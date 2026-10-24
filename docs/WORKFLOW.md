@@ -29,7 +29,7 @@ Carvetto is built by a small hierarchy of agents coordinated by one human, the *
 1. Keeps `docs/BACKLOG.md` current: tasks with IDs, dependencies, acceptance criteria, status.
 2. Picks the ready tasks (dependencies done) and dispatches each to a **coder agent** in its own git worktree/branch, in parallel, up to the concurrency limit (default 4).
 3. When a coder reports a branch ready, dispatches a **verifier agent** with the task card and branch name only — never the coder's own summary of what it did.
-4. On **PASS**: reviews the diff size and scope, merges to `main` (fast-forward or squash), marks the task done, unblocks dependents.
+4. On **PASS**: rebases the branch on current `main`, pushes it and opens a PR so CI runs on Linux **and Windows/MSVC** (the agents' workspace only has GCC). Only when both CI jobs are green does the director squash-merge to `main`, mark the task done, and unblock dependents. A CI-only failure (e.g. MSVC-specific) goes back to the coder like a verifier FAIL, with the CI error text.
 5. On **FAIL**: sends the verifier's report back to the *same* coder agent (its context is intact) with instructions to fix; re-verifies. After **3 failed rounds** the director stops the loop and either re-scopes the task or escalates.
 6. **Escalates to the owner** (via a question, not a guess) when: a task needs a product decision; two tasks conflict in a way the plan doesn't resolve; a dependency choice has licensing or platform implications; a phase is finished and the next phase's order should be confirmed; or a task has failed verification three times.
 7. Posts a short status summary to the owner at natural checkpoints (a batch merged, a phase done, something blocked). Not a running commentary.
