@@ -75,6 +75,14 @@ Acceptance criteria:
   4. Remove the "Known limitation (tracked as T-0005)" note from `intersect.hpp`.
 Out of scope: Bezier overlap detection; Debug-build Bezier length performance.
 
+### T-0006 Open-offset quality for toolpaths: speed at large d, exact arc mitres, snapped junctions   [status: blocked]
+Phase: 1 (before the 2D Profile toolpath)   Module: core/geometry   Depends on: T-0004
+Goal: Non-blocking findings from T-0004 verification that matter once offsets feed G-code.
+Acceptance criteria:
+  1. Speed: a 2000-step 0.5 mm random walk offset by d = 1 and d = 2 (all joins, both sides) completes in < 0.5 s Release; 8000-span hypotrochoid and text-like loops at d = 2 in < 1 s. Profile and fix the neighbourhood-boundary splitting / distance-pruning cost.
+  2. Sharp joins at arc corners produce the true mitre whenever it lies within `mitreLimit·d` (no fallback to Square/Round caused by trimming the arc's extension range); Square likewise. Header documents every remaining fallback. Regression: keyhole, d = 0.25, Left, Sharp → mitre at 0.304 from the vertex (limit 0.5), not an arc.
+  3. Consecutive spans within a returned chain meet exactly (shared endpoint bit-identical, snapped), and no span starts behind the previous end along the chain. Fuzz: 0 gaps > 1e-12 and 0 backward steps over ≥ 20k generated offsets.
+
 ### T-0010 Document model: Job, Sheet, Layer, Object, UndoStack                [status: done]
 Phase: 0   Module: core/document   Depends on: T-0001
 Goal: In-memory document: `Job` (type single/double/rotary, size, units display setting, Z-zero, datum), `Sheet`s (each with size/datum), `Layer`s (name, colour, visible, locked, order), `Object`s (vector object holding contours + creation params as a tagged variant; bitmap placeholder; group), stable IDs, selection set, and a command-based `UndoStack` with coalescing.
