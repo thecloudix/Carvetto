@@ -8,6 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(CARVETTO_BUILD_APP   "Build the Qt desktop application" ON)
 option(CARVETTO_BUILD_TESTS "Build unit tests" ON)
+option(CARVETTO_BUILD_VIEWMODEL "Build the Qt-free app view-model library (always on when the app is built)" ON)
 
 # Warnings as errors everywhere.
 add_library(carvetto_warnings INTERFACE)
@@ -29,8 +30,13 @@ if(CARVETTO_BUILD_TESTS)
   add_subdirectory(core/tests)
 endif()
 
+# Qt-free view logic for the app (ADR-0014): built and tested even where Qt is unavailable.
+if(CARVETTO_BUILD_VIEWMODEL OR CARVETTO_BUILD_APP)
+  add_subdirectory(app/viewmodel)
+endif()
+
 if(CARVETTO_BUILD_APP)
-  find_package(Qt6 6.5 COMPONENTS Widgets OpenGLWidgets QUIET)
+  find_package(Qt6 6.5 COMPONENTS Widgets QUIET)
   if(Qt6_FOUND)
     add_subdirectory(app)
   else()
