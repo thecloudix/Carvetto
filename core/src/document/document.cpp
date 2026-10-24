@@ -2,10 +2,13 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
+#include <map>
 #include <set>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace carvetto::document {
 
@@ -339,6 +342,37 @@ std::vector<IntegrityIssue> Document::checkIntegrity() const {
         if (obj.id != id) {
             checkId(obj.id.value, id, "object (stored id)");
         }
+    }
+
+    // One shared generator hands out every kind of id, so a value may belong to only one sheet,
+    // layer or object (ADR-0007 amendment A2). Keyed by value so the report order is deterministic.
+    struct IdOwners {
+        std::vector<std::string> names;
+        ObjectId object;  // first object owning the value, if any
+    };
+    std::map<std::uint64_t, IdOwners> owners;
+    for (const Sheet& sheet : sheets_) {
+        owners[sheet.id.value].names.push_back("sheet");
+    }
+    for (const Layer& layer : layers_) {
+        owners[layer.id.value].names.push_back("layer");
+    }
+    for (const auto& [id, obj] : objects_) {
+        IdOwners& entry = owners[id.value];
+        entry.names.push_back("object");
+        if (entry.object.isNull()) {
+            entry.object = id;
+        }
+    }
+    for (const auto& [value, entry] : owners) {
+        if (value == 0 || entry.names.size() < 2) {
+            continue;  // the null id is already reported as IdOutOfRange
+        }
+        std::string message = "id #" + std::to_string(value) + " is used by";
+        for (std::size_t i = 0; i < entry.names.size(); ++i) {
+            message += (i == 0 ? " " : ", ") + entry.names[i];
+        }
+        report(Kind::DuplicateId, entry.object, {}, std::move(message));
     }
 
     std::map<ObjectId, ObjectId> listedBy;  // child -> group listing it
