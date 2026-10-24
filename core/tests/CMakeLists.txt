@@ -26,11 +26,6 @@ add_executable(carvetto_tests
   post/parser_test.cpp
   post/interpreter_test.cpp
   post/grbl_golden_test.cpp
-)
-# Golden files and shipped posts are read from the source tree via absolute paths.
-target_compile_definitions(carvetto_tests PRIVATE
-  CARVETTO_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/golden"
-  CARVETTO_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
   document/job_test.cpp
   document/variables_test.cpp
   document/selection_test.cpp
@@ -38,6 +33,11 @@ target_compile_definitions(carvetto_tests PRIVATE
   document/document_test.cpp
   document/commands_test.cpp
   document/integrity_test.cpp
+)
+# Golden files and shipped posts are read from the source tree via absolute paths.
+target_compile_definitions(carvetto_tests PRIVATE
+  CARVETTO_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/golden"
+  CARVETTO_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
 )
 target_link_libraries(carvetto_tests PRIVATE carvetto::core Catch2::Catch2WithMain carvetto_warnings)
 
