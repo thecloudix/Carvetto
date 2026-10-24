@@ -91,7 +91,13 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: |
-          if (Test-Path build/app/carvetto.exe) { ./build/app/carvetto.exe --self-test; if ($LASTEXITCODE -ne 0) { Write-Host "::error title=App self-test failed::exit $LASTEXITCODE"; exit 1 } } else { Write-Host "app not built yet - skipping" }
+          if (Test-Path build/app/carvetto.exe) {
+            # carvetto.exe is a GUI-subsystem app: PowerShell does not wait for it unless asked.
+            $p = Start-Process -FilePath build/app/carvetto.exe -ArgumentList '--self-test' -Wait -PassThru -NoNewWindow -RedirectStandardOutput selftest.out -RedirectStandardError selftest.err
+            $msg = ((Get-Content selftest.out -ErrorAction SilentlyContinue) + (Get-Content selftest.err -ErrorAction SilentlyContinue)) -join '%0A'
+            if ($p.ExitCode -ne 0) { Write-Host "::error title=App self-test failed (exit $($p.ExitCode))::$msg"; exit 1 }
+            Write-Host "self-test passed: $msg"
+          } else { Write-Host "app not built yet - skipping" }
       - name: Upload app
         uses: actions/upload-artifact@v4
         with:
