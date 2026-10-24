@@ -33,6 +33,8 @@ add_executable(carvetto_tests
   document/document_test.cpp
   document/commands_test.cpp
   document/integrity_test.cpp
+  geometry/offset_test.cpp
+  geometry/boolean_test.cpp
 )
 # Golden files and shipped posts are read from the source tree via absolute paths.
 target_compile_definitions(carvetto_tests PRIVATE
