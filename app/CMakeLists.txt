@@ -16,6 +16,6 @@ qt_add_executable(carvetto
   src/self_test.hpp
 )
 target_link_libraries(carvetto PRIVATE carvetto::viewmodel carvetto::core Qt6::Widgets carvetto_warnings)
-# Console subsystem for now so `carvetto --self-test` can be waited on and print its result in
-# CI (a WIN32 GUI executable returns immediately from PowerShell). See ADR-0014.
+# GUI subsystem on Windows (no console window). CI waits for `--self-test` with
+# Start-Process -Wait and redirected output. See ADR-0014.
 set_target_properties(carvetto PROPERTIES WIN32_EXECUTABLE ON)
