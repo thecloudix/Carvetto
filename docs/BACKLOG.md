@@ -87,7 +87,7 @@ Acceptance criteria:
   5. Object IDs are unique across undo/redo and survive copy/paste as new IDs.
 Out of scope: file I/O (T-0012), rendering.
 
-### T-0011 IdGenerator overflow guard                                           [status: ready]
+### T-0011 IdGenerator overflow guard                                           [status: in-progress]
 Phase: 0   Module: core/document   Depends on: T-0010
 Goal: The id generator wraps at 2^64 and can then hand out ids that collide with existing sheets/layers/objects (found while verifying T-0012). Make allocation fail loudly instead.
 Acceptance criteria:
