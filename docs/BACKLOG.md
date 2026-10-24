@@ -122,7 +122,7 @@ Acceptance criteria:
   2. `Document::checkIntegrity()` reports an id used by more than one item across kinds (new IntegrityIssue kind).
   3. Regression: `o.id = ObjectId{d.defaultLayer().value}; d.execute(AddObjectCommand(o))` returns false and leaves the document unchanged; fixed-seed randomized test over all commands with preset ids finds no cross-kind duplicates.
 
-### T-0014 Document hardening: id/key mismatch check, load-robust timing test   [status: in-progress]
+### T-0014 Document hardening: id/key mismatch check, load-robust timing test   [status: done]
 Phase: 0   Module: core/document   Depends on: T-0013
 Goal: Two small follow-ups found during T-0011/T-0013 verification.
 Acceptance criteria:
