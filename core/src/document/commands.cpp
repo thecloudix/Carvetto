@@ -68,11 +68,24 @@ void ObjectChangeSet::clear() {
 
 namespace {
 
-// Id-allocation guard shared by every command that creates something (ADR-0007, amendment A1):
-// a preset id must lie below the ceiling, and a null id needs one free id in the generator. When
-// this fails the command's first `apply` returns false, so nothing changes and nothing is recorded.
+// True when `value` is the id of any sheet, layer or object. The three kinds share one generator,
+// so a value names at most one item of any kind (ADR-0007, amendment A2).
+bool idInUse(const Document& doc, std::uint64_t value) {
+    return doc.findSheet(SheetId{value}) != nullptr || doc.findLayer(LayerId{value}) != nullptr ||
+           doc.hasObject(ObjectId{value});
+}
+
+// Id-allocation guard shared by every command that creates something (ADR-0007, amendments A1
+// and A2). A null id needs one free id in the generator. A preset id must be fresh: below the
+// ceiling, not below the generator's next id (so it was never handed out, and an id freed by
+// undoing an add cannot be taken again), and not used by any sheet, layer or object. When this
+// fails the command's first `apply` returns false, so nothing changes and nothing is recorded.
+// Redo must not call it: the command's own id is below the next id by then.
 bool canTakeId(const Document& doc, std::uint64_t presetId) {
-    return presetId == 0 ? doc.idGenerator().canAllocate(1) : presetId < IdGenerator::kMaxId;
+    if (presetId == 0) {
+        return doc.idGenerator().canAllocate(1);
+    }
+    return presetId < IdGenerator::kMaxId && presetId >= doc.idGenerator().peek() && !idInUse(doc, presetId);
 }
 
 void transformData(ObjectData& data, const geometry::Transform2& m) {
@@ -473,11 +486,14 @@ void UngroupCommand::revert(Document& doc) {
 // --- AddLayerCommand -----------------------------------------------------------------------------
 
 bool AddLayerCommand::apply(Document& doc) {
-    if (!canTakeId(doc, layer_.id.value)) {
-        return false;
-    }
-    if (layer_.id.isNull()) {
-        layer_.id = doc.allocateLayerId();
+    if (!applied_) {
+        if (!canTakeId(doc, layer_.id.value)) {
+            return false;
+        }
+        if (layer_.id.isNull()) {
+            layer_.id = doc.allocateLayerId();
+        }
+        applied_ = true;
     }
     previousActive_ = doc.activeLayer();
     doc.insertLayer(layer_, index_);
@@ -573,11 +589,14 @@ void MoveLayerCommand::revert(Document& doc) {
 // --- AddSheetCommand -----------------------------------------------------------------------------
 
 bool AddSheetCommand::apply(Document& doc) {
-    if (!canTakeId(doc, sheet_.id.value)) {
-        return false;
-    }
-    if (sheet_.id.isNull()) {
-        sheet_.id = doc.allocateSheetId();
+    if (!applied_) {
+        if (!canTakeId(doc, sheet_.id.value)) {
+            return false;
+        }
+        if (sheet_.id.isNull()) {
+            sheet_.id = doc.allocateSheetId();
+        }
+        applied_ = true;
     }
     previousActive_ = doc.activeSheet();
     doc.insertSheet(sheet_);

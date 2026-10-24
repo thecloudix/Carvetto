@@ -1,6 +1,6 @@
 # ADR-0007: Document model storage, ids and command-based undo
 
-Date: 2026-10-24 · Status: accepted (director, 2026-10-24)
+Date: 2026-10-24 · Status: accepted (director, 2026-10-24; amendments A1 T-0011, A2 T-0013)
 
 ## Context
 T-0010 asked for an in-memory document (job, sheets, layers, objects, selection, variables) with
@@ -108,3 +108,20 @@ Decision 3 is amended. The shared generator no longer wraps at 2^64:
 - **Integrity.** `Document::checkIntegrity()` reports `IdOutOfRange` for a null id or an id
   `>= kMaxId` on any sheet, layer or object (including an object whose stored id differs from its
   key), and `IdNotBelowNext` when the generator's next id is `<=` any existing id.
+
+### A2 (T-0013, 2026-10-24): preset ids must be fresh
+Decision 3 is amended. One generator serves sheets, layers and objects, so an id value names at most
+one item of *any* kind, and a value once handed out is never taken again — not even through a
+caller-supplied (preset) id.
+- **Commands.** `AddObjectCommand`, `AddLayerCommand` and `AddSheetCommand` (the only commands that
+  accept a preset id; paste and group always allocate) accept a non-null id only when it is in
+  `[IdGenerator::peek(), kMaxId)` and not used by any sheet, layer or object. Otherwise the first
+  `apply` returns false: no-op, nothing recorded, `Document::execute` returns false (decision 2).
+  This also covers an id freed by undoing (or deleting) the item that held it: it is below the next
+  id, so it cannot be re-taken by a new preset add. Only redo of the original command brings it
+  back. Redo never re-runs the check (the command's own id is below the next id by then).
+- **Raw mutators** (`insertSheet/Layer/Object`) still only assert same-kind duplicates; they are
+  the building blocks undo/redo and file loading use and are not a user-level entry point.
+- **Integrity.** `Document::checkIntegrity()` reports `DuplicateId` once per id value used by more
+  than one sheet, layer or object (across kinds, or two sheets/layers with the same id). The issue's
+  `object` is the object owning the value, if any. File I/O (T-0012) gets this check on load for free.

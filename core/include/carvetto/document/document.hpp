@@ -38,6 +38,8 @@ struct IntegrityIssue {
         StaleSelection,       ///< The selection holds an id that does not exist.
         IdOutOfRange,         ///< A sheet, layer or object id is null or >= `IdGenerator::kMaxId`.
         IdNotBelowNext,       ///< The id generator's next id is <= an existing id (could reuse it).
+        DuplicateId,          ///< One id value is used by more than one sheet, layer or object
+                              ///< (across kinds, or two sheets/layers sharing an id).
     };
     Kind kind;
     /// The object (or zero) the issue is about. Zero for id issues on a layer or sheet; the
@@ -139,7 +141,8 @@ class Document {
 
     /// Lists every structural inconsistency (group links, missing layers/sheets, cycles, stale
     /// active layer/sheet or selection, ids outside `[1, IdGenerator::kMaxId)` or not below the
-    /// generator's next id). Empty for a consistent document; every command keeps it so.
+    /// generator's next id, one id value used by several sheets/layers/objects). Empty for a consistent
+    /// document; every command keeps it so.
     std::vector<IntegrityIssue> checkIntegrity() const;
 
     // --- Ids -------------------------------------------------------------------------------

@@ -36,6 +36,10 @@
 /// too few ids remain below `IdGenerator::kMaxId`, or a preset id is at or above it, its first
 /// `apply` returns false, so `Document::execute` reports a no-op and nothing is recorded. Redo
 /// never allocates.
+///
+/// Preset ids (ADR-0007, amendment A2): add object/layer/sheet also accept a caller-supplied id
+/// only when it is fresh: not used by any sheet, layer or object and not below the generator's
+/// next id (`IdGenerator::peek()`). Otherwise the first `apply` is a no-op in the same way.
 namespace carvetto::document {
 
 /// Before/after snapshots of the objects one command touched. `recordBefore` is called before an
@@ -66,8 +70,9 @@ class ObjectChangeSet {
 
 // --- Objects -----------------------------------------------------------------------------------
 
-/// Adds one object. `obj.id` may be null (allocated on first apply) or a fresh unused id below
-/// `IdGenerator::kMaxId`; otherwise (or with no id left) the command is a no-op. When
+/// Adds one object. `obj.id` may be null (allocated on first apply) or a fresh id in
+/// `[IdGenerator::peek(), IdGenerator::kMaxId)` used by no sheet, layer or object; otherwise (or
+/// with no id left) the command is a no-op. When
 /// `obj.parent` names an existing group the object is appended to that group's children (and
 /// takes the group's sheet); any other parent is cleared.
 class AddObjectCommand : public Command {
@@ -208,7 +213,7 @@ class UngroupCommand : public Command {
 // --- Layers ------------------------------------------------------------------------------------
 
 /// Adds a layer (id allocated on first apply) at `index` or on top; optionally makes it active.
-/// No-op when no id is left (or a preset id is at or above `IdGenerator::kMaxId`).
+/// No-op when no id is left, or a preset id is not fresh (see "Preset ids" above).
 class AddLayerCommand : public Command {
    public:
     AddLayerCommand(Layer layer, bool makeActive = false, std::optional<std::size_t> index = std::nullopt)
@@ -223,6 +228,7 @@ class AddLayerCommand : public Command {
     bool makeActive_;
     std::optional<std::size_t> index_;
     LayerId previousActive_;
+    bool applied_{false};  // first apply done: redo reuses `layer_.id` without re-checking it
 };
 
 /// Deletes a layer. With `deleteContents` its objects are deleted: groups on the layer are
@@ -277,7 +283,7 @@ class MoveLayerCommand : public Command {
 // --- Sheets ------------------------------------------------------------------------------------
 
 /// Adds a sheet (id allocated on first apply); optionally makes it active. No-op when no id is
-/// left (or a preset id is at or above `IdGenerator::kMaxId`).
+/// left, or a preset id is not fresh (see "Preset ids" above).
 class AddSheetCommand : public Command {
    public:
     explicit AddSheetCommand(Sheet sheet, bool makeActive = false)
@@ -291,6 +297,7 @@ class AddSheetCommand : public Command {
     Sheet sheet_;
     bool makeActive_;
     SheetId previousActive_;
+    bool applied_{false};  // first apply done: redo reuses `sheet_.id` without re-checking it
 };
 
 /// Deletes a sheet together with the objects on it. The last sheet cannot be deleted (no-op).
