@@ -5,6 +5,11 @@ add_library(carvetto_core STATIC
   src/geometry/span.cpp
   src/geometry/polyline.cpp
   src/geometry/contour.cpp
+  src/toolpath/move.cpp
+  src/toolpath/toolpath.cpp
+  src/toolpath/pass_plan.cpp
+  src/toolpath/linking.cpp
+  src/toolpath/time.cpp
 )
 target_include_directories(carvetto_core PUBLIC include)
 target_link_libraries(carvetto_core PRIVATE carvetto_warnings)

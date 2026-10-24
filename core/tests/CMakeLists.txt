@@ -14,6 +14,11 @@ add_executable(carvetto_tests
   geometry/span_test.cpp
   geometry/polyline_test.cpp
   geometry/contour_test.cpp
+  toolpath/move_test.cpp
+  toolpath/toolpath_test.cpp
+  toolpath/pass_plan_test.cpp
+  toolpath/linking_test.cpp
+  toolpath/time_test.cpp
 )
 target_link_libraries(carvetto_tests PRIVATE carvetto::core Catch2::Catch2WithMain carvetto_warnings)
 
