@@ -19,6 +19,9 @@ add_executable(carvetto_tests
   toolpath/pass_plan_test.cpp
   toolpath/linking_test.cpp
   toolpath/time_test.cpp
+  tooling/tool_test.cpp
+  tooling/tool_database_test.cpp
+  tooling/json_io_test.cpp
 )
 target_link_libraries(carvetto_tests PRIVATE carvetto::core Catch2::Catch2WithMain carvetto_warnings)
 
