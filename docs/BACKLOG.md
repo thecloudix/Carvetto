@@ -64,7 +64,7 @@ Acceptance criteria:
   4. No returned chain is self-intersecting for any join type (split at T/X junctions into loop and tail). Regression repro A: lines (-6.4312190988360092,1.1428523003734297)→(-12.846939679779521,3.9348207104935331)→(-9.7434797348853266,-1.9260892800402662), then CW arc c(-17.535585621268488,-1.0001000247398364) r=7.846933811721553 a0=-0.11828212233321031 a1=-5.0521988806306926, then CW arc c(-17.021348114572877,0.45450829964057693) r=6.3041034287405493 a0=1.2309864265488941 a1=0.23263422704120162; offset d=2.5 Right with Sharp and Square.
 Out of scope: closed-contour offsets (Clipper2 path), arc refitting.
 
-### T-0005 Intersection residuals: 2-span closed contours, tolerance-boundary cases   [status: in-progress]
+### T-0005 Intersection residuals: 2-span closed contours, tolerance-boundary cases   [status: verifying]
 Phase: 0   Module: core/geometry   Depends on: T-0002   ADR: amend 0009
 Goal: Close the residual defects found in T-0002's third verification round.
 Interfaces: `geometry/intersect.hpp` / `contour_ops.hpp` implementations; signatures unchanged.
@@ -87,7 +87,7 @@ Acceptance criteria:
   5. Object IDs are unique across undo/redo and survive copy/paste as new IDs.
 Out of scope: file I/O (T-0012), rendering.
 
-### T-0011 IdGenerator overflow guard                                           [status: in-progress]
+### T-0011 IdGenerator overflow guard                                           [status: verifying]
 Phase: 0   Module: core/document   Depends on: T-0010
 Goal: The id generator wraps at 2^64 and can then hand out ids that collide with existing sheets/layers/objects (found while verifying T-0012). Make allocation fail loudly instead.
 Acceptance criteria:
@@ -104,6 +104,14 @@ Acceptance criteria:
   2. Loading a file with an unknown top-level JSON field keeps the field on re-save.
   3. Loading a file with a higher major version fails with a clear error, not a crash.
 Out of scope: heightfields, toolpath caches (later phases).
+
+### T-0013 Reject preset ids already in use; integrity check for cross-kind duplicates   [status: blocked]
+Phase: 0   Module: core/document   Depends on: T-0011
+Goal: Commands that accept a caller-supplied (preset) id currently accept one already used by another kind (e.g. an object taking a layer's id) or an id below the generator's next value (re-adding a removed id). Found while verifying T-0011.
+Acceptance criteria:
+  1. Every command accepting a preset id refuses (no-op, returns false) an id that is in use by ANY sheet, layer or object, or that is below the generator's next id.
+  2. `Document::checkIntegrity()` reports an id used by more than one item across kinds (new IntegrityIssue kind).
+  3. Regression: `o.id = ObjectId{d.defaultLayer().value}; d.execute(AddObjectCommand(o))` returns false and leaves the document unchanged; fixed-seed randomized test over all commands with preset ids finds no cross-kind duplicates.
 
 ### T-0020 Tool database and machines                                          [status: done]
 Phase: 0   Module: core/tooling   Depends on: T-0001
