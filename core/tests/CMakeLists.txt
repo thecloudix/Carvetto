@@ -22,6 +22,15 @@ add_executable(carvetto_tests
   tooling/tool_test.cpp
   tooling/tool_database_test.cpp
   tooling/json_io_test.cpp
+  post/variables_test.cpp
+  post/parser_test.cpp
+  post/interpreter_test.cpp
+  post/grbl_golden_test.cpp
+)
+# Golden files and shipped posts are read from the source tree via absolute paths.
+target_compile_definitions(carvetto_tests PRIVATE
+  CARVETTO_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/golden"
+  CARVETTO_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
 )
 target_link_libraries(carvetto_tests PRIVATE carvetto::core Catch2::Catch2WithMain carvetto_warnings)
 
