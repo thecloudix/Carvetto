@@ -105,13 +105,21 @@ Acceptance criteria:
   3. Loading a file with a higher major version fails with a clear error, not a crash.
 Out of scope: heightfields, toolpath caches (later phases).
 
-### T-0013 Reject preset ids already in use; integrity check for cross-kind duplicates   [status: in-progress]
+### T-0013 Reject preset ids already in use; integrity check for cross-kind duplicates   [status: verifying]
 Phase: 0   Module: core/document   Depends on: T-0011
 Goal: Commands that accept a caller-supplied (preset) id currently accept one already used by another kind (e.g. an object taking a layer's id) or an id below the generator's next value (re-adding a removed id). Found while verifying T-0011.
 Acceptance criteria:
   1. Every command accepting a preset id refuses (no-op, returns false) an id that is in use by ANY sheet, layer or object, or that is below the generator's next id.
   2. `Document::checkIntegrity()` reports an id used by more than one item across kinds (new IntegrityIssue kind).
   3. Regression: `o.id = ObjectId{d.defaultLayer().value}; d.execute(AddObjectCommand(o))` returns false and leaves the document unchanged; fixed-seed randomized test over all commands with preset ids finds no cross-kind duplicates.
+
+### T-0014 Document hardening: id/key mismatch check, load-robust timing test   [status: blocked]
+Phase: 0   Module: core/document   Depends on: T-0013
+Goal: Two small follow-ups found during T-0011/T-0013 verification.
+Acceptance criteria:
+  1. `checkIntegrity()` reports an object whose stored `id` differs from its map key (new or existing issue kind), and DuplicateId considers stored ids as well as keys. Regression: insertObject, then `findObject(o)->id = ObjectId{defaultLayer().value}` → issue reported.
+  2. The T-0010 "10 000 inserts, undo all and redo all under one second" test no longer fails under parallel ctest load: measure CPU time of the test thread (or use a generous wall bound plus an operation-count/complexity assertion), and keep detecting an O(n²) regression (e.g. assert time(20k) < 3 × time(10k)).
+  3. `ctest -j8` passes 10 consecutive runs on the CI Linux runner (add a CI step or document the local check).
 
 ### T-0020 Tool database and machines                                          [status: done]
 Phase: 0   Module: core/tooling   Depends on: T-0001
