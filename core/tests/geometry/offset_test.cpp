@@ -18,6 +18,14 @@ namespace {
 
 const Tolerance kTol{};  // distance 0.001, chordal 0.01
 
+// Offsets an open contour and requires the result to be exactly one chain.
+Contour oneChain(const Contour& c, double d, OffsetSide side, JoinType join, const Tolerance& tol = kTol,
+                 double mitreLimit = 2.0) {
+    const std::vector<Contour> chains = offsetOpenContour(c, d, side, join, tol, mitreLimit);
+    REQUIRE(chains.size() == 1);
+    return chains.front();
+}
+
 double area(const Contour& c) {
     return c.polygonise(kTol).signedArea();
 }
@@ -277,7 +285,7 @@ TEST_CASE("Open polyline offset left/right keeps the span count", "[geometry][of
     pl.spans.emplace_back(LineSpan{{10.0, 0.0}, {10.0, 10.0}});
 
     SECTION("left of an L turning left is the inside: two trimmed lines") {
-        const Contour left = offsetOpenContour(pl, 1.0, OffsetSide::Left, JoinType::Round, kTol);
+        const Contour left = oneChain(pl, 1.0, OffsetSide::Left, JoinType::Round, kTol);
         REQUIRE_FALSE(left.closed);
         REQUIRE(left.spanCount() == 2);
         CHECK(left.isContinuous(kTol));
@@ -286,7 +294,7 @@ TEST_CASE("Open polyline offset left/right keeps the span count", "[geometry][of
         CHECK(approxEqual(left.endPoint(), {9.0, 10.0}));
     }
     SECTION("right of an L turning left is the outside: round join adds one arc") {
-        const Contour right = offsetOpenContour(pl, 1.0, OffsetSide::Right, JoinType::Round, kTol);
+        const Contour right = oneChain(pl, 1.0, OffsetSide::Right, JoinType::Round, kTol);
         REQUIRE(right.spanCount() == 3);
         CHECK(right.isContinuous(kTol));
         CHECK(countArcs(right) == 1);
@@ -298,13 +306,13 @@ TEST_CASE("Open polyline offset left/right keeps the span count", "[geometry][of
         CHECK(approxEqual(right.endPoint(), {11.0, 10.0}));
     }
     SECTION("sharp join on the outside keeps the span count exactly") {
-        const Contour right = offsetOpenContour(pl, 1.0, OffsetSide::Right, JoinType::Sharp, kTol);
+        const Contour right = oneChain(pl, 1.0, OffsetSide::Right, JoinType::Sharp, kTol);
         REQUIRE(right.spanCount() == 2);
         CHECK(right.isContinuous(kTol));
         CHECK(approxEqual(endPoint(right.spans[0]), {11.0, -1.0}));
     }
     SECTION("square join on the outside adds one chamfer span") {
-        const Contour right = offsetOpenContour(pl, 1.0, OffsetSide::Right, JoinType::Square, kTol);
+        const Contour right = oneChain(pl, 1.0, OffsetSide::Right, JoinType::Square, kTol);
         REQUIRE(right.spanCount() == 3);
         CHECK(right.isContinuous(kTol));
         // Chamfer line is 1 mm from the corner along the bisector direction (1,-1)/sqrt2.
@@ -312,8 +320,8 @@ TEST_CASE("Open polyline offset left/right keeps the span count", "[geometry][of
         CHECK_THAT(distance(mid, {10.0, 0.0}), WithinAbs(1.0, 1e-9));
     }
     SECTION("negative distance flips the side") {
-        const Contour a = offsetOpenContour(pl, -1.0, OffsetSide::Left, JoinType::Sharp, kTol);
-        const Contour b = offsetOpenContour(pl, 1.0, OffsetSide::Right, JoinType::Sharp, kTol);
+        const Contour a = oneChain(pl, -1.0, OffsetSide::Left, JoinType::Sharp, kTol);
+        const Contour b = oneChain(pl, 1.0, OffsetSide::Right, JoinType::Sharp, kTol);
         CHECK(a == b);
     }
 }
@@ -325,7 +333,7 @@ TEST_CASE("Open zig-zag offset with sharp joins keeps the span count", "[geometr
     zig.spans.emplace_back(LineSpan{{20.0, 0.0}, {30.0, 5.0}});
     zig.spans.emplace_back(LineSpan{{30.0, 5.0}, {40.0, 0.0}});
     for (const OffsetSide side : {OffsetSide::Left, OffsetSide::Right}) {
-        const Contour out = offsetOpenContour(zig, 0.5, side, JoinType::Sharp, kTol);
+        const Contour out = oneChain(zig, 0.5, side, JoinType::Sharp, kTol);
         CHECK(out.spanCount() == 4);
         CHECK(out.isContinuous(kTol));
         CHECK_FALSE(out.closed);
@@ -345,7 +353,7 @@ TEST_CASE("Open contour offset handles arcs exactly", "[geometry][offset][open]"
     c.spans.emplace_back(LineSpan{{10.0, 2.0}, {10.0, 10.0}});
 
     SECTION("outside offset grows the arc radius, same span count") {
-        const Contour out = offsetOpenContour(c, 1.0, OffsetSide::Right, JoinType::Round, kTol);
+        const Contour out = oneChain(c, 1.0, OffsetSide::Right, JoinType::Round, kTol);
         REQUIRE(out.spanCount() == 3);
         CHECK(out.isContinuous(kTol));
         const auto& arc = std::get<ArcSpan>(out.spans[1]);
@@ -353,13 +361,13 @@ TEST_CASE("Open contour offset handles arcs exactly", "[geometry][offset][open]"
         CHECK(approxEqual(arc.centre, {8.0, 2.0}));
     }
     SECTION("inside offset smaller than the radius shrinks the arc") {
-        const Contour out = offsetOpenContour(c, 1.0, OffsetSide::Left, JoinType::Round, kTol);
+        const Contour out = oneChain(c, 1.0, OffsetSide::Left, JoinType::Round, kTol);
         REQUIRE(out.spanCount() == 3);
         CHECK(out.isContinuous(kTol));
         CHECK_THAT(std::get<ArcSpan>(out.spans[1]).radius, WithinAbs(1.0, 1e-12));
     }
     SECTION("inside offset beyond the radius collapses the arc into a sharp corner") {
-        const Contour out = offsetOpenContour(c, 3.0, OffsetSide::Left, JoinType::Round, kTol);
+        const Contour out = oneChain(c, 3.0, OffsetSide::Left, JoinType::Round, kTol);
         REQUIRE(out.spanCount() == 2);
         CHECK(out.isContinuous(kTol));
         CHECK(countArcs(out) == 0);
@@ -369,27 +377,26 @@ TEST_CASE("Open contour offset handles arcs exactly", "[geometry][offset][open]"
 
 TEST_CASE("Open contour offset edge cases", "[geometry][offset][open]") {
     SECTION("empty contour") {
-        const Contour out = offsetOpenContour(Contour{}, 1.0, OffsetSide::Left, JoinType::Round, kTol);
-        CHECK(out.isEmpty());
+        CHECK(offsetOpenContour(Contour{}, 1.0, OffsetSide::Left, JoinType::Round, kTol).empty());
     }
     SECTION("degenerate spans are ignored") {
         Contour c;
         c.spans.emplace_back(LineSpan{{0.0, 0.0}, {0.0, 0.0}});
         c.spans.emplace_back(LineSpan{{0.0, 0.0}, {5.0, 0.0}});
-        const Contour out = offsetOpenContour(c, 1.0, OffsetSide::Left, JoinType::Round, kTol);
+        const Contour out = oneChain(c, 1.0, OffsetSide::Left, JoinType::Round, kTol);
         REQUIRE(out.spanCount() == 1);
         CHECK(approxEqual(out.startPoint(), {0.0, 1.0}));
     }
     SECTION("zero distance returns the input geometry") {
         Contour c;
         c.spans.emplace_back(LineSpan{{0.0, 0.0}, {5.0, 0.0}});
-        const Contour out = offsetOpenContour(c, 0.0, OffsetSide::Left, JoinType::Round, kTol);
+        const Contour out = oneChain(c, 0.0, OffsetSide::Left, JoinType::Round, kTol);
         CHECK(out.spans == c.spans);
     }
     SECTION("Bezier spans are polygonised, result stays within the chordal tolerance band") {
         Contour c;
         c.spans.emplace_back(BezierSpan{{0.0, 0.0}, {5.0, 10.0}, {15.0, 10.0}, {20.0, 0.0}});
-        const Contour out = offsetOpenContour(c, 1.0, OffsetSide::Right, JoinType::Round, kTol);
+        const Contour out = oneChain(c, 1.0, OffsetSide::Right, JoinType::Round, kTol);
         REQUIRE(out.spanCount() >= 2);
         CHECK(out.isContinuous(kTol));
         const Polyline orig = c.polygonise(Tolerance{0.001, 1e-9, 0.0005});
@@ -401,18 +408,18 @@ TEST_CASE("Open contour offset edge cases", "[geometry][offset][open]") {
         Contour c;
         c.spans.emplace_back(LineSpan{{0.0, 0.0}, {10.0, 0.0}});
         c.spans.emplace_back(LineSpan{{10.0, 0.0}, {0.0, 0.0}});
-        const Contour out = offsetOpenContour(c, 1.0, OffsetSide::Left, JoinType::Round, kTol);
+        const Contour out = oneChain(c, 1.0, OffsetSide::Left, JoinType::Round, kTol);
         REQUIRE(out.spanCount() == 3);
         CHECK(out.isContinuous(kTol));
         CHECK_THAT(std::fabs(std::get<ArcSpan>(out.spans[1]).sweepAngle()), WithinAbs(kPi, 1e-9));
     }
     SECTION("closed input wraps the corner at the start and stays closed") {
-        const Contour out = offsetOpenContour(square10(), 1.0, OffsetSide::Right, JoinType::Sharp, kTol);
+        const Contour out = oneChain(square10(), 1.0, OffsetSide::Right, JoinType::Sharp, kTol);
         CHECK(out.closed);
         REQUIRE(out.spanCount() == 4);
         CHECK(out.isContinuous(kTol));
         CHECK_THAT(area(out), WithinAbs(144.0, 1e-9));
-        const Contour in = offsetOpenContour(square10(), 1.0, OffsetSide::Left, JoinType::Sharp, kTol);
+        const Contour in = oneChain(square10(), 1.0, OffsetSide::Left, JoinType::Sharp, kTol);
         REQUIRE(in.spanCount() == 4);
         CHECK_THAT(area(in), WithinAbs(64.0, 1e-9));
     }
@@ -462,7 +469,7 @@ TEST_CASE("AC5: U-shape offset to the outside adds one join span per outside cor
     const double d = 1.0;
 
     SECTION("Round: 3 + 2 arc joins = 5 spans, every point exactly at d") {
-        const Contour out = offsetOpenContour(u, d, OffsetSide::Right, JoinType::Round, kTol);
+        const Contour out = oneChain(u, d, OffsetSide::Right, JoinType::Round, kTol);
         CHECK_FALSE(out.closed);
         REQUIRE(out.spanCount() == 5);
         CHECK(out.isContinuous(kTol));
@@ -480,7 +487,7 @@ TEST_CASE("AC5: U-shape offset to the outside adds one join span per outside cor
         CHECK(approxEqual(out.endPoint(), {0.0, 11.0}));
     }
     SECTION("Square: 3 + 2 chamfer joins = 5 spans, chamfers exactly d from the corners") {
-        const Contour out = offsetOpenContour(u, d, OffsetSide::Right, JoinType::Square, kTol);
+        const Contour out = oneChain(u, d, OffsetSide::Right, JoinType::Square, kTol);
         REQUIRE(out.spanCount() == 5);
         CHECK(out.isContinuous(kTol));
         CHECK(countArcs(out) == 0);
@@ -493,7 +500,7 @@ TEST_CASE("AC5: U-shape offset to the outside adds one join span per outside cor
         CHECK(hi <= d * std::sqrt(2.0) + 1e-9);  // never beyond the mitre point
     }
     SECTION("Sharp (right angles are within the default mitre limit): 3 + 0 = 3 spans") {
-        const Contour out = offsetOpenContour(u, d, OffsetSide::Right, JoinType::Sharp, kTol);
+        const Contour out = oneChain(u, d, OffsetSide::Right, JoinType::Sharp, kTol);
         REQUIRE(out.spanCount() == 3);
         CHECK(approxEqual(endPoint(out.spans[0]), {11.0, -1.0}));
         CHECK(approxEqual(endPoint(out.spans[1]), {11.0, 11.0}));
@@ -503,7 +510,7 @@ TEST_CASE("AC5: U-shape offset to the outside adds one join span per outside cor
     }
     SECTION("Left side: both corners inside, trimmed, no spans consumed -> 3 spans at exactly d") {
         for (const JoinType join : {JoinType::Round, JoinType::Sharp, JoinType::Square}) {
-            const Contour out = offsetOpenContour(u, d, OffsetSide::Left, join, kTol);
+            const Contour out = oneChain(u, d, OffsetSide::Left, join, kTol);
             REQUIRE(out.spanCount() == 3);
             CHECK(approxEqual(endPoint(out.spans[0]), {9.0, 1.0}));
             CHECK(approxEqual(endPoint(out.spans[1]), {9.0, 9.0}));
@@ -524,7 +531,7 @@ TEST_CASE("AC5: acute zig-zag with Sharp joins falls back to chamfers past the m
     const Contour zig = openPolyline({{0.0, 0.0}, {1.0, 10.0}, {2.0, 0.0}, {3.0, 10.0}, {4.0, 0.0}});
     const double d = 0.5;
 
-    const Contour out = offsetOpenContour(zig, d, OffsetSide::Left, JoinType::Sharp, kTol, 2.0);
+    const Contour out = oneChain(zig, d, OffsetSide::Left, JoinType::Sharp, kTol, 2.0);
     CHECK_FALSE(out.closed);
     REQUIRE(out.spanCount() == 6);
     CHECK(out.isContinuous(kTol));
@@ -544,12 +551,12 @@ TEST_CASE("AC5: acute zig-zag with Sharp joins falls back to chamfers past the m
     CHECK(hi <= 2.0 * d + 1e-9);
 
     SECTION("a mitre limit large enough keeps the sharp corners: 4 + 0 = 4 spans") {
-        const Contour sharp = offsetOpenContour(zig, d, OffsetSide::Left, JoinType::Sharp, kTol, 20.0);
+        const Contour sharp = oneChain(zig, d, OffsetSide::Left, JoinType::Sharp, kTol, 20.0);
         REQUIRE(sharp.spanCount() == 4);
         CHECK(distanceRange(sharp, zig).first >= d - 1e-9);
     }
     SECTION("Round joins: 4 + 2 arcs = 6 spans, all points exactly at d") {
-        const Contour round = offsetOpenContour(zig, d, OffsetSide::Left, JoinType::Round, kTol);
+        const Contour round = oneChain(zig, d, OffsetSide::Left, JoinType::Round, kTol);
         REQUIRE(round.spanCount() == 6);
         CHECK(countArcs(round) == 2);
         const auto [rlo, rhi] = distanceRange(round, zig);
@@ -557,7 +564,7 @@ TEST_CASE("AC5: acute zig-zag with Sharp joins falls back to chamfers past the m
         CHECK_THAT(rhi, WithinAbs(d, 1e-9));
     }
     SECTION("Right side: valleys at (2,0) is outside, peaks inside -> 4 + 1 = 5 spans") {
-        const Contour right = offsetOpenContour(zig, d, OffsetSide::Right, JoinType::Sharp, kTol, 2.0);
+        const Contour right = oneChain(zig, d, OffsetSide::Right, JoinType::Sharp, kTol, 2.0);
         REQUIRE(right.spanCount() == 5);
         CHECK(distanceRange(right, zig).first >= d - kTol.distance);
     }
@@ -572,7 +579,7 @@ TEST_CASE("AC5: an inside corner that consumes a span reduces the count", "[geom
     c.spans.emplace_back(LineSpan{{10.0, 2.0}, {10.0, 10.0}});
     const double d = 3.0;
 
-    const Contour in = offsetOpenContour(c, d, OffsetSide::Left, JoinType::Round, kTol);
+    const Contour in = oneChain(c, d, OffsetSide::Left, JoinType::Round, kTol);
     REQUIRE(in.spanCount() == 2);
     CHECK(in.isContinuous(kTol));
     CHECK(approxEqual(endPoint(in.spans[0]), {7.0, 3.0}));
@@ -581,7 +588,7 @@ TEST_CASE("AC5: an inside corner that consumes a span reduces the count", "[geom
     CHECK(hi <= d + kTol.chordal + 1e-9);
 
     // The outside of the same path keeps every span and offsets the arc to exactly r + d.
-    const Contour out = offsetOpenContour(c, d, OffsetSide::Right, JoinType::Round, kTol);
+    const Contour out = oneChain(c, d, OffsetSide::Right, JoinType::Round, kTol);
     REQUIRE(out.spanCount() == 3);
     const auto& arc = std::get<ArcSpan>(out.spans[1]);
     CHECK_THAT(arc.radius, WithinAbs(2.0 + d, 1e-12));
@@ -598,8 +605,8 @@ TEST_CASE("Offsets reject non-finite distances", "[geometry][offset]") {
     CHECK(offsetContours({square10()}, inf, JoinType::Round, kTol).empty());
     Contour line;
     line.spans.emplace_back(LineSpan{{0.0, 0.0}, {10.0, 0.0}});
-    CHECK(offsetOpenContour(line, nan, OffsetSide::Left, JoinType::Round, kTol).isEmpty());
-    CHECK(offsetOpenContour(line, -inf, OffsetSide::Left, JoinType::Round, kTol).isEmpty());
+    CHECK(offsetOpenContour(line, nan, OffsetSide::Left, JoinType::Round, kTol).empty());
+    CHECK(offsetOpenContour(line, -inf, OffsetSide::Left, JoinType::Round, kTol).empty());
 }
 
 // --- AC5 round 3: arc corners, consumed spans, generative coverage ---------------------------
@@ -699,6 +706,16 @@ void requireValidOpenOffset(const Contour& out, const Contour& input, double d, 
     }
 }
 
+// Same for every chain of a result that may have split into several (T-0004): at least one
+// chain, each one valid.
+void requireValidOpenOffset(const std::vector<Contour>& chains, const Contour& input, double d, JoinType join,
+                            double mitreLimit) {
+    REQUIRE_FALSE(chains.empty());
+    for (const Contour& chain : chains) {
+        requireValidOpenOffset(chain, input, d, join, mitreLimit);
+    }
+}
+
 Contour repro1() {
     Contour c;
     c.spans.emplace_back(LineSpan{{0.0, 0.0}, {10.0, 0.0}});
@@ -748,7 +765,7 @@ TEST_CASE("AC5: outside corners involving arcs cost at most one join span", "[ge
         for (const JoinType join : kAllJoins) {
             for (const OffsetSide side : kBothSides) {
                 CAPTURE(static_cast<int>(join), static_cast<int>(side));
-                const Contour out = offsetOpenContour(in, 1.0, side, join, kTol);
+                const Contour out = oneChain(in, 1.0, side, join, kTol);
                 CHECK(out.spanCount() == expected.get(join, side));
                 requireValidOpenOffset(out, in, 1.0, join, 2.0);
             }
@@ -761,14 +778,14 @@ TEST_CASE("AC5: outside corners involving arcs cost at most one join span", "[ge
         for (const JoinType join : kAllJoins) {
             for (const OffsetSide side : kBothSides) {
                 CAPTURE(static_cast<int>(join), static_cast<int>(side));
-                const Contour out = offsetOpenContour(in, 1.5, side, join, kTol);
+                const Contour out = oneChain(in, 1.5, side, join, kTol);
                 CHECK(out.spanCount() == expected.get(join, side));
                 requireValidOpenOffset(out, in, 1.5, join, 2.0);
             }
         }
     }
     SECTION("Sharp at an arc corner extends the arc itself: no tangent stub") {
-        const Contour out = offsetOpenContour(repro1(), 1.0, OffsetSide::Left, JoinType::Sharp, kTol);
+        const Contour out = oneChain(repro1(), 1.0, OffsetSide::Left, JoinType::Sharp, kTol);
         REQUIRE(out.spanCount() == 5);
         CHECK(countArcs(out) == 2);
         // Every arc keeps its centre and offset radius (r - d on the left of the CCW arc,
@@ -785,13 +802,13 @@ TEST_CASE("AC5: a span consumed between two inside corners is removed", "[geomet
     const Contour in = Contour::fromPolyline(pl);
     for (const JoinType join : kAllJoins) {
         CAPTURE(static_cast<int>(join));
-        const Contour left = offsetOpenContour(in, 2.0, OffsetSide::Left, join, kTol);
+        const Contour left = oneChain(in, 2.0, OffsetSide::Left, join, kTol);
         REQUIRE(left.spanCount() == 2);
         // The neighbours meet where x + y = 2*sqrt(2) and y - x = 2*sqrt(2) - 1.
         CHECK(approxEqual(endPoint(left.spans[0]), {0.5, 2.0 * std::sqrt(2.0) - 0.5}, 1e-9));
         requireValidOpenOffset(left, in, 2.0, join, 2.0);
         // Right side: both corners are outside; the middle span survives.
-        const Contour right = offsetOpenContour(in, 2.0, OffsetSide::Right, join, kTol);
+        const Contour right = oneChain(in, 2.0, OffsetSide::Right, join, kTol);
         CHECK(right.spanCount() == (join == JoinType::Sharp ? 3u : 5u));
         requireValidOpenOffset(right, in, 2.0, join, 2.0);
     }
@@ -800,7 +817,7 @@ TEST_CASE("AC5: a span consumed between two inside corners is removed", "[geomet
         valley.points = {{-10.0, 10.0}, {0.0, 0.0}, {0.3, -0.1}, {0.6, -0.1}, {0.9, 0.0}, {10.9, 10.0}};
         const Contour v = Contour::fromPolyline(valley);
         for (const JoinType join : kAllJoins) {
-            const Contour out = offsetOpenContour(v, 2.0, OffsetSide::Left, join, kTol);
+            const Contour out = oneChain(v, 2.0, OffsetSide::Left, join, kTol);
             CHECK(out.spanCount() == 2);
             requireValidOpenOffset(out, v, 2.0, join, 2.0);
         }
@@ -810,7 +827,7 @@ TEST_CASE("AC5: a span consumed between two inside corners is removed", "[geomet
         hook.points = {{0.3, -0.5}, {0.0, 0.0}, {10.0, 0.0}, {10.0, 10.0}, {9.7, 10.4}};
         const Contour h = Contour::fromPolyline(hook);
         for (const JoinType join : kAllJoins) {
-            const Contour out = offsetOpenContour(h, 1.0, OffsetSide::Left, join, kTol);
+            const Contour out = oneChain(h, 1.0, OffsetSide::Left, join, kTol);
             requireValidOpenOffset(out, h, 1.0, join, 2.0);
         }
     }
@@ -945,7 +962,7 @@ TEST_CASE("AC5 generative: random polylines with short spans keep the distance p
             for (const JoinType join : kAllJoins) {
                 for (const OffsetSide side : kBothSides) {
                     CAPTURE(trial, d, static_cast<int>(join), static_cast<int>(side));
-                    const Contour out = offsetOpenContour(in, d, side, join, kTol, 2.0);
+                    const std::vector<Contour> out = offsetOpenContour(in, d, side, join, kTol, 2.0);
                     requireValidOpenOffset(out, in, d, join, 2.0);
                 }
             }
@@ -965,7 +982,7 @@ TEST_CASE("AC5 generative: random line/arc paths keep the distance property",
             for (const JoinType join : kAllJoins) {
                 for (const OffsetSide side : kBothSides) {
                     CAPTURE(trial, d, static_cast<int>(join), static_cast<int>(side));
-                    const Contour out = offsetOpenContour(in, d, side, join, kTol, 2.0);
+                    const std::vector<Contour> out = offsetOpenContour(in, d, side, join, kTol, 2.0);
                     requireValidOpenOffset(out, in, d, join, 2.0);
                 }
             }
@@ -983,13 +1000,13 @@ TEST_CASE("AC5 generative: span count follows the rule when nothing is consumed"
             for (const JoinType join : kAllJoins) {
                 for (const OffsetSide side : kBothSides) {
                     CAPTURE(trial, d, static_cast<int>(join), static_cast<int>(side));
-                    const Contour a = offsetOpenContour(poly, d, side, join, kTol, 2.0);
+                    const Contour a = oneChain(poly, d, side, join, kTol, 2.0);
                     CHECK(a.spanCount() == expectedSpanCount(poly, side, join, 2.0));
                     requireValidOpenOffset(a, poly, d, join, 2.0);
                     if (mixed.isEmpty()) {
                         continue;
                     }
-                    const Contour b = offsetOpenContour(mixed, d, side, join, kTol, 2.0);
+                    const Contour b = oneChain(mixed, d, side, join, kTol, 2.0);
                     CHECK(b.spanCount() == expectedSpanCount(mixed, side, join, 2.0));
                     requireValidOpenOffset(b, mixed, d, join, 2.0);
                 }

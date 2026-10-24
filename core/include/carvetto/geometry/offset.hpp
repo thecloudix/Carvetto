@@ -38,9 +38,10 @@ enum class OffsetSide { Left, Right };
 std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double distance, JoinType join,
                                     const Tolerance& tol = Tolerance::defaults(), double mitreLimit = 2.0);
 
-/// Offsets one open contour to one side by |distance|, keeping it open. A negative `distance`
-/// flips the side. Line and arc spans are offset exactly (an arc keeps its centre and its radius
-/// grows or shrinks by |distance|); Bezier spans are polygonised first.
+/// Offsets one open contour to one side by |distance| and returns the result as chains (see
+/// "Several chains" below). A negative `distance` flips the side. Line and arc spans are offset
+/// exactly (an arc keeps its centre and its radius grows or shrinks by |distance|); Bezier
+/// spans are polygonised first.
 ///
 /// Corners: tangent-continuous junctions need no join. Outside corners get one join span for
 /// Round (an arc of radius |distance| about the vertex) and Square (a chamfer line at
@@ -50,25 +51,34 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// `mitreLimit` x |distance| from the vertex, in which case the corner is squared off. Inside
 /// corners trim both neighbours to their intersection, and any span (or arc whose offset
 /// radius would be negative) that lies wholly within |distance| of the input is removed. So
-/// the result has n spans, minus consumed ones, plus one per joined outside corner, and every
-/// point of it is at least |distance| from the input (exactly |distance| for Round).
+/// when the offset stays in one piece it is one chain of n spans, minus consumed ones, plus one
+/// per joined outside corner, and every point of every chain is at least |distance| from the
+/// input (exactly |distance| for Round).
 ///
 /// Approach: build the raw offset (offset spans + joins + inside-corner connectors), split it
 /// at its self-intersections and where it crosses the rest of the |distance|-neighbourhood
-/// boundary (circles about the vertices, opposite-side offsets), drop the pieces closer than
-/// |distance| to the input and stitch the rest. If the surviving pieces do not form one chain
-/// (only possible when distant parts of the path come within 2 x |distance| of each other) the
-/// longest chain is returned.
+/// boundary (circles about the vertices, offsets on both sides), drop the pieces closer than
+/// |distance| to the input, and with Sharp/Square also the pieces strictly inside the region a
+/// mitre or chamfer adds (so a neighbour running past a mitre loses its stub), then stitch the
+/// rest. Candidate pairs come from a uniform grid, so the cost is close to linear in the span
+/// count. See ADR-0012.
 ///
-/// Known limitation (tracked as T-0004): with Sharp or Square joins, an offset that curls back
-/// into a closed loop can come back as the loop plus a short tail that crosses its own start,
-/// i.e. a self-intersecting chain (about 0.1% of random paths in verification). Round joins
-/// are not affected. T-0004 will split such results and return every chain.
+/// Several chains: when distant parts of the path come within 2 x |distance| of each other the
+/// surviving offset falls apart into several chains, and all of them are returned, ordered by
+/// where they start along the input path. Each chain runs in the input's direction (nothing is
+/// reversed). No returned chain intersects or touches itself: where the offset crosses itself
+/// (an X) or runs into itself (a T), it is cut there into the part before that point, a closed
+/// loop through it (`closed` = true) and the part after it. Different chains may touch or cross.
+/// Pieces no longer than tol.distance are dropped (unless that would open a gap wider than the
+/// tolerance), so chains are continuous within it and a stretch of valid offset no longer than it
+/// may be missing.
 ///
-/// An empty or degenerate contour, or a non-finite `distance`, yields an empty contour. A
-/// closed contour is accepted too: the corner between its last and first spans is treated like
-/// any other and the result is closed when the surviving chain still forms a loop.
-Contour offsetOpenContour(const Contour& contour, double distance, OffsetSide side, JoinType join,
-                          const Tolerance& tol = Tolerance::defaults(), double mitreLimit = 2.0);
+/// An empty or degenerate contour, or a non-finite `distance`, yields no chains; a zero
+/// `distance` yields the (flattened) input as one chain. A closed contour is accepted too: the
+/// corner between its last and first spans is treated like any other, and a result that still
+/// goes all the way round is one closed chain.
+std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, OffsetSide side,
+                                       JoinType join, const Tolerance& tol = Tolerance::defaults(),
+                                       double mitreLimit = 2.0);
 
 }  // namespace carvetto::geometry
