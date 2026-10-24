@@ -19,6 +19,31 @@ jobs:
       - name: Test
         run: ctest --test-dir build --output-on-failure
 
+  linux-app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y ninja-build libgl1-mesa-dev libxkbcommon-dev libegl1
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.7.*'
+          cache: true
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release 2>&1 | tee configure.log || (echo "::error title=CMake configure failed::$(tail -30 configure.log | tr '\n' '|')"; exit 1)
+      - name: Build
+        run: |
+          set -o pipefail
+          cmake --build build 2>&1 | tee build.log || { echo "::error title=Build failed::$(grep -E 'error' build.log | head -25 | tr '\n' '|')"; exit 1; }
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      - name: App self-test (headless)
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          if [ -x build/app/carvetto ]; then build/app/carvetto --self-test || { echo "::error title=App self-test failed::exit $?"; exit 1; }; else echo "app not built yet - skipping"; fi
+
   windows-app:
     runs-on: windows-latest
     steps:
@@ -61,6 +86,12 @@ jobs:
             Write-Host "::error title=Tests failed::$fails"
             exit 1
           }
+      - name: App self-test (headless)
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          if (Test-Path build/app/carvetto.exe) { ./build/app/carvetto.exe --self-test; if ($LASTEXITCODE -ne 0) { Write-Host "::error title=App self-test failed::exit $LASTEXITCODE"; exit 1 } } else { Write-Host "app not built yet - skipping" }
       - name: Upload app
         uses: actions/upload-artifact@v4
         with:

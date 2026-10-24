@@ -61,7 +61,7 @@ Acceptance criteria:
   3. A 2000-span polyline offset completes in < 0.5 s in Release on CI Linux.
 Out of scope: closed-contour offsets (Clipper2 path), arc refitting.
 
-### T-0010 Document model: Job, Sheet, Layer, Object, UndoStack                [status: in-progress]
+### T-0010 Document model: Job, Sheet, Layer, Object, UndoStack                [status: done]
 Phase: 0   Module: core/document   Depends on: T-0001
 Goal: In-memory document: `Job` (type single/double/rotary, size, units display setting, Z-zero, datum), `Sheet`s (each with size/datum), `Layer`s (name, colour, visible, locked, order), `Object`s (vector object holding contours + creation params as a tagged variant; bitmap placeholder; group), stable IDs, selection set, and a command-based `UndoStack` with coalescing.
 Interfaces: `document/*.hpp`. Read-only: T-0001.
@@ -73,8 +73,8 @@ Acceptance criteria:
   5. Object IDs are unique across undo/redo and survive copy/paste as new IDs.
 Out of scope: file I/O (T-0012), rendering.
 
-### T-0012 Native `.carv` file I/O                                            [status: blocked]
-Phase: 0   Module: core/document   Depends on: T-0010   (ADR-0003 accepted)
+### T-0012 Native `.carv` file I/O                                            [status: ready]
+Phase: 0   Module: core/document   Depends on: T-0010   (ADR-0003 accepted)   ADR: 0013
 Goal: Save/load the document to the `.carv` zip container (miniz, nlohmann/json pinned). Versioned manifest; forward-compatible unknown fields preserved.
 Acceptance criteria:
   1. Save → load → save produces byte-identical `job.json` for a document with 3 layers, 50 vector objects (lines, arcs, Beziers), text params, and document variables.
@@ -122,15 +122,18 @@ Acceptance criteria:
   2. Introducing an unused variable fails the Linux job.
   3. The Windows job produces the `carvetto.exe` artifact (even if the app is a blank window).
 
-### T-0060 Qt app shell                                                        [status: blocked]
-Phase: 0   Module: app   Depends on: T-0010
-Goal: Main window with dockable panels (Design, Layers, Sheets, Toolpaths placeholders), a 2D canvas (QGraphicsView or custom QOpenGLWidget) with pan/zoom/rulers rendering `Contour`s from a `Document`, a blank 3D view tab, status bar with cursor coordinates in display units, File ▸ New job dialog (job type, size, units, Z-zero, datum).
+### T-0060 Qt app shell                                                        [status: ready]
+Phase: 0   Module: app (+ app/viewmodel)   Depends on: T-0010   ADR: 0014
+Goal: Main window with dockable panels (Design, Layers, Sheets, Toolpaths placeholders), a 2D canvas with pan/zoom/rulers rendering `Contour`s from a `Document`, a blank 3D view tab, status bar with cursor coordinates in display units, File ▸ New job dialog (job type, size, units, Z-zero, datum).
+Structure (required because Qt is not available in the agents' workspace): all non-trivial view logic lives in a **Qt-free** static library `carvetto_viewmodel` (`app/viewmodel/`): view transform (world mm ↔ screen px, zoom about cursor, pan, zoom-to-fit with margin), ruler tick generation (nice-number steps in the display unit, labels), polygonisation of document contours for drawing at a screen tolerance, cursor-coordinate formatting in display units, New Job form validation → `Job`. It is unit-tested headless in `core/tests`-style Catch2 tests (`app/viewmodel/tests/`), built and run in every environment. The Qt layer in `app/src/` is thin glue.
+Interfaces: owns `app/**`. Read-only: core.
 Acceptance criteria:
-  1. Launch → New job 254×254 → the canvas shows the material rectangle with rulers in the chosen units.
-  2. Programmatically adding a circle contour to the document renders it; undo removes it from the view.
-  3. Window layout (dock positions) persists across restarts via QSettings.
-  4. Core stays Qt-free: `grep -r "Q[A-Z]" core/` returns nothing.
-Out of scope: drawing tools (Phase 1).
+  1. View transform: world→screen→world round-trips within 1e-9 mm; zooming about a cursor point keeps that world point under the cursor; zoom-to-fit of a 254×254 mm job in a 1000×800 px view with 5% margin fits exactly on the limiting axis.
+  2. Rulers: for any zoom from 0.01 to 1000 px/mm, major tick spacing on screen is between 50 and 150 px, steps are 1/2/5×10ⁿ in the display unit (inches use the same rule on decimal inches), labels are exact (no 0.30000000004).
+  3. New Job form validation rejects zero/negative sizes and produces a `Job` identical to `Job::singleSided(...)` for valid input in both units.
+  4. The Qt app builds on Windows (MSVC) and Linux CI, and `carvetto --self-test` (headless, `-platform offscreen`) creates a job, adds a circle, renders one frame of the 2D canvas to an image, verifies non-background pixels exist inside the material rectangle, undoes the add, re-renders, verifies the circle pixels are gone, saves/restores dock layout via QSettings to a temp location, and exits 0. CI runs this.
+  5. Core stays Qt-free: no `#include <Q` under `core/`, and `carvetto_viewmodel` links no Qt.
+Out of scope: drawing tools, selection, 3D rendering (blank tab only).
 
 ---
 
