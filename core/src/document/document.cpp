@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstdint>
 #include <set>
 #include <string>
 #include <utility>
@@ -55,6 +56,9 @@ bool Document::setActiveSheet(SheetId id) {
 SheetId Document::insertSheet(Sheet sheet, std::optional<std::size_t> index) {
     if (sheet.id.isNull()) {
         sheet.id = allocateSheetId();
+        if (sheet.id.isNull()) {
+            return {};  // generator exhausted (asserted in allocate)
+        }
     } else {
         assert(!findSheet(sheet.id) && "duplicate sheet id");
         ids_.reserveThrough(sheet.id.value);
@@ -122,6 +126,9 @@ bool Document::setActiveLayer(LayerId id) {
 LayerId Document::insertLayer(Layer layer, std::optional<std::size_t> index) {
     if (layer.id.isNull()) {
         layer.id = allocateLayerId();
+        if (layer.id.isNull()) {
+            return {};  // generator exhausted (asserted in allocate)
+        }
     } else {
         assert(!findLayer(layer.id) && "duplicate layer id");
         ids_.reserveThrough(layer.id.value);
@@ -201,6 +208,9 @@ std::vector<ObjectId> Document::objectIds() const {
 ObjectId Document::insertObject(Object obj) {
     if (obj.id.isNull()) {
         obj.id = allocateObjectId();
+        if (obj.id.isNull()) {
+            return {};  // generator exhausted (asserted in allocate)
+        }
     } else {
         assert(!objects_.contains(obj.id) && "duplicate object id");
         ids_.reserveThrough(obj.id.value);
@@ -302,6 +312,32 @@ std::vector<IntegrityIssue> Document::checkIntegrity() const {
     for (ObjectId id : selection_.ids()) {
         if (!hasObject(id)) {
             report(Kind::StaleSelection, id, {}, "selection holds missing object " + idText(id));
+        }
+    }
+
+    // Ids: every id must lie in [1, kMaxId) and below the generator's next id, or a later
+    // allocation could hand it out again.
+    const std::uint64_t next = ids_.peek();
+    const auto checkId = [&report, next](std::uint64_t value, ObjectId object, const char* what) {
+        const std::string name = std::string(what) + " #" + std::to_string(value);
+        if (value == 0 || value >= IdGenerator::kMaxId) {
+            report(Kind::IdOutOfRange, object, {}, name + " is outside [1, 2^62)");
+        }
+        if (value >= next) {
+            report(Kind::IdNotBelowNext, object, {},
+                   name + " is not below the next id #" + std::to_string(next));
+        }
+    };
+    for (const Sheet& sheet : sheets_) {
+        checkId(sheet.id.value, {}, "sheet");
+    }
+    for (const Layer& layer : layers_) {
+        checkId(layer.id.value, {}, "layer");
+    }
+    for (const auto& [id, obj] : objects_) {
+        checkId(id.value, id, "object");
+        if (obj.id != id) {
+            checkId(obj.id.value, id, "object (stored id)");
         }
     }
 

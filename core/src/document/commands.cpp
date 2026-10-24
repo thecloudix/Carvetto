@@ -1,6 +1,8 @@
 #include "carvetto/document/commands.hpp"
 
 #include <algorithm>
+#include <cstdint>
+#include <map>
 #include <set>
 #include <type_traits>
 #include <variant>
@@ -65,6 +67,13 @@ void ObjectChangeSet::clear() {
 }
 
 namespace {
+
+// Id-allocation guard shared by every command that creates something (ADR-0007, amendment A1):
+// a preset id must lie below the ceiling, and a null id needs one free id in the generator. When
+// this fails the command's first `apply` returns false, so nothing changes and nothing is recorded.
+bool canTakeId(const Document& doc, std::uint64_t presetId) {
+    return presetId == 0 ? doc.idGenerator().canAllocate(1) : presetId < IdGenerator::kMaxId;
+}
 
 void transformData(ObjectData& data, const geometry::Transform2& m) {
     std::visit(
@@ -196,6 +205,9 @@ bool AddObjectCommand::apply(Document& doc) {
     if (!changes_.empty()) {
         changes_.reapply(doc);
         return true;
+    }
+    if (!canTakeId(doc, object_.id.value)) {
+        return false;
     }
     if (object_.id.isNull()) {
         object_.id = doc.allocateObjectId();
@@ -341,6 +353,9 @@ bool TransformObjectsCommand::mergeWith(const Command& next) {
 
 bool PasteObjectsCommand::apply(Document& doc) {
     if (pasted_.empty()) {
+        if (clipboard_.empty() || !doc.idGenerator().canAllocate(clipboard_.size())) {
+            return false;  // all-or-nothing: never paste part of the clipboard
+        }
         std::map<ObjectId, ObjectId> remap;
         for (const Object& src : clipboard_) {
             remap[src.id] = doc.allocateObjectId();
@@ -409,7 +424,7 @@ bool GroupObjectsCommand::apply(Document& doc) {
         }
         members.push_back(id);
     }
-    if (members.empty()) {
+    if (members.empty() || !canTakeId(doc, 0)) {
         return false;
     }
     const Object& first = *doc.findObject(members.front());
@@ -458,6 +473,9 @@ void UngroupCommand::revert(Document& doc) {
 // --- AddLayerCommand -----------------------------------------------------------------------------
 
 bool AddLayerCommand::apply(Document& doc) {
+    if (!canTakeId(doc, layer_.id.value)) {
+        return false;
+    }
     if (layer_.id.isNull()) {
         layer_.id = doc.allocateLayerId();
     }
@@ -555,6 +573,9 @@ void MoveLayerCommand::revert(Document& doc) {
 // --- AddSheetCommand -----------------------------------------------------------------------------
 
 bool AddSheetCommand::apply(Document& doc) {
+    if (!canTakeId(doc, sheet_.id.value)) {
+        return false;
+    }
     if (sheet_.id.isNull()) {
         sheet_.id = doc.allocateSheetId();
     }

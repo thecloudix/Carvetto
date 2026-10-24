@@ -30,6 +30,12 @@
 ///   the surviving children are spliced into the group's parent at the group's position, or become
 ///   top-level objects when the group was top-level.
 /// - Moving a group to another layer or sheet moves its descendants with it.
+///
+/// Id exhaustion (ADR-0007, amendment A1): a command that needs new ids (add object/layer/sheet
+/// with a null id, paste, group) checks `IdGenerator::canAllocate` before allocating anything; when
+/// too few ids remain below `IdGenerator::kMaxId`, or a preset id is at or above it, its first
+/// `apply` returns false, so `Document::execute` reports a no-op and nothing is recorded. Redo
+/// never allocates.
 namespace carvetto::document {
 
 /// Before/after snapshots of the objects one command touched. `recordBefore` is called before an
@@ -60,7 +66,8 @@ class ObjectChangeSet {
 
 // --- Objects -----------------------------------------------------------------------------------
 
-/// Adds one object. `obj.id` may be null (allocated on first apply) or a fresh unused id. When
+/// Adds one object. `obj.id` may be null (allocated on first apply) or a fresh unused id below
+/// `IdGenerator::kMaxId`; otherwise (or with no id left) the command is a no-op. When
 /// `obj.parent` names an existing group the object is appended to that group's children (and
 /// takes the group's sheet); any other parent is cleared.
 class AddObjectCommand : public Command {
@@ -143,7 +150,8 @@ class TransformObjectsCommand : public Command {
 
 /// Inserts copies of clipboard objects (as produced by `Document::copyObjects`) with fresh ids,
 /// optionally shifted, onto `layer`/`sheet` (null = keep each copy's own). Group links inside the
-/// clipboard are remapped to the new ids; links to objects outside it are dropped.
+/// clipboard are remapped to the new ids; links to objects outside it are dropped. All or nothing:
+/// a no-op when fewer than `clipboard.size()` ids remain (or the clipboard is empty).
 class PasteObjectsCommand : public Command {
    public:
     PasteObjectsCommand(std::vector<Object> clipboard, geometry::Vec2 offsetMm = {}, LayerId layer = {},
@@ -165,7 +173,8 @@ class PasteObjectsCommand : public Command {
 };
 
 /// Groups top-level objects into a new `GroupObject` on the layer/sheet of the first member.
-/// Members on other sheets than the first are ignored; nested objects cannot be grouped.
+/// Members on other sheets than the first are ignored; nested objects cannot be grouped. No-op
+/// when no member qualifies or no id is left for the group.
 class GroupObjectsCommand : public Command {
    public:
     explicit GroupObjectsCommand(std::vector<ObjectId> ids) : ids_(std::move(ids)) {}
@@ -199,6 +208,7 @@ class UngroupCommand : public Command {
 // --- Layers ------------------------------------------------------------------------------------
 
 /// Adds a layer (id allocated on first apply) at `index` or on top; optionally makes it active.
+/// No-op when no id is left (or a preset id is at or above `IdGenerator::kMaxId`).
 class AddLayerCommand : public Command {
    public:
     AddLayerCommand(Layer layer, bool makeActive = false, std::optional<std::size_t> index = std::nullopt)
@@ -266,7 +276,8 @@ class MoveLayerCommand : public Command {
 
 // --- Sheets ------------------------------------------------------------------------------------
 
-/// Adds a sheet (id allocated on first apply); optionally makes it active.
+/// Adds a sheet (id allocated on first apply); optionally makes it active. No-op when no id is
+/// left (or a preset id is at or above `IdGenerator::kMaxId`).
 class AddSheetCommand : public Command {
    public:
     explicit AddSheetCommand(Sheet sheet, bool makeActive = false)
