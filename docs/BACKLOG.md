@@ -84,7 +84,7 @@ Notes/refs: feature-inventory §5 "Tool Database".
 
 ### T-0030 `.pp` post-processor interpreter                                    [status: ready]
 Phase: 0   Module: core/post   Depends on: T-0001
-Goal: Parse the `.pp` grammar (ADR-0004): global settings, `VAR` definitions with format spec, `begin/end` blocks, `+`-prefixed output lines, comments. Interpret a `Toolpath` move list (define a minimal `Move` struct in `toolpath/move.hpp` owned by this task until T-0040 lands; coordinate with it) into text: header, per-toolpath tool change / new segment, rapid/feed/plunge/retract/arc/dwell blocks, footer; variable formatting (precision, absolute/incremental, prefix), line numbering, unit scaling, arc I/J vs R, inverse-time option.
+Goal: Parse the `.pp` grammar (ADR-0004): global settings, `VAR` definitions with format spec, `begin/end` blocks, `+`-prefixed output lines, comments. Interpret a `Toolpath` move list (consume `toolpath/move.hpp` and `toolpath/toolpath.hpp` from T-0040 — read-only; see ADR-0008) into text: header, per-toolpath tool change / new segment, rapid/feed/plunge/retract/arc/dwell blocks, footer; variable formatting (precision, absolute/incremental, prefix), line numbering, unit scaling, arc I/J vs R, inverse-time option.
 Acceptance criteria:
   1. A hand-written Grbl post + a square profile at Z−3 with one rapid, one plunge, four feeds and a retract produces the golden G-code in `core/tests/golden/post/grbl_square.nc` exactly.
   2. Variable format `[X|A|X|1.3]` renders 12.3456 as `X12.346`; incremental mode renders deltas.
@@ -93,7 +93,7 @@ Acceptance criteria:
   5. `ROTARY_WRAP_Y` wraps Y into A for a 50 mm diameter job (Y=π·25 → A=180°).
 Out of scope: saving dialogs, direct output.
 
-### T-0040 Toolpath core types and linking                                    [status: in-progress]
+### T-0040 Toolpath core types and linking                                    [status: done]
 Phase: 0   Module: core/toolpath   Depends on: T-0001
 Goal: `Move` (kind: rapid/feed/plunge/retract/arcCW/arcCCW/dwell; endpoint; arc centre; feed override), `Toolpath` (name, tool snapshot, moves, bounding box, length by kind), `PassPlan` (start depth, cut depth, pass depth, exact-step flag, last-pass thickness → list of Z levels), linking helper that joins contour passes with safe-Z retracts and rapids, and `estimateTime(Toolpath, rapidRate, feed, accel)` baseline.
 Interfaces: `toolpath/{move,toolpath,pass_plan,linking,time}.hpp`. If T-0030 has already defined `Move`, adopt it unchanged.
@@ -103,8 +103,9 @@ Acceptance criteria:
   3. Total length by kind sums to the analytic value for a 10×10 square at one depth within 1e-9.
   4. Time estimate for 1000 mm at 1000 mm/min with infinite acceleration is 60 s; with finite acceleration it is strictly greater.
 
-### T-0050 CI pipeline: Linux core+tests, Windows Qt app                        [status: ready]
+### T-0050 CI pipeline: Linux core+tests, Windows Qt app                        [status: done]
 Phase: 0   Module: repo   Depends on: T-0001
+Done by director during Batch 2 (Ninja + MSVC on Windows, annotations surface errors).
 Goal: `.github/workflows/ci.yml` builds and tests on `ubuntu-latest` (GCC, core only) and `windows-latest` (MSVC, Qt 6 via `jurplel/install-qt-action`, full app). Caches FetchContent deps. Fails on warnings.
 Acceptance criteria:
   1. A PR touching core triggers both jobs; both green on `main`.

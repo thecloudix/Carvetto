@@ -34,7 +34,7 @@ Dependency direction: `app → core`. Never the reverse. Third-party libs are fe
 - **Units:** millimetres and radians inside core. The document stores the user's display unit; the UI converts.
 - **Precision:** `double` for geometry, `float` for heightfields. Geometric tolerance is explicit (`Tolerance` struct passed in), default 0.001 mm.
 - **Vectors are span lists.** A `Contour` is an ordered list of `Span`s (line, circular arc, cubic Bezier) that is open or closed. Polygonisation to `Polyline` happens at a stated tolerance for algorithms that need it (Clipper2 offsets/booleans), and arcs are refitted afterwards where the feature requires it (`Fit Curves`).
-- **Toolpaths are move lists** in machine coordinates (mm, absolute, Z up), tool-tip positions, with move kinds: rapid, feed, plunge, arc (CW/CCW with centre), dwell. Wrapping for rotary happens in `post`.
+- **Toolpaths are move lists** in machine coordinates (mm, absolute, Z up), tool-tip positions, with move kinds: rapid, feed, plunge, retract, arc (CW/CCW with centre; Z change = helix), dwell (ADR-0008). Wrapping for rotary happens in `post`.
 - **Parametric objects.** Every created object stores its creation parameters so it can be re-edited (shapes, text, dimensions, toolpaths). Toolpaths store a `VectorSelector` association, not just raw geometry, so recalculation re-resolves vectors.
 - **No global state.** No singletons. The `Document` is passed explicitly; services (fonts, tool DB) are injected.
 - **Errors:** `std::expected<T, Error>` (or a small equivalent) for recoverable failures; exceptions only for programmer errors.
