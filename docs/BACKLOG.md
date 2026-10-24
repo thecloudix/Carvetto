@@ -104,6 +104,7 @@ Acceptance criteria:
   2. Loading a file with an unknown top-level JSON field keeps the field on re-save.
   3. Loading a file with a higher major version fails with a clear error, not a crash.
 Out of scope: heightfields, toolpath caches (later phases).
+Round-3 direction (director, 2026-10-24): untrusted JSON is parsed via SAX straight into records (no DOM), unknown fields kept as raw text under a global budget, linear group-structure pre-check in the loader; checkIntegrity performance moved to T-0014 AC4.
 
 ### T-0013 Reject preset ids already in use; integrity check for cross-kind duplicates   [status: done]
 Phase: 0   Module: core/document   Depends on: T-0011
@@ -120,6 +121,7 @@ Acceptance criteria:
   1. `checkIntegrity()` reports an object whose stored `id` differs from its map key (new or existing issue kind), and DuplicateId considers stored ids as well as keys. Regression: insertObject, then `findObject(o)->id = ObjectId{defaultLayer().value}` → issue reported.
   2. The T-0010 "10 000 inserts, undo all and redo all under one second" test no longer fails under parallel ctest load: measure CPU time of the test thread (or use a generous wall bound plus an operation-count/complexity assertion), and keep detecting an O(n²) regression (e.g. assert time(20k) < 3 × time(10k)).
   3. `ctest -j8` passes 10 consecutive runs on the CI Linux runner (add a CI step or document the local check).
+  4. *(Added by director 2026-10-24, found verifying T-0012.)* `checkIntegrity()` is O(N log N) or better regardless of group depth/width: a 60,000-deep nested-group chain and a single group with 200,000 children each check in < 1 s Release; iterative (no recursion) cycle detection still finds a cycle at depth 50,000; all existing issue kinds and ordering unchanged.
 
 ### T-0020 Tool database and machines                                          [status: done]
 Phase: 0   Module: core/tooling   Depends on: T-0001
