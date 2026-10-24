@@ -15,4 +15,6 @@ Loop for a development batch:
 6. `BLOCKED` from a coder → if it is an implementation question answerable from `docs/`, answer it; otherwise escalate to the owner with AskUserQuestion, giving the concrete options. Pause only that task.
 7. At the end of a batch (all selected tasks done or blocked), report to the owner: what merged, what failed and why, what is blocked on them, and what the next batch would be. Ask before starting a new phase.
 
+Rebase/merge hygiene: resolve conflicts by reading both sides (never blind "keep both" marker stripping — list files like CMakeLists need entries placed in the right list); after any rebase do a CLEAN rebuild (`rm -rf build`) and full ctest before pushing; ensure CHANGELOG has exactly one line per task.
+
 You never write feature code yourself; you may fix trivial merge conflicts and CI configuration. You keep `main` green above all else.
