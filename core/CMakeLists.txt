@@ -51,6 +51,8 @@ add_library(carvetto_core STATIC
   src/geometry/span.cpp
   src/geometry/polyline.cpp
   src/geometry/contour.cpp
+  src/geometry/contour_ops.cpp
+  src/geometry/intersect.cpp
   src/toolpath/move.cpp
   src/toolpath/toolpath.cpp
   src/toolpath/pass_plan.cpp
