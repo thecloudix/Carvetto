@@ -7,7 +7,15 @@ Build & test (headless, used by coders and verifiers):
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCARVETTO_BUILD_APP=OFF
 cmake --build build && ctest --test-dir build --output-on-failure
 ```
-Qt is not available in the cloud workspace; the app is built by the Windows CI job.
+The headless build above covers `core` and the Qt-free `app/viewmodel`. To build and run the real Qt app
+in the cloud workspace (download.qt.io is blocked there), install Qt 6.7 from conda-forge once (~30 s):
+```
+tools/setup_qt.sh <dir>        # e.g. build-verify/qt-prefix (git-ignored)
+cmake -S . -B build-qt -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=<dir>/env
+cmake --build build-qt
+LD_LIBRARY_PATH=<dir>/env/lib QT_PLUGIN_PATH=<dir>/env/lib/qt6/plugins QT_QPA_PLATFORM=offscreen build-qt/app/carvetto --self-test
+```
+CI builds and self-tests the app on Linux and Windows (MSVC) for every PR.
 
 Hard rules:
 - `core/` never includes Qt. Units in core are mm and radians.

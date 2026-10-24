@@ -22,6 +22,7 @@ Work is organised as tasks in `docs/BACKLOG.md`, executed by coder agents and ch
 2. A passing `ctest` run on Linux (core) — Windows app build is checked by CI.
 3. A short entry in `CHANGELOG.md` under *Unreleased*.
 4. A `docs/adr/NNNN-*.md` file when the change makes an architectural decision.
+5. A row in `THIRD_PARTY_NOTICES.md` when the change adds a third-party dependency.
 
 ## Code conventions
 

@@ -6,12 +6,14 @@ Decisions here are binding for coder agents. Changes go through an ADR in `docs/
 
 ```
 app/        Qt 6 desktop application (Windows first, Linux later). Thin: views, forms, commands.
+app/viewmodel/  carvetto_viewmodel — Qt-free view logic (view transform, rulers, canvas scene,
+            unit formatting, form validation). Headless-tested; the Qt layer is glue (ADR-0014).
 core/       carvetto_core — static library, C++20, NO Qt. Everything testable headless.
 posts/      Post-processor templates (.pp text format) written for Carvetto.
 tools/      Developer scripts (golden-file regeneration, format checks).
 ```
 
-Dependency direction: `app → core`. Never the reverse. Third-party libs are fetched by CMake `FetchContent` (pinned tags) or found via `find_package` for Qt.
+Dependency direction: `app → viewmodel → core`. Never the reverse. Third-party libs are fetched by CMake `FetchContent` (pinned tags) or found via `find_package` for Qt.
 
 ## Core modules (namespace `carvetto::<module>`)
 

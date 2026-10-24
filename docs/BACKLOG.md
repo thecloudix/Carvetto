@@ -87,6 +87,15 @@ Acceptance criteria:
   5. Object IDs are unique across undo/redo and survive copy/paste as new IDs.
 Out of scope: file I/O (T-0012), rendering.
 
+### T-0011 IdGenerator overflow guard                                           [status: ready]
+Phase: 0   Module: core/document   Depends on: T-0010
+Goal: The id generator wraps at 2^64 and can then hand out ids that collide with existing sheets/layers/objects (found while verifying T-0012). Make allocation fail loudly instead.
+Acceptance criteria:
+  1. Allocating past a documented ceiling (2^62) is impossible: the generator reports exhaustion (assert in Debug + an error/no-op result from the commands that allocate in Release), never wraps, never reuses.
+  2. `Document::checkIntegrity()` flags any id ≥ the ceiling and a next-id ≤ any existing id.
+  3. Regression: a document whose generator is near the ceiling cannot be driven into a duplicate id by any public command sequence (fixed-seed randomized test).
+Out of scope: file I/O (T-0012 already rejects out-of-range ids on load).
+
 ### T-0012 Native `.carv` file I/O                                            [status: in-progress]
 Phase: 0   Module: core/document   Depends on: T-0010   (ADR-0003 accepted)   ADR: 0013
 Goal: Save/load the document to the `.carv` zip container (miniz, nlohmann/json pinned). Versioned manifest; forward-compatible unknown fields preserved.
@@ -136,7 +145,7 @@ Acceptance criteria:
   2. Introducing an unused variable fails the Linux job.
   3. The Windows job produces the `carvetto.exe` artifact (even if the app is a blank window).
 
-### T-0060 Qt app shell                                                        [status: in-progress]
+### T-0060 Qt app shell                                                        [status: verifying]
 Phase: 0   Module: app (+ app/viewmodel)   Depends on: T-0010   ADR: 0014
 Goal: Main window with dockable panels (Design, Layers, Sheets, Toolpaths placeholders), a 2D canvas with pan/zoom/rulers rendering `Contour`s from a `Document`, a blank 3D view tab, status bar with cursor coordinates in display units, File ▸ New job dialog (job type, size, units, Z-zero, datum).
 Structure (required because Qt is not available in the agents' workspace): all non-trivial view logic lives in a **Qt-free** static library `carvetto_viewmodel` (`app/viewmodel/`): view transform (world mm ↔ screen px, zoom about cursor, pan, zoom-to-fit with margin), ruler tick generation (nice-number steps in the display unit, labels), polygonisation of document contours for drawing at a screen tolerance, cursor-coordinate formatting in display units, New Job form validation → `Job`. It is unit-tested headless in `core/tests`-style Catch2 tests (`app/viewmodel/tests/`), built and run in every environment. The Qt layer in `app/src/` is thin glue.
