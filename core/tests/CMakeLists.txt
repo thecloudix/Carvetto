@@ -26,6 +26,13 @@ add_executable(carvetto_tests
   post/parser_test.cpp
   post/interpreter_test.cpp
   post/grbl_golden_test.cpp
+  document/job_test.cpp
+  document/variables_test.cpp
+  document/selection_test.cpp
+  document/undo_stack_test.cpp
+  document/document_test.cpp
+  document/commands_test.cpp
+  document/integrity_test.cpp
 )
 # Golden files and shipped posts are read from the source tree via absolute paths.
 target_compile_definitions(carvetto_tests PRIVATE
