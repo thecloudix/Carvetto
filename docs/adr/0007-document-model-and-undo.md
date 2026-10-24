@@ -1,6 +1,6 @@
 # ADR-0007: Document model storage, ids and command-based undo
 
-Date: 2026-10-24 · Status: accepted (director, 2026-10-24)
+Date: 2026-10-24 · Status: accepted (director, 2026-10-24; amendments A1 T-0011, A2 T-0013)
 
 ## Context
 T-0010 asked for an in-memory document (job, sheets, layers, objects, selection, variables) with
