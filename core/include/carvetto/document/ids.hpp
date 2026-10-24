@@ -54,9 +54,12 @@ class IdGenerator {
 
 }  // namespace carvetto::document
 
+namespace std {
+/// Hashes an id by its value so ids can key unordered containers.
 template <class Tag>
-struct std::hash<carvetto::document::Id<Tag>> {
+struct hash<carvetto::document::Id<Tag>> {
     std::size_t operator()(const carvetto::document::Id<Tag>& id) const noexcept {
         return std::hash<std::uint64_t>{}(id.value);
     }
 };
+}  // namespace std

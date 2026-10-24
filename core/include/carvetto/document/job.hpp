@@ -63,14 +63,14 @@ struct Job {
 
     /// Flat single-sided job from values in `units`.
     static Job singleSided(double width, double height, double thickness, Units units,
-                           Datum datum = Datum::BottomLeft, ZZero zZero = ZZero::MaterialSurface);
+                           Datum datumPos = Datum::BottomLeft, ZZero zero = ZZero::MaterialSurface);
     /// Flat double-sided job from values in `units`.
     static Job doubleSided(double width, double height, double thickness, Units units,
-                           Datum datum = Datum::BottomLeft, ZZero zZero = ZZero::MaterialSurface,
+                           Datum datumPos = Datum::BottomLeft, ZZero zero = ZZero::MaterialSurface,
                            FlipDirection flip = FlipDirection::Horizontal);
     /// Rotary job from a length and diameter in `units`; the flat design area is length × π·diameter.
     static Job rotary(double length, double diameter, Units units, RotaryAxis axis = RotaryAxis::X,
-                      ZZero zZero = ZZero::CylinderAxis);
+                      ZZero zero = ZZero::CylinderAxis);
 
     /// Size expressed in `displayUnits`.
     JobSize displaySize() const;

@@ -17,13 +17,52 @@
 #include "carvetto/geometry/vec2.hpp"
 
 /// Concrete undoable edits on a `Document`. Commands that create things allocate their ids on
-/// the first `apply` and reuse them on redo, so identity survives undo/redo. Commands that remove
-/// things keep the removed state and put it back verbatim on `revert`.
+/// the first `apply` and reuse them on redo, so identity survives undo/redo. Commands that change
+/// object structure (remove, group, ungroup, delete layer/sheet) record every touched object in an
+/// `ObjectChangeSet` and restore those snapshots verbatim on undo and redo.
+///
+/// Group rules shared by every command (ADR-0007):
+/// - A group's `children` and each child's `parent` always agree; children share the group's sheet.
+/// - Removing an object detaches it from its parent group. A group left with no children is
+///   removed as well (recursively up the chain); a group left with one child is kept.
+/// - Removing a group removes its descendants, except where a command says it dissolves the group
+///   instead (deleting a layer or sheet that holds the group but not all of its children): then
+///   the surviving children are spliced into the group's parent at the group's position, or become
+///   top-level objects when the group was top-level.
+/// - Moving a group to another layer or sheet moves its descendants with it.
 namespace carvetto::document {
+
+/// Before/after snapshots of the objects one command touched. `recordBefore` is called before an
+/// object is first modified, created or removed; `captureAfter` at the end of `apply`. `revert`
+/// and `reapply` then restore either side exactly, independent of how the edit was computed.
+class ObjectChangeSet {
+   public:
+    /// Snapshots `id` (or its absence) unless it was already recorded.
+    void recordBefore(const Document& doc, ObjectId id);
+    /// Snapshots the current state of every recorded id.
+    void captureAfter(const Document& doc);
+    /// Restores the before-states (absent objects are removed, present ones restored).
+    void revert(Document& doc) const;
+    /// Restores the after-states.
+    void reapply(Document& doc) const;
+    bool empty() const { return order_.empty(); }
+    /// True when at least one recorded object differs between before and after.
+    bool changed() const;
+    void clear();
+
+   private:
+    static void restore(Document& doc, ObjectId id, const std::optional<Object>& state);
+
+    std::vector<ObjectId> order_;
+    std::map<ObjectId, std::optional<Object>> before_;
+    std::map<ObjectId, std::optional<Object>> after_;
+};
 
 // --- Objects -----------------------------------------------------------------------------------
 
-/// Adds one object. `obj.id` may be null (allocated on first apply) or a fresh unused id.
+/// Adds one object. `obj.id` may be null (allocated on first apply) or a fresh unused id. When
+/// `obj.parent` names an existing group the object is appended to that group's children (and
+/// takes the group's sheet); any other parent is cleared.
 class AddObjectCommand : public Command {
    public:
     explicit AddObjectCommand(Object obj) : object_(std::move(obj)) {}
@@ -35,6 +74,7 @@ class AddObjectCommand : public Command {
 
    private:
     Object object_;
+    ObjectChangeSet changes_;
 };
 
 /// Removes objects (groups take their descendants with them). Unknown ids are skipped.
@@ -47,11 +87,10 @@ class RemoveObjectsCommand : public Command {
 
    private:
     std::vector<ObjectId> ids_;
-    std::vector<Object> removed_;
-    std::vector<std::pair<ObjectId, std::vector<ObjectId>>> detachedFromGroups_;
+    ObjectChangeSet changes_;
 };
 
-/// Moves objects to another layer, remembering where each came from.
+/// Moves objects (and the descendants of groups among them) to another layer.
 class MoveObjectsToLayerCommand : public Command {
    public:
     MoveObjectsToLayerCommand(std::vector<ObjectId> ids, LayerId target)
@@ -63,10 +102,11 @@ class MoveObjectsToLayerCommand : public Command {
    private:
     std::vector<ObjectId> ids_;
     LayerId target_;
-    std::vector<std::pair<ObjectId, LayerId>> previous_;
+    ObjectChangeSet changes_;
 };
 
-/// Moves objects to another sheet, remembering where each came from.
+/// Moves objects (and the descendants of groups among them) to another sheet. An object whose
+/// parent group stays behind is detached from that group first, since a group never spans sheets.
 class MoveObjectsToSheetCommand : public Command {
    public:
     MoveObjectsToSheetCommand(std::vector<ObjectId> ids, SheetId target)
@@ -78,7 +118,7 @@ class MoveObjectsToSheetCommand : public Command {
    private:
     std::vector<ObjectId> ids_;
     SheetId target_;
-    std::vector<std::pair<ObjectId, SheetId>> previous_;
+    ObjectChangeSet changes_;
 };
 
 /// Applies an affine transform to objects. The pre-transform payloads are snapshotted so undo is
@@ -103,7 +143,7 @@ class TransformObjectsCommand : public Command {
 
 /// Inserts copies of clipboard objects (as produced by `Document::copyObjects`) with fresh ids,
 /// optionally shifted, onto `layer`/`sheet` (null = keep each copy's own). Group links inside the
-/// clipboard are remapped to the new ids.
+/// clipboard are remapped to the new ids; links to objects outside it are dropped.
 class PasteObjectsCommand : public Command {
    public:
     PasteObjectsCommand(std::vector<Object> clipboard, geometry::Vec2 offsetMm = {}, LayerId layer = {},
@@ -125,20 +165,23 @@ class PasteObjectsCommand : public Command {
 };
 
 /// Groups top-level objects into a new `GroupObject` on the layer/sheet of the first member.
+/// Members on other sheets than the first are ignored; nested objects cannot be grouped.
 class GroupObjectsCommand : public Command {
    public:
     explicit GroupObjectsCommand(std::vector<ObjectId> ids) : ids_(std::move(ids)) {}
     bool apply(Document& doc) override;
     void revert(Document& doc) override;
     std::string text() const override { return "Group"; }
-    ObjectId groupId() const { return group_.id; }
+    ObjectId groupId() const { return groupId_; }
 
    private:
     std::vector<ObjectId> ids_;
-    Object group_;
+    ObjectId groupId_;
+    ObjectChangeSet changes_;
 };
 
-/// Dissolves a group: children become top-level objects, optionally moved to the group's layer.
+/// Dissolves a group: its children take its place in its parent group (or become top-level),
+/// optionally moving to the group's layer.
 class UngroupCommand : public Command {
    public:
     explicit UngroupCommand(ObjectId group, bool toGroupLayer = false)
@@ -150,8 +193,7 @@ class UngroupCommand : public Command {
    private:
     ObjectId groupId_;
     bool toGroupLayer_;
-    Object group_;
-    std::vector<std::pair<ObjectId, LayerId>> previousLayers_;
+    ObjectChangeSet changes_;
 };
 
 // --- Layers ------------------------------------------------------------------------------------
@@ -173,8 +215,10 @@ class AddLayerCommand : public Command {
     LayerId previousActive_;
 };
 
-/// Deletes a layer. Its objects are deleted when `deleteContents` is set, otherwise moved to the
-/// default layer (the first remaining layer). The last layer cannot be deleted (no-op).
+/// Deletes a layer. With `deleteContents` its objects are deleted: groups on the layer are
+/// dissolved (children on other layers survive, see the group rules above) and groups elsewhere
+/// lose the children that were on it. Otherwise the objects move to the default layer (the first
+/// remaining layer). The last layer cannot be deleted (no-op).
 class DeleteLayerCommand : public Command {
    public:
     DeleteLayerCommand(LayerId id, bool deleteContents) : id_(id), deleteContents_(deleteContents) {}
@@ -188,8 +232,7 @@ class DeleteLayerCommand : public Command {
     Layer layer_;
     std::size_t index_{0};
     LayerId previousActive_;
-    std::vector<Object> removed_;
-    std::vector<ObjectId> moved_;
+    ObjectChangeSet changes_;
 };
 
 /// Replaces a layer's properties (name, colour, visibility, lock). Consecutive edits of the same
@@ -240,6 +283,8 @@ class AddSheetCommand : public Command {
 };
 
 /// Deletes a sheet together with the objects on it. The last sheet cannot be deleted (no-op).
+/// (What happens to the sheet's objects is pending an owner decision; it is confined to
+/// `DeleteSheetCommand::apply`.)
 class DeleteSheetCommand : public Command {
    public:
     explicit DeleteSheetCommand(SheetId id) : id_(id) {}
@@ -252,7 +297,7 @@ class DeleteSheetCommand : public Command {
     Sheet sheet_;
     std::size_t index_{0};
     SheetId previousActive_;
-    std::vector<Object> removed_;
+    ObjectChangeSet changes_;
 };
 
 /// Replaces a sheet's properties. Consecutive edits of the same sheet coalesce.

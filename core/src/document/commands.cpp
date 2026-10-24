@@ -1,7 +1,6 @@
 #include "carvetto/document/commands.hpp"
 
 #include <algorithm>
-#include <functional>
 #include <set>
 #include <type_traits>
 #include <variant>
@@ -10,31 +9,66 @@
 
 namespace carvetto::document {
 
-namespace {
+// --- ObjectChangeSet -----------------------------------------------------------------------------
 
-// Ids plus every descendant of groups among them, in id order, skipping unknown ids.
-std::vector<ObjectId> withDescendants(const Document& doc, const std::vector<ObjectId>& ids) {
-    std::set<ObjectId> all;
-    std::function<void(ObjectId)> collect = [&](ObjectId id) {
-        const Object* obj = doc.findObject(id);
-        if (!obj || !all.insert(id).second) {
-            return;
-        }
-        if (const auto* g = obj->asGroup()) {
-            for (ObjectId child : g->children) {
-                collect(child);
-            }
-        }
-    };
-    for (ObjectId id : ids) {
-        collect(id);
+void ObjectChangeSet::recordBefore(const Document& doc, ObjectId id) {
+    if (before_.contains(id)) {
+        return;
     }
-    return {all.begin(), all.end()};
+    const Object* obj = doc.findObject(id);
+    before_.emplace(id, obj ? std::optional<Object>(*obj) : std::nullopt);
+    order_.push_back(id);
 }
+
+void ObjectChangeSet::captureAfter(const Document& doc) {
+    after_.clear();
+    for (ObjectId id : order_) {
+        const Object* obj = doc.findObject(id);
+        after_.emplace(id, obj ? std::optional<Object>(*obj) : std::nullopt);
+    }
+}
+
+void ObjectChangeSet::restore(Document& doc, ObjectId id, const std::optional<Object>& state) {
+    Object* current = doc.findObject(id);
+    if (!state) {
+        if (current) {
+            doc.takeObject(id);
+        }
+    } else if (current) {
+        *current = *state;
+    } else {
+        doc.insertObject(*state);
+    }
+}
+
+void ObjectChangeSet::revert(Document& doc) const {
+    for (ObjectId id : order_) {
+        restore(doc, id, before_.at(id));
+    }
+}
+
+void ObjectChangeSet::reapply(Document& doc) const {
+    for (ObjectId id : order_) {
+        restore(doc, id, after_.at(id));
+    }
+}
+
+bool ObjectChangeSet::changed() const {
+    return std::any_of(order_.begin(), order_.end(),
+                       [this](ObjectId id) { return before_.at(id) != after_.at(id); });
+}
+
+void ObjectChangeSet::clear() {
+    order_.clear();
+    before_.clear();
+    after_.clear();
+}
+
+namespace {
 
 void transformData(ObjectData& data, const geometry::Transform2& m) {
     std::visit(
-        [&](auto& payload) {
+        [&m](auto& payload) {
             using T = std::decay_t<decltype(payload)>;
             if constexpr (!std::is_same_v<T, GroupObject>) {
                 payload.transform(m);
@@ -43,106 +77,221 @@ void transformData(ObjectData& data, const geometry::Transform2& m) {
         data);
 }
 
+// --- Group maintenance shared by the structural commands (rules in commands.hpp / ADR-0007) ----
+
+// Removes `id` from its parent's child list and clears its parent link. Returns the former parent.
+std::optional<ObjectId> detachFromParent(Document& doc, ObjectChangeSet& cs, ObjectId id) {
+    Object* obj = doc.findObject(id);
+    if (!obj || !obj->parent) {
+        return std::nullopt;
+    }
+    const ObjectId parentId = *obj->parent;
+    cs.recordBefore(doc, id);
+    obj->parent.reset();
+    if (Object* parent = doc.findObject(parentId)) {
+        if (auto* g = parent->asGroup()) {
+            cs.recordBefore(doc, parentId);
+            std::erase(g->children, id);
+        }
+    }
+    return parentId;
+}
+
+// Removes `groupId` and then each ancestor while they are groups with no children left.
+void pruneEmptyGroups(Document& doc, ObjectChangeSet& cs, std::optional<ObjectId> groupId) {
+    while (groupId) {
+        const Object* obj = doc.findObject(*groupId);
+        if (!obj || !obj->isGroup() || !obj->asGroup()->children.empty()) {
+            return;
+        }
+        const ObjectId current = *groupId;
+        groupId = detachFromParent(doc, cs, current);
+        cs.recordBefore(doc, current);
+        doc.takeObject(current);
+    }
+}
+
+// Removes an object and all its descendants, detaching it from its parent group first.
+void removeTree(Document& doc, ObjectChangeSet& cs, ObjectId id) {
+    if (!doc.hasObject(id)) {
+        return;
+    }
+    const std::optional<ObjectId> parent = detachFromParent(doc, cs, id);
+    for (ObjectId d : doc.withDescendants({id})) {
+        cs.recordBefore(doc, d);
+        doc.takeObject(d);
+    }
+    pruneEmptyGroups(doc, cs, parent);
+}
+
+// Removes a group but keeps its children: they take the group's place in its parent's child list
+// (or become top-level), optionally moving to `moveTo`.
+void dissolveGroup(Document& doc, ObjectChangeSet& cs, ObjectId groupId, std::optional<LayerId> moveTo) {
+    const Object* found = doc.findObject(groupId);
+    if (!found || !found->isGroup()) {
+        return;
+    }
+    const Object group = *found;
+    const std::vector<ObjectId>& children = group.asGroup()->children;
+    for (ObjectId child : children) {
+        if (Object* c = doc.findObject(child)) {
+            cs.recordBefore(doc, child);
+            c->parent = group.parent;
+            if (moveTo) {
+                c->layer = *moveTo;
+            }
+        }
+    }
+    if (group.parent) {
+        if (Object* parent = doc.findObject(*group.parent)) {
+            if (auto* g = parent->asGroup()) {
+                cs.recordBefore(doc, *group.parent);
+                std::vector<ObjectId> spliced;
+                spliced.reserve(g->children.size() + children.size());
+                for (ObjectId sibling : g->children) {
+                    if (sibling == groupId) {
+                        spliced.insert(spliced.end(), children.begin(), children.end());
+                    } else {
+                        spliced.push_back(sibling);
+                    }
+                }
+                g->children = std::move(spliced);
+            }
+        }
+    }
+    cs.recordBefore(doc, groupId);
+    doc.takeObject(groupId);
+    if (children.empty()) {
+        pruneEmptyGroups(doc, cs, group.parent);
+    }
+}
+
+// Deletes every object matching `pred`. Matching groups are dissolved first, so their children
+// that do not match survive in the group's place; the remaining matches are then removed (which
+// detaches them from non-matching groups and prunes groups left empty).
+template <class Pred>
+void removeMatching(Document& doc, ObjectChangeSet& cs, Pred pred) {
+    const auto matching = [&doc, &pred](bool groups) {
+        std::vector<ObjectId> out;
+        for (const auto& [id, obj] : doc.objects()) {
+            if (obj.isGroup() == groups && pred(obj)) {
+                out.push_back(id);
+            }
+        }
+        return out;
+    };
+    for (ObjectId id : matching(true)) {
+        dissolveGroup(doc, cs, id, std::nullopt);
+    }
+    for (ObjectId id : matching(false)) {
+        removeTree(doc, cs, id);
+    }
+}
+
 }  // namespace
 
 // --- AddObjectCommand ----------------------------------------------------------------------------
 
 bool AddObjectCommand::apply(Document& doc) {
+    if (!changes_.empty()) {
+        changes_.reapply(doc);
+        return true;
+    }
     if (object_.id.isNull()) {
         object_.id = doc.allocateObjectId();
     }
+    Object* parent = object_.parent ? doc.findObject(*object_.parent) : nullptr;
+    if (parent && parent->isGroup()) {
+        changes_.recordBefore(doc, parent->id);
+        parent->asGroup()->children.push_back(object_.id);
+        object_.sheet = parent->sheet;
+    } else {
+        object_.parent.reset();
+    }
+    changes_.recordBefore(doc, object_.id);
     doc.insertObject(object_);
+    changes_.captureAfter(doc);
     return true;
 }
 
 void AddObjectCommand::revert(Document& doc) {
-    doc.takeObject(object_.id);
+    changes_.revert(doc);
 }
 
 // --- RemoveObjectsCommand ------------------------------------------------------------------------
 
 bool RemoveObjectsCommand::apply(Document& doc) {
-    removed_.clear();
-    detachedFromGroups_.clear();
-    const std::vector<ObjectId> all = withDescendants(doc, ids_);
-    const std::set<ObjectId> removing(all.begin(), all.end());
-    for (ObjectId id : all) {
-        const Object* obj = doc.findObject(id);
-        if (obj->parent && !removing.contains(*obj->parent)) {
-            if (Object* parent = doc.findObject(*obj->parent)) {
-                if (auto* g = parent->asGroup()) {
-                    detachedFromGroups_.emplace_back(parent->id, g->children);
-                    std::erase(g->children, id);
-                }
-            }
-        }
-        removed_.push_back(*doc.takeObject(id));
+    if (!changes_.empty()) {
+        changes_.reapply(doc);
+        return true;
     }
-    return !removed_.empty();
+    for (ObjectId id : ids_) {
+        removeTree(doc, changes_, id);
+    }
+    changes_.captureAfter(doc);
+    return !changes_.empty();
 }
 
 void RemoveObjectsCommand::revert(Document& doc) {
-    for (const Object& obj : removed_) {
-        doc.insertObject(obj);
-    }
-    // Restore child lists in reverse so a parent touched twice ends with its original list.
-    for (auto it = detachedFromGroups_.rbegin(); it != detachedFromGroups_.rend(); ++it) {
-        if (Object* parent = doc.findObject(it->first)) {
-            if (auto* g = parent->asGroup()) {
-                g->children = it->second;
-            }
-        }
-    }
+    changes_.revert(doc);
 }
 
 // --- MoveObjectsToLayerCommand -------------------------------------------------------------------
 
 bool MoveObjectsToLayerCommand::apply(Document& doc) {
-    previous_.clear();
+    if (!changes_.empty()) {
+        changes_.reapply(doc);
+        return true;
+    }
     if (!doc.findLayer(target_)) {
         return false;
     }
-    for (ObjectId id : ids_) {
+    for (ObjectId id : doc.withDescendants(ids_)) {
         Object* obj = doc.findObject(id);
-        if (obj && obj->layer != target_) {
-            previous_.emplace_back(id, obj->layer);
+        if (obj->layer != target_) {
+            changes_.recordBefore(doc, id);
             obj->layer = target_;
         }
     }
-    return !previous_.empty();
+    changes_.captureAfter(doc);
+    return !changes_.empty();
 }
 
 void MoveObjectsToLayerCommand::revert(Document& doc) {
-    for (const auto& [id, layer] : previous_) {
-        if (Object* obj = doc.findObject(id)) {
-            obj->layer = layer;
-        }
-    }
+    changes_.revert(doc);
 }
 
 // --- MoveObjectsToSheetCommand -------------------------------------------------------------------
 
 bool MoveObjectsToSheetCommand::apply(Document& doc) {
-    previous_.clear();
+    if (!changes_.empty()) {
+        changes_.reapply(doc);
+        return true;
+    }
     if (!doc.findSheet(target_)) {
         return false;
     }
-    for (ObjectId id : withDescendants(doc, ids_)) {
+    const std::vector<ObjectId> moving = doc.withDescendants(ids_);
+    const std::set<ObjectId> movingSet(moving.begin(), moving.end());
+    for (ObjectId id : moving) {
+        const Object* obj = doc.findObject(id);
+        if (obj && obj->sheet != target_ && obj->parent && !movingSet.contains(*obj->parent)) {
+            pruneEmptyGroups(doc, changes_, detachFromParent(doc, changes_, id));
+        }
+    }
+    for (ObjectId id : moving) {
         Object* obj = doc.findObject(id);
         if (obj && obj->sheet != target_) {
-            previous_.emplace_back(id, obj->sheet);
+            changes_.recordBefore(doc, id);
             obj->sheet = target_;
         }
     }
-    return !previous_.empty();
+    changes_.captureAfter(doc);
+    return !changes_.empty();
 }
 
 void MoveObjectsToSheetCommand::revert(Document& doc) {
-    for (const auto& [id, sheet] : previous_) {
-        if (Object* obj = doc.findObject(id)) {
-            obj->sheet = sheet;
-        }
-    }
+    changes_.revert(doc);
 }
 
 // --- TransformObjectsCommand ---------------------------------------------------------------------
@@ -158,7 +307,7 @@ bool TransformObjectsCommand::apply(Document& doc) {
         return true;
     }
     before_.clear();
-    for (ObjectId id : withDescendants(doc, ids_)) {
+    for (ObjectId id : doc.withDescendants(ids_)) {
         Object* obj = doc.findObject(id);
         if (!obj || obj->isGroup()) {
             continue;
@@ -245,76 +394,65 @@ void PasteObjectsCommand::revert(Document& doc) {
 // --- GroupObjectsCommand -------------------------------------------------------------------------
 
 bool GroupObjectsCommand::apply(Document& doc) {
-    if (group_.id.isNull()) {
-        std::vector<ObjectId> members;
-        for (ObjectId id : ids_) {
-            const Object* obj = doc.findObject(id);
-            if (obj && !obj->parent && std::find(members.begin(), members.end(), id) == members.end()) {
-                members.push_back(id);
-            }
-        }
-        if (members.empty()) {
-            return false;
-        }
-        const Object& first = *doc.findObject(members.front());
-        group_.id = doc.allocateObjectId();
-        group_.layer = first.layer;
-        group_.sheet = first.sheet;
-        group_.name = "Group";
-        group_.data = GroupObject{std::move(members)};
+    if (!changes_.empty()) {
+        changes_.reapply(doc);
+        return true;
     }
-    doc.insertObject(group_);
-    for (ObjectId id : group_.asGroup()->children) {
-        if (Object* obj = doc.findObject(id)) {
-            obj->parent = group_.id;
+    std::vector<ObjectId> members;
+    for (ObjectId id : ids_) {
+        const Object* obj = doc.findObject(id);
+        if (!obj || obj->parent || std::find(members.begin(), members.end(), id) != members.end()) {
+            continue;
         }
+        if (!members.empty() && obj->sheet != doc.findObject(members.front())->sheet) {
+            continue;
+        }
+        members.push_back(id);
     }
+    if (members.empty()) {
+        return false;
+    }
+    const Object& first = *doc.findObject(members.front());
+    Object group;
+    group.id = doc.allocateObjectId();
+    group.layer = first.layer;
+    group.sheet = first.sheet;
+    group.name = "Group";
+    group.data = GroupObject{members};
+    groupId_ = group.id;
+    changes_.recordBefore(doc, groupId_);
+    doc.insertObject(std::move(group));
+    for (ObjectId id : members) {
+        changes_.recordBefore(doc, id);
+        doc.findObject(id)->parent = groupId_;
+    }
+    changes_.captureAfter(doc);
     return true;
 }
 
 void GroupObjectsCommand::revert(Document& doc) {
-    for (ObjectId id : group_.asGroup()->children) {
-        if (Object* obj = doc.findObject(id)) {
-            obj->parent.reset();
-        }
-    }
-    doc.takeObject(group_.id);
+    changes_.revert(doc);
 }
 
 // --- UngroupCommand ------------------------------------------------------------------------------
 
 bool UngroupCommand::apply(Document& doc) {
+    if (!changes_.empty()) {
+        changes_.reapply(doc);
+        return true;
+    }
     const Object* obj = doc.findObject(groupId_);
     if (!obj || !obj->isGroup()) {
         return false;
     }
-    group_ = *obj;
-    previousLayers_.clear();
-    for (ObjectId child : group_.asGroup()->children) {
-        if (Object* c = doc.findObject(child)) {
-            c->parent = group_.parent;
-            if (toGroupLayer_) {
-                previousLayers_.emplace_back(child, c->layer);
-                c->layer = group_.layer;
-            }
-        }
-    }
-    doc.takeObject(groupId_);
+    const std::optional<LayerId> moveTo = toGroupLayer_ ? std::optional<LayerId>(obj->layer) : std::nullopt;
+    dissolveGroup(doc, changes_, groupId_, moveTo);
+    changes_.captureAfter(doc);
     return true;
 }
 
 void UngroupCommand::revert(Document& doc) {
-    doc.insertObject(group_);
-    for (ObjectId child : group_.asGroup()->children) {
-        if (Object* c = doc.findObject(child)) {
-            c->parent = groupId_;
-        }
-    }
-    for (const auto& [id, layer] : previousLayers_) {
-        if (Object* c = doc.findObject(id)) {
-            c->layer = layer;
-        }
-    }
+    changes_.revert(doc);
 }
 
 // --- AddLayerCommand -----------------------------------------------------------------------------
@@ -339,6 +477,12 @@ void AddLayerCommand::revert(Document& doc) {
 // --- DeleteLayerCommand --------------------------------------------------------------------------
 
 bool DeleteLayerCommand::apply(Document& doc) {
+    if (!layer_.id.isNull()) {
+        // Redo: replay the recorded object changes, then drop the (now empty) layer.
+        changes_.reapply(doc);
+        doc.takeLayer(id_);
+        return true;
+    }
     const Layer* layer = doc.findLayer(id_);
     if (!layer || doc.layers().size() == 1) {
         return false;
@@ -346,34 +490,23 @@ bool DeleteLayerCommand::apply(Document& doc) {
     layer_ = *layer;
     index_ = *doc.layerIndex(id_);
     previousActive_ = doc.activeLayer();
-    removed_.clear();
-    moved_.clear();
-    const std::vector<ObjectId> objects = doc.objectsOnLayer(id_);
     if (deleteContents_) {
-        for (ObjectId id : objects) {
-            removed_.push_back(*doc.takeObject(id));
-        }
+        removeMatching(doc, changes_, [this](const Object& obj) { return obj.layer == id_; });
     } else {
         const LayerId target = (index_ == 0) ? doc.layers()[1].id : doc.defaultLayer();
-        for (ObjectId id : objects) {
+        for (ObjectId id : doc.objectsOnLayer(id_)) {
+            changes_.recordBefore(doc, id);
             doc.findObject(id)->layer = target;
-            moved_.push_back(id);
         }
     }
+    changes_.captureAfter(doc);
     doc.takeLayer(id_);
     return true;
 }
 
 void DeleteLayerCommand::revert(Document& doc) {
     doc.insertLayer(layer_, index_);
-    for (ObjectId id : moved_) {
-        if (Object* obj = doc.findObject(id)) {
-            obj->layer = id_;
-        }
-    }
-    for (const Object& obj : removed_) {
-        doc.insertObject(obj);
-    }
+    changes_.revert(doc);
     doc.setActiveLayer(previousActive_);
 }
 
@@ -441,6 +574,11 @@ void AddSheetCommand::revert(Document& doc) {
 // --- DeleteSheetCommand --------------------------------------------------------------------------
 
 bool DeleteSheetCommand::apply(Document& doc) {
+    if (!sheet_.id.isNull()) {
+        changes_.reapply(doc);
+        doc.takeSheet(id_);
+        return true;
+    }
     const Sheet* sheet = doc.findSheet(id_);
     if (!sheet || doc.sheets().size() == 1) {
         return false;
@@ -448,19 +586,17 @@ bool DeleteSheetCommand::apply(Document& doc) {
     sheet_ = *sheet;
     index_ = *doc.sheetIndex(id_);
     previousActive_ = doc.activeSheet();
-    removed_.clear();
-    for (ObjectId id : doc.objectsOnSheet(id_)) {
-        removed_.push_back(*doc.takeObject(id));
-    }
+    // Pending owner decision: the sheet's objects are deleted with it. Groups never span sheets,
+    // so this removes whole trees; removeMatching keeps that true even for inconsistent input.
+    removeMatching(doc, changes_, [this](const Object& obj) { return obj.sheet == id_; });
+    changes_.captureAfter(doc);
     doc.takeSheet(id_);
     return true;
 }
 
 void DeleteSheetCommand::revert(Document& doc) {
     doc.insertSheet(sheet_, index_);
-    for (const Object& obj : removed_) {
-        doc.insertObject(obj);
-    }
+    changes_.revert(doc);
     doc.setActiveSheet(previousActive_);
 }
 

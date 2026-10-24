@@ -2,9 +2,9 @@
 
 namespace carvetto::document {
 
-Sheet Sheet::fromJob(const Job& job, std::string name) {
+Sheet Sheet::fromJob(const Job& job, std::string sheetName) {
     Sheet sheet;
-    sheet.name = std::move(name);
+    sheet.name = std::move(sheetName);
     sheet.sizeMm = job.sizeMm;
     sheet.zZero = job.zZero;
     sheet.datum = job.datum;

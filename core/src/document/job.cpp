@@ -26,30 +26,30 @@ Box2 materialBounds(Datum datum, double width, double height, Vec2 datumOffset) 
     return Box2{bottomLeft, bottomLeft + Vec2{width, height}};
 }
 
-Job Job::singleSided(double width, double height, double thickness, Units units, Datum datum, ZZero zZero) {
+Job Job::singleSided(double width, double height, double thickness, Units units, Datum datumPos, ZZero zero) {
     Job job;
     job.type = JobType::SingleSided;
     job.displayUnits = units;
     job.sizeMm = {fromDisplay(width, units), fromDisplay(height, units), fromDisplay(thickness, units)};
-    job.datum = datum;
-    job.zZero = zZero;
+    job.datum = datumPos;
+    job.zZero = zero;
     return job;
 }
 
-Job Job::doubleSided(double width, double height, double thickness, Units units, Datum datum, ZZero zZero,
+Job Job::doubleSided(double width, double height, double thickness, Units units, Datum datumPos, ZZero zero,
                      FlipDirection flip) {
-    Job job = singleSided(width, height, thickness, units, datum, zZero);
+    Job job = singleSided(width, height, thickness, units, datumPos, zero);
     job.type = JobType::DoubleSided;
     job.flipDirection = flip;
     return job;
 }
 
-Job Job::rotary(double length, double diameter, Units units, RotaryAxis axis, ZZero zZero) {
+Job Job::rotary(double length, double diameter, Units units, RotaryAxis axis, ZZero zero) {
     Job job;
     job.type = JobType::Rotary;
     job.displayUnits = units;
     job.rotaryAxis = axis;
-    job.zZero = zZero;
+    job.zZero = zero;
     job.diameterMm = fromDisplay(diameter, units);
     const double lengthMm = fromDisplay(length, units);
     const double circumferenceMm = geometry::kPi * job.diameterMm;

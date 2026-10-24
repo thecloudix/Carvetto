@@ -20,6 +20,32 @@
 
 namespace carvetto::document {
 
+/// One structural inconsistency found by `Document::checkIntegrity()`.
+struct IntegrityIssue {
+    /// What is wrong.
+    enum class Kind {
+        DanglingChild,        ///< A group lists a child id that does not exist.
+        ChildParentMismatch,  ///< A group lists a child whose `parent` is not that group.
+        DuplicateChild,       ///< A group lists the same child twice, or a child is in two groups.
+        ChildNotListed,       ///< An object's `parent` group does not list it.
+        BadParent,            ///< An object's `parent` is missing or is not a group.
+        SheetMismatch,        ///< A child is on a different sheet than its parent group.
+        Cycle,                ///< Following `parent` links loops.
+        MissingLayer,         ///< An object's layer does not exist.
+        MissingSheet,         ///< An object's sheet does not exist.
+        BadActiveLayer,       ///< The active layer does not exist.
+        BadActiveSheet,       ///< The active sheet does not exist.
+        StaleSelection,       ///< The selection holds an id that does not exist.
+    };
+    Kind kind;
+    /// The object (or zero) the issue is about.
+    ObjectId object;
+    /// Second object involved (the child or parent), or zero.
+    ObjectId related;
+    /// Human-readable description for test output and logs.
+    std::string message;
+};
+
 /// The in-memory design: one job, its sheets, ordered layers, objects, selection, document
 /// variables and undo history.
 ///
@@ -101,6 +127,12 @@ class Document {
     /// Deep copies of `ids` plus every descendant of groups among them, in id order, for the
     /// clipboard. Ids are kept so `PasteObjectsCommand` can remap group links.
     std::vector<Object> copyObjects(const std::vector<ObjectId>& ids) const;
+    /// Ids plus every descendant of groups among them, in id order; unknown ids are skipped.
+    std::vector<ObjectId> withDescendants(const std::vector<ObjectId>& ids) const;
+
+    /// Lists every structural inconsistency (group links, missing layers/sheets, cycles, stale
+    /// active layer/sheet or selection). Empty for a consistent document; every command keeps it so.
+    std::vector<IntegrityIssue> checkIntegrity() const;
 
     // --- Ids -------------------------------------------------------------------------------
     ObjectId allocateObjectId() { return ObjectId{ids_.allocate()}; }

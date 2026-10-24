@@ -23,7 +23,7 @@ struct Sheet {
     bool operator==(const Sheet&) const = default;
 
     /// Sheet taking its size, Z-zero and datum from the job.
-    static Sheet fromJob(const Job& job, std::string name = "Sheet 1");
+    static Sheet fromJob(const Job& job, std::string sheetName = "Sheet 1");
 
     /// Material rectangle in document coordinates.
     geometry::Box2 materialBoundsMm() const {

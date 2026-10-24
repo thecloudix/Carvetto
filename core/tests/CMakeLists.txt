@@ -37,6 +37,7 @@ target_compile_definitions(carvetto_tests PRIVATE
   document/undo_stack_test.cpp
   document/document_test.cpp
   document/commands_test.cpp
+  document/integrity_test.cpp
 )
 target_link_libraries(carvetto_tests PRIVATE carvetto::core Catch2::Catch2WithMain carvetto_warnings)
 

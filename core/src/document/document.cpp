@@ -2,8 +2,9 @@
 
 #include <algorithm>
 #include <cassert>
-#include <functional>
 #include <set>
+#include <string>
+#include <utility>
 
 namespace carvetto::document {
 
@@ -242,25 +243,29 @@ std::optional<geometry::Box2> Document::objectBounds(ObjectId id) const {
     return box;
 }
 
-std::vector<Object> Document::copyObjects(const std::vector<ObjectId>& ids) const {
-    std::set<ObjectId> wanted;
-    std::function<void(ObjectId)> collect = [&](ObjectId id) {
+std::vector<ObjectId> Document::withDescendants(const std::vector<ObjectId>& ids) const {
+    std::set<ObjectId> all;
+    std::vector<ObjectId> stack(ids.rbegin(), ids.rend());
+    while (!stack.empty()) {
+        const ObjectId id = stack.back();
+        stack.pop_back();
         const Object* obj = findObject(id);
-        if (!obj || !wanted.insert(id).second) {
-            return;
+        if (!obj || !all.insert(id).second) {
+            continue;
         }
         if (const auto* g = obj->asGroup()) {
-            for (ObjectId child : g->children) {
-                collect(child);
-            }
+            stack.insert(stack.end(), g->children.begin(), g->children.end());
         }
-    };
-    for (ObjectId id : ids) {
-        collect(id);
     }
+    return {all.begin(), all.end()};
+}
+
+std::vector<Object> Document::copyObjects(const std::vector<ObjectId>& ids) const {
+    const std::vector<ObjectId> wantedIds = withDescendants(ids);
+    const std::set<ObjectId> wanted(wantedIds.begin(), wantedIds.end());
     std::vector<Object> out;
-    out.reserve(wanted.size());
-    for (ObjectId id : wanted) {
+    out.reserve(wantedIds.size());
+    for (ObjectId id : wantedIds) {
         Object copy = *findObject(id);
         // A copied child whose parent is not in the clipboard becomes top-level.
         if (copy.parent && !wanted.contains(*copy.parent)) {
@@ -269,6 +274,92 @@ std::vector<Object> Document::copyObjects(const std::vector<ObjectId>& ids) cons
         out.push_back(std::move(copy));
     }
     return out;
+}
+
+// --- Integrity -----------------------------------------------------------------------------------
+
+namespace {
+
+std::string idText(ObjectId id) {
+    return "#" + std::to_string(id.value);
+}
+
+}  // namespace
+
+std::vector<IntegrityIssue> Document::checkIntegrity() const {
+    using Kind = IntegrityIssue::Kind;
+    std::vector<IntegrityIssue> issues;
+    const auto report = [&issues](Kind kind, ObjectId object, ObjectId related, std::string message) {
+        issues.push_back(IntegrityIssue{kind, object, related, std::move(message)});
+    };
+
+    if (!findLayer(activeLayer_)) {
+        report(Kind::BadActiveLayer, {}, {}, "active layer does not exist");
+    }
+    if (!findSheet(activeSheet_)) {
+        report(Kind::BadActiveSheet, {}, {}, "active sheet does not exist");
+    }
+    for (ObjectId id : selection_.ids()) {
+        if (!hasObject(id)) {
+            report(Kind::StaleSelection, id, {}, "selection holds missing object " + idText(id));
+        }
+    }
+
+    std::map<ObjectId, ObjectId> listedBy;  // child -> group listing it
+    for (const auto& [id, obj] : objects_) {
+        if (!findLayer(obj.layer)) {
+            report(Kind::MissingLayer, id, {}, idText(id) + " is on a missing layer");
+        }
+        if (!findSheet(obj.sheet)) {
+            report(Kind::MissingSheet, id, {}, idText(id) + " is on a missing sheet");
+        }
+        if (const auto* g = obj.asGroup()) {
+            for (ObjectId child : g->children) {
+                const Object* c = findObject(child);
+                if (!c) {
+                    report(Kind::DanglingChild, id, child,
+                           "group " + idText(id) + " lists missing child " + idText(child));
+                    continue;
+                }
+                if (const auto [it, inserted] = listedBy.emplace(child, id); !inserted) {
+                    report(Kind::DuplicateChild, id, child,
+                           idText(child) + " is listed by " + idText(it->second) + " and " + idText(id));
+                    continue;
+                }
+                if (c->parent != id) {
+                    report(Kind::ChildParentMismatch, id, child,
+                           "group " + idText(id) + " lists " + idText(child) + " whose parent differs");
+                }
+                if (c->sheet != obj.sheet) {
+                    report(Kind::SheetMismatch, id, child,
+                           "child " + idText(child) + " is on another sheet than group " + idText(id));
+                }
+            }
+        }
+        if (obj.parent) {
+            const Object* p = findObject(*obj.parent);
+            if (!p || !p->isGroup()) {
+                report(Kind::BadParent, id, *obj.parent,
+                       idText(id) + " has missing or non-group parent " + idText(*obj.parent));
+            } else {
+                const auto& kids = p->asGroup()->children;
+                if (std::find(kids.begin(), kids.end(), id) == kids.end()) {
+                    report(Kind::ChildNotListed, id, *obj.parent,
+                           idText(id) + " is not listed by its parent " + idText(*obj.parent));
+                }
+            }
+        }
+        // Cycle detection: walk up at most objectCount() links.
+        std::set<ObjectId> seen{id};
+        for (const Object* cur = &obj; cur && cur->parent;) {
+            if (!seen.insert(*cur->parent).second) {
+                report(Kind::Cycle, id, *cur->parent, "parent chain of " + idText(id) + " loops");
+                break;
+            }
+            cur = findObject(*cur->parent);
+        }
+    }
+    return issues;
 }
 
 }  // namespace carvetto::document

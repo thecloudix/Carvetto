@@ -151,10 +151,10 @@ struct Object {
     const GroupObject* asGroup() const { return std::get_if<GroupObject>(&data); }
 
     /// Convenience: a vector object with one contour and no parameters.
-    static Object vector(geometry::Contour contour, LayerId layer, SheetId sheet,
+    static Object vector(geometry::Contour contour, LayerId layerId, SheetId sheetId,
                          CreationParams params = NoParams{});
     /// Convenience: a vector object with several contours.
-    static Object vector(std::vector<geometry::Contour> contours, LayerId layer, SheetId sheet,
+    static Object vector(std::vector<geometry::Contour> contours, LayerId layerId, SheetId sheetId,
                          CreationParams params = NoParams{});
 };
 

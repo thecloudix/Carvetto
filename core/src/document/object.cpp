@@ -31,17 +31,17 @@ void BitmapObject::transform(const geometry::Transform2& m) {
     placementMm = b;
 }
 
-Object Object::vector(geometry::Contour contour, LayerId layer, SheetId sheet, CreationParams params) {
+Object Object::vector(geometry::Contour contour, LayerId layerId, SheetId sheetId, CreationParams params) {
     std::vector<geometry::Contour> contours;
     contours.push_back(std::move(contour));
-    return vector(std::move(contours), layer, sheet, std::move(params));
+    return vector(std::move(contours), layerId, sheetId, std::move(params));
 }
 
-Object Object::vector(std::vector<geometry::Contour> contours, LayerId layer, SheetId sheet,
+Object Object::vector(std::vector<geometry::Contour> contours, LayerId layerId, SheetId sheetId,
                       CreationParams params) {
     Object o;
-    o.layer = layer;
-    o.sheet = sheet;
+    o.layer = layerId;
+    o.sheet = sheetId;
     o.data = VectorObject{std::move(contours), std::move(params)};
     return o;
 }
