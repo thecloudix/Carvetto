@@ -53,7 +53,14 @@ jobs:
             exit 1
           }
       - name: Test
-        run: ctest --test-dir build --output-on-failure
+        shell: pwsh
+        run: |
+          ctest --test-dir build --output-on-failure 2>&1 | Tee-Object -FilePath test.log
+          if ($LASTEXITCODE -ne 0) {
+            $fails = (Select-String -Path test.log -Pattern 'FAILED|Failed|failed|REQUIRE|CHECK|with expansion|==' | Select-Object -Last 40 | ForEach-Object { $_.Line }) -join '%0A'
+            Write-Host "::error title=Tests failed::$fails"
+            exit 1
+          }
       - name: Upload app
         uses: actions/upload-artifact@v4
         with:

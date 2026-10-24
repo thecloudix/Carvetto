@@ -1,0 +1,6 @@
+# Default: normalise text to LF in the repo.
+* text=auto
+
+# Byte-exact test fixtures and post-processors: never convert line endings.
+core/tests/golden/** -text
+posts/*.pp -text
