@@ -19,14 +19,17 @@ struct Tolerance {
     /// Default tolerance set.
     static constexpr Tolerance defaults() { return {}; }
 
+    /// constexpr absolute value (std::fabs is not constexpr on MSVC).
+    static constexpr double absValue(double v) { return v < 0.0 ? -v : v; }
+
     /// True when |a - b| <= distance.
-    constexpr bool equalDistance(double a, double b) const { return std::fabs(a - b) <= distance; }
+    constexpr bool equalDistance(double a, double b) const { return absValue(a - b) <= distance; }
     /// True when the two points are within `distance` of each other.
     bool equalPoints(Vec2 a, Vec2 b) const { return geometry::distance(a, b) <= distance; }
     /// True when |a - b| <= angle.
-    constexpr bool equalAngle(double a, double b) const { return std::fabs(a - b) <= angle; }
+    constexpr bool equalAngle(double a, double b) const { return absValue(a - b) <= angle; }
     /// True when |v| <= distance.
-    constexpr bool isZero(double v) const { return std::fabs(v) <= distance; }
+    constexpr bool isZero(double v) const { return absValue(v) <= distance; }
 };
 
 }  // namespace carvetto::geometry
