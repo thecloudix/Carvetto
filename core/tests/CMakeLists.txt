@@ -31,6 +31,12 @@ add_executable(carvetto_tests
 target_compile_definitions(carvetto_tests PRIVATE
   CARVETTO_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/golden"
   CARVETTO_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
+  document/job_test.cpp
+  document/variables_test.cpp
+  document/selection_test.cpp
+  document/undo_stack_test.cpp
+  document/document_test.cpp
+  document/commands_test.cpp
 )
 target_link_libraries(carvetto_tests PRIVATE carvetto::core Catch2::Catch2WithMain carvetto_warnings)
 

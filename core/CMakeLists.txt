@@ -31,6 +31,14 @@ add_library(carvetto_core STATIC
   src/post/variables.cpp
   src/post/parser.cpp
   src/post/interpreter.cpp
+  src/document/job.cpp
+  src/document/sheet.cpp
+  src/document/object.cpp
+  src/document/selection.cpp
+  src/document/variables.cpp
+  src/document/undo_stack.cpp
+  src/document/document.cpp
+  src/document/commands.cpp
 )
 target_include_directories(carvetto_core PUBLIC include)
 target_link_libraries(carvetto_core
