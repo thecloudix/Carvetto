@@ -15,6 +15,11 @@ if(MSVC)
   target_compile_options(carvetto_warnings INTERFACE /W4 /WX /permissive- /utf-8)
 else()
   target_compile_options(carvetto_warnings INTERFACE -Wall -Wextra -Wpedantic -Werror -Wshadow -Wconversion -Wsign-conversion)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # GCC 12-14 emit false-positive -Wstringop-overflow inside std::variant at -O2/-O3
+    # (GCC bugs 105746/106199). Disable only this diagnostic, only for GCC.
+    target_compile_options(carvetto_warnings INTERFACE -Wno-stringop-overflow)
+  endif()
 endif()
 
 add_subdirectory(core)

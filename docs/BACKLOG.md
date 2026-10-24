@@ -39,7 +39,7 @@ Acceptance criteria:
   5. A figure-eight contour reports self-intersection; a square does not.
 Out of scope: boolean operations (T-0003).
 
-### T-0003 Polygon offset and booleans via Clipper2                           [status: in-progress]
+### T-0003 Polygon offset and booleans via Clipper2                           [status: verifying]
 Phase: 0   Module: core/geometry   Depends on: T-0001
 Goal: Wrap Clipper2 (FetchContent, pinned) behind `offsetContours(contours, distance, JoinType, tolerance)` and `booleanOp(Union|Difference|Intersection|Xor, subject, clip)` operating on `Contour`s: polygonise at tolerance, run Clipper2 in fixed-point, convert back, optionally refit arcs. Join types: round, sharp (mitre with limit), square.
 Interfaces: `geometry/offset.hpp`, `geometry/boolean.hpp`. Read-only: T-0001.
@@ -50,15 +50,17 @@ Acceptance criteria:
   4. Offset(+d) then offset(−d) of a rounded shape returns within 2·tolerance of the original (Hausdorff).
   5. Open-contour offset to the Left/Right of a polyline produces an open contour whose span count is n (the input count) minus trimmed inside corners, plus one join span per outside corner for Round/Square joins (and per mitre-limit fallback for Sharp). Every point of the result lies at distance ≥ d − tolerance from the input, and offset vertices/arcs lie at exactly d. *(Amended by director 2026-10-24: the original "same span count ±1" wording was wrong for joins at multiple outside corners.)*
 Out of scope: fillets, trim (Phase 1 cards).
+Re-scoped by director after 3 verification rounds (2026-10-24): self-intersecting loop+tail chains for Sharp/Square open offsets moved to T-0004 AC4.
 
 ### T-0004 Open-contour offset returns every chain; performance for dense input   [status: blocked]
 Phase: 0   Module: core/geometry   Depends on: T-0003   ADR: 0012 (if needed)
-Goal: `offsetOpenContour` currently returns only the longest chain when the offset splits (parts of the path within 2d of each other). For CAM this silently drops geometry. Return all chains in path order, and bring cost for 2000+ span inputs (polygonised Beziers) to well under a second.
+Goal: (Also absorbs the T-0003 round-3 residual defect: with Sharp/Square joins, an offset that curls into a closed loop can return loop + tail where the tail crosses the chain start — verifier repros A/B in T-0003 notes; 8/6840 random cases.) `offsetOpenContour` currently returns only the longest chain when the offset splits (parts of the path within 2d of each other). For CAM this silently drops geometry. Return all chains in path order, and bring cost for 2000+ span inputs (polygonised Beziers) to well under a second.
 Interfaces: owns the signature of `offsetOpenContour` (change return to `std::vector<Contour>`); update all call sites/tests.
 Acceptance criteria:
   1. A hairpin polyline narrower than 2d offset on the inside returns ≥2 chains, each satisfying the T-0003 AC5 distance property, ordered along the input path.
   2. For fixed-seed random paths with full ±180° headings (spirals, U-turns), the union of returned chains covers every input point's offset that is ≥ d − tol from the whole input (no valid geometry dropped), and every returned point is ≥ d − tol from the input.
   3. A 2000-span polyline offset completes in < 0.5 s in Release on CI Linux.
+  4. No returned chain is self-intersecting for any join type (split at T/X junctions into loop and tail). Regression repro A: lines (-6.4312190988360092,1.1428523003734297)→(-12.846939679779521,3.9348207104935331)→(-9.7434797348853266,-1.9260892800402662), then CW arc c(-17.535585621268488,-1.0001000247398364) r=7.846933811721553 a0=-0.11828212233321031 a1=-5.0521988806306926, then CW arc c(-17.021348114572877,0.45450829964057693) r=6.3041034287405493 a0=1.2309864265488941 a1=0.23263422704120162; offset d=2.5 Right with Sharp and Square.
 Out of scope: closed-contour offsets (Clipper2 path), arc refitting.
 
 ### T-0010 Document model: Job, Sheet, Layer, Object, UndoStack                [status: done]
