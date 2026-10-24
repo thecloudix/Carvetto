@@ -53,7 +53,7 @@ Acceptance criteria:
 Out of scope: fillets, trim (Phase 1 cards).
 Re-scoped by director after 3 verification rounds (2026-10-24): self-intersecting loop+tail chains for Sharp/Square open offsets moved to T-0004 AC4.
 
-### T-0004 Open-contour offset returns every chain; performance for dense input   [status: in-progress]
+### T-0004 Open-contour offset returns every chain; performance for dense input   [status: done]
 Phase: 0   Module: core/geometry   Depends on: T-0003   ADR: 0012 (if needed)
 Goal: (Also absorbs the T-0003 round-3 residual defect: with Sharp/Square joins, an offset that curls into a closed loop can return loop + tail where the tail crosses the chain start — verifier repros A/B in T-0003 notes; 8/6840 random cases.) `offsetOpenContour` currently returns only the longest chain when the offset splits (parts of the path within 2d of each other). For CAM this silently drops geometry. Return all chains in path order, and bring cost for 2000+ span inputs (polygonised Beziers) to well under a second.
 Interfaces: owns the signature of `offsetOpenContour` (change return to `std::vector<Contour>`); update all call sites/tests.
@@ -75,7 +75,7 @@ Acceptance criteria:
   4. Remove the "Known limitation (tracked as T-0005)" note from `intersect.hpp`.
 Out of scope: Bezier overlap detection; Debug-build Bezier length performance.
 
-### T-0006 Open-offset quality for toolpaths: speed at large d, exact arc mitres, snapped junctions   [status: blocked]
+### T-0006 Open-offset quality for toolpaths: speed at large d, exact arc mitres, snapped junctions   [status: ready]
 Phase: 1 (before the 2D Profile toolpath)   Module: core/geometry   Depends on: T-0004
 Goal: Non-blocking findings from T-0004 verification that matter once offsets feed G-code.
 Acceptance criteria:
