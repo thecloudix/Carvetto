@@ -1,7 +1,7 @@
+#include "carvetto/geometry/vec2.hpp"
+
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
-
-#include "carvetto/geometry/vec2.hpp"
 
 using carvetto::geometry::Vec2;
 using Catch::Matchers::WithinAbs;

@@ -13,7 +13,7 @@ Concurrency note: T-0001 (geometry primitives) is the root dependency; everythin
 Phase: 0   Module: repo   Depends on: —
 Goal: CMake project, core lib + Catch2 tests, CI, docs, agent workflow. Done by the director.
 
-### T-0001 Geometry primitives: Vec2, Box2, Transform2, Span, Contour         [status: in-progress]
+### T-0001 Geometry primitives: Vec2, Box2, Transform2, Span, Contour         [status: done]
 Phase: 0   Module: core/geometry   Depends on: —
 Goal: The foundation every other module uses. `Vec2` (double), `Box2`, `Transform2` (affine 2×3, compose/invert/apply), `Span` as a variant of `LineSpan`, `ArcSpan` (centre, radius, start/end angle, direction), `BezierSpan` (cubic), `Contour` (ordered spans, open/closed flag, layer-agnostic), with length, bounding box, point-at-parameter, reverse, transform, and polygonisation to `Polyline` at a chordal tolerance.
 Interfaces: owns `core/include/carvetto/geometry/{vec2,box2,transform2,span,contour,polyline,tolerance}.hpp`.
@@ -27,7 +27,7 @@ Acceptance criteria:
 Out of scope: offsetting, booleans, intersection, snapping.
 Notes/refs: ARCHITECTURE.md "Vectors are span lists".
 
-### T-0002 Span intersections and contour utilities                           [status: blocked]
+### T-0002 Span intersections and contour utilities                           [status: ready]
 Phase: 0   Module: core/geometry   Depends on: T-0001
 Goal: Robust line–line, line–arc, arc–arc intersection (Bezier via polygonisation + refinement), point-in-contour (even–odd and non-zero), contour orientation and area, closest point on span/contour, self-intersection detection.
 Interfaces: `geometry/intersect.hpp`, `geometry/contour_ops.hpp`. Read-only: T-0001 headers.
@@ -39,7 +39,7 @@ Acceptance criteria:
   5. A figure-eight contour reports self-intersection; a square does not.
 Out of scope: boolean operations (T-0003).
 
-### T-0003 Polygon offset and booleans via Clipper2                           [status: blocked]
+### T-0003 Polygon offset and booleans via Clipper2                           [status: ready]
 Phase: 0   Module: core/geometry   Depends on: T-0001
 Goal: Wrap Clipper2 (FetchContent, pinned) behind `offsetContours(contours, distance, JoinType, tolerance)` and `booleanOp(Union|Difference|Intersection|Xor, subject, clip)` operating on `Contour`s: polygonise at tolerance, run Clipper2 in fixed-point, convert back, optionally refit arcs. Join types: round, sharp (mitre with limit), square.
 Interfaces: `geometry/offset.hpp`, `geometry/boolean.hpp`. Read-only: T-0001.
@@ -51,7 +51,7 @@ Acceptance criteria:
   5. Open-contour offset to the Left/Right of a polyline produces an open contour of the same span count ±1.
 Out of scope: fillets, trim (Phase 1 cards).
 
-### T-0010 Document model: Job, Sheet, Layer, Object, UndoStack                [status: blocked]
+### T-0010 Document model: Job, Sheet, Layer, Object, UndoStack                [status: ready]
 Phase: 0   Module: core/document   Depends on: T-0001
 Goal: In-memory document: `Job` (type single/double/rotary, size, units display setting, Z-zero, datum), `Sheet`s (each with size/datum), `Layer`s (name, colour, visible, locked, order), `Object`s (vector object holding contours + creation params as a tagged variant; bitmap placeholder; group), stable IDs, selection set, and a command-based `UndoStack` with coalescing.
 Interfaces: `document/*.hpp`. Read-only: T-0001.
@@ -72,7 +72,7 @@ Acceptance criteria:
   3. Loading a file with a higher major version fails with a clear error, not a crash.
 Out of scope: heightfields, toolpath caches (later phases).
 
-### T-0020 Tool database and machines                                          [status: blocked]
+### T-0020 Tool database and machines                                          [status: ready]
 Phase: 0   Module: core/tooling   Depends on: T-0001
 Goal: `ToolType` (end mill, ball nose, V-bit, engraving, tapered ball nose, radiused end mill, form tool with profile, diamond drag, drill), `Tool` geometry per type, `CuttingData` keyed by (machine, material): pass depth, stepover, final/clearance stepover, spindle, feed, plunge, tool number; `Material`, `Machine` (name, accelerations, associated posts); `ToolDatabase` with groups, CRUD, JSON import/export, merge with/without overwrite.
 Acceptance criteria:
@@ -82,7 +82,7 @@ Acceptance criteria:
   4. Looking up cutting data for a missing (machine, material) pair falls back to the tool's default data and says so.
 Notes/refs: feature-inventory §5 "Tool Database".
 
-### T-0030 `.pp` post-processor interpreter                                    [status: blocked]
+### T-0030 `.pp` post-processor interpreter                                    [status: ready]
 Phase: 0   Module: core/post   Depends on: T-0001
 Goal: Parse the `.pp` grammar (ADR-0004): global settings, `VAR` definitions with format spec, `begin/end` blocks, `+`-prefixed output lines, comments. Interpret a `Toolpath` move list (define a minimal `Move` struct in `toolpath/move.hpp` owned by this task until T-0040 lands; coordinate with it) into text: header, per-toolpath tool change / new segment, rapid/feed/plunge/retract/arc/dwell blocks, footer; variable formatting (precision, absolute/incremental, prefix), line numbering, unit scaling, arc I/J vs R, inverse-time option.
 Acceptance criteria:
@@ -93,7 +93,7 @@ Acceptance criteria:
   5. `ROTARY_WRAP_Y` wraps Y into A for a 50 mm diameter job (Y=π·25 → A=180°).
 Out of scope: saving dialogs, direct output.
 
-### T-0040 Toolpath core types and linking                                    [status: blocked]
+### T-0040 Toolpath core types and linking                                    [status: ready]
 Phase: 0   Module: core/toolpath   Depends on: T-0001
 Goal: `Move` (kind: rapid/feed/plunge/retract/arcCW/arcCCW/dwell; endpoint; arc centre; feed override), `Toolpath` (name, tool snapshot, moves, bounding box, length by kind), `PassPlan` (start depth, cut depth, pass depth, exact-step flag, last-pass thickness → list of Z levels), linking helper that joins contour passes with safe-Z retracts and rapids, and `estimateTime(Toolpath, rapidRate, feed, accel)` baseline.
 Interfaces: `toolpath/{move,toolpath,pass_plan,linking,time}.hpp`. If T-0030 has already defined `Move`, adopt it unchanged.
@@ -103,7 +103,7 @@ Acceptance criteria:
   3. Total length by kind sums to the analytic value for a 10×10 square at one depth within 1e-9.
   4. Time estimate for 1000 mm at 1000 mm/min with infinite acceleration is 60 s; with finite acceleration it is strictly greater.
 
-### T-0050 CI pipeline: Linux core+tests, Windows Qt app                        [status: blocked]
+### T-0050 CI pipeline: Linux core+tests, Windows Qt app                        [status: ready]
 Phase: 0   Module: repo   Depends on: T-0001
 Goal: `.github/workflows/ci.yml` builds and tests on `ubuntu-latest` (GCC, core only) and `windows-latest` (MSVC, Qt 6 via `jurplel/install-qt-action`, full app). Caches FetchContent deps. Fails on warnings.
 Acceptance criteria:

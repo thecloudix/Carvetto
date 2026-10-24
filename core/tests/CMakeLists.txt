@@ -9,6 +9,11 @@ FetchContent_MakeAvailable(Catch2)
 
 add_executable(carvetto_tests
   geometry/vec2_test.cpp
+  geometry/box2_test.cpp
+  geometry/transform2_test.cpp
+  geometry/span_test.cpp
+  geometry/polyline_test.cpp
+  geometry/contour_test.cpp
 )
 target_link_libraries(carvetto_tests PRIVATE carvetto::core Catch2::Catch2WithMain carvetto_warnings)
 

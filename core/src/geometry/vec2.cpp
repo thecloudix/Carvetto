@@ -2,6 +2,22 @@
 
 namespace carvetto::geometry {
 
+double normalizeAngle(double angle) {
+    double a = std::fmod(angle, kTwoPi);
+    if (a < 0.0) {
+        a += kTwoPi;
+    }
+    // fmod can return exactly kTwoPi after the add for tiny negatives.
+    if (a >= kTwoPi) {
+        a = 0.0;
+    }
+    return a;
+}
+
+Vec2 Vec2::fromAngle(double angle, double length) {
+    return {std::cos(angle) * length, std::sin(angle) * length};
+}
+
 Vec2 Vec2::normalized() const {
     const double len = length();
     if (len <= 0.0) {
