@@ -64,7 +64,7 @@ Acceptance criteria:
 Out of scope: file I/O (T-0012), rendering.
 
 ### T-0012 Native `.carv` file I/O                                            [status: blocked]
-Phase: 0   Module: core/document   Depends on: T-0010   **Needs owner sign-off of ADR-0003 before start**
+Phase: 0   Module: core/document   Depends on: T-0010   (ADR-0003 accepted)
 Goal: Save/load the document to the `.carv` zip container (miniz, nlohmann/json pinned). Versioned manifest; forward-compatible unknown fields preserved.
 Acceptance criteria:
   1. Save → load → save produces byte-identical `job.json` for a document with 3 layers, 50 vector objects (lines, arcs, Beziers), text params, and document variables.
