@@ -87,7 +87,7 @@ Acceptance criteria:
   5. Object IDs are unique across undo/redo and survive copy/paste as new IDs.
 Out of scope: file I/O (T-0012), rendering.
 
-### T-0011 IdGenerator overflow guard                                           [status: verifying]
+### T-0011 IdGenerator overflow guard                                           [status: done]
 Phase: 0   Module: core/document   Depends on: T-0010
 Goal: The id generator wraps at 2^64 and can then hand out ids that collide with existing sheets/layers/objects (found while verifying T-0012). Make allocation fail loudly instead.
 Acceptance criteria:
@@ -105,7 +105,7 @@ Acceptance criteria:
   3. Loading a file with a higher major version fails with a clear error, not a crash.
 Out of scope: heightfields, toolpath caches (later phases).
 
-### T-0013 Reject preset ids already in use; integrity check for cross-kind duplicates   [status: blocked]
+### T-0013 Reject preset ids already in use; integrity check for cross-kind duplicates   [status: in-progress]
 Phase: 0   Module: core/document   Depends on: T-0011
 Goal: Commands that accept a caller-supplied (preset) id currently accept one already used by another kind (e.g. an object taking a layer's id) or an id below the generator's next value (re-adding a removed id). Found while verifying T-0011.
 Acceptance criteria:
