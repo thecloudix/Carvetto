@@ -13,7 +13,7 @@ Concurrency note: T-0001 (geometry primitives) is the root dependency; everythin
 Phase: 0   Module: repo   Depends on: —
 Goal: CMake project, core lib + Catch2 tests, CI, docs, agent workflow. Done by the director.
 
-### T-0001 Geometry primitives: Vec2, Box2, Transform2, Span, Contour         [status: ready]
+### T-0001 Geometry primitives: Vec2, Box2, Transform2, Span, Contour         [status: in-progress]
 Phase: 0   Module: core/geometry   Depends on: —
 Goal: The foundation every other module uses. `Vec2` (double), `Box2`, `Transform2` (affine 2×3, compose/invert/apply), `Span` as a variant of `LineSpan`, `ArcSpan` (centre, radius, start/end angle, direction), `BezierSpan` (cubic), `Contour` (ordered spans, open/closed flag, layer-agnostic), with length, bounding box, point-at-parameter, reverse, transform, and polygonisation to `Polyline` at a chordal tolerance.
 Interfaces: owns `core/include/carvetto/geometry/{vec2,box2,transform2,span,contour,polyline,tolerance}.hpp`.
