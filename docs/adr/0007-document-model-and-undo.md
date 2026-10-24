@@ -84,3 +84,27 @@ the ones a later card (file I/O, toolpaths, UI) would otherwise have to reverse-
 - Deleting a sheet deletes the objects on it (undoable). Whether the product should instead move
   them is a product question left to the owner; the command is isolated so either is a local
   change.
+
+## Amendments
+
+### A1 (T-0011, 2026-10-24): id ceiling and exhaustion
+Decision 3 is amended. The shared generator no longer wraps at 2^64:
+- **Ceiling.** Every id lies in `[1, IdGenerator::kMaxId)` with `kMaxId = 2^62`
+  (`carvetto/document/ids.hpp`). File I/O (T-0012) is to use the same constant to reject out-of-range ids on
+  load. 2^62 leaves headroom so `value + 1` and small sums never overflow 64 bits.
+- **Exhaustion.** Once `peek() == kMaxId` the generator is exhausted and stays so: it never wraps,
+  never reuses a value and never goes backwards. `reserveThrough(v)` with `v >= kMaxId - 1` clamps
+  to exhausted instead of wrapping. `tryAllocate()` returns nullopt; `allocate()` asserts in Debug
+  and returns 0 (the null id) without advancing in Release. Raw `Document::insertSheet/Layer/Object`
+  with a null id on an exhausted generator therefore assert (Debug) or insert nothing and return a
+  null id (Release).
+- **Commands follow decision 2.** Every command that creates something (`AddObjectCommand`,
+  `PasteObjectsCommand`, `GroupObjectsCommand`, `AddLayerCommand`, `AddSheetCommand`) checks
+  `IdGenerator::canAllocate(n)` before allocating anything and returns false from its first `apply`
+  when too few ids remain, or when a caller-supplied id is at or above `kMaxId`. It is then a no-op:
+  nothing changes, nothing is recorded, `Document::execute` returns false; same in Debug and Release.
+  Paste is all-or-nothing (needs one id per clipboard object). Redo never allocates, so undo/redo
+  is unaffected by exhaustion.
+- **Integrity.** `Document::checkIntegrity()` reports `IdOutOfRange` for a null id or an id
+  `>= kMaxId` on any sheet, layer or object (including an object whose stored id differs from its
+  key), and `IdNotBelowNext` when the generator's next id is `<=` any existing id.

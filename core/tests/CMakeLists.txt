@@ -35,6 +35,7 @@ add_executable(carvetto_tests
   document/document_test.cpp
   document/commands_test.cpp
   document/integrity_test.cpp
+  document/id_overflow_test.cpp
   geometry/offset_test.cpp
   geometry/boolean_test.cpp
 )

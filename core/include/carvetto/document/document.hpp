@@ -36,9 +36,12 @@ struct IntegrityIssue {
         BadActiveLayer,       ///< The active layer does not exist.
         BadActiveSheet,       ///< The active sheet does not exist.
         StaleSelection,       ///< The selection holds an id that does not exist.
+        IdOutOfRange,         ///< A sheet, layer or object id is null or >= `IdGenerator::kMaxId`.
+        IdNotBelowNext,       ///< The id generator's next id is <= an existing id (could reuse it).
     };
     Kind kind;
-    /// The object (or zero) the issue is about.
+    /// The object (or zero) the issue is about. Zero for id issues on a layer or sheet; the
+    /// message names the kind and value.
     ObjectId object;
     /// Second object involved (the child or parent), or zero.
     ObjectId related;
@@ -80,6 +83,8 @@ class Document {
     /// Returns false when `id` is not a sheet.
     bool setActiveSheet(SheetId id);
     /// Raw: inserts `sheet` (allocating an id when null) at `index` or at the end. Returns the id.
+    /// With a null id and an exhausted generator: asserts (Debug), inserts nothing and returns a
+    /// null id (Release).
     SheetId insertSheet(Sheet sheet, std::optional<std::size_t> index = std::nullopt);
     /// Raw: removes a sheet. Fails (nullopt) when it is the last sheet or still has objects.
     /// The active sheet falls back to the first remaining sheet.
@@ -99,6 +104,7 @@ class Document {
     /// Returns false when `id` is not a layer.
     bool setActiveLayer(LayerId id);
     /// Raw: inserts `layer` (allocating an id when null) at `index` or on top. Returns the id.
+    /// Exhausted generator: as `insertSheet`.
     LayerId insertLayer(Layer layer, std::optional<std::size_t> index = std::nullopt);
     /// Raw: removes a layer. Fails (nullopt) when it is the last layer or still has objects.
     /// The active layer falls back to the default layer.
@@ -119,6 +125,7 @@ class Document {
     const std::map<ObjectId, Object>& objects() const { return objects_; }
     /// Raw: inserts `obj`, allocating an id when `obj.id` is null. A non-null id must be unused
     /// and previously allocated by this document (undo/redo re-inserting). Returns the id.
+    /// Exhausted generator: as `insertSheet`.
     ObjectId insertObject(Object obj);
     /// Raw: removes an object (and deselects it). Nullopt when absent.
     std::optional<Object> takeObject(ObjectId id);
@@ -131,10 +138,13 @@ class Document {
     std::vector<ObjectId> withDescendants(const std::vector<ObjectId>& ids) const;
 
     /// Lists every structural inconsistency (group links, missing layers/sheets, cycles, stale
-    /// active layer/sheet or selection). Empty for a consistent document; every command keeps it so.
+    /// active layer/sheet or selection, ids outside `[1, IdGenerator::kMaxId)` or not below the
+    /// generator's next id). Empty for a consistent document; every command keeps it so.
     std::vector<IntegrityIssue> checkIntegrity() const;
 
     // --- Ids -------------------------------------------------------------------------------
+    // Each returns a null id when the generator is exhausted (and asserts in Debug); commands
+    // check `idGenerator().canAllocate(n)` first and refuse (no-op) instead.
     ObjectId allocateObjectId() { return ObjectId{ids_.allocate()}; }
     LayerId allocateLayerId() { return LayerId{ids_.allocate()}; }
     SheetId allocateSheetId() { return SheetId{ids_.allocate()}; }
