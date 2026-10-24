@@ -30,7 +30,7 @@ set(CLIPPER2_TESTS    OFF CACHE BOOL   "" FORCE)
 set(CLIPPER2_USINGZ   OFF CACHE STRING "" FORCE)
 FetchContent_MakeAvailable(Clipper2)
 set_target_properties(Clipper2 PROPERTIES
-  INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${clipper2_SOURCE_DIR}/CPP/Clipper2Lib/include")
+  INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${clipper2_SOURCE_DIR}/CPP/Clipper2Lib/include>")
 # Clipper2 builds itself with -Werror (/WX on MSVC). Strip that so warnings a future compiler
 # finds in third-party code cannot break our build; Carvetto targets keep warnings-as-errors.
 get_target_property(_clipper2_opts Clipper2 COMPILE_OPTIONS)
