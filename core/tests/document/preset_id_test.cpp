@@ -424,3 +424,54 @@ TEST_CASE("randomized preset-id commands never produce a shared id, through undo
         }
     }
 }
+
+// T-0014 (ADR-0007 amendment A3): an object whose stored id differs from its map key is reported,
+// and the stored id takes part in the DuplicateId check.
+TEST_CASE("checkIntegrity reports an object whose stored id differs from its key",
+          "[document][ids][integrity]") {
+    SECTION("regression: stored id rewritten to the default layer's id") {
+        Document d;
+        const ObjectId key = d.insertObject(squareAt(d, 0));
+        requireIntact(d, "after insert");
+        d.findObject(key)->id = ObjectId{d.defaultLayer().value};
+        const auto issues = d.checkIntegrity();
+        INFO(describe(issues));
+        REQUIRE(countKind(issues, Kind::IdKeyMismatch) == 1);
+        const auto mismatch = std::find_if(issues.begin(), issues.end(), [](const IntegrityIssue& i) {
+            return i.kind == Kind::IdKeyMismatch;
+        });
+        CHECK(mismatch->object == key);
+        CHECK(mismatch->related == ObjectId{d.defaultLayer().value});
+        REQUIRE(countKind(issues, Kind::DuplicateId) == 1);
+        const auto dup = std::find_if(issues.begin(), issues.end(),
+                                      [](const IntegrityIssue& i) { return i.kind == Kind::DuplicateId; });
+        CHECK(dup->object == key);
+        CHECK(dup->message.find("layer") != std::string::npos);
+        CHECK(dup->message.find("stored id") != std::string::npos);
+    }
+    SECTION("stored id equal to another object's key") {
+        Document d;
+        const ObjectId a = d.insertObject(squareAt(d, 0));
+        const ObjectId b = d.insertObject(squareAt(d, 10));
+        d.findObject(b)->id = a;
+        const auto issues = d.checkIntegrity();
+        INFO(describe(issues));
+        CHECK(countKind(issues, Kind::IdKeyMismatch) == 1);
+        REQUIRE(countKind(issues, Kind::DuplicateId) == 1);
+        const auto dup = std::find_if(issues.begin(), issues.end(),
+                                      [](const IntegrityIssue& i) { return i.kind == Kind::DuplicateId; });
+        CHECK(dup->object == a);
+    }
+    SECTION("stored id with an unused in-range value is a mismatch only") {
+        Document d;
+        const ObjectId a = d.insertObject(squareAt(d, 0));
+        const ObjectId b = d.insertObject(squareAt(d, 10));  // allocated, then freed below
+        REQUIRE(d.takeObject(b).has_value());
+        d.findObject(a)->id = b;
+        const auto issues = d.checkIntegrity();
+        INFO(describe(issues));
+        CHECK(countKind(issues, Kind::IdKeyMismatch) == 1);
+        CHECK(countKind(issues, Kind::DuplicateId) == 0);
+        CHECK(issues.size() == 1);
+    }
+}

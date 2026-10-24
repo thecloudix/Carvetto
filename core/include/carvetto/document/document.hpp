@@ -39,7 +39,9 @@ struct IntegrityIssue {
         IdOutOfRange,         ///< A sheet, layer or object id is null or >= `IdGenerator::kMaxId`.
         IdNotBelowNext,       ///< The id generator's next id is <= an existing id (could reuse it).
         DuplicateId,          ///< One id value is used by more than one sheet, layer or object
-                              ///< (across kinds, or two sheets/layers sharing an id).
+                              ///< (across kinds, or two sheets/layers sharing an id). An
+                              ///< object's stored `id` counts as well as its map key.
+        IdKeyMismatch,        ///< An object's stored `id` differs from the key it is stored under.
     };
     Kind kind;
     /// The object (or zero) the issue is about. Zero for id issues on a layer or sheet; the

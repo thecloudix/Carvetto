@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <map>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -297,6 +298,64 @@ std::string idText(ObjectId id) {
     return "#" + std::to_string(id.value);
 }
 
+/// For each object whose parent chain loops, the first object on the loop that the chain reaches.
+std::map<ObjectId, ObjectId> findParentCycles(const std::map<ObjectId, Object>& objects) {
+    // Parent links form a functional graph (at most one parent per object). Each object is walked
+    // at most once: the walk from an unvisited object follows parent links, pushing objects on an
+    // explicit path (no recursion, so very deep chains cannot overflow the stack), until it hits
+    // no parent, a missing object, an object finished by an earlier walk, or an object already on
+    // the path. In the last case the path suffix from that object is a loop; every loop object
+    // enters the loop at itself. Objects before the loop, and objects whose walk reaches a finished
+    // object, inherit that object's entry (if any). This matches walking each chain separately and
+    // naming the first repeated object, in O(N log N) overall.
+    enum class Mark : unsigned char { OnPath, Done };
+    std::map<ObjectId, Mark> marks;
+    std::map<ObjectId, ObjectId> entry;
+    std::vector<ObjectId> path;
+    for (const auto& entryPair : objects) {
+        const ObjectId start = entryPair.first;
+        if (marks.count(start) != 0) {
+            continue;
+        }
+        path.clear();
+        std::optional<ObjectId> inherited;
+        for (ObjectId cur = start;;) {
+            marks[cur] = Mark::OnPath;
+            path.push_back(cur);
+            const Object& obj = objects.at(cur);
+            if (!obj.parent || objects.count(*obj.parent) == 0) {
+                break;
+            }
+            const ObjectId next = *obj.parent;
+            const auto mark = marks.find(next);
+            if (mark == marks.end()) {
+                cur = next;
+                continue;
+            }
+            if (mark->second == Mark::OnPath) {
+                // Loop: the path from `next` to the end. Those objects enter the loop at themselves.
+                const auto loopBegin = std::find(path.begin(), path.end(), next);
+                for (auto it = loopBegin; it != path.end(); ++it) {
+                    entry[*it] = *it;
+                    marks[*it] = Mark::Done;
+                }
+                path.erase(loopBegin, path.end());
+                inherited = next;
+            } else if (const auto e = entry.find(next); e != entry.end()) {
+                inherited = e->second;
+            }
+            break;
+        }
+        for (ObjectId id : path) {
+            marks[id] = Mark::Done;
+            if (inherited) {
+                entry[id] = *inherited;
+            }
+        }
+    }
+    return entry;
+}
+
 }  // namespace
 
 std::vector<IntegrityIssue> Document::checkIntegrity() const {
@@ -340,6 +399,8 @@ std::vector<IntegrityIssue> Document::checkIntegrity() const {
     for (const auto& [id, obj] : objects_) {
         checkId(id.value, id, "object");
         if (obj.id != id) {
+            report(Kind::IdKeyMismatch, id, obj.id,
+                   "object stored under " + idText(id) + " has id " + idText(obj.id));
             checkId(obj.id.value, id, "object (stored id)");
         }
     }
@@ -357,11 +418,19 @@ std::vector<IntegrityIssue> Document::checkIntegrity() const {
     for (const Layer& layer : layers_) {
         owners[layer.id.value].names.push_back("layer");
     }
-    for (const auto& [id, obj] : objects_) {
-        IdOwners& entry = owners[id.value];
-        entry.names.push_back("object");
+    // An object's stored id is a value it claims too (ADR-0007 amendment A3): a mismatching one
+    // is counted separately, so it collides with whatever else uses that value.
+    const auto addObjectOwner = [&owners](std::uint64_t value, ObjectId key, const char* name) {
+        IdOwners& entry = owners[value];
+        entry.names.push_back(name);
         if (entry.object.isNull()) {
-            entry.object = id;
+            entry.object = key;
+        }
+    };
+    for (const auto& [id, obj] : objects_) {
+        addObjectOwner(id.value, id, "object");
+        if (obj.id != id) {
+            addObjectOwner(obj.id.value, id, "object (stored id)");
         }
     }
     for (const auto& [value, entry] : owners) {
@@ -374,6 +443,19 @@ std::vector<IntegrityIssue> Document::checkIntegrity() const {
         }
         report(Kind::DuplicateId, entry.object, {}, std::move(message));
     }
+
+    // Pre-passes so the per-object loop below is O(log N) per check whatever the group depth or
+    // width (T-0014): every (group, child) link, and for each object whose parent chain loops, the
+    // first node on the loop that its chain reaches.
+    std::set<std::pair<ObjectId, ObjectId>> listedPairs;  // (group, child)
+    for (const auto& [id, obj] : objects_) {
+        if (const auto* g = obj.asGroup()) {
+            for (ObjectId child : g->children) {
+                listedPairs.emplace(id, child);
+            }
+        }
+    }
+    const std::map<ObjectId, ObjectId> cycleEntry = findParentCycles(objects_);
 
     std::map<ObjectId, ObjectId> listedBy;  // child -> group listing it
     for (const auto& [id, obj] : objects_) {
@@ -412,21 +494,14 @@ std::vector<IntegrityIssue> Document::checkIntegrity() const {
                 report(Kind::BadParent, id, *obj.parent,
                        idText(id) + " has missing or non-group parent " + idText(*obj.parent));
             } else {
-                const auto& kids = p->asGroup()->children;
-                if (std::find(kids.begin(), kids.end(), id) == kids.end()) {
+                if (listedPairs.count({*obj.parent, id}) == 0) {
                     report(Kind::ChildNotListed, id, *obj.parent,
                            idText(id) + " is not listed by its parent " + idText(*obj.parent));
                 }
             }
         }
-        // Cycle detection: walk up at most objectCount() links.
-        std::set<ObjectId> seen{id};
-        for (const Object* cur = &obj; cur && cur->parent;) {
-            if (!seen.insert(*cur->parent).second) {
-                report(Kind::Cycle, id, *cur->parent, "parent chain of " + idText(id) + " loops");
-                break;
-            }
-            cur = findObject(*cur->parent);
+        if (const auto it = cycleEntry.find(id); it != cycleEntry.end()) {
+            report(Kind::Cycle, id, it->second, "parent chain of " + idText(id) + " loops");
         }
     }
     return issues;
