@@ -92,7 +92,7 @@ Acceptance criteria:
   4. Looking up cutting data for a missing (machine, material) pair falls back to the tool's default data and says so.
 Notes/refs: feature-inventory §5 "Tool Database".
 
-### T-0030 `.pp` post-processor interpreter                                    [status: in-progress]
+### T-0030 `.pp` post-processor interpreter                                    [status: done]
 Phase: 0   Module: core/post   Depends on: T-0001
 Goal: Parse the `.pp` grammar (ADR-0004): global settings, `VAR` definitions with format spec, `begin/end` blocks, double-quoted output lines, `+`-prefixed comment lines. *(Amended by director 2026-10-24: `+` marks comments in existing posts; quoted strings are output.)* Interpret a `Toolpath` move list (consume `toolpath/move.hpp` and `toolpath/toolpath.hpp` from T-0040 — read-only; see ADR-0008) into text: header, per-toolpath tool change / new segment, rapid/feed/plunge/retract/arc/dwell blocks, footer; variable formatting (precision, absolute/incremental, prefix), line numbering, unit scaling, arc I/J vs R, inverse-time option.
 Acceptance criteria:
