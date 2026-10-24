@@ -48,7 +48,7 @@ Acceptance criteria:
   2. Offsetting a 10×10 square by −6 gives zero contours.
   3. Union of two overlapping squares gives one contour; difference of a square and a fully-contained square gives one outer and one hole (two contours, opposite orientation).
   4. Offset(+d) then offset(−d) of a rounded shape returns within 2·tolerance of the original (Hausdorff).
-  5. Open-contour offset to the Left/Right of a polyline produces an open contour of the same span count ±1.
+  5. Open-contour offset to the Left/Right of a polyline produces an open contour whose span count is n (the input count) minus trimmed inside corners, plus one join span per outside corner for Round/Square joins (and per mitre-limit fallback for Sharp). Every point of the result lies at distance ≥ d − tolerance from the input, and offset vertices/arcs lie at exactly d. *(Amended by director 2026-10-24: the original "same span count ±1" wording was wrong for joins at multiple outside corners.)*
 Out of scope: fillets, trim (Phase 1 cards).
 
 ### T-0010 Document model: Job, Sheet, Layer, Object, UndoStack                [status: in-progress]
