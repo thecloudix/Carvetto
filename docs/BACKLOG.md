@@ -40,7 +40,7 @@ Acceptance criteria:
 Out of scope: boolean operations (T-0003).
 Re-scoped by director after 3 verification rounds (2026-10-24): 2-span closed contour junction defect and two tolerance-boundary findings moved to T-0005.
 
-### T-0003 Polygon offset and booleans via Clipper2                           [status: verifying]
+### T-0003 Polygon offset and booleans via Clipper2                           [status: done]
 Phase: 0   Module: core/geometry   Depends on: T-0001
 Goal: Wrap Clipper2 (FetchContent, pinned) behind `offsetContours(contours, distance, JoinType, tolerance)` and `booleanOp(Union|Difference|Intersection|Xor, subject, clip)` operating on `Contour`s: polygonise at tolerance, run Clipper2 in fixed-point, convert back, optionally refit arcs. Join types: round, sharp (mitre with limit), square.
 Interfaces: `geometry/offset.hpp`, `geometry/boolean.hpp`. Read-only: T-0001.
@@ -53,7 +53,7 @@ Acceptance criteria:
 Out of scope: fillets, trim (Phase 1 cards).
 Re-scoped by director after 3 verification rounds (2026-10-24): self-intersecting loop+tail chains for Sharp/Square open offsets moved to T-0004 AC4.
 
-### T-0004 Open-contour offset returns every chain; performance for dense input   [status: blocked]
+### T-0004 Open-contour offset returns every chain; performance for dense input   [status: in-progress]
 Phase: 0   Module: core/geometry   Depends on: T-0003   ADR: 0012 (if needed)
 Goal: (Also absorbs the T-0003 round-3 residual defect: with Sharp/Square joins, an offset that curls into a closed loop can return loop + tail where the tail crosses the chain start — verifier repros A/B in T-0003 notes; 8/6840 random cases.) `offsetOpenContour` currently returns only the longest chain when the offset splits (parts of the path within 2d of each other). For CAM this silently drops geometry. Return all chains in path order, and bring cost for 2000+ span inputs (polygonised Beziers) to well under a second.
 Interfaces: owns the signature of `offsetOpenContour` (change return to `std::vector<Contour>`); update all call sites/tests.
