@@ -27,7 +27,7 @@ Acceptance criteria:
 Out of scope: offsetting, booleans, intersection, snapping.
 Notes/refs: ARCHITECTURE.md "Vectors are span lists".
 
-### T-0002 Span intersections and contour utilities                           [status: verifying]
+### T-0002 Span intersections and contour utilities                           [status: done]
 Phase: 0   Module: core/geometry   Depends on: T-0001
 Goal: Robust line–line, line–arc, arc–arc intersection (Bezier via polygonisation + refinement), point-in-contour (even–odd and non-zero), contour orientation and area, closest point on span/contour, self-intersection detection.
 Interfaces: `geometry/intersect.hpp`, `geometry/contour_ops.hpp`. Read-only: T-0001 headers.
@@ -64,7 +64,7 @@ Acceptance criteria:
   4. No returned chain is self-intersecting for any join type (split at T/X junctions into loop and tail). Regression repro A: lines (-6.4312190988360092,1.1428523003734297)→(-12.846939679779521,3.9348207104935331)→(-9.7434797348853266,-1.9260892800402662), then CW arc c(-17.535585621268488,-1.0001000247398364) r=7.846933811721553 a0=-0.11828212233321031 a1=-5.0521988806306926, then CW arc c(-17.021348114572877,0.45450829964057693) r=6.3041034287405493 a0=1.2309864265488941 a1=0.23263422704120162; offset d=2.5 Right with Sharp and Square.
 Out of scope: closed-contour offsets (Clipper2 path), arc refitting.
 
-### T-0005 Intersection residuals: 2-span closed contours, tolerance-boundary cases   [status: blocked]
+### T-0005 Intersection residuals: 2-span closed contours, tolerance-boundary cases   [status: in-progress]
 Phase: 0   Module: core/geometry   Depends on: T-0002   ADR: amend 0009
 Goal: Close the residual defects found in T-0002's third verification round.
 Interfaces: `geometry/intersect.hpp` / `contour_ops.hpp` implementations; signatures unchanged.
