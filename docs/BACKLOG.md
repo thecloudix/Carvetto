@@ -51,6 +51,16 @@ Acceptance criteria:
   5. Open-contour offset to the Left/Right of a polyline produces an open contour whose span count is n (the input count) minus trimmed inside corners, plus one join span per outside corner for Round/Square joins (and per mitre-limit fallback for Sharp). Every point of the result lies at distance ≥ d − tolerance from the input, and offset vertices/arcs lie at exactly d. *(Amended by director 2026-10-24: the original "same span count ±1" wording was wrong for joins at multiple outside corners.)*
 Out of scope: fillets, trim (Phase 1 cards).
 
+### T-0004 Open-contour offset returns every chain; performance for dense input   [status: blocked]
+Phase: 0   Module: core/geometry   Depends on: T-0003   ADR: 0012 (if needed)
+Goal: `offsetOpenContour` currently returns only the longest chain when the offset splits (parts of the path within 2d of each other). For CAM this silently drops geometry. Return all chains in path order, and bring cost for 2000+ span inputs (polygonised Beziers) to well under a second.
+Interfaces: owns the signature of `offsetOpenContour` (change return to `std::vector<Contour>`); update all call sites/tests.
+Acceptance criteria:
+  1. A hairpin polyline narrower than 2d offset on the inside returns ≥2 chains, each satisfying the T-0003 AC5 distance property, ordered along the input path.
+  2. For fixed-seed random paths with full ±180° headings (spirals, U-turns), the union of returned chains covers every input point's offset that is ≥ d − tol from the whole input (no valid geometry dropped), and every returned point is ≥ d − tol from the input.
+  3. A 2000-span polyline offset completes in < 0.5 s in Release on CI Linux.
+Out of scope: closed-contour offsets (Clipper2 path), arc refitting.
+
 ### T-0010 Document model: Job, Sheet, Layer, Object, UndoStack                [status: in-progress]
 Phase: 0   Module: core/document   Depends on: T-0001
 Goal: In-memory document: `Job` (type single/double/rotary, size, units display setting, Z-zero, datum), `Sheet`s (each with size/datum), `Layer`s (name, colour, visible, locked, order), `Object`s (vector object holding contours + creation params as a tagged variant; bitmap placeholder; group), stable IDs, selection set, and a command-based `UndoStack` with coalescing.
