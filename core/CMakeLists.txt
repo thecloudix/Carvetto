@@ -28,6 +28,9 @@ add_library(carvetto_core STATIC
   src/tooling/tool.cpp
   src/tooling/tool_database.cpp
   src/tooling/json_io.cpp
+  src/post/variables.cpp
+  src/post/parser.cpp
+  src/post/interpreter.cpp
 )
 target_include_directories(carvetto_core PUBLIC include)
 target_link_libraries(carvetto_core
