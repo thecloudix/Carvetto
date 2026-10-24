@@ -27,7 +27,7 @@ Acceptance criteria:
 Out of scope: offsetting, booleans, intersection, snapping.
 Notes/refs: ARCHITECTURE.md "Vectors are span lists".
 
-### T-0002 Span intersections and contour utilities                           [status: ready]
+### T-0002 Span intersections and contour utilities                           [status: in-progress]
 Phase: 0   Module: core/geometry   Depends on: T-0001
 Goal: Robust line–line, line–arc, arc–arc intersection (Bezier via polygonisation + refinement), point-in-contour (even–odd and non-zero), contour orientation and area, closest point on span/contour, self-intersection detection.
 Interfaces: `geometry/intersect.hpp`, `geometry/contour_ops.hpp`. Read-only: T-0001 headers.
@@ -39,7 +39,7 @@ Acceptance criteria:
   5. A figure-eight contour reports self-intersection; a square does not.
 Out of scope: boolean operations (T-0003).
 
-### T-0003 Polygon offset and booleans via Clipper2                           [status: ready]
+### T-0003 Polygon offset and booleans via Clipper2                           [status: in-progress]
 Phase: 0   Module: core/geometry   Depends on: T-0001
 Goal: Wrap Clipper2 (FetchContent, pinned) behind `offsetContours(contours, distance, JoinType, tolerance)` and `booleanOp(Union|Difference|Intersection|Xor, subject, clip)` operating on `Contour`s: polygonise at tolerance, run Clipper2 in fixed-point, convert back, optionally refit arcs. Join types: round, sharp (mitre with limit), square.
 Interfaces: `geometry/offset.hpp`, `geometry/boolean.hpp`. Read-only: T-0001.
@@ -51,7 +51,7 @@ Acceptance criteria:
   5. Open-contour offset to the Left/Right of a polyline produces an open contour of the same span count ±1.
 Out of scope: fillets, trim (Phase 1 cards).
 
-### T-0010 Document model: Job, Sheet, Layer, Object, UndoStack                [status: ready]
+### T-0010 Document model: Job, Sheet, Layer, Object, UndoStack                [status: in-progress]
 Phase: 0   Module: core/document   Depends on: T-0001
 Goal: In-memory document: `Job` (type single/double/rotary, size, units display setting, Z-zero, datum), `Sheet`s (each with size/datum), `Layer`s (name, colour, visible, locked, order), `Object`s (vector object holding contours + creation params as a tagged variant; bitmap placeholder; group), stable IDs, selection set, and a command-based `UndoStack` with coalescing.
 Interfaces: `document/*.hpp`. Read-only: T-0001.
@@ -72,7 +72,7 @@ Acceptance criteria:
   3. Loading a file with a higher major version fails with a clear error, not a crash.
 Out of scope: heightfields, toolpath caches (later phases).
 
-### T-0020 Tool database and machines                                          [status: ready]
+### T-0020 Tool database and machines                                          [status: in-progress]
 Phase: 0   Module: core/tooling   Depends on: T-0001
 Goal: `ToolType` (end mill, ball nose, V-bit, engraving, tapered ball nose, radiused end mill, form tool with profile, diamond drag, drill), `Tool` geometry per type, `CuttingData` keyed by (machine, material): pass depth, stepover, final/clearance stepover, spindle, feed, plunge, tool number; `Material`, `Machine` (name, accelerations, associated posts); `ToolDatabase` with groups, CRUD, JSON import/export, merge with/without overwrite.
 Acceptance criteria:
@@ -93,7 +93,7 @@ Acceptance criteria:
   5. `ROTARY_WRAP_Y` wraps Y into A for a 50 mm diameter job (Y=π·25 → A=180°).
 Out of scope: saving dialogs, direct output.
 
-### T-0040 Toolpath core types and linking                                    [status: ready]
+### T-0040 Toolpath core types and linking                                    [status: in-progress]
 Phase: 0   Module: core/toolpath   Depends on: T-0001
 Goal: `Move` (kind: rapid/feed/plunge/retract/arcCW/arcCCW/dwell; endpoint; arc centre; feed override), `Toolpath` (name, tool snapshot, moves, bounding box, length by kind), `PassPlan` (start depth, cut depth, pass depth, exact-step flag, last-pass thickness → list of Z levels), linking helper that joins contour passes with safe-Z retracts and rapids, and `estimateTime(Toolpath, rapidRate, feed, accel)` baseline.
 Interfaces: `toolpath/{move,toolpath,pass_plan,linking,time}.hpp`. If T-0030 has already defined `Move`, adopt it unchanged.
