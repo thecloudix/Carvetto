@@ -72,7 +72,7 @@ Acceptance criteria:
   3. Loading a file with a higher major version fails with a clear error, not a crash.
 Out of scope: heightfields, toolpath caches (later phases).
 
-### T-0020 Tool database and machines                                          [status: in-progress]
+### T-0020 Tool database and machines                                          [status: done]
 Phase: 0   Module: core/tooling   Depends on: T-0001
 Goal: `ToolType` (end mill, ball nose, V-bit, engraving, tapered ball nose, radiused end mill, form tool with profile, diamond drag, drill), `Tool` geometry per type, `CuttingData` keyed by (machine, material): pass depth, stepover, final/clearance stepover, spindle, feed, plunge, tool number; `Material`, `Machine` (name, accelerations, associated posts); `ToolDatabase` with groups, CRUD, JSON import/export, merge with/without overwrite.
 Acceptance criteria:
