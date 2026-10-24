@@ -37,6 +37,7 @@ add_executable(carvetto_tests
   document/integrity_test.cpp
   document/id_overflow_test.cpp
   document/preset_id_test.cpp
+  document/integrity_scale_test.cpp
   geometry/offset_test.cpp
   geometry/open_offset_chains_test.cpp
   geometry/boolean_test.cpp

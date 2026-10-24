@@ -3,7 +3,9 @@
 #include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
-#include <chrono>
+#include <cstddef>
+#include <ctime>
+#include <limits>
 #include <memory>
 #include <set>
 #include <vector>
@@ -147,26 +149,60 @@ TEST_CASE("AC3: deleting a layer moves its objects to the default layer unless d
     }
 }
 
-TEST_CASE("AC4: 10 000 inserts, undo all and redo all complete under one second",
-          "[document][commands][perf]") {
+// Timing method (T-0014). The original wall-clock bound failed under parallel `ctest -j8` on a
+// loaded machine, where this process may only get a fraction of a core. So:
+//  - Time is process CPU time from `std::clock()`. On POSIX that excludes time spent waiting for
+//    the CPU while other tests run; this test is single-threaded, so process CPU time is the test's
+//    own work. (MSVC's `std::clock()` is wall time since process start; Windows CI runs ctest
+//    serially, so the bound is still meaningful there.)
+//  - The one-second bound (the T-0010 criterion) applies to the best of three 10 000-op runs, which
+//    filters out one-off stalls (page faults, a descheduled timer tick).
+//  - An O(n^2) regression is caught independently of machine speed by a scaling check measured the
+//    same way: best(20 000) < 3 x best(10 000). Linear or n log n work gives a ratio of about 2;
+//    quadratic work gives about 4. Runs of both sizes are interleaved so a slow phase of the machine
+//    affects both.
+namespace {
+
+/// Inserts `count` objects, undoes all and redoes all; returns the process CPU seconds it took.
+double insertUndoRedoSeconds(int count) {
     Document doc;
-    constexpr int kCount = 10000;
-    const auto start = std::chrono::steady_clock::now();
-    for (int i = 0; i < kCount; ++i) {
+    const std::clock_t start = std::clock();
+    for (int i = 0; i < count; ++i) {
         const double x = static_cast<double>(i % 100) * 12.0;
         const double y = static_cast<double>(i / 100) * 12.0;
         doc.execute(std::make_unique<AddObjectCommand>(square(doc, x, y)));
     }
-    REQUIRE(doc.objectCount() == kCount);
+    REQUIRE(doc.objectCount() == static_cast<std::size_t>(count));
     while (doc.undo()) {
     }
     REQUIRE(doc.objectCount() == 0);
     while (doc.redo()) {
     }
-    REQUIRE(doc.objectCount() == kCount);
-    const auto elapsed = std::chrono::steady_clock::now() - start;
-    CHECK(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() < 1000);
-    CHECK(doc.undoStack().count() == kCount);
+    REQUIRE(doc.objectCount() == static_cast<std::size_t>(count));
+    REQUIRE(doc.undoStack().count() == static_cast<std::size_t>(count));
+    const std::clock_t stop = std::clock();
+    return static_cast<double>(stop - start) / static_cast<double>(CLOCKS_PER_SEC);
+}
+
+}  // namespace
+
+TEST_CASE("AC4: 10 000 inserts, undo all and redo all complete under one second",
+          "[document][commands][perf]") {
+    constexpr int kCount = 10000;
+    constexpr int kRuns = 3;
+    double best10k = std::numeric_limits<double>::infinity();
+    double best20k = std::numeric_limits<double>::infinity();
+    for (int run = 0; run < kRuns; ++run) {
+        best10k = std::min(best10k, insertUndoRedoSeconds(kCount));
+        best20k = std::min(best20k, insertUndoRedoSeconds(2 * kCount));
+    }
+    INFO("best CPU seconds: 10k = " << best10k << ", 20k = " << best20k);
+    CHECK(best10k < 1.0);
+    // Optimised builds finish 10k in a few tens of ms; `std::clock()` ticks can be ~16 ms on
+    // Windows, so the ratio uses a 50 ms floor. That keeps the check robust there; the unoptimised
+    // Linux CI build (10k ~ 0.2 s) is where a quadratic regression shows up.
+    const double floor10k = std::max(best10k, 0.05);
+    CHECK(best20k < 3.0 * floor10k);
 }
 
 TEST_CASE("AC5: object ids are unique across undo/redo and paste assigns new ids", "[document][commands]") {

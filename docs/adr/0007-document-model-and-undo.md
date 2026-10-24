@@ -1,6 +1,6 @@
 # ADR-0007: Document model storage, ids and command-based undo
 
-Date: 2026-10-24 · Status: accepted (director, 2026-10-24; amendments A1 T-0011, A2 T-0013)
+Date: 2026-10-24 · Status: accepted (director, 2026-10-24; amendments A1 T-0011, A2 T-0013, A3 T-0014)
 
 ## Context
 T-0010 asked for an in-memory document (job, sheets, layers, objects, selection, variables) with
@@ -125,3 +125,23 @@ caller-supplied (preset) id.
 - **Integrity.** `Document::checkIntegrity()` reports `DuplicateId` once per id value used by more
   than one sheet, layer or object (across kinds, or two sheets/layers with the same id). The issue's
   `object` is the object owning the value, if any. File I/O (T-0012) gets this check on load for free.
+
+### A3 (T-0014, 2026-10-24): an object's stored id must equal its key
+Decision 4 is amended. Objects are keyed by id in the map *and* carry their id in `Object::id`;
+the two must agree. Nothing in the command layer can make them disagree, but raw mutation
+(`findObject(k)->id = …`) or a faulty loader can, and a mismatch would make the stored id an
+untracked claim on an id value.
+- **Integrity.** `Document::checkIntegrity()` reports `IdKeyMismatch` for every object whose stored
+  `id` differs from its key (`object` = the key, `related` = the stored id). The stored id is also
+  range-checked (`IdOutOfRange` / `IdNotBelowNext`, as in A1).
+- **DuplicateId counts stored ids.** A mismatching stored id is an extra owner of its value
+  (named "object (stored id)" in the message), so it is reported as `DuplicateId` when that value
+  is also a sheet, layer or object key. An object whose stored id equals its key is counted once.
+- File I/O (T-0012) gets this check on load for free; a loader that writes objects from their
+  stored id never produces a mismatch.
+- **Complexity.** Because the loader runs `checkIntegrity()` on untrusted input, it must be
+  O(N log N) in the number of objects whatever the group depth or width: (group, child) links are
+  collected into a set once (no linear search of a child list), and parent-chain loops are found by
+  one iterative walk over the parent links with on-path/done marks (no recursion, no per-object
+  re-walk). Issue kinds, their per-object order and the `Cycle` issue's `related` object (the first
+  object on the loop that the chain reaches) are unchanged.
