@@ -21,7 +21,7 @@ jobs:
       # T-0014: timing-sensitive tests must hold under parallel load. Runs the suite with 8 jobs;
       # each test is repeated up to 3 times and the step fails as soon as any repetition fails.
       - name: Test (parallel stress, -j8)
-        run: ctest --test-dir build --output-on-failure -j8 --repeat until-fail:3
+        run: ctest --test-dir build --output-on-failure -j8 --repeat until-fail:5
 
   linux-app:
     runs-on: ubuntu-latest

@@ -19,7 +19,7 @@ Describing what a feature does, what its options are, and how a user expects it 
 Work is organised as tasks in `docs/BACKLOG.md`, executed by coder agents and checked by verifier agents under a director. See `docs/WORKFLOW.md`. Every change arrives as a branch with:
 
 1. The code and its unit tests (Catch2) in the same change.
-2. A passing `ctest` run on Linux (core) — Windows app build is checked by CI.
+2. A passing serial `ctest` run on Linux (core), and `ctest -j8` passing repeatedly (CI repeats it 5×; run `ctest -j8 --repeat until-fail:10` locally for timing-sensitive changes) — Windows app build is checked by CI.
 3. A short entry in `CHANGELOG.md` under *Unreleased*.
 4. A `docs/adr/NNNN-*.md` file when the change makes an architectural decision.
 5. A row in `THIRD_PARTY_NOTICES.md` when the change adds a third-party dependency.
