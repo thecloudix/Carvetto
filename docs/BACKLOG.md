@@ -145,7 +145,7 @@ Acceptance criteria:
   2. Introducing an unused variable fails the Linux job.
   3. The Windows job produces the `carvetto.exe` artifact (even if the app is a blank window).
 
-### T-0060 Qt app shell                                                        [status: verifying]
+### T-0060 Qt app shell                                                        [status: done]
 Phase: 0   Module: app (+ app/viewmodel)   Depends on: T-0010   ADR: 0014
 Goal: Main window with dockable panels (Design, Layers, Sheets, Toolpaths placeholders), a 2D canvas with pan/zoom/rulers rendering `Contour`s from a `Document`, a blank 3D view tab, status bar with cursor coordinates in display units, File ▸ New job dialog (job type, size, units, Z-zero, datum).
 Structure (required because Qt is not available in the agents' workspace): all non-trivial view logic lives in a **Qt-free** static library `carvetto_viewmodel` (`app/viewmodel/`): view transform (world mm ↔ screen px, zoom about cursor, pan, zoom-to-fit with margin), ruler tick generation (nice-number steps in the display unit, labels), polygonisation of document contours for drawing at a screen tolerance, cursor-coordinate formatting in display units, New Job form validation → `Job`. It is unit-tested headless in `core/tests`-style Catch2 tests (`app/viewmodel/tests/`), built and run in every environment. The Qt layer in `app/src/` is thin glue.
