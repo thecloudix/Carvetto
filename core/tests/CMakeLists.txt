@@ -30,6 +30,8 @@ add_executable(carvetto_tests
   post/parser_test.cpp
   post/interpreter_test.cpp
   post/grbl_golden_test.cpp
+  post/shipped_posts_test.cpp
+  tooling/starter_tools_test.cpp
   document/job_test.cpp
   document/variables_test.cpp
   document/selection_test.cpp
@@ -51,6 +53,7 @@ target_include_directories(carvetto_tests PRIVATE ${PROJECT_SOURCE_DIR}/core/src
 target_compile_definitions(carvetto_tests PRIVATE
   CARVETTO_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/golden"
   CARVETTO_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
+  CARVETTO_STARTER_TOOLS="${PROJECT_SOURCE_DIR}/data/tools/starter_tools.json"
 )
 target_link_libraries(carvetto_tests PRIVATE carvetto::core Catch2::Catch2WithMain carvetto_warnings)
 
