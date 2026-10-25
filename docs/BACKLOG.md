@@ -115,7 +115,7 @@ Acceptance criteria:
   3. Regression: a document whose generator is near the ceiling cannot be driven into a duplicate id by any public command sequence (fixed-seed randomized test).
 Out of scope: file I/O (T-0012 already rejects out-of-range ids on load).
 
-### T-0012 Native `.carv` file I/O                                            [status: in-progress]
+### T-0012 Native `.carv` file I/O                                            [status: done]
 Phase: 0   Module: core/document   Depends on: T-0010   (ADR-0003 accepted)   ADR: 0013
 Goal: Save/load the document to the `.carv` zip container (miniz, nlohmann/json pinned). Versioned manifest; forward-compatible unknown fields preserved.
 Acceptance criteria:
@@ -143,7 +143,7 @@ Acceptance criteria:
   3. `ctest -j8` passes 10 consecutive runs on the CI Linux runner (add a CI step or document the local check).
   4. *(Added by director 2026-10-24, found verifying T-0012.)* `checkIntegrity()` is O(N log N) or better regardless of group depth/width: a 60,000-deep nested-group chain and a single group with 200,000 children each check in < 1 s Release; iterative (no recursion) cycle detection still finds a cycle at depth 50,000; all existing issue kinds and ordering unchanged.
 
-### T-0015 .carv zip-layer hardening: bounded inflate, overlapping entries, held-bytes cap   [status: blocked]
+### T-0015 .carv zip-layer hardening: bounded inflate, overlapping entries, held-bytes cap   [status: in-progress]
 Phase: 0 (must land before any UI file open/save)   Module: core/document   Depends on: T-0012   ADR: amend 0013
 Goal: Close the two blocking findings from T-0012's third verification round, which are in the archive layer, not the JSON loader.
 Acceptance criteria:
