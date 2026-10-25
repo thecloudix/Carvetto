@@ -208,19 +208,69 @@ Out of scope: drawing tools, selection, 3D rendering (blank tab only).
 
 ---
 
-## Phase 1 — 2D/2.5D CAM MVP (cards to be filled by the director as Phase 0 lands)
+## Phase 1 — 2D/2.5D CAM MVP
 
-Planned task groups, in dependency order. Each becomes several T-01xx/T-02xx cards.
-- Drawing tools: circle, ellipse, rectangle (corner types), polygon, star, polyline/Bezier, arc, freehand; interactive handles & quick keys.
-- Snapping and guides; grid.
-- Selection & node editing; move/scale/rotate/mirror/distort; align & space; group/ungroup.
-- Boolean & shape ops: weld/subtract/overlap, boundary trim, interactive trim, fillets (normal/dog-bone/T-bone), extend, join/close variants, curve fit, offset, vector boundary.
-- Text: FreeType/HarfBuzz outlines, text block, text-in-box, text on curve, kerning/arch handles, single-line fonts, convert to curves.
-- Dimensions and measure.
-- Bitmaps: import, trace (potrace + colour quantisation), edit, crop, fade; vector texture.
-- Layout: array/circular/along-vector copy; nesting; plate production.
-- Import/export: DXF (libdxfrw or own), SVG, EPS/AI (PostScript subset), PDF vector export.
-- Toolpaths: 2D profile (tabs/ramps/leads/allowance/corners/order/start), pocket (offset/raster/multi-tool), drill (peck/dwell), quick engrave, V-carve/engrave (medial axis; flat depth; clearance), fluting, chamfer, prism, inlay (straight), VCarve inlay, photo V-carve, thread milling, texture (flat), keep-out zones, templates, merge, array copy, tiling, double-sided jobs, project-onto-3D stub.
-- Simulation: heightfield stock, tool sweeps per type, quality levels, material/surface colour, animation; time estimation with acceleration.
-- Output: save toolpaths (single/multi-file, ATC tool-number check, tiled), job sheet HTML, shipped posts (Grbl, Mach3, LinuxCNC, Marlin).
-- MVP acceptance (PLAN §5): DXF → text on curve → pocket + profile with tabs → V-carve with clearance → preview → Grbl post → real cut.
+Goal: the PLAN §5 acceptance test — import a DXF, add text on a curve, pocket + profile with tabs, V-carve with a clearance tool, preview, post to Grbl, cut it on a real machine. Cards are written in batches; each batch is dispatched only after the owner approves the phase. ADR numbers are pre-assigned per card. Concurrency 4; cards in the same module that share headers do not run together.
+
+### Batch A — vertical slice first (prove the pipeline end to end, headless)
+These five cards, together with what Phase 0 already has, make `carvetto-cli` able to turn a DXF into Grbl G-code with no UI. Everything later plugs into this spine.
+
+### T-0100 DXF import and export (lines, arcs, polylines, splines → contours; layers)   [status: ready]
+Phase: 1   Module: core/io   Depends on: T-0005   ADR: 0015
+Goal: `importDxf(bytes) → {layers, contours, warnings}` and `exportDxf(doc)` for DXF R12–2018 ASCII (and binary R12+ if cheap): LINE, ARC, CIRCLE, ELLIPSE, LWPOLYLINE (bulges → arcs), POLYLINE/VERTEX, SPLINE (NURBS → cubic Beziers within chordal tolerance), INSERT/BLOCK (flattened, nested), TEXT/MTEXT (as text objects with font name, height, position — rendered later by T-0130), $INSUNITS and $MEASUREMENT for unit scaling, layer names/colours/visibility. Own parser (no third-party DXF lib; the format is public). Export writes R2000 ASCII with layers, LWPOLYLINE bulges for arcs, SPLINE for Beziers.
+Interfaces: owns `core/include/carvetto/io/dxf.hpp`.
+Acceptance criteria:
+  1. A hand-written DXF with one of every supported entity imports to contours whose geometry matches the analytic expectation within 1e-6 mm (bulges → exact arcs; spline → Beziers within 0.01 mm chordal).
+  2. Export → import round trip of a random document (lines/arcs/Beziers, 5 layers) reproduces every contour within 1e-9 mm and every layer name; a second export is byte-identical.
+  3. Units: $INSUNITS = inches scales to mm on import; export writes $INSUNITS = mm.
+  4. Nested INSERT with rotation/scale/mirror flattens correctly (checked against hand-computed transforms).
+  5. Malformed input (truncated, bad group codes, unknown entities, 100 MB of garbage) never crashes; unknown entities produce warnings, not errors; fuzz ≥ 2,000 iterations under ASan.
+Out of scope: DWG, hatches, dimensions entities (imported as warnings), 3D entities.
+
+### T-0110 Tool database defaults and the Grbl/Mach3/LinuxCNC/Marlin posts   [status: ready]
+Phase: 1   Module: posts, core/tooling   Depends on: —
+Goal: Ship a starter tool database (JSON, ~30 common tools: end mills 1/8–1/2 in and 2–12 mm, ball noses, 60/90/120° V-bits, engraving, tapered ball nose) with conservative wood/plastic/aluminium cutting data, plus original posts for Mach3, Mach4, LinuxCNC, Marlin (mm and inch variants where idiomatic) alongside the existing Grbl post, each with a golden-file test.
+Acceptance criteria:
+  1. Each post parses with no warnings and reproduces its golden output for the shared square-profile + pocket-with-arcs + drill-with-dwell fixture.
+  2. Each golden file hand-reviewed for machine safety (units, absolute mode, safe Z before rapids, spindle on before plunge, spindle off and program end) — the reviewer's checklist goes in `posts/README.md`.
+  3. The starter tool database loads, validates, and every tool has cutting data for at least one material.
+Clean-room: no text from any vendor post. Marlin/Grbl/LinuxCNC/Mach dialect facts come from their public docs.
+
+### T-0120 2D Profile toolpath   [status: blocked]
+Phase: 1   Module: core/toolpath   Depends on: T-0006, T-0040   ADR: 0016
+Goal: `profileToolpath(contours, Tool, ProfileParams) → Toolpath` per feature-inventory §5 "2D Profile Toolpath": Machine Vectors Outside/Inside/On (open vectors Left/Right), Climb/Conventional, Allowance Offset, Do Separate Last Pass (allowance, reverse), Use Vector Start Point, Tabs (length, thickness, constant number / constant distance, avoid corners; 3D tabs), Ramps (Smooth distance/angle, Zig-Zag, Spiral), Leads (straight / circular, lead-out, overcut), Order (vector selection / left-to-right / bottom-to-top / grid), Start At (keep / optimise / closest on bounding box), Corners (sharp external via V-bit when tool is V, sharp internal 3D). Multi-pass via PassPlan. Inner contours before outer. Deterministic.
+Acceptance criteria:
+  1. Outside profile of a 100×50 rectangle with a 6 mm end mill, 3 passes of 4 mm, 2 tabs 10×2 mm: move list matches a golden (hand-checked) toolpath exactly; tab regions rise to −(depth−2).
+  2. Inside profile of a circle r=10 with a 6 mm tool is a circle r=7 (arc moves, not lines); r=2.9 yields no toolpath with a clear reason.
+  3. Climb vs conventional reverses direction; separate last pass with 0.2 mm allowance produces two offset loops at the expected distances.
+  4. Smooth ramp over 20 mm reaches full depth exactly at 20 mm along the path; spiral ramp on a closed contour descends by pass depth per revolution; leads start/end off the material and never gouge (min distance of lead to any other contour ≥ tool radius).
+  5. Ordering modes produce the documented orders on a 3×3 grid of squares; inner-first holds for nested contours.
+  6. Golden G-code through the Grbl post for the AC1 case; randomized property test: no feed move ever comes closer than tool radius − tol to the uncut side of any input contour.
+
+### T-0121 Pocket toolpath (offset and raster, profile pass, ramp plunge)   [status: blocked]
+Phase: 1   Module: core/toolpath   Depends on: T-0006, T-0040   ADR: 0017
+Goal: `pocketToolpath(contours, tools, PocketParams)` per §5 "Pocketing Toolpath": Offset strategy (climb/conv, stepover, linking with minimal retracts) or Raster (angle, stepover, boundary pass), Profile Pass first/last/none, Pocket Allowance, Ramp Plunge, multi-tool clearance + rest tool (rest regions computed as the area the larger tool could not reach), islands (inner contours) respected.
+Acceptance criteria:
+  1. Pocketing a 50×30 rectangle with a 6 mm tool at 40% stepover: all material inside (offset by tool radius) is covered — rasterised coverage test at 0.1 mm resolution shows 100% coverage of the pocket area minus corners the tool cannot reach, and 0% outside.
+  2. An island (20×10 inside the rectangle) stays uncut with ≥ tool radius clearance.
+  3. Raster at 45° with a final profile pass: raster lines are parallel at the angle, clipped to the offset boundary, and the profile pass follows the boundary once.
+  4. Rest machining: 12 mm clearance tool then 3 mm rest tool — the rest toolpath touches only regions within 6 mm of concave corners/narrow slots (checked against a rasterised difference).
+  5. Linking: number of retracts in the offset strategy ≤ number of disconnected regions + 1 for simple shapes.
+  6. Golden G-code through Grbl for AC1; gouge-free property test as in T-0120.
+
+### T-0122 Headless CLI: carvetto-cli   [status: blocked]
+Phase: 1   Module: app/cli   Depends on: T-0100, T-0110, T-0120, T-0121
+Goal: A small console program `carvetto-cli` (no Qt): `import <dxf> → .carv`, `toolpath profile|pocket <params.json> <in.carv> <out.carv>`, `post <post.pp> <in.carv> <out.nc>`, `info`. Used by CI for the end-to-end test and by users for scripting.
+Acceptance criteria:
+  1. CI job: DXF fixture → profile with tabs + pocket → Grbl `.nc` whose checksum matches the golden; runs on Linux and Windows.
+  2. Errors are clear and exit codes non-zero; `--help` documents every command.
+
+### Batch B — drawing & editing (viewmodel + Qt), to be carded after Batch A is dispatched
+- Drawing tools, snapping/guides, selection & node editing, transforms, align, group; boolean/shape ops UI (weld/subtract/overlap/trim/fillet/offset wrappers over T-0003/T-0004/T-0005), curve fit, join/close.
+- Text (FreeType/HarfBuzz) T-0130, dimensions, measure, bitmaps/trace, layout (arrays, nesting).
+- File open/save in the app (BLOCKED on T-0015), SVG/EPS/PDF I/O.
+
+### Batch C — the rest of the toolpaths, simulation and output
+- Drill, quick engrave, V-carve (medial axis) with clearance, fluting, chamfer, prism, inlay, VCarve inlay, photo V-carve, thread milling, texture, keep-out zones, templates, merge, array copy, tiling, double-sided.
+- Material-removal simulation and time estimates; save-toolpaths dialog; job sheet.
+- MVP acceptance run on a real machine (owner).
