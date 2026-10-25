@@ -288,7 +288,23 @@ bool inUnit(double t) {
 // Point of carrier contact between `a` (ending) and `b` (starting) beyond a's end and before
 // b's start, within `maxDist` of `vertex`: where the two extensions first meet (smallest total
 // extension length). An arc may be extended over the whole gap outside its sweep.
-std::optional<Vec2> extensionMeet(const Span& a, const Span& b, Vec2 vertex, double maxDist) {
+// Cap on extending an arc to a mitre or chamfer (T-0006): the extension may sweep at most a
+// quarter turn and its new end point must stay within `arcReach` (mitreLimit x d) of the corner
+// vertex. Beyond that a tiny offset arc would be dragged round much of its circle to meet the
+// other side, which is no longer a corner. Lines are bounded by the callers' own reach.
+constexpr double kMaxArcExtension = kPi / 2.0;
+
+bool arcExtensionOk(const Span& s, double t, bool pastEnd, Vec2 p, Vec2 vertex, double arcReach) {
+    const auto* arc = std::get_if<ArcSpan>(&s);
+    if (!arc) {
+        return true;
+    }
+    const double sweep = std::fabs(arc->sweepAngle()) * (pastEnd ? t - 1.0 : -t);
+    return sweep <= kMaxArcExtension + 1e-12 && geometry::distance(p, vertex) <= arcReach;
+}
+
+std::optional<Vec2> extensionMeet(const Span& a, const Span& b, Vec2 vertex, double maxDist,
+                                  double arcReach) {
     std::optional<Vec2> best;
     double bestCost = std::numeric_limits<double>::infinity();
     const double la = length(a);
@@ -299,7 +315,8 @@ std::optional<Vec2> extensionMeet(const Span& a, const Span& b, Vec2 vertex, dou
         if (!ta || !tb || *ta < 1.0 - kParamEps || *tb > kParamEps) {
             continue;
         }
-        if (geometry::distance(p, vertex) > maxDist) {
+        if (geometry::distance(p, vertex) > maxDist || !arcExtensionOk(a, *ta, true, p, vertex, arcReach) ||
+            !arcExtensionOk(b, *tb, false, p, vertex, arcReach)) {
             continue;
         }
         const double cost = std::max(0.0, *ta - 1.0) * la + std::max(0.0, -*tb) * lb;
@@ -313,7 +330,7 @@ std::optional<Vec2> extensionMeet(const Span& a, const Span& b, Vec2 vertex, dou
 
 // Square join: extends `a` and `b` to the chamfer line at distance d from the vertex and
 // returns the chamfer; nullopt when an element cannot reach it (caller falls back to Round).
-std::optional<LineSpan> squareJoin(Span& a, Span& b, Vec2 vertex, Vec2 tangentIn, double d) {
+std::optional<LineSpan> squareJoin(Span& a, Span& b, Vec2 vertex, Vec2 tangentIn, double d, double arcReach) {
     const Vec2 e = endPoint(a);
     const Vec2 s = startPoint(b);
     Vec2 bisector = ((e - vertex) + (s - vertex)).normalized();
@@ -328,7 +345,8 @@ std::optional<LineSpan> squareJoin(Span& a, Span& b, Vec2 vertex, Vec2 tangentIn
     double t1 = 0.0;
     for (const Vec2 p : carrierIntersections(a, chamferCarrier)) {
         const std::optional<double> t = extensionParam(a, p, true);
-        if (t && *t >= 1.0 - kParamEps && geometry::distance(p, vertex) <= reach && (!h1 || *t < t1)) {
+        if (t && *t >= 1.0 - kParamEps && geometry::distance(p, vertex) <= reach &&
+            arcExtensionOk(a, *t, true, p, vertex, arcReach) && (!h1 || *t < t1)) {
             h1 = p;
             t1 = *t;
         }
@@ -337,7 +355,8 @@ std::optional<LineSpan> squareJoin(Span& a, Span& b, Vec2 vertex, Vec2 tangentIn
     double t2 = 0.0;
     for (const Vec2 p : carrierIntersections(b, chamferCarrier)) {
         const std::optional<double> t = extensionParam(b, p, false);
-        if (t && *t <= kParamEps && geometry::distance(p, vertex) <= reach && (!h2 || *t > t2)) {
+        if (t && *t <= kParamEps && geometry::distance(p, vertex) <= reach &&
+            arcExtensionOk(b, *t, false, p, vertex, arcReach) && (!h2 || *t > t2)) {
             h2 = p;
             t2 = *t;
         }
@@ -373,8 +392,9 @@ void outsideCorner(std::vector<Span>& raw, Span& next, Vec2 vertex, Vec2 tangent
     Span& prev = raw.back();
     const Vec2 e = endPoint(prev);
     const Vec2 s = startPoint(next);
+    const double arcReach = std::max(mitreLimit, 1.0) * d;
     auto mitre = [&](double reach) {
-        const auto m = extensionMeet(prev, next, vertex, reach);
+        const auto m = extensionMeet(prev, next, vertex, reach, arcReach);
         if (!m) {
             return false;
         }
@@ -394,7 +414,7 @@ void outsideCorner(std::vector<Span>& raw, Span& next, Vec2 vertex, Vec2 tangent
     if (join != JoinType::Round) {
         Span a = prev;
         Span b = next;
-        if (const auto chamfer = squareJoin(a, b, vertex, tangentIn, d)) {
+        if (const auto chamfer = squareJoin(a, b, vertex, tangentIn, d, arcReach)) {
             // A chamfer shorter than the tolerance (a nearly tangent corner) would be dropped
             // and leave a gap; meeting the extended neighbours there is the same corner.
             if (tol.equalPoints(chamfer->start, chamfer->end) && mitre(1.5 * d)) {
@@ -830,7 +850,12 @@ bool snapJunction(Span& a, Span& b, const SnapContext& ctx) {
     } else if (std::holds_alternative<LineSpan>(a)) {
         std::get<LineSpan>(a).end = s;
     } else {
-        b = withStart(b, e);  // two arcs: as close as their circles allow
+        // Two arcs whose circles do not meet here: only a rounding-level residual may remain
+        // (exactJunction then removes it); anything larger is bridged instead.
+        if (gap > 1e-12 * std::max({1.0, std::fabs(e.x), std::fabs(e.y), std::get<ArcSpan>(b).radius})) {
+            return false;
+        }
+        b = withStart(b, e);
     }
     return true;
 }

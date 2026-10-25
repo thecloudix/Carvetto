@@ -47,14 +47,17 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// Round (an arc of radius |distance| about the vertex) and Square (a chamfer line at
 /// |distance| from the vertex, the neighbouring lines or arcs being extended along their own
 /// carriers to meet it); Sharp extends both neighbours (lines along their direction, arcs along
-/// their circle) to where they first meet and adds no span. An arc may be extended over the
-/// whole gap outside its (already extended) sweep. Remaining fallbacks: Sharp squares the corner
-/// off when the meeting point is farther than `mitreLimit` x |distance| from the vertex, or when
-/// the carriers meet only by wrapping an arc past its own other end (beyond a full turn). Square
-/// falls back to Round when a neighbour cannot reach the chamfer line within 1.5 x |distance| of
-/// the vertex (an arc too small or curling away from it, or one that would wrap past its other
-/// end) or the chamfer would run backwards; a chamfer shorter than the tolerance (nearly tangent
-/// corner) becomes the neighbours' meeting point instead, if that is within 1.5 x |distance|. Inside
+/// their circle) to where they first meet and adds no span. An arc may be extended into the gap
+/// outside its (already extended) sweep, by at most a quarter turn (90 degrees) and only as far
+/// as `mitreLimit` x |distance| from the vertex (for Square too). Remaining fallbacks: Sharp
+/// squares the corner off when the meeting point is farther than `mitreLimit` x |distance| from
+/// the vertex, when an arc would have to be extended by more than 90 degrees, or when the
+/// carriers meet only by wrapping an arc past its own other end. Square falls back to Round when
+/// a neighbour cannot reach the chamfer line within 1.5 x |distance| of the vertex (an arc too
+/// small or curling away from it, needing more than 90 degrees or ending farther than
+/// `mitreLimit` x |distance| from the vertex) or the chamfer would run backwards; a chamfer
+/// shorter than the tolerance (nearly tangent corner) becomes the neighbours' meeting point
+/// instead, if that is within 1.5 x |distance| and the same arc cap. Inside
 /// corners trim both neighbours to their intersection, and any span (or arc whose offset
 /// radius would be negative) that lies wholly within |distance| of the input is removed. So
 /// when the offset stays in one piece it is one chain of n spans, minus consumed ones, plus one
@@ -80,16 +83,21 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// loop through it (`closed` = true) and the part after it. Different chains may touch or cross.
 ///
 /// Junctions (for toolpaths): consecutive spans of a chain, and the last and first spans of a
-/// closed chain, share their end point exactly — bit-identical wherever a line is involved;
-/// between two arcs (whose end points are computed from centre and angles) to rounding, far
-/// below 1e-12 mm — and no span starts behind the previous one's end. Pieces no longer than
+/// closed chain, share their end point exactly: bit-identical wherever a line is involved;
+/// between two arcs (whose end points are computed from centre and angles, ADR-0005) usually
+/// bit-identical too (the second arc's centre is nudged by a few ulps), otherwise within
+/// 1e-12 x max(1, |x|, |y|, radius) mm (at most 6.3e-13 mm over 540 000 fuzzed offsets with
+/// coordinates up to ~100 mm). No span starts behind the previous one's end. Pieces no longer than
 /// tol.distance are dropped where their neighbours can be joined without them: trimmed or
 /// extended along their own carriers to where these meet (extensions staying at least |distance|
 /// from the input, and for Round not beyond it), or, for a sub-tolerance step sideways, by
 /// bending the last tolerance of a neighbour outwards onto the other's end. Otherwise they are
 /// kept (so a chain may hold such a short span where the offset really has a sub-tolerance
 /// feature), and where there is nothing to keep a straight bridge shorter than the tolerance
-/// closes the gap; it may lie inside |distance| by its sagitta, at most tol^2 / (8 |distance|).
+/// closes the gap. Such a bridge may come closer to the input than |distance| by its sagitta
+/// against the neighbourhood's round boundary, at most tol.distance^2 / (8 |distance|)
+/// (1.25e-7 mm at |distance| = 1, 2.5e-6 mm at 0.05 with the default tolerance); snapped
+/// extensions and bends by at most min(5e-7 x max(1, |distance|), 0.1 tol.distance^2 / |distance|).
 /// So a stretch of valid offset no longer than the tolerance may be missing or straightened.
 ///
 /// An empty or degenerate contour, or a non-finite `distance`, yields no chains; a zero
