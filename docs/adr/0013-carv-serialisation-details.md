@@ -1,6 +1,6 @@
 # ADR-0013: `.carv` serialisation details
 
-Date: 2026-10-24 · Status: accepted (director, 2026-10-24; zip-layer residuals tracked in T-0015)
+Date: 2026-10-24 · Status: accepted (director, 2026-10-24) · Amended 2026-10-24 (A1, T-0015)
 
 ## Context
 ADR-0003 fixes the container (zip of `manifest.json`, `job.json` and optional binary members).
@@ -91,20 +91,37 @@ the choices the card left open.
    bounded by absolute limits, independent of the file's size or JSON shape. Allocation failure
    (`std::bad_alloc`) is also reported as `ResourceLimit`.
    - *Archive limits.* These are checked against the sizes declared in the central directory,
-     before anything is decompressed. Extraction never produces more than the declared size, and
-     binary members are read into a buffer that grows as data arrives, never pre-sized to the
-     declared size.
+     before anything is decompressed. The local header of every entry is read and its data range
+     computed; entries whose [local header, data end) ranges overlap or coincide are refused
+     (`InvalidArchive`), so one compressed stream can never be inflated more than once.
+     Extraction never produces more than the declared size, and binary members are read into a
+     buffer that grows as data arrives, never pre-sized to the declared size.
      - At most 10 000 members, and at most 1 GiB declared across all of them.
-     - A `.json` member may be at most 256 MiB. `manifest.json` and `job.json` are streamed, so
-       for them this caps time rather than memory (a 100k-object `job.json` is about 75 MB). Any
-       *other* `.json` member is an unknown member and is buffered whole like a binary one, so
-       the cap is also its memory bound (T-0015 residual).
+     - A `.json` member may be at most 256 MiB. Every `.json` member is streamed through the
+       strict reader: `manifest.json` and `job.json` are decoded, and any *other* `.json` member
+       is validated (and its values charged to the unknown-content budget) before it is kept
+       byte for byte. So for all of them the cap bounds time; memory is bounded by the budget and
+       the held-bytes cap below. A 100k-object `job.json` is about 75 MB.
      - Any other member may be at most 256 MiB.
+     - *Held-bytes cap.* The members kept verbatim after a load (everything but manifest.json and
+       job.json) may hold at most max(64 MiB, 32 × archive size) in total, checked cumulatively on
+       declared sizes as members are read (members before the offending one are already in
+       memory, so peak memory is bounded by the cap, not below it). Unknown-field extras have
+       their own 16 MiB budget on top. With the ratio checks in force nothing can exceed
+       20 × the file size, so in practice this cap is a backstop; the test exercises it with the
+       ratios relaxed.
      - Ratio checks apply to a member over 1 MiB: a `.json` member may expand at most 200:1 and
        a binary member at most 20:1. The binary ratio also applies to all binary members
        together, so many small members cannot add up to a bomb. Measured: a real 100k-object
        `job.json` compresses about 19:1, and 124:1 when all objects are identical; deflate bombs
        run at about 1000:1; zstd/PNG data is about 1:1.
+   - *Bounded inflate.* Members are inflated by Carvetto's own loop over `tinfl_decompress`
+     (`detail::BoundedStream`), not by `mz_zip_reader_extract_iter_read`, whose in-memory path
+     never decrements its remaining-input counter and spins forever on a truncated, corrupted or
+     size-lying stream. The loop feeds exactly the entry's declared compressed bytes, stops with
+     `InvalidArchive` when the inflater asks for more input after all of it is consumed or
+     consumes nothing, refuses output past the declared size, and checks the CRC and size at the
+     end. Stored (method 0) members are served directly with the same size and CRC checks.
    - *One global budget across all members* (`detail::LoadLimits`):
 
      | Limit | Value |
@@ -152,15 +169,19 @@ the choices the card left open.
        2.0 s with 82 MiB peak RSS growth; 200k in 3.8 s with 164 MiB; 400k minimal objects in
        1.7 s with 242 MiB; a 200k-child group loads in about 1 s; a 60k-deep chain is refused in
        0.3 s.
-   - *Known limitations (tracked as T-0015).* The zip layer is not yet safe for untrusted files:
-     1. miniz 3.0.2's extract iterator never decrements `comp_remaining` for in-memory archives,
-        so a truncated, corrupted or size-lying deflate stream makes the inflater ask for more
-        input without progress and the read loop spins forever. The verifier found 38 hangs in
-        12k fuzz iterations with that shape; the loader can hang rather than fail.
-     2. Central-directory entries pointing at the same or overlapping local header are not
-        detected, so one stream is inflated once per entry (60 entries sharing a 1.8 MB stream of
-        16 MiB each were observed at about 980 MiB RSS), and unknown `.json` members are buffered
-        whole (a 250 MiB one at about 325 MiB).
+   - *Zip-layer attacks* (Release, GCC 13, the regression tests' own measurements; peak RSS growth
+     as above):
+     - a central directory declaring `comp_size = 5` for job.json, the deflate stream cut in half
+       with consistent headers, and 5 random bit flips inside the compressed data each fail with
+       `InvalidArchive` in 0.08–0.35 ms (Debug: under 15 ms). Before amendment A1 the first two
+       hung forever;
+     - 60 directory entries sharing one 2.7 MB stream of 16 MiB each (2.7 MB file) are refused
+       as overlapping in 54 µs with 1 MiB peak RSS growth (before: about 980 MiB);
+     - a 250 MiB unknown `.json` bomb in a 255 KB file is refused by the 200:1 ratio check in
+       37 µs with 1 MiB peak growth (before: about 325 MiB);
+     - the fuzz test forks each of 5 000 loads (2 seeds; byte flips, truncation, compressed-data
+       bit flips, directory lies, JSON mutation) under a 5 s alarm: 0 hangs, 0 crashes, in 6 s
+       Release and 10 s Debug on this machine.
 
 ## Rationale
 Shortest round-trip formatting is the only option that is both exact and stable across
@@ -173,9 +194,16 @@ confines forward-compat logic to the I/O layer.
 - The UI must hold on to `CarvExtras` between open and save to keep newer-version content.
 - A newer-version file whose *unknown* content exceeds the unknown-field limits (2 M values,
   16 MiB) cannot be opened by this version; the limits trade that for bounded loads.
-- Until T-0015 lands, `loadCarv` must only be pointed at files the user chose themselves; the
-  two zip-layer residuals above can hang or exhaust memory on a crafted archive.
+- `loadCarv` is intended to be safe on untrusted files: every known bomb and damage shape fails
+  in bounded time and memory, and the forked fuzz test in CI guards that.
 - Adding a field to the model means adding it to the encoder, the decoder and the known-key list
   (otherwise it would be treated as unknown and duplicated).
 - Later members (`components/*.hf`, `toolpaths/*.bin`, `bitmaps/*`) already round-trip as
   preserved members until their phases give them a schema.
+
+## Amendments
+- **A1 (2026-10-24, T-0015): zip-layer hardening.** Decision 9 now states the bounded inflate
+  loop over `tinfl`, the overlapping-entry rejection, the held-bytes cap and the streaming of
+  unknown `.json` members, replacing the "Known limitations (tracked as T-0015)" list. The
+  figures under *Zip-layer attacks* were measured with the T-0015 regression tests. Decision 8's
+  claim that `.json` members are streamed now holds for every `.json` member.
