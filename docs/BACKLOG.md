@@ -94,6 +94,15 @@ Acceptance criteria:
   4. A Bezier that bulges ≤ ~tol outside the arc it joins and re-crosses it within ~10·tol of the junction reports the re-crossing (sign test not defeated by the exact-zero sample at the junction). Regression: Bez{{-0.18860739840346241,3.8634722338314074},{0.0522167808921572,4.3830641573127442},{1.6272051316098195,-2.0179279547519577},{1.9578386933824259,-2.3369534285717775}} vs Arc{{6.4363713372296427,1.9356191918458676},6.1896794294008179,-2.3797254616523524,3.0863225397506588,CW}.
   5. ADR-0009 guarantee bullets amended to match; the "Known limitations (tracked as T-0007)" note removed from intersect.hpp.
 
+### T-0008 Exact line/arc intersections: end touches and shared endpoints   [status: blocked]
+Phase: 1 (before Trim / Join / Vector Validator)   Module: core/geometry   Depends on: T-0007
+Goal: The analytic line/line, line/arc and arc/arc paths (not the Bezier pipeline) miss end touches with 0 < h ≤ tol, and can miss an EXACT shared endpoint. Found while verifying T-0007; identical on main.
+Acceptance criteria:
+  1. An end of either span within h ≤ tol of the other span's interior or end gives exactly one hit (tangent when the spans don't cross there), in both argument orders, for L/L, L/A, A/L, A/A, full circles included. Regression (0 hits today, endpoints 1.8e-15 apart): LineSpan{{-2.092227545811626,-4.3793988799678552},{9.7310280804032239,-4.1770917092683604}} vs ArcSpan{{-2.185139788351961,0.95685533589696803},5.3370630257800924,2.4383258356681337,4.7297987310031928,CW}.
+  2. Generative (fixed seed, ≥ 10k pairs per combination; oblique, normal and near-parallel approaches; h ∈ [0, 0.99·tol] and [1.05·tol, 2·tol]) vs brute force: 0 missed end touches, 0 asymmetries, 0 hits beyond tol, residuals ≤ tol.
+  3. The analytic near-tangent "fold two crossings into one tangent hit" rule and the junction-erasure rule are re-examined: crossings separated by > 2·tol are both reported (as for Bezier pairs); a single tangent hit within tol of a contour junction is not erased when it is a genuine re-crossing. Document the final rules in ADR-0009.
+  4. Regression vs main on ≥ 50k random pairs: every difference is an improvement by brute force; symmetry bit-exact.
+
 ### T-0010 Document model: Job, Sheet, Layer, Object, UndoStack                [status: done]
 Phase: 0   Module: core/document   Depends on: T-0001
 Goal: In-memory document: `Job` (type single/double/rotary, size, units display setting, Z-zero, datum), `Sheet`s (each with size/datum), `Layer`s (name, colour, visible, locked, order), `Object`s (vector object holding contours + creation params as a tagged variant; bitmap placeholder; group), stable IDs, selection set, and a command-based `UndoStack` with coalescing.
