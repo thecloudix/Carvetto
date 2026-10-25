@@ -102,6 +102,7 @@ Acceptance criteria:
   2. Generative (fixed seed, ≥ 10k pairs per combination; oblique, normal and near-parallel approaches; h ∈ [0, 0.99·tol] and [1.05·tol, 2·tol]) vs brute force: 0 missed end touches, 0 asymmetries, 0 hits beyond tol, residuals ≤ tol.
   3. The analytic near-tangent "fold two crossings into one tangent hit" rule and the junction-erasure rule are re-examined: crossings separated by > 2·tol are both reported (as for Bezier pairs); a single tangent hit within tol of a contour junction is not erased when it is a genuine re-crossing. Document the final rules in ADR-0009.
   4. Regression vs main on ≥ 50k random pairs: every difference is an improvement by brute force; symmetry bit-exact.
+  5. Root-cause fix found in T-0007: `closestPoint(ArcSpan)` (contour_ops.cpp) returns the start point but parameter 1 when the query's angle lies a rounding error before the arc's start. Fix it at the source (parameter 0), add a fine-angle regression around both ends of CW/CCW partial arcs, and remove T-0007's wrapper in intersect.cpp. Check every other caller (contour closestPoint/distanceTo, offset pruning) is unaffected or improved.
 
 ### T-0010 Document model: Job, Sheet, Layer, Object, UndoStack                [status: done]
 Phase: 0   Module: core/document   Depends on: T-0001
