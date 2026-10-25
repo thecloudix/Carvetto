@@ -12,6 +12,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <initializer_list>
+#include <utility>
 #include <vector>
 
 #include "carvetto/geometry/contour_ops.hpp"
@@ -95,35 +96,58 @@ TEST_CASE("T-0007 AC1: verifier regressions, circles touching a cubic near piece
     }
 }
 
-TEST_CASE("T-0007 AC1: fine sweep of external circles and arcs touching convex cubics (t = i/1000)",
+namespace {
+// Positions on a cubic where touch detection used to fail in bands: around the 1/16 piece cuts
+// (+-0.006 in steps of `cutStep`) and near both span ends (0..0.012 and 0.988..1 in steps of
+// `endStep`), plus `randomCount` uniformly random positions elsewhere.
+std::vector<double> sweepPositions(SplitMix& rng, double cutStep, double endStep, int randomCount) {
+    std::vector<double> ts;
+    for (int k = 1; k < 16; ++k) {
+        for (double d = -0.006; d <= 0.006 + 1e-12; d += cutStep) {
+            ts.push_back(k / 16.0 + d);
+        }
+    }
+    for (double d = 0.0; d <= 0.012 + 1e-12; d += endStep) {
+        ts.push_back(d);
+        ts.push_back(1.0 - d);
+    }
+    for (int k = 0; k < randomCount; ++k) {
+        ts.push_back(rng.uniform(0.0, 1.0));
+    }
+    return ts;
+}
+}  // namespace
+
+TEST_CASE("T-0007 AC1: external circles and arcs touching convex cubics, dense near cuts and ends",
           "[geometry][intersect][t0007][property]") {
-    // Every position t = i/1000 on four convex cubics, external circles of radius 0.2 and 1.0
-    // touching at gap h on the convex side: exactly one tangent hit near A(t), in both argument
-    // orders (bit-identical mirror images). A short arc of the same circle around the touch point
-    // must give the same, as must the circle with its seam turned to face the cubic.
-    //
-    // Optimised builds run every position with every variant in both orders. Debug builds (no
-    // NDEBUG) take every 3rd position, offset per configuration (0.003 apart, still well inside
-    // the ~0.007 wide bands this guards against), the arc variants every 21st, and check the
-    // mirrored order on every 5th call.
+    // Four convex cubics, external circles of radius 0.2 and 1.0 touching at gap h on the convex
+    // side, at positions packed around the piece cuts and the span ends (where drops came in bands
+    // ~0.007 wide) plus random positions: exactly one tangent hit near A(t). A short arc of the
+    // same circle around the touch point (both directions) and the circle with its seam at the
+    // touch point must give the same. Every 2nd call checks that the mirrored order is a
+    // bit-identical mirror image. Debug builds (no NDEBUG) use coarser band steps (still finer
+    // than the bands) and fewer random positions.
+#ifdef NDEBUG
+    constexpr double kCutStep = 0.0015;
+    constexpr double kEndStep = 0.0005;
+    constexpr int kRandom = 100;
+    constexpr int kArcEvery = 3;
+#else
+    constexpr double kCutStep = 0.002;
+    constexpr double kEndStep = 0.001;
+    constexpr int kRandom = 40;
+    constexpr int kArcEvery = 5;
+#endif
+    SplitMix rng{0x7007AC1ULL};
     std::size_t touches = 0;
     std::size_t drops = 0;
-#ifdef NDEBUG
-    constexpr int kStride = 1;
-    constexpr int kArcEvery = 1;
-    constexpr std::size_t kMirrorEvery = 1;
-#else
-    constexpr int kStride = 3;
-    constexpr int kArcEvery = 21;
-    constexpr std::size_t kMirrorEvery = 5;
-#endif
-    int config = 0;
     for (std::size_t ci = 0; ci < kConvex.size(); ++ci) {
         const BezierSpan& a = kConvex[ci];
         for (const double radius : {0.2, 1.0}) {
             for (const double h : {1e-5, 1e-4, 0.99 * tol.distance}) {
-                for (int i = config++ % kStride; i <= 1000; i += kStride) {
-                    const double t = i / 1000.0;
+                const std::vector<double> ts = sweepPositions(rng, kCutStep, kEndStep, kRandom);
+                for (std::size_t i = 0; i < ts.size(); ++i) {
+                    const double t = std::clamp(ts[i], 0.0, 1.0);
                     const Vec2 n = convexNormal(a, t);
                     const Vec2 centre = a.pointAt(t) + n * (h + radius);
                     const double facing = (n * -1.0).angle();  // angle of the touch point on the circle
@@ -139,7 +163,7 @@ TEST_CASE("T-0007 AC1: fine sweep of external circles and arcs touching convex c
                     for (const Span& other : others) {
                         IntersectionResult r;
                         bool symmetric = true;
-                        if (touches % kMirrorEvery == 0) {
+                        if (touches % 2 == 0) {
                             symmetric = mirrored(a, other, &r);
                         } else {
                             r = intersect(Span{a}, other, tol);
@@ -161,7 +185,94 @@ TEST_CASE("T-0007 AC1: fine sweep of external circles and arcs touching convex c
         }
     }
     CHECK(drops == 0);
-    CHECK(touches >= 4u * 2u * 3u * (1000u / static_cast<std::size_t>(kStride)));
+    CHECK(touches > 6000u);
+}
+
+TEST_CASE("T-0007 AC1: partial arcs starting or ending just before a touch near a steep span end",
+          "[geometry][intersect][t0007][property]") {
+    // Round-2 verifier regressions (A = the steep cubic, arcs of radius 0.2 and 1).
+    const BezierSpan steep = kConvex[3];
+    const std::array<ArcSpan, 3> repros{{
+        {{3.0950979496607998, 8.3643981425706002},
+         0.2,
+         3.1008770665079832,
+         1.9723224964019979,
+         ArcDirection::CW},
+        {{2.8450265122033245, 6.9769008049397137},
+         0.2,
+         3.1336418585979828,
+         1.8870265992830411,
+         ArcDirection::CW},
+        {{-3.9652152469811144, 8.7089130968477519},
+         1.0,
+         0.096718052339241828,
+         1.5410881198509676,
+         ArcDirection::CCW},
+    }};
+    const std::array<double, 3> reproT{0.983, 0.9414, 0.0035};
+    for (std::size_t k = 0; k < repros.size(); ++k) {
+        IntersectionResult r;
+        CHECK(mirrored(steep, repros[k], &r));
+        REQUIRE(r.points.size() == 1);
+        CHECK(r.points[0].tangent);
+        CHECK_THAT(r.points[0].tA, Catch::Matchers::WithinAbs(reproT[k], 1e-6));
+    }
+    // Sweep: the arc's start (or end) lies `before` radians ahead of the touch point, in steps of
+    // 0.0005 rad (radius 0.2; radius 1 at 0.001 rad), for touches near both ends of steep cubics.
+    // Debug builds cover fewer positions and a shorter range of `before`.
+#ifdef NDEBUG
+    const std::vector<std::pair<std::size_t, double>> where{
+        {3, 0.0035}, {3, 0.9414}, {3, 0.983}, {2, 0.003}, {2, 0.997}};
+    constexpr int kSteps = 400;
+    constexpr int kLargeRadiusEvery = 2;
+    constexpr std::size_t kMirrorEvery = 4;
+#else
+    const std::vector<std::pair<std::size_t, double>> where{{3, 0.0035}, {3, 0.983}};
+    constexpr int kSteps = 300;
+    constexpr int kLargeRadiusEvery = 4;
+    constexpr std::size_t kMirrorEvery = 9;
+#endif
+    std::size_t calls = 0;
+    std::size_t drops = 0;
+    for (const auto& [ci, t] : where) {
+        const BezierSpan& a = kConvex[ci];
+        for (const double radius : {0.2, 1.0}) {
+            for (const double h : {1e-5, 1e-4, 0.99 * tol.distance}) {
+                const Vec2 n = convexNormal(a, t);
+                const Vec2 centre = a.pointAt(t) + n * (h + radius);
+                const double facing = (n * -1.0).angle();
+                for (int k = 0; k < kSteps; ++k) {
+                    const double before = 0.0002 + 0.0005 * k;
+                    if (radius == 1.0 && k % kLargeRadiusEvery != 0) {
+                        continue;  // the larger radius, whose touch is wider, at coarser steps
+                    }
+                    const std::array<ArcSpan, 4> arcs{{
+                        {centre, radius, facing - before, facing + 1.2, ArcDirection::CCW},
+                        {centre, radius, facing + before, facing - 1.2, ArcDirection::CW},
+                        {centre, radius, facing - 1.2, facing + before, ArcDirection::CCW},
+                        {centre, radius, facing + 1.2, facing - before, ArcDirection::CW},
+                    }};
+                    for (const ArcSpan& arc : arcs) {
+                        IntersectionResult r;
+                        bool symmetric = true;
+                        if (calls % kMirrorEvery == 0) {
+                            symmetric = mirrored(a, arc, &r);
+                        } else {
+                            r = intersect(Span{a}, Span{arc}, tol);
+                        }
+                        ++calls;
+                        if (!(symmetric && r.points.size() == 1 && r.points[0].tangent)) {
+                            ++drops;
+                            UNSCOPED_INFO("cubic " << ci << " t=" << t << " R=" << radius << " h=" << h
+                                                   << " before=" << before << " hits=" << r.points.size());
+                        }
+                    }
+                }
+            }
+        }
+    }
+    CHECK(drops == 0);
+    CHECK(calls > 5000u);
 }
 
 TEST_CASE("T-0007 AC1: circles just beyond tolerance give nothing", "[geometry][intersect][t0007]") {
@@ -416,6 +527,75 @@ TEST_CASE("T-0007 AC3: loops no larger than the tolerance are cusps, not self-in
     REQUIRE(r.points.size() == 1);
     CHECK_THAT(r.points[0].hit.tA, Catch::Matchers::WithinAbs(1.0 / 3.0, 1e-9));
     CHECK_THAT(r.points[0].hit.tB, Catch::Matchers::WithinAbs(2.0 / 3.0, 1e-9));
+}
+
+TEST_CASE("T-0007 AC3: small lopsided loops are judged by their largest extent",
+          "[geometry][intersect][t0007]") {
+    // Random looping cubics, scaled about their double point. A loop reaching further than the
+    // tolerance from its double point (largest distance, by dense sampling) is reported, one that
+    // stays within it is not. The point half-way in parameter can be much closer to the double
+    // point than the far end of a lopsided loop, so it must not be what decides: half of the
+    // cases are scaled to put that point just inside the tolerance.
+    SplitMix rng{0x7007100FULL};
+    std::size_t big = 0;
+    std::size_t bigFound = 0;
+    std::size_t small = 0;
+    std::size_t smallFound = 0;
+    std::size_t lopsided = 0;
+#ifdef NDEBUG
+    constexpr int kLoops = 1500;
+#else
+    constexpr int kLoops = 600;  // Debug: fewer loops
+#endif
+    for (int made = 0; made < kLoops;) {
+        const auto pt = [&] { return Vec2{rng.uniform(-5.0, 5.0), rng.uniform(-5.0, 5.0)}; };
+        const BezierSpan raw{pt(), pt(), pt(), pt()};
+        Contour probe;
+        probe.append(raw);
+        const ContourIntersections loop = selfIntersections(probe, tol);
+        if (loop.points.size() != 1) {
+            continue;
+        }
+        ++made;
+        const double s = loop.points[0].hit.tA;
+        const double u = loop.points[0].hit.tB;
+        const Vec2 dp = raw.pointAt(s);
+        double extent = 0.0;
+        for (int k = 0; k <= 2000; ++k) {
+            extent = std::max(extent, distance(dp, raw.pointAt(s + (u - s) * k / 2000.0)));
+        }
+        const double midReach = distance(dp, raw.pointAt(0.5 * (s + u)));
+        // Kind 0: scaled so that the parameter mid-point lies just inside the tolerance (the loop
+        // itself reaches further when it is lopsided); kind 1: a loop below 0.8 um; kind 2: a loop
+        // reaching 1.2-3 um.
+        const int kind = made % 3;
+        const bool even = kind == 0;
+        const double scale = kind == 0   ? 0.9 * tol.distance / midReach
+                             : kind == 1 ? rng.uniform(0.2e-3, 0.8e-3) / extent
+                                         : rng.uniform(1.2e-3, 3e-3) / extent;
+        const auto shrink = [&](Vec2 p) { return dp + (p - dp) * scale; };
+        const BezierSpan b{shrink(raw.p0), shrink(raw.p1), shrink(raw.p2), shrink(raw.p3)};
+        Contour c;
+        c.append(b);
+        const bool found = !selfIntersections(c, tol).isEmpty();
+        const double reach = extent * scale;
+        if (reach > 1.05 * tol.distance) {
+            ++big;
+            bigFound += found ? 1u : 0u;
+            lopsided += even ? 1u : 0u;
+            if (!found) {
+                UNSCOPED_INFO("missed loop " << made << " extent=" << reach << " s=" << s << " u=" << u);
+            }
+        } else if (reach < 0.95 * tol.distance) {
+            ++small;
+            smallFound += found ? 1u : 0u;
+        }
+    }
+    CHECK(bigFound == big);
+    CHECK(smallFound == 0u);
+    CHECK(lopsided > static_cast<std::size_t>(kLoops) / 75u);
+    CHECK(big > static_cast<std::size_t>(kLoops) / 3u);
+    CHECK(small > static_cast<std::size_t>(kLoops) / 4u);
 }
 
 // ============================================================================ AC4

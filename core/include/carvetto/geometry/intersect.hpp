@@ -70,7 +70,8 @@ IntersectionResult intersect(const ArcSpan& a, const ArcSpan& b, const Tolerance
 /// dip, are touch candidates: each is walked to the local minimum of the distance between the
 /// unsplit curves (around the seam of a full circle) and kept when that minimum is within
 /// `tol.distance`, flagged `tangent`. A closest approach with gap h <= tol.distance is reported
-/// exactly once, wherever it lies along either span and whichever span's end it involves; curves
+/// exactly once, wherever it lies along either span and whichever span's end it involves (this
+/// symmetry of end touches holds for pairs involving a Bezier; see ADR-0009); curves
 /// running within tolerance of each other report their crossings plus their local closest
 /// approaches, nothing in between. Degenerate (zero-length) spans are treated as points. Results
 /// are ordered by `tA`; hits within `tol.distance` of each other are merged into one, and two
@@ -115,7 +116,8 @@ ContourIntersections intersect(const Contour& a, const Contour& b, const Toleran
 /// consecutive spans (including the closing junction) does not count; everything else does,
 /// including a crossing next to a junction and a cubic Bezier that loops back through itself
 /// (reported with `spanA == spanB`; the double point is computed analytically, so thin sliver
-/// loops are found; a loop no larger than `tol.distance` is a cusp and is not reported).
+/// loops are found; a loop that stays within `tol.distance` of its double point is a cusp and is
+/// not reported).
 /// In a closed contour of two spans both junctions are ignored, and in a closed contour of one
 /// span the span's end meeting its own start is ignored.
 ContourIntersections selfIntersections(const Contour& c, const Tolerance& tol);
