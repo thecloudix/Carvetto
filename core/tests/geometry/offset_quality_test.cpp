@@ -335,8 +335,8 @@ std::vector<Vec2> meets(const Carrier& a, const Carrier& b) {
 }
 
 // Length by which carrier `c` must be extended beyond its end (`forward`) or before its start to
-// reach `p`; an arc may use its whole gap. Nothing when p lies on the span itself or is reached
-// only by wrapping onto the arc's other end.
+// reach `p`; an arc may use its gap up to a quarter turn. Nothing when p lies on the span itself,
+// is reached only by wrapping onto the arc's other end, or lies beyond the quarter-turn cap.
 std::optional<double> extension(const Carrier& c, const Span& offsetSpan, Vec2 p, bool forward) {
     if (!c.circle) {
         const double t =
@@ -353,7 +353,8 @@ std::optional<double> extension(const Carrier& c, const Span& offsetSpan, Vec2 p
     if (phi > kTwoPi - 1e-9) {
         return 0.0;
     }
-    if (phi >= kTwoPi - sweep - 1e-9) {
+    // ADR-0012 A1: an arc is extended over at most a quarter turn (and never past its other end).
+    if (phi >= kTwoPi - sweep - 1e-9 || phi > kPi / 2.0 - 1e-9) {
         return std::nullopt;
     }
     return phi * arc.radius;
@@ -623,6 +624,49 @@ TEST_CASE(
     CHECK(sharpChecked > 800);
     CHECK(sharpBeyondHalfGap > 50);
     CHECK(squareChecked > 800);
+}
+
+TEST_CASE("T-0006 AC2: a tiny offset arc is not dragged round its circle to make a corner",
+          "[geometry][offset][open][t0006]") {
+    // Right of the clockwise second arc the offset radius is 2.549 - 2.5 = 0.049, about 2% of d.
+    // Before the quarter-turn cap (ADR-0012 A1) Square extended that arc back by ~2 rad (sweep
+    // 4.15 -> 6.19 rad) to reach the chamfer line; now Square falls back to Round.
+    const Vec2 v{7.971660624, 2.014180349};
+    const Vec2 c2{7.566507, 4.530770};
+    Contour in;
+    in.spans.emplace_back(LineSpan{{0.374398076, 3.071823909}, {7.910979919, 1.784433171}});
+    in.spans.emplace_back(
+        ArcSpan::fromCentre({7.931065, 1.902015}, {7.910979919, 1.784433171}, v, ArcDirection::CCW));
+    in.spans.emplace_back(ArcSpan::fromCentre(c2, v, {9.482077052, 6.212425025}, ArcDirection::CW));
+    const double inputSweep = std::fabs(std::get<ArcSpan>(in.spans[2]).sweepAngle());
+    const double d = 2.5;
+    for (const JoinType join : {JoinType::Sharp, JoinType::Square}) {
+        CAPTURE(static_cast<int>(join));
+        const std::vector<Contour> chains = offsetOpenContour(in, d, OffsetSide::Right, join, kTol);
+        REQUIRE_FALSE(chains.empty());
+        bool tinyArcSeen = false;
+        for (const Contour& c : chains) {
+            for (const Span& s : c.spans) {
+                const auto* arc = std::get_if<ArcSpan>(&s);
+                if (arc && distance(arc->centre, c2) < 1e-6 && arc->radius < 0.1) {
+                    tinyArcSeen = true;
+                    CHECK(std::fabs(arc->sweepAngle()) <= inputSweep + kPi / 2.0 + 1e-9);
+                }
+                for (int k = 0; k <= 20; ++k) {
+                    CHECK(distanceToInput(pointAt(s, k / 20.0), in) >= d - 1e-6 * d);
+                }
+            }
+            JunctionStats st;
+            checkJunctions(chains, st);
+            CHECK(st.gaps == 0);
+            CHECK(st.backward == 0);
+        }
+        CHECK(tinyArcSeen);
+    }
+    // Square cannot reach its chamfer within the cap, so the corner is Round (whose join arc is
+    // then pruned here: the result equals the Round offset). Sharp meets within a quarter turn.
+    CHECK(offsetOpenContour(in, d, OffsetSide::Right, JoinType::Square, kTol) ==
+          offsetOpenContour(in, d, OffsetSide::Right, JoinType::Round, kTol));
 }
 
 // --- AC3: snapped junctions ---------------------------------------------------------------------

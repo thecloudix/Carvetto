@@ -81,23 +81,39 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     circle, the path ends their full circles. Release, dev container, CPU time per offset (all
     joins and sides): walk d = 1 ≤ 0.02 s, d = 2 ≤ 0.04 s; 8000-span hypotrochoid d = 2 ≤ 0.2 s;
     8000-span text-like loops d = 2 ≤ 0.06 s.
-  - *Arc corners (ADR-0006 §5, §4 here).* Mitre and chamfer extension of an arc may use the whole
-    gap outside its current (possibly already extended) sweep; previously the gap was split in
-    half between "past the end" and "before the start", so the second corner of an arc whose
-    first corner had already consumed part of the gap fell back (keyhole d = 0.25 Left Sharp:
-    true mitres at 0.304 from the vertices, previously a chamfer). The meeting point chosen is the
-    one reached first (least total extension). Remaining fallbacks are listed in `offset.hpp`.
+  - *Arc corners (ADR-0006 §5, §4 here).* Mitre and chamfer extension of an arc may use the gap
+    outside its current (possibly already extended) sweep; previously the gap was split in half
+    between "past the end" and "before the start", so the second corner of an arc whose first
+    corner had already consumed part of the gap fell back (keyhole d = 0.25 Left Sharp: true
+    mitres at 0.304 from the vertices, previously a chamfer). The meeting point chosen is the one
+    reached first (least total extension). **Cap (director, 2026-10-25):** an arc extension may
+    sweep at most 90° and the arc's new end point must stay within mitreLimit·d of the corner
+    vertex (for Square too, besides its 1.5·d chamfer reach); beyond either, Sharp falls back to
+    Square and Square to Round. Without it, an offset arc whose radius is ~2 % of d was dragged
+    ~2 rad round its circle to reach a chamfer line. Remaining fallbacks are listed in `offset.hpp`.
   - *Junctions (§7 replaced).* Chains are exactly continuous: consecutive spans (and the closing
-    junction of a closed chain) share their end point bit-identically wherever a line is involved
-    and to rounding between two arcs (ADR-0005 computes arc end points; the centre is nudged by a
-    few ulps where that makes them equal). Each junction is first closed geometrically: both spans
+    junction of a closed chain) share their end point bit-identically wherever a line is involved.
+    Between two arcs (ADR-0005 computes arc end points from centre and angles) the second arc's
+    centre is nudged by a few ulps until the points are equal; where that cannot succeed (centre
+    coordinates much larger than the point's) they agree within 1e-12·max(1, |x|, |y|, r) mm —
+    at most 6.3e-13 mm over 540 000 fuzzed offsets with coordinates up to ~100 mm (accepted,
+    director 2026-10-25). Each junction is first closed geometrically: both spans
     trimmed or extended along their carriers to where they meet (extensions must stay ≥ d from the
     input and, for Round, ≤ d, both to min(5e-7·max(1,d), 0.1·tol²/d)); else, for a sub-tolerance
     step sideways, the last tolerance of a neighbour is bent outwards onto the other's end; else
     the sub-tolerance pieces dropped there are put back (they are the true offset), else a straight
-    bridge (< tol, sagitta ≤ tol²/(8d)) closes the gap. A sub-tolerance piece is therefore only
+    bridge (< tol) closes the gap. Such a bridge may come closer than d to the input by its
+    sagitta against the round neighbourhood boundary, at most tol²/(8d): 1.25e-7 mm at d = 1,
+    2.5e-6 mm at d = 0.05 with tol = 0.001 (accepted, director 2026-10-25; the old code missed
+    d by similar amounts at such small d through other paths). Snapped extensions and bends may
+    come closer by at most min(5e-7·max(1,d), 0.1·tol²/d). A sub-tolerance piece is therefore only
     dropped where its neighbours can be joined without it, and a chain may contain a span shorter
     than the tolerance where the offset really has a feature that small. A closed chain made of
     two lines between the same two points (a zero-width sliver) is dropped like the opposite pairs
     of §5. The closing junction of a closed chain is snapped first so that no span can be trimmed
     past its own other end.
+  - *Tests.* The T-0004 chain check now requires exact continuity (1e-12) and allows a span no
+    longer than the tolerance wherever it is needed for that continuity (positive length, never
+    at an open chain's ends, exact junctions, no backward step); it passes with
+    `CARVETTO_OFFSET_TRIALS=96`. The T-0004 2000-span timing test measures CPU time (`std::clock`),
+    its absolute bound Release-only, plus a CPU-time complexity ratio (1000 vs 4000 spans).
