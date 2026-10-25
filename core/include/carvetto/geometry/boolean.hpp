@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "carvetto/geometry/contour.hpp"
+#include "carvetto/geometry/fill_rule.hpp"
 #include "carvetto/geometry/fixed_point.hpp"
 #include "carvetto/geometry/tolerance.hpp"
 
@@ -10,11 +11,6 @@ namespace carvetto::geometry {
 
 /// Boolean operation between a subject set and a clip set of closed contours.
 enum class BooleanOp { Union, Difference, Intersection, Xor };
-
-/// Rule deciding which regions of self-overlapping or nested input count as "inside".
-/// NonZero treats a hole as a contour wound opposite to its outer (the usual CAD convention);
-/// EvenOdd ignores orientation and alternates inside/outside at every boundary.
-enum class FillRule { NonZero, EvenOdd };
 
 /// Result of a boolean operation. Closed results are polygonal contours of line spans: outers
 /// are counter-clockwise (positive area), holes clockwise. Open results come from open subject

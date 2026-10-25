@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "carvetto/geometry/contour.hpp"
+#include "carvetto/geometry/fill_rule.hpp"
 #include "carvetto/geometry/span.hpp"
 #include "carvetto/geometry/tolerance.hpp"
 #include "carvetto/geometry/vec2.hpp"
@@ -33,9 +34,6 @@ Orientation orientation(const Contour& c, const Tolerance& tol);
 void setOrientation(Contour& c, Orientation want, const Tolerance& tol);
 
 // ----------------------------------------------------------------- point in contour
-
-/// Rule deciding which regions enclosed by one or more contours count as filled.
-enum class FillRule { EvenOdd, NonZero };
 
 /// Where a point lies relative to a (set of) closed contour(s).
 enum class PointLocation { Inside, Outside, OnBoundary };

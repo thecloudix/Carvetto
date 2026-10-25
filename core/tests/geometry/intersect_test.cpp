@@ -758,13 +758,18 @@ TEST_CASE("Arc-arc: near-tangent internal circles with close centres (verifier r
     CHECK(near(rb.points[0].point, {-5.0, 0.0}, tol.distance));
 }
 
-TEST_CASE("Arc-arc: concentric circles of different radii never meet", "[geometry][intersect]") {
+TEST_CASE("Arc-arc: nearly concentric circles meet only when their closest approach is within tolerance",
+          "[geometry][intersect]") {
+    // Closest approach of nested circles is |r1 - r2| - d (T-0005 AC2: no concentric special case).
     const ArcSpan a = ArcSpan::fullCircle({1.0, 1.0}, 5.0);
     for (const double dr : {0.0011, 0.01, 1.0}) {
         for (const double d : {0.0, 1e-9, 5e-4}) {
             const ArcSpan b = ArcSpan::fullCircle({1.0 + d, 1.0}, 5.0 + dr);
-            CHECK(intersect(a, b, tol).isEmpty());
-            CHECK(intersect(b, a, tol).isEmpty());
+            const bool touches = dr - d <= tol.distance;
+            INFO("dr=" << dr << " d=" << d);
+            CHECK(intersect(a, b, tol).points.size() == (touches ? 1u : 0u));
+            CHECK(intersect(b, a, tol).points.size() == (touches ? 1u : 0u));
+            CHECK(intersect(a, b, tol).overlaps.empty());
         }
     }
 }
