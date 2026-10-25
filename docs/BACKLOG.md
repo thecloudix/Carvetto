@@ -227,11 +227,11 @@ These five cards, together with what Phase 0 already has, make `carvetto-cli` ab
 
 ### T-0100 DXF import and export (lines, arcs, polylines, splines → contours; layers)   [status: in-progress]
 Phase: 1   Module: core/io   Depends on: T-0005   ADR: 0015
-Goal: `importDxf(bytes) → {layers, contours, warnings}` and `exportDxf(doc)` for DXF R12–2018 ASCII (and binary R12+ if cheap): LINE, ARC, CIRCLE, ELLIPSE, LWPOLYLINE (bulges → arcs), POLYLINE/VERTEX, SPLINE (NURBS → cubic Beziers within chordal tolerance), INSERT/BLOCK (flattened, nested), TEXT/MTEXT (as text objects with font name, height, position — rendered later by T-0130), $INSUNITS and $MEASUREMENT for unit scaling, layer names/colours/visibility. Own parser (no third-party DXF lib; the format is public). Export writes R2000 ASCII with layers, LWPOLYLINE bulges for arcs, SPLINE for Beziers.
+Goal: `importDxf(bytes) → {layers, contours, warnings}` and `exportDxf(layers, contours)` (director 2026-10-25: geometry-level API, not document-level) for DXF R12–2018 ASCII (and binary R12+ if cheap): LINE, ARC, CIRCLE, ELLIPSE, LWPOLYLINE (bulges → arcs), POLYLINE/VERTEX, SPLINE (NURBS → cubic Beziers within chordal tolerance), INSERT/BLOCK (flattened, nested), TEXT/MTEXT (as text objects with font name, height, position — rendered later by T-0130), $INSUNITS and $MEASUREMENT for unit scaling, layer names/colours/visibility. Own parser (no third-party DXF lib; the format is public). Export writes R2000 ASCII with layers, LWPOLYLINE bulges for arcs, SPLINE for Beziers.
 Interfaces: owns `core/include/carvetto/io/dxf.hpp`.
 Acceptance criteria:
   1. A hand-written DXF with one of every supported entity imports to contours whose geometry matches the analytic expectation within 1e-6 mm (bulges → exact arcs; spline → Beziers within 0.01 mm chordal).
-  2. Export → import round trip of a random document (lines/arcs/Beziers, 5 layers) reproduces every contour within 1e-9 mm and every layer name; a second export is byte-identical.
+  2. Export → import round trip of a random document (lines/arcs/Beziers, 5 layers) reproduces every contour within 1e-9 mm and every layer name; exporting the same input twice is byte-identical (export(import(export(x))) need only preserve geometry within 1e-9 — director 2026-10-25).
   3. Units: $INSUNITS = inches scales to mm on import; export writes $INSUNITS = mm.
   4. Nested INSERT with rotation/scale/mirror flattens correctly (checked against hand-computed transforms).
   5. Malformed input (truncated, bad group codes, unknown entities, 100 MB of garbage) never crashes; unknown entities produce warnings, not errors; fuzz ≥ 2,000 iterations under ASan.
