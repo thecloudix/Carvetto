@@ -143,7 +143,7 @@ Acceptance criteria:
   3. `ctest -j8` passes 10 consecutive runs on the CI Linux runner (add a CI step or document the local check).
   4. *(Added by director 2026-10-24, found verifying T-0012.)* `checkIntegrity()` is O(N log N) or better regardless of group depth/width: a 60,000-deep nested-group chain and a single group with 200,000 children each check in < 1 s Release; iterative (no recursion) cycle detection still finds a cycle at depth 50,000; all existing issue kinds and ordering unchanged.
 
-### T-0015 .carv zip-layer hardening: bounded inflate, overlapping entries, held-bytes cap   [status: in-progress]
+### T-0015 .carv zip-layer hardening: bounded inflate, overlapping entries, held-bytes cap   [status: done]
 Phase: 0 (must land before any UI file open/save)   Module: core/document   Depends on: T-0012   ADR: amend 0013
 Goal: Close the two blocking findings from T-0012's third verification round, which are in the archive layer, not the JSON loader.
 Acceptance criteria:
@@ -268,7 +268,7 @@ Acceptance criteria:
 ### Batch B — drawing & editing (viewmodel + Qt), to be carded after Batch A is dispatched
 - Drawing tools, snapping/guides, selection & node editing, transforms, align, group; boolean/shape ops UI (weld/subtract/overlap/trim/fillet/offset wrappers over T-0003/T-0004/T-0005), curve fit, join/close.
 - Text (FreeType/HarfBuzz) T-0130, dimensions, measure, bitmaps/trace, layout (arrays, nesting).
-- File open/save in the app (BLOCKED on T-0015), SVG/EPS/PDF I/O.
+- File open/save in the app (T-0015 done — unblocked), SVG/EPS/PDF I/O.
 
 ### Batch C — the rest of the toolpaths, simulation and output
 - Drill, quick engrave, V-carve (medial axis) with clearance, fluting, chamfer, prism, inlay, VCarve inlay, photo V-carve, thread milling, texture, keep-out zones, templates, merge, array copy, tiling, double-sided.
