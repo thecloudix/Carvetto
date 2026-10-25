@@ -76,7 +76,7 @@ Acceptance criteria:
 Out of scope: Bezier overlap detection; Debug-build Bezier length performance.
 Re-scoped by director after 3 verification rounds (2026-10-24): AC1, AC2, AC4, FillRule unification, completeness (0 misses / 48k pairs), symmetry and line/mirrored-cubic touches verified clean; residuals (circle touches dropped in bands near Bezier piece cuts, asymmetric end touches, sliver self-loops, junction-adjacent bulge crossing) moved to T-0007.
 
-### T-0006 Open-offset quality for toolpaths: speed at large d, exact arc mitres, snapped junctions   [status: pending-owner]
+### T-0006 Open-offset quality for toolpaths: speed at large d, exact arc mitres, snapped junctions   [status: in-progress]
 Phase: 1 (before the 2D Profile toolpath)   Module: core/geometry   Depends on: T-0004
 Goal: Non-blocking findings from T-0004 verification that matter once offsets feed G-code.
 Acceptance criteria:
@@ -84,7 +84,7 @@ Acceptance criteria:
   2. Sharp joins at arc corners produce the true mitre whenever it lies within `mitreLimit·d` (no fallback to Square/Round caused by trimming the arc's extension range); Square likewise. Header documents every remaining fallback. Regression: keyhole, d = 0.25, Left, Sharp → mitre at 0.304 from the vertex (limit 0.5), not an arc.
   3. Consecutive spans within a returned chain meet exactly (shared endpoint bit-identical, snapped), and no span starts behind the previous end along the chain. Fuzz: 0 gaps > 1e-12 and 0 backward steps over ≥ 20k generated offsets.
 
-### T-0007 Intersection residuals II: circle touches near Bezier cuts, end-touch symmetry, sliver loops   [status: pending-owner]
+### T-0007 Intersection residuals II: circle touches near Bezier cuts, end-touch symmetry, sliver loops   [status: in-progress]
 Phase: 1 (before Trim / Vector Validator)   Module: core/geometry   Depends on: T-0005   ADR: amend 0009
 Goal: Close the residuals from T-0005's third verification round.
 Acceptance criteria:
@@ -210,12 +210,12 @@ Out of scope: drawing tools, selection, 3D rendering (blank tab only).
 
 ## Phase 1 — 2D/2.5D CAM MVP
 
-Goal: the PLAN §5 acceptance test — import a DXF, add text on a curve, pocket + profile with tabs, V-carve with a clearance tool, preview, post to Grbl, cut it on a real machine. Cards are written in batches; each batch is dispatched only after the owner approves the phase. **Owner decision 2026-10-24: paused after Phase 0 — do not dispatch Phase 1 until the owner says so.** Phase 0 follow-ups T-0006/T-0007 are also held (they are Phase 1 prerequisites). ADR numbers are pre-assigned per card. Concurrency 4; cards in the same module that share headers do not run together.
+Goal: the PLAN §5 acceptance test — import a DXF, add text on a curve, pocket + profile with tabs, V-carve with a clearance tool, preview, post to Grbl, cut it on a real machine. Cards are written in batches; each batch is dispatched only after the owner approves the phase. Owner decision 2026-10-24: paused after Phase 0. **Owner decision 2026-10-25: Phase 1 started.** ADR numbers are pre-assigned per card. Concurrency 4; cards in the same module that share headers do not run together.
 
 ### Batch A — vertical slice first (prove the pipeline end to end, headless)
 These five cards, together with what Phase 0 already has, make `carvetto-cli` able to turn a DXF into Grbl G-code with no UI. Everything later plugs into this spine.
 
-### T-0100 DXF import and export (lines, arcs, polylines, splines → contours; layers)   [status: pending-owner]
+### T-0100 DXF import and export (lines, arcs, polylines, splines → contours; layers)   [status: in-progress]
 Phase: 1   Module: core/io   Depends on: T-0005   ADR: 0015
 Goal: `importDxf(bytes) → {layers, contours, warnings}` and `exportDxf(doc)` for DXF R12–2018 ASCII (and binary R12+ if cheap): LINE, ARC, CIRCLE, ELLIPSE, LWPOLYLINE (bulges → arcs), POLYLINE/VERTEX, SPLINE (NURBS → cubic Beziers within chordal tolerance), INSERT/BLOCK (flattened, nested), TEXT/MTEXT (as text objects with font name, height, position — rendered later by T-0130), $INSUNITS and $MEASUREMENT for unit scaling, layer names/colours/visibility. Own parser (no third-party DXF lib; the format is public). Export writes R2000 ASCII with layers, LWPOLYLINE bulges for arcs, SPLINE for Beziers.
 Interfaces: owns `core/include/carvetto/io/dxf.hpp`.
@@ -227,7 +227,7 @@ Acceptance criteria:
   5. Malformed input (truncated, bad group codes, unknown entities, 100 MB of garbage) never crashes; unknown entities produce warnings, not errors; fuzz ≥ 2,000 iterations under ASan.
 Out of scope: DWG, hatches, dimensions entities (imported as warnings), 3D entities.
 
-### T-0110 Tool database defaults and the Grbl/Mach3/LinuxCNC/Marlin posts   [status: pending-owner]
+### T-0110 Tool database defaults and the Grbl/Mach3/LinuxCNC/Marlin posts   [status: in-progress]
 Phase: 1   Module: posts, core/tooling   Depends on: —
 Goal: Ship a starter tool database (JSON, ~30 common tools: end mills 1/8–1/2 in and 2–12 mm, ball noses, 60/90/120° V-bits, engraving, tapered ball nose) with conservative wood/plastic/aluminium cutting data, plus original posts for Mach3, Mach4, LinuxCNC, Marlin (mm and inch variants where idiomatic) alongside the existing Grbl post, each with a golden-file test.
 Acceptance criteria:
