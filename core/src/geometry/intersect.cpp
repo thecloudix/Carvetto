@@ -72,10 +72,24 @@ void finish(IntersectionResult& out, double slackA) {
                      [](const Overlap& l, const Overlap& r) { return l.tA0 < r.tA0; });
 }
 
+// `closestPoint` with the parameter made consistent with the point: for an arc, a point whose
+// angle lies a rounding error before the start (so that `containsAngle` accepts it) gets the
+// parameter of the END from `closestPoint(ArcSpan)` (the travelled angle wraps to just under 2pi
+// and is clamped), while the returned point is at the start. Such a parameter is replaced by 0.
+ClosestPoint closestOn(const Span& o, Vec2 p) {
+    ClosestPoint cp = closestPoint(o, p);
+    if (const auto* arc = std::get_if<ArcSpan>(&o)) {
+        if (cp.t == 1.0 && distance(cp.point, arc->startPoint()) < distance(cp.point, arc->endPoint())) {
+            cp.t = 0.0;
+        }
+    }
+    return cp;
+}
+
 // A degenerate span is a point: it intersects where it lies on the other span.
 IntersectionResult pointAgainstSpan(Vec2 p, const Span& b, bool pointIsA, const Tolerance& tol) {
     IntersectionResult out;
-    const ClosestPoint cp = closestPoint(b, p);
+    const ClosestPoint cp = closestOn(b, p);
     if (cp.distance <= tol.distance) {
         out.points.push_back(pointIsA ? Intersection{cp.point, 0.0, cp.t, false}
                                       : Intersection{cp.point, cp.t, 0.0, false});
@@ -447,6 +461,11 @@ std::vector<ParamPoint> sampleSpan(const Span& s, const Tolerance& tol) {
 struct Candidate {
     double tA;
     double tB;
+    // Extra distance, beyond 1.5 * tol.distance, within which the candidate is still worth
+    // settling: a sample next to a minimum that lies beyond the sampled range (see scanCrossings).
+    double reach{0.0};
+    // Set for a span end paired with its nearest point on the other span (see polygoniseAndRefine).
+    bool spanEnd{false};
 };
 
 // Closest parameters between two straight segments (0 distance when they cross).
@@ -526,7 +545,7 @@ Candidate newton(const Span& a, const Span& b, Candidate c) {
 ClosestPoint nearestFrom(const Span& o, Vec2 p, double seed) {
     const auto* z = std::get_if<BezierSpan>(&o);
     if (z == nullptr) {
-        return closestPoint(o, p);
+        return closestOn(o, p);
     }
     double s = std::clamp(seed, 0.0, 1.0);
     for (int iter = 0; iter < 20; ++iter) {
@@ -571,7 +590,7 @@ struct SideSample {
 // `seedO` < 0 asks for the global closest point; otherwise the foot point near O(seedO).
 SideSample sideSample(const Span& s, const Span& o, double t, double seedO) {
     const Vec2 p = pointAt(s, t);
-    const ClosestPoint cp = seedO < 0.0 ? closestPoint(o, p) : nearestFrom(o, p, seedO);
+    const ClosestPoint cp = seedO < 0.0 ? closestOn(o, p) : nearestFrom(o, p, seedO);
     return {t, tangentAt(o, cp.t).cross(p - cp.point), cp.t};
 }
 
@@ -644,6 +663,48 @@ void scanCrossings(const Span& s, const Span& o, double t0, double t1, bool span
             bracket(l, r);
         }
     }
+    // A sample at zero distance (to rounding) carries no sign: typically the junction S shares
+    // with O, or a crossing that falls exactly on a sample. The neighbouring piece may still
+    // swing to the other side of O and come back to the zero, i.e. cross O once more, without
+    // any sign change between samples. The signed distance, oriented by the non-zero neighbour,
+    // is unimodal over such a piece (down through the crossing to the swing's peak, back up to
+    // the zero), so its minimum is found by golden section and, when it lies beyond O, brackets
+    // the extra crossing against the non-zero sample.
+    constexpr double invPhi = 0.6180339887498949;
+    for (std::size_t k = 0; k < kPieces; ++k) {
+        const SideSample& l = samples[k];
+        const SideSample& r = samples[k + 1];
+        const bool lz = std::fabs(l.f) <= noise;
+        const bool rz = std::fabs(r.f) <= noise;
+        if (lz == rz) {
+            continue;
+        }
+        const SideSample& nz = lz ? r : l;
+        const double sign = nz.f > 0.0 ? 1.0 : -1.0;
+        double lo = l.t;
+        double hi = r.t;
+        SideSample x1 = sideSample(s, o, hi - invPhi * (hi - lo), nz.tO);
+        SideSample x2 = sideSample(s, o, lo + invPhi * (hi - lo), nz.tO);
+        for (int iter = 0; iter < 16 && sign * x1.f >= -noise && sign * x2.f >= -noise; ++iter) {
+            if (sign * x1.f < sign * x2.f) {
+                hi = x2.t;
+                x2 = x1;
+                x1 = sideSample(s, o, hi - invPhi * (hi - lo), x2.tO);
+            } else {
+                lo = x1.t;
+                x1 = x2;
+                x2 = sideSample(s, o, lo + invPhi * (hi - lo), x1.tO);
+            }
+        }
+        const SideSample& m = sign * x1.f < sign * x2.f ? x1 : x2;
+        if (sign * m.f < -noise) {
+            if (lz) {
+                bracket(m, r);
+            } else {
+                bracket(l, m);
+            }
+        }
+    }
     // An interior sample at which the signed distance is (weakly) closer to O than at both
     // neighbours marks a dip: a shallow double crossing hiding between samples, or a touch. The
     // extremum towards O is searched by golden section over the two pieces around the sample.
@@ -676,7 +737,6 @@ void scanCrossings(const Span& s, const Span& o, double t0, double t1, bool span
         if (sign * c.f > 1.5 * tol + 2.0 * variation) {
             continue;
         }
-        constexpr double invPhi = 0.6180339887498949;
         double lo = l.t;
         double hi = r.t;
         SideSample x1 = sideSample(s, o, hi - invPhi * (hi - lo), c.tO);
@@ -684,12 +744,6 @@ void scanCrossings(const Span& s, const Span& o, double t0, double t1, bool span
         // Twelve steps shrink the bracket to under 1% of the pieces: enough to tell a crossing
         // pair from a touch, and a touch candidate is polished later by settleTouch.
         for (int iter = 0; iter < 12 && sign * x1.f >= -noise && sign * x2.f >= -noise; ++iter) {
-            // Near a smooth minimum the two probes differ by far less than the value there: once
-            // the difference is a small fraction of the remaining margin, the dip can neither
-            // reach O nor come within tolerance of it.
-            if (4.0 * std::fabs(x1.f - x2.f) < std::min(sign * x1.f, sign * x2.f) - noise - tol) {
-                break;
-            }
             if (sign * x1.f < sign * x2.f) {
                 hi = x2.t;
                 x2 = x1;
@@ -720,6 +774,49 @@ void scanCrossings(const Span& s, const Span& o, double t0, double t1, bool span
     // candidates, and `settleTouch` walks them to the true minimum on the unsplit spans.
     for (std::size_t k = 0; k <= kPieces; ++k) {
         const SideSample& x = samples[k];
+        const bool chordEnd = k == 0 || k == kPieces;
+        // A chord end that is no further from O than its inner neighbour is the sampled bottom of
+        // a dip that the interior test cannot see, because the dip straddles the end of the chord
+        // (the neighbouring chord or piece has the same sample as its own end) or the end of S.
+        // Within the same reach as an interior dip, the extremum towards O over the end piece is
+        // searched by golden section: beyond O it brackets a double crossing confined to that
+        // piece (e.g. S swinging across O and back just before its end); otherwise the end is a
+        // touch candidate, settled later on the unsplit spans (the minimum may lie beyond the
+        // end, so the candidate carries the variation as extra reach).
+        if (chordEnd) {
+            const SideSample& inner = samples[k == 0 ? 1 : kPieces - 1];
+            const double fx = std::fabs(x.f);
+            const double fi = std::fabs(inner.f);
+            const double allowance = clamped(inner) ? 0.0 : 2.0 * (fi - fx);
+            if ((x.f > 0.0) == (inner.f > 0.0) && fx <= fi && fx > noise && fx <= 1.5 * tol + allowance) {
+                const double sign = x.f > 0.0 ? 1.0 : -1.0;
+                double lo = std::min(x.t, inner.t);
+                double hi = std::max(x.t, inner.t);
+                SideSample x1 = sideSample(s, o, hi - invPhi * (hi - lo), x.tO);
+                SideSample x2 = sideSample(s, o, lo + invPhi * (hi - lo), x.tO);
+                for (int iter = 0; iter < 12 && sign * x1.f >= -noise && sign * x2.f >= -noise; ++iter) {
+                    if (sign * x1.f < sign * x2.f) {
+                        hi = x2.t;
+                        x2 = x1;
+                        x1 = sideSample(s, o, hi - invPhi * (hi - lo), x2.tO);
+                    } else {
+                        lo = x1.t;
+                        x1 = x2;
+                        x2 = sideSample(s, o, lo + invPhi * (hi - lo), x1.tO);
+                    }
+                }
+                const SideSample& m = sign * x1.f < sign * x2.f ? x1 : x2;
+                if (sign * m.f < -noise) {
+                    bracket(k == 0 ? x : inner, m);
+                    bracket(m, k == 0 ? inner : x);
+                    continue;
+                }
+                if (fx > 1.5 * tol) {
+                    out.push_back({x.tO, x.t, allowance});
+                    continue;
+                }
+            }
+        }
         if (std::fabs(x.f) > 1.5 * tol) {
             continue;
         }
@@ -755,12 +852,24 @@ void pieceCandidates(const Span& a, const Span& b, const Tolerance& tol, std::ve
             const double wA = pa[i].t - pa[i - 1].t;
             const Candidate seed{pa[i - 1].t + wA * prox->first.tA,
                                  pb[j - 1].t + (pb[j].t - pb[j - 1].t) * prox->first.tB};
-            // Only converged seeds (crossings) are kept. A seed that Newton could not converge lies
-            // where the tangents are nearly parallel; the signed-distance scan below covers those
-            // stretches, both for crossings and for touches.
+            // A seed that Newton converges is a crossing. One that it cannot converge lies where the
+            // tangents are nearly parallel: a near miss or a touch. Every touch within tolerance has
+            // such a chord pair, so the seed is kept as a touch candidate too, to be walked to the
+            // local minimum of the gap by `settleTouch`. (The scan below also finds the samples
+            // near a touch, but only within bounds estimated from the samples, which narrow dips
+            // near piece cuts and span ends defeat.)
             const Candidate c = refine(a, b, seed);
             if (residual(a, b, c) <= 1e-6 * tol.distance) {
                 found.push_back(c);
+            } else {
+                // The same fraction along a chord need not be the nearest curve point (a Bezier's
+                // speed varies along a chord), so the closest point of A's chord is projected onto
+                // A, and that onto B. Each curve lies within tol.chordal of its chord and the chords
+                // come within `reach`, so the gap is below 4 * tol.chordal + tol.distance.
+                const Vec2 onChordA = pa[i - 1].p + (pa[i].p - pa[i - 1].p) * prox->first.tA;
+                const double tA = nearestFrom(a, onChordA, seed.tA).t;
+                const ClosestPoint cp = nearestFrom(b, pointAt(a, tA), seed.tB);
+                found.push_back({tA, cp.t, 4.0 * tol.chordal});
             }
         }
     }
@@ -855,14 +964,16 @@ constexpr double kMaxWalkStep = 1.0 / 64.0;
 
 // Follows the gap along A downhill from `mid` in the direction of `next` (a sample one `step`
 // away whose gap is lower), with growing steps until the gap rises again, then narrows the
-// bracket by golden section. Stops at an end of A. Returns the lowest sample seen; `probe`
-// evaluates and records a sample.
+// bracket by golden section. Stops at an end of A, unless A is `periodic` (a full circle, whose
+// parameter wraps around and which has no ends). Returns the lowest sample seen; `probe` evaluates
+// and records a sample.
 template <typename Probe>
-GapSample descend(GapSample mid, GapSample next, double step, const Probe& probe) {
+GapSample descend(GapSample mid, GapSample next, double step, bool periodic,
+                  const std::vector<GapSample>* known, const Probe& probe) {
     const bool forward = next.t > mid.t;
     GapSample behind = mid;
     for (int iter = 0; iter < 80 && next.gap < mid.gap; ++iter) {
-        if ((forward && next.t >= 1.0) || (!forward && next.t <= 0.0)) {
+        if (!periodic && ((forward && next.t >= 1.0) || (!forward && next.t <= 0.0))) {
             return next;  // ran into an end of A while still descending: an end touch
         }
         behind = mid;
@@ -874,6 +985,20 @@ GapSample descend(GapSample mid, GapSample next, double step, const Probe& probe
     constexpr double invPhi = 0.6180339887498949;
     double l = std::min(behind.t, next.t);
     double h = std::max(behind.t, next.t);
+    // A minimum that an earlier walk settled inside this bracket, at or below its lowest sample,
+    // is where this walk would end too: return it instead of searching again (along
+    // near-coincident curves many candidates descend into the same few minima).
+    if (known != nullptr) {
+        const GapSample* found = nullptr;
+        for (const GapSample& k : *known) {
+            if (k.t > l && k.t < h && k.gap <= mid.gap && (found == nullptr || k.gap < found->gap)) {
+                found = &k;
+            }
+        }
+        if (found != nullptr) {
+            return *found;
+        }
+    }
     GapSample x1 = probe(h - invPhi * (h - l), mid.tB);
     GapSample x2 = probe(l + invPhi * (h - l), mid.tB);
     for (int iter = 0; iter < 100 && h - l > 1e-10; ++iter) {
@@ -906,37 +1031,60 @@ GapSample descend(GapSample mid, GapSample next, double step, const Probe& probe
 // that was not unimodal, or a branch change of the nearest point) is dropped, and the real minima
 // are reached from other candidates.
 //
+// `minima` collects the minima accepted by earlier walks for the same span pair; a walk whose
+// final bracket contains one at or below its lowest sample ends there (see `descend`).
+//
 // `trail` collects every gap evaluation of earlier walks for the same span pair (sorted by t). A
 // new candidate that lands between two earlier samples less than a step apart, with its gap
 // between theirs, sits on a stretch already walked downhill and is skipped: the minimum at the
 // bottom of that slope was reached from the earlier candidate. Along near-coincident curves this
 // turns hundreds of chord seeds into a handful of walks.
-std::vector<Candidate> settleTouch(const Span& a, const Span& b, Candidate c, std::vector<GapSample>& trail) {
+//
+// A full circle has no ends: its seam is an arbitrary point, so the walk wraps around it (samples
+// are evaluated and recorded at the wrapped parameter) instead of stopping there.
+std::vector<Candidate> settleTouch(const Span& a, const Span& b, Candidate c, std::vector<GapSample>& trail,
+                                   std::vector<GapSample>& minima) {
     std::vector<Candidate> out;
+    const auto* arcA = std::get_if<ArcSpan>(&a);
+    const bool periodic = arcA != nullptr && arcA->isFullCircle();
+    const auto wrap = [periodic](double t) { return periodic ? t - std::floor(t) : std::clamp(t, 0.0, 1.0); };
     const auto record = [&](const GapSample& g) {
         const auto pos = std::lower_bound(trail.begin(), trail.end(), g.t,
                                           [](const GapSample& e, double t) { return e.t < t; });
         trail.insert(pos, g);
     };
     const GapSample mid = gapAlongA(a, b, std::clamp(c.tA, 0.0, 1.0), c.tB);
+    // Earlier samples either side of the candidate, if any (looked up before this walk records).
+    std::optional<GapSample> trailL;
+    std::optional<GapSample> trailR;
     {
         const auto right = std::lower_bound(trail.begin(), trail.end(), mid.t,
                                             [](const GapSample& e, double t) { return e.t < t; });
         if (right != trail.end() && right != trail.begin()) {
-            const GapSample& r = *right;
-            const GapSample& l = *(right - 1);
-            const bool close = r.t - l.t <= kMaxWalkStep;
-            const bool between =
-                (l.gap <= mid.gap && mid.gap <= r.gap) || (l.gap >= mid.gap && mid.gap >= r.gap);
-            if (close && between) {
-                return out;
-            }
+            trailL = *(right - 1);
+            trailR = *right;
         }
+    }
+    const bool walked = trailL && trailR && trailR->t - trailL->t <= kMaxWalkStep;
+    const auto between = [&] {
+        const GapSample& l = *trailL;
+        const GapSample& r = *trailR;
+        return (l.gap <= mid.gap && mid.gap <= r.gap) || (l.gap >= mid.gap && mid.gap >= r.gap);
+    };
+    // A chord seed (a candidate with extra reach) is a backstop for touches the scan cannot
+    // bound; along near-coincident curves there are hundreds of them. One that lands between two
+    // earlier samples less than a walk step apart, with its gap between theirs, is skipped
+    // outright, like any slope candidate below, without probing which way it descends.
+    if (!c.spanEnd && c.reach > 0.0 && walked && between()) {
+        return out;
     }
     record(mid);
     const auto probe = [&](double t, double seed) {
-        const GapSample g = gapAlongA(a, b, std::clamp(t, 0.0, 1.0), seed);
+        GapSample g = gapAlongA(a, b, wrap(t), seed);
         record(g);
+        if (periodic) {
+            g.t = t;  // the walk itself runs on the unwrapped parameter
+        }
         return g;
     };
     // Initial probes a tiny step either side, widened while the gap is flat to within noise.
@@ -950,22 +1098,42 @@ std::vector<Candidate> settleTouch(const Span& a, const Span& b, Candidate c, st
         lo = probe(mid.t - step, mid.tB);
         hi = probe(mid.t + step, mid.tB);
     }
+    // A candidate on a slope that descends towards an earlier sample less than a walk step away,
+    // with its gap between those of the two earlier samples around it, would only retrace a
+    // stretch already walked downhill: skip it. A candidate at the bottom of the gap (no lower
+    // probe either side) or on a ridge is always walked, because the earlier samples around it say
+    // nothing about a minimum between them (e.g. a touch next to a crossing). A span end is always
+    // walked: where the curves run within tolerance of each other the gap is flat to rounding, the
+    // trail around the end says nothing about whether the end is the bottom, and an end touch there
+    // was lost.
+    if (walked && !c.spanEnd) {
+        const GapSample& l = *trailL;
+        const GapSample& r = *trailR;
+        const bool downLeft = lo.gap < mid.gap && hi.gap >= mid.gap && l.gap < mid.gap;
+        const bool downRight = hi.gap < mid.gap && lo.gap >= mid.gap && r.gap < mid.gap;
+        if (between() && (downLeft || downRight)) {
+            return out;
+        }
+    }
     const auto accept = [&](const GapSample& best) {
         for (const double t : {best.t - 1e-5, best.t + 1e-5}) {
-            if (t >= 0.0 && t <= 1.0 && gapAlongA(a, b, t, best.tB).gap < best.gap - kGapNoise) {
+            if ((periodic || (t >= 0.0 && t <= 1.0)) &&
+                gapAlongA(a, b, wrap(t), best.tB).gap < best.gap - kGapNoise) {
                 return;
             }
         }
-        out.push_back({best.t, best.tB});
+        out.push_back({wrap(best.t), best.tB});
+        minima.push_back({wrap(best.t), best.tB, best.gap});
     };
     if (lo.gap < mid.gap) {
-        accept(descend(mid, lo, step, probe));
+        accept(descend(mid, lo, step, periodic, periodic ? nullptr : &minima, probe));
     }
     if (hi.gap < mid.gap) {
-        accept(descend(mid, hi, step, probe));
+        accept(descend(mid, hi, step, periodic, periodic ? nullptr : &minima, probe));
     }
     if (lo.gap >= mid.gap && hi.gap >= mid.gap) {
-        accept(descend(mid, lo.gap <= hi.gap ? lo : hi, step, probe));  // already at the bottom
+        accept(descend(mid, lo.gap <= hi.gap ? lo : hi, step, periodic, periodic ? nullptr : &minima,
+                       probe));  // already at the bottom
     }
     return out;
 }
@@ -999,7 +1167,30 @@ IntersectionResult polygoniseAndRefine(const Span& a, const Span& b, const Toler
             pieceCandidates(p.span, q.span, tol, local);
             for (const Candidate& c : local) {
                 // De Casteljau halving is an affine reparametrisation, so this mapping is exact.
-                found.push_back({p.u0 + (p.u1 - p.u0) * c.tA, q.u0 + (q.u1 - q.u0) * c.tB});
+                found.push_back({p.u0 + (p.u1 - p.u0) * c.tA, q.u0 + (q.u1 - q.u0) * c.tB, c.reach});
+            }
+        }
+    }
+    // The ends of both spans, paired with their nearest points on the other span. An end touch is
+    // a minimum of the distance along one span only (along the other the distance may keep falling
+    // towards a crossing), so neither the scan, which runs along B, nor the walk, which runs along
+    // A, need reach it from elsewhere; seeding it directly makes end touches symmetric.
+    // (The bounding boxes rule out most ends before the global nearest-point search.)
+    const Box2 nearA = bounds(a).inflated(1.5 * tol.distance);
+    const Box2 nearB = bounds(b).inflated(1.5 * tol.distance);
+    for (const double t : {0.0, 1.0}) {
+        const Vec2 endA = pointAt(a, t);
+        if (nearB.contains(endA)) {
+            const ClosestPoint onB = closestOn(b, endA);
+            if (onB.distance <= 1.5 * tol.distance) {
+                found.push_back({t, onB.t, 0.0, true});
+            }
+        }
+        const Vec2 endB = pointAt(b, t);
+        if (nearA.contains(endB)) {
+            const ClosestPoint onA = closestOn(a, endB);
+            if (onA.distance <= 1.5 * tol.distance) {
+                found.push_back({onA.t, t, 0.0, true});
             }
         }
     }
@@ -1013,6 +1204,7 @@ IntersectionResult polygoniseAndRefine(const Span& a, const Span& b, const Toler
     };
     std::vector<Raw> raw;
     std::vector<GapSample> trail;
+    std::vector<GapSample> minima;
     std::vector<std::pair<double, Candidate>> touches;
     const auto emit = [&](Candidate c, double res, bool exact) {
         if (exact) {
@@ -1034,12 +1226,27 @@ IntersectionResult polygoniseAndRefine(const Span& a, const Span& b, const Toler
             }
         }
         const Vec2 p = (pointAt(a, c.tA) + pointAt(b, c.tB)) * 0.5;
-        // A contact that is not an exact crossing is a touch within tolerance.
-        raw.push_back({res, {p, c.tA, c.tB, !exact || tangentsParallel(a, c.tA, b, c.tB)}});
+        // A contact that is not an exact crossing is a touch within tolerance. An exact contact is
+        // a touch when the tangents are parallel, or when they are nearly so and A stays on one
+        // side of B half a tolerance either way along A: at an exact tangency Newton stops
+        // anywhere in the band where the curves agree to rounding, and there the tangents can
+        // differ by more than the parallel test allows.
+        bool tangent = !exact || tangentsParallel(a, c.tA, b, c.tB);
+        if (!tangent && std::fabs(tangentAt(a, c.tA).cross(tangentAt(b, c.tB))) <= 1e-3) {
+            const double speed = derivativeAt(a, c.tA).length();
+            const double step = speed > 0.0 ? 0.5 * tol.distance / speed : 0.0;
+            const auto side = [&](double t) { return sideSample(a, b, std::clamp(t, 0.0, 1.0), c.tB).f; };
+            const double before = side(c.tA - step);
+            const double after = side(c.tA + step);
+            const double noise = 1e-6 * tol.distance;
+            tangent = step > 0.0 && std::fabs(before) > noise && std::fabs(after) > noise &&
+                      (before > 0.0) == (after > 0.0);
+        }
+        raw.push_back({res, {p, c.tA, c.tB, tangent}});
     };
     for (const Candidate& c : found) {
         const double res = residual(a, b, c);
-        if (res > 1.5 * tol.distance) {
+        if (res > 1.5 * tol.distance + c.reach) {
             continue;
         }
         const bool exact = res <= 1e-6 * tol.distance;
@@ -1050,7 +1257,7 @@ IntersectionResult polygoniseAndRefine(const Span& a, const Span& b, const Toler
             // keep getting closer beyond it. Settle it to the nearest local minimum of the gap
             // along the unsplit A; a candidate whose descent ends at a crossing becomes that
             // crossing (its exact twin, found from the other side, wins the merge).
-            for (const Candidate& settled : settleTouch(a, b, c, trail)) {
+            for (const Candidate& settled : settleTouch(a, b, c, trail, minima)) {
                 const double r = residual(a, b, settled);
                 if (r <= tol.distance) {
                     touches.push_back({r, settled});
@@ -1138,11 +1345,83 @@ void appendContourHits(ContourIntersections& out, std::size_t i, std::size_t j, 
     }
 }
 
+// The double point of a cubic, from its power-basis form B(t) = a t^3 + b t^2 + c t + d: for
+// s != t, (B(t) - B(s)) / (t - s) = a (t^2 + ts + s^2) + b (t + s) + c = 0. In terms of the sum
+// u = s + t and the product v = s t this is a (u^2 - v) + b u + c = 0; crossing with a gives
+// u (a x b) + (a x c) = 0, and projecting on a gives v. s and t are the roots of
+// x^2 - u x + v = 0. A cubic has at most one double point; it is a loop of this span when both
+// roots are real, distinct and in [0, 1]. Returned unrefined (s < t).
+std::optional<Candidate> cubicDoublePoint(const BezierSpan& z) {
+    const Vec2 a = z.p3 - z.p0 + (z.p1 - z.p2) * 3.0;
+    const Vec2 b = (z.p0 - z.p1 * 2.0 + z.p2) * 3.0;
+    const Vec2 c = (z.p1 - z.p0) * 3.0;
+    const double ab = a.cross(b);
+    const double aa = a.dot(a);
+    if (ab == 0.0 || aa == 0.0) {
+        return std::nullopt;
+    }
+    const double u = -a.cross(c) / ab;
+    const double v = u * u + (b * u + c).dot(a) / aa;
+    const double disc = u * u - 4.0 * v;
+    if (!(disc > 0.0) || !std::isfinite(disc)) {
+        return std::nullopt;
+    }
+    const double root = std::sqrt(disc);
+    const double t0 = 0.5 * (u - root);
+    const double t1 = 0.5 * (u + root);
+    constexpr double kSlack = 1e-9;
+    if (t0 < -kSlack || t1 > 1.0 + kSlack) {
+        return std::nullopt;
+    }
+    return Candidate{std::clamp(t0, 0.0, 1.0), std::clamp(t1, 0.0, 1.0)};
+}
+
 // Self-intersections of a single cubic Bezier (a loop crossing itself). `closingJunction` is set
 // when the Bezier alone forms a closed contour: its start meeting its end there is not a crossing.
+// The double point is computed analytically (`cubicDoublePoint`), so loops of any size are found,
+// including thin slivers whose chords never cross at the chordal sampling; a loop that stays
+// within `tol.distance` of its double point is a cusp within tolerance and is not reported. Chord crossings
+// are also refined, as a fallback when rounding puts the analytic roots just outside [0, 1].
 void bezierSelfIntersections(const BezierSpan& bz, std::size_t index, std::optional<Vec2> closingJunction,
                              ContourIntersections& out, const Tolerance& tol) {
     const Span s{bz};
+    if (const std::optional<Candidate> dp = cubicDoublePoint(bz)) {
+        Candidate c = newton(s, s, *dp);
+        if (c.tA > c.tB) {
+            std::swap(c.tA, c.tB);
+        }
+        const Vec2 p = pointAt(s, c.tA);
+        // The loop's size: its largest distance from the double point, from 16 samples refined by
+        // golden section around the farthest (the distance is smooth and, for a loop, has one
+        // maximum, but the sampling keeps a lopsided loop from fooling the search).
+        const auto reachOf = [&](double u) { return distance(p, pointAt(s, u)); };
+        constexpr int kLoopSamples = 16;
+        const double du = (c.tB - c.tA) / kLoopSamples;
+        int far = 1;
+        for (int k = 2; k < kLoopSamples; ++k) {
+            if (reachOf(c.tA + du * k) > reachOf(c.tA + du * far)) {
+                far = k;
+            }
+        }
+        double lo = c.tA + du * (far - 1);
+        double hi = c.tA + du * (far + 1);
+        for (int iter = 0; iter < 40; ++iter) {
+            const double m1 = hi - 0.6180339887498949 * (hi - lo);
+            const double m2 = lo + 0.6180339887498949 * (hi - lo);
+            if (reachOf(m1) > reachOf(m2)) {
+                hi = m2;
+            } else {
+                lo = m1;
+            }
+        }
+        const double extent = std::max(reachOf(0.5 * (lo + hi)), reachOf(c.tA + du * far));
+        if (std::fabs(c.tA - c.tB) > 1e-6 && residual(s, s, c) <= tol.distance && extent > tol.distance &&
+            !(closingJunction && tol.equalPoints(p, *closingJunction))) {
+            IntersectionResult r;
+            r.points.push_back({p, c.tA, c.tB, false});
+            appendContourHits(out, index, index, r, tol);
+        }
+    }
     const std::vector<ParamPoint> pts = sampleSpan(s, tol);
     for (std::size_t i = 1; i < pts.size(); ++i) {
         for (std::size_t j = i + 2; j < pts.size(); ++j) {

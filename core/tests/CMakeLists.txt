@@ -17,6 +17,7 @@ add_executable(carvetto_tests
   geometry/contour_ops_test.cpp
   geometry/intersect_test.cpp
   geometry/intersect_residuals_test.cpp
+  geometry/intersect_residuals_ii_test.cpp
   geometry/fill_rule_test.cpp
   toolpath/move_test.cpp
   toolpath/toolpath_test.cpp
