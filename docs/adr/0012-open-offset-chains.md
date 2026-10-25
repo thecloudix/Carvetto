@@ -65,3 +65,39 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
   side that produced it (it is that side's outside-corner join).
 - The 2d-proximity split no longer loses geometry, but chains may now be numerous for dense,
   self-approaching input; ordering by start position keeps output deterministic.
+
+## Amendments
+- **A1 (2026-10-25, T-0006): open-offset quality for toolpaths.** Status unchanged.
+  - *Cost (§8).* Profiling the 2000-step 0.5 mm random walk at d = 2 (≈1.2 s per offset in
+    Release before) put ~85 % of the time in pruning (each rejected sample scanned every input span
+    within d: ~200 per sample, ~440 000 pieces per offset) and ~10 % in splitting at whole vertex
+    circles. Now (a) the distance test stops at the first input span closer than d and tries the
+    span that rejected the previous sample first (same answer as the full scan); (b) raw elements
+    whose convex hull points (line ends; arc ends and tangent apexes per ≤ 90° piece) all lie
+    within d of one input *line* are discarded before splitting (distance to a segment is convex);
+    (c) a vertex contributes only the arc of its circle between the neighbours' offsets on the
+    outer side of the turn (the rest lies inside the neighbourhood of one of the two spans), a
+    reversal or a discontinuity of the flattened input (a dropped sub-tolerance span) a full
+    circle, the path ends their full circles. Release, dev container, CPU time per offset (all
+    joins and sides): walk d = 1 ≤ 0.02 s, d = 2 ≤ 0.04 s; 8000-span hypotrochoid d = 2 ≤ 0.2 s;
+    8000-span text-like loops d = 2 ≤ 0.06 s.
+  - *Arc corners (ADR-0006 §5, §4 here).* Mitre and chamfer extension of an arc may use the whole
+    gap outside its current (possibly already extended) sweep; previously the gap was split in
+    half between "past the end" and "before the start", so the second corner of an arc whose
+    first corner had already consumed part of the gap fell back (keyhole d = 0.25 Left Sharp:
+    true mitres at 0.304 from the vertices, previously a chamfer). The meeting point chosen is the
+    one reached first (least total extension). Remaining fallbacks are listed in `offset.hpp`.
+  - *Junctions (§7 replaced).* Chains are exactly continuous: consecutive spans (and the closing
+    junction of a closed chain) share their end point bit-identically wherever a line is involved
+    and to rounding between two arcs (ADR-0005 computes arc end points; the centre is nudged by a
+    few ulps where that makes them equal). Each junction is first closed geometrically: both spans
+    trimmed or extended along their carriers to where they meet (extensions must stay ≥ d from the
+    input and, for Round, ≤ d, both to min(5e-7·max(1,d), 0.1·tol²/d)); else, for a sub-tolerance
+    step sideways, the last tolerance of a neighbour is bent outwards onto the other's end; else
+    the sub-tolerance pieces dropped there are put back (they are the true offset), else a straight
+    bridge (< tol, sagitta ≤ tol²/(8d)) closes the gap. A sub-tolerance piece is therefore only
+    dropped where its neighbours can be joined without it, and a chain may contain a span shorter
+    than the tolerance where the offset really has a feature that small. A closed chain made of
+    two lines between the same two points (a zero-width sliver) is dropped like the opposite pairs
+    of §5. The closing junction of a closed chain is snapped first so that no span can be trimmed
+    past its own other end.

@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <limits>
 #include <map>
 #include <optional>
@@ -85,8 +86,9 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 //     falling back to Square beyond the mitre limit; Square: both neighbours extended to a
 //     chamfer line at distance d from the vertex, falling back to Round when an arc cannot
 //     reach it); inside corners get a straight connector.
-//  2. Split the raw chain at all its self-intersections (and where elements overlap on one
-//     carrier) and where it crosses the rest of the d-neighbourhood boundary (circles about the
+//  2. Discard raw elements lying wholly within d of one input line. Split the rest at all
+//     their self-intersections (and where elements overlap on one carrier) and where they
+//     cross the rest of the d-neighbourhood boundary (the outer arcs of the circles about the
 //     input vertices, offsets on both sides, inverted arcs). A uniform grid supplies the
 //     candidate pairs, so this is close to linear in the number of spans.
 //  3. Discard every piece that comes closer than d to the input, or that lies strictly inside
@@ -97,11 +99,14 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 //  4. Stitch the surviving pieces into components by following their end points.
 //  5. Cut every component where it returns to a point it already passed, into open chains and
 //     closed loops that never meet themselves, and order them along the input (ADR-0012).
+//  6. Snap each chain's junctions so consecutive spans share their end points exactly
+//     (T-0006; see snapChain).
 // ---------------------------------------------------------------------------------------------
 
 namespace {
 
 constexpr double kParamEps = 1e-9;
+constexpr double kInf = std::numeric_limits<double>::infinity();
 
 // Flattened input span list: lines and arcs only, Beziers polygonised, degenerate pieces gone.
 std::vector<Span> flattenForOffset(const Contour& c, const Tolerance& tol) {
@@ -228,6 +233,32 @@ double carrierParam(const Span& s, Vec2 p) {
     return after < before ? phi / sweep : -before / sweep;
 }
 
+// Parameter of carrier point `p` for extending `s` past its end (`pastEnd`) or before its start:
+// like carrierParam, but on an arc the WHOLE gap outside the sweep counts as extension in the
+// requested direction (carrierParam splits it in half, which made an arc whose mitre point lay
+// more than half the gap away fall back to Square/Round, T-0006). Nothing when reaching `p` would
+// take the arc (within 1e-9 rad) all the way round to its own other end.
+std::optional<double> extensionParam(const Span& s, Vec2 p, bool pastEnd) {
+    if (std::holds_alternative<LineSpan>(s)) {
+        return carrierParam(s, p);
+    }
+    const auto& arc = std::get<ArcSpan>(s);
+    const double sweep = std::fabs(arc.sweepAngle());
+    const double angle = (p - arc.centre).angle();
+    const double phi = arc.direction == ArcDirection::CCW ? normalizeAngle(angle - arc.startAngle)
+                                                          : normalizeAngle(arc.startAngle - angle);
+    if (phi <= sweep) {
+        return phi / sweep;
+    }
+    const double after = phi - sweep;    // travelled past the end
+    const double before = kTwoPi - phi;  // travelled back from the start
+    const double gap = kTwoPi - sweep;
+    if ((pastEnd ? after : before) > gap - 1e-9) {
+        return std::nullopt;
+    }
+    return pastEnd ? 1.0 + after / sweep : -before / sweep;
+}
+
 // Same carrier, end moved to `p` (which must lie on the carrier).
 Span withEnd(Span s, Vec2 p) {
     if (auto* line = std::get_if<LineSpan>(&s)) {
@@ -255,17 +286,25 @@ bool inUnit(double t) {
 }
 
 // Point of carrier contact between `a` (ending) and `b` (starting) beyond a's end and before
-// b's start, nearest `vertex` and within `maxDist` of it.
+// b's start, within `maxDist` of `vertex`: where the two extensions first meet (smallest total
+// extension length). An arc may be extended over the whole gap outside its sweep.
 std::optional<Vec2> extensionMeet(const Span& a, const Span& b, Vec2 vertex, double maxDist) {
     std::optional<Vec2> best;
+    double bestCost = std::numeric_limits<double>::infinity();
+    const double la = length(a);
+    const double lb = length(b);
     for (const Vec2 p : carrierIntersections(a, b)) {
-        if (carrierParam(a, p) < 1.0 - kParamEps || carrierParam(b, p) > kParamEps) {
+        const std::optional<double> ta = extensionParam(a, p, true);
+        const std::optional<double> tb = extensionParam(b, p, false);
+        if (!ta || !tb || *ta < 1.0 - kParamEps || *tb > kParamEps) {
             continue;
         }
         if (geometry::distance(p, vertex) > maxDist) {
             continue;
         }
-        if (!best || geometry::distance(p, vertex) < geometry::distance(*best, vertex)) {
+        const double cost = std::max(0.0, *ta - 1.0) * la + std::max(0.0, -*tb) * lb;
+        if (cost < bestCost) {
+            bestCost = cost;
             best = p;
         }
     }
@@ -284,18 +323,23 @@ std::optional<LineSpan> squareJoin(Span& a, Span& b, Vec2 vertex, Vec2 tangentIn
     const Vec2 q = vertex + bisector * d;
     const Span chamferCarrier = LineSpan{q, q + bisector.perp()};
     const double reach = 1.5 * d;  // chamfer ends lie within d / cos(45 deg) of the vertex
+    // First hit of each extension (an arc's may use the whole gap outside its sweep).
     std::optional<Vec2> h1;
+    double t1 = 0.0;
     for (const Vec2 p : carrierIntersections(a, chamferCarrier)) {
-        if (carrierParam(a, p) >= 1.0 - kParamEps && geometry::distance(p, vertex) <= reach &&
-            (!h1 || carrierParam(a, p) < carrierParam(a, *h1))) {
+        const std::optional<double> t = extensionParam(a, p, true);
+        if (t && *t >= 1.0 - kParamEps && geometry::distance(p, vertex) <= reach && (!h1 || *t < t1)) {
             h1 = p;
+            t1 = *t;
         }
     }
     std::optional<Vec2> h2;
+    double t2 = 0.0;
     for (const Vec2 p : carrierIntersections(b, chamferCarrier)) {
-        if (carrierParam(b, p) <= kParamEps && geometry::distance(p, vertex) <= reach &&
-            (!h2 || carrierParam(b, p) > carrierParam(b, *h2))) {
+        const std::optional<double> t = extensionParam(b, p, false);
+        if (t && *t <= kParamEps && geometry::distance(p, vertex) <= reach && (!h2 || *t > t2)) {
             h2 = p;
+            t2 = *t;
         }
     }
     if (!h1 || !h2 || (*h2 - *h1).dot(s - e) < 0.0) {
@@ -474,6 +518,9 @@ class BoxGrid {
         ch_ = h > 0.0 ? h / static_cast<double>(ny_) : 1.0;
         cells_.resize(nx_ * ny_);
         for (std::size_t i = 0; i < boxes_.size(); ++i) {
+            if (boxes_[i].isEmpty()) {
+                continue;  // never reported
+            }
             const auto [x0, x1, y0, y1] = cellRange(boxes_[i]);
             for (std::size_t y = y0; y <= y1; ++y) {
                 for (std::size_t x = x0; x <= x1; ++x) {
@@ -486,8 +533,17 @@ class BoxGrid {
     // Calls f(i) once for every item whose box intersects `query`.
     template <class F>
     void query(const Box2& query, F&& f) {
+        queryUntil(query, [&](std::size_t i) {
+            f(i);
+            return false;
+        });
+    }
+
+    // Like query(), but stops as soon as f(i) returns true; returns whether it did.
+    template <class F>
+    bool queryUntil(const Box2& query, F&& f) {
         if (cells_.empty() || !query.intersects(extent_)) {
-            return;
+            return false;
         }
         ++epoch_;
         const auto [x0, x1, y0, y1] = cellRange(query);
@@ -496,11 +552,14 @@ class BoxGrid {
                 for (const std::size_t i : cells_[y * nx_ + x]) {
                     if (stamp_[i] != epoch_ && boxes_[i].intersects(query)) {
                         stamp_[i] = epoch_;
-                        f(i);
+                        if (f(i)) {
+                            return true;
+                        }
                     }
                 }
             }
         }
+        return false;
     }
 
    private:
@@ -531,16 +590,46 @@ class BoxGrid {
     std::uint64_t epoch_{0};
 };
 
-// Smallest distance from `p` to the input spans whose (inflated) boxes the grid reports, cut
-// short as soon as one is closer than `limit`. Spans farther than `limit` are never visited.
-double distanceBelow(Vec2 p, double limit, const std::vector<Span>& input, BoxGrid& grid) {
-    double best = std::numeric_limits<double>::infinity();
-    grid.query(Box2{p - Vec2{limit, limit}, p + Vec2{limit, limit}}, [&](std::size_t i) {
-        if (best >= limit) {
-            best = std::min(best, distanceToSpan(p, input[i]));
+// True when some input span is closer than `limit` to `p`. `witness` is the span that last
+// answered yes; it is tried first and updated, because neighbouring samples along the raw chain
+// are almost always rejected by the same span (most raw pieces of a dense path at a large
+// distance lie deep inside the neighbourhood). Without it each rejected sample visited every
+// span within `limit`, which dominated the cost at large d (T-0006). Only spans whose boxes meet
+// the query square can be closer than `limit`, so the answer is exactly that of a full scan.
+bool closerThan(Vec2 p, double limit, const std::vector<Span>& input, BoxGrid& grid, std::size_t& witness) {
+    if (witness < input.size() && distanceToSpan(p, input[witness]) < limit) {
+        return true;
+    }
+    return grid.queryUntil(Box2{p - Vec2{limit, limit}, p + Vec2{limit, limit}}, [&](std::size_t i) {
+        if (i != witness && distanceToSpan(p, input[i]) < limit) {
+            witness = i;
+            return true;
         }
+        return false;
     });
-    return best;
+}
+
+// Points whose convex hull contains the line or arc `s`: a line's end points; for an arc, the
+// end points of sub-arcs of at most 90 degrees plus, for each, the meeting point of its end
+// tangents (at radius r / cos(half sweep) on the bisector).
+void hullPoints(const Span& s, std::vector<Vec2>& out) {
+    out.clear();
+    if (const auto* line = std::get_if<LineSpan>(&s)) {
+        out.push_back(line->start);
+        out.push_back(line->end);
+        return;
+    }
+    const auto& arc = std::get<ArcSpan>(s);
+    const double sweep = arc.sweepAngle();
+    const int parts = std::max(1, static_cast<int>(std::ceil(std::fabs(sweep) / (kPi / 2.0))));
+    const double step = sweep / parts;
+    const double apex = arc.radius / std::cos(0.5 * step);
+    out.push_back(arc.startPoint());
+    for (int k = 0; k < parts; ++k) {
+        const double a0 = arc.startAngle + step * k;
+        out.push_back(arc.centre + Vec2::fromAngle(a0 + 0.5 * step, apex));
+        out.push_back(arc.centre + Vec2::fromAngle(a0 + step, arc.radius));
+    }
 }
 
 // A sub-range [t0, t1] of one raw element.
@@ -667,6 +756,261 @@ bool insideRegion(Vec2 p, const Wedge& edges) {
     return inside;
 }
 
+// Moves the end of `a` and the start of `b` to the common point `j` (on both carriers), unless
+// that would reverse either span or wrap an arc round to its other end; returns whether it did.
+bool moveJunction(Span& a, Span& b, Vec2 j) {
+    const std::optional<double> ta = extensionParam(a, j, true);
+    const std::optional<double> tb = extensionParam(b, j, false);
+    if (!ta || !tb || *ta <= kParamEps || *tb >= 1.0 - kParamEps) {
+        return false;
+    }
+    a = withEnd(a, j);
+    b = withStart(b, j);
+    return true;
+}
+
+// What the junction snapping needs from the offset: the side, the tolerance, and a test that a
+// point is at least d (to the pruning margin) from the input.
+struct SnapContext {
+    double sign;
+    const Tolerance& tol;
+    std::function<bool(Vec2)> clear;   // at least d from the input (to the snapping margin)
+    std::function<bool(Vec2)> notFar;  // Round only: at most d (to the same margin) from it
+};
+
+// Geometric snap of the junction between `a` and `b`, consecutive spans of an output chain whose
+// end points agree to the tolerance. Both are trimmed or extended along their own carriers to
+// where those meet, so the junction lies on both. That is only done where it keeps both spans on
+// the offset: a trimmed span stays on itself, and an extension (e.g. the mitre of a corner whose
+// sub-tolerance join piece was dropped, at most about tol^2 / (8d) beyond d) must be at least d
+// from the input (and, for Round, not beyond d), within a few gaps of the old ends. Gaps of
+// rounding size need no such care: a line end moves onto the other span's end, or an arc end
+// onto the angle of a line's end. Returns false, leaving both spans unchanged, where the
+// junction cannot be closed that way (e.g. a sub-tolerance S-step: the carriers meet only
+// behind one span and ahead of the other).
+bool snapJunction(Span& a, Span& b, const SnapContext& ctx) {
+    const Vec2 e = endPoint(a);
+    const Vec2 s = startPoint(b);
+    if (e == s) {
+        return true;
+    }
+    const double gap = geometry::distance(e, s);
+    const double rounding = 1e-9 * std::max({1.0, std::fabs(e.x), std::fabs(e.y)});
+    const double reach = std::max(2.0 * ctx.tol.distance, 4.0 * gap);
+    const Vec2 mid = (e + s) * 0.5;
+    std::optional<Vec2> best;
+    double bestGap = kInf;
+    for (const Vec2 p : carrierIntersections(a, b)) {
+        const std::optional<double> ta = extensionParam(a, p, true);
+        const std::optional<double> tb = extensionParam(b, p, false);
+        if (!ta || !tb || geometry::distance(p, e) > reach || geometry::distance(p, s) > reach ||
+            geometry::distance(p, mid) >= bestGap) {
+            continue;
+        }
+        // Trimming keeps a span on itself. An extension beyond rounding size must stay clear of
+        // the input (the dropped piece may have been a stretch of another part's offset cutting
+        // across this corner) and, for Round, not stray beyond d.
+        auto extensionOk = [&](Vec2 end) {
+            return geometry::distance(p, end) <= rounding || (ctx.clear(p) && ctx.clear((p + end) * 0.5) &&
+                                                              ctx.notFar(p) && ctx.notFar((p + end) * 0.5));
+        };
+        if ((*ta <= 1.0 || extensionOk(e)) && (*tb >= 0.0 || extensionOk(s))) {
+            bestGap = geometry::distance(p, mid);
+            best = p;
+        }
+    }
+    if (best && moveJunction(a, b, *best)) {
+        return true;
+    }
+    if (gap > rounding) {
+        return false;
+    }
+    if (std::holds_alternative<LineSpan>(b)) {
+        std::get<LineSpan>(b).start = e;
+    } else if (std::holds_alternative<LineSpan>(a)) {
+        std::get<LineSpan>(a).end = s;
+    } else {
+        b = withStart(b, e);  // two arcs: as close as their circles allow
+    }
+    return true;
+}
+
+// Closes a junction snapJunction could not (a sub-tolerance step sideways, left where a
+// tolerance-sized piece was dropped) by bending the last tolerance of one neighbour onto the
+// other span's end point: the neighbour is cut at P, one tolerance along it from the junction,
+// and the straight P -> (other end point) replaces the stretch beyond P (a short line moves as
+// a whole). Only a neighbour whose end then moves away from the input (towards the offset side)
+// and whose new stretch stays at least d from it is bent; the offset moves by at most the gap,
+// and only within the tolerance of the junction. `extra` receives the new span between `a` and
+// `b`, if any. Returns false where neither neighbour can be bent.
+bool stepJunction(Span& a, Span& b, const SnapContext& ctx, std::optional<Span>& extra) {
+    extra.reset();
+    const double tol = ctx.tol.distance;
+    const Vec2 e = endPoint(a);
+    const Vec2 s = startPoint(b);
+    if (geometry::distance(e, s) > tol) {
+        return false;
+    }
+    // Where `span` is cut when its `atEnd` end moves to `to` (nothing when it may not bend):
+    // the parameter of P, or the far end itself for a short line.
+    auto cut = [&](const Span& span, bool atEnd, Vec2 to) -> std::optional<double> {
+        const double len = length(span);
+        const bool line = std::holds_alternative<LineSpan>(span);
+        if (len <= (line ? tol : 2.0 * tol)) {
+            return std::nullopt;
+        }
+        const Vec2 from = atEnd ? endPoint(span) : startPoint(span);
+        const Vec2 outward = tangentAt(span, atEnd ? 1.0 : 0.0).perp() * ctx.sign;
+        if ((to - from).dot(outward) < 0.0) {
+            return std::nullopt;
+        }
+        const double t = len <= 2.0 * tol ? (atEnd ? 0.0 : 1.0) : (atEnd ? 1.0 - tol / len : tol / len);
+        const Vec2 p = pointAt(span, t);
+        if (geometry::distance(p, to) <= tol) {
+            return std::nullopt;  // the new stretch would itself be shorter than the tolerance
+        }
+        for (const double f : {0.25, 0.5, 0.75}) {
+            if (!ctx.clear(lerp(p, to, f)) || !ctx.notFar(lerp(p, to, f))) {
+                return std::nullopt;
+            }
+        }
+        return t;
+    };
+    if (const auto t = cut(a, true, s)) {
+        if (*t == 0.0) {
+            std::get<LineSpan>(a).end = s;
+        } else {
+            const Vec2 p = pointAt(a, *t);
+            a = withEnd(a, p);
+            extra = LineSpan{p, s};
+        }
+        return true;
+    }
+    if (const auto t = cut(b, false, e)) {
+        if (*t == 1.0) {
+            std::get<LineSpan>(b).start = e;
+        } else {
+            const Vec2 p = pointAt(b, *t);
+            b = withStart(b, p);
+            extra = LineSpan{e, p};
+        }
+        return true;
+    }
+    return false;
+}
+
+// Makes the junction of `a` and `b` bit-identical, changing only a's end or b's start. A line
+// end simply takes the other span's computed end point. Between two arcs, whose end points are
+// computed from centre, radius and angles (ADR-0005), b's centre is nudged by a few ulps until
+// its computed start equals a's computed end; that can fail where the centre's coordinates are
+// much larger than the point's, leaving a rounding-level residual (far below 1e-12 mm).
+void exactJunction(Span& a, Span& b) {
+    if (auto* line = std::get_if<LineSpan>(&a)) {
+        line->end = startPoint(b);
+        return;
+    }
+    const Vec2 j = endPoint(a);
+    if (auto* line = std::get_if<LineSpan>(&b)) {
+        line->start = j;
+        return;
+    }
+    auto& arc = std::get<ArcSpan>(b);
+    if (arc.startPoint() == j) {
+        return;
+    }
+    const double scale = std::max({1.0, std::fabs(j.x), std::fabs(j.y), arc.radius});
+    if (geometry::distance(arc.startPoint(), j) > 1e-12 * scale) {
+        return;  // not a rounding-level residual: leave the arc where it is
+    }
+    ArcSpan moved = arc;
+    moved.centre = j - Vec2::fromAngle(arc.angleAt(0.0), arc.radius);
+    for (int iter = 0; iter < 8 && moved.startPoint() != j; ++iter) {
+        const Vec2 got = moved.startPoint();
+        if (got.x != j.x) {
+            moved.centre.x = std::nextafter(moved.centre.x, got.x < j.x ? kInf : -kInf);
+        }
+        if (got.y != j.y) {
+            moved.centre.y = std::nextafter(moved.centre.y, got.y < j.y ? kInf : -kInf);
+        }
+    }
+    if (moved.startPoint() == j) {
+        arc = moved;
+    }
+}
+
+// Snaps the junctions of an output chain (and its closing junction when `closed`) so that
+// consecutive spans share their end point exactly. `dropped[k]` holds the sub-tolerance pieces
+// left out before span k (`dropped[0]`: those across the closing junction of a closed chain).
+// Each junction is first snapped geometrically (snapJunction, else stepJunction); where both
+// fail the dropped pieces are put back (they are the true offset there), and where there are
+// none a straight bridge spans the gap. Then the junctions are made bit-identical in order
+// (exactJunction), which never disturbs an end matched before; a closed chain is walked from a
+// line if it has one, so its closing junction is exact too.
+std::vector<Span> snapChain(const std::vector<Span>& spans, const std::vector<std::vector<Span>>& dropped,
+                            bool closed, const SnapContext& ctx) {
+    std::vector<Span> out;
+    if (spans.empty()) {
+        return out;
+    }
+    // Closes the junction a -> b; `between` receives any spans that go between them.
+    auto join = [&](Span& a, Span& b, const std::vector<Span>& before, std::vector<Span>& between) {
+        std::optional<Span> extra;
+        if (snapJunction(a, b, ctx)) {
+            return;
+        }
+        if (stepJunction(a, b, ctx, extra)) {
+            if (extra) {
+                between.push_back(*extra);
+            }
+            return;
+        }
+        std::vector<Span> chain{a};
+        chain.insert(chain.end(), before.begin(), before.end());
+        chain.push_back(b);
+        std::vector<Span> joined{chain.front()};
+        for (std::size_t k = 1; k < chain.size(); ++k) {
+            if (!snapJunction(joined.back(), chain[k], ctx)) {
+                joined.emplace_back(LineSpan{endPoint(joined.back()), startPoint(chain[k])});
+            }
+            joined.push_back(chain[k]);
+        }
+        a = joined.front();
+        b = joined.back();
+        between.assign(joined.begin() + 1, joined.end() - 1);
+    };
+    std::vector<Span> body = spans;
+    std::vector<Span> closing;
+    if (closed && body.size() > 1) {
+        // The closing junction first, so that every later junction sees both ends of its spans
+        // in their final place (no span can then be trimmed past its own other end).
+        join(body.back(), body.front(), dropped[0], closing);
+    }
+    out.push_back(body.front());
+    for (std::size_t k = 1; k < body.size(); ++k) {
+        std::vector<Span> between;
+        join(out.back(), body[k], dropped[k], between);
+        out.insert(out.end(), between.begin(), between.end());
+        out.push_back(body[k]);
+    }
+    out.insert(out.end(), closing.begin(), closing.end());
+    const std::size_t n = out.size();
+    if (n < 2) {
+        return out;
+    }
+    std::size_t first = 0;
+    if (closed) {
+        const auto line = std::find_if(out.begin(), out.end(),
+                                       [](const Span& sp) { return std::holds_alternative<LineSpan>(sp); });
+        first = line == out.end() ? 0 : static_cast<std::size_t>(line - out.begin());
+    }
+    const std::size_t junctions = closed ? n : n - 1;
+    for (std::size_t k = 0; k < junctions; ++k) {
+        const std::size_t i = (first + k) % n;
+        exactJunction(out[i], out[(i + 1) % n]);
+    }
+    return out;
+}
+
 // The raw offset chain of one side, with each element's position along the input path (span
 // index + fraction at its start and end) for ordering the output chains.
 struct RawChain {
@@ -749,11 +1093,46 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
         return result;
     }
 
+    // The margin only absorbs rounding (pieces on the boundary sit at d to ~1e-15 relative). It
+    // stays below tol^2 / (8d), the depth of the shallowest connector or overshoot longer than
+    // the tolerance at a nearly straight inside corner, so no such sliver survives as a cusp.
+    const double keepAbove = d - std::min(1e-9 * std::max(1.0, d), 0.1 * tol.distance * tol.distance / d);
+    std::vector<Box2> inputBoxes;
+    inputBoxes.reserve(input.size());
+    for (const Span& s : input) {
+        inputBoxes.push_back(bounds(s));
+    }
+    BoxGrid inputGrid(inputBoxes);
+
+    // Dead elements: distance to a segment is a convex function of the point, so a raw element
+    // whose convex hull points (see hullPoints) are all closer than keepAbove to one input line
+    // lies wholly that close to it, and every piece of it would be pruned. At a large distance
+    // relative to the feature size most of the raw chain is like that; dropping these elements
+    // before splitting removes most of the boundary-split and pruning work (T-0006). Splits a
+    // live element would get from crossing a dead one lie strictly inside the neighbourhood,
+    // between two pieces that are pruned anyway.
+    std::vector<bool> dead(m, false);
+    std::vector<Vec2> hull;
+    for (std::size_t i = 0; i < m; ++i) {
+        hullPoints(raw[i], hull);
+        const Vec2 a = hull.front();
+        dead[i] = inputGrid.queryUntil(
+            Box2{a - Vec2{keepAbove, keepAbove}, a + Vec2{keepAbove, keepAbove}}, [&](std::size_t j) {
+                if (!std::holds_alternative<LineSpan>(input[j])) {
+                    return false;
+                }
+                return std::all_of(hull.begin(), hull.end(),
+                                   [&](Vec2 p) { return distanceToSpan(p, input[j]) < keepAbove; });
+            });
+    }
+
     // 2. Split the raw chain at its self-intersections (candidate pairs from a uniform grid).
     std::vector<std::vector<double>> splits(m);
     std::vector<Box2> boxes(m);
     for (std::size_t i = 0; i < m; ++i) {
-        boxes[i] = bounds(raw[i]).inflated(1e-9);
+        if (!dead[i]) {
+            boxes[i] = bounds(raw[i]).inflated(1e-9);
+        }
     }
     BoxGrid rawGrid(boxes);
     auto adjacentShared = [&](std::size_t i, std::size_t j, double ti, double tj) {
@@ -763,6 +1142,9 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
         return cyclic && m > 1 && i == 0 && j + 1 == m && ti <= kParamEps && tj >= 1.0 - kParamEps;
     };
     for (std::size_t i = 0; i < m; ++i) {
+        if (dead[i]) {
+            continue;
+        }
         rawGrid.query(boxes[i], [&](std::size_t j) {
             if (j <= i) {
                 return;
@@ -796,9 +1178,42 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     // on both sides and, for arcs with r < d, the inverted offsets beyond the centre. A piece
     // can only enter the neighbourhood by crossing that boundary, so after these splits each
     // piece lies wholly inside or outside and an interior sample decides it.
+    //    Of a vertex circle only the arc between the two neighbours' offsets on the outer side
+    //    of the turn can be on that boundary: every other point of it lies in the interior of the
+    //    neighbourhood of one of the two spans meeting there (the d-neighbourhood of a span is
+    //    bounded by its two offsets and the halves of its end circles facing away from it). So
+    //    a vertex contributes that arc (angle = turn angle, widened by a hair so the split set
+    //    is a superset), a reversal a full circle, and the path's two ends their full circles.
+    //    So does a "vertex" where the flattened input is not continuous (a sub-tolerance span
+    //    was left out): both ends there get full circles. Splitting at whole circles cost one
+    //    split per raw element per vertex within d, which dominated dense input at a large d
+    //    (T-0006).
     std::vector<Span> boundary;
-    for (const Span& s : input) {
-        boundary.emplace_back(ArcSpan::fullCircle(startPoint(s), d));
+    for (std::size_t i = 0; i < input.size(); ++i) {
+        const Span& s = input[i];
+        const Span& prev = input[i == 0 ? input.size() - 1 : i - 1];
+        if (i == 0 && !cyclic) {
+            boundary.emplace_back(ArcSpan::fullCircle(startPoint(s), d));
+        } else if (geometry::distance(endPoint(prev), startPoint(s)) > 1e-9 * std::max(1.0, d)) {
+            boundary.emplace_back(ArcSpan::fullCircle(endPoint(prev), d));
+            boundary.emplace_back(ArcSpan::fullCircle(startPoint(s), d));
+        } else {
+            const Vec2 tin = tangentAt(prev, 1.0);
+            const Vec2 tout = tangentAt(s, 0.0);
+            const double turn = std::atan2(tin.cross(tout), tin.dot(tout));
+            constexpr double kWiden = 1e-6;
+            if (std::fabs(turn) >= kPi - 2.0 * kWiden) {
+                boundary.emplace_back(ArcSpan::fullCircle(startPoint(s), d));
+            } else {
+                // Outer side: right of travel for a left turn, left for a right turn; the
+                // outward normal turns with the tangent, from n(tin) to n(tout).
+                const double outer = turn > 0.0 ? -1.0 : 1.0;
+                const double a0 = (tin.perp() * outer).angle();
+                const double grow = turn > 0.0 ? kWiden : -kWiden;
+                boundary.emplace_back(ArcSpan{startPoint(s), d, a0 - grow, a0 + turn + grow,
+                                              turn > 0.0 ? ArcDirection::CCW : ArcDirection::CW});
+            }
+        }
         for (const double sd : {1.0, -1.0}) {
             if (auto o = offsetSpan(s, d, sd)) {
                 boundary.push_back(*o);
@@ -807,7 +1222,9 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
             }
         }
     }
-    boundary.emplace_back(ArcSpan::fullCircle(endPoint(input.back()), d));
+    if (!cyclic) {
+        boundary.emplace_back(ArcSpan::fullCircle(endPoint(input.back()), d));
+    }
     for (const Span& b : boundary) {
         const auto* arc = std::get_if<ArcSpan>(&b);
         const bool wholeCarrier = arc && arc->isFullCircle();
@@ -823,16 +1240,6 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
 
     // 3. Keep the pieces that stay at least d from the input and outside every Sharp/Square
     //    corner region.
-    // The margin only absorbs rounding (pieces on the boundary sit at d to ~1e-15 relative). It
-    // stays below tol^2 / (8d), the depth of the shallowest connector or overshoot longer than
-    // the tolerance at a nearly straight inside corner, so no such sliver survives as a cusp.
-    const double keepAbove = d - std::min(1e-9 * std::max(1.0, d), 0.1 * tol.distance * tol.distance / d);
-    std::vector<Box2> inputBoxes;
-    inputBoxes.reserve(input.size());
-    for (const Span& s : input) {
-        inputBoxes.push_back(bounds(s));
-    }
-    BoxGrid inputGrid(inputBoxes);
     std::vector<Box2> wedgeBoxes;
     for (const Wedge& w : wedges) {
         Box2 b;
@@ -860,7 +1267,11 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
         return hit;
     };
     std::vector<Piece> kept;
+    std::size_t witness = input.size();
     for (std::size_t i = 0; i < m; ++i) {
+        if (dead[i]) {
+            continue;
+        }
         std::vector<double>& ts = splits[i];
         ts.push_back(0.0);
         ts.push_back(1.0);
@@ -877,7 +1288,7 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
             bool ok = true;
             for (const double f : {0.25, 0.5, 0.75}) {
                 const Vec2 q = pointAt(raw[i], piece.t0 + (piece.t1 - piece.t0) * f);
-                if (distanceBelow(q, keepAbove, input, inputGrid) < keepAbove || inWedge(q)) {
+                if (closerThan(q, keepAbove, input, inputGrid, witness) || inWedge(q)) {
                     ok = false;
                     break;
                 }
@@ -1013,6 +1424,19 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
                          return pathPos(a.front()) < pathPos(b.front());
                      });
 
+    // Junction snapping (step 6) may move the offset towards the input by a hair more than the
+    // pruning margin: up to 5e-7 relative, and below 0.1 tol^2 / d like that margin.
+    const double snapAbove =
+        d - std::max(d - keepAbove, std::min(5e-7 * std::max(1.0, d), 0.1 * tol.distance * tol.distance / d));
+    const double snapBelow = 2.0 * d - snapAbove;
+    std::size_t snapWitness = input.size();
+    std::size_t farWitness = input.size();
+    const SnapContext snap{
+        sign, tol,
+        [&](Vec2 p) { return !closerThan(p, snapAbove, input, inputGrid, snapWitness) && !inWedge(p); },
+        [&](Vec2 p) {
+            return join != JoinType::Round || closerThan(p, snapBelow, input, inputGrid, farWitness);
+        }};
     auto emit = [&](std::vector<Piece>::const_iterator b, std::vector<Piece>::const_iterator e, bool loop) {
         Contour c;
         c.closed = loop;
@@ -1036,19 +1460,39 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
             spans.push_back(subSpan(raw[p.element], p.t0, p.t1));
             tiny.push_back(isDegenerate(spans.back(), tol));
         }
+        // The dropped pieces are remembered next to the span they preceded, in case the junction
+        // they leave cannot be snapped shut (see snapChain).
         const auto lastSolid = std::find(tiny.rbegin(), tiny.rend(), false);
         const std::size_t solidEnd = static_cast<std::size_t>(tiny.rend() - lastSolid);  // one past
         double total = 0.0;
+        std::vector<Span> solid;
+        std::vector<std::vector<Span>> dropped(1);
+        std::vector<Span> leading;
         for (std::size_t k = 0; k < solidEnd; ++k) {
-            if (tiny[k] && (c.spans.empty() || geometry::distance(endPoint(c.spans.back()),
-                                                                  endPoint(spans[k])) <= tol.distance)) {
+            if (tiny[k] && (solid.empty() ||
+                            geometry::distance(endPoint(solid.back()), endPoint(spans[k])) <= tol.distance)) {
+                (solid.empty() ? leading : dropped.back()).push_back(spans[k]);
                 continue;
             }
             total += length(spans[k]);
-            c.spans.push_back(spans[k]);
+            solid.push_back(spans[k]);
+            dropped.emplace_back();
         }
         if (total > tol.distance * (loop ? 4.0 : 1.0)) {
-            result.push_back(std::move(c));
+            // dropped[k] precedes solid[k]; dropped[0] crosses the closing junction (trailing
+            // pieces, then leading ones).
+            dropped.pop_back();
+            dropped[0].assign(spans.begin() + static_cast<std::ptrdiff_t>(solidEnd), spans.end());
+            dropped[0].insert(dropped[0].end(), leading.begin(), leading.end());
+            c.spans = snapChain(solid, dropped, loop, snap);
+            // A loop of two lines between the same two points (a sliver the snapping closed up)
+            // encloses nothing and would only retrace itself: dropped like the opposite pairs
+            // of step 3.
+            const bool sliver = loop && c.spans.size() == 2 && std::holds_alternative<LineSpan>(c.spans[0]) &&
+                                std::holds_alternative<LineSpan>(c.spans[1]);
+            if (!sliver) {
+                result.push_back(std::move(c));
+            }
         }
     };
     // 6. Every crossing or touching point of the raw chain is a split point, so a component
