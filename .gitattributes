@@ -4,3 +4,4 @@
 # Byte-exact test fixtures and post-processors: never convert line endings.
 core/tests/golden/** -text
 posts/*.pp -text
+data/tools/*.json -text

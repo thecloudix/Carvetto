@@ -4,7 +4,10 @@
 +
 + Notes
 + - Grbl has no automatic tool changer: a tool change stops the spindle,
-+   retracts and pauses with M0 so the operator can swap the cutter.
++   retracts to safe Z and pauses with M0 so the operator can swap the cutter.
++   After the pause the new tool is lifted to safe Z (the operator may have
++   re-zeroed Z on the work surface) before the spindle restarts.
++ - G4 P is a dwell in seconds on Grbl.
 + - Parentheses start comments in Grbl, so they are replaced in text values.
 + - Arcs use G2/G3 with I/J relative to the arc start (G91.1 is Grbl's default).
 + ---------------------------------------------------------------------------
@@ -45,6 +48,7 @@ begin TOOLCHANGE
 "G0[SAFEZ]"
 "(Change to tool [T]: [TOOLNAME])"
 "M0"
+"G0[SAFEZ]"
 "([TOOLPATH_NAME])"
 end
 

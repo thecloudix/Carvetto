@@ -114,6 +114,7 @@ TEST_CASE("Grbl post: tool change, arcs and dwell", "[post][grbl]") {
         "G0 Z5.000\n"
         "(Change to tool 2: Drill 3 mm)\n"
         "M0\n"
+        "G0 Z5.000\n"  // lift the new tool before any XY move (Z may have been re-zeroed)
         "(Drill)\n"
         "M3 S10000\n"
         "G0 X30.000 Y30.000 Z5.000\n"
@@ -133,4 +134,14 @@ TEST_CASE("Grbl post: tool change, arcs and dwell", "[post][grbl]") {
         "M30\n";
     REQUIRE(out.size() > expectedTail.size());
     CHECK(out.substr(out.size() - expectedTail.size()) == expectedTail);
+}
+
+// Hidden test (tag [.regen], never run by ctest): rewrites grbl_square.nc. Run through
+// tools/regen_golden.py and hand-review the result before committing it.
+TEST_CASE("Regenerate grbl_square golden", "[.regen]") {
+    const auto r = grbl().run({square()}, squareContext());
+    REQUIRE(r.ok());
+    std::ofstream out(std::string(CARVETTO_GOLDEN_DIR) + "/post/grbl_square.nc", std::ios::binary);
+    REQUIRE(out);
+    out << r.value().text;
 }
