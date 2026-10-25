@@ -64,7 +64,7 @@ Acceptance criteria:
   4. No returned chain is self-intersecting for any join type (split at T/X junctions into loop and tail). Regression repro A: lines (-6.4312190988360092,1.1428523003734297)→(-12.846939679779521,3.9348207104935331)→(-9.7434797348853266,-1.9260892800402662), then CW arc c(-17.535585621268488,-1.0001000247398364) r=7.846933811721553 a0=-0.11828212233321031 a1=-5.0521988806306926, then CW arc c(-17.021348114572877,0.45450829964057693) r=6.3041034287405493 a0=1.2309864265488941 a1=0.23263422704120162; offset d=2.5 Right with Sharp and Square.
 Out of scope: closed-contour offsets (Clipper2 path), arc refitting.
 
-### T-0005 Intersection residuals: 2-span closed contours, tolerance-boundary cases   [status: in-progress]
+### T-0005 Intersection residuals: 2-span closed contours, tolerance-boundary cases   [status: done]
 Phase: 0   Module: core/geometry   Depends on: T-0002   ADR: amend 0009
 Goal: Close the residual defects found in T-0002's third verification round.
 Interfaces: `geometry/intersect.hpp` / `contour_ops.hpp` implementations; signatures unchanged.
@@ -84,7 +84,7 @@ Acceptance criteria:
   2. Sharp joins at arc corners produce the true mitre whenever it lies within `mitreLimit·d` (no fallback to Square/Round caused by trimming the arc's extension range); Square likewise. Header documents every remaining fallback. Regression: keyhole, d = 0.25, Left, Sharp → mitre at 0.304 from the vertex (limit 0.5), not an arc.
   3. Consecutive spans within a returned chain meet exactly (shared endpoint bit-identical, snapped), and no span starts behind the previous end along the chain. Fuzz: 0 gaps > 1e-12 and 0 backward steps over ≥ 20k generated offsets.
 
-### T-0007 Intersection residuals II: circle touches near Bezier cuts, end-touch symmetry, sliver loops   [status: blocked]
+### T-0007 Intersection residuals II: circle touches near Bezier cuts, end-touch symmetry, sliver loops   [status: ready]
 Phase: 1 (before Trim / Vector Validator)   Module: core/geometry   Depends on: T-0005   ADR: amend 0009
 Goal: Close the residuals from T-0005's third verification round.
 Acceptance criteria:
