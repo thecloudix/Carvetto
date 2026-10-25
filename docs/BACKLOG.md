@@ -113,6 +113,7 @@ Acceptance criteria:
   3. Loading a file with a higher major version fails with a clear error, not a crash.
 Out of scope: heightfields, toolpath caches (later phases).
 Round-3 direction (director, 2026-10-24): untrusted JSON is parsed via SAX straight into records (no DOM), unknown fields kept as raw text under a global budget, linear group-structure pre-check in the loader; checkIntegrity performance moved to T-0014 AC4.
+Re-scoped by director after 3 verification rounds (2026-10-24): JSON loader, round trips, ids, structure pre-check and 46 JSON bombs verified clean; two residuals in the zip layer (miniz in-memory inflate hang on damaged streams; overlapping entries / whole-buffered unknown members exceeding the memory target) moved to T-0015, which blocks any UI file open/save.
 
 ### T-0013 Reject preset ids already in use; integrity check for cross-kind duplicates   [status: done]
 Phase: 0   Module: core/document   Depends on: T-0011
@@ -130,6 +131,16 @@ Acceptance criteria:
   2. The T-0010 "10 000 inserts, undo all and redo all under one second" test no longer fails under parallel ctest load: measure CPU time of the test thread (or use a generous wall bound plus an operation-count/complexity assertion), and keep detecting an O(n²) regression (e.g. assert time(20k) < 3 × time(10k)).
   3. `ctest -j8` passes 10 consecutive runs on the CI Linux runner (add a CI step or document the local check).
   4. *(Added by director 2026-10-24, found verifying T-0012.)* `checkIntegrity()` is O(N log N) or better regardless of group depth/width: a 60,000-deep nested-group chain and a single group with 200,000 children each check in < 1 s Release; iterative (no recursion) cycle detection still finds a cycle at depth 50,000; all existing issue kinds and ordering unchanged.
+
+### T-0015 .carv zip-layer hardening: bounded inflate, overlapping entries, held-bytes cap   [status: blocked]
+Phase: 0 (must land before any UI file open/save)   Module: core/document   Depends on: T-0012   ADR: amend 0013
+Goal: Close the two blocking findings from T-0012's third verification round, which are in the archive layer, not the JSON loader.
+Acceptance criteria:
+  1. A truncated, corrupted or size-lying deflate stream can never hang: decompression of in-memory archives detects "needs more input with no progress" (miniz 3.0.2 `mz_zip_reader_extract_iter_read` never decrements `comp_remaining` for memory archives) and returns InvalidArchive in bounded time. Regressions: central-directory comp_size=5 for job.json; deflate stream cut in half with consistent comp_size; 5 random bit flips inside job.json's compressed data. Each must fail in < 100 ms Release. Fix by tracking consumed input and bounding by the entry's comp_size (own inflate loop over tinfl, or the callback API with a no-progress guard) — do not patch the vendored miniz source.
+  2. Archive entries whose local headers overlap or are duplicated (several CD entries pointing at the same data offset) are rejected; the total bytes *held* after load (members + extras) is capped at max(64 MiB, 32 × archive size); unknown `.json` members are streamed through the strict reader for validation and then either kept under the extras budget or rejected — never buffered whole beyond the cap. Regression: 60 CD entries pointing at one 1.8 MB stream declaring 16 MiB each (1.76 MB file) → rejected, peak RSS < 128 MiB; unknown_json_250M (1.8 MB) → rejected or < 128 MiB.
+  3. Fuzz in CI (Release, Linux): ≥ 5,000 iterations over ≥ 2 seeds of bit flips / truncation / JSON mutation, each iteration under a per-load timeout (fork + alarm) — zero hangs, zero crashes.
+  4. Timing assertions in carv_io_test.cpp use CPU time or complexity ratios (T-0014 style), not wall-clock bounds that fail under parallel ctest.
+  5. ADR-0013 §9 rewritten to match measured behaviour (own numbers; unknown-member buffering stated; Debug times stated honestly).
 
 ### T-0020 Tool database and machines                                          [status: done]
 Phase: 0   Module: core/tooling   Depends on: T-0001
