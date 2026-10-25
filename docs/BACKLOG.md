@@ -227,7 +227,7 @@ Acceptance criteria:
   5. Malformed input (truncated, bad group codes, unknown entities, 100 MB of garbage) never crashes; unknown entities produce warnings, not errors; fuzz ≥ 2,000 iterations under ASan.
 Out of scope: DWG, hatches, dimensions entities (imported as warnings), 3D entities.
 
-### T-0110 Tool database defaults and the Grbl/Mach3/LinuxCNC/Marlin posts   [status: in-progress]
+### T-0110 Tool database defaults and the Grbl/Mach3/LinuxCNC/Marlin posts   [status: done]
 Phase: 1   Module: posts, core/tooling   Depends on: —
 Goal: Ship a starter tool database (JSON, ~30 common tools: end mills 1/8–1/2 in and 2–12 mm, ball noses, 60/90/120° V-bits, engraving, tapered ball nose) with conservative wood/plastic/aluminium cutting data, plus original posts for Mach3, Mach4, LinuxCNC, Marlin (mm and inch variants where idiomatic) alongside the existing Grbl post, each with a golden-file test.
 Acceptance criteria:
