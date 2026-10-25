@@ -145,3 +145,7 @@ untracked claim on an id value.
   one iterative walk over the parent links with on-path/done marks (no recursion, no per-object
   re-walk). Issue kinds, their per-object order and the `Cycle` issue's `related` object (the first
   object on the loop that the chain reaches) are unchanged.
+
+### A4 — Sheet deletion (owner decision, 2026-10-24)
+Deleting a sheet deletes the objects on it (undoable), as implemented in `DeleteSheetCommand`. The project owner confirmed this behaviour; the alternative (moving the objects to another sheet) was rejected. The "pending owner decision" notes in T-0010/T-0012 are closed.
+
