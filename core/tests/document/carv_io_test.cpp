@@ -1,12 +1,14 @@
 #include "carvetto/document/carv_io.hpp"
 
 #include <algorithm>
+#include <array>
 #include <bit>
 #include <catch2/catch_test_macros.hpp>
 #include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <ctime>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -1041,10 +1043,17 @@ Bytes withDeclaredSize(Bytes zip, const std::string& name, std::uint32_t size) {
     return zip;
 }
 
+// Process CPU time, so the bounds below are immune to other processes competing for the cores
+// (parallel ctest, other agents): a slow or loaded machine stretches wall-clock time, not CPU time.
+// (On MSVC std::clock() is wall-clock; the Windows CI runs ctest serially.)
+double cpuSeconds() {
+    return static_cast<double>(std::clock()) / static_cast<double>(CLOCKS_PER_SEC);
+}
+
 double secondsToLoad(const Bytes& bytes, CarvError& error) {
-    const auto t0 = std::chrono::steady_clock::now();
+    const double t0 = cpuSeconds();
     auto r = loadCarv(std::span<const std::uint8_t>(bytes));
-    const double s = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+    const double s = cpuSeconds() - t0;
     REQUIRE_FALSE(r.ok());
     error = r.error();
     return s;
@@ -1333,9 +1342,9 @@ TEST_CASE("group structure is pre-checked linearly", "[document][carv][limits]")
         }
         objects += groupRecord(5, children, 0);
         const Bytes file = structureFile(objects, 10 + kWidth);
-        const auto t0 = std::chrono::steady_clock::now();
+        const double t0 = cpuSeconds();
         auto r = loadCarv(std::span<const std::uint8_t>(file));
-        const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+        const double seconds = cpuSeconds() - t0;
         INFO((r ? std::string() : r.error().message));
         REQUIRE(r.ok());
         CHECK(r.value().document.objectCount() == kWidth + 1);
