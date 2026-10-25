@@ -41,7 +41,10 @@ add_executable(carvetto_tests
   geometry/offset_test.cpp
   geometry/open_offset_chains_test.cpp
   geometry/boolean_test.cpp
+  document/carv_io_test.cpp
 )
+# carv_io_test uses the internal zip helper (core/src/document/carv_zip.hpp) to craft archives.
+target_include_directories(carvetto_tests PRIVATE ${PROJECT_SOURCE_DIR}/core/src/document)
 # Golden files and shipped posts are read from the source tree via absolute paths.
 target_compile_definitions(carvetto_tests PRIVATE
   CARVETTO_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/golden"
