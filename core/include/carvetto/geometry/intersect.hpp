@@ -53,21 +53,40 @@ IntersectionResult intersect(const LineSpan& a, const LineSpan& b, const Toleran
 /// one tangent hit.
 IntersectionResult intersect(const LineSpan& a, const ArcSpan& b, const Tolerance& tol);
 /// Exact arc–arc intersection from the circle–circle solution. Externally or internally tangent
-/// circles (within `tol.distance`) give one tangent hit at the midpoint of the two circles'
-/// facing points on the centre line, so it lies within tolerance of both however close the
-/// centres are. Arcs on the same circle give overlaps; concentric circles of different radii
-/// give nothing.
+/// circles (closest approach within `tol.distance`) give one tangent hit at the midpoint of the two
+/// circles' facing points on the centre line, so it lies within tolerance of both however close
+/// the centres are; this includes nearly concentric circles (centre distance d <= tol.distance)
+/// whose closest approach |r1 - r2| - d is within tolerance. Arcs on the same circle (d and
+/// |r1 - r2| both within tolerance) give overlaps; other concentric circles give nothing.
 IntersectionResult intersect(const ArcSpan& a, const ArcSpan& b, const Tolerance& tol);
 
-/// Intersection of any two spans. Line/arc pairs are solved analytically; pairs involving a
-/// Bezier are polygonised at `tol.chordal`, candidate crossings are refined by Newton iteration
-/// on A(t) - B(s) = 0 (falling back to alternating closest-point projection near tangencies) and
-/// accepted when the residual is within `tol.distance`. Degenerate (zero-length) spans are
-/// treated as points. Results are ordered by `tA` and de-duplicated within `tol.distance`.
+/// Intersection of any two spans. Line/arc pairs are solved analytically. Pairs involving a
+/// Bezier are cut into pieces over which each Bezier turns by at most 45 degrees (so loops and
+/// cusps are handled branch by branch); each pair of pieces is polygonised at `tol.chordal`,
+/// chord crossings are refined by Newton on A(t) - B(s) = 0, and the signed distance along every
+/// Bezier chord near the other span is scanned for sign changes (crossings) and dips (shallow
+/// double crossings, touches). A touch candidate is walked to the local minimum of the distance
+/// between the unsplit curves and kept when that minimum is within `tol.distance`, flagged
+/// `tangent`: a closest approach with gap h <= tol.distance is reported exactly once, and curves
+/// running within tolerance of each other report their crossings plus their local closest
+/// approaches, nothing in between. Degenerate (zero-length) spans are treated as points. Results
+/// are ordered by `tA`; hits within `tol.distance` of each other are merged into one, and two
+/// distinct crossings merged that way are flagged `tangent`. Bezier pairs are solved in a
+/// canonical argument order, so `intersect(b, a)` is exactly `intersect(a, b)` with parameters
+/// swapped. See ADR-0009 (amendments) for the guarantees and the remaining heuristics.
 ///
 /// Limitation: overlap detection is implemented for line/line and arc/arc pairs only. Coincident
-/// stretches involving a Bezier are reported as a set of sampled tangent points along the shared
-/// part, not as `Overlap`s (Bezier overlap detection is future work; see ADR-0009).
+/// stretches involving a Bezier are reported as tangent points along the shared part (its ends
+/// and local closest approaches, sampled where the curves agree to rounding), not as `Overlap`s
+/// (Bezier overlap detection is future work; see ADR-0009).
+///
+/// Known limitations (tracked as T-0007):
+/// - An external circle or arc tangent to a convex cubic with a gap 0 < h <= tol.distance is
+///   dropped in bands of about +-0.0035 (cubic parameter) around the 1/16 piece cuts and near the
+///   span start (0.5-5% of positions at R = 0.2 mm). Exact tangency, lines and mirrored cubics
+///   are not affected.
+/// - End touches are not symmetric: an end of B within tolerance of A's interior is reported,
+///   but an end of A within tolerance of B's interior can be missed.
 IntersectionResult intersect(const Span& a, const Span& b, const Tolerance& tol);
 
 /// An intersection between two contours (or two spans of one contour), tagged with the span
@@ -100,10 +119,14 @@ ContourIntersections intersect(const Contour& a, const Contour& b, const Toleran
 /// Points where a contour crosses, touches or overlaps itself. The shared junction of two
 /// consecutive spans (including the closing junction) does not count; everything else does,
 /// including a cubic Bezier that loops back through itself (reported with `spanA == spanB`).
+/// In a closed contour of two spans both junctions are ignored, and in a closed contour of one
+/// span the span's end meeting its own start is ignored.
 ///
-/// Known limitation (tracked as T-0005): a closed contour of exactly two spans (e.g. a
-/// half-disc: line + arc, or a two-Bezier lens) wrongly reports its closing junction as a
-/// self-intersection.
+/// Known limitations (tracked as T-0007):
+/// - Thin (sliver) self-loops of a single cubic, up to ~0.3 mm long and 0.3-5 um thick, are not
+///   found: their chord crossings fall below the chordal sampling.
+/// - A Bezier that bulges <= ~tol.distance outside the arc it joins and re-crosses it within
+///   ~10 * tol.distance of the junction reports only the junction.
 ContourIntersections selfIntersections(const Contour& c, const Tolerance& tol);
 
 /// True when `selfIntersections(c, tol)` is non-empty (stops at the first hit).

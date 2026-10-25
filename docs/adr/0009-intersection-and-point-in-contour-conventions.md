@@ -1,6 +1,6 @@
 # ADR-0009: Intersection results and point-in-contour conventions
 
-Date: 2026-10-24 · Status: accepted (director, 2026-10-24; residuals tracked in T-0005)
+Date: 2026-10-24 · Status: accepted (director, 2026-10-24); amendments of 2026-10-24 (T-0005) proposed, residuals tracked in T-0007
 
 ## Decision
 1. `intersect(Span, Span)` returns an `IntersectionResult` with two lists: isolated `points`
@@ -85,3 +85,128 @@ Date: 2026-10-24 · Status: accepted (director, 2026-10-24; residuals tracked in
 - The Bezier path is tolerance-driven: a finer `tol.distance` without a finer `tol.chordal`
   still converges, but a very coarse `tol.chordal` can miss contacts between tightly curved
   spans. Callers should pass the same `Tolerance` they polygonise with.
+
+## Amendments
+
+### 2026-10-24 — T-0005 (residuals of T-0002 round 3) · Status: accepted (director, 2026-10-24; residuals tracked in T-0007)
+1. **Junctions of short closed contours (decision 4).** A span pair can share two junctions: in a
+   closed contour of exactly two spans, the pair (0, 1) meets at the end of span 0 and at the
+   closing junction (start of span 0); hits within `tol.distance` of either are ignored. In a
+   closed contour of one span the span's end meets its own start; for a Bezier that point is
+   ignored as well (a full-circle arc never reports it). A cubic has at most one double point, so
+   a closed one-Bezier contour never self-intersects. An open contour still reports its ends
+   meeting, as before.
+2. **Nearly concentric arcs (decision 1).** The concentric special case is limited to circles
+   that are the same within tolerance (centre distance d and |r1 − r2| both ≤ `tol.distance`:
+   overlaps). Every other pair, including d ≤ `tol.distance` with |r1 − r2| > `tol.distance`,
+   follows the general rule: closest approach |d − |r1 − r2|| (internal) or |d − (r1 + r2)|
+   (external) within `tol.distance` gives one tangent hit at the midpoint of the two facing points
+   on the centre line. When d is tiny that direction is poorly determined, but both facing points
+   lie exactly on their circles and are |r1 − r2| − d ≤ `tol.distance` apart, so the hit is within
+   tolerance of both arcs wherever it lands; d = 0 with |r1 − r2| > `tol.distance` is rejected
+   before the direction is needed. Coincident-arc results are computed in a canonical argument
+   order (touch points are placed on A's circle).
+3. **Bezier pairs: symmetry, shallow crossings, loops, merging (decision 1).** Final algorithm
+   for every pair that involves a Bezier (`polygoniseAndRefine`):
+   - **Canonical order.** The pair is solved in one order (by span kind, line < arc < Bezier,
+     then by control points) and the other order is answered by swapping the parameters, so
+     `intersect(a, b)` and `intersect(b, a)` are exact mirror images.
+   - **Pieces.** Each Bezier is cut by repeated halving until the cone of its first-derivative
+     control vectors spans at most 45° (the tangent turns by at most that much over the piece);
+     halving stops at depth 10 or when the control polygon is shorter than `tol.distance`. Loops,
+     cusps and tight bends therefore end up as several pieces, one per branch. Lines and arcs are
+     one piece. Every pair of pieces whose bounds come within reach (2·`tol.chordal` +
+     `tol.distance`) is searched on its own, and its candidates are mapped back to the span
+     parameters (halving is an affine reparametrisation, so the mapping is exact). Without this,
+     near a loop the seeds, Newton steps and nearest-point queries of one branch could settle on
+     another branch, and a crossing between different branches was lost (T-0005 round 2:
+     tA 0.5809 / tB 0.6657, 18·tol from the nearest other crossing).
+   - **Per piece pair:** (a) chord seeds: both pieces are polygonised at `tol.chordal`, every chord
+     pair within reach gives a seed, refined by Newton on A(t) − B(s) = 0. Only seeds that
+     converge to an exact crossing (residual ≤ 1e-6·`tol.distance`) are kept; where the tangents
+     are nearly parallel Newton stalls, and those stretches belong to the scan. (b) signed-distance
+     scan along the Bezier piece: every chord of it that came within reach is cut into 8 equal
+     parameter pieces and the signed distance to the other piece (nearest point found by a local
+     Newton projection seeded from the previous sample, falling back to the global search of
+     decision 7) is evaluated at the 9 sample points. A sign change between neighbours is a
+     crossing, located by Illinois regula falsi. An interior sample that is no further from the
+     other piece than both neighbours marks a dip; when it lies within 1.5·`tol.distance` plus
+     twice the variation to its neighbours (the bound comes from the samples themselves, so it
+     holds whatever the curvature of the other span), the extremum towards the other piece is
+     searched by golden section over the two pieces around it (12 steps). An extremum beyond the
+     other span brackets two crossings; one on the same side within 1.5·`tol.distance` is a touch
+     candidate. A sample whose nearest point is clamped at an end of the other piece measures the
+     distance to that end point, not to a foot on the curve: it never rules a dip out, and it is
+     itself a touch candidate when within 1.5·`tol.distance`, as are the samples at the ends of a
+     chord that are no further than their inner neighbour and the samples at the ends of the span.
+   - **Settling touches.** Every candidate that is not an exact crossing but lies within
+     1.5·`tol.distance` is walked to a local minimum of the distance between the curves along the
+     unsplit A (`settleTouch`): probes a tiny step either side (widened while the gap is flat to
+     1e-12), then a downhill walk with doubling steps capped at 1/64 of the parameter range until
+     the gap rises, then golden section inside the bracket to 1e-10 in parameter. A walk that
+     reaches an end of A stops there (an end touch). When the gap falls away on both sides of the
+     candidate both descents are followed. The result is kept only if no closer approach exists a
+     step of 1e-5 either side (the same-branch distance, via the seeded projection), which rejects
+     walks that ended on a slope. Because the walk runs on the original spans, cuts between
+     pieces cannot lose a touch. Gap evaluations are recorded in a sorted trail; a later candidate
+     between two recorded samples less than 1/64 apart, with its gap between theirs, sits on an
+     already walked slope and is skipped.
+   - **Acceptance.** A settled touch is kept when its distance is ≤ `tol.distance`, flagged
+     `tangent`; a settled candidate whose descent ran into a crossing is an exact hit like any
+     other. An exact hit whose parameter is within 1e-6 of a span end is snapped to that end (the
+     other parameter re-projected) when the snapped pair is still exact, because along a
+     tangential contact Newton stops anywhere in a band where the curves agree to rounding.
+   - **Merging.** Hits are merged most-exact first (smallest residual): a hit within
+     `tol.distance` of an already kept one is dropped. If both are exact crossings at distinct
+     points (more than 1e-3·`tol.distance` apart) the kept hit becomes `tangent`, because two
+     crossings the tolerance cannot separate are a touch; a touch absorbed by a nearby crossing
+     leaves the crossing as it is. Crossings further apart than `tol.distance` are all reported.
+   - **Guarantees and limits.**
+     - *Symmetry:* exact by construction (canonical order).
+     - *Crossings:* every crossing that is more than 2–3·`tol.distance` from any other hit, at an
+       angle above 1e-4 rad, is reported (brute-force references over random arc/Bezier and
+       Bezier/Bezier pairs, Beziers hugging an arc within a few tolerances, and perturbed copies
+       of looping or tightly bent cubics, including crossings between different branches near a
+       loop).
+     - *Touches (closest approach within tolerance, no crossing):* a touch whose gap h satisfies
+       0 ≤ h ≤ `tol.distance` is reported exactly once, flagged `tangent`, with the reported
+       point within h of both curves, for: every analytic pair (line/line, line/arc, arc/arc),
+       lines against cubics, and mirrored cubics against convex cubics (verified at h ∈ {0, 1e-5,
+       1e-4, 5e-4, 0.99·tol}; ~10,000 random line and mirrored-cubic touches with 0 drops).
+       h > ~1.05·`tol.distance` gives nothing (the band between is decided by rounding of the
+       settled gap). **Residual (tracked in T-0007):** an external circle or arc tangent to a
+       convex cubic with 0 < h ≤ `tol.distance` is dropped in bands of about ±0.0035 in the
+       cubic's parameter around the 1/16 piece cuts and near the span start (0.5–5 % of positions
+       at R = 0.2 mm; e.g. `BezierSpan{{-3,9},{-1,-3},{1,-3},{3,9}}` against
+       `ArcSpan::fullCircle({-2.4572958060271235, 5.0734751657764976}, 0.2)` gives no hit);
+       exact tangency (h = 0) is always found. A touch is reported wherever the distance between
+       the curves has a joint local minimum (a local minimum along both curves, measured to the
+       same branch); for curves running within tolerance of each other over a stretch the result
+       is their crossings plus those closest approaches, nothing in between (brute-force gap
+       profiles over perturbed copies of random cubics).
+     - *End touches (tracked in T-0007):* when an end of B comes within tolerance of A's interior
+       the touch is reported; when an end of A comes within tolerance of B's interior (the foot
+       of the walk is clamped at A's end) it can be missed, so end touches are not symmetric in
+       that respect (e.g. `ArcSpan{{1.2115827528094094, 3.0195632709834515}, 5.9592789586434449,
+       5.5749720172249306, 7.0509709398542197, CCW}` against
+       `BezierSpan{{5.4971827427603293, 7.1603566376986816}, {7.6315225436121663,
+       4.949460611577611}, {7.7363570760098641, 1.4786963115444329}, {5.7389721228483266,
+       -0.85517614189571634}}` reports only one of its two end touches).
+     - *Heuristics that remain:* a double crossing or a touch confined to one eighth of a chord
+       whose dip is shallower than the sampled variation bound may be reported as one tangent
+       touch, or missed; the 1/64 step cap and 1e-5 validation step are scale assumptions
+       (parameter space, so very long spans have correspondingly coarser steps). Bezier overlaps
+       are still reported as touches/crossings, not `Overlap`s.
+     - *Pre-existing limits elsewhere in `intersect`, unchanged by T-0005 (sliver loops and the
+       junction bulge tracked in T-0007):* a thin (sliver) self-loop of a single cubic, up to
+       about 0.3 mm long and 0.3–5 µm thick, is not reported by `selfIntersections` (its chord
+       crossings are below the chordal sampling); a Bezier that bulges ≤ ~`tol.distance` outside
+       the arc it joins and re-crosses it within ~10·`tol.distance` of the junction reports only
+       the junction (the exact-zero sample at the junction defeats the sign test); the analytic
+       line/arc and arc/arc rules treat an infinite line or
+       circle within `tol.distance` of touching as one tangent hit, so two genuine crossings up
+       to about 2·√(2·r·tol) apart fold into one tangent hit (≈ 0.09 mm for r = 1 mm, 0.9 mm for
+       r = 100 mm); same-circle partial arcs that touch end to end report a point whose residual
+       to the arc ends can reach 1.5·`tol.distance` (the midpoint rule in the angular frame).
+     - *Cost:* in a Debug build a pair of nearly identical 4 mm cubics takes about 4 ms, a
+       Bezier hugging an arc about 1 ms, typical crossing pairs well under 1 ms.
