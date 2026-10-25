@@ -64,7 +64,7 @@ Acceptance criteria:
   4. No returned chain is self-intersecting for any join type (split at T/X junctions into loop and tail). Regression repro A: lines (-6.4312190988360092,1.1428523003734297)→(-12.846939679779521,3.9348207104935331)→(-9.7434797348853266,-1.9260892800402662), then CW arc c(-17.535585621268488,-1.0001000247398364) r=7.846933811721553 a0=-0.11828212233321031 a1=-5.0521988806306926, then CW arc c(-17.021348114572877,0.45450829964057693) r=6.3041034287405493 a0=1.2309864265488941 a1=0.23263422704120162; offset d=2.5 Right with Sharp and Square.
 Out of scope: closed-contour offsets (Clipper2 path), arc refitting.
 
-### T-0005 Intersection residuals: 2-span closed contours, tolerance-boundary cases   [status: verifying]
+### T-0005 Intersection residuals: 2-span closed contours, tolerance-boundary cases   [status: in-progress]
 Phase: 0   Module: core/geometry   Depends on: T-0002   ADR: amend 0009
 Goal: Close the residual defects found in T-0002's third verification round.
 Interfaces: `geometry/intersect.hpp` / `contour_ops.hpp` implementations; signatures unchanged.
@@ -74,6 +74,7 @@ Acceptance criteria:
   3. Arc/Bezier and Bezier/Bezier pairs with two shallow crossings closer than ~2·tol give the same result in both argument orders; when two hits are merged into one, the merged hit carries `tangent=true`. Regression: `ArcSpan{{-3.2305423907849837,-8.7399422212084588},9.3248612306533616,-0.86772800461480459,-5.0533095891647033,CW}` vs `BezierSpan{{-14.222937128613282,-10.138318879522913},{-12.121499048115544,-10.250528577090371},{-11.910081639881342,-6.2911507142599774},{-14.011519720379081,-6.1789410166925203}}`. Symmetry fuzz on ≥9,000 AB/BB pairs: 0 asymmetries.
   4. Remove the "Known limitation (tracked as T-0005)" note from `intersect.hpp`.
 Out of scope: Bezier overlap detection; Debug-build Bezier length performance.
+Re-scoped by director after 3 verification rounds (2026-10-24): AC1, AC2, AC4, FillRule unification, completeness (0 misses / 48k pairs), symmetry and line/mirrored-cubic touches verified clean; residuals (circle touches dropped in bands near Bezier piece cuts, asymmetric end touches, sliver self-loops, junction-adjacent bulge crossing) moved to T-0007.
 
 ### T-0006 Open-offset quality for toolpaths: speed at large d, exact arc mitres, snapped junctions   [status: ready]
 Phase: 1 (before the 2D Profile toolpath)   Module: core/geometry   Depends on: T-0004
@@ -82,6 +83,16 @@ Acceptance criteria:
   1. Speed: a 2000-step 0.5 mm random walk offset by d = 1 and d = 2 (all joins, both sides) completes in < 0.5 s Release; 8000-span hypotrochoid and text-like loops at d = 2 in < 1 s. Profile and fix the neighbourhood-boundary splitting / distance-pruning cost.
   2. Sharp joins at arc corners produce the true mitre whenever it lies within `mitreLimit·d` (no fallback to Square/Round caused by trimming the arc's extension range); Square likewise. Header documents every remaining fallback. Regression: keyhole, d = 0.25, Left, Sharp → mitre at 0.304 from the vertex (limit 0.5), not an arc.
   3. Consecutive spans within a returned chain meet exactly (shared endpoint bit-identical, snapped), and no span starts behind the previous end along the chain. Fuzz: 0 gaps > 1e-12 and 0 backward steps over ≥ 20k generated offsets.
+
+### T-0007 Intersection residuals II: circle touches near Bezier cuts, end-touch symmetry, sliver loops   [status: blocked]
+Phase: 1 (before Trim / Vector Validator)   Module: core/geometry   Depends on: T-0005   ADR: amend 0009
+Goal: Close the residuals from T-0005's third verification round.
+Acceptance criteria:
+  1. An external circle/arc tangent to a convex cubic with gap 0 < h ≤ tol is reported exactly once (tangent) at EVERY position, including the ±0.0035 bands around the 1/16 piece cuts and near the span start. Regressions (0 hits today, both orders): A = BezierSpan{{-3,9},{-1,-3},{1,-3},{3,9}} vs ArcSpan::fullCircle({-2.4572958060271235,5.0734751657764976},0.2) (tA≈0.123, h=1e-5) and fullCircle({-2.0592815815728511,3.4301656512398564},0.2) (tA≈0.189, h=1e-4); A = {{-1,0},{0.5,3},{1,3},{3,-1}} vs fullCircle({-0.92142472309476964,0.59261447867484451},0.2) (tA≈0.059), fullCircle({2.2044174888982013,0.91064133105013123},0.2) (tA≈0.816), fullCircle({-1.1657867390182135,0.11673084174268154},0.2) (tA≈0.003, h=5e-4). Test: fine sweep t = i/1000 on ≥ 4 convex cubics × R ∈ {0.2, 1.0} × h ∈ {1e-5, 1e-4, 0.99·tol}: 0 drops.
+  2. End touches are symmetric: when A's end comes within tol of B (foot clamped at A's end) the touch is reported exactly as when B's end comes within tol of A. Regression: A = ArcSpan{{1.2115827528094094,3.0195632709834515},5.9592789586434449,5.5749720172249306,7.0509709398542197,CCW}, B = BezierSpan{{5.4971827427603293,7.1603566376986816},{7.6315225436121663,4.949460611577611},{7.7363570760098641,1.4786963115444329},{5.7389721228483266,-0.85517614189571634}} → both tA≈0/tB=1 and tA=1/tB≈0.00028 reported.
+  3. Thin sliver self-loops of a single cubic (0.05–0.3 mm long, 0.3–5 µm thick) are found by selfIntersections (seed chord crossings from the curve's own self-intersection parameter pair, computed analytically or by subdivision).
+  4. A Bezier that bulges ≤ ~tol outside the arc it joins and re-crosses it within ~10·tol of the junction reports the re-crossing (sign test not defeated by the exact-zero sample at the junction). Regression: Bez{{-0.18860739840346241,3.8634722338314074},{0.0522167808921572,4.3830641573127442},{1.6272051316098195,-2.0179279547519577},{1.9578386933824259,-2.3369534285717775}} vs Arc{{6.4363713372296427,1.9356191918458676},6.1896794294008179,-2.3797254616523524,3.0863225397506588,CW}.
+  5. ADR-0009 guarantee bullets amended to match; the "Known limitations (tracked as T-0007)" note removed from intersect.hpp.
 
 ### T-0010 Document model: Job, Sheet, Layer, Object, UndoStack                [status: done]
 Phase: 0   Module: core/document   Depends on: T-0001
