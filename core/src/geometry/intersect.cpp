@@ -464,6 +464,8 @@ struct Candidate {
     // Extra distance, beyond 1.5 * tol.distance, within which the candidate is still worth
     // settling: a sample next to a minimum that lies beyond the sampled range (see scanCrossings).
     double reach{0.0};
+    // Set for a span end paired with its nearest point on the other span (see polygoniseAndRefine).
+    bool spanEnd{false};
 };
 
 // Closest parameters between two straight segments (0 distance when they cross).
@@ -1073,7 +1075,7 @@ std::vector<Candidate> settleTouch(const Span& a, const Span& b, Candidate c, st
     // bound; along near-coincident curves there are hundreds of them. One that lands between two
     // earlier samples less than a walk step apart, with its gap between theirs, is skipped
     // outright, like any slope candidate below, without probing which way it descends.
-    if (c.reach > 0.0 && walked && between()) {
+    if (!c.spanEnd && c.reach > 0.0 && walked && between()) {
         return out;
     }
     record(mid);
@@ -1100,8 +1102,11 @@ std::vector<Candidate> settleTouch(const Span& a, const Span& b, Candidate c, st
     // with its gap between those of the two earlier samples around it, would only retrace a
     // stretch already walked downhill: skip it. A candidate at the bottom of the gap (no lower
     // probe either side) or on a ridge is always walked, because the earlier samples around it say
-    // nothing about a minimum between them (e.g. a touch next to a crossing).
-    if (walked) {
+    // nothing about a minimum between them (e.g. a touch next to a crossing). A span end is always
+    // walked: where the curves run within tolerance of each other the gap is flat to rounding, the
+    // trail around the end says nothing about whether the end is the bottom, and an end touch there
+    // was lost.
+    if (walked && !c.spanEnd) {
         const GapSample& l = *trailL;
         const GapSample& r = *trailR;
         const bool downLeft = lo.gap < mid.gap && hi.gap >= mid.gap && l.gap < mid.gap;
@@ -1178,14 +1183,14 @@ IntersectionResult polygoniseAndRefine(const Span& a, const Span& b, const Toler
         if (nearB.contains(endA)) {
             const ClosestPoint onB = closestOn(b, endA);
             if (onB.distance <= 1.5 * tol.distance) {
-                found.push_back({t, onB.t});
+                found.push_back({t, onB.t, 0.0, true});
             }
         }
         const Vec2 endB = pointAt(b, t);
         if (nearA.contains(endB)) {
             const ClosestPoint onA = closestOn(a, endB);
             if (onA.distance <= 1.5 * tol.distance) {
-                found.push_back({onA.t, t});
+                found.push_back({onA.t, t, 0.0, true});
             }
         }
     }

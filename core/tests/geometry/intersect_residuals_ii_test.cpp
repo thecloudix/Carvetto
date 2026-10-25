@@ -435,6 +435,48 @@ TEST_CASE("T-0007 AC2: an arc ending 16 um from a hugging Bezier's interior, nex
                Catch::Matchers::WithinAbs(1.653e-5, 1e-8));
 }
 
+TEST_CASE("T-0007 AC2: end touches of a Bezier hugging an arc are not lost (no regression vs T-0005)",
+          "[geometry][intersect][t0007]") {
+    // Round-3 verifier regressions: the curves run within tolerance of each other, so the gap is
+    // flat to rounding near the end; the end touch reported before T-0007 must still be reported.
+    {
+        const ArcSpan arc{{4.7484222518053691, 4.8791950444574557},
+                          1.8158182239215923,
+                          1.0103546387460398,
+                          1.6291667723247802,
+                          ArcDirection::CCW};
+        const BezierSpan bz{{5.4885049765368423, 6.5370739213139943},
+                            {5.3537138313866039, 6.5972451433284816},
+                            {5.2120876332541082, 6.6407535738820904},
+                            {5.0667626764787794, 6.6666357242540775}};
+        IntersectionResult r;
+        CHECK(mirrored(arc, bz, &r));
+        REQUIRE(r.points.size() == 4);
+        CHECK(r.points[3].tangent);
+        CHECK_THAT(r.points[3].tA, Catch::Matchers::WithinAbs(0.620852, 1e-5));
+        CHECK_THAT(r.points[3].tB, Catch::Matchers::WithinAbs(1.0, 1e-5));
+        CHECK_THAT(r.points[0].tA, Catch::Matchers::WithinAbs(0.227182, 1e-5));
+    }
+    {
+        const BezierSpan bz{{2.2769241357627239, 3.5251027604990863},
+                            {2.2265198605285583, 3.5162078913600801},
+                            {2.1774505894335596, 3.500942358504874},
+                            {2.1308959894262638, 3.4796731583073526}};
+        const ArcSpan arc{{2.3818915272226935, 2.93028734420934},
+                          0.60401101598186635,
+                          1.7765794963701669,
+                          2.2701346209883781,
+                          ArcDirection::CCW};
+        IntersectionResult r;
+        CHECK(mirrored(bz, arc, &r));
+        const bool endTouch = std::any_of(r.points.begin(), r.points.end(), [](const Intersection& p) {
+            return p.tangent && p.tA >= 1.0 - 1e-4 && std::fabs(p.tB - 0.451341) <= 1e-5;
+        });
+        CHECK(endTouch);
+        CHECK(r.points.size() == 3);
+    }
+}
+
 TEST_CASE("T-0007 AC2: a double crossing confined to the last sample piece before a span end",
           "[geometry][intersect][t0007]") {
     // The Bezier swings across the arc and back within its last ~0.007 of parameter (0.15 mm),
