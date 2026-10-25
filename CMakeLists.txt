@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(Carvetto VERSION 0.0.1 LANGUAGES CXX)
+project(Carvetto VERSION 0.0.1 LANGUAGES C CXX)  # C: bundled miniz (core/CMakeLists.txt)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
