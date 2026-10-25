@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -30,6 +31,10 @@ struct LoadLimits {
     std::uint64_t maxValues{24'000'000};
     /// Estimated bytes of decoded records (objects, contours, spans, names, ...).
     std::uint64_t maxDocumentBytes{std::uint64_t{192} << 20};
+    /// Bytes *held* after load for preserved archive members and extras: the greater of this
+    /// floor and `heldBytesPerArchiveByte` x the archive's size (a 1.8 MB file may keep 64 MiB).
+    std::uint64_t minHeldBytes{std::uint64_t{64} << 20};
+    std::uint64_t heldBytesPerArchiveByte{32};
     /// JSON values inside unknown fields (kept or skipped), across all members.
     std::uint64_t maxUnknownValues{2'000'000};
     /// Bytes of canonical text kept (or transiently built) for unknown fields.
@@ -206,5 +211,10 @@ bool isValidUtf8(std::string_view s);
 
 /// Canonical compact text of a complete JSON text, under `budget` (used by tests).
 std::string canonicalJson(std::string_view text, LoadBudget& budget);
+
+struct ZipLimits;
+/// `loadCarv` with explicit limits (used by tests to exercise each cap with small fixtures).
+CarvResult<LoadedCarv> loadCarvWithLimits(std::span<const std::uint8_t> bytes, const LoadLimits& limits,
+                                          const ZipLimits& zipLimits);
 
 }  // namespace carvetto::document::detail

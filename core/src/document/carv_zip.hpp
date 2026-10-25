@@ -47,12 +47,21 @@ struct ZipEntry {
     std::uint32_t index{0};
     std::string name;
     std::uint64_t size{0};
+    std::uint64_t compressedSize{0};
     std::uint32_t crc{0};
     bool json{false};
+    /// Where the member's local header and data lie in the archive bytes.
+    std::uint64_t headerOffset{0};
+    std::uint64_t dataOffset{0};
+    std::uint64_t dataEnd{0};
+    bool stored{false};  // method 0: data is the uncompressed bytes
 };
 
-/// An open archive. `open` validates the central directory against the limits; members are then
-/// read incrementally (whole, growing as data arrives) or streamed.
+/// An open archive. `open` validates the central directory against the limits, reads every local
+/// header and rejects entries whose data ranges overlap. Members are then inflated by our own
+/// bounded loop over tinfl (ADR-0013 §9, amendment A1): consumed input is bounded by the entry's
+/// compressed size, "needs more input" without progress is a failure, and output never exceeds
+/// the declared size, so a truncated, corrupted or size-lying stream fails instead of spinning.
 class ZipArchive {
    public:
     explicit ZipArchive(std::span<const std::uint8_t> bytes);
@@ -110,7 +119,7 @@ struct ZipWriteResult {
 /// with DOS time/date zero and no extra fields, so equal input always gives equal bytes.
 ZipWriteResult writeZip(const std::vector<ZipMember>& members, int level = 6);
 
-/// Opens and reads every member (CRC-checked), under `limits`.
+/// Opens and reads every member (bounded inflate, CRC-checked), under `limits`.
 ZipReadResult readZip(std::span<const std::uint8_t> bytes, const ZipLimits& limits = {});
 
 }  // namespace carvetto::document::detail

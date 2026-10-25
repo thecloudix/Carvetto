@@ -4,10 +4,11 @@
 #include <array>
 #include <bit>
 #include <catch2/catch_test_macros.hpp>
-#include <chrono>
 #include <cmath>
+#include <csignal>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <ctime>
 #include <filesystem>
 #include <fstream>
@@ -1017,9 +1018,10 @@ void writeLe32(Bytes& b, std::size_t at, std::uint32_t v) {
     }
 }
 
-/// Rewrites the uncompressed size declared in the central directory for member `name`. The data
-/// itself is unchanged, so only the up-front limit checks can see the claimed size.
-Bytes withDeclaredSize(Bytes zip, const std::string& name, std::uint32_t size) {
+/// Rewrites one 32-bit field (by offset within the central-directory header: 20 = compressed
+/// size, 24 = uncompressed size, 42 = local header offset) for member `name`. The data itself is
+/// unchanged, so only the central directory lies.
+Bytes withCdField(Bytes zip, const std::string& name, std::size_t fieldOffset, std::uint32_t value) {
     REQUIRE(zip.size() >= 22);
     const std::size_t eocd = zip.size() - 22;  // no archive comment
     REQUIRE(readLe32(zip, eocd) == 0x06054b50u);
@@ -1034,13 +1036,157 @@ Bytes withDeclaredSize(Bytes zip, const std::string& name, std::uint32_t size) {
         const std::string entryName(zip.begin() + static_cast<std::ptrdiff_t>(at + 46),
                                     zip.begin() + static_cast<std::ptrdiff_t>(at + 46 + nameLen));
         if (entryName == name) {
-            writeLe32(zip, at + 24, size);
+            writeLe32(zip, at + fieldOffset, value);
             patched = true;
         }
         at += 46 + nameLen + extraLen + commentLen;
     }
     REQUIRE(patched);
     return zip;
+}
+
+/// Rewrites the uncompressed size declared in the central directory for member `name`.
+Bytes withDeclaredSize(Bytes zip, const std::string& name, std::uint32_t size) {
+    return withCdField(std::move(zip), name, 24, size);
+}
+
+/// Start and length of the compressed data of member `name`, plus its local header offset.
+struct DataRange {
+    std::size_t header;
+    std::size_t start;
+    std::size_t length;
+};
+
+DataRange dataRange(const Bytes& zip, const std::string& name) {
+    const std::size_t eocd = zip.size() - 22;
+    std::size_t at = readLe32(zip, eocd + 16);
+    const std::uint16_t entries = readLe16(zip, eocd + 10);
+    for (std::uint16_t e = 0; e < entries; ++e) {
+        const std::size_t nameLen = readLe16(zip, at + 28);
+        const std::string entryName(zip.begin() + static_cast<std::ptrdiff_t>(at + 46),
+                                    zip.begin() + static_cast<std::ptrdiff_t>(at + 46 + nameLen));
+        if (entryName == name) {
+            const std::size_t lh = readLe32(zip, at + 42);
+            const std::size_t start = lh + 30 + readLe16(zip, lh + 26) + readLe16(zip, lh + 28);
+            return {lh, start, readLe32(zip, at + 20)};
+        }
+        at += 46 + nameLen + readLe16(zip, at + 30) + readLe16(zip, at + 32);
+    }
+    FAIL("member " << name << " not found");
+    return {};
+}
+
+void appendLe16(Bytes& b, std::uint16_t v) {
+    b.push_back(static_cast<std::uint8_t>(v));
+    b.push_back(static_cast<std::uint8_t>(v >> 8));
+}
+
+void appendLe32(Bytes& b, std::uint32_t v) {
+    for (int k = 0; k < 4; ++k) {
+        b.push_back(static_cast<std::uint8_t>(v >> (8 * k)));
+    }
+}
+
+/// `bytes` of letters drawn from an alphabet of `letters` (a..), built from a repeated random
+/// 64 KiB block so deflate still finds long matches and the fixture is quick to build.
+Bytes pseudoText(std::size_t bytes, int letters, std::uint32_t seed) {
+    std::mt19937 rng(seed);
+    Bytes block(std::size_t{1} << 16);
+    for (auto& b : block) {
+        b = static_cast<std::uint8_t>('a' + static_cast<int>(rng() % static_cast<std::uint32_t>(letters)));
+    }
+    Bytes out;
+    out.reserve(bytes);
+    while (out.size() + block.size() <= bytes) {
+        out.insert(out.end(), block.begin(), block.end());
+    }
+    out.insert(out.end(), block.begin(), block.begin() + static_cast<std::ptrdiff_t>(bytes - out.size()));
+    return out;
+}
+
+/// A raw deflated member for `rawZip`: data taken from a one-member archive miniz wrote.
+struct RawMember {
+    std::string name;
+    Bytes compressed;
+    std::uint32_t crc{0};
+    std::uint32_t uncompressedSize{0};
+};
+
+RawMember compressMember(const std::string& name, const Bytes& data) {
+    const auto z = detail::writeZip({{name, data}}, 6);
+    REQUIRE(z.ok);
+    const DataRange r = dataRange(z.bytes, name);
+    RawMember m;
+    m.name = name;
+    m.compressed.assign(z.bytes.begin() + static_cast<std::ptrdiff_t>(r.start),
+                        z.bytes.begin() + static_cast<std::ptrdiff_t>(r.start + r.length));
+    m.uncompressedSize = static_cast<std::uint32_t>(data.size());
+    const std::size_t eocd = z.bytes.size() - 22;
+    m.crc = readLe32(z.bytes, readLe32(z.bytes, eocd + 16) + 16);
+    return m;
+}
+
+/// One central-directory record for `rawZip`: which member's local header it points at, the name
+/// it declares, and an optional lie about the uncompressed size (0 = truthful).
+struct CdEntry {
+    std::size_t member;
+    std::string name;
+    std::uint32_t declaredSize;
+};
+
+/// Hand-built zip: each member written once as local header + data, then the given directory
+/// records (so several records may share one local header).
+Bytes rawZip(const std::vector<RawMember>& members, const std::vector<CdEntry>& entries) {
+    Bytes out;
+    std::vector<std::uint32_t> headerOffsets;
+    for (const RawMember& m : members) {
+        headerOffsets.push_back(static_cast<std::uint32_t>(out.size()));
+        appendLe32(out, 0x04034b50u);
+        appendLe16(out, 20);  // version needed
+        appendLe16(out, 0);   // flags
+        appendLe16(out, 8);   // deflate
+        appendLe16(out, 0);   // time
+        appendLe16(out, 0);   // date
+        appendLe32(out, m.crc);
+        appendLe32(out, static_cast<std::uint32_t>(m.compressed.size()));
+        appendLe32(out, m.uncompressedSize);
+        appendLe16(out, static_cast<std::uint16_t>(m.name.size()));
+        appendLe16(out, 0);
+        out.insert(out.end(), m.name.begin(), m.name.end());
+        out.insert(out.end(), m.compressed.begin(), m.compressed.end());
+    }
+    const auto cdStart = static_cast<std::uint32_t>(out.size());
+    for (const CdEntry& e : entries) {
+        const RawMember& m = members[e.member];
+        appendLe32(out, 0x02014b50u);
+        appendLe16(out, 20);
+        appendLe16(out, 20);
+        appendLe16(out, 0);
+        appendLe16(out, 8);
+        appendLe16(out, 0);
+        appendLe16(out, 0);
+        appendLe32(out, m.crc);
+        appendLe32(out, static_cast<std::uint32_t>(m.compressed.size()));
+        appendLe32(out, e.declaredSize ? e.declaredSize : m.uncompressedSize);
+        appendLe16(out, static_cast<std::uint16_t>(e.name.size()));
+        appendLe16(out, 0);  // extra
+        appendLe16(out, 0);  // comment
+        appendLe16(out, 0);  // disk
+        appendLe16(out, 0);  // internal attr
+        appendLe32(out, 0);  // external attr
+        appendLe32(out, headerOffsets[e.member]);
+        out.insert(out.end(), e.name.begin(), e.name.end());
+    }
+    const std::uint32_t cdSize = static_cast<std::uint32_t>(out.size()) - cdStart;
+    appendLe32(out, 0x06054b50u);
+    appendLe16(out, 0);
+    appendLe16(out, 0);
+    appendLe16(out, static_cast<std::uint16_t>(entries.size()));
+    appendLe16(out, static_cast<std::uint16_t>(entries.size()));
+    appendLe32(out, cdSize);
+    appendLe32(out, cdStart);
+    appendLe16(out, 0);
+    return out;
 }
 
 // Process CPU time, so the bounds below are immune to other processes competing for the cores
@@ -1333,23 +1479,30 @@ TEST_CASE("group structure is pre-checked linearly", "[document][carv][limits]")
         requireIntact(loaded.document);
     }
     SECTION("a group with 200,000 children loads quickly") {
-        constexpr std::uint64_t kWidth = 200000;
-        std::string objects;
-        std::string children;
-        for (std::uint64_t i = 0; i < kWidth; ++i) {
-            objects += vectorRecord(10 + i, 5) + ",";
-            children += (i ? "," : "") + std::to_string(10 + i);
-        }
-        objects += groupRecord(5, children, 0);
-        const Bytes file = structureFile(objects, 10 + kWidth);
-        const double t0 = cpuSeconds();
-        auto r = loadCarv(std::span<const std::uint8_t>(file));
-        const double seconds = cpuSeconds() - t0;
-        INFO((r ? std::string() : r.error().message));
-        REQUIRE(r.ok());
-        CHECK(r.value().document.objectCount() == kWidth + 1);
-        CHECK(r.value().document.findObject(ObjectId{5})->asGroup()->children.size() == kWidth);
-        CHECK(seconds < 10.0);  // Debug; the pre-check and checkIntegrity (T-0014) are both linear
+        // Linear in the width: loading twice the children takes at most ~3x the CPU time (a
+        // quadratic check would take ~4x), independent of how loaded the machine is.
+        const auto timeWidth = [](std::uint64_t width) {
+            std::string objects;
+            std::string children;
+            for (std::uint64_t i = 0; i < width; ++i) {
+                objects += vectorRecord(10 + i, 5) + ",";
+                children += (i ? "," : "") + std::to_string(10 + i);
+            }
+            objects += groupRecord(5, children, 0);
+            const Bytes file = structureFile(objects, 10 + width);
+            const double t0 = cpuSeconds();
+            auto r = loadCarv(std::span<const std::uint8_t>(file));
+            const double seconds = cpuSeconds() - t0;
+            INFO((r ? std::string() : r.error().message));
+            REQUIRE(r.ok());
+            CHECK(r.value().document.objectCount() == width + 1);
+            CHECK(r.value().document.findObject(ObjectId{5})->asGroup()->children.size() == width);
+            return seconds;
+        };
+        const double half = timeWidth(100000);
+        const double full = timeWidth(200000);
+        INFO("100k children: " << half << " s CPU, 200k children: " << full << " s CPU");
+        CHECK(full < 3.0 * std::max(half, 0.05));
     }
     SECTION("a cycle is reported without walking it forever") {
         const std::string objects = groupRecord(10, "11", 11) + "," + groupRecord(11, "10", 10);
@@ -1535,3 +1688,310 @@ TEST_CASE("a legitimate 100k-object document loads within the limits", "[documen
     CHECK(loaded.document.objectCount() == 100000);
     CHECK(loaded.document.objects() == doc.objects());
 }
+
+// ------------------------------------------------------------------------------------------------
+// T-0015: zip-layer hardening
+// ------------------------------------------------------------------------------------------------
+
+TEST_CASE("damaged deflate streams fail fast instead of hanging", "[document][carv][zip]") {
+    const Document doc = makeAcceptanceDocument();
+    const Bytes good = save(doc);
+    const DataRange job = dataRange(good, "job.json");
+    REQUIRE(job.length > 100);
+    const auto refusedFast = [](const Bytes& file, const char* label) {
+        INFO(label);
+        CarvError err;
+        const double seconds = secondsToLoad(file, err);
+        INFO(err.message);
+        CHECK(err.code == Code::InvalidArchive);
+        CHECK(contains(err.message, "job.json"));
+        CHECK(seconds < 0.5);  // CPU seconds, Debug; Release is well under 100 ms
+    };
+    SECTION("central directory declares comp_size = 5 for job.json") {
+        refusedFast(withCdField(good, "job.json", 20, 5), "comp_size lie");
+    }
+    SECTION("the deflate stream is cut in half, with a consistent comp_size") {
+        Bytes cut = good;
+        const std::size_t half = job.length / 2;
+        cut.erase(cut.begin() + static_cast<std::ptrdiff_t>(job.start + half),
+                  cut.begin() + static_cast<std::ptrdiff_t>(job.start + job.length));
+        // Keep the directory consistent: its offset first, then comp_size in both headers.
+        const std::size_t eocd = cut.size() - 22;
+        writeLe32(cut, eocd + 16, readLe32(cut, eocd + 16) - static_cast<std::uint32_t>(job.length - half));
+        cut = withCdField(cut, "job.json", 20, static_cast<std::uint32_t>(half));
+        writeLe32(cut, job.header + 18, static_cast<std::uint32_t>(half));
+        refusedFast(cut, "stream cut in half");
+    }
+    SECTION("5 random bit flips inside job.json's compressed data") {
+        std::mt19937 rng(2024);
+        int refused = 0;
+        for (int round = 0; round < 20; ++round) {
+            Bytes flipped = good;
+            for (int k = 0; k < 5; ++k) {
+                flipped[job.start + rng() % job.length] ^= static_cast<std::uint8_t>(1u << (rng() % 8));
+            }
+            const double t0 = cpuSeconds();
+            auto r = loadCarv(std::span<const std::uint8_t>(flipped));
+            CHECK(cpuSeconds() - t0 < 0.5);
+            if (!r.ok()) {
+                ++refused;
+                CHECK((r.error().code == Code::InvalidArchive || r.error().code == Code::InvalidJson ||
+                       r.error().code == Code::InvalidContent));
+            }
+        }
+        CHECK(refused >= 19);  // a flip that keeps deflate, JSON and the CRC valid is astronomically unlikely
+    }
+    SECTION("a complete deflate stream followed by declared trailing bytes") {
+        Bytes longer = good;
+        longer.insert(longer.begin() + static_cast<std::ptrdiff_t>(job.start + job.length), 64,
+                      std::uint8_t{0xAB});
+        // The directory moved by 64 bytes; then declare the longer stream in both headers.
+        const std::size_t eocd = longer.size() - 22;
+        writeLe32(longer, eocd + 16, readLe32(longer, eocd + 16) + 64);
+        longer = withCdField(longer, "job.json", 20, static_cast<std::uint32_t>(job.length + 64));
+        writeLe32(longer, job.header + 18, static_cast<std::uint32_t>(job.length + 64));
+        // The stream completes before its declared input ends; the loader accepts or refuses but
+        // never spins, and a refusal is InvalidArchive.
+        auto r = loadCarv(std::span<const std::uint8_t>(longer));
+        if (!r.ok()) {
+            CHECK(r.error().code == Code::InvalidArchive);
+        }
+    }
+}
+
+TEST_CASE("overlapping central-directory entries and the held-bytes cap", "[document][carv][zip][limits]") {
+    const Bytes base = save(Document{});
+    const RawMember manifest = compressMember("manifest.json", members(base)[0].data);
+    const RawMember jobMember = compressMember("job.json", members(base)[1].data);
+    SECTION("60 entries pointing at one stream declaring 16 MiB each are rejected up front") {
+        const RawMember shared = compressMember("blob.bin", pseudoText(std::size_t{16} << 20, 2, 11));
+        std::vector<CdEntry> entries{{0, "manifest.json", 0}, {1, "job.json", 0}};
+        for (int i = 0; i < 60; ++i) {
+            entries.push_back({2, "b" + std::to_string(i) + ".bin", 0});
+        }
+        const Bytes file = rawZip({manifest, jobMember, shared}, entries);
+        INFO("file " << file.size() << " bytes (" << shared.compressed.size() << " compressed payload)");
+        CHECK(file.size() < (std::size_t{4} << 20));  // 60 x 16 MiB declared from a few MB
+        CarvError err;
+        const double seconds = secondsToLoad(file, err);
+        INFO(err.message);
+        CHECK(err.code == Code::InvalidArchive);
+        CHECK(contains(err.message, "overlapping"));
+        CHECK(seconds < 0.5);
+#if defined(__linux__)
+        const std::int64_t peak = childPeakGrowth(file);
+        INFO("peak RSS growth " << peak / (1 << 20) << " MiB");
+        if (peak >= 0) {
+            CHECK(peak < std::int64_t{128} << 20);
+        }
+#endif
+        // The same three members referenced once each load fine, and the blob is kept verbatim.
+        const Bytes honest = rawZip({manifest, jobMember, shared},
+                                    {{0, "manifest.json", 0}, {1, "job.json", 0}, {2, "blob.bin", 0}});
+        LoadedCarv loaded = load(honest);
+        CHECK(loaded.extras.memberNames() == std::vector<std::string>{"blob.bin"});
+        CHECK(memberText(save(loaded.document, loaded.extras), "blob.bin").size() == (std::size_t{16} << 20));
+    }
+    SECTION("two entries whose data ranges overlap are rejected") {
+        const Bytes good = save(makeAcceptanceDocument());
+        // Point manifest.json's record at job.json's local header: a duplicated offset.
+        const DataRange job = dataRange(good, "job.json");
+        const CarvError dup =
+            loadError(withCdField(good, "manifest.json", 42, static_cast<std::uint32_t>(job.header)));
+        CHECK(dup.code == Code::InvalidArchive);
+        CHECK(contains(dup.message, "overlapping"));
+        // An offset inside another member's data (not at a header) is a bad local header.
+        const CarvError inside =
+            loadError(withCdField(good, "manifest.json", 42, static_cast<std::uint32_t>(job.start + 10)));
+        CHECK(inside.code == Code::InvalidArchive);
+    }
+    SECTION("held bytes are capped at max(64 MiB, 32 x archive size)") {
+        detail::LoadLimits l;
+        CHECK(std::max(l.minHeldBytes, l.heldBytesPerArchiveByte * std::uint64_t{1'800'000}) ==
+              (std::uint64_t{64} << 20));
+        CHECK(std::max(l.minHeldBytes, l.heldBytesPerArchiveByte * std::uint64_t{10'000'000}) ==
+              std::uint64_t{320'000'000});
+        // With the default ratio checks (20:1 per binary member and across all of them) nothing
+        // can hold more than 20 x the file size, so the 32 x cap is a backstop that only the floor
+        // can reach on tiny files, and the aggregate ratio fires first. Exercise the cap itself
+        // with the ratio checks relaxed and a 2 MiB floor: three 1 MiB members in a ~140 KB file.
+        std::vector<RawMember> ms{manifest, jobMember};
+        std::vector<CdEntry> entries{{0, "manifest.json", 0}, {1, "job.json", 0}};
+        for (int i = 0; i < 3; ++i) {
+            ms.push_back(
+                compressMember("t" + std::to_string(i) + ".bin",
+                               pseudoText(std::size_t{1} << 20, 8, static_cast<std::uint32_t>(7 + i))));
+            entries.push_back({static_cast<std::size_t>(2 + i), "t" + std::to_string(i) + ".bin", 0});
+        }
+        const Bytes file = rawZip(ms, entries);
+        INFO("file " << file.size() << " bytes");
+        detail::ZipLimits relaxed;
+        relaxed.maxBinaryRatio = 1000;
+        detail::LoadLimits capped;
+        capped.minHeldBytes = std::uint64_t{2} << 20;
+        capped.heldBytesPerArchiveByte = 1;
+        auto r = detail::loadCarvWithLimits(file, capped, relaxed);
+        REQUIRE_FALSE(r.ok());
+        INFO(r.error().message);
+        CHECK(r.error().code == Code::ResourceLimit);
+        CHECK(contains(r.error().message, "hold more than"));
+        CHECK(contains(r.error().message, "t2.bin"));  // the third member is the one over the line
+        // Two of them fit under the 2 MiB floor; and under the default limits (64 MiB floor,
+        // 2.3:1 compression) the same three members are simply a legitimate file.
+        ms.resize(4);
+        entries.resize(4);
+        auto two = detail::loadCarvWithLimits(rawZip(ms, entries), capped, relaxed);
+        REQUIRE(two.ok());
+        CHECK(two.value().extras.memberNames().size() == 2);
+        CHECK(load(file).extras.memberNames().size() == 3);
+    }
+    SECTION("an unknown .json member is streamed, validated and kept under the cap") {
+        const Bytes good = save(makeAcceptanceDocument());
+        const Bytes withJson =
+            withMember(good, "toolpaths/index.json", R"({"version": 1, "items": [1, 2, 3]})");
+        LoadedCarv loaded = load(withJson);
+        CHECK(loaded.extras.memberNames() == std::vector<std::string>{"toolpaths/index.json"});
+        CHECK(save(loaded.document, loaded.extras) == withJson);
+        const CarvError bad = loadError(withMember(good, "toolpaths/index.json", "{not json"));
+        CHECK(bad.code == Code::InvalidJson);
+        // A 250 MiB unknown .json bomb (`[0,0,...]`, 1.8 MB compressed) is refused up front by
+        // the 200:1 ratio check; nothing close to 250 MiB ever exists in memory. (The streaming
+        // validation path is exercised by the small valid/invalid members above.)
+        Bytes bomb;
+        bomb.push_back('[');
+        appendRepeated(bomb, "0", std::size_t{250} << 20);
+        bomb.push_back(']');
+        const RawMember unknown = compressMember("unknown.json", bomb);
+        bomb = Bytes();
+        const Bytes file = rawZip({manifest, jobMember, unknown},
+                                  {{0, "manifest.json", 0}, {1, "job.json", 0}, {2, "unknown.json", 0}});
+        INFO("file " << file.size() << " bytes");
+        CarvError err;
+        const double seconds = secondsToLoad(file, err);
+        INFO(err.message);
+        CHECK(err.code == Code::ResourceLimit);
+        CHECK(seconds < 2.0);
+#if defined(__linux__)
+        const std::int64_t peak = childPeakGrowth(file);
+        INFO("peak RSS growth " << peak / (1 << 20) << " MiB");
+        if (peak >= 0) {
+            CHECK(peak < std::int64_t{128} << 20);
+        }
+#endif
+    }
+}
+
+#if defined(__linux__)
+namespace {
+
+/// Loads `file` in a forked child under `alarm(timeoutSeconds)` and re-saves on success. Returns
+/// 0 for a normal return (loaded or a clean error), the signal number on a crash or timeout, or a
+/// negative child exit code for an inconsistent result (empty error message, re-save failure).
+int loadInChildWithTimeout(const Bytes& file, unsigned timeoutSeconds) {
+    const pid_t pid = fork();
+    if (pid == 0) {
+        alarm(timeoutSeconds);
+        auto r = loadCarv(std::span<const std::uint8_t>(file));
+        if (r.ok()) {
+            auto again = saveCarv(r.value().document, r.value().extras);
+            _exit(again.ok() ? 0 : 3);
+        }
+        _exit(r.error().message.empty() ? 2 : 0);
+    }
+    if (pid < 0) {
+        return -1;
+    }
+    int status = 0;
+    waitpid(pid, &status, 0);
+    if (WIFSIGNALED(status)) {
+        return WTERMSIG(status);
+    }
+    return WEXITSTATUS(status) == 0 ? 0 : -WEXITSTATUS(status);
+}
+
+}  // namespace
+
+TEST_CASE("fuzz under a per-load timeout: no hangs, no crashes", "[document][carv][fuzz][ci]") {
+    // Each iteration loads in a forked child under alarm(): a hang shows up as SIGALRM, a crash as
+    // its signal. Two seeds x 2,500 iterations: byte flips anywhere, truncation, bit flips inside
+    // job.json's compressed data, central-directory lies, and JSON text mutation.
+    Document doc = makeAcceptanceDocument();
+    group(doc, {doc.objectIds()[0], doc.objectIds()[1]});
+    const Bytes good = save(doc);
+    const std::string goodJob = memberText(good, "job.json");
+    const DataRange job = dataRange(good, "job.json");
+    const std::string alphabet = "{}[]\",:.-+eE0123456789 truefalsnul#";
+    int hangs = 0;
+    int crashes = 0;
+    int inconsistent = 0;
+    int loaded = 0;
+    for (const std::uint32_t seed : {std::uint32_t{20261024}, std::uint32_t{15}}) {
+        std::mt19937 rng(seed);
+        for (int i = 0; i < 2500; ++i) {
+            Bytes file = good;
+            switch (rng() % 5) {
+                case 0: {
+                    const unsigned flips = 1 + static_cast<unsigned>(rng() % 8);
+                    for (unsigned f = 0; f < flips; ++f) {
+                        file[rng() % file.size()] ^= static_cast<std::uint8_t>(1 + rng() % 255);
+                    }
+                    break;
+                }
+                case 1:
+                    file.resize(rng() % file.size());
+                    break;
+                case 2: {
+                    const unsigned flips = 1 + static_cast<unsigned>(rng() % 5);
+                    for (unsigned f = 0; f < flips; ++f) {
+                        file[job.start + rng() % job.length] ^= static_cast<std::uint8_t>(1u << (rng() % 8));
+                    }
+                    break;
+                }
+                case 3: {
+                    const std::size_t field = (rng() % 3 == 0) ? 42 : (rng() % 2 ? 20 : 24);
+                    const auto value = static_cast<std::uint32_t>(rng() % (std::uint64_t{1} << (rng() % 28)));
+                    file = withCdField(file, (rng() % 2) ? "job.json" : "manifest.json", field, value);
+                    break;
+                }
+                default: {
+                    std::string t = goodJob;
+                    const unsigned edits = 1 + static_cast<unsigned>(rng() % 4);
+                    for (unsigned e = 0; e < edits; ++e) {
+                        const std::size_t pos = rng() % t.size();
+                        switch (rng() % 3) {
+                            case 0:
+                                t[pos] = alphabet[rng() % alphabet.size()];
+                                break;
+                            case 1:
+                                t.erase(pos, 1 + rng() % 16);
+                                break;
+                            default:
+                                t.insert(pos, t.substr(rng() % t.size(), 1 + rng() % 40));
+                                break;
+                        }
+                    }
+                    file = withMember(good, "job.json", t);
+                    break;
+                }
+            }
+            const int outcome = loadInChildWithTimeout(file, 5);
+            if (outcome == SIGALRM) {
+                ++hangs;
+            } else if (outcome > 0) {
+                ++crashes;
+            } else if (outcome < 0) {
+                ++inconsistent;
+            } else {
+                ++loaded;  // counts clean errors too; see below
+            }
+            if (outcome != 0 && hangs + crashes + inconsistent <= 3) {
+                WARN("seed " << seed << " iteration " << i << ": outcome " << outcome);
+            }
+        }
+    }
+    CHECK(hangs == 0);
+    CHECK(crashes == 0);
+    CHECK(inconsistent == 0);
+    CHECK(loaded == 5000);
+}
+#endif

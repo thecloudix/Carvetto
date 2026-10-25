@@ -1493,12 +1493,13 @@ auto decodeMember(detail::ZipArchive& zip, const detail::ZipEntry& entry, LoadBu
     }
 }
 
-LoadedCarv loadImpl(std::span<const std::uint8_t> bytes) {
+LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimits& limits,
+                    const detail::ZipLimits& zipLimits) {
     detail::ZipArchive zip(bytes);
     {
         std::string error;
         bool limit = false;
-        if (!zip.open(detail::ZipLimits{}, error, limit)) {
+        if (!zip.open(zipLimits, error, limit)) {
             throw LoadFailure{limit ? CarvError::Code::ResourceLimit : CarvError::Code::InvalidArchive,
                               error};
         }
@@ -1508,7 +1509,7 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes) {
         throw LoadFailure{CarvError::Code::MissingMember,
                           "the archive has no manifest.json (not a .carv file?)"};
     }
-    LoadBudget budget;  // one budget for every member of the archive
+    LoadBudget budget(limits);  // one budget for every member of the archive
     auto extras = std::make_shared<CarvExtras::Impl>();
     LoadedCarv out{};
 
@@ -1542,10 +1543,34 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes) {
     extras->root = std::move(jf.rootUnknown);
     extras->job = std::move(jf.jobUnknown);
 
-    // --- other members, kept verbatim
+    // --- other members, kept verbatim under the held-bytes cap: max(64 MiB, 32 x archive size).
+    // Binary members are read incrementally; an unknown .json member is first streamed through
+    // the strict reader (validated and charged to the budget, never buffered whole) and only then
+    // copied if it fits.
+    const std::uint64_t heldCap =
+        std::max(budget.limits().minHeldBytes, budget.limits().heldBytesPerArchiveByte * bytes.size());
+    std::uint64_t held = 0;
+    const auto hold = [&](const detail::ZipEntry& e) {
+        held += e.size;
+        if (held > heldCap) {
+            throw LoadFailure{CarvError::Code::ResourceLimit,
+                              "preserved members would hold more than " + std::to_string(heldCap >> 20) +
+                                  " MiB in memory (" + std::to_string(heldCap) + " bytes allowed for a " +
+                                  std::to_string(bytes.size()) + "-byte file); member '" + e.name + "'"};
+        }
+    };
     for (const detail::ZipEntry& e : zip.entries()) {
         if (e.name == kManifestName || e.name == kJobName) {
             continue;
+        }
+        hold(e);
+        if (e.json) {
+            // Validate as JSON while streaming; the canonical text is discarded (the member is
+            // kept byte for byte below), but the pass bounds the work and refuses non-JSON.
+            decodeMember(zip, e, budget, [](JsonReader& r) {
+                r.readCanonical(nullptr);
+                return 0;
+            });
         }
         std::vector<std::uint8_t> data;
         std::string error;
@@ -1794,9 +1819,26 @@ CarvStatus saveCarv(const Document& doc, const std::filesystem::path& path, cons
     return std::monostate{};
 }
 
+namespace detail {
+
+CarvResult<LoadedCarv> loadCarvWithLimits(std::span<const std::uint8_t> bytes, const LoadLimits& limits,
+                                          const ZipLimits& zipLimits) {
+    try {
+        return loadImpl(bytes, limits, zipLimits);
+    } catch (const LoadFailure& f) {
+        return CarvError{f.code, f.message};
+    } catch (const std::bad_alloc&) {
+        return CarvError{CarvError::Code::ResourceLimit, "out of memory while loading"};
+    } catch (const std::exception& e) {
+        return CarvError{CarvError::Code::InvalidContent, std::string("cannot load: ") + e.what()};
+    }
+}
+
+}  // namespace detail
+
 CarvResult<LoadedCarv> loadCarv(std::span<const std::uint8_t> bytes) {
     try {
-        return loadImpl(bytes);
+        return loadImpl(bytes, detail::LoadLimits{}, detail::ZipLimits{});
     } catch (const LoadFailure& f) {
         return CarvError{f.code, f.message};
     } catch (const std::bad_alloc&) {

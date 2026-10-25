@@ -6,6 +6,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <memory>
 #include <set>
 #include <span>
@@ -81,48 +82,173 @@ struct ZipArchive::Impl {
 
 namespace {
 
-class MinizStream final : public ZipArchive::Stream, public CharSource {
+/// Little-endian reads from the archive bytes.
+std::uint16_t le16(std::span<const std::uint8_t> b, std::uint64_t at) {
+    return static_cast<std::uint16_t>(b[static_cast<std::size_t>(at)] |
+                                      (b[static_cast<std::size_t>(at) + 1] << 8));
+}
+std::uint32_t le32(std::span<const std::uint8_t> b, std::uint64_t at) {
+    return static_cast<std::uint32_t>(b[static_cast<std::size_t>(at)]) |
+           (static_cast<std::uint32_t>(b[static_cast<std::size_t>(at) + 1]) << 8) |
+           (static_cast<std::uint32_t>(b[static_cast<std::size_t>(at) + 2]) << 16) |
+           (static_cast<std::uint32_t>(b[static_cast<std::size_t>(at) + 3]) << 24);
+}
+
+constexpr std::uint64_t kLocalHeaderSize = 30;
+constexpr std::uint32_t kLocalHeaderSig = 0x04034b50u;
+constexpr std::size_t kInflateChunk = std::size_t{1} << 16;
+
+/// Our own inflate loop over tinfl for one member of an in-memory archive. Input is the exact
+/// [dataOffset, dataEnd) range from the (validated) local header; output is produced into a
+/// 32 KiB wrapping dictionary and copied out on demand. Every call either produces output,
+/// consumes input, or fails, so the loop cannot spin.
+class BoundedStream final : public ZipArchive::Stream, public CharSource {
    public:
-    MinizStream(mz_zip_archive* zip, mz_zip_reader_extract_iter_state* state, const ZipEntry& entry)
-        : zip_(zip), state_(state), entry_(entry) {}
-    ~MinizStream() override {
-        if (state_) {
-            mz_zip_reader_extract_iter_free(state_);
+    BoundedStream(std::span<const std::uint8_t> bytes, const ZipEntry& entry)
+        : in_(bytes.subspan(static_cast<std::size_t>(entry.dataOffset),
+                            static_cast<std::size_t>(entry.dataEnd - entry.dataOffset))),
+          entry_(entry) {
+        if (!entry.stored) {
+            dict_.resize(TINFL_LZ_DICT_SIZE);
+            tinfl_init(&inflator_);
         }
     }
-    MinizStream(const MinizStream&) = delete;
-    MinizStream& operator=(const MinizStream&) = delete;
 
     std::size_t readBytes(char* buf, std::size_t n) override {
-        if (!state_ || n == 0) {
+        if (failed_ || n == 0) {
             return 0;
         }
-        const std::size_t got = mz_zip_reader_extract_iter_read(state_, buf, n);
-        produced_ += got;
-        return got;
+        std::size_t copied = 0;
+        while (copied < n) {
+            if (dictAvail_ == 0) {
+                if (!produceMore()) {
+                    break;
+                }
+                if (dictAvail_ == 0) {
+                    break;  // done
+                }
+            }
+            const std::size_t take = std::min(n - copied, dictAvail_);
+            std::memcpy(buf + copied, dict_.data() + dictRead_, take);
+            crc_ = static_cast<std::uint32_t>(mz_crc32(crc_, dict_.data() + dictRead_, take));
+            dictRead_ = (dictRead_ + take) & (TINFL_LZ_DICT_SIZE - 1);
+            dictAvail_ -= take;
+            copied += take;
+            produced_ += take;
+        }
+        return copied;
     }
     std::size_t read(char* buf, std::size_t n) override { return readBytes(buf, n); }
     CharSource& source() override { return *this; }
 
     bool finish(std::string& error) override {
-        // Drain anything left so the size and CRC can be checked.
         std::array<char, 4096> scratch{};
-        while (readBytes(scratch.data(), scratch.size()) > 0) {
+        while (!failed_ && readBytes(scratch.data(), scratch.size()) > 0) {
         }
-        const bool ok = mz_zip_reader_extract_iter_free(state_) != 0;
-        state_ = nullptr;
-        if (!ok || produced_ != entry_.size) {
-            error = "zip member '" + entry_.name + "' is damaged (" + zipErrorText(*zip_) + ")";
+        if (failed_) {
+            error = "zip member '" + entry_.name + "' is damaged (" + failure_ + ")";
+            return false;
+        }
+        if (produced_ != entry_.size) {
+            error = "zip member '" + entry_.name + "' is damaged (decompressed to " +
+                    std::to_string(produced_) + " bytes, " + std::to_string(entry_.size) + " declared)";
+            return false;
+        }
+        if (crc_ != entry_.crc) {
+            error = "zip member '" + entry_.name + "' is damaged (CRC mismatch)";
             return false;
         }
         return true;
     }
 
    private:
-    mz_zip_archive* zip_;
-    mz_zip_reader_extract_iter_state* state_;
+    bool fail(const char* why) {
+        failed_ = true;
+        failure_ = why;
+        return false;
+    }
+
+    /// Fills the dictionary with the next block of output. Returns false on failure; leaves
+    /// dictAvail_ == 0 when the stream is complete.
+    bool produceMore() {
+        if (done_) {
+            return true;
+        }
+        if (entry_.stored) {
+            // Stored member: the data *is* the output; serve it in dictionary-sized pieces.
+            const std::size_t left = in_.size() - inPos_;
+            const std::size_t take = std::min(
+                left, dict_.empty() ? (dict_.resize(TINFL_LZ_DICT_SIZE), dict_.size()) : dict_.size());
+            if (take == 0) {
+                done_ = true;
+                return true;
+            }
+            if (produced_ + take > entry_.size) {
+                return fail("more data than declared");
+            }
+            std::memcpy(dict_.data(), in_.data() + inPos_, take);
+            inPos_ += take;
+            dictRead_ = 0;
+            dictAvail_ = take;
+            return true;
+        }
+        for (;;) {
+            // The wrapping buffer: write from dictWrite_ up to the end of the dictionary.
+            std::size_t outSize = TINFL_LZ_DICT_SIZE - dictWrite_;
+            std::size_t inSize = std::min(in_.size() - inPos_, kInflateChunk);
+            const bool moreInput = inPos_ + inSize < in_.size();
+            const tinfl_status status = tinfl_decompress(&inflator_, in_.data() + inPos_, &inSize,
+                                                         dict_.data(), dict_.data() + dictWrite_, &outSize,
+                                                         moreInput ? TINFL_FLAG_HAS_MORE_INPUT : 0);
+            inPos_ += inSize;
+            if (status < TINFL_STATUS_DONE) {
+                return fail("deflate stream is corrupted");
+            }
+            if (outSize > 0) {
+                if (produced_ + dictAvail_ + outSize > entry_.size) {
+                    return fail("more data than declared");
+                }
+                dictRead_ = dictWrite_;
+                dictWrite_ = (dictWrite_ + outSize) & (TINFL_LZ_DICT_SIZE - 1);
+                dictAvail_ = outSize;
+                if (status == TINFL_STATUS_DONE) {
+                    done_ = true;
+                }
+                return true;
+            }
+            if (status == TINFL_STATUS_DONE) {
+                done_ = true;
+                return true;
+            }
+            if (status == TINFL_STATUS_NEEDS_MORE_INPUT) {
+                if (inPos_ >= in_.size()) {
+                    return fail("deflate stream is truncated");  // all declared input consumed
+                }
+                if (inSize == 0) {
+                    return fail("deflate stream makes no progress");
+                }
+                continue;  // consumed some input, produced nothing yet: feed the next chunk
+            }
+            // HAS_MORE_OUTPUT with outSize == 0 cannot happen with a free dictionary; guard anyway.
+            if (inSize == 0) {
+                return fail("deflate stream makes no progress");
+            }
+        }
+    }
+
+    std::span<const std::uint8_t> in_;
     ZipEntry entry_;
+    std::size_t inPos_{0};
+    tinfl_decompressor inflator_{};
+    std::vector<std::uint8_t> dict_;
+    std::size_t dictRead_{0};
+    std::size_t dictWrite_{0};
+    std::size_t dictAvail_{0};
     std::uint64_t produced_{0};
+    std::uint32_t crc_{MZ_CRC32_INIT};
+    bool done_{false};
+    bool failed_{false};
+    std::string failure_;
 };
 
 }  // namespace
@@ -227,18 +353,56 @@ bool ZipArchive::open(const ZipLimits& limits, std::string& error, bool& limitEx
             limitExceeded = true;
             return false;
         }
-        impl_->entries.push_back(ZipEntry{i, name, st.m_uncomp_size, st.m_crc32, json});
+        if (st.m_method != MZ_DEFLATED && st.m_method != 0) {
+            error = "zip member '" + name + "' uses an unsupported compression method";
+            return false;
+        }
+        // Read the local header ourselves to learn where the data really is.
+        const std::uint64_t lh = st.m_local_header_ofs;
+        const std::uint64_t total_size = impl_->bytes.size();
+        if (lh + kLocalHeaderSize > total_size || le32(impl_->bytes, lh) != kLocalHeaderSig) {
+            error = "zip member '" + name + "' has a bad local header";
+            return false;
+        }
+        const std::uint64_t nameLen = le16(impl_->bytes, lh + 26);
+        const std::uint64_t extraLen = le16(impl_->bytes, lh + 28);
+        const std::uint64_t dataOffset = lh + kLocalHeaderSize + nameLen + extraLen;
+        const std::uint64_t dataEnd = dataOffset + st.m_comp_size;
+        if (dataOffset > total_size || dataEnd > total_size || dataEnd < dataOffset) {
+            error = "zip member '" + name + "' points past the end of the file";
+            return false;
+        }
+        ZipEntry entry{i,    name, st.m_uncomp_size, st.m_comp_size, st.m_crc32,
+                       json, lh,   dataOffset,       dataEnd,        st.m_method == 0};
+        if (entry.stored && entry.compressedSize != entry.size) {
+            error = "zip member '" + name + "' is stored but its sizes differ";
+            return false;
+        }
+        impl_->entries.push_back(entry);
+    }
+    // Each entry's [local header, data end) must be disjoint from every other's: a shared or
+    // overlapping stream would otherwise be inflated once per entry.
+    std::vector<std::pair<std::uint64_t, std::uint64_t>> ranges;
+    ranges.reserve(impl_->entries.size());
+    for (const ZipEntry& e : impl_->entries) {
+        ranges.emplace_back(e.headerOffset, e.dataEnd);
+    }
+    std::sort(ranges.begin(), ranges.end());
+    for (std::size_t k = 1; k < ranges.size(); ++k) {
+        if (ranges[k].first < ranges[k - 1].second) {
+            error = "zip archive has overlapping or duplicated member data (entries share a local header)";
+            return false;
+        }
     }
     return true;
 }
 
 std::unique_ptr<ZipArchive::Stream> ZipArchive::stream(const ZipEntry& entry, std::string& error) {
-    mz_zip_reader_extract_iter_state* state = mz_zip_reader_extract_iter_new(&impl_->zip, entry.index, 0);
-    if (!state) {
-        error = "zip member '" + entry.name + "' is damaged (" + zipErrorText(impl_->zip) + ")";
+    if (entry.dataEnd > impl_->bytes.size() || entry.dataOffset > entry.dataEnd) {
+        error = "zip member '" + entry.name + "' points past the end of the file";
         return nullptr;
     }
-    return std::make_unique<MinizStream>(&impl_->zip, state, entry);
+    return std::make_unique<BoundedStream>(impl_->bytes, entry);
 }
 
 bool ZipArchive::readAll(const ZipEntry& entry, std::vector<std::uint8_t>& out, std::string& error) {

@@ -114,18 +114,8 @@ CarvStatus saveCarv(const Document& doc, const std::filesystem::path& path, cons
 
 /// Parses archive bytes. Never throws for bad input: any defect gives a `CarvError`. The loaded
 /// document has an empty, clean undo stack and an empty selection. JSON members are streamed
-/// through a strict parser under an archive-wide resource budget (ADR-0013 §8–9).
-///
-/// Known limitations (tracked as T-0015; the zip layer is not yet safe for untrusted files):
-/// 1. miniz 3.0.2's `mz_zip_reader_extract_iter_read` never decrements `comp_remaining` for
-///    in-memory archives, so a truncated, corrupted or size-lying deflate stream makes the
-///    inflater report "needs more input" without progress and the read loop spins forever.
-///    A hostile or damaged file can therefore hang `loadCarv` instead of failing.
-/// 2. Central-directory entries that point at the same (or overlapping) local header are not
-///    detected, so one compressed stream can be inflated once per entry (observed: 60 entries
-///    sharing a 1.8 MB stream of 16 MiB each load at ~980 MiB RSS). Unknown `.json` members
-///    (any member ending in `.json` other than manifest.json/job.json) are also buffered whole,
-///    up to the 256 MiB per-member cap, rather than streamed.
+/// through a strict parser under an archive-wide resource budget, and zip members are inflated
+/// by a bounded loop that cannot hang on damaged or size-lying data (ADR-0013 §8–9).
 CarvResult<LoadedCarv> loadCarv(std::span<const std::uint8_t> bytes);
 
 /// Reads and parses the file at `path`.
