@@ -47,14 +47,21 @@ add_executable(carvetto_tests
   geometry/open_offset_chains_test.cpp
   geometry/boolean_test.cpp
   document/carv_io_test.cpp
+  io/dxf_import_test.cpp
+  io/dxf_export_test.cpp
+  io/dxf_curves_test.cpp
+  io/dxf_fuzz_test.cpp
 )
 # carv_io_test uses the internal zip helper (core/src/document/carv_zip.hpp) to craft archives.
 target_include_directories(carvetto_tests PRIVATE ${PROJECT_SOURCE_DIR}/core/src/document)
+# DXF tests use internal io helpers (pair reader value types, curve conversions).
+target_include_directories(carvetto_tests PRIVATE ${PROJECT_SOURCE_DIR}/core/src/io)
 # Golden files and shipped posts are read from the source tree via absolute paths.
 target_compile_definitions(carvetto_tests PRIVATE
   CARVETTO_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/golden"
   CARVETTO_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
   CARVETTO_STARTER_TOOLS="${PROJECT_SOURCE_DIR}/data/tools/starter_tools.json"
+  CARVETTO_DXF_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dxf"
 )
 target_link_libraries(carvetto_tests PRIVATE carvetto::core Catch2::Catch2WithMain carvetto_warnings)
 

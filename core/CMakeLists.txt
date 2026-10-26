@@ -98,6 +98,12 @@ add_library(carvetto_core STATIC
   src/document/carv_zip.cpp
   src/document/carv_json_reader.cpp
   src/document/carv_io.cpp
+  src/io/dxf_pairs.cpp
+  src/io/dxf_text.cpp
+  src/io/dxf_curves.cpp
+  src/io/dxf_colour.cpp
+  src/io/dxf_import.cpp
+  src/io/dxf_export.cpp
 )
 target_include_directories(carvetto_core PUBLIC include)
 target_link_libraries(carvetto_core
