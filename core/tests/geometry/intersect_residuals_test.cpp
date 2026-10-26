@@ -89,6 +89,18 @@ bool symmetricPair(const Span& a, const Span& b, IntersectionResult* result = nu
     }
     return ok;
 }
+
+// T-0008: an end of either span (a full circle has none) within tolerance of the other span is a
+// contact of its own, reported unless another hit is within tolerance of it. True when `p` is such
+// an end contact.
+bool isEndContact(const Span& a, const Span& b, const Intersection& p) {
+    const auto hasEnd = [](const Span& s, double t) {
+        const auto* arc = std::get_if<ArcSpan>(&s);
+        return (t == 0.0 || t == 1.0) && (arc == nullptr || !arc->isFullCircle());
+    };
+    return (hasEnd(a, p.tA) && closestPoint(b, pointAt(a, p.tA)).distance <= tol.distance) ||
+           (hasEnd(b, p.tB) && closestPoint(a, pointAt(b, p.tB)).distance <= tol.distance);
+}
 }  // namespace
 
 // ============================================================================ AC1
@@ -691,22 +703,26 @@ TEST_CASE("T-0005 AC3: crossing between different branches near a cubic's loop i
             return std::fabs(p.tA - tA) <= 1e-6 && std::fabs(p.tB - tB) <= 1e-6 && !p.tangent;
         });
     };
-    // Every crossing of the two curves (dense brute force), plus the two genuine closest
-    // approaches within tolerance: a dip of the gap to 2.08e-4 near t = 0.63 and the ends, which
-    // are 3.3e-4 apart (closest 2.4e-4 just before B's end). Nothing else.
+    // Every crossing of the two curves (dense brute force), plus the genuine closest approaches
+    // within tolerance: a dip of the gap to 2.08e-4 near t = 0.63 and the ends, which are 3.3e-4
+    // apart (closest 2.4e-4 just before B's end). Since T-0008 the starts, whose gap is 3.3e-4 to
+    // 3.9e-4, are a contact too (an end within tolerance of the other span). Nothing else.
     CHECK(has(0.109388826, 0.109351239));
     CHECK(has(0.375244198, 0.375270185));
     CHECK(has(0.580903743, 0.665673934));
     CHECK(has(0.633110476, 0.615930502));
     CHECK(has(0.657644445, 0.589863425));
-    CHECK(approxEqual(r.points[2].point, {4.333550126, -4.035616762}, 1e-8));
-    REQUIRE(r.points.size() == 7);
-    CHECK(r.points[3].tangent);
-    CHECK_THAT(r.points[3].tA, Catch::Matchers::WithinAbs(0.629703, 1e-5));
-    CHECK_THAT(r.points[3].tB, Catch::Matchers::WithinAbs(0.629877, 1e-5));
-    CHECK(r.points[6].tA == 1.0);
-    CHECK_THAT(r.points[6].tB, Catch::Matchers::WithinAbs(0.999994, 1e-5));
-    CHECK(r.points[6].tangent);
+    REQUIRE(r.points.size() == 8);
+    CHECK(r.points[0].tangent);
+    CHECK(r.points[0].tB == 0.0);
+    CHECK_THAT(r.points[0].tA, Catch::Matchers::WithinAbs(0.0000122, 1e-6));
+    CHECK(approxEqual(r.points[3].point, {4.333550126, -4.035616762}, 1e-8));
+    CHECK(r.points[4].tangent);
+    CHECK_THAT(r.points[4].tA, Catch::Matchers::WithinAbs(0.629703, 1e-5));
+    CHECK_THAT(r.points[4].tB, Catch::Matchers::WithinAbs(0.629877, 1e-5));
+    CHECK(r.points[7].tA == 1.0);
+    CHECK_THAT(r.points[7].tB, Catch::Matchers::WithinAbs(0.999994, 1e-5));
+    CHECK(r.points[7].tangent);
 }
 
 namespace {
@@ -929,7 +945,9 @@ TEST_CASE("T-0005 AC3: touches within tolerance are reported once and gaps beyon
           "[geometry][intersect][t0005][property]") {
     // Tangent lines, external and internal circles and mirrored cubics at t = i/40 on three convex
     // cubics, offset by h to the convex side: exactly one tangent hit for every h within tolerance
-    // (0, 1e-5, 1e-4, 5e-4, 0.99*tol), none at 1.05*tol.
+    // (0, 1e-5, 1e-4, 5e-4, 0.99*tol), none at 1.05*tol. Since T-0008 an end of either span that
+    // comes within tolerance of the other further along (e.g. the end of the cubic next to a long
+    // tangent line) is reported as well, as its own end contact.
     std::size_t touches = 0;
     std::size_t misses = 0;
     for (const BezierSpan& a : kConvex) {
@@ -941,11 +959,18 @@ TEST_CASE("T-0005 AC3: touches within tolerance are reported once and gaps beyon
                     IntersectionResult r;
                     CHECK(symmetricPair(a, tc.span, &r));
                     if (h <= tol.distance) {
-                        REQUIRE(r.points.size() == 1);
-                        CHECK(r.points[0].tangent);
-                        CHECK_THAT(r.points[0].tA, Catch::Matchers::WithinAbs(t, 2e-3));
-                        CHECK(distance(a.pointAt(r.points[0].tA), pointAt(tc.span, r.points[0].tB)) <=
-                              h + 1e-6);
+                        std::vector<Intersection> touch;
+                        for (const Intersection& p : r.points) {
+                            if (std::fabs(p.tA - t) <= 2e-3) {
+                                touch.push_back(p);
+                            } else {
+                                CHECK(isEndContact(a, tc.span, p));
+                                CHECK(p.tangent);
+                            }
+                        }
+                        REQUIRE(touch.size() == 1);
+                        CHECK(touch[0].tangent);
+                        CHECK(distance(a.pointAt(touch[0].tA), pointAt(tc.span, touch[0].tB)) <= h + 1e-6);
                         ++touches;
                     } else {
                         CHECK(r.isEmpty());
@@ -963,8 +988,9 @@ TEST_CASE("T-0005 AC3: curves hugging within tolerance report crossings and true
           "[geometry][intersect][t0005][property]") {
     // Perturbed copies of random cubics (control points moved by up to 0.9*tol). The reference is
     // the global gap g(t) = dist(A(t), B) sampled densely: every reported hit must sit at a local
-    // minimum of g (a crossing has g = 0), and every local minimum with g < 0.9*tol that is not
-    // within 3*tol of another one must be reported.
+    // minimum of g (a crossing has g = 0) or be an end contact (T-0008: an end of either span within
+    // tolerance of the other), and every local minimum with g < 0.9*tol that is not within 3*tol
+    // of another one must be reported.
 #ifdef NDEBUG
     constexpr int kCases = 400;
 #else
@@ -1000,9 +1026,21 @@ TEST_CASE("T-0005 AC3: curves hugging within tolerance report crossings and true
             const double res = distance(a.pointAt(p.tA), b.pointAt(p.tB));
             const double gHere = closestPoint(b, a.pointAt(p.tA)).distance;
             INFO("case " << i << " hit tA=" << p.tA << " tangent=" << p.tangent << " res=" << res);
-            CHECK(gHere >= res - 1e-9);
+            if (isEndContact(a, b, p)) {
+                // An end paired with its nearest point on the other span: the residual is the end's
+                // distance to that span (the other point's own nearest point may lie a little closer).
+                const bool endOfA = (p.tA == 0.0 || p.tA == 1.0) &&
+                                    std::fabs(closestPoint(b, a.pointAt(p.tA)).distance - res) <= 1e-12;
+                const bool endOfB = (p.tB == 0.0 || p.tB == 1.0) &&
+                                    std::fabs(closestPoint(a, b.pointAt(p.tB)).distance - res) <= 1e-12;
+                CHECK((endOfA || endOfB));
+            } else {
+                CHECK(gHere >= res - 1e-9);
+            }
             if (res > 1e-9) {
                 CHECK(p.tangent);
+            }
+            if (res > 1e-9 && !isEndContact(a, b, p)) {
                 for (const double d : {-1e-4, -1e-5, 1e-5, 1e-4}) {
                     const double t = p.tA + d;
                     if (t >= 0.0 && t <= 1.0) {

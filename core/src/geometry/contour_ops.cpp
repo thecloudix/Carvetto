@@ -237,10 +237,13 @@ ClosestPoint closestPoint(const ArcSpan& s, Vec2 p) {
     if (radial.lengthSquared() > 0.0) {
         const double angle = radial.angle();
         if (s.containsAngle(angle)) {
-            const double sweep = s.sweepAngle();
+            const double sweep = std::fabs(s.sweepAngle());
             const double delta = s.direction == ArcDirection::CCW ? normalizeAngle(angle - s.startAngle)
                                                                   : normalizeAngle(s.startAngle - angle);
-            const double t = std::clamp(delta / std::fabs(sweep), 0.0, 1.0);
+            // `containsAngle` accepts angles a rounding margin outside the arc. Just past the end
+            // the travelled angle is slightly above the sweep; just before the start it wraps to
+            // just under 2pi. Either way the parameter is that of the nearer end (in angle).
+            const double t = delta <= sweep ? delta / sweep : (delta - sweep <= kTwoPi - delta ? 1.0 : 0.0);
             const Vec2 q = s.centre + Vec2::fromAngle(angle, s.radius);
             return {q, t, distance(p, q)};
         }

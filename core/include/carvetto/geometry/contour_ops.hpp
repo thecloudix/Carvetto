@@ -72,7 +72,9 @@ struct ClosestPoint {
 /// Closest point on a line segment (orthogonal projection clamped to the segment).
 ClosestPoint closestPoint(const LineSpan& s, Vec2 p);
 /// Closest point on an arc: radial projection when the query direction falls inside the sweep,
-/// otherwise the nearer end point. A query at the centre returns the start point.
+/// otherwise the nearer end point. A query at the centre returns the start point. The parameter
+/// always matches the returned point: a direction a rounding error outside the sweep gets the
+/// parameter of the nearer end (0 just before the start, 1 just past the end).
 ClosestPoint closestPoint(const ArcSpan& s, Vec2 p);
 /// Global closest point on a cubic Bezier: every root in [0,1] of the quintic
 /// (B(t) - p) . B'(t) is isolated by Bernstein subdivision and bisected, and the best of those

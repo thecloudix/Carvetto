@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <initializer_list>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "carvetto/geometry/contour_ops.hpp"
@@ -62,6 +63,39 @@ const std::array<BezierSpan, 4> kConvex{{
     BezierSpan{{-3.0, 9.0}, {-1.0, -3.0}, {1.0, -3.0}, {3.0, 9.0}},
 }};
 
+// T-0008: an end of either span (a full circle has none) within tolerance of the other span is a
+// contact of its own, reported unless another hit is within tolerance of it. True when `p` is such
+// an end contact.
+bool isEndContact(const Span& a, const Span& b, const Intersection& p) {
+    const auto hasEnd = [](const Span& s, double t) {
+        const auto* arc = std::get_if<ArcSpan>(&s);
+        return (t == 0.0 || t == 1.0) && (arc == nullptr || !arc->isFullCircle());
+    };
+    return (hasEnd(a, p.tA) && closestPoint(b, pointAt(a, p.tA)).distance <= tol.distance) ||
+           (hasEnd(b, p.tB) && closestPoint(a, pointAt(b, p.tB)).distance <= tol.distance);
+}
+
+// The touch near A(tTouch) with gap h is reported exactly once: the hit closest to the touch in
+// residual among those with |tA - tTouch| <= 2e-3 is tangent and within h of both curves, and every
+// other hit is a tangent end contact (an end of either span lying within tolerance of the other
+// further than the tolerance from the touch).
+bool touchReported(const Span& a, const Span& b, const IntersectionResult& r, double tTouch, double h) {
+    const Intersection* touch = nullptr;
+    double best = 0.0;
+    for (const Intersection& p : r.points) {
+        const double res = distance(pointAt(a, p.tA), pointAt(b, p.tB));
+        if (std::fabs(p.tA - tTouch) <= 2e-3 && (touch == nullptr || res < best)) {
+            touch = &p;
+            best = res;
+        }
+    }
+    if (touch == nullptr || !touch->tangent || best > h + 1e-9) {
+        return false;
+    }
+    return std::all_of(r.points.begin(), r.points.end(), [&](const Intersection& p) {
+        return &p == touch || (p.tangent && isEndContact(a, b, p));
+    });
+}
 }  // namespace
 
 // ============================================================================ AC1
@@ -168,10 +202,9 @@ TEST_CASE("T-0007 AC1: external circles and arcs touching convex cubics, dense n
                         } else {
                             r = intersect(Span{a}, other, tol);
                         }
-                        const bool ok =
-                            symmetric && r.points.size() == 1 && r.points[0].tangent &&
-                            std::fabs(r.points[0].tA - t) <= 2e-3 &&
-                            distance(a.pointAt(r.points[0].tA), pointAt(other, r.points[0].tB)) <= h + 1e-9;
+                        // Since T-0008 an end of the cubic or of a partial arc that comes within
+                        // tolerance of the other span further along is reported too.
+                        const bool ok = symmetric && touchReported(a, other, r, t, h);
                         if (!ok) {
                             ++drops;
                             UNSCOPED_INFO("cubic " << ci << " R=" << radius << " h=" << h << " t=" << t
@@ -261,7 +294,9 @@ TEST_CASE("T-0007 AC1: partial arcs starting or ending just before a touch near 
                             r = intersect(Span{a}, Span{arc}, tol);
                         }
                         ++calls;
-                        if (!(symmetric && r.points.size() == 1 && r.points[0].tangent)) {
+                        // Since T-0008 the arc's end, `before` radians from the touch, is reported
+                        // as well when it lies further than the tolerance from it.
+                        if (!(symmetric && touchReported(a, arc, r, t, h))) {
                             ++drops;
                             UNSCOPED_INFO("cubic " << ci << " t=" << t << " R=" << radius << " h=" << h
                                                    << " before=" << before << " hits=" << r.points.size());
@@ -423,15 +458,20 @@ TEST_CASE("T-0007 AC2: an arc ending 16 um from a hugging Bezier's interior, nex
                         {8.7773397068828647, 1.5168625224733479},
                         {8.7044912219698638, 1.3839224389548523},
                         {8.610537711424648, 1.2659908954420165}};
+    // Since T-0008 the Bezier's start, 0.2 um from the arc and 0.06 mm before the first crossing
+    // along a stretch where the two run within tolerance, is reported too.
     IntersectionResult r;
     CHECK(mirrored(arc, bz, &r));
-    REQUIRE(r.points.size() == 3);
-    CHECK_FALSE(r.points[0].tangent);
+    REQUIRE(r.points.size() == 4);
+    CHECK(r.points[0].tangent);
+    CHECK(r.points[0].tB == 0.0);
+    CHECK_THAT(r.points[0].tA, Catch::Matchers::WithinAbs(0.465645252, 1e-8));
     CHECK_FALSE(r.points[1].tangent);
-    CHECK(r.points[2].tangent);
-    CHECK(r.points[2].tA == 1.0);
-    CHECK_THAT(r.points[2].tB, Catch::Matchers::WithinAbs(0.885567757, 1e-8));
-    CHECK_THAT(distance(arc.pointAt(1.0), bz.pointAt(r.points[2].tB)),
+    CHECK_FALSE(r.points[2].tangent);
+    CHECK(r.points[3].tangent);
+    CHECK(r.points[3].tA == 1.0);
+    CHECK_THAT(r.points[3].tB, Catch::Matchers::WithinAbs(0.885567757, 1e-8));
+    CHECK_THAT(distance(arc.pointAt(1.0), bz.pointAt(r.points[3].tB)),
                Catch::Matchers::WithinAbs(1.653e-5, 1e-8));
 }
 
@@ -473,14 +513,20 @@ TEST_CASE("T-0007 AC2: end touches of a Bezier hugging an arc are not lost (no r
             return p.tangent && p.tA >= 1.0 - 1e-4 && std::fabs(p.tB - 0.451341) <= 1e-5;
         });
         CHECK(endTouch);
-        CHECK(r.points.size() == 3);
+        // Since T-0008 also the arc's start, 4.8 um from the Bezier's interior (tA 0.1224).
+        const bool startTouch = std::any_of(r.points.begin(), r.points.end(), [](const Intersection& p) {
+            return p.tangent && p.tB == 0.0 && std::fabs(p.tA - 0.122435) <= 1e-5;
+        });
+        CHECK(startTouch);
+        CHECK(r.points.size() == 4);
     }
 }
 
 TEST_CASE("T-0007 AC2: a double crossing confined to the last sample piece before a span end",
           "[geometry][intersect][t0007]") {
     // The Bezier swings across the arc and back within its last ~0.007 of parameter (0.15 mm),
-    // ending 0.2 mm inside: both crossings are reported (found while checking AC2).
+    // ending 0.2 mm inside: both crossings are reported (found while checking AC2). Since T-0008
+    // the Bezier's end, 3.6 um past the second crossing and 0.21 um from the arc, is reported too.
     const ArcSpan arc{{-3.1052154736786743, 2.2654113437212198},
                       1.3414515037303174,
                       -1.3951806466022543,
@@ -492,11 +538,13 @@ TEST_CASE("T-0007 AC2: a double crossing confined to the last sample piece befor
                         {-3.2616336475393179, 3.5979244888280042}};
     IntersectionResult r;
     CHECK(mirrored(arc, bz, &r));
-    REQUIRE(r.points.size() == 2);
-    CHECK_THAT(r.points[0].tB, Catch::Matchers::WithinAbs(0.999839726, 1e-8));
-    CHECK_THAT(r.points[1].tB, Catch::Matchers::WithinAbs(0.993069174, 1e-8));
-    CHECK_FALSE(r.points[0].tangent);
+    REQUIRE(r.points.size() == 3);
+    CHECK(r.points[0].tB == 1.0);
+    CHECK(r.points[0].tangent);
+    CHECK_THAT(r.points[1].tB, Catch::Matchers::WithinAbs(0.999839726, 1e-8));
+    CHECK_THAT(r.points[2].tB, Catch::Matchers::WithinAbs(0.993069174, 1e-8));
     CHECK_FALSE(r.points[1].tangent);
+    CHECK_FALSE(r.points[2].tangent);
 }
 
 // ============================================================================ AC3

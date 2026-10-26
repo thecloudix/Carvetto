@@ -41,28 +41,32 @@ struct IntersectionResult {
     bool isEmpty() const { return points.empty() && overlaps.empty(); }
 };
 
-/// Exact line–line intersection, symmetric in its arguments (swapping A and B swaps the
-/// parameters and nothing else). Segments are collinear when both end points of the shorter lie
+/// Exact line–line intersection. Segments are collinear when both end points of the shorter lie
 /// within `tol.distance` of the longer one's line; they then give an overlap, or a single tangent
 /// point when they only touch end to end. Otherwise the lines are intersected however small the
-/// angle between them, and an end point within `tol.distance` of the other segment also counts.
+/// angle between them. Every end point within `tol.distance` of the other segment is a contact
+/// too (see `intersect(const Span&, const Span&, const Tolerance&)` for end contacts).
 IntersectionResult intersect(const LineSpan& a, const LineSpan& b, const Tolerance& tol);
 /// Exact line–arc intersection from the foot of the perpendicular dropped from the centre
 /// (hits at ±sqrt(r² − h²) along the line), which stays precise for lines much longer than the
-/// circle. A line whose distance from the centre is within `tol.distance` of the radius gives
-/// one tangent hit.
+/// circle. Two crossings further apart than `tol.distance` are both reported; closer ones, and a
+/// line passing outside the circle within `tol.distance`, give one tangent hit at the foot. Ends
+/// within `tol.distance` of the other span are contacts too.
 IntersectionResult intersect(const LineSpan& a, const ArcSpan& b, const Tolerance& tol);
-/// Exact arc–arc intersection from the circle–circle solution. Externally or internally tangent
-/// circles (closest approach within `tol.distance`) give one tangent hit at the midpoint of the two
-/// circles' facing points on the centre line, so it lies within tolerance of both however close
-/// the centres are; this includes nearly concentric circles (centre distance d <= tol.distance)
-/// whose closest approach |r1 - r2| - d is within tolerance. Arcs on the same circle (d and
-/// |r1 - r2| both within tolerance) give overlaps; other concentric circles give nothing.
+/// Exact arc–arc intersection from the circle–circle solution. Two crossings further apart than
+/// `tol.distance` are both reported. Circles that touch (closest approach within `tol.distance`,
+/// externally or internally) or cross at two points the tolerance cannot separate give one tangent
+/// hit at the midpoint of the two circles' facing points on the centre line, so it lies within
+/// tolerance of both however close the centres are; this includes nearly concentric circles
+/// (centre distance d <= tol.distance) whose closest approach |r1 - r2| - d is within tolerance.
+/// Arcs on the same circle (d and |r1 - r2| both within tolerance) give overlaps; other concentric
+/// circles give nothing. Ends within `tol.distance` of the other span are contacts too.
 IntersectionResult intersect(const ArcSpan& a, const ArcSpan& b, const Tolerance& tol);
 
-/// Intersection of any two spans. Line/arc pairs are solved analytically. Pairs involving a
-/// Bezier are cut into pieces over which each Bezier turns by at most 45 degrees (so loops and
-/// cusps are handled branch by branch); each pair of pieces is polygonised at `tol.chordal`,
+/// Intersection of any two spans. Line/arc pairs are solved analytically, in a canonical argument
+/// order (so `intersect(b, a)` is exactly `intersect(a, b)` with parameters swapped). Pairs
+/// involving a Bezier are cut into pieces over which each Bezier turns by at most 45 degrees (so
+/// loops and cusps are handled branch by branch); each pair of pieces is polygonised at `tol.chordal`,
 /// chord crossings are refined by Newton on A(t) - B(s) = 0, and the signed distance along every
 /// Bezier chord near the other span is scanned for sign changes (crossings) and dips (shallow
 /// double crossings, touches), including dips at chord and span ends and next to samples at zero
@@ -70,15 +74,22 @@ IntersectionResult intersect(const ArcSpan& a, const ArcSpan& b, const Tolerance
 /// dip, are touch candidates: each is walked to the local minimum of the distance between the
 /// unsplit curves (around the seam of a full circle) and kept when that minimum is within
 /// `tol.distance`, flagged `tangent`. A closest approach with gap h <= tol.distance is reported
-/// exactly once, wherever it lies along either span and whichever span's end it involves (this
-/// symmetry of end touches holds for pairs involving a Bezier, at ends not inside a stretch where
-/// the curves run within tolerance of each other; see ADR-0009); curves
-/// running within tolerance of each other report their crossings plus their local closest
-/// approaches, nothing in between. Degenerate (zero-length) spans are treated as points. Results
-/// are ordered by `tA`; hits within `tol.distance` of each other are merged into one, and two
-/// distinct crossings merged that way are flagged `tangent`. Bezier pairs are solved in a
-/// canonical argument order, so `intersect(b, a)` is exactly `intersect(a, b)` with parameters
-/// swapped. See ADR-0009 (amendments) for the guarantees and the remaining heuristics.
+/// exactly once, wherever it lies along either span; curves running within tolerance of each other
+/// report their crossings plus their local closest approaches, nothing in between.
+///
+/// End contacts (every pair kind): an end of either span within `tol.distance` of the other span
+/// (its interior or its end) is reported as one hit, the end paired with its nearest point, unless
+/// another hit lies within `tol.distance` of it. It is flagged `tangent` unless the end lies on the
+/// other span (exactly, to 1e-6 tolerance), where the tangent rule of any exact contact applies.
+/// This holds whether or not the end is a local minimum of the gap: an end inside a stretch where
+/// the curves run within tolerance of each other, or on the slope down to a crossing further than
+/// the tolerance away, is reported too. A full circle has no ends.
+///
+/// Degenerate (zero-length) spans are treated as points. Results are ordered by `tA`; hits within
+/// `tol.distance` of each other are merged into one, and two distinct crossings merged that way
+/// are flagged `tangent` (an end contact never counts as a crossing for this). Bezier pairs are
+/// solved in a canonical argument order too. See ADR-0009 (amendments) for the guarantees and the
+/// remaining heuristics.
 ///
 /// Limitation: overlap detection is implemented for line/line and arc/arc pairs only. Coincident
 /// stretches involving a Bezier are reported as tangent points along the shared part (its ends

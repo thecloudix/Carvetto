@@ -72,24 +72,21 @@ void finish(IntersectionResult& out, double slackA) {
                      [](const Overlap& l, const Overlap& r) { return l.tA0 < r.tA0; });
 }
 
-// `closestPoint` with the parameter made consistent with the point: for an arc, a point whose
-// angle lies a rounding error before the start (so that `containsAngle` accepts it) gets the
-// parameter of the END from `closestPoint(ArcSpan)` (the travelled angle wraps to just under 2pi
-// and is clamped), while the returned point is at the start. Such a parameter is replaced by 0.
-ClosestPoint closestOn(const Span& o, Vec2 p) {
-    ClosestPoint cp = closestPoint(o, p);
-    if (const auto* arc = std::get_if<ArcSpan>(&o)) {
-        if (cp.t == 1.0 && distance(cp.point, arc->startPoint()) < distance(cp.point, arc->endPoint())) {
-            cp.t = 0.0;
-        }
-    }
-    return cp;
+// A contact whose gap is at most this is exact (a crossing or a shared point), not a touch.
+double exactGap(const Tolerance& tol) {
+    return 1e-6 * tol.distance;
+}
+
+// A full circle has no ends: its start is an arbitrary seam.
+bool isClosedCircle(const Span& s) {
+    const auto* arc = std::get_if<ArcSpan>(&s);
+    return arc != nullptr && arc->isFullCircle();
 }
 
 // A degenerate span is a point: it intersects where it lies on the other span.
 IntersectionResult pointAgainstSpan(Vec2 p, const Span& b, bool pointIsA, const Tolerance& tol) {
     IntersectionResult out;
-    const ClosestPoint cp = closestOn(b, p);
+    const ClosestPoint cp = closestPoint(b, p);
     if (cp.distance <= tol.distance) {
         out.points.push_back(pointIsA ? Intersection{cp.point, 0.0, cp.t, false}
                                       : Intersection{cp.point, cp.t, 0.0, false});
@@ -165,8 +162,8 @@ double projectParam(const LineSpan& s, Vec2 p) {
 // of the shorter one (a long segment's direction is the better-conditioned reference). When the
 // segments are not collinear the infinite lines are intersected directly, however small the angle
 // between them; only an exactly zero cross product means "parallel, never meeting". A crossing
-// that lands just outside either segment is recovered by testing the four end points against the
-// other segment, which keeps end-to-end contact within `tol.distance` independent of the angle.
+// that lands outside either segment is not one; an end point within `tol.distance` of the other
+// segment is an end contact (`endContacts`), whatever the angle.
 IntersectionResult lineLine(const LineSpan& a, const LineSpan& b, const Tolerance& tol) {
     IntersectionResult out;
     const double la = a.length();
@@ -217,54 +214,30 @@ IntersectionResult lineLine(const LineSpan& a, const LineSpan& b, const Toleranc
             // always agrees with A(tA) and B(tB). Projection is symmetric under the swap.
             const Vec2 p = (a.pointAt(t) + b.pointAt(u)) * 0.5;
             out.points.push_back({p, projectParam(a, p), projectParam(b, p), false});
-            return out;
         }
-    }
-
-    // No crossing within the segments: an end point lying within tolerance of the other segment
-    // is still a contact. Keep the closest such pair (they all describe the same neighbourhood,
-    // since the segments are not collinear).
-    struct EndHit {
-        Intersection hit;
-        double dist;
-    };
-    std::optional<EndHit> best;
-    const auto consider = [&](Vec2 endPt, const LineSpan& other, bool endOnA, double endT) {
-        const double tOther = projectParam(other, endPt);
-        const Vec2 q = other.pointAt(tOther);
-        const double dist = distance(endPt, q);
-        if (dist > tol.distance || (best && dist >= best->dist)) {
-            return;
-        }
-        const Vec2 mid = (endPt + q) * 0.5;
-        best = EndHit{
-            endOnA ? Intersection{mid, endT, tOther, false} : Intersection{mid, tOther, endT, false}, dist};
-    };
-    // Visit end points in a canonical order so ties resolve identically whichever span is A.
-    const bool aFirst = !segmentLess(b, a);
-    for (int pass = 0; pass < 2; ++pass) {
-        const bool useA = (pass == 0) == aFirst;
-        const LineSpan& seg = useA ? a : b;
-        const LineSpan& other = useA ? b : a;
-        consider(seg.start, other, useA, 0.0);
-        consider(seg.end, other, useA, 1.0);
-    }
-    if (best) {
-        out.points.push_back(best->hit);
     }
     return out;
+}
+
+// True when the absolute `angle` lies on the arc (no slack beyond rounding; contacts just past an
+// end are end contacts).
+bool onArc(const ArcSpan& arc, double angle) {
+    return arc.isFullCircle() || arc.containsAngle(angle, 0.0);
 }
 
 // Line-arc intersection from the foot of the perpendicular F from the centre onto the line:
 // hits lie at F +- dir * sqrt(r^2 - h^2). Unlike the expanded quadratic this has no
 // cancellation when the line is much longer than the circle is wide.
+//
+// Two crossings further apart than `tol.distance` are both reported. Closer ones (the line within
+// tolerance of tangency) fold into one tangent hit at the foot, as does a line passing outside
+// the circle within `tol.distance`. A hit is reported only where it lies on both spans; one just
+// beyond an end is found as an end contact (`endContacts`).
 IntersectionResult lineArc(const LineSpan& a, const ArcSpan& b, const Tolerance& tol) {
     IntersectionResult out;
     const Vec2 d = a.end - a.start;
     const double la = d.length();
     const Vec2 dir = d / la;
-    const double slackA = paramSlack(la, tol);
-    const double angTol = angleSlack(b.radius, tol);
     const Vec2 f = a.start - b.centre;
     const double footAlong = -f.dot(dir);   // distance from a.start to the foot along the line
     const Vec2 foot = f + dir * footAlong;  // foot relative to the centre
@@ -272,27 +245,29 @@ IntersectionResult lineArc(const LineSpan& a, const ArcSpan& b, const Tolerance&
 
     const auto consider = [&](double along, bool tangent) {
         const double t = along / la;
-        if (t < -slackA || t > 1.0 + slackA) {
+        if (t < 0.0 || t > 1.0) {
             return;
         }
-        const double tc = std::clamp(t, 0.0, 1.0);
-        const Vec2 p = tc == t ? b.centre + foot + dir * (along - footAlong) : a.pointAt(tc);
+        const Vec2 p = b.centre + foot + dir * (along - footAlong);
         const double angle = (p - b.centre).angle();
-        if (!b.containsAngle(angle, angTol)) {
+        if (!onArc(b, angle)) {
             return;
         }
-        addPoint(out, {p, tc, arcParam(b, angle, angTol), tangent}, tol);
+        addPoint(out, {p, t, arcParam(b, angle, 0.0), tangent}, tol);
     };
 
-    if (std::fabs(h - b.radius) <= tol.distance) {
-        consider(footAlong, true);
-        return out;
-    }
-    if (h > b.radius) {
+    if (h >= b.radius) {
+        if (h - b.radius <= tol.distance) {
+            consider(footAlong, true);
+        }
         return out;
     }
     // (r - h)(r + h) avoids squaring large numbers.
     const double half = std::sqrt(std::max(0.0, (b.radius - h) * (b.radius + h)));
+    if (2.0 * half <= tol.distance) {
+        consider(footAlong, true);
+        return out;
+    }
     consider(footAlong - half, false);
     consider(footAlong + half, false);
     return out;
@@ -337,13 +312,11 @@ void coincidentArcs(const ArcSpan& a, const ArcSpan& b, IntersectionResult& out,
 
 IntersectionResult swapped(IntersectionResult r);
 
-// Direction-sensitive total order on arcs, used to pick one argument order where a computation
-// is not naturally symmetric.
-bool arcLess(const ArcSpan& a, const ArcSpan& b) {
-    return std::tie(a.centre.x, a.centre.y, a.radius, a.startAngle, a.endAngle, a.direction) <
-           std::tie(b.centre.x, b.centre.y, b.radius, b.startAngle, b.endAngle, b.direction);
-}
-
+// Arc-arc intersection. Callers pass the pair in canonical order (`analyticPair`), so the result
+// is symmetric. Two crossings further apart than `tol.distance` are both reported; closer ones,
+// and circles that pass within `tol.distance` of each other without crossing, give one tangent
+// hit. A hit is reported only where it lies on both arcs; one just beyond an end is found as an
+// end contact (`endContacts`).
 IntersectionResult arcArc(const ArcSpan& a, const ArcSpan& b, const Tolerance& tol) {
     IntersectionResult out;
     const Vec2 cc = b.centre - a.centre;
@@ -352,12 +325,7 @@ IntersectionResult arcArc(const ArcSpan& a, const ArcSpan& b, const Tolerance& t
     const double r2 = b.radius;
 
     if (d <= tol.distance && std::fabs(r1 - r2) <= tol.distance) {
-        // Touch points are placed on A's circle, so solve in a canonical order for symmetry.
-        if (arcLess(b, a)) {
-            return swapped(arcArc(b, a, tol));
-        }
         coincidentArcs(a, b, out, tol);
-        finish(out, angleSlack(r1, tol) / std::fabs(a.sweepAngle()));
         return out;
     }
     // Nearly concentric circles (d <= tol) of different radii are not special: their closest
@@ -366,53 +334,179 @@ IntersectionResult arcArc(const ArcSpan& a, const ArcSpan& b, const Tolerance& t
     if (d > r1 + r2 + tol.distance || d < std::fabs(r1 - r2) - tol.distance) {
         return out;
     }
-    const bool external = std::fabs(d - (r1 + r2)) <= tol.distance;
-    const bool internal = !external && std::fabs(d - std::fabs(r1 - r2)) <= tol.distance;
-    const bool tangent = external || internal;
     const Vec2 u = cc / d;
-    const double angTolA = angleSlack(r1, tol);
-    const double angTolB = angleSlack(r2, tol);
 
-    const auto consider = [&](Vec2 p) {
+    const auto consider = [&](Vec2 p, bool tangent) {
         const double angA = (p - a.centre).angle();
         const double angB = (p - b.centre).angle();
-        if (!a.containsAngle(angA, angTolA) || !b.containsAngle(angB, angTolB)) {
+        if (!onArc(a, angA) || !onArc(b, angB)) {
             return;
         }
-        addPoint(out, {p, arcParam(a, angA, angTolA), arcParam(b, angB, angTolB), tangent}, tol);
+        addPoint(out, {p, arcParam(a, angA, 0.0), arcParam(b, angB, 0.0), tangent}, tol);
     };
 
-    if (tangent) {
-        // The circles touch (or nearly touch) on the centre line. Take each circle's point on that
-        // line facing the other and report their midpoint: both lie exactly on their circles and
-        // are at most `tol.distance` apart, so the midpoint is within tolerance of both. (The
-        // two-circle formula for `along` divides the radius gap by d and is useless here when the
-        // centres are close: its error grows like r * gap / d.)
-        Vec2 onA;
-        Vec2 onB;
-        if (external) {
-            onA = a.centre + u * r1;
-            onB = b.centre - u * r2;
-        } else if (r1 >= r2) {  // B inside A, touching on the +u side
-            onA = a.centre + u * r1;
-            onB = b.centre + u * r2;
-        } else {  // A inside B, touching on the -u side
-            onA = a.centre - u * r1;
-            onB = b.centre - u * r2;
+    if (d < r1 + r2 && d > std::fabs(r1 - r2)) {
+        // The circles cross. Distance from A's centre to the radical line, and half the chord;
+        // the factored forms avoid cancellation between nearly equal squares. (Crossing circles
+        // are more than `tol.distance` apart at the centres, see the overlap test above, so the
+        // division by d is well conditioned.)
+        const double along = ((r1 - r2) * (r1 + r2) + d * d) / (2.0 * d);
+        const double h = std::sqrt(std::max(0.0, (r1 - along) * (r1 + along)));
+        if (2.0 * h > tol.distance) {
+            const Vec2 base = a.centre + u * along;
+            consider(base + u.perp() * h, false);
+            consider(base - u.perp() * h, false);
+            return out;
         }
-        consider((onA + onB) * 0.5);
-        finish(out, 0.0);
-        return out;
     }
+    // The circles touch, nearly touch, or cross at two points the tolerance cannot separate: one
+    // hit on the centre line. Take each circle's point on that line facing the other and report
+    // their midpoint: both lie exactly on their circles and are at most `tol.distance` apart, so
+    // the midpoint is within tolerance of both. (The two-circle formula for `along` divides the
+    // radius gap by d and is useless here when the centres are close: its error grows like
+    // r * gap / d.)
+    const bool external = std::fabs(d - (r1 + r2)) <= std::fabs(d - std::fabs(r1 - r2));
+    Vec2 onA;
+    Vec2 onB;
+    if (external) {
+        onA = a.centre + u * r1;
+        onB = b.centre - u * r2;
+    } else if (r1 >= r2) {  // B inside A, touching on the +u side
+        onA = a.centre + u * r1;
+        onB = b.centre + u * r2;
+    } else {  // A inside B, touching on the -u side
+        onA = a.centre - u * r1;
+        onB = b.centre - u * r2;
+    }
+    consider((onA + onB) * 0.5, true);
+    return out;
+}
 
-    // Distance from A's centre to the radical line, and half the chord. The factored forms avoid
-    // cancellation between nearly equal squares.
-    const double along = ((r1 - r2) * (r1 + r2) + d * d) / (2.0 * d);
-    const double h = std::sqrt(std::max(0.0, (r1 - along) * (r1 + along)));
-    const Vec2 base = a.centre + u * along;
-    consider(base + u.perp() * h);
-    consider(base - u.perp() * h);
-    finish(out, 0.0);
+// A box containing the span, cheap to compute: a line's own box, an arc's whole circle.
+Box2 coarseBounds(const Span& s) {
+    if (const auto* l = std::get_if<LineSpan>(&s)) {
+        return Box2{l->start, l->end};
+    }
+    const auto& arc = std::get<ArcSpan>(s);
+    return Box2::fromCentre(arc.centre, 2.0 * arc.radius, 2.0 * arc.radius);
+}
+
+// A lower bound of the distance from `p` to a line or arc span, cheap to compute: the distance to
+// the infinite line, or to the whole circle.
+double distanceLowerBound(const Span& s, Vec2 p) {
+    if (const auto* l = std::get_if<LineSpan>(&s)) {
+        const Vec2 d = l->end - l->start;
+        const double len = d.length();
+        return len > 0.0 ? std::fabs((p - l->start).cross(d)) / len : distance(p, l->start);
+    }
+    const auto& arc = std::get<ArcSpan>(s);
+    return std::fabs(distance(p, arc.centre) - arc.radius);
+}
+
+// True when no point of a line or arc span comes within `tol.distance` of the other's circle:
+// circles further apart, or one inside the other, by more than the tolerance; a segment further
+// than the tolerance outside a circle, or with both ends (so all of it) further inside.
+bool apartBeyondTolerance(const Span& a, const Span& b, const Tolerance& tol) {
+    const auto* arcA = std::get_if<ArcSpan>(&a);
+    const auto* arcB = std::get_if<ArcSpan>(&b);
+    if (arcA != nullptr && arcB != nullptr) {
+        const double d = distance(arcA->centre, arcB->centre);
+        return d > arcA->radius + arcB->radius + tol.distance ||
+               d < std::fabs(arcA->radius - arcB->radius) - tol.distance;
+    }
+    if (arcA == nullptr && arcB == nullptr) {
+        return false;
+    }
+    const ArcSpan& arc = arcA != nullptr ? *arcA : *arcB;
+    const LineSpan& line = std::get<LineSpan>(arcA != nullptr ? b : a);
+    const double inner = arc.radius - tol.distance;
+    if (distance(line.start, arc.centre) < inner && distance(line.end, arc.centre) < inner) {
+        return true;
+    }
+    const Vec2 d = line.end - line.start;
+    const double len = d.length();
+    return len > 0.0 && std::fabs((arc.centre - line.start).cross(d)) / len > arc.radius + tol.distance;
+}
+
+// Every end of either span that lies within `tol.distance` of the other span is a contact: the
+// end paired with its nearest point on the other span, reported at their midpoint unless a hit is
+// already within `tol.distance` of it. The ends are taken most exact first. An end contact is a
+// touch (`tangent`) unless it is exact, i.e. the end lies on the other span (to 1e-6 tolerance),
+// in which case it is tangent only where the two tangents are parallel. A full circle has no ends.
+//
+// This holds whether or not the end is a local minimum of the gap: an end inside a stretch where
+// the spans run within tolerance of each other, or on the slope down to a crossing further than
+// the tolerance away, is reported too (ADR-0009, T-0008 amendment).
+std::vector<std::pair<double, Intersection>> endContacts(const Span& a, const Span& b, const Tolerance& tol) {
+    std::vector<std::pair<double, Intersection>> ends;
+    for (const bool endOfA : {true, false}) {
+        const Span& s = endOfA ? a : b;
+        const Span& o = endOfA ? b : a;
+        if (isClosedCircle(s)) {
+            continue;
+        }
+        for (const double t : {0.0, 1.0}) {
+            const Vec2 e = pointAt(s, t);
+            if (distanceLowerBound(o, e) > tol.distance) {
+                continue;
+            }
+            const ClosestPoint cp = closestPoint(o, e);
+            if (cp.distance > tol.distance) {
+                continue;
+            }
+            const double tA = endOfA ? t : cp.t;
+            const double tB = endOfA ? cp.t : t;
+            const bool tangent = cp.distance > exactGap(tol) || tangentsParallel(a, tA, b, tB);
+            ends.push_back({cp.distance, {(e + cp.point) * 0.5, tA, tB, tangent}});
+        }
+    }
+    std::stable_sort(ends.begin(), ends.end(),
+                     [](const auto& l, const auto& r) { return l.first < r.first; });
+    return ends;
+}
+
+// Canonical argument order for the analytic pairs: lines before arcs, then by the defining
+// numbers (start before end, so a segment and its reverse differ). Solving every pair in one
+// order makes `intersect(a, b)` and `intersect(b, a)` exact mirror images.
+bool analyticOrder(const Span& a, const Span& b) {
+    if (a.index() != b.index()) {
+        return a.index() < b.index();
+    }
+    const auto key = [](const Span& s) {
+        if (const auto* l = std::get_if<LineSpan>(&s)) {
+            return std::array<double, 6>{l->start.x, l->start.y, l->end.x, l->end.y, 0.0, 0.0};
+        }
+        const auto& c = std::get<ArcSpan>(s);
+        return std::array<double, 6>{c.centre.x,   c.centre.y, c.radius,
+                                     c.startAngle, c.endAngle, c.direction == ArcDirection::CCW ? 1.0 : 0.0};
+    };
+    return !(key(b) < key(a));
+}
+
+// Line/line, line/arc and arc/arc pairs: the analytic crossings (or overlaps), then the end
+// contacts, all in canonical order.
+IntersectionResult analyticPair(const Span& a, const Span& b, const Tolerance& tol) {
+    IntersectionResult out;
+    if (!coarseBounds(a).inflated(tol.distance).intersects(coarseBounds(b)) ||
+        apartBeyondTolerance(a, b, tol)) {
+        return out;  // no point of one span within tolerance of the other
+    }
+    if (!analyticOrder(a, b)) {
+        return swapped(analyticPair(b, a, tol));
+    }
+    const auto* la = std::get_if<LineSpan>(&a);
+    const auto* lb = std::get_if<LineSpan>(&b);
+    if (la != nullptr && lb != nullptr) {
+        out = lineLine(*la, *lb, tol);
+    } else if (la != nullptr) {
+        out = lineArc(*la, std::get<ArcSpan>(b), tol);
+    } else {
+        out = arcArc(std::get<ArcSpan>(a), std::get<ArcSpan>(b), tol);
+    }
+    for (const auto& end : endContacts(a, b, tol)) {
+        addPoint(out, end.second, tol);
+    }
+    finish(out, out.overlaps.empty() ? 0.0 : paramSlack(length(a), tol));
     return out;
 }
 
@@ -545,7 +639,7 @@ Candidate newton(const Span& a, const Span& b, Candidate c) {
 ClosestPoint nearestFrom(const Span& o, Vec2 p, double seed) {
     const auto* z = std::get_if<BezierSpan>(&o);
     if (z == nullptr) {
-        return closestOn(o, p);
+        return closestPoint(o, p);
     }
     double s = std::clamp(seed, 0.0, 1.0);
     for (int iter = 0; iter < 20; ++iter) {
@@ -590,7 +684,7 @@ struct SideSample {
 // `seedO` < 0 asks for the global closest point; otherwise the foot point near O(seedO).
 SideSample sideSample(const Span& s, const Span& o, double t, double seedO) {
     const Vec2 p = pointAt(s, t);
-    const ClosestPoint cp = seedO < 0.0 ? closestOn(o, p) : nearestFrom(o, p, seedO);
+    const ClosestPoint cp = seedO < 0.0 ? closestPoint(o, p) : nearestFrom(o, p, seedO);
     return {t, tangentAt(o, cp.t).cross(p - cp.point), cp.t};
 }
 
@@ -1176,37 +1270,52 @@ IntersectionResult polygoniseAndRefine(const Span& a, const Span& b, const Toler
     // towards a crossing), so neither the scan, which runs along B, nor the walk, which runs along
     // A, need reach it from elsewhere; seeding it directly makes end touches symmetric.
     // (The bounding boxes rule out most ends before the global nearest-point search.)
+    //
+    // An end within `tol.distance` of the other span is moreover a contact in its own right, kept
+    // as it is (`endHits`): where the spans run within tolerance of each other the gap along that
+    // stretch is flat or slopes away from the end, so the settling walk leaves the end, yet the end
+    // is where the stretch stops (T-0008). A full circle (only A can be one) has no ends.
     const Box2 nearA = bounds(a).inflated(1.5 * tol.distance);
     const Box2 nearB = bounds(b).inflated(1.5 * tol.distance);
+    const bool aHasEnds = !isClosedCircle(a);
+    std::vector<Candidate> endHits;
     for (const double t : {0.0, 1.0}) {
         const Vec2 endA = pointAt(a, t);
         if (nearB.contains(endA)) {
-            const ClosestPoint onB = closestOn(b, endA);
+            const ClosestPoint onB = closestPoint(b, endA);
             if (onB.distance <= 1.5 * tol.distance) {
                 found.push_back({t, onB.t, 0.0, true});
+            }
+            if (aHasEnds && onB.distance <= tol.distance) {
+                endHits.push_back({t, onB.t, 0.0, true});
             }
         }
         const Vec2 endB = pointAt(b, t);
         if (nearA.contains(endB)) {
-            const ClosestPoint onA = closestOn(a, endB);
+            const ClosestPoint onA = closestPoint(a, endB);
             if (onA.distance <= 1.5 * tol.distance) {
                 found.push_back({onA.t, t, 0.0, true});
+            }
+            if (onA.distance <= tol.distance) {
+                endHits.push_back({onA.t, t, 0.0, true});
             }
         }
     }
 
     // Accept, then merge hits within tol.distance, most exact first so that each merged group is
     // represented by its best contact. Two distinct crossings merged into one hit are a contact
-    // the tolerance cannot resolve, so the hit becomes tangent.
+    // the tolerance cannot resolve, so the hit becomes tangent (end contacts never count as
+    // crossings for this rule: an end lying on the other span is not a second crossing).
     struct Raw {
         double res;
         Intersection hit;
+        bool end{false};
     };
     std::vector<Raw> raw;
     std::vector<GapSample> trail;
     std::vector<GapSample> minima;
     std::vector<std::pair<double, Candidate>> touches;
-    const auto emit = [&](Candidate c, double res, bool exact) {
+    const auto emit = [&](Candidate c, double res, bool exact, bool end) {
         if (exact) {
             // Along a tangential contact Newton stops anywhere in a band where the curves agree
             // to rounding; when that band reaches a span end, report the end itself.
@@ -1242,7 +1351,7 @@ IntersectionResult polygoniseAndRefine(const Span& a, const Span& b, const Toler
             tangent = step > 0.0 && std::fabs(before) > noise && std::fabs(after) > noise &&
                       (before > 0.0) == (after > 0.0);
         }
-        raw.push_back({res, {p, c.tA, c.tB, tangent}});
+        raw.push_back({res, {p, c.tA, c.tB, tangent}, end});
     };
     for (const Candidate& c : found) {
         const double res = residual(a, b, c);
@@ -1265,17 +1374,22 @@ IntersectionResult polygoniseAndRefine(const Span& a, const Span& b, const Toler
             }
             continue;
         }
-        emit(c, res, true);
+        emit(c, res, true, false);
     }
     // A settled touch may itself be an exact crossing (a descent that ran into one).
     for (const auto& [res, c] : touches) {
-        emit(c, res, res <= 1e-6 * tol.distance);
+        emit(c, res, res <= 1e-6 * tol.distance, false);
+    }
+    for (const Candidate& c : endHits) {
+        const double res = residual(a, b, c);
+        emit(c, res, res <= exactGap(tol), true);
     }
     std::stable_sort(raw.begin(), raw.end(), [](const Raw& l, const Raw& r) {
         return std::tie(l.res, l.hit.tA, l.hit.tB) < std::tie(r.res, r.hit.tA, r.hit.tB);
     });
     IntersectionResult out;
     std::vector<double> keptRes;
+    std::vector<bool> keptEnd;
     for (const Raw& r : raw) {
         const Intersection& hit = r.hit;
         const auto it = std::find_if(out.points.begin(), out.points.end(), [&](const Intersection& e) {
@@ -1284,8 +1398,12 @@ IntersectionResult polygoniseAndRefine(const Span& a, const Span& b, const Toler
         if (it == out.points.end()) {
             out.points.push_back(hit);
             keptRes.push_back(r.res);
-        } else if (distance(it->point, hit.point) > 1e-3 * tol.distance && r.res <= 1e-6 * tol.distance &&
-                   keptRes[static_cast<std::size_t>(it - out.points.begin())] <= 1e-6 * tol.distance) {
+            keptEnd.push_back(r.end);
+            continue;
+        }
+        const auto k = static_cast<std::size_t>(it - out.points.begin());
+        if (distance(it->point, hit.point) > 1e-3 * tol.distance && r.res <= 1e-6 * tol.distance &&
+            keptRes[k] <= 1e-6 * tol.distance && !r.end && !keptEnd[k]) {
             // Two distinct exact crossings closer than the tolerance: a touch, not a crossing. (A
             // touch absorbed by a nearby crossing leaves the crossing as it is.)
             it->tangent = true;
@@ -1524,24 +1642,8 @@ IntersectionResult intersect(const Span& a, const Span& b, const Tolerance& tol)
         return pointAgainstSpan(startPoint(b), a, false, tol);
     }
 
-    if (const auto* la = std::get_if<LineSpan>(&a)) {
-        if (const auto* lb = std::get_if<LineSpan>(&b)) {
-            IntersectionResult r = lineLine(*la, *lb, tol);
-            finish(r, paramSlack(la->length(), tol));
-            return r;
-        }
-        if (const auto* ab = std::get_if<ArcSpan>(&b)) {
-            IntersectionResult r = lineArc(*la, *ab, tol);
-            finish(r, 0.0);
-            return r;
-        }
-    } else if (const auto* aa = std::get_if<ArcSpan>(&a)) {
-        if (const auto* lb = std::get_if<LineSpan>(&b)) {
-            return swapped(lineArc(*lb, *aa, tol));
-        }
-        if (const auto* ab = std::get_if<ArcSpan>(&b)) {
-            return arcArc(*aa, *ab, tol);
-        }
+    if (!std::holds_alternative<BezierSpan>(a) && !std::holds_alternative<BezierSpan>(b)) {
+        return analyticPair(a, b, tol);
     }
     if (!canonicalOrder(a, b)) {
         return swapped(polygoniseAndRefine(b, a, tol));
