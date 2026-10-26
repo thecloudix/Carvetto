@@ -12,6 +12,7 @@
 #include <initializer_list>
 #include <string>
 #include <variant>
+#include <vector>
 
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/geometry/span.hpp"
@@ -111,6 +112,78 @@ inline std::size_t countBackwardSteps(const Contour& chain, const Tolerance& tol
             shortSpanRunsBack(chain.spans[(i + n - 1) % n], chain.spans[i], chain.spans[(i + 1) % n], tol)) {
             ++count;
             note("short span runs against both neighbours", i);
+        }
+    }
+    return count;
+}
+
+// Stretches that the result traverses twice: pairs of spans (in one chain or in two) lying on
+// nearly the same line or circle, within `lateral` of each other, that run alongside each other
+// for more than `lateral` (a toolpath would cut them twice). Consecutive spans of one chain
+// meeting at their junction are not an overlap; a retrace is (junctionStepsBack catches it too).
+// O(n^2): for test-sized results.
+inline std::size_t countOverlaps(const std::vector<Contour>& chains, double lateral,
+                                 std::string* why = nullptr) {
+    struct Item {
+        const Span* span;
+        std::size_t chain;
+        std::size_t index;
+    };
+    std::vector<Item> items;
+    for (std::size_t c = 0; c < chains.size(); ++c) {
+        for (std::size_t i = 0; i < chains[c].spans.size(); ++i) {
+            items.push_back({&chains[c].spans[i], c, i});
+        }
+    }
+    // Length of the stretch of `a` that lies within `lateral` of `b`, sampled at 64 points.
+    auto alongside = [&](const Span& a, const Span& b) {
+        int inside = 0;
+        for (int k = 0; k < 64; ++k) {
+            if (distanceToSpanExact(pointAt(a, (k + 0.5) / 64.0), b) <= lateral) {
+                ++inside;
+            }
+        }
+        return length(a) * inside / 64.0;
+    };
+    std::size_t count = 0;
+    for (std::size_t x = 0; x < items.size(); ++x) {
+        for (std::size_t y = x + 1; y < items.size(); ++y) {
+            const Span& a = *items[x].span;
+            const Span& b = *items[y].span;
+            if (a.index() != b.index()) {
+                continue;
+            }
+            double shared = 0.0;
+            if (const auto* ca = std::get_if<ArcSpan>(&a)) {
+                const auto& cb = std::get<ArcSpan>(b);
+                if (distance(ca->centre, cb.centre) > lateral ||
+                    std::fabs(ca->radius - cb.radius) > lateral) {
+                    continue;
+                }
+                shared = std::max(alongside(a, b), alongside(b, a));
+            } else {
+                // Lines: nearly the same carrier (b within `lateral` of a's line at both ends),
+                // then the overlap of b's projection onto a with a itself.
+                const auto& la = std::get<LineSpan>(a);
+                const auto& lb = std::get<LineSpan>(b);
+                const Vec2 u = (la.end - la.start).normalized();
+                if (std::fabs(u.cross(lb.start - la.start)) > lateral ||
+                    std::fabs(u.cross(lb.end - la.start)) > lateral) {
+                    continue;
+                }
+                const double s0 = (lb.start - la.start).dot(u);
+                const double s1 = (lb.end - la.start).dot(u);
+                shared = std::min(length(a), std::max(s0, s1)) - std::max(0.0, std::min(s0, s1));
+            }
+            const bool arcs = std::holds_alternative<ArcSpan>(a);
+            if (shared > 2.0 * lateral + (arcs ? 2.0 / 64.0 * std::max(length(a), length(b)) : 0.0)) {
+                ++count;
+                if (why && why->empty()) {
+                    *why = "chain " + std::to_string(items[x].chain) + " span " +
+                           std::to_string(items[x].index) + " overlaps chain " +
+                           std::to_string(items[y].chain) + " span " + std::to_string(items[y].index);
+                }
+            }
         }
     }
     return count;

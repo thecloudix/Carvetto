@@ -846,9 +846,15 @@ bool snapJunction(Span& a, Span& b, const SnapContext& ctx) {
     if (gap > rounding) {
         return false;
     }
-    if (std::holds_alternative<LineSpan>(b)) {
+    // Moving a line end tilts the whole line, so the end that moves outwards (away from the
+    // input) is moved: moving one inwards took a 185 mm line 1e-8 inside d near its end where the
+    // gap (two copies of a nearly collinear chamfer, 97 mm from the origin) passed as rounding.
+    const bool lineA = std::holds_alternative<LineSpan>(a);
+    const bool lineB = std::holds_alternative<LineSpan>(b);
+    const bool bOutwards = (e - s).dot(tangentAt(b, 0.0).perp() * ctx.sign) >= 0.0;
+    if (lineB && (bOutwards || !lineA)) {
         std::get<LineSpan>(b).start = e;
-    } else if (std::holds_alternative<LineSpan>(a)) {
+    } else if (lineA) {
         std::get<LineSpan>(a).end = s;
     } else {
         // Two arcs whose circles do not meet here: only a rounding-level residual may remain
@@ -1037,6 +1043,134 @@ std::vector<Span> snapChain(const std::vector<Span>& spans, const std::vector<st
     return out;
 }
 
+// True when the short span `s` steps back between `prev` and `next`: no longer than the
+// tolerance, and its chord runs against both neighbours while they go the same general way, or it
+// sets off straight back along `prev` (a retrace), or `next` sets off straight back along it.
+bool stepsBack(const Span& prev, const Span& s, const Span& next, const Tolerance& tol) {
+    if (!isDegenerate(s, tol)) {
+        return false;
+    }
+    const Vec2 chord = endPoint(s) - startPoint(s);
+    const Vec2 tin = tangentAt(prev, 1.0);
+    const Vec2 tout = tangentAt(next, 0.0);
+    if (tin.dot(tout) > 0.0 && chord.dot(tin) < 0.0 && chord.dot(tout) < 0.0) {
+        return true;
+    }
+    return tin.dot(tangentAt(s, 0.0)) < -0.9999 || tangentAt(s, 1.0).dot(tout) < -0.9999;
+}
+
+// Safety net after snapChain (T-0006): where three or more offset carriers nearly meet within the
+// tolerance (e.g. lines a few hundredths of a radian apart crossing in a sub-tolerance triangle),
+// the pieces between their crossings can leave a span shorter than the tolerance that steps back
+// or sideways against the direction of travel. Such a span is removed, with a short neighbour
+// if need be, and the spans on either side are joined: by snapJunction (trimmed or extended along
+// their carriers to where they meet, extensions at least d from the input and, for Round, not
+// beyond it), else by a straight bridge if that runs forwards with both and stays clear in the
+// same way (the two sides on one carrier, say). Where neither works the chain is left as it is.
+// New junctions are made exact like the others.
+void removeBackSteps(std::vector<Span>& spans, bool closed, const SnapContext& ctx) {
+    auto bridgeOk = [&](const Span& a, const Span& b) {
+        const Vec2 e = endPoint(a);
+        const Vec2 s = startPoint(b);
+        const Vec2 chord = s - e;
+        if (geometry::distance(e, s) > 2.0 * ctx.tol.distance || chord.dot(tangentAt(a, 1.0)) <= 0.0 ||
+            chord.dot(tangentAt(b, 0.0)) <= 0.0) {
+            return false;
+        }
+        for (const double f : {0.25, 0.5, 0.75}) {
+            if (!ctx.clear(lerp(e, s, f)) || !ctx.notFar(lerp(e, s, f))) {
+                return false;
+            }
+        }
+        return true;
+    };
+    for (int pass = 0; pass < 4; ++pass) {
+        bool changed = false;
+        for (std::size_t i = 0; i < spans.size() && spans.size() > 3; ++i) {
+            const std::size_t n = spans.size();
+            if (!closed && (i == 0 || i + 1 == n)) {
+                continue;
+            }
+            if (!stepsBack(spans[(i + n - 1) % n], spans[i], spans[(i + 1) % n], ctx.tol)) {
+                continue;
+            }
+            // Candidate windows (first, last) of spans to remove, all no longer than the tolerance:
+            // the span itself, then with its previous or next neighbour.
+            std::vector<std::pair<std::size_t, std::size_t>> windows{{i, i}};
+            if (closed || i >= 2) {
+                windows.emplace_back((i + n - 1) % n, i);
+            }
+            if (closed || i + 2 < n) {
+                windows.emplace_back(i, (i + 1) % n);
+            }
+            for (const auto& [first, last] : windows) {
+                if (!isDegenerate(spans[first], ctx.tol) || !isDegenerate(spans[last], ctx.tol)) {
+                    continue;
+                }
+                const std::size_t left = (first + n - 1) % n;
+                const std::size_t right = (last + 1) % n;
+                if (left == right || left == last || right == first) {
+                    continue;
+                }
+                Span a = spans[left];
+                Span b = spans[right];
+                std::optional<Span> bridge;
+                if (!snapJunction(a, b, ctx) || isDegenerate(a, ctx.tol) || isDegenerate(b, ctx.tol)) {
+                    a = spans[left];
+                    b = spans[right];
+                    // A straight bridge between them, else one that also takes over the first
+                    // tolerance of `b` or the last of `a` (a sub-tolerance notch of the exact offset
+                    // that a direct bridge would cut inside d).
+                    const double tol = ctx.tol.distance;
+                    std::optional<Span> cutB;
+                    std::optional<Span> cutA;
+                    if (length(b) > 2.0 * tol) {
+                        cutB = withStart(b, pointAt(b, tol / length(b)));
+                    }
+                    if (length(a) > 2.0 * tol) {
+                        cutA = withEnd(a, pointAt(a, 1.0 - tol / length(a)));
+                    }
+                    if (!bridgeOk(a, b)) {
+                        if (cutB && bridgeOk(a, *cutB)) {
+                            b = *cutB;
+                        } else if (cutA && bridgeOk(*cutA, b)) {
+                            a = *cutA;
+                        } else {
+                            continue;
+                        }
+                    }
+                    bridge = LineSpan{endPoint(a), startPoint(b)};
+                }
+                spans[left] = a;
+                spans[right] = b;
+                // Remove first..last (one or two spans, possibly wrapping round a closed chain),
+                // putting the bridge in their place.
+                const std::size_t count = first == last ? 1 : 2;
+                std::vector<Span> next;
+                next.reserve(n);
+                for (std::size_t k = 0; k < n; ++k) {
+                    const bool removed = k == first || (count == 2 && k == last);
+                    if (!removed) {
+                        next.push_back(spans[k]);
+                    } else if (k == last && bridge) {
+                        next.push_back(*bridge);
+                    }
+                }
+                spans.swap(next);
+                const std::size_t m = spans.size();
+                for (std::size_t k = 0; k + 1 < m || (closed && k < m); ++k) {
+                    exactJunction(spans[k], spans[(k + 1) % m]);
+                }
+                changed = true;
+                break;
+            }
+        }
+        if (!changed) {
+            return;
+        }
+    }
+}
+
 // The raw offset chain of one side, with each element's position along the input path (span
 // index + fraction at its start and end) for ordering the output chains.
 struct RawChain {
@@ -1109,7 +1243,7 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
 // and parameter, like the input.
 std::vector<Piece> mergeOnCarriers(const std::vector<Span>& raw, const std::vector<Piece>& kept,
                                    const std::vector<std::pair<std::size_t, std::size_t>>& overlapping,
-                                   double d) {
+                                   double d, double sign, double lateral) {
     const std::size_t m = raw.size();
     std::vector<std::size_t> parent(m);
     for (std::size_t i = 0; i < m; ++i) {
@@ -1123,13 +1257,89 @@ std::vector<Piece> mergeOnCarriers(const std::vector<Span>& raw, const std::vect
         return i;
     };
     std::vector<bool> shared(m, false);
-    for (const auto& [i, j] : overlapping) {
+    auto unite = [&](std::size_t i, std::size_t j) {
         shared[i] = true;
         shared[j] = true;
         const std::size_t a = find(i);
         const std::size_t b = find(j);
         if (a != b) {
             parent[std::max(a, b)] = std::min(a, b);  // the root is the group's lowest element
+        }
+    };
+    for (const auto& [i, j] : overlapping) {
+        unite(i, j);
+    }
+    // Nearly the same carrier: kept pieces of two elements that stay within `lateral` of each
+    // other's line or circle over a common stretch. Raw elements whose carriers differ by more
+    // than rounding but less than the tolerance (vertex noise of 1e-9..1e-5 mm in DXF or computed
+    // input, coordinates far from the origin) meet at ill-conditioned crossings that do not cut
+    // their copies consistently either; both copies are boundary (each passed the distance
+    // pruning), so keeping one per stretch keeps the offset at least d from the input and moves
+    // it by at most `lateral`.
+    std::vector<Span> pieceSpans;
+    std::vector<Box2> pieceBoxes;
+    pieceSpans.reserve(kept.size());
+    pieceBoxes.reserve(kept.size());
+    for (const Piece& p : kept) {
+        pieceSpans.push_back(subSpan(raw[p.element], p.t0, p.t1));
+        pieceBoxes.push_back(bounds(pieceSpans.back()).inflated(lateral));
+    }
+    auto onCarrierOf = [&](Vec2 q, const Span& s) {
+        if (const auto* line = std::get_if<LineSpan>(&s)) {
+            const Vec2 u = line->end - line->start;
+            return std::fabs(u.cross(q - line->start)) <= lateral * u.length();
+        }
+        const auto& arc = std::get<ArcSpan>(s);
+        return std::fabs(geometry::distance(q, arc.centre) - arc.radius) <= lateral;
+    };
+    auto nearCarrier = [&](std::size_t a, std::size_t b) {
+        const Span& sa = pieceSpans[a];
+        const Span& sb = pieceSpans[b];
+        if (sa.index() != sb.index()) {
+            return false;
+        }
+        if (const auto* arcA = std::get_if<ArcSpan>(&sa)) {
+            const auto& arcB = std::get<ArcSpan>(sb);
+            if (geometry::distance(arcA->centre, arcB.centre) > lateral ||
+                std::fabs(arcA->radius - arcB.radius) > lateral) {
+                return false;
+            }
+        } else if (const Span& ea = raw[kept[a].element], &eb = raw[kept[b].element];
+                   std::fabs(tangentAt(ea, 0.0).cross(tangentAt(eb, 0.0))) *
+                       std::max(length(ea), length(eb)) >
+                   lateral) {
+            // Not nearly parallel over the whole elements: a short piece can have both ends near a
+            // carrier it crosses at a large angle, and projecting a whole element onto the
+            // group's axis is only consistent for nearly parallel ones.
+            return false;
+        } else if (!onCarrierOf(startPoint(sb), raw[kept[a].element]) ||
+                   !onCarrierOf(endPoint(sb), raw[kept[a].element]) ||
+                   !onCarrierOf(startPoint(sa), raw[kept[b].element]) ||
+                   !onCarrierOf(endPoint(sa), raw[kept[b].element])) {
+            return false;
+        }
+        // A common stretch: some interior point of one lies alongside the other.
+        for (const auto& [x, y] : {std::pair{&sa, &sb}, std::pair{&sb, &sa}}) {
+            for (const double f : {0.25, 0.5, 0.75}) {
+                if (distanceToSpan(pointAt(*x, f), *y) <= lateral) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+    {
+        BoxGrid pieceGrid(pieceBoxes);
+        for (std::size_t a = 0; a < kept.size(); ++a) {
+            pieceGrid.query(pieceBoxes[a], [&](std::size_t b) {
+                if (b <= a || kept[a].element == kept[b].element ||
+                    find(kept[a].element) == find(kept[b].element)) {
+                    return;
+                }
+                if (nearCarrier(a, b)) {
+                    unite(kept[a].element, kept[b].element);
+                }
+            });
         }
     }
     std::vector<Piece> out;
@@ -1231,6 +1441,7 @@ std::vector<Piece> mergeOnCarriers(const std::vector<Span>& raw, const std::vect
         }
         std::multiset<std::size_t> forward;
         std::multiset<std::size_t> backward;
+        std::optional<std::pair<bool, std::size_t>> previous;  // direction and element of the last stretch
         for (std::size_t k = 0; k + 1 < nodes.size(); ++k) {
             for (const auto& [fw, e] : leave[k]) {
                 auto& set = fw ? forward : backward;
@@ -1240,10 +1451,31 @@ std::vector<Piece> mergeOnCarriers(const std::vector<Span>& raw, const std::vect
                 (fw ? forward : backward).insert(e);
             }
             if (forward.size() == backward.size()) {
+                previous.reset();
                 continue;  // nothing, or opposite copies enclosing nothing
             }
             const bool fw = forward.size() > backward.size();
-            const std::size_t owner = *(fw ? forward : backward).begin();
+            const std::multiset<std::size_t>& covering = fw ? forward : backward;
+            // The outermost copy (farthest towards the offset side) is at least d from the inputs
+            // of all the copies, so it is kept; copies level with it to rounding prefer the
+            // previous stretch's element (no sideways jog), then the lowest-numbered one.
+            const double mid = 0.5 * (nodes[k] + nodes[k + 1]);
+            const Vec2 at = pointOf(mid);
+            std::size_t owner = *covering.begin();
+            double bestOut = -kInf;
+            const double level = 1e-12 * scale;  // rounding only: any real difference picks the outer
+            for (auto it = covering.begin(); it != covering.end(); it = covering.upper_bound(*it)) {
+                const Span& s = raw[*it];
+                const double t = std::clamp(carrierParam(s, at), 0.0, 1.0);
+                const Vec2 q = pointAt(s, t);
+                const double outward = (q - at).dot(tangentAt(s, t).perp() * sign);
+                const bool sticky = previous && previous->first == fw && previous->second == *it;
+                if (outward > bestOut + level || (outward >= bestOut - level && sticky)) {
+                    bestOut = std::max(bestOut, outward);
+                    owner = *it;
+                }
+            }
+            previous = std::pair{fw, owner};
             const Vec2 from = pointOf(fw ? nodes[k] : nodes[k + 1]);
             const Vec2 to = pointOf(fw ? nodes[k + 1] : nodes[k]);
             const double t0 = std::clamp(carrierParam(raw[owner], from), 0.0, 1.0);
@@ -1350,7 +1582,10 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
             }
             if (sameCarrier(raw[i], raw[j])) {
                 // Overlapping elements (e.g. the mitre extensions of a slot narrower than 2d):
-                // split each at the other's end points so the overlap becomes whole pieces.
+                // split each at the other's end points so the overlap becomes whole pieces. The
+                // carriers may still cross (sameCarrier allows ~1e-9 of the length sideways, 1e-7
+                // on a 100 mm chamfer); that crossing is split too, below, so that on each side of
+                // it the outer copy can be kept (mergeOnCarriers) and nothing dips inside d.
                 overlapping.emplace_back(i, j);
                 for (const auto& [a, b, splitsOfA] :
                      {std::tuple{i, j, &splits[i]}, std::tuple{j, i, &splits[j]}}) {
@@ -1361,7 +1596,6 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
                         }
                     }
                 }
-                return;
             }
             for (const Vec2 p : carrierIntersections(raw[i], raw[j])) {
                 const double ti = carrierParam(raw[i], p);
@@ -1503,9 +1737,7 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     // points lie much further apart.
     auto coincide = [&](Vec2 p) { return 1e-9 * std::max({1.0, d, std::fabs(p.x), std::fabs(p.y)}); };
     // Overlapping elements on one carrier (see mergeOnCarriers): one boundary piece per stretch.
-    if (!overlapping.empty()) {
-        kept = mergeOnCarriers(raw, kept, overlapping, d);
-    }
+    kept = mergeOnCarriers(raw, kept, overlapping, d, sign, 0.5 * tol.distance);
     if (kept.empty()) {
         return result;
     }
@@ -1662,6 +1894,7 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
             dropped[0].assign(spans.begin() + static_cast<std::ptrdiff_t>(solidEnd), spans.end());
             dropped[0].insert(dropped[0].end(), leading.begin(), leading.end());
             c.spans = snapChain(solid, dropped, loop, snap);
+            removeBackSteps(c.spans, loop, snap);
             // A loop of two lines between the same two points (a sliver the snapping closed up)
             // encloses nothing and would only retrace itself: dropped like the opposite pairs
             // of step 3.

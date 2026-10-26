@@ -82,10 +82,11 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     joins and sides): walk d = 1 ≤ 0.02 s, d = 2 ≤ 0.04 s; 8000-span hypotrochoid d = 2 ≤ 0.2 s;
     8000-span text-like loops d = 2 ≤ 0.06 s. Caveat: the cost stays close to linear in the
     span count, but the constant is not uniform. On a dense zig-zag with d many times its pitch,
-    Sharp and Square run 10–20× slower than Round, because every corner's mitre or chamfer
+    Sharp and Square run 10–30× slower than Round, because every corner's mitre or chamfer
     reaches out ~d and overlaps hundreds of its neighbours' on the same line, which multiplies the
     pieces to split and prune. Release, CPU time: pitch 0.02, amplitude 1, d = 7, 1000 spans:
-    Sharp 14.2 s, Square 14.6 s, Round 0.7 s (verifier measured ≈37 s for 2000 spans before the
+    Sharp 14.2 s, Square 14.6 s, Round 0.7 s (18.0 s / 18.1 s / 0.66 s after round 3, whose
+    near-carrier pair search adds the difference) (verifier measured ≈37 s for 2000 spans before the
     overlap fix below, which did not change these figures materially); pitch 0.05, d = 5, 4000
     spans: Square 5.2 s, Round 0.6 s.
     Hatch- or fill-like vectors offset at a large d with Sharp/Square (T-0120/T-0121) will feel
@@ -141,12 +142,39 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     continues a piece with the start nearest its end (to the same rounding) and only among
     equally near starts by raw order, so a start a sub-tolerance distance behind the end is never
     taken over one exactly at it.
+  - *Nearly collinear carriers (verification round 3).* The merge above grouped only carriers
+    that `sameCarrier` matches (~1e-9 of the length sideways). With 1e-9..1e-5 mm of vertex
+    noise (normal for DXF or computed geometry), or exact input far from the origin, the copies'
+    carriers differ by more than that but cross at ill-conditioned angles, and chains again
+    retraced, stepped back or repeated stretches of other chains (one input: 5 chains for 1).
+    Now (a) kept pieces of two elements are also grouped when each piece's ends lie within
+    tol/2 of the other's carrier over a common stretch and the elements are nearly parallel
+    over their whole length (|u×v|·max length ≤ tol/2; without that a short piece crossing a
+    carrier at a large angle joined the group and was projected wrongly, 2.4e-3 mm inside d);
+    (b) each merged stretch is kept on the copy farthest from the input (at least d from every
+    copy's input), ties to rounding (1e-12·scale) staying on the previous stretch's element; (c)
+    same-carrier pairs are also split where their carriers cross, so no stretch spans a change of
+    the outer copy; (d) junction snapping that closes a "rounding" gap (≤ 1e-9·max(1,|x|,|y|),
+    1e-7 at 100 mm) by moving a line end moves the end that goes outwards, never tilting a long
+    line inwards (this was the ~1e-8 shortfall at large d); (e) a safety net after snapping
+    removes any span no longer than the tolerance that steps back (chord against both
+    neighbours, or a retrace) where three or more carriers nearly meet, joining its neighbours by
+    snapJunction or by a forward straight bridge (optionally taking over a tolerance of one
+    neighbour) that passes the same distance checks. Results, Release, the verifier's sweep (300
+    zig-zags per level, Square/Sharp, d 0.5–12× amplitude) at noise 0, 1e-13…1e-4, and at
+    translations 0, −150, 600 and 1000 mm, plus 1000 trials at 0: 0 reversals, 0 short back
+    steps, 0 overlaps, 0 gaps, 0 distance violations beyond the allowance; R1/R2 give one chain
+    as without noise; R3 is clean. Statement in `offset.hpp`, now true as written: junctions are
+    exact, so no span starts behind the previous one's end, and a sub-tolerance span that would
+    step back is removed unless no join passes the distance checks (not seen in any run).
   - *Known limitation: input with sub-tolerance spans* (present before T-0006, carded as
     follow-up). Flattening leaves out spans no longer than tol.distance, so the distance and
     coverage guarantees hold for the flattened input only. Next to such a span an offset point
     may be short of d by up to ~tol (9e-4 seen), a Round arc about the neighbouring vertex may be
-    up to ~tol over d (8e-4 seen), and up to ~1 mm of valid offset may be missing. Fuzzing hits
-    this in ~1 in 1000 such inputs; inputs without sub-tolerance spans are unaffected (worst
+    up to ~tol over d (8e-4 seen), and up to ~1 mm of valid offset may be missing. How often
+    depends on the inputs: ~1 in 1000 offsets in the general fuzz (where such spans are
+    occasional), ~28 % with the verifier's generator that injects sub-tolerance jogs after ~30 %
+    of the lines. Inputs without sub-tolerance spans are unaffected (worst
     shortfall 1.5e-6 at d ≈ 0.05, within the bridge bound above). Documented in `offset.hpp`.
   - *Tests.* The T-0004 chain check now requires exact continuity (1e-12) and allows a span no
     longer than the tolerance wherever it is needed for that continuity (positive length, never
@@ -158,5 +186,8 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     sub-tolerance step back fails), and a sub-tolerance span running against both neighbours.
     Regressions: the verifier's zig-zag and closed zig-zag repros and a 3456-offset steep
     zig-zag sweep (all joins and sides, open and closed, mitre limits 1–4.1, near the origin
-    and ~120 mm away). The T-0004 2000-span timing test measures CPU time (`std::clock`),
+    and ~120 mm away); round 3 adds R1, R2, R3 and a 1296-offset noise sweep (noise 1e-12…1e-4,
+    all joins, both sides, open and closed, half ~640 mm from the origin) checked for backward
+    steps, overlapping stretches within 1e-6 (`countOverlaps`, across chains too), gaps and
+    distance ≥ d − allowance. The T-0004 2000-span timing test measures CPU time (`std::clock`),
     its absolute bound Release-only, plus a CPU-time complexity ratio (1000 vs 4000 spans).
