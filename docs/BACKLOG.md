@@ -76,13 +76,26 @@ Acceptance criteria:
 Out of scope: Bezier overlap detection; Debug-build Bezier length performance.
 Re-scoped by director after 3 verification rounds (2026-10-24): AC1, AC2, AC4, FillRule unification, completeness (0 misses / 48k pairs), symmetry and line/mirrored-cubic touches verified clean; residuals (circle touches dropped in bands near Bezier piece cuts, asymmetric end touches, sliver self-loops, junction-adjacent bulge crossing) moved to T-0007.
 
-### T-0006 Open-offset quality for toolpaths: speed at large d, exact arc mitres, snapped junctions   [status: in-progress]
+### T-0006 Open-offset quality for toolpaths: speed at large d, exact arc mitres, snapped junctions   [status: re-scoped → T-0017]
 Phase: 1 (before the 2D Profile toolpath)   Module: core/geometry   Depends on: T-0004
 Goal: Non-blocking findings from T-0004 verification that matter once offsets feed G-code.
 Acceptance criteria:
   1. Speed: a 2000-step 0.5 mm random walk offset by d = 1 and d = 2 (all joins, both sides) completes in < 0.5 s Release; 8000-span hypotrochoid and text-like loops at d = 2 in < 1 s. Profile and fix the neighbourhood-boundary splitting / distance-pruning cost.
   2. Sharp joins at arc corners produce the true mitre whenever it lies within `mitreLimit·d` (no fallback to Square/Round caused by trimming the arc's extension range); Square likewise. Header documents every remaining fallback. Regression: keyhole, d = 0.25, Left, Sharp → mitre at 0.304 from the vertex (limit 0.5), not an arc.
   3. Consecutive spans within a returned chain meet exactly (shared endpoint bit-identical, snapped), and no span starts behind the previous end along the chain. Fuzz: 0 gaps > 1e-12 and 0 backward steps over ≥ 20k generated offsets.
+
+Re-scoped by director after 3 verification rounds (2026-10-26, owner decision: re-scope, do not merge): AC1 speed and AC2 mitres verified clean; AC3 fixed for exactly and near-collinear steep zig-zags (noise sweep 1e-13…1e-4 clean), but the round-3 "nearly the same carrier" grouping is worse than main in ~25/10k new adversarial cases (offset inside d, Round beyond d, spurious chains) and the back-step safety net skips 3-span chains. Not merged; work continues on branch task/T-0006-offset-quality (b722cf2, pushed) under T-0017.
+
+### T-0017 Open-offset quality II: residuals of T-0006   [status: in-progress]
+Phase: 1 (before Profile/Pocket ship)   Module: core/geometry   Depends on: T-0006 branch (b722cf2)   ADR: 0012 (amend A1)
+Goal: Finish T-0006 so it can merge: everything T-0006 verified clean stays clean (AC1 speed, AC2 mitre oracle, steep zig-zags exact and noisy, R1/R2/R3, needle-tip classification), and the round-3 verifier's residuals are fixed. Repros and harness: T-0006 round-3 verifier scratchpad `t0006v3/` (repro_r4/r5/r6.cpp, vdrv3.cpp with gen3.inc, bnd.cpp).
+Acceptance criteria:
+  1. Nearly-same-carrier grouping: a real angle limit (or one relative to element length) so short elements at 11–20° are never grouped, and near-carrier groups are split where their carriers cross so the outermost copy is outermost along the whole stretch. Regressions R4 (6 lines, d=0.03169564160714932, Square, Right, mitre 2.1158 → 1 chain, ≥ d − allowance), R5 (line + two near-co-circular arcs, d=0.1712, Sharp, Right → ≥ d − 5e-7), R6 (8 lines near (−5280,−5270), d=0.676, Round, Left → no span beyond d, same chain count as main).
+  2. The back-step safety net runs on chains of every length (including 3 spans); nearly co-circular arcs meeting end to end are merged. Regression: 0x7300029 (verifier gen3) → no backward span.
+  3. Sub-tolerance-wide closed two-arc lenses are dropped or merged (0x82004c8), and the exact overlap 0x840117a is fixed.
+  4. Decisive: no result worse than main over ≥ 20k new-seed offsets covering the legacy families and the T-0006 round-3 families (short pieces, grouping boundary, co-circular noise, translations to ±1e4), judged by an exact checker; AC3 of T-0006 holds (0 gaps > 1e-12, 0 back-steps, 0 retraces, 0 duplicated chains).
+  5. Header and ADR-0012 A1 are true as written: "every point ≥ d" / "Round exactly d" qualified only by the documented sub-tolerance-input limit; arc-junction gap claim qualified "for continuous input"; safety-net bridge length stated correctly; cost figures re-measured (Sharp/Square dense zig-zag figure belongs to T-0016).
+  6. Timing tests that claim CPU time measure CPU time on Windows too (MSVC `std::clock` is wall-clock: use GetProcessTimes or keep the assertion a complexity ratio).
 
 ### T-0007 Intersection residuals II: circle touches near Bezier cuts, end-touch symmetry, sliver loops   [status: done]
 Phase: 1 (before Trim / Vector Validator)   Module: core/geometry   Depends on: T-0005   ADR: amend 0009
@@ -106,7 +119,7 @@ Acceptance criteria:
   5. Root-cause fix found in T-0007: `closestPoint(ArcSpan)` (contour_ops.cpp) returns the start point but parameter 1 when the query's angle lies a rounding error before the arc's start. Fix it at the source (parameter 0), add a fine-angle regression around both ends of CW/CCW partial arcs, and remove T-0007's wrapper in intersect.cpp. Check every other caller (contour closestPoint/distanceTo, offset pruning) is unaffected or improved.
 
 ### T-0009 Offsets of inputs with sub-tolerance spans   [status: blocked]
-Phase: 1 (before Profile/Pocket ship)   Module: core/geometry   Depends on: T-0006
+Phase: 1 (before Profile/Pocket ship)   Module: core/geometry   Depends on: T-0017
 Goal: `flattenForOffset` drops spans ≤ `tol.distance`, so the distance/coverage guarantees of `offsetOpenContour` hold only for the flattened input. Next to a dropped span an offset point can be short of d by up to ~tol (9e-4 mm seen), a Round arc about the neighbouring vertex can be up to ~tol over d (8e-4 mm seen), and up to ~1 mm of valid offset can be missing (seed 0x60660ace). About 1 in 1000 such inputs; already in main before T-0006. Found by the T-0006 verifier and coder.
 Acceptance criteria:
   1. Sub-tolerance spans are merged into a neighbour (path kept continuous) or their end points treated as vertices with full circles in pruning/coverage — coder's choice, recorded in ADR-0012.
@@ -115,7 +128,7 @@ Acceptance criteria:
   4. The limitation note in offset.hpp and ADR-0012 A1 is removed or narrowed to what remains.
 
 ### T-0016 Sharp/Square offset cost on dense hatch-like vectors   [status: blocked]
-Phase: 1 (alongside T-0120/T-0121)   Module: core/geometry   Depends on: T-0006
+Phase: 1 (alongside T-0120/T-0121)   Module: core/geometry   Depends on: T-0017
 Goal: Scaling is linear, but on dense zig-zags with d ≫ pitch Sharp/Square joins are 10–20× slower than Round (1000-span zig-zag, pitch 0.02, amplitude 1, d=7: ~14 s Release vs 0.7 s Round). Hatch- and fill-like vectors will hit this in Profile/Pocket.
 Acceptance criteria:
   1. The 1000-span case above runs within 3× of Round for Sharp and Square (Release, CPU time), and 4000 spans scale ≤ 2.5× per doubling.
@@ -264,8 +277,8 @@ Acceptance criteria:
   3. The starter tool database loads, validates, and every tool has cutting data for at least one material.
 Clean-room: no text from any vendor post. Marlin/Grbl/LinuxCNC/Mach dialect facts come from their public docs.
 
-### T-0120 2D Profile toolpath   [status: blocked]
-Phase: 1   Module: core/toolpath   Depends on: T-0006, T-0040   ADR: 0016
+### T-0120 2D Profile toolpath   [status: in-progress]
+Phase: 1   Module: core/toolpath   Depends on: T-0040 (offset API in main; T-0017 quality fixes land in parallel — owner decision 2026-10-26)   ADR: 0016
 Goal: `profileToolpath(contours, Tool, ProfileParams) → Toolpath` per feature-inventory §5 "2D Profile Toolpath": Machine Vectors Outside/Inside/On (open vectors Left/Right), Climb/Conventional, Allowance Offset, Do Separate Last Pass (allowance, reverse), Use Vector Start Point, Tabs (length, thickness, constant number / constant distance, avoid corners; 3D tabs), Ramps (Smooth distance/angle, Zig-Zag, Spiral), Leads (straight / circular, lead-out, overcut), Order (vector selection / left-to-right / bottom-to-top / grid), Start At (keep / optimise / closest on bounding box), Corners (sharp external via V-bit when tool is V, sharp internal 3D). Multi-pass via PassPlan. Inner contours before outer. Deterministic.
 Acceptance criteria:
   1. Outside profile of a 100×50 rectangle with a 6 mm end mill, 3 passes of 4 mm, 2 tabs 10×2 mm: move list matches a golden (hand-checked) toolpath exactly; tab regions rise to −(depth−2).
@@ -275,8 +288,8 @@ Acceptance criteria:
   5. Ordering modes produce the documented orders on a 3×3 grid of squares; inner-first holds for nested contours.
   6. Golden G-code through the Grbl post for the AC1 case; randomized property test: no feed move ever comes closer than tool radius − tol to the uncut side of any input contour.
 
-### T-0121 Pocket toolpath (offset and raster, profile pass, ramp plunge)   [status: blocked]
-Phase: 1   Module: core/toolpath   Depends on: T-0006, T-0040   ADR: 0017
+### T-0121 Pocket toolpath (offset and raster, profile pass, ramp plunge)   [status: in-progress]
+Phase: 1   Module: core/toolpath   Depends on: T-0040 (offset API in main; T-0017 quality fixes land in parallel — owner decision 2026-10-26)   ADR: 0017
 Goal: `pocketToolpath(contours, tools, PocketParams)` per §5 "Pocketing Toolpath": Offset strategy (climb/conv, stepover, linking with minimal retracts) or Raster (angle, stepover, boundary pass), Profile Pass first/last/none, Pocket Allowance, Ramp Plunge, multi-tool clearance + rest tool (rest regions computed as the area the larger tool could not reach), islands (inner contours) respected.
 Acceptance criteria:
   1. Pocketing a 50×30 rectangle with a 6 mm tool at 40% stepover: all material inside (offset by tool radius) is covered — rasterised coverage test at 0.1 mm resolution shows 100% coverage of the pocket area minus corners the tool cannot reach, and 0% outside.
