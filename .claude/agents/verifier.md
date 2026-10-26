@@ -14,7 +14,7 @@ Procedure:
    `cmake -S . -B build-verify -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCARVETTO_BUILD_APP=OFF && cmake --build build-verify && ctest --test-dir build-verify --output-on-failure`
 3. For **each** acceptance criterion on the card, verify it independently. If an existing test covers it, read the test and confirm it really asserts the criterion (not just that code runs). If not, write a throwaway Catch2 test or a tiny driver under `build-verify/` (never commit it) and run it. Try at least one edge case per criterion (empty input, degenerate geometry, unit extremes).
 4. Review the diff for: scope creep beyond the card; changes to read-only interfaces; clean-room violations (copied code/assets/trademark strings in UI); missing tests; convention breaches (Qt in core, globals, imperial units inside core, missing changelog line, missing ADR for an architectural choice).
-5. Do not modify tracked files. Do not merge.
+5. Do not modify tracked files. Do not merge. Other agents build and test in other worktrees at the same time: never run broad `pkill`/`killall` patterns; kill only processes you started, by PID.
 
 Output exactly this format:
 ```

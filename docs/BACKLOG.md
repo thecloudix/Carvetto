@@ -299,6 +299,30 @@ Acceptance criteria:
   5. Linking: number of retracts in the offset strategy ≤ number of disconnected regions + 1 for simple shapes.
   6. Golden G-code through Grbl for AC1; gouge-free property test as in T-0120.
 
+### T-0018 offsetContours: inward offsets past the inradius must vanish, not invert   [status: ready]
+Phase: 1   Module: core/geometry   Depends on: —
+Goal: Found by the T-0121 coder: a closed contour offset inward by more than its inradius comes back inside out instead of empty (a 17 mm circle shrunk by 19.2 mm returns a 2.2 mm circle; by 30 mm a 13 mm circle). Pocket guards against it locally (`insetBy`); every other caller of `offsetContours` is exposed. Also document (or fix) that Clipper drops pieces of an open path lying exactly on a clip boundary.
+Acceptance criteria:
+  1. Inward offset ≥ inradius of a region yields no contour (or only the genuinely surviving lobes of a multi-lobed shape), for circles, polygons, arcs/Beziers, with and without holes, all join types; generative test vs a brute-force inradius/medial check.
+  2. No output contour has the opposite orientation of its source region unless it is a genuine hole; regression for the reported cases.
+  3. Pocket's local guard can be removed or kept as defence; if kept, document why. Behaviour of open paths on clip boundaries documented in ADR-0006 (or fixed), with a test.
+
+### T-0019 Make the T-0004 AC3 timing test CPU-time based   [status: ready]
+Phase: 1   Module: core/tests   Depends on: —
+Goal: "T-0004 AC3" in `open_offset_chains_test.cpp` asserts a wall-clock bound (< 0.5 s) and fails intermittently under `ctest -j8` (seen by the T-0120 coder). Convert it to process CPU time (GetProcessTimes on Windows, std::clock elsewhere) or a complexity ratio, like the other timing tests. Coordinate with T-0017 if it lands first (T-0017 AC6 touches the timing helper).
+Acceptance criteria:
+  1. The test measures CPU time or a ratio; it passes 20× under `ctest -j8 --repeat until-fail:20`.
+
+### T-0123 Toolpath API alignment: shared ramps, Tool → pass tool conversion, result types   [status: blocked]
+Phase: 1   Module: core/toolpath   Depends on: T-0120, T-0121
+Goal: Profile (T-0120) and Pocket (T-0121) were built in parallel. Unify: one ramp module (Profile's `ramp_entry` vs Pocket's `pocket_ramp`), one result shape (`ProfileResult`/`PocketResult` with diagnostics), a `tooling::Tool` + `CuttingData` → pocket tool conversion (feeds, stepover, pass depth), and shared ordering/linking where it overlaps. Add a spatial index where vector-pair checks are O(n²) (Profile grouping/nesting/clearance; Pocket inset guard) so text-heavy jobs with thousands of vectors stay fast.
+Acceptance criteria:
+  1. One ramp implementation used by both; existing Profile and Pocket tests and goldens unchanged (or regenerated with a hand-checked diff explained).
+  2. Both take `tooling::Tool` (+ cutting data) and return the same diagnostics type.
+  3. 5,000 small closed vectors profile and pocket in < 2 s Release (CPU time), scaling ≤ 2.5× per doubling.
+
+Owner decisions 2026-10-26 for T-0120/T-0121 (record in ADR-0016/0017): tab length = material left (raised path = length + tool diameter); separate last pass runs after all roughing; nested closed vectors form a region (inner = hole); climb assumes M3 (clockwise) spindle, ramps at feed rate, 3D tabs ramp at 45°, leads only on each cut's first entry and last exit, left-to-right ordering column by column — accepted as proposed; Pocket Profile Pass First/Last/None applies to the Offset strategy too (not only Raster).
+
 ### T-0122 Headless CLI: carvetto-cli   [status: blocked]
 Phase: 1   Module: app/cli   Depends on: T-0100, T-0110, T-0120, T-0121
 Goal: A small console program `carvetto-cli` (no Qt): `import <dxf> → .carv`, `toolpath profile|pocket <params.json> <in.carv> <out.carv>`, `post <post.pp> <in.carv> <out.nc>`, `info`. Used by CI for the end-to-end test and by users for scripting.
