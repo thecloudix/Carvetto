@@ -47,6 +47,7 @@ struct Cut {
     double distance{0.0};  // |offset| from the vectors
     ArcLengthPath walk;
     std::vector<double> tabs;
+    Contour leadIn;  // planned lead-in (empty: none or none fits)
 };
 
 struct Input {
@@ -149,11 +150,15 @@ class ProfileBuilder {
     void chooseStarts(std::vector<Cut>& cuts);
     std::vector<std::size_t> order(const std::vector<Cut>& cuts) const;
     void placeTabsOn(std::vector<Cut>& primary);
-    void projectTabs(const std::vector<Cut>& from, std::vector<Cut>& to) const;
+    void projectTabs(const std::vector<Cut>& from, std::vector<Cut>& to);
     void emit(const Cut& cut, const std::vector<double>& levels, bool finishing);
     void emitLeg(const Cut& cut, const PathLeg& leg, bool lastLevel, std::vector<bool>& cornerDone);
     template <class Make>
+    bool leadFits(Make make, double scale, Contour& out, bool& gentler) const;
+    template <class Make>
     Contour fitLead(Make make, std::size_t contour, const char* what);
+    void planLeadIns(std::vector<Cut>& cuts);
+    std::vector<LeadOptions> leadVariants() const;
 
     const std::vector<Contour>& raw_;
     const tooling::Tool& tool_;
@@ -166,6 +171,7 @@ class ProfileBuilder {
     bool vbit_{false};
     bool sharpExternal_{false};
     bool sharpInternal_{false};
+    double vbitTan_{1.0};  // tan(half included angle) of a V-bit
     Input in_;
     ClearanceField allField_;
     ProfileResult result_;
@@ -212,6 +218,13 @@ bool ProfileBuilder::validate() {
     }
     sharpExternal_ = vbit_ && p_.corners.sharpExternal;
     sharpInternal_ = vbit_ && p_.corners.sharpInternal;
+    if (sharpInternal_) {
+        vbitTan_ = std::tan(0.5 * tool_.includedAngle);
+        if (!(vbitTan_ > 0.0) || !std::isfinite(vbitTan_)) {
+            diag(ProfileIssue::InvalidParameters, std::nullopt, "the V-bit has no valid included angle");
+            return false;
+        }
+    }
     return true;
 }
 
@@ -552,15 +565,21 @@ void ProfileBuilder::placeTabsOn(std::vector<Cut>& primary) {
     for (Cut& c : primary) {
         const TabPlacement tp = placeTabs(c.walk, raised, p_.tabs);
         c.tabs = tp.centres;
-        if (tp.notAvoided > 0 || tp.dropped > 0) {
+        if (tp.dropped > 0) {
             diag(ProfileIssue::TabsNotPlaced, c.sources.front(),
-                 vecName(c.sources.front()) + ": " + std::to_string(tp.dropped) + " tab(s) dropped, " +
-                     std::to_string(tp.notAvoided) + " left on a corner or curve");
+                 vecName(c.sources.front()) + ": " + std::to_string(tp.dropped) +
+                     " tab(s) left out (no room: they would overlap, run past an open end or leave no stretch "
+                     "cut to full depth)");
+        }
+        if (tp.notAvoided > 0) {
+            diag(ProfileIssue::TabsNotPlaced, c.sources.front(),
+                 vecName(c.sources.front()) + ": " + std::to_string(tp.notAvoided) +
+                     " tab(s) left on a corner or curve (no straight stretch long enough)");
         }
     }
 }
 
-void ProfileBuilder::projectTabs(const std::vector<Cut>& from, std::vector<Cut>& to) const {
+void ProfileBuilder::projectTabs(const std::vector<Cut>& from, std::vector<Cut>& to) {
     const double reach = p_.lastPassAllowance + 2.0 * tol_.distance + 1e-9;
     for (Cut& c : to) {
         for (const Cut& f : from) {
@@ -574,29 +593,128 @@ void ProfileBuilder::projectTabs(const std::vector<Cut>& from, std::vector<Cut>&
         }
         std::sort(c.tabs.begin(), c.tabs.end());
         c.tabs.erase(std::unique(c.tabs.begin(), c.tabs.end()), c.tabs.end());
+        // The roughing cut is longer or shorter than the finishing cut: fit the tabs again.
+        const TabPlacement tp = fitTabs(c.walk, c.tabs, tabFootprint(p_.tabs.length + 2.0 * radius_, p_.tabs));
+        c.tabs = tp.centres;
+        if (tp.dropped > 0) {
+            diag(ProfileIssue::TabsNotPlaced, c.sources.front(),
+                 vecName(c.sources.front()) + ": " + std::to_string(tp.dropped) +
+                     " tab(s) left out of the roughing cut (no room for them)");
+        }
     }
 }
 
-// The lead `make(scale)` at full size, or halved up to three times until it stays at least the
-// tool radius from every vector; empty (with a diagnostic) when even the smallest gouges.
+// Lead options to try, in order: as asked, then a gentler variant that clears an adjacent wall
+// more often (straight: perpendicular; circular: half the sweep).
+std::vector<LeadOptions> ProfileBuilder::leadVariants() const {
+    std::vector<LeadOptions> v{p_.leads};
+    LeadOptions alt = p_.leads;
+    if (alt.type == LeadType::Straight && alt.angle != geometry::kPi / 2.0) {
+        alt.angle = geometry::kPi / 2.0;
+        v.push_back(alt);
+    } else if (alt.type == LeadType::Circular) {
+        alt.sweep *= 0.5;
+        v.push_back(alt);
+    }
+    return v;
+}
+
+// True (and the lead in `out`) when some variant of `make(options, scale)` stays at least the tool
+// radius from every vector.
 template <class Make>
-Contour ProfileBuilder::fitLead(Make make, std::size_t contour, const char* what) {
-    for (double scale : {1.0, 0.5, 0.25, 0.125}) {
-        Contour cand = make(scale);
+bool ProfileBuilder::leadFits(Make make, double scale, Contour& out, bool& gentler) const {
+    const std::vector<LeadOptions> variants = leadVariants();
+    for (std::size_t k = 0; k < variants.size(); ++k) {
+        Contour cand = make(variants[k], scale);
         if (cand.isEmpty()) {
-            return cand;
+            continue;
         }
         if (p_.side == ProfileSide::On ||
             isClear(ArcLengthPath(cand, offTol_), allField_, radius_ - tol_.distance, 0.5 * tol_.distance)) {
-            if (scale < 1.0) {
+            out = std::move(cand);
+            gentler = k > 0;
+            return true;
+        }
+    }
+    return false;
+}
+
+// The lead `make(options, scale)` at full size, or halved up to three times until it stays at
+// least the tool radius from every vector; empty (with a diagnostic) when even the smallest gouges.
+template <class Make>
+Contour ProfileBuilder::fitLead(Make make, std::size_t contour, const char* what) {
+    for (double scale : {1.0, 0.5, 0.25, 0.125}) {
+        Contour lead;
+        bool gentler = false;
+        if (leadFits(make, scale, lead, gentler)) {
+            if (scale < 1.0 || gentler) {
                 diag(ProfileIssue::LeadShortened, contour,
-                     vecName(contour) + ": " + what + " shortened to keep clear of the vectors");
+                     vecName(contour) + ": " + what + (gentler ? " made gentler" : "") +
+                         (scale < 1.0 ? " shortened" : "") + " to keep clear of the vectors");
             }
-            return cand;
+            return lead;
         }
     }
     diag(ProfileIssue::LeadDropped, contour, vecName(contour) + ": " + what + " left out (it would gouge a vector)");
     return {};
+}
+
+// Lead-ins are planned before tabs: when no lead fits at the chosen start of a closed cut (for
+// example an inside corner, where the approach would cross the adjacent wall), the start is moved
+// to the middle of a span (the start span first, then the others from the longest). At each start
+// the lead is tried at full size and then halved up to three times.
+void ProfileBuilder::planLeadIns(std::vector<Cut>& cuts) {
+    if (p_.leads.type == LeadType::None) {
+        return;
+    }
+    for (Cut& c : cuts) {
+        const std::size_t src = c.sources.front();
+        const bool wasteLeft = !c.contourOnLeft;
+        std::vector<double> starts{0.0};
+        if (c.walk.closed()) {
+            std::vector<std::size_t> spans(c.walk.spanCount());
+            std::iota(spans.begin(), spans.end(), std::size_t{0});
+            std::stable_sort(spans.begin() + 1, spans.end(), [&](std::size_t x, std::size_t y) {
+                return c.walk.spanLength(x) > c.walk.spanLength(y);
+            });
+            for (std::size_t i : spans) {
+                starts.push_back(c.walk.spanStart(i) + 0.5 * c.walk.spanLength(i));
+            }
+        }
+        bool found = false;
+        for (double u : starts) {
+            for (double scale : {1.0, 0.5, 0.25, 0.125}) {
+                const Vec2 at = c.walk.pointAt(u);
+                const Vec2 t = c.walk.tangentAt(u);
+                Contour lead;
+                bool gentler = false;
+                if (!leadFits([&](const LeadOptions& o, double sc) { return leadIn(at, t, wasteLeft, o, sc); }, scale,
+                              lead, gentler)) {
+                    continue;
+                }
+                if (u != 0.0) {
+                    c.path.spans = c.walk.extract(u, u + c.walk.length());
+                    c.walk = ArcLengthPath(c.path, offTol_);
+                    diag(ProfileIssue::StartMoved, src,
+                         vecName(src) + ": start moved along the cut so that the lead-in fits");
+                }
+                if (scale < 1.0 || gentler) {
+                    diag(ProfileIssue::LeadShortened, src,
+                         vecName(src) + ": lead-in" + (gentler ? " made gentler" : "") +
+                             (scale < 1.0 ? " shortened" : "") + " to keep clear of the vectors");
+                }
+                c.leadIn = std::move(lead);
+                found = true;
+                break;
+            }
+            if (found) {
+                break;
+            }
+        }
+        if (!found) {
+            diag(ProfileIssue::LeadDropped, src, vecName(src) + ": lead-in left out (it would gouge a vector)");
+        }
+    }
 }
 
 void ProfileBuilder::emitLeg(const Cut& cut, const PathLeg& leg, bool lastLevel, std::vector<bool>& cornerDone) {
@@ -644,7 +762,22 @@ void ProfileBuilder::emitLeg(const Cut& cut, const PathLeg& leg, bool lastLevel,
                         }
                     }
                 }
-                inserts.push_back({lam, {Move::feed(Vec3{v, 0.0 - passes_.startDepth}), Move::feed(Vec3{q, bottom})}});
+                // The offset radius is the cone's radius at the material surface (Z = 0) with the tip
+                // at the bottom, so the walls' top edges are on the vector. Along Q -> V the tip
+                // rises linearly to the surface at V; at the start it must be no deeper than the
+                // depth at which the cone (not the shank) reaches radius r, so the cone never
+                // passes the walls whatever the start depth or the V-bit's flute length.
+                const double knee = std::max(bottom, -radius_ / vbitTan_);
+                std::vector<Move> moves;
+                if (knee > bottom) {
+                    moves.push_back(Move::feed(Vec3{q, knee}));
+                }
+                moves.push_back(Move::feed(Vec3{v, 0.0}));
+                moves.push_back(Move::feed(Vec3{q, knee}));
+                if (knee > bottom) {
+                    moves.push_back(Move::plunge(Vec3{q, bottom}));
+                }
+                inserts.push_back({lam, std::move(moves)});
                 cornerDone[k] = true;
                 break;
             }
@@ -671,14 +804,7 @@ void ProfileBuilder::emit(const Cut& cut, const std::vector<double>& levels, boo
     const bool rampFirst = ramp.type != RampType::None && levels.front() < z0;
     const std::size_t src = cut.sources.front();
 
-    // Lead-in, checked against every vector.
-    Contour in;
-    if (p_.leads.type != LeadType::None) {
-        const Vec2 at = walk.pointAt(0.0);
-        const Vec2 t = walk.tangentAt(0.0);
-        const bool wasteLeft = !cut.contourOnLeft;
-        in = fitLead([&](double scale) { return leadIn(at, t, wasteLeft, p_.leads, scale); }, src, "lead-in");
-    }
+    const Contour& in = cut.leadIn;  // planned and checked by planLeadIns
     const Vec2 entry = in.isEmpty() ? walk.pointAt(0.0) : in.startPoint();
     out.append(Move::rapid(Vec3{entry, p_.safeZ}));
     double zFrom = levels.front();
@@ -733,7 +859,8 @@ void ProfileBuilder::emit(const Cut& cut, const std::vector<double>& levels, boo
             wasteLeft = forward ? !cut.contourOnLeft : cut.contourOnLeft;
         }
         const Contour lo =
-            fitLead([&](double scale) { return leadOut(at, t, wasteLeft, p_.leads, scale); }, src, "lead-out");
+            fitLead([&](const LeadOptions& o, double scale) { return leadOut(at, t, wasteLeft, o, scale); }, src,
+                    "lead-out");
         if (!lo.isEmpty()) {
             const ArcLengthPath lw(lo, offTol_);
             appendLeg(lw, 0.0, lw.length(), ZProfile::flat(zn), out);
@@ -782,8 +909,33 @@ ProfileResult ProfileBuilder::run() {
     };
     const std::vector<std::size_t> roughOrder = order(rough);
     applyOptimisedStarts(rough, roughOrder);
-    const std::vector<std::size_t> finishOrder = order(finish);
+    // Finishing cuts follow the roughing order: each takes the position of the roughing cut
+    // nearest to it (they lie the last-pass allowance apart).
+    std::vector<std::size_t> finishOrder(finish.size());
+    {
+        std::vector<std::size_t> rank(rough.size());
+        for (std::size_t k = 0; k < roughOrder.size(); ++k) {
+            rank[roughOrder[k]] = k;
+        }
+        std::vector<double> key(finish.size(), static_cast<double>(rough.size()));
+        for (std::size_t f = 0; f < finish.size(); ++f) {
+            const Vec2 p = finish[f].walk.pointAt(0.0);
+            double best = std::numeric_limits<double>::infinity();
+            for (std::size_t r = 0; r < rough.size(); ++r) {
+                const double d = geometry::distanceTo(rough[r].walk.contour(), p);
+                if (d < best) {
+                    best = d;
+                    key[f] = static_cast<double>(rank[r]);
+                }
+            }
+        }
+        std::iota(finishOrder.begin(), finishOrder.end(), std::size_t{0});
+        std::stable_sort(finishOrder.begin(), finishOrder.end(),
+                         [&](std::size_t x, std::size_t y) { return key[x] < key[y]; });
+    }
     applyOptimisedStarts(finish, finishOrder);
+    planLeadIns(rough);
+    planLeadIns(finish);
     if (separate) {
         placeTabsOn(finish);
         projectTabs(finish, rough);

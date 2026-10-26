@@ -180,6 +180,27 @@ void sampleCuttingMoves(const toolpath::Toolpath& tp, double step, F&& f) {
     }
 }
 
+/// Like `sampleCuttingMoves`, with the tool-tip height (Z interpolated linearly along the move,
+/// which is exact for lines and for helical arcs): f(point, z).
+template <class F>
+void sampleCuttingMoves3(const toolpath::Toolpath& tp, double step, F&& f) {
+    for (std::size_t i = 1; i < tp.moves.size(); ++i) {
+        if (!toolpath::isCutting(tp.moves[i].kind)) {
+            continue;
+        }
+        toolpath::Toolpath one;
+        one.moves = {tp.moves[i - 1], tp.moves[i]};
+        std::vector<geometry::Vec2> pts;
+        sampleCuttingMoves(one, step, [&](geometry::Vec2 p) { pts.push_back(p); });
+        const double z0 = tp.moves[i - 1].to.z;
+        const double z1 = tp.moves[i].to.z;
+        for (std::size_t k = 0; k < pts.size(); ++k) {
+            const double t = pts.size() > 1 ? static_cast<double>(k) / static_cast<double>(pts.size() - 1) : 1.0;
+            f(pts[k], z0 + (z1 - z0) * t);
+        }
+    }
+}
+
 /// Smallest distance from any cutting-move sample of `tp` to `cs`.
 inline double minCutDistance(const toolpath::Toolpath& tp, const std::vector<geometry::Contour>& cs,
                              double step = 0.05) {

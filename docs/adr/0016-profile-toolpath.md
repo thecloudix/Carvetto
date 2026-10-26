@@ -66,8 +66,9 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     bottom-to-top (row by row); grid (rows bottom-up, a row = cuts whose y-extent overlaps the
     row's first, serpentine). Several enabled → the one with least rapid travel (ties: that
     order). None → greedy nearest neighbour from `startPosition`. Each cut is machined through
-    all levels before the next. With a separate last pass, all roughing cuts come first, then all
-    finishing cuts in the same order.
+    all levels before the next. With a separate last pass (owner decision: after all roughing), all roughing
+    cuts come first; the finishing cuts then follow the roughing order (each takes the place of
+    the roughing cut nearest to it), so finishing is never re-ordered on its own.
 11. **Start points.** `StartAt::VectorStart` (= "Use Vector Start Point"): the cut point nearest
     the vector's start; `Optimise`: nearest the previous cut's start; `ClosestOnBoundingBox`:
     nearest one of nine anchors of the cut's bounding box. Ties follow `closestPoint` (lowest
@@ -89,23 +90,40 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     is already cut).
 14. **Tabs.** Tab length is the material left along the vector, so the raised stretch on the
     tool path is length + tool diameter (exact on straight edges). Tab top = bottom + thickness;
-    only passes below it are affected. Constant number: centres at (i + ½)·L/n from the cut
-    start (the plunge point is never in a tab); constant distance: n = round(L/distance) ≥ 1.
-    "Avoid corners" moves each tab to the nearest place whose raised stretch lies on one line
-    span; tabs that cannot be moved, overlap or do not fit are reported (`TabsNotPlaced`). 3D
-    tabs ramp at 45°. With a separate last pass, tabs are placed on the finishing cut and
-    projected onto the roughing cut. Interactive tab editing and "tab at machining start" are
-    not implemented (see Consequences).
+    only passes below it are affected. 3D tabs ramp down at 45°, i.e. over `thickness` on each
+    side of the raised stretch, so a tab's **footprint** along the path is raised + 2·thickness
+    (3D) or raised (2D). Constant number: centres at (i + ½)·L/n from the cut start (the plunge
+    point is never in a tab); constant distance: n = round(L/distance) ≥ 1. "Avoid corners"
+    moves each tab to the nearest place whose raised stretch lies on one line span. `fitTabs`
+    then drops, with `TabsNotPlaced`, every tab whose footprint would overlap the previous tab
+    (or the first, across the start of a closed cut) or leave less than `kMinTabGap` (0.001 mm)
+    between them, run past an open end, or (closed cut) be as long as the cut itself. So every
+    pass still reaches its level somewhere, and a loop shorter than one tab (a hole smaller than
+    a tab) is cut through without tabs, with a diagnostic. With a separate last pass, tabs are
+    placed on the finishing cut, projected onto the roughing cut and fitted again there.
+    Interactive tab editing and "tab at machining start" are not implemented (see Consequences).
 15. **Leads.** Straight (length, angle to the path) or circular (radius, sweep, tangent) from the
     waste side; optional mirrored lead-out; overcut (closed cuts) runs past the start before the
     lead-out. Leads are used on the first entry and final exit of each cut, not between levels.
-    Each lead is checked against every vector with the clearance check at tool radius − tol;
-    a gouging lead is halved up to three times (`LeadShortened`), then left out (`LeadDropped`).
+    Each lead is checked against every vector with the clearance check at tool radius − tol.
+    Lead-ins are planned before tabs. At the chosen start the lead is tried as asked and as a
+    gentler variant (straight: perpendicular to the path; circular: half the sweep), at full
+    size and then halved up to three times (`LeadShortened`). If none fits (typically an inside
+    profile starting at a corner, where the approach crosses the adjacent wall) the start of a
+    closed cut moves to the middle of its start span, then of the other spans from the longest
+    (`StartMoved`). Only when nothing fits is the lead left out (`LeadDropped`). Lead-outs try
+    the same variants and sizes at the end point.
 16. **V-bit corners.** Sharp external = Sharp joins (5). Sharp internal: on the final level, at
-    every inside-corner kink of the path the tool runs straight to the vector's nearest corner
-    vertex while rising to the top of the cut and back (depth ∝ distance to the corner along the
-    bisector, so the cone stays on both walls). Allowance is not applied to that move. Both
-    options are ignored with `CornerNeedsVBit` for other tools.
+    every inside-corner kink Q of the path the tool runs to the vector's nearest corner vertex V
+    and back. The offset radius r is the cone's radius at the material surface (Z = 0) with the
+    tip at the bottom, so the tip reaches Z = 0 at V (climbing only to the start depth left the
+    cone startDepth·tan(α/2) past the walls). Along Q → V the tip rises linearly from the knee
+    depth max(bottom, −r / tan(α/2)), where the cone itself is r wide, to Z = 0 at V; when the
+    cut is deeper than the cone (r capped at the tool radius) the tool first rises vertically at
+    Q to the knee. The wall distance along the bisector grows linearly with the distance from V,
+    so the cone stays inside both walls for any start depth and allowance ≥ 0 (tested at 60° and
+    90°, inside and outside, start depth 0 and 2, and a tool whose cone is shallower than the
+    cut). Both options are ignored with `CornerNeedsVBit` for other tools.
 17. **Bezier input.** Beziers are polygonised before offsetting; when present the offset chordal
     tolerance is tightened to tol.distance/2 so the cut stays within tolerance of r.
 
@@ -132,7 +150,10 @@ I/J = centre − start, plunge at F300 and feeds at F1000 restated, retract, M5,
 - Not implemented: interactive tab editing and per-vector stored tab positions (needs the
   document/UI side), "tab at machining start point", leads between levels, cutter compensation,
   projection onto a 3D model.
-- Decisions the director should confirm with the product's behaviour: region semantics (4),
-  tab length as material length (14), last pass at full depth only and roughing-before-finishing
-  (10), leads only on entry/exit (15), ramps at feed rate (13), 3D tab slope (14), ordering
-  definitions (10).
+
+## Owner decisions (2026-10-26, via the director)
+Confirmed as proposed: tab length is the material left (raised path = length + tool diameter,
+14); the separate last pass runs after all roughing (10); nested closed vectors form a region,
+the inner one a hole (4); climb assumes an M3 spindle (9); ramps run at feed rate (13); 3D tabs
+ramp at 45° (14); leads only on the first entry and last exit (15); left-to-right orders column
+by column (10).

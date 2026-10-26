@@ -14,6 +14,7 @@
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/geometry/span.hpp"
 #include "carvetto/toolpath/profile.hpp"
+#include "../geometry/test_rng.hpp"
 #include "profile_test_util.hpp"
 
 using namespace carvetto;
@@ -659,4 +660,209 @@ TEST_CASE("Profile output is deterministic and invalid input is reported", "[too
     CHECK(tp.tool.feedRate == 1000.0);
     CHECK(tp.tool.toolNumber == 1);
     CHECK(tp.name == "Profile");
+}
+
+// ------------------------------------------------------------------ round-2 regressions
+
+TEST_CASE("Tabs on a loop shorter than one tab are left out, so the hole is still cut through",
+          "[toolpath][profile][tabs]") {
+    for (int count : {1, 2}) {
+        ProfileParams p = baseParams(6.0, 3.0);
+        p.side = ProfileSide::Inside;
+        p.tabs.enabled = true;
+        p.tabs.count = count;
+        p.tabs.length = 10.0;
+        p.tabs.thickness = 2.0;
+        // Loop of the r = 5 hole with a 6 mm tool: 2·pi·2 = 12.6 mm < raised stretch 16 mm.
+        const ProfileResult r = profileToolpath({Contour::circle({0, 0}, 5.0)}, test::endMill(6.0), p);
+        REQUIRE(r.ok());
+        INFO("count " << count);
+        CHECK(r.toolpath.minZ() == Approx(-6.0));
+        CHECK(test::feedLevels(r.toolpath) == std::vector<double>{-3.0, -6.0});
+        CHECK(r.has(ProfileIssue::TabsNotPlaced));
+    }
+}
+
+TEST_CASE("3D tab ramps count towards overlap: neighbouring 3D tabs never merge above the bottom",
+          "[toolpath][profile][tabs]") {
+    for (bool threeD : {false, true}) {
+        ProfileParams p = baseParams(12.0, 6.0);
+        p.tabs.enabled = true;
+        p.tabs.count = 16;
+        p.tabs.length = 10.0;
+        p.tabs.thickness = 4.0;
+        p.tabs.threeD = threeD;
+        const ProfileResult r =
+            profileToolpath({Contour::rectangle(Box2{{0, 0}, {100, 50}})}, test::endMill(6.0), p);
+        REQUIRE(r.ok());
+        INFO("threeD " << threeD);
+        CHECK(r.toolpath.minZ() == Approx(-12.0));
+        // 16 footprints: 16 mm raised + 2 x 4 mm ramps = 24 mm each > 318.85 / 16 for 3D tabs.
+        CHECK(r.has(ProfileIssue::TabsNotPlaced) == threeD);
+        // Between consecutive tabs the last pass returns to the bottom.
+        const std::vector<Toolpath> cuts = splitCuts(r.toolpath);
+        REQUIRE(cuts.size() == 1);
+        std::size_t rises = 0;
+        bool atBottom = false;
+        for (const Move& m : cuts[0].moves) {
+            if (m.to.z == -12.0) {
+                atBottom = true;
+            } else if (atBottom && m.to.z > -12.0 && m.to.z < 0.0 && m.kind != MoveKind::Retract) {
+                ++rises;
+                atBottom = false;
+            }
+        }
+        CHECK(rises >= 8);  // every placed tab is its own rise from the bottom
+    }
+    // Open path: a 3D tab footprint must not run past the ends.
+    Contour line;
+    line.append(LineSpan{{0, 0}, {30, 0}});
+    ProfileParams p = baseParams(6.0, 6.0);
+    p.side = ProfileSide::Right;
+    p.tabs.enabled = true;
+    p.tabs.count = 1;
+    p.tabs.length = 14.0;  // raised 20 mm + 2 x 3 mm ramps = 26 mm on a 30 mm path: fits
+    p.tabs.thickness = 3.0;
+    p.tabs.threeD = true;
+    const ProfileResult fits = profileToolpath({line}, test::endMill(6.0), p);
+    CHECK_FALSE(fits.has(ProfileIssue::TabsNotPlaced));
+    CHECK(fits.toolpath.minZ() == Approx(-6.0));
+    p.tabs.thickness = 6.0;  // 20 + 12 = 32 mm > 30 mm: left out
+    const ProfileResult nofit = profileToolpath({line}, test::endMill(6.0), p);
+    CHECK(nofit.has(ProfileIssue::TabsNotPlaced));
+    CHECK(nofit.toolpath.minZ() == Approx(-6.0));
+}
+
+TEST_CASE("Generative: every pass of a tabbed vector reaches its level", "[toolpath][profile][tabs][property]") {
+    test::SplitMix rng{0x7AB5ULL};
+    for (int s = 0; s < 300; ++s) {
+        Contour c;
+        switch (rng.next() % 3) {
+            case 0:
+                c = Contour::circle({0, 0}, rng.uniform(3.5, 20.0));
+                break;
+            case 1:
+                c = Contour::rectangle(Box2::fromCentre({0, 0}, rng.uniform(4, 60), rng.uniform(4, 40)));
+                break;
+            default:
+                c.append(LineSpan{{0, 0}, {rng.uniform(2, 50), 0}});
+                c.append(LineSpan{c.endPoint(), c.endPoint() + Vec2{0, rng.uniform(2, 30)}});
+                break;
+        }
+        ProfileParams p = baseParams(rng.uniform(2, 12), rng.uniform(1, 6));
+        p.side = rng.uniform(0, 1) < 0.5 ? ProfileSide::Outside : ProfileSide::Inside;
+        p.tabs.enabled = true;
+        p.tabs.spacing = rng.uniform(0, 1) < 0.5 ? TabSpacing::ConstantNumber : TabSpacing::ConstantDistance;
+        p.tabs.count = 1 + static_cast<int>(rng.next() % 20);
+        p.tabs.distance = rng.uniform(5, 60);
+        p.tabs.length = rng.uniform(1, 15);
+        p.tabs.thickness = rng.uniform(0.5, 5);
+        p.tabs.threeD = rng.uniform(0, 1) < 0.5;
+        p.tabs.avoidCorners = rng.uniform(0, 1) < 0.3;
+        p.ramp.type = rng.uniform(0, 1) < 0.3 ? RampType::Smooth : RampType::None;
+        p.ramp.distance = rng.uniform(2, 20);
+        p.separateLastPass = rng.uniform(0, 1) < 0.3;
+        const double d = rng.uniform(3, 8);
+        const ProfileResult r = profileToolpath({c}, test::endMill(d), p);
+        if (!r.ok()) {
+            CHECK(r.has(ProfileIssue::ToolTooLarge));
+            continue;
+        }
+        INFO("scene " << s);
+        const std::vector<double> got = test::feedLevels(r.toolpath);
+        for (double level : p.passes.levels()) {
+            CHECK(std::find_if(got.begin(), got.end(), [&](double z) { return std::fabs(z - level) < 1e-9; }) !=
+                  got.end());
+        }
+        CHECK(r.toolpath.minZ() == Approx(p.passes.bottomZ()));
+    }
+}
+
+TEST_CASE("V-bit sharp internal corners keep the cone inside the walls for any start depth",
+          "[toolpath][profile][vbit]") {
+    Contour l;
+    l.closed = true;
+    for (auto [a, b] : std::vector<std::pair<Vec2, Vec2>>{{{0, 0}, {40, 0}},
+                                                            {{40, 0}, {40, 20}},
+                                                            {{40, 20}, {20, 20}},
+                                                            {{20, 20}, {20, 40}},
+                                                            {{20, 40}, {0, 40}},
+                                                            {{0, 40}, {0, 0}}}) {
+        l.append(LineSpan{a, b});
+    }
+    for (double angleDeg : {60.0, 90.0}) {
+        for (double diameter : {12.0, 4.0}) {  // 4 mm: the cut is deeper than the cone at 90°
+            tooling::Tool v = test::endMill(diameter);
+            v.type = tooling::ToolType::VBit;
+            v.includedAngle = angleDeg * geometry::kPi / 180.0;
+            const double tanHalf = std::tan(0.5 * v.includedAngle);
+            for (ProfileSide side : {ProfileSide::Outside, ProfileSide::Inside}) {
+                for (double startDepth : {0.0, 2.0}) {
+                    ProfileParams p = baseParams(3.0, 3.0);
+                    p.passes.startDepth = startDepth;
+                    p.side = side;
+                    p.corners.sharpInternal = true;
+                    const ProfileResult r = profileToolpath({l}, v, p);
+                    REQUIRE(r.ok());
+                    INFO("angle " << angleDeg << " dia " << diameter << " side " << static_cast<int>(side)
+                                  << " start " << startDepth);
+                    bool reachedCorner = false;
+                    double worst = 1e9;
+                    test::sampleCuttingMoves3(r.toolpath, 0.02, [&](Vec2 q, double z) {
+                        if (z >= 0.0) {
+                            reachedCorner = reachedCorner || z == 0.0;
+                            return;
+                        }
+                        // Radius the cone cuts at the surface (Z = 0), capped at the tool radius.
+                        const double rho = std::min(-z * tanHalf, 0.5 * diameter);
+                        worst = std::min(worst, test::bruteDistance(q, {l}) - rho);
+                    });
+                    CHECK(worst >= -1e-6);
+                    CHECK(reachedCorner);
+                }
+            }
+        }
+    }
+}
+
+TEST_CASE("Separate last pass: finishing cuts follow the roughing order", "[toolpath][profile]") {
+    for (int mode = 0; mode < 3; ++mode) {
+        ProfileParams p = baseParams(3.0, 3.0);
+        p.separateLastPass = true;
+        p.lastPassAllowance = 0.3;
+        p.startPosition = {100, 0};
+        p.order.grid = mode == 1;
+        p.order.selectionOrder = mode == 2;
+        const std::vector<int> cells = cutCells(profileToolpath(grid3x3(), test::endMill(6.0), p).toolpath);
+        REQUIRE(cells.size() == 18);
+        INFO("mode " << mode);
+        CHECK(std::vector<int>(cells.begin(), cells.begin() + 9) == std::vector<int>(cells.begin() + 9, cells.end()));
+    }
+}
+
+TEST_CASE("Inside profiles starting at a corner still get their lead-in", "[toolpath][profile][leads]") {
+    const Contour sq = Contour::rectangle(Box2{{0, 0}, {40, 30}});  // starts at a corner
+    for (LeadType type : {LeadType::Straight, LeadType::Circular}) {
+        ProfileParams p = baseParams(3.0, 3.0);
+        p.side = ProfileSide::Inside;
+        p.leads.type = type;
+        p.leads.length = 6.0;
+        p.leads.angle = geometry::kPi / 6.0;
+        p.leads.radius = 4.0;
+        p.leads.sweep = geometry::kPi / 2.0;
+        p.leads.leadOut = true;
+        const ProfileResult r = profileToolpath({sq}, test::endMill(6.0), p);
+        REQUIRE(r.ok());
+        INFO("type " << static_cast<int>(type));
+        CHECK_FALSE(r.has(ProfileIssue::LeadDropped));
+        CHECK(test::minCutDistance(r.toolpath, {sq}) >= 3.0 - 1e-3);
+        // The entry is in the waste (inside the hole), away from where the cut starts, and at
+        // least the tool radius from the walls (a perpendicular straight lead at a corner runs
+        // along the previous edge's cut line, exactly at the tool radius).
+        const Vec2 entry = r.toolpath.moves[0].to.xy();
+        INFO("entry " << entry.x << ", " << entry.y);
+        CHECK(test::bruteDistance(entry, {sq}) >= 3.0 - 1e-9);
+        CHECK(sq.bounds().contains(entry));
+        CHECK(geometry::distance(entry, r.toolpath.moves[2].to.xy()) > 1.0);
+    }
 }

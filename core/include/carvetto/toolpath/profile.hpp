@@ -107,8 +107,9 @@ enum class ProfileIssue {
     ToolTooLarge,           ///< The offset of a vector vanished (e.g. a hole smaller than the tool).
     MergedWithNeighbour,    ///< Offsets of nearby vectors overlapped and were merged (polygonal).
     TrimmedNearVector,      ///< Part of a cut was removed because it passed within the tool radius of another vector.
-    LeadShortened,          ///< A lead would have gouged and was shortened.
+    LeadShortened,          ///< A lead would have gouged and was shortened and/or made gentler (perpendicular / half sweep).
     LeadDropped,            ///< A lead would have gouged at any length and was left out.
+    StartMoved,             ///< A closed cut's start was moved along it so that its lead-in fits.
     TabsNotPlaced,          ///< Some tabs could not be placed (overlap, no straight stretch, path too short).
     CornerNeedsVBit,        ///< Sharp corner options need a V-bit; ignored.
     SpiralNeedsClosed,      ///< Spiral ramp on an open vector; a smooth ramp was used.

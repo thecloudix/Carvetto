@@ -72,19 +72,37 @@ TabPlacement placeTabs(const ArcLengthPath& path, double raisedLength, const Tab
         }
         centres.push_back(c);
     }
+    const TabPlacement fitted = fitTabs(path, std::move(centres), tabFootprint(raisedLength, options));
+    result.centres = fitted.centres;
+    result.dropped = fitted.dropped;
+    return result;
+}
+
+double tabFootprint(double raisedLength, const TabOptions& options) {
+    return raisedLength + (options.threeD ? 2.0 * std::max(0.0, options.thickness) : 0.0);
+}
+
+TabPlacement fitTabs(const ArcLengthPath& path, std::vector<double> centres, double footprint) {
+    TabPlacement result;
+    const double len = path.length();
     std::sort(centres.begin(), centres.end());
-    // Drop tabs that overlap an earlier one or do not fit an open path.
+    const double half = 0.5 * footprint;
+    // A closed path must keep some full-depth stretch: a footprint as long as the loop leaves none.
+    if (path.closed() && footprint + kMinTabGap > len) {
+        result.dropped = centres.size();
+        return result;
+    }
     for (double c : centres) {
-        if (!path.closed() && (c - 0.5 * raisedLength < 0.0 || c + 0.5 * raisedLength > len)) {
-            ++result.dropped;
+        if (!path.closed() && (c - half < 0.0 || c + half > len)) {
+            ++result.dropped;  // would run past an open end
             continue;
         }
-        if (!result.centres.empty() && c - result.centres.back() < raisedLength) {
-            ++result.dropped;
+        if (!result.centres.empty() && c - result.centres.back() < footprint + kMinTabGap) {
+            ++result.dropped;  // overlaps (or touches) the previous tab
             continue;
         }
-        if (path.closed() && !result.centres.empty() && result.centres.front() + len - c < raisedLength) {
-            ++result.dropped;
+        if (path.closed() && !result.centres.empty() && result.centres.front() + len - c < footprint + kMinTabGap) {
+            ++result.dropped;  // overlaps the first tab across the start
             continue;
         }
         result.centres.push_back(c);
