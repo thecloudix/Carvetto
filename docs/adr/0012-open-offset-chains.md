@@ -80,7 +80,16 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     reversal or a discontinuity of the flattened input (a dropped sub-tolerance span) a full
     circle, the path ends their full circles. Release, dev container, CPU time per offset (all
     joins and sides): walk d = 1 ≤ 0.02 s, d = 2 ≤ 0.04 s; 8000-span hypotrochoid d = 2 ≤ 0.2 s;
-    8000-span text-like loops d = 2 ≤ 0.06 s.
+    8000-span text-like loops d = 2 ≤ 0.06 s. Caveat: the cost stays close to linear in the
+    span count, but the constant is not uniform. On a dense zig-zag with d many times its pitch,
+    Sharp and Square run 10–20× slower than Round, because every corner's mitre or chamfer
+    reaches out ~d and overlaps hundreds of its neighbours' on the same line, which multiplies the
+    pieces to split and prune. Release, CPU time: pitch 0.02, amplitude 1, d = 7, 1000 spans:
+    Sharp 14.2 s, Square 14.6 s, Round 0.7 s (verifier measured ≈37 s for 2000 spans before the
+    overlap fix below, which did not change these figures materially); pitch 0.05, d = 5, 4000
+    spans: Square 5.2 s, Round 0.6 s.
+    Hatch- or fill-like vectors offset at a large d with Sharp/Square (T-0120/T-0121) will feel
+    this; not addressed here.
   - *Arc corners (ADR-0006 §5, §4 here).* Mitre and chamfer extension of an arc may use the gap
     outside its current (possibly already extended) sweep; previously the gap was split in half
     between "past the end" and "before the start", so the second corner of an arc whose first
@@ -112,8 +121,42 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     two lines between the same two points (a zero-width sliver) is dropped like the opposite pairs
     of §5. The closing junction of a closed chain is snapped first so that no span can be trimmed
     past its own other end.
+  - *Overlapping joins on one carrier (verification round 2).* On steep zig-zags the Square
+    chamfers (also Sharp corners beyond the mitre limit) of neighbouring peaks lie on one line
+    and may overlap by less than the tolerance (6–9e-4 mm seen). Both copies of the overlap
+    survived, because deduplication of coincident pieces compared end points to the tolerance and
+    so skipped pieces shorter than 2·tol, and because each element computed its own nearly
+    tangent boundary crossings (bottom of a vertex circle on the chamfer line), cutting the two
+    copies ~1e-7 mm apart; the chain then ran forward, stepped back over the overlap and ran on.
+    Now the kept pieces of every group of raw elements on one line or circle (overlapping pairs
+    found during splitting, joined transitively) are merged by a sweep along a common coordinate
+    (distance along the line, angle round the circle): all piece ends of the group that agree to
+    rounding (1e-9·max(1, d, |x|, |y|)) become one node, and each stretch between consecutive
+    nodes is kept once, on the lowest-numbered element, if more copies cover it one way than the
+    other, else dropped (opposite copies enclose nothing, as in §5). This replaces the pairwise
+    end-point matching (to the tolerance, and only for pieces longer than 2·tol), costs
+    O(P log P) per group and keeps every piece end as a node, so stitching can still turn there.
+    (Cutting every copy at its partners' ends instead was correct but ~18× more pieces on dense
+    zig-zags at large d, where every inside-corner connector lies on one line.) Stitching also
+    continues a piece with the start nearest its end (to the same rounding) and only among
+    equally near starts by raw order, so a start a sub-tolerance distance behind the end is never
+    taken over one exactly at it.
+  - *Known limitation: input with sub-tolerance spans* (present before T-0006, carded as
+    follow-up). Flattening leaves out spans no longer than tol.distance, so the distance and
+    coverage guarantees hold for the flattened input only. Next to such a span an offset point
+    may be short of d by up to ~tol (9e-4 seen), a Round arc about the neighbouring vertex may be
+    up to ~tol over d (8e-4 seen), and up to ~1 mm of valid offset may be missing. Fuzzing hits
+    this in ~1 in 1000 such inputs; inputs without sub-tolerance spans are unaffected (worst
+    shortfall 1.5e-6 at d ≈ 0.05, within the bridge bound above). Documented in `offset.hpp`.
   - *Tests.* The T-0004 chain check now requires exact continuity (1e-12) and allows a span no
     longer than the tolerance wherever it is needed for that continuity (positive length, never
     at an open chain's ends, exact junctions, no backward step); it passes with
-    `CARVETTO_OFFSET_TRIALS=96`. The T-0004 2000-span timing test measures CPU time (`std::clock`),
+    `CARVETTO_OFFSET_TRIALS=96`. Backward steps are detected by one shared checker
+    (`core/tests/geometry/offset_chain_checks.hpp`) on every junction including the closing one:
+    a start behind the previous end, a retrace (a near-reversal passes as a needle tip only if
+    the two sides diverge at every probe up to the shorter span's length, so a collinear
+    sub-tolerance step back fails), and a sub-tolerance span running against both neighbours.
+    Regressions: the verifier's zig-zag and closed zig-zag repros and a 3456-offset steep
+    zig-zag sweep (all joins and sides, open and closed, mitre limits 1–4.1, near the origin
+    and ~120 mm away). The T-0004 2000-span timing test measures CPU time (`std::clock`),
     its absolute bound Release-only, plus a CPU-time complexity ratio (1000 vs 4000 spans).

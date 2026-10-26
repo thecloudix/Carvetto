@@ -8,6 +8,7 @@
 #include <limits>
 #include <map>
 #include <optional>
+#include <set>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -1086,6 +1087,178 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
     return rc;
 }
 
+// Kept pieces of raw elements that lie on one line or circle, merged into one boundary piece per
+// stretch. Overlapping elements (the mitre extensions of a slot narrower than 2d, the chamfers
+// or mitres of neighbouring peaks of a steep zig-zag, the inside-corner connectors of a dense
+// zig-zag at a large d) keep copies of the same stretch. A copy running the same way is the
+// same boundary piece; two copies running opposite ways bound a region of zero width inside the
+// offset shape and both go. Matching copies by their end points failed where the copies were
+// cut differently: each element computes its own boundary crossings, and a nearly tangent one
+// (the bottom of a vertex circle touching a chamfer line) lands up to ~1e-7 mm apart on two
+// copies, and pieces shorter than the tolerance could not be matched to the tolerance at all.
+// Both copies of such an overlap survived and the chain stepped back over it (T-0006).
+//
+// So every group of elements on one carrier (pairs from `overlapping`, joined transitively) is
+// swept along a common coordinate: distance along the line, or angle round the circle. All
+// piece ends of the group are merged where they agree to rounding (1e-9 x max(1, d, |x|, |y|),
+// or that over the radius for angles), and each elementary stretch between consecutive ends is
+// kept once if more copies cover it one way than the other, on the lowest-numbered element
+// running that way, and dropped otherwise. Every piece end stays a piece end, so the stitching
+// can still turn at any point where another piece starts or ends. Cost O(P log P) per group of P
+// pieces; pieces of elements outside every group are untouched. The result is ordered by element
+// and parameter, like the input.
+std::vector<Piece> mergeOnCarriers(const std::vector<Span>& raw, const std::vector<Piece>& kept,
+                                   const std::vector<std::pair<std::size_t, std::size_t>>& overlapping,
+                                   double d) {
+    const std::size_t m = raw.size();
+    std::vector<std::size_t> parent(m);
+    for (std::size_t i = 0; i < m; ++i) {
+        parent[i] = i;
+    }
+    auto find = [&](std::size_t i) {
+        while (parent[i] != i) {
+            parent[i] = parent[parent[i]];
+            i = parent[i];
+        }
+        return i;
+    };
+    std::vector<bool> shared(m, false);
+    for (const auto& [i, j] : overlapping) {
+        shared[i] = true;
+        shared[j] = true;
+        const std::size_t a = find(i);
+        const std::size_t b = find(j);
+        if (a != b) {
+            parent[std::max(a, b)] = std::min(a, b);  // the root is the group's lowest element
+        }
+    }
+    std::vector<Piece> out;
+    std::map<std::size_t, std::vector<Piece>> groups;
+    for (const Piece& p : kept) {
+        if (shared[p.element]) {
+            groups[find(p.element)].push_back(p);
+        } else {
+            out.push_back(p);  // not on a shared carrier
+        }
+    }
+
+    // A stretch [lo, hi] of the common coordinate covered by one piece, and which way it runs.
+    struct Stretch {
+        double lo;
+        double hi;
+        bool forward;
+        std::size_t element;
+    };
+    for (const auto& [root, pieces] : groups) {
+        const Span& ref = raw[root];
+        const auto* refLine = std::get_if<LineSpan>(&ref);
+        const auto* refArc = std::get_if<ArcSpan>(&ref);
+        if (!refLine && !refArc) {
+            out.insert(out.end(), pieces.begin(), pieces.end());
+            continue;
+        }
+        const Vec2 origin = refLine ? refLine->start : refArc->centre;
+        const Vec2 axis = refLine ? (refLine->end - refLine->start).normalized() : Vec2{};
+        const double radius = refArc ? refArc->radius : 1.0;
+        const double refAngle = refArc ? refArc->startAngle : 0.0;
+        auto coordOf = [&](Vec2 p) {
+            return refLine ? (p - origin).dot(axis) : normalizeAngle((p - origin).angle() - refAngle);
+        };
+        auto pointOf = [&](double c) {
+            return refLine ? origin + axis * c : origin + Vec2::fromAngle(refAngle + c, radius);
+        };
+        double scale = std::max(1.0, d);
+        std::vector<Stretch> stretches;
+        for (const Piece& p : pieces) {
+            const Span& s = raw[p.element];
+            const Vec2 a = pointAt(s, p.t0);
+            const Vec2 b = pointAt(s, p.t1);
+            scale = std::max({scale, std::fabs(a.x), std::fabs(a.y), std::fabs(b.x), std::fabs(b.y)});
+            if (refLine) {
+                const double ca = coordOf(a);
+                const double cb = coordOf(b);
+                stretches.push_back({std::min(ca, cb), std::max(ca, cb), cb > ca, p.element});
+                continue;
+            }
+            // Angles: a piece runs CCW (increasing angle) or CW from its start, by its sweep; one
+            // that passes the reference angle is cut there.
+            const auto& arc = std::get<ArcSpan>(s);
+            const bool ccw = arc.direction == ArcDirection::CCW;
+            const double span = std::fabs(arc.sweepAngle()) * (p.t1 - p.t0);
+            const double ca = coordOf(a);
+            const double lo = ccw ? ca : ca - span;
+            const double hi = ccw ? ca + span : ca;
+            if (lo < 0.0) {
+                stretches.push_back({lo + kTwoPi, kTwoPi, ccw, p.element});
+                stretches.push_back({0.0, hi, ccw, p.element});
+            } else if (hi > kTwoPi) {
+                stretches.push_back({lo, kTwoPi, ccw, p.element});
+                stretches.push_back({0.0, hi - kTwoPi, ccw, p.element});
+            } else {
+                stretches.push_back({lo, hi, ccw, p.element});
+            }
+        }
+        const double eps = 1e-9 * scale / (refLine ? 1.0 : radius);
+        // Merged end coordinates; each stretch then covers ends [first, last).
+        std::vector<double> ends;
+        for (const Stretch& st : stretches) {
+            ends.push_back(st.lo);
+            ends.push_back(st.hi);
+        }
+        std::sort(ends.begin(), ends.end());
+        std::vector<double> nodes;
+        for (const double c : ends) {
+            if (nodes.empty() || c > nodes.back() + eps) {
+                nodes.push_back(c);
+            }
+        }
+        auto nodeOf = [&](double c) {
+            // The last node at or below c: the node c was merged into (a node is the smallest
+            // value of its run, and the next node lies more than eps above that run's start).
+            const auto it = std::upper_bound(nodes.begin(), nodes.end(), c);
+            return static_cast<std::size_t>(it - nodes.begin()) - 1;
+        };
+        // Sweep: copies entering and leaving at each node.
+        std::vector<std::vector<std::pair<bool, std::size_t>>> enter(nodes.size());
+        std::vector<std::vector<std::pair<bool, std::size_t>>> leave(nodes.size());
+        for (const Stretch& st : stretches) {
+            const std::size_t a = nodeOf(st.lo);
+            const std::size_t b = nodeOf(st.hi);
+            if (a < b) {
+                enter[a].emplace_back(st.forward, st.element);
+                leave[b].emplace_back(st.forward, st.element);
+            }
+        }
+        std::multiset<std::size_t> forward;
+        std::multiset<std::size_t> backward;
+        for (std::size_t k = 0; k + 1 < nodes.size(); ++k) {
+            for (const auto& [fw, e] : leave[k]) {
+                auto& set = fw ? forward : backward;
+                set.erase(set.find(e));
+            }
+            for (const auto& [fw, e] : enter[k]) {
+                (fw ? forward : backward).insert(e);
+            }
+            if (forward.size() == backward.size()) {
+                continue;  // nothing, or opposite copies enclosing nothing
+            }
+            const bool fw = forward.size() > backward.size();
+            const std::size_t owner = *(fw ? forward : backward).begin();
+            const Vec2 from = pointOf(fw ? nodes[k] : nodes[k + 1]);
+            const Vec2 to = pointOf(fw ? nodes[k + 1] : nodes[k]);
+            const double t0 = std::clamp(carrierParam(raw[owner], from), 0.0, 1.0);
+            const double t1 = std::clamp(carrierParam(raw[owner], to), 0.0, 1.0);
+            if (t1 > t0) {
+                out.push_back(Piece{owner, t0, t1});
+            }
+        }
+    }
+    std::sort(out.begin(), out.end(), [](const Piece& a, const Piece& b) {
+        return a.element != b.element ? a.element < b.element : a.t0 < b.t0;
+    });
+    return out;
+}
+
 }  // namespace
 
 std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, OffsetSide side,
@@ -1160,6 +1333,7 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
         }
     }
     BoxGrid rawGrid(boxes);
+    std::vector<std::pair<std::size_t, std::size_t>> overlapping;  // element pairs on one carrier
     auto adjacentShared = [&](std::size_t i, std::size_t j, double ti, double tj) {
         if (j == i + 1 && ti >= 1.0 - kParamEps && tj <= kParamEps) {
             return true;
@@ -1177,6 +1351,7 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
             if (sameCarrier(raw[i], raw[j])) {
                 // Overlapping elements (e.g. the mitre extensions of a slot narrower than 2d):
                 // split each at the other's end points so the overlap becomes whole pieces.
+                overlapping.emplace_back(i, j);
                 for (const auto& [a, b, splitsOfA] :
                      {std::tuple{i, j, &splits[i]}, std::tuple{j, i, &splits[j]}}) {
                     for (const Vec2 p : {startPoint(raw[b]), endPoint(raw[b])}) {
@@ -1323,47 +1498,13 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
             }
         }
     }
-    auto pieceLength = [&](const Piece& p) { return length(raw[p.element]) * (p.t1 - p.t0); };
-    // Pieces that coincide with an earlier one (overlapping elements on the same carrier): a
-    // copy running the same way is the same boundary piece and is dropped; two copies running
-    // opposite ways bound a region of zero width that lies inside the offset shape, so both go.
-    {
-        std::vector<bool> drop(kept.size(), false);
-        PointIndex mids(tol.distance);
-        for (std::size_t k = 0; k < kept.size(); ++k) {
-            const Piece& pk = kept[k];
-            const Vec2 sk = pointAt(raw[pk.element], pk.t0);
-            const Vec2 ek = pointAt(raw[pk.element], pk.t1);
-            const Vec2 mk = pointAt(raw[pk.element], 0.5 * (pk.t0 + pk.t1));
-            mids.forEachNear(mk, [&](std::size_t j) {
-                if (drop[j] || drop[k]) {
-                    return;
-                }
-                const Piece& pj = kept[j];
-                // Only distinct elements on one carrier, and only pieces long enough for the end
-                // point comparison to mean something (shorter ones are dropped on output).
-                if (pk.element == pj.element || !sameCarrier(raw[pk.element], raw[pj.element]) ||
-                    pieceLength(pk) <= 2.0 * tol.distance || pieceLength(pj) <= 2.0 * tol.distance) {
-                    return;
-                }
-                const Vec2 sj = pointAt(raw[pj.element], pj.t0);
-                const Vec2 ej = pointAt(raw[pj.element], pj.t1);
-                if (tol.equalPoints(sk, sj) && tol.equalPoints(ek, ej)) {
-                    drop[k] = true;
-                } else if (tol.equalPoints(sk, ej) && tol.equalPoints(ek, sj)) {
-                    drop[k] = true;
-                    drop[j] = true;
-                }
-            });
-            mids.add(mk, k);
-        }
-        std::vector<Piece> unique;
-        for (std::size_t k = 0; k < kept.size(); ++k) {
-            if (!drop[k]) {
-                unique.push_back(kept[k]);
-            }
-        }
-        kept.swap(unique);
+    // Two points computed separately at the same place on the offset (a piece's end and its
+    // continuation's start) agree to rounding: much closer than this, while distinct split
+    // points lie much further apart.
+    auto coincide = [&](Vec2 p) { return 1e-9 * std::max({1.0, d, std::fabs(p.x), std::fabs(p.y)}); };
+    // Overlapping elements on one carrier (see mergeOnCarriers): one boundary piece per stretch.
+    if (!overlapping.empty()) {
+        kept = mergeOnCarriers(raw, kept, overlapping, d);
     }
     if (kept.empty()) {
         return result;
@@ -1399,13 +1540,24 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
             const std::size_t successor = (k + 1) % nk;
             std::optional<std::size_t> next;
             std::size_t bestRank = nk;
-            starts.forEachNear(pieceEnd(kept[k]), [&](std::size_t j) {
+            double bestGap = kInf;
+            const Vec2 end = pieceEnd(kept[k]);
+            const double same = coincide(end);
+            starts.forEachNear(end, [&](std::size_t j) {
                 if (used[j]) {
                     return;
                 }
-                // Prefer the raw successor, then the nearest piece after k in raw order.
+                // A piece starting exactly here (to rounding) beats one merely within the
+                // tolerance: where split points lie closer together than the tolerance (the
+                // overlapping chamfers of a dense zig-zag) a start a little behind the end would
+                // be a backward step (T-0006). Among equally near starts, prefer the raw
+                // successor, then the nearest piece after k in raw order.
+                const double gap = geometry::distance(pieceStart(kept[j]), end);
                 const std::size_t rank = j == successor ? 0 : (j + nk - k) % nk;
-                if (rank < bestRank) {
+                const bool nearer = gap + same < bestGap;
+                const bool asNear = !nearer && gap <= bestGap + same;
+                if (nearer || (asNear && rank < bestRank)) {
+                    bestGap = std::min(bestGap, gap);
                     bestRank = rank;
                     next = j;
                 }

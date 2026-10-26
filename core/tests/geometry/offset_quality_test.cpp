@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "carvetto/geometry/offset.hpp"
+#include "offset_chain_checks.hpp"
 #include "test_rng.hpp"
 
 using namespace carvetto::geometry;
@@ -77,8 +78,10 @@ struct JunctionStats {
     double maxGap{0.0};
 };
 
-// One junction a -> b. "Backward": b's start lies behind a's end along a's direction of travel,
-// or b sets off straight back along a (a retrace that would be a backward G-code move).
+// One junction a -> b: gap and bit-identity. Backward steps are counted per chain by
+// countBackwardSteps (offset_chain_checks.hpp): starting behind the previous end, retracing it
+// (a near-reversal passes only as a needle tip whose sides diverge), and short spans that run
+// against both neighbours.
 void checkJunction(const Span& a, const Span& b, JunctionStats& st) {
     ++st.junctions;
     const Vec2 e = endPoint(a);
@@ -92,15 +95,6 @@ void checkJunction(const Span& a, const Span& b, JunctionStats& st) {
     if (lineSide && !(e == s)) {
         ++st.notIdentical;
     }
-    bool back = (s - e).dot(tangentAt(a, 1.0)) < -1e-12;
-    if (tangentAt(a, 1.0).dot(tangentAt(b, 0.0)) < -0.9999) {
-        const double probe = 0.5 * std::min(length(a), length(b));
-        const Vec2 q = pointAt(b, std::min(1.0, probe / length(b)));
-        back = back || distanceToSpan(q, a) < 1e-9;
-    }
-    if (back) {
-        ++st.backward;
-    }
 }
 
 void checkJunctions(const std::vector<Contour>& chains, JunctionStats& st) {
@@ -112,6 +106,7 @@ void checkJunctions(const std::vector<Contour>& chains, JunctionStats& st) {
         if (c.closed && n > 1) {
             checkJunction(c.spans[n - 1], c.spans[0], st);
         }
+        st.backward += carvetto::geometry::testing::countBackwardSteps(c, kTol);
     }
 }
 
@@ -780,4 +775,140 @@ TEST_CASE("T-0006 AC3 generative: no gap above 1e-12 and no backward step over 2
     CHECK(st.gaps == 0);
     CHECK(st.backward == 0);
     CHECK(st.notIdentical == 0);
+}
+
+// --- AC3: steep zig-zags (overlapping collinear chamfers) ----------------------------------------
+
+namespace {
+
+// Zig-zag through (origin + (i * pitch, (i % 2) * amplitude)), i = 0..lines; closed contours
+// return straight to the first vertex.
+Contour zigZag(int lines, double pitch, double amplitude, bool closed, Vec2 origin = {}) {
+    std::vector<Vec2> pts;
+    for (int i = 0; i <= lines; ++i) {
+        pts.push_back(origin + Vec2{i * pitch, (i % 2) * amplitude});
+    }
+    Contour c = polyline(pts);
+    if (closed) {
+        c.spans.emplace_back(LineSpan{pts.back(), pts.front()});
+        c.closed = true;
+    }
+    return c;
+}
+
+// Junction defects plus the distance criterion (every point at least d from the input).
+void checkSteepZigZag(const Contour& in, double d, OffsetSide side, JoinType join, double mitre,
+                      JunctionStats& st, std::size_t& closeViolations) {
+    const std::vector<Contour> chains = offsetOpenContour(in, d, side, join, kTol, mitre);
+    checkJunctions(chains, st);
+    for (const Contour& c : chains) {
+        for (const Span& s : c.spans) {
+            for (int k = 0; k <= 8; ++k) {
+                if (distanceToInput(pointAt(s, k / 8.0), in) < d - 1e-6 * std::max(1.0, d)) {
+                    ++closeViolations;
+                }
+            }
+        }
+    }
+}
+
+}  // namespace
+
+TEST_CASE("T-0006 AC3: steep zig-zag, Square: neighbouring chamfers on one line do not step back",
+          "[geometry][offset][open][t0006]") {
+    // Verifier repro (round 2): the chamfers of neighbouring peaks lie on one line and overlap by
+    // 6.12e-4 mm (less than the tolerance). Both copies of the overlap survived and the chain ran
+    // forward, stepped back over the overlap and ran forward again.
+    const Contour in = zigZag(10, 0.32926969138355855, 0.29643099557445474, false);
+    for (const JoinType join : kJoins) {
+        for (const OffsetSide side : kSides) {
+            CAPTURE(static_cast<int>(join), static_cast<int>(side));
+            const std::vector<Contour> chains =
+                offsetOpenContour(in, 2.574417216178353, side, join, kTol, 1.7950104685437678);
+            REQUIRE(chains.size() == 1);
+            JunctionStats st;
+            checkJunctions(chains, st);
+            CHECK(st.gaps == 0);
+            CHECK(st.notIdentical == 0);
+            CHECK(st.backward == 0);
+            // With Square the peaks' chamfers merge into one straight run: every span is longer
+            // than the tolerance and each consecutive pair turns, never continues collinearly.
+            for (const Span& s : chains.front().spans) {
+                CHECK_FALSE(isDegenerate(s, kTol));
+            }
+        }
+    }
+}
+
+TEST_CASE("T-0006 AC3: closed steep zig-zag, Sharp falling back to Square, has no reversals",
+          "[geometry][offset][open][t0006]") {
+    // Verifier fuzz seed 0x60360355: 18 zig-zag lines closed by a line back to the start,
+    // d = 0.0768948, Sharp with mitre limit 2, Left. The peaks exceed the mitre limit, square
+    // off, and their chamfers overlapped by 8.6e-4 mm: 16 reversals.
+    const Contour in = zigZag(18, 0.064345757583246344, 0.37327572041736617, true);
+    for (const JoinType join : kJoins) {
+        for (const OffsetSide side : kSides) {
+            CAPTURE(static_cast<int>(join), static_cast<int>(side));
+            const std::vector<Contour> chains = offsetOpenContour(in, 0.07689480169075523, side, join, kTol, 2.0);
+            // The contour runs clockwise: Left is outside. Right is inside the teeth, which are too
+            // thin for d, so only Sharp/Square corner regions at the valleys may leave anything.
+            if (side == OffsetSide::Left) {
+                REQUIRE_FALSE(chains.empty());
+            }
+            JunctionStats st;
+            checkJunctions(chains, st);
+            CHECK(st.gaps == 0);
+            CHECK(st.notIdentical == 0);
+            CHECK(st.backward == 0);
+        }
+    }
+}
+
+TEST_CASE("T-0006 AC3 generative: steep zig-zags at all joins, both sides, open and closed",
+          "[geometry][offset][open][t0006][generative]") {
+    // Pitch, amplitude and distance chosen so that the chamfers or mitres of neighbouring peaks
+    // land on one line with overlaps from far above to well below the tolerance; irrational
+    // factors keep the overlaps off round numbers. Some inputs sit far from the origin.
+    JunctionStats st;
+    std::size_t closeViolations = 0;
+    std::size_t offsets = 0;
+    for (const double pitch : {0.0643457575832463, 0.1371, 0.32926969138355855}) {
+        for (const double steep : {0.9013, 2.2361, 5.8011}) {
+            for (const double dOverPitch : {0.6180, 1.1952, 3.1416, 7.8174}) {
+                for (const int lines : {7, 12}) {
+                    for (const bool closed : {false, true}) {
+                        for (const Vec2 origin : {Vec2{}, Vec2{37.31, -112.97}}) {
+                            const Contour in = zigZag(lines, pitch, pitch * steep, closed, origin);
+                            const double d = pitch * dOverPitch;
+                            for (const JoinType join : kJoins) {
+                                for (const double mitre : {1.0, 1.4142, 2.0, 4.1}) {
+                                    if (join != JoinType::Sharp && mitre != 2.0) {
+                                        continue;  // the limit only matters for Sharp (and arcs)
+                                    }
+                                    for (const OffsetSide side : kSides) {
+                                        const std::size_t before = st.backward + st.gaps + st.notIdentical;
+                                        const std::size_t closeBefore = closeViolations;
+                                        checkSteepZigZag(in, d, side, join, mitre, st, closeViolations);
+                                        if (st.backward + st.gaps + st.notIdentical != before ||
+                                            closeViolations != closeBefore) {
+                                            CAPTURE(pitch, steep, d, lines, closed, origin.x,
+                                                    static_cast<int>(join), mitre, static_cast<int>(side));
+                                            FAIL_CHECK("steep zig-zag defect");
+                                        }
+                                        ++offsets;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    CAPTURE(offsets, st.junctions);
+    CHECK(offsets == 3 * 3 * 4 * 2 * 2 * 2 * 6 * 2);
+    CHECK(st.backward == 0);
+    CHECK(st.gaps == 0);
+    CHECK(st.notIdentical == 0);
+    CHECK(closeViolations == 0);
 }

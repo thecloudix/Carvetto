@@ -65,15 +65,31 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// input (exactly |distance| for Round), up to the sub-tolerance junction repairs described
 /// under "Junctions".
 ///
+/// Known limitation (input with sub-tolerance spans): spans no longer than tol.distance are left
+/// out of the input before offsetting, so the guarantees above hold for that flattened input,
+/// not the original. Next to such a span an offset point may be short of |distance| from the
+/// original input by up to about tol.distance, a Round join arc about the neighbouring vertex
+/// may run up to about tol.distance beyond |distance|, and a stretch of valid offset (seen up
+/// to ~1 mm) may be missing. Fuzzing hits this in roughly 1 of 1000 inputs that contain such
+/// spans; inputs without them are unaffected. Clean the input (join or remove sub-tolerance
+/// spans) where this matters.
+///
 /// Approach: build the raw offset (offset spans + joins + inside-corner connectors), split it
 /// at its self-intersections and where it crosses the rest of the |distance|-neighbourhood
 /// boundary (the outer arcs of the circles about the vertices, offsets on both sides), drop the
 /// pieces closer than |distance| to the input, and with Sharp/Square also the pieces strictly
 /// inside the region a mitre or chamfer adds (so a neighbour running past a mitre loses its
-/// stub), then stitch the rest and snap the junctions. Candidate pairs come from uniform grids
-/// and raw elements lying wholly within |distance| of one input line are discarded up front, so
-/// the cost stays close to linear in the span count even when |distance| is large compared with
-/// the features. See ADR-0012.
+/// stub), then stitch the rest and snap the junctions. Where raw elements on one line or circle
+/// overlap (e.g. the chamfers of neighbouring peaks of a steep zig-zag) their surviving pieces
+/// are merged along that carrier so each stretch is kept once (or dropped where copies run both
+/// ways), so overlaps never make a chain step back. Candidate pairs come from uniform grids and
+/// raw elements lying wholly within |distance| of one input line are discarded up front, so the
+/// cost stays close to linear in the span count even when |distance| is large compared with the
+/// features. The constant factor is not uniform, though: on a dense zig-zag with |distance| many
+/// times its pitch, Sharp and Square are 10-20x slower than Round, because every corner's mitre
+/// or chamfer reaches out about |distance| and overlaps hundreds of its neighbours', which
+/// multiplies the pieces to split and prune (pitch 0.02, amplitude 1, |distance| 7, 1000 spans,
+/// Release: about 14 s against 0.7 s for Round). See ADR-0012.
 ///
 /// Several chains: when distant parts of the path come within 2 x |distance| of each other the
 /// surviving offset falls apart into several chains, and all of them are returned, ordered by
