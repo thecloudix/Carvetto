@@ -320,6 +320,8 @@ Acceptance criteria:
   1. One ramp implementation used by both; existing Profile and Pocket tests and goldens unchanged (or regenerated with a hand-checked diff explained).
   2. Both take `tooling::Tool` (+ cutting data) and return the same diagnostics type.
   3. 5,000 small closed vectors profile and pocket in < 2 s Release (CPU time), scaling ≤ 2.5× per doubling.
+  4. Pocket rest tools build their pattern only over the rest areas (not the full pattern then clipped): the 200-tooth comb with a 0.1 mm rest tool (T-0121 verifier) runs ≥ 5× faster than at T-0121 merge.
+  5. Raster and rest toolpaths route links through cleared area (as Offset does since T-0121 round 2), so raster pockets split by islands and far-apart rest areas retract only between disconnected regions.
 
 Owner decisions 2026-10-26 for T-0120/T-0121 (record in ADR-0016/0017): tab length = material left (raised path = length + tool diameter); separate last pass runs after all roughing; nested closed vectors form a region (inner = hole); climb assumes M3 (clockwise) spindle, ramps at feed rate, 3D tabs ramp at 45°, leads only on each cut's first entry and last exit, left-to-right ordering column by column — accepted as proposed; Pocket Profile Pass First/Last/None applies to the Offset strategy too (not only Raster); when a lead-in does not fit at the chosen start, Profile moves the start along the vector and warns (StartMoved).
 
