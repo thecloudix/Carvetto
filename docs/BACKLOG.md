@@ -94,7 +94,7 @@ Acceptance criteria:
   4. A Bezier that bulges ≤ ~tol outside the arc it joins and re-crosses it within ~10·tol of the junction reports the re-crossing (sign test not defeated by the exact-zero sample at the junction). Regression: Bez{{-0.18860739840346241,3.8634722338314074},{0.0522167808921572,4.3830641573127442},{1.6272051316098195,-2.0179279547519577},{1.9578386933824259,-2.3369534285717775}} vs Arc{{6.4363713372296427,1.9356191918458676},6.1896794294008179,-2.3797254616523524,3.0863225397506588,CW}.
   5. ADR-0009 guarantee bullets amended to match; the "Known limitations (tracked as T-0007)" note removed from intersect.hpp.
 
-### T-0008 Exact line/arc intersections: end touches and shared endpoints   [status: ready]
+### T-0008 Exact line/arc intersections: end touches and shared endpoints   [status: in-progress]
 Phase: 1 (before Trim / Join / Vector Validator)   Module: core/geometry   Depends on: T-0007
 Goal: The analytic line/line, line/arc and arc/arc paths (not the Bezier pipeline) miss end touches with 0 < h ≤ tol, and can miss an EXACT shared endpoint. Found while verifying T-0007; identical on main.
 Acceptance criteria:
@@ -104,6 +104,23 @@ Acceptance criteria:
   4. Regression vs main on ≥ 50k random pairs: every difference is an improvement by brute force; symmetry bit-exact.
   6. Ends inside near-coincident (hugging) stretches — e.g. a Bezier lying within tol of an arc that extends past it — are reported: an end of either span within tol of the other's interior gives one tangent hit even when the curves run within tol of each other along that stretch. Today ~38–45% are missed (main and T-0007 alike; T-0007 round-3 verifier measured 44.5% and 44.8% on two seeds). Generator: Beziers within tol of an arc extending ≤ 0.3 rad past them, ≥ 6,000 pairs, vs brute force → 0 misses of ends whose foot is ≥ 0.01 mm from the other span's end.
   5. Root-cause fix found in T-0007: `closestPoint(ArcSpan)` (contour_ops.cpp) returns the start point but parameter 1 when the query's angle lies a rounding error before the arc's start. Fix it at the source (parameter 0), add a fine-angle regression around both ends of CW/CCW partial arcs, and remove T-0007's wrapper in intersect.cpp. Check every other caller (contour closestPoint/distanceTo, offset pruning) is unaffected or improved.
+
+### T-0009 Offsets of inputs with sub-tolerance spans   [status: blocked]
+Phase: 1 (before Profile/Pocket ship)   Module: core/geometry   Depends on: T-0006
+Goal: `flattenForOffset` drops spans ≤ `tol.distance`, so the distance/coverage guarantees of `offsetOpenContour` hold only for the flattened input. Next to a dropped span an offset point can be short of d by up to ~tol (9e-4 mm seen), a Round arc about the neighbouring vertex can be up to ~tol over d (8e-4 mm seen), and up to ~1 mm of valid offset can be missing (seed 0x60660ace). About 1 in 1000 such inputs; already in main before T-0006. Found by the T-0006 verifier and coder.
+Acceptance criteria:
+  1. Sub-tolerance spans are merged into a neighbour (path kept continuous) or their end points treated as vertices with full circles in pruning/coverage — coder's choice, recorded in ADR-0012.
+  2. 0 distance, Round-over-d and coverage violations over ≥ 20k fuzzed inputs containing sub-tolerance spans (all joins, both sides, open and closed), judged by an exact checker.
+  3. No result worse than main on inputs without sub-tolerance spans; T-0006 speed criteria still hold.
+  4. The limitation note in offset.hpp and ADR-0012 A1 is removed or narrowed to what remains.
+
+### T-0016 Sharp/Square offset cost on dense hatch-like vectors   [status: blocked]
+Phase: 1 (alongside T-0120/T-0121)   Module: core/geometry   Depends on: T-0006
+Goal: Scaling is linear, but on dense zig-zags with d ≫ pitch Sharp/Square joins are 10–20× slower than Round (1000-span zig-zag, pitch 0.02, amplitude 1, d=7: ~14 s Release vs 0.7 s Round). Hatch- and fill-like vectors will hit this in Profile/Pocket.
+Acceptance criteria:
+  1. The 1000-span case above runs within 3× of Round for Sharp and Square (Release, CPU time), and 4000 spans scale ≤ 2.5× per doubling.
+  2. Results bit-identical to, or judged no worse than, the T-0006 output on the T-0006 fuzz set (all joins, both sides).
+  3. ADR-0012 cost caveat updated with the new measurements.
 
 ### T-0010 Document model: Job, Sheet, Layer, Object, UndoStack                [status: done]
 Phase: 0   Module: core/document   Depends on: T-0001
