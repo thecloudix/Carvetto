@@ -5,6 +5,8 @@ What it rewrites, from the current sources:
   - core/tests/golden/post/<post>_fixture.nc for every shipped post (posts/*.pp listed in
     core/tests/post/shipped_posts_test.cpp), from the shared fixture in post_fixture.hpp;
   - core/tests/golden/post/grbl_square.nc;
+  - core/tests/golden/toolpath/profile_rect_tabs.moves and profile_rect_tabs_grbl.nc (T-0120; hand-check
+    against the notes in docs/adr/0016-profile-toolpath.md);
   - data/tools/starter_tools.json, re-exported in the exporter's canonical form (sorted keys,
     id order, rounded numbers), so hand edits to the database become byte-stable.
 
@@ -28,7 +30,7 @@ import subprocess
 import sys
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
-OUTPUTS = ["core/tests/golden/post", "data/tools/starter_tools.json"]
+OUTPUTS = ["core/tests/golden/post", "core/tests/golden/toolpath", "data/tools/starter_tools.json"]
 
 
 def find_test_binary(build_dir: pathlib.Path) -> pathlib.Path:
