@@ -63,7 +63,8 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// when the offset stays in one piece it is one chain of n spans, minus consumed ones, plus one
 /// per joined outside corner, and every point of every chain is at least |distance| from the
 /// input (exactly |distance| for Round), up to the sub-tolerance junction repairs described
-/// under "Junctions".
+/// under "Junctions" (bounded there) and, for input that is not continuous or holds
+/// sub-tolerance spans, the limitations described there and just below.
 ///
 /// Known limitation (input with sub-tolerance spans): spans no longer than tol.distance are left
 /// out of the input before offsetting, so the guarantees above hold for that flattened input,
@@ -81,19 +82,26 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// pieces closer than |distance| to the input, and with Sharp/Square also the pieces strictly
 /// inside the region a mitre or chamfer adds (so a neighbour running past a mitre loses its
 /// stub), then stitch the rest and snap the junctions. Where raw elements on one line or circle,
-/// or on nearly the same one (within tol.distance / 2 over their common stretch, and nearly
-/// parallel over their whole length: e.g. the chamfers of neighbouring peaks of a steep zig-zag
-/// whose vertices carry 1e-9..1e-4 mm of noise), overlap, their surviving pieces are merged along
-/// the carrier: each stretch is kept once, on the copy farthest from the input (which is at least
-/// |distance| from every copy's input), or dropped where as many copies run each way. So
-/// overlaps never make a chain step back or traverse a stretch twice. Candidate pairs come from
+/// or on nearly the same one, overlap, their surviving pieces are merged along the carrier: each
+/// stretch is kept once, on the copy outermost along the whole of it (handing over where two
+/// copies cross; that copy is at least |distance| from every copy's input), or dropped where as
+/// many copies run each way. "Nearly the same" (e.g. the chamfers of neighbouring peaks of a steep
+/// zig-zag whose vertices carry 1e-9..1e-4 mm of noise) means: pieces that share a stretch of
+/// positive length, of elements at most 1e-3 rad apart that drift apart by no more than
+/// tol.distance / 2 over their length, and within tol.distance / 2 of each other's carrier for
+/// copies running the same way, within the snapping allowance below for copies running opposite
+/// ways (wider opposite pairs bound a real thin feature, such as a needle tip, and are kept).
+/// Pieces are never projected onto another element: each merged stretch is part of its owner's
+/// own surviving piece. So overlaps never make a chain step back or traverse a stretch twice.
+/// Candidate pairs come from
 /// uniform grids and raw elements lying wholly within |distance| of one input line are
 /// discarded up front, so the cost stays close to linear in the span count even when |distance|
 /// is large compared with the features. The constant factor is not uniform, though: on a dense
 /// zig-zag with |distance| many times its pitch, Sharp and Square are 10-30x slower than Round,
 /// because every corner's mitre or chamfer reaches out about |distance| and overlaps hundreds of
 /// its neighbours', which multiplies the pieces to split and prune (pitch 0.02, amplitude 1,
-/// |distance| 7, 1000 spans, Release: about 18 s against 0.7 s for Round). See ADR-0012.
+/// |distance| 7, 1000 spans, Release: about 21 s against 0.7 s for Round; tracked as T-0016).
+/// See ADR-0012.
 ///
 /// Several chains: when distant parts of the path come within 2 x |distance| of each other the
 /// surviving offset falls apart into several chains, and all of them are returned, ordered by
@@ -107,26 +115,44 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// between two arcs (whose end points are computed from centre and angles, ADR-0005) usually
 /// bit-identical too (the second arc's centre is nudged by a few ulps), otherwise within
 /// 1e-12 x max(1, |x|, |y|, radius) mm (at most 6.3e-13 mm over 540 000 fuzzed offsets with
-/// coordinates up to ~100 mm), so no span starts behind the previous one's end. Pieces no
+/// coordinates up to ~100 mm), so no span starts behind the previous one's end. That holds for
+/// continuous input (consecutive input spans sharing their end points): where the input itself
+/// has a gap, an arc-to-arc junction can keep a gap of up to about that input gap, and a Round
+/// join there can lie up to about that gap beyond |distance|. Pieces no
 /// longer than tol.distance are dropped where their neighbours can be joined without them:
 /// trimmed or extended along their own carriers to where these meet (extensions staying at least
 /// |distance| from the input, and for Round not beyond it), or, for a sub-tolerance step
 /// sideways, by bending the last tolerance of a neighbour outwards onto the other's end.
 /// Otherwise they are kept (so a chain may hold such a short span where the offset really has a
 /// sub-tolerance feature), and where there is nothing to keep a straight bridge shorter than
-/// the tolerance closes the gap. Such a bridge may come closer to the input than |distance| by its sagitta
-/// against the neighbourhood's round boundary, at most tol.distance^2 / (8 |distance|)
-/// (1.25e-7 mm at |distance| = 1, 2.5e-6 mm at 0.05 with the default tolerance); snapped
+/// the tolerance closes the gap. Such a bridge may come closer to the input than |distance| by
+/// its sagitta against the neighbourhood's round boundary, at most tol.distance^2 / (8 |distance|)
+/// (1.25e-7 mm at |distance| = 1, 2.5e-6 mm at 0.05 with the default tolerance), and for Round
+/// never goes beyond |distance|: where it would (a needle tip whose rounded end is missing), the
+/// missing arc about the nearest input point is put in if it passes the checks, and otherwise
+/// the chain is cut there into two chains, each continuous, rather than bridged; snapped
 /// extensions and bends by at most min(5e-7 x max(1, |distance|), 0.1 tol.distance^2 / |distance|).
 /// Where a junction gap is closed by moving a line's end (gaps up to 1e-9 x max(1, |x|, |y|)),
-/// the end that moves away from the input is moved, so the line is never tilted inwards. A span
-/// no longer than tol.distance that would step back against the direction of travel (its chord
-/// running against both neighbours, or a retrace), as left where three or more carriers nearly
-/// meet within the tolerance, is removed and its neighbours joined as above, or by a straight
-/// bridge that runs forwards with both (taking over the first or last tolerance of one if
-/// needed) and passes the same distance checks; only if none of these is possible would it stay
-/// (not seen over the fuzzing and noise sweeps of ADR-0012 A1). So a stretch of valid offset no
-/// longer than the tolerance may be missing or straightened.
+/// the end that moves away from the input is moved, so the line is never tilted inwards. Every
+/// extension, bend or bridge is checked against the input at points at most tol.distance / 8
+/// apart. A span no longer than tol.distance that would step back against the direction of travel
+/// (its chord running against both neighbours, or a retrace), as left where three or more
+/// carriers nearly meet within the tolerance, is removed (in chains of three or more spans) and
+/// its neighbours joined: two arcs on nearly one circle (centres and radii within tol.distance /
+/// 2 in all) by one arc on the circle of either, else as above, else by a straight bridge, at
+/// most 2 x tol.distance long, that runs forwards with both (taking over the first or last
+/// tolerance of one if needed) and passes the same distance checks; only if none of these is
+/// possible would it stay (not seen over the fuzzing and noise sweeps of ADR-0012 A1). A span
+/// that runs straight back along its neighbour within the rounding unit of the coordinates
+/// (2e-9 x max(1, |distance|, |x|, |y|); two arcs only if also on one circle to that unit) is a
+/// needle tip too thin to follow at those coordinates: it is removed and the neighbour cut back to
+/// match. Consecutive arcs on one circle to rounding (1e-12 x the coordinates) running the same
+/// way are one arc. A closed chain narrower than the tolerance encloses nothing a tool could
+/// follow and is dropped: two spans that never part by more than tol.distance / 2, or any loop
+/// whose mean width (2 x area / perimeter) is below tol.distance / 8 and whose every point lies
+/// within tol.distance / 8 of another of its spans (e.g. the lens between two nearly co-circular
+/// arcs running opposite ways). So a stretch of valid offset no longer than the tolerance, or
+/// such a needle tip or loop, may be missing or straightened.
 ///
 /// An empty or degenerate contour, or a non-finite `distance`, yields no chains; a zero
 /// `distance` yields the (flattened) input as one chain. A closed contour is accepted too: the

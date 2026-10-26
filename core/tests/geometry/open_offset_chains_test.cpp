@@ -8,7 +8,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <ctime>
 #include <optional>
 #include <random>
 #include <string>
@@ -18,6 +17,7 @@
 
 #include "carvetto/geometry/offset.hpp"
 #include "carvetto/geometry/transform2.hpp"
+#include "cpu_time.hpp"
 #include "offset_chain_checks.hpp"
 
 using namespace carvetto::geometry;
@@ -870,11 +870,11 @@ TEST_CASE("T-0004 AC3: a 2000-span polyline offsets correctly (timing checked in
     for (const JoinType join : kJoins) {
         for (const OffsetSide side : kSides) {
             CAPTURE(static_cast<int>(join), static_cast<int>(side));
-            // Process CPU time, not wall-clock, so parallel ctest load does not fail it (T-0006).
-            const std::clock_t t0 = std::clock();
+            // Process CPU time, not wall-clock, so parallel ctest load does not fail it (T-0006), on
+            // Windows too (T-0017).
+            const double t0 = carvetto::test::processCpuSeconds();
             const std::vector<Contour> chains = offsetOpenContour(in, 1.5, side, join, kTol);
-            const double seconds =
-                static_cast<double>(std::clock() - t0) / static_cast<double>(CLOCKS_PER_SEC);
+            const double seconds = carvetto::test::processCpuSeconds() - t0;
             REQUIRE_FALSE(chains.empty());
 #ifdef NDEBUG
             CHECK(seconds < 0.5);  // AC3: Release build
@@ -898,19 +898,19 @@ TEST_CASE("T-0004 AC3: offset cost grows about linearly with the span count (CPU
           "[geometry][offset][open][t0004][perf]") {
     // Same spiral sampled with 1000 and 4000 spans: linear cost gives a ratio of ~4, quadratic
     // ~16. A ratio of CPU times holds in Debug and Release alike (T-0006).
-    const Contour small = densePolyline(1000);
-    const Contour large = densePolyline(4000);
+    const Contour shortSpiral = densePolyline(1000);
+    const Contour longSpiral = densePolyline(4000);
     auto cost = [](const Contour& in, int reps) {
-        const std::clock_t t0 = std::clock();
+        const double t0 = carvetto::test::processCpuSeconds();
         std::size_t chains = 0;
         for (int r = 0; r < reps; ++r) {
             chains += offsetOpenContour(in, 1.5, OffsetSide::Left, JoinType::Round, kTol).size();
         }
         CHECK(chains > 0);
-        return static_cast<double>(std::clock() - t0) / static_cast<double>(CLOCKS_PER_SEC) / reps;
+        return (carvetto::test::processCpuSeconds() - t0) / reps;
     };
-    const double smallCost = std::max(cost(small, 4), 1e-4);
-    const double largeCost = cost(large, 1);
+    const double smallCost = std::max(cost(shortSpiral, 4), 1e-4);
+    const double largeCost = cost(longSpiral, 1);
     CAPTURE(smallCost, largeCost);
     CHECK(largeCost < 8.0 * smallCost);
 }

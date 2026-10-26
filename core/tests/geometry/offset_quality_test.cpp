@@ -7,14 +7,15 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <ctime>
 #include <optional>
 #include <string>
 #include <tuple>
 #include <variant>
 #include <vector>
 
+#include "carvetto/geometry/intersect.hpp"
 #include "carvetto/geometry/offset.hpp"
+#include "cpu_time.hpp"
 #include "offset_chain_checks.hpp"
 #include "test_rng.hpp"
 
@@ -62,8 +63,9 @@ Contour polyline(const std::vector<Vec2>& pts) {
     return c;
 }
 
-double cpuSeconds(std::clock_t since) {
-    return static_cast<double>(std::clock() - since) / static_cast<double>(CLOCKS_PER_SEC);
+// CPU seconds since `since` (a processCpuSeconds() reading): CPU time on Windows too.
+double cpuSeconds(double since) {
+    return carvetto::test::processCpuSeconds() - since;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -383,7 +385,7 @@ TEST_CASE("T-0006 AC1: dense input at a large distance offsets quickly (CPU time
             for (const JoinType join : kJoins) {
                 for (const OffsetSide side : kSides) {
                     CAPTURE(c.name, d, static_cast<int>(join), static_cast<int>(side));
-                    const std::clock_t t0 = std::clock();
+                    const double t0 = carvetto::test::processCpuSeconds();
                     const std::vector<Contour> chains = offsetOpenContour(c.input, d, side, join, kTol);
                     const double seconds = cpuSeconds(t0);
                     REQUIRE_FALSE(chains.empty());
@@ -415,7 +417,7 @@ TEST_CASE("T-0006 AC1: cost grows about linearly with the length of a dense walk
           "[geometry][offset][open][t0006][perf]") {
     // Before T-0006 a rejected piece scanned every input span within d, so doubling the walk
     // (same density) roughly quadrupled the time at d = 2. Measured as a ratio, so it holds in
-    // Debug too; the repetitions keep the shorter run long enough for std::clock.
+    // Debug too; the repetitions keep the shorter run long enough for the CPU clock.
     SplitMix rng{7u};
     std::vector<Vec2> pts{{0.0, 0.0}};
     for (int i = 0; i < 2000; ++i) {
@@ -424,7 +426,7 @@ TEST_CASE("T-0006 AC1: cost grows about linearly with the length of a dense walk
     const Contour longWalk = polyline(pts);
     const Contour shortWalk = polyline(std::vector<Vec2>(pts.begin(), pts.begin() + 1001));
     auto cost = [](const Contour& in, int reps) {
-        const std::clock_t t0 = std::clock();
+        const double t0 = carvetto::test::processCpuSeconds();
         std::size_t chains = 0;
         for (int r = 0; r < reps; ++r) {
             chains += offsetOpenContour(in, 2.0, OffsetSide::Left, JoinType::Round, kTol).size();
@@ -1118,4 +1120,802 @@ TEST_CASE("T-0006 AC3 generative: steep zig-zags with vertex noise 1e-12..1e-4 m
     CHECK(total.overlaps == 0);
     CHECK(total.gaps == 0);
     CHECK(total.tooClose == 0);
+}
+
+// ---------------------------------------------------------------------------------------------
+// T-0017: residuals of T-0006 round 3 (verifier repros, inputs inlined).
+// ---------------------------------------------------------------------------------------------
+
+namespace {
+
+// Worst shortfall below d and (for Round) excess beyond d over every chain, sampled finely.
+struct DistanceExtremes {
+    double under{0.0};
+    double over{0.0};
+};
+
+DistanceExtremes distanceExtremes(const std::vector<Contour>& chains, const Contour& in, double d) {
+    DistanceExtremes ex;
+    for (const Contour& c : chains) {
+        for (const Span& s : c.spans) {
+            for (int k = 0; k <= 2000; ++k) {
+                const double m = distanceToInput(pointAt(s, k / 2000.0), in);
+                ex.under = std::max(ex.under, d - m);
+                ex.over = std::max(ex.over, m - d);
+            }
+        }
+    }
+    return ex;
+}
+
+// Every AC3 defect over all chains: backward steps (shared checker), gaps, overlaps.
+void requireCleanChains(const std::vector<Contour>& chains, double overlapLateral) {
+    JunctionStats js;
+    checkJunctions(chains, js);
+    CHECK(js.backward == 0);
+    CHECK(js.gaps == 0);
+    CHECK(js.notIdentical == 0);
+    std::string why;
+    const std::size_t overlaps = carvetto::geometry::testing::countOverlaps(chains, overlapLateral, &why);
+    CAPTURE(why);
+    CHECK(overlaps == 0);
+}
+
+}  // namespace
+
+TEST_CASE("T-0017 AC1: a short piece at 11-20 degrees to a carrier is not merged into it (R4)",
+          "[geometry][offset][open][t0017]") {
+    // Six exact lines turning gently (11-20 degrees apart, 1.5-2.5e-3 mm long). The round-3
+    // "nearly the same carrier" test (|u x v| x length <= tol/2) chained all their offsets into
+    // one group and projected them onto the first one's axis: a second chain, a 1.57e-3 mm span
+    // 1.86e-4 mm inside d (Square, Right).
+    const Contour in = polyline({{0.0036197263399135272, -0.29193303409146748},
+                                 {0.0049012208081527647, -0.2944254877427343},
+                                 {0.006583562492423152, -0.29666697825870963},
+                                 {0.0086117770255438111, -0.29860111865782218},
+                                 {0.010933978192457157, -0.30017017411134422},
+                                 {0.013068744511359252, -0.30198602819125325},
+                                 {0.015475029509577408, -0.30342281132840071}});
+    const double d = 0.03169564160714932;
+    const double mitre = 2.1158214539163573;
+    for (const JoinType join : kJoins) {
+        for (const OffsetSide side : kSides) {
+            CAPTURE(static_cast<int>(join), static_cast<int>(side));
+            const std::vector<Contour> chains = offsetOpenContour(in, d, side, join, kTol, mitre);
+            CHECK(chains.size() == 1);
+            const DistanceExtremes ex = distanceExtremes(chains, in, d);
+            CHECK(ex.under <= distanceAllowance(d, Vec2{}));
+            if (join == JoinType::Round) {
+                CHECK(ex.over <= distanceAllowance(d, Vec2{}));
+            }
+            requireCleanChains(chains, 1e-6);
+        }
+    }
+}
+
+TEST_CASE("T-0017 AC1: nearly co-circular arcs keep the offset at least d away (R5)",
+          "[geometry][offset][open][t0017]") {
+    // A line and two arcs whose circles differ by ~1e-5 mm: the outer copy, chosen at the middle
+    // of a merged stretch, was the inner one at its ends (2.4e-6 mm inside d, Sharp, Right).
+    Contour in;
+    in.spans.emplace_back(
+        LineSpan{{-0.54490984941556175, 0.47713618213141934}, {-0.65087324196032126, 0.74692846369896915}});
+    in.spans.emplace_back(ArcSpan{{-0.66128590342338933, 0.74283879542663755},
+                                  0.011186997153936269,
+                                  0.37424873933798614,
+                                  3.7359281215955029,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(ArcSpan{{-0.66130088294241851, 0.74282867147309783},
+                                  0.011168917319157794,
+                                  -2.5472571855840811,
+                                  -1.6946626886190583,
+                                  ArcDirection::CCW});
+    const double d = 0.1712170592382718;
+    const double mitre = 2.3199483387667215;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Right, JoinType::Sharp, kTol, mitre);
+    REQUIRE(chains.size() == 1);
+    CHECK(distanceExtremes(chains, in, d).under <= 5e-7);
+    for (const JoinType join : kJoins) {
+        for (const OffsetSide side : kSides) {
+            CAPTURE(static_cast<int>(join), static_cast<int>(side));
+            const std::vector<Contour> all = offsetOpenContour(in, d, side, join, kTol, mitre);
+            CHECK(distanceExtremes(all, in, d).under <= distanceAllowance(d, Vec2{}));
+            requireCleanChains(all, 1e-6);
+        }
+    }
+}
+
+TEST_CASE("T-0017 AC1: opposite strands ~1e-4 mm apart keep their needle tip, Round stays at d (R6)",
+          "[geometry][offset][open][t0017]") {
+    // Eight exact lines near (-5280, -5270) with two strands a little more than 2d apart running
+    // opposite ways. Their offsets, 0.8-1.9e-4 mm apart, form a genuine thin needle. Round 3
+    // merged them as copies and dropped both, leaving a sliver loop and a sideways bridge 9.5e-5 mm
+    // beyond d, and 4 chains where main gives 3. Opposite copies are now only merged on exactly
+    // one carrier (ADR-0012 section 5).
+    const Contour in = polyline({{-5281.0715789769911, -5268.2784733563021},
+                                 {-5284.9414577865855, -5267.8446579537076},
+                                 {-5288.7708788228092, -5290.2632742408732},
+                                 {-5286.9348942352071, -5291.4753527022858},
+                                 {-5284.2200656054292, -5269.286576947201},
+                                 {-5280.3502977692388, -5269.7213822953418},
+                                 {-5276.2576290492298, -5245.9702232636519},
+                                 {-5281.4940880823642, -5268.2313251412743},
+                                 {-5285.3638950837394, -5267.7968691687456}});
+    const double d = 0.67641900916302644;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Left, JoinType::Round, kTol, 2.0);
+    CHECK(chains.size() == 3);
+    const Vec2 farAway{-5281.0, -5268.0};
+    const DistanceExtremes ex = distanceExtremes(chains, in, d);
+    CHECK(ex.under <= distanceAllowance(d, farAway));
+    CHECK(ex.over <= distanceAllowance(d, farAway));
+    requireCleanChains(chains, 1e-6);
+}
+
+TEST_CASE("T-0017 AC2: three-span chains get the back-step safety net; co-circular arcs merge (0x7300029)",
+          "[geometry][offset][open][t0017]") {
+    // Verifier generator gen3, seed 0x7300029 (co-circular noise): input arcs split in two with
+    // ~2e-8 mm of noise, so the offsets' circles are nested and never meet. One chain was
+    // [arc, 6.5e-8 mm line running backwards, arc]; the safety net skipped chains of 3 spans. Now
+    // the two arcs become one.
+    Contour in;
+    in.spans.emplace_back(ArcSpan{{4.0771360287070938e-08, -2.6491191809783244e-09},
+                                  0.97686775285815508,
+                                  -0.084521906830785198,
+                                  0.51371505051026611,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(
+        LineSpan{{0.85077847712394983, 0.4800485978191919}, {22.823916188798368, 12.878310641376288}});
+    in.spans.emplace_back(
+        LineSpan{{22.823916188798368, 12.878310641376288}, {25.536721000586631, -5.588673086139968}});
+    in.spans.emplace_back(
+        LineSpan{{25.536721000586631, -5.588673086139968}, {2.0395558685517137, -0.037802706440730069}});
+    in.spans.emplace_back(ArcSpan{{-3.5099739204654406e-08, -8.1836547595284496e-09},
+                                  2.0399062057151083,
+                                  -0.018532647326693574,
+                                  -0.39553391165788609,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(
+        LineSpan{{1.8824070100285553, -0.78597777158817572}, {21.85893111380544, -9.1269493908143104}});
+    in.spans.emplace_back(
+        LineSpan{{21.85893111380544, -9.1269493908143104}, {21.388027898563045, 15.558140734969852}});
+    in.spans.emplace_back(
+        LineSpan{{21.388027898563045, 15.558140734969852}, {1.5724223496101351, 1.2995019723108592}});
+    in.spans.emplace_back(ArcSpan{{-1.8222062058436283e-08, -1.2713031498273938e-08},
+                                  2.0399062507723351,
+                                  0.69065219871825922,
+                                  -0.91143433170557686,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(
+        LineSpan{{1.2496724747413674, -1.6123077290843861}, {14.821831581440948, -19.122893040790881}});
+    in.spans.emplace_back(
+        LineSpan{{14.821831581440948, -19.122893040790881}, {-12.154150677486221, -21.797895592825167}});
+    in.spans.emplace_back(
+        LineSpan{{-12.154150677486221, -21.797895592825167}, {-0.58415529700295565, -0.78296438693836323}});
+    in.spans.emplace_back(ArcSpan{{3.181346313573212e-08, 8.2326847196507777e-09},
+                                  0.97686779673105373,
+                                  -2.2117849393835041,
+                                  -0.92627887375258466,
+                                  ArcDirection::CCW});
+    const double d = 0.531519219172784;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Right, JoinType::Sharp, kTol, 2.0);
+    requireCleanChains(chains, 1e-6);
+    // The chain round the split arcs is one arc of radius r + d ~ 1.508 from angle -0.0847 on.
+    bool merged = false;
+    for (const Contour& c : chains) {
+        if (c.spans.size() == 1 && std::holds_alternative<ArcSpan>(c.spans[0])) {
+            const auto& arc = std::get<ArcSpan>(c.spans[0]);
+            merged = merged || (std::fabs(arc.radius - 1.50838699) < 1e-6 &&
+                                std::fabs(arc.startAngle + 0.0847310235) < 1e-6);
+        }
+    }
+    CHECK(merged);
+    CHECK(distanceExtremes(chains, in, d).under <= distanceAllowance(d, Vec2{}));
+    for (const JoinType join : kJoins) {
+        for (const OffsetSide side : kSides) {
+            CAPTURE(static_cast<int>(join), static_cast<int>(side));
+            requireCleanChains(offsetOpenContour(in, d, side, join, kTol, 2.0), 1e-6);
+        }
+    }
+}
+
+TEST_CASE("T-0017 AC3: a closed lens of two arcs narrower than the tolerance is dropped (0x82004c8)",
+          "[geometry][offset][open][t0017]") {
+    // Verifier legacy generator, seed 0x82004c8 (closed input, Sharp, Right, d = 3.33): a closed
+    // chain of two arcs on nearly one circle running opposite ways, 0.018 mm long and far
+    // narrower than the tolerance (main identical). Such a loop encloses no width a tool could
+    // follow and only retraces itself; it is dropped like a two-line sliver.
+    Contour in;
+    in.closed = true;
+    in.spans.emplace_back(ArcSpan{{-0.013668801848060654, -0.025068497936788177},
+                                  0.02855285857437569,
+                                  1.0716010092392056,
+                                  0.69025107450886569,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(ArcSpan{{1.3337557731103167, -0.39067286236501525},
+                                  1.3798539078669199,
+                                  2.8597413207868971,
+                                  7.297019467738151,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(ArcSpan{{2.2444598694046363, 0.69309892306564291},
+                                  0.20132660162268834,
+                                  2.6917715449140163,
+                                  1.9525503827318134,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(
+        LineSpan{{2.1694558799877948, 0.87993254448453795}, {2.7032272642781559, 1.0942140156367008}});
+    in.spans.emplace_back(ArcSpan{{3.9202096316477171, -1.9372677050881584},
+                                  3.2666385636579651,
+                                  1.9525503827318125,
+                                  1.2156945406390398,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(ArcSpan{{3.4717581102005326, -3.1466156930745752},
+                                  4.5564568931660734,
+                                  1.2156945406390398,
+                                  -2.5059257006901596,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(ArcSpan{{-0.10453024482922757, -7.2890377279896335},
+                                  1.4400149696835061,
+                                  1.6334635449873582,
+                                  2.6474758745571094,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(ArcSpan{{-1.9545746400937465, -6.2924413300687396},
+                                  0.66138186214016503,
+                                  -0.49411677903268325,
+                                  -4.9767435460372091,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(
+        LineSpan{{-1.7817646139728338, -5.654034984204225}, {-2.0552874154611018, -7.962389519448883}});
+    in.spans.emplace_back(
+        LineSpan{{-2.0552874154611018, -7.962389519448883}, {-0.6044455076602695, -7.3141432031992597}});
+    in.spans.emplace_back(ArcSpan{{-0.57224982707146621, -7.2552405283190611},
+                                  0.067127393488936982,
+                                  4.2121666982044026,
+                                  8.2466903499160757,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(
+        LineSpan{{-0.59793896590920292, -7.1932231508963254}, {-1.7347234759768071e-18, 0}});
+    const double d = 3.332298622967294;
+    for (const JoinType join : kJoins) {
+        for (const OffsetSide side : kSides) {
+            CAPTURE(static_cast<int>(join), static_cast<int>(side));
+            const std::vector<Contour> chains = offsetOpenContour(in, d, side, join, kTol, 2.0);
+            for (const Contour& c : chains) {
+                // No closed two-span chain that never opens wider than half the tolerance.
+                if (c.closed && c.spans.size() == 2) {
+                    double width = 0.0;
+                    for (int k = 1; k < 64; ++k) {
+                        width = std::max(width, distanceToSpan(pointAt(c.spans[0], k / 64.0), c.spans[1]));
+                    }
+                    CHECK(width > 0.5 * kTol.distance);
+                }
+            }
+            requireCleanChains(chains, 1e-6);
+        }
+    }
+}
+
+TEST_CASE("T-0017 AC3: a needle tip whose sides coincide to rounding is not traversed twice (0x840117a)",
+          "[geometry][offset][open][t0017]") {
+    // Verifier generator gen3 (crossShort), seed 0x840117a, shrunk from 895 to 116 lines: a long
+    // line near (-1e4, 1e4) and, a little less than 2d above it, a return path of short noisy
+    // pieces whose offsets dip to within 3.6e-6 mm of the long line's. A closed chain ended with a
+    // 2.9e-3 mm span running back along its own first span, 3.6e-6 mm away: at coordinates of 1e4
+    // (rounding unit 1e-9 x 1e4 = 1e-5 mm) the same stretch traversed twice.
+    const Contour in = polyline({{-10000, 10000},
+                                 {-9995.7168746242442, 10000},
+                                 {-9994.7168746242442, 10015.279770683441},
+                                 {-9995.2168746242442, 10000.139779498651},
+                                 {-9995.2981677593943, 10000.140055151576},
+                                 {-9995.3033866750848, 10000.140818557737},
+                                 {-9995.3065293031359, 10000.140605677798},
+                                 {-9995.3138569388157, 10000.141345094353},
+                                 {-9995.3204197424457, 10000.140915982538},
+                                 {-9995.3290104336847, 10000.140076305861},
+                                 {-9995.3324839386314, 10000.140618611138},
+                                 {-9995.3364355558788, 10000.140428648398},
+                                 {-9995.3432400118527, 10000.141070722075},
+                                 {-9995.3502347612248, 10000.140038497131},
+                                 {-9995.3591880187214, 10000.14051190371},
+                                 {-9995.3629114170672, 10000.140698680592},
+                                 {-9995.3681815764157, 10000.140227745711},
+                                 {-9995.3728548542967, 10000.139531212368},
+                                 {-9995.3808989788959, 10000.138512024907},
+                                 {-9995.3857931012735, 10000.13913799765},
+                                 {-9995.39244105957, 10000.138583634018},
+                                 {-9995.3988341352142, 10000.139523440894},
+                                 {-9995.4063805123951, 10000.138876393892},
+                                 {-9995.4138096113657, 10000.139468209305},
+                                 {-9995.4210359455519, 10000.138627521268},
+                                 {-9995.4257283495481, 10000.139318104029},
+                                 {-9995.431594440508, 10000.140230579227},
+                                 {-9995.4353500922589, 10000.140699308877},
+                                 {-9995.4433813558571, 10000.140115552791},
+                                 {-9995.4496175926961, 10000.139492413729},
+                                 {-9995.4570188905382, 10000.138551317825},
+                                 {-9995.4638726540707, 10000.139097073261},
+                                 {-9995.4702445493767, 10000.138133131868},
+                                 {-9995.4783734130106, 10000.137093926442},
+                                 {-9995.48361007946, 10000.137887346234},
+                                 {-9995.4889086990024, 10000.138572006696},
+                                 {-9995.4937318824232, 10000.138117447772},
+                                 {-9995.5027136169265, 10000.138809662918},
+                                 {-9995.5077346639773, 10000.139423542762},
+                                 {-9995.5142366976288, 10000.140226317302},
+                                 {-9995.5174757201585, 10000.14069966693},
+                                 {-9995.5249045895707, 10000.141737749611},
+                                 {-9995.5317302297772, 10000.141219326222},
+                                 {-9995.5358839069304, 10000.141766893339},
+                                 {-9995.5404907869452, 10000.141255534299},
+                                 {-9995.5435995842472, 10000.141003260414},
+                                 {-9995.5477242207508, 10000.141579978888},
+                                 {-9995.5536859653039, 10000.142120283617},
+                                 {-9995.5603612425293, 10000.141229886278},
+                                 {-9995.5652485020819, 10000.141828094162},
+                                 {-9995.5690770148976, 10000.141490213771},
+                                 {-9995.5775880271467, 10000.142157112772},
+                                 {-9995.5825744441081, 10000.142630238615},
+                                 {-9995.5873327073641, 10000.143298758117},
+                                 {-9995.5957271629632, 10000.143986454332},
+                                 {-9995.5991818559087, 10000.14358752479},
+                                 {-9995.6066903900228, 10000.144000876249},
+                                 {-9995.613634899848, 10000.144459559708},
+                                 {-9995.6166159220611, 10000.144668021057},
+                                 {-9995.6206660250755, 10000.144379003241},
+                                 {-9995.6237382876698, 10000.144095717791},
+                                 {-9995.626882817638, 10000.143685251016},
+                                 {-9995.6331255306868, 10000.144680658987},
+                                 {-9995.6410527720491, 10000.143664866115},
+                                 {-9995.6453567934659, 10000.143034154728},
+                                 {-9995.6521382392566, 10000.143384563951},
+                                 {-9995.6587776014294, 10000.142676444852},
+                                 {-9995.666476798353, 10000.143643476649},
+                                 {-9995.6752991481371, 10000.144794095533},
+                                 {-9995.6809810802006, 10000.144473746082},
+                                 {-9995.6899110531103, 10000.145246085711},
+                                 {-9995.6933610515371, 10000.144730018743},
+                                 {-9995.69654044854, 10000.144377161982},
+                                 {-9995.7030225580602, 10000.143587707258},
+                                 {-9995.7081349436776, 10000.142784248501},
+                                 {-9995.7156786100932, 10000.141748818685},
+                                 {-9995.7242945927628, 10000.142682740307},
+                                 {-9995.7329291902915, 10000.141977869151},
+                                 {-9995.7400621551969, 10000.14094771636},
+                                 {-9995.7474511313776, 10000.140360400714},
+                                 {-9995.7543905710081, 10000.14091011066},
+                                 {-9995.762948894655, 10000.14146730362},
+                                 {-9995.766998501118, 10000.14201875491},
+                                 {-9995.7743934145492, 10000.141280419841},
+                                 {-9995.7819888367376, 10000.140149951205},
+                                 {-9995.7869246409191, 10000.140758397434},
+                                 {-9995.7948544071169, 10000.141911595309},
+                                 {-9995.7998034732718, 10000.141157979995},
+                                 {-9995.8047537934053, 10000.141580536485},
+                                 {-9995.8094848126202, 10000.141321558138},
+                                 {-9995.8143735008707, 10000.14173606282},
+                                 {-9995.817994959345, 10000.141511803717},
+                                 {-9995.8238444081562, 10000.141865403422},
+                                 {-9995.8286050719926, 10000.142517910799},
+                                 {-9995.8350583230967, 10000.141772432647},
+                                 {-9995.8424548865678, 10000.141256769159},
+                                 {-9995.8480084828443, 10000.14054232015},
+                                 {-9995.8526503849062, 10000.141182536609},
+                                 {-9995.8553386775475, 10000.140967320323},
+                                 {-9995.8588949572768, 10000.141220234766},
+                                 {-9995.8668395263521, 10000.141689862379},
+                                 {-9995.8751515628228, 10000.140622130597},
+                                 {-9995.8840750154395, 10000.140057286602},
+                                 {-9995.8929478212322, 10000.139226335401},
+                                 {-9995.8969309920158, 10000.139625162377},
+                                 {-9995.9034305011864, 10000.139082916538},
+                                 {-9995.9080170708985, 10000.139763307603},
+                                 {-9995.9122555813501, 10000.140037563342},
+                                 {-9995.9196404305585, 10000.139139461013},
+                                 {-9995.9251641331139, 10000.138686239987},
+                                 {-9995.9320666865988, 10000.139476737018},
+                                 {-9995.9389693534722, 10000.139044773467},
+                                 {-9995.9457655180613, 10000.139709648292},
+                                 {-9995.9500540826775, 10000.140301547968},
+                                 {-9995.9558170007531, 10000.140655046023},
+                                 {-9995.9631212660443, 10000.139884319824},
+                                 {-9995.9688798750885, 10000.140477210467}});
+    const double d = 0.069942670860089734;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Left, JoinType::Square, kTol, 2.0);
+    requireCleanChains(chains, 1e-5);
+    const DistanceExtremes ex = distanceExtremes(chains, in, d);
+    CHECK(ex.under <= distanceAllowance(d, Vec2{-1e4, 1e4}));
+}
+
+namespace {
+
+// No span of a chain crosses or touches another one, except adjacent spans at their junction
+// (within 1e-9 of the coordinates' size).
+std::size_t countSelfCrossings(const std::vector<Contour>& chains) {
+    const Tolerance exact{1e-9, 1e-9, 0.01};
+    std::size_t count = 0;
+    for (const Contour& c : chains) {
+        const std::size_t n = c.spans.size();
+        for (std::size_t i = 0; i < n; ++i) {
+            for (std::size_t j = i + 1; j < n; ++j) {
+                const bool next = j == i + 1;
+                const bool wrap = c.closed && i == 0 && j + 1 == n;
+                for (const Intersection& x : intersect(c.spans[i], c.spans[j], exact).points) {
+                    const double junctionSlack =
+                        1e-9 * std::max({1.0, std::fabs(x.point.x), std::fabs(x.point.y)});
+                    const bool atJunction =
+                        (next && distance(x.point, endPoint(c.spans[i])) <= junctionSlack) ||
+                        (wrap && distance(x.point, startPoint(c.spans[i])) <= junctionSlack) ||
+                        (n == 2 && c.closed && distance(x.point, endPoint(c.spans[j])) <= junctionSlack);
+                    if (!atJunction) {
+                        ++count;
+                    }
+                }
+            }
+        }
+    }
+    return count;
+}
+
+}  // namespace
+
+TEST_CASE("T-0017: a Round extension next to a wiggly input stays at d between its samples (gen3 0x9300156)",
+          "[geometry][offset][open][t0017]") {
+    // Exact short walk (steps ~0.006 mm), d = 0.108, Round, Left. A snapped junction extended an
+    // offset line 5.4e-4 mm past its segment; checked only at its far end and middle, it ended
+    // 1.32e-6 mm beyond d (allowance 1.16e-6) where the distance to the wiggly input is not
+    // monotone. Junction repairs are now checked every tol / 8.
+    const Contour in = polyline({{0, 0},
+                                 {-0.0054136337315826809, -0.0025513712606099938},
+                                 {-0.010435280620443549, -0.0058071335389083389},
+                                 {-0.015615556189461859, -0.008804077068277634},
+                                 {-0.021206138261324621, -0.010940035304518017},
+                                 {-0.027121885865398345, -0.011846046217306842},
+                                 {-0.032587608415365107, -0.014283832609914128},
+                                 {-0.038151992166310836, -0.016487138980214824},
+                                 {-0.044066883875394251, -0.017398720879449756},
+                                 {-0.049601350907194808, -0.019676131725807781},
+                                 {-0.055226785835634028, -0.02171853407478129},
+                                 {-0.061211119511915574, -0.021786914920923005},
+                                 {-0.066992106567154888, -0.02023865326462846},
+                                 {-0.072438653913284121, -0.017758321130504254},
+                                 {-0.078415672595350705, -0.017454720795485646},
+                                 {-0.084337993590136301, -0.018316718199146598},
+                                 {-0.090218877003883091, -0.017206702089752494},
+                                 {-0.096201462748697522, -0.017046723043813074},
+                                 {-0.10206400352584247, -0.018249861076421601},
+                                 {-0.10804295392483335, -0.017987034868437526},
+                                 {-0.11394118638693301, -0.019000829380274191},
+                                 {-0.11987313465770358, -0.018207787639822535},
+                                 {-0.12572678684708058, -0.019453452737269745},
+                                 {-0.1317113948805563, -0.019490764596701137},
+                                 {-0.13748613617917541, -0.021062161562212866},
+                                 {-0.14302565564023909, -0.023327255297512395},
+                                 {-0.14877820870608496, -0.024978030483242892},
+                                 {-0.1547617990750168, -0.025094528491906836},
+                                 {-0.16060178960575788, -0.026402747162485585},
+                                 {-0.16607177003914822, -0.028830964522509852},
+                                 {-0.17059708798170764, -0.032747394402891511},
+                                 {-0.17592911043898501, -0.035465199032419931},
+                                 {-0.18094159860274781, -0.038735044272998502},
+                                 {-0.18657790043225719, -0.040747263738132838},
+                                 {-0.19249973053678401, -0.04161262707356847},
+                                 {-0.19847782710576806, -0.04133104777550535},
+                                 {-0.20412152100751962, -0.039339655139050023},
+                                 {-0.20946869948564775, -0.036651792082225902},
+                                 {-0.21525958399474723, -0.035140970421185712},
+                                 {-0.22122466401062144, -0.034656464597263202},
+                                 {-0.22720386406497417, -0.034399380565817143},
+                                 {-0.23267827882034514, -0.031981176981465124},
+                                 {-0.23854542798392867, -0.030800716824806909},
+                                 {-0.24390231676424395, -0.028132258827286899},
+                                 {-0.24870131216484534, -0.02455642764639996},
+                                 {-0.25283447467529546, -0.020228160885743213},
+                                 {-0.25512396578487384, -0.014698680263807919},
+                                 {-0.25901347802037256, -0.010150205787777252},
+                                 {-0.26095847373085673, -0.0044903544491470054},
+                                 {-0.26241585170772019, 0.0013142105579616072},
+                                 {-0.2657226709359839, 0.0063023837787691802},
+                                 {-0.26989537677953185, 0.010592541285483491},
+                                 {-0.27350443127072438, 0.015366601524818509},
+                                 {-0.27717519119902018, 0.020093381299465762},
+                                 {-0.28059381210100065, 0.025005606520049472},
+                                 {-0.28451438860189271, 0.029527332450471355},
+                                 {-0.28826449314742975, 0.034191412358313723},
+                                 {-0.2926928253139085, 0.038217179330273993},
+                                 {-0.29747286888876012, 0.041818305391899208},
+                                 {-0.30303959150093968, 0.044015695855209161},
+                                 {-0.30794599999941386, 0.047442659691507516},
+                                 {-0.31357943231598756, 0.049462898742654519},
+                                 {-0.31862535196844177, 0.052680913713125103},
+                                 {-0.32413198304196777, 0.055024829178596128},
+                                 {-0.32986069544143759, 0.056756527689699368},
+                                 {-0.33547451231131525, 0.058830650550253577},
+                                 {-0.34044236153502844, 0.062167924824215563},
+                                 {-0.34604644417591057, 0.064268206529930316},
+                                 {-0.35203086247899867, 0.0642076832876117},
+                                 {-0.35756396144419078, 0.061926950657383795},
+                                 {-0.362501932743235, 0.058545624743040113},
+                                 {-0.36637842783930874, 0.053986051159982965},
+                                 {-0.37051965875724385, 0.049665503512573601},
+                                 {-0.37594594335389059, 0.047141149938806456},
+                                 {-0.3818572380660018, 0.046206526851266826},
+                                 {-0.38774331899002656, 0.045124410016064515},
+                                 {-0.39289388647352014, 0.042076692823283107},
+                                 {-0.39831833876602191, 0.039548404308186576},
+                                 {-0.40287375725284275, 0.035667027245966577},
+                                 {-0.40775436531081832, 0.032203417788533403},
+                                 {-0.41104553910027997, 0.027204907952916683},
+                                 {-0.41331606392175396, 0.021667612356303941},
+                                 {-0.41498221464480395, 0.015919493772169096},
+                                 {-0.41573221389067527, 0.0099819499516664717},
+                                 {-0.41806748487584056, 0.0044716473361069839},
+                                 {-0.41868928088753032, -0.0014806879374678478},
+                                 {-0.41919797614525767, -0.0074437538119959974},
+                                 {-0.42008636559973073, -0.013362173336360379},
+                                 {-0.41906735292613612, -0.019259506518422419},
+                                 {-0.41911143018753161, -0.025244068547863197},
+                                 {-0.4206963256572942, -0.031015119737995072},
+                                 {-0.42181845212806673, -0.036893704403778843},
+                                 {-0.42166497414740534, -0.042876460457526022},
+                                 {-0.42041846820246498, -0.04872993365029156},
+                                 {-0.41875567022179028, -0.05447902300119406},
+                                 {-0.416443591197242, -0.059999096920394818},
+                                 {-0.41237981988432532, -0.064392579389406346},
+                                 {-0.40735165546775665, -0.067638267003633734},
+                                 {-0.40168715865995402, -0.069569691711871204},
+                                 {-0.39697437891113146, -0.07325840863355064},
+                                 {-0.39219340740913528, -0.076858302657865349}});
+    const double d = 0.10786838074101836;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Left, JoinType::Round, kTol, 1.1680522392316532);
+    const DistanceExtremes ex = distanceExtremes(chains, in, d);
+    CHECK(ex.under <= distanceAllowance(d, Vec2{}));
+    CHECK(ex.over <= distanceAllowance(d, Vec2{}));
+    requireCleanChains(chains, 1e-6);
+}
+
+TEST_CASE("T-0017: Round arcs about vertices 2d apart meet where they cross, not past it (gen3 0x9300047)",
+          "[geometry][offset][open][t0017]") {
+    // Collinear runs ~9000 mm from the origin with ~1e-9 mm of noise, d = 0.454, Round, Left. Two
+    // Round arcs about vertices almost exactly 2d apart cross twice 1.6e-5 mm apart at a needle
+    // tip; snapping met them at the crossing that needed extensions, so they crossed at the
+    // other. Equally near meeting points now prefer the one reached by trimming.
+    const Contour in =
+        polyline({{8996.5094022876892, -9023.9341099606918}, {8999.2511640390348, -9023.9341099587818},
+                  {8997.5246192206669, -8992.5000074484542}, {8996.48212271169, -8992.8555907930477},
+                  {8994.8010534908444, -9023.0256787452054}, {8993.9247984476751, -9023.025678744023},
+                  {8995.1172128405397, -8989.5814432155785}, {8998.5650113316915, -8989.7458334173298},
+                  {9000.0492545201978, -9023.0256787483322}, {8994.9771669496567, -9023.0256787496073},
+                  {8994.1409311328771, -9055.0230421255274}, {8993.5300442453972, -9055.682506074776},
+                  {8993.9247984443646, -9023.934109956379},  {8994.8010534924397, -9023.9341099604699},
+                  {8993.8927706896393, -9057.3145200221243}, {9000.5377438816668, -9057.6143270223802},
+                  {8999.2511640359662, -9023.9341099589401}, {8996.5094022831763, -9023.9341099573357},
+                  {8995.350273246313, -8992.892519298588},   {8995.4452588795812, -8993.8226974029476},
+                  {8995.2315027401946, -9023.9341099615867}, {9000.2950330495114, -9023.9341099596986},
+                  {9002.0501470963081, -8993.4333677861396}, {9000.8696419065764, -8994.3047799592132},
+                  {9000.2950330493695, -9023.9341099569938}, {8995.2315027418499, -9023.9341099572648},
+                  {8996.7095258541285, -9054.1356312614553}, {8993.3627061846601, -9053.2101330708447},
+                  {8994.9771669507554, -9023.934109959253},  {9000.0492545222696, -9023.9341099613594},
+                  {8998.2486953084026, -9058.7286199307491}, {9001.1408081919781, -9057.7687373789704},
+                  {9000.2950330491803, -9023.025678745269},  {8995.2315027422701, -9023.0256787482613},
+                  {8995.2569920857932, -8989.5014313946849}, {8998.3831134823431, -8990.0418276246655},
+                  {8999.2511640344055, -9023.0256787473154}, {8996.5094022868943, -9023.025678744636},
+                  {8994.7248328600272, -9056.898322267878},  {9000.8417351245698, -9057.7457798926607},
+                  {9000.0492545213856, -9023.9341099617523}, {8994.9771669528945, -9023.9341099606299},
+                  {8996.8447922136711, -9054.9939859294263}, {8993.9389586835623, -9055.7191093262081},
+                  {8994.9771669484981, -9023.0256787461949}, {9000.0492545186535, -9023.0256787492835}});
+    const double d = 0.45421560625090113;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Left, JoinType::Round, kTol, 2.0);
+    CHECK(countSelfCrossings(chains) == 0);
+    requireCleanChains(chains, 1e-6);
+}
+
+TEST_CASE(
+    "T-0017: a lens between opposite near-co-circular arcs is dropped, not bent into a crossing (gen3 "
+    "0x9300698)",
+    "[geometry][offset][open][t0017]") {
+    // Co-circular arcs with ~5e-6 mm of noise, d = 0.246, Sharp, Right: two offset arcs running
+    // opposite ways 5e-6 mm apart bound a 1.45 mm lens whose near-tangent ends were closed by
+    // 1e-3 mm bends, one crossing an arc. A loop that narrow encloses nothing a tool could follow.
+    Contour in;
+    in.spans.emplace_back(ArcSpan{{1.0635070514947627e-06, 2.0310758936650285e-06},
+                                  2.2353028219769837,
+                                  1.2369595170096863,
+                                  -0.71174911541833641,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(
+        LineSpan{{1.692618371792735, -1.4600066516482859}, {18.600960985750532, -16.044718856765844}});
+    in.spans.emplace_back(
+        LineSpan{{18.600960985750532, -16.044718856765844}, {15.688773039021658, -19.660770343560522}});
+    in.spans.emplace_back(
+        LineSpan{{15.688773039021658, -19.660770343560522}, {1.319724712158967, -1.13835881791578}});
+    in.spans.emplace_back(ArcSpan{{2.5939678405104105e-06, -5.1341604924822524e-08},
+                                  1.7428502949706124,
+                                  -0.71174911541833641,
+                                  1.2369595170096863,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(
+        LineSpan{{0.57108308015990561, 1.6466311244138478}, {7.6781616166322673, 22.13890996724724}});
+    in.spans.emplace_back(
+        LineSpan{{7.6781616166322673, 22.13890996724724}, {-3.4832788764084661, -22.917347153429596}});
+    in.spans.emplace_back(
+        LineSpan{{-3.4832788764084661, -22.917347153429596}, {-0.25229425265220268, -1.7244884834202889}});
+    in.spans.emplace_back(ArcSpan{{-3.326028964102671e-08, 2.7250480846609615e-06},
+                                  1.7428489037272528,
+                                  -1.7160663991944269,
+                                  -0.7032058428069663,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(
+        LineSpan{{1.3293980533757581, -1.127038990449484}, {17.828712809418498, -15.114890691773354}});
+    in.spans.emplace_back(
+        LineSpan{{17.828712809418498, -15.114890691773354}, {15.259617869706736, 18.483838556097343}});
+    in.spans.emplace_back(
+        LineSpan{{15.259617869706736, 18.483838556097343}, {1.1361037315557854, 1.9250635846418378}});
+    in.spans.emplace_back(ArcSpan{{-1.9956875122604129e-06, 1.7219368796383501e-06},
+                                  2.2353074506018418,
+                                  1.037639217216928,
+                                  -0.078442976715351165,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(
+        LineSpan{{2.2284317213441112, -0.17516267944858732}, {23.280033388236522, -1.8299078731122673}});
+    in.spans.emplace_back(
+        LineSpan{{23.280033388236522, -1.8299078731122673}, {22.999238432503073, 1.8497128504756084}});
+    in.spans.emplace_back(
+        LineSpan{{22.999238432503073, 1.8497128504756084}, {1.7374863840970372, -0.13657355434039661}});
+    in.spans.emplace_back(ArcSpan{{-3.0030163236669816e-06, 5.2730324187531646e-07},
+                                  1.7428487743084209,
+                                  -0.078442976715351165,
+                                  1.037639217216928,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(
+        LineSpan{{0.88580824128371216, 1.5009536543461843}, {11.945648516992138, 20.241173453132586}});
+    in.spans.emplace_back(
+        LineSpan{{11.945648516992138, 20.241173453132586}, {15.110816324336502, -18.987403547125403}});
+    in.spans.emplace_back(
+        LineSpan{{15.110816324336502, -18.987403547125403}, {1.7050275381662989, -1.4454968880867101}});
+    in.spans.emplace_back(ArcSpan{{-8.7338639162805878e-07, -1.994385595265258e-06},
+                                  2.2353025235788304,
+                                  -0.7032058428069663,
+                                  -1.7160663991944269,
+                                  ArcDirection::CW});
+    const double d = 0.24622823291257359;
+    const double mitre = 2.9164368991153471;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Right, JoinType::Sharp, kTol, mitre);
+    CHECK(countSelfCrossings(chains) == 0);
+    requireCleanChains(chains, 1e-6);
+    for (const Contour& c : chains) {
+        if (c.closed) {
+            double perimeter = 0.0;
+            for (const Span& s : c.spans) {
+                perimeter += length(s);
+            }
+            CHECK(perimeter > 0.1);  // the loops left are the big ones round the input's lobes
+        }
+    }
+}
+
+TEST_CASE("T-0017: next to a gap in the input the safety net still removes a step back (gen3 0x930046a)",
+          "[geometry][offset][open][t0017]") {
+    // Mixed arcs with ~1e-5 mm of noise that leaves gaps between consecutive input spans, d =
+    // 0.181, Round, Right. Next to a 1.4e-5 mm gap the Round join lies 3.2e-6 mm beyond d (the
+    // documented input-gap limitation) and missed the next offset by 3.2e-6 mm, leaving a short
+    // span running back; every bridge failed the "not beyond d" check. A bridge may now stay as
+    // far beyond d as its end points already are.
+    Contour in;
+    in.spans.emplace_back(ArcSpan{{10042.990176592648, -10145.151172822918},
+                                  0.0056692329841511848,
+                                  -0.70988936876973974,
+                                  1.1577814838729976,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(ArcSpan{{10042.996415540973, -10145.143141531787},
+                                  0.0048758087929862042,
+                                  -2.5192450317754358,
+                                  0.11860784482414033,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(
+        LineSpan{{10043.001257093951, -10145.142564577587}, {10043.000277831445, -10145.134088870665}});
+    in.spans.emplace_back(ArcSpan{{10042.979080930432, -10145.136614845522},
+                                  0.021346877089786512,
+                                  0.11860784482414001,
+                                  0.31812762086531415,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(ArcSpan{{10042.719236402705, -10145.30706673615},
+                                  0.3314244343242761,
+                                  0.56389629323009038,
+                                  3.4712910678799975,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(
+        LineSpan{{10042.405662479381, -10145.414367948999}, {10042.363951879093, -10145.451959472068}});
+    in.spans.emplace_back(ArcSpan{{10042.06764071936, -10145.123235078358},
+                                  0.44256076464333405,
+                                  -0.83720997562975841,
+                                  -2.2007998320611875,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(ArcSpan{{10041.816610415408, -10145.480120011447},
+                                  0.0097442891481605547,
+                                  -3.0702430420692881,
+                                  -7.2296568191126553,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(
+        LineSpan{{10041.822306435628, -10145.488026118242}, {10041.769486524105, -10145.526070902673}});
+    in.spans.emplace_back(ArcSpan{{10041.777021015308, -10145.536528817112},
+                                  0.012889396111548008,
+                                  2.1951211416567191,
+                                  6.0938396469038771,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(
+        LineSpan{{10041.789680047012, -10145.538954811431}, {10041.86855333064, -10145.96000199588}});
+    in.spans.emplace_back(ArcSpan{{10041.870011712253, -10145.952799179953},
+                                  0.0073489750449806978,
+                                  -1.7705694186065517,
+                                  -1.0176007312260649,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(ArcSpan{{10041.879725305487, -10145.945266630533},
+                                  0.014981792285013819,
+                                  -1.9726231224360227,
+                                  2.4091341498226946,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(ArcSpan{{10041.88291248247, -10145.93323573652},
+                                  0.014431950033253168,
+                                  -2.999101844609831,
+                                  -0.10486320297883678,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(ArcSpan{{10041.906472570889, -10145.936268691617},
+                                  0.0093631665265022663,
+                                  2.9781627670283424,
+                                  -1.3040645916978875,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(ArcSpan{{10041.776912172925, -10146.014506946385},
+                                  0.14909250829287946,
+                                  0.48306542533138924,
+                                  -1.6242324809407036,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(ArcSpan{{10041.769456643042, -10146.153877254184},
+                                  0.0095135448898883233,
+                                  -1.6242324809406936,
+                                  -4.3680582406578932,
+                                  ArcDirection::CW});
+    const double d = 0.18060785958129802;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Right, JoinType::Round, kTol, 2.0);
+    requireCleanChains(chains, 1e-6);
+    double inputGap = 0.0;
+    for (std::size_t i = 0; i + 1 < in.spans.size(); ++i) {
+        inputGap = std::max(inputGap, distance(endPoint(in.spans[i]), startPoint(in.spans[i + 1])));
+    }
+    const DistanceExtremes ex = distanceExtremes(chains, in, d);
+    CHECK(ex.under <= distanceAllowance(d, Vec2{1e4, 1e4}));
+    CHECK(ex.over <= inputGap);
+}
+
+TEST_CASE(
+    "T-0017: a snapped extension of rounding length far from the origin keeps the offset at d (gen3 "
+    "0x9400bf7)",
+    "[geometry][offset][open][t0017]") {
+    // Exact short walk ~1e4 mm from the origin, d = 0.182, Square, Left (shrunk from 239 to 10
+    // lines). A junction was closed by extending both spans ~9e-6 mm, below the "rounding" level
+    // 1e-9 x |x| at those coordinates, so the extension went unchecked; at a steep angle to
+    // another part of the input it ended 9.4e-7 mm inside d (allowance 6.9e-7). Only moves at the
+    // level of the coordinates' last bits now go unchecked.
+    const Contour in = polyline({{-612.44354139524489, -9540.2395988581757},
+                                 {-612.45619885366364, -9540.2418256919191},
+                                 {-612.46902217709624, -9540.2409698775209},
+                                 {-612.48186941473148, -9540.2413141554425},
+                                 {-612.49410278892799, -9540.2452530128794},
+                                 {-612.50692112676938, -9540.2461805133516},
+                                 {-612.51970810823968, -9540.2474701439278},
+                                 {-612.53167917914664, -9540.2521459864693},
+                                 {-612.54309403377624, -9540.2580511652086},
+                                 {-612.55225443128097, -9540.2670654405374},
+                                 {-612.56306569485218, -9540.2740142981511}});
+    const double d = 0.18198055231497526;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Left, JoinType::Square, kTol, 2.0);
+    CHECK(distanceExtremes(chains, in, d).under <= distanceAllowance(d, Vec2{-612.5, -9540.4}));
+    requireCleanChains(chains, 1e-6);
 }
