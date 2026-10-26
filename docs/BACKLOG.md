@@ -226,7 +226,7 @@ Goal: the PLAN §5 acceptance test — import a DXF, add text on a curve, pocket
 ### Batch A — vertical slice first (prove the pipeline end to end, headless)
 These five cards, together with what Phase 0 already has, make `carvetto-cli` able to turn a DXF into Grbl G-code with no UI. Everything later plugs into this spine.
 
-### T-0100 DXF import and export (lines, arcs, polylines, splines → contours; layers)   [status: in-progress]
+### T-0100 DXF import and export (lines, arcs, polylines, splines → contours; layers)   [status: done]
 Phase: 1   Module: core/io   Depends on: T-0005   ADR: 0015
 Goal: `importDxf(bytes) → {layers, contours, warnings}` and `exportDxf(layers, contours)` (director 2026-10-25: geometry-level API, not document-level) for DXF R12–2018 ASCII (and binary R12+ if cheap): LINE, ARC, CIRCLE, ELLIPSE, LWPOLYLINE (bulges → arcs), POLYLINE/VERTEX, SPLINE (NURBS → cubic Beziers within chordal tolerance), INSERT/BLOCK (flattened, nested), TEXT/MTEXT (as text objects with font name, height, position — rendered later by T-0130), $INSUNITS and $MEASUREMENT for unit scaling, layer names/colours/visibility. Own parser (no third-party DXF lib; the format is public). Export writes R2000 ASCII with layers, LWPOLYLINE bulges for arcs, SPLINE for Beziers.
 Interfaces: owns `core/include/carvetto/io/dxf.hpp`.
