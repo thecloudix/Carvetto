@@ -94,7 +94,7 @@ Acceptance criteria:
   4. A Bezier that bulges ≤ ~tol outside the arc it joins and re-crosses it within ~10·tol of the junction reports the re-crossing (sign test not defeated by the exact-zero sample at the junction). Regression: Bez{{-0.18860739840346241,3.8634722338314074},{0.0522167808921572,4.3830641573127442},{1.6272051316098195,-2.0179279547519577},{1.9578386933824259,-2.3369534285717775}} vs Arc{{6.4363713372296427,1.9356191918458676},6.1896794294008179,-2.3797254616523524,3.0863225397506588,CW}.
   5. ADR-0009 guarantee bullets amended to match; the "Known limitations (tracked as T-0007)" note removed from intersect.hpp.
 
-### T-0008 Exact line/arc intersections: end touches and shared endpoints   [status: in-progress]
+### T-0008 Exact line/arc intersections: end touches and shared endpoints   [status: done]
 Phase: 1 (before Trim / Join / Vector Validator)   Module: core/geometry   Depends on: T-0007
 Goal: The analytic line/line, line/arc and arc/arc paths (not the Bezier pipeline) miss end touches with 0 < h ≤ tol, and can miss an EXACT shared endpoint. Found while verifying T-0007; identical on main.
 Acceptance criteria:
