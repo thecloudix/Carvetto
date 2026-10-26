@@ -48,13 +48,15 @@ choices. Behaviour descriptions come from `docs/reference/` only.
    the true curves. These cuts are polygonal (`MergedWithNeighbour`). A closed vector whose own
    offset comes back as open chains is handled the same way.
 7. **Safety net.** Every cut is then checked against every other vector (merged cuts also
-   against their own members) and stretches closer than r + allowance − tol are removed
+   against their own members) and stretches closer than r + allowance − 0.05·tol are removed
    (`TrimmedNearVector`); a trimmed loop becomes open pieces. Exact offsets are not re-checked
    against their own vector (ADR-0012 guarantees it; see Consequences). On profiles skip 6–7.
 8. **Clearance check.** Distance along a path is 1-Lipschitz in arc length, so an interval
    whose end samples both exceed threshold + half its length is certified clear; others are
-   bisected down to tol/2. Violations are bracketed by the neighbouring clear samples (removal
-   errs on the safe side). Obstacles are pre-filtered by bounding box.
+   bisected down to a resolution (0.05·tol for the safety net and the lead checks, so what is
+   kept is within 1.5 × 0.05·tol of the threshold; tol/2 for grouping). Violations are bracketed
+   by the neighbouring clear samples (removal errs on the safe side). Obstacles are pre-filtered
+   by bounding box.
 
 ### Machining
 9. **Direction.** Assuming an M3 (clockwise) spindle, climb keeps the vector on the right of
@@ -67,8 +69,11 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     row's first, serpentine). Several enabled → the one with least rapid travel (ties: that
     order). None → greedy nearest neighbour from `startPosition`. Each cut is machined through
     all levels before the next. With a separate last pass (owner decision: after all roughing), all roughing
-    cuts come first; the finishing cuts then follow the roughing order (each takes the place of
-    the roughing cut nearest to it), so finishing is never re-ordered on its own.
+    cuts come first; the finishing cuts then follow the roughing order: each takes the rank of its
+    counterpart (the roughing cut with the smallest median distance over 17 points along it,
+    when that is within the last-pass allowance + a tool radius); a finishing cut without one
+    (a small loop that vanishes at the roughing distance) takes the rank of the roughing cut
+    nearest its start. Finishing is never re-ordered on its own.
 11. **Start points.** `StartAt::VectorStart` (= "Use Vector Start Point"): the cut point nearest
     the vector's start; `Optimise`: nearest the previous cut's start; `ClosestOnBoundingBox`:
     nearest one of nine anchors of the cut's bounding box. Ties follow `closestPoint` (lowest
@@ -76,9 +81,14 @@ choices. Behaviour descriptions come from `docs/reference/` only.
 12. **Height profiles.** A pass is a list of legs (`PathLeg`: walk the path from u0 to u1, either
     way, with a piecewise-linear Z over travelled distance). Lines become feeds, arcs (helical
     where Z changes, exact because Z is linear in arc length between knots), profile jumps
-    vertical moves (Feed up, Plunge down). Tabs are a ceiling profile combined by point-wise
-    max, so ramps, tabs and passes compose without special cases. Arcs with a chord under
-    0.01 mm are written as feeds (a controller would read them as full circles once rounded).
+    vertical moves. Every vertical descent is a Plunge and every Plunge is vertical; climbs are
+    Feeds; sloped descents (ramps, 3D tab ramps, V-bit corner returns) are Feeds or arcs. A leg
+    starts with a vertical move wherever the tool stands within 2·10⁻³ mm of the leg's start
+    (closed cuts are also snapped to close exactly), so without a ramp a closed cut steps down
+    vertically at its start and every level is a full flat loop; nothing descends along the
+    first span. Tabs are a ceiling profile combined by point-wise max, so ramps, tabs, overcut
+    and passes compose without special cases. Arcs with a chord under 0.01 mm are written as
+    feeds (a controller would read them as full circles once rounded).
 13. **Ramps** (`planPass`). Closed: Smooth descends over L (distance, or drop/tan(angle)) and
     continues until L past the start, so the ramp is re-cut at depth; the next pass starts L
     further on. Zig-zag goes back and forth over L (angle mode adds leg pairs so no leg exceeds
@@ -92,16 +102,26 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     tool path is length + tool diameter (exact on straight edges). Tab top = bottom + thickness;
     only passes below it are affected. 3D tabs ramp down at 45°, i.e. over `thickness` on each
     side of the raised stretch, so a tab's **footprint** along the path is raised + 2·thickness
-    (3D) or raised (2D). Constant number: centres at (i + ½)·L/n from the cut start (the plunge
-    point is never in a tab); constant distance: n = round(L/distance) ≥ 1. "Avoid corners"
-    moves each tab to the nearest place whose raised stretch lies on one line span. `fitTabs`
-    then drops, with `TabsNotPlaced`, every tab whose footprint would overlap the previous tab
-    (or the first, across the start of a closed cut) or leave less than `kMinTabGap` (0.001 mm)
-    between them, run past an open end, or (closed cut) be as long as the cut itself. So every
-    pass still reaches its level somewhere, and a loop shorter than one tab (a hole smaller than
-    a tab) is cut through without tabs, with a diagnostic. With a separate last pass, tabs are
-    placed on the finishing cut, projected onto the roughing cut and fitted again there.
-    Interactive tab editing and "tab at machining start" are not implemented (see Consequences).
+    (3D) or raised (2D). Constant number: centres at (i + ½)·L/n from the cut start; constant
+    distance: n = round(L/distance) ≥ 1. "Avoid corners" moves each tab to the nearest place
+    whose raised stretch lies on one line span (inside the allowed range below). `fitTabs` then:
+    - keeps every footprint inside [0.001, L − 0.001] mm: on a closed cut a tab across the start
+      is moved along the cut until it clears it (the tool plunges, and the lead arrives, at the
+      start); on an open cut a tab past an end is dropped;
+    - moves footprints off `keepClear` points (to the nearer side), dropping them when there is
+      no room. With a separate last pass these are the other pass's cut starts projected onto
+      the cut (within a tool radius + allowance), so neither pass plunges into the other's tab;
+    - drops a tab whose footprint would come closer than a tool radius (finishing-projected
+      roughing tabs: half a radius) to the previous one, or to the first across the start, so
+      neighbouring tabs never merge and every pass still reaches its level between them;
+    - drops every tab when one footprint does not fit the path at all (a hole smaller than a
+      tab is cut through without tabs).
+    Kept + dropped = requested per cut; one `TabsNotPlaced` diagnostic per vector gives the total
+    left out (and those that could not avoid a corner). With a separate last pass, tabs are
+    placed on the finishing cut, projected onto the roughing cut and fitted again there. The
+    overcut walks under the same tab ceiling, and every lead runs no lower than the tab top when
+    it comes within a tool diameter of tab material (any cut's), so plunges, leads and overcut
+    never notch a tab. Interactive tab editing and "tab at machining start" are not implemented.
 15. **Leads.** Straight (length, angle to the path) or circular (radius, sweep, tangent) from the
     waste side; optional mirrored lead-out; overcut (closed cuts) runs past the start before the
     lead-out. Leads are used on the first entry and final exit of each cut, not between levels.
@@ -111,19 +131,28 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     size and then halved up to three times (`LeadShortened`). If none fits (typically an inside
     profile starting at a corner, where the approach crosses the adjacent wall) the start of a
     closed cut moves to the middle of its start span, then of the other spans from the longest
-    (`StartMoved`). Only when nothing fits is the lead left out (`LeadDropped`). Lead-outs try
-    the same variants and sizes at the end point.
-16. **V-bit corners.** Sharp external = Sharp joins (5). Sharp internal: on the final level, at
-    every inside-corner kink Q of the path the tool runs to the vector's nearest corner vertex V
-    and back. The offset radius r is the cone's radius at the material surface (Z = 0) with the
-    tip at the bottom, so the tip reaches Z = 0 at V (climbing only to the start depth left the
-    cone startDepth·tan(α/2) past the walls). Along Q → V the tip rises linearly from the knee
-    depth max(bottom, −r / tan(α/2)), where the cone itself is r wide, to Z = 0 at V; when the
-    cut is deeper than the cone (r capped at the tool radius) the tool first rises vertically at
-    Q to the knee. The wall distance along the bisector grows linearly with the distance from V,
-    so the cone stays inside both walls for any start depth and allowance ≥ 0 (tested at 60° and
-    90°, inside and outside, start depth 0 and 2, and a tool whose cone is shallower than the
-    cut). Both options are ignored with `CornerNeedsVBit` for other tools.
+    (`StartMoved`; owner decision 2026-10-26: keep this). Only when nothing fits is the lead left
+    out (`LeadDropped`). Lead-outs try the same variants and sizes at the end point and leave at
+    the height the cut ended at (the tab top when the overcut ends in a tab).
+16. **V-bit corners.** Sharp external = Sharp joins (5). Sharp internal, on the final level, at
+    an inside-corner kink Q of an exact offset where the path turns by more than 5° (merged
+    polygonal regions, On profiles and the sub-degree kinks of polygonised curves get none):
+    the target V is the nearest junction of a source vector whose direction turns by more than
+    5° — a genuine corner of the input — and it must lie within twice the straight-wall distance
+    (r + a)/cos(turn/2) of Q. The offset radius r is the cone's radius
+    at the material surface (Z = 0) with the tip at the bottom. The climb ends at the point of
+    Q→V whose distance to the walls equals the allowance a (V itself when a = 0), at Z = 0, and
+    starts from the knee depth max(bottom, −r / tan(α/2)) at Q (a vertical rise first when the
+    cut is deeper than the cone). That straight climb is exact between two straight walls; it is
+    checked against the real walls (all vectors, exact distances, every 0.005 mm): the cone's
+    surface radius min(depth·tan(α/2), R) must stay within distance − a. If it would pass a wall
+    (a curved wall next to the corner), the climb follows the walls instead: every 0.05 mm the
+    tip is held at (distance − a − 0.05)/tan(α/2) below the surface, which keeps the cone inside
+    the walls between samples too, reaching the surface within one sample of the end. The way
+    back mirrors the climb (sloped feeds, vertical plunges). Tested with a cone-vs-wall sampler at
+    60° and 90°, inside and outside, start depth 0 and 2, allowance 0 and 0.3, a cone shallower
+    than the cut, and arcs bulging 6 and 10 mm next to the corner. Both options are ignored with
+    `CornerNeedsVBit` for other tools.
 17. **Bezier input.** Beziers are polygonised before offsetting; when present the offset chordal
     tolerance is tightened to tol.distance/2 so the cut stays within tolerance of r.
 
@@ -147,6 +176,12 @@ I/J = centre − start, plunge at F300 and feeds at F1000 restated, retract, M5,
 - The gouge guarantee against a vector's own exact offset rests on ADR-0012 and inherits its
   documented sub-tolerance-span limitation (T-0009); T-0017 changes offset quality, not this
   code. Tests keep inputs free of sub-tolerance spans and of Sharp joins on zig-zags.
+- Open vectors with a sharp turn next to an arc whose offset nearly collapses can get a stretch
+  of cut that a local "right of the vector" test reads as the wrong side: the round join about
+  the vertex wraps round (ADR-0012, Consequences). It stays at least the offset distance from
+  the vector (no gouge); it belongs to the offset (T-0017), not to this code.
+- Tab placement is greedy (tabs that do not fit are dropped, the rest are not redistributed);
+  evenly redistributing the kept tabs is future work.
 - Not implemented: interactive tab editing and per-vector stored tab positions (needs the
   document/UI side), "tab at machining start point", leads between levels, cutter compensation,
   projection onto a 3D model.

@@ -9,6 +9,8 @@
 #include <cstdio>
 #include <cstddef>
 #include <limits>
+#include <map>
+#include <utility>
 #include <string>
 #include <variant>
 #include <vector>
@@ -183,10 +185,12 @@ void sampleCuttingMoves(const toolpath::Toolpath& tp, double step, F&& f) {
 /// Like `sampleCuttingMoves`, with the tool-tip height (Z interpolated linearly along the move,
 /// which is exact for lines and for helical arcs): f(point, z).
 template <class F>
-void sampleCuttingMoves3(const toolpath::Toolpath& tp, double step, F&& f) {
+void sampleCuttingMoves3(const toolpath::Toolpath& tp, double step, F&& f,
+                         double zBelow = std::numeric_limits<double>::infinity()) {
     for (std::size_t i = 1; i < tp.moves.size(); ++i) {
-        if (!toolpath::isCutting(tp.moves[i].kind)) {
-            continue;
+        if (!toolpath::isCutting(tp.moves[i].kind) ||
+            std::min(tp.moves[i - 1].to.z, tp.moves[i].to.z) > zBelow) {
+            continue;  // (moves entirely above zBelow are skipped when it is given)
         }
         toolpath::Toolpath one;
         one.moves = {tp.moves[i - 1], tp.moves[i]};
@@ -207,6 +211,152 @@ inline double minCutDistance(const toolpath::Toolpath& tp, const std::vector<geo
     double best = std::numeric_limits<double>::infinity();
     sampleCuttingMoves(tp, step, [&](geometry::Vec2 p) { best = std::min(best, bruteDistance(p, cs)); });
     return best;
+}
+
+/// Smallest cone-vs-wall margin of a V-bit toolpath: at every cutting sample with the tip below
+/// the surface (Z = 0), distance to the vectors - allowance - the radius the cone cuts at the
+/// surface (tip depth * tanHalf, capped at `radius`). Negative = the cone passes a wall.
+inline double minConeClearance(const toolpath::Toolpath& tp, const std::vector<geometry::Contour>& cs,
+                               double tanHalf, double radius, double allowance, double step = 0.01) {
+    double worst = std::numeric_limits<double>::infinity();
+    sampleCuttingMoves3(
+        tp, step,
+        [&](geometry::Vec2 q, double z) {
+            if (z >= 0.0) {
+                return;
+            }
+            const double cone = std::min(-z * tanHalf, radius);
+            worst = std::min(worst, bruteDistance(q, cs) - allowance - cone);
+        },
+        0.0);
+    return worst;
+}
+
+/// Points of the toolpath's cutting moves at Z <= `zMax` (sampled every `step`), bucketed for
+/// "is this outline point cut?" queries.
+class CutCoverage {
+   public:
+    CutCoverage(const toolpath::Toolpath& tp, double zMax, double step = 0.02) : cell_(4.0 * step) {
+        sampleCuttingMoves3(
+            tp, step,
+            [&](geometry::Vec2 q, double z) {
+                if (z <= zMax + 1e-9) {
+                    cells_[key(q)].push_back(q);
+                }
+            },
+            zMax + 1e-9);
+    }
+    /// True when some sample lies within `reach` of p (reach <= cell size).
+    bool covers(geometry::Vec2 p, double reach) const {
+        const auto [cx, cy] = key(p);
+        for (long dx = -1; dx <= 1; ++dx) {
+            for (long dy = -1; dy <= 1; ++dy) {
+                const auto it = cells_.find({cx + dx, cy + dy});
+                if (it == cells_.end()) {
+                    continue;
+                }
+                for (const geometry::Vec2& q : it->second) {
+                    if (std::hypot(q.x - p.x, q.y - p.y) <= reach) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+   private:
+    std::pair<long, long> key(geometry::Vec2 p) const {
+        return {static_cast<long>(std::floor(p.x / cell_)), static_cast<long>(std::floor(p.y / cell_))};
+    }
+    double cell_;
+    std::map<std::pair<long, long>, std::vector<geometry::Vec2>> cells_;
+};
+
+/// Analytic tool-centre outline of a circle (centre c, radius r) offset by `d` (sign: + outwards),
+/// sampled every `step` mm.
+inline std::vector<geometry::Vec2> circleOutline(geometry::Vec2 c, double r, double d, double step) {
+    std::vector<geometry::Vec2> pts;
+    const double R = r + d;
+    const int n = std::max(8, static_cast<int>(std::ceil(6.283185307179586 * R / step)));
+    for (int i = 0; i < n; ++i) {
+        const double a = 6.283185307179586 * i / n;
+        pts.push_back({c.x + R * std::cos(a), c.y + R * std::sin(a)});
+    }
+    return pts;
+}
+
+/// Analytic tool-centre outline of an axis-aligned rectangle offset by `d`: outwards (d > 0) a
+/// rounded rectangle with corner radius d, inwards a smaller sharp rectangle; sampled every `step`.
+inline std::vector<geometry::Vec2> rectOutline(geometry::Box2 b, double d, double step) {
+    std::vector<geometry::Vec2> pts;
+    auto line = [&](geometry::Vec2 a, geometry::Vec2 e) {
+        const double len = std::hypot(e.x - a.x, e.y - a.y);
+        const int n = std::max(1, static_cast<int>(std::ceil(len / step)));
+        for (int i = 0; i < n; ++i) {
+            pts.push_back({a.x + (e.x - a.x) * i / n, a.y + (e.y - a.y) * i / n});
+        }
+    };
+    if (d < 0.0) {
+        const double e = -d;
+        const geometry::Vec2 p0{b.min.x + e, b.min.y + e}, p1{b.max.x - e, b.min.y + e}, p2{b.max.x - e, b.max.y - e},
+            p3{b.min.x + e, b.max.y - e};
+        line(p0, p1);
+        line(p1, p2);
+        line(p2, p3);
+        line(p3, p0);
+        return pts;
+    }
+    // In traversal order (CCW): bottom edge, corner, right edge, corner, top, corner, left, corner.
+    auto corner = [&](geometry::Vec2 c, double a0) {
+        const int n = std::max(2, static_cast<int>(std::ceil(1.5707963267948966 * d / step)));
+        for (int i = 0; i < n; ++i) {
+            const double a = a0 + 1.5707963267948966 * i / n;
+            pts.push_back({c.x + d * std::cos(a), c.y + d * std::sin(a)});
+        }
+    };
+    line({b.min.x, b.min.y - d}, {b.max.x, b.min.y - d});
+    corner({b.max.x, b.min.y}, -1.5707963267948966);
+    line({b.max.x + d, b.min.y}, {b.max.x + d, b.max.y});
+    corner({b.max.x, b.max.y}, 0.0);
+    line({b.max.x, b.max.y + d}, {b.min.x, b.max.y + d});
+    corner({b.min.x, b.max.y}, 1.5707963267948966);
+    line({b.min.x - d, b.max.y}, {b.min.x - d, b.min.y});
+    corner({b.min.x, b.min.y}, 3.141592653589793);
+    return pts;
+}
+
+/// Lengths (in outline samples x step) of the maximal runs of `outline` (a closed loop of samples)
+/// that are not cut at Z <= zMax. Empty = every outline point is cut at that depth.
+inline std::vector<double> uncutRuns(const std::vector<geometry::Vec2>& outline, const CutCoverage& cov, double reach,
+                                     double step) {
+    std::vector<bool> cut(outline.size());
+    for (std::size_t i = 0; i < outline.size(); ++i) {
+        cut[i] = cov.covers(outline[i], reach);
+    }
+    std::vector<double> runs;
+    const std::size_t n = outline.size();
+    std::size_t first = n;
+    for (std::size_t i = 0; i < n; ++i) {
+        if (cut[i]) {
+            first = i;
+            break;
+        }
+    }
+    if (first == n) {
+        return {static_cast<double>(n) * step};
+    }
+    std::size_t len = 0;
+    for (std::size_t k = 1; k <= n; ++k) {
+        const std::size_t i = (first + k) % n;
+        if (!cut[i]) {
+            ++len;
+        } else if (len > 0) {
+            runs.push_back(static_cast<double>(len) * step);
+            len = 0;
+        }
+    }
+    return runs;
 }
 
 /// The Z levels at which the tool cuts flat (feed end points), deduplicated, descending.

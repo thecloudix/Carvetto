@@ -100,13 +100,15 @@ struct LegInsert {
 
 /// Appends the moves that walk `path` from `u0` to `u1` (backwards when `u1 < u0`) with the
 /// height `z(s)`, s = distance travelled from `u0`. The tool is expected at `path.pointAt(u0)`;
-/// if it is there at another height, a vertical move (Plunge down, Feed up) is emitted first.
+/// if it is there (within `joinTolerance`) at another height, a vertical move (Plunge down, Feed
+/// up) is emitted first, so a level change never becomes a slope along the first span.
 /// Lines become Feed moves, arcs ArcCW/ArcCCW moves (helical where the height changes, which is
 /// exact because the height is linear in arc length between knots). Jumps in the profile become
 /// vertical moves. Arcs whose chord is shorter than `minArcChord` are written as Feed moves (a
 /// controller would read such an arc as a full circle after rounding); a whole revolution is
 /// one arc move ending where it starts (ADR-0008 full-circle convention).
 void appendLeg(const ArcLengthPath& path, double u0, double u1, const ZProfile& z, Toolpath& out,
-               const std::vector<LegInsert>& inserts = {}, double minArcChord = 0.01);
+               const std::vector<LegInsert>& inserts = {}, double minArcChord = 0.01,
+               double joinTolerance = 2e-3);
 
 }  // namespace carvetto::toolpath

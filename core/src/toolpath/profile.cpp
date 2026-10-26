@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstddef>
 #include <limits>
+#include <map>
 #include <numeric>
 #include <optional>
 #include <string>
@@ -79,6 +80,19 @@ class DisjointSets {
     std::vector<std::size_t> parent_;
 };
 
+// A closed cut may close only within the tolerance; snap a line end so the loop closes exactly.
+void closeExactly(Contour& c) {
+    if (!c.closed || c.spans.empty()) {
+        return;
+    }
+    const Vec2 first = geometry::startPoint(c.spans.front());
+    if (auto* last = std::get_if<geometry::LineSpan>(&c.spans.back())) {
+        last->end = first;
+    } else if (auto* head = std::get_if<geometry::LineSpan>(&c.spans.front())) {
+        head->start = geometry::endPoint(c.spans.back());
+    }
+}
+
 Vec2 probePoint(const Contour& c) {
     return geometry::pointAt(c.spans.front(), 0.5);
 }
@@ -149,8 +163,15 @@ class ProfileBuilder {
     std::vector<Cut> trim(std::vector<Cut> cuts);
     void chooseStarts(std::vector<Cut>& cuts);
     std::vector<std::size_t> order(const std::vector<Cut>& cuts) const;
-    void placeTabsOn(std::vector<Cut>& primary);
+    void placeTabsOn(std::vector<Cut>& primary, const std::vector<Cut>& otherPass);
     void projectTabs(const std::vector<Cut>& from, std::vector<Cut>& to);
+    std::vector<double> otherStarts(const Cut& c, const std::vector<Cut>& otherPass) const;
+    void reportTabs();
+    void collectTabMaterial(const std::vector<Cut>& cuts);
+    double leadFloor(const Contour& lead) const;
+    std::vector<Vec2> tabMaterial_;  // sample points of every tab's material (all cuts)
+    std::map<std::size_t, std::size_t> tabsDropped_;   // per vector, all its cuts
+    std::map<std::size_t, std::size_t> tabsOnCorner_;
     void emit(const Cut& cut, const std::vector<double>& levels, bool finishing);
     void emitLeg(const Cut& cut, const PathLeg& leg, bool lastLevel, std::vector<bool>& cornerDone);
     template <class Make>
@@ -158,6 +179,10 @@ class ProfileBuilder {
     template <class Make>
     Contour fitLead(Make make, std::size_t contour, const char* what);
     void planLeadIns(std::vector<Cut>& cuts);
+    std::vector<Move> cornerMoves(const Cut& cut, Vec2 q, double turn, double bottom) const;
+    double coneClearance(Vec2 p, double tipZ) const;
+    /// Margin and resolution of the safety checks (trim, leads): 5 % of the distance tolerance.
+    double guardTol() const { return 0.05 * tol_.distance; }
     std::vector<LeadOptions> leadVariants() const;
 
     const std::vector<Contour>& raw_;
@@ -476,7 +501,9 @@ std::vector<Cut> ProfileBuilder::trim(std::vector<Cut> cuts) {
         const ClearanceField field(std::move(others));
         const ArcLengthPath walk(cut.path, offTol_);
         const double len = walk.length();
-        const auto bad = findViolations(walk, 0.0, len, field, cut.distance - tol_.distance, 0.5 * tol_.distance);
+        // Strict: trimmed cuts keep within 1.5 x guardTol() of the full distance (merged regions are
+        // offset by d + chordal, so this rarely removes anything there).
+        const auto bad = findViolations(walk, 0.0, len, field, cut.distance - guardTol(), guardTol());
         if (bad.empty()) {
             out.push_back(std::move(cut));
             continue;
@@ -539,6 +566,7 @@ void ProfileBuilder::chooseStarts(std::vector<Cut>& cuts) {
             const double u = walk.project(target);
             c.path.spans = walk.extract(u, u + walk.length());
         }
+        closeExactly(c.path);
         c.walk = ArcLengthPath(c.path, offTol_);
     }
 }
@@ -557,25 +585,34 @@ std::vector<std::size_t> ProfileBuilder::order(const std::vector<Cut>& cuts) con
     return orderCuts(items, p_.order, p_.startPosition, tol_);
 }
 
-void ProfileBuilder::placeTabsOn(std::vector<Cut>& primary) {
+// Positions on `c` (arc length) of the start points of the other pass's cuts that lie near it:
+// where the other pass plunges and its lead arrives, so `c` must not have a tab there either.
+std::vector<double> ProfileBuilder::otherStarts(const Cut& c, const std::vector<Cut>& otherPass) const {
+    std::vector<double> out;
+    // Generous reach: at a corner the other pass's start lies allowance / sin(half angle) away,
+    // and an extra keep-clear point only shifts a tab.
+    const double reach = radius_ + p_.lastPassAllowance + 2.0 * tol_.distance;
+    for (const Cut& o : otherPass) {
+        const Vec2 p = o.walk.pointAt(0.0);
+        const double v = c.walk.project(p);
+        if (geometry::distance(c.walk.pointAt(v), p) <= reach) {
+            out.push_back(v);
+        }
+    }
+    return out;
+}
+
+void ProfileBuilder::placeTabsOn(std::vector<Cut>& primary, const std::vector<Cut>& otherPass) {
     if (!p_.tabs.enabled) {
         return;
     }
     const double raised = p_.tabs.length + 2.0 * radius_;
     for (Cut& c : primary) {
-        const TabPlacement tp = placeTabs(c.walk, raised, p_.tabs);
+        // At least a tool radius cut to full depth between neighbouring tabs, so they stay apart.
+        const TabPlacement tp = placeTabs(c.walk, raised, p_.tabs, otherStarts(c, otherPass), radius_);
         c.tabs = tp.centres;
-        if (tp.dropped > 0) {
-            diag(ProfileIssue::TabsNotPlaced, c.sources.front(),
-                 vecName(c.sources.front()) + ": " + std::to_string(tp.dropped) +
-                     " tab(s) left out (no room: they would overlap, run past an open end or leave no stretch "
-                     "cut to full depth)");
-        }
-        if (tp.notAvoided > 0) {
-            diag(ProfileIssue::TabsNotPlaced, c.sources.front(),
-                 vecName(c.sources.front()) + ": " + std::to_string(tp.notAvoided) +
-                     " tab(s) left on a corner or curve (no straight stretch long enough)");
-        }
+        tabsDropped_[c.sources.front()] += tp.dropped;
+        tabsOnCorner_[c.sources.front()] += tp.notAvoided;
     }
 }
 
@@ -593,13 +630,71 @@ void ProfileBuilder::projectTabs(const std::vector<Cut>& from, std::vector<Cut>&
         }
         std::sort(c.tabs.begin(), c.tabs.end());
         c.tabs.erase(std::unique(c.tabs.begin(), c.tabs.end()), c.tabs.end());
-        // The roughing cut is longer or shorter than the finishing cut: fit the tabs again.
-        const TabPlacement tp = fitTabs(c.walk, c.tabs, tabFootprint(p_.tabs.length + 2.0 * radius_, p_.tabs));
+        // The roughing cut is longer or shorter than the finishing cut: fit the tabs again, clear
+        // of its own start and of the finishing cuts' starts.
+        const TabPlacement tp = fitTabs(c.walk, c.tabs, tabFootprint(p_.tabs.length + 2.0 * radius_, p_.tabs),
+                                        otherStarts(c, from), 0.5 * radius_);
         c.tabs = tp.centres;
-        if (tp.dropped > 0) {
-            diag(ProfileIssue::TabsNotPlaced, c.sources.front(),
-                 vecName(c.sources.front()) + ": " + std::to_string(tp.dropped) +
-                     " tab(s) left out of the roughing cut (no room for them)");
+        tabsDropped_[c.sources.front()] += tp.dropped;
+    }
+}
+
+// Points (every 0.1 mm) along the stretch of each tab that leaves material: its footprint minus a
+// tool radius at each end (the raised stretch includes the tool diameter).
+void ProfileBuilder::collectTabMaterial(const std::vector<Cut>& cuts) {
+    const double half = 0.5 * tabFootprint(p_.tabs.length + 2.0 * radius_, p_.tabs) - radius_;
+    if (half <= 0.0) {
+        return;
+    }
+    for (const Cut& c : cuts) {
+        for (double u : c.tabs) {
+            const int n = std::max(1, static_cast<int>(std::ceil(2.0 * half / 0.1)));
+            for (int i = 0; i <= n; ++i) {
+                tabMaterial_.push_back(c.walk.pointAt(u - half + 2.0 * half * i / n));
+            }
+        }
+    }
+}
+
+// Lowest height a lead may run at: a lead whose tool comes within reach of tab material (closer
+// than a tool diameter, plus the 0.1 mm sampling) runs no lower than the tab top, so it never
+// notches a tab; the plunge to the level then happens at the cut start, which tabs keep clear.
+double ProfileBuilder::leadFloor(const Contour& lead) const {
+    if (lead.isEmpty() || tabMaterial_.empty()) {
+        return kNoCeiling;
+    }
+    const double reach = 2.0 * radius_ + 0.1;
+    const ArcLengthPath lw(lead, offTol_);
+    const int n = std::max(1, static_cast<int>(std::ceil(lw.length() / 0.1)));
+    const geometry::Box2 box = lead.bounds().inflated(reach);
+    for (const Vec2& m : tabMaterial_) {
+        if (!box.contains(m)) {
+            continue;
+        }
+        for (int i = 0; i <= n; ++i) {
+            if (geometry::distance(lw.pointAt(lw.length() * i / n), m) < reach) {
+                return passes_.bottomZ() + p_.tabs.thickness;
+            }
+        }
+    }
+    return kNoCeiling;
+}
+
+// One diagnostic per vector with the totals over all its cuts (so kept + left out adds up).
+void ProfileBuilder::reportTabs() {
+    for (const auto& [src, n] : tabsDropped_) {
+        if (n > 0) {
+            diag(ProfileIssue::TabsNotPlaced, src,
+                 vecName(src) + ": " + std::to_string(n) +
+                     " tab(s) left out (no room: they would overlap, run past an open end, cover where the tool "
+                     "plunges or leave no stretch cut to full depth)");
+        }
+    }
+    for (const auto& [src, n] : tabsOnCorner_) {
+        if (n > 0) {
+            diag(ProfileIssue::TabsNotPlaced, src,
+                 vecName(src) + ": " + std::to_string(n) +
+                     " tab(s) left on a corner or curve (no straight stretch long enough)");
         }
     }
 }
@@ -630,7 +725,7 @@ bool ProfileBuilder::leadFits(Make make, double scale, Contour& out, bool& gentl
             continue;
         }
         if (p_.side == ProfileSide::On ||
-            isClear(ArcLengthPath(cand, offTol_), allField_, radius_ - tol_.distance, 0.5 * tol_.distance)) {
+            isClear(ArcLengthPath(cand, offTol_), allField_, radius_ - guardTol(), guardTol())) {
             out = std::move(cand);
             gentler = k > 0;
             return true;
@@ -694,6 +789,7 @@ void ProfileBuilder::planLeadIns(std::vector<Cut>& cuts) {
                 }
                 if (u != 0.0) {
                     c.path.spans = c.walk.extract(u, u + c.walk.length());
+                    closeExactly(c.path);
                     c.walk = ArcLengthPath(c.path, offTol_);
                     diag(ProfileIssue::StartMoved, src,
                          vecName(src) + ": start moved along the cut so that the lead-in fits");
@@ -715,6 +811,118 @@ void ProfileBuilder::planLeadIns(std::vector<Cut>& cuts) {
             diag(ProfileIssue::LeadDropped, src, vecName(src) + ": lead-in left out (it would gouge a vector)");
         }
     }
+}
+
+// How far the V-bit's cone stays inside the walls with the tip at `p`, `tipZ`: distance from p to
+// the nearest vector, minus the allowance, minus the radius the cone cuts at the material surface
+// (Z = 0; capped at the tool radius). Negative = it would cut past a wall.
+double ProfileBuilder::coneClearance(Vec2 p, double tipZ) const {
+    const double cone = std::min(std::max(0.0, -tipZ) * vbitTan_, 0.5 * tool_.diameter);
+    return allField_.distance(p) - std::max(0.0, p_.allowance) - cone;
+}
+
+// The sharp-internal-corner excursion for a V-bit at the path's inside corner `q` (tip at
+// `bottom`), returning to q; empty when there is no genuine corner of the vector there.
+//
+// The corner V must be a junction of a source vector whose direction turns by more than 5° (so
+// polyline vertices of polygonised curves and merged-region offsets do not count), on an exact
+// offset (merged polygonal regions get none). The tip runs from q, at the "knee" depth where the
+// cone itself is r wide, towards V and rises linearly to the surface where the distance to the
+// walls equals the allowance (V itself when the allowance is 0). That straight climb is exact
+// between two straight walls; it is checked against the real walls every 0.005 mm, and when it
+// would cut past one (a curved wall next to the corner) the climb follows the walls instead: at
+// samples 0.05 mm apart the tip is held at (distance - allowance - 0.05) / tan(half angle) below
+// the surface, which keeps the cone inside the walls between samples too (distance changes by at
+// most the sample spacing).
+std::vector<Move> ProfileBuilder::cornerMoves(const Cut& cut, Vec2 q, double turn, double bottom) const {
+    constexpr double kCornerTurn = 0.0872664625997165;  // 5 degrees
+    // The path itself must turn sharply here: polyline vertices of polygonised curves turn by
+    // fractions of a degree and are not corners.
+    if (!cut.exact || p_.side == ProfileSide::On || std::fabs(turn) <= kCornerTurn) {
+        return {};
+    }
+    Vec2 v = q;
+    double best = std::numeric_limits<double>::infinity();
+    for (std::size_t s : cut.sources) {
+        const Contour& c = in_.contours[s];
+        const std::size_t n = c.spans.size();
+        for (std::size_t j = 0; j < n; ++j) {
+            if (j == 0 && !c.closed) {
+                continue;
+            }
+            const Span& prev = c.spans[(j + n - 1) % n];
+            const Span& next = c.spans[j];
+            const Vec2 a = geometry::tangentAt(prev, 1.0);
+            const Vec2 b = geometry::tangentAt(next, 0.0);
+            if (std::fabs(std::atan2(a.cross(b), a.dot(b))) <= kCornerTurn) {
+                continue;
+            }
+            const Vec2 corner = geometry::startPoint(next);
+            const double d = geometry::distance(corner, q);
+            if (d < best) {
+                best = d;
+                v = corner;
+            }
+        }
+    }
+    const double r = radius_;
+    const double a = std::max(0.0, p_.allowance);
+    // Between straight walls turning by `turn`, Q lies (r + a) / cos(turn / 2) from the corner.
+    // Accept the nearest genuine corner only if it is about that far (twice, for curved walls).
+    const double expected = (r + a) / std::cos(0.5 * std::min(std::fabs(turn), geometry::kPi - kCornerTurn));
+    if (!(best <= 2.0 * expected) || best <= tol_.distance) {
+        return {};
+    }
+    const double knee = std::max(bottom, -r / vbitTan_);
+    // Where the climb ends: the point towards V whose distance to the walls equals the allowance.
+    Vec2 target = v;
+    if (a > 0.0) {
+        double lo = 0.0;
+        double hi = 1.0;
+        for (int it = 0; it < 60; ++it) {
+            const double mid = 0.5 * (lo + hi);
+            (allField_.distance(geometry::lerp(q, v, mid)) > a ? lo : hi) = mid;
+        }
+        target = geometry::lerp(q, v, lo);
+    }
+    const double len = geometry::distance(q, target);
+    bool straight = true;
+    const int checks = std::max(2, static_cast<int>(std::ceil(len / 0.005)));
+    for (int i = 0; i <= checks && straight; ++i) {
+        const double s = static_cast<double>(i) / checks;
+        straight = coneClearance(geometry::lerp(q, target, s), knee * (1.0 - s)) >= -1e-9;
+    }
+    std::vector<Move> up;
+    if (straight) {
+        if (knee > bottom) {
+            up.push_back(Move::feed(Vec3{q, knee}));
+        }
+        up.push_back(Move::feed(Vec3{target, 0.0}));
+    } else {
+        constexpr double h = 0.05;
+        auto heldZ = [&](Vec2 p) {
+            const double room = allField_.distance(p) - a - h;
+            return std::max(knee, -std::max(0.0, room) / vbitTan_);
+        };
+        up.push_back(Move::feed(Vec3{q, heldZ(q)}));
+        const int n = std::max(1, static_cast<int>(std::ceil(len / h)));
+        for (int i = 1; i <= n; ++i) {
+            const Vec2 p = geometry::lerp(q, target, static_cast<double>(i) / n);
+            up.push_back(Move::feed(Vec3{p, heldZ(p)}));
+        }
+    }
+    // Back down the same way, then to the bottom at q.
+    // Vertical descents are plunges; sloped ones (along the bisector) are feeds.
+    std::vector<Move> moves = up;
+    auto down = [&](Vec3 to) {
+        const Vec3 from = moves.back().to;
+        moves.push_back(from.xy() == to.xy() ? Move::plunge(to) : Move::feed(to));
+    };
+    for (std::size_t i = up.size() - 1; i-- > 0;) {
+        down(up[i].to);
+    }
+    down(Vec3{q, bottom});  // straight climb without a knee: one sloped feed back to q
+    return moves;
 }
 
 void ProfileBuilder::emitLeg(const Cut& cut, const PathLeg& leg, bool lastLevel, std::vector<bool>& cornerDone) {
@@ -749,33 +957,10 @@ void ProfileBuilder::emitLeg(const Cut& cut, const PathLeg& leg, bool lastLevel,
                 if (lam < -1e-9 || lam > travel + 1e-9 || std::fabs(z.after(lam) - bottom) > 1e-9) {
                     continue;
                 }
-                // Target: the vector's corner (the span junction nearest the path's corner).
-                const Vec2 q = cut.walk.pointAt(kinks[k].u);
-                Vec2 v = q;
-                double best = std::numeric_limits<double>::infinity();
-                for (std::size_t s : cut.sources) {
-                    for (const Span& sp : in_.contours[s].spans) {
-                        const Vec2 c = geometry::startPoint(sp);
-                        if (geometry::distance(c, q) < best) {
-                            best = geometry::distance(c, q);
-                            v = c;
-                        }
-                    }
-                }
-                // The offset radius is the cone's radius at the material surface (Z = 0) with the tip
-                // at the bottom, so the walls' top edges are on the vector. Along Q -> V the tip
-                // rises linearly to the surface at V; at the start it must be no deeper than the
-                // depth at which the cone (not the shank) reaches radius r, so the cone never
-                // passes the walls whatever the start depth or the V-bit's flute length.
-                const double knee = std::max(bottom, -radius_ / vbitTan_);
-                std::vector<Move> moves;
-                if (knee > bottom) {
-                    moves.push_back(Move::feed(Vec3{q, knee}));
-                }
-                moves.push_back(Move::feed(Vec3{v, 0.0}));
-                moves.push_back(Move::feed(Vec3{q, knee}));
-                if (knee > bottom) {
-                    moves.push_back(Move::plunge(Vec3{q, bottom}));
+                std::vector<Move> moves = cornerMoves(cut, cut.walk.pointAt(kinks[k].u), kinks[k].turn, bottom);
+                if (moves.empty()) {
+                    cornerDone[k] = true;
+                    break;
                 }
                 inserts.push_back({lam, std::move(moves)});
                 cornerDone[k] = true;
@@ -810,16 +995,20 @@ void ProfileBuilder::emit(const Cut& cut, const std::vector<double>& levels, boo
     double zFrom = levels.front();
     if (!in.isEmpty()) {
         const ArcLengthPath lw(in, offTol_);
+        const ZProfile floor = ZProfile::flat(leadFloor(in));  // keeps the lead out of tabs
         if (rampFirst && ramp.onLeadIn) {
-            out.append(Move::plunge(Vec3{entry, z0}));
-            appendLeg(lw, 0.0, lw.length(), ZProfile::linear(z0, levels.front(), lw.length()), out);
+            const ZProfile z = ZProfile::max(ZProfile::linear(z0, levels.front(), lw.length()), floor);
+            out.append(Move::plunge(Vec3{entry, z.after(0.0)}));
+            appendLeg(lw, 0.0, lw.length(), z, out);
         } else if (rampFirst) {
-            out.append(Move::plunge(Vec3{entry, z0}));
-            appendLeg(lw, 0.0, lw.length(), ZProfile::flat(z0), out);
+            const ZProfile z = ZProfile::max(ZProfile::flat(z0), floor);
+            out.append(Move::plunge(Vec3{entry, z.after(0.0)}));
+            appendLeg(lw, 0.0, lw.length(), z, out);
             zFrom = z0;
         } else {
-            out.append(Move::plunge(Vec3{entry, levels.front()}));
-            appendLeg(lw, 0.0, lw.length(), ZProfile::flat(levels.front()), out);
+            const ZProfile z = ZProfile::max(ZProfile::flat(levels.front()), floor);
+            out.append(Move::plunge(Vec3{entry, z.after(0.0)}));
+            appendLeg(lw, 0.0, lw.length(), z, out);
         }
     } else if (rampFirst) {
         out.append(Move::plunge(Vec3{entry, z0}));
@@ -862,8 +1051,14 @@ void ProfileBuilder::emit(const Cut& cut, const std::vector<double>& levels, boo
             fitLead([&](const LeadOptions& o, double scale) { return leadOut(at, t, wasteLeft, o, scale); }, src,
                     "lead-out");
         if (!lo.isEmpty()) {
+            // Leave at the height the cut ended at: inside a tab (e.g. after an overcut) that is
+            // the tab top, so the lead-out never cuts into the tab.
             const ArcLengthPath lw(lo, offTol_);
-            appendLeg(lw, 0.0, lw.length(), ZProfile::flat(zn), out);
+            const double z = std::max(out.moves.back().to.z, leadFloor(lo));
+            if (z > out.moves.back().to.z) {
+                out.append(Move::feed(Vec3{out.moves.back().to.xy(), z}));  // up out of the way of a tab
+            }
+            appendLeg(lw, 0.0, lw.length(), ZProfile::flat(z), out);
         }
     }
     out.append(Move::retract(Vec3{out.moves.back().to.xy(), p_.safeZ}));
@@ -902,6 +1097,7 @@ ProfileResult ProfileBuilder::run() {
             if (c.walk.closed()) {
                 const double u = c.walk.project(prev);
                 c.path.spans = c.walk.extract(u, u + c.walk.length());
+                closeExactly(c.path);
                 c.walk = ArcLengthPath(c.path, offTol_);
             }
             prev = c.walk.pointAt(0.0);
@@ -917,16 +1113,37 @@ ProfileResult ProfileBuilder::run() {
         for (std::size_t k = 0; k < roughOrder.size(); ++k) {
             rank[roughOrder[k]] = k;
         }
+        // Counterpart = the roughing cut with the smallest median distance over 17 points along
+        // the finishing cut (robust where trimmed or merged pieces lie close together), if that
+        // median is within the last-pass allowance + a tool radius. A finishing cut without one
+        // (e.g. a small loop that vanished at the roughing distance) takes the rank of the
+        // roughing cut nearest its start point.
         std::vector<double> key(finish.size(), static_cast<double>(rough.size()));
+        const double match = p_.lastPassAllowance + radius_ + tol_.distance;
         for (std::size_t f = 0; f < finish.size(); ++f) {
-            const Vec2 p = finish[f].walk.pointAt(0.0);
             double best = std::numeric_limits<double>::infinity();
+            double nearestStart = std::numeric_limits<double>::infinity();
+            double startKey = key[f];
+            const Vec2 start = finish[f].walk.pointAt(0.0);
             for (std::size_t r = 0; r < rough.size(); ++r) {
-                const double d = geometry::distanceTo(rough[r].walk.contour(), p);
-                if (d < best) {
-                    best = d;
+                std::vector<double> ds;
+                for (int k = 0; k <= 16; ++k) {
+                    const Vec2 p = finish[f].walk.pointAt(finish[f].walk.length() * k / 16.0);
+                    ds.push_back(geometry::distanceTo(rough[r].walk.contour(), p));
+                }
+                std::nth_element(ds.begin(), ds.begin() + 8, ds.end());
+                if (ds[8] < best) {
+                    best = ds[8];
                     key[f] = static_cast<double>(rank[r]);
                 }
+                const double ds0 = geometry::distanceTo(rough[r].walk.contour(), start);
+                if (ds0 < nearestStart) {
+                    nearestStart = ds0;
+                    startKey = static_cast<double>(rank[r]);
+                }
+            }
+            if (!(best <= match)) {
+                key[f] = startKey;
             }
         }
         std::iota(finishOrder.begin(), finishOrder.end(), std::size_t{0});
@@ -937,11 +1154,14 @@ ProfileResult ProfileBuilder::run() {
     planLeadIns(rough);
     planLeadIns(finish);
     if (separate) {
-        placeTabsOn(finish);
+        placeTabsOn(finish, rough);
         projectTabs(finish, rough);
     } else {
-        placeTabsOn(rough);
+        placeTabsOn(rough, {});
     }
+    reportTabs();
+    collectTabMaterial(rough);
+    collectTabMaterial(finish);
     for (std::size_t i : roughOrder) {
         emit(rough[i], levels, false);
     }

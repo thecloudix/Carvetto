@@ -385,7 +385,7 @@ void appendSpan(const Span& span, double z, double minArcChord, Toolpath& out) {
 }  // namespace
 
 void appendLeg(const ArcLengthPath& path, double u0, double u1, const ZProfile& z, Toolpath& out,
-               const std::vector<LegInsert>& inserts, double minArcChord) {
+               const std::vector<LegInsert>& inserts, double minArcChord, double joinTolerance) {
     if (path.isEmpty()) {
         return;
     }
@@ -436,8 +436,11 @@ void appendLeg(const ArcLengthPath& path, double u0, double u1, const ZProfile& 
         }
     };
 
+    // Change height where the tool stands before moving on (a closed offset may close within the
+    // tolerance, so "at the start" allows `joinTolerance`): a level change is a vertical move,
+    // never a slope along the first span.
     const geometry::Vec2 start = path.pointAt(u0);
-    if (!out.isEmpty() && geometry::distance(out.moves.back().to.xy(), start) <= 1e-9) {
+    if (!out.isEmpty() && geometry::distance(out.moves.back().to.xy(), start) <= joinTolerance) {
         appendVertical(out, z.after(0.0));
     }
     runInserts(0);

@@ -14,29 +14,24 @@ namespace carvetto::toolpath {
 
 namespace {
 
-// Nearest centre to `c` whose raised stretch [c - w/2, c + w/2] lies within one line span.
-// Returns false when no line span is long enough.
-bool nearestStraight(const ArcLengthPath& path, double c, double w, double& out) {
-    const double len = path.length();
+// Nearest centre to `c` in [cmin, cmax] (the allowed centre range) whose raised stretch
+// [c - w/2, c + w/2] lies within one line span. Returns false when there is no such place.
+bool nearestStraight(const ArcLengthPath& path, double c, double w, double cmin, double cmax, double& out) {
     double bestDist = std::numeric_limits<double>::infinity();
     for (std::size_t i = 0; i < path.spanCount(); ++i) {
         if (!std::holds_alternative<geometry::LineSpan>(path.contour().spans[i])) {
             continue;
         }
-        const double lo = path.spanStart(i) + 0.5 * w;
-        const double hi = path.spanStart(i) + path.spanLength(i) - 0.5 * w;
+        const double lo = std::max(cmin, path.spanStart(i) + 0.5 * w);
+        const double hi = std::min(cmax, path.spanStart(i) + path.spanLength(i) - 0.5 * w);
         if (hi < lo) {
             continue;
         }
-        const int copies = path.closed() ? 1 : 0;
-        for (int k = -copies; k <= copies; ++k) {
-            const double shift = k * len;
-            const double cand = std::clamp(c, lo + shift, hi + shift);
-            const double d = std::fabs(cand - c);
-            if (d < bestDist) {
-                bestDist = d;
-                out = path.closed() ? path.wrap(cand) : cand;
-            }
+        const double cand = std::clamp(c, lo, hi);
+        const double d = std::fabs(cand - c);
+        if (d < bestDist) {
+            bestDist = d;
+            out = cand;
         }
     }
     return bestDist < std::numeric_limits<double>::infinity();
@@ -44,7 +39,8 @@ bool nearestStraight(const ArcLengthPath& path, double c, double w, double& out)
 
 }  // namespace
 
-TabPlacement placeTabs(const ArcLengthPath& path, double raisedLength, const TabOptions& options) {
+TabPlacement placeTabs(const ArcLengthPath& path, double raisedLength, const TabOptions& options,
+                       const std::vector<double>& keepClear, double minGap) {
     TabPlacement result;
     const double len = path.length();
     if (!options.enabled || path.isEmpty() || len <= 0.0 || raisedLength <= 0.0) {
@@ -59,12 +55,17 @@ TabPlacement placeTabs(const ArcLengthPath& path, double raisedLength, const Tab
     if (n == 0) {
         return result;
     }
+    // Allowed centres: the whole footprint inside the path, clear of its start (where the tool
+    // plunges and the lead arrives) and of an open path's ends.
+    const double half = 0.5 * tabFootprint(raisedLength, options);
+    const double cmin = half + kMinTabGap;
+    const double cmax = len - half - kMinTabGap;
     std::vector<double> centres;
     for (long i = 0; i < n; ++i) {
         double c = (static_cast<double>(i) + 0.5) * len / static_cast<double>(n);
         if (options.avoidCorners) {
             double moved = c;
-            if (nearestStraight(path, c, raisedLength, moved)) {
+            if (nearestStraight(path, c, raisedLength, cmin, cmax, moved)) {
                 c = moved;
             } else {
                 ++result.notAvoided;
@@ -72,7 +73,8 @@ TabPlacement placeTabs(const ArcLengthPath& path, double raisedLength, const Tab
         }
         centres.push_back(c);
     }
-    const TabPlacement fitted = fitTabs(path, std::move(centres), tabFootprint(raisedLength, options));
+    const TabPlacement fitted =
+        fitTabs(path, std::move(centres), tabFootprint(raisedLength, options), keepClear, minGap);
     result.centres = fitted.centres;
     result.dropped = fitted.dropped;
     return result;
@@ -82,26 +84,51 @@ double tabFootprint(double raisedLength, const TabOptions& options) {
     return raisedLength + (options.threeD ? 2.0 * std::max(0.0, options.thickness) : 0.0);
 }
 
-TabPlacement fitTabs(const ArcLengthPath& path, std::vector<double> centres, double footprint) {
+TabPlacement fitTabs(const ArcLengthPath& path, std::vector<double> centres, double footprint,
+                     const std::vector<double>& keepClear, double minGap) {
+    minGap = std::max(minGap, kMinTabGap);
     TabPlacement result;
     const double len = path.length();
-    std::sort(centres.begin(), centres.end());
     const double half = 0.5 * footprint;
-    // A closed path must keep some full-depth stretch: a footprint as long as the loop leaves none.
-    if (path.closed() && footprint + kMinTabGap > len) {
+    const double reach = half + kMinTabGap;  // centre-to-point distance that keeps a point clear
+    // A footprint must lie inside the path, clear of its start by kMinTabGap: on a closed path the
+    // tool plunges and the lead arrives there; an open path must not lose its ends.
+    if (footprint + 2.0 * kMinTabGap > len) {
         result.dropped = centres.size();
         return result;
     }
+    const double lo = reach;
+    const double hi = len - reach;
+    auto clashes = [&](double c) {
+        return std::any_of(keepClear.begin(), keepClear.end(), [&](double f) { return std::fabs(c - f) < reach; });
+    };
+    std::vector<double> placed;
     for (double c : centres) {
-        if (!path.closed() && (c - half < 0.0 || c + half > len)) {
+        if (path.closed()) {
+            c = std::clamp(c, lo, hi);  // move it off the start
+        } else if (c < lo || c > hi) {
             ++result.dropped;  // would run past an open end
             continue;
         }
-        if (!result.centres.empty() && c - result.centres.back() < footprint + kMinTabGap) {
+        // Move it off any other point that must stay clear, to the nearer side.
+        for (double f : keepClear) {
+            if (std::fabs(c - f) < reach) {
+                c = c < f ? f - reach : f + reach;
+            }
+        }
+        if (c < lo || c > hi || clashes(c)) {
+            ++result.dropped;  // no room next to the points that must stay clear
+            continue;
+        }
+        placed.push_back(c);
+    }
+    std::sort(placed.begin(), placed.end());
+    for (double c : placed) {
+        if (!result.centres.empty() && c - result.centres.back() < footprint + minGap) {
             ++result.dropped;  // overlaps (or touches) the previous tab
             continue;
         }
-        if (path.closed() && !result.centres.empty() && result.centres.front() + len - c < footprint + kMinTabGap) {
+        if (path.closed() && !result.centres.empty() && result.centres.front() + len - c < footprint + minGap) {
             ++result.dropped;  // overlaps the first tab across the start
             continue;
         }
