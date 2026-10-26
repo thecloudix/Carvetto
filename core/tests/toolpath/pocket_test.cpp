@@ -613,3 +613,125 @@ TEST_CASE("Regression: travel never crosses a thin fin through its corner vertic
         }
     }
 }
+
+TEST_CASE("AC5 regression: pockets with many islands retract once", "[toolpath][pocket][linking]") {
+    // Round-3 verifier repros: with three or more islands the way between rings of the root
+    // used to give up when another island blocked the straight bridge, so every level retracted.
+    struct Case {
+        const char* name;
+        std::vector<orc::Poly> polys;
+    };
+    std::vector<Case> cases;
+    for (int n = 3; n <= 6; ++n) {
+        Case c{"row of islands", {orc::rectPoly(0, 0, 8 + 20.0 * n, 30)}};
+        for (int a = 0; a < n; ++a) {
+            c.polys.push_back(orc::rectPoly(8 + 20.0 * a, 8, 20 + 20.0 * a, 22));
+        }
+        cases.push_back(c);
+    }
+    {
+        Case c{"3 x 2 grid of 12 mm islands", {orc::rectPoly(0, 0, 70, 50)}};
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 2; ++j) {
+                c.polys.push_back(orc::rectPoly(6 + 22.0 * i, 8 + 22.0 * j, 18 + 22.0 * i, 20 + 22.0 * j));
+            }
+        }
+        cases.push_back(c);
+    }
+    {
+        Case c{"6 x 4 grid of islands in 200 x 120", {orc::rectPoly(0, 0, 200, 120)}};
+        for (int i = 0; i < 6; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                c.polys.push_back(orc::rectPoly(12 + 32.0 * i, 10 + 28.0 * j, 26 + 32.0 * i, 24 + 28.0 * j));
+            }
+        }
+        cases.push_back(c);
+    }
+    for (const Case& c : cases) {
+        std::vector<Contour> input;
+        for (const orc::Poly& poly : c.polys) {
+            input.push_back(Contour::fromPolyline(Polyline{poly, true}));
+        }
+        for (double stepover : {1.2, 2.4}) {
+            if (c.polys.size() > 7 && stepover < 2.0) {
+                continue;  // the 24-island grid once is enough (Debug time)
+            }
+            INFO(c.name << " islands " << c.polys.size() - 1 << " stepover " << stepover);
+            PocketParams p = params(9.0);
+            PocketTool t = tool(6.0, 0.4, 3.0);
+            t.stepover = stepover;
+            const PocketResult res = pocketToolpath(input, {t}, p);
+            const Toolpath& tp = res.toolpaths[0];
+            REQUIRE_FALSE(tp.isEmpty());
+            CHECK(tp.count(MoveKind::Retract) == 1);
+            if (c.polys.size() <= 7) {  // the exact gouge check is costly on the big grid
+                const orc::GougeReport g = orc::gougeCheck(tp, c.polys, 1e-9, p.safeZ);
+                CHECK(g.allInside);
+                CHECK(g.minDistance >= 3.0);
+            }
+        }
+    }
+}
+
+TEST_CASE("AC6 regression: the move cap sees raster pieces per line", "[toolpath][pocket][robustness]") {
+    // Round-3 verifier repro: on a comb the raster lines are cut into one piece per tooth, which
+    // the line-count estimate missed (hours of work inside the caps). The cap is now checked on
+    // the actual pattern before any move is emitted: the pattern is O(lines x teeth) to build,
+    // and the refused case emits nothing.
+    std::vector<Vec2> pts;
+    const int teeth = 50;
+    for (int i = 0; i < teeth; ++i) {
+        pts.push_back({i * 1.0, 0});
+        pts.push_back({i * 1.0, 20});
+        pts.push_back({i + 0.5, 20});
+        pts.push_back({i + 0.5, 0.0});
+    }
+    pts.push_back({double(teeth), -5});
+    pts.push_back({0, -5});
+    const Contour comb = Contour::fromPolyline(Polyline{pts, true});
+    PocketParams p = params(9.0);
+    p.strategy = PocketStrategy::Raster;
+    PocketTool t = tool(0.2, 0.1, 0.01);
+    t.stepover = 0.02;
+    // 1250 lines x ~50 pieces x 900 levels: far beyond the cap.
+    const PocketResult refused = pocketToolpath({comb}, {t}, p);
+    CHECK(refused.toolpaths[0].isEmpty());
+    CHECK(refused.plans[0].paths.empty());
+    CHECK(refused.plans[0].levels.empty());
+    REQUIRE(refused.messages.size() == 1);
+    CHECK(refused.messages[0].find("would exceed") != std::string::npos);
+    // The same pattern at 3 levels is inside the cap and is produced.
+    t.passDepth = 3.0;
+    const PocketResult ok = pocketToolpath({comb}, {t}, p);
+    CHECK(ok.messages.empty());
+    CHECK_FALSE(ok.toolpaths[0].isEmpty());
+    CHECK(ok.toolpaths[0].moves.size() <= 20000000u);
+    CHECK(ok.plans[0].paths.size() > 10000u);  // ~one piece per tooth per line
+}
+
+TEST_CASE("Raster without a boundary pass never travels over the scalloped floor",
+          "[toolpath][pocket][linking]") {
+    // Round-3 non-blocking item: with Profile Pass None the walls keep scallops at every level,
+    // so travel at the previous floor would cut them; such toolpaths retract instead. A rest
+    // tool sees the scallops as rest material (the swept area is the disc along the actual
+    // raster lines) and travels only inside its own part of the need region.
+    PocketParams p = params(6.0);
+    p.strategy = PocketStrategy::Raster;
+    p.profilePass = ProfilePass::None;
+    p.rasterAngle = 0.3;
+    const PocketResult res =
+        pocketToolpath({rect(0, 0, 50, 30)}, {tool(6.0, 0.6, 3.0, "Big"), tool(2.0, 0.4, 3.0, "Small")}, p);
+    REQUIRE(res.toolpaths.size() == 2);
+    const Toolpath& clear = res.toolpaths[0];
+    for (std::size_t i = 0; i < clear.moves.size(); ++i) {
+        const Move& mv = clear.moves[i];
+        CHECK_FALSE((mv.kind == MoveKind::Feed && mv.to.z > clear.startOf(i).z));  // no lifts
+    }
+    // The scallops along the walls are rest material for the small tool.
+    CHECK(res.plans[1].restMaterial.size() > 4);  // more than the four corners
+    CHECK_FALSE(res.toolpaths[1].isEmpty());
+    const orc::GougeReport g =
+        orc::gougeCheck(res.toolpaths[1], {orc::rectPoly(0, 0, 50, 30)}, 1e-9, p.safeZ);
+    CHECK(g.allInside);
+    CHECK(g.minDistance >= 1.0);
+}

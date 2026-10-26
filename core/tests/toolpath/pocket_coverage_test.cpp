@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 
+#include "../geometry/test_rng.hpp"
 #include "carvetto/geometry/box2.hpp"
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/toolpath/pocket.hpp"
@@ -405,5 +406,144 @@ TEST_CASE("AC4: rest machining (12 mm then 3 mm) touches only the rest areas",
         CHECK(missed == 0);
         CHECK(orc::gougeCheck(clear, boundary, 0.0, p.safeZ).minDistance >= 6.0);
         CHECK(orc::gougeCheck(rest, boundary, 0.0, p.safeZ).minDistance >= 1.5);
+    }
+}
+
+namespace {
+
+/// Cells inside `polys` that a tool of radius r1 can reach (some centre inside, at least
+/// r1 + margin + band from every wall, within r1 - band of the cell) but that neither toolpath
+/// swept at depth z (`validCentres` counts the rest tool's valid centre cells). Independent of the pocket
+/// code: grid sweep, even-odd test, edge distances.
+std::size_t unreachedRest(const std::vector<orc::Poly>& polys, const Toolpath& t0, double r0,
+                          const Toolpath& t1, double r1, double z, double margin, std::size_t& validCentres) {
+    const double h = 0.1, band = 0.02;
+    Box2 box;
+    for (const orc::Poly& poly : polys) {
+        for (const Vec2 q : poly) {
+            box.expand(q);
+        }
+    }
+    orc::Grid g(box.min.x - 1, box.min.y - 1, box.max.x + 1, box.max.y + 1, h);
+    orc::sweepFloor(g, t0, r0, z);
+    orc::sweepFloor(g, t1, r1, z);
+    orc::Grid valid(box.min.x - 1, box.min.y - 1, box.max.x + 1, box.max.y + 1, h);
+    for (int j = 0; j < valid.ny; ++j) {
+        for (int i = 0; i < valid.nx; ++i) {
+            const Vec2 c = valid.centre(i, j);
+            valid.at(i, j) = static_cast<std::uint8_t>(orc::insideEvenOdd(polys, c) &&
+                                                       orc::boundaryDist(polys, c) >= r1 + margin + band);
+        }
+    }
+    const int win = static_cast<int>(std::ceil(r1 / h));
+    std::size_t missed = 0;
+    validCentres = 0;
+    for (int j = 0; j < g.ny; ++j) {
+        for (int i = 0; i < g.nx; ++i) {
+            if (g.at(i, j)) {
+                continue;  // swept by one of the tools
+            }
+            const Vec2 p = g.centre(i, j);
+            if (!orc::insideEvenOdd(polys, p)) {
+                continue;  // outside the pocket: nothing to cut
+            }
+            bool reachable = false;
+            for (int dj = -win; dj <= win && !reachable; ++dj) {
+                for (int di = -win; di <= win && !reachable; ++di) {
+                    const int ii = i + di, jj = j + dj;
+                    if (ii < 0 || jj < 0 || ii >= valid.nx || jj >= valid.ny || !valid.at(ii, jj)) {
+                        continue;
+                    }
+                    const Vec2 c = valid.centre(ii, jj);
+                    reachable = std::hypot(c.x - p.x, c.y - p.y) <= r1 - band;
+                }
+            }
+            if (reachable) {
+                ++missed;
+            }
+        }
+    }
+    for (int j = 0; j < valid.ny; ++j) {
+        for (int i = 0; i < valid.nx; ++i) {
+            validCentres += valid.at(i, j);
+        }
+    }
+    return missed;
+}
+
+orc::Poly dumbbell(double w) {
+    return {{0, 0},   {25, 0},  {25, 15 - w / 2}, {40, 15 - w / 2}, {40, 5},  {60, 5},
+            {60, 25}, {40, 25}, {40, 15 + w / 2}, {25, 15 + w / 2}, {25, 30}, {0, 30}};
+}
+
+}  // namespace
+
+TEST_CASE("AC4 regression: the 15 x 6 mm neck of a dumbbell is rest material and is cut",
+          "[toolpath][pocket][coverage][rest]") {
+    // Round-3 verifier repro: the opening of the rest material insets it slightly, and the
+    // inside-out guard dropped the whole neck because one vertex near a cusp came out a little
+    // too close; only the eight corners were left.
+    for (double w : {6.0, 6.03, 6.05}) {
+        for (PocketStrategy strategy : {PocketStrategy::Offset, PocketStrategy::Raster}) {
+            INFO("neck width " << w << " strategy " << static_cast<int>(strategy));
+            PocketParams p = baseParams();
+            p.strategy = strategy;
+            p.rasterAngle = 0.4;
+            const orc::Poly poly = dumbbell(w);
+            const PocketResult res = pocketToolpath({Contour::fromPolyline({poly, true})},
+                                                    {tool(12.0, 0.4, 6.0, 1), tool(3.0, 0.4, 6.0, 2)}, p);
+            bool neck = false;
+            for (const Contour& c : res.plans[1].restMaterial) {
+                const Box2 b = c.bounds();
+                neck = neck || (b.min.x <= 25.5 && b.max.x >= 39.5 && b.height() > 5.0);
+            }
+            CHECK(neck);
+            std::size_t judged = 0;
+            CHECK(unreachedRest({poly}, res.toolpaths[0], 6.0, res.toolpaths[1], 1.5, -6.0,
+                                p.tolerance.chordal, judged) == 0);
+            CHECK(judged > 1000);
+        }
+    }
+}
+
+TEST_CASE("AC4 property: rest material the rest tool can reach is always cut",
+          "[toolpath][pocket][coverage][rest]") {
+    // Random dumbbells and slotted rectangles, both strategies, every profile pass except
+    // Raster + None (see below), fixed seeds.
+    carvetto::test::SplitMix rng{0x7121'0300ULL};
+    for (int k = 0; k < 10; ++k) {
+        orc::Poly poly;
+        if (k % 2 == 0) {
+            poly = dumbbell(rng.uniform(4.0, 9.0));
+        } else {
+            const double sw = rng.uniform(3.5, 8.0), sl = rng.uniform(5.0, 15.0), sy = rng.uniform(4.0, 20.0);
+            poly = {{0, 0},        {40, 0},  {40, sy}, {40 + sl, sy}, {40 + sl, sy + sw},
+                    {40, sy + sw}, {40, 30}, {0, 30}};
+        }
+        PocketParams p = baseParams();
+        p.cutDepth = 3.0;
+        p.strategy = rng.next() % 2 == 0 ? PocketStrategy::Offset : PocketStrategy::Raster;
+        p.profilePass = static_cast<ProfilePass>(rng.next() % 3);
+        if (p.strategy == PocketStrategy::Raster && p.profilePass == ProfilePass::None) {
+            // Raster without a boundary pass leaves wall scallops for every tool by design (the
+            // rest tool's own raster has no boundary pass either), so the property does not hold
+            // there; its rest material is still taken from the actual sweep (pocket_test).
+            p.profilePass = ProfilePass::Last;
+        }
+        p.rasterAngle = rng.uniform(0.0, 3.0);
+        const double d0 = rng.uniform(8.0, 12.0), d1 = rng.uniform(2.0, 3.5);
+        INFO("case " << k << " strategy " << static_cast<int>(p.strategy) << " pass "
+                     << static_cast<int>(p.profilePass) << " d0 " << d0 << " d1 " << d1);
+        const PocketResult res = pocketToolpath({Contour::fromPolyline({poly, true})},
+                                                {tool(d0, 0.4, 3.0, 1), tool(d1, 0.4, 3.0, 2)}, p);
+        REQUIRE(res.toolpaths.size() == 2);
+        std::size_t judged = 0;
+        CHECK(unreachedRest({poly}, res.toolpaths[0], d0 / 2, res.toolpaths[1], d1 / 2, -3.0,
+                            p.tolerance.chordal, judged) == 0);
+        for (std::size_t i = 0; i < 2; ++i) {
+            const orc::GougeReport g = orc::gougeCheck(res.toolpaths[i], {poly}, 1e-9, p.safeZ);
+            CHECK(g.allInside);
+            CHECK(g.minDistance >= 0.5 * res.toolpaths[i].tool.diameter);
+        }
     }
 }

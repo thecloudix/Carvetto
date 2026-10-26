@@ -137,7 +137,8 @@ struct PocketResult {
 /// diameters) that stays inside the centre region is a feed at depth; any other way within a
 /// cluster lifts to the floor of the previous level (the surface for the first level), which is
 /// already cleared there, and feeds along a straight segment or a route through the offset ring
-/// tree inside the centre region; only when there is no such way does the tool retract to safe
+/// tree inside the centre region (Raster without a boundary pass leaves wall scallops, so it never
+/// travels); only when there is no such way does the tool retract to safe
 /// Z. Entry into the material is a vertical plunge or, with `rampPlunge`, a zig-zag ramp along the
 /// path (`appendPathRamp`). Parameters that would make the work explode (pass depth, stepover or
 /// chordal tolerance too small for the pocket) are refused with a message and an empty toolpath.

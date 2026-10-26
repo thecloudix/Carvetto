@@ -1,6 +1,6 @@
 # ADR-0017: Pocket toolpath
 
-Date: 2026-10-26 · Status: proposed (T-0121; revised in fix round 2, same day)
+Date: 2026-10-26 · Status: proposed (T-0121; revised in fix rounds 2 and 3, same day)
 
 ## Context
 T-0121 adds `pocketToolpath(contours, tools, PocketParams)` (feature-inventory §5 "Pocketing
@@ -34,9 +34,13 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
    the inset (less the join tolerance) to its source. Clipper2 1.4.0 turns a polygon inset past its
    inradius inside out: a 17 mm circle inset by 19.2 comes back as a 2.2 mm circle, by 30 as a
    13 mm one. Without the guard, offset levels never end, and a tool too big for a small pocket
-   would get a phantom region to cut. The distance test uses a uniform grid over the source edges,
-   and one inside test per region (a region that keeps that distance cannot cross the source
-   boundary).
+   would get a phantom region to cut. The distance test uses a uniform grid over the source edges.
+   For the **tool-centre region** every outer vertex must keep the distance (`Strict`), because a
+   vertex too close would be a gouge. Everywhere else (offset levels, rest material, openings) at
+   least half of them must (`Majority`). A phantom fails at every vertex: its vertices are about
+   twice its own size too close. A genuine region can come out with a vertex near a cusp of the
+   input a little too close. Round 2 dropped a whole 15 × 6 mm neck of rest material for one such
+   vertex (verifier dumbbell repro).
 5. **Offset strategy.** The levels are `inset(C, k·stepover)`, each taken from C directly so
    errors do not accumulate. They are grouped into regions (outer + holes) and arranged as a
    containment tree, which is cut in **post-order (inside out)**. The innermost rings come first
@@ -83,7 +87,9 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
    - **Retract:** only when there is no such way does the tool retract to safe Z, rapid and
      descend.
    The way is the straight segment when that is inside C. Otherwise, for Offset clusters, it is
-   routed through the ring tree (8b).
+   routed through the ring tree (8b). With **Raster + Profile Pass None** the walls keep scallops
+   at every level, so the floor is not clear along them. Such a toolpath never travels: it
+   retracts instead (8c).
    - **8a, the inside test.** `segmentInside` is our own segment-vs-polygon check. A crossing
      away from the ends rejects the segment, and so does a boundary vertex within tolerance of the
      segment's interior, because rounding can hide a crossing through a vertex. The midpoint must
@@ -95,12 +101,24 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
    - **8b, ring-tree routes.** From each end, climb to the parent level by a straight segment to
      the parent boundary's nearest point. The open disc around a point of a region, out to its
      nearest boundary point, lies inside the region, so each such segment is inside. At the
-     lowest common ancestor, follow its ring the shorter way, or cross between two of its rings at
-     their closest pair when that segment is inside; otherwise climb further. Then shorten the
-     result greedily ("string pulling") with `segmentInside`.
-   With this, a connected pocket of any shape (convex, U, C, L, plus, rectangles with islands)
-   retracts once in total, and n disjoint regions retract n times (AC5). Raster and rest clusters
-   use straight travel only.
+     lowest common ancestor the way follows its rings and **bridges**. The bridges of a node are
+     a Kruskal spanning tree over the closest pairs between its rings, shortest first, and are
+     built on first use. A Kruskal bridge cannot be blocked by a third ring: that ring would be
+     closer to one end and would already be joined to it. Each bridge is still checked with
+     `segmentInside`. The way goes ring to ring by the fewest bridges (BFS) and walks each ring
+     the shorter way. It climbs further only when the bridges do not connect, which does not
+     happen in exact geometry. The result is then shortened greedily ("string pulling"). Round 2
+     tried only the closest pair of the two end rings, and so gave up whenever a third island
+     blocked it: three or more islands retracted at every level.
+   - **8c, cost.** The inside tests in raster linking, emission and string pulling use a
+     `RegionIndex`, a uniform edge grid with a per-row parity ray. Each test costs the edges near
+     the segment rather than all edges. A 200-tooth comb raster with 200,000 pieces per level
+     dropped from 66 s to 1.7 s.
+   With this, a connected pocket of any shape retracts once in total, however many islands it has
+   (rows of 3–6 islands, grids up to 6 × 4, U, C, L, plus), and n disjoint regions retract
+   n times (AC5). Raster and rest clusters use straight travel only. A rest cluster travels only
+   inside its own part of the need region (∩ C): other rest clusters may still hold material at
+   every depth.
 9. **Descent.** It is a vertical `Plunge`. With `rampPlunge`, the tool plunges through the air to
    the floor already cut (the surface for the first level) and then makes a **zig-zag ramp**
    (`toolpath/pocket_ramp.hpp`, `appendPathRamp`). The ramp runs forward along the path for
@@ -120,7 +138,9 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
     with C_i: the outermost ring lies on C_i's boundary, where open-path clipping is ambiguous and
     drops pieces. Each path is clipped only against the parts of N_i whose bounding box it
     overlaps. Pieces keep their path's direction and order, a ring cut across its seam is
-    rejoined, and the pieces are clustered by the connected part of N_i that holds them. Round 1
+    rejoined, and the pieces are clustered by the connected part of N_i that holds them. With
+    Raster + None the swept area is the tool disc along the actual paths rather than the whole
+    reach, so the wall scallops become rest material for the next tool. Round 1
     opened the rest material by 5·chordal and so skipped real thin residue: a ~0.1 mm corner band
     at chordal 0.049 (verifier seed 31493).
 11. **Output.** Moves are straight lines only, because the geometry is polygonal. Rapids are at
@@ -133,7 +153,12 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
     - stepover ≥ 10·distance;
     - at most 10⁴ depth passes, estimated as ⌈cutDepth / passDepth⌉ + 2, before `PassPlan` runs;
     - at most 2·10⁴ rings or raster lines per part, estimated from the pocket region's bounding
-      boxes shrunk by the tool, and at most 2·10⁷ estimated moves (levels × rings × vertices).
+      boxes shrunk by the tool, and at most 2·10⁷ estimated moves (levels × rings × vertices);
+    - after the pattern is built and before any move is emitted, the actual move count,
+      levels × Σ(points + 4) over the paths, must also stay within 2·10⁷. The estimate cannot see
+      raster lines cut into many pieces: the round-2 comb, with ~200 pieces per line and
+      900 levels, would have run for hours. Building the pattern is O(lines × pieces) and is
+      refused in under 1 s.
     The verifier's repros now return at once: pass depth 1e-9 (round 1: `std::bad_alloc` from
     2·10⁹ levels), stepover 1e-6, and chordal 1e-7 on an r = 20 circle (both ran unbounded).
 
@@ -162,9 +187,11 @@ move by move (to Clipper2's 1e-6 mm grid), independently of the offset code.
 - Raster and rest travel only goes straight. A raster pocket split by islands, or rest clusters
   far apart, still retract between runs. A boundary-following router for those is a possible
   refinement.
-- Rest machining builds the tool's full pattern and then clips it. That is correct but can be
-  slow for a very small rest tool on a large, finely detailed pocket: the verifier's 200-tooth
-  comb with a 0.1 mm rest tool takes ~20 s in Release.
+- Rest machining builds the tool's full pattern and then clips it. That is correct but costs
+  more than a pattern restricted to the rest areas would.
+- A self-overlapping input (two coincident edges of opposite direction, as in the verifier's
+  "spiral" scene) is a zero-width fold with pocket on both sides under even-odd and non-zero
+  alike. The pocket treats it as open, so checkers must not count such folds as walls.
 - The Clipper2 inversion in (4) also affects other callers of `offsetContours` with large
   negative distances. It should be fixed or guarded in geometry (a director card, outside
   T-0017's open-offset scope).

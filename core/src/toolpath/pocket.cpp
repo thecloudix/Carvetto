@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <limits>
 #include <optional>
 #include <string>
@@ -327,14 +328,172 @@ class EdgeGrid {
     std::vector<std::size_t> items_;
 };
 
+/// A region (even-odd rings) with its edges in a uniform grid, for the same `segmentInside` and
+/// point-in-region tests as the free functions but in time proportional to the edges near the
+/// query (and along one grid row for the parity ray) instead of all edges. Used where those
+/// tests run per link or per travel move.
+class RegionIndex {
+   public:
+    explicit RegionIndex(std::vector<Ring> rings) : rings_(std::move(rings)) {
+        for (std::size_t ri = 0; ri < rings_.size(); ++ri) {
+            for (std::size_t i = 0, n = rings_[ri].size(); i < n; ++i) {
+                edges_.emplace_back(rings_[ri][i], rings_[ri][(i + 1) % n]);
+                box_.expand(rings_[ri][i]);
+            }
+        }
+        stamp_.assign(edges_.size(), 0);
+        if (edges_.empty()) {
+            return;
+        }
+        const double perAxis = std::clamp(std::sqrt(static_cast<double>(edges_.size())), 1.0, 512.0);
+        cell_ = std::max({box_.width() / perAxis, box_.height() / perAxis, 1e-9});
+        nx_ = static_cast<std::size_t>(box_.width() / cell_) + 1;
+        ny_ = static_cast<std::size_t>(box_.height() / cell_) + 1;
+        start_.assign(nx_ * ny_ + 1, 0);
+        for (int pass = 0; pass < 2; ++pass) {
+            std::vector<std::size_t> fill;
+            if (pass == 1) {
+                for (std::size_t c = 1; c < start_.size(); ++c) {
+                    start_[c] += start_[c - 1];
+                }
+                items_.resize(start_.back());
+                fill.assign(start_.begin(), start_.end() - 1);
+            }
+            for (std::size_t e = 0; e < edges_.size(); ++e) {
+                const auto [a, b] = edges_[e];
+                for (std::size_t j = row(std::min(a.y, b.y)); j <= row(std::max(a.y, b.y)); ++j) {
+                    for (std::size_t i = col(std::min(a.x, b.x)); i <= col(std::max(a.x, b.x)); ++i) {
+                        const std::size_t c = j * nx_ + i;
+                        if (pass == 0) {
+                            ++start_[c + 1];
+                        } else {
+                            items_[fill[c]++] = e;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    const std::vector<Ring>& rings() const { return rings_; }
+
+    /// As the free `insideRegion`.
+    bool inside(Vec2 p, double tol) const {
+        bool onBoundary = false;
+        forEdges(p.x - tol, p.y - tol, p.x + tol, p.y + tol,
+                 [&](Vec2 a, Vec2 b) { onBoundary = onBoundary || distToSegment(p, a, b) <= tol; });
+        if (onBoundary) {
+            return true;
+        }
+        bool in = false;
+        forEdges(p.x, p.y, box_.max.x + 1.0, p.y, [&](Vec2 a, Vec2 b) {
+            if ((a.y > p.y) != (b.y > p.y)) {
+                const double x = a.x + (p.y - a.y) * (b.x - a.x) / (b.y - a.y);
+                if (x > p.x) {
+                    in = !in;
+                }
+            }
+        });
+        return in;
+    }
+
+    /// As the free `segmentInside`.
+    bool segmentInside(Vec2 a, Vec2 b, double tol) const {
+        const Vec2 d = b - a;
+        auto nearEnd = [&](Vec2 x) {
+            return geometry::distance(x, a) <= tol || geometry::distance(x, b) <= tol;
+        };
+        bool ok = true;
+        forEdges(std::min(a.x, b.x) - tol, std::min(a.y, b.y) - tol, std::max(a.x, b.x) + tol,
+                 std::max(a.y, b.y) + tol, [&](Vec2 c, Vec2 c2) {
+                     if (!ok) {
+                         return;
+                     }
+                     const Vec2 e = c2 - c;
+                     if (e.lengthSquared() > 0.0 && distToSegment(a, c, c2) <= tol &&
+                         distToSegment(b, c, c2) <= tol) {
+                         return;  // following the boundary
+                     }
+                     if (distToSegment(c, a, b) <= tol && !nearEnd(c)) {
+                         ok = false;
+                         return;
+                     }
+                     const double o1 = d.cross(c - a);
+                     const double o2 = d.cross(c2 - a);
+                     const double o3 = e.cross(a - c);
+                     const double o4 = e.cross(b - c);
+                     if (((o1 < 0.0 && o2 > 0.0) || (o1 > 0.0 && o2 < 0.0)) &&
+                         ((o3 < 0.0 && o4 > 0.0) || (o3 > 0.0 && o4 < 0.0)) &&
+                         !nearEnd(a + d * (o3 / (o3 - o4)))) {
+                         ok = false;
+                     }
+                 });
+        return ok && inside((a + b) * 0.5, tol);
+    }
+
+   private:
+    template <class F>
+    void forEdges(double x0, double y0, double x1, double y1, F&& f) const {
+        if (edges_.empty()) {
+            return;
+        }
+        ++tick_;
+        for (std::size_t j = row(y0); j <= row(y1); ++j) {
+            for (std::size_t i = col(x0); i <= col(x1); ++i) {
+                const std::size_t c = j * nx_ + i;
+                for (std::size_t k = start_[c]; k < start_[c + 1]; ++k) {
+                    const std::size_t e = items_[k];
+                    if (stamp_[e] != tick_) {
+                        stamp_[e] = tick_;
+                        f(edges_[e].first, edges_[e].second);
+                    }
+                }
+            }
+        }
+    }
+    std::size_t col(double x) const {
+        const double f = std::floor((x - box_.min.x) / cell_);
+        return static_cast<std::size_t>(std::clamp(f, 0.0, static_cast<double>(nx_ - 1)));
+    }
+    std::size_t row(double y) const {
+        const double f = std::floor((y - box_.min.y) / cell_);
+        return static_cast<std::size_t>(std::clamp(f, 0.0, static_cast<double>(ny_ - 1)));
+    }
+
+    std::vector<Ring> rings_;
+    std::vector<std::pair<Vec2, Vec2>> edges_;
+    Box2 box_;
+    double cell_{1.0};
+    std::size_t nx_{1};
+    std::size_t ny_{1};
+    std::vector<std::size_t> start_;
+    std::vector<std::size_t> items_;
+    mutable std::vector<std::uint64_t> stamp_;
+    mutable std::uint64_t tick_{0};
+};
+
+/// How `insetBy` tells a genuine inset region from an inside-out phantom.
+enum class InsetGuard {
+    /// Every outer vertex must keep the inset distance: used for the tool-centre region, where a
+    /// vertex too close to a wall would be a gouge.
+    Strict,
+    /// At least half of the outer vertices must keep it: used everywhere else (offset levels,
+    /// rest material, openings). A phantom fails at every vertex (its vertices are about twice
+    /// its own size too close), while a genuine region keeps its shape even when a vertex near a
+    /// cusp of the input comes out a little too close (T-0121 round 3: a 15 x 6 mm neck of rest
+    /// material was dropped whole for one such vertex).
+    Majority,
+};
+
 /// Insets the region of `cs` by d > 0 (offsetContours with −d) and keeps only result regions
-/// whose outer vertices all lie at least d (less the join tolerance) from the input's boundary
-/// and inside it. Clipper2 1.4.0 turns a polygon inset beyond its inradius inside out (a circle
-/// inset by more than its radius comes back as a growing circle), so a valid-looking region can
-/// appear where nothing fits; every vertex of a true inset is at distance >= d from the input,
-/// which rejects those. Distances use an edge grid; a region whose vertices all keep that
-/// distance cannot cross the input boundary, so one inside test per region suffices.
-std::vector<Contour> insetBy(const std::vector<Contour>& cs, double d, const Tolerance& tol) {
+/// whose outer vertices lie at least d (less the join tolerance) from the input's boundary, all
+/// of them or most of them per `guard`, and inside it. Clipper2 1.4.0 turns a polygon inset
+/// beyond its inradius inside out (a circle inset by more than its radius comes back as a growing
+/// circle), so a valid-looking region can appear where nothing fits; every vertex of a true inset
+/// is at distance >= d from the input, which rejects those. Distances use an edge grid; the
+/// inside test is made once per region at a vertex that keeps the distance.
+std::vector<Contour> insetBy(const std::vector<Contour>& cs, double d, const Tolerance& tol,
+                             InsetGuard guard = InsetGuard::Majority) {
     const std::vector<Contour> raw = offsetBy(cs, -d, tol);
     if (raw.empty()) {
         return raw;
@@ -350,11 +509,21 @@ std::vector<Contour> insetBy(const std::vector<Contour>& cs, double d, const Tol
     const EdgeGrid grid(base, need);
     std::vector<Group> kept;
     for (Group& g : groupsOf(raw, tol.distance)) {
-        bool ok = !g.outer.empty() && insideRegion(base, g.outer.front(), 0.0);
-        for (std::size_t i = 0; i < g.outer.size() && ok; ++i) {
-            ok = !grid.anyCloser(g.outer[i], need);
+        const std::size_t n = g.outer.size();
+        std::size_t bad = 0;
+        std::optional<Vec2> good;
+        for (std::size_t i = 0; i < n; ++i) {
+            if (grid.anyCloser(g.outer[i], need)) {
+                ++bad;
+                if (guard == InsetGuard::Strict) {
+                    break;
+                }
+            } else if (!good) {
+                good = g.outer[i];
+            }
         }
-        if (ok) {
+        const bool distanceOk = guard == InsetGuard::Strict ? bad == 0 : 2 * bad <= n;
+        if (n > 0 && distanceOk && good && insideRegion(base, *good, 0.0)) {
             kept.push_back(std::move(g));
         }
     }
@@ -488,9 +657,18 @@ constexpr std::size_t kNoNode = std::numeric_limits<std::size_t>::max();
 /// Containment tree of one cluster's Offset level sets: the rings of every node (outer + holes)
 /// and its parent (kNoNode for the root, the cluster's centre region). Used to route travel moves
 /// through the cleared centre region (ADR-0017 §8).
+struct RingBridge {
+    std::size_t ringA{0};
+    std::size_t ringB{0};
+    Vec2 a;  // on ringA
+    Vec2 b;  // on ringB
+};
+
 struct RingTree {
     std::vector<std::vector<Ring>> rings;
     std::vector<std::size_t> parent;
+    /// Per node, built on first use by `route`: bridges joining all of the node's rings.
+    mutable std::vector<std::optional<std::vector<RingBridge>>> bridges;
 };
 
 /// A tool's planned paths plus what the emitter needs to route travel moves between them.
@@ -701,7 +879,7 @@ void rasterPattern(const Group& g, const PatternContext& ctx, std::size_t cluste
 
     // Zig-zag: continue on the next row with the piece nearest to the current end when the link
     // stays inside the region and is short; otherwise restart at the first unused piece.
-    const std::vector<Ring> region = ringsOf(g);
+    const RegionIndex region(ringsOf(g));
     const double linkLimit = 2.0 * ctx.diameter;
     auto emit = [&](std::size_t k, std::size_t i, bool fromA) {
         RasterPiece& piece = rows[k][i];
@@ -740,7 +918,7 @@ void rasterPattern(const Group& g, const PatternContext& ctx, std::size_t cluste
                     break;
                 }
                 const Vec2 s = bestFromA ? rows[k][*best].a : rows[k][*best].b;
-                if (bestD > linkLimit || !segmentInside(*cursor, s, region, tol.distance)) {
+                if (bestD > linkLimit || !region.segmentInside(*cursor, s, tol.distance)) {
                     break;
                 }
                 emit(k, *best, bestFromA);
@@ -810,7 +988,7 @@ Vec2 directionNear(const Polyline& path, Vec2 q) {
 /// Clips every path of `pattern` to `need` and returns the pieces in pattern order, each running
 /// in its path's direction; clusters are the connected parts of `need`.
 std::vector<PocketPath> clipPattern(const std::vector<PocketPath>& pattern, const std::vector<Group>& need,
-                                    const Tolerance& tol) {
+                                    const Tolerance& tol, std::vector<std::size_t>& clusterGroup) {
     // Each path is clipped only against the parts of `need` whose bounding box it overlaps.
     std::vector<std::vector<Contour>> needParts;
     std::vector<Box2> needBoxes;
@@ -895,6 +1073,7 @@ std::vector<PocketPath> clipPattern(const std::vector<PocketPath>& pattern, cons
         }
         members[static_cast<std::size_t>(it - clusterOrder.begin())].push_back(i);
     }
+    clusterGroup = clusterOrder;
     std::vector<PocketPath> out;
     for (std::size_t c = 0; c < members.size(); ++c) {
         for (std::size_t i : members[c]) {
@@ -990,16 +1169,118 @@ std::pair<Vec2, Vec2> closestPair(const Ring& ra, const Ring& rb) {
     return out;
 }
 
+/// Bridges joining the rings of one region (outer + holes) into one connected set: Kruskal over
+/// the closest pairs between rings, shortest first. Such a bridge cannot be blocked by a third
+/// ring: that ring would be closer to one end and would already have been joined to it. Each
+/// bridge is still checked with `segmentInside` (rounding); a rejected one is skipped, so the
+/// set may stay disconnected, and `acrossRings` then fails and the route climbs a level.
+std::vector<RingBridge> ringBridges(const std::vector<Ring>& rings, double tol) {
+    struct Candidate {
+        double length;
+        std::size_t i;
+        std::size_t j;
+        Vec2 a;
+        Vec2 b;
+    };
+    std::vector<Candidate> cands;
+    for (std::size_t i = 0; i < rings.size(); ++i) {
+        for (std::size_t j = i + 1; j < rings.size(); ++j) {
+            const auto [x, y] = closestPair(rings[i], rings[j]);
+            cands.push_back({geometry::distance(x, y), i, j, x, y});
+        }
+    }
+    std::sort(cands.begin(), cands.end(), [](const Candidate& p, const Candidate& q) {
+        return p.length < q.length || (p.length == q.length && (p.i < q.i || (p.i == q.i && p.j < q.j)));
+    });
+    std::vector<std::size_t> root(rings.size());
+    for (std::size_t i = 0; i < root.size(); ++i) {
+        root[i] = i;
+    }
+    auto find = [&](std::size_t x) {
+        while (root[x] != x) {
+            x = root[x] = root[root[x]];
+        }
+        return x;
+    };
+    std::vector<RingBridge> out;
+    for (const Candidate& c : cands) {
+        const std::size_t ri = find(c.i);
+        const std::size_t rj = find(c.j);
+        if (ri == rj || !segmentInside(c.a, c.b, rings, tol)) {
+            continue;
+        }
+        root[ri] = rj;
+        out.push_back(RingBridge{c.i, c.j, c.a, c.b});
+    }
+    return out;
+}
+
+/// A way inside one region from `a` to `b` (points on its rings): along the shared ring, or along
+/// rings and across bridges, ring to ring by the fewest bridges (BFS). Empty when the bridges do
+/// not connect the two rings.
+std::vector<Vec2> acrossRings(const std::vector<Ring>& rings, const std::vector<RingBridge>& bridges,
+                              const RingPoint& a, const RingPoint& b) {
+    if (a.ring == b.ring) {
+        return walkRing(rings[a.ring], a, b);
+    }
+    // BFS over rings; `via[r]` is the bridge index that reached ring r.
+    std::vector<std::size_t> via(rings.size(), kNoNode);
+    std::vector<bool> seen(rings.size(), false);
+    std::vector<std::size_t> queue{a.ring};
+    seen[a.ring] = true;
+    for (std::size_t qi = 0; qi < queue.size() && !seen[b.ring]; ++qi) {
+        const std::size_t r = queue[qi];
+        for (std::size_t bi = 0; bi < bridges.size(); ++bi) {
+            const RingBridge& br = bridges[bi];
+            const std::size_t other = br.ringA == r ? br.ringB : (br.ringB == r ? br.ringA : kNoNode);
+            if (other != kNoNode && !seen[other]) {
+                seen[other] = true;
+                via[other] = bi;
+                queue.push_back(other);
+            }
+        }
+    }
+    if (!seen[b.ring]) {
+        return {};
+    }
+    // Bridges from a.ring to b.ring, each as (point on the ring we leave, point on the next).
+    std::vector<std::pair<RingPoint, RingPoint>> hops;
+    for (std::size_t r = b.ring; r != a.ring;) {
+        const RingBridge& br = bridges[via[r]];
+        const bool forward = br.ringB == r;  // crossing ringA -> ringB
+        const std::size_t from = forward ? br.ringA : br.ringB;
+        const Vec2 pf = forward ? br.a : br.b;
+        const Vec2 pt = forward ? br.b : br.a;
+        RingPoint leave = nearestOn({rings[from]}, pf);
+        leave.ring = from;
+        RingPoint arrive = nearestOn({rings[r]}, pt);
+        arrive.ring = r;
+        hops.emplace_back(leave, arrive);
+        r = from;
+    }
+    std::reverse(hops.begin(), hops.end());
+    std::vector<Vec2> way;
+    RingPoint cur = a;
+    for (const auto& [leave, arrive] : hops) {
+        const std::vector<Vec2> walk = walkRing(rings[cur.ring], cur, leave);
+        way.insert(way.end(), walk.begin(), walk.end());
+        cur = arrive;
+    }
+    const std::vector<Vec2> last = walkRing(rings[cur.ring], cur, b);
+    way.insert(way.end(), last.begin(), last.end());
+    return way;
+}
+
 /// A way from P (on node `na`'s rings) to Q (on node `nb`'s rings) that stays inside the
 /// cluster's centre region, or empty. Climbing to a parent goes straight to the parent
 /// boundary's nearest point: the open disc around a point of a region up to its nearest boundary
 /// point lies inside the region, so that segment is inside. The two climbs meet at the lowest
-/// common ancestor, where the way follows the shared ring, or crosses between two of its rings
-/// at their closest pair when that segment is inside; otherwise it climbs further. The result
+/// common ancestor, where the way follows its rings and the bridges between them
+/// (`ringBridges`, `acrossRings`); only if those do not connect does it climb further. The result
 /// is shortened greedily (a later point replaces the ones in between when the straight segment
 /// to it stays inside `region`).
 std::vector<Vec2> route(const RingTree& tree, std::size_t na, Vec2 P, std::size_t nb, Vec2 Q,
-                        const std::vector<Ring>& region, double tol) {
+                        const RegionIndex& region, double tol) {
     auto ancestors = [&](std::size_t n) {
         std::vector<std::size_t> out;
         for (std::size_t x = n; x != kNoNode; x = tree.parent[x]) {
@@ -1029,22 +1310,18 @@ std::vector<Vec2> route(const RingTree& tree, std::size_t na, Vec2 P, std::size_
     std::vector<Vec2> up = climb(ancA, P);
     std::vector<Vec2> down = climb(ancB, Q);
     std::vector<Vec2> mid;
+    if (tree.bridges.size() < tree.rings.size()) {
+        tree.bridges.resize(tree.rings.size());
+    }
     for (std::size_t node = lca;;) {
         const std::vector<Ring>& rings = tree.rings[node];
+        if (!tree.bridges[node]) {
+            tree.bridges[node] = ringBridges(rings, tol);
+        }
         const RingPoint a = nearestOn(rings, up.back());
         const RingPoint b = nearestOn(rings, down.back());
-        if (a.ring == b.ring) {
-            mid = walkRing(rings[a.ring], a, b);
-            break;
-        }
-        const auto [x, y] = closestPair(rings[a.ring], rings[b.ring]);
-        if (segmentInside(x, y, rings, tol)) {
-            const RingPoint xa = nearestOn({rings[a.ring]}, x);
-            const RingPoint yb = nearestOn({rings[b.ring]}, y);
-            mid = walkRing(rings[a.ring], a, RingPoint{a.ring, xa.edge, xa.t, xa.point});
-            const std::vector<Vec2> tail =
-                walkRing(rings[b.ring], RingPoint{b.ring, yb.edge, yb.t, yb.point}, b);
-            mid.insert(mid.end(), tail.begin(), tail.end());
+        mid = acrossRings(rings, *tree.bridges[node], a, b);
+        if (!mid.empty()) {
             break;
         }
         if (tree.parent[node] == kNoNode) {
@@ -1070,7 +1347,7 @@ std::vector<Vec2> route(const RingTree& tree, std::size_t na, Vec2 P, std::size_
     std::vector<Vec2> pulled{clean.front()};
     for (std::size_t i = 0; i + 1 < clean.size();) {
         std::size_t j = i + 1;
-        while (j + 1 < clean.size() && segmentInside(clean[i], clean[j + 1], region, tol)) {
+        while (j + 1 < clean.size() && region.segmentInside(clean[i], clean[j + 1], tol)) {
             ++j;
         }
         pulled.push_back(clean[j]);
@@ -1084,8 +1361,14 @@ std::vector<Vec2> route(const RingTree& tree, std::size_t na, Vec2 P, std::size_
 
 class Emitter {
    public:
-    Emitter(Toolpath& tp, const PocketParams& p, double linkLimit)
-        : tp_(tp), p_(p), linkLimit_(linkLimit), minRamp_(10.0 * p.tolerance.distance) {}
+    /// `allowTravel` false: every way that is not a short link at depth retracts (used when the
+    /// floor of the previous level is not known to be clear, ADR-0017 §8).
+    Emitter(Toolpath& tp, const PocketParams& p, double linkLimit, bool allowTravel)
+        : tp_(tp),
+          p_(p),
+          linkLimit_(linkLimit),
+          minRamp_(10.0 * p.tolerance.distance),
+          allowTravel_(allowTravel) {}
 
     /// Cuts the paths of one cluster at every level. Short links inside the centre region feed at
     /// depth; longer ways (and the way back to the first path of the next level) travel inside the
@@ -1093,7 +1376,7 @@ class Emitter {
     /// already cleared there, along a straight segment or a route through `tree`; only when
     /// neither exists does the tool retract to safe Z.
     void cluster(const std::vector<const PocketPath*>& paths, const std::vector<std::size_t>& nodes,
-                 const std::vector<double>& levels, const std::vector<Ring>& region, const RingTree* tree) {
+                 const std::vector<double>& levels, const RegionIndex& region, const RingTree* tree) {
         const double tol = p_.tolerance.distance;
         for (std::size_t k = 0; k < levels.size(); ++k) {
             const double z = levels[k];
@@ -1106,9 +1389,10 @@ class Emitter {
                     rapidTo(s);
                     enter(path, zTop, z);
                 } else if (!atSafe_ && z_ == z && geometry::distance(pos_, s) <= linkLimit_ &&
-                           segmentInside(pos_, s, region, tol)) {
+                           region.segmentInside(pos_, s, tol)) {
                     feedTo(s, z);
-                } else if (!atSafe_ && inCluster_ && z_ <= zTop && travel(s, zTop, node, region, tree)) {
+                } else if (allowTravel_ && !atSafe_ && inCluster_ && z_ <= zTop &&
+                           travel(s, zTop, node, region, tree)) {
                     enter(path, zTop, z);
                 } else {
                     retract();
@@ -1127,11 +1411,10 @@ class Emitter {
 
    private:
     /// Lifts to `zTravel` and feeds to `s` inside the centre region; false when there is no way.
-    bool travel(Vec2 s, double zTravel, std::size_t node, const std::vector<Ring>& region,
-                const RingTree* tree) {
+    bool travel(Vec2 s, double zTravel, std::size_t node, const RegionIndex& region, const RingTree* tree) {
         const double tol = p_.tolerance.distance;
         std::vector<Vec2> way;
-        if (segmentInside(pos_, s, region, tol)) {
+        if (region.segmentInside(pos_, s, tol)) {
             way = {pos_, s};
         } else if (tree != nullptr && !tree->rings.empty() && node != kNoNode && node_ != kNoNode) {
             way = route(*tree, node_, pos_, node, s, region, tol);
@@ -1193,6 +1476,7 @@ class Emitter {
     const PocketParams& p_;
     double linkLimit_;
     double minRamp_;
+    bool allowTravel_;
     bool started_{false};
     bool atSafe_{true};
     bool inCluster_{false};
@@ -1370,7 +1654,8 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
                                       "for the pocket size)");
             continue;
         }
-        const std::vector<Contour> centreRegion = insetBy(region, r + params.allowance + margin, tol);
+        const std::vector<Contour> centreRegion =
+            insetBy(region, r + params.allowance + margin, tol, InsetGuard::Strict);
         const std::vector<Group> centre = groupsOf(centreRegion, tol.distance);
         if (centre.empty()) {
             result.messages.push_back(label + ": too large for the pocket, nothing to cut");
@@ -1382,14 +1667,31 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
         const PatternContext ctx{params, pt.stepover, d, tol, fine, sliver};
         Pattern pattern = fullPattern(centre, ctx);
         const bool isRest = ti > 0 && !swept.empty();
+        // Raster without a boundary pass leaves scallops along the walls: its swept area is the
+        // tool disc along the actual paths, not the whole reach, and the floor of a level is not
+        // clear everywhere, so the tool retracts instead of travelling (ADR-0017 §8, §10).
+        const bool scalloped =
+            params.strategy == PocketStrategy::Raster && params.profilePass == ProfilePass::None;
+        auto sweptByPaths = [&](const std::vector<PocketPath>& paths) {
+            std::vector<Contour> open;
+            for (const PocketPath& pp : paths) {
+                Polyline pl = pp.path;
+                if (pl.closed && !pl.points.empty()) {
+                    pl.points.push_back(pl.points.front());
+                    pl.closed = false;
+                }
+                open.push_back(Contour::fromPolyline(pl));
+            }
+            return offsetBy(open, r, fine);
+        };
         std::vector<Contour> cutArea;
         std::vector<std::size_t> nodes;
         std::vector<RingTree> trees;
+        std::vector<std::vector<Ring>> restRegions;  // per rest cluster: travel region
         if (!isRest) {
             plan.paths = std::move(pattern.paths);
             nodes = std::move(pattern.node);
             trees = std::move(pattern.trees);
-            cutArea = offsetBy(plan.centreRegion, r, fine);
         } else {
             if (!target) {
                 target = insetBy(region, params.allowance + margin, tol);
@@ -1407,13 +1709,39 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
             // need ∩ centre would put the outermost ring exactly on the clip boundary, where
             // open-path clipping is ambiguous.
             const std::vector<Group> need = groupsOf(needContours, tol.distance);
-            plan.paths = clipPattern(pattern.paths, need, tol);
+            std::vector<std::size_t> clusterGroup;
+            plan.paths = clipPattern(pattern.paths, need, tol, clusterGroup);
             if (plan.paths.empty()) {
                 result.messages.push_back(label + ": cannot reach the rest material, nothing to cut");
                 continue;
             }
             nodes.assign(plan.paths.size(), kNoNode);
-            cutArea = offsetBy(intersection(needContours, plan.centreRegion, tol), r, fine);
+            // A rest cluster travels only inside its own part of the need region (within the
+            // centre region): the floor there is clear at the previous level, while other rest
+            // clusters may still hold material at every depth.
+            for (const std::size_t g : clusterGroup) {
+                restRegions.push_back(ringsOf(
+                    groupsOf(intersection(contoursOf(need[g]), plan.centreRegion, tol), tol.distance)));
+            }
+            if (!scalloped) {
+                cutArea = offsetBy(intersection(needContours, plan.centreRegion, tol), r, fine);
+            }
+        }
+        // Work cap on the actual pattern (the estimate above cannot see raster pieces per line).
+        double patternMoves = 0.0;
+        for (const PocketPath& pp : plan.paths) {
+            patternMoves += static_cast<double>(pp.path.points.size()) + 4.0;
+        }
+        if (!(patternMoves * static_cast<double>(plan.levels.size()) <= kMaxMoves)) {
+            result.messages.push_back(label + ": skipped, the toolpath would exceed " +
+                                      std::to_string(static_cast<long long>(kMaxMoves)) +
+                                      " moves (stepover or pass depth too small for the pocket)");
+            plan.paths.clear();
+            plan.levels.clear();
+            continue;
+        }
+        if (cutArea.empty()) {
+            cutArea = scalloped ? sweptByPaths(plan.paths) : offsetBy(plan.centreRegion, r, fine);
         }
         swept = swept.empty() ? cutArea : geometry::unionContours([&] {
             std::vector<Contour> all = swept;
@@ -1422,7 +1750,7 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
         }());
 
         Toolpath& tp = result.toolpaths[ti];
-        Emitter emitter(tp, params, 2.0 * d);
+        Emitter emitter(tp, params, 2.0 * d, !scalloped);
         for (std::size_t start = 0; start < plan.paths.size();) {
             const std::size_t cl = plan.paths[start].cluster;
             std::vector<const PocketPath*> members;
@@ -1433,13 +1761,14 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
                 memberNodes.push_back(nodes[end]);
                 ++end;
             }
-            // Travel stays inside this cluster's own part of the centre region (rest clusters,
-            // which are parts of the rest material, use the whole centre region).
+            // Travel stays inside this cluster's own part of the centre region.
             const bool own = !isRest && cl < centre.size();
-            const std::vector<Ring> clusterRegion = own ? ringsOf(centre[cl]) : ringsOf(centre);
+            const std::vector<Ring> clusterRegion =
+                own ? ringsOf(centre[cl])
+                    : (isRest && cl < restRegions.size() ? restRegions[cl] : ringsOf(centre));
             const RingTree* tree =
                 own && cl < trees.size() && !trees[cl].rings.empty() ? &trees[cl] : nullptr;
-            emitter.cluster(members, memberNodes, plan.levels, clusterRegion, tree);
+            emitter.cluster(members, memberNodes, plan.levels, RegionIndex(clusterRegion), tree);
             start = end;
         }
         emitter.finish();
