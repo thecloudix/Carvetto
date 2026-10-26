@@ -912,3 +912,210 @@ TEST_CASE("T-0006 AC3 generative: steep zig-zags at all joins, both sides, open 
     CHECK(st.notIdentical == 0);
     CHECK(closeViolations == 0);
 }
+
+// --- AC3: nearly collinear carriers (verification round 3) ---------------------------------------
+
+namespace {
+
+// Distance the chain may come closer to the input than d: the bridge sagitta and the snapping
+// margin documented in offset.hpp, plus rounding of coordinates far from the origin.
+double distanceAllowance(double d, Vec2 at) {
+    const double t = kTol.distance;
+    return std::max(t * t / (8.0 * d), std::min(5e-7 * std::max(1.0, d), 0.1 * t * t / d)) +
+           1e-12 * std::max({1.0, d, std::fabs(at.x), std::fabs(at.y)});
+}
+
+struct NearCollinearStats {
+    std::size_t offsets{0};
+    std::size_t backward{0};
+    std::size_t overlaps{0};
+    std::size_t gaps{0};
+    std::size_t tooClose{0};
+};
+
+// Every defect AC3 rules out, plus the distance criterion, for one offset.
+void checkNearCollinear(const Contour& in, double d, OffsetSide side, JoinType join, double mitre,
+                        NearCollinearStats& st, std::string* why = nullptr) {
+    const std::vector<Contour> chains = offsetOpenContour(in, d, side, join, kTol, mitre);
+    ++st.offsets;
+    JunctionStats js;
+    checkJunctions(chains, js);  // counts backward steps with countBackwardSteps
+    st.backward += js.backward;
+    st.gaps += js.gaps + js.notIdentical;
+    st.overlaps += carvetto::geometry::testing::countOverlaps(chains, 1e-6, why);
+    for (const Contour& c : chains) {
+        for (const Span& s : c.spans) {
+            for (int k = 0; k <= 16; ++k) {
+                const Vec2 p = pointAt(s, k / 16.0);
+                if (distanceToInput(p, in) < d - distanceAllowance(d, p)) {
+                    ++st.tooClose;
+                }
+            }
+        }
+    }
+}
+
+const std::vector<Vec2> kR1{{0, 0},
+                            {0.34314657975231688, 0.42689234201510018},
+                            {0.68629315950463377, 4.1466788538240213e-09},
+                            {1.0294397392569508, 0.4268923496590592},
+                            {1.3725863190092675, -5.1970845120572706e-09},
+                            {1.7157328987615843, 0.42689234496395445},
+                            {2.0588794785139015, -3.0832318809454741e-09},
+                            {2.4020260582662183, 0.42689234858743808},
+                            {2.7451726380185351, 1.3336163515167116e-09},
+                            {3.0883192177708518, 0.42689235209290904},
+                            {3.4314657975231686, 1.9554402014056211e-09},
+                            {3.7746123772754858, 0.42689233652465358},
+                            {4.117758957027803, 7.5870395793344307e-09},
+                            {4.4609055367801194, 0.4268923516090688},
+                            {4.8040521165324366, -7.8081612624261673e-09},
+                            {5.1471986962847529, 0.42689234700998913},
+                            {5.4903452760370701, 7.6129937363389407e-09},
+                            {5.8334918557893873, 0.42689234436136914}};
+
+const std::vector<Vec2> kR2{{0, 0},
+                            {0.13501705870620517, 0.27352602793522046},
+                            {0.27003411741241035, 1.6459969677485449e-09},
+                            {0.40505117611861552, 0.27352603356583249},
+                            {0.54006823482482069, 6.0794457483971358e-09},
+                            {0.67508529353102587, 0.27352603017211757},
+                            {0.81010235223723104, -8.2462010234247105e-09},
+                            {0.94511941094343621, 0.27352603547300997},
+                            {1.0801364696496414, 1.9453315567158852e-09},
+                            {1.2151535283558466, 0.27352601631583845},
+                            {1.3501705870620517, 7.4452776617249392e-09},
+                            {1.4851876457682569, 0.2735260193650989},
+                            {1.6202047044744621, 5.0472290070040781e-09},
+                            {1.7552217631806672, 0.2735260169191826},
+                            {1.8902388218868724, -1.3246464711254609e-09},
+                            {2.0252558805930776, 0.27352602908387069},
+                            {2.1602729392992828, 8.9026067543794283e-09},
+                            {2.2952899980054879, 0.27352603460625025}};
+
+// Exact input far from the origin: runs of collinear lines at two heights, x ~ -800.
+const std::vector<Vec2> kR3{
+    {-799.04665111856445, -358.12890674720455}, {-804.49964414289707, -358.12890674720455},
+    {-803.10454902039055, -386.09106214164575}, {-799.74334805970784, -385.3456905353446},
+    {-800.77279240785708, -358.24083861981262}, {-795.26389224877698, -358.24083861981262},
+    {-796.11944403511757, -387.72102577857282}, {-805.68565535706261, -387.33030905810119},
+    {-804.83924329636636, -358.12890674720455}, {-804.88596323010142, -358.12890674720455},
+    {-805.25050996888797, -388.98479156842029}, {-799.68453512309236, -389.85776028071899},
+    {-798.68133173415049, -358.24083861981262}, {-802.75694351264576, -358.24083861981262},
+    {-804.56049472068457, -386.85222138708349}, {-803.73023188598006, -386.03983269228053},
+    {-802.75694351264576, -358.24083861981262}, {-798.68133173415049, -358.24083861981262},
+    {-800.47855209748525, -391.04362303030348}, {-805.27018421811158, -391.63422975439784},
+    {-803.80217372728339, -358.12890674720455}, {-803.94846823604598, -358.12890674720455},
+    {-805.22674363390411, -387.19918857067739}, {-803.10173476342152, -386.41037224351277},
+    {-802.8225499081251, -358.24083861981262},  {-801.6963092051468, -358.24083861981262}};
+
+}  // namespace
+
+TEST_CASE("T-0006 AC3: steep zig-zags with ~1e-8 mm vertex noise neither step back nor overlap (R1, R2)",
+          "[geometry][offset][open][t0006]") {
+    // Verifier round 3. The chamfers (R1, Square) and mitre fallbacks (R2, Sharp) of the peaks lie
+    // on carriers ~1e-8 apart: too far for an exact same-carrier test, too close for their
+    // crossings to cut the copies consistently. Before: 5 and 3 chains, retraces and short steps
+    // back, the later chains repeating stretches of the first. Now one chain, as without noise.
+    struct Repro {
+        const std::vector<Vec2>* pts;
+        double d;
+        JoinType join;
+        double mitre;
+    };
+    for (const Repro& r : {Repro{&kR1, 2.9084271393964491, JoinType::Square, 1.8241758062497766},
+                           Repro{&kR2, 1.2018887962144966, JoinType::Sharp, 1.3463749409772734}}) {
+        const Contour in = polyline(*r.pts);
+        CAPTURE(r.d);
+        CHECK(offsetOpenContour(in, r.d, OffsetSide::Left, r.join, kTol, r.mitre).size() == 1);
+        for (const JoinType join : kJoins) {
+            for (const OffsetSide side : kSides) {
+                CAPTURE(static_cast<int>(join), static_cast<int>(side));
+                NearCollinearStats st;
+                std::string why;
+                checkNearCollinear(in, r.d, side, join, r.mitre, st, &why);
+                CAPTURE(why);
+                CHECK(st.backward == 0);
+                CHECK(st.overlaps == 0);
+                CHECK(st.gaps == 0);
+                CHECK(st.tooClose == 0);
+            }
+        }
+    }
+}
+
+TEST_CASE("T-0006 AC3: exact collinear runs far from the origin do not step back (R3)",
+          "[geometry][offset][open][t0006]") {
+    // Verifier round 3: d = 0.0559659, Sharp, Right, mitre 2 gave a 1.2e-5 mm step back at span 4
+    // of a closed chain.
+    const Contour in = polyline(kR3);
+    for (const JoinType join : kJoins) {
+        for (const OffsetSide side : kSides) {
+            CAPTURE(static_cast<int>(join), static_cast<int>(side));
+            NearCollinearStats st;
+            std::string why;
+            checkNearCollinear(in, 0.055965936304044207, side, join, 2.0, st, &why);
+            CAPTURE(why);
+            CHECK(st.backward == 0);
+            CHECK(st.overlaps == 0);
+            CHECK(st.gaps == 0);
+            CHECK(st.tooClose == 0);
+        }
+    }
+}
+
+TEST_CASE("T-0006 AC3 generative: steep zig-zags with vertex noise 1e-12..1e-4 mm",
+          "[geometry][offset][open][t0006][generative]") {
+    // Each level: random pitch, amplitude (0.5-25 x pitch), line count and distance (0.5-12 x
+    // amplitude), y noise of that size on every vertex, all joins, both sides, open and closed,
+    // half of them ~640 mm from the origin.
+    NearCollinearStats total;
+    std::uint64_t seed = 600603u;
+    for (const double noise : {1e-12, 1e-11, 1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4}) {
+        SplitMix rng{seed++};
+        NearCollinearStats st;
+        for (int trial = 0; trial < 12; ++trial) {
+            const double pitch = rng.uniform(0.02, 0.5);
+            const double amplitude = pitch * rng.uniform(0.5, 25.0);
+            const int lines = 5 + static_cast<int>(rng.uniform(0.0, 20.0));
+            const double d = amplitude * rng.uniform(0.5, 12.0);
+            const double mitre = rng.uniform(1.0, 4.0);
+            const Vec2 origin = trial % 2 == 0 ? Vec2{} : Vec2{600.0, -222.0};
+            std::vector<Vec2> pts;
+            for (int i = 0; i <= lines; ++i) {
+                pts.push_back(origin + Vec2{i * pitch, (i % 2) * amplitude + rng.uniform(-noise, noise)});
+            }
+            for (const bool closed : {false, true}) {
+                Contour in = polyline(pts);
+                if (closed) {
+                    in.spans.emplace_back(LineSpan{pts.back(), pts.front()});
+                    in.closed = true;
+                }
+                for (const JoinType join : kJoins) {
+                    for (const OffsetSide side : kSides) {
+                        const NearCollinearStats before = st;
+                        std::string why;
+                        checkNearCollinear(in, d, side, join, mitre, st, &why);
+                        if (st.backward != before.backward || st.overlaps != before.overlaps ||
+                            st.gaps != before.gaps || st.tooClose != before.tooClose) {
+                            CAPTURE(noise, trial, closed, d, pitch, amplitude, lines, mitre,
+                                    static_cast<int>(join), static_cast<int>(side), why);
+                            FAIL_CHECK("near-collinear defect");
+                        }
+                    }
+                }
+            }
+        }
+        total.offsets += st.offsets;
+        total.backward += st.backward;
+        total.overlaps += st.overlaps;
+        total.gaps += st.gaps;
+        total.tooClose += st.tooClose;
+    }
+    CAPTURE(total.offsets);
+    CHECK(total.offsets == 9 * 12 * 2 * 3 * 2);
+    CHECK(total.backward == 0);
+    CHECK(total.overlaps == 0);
+    CHECK(total.gaps == 0);
+    CHECK(total.tooClose == 0);
+}
