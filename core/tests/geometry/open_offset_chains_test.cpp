@@ -18,6 +18,7 @@
 
 #include "carvetto/geometry/offset.hpp"
 #include "carvetto/geometry/transform2.hpp"
+#include "offset_chain_checks.hpp"
 
 using namespace carvetto::geometry;
 
@@ -279,20 +280,17 @@ void checkChains(const std::vector<Contour>& chains, const Contour& input, doubl
                 }
                 if (c.closed || i + 1 < n) {
                     CHECK(distance(endPoint(c.spans[i]), startPoint(next)) <= 1e-12);
-                    // Not a backward step: the next span does not set off back along this one.
-                    CHECK(tangentAt(c.spans[i], 1.0).dot(tangentAt(next, 0.0)) > -0.9999);
                 }
             }
-            if (i > 0 && tangentAt(c.spans[i - 1], 1.0).dot(tangentAt(c.spans[i], 0.0)) < -0.9999) {
-                // A near-reversal is only legitimate as the tip of a needle-shaped feature; the
-                // chain must not run back over itself.
-                const Span& a = c.spans[i - 1];
-                const Span& b = c.spans[i];
-                const Span& shorter = length(a) < length(b) ? a : b;
-                const Span& longer = length(a) < length(b) ? b : a;
-                CHECK(distanceToSpan(pointAt(shorter, 0.5), longer) > 1e-6);
-            }
         }
+        // No backward step anywhere (T-0006): no span starts behind the previous end or retraces
+        // it (a near-reversal passes only as a needle tip whose sides diverge at every probe), on
+        // every junction including the closing one, and no short span runs against both of its
+        // neighbours. See offset_chain_checks.hpp.
+        std::string backWhy;
+        const std::size_t backSteps = carvetto::geometry::testing::countBackwardSteps(c, kTol, &backWhy);
+        CAPTURE(backWhy);
+        CHECK(backSteps == 0);
         if (c.closed) {
             CHECK(distance(c.startPoint(), c.endPoint()) <= kTol.distance);
         }
