@@ -109,6 +109,8 @@ TEST_CASE("AC1: 50x30 rectangle, 6 mm tool, 40% stepover: full coverage, nothing
         {"offset climb", PocketStrategy::Offset, CutDirection::Climb, ProfilePass::Last, 0.0, false},
         {"offset conventional + ramp", PocketStrategy::Offset, CutDirection::Conventional, ProfilePass::None,
          0.0, true},
+        {"offset climb, boundary first + ramp", PocketStrategy::Offset, CutDirection::Climb,
+         ProfilePass::First, 0.0, true},
         {"raster 0 + last profile", PocketStrategy::Raster, CutDirection::Climb, ProfilePass::Last, 0.0,
          false},
         {"raster 45 + first profile + ramp", PocketStrategy::Raster, CutDirection::Climb, ProfilePass::First,
@@ -153,6 +155,72 @@ TEST_CASE("AC1 (stepover > radius): extra rings cover the middle of a narrow poc
         CHECK(c.missed == 0);
         CHECK(c.gouged == 0);
     }
+}
+
+TEST_CASE("AC1 regression: a thin uncut strip in a narrow pocket is not discarded as a sliver",
+          "[toolpath][pocket][coverage]") {
+    // Verifier repro (T-0121 round 2): 60 x 12.08, 6 mm tool, stepover 6. The part of the centre
+    // region deeper than r is 0.06 mm tall, which the old 5 x chordal opening threw away, leaving
+    // a 0.06 mm strip along y = 6.04 (480 cells at 0.1 mm).
+    for (double w : {12.0, 12.05, 12.08, 12.12, 12.15, 12.3, 13.0}) {
+        for (double frac : {0.6, 0.9, 1.0}) {
+            INFO("width " << w << " stepover fraction " << frac);
+            PocketParams p = baseParams();
+            p.cutDepth = 1.0;
+            const PocketResult res = pocketToolpath({Contour::rectangle(Box2{Vec2{0, 0}, Vec2{60, w}})},
+                                                    {tool(6.0, frac, 1.0)}, p);
+            const Coverage c = rectCoverage(res.toolpaths[0], 60, w, 3.0, -1.0);
+            CHECK(c.mustCover > 0);
+            CHECK(c.missed == 0);
+            CHECK(c.gouged == 0);
+        }
+    }
+}
+
+TEST_CASE("AC4 regression: thin rest material at a coarse chordal tolerance is still cut",
+          "[toolpath][pocket][coverage][rest]") {
+    // Verifier repro (seed 31493, chordal 0.049): a rest tool only slightly smaller than the
+    // clearance tool leaves a ~0.08 mm band in each corner, which the old 5 x chordal opening
+    // (0.245 mm) discarded. With the band kept the two tools together cover everything the
+    // smaller one can reach.
+    PocketParams p = baseParams();
+    p.cutDepth = 2.0;
+    p.tolerance.chordal = 0.049;
+    const double r1 = 2.8;
+    const PocketResult res = pocketToolpath({Contour::rectangle(Box2{Vec2{0, 0}, Vec2{40, 25}})},
+                                            {tool(6.0, 0.4, 2.0, 1), tool(2 * r1, 0.4, 2.0, 2)}, p);
+    REQUIRE(res.toolpaths.size() == 2);
+    CHECK_FALSE(res.plans[1].restMaterial.empty());
+    REQUIRE_FALSE(res.toolpaths[1].isEmpty());
+    // Reach depth of the rest tool: r1 minus the distance to its centre region, the rectangle
+    // inset by r1 + margin (the margin is one chordal tolerance; the region is exact for lines).
+    const double m = p.tolerance.chordal;
+    auto restReach = [&](Vec2 q) {
+        const double cx = std::clamp(q.x, r1 + m, 40 - r1 - m);
+        const double cy = std::clamp(q.y, r1 + m, 25 - r1 - m);
+        return r1 - std::hypot(q.x - cx, q.y - cy);
+    };
+    const double band = 0.02;
+    auto missedCells = [&](bool withRest) {
+        orc::Grid g(-1, -1, 41, 26, 0.05);
+        orc::sweepFloor(g, res.toolpaths[0], 3.0, -2.0);
+        if (withRest) {
+            orc::sweepFloor(g, res.toolpaths[1], r1, -2.0);
+        }
+        std::size_t must = 0, missed = 0;
+        for (int j = 0; j < g.ny; ++j) {
+            for (int i = 0; i < g.nx; ++i) {
+                if (restReach(g.centre(i, j)) >= band) {
+                    ++must;
+                    missed += g.at(i, j) ? 0u : 1u;
+                }
+            }
+        }
+        CHECK(must > 350000);
+        return missed;
+    };
+    CHECK(missedCells(true) == 0);
+    CHECK(missedCells(false) > 20);  // the band is real: the clearance tool alone leaves it
 }
 
 TEST_CASE("AC2: a 20x10 island stays uncut with at least the tool radius of clearance",

@@ -28,7 +28,9 @@ enum class CutDirection {
     Conventional,
 };
 
-/// When the boundary (profile) pass of a Raster pocket is cut, at every depth level.
+/// When the boundary (profile) pass is cut, at every depth level (owner decision 2026-10-26: for
+/// both strategies). For Offset, the boundary pass is the outermost ring (outer wall and island
+/// walls); None leaves it as an ordinary clearing ring, which the inside-out order cuts last.
 enum class ProfilePass { None, First, Last };
 
 /// One tool of the multi-tool list with the values the pocket needs from its cutting data.
@@ -64,8 +66,8 @@ struct PocketParams {
     CutDirection direction{CutDirection::Climb};
     /// Raster line direction measured from +X (the inventory's 0–90°, any value accepted).
     double rasterAngle{0.0};
-    /// Boundary pass of a Raster pocket. Ignored by the Offset strategy, whose outermost ring is
-    /// the boundary pass and is always cut last (ADR-0017).
+    /// Boundary pass: First (before clearing), Last (after) or None (Raster: no boundary pass;
+    /// Offset: the outermost ring stays an ordinary clearing ring). See `ProfilePass`.
     ProfilePass profilePass{ProfilePass::Last};
     /// Material left on every wall and island (>= 0) ("Pocket Allowance").
     double allowance{0.0};
@@ -81,9 +83,9 @@ struct PocketParams {
 
 /// What a planned pocket path is for.
 enum class PocketPathRole {
-    Ring,     ///< An Offset-strategy ring (the outermost one is the boundary).
+    Ring,     ///< An Offset-strategy clearing ring.
     Raster,   ///< One Raster-strategy line piece.
-    Profile,  ///< A Raster-strategy boundary pass.
+    Profile,  ///< A boundary pass (Raster boundary, or Offset outermost ring with First/Last).
 };
 
 /// One planned path: tool-centre positions at constant Z, in cutting order and direction.
@@ -125,16 +127,20 @@ struct PocketResult {
 /// islands, contours inside islands are pockets again); open contours are ignored with a
 /// message. For each tool the region is shrunk by tool radius + allowance + a safety margin of
 /// `tolerance.chordal` (Clipper2 offsets, ADR-0006) to get the centre region; the Offset strategy
-/// cuts the rings offset(centre, −k·stepover) inside-out (outermost ring = boundary, last), the
-/// Raster strategy clips parallel lines spaced ≤ stepover to the centre region, links them
-/// zig-zag and adds the boundary pass first/last/none. Rest tools cut their own pattern clipped
-/// to where their disc touches the rest material: the pocket (less allowance) minus the area the
-/// earlier tools swept. Links between paths are straight feeds when they stay inside the centre
-/// region (and, inside one depth level, are no longer than two tool diameters); otherwise the
-/// tool retracts to safe Z. Every depth level of a cluster is cut before the next cluster, and
-/// the clearance tool goes from one level to the next without retracting when the way back to the
-/// level's first path lies inside the centre region. Entry into the material is a vertical
-/// plunge or, with `rampPlunge`, a zig-zag ramp along the path (`appendPathRamp`).
+/// cuts the rings offset(centre, −k·stepover) inside-out (with the boundary ring first, last or
+/// as an ordinary ring per `profilePass`), the Raster strategy clips parallel lines spaced
+/// ≤ stepover to the centre region, links them zig-zag and adds the boundary pass first/last/none.
+/// Every point the tool can reach is cut for any stepover ≤ diameter (residue thinner than
+/// min(chordal, 0.01 mm) aside). Rest tools cut their own pattern clipped to where their disc
+/// overlaps the rest material: the pocket (less allowance) minus the area the earlier tools swept.
+/// Every depth level of a cluster is cut before the next cluster. A short link (≤ two tool
+/// diameters) that stays inside the centre region is a feed at depth; any other way within a
+/// cluster lifts to the floor of the previous level (the surface for the first level), which is
+/// already cleared there, and feeds along a straight segment or a route through the offset ring
+/// tree inside the centre region; only when there is no such way does the tool retract to safe
+/// Z. Entry into the material is a vertical plunge or, with `rampPlunge`, a zig-zag ramp along the
+/// path (`appendPathRamp`). Parameters that would make the work explode (pass depth, stepover or
+/// chordal tolerance too small for the pocket) are refused with a message and an empty toolpath.
 ///
 /// Every move is a straight line (polygonal geometry); output is deterministic. See ADR-0017.
 PocketResult pocketToolpath(const std::vector<geometry::Contour>& contours,

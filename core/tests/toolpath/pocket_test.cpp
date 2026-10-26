@@ -184,34 +184,201 @@ TEST_CASE("AC5: offset strategy retracts at most once per disconnected region pl
           "[toolpath][pocket][linking]") {
     struct Case {
         const char* name;
-        std::vector<Contour> shape;
+        std::vector<orc::Poly> polys;  // even-odd: outer(s), then islands
         std::size_t regions;
-        double cutDepth;
     };
-    const Polyline lShape{{{0, 0}, {60, 0}, {60, 20}, {20, 20}, {20, 50}, {0, 50}}, true};
-    const Case cases[] = {
-        {"rectangle, one level", {rect(0, 0, 50, 30)}, 1, 3.0},
-        {"rectangle, three levels", {rect(0, 0, 50, 30)}, 1, 9.0},
-        {"circle r 20, two levels", {Contour::circle({0, 0}, 20.0)}, 1, 6.0},
-        {"L shape, two levels", {Contour::fromPolyline(lShape)}, 1, 6.0},
-        {"two rectangles, two levels", {rect(0, 0, 30, 20), rect(40, 0, 70, 20)}, 2, 6.0},
-        {"three circles",
-         {Contour::circle({0, 0}, 8), Contour::circle({30, 0}, 8), Contour::circle({60, 0}, 8)},
-         3,
-         3.0},
+    const orc::Poly lShape{{0, 0}, {60, 0}, {60, 20}, {20, 20}, {20, 50}, {0, 50}};
+    // Verifier repros (T-0121 round 2): concave U and C shapes and the AC2 island used to
+    // retract at every level because the way back had to be one straight segment.
+    const orc::Poly uShape{{0, 0}, {60, 0}, {60, 40}, {35, 40}, {35, 12}, {25, 12}, {25, 40}, {0, 40}};
+    const orc::Poly cShape{{0, 0}, {50, 0}, {50, 12}, {14, 12}, {14, 38}, {50, 38}, {50, 50}, {0, 50}};
+    const orc::Poly plus{{20, 0},  {40, 0},  {40, 20}, {60, 20}, {60, 40}, {40, 40},
+                         {40, 60}, {20, 60}, {20, 40}, {0, 40},  {0, 20},  {20, 20}};
+    auto circle = [](Vec2 c, double r) {
+        orc::Poly p;
+        for (int i = 0; i < 90; ++i) {
+            p.push_back({c.x + r * std::cos(i * kPi / 45), c.y + r * std::sin(i * kPi / 45)});
+        }
+        return p;
+    };
+    const std::vector<Case> cases{
+        {"rectangle", {orc::rectPoly(0, 0, 50, 30)}, 1},
+        {"circle r 20", {circle({0, 0}, 20)}, 1},
+        {"L shape", {lShape}, 1},
+        {"U shape", {uShape}, 1},
+        {"C shape", {cShape}, 1},
+        {"plus", {plus}, 1},
+        {"rectangle + 20x10 island", {orc::rectPoly(0, 0, 50, 30), orc::rectPoly(15, 10, 35, 20)}, 1},
+        {"rectangle + two islands",
+         {orc::rectPoly(0, 0, 70, 40), orc::rectPoly(10, 10, 25, 30), orc::rectPoly(40, 12, 60, 28)},
+         1},
+        {"two rectangles", {orc::rectPoly(0, 0, 30, 20), orc::rectPoly(40, 0, 70, 20)}, 2},
+        {"three circles", {circle({0, 0}, 8), circle({30, 0}, 8), circle({60, 0}, 8)}, 3},
     };
     for (const Case& c : cases) {
-        INFO(c.name);
-        PocketParams p = params(c.cutDepth);
-        for (bool ramp : {false, true}) {
-            INFO("ramp " << ramp);
-            p.rampPlunge = ramp;
-            const PocketResult res = pocketToolpath(c.shape, {tool(6.0, 0.4, 3.0)}, p);
-            const Toolpath& tp = res.toolpaths[0];
-            REQUIRE_FALSE(tp.isEmpty());
-            CHECK(tp.count(MoveKind::Retract) <= c.regions + 1);
-            CHECK(tp.count(MoveKind::Retract) >= c.regions);
+        std::vector<Contour> input;
+        for (const orc::Poly& poly : c.polys) {
+            input.push_back(Contour::fromPolyline(Polyline{poly, true}));
         }
+        for (double cutDepth : {3.0, 9.0}) {
+            for (double stepover : {2.4, 4.5}) {
+                for (ProfilePass pass : {ProfilePass::Last, ProfilePass::First}) {
+                    for (bool ramp : {false, true}) {
+                        INFO(c.name << " cut depth " << cutDepth << " stepover " << stepover << " pass "
+                                    << static_cast<int>(pass) << " ramp " << ramp);
+                        PocketParams p = params(cutDepth);
+                        p.rampPlunge = ramp;
+                        p.profilePass = pass;
+                        PocketTool t = tool(6.0, 0.4, 3.0);
+                        t.stepover = stepover;
+                        const PocketResult res = pocketToolpath(input, {t}, p);
+                        const Toolpath& tp = res.toolpaths[0];
+                        REQUIRE_FALSE(tp.isEmpty());
+                        CHECK(tp.count(MoveKind::Retract) <= c.regions + 1);
+                        CHECK(tp.count(MoveKind::Retract) >= c.regions);
+                        if (ramp || cutDepth < 9.0) {
+                            continue;  // the exact gouge check below is costly; one variant suffices
+                        }
+                        // Travel inside the pocket never gouges, and lifts are vertical and stay
+                        // below the surface.
+                        const orc::GougeReport g = orc::gougeCheck(tp, c.polys, 0.0, p.safeZ);
+                        CHECK(g.allInside);
+                        CHECK(g.minDistance >= 3.0);
+                        for (std::size_t i = 0; i < tp.moves.size(); ++i) {
+                            const Move& mv = tp.moves[i];
+                            const Vec3 from = tp.startOf(i);
+                            if (mv.kind == MoveKind::Feed && mv.to.z > from.z) {
+                                CHECK(distance(mv.to.xy(), from.xy()) == 0.0);
+                                CHECK(mv.to.z <= 0.0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+TEST_CASE("Raster links along the boundary are feeds, not retracts", "[toolpath][pocket][linking][raster]") {
+    // Verifier repro: at 45 degrees the projected piece ends sit a rounding error off the
+    // boundary, and the link along it used to be rejected (~16 retracts per level; 1,374 on
+    // 500 x 300).
+    for (double angle : {0.0, kPi / 6, kPi / 4, kPi / 2, 2.0}) {
+        for (double w : {50.0, 500.0}) {
+            INFO("angle " << angle << " width " << w);
+            PocketParams p = params(3.0);
+            p.strategy = PocketStrategy::Raster;
+            p.rasterAngle = angle;
+            p.profilePass = ProfilePass::None;
+            const PocketResult res = pocketToolpath({rect(0, 0, w, 0.6 * w)}, {tool(6.0, 0.4, 3.0)}, p);
+            const Toolpath& tp = res.toolpaths[0];
+            CHECK(tp.count(MoveKind::Retract) <= 2);
+            const orc::GougeReport g = orc::gougeCheck(tp, {orc::rectPoly(0, 0, w, 0.6 * w)}, 0.0, p.safeZ);
+            CHECK(g.allInside);
+            CHECK(g.minDistance >= 3.0);
+        }
+    }
+}
+
+TEST_CASE("Owner decision 2026-10-26: Profile Pass First/Last/None for the Offset strategy",
+          "[toolpath][pocket][profile]") {
+    const std::vector<Contour> shape{rect(0, 0, 50, 30), rect(15, 10, 35, 20)};
+    auto plan = [&](ProfilePass pass) {
+        PocketParams p = params(3.0);
+        p.profilePass = pass;
+        return pocketToolpath(shape, {tool(6.0, 0.4, 3.0)}, p);
+    };
+    const PocketResult first = plan(ProfilePass::First);
+    const PocketResult last = plan(ProfilePass::Last);
+    const PocketResult none = plan(ProfilePass::None);
+    auto roles = [](const PocketResult& r) {
+        std::vector<PocketPathRole> out;
+        for (const PocketPath& pp : r.plans[0].paths) {
+            out.push_back(pp.role);
+        }
+        return out;
+    };
+    // The boundary pass is the outer wall ring and the island ring at the full inset.
+    const std::vector<PocketPathRole> rf = roles(first), rl = roles(last), rn = roles(none);
+    REQUIRE(rf.size() >= 4);
+    CHECK(rf[0] == PocketPathRole::Profile);
+    CHECK(rf[1] == PocketPathRole::Profile);
+    CHECK(rf[2] == PocketPathRole::Ring);
+    CHECK(std::count(rf.begin(), rf.end(), PocketPathRole::Profile) == 2);
+    CHECK(rl[rl.size() - 1] == PocketPathRole::Profile);
+    CHECK(rl[rl.size() - 2] == PocketPathRole::Profile);
+    CHECK(std::count(rl.begin(), rl.end(), PocketPathRole::Profile) == 2);
+    CHECK(std::count(rn.begin(), rn.end(), PocketPathRole::Profile) == 0);
+    // None leaves the boundary as an ordinary (last) clearing ring: same geometry as Last.
+    REQUIRE(none.plans[0].paths.size() == last.plans[0].paths.size());
+    for (std::size_t i = 0; i < none.plans[0].paths.size(); ++i) {
+        CHECK(none.plans[0].paths[i].path == last.plans[0].paths[i].path);
+    }
+    CHECK(none.toolpaths[0].moves == last.toolpaths[0].moves);
+    // First cuts the boundary before clearing: the first cutting moves trace the wall at
+    // radius + margin from the outer rectangle.
+    const Polyline& wall = first.plans[0].paths[0].path;
+    CHECK_THAT(std::fabs(shoelace(wall.points)), WithinAbs((50 - 6.02) * (30 - 6.02), 1e-3));
+    CHECK(first.toolpaths[0].moves[1].kind == MoveKind::Plunge);
+    CHECK(distance(first.toolpaths[0].moves[1].to.xy(), wall.points.front()) <= 1e-12);
+    // Every variant is gouge-free and retracts once.
+    for (const PocketResult* r : {&first, &last, &none}) {
+        CHECK(r->toolpaths[0].count(MoveKind::Retract) == 1);
+        const orc::GougeReport g = orc::gougeCheck(
+            r->toolpaths[0], {orc::rectPoly(0, 0, 50, 30), orc::rectPoly(15, 10, 35, 20)}, 0.0, 5.0);
+        CHECK(g.allInside);
+        CHECK(g.minDistance >= 3.0);
+    }
+}
+
+TEST_CASE("Pocket: degenerate parameters are refused before any work, never thrown",
+          "[toolpath][pocket][robustness]") {
+    // Verifier repros: pass depth 1e-9 (2e9 levels -> bad_alloc), stepover 1e-6 (unbounded run),
+    // chordal 1e-7 on an r = 20 circle (unbounded run). Each must come back at once with an empty
+    // toolpath, no plan and a message; the checks run before PassPlan, offsets or patterns, so
+    // the work done is independent of how extreme the value is.
+    struct Case {
+        const char* name;
+        std::vector<Contour> shape;
+        PocketTool tool;
+        PocketParams params;
+    };
+    std::vector<Case> cases;
+    auto add = [&](const char* name, std::vector<Contour> shape, PocketTool t, PocketParams p) {
+        cases.push_back({name, std::move(shape), std::move(t), std::move(p)});
+    };
+    PocketTool t = tool(6.0, 0.4, 3.0);
+    PocketParams p = params(6.0);
+    PocketTool tinyPass = t;
+    tinyPass.passDepth = 1e-9;
+    add("pass depth 1e-9", {rect(0, 0, 50, 30)}, tinyPass, p);
+    PocketTool tinyStep = t;
+    tinyStep.stepover = 1e-6;
+    add("stepover 1e-6", {rect(0, 0, 50, 30)}, tinyStep, p);
+    PocketParams fineTol = p;
+    fineTol.tolerance.chordal = 1e-7;
+    add("chordal 1e-7", {Contour::circle({0, 0}, 20)}, t, fineTol);
+    PocketParams badDist = p;
+    badDist.tolerance.distance = 0.0;
+    add("distance 0", {rect(0, 0, 50, 30)}, t, badDist);
+    PocketTool smallStep = t;
+    smallStep.stepover = 0.02;
+    add("stepover 0.02 on a 2 m pocket", {rect(0, 0, 2000, 2000)}, smallStep, p);
+    add("huge circle at fine tolerance", {Contour::circle({0, 0}, 1e6)}, t, p);
+    PocketTool hugeLevels = t;
+    hugeLevels.passDepth = 0.5;
+    PocketParams deep = p;
+    deep.cutDepth = 1e5;
+    add("100 m deep in 0.5 mm passes", {rect(0, 0, 50, 30)}, hugeLevels, deep);
+    for (const Case& c : cases) {
+        INFO(c.name);
+        PocketResult r;
+        REQUIRE_NOTHROW(r = pocketToolpath(c.shape, {c.tool}, c.params));
+        REQUIRE(r.toolpaths.size() == 1);
+        CHECK(r.toolpaths[0].isEmpty());
+        CHECK(r.plans[0].paths.empty());
+        CHECK(r.plans[0].levels.empty());
+        CHECK(r.messages.size() == 1);
     }
 }
 
@@ -223,7 +390,7 @@ TEST_CASE("Pocket: climb and conventional reverse the ring directions", "[toolpa
             pocketToolpath({rect(0, 0, 50, 30), rect(15, 10, 35, 20)}, {tool(6.0, 0.4, 3.0)}, p);
         std::size_t outers = 0, holes = 0;
         for (const PocketPath& pp : res.plans[0].paths) {
-            REQUIRE(pp.role == PocketPathRole::Ring);
+            REQUIRE(pp.role != PocketPathRole::Raster);  // default Last: the boundary rings are Profile
             REQUIRE(pp.path.closed);
             const double a = shoelace(pp.path.points);
             if (a > 0) {
@@ -409,5 +576,40 @@ TEST_CASE("Pocket: invalid input is reported, not cut", "[toolpath][pocket]") {
             middle = middle || (mv.to.z < 0 && mv.to.x > 21 && mv.to.x < 39 && mv.to.y > 21 && mv.to.y < 39);
         }
         CHECK(middle);
+    }
+}
+
+TEST_CASE("Regression: travel never crosses a thin fin through its corner vertices",
+          "[toolpath][pocket][gouge]") {
+    // Round-2 gouge sweep, verifier scene 84: a U pocket around a 1.63 mm fin, raster with the
+    // boundary first. The raster ends, projected onto their exact line, sat ~1e-7 mm off the
+    // centre region's top edge, so a lifted travel along that line slipped through the fin's
+    // corner vertices without registering a crossing and came 0.0022 mm too close to the fin.
+    const orc::Poly u{{14.66107, 15.29806}, {46.90379, 15.29806}, {46.90379, 47.54078}, {31.59986, 47.54078},
+                      {31.59986, 24.97087}, {29.96501, 24.97087}, {29.96501, 47.54078}, {14.66107, 47.54078}};
+    PocketTool t1 = tool(2.1278, 1.0, 1.8905, "T1");
+    t1.stepover = 1.6948;
+    PocketTool t2 = tool(0.9164, 1.0, 3.8357, "T2");
+    t2.stepover = 0.3921;
+    for (ProfilePass pass : {ProfilePass::First, ProfilePass::Last, ProfilePass::None}) {
+        for (PocketStrategy strategy : {PocketStrategy::Raster, PocketStrategy::Offset}) {
+            INFO("pass " << static_cast<int>(pass) << " strategy " << static_cast<int>(strategy));
+            PocketParams p = params(4.594);
+            p.strategy = strategy;
+            p.rasterAngle = -0.2235;
+            p.profilePass = pass;
+            p.rampPlunge = true;
+            p.rampDistance = 17.076;
+            const PocketResult res = pocketToolpath({Contour::fromPolyline(Polyline{u, true})}, {t1, t2}, p);
+            for (std::size_t i = 0; i < 2; ++i) {
+                const Toolpath& tp = res.toolpaths[i];
+                if (tp.isEmpty()) {
+                    continue;
+                }
+                const orc::GougeReport g = orc::gougeCheck(tp, {u}, 1e-9, p.safeZ);  // surface moves too
+                CHECK(g.allInside);
+                CHECK(g.minDistance >= 0.5 * tp.tool.diameter);
+            }
+        }
     }
 }
