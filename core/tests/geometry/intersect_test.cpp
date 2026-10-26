@@ -1,9 +1,12 @@
 #include "carvetto/geometry/intersect.hpp"
 
+#include <algorithm>
+#include <array>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <cmath>
 #include <cstdint>
+#include <functional>
 #include <utility>
 
 #include "test_rng.hpp"
@@ -814,8 +817,20 @@ TEST_CASE("Arc-arc: generative near-tangent internal and external circle pairs",
         const std::size_t nba = checkArcPoints(fullB, full, tol);
         CHECK(nab == nba);
         if (d > tol.distance) {
-            // The circles are within tolerance of touching, so exactly one tangent contact.
-            CHECK(nab == 1);
+            // The circles are within tolerance of touching: one tangent contact, unless they cross
+            // at two points further apart than the tolerance (T-0008 AC3), which are both reported.
+            // The common chord from the triangle of the centres and radii (Kahan's stable Heron).
+            std::array<double, 3> s{d, r1, r2};
+            std::sort(s.begin(), s.end(), std::greater<>());
+            const double area4 =
+                std::sqrt(std::max(0.0, (s[0] + (s[1] + s[2])) * (s[2] - (s[0] - s[1])) *
+                                            (s[2] + (s[0] - s[1])) * (s[0] + (s[1] - s[2]))));
+            const double chord = gap < 0.0 ? area4 / d : 0.0;  // 2 * (2 * area / d)
+            if (chord < 0.99 * tol.distance) {
+                CHECK(nab == 1);
+            } else if (chord > 1.01 * tol.distance) {
+                CHECK(nab == 2);
+            }
         }
         ++tested;
     }

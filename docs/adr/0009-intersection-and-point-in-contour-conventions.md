@@ -1,6 +1,6 @@
 # ADR-0009: Intersection results and point-in-contour conventions
 
-Date: 2026-10-24 · Status: accepted (director, 2026-10-24); amendments of 2026-10-24 (T-0005) and 2026-10-25 (T-0007) accepted, residuals tracked in T-0008
+Date: 2026-10-24 · Status: accepted (director, 2026-10-24); amendments of 2026-10-24 (T-0005), 2026-10-25 (T-0007) 2026-10-25 (T-0008) accepted
 
 ## Decision
 1. `intersect(Span, Span)` returns an `IntersectionResult` with two lists: isolated `points`
@@ -203,9 +203,9 @@ Date: 2026-10-24 · Status: accepted (director, 2026-10-24); amendments of 2026-
        crossings are below the chordal sampling); a Bezier that bulges ≤ ~`tol.distance` outside
        the arc it joins and re-crosses it within ~10·`tol.distance` of the junction reports only
        the junction (the exact-zero sample at the junction defeats the sign test); the analytic
-       line/arc and arc/arc rules treat an infinite line or
-       circle within `tol.distance` of touching as one tangent hit, so two genuine crossings up
-       to about 2·√(2·r·tol) apart fold into one tangent hit (≈ 0.09 mm for r = 1 mm, 0.9 mm for
+       line/arc and arc/arc rules treat an infinite line or circle within `tol.distance` of
+       touching as one tangent hit (resolved by T-0008, see its amendment), so two genuine
+       crossings up to about 2·√(2·r·tol) apart fold into one tangent hit (≈ 0.09 mm for r = 1 mm, 0.9 mm for
        r = 100 mm); same-circle partial arcs that touch end to end report a point whose residual
        to the arc ends can reach 1.5·`tol.distance` (the midpoint rule in the angular frame).
      - *Cost:* in a Debug build a pair of nearly identical 4 mm cubics takes about 4 ms, a
@@ -276,7 +276,8 @@ Changes to the Bezier pipeline of the 2026-10-24 amendment (decision 1) and to `
    near a partial arc's start were mapped to its end, so touches close to the start of a partial
    arc were dropped in bands of the arc's start angle (e.g. arcs of radius 0.2 starting
    0.12–0.18 rad before a touch near the steep end of a cubic). The bug in `closestPoint` itself
-   (`contour_ops.cpp`, T-0002) is left for its owner.
+   (`contour_ops.cpp`, T-0002) is left for its owner. (Fixed at the source by T-0008; the wrapper
+   is gone.)
 9. **Exact tangency (round 2).** An exact contact (Newton residual ≤ 1e-6·`tol.distance`) is flagged
    `tangent` when the unit tangents are parallel to 1e-6 (as before), or when they are within
    1e-3 and A lies on the same side of B half a tolerance either way along A. At an exact tangency
@@ -311,7 +312,8 @@ Changes to the Bezier pipeline of the 2026-10-24 amendment (decision 1) and to `
   a minimum of a gap that is flat to rounding; such end touches are still missed at roughly
   `main`'s rate (~38–39 % in the verifier's hugging family; no end touch that `main` reports is
   lost) and are tracked in T-0008. The exact line/line, line/arc and arc/arc pairs keep their own
-  end-contact rules and still miss oblique end touches (pre-existing; also T-0008).
+  end-contact rules and still miss oblique end touches (pre-existing; also T-0008). (Both resolved
+  by T-0008, see its amendment.)
 - *Self-intersections:* every loop of a single cubic reaching further than the tolerance from its
   double point is reported once, and no loop that stays within it (random looping cubics scaled
   to 0.2–3 µm, including lopsided ones whose parameter mid-point is inside the tolerance:
@@ -354,3 +356,157 @@ Changes to the Bezier pipeline of the 2026-10-24 amendment (decision 1) and to `
 - *Contour labels at triple points:* the pre-existing point dedupe in `appendContourHits` keeps
   one hit per point, so where a span's own loop and a crossing with another span meet within
   tolerance the hit is labelled (i,i) rather than (i,k); the number of points is unchanged.
+
+### 2026-10-25 — T-0008 (exact line/arc intersections: end touches and shared end points) · Status: accepted (director, 2026-10-25)
+Changes to decision 1 (analytic pairs, and end touches of the Bezier pipeline of the earlier
+amendments), decision 4 (junctions) and `closestPoint(ArcSpan)`. Everything not mentioned below is
+unchanged.
+1. **End contacts (every pair kind).** An end of either span within `tol.distance` of the other span
+   (its interior or its end) is a contact: the end paired with its nearest point on the other span
+   (global `closestPoint`), reported at their midpoint, so within half the gap of both. It is
+   dropped only when another hit lies within `tol.distance` of it (the usual merge; contacts are
+   taken most exact first, so a crossing or a deeper touch represents a nearby end). It is flagged
+   `tangent` unless it is exact (gap ≤ 1e-6·`tol.distance`: the end lies on the other span), where
+   the tangent rule of any exact contact applies (analytic pairs: parallel tangents to 1e-6). A
+   full circle has no ends (its start is a seam). An end contact never counts as a crossing for the
+   rule that turns two merged exact crossings into a tangent hit.
+   - The rule does not ask the end to be a local minimum of the gap. An end inside a stretch where
+     the curves run within tolerance of each other (e.g. a Bezier hugging an arc that extends past
+     it), or on the slope down to a crossing or touch further than `tol.distance` away (an overshoot
+     past a crossing at a shallow angle; an arc ending 1–2 µm from a tangency it covers), is
+     reported in addition to that crossing or touch. The earlier amendments reported only local
+     minima of the gap, and their settling walk leaves such ends; the T-0005/T-0007 tests that
+     asked for exactly one hit next to a touch now accept further hits only when they are such end
+     contacts (`isEndContact` in the tests), and four fixed regressions gained the end contact
+     their pair has (counts updated there).
+   - In the Bezier pipeline the ends found by the bounding-box filter of T-0007 item 6 are, within
+     `tol.distance`, kept as hits as they are (`endHits`), besides being settled as touch candidates
+     as before.
+2. **Analytic pairs in canonical order.** Line/line, line/arc and arc/arc pairs are solved in one
+   argument order (lines before arcs, then by start/end points, or by centre, radius, angles and
+   direction) and the other order is answered by swapping the parameters, so `intersect(a, b)` and
+   `intersect(b, a)` are exact mirror images. On `main` arc/arc crossings were computed from A's
+   centre and were not bit-exact mirrors (4 % of random arc pairs in 20 × 20 mm, 35 % of arcs in
+   a 0.1 mm box, 19 % of the analytic end-touch family).
+3. **Crossings only on both spans.** An analytic crossing or tangent hit is reported only where it
+   lies on both spans to rounding (line parameter in [0, 1], angle inside the sweep with no slack).
+   `main` accepted points up to `tol.distance` beyond an end and reported them at the end as
+   untangent crossings; such a contact is now the end contact of item 1 (tangent, since the spans do
+   not meet there). Line/line's own end-point test is replaced by item 1. This is what made
+   oblique end touches (h > 0) and an exact shared end point miss: the regression of the card, a
+   line starting 1.8e-15 from an arc's end, nearly tangent to the circle, whose tangent hit at the
+   foot lay 1.6 µm beyond the arc's end, gave nothing.
+4. **The near-tangent fold rule (final).** Line/arc: with h the distance of the infinite line from
+   the centre, h ≥ r gives one tangent hit at the foot when h − r ≤ `tol.distance` (a touch);
+   h < r gives the crossings at ±s = ±√((r − h)(r + h)) along the line from the foot: both, untangent,
+   when 2s > `tol.distance`, otherwise one tangent hit at the foot. Arc/arc: circles that cross
+   (|r1 − r2| < d < r1 + r2) give both crossings, untangent, when the common chord 2h exceeds
+   `tol.distance`; otherwise (crossing at points the tolerance cannot separate, touching, or
+   passing within `tol.distance`) one tangent hit at the midpoint of the facing points, external
+   when |d − (r1 + r2)| ≤ |d − |r1 − r2||, as before. So crossings further apart than the tolerance
+   are always both reported, as for Bezier pairs (whose merge distance is the same); `main` folded
+   any pair within tolerance of tangency, i.e. crossings up to 2·√(2·r·tol) apart. Crossing
+   circles that reach the radical-line formula have d > `tol.distance` (closer centres with
+   |r1 − r2| < d are the same circle within tolerance: overlaps), so the formula is well
+   conditioned there; residuals of the crossings stay ~1e-11 at crossing angles down to 0.01 rad.
+5. **Junction erasure (decision 4), re-examined.** The rule is unchanged: in `selfIntersections` hits
+   within `tol.distance` of the junction two consecutive spans share (and of the closing junction)
+   are erased. With item 4 a re-crossing more than `tol.distance` from the junction is a crossing
+   of its own and survives the erasure, reported where it is; within `tol.distance` it is the
+   junction to the tolerance. On `main` the junction and a re-crossing up to 2·√(2·r·tol) away
+   folded into one tangent hit midway, which was erased with the junction when the re-crossing was
+   up to 2·`tol.distance` away and reported midway, flagged tangent, beyond. The end contacts at a
+   junction (exact) are erased with it. The Bezier pipeline already reported crossings more than
+   `tol.distance` apart separately (T-0007 item 4 for re-crossings next to a junction).
+6. **`closestPoint(ArcSpan)` (T-0007 item 8) fixed at the source.** A query direction that
+   `containsAngle` accepts although it lies a rounding error outside the sweep (its 1e-9 rad slack)
+   gets the parameter of the nearer end in angle: 0 just before the start (it was 1: the travelled
+   angle wraps to just under 2π and was clamped), 1 just past the end. The point and the distance
+   are unchanged. The wrapper `closestOn` in `intersect.cpp` is removed; its rule was the same, so
+   `intersect` is unaffected. Other callers: `closestPoint(Contour)` returns a parameter consistent
+   with its point (improved); `distanceTo`, `locatePoint` and `isInside` use the distance only
+   (unaffected); `offset.cpp` (offset pruning) does not call `closestPoint` — its own
+   `distanceToSpan` returns a distance only, from `containsAngle(…, 0)` — so it is unaffected.
+7. **Cost guards for analytic pairs.** Before the end contacts, pairs whose coarse boxes (a line's
+   box, an arc's whole circle) are further apart than `tol.distance`, circles further apart (or one
+   inside the other) by more than the tolerance, and a segment wholly outside or inside a circle by
+   more than the tolerance return nothing; an end is only queried with `closestPoint` when its
+   distance to the other span's infinite line or circle is within tolerance.
+
+**Guarantees, replacing the T-0007 bullet on end touches and the T-0005 limit on the fold rule:**
+- *End contacts, analytic pairs:* 40,000 generated cases, 10,000 each of line/line, line/arc,
+  arc/line and arc/arc (the approached span first; arcs include full circles), a span ending at
+  gap h from the other's interior with oblique (up to 69° from the normal), normal (within 1.1°) and
+  near-parallel (1.1–8.6° from the tangent) approaches, h ∈ [0, 0.99·tol] (a tenth exactly 0, a
+  tenth 1e-9–1e-4 mm) or [1.05, 2]·tol, both orders, the gap measured by brute force: 0 failures
+  (27,723 within tolerance: exactly one hit within 2·tol of the end, within the gap, tangent unless
+  exact; 12,277 beyond: none; every residual within tolerance; every pair a bit-exact mirror).
+  The same test fails 25,379 of the 40,000 on `main`.
+- *End contacts in hugging stretches (Bezier pipeline):* 6,000 cubics approximating 0.05–0.6 rad of a
+  circle (scaled by up to 0.9·tol/r, jiggled by up to 0.5·tol) against the arc extending 0–0.3 rad
+  past them: of 11,610 ends within tolerance of the other span with their foot ≥ 0.01 mm from that
+  span's ends, 0 have no hit within tol + gap/2 (tangent, or exact where the end lies within
+  tolerance of a crossing that represents it); `main` fails 6,124 of them by the same criterion.
+- *Near-tangent crossings:* 3,983 line/circle and circle/circle pairs crossing at points c apart:
+  c > 1.05·tol gives both crossings (untangent, ≤ 1e-7 mm from the constructed points, residual
+  ≤ 1e-9), c < 0.95·tol one tangent hit within tolerance of the chord's midpoint: 0 failures
+  (`main` 1,788). Junction re-crossings (line or arc, then an arc folding back over it, 2,000
+  contours, both directions): a re-crossing 1.2–20·tol from the junction is the one reported hit,
+  untangent, within 2e-7 mm of the constructed point; one 0.05–0.8·tol away gives nothing:
+  0 failures (`main` fails all 1,000 of the first kind).
+- *`closestPoint(ArcSpan)`:* 21,600 queries 0–9e-10 rad before the start and past the end of
+  CW and CCW partial arcs (radii 0.01–100, on, inside and outside the circle): parameter 0 / 1 and
+  consistent with the point.
+- *Regression guard (measured):* a driver links `main`'s geometry (renamed namespace) and the branch
+  and runs both on 95,800 cases per seed, two seeds: random line/line (10,000), line/arc (12,000),
+  arc/arc (12,000, a sixth full circles), the same in 0.01–0.1 mm boxes (11,000), the analytic
+  end-touch family (6,000), near-tangent line/circle and circle/circle pairs with gaps ±2·tol and
+  partial arcs (8,000), random arc/Bezier, Bezier/Bezier and line/Bezier (9,000), jiggled
+  near-coincident cubics (800), the hugging family above (6,000), Bezier ends placed near lines,
+  arcs and Beziers (3,000), Beziers hugging lines (2,000), touches on convex cubics (6,000),
+  Beziers hugging sub-arcs (3,000), random 1–4-span contours (`selfIntersections`, 4,000) and the
+  junction re-crossings (3,000). Every result that differs from `main` (and every 50th case) is
+  judged by a brute-force oracle: the gap along A sampled densely (40,000 parameters for lines and
+  arcs, 20,000 for Beziers, refined geometrically towards both ends), local minima of
+  prominence ≥ 1e-9 mm refined by golden section, plus every end of either span within tolerance of
+  the other; contours pairwise, minus contacts at shared junctions. Errors: a contact within
+  0.999·tol with no hit within `tol.distance` of it, a hit that is not exact with no contact near
+  it, a residual beyond tolerance, a missing `tangent` flag at a gap above 1.1e-6·tol or a
+  `tangent` flag on an isolated transversal crossing, and an asymmetry. Results: worse than `main`
+  0 and 0; different 17,635 and 17,512, of which better 17,588 and 17,470 and equal in errors 47
+  and 42 (0 errors on both sides: the branch's hit carries the brute-force gap — the end paired
+  with its nearest point, or the true minimum — where `main`'s lay at a nearby pair with a larger
+  residual within tolerance, or the difference is an end contact in a band the judge leaves open:
+  gap 0.999–1·tol, or within 10 % of the 1e-6·tol exactness threshold). With a looser judge
+  (found within tol + gap/2, flags from 1e-5·tol) the equal counts are 464 and 452 and worse is
+  still 0. The branch is a bit-exact mirror in every case; `main` is not in 3,393 and 3,444
+  (arc/arc). The branch's own errors over all judged cases (none of them worse than `main` in that
+  case): pre-existing Bezier-pipeline heuristics — minima separated by ridges of ~1e-9 mm
+  reported as the deeper one, or touches in the band where the gap is flat to rounding (up to 9 of
+  the 9,000 hugging pairs per seed), and a crossing between branches near a loop flagged tangent
+  because another crossing lies within tolerance (8–14 of the 800 jiggled cubics) — plus, for the
+  strict judge only, 3–6 ends per seed merged into a hit between tol and tol + gap/2 away (the
+  merge rule of item 1).
+- *Heuristics that remain:* those of the T-0007 amendment, unchanged. End contacts are judged by the
+  end's nearest point only, so two ends within tolerance of each other (an end-to-end contact) are
+  one hit, and an end whose nearest point lies on another branch of a looping cubic is paired with
+  that branch.
+- *Cost (Release -O2, CPU time per pair, best of 3, branch / `main`, on the cases above):*
+  pairs involving a Bezier unchanged (median 1.00–1.02×, p99 ≤ 1.20×, worst 1.75×); random
+  analytic pairs median 0.37× (line/line), 0.65× (line/arc), 1.02× (arc/arc), p99 2.0–3.0×
+  (absolute p99 ≤ 0.9 µs, worst 1.5 µs, against 1.0 µs on `main`), faster where boxes or circles
+  are apart, which `main` did not test first; analytic pairs in contact (the end-touch family,
+  near-tangent pairs, arcs in 0.1 mm boxes) median 1.6–2.1×, p90 2.9–4.1×, p99 4.0–6.9×, worst
+  11× (absolute median 0.37–0.58 µs, worst 1.9 µs; `main` 0.18–0.28 µs): the end contacts cost up
+  to four closest-point queries. `selfIntersections` of random 1–4-span contours median 1.02×,
+  p90 2.1×, p99 2.4×, worst 4.1× (median 19 µs); two-span junction contours 2.2× (0.7 → 1.4 µs).
+  All 95,800 cases: median 1.01×, p90 2.3×, p99 4.0×, worst 11×.
+  The independent verifier (own generators, 9,000 pairs) measured exact shared end points at
+  median 3.1×, worst 10.7× (absolute median 0.5–0.6 µs, worst 2.1 µs), end touches 2.1× / 7.7×
+  and near-tangent pairs 2.1× / 4.5×; all pairs median 1.34×, p99 7.4×.
+- *Known limits found in verification:* in `selfIntersections` an end contact of a span's far end
+  lying about 1.05–1.4·`tol.distance` from a junction can be merged into a hit within tolerance of
+  that junction and erased with it by the junction rule (item 5) — 450 of 6,036 generated
+  near-junction contours, the same as `main`; erasing junction hits before merging would fix it.
+  A span shorter than the tolerance is handled as a point and its hit is not flagged tangent even
+  at a non-zero gap (pre-existing).
