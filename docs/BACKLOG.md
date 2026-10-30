@@ -320,7 +320,7 @@ Acceptance criteria:
   3. Everything T-0121 verified stays clean (ACs 1–6, ≥ 2,000-scene sweep, caps, owner decision on Profile Pass).
   4. ADR §12 corrected: raster pattern memory is not bounded before the cap check (moved to T-0123).
 
-### T-0021 intersect(): arc/arc cancellation with very different radii   [status: ready]
+### T-0021 intersect(): arc/arc cancellation with very different radii   [status: in-progress]
 Phase: 1   Module: core/geometry   Depends on: —
 Goal: Found by the T-0017 coder: the general `intersect()` in core/src/geometry/intersect.cpp has a cancellation bug for arcs with very different radii (r = 39785 vs r = 0.09), reporting a false second crossing ~1e-5 mm from the real one (repro T-0017 seed 0xe400137f; offset junction exact at 50 digits). The coder had a fix + unit test, reverted as out of scope.
 Acceptance criteria:
