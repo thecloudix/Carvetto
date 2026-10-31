@@ -311,7 +311,7 @@ Acceptance criteria:
   3. Everything T-0120 verified stays clean (ACs 1–6, B1–B4, ≥ 2,000-scene gouge sweep, golden unchanged).
   4. Non-blocking items from the round-3 report fixed where cheap: leads checked against r + allowance; tab thickness > cut depth clamped with a diagnostic; zero-length plunge removed; projected tab length on curves.
 
-### T-0125 Pocket: centre-region guard must never drop a genuine region (residual of T-0121)   [status: in-progress]
+### T-0125 Pocket: centre-region guard must never drop a genuine region (residual of T-0121)   [status: verified 2026-10-31 — merging with T-0121]
 Phase: 1   Module: core/toolpath   Branch: task/T-0121-pocket (continues d432243)   ADR: 0017
 Goal: Finish T-0121 so it can merge. The Strict inset guard rejects a whole centre-region lobe when one vertex sits ~1e-6 past the slack (Clipper grid + round-join sag), so a reachable part of the pocket is silently left uncut (~1 in 4,000 diameters).
 Acceptance criteria:
@@ -334,6 +334,14 @@ Acceptance criteria:
   1. Angular slack is distance-based (≈ ε or tol/r scaled), so ends beyond an arc by more than rounding are end contacts flagged tangent; regression for the repro and a radius sweep 1e-3…1e6.
   2. Two crossings merged by the threshold rule are always flagged tangent; regression at 2h − tol ≈ ±1e-15.
   3. No result worse than main on the T-0007/T-0008/T-0021 families.
+
+### T-0126 Pocket guard hardening: edge checks after pull-in, area-weighted phantom test   [status: ready]
+Phase: 1 (before Pocket ships to users)   Module: core/toolpath   Depends on: T-0121/T-0125 merged   ADR: 0017
+Goal: Non-blocking findings of the T-0125 round-2 verifier (scratchpad t0125v2/adv.cpp raw-injection harness). (N1) After a convex vertex is pulled in or removed, only vertices are re-checked: removing a vertex on a concave join arc lets the new chord sag ~4× the arc step inside the limit (0.015 mm at chordal 0.01, 0.15 at 0.1, 0.71 at 0.5) — a gouge into exact walls. Never seen with real Clipper output, but a gap in the guard. (N2) The phantom test counts vertices, so a real 900 mm² region whose small bulge holds most vertices is rejected silently; a successful inset repair can lose 76 mm² at chordal 0.5 without a message.
+Acceptance criteria:
+  1. After pull-in or removal every new edge is distance-checked (exact segment-to-wall), falling back to the inset repair; regression from the raw-injection cases at chordal 0.01/0.1/0.5.
+  2. Phantom classification is area- or depth-weighted; the C2/C4 cases are kept; a message whenever the repair inset exceeds ~chordal or loses area beyond a small bound.
+  3. Everything T-0121/T-0125 verified stays clean (diameter scans, phantom probes, sweeps).
 
 ### T-0018 offsetContours: inward offsets past the inradius must vanish, not invert   [status: ready]
 Phase: 1   Module: core/geometry   Depends on: —
