@@ -1296,3 +1296,229 @@ TEST_CASE("Leads keep the tool radius plus the allowance from every vector", "[t
     REQUIRE(r.ok());
     CHECK(test::minCutDistance(r.toolpath, {sq, near}) >= 3.5 - 1e-3);
 }
+
+namespace {
+
+/// Checks, with the rasterised oracle, that every kept tab (every raised run at the tab top; with
+/// a separate last pass those of the finishing cut) still joins the part to the waste. Returns
+/// the number of tabs checked (those with waste beyond the kerf in their window).
+int checkTabsJoin(const ProfileResult& r, const std::vector<Contour>& vectors, const ProfileParams& p, double d) {
+    const auto cuts = cutRanges(r.toolpath);
+    const double zTab = p.passes.bottomZ() + p.tabs.thickness;
+    const double rad = d / 2;
+    const double kerfOuter = p.allowance + (p.separateLastPass ? p.lastPassAllowance : 0.0) + d;
+    const double res = std::max(0.1, d / 80.0);
+    std::vector<Vec2> done;
+    int checked = 0;
+    const std::size_t first = p.separateLastPass ? cuts.size() / 2 : 0;
+    for (std::size_t c = first; c < cuts.size(); ++c) {
+        for (const auto& run : test::raisedRuns(r.toolpath, cuts[c].first, cuts[c].second, zTab)) {
+            double len = 0.0;
+            for (std::size_t i = 1; i < run.size(); ++i) len += std::hypot(run[i].x - run[i - 1].x, run[i].y - run[i - 1].y);
+            const Vec2 mid = test::runCore(run, 0.0, true).front();
+            if (std::any_of(done.begin(), done.end(), [&](Vec2 q) { return std::hypot(q.x - mid.x, q.y - mid.y) < 0.5; })) {
+                continue;  // the same tab on another level
+            }
+            done.push_back(mid);
+            const test::TabJoin j = test::tabJoins(r.toolpath, vectors, p.side == ProfileSide::Inside, mid,
+                                                   0.5 * len + kerfOuter + 1.0, zTab, rad, kerfOuter, res);
+            if (!j.slug) continue;
+            INFO("tab at " << mid.x << ", " << mid.y << " (raised run " << len << " mm)");
+            CHECK(j.joined);
+            ++checked;
+        }
+    }
+    return checked;
+}
+
+}  // namespace
+
+TEST_CASE("Separate last pass: a short tab on a concave curve is not cut through by the roughing cut",
+          "[toolpath][profile][tabs]") {
+    // Verifier repro b5circle: Inside of a circle r 19.679, 8 mm tool, allowance 0.358, last pass
+    // 0.892, one 0.62 x 4.31 tab. The roughing cut runs round the concave wall on a smaller radius,
+    // so the roughing tool at a merely projected end of its raised stretch cut through the outer
+    // half of the tab's bridge at full depth (no diagnostic).
+    const std::vector<Contour> cs{Contour::circle({0, 0}, 19.679080419874751)};
+    ProfileParams p;
+    p.side = ProfileSide::Inside;
+    p.allowance = 0.35808273924283024;
+    p.passes.startDepth = 2.5890622067618838;
+    p.passes.cutDepth = 6.6827760460028767;
+    p.passes.passDepth = 5.5108253589101883;
+    p.separateLastPass = true;
+    p.lastPassAllowance = 0.89243563469697218;
+    p.tabs.enabled = true;
+    p.tabs.count = 1;
+    p.tabs.length = 0.62026736706984131;
+    p.tabs.thickness = 4.3090084694084512;
+    p.ramp.type = RampType::ZigZag;
+    p.ramp.distance = 36.75464170141808;
+    p.leads.type = LeadType::Circular;
+    p.leads.length = 8.2550718220314288;
+    p.leads.angle = 0.69261347705451748;
+    p.leads.radius = 6.3947391786514576;
+    p.leads.sweep = 0.15589211200284489;
+    p.startAt = StartAt::Optimise;
+    p.startAnchor = BoxAnchor::TopRight;
+    p.startPosition = {11.026666867948485, -6.302635438741838};
+    const ProfileResult r = profileToolpath(cs, test::endMill(8.0), p);
+    REQUIRE(r.ok());
+    const auto cuts = cutRanges(r.toolpath);
+    REQUIRE(cuts.size() == 2);
+    const double zTab = p.passes.bottomZ() + p.tabs.thickness;
+    // The tab is kept (on both passes) and still joins the part to the waste.
+    CHECK(tabsLeftOut(r) == 0);
+    CHECK(test::raisedRuns(r.toolpath, cuts[1].first, cuts[1].second, zTab).size() == 1);
+    CHECK(test::raisedRuns(r.toolpath, cuts[0].first, cuts[0].second, zTab).size() == 2);  // two levels
+    CHECK(checkTabsJoin(r, cs, p, 8.0) == 1);
+    checkTabMaterial(r.toolpath, zTab, 4.0);
+}
+
+TEST_CASE("Separate last pass: a tab whose material a lobe of the roughing cut crosses is left out",
+          "[toolpath][profile][tabs]") {
+    // Verifier repro b5blob: Inside of a Bezier blob, 12 mm tool, allowance 0.49, last pass
+    // 0.958, one 1.44 x 3.58 tab. Another stretch of the roughing cut (a lobe coming back) ran
+    // through the far part of the tab's bridge, 8-13 mm out from the vector, at full depth.
+    const double B[8][8] = {
+        {24.528297700458356, -0.075131575306200141, 24.589931499642784, 5.5471493574607127, 21.023356708879575, 14.160905540386025, 16.933676131720073, 17.50028364950516},
+        {16.933676131720073, 17.50028364950516, 12.843995554560571, 20.839661758624295, 4.6004164157089189, 21.080710980455006, -0.009785762498662717, 19.961137079408608},
+        {-0.009785762498662717, 19.961137079408608, -4.6199879407062436, 18.841563178362211, -7.0160096946899637, 14.103805991146414, -10.727536937525418, 10.782840243226778},
+        {-10.727536937525418, 10.782840243226778, -14.439064180360873, 7.461874495307141, -21.381104878470005, 4.4245520465845924, -22.278949219511389, 0.035342591890786854},
+        {-22.278949219511389, 0.035342591890786854, -23.176793560552774, -4.3538668628030184, -19.86863318804566, -13.108168954594763, -16.114602983773732, -15.552416484936053},
+        {-16.114602983773732, -15.552416484936053, -12.360572779501807, -17.996664015277343, -5.2011807139443693, -14.516645013130244, 0.24523200612016866, -14.630142590156956},
+        {0.24523200612016866, -14.630142590156956, 5.6916447261847072, -14.743640167183667, 12.516695720890473, -18.65923711623811, 16.563873336613504, -16.233401947096318},
+        {16.563873336613504, -16.233401947096318, 20.611050952336534, -13.807566777954527, 24.466663901273929, -5.6974125080731124, 24.528297700458356, -0.075131575306200141}};
+    Contour blob;
+    blob.closed = true;
+    for (const auto& b : B) {
+        blob.append(geometry::BezierSpan{{b[0], b[1]}, {b[2], b[3]}, {b[4], b[5]}, {b[6], b[7]}});
+    }
+    const std::vector<Contour> cs{blob};
+    ProfileParams p;
+    p.side = ProfileSide::Inside;
+    p.direction = CutDirection::Climb;
+    p.allowance = 0.49190493333618557;
+    p.passes.cutDepth = 18.165175165326691;
+    p.passes.passDepth = 5.9478725204244043;
+    p.separateLastPass = true;
+    p.lastPassAllowance = 0.95809446752021477;
+    p.tabs.enabled = true;
+    p.tabs.count = 1;
+    p.tabs.length = 1.4386404699535462;
+    p.tabs.thickness = 3.576056744455637;
+    p.tabs.avoidCorners = true;
+    p.leads.type = LeadType::Straight;
+    p.leads.length = 14.197196335998006;
+    p.leads.angle = 1.1481504767893238;
+    p.leads.leadOut = true;
+    p.startAt = StartAt::ClosestOnBoundingBox;
+    p.startAnchor = BoxAnchor::TopLeft;
+    p.startPosition = {39.967753505838715, -23.008829543971238};
+    p.order.leftToRight = true;
+    p.order.grid = true;
+    const ProfileResult r = profileToolpath(cs, test::endMill(12.0), p);
+    REQUIRE(r.ok());
+    const auto cuts = cutRanges(r.toolpath);
+    REQUIRE(cuts.size() == 2);
+    const double zTab = p.passes.bottomZ() + p.tabs.thickness;
+    // Kept tabs join the part to the waste; the rest are reported.
+    const std::size_t kept = test::raisedRuns(r.toolpath, cuts[1].first, cuts[1].second, zTab).size();
+    CHECK(kept + tabsLeftOut(r) == 1);
+    checkTabsJoin(r, cs, p, 12.0);
+    checkTabMaterial(r.toolpath, zTab, 6.0);
+}
+
+TEST_CASE("Short tabs centred on sharp convex corners are kept whole or left out and reported",
+          "[toolpath][profile][tabs]") {
+    // Verifier N1: Outside of 40 x 30, 12 mm tool, 4 tabs 1.5 mm long starting at the bottom
+    // centre, so each lies on a corner arc; the tool at the end of the tab's own raised stretch
+    // cut right through the middle of the tab's material.
+    const std::vector<Contour> cs{Contour::rectangle(Box2{{0, 0}, {40, 30}})};
+    for (const bool separate : {false, true}) {
+        for (const double length : {0.5, 1.0, 1.5, 2.0, 3.0, 4.0}) {
+            ProfileParams p = baseParams(6.0, 3.0);
+            p.separateLastPass = separate;
+            p.lastPassAllowance = 1.0;
+            p.lastPassReverse = true;
+            p.tabs.enabled = true;
+            p.tabs.count = 4;
+            p.tabs.length = length;
+            p.tabs.thickness = 1.5;
+            p.tabs.avoidCorners = false;
+            p.startAt = StartAt::ClosestOnBoundingBox;
+            p.startAnchor = BoxAnchor::BottomCentre;
+            const ProfileResult r = profileToolpath(cs, test::endMill(12.0), p);
+            REQUIRE(r.ok());
+            INFO("separate " << separate << ", tab length " << length);
+            const auto cuts = cutRanges(r.toolpath);
+            const double zTab = p.passes.bottomZ() + p.tabs.thickness;
+            const std::size_t kept = test::raisedRuns(r.toolpath, cuts.back().first, cuts.back().second, zTab).size();
+            CHECK(kept + tabsLeftOut(r) == 4);  // one level (-6) below the tab top
+            checkTabsJoin(r, cs, p, 12.0);
+        }
+    }
+}
+
+TEST_CASE("Generative: every kept tab still joins the part to the waste (rasterised)",
+          "[toolpath][profile][tabs][property]") {
+    test::SplitMix rng{0x7125ULL};
+    int tabs = 0;
+    int scenes = 0;
+    for (int s = 0; s < 90; ++s) {
+        const int kind = static_cast<int>(rng.next() % 4);
+        Contour c;
+        if (kind == 0) {
+            c = Contour::circle({0, 0}, rng.uniform(8, 30));
+        } else if (kind == 1) {
+            c = Contour::rectangle(Box2{{0, 0}, {rng.uniform(20, 70), rng.uniform(15, 50)}});
+        } else {
+            // Rectangle with a round bite out of the bottom edge (kind 2) or a round bump on it
+            // (kind 3): concave and convex curves meeting straight edges at corners.
+            const double w = rng.uniform(40, 80);
+            const double h = rng.uniform(30, 60);
+            const double k = rng.uniform(5, std::min(0.3 * w, 0.4 * h));
+            const Vec2 m{0.5 * w, 0.0};
+            c.closed = true;
+            c.append(LineSpan{{0, 0}, {m.x - k, 0}});
+            c.append(ArcSpan{m, k, geometry::kPi, 0.0, kind == 2 ? geometry::ArcDirection::CW : geometry::ArcDirection::CCW});
+            c.append(LineSpan{{m.x + k, 0}, {w, 0}});
+            c.append(LineSpan{{w, 0}, {w, h}});
+            c.append(LineSpan{{w, h}, {0, h}});
+            c.append(LineSpan{{0, h}, {0, 0}});
+        }
+        const std::vector<Contour> cs{c};
+        const double d = std::vector<double>{3.175, 6.0, 8.0, 12.0}[rng.next() % 4];
+        ProfileParams p = baseParams(rng.uniform(3, 15), rng.uniform(1.5, 8));
+        p.side = rng.uniform(0, 1) < 0.5 ? ProfileSide::Outside : ProfileSide::Inside;
+        p.direction = rng.uniform(0, 1) < 0.5 ? CutDirection::Climb : CutDirection::Conventional;
+        p.allowance = rng.uniform(0, 1) < 0.5 ? 0.0 : rng.uniform(0, 0.5);
+        p.separateLastPass = rng.uniform(0, 1) < 0.5;
+        p.lastPassAllowance = rng.uniform(0.05, 1.0);
+        p.lastPassReverse = rng.uniform(0, 1) < 0.5;
+        p.tabs.enabled = true;
+        p.tabs.count = 1 + static_cast<int>(rng.next() % 6);
+        p.tabs.length = rng.uniform(0.3, 4.0);
+        p.tabs.thickness = rng.uniform(0.5, std::min(4.0, p.passes.cutDepth - 0.2));
+        p.tabs.avoidCorners = rng.uniform(0, 1) < 0.3;
+        const RampType ramps[] = {RampType::None, RampType::Smooth, RampType::ZigZag, RampType::Spiral};
+        p.ramp.type = ramps[rng.next() % 4];
+        p.ramp.distance = rng.uniform(2, 40);
+        const LeadType leads[] = {LeadType::None, LeadType::Straight, LeadType::Circular};
+        p.leads.type = leads[rng.next() % 3];
+        p.leads.length = rng.uniform(2, 8);
+        p.leads.radius = rng.uniform(2, 8);
+        p.startAt = static_cast<StartAt>(rng.next() % 3);
+        p.startAnchor = static_cast<BoxAnchor>(rng.next() % 9);
+        p.startPosition = {rng.uniform(-10, 60), rng.uniform(-10, 60)};
+        const ProfileResult r = profileToolpath(cs, test::endMill(d), p);
+        if (!r.ok() || r.toolpath.isEmpty()) {
+            continue;
+        }
+        INFO("scene " << s);
+        tabs += checkTabsJoin(r, cs, p, d);
+        ++scenes;
+    }
+    CHECK(scenes > 60);
+    CHECK(tabs > 60);
+}

@@ -93,6 +93,29 @@ void closeExactly(Contour& c) {
     }
 }
 
+// A cross-section of a tab's material: the segment across the kerf at one station of the tab.
+struct TabSection {
+    Vec2 p0;
+    Vec2 p1;
+};
+
+// Distance from `q` to the cross-section `s`.
+double sectionDistance(Vec2 q, const TabSection& s) {
+    const Vec2 d = s.p1 - s.p0;
+    const double dd = d.x * d.x + d.y * d.y;
+    const double t = dd > 0.0 ? std::clamp(((q.x - s.p0.x) * d.x + (q.y - s.p0.y) * d.y) / dd, 0.0, 1.0) : 0.0;
+    return geometry::distance(q, s.p0 + d * t);
+}
+
+// Distance from `q` to the nearest of `sections` (infinity when there are none).
+double sectionDistance(Vec2 q, const std::vector<TabSection>& sections) {
+    double best = std::numeric_limits<double>::infinity();
+    for (const TabSection& s : sections) {
+        best = std::min(best, sectionDistance(q, s));
+    }
+    return best;
+}
+
 Vec2 probePoint(const Contour& c) {
     return geometry::pointAt(c.spans.front(), 0.5);
 }
@@ -167,6 +190,7 @@ class ProfileBuilder {
     void matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut>& rough);
     void dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& secondary);
     bool mapTab(const Cut& from, const TabSpan& t, const Cut& onto, TabSpan& out, bool& near) const;
+    std::vector<TabSection> tabSections(const Cut& c, const TabSpan& t) const;
     bool spanFits(const Cut& c, const TabSpan& t, const std::vector<double>& keepClear) const;
     std::vector<double> otherStarts(const Cut& c, const std::vector<Cut>& otherPass) const;
     void reportTabs();
@@ -657,6 +681,50 @@ bool ProfileBuilder::spanFits(const Cut& c, const TabSpan& t, const std::vector<
     return true;
 }
 
+// The material a tab leaves, as cross-sections in order along its core (the raised stretch less a
+// tool radius at each end): every 0.1 mm (exact ends included), plus a fan every 5° at a corner of
+// the cut, where the material runs across the corner. Each runs along the normal from the vector
+// out to the far wall of the widest kerf at the tab (a tool diameter, plus the last-pass allowance
+// when the roughing cut runs outside it), less 0.02 mm at each end so the walls do not count.
+std::vector<TabSection> ProfileBuilder::tabSections(const Cut& c, const TabSpan& t) const {
+    std::vector<TabSection> out;
+    const double ca = t.a + radius_;
+    const double cb = t.b - radius_;
+    if (cb < ca) {
+        return out;
+    }
+    const double inner = c.distance - 0.02;
+    const double outer = radius_ + (p_.separateLastPass ? p_.lastPassAllowance : 0.0) - 0.02;
+    auto section = [&](Vec2 p, Vec2 tg) {
+        Vec2 toVector{-tg.y, tg.x};  // left of travel
+        if (!c.contourOnLeft) {
+            toVector = toVector * -1.0;
+        }
+        out.push_back({p + toVector * inner, p - toVector * outer});
+    };
+    constexpr double fanStep = 5.0 * geometry::kPi / 180.0;
+    std::vector<ArcLengthPath::Kink> kinks = c.walk.kinks(fanStep);
+    std::size_t k = 0;
+    const int n = std::max(1, static_cast<int>(std::ceil((cb - ca) / 0.1)));
+    for (int i = 0; i <= n; ++i) {
+        const double u = ca + (cb - ca) * i / n;
+        for (; k < kinks.size() && kinks[k].u <= u; ++k) {
+            if (kinks[k].u <= ca) {
+                continue;
+            }
+            const Vec2 t0 = c.walk.tangentAt(kinks[k].u - 1e-6);
+            const int m = static_cast<int>(std::ceil(std::fabs(kinks[k].turn) / fanStep));
+            for (int j = 1; j < m; ++j) {
+                const double phi = kinks[k].turn * j / m;
+                section(c.walk.pointAt(kinks[k].u),
+                        Vec2{t0.x * std::cos(phi) - t0.y * std::sin(phi), t0.x * std::sin(phi) + t0.y * std::cos(phi)});
+            }
+        }
+        section(c.walk.pointAt(u), c.walk.tangentAt(u));
+    }
+    return out;
+}
+
 // Maps the raised stretch `t` of cut `from` onto cut `onto` (a cut of the other pass): its two
 // ends and its middle are projected, and the stretch between them (following the direction that
 // passes through the middle) is widened by the distance tolerance, so the mapped stretch covers
@@ -729,40 +797,57 @@ bool ProfileBuilder::mapTab(const Cut& from, const TabSpan& t, const Cut& onto, 
             }
         }
     }
-    // The ends are projected along the normals, so the roughing tool at a mapped end stands the
-    // last-pass allowance further from the vector than the finishing tool at the tab's end and
-    // cuts none of the tab; widen by the tolerance only (a longer roughing tab would have a part
-    // the finishing pass then cuts at full depth).
+    // The ends are projected along the normals and widened by the tolerance. That alone is not
+    // enough: past a corner, or where the roughing cut runs round a concave curve (shorter than
+    // the finishing cut), the roughing tool standing at or beyond a mapped end still reaches the
+    // tab's material. So every roughing position from each end out to a window of two tool radii
+    // plus the last-pass allowance is tested against the tab's cross-sections (the material from
+    // the vector out to the far wall of the roughing kerf, along the tab's core), and the end is
+    // moved past the furthest one that reaches it, 0.05 mm at a time, by at most two tool
+    // diameters plus the allowance (beyond that the match fails: the tab is left out and
+    // reported). Positions further away that still reach it (a lobe coming back) are found by
+    // dropSweptTabs.
     out = {a - tol_.distance, b + tol_.distance};
-    // Near a corner the normal projection is not enough: the tool standing at a mapped end can
-    // still reach the tab's core (the finishing stretch less a tool radius at each end) across the
-    // corner. Extend the ends, 0.05 mm at a time and by at most a tool diameter, until it cannot.
-    std::vector<Vec2> core;
-    {
-        const double ca = t.a + radius_;
-        const double cb = t.b - radius_;
-        const int n = std::max(1, static_cast<int>(std::ceil((cb - ca) / 0.05)));
-        for (int i = 0; i <= n && cb >= ca; ++i) {  // exact ends included
-            core.push_back(from.walk.pointAt(ca + (cb - ca) * i / n));
+    const std::vector<TabSection> material = tabSections(from, t);
+    if (material.empty()) {
+        return false;
+    }
+    constexpr double step = 0.05;
+    const double window = 2.0 * radius_ + p_.lastPassAllowance;
+    const double cap = 4.0 * radius_ + p_.lastPassAllowance;
+    auto reaches = [&](double u) { return sectionDistance(onto.walk.pointAt(u), material) < radius_; };
+    // Extension needed at one end (dir -1: before out.a, +1: after out.b), or a negative value
+    // when it exceeds the cap.
+    auto extension = [&](double end, double dir) {
+        double ext = 0.0;
+        for (;;) {
+            double furthest = -1.0;
+            for (double k = 0.0; k <= window + 1e-9; k += step) {
+                if (reaches(end + dir * (ext + k))) {
+                    furthest = k;
+                }
+            }
+            if (furthest < 0.0) {
+                return ext;
+            }
+            ext += furthest + step;
+            if (ext > cap) {
+                return -1.0;
+            }
         }
-    }
-    auto reaches = [&](double u) {
-        const Vec2 q = onto.walk.pointAt(u);
-        return std::any_of(core.begin(), core.end(),
-                           [&](Vec2 c) { return geometry::distance(q, c) < radius_ + tol_.distance; });
     };
-    double extA = 0.0;
-    double extB = 0.0;
-    while (extA < 2.0 * radius_ && reaches(out.a - extA)) {
-        extA += 0.05;
-    }
-    while (extB < 2.0 * radius_ && reaches(out.b + extB)) {
-        extB += 0.05;
+    const double extA = extension(out.a, -1.0);
+    const double extB = extension(out.b, 1.0);
+    if (extA < 0.0 || extB < 0.0) {
+        return false;
     }
     // Both ends by the same amount, so the mapped stretch stays centred on the tab.
     const double ext = std::max(extA, extB);
     out.a -= ext;
     out.b += ext;
+    if (onto.walk.closed() && out.b - out.a >= len - 2.0 * kMinTabGap) {
+        return false;
+    }
     if (!onto.walk.closed() && (out.a < 0.0 || out.b > len)) {
         return false;
     }
@@ -815,13 +900,16 @@ void ProfileBuilder::matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut
     }
 }
 
-// A tab only holds if no other part of any cut sweeps over it at full depth: in a slot narrower
-// than the tool (or past a nearby corner) the cut along the opposite wall removes the tab's
-// material. Each primary tab, with its matched stretches on the other pass, is dropped (and
-// reported) when a point of the middle half of its core (the raised stretch less a tool radius
-// and 0.05 mm at each end) lies within a tool radius of any cut, its own included, outside the
-// raised stretches of the tabs still kept. Sweeps nearer the core ends (a corner next to the
-// tab) only shorten the tab.
+// A tab only holds if no cut sweeps through its material below the tab top: in a slot narrower
+// than the kerf, past a nearby corner, or where a lobe of a cut comes back, the tool removes the
+// material and severs the tab. Each primary tab, with its matched stretches on the other pass, is
+// dropped (and reported) when any cut, outside the raised stretches of the tabs still kept,
+// comes closer than a tool radius (less 1 µm) to the tab's material: its cross-sections from the
+// vector out to the far wall of the kerf (tabSections). The tab's own cut near the tab (within two
+// tool radii of its raised stretch) is treated apart: on a convex curve, and round a corner of the
+// cut, it always nicks some cross-sections near the ends of the core, which only narrows the tab,
+// so it only has to leave a run of whole cross-sections at least min(0.5 mm, half the tab) wide;
+// on a sharp convex corner it can cut through every cross-section of a short tab.
 // Repeated until nothing changes, since a dropped tab exposes more of its cut.
 void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& secondary) {
     constexpr double h = 0.05;  // sampling step of the cut paths
@@ -849,8 +937,13 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
     if (groups.empty()) {
         return;
     }
+    // Each group's material, from its primary tab.
+    std::vector<std::vector<TabSection>> material(groups.size());
+    for (std::size_t g = 0; g < groups.size(); ++g) {
+        const Ref& r = groups[g].front();
+        material[g] = tabSections(primary[r.cut], r.span);
+    }
     std::vector<bool> alive(groups.size(), true);
-    auto cutOf = [&](const Ref& r) -> const Cut& { return r.second ? secondary[r.cut] : primary[r.cut]; };
     struct Sample {
         bool second;
         std::size_t cut;
@@ -878,8 +971,15 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
                 const int n = std::max(1, static_cast<int>(std::ceil(w.length() / h)));
                 for (int i = 0; i <= n; ++i) {
                     const double u = w.length() * i / n;
-                    const bool covered = std::any_of(keep.begin(), keep.end(),
-                                                     [&](const TabSpan& t) { return u > t.a && u < t.b; });
+                    // Spans may run past 0 or the length on a closed cut: compare cyclically.
+                    const bool covered = std::any_of(keep.begin(), keep.end(), [&](const TabSpan& t) {
+                        if (!w.closed()) return u > t.a && u < t.b;
+                        const double len = w.length();
+                        for (double s : {u - len, u, u + len}) {
+                            if (s > t.a && s < t.b) return true;
+                        }
+                        return false;
+                    });
                     if (!covered) pts.push_back({second, c, u, w.pointAt(u)});
                 }
             }
@@ -888,50 +988,75 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
         add(secondary, true);
         return pts;
     };
+    // Path distance from `u` to the stretch `t` on `w` (cyclic on a closed cut).
+    auto pathGap = [](const ArcLengthPath& w, double u, const TabSpan& t) {
+        auto gap = [&](double s) { return s < t.a ? t.a - s : (s > t.b ? s - t.b : 0.0); };
+        if (!w.closed()) return gap(u);
+        const double len = w.length();
+        return std::min({gap(u - len), gap(u), gap(u + len)});
+    };
+    const double localReach = 2.0 * radius_;
     bool changed = true;
     while (changed) {
         changed = false;
         const std::vector<Sample> open = unprotected();
-        // Bucket the samples on a grid of tool-radius cells; a query looks at the 3 x 3 cells round it.
+        // Bucket the samples on a grid of tool-radius cells.
         const double cell = std::max(radius_, 1e-3);
-        std::map<std::pair<long, long>, std::vector<Vec2>> grid;
-        auto key = [&](Vec2 p) {
-            return std::pair<long, long>{static_cast<long>(std::floor(p.x / cell)),
-                                         static_cast<long>(std::floor(p.y / cell))};
-        };
-        for (const Sample& q : open) {
-            grid[key(q.p)].push_back(q.p);
+        std::map<std::pair<long, long>, std::vector<std::size_t>> grid;
+        auto cellOf = [&](double x) { return static_cast<long>(std::floor(x / cell)); };
+        for (std::size_t i = 0; i < open.size(); ++i) {
+            grid[{cellOf(open[i].p.x), cellOf(open[i].p.y)}].push_back(i);
         }
-        auto sweptAt = [&](Vec2 p) {
-            const auto [cx, cy] = key(p);
-            for (long dx = -1; dx <= 1; ++dx) {
-                for (long dy = -1; dy <= 1; ++dy) {
-                    const auto it = grid.find({cx + dx, cy + dy});
+        for (std::size_t g = 0; g < groups.size(); ++g) {
+            if (!alive[g] || material[g].empty()) continue;
+            const std::vector<TabSection>& sections = material[g];
+            const Ref& own = groups[g].front();
+            geometry::Box2 box;
+            for (const TabSection& sct : sections) {
+                box.expand(sct.p0);
+                box.expand(sct.p1);
+            }
+            box = box.inflated(radius_);
+            std::vector<char> nicked(sections.size(), 0);  // by the tab's own cut near it
+            bool swept = false;
+            for (long cx = cellOf(box.min.x); cx <= cellOf(box.max.x) && !swept; ++cx) {
+                for (long cy = cellOf(box.min.y); cy <= cellOf(box.max.y) && !swept; ++cy) {
+                    const auto it = grid.find({cx, cy});
                     if (it == grid.end()) continue;
-                    for (const Vec2& q : it->second) {
-                        if (geometry::distance(p, q) < radius_ - tol_.distance) return true;
+                    for (std::size_t i : it->second) {
+                        const Sample& q = open[i];
+                        const bool local = !q.second && q.cut == own.cut &&
+                                           pathGap(primary[own.cut].walk, q.u, own.span) < localReach;
+                        if (!local) {
+                            if (sectionDistance(q.p, sections) < radius_ - 1e-3) {
+                                swept = true;
+                                break;
+                            }
+                            continue;
+                        }
+                        for (std::size_t k = 0; k < sections.size(); ++k) {
+                            if (!nicked[k] && sectionDistance(q.p, sections[k]) < radius_ - 1e-3) nicked[k] = 1;
+                        }
                     }
                 }
             }
-            return false;
-        };
-        for (std::size_t g = 0; g < groups.size(); ++g) {
-            if (!alive[g]) continue;
-            bool swept = false;
-            for (const Ref& r : groups[g]) {
-                // The middle half of the core: sweeps nearer its ends (a corner next to the tab)
-                // only shorten the tab; a sweep over its middle removes it.
-                const double c0 = r.span.a + radius_ + h;
-                const double c1 = r.span.b - radius_ - h;
-                const double a = c0 + 0.25 * (c1 - c0);
-                const double b = c1 - 0.25 * (c1 - c0);
-                const ArcLengthPath& w = cutOf(r).walk;
-                const int n = std::max(1, static_cast<int>(std::ceil((b - a) / 0.25)));
-                for (int i = 0; i <= n && b >= a && !swept; ++i) {  // exact core ends included
-                    const Vec2 p = w.pointAt(a + (b - a) * i / n);
-                    swept = sweptAt(p);
+            if (!swept) {
+                // The widest run of whole cross-sections left by the tab's own cut, measured
+                // between its first and last cross-section at whichever end is further apart.
+                const double need = std::min(0.5, 0.5 * (own.span.b - own.span.a - 2.0 * radius_));
+                double widest = -1.0;
+                std::size_t runStart = 0;
+                for (std::size_t k = 0; k <= sections.size(); ++k) {
+                    if (k == sections.size() || nicked[k]) {
+                        if (k > runStart) {
+                            const TabSection& f = sections[runStart];
+                            const TabSection& l = sections[k - 1];
+                            widest = std::max({widest, geometry::distance(f.p0, l.p0), geometry::distance(f.p1, l.p1)});
+                        }
+                        runStart = k + 1;
+                    }
                 }
-                if (swept) break;
+                swept = widest < need - 1e-9;
             }
             if (swept) {
                 alive[g] = false;
@@ -1004,7 +1129,8 @@ void ProfileBuilder::reportTabs() {
             diag(ProfileIssue::TabsNotPlaced, src,
                  vecName(src) + ": " + std::to_string(n) + " of " + std::to_string(tabsRequested_[src]) +
                      " tab(s) left out (no room: they would overlap, run past an open end, cover where the tool "
-                     "plunges, leave no stretch cut to full depth, or could not be matched on the roughing cut)");
+                     "plunges, leave no stretch cut to full depth, could not be matched on the roughing cut, or "
+                     "another stretch of a cut would cut through them)");
         }
     }
     for (const auto& [src, n] : tabsOnCorner_) {

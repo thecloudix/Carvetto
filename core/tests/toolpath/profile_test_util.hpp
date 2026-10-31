@@ -426,4 +426,126 @@ inline std::vector<double> feedLevels(const toolpath::Toolpath& tp) {
     return zs;
 }
 
+/// Result of `tabJoins`: `slug` = there is waste beyond the kerf inside the window to join to.
+struct TabJoin {
+    bool slug{false};
+    bool joined{false};
+};
+
+/// Rasterised tab connectivity, independent of the planner. In a square window (half-size `half`,
+/// cells of `res` mm) round `centre`, a cell is cut when a cutting sample of `tp` below `zTab`
+/// comes within `r` − 1 µm of it; the part side and the waste side of `vectors` (even-odd over
+/// polylines of every span, every 0.05 mm) are told apart per row; waste cells farther than
+/// `kerfOuter` + 0.1 from the vectors lie beyond the kerf. `joined` is true when uncut cells
+/// connect (4-neighbour) the part side to such a waste cell, i.e. some tab bridges the kerf.
+inline TabJoin tabJoins(const toolpath::Toolpath& tp, const std::vector<geometry::Contour>& vectors,
+                        bool wasteInside, geometry::Vec2 centre, double half, double zTab, double r,
+                        double kerfOuter, double res) {
+    const int n = static_cast<int>(std::ceil(2.0 * half / res));
+    const double x0 = centre.x - half;
+    const double y0 = centre.y - half;
+    auto at = [&](int i, int j) { return static_cast<std::size_t>(j) * static_cast<std::size_t>(n) + static_cast<std::size_t>(i); };
+    // Marks the cells whose centres lie within `rad` of `c`, a row at a time.
+    auto stamp = [&](std::vector<char>& mask, geometry::Vec2 c, double rad) {
+        const int j0 = std::max(0, static_cast<int>(std::floor((c.y - rad - y0) / res)));
+        const int j1 = std::min(n - 1, static_cast<int>(std::ceil((c.y + rad - y0) / res)));
+        for (int j = j0; j <= j1; ++j) {
+            const double dy = y0 + (j + 0.5) * res - c.y;
+            const double w2 = rad * rad - dy * dy;
+            if (w2 <= 0.0) continue;
+            const double w = std::sqrt(w2);
+            const int i0 = std::max(0, static_cast<int>(std::ceil((c.x - w - x0) / res - 0.5)));
+            const int i1 = std::min(n - 1, static_cast<int>(std::floor((c.x + w - x0) / res - 0.5)));
+            if (i1 >= i0) std::fill(mask.begin() + static_cast<std::ptrdiff_t>(at(i0, j)),
+                                    mask.begin() + static_cast<std::ptrdiff_t>(at(i1, j)) + 1, char{1});
+        }
+    };
+    // Cut cells.
+    std::vector<char> cut(static_cast<std::size_t>(n) * static_cast<std::size_t>(n), 0);
+    std::map<std::pair<long, long>, bool> seen;
+    // Samples every 0.1 mm: the discs' union misses at most 0.1² / (8 r) of the swept area.
+    sampleCuttingMoves3(
+        tp, 0.1,
+        [&](geometry::Vec2 q, double z) {
+            if (z >= zTab - 1e-6 || std::fabs(q.x - centre.x) > half + r || std::fabs(q.y - centre.y) > half + r) return;
+            const std::pair<long, long> k{std::lround(q.x * 100.0), std::lround(q.y * 100.0)};
+            if (seen.emplace(k, true).second) stamp(cut, q, r - 1e-3);
+        },
+        zTab - 1e-6);
+    // Polylines of the vectors.
+    std::vector<std::pair<geometry::Vec2, geometry::Vec2>> segs;
+    for (const geometry::Contour& c : vectors) {
+        for (const geometry::Span& s : c.spans) {
+            auto pt = [&](double t) { return std::visit([&](const auto& sp) { return sp.pointAt(t); }, s); };
+            double len = 0.0;
+            for (int k = 1; k <= 64; ++k) {
+                const geometry::Vec2 a = pt((k - 1) / 64.0);
+                const geometry::Vec2 b = pt(k / 64.0);
+                len += std::hypot(b.x - a.x, b.y - a.y);
+            }
+            const int m = std::max(1, static_cast<int>(std::ceil(len / 0.05)));
+            for (int k = 1; k <= m; ++k) segs.push_back({pt((k - 1.0) / m), pt(static_cast<double>(k) / m)});
+        }
+    }
+    // Cells within the kerf (near the vectors), stamped every 0.2 mm or so along them.
+    std::vector<char> nearVec(cut.size(), 0);
+    double since = 1e9;
+    for (const auto& sg : segs) {
+        since += std::hypot(sg.second.x - sg.first.x, sg.second.y - sg.first.y);
+        const geometry::Vec2 q = sg.first;
+        if (since >= 0.2 && std::fabs(q.x - centre.x) <= half + kerfOuter + 0.2 &&
+            std::fabs(q.y - centre.y) <= half + kerfOuter + 0.2) {
+            stamp(nearVec, q, kerfOuter + 0.1);
+            since = 0.0;
+        }
+    }
+    // Sides, row by row (even-odd crossings left of each cell centre).
+    std::vector<char> inside(cut.size(), 0);
+    for (int j = 0; j < n; ++j) {
+        const double y = y0 + (j + 0.5) * res;
+        std::vector<double> xs;
+        for (const auto& [a, b] : segs) {
+            if ((a.y > y) != (b.y > y)) xs.push_back(a.x + (y - a.y) * (b.x - a.x) / (b.y - a.y));
+        }
+        std::sort(xs.begin(), xs.end());
+        std::size_t k = 0;
+        for (int i = 0; i < n; ++i) {
+            const double x = x0 + (i + 0.5) * res;
+            while (k < xs.size() && xs[k] < x) ++k;
+            inside[at(i, j)] = static_cast<char>(k % 2);
+        }
+    }
+    TabJoin out;
+    std::vector<char> reached(cut.size(), 0);
+    std::vector<std::size_t> queue;
+    for (std::size_t c = 0; c < cut.size(); ++c) {
+        const bool waste = (inside[c] != 0) == wasteInside;
+        if (!cut[c] && waste && !nearVec[c]) out.slug = true;
+        if (!cut[c] && !waste) {
+            reached[c] = 1;
+            queue.push_back(c);
+        }
+    }
+    for (std::size_t q = 0; q < queue.size() && !out.joined; ++q) {
+        const int i = static_cast<int>(queue[q] % static_cast<std::size_t>(n));
+        const int j = static_cast<int>(queue[q] / static_cast<std::size_t>(n));
+        const int di[4] = {1, -1, 0, 0};
+        const int dj[4] = {0, 0, 1, -1};
+        for (int d = 0; d < 4; ++d) {
+            const int ii = i + di[d];
+            const int jj = j + dj[d];
+            if (ii < 0 || jj < 0 || ii >= n || jj >= n) continue;
+            const std::size_t c = at(ii, jj);
+            if (reached[c] || cut[c]) continue;
+            reached[c] = 1;
+            if ((inside[c] != 0) == wasteInside && !nearVec[c]) {
+                out.joined = true;
+                break;
+            }
+            queue.push_back(c);
+        }
+    }
+    return out;
+}
+
 }  // namespace carvetto::test

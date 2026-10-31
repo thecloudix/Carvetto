@@ -121,19 +121,37 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     carried onto each roughing cut that passes it: the tab's two ends and its middle are
     projected onto the roughing cut and the stretch between them (through the middle, either
     direction) is taken, widened by the tolerance; projection along the normals keeps the angle
-    on arcs, so the roughing tool at a mapped end stands the allowance outside the finishing tool
-    and cuts none of the tab (this also fixes the 0.3–0.6 mm short roughing tabs on curves). Near
-    a corner the mapped ends are extended (equally, 0.05 mm at a time, at most a tool diameter)
-    until the roughing tool there can no longer reach the finishing tab's core. The match is
+    on arcs (this also fixes the 0.3–0.6 mm short roughing tabs on curves). A tab's **material**
+    is described by cross-sections along its core (the finishing raised stretch less a tool radius
+    at each end): every 0.1 mm, plus a fan every 5° at a corner of the cut (where the material
+    runs diagonally across the corner), each running along the normal from the vector out to the
+    far wall of the widest kerf (a tool diameter beyond the vector-side wall, plus the last-pass
+    allowance with a separate last pass), less 0.02 mm at each end. Projection alone does not keep
+    the roughing tool off that material: round a concave curve (Inside of a circle) the roughing
+    cut is shorter than the finishing cut, and past a corner the path turns back towards the tab.
+    So every roughing position from each mapped end out to 2·radius + allowance beyond it is
+    tested against the cross-sections, and the end is moved past the furthest one that comes
+    within a tool radius (0.05 mm steps, both ends by the same amount so the stretch stays
+    centred, at most 4·radius + allowance; beyond that the match is refused). The match is
     refused when the projections are ambiguous (mapped length off by more than 2·(allowance +
     radius), or a point along the tab projecting outside the mapped stretch: a nearby lobe), when
     the cut passes the tab only in part, or when the mapped stretch would cover a roughing start,
     a finishing start projected onto it, or another roughing tab. A refused match drops the
     finishing tab too, so both passes always agree. Finally every tab group (a tab and its
-    roughing cover) is checked against all cuts of both passes: if any cut outside the kept
-    raised stretches (its own included) comes within a tool radius of the middle half of the
-    tab's core (raised stretch less a radius + 0.05 mm per end) — e.g. the opposite wall of a slot
-    narrower than the tool, or a tight lobe — the group is dropped, repeatedly until stable.
+    roughing cover) is checked against all cuts of both passes (and without a separate last pass
+    the only pass against itself): if any cut position outside the kept raised stretches comes
+    closer than a tool radius (less 1 µm) to the tab's cross-sections — the opposite wall of a
+    slot, a lobe of the roughing cut coming back across the far part of the kerf, a nearby
+    vector's cut — the group is dropped, repeatedly until stable. The tab's own cut within two
+    tool radii of its raised stretch is treated apart: on any convex curve, and round a corner of
+    the cut, the tool at the plateau ends always nicks some cross-sections near the ends of the
+    core, which only narrows the tab, so it must leave a run of whole cross-sections at least
+    min(0.5 mm, half the tab length) wide (measured between the run's first and last
+    cross-section at whichever end is further apart); on a sharp convex corner a short tab can
+    have every cross-section cut by its own pass, and is dropped. Together: no pass cuts below the
+    tab top into any cross-section of a kept tab, except its own pass's nicks near the core ends,
+    which leave a whole run of cross-sections at least that wide — so every kept tab joins the
+    part to the waste beyond the kerf.
     Counting: kept + left out = requested per vector, counted on the primary cuts (the finishing
     cuts with a separate last pass, otherwise the only cuts); one `TabsNotPlaced` diagnostic per
     vector says "N of M tab(s) left out" (another reports tabs that could not avoid a corner).
