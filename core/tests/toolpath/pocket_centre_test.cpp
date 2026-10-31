@@ -285,6 +285,32 @@ TEST_CASE("T-0125 regression: Clipper spike vertices no longer cost a whole regi
     }
 }
 
+TEST_CASE("T-0126 regression: Clipper slivers of a collapsing knob are not reported as lost",
+          "[toolpath][pocket][centre]") {
+    // T-0126 verifier-style scan (knobs N=2, seed 7852, fixture knob_poly.txt): where a knob
+    // collapses, Clipper2 leaves dozens of zero-area sliver regions. With the depth test (one
+    // vertex at full depth) a sliver that could not be made valid went to the inset repair,
+    // vanished and was reported as "could not be kept" although it holds nothing.
+    const orc::Poly poly = fixturePoly("knob_poly.txt");
+    REQUIRE(poly.size() == 1102);
+    const Contour input = Contour::fromPolyline(Polyline{poly, true});
+    PocketParams p;
+    const WallIndex walls(poly, 0.5);
+    for (double d : {6.696687, 6.69, 6.70, 6.71}) {
+        INFO("d " << d);
+        std::vector<std::string> messages;
+        const std::vector<Contour> centre = pocketCentreRegion({input}, d, p, &messages);
+        CHECK(messages.empty());
+        CHECK(!centre.empty());
+        const double bound = d / 2 + p.tolerance.chordal - (0.5 * p.tolerance.chordal + 2e-6);
+        for (const orc::Poly& ring : polysOf(centre)) {
+            for (std::size_t i = 0, n = ring.size(); i < n; ++i) {
+                CHECK(walls.segDistBelow(ring[i], ring[(i + 1) % n], bound) >= bound);
+            }
+        }
+    }
+}
+
 TEST_CASE("T-0125 property: no reachable part of the pocket is dropped across 4,000+ tool diameters",
           "[toolpath][pocket][centre]") {
     std::vector<Shape> shapes;
@@ -330,6 +356,12 @@ TEST_CASE("T-0125 property: no reachable part of the pocket is dropped across 4,
         for (double d : {5.04, 5.0673}) {
             s.diameters.push_back(d);
         }
+        shapes.push_back(s);
+    }
+    {
+        // T-0126: knob collapse with Clipper sliver regions (fixture knob_poly.txt).
+        Shape s{"knob_poly (collapsing knobs)", fixturePoly("knob_poly.txt"), scan(6.0, 7.5, 151)};
+        s.diameters.push_back(6.696687);
         shapes.push_back(s);
     }
     for (std::uint64_t seed : {301ULL, 700ULL, 606ULL}) {

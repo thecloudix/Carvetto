@@ -70,6 +70,13 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
      goes through the same pull-in and edge checks. Whether a region can be repaired is decided by
      whether a further inset yields valid regions, not by the size of the shortfall.
 
+   - **Slivers:** where a lobe collapses, Clipper2 leaves dozens of zero-area sliver regions,
+     some with a vertex at full depth. A sliver (area / perimeter under half the join tolerance)
+     is kept if it passes as it is and otherwise dropped without a report: an inset only makes
+     it vanish, and it holds nothing the tolerance does not already allow for (knobs scan seed
+     7852, fixture `knob_poly.txt`, d = 6.696687, where the first T-0126 build reported such
+     slivers as lost).
+
    Nothing is lost or trimmed silently. A genuine region that still cannot be kept is reported in
    the result's messages ("could not be kept within the safety margin and are not cut"), and so
    is a region repaired by an inset larger than the join tolerance, or losing more area than its
