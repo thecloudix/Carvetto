@@ -511,7 +511,7 @@ unchanged.
   A span shorter than the tolerance is handled as a point and its hit is not flagged tangent even
   at a non-zero gap (pre-existing).
 
-### 2026-10-30 — T-0021 (arc/arc crossings without cancellation) · Status: proposed
+### 2026-10-30 — T-0021 (arc/arc crossings without cancellation) · Status: accepted (director, 2026-10-30)
 Change to decision 1 (analytic arc/arc crossings). Everything not mentioned below is unchanged.
 1. **Half chord from the smaller circle.** Crossing circles (the `2h > tol.distance` branch of
    T-0008 item 4) are now solved from the circle with the smaller radius S (A when the radii are
