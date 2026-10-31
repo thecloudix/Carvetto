@@ -346,14 +346,26 @@ IntersectionResult arcArc(const ArcSpan& a, const ArcSpan& b, const Tolerance& t
     };
 
     if (d < r1 + r2 && d > std::fabs(r1 - r2)) {
-        // The circles cross. Distance from A's centre to the radical line, and half the chord;
-        // the factored forms avoid cancellation between nearly equal squares. (Crossing circles
-        // are more than `tol.distance` apart at the centres, see the overlap test above, so the
+        // The circles cross. Signed distance from the centre of the SMALLER circle S to the
+        // radical line (towards the other centre), and half the chord from S's radius; the
+        // factored forms avoid cancellation between nearly equal squares. (Crossing circles are
+        // more than `tol.distance` apart at the centres, see the overlap test above, so the
         // division by d is well conditioned.)
-        const double along = ((r1 - r2) * (r1 + r2) + d * d) / (2.0 * d);
-        const double h = std::sqrt(std::max(0.0, (r1 - along) * (r1 + along)));
+        //
+        // The distance carries an absolute rounding error of a few ulps of max(d, r1, r2). Taken
+        // from the larger circle, h^2 = (rL - a)(rL + a) multiplies that error by 2*rL: with
+        // rL = 39785 and rS = 0.09 the half chord was off by ~1e-5 mm (T-0021). From the smaller
+        // circle the factor is 2*rS, and the error of h is that of the crossing itself (the
+        // centre-line error over the sine of the crossing angle). Equal radii use A (as before).
+        const bool fromA = r1 <= r2;
+        const double rS = fromA ? r1 : r2;
+        const double rO = fromA ? r2 : r1;
+        const Vec2 cS = fromA ? a.centre : b.centre;
+        const Vec2 uS = fromA ? u : -u;
+        const double along = ((rS - rO) * (rS + rO) + d * d) / (2.0 * d);
+        const double h = std::sqrt(std::max(0.0, (rS - along) * (rS + along)));
         if (2.0 * h > tol.distance) {
-            const Vec2 base = a.centre + u * along;
+            const Vec2 base = cS + uS * along;
             consider(base + u.perp() * h, false);
             consider(base - u.perp() * h, false);
             return out;

@@ -510,3 +510,73 @@ unchanged.
   near-junction contours, the same as `main`; erasing junction hits before merging would fix it.
   A span shorter than the tolerance is handled as a point and its hit is not flagged tangent even
   at a non-zero gap (pre-existing).
+
+### 2026-10-30 — T-0021 (arc/arc crossings without cancellation) · Status: accepted (director, 2026-10-30)
+Change to decision 1 (analytic arc/arc crossings). Everything not mentioned below is unchanged.
+1. **Half chord from the smaller circle.** Crossing circles (the `2h > tol.distance` branch of
+   T-0008 item 4) are now solved from the circle with the smaller radius S (A when the radii are
+   equal, so pairs of equal radii, and every pair with r(A) ≤ r(B) in canonical order, give
+   bit-identical results to before): `a = ((rS − rO)(rS + rO) + d²) / 2d` is S's signed distance to
+   the radical line, `h = √((rS − a)(rS + a))`, and the crossings are `cS + uS·a ± u⊥·h`. The
+   distance `a` carries an absolute rounding error of a few ulps of max(d, r1, r2) whichever circle
+   it is measured from; the factored half chord multiplies it by 2·r of the circle it is taken
+   from. Taken from the larger circle (as before, whenever A was the larger) the error of h was
+   ≈ ulp(rL)·rL/h: for the pair the T-0017 coder found (r = 39785.2 against r = 0.0896, ~4·10⁴ mm
+   from the origin, crossing 0.0108 mm apart) both crossings were 1.04·10⁻⁵ mm off, and the one at
+   the junction of the offset chain was reported as a separate crossing 1.04·10⁻⁵ mm along the big
+   arc. From the smaller circle the error of h is that of the crossing itself (the centre-line
+   error over the sine of the crossing angle): 9·10⁻¹¹ mm there, at the junction to rounding.
+   The near-tangent rule (when to fold into one tangent hit), the overlap and concentric rules, the
+   end contacts (T-0008 item 1) and the canonical order (bit-exact mirrors) are unchanged.
+2. **Line/arc needed no change.** The foot-of-perpendicular form (decision 1, T-0008 item 4) is
+   already backward stable: the foot is taken from the line, and the half chord's error is that of
+   the foot distance times cot of the crossing angle, i.e. no worse than the crossing's own
+   conditioning. Measured with the same reference (below), its worst error is 3.1 units.
+
+**Guarantees (measured):**
+- *Accuracy against a double-double reference* (crossings recomputed in ~106-bit arithmetic from the
+  same double inputs), in units of ε·scale/sin θ, where scale is the largest coordinate or radius
+  and θ the crossing angle (the error of a backward-stable solve): arc/arc pairs with radius ratios
+  1e-6…1e6 (smaller radius 1e-3…10, larger up to 1e6, a quarter comparable radii, half both large),
+  centres translated by up to ±1e4 mm, crossings more than 2·`tol.distance` apart: worst 1.8 over
+  100,000 pairs (median 0.39, p99 0.98); `main` median 0.52, p99 1.1·10⁵, worst 1.1·10⁶. Line/arc
+  (radius 3e-3…1e6, segment length 1e-6…1e6 times the radius, a fifth of the lines within
+  1e-4…1 rad of tangency): worst 3.1 over 76,000 pairs, identical to `main`. The unit tests assert
+  ≤ 16 on ~5,900 arc/arc and ~4,600 line/arc pairs (the arc/arc test fails on `main`: 657 of
+  5,897 pairs, worst 9.5·10⁵), plus the regression pair (each crossing within 1e-9 mm of the 50-digit value)
+  and 3,000 generated junctions where a small arc ends on a large arc's start (one exact hit at
+  the junction; `main` fails 176).
+- *Regression guard (no result worse than `main`):* a driver links `main`'s geometry (`git archive
+  main`, namespace renamed) next to the branch and runs both on 87,000 cases per seed, three
+  seeds: random line/line, line/arc, arc/arc in a 20 mm box (34,000; a sixth of the arcs full
+  circles) and in 0.01–0.1 mm boxes (11,000), the analytic end-touch family of T-0008 (6,000:
+  lines and arcs ending at gaps 0…2·tol from a line or arc, oblique, normal and near-parallel),
+  near-tangent line/circle and circle/circle pairs at gaps ±2·tol with partial arcs (8,000), the
+  radius-ratio family above with partial arcs (10,000) and its junctions (5,000), random
+  arc/Bezier and line/Bezier pairs (3,000), and `selfIntersections` of random 1–4-span line/arc
+  contours (4,000), junction re-crossings (3,000) and lens slots closing where a big arc meets a
+  small one (3,000). Every result that differs from `main` and every 50th case is judged by a
+  brute-force oracle: the gap along the shorter span sampled at 20,000 parameters plus a geometric
+  refinement towards both ends (a full circle sampled from two seams), local minima refined by
+  golden section, plus every end within tolerance of the other span (exact distances in
+  double-double). Errors: a contact within 0.999·tol with no hit within tol + gap/2, a hit further
+  than tol from either span or from A(tA)/B(tB), an untangent hit further than 1e-6·tol from
+  either span (not an exact crossing), an asymmetry. A differing case is worse when it has more
+  errors, or the same and its largest untangent residual exceeds 4× `main`'s + 16·ε·scale.
+  Results (seeds 1, 2, 3): worse than `main` 0, 0, 0; different 3,502, 3,499, 3,545 — all in
+  arc/arc pairs and contours containing them (lines, line/arc and Bezier pairs are bit-identical);
+  of the pairs among them better 1,404, 1,404, 1,484 and equal the rest (the same errors and the
+  untangent residual within the 4× margin: bit-level moves of crossings with r(A) > r(B)). Errors in the radius-ratio
+  families: branch 0, 0, 2 against `main` 1,213, 1,200, 1,268 (crossings 2·10⁻⁵–10⁻⁴ mm off both
+  circles; largest untangent residual branch 2.1·10⁻¹⁰ mm at coordinates up to 10⁶, `main` up to
+  1·10⁻⁴ mm). The branch's remaining errors are pre-existing and shared with `main` in the same
+  cases: spans shorter than the tolerance handled as points, whose hit is untangent at a non-zero
+  gap (T-0008 known limits). Contours: different 143, 132, 140, worse 0, no exact `main` hit lost.
+  Symmetry: bit-exact mirrors in every non-degenerate case except arcs on the same circle within
+  tolerance whose overlap and points disagree between the orders (0–2 per seed in the
+  radius-ratio families: tiny circles r ≈ 1e-3 with d ≤ tol), identically on `main`
+  (pre-existing, `finish`/`swapped` of coincident arcs; out of scope).
+- *Cost (Release -O2, per pair, best of 3, branch / `main`, seed 1, the 77,000 span pairs):* median
+  1.00, p90 1.02, p99 1.14 (arc/arc families median 0.97–1.00, p99 1.07–1.38); the few larger
+  ratios (worst 17.8 on one pair) are timer noise on a loaded machine, the change adds a handful of
+  selects and no work.
