@@ -54,6 +54,11 @@ add_executable(carvetto_tests
   io/dxf_export_test.cpp
   io/dxf_curves_test.cpp
   io/dxf_fuzz_test.cpp
+  toolpath/pocket_coverage_test.cpp
+  toolpath/pocket_test.cpp
+  toolpath/pocket_gouge_test.cpp
+  toolpath/pocket_golden_test.cpp
+  toolpath/pocket_centre_test.cpp
 )
 # carv_io_test uses the internal zip helper (core/src/document/carv_zip.hpp) to craft archives.
 target_include_directories(carvetto_tests PRIVATE ${PROJECT_SOURCE_DIR}/core/src/document)
@@ -65,6 +70,7 @@ target_compile_definitions(carvetto_tests PRIVATE
   CARVETTO_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
   CARVETTO_STARTER_TOOLS="${PROJECT_SOURCE_DIR}/data/tools/starter_tools.json"
   CARVETTO_DXF_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dxf"
+  CARVETTO_POCKET_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/pocket"
 )
 target_link_libraries(carvetto_tests PRIVATE carvetto::core Catch2::Catch2WithMain carvetto_warnings)
 
