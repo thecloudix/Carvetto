@@ -113,6 +113,7 @@ enum class ProfileIssue {
     TabsNotPlaced,          ///< Some tabs could not be placed (overlap, no straight stretch, path too short).
     CornerNeedsVBit,        ///< Sharp corner options need a V-bit; ignored.
     SpiralNeedsClosed,      ///< Spiral ramp on an open vector; a smooth ramp was used.
+    TabThicknessClamped,    ///< Tab thickness exceeded the cut depth and was clamped to it.
 };
 
 /// One diagnostic; `contour` is the input vector index when the issue concerns one.

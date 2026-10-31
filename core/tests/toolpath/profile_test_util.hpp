@@ -359,6 +359,60 @@ inline std::vector<double> uncutRuns(const std::vector<geometry::Vec2>& outline,
     return runs;
 }
 
+/// Raised runs of moves [first, last) of `tp`: maximal sequences of feed/arc moves that start and
+/// end at `zTab` (the tool travelling at the tab top). Each run is returned as XY samples every
+/// `step` mm along it.
+inline std::vector<std::vector<geometry::Vec2>> raisedRuns(const toolpath::Toolpath& tp, std::size_t first,
+                                                           std::size_t last, double zTab, double step = 0.02) {
+    std::vector<std::vector<geometry::Vec2>> runs;
+    bool open = false;
+    for (std::size_t i = std::max<std::size_t>(first, 1); i < last && i < tp.moves.size(); ++i) {
+        const toolpath::Move& m = tp.moves[i];
+        const bool flatAtTab = (m.kind == toolpath::MoveKind::Feed || toolpath::isArc(m.kind)) &&
+                               m.to.z == zTab && tp.moves[i - 1].to.z == zTab &&
+                               m.to.xy() != tp.moves[i - 1].to.xy();
+        if (!flatAtTab) {
+            open = false;
+            continue;
+        }
+        if (!open) {
+            runs.emplace_back();
+            open = true;
+        }
+        toolpath::Toolpath one;
+        one.moves = {tp.moves[i - 1], m};
+        sampleCuttingMoves(one, step, [&](geometry::Vec2 q) { runs.back().push_back(q); });
+    }
+    return runs;
+}
+
+/// Core of a raised run: its samples at least `margin` from both ends along it (or only the
+/// middle sample when `middleOnly`).
+inline std::vector<geometry::Vec2> runCore(const std::vector<geometry::Vec2>& run, double margin,
+                                           bool middleOnly = false) {
+    std::vector<double> s{0.0};
+    for (std::size_t i = 1; i < run.size(); ++i) {
+        s.push_back(s.back() + std::hypot(run[i].x - run[i - 1].x, run[i].y - run[i - 1].y));
+    }
+    std::vector<geometry::Vec2> core;
+    if (run.empty()) {
+        return core;
+    }
+    const double len = s.back();
+    if (middleOnly) {
+        std::size_t best = 0;
+        for (std::size_t i = 0; i < run.size(); ++i) {
+            if (std::fabs(s[i] - len / 2) < std::fabs(s[best] - len / 2)) best = i;
+        }
+        core.push_back(run[best]);
+        return core;
+    }
+    for (std::size_t i = 0; i < run.size(); ++i) {
+        if (s[i] >= margin && s[i] <= len - margin) core.push_back(run[i]);
+    }
+    return core;
+}
+
 /// The Z levels at which the tool cuts flat (feed end points), deduplicated, descending.
 inline std::vector<double> feedLevels(const toolpath::Toolpath& tp) {
     std::vector<double> zs;

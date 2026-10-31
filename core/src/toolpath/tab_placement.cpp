@@ -139,29 +139,38 @@ TabPlacement fitTabs(const ArcLengthPath& path, std::vector<double> centres, dou
 
 ZProfile tabCeiling(const ArcLengthPath& path, double u0, double u1, const std::vector<double>& centres,
                     double raisedLength, double zTab, double zBottom, bool threeD) {
+    std::vector<TabSpan> spans;
+    spans.reserve(centres.size());
+    for (double c : centres) {
+        spans.push_back({c - 0.5 * raisedLength, c + 0.5 * raisedLength});
+    }
+    return tabCeiling(path, u0, u1, spans, zTab, zBottom, threeD);
+}
+
+ZProfile tabCeiling(const ArcLengthPath& path, double u0, double u1, const std::vector<TabSpan>& spans, double zTab,
+                    double zBottom, bool threeD) {
     ZProfile ceiling = ZProfile::flat(kNoCeiling);
     const double len = path.length();
-    if (centres.empty() || len <= 0.0 || (path.closed() && len < 1e-6)) {
+    if (spans.empty() || len <= 0.0 || (path.closed() && len < 1e-6)) {
         return ceiling;
     }
     const double dir = u1 >= u0 ? 1.0 : -1.0;
     const double travel = std::fabs(u1 - u0);
     const double ramp = threeD ? std::max(0.0, zTab - zBottom) : 0.0;
-    const double reach = 0.5 * raisedLength + ramp;
-    const double lo = std::min(u0, u1) - reach;
-    const double hi = std::max(u0, u1) + reach;
+    const double lo = std::min(u0, u1);
+    const double hi = std::max(u0, u1);
     std::vector<std::pair<double, double>> stretches;  // in travelled distance
-    for (double c : centres) {
+    for (const TabSpan& t : spans) {
         long kmin = 0;
         long kmax = 0;
         if (path.closed()) {
-            kmin = static_cast<long>(std::floor((lo - c) / len));
-            kmax = static_cast<long>(std::ceil((hi - c) / len));
+            kmin = static_cast<long>(std::floor((lo - t.b - ramp) / len));
+            kmax = static_cast<long>(std::ceil((hi - t.a + ramp) / len));
         }
         for (long k = kmin; k <= kmax; ++k) {
-            const double cc = c + static_cast<double>(k) * len;
-            const double a = (cc - 0.5 * raisedLength - u0) * dir;
-            const double b = (cc + 0.5 * raisedLength - u0) * dir;
+            const double shift = static_cast<double>(k) * len;
+            const double a = (t.a + shift - u0) * dir;
+            const double b = (t.b + shift - u0) * dir;
             const double s0 = std::min(a, b);
             const double s1 = std::max(a, b);
             if (s1 + ramp < 0.0 || s0 - ramp > travel) {

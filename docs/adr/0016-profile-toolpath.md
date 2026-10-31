@@ -1,6 +1,6 @@
 # ADR-0016: 2D Profile toolpath
 
-Date: 2026-10-26 · Status: proposed (T-0120)
+Date: 2026-10-26 · Status: proposed (T-0120; amended in place by T-0124, 2026-10-30)
 
 ## Context
 T-0120 asks for `profileToolpath(contours, Tool, ProfileParams)` with the options of
@@ -111,21 +111,41 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     - moves footprints off `keepClear` points (to the nearer side), dropping them when there is
       no room. With a separate last pass these are the other pass's cut starts projected onto
       the cut (within a tool radius + allowance), so neither pass plunges into the other's tab;
-    - drops a tab whose footprint would come closer than a tool radius (finishing-projected
-      roughing tabs: half a radius) to the previous one, or to the first across the start, so
-      neighbouring tabs never merge and every pass still reaches its level between them;
+    - drops a tab whose footprint would come closer than a tool radius to the previous one, or
+      to the first across the start, so neighbouring tabs never merge and every pass still
+      reaches its level between them;
     - drops every tab when one footprint does not fit the path at all (a hole smaller than a
       tab is cut through without tabs).
-    Kept + dropped = requested per cut; one `TabsNotPlaced` diagnostic per vector gives the total
-    left out (and those that could not avoid a corner). With a separate last pass, tabs are
-    placed on the finishing cut, projected onto the roughing cut and fitted again there. The
-    overcut walks under the same tab ceiling, and every lead runs no lower than the tab top when
-    it comes within a tool diameter of tab material (any cut's), so plunges, leads and overcut
-    never notch a tab. Interactive tab editing and "tab at machining start" are not implemented.
+    Tabs are explicit raised stretches (`TabSpan`, arc lengths on the cut). **Separate last pass
+    (amended by T-0124):** tabs are placed once, on the finishing cut, and every finishing tab is
+    carried onto each roughing cut that passes it: the tab's two ends and its middle are
+    projected onto the roughing cut and the stretch between them (through the middle, either
+    direction) is taken, widened by the tolerance; projection along the normals keeps the angle
+    on arcs, so the roughing tool at a mapped end stands the allowance outside the finishing tool
+    and cuts none of the tab (this also fixes the 0.3–0.6 mm short roughing tabs on curves). Near
+    a corner the mapped ends are extended (equally, 0.05 mm at a time, at most a tool diameter)
+    until the roughing tool there can no longer reach the finishing tab's core. The match is
+    refused when the projections are ambiguous (mapped length off by more than 2·(allowance +
+    radius), or a point along the tab projecting outside the mapped stretch: a nearby lobe), when
+    the cut passes the tab only in part, or when the mapped stretch would cover a roughing start,
+    a finishing start projected onto it, or another roughing tab. A refused match drops the
+    finishing tab too, so both passes always agree. Finally every tab group (a tab and its
+    roughing cover) is checked against all cuts of both passes: if any cut outside the kept
+    raised stretches (its own included) comes within a tool radius of the middle half of the
+    tab's core (raised stretch less a radius + 0.05 mm per end) — e.g. the opposite wall of a slot
+    narrower than the tool, or a tight lobe — the group is dropped, repeatedly until stable.
+    Counting: kept + left out = requested per vector, counted on the primary cuts (the finishing
+    cuts with a separate last pass, otherwise the only cuts); one `TabsNotPlaced` diagnostic per
+    vector says "N of M tab(s) left out" (another reports tabs that could not avoid a corner).
+    A tab thickness beyond the cut depth is clamped to it (`TabThicknessClamped`). The overcut
+    walks under the same tab ceiling, and every lead runs no lower than the tab top when it comes
+    within a tool diameter of tab material (any cut's), so plunges, leads and overcut never notch
+    a tab. Interactive tab editing and "tab at machining start" are not implemented.
 15. **Leads.** Straight (length, angle to the path) or circular (radius, sweep, tangent) from the
     waste side; optional mirrored lead-out; overcut (closed cuts) runs past the start before the
     lead-out. Leads are used on the first entry and final exit of each cut, not between levels.
-    Each lead is checked against every vector with the clearance check at tool radius − tol.
+    Each lead is checked against every vector with the clearance check at tool radius + allowance
+    (allowance ≥ 0) − 0.05·tol, so it never cuts into the allowance (T-0124).
     Lead-ins are planned before tabs. At the chosen start the lead is tried as asked and as a
     gentler variant (straight: perpendicular to the path; circular: half the sweep), at full
     size and then halved up to three times (`LeadShortened`). If none fits (typically an inside

@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstddef>
 #include <iterator>
+#include <string>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -980,10 +981,12 @@ TEST_CASE("V-bit sharp internal corners only at genuine corners, safe next to cu
                 }
             }
             CHECK(climbs == 4);
-            // Vertical descents are plunges, sloped ones feeds; plunges are always vertical.
+            // Vertical descents are plunges, sloped ones feeds; plunges are always vertical; no
+            // zero-length moves.
             for (std::size_t i = 1; i < r.toolpath.moves.size(); ++i) {
                 const Move& m = r.toolpath.moves[i];
                 const Vec3 from = r.toolpath.moves[i - 1].to;
+                CHECK((m.to != from || (isArc(m.kind) && m.to.xy() == from.xy())));
                 if (m.to.z < from.z) {
                     CHECK((m.kind == MoveKind::Plunge) == (m.to.xy() == from.xy()));
                 }
@@ -1134,4 +1137,162 @@ TEST_CASE("Inside profiles starting at a corner still get their lead-in", "[tool
         CHECK(sq.bounds().contains(entry));
         CHECK(geometry::distance(entry, r.toolpath.moves[2].to.xy()) > 1.0);
     }
+}
+
+// ------------------------------------------------------------------ T-0124: roughing tabs
+
+namespace {
+
+/// [first, last) move ranges of each cut (a cut starts at its rapid).
+std::vector<std::pair<std::size_t, std::size_t>> cutRanges(const Toolpath& tp) {
+    std::vector<std::pair<std::size_t, std::size_t>> out;
+    for (std::size_t i = 0; i < tp.moves.size(); ++i) {
+        if (tp.moves[i].kind == MoveKind::Rapid) {
+            if (!out.empty()) out.back().second = i;
+            out.push_back({i, tp.moves.size()});
+        }
+    }
+    return out;
+}
+
+/// Total tabs left out according to the TabsNotPlaced diagnostics ("vector i: N of M ...").
+std::size_t tabsLeftOut(const ProfileResult& r) {
+    std::size_t n = 0;
+    for (const ProfileDiagnostic& d : r.diagnostics) {
+        if (d.issue == ProfileIssue::TabsNotPlaced && d.message.find(" tab(s) left out") != std::string::npos) {
+            n += static_cast<std::size_t>(std::stoul(d.message.substr(d.message.find(": ") + 2)));
+        }
+    }
+    return n;
+}
+
+/// Checks that no move of any pass goes below the tab top over tab material: the cores of the
+/// finishing cut's raised runs (a tool radius + 0.05 mm in from each end) and the middle of each
+/// roughing run must not lie within a tool radius of any cutting sample below the tab top.
+void checkTabMaterial(const Toolpath& tp, double zTab, double r) {
+    const auto cuts = cutRanges(tp);
+    REQUIRE(cuts.size() >= 2);
+    const test::CutCoverage deep(tp, zTab - 1e-6);
+    for (std::size_t c = 0; c < cuts.size(); ++c) {
+        const bool finishing = c + 1 == cuts.size();
+        for (const auto& run : test::raisedRuns(tp, cuts[c].first, cuts[c].second, zTab)) {
+            for (const Vec2& p : test::runCore(run, r + 0.05, !finishing)) {
+                INFO("cut " << c << " tab material at " << p.x << ", " << p.y);
+                CHECK_FALSE(deep.covers(p, r - 1e-3));
+            }
+        }
+    }
+}
+
+}  // namespace
+
+TEST_CASE("Separate last pass: every finishing tab is covered by the roughing cut", "[toolpath][profile][tabs]") {
+    // Verifier repro tabmin1: inside 100 x 50, 6 mm, 12 deep in 6 mm passes, last pass 0.1,
+    // 7 tabs 4 x 3; one finishing tab goes round the top-right corner and the roughing cut used
+    // to run straight through it at -12.
+    ProfileParams p = baseParams(12.0, 6.0);
+    p.side = ProfileSide::Inside;
+    p.separateLastPass = true;
+    p.lastPassAllowance = 0.1;
+    p.tabs.enabled = true;
+    p.tabs.count = 7;
+    p.tabs.length = 4.0;
+    p.tabs.thickness = 3.0;
+    const ProfileResult r = profileToolpath({Contour::rectangle(Box2{{0, 0}, {100, 50}})}, test::endMill(6.0), p);
+    REQUIRE(r.ok());
+    CHECK(r.diagnostics.empty());
+    const auto cuts = cutRanges(r.toolpath);
+    REQUIRE(cuts.size() == 2);
+    const double zTab = -9.0;
+    CHECK(test::raisedRuns(r.toolpath, cuts[1].first, cuts[1].second, zTab).size() == 7);
+    CHECK(test::raisedRuns(r.toolpath, cuts[0].first, cuts[0].second, zTab).size() == 7);
+    checkTabMaterial(r.toolpath, zTab, 3.0);
+}
+
+TEST_CASE("Generative: with a separate last pass no move cuts below the tab top over tab material",
+          "[toolpath][profile][tabs][property]") {
+    test::SplitMix rng{0x7124ULL};
+    int checked = 0;
+    for (int s = 0; s < 160; ++s) {
+        const int kind = static_cast<int>(rng.next() % 3);
+        Contour c;
+        if (kind == 0) {
+            c = Contour::circle({0, 0}, rng.uniform(8, 30));
+        } else if (kind == 1) {
+            c = Contour::rectangle(Box2{{0, 0}, {rng.uniform(20, 120), rng.uniform(15, 80)}});
+        } else {
+            // Chamfered rectangle: corners where tabs meet short sloped edges.
+            const double w = rng.uniform(30, 100);
+            const double h = rng.uniform(20, 60);
+            const double k = rng.uniform(2, 8);
+            const Vec2 pts[8] = {{k, 0}, {w - k, 0}, {w, k}, {w, h - k}, {w - k, h}, {k, h}, {0, h - k}, {0, k}};
+            c.closed = true;
+            for (int i = 0; i < 8; ++i) {
+                c.append(LineSpan{pts[i], pts[(i + 1) % 8]});
+            }
+        }
+        const double d = std::vector<double>{3.175, 6.0, 8.0, 12.0}[rng.next() % 4];
+        ProfileParams p = baseParams(rng.uniform(3, 20), rng.uniform(1, 8));
+        p.side = rng.uniform(0, 1) < 0.5 ? ProfileSide::Outside : ProfileSide::Inside;
+        p.direction = rng.uniform(0, 1) < 0.5 ? CutDirection::Climb : CutDirection::Conventional;
+        p.allowance = rng.uniform(0, 1) < 0.5 ? 0.0 : rng.uniform(0, 0.4);
+        p.separateLastPass = true;
+        p.lastPassAllowance = rng.uniform(0.05, 1.0);
+        p.lastPassReverse = rng.uniform(0, 1) < 0.5;
+        p.tabs.enabled = true;
+        p.tabs.spacing = TabSpacing::ConstantNumber;
+        p.tabs.count = 1 + static_cast<int>(rng.next() % 9);
+        p.tabs.length = rng.uniform(2, 20);
+        p.tabs.thickness = rng.uniform(0.5, std::min(5.0, p.passes.cutDepth - 0.2));
+        p.tabs.threeD = rng.uniform(0, 1) < 0.3;
+        p.tabs.avoidCorners = rng.uniform(0, 1) < 0.5;
+        const RampType ramps[] = {RampType::None, RampType::Smooth, RampType::Spiral};
+        p.ramp.type = ramps[rng.next() % 3];
+        p.ramp.distance = rng.uniform(2, 40);
+        p.startAt = static_cast<StartAt>(rng.next() % 3);
+        p.startAnchor = static_cast<BoxAnchor>(rng.next() % 9);
+        const ProfileResult r = profileToolpath({c}, test::endMill(d), p);
+        if (!r.ok() || cutRanges(r.toolpath).size() != 2) {
+            continue;
+        }
+        INFO("scene " << s);
+        const double zTab = p.passes.bottomZ() + p.tabs.thickness;
+        checkTabMaterial(r.toolpath, zTab, d / 2);
+        // kept + left out = requested (per vector, counted on the finishing cut).
+        const auto cuts = cutRanges(r.toolpath);
+        const std::size_t kept = test::raisedRuns(r.toolpath, cuts[1].first, cuts[1].second, zTab).size();
+        CHECK(kept + tabsLeftOut(r) == static_cast<std::size_t>(p.tabs.count));
+        ++checked;
+    }
+    CHECK(checked > 80);
+}
+
+TEST_CASE("Tab thickness beyond the cut depth is clamped and reported", "[toolpath][profile][tabs]") {
+    ProfileParams p = baseParams(6.0, 3.0);
+    p.tabs.enabled = true;
+    p.tabs.count = 2;
+    p.tabs.thickness = 20.0;
+    const ProfileResult r = profileToolpath({square({0, 0}, 40.0)}, test::endMill(6.0), p);
+    REQUIRE(r.ok());
+    CHECK(r.has(ProfileIssue::TabThicknessClamped));
+    for (std::size_t i = 1; i + 1 < r.toolpath.moves.size(); ++i) {
+        if (isCutting(r.toolpath.moves[i].kind) && r.toolpath.moves[i].kind != MoveKind::Retract) {
+            CHECK(r.toolpath.moves[i].to.z <= 0.0);  // never above the top of the cut
+        }
+    }
+}
+
+TEST_CASE("Leads keep the tool radius plus the allowance from every vector", "[toolpath][profile][leads]") {
+    const Contour sq = Contour::rectangle(Box2{{0, 0}, {40, 40}});
+    const Contour near = Contour::rectangle(Box2{{-14, 15}, {-9.5, 25}});
+    ProfileParams p = baseParams(3.0, 3.0);
+    p.allowance = 0.5;
+    p.leads.type = LeadType::Straight;
+    p.leads.length = 12.0;
+    p.leads.angle = geometry::kPi / 2.0;
+    p.startAt = StartAt::ClosestOnBoundingBox;
+    p.startAnchor = BoxAnchor::CentreLeft;
+    const ProfileResult r = profileToolpath({sq, near}, test::endMill(6.0), p);
+    REQUIRE(r.ok());
+    CHECK(test::minCutDistance(r.toolpath, {sq, near}) >= 3.5 - 1e-3);
 }

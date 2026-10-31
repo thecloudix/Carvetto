@@ -73,6 +73,19 @@ double tabFootprint(double raisedLength, const TabOptions& options);
 TabPlacement fitTabs(const ArcLengthPath& path, std::vector<double> centres, double footprint,
                      const std::vector<double>& keepClear = {}, double minGap = kMinTabGap);
 
+/// One tab's raised stretch on a path: arc lengths a < b (the path is raised over [a, b]; a 3D
+/// tab adds its ramps outside). Used where a tab's stretch is not a fixed length around a centre,
+/// e.g. a finishing tab mapped onto a roughing cut.
+struct TabSpan {
+    double a{0.0};
+    double b{0.0};
+    bool operator==(const TabSpan&) const = default;
+};
+
+/// Height ceiling of explicit raised stretches (see `tabCeiling` below for the profile it builds).
+ZProfile tabCeiling(const ArcLengthPath& path, double u0, double u1, const std::vector<TabSpan>& spans, double zTab,
+                    double zBottom, bool threeD);
+
 /// Height ceiling imposed by tabs on a leg that walks `path` from `u0` to `u1`, as a profile in
 /// travelled distance: `zTab` over each raised stretch, a very low sentinel elsewhere, plus 45°
 /// ramps down to `zBottom` on both sides when `threeD`. Closed paths repeat tabs every

@@ -47,7 +47,7 @@ struct Cut {
     bool exact{true};      // exact offset of its source (trusted against it); false = merged region
     double distance{0.0};  // |offset| from the vectors
     ArcLengthPath walk;
-    std::vector<double> tabs;
+    std::vector<TabSpan> tabs;  // raised stretches (arc length on `walk`)
     Contour leadIn;  // planned lead-in (empty: none or none fits)
 };
 
@@ -164,13 +164,20 @@ class ProfileBuilder {
     void chooseStarts(std::vector<Cut>& cuts);
     std::vector<std::size_t> order(const std::vector<Cut>& cuts) const;
     void placeTabsOn(std::vector<Cut>& primary, const std::vector<Cut>& otherPass);
-    void projectTabs(const std::vector<Cut>& from, std::vector<Cut>& to);
+    void matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut>& rough);
+    void dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& secondary);
+    bool mapTab(const Cut& from, const TabSpan& t, const Cut& onto, TabSpan& out, bool& near) const;
+    bool spanFits(const Cut& c, const TabSpan& t, const std::vector<double>& keepClear) const;
     std::vector<double> otherStarts(const Cut& c, const std::vector<Cut>& otherPass) const;
     void reportTabs();
     void collectTabMaterial(const std::vector<Cut>& cuts);
     double leadFloor(const Contour& lead) const;
     std::vector<Vec2> tabMaterial_;  // sample points of every tab's material (all cuts)
-    std::map<std::size_t, std::size_t> tabsDropped_;   // per vector, all its cuts
+    std::map<std::size_t, std::size_t> tabsRequested_;  // per vector, over its primary cuts
+    // For each primary (finishing, or only) cut and tab index: the matching spans on the other
+    // pass's cuts (cut index, span), so a tab and its roughing cover are kept or dropped together.
+    std::vector<std::vector<std::vector<std::pair<std::size_t, TabSpan>>>> tabLinks_;
+    std::map<std::size_t, std::size_t> tabsDropped_;
     std::map<std::size_t, std::size_t> tabsOnCorner_;
     void emit(const Cut& cut, const std::vector<double>& levels, bool finishing);
     void emitLeg(const Cut& cut, const PathLeg& leg, bool lastLevel, std::vector<bool>& cornerDone);
@@ -236,6 +243,12 @@ bool ProfileBuilder::validate() {
     if (passes_.levels().empty()) {
         diag(ProfileIssue::NoPasses, std::nullopt, "the cut depth yields no passes");
         return false;
+    }
+    if (p_.tabs.enabled && p_.tabs.thickness > passes_.cutDepth) {
+        diag(ProfileIssue::TabThicknessClamped, std::nullopt,
+             "tab thickness " + std::to_string(p_.tabs.thickness) + " mm is more than the cut depth; clamped to " +
+                 std::to_string(passes_.cutDepth) + " mm");
+        p_.tabs.thickness = passes_.cutDepth;
     }
     vbit_ = tool_.type == tooling::ToolType::VBit;
     if ((p_.corners.sharpExternal || p_.corners.sharpInternal) && !vbit_) {
@@ -610,47 +623,351 @@ void ProfileBuilder::placeTabsOn(std::vector<Cut>& primary, const std::vector<Cu
     for (Cut& c : primary) {
         // At least a tool radius cut to full depth between neighbouring tabs, so they stay apart.
         const TabPlacement tp = placeTabs(c.walk, raised, p_.tabs, otherStarts(c, otherPass), radius_);
-        c.tabs = tp.centres;
+        c.tabs.clear();
+        for (double u : tp.centres) {
+            c.tabs.push_back({u - 0.5 * raised, u + 0.5 * raised});
+        }
+        tabsRequested_[c.sources.front()] += tp.centres.size() + tp.dropped;
         tabsDropped_[c.sources.front()] += tp.dropped;
         tabsOnCorner_[c.sources.front()] += tp.notAvoided;
     }
 }
 
-void ProfileBuilder::projectTabs(const std::vector<Cut>& from, std::vector<Cut>& to) {
-    const double reach = p_.lastPassAllowance + 2.0 * tol_.distance + 1e-9;
-    for (Cut& c : to) {
-        for (const Cut& f : from) {
-            for (double u : f.tabs) {
-                const Vec2 p = f.walk.pointAt(u);
-                const double v = c.walk.project(p);
-                if (geometry::distance(c.walk.pointAt(v), p) <= reach) {
-                    c.tabs.push_back(v);
-                }
+// True when `t` (a raised stretch on `c`) can be cut on `c`: its footprint (3D ramps included)
+// clears the start of a closed cut and the ends of an open one, every point in `keepClear`, and
+// the cut's other tabs, each by kMinTabGap.
+bool ProfileBuilder::spanFits(const Cut& c, const TabSpan& t, const std::vector<double>& keepClear) const {
+    const double ramp = p_.tabs.threeD ? p_.tabs.thickness : 0.0;
+    const double a = t.a - ramp;
+    const double b = t.b + ramp;
+    const double len = c.walk.length();
+    if (a < kMinTabGap || b > len - kMinTabGap) {
+        return false;
+    }
+    for (double f : keepClear) {
+        if (f > a - kMinTabGap && f < b + kMinTabGap) {
+            return false;
+        }
+    }
+    for (const TabSpan& o : c.tabs) {
+        if (a < o.b + ramp + kMinTabGap && o.a - ramp < b + kMinTabGap) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Maps the raised stretch `t` of cut `from` onto cut `onto` (a cut of the other pass): its two
+// ends and its middle are projected, and the stretch between them (following the direction that
+// passes through the middle) is widened by the distance tolerance, so the mapped stretch covers
+// the tab on `onto` round corners and curves too (projection keeps the angle on arcs). `near` is
+// false when `onto` does not pass the tab at all (nothing to map); a partial or ambiguous match
+// returns false with `near` true.
+bool ProfileBuilder::mapTab(const Cut& from, const TabSpan& t, const Cut& onto, TabSpan& out, bool& near) const {
+    const double reach = radius_ + p_.lastPassAllowance + 2.0 * tol_.distance;
+    const Vec2 pts[3] = {from.walk.pointAt(t.a), from.walk.pointAt(0.5 * (t.a + t.b)), from.walk.pointAt(t.b)};
+    double v[3];
+    int hits = 0;
+    for (int i = 0; i < 3; ++i) {
+        v[i] = onto.walk.project(pts[i]);
+        hits += geometry::distance(onto.walk.pointAt(v[i]), pts[i]) <= reach ? 1 : 0;
+    }
+    near = hits > 0;
+    if (hits < 3) {
+        return false;
+    }
+    const double len = onto.walk.length();
+    double a = 0.0;
+    double b = 0.0;
+    if (onto.walk.closed()) {
+        auto fwd = [&](double x, double y) {
+            const double d = std::fmod(y - x, len);
+            return d < 0.0 ? d + len : d;
+        };
+        const double forward = fwd(v[0], v[1]) + fwd(v[1], v[2]);
+        const double backward = fwd(v[1], v[0]) + fwd(v[2], v[1]);
+        if (forward <= backward) {
+            a = v[0];
+            b = v[0] + forward;
+        } else {  // `onto` runs the other way (last pass reversed)
+            a = v[2];
+            b = v[2] + backward;
+        }
+        if (b - a >= 0.5 * len) {
+            return false;
+        }
+    } else {
+        a = std::min(v[0], v[2]);
+        b = std::max(v[0], v[2]);
+        if (v[1] < a || v[1] > b) {
+            return false;
+        }
+    }
+    // Consistency: the stretch must be about as long as the tab (the cuts lie the last-pass
+    // allowance apart; corners change lengths by less than that plus a tool radius per end), and
+    // every point along the tab must project into it — otherwise the projections landed on
+    // different parts of `onto` (a nearby lobe) and the match is ambiguous.
+    {
+        const double slack = 2.0 * (p_.lastPassAllowance + radius_) + tol_.distance;
+        if (std::fabs((b - a) - (t.b - t.a)) > slack) {
+            return false;
+        }
+        const int n = std::max(2, static_cast<int>(std::ceil((t.b - t.a) / 0.25)));
+        for (int i = 0; i <= n; ++i) {
+            const Vec2 q = from.walk.pointAt(t.a + (t.b - t.a) * i / n);
+            const double w = onto.walk.project(q);
+            if (geometry::distance(onto.walk.pointAt(w), q) > reach) {
+                return false;
+            }
+            double rel = w - a;
+            if (onto.walk.closed()) {
+                rel = std::fmod(rel, len);
+                if (rel < 0.0) rel += len;
+            }
+            if (rel < -tol_.distance || rel > (b - a) + tol_.distance) {
+                return false;
             }
         }
-        std::sort(c.tabs.begin(), c.tabs.end());
-        c.tabs.erase(std::unique(c.tabs.begin(), c.tabs.end()), c.tabs.end());
-        // The roughing cut is longer or shorter than the finishing cut: fit the tabs again, clear
-        // of its own start and of the finishing cuts' starts.
-        const TabPlacement tp = fitTabs(c.walk, c.tabs, tabFootprint(p_.tabs.length + 2.0 * radius_, p_.tabs),
-                                        otherStarts(c, from), 0.5 * radius_);
-        c.tabs = tp.centres;
-        tabsDropped_[c.sources.front()] += tp.dropped;
     }
+    // The ends are projected along the normals, so the roughing tool at a mapped end stands the
+    // last-pass allowance further from the vector than the finishing tool at the tab's end and
+    // cuts none of the tab; widen by the tolerance only (a longer roughing tab would have a part
+    // the finishing pass then cuts at full depth).
+    out = {a - tol_.distance, b + tol_.distance};
+    // Near a corner the normal projection is not enough: the tool standing at a mapped end can
+    // still reach the tab's core (the finishing stretch less a tool radius at each end) across the
+    // corner. Extend the ends, 0.05 mm at a time and by at most a tool diameter, until it cannot.
+    std::vector<Vec2> core;
+    {
+        const double ca = t.a + radius_;
+        const double cb = t.b - radius_;
+        const int n = std::max(1, static_cast<int>(std::ceil((cb - ca) / 0.05)));
+        for (int i = 0; i <= n && cb >= ca; ++i) {  // exact ends included
+            core.push_back(from.walk.pointAt(ca + (cb - ca) * i / n));
+        }
+    }
+    auto reaches = [&](double u) {
+        const Vec2 q = onto.walk.pointAt(u);
+        return std::any_of(core.begin(), core.end(),
+                           [&](Vec2 c) { return geometry::distance(q, c) < radius_ + tol_.distance; });
+    };
+    double extA = 0.0;
+    double extB = 0.0;
+    while (extA < 2.0 * radius_ && reaches(out.a - extA)) {
+        extA += 0.05;
+    }
+    while (extB < 2.0 * radius_ && reaches(out.b + extB)) {
+        extB += 0.05;
+    }
+    // Both ends by the same amount, so the mapped stretch stays centred on the tab.
+    const double ext = std::max(extA, extB);
+    out.a -= ext;
+    out.b += ext;
+    if (!onto.walk.closed() && (out.a < 0.0 || out.b > len)) {
+        return false;
+    }
+    return true;
+}
+
+// Separate last pass: the finishing cuts' tabs (placed first) are carried onto the roughing cuts.
+// Every finishing tab gets a covering raised stretch on each roughing cut that passes it; when
+// one cannot be placed there (it would cover a roughing start, a finishing start or another tab),
+// the finishing tab is left out too, so the two passes always agree.
+void ProfileBuilder::matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut>& rough) {
+    for (Cut& r : rough) {
+        r.tabs.clear();
+    }
+    std::vector<std::vector<double>> roughKeepClear(rough.size());
+    for (std::size_t k = 0; k < rough.size(); ++k) {
+        roughKeepClear[k] = otherStarts(rough[k], finish);
+    }
+    tabLinks_.assign(finish.size(), {});
+    for (std::size_t fi = 0; fi < finish.size(); ++fi) {
+        Cut& f = finish[fi];
+        std::vector<TabSpan> kept;
+        for (const TabSpan& t : f.tabs) {
+            std::vector<std::pair<std::size_t, TabSpan>> mapped;
+            bool ok = true;
+            for (std::size_t k = 0; k < rough.size() && ok; ++k) {
+                TabSpan m;
+                bool near = false;
+                if (mapTab(f, t, rough[k], m, near)) {
+                    ok = spanFits(rough[k], m, roughKeepClear[k]);
+                    mapped.push_back({k, m});
+                } else if (near) {
+                    ok = false;  // passes the tab only in part: cannot cover it
+                }
+            }
+            if (!ok) {
+                ++tabsDropped_[f.sources.front()];
+                continue;
+            }
+            for (const auto& [k, m] : mapped) {
+                rough[k].tabs.push_back(m);
+            }
+            kept.push_back(t);
+            tabLinks_[fi].push_back(mapped);
+        }
+        f.tabs = std::move(kept);
+    }
+    for (Cut& r : rough) {
+        std::sort(r.tabs.begin(), r.tabs.end(), [](const TabSpan& x, const TabSpan& y) { return x.a < y.a; });
+    }
+}
+
+// A tab only holds if no other part of any cut sweeps over it at full depth: in a slot narrower
+// than the tool (or past a nearby corner) the cut along the opposite wall removes the tab's
+// material. Each primary tab, with its matched stretches on the other pass, is dropped (and
+// reported) when a point of the middle half of its core (the raised stretch less a tool radius
+// and 0.05 mm at each end) lies within a tool radius of any cut, its own included, outside the
+// raised stretches of the tabs still kept. Sweeps nearer the core ends (a corner next to the
+// tab) only shorten the tab.
+// Repeated until nothing changes, since a dropped tab exposes more of its cut.
+void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& secondary) {
+    constexpr double h = 0.05;  // sampling step of the cut paths
+    const bool linked = !tabLinks_.empty();
+    struct Ref {
+        bool second;
+        std::size_t cut;
+        TabSpan span;
+    };
+    // Groups: a primary tab and its linked secondary spans.
+    std::vector<std::vector<Ref>> groups;
+    std::vector<std::size_t> groupSource;
+    for (std::size_t c = 0; c < primary.size(); ++c) {
+        for (std::size_t t = 0; t < primary[c].tabs.size(); ++t) {
+            std::vector<Ref> g{{false, c, primary[c].tabs[t]}};
+            if (linked && c < tabLinks_.size() && t < tabLinks_[c].size()) {
+                for (const auto& [k, m] : tabLinks_[c][t]) {
+                    g.push_back({true, k, m});
+                }
+            }
+            groups.push_back(std::move(g));
+            groupSource.push_back(primary[c].sources.front());
+        }
+    }
+    if (groups.empty()) {
+        return;
+    }
+    std::vector<bool> alive(groups.size(), true);
+    auto cutOf = [&](const Ref& r) -> const Cut& { return r.second ? secondary[r.cut] : primary[r.cut]; };
+    struct Sample {
+        bool second;
+        std::size_t cut;
+        double u;
+        Vec2 p;
+    };
+    // Unprotected samples of every cut: points every h outside the raised stretches still alive,
+    // plus the exact ends of those stretches (where the tool goes back down).
+    auto unprotected = [&]() {
+        std::vector<Sample> pts;
+        auto add = [&](const std::vector<Cut>& cuts, bool second) {
+            for (std::size_t c = 0; c < cuts.size(); ++c) {
+                std::vector<TabSpan> keep;
+                for (std::size_t g = 0; g < groups.size(); ++g) {
+                    if (!alive[g]) continue;
+                    for (const Ref& r : groups[g]) {
+                        if (r.second == second && r.cut == c) keep.push_back(r.span);
+                    }
+                }
+                const ArcLengthPath& w = cuts[c].walk;
+                for (const TabSpan& t : keep) {
+                    pts.push_back({second, c, t.a, w.pointAt(t.a)});
+                    pts.push_back({second, c, t.b, w.pointAt(t.b)});
+                }
+                const int n = std::max(1, static_cast<int>(std::ceil(w.length() / h)));
+                for (int i = 0; i <= n; ++i) {
+                    const double u = w.length() * i / n;
+                    const bool covered = std::any_of(keep.begin(), keep.end(),
+                                                     [&](const TabSpan& t) { return u > t.a && u < t.b; });
+                    if (!covered) pts.push_back({second, c, u, w.pointAt(u)});
+                }
+            }
+        };
+        add(primary, false);
+        add(secondary, true);
+        return pts;
+    };
+    bool changed = true;
+    while (changed) {
+        changed = false;
+        const std::vector<Sample> open = unprotected();
+        // Bucket the samples on a grid of tool-radius cells; a query looks at the 3 x 3 cells round it.
+        const double cell = std::max(radius_, 1e-3);
+        std::map<std::pair<long, long>, std::vector<Vec2>> grid;
+        auto key = [&](Vec2 p) {
+            return std::pair<long, long>{static_cast<long>(std::floor(p.x / cell)),
+                                         static_cast<long>(std::floor(p.y / cell))};
+        };
+        for (const Sample& q : open) {
+            grid[key(q.p)].push_back(q.p);
+        }
+        auto sweptAt = [&](Vec2 p) {
+            const auto [cx, cy] = key(p);
+            for (long dx = -1; dx <= 1; ++dx) {
+                for (long dy = -1; dy <= 1; ++dy) {
+                    const auto it = grid.find({cx + dx, cy + dy});
+                    if (it == grid.end()) continue;
+                    for (const Vec2& q : it->second) {
+                        if (geometry::distance(p, q) < radius_ - tol_.distance) return true;
+                    }
+                }
+            }
+            return false;
+        };
+        for (std::size_t g = 0; g < groups.size(); ++g) {
+            if (!alive[g]) continue;
+            bool swept = false;
+            for (const Ref& r : groups[g]) {
+                // The middle half of the core: sweeps nearer its ends (a corner next to the tab)
+                // only shorten the tab; a sweep over its middle removes it.
+                const double c0 = r.span.a + radius_ + h;
+                const double c1 = r.span.b - radius_ - h;
+                const double a = c0 + 0.25 * (c1 - c0);
+                const double b = c1 - 0.25 * (c1 - c0);
+                const ArcLengthPath& w = cutOf(r).walk;
+                const int n = std::max(1, static_cast<int>(std::ceil((b - a) / 0.25)));
+                for (int i = 0; i <= n && b >= a && !swept; ++i) {  // exact core ends included
+                    const Vec2 p = w.pointAt(a + (b - a) * i / n);
+                    swept = sweptAt(p);
+                }
+                if (swept) break;
+            }
+            if (swept) {
+                alive[g] = false;
+                ++tabsDropped_[groupSource[g]];
+                changed = true;
+                break;  // recompute the unprotected samples
+            }
+        }
+    }
+    for (Cut& c : primary) c.tabs.clear();
+    for (Cut& c : secondary) c.tabs.clear();
+    for (std::size_t g = 0; g < groups.size(); ++g) {
+        if (!alive[g]) continue;
+        for (const Ref& r : groups[g]) {
+            (r.second ? secondary[r.cut] : primary[r.cut]).tabs.push_back(r.span);
+        }
+    }
+    auto byStart = [](const TabSpan& x, const TabSpan& y) { return x.a < y.a; };
+    for (Cut& c : primary) std::sort(c.tabs.begin(), c.tabs.end(), byStart);
+    for (Cut& c : secondary) std::sort(c.tabs.begin(), c.tabs.end(), byStart);
 }
 
 // Points (every 0.1 mm) along the stretch of each tab that leaves material: its footprint minus a
 // tool radius at each end (the raised stretch includes the tool diameter).
 void ProfileBuilder::collectTabMaterial(const std::vector<Cut>& cuts) {
-    const double half = 0.5 * tabFootprint(p_.tabs.length + 2.0 * radius_, p_.tabs) - radius_;
-    if (half <= 0.0) {
-        return;
-    }
+    const double ramp = p_.tabs.threeD ? p_.tabs.thickness : 0.0;
     for (const Cut& c : cuts) {
-        for (double u : c.tabs) {
-            const int n = std::max(1, static_cast<int>(std::ceil(2.0 * half / 0.1)));
+        for (const TabSpan& t : c.tabs) {
+            const double a = t.a - ramp + radius_;
+            const double b = t.b + ramp - radius_;
+            if (b <= a) {
+                continue;
+            }
+            const int n = std::max(1, static_cast<int>(std::ceil((b - a) / 0.1)));
             for (int i = 0; i <= n; ++i) {
-                tabMaterial_.push_back(c.walk.pointAt(u - half + 2.0 * half * i / n));
+                tabMaterial_.push_back(c.walk.pointAt(a + (b - a) * i / n));
             }
         }
     }
@@ -685,9 +1002,9 @@ void ProfileBuilder::reportTabs() {
     for (const auto& [src, n] : tabsDropped_) {
         if (n > 0) {
             diag(ProfileIssue::TabsNotPlaced, src,
-                 vecName(src) + ": " + std::to_string(n) +
+                 vecName(src) + ": " + std::to_string(n) + " of " + std::to_string(tabsRequested_[src]) +
                      " tab(s) left out (no room: they would overlap, run past an open end, cover where the tool "
-                     "plunges or leave no stretch cut to full depth)");
+                     "plunges, leave no stretch cut to full depth, or could not be matched on the roughing cut)");
         }
     }
     for (const auto& [src, n] : tabsOnCorner_) {
@@ -725,7 +1042,8 @@ bool ProfileBuilder::leadFits(Make make, double scale, Contour& out, bool& gentl
             continue;
         }
         if (p_.side == ProfileSide::On ||
-            isClear(ArcLengthPath(cand, offTol_), allField_, radius_ - guardTol(), guardTol())) {
+            isClear(ArcLengthPath(cand, offTol_), allField_, radius_ + std::max(0.0, p_.allowance) - guardTol(),
+                    guardTol())) {
             out = std::move(cand);
             gentler = k > 0;
             return true;
@@ -916,6 +1234,9 @@ std::vector<Move> ProfileBuilder::cornerMoves(const Cut& cut, Vec2 q, double tur
     std::vector<Move> moves = up;
     auto down = [&](Vec3 to) {
         const Vec3 from = moves.back().to;
+        if (from == to) {
+            return;  // no zero-length moves
+        }
         moves.push_back(from.xy() == to.xy() ? Move::plunge(to) : Move::feed(to));
     };
     for (std::size_t i = up.size() - 1; i-- > 0;) {
@@ -930,8 +1251,7 @@ void ProfileBuilder::emitLeg(const Cut& cut, const PathLeg& leg, bool lastLevel,
     ZProfile z = leg.z;
     if (!cut.tabs.empty()) {
         const double zTab = bottom + p_.tabs.thickness;
-        z = ZProfile::max(z, tabCeiling(cut.walk, leg.u0, leg.u1, cut.tabs, p_.tabs.length + 2.0 * radius_, zTab,
-                                        bottom, p_.tabs.threeD));
+        z = ZProfile::max(z, tabCeiling(cut.walk, leg.u0, leg.u1, cut.tabs, zTab, bottom, p_.tabs.threeD));
     }
     std::vector<LegInsert> inserts;
     if (lastLevel && sharpInternal_) {
@@ -1155,9 +1475,11 @@ ProfileResult ProfileBuilder::run() {
     planLeadIns(finish);
     if (separate) {
         placeTabsOn(finish, rough);
-        projectTabs(finish, rough);
+        matchRoughingTabs(finish, rough);
+        dropSweptTabs(finish, rough);
     } else {
         placeTabsOn(rough, {});
+        dropSweptTabs(rough, finish);
     }
     reportTabs();
     collectTabMaterial(rough);
