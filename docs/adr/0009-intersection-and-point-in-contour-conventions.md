@@ -581,7 +581,7 @@ Change to decision 1 (analytic arc/arc crossings). Everything not mentioned belo
   ratios (worst 17.8 on one pair) are timer noise on a loaded machine, the change adds a handful of
   selects and no work.
 
-### 2026-10-30 — T-0022 (arc angular slack and threshold crossings) · Status: proposed
+### 2026-10-30 — T-0022 (arc angular slack and threshold crossings) · Status: accepted (director, 2026-10-31)
 Changes to `closestPoint(ArcSpan)` (T-0008 item 6) and to the near-tangent fold rule of the analytic
 pairs (T-0008 item 4). Everything not mentioned below is unchanged.
 1. **No angular slack in `closestPoint(ArcSpan)`.** A query direction is projected radially only when
@@ -666,3 +666,7 @@ pairs (T-0008 item 4). Everything not mentioned below is unchanged.
 - *Cost (Release -O2, CPU time, best of 7, branch / `main`):* every analytic and Bezier family
   0.98–1.05× (the threshold test adds one point distance per crossing pair); `closestPoint(ArcSpan)`
   1.04× (0.19 µs: `isFullCircle` is asked before `containsAngle`).
+- *Verification note (T-0022):* for a near-full arc whose two ends both touch the other span within
+  about 5e-5 mm, the single merged hit may be the exact (untangent) contact rather than the tangent
+  one; both are allowed by the merge rule. `isFullCircle`'s angular 1e-9 rad threshold is unchanged:
+  consistent at `tol.distance` up to r = 1e6 mm (the ends are then within tol), not beyond.
