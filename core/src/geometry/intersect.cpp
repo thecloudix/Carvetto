@@ -243,12 +243,13 @@ IntersectionResult lineArc(const LineSpan& a, const ArcSpan& b, const Tolerance&
     const Vec2 foot = f + dir * footAlong;  // foot relative to the centre
     const double h = foot.length();
 
+    const auto crossingAt = [&](double along) { return b.centre + foot + dir * (along - footAlong); };
     const auto consider = [&](double along, bool tangent) {
         const double t = along / la;
         if (t < 0.0 || t > 1.0) {
             return;
         }
-        const Vec2 p = b.centre + foot + dir * (along - footAlong);
+        const Vec2 p = crossingAt(along);
         const double angle = (p - b.centre).angle();
         if (!onArc(b, angle)) {
             return;
@@ -264,7 +265,12 @@ IntersectionResult lineArc(const LineSpan& a, const ArcSpan& b, const Tolerance&
     }
     // (r - h)(r + h) avoids squaring large numbers.
     const double half = std::sqrt(std::max(0.0, (b.radius - h) * (b.radius + h)));
-    if (2.0 * half <= tol.distance) {
+    // Two crossings the tolerance cannot separate fold into one tangent hit at the foot. The
+    // computed points decide as well as 2s: when 2s exceeds the tolerance only by rounding, the
+    // points can still be within it, and `addPoint` would otherwise merge them into one hit not
+    // flagged tangent (T-0022).
+    if (2.0 * half <= tol.distance ||
+        tol.equalPoints(crossingAt(footAlong - half), crossingAt(footAlong + half))) {
         consider(footAlong, true);
         return out;
     }
@@ -364,10 +370,15 @@ IntersectionResult arcArc(const ArcSpan& a, const ArcSpan& b, const Tolerance& t
         const Vec2 uS = fromA ? u : -u;
         const double along = ((rS - rO) * (rS + rO) + d * d) / (2.0 * d);
         const double h = std::sqrt(std::max(0.0, (rS - along) * (rS + along)));
-        if (2.0 * h > tol.distance) {
-            const Vec2 base = cS + uS * along;
-            consider(base + u.perp() * h, false);
-            consider(base - u.perp() * h, false);
+        // Crossings the tolerance cannot separate fold into one tangent hit below; the computed
+        // points decide as well as 2h, which may exceed the tolerance only by rounding while the
+        // points are within it (`addPoint` would merge them into one untangent hit; T-0022).
+        const Vec2 base = cS + uS * along;
+        const Vec2 p1 = base + u.perp() * h;
+        const Vec2 p2 = base - u.perp() * h;
+        if (2.0 * h > tol.distance && !tol.equalPoints(p1, p2)) {
+            consider(p1, false);
+            consider(p2, false);
             return out;
         }
     }
