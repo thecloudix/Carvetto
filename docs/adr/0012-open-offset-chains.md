@@ -90,7 +90,12 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     spans: Sharp 20.7 s (21.8), Square 20.8 s (22.0), Round 0.73 s (0.76); pitch 0.05, amplitude
     0.2, d = 5, 4000 spans: Sharp 8.7 s (8.7), Square 8.7 s (8.5), Round 0.75 s (0.67). Hatch- or
     fill-like vectors offset at a large d with Sharp/Square (T-0120/T-0121) will feel this; it is
-    T-0016's to fix.
+    T-0016's to fix. T-0017 fix round 2 (more thorough repair checks), measured in one process
+    against the round-1 build on a shared, heavily loaded 2-core container, so only the ratios
+    count: walk d = 1 / 2 worst 0.024 / 0.047 s (round 1: 0.020 / 0.048), hypotrochoid 0.22–0.35 s
+    (0.21–0.31), text loops 0.08–0.12 s (0.08–0.13), zig-zag pitch 0.02 Round 1.15 s (1.16),
+    Sharp/Square 37.2 s (35.0), zig-zag pitch 0.05 Round 1.0 s (1.05), Sharp/Square 15.3 s
+    (13.3); the verifier's fuzz families 1.03–1.16× round 1.
   - *Arc corners (ADR-0006 §5, §4 here).* Mitre and chamfer extension of an arc may use the gap
     outside its current (possibly already extended) sweep; previously the gap was split in half
     between "past the end" and "before the start", so the second corner of an arc whose first
@@ -109,8 +114,16 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     at most 6.3e-13 mm over 540 000 fuzzed offsets with coordinates up to ~100 mm (accepted,
     director 2026-10-25). That is for continuous input: where the input's own spans do not meet,
     an arc-to-arc junction can keep a gap of about that input gap (8.5e-10 mm seen for a 9.4e-10
-    mm input gap) and a Round join there can lie up to about the gap beyond d (2.4e-5 mm seen
-    for a 1e-4 mm gap; T-0017 verifier). Each junction is first closed geometrically: both spans
+    mm input gap). A Round join at such a gap was one arc about the next span's start through the
+    previous offset's end, so up to the gap beyond d (2.4e-5 mm seen for a 1e-4 mm gap) and, where
+    the gap runs along the corner, up to ~1e-8 mm inside d of the previous span's end, enough for
+    the pruning to cut it and split the chain (T-0017 fix round 2, 0xe30005b6); it is now an arc
+    of radius d about each end of the gap, the outer stretch of each kept by the usual splitting
+    and pruning. Arc-arc crossings (splitting and junction snapping) are computed without
+    cancellation (s = (r2 − (D − r1))(r2 + (D − r1))/2D from the first circle's far side,
+    h² = s(2r1 − s)): the textbook a = (D² + r1² − r2²)/2D, h² = r1² − a² lost ~1e-4 of h for a
+    U-turn arc of radius d(1 + 1e-6) entered from an arc and left 1e-7..1e-5 mm junction gaps
+    there, and 7.2e-12 at a tangent two-circle cusp (fix round 2, B1; repro_hp (a), 0xe300070e). Each junction is first closed geometrically: both spans
     trimmed or extended along their carriers to where they meet (extensions must stay ≥ d from the
     input and, for Round, ≤ d, both to min(5e-7·max(1,d), 0.1·tol²/d), checked every tol/8 since
     T-0017; among equally near meeting points one reached by trimming wins); else, for a sub-tolerance
@@ -138,14 +151,26 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     (distance along the line, angle round the circle): all piece ends of the group that agree to
     rounding (1e-9·max(1, d, |x|, |y|)) become one node, and each stretch between consecutive
     nodes is kept once, on the lowest-numbered element, if more copies cover it one way than the
-    other, else dropped (opposite copies enclose nothing, as in §5). This replaces the pairwise
+    other, else dropped (opposite copies enclose nothing, as in §5). (T-0017: kept only if all
+    copies covering it run one way, on the outermost copy; two copies one way and one the other,
+    where the input overlaps itself on a circle exactly 2d from another, still enclose nothing,
+    0xe20006d8.) This replaces the pairwise
     end-point matching (to the tolerance, and only for pieces longer than 2·tol), costs
     O(P log P) per group and keeps every piece end as a node, so stitching can still turn there.
     (Cutting every copy at its partners' ends instead was correct but ~18× more pieces on dense
     zig-zags at large d, where every inside-corner connector lies on one line.) Stitching also
     continues a piece with the start nearest its end (to the same rounding) and only among
     equally near starts by raw order, so a start a sub-tolerance distance behind the end is never
-    taken over one exactly at it.
+    taken over one exactly at it. (T-0017 fix round 2: stitching is one global matching instead,
+    every end against every start within tol, links taken closest first, ties among rounding-equal
+    gaps by raw order, each end and each start used once; then chains are walked from pieces no
+    link reaches, and the remaining cycles closed. The greedy piece-by-piece walk took a near
+    start that another chain needed and split chains spuriously: 0xe2000124, 0xe20010e4. A link
+    that would close a run no longer than 4·tol into a loop is skipped, since such a loop is
+    dropped on output anyway: taken first for its small gap, a loop of two sub-tolerance pieces
+    took the starts the chain through them needed, 0xe40003fb.) The sideways step repair (bending
+    the last tolerance of a neighbour) is not used at a needle tip (tangents within ~8° of
+    opposite): there the gap runs across the tip and is bridged instead (0xe40016aa).
   - *Nearly collinear carriers (verification round 3; corrected in T-0017).* The merge above grouped
     only carriers that `sameCarrier` matches (~1e-9 of the length sideways). With 1e-9..1e-5 mm of
     vertex noise (normal for DXF or computed geometry), or exact input far from the origin, the
@@ -182,9 +207,15 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
        only within the snapping allowance min(5e-7·max(1,d), 0.1·tol²/d), where the sideways join
        is within the documented bound (co-circular noise of ~1e-8 mm, as in the co-circular arcs of
        0x7300029, is still cleaned up); wider opposite pairs stay, as on main.
-    Further, (d) junction snapping that closes a "rounding" gap (≤ 1e-9·max(1,|x|,|y|), 1e-7 at
-    100 mm) by moving a line end moves the end that goes outwards, never tilting a long line inwards
-    (this was the ~1e-8 shortfall at large d); (e) a safety net after snapping removes any span no
+    Further, (d) junction snapping that closes a rounding gap by moving a line end moves the end
+    that goes outwards (this was the ~1e-8 shortfall at large d). Round 1 of T-0017 took any gap
+    ≤ 1e-9·max(1,|x|,|y|) as rounding and moved the end unchecked; at 1e3–1e4 mm that is 1e-6–1e-5
+    mm and could tilt the line inwards (repro_hp (b), (c)). Since fix round 2 the moved line is always
+    checked like an extension (≥ d − allowance, for Round ≤ d + allowance, along the whole line,
+    outward end preferred), still for gaps up to 1e-9·max(1,|x|,|y|) (two nearly collinear chamfer
+    copies 4e-14 mm apart would otherwise be bridged by a zero-length span, fam2 0xe2000055); if
+    neither end passes, the junction is treated as a real gap. Only extensions within 16 ulps of
+    the coordinates (16·2.2e-16·max(1,|x|,|y|)) count as rounding and go unchecked; (e) a safety net after snapping removes any span no
     longer than the tolerance that steps back (chord against both neighbours, or a retrace) where
     three or more carriers nearly meet, joining its neighbours by snapJunction or by a forward
     straight bridge (optionally taking over a tolerance of one neighbour, so the bridge may be up to
@@ -194,26 +225,43 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     and two arcs of the same direction on nearly one circle (centres and radii within tol/2 in
     all) on either side of the removed span become one arc on the circle of either, where every
     point of it passes the distance checks (sampled every tol/8) and the moved end's other junction
-    snaps again. (f, T-0017) A span that sets off straight back along its neighbour and lies
-    wholly within the rounding unit 2e-9·max(1, d, |x|, |y|) of it (arcs only if also on one circle
-    to that unit) is removed and the neighbour cut back to match: at those coordinates the two are
-    one stretch traversed twice (0x840117a, ~1e4 mm from the origin: a 2.9e-3 mm span 3.6e-6 mm
-    beside its loop's first span; the 2.9e-3 mm needle tip it bounded is lost, which the
-    main-vs-branch coverage comparison reports). (g, T-0017) A closed chain narrower than the
+    snaps again. The safety net's cuts start from the exact length needed to undo the step back on
+    either side, then tol, tol/2 … tol/10 (a fixed tol … tol/8 list missed a back-step that only a
+    shorter or a precisely sized cut clears: 0xe40010cb, fix round 2). (f, T-0017) A span that sets
+    off straight back along its neighbour and lies wholly within 2e-9·max(1, d) mm of it (or 64
+    ulps of the coordinates where larger, beyond ~1e6 mm; arcs only if also on one circle to that
+    bound) is removed and the neighbour cut back to match: a needle of rounding width. Round 1
+    scaled the bound with the coordinates (2e-9·max(1, d, |x|, |y|)), so the same needle was kept
+    near the origin and removed at 1e4 mm, losing real path there (0xd4001274, 0xe400062f,
+    0xe4001140, 0xd4001d85, 0xd4000e09); per the director's decision (fix round 2) the bound no
+    longer depends on translation and a wider needle is kept wherever it lies (0x840117a: the 2.9e-3
+    mm needle 3.6e-6 mm wide at ~1e4 mm is now kept, as at the origin). (g, T-0017) A closed chain narrower than the
     tolerance is dropped like the two-line sliver above: two spans that never part by more than
     tol/2 (0x82004c8: a lens of two arcs on nearly one circle running opposite ways, 0.018 mm long,
     ~2.4e-5 mm wide; main identical), or any loop whose mean width 2·area/perimeter is below tol/8
     and whose every point lies within tol/8 of another of its spans (gen3 0x9300698: a 1.45 mm
     lens ~1e-5 mm wide between opposite arcs 5e-6 mm apart, which crossed itself where 1e-3 mm
     bends closed its near-tangent ends; 0x9100821: 0.017 mm left between two tangent circles).
+    (The two-span drop of lenses up to tol/2 wide is tolerance-level and accepted by the director.)
     These are the only valid offset points the branch drops on purpose besides the corner changes
     of AC2 and exact zero-width slivers; the main-vs-branch comparison below classifies them.
-    (h, T-0017) Every extension, bend and bridge is checked at points at most tol/8 apart (round
-    3 checked an extension only at its far end and middle; next to a wiggly input the distance
-    is not monotone and a Round extension ended 1.3e-6 mm beyond d between them, gen3 0x9300156;
-    and only moves at the level of the coordinates' last bits, 1e-12·max(1,|x|,|y|), skip the check:
-    round 3 skipped extensions up to the 1e-9·max(1,|x|,|y|) "rounding" gap, 9.5e-6 mm at 1e4 mm,
-    and one at a steep angle to another part of the input ended 9.4e-7 mm inside d, gen3 0x9400bf7),
+    (h, T-0017) Every extension, bend and bridge is checked at points at most tol/8 apart (a line
+    tilted by moving one end, at most 1e-9·max(1,|x|,|y|), at up to 24 points crowded towards the
+    moved end, where the tilt is largest and a kept line comes nearest the limits: sampling it every
+    tol/8 made the fuzz families 4× slower, and 4 even points let a Sharp line at 1e4 mm end 3.8e-6
+    mm inside d, hp sweep), and between the samples every local extreme of the distance
+    to the input is located by golden-section search (40 steps; skipped where three neighbouring
+    samples agree to 1e-12 of the scale, a flat stretch such as an arc about a vertex, whose search
+    made Round offsets of dense polylines 3–6× slower; the distance is queried only up to d + 2·tol
+    away), because the distance along a span is the minimum of convex
+    functions and peaks between samples where the nearest input element changes (round 3 checked
+    an extension only at its far end and middle: a Round extension ended 1.3e-6 mm beyond d next to
+    a wiggly input, gen3 0x9300156; sampling alone still let 6.7e-7 and 4.2e-7 mm through,
+    0xe30009ae and 0xd4001762, fix round 2). Only a move no longer than 16 ulps of the coordinates
+    (16·2.2e-16·max(1,|x|,|y|)) skips the check (round 3 skipped extensions up to the
+    1e-9·max(1,|x|,|y|) "rounding" gap, 9.5e-6 mm at 1e4 mm, and one at a steep angle to another
+    part of the input ended 9.4e-7 mm inside d, gen3 0x9400bf7; round 1 of T-0017 still skipped
+    the line-end moves of (d) at that size),
     and where several meeting points of two carriers are equally near the junction, one reached by
     trimming both is preferred (two Round arcs about vertices almost exactly 2d apart cross twice
     ~1.6e-5 mm apart; meeting at the crossing that needs extensions left them crossing at the
@@ -225,7 +273,9 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     beyond d): at a Round needle tip whose rounded end was not among the kept pieces it ran 1.3e-5
     mm beyond d (gen3 0x93010bf). There the missing arc about the nearest input point is put in
     where it passes the checks, and otherwise the chain is cut into two continuous chains (main
-    leaves a gap in one chain there).
+    leaves a gap in one chain there). A cut never drops a piece: the chain's spans are only
+    divided between the two parts (0xe30005b6, where a cut seemed to lose 0.019 mm, was the
+    Round join at an input gap described under Junctions, pruned before stitching).
     (i, T-0017) Consecutive arcs on one circle to 1e-12·max(1, |x|, |y|, r) running the same way
     become one arc (a closed chain going all the way round, one full circle): a full circle left
     as three such arcs had a closing junction the shared checker read as a step back from the

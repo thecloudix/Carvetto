@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <optional>
 #include <string>
 #include <tuple>
@@ -1149,6 +1150,20 @@ DistanceExtremes distanceExtremes(const std::vector<Contour>& chains, const Cont
 }
 
 // Every AC3 defect over all chains: backward steps (shared checker), gaps, overlaps.
+// `c` moved by `shift`.
+Contour translated(const Contour& c, Vec2 shift) {
+    Contour out = c;
+    for (Span& s : out.spans) {
+        if (auto* line = std::get_if<LineSpan>(&s)) {
+            line->start = line->start + shift;
+            line->end = line->end + shift;
+        } else if (auto* arc = std::get_if<ArcSpan>(&s)) {
+            arc->centre = arc->centre + shift;
+        }
+    }
+    return out;
+}
+
 void requireCleanChains(const std::vector<Contour>& chains, double overlapLateral) {
     JunctionStats js;
     checkJunctions(chains, js);
@@ -1397,13 +1412,15 @@ TEST_CASE("T-0017 AC3: a closed lens of two arcs narrower than the tolerance is 
     }
 }
 
-TEST_CASE("T-0017 AC3: a needle tip whose sides coincide to rounding is not traversed twice (0x840117a)",
+TEST_CASE("T-0017 AC3: a thin needle tip is the same wherever it lies (0x840117a)",
           "[geometry][offset][open][t0017]") {
     // Verifier generator gen3 (crossShort), seed 0x840117a, shrunk from 895 to 116 lines: a long
     // line near (-1e4, 1e4) and, a little less than 2d above it, a return path of short noisy
-    // pieces whose offsets dip to within 3.6e-6 mm of the long line's. A closed chain ended with a
-    // 2.9e-3 mm span running back along its own first span, 3.6e-6 mm away: at coordinates of 1e4
-    // (rounding unit 1e-9 x 1e4 = 1e-5 mm) the same stretch traversed twice.
+    // pieces whose offsets dip to within 3.6e-6 mm of the long line's. A closed chain ends in a
+    // 2.9e-3 mm needle 3.6e-6 mm wide. Round 1 removed it as "the same stretch traversed twice"
+    // by a rounding unit scaled by the coordinates (1e-5 mm at 1e4), so the result depended on
+    // where the input lay; the needle is real geometry (far above rounding) and is now kept at
+    // any translation (fix round 2, director decision).
     const Contour in = polyline({{-10000, 10000},
                                  {-9995.7168746242442, 10000},
                                  {-9994.7168746242442, 10015.279770683441},
@@ -1524,9 +1541,19 @@ TEST_CASE("T-0017 AC3: a needle tip whose sides coincide to rounding is not trav
     const double d = 0.069942670860089734;
     const std::vector<Contour> chains =
         offsetOpenContour(in, d, OffsetSide::Left, JoinType::Square, kTol, 2.0);
-    requireCleanChains(chains, 1e-5);
+    requireCleanChains(chains, 1e-6);
     const DistanceExtremes ex = distanceExtremes(chains, in, d);
     CHECK(ex.under <= distanceAllowance(d, Vec2{-1e4, 1e4}));
+    // The same input moved to the origin gives the same chains, needle included.
+    const Vec2 shift{1e4, -1e4};
+    const std::vector<Contour> near =
+        offsetOpenContour(translated(in, shift), d, OffsetSide::Left, JoinType::Square, kTol, 2.0);
+    REQUIRE(near.size() == chains.size());
+    for (std::size_t i = 0; i < chains.size(); ++i) {
+        CAPTURE(i);
+        CHECK(near[i].spans.size() == chains[i].spans.size());
+        CHECK(near[i].closed == chains[i].closed);
+    }
 }
 
 namespace {
@@ -1918,4 +1945,804 @@ TEST_CASE(
         offsetOpenContour(in, d, OffsetSide::Left, JoinType::Square, kTol, 2.0);
     CHECK(distanceExtremes(chains, in, d).under <= distanceAllowance(d, Vec2{-612.5, -9540.4}));
     requireCleanChains(chains, 1e-6);
+}
+
+namespace {
+
+// Hairpin: an entry (line, or arc turning gently left), a U-turn arc of radius d (1 + eps)
+// turning left by pi (1 + 1e-3), and an exit (line, or arc turning gently right), starting at
+// `origin` with heading `h`. Offsetting to the left puts the offset inside the U-turn, where it
+// nearly vanishes.
+Contour hairpin(Vec2 origin, double h, double d, double eps, bool arcIn, bool arcOut) {
+    Contour c;
+    Vec2 p = origin;
+    auto dir = [](double a) { return Vec2{std::cos(a), std::sin(a)}; };
+    auto left = [&](double radius, double sweep) {
+        const Vec2 centre = p + dir(h + kPi / 2.0) * radius;
+        const ArcSpan arc{centre, radius, h - kPi / 2.0, h - kPi / 2.0 + sweep, ArcDirection::CCW};
+        c.spans.emplace_back(arc);
+        p = arc.endPoint();
+        h += sweep;
+    };
+    auto right = [&](double radius, double sweep) {
+        const Vec2 centre = p + dir(h - kPi / 2.0) * radius;
+        const ArcSpan arc{centre, radius, h + kPi / 2.0, h + kPi / 2.0 - sweep, ArcDirection::CW};
+        c.spans.emplace_back(arc);
+        p = arc.endPoint();
+        h -= sweep;
+    };
+    auto line = [&](double len) {
+        const Vec2 q = p + dir(h) * len;
+        c.spans.emplace_back(LineSpan{p, q});
+        p = q;
+    };
+    if (arcIn) {
+        left(12.0, 0.15);
+    } else {
+        line(2.5);
+    }
+    left(d * (1.0 + eps), kPi * (1.0 + 1e-3));
+    if (arcOut) {
+        right(9.0, 0.12);
+    } else {
+        line(2.0);
+    }
+    return c;
+}
+
+std::size_t junctionGaps(const std::vector<Contour>& chains) {
+    JunctionStats js;
+    checkJunctions(chains, js);
+    return js.gaps;
+}
+
+}  // namespace
+
+TEST_CASE("T-0017: hairpins with a U-turn of radius about d keep exact junctions and d (fix round 2)",
+          "[geometry][offset][open][t0017]") {
+    // The verifier's hairpin family (hp): a U-turn arc of radius d (1 + eps) entered from and
+    // left to a line or an arc, at 0, 5e3 and 1e4 mm from the origin. Arc-arc crossings computed
+    // as a = (D^2 + r1^2 - r2^2) / 2D lost ~1e-4 of h there and left junction gaps (repro_hp (a));
+    // line ends moved unchecked by up to 1e-9 x |x| tilted lines inwards or past d at 5e3..1e4
+    // (repro_hp (b), (c)).
+    std::size_t offsets = 0;
+    for (const double at : {0.0, 5e3, 1e4}) {
+        for (const double eps : {-1e-3, -1e-6, 1e-7, 1e-6, 1e-3}) {
+            for (int variant = 0; variant < 4; ++variant) {
+                for (const double d : {0.07, 0.46, 1.9}) {
+                    const Vec2 origin{at, -0.7 * at};
+                    const Contour in =
+                        hairpin(origin, 0.3 + variant, d, eps, (variant & 1) != 0, (variant & 2) != 0);
+                    for (const JoinType join : kJoins) {
+                        CAPTURE(at, eps, variant, d, static_cast<int>(join));
+                        const std::vector<Contour> chains =
+                            offsetOpenContour(in, d, OffsetSide::Left, join, kTol, 2.0);
+                        ++offsets;
+                        JunctionStats js;
+                        checkJunctions(chains, js);
+                        CHECK(js.backward == 0);
+                        CHECK(js.notIdentical == 0);
+                        // Arc-arc junctions: exact, or within 1e-12 x the scale (ADR-0012 A1).
+                        CHECK(js.maxGap <= 1e-12 * std::max({1.0, at, 0.7 * at, 12.0}));
+                        const DistanceExtremes ex = distanceExtremes(chains, in, d);
+                        CHECK(ex.under <= distanceAllowance(d, origin));
+                        if (join == JoinType::Round) {
+                            CHECK(ex.over <= distanceAllowance(d, origin));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    CHECK(offsets == 540);
+}
+
+TEST_CASE("T-0017: an arc into a U-turn of radius d (1 + 1e-6) meets it exactly (repro_hp a)",
+          "[geometry][offset][open][t0017]") {
+    Contour in;
+    in.spans.emplace_back(ArcSpan{{-6.1835881590179307, -4.5609137211896442},
+                                  7.6836642620876354,
+                                  0.63550719201869088,
+                                  0.59034783467233742,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(ArcSpan{{0.5819774350952871, -0.027581994245153507},
+                                  0.46028897665152524,
+                                  -2.5512448189174557,
+                                  0.58554158006787915,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(
+        LineSpan{{0.96558820755480146, 0.22679708759909528}, {-1.0290918042762391, 3.2348303527579176}});
+    const double d = 0.46028851636300894;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Left, JoinType::Round, kTol, 2.0);
+    CHECK(junctionGaps(chains) == 0);
+    requireCleanChains(chains, 1e-6);
+    const DistanceExtremes ex = distanceExtremes(chains, in, d);
+    CHECK(ex.under <= distanceAllowance(d, Vec2{}));
+    CHECK(ex.over <= distanceAllowance(d, Vec2{}));
+}
+
+TEST_CASE("T-0017: a rounding-gap line end at 5e3..1e4 mm is moved only where it stays at d (repro_hp b, c)",
+          "[geometry][offset][open][t0017]") {
+    {
+        Contour in;
+        in.spans.emplace_back(
+            LineSpan{{5188.4461692588793, -4233.4568454048558}, {5192.3005941971678, -4231.826230991167}});
+        in.spans.emplace_back(ArcSpan{{5192.2285411430012, -4231.6559129279085},
+                                      0.18493210993996412,
+                                      -1.1705785180382842,
+                                      1.9688563277542461,
+                                      ArcDirection::CCW});
+        in.spans.emplace_back(
+            LineSpan{{5192.1568557699384, -4231.4854397846402}, {5186.9319562479923, -4233.6825534429363}});
+        const double d = 0.18493026061898363;
+        const std::vector<Contour> chains =
+            offsetOpenContour(in, d, OffsetSide::Left, JoinType::Round, kTol, 2.0);
+        const DistanceExtremes ex = distanceExtremes(chains, in, d);
+        CHECK(ex.under <= distanceAllowance(d, Vec2{5192, -4231}));
+        CHECK(ex.over <= distanceAllowance(d, Vec2{5192, -4231}));
+        CHECK(junctionGaps(chains) == 0);
+    }
+    {
+        Contour in;
+        in.spans.emplace_back(LineSpan{{10000, -7000}, {9999.7699140805944, -6998.8108121181322}});
+        in.spans.emplace_back(ArcSpan{{9999.295782931682, -6998.9025477496334},
+                                      0.48292418913950697,
+                                      0.19112003894738341,
+                                      3.3333454522343238,
+                                      ArcDirection::CCW});
+        in.spans.emplace_back(ArcSpan{{9979.9701657394107, -7002.654385997299},
+                                      19.203512006852304,
+                                      0.1917527986445309,
+                                      0.10631536567386451,
+                                      ArcDirection::CW});
+        const double d = 0.48291935994590746;
+        // All joins: with Sharp a moved line end checked at only 4 points came 3.8e-6 mm inside d
+        // just before its end (verifier hp sweep, variant 2, eps 1e-5).
+        for (const JoinType join : kJoins) {
+            CAPTURE(static_cast<int>(join));
+            const std::vector<Contour> chains = offsetOpenContour(in, d, OffsetSide::Left, join, kTol, 2.0);
+            const DistanceExtremes ex = distanceExtremes(chains, in, d);
+            CHECK(ex.under <= distanceAllowance(d, Vec2{1e4, -7e3}));
+            if (join == JoinType::Round) {
+                CHECK(ex.over <= distanceAllowance(d, Vec2{1e4, -7e3}));
+            }
+            CHECK(junctionGaps(chains) == 0);
+        }
+    }
+}
+
+TEST_CASE("T-0017: stitching matches ends globally, so a closed zig-zag is not split (0xe2000124)",
+          "[geometry][offset][open][t0017]") {
+    // Verifier fam2 closedZigzag-seam (noisy), Square, Right, d = 88.6. The piece-by-piece stitching
+    // took a start that another chain needed and returned 4 chains for main's 2.
+    Contour in = polyline({{-2.7580688007887257, -13.331069956806303},
+                           {-7.3094735972188536, -2.7940768555638265},
+                           {-3.6717530105012752, -13.680329537433709},
+                           {-8.2231577846887163, -3.1433364943794411},
+                           {-9.1964891937801028, -0.59704283910109668},
+                           {-0.97333140669553064, 2.5462936490106416},
+                           {0, 0},
+                           {3.6377206110157543, -10.886252745435373},
+                           {-0.91368419608293883, -0.34925961628329061},
+                           {2.7240364034279625, -11.235512331621276},
+                           {-1.827368386596339, -0.69851924713683033},
+                           {1.8103522160388277, -11.584771970648081},
+                           {-2.7410525972899773, -1.047778825197651},
+                           {0.89666799704907874, -11.934031527005775},
+                           {-3.6547368124913011, -1.3970383914660924},
+                           {-0.01701619545865718, -12.283291152642011},
+                           {-4.5684210050908778, -1.746298016862069},
+                           {-0.93070041323631703, -12.632550712170605},
+                           {-5.4821052001583341, -2.095557635801923},
+                           {-1.8443845804940686, -12.981810403862326},
+                           {-6.3957894031340929, -2.4448172340531831},
+                           {-2.7580688007887257, -13.331069956806303}});
+    in.closed = true;
+    const double d = 88.588646191724834;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Right, JoinType::Square, kTol, 2.0);
+    CHECK(chains.size() == 2);
+    requireCleanChains(chains, 1e-6);
+}
+
+TEST_CASE("T-0017: no spurious chain splits on co-circular ties (0xe20010e4)",
+          "[geometry][offset][open][t0017]") {
+    // Verifier coCircular-tie, Square, Right: more chains than main (30), from the greedy stitching
+    // or the merge keeping a stretch that copies run both ways.
+    Contour in;
+    in.spans.emplace_back(ArcSpan{{-528.52220731529064, -795.48055650428023},
+                                  2.3862428321970466,
+                                  -4.5621665668092648,
+                                  -2.6741011505546641,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(
+        LineSpan{{-530.65240998014099, -796.55591293862028}, {-548.94963649378906, -805.79261167470577}});
+    in.spans.emplace_back(
+        LineSpan{{-548.94963649378906, -805.79261167470577}, {-516.13281398203776, -774.65919515999315}});
+    in.spans.emplace_back(
+        LineSpan{{-516.13281398203776, -774.65919515999315}, {-527.20304046700051, -793.4921014053192}});
+    in.spans.emplace_back(ArcSpan{{-528.52220731529064, -795.48055650428023},
+                                  2.3862428321970466,
+                                  -5.2981356216840663,
+                                  -3.1700591557281022,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(
+        LineSpan{{-530.90748337668583, -795.41263769137049}, {-551.66878317794499, -794.82147641667063}});
+    in.spans.emplace_back(
+        LineSpan{{-551.66878317794499, -794.82147641667063}, {-553.25672246990587, -792.42687469612883}});
+    in.spans.emplace_back(
+        LineSpan{{-553.25672246990587, -792.42687469612883}, {-530.90843047481098, -795.47086696454119}});
+    in.spans.emplace_back(ArcSpan{{-528.52220731529064, -795.48055650428023},
+                                  2.3862428321970466,
+                                  -3.1456532488636326,
+                                  -0.70919585426922938,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(
+        LineSpan{{-526.71132151439201, -797.03453445467574}, {-511.02037592237946, -810.49942741410098}});
+    in.spans.emplace_back(
+        LineSpan{{-511.02037592237946, -810.49942741410098}, {-550.89713992024394, -804.94076250819387}});
+    in.spans.emplace_back(
+        LineSpan{{-550.89713992024394, -804.94076250819387}, {-530.96291329301039, -796.00011019586691}});
+    in.spans.emplace_back(ArcSpan{{-528.52220731529064, -795.48055650428023},
+                                  2.4953920950661193,
+                                  -2.9318530340915321,
+                                  -4.4399499502028501,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(
+        LineSpan{{-529.19367068242752, -793.077200797209}, {-535.14309552346174, -771.78254073785104}});
+    in.spans.emplace_back(
+        LineSpan{{-535.14309552346174, -771.78254073785104}, {-533.34364821798954, -820.07641355322892}});
+    in.spans.emplace_back(
+        LineSpan{{-533.34364821798954, -820.07641355322892}, {-528.99483158744624, -797.93078261741505}});
+    in.spans.emplace_back(ArcSpan{{-528.52220731529064, -795.48055650428023},
+                                  2.4953920950661193,
+                                  -1.7613461565305366,
+                                  -3.3952454119238,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(
+        LineSpan{{-530.93775248525071, -794.85435905937891}, {-552.10605282837889, -789.36676323520794}});
+    in.spans.emplace_back(
+        LineSpan{{-552.10605282837889, -789.36676323520794}, {-509.72595117382872, -780.35017544508185}});
+    in.spans.emplace_back(
+        LineSpan{{-509.72595117382872, -780.35017544508185}, {-526.64332021418943, -793.83837351525801}});
+    in.spans.emplace_back(ArcSpan{{-528.52220731529064, -795.48055650428023},
+                                  2.4953920950661193,
+                                  0.7182741078915007,
+                                  0.35533061320593529,
+                                  ArcDirection::CW});
+    const double d = 0.054574631434536308;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Right, JoinType::Square, kTol, 2);
+    CHECK(chains.size() <= 30);
+    JunctionStats js;
+    checkJunctions(chains, js);
+    CHECK(js.backward == 0);
+    CHECK(js.gaps == 0);
+}
+
+TEST_CASE("T-0017: no spurious chain splits on co-circular ties (0xe20006d8)",
+          "[geometry][offset][open][t0017]") {
+    // Verifier coCircular-tie, Sharp, Right: more chains than main (21), from the greedy stitching
+    // or the merge keeping a stretch that copies run both ways.
+    Contour in;
+    in.spans.emplace_back(
+        ArcSpan{{0, 0}, 1.1919727791070662, 2.4357476808179968, 4.5278080532487923, ArcDirection::CCW});
+    in.spans.emplace_back(
+        LineSpan{{-0.21876824183394267, -1.1717250370701773}, {-4.39504096909259, -23.539886316515425}});
+    in.spans.emplace_back(
+        LineSpan{{-4.39504096909259, -23.539886316515425}, {-5.6677075625630859, -22.456921546747697}});
+    in.spans.emplace_back(
+        LineSpan{{-5.6677075625630859, -22.456921546747697}, {-0.21876824183394267, -1.1717250370701773}});
+    in.spans.emplace_back(
+        ArcSpan{{0, 0}, 1.1919727791070662, 4.5278080532487923, 2.4357476808179972, ArcDirection::CW});
+    in.spans.emplace_back(
+        LineSpan{{-0.90716722429277774, 0.77320549228595103}, {-18.088632626063685, 15.417477307250458}});
+    in.spans.emplace_back(
+        LineSpan{{-18.088632626063685, 15.417477307250458}, {0.16115639308495969, 23.457553774169011}});
+    in.spans.emplace_back(
+        LineSpan{{0.16115639308495969, 23.457553774169011}, {0.080254774639365339, 1.3080613106940997}});
+    in.spans.emplace_back(
+        ArcSpan{{0, 0}, 1.3105209732725309, 1.5095191530933008, 0.4869420860726652, ArcDirection::CW});
+    in.spans.emplace_back(
+        LineSpan{{1.1581963220008005, 0.61322630495682384}, {19.917905323155367, 10.545866233367279}});
+    in.spans.emplace_back(
+        LineSpan{{19.917905323155367, 10.545866233367279}, {23.399749486168027, -0.96406011694593097}});
+    in.spans.emplace_back(
+        LineSpan{{23.399749486168027, -0.96406011694593097}, {1.1828970666470202, -0.14681156579131652}});
+    in.spans.emplace_back(
+        ArcSpan{{0, 0}, 1.1919727791070662, -0.1234804317390692, 2.0702834027244332, ArcDirection::CCW});
+    in.spans.emplace_back(
+        LineSpan{{-0.57092556993018517, 1.0463475042891421}, {-11.591943268876204, 21.244802384193687}});
+    in.spans.emplace_back(
+        LineSpan{{-11.591943268876204, 21.244802384193687}, {13.480154468575595, -20.30503941079964}});
+    in.spans.emplace_back(
+        LineSpan{{13.480154468575595, -20.30503941079964}, {0.47285918223161294, -1.0941678572830922}});
+    in.spans.emplace_back(
+        ArcSpan{{0, 0}, 1.1919727791070662, -1.1628739864816351, 0.89591121102210303, ArcDirection::CCW});
+    in.spans.emplace_back(
+        LineSpan{{0.74475367723229968, 0.93066700080167797}, {13.498116409923712, 16.867659603078756}});
+    in.spans.emplace_back(
+        LineSpan{{13.498116409923712, 16.867659603078756}, {-2.0317464307992732, 24.111758353574221}});
+    in.spans.emplace_back(
+        LineSpan{{-2.0317464307992732, 24.111758353574221}, {-0.20305133823571422, 1.2946950897519722}});
+    in.spans.emplace_back(
+        ArcSpan{{0, 0}, 1.3105209732725309, 1.7263624429144553, 0.15341426555344007, ArcDirection::CW});
+    in.spans.emplace_back(
+        LineSpan{{1.2951290280355914, 0.20026487991349423}, {21.280654653116034, 3.2906124844185856}});
+    in.spans.emplace_back(
+        LineSpan{{21.280654653116034, 3.2906124844185856}, {20.368338190482071, -9.1039641829667719}});
+    in.spans.emplace_back(
+        LineSpan{{20.368338190482071, -9.1039641829667719}, {1.1020365401844114, -0.70921131229384238}});
+    in.spans.emplace_back(
+        ArcSpan{{0, 0}, 1.3105209732725309, -0.5718248168727591, -2.8994887782050154, ArcDirection::CW});
+    const double d = 0.059274097082732395;
+    const std::vector<Contour> chains = offsetOpenContour(in, d, OffsetSide::Right, JoinType::Sharp, kTol, 2);
+    CHECK(chains.size() <= 21);
+    JunctionStats js;
+    checkJunctions(chains, js);
+    CHECK(js.backward == 0);
+    CHECK(js.gaps == 0);
+}
+
+TEST_CASE("T-0017: no spurious chain splits on co-circular ties (0xe3001ac2)",
+          "[geometry][offset][open][t0017]") {
+    // Verifier coCircularNoisy, Square, Right: more chains than main (17), from the greedy stitching
+    // or the merge keeping a stretch that copies run both ways.
+    Contour in;
+    in.spans.emplace_back(ArcSpan{{-86.78814498830485, 715.58515024155804},
+                                  1.0908054494621033,
+                                  0.48575230134896552,
+                                  1.4728805836930272,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(
+        LineSpan{{-86.681508548943796, 716.67073082280319}, {-84.456158542599809, 739.32524524425139}});
+    in.spans.emplace_back(
+        LineSpan{{-84.456158542599809, 739.32524524425139}, {-68.781084618225648, 728.29482572264112}});
+    in.spans.emplace_back(
+        LineSpan{{-68.781084618225648, 728.29482572264112}, {-85.968984963650939, 716.30545113882147}});
+    in.spans.emplace_back(ArcSpan{{-86.788144988299209, 715.58515024155474},
+                                  1.0908054494661392,
+                                  0.72126949998118706,
+                                  2.9140318809814372,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(
+        LineSpan{{-87.850829022667, 715.83123797323765}, {-108.77292355259084, 720.6762065795341}});
+    in.spans.emplace_back(
+        LineSpan{{-108.77292355259084, 720.6762065795341}, {-78.894600869747634, 736.50093129607183}});
+    in.spans.emplace_back(
+        LineSpan{{-78.894600869747634, 736.50093129607183}, {-86.316656641626636, 716.73643824866053}});
+    in.spans.emplace_back(ArcSpan{{-86.7881449882981, 715.58515024155656},
+                                  1.2440921735741632,
+                                  1.1821005065108441,
+                                  0.8207966410408235,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(
+        LineSpan{{-85.940123827802736, 716.49543890330108}, {-71.845465712074571, 731.62502301229119}});
+    in.spans.emplace_back(
+        LineSpan{{-71.845465712074571, 731.62502301229119}, {-72.810726151152167, 699.05233169187397}});
+    in.spans.emplace_back(
+        LineSpan{{-72.810726151152167, 699.05233169187397}, {-86.067854540091147, 714.76598102901153}});
+    in.spans.emplace_back(ArcSpan{{-86.788144988302264, 715.5851502415594},
+                                  1.0908054494594388,
+                                  -0.84953958255408324,
+                                  -0.37838253750279938,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(
+        LineSpan{{-85.774499439794525, 715.18218717804007}, {-65.073000573041512, 706.95254574660839}});
+    in.spans.emplace_back(
+        LineSpan{{-65.073000573041512, 706.95254574660839}, {-75.968802944125443, 736.08970093582138}});
+    in.spans.emplace_back(
+        LineSpan{{-75.968802944125443, 736.08970093582138}, {-86.449783729782922, 716.62214984970683}});
+    in.spans.emplace_back(ArcSpan{{-86.788144988304609, 715.5851502415544},
+                                  1.09080544946236,
+                                  1.2553992806336334,
+                                  1.7333888049510962,
+                                  ArcDirection::CCW});
+    const double d = 0.076643362054408748;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Right, JoinType::Square, kTol, 3.310653624707161);
+    CHECK(chains.size() <= 17);
+    JunctionStats js;
+    checkJunctions(chains, js);
+    CHECK(js.backward == 0);
+    CHECK(js.gaps == 0);
+}
+
+TEST_CASE("T-0017: the safety net cuts exactly as far as a back-step needs (0xe40010cb)",
+          "[geometry][offset][open][t0017]") {
+    // Verifier fam4 chainDrift, Sharp, Left: a sub-tolerance back-step survived the safety net,
+    // whose fixed cuts (tol ... tol/8) were all too long or too short to clear it.
+    Contour in = polyline({{0.0010496765366513603, 0},
+                           {0.0073955920818131581, 1.071854596146545e-07},
+                           {0.50739559208181317, 10.454619281539813},
+                           {-0.49929214562655427, 11.454619281539813},
+                           {0.00070785437344571852, -0.0004675716854893085},
+                           {0.0070537657326320757, -0.00046028202401149105},
+                           {0.50705376573263206, -10.454619281539813},
+                           {-0.49876294728992132, -9.4546192815398129},
+                           {0.001237052710078681, 0.00093514337097861701},
+                           {0.007582967280140393, 0.00093162381229032216},
+                           {0.50758296728014041, 10.454619281539813},
+                           {-0.5001602088216196, 11.454619281539813},
+                           {-0.00016020882161960155, 0.0014027150564679255},
+                           {0.0061857031540754814, 0.0014094466643453415},
+                           {0.50618570315407552, -10.454619281539813},
+                           {-0.49984270599068781, -9.4546192815398129},
+                           {0.00015729400931219689, 0.001870286741957234},
+                           {0.0065032088971614865, 0.0018673964153976411}});
+    const double d = 0.11365482038495342;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Left, JoinType::Sharp, kTol, 3.3483382136580797);
+    JunctionStats js;
+    checkJunctions(chains, js);
+    CHECK(js.backward == 0);
+    CHECK(js.gaps == 0);
+    CHECK(distanceExtremes(chains, in, d).under <= distanceAllowance(d, Vec2{}));
+}
+
+TEST_CASE("T-0017: a snapped Round extension stays at d between its samples too (0xd4001762)",
+          "[geometry][offset][open][t0017]") {
+    // Verifier fam4 shortWalkFar, Round, Left: 4.2e-7 mm beyond d between the tol/8 samples
+    // (allowance 3.9e-7). The distance between samples is now refined to its local extremes.
+    Contour in = polyline({{0, 0},
+                           {-0.002617144792886075, 0.0009616838997198524},
+                           {-0.0052765476359014889, 0.0017994543387260344},
+                           {-0.008045278194458173, 0.0021287169755761261},
+                           {-0.010795029459401299, 0.0016670344322037784},
+                           {-0.013546444716577715, 0.0012153743028056768},
+                           {-0.016327788626580839, 0.0010193925582486062},
+                           {-0.019112947400273729, 0.0011504398597568331},
+                           {-0.021770301608403587, 0.0019946859153861188},
+                           {-0.02417496671896488, 0.0034060216288010091},
+                           {-0.026582775287410959, 0.0048119877335235633},
+                           {-0.028600957928098303, 0.0067358436581549646},
+                           {-0.030442355213943104, 0.0088295338992351695},
+                           {-0.031881474876612963, 0.011217674888881311},
+                           {-0.033828674501609056, 0.013213344302969268},
+                           {-0.035937846844188145, 0.015036987584757267},
+                           {-0.037821024356946897, 0.017093179512897936},
+                           {-0.040186547984078849, 0.01856918112515709},
+                           {-0.042479338094820802, 0.020155811610807404},
+                           {-0.04513833765219262, 0.020994861158693322},
+                           {-0.04764930443405687, 0.022207019815918265},
+                           {-0.050193514522477577, 0.023347755462722289},
+                           {-0.052955947726039759, 0.023726233448565958},
+                           {-0.055715183046279475, 0.024127360906430303},
+                           {-0.058491654482236727, 0.023871452416487977},
+                           {-0.061252249814253576, 0.024263110689422208},
+                           {-0.064037253210832756, 0.024397419553439041},
+                           {-0.066656642779243797, 0.025352972314311256},
+                           {-0.069085035074225809, 0.026723079482230273},
+                           {-0.071767248208076423, 0.027484666965393111},
+                           {-0.074208083513842185, 0.028832482160454542},
+                           {-0.076733741964666632, 0.030013723956062093},
+                           {-0.078820518552206315, 0.031862952515112397},
+                           {-0.081147015754012647, 0.033399732772630836},
+                           {-0.083828398939788842, 0.034164237187888039},
+                           {-0.086283418849209828, 0.0354860390014205},
+                           {-0.088510024534533382, 0.037164285083494238},
+                           {-0.090201621684830258, 0.039380764695631149},
+                           {-0.091650542402871946, 0.041762971979378866},
+                           {-0.093473412670568995, 0.043872812441844482},
+                           {-0.094822867131133748, 0.046312741836063293},
+                           {-0.095658598613456117, 0.048972786136327162}});
+    const double d = 0.32201947116387097;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Left, JoinType::Round, kTol, 2.0);
+    const DistanceExtremes ex = distanceExtremes(chains, in, d);
+    CHECK(ex.under <= distanceAllowance(d, Vec2{}));
+    CHECK(ex.over <= distanceAllowance(d, Vec2{}));
+}
+
+TEST_CASE("T-0017: a bend on a short walk stays within the Round allowance (0xe30009ae)",
+          "[geometry][offset][open][t0017]") {
+    // Verifier gen3 shortWalk, Round, Right, shrunk from 214 to 4 lines: 6.7e-7 mm beyond d
+    // (allowance 5.7e-7) between the samples of a checked join.
+    Contour in = polyline({{-1.3663708911957717, 0.45694987180560709},
+                           {-1.370032676929517, 0.46338718093797288},
+                           {-1.3739290056930742, 0.46968529540118953},
+                           {-1.3773921176868829, 0.47623162864536828},
+                           {-1.3808726239246627, 0.48276873044618773}});
+    const double d = 0.22085132033759949;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Right, JoinType::Round, kTol, 2.0);
+    const DistanceExtremes ex = distanceExtremes(chains, in, d);
+    CHECK(ex.under <= distanceAllowance(d, Vec2{}));
+    CHECK(ex.over <= distanceAllowance(d, Vec2{}));
+}
+
+TEST_CASE("T-0017: a Round corner at an input gap is an arc about each end of the gap (0xe30005b6)",
+          "[geometry][offset][open][t0017]") {
+    // Verifier gen3 mixedNoisy, Round, Left, ~6e3 mm from the origin, input gaps of 1.4-5.3e-6 mm.
+    // One join arc about the next span's start ran 5.3e-6 mm beyond d and dipped ~1e-8 mm inside d
+    // of the previous span's end, so the pruning cut 0.019 mm of it out: 9 chains for main's 7, a
+    // valid offset point 0.0093 mm from the output, and a corner left open.
+    Contour in;
+    in.spans.emplace_back(ArcSpan{{-4867.1435005564144, -5990.1403459968051},
+                                  2.5914697416262196,
+                                  2.2680277277875818,
+                                  4.5488985366090446,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(ArcSpan{{-4867.5716266691343, -5992.735627499721},
+                                  0.038888278167742055,
+                                  1.4073058830192622,
+                                  -0.88998075797788312,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(
+        LineSpan{{-4867.5471493376926, -5992.7658460110069}, {-4870.3532144266082, -5995.0387951216017}});
+    in.spans.emplace_back(ArcSpan{{-4870.0108046612486, -5995.4615174017608},
+                                  0.54400236539630853,
+                                  2.2516118956119011,
+                                  6.7456041835472593,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(ArcSpan{{-4871.2378237019284, -5996.7187762641806},
+                                  2.2775586815494946,
+                                  0.71892639065476116,
+                                  -3.6734215059202042,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(
+        LineSpan{{-4873.200808443351, -5995.5638024753689}, {-4873.1044659320241, -5995.4000621348878}});
+    in.spans.emplace_back(
+        LineSpan{{-4873.1044659320241, -5995.4000621348878}, {-4872.4208286289313, -5994.2381560861986}});
+    in.spans.emplace_back(
+        LineSpan{{-4872.4208286289313, -5994.2381560861986}, {-4872.183153306416, -5995.379374479643}});
+    in.spans.emplace_back(ArcSpan{{-4872.1357752352696, -5995.3695072298642},
+                                  0.048394671645930316,
+                                  -2.9362616275055844,
+                                  -0.40856347193870146,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(ArcSpan{{-4872.1164981933262, -5995.3106720228197},
+                                  0.08200759952260718,
+                                  -1.2593249932060053,
+                                  -4.286710894276867,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(ArcSpan{{-4872.1721666826006, -5995.1878940402348},
+                                  0.052803404343170164,
+                                  -1.1451182406870728,
+                                  2.7573911258417785,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(ArcSpan{{-4867.9675977595271, -5997.6983506405086},
+                                  4.9492005148181279,
+                                  -3.6782235048821015,
+                                  -3.9097180104070226,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(ArcSpan{{-4868.5293542659247, -5992.5733144167962},
+                                  3.4395616646332146,
+                                  -2.6291691962538533,
+                                  -3.6832948435304935,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(
+        LineSpan{{-4871.4764817364194, -5990.7998928319857}, {-4871.0087413022802, -5993.3502787775042}});
+    in.spans.emplace_back(
+        LineSpan{{-4871.0087413022802, -5993.3502787775042}, {-4869.9389687583534, -5990.9623466465164}});
+    in.spans.emplace_back(
+        LineSpan{{-4869.9389687583534, -5990.9623466465164}, {-4869.1773749469203, -5989.2623248076634}});
+    in.spans.emplace_back(
+        LineSpan{{-4869.1773749469203, -5989.2623248076634}, {-4867.8498940150221, -5986.2991454069124}});
+    in.spans.emplace_back(
+        LineSpan{{-4867.8498940150221, -5986.2991454069124}, {-4867.7167074323106, -5986.0018497522196}});
+    in.spans.emplace_back(ArcSpan{{-4867.6453016329133, -5986.0338389172166},
+                                  0.078243816782941927,
+                                  -3.5627747492598156,
+                                  -5.2939234071540042,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(ArcSpan{{-4869.2921912588772, -5987.0847785922051},
+                                  2.0252969108898462,
+                                  0.58378829667518972,
+                                  -1.8265216833646691,
+                                  ArcDirection::CW});
+    in.spans.emplace_back(
+        LineSpan{{-4869.8044845290333, -5989.0442129959583}, {-4869.9973616594034, -5988.9937871034563}});
+    const double d = 0.13880492771945446;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Left, JoinType::Round, kTol, 1.4732506836278474);
+    CHECK(chains.size() <= 7);
+    const DistanceExtremes ex = distanceExtremes(chains, in, d);
+    CHECK(ex.under <= distanceAllowance(d, Vec2{-4870, -5995}));
+    CHECK(ex.over <= distanceAllowance(d, Vec2{-4870, -5995}));
+    // Points of the exact offset that the split chain missed.
+    for (const Vec2 p : {Vec2{-4869.6523, -5995.2716}, Vec2{-4867.5169, -5985.8590}}) {
+        CAPTURE(p.x, p.y);
+        double nearest = std::numeric_limits<double>::infinity();
+        for (const Contour& c : chains) {
+            for (const Span& s : c.spans) {
+                nearest = std::min(nearest, carvetto::geometry::testing::distanceToSpanExact(p, s));
+            }
+        }
+        CHECK(nearest <= 1e-3);
+    }
+}
+
+TEST_CASE("T-0017: arcs about vertices 2d apart that just miss each other still join exactly (0xe300070e)",
+          "[geometry][offset][open][t0017]") {
+    // Verifier gen3 outerTie, Round, Left: two Round arcs about vertices 2d + 7.2e-12 mm apart, the
+    // chain passing from one to the other at their (near) touching point, kept a 7.2e-12 mm gap: the
+    // second arc's centre lies on the x axis, whose ulp steps (1e-28) could not move it there.
+    Contour in = polyline(
+        {{6.6283223938981575, -1.2779953526139643e-11},  {5.023667459767422, 2.1623209668586711e-11},
+         {6.9756096886500769, 34.51051481312367},        {6.3189901091486398, 34.312480314617368},
+         {4.6667279880904458, 2.0657439862650513},       {0.69533962297162577, 2.0657439862566656},
+         {1.9562893692302896, 33.119825834028326},       {7.04511858784476, 33.809684447840162},
+         {6.6283223939411231, 2.0657439862576599},       {5.0236674597854529, 2.0657439862438181},
+         {5.4657050614391105, 36.723239966815832},       {4.5703929732694029, 36.057839455949605},
+         {4.8076418394176894, 3.1120034057046923e-12},   {8.8588515885397729, -8.7094539924375882e-13},
+         {9.7907278097679189, -35.00186354855979},       {1.9705389447012767, -34.43692474497638},
+         {0.69533962299185814, -2.6581188530012263e-11}, {4.6667279880936041, -3.0346127572489825e-11},
+         {3.1154143986946496, 34.81196163001529},        {4.5941198790408642, 35.289788649021553},
+         {5.0236674597518789, 1.9744273286251705e-11},   {6.6283223939582836, -1.3296097279548633e-11},
+         {6.980860505868165, 32.133493994828015},        {9.603450489764624, 31.205313249352219},
+         {8.858851588581409, 2.0657439862506815},        {4.8076418393909703, 2.0657439862946823}});
+    const double d = 1.0328719931380388;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Left, JoinType::Round, kTol, 3.8787999757578069);
+    CHECK(junctionGaps(chains) == 0);
+    const DistanceExtremes ex = distanceExtremes(chains, in, d);
+    CHECK(ex.under <= distanceAllowance(d, Vec2{}));
+    CHECK(ex.over <= distanceAllowance(d, Vec2{}));
+}
+
+TEST_CASE("T-0017: a reversal between nearly co-circular arcs is kept wherever it lies (0xd4001274)",
+          "[geometry][offset][open][t0017]") {
+    // Verifier fam4 coCircNear, Square, Right, at (-1e4, 1e4): two offset arcs on circles 3e-6 mm
+    // apart run opposite ways and meet where they cross. Round 1 removed the second as a needle of
+    // "rounding" width 2e-9 x |x| = 2e-5 mm at 1e4 mm (losing 5.35 mm of path) but kept it near the
+    // origin; the bound no longer depends on where the input lies.
+    Contour in;
+    in.spans.emplace_back(ArcSpan{
+        {-10000, 10000}, 1.8130057389650542, 1.6909617265835539, 4.0236245777151183, ArcDirection::CCW});
+    in.spans.emplace_back(
+        LineSpan{{-10001.152316980988, 9998.6003016807736}, {-10015.178649135607, 9981.5627730617762}});
+    in.spans.emplace_back(
+        LineSpan{{-10015.178649135607, 9981.5627730617762}, {-10012.596667411821, 9979.7109217343568}});
+    in.spans.emplace_back(
+        LineSpan{{-10012.596667411821, 9979.7109217343568}, {-10001.609698146518, 9997.9070491012317}});
+    in.spans.emplace_back(ArcSpan{{-10000.000000089174, 10000.00000296611},
+                                  2.6403756771195135,
+                                  4.0567733419701861,
+                                  0.76780841659784071,
+                                  ArcDirection::CW});
+    const double d = 0.41368496906985969;
+    const std::vector<Contour> far =
+        offsetOpenContour(in, d, OffsetSide::Right, JoinType::Square, kTol, 3.1518687530154437);
+    const std::vector<Contour> near = offsetOpenContour(translated(in, Vec2{1e4, -1e4}), d, OffsetSide::Right,
+                                                        JoinType::Square, kTol, 3.1518687530154437);
+    REQUIRE(far.size() == near.size());
+    double farLength = 0.0;
+    double nearLength = 0.0;
+    for (std::size_t i = 0; i < far.size(); ++i) {
+        CAPTURE(i);
+        CHECK(far[i].spans.size() == near[i].spans.size());
+        for (const Span& s : far[i].spans) {
+            farLength += length(s);
+        }
+        for (const Span& s : near[i].spans) {
+            nearLength += length(s);
+        }
+    }
+    CHECK(std::fabs(farLength - nearLength) <= 1e-6);
+    CHECK(farLength > 55.0);
+}
+
+TEST_CASE("T-0017: a lens slot far from the origin closes exactly where its arcs cross (0xe400137f)",
+          "[geometry][offset][open][t0017]") {
+    // Verifier fam4 lensSlot, Round, Left: the closed chain's closing junction is the crossing of
+    // arcs of radius 39785 and 1.9 mm (checked to 30 digits: span 4 stays inside the large circle
+    // and span 0 outside the small one but at the junction). The verifier's own crossing
+    // (h^2 = r^2 - a^2, ~4e-4 relative error at r = 39785) read it as a self-crossing.
+    Contour in;
+    in.spans.emplace_back(ArcSpan{{-6308.8745429246874, 31581.569216038675},
+                                  39785.30676902362,
+                                  -1.570920458202786,
+                                  -1.5706721953870071,
+                                  ArcDirection::CCW});
+    in.spans.emplace_back(
+        LineSpan{{-6303.9359367948146, -8203.7372464668806}, {-6302.9359367948146, -8193.37889961566}});
+    in.spans.emplace_back(
+        LineSpan{{-6302.9359367948146, -8193.37889961566}, {-6305.2879140935202, -8192.37889961566}});
+    in.spans.emplace_back(
+        LineSpan{{-6305.2879140935202, -8192.37889961566}, {-6304.1211345246902, -8203.558166433495}});
+    in.spans.emplace_back(
+        LineSpan{{-6304.1211345246902, -8203.558166433495}, {-6313.6279513246845, -8203.558166433495}});
+    const double d = 0.089633408917393007;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Left, JoinType::Round, kTol, 2.0);
+    JunctionStats js;
+    checkJunctions(chains, js);
+    CHECK(js.backward == 0);
+    CHECK(js.notIdentical == 0);
+    CHECK(js.maxGap <= 1e-12 * 39785.4);
+    // No self-crossing check here: intersect()'s circle-circle crossing has the same
+    // cancellation for r = 39785 against 0.09 and reports a spurious second crossing 1e-5 mm from
+    // the junction (the true one is 0.011 mm away); a fix belongs outside T-0017.
+    const DistanceExtremes ex = distanceExtremes(chains, in, d);
+    CHECK(ex.under <= distanceAllowance(d, Vec2{-6304, -8204}));
+    CHECK(ex.over <= distanceAllowance(d, Vec2{-6304, -8204}));
+}
+
+TEST_CASE(
+    "T-0017: nearly collinear chamfer copies are joined by moving a line end, not a zero-length span "
+    "(0xe2000055)",
+    "[geometry][offset][open][t0017]") {
+    // Verifier fam2 zigzag-nearcollinear, Square, Left, d = 7.69: two chamfer copies 4.3e-14 mm
+    // apart at ~9 mm. With only 16-ulp gaps taken as rounding, the junction was bridged by a
+    // 4.3e-14 mm line; a line end now moves across gaps up to 1e-9 x |x| where the tilted line
+    // passes the distance checks.
+    Contour in = polyline({{0, 0},
+                           {0.34246809807709416, 1.3292456870100586},
+                           {0.68493619615418833, -9.8720926466949901e-15},
+                           {1.0274042942312824, 1.3292456870100819},
+                           {1.3698723923083767, 9.6758026023871068e-15}});
+    const double d = 7.6917751206911928;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Left, JoinType::Square, kTol, 2.0);
+    for (const Contour& c : chains) {
+        for (const Span& s : c.spans) {
+            CHECK(length(s) > 1e-9);
+        }
+    }
+    requireCleanChains(chains, 1e-6);
+    CHECK(distanceExtremes(chains, in, d).under <= distanceAllowance(d, Vec2{}));
+}
+
+TEST_CASE("T-0017: a loop of sub-tolerance pieces does not take the starts its chain needs (0xe40003fb)",
+          "[geometry][offset][open][t0017]") {
+    // Verifier fam4 shortWalkFar, Round, Left, d = 0.0213 (shrunk from 137 to 6 lines). The global
+    // stitching linked two sub-tolerance pieces into a loop first (gap 3.2e-4 mm), so the chain
+    // through them could not continue (gaps 9.9e-4 and 7.3e-4 mm) and fell apart in two, losing
+    // 3.6e-3 mm of offset. A link that would close a loop no longer than 4 x tol is skipped.
+    Contour in = polyline({{0.12516456875199689, -0.031632953553321519},
+                           {0.1279511103475624, -0.032220275701318545},
+                           {0.13064769290544898, -0.03313581045098489},
+                           {0.13347013052959394, -0.033514765893161984},
+                           {0.13627188406074953, -0.034024607554858859},
+                           {0.13911239817775328, -0.033821528948287299},
+                           {0.14195821566057526, -0.033716247307868007}});
+    const double d = 0.021263305223598185;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Left, JoinType::Round, kTol, 1.2917229761801405);
+    CHECK(chains.size() == 1);
+    requireCleanChains(chains, 1e-6);
+    const DistanceExtremes ex = distanceExtremes(chains, in, d);
+    CHECK(ex.under <= distanceAllowance(d, Vec2{}));
+    CHECK(ex.over <= distanceAllowance(d, Vec2{}));
+}
+
+TEST_CASE("T-0017: a needle tip between nearly co-circular arcs is bridged, not bent (0xe40016aa)",
+          "[geometry][offset][open][t0017]") {
+    // Verifier fam4 coCircNear (noisy), Sharp, Right: two offset arcs on circles 1.7e-7 mm apart
+    // run back along each other with a 1.5e-8 mm gap at the tip. The step repair bent the last
+    // tolerance of one arc into a 1e-3 mm line onto the other (a spike); at a reversal the gap is
+    // now bridged across the tip.
+    Contour in;
+    in.spans.emplace_back(
+        ArcSpan{{0, 0}, 2.2033079169640071, -2.2267861109534142, -1.3064720620699988, ArcDirection::CCW});
+    in.spans.emplace_back(
+        LineSpan{{0.57562975164911068, -2.1267854066578167}, {7.422449049853542, -27.423801976296062}});
+    in.spans.emplace_back(
+        LineSpan{{7.422449049853542, -27.423801976296062}, {10.123179626699358, -26.545788723983144}});
+    in.spans.emplace_back(
+        LineSpan{{10.123179626699358, -26.545788723983144}, {1.2243009918830434, -4.5234379448674229}});
+    in.spans.emplace_back(ArcSpan{{-3.5187571150240017e-08, 1.6838212700014806e-07},
+                                  4.6861930571930994,
+                                  -1.3064720620699988,
+                                  -2.592518075747611,
+                                  ArcDirection::CW});
+    const double d = 1.2414424801835482;
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, d, OffsetSide::Right, JoinType::Sharp, kTol, 2.0);
+    for (const Contour& c : chains) {
+        for (std::size_t i = 1; i + 1 < c.spans.size(); ++i) {
+            if (std::holds_alternative<LineSpan>(c.spans[i]) &&
+                std::holds_alternative<ArcSpan>(c.spans[i - 1]) &&
+                std::holds_alternative<ArcSpan>(c.spans[i + 1])) {
+                CHECK(length(c.spans[i]) <= 1e-6);
+            }
+        }
+    }
+    JunctionStats js;
+    checkJunctions(chains, js);
+    CHECK(js.gaps == 0);
+    CHECK(js.notIdentical == 0);
+    CHECK(distanceExtremes(chains, in, d).under <= distanceAllowance(d, Vec2{}));
 }
