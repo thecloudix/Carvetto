@@ -145,13 +145,16 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     vector's cut — the group is dropped, repeatedly until stable. The tab's own cut within two
     tool radii of its raised stretch is treated apart: on any convex curve, and round a corner of
     the cut, the tool at the plateau ends always nicks some cross-sections near the ends of the
-    core, which only narrows the tab, so it must leave a run of whole cross-sections at least
-    min(0.5 mm, half the tab length) wide (measured between the run's first and last
-    cross-section at whichever end is further apart); on a sharp convex corner a short tab can
-    have every cross-section cut by its own pass, and is dropped. Together: no pass cuts below the
-    tab top into any cross-section of a kept tab, except its own pass's nicks near the core ends,
-    which leave a whole run of cross-sections at least that wide — so every kept tab joins the
-    part to the waste beyond the kerf.
+    core, which only narrows the tab, so there the tab only has to stay joined: either a run of at
+    least three whole cross-sections whose ends lie ≥ 0.2 mm apart at both walls remains, or a
+    0.05 mm raster of the material (cells whose nearest core point lies along the normal within
+    the cross-sections' extent, so the material across a corner of the cut counts too; a cell is
+    cut when a tool comes within its radius plus half a cell) still joins the cells next to the
+    vector to the cells next to the far wall. On a sharp convex corner a short tab is cut through,
+    or left hanging on the part by a sliver, by its own pass, and is dropped. Together: no pass
+    cuts below the tab top into any cross-section of a kept tab except its own pass's nicks, which
+    leave the material joined (about 0.1 mm wide at least), so every kept tab joins the part to
+    the waste beyond the kerf.
     Counting: kept + left out = requested per vector, counted on the primary cuts (the finishing
     cuts with a separate last pass, otherwise the only cuts); one `TabsNotPlaced` diagnostic per
     vector says "N of M tab(s) left out" (another reports tabs that could not avoid a corner).

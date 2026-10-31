@@ -191,6 +191,7 @@ class ProfileBuilder {
     void dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& secondary);
     bool mapTab(const Cut& from, const TabSpan& t, const Cut& onto, TabSpan& out, bool& near) const;
     std::vector<TabSection> tabSections(const Cut& c, const TabSpan& t) const;
+    bool tabHolds(const Cut& c, const TabSpan& t, const std::vector<Vec2>& tools) const;
     bool spanFits(const Cut& c, const TabSpan& t, const std::vector<double>& keepClear) const;
     std::vector<double> otherStarts(const Cut& c, const std::vector<Cut>& otherPass) const;
     void reportTabs();
@@ -900,6 +901,127 @@ void ProfileBuilder::matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut
     }
 }
 
+// True when the material of tab `t` on cut `c` still joins the part to the waste once tools
+// (below the tab top) stand at `tools`. The material is rasterised in 0.05 mm cells: a cell belongs
+// to it when its nearest point on the core (sampled every 0.05 mm) lies along the normal, within
+// the vector-side extent of the cross-sections (tabSections) on one side or the far-wall extent on
+// the other; round a corner of the cut the nearest point is the corner, which takes in the material
+// across it. A cell is cut when a tool comes within its radius plus half a cell, so what remains is
+// at least about 0.1 mm wide. The tab holds when uncut cells join (4-neighbour) the cells next to
+// the vector to the cells next to the far wall.
+bool ProfileBuilder::tabHolds(const Cut& c, const TabSpan& t, const std::vector<Vec2>& tools) const {
+    constexpr double h = 0.05;
+    const double ca = t.a + radius_;
+    const double cb = t.b - radius_;
+    if (cb < ca) {
+        return false;
+    }
+    const double inner = c.distance - 0.02;
+    const double outer = radius_ + (p_.separateLastPass ? p_.lastPassAllowance : 0.0) - 0.02;
+    struct Station {
+        Vec2 p;
+        Vec2 t;
+    };
+    std::vector<Station> core;
+    const int ns = std::max(1, static_cast<int>(std::ceil((cb - ca) / h)));
+    geometry::Box2 box;
+    for (int i = 0; i <= ns; ++i) {
+        const double u = ca + (cb - ca) * i / ns;
+        core.push_back({c.walk.pointAt(u), c.walk.tangentAt(u)});
+        box.expand(core.back().p);
+    }
+    const double reach = std::max(inner, outer);
+    box = box.inflated(reach + h);
+    const int nx = static_cast<int>(std::ceil(box.width() / h)) + 1;
+    const int ny = static_cast<int>(std::ceil(box.height() / h)) + 1;
+    const auto cells = static_cast<std::size_t>(nx) * static_cast<std::size_t>(ny);
+    auto centre = [&](int i, int j) { return Vec2{box.min.x + (i + 0.5) * h, box.min.y + (j + 0.5) * h}; };
+    auto index = [&](int i, int j) { return static_cast<std::size_t>(j) * static_cast<std::size_t>(nx) + static_cast<std::size_t>(i); };
+    // Core stations bucketed by cells of `reach`, for the nearest-station search.
+    const double bucket = std::max(reach, 0.5);
+    std::map<std::pair<long, long>, std::vector<std::size_t>> near;
+    auto bkey = [&](Vec2 p) {
+        return std::pair<long, long>{static_cast<long>(std::floor(p.x / bucket)), static_cast<long>(std::floor(p.y / bucket))};
+    };
+    for (std::size_t k = 0; k < core.size(); ++k) {
+        near[bkey(core[k].p)].push_back(k);
+    }
+    // 0 = not material, 1 = material, 2 = material next to the vector, 3 = next to the far wall.
+    std::vector<char> state(cells, 0);
+    for (int j = 0; j < ny; ++j) {
+        for (int i = 0; i < nx; ++i) {
+            const Vec2 x = centre(i, j);
+            const auto [bx, by] = bkey(x);
+            double best = std::numeric_limits<double>::infinity();
+            std::size_t bk = 0;
+            for (long dx = -1; dx <= 1; ++dx) {
+                for (long dy = -1; dy <= 1; ++dy) {
+                    const auto it = near.find({bx + dx, by + dy});
+                    if (it == near.end()) continue;
+                    for (std::size_t k : it->second) {
+                        const double d = geometry::distance(x, core[k].p);
+                        if (d < best) {
+                            best = d;
+                            bk = k;
+                        }
+                    }
+                }
+            }
+            if (best > reach) continue;
+            const Vec2 rel = x - core[bk].p;
+            const double along = rel.x * core[bk].t.x + rel.y * core[bk].t.y;
+            if ((bk == 0 && along < -h) || (bk + 1 == core.size() && along > h)) continue;  // past the core
+            const double cross = core[bk].t.x * rel.y - core[bk].t.y * rel.x;  // > 0: left of travel
+            const bool vectorSide = (cross > 0.0) == c.contourOnLeft;
+            const double limit = vectorSide ? inner : outer;
+            if (best > limit) continue;
+            state[index(i, j)] = best < limit - 0.15 ? char{1} : (vectorSide ? char{2} : char{3});
+        }
+    }
+    // Cut cells, a row of each tool's disc at a time.
+    const double rr = radius_ - 1e-3 + 1.5 * h;
+    for (const Vec2& q : tools) {
+        const int j0 = std::max(0, static_cast<int>(std::floor((q.y - rr - box.min.y) / h)));
+        const int j1 = std::min(ny - 1, static_cast<int>(std::ceil((q.y + rr - box.min.y) / h)));
+        for (int j = j0; j <= j1; ++j) {
+            const double dy = box.min.y + (j + 0.5) * h - q.y;
+            const double w2 = rr * rr - dy * dy;
+            if (w2 <= 0.0) continue;
+            const double w = std::sqrt(w2);
+            const int i0 = std::max(0, static_cast<int>(std::ceil((q.x - w - box.min.x) / h - 0.5)));
+            const int i1 = std::min(nx - 1, static_cast<int>(std::floor((q.x + w - box.min.x) / h - 0.5)));
+            for (int i = i0; i <= i1; ++i) {
+                state[index(i, j)] = 0;
+            }
+        }
+    }
+    std::vector<char> seen(cells, 0);
+    std::vector<std::size_t> queue;
+    for (std::size_t k = 0; k < cells; ++k) {
+        if (state[k] == 2) {
+            seen[k] = 1;
+            queue.push_back(k);
+        }
+    }
+    for (std::size_t q = 0; q < queue.size(); ++q) {
+        const int i = static_cast<int>(queue[q] % static_cast<std::size_t>(nx));
+        const int j = static_cast<int>(queue[q] / static_cast<std::size_t>(nx));
+        const int di[4] = {1, -1, 0, 0};
+        const int dj[4] = {0, 0, 1, -1};
+        for (int e = 0; e < 4; ++e) {
+            const int ii = i + di[e];
+            const int jj = j + dj[e];
+            if (ii < 0 || jj < 0 || ii >= nx || jj >= ny) continue;
+            const std::size_t k = index(ii, jj);
+            if (seen[k] || state[k] == 0) continue;
+            if (state[k] == 3) return true;
+            seen[k] = 1;
+            queue.push_back(k);
+        }
+    }
+    return false;
+}
+
 // A tab only holds if no cut sweeps through its material below the tab top: in a slot narrower
 // than the kerf, past a nearby corner, or where a lobe of a cut comes back, the tool removes the
 // material and severs the tab. Each primary tab, with its matched stretches on the other pass, is
@@ -1017,7 +1139,7 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
                 box.expand(sct.p1);
             }
             box = box.inflated(radius_);
-            std::vector<char> nicked(sections.size(), 0);  // by the tab's own cut near it
+            std::vector<Vec2> nicks;  // samples of the tab's own cut near it that reach its material
             bool swept = false;
             for (long cx = cellOf(box.min.x); cx <= cellOf(box.max.x) && !swept; ++cx) {
                 for (long cy = cellOf(box.min.y); cy <= cellOf(box.max.y) && !swept; ++cy) {
@@ -1027,36 +1149,37 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
                         const Sample& q = open[i];
                         const bool local = !q.second && q.cut == own.cut &&
                                            pathGap(primary[own.cut].walk, q.u, own.span) < localReach;
-                        if (!local) {
-                            if (sectionDistance(q.p, sections) < radius_ - 1e-3) {
+                        if (sectionDistance(q.p, sections) < radius_ - 1e-3) {
+                            if (!local) {
                                 swept = true;
                                 break;
                             }
-                            continue;
-                        }
-                        for (std::size_t k = 0; k < sections.size(); ++k) {
-                            if (!nicked[k] && sectionDistance(q.p, sections[k]) < radius_ - 1e-3) nicked[k] = 1;
+                            nicks.push_back(q.p);
                         }
                     }
                 }
             }
-            if (!swept) {
-                // The widest run of whole cross-sections left by the tab's own cut, measured
-                // between its first and last cross-section at whichever end is further apart.
-                const double need = std::min(0.5, 0.5 * (own.span.b - own.span.a - 2.0 * radius_));
-                double widest = -1.0;
+            if (!swept && !nicks.empty()) {
+                // Quick answer: a run of at least three whole cross-sections whose ends lie at least
+                // 0.2 mm apart at both walls joins the part to the waste. Otherwise (round a corner)
+                // rasterise.
+                bool whole = false;
                 std::size_t runStart = 0;
-                for (std::size_t k = 0; k <= sections.size(); ++k) {
-                    if (k == sections.size() || nicked[k]) {
-                        if (k > runStart) {
+                for (std::size_t k = 0; k <= sections.size() && !whole; ++k) {
+                    const bool nicked = k < sections.size() &&
+                                        std::any_of(nicks.begin(), nicks.end(), [&](Vec2 q) {
+                                            return sectionDistance(q, sections[k]) < radius_ - 1e-3;
+                                        });
+                    if (k == sections.size() || nicked) {
+                        if (k >= runStart + 3) {
                             const TabSection& f = sections[runStart];
                             const TabSection& l = sections[k - 1];
-                            widest = std::max({widest, geometry::distance(f.p0, l.p0), geometry::distance(f.p1, l.p1)});
+                            whole = geometry::distance(f.p0, l.p0) >= 0.2 && geometry::distance(f.p1, l.p1) >= 0.2;
                         }
                         runStart = k + 1;
                     }
                 }
-                swept = widest < need - 1e-9;
+                swept = !whole && !tabHolds(primary[own.cut], own.span, nicks);
             }
             if (swept) {
                 alive[g] = false;
