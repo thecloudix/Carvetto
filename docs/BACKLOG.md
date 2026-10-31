@@ -327,6 +327,14 @@ Acceptance criteria:
   1. Arc/arc and line/arc crossings computed without cancellation; regression for the reported pair and a generative test over radius ratios 1e-6…1e6 vs high-precision reference.
   2. No result worse than main on the T-0007/T-0008 regression families.
 
+### T-0022 Arc angular slack and threshold crossings: distance-based tolerances   [status: ready]
+Phase: 1   Module: core/geometry   Depends on: T-0021
+Goal: Found by the T-0021 verifier (both pre-existing on main). (a) `closestPoint(ArcSpan)` and the end-contact code accept query directions within `containsAngle`'s fixed 1e-9 rad slack, which is real distance on large arcs (1.26e-4 mm at r = 1.26e5, the full tolerance at r = 1e6): an end lying that far beyond an arc's end is treated as exact and reported untangent. Repro: arc centre (0,0), r = 125593, start 1.0, end 1.5, CCW; line from E − 0.5·(cos a, sin a) to E with a = 1.0 − 3.2e-10, E = r·(cos a, sin a) → one untangent hit, distance to arc 4.0e-5 mm. (b) When a chord 2h exceeds tol only at rounding level, `addPoint` merges the two crossings into one hit not flagged tangent, contrary to ADR-0009 (~25 of 179k threshold pairs).
+Acceptance criteria:
+  1. Angular slack is distance-based (≈ ε or tol/r scaled), so ends beyond an arc by more than rounding are end contacts flagged tangent; regression for the repro and a radius sweep 1e-3…1e6.
+  2. Two crossings merged by the threshold rule are always flagged tangent; regression at 2h − tol ≈ ±1e-15.
+  3. No result worse than main on the T-0007/T-0008/T-0021 families.
+
 ### T-0018 offsetContours: inward offsets past the inradius must vanish, not invert   [status: ready]
 Phase: 1   Module: core/geometry   Depends on: —
 Goal: Found by the T-0121 coder: a closed contour offset inward by more than its inradius comes back inside out instead of empty (a 17 mm circle shrunk by 19.2 mm returns a 2.2 mm circle; by 30 mm a 13 mm circle). Pocket guards against it locally (`insetBy`); every other caller of `offsetContours` is exposed. Also document (or fix) that Clipper drops pieces of an open path lying exactly on a clip boundary.
