@@ -14,7 +14,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
+#include <fstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -38,15 +38,14 @@ namespace {
 orc::Poly fixturePoly(const char* name) {
     orc::Poly pts;
     const std::string path = std::string(CARVETTO_POCKET_FIXTURE_DIR) + "/" + name;
-    std::FILE* f = std::fopen(path.c_str(), "r");
-    if (f == nullptr) {
+    std::ifstream in(path);
+    if (!in) {
         FAIL("cannot open " << path);
     }
     double x = 0.0, y = 0.0;
-    while (std::fscanf(f, "%lf %lf", &x, &y) == 2) {
+    while (in >> x >> y) {
         pts.push_back({x, y});
     }
-    std::fclose(f);
     return pts;
 }
 
