@@ -236,13 +236,21 @@ ClosestPoint closestPoint(const ArcSpan& s, Vec2 p) {
     const Vec2 radial = p - s.centre;
     if (radial.lengthSquared() > 0.0) {
         const double angle = radial.angle();
-        if (s.containsAngle(angle)) {
+        // No angular slack (T-0022): a fixed slack in angle is a real distance on a large arc
+        // (1e-9 rad is 1e-3 mm at r = 1e6), and a direction inside it but beyond an end was
+        // projected radially onto the circle past the arc's end. When the direction lies outside
+        // the sweep the nearer end point is the answer; where that is only a rounding error of the
+        // direction, the end point and the radial projection are r times that rounding apart, so
+        // the distance is right to rounding either way. A full circle (as `isFullCircle` defines
+        // it) has no ends.
+        if (s.isFullCircle() || s.containsAngle(angle, 0.0)) {
             const double sweep = std::fabs(s.sweepAngle());
             const double delta = s.direction == ArcDirection::CCW ? normalizeAngle(angle - s.startAngle)
                                                                   : normalizeAngle(s.startAngle - angle);
-            // `containsAngle` accepts angles a rounding margin outside the arc. Just past the end
-            // the travelled angle is slightly above the sweep; just before the start it wraps to
-            // just under 2pi. Either way the parameter is that of the nearer end (in angle).
+            // On a circle that `isFullCircle` accepts although its sweep falls a rounding margin
+            // short of 2pi, the travelled angle can lie in that gap: just past the end it is slightly
+            // above the sweep, just before the start it wraps to just under 2pi. Either way the
+            // parameter is that of the nearer end (in angle).
             const double t = delta <= sweep ? delta / sweep : (delta - sweep <= kTwoPi - delta ? 1.0 : 0.0);
             const Vec2 q = s.centre + Vec2::fromAngle(angle, s.radius);
             return {q, t, distance(p, q)};

@@ -580,3 +580,89 @@ Change to decision 1 (analytic arc/arc crossings). Everything not mentioned belo
   1.00, p90 1.02, p99 1.14 (arc/arc families median 0.97–1.00, p99 1.07–1.38); the few larger
   ratios (worst 17.8 on one pair) are timer noise on a loaded machine, the change adds a handful of
   selects and no work.
+
+### 2026-10-30 — T-0022 (arc angular slack and threshold crossings) · Status: proposed
+Changes to `closestPoint(ArcSpan)` (T-0008 item 6) and to the near-tangent fold rule of the analytic
+pairs (T-0008 item 4). Everything not mentioned below is unchanged.
+1. **No angular slack in `closestPoint(ArcSpan)`.** A query direction is projected radially only when
+   it lies inside the sweep (`containsAngle(angle, 0)`), or on a circle that `isFullCircle` accepts;
+   otherwise the nearer end point is returned. `containsAngle`'s default slack of 1e-9 rad is a
+   real distance on a large arc (1.26·10⁻⁴ mm at r = 1.26·10⁵, the whole tolerance at r = 10⁶):
+   a point that far beyond an end was projected onto the circle past the end, at gap ≈ 0, so the
+   end contact of T-0008 item 1 judged it exact and reported it untangent (the card's regression:
+   a radial line ending 3.2·10⁻¹⁰ rad = 4.0·10⁻⁵ mm before the start of an arc of radius 125593
+   gave one untangent hit). A slack was not replaced by a smaller, distance-based one because
+   none is needed: where the direction lies outside the sweep only by the rounding of its angle,
+   the end point and the radial projection are r times that rounding apart, so the distance (and
+   the end contact's gap) is right to rounding either way, and the returned point is the arc's
+   own end point (an end shared with another span is now found at distance 0 rather than a
+   rounding error). The parameter rule of T-0008 item 6 is kept for the one case where the
+   direction can still lie outside the sweep: circles that `isFullCircle` (1e-9 rad) accepts
+   although their sweep falls a rounding margin short of 2π. That threshold, like
+   `isClosedCircle` in `intersect`, is a property of the arc's angles, not a distance, and is
+   unchanged.
+   Callers: `endContacts` and the Bezier pipeline's span-end hits (`endHits`) now see the true gap
+   of an end beyond an arc's end, so such an end within tolerance is a contact flagged `tangent`
+   (exact only when within 1e-6·`tol.distance` of the end itself); scan samples, settling walks and
+   point-like degenerate spans query `closestPoint` the same way and change by at most r·1e-9 at
+   ends. `closestPoint(Contour)`, `distanceTo`, `locatePoint` and `isInside` use the distance and
+   follow. Other `containsAngle` callers are unaffected: `onArc` in `intersect` and
+   `distanceToSpan` in `offset.cpp` already pass 0; `ArcSpan::bounds` keeps the 1e-9 rad default,
+   which can only add an axis extreme within r·(1 − cos 1e-9) of the true box.
+2. **Crossings merged by rounding are one tangent hit (T-0008 item 4).** The fold rule asked only
+   whether the computed chord 2s (line/arc) or 2h (arc/arc) exceeds `tol.distance`. When it does
+   only by rounding (2h − tol ≈ 10⁻¹⁵ mm) the two crossings computed from it can still lie within
+   `tol.distance` of each other, and `addPoint` merged them into one hit not flagged tangent. Now
+   the pair folds when the chord is within the tolerance *or* the two computed crossing points are
+   (the same `equalPoints` test `addPoint` applies): one tangent hit at the foot of the
+   perpendicular (line/arc) or the midpoint of the facing points (arc/arc), exactly as just below
+   the threshold, so the result is continuous across it. Results with two crossings are
+   bit-identical to before.
+
+**Guarantees (measured):**
+- *Ends beyond arc ends* (unit test, 12,000 cases): arcs of radius 10⁻³…10⁶ (centres within
+  ±10³ mm), a line (radial from inside, radial outwards, tangential, oblique) or a Bezier ending
+  0…2·`tol.distance` beyond an arc's start or end (a tenth exactly at the end, a fifth
+  10⁻¹²…10⁻⁶·tol, a fifth 0.5…2× the exact-contact gap), both orders, the gap computed in
+  double-double (the arc's end from its own `angleAt`, cos/sin to ~10⁻³⁰). Gap ≤ 0.999·tol:
+  exactly one hit within tol + gap of the end, `tangent` whenever the gap exceeds 1e-6·tol by more
+  than the rounding of the arc's end (8ε·(|centre| + r·(1 + |angle|))), untangent where an exact
+  contact is transversal; gap ≥ 1.001·tol: no hit; bit-exact mirrors. 0 failures (`main`: 719).
+  Arcs no longer than the tolerance are points (decision 3) and are only checked for symmetry.
+  `closestPoint` against the same reference over 20,000 queries beyond the ends, on and off the
+  circle: worst error 0.08 of that rounding allowance (`main`: 1,873 queries off by up to
+  r·1e-9).
+- *Threshold chords* (unit tests, 20,000 line/circle and 20,000 circle/circle pairs with the chord
+  tol·(1 ± 10⁻¹¹), half of them small full circles far from the origin, where the crossings'
+  rounding exceeds the half chord's): one tangent hit or two untangent hits more than tol apart,
+  never one untangent hit; 0 failures (`main`: 80 and 68), plus two fixed regressions.
+- *Regression guard (no result worse than `main`):* the T-0021 driver set-up (`git archive main`,
+  namespace renamed, linked next to the branch), 76,000 span pairs per seed, seeds 1, 2, 3:
+  random line/line, line/arc, arc/arc (20 mm box, a sixth full circles) and in 0.01–0.1 mm
+  boxes, the T-0008 end-touch family, near-tangent line/circle and circle/circle pairs (gaps
+  ±2·tol), the threshold chords above, the T-0021 radius-ratio pairs and junctions, the ends
+  beyond arc ends above, random arc/line/Bezier–Bezier pairs, Beziers hugging arcs and circles
+  touching a convex cubic. Every differing result and every 50th case judged by a brute-force
+  gap profile (20,000 samples along A, 6,000 with a Bezier, plus geometric refinement towards the
+  ends; local minima refined by golden section; ends within tolerance; distances to lines and arcs
+  in double-double). Errors: a contact within 0.999·tol with no hit within tol + gap/2; a hit
+  further than tol from either span or from A(tA)/B(tB); an untangent hit further than
+  1.1e-6·tol + 16ε·scale from either span; a hit with no contact near it; an asymmetry. Worse
+  (more errors, or the same and the largest untangent residual above 4× `main`'s): 0, 0, 0.
+  Different: 1,505, 1,606, 1,565 — the ends beyond arc ends (better 333, 344, 378: `main`
+  reported those ends untangent at the radial projection; the rest equal: the end contact now
+  paired with the arc's end point, moved by up to half the gap, ≤ 4.8·10⁻⁴ mm, flags unchanged
+  outside the band at the exact-contact gap) and threshold chords (4, 11, 5: one untangent
+  merged crossing became the tangent fold, which the judge counts equal). Every other family is
+  bit-identical. Branch errors in judged cases 1, 2, 3, each identical on `main`: an arc shorter
+  than the tolerance handled as a point (untangent at a non-zero gap; T-0008 known limits), one
+  pre-existing error in a 0.1 mm box, and a judge artefact at a full circle's seam (seed 3, a
+  sampled case with bit-identical results).
+  `selfIntersections` of 4,000 random 1–4-span line/arc contours and 3,000 lens slots: identical.
+- *Downstream:* `offsetContours` (3,000: circles up to r = 10⁴, random closed line/arc contours,
+  lens slots; ±0.01…3 mm, all join types), `offsetOpenContour` (2,000) and `booleanOp` (3,000,
+  all four operations against shifted copies) give identical output on the branch and `main`
+  for every seed.
+- *Cost (Release -O2, CPU time, best of 7, branch / `main`):* every analytic and Bezier family
+  0.98–1.05× (the threshold test adds one point distance per crossing pair); `closestPoint(ArcSpan)`
+  1.04× (0.19 µs: `isFullCircle` is asked before `containsAngle`).
