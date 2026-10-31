@@ -290,7 +290,7 @@ Acceptance criteria:
   5. Ordering modes produce the documented orders on a 3×3 grid of squares; inner-first holds for nested contours.
   6. Golden G-code through the Grbl post for the AC1 case; randomized property test: no feed move ever comes closer than tool radius − tol to the uncut side of any input contour.
 
-### T-0121 Pocket toolpath (offset and raster, profile pass, ramp plunge)   [status: re-scoped → T-0125 (owner decision 2026-10-30: follow-up card on the same branch, merge when it passes)]   [was: failed final round, owner decision pending]
+### T-0121 Pocket toolpath (offset and raster, profile pass, ramp plunge)   [status: done (with T-0125, 2026-10-31)]
 Paused 2026-10-26 (owner). Branch task/T-0121-pocket @ d432243 (pushed). Round 3 verifier: ACs 1–6 PASS, ~3,200 scenes 0 gouges, fold flags confirmed generator artefacts; FAIL on one residual: the Strict centre-region inset guard can drop a genuine lobe whose one vertex sits ~1e-6 past the slack → whole reachable area silently uncut (rare: ~1/4,000 diameters; repro scratchpad t0121v3/gap_poly.txt + gap4.cpp). Proposed: re-scope into a small follow-up card. To T-0123: raster pattern memory unbounded inside caps (bad_alloc at 1000-tooth comb), rest raster quadratic, rest tools re-trace link-cut scallops.
 Phase: 1   Module: core/toolpath   Depends on: T-0040 (offset API in main; T-0017 quality fixes land in parallel — owner decision 2026-10-26)   ADR: 0017
 Goal: `pocketToolpath(contours, tools, PocketParams)` per §5 "Pocketing Toolpath": Offset strategy (climb/conv, stepover, linking with minimal retracts) or Raster (angle, stepover, boundary pass), Profile Pass first/last/none, Pocket Allowance, Ramp Plunge, multi-tool clearance + rest tool (rest regions computed as the area the larger tool could not reach), islands (inner contours) respected.
@@ -311,7 +311,7 @@ Acceptance criteria:
   3. Everything T-0120 verified stays clean (ACs 1–6, B1–B4, ≥ 2,000-scene gouge sweep, golden unchanged).
   4. Non-blocking items from the round-3 report fixed where cheap: leads checked against r + allowance; tab thickness > cut depth clamped with a diagnostic; zero-length plunge removed; projected tab length on curves.
 
-### T-0125 Pocket: centre-region guard must never drop a genuine region (residual of T-0121)   [status: verified 2026-10-31 — merging with T-0121]
+### T-0125 Pocket: centre-region guard must never drop a genuine region (residual of T-0121)   [status: done]
 Phase: 1   Module: core/toolpath   Branch: task/T-0121-pocket (continues d432243)   ADR: 0017
 Goal: Finish T-0121 so it can merge. The Strict inset guard rejects a whole centre-region lobe when one vertex sits ~1e-6 past the slack (Clipper grid + round-join sag), so a reachable part of the pocket is silently left uncut (~1 in 4,000 diameters).
 Acceptance criteria:
@@ -335,7 +335,7 @@ Acceptance criteria:
   2. Two crossings merged by the threshold rule are always flagged tangent; regression at 2h − tol ≈ ±1e-15.
   3. No result worse than main on the T-0007/T-0008/T-0021 families.
 
-### T-0126 Pocket guard hardening: edge checks after pull-in, area-weighted phantom test   [status: ready]
+### T-0126 Pocket guard hardening: edge checks after pull-in, area-weighted phantom test   [status: in-progress]
 Phase: 1 (before Pocket ships to users)   Module: core/toolpath   Depends on: T-0121/T-0125 merged   ADR: 0017
 Goal: Non-blocking findings of the T-0125 round-2 verifier (scratchpad t0125v2/adv.cpp raw-injection harness). (N1) After a convex vertex is pulled in or removed, only vertices are re-checked: removing a vertex on a concave join arc lets the new chord sag ~4× the arc step inside the limit (0.015 mm at chordal 0.01, 0.15 at 0.1, 0.71 at 0.5) — a gouge into exact walls. Never seen with real Clipper output, but a gap in the guard. (N2) The phantom test counts vertices, so a real 900 mm² region whose small bulge holds most vertices is rejected silently; a successful inset repair can lose 76 mm² at chordal 0.5 without a message.
 Acceptance criteria:
