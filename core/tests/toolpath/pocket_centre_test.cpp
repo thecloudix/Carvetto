@@ -6,8 +6,9 @@
 // The oracle is independent of the offset code: the exact signed distance to the input polygon
 // (pocket_oracle.hpp) is sampled on a grid, its local maxima are the centres of the pocket's
 // lobes, and every lobe centre deeper than radius + margin (+ 0.02) must lie inside the centre
-// region. Every vertex of the centre region must be inside the pocket and at least
-// radius + margin − (chordal/2 + 2e-6) from the walls (the join budget of ADR-0017 §3).
+// region. Every vertex of the centre region must be inside the pocket, and every edge at least
+// radius + margin − (chordal/2 + 2e-6) from the walls (the join budget of ADR-0017 §3; exact
+// segment distance, T-0126).
 
 #include <algorithm>
 #include <catch2/catch_test_macros.hpp>
@@ -122,6 +123,61 @@ std::vector<orc::Poly> polysOf(const std::vector<Contour>& cs) {
     }
     return out;
 }
+
+/// The wall edges of one polygon in a uniform grid (cell size `cell`), for "is every edge of a
+/// region at least `bound` from the wall" over thousands of diameters. Distances are the oracle's
+/// exact segment-to-segment distance.
+class WallIndex {
+   public:
+    WallIndex(const orc::Poly& wall, double cell) : wall_(wall), cell_(cell) {
+        x0_ = y0_ = 1e300;
+        double x1 = -1e300, y1 = -1e300;
+        for (const Vec2 q : wall) {
+            x0_ = std::min(x0_, q.x);
+            y0_ = std::min(y0_, q.y);
+            x1 = std::max(x1, q.x);
+            y1 = std::max(y1, q.y);
+        }
+        nx_ = static_cast<int>((x1 - x0_) / cell_) + 1;
+        ny_ = static_cast<int>((y1 - y0_) / cell_) + 1;
+        cells_.resize(static_cast<std::size_t>(nx_ * ny_));
+        for (std::size_t e = 0, n = wall.size(); e < n; ++e) {
+            const Vec2 a = wall[e], b = wall[(e + 1) % n];
+            for (int j = row(std::min(a.y, b.y)); j <= row(std::max(a.y, b.y)); ++j) {
+                for (int i = col(std::min(a.x, b.x)); i <= col(std::max(a.x, b.x)); ++i) {
+                    cells_[static_cast<std::size_t>(j * nx_ + i)].push_back(e);
+                }
+            }
+        }
+    }
+
+    /// Smallest distance from segment ab to the wall, if below `bound`; `bound` otherwise.
+    double segDistBelow(Vec2 a, Vec2 b, double bound) const {
+        double best = bound;
+        for (int j = row(std::min(a.y, b.y) - bound); j <= row(std::max(a.y, b.y) + bound); ++j) {
+            for (int i = col(std::min(a.x, b.x) - bound); i <= col(std::max(a.x, b.x) + bound); ++i) {
+                for (const std::size_t e : cells_[static_cast<std::size_t>(j * nx_ + i)]) {
+                    best = std::min(best, orc::segSegDist(a, b, wall_[e], wall_[(e + 1) % wall_.size()]));
+                }
+            }
+        }
+        return best;
+    }
+
+   private:
+    int col(double x) const {
+        return std::clamp(static_cast<int>(std::floor((x - x0_) / cell_)), 0, nx_ - 1);
+    }
+    int row(double y) const {
+        return std::clamp(static_cast<int>(std::floor((y - y0_) / cell_)), 0, ny_ - 1);
+    }
+
+    const orc::Poly& wall_;
+    double cell_;
+    double x0_, y0_;
+    int nx_{1}, ny_{1};
+    std::vector<std::vector<std::size_t>> cells_;
+};
 
 struct Shape {
     std::string name;
@@ -285,12 +341,13 @@ TEST_CASE("T-0125 property: no reachable part of the pocket is dropped across 4,
         }
     }
 
-    std::size_t diameters = 0;
+    std::size_t diameters = 0, tooClose = 0;
     for (const Shape& s : shapes) {
         const Contour input = Contour::fromPolyline(Polyline{s.poly, true});
         const auto centres = lobeCentres(s.poly, 0.2);
         REQUIRE(centres.size() >= 2);
         std::size_t lobeChecks = 0;
+        const WallIndex walls(s.poly, 0.5);
         PocketParams p;
         p.tolerance.chordal = s.chordal;
         const double m = p.tolerance.chordal;
@@ -308,11 +365,24 @@ TEST_CASE("T-0125 property: no reachable part of the pocket is dropped across 4,
                     CHECK(orc::insideEvenOdd(cp, q));
                 }
             }
-            // Every 25th diameter: no vertex too close to a wall, none outside (no phantom kept).
+            // Every diameter: no edge too close to a wall (T-0126; exact segment distance, so
+            // a chord sagging between two good vertices is caught too).
+            const double bound = r + m - (0.5 * m + 2e-6);
+            for (const orc::Poly& ring : cp) {
+                for (std::size_t i = 0, n = ring.size(); i < n; ++i) {
+                    const double dist = walls.segDistBelow(ring[i], ring[(i + 1) % n], bound);
+                    if (dist < bound) {
+                        ++tooClose;
+                        FAIL_CHECK("edge " << i << " (" << ring[i].x << ", " << ring[i].y << ") at " << dist
+                                           << " < " << bound);
+                    }
+                }
+            }
+            // Every 25th diameter: no vertex outside the pocket (no phantom kept).
             if (k % 25 == 0) {
                 for (const orc::Poly& ring : cp) {
                     for (const Vec2 v : ring) {
-                        CHECK(signedDist(s.poly, v) >= r + m - (0.5 * m + 2e-6));
+                        CHECK(signedDist(s.poly, v) > 0.0);
                     }
                 }
             }
@@ -336,4 +406,5 @@ TEST_CASE("T-0125 property: no reachable part of the pocket is dropped across 4,
         CHECK(2 * lobeChecks > s.diameters.size());  // most diameters fit at least one lobe
     }
     CHECK(diameters >= 5000);
+    CHECK(tooClose == 0);
 }

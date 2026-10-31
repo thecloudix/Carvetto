@@ -151,11 +151,12 @@ PocketResult pocketToolpath(const std::vector<geometry::Contour>& contours,
 /// as `pocketToolpath` computes it (`PocketToolPlan::centreRegion`): the even-odd region of the
 /// closed contours inset by radius + `params.allowance` + `params.tolerance.chordal`, polygonal,
 /// outers counter-clockwise, holes clockwise. Empty when the tool fits nowhere. Vertices that
-/// Clipper2 leaves too close to a wall are pulled in or the part is inset slightly further
-/// (ADR-0017 §4); a part that still cannot be kept within the safety margin is reported in
-/// `messages`, never dropped silently. Open contours are ignored and reported, and input over the
-/// vertex cap (ADR-0017 §12) is refused with a message, as in `pocketToolpath`. Cheap compared to
-/// a whole toolpath: useful to preview where a tool fits.
+/// Clipper2 leaves too close to a wall are pulled in (every edge so changed is checked exactly)
+/// or the part is inset further (ADR-0017 §4); a part that still cannot be kept within the
+/// safety margin, or is inset by more than the chordal tolerance to keep it, is reported in
+/// `messages`, never dropped or trimmed silently. Open contours are ignored and reported, and
+/// input over the vertex cap (ADR-0017 §12) is refused with a message, as in `pocketToolpath`.
+/// Cheap compared to a whole toolpath: useful to preview where a tool fits.
 std::vector<geometry::Contour> pocketCentreRegion(const std::vector<geometry::Contour>& contours,
                                                   double toolDiameter, const PocketParams& params,
                                                   std::vector<std::string>* messages = nullptr);
