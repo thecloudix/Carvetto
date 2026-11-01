@@ -86,7 +86,7 @@ Acceptance criteria:
 
 Re-scoped by director after 3 verification rounds (2026-10-26, owner decision: re-scope, do not merge): AC1 speed and AC2 mitres verified clean; AC3 fixed for exactly and near-collinear steep zig-zags (noise sweep 1e-13…1e-4 clean), but the round-3 "nearly the same carrier" grouping is worse than main in ~25/10k new adversarial cases (offset inside d, Round beyond d, spurious chains) and the back-step safety net skips 3-span chains. Not merged; work continues on branch task/T-0006-offset-quality (b722cf2, pushed) under T-0017.
 
-### T-0017 Open-offset quality II: residuals of T-0006   [status: in-progress (resumed 2026-10-30)]
+### T-0017 Open-offset quality II: residuals of T-0006   [status: verifying — round 3 of 3 @ ec0856e (pass rule: no worse than main, owner 2026-10-31)]
 Paused 2026-10-26 (owner). Branch task/T-0017-offset-quality-ii @ f8e4506 (WIP, pushed; builds, 494/494 serial). Round-1 verifier FAIL (7 items + translation-dependent needle removal); coder reports 6/7 + needle removal fixed; item 5 (self-crossing 0xe400137f) is a cancellation bug in core/src/geometry/intersect.cpp general intersect() — needs its own card. On resume: coder runs fam2/3/4 + hp/lens sweeps, -j8 repeat, CHANGELOG line, then round-2 verification.
 Phase: 1 (before Profile/Pocket ship)   Module: core/geometry   Depends on: T-0006 branch (b722cf2)   ADR: 0012 (amend A1)
 Goal: Finish T-0006 so it can merge: everything T-0006 verified clean stays clean (AC1 speed, AC2 mitre oracle, steep zig-zags exact and noisy, R1/R2/R3, needle-tip classification), and the round-3 verifier's residuals are fixed. Repros and harness: T-0006 round-3 verifier scratchpad `t0006v3/` (repro_r4/r5/r6.cpp, vdrv3.cpp with gen3.inc, bnd.cpp).
@@ -302,7 +302,7 @@ Acceptance criteria:
   5. Linking: number of retracts in the offset strategy ≤ number of disconnected regions + 1 for simple shapes.
   6. Golden G-code through Grbl for AC1; gouge-free property test as in T-0120.
 
-### T-0124 Profile: roughing tabs must match finishing tabs (residual of T-0120)   [status: in-progress]
+### T-0124 Profile: roughing tabs must match finishing tabs (residual of T-0120)   [status: in-progress — round 3 FAIL (On profiles only); owner 2026-11-01: add conservative On guard, verify the guard, merge; On fix → T-0127]
 Phase: 1   Module: core/toolpath   Branch: task/T-0120-profile (continues d75742a)   ADR: 0016
 Goal: Finish T-0120 so it can merge. With a separate last pass, a finishing tab can be missing from the roughing cut, so roughing cuts through it at full depth with no diagnostic (T-0120 round-3 verifier: 96/576 rectangle configs; 38/300 random scenes with separate last pass forced on).
 Acceptance criteria:
@@ -335,13 +335,23 @@ Acceptance criteria:
   2. Two crossings merged by the threshold rule are always flagged tangent; regression at 2h − tol ≈ ±1e-15.
   3. No result worse than main on the T-0007/T-0008/T-0021 families.
 
-### T-0126 Pocket guard hardening: edge checks after pull-in, area-weighted phantom test   [status: in-progress]
+### T-0126 Pocket guard hardening: edge checks after pull-in, area-weighted phantom test   [status: in-progress — fix committed @ f85d8f7 (pushed); final test runs pending, then verification]
 Phase: 1 (before Pocket ships to users)   Module: core/toolpath   Depends on: T-0121/T-0125 merged   ADR: 0017
 Goal: Non-blocking findings of the T-0125 round-2 verifier (scratchpad t0125v2/adv.cpp raw-injection harness). (N1) After a convex vertex is pulled in or removed, only vertices are re-checked: removing a vertex on a concave join arc lets the new chord sag ~4× the arc step inside the limit (0.015 mm at chordal 0.01, 0.15 at 0.1, 0.71 at 0.5) — a gouge into exact walls. Never seen with real Clipper output, but a gap in the guard. (N2) The phantom test counts vertices, so a real 900 mm² region whose small bulge holds most vertices is rejected silently; a successful inset repair can lose 76 mm² at chordal 0.5 without a message.
 Acceptance criteria:
   1. After pull-in or removal every new edge is distance-checked (exact segment-to-wall), falling back to the inset repair; regression from the raw-injection cases at chordal 0.01/0.1/0.5.
   2. Phantom classification is area- or depth-weighted; the C2/C4 cases are kept; a message whenever the repair inset exceeds ~chordal or loses area beyond a small bound.
   3. Everything T-0121/T-0125 verified stays clean (diameter scans, phantom probes, sweeps).
+
+### T-0127 Profile On-vector tabs: exact classification and connectivity on sharp turns   [status: blocked]
+(Unblocks when T-0120/T-0124 merge.)
+Phase: 1   Module: core/toolpath   Depends on: T-0124   ADR: 0016 §14
+Goal: T-0124 round-3 verifier (harness branch `verifier-harness`, t0124v4/): for profiles On the vector, a short tab on a sharp turn of the cut is kept although its own pass cuts it through (repro/on_corner.cpp; sweep scenes repro/sev_*.scn; F9 = seed 41006 fam 5 scene 9). T-0124 merges with a conservative guard that drops such tabs ("cut through"); this card replaces the guard with an exact rule so On tabs are kept whenever they really hold.
+Acceptance criteria:
+  1. On is decided by the profile side, not by `Cut::distance`; left/right material classification is correct near corners (allowance −, 0, +; with and without a separate last pass).
+  2. Every kept On tab joins part and waste (independent raster oracle conn6/flood) over ≥ 1,500 new-seed scenes; tabs dropped by the T-0124 guard that would hold are kept.
+  3. "kept + left out = requested" stated correctly (per loop when an offset splits) and consistent; thin necks < 0.1 mm either avoided or reported.
+  4. Inside/Outside and tab-free toolpaths byte-identical to the T-0124 merge.
 
 ### T-0018 offsetContours: inward offsets past the inradius must vanish, not invert   [status: ready]
 Phase: 1   Module: core/geometry   Depends on: —
@@ -366,6 +376,8 @@ Acceptance criteria:
   3. 5,000 small closed vectors profile and pocket in < 2 s Release (CPU time), scaling ≤ 2.5× per doubling.
   4. Pocket rest tools build their pattern only over the rest areas (not the full pattern then clipped): the 200-tooth comb with a 0.1 mm rest tool (T-0121 verifier) runs ≥ 5× faster than at T-0121 merge.
   5. Raster and rest toolpaths route links through cleared area (as Offset does since T-0121 round 2), so raster pockets split by islands and far-apart rest areas retract only between disconnected regions.
+
+Owner decisions 2026-10-31/11-01: run heavy verification one task at a time (machine capacity); T-0017 passes on "no worse than main" (findings identical to main become follow-up cards); T-0124 round-3 FAIL limited to On profiles → merge with a conservative On guard, exact fix in T-0127; director moved from the cloud session to Chris's local WSL machine (see docs/HANDOFF.md).
 
 Owner decisions 2026-10-26 for T-0120/T-0121 (record in ADR-0016/0017): tab length = material left (raised path = length + tool diameter); separate last pass runs after all roughing; nested closed vectors form a region (inner = hole); climb assumes M3 (clockwise) spindle, ramps at feed rate, 3D tabs ramp at 45°, leads only on each cut's first entry and last exit, left-to-right ordering column by column — accepted as proposed; Pocket Profile Pass First/Last/None applies to the Offset strategy too (not only Raster); when a lead-in does not fit at the chosen start, Profile moves the start along the vector and warns (StartMoved).
 
