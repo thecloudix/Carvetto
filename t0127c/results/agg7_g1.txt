@@ -1,0 +1,3 @@
+paired On: scenes=490 req=2960 kept_new=1649 kept_old=1490 scenes_more=69
+new files=33 scenes=1650 det=0 gouge=0 clampBad=0 kept_all=5359 checked_all=5311 sev_all=23 thin_all=4 countBad=88 on_scenes=490 on_kept=1649 on_left=1158 on_req=2960 on_tabs_checked=1629 on_severed=3 on_thin=0
+old files=33 scenes=1650 det=0 gouge=0 clampBad=0 kept_all=5147 checked_all=5135 sev_all=27 thin_all=3 countBad=86 on_scenes=490 on_kept=1490 on_left=1297 on_req=2960 on_tabs_checked=1484 on_severed=2 on_thin=0

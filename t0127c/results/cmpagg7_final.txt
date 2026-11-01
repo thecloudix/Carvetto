@@ -1,0 +1,12 @@
+notabs_io_neg_diff 59
+notabs_io_neg_n 893
+notabs_io_nonneg_n 5804
+notabs_on_n 2513
+tabs_io_neg_diff 194
+tabs_io_neg_n 893
+tabs_io_nonneg_n 5804
+tabs_on_diff 466
+tabs_on_n 2513
+io_neg diffs (tabs): 194
+notabs_io_neg diffs 59 of which allowance == -r exactly 59 (Inside 59 )
+tabs_io_neg diffs 194 of which allowance == -r exactly 81 (Inside 59 )

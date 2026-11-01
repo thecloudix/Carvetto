@@ -1,0 +1,18 @@
+SIDE=2 ALLOW=0 kind 0 sep 0 | new: diags 0 (tab diags 0) cpu 0.19s | main: diags 0 (tab diags 0) cpu 0.32s
+SIDE=2 ALLOW=0 kind 0 sep 1 | new: diags 0 (tab diags 0) cpu 3.13s | main: diags 0 (tab diags 0) cpu 3.38s
+SIDE=2 ALLOW=0 kind 1 sep 0 | new: diags 0 (tab diags 0) cpu 0.24s | main: diags 0 (tab diags 0) cpu 0.33s
+SIDE=2 ALLOW=0 kind 1 sep 1 | new: diags 0 (tab diags 0) cpu 6.18s | main: diags 0 (tab diags 0) cpu 6.34s
+SIDE=2 ALLOW=0.3 kind 0 sep 0 | new: tab diags 0) cpu 0.21s | main: timeout>30s
+SIDE=2 ALLOW=0.3 kind 0 sep 1 | new: tab diags 0) cpu 3.21s | main: timeout>30s
+SIDE=2 ALLOW=0.3 kind 1 sep 0 | new: tab diags 0) cpu 0.26s | main: timeout>30s
+SIDE=2 ALLOW=0.3 kind 1 sep 1 | new: tab diags 0) cpu 6.33s | main: timeout>30s
+SIDE=2 ALLOW=-0.3 kind 0 sep 0 | new: tab diags 0) cpu 0.19s | main: timeout>30s
+SIDE=2 ALLOW=-0.3 kind 0 sep 1 | new: tab diags 0) cpu 1.64s | main: timeout>30s
+SIDE=2 ALLOW=-0.3 kind 1 sep 0 | new: tab diags 0) cpu 0.24s | main: timeout>30s
+SIDE=2 ALLOW=-0.3 kind 1 sep 1 | new: tab diags 0) cpu 3.29s | main: timeout>30s
+SIDE=0 ALLOW=-0.5 kind 0 sep 0 | new: tab diags 0) cpu 3.72s | main: tab diags 0) cpu 3.75s
+SIDE=0 ALLOW=-0.5 kind 0 sep 1 | new: tab diags 0) cpu 11.23s | main: tab diags 0) cpu 11.09s
+SIDE=0 ALLOW=-0.5 kind 1 sep 0 | new: tab diags 0) cpu 11.15s | main: tab diags 0) cpu 11.16s
+SIDE=0 ALLOW=-0.5 kind 1 sep 1 | new: timeout>30s | main: timeout>30s
+
+[exited with code 0]

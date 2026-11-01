@@ -1,0 +1,31 @@
+T-0127 coder harness (2026-11-01). Based on t0124v5 (tools/ copied unchanged), plus:
+  tools/conn7.cpp       conn6s + env NEGA=1 (In/Out allowance in [-r, 0]: -r exactly 1/8, -r+U(0,0.5) 3/8,
+                        U(-r,0) 1/2; On U(-0.5,0.5) 5/8 else 0) and a gouge bound of r + min(0, allowance)
+  tools/nontab3.cpp     nontab2 (move+diag hash per scene) printing the allowance; gen_body_neg.inc adds NEGA
+  tools/mkscn.cpp       writes the 30x30 square tab scenes (side, D, allowance, sep, L, n, [+circle], [lpa], [3d])
+  tools/tangent.cpp     + wtab.py: windowed flood across one tab (direction from the nearest vector),
+                        seeds at +-(r + |a| + 1.2) along the normal, window half max(plateau/2 + 1.5, r + 3)
+  mk.sh src name        builds bin/name (worktree build-hr) and bin/name_old (main e4da396 build-hr)
+  mknew.sh names...     rebuilds only the new binaries
+  jobs7.py conn|cmp     job lists: conn sets n3 (85000, std), n4 (86000, ONP=1), g1 (87000, NEGA=1),
+                        g2 (88000, NEGA=1 ONP=1) over the 11 t0124v4 configs, conn7 and conn7_old;
+                        cmp sets r3/n1/n2/n3 (81000/83000/84000/85000) + g1 (87000 NEGA) TABS=0/1, c_9100x x120
+  run7.sh <job line>    resumable runner (xargs -P 4 -L 1 ./run7.sh < jobs)
+  agg7.py [prefixes]    conn7 aggregate new vs old (On kept/left/req, severed, thin, countBad, lists)
+  recheck7.sh [sides]   every SEVERED tab of the new logs: dump scene, wtab.py with new and old lib
+  recheckio.sh [pref]   In/Out SEVERED scenes re-run at CELL 0.03 NOSEAM=1 and CELL 0.02, new and old
+  cmpagg7.py            byte identity per scene new vs old, grouped tabs/notabs x On / In-Out a>=0 / a<0
+Build libs: worktree and main with -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=-Wno-maybe-uninitialized
+(GCC 15 -O3 false positives in document.cpp). Paths in mk.sh/mknew.sh are this machine's.
+  tools/seedsio.cpp     + wtabio.py: windowed flood for an Inside/Outside tab (part seed |min(a,0)| + 1 into the
+                        part, waste seed 2r + a + lpa + 1 into the waste, by nesting parity)
+  tools/deepest.cpp     deepest point inside the closed vectors (whole-scene flood from it: is any remnant held?)
+  tools/plats.cpp       raised runs at the tab top (chord mid point and chord length) of a scene
+  scn/rc_*.scn          dumped scenes of every SEVERED report rechecked; fw_*.scn: scenes where the branch keeps
+                        fewer On tabs than main; thin_J46.scn: the seam-split thin report
+Note: windowed floods are invalid when a seed lies in cut material (wtab.py prints seedCut/wasteCut);
+those cases were judged with deepest.cpp + a whole-scene flood or a hand-placed window.
+  tools/floodd.cpp      flood with env DIL = extra tool radius (neck measurement with all kept tabs present)
+  tools/perf2.cpp       perf (500 vectors) with env SIDE / ALLOW
+  results/              final sweep (branch 9c3680c vs main e4da396): agg7_*.txt, cmpagg7_final.txt,
+                        recheck_*_final.txt, sw_logs_final.tgz (conn7 logs), cmp_final.tgz (hash lists)

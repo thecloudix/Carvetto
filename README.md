@@ -15,3 +15,4 @@ Original locations (scripts may hard-code these; adjust paths when reusing):
 - t0126/    -> /home/claude/vscratch/t0126 (Pocket guard coder: v3src, jobs, final2/ logs)
 - t0124v5/: T-0124 On-guard verifier (2026-11-01, local WSL; PASS on 736f955). Paths were /tmp/claude-1000/.../scratchpad/h. Includes negallow/neg*.scn repros for the negative-allowance tab defect and wflood.py (windowed flood oracle).
 - t0123v1/: T-0123 verifier (2026-11-01, local; FAIL on 3f3af16 only for rest-travel owner decision). pockcheck.cpp = pocket safety oracle (gouge/inside/one-level/coverage/retracts), profmulti.cpp, bi.cpp, perf.cpp, restretract.cpp; build with mk.sh (EXTRA=-DNEWAPI). Paths were /home/chris/wt-T0123/build-verify/drv.
+- t0127c/: T-0127 coder harness (2026-11-01, local): conn7 (On/NEGA modes), nontab3 hashing, mkscn, floodd, perf2; results/ and scn/ repros. See t0127c/README.
