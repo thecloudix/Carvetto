@@ -49,6 +49,7 @@ add_executable(carvetto_tests
   document/integrity_scale_test.cpp
   geometry/offset_test.cpp
   geometry/open_offset_chains_test.cpp
+  geometry/offset_quality_test.cpp
   geometry/boolean_test.cpp
   document/carv_io_test.cpp
   io/dxf_import_test.cpp
