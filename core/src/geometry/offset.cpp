@@ -828,6 +828,10 @@ struct SnapContext {
     double d;
     double allowance;  // how far snapped extensions and bends may come inside d
     bool round;
+    // True when the stretch of `carrier`'s line or circle from `from` to `to` runs along a kept
+    // piece of another chain (or another part of this one): extending onto it would traverse
+    // that stretch twice.
+    std::function<bool(const Span& carrier, Vec2 from, Vec2 to)> occupied;
 };
 
 // How far beyond d a Round offset point lies (0 for the other joins, or inside d).
@@ -983,8 +987,12 @@ bool snapJunction(Span& a, Span& b, const SnapContext& ctx) {
         // Only a move at the level of the coordinates' last bits (`rounding`) goes unchecked: at
         // 1e4 mm a move of 1e-9 x |x| = 1e-5 mm at a steep angle to another part of the input came
         // 9.4e-7 mm inside d (T-0017, gen3 0x9400bf7).
+        // Nor may an extension run along a piece of another chain: closing a three-span loop by
+        // extending a line over the start of the next chain duplicated 1.5e-3 mm of it and poked
+        // the corner 1.1e-3 mm past the offset (T-0017 round 3, B-2, fam5 0xf500163e).
         auto extensionOk = [&](const Span& span, Vec2 end) {
-            return geometry::distance(p, end) <= rounding || stretchClear(&span, end, p, ctx);
+            return geometry::distance(p, end) <= rounding ||
+                   (stretchClear(&span, end, p, ctx) && !ctx.occupied(span, end, p));
         };
         if ((*ta <= 1.0 || extensionOk(a, e)) && (*tb >= 0.0 || extensionOk(b, s))) {
             bestGap = nearness;
@@ -992,8 +1000,25 @@ bool snapJunction(Span& a, Span& b, const SnapContext& ctx) {
             best = p;
         }
     }
-    if (best && moveJunction(a, b, *best)) {
-        return true;
+    if (best) {
+        Span ma = a;
+        Span mb = b;
+        if (moveJunction(ma, mb, *best)) {
+            // Two arcs whose circles only nearly touch (a Round cusp between vertices 2d + g
+            // apart, g ~ 1e-10) meet at a point on neither circle: their recomputed ends stay up
+            // to g apart. Beyond what exactJunction closes (1e-10 x the scale) that is a gap,
+            // bridged below instead (T-0017 round 3, B-1).
+            const auto* arcA = std::get_if<ArcSpan>(&ma);
+            const auto* arcB = std::get_if<ArcSpan>(&mb);
+            const Vec2 j = endPoint(ma);
+            if (!arcA || !arcB ||
+                geometry::distance(j, startPoint(mb)) <=
+                    1e-10 * std::max({1.0, std::fabs(j.x), std::fabs(j.y), arcB->radius})) {
+                a = ma;
+                b = mb;
+                return true;
+            }
+        }
     }
     // A line end may also move onto the other span's end across a gap up to 1e-9 x |x| (two
     // nearly collinear chamfer copies 4e-14 mm apart at ~9 mm, where a bridge would be a
@@ -1183,6 +1208,28 @@ void exactJunction(Span& a, Span& b) {
     }
     if (moved.startPoint() == j) {
         arc = moved;
+    }
+}
+
+// exactJunction over every junction of a chain, in order. A closed chain is walked from a line
+// if it has one: each call may move the second span's start (an arc's centre), so the walk must
+// end at a junction whose second span is a line, or the closing call would undo the first one
+// (T-0017 round 3: a retrace removed from a closed chain left its first junction 3.5e-14 open).
+void exactJunctions(std::vector<Span>& spans, bool closed) {
+    const std::size_t m = spans.size();
+    if (m < 2) {
+        return;
+    }
+    std::size_t first = 0;
+    if (closed) {
+        const auto line = std::find_if(spans.begin(), spans.end(),
+                                       [](const Span& sp) { return std::holds_alternative<LineSpan>(sp); });
+        first = line == spans.end() ? 0 : static_cast<std::size_t>(line - spans.begin());
+    }
+    const std::size_t junctions = closed ? m : m - 1;
+    for (std::size_t k = 0; k < junctions; ++k) {
+        const std::size_t i = (first + k) % m;
+        exactJunction(spans[i], spans[(i + 1) % m]);
     }
 }
 
@@ -1567,10 +1614,7 @@ void removeBackSteps(std::vector<Span>& spans, bool closed, const SnapContext& c
                     next.insert(next.end(), slot.begin(), slot.end());
                 }
                 spans.swap(next);
-                const std::size_t m = spans.size();
-                for (std::size_t k = 0; k + 1 < m || (closed && k < m); ++k) {
-                    exactJunction(spans[k], spans[(k + 1) % m]);
-                }
+                exactJunctions(spans, closed);
                 changed = true;
                 break;
             }
@@ -1691,10 +1735,7 @@ void removeRetraces(std::vector<Span>& spans, bool closed, const SnapContext& ct
                     next.insert(next.end(), slot.begin(), slot.end());
                 }
                 spans.swap(next);
-                const std::size_t m = spans.size();
-                for (std::size_t q = 0; q + 1 < m || (closed && q < m); ++q) {
-                    exactJunction(spans[q], spans[(q + 1) % m]);
-                }
+                exactJunctions(spans, closed);
                 changed = true;
                 break;
             }
@@ -1751,10 +1792,7 @@ void mergeCoCircularArcs(std::vector<Span>& spans, bool closed) {
         changed = true;
     }
     if (changed) {
-        const std::size_t m = spans.size();
-        for (std::size_t q = 0; q + 1 < m || (closed && q < m && m > 1); ++q) {
-            exactJunction(spans[q], spans[(q + 1) % m]);
-        }
+        exactJunctions(spans, closed);
     }
 }
 
@@ -2636,6 +2674,47 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     const double snapBelow = 2.0 * d - snapAbove;
     std::size_t snapWitness = input.size();
     std::size_t farWitness = input.size();
+    // Kept pieces, for the occupancy test; the pieces of the chain being emitted are excluded.
+    std::vector<Span> keptSpans;
+    std::vector<Box2> keptBoxes;
+    keptSpans.reserve(kept.size());
+    keptBoxes.reserve(kept.size());
+    for (const Piece& p : kept) {
+        keptSpans.push_back(subSpan(raw[p.element], p.t0, p.t1));
+        keptBoxes.push_back(bounds(keptSpans.back()));
+    }
+    BoxGrid keptGrid(keptBoxes);
+    std::vector<std::pair<std::size_t, double>> emitting;  // (element, t0) of the chain's pieces
+    auto isEmitting = [&](const Piece& p) {
+        return std::binary_search(emitting.begin(), emitting.end(), std::make_pair(p.element, p.t0));
+    };
+    auto occupied = [&](const Span& carrier, Vec2 from, Vec2 to) {
+        const double eps = 1e-9 * std::max({1.0, d, std::fabs(from.x), std::fabs(from.y)});
+        const auto* arc = std::get_if<ArcSpan>(&carrier);
+        auto onCarrier = [&](double t) {
+            Vec2 q = lerp(from, to, t);
+            if (arc && q != arc->centre) {
+                q = arc->centre + (q - arc->centre).normalized() * arc->radius;
+            }
+            return q;
+        };
+        Box2 box;
+        box.expand(Box2{from, from});
+        box.expand(Box2{to, to});
+        bool hit = false;
+        keptGrid.query(box.inflated(eps + geometry::distance(from, to)), [&](std::size_t k) {
+            if (hit || isEmitting(kept[k]) || !sameCarrier(carrier, raw[kept[k].element])) {
+                return;
+            }
+            for (const double f : {0.25, 0.5, 0.75}) {
+                if (distanceToSpan(onCarrier(f), keptSpans[k]) <= eps) {
+                    hit = true;
+                    return;
+                }
+            }
+        });
+        return hit;
+    };
     const SnapContext snap{
         sign,
         tol,
@@ -2683,8 +2762,14 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
         },
         d,
         d - snapAbove,
-        join == JoinType::Round};
+        join == JoinType::Round,
+        occupied};
     auto emit = [&](std::vector<Piece>::const_iterator b, std::vector<Piece>::const_iterator e, bool loop) {
+        emitting.clear();
+        for (auto it = b; it != e; ++it) {
+            emitting.emplace_back(it->element, it->t0);
+        }
+        std::sort(emitting.begin(), emitting.end());
         std::vector<Piece> merged;
         for (auto it = b; it != e; ++it) {
             if (!merged.empty() && merged.back().element == it->element &&
@@ -2738,6 +2823,20 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
                 removeBackSteps(piece.spans, piece.closed, snap);
                 removeRetraces(piece.spans, piece.closed, snap, d);
                 mergeCoCircularArcs(piece.spans, piece.closed);
+                // An open chain neither starts nor ends with a span no longer than the
+                // tolerance (ADR-0012 section 7): where a cut or a node left one there (fam5
+                // 0xf50009c9: 7.8e-4 mm), it goes, as the leading and trailing tiny pieces do.
+                if (!piece.closed) {
+                    while (piece.spans.size() > 1 && isDegenerate(piece.spans.front(), tol)) {
+                        piece.spans.erase(piece.spans.begin());
+                    }
+                    while (piece.spans.size() > 1 && isDegenerate(piece.spans.back(), tol)) {
+                        piece.spans.pop_back();
+                    }
+                    if (piece.spans.size() == 1 && isDegenerate(piece.spans.front(), tol)) {
+                        continue;
+                    }
+                }
                 if (!isSliverLoop(piece, tol)) {
                     result.push_back(std::move(piece));
                 }

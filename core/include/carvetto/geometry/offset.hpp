@@ -117,13 +117,16 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// Junctions (for toolpaths): consecutive spans of a chain, and the last and first spans of a
 /// closed chain, share their end point exactly: bit-identical wherever a line is involved;
 /// between two arcs (whose end points are computed from centre and angles, ADR-0005) usually
-/// bit-identical too (the second arc's centre is nudged by a few ulps), otherwise within
-/// 1e-12 x max(1, |x|, |y|, radius) mm (at most 6.3e-13 mm over 540 000 fuzzed offsets with
-/// coordinates up to ~100 mm, and on U-turns and hairpins at coordinates up to 1e4 mm), so no
-/// span starts behind the previous one's end; arc-arc crossings are computed without
-/// cancellation, so this holds for circles of any size. That holds for continuous input
-/// (consecutive input spans sharing their end points): where the input itself has a gap, an
-/// arc-to-arc junction can keep a gap of up to about that input gap. Pieces no longer than
+/// bit-identical too (the second arc's centre is moved by the residual, at most
+/// 1e-10 x max(1, |x|, |y|, radius) mm, then by a few ulps of centre and radius), otherwise
+/// within 1e-12 x max(1, |x|, |y|, radius) mm (only where the centre's coordinates are much
+/// larger than the point's, e.g. radius 4e4 at 1e4 mm), so no span starts behind the previous
+/// one's end; arc-arc crossings are computed without cancellation, so this holds for circles of
+/// any size. Two arcs whose circles only nearly touch (Round arcs about vertices 2 |distance| + g
+/// apart meeting at a cusp, g above that 1e-10 limit) are joined by a straight bridge of length
+/// about g instead. That holds for continuous input (consecutive input spans sharing their end
+/// points): where the input itself has a gap, an arc-to-arc junction can keep a gap of up to
+/// about that input gap. Pieces no longer than
 /// tol.distance are dropped where their neighbours can be joined without them:
 /// trimmed or extended along their own carriers to where these meet (extensions staying at least
 /// |distance| from the input, and for Round not beyond it), or, for a sub-tolerance step
@@ -137,6 +140,13 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// missing arc about the nearest input point is put in if it passes the checks, and otherwise
 /// the chain is cut there into two chains, each continuous, rather than bridged; snapped
 /// extensions and bends by at most min(5e-7 x max(1, |distance|), 0.1 tol.distance^2 / |distance|).
+/// Pieces of one raw element that the chain steps over a sub-tolerance sliver between are
+/// emitted as one span again; across the sliver that span may dip inside |distance| by up to
+/// about tol.distance^2 / (4 |distance|) (1.7e-7 mm seen at |distance| = 1.4, as on main). No
+/// extension runs along a piece of another chain (that would traverse the stretch twice); such a
+/// junction is closed by the other repairs above instead (e.g. the checked straight bridge). An open
+/// chain neither starts nor ends with a span no longer than the tolerance: such an end span is
+/// dropped.
 /// Where a junction gap is closed by moving a line's end (gaps up to 1e-9 x max(1, |x|, |y|)),
 /// the moved line is always checked like an extension (at least |distance| from the input
 /// within the allowance above, for Round not beyond it), preferring the end that moves away from

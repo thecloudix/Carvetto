@@ -109,10 +109,15 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
   - *Junctions (§7 replaced).* Chains are exactly continuous: consecutive spans (and the closing
     junction of a closed chain) share their end point bit-identically wherever a line is involved.
     Between two arcs (ADR-0005 computes arc end points from centre and angles) the second arc's
-    centre is nudged by a few ulps until the points are equal; where that cannot succeed (centre
-    coordinates much larger than the point's) they agree within 1e-12·max(1, |x|, |y|, r) mm —
-    at most 6.3e-13 mm over 540 000 fuzzed offsets with coordinates up to ~100 mm (accepted,
-    director 2026-10-25). That is for continuous input: where the input's own spans do not meet,
+    centre is moved by the residual (at most 1e-10·max(1, |x|, |y|, r), T-0017 round 2) and then
+    by a few ulps of centre and radius until the points are equal; where that cannot succeed
+    (centre coordinates much larger than the point's) they agree within 1e-12·max(1, |x|, |y|, r)
+    mm — at most 6.3e-13 mm over 540 000 fuzzed offsets with coordinates up to ~100 mm (accepted,
+    director 2026-10-25). Two arcs whose circles only nearly touch (Round arcs about vertices
+    2d + g apart meeting at a cusp) were snapped to a point on neither circle and kept a gap of
+    about g, 1.1e-10…8.3e-10 mm for g ≈ 8e-11…9e-10 (T-0017 round 3, B-1, as on main); such a
+    snap is now refused when the residual exceeds the 1e-10 limit, and the junction is bridged by
+    a checked straight line of about g instead (exact again for every g). That is for continuous input: where the input's own spans do not meet,
     an arc-to-arc junction can keep a gap of about that input gap (8.5e-10 mm seen for a 9.4e-10
     mm input gap). A Round join at such a gap was one arc about the next span's start through the
     previous offset's end, so up to the gap beyond d (2.4e-5 mm seen for a 1e-4 mm gap) and, where
@@ -243,6 +248,22 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     lens ~1e-5 mm wide between opposite arcs 5e-6 mm apart, which crossed itself where 1e-3 mm
     bends closed its near-tangent ends; 0x9100821: 0.017 mm left between two tangent circles).
     (The two-span drop of lenses up to tol/2 wide is tolerance-level and accepted by the director.)
+    (j, T-0017 round 3) No snapped extension may run along a kept piece of another chain (or of
+    another part of the same component) on the same carrier: closing a three-span loop by
+    extending a line over the start of the next chain duplicated 1.5e-3 mm of it and poked the
+    corner 1.1e-3 mm past the offset (fam5 0xf500163e; also 0xf5001afe, 0xf50007aa); such a
+    junction falls to the other repairs (here the checked bridge). An open chain no longer
+    starts or ends with a span no longer than the tolerance (§7): a cut or a node could leave
+    one there (0xf50009c9, 0xf5000dd2, 0xf5001b5b); it is dropped, like leading and trailing
+    tiny pieces. Pieces of one element re-merged across a sub-tolerance sliver the chain steps
+    over (one span again) may dip inside d by up to ~tol²/(4d) across it (0xf50011fd: 1.72e-7
+    mm, as on main). Known: a needle narrower than the tolerance whose two strands pass within
+    the tolerance of each other's nodes is cut into several chains at those nodes by the node
+    walk (0xf5000fc3: 7 chains, main 6 with back-steps and overlaps instead). After a repair of
+    the safety net, retrace removal or co-circular merge, the junctions of a closed chain are
+    made exact walking from a line, as snapChain does: walked from span 0, the closing call moved
+    an arc's centre and reopened the first junction by 3.5e-14 mm (fam5 0xf51007d9, found while
+    fixing B-1).
     These are the only valid offset points the branch drops on purpose besides the corner changes
     of AC2 and exact zero-width slivers; the main-vs-branch comparison below classifies them.
     (h, T-0017) Every extension, bend and bridge is checked at points at most tol/8 apart (a line
