@@ -145,19 +145,37 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     vector's cut — the group is dropped, repeatedly until stable. The tab's own cut within two
     tool radii of its raised stretch is treated apart: on any convex curve, and round a corner of
     the cut, the tool at the plateau ends always nicks some cross-sections near the ends of the
-    core, which only narrows the tab, so there the tab only has to stay joined: either a run of at
-    least three whole cross-sections whose ends lie ≥ 0.2 mm apart at both walls remains, or a
-    0.05 mm raster of the material (cells whose nearest core point lies along the normal within
-    the cross-sections' extent, so the material across a corner of the cut counts too; a cell is
-    cut when a tool comes within its radius plus half a cell) still joins the cells next to the
-    vector to the cells next to the far wall. On a sharp convex corner a short tab is cut through,
-    or left hanging on the part by a sliver, by its own pass, and is dropped. Together: no pass
-    cuts below the tab top into any cross-section of a kept tab except its own pass's nicks, which
-    leave the material joined (about 0.1 mm wide at least), so every kept tab joins the part to
-    the waste beyond the kerf.
+    core, which only narrows the tab, so there the tab only has to stay joined to the waste beyond
+    the kerf. Quick answer: a run of at least three cross-sections with no tool of its own cut
+    within a radius + 0.1 mm, whose ends lie ≥ 0.2 mm apart at both walls, and whose middle one,
+    carried on 0.4 mm past the far wall, reaches the waste beyond the kerf (0.2 mm past the widest
+    kerf from the vectors) with no open tool within a radius + 0.1 mm of it. Otherwise a raster
+    (0.05 mm cells, or a fortieth of the radius for big tools) round the core, reaching a tool
+    diameter past the widest kerf, decides: cells are told apart by the distance to the vectors;
+    on the vector side only the tab's material counts (cells whose nearest core point lies along
+    the normal within the cross-sections' extent, so round a corner of the cut the material across
+    it counts too), on the waste side every cell; every open tool position cuts the cells within
+    its radius plus 1.5 cells; the tab holds when uncut cells join the material next to the vector
+    to the waste beyond the kerf (or when there is no such waste near it at all: a hole smaller
+    than the kerf). On the vector (side On) the left of travel plays the vector side and must
+    itself reach the waste beyond the kerf. So a short tab centred on a sharp turn of the cut — a
+    convex corner or spike tip, an inside corner (Inside of a square), a gear root, the tip of a
+    narrow arm — where the tool at the two ends of the raised stretch seals the tab's material off
+    from the waste, is dropped and reported; so
+    is one left hanging on the part by a sliver (verify rounds 2 and 3). The check runs as a
+    worklist: when a tab is dropped, only the tabs whose material lies within reach of the cut it
+    protected are checked again (a separate last pass with tabs on 500 close vectors costs about
+    1.3 × the time without tabs). Together: no pass cuts below the tab top into any cross-section
+    of a kept tab except its own pass's nicks, which leave the material joined, so every kept tab
+    joins the part to the waste beyond the kerf.
     Counting: kept + left out = requested per vector, counted on the primary cuts (the finishing
     cuts with a separate last pass, otherwise the only cuts); one `TabsNotPlaced` diagnostic per
-    vector says "N of M tab(s) left out" (another reports tabs that could not avoid a corner).
+    vector says "N of M tab(s) left out" with the count for each reason (no room, could not be
+    matched on the roughing cut, would be cut through); another reports tabs that could not avoid
+    a corner. Where a V-bit corner climb is inserted at the start of a raised stretch, the tool
+    goes back up to the tab top vertically after the climb (inserts end at the leg's height there;
+    path breaks closer than the tiny length merge into the last of them), so a tab is always cut
+    flat at its top.
     A tab thickness beyond the cut depth is clamped to it (`TabThicknessClamped`). The overcut
     walks under the same tab ceiling, and every lead runs no lower than the tab top when it comes
     within a tool diameter of tab material (any cut's), so plunges, leads and overcut never notch

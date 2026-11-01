@@ -26,6 +26,7 @@ using carvetto::geometry::Box2;
 using carvetto::geometry::Contour;
 using carvetto::geometry::LineSpan;
 using carvetto::geometry::Vec2;
+using carvetto::geometry::Vec3;
 using Catch::Approx;
 
 namespace {
@@ -1521,4 +1522,183 @@ TEST_CASE("Generative: every kept tab still joins the part to the waste (rasteri
     }
     CHECK(scenes > 60);
     CHECK(tabs > 60);
+}
+
+TEST_CASE("Tabs at an inside corner of the cut are kept joined or left out and reported", "[toolpath][profile][tabs]") {
+    // Verifier repro inside_corner: Inside of a 30 x 30 square, 6 mm tool, 4 tabs starting at the
+    // bottom centre, so each is centred on a corner of the cut. Below about 2.5 mm the tool at the two
+    // ends of the raised stretch stands less than a diameter apart across the corner and cuts the tab
+    // through; such tabs used to be kept.
+    const std::vector<Contour> cs{Contour::rectangle(Box2{{0, 0}, {30, 30}})};
+    int joined = 0;
+    for (const bool separate : {false, true}) {
+        for (const double length : {0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 6.0}) {
+            ProfileParams p = baseParams(6.0, 3.0);
+            p.side = ProfileSide::Inside;
+            p.separateLastPass = separate;
+            p.lastPassAllowance = 0.3;
+            p.tabs.enabled = true;
+            p.tabs.count = 4;
+            p.tabs.length = length;
+            p.tabs.thickness = 1.5;
+            p.startAt = StartAt::ClosestOnBoundingBox;
+            p.startAnchor = BoxAnchor::BottomCentre;
+            const ProfileResult r = profileToolpath(cs, test::endMill(6.0), p);
+            REQUIRE(r.ok());
+            INFO("separate " << separate << ", tab length " << length);
+            const auto cuts = cutRanges(r.toolpath);
+            const double zTab = p.passes.bottomZ() + p.tabs.thickness;
+            const std::size_t kept = test::raisedRuns(r.toolpath, cuts.back().first, cuts.back().second, zTab).size();
+            CHECK(kept + tabsLeftOut(r) == 4);
+            joined += checkTabsJoin(r, cs, p, 6.0);
+        }
+    }
+    CHECK(joined > 0);  // the longer tabs are kept (and joined)
+}
+
+TEST_CASE("Tabs in the roots of a gear are kept joined or left out and reported", "[toolpath][profile][tabs]") {
+    // Verifier repro gear_valley: Outside of a 10-tooth gear, 6 mm tool, 5 short tabs that land on
+    // the sharp concave corners of the cut (tooth roots); the tool at both ends of each raised
+    // stretch stood less than a diameter apart and cut every tab through.
+    const std::vector<Vec2> P = {
+    {0x1.3818209cdf692p+3, 0x0p+0},
+    {0x1.b2a9c04745aap+3, 0x1.b74926870a02ep+0},
+    {0x1.a0acbdaeb6c7fp+3, 0x1.0ec58cc07e1ddp+2},
+    {0x1.1a642d6d90a64p+3, 0x1.09c43ba8926c3p+2},
+    {0x1.f8faa6523f088p+2, 0x1.6ee387e227531p+2},
+    {0x1.3f5fc61a14a5cp+3, 0x1.2be989c076739p+3},
+    {0x1.0184e84e27044p+3, 0x1.6271d9c84d2cep+3},
+    {0x1.2cb4817e85828p+2, 0x1.117d8298d838fp+3},
+    {0x1.81c50b6abf3ecp+1, 0x1.28d1bb8aa8a1cp+3},
+    {0x1.48615e189be9dp+1, 0x1.ae5b85bba9a8ap+3},
+    {0x1.e345980e16ec2p-51, 0x1.b61e26d01c3bep+3},
+    {-0x1.38ed1eb5f824fp+0, 0x1.35a21f6071b6ep+3},
+    {-0x1.81c50b6abf3eap+1, 0x1.28d1bb8aa8a1cp+3},
+    {-0x1.75153c96ac05bp+2, 0x1.8c6bbacfd9929p+3},
+    {-0x1.0184e84e27043p+3, 0x1.6271d9c84d2cep+3},
+    {-0x1.ab4953583239ap+2, 0x1.c7038a67b4affp+2},
+    {-0x1.f8faa6523f087p+2, 0x1.6ee387e227532p+2},
+    {-0x1.7feceffeae017p+3, 0x1.a62134078a3a4p+2},
+    {-0x1.a0acbdaeb6c7fp+3, 0x1.0ec58cc07e1dfp+2},
+    {-0x1.3290f283a7fd2p+3, 0x1.d3d854bfbd1f9p+0},
+    {-0x1.3818209cdf692p+3, 0x1.58428616b06b5p-50},
+    {-0x1.b2a9c04745aap+3, -0x1.b74926870a03p+0},
+    {-0x1.a0acbdaeb6c8p+3, -0x1.0ec58cc07e1dcp+2},
+    {-0x1.1a642d6d90a63p+3, -0x1.09c43ba8926c4p+2},
+    {-0x1.f8faa6523f089p+2, -0x1.6ee387e22753p+2},
+    {-0x1.3f5fc61a14a5cp+3, -0x1.2be989c07673ap+3},
+    {-0x1.0184e84e27045p+3, -0x1.6271d9c84d2cdp+3},
+    {-0x1.2cb4817e85827p+2, -0x1.117d8298d838fp+3},
+    {-0x1.81c50b6abf3efp+1, -0x1.28d1bb8aa8a1cp+3},
+    {-0x1.48615e189be9ap+1, -0x1.ae5b85bba9a8bp+3},
+    {-0x1.6a74320a91311p-49, -0x1.b61e26d01c3bep+3},
+    {0x1.38ed1eb5f8253p+0, -0x1.35a21f6071b6ep+3},
+    {0x1.81c50b6abf3e8p+1, -0x1.28d1bb8aa8a1cp+3},
+    {0x1.75153c96ac059p+2, -0x1.8c6bbacfd992ap+3},
+    {0x1.0184e84e27043p+3, -0x1.6271d9c84d2cfp+3},
+    {0x1.ab49535832399p+2, -0x1.c7038a67b4b01p+2},
+    {0x1.f8faa6523f087p+2, -0x1.6ee387e227534p+2},
+    {0x1.7feceffeae017p+3, -0x1.a62134078a3a6p+2},
+    {0x1.a0acbdaeb6c7fp+3, -0x1.0ec58cc07e1e1p+2},
+    {0x1.3290f283a7fd2p+3, -0x1.d3d854bfbd1fep+0}};
+    Contour gear;
+    gear.closed = true;
+    for (std::size_t i = 0; i < P.size(); ++i) {
+        gear.append(LineSpan{P[i], P[(i + 1) % P.size()]});
+    }
+    const std::vector<Contour> cs{gear};
+    for (const bool asFound : {true, false}) {
+        ProfileParams p = baseParams(0x1.2b8f107f8b25ap+2, 0x1.58df19fd4f982p-1);
+        p.side = ProfileSide::Outside;
+        p.allowance = 0x1.3251f836c5991p-2;
+        p.tabs.enabled = true;
+        p.tabs.count = 5;
+        p.tabs.length = 0x1.8d5f26853ba7ep-2;
+        p.tabs.thickness = 0x1.6ad521abda6c3p+0;
+        p.tabs.avoidCorners = true;
+        if (asFound) {
+            p.ramp.type = RampType::Smooth;
+            p.ramp.distance = 0x1.e745ae236a21bp+4;
+            p.ramp.onLeadIn = true;
+            p.leads.overcut = 0x1.270666784b5e4p+3;
+        }
+        const ProfileResult r = profileToolpath(cs, test::endMill(6.0), p);
+        REQUIRE(r.ok());
+        INFO("as found " << asFound);
+        const auto cuts = cutRanges(r.toolpath);
+        const double zTab = p.passes.bottomZ() + p.tabs.thickness;
+        std::vector<Vec2> mids;
+        for (const auto& run : test::raisedRuns(r.toolpath, cuts.back().first, cuts.back().second, zTab)) {
+            const Vec2 m = test::runCore(run, 0.0, true).front();
+            if (std::none_of(mids.begin(), mids.end(), [&](Vec2 q) { return std::hypot(q.x - m.x, q.y - m.y) < 0.5; })) {
+                mids.push_back(m);
+            }
+        }
+        CHECK(mids.size() + tabsLeftOut(r) == 5);
+        checkTabsJoin(r, cs, p, 6.0);
+    }
+}
+
+TEST_CASE("A tab starting at a V-bit sharp inside corner is cut flat at the tab top", "[toolpath][profile][tabs][vbit]") {
+    // Verifier repro vbit_tab_slope: Inside of a D shape, 12 mm 120-degree V-bit with sharp internal
+    // corners. The kept tab's raised stretch starts exactly at the corner where the corner climb is
+    // inserted; the tool came back from the climb at the bottom and fed on a slope up to the tab top
+    // at the far end, so the tab was never flat and was cut below its top all along.
+    Contour c;
+    c.closed = true;
+    c.append(ArcSpan{{0, 0}, 33.069952603275667, -0.82891326789637176, -2.3126793856934218, geometry::ArcDirection::CCW});
+    c.append(LineSpan{{-22.344616124565331, -24.37908725585751}, {22.344616124565327, -24.379087255857513}});
+    ProfileParams p;
+    p.side = ProfileSide::Inside;
+    p.allowance = 0.47890384266872976;
+    p.passes.cutDepth = 5.8704981320714289;
+    p.passes.passDepth = 2.3961106328433783;
+    p.passes.lastPassThickness = 0.69316655279558259;
+    p.tabs.enabled = true;
+    p.tabs.count = 5;
+    p.tabs.length = 3.6268170792542103;
+    p.tabs.thickness = 1.2531515480900344;
+    p.tabs.avoidCorners = true;
+    p.ramp.type = RampType::Spiral;
+    p.ramp.distance = 29.230956653218364;
+    p.leads.type = LeadType::Straight;
+    p.leads.length = 8.7415901278800483;
+    p.leads.angle = 0.91409126210320324;
+    p.corners.sharpExternal = true;
+    p.corners.sharpInternal = true;
+    p.startPosition = {-1.3579110524131295, 24.403258302710057};
+    tooling::Tool vbit = test::endMill(12.0);
+    vbit.type = tooling::ToolType::VBit;
+    vbit.includedAngle = 120.0 * geometry::kPi / 180.0;
+    const ProfileResult r = profileToolpath({c}, vbit, p);
+    REQUIRE(r.ok());
+    const double zTab = p.passes.bottomZ() + p.tabs.thickness;
+    const auto& mv = r.toolpath.moves;
+    // No move climbs (or descends) along the path into or out of the tab top: every raised stretch
+    // is entered and left vertically.
+    for (std::size_t i = 1; i < mv.size(); ++i) {
+        const Vec3 a = mv[i - 1].to;
+        const Vec3 b = mv[i].to;
+        const bool alongPath = (mv[i].kind == MoveKind::Feed || isArc(mv[i].kind)) && std::hypot(b.x - a.x, b.y - a.y) > 0.01;
+        const bool crossesTabTop = (a.z < zTab - 1e-9 && b.z >= zTab - 1e-9) || (a.z >= zTab - 1e-9 && b.z < zTab - 1e-9);
+        INFO("move " << i);
+        CHECK_FALSE((alongPath && crossesTabTop && a.z > p.passes.bottomZ() - 1e-9 && std::fabs(b.z - zTab) < 1e-9));
+    }
+    // Every tab is kept flat (a raised run at the tab top on the last level) or reported.
+    const auto cuts = cutRanges(r.toolpath);
+    std::vector<Vec2> mids;
+    for (const auto& run : test::raisedRuns(r.toolpath, cuts.back().first, cuts.back().second, zTab)) {
+        const Vec2 m = test::runCore(run, 0.0, true).front();
+        if (std::none_of(mids.begin(), mids.end(), [&](Vec2 q) { return std::hypot(q.x - m.x, q.y - m.y) < 0.5; })) {
+            mids.push_back(m);
+        }
+    }
+    CHECK(mids.size() + tabsLeftOut(r) == 5);
+    // No cut below the tab top along the middle of any kept tab.
+    const test::CutCoverage deep(r.toolpath, zTab - 1e-6);
+    for (const auto& run : test::raisedRuns(r.toolpath, cuts.back().first, cuts.back().second, zTab)) {
+        for (const Vec2& q : test::runCore(run, 0.0, true)) {
+            CHECK_FALSE(deep.covers(q, 0.05));
+        }
+    }
 }

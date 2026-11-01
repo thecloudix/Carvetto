@@ -410,8 +410,20 @@ void appendLeg(const ArcLengthPath& path, double u0, double u1, const ZProfile& 
         }
     }
     std::sort(breaks.begin(), breaks.end());
-    breaks.erase(std::unique(breaks.begin(), breaks.end(), [](double x, double y) { return y - x <= kTinyLength; }),
-                 breaks.end());
+    // Breaks closer than kTinyLength are merged into the last of them, so the height after a merged
+    // break is the one after all its knots (a tab starting just past a corner insert is entered
+    // vertically there, not along a slope).
+    {
+        std::vector<double> merged;
+        for (double b : breaks) {
+            if (!merged.empty() && b - merged.back() <= kTinyLength) {
+                merged.back() = merged.size() == 1 ? merged.back() : b;  // the leg start stays at 0
+            } else {
+                merged.push_back(b);
+            }
+        }
+        breaks = std::move(merged);
+    }
     if (breaks.back() < len) {
         breaks.back() = len;
     }
@@ -430,9 +442,15 @@ void appendLeg(const ArcLengthPath& path, double u0, double u1, const ZProfile& 
         }
         at[best].push_back(&ins);
     }
+    // Inserted moves end where they began on the path but maybe at another height: the tool goes
+    // back (vertically) to the leg's height there before going on, so a raised stretch that starts
+    // at an insert (a tab at a V-bit corner) is still entered vertically and cut flat.
     auto runInserts = [&](std::size_t j) {
         for (const LegInsert* ins : at[j]) {
             out.moves.insert(out.moves.end(), ins->moves.begin(), ins->moves.end());
+        }
+        if (!at[j].empty()) {
+            appendVertical(out, j + 1 < breaks.size() ? z.after(breaks[j]) : z.before(breaks[j]));
         }
     };
 
