@@ -120,13 +120,16 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// bit-identical too (the second arc's centre is moved by the residual, at most
 /// 1e-10 x max(1, |x|, |y|, radius) mm, then by a few ulps of centre and radius), otherwise
 /// within 1e-12 x max(1, |x|, |y|, radius) mm (only where the centre's coordinates are much
-/// larger than the point's, e.g. radius 4e4 at 1e4 mm), so no span starts behind the previous
-/// one's end; arc-arc crossings are computed without cancellation, so this holds for circles of
-/// any size. Two arcs whose circles only nearly touch (Round arcs about vertices 2 |distance| + g
-/// apart meeting at a cusp, g above that 1e-10 limit) are joined by a straight bridge of length
-/// about g instead. That holds for continuous input (consecutive input spans sharing their end
-/// points): where the input itself has a gap, an arc-to-arc junction can keep a gap of up to
-/// about that input gap. Pieces no longer than
+/// larger than the point's, e.g. radius 4e4 at 1e4 mm, where the nearest such residual that leaves
+/// the second arc starting level with or ahead of the first's end is chosen; a closed chain of
+/// arcs only is closed by turning its first arc's start angle where moving its centre would reopen
+/// its first junction behind), so no span starts behind the previous one's end; arc-arc crossings
+/// are computed without cancellation, so this holds for circles of any size. Two arcs whose
+/// circles only nearly touch (Round arcs about vertices 2 |distance| + g apart meeting at a cusp,
+/// g above that 1e-10 limit) are joined by a straight bridge of length about g instead. That
+/// holds for continuous input (consecutive input spans sharing their end points): where the
+/// input itself has a gap, an arc-to-arc junction can keep a gap of up to about that input gap.
+/// Pieces no longer than
 /// tol.distance are dropped where their neighbours can be joined without them:
 /// trimmed or extended along their own carriers to where these meet (extensions staying at least
 /// |distance| from the input, and for Round not beyond it), or, for a sub-tolerance step

@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <limits>
 #include <optional>
 #include <string>
@@ -2658,6 +2659,116 @@ TEST_CASE("T-0017: a lens slot far from the origin closes exactly where its arcs
     const DistanceExtremes ex = distanceExtremes(chains, in, d);
     CHECK(ex.under <= distanceAllowance(d, Vec2{-6304, -8204}));
     CHECK(ex.over <= distanceAllowance(d, Vec2{-6304, -8204}));
+}
+
+TEST_CASE(
+    "T-0017: the lens slot's inexact closing junction never steps back under ulp-level noise (0xe400137f)",
+    "[geometry][offset][open][t0017]") {
+    // The closing junction above joins an arc of radius 39785 about a centre 3e4 mm away to a
+    // point at 8e3 mm: its start's y is reachable only on every other ulp, so a few-ulp residual
+    // stays, and its direction was rounding noise. MSVC's sin/cos put it 3.7e-12 mm behind the
+    // previous end (Windows CI) where glibc's put it ahead. Moving any input value or d by up to
+    // +-8 ulps reproduces that noise here (27 of these 272 offsets stepped back before the fix);
+    // the residual must now always lie level with or ahead of the previous end.
+    // Arc centre x, y, radius, start and end angle; the four lines' points; d.
+    const double base[16] = {-6308.8745429246874, 31581.569216038675,  39785.30676902362,
+                             -1.570920458202786,  -1.5706721953870071, -6303.9359367948146,
+                             -8203.7372464668806, -6302.9359367948146, -8193.37889961566,
+                             -6305.2879140935202, -8192.37889961566,   -6304.1211345246902,
+                             -8203.558166433495,  -6313.6279513246845, -8203.558166433495,
+                             0.089633408917393007};
+    constexpr double kInf = std::numeric_limits<double>::infinity();
+    std::size_t offsets = 0;
+    std::size_t stepsBack = 0;
+    for (int which = 0; which < 16; ++which) {
+        for (int k = -8; k <= 8; ++k) {
+            double v[16];
+            std::copy(std::begin(base), std::end(base), std::begin(v));
+            for (int i = 0; i < (k < 0 ? -k : k); ++i) {
+                v[which] = std::nextafter(v[which], k < 0 ? -kInf : kInf);
+            }
+            Contour in;
+            in.spans.emplace_back(ArcSpan{{v[0], v[1]}, v[2], v[3], v[4], ArcDirection::CCW});
+            in.spans.emplace_back(LineSpan{{v[5], v[6]}, {v[7], v[8]}});
+            in.spans.emplace_back(LineSpan{{v[7], v[8]}, {v[9], v[10]}});
+            in.spans.emplace_back(LineSpan{{v[9], v[10]}, {v[11], v[12]}});
+            in.spans.emplace_back(LineSpan{{v[11], v[12]}, {v[13], v[14]}});
+            const std::vector<Contour> chains =
+                offsetOpenContour(in, v[15], OffsetSide::Left, JoinType::Round, kTol, 2.0);
+            JunctionStats js;
+            checkJunctions(chains, js);
+            ++offsets;
+            CAPTURE(which, k);
+            CHECK(js.notIdentical == 0);
+            CHECK(js.maxGap <= 1e-12 * 39785.4);
+            stepsBack += js.backward;
+        }
+    }
+    CHECK(offsets == 272);
+    CHECK(stepsBack == 0);
+}
+
+TEST_CASE("T-0017: a closed loop of arcs only does not step back at its first junction (0xa5000ba6)",
+          "[geometry][offset][open][t0017]") {
+    // fam5 gapCorner (noisy input with 1e-11..3e-8 mm gaps), Square, Right, at (-1e5, -4e4): one
+    // closed chain is four arcs. Closing it moved the first arc's centre by a few ulps, which
+    // reopened its junction with the second 7.2e-12 mm behind; the loop is now closed by turning
+    // the first arc's start angle where that happens, so its end point stays where it was.
+    Contour in;
+    auto arc = [&](double cx, double cy, double r, double sa, double ea, ArcDirection dir) {
+        in.spans.emplace_back(ArcSpan{{cx, cy}, r, sa, ea, dir});
+    };
+    auto line = [&](double x0, double y0, double x1, double y1) {
+        in.spans.emplace_back(LineSpan{{x0, y0}, {x1, y1}});
+    };
+    const ArcDirection ccw = ArcDirection::CCW;
+    const ArcDirection cw = ArcDirection::CW;
+    arc(-100003.26462976352, -40132.417863613162, 5.5656119268175104, -0.94397716543291166,
+        2.6792714197364265, ccw);
+    arc(-100008.16268919814, -40130.223958241186, 0.30028413145508126, 1.8517908992463994,
+        -0.019516431342406992, cw);
+    line(-100007.86246227068, -40130.229818339743, -100008.19634315693, -40131.860520182847);
+    arc(-100008.33079714644, -40132.138921574246, 0.30916857865302361, 1.1208814087124119,
+        0.68690233454577865, cw);
+    arc(-100005.78304936345, -40130.049407537677, 2.9858409319146233, -2.454690319044015,
+        0.47225666730938176, ccw);
+    line(-100003.12402664055, -40128.691157135072, -100002.76265919514, -40126.191180194604);
+    line(-100002.76265919514, -40126.191180194604, -100002.27067637233, -40128.337209108729);
+    arc(-100001.8588480772, -40133.955489948428, 5.6333544303873575, 1.6439669418902259,
+        -0.82994146405230595, cw);
+    arc(-99998.141346845645, -40138.119758014989, 0.084885037894354337, 0.088016696413238615,
+        1.5499136438036496, ccw);
+    arc(-99997.21041045661, -40139.122468546448, 1.430443777282056, 2.2778063508612458,
+        5.6932747908758028, ccw);
+    line(-99996.021725322164, -40139.918205374554, -99996.415228650818, -40139.166827243396);
+    line(-99996.415228651385, -40139.166827243876, -99999.430558161577, -40139.137603034273);
+    arc(-99999.043213268989, -40138.959411656688, 0.42636631299676397, -2.7104267945067537,
+        -6.5360268959867698, cw);
+    arc(-99998.903625502368, -40139.733853395228, 0.72151603048396462, 1.1824285352235402,
+        1.6206759561367614, ccw);
+    arc(-99999.071093572114, -40136.37919412207, 2.6373207314515934, -1.5209166974530322,
+        -5.6854779190539579, cw);
+    arc(-99997.276766295807, -40135.157658422817, 0.46666188238327572, 0.59770738812562829,
+        -0.76153079505704224, cw);
+    arc(-99996.671780354693, -40135.501807712921, 0.26814061340703443, 3.0589355694294253,
+        1.452435281316619, cw);
+    line(-99996.640116998009, -40135.235543148257, -99995.598560426384, -40135.359401802714);
+    line(-99995.59856042637, -40135.359401802736, -99994.385979156315, -40136.841212409774);
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, 0.070216203550996448, OffsetSide::Right, JoinType::Square, kTol, 2.0);
+    std::size_t arcLoops = 0;
+    for (const Contour& c : chains) {
+        const bool allArcs = std::all_of(c.spans.begin(), c.spans.end(),
+                                         [](const Span& sp) { return std::holds_alternative<ArcSpan>(sp); });
+        if (c.closed && c.spans.size() >= 2 && allArcs) {
+            ++arcLoops;
+        }
+    }
+    CHECK(arcLoops >= 1);
+    JunctionStats js;
+    checkJunctions(chains, js);
+    CHECK(js.backward == 0);
+    CHECK(js.notIdentical == 0);
 }
 
 TEST_CASE(

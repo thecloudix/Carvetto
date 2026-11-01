@@ -113,7 +113,16 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     by a few ulps of centre and radius until the points are equal; where that cannot succeed
     (centre coordinates much larger than the point's) they agree within 1e-12·max(1, |x|, |y|, r)
     mm — at most 6.3e-13 mm over 540 000 fuzzed offsets with coordinates up to ~100 mm (accepted,
-    director 2026-10-25). Two arcs whose circles only nearly touch (Round arcs about vertices
+    director 2026-10-25). Such a residual's direction is rounding noise (it differed between
+    glibc's and MSVC's sin/cos for 0xe400137f, radius 39785 at 8e3 mm, 3.7e-12 mm behind on
+    Windows), so where the unmoved arc would start behind the previous end along its direction
+    of travel, the nearest searched candidate (within the ulp search, ≤ 1e-12 of the scale) that
+    starts level with or ahead of it is taken; an arc that already starts level or ahead is left
+    as it was. A closed chain of arcs only has no line to start its walk from, so its closing
+    junction moves the first arc's centre and reopens its first junction by a few ulps; where
+    that leaves the second arc starting behind, the loop is closed instead by turning the first
+    arc's start angle (its end point bit-identical), exactly or, failing that, level with or
+    ahead within the same bound (fam5 0xa5000ba6, a 4-arc loop at 1e5 mm, 7.2e-12 mm behind). Two arcs whose circles only nearly touch (Round arcs about vertices
     2d + g apart meeting at a cusp) were snapped to a point on neither circle and kept a gap of
     about g, 1.1e-10…8.3e-10 mm for g ≈ 8e-11…9e-10 (T-0017 round 3, B-1, as on main); such a
     snap is now refused when the residual exceeds the 1e-10 limit, and the junction is bridged by

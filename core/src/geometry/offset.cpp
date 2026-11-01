@@ -1141,7 +1141,8 @@ bool stepJunction(Span& a, Span& b, const SnapContext& ctx, std::optional<Span>&
 // computed from centre, radius and angles (ADR-0005), b's centre is moved by the residual (at
 // most 1e-10 x max(1, |x|, |y|, r)) and then nudged by a few ulps until
 // its computed start equals a's computed end; that can fail where the centre's coordinates are
-// much larger than the point's, leaving a rounding-level residual (within 1e-12 x the scale).
+// much larger than the point's, leaving a rounding-level residual (within 1e-12 x the scale)
+// that never puts b's start behind a's end along a's direction of travel.
 void exactJunction(Span& a, Span& b) {
     if (auto* line = std::get_if<LineSpan>(&a)) {
         line->end = startPoint(b);
@@ -1195,41 +1196,140 @@ void exactJunction(Span& a, Span& b) {
         return v;
     };
     const ArcSpan base = moved;
+    auto candidate = [&](int da, int dx, int dy) {
+        // 0, +1, -1, +2, -2, ... ulps
+        auto off = [](int i) { return (i % 2 == 1) ? (i + 1) / 2 : -(i / 2); };
+        ArcSpan c = base;
+        c.radius = steps(base.radius, off(da));
+        c.centre = Vec2{steps(base.centre.x, off(dx)), steps(base.centre.y, off(dy))};
+        return c;
+    };
     for (int da = 0; da < 9 && moved.startPoint() != j; ++da) {
         for (int dx = 0; dx < 9 && moved.startPoint() != j; ++dx) {
             for (int dy = 0; dy < 9 && moved.startPoint() != j; ++dy) {
-                moved = base;
-                // 0, +1, -1, +2, -2, ... ulps
-                auto off = [](int i) { return (i % 2 == 1) ? (i + 1) / 2 : -(i / 2); };
-                moved.radius = steps(base.radius, off(da));
-                moved.centre = Vec2{steps(base.centre.x, off(dx)), steps(base.centre.y, off(dy))};
+                moved = candidate(da, dx, dy);
             }
         }
     }
     if (moved.startPoint() == j) {
         arc = moved;
+        return;
     }
+    // No exact hit (the point's coordinate reachable only on every other ulp, e.g. radius 4e4
+    // about a centre 3e4 mm away from a point at 8e3 mm): the residual is a few ulps whose
+    // direction is rounding noise (it differed between platforms' sin/cos, 0xe400137f), so b
+    // could start a hair behind a's end. Keep b where it is if it starts level with or ahead of
+    // a's end along a's direction of travel; otherwise take the nearest of the searched
+    // candidates that does, within the documented 1e-12 x the scale.
+    const Vec2 ta = tangentAt(a, 1.0);
+    auto ahead = [&](const ArcSpan& c) { return (c.startPoint() - j).dot(ta) >= 0.0; };
+    if (ahead(arc)) {
+        return;
+    }
+    double bestGap = 1e-12 * scale;
+    std::optional<ArcSpan> best;
+    for (int da = 0; da < 9; ++da) {
+        for (int dx = 0; dx < 9; ++dx) {
+            for (int dy = 0; dy < 9; ++dy) {
+                const ArcSpan c = candidate(da, dx, dy);
+                const double gap = geometry::distance(c.startPoint(), j);
+                if (gap <= bestGap && ahead(c)) {
+                    bestGap = gap;
+                    best = c;
+                }
+            }
+        }
+    }
+    if (best) {
+        arc = *best;
+    }
+}
+
+// True when b starts behind a's end along a's direction of travel.
+bool startsBehind(const Span& a, const Span& b) {
+    return (startPoint(b) - endPoint(a)).dot(tangentAt(a, 1.0)) < 0.0;
+}
+
+// Closes the junction a -> b by turning b's start angle only, so that b's end point stays
+// bit-identical: b's start becomes a's end exactly if some angle within a few ulps of the
+// direction of a's end gives it, else the nearest such start that lies level with or ahead of
+// a's end along a's travel, within 1e-12 x max(1, |x|, |y|, r). Returns false (b unchanged)
+// where no angle does.
+bool exactJunctionByAngle(const Span& a, ArcSpan& b) {
+    const Vec2 j = endPoint(a);
+    const Vec2 bEnd = b.endPoint();
+    const Vec2 ta = tangentAt(a, 1.0);
+    const double scale = std::max({1.0, std::fabs(j.x), std::fabs(j.y), b.radius});
+    // The angle of a's end about b's centre, taken next to b's current start angle.
+    double wrapped = normalizeAngle((j - b.centre).angle() - b.startAngle);
+    if (wrapped > 0.5 * kTwoPi) {
+        wrapped -= kTwoPi;
+    }
+    const double target = b.startAngle + wrapped;
+    std::optional<ArcSpan> best;
+    double bestGap = 1e-12 * scale;
+    for (int k = -16; k <= 16; ++k) {
+        ArcSpan c = b;
+        c.startAngle = target;
+        for (int i = 0; i < (k < 0 ? -k : k); ++i) {
+            c.startAngle = std::nextafter(c.startAngle, k < 0 ? -kInf : kInf);
+        }
+        if (!(c.endPoint() == bEnd)) {
+            continue;  // the sweep's rounding moved the end: not a candidate
+        }
+        const Vec2 st = c.startPoint();
+        if (st == j) {
+            b = c;
+            return true;
+        }
+        const double gap = geometry::distance(st, j);
+        if (gap <= bestGap && (st - j).dot(ta) >= 0.0) {
+            bestGap = gap;
+            best = c;
+        }
+    }
+    if (best) {
+        b = *best;
+        return true;
+    }
+    return false;
 }
 
 // exactJunction over every junction of a chain, in order. A closed chain is walked from a line
 // if it has one: each call may move the second span's start (an arc's centre), so the walk must
 // end at a junction whose second span is a line, or the closing call would undo the first one
 // (T-0017 round 3: a retrace removed from a closed chain left its first junction 3.5e-14 open).
+// A closed chain of arcs only has no such junction: the closing call moves the first arc's
+// centre and so reopens the first junction by a few ulps, in a direction that is rounding noise.
+// Where that leaves the second arc starting behind the first's end, the loop is closed instead
+// by turning the first arc's start angle, which keeps its end point (0xa5000ba6, a 4-arc loop
+// at 1e5 mm: 7.2e-12 mm behind).
 void exactJunctions(std::vector<Span>& spans, bool closed) {
     const std::size_t m = spans.size();
     if (m < 2) {
         return;
     }
     std::size_t first = 0;
+    bool allArcs = false;
     if (closed) {
         const auto line = std::find_if(spans.begin(), spans.end(),
                                        [](const Span& sp) { return std::holds_alternative<LineSpan>(sp); });
-        first = line == spans.end() ? 0 : static_cast<std::size_t>(line - spans.begin());
+        allArcs = line == spans.end();
+        first = allArcs ? 0 : static_cast<std::size_t>(line - spans.begin());
     }
     const std::size_t junctions = closed ? m : m - 1;
-    for (std::size_t k = 0; k < junctions; ++k) {
+    for (std::size_t k = 0; k + 1 < junctions; ++k) {
         const std::size_t i = (first + k) % m;
         exactJunction(spans[i], spans[(i + 1) % m]);
+    }
+    const std::size_t i = (first + junctions - 1) % m;
+    const Span before = spans[(i + 1) % m];
+    exactJunction(spans[i], spans[(i + 1) % m]);
+    if (allArcs && startsBehind(spans[0], spans[1])) {
+        ArcSpan turned = std::get<ArcSpan>(before);
+        if (exactJunctionByAngle(spans[m - 1], turned)) {
+            spans[0] = turned;
+        }
     }
 }
 
@@ -1402,22 +1502,10 @@ std::vector<std::vector<Span>> snapChain(const std::vector<Span>& spans,
     }
     stillClosed = closed && !wasCut;
     for (std::vector<Span>& piece : pieces) {
-        const std::size_t n = piece.size();
-        if (n == 0) {
+        if (piece.empty()) {
             continue;
         }
-        std::size_t first = 0;
-        if (stillClosed) {
-            const auto line = std::find_if(piece.begin(), piece.end(), [](const Span& sp) {
-                return std::holds_alternative<LineSpan>(sp);
-            });
-            first = line == piece.end() ? 0 : static_cast<std::size_t>(line - piece.begin());
-        }
-        const std::size_t junctions = stillClosed ? n : n - 1;
-        for (std::size_t k = 0; k < junctions && n > 1; ++k) {
-            const std::size_t i = (first + k) % n;
-            exactJunction(piece[i], piece[(i + 1) % n]);
-        }
+        exactJunctions(piece, stillClosed);
         result.push_back(std::move(piece));
     }
     return result;
