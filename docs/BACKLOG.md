@@ -352,7 +352,7 @@ Acceptance criteria:
   2. Phantom classification is area- or depth-weighted; the C2/C4 cases are kept; a message whenever the repair inset exceeds ~chordal or loses area beyond a small bound.
   3. Everything T-0121/T-0125 verified stays clean (diameter scans, phantom probes, sweeps).
 
-### T-0127 Profile On-vector tabs: exact classification and connectivity on sharp turns   [status: ready]
+### T-0127 Profile On-vector tabs: exact classification and connectivity on sharp turns   [status: in-progress]
 Phase: 1   Module: core/toolpath   Depends on: T-0124   ADR: 0016 §14
 Goal: T-0124 round-3 verifier (harness branch `verifier-harness`, t0124v4/): for profiles On the vector, a short tab on a sharp turn of the cut is kept although its own pass cuts it through (repro/on_corner.cpp; sweep scenes repro/sev_*.scn; F9 = seed 41006 fam 5 scene 9). T-0124 merges with a conservative guard that drops such tabs ("cut through"); this card replaces the guard with an exact rule so On tabs are kept whenever they really hold.
 Acceptance criteria:
@@ -378,7 +378,7 @@ Goal: "T-0004 AC3" in `open_offset_chains_test.cpp` asserts a wall-clock bound (
 Acceptance criteria:
   1. The test measures CPU time or a ratio; it passes 20× under `ctest -j8 --repeat until-fail:20`.
 
-### T-0123 Toolpath API alignment: shared ramps, Tool → pass tool conversion, result types   [status: ready]
+### T-0123 Toolpath API alignment: shared ramps, Tool → pass tool conversion, result types   [status: in-progress]
 Phase: 1   Module: core/toolpath   Depends on: T-0120, T-0121
 Goal: Profile (T-0120) and Pocket (T-0121) were built in parallel. Unify: one ramp module (Profile's `ramp_entry` vs Pocket's `pocket_ramp`), one result shape (`ProfileResult`/`PocketResult` with diagnostics), a `tooling::Tool` + `CuttingData` → pocket tool conversion (feeds, stepover, pass depth), and shared ordering/linking where it overlaps. Add a spatial index where vector-pair checks are O(n²) (Profile grouping/nesting/clearance; Pocket inset guard) so text-heavy jobs with thousands of vectors stay fast.
 Acceptance criteria:
@@ -392,12 +392,13 @@ Owner decisions 2026-10-31/11-01: run heavy verification one task at a time (mac
 
 Owner decisions 2026-10-26 for T-0120/T-0121 (record in ADR-0016/0017): tab length = material left (raised path = length + tool diameter); separate last pass runs after all roughing; nested closed vectors form a region (inner = hole); climb assumes M3 (clockwise) spindle, ramps at feed rate, 3D tabs ramp at 45°, leads only on each cut's first entry and last exit, left-to-right ordering column by column — accepted as proposed; Pocket Profile Pass First/Last/None applies to the Offset strategy too (not only Raster); when a lead-in does not fit at the chosen start, Profile moves the start along the vector and warns (StartMoved).
 
-### T-0122 Headless CLI: carvetto-cli   [status: ready]
+### T-0122 Headless CLI: carvetto-cli   [status: blocked — waits for T-0123 (owner 2026-11-01)]
 Phase: 1   Module: app/cli   Depends on: T-0100, T-0110, T-0120, T-0121
 Goal: A small console program `carvetto-cli` (no Qt): `import <dxf> → .carv`, `toolpath profile|pocket <params.json> <in.carv> <out.carv>`, `post <post.pp> <in.carv> <out.nc>`, `info`. Used by CI for the end-to-end test and by users for scripting.
 Acceptance criteria:
   1. CI job: DXF fixture → profile with tabs + pocket → Grbl `.nc` whose checksum matches the golden; runs on Linux and Windows.
   2. Errors are clear and exit codes non-zero; `--help` documents every command.
+Owner decisions 2026-11-01 (from the coder's BLOCKED report): (1) toolpaths are stored in the .carv as interim archive members `toolpaths/NNNN.json` (name, tool snapshot, moves, the params they came from) via two small public accessors in `carv_io.hpp` (read a preserved member; copy with a member added); an ADR marks this interim until a card implements ADR-0003's job.json toolpath records. (2) T-0123 merges first; the CLI is written against its API. (3) params.json: snake_case keys mirroring ProfileParams/PocketParams; lengths in mm, angles in degrees (converted at the CLI edge); tool = {"tool": {"database": <path, default data/tools/starter_tools.json>, "id": …}} plus optional material/machine for cutting data; optional "layers": [names] (default all vectors); unknown keys rejected with an error naming the key. nlohmann/json (already used) — no new dependency.
 
 ### Batch B — drawing & editing (viewmodel + Qt), to be carded after Batch A is dispatched
 - Drawing tools, snapping/guides, selection & node editing, transforms, align, group; boolean/shape ops UI (weld/subtract/overlap/trim/fillet/offset wrappers over T-0003/T-0004/T-0005), curve fit, join/close.
