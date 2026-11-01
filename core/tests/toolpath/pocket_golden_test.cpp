@@ -18,6 +18,7 @@
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/post/post_processor.hpp"
 #include "carvetto/toolpath/pocket.hpp"
+#include "pocket_test_util.hpp"
 
 using namespace carvetto::toolpath;
 using carvetto::geometry::Box2;
@@ -38,22 +39,14 @@ std::string readFile(const std::string& path) {
 }
 
 Toolpath ac1Pocket() {
-    PocketTool t;
-    t.tool.name = "End Mill (6 mm)";
-    t.tool.toolNumber = 1;
-    t.tool.diameter = 6.0;
-    t.tool.feedRate = 1000.0;
-    t.tool.plungeRate = 300.0;
-    t.tool.spindleSpeed = 18000.0;
-    t.stepover = 2.4;
-    t.passDepth = 3.0;
+    const PocketTool t = carvetto::test::pocket::endMill("End Mill (6 mm)", 1, 6.0, 2.4, 3.0);
     PocketParams p;
     p.name = "Pocket 1";
     p.cutDepth = 6.0;
     p.safeZ = 5.0;
     const PocketResult r = pocketToolpath({Contour::rectangle(Box2{Vec2{0, 0}, Vec2{50, 30}})}, {t}, p);
     REQUIRE(r.toolpaths.size() == 1);
-    REQUIRE(r.messages.empty());
+    REQUIRE(r.diagnostics.empty());
     return r.toolpaths[0];
 }
 

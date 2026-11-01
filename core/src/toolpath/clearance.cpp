@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstddef>
 #include <limits>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -49,23 +50,84 @@ void refine(const ArcLengthPath& path, const ClearanceField& field, double thres
 
 }  // namespace
 
-ClearanceField::ClearanceField(std::vector<geometry::Contour> obstacles) : obstacles_(std::move(obstacles)) {
-    boxes_.reserve(obstacles_.size());
-    for (const geometry::Contour& c : obstacles_) {
-        boxes_.push_back(c.bounds());
-        all_.expand(boxes_.back());
+ClearanceField::ClearanceField(std::vector<geometry::Contour> obstacles) {
+    auto data = std::make_shared<Data>();
+    data->obstacles = std::move(obstacles);
+    std::vector<geometry::Box2> boxes;
+    boxes.reserve(data->obstacles.size());
+    for (const geometry::Contour& c : data->obstacles) {
+        boxes.push_back(c.bounds());
     }
+    data->index = BoxIndex(std::move(boxes));
+    data_ = std::move(data);
+}
+
+std::size_t ClearanceField::size() const {
+    return data_ ? data_->obstacles.size() - skip_.size() : 0;
+}
+
+const geometry::Box2& ClearanceField::bounds() const {
+    static const geometry::Box2 kEmpty;
+    return data_ ? data_->index.bounds() : kEmpty;
+}
+
+bool ClearanceField::skipped(std::size_t i) const {
+    return !skip_.empty() && std::binary_search(skip_.begin(), skip_.end(), i);
+}
+
+ClearanceField ClearanceField::excluding(std::vector<std::size_t> indices) const {
+    ClearanceField out = *this;
+    out.skip_.insert(out.skip_.end(), indices.begin(), indices.end());
+    std::sort(out.skip_.begin(), out.skip_.end());
+    out.skip_.erase(std::unique(out.skip_.begin(), out.skip_.end()), out.skip_.end());
+    if (data_) {
+        out.skip_.erase(std::remove_if(out.skip_.begin(), out.skip_.end(),
+                                       [&](std::size_t i) { return i >= data_->obstacles.size(); }),
+                        out.skip_.end());
+    }
+    return out;
 }
 
 double ClearanceField::distance(geometry::Vec2 p) const {
     double best = std::numeric_limits<double>::infinity();
-    for (std::size_t i = 0; i < obstacles_.size(); ++i) {
-        if (boxDistance(boxes_[i], p) >= best) {
-            continue;
-        }
-        best = std::min(best, geometry::distanceTo(obstacles_[i], p));
+    if (isEmpty()) {
+        return best;
     }
-    return best;
+    const BoxIndex& index = data_->index;
+    const geometry::Box2& all = index.bounds();
+    // Squares of half-width r round p: an obstacle whose box misses the square is more than r
+    // away, so once the best distance is <= r every other obstacle is ruled out. The square
+    // grows until it covers every box.
+    const double reach = std::max({std::fabs(p.x - all.min.x), std::fabs(p.x - all.max.x),
+                                   std::fabs(p.y - all.min.y), std::fabs(p.y - all.max.y)});
+    double r = std::max(index.size() > 64 ? 0.5 * std::max(all.width(), all.height()) /
+                                                std::sqrt(static_cast<double>(index.size()))
+                                          : reach,
+                        1e-6);
+    for (;;) {
+        const bool last = r >= reach || !std::isfinite(r);
+        const std::vector<std::size_t> hits =
+            last ? std::vector<std::size_t>{} : index.query(geometry::Box2{p - Vec2{r, r}, p + Vec2{r, r}});
+        auto visit = [&](std::size_t i) {
+            if (skipped(i) || boxDistance(index.box(i), p) >= best) {
+                return;  // excluded, or cannot be nearer (a repeat visit from a smaller square)
+            }
+            best = std::min(best, geometry::distanceTo(data_->obstacles[i], p));
+        };
+        if (last) {
+            for (std::size_t i = 0; i < index.size(); ++i) {
+                visit(i);
+            }
+            return best;
+        }
+        for (std::size_t i : hits) {
+            visit(i);
+        }
+        if (best <= r) {
+            return best;
+        }
+        r *= 4.0;
+    }
 }
 
 std::vector<std::pair<double, double>> findViolations(const ArcLengthPath& path, double u0, double u1,

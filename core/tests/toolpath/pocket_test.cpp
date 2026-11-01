@@ -16,6 +16,7 @@
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/toolpath/pass_plan.hpp"
 #include "pocket_oracle.hpp"
+#include "pocket_test_util.hpp"
 
 using namespace carvetto::toolpath;
 using carvetto::geometry::Box2;
@@ -30,16 +31,7 @@ namespace orc = carvetto::test::pocket;
 namespace {
 
 PocketTool tool(double diameter, double stepoverFraction, double passDepth, const std::string& name = "EM") {
-    PocketTool t;
-    t.tool.name = name;
-    t.tool.toolNumber = 1;
-    t.tool.diameter = diameter;
-    t.tool.feedRate = 1000.0;
-    t.tool.plungeRate = 300.0;
-    t.tool.spindleSpeed = 18000.0;
-    t.stepover = stepoverFraction * diameter;
-    t.passDepth = passDepth;
-    return t;
+    return orc::endMill(name, 1, diameter, stepoverFraction * diameter, passDepth);
 }
 
 Contour rect(double x0, double y0, double x1, double y1) {
@@ -104,8 +96,8 @@ TEST_CASE("AC3: raster at 45 degrees with a last profile pass", "[toolpath][pock
     CHECK(rasters >= 10);
     std::sort(offsets.begin(), offsets.end());
     for (std::size_t i = 1; i < offsets.size(); ++i) {
-        CHECK(offsets[i] - offsets[i - 1] <= t.stepover + 1e-9);
-        CHECK(offsets[i] - offsets[i - 1] >= 0.5 * t.stepover);
+        CHECK(offsets[i] - offsets[i - 1] <= orc::cuttingOf(t).stepover + 1e-9);
+        CHECK(offsets[i] - offsets[i - 1] >= 0.5 * orc::cuttingOf(t).stepover);
     }
 
     // Exactly one profile path, tracing the centre boundary once (area and perimeter match).
@@ -230,7 +222,7 @@ TEST_CASE("AC5: offset strategy retracts at most once per disconnected region pl
                         p.rampPlunge = ramp;
                         p.profilePass = pass;
                         PocketTool t = tool(6.0, 0.4, 3.0);
-                        t.stepover = stepover;
+                        orc::cuttingOf(t).stepover = stepover;
                         const PocketResult res = pocketToolpath(input, {t}, p);
                         const Toolpath& tp = res.toolpaths[0];
                         REQUIRE_FALSE(tp.isEmpty());
@@ -350,10 +342,10 @@ TEST_CASE("Pocket: degenerate parameters are refused before any work, never thro
     PocketTool t = tool(6.0, 0.4, 3.0);
     PocketParams p = params(6.0);
     PocketTool tinyPass = t;
-    tinyPass.passDepth = 1e-9;
+    orc::cuttingOf(tinyPass).passDepth = 1e-9;
     add("pass depth 1e-9", {rect(0, 0, 50, 30)}, tinyPass, p);
     PocketTool tinyStep = t;
-    tinyStep.stepover = 1e-6;
+    orc::cuttingOf(tinyStep).stepover = 1e-6;
     add("stepover 1e-6", {rect(0, 0, 50, 30)}, tinyStep, p);
     PocketParams fineTol = p;
     fineTol.tolerance.chordal = 1e-7;
@@ -362,11 +354,11 @@ TEST_CASE("Pocket: degenerate parameters are refused before any work, never thro
     badDist.tolerance.distance = 0.0;
     add("distance 0", {rect(0, 0, 50, 30)}, t, badDist);
     PocketTool smallStep = t;
-    smallStep.stepover = 0.02;
+    orc::cuttingOf(smallStep).stepover = 0.02;
     add("stepover 0.02 on a 2 m pocket", {rect(0, 0, 2000, 2000)}, smallStep, p);
     add("huge circle at fine tolerance", {Contour::circle({0, 0}, 1e6)}, t, p);
     PocketTool hugeLevels = t;
-    hugeLevels.passDepth = 0.5;
+    orc::cuttingOf(hugeLevels).passDepth = 0.5;
     PocketParams deep = p;
     deep.cutDepth = 1e5;
     add("100 m deep in 0.5 mm passes", {rect(0, 0, 50, 30)}, hugeLevels, deep);
@@ -378,7 +370,7 @@ TEST_CASE("Pocket: degenerate parameters are refused before any work, never thro
         CHECK(r.toolpaths[0].isEmpty());
         CHECK(r.plans[0].paths.empty());
         CHECK(r.plans[0].levels.empty());
-        CHECK(r.messages.size() == 1);
+        CHECK(r.diagnostics.size() == 1);
     }
 }
 
@@ -438,7 +430,12 @@ TEST_CASE("Pocket: allowance shrinks the centre region; levels follow PassPlan",
             CHECK(mv.to.z == p.safeZ);
         }
     }
-    CHECK(tp.tool == t.tool);
+    CHECK(tp.tool == toolSnapshot(t.tool, t.tool.defaultCuttingData));
+    CHECK(tp.tool.name == "EM");
+    CHECK(tp.tool.toolNumber == 1);
+    CHECK(tp.tool.diameter == 6.0);
+    CHECK(tp.tool.feedRate == 1000.0);
+    CHECK(tp.tool.plungeRate == 300.0);
     CHECK(tp.name == "Pocket");
 }
 
@@ -524,28 +521,28 @@ TEST_CASE("Pocket: invalid input is reported, not cut", "[toolpath][pocket]") {
         open.append(carvetto::geometry::LineSpan{{0, 0}, {10, 0}});
         const PocketResult r = pocketToolpath({open, rect(0, 0, 20, 20)}, {tool(6.0, 0.4, 3.0)}, params());
         CHECK_FALSE(r.toolpaths[0].isEmpty());
-        REQUIRE(r.messages.size() == 1);
-        CHECK(r.messages[0].find("open contour") != std::string::npos);
+        REQUIRE(r.diagnostics.size() == 1);
+        CHECK(r.diagnostics[0].message.find("open contour") != std::string::npos);
     }
     SECTION("only open contours") {
         Contour open;
         open.append(carvetto::geometry::LineSpan{{0, 0}, {10, 0}});
         const PocketResult r = pocketToolpath({open}, {tool(6.0, 0.4, 3.0)}, params());
         CHECK(r.toolpaths[0].isEmpty());
-        CHECK(r.messages.size() == 2);
+        CHECK(r.diagnostics.size() == 2);
     }
     SECTION("tool too large") {
         const PocketResult r = pocketToolpath({rect(0, 0, 5, 5)}, {tool(6.0, 0.4, 3.0)}, params());
         CHECK(r.toolpaths[0].isEmpty());
-        REQUIRE(r.messages.size() == 1);
-        CHECK(r.messages[0].find("too large") != std::string::npos);
+        REQUIRE(r.diagnostics.size() == 1);
+        CHECK(r.diagnostics[0].message.find("too large") != std::string::npos);
     }
     SECTION("stepover larger than the tool, zero pass depth") {
         const PocketResult r =
             pocketToolpath({rect(0, 0, 50, 50)}, {tool(6.0, 1.5, 3.0), tool(6.0, 0.5, 0.0)}, params());
         CHECK(r.toolpaths[0].isEmpty());
         CHECK(r.toolpaths[1].isEmpty());
-        CHECK(r.messages.size() == 2);
+        CHECK(r.diagnostics.size() == 2);
     }
     SECTION("skipped first tool: the next one clears") {
         const PocketResult r =
@@ -555,10 +552,10 @@ TEST_CASE("Pocket: invalid input is reported, not cut", "[toolpath][pocket]") {
         CHECK(r.plans[1].restMaterial.empty());
     }
     SECTION("no tools, no depth") {
-        CHECK(pocketToolpath({rect(0, 0, 50, 50)}, {}, params()).messages.size() == 1);
+        CHECK(pocketToolpath({rect(0, 0, 50, 50)}, {}, params()).diagnostics.size() == 1);
         const PocketResult r = pocketToolpath({rect(0, 0, 50, 50)}, {tool(6.0, 0.4, 3.0)}, params(0.0));
         CHECK(r.toolpaths[0].isEmpty());
-        CHECK(r.messages.size() == 1);
+        CHECK(r.diagnostics.size() == 1);
     }
     SECTION("nested contours alternate pocket / island / pocket (even-odd)") {
         const PocketResult r =
@@ -588,9 +585,9 @@ TEST_CASE("Regression: travel never crosses a thin fin through its corner vertic
     const orc::Poly u{{14.66107, 15.29806}, {46.90379, 15.29806}, {46.90379, 47.54078}, {31.59986, 47.54078},
                       {31.59986, 24.97087}, {29.96501, 24.97087}, {29.96501, 47.54078}, {14.66107, 47.54078}};
     PocketTool t1 = tool(2.1278, 1.0, 1.8905, "T1");
-    t1.stepover = 1.6948;
+    orc::cuttingOf(t1).stepover = 1.6948;
     PocketTool t2 = tool(0.9164, 1.0, 3.8357, "T2");
-    t2.stepover = 0.3921;
+    orc::cuttingOf(t2).stepover = 0.3921;
     for (ProfilePass pass : {ProfilePass::First, ProfilePass::Last, ProfilePass::None}) {
         for (PocketStrategy strategy : {PocketStrategy::Raster, PocketStrategy::Offset}) {
             INFO("pass " << static_cast<int>(pass) << " strategy " << static_cast<int>(strategy));
@@ -659,7 +656,7 @@ TEST_CASE("AC5 regression: pockets with many islands retract once", "[toolpath][
             INFO(c.name << " islands " << c.polys.size() - 1 << " stepover " << stepover);
             PocketParams p = params(9.0);
             PocketTool t = tool(6.0, 0.4, 3.0);
-            t.stepover = stepover;
+            orc::cuttingOf(t).stepover = stepover;
             const PocketResult res = pocketToolpath(input, {t}, p);
             const Toolpath& tp = res.toolpaths[0];
             REQUIRE_FALSE(tp.isEmpty());
@@ -692,18 +689,18 @@ TEST_CASE("AC6 regression: the move cap sees raster pieces per line", "[toolpath
     PocketParams p = params(9.0);
     p.strategy = PocketStrategy::Raster;
     PocketTool t = tool(0.2, 0.1, 0.01);
-    t.stepover = 0.02;
+    orc::cuttingOf(t).stepover = 0.02;
     // 1250 lines x ~50 pieces x 900 levels: far beyond the cap.
     const PocketResult refused = pocketToolpath({comb}, {t}, p);
     CHECK(refused.toolpaths[0].isEmpty());
     CHECK(refused.plans[0].paths.empty());
     CHECK(refused.plans[0].levels.empty());
-    REQUIRE(refused.messages.size() == 1);
-    CHECK(refused.messages[0].find("would exceed") != std::string::npos);
+    REQUIRE(refused.diagnostics.size() == 1);
+    CHECK(refused.diagnostics[0].message.find("would exceed") != std::string::npos);
     // The same pattern at 3 levels is inside the cap and is produced.
-    t.passDepth = 3.0;
+    orc::cuttingOf(t).passDepth = 3.0;
     const PocketResult ok = pocketToolpath({comb}, {t}, p);
-    CHECK(ok.messages.empty());
+    CHECK(ok.diagnostics.empty());
     CHECK_FALSE(ok.toolpaths[0].isEmpty());
     CHECK(ok.toolpaths[0].moves.size() <= 20000000u);
     CHECK(ok.plans[0].paths.size() > 10000u);  // ~one piece per tooth per line

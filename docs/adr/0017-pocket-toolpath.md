@@ -20,6 +20,11 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
    and an empty toolpath for that tool, as do parameters that would make the work explode (12).
    It never throws. With more than one tool, each toolpath is
    named `"<name> [<tool name>]"` (the inventory's tool-inclusive naming).
+   **Amended by T-0123 (ADR-0018):** a `PocketTool` is now a `tooling::Tool` plus optional
+   `CuttingData` (empty = the tool's default data, as `ProfileParams::cuttingData`); `passTool`
+   takes from it the radius (half the cutting width at the bottom of the pocket: D/2 for end
+   mills), stepover, pass depth and snapshot. Messages are `ToolpathDiagnostic`s (shared with
+   Profile) with an issue code, the same texts and the tool index; `CutDirection` is shared.
 2. **Region.** The pocket is the **even-odd** union of the closed input contours, so nesting
    decides islands (pocket / island / pocket again) whatever the orientation. Open contours are
    ignored with a message.
@@ -186,23 +191,28 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
      dropped from 66 s to 1.7 s.
    With this, a connected pocket of any shape retracts once in total, however many islands it has
    (rows of 3–6 islands, grids up to 6 × 4, U, C, L, plus), and n disjoint regions retract
-   n times (AC5). Raster and rest clusters use straight travel only. A rest cluster travels only
-   inside its own part of the need region (∩ C): other rest clusters may still hold material at
-   every depth.
+   n times (AC5). A rest cluster travels only inside its own part of the need region (∩ C): other
+   rest clusters may still hold material at every depth. **Amended by T-0123 (ADR-0018 §10):**
+   Raster parts and rest areas route travel along their own rings like Offset (they used straight
+   travel only), and between rest clusters in one part of the centre region the tool lifts to the
+   top of the cut and travels inside that part instead of retracting.
 9. **Descent.** It is a vertical `Plunge`. With `rampPlunge`, the tool plunges through the air to
    the floor already cut (the surface for the first level) and then makes a **zig-zag ramp**
    (`toolpath/pocket_ramp.hpp`, `appendPathRamp`). The ramp runs forward along the path for
    min(rampDistance, path length) down to the midway height, then back over the same points,
    arriving at the start exactly at the level. All ramp moves are `Feed` moves on the path, so a
-   ramp can never gouge. Paths shorter than 10·tolerance.distance fall back to a plunge. This is
-   pocket-specific and separate from Profile's ramp family (ADR-0016); unifying them is left to a
-   later card.
+   ramp can never gouge. Paths shorter than 10·tolerance.distance fall back to a plunge. Since
+   T-0123 this is the shared ramp module's zig-zag (`ramp_entry.hpp`, `zigZagLegs` walked with
+   `appendLeg`), the same legs as Profile's zig-zag ramp (ADR-0018 §5).
 10. **Rest machining.** Tools run in list order; the first usable tool is the clearance tool. The
     rest material for tool i is `opened(inset(R, allowance + margin) − swept, sliver)`. Here
     `swept` is the union of the earlier tools' cut areas: `C₀ ⊕ r₀` for the clearance tool, and
     `(N ∩ C) ⊕ r` for each earlier rest tool. These are computed with round joins at ≤ 1e-4 mm,
-    so the joins' chords do not show up as fake rest material. Tool i builds its normal pattern
-    over its own C_i and clips every path, as an open path, to `N_i = offset(rest, r_i − 10·distance)`:
+    so the joins' chords do not show up as fake rest material. **Amended by T-0123 (ADR-0018 §9):
+    tool i now builds its normal pattern over the rest areas `N_i ∩ C_i` (N_i thinned to the region
+    tolerance), one cluster per connected area, instead of the clipping described in the rest of
+    this paragraph.** Before T-0123, tool i built its normal pattern
+    over its own C_i and clipped every path, as an open path, to `N_i = offset(rest, r_i − 10·distance)`:
     the centres whose disc overlaps the rest material by more than 10·distance. A tool that would
     only touch it, such as the same tool again, gets nothing. N_i is deliberately *not* intersected
     with C_i: the outermost ring lies on C_i's boundary, where open-path clipping is ambiguous and
@@ -232,6 +242,8 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
       before the check. The raster pattern's memory is proportional to lines × pieces and is not
       bounded until then: the verifier hit `std::bad_alloc` on a 1000-tooth comb inside the
       caps. Bounding it, and the quadratic cost of rest-tool raster clipping, moved to T-0123.
+      **Resolved by T-0123 (ADR-0018 §9, §11):** raster lines are clipped in batches against a
+      piece budget (move cap / (6 × levels)), and rest tools no longer clip.
     The verifier's repros now return at once: pass depth 1e-9 (round 1: `std::bad_alloc` from
     2·10⁹ levels), stepover 1e-6, and chordal 1e-7 on an r = 20 circle (both ran unbounded).
 
@@ -257,11 +269,9 @@ move by move (to Clipper2's 1e-6 mm grid), independently of the offset code.
   back to arcs.
 - Lifts are vertical `Feed` moves, not `Retract`s. They never leave the pocket and travel only
   inside the centre region, above a cleared floor. AC5 counts retracts to safe Z.
-- Raster and rest travel only goes straight. A raster pocket split by islands, or rest clusters
-  far apart, still retract between runs. A boundary-following router for those is a possible
-  refinement.
-- Rest machining builds the tool's full pattern and then clips it. That is correct but costs
-  more than a pattern restricted to the rest areas would.
+- Raster and rest travel went straight only, so a raster pocket split by islands, or rest clusters
+  far apart, retracted between runs; and rest machining built the tool's full pattern and then
+  clipped it. Both resolved by T-0123 (ADR-0018 §9, §10).
 - A self-overlapping input (two coincident edges of opposite direction, as in the verifier's
   "spiral" scene) is a zero-width fold with pocket on both sides under even-odd and non-zero
   alike. The pocket treats it as open, so checkers must not count such folds as walls.

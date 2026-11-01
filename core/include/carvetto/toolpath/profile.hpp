@@ -12,6 +12,7 @@
 #include "carvetto/tooling/tool.hpp"
 #include "carvetto/toolpath/cut_order.hpp"
 #include "carvetto/toolpath/lead_moves.hpp"
+#include "carvetto/toolpath/operation.hpp"
 #include "carvetto/toolpath/pass_plan.hpp"
 #include "carvetto/toolpath/ramp_entry.hpp"
 #include "carvetto/toolpath/tab_placement.hpp"
@@ -32,10 +33,6 @@ enum class ProfileSide {
     Right = Outside,
     Left = Inside,
 };
-
-/// Climb or conventional milling, assuming a clockwise (M3) spindle: climb keeps the vector on
-/// the right of the direction of travel (outside profiles run clockwise, inside counter-clockwise).
-enum class CutDirection { Climb, Conventional };
 
 /// Where each closed cut starts (feature-inventory §5 "Start At" / "Use Vector Start Point").
 enum class StartAt {
@@ -93,35 +90,17 @@ struct ProfileParams {
     geometry::Vec2 startPosition{0.0, 0.0};
     CornerOptions corners;
 
-    /// Feeds, speeds, tool number and default pass depth; empty = the tool's default data.
+    /// Feeds, speeds, tool number and default pass depth; empty = the tool's default data
+    /// (`effectiveCuttingData`). Look up machine/material data with `Tool::cuttingDataFor`.
     std::optional<tooling::CuttingData> cuttingData;
     geometry::Tolerance tolerance{geometry::Tolerance::defaults()};
 };
 
-/// Why part of a profile could not be produced as asked.
-enum class ProfileIssue {
-    InvalidParameters,      ///< Non-finite or out-of-range parameter; nothing produced.
-    NoPasses,               ///< The pass plan yields no levels; nothing produced.
-    EmptyContour,           ///< A vector without spans was skipped.
-    DiscontinuousContour,   ///< A vector whose spans do not join was skipped.
-    ToolTooLarge,           ///< The offset of a vector vanished (e.g. a hole smaller than the tool).
-    MergedWithNeighbour,    ///< Offsets of nearby vectors overlapped and were merged (polygonal).
-    TrimmedNearVector,      ///< Part of a cut was removed because it passed within the tool radius of another vector.
-    LeadShortened,          ///< A lead would have gouged and was shortened and/or made gentler (perpendicular / half sweep).
-    LeadDropped,            ///< A lead would have gouged at any length and was left out.
-    StartMoved,             ///< A closed cut's start was moved along it so that its lead-in fits.
-    TabsNotPlaced,          ///< Some tabs could not be placed (overlap, no straight stretch, path too short).
-    CornerNeedsVBit,        ///< Sharp corner options need a V-bit; ignored.
-    SpiralNeedsClosed,      ///< Spiral ramp on an open vector; a smooth ramp was used.
-    TabThicknessClamped,    ///< Tab thickness exceeded the cut depth and was clamped to it.
-};
-
+/// Profile diagnostics use the shared operation types (T-0123, operation.hpp); the profile's
+/// issues are `ProfileIssue::InvalidParameters` … `ProfileIssue::TabThicknessClamped`.
+using ProfileIssue = ToolpathIssue;
 /// One diagnostic; `contour` is the input vector index when the issue concerns one.
-struct ProfileDiagnostic {
-    ProfileIssue issue{ProfileIssue::InvalidParameters};
-    std::optional<std::size_t> contour;
-    std::string message;
-};
+using ProfileDiagnostic = ToolpathDiagnostic;
 
 /// The computed toolpath and what could not be done as asked.
 struct ProfileResult {
@@ -130,7 +109,7 @@ struct ProfileResult {
     /// True when the toolpath has moves.
     bool ok() const { return !toolpath.isEmpty(); }
     /// True when some diagnostic has the given issue.
-    bool has(ProfileIssue issue) const;
+    bool has(ToolpathIssue issue) const { return hasIssue(diagnostics, issue); }
 };
 
 /// Radius used to offset the vectors: half the tool's cutting width at the bottom of the cut

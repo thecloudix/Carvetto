@@ -21,6 +21,7 @@
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "pocket_oracle.hpp"
+#include "pocket_test_util.hpp"
 
 using namespace carvetto::toolpath;
 using carvetto::geometry::Box2;
@@ -34,16 +35,8 @@ namespace {
 constexpr double kBand = 0.05;
 
 PocketTool tool(double diameter, double stepoverFraction, double passDepth, int number = 1) {
-    PocketTool t;
-    t.tool.name = "End Mill (" + std::to_string(diameter) + " mm)";
-    t.tool.toolNumber = number;
-    t.tool.diameter = diameter;
-    t.tool.feedRate = 1000.0;
-    t.tool.plungeRate = 300.0;
-    t.tool.spindleSpeed = 18000.0;
-    t.stepover = stepoverFraction * diameter;
-    t.passDepth = passDepth;
-    return t;
+    return orc::endMill("End Mill (" + std::to_string(diameter) + " mm)", number, diameter,
+                        stepoverFraction * diameter, passDepth);
 }
 
 /// Signed reach depth of p in a W×H rectangle at the origin for a tool of radius r: >= 0 where

@@ -5,10 +5,12 @@
 #include <cstddef>
 #include <limits>
 #include <numeric>
+#include <utility>
 #include <vector>
 
 #include "carvetto/geometry/contour_ops.hpp"
 #include "carvetto/geometry/fill_rule.hpp"
+#include "carvetto/toolpath/box_index.hpp"
 
 namespace carvetto::toolpath {
 
@@ -86,16 +88,35 @@ void walk(std::size_t node, const std::vector<Node>& tree, const std::vector<Ord
     std::vector<std::size_t> kids = tree[node].children;
     sortSiblings(kids, items, boxes, s);
     if (s == Strategy::Nearest) {
+        // Greedy nearest neighbour: the unused sibling whose start is nearest to the tool, ties to
+        // the first in selection order. The starts are indexed (T-0123): a square of half-width h
+        // round the tool is searched, growing until the best distance found is <= h (every start
+        // outside it is farther), so the choice is the same as a scan over all siblings.
+        std::vector<geometry::Box2> starts(kids.size());
+        geometry::Box2 all;
+        for (std::size_t k = 0; k < kids.size(); ++k) {
+            starts[k] = geometry::Box2{items[kids[k]].start, items[kids[k]].start};
+            all.expand(items[kids[k]].start);
+        }
+        const BoxIndex index(std::move(starts));
+        const double count = static_cast<double>(std::max<std::size_t>(kids.size(), 1));
+        const double step = std::max(std::max(all.width(), all.height()) / std::sqrt(count), 1e-9);
         std::vector<bool> used(kids.size(), false);
         for (std::size_t n = 0; n < kids.size(); ++n) {
             std::size_t best = kids.size();
             double bestD = std::numeric_limits<double>::infinity();
-            for (std::size_t k = 0; k < kids.size(); ++k) {
-                if (used[k]) continue;
-                const double d = geometry::distance(pos, items[kids[k]].start);
-                if (d < bestD) {
-                    bestD = d;
-                    best = k;
+            for (double h = step;; h *= 2.0) {
+                const geometry::Box2 square{pos - geometry::Vec2{h, h}, pos + geometry::Vec2{h, h}};
+                for (const std::size_t k : index.query(square)) {
+                    if (used[k]) continue;
+                    const double d = geometry::distance(pos, items[kids[k]].start);
+                    if (d < bestD || (d == bestD && k < best)) {
+                        bestD = d;
+                        best = k;
+                    }
+                }
+                if (bestD <= h || square.contains(all)) {
+                    break;  // nothing outside the square can be nearer, or nothing is outside it
                 }
             }
             used[best] = true;
@@ -136,6 +157,13 @@ std::vector<std::size_t> orderCuts(const std::vector<OrderItem>& items, const Or
     // Containment tree: the parent of an item is the smallest-area closed item, larger than it,
     // that contains a point of it. Node 0 is the root, node i+1 is item i.
     std::vector<Node> tree(n + 1);
+    std::vector<geometry::Box2> closedBoxes(n);
+    for (std::size_t i = 0; i < n; ++i) {
+        if (items[i].path.closed) {
+            closedBoxes[i] = boxes[i];
+        }
+    }
+    const BoxIndex index(std::move(closedBoxes));
     for (std::size_t i = 0; i < n; ++i) {
         if (items[i].path.isEmpty()) {
             tree[0].children.push_back(i);
@@ -145,11 +173,8 @@ std::vector<std::size_t> orderCuts(const std::vector<OrderItem>& items, const Or
         const geometry::Vec2 probe = geometry::pointAt(items[i].path.spans.front(), 0.5);
         std::size_t parent = n;
         double parentArea = std::numeric_limits<double>::infinity();
-        for (std::size_t j = 0; j < n; ++j) {
+        for (std::size_t j : index.containing(probe)) {
             if (j == i || !items[j].path.closed || areas[j] <= areas[i] || areas[j] >= parentArea) {
-                continue;
-            }
-            if (!boxes[j].contains(probe)) {
                 continue;
             }
             if (geometry::locatePoint(items[j].path, probe, geometry::FillRule::EvenOdd, tol) ==

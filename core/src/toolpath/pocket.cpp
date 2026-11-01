@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <numeric>
 #include <optional>
 #include <string>
 #include <type_traits>
@@ -17,11 +18,12 @@
 #include "carvetto/geometry/fill_rule.hpp"
 #include "carvetto/geometry/offset.hpp"
 #include "carvetto/geometry/span.hpp"
+#include "carvetto/toolpath/box_index.hpp"
 #include "carvetto/toolpath/pass_plan.hpp"
-#include "carvetto/toolpath/pocket_ramp.hpp"
+#include "carvetto/toolpath/ramp_entry.hpp"
 #include "pocket_guard.hpp"
 
-// Pocket toolpath (T-0121, ADR-0017).
+// Pocket toolpath (T-0121, ADR-0017; T-0123, ADR-0018).
 //
 // All region work is done on polygons through the public geometry API: the even-odd union of
 // the input gives the pocket region R; offsetContours(R, −(radius + allowance + margin)) gives
@@ -29,9 +31,9 @@
 // offset(C, −k·stepover) as a containment tree and cuts it in post-order (inside out); when the
 // stepover exceeds the radius, extra rings offset(C, −(k·stepover + radius)) are inserted
 // wherever the next level would leave material uncovered. The Raster strategy clips lines to C
-// with an open-path intersection. Rest tools clip their own pattern to the neighbourhood of the
-// rest material. Small polygon helpers (point in ring, segment inside region) live here and are
-// deliberately simple: they work on the line-only polygons Clipper2 returns.
+// with an open-path intersection. Rest tools build their own pattern over their rest areas (the
+// centre region where the tool disc reaches rest material). Small polygon helpers (point in
+// ring, segment inside region) live here and are deliberately simple: they work on the line-only polygons Clipper2 returns.
 
 namespace carvetto::toolpath {
 
@@ -201,14 +203,12 @@ std::vector<Contour> contoursOf(const std::vector<Group>& gs) {
     return out;
 }
 
-std::vector<Ring> ringsOf(const std::vector<Group>& gs) {
-    std::vector<Ring> out;
-    for (const Group& g : gs) {
-        for (Ring& r : ringsOf(g)) {
-            out.push_back(std::move(r));
-        }
+Box2 ringBox(const Ring& r) {
+    Box2 b;
+    for (const Vec2 q : r) {
+        b.expand(q);
     }
-    return out;
+    return b;
 }
 
 /// Groups polygonal Clipper2 output (outers CCW, holes CW) into regions. Each hole goes to the
@@ -230,10 +230,18 @@ std::vector<Group> groupsOf(const std::vector<Contour>& contours, double tol) {
             holes.push_back(std::move(r));
         }
     }
+    // Only outers whose box holds the hole's box can contain it (T-0123: a spatial index keeps
+    // this near-linear for thousands of regions).
+    std::vector<Box2> outerBoxes;
+    outerBoxes.reserve(groups.size());
+    for (const Group& g : groups) {
+        outerBoxes.push_back(ringBox(g.outer));
+    }
+    const BoxIndex index(std::move(outerBoxes));
     for (Ring& h : holes) {
         Vec2 probe = h.front();
         std::optional<std::size_t> best;
-        for (std::size_t gi = 0; gi < groups.size(); ++gi) {
+        for (const std::size_t gi : index.query(ringBox(h).inflated(tol))) {
             const Ring& o = groups[gi].outer;
             for (const Vec2 v : h) {
                 if (!onRing(o, v, tol)) {
@@ -318,7 +326,9 @@ class EdgeGrid {
                 const std::size_t c = j * nx_ + i;
                 for (std::size_t k = start_[c]; k < start_[c + 1]; ++k) {
                     const auto [a, b] = edges_[items_[k]];
-                    best = std::min(best, distToSegment(p, a, b));
+                    if (!apart(p, p, a, b, best)) {
+                        best = std::min(best, distToSegment(p, a, b));
+                    }
                 }
             }
         }
@@ -339,7 +349,9 @@ class EdgeGrid {
                 const std::size_t c = j * nx_ + i;
                 for (std::size_t k = start_[c]; k < start_[c + 1]; ++k) {
                     const auto [p, q] = edges_[items_[k]];
-                    best = std::min(best, distSegments(a, b, p, q));
+                    if (!apart(a, b, p, q, best)) {
+                        best = std::min(best, distSegments(a, b, p, q));
+                    }
                 }
             }
         }
@@ -358,7 +370,7 @@ class EdgeGrid {
                 const std::size_t c = j * nx_ + i;
                 for (std::size_t k = start_[c]; k < start_[c + 1]; ++k) {
                     const auto [a, b] = edges_[items_[k]];
-                    if (distToSegment(p, a, b) < d) {
+                    if (!apart(p, p, a, b, d) && distToSegment(p, a, b) < d) {
                         return true;
                     }
                 }
@@ -368,6 +380,16 @@ class EdgeGrid {
     }
 
    private:
+    /// True when the bounding boxes of segments ab and cd lie more than `d` apart along an axis,
+    /// so the segments are certainly farther apart than `d` (a cheap test before the exact
+    /// distance; the 1e-9 mm keeps it clear of rounding, so results are as without it).
+    static bool apart(Vec2 a, Vec2 b, Vec2 c, Vec2 d2, double d) {
+        const double gx =
+            std::max(std::min(c.x, d2.x) - std::max(a.x, b.x), std::min(a.x, b.x) - std::max(c.x, d2.x));
+        const double gy =
+            std::max(std::min(c.y, d2.y) - std::max(a.y, b.y), std::min(a.y, b.y) - std::max(c.y, d2.y));
+        return std::max(gx, gy) > d + 1e-9;
+    }
     std::size_t col(double x) const {
         const double f = std::floor((x - box_.min.x) / cell_);
         return static_cast<std::size_t>(std::clamp(f, 0.0, static_cast<double>(nx_ - 1)));
@@ -603,6 +625,7 @@ std::vector<Contour> guardInset(const std::vector<Contour>& cs, const std::vecto
     const double slack = tol.chordal + 1e-6;
     const double need = d - slack;
     const EdgeGrid grid(base, need);
+    const RegionIndex baseRegion(base);  // inside tests in time proportional to nearby edges
     auto passes = [&](Vec2 v) { return !grid.anyCloser(v, need); };
     // Pulls each failing vertex that is convex for the region (a left turn: the region lies on
     // the left of every ring, outers counter-clockwise, holes clockwise) towards the midpoint of
@@ -692,7 +715,7 @@ std::vector<Contour> guardInset(const std::vector<Contour>& cs, const std::vecto
                 break;
             }
         }
-        if (good && !insideRegion(base, *good, 0.0)) {
+        if (good && !baseRegion.inside(*good, 0.0)) {
             continue;  // keeps the distance, but outside the source: a phantom
         }
         // No vertex at full depth: the centroid can still show a genuine region, unless the
@@ -704,7 +727,7 @@ std::vector<Contour> guardInset(const std::vector<Contour>& cs, const std::vecto
                 c = c + v;
             }
             c = c * (1.0 / static_cast<double>(g.outer.size()));
-            if (passes(c) && insideRegion(ringsOf(g), c, 0.0) && insideRegion(base, c, 0.0)) {
+            if (passes(c) && insideRegion(ringsOf(g), c, 0.0) && baseRegion.inside(c, 0.0)) {
                 good = c;
             }
         }
@@ -768,6 +791,54 @@ std::vector<Contour> guardInset(const std::vector<Contour>& cs, const std::vecto
 std::vector<Contour> insetBy(const std::vector<Contour>& cs, double d, const Tolerance& tol,
                              InsetGuard guard = InsetGuard::Lenient, InsetReport* report = nullptr) {
     return guardInset(cs, offsetBy(cs, -d, tol), d, tol, guard, report);
+}
+
+/// `r` with the vertices dropped that lie within `eps` of the chord kept round them
+/// (Douglas-Peucker, closed ring split at vertex 0 and the vertex farthest from it). Every
+/// dropped vertex is within `eps` of the result, so the region moves by at most `eps` either way.
+Ring simplified(const Ring& r, double eps) {
+    const std::size_t n = r.size();
+    if (n <= 4) {
+        return r;
+    }
+    std::size_t apex = 0;
+    for (std::size_t i = 1; i < n; ++i) {
+        if (geometry::distance(r[i], r[0]) > geometry::distance(r[apex], r[0])) {
+            apex = i;
+        }
+    }
+    if (apex == 0) {
+        return r;
+    }
+    std::vector<char> keep(n, 0);
+    keep[0] = keep[apex] = 1;
+    // Index ranges (a, b), b may wrap past n (taken modulo n), with a < b.
+    std::vector<std::pair<std::size_t, std::size_t>> stack{{0, apex}, {apex, n}};
+    while (!stack.empty()) {
+        const auto [a, b] = stack.back();
+        stack.pop_back();
+        double worst = 0.0;
+        std::size_t at = a;
+        for (std::size_t i = a + 1; i < b; ++i) {
+            const double dd = distToSegment(r[i % n], r[a % n], r[b % n]);
+            if (dd > worst) {
+                worst = dd;
+                at = i;
+            }
+        }
+        if (worst > eps) {
+            keep[at % n] = 1;
+            stack.emplace_back(a, at);
+            stack.emplace_back(at, b);
+        }
+    }
+    Ring out;
+    for (std::size_t i = 0; i < n; ++i) {
+        if (keep[i] != 0) {
+            out.push_back(r[i]);
+        }
+    }
+    return out.size() >= 3 ? out : r;
 }
 
 /// Morphological opening: removes slivers narrower than 2·eps (numeric residue of booleans).
@@ -914,9 +985,9 @@ struct RingTree {
 /// A tool's planned paths plus what the emitter needs to route travel moves between them.
 struct Pattern {
     std::vector<PocketPath> paths;
-    /// Per path: its RingTree node, or kNoNode (raster pieces, rest pieces).
+    /// Per path: its RingTree node (raster paths: node 0, the part itself).
     std::vector<std::size_t> node;
-    /// Per cluster; empty for raster and rest clusters.
+    /// Per cluster: the Offset level tree, or one node (the part) for Raster.
     std::vector<RingTree> trees;
 
     void add(std::vector<PocketPath>& fresh, std::size_t nodeId) {
@@ -940,6 +1011,14 @@ struct PatternContext {
     Tolerance fine;
     /// Residual material narrower than 2·sliver is ignored (ADR-0017 §5, §10).
     double sliver;
+    /// Raster pieces the toolpath may hold within the move cap (ADR-0017 §12, T-0123): the raster
+    /// pattern is clipped in batches of lines and stops, setting `overBudget`, as soon as it
+    /// holds more, so its memory stays bounded however many pieces the lines would split into.
+    std::size_t pieceBudget{std::numeric_limits<std::size_t>::max()};
+    /// Raster pieces built so far over all parts (may be null: no budget kept).
+    std::size_t* piecesUsed{nullptr};
+    /// Set by the raster builder when `pieceBudget` was exceeded (the pattern is then incomplete).
+    bool* overBudget{nullptr};
 };
 
 /// Rings of one connected centre region `g`, cut inside out; the root (boundary) rings first,
@@ -1080,37 +1159,54 @@ void rasterPattern(const Group& g, const PatternContext& ctx, std::size_t cluste
     const double span = vmax - vmin;
     const auto n = static_cast<std::size_t>(std::max(1.0, std::ceil(span / ctx.stepover - 1e-9)));
     const double pitch = span / static_cast<double>(n);
-    std::vector<Contour> lines;
-    for (std::size_t k = 0; k < n; ++k) {
-        const double vk = vmin + (static_cast<double>(k) + 0.5) * pitch;
-        Contour c;
-        c.append(geometry::LineSpan{u * (umin - 1.0) + v * vk, u * (umax + 1.0) + v * vk});
-        lines.push_back(std::move(c));
-    }
-    const geometry::BooleanResult clipped =
-        geometry::booleanOp(BooleanOp::Intersection, lines, contoursOf(g), tol, FillRule::EvenOdd);
+    // Lines are clipped in batches (open paths do not interact, so the pieces are the same as in
+    // one call), and the pieces counted against the budget after each batch.
+    constexpr std::size_t kBatch = 256;
+    const std::vector<Contour> clip = contoursOf(g);
     std::vector<std::vector<RasterPiece>> rows(n);
-    for (const Contour& c : clipped.open) {
-        if (c.isEmpty()) {
-            continue;
+    std::size_t pieces = 0;
+    for (std::size_t k0 = 0; k0 < n; k0 += kBatch) {
+        std::vector<Contour> lines;
+        for (std::size_t k = k0; k < std::min(n, k0 + kBatch); ++k) {
+            const double vk = vmin + (static_cast<double>(k) + 0.5) * pitch;
+            Contour c;
+            c.append(geometry::LineSpan{u * (umin - 1.0) + v * vk, u * (umax + 1.0) + v * vk});
+            lines.push_back(std::move(c));
         }
-        Vec2 a = c.startPoint();
-        Vec2 b = c.endPoint();
-        if (geometry::distance(a, b) <= tol.distance) {
-            continue;
+        const geometry::BooleanResult clipped =
+            geometry::booleanOp(BooleanOp::Intersection, lines, clip, tol, FillRule::EvenOdd);
+        for (const Contour& c : clipped.open) {
+            if (c.isEmpty()) {
+                continue;
+            }
+            Vec2 a = c.startPoint();
+            Vec2 b = c.endPoint();
+            if (geometry::distance(a, b) <= tol.distance) {
+                continue;
+            }
+            if (a.dot(u) > b.dot(u)) {
+                std::swap(a, b);
+            }
+            const double row = (0.5 * (a + b).dot(v) - vmin) / (pitch > 0.0 ? pitch : 1.0) - 0.5;
+            const auto k =
+                static_cast<std::size_t>(std::clamp(std::llround(row), 0LL, static_cast<long long>(n - 1)));
+            // Clipper2 returns the ends on its 1e-6 mm grid; put them back on the exact line so
+            // every raster piece is exactly parallel to the raster angle.
+            const double vk = vmin + (static_cast<double>(k) + 0.5) * pitch;
+            a = u * a.dot(u) + v * vk;
+            b = u * b.dot(u) + v * vk;
+            rows[k].push_back(RasterPiece{a, b});
+            ++pieces;
         }
-        if (a.dot(u) > b.dot(u)) {
-            std::swap(a, b);
+        if ((ctx.piecesUsed != nullptr ? *ctx.piecesUsed : 0) + pieces > ctx.pieceBudget) {
+            if (ctx.overBudget != nullptr) {
+                *ctx.overBudget = true;
+            }
+            return;
         }
-        const double row = (0.5 * (a + b).dot(v) - vmin) / (pitch > 0.0 ? pitch : 1.0) - 0.5;
-        const auto k =
-            static_cast<std::size_t>(std::clamp(std::llround(row), 0LL, static_cast<long long>(n - 1)));
-        // Clipper2 returns the ends on its 1e-6 mm grid; put them back on the exact line so
-        // every raster piece is exactly parallel to the raster angle.
-        const double vk = vmin + (static_cast<double>(k) + 0.5) * pitch;
-        a = u * a.dot(u) + v * vk;
-        b = u * b.dot(u) + v * vk;
-        rows[k].push_back(RasterPiece{a, b});
+    }
+    if (ctx.piecesUsed != nullptr) {
+        *ctx.piecesUsed += pieces;
     }
     for (auto& row : rows) {
         std::sort(row.begin(), row.end(),
@@ -1168,158 +1264,78 @@ void rasterPattern(const Group& g, const PatternContext& ctx, std::size_t cluste
     if (p.profilePass == ProfilePass::Last) {
         appendGroupRings(g, p.direction, PocketPathRole::Profile, cluster, cursor, tol.distance, out);
     }
-    pattern.add(out, kNoNode);
+    // One tree node: the part's own rings. Travel between runs (islands split the lines) is
+    // routed along them like the Offset strategy's (ADR-0017 §8, T-0123).
+    pattern.add(out, 0);
     if (pattern.trees.size() <= cluster) {
         pattern.trees.resize(cluster + 1);
     }
+    pattern.trees[cluster].rings = {ringsOf(g)};
+    pattern.trees[cluster].parent = {kNoNode};
+}
+
+/// An order for `parts`: grouped by `partOf` (ascending), and within a group greedy nearest
+/// neighbour between bounding-box centres, starting at the lowest (then leftmost) centre. Ties
+/// go to the lower index. The nearest unused part is found with a growing square search over a
+/// `BoxIndex` of the centres, so thousands of parts stay cheap.
+std::vector<std::size_t> nearestFirst(const std::vector<Group>& parts, const std::vector<std::size_t>& partOf) {
+    const std::size_t n = parts.size();
+    std::vector<Vec2> centres(n);
+    std::vector<Box2> points(n);
+    Box2 all;
+    for (std::size_t i = 0; i < n; ++i) {
+        centres[i] = ringBox(parts[i].outer).centre();
+        points[i] = Box2{centres[i], centres[i]};
+        all.expand(centres[i]);
+    }
+    const BoxIndex index(points);
+    const double extent = std::max({all.width(), all.height(), 1e-9});
+    std::vector<char> used(n, 0);
+    std::vector<std::size_t> out;
+    std::vector<std::size_t> groupIds(partOf);
+    std::sort(groupIds.begin(), groupIds.end());
+    groupIds.erase(std::unique(groupIds.begin(), groupIds.end()), groupIds.end());
+    for (const std::size_t gid : groupIds) {
+        std::optional<std::size_t> cur;
+        for (std::size_t i = 0; i < n; ++i) {
+            if (partOf[i] == gid && (!cur || centres[i].y < centres[*cur].y ||
+                                     (centres[i].y == centres[*cur].y && centres[i].x < centres[*cur].x))) {
+                cur = i;
+            }
+        }
+        while (cur) {
+            used[*cur] = 1;
+            out.push_back(*cur);
+            const Vec2 at = centres[*cur];
+            cur.reset();
+            double best = std::numeric_limits<double>::infinity();
+            for (double h = extent / std::sqrt(static_cast<double>(n)) + 1e-9;; h *= 2.0) {
+                for (const std::size_t j : index.query(Box2{at - Vec2{h, h}, at + Vec2{h, h}})) {
+                    const double dd = geometry::distance(at, centres[j]);
+                    if (used[j] == 0 && partOf[j] == gid && dd < best) {
+                        best = dd;
+                        cur = j;
+                    }
+                }
+                // Anything outside the square is farther than h; done once the square covers all.
+                if (best <= h || h > 2.0 * extent) {
+                    break;
+                }
+            }
+        }
+    }
+    return out;
 }
 
 /// The full pattern of one tool over every connected part of its centre region.
 Pattern fullPattern(const std::vector<Group>& centre, const PatternContext& ctx) {
     Pattern out;
     std::optional<Vec2> cursor;
-    for (std::size_t ci = 0; ci < centre.size(); ++ci) {
+    for (std::size_t ci = 0; ci < centre.size() && !(ctx.overBudget != nullptr && *ctx.overBudget); ++ci) {
         if (ctx.params.strategy == PocketStrategy::Offset) {
             offsetPattern(centre[ci], ctx, ci, cursor, out);
         } else {
             rasterPattern(centre[ci], ctx, ci, cursor, out);
-        }
-    }
-    return out;
-}
-
-// ------------------------------------------------------------------------- rest machining
-
-/// Arc-length parameter of the point of `path` nearest to `q`; ties go to the earliest (or, with
-/// `late`, the latest) parameter.
-double paramOn(const Polyline& path, Vec2 q, bool late) {
-    double best = std::numeric_limits<double>::infinity();
-    double bestParam = 0.0;
-    double acc = 0.0;
-    for (std::size_t i = 0, n = path.segmentCount(); i < n; ++i) {
-        const Vec2 a = path.segmentStart(i);
-        const Vec2 ab = path.segmentEnd(i) - a;
-        const double len = ab.length();
-        const double t = len > 0.0 ? std::clamp((q - a).dot(ab) / (len * len), 0.0, 1.0) : 0.0;
-        const double d = geometry::distance(q, a + ab * t);
-        if (d < best - 1e-9 || (late && d <= best + 1e-9)) {
-            best = std::min(best, d);
-            bestParam = acc + t * len;
-        }
-        acc += len;
-    }
-    return bestParam;
-}
-
-/// Direction of `path` at the segment nearest to `q`.
-Vec2 directionNear(const Polyline& path, Vec2 q) {
-    double best = std::numeric_limits<double>::infinity();
-    Vec2 dir{1.0, 0.0};
-    for (std::size_t i = 0, n = path.segmentCount(); i < n; ++i) {
-        const double d = distToSegment(q, path.segmentStart(i), path.segmentEnd(i));
-        if (d < best) {
-            best = d;
-            dir = path.segmentEnd(i) - path.segmentStart(i);
-        }
-    }
-    return dir;
-}
-
-/// Clips every path of `pattern` to `need` and returns the pieces in pattern order, each running
-/// in its path's direction; clusters are the connected parts of `need`.
-std::vector<PocketPath> clipPattern(const std::vector<PocketPath>& pattern, const std::vector<Group>& need,
-                                    const Tolerance& tol, std::vector<std::size_t>& clusterGroup) {
-    // Each path is clipped only against the parts of `need` whose bounding box it overlaps.
-    std::vector<std::vector<Contour>> needParts;
-    std::vector<Box2> needBoxes;
-    for (const Group& g : need) {
-        needParts.push_back(contoursOf(g));
-        Box2 b;
-        for (const Vec2 q : g.outer) {
-            b.expand(q);
-        }
-        needBoxes.push_back(b);
-    }
-    std::vector<PocketPath> pieces;
-    for (std::size_t pi = 0; pi < pattern.size(); ++pi) {
-        const Polyline& src = pattern[pi].path;
-        const Box2 pathBox = src.bounds();
-        std::vector<Contour> clip;
-        for (std::size_t g = 0; g < need.size(); ++g) {
-            const Box2& b = needBoxes[g];
-            if (b.min.x <= pathBox.max.x + tol.distance && pathBox.min.x <= b.max.x + tol.distance &&
-                b.min.y <= pathBox.max.y + tol.distance && pathBox.min.y <= b.max.y + tol.distance) {
-                clip.insert(clip.end(), needParts[g].begin(), needParts[g].end());
-            }
-        }
-        if (clip.empty()) {
-            continue;
-        }
-        Polyline open = src;
-        if (src.closed && !src.points.empty()) {
-            open.points.push_back(src.points.front());
-            open.closed = false;
-        }
-        const double total = open.length();
-        Contour subject = Contour::fromPolyline(open);
-        const geometry::BooleanResult r =
-            geometry::booleanOp(BooleanOp::Intersection, {subject}, clip, tol, FillRule::EvenOdd);
-        std::vector<std::pair<double, Polyline>> local;  // (start param, piece)
-        for (const Contour& c : r.open) {
-            Polyline pl = c.polygonise(tol);
-            if (pl.points.size() < 2 || pl.length() <= tol.distance) {
-                continue;
-            }
-            const Vec2 mid = (pl.points[0] + pl.points[1]) * 0.5;
-            if (directionNear(open, mid).dot(pl.points[1] - pl.points[0]) < 0.0) {
-                pl.reverse();
-            }
-            local.emplace_back(paramOn(open, pl.points.front(), false), std::move(pl));
-        }
-        std::sort(local.begin(), local.end(), [](const auto& x, const auto& y) { return x.first < y.first; });
-        // A closed ring cut across its seam comes back as a tail and a head piece: rejoin them.
-        if (src.closed && local.size() >= 2) {
-            Polyline& head = local.front().second;
-            Polyline& tail = local.back().second;
-            if (local.front().first <= tol.distance &&
-                paramOn(open, tail.points.back(), true) >= total - tol.distance &&
-                geometry::distance(tail.points.back(), head.points.front()) <= tol.distance) {
-                tail.points.insert(tail.points.end(), head.points.begin() + 1, head.points.end());
-                local.erase(local.begin());
-            }
-        }
-        for (auto& entry : local) {
-            pieces.push_back(PocketPath{std::move(entry.second), pattern[pi].role, 0});
-        }
-    }
-    // Clusters: the part of `need` holding the piece, in order of first appearance.
-    std::vector<std::size_t> clusterOrder;
-    std::vector<std::vector<std::size_t>> members;
-    for (std::size_t i = 0; i < pieces.size(); ++i) {
-        const auto& pts = pieces[i].path.points;
-        const Vec2 probe = (pts[0] + pts[1]) * 0.5;
-        std::size_t gi = 0;
-        for (std::size_t g = 0; g < need.size(); ++g) {
-            if (insideRegion(ringsOf(need[g]), probe, tol.distance)) {
-                gi = g;
-                break;
-            }
-        }
-        auto it = std::find(clusterOrder.begin(), clusterOrder.end(), gi);
-        if (it == clusterOrder.end()) {
-            clusterOrder.push_back(gi);
-            members.emplace_back();
-            it = clusterOrder.end() - 1;
-        }
-        members[static_cast<std::size_t>(it - clusterOrder.begin())].push_back(i);
-    }
-    clusterGroup = clusterOrder;
-    std::vector<PocketPath> out;
-    for (std::size_t c = 0; c < members.size(); ++c) {
-        for (std::size_t i : members[c]) {
-            PocketPath pp = std::move(pieces[i]);
-            pp.cluster = c;
-            out.push_back(std::move(pp));
         }
     }
     return out;
@@ -1599,6 +1615,19 @@ std::vector<Vec2> route(const RingTree& tree, std::size_t na, Vec2 P, std::size_
 
 // ------------------------------------------------------------------------- move emission
 
+/// A connected part of the tool's centre region, prepared for routing travel moves across it
+/// (between rest clusters, over the top of the cut): its rings as a one-node `RingTree` and an
+/// index for inside tests.
+struct TravelArea {
+    TravelArea(std::size_t partId, const Group& g) : id(partId), index(ringsOf(g)) {
+        tree.rings = {ringsOf(g)};
+        tree.parent = {kNoNode};
+    }
+    std::size_t id;
+    RegionIndex index;
+    RingTree tree;
+};
+
 class Emitter {
    public:
     /// `allowTravel` false: every way that is not a short link at depth retracts (used when the
@@ -1614,9 +1643,12 @@ class Emitter {
     /// depth; longer ways (and the way back to the first path of the next level) travel inside the
     /// centre region at the floor of the previous level (the surface for the first), which is
     /// already cleared there, along a straight segment or a route through `tree`; only when
-    /// neither exists does the tool retract to safe Z.
+    /// neither exists does the tool retract to safe Z. When the previous cluster lay in the same
+    /// `area` (a part of the centre region; rest clusters), the tool reaches this cluster by
+    /// lifting to the top of the cut and travelling inside the area instead of retracting.
     void cluster(const std::vector<const PocketPath*>& paths, const std::vector<std::size_t>& nodes,
-                 const std::vector<double>& levels, const RegionIndex& region, const RingTree* tree) {
+                 const std::vector<double>& levels, const RegionIndex& region, const RingTree* tree,
+                 const TravelArea* area = nullptr) {
         const double tol = p_.tolerance.distance;
         for (std::size_t k = 0; k < levels.size(); ++k) {
             const double z = levels[k];
@@ -1634,6 +1666,9 @@ class Emitter {
                 } else if (allowTravel_ && !atSafe_ && inCluster_ && z_ <= zTop &&
                            travel(s, zTop, node, region, tree)) {
                     enter(path, zTop, z);
+                } else if (!atSafe_ && !inCluster_ && k == 0 && area != nullptr && area->id == lastArea_ &&
+                           travelAcross(s, zTop, *area)) {
+                    enter(path, zTop, z);
                 } else {
                     retract();
                     rapidTo(s);
@@ -1645,6 +1680,7 @@ class Emitter {
             }
         }
         inCluster_ = false;
+        lastArea_ = area != nullptr ? area->id : kNoNode;
     }
 
     void finish() { retract(); }
@@ -1667,6 +1703,27 @@ class Emitter {
         }
         for (std::size_t i = 1; i < way.size(); ++i) {
             feedTo(way[i], zTravel);
+        }
+        return true;
+    }
+    /// Lifts to `zTop` (the top of the cut: clear inside the whole centre region) and feeds to
+    /// `s` along a way inside `area`; false when there is none.
+    bool travelAcross(Vec2 s, double zTop, const TravelArea& area) {
+        const double tol = p_.tolerance.distance;
+        std::vector<Vec2> way;
+        if (area.index.segmentInside(pos_, s, tol)) {
+            way = {pos_, s};
+        } else {
+            way = route(area.tree, 0, pos_, 0, s, area.index, tol);
+        }
+        if (way.size() < 2 || z_ > zTop) {
+            return false;
+        }
+        if (z_ < zTop) {
+            feedTo(pos_, zTop);  // up out of the finished cluster
+        }
+        for (std::size_t i = 1; i < way.size(); ++i) {
+            feedTo(way[i], zTop);
         }
         return true;
     }
@@ -1696,7 +1753,7 @@ class Emitter {
             if (z_ > zFrom) {
                 tp_.append(Move::plunge(Vec3{pos_, zFrom}));
             }
-            appendPathRamp(path, zFrom, zTo, p_.rampDistance, minRamp_, tp_);
+            appendPathRamp(path, zFrom, zTo, p_.rampDistance, minRamp_, p_.tolerance, tp_);
         } else {
             tp_.append(Move::plunge(Vec3{pos_, zTo}));
         }
@@ -1720,6 +1777,7 @@ class Emitter {
     bool started_{false};
     bool atSafe_{true};
     bool inCluster_{false};
+    std::size_t lastArea_{kNoNode};
     std::size_t node_{kNoNode};
     Vec2 pos_;
     double z_{0.0};
@@ -1736,17 +1794,28 @@ std::vector<Contour> centreRegionOf(const std::vector<Contour>& region, double r
     return insetBy(region, radius + allowance + margin, tol, InsetGuard::Strict, &report);
 }
 
-/// The messages for what the strict guard could not keep exactly (ADR-0017 §4).
-std::vector<std::string> centreRegionMessages(const InsetReport& report) {
-    std::vector<std::string> out;
+/// A diagnostic, optionally about tool `tool` of the list.
+ToolpathDiagnostic note(ToolpathIssue issue, std::string message, std::optional<std::size_t> tool = std::nullopt) {
+    return ToolpathDiagnostic{issue, std::nullopt, std::move(message), tool};
+}
+
+/// The diagnostics for what the strict guard could not keep exactly (ADR-0017 §4); `prefix`
+/// names the tool.
+std::vector<ToolpathDiagnostic> centreRegionNotes(const InsetReport& report, const std::string& prefix,
+                                                  std::optional<std::size_t> tool) {
+    std::vector<ToolpathDiagnostic> out;
     if (report.dropped > 0) {
-        out.push_back(std::to_string(report.dropped) +
-                      " part(s) of the pocket could not be kept within the safety margin and are not cut");
+        out.push_back(note(ToolpathIssue::RegionNotKept,
+                           prefix + std::to_string(report.dropped) +
+                               " part(s) of the pocket could not be kept within the safety margin and are not cut",
+                           tool));
     }
     if (report.trimmed > 0) {
-        out.push_back(std::to_string(report.trimmed) +
-                      " part(s) of the pocket were trimmed by more than the tolerance to keep the safety "
-                      "margin; material near them may be left");
+        out.push_back(note(ToolpathIssue::RegionTrimmed,
+                           prefix + std::to_string(report.trimmed) +
+                               " part(s) of the pocket were trimmed by more than the tolerance to keep the safety "
+                               "margin; material near them may be left",
+                           tool));
     }
     return out;
 }
@@ -1791,6 +1860,10 @@ constexpr double kMaxMoves = 20000000.0;   // estimated moves per toolpath
 
 }  // namespace
 
+bool PocketResult::ok() const {
+    return std::any_of(toolpaths.begin(), toolpaths.end(), [](const Toolpath& t) { return !t.isEmpty(); });
+}
+
 PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vector<PocketTool>& tools,
                             const PocketParams& params) {
     PocketResult result;
@@ -1808,32 +1881,40 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
 
     result.toolpaths.resize(tools.size());
     result.plans.resize(tools.size());
+    // The Tool -> pass tool conversion (T-0123): radius at the bottom of the pocket, stepover and
+    // pass depth from the cutting data, snapshot for the toolpath.
+    std::vector<PassTool> passTools;
     for (std::size_t i = 0; i < tools.size(); ++i) {
+        passTools.push_back(passTool(tools[i].tool, effectiveCuttingData(tools[i].tool, tools[i].cuttingData),
+                                     params.startDepth + params.cutDepth));
         result.toolpaths[i].name =
             tools.size() > 1 ? params.name + " [" + tools[i].tool.name + "]" : params.name;
-        result.toolpaths[i].tool = tools[i].tool;
+        result.toolpaths[i].tool = passTools[i].snapshot;
     }
+    auto say = [&](ToolpathIssue issue, std::string message, std::optional<std::size_t> tool = std::nullopt) {
+        result.diagnostics.push_back(note(issue, std::move(message), tool));
+    };
     if (tools.empty()) {
-        result.messages.push_back("no tool selected");
+        say(ToolpathIssue::NoTool, "no tool selected");
         return result;
     }
     if (!finite(params.cutDepth) || !(params.cutDepth > 0.0) || !finite(params.startDepth) ||
         params.startDepth < 0.0 || !finite(params.allowance) || params.allowance < 0.0 ||
         !finite(params.safeZ) || !finite(params.rasterAngle) || !finite(params.rampDistance) ||
         !finite(params.lastPassThickness)) {
-        result.messages.push_back(
+        say(ToolpathIssue::InvalidParameters,
             "invalid pocket parameters: cut depth must be > 0, start depth and allowance >= 0, all values "
             "finite");
         return result;
     }
     if (!finite(userTol.chordal) || userTol.chordal < kMinChordal || userTol.chordal > 1.0 ||
         !finite(userTol.distance) || !(userTol.distance > 0.0) || userTol.distance > userTol.chordal) {
-        result.messages.push_back(
+        say(ToolpathIssue::InvalidParameters,
             "invalid tolerance: chordal must be between 0.0001 and 1 mm, distance > 0 and <= chordal");
         return result;
     }
     if (params.safeZ <= -params.startDepth) {
-        result.messages.push_back("safe Z must be above the start depth");
+        say(ToolpathIssue::InvalidParameters, "safe Z must be above the start depth");
         return result;
     }
 
@@ -1849,17 +1930,18 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
         }
     }
     if (openCount > 0) {
-        result.messages.push_back(std::to_string(openCount) +
-                                  " open contour(s) ignored: a pocket needs closed vectors");
+        say(ToolpathIssue::OpenContourIgnored,
+            std::to_string(openCount) + " open contour(s) ignored: a pocket needs closed vectors");
     }
     if (!(inputVertices <= kMaxVertices)) {
-        result.messages.push_back("pocket boundary too detailed at this chordal tolerance (more than " +
-                                  std::to_string(static_cast<long long>(kMaxVertices)) + " vertices)");
+        say(ToolpathIssue::WorkLimitExceeded,
+            "pocket boundary too detailed at this chordal tolerance (more than " +
+                std::to_string(static_cast<long long>(kMaxVertices)) + " vertices)");
         return result;
     }
     const std::vector<Contour> region = geometry::unionContours(closedInput, tol, FillRule::EvenOdd);
     if (region.empty()) {
-        result.messages.push_back("no closed region to pocket");
+        say(ToolpathIssue::NoRegion, "no closed region to pocket");
         return result;
     }
     std::optional<std::vector<Contour>> target;  // pocket less allowance; only rest tools need it
@@ -1878,24 +1960,25 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
 
     std::vector<Contour> swept;  // area cut by the tools so far (pocket floor)
     for (std::size_t ti = 0; ti < tools.size(); ++ti) {
-        const PocketTool& pt = tools[ti];
-        const double d = pt.tool.diameter;
-        const std::string label = "tool " + std::to_string(ti + 1) + " (" + pt.tool.name + ")";
+        const PassTool& pt = passTools[ti];
+        const double d = 2.0 * pt.radius;  // cutting width at the bottom of the pocket
+        const std::string label = "tool " + std::to_string(ti + 1) + " (" + tools[ti].tool.name + ")";
         if (!finite(d) || !(d > 0.0) || !finite(pt.stepover) || !(pt.stepover > 0.0) ||
             pt.stepover > d * (1.0 + 1e-12) || !finite(pt.passDepth) || !(pt.passDepth > 0.0)) {
-            result.messages.push_back(
-                label + ": skipped, needs diameter > 0, 0 < stepover <= diameter and pass depth > 0");
+            say(ToolpathIssue::InvalidTool,
+                label + ": skipped, needs diameter > 0, 0 < stepover <= diameter and pass depth > 0", ti);
             continue;
         }
         if (pt.stepover < 10.0 * userTol.distance) {
-            result.messages.push_back(label + ": skipped, stepover below 10 x the distance tolerance");
+            say(ToolpathIssue::InvalidTool, label + ": skipped, stepover below 10 x the distance tolerance", ti);
             continue;
         }
         const double levelEstimate = std::ceil(params.cutDepth / pt.passDepth) + 2.0;
         if (!(levelEstimate <= kMaxLevels)) {
-            result.messages.push_back(label + ": skipped, more than " +
-                                      std::to_string(static_cast<long long>(kMaxLevels)) +
-                                      " depth passes (pass depth too small)");
+            say(ToolpathIssue::WorkLimitExceeded,
+                label + ": skipped, more than " + std::to_string(static_cast<long long>(kMaxLevels)) +
+                    " depth passes (pass depth too small)",
+                ti);
             continue;
         }
         const double r = 0.5 * d;
@@ -1923,27 +2006,31 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
             levelEstimate * (params.strategy == PocketStrategy::Offset ? passEstimate * regionVertices
                                                                        : 2.0 * passEstimate + regionVertices);
         if (!(passEstimate <= kMaxPasses) || !(moveEstimate <= kMaxMoves)) {
-            result.messages.push_back(label +
-                                      ": skipped, the pattern would be too large (stepover too small " +
-                                      "for the pocket size)");
+            say(ToolpathIssue::WorkLimitExceeded,
+                label + ": skipped, the pattern would be too large (stepover too small for the pocket size)", ti);
             continue;
         }
         InsetReport guardReport;
         const std::vector<Contour> centreRegion =
             centreRegionOf(region, r, params.allowance, margin, tol, guardReport);
-        for (const std::string& m : centreRegionMessages(guardReport)) {
-            result.messages.push_back(label + ": " + m);
+        for (ToolpathDiagnostic& n : centreRegionNotes(guardReport, label + ": ", ti)) {
+            result.diagnostics.push_back(std::move(n));
         }
         const std::vector<Group> centre = groupsOf(centreRegion, tol.distance);
         if (centre.empty()) {
-            result.messages.push_back(label + ": too large for the pocket, nothing to cut");
+            say(ToolpathIssue::ToolTooLarge, label + ": too large for the pocket, nothing to cut", ti);
             continue;
         }
         plan.levels = passes.levels();
         plan.centreRegion = centreRegion;
 
-        const PatternContext ctx{params, pt.stepover, d, tol, fine, sliver};
-        Pattern pattern = fullPattern(centre, ctx);
+        // Each raster piece costs at least 6 moves per level (ADR-0017 §12): more pieces than the
+        // move cap allows stop the pattern early instead of filling memory first.
+        std::size_t piecesUsed = 0;
+        bool overBudget = false;
+        const auto pieceBudget = static_cast<std::size_t>(
+            kMaxMoves / (6.0 * static_cast<double>(std::max<std::size_t>(plan.levels.size(), 1))));
+        const PatternContext ctx{params, pt.stepover, d, tol, fine, sliver, pieceBudget, &piecesUsed, &overBudget};
         const bool isRest = ti > 0 && !swept.empty();
         // Raster without a boundary pass leaves scallops along the walls: its swept area is the
         // tool disc along the actual paths, not the whole reach, and the floor of a level is not
@@ -1963,47 +2050,92 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
             return offsetBy(open, r, fine);
         };
         std::vector<Contour> cutArea;
-        std::vector<std::size_t> nodes;
-        std::vector<RingTree> trees;
-        std::vector<std::vector<Ring>> restRegions;  // per rest cluster: travel region
+        // The connected parts the pattern is built over, one cluster each: the centre region's
+        // parts for the clearance tool, the rest areas (need ∩ centre) for a rest tool.
+        std::vector<Group> parts;
         if (!isRest) {
-            plan.paths = std::move(pattern.paths);
-            nodes = std::move(pattern.node);
-            trees = std::move(pattern.trees);
+            parts = centre;
         } else {
             if (!target) {
                 target = insetBy(region, params.allowance + margin, tol);
             }
             plan.restMaterial = opened(difference(*target, swept, tol), sliver, fine);
             if (plan.restMaterial.empty()) {
-                result.messages.push_back(label + ": no rest material left, nothing to cut");
+                say(ToolpathIssue::NoRestMaterial, label + ": no rest material left, nothing to cut", ti);
                 continue;
             }
             // Centres whose disc overlaps the rest material by more than 10 x the distance
             // tolerance: a tool that would only touch it (e.g. the same tool again) gets nothing.
-            const std::vector<Contour> needContours =
-                offsetBy(plan.restMaterial, r - 10.0 * userTol.distance, fine);
-            // The pattern already lies inside the centre region; clipping it against
-            // need ∩ centre would put the outermost ring exactly on the clip boundary, where
-            // open-path clipping is ambiguous.
-            const std::vector<Group> need = groupsOf(needContours, tol.distance);
-            std::vector<std::size_t> clusterGroup;
-            plan.paths = clipPattern(pattern.paths, need, tol, clusterGroup);
-            if (plan.paths.empty()) {
-                result.messages.push_back(label + ": cannot reach the rest material, nothing to cut");
+            // The pattern's rings follow this boundary, so it is built at the region tolerance
+            // (not the fine one), and the swept area's arcs (round joins at 1e-4 mm), which carry
+            // over from the rest material, are thinned to the region tolerance too: the need region
+            // moves by at most that, and is then clipped to the centre region.
+            std::vector<Contour> needContours = offsetBy(plan.restMaterial, r - 10.0 * userTol.distance, tol);
+            for (Contour& c : needContours) {
+                c = contourOf(simplified(ringOf(c), tol.chordal));
+            }
+            // The rest areas: where the centre may go and its disc reaches rest material. The
+            // pattern is built over them only (T-0123), not over the whole centre region and
+            // then clipped: its rings or lines cover every point within a radius of the area,
+            // hence all rest material the tool can reach, and every path lies inside the centre
+            // region. A rest cluster travels only inside its own area: the floor there is clear
+            // at the previous level, while other areas may still hold material at every depth.
+            const std::vector<Contour> restAreas = intersection(needContours, plan.centreRegion, tol);
+            parts = groupsOf(restAreas, tol.distance);
+            if (parts.empty()) {
+                say(ToolpathIssue::RestUnreachable, label + ": cannot reach the rest material, nothing to cut", ti);
                 continue;
             }
-            nodes.assign(plan.paths.size(), kNoNode);
-            // A rest cluster travels only inside its own part of the need region (within the
-            // centre region): the floor there is clear at the previous level, while other rest
-            // clusters may still hold material at every depth.
-            for (const std::size_t g : clusterGroup) {
-                restRegions.push_back(ringsOf(
-                    groupsOf(intersection(contoursOf(need[g]), plan.centreRegion, tol), tol.distance)));
-            }
             if (!scalloped) {
-                cutArea = offsetBy(intersection(needContours, plan.centreRegion, tol), r, fine);
+                cutArea = offsetBy(restAreas, r, fine);
             }
+        }
+        // The part of the centre region each cluster lies in: between clusters of one part (rest
+        // areas) the tool travels over the top of the cut instead of retracting (T-0123). Rest
+        // areas are cut part by part, nearest first, so the tool leaves a part only once.
+        std::vector<std::size_t> partOf(parts.size(), kNoNode);
+        if (!isRest) {
+            std::iota(partOf.begin(), partOf.end(), std::size_t{0});
+        } else {
+            std::vector<Box2> centreBoxes;
+            for (const Group& g : centre) {
+                centreBoxes.push_back(ringBox(g.outer).inflated(tol.distance));
+            }
+            const BoxIndex centreIndex(std::move(centreBoxes));
+            for (std::size_t c = 0; c < parts.size(); ++c) {
+                for (const std::size_t k : centreIndex.containing(parts[c].outer.front())) {
+                    if (insideRegion(ringsOf(centre[k]), parts[c].outer.front(), tol.distance)) {
+                        partOf[c] = k;
+                        break;
+                    }
+                }
+            }
+            const std::vector<std::size_t> order = nearestFirst(parts, partOf);
+            std::vector<Group> sortedParts;
+            std::vector<std::size_t> sortedPartOf;
+            for (const std::size_t c : order) {
+                sortedParts.push_back(std::move(parts[c]));
+                sortedPartOf.push_back(partOf[c]);
+            }
+            parts = std::move(sortedParts);
+            partOf = std::move(sortedPartOf);
+        }
+        Pattern pattern = fullPattern(parts, ctx);
+        if (overBudget) {
+            say(ToolpathIssue::WorkLimitExceeded,
+                label + ": skipped, the toolpath would exceed " +
+                    std::to_string(static_cast<long long>(kMaxMoves)) +
+                    " moves (stepover or pass depth too small for the pocket)",
+                ti);
+            plan.levels.clear();
+            continue;
+        }
+        plan.paths = std::move(pattern.paths);
+        const std::vector<std::size_t> nodes = std::move(pattern.node);
+        const std::vector<RingTree> trees = std::move(pattern.trees);
+        if (plan.paths.empty()) {
+            say(ToolpathIssue::RestUnreachable, label + ": cannot reach the rest material, nothing to cut", ti);
+            continue;
         }
         // Work cap on the actual pattern (the estimate above cannot see raster pieces per line).
         double patternMoves = 0.0;
@@ -2011,21 +2143,27 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
             patternMoves += static_cast<double>(pp.path.points.size()) + 4.0;
         }
         if (!(patternMoves * static_cast<double>(plan.levels.size()) <= kMaxMoves)) {
-            result.messages.push_back(label + ": skipped, the toolpath would exceed " +
-                                      std::to_string(static_cast<long long>(kMaxMoves)) +
-                                      " moves (stepover or pass depth too small for the pocket)");
+            say(ToolpathIssue::WorkLimitExceeded,
+                label + ": skipped, the toolpath would exceed " +
+                    std::to_string(static_cast<long long>(kMaxMoves)) +
+                    " moves (stepover or pass depth too small for the pocket)",
+                ti);
             plan.paths.clear();
             plan.levels.clear();
             continue;
         }
-        if (cutArea.empty()) {
-            cutArea = scalloped ? sweptByPaths(plan.paths) : offsetBy(plan.centreRegion, r, fine);
+        if (ti + 1 < tools.size()) {  // only later tools need the swept area
+            if (cutArea.empty()) {
+                cutArea = scalloped ? sweptByPaths(plan.paths) : offsetBy(plan.centreRegion, r, fine);
+            }
+            swept = swept.empty() ? cutArea : geometry::unionContours([&] {
+                std::vector<Contour> all = swept;
+                all.insert(all.end(), cutArea.begin(), cutArea.end());
+                return all;
+            }());
         }
-        swept = swept.empty() ? cutArea : geometry::unionContours([&] {
-            std::vector<Contour> all = swept;
-            all.insert(all.end(), cutArea.begin(), cutArea.end());
-            return all;
-        }());
+
+        std::vector<std::optional<TravelArea>> areas(centre.size());
 
         Toolpath& tp = result.toolpaths[ti];
         Emitter emitter(tp, params, 2.0 * d, !scalloped);
@@ -2039,14 +2177,18 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
                 memberNodes.push_back(nodes[end]);
                 ++end;
             }
-            // Travel stays inside this cluster's own part of the centre region.
-            const bool own = !isRest && cl < centre.size();
-            const std::vector<Ring> clusterRegion =
-                own ? ringsOf(centre[cl])
-                    : (isRest && cl < restRegions.size() ? restRegions[cl] : ringsOf(centre));
-            const RingTree* tree =
-                own && cl < trees.size() && !trees[cl].rings.empty() ? &trees[cl] : nullptr;
-            emitter.cluster(members, memberNodes, plan.levels, RegionIndex(clusterRegion), tree);
+            // Travel within the cluster stays inside its own part (of the centre region, or rest
+            // area); between clusters inside the part of the centre region holding both.
+            const RingTree* tree = cl < trees.size() && !trees[cl].rings.empty() ? &trees[cl] : nullptr;
+            const TravelArea* area = nullptr;
+            if (isRest && cl < parts.size() && partOf[cl] != kNoNode) {
+                std::optional<TravelArea>& a = areas[partOf[cl]];
+                if (!a) {
+                    a.emplace(partOf[cl], centre[partOf[cl]]);
+                }
+                area = &*a;
+            }
+            emitter.cluster(members, memberNodes, plan.levels, RegionIndex(ringsOf(parts[cl])), tree, area);
             start = end;
         }
         emitter.finish();
@@ -2055,18 +2197,18 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
 }
 
 std::vector<Contour> pocketCentreRegion(const std::vector<Contour>& contours, double toolDiameter,
-                                        const PocketParams& params, std::vector<std::string>* messages) {
+                                        const PocketParams& params, std::vector<ToolpathDiagnostic>* diagnostics) {
     const Tolerance& userTol = params.tolerance;
-    auto say = [&](const std::string& m) {
-        if (messages != nullptr) {
-            messages->push_back(m);
+    auto say = [&](ToolpathIssue issue, std::string m) {
+        if (diagnostics != nullptr) {
+            diagnostics->push_back(note(issue, std::move(m)));
         }
     };
     if (!finite(toolDiameter) || !(toolDiameter > 0.0) || !finite(params.allowance) ||
         params.allowance < 0.0 || !finite(userTol.chordal) || userTol.chordal < kMinChordal ||
         userTol.chordal > 1.0 || !finite(userTol.distance) || !(userTol.distance > 0.0) ||
         userTol.distance > userTol.chordal) {
-        say("invalid tool diameter, allowance or tolerance");
+        say(ToolpathIssue::InvalidParameters, "invalid tool diameter, allowance or tolerance");
         return {};
     }
     const Tolerance tol = regionTolerance(userTol);
@@ -2082,10 +2224,11 @@ std::vector<Contour> pocketCentreRegion(const std::vector<Contour>& contours, do
         }
     }
     if (openCount > 0) {
-        say(std::to_string(openCount) + " open contour(s) ignored: a pocket needs closed vectors");
+        say(ToolpathIssue::OpenContourIgnored,
+            std::to_string(openCount) + " open contour(s) ignored: a pocket needs closed vectors");
     }
     if (!(inputVertices <= kMaxVertices)) {
-        say("pocket boundary too detailed at this chordal tolerance (more than " +
+        say(ToolpathIssue::WorkLimitExceeded, "pocket boundary too detailed at this chordal tolerance (more than " +
             std::to_string(static_cast<long long>(kMaxVertices)) + " vertices)");
         return {};
     }
@@ -2093,8 +2236,10 @@ std::vector<Contour> pocketCentreRegion(const std::vector<Contour>& contours, do
     InsetReport guardReport;
     std::vector<Contour> centre =
         centreRegionOf(region, 0.5 * toolDiameter, params.allowance, userTol.chordal, tol, guardReport);
-    for (const std::string& m : centreRegionMessages(guardReport)) {
-        say(m);
+    if (diagnostics != nullptr) {
+        for (ToolpathDiagnostic& n : centreRegionNotes(guardReport, "", std::nullopt)) {
+            diagnostics->push_back(std::move(n));
+        }
     }
     return centre;
 }
