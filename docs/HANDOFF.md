@@ -46,3 +46,9 @@ T-0122 CLI (after T-0124), T-0127, T-0018, T-0019, T-0009, T-0016 (after T-0017)
 ## Owner-facing status doc
 
 The claude.ai Project doc `claude/carvetto-status.md` is only reachable from the cloud session; from now on keep status in this file and `docs/BACKLOG.md`.
+
+## Update after hand-off — T-0124 On guard pushed (736f955)
+
+The cloud Profile coder finished the On guard on `task/T-0120-profile` @ **736f955** (4 files, +289/−10; ~30 lines in profile.cpp): On decided by profile side (not `Cut::distance`) in tabSections/tabHolds/quick check; On tabs kept only if end tool positions stay ≥ 2r + 2|allowance| + max(0.25, 0.05·D) apart on every pass and connectivity holds, else dropped as "cut through"; on_corner/sev_* /F9 regression tests (fail on c2f4709); ADR-0016 §14 updated (counts are "per primary cut"). Test bar: Debug -Werror, serial 507/507, -j2 until-fail:3 507/507. Byte-identity vs c2f4709: tabs off 960/960, Inside/Outside with tabs 724/724, On differs 56/236 (intended).
+
+Open point for the verifier: conn6 sweep (11 configs × 150, CELL 0.05) flagged 20 tabs; re-run at CELL 0.03 leaves 4 scenes (5 tabs) only with conn6's seam extension, 0 with NOSEAM=1 — A 82652 sc2, F 82701 sc6 (On), F 82701 sc49, G 82712 sc0. Coder believes these are seam artefacts in conn6. The fresh verifier must decide each with an independent raster (flood.cpp) — a genuinely severed kept tab is blocking. Coder logs were in /home/claude/cscratch-T0124/sw4/ on the cloud machine (not on the harness branch; scenes are reproducible from seeds).
