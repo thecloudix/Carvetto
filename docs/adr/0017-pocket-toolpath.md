@@ -1,6 +1,6 @@
 # ADR-0017: Pocket toolpath
 
-Date: 2026-10-26 · Status: accepted (director, 2026-10-31; T-0121; revised in fix rounds 2 and 3, same day; amended by T-0125, 2026-10-30 and 31)
+Date: 2026-10-26 · Status: accepted (director, 2026-10-31; T-0121; revised in fix rounds 2 and 3, same day; amended by T-0125, 2026-10-30 and 31, and T-0126, 2026-10-31)
 
 ## Context
 T-0121 adds `pocketToolpath(contours, tools, PocketParams)` (feature-inventory §5 "Pocketing
@@ -30,14 +30,22 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
    the true walls or islands (AC2 and AC6 hold strictly). The price is a wall skin of at most
    1.5·chordal (0.015 mm by default) left on top of the allowance.
 4. **Centre region and inset guard.** `C = inset(R, radius + allowance + margin)`. Every inward
-   offset goes through `insetBy`, which drops any result region with an outer vertex closer than
-   the inset (less the join tolerance) to its source. Clipper2 1.4.0 turns a polygon inset past its
-   inradius inside out: a 17 mm circle inset by 19.2 comes back as a 2.2 mm circle, by 30 as a
-   13 mm one. Without the guard, offset levels never end, and a tool too big for a small pocket
-   would get a phantom region to cut. The distance test uses a uniform grid over the source edges.
-   For the **tool-centre region** (`Strict`), a vertex too close would be a gouge. Every vertex is
-   checked, on the outer ring and on island (hole) rings alike:
-   - **Phantom, rejected:** most outer vertices fail. Inside-out regions fail at every vertex.
+   offset goes through `insetBy`. Clipper2 1.4.0 turns a polygon inset past its inradius inside
+   out: a 17 mm circle inset by 19.2 comes back as a 2.2 mm circle, by 30 as a 13 mm one. Without
+   the guard, offset levels never end, and a tool too big for a small pocket would get a phantom
+   region to cut. Distances use a uniform grid over the source edges.
+
+   **Phantom test (by depth, T-0126).** A result region is genuine when some point of it keeps
+   the full distance (the inset less the join tolerance) from the source and lies inside it: the
+   first outer vertex that keeps the distance, or else (for a region that is not a sliver, see
+   below) the centroid of the outer ring when it lies in the region. Such a point belongs to the true inset, so the region does too. An inside-out
+   region has no such point: all of it is closer to the walls than the inset. Before T-0126 the
+   test counted vertices (most outer vertices had to keep the distance), so a 900 mm² region whose
+   small bulge towards a wall held most of its vertices was rejected silently (verifier cases C2
+   and C4, now regression tests).
+
+   For the **tool-centre region** (`Strict`), a vertex or an edge too close would be a gouge. Every
+   vertex is checked, on the outer ring and on island (hole) rings alike:
    - **Kept:** every vertex keeps the distance.
    - **Pulled in:** a failing vertex that is convex for the region (a left turn; the region lies on
      the left of every ring) is moved towards the midpoint of its neighbours, by bisection, just
@@ -48,13 +56,36 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
      vertex a hair past the slack, which moves by about that hair, and the zero-width
      out-and-back spikes Clipper2 leaves in disc-union insets, whose tips overshoot by up to about
      1e-2 mm.
-   - **Repaired by inset:** if a failing vertex is reflex, the region is inset further, by twice
-     the worst overshoot (at least 2e-6 mm) and then doubling, at most 12 times and never past the
-     inset itself. Each result goes through the same pull-in. Whether a region can be repaired is
-     decided by whether a further inset yields valid regions, not by the size of the overshoot.
+   - **Edges (T-0126).** Two vertices that keep the distance do not make the edge between them
+     keep it: the chord left by removing a vertex of a round join around a wall corner sags
+     towards the corner by about four times the arc step (0.015, 0.148 and 0.708 mm at chordal
+     0.01, 0.1 and 0.5 in the verifier's raw-injection cases). After the pull-in, every edge with
+     a moved end and every chord left by a removal is checked with the exact segment-to-segment
+     distance and must keep the same distance as a vertex. Every other edge (Clipper2's own
+     chords, which keep about the inset less one join tolerance) must stay clear of the no-gouge
+     line, the inset less two join tolerances (radius + allowance for the centre region).
+   - **Repaired by inset:** if a failing vertex is reflex, or an edge fails, the region is inset
+     further, by twice the worst vertex or edge shortfall left after the pull-in (at least
+     2e-6 mm) and then doubling, at most 12 times and never past the inset itself. Each result
+     goes through the same pull-in and edge checks. Whether a region can be repaired is decided by
+     whether a further inset yields valid regions, not by the size of the shortfall.
 
-   A genuine region that still cannot be kept is reported in the result's messages; it is never
-   dropped silently. In every scan so far this has not happened.
+   - **Slivers:** where a lobe collapses, Clipper2 leaves dozens of zero-area sliver regions,
+     some with a vertex at full depth. A sliver (area / perimeter under half the join tolerance)
+     is kept if it passes as it is and otherwise dropped without a report, and its centroid
+     never counts as a point at depth (a thin crescent of a collapsing knob in the verifier's S3
+     scan, knobs seed 3383 at chordal 0.5, d = 5.666, had its centroid at depth, all of its
+     vertices too close, and its pulled-in remains 2e-6 mm² outside Clipper's raw inset). An
+     inset only makes a sliver vanish, and it holds nothing the tolerance does not already allow for (knobs scan seed
+     7852, fixture `knob_poly.txt`, d = 6.696687, where the first T-0126 build reported such
+     slivers as lost).
+
+   Nothing is lost or trimmed silently. A genuine region that still cannot be kept is reported in
+   the result's messages ("could not be kept within the safety margin and are not cut"), and so
+   is a region repaired by an inset larger than the join tolerance, or losing more area than its
+   perimeter times the join tolerance ("trimmed by more than the tolerance"). Neither has
+   happened with real Clipper2 output in any scan so far: the pull-in only ever removed zero-width
+   spikes, and repairs (Clipper2's 1e-6 mm grid) stayed far below the join tolerance.
 
    **History.**
    - Before T-0125, any failing vertex rejected the whole region. Verifier sweep seed 3150371 lost
@@ -63,17 +94,23 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
    - T-0125 round 1 capped the repair at an overshoot of one join tolerance. Spike tips overshoot
      by 5.1–5.4e-3, so genuine disc-union regions of tens of mm² were reported but not cut. The
      fixture is `spike_poly.txt`, with d = 5.04 and 5.0673 (verifier seeds 301, 700 and 606).
+   - T-0125 checked vertices only and classified phantoms by vertex count (see above); T-0126
+     added the edge checks, the depth test and the "trimmed" report. The guard is reachable on
+     hand-made insets through the internal `detail::strictInset` (`core/src/toolpath/
+     pocket_guard.hpp`), which `pocket_guard_test.cpp` uses for the N1 cases at chordal 0.01, 0.1
+     and 0.5, for C2 and C4, and for phantoms.
 
    The same computation is public as `pocketCentreRegion`. A property test scans over 5,000
    diameters on lobed shapes and disc chains at chordal 0.01, 0.1 and 0.5, against an exact
-   signed-distance oracle: lobe centres kept, no vertex too close, and the toolpath plans the same
-   region.
+   signed-distance oracle: lobe centres kept, no vertex outside the pocket, no edge too close
+   (exact segment distance, every diameter), and the toolpath plans the same region.
 
-   Everywhere else (offset levels, rest material, openings) at least half of the vertices must
-   keep the distance (`Majority`). A phantom fails at every vertex: its vertices are about
-   twice its own size too close. A genuine region can come out with a vertex near a cusp of the
-   input a little too close. Round 2 dropped a whole 15 × 6 mm neck of rest material for one such
-   vertex (verifier dumbbell repro).
+   Everywhere else (offset levels, rest material, openings) the guard only rejects phantoms, by
+   the same depth test, and keeps genuine regions as they come (`Lenient`). A genuine region can
+   come out with a vertex near a cusp of the input a little too close, which costs nothing there.
+   T-0121 round 2 dropped a whole 15 × 6 mm neck of rest material for one such vertex (verifier
+   dumbbell repro); round 3 kept regions where at least half the vertices kept the distance, and
+   T-0126 replaced that count by the depth test.
 5. **Offset strategy.** The levels are `inset(C, k·stepover)`, each taken from C directly so
    errors do not accumulate. They are grouped into regions (outer + holes) and arranged as a
    containment tree, which is cut in **post-order (inside out)**. The innermost rings come first
@@ -232,7 +269,7 @@ move by move (to Clipper2's 1e-6 mm grid), independently of the offset code.
   negative distances. It should be fixed or guarded in geometry (a director card, outside
   T-0017's open-offset scope).
 
-## Verification notes (T-0125 round 2, accepted by the director 2026-10-31)
-- After a convex vertex is pulled in or removed, the guard re-checks vertices, not the new edges. With hand-made insets a removed vertex on a concave join arc lets the new chord sag up to about four times the arc step inside the limit (≈ chordal). Never observed with real Clipper output (all removals were zero-width spikes; 0 edges closer than r + allowance over ~330,000 diameters). Tracked as T-0126.
-- The phantom test counts vertices, not area, and a successful inset repair can lose area without a message at coarse chordal tolerances; neither occurred in real scans. Tracked as T-0126.
+## Verification notes (T-0125 round 2, accepted by the director 2026-10-31; updated by T-0126)
+- After a convex vertex is pulled in or removed, the guard re-checked vertices, not the new edges. With hand-made insets a removed vertex on a concave join arc let the new chord sag up to about four times the arc step inside the limit (≈ chordal). Never observed with real Clipper output (all removals were zero-width spikes; 0 edges closer than r + allowance over ~330,000 diameters). **Resolved by T-0126:** changed edges are checked exactly and repaired (§4).
+- The phantom test counted vertices, not area, and a successful inset repair could lose area without a message at coarse chordal tolerances; neither occurred in real scans. **Resolved by T-0126:** depth test, and a "trimmed" message for repairs larger than the join tolerance (§4).
 - At stepover = diameter, travel between levels can cross the thin scallops left between offset rings (still ≥ r + margin from walls).

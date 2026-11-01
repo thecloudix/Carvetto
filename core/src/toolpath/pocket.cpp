@@ -19,6 +19,7 @@
 #include "carvetto/geometry/span.hpp"
 #include "carvetto/toolpath/pass_plan.hpp"
 #include "carvetto/toolpath/pocket_ramp.hpp"
+#include "pocket_guard.hpp"
 
 // Pocket toolpath (T-0121, ADR-0017).
 //
@@ -79,6 +80,23 @@ double distToSegment(Vec2 p, Vec2 a, Vec2 b) {
     const double l2 = ab.lengthSquared();
     const double t = l2 > 0.0 ? std::clamp((p - a).dot(ab) / l2, 0.0, 1.0) : 0.0;
     return geometry::distance(p, a + ab * t);
+}
+
+/// Exact distance between segments ab and cd (0 when they cross or touch).
+double distSegments(Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
+    const Vec2 ab = b - a;
+    const Vec2 cd = d - c;
+    const double o1 = ab.cross(c - a);
+    const double o2 = ab.cross(d - a);
+    const double o3 = cd.cross(a - c);
+    const double o4 = cd.cross(b - c);
+    if (((o1 <= 0.0 && o2 >= 0.0) || (o1 >= 0.0 && o2 <= 0.0)) &&
+        ((o3 <= 0.0 && o4 >= 0.0) || (o3 >= 0.0 && o4 <= 0.0)) && ab.lengthSquared() > 0.0 &&
+        cd.lengthSquared() > 0.0 && !(o1 == 0.0 && o2 == 0.0)) {
+        return 0.0;
+    }
+    return std::min(std::min(distToSegment(a, c, d), distToSegment(b, c, d)),
+                    std::min(distToSegment(c, a, b), distToSegment(d, a, b)));
 }
 
 bool onRing(const Ring& r, Vec2 p, double tol) {
@@ -241,8 +259,8 @@ std::vector<Contour> offsetBy(const std::vector<Contour>& cs, double d, const To
     return geometry::offsetContours(cs, d, JoinType::Round, tol);
 }
 
-/// Uniform grid over the edges of a ring set, for "is any edge closer than d to p" and "nearest
-/// edge within d" queries.
+/// Uniform grid over the edges of a ring set, for "is any edge closer than d to p (or to a
+/// segment)" and "nearest edge within d" queries.
 /// Cells are at least `cell` wide (at most 256 per axis); an edge is listed in every cell its
 /// bounding box touches. Storage is flat (CSR), built in two passes.
 class EdgeGrid {
@@ -289,7 +307,6 @@ class EdgeGrid {
         }
     }
 
-    /// True when some edge lies closer than `d` to `p`.
     /// Smallest distance from `p` to an edge, if some edge is closer than `d`; `d` otherwise.
     double nearestWithin(Vec2 p, double d) const {
         double best = d;
@@ -308,6 +325,28 @@ class EdgeGrid {
         return best;
     }
 
+    /// Smallest exact distance from the segment ab to an edge, if some edge is closer than `d`;
+    /// `d` otherwise.
+    double nearestWithin(Vec2 a, Vec2 b, double d) const {
+        double best = d;
+        if (edges_.empty()) {
+            return best;
+        }
+        const std::size_t i0 = col(std::min(a.x, b.x) - d), i1 = col(std::max(a.x, b.x) + d);
+        const std::size_t j0 = row(std::min(a.y, b.y) - d), j1 = row(std::max(a.y, b.y) + d);
+        for (std::size_t j = j0; j <= j1; ++j) {
+            for (std::size_t i = i0; i <= i1; ++i) {
+                const std::size_t c = j * nx_ + i;
+                for (std::size_t k = start_[c]; k < start_[c + 1]; ++k) {
+                    const auto [p, q] = edges_[items_[k]];
+                    best = std::min(best, distSegments(a, b, p, q));
+                }
+            }
+        }
+        return best;
+    }
+
+    /// True when some edge lies closer than `d` to `p`.
     bool anyCloser(Vec2 p, double d) const {
         if (edges_.empty()) {
             return false;
@@ -491,35 +530,67 @@ class RegionIndex {
     mutable std::uint64_t tick_{0};
 };
 
-/// How `insetBy` tells a genuine inset region from an inside-out phantom.
+/// How `insetBy` tells a genuine inset region from an inside-out phantom, and what it does with
+/// a genuine region that overshoots.
+///
+/// Phantom test (both guards, T-0126): a result region is genuine when some point of it (an outer
+/// vertex, or the centroid of its outer ring when that lies in the region) keeps the full
+/// distance from the source and lies inside it. Such a point belongs to the true inset, so the
+/// region does too. A phantom (Clipper2's inside-out result past the inradius) has no such
+/// point: every point of it is closer to the walls than the inset. The test is by depth, not by
+/// vertex count, so a large region whose small bulge holds most of its vertices is kept.
 enum class InsetGuard {
-    /// For the tool-centre region, where a vertex too close to a wall would be a gouge. Outer and
-    /// hole vertices are checked. A region failing at most outer vertices is a phantom. In a
-    /// genuine one, failing convex vertices are pulled in (or removed) so the region only shrinks
-    /// where it overshot (Clipper2's grid, join sag, zero-width spikes); if a failing vertex is
-    /// reflex the region is inset further until a valid region results. A region is never
-    /// dropped for overshoot alone, and one that cannot be kept is counted and reported (T-0125;
-    /// ADR-0017 §4).
+    /// For the tool-centre region, where a vertex or an edge too close to a wall would be a gouge.
+    /// Outer and hole vertices are checked. In a genuine region, failing convex vertices are
+    /// pulled in (or removed) so the region only shrinks where it overshot (Clipper2's grid, join
+    /// sag, zero-width spikes), and every edge so changed is checked against the walls exactly;
+    /// if a failing vertex is reflex, or a changed edge comes too close, the region is inset
+    /// further until a valid region results. A region is never dropped for overshoot alone; one
+    /// that cannot be kept, or is trimmed by more than the join tolerance, is counted and
+    /// reported (T-0125, T-0126; ADR-0017 §4).
     Strict,
-    /// At least half of the outer vertices must keep it: used everywhere else (offset levels,
-    /// rest material, openings). A phantom fails at every vertex (its vertices are about twice
-    /// its own size too close), while a genuine region keeps its shape even when a vertex near a
-    /// cusp of the input comes out a little too close (T-0121 round 3: a 15 x 6 mm neck of rest
-    /// material was dropped whole for one such vertex).
-    Majority,
+    /// Phantoms are rejected and genuine regions kept as they come: used everywhere else (offset
+    /// levels, rest material, openings), where a vertex near a cusp of the input that comes out
+    /// a little too close costs nothing (T-0121 round 3: a 15 x 6 mm neck of rest material was
+    /// dropped whole for one such vertex).
+    Lenient,
 };
 
-/// Insets the region of `cs` by d > 0 (offsetContours with −d) and keeps only result regions
-/// whose outer vertices lie at least d (less the join tolerance) from the input's boundary, as
-/// `guard` describes, and inside it. Clipper2 1.4.0 turns a polygon inset beyond its inradius
+using detail::InsetReport;
+
+double groupArea(const Group& g) {
+    double a = ringArea(g.outer);
+    for (const Ring& h : g.holes) {
+        a += ringArea(h);
+    }
+    return a;
+}
+
+double groupPerimeter(const Group& g) {
+    double len = 0.0;
+    auto ring = [&](const Ring& r) {
+        for (std::size_t i = 0, n = r.size(); i < n; ++i) {
+            len += geometry::distance(r[i], r[(i + 1) % n]);
+        }
+    };
+    ring(g.outer);
+    for (const Ring& h : g.holes) {
+        ring(h);
+    }
+    return len;
+}
+
+/// Insets the region of `cs` by d > 0 (offsetContours with −d) and keeps only genuine result
+/// regions, as `guard` describes. Clipper2 1.4.0 turns a polygon inset beyond its inradius
 /// inside out (a circle inset by more than its radius comes back as a growing circle), so a
-/// valid-looking region can appear where nothing fits; every vertex of a true inset is at
+/// valid-looking region can appear where nothing fits; every point of a true inset is at
 /// distance >= d from the input, which rejects those. Distances use an edge grid; the inside
-/// test is made once per region at a vertex that keeps the distance. With `Strict`, a genuine
-/// region that cannot be repaired is counted in `*dropped` (never silently lost).
-std::vector<Contour> insetBy(const std::vector<Contour>& cs, double d, const Tolerance& tol,
-                             InsetGuard guard = InsetGuard::Majority, std::size_t* dropped = nullptr) {
-    const std::vector<Contour> raw = offsetBy(cs, -d, tol);
+/// test is made once per region at a point that keeps the distance. With `Strict`, a genuine
+/// region that cannot be repaired, or is trimmed noticeably, is counted in `*report` (never
+/// silently lost).
+/// `insetBy` on a given raw inset `raw` of `cs` (Clipper2's, or a hand-made one in tests).
+std::vector<Contour> guardInset(const std::vector<Contour>& cs, const std::vector<Contour>& raw, double d,
+                                const Tolerance& tol, InsetGuard guard, InsetReport* report) {
     if (raw.empty()) {
         return raw;
     }
@@ -542,10 +613,18 @@ std::vector<Contour> insetBy(const std::vector<Contour>& cs, double d, const Tol
     // by no more than needed. When the midpoint fails too (a spike over several vertices) the
     // vertex is dropped, which cuts that triangle off, and its neighbours follow in later passes
     // (rings keep at least three vertices). A failing reflex vertex is left for the inset repair
-    // below. Returns true when every vertex of every ring then keeps the distance.
+    // below. A vertex that keeps the distance does not make its edges keep it (a chord across a
+    // wall corner can sag towards it), so every edge with a moved end, and every chord left by a
+    // removal, is then checked exactly against the walls (T-0126). Returns true when every
+    // vertex and every such edge of every ring keeps the distance, and no other edge comes
+    // closer than d less twice the join tolerance (the no-gouge line: radius + allowance for the
+    // centre region; Clipper2's own chords keep about d less one join tolerance).
+    const double edgeNeed = need - tol.chordal;
+    double shortfall = 0.0;  // largest vertex or edge shortfall left by the last pull-in
     auto pullIn = [&](Group& g) {
         bool allOk = true;
         auto ring = [&](Ring& r) {
+            std::vector<char> touched(r.size(), 0);  // vertex moved, or a neighbour removed
             for (int pass = 0; pass < 64; ++pass) {
                 bool changed = false;
                 for (std::size_t i = 0, n = r.size(); i < n; ++i) {
@@ -565,7 +644,10 @@ std::vector<Contour> insetBy(const std::vector<Contour>& cs, double d, const Tol
                         // vertex, cutting the triangle off; the neighbours follow in later passes.
                         if (n > 3) {
                             r.erase(r.begin() + static_cast<std::ptrdiff_t>(i));
+                            touched.erase(touched.begin() + static_cast<std::ptrdiff_t>(i));
                             --n;
+                            touched[(i + n - 1) % n] = 1;  // the new chord prev -> next
+                            touched[i % n] = 1;
                             --i;
                             changed = true;
                         }
@@ -577,14 +659,20 @@ std::vector<Contour> insetBy(const std::vector<Contour>& cs, double d, const Tol
                         (passes(r[i] + (mid - r[i]) * t) ? hi : lo) = t;
                     }
                     r[i] = r[i] + (mid - r[i]) * hi;
+                    touched[i] = 1;
                     changed = true;
                 }
                 if (!changed) {
                     break;
                 }
             }
-            for (const Vec2 v : r) {
-                allOk = allOk && passes(v);
+            for (std::size_t i = 0, n = r.size(); i < n; ++i) {
+                const std::size_t j = (i + 1) % n;
+                const double limit = touched[i] != 0 || touched[j] != 0 ? need : edgeNeed;
+                const double vertexDist = grid.nearestWithin(r[i], need);
+                const double edgeDist = grid.nearestWithin(r[i], r[j], limit);
+                shortfall = std::max({shortfall, need - vertexDist, limit - edgeDist});
+                allOk = allOk && vertexDist >= need && edgeDist >= limit;
             }
         };
         ring(g.outer);
@@ -595,61 +683,91 @@ std::vector<Contour> insetBy(const std::vector<Contour>& cs, double d, const Tol
     };
     std::vector<Group> kept;
     for (Group& g : groupsOf(raw, tol.distance)) {
-        const std::size_t n = g.outer.size();
-        std::size_t bad = 0;
-        double worst = 0.0;  // largest overshoot past the slack (outer and holes)
+        // Phantom test by depth (see InsetGuard): a point of the region at full distance from
+        // the walls and inside the source.
         std::optional<Vec2> good;
-        for (std::size_t i = 0; i < n; ++i) {
-            const double dist = grid.nearestWithin(g.outer[i], need);
-            if (dist < need) {
-                ++bad;
-                worst = std::max(worst, need - dist);
-            } else if (!good) {
-                good = g.outer[i];
+        for (const Vec2 v : g.outer) {
+            if (passes(v)) {
+                good = v;
+                break;
             }
         }
-        const bool genuine = n > 0 && 2 * bad <= n && good && insideRegion(base, *good, 0.0);
-        if (!genuine) {
+        if (good && !insideRegion(base, *good, 0.0)) {
+            continue;  // keeps the distance, but outside the source: a phantom
+        }
+        // No vertex at full depth: the centroid can still show a genuine region, unless the
+        // region is a sliver (see below), where a centroid "at depth" is Clipper2 debris of a
+        // collapsing lobe, not room for the tool.
+        if (!good && g.outer.size() >= 3 && groupArea(g) > 0.5 * tol.chordal * groupPerimeter(g)) {
+            Vec2 c{0.0, 0.0};
+            for (const Vec2 v : g.outer) {
+                c = c + v;
+            }
+            c = c * (1.0 / static_cast<double>(g.outer.size()));
+            if (passes(c) && insideRegion(ringsOf(g), c, 0.0) && insideRegion(base, c, 0.0)) {
+                good = c;
+            }
+        }
+        if (!good) {
             continue;  // phantom (or nothing)
         }
-        if (guard == InsetGuard::Majority) {
+        if (guard == InsetGuard::Lenient) {
             kept.push_back(std::move(g));
             continue;
         }
-        // Strict: holes count too (a hole vertex too close to its island would be a gouge).
-        for (const Ring& h : g.holes) {
-            for (const Vec2 v : h) {
-                const double dist = grid.nearestWithin(v, need);
-                if (dist < need) {
-                    worst = std::max(worst, need - dist);
-                }
-            }
-        }
+        const double areaBefore = groupArea(g);
+        const double perimeter = groupPerimeter(g);
+        // Strict: hole vertices count too (one too close to its island would be a gouge).
+        shortfall = 0.0;
         if (pullIn(g)) {
             kept.push_back(std::move(g));
             continue;
         }
-        // Some failing vertex could not be pulled in: inset this region further, by twice the worst overshoot
-        // (at least 2e-6 mm) and then doubling, until a further inset yields regions whose every
-        // vertex passes. Whether the repair is possible is decided by that result, not by the
-        // size of the overshoot; a region that cannot be repaired is reported, never silent.
+        if (areaBefore <= 0.5 * tol.chordal * perimeter) {
+            // A sliver (mean half-width, area / perimeter, under half the join tolerance:
+            // Clipper2 debris where a lobe collapses, zero area in practice) that does not pass
+            // as it is holds nothing the tolerance does not already allow for; an inset only
+            // makes it vanish. Dropped without a report.
+            continue;
+        }
+        // Some failing vertex could not be pulled in, or an edge comes too close: inset this
+        // region further, by twice the worst shortfall left (at least 2e-6 mm) and then
+        // doubling, until a further inset yields regions whose every vertex (and every edge the
+        // pull-in changes) passes. Whether the repair is possible is decided by that result, not
+        // by the size of the overshoot; a region that cannot be repaired is reported, never
+        // silent, and so is one trimmed by more than the join tolerance.
         bool repaired = false;
-        double extra = std::max(2.0 * worst, 2e-6);
-        for (int attempt = 0; attempt < 12 && !repaired && extra < d; ++attempt, extra *= 2.0) {
+        double extra = std::max(2.0 * shortfall, 2e-6);
+        for (int attempt = 0; attempt < 12 && !repaired && extra < d; ++attempt) {
             std::vector<Group> parts = groupsOf(offsetBy(contoursOf(g), -extra, tol), tol.distance);
             repaired = !parts.empty() &&
                        std::all_of(parts.begin(), parts.end(), [&](Group& part) { return pullIn(part); });
             if (repaired) {
+                double areaAfter = 0.0;
                 for (Group& part : parts) {
+                    areaAfter += groupArea(part);
                     kept.push_back(std::move(part));
                 }
+                const bool large =
+                    extra > tol.chordal ||
+                    areaBefore - areaAfter > perimeter * tol.chordal + tol.chordal * tol.chordal;
+                if (large && report != nullptr) {
+                    ++report->trimmed;
+                }
+            } else {
+                extra *= 2.0;
             }
         }
-        if (!repaired && dropped != nullptr) {
-            ++*dropped;
+        if (!repaired && report != nullptr) {
+            ++report->dropped;
         }
     }
     return contoursOf(kept);
+}
+
+std::vector<Contour> insetBy(const std::vector<Contour>& cs, double d, const Tolerance& tol,
+                             InsetGuard guard = InsetGuard::Lenient, InsetReport* report = nullptr) {
+    return guardInset(cs, offsetBy(cs, -d, tol), d, tol, guard, report);
 }
 
 /// Morphological opening: removes slivers narrower than 2·eps (numeric residue of booleans).
@@ -1614,8 +1732,23 @@ bool finite(double v) {
 /// The region the tool centre may visit: the pocket region inset by radius + allowance + margin
 /// with the strict guard (ADR-0017 §3, §4). Shared by `pocketToolpath` and `pocketCentreRegion`.
 std::vector<Contour> centreRegionOf(const std::vector<Contour>& region, double radius, double allowance,
-                                    double margin, const Tolerance& tol, std::size_t& dropped) {
-    return insetBy(region, radius + allowance + margin, tol, InsetGuard::Strict, &dropped);
+                                    double margin, const Tolerance& tol, InsetReport& report) {
+    return insetBy(region, radius + allowance + margin, tol, InsetGuard::Strict, &report);
+}
+
+/// The messages for what the strict guard could not keep exactly (ADR-0017 §4).
+std::vector<std::string> centreRegionMessages(const InsetReport& report) {
+    std::vector<std::string> out;
+    if (report.dropped > 0) {
+        out.push_back(std::to_string(report.dropped) +
+                      " part(s) of the pocket could not be kept within the safety margin and are not cut");
+    }
+    if (report.trimmed > 0) {
+        out.push_back(std::to_string(report.trimmed) +
+                      " part(s) of the pocket were trimmed by more than the tolerance to keep the safety "
+                      "margin; material near them may be left");
+    }
+    return out;
 }
 
 /// Vertices the polygonisation of `c` will produce at `tol` (lines 1, arcs by sag, Beziers
@@ -1795,13 +1928,11 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
                                       "for the pocket size)");
             continue;
         }
-        std::size_t droppedParts = 0;
+        InsetReport guardReport;
         const std::vector<Contour> centreRegion =
-            centreRegionOf(region, r, params.allowance, margin, tol, droppedParts);
-        if (droppedParts > 0) {
-            result.messages.push_back(label + ": " + std::to_string(droppedParts) +
-                                      " part(s) of the pocket could not be kept within the safety margin and "
-                                      "are not cut");
+            centreRegionOf(region, r, params.allowance, margin, tol, guardReport);
+        for (const std::string& m : centreRegionMessages(guardReport)) {
+            result.messages.push_back(label + ": " + m);
         }
         const std::vector<Group> centre = groupsOf(centreRegion, tol.distance);
         if (centre.empty()) {
@@ -1959,14 +2090,22 @@ std::vector<Contour> pocketCentreRegion(const std::vector<Contour>& contours, do
         return {};
     }
     const std::vector<Contour> region = geometry::unionContours(closedInput, tol, FillRule::EvenOdd);
-    std::size_t dropped = 0;
+    InsetReport guardReport;
     std::vector<Contour> centre =
-        centreRegionOf(region, 0.5 * toolDiameter, params.allowance, userTol.chordal, tol, dropped);
-    if (dropped > 0) {
-        say(std::to_string(dropped) +
-            " part(s) of the pocket could not be kept within the safety margin and are not cut");
+        centreRegionOf(region, 0.5 * toolDiameter, params.allowance, userTol.chordal, tol, guardReport);
+    for (const std::string& m : centreRegionMessages(guardReport)) {
+        say(m);
     }
     return centre;
 }
+
+namespace detail {
+
+std::vector<Contour> strictInset(const std::vector<Contour>& source, const std::vector<Contour>& raw,
+                                 double d, const Tolerance& tol, InsetReport* report) {
+    return guardInset(source, raw, d, tol, InsetGuard::Strict, report);
+}
+
+}  // namespace detail
 
 }  // namespace carvetto::toolpath
