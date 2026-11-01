@@ -1,0 +1,51 @@
+S 273001 0 side 2 D 25 V 60 a -0.3204 sep 0 lpa 0.748 n 3 len 0.209 th 5.241 3d 0 | G 0 hold 0 nohold 0 sev 0 part 0 thin 0 | left 3 req 3 | cell 0.027 1.3s [FREE 1 biggest 545.46 mm2 at (-0.00,-0.00) allLost 1]
+S 273001 1 side 0 D 12 V 120 a -1.6637 sep 1 lpa 0.226 n 1 len 8.706 th 0.435 3d 0 | G 8 hold 8 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.022 1.6s
+S 273001 2 side 0 D 3.175 V 0 a -0.0171 sep 0 lpa 0.565 n 4 len 3.595 th 0.670 3d 1 | G 3 hold 3 nohold 0 sev 0 part 0 thin 0 | left 1 req 4 | cell 0.020 1.6s
+S 273001 3 side 1 D 6 V 120 a -2.9046 sep 0 lpa 0.518 n 6 len 2.342 th 1.036 3d 1 | G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.020 3.4s
+S 273001 4 side 0 D 12 V 120 a -5.7145 sep 1 lpa 0.661 n 2 len 2.876 th 1.590 3d 0 | G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.020 13.4s
+S 273001 5 side 0 D 3.175 V 0 a -1.5318 sep 1 lpa 0.094 n 1 len 1.238 th 1.374 3d 0 | G 1 hold 1 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.020 1.1s
+S 273001 6 side 0 D 25 V 120 a -1.4177 sep 0 lpa 0.017 n 4 len 0.560 th 2.847 3d 0 | G 3 hold 3 nohold 0 sev 0 part 0 thin 0 | left 1 req 4 | cell 0.024 5.0s
+S 273001 7 side 2 D 25 V 120 a -0.4607 sep 0 lpa 0.524 n 6 len 2.971 th 0.507 3d 0 | G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.020 0.8s
+S 273001 8 side 1 D 3.175 V 0 a -1.1113 sep 1 lpa 0.632 n 7 len 0.170 th 0.827 3d 0 | G 7 hold 7 nohold 0 sev 0 part 0 thin 0 | left 2 req 4 | cell 0.025 1.7s [FREE 3 biggest 63.45 mm2 at (7.92,10.37) allLost 1]
+S 273001 9 side 1 D 25 V 90 a -5.5460 sep 1 lpa 0.069 n 4 len 7.714 th 1.234 3d 0 | G 1 hold 1 nohold 0 sev 0 part 0 thin 0 | left 3 req 4 | cell 0.020 1.4s
+S 273001 10 side 0 D 12 V 120 a -4.0716 sep 1 lpa 0.490 n 2 len 2.611 th 2.261 3d 0 | G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.037 2.1s
+S 273001 11 side 2 D 2 V 0 a 0.0000 sep 1 lpa 0.205 n 4 len 1.241 th 3.492 3d 0 | G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.021 1.5s
+S 273001 12 side 1 D 2 V 0 a -0.7006 sep 0 lpa 0.370 n 6 len 1.994 th 2.588 3d 1 | G 12 hold 12 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.029 2.0s
+S 273001 13 side 1 D 25 V 90 a -5.1989 sep 0 lpa 0.399 n 1 len 2.048 th 3.388 3d 0 | G 0 hold 0 nohold 0 sev 0 part 0 thin 0 | left 1 req 1 | cell 0.020 0.8s
+S 273001 14 side 0 D 12 V 120 a -2.0454 sep 0 lpa 0.555 n 9 len 2.012 th 1.001 3d 1 | G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.020 2.6s
+S 273001 15 side 1 D 8 V 0 a -3.5422 sep 0 lpa 0.930 n 2 len 3.751 th 0.557 3d 0 | G 0 hold 0 nohold 0 sev 0 part 0 thin 0 | left 4 req 4 | cell 0.020 0.6s
+S 273001 16 side 2 D 12 V 0 a 0.1953 sep 1 lpa 0.609 n 3 len 2.323 th 3.270 3d 0 | G 5 hold 4 nohold 1 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.035 8.8s
+S 273001 17 side 1 D 6 V 90 a -2.2475 sep 1 lpa 0.094 n 3 len 0.652 th 2.520 3d 0 | G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.022 4.4s
+S 273001 18 side 2 D 8 V 0 a 0.0000 sep 0 lpa 0.972 n 8 len 3.576 th 3.468 3d 1 | G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 6 req 8 | cell 0.024 4.2s
+S 273001 19 side 0 D 6 V 0 a -3.0000 sep 0 lpa 0.979 n 5 len 3.533 th 2.824 3d 0 | G 7 hold 7 nohold 0 sev 0 part 0 thin 0 | left 13 req 20 | cell 0.023 3.0s
+S 273001 20 side 2 D 2 V 0 a -0.6073 sep 1 lpa 0.122 n 1 len 2.865 th 2.185 3d 0 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.020 1.1s
+S 273001 21 side 2 D 2 V 0 a 0.0000 sep 0 lpa 0.781 n 4 len 2.796 th 1.427 3d 0 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.020 0.4s
+S 273001 22 side 0 D 3.175 V 0 a -0.0064 sep 0 lpa 0.777 n 8 len 1.785 th 2.560 3d 1 | G 12 hold 12 nohold 0 sev 0 part 0 thin 0 | left 4 req 16 | cell 0.030 1.6s
+S 273001 23 side 2 D 2 V 0 a -0.1757 sep 1 lpa 0.426 n 6 len 2.721 th 1.955 3d 0 | G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.020 0.6s
+S 273001 24 side 0 D 3.175 V 0 a -1.1342 sep 1 lpa 0.125 n 9 len 1.001 th 1.948 3d 0 | G 3 hold 3 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.020 1.5s
+S 273001 25 side 0 D 8 V 0 a -2.1048 sep 0 lpa 0.310 n 9 len 3.178 th 1.822 3d 0 | G 9 hold 9 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.032 2.6s
+S 273001 26 side 2 D 2 V 0 a -0.0201 sep 1 lpa 0.216 n 3 len 2.358 th 0.412 3d 0 | G 3 hold 3 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.020 0.4s
+S 273001 27 side 0 D 3.175 V 0 a -0.0459 sep 0 lpa 0.222 n 2 len 0.153 th 4.665 3d 0 | G 0 hold 0 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.020 1.4s [FREE 1 biggest 489.91 mm2 at (-2.48,2.93) allLost 1]
+S 273001 28 side 1 D 12 V 0 a -5.9012 sep 1 lpa 0.645 n 7 len 1.987 th 1.542 3d 0 | G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 12 req 14 | cell 0.030 6.9s [FREE 1 biggest 7.21 mm2 at (0.78,-0.16) allLost 1]
+S 273001 29 side 2 D 2 V 0 a 0.0000 sep 1 lpa 0.838 n 7 len 3.825 th 2.458 3d 1 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 3 req 6 | cell 0.021 1.3s [FREE 3 biggest 95.75 mm2 at (9.49,10.53) allLost 2]
+S 273001 30 side 0 D 6 V 0 a -2.5763 sep 0 lpa 0.864 n 8 len 3.418 th 0.479 3d 1 | G 1 hold 0 nohold 1 sev 0 part 0 thin 0 | left 7 req 8 | cell 0.020 0.5s
+S 273001 31 side 1 D 6 V 0 a -0.0166 sep 1 lpa 0.128 n 8 len 7.651 th 3.819 3d 0 | G 8 hold 8 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.021 10.6s
+S 273001 32 side 0 D 12 V 90 a -2.6070 sep 0 lpa 0.057 n 1 len 1.980 th 2.221 3d 0 | G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 1 req 2 | cell 0.022 1.1s [FREE 1 biggest 44.48 mm2 at (34.80,10.52) allLost 0]
+S 273001 33 side 0 D 3.175 V 0 a -1.2643 sep 0 lpa 0.052 n 1 len 0.173 th 1.257 3d 0 | G 0 hold 0 nohold 0 sev 0 part 0 thin 0 | left 1 req 1 | cell 0.021 1.4s [FREE 1 biggest 1403.54 mm2 at (0.00,0.00) allLost 1]
+S 273001 34 side 0 D 12 V 120 a -1.8219 sep 0 lpa 0.490 n 4 len 0.367 th 0.600 3d 0 | G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.021 1.0s
+S 273001 35 side 2 D 12 V 90 a 0.0000 sep 1 lpa 0.678 n 2 len 11.232 th 0.763 3d 0 | G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.020 0.8s
+S 273001 36 side 2 D 8 V 0 a 0.0000 sep 0 lpa 0.079 n 8 len 3.148 th 3.769 3d 0 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 4 req 8 | cell 0.020 1.5s
+S 273001 37 side 0 D 8 V 0 a -3.1692 sep 1 lpa 0.066 n 4 len 1.358 th 1.547 3d 0 | G 1 hold 1 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.020 1.2s
+S 273001 38 side 0 D 12 V 0 a -5.7619 sep 0 lpa 0.753 n 2 len 3.525 th 2.555 3d 0 | G 0 hold 0 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.024 1.8s [FREE 1 biggest 2.53 mm2 at (-1.45,-0.99) allLost 1]
+S 273001 39 side 2 D 8 V 0 a 0.0000 sep 0 lpa 0.897 n 6 len 5.807 th 3.149 3d 1 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 5 req 9 | cell 0.020 12.8s [FREE 3 biggest 120.79 mm2 at (19.07,14.37) allLost 3]
+S 273001 40 side 0 D 2 V 0 a -0.0089 sep 1 lpa 0.424 n 5 len 1.354 th 2.102 3d 1 | G 5 hold 5 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.020 0.8s
+S 273001 41 side 1 D 8 V 0 a -3.9451 sep 1 lpa 0.852 n 7 len 0.385 th 3.093 3d 0 | G 3 hold 3 nohold 0 sev 0 part 0 thin 0 | left 3 req 6 | cell 0.028 4.8s [FREE 2 biggest 69.06 mm2 at (11.00,20.03) allLost 2]
+S 273001 42 empty
+S 273001 43 side 1 D 8 V 0 a -3.5553 sep 0 lpa 0.264 n 1 len 1.753 th 0.862 3d 0 | G 0 hold 0 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.020 1.3s
+S 273001 44 side 2 D 8 V 0 a 1.1875 sep 1 lpa 0.140 n 4 len 0.343 th 1.044 3d 0 | G 0 hold 0 nohold 0 sev 0 part 0 thin 0 | left 4 req 4 | cell 0.020 2.2s [FREE 1 biggest 924.34 mm2 at (18.53,17.51) allLost 1]
+S 273001 45 side 1 D 2 V 0 a -0.9998 sep 1 lpa 0.588 n 6 len 0.564 th 0.640 3d 0 | G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.021 2.2s
+S 273001 46 side 2 D 8 V 0 a -0.8992 sep 1 lpa 0.721 n 3 len 3.833 th 0.983 3d 0 | G 3 hold 3 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.020 5.0s
+S 273001 47 side 2 D 8 V 0 a 0.0000 sep 1 lpa 0.006 n 4 len 0.814 th 0.842 3d 0 | G 1 hold 1 nohold 0 sev 0 part 0 thin 0 | left 3 req 4 | cell 0.020 3.3s
+S 273001 48 side 0 D 6 V 0 a -0.0110 sep 1 lpa 0.644 n 2 len 0.376 th 2.256 3d 1 | G 0 hold 0 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.020 1.7s [FREE 1 biggest 163.83 mm2 at (-0.07,-0.05) allLost 1]
+S 273001 49 empty
+SUMMARY seed 273001 mode 2 scenes 50 empty 2 | tabs 164 hold 162 nohold 2 severed 0 partial 0 thin 0 | freeScenes 12 | left 91 req 140

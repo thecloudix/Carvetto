@@ -1,0 +1,15 @@
+C 1
+L -0x1.847f87aabdd1ep+3 -0x1.847f87aabdd1ep+3 -0x1.cc10fd7c667dcp+1 -0x1.847f87aabdd1ep+3
+L -0x1.cc10fd7c667dcp+1 -0x1.847f87aabdd1ep+3 -0x1.cc10fd7c667dcp+1 -0x1.d854481d6113cp+0
+L -0x1.cc10fd7c667dcp+1 -0x1.d854481d6113cp+0 0x1.0e6a75a3658cfp+3 -0x1.d854481d6113cp+0
+L 0x1.0e6a75a3658cfp+3 -0x1.d854481d6113cp+0 0x1.0e6a75a3658cfp+3 -0x1.847f87aabdd1ep+3
+L 0x1.0e6a75a3658cfp+3 -0x1.847f87aabdd1ep+3 0x1.0ff2def784dfbp+4 -0x1.847f87aabdd1ep+3
+L 0x1.0ff2def784dfbp+4 -0x1.847f87aabdd1ep+3 0x1.0ff2def784dfbp+4 0x1.0ff2def784dfbp+4
+L 0x1.0ff2def784dfbp+4 0x1.0ff2def784dfbp+4 0x1.0e6a75a3658cfp+3 0x1.0ff2def784dfbp+4
+L 0x1.0e6a75a3658cfp+3 0x1.0ff2def784dfbp+4 0x1.0e6a75a3658cfp+3 0x1.ace17e8ff01ffp+2
+L 0x1.0e6a75a3658cfp+3 0x1.ace17e8ff01ffp+2 -0x1.cc10fd7c667dcp+1 0x1.ace17e8ff01ffp+2
+L -0x1.cc10fd7c667dcp+1 0x1.ace17e8ff01ffp+2 -0x1.cc10fd7c667dcp+1 0x1.0ff2def784dfbp+4
+L -0x1.cc10fd7c667dcp+1 0x1.0ff2def784dfbp+4 -0x1.847f87aabdd1ep+3 0x1.0ff2def784dfbp+4
+L -0x1.847f87aabdd1ep+3 0x1.0ff2def784dfbp+4 -0x1.847f87aabdd1ep+3 -0x1.847f87aabdd1ep+3
+P 0x1p+3 0 -0x1.40b73bf8f4d68p-3 2 1 0x0p+0 0x1.865ca8c379747p+2 0x1.e2731a8f61a07p+2 0x0p+0 0x1.4p+2 0 0x1.92d594b2c2a95p-1 0 1 0x1.8fc1625d220fcp+0 0x1.0d39dc2f9f54ep+2 0 1 0x1.60d4a2b4b65dfp+5 0x0p+0 0 0 0x0p+0 0 0x1.0162015e0bee9p+4 1 0 0x1.bcb35b66bf08dp-5 0x1.1503f80f1c5b4p+3 0x1.db5e34df1d3bdp-1 0x1.0c58323c12a4ep+2 1 0x1.556eead3e192ap-3 0 0 0x0p+0 0x0p+0 2 7 0 0 0 0 -0x1.a29a87a490b91p+4 0x1.7208fa5d72fccp+4 0x1p+1
+K 0 0

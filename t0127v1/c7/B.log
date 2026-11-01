@@ -1,0 +1,8 @@
+scene 16 fam 5 side 1 D 12.000 V 0 allow -5.739 sep 0 lpa 0.707 rev 0 n 5 sp 0 len 16.703 th 4.791 3d 0 avoid 0 ramp 3 lead 0 out 1 oc 0.00 start 1 depth 6.32/6.19: [COUNT kept 2 + left 4 != requested 5 (diag M sum 5)]
+scene 23 fam 8 side 1 D 3.175 V 1 allow 0.108 sep 1 lpa 0.099 rev 1 n 7 sp 1 len 15.760 th 3.642 3d 0 avoid 1 ramp 1 lead 1 out 1 oc 0.00 start 1 depth 4.48/5.65: [COUNT kept 1 + left 0 != requested 2 (diag M sum 0)]
+scene 32 fam 5 side 1 D 3.175 V 0 allow -1.486 sep 0 lpa 0.592 rev 0 n 7 sp 0 len 1.036 th 4.541 3d 0 avoid 0 ramp 3 lead 0 out 0 oc 10.47 start 1 depth 5.03/2.32: [COUNT kept 8 + left 0 != requested 7 (diag M sum 0)]
+scene 36 fam 4 side 0 D 8.000 V 0 allow -1.480 sep 0 lpa 0.919 rev 1 n 5 sp 0 len 14.080 th 2.657 3d 0 avoid 1 ramp 2 lead 2 out 0 oc 10.94 start 2 depth 6.52/0.51: [SEVERED tab at (-12.921,4.990) plateau 10.900] [COUNT kept 3 + left 3 != requested 5 (diag M sum 5)]
+scene 38 fam 4 side 0 D 6.000 V 0 allow -1.263 sep 0 lpa 0.974 rev 1 n 7 sp 0 len 13.281 th 2.567 3d 1 avoid 1 ramp 2 lead 1 out 1 oc 6.38 start 1 depth 4.98/0.59: [SEVERED tab at (6.056,5.668) plateau 36.649] [SEVERED tab at (6.985,-2.569) plateau 19.281] [COUNT kept 2 + left 6 != requested 7 (diag M sum 7)]
+ONTAB seed 289001 sc 44 len 15.661 joined 1 neck 1.1997 D 8.000
+ONSTAT seed 289001 sc 44 fam 5 kept 1 left 0 req 1 countable 1 D 8.000 len 7.662 sep 1 allow -0.433
+SUMMARY seed 289001 fam 0 sep -1 cell 0.050: scenes 60 det 0 gouge 0 clampBad 0 sepOrder 0 | tabs kept 157 checked 156 severed 3 thin(<0.1) 0 minNeck 0.6167 noSeed 0 noTarget 1 | requested 292 left 138 countBad 5 | 61.2s
