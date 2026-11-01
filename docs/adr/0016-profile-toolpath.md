@@ -1,6 +1,6 @@
 # ADR-0016: 2D Profile toolpath
 
-Date: 2026-10-26 · Status: accepted 2026-11-01 (T-0120; amended in place by T-0124, 2026-10-30/11-01)
+Date: 2026-10-26 · Status: accepted 2026-11-01 (T-0120; amended in place by T-0124, 2026-10-30/11-01, and T-0127)
 
 ## Context
 T-0120 asks for `profileToolpath(contours, Tool, ProfileParams)` with the options of
@@ -32,7 +32,9 @@ choices. Behaviour descriptions come from `docs/reference/` only.
    number of others is a hole). They are oriented region-on-the-left (outer CCW, hole CW, island
    CCW). Outside keeps the region: the tool runs outside outer boundaries and inside holes;
    Inside runs inside the region. Open vectors: Outside = right of travel, Inside = left (the
-   enum has `Right`/`Left` aliases). On runs on the vector (offset by the allowance only).
+   enum has `Right`/`Left` aliases). On runs on the vector (offset by the allowance only). An
+   allowance of exactly −r also puts the cut on the vector; the profile side still decides the
+   direction of cut and which side is the part (T-0127; before, Inside turned into Outside there).
 5. **Exact offsets first.** Each vector is offset by r + allowance with
    `geometry::offsetOpenContour` (the public API as on main; closed contours are accepted), so
    lines and arcs stay exact: an inside profile of an r = 10 circle with a 6 mm tool is one
@@ -157,18 +159,47 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     it counts too), on the waste side every cell; every open tool position cuts the cells within
     its radius plus 1.5 cells; the tab holds when uncut cells join the material next to the vector
     to the waste beyond the kerf (or when there is no such waste near it at all: a hole smaller
-    than the kerf). On the vector (side On, decided by the profile side: `Cut::distance` is
-    |allowance| there) the left of travel plays the vector side and must itself reach the waste
-    beyond the kerf. **On guard (conservative, pending card T-0127):** On the vector a tab is
-    kept only if, in addition, on every pass the tool positions within two tool radii (plus the 3D
-    ramp) outside the two ends of each of its raised stretches stay at least
-    2r + 2·|allowance| + max(0.25 mm, 0.05·D) apart; otherwise it is dropped and reported as cut
-    through. So On tabs on sharp turns of the cut are conservatively dropped; T-0127 is to judge
-    them properly. So a short tab centred on a sharp turn of the cut — a
-    convex corner or spike tip, an inside corner (Inside of a square), a gear root, the tip of a
-    narrow arm — where the tool at the two ends of the raised stretch seals the tab's material off
-    from the waste, is dropped and reported; so
-    is one left hanging on the part by a sliver (verify rounds 2 and 3). The check runs as a
+    than the kerf). This distance rule serves Inside/Outside with allowance ≥ 0, where the kerf
+    lies wholly on the waste side of the vector. **Sides of the cut (T-0127).** On the vector, and
+    for Inside/Outside with a negative allowance (the kerf then crosses the vector, so the distance
+    to the vectors no longer tells the part from the waste), a tab is judged by the sides of its own
+    cut path instead, decided by the profile side and the allowance (never by `Cut::distance`). The
+    cross-sections run across the whole kerf: a tool radius to each side of the cut, plus the
+    last-pass allowance on the side where the roughing cut runs (away from the vector, but towards
+    it On with a negative allowance, where the finishing cut runs left of the vector). The raster
+    gives each cell the side of its nearest point on the cut, exact on lines and arcs; where that
+    point is a junction of two spans, the side both spans agree on, or else (the cell lies in the
+    junction's normal cone) the outer side of the turn, so the material across a corner of the cut
+    is classified right. The part is every cell on the vector side (On: the left of travel) beyond
+    the kerf there, the waste every cell on the other side beyond the kerf there. In between, only
+    cells whose nearest cut point lies on the raised stretch of this tab or of another live tab of
+    the same cut may carry material, and the cut may only be crossed (from a cell on one side to a
+    neighbour on the other) where both lie on this tab's own stretch: so tabs may hold a part
+    together (two tabs on the two edges of an arm narrower than two kerfs), but a tab never
+    borrows another tab's bridge. The rest of the kerf band counts as cut, and so do the cells
+    beyond an open end of the cut (left and right meet there). The tools cut with their radius at
+    the tab's layer, just below its top, where they cut widest (a V-bit's cone there: tab thickness
+    × tan(half angle), at most the radius at the bottom), and the kerf is that wide. The quick
+    answer must reach beyond the kerf on both sides, by the same classification (counting the other
+    tabs' stretches as cut). When the tools (at that radius + 1 µm) leave no part or no waste
+    beyond the kerf near the tab (a loop or arm narrower than the kerf) it holds; any remnant they
+    leave counts as part, so a tab that does not hold it is dropped. When what they leave is thinner
+    than the raster's 1.5-cell widening of the tools (a part barely wider than two kerfs, a 0.14 mm
+    sliver; or a 0.18 mm strip of part between two kerfs joining the part to the tab), so that the
+    exact cut would join the part to the waste but the widened one does not, the raster is refined,
+    halving the cells (big tools start at a fortieth of the radius) down to 0.035 mm, where the
+    widening is still ≥ 0.05 mm. There a remnant thinner than the widening counts as nothing to
+    hold, a neck that thin (under about 0.1 mm) as cut through, and so does anything the
+    refinement cannot reach within 4 million cells. So a short tab centred on a sharp turn of the cut — a convex
+    corner or spike tip, an inside corner (Inside of a square), a gear root, the tip of a narrow
+    arm — where the tool at the two ends of the raised stretch seals the tab's material off from
+    the waste, is dropped and reported (On a 30 × 30 square with a 6 mm tool, corner tabs shorter
+    than 3 mm: the ends stand (L/2 + r)·√2 apart, and the raster's 1.5-cell margin asks for a neck
+    of about 0.1 mm), and so is one left hanging on the part by a sliver (verify rounds 2 and 3);
+    tabs that hold — short tabs on straight edges, longer tabs on corners — are kept, for every
+    allowance ≥ −r. (T-0124 merged with a conservative On guard that dropped every On tab whose
+    raised-stretch ends came within 2r + 2|allowance| + max(0.25, 0.05·D) of each other; T-0127
+    replaced it with this rule.) The check runs as a
     worklist: when a tab is dropped, only the tabs whose material lies within reach of the cut it
     protected are checked again (a separate last pass with tabs on 500 close vectors costs about
     1.3 × the time without tabs). Together: no pass cuts below the tab top into any cross-section

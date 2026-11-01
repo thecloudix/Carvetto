@@ -15,6 +15,7 @@
 #include <variant>
 #include <vector>
 
+#include "carvetto/geometry/box2.hpp"
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/geometry/span.hpp"
 #include "carvetto/tooling/tool.hpp"
@@ -596,6 +597,68 @@ inline TabJoin tabJoins(const toolpath::Toolpath& tp, const std::vector<geometry
         }
     }
     return out;
+}
+
+/// Window flood at the tab-top layer, independent of the planner (T-0127): cells of `res` mm in
+/// `box` are cut when a cutting sample of `tp` below `zTab` (every 0.1 mm: the discs' union misses
+/// at most 0.1² / (8 r) of the swept area) comes within `r` − 1 µm of the cell centre; true when uncut cells join (4-neighbour) the cell of `part` to the cell
+/// of `waste`, i.e. the material at `part` is still held. Both points must lie inside `box`. With
+/// `tanHalf` > 0 (a V-bit) a sample at tip height z cuts min(r, (zTab − z)·tanHalf), its cone at
+/// the tab top.
+inline bool floodHeld(const toolpath::Toolpath& tp, geometry::Box2 box, double zTab, double r, geometry::Vec2 part,
+                      geometry::Vec2 waste, double res = 0.04, double tanHalf = 0.0) {
+    const int nx = static_cast<int>(std::ceil(box.width() / res));
+    const int ny = static_cast<int>(std::ceil(box.height() / res));
+    auto at = [&](int i, int j) { return static_cast<std::size_t>(j) * static_cast<std::size_t>(nx) + static_cast<std::size_t>(i); };
+    std::vector<char> cut(static_cast<std::size_t>(nx) * static_cast<std::size_t>(ny), 0);
+    sampleCuttingMoves3(
+        tp, 0.1,
+        [&](geometry::Vec2 c, double z) {
+            if (z >= zTab - 1e-6 || !box.inflated(r).contains(c)) return;
+            const double rad = (tanHalf > 0.0 ? std::min(r, (zTab - z) * tanHalf) : r) - 1e-3;
+            if (rad <= 0.0) return;
+            const int j0 = std::max(0, static_cast<int>(std::floor((c.y - rad - box.min.y) / res)));
+            const int j1 = std::min(ny - 1, static_cast<int>(std::ceil((c.y + rad - box.min.y) / res)));
+            for (int j = j0; j <= j1; ++j) {
+                const double dy = box.min.y + (j + 0.5) * res - c.y;
+                const double w2 = rad * rad - dy * dy;
+                if (w2 <= 0.0) continue;
+                const double w = std::sqrt(w2);
+                const int i0 = std::max(0, static_cast<int>(std::ceil((c.x - w - box.min.x) / res - 0.5)));
+                const int i1 = std::min(nx - 1, static_cast<int>(std::floor((c.x + w - box.min.x) / res - 0.5)));
+                for (int i = i0; i <= i1; ++i) cut[at(i, j)] = 1;
+            }
+        },
+        zTab - 1e-6);
+    auto cellOf = [&](geometry::Vec2 q) {
+        return at(std::clamp(static_cast<int>((q.x - box.min.x) / res), 0, nx - 1),
+                  std::clamp(static_cast<int>((q.y - box.min.y) / res), 0, ny - 1));
+    };
+    const std::size_t from = cellOf(part);
+    const std::size_t to = cellOf(waste);
+    if (cut[from] || cut[to]) return false;
+    std::vector<char> seen(cut.size(), 0);
+    std::vector<std::size_t> st{from};
+    seen[from] = 1;
+    while (!st.empty()) {
+        const std::size_t k = st.back();
+        st.pop_back();
+        if (k == to) return true;
+        const int i = static_cast<int>(k % static_cast<std::size_t>(nx));
+        const int j = static_cast<int>(k / static_cast<std::size_t>(nx));
+        const int di[4] = {1, -1, 0, 0};
+        const int dj[4] = {0, 0, 1, -1};
+        for (int e = 0; e < 4; ++e) {
+            const int ii = i + di[e];
+            const int jj = j + dj[e];
+            if (ii < 0 || jj < 0 || ii >= nx || jj >= ny) continue;
+            const std::size_t kk = at(ii, jj);
+            if (seen[kk] || cut[kk]) continue;
+            seen[kk] = 1;
+            st.push_back(kk);
+        }
+    }
+    return false;
 }
 
 }  // namespace carvetto::test

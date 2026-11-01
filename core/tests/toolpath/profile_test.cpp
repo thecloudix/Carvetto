@@ -1899,3 +1899,334 @@ TEST_CASE("On the vector: verifier sweep scenes keep no severed tab", "[toolpath
         checkTabsJoin(r, cs, p, d);
     }
 }
+
+// ------------------------------------------------------- T-0127: exact tab check On the vector
+
+namespace {
+
+/// Parameters of the T-0127 square repros: 30 x 30 square, cut depth 6 in two passes, 4 tabs of
+/// thickness 1.5 starting at `anchor` (bottom centre: one tab centred on each corner).
+ProfileParams squareTabParams(ProfileSide side, double allowance, bool separate, double length, BoxAnchor anchor) {
+    ProfileParams p = baseParams(6.0, 3.0);
+    p.side = side;
+    p.allowance = allowance;
+    p.separateLastPass = separate;
+    p.lastPassAllowance = 0.3;
+    p.tabs.enabled = true;
+    p.tabs.count = 4;
+    p.tabs.length = length;
+    p.tabs.thickness = 1.5;
+    p.startAt = StartAt::ClosestOnBoundingBox;
+    p.startAnchor = anchor;
+    return p;
+}
+
+/// Tabs kept on the last cut (raised runs at the tab top on its final level).
+std::size_t keptOnLastCut(const ProfileResult& r, const ProfileParams& p) {
+    const auto cuts = cutRanges(r.toolpath);
+    return test::raisedRuns(r.toolpath, cuts.back().first, cuts.back().second, p.passes.bottomZ() + p.tabs.thickness).size();
+}
+
+}  // namespace
+
+TEST_CASE("On the vector: a tab centred on a corner is kept exactly when it holds", "[toolpath][profile][tabs]") {
+    // T-0127 AC1/AC2 (repro on_corner): the T-0124 guard dropped every short On tab on a sharp
+    // turn. The tool at the two ends of the raised stretch (L/2 + r along each edge from the
+    // corner) stands (L/2 + r)·√2 apart, so with r = 3 the tab is cut through for L < 2.49 and
+    // holds above (with a neck of at least ~0.1 mm from L = 3). Every kept tab is checked with an
+    // independent flood across the corner; L >= 3 must be kept for every allowance and pass mode.
+    const std::vector<Contour> cs{Contour::rectangle(Box2{{0, 0}, {30, 30}})};
+    for (const double allowance : {-0.3, 0.0, 0.3}) {
+        for (const bool separate : {false, true}) {
+            for (const double length : {1.0, 2.0, 3.0, 4.0}) {
+                const ProfileParams p = squareTabParams(ProfileSide::On, allowance, separate, length, BoxAnchor::BottomCentre);
+                const ProfileResult r = profileToolpath(cs, test::endMill(6.0), p);
+                REQUIRE(r.ok());
+                INFO("allowance " << allowance << ", separate " << separate << ", tab length " << length);
+                const std::size_t kept = keptOnLastCut(r, p);
+                CHECK(kept + tabsLeftOut(r) == 4);
+                const double zTab = p.passes.bottomZ() + p.tabs.thickness;
+                const bool held = test::floodHeld(r.toolpath, Box2{{-8, -8}, {8, 8}}, zTab, 3.0, {5, 5}, {-5, -5});
+                CHECK(held == (kept == 4));
+                if (length >= 3.0) {
+                    CHECK(kept == 4);
+                } else {
+                    CHECK(kept == 0);
+                }
+            }
+        }
+    }
+}
+
+TEST_CASE("On the vector: short tabs on straight edges are kept and hold", "[toolpath][profile][tabs]") {
+    // T-0127 AC6 (driver straight.cpp): the T-0124 guard dropped every On tab shorter than
+    // 2|allowance| + max(0.25, 0.05 D), e.g. D 12, L 1, allowance ±0.3, on a straight edge. Two
+    // tabs on the 100 x 60 rectangle land at x = 80 on the bottom edge and x = 20 on the top edge.
+    const std::vector<Contour> cs{Contour::rectangle(Box2{{0, 0}, {100, 60}})};
+    for (const double d : {6.0, 12.0}) {
+        for (const double allowance : {-0.3, 0.0, 0.3}) {
+            for (const bool threeD : {false, true}) {
+                ProfileParams p = baseParams(8.0, 3.0);
+                p.side = ProfileSide::On;
+                p.allowance = allowance;
+                p.tabs.enabled = true;
+                p.tabs.count = 2;
+                p.tabs.length = 1.0;
+                p.tabs.thickness = 1.5;
+                p.tabs.threeD = threeD;
+                p.startAt = StartAt::ClosestOnBoundingBox;
+                p.startAnchor = BoxAnchor::BottomLeft;
+                const ProfileResult r = profileToolpath(cs, test::endMill(d), p);
+                REQUIRE(r.ok());
+                INFO("D " << d << ", allowance " << allowance << ", 3D " << threeD);
+                CHECK(keptOnLastCut(r, p) == 2);
+                CHECK(tabsLeftOut(r) == 0);
+                const double zTab = p.passes.bottomZ() + p.tabs.thickness;
+                const double h = 0.5 + d / 2 + 1.5;  // a window just past the raised stretch
+                const double off = d / 2 + 0.3 + 1.2;
+                for (const Vec2 m : {Vec2{80, 0}, Vec2{20, 60}}) {
+                    INFO("tab at " << m.x << ", " << m.y);
+                    CHECK(test::floodHeld(r.toolpath, Box2{{m.x - h, m.y - h}, {m.x + h, m.y + h}}, zTab, d / 2,
+                                          {m.x, m.y + off}, {m.x, m.y - off}));
+                }
+            }
+        }
+    }
+}
+
+TEST_CASE("Negative allowance: a tab is kept only if the real cut leaves it joined", "[toolpath][profile][tabs]") {
+    // T-0127 AC5 (verifier t0124v5, neg2_s0_da*.scn): Outside/Inside of a 30 x 30 square with a
+    // 6 mm end mill and an allowance between -r and about -r + 0.5 put the tool centre right by the
+    // vector; the tab check measured the material from the vector (no longer the kerf wall) and kept
+    // short corner tabs that the tool cut through, with no diagnostic. Tabs centred on the corners
+    // (bottom-centre start) are checked at the corner (0, 0), mid-edge tabs (bottom-left start) on
+    // the bottom edge, each with an independent flood from the part to the waste.
+    const std::vector<Contour> cs{Contour::rectangle(Box2{{0, 0}, {30, 30}})};
+    for (const ProfileSide side : {ProfileSide::Outside, ProfileSide::Inside}) {
+        const double in = side == ProfileSide::Outside ? 1.0 : -1.0;  // towards the part
+        for (const double allowance : {-3.0, -2.99, -2.9, -2.5, -2.0, -1.0, -0.2}) {
+            for (const bool separate : {false, true}) {
+                INFO("side " << static_cast<int>(side) << ", allowance " << allowance << ", separate " << separate);
+                {
+                    const ProfileParams p = squareTabParams(side, allowance, separate, 1.0, BoxAnchor::BottomCentre);
+                    const ProfileResult r = profileToolpath(cs, test::endMill(6.0), p);
+                    REQUIRE(r.ok());
+                    const std::size_t kept = keptOnLastCut(r, p);
+                    CHECK(kept + tabsLeftOut(r) == 4);
+                    const double zTab = p.passes.bottomZ() + p.tabs.thickness;
+                    const Vec2 part = side == ProfileSide::Outside ? Vec2{6.5, 6.5} : Vec2{-6.5, -6.5};
+                    const Vec2 waste = side == ProfileSide::Outside ? Vec2{-6.5, -6.5} : Vec2{6.5, 6.5};
+                    const bool held = test::floodHeld(r.toolpath, Box2{{-9.5, -9.5}, {9.5, 9.5}}, zTab, 3.0, part, waste);
+                    CHECK(held == (kept == 4));
+                }
+                {
+                    ProfileParams p = squareTabParams(side, allowance, separate, 4.0, BoxAnchor::BottomLeft);
+                    const ProfileResult r = profileToolpath(cs, test::endMill(6.0), p);
+                    REQUIRE(r.ok());
+                    CHECK(keptOnLastCut(r, p) == 4);  // mid-edge tabs hold
+                    CHECK(tabsLeftOut(r) == 0);
+                    const double zTab = p.passes.bottomZ() + p.tabs.thickness;
+                    // The tab on the bottom edge (centre x = 15); window just past its raised stretch.
+                    CHECK(test::floodHeld(r.toolpath, Box2{{15 - 6.5, -9}, {15 + 6.5, 9}}, zTab, 3.0, {15, 7.5 * in},
+                                          {15, -7.5 * in}));
+                }
+            }
+        }
+    }
+}
+
+TEST_CASE("Allowance of exactly minus the radius keeps the profile side", "[toolpath][profile][tabs]") {
+    // T-0127 AC5 (driver negallow.cpp): with r + allowance = 0 the cut runs on the vector and the
+    // sign of the (zero) offset decided the side, so Inside turned into Outside there: the
+    // direction of cut and the part side of the tabs flipped against an allowance 1e-9 larger.
+    const std::vector<Contour> cs{Contour::rectangle(Box2{{0, 0}, {30, 30}}), Contour::circle({60, 15}, 10)};
+    for (const ProfileSide side : {ProfileSide::Outside, ProfileSide::Inside}) {
+        for (const double d : {3.175, 6.0}) {
+            for (const bool separate : {false, true}) {
+                INFO("side " << static_cast<int>(side) << ", D " << d << ", separate " << separate);
+                ProfileParams p = squareTabParams(side, -d / 2, separate, 5.0, BoxAnchor::BottomCentre);
+                const ProfileResult exact = profileToolpath(cs, test::endMill(d), p);
+                p.allowance = -d / 2 + 1e-9;
+                const ProfileResult above = profileToolpath(cs, test::endMill(d), p);
+                REQUIRE(exact.ok());
+                REQUIRE(exact.toolpath.moves.size() == above.toolpath.moves.size());
+                CHECK(exact.diagnostics.size() == above.diagnostics.size());
+                double worst = 0.0;
+                for (std::size_t i = 0; i < exact.toolpath.moves.size(); ++i) {
+                    const Move& a = exact.toolpath.moves[i];
+                    const Move& b = above.toolpath.moves[i];
+                    CHECK(a.kind == b.kind);
+                    worst = std::max({worst, std::fabs(a.to.x - b.to.x), std::fabs(a.to.y - b.to.y), std::fabs(a.to.z - b.to.z)});
+                }
+                CHECK(worst < 1e-6);
+            }
+        }
+    }
+}
+
+TEST_CASE("Generative: every kept On tab joins both sides, allowance - 0 +", "[toolpath][profile][tabs][property]") {
+    // T-0127 AC1/AC2: short tabs On the vector of shapes with sharp convex and concave turns
+    // (stars, notched rectangles, circles), allowances on both sides of the vector, with and
+    // without a separate last pass; every kept tab is checked with the rasterised oracle and the
+    // counts must add up.
+    test::SplitMix rng{0x7127ULL};
+    int tabs = 0;
+    for (int s = 0; s < 24; ++s) {
+        Contour c;
+        const int kind = static_cast<int>(rng.next() % 3);
+        if (kind == 0) {
+            const int n = 3 + static_cast<int>(rng.next() % 4);
+            const double ro = rng.uniform(15, 30);
+            const double ri = ro * rng.uniform(0.35, 0.7);
+            std::vector<Vec2> pts;
+            for (int k = 0; k < 2 * n; ++k) {
+                const double a = geometry::kPi * k / n;
+                const double rr = k % 2 == 0 ? ro : ri;
+                pts.push_back({rr * std::cos(a), rr * std::sin(a)});
+            }
+            c.closed = true;
+            for (std::size_t k = 0; k < pts.size(); ++k) c.append(LineSpan{pts[k], pts[(k + 1) % pts.size()]});
+        } else if (kind == 1) {
+            const double w = rng.uniform(30, 60);
+            const double hgt = rng.uniform(20, 40);
+            const double nw = rng.uniform(4, 10);
+            const double nd = rng.uniform(4, 10);
+            const std::vector<Vec2> pts{{0, 0}, {0.5 * (w - nw), 0}, {0.5 * (w - nw), nd}, {0.5 * (w + nw), nd},
+                                        {0.5 * (w + nw), 0}, {w, 0}, {w, hgt}, {0, hgt}};
+            c.closed = true;
+            for (std::size_t k = 0; k < pts.size(); ++k) c.append(LineSpan{pts[k], pts[(k + 1) % pts.size()]});
+        } else {
+            c = Contour::circle({0, 0}, rng.uniform(6, 25));
+        }
+        const std::vector<Contour> cs{c};
+        const double d = std::vector<double>{3.175, 6.0, 8.0}[rng.next() % 3];
+        ProfileParams p = baseParams(rng.uniform(3, 10), rng.uniform(1.5, 5));
+        p.side = ProfileSide::On;
+        p.direction = rng.uniform(0, 1) < 0.5 ? CutDirection::Climb : CutDirection::Conventional;
+        p.allowance = rng.uniform(-0.5, 0.5);
+        p.separateLastPass = rng.uniform(0, 1) < 0.5;
+        p.lastPassAllowance = rng.uniform(0.05, 0.6);
+        p.lastPassReverse = rng.uniform(0, 1) < 0.5;
+        p.tabs.enabled = true;
+        p.tabs.count = 2 + static_cast<int>(rng.next() % 7);
+        p.tabs.length = rng.uniform(0.3, 4.0);
+        p.tabs.thickness = rng.uniform(0.5, std::min(3.0, p.passes.cutDepth - 0.2));
+        p.tabs.threeD = rng.uniform(0, 1) < 0.3;
+        p.startAt = StartAt::ClosestOnBoundingBox;
+        p.startAnchor = static_cast<BoxAnchor>(rng.next() % 9);
+        const ProfileResult r = profileToolpath(cs, test::endMill(d), p);
+        if (!r.ok() || r.toolpath.isEmpty()) continue;
+        INFO("scene " << s);
+        // Raised runs of the last cut on every level below the tab top (one level with a separate
+        // last pass).
+        const double zTab = p.passes.bottomZ() + p.tabs.thickness;
+        const auto levels = p.passes.levels();
+        const auto below = p.separateLastPass ? std::size_t{1}
+                                              : static_cast<std::size_t>(std::count_if(levels.begin(), levels.end(),
+                                                                                       [&](double z) { return z < zTab - 1e-9; }));
+        const std::size_t runs = keptOnLastCut(r, p);
+        CHECK(runs % below == 0);
+        CHECK(runs / below + tabsLeftOut(r) == static_cast<std::size_t>(p.tabs.count));
+        tabs += checkTabsJoin(r, cs, p, d);
+    }
+    CHECK(tabs > 30);
+}
+
+TEST_CASE("On the vector: a tab on a loop barely wider than the kerf holds the remnant or is reported",
+          "[toolpath][profile][tabs]") {
+    // T-0127 sweep scene n4_A_86651 #6: a circle of radius 4.1 cut On with an 8 mm tool leaves a
+    // remnant 0.1 mm across at the centre. Judging the part only 0.2 mm (or a raster cell) beyond
+    // the kerf took it for "nothing to hold", and the tab was kept although the remnant came free.
+    // A remnant the tools leave counts (one thinner than the raster's finest widening, about
+    // 0.15 mm across for this tool, counts as nothing): every kept tab must hold it (independent
+    // flood from the centre to the waste), the rest are reported.
+    for (const double radius : {4.1, 4.2, 4.5, 5.0, 6.0}) {
+        for (const double length : {0.336, 2.0}) {
+            for (const int count : {1, 2}) {
+                ProfileParams p = baseParams(6.0, 3.0);
+                p.side = ProfileSide::On;
+                p.tabs.enabled = true;
+                p.tabs.count = count;
+                p.tabs.length = length;
+                p.tabs.thickness = 1.2;
+                const std::vector<Contour> cs{Contour::circle({0, 0}, radius)};
+                const ProfileResult r = profileToolpath(cs, test::endMill(8.0), p);
+                REQUIRE(r.ok());
+                INFO("radius " << radius << ", tab length " << length << ", tabs " << count);
+                const std::size_t kept = keptOnLastCut(r, p);
+                CHECK(kept + tabsLeftOut(r) == static_cast<std::size_t>(count));
+                if (kept > 0) {
+                    const double zTab = p.passes.bottomZ() + p.tabs.thickness;
+                    const double w = radius + 7.0;
+                    CHECK(test::floodHeld(r.toolpath, Box2{{-w, -w}, {w, w}}, zTab, 4.0, {0, 0}, {-w + 0.5, -w + 0.5},
+                                          0.01));
+                }
+            }
+        }
+    }
+}
+
+TEST_CASE("On the vector: tabs holding a sliver or holding a part together are kept", "[toolpath][profile][tabs]") {
+    // T-0127 sweep scenes where a first version of the exact rule dropped tabs that main kept and
+    // that hold the part (independent whole-scene flood from the deepest point of the part):
+    // n4_D_86682 #29, a 102 x 8.09 rectangle cut On with an 8 mm tool, which leaves a 0.14 mm
+    // sliver (thinner than the raster's widening of the tools: refined), and g2_E_88693 #29, a
+    // six-point star cut On with a 60 degree V-bit whose two long tabs on the two edges of an arm
+    // only hold the part together (and the cone cuts only thickness x tan 30 at the tab top).
+    struct Case {
+        const char* name;
+        const char* text;
+        Vec2 part;
+        Box2 window;
+        double res;
+    };
+    const std::vector<Case> cases{
+        {"n4_D_86682_29",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.98c976311a084p+6 0x0p+0\n"
+         "L 0x1.98c976311a084p+6 0x0p+0 0x1.98c976311a084p+6 0x1.02e54af273d0fp+3\n"
+         "L 0x1.98c976311a084p+6 0x1.02e54af273d0fp+3 0x0p+0 0x1.02e54af273d0fp+3\n"
+         "L 0x0p+0 0x1.02e54af273d0fp+3 0x0p+0 0x0p+0\n"
+         "P 0x1p+3 0 0x1.8ae13288ebc91p-6 2 0 0x0p+0 0x1.7611033238057p+1 0x1.ebd62fb50d326p+2 0x0p+0 0x1.4p+2 1 0x1.2aa284b4d03bcp-2 0 1 0x1.39e825ef3549bp+0 0x1.7365c351900edp+0 0 3 0x1.c0ac4057d41eap+3 0x0p+0 1 0 0x0p+0 1 0x1.4d331145e1388p+0 1 0 0x1.e37fbc94cbef6p-4 0x1.f16b332963d92p+1 0x1.eca15ed8ff545p-2 0x1.65cc627f8fe82p+3 2 0x1.15fecbbc85c01p+0 1 0 0x0p+0 0x0p+0 2 5 0 0 0 1 0x1.7cd829df700a4p+5 -0x1.4a3b0bb7baaf2p+5 0x1p+1\n"
+         "K 0 0\n",
+         {51.0, 4.045}, Box2{{-16, -16}, {118.2, 24.1}}, 0.02},
+        {"g2_E_88693_29",
+         "C 1\n"
+         "L 0x1.9d584f7f43213p+4 0x0p+0 0x1.253065edb4a99p+3 0x1.5efd996028e68p+2\n"
+         "L 0x1.253065edb4a99p+3 0x1.5efd996028e68p+2 0x1.e13c7222173cep+3 0x1.a0c340727ec4p+4\n"
+         "L 0x1.e13c7222173cep+3 0x1.a0c340727ec4p+4 0x1.f8acc2c9b7735p-3 0x1.b34141574b9f6p+2\n"
+         "L 0x1.f8acc2c9b7735p-3 0x1.b34141574b9f6p+2 -0x1.d2f4f981a2accp+3 0x1.94658554e25edp+4\n"
+         "L -0x1.d2f4f981a2accp+3 0x1.94658554e25edp+4 -0x1.779747d2c298ap+2 0x1.b842869113418p+1\n"
+         "L -0x1.779747d2c298ap+2 0x1.b842869113418p+1 -0x1.b96e50b2a443ap+4 0x1.e6ed2c2a4cee7p-49\n"
+         "L -0x1.b96e50b2a443ap+4 0x1.e6ed2c2a4cee7p-49 -0x1.9269b23f7e363p+2 -0x1.e662e40d4b917p+1\n"
+         "L -0x1.9269b23f7e363p+2 -0x1.e662e40d4b917p+1 -0x1.f99dc56740d1bp+3 -0x1.b5e065e2858f1p+4\n"
+         "L -0x1.f99dc56740d1bp+3 -0x1.b5e065e2858f1p+4 0x1.49dc71912c087p-2 -0x1.b4a6444e69392p+2\n"
+         "L 0x1.49dc71912c087p-2 -0x1.b4a6444e69392p+2 0x1.a93cad9baa389p+3 -0x1.70441cdda0258p+4\n"
+         "L 0x1.a93cad9baa389p+3 -0x1.70441cdda0258p+4 0x1.bce23dd0efcc2p+2 -0x1.1cba77b1a2416p+2\n"
+         "L 0x1.bce23dd0efcc2p+2 -0x1.1cba77b1a2416p+2 0x1.9d584f7f43213p+4 0x0p+0\n"
+         "P 0x1.8p+3 60 0x0p+0 2 0 0x1.e95574e5e3aa7p+0 0x1.1f7af4c40c9b1p+2 0x1.f8086afbab977p-2 0x0p+0 0x1.4p+2 0 0x1.74fb50902b036p-4 1 1 0x1.b4679d3c5fd5ep+3 0x1.e87c6cc9d2c7ap+1 0 8 0x1.eead93369f1bep+4 0x0p+0 1 0 0x0p+0 3 0x1.287d12f9a2ecp+4 0 1 0x1.c059d20304292p-3 0x1.56ecd6889086ap+2 0x1.2d56875a65c14p-3 0x1.7a4f3619eda9p+2 2 0x1.126ca7aedcb93p-1 1 0 0x0p+0 0x0p+0 2 1 0 1 0 0 0x1.c2a25a88bf77p+1 0x1.6a00498a2bff6p+5 0x1p+1\n"
+         "K 0 1\n",
+         {1.6106, -0.0173}, Box2{{-47.6, -47.4}, {45.9, 46.1}}, 0.04},
+    };
+    for (const Case& k : cases) {
+        std::vector<Contour> cs;
+        ProfileParams p;
+        int vbitDeg = 0;
+        const double d = readScene(k.text, cs, p, vbitDeg);
+        tooling::Tool tool = test::endMill(d);
+        double tanHalf = 0.0;
+        if (vbitDeg > 0) {
+            tool.type = tooling::ToolType::VBit;
+            tool.includedAngle = vbitDeg * geometry::kPi / 180.0;
+            tanHalf = std::tan(0.5 * tool.includedAngle);
+        }
+        INFO("scene " << k.name);
+        const ProfileResult r = profileToolpath(cs, tool, p);
+        REQUIRE(r.ok());
+        const std::size_t kept = keptOnLastCut(r, p);
+        CHECK(kept >= 2);
+        const double zTab = p.passes.bottomZ() + std::min(p.tabs.thickness, p.passes.cutDepth);
+        const double rad = 0.5 * tooling::cuttingWidthAtDepth(tool, p.passes.startDepth + p.passes.cutDepth);
+        CHECK(test::floodHeld(r.toolpath, k.window, zTab, rad, k.part, k.window.min + Vec2{0.5, 0.5}, k.res, tanHalf));
+    }
+}
