@@ -1,0 +1,8 @@
+scene 19 fam 6 side 0 D 12.000 V 0 allow 0.377 sep 0 lpa 0.045 rev 1 n 8 sp 0 len 2.593 th 5.524 3d 0 avoid 1 ramp 1 lead 2 out 1 oc 0.00 start 2 depth 6.10/1.24: [COUNT kept 7 + left 0 != requested 8 (diag M sum 0)]
+scene 64 fam 6 side 1 D 3.175 V 0 allow 0.000 sep 0 lpa 0.534 rev 1 n 9 sp 0 len 0.450 th 19.206 3d 1 avoid 0 ramp 1 lead 2 out 0 oc 11.47 start 0 depth 16.70/3.73: [COUNT kept 2 + left 6 != requested 9 (diag M sum 9)]
+scene 78 fam 6 side 0 D 6.000 V 0 allow 0.430 sep 0 lpa 0.036 rev 1 n 3 sp 0 len 3.284 th 11.084 3d 0 avoid 0 ramp 1 lead 2 out 1 oc 0.00 start 2 depth 9.31/7.79: [THIN tab at (-3.430,9.072) plateau 9.284 neck 0.0589]
+scene 107 fam 6 side 1 D 2.000 V 0 allow 0.000 sep 0 lpa 0.505 rev 1 n 8 sp 0 len 0.712 th 2.976 3d 1 avoid 1 ramp 1 lead 2 out 1 oc 4.63 start 2 depth 15.67/2.23: [SEVERED tab at (2.825,37.923) plateau 2.712]
+scene 179 fam 6 side 1 D 8.000 V 0 allow 0.486 sep 0 lpa 0.331 rev 1 n 9 sp 0 len 1.439 th 1.392 3d 0 avoid 0 ramp 1 lead 2 out 1 oc 9.41 start 2 depth 3.20/0.44: [SEVERED tab at (20.116,25.973) plateau 9.439]
+scene 264 fam 6 side 1 D 12.000 V 0 allow 0.407 sep 0 lpa 0.085 rev 0 n 3 sp 0 len 3.213 th 5.575 3d 1 avoid 1 ramp 1 lead 2 out 1 oc 6.01 start 0 depth 17.46/4.94: [COUNT kept 2 + left 0 != requested 3 (diag M sum 0)]
+scene 270 fam 6 side 0 D 12.000 V 0 allow 0.000 sep 1 lpa 0.976 rev 1 n 6 sp 0 len 3.790 th 14.927 3d 0 avoid 1 ramp 3 lead 1 out 1 oc 14.66 start 2 depth 13.17/3.57: [SEVERED tab at (37.586,15.479) plateau 15.790]
+SUMMARY seed 41005 fam 6 sep -1 cell 0.040: scenes 300 det 0 gouge 0 clampBad 0 sepOrder 0 | tabs kept 1286 checked 1282 severed 3 thin(<0.1) 1 minNeck 0.0589 noSeed 0 noTarget 4 | requested 1433 left 144 countBad 3 | 133.6s

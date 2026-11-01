@@ -1,0 +1,26 @@
+REG[subTolEnd] tieGap(noisy) st=0 seed=0xf510002c gen=40 n=29 d=0.0551444547 Round side=0 mitre=1.577 chains b25 m27 | br[sub-tol span at open chain end ch 5 sp 0 len 2.49e-10] main[line junction not bitwise ch 0 j 2 gap 7.44e-15] miss other 0 (worst 0 at 0,0) loop 399 (w 1e-05 L 1.82) corner 0
+REG[selfX] axisCusp(noisy) st=0 seed=0xf510004a gen=46 n=7 d=0.723635516 Round side=1 mitre=2 chains b3 m3 | br[reversal ch 1 j 0 dot -1.000000] main[line junction not bitwise ch 0 j 1 gap 1.24e-16] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[selfX] axisCusp(noisy) st=0 seed=0xf510021d gen=46 n=7 d=0.410496387 Round side=1 mitre=2 chains b3 m3 | br[reversal ch 1 j 0 dot -1.000000] main[arc-arc gap ch 1 j 0 rel 2.53e-09] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[selfX] axisCusp(noisy) st=0 seed=0xf51002d7 gen=46 n=7 d=1.48832328 Round side=1 mitre=3.123 chains b3 m3 | br[reversal ch 1 j 0 dot -1.000000] main[line junction not bitwise ch 0 j 1 gap 4e-16] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[selfX] coCircGap(noisy) st=0 seed=0xf51002e5 gen=41 n=13 d=0.293440393 Round side=1 mitre=2 chains b11 m11 | br[reversal ch 6 j 1 dot -1.000000] main[line junction not bitwise ch 1 j 1 gap 3.55e-15] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[selfX] axisCusp(noisy) st=0 seed=0xf5100335 gen=46 n=7 d=0.882005263 Round side=1 mitre=2 chains b3 m3 | br[reversal ch 1 j 0 dot -1.000000] main[line junction not bitwise ch 0 j 1 gap 1.81e-15] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[selfX] coCircGap(noisy) st=0 seed=0xf51003d7 gen=41 n=5 d=0.0562488374 Round side=1 mitre=4.193 chains b2 m2 | br[reversal ch 1 j 0 dot -1.000000] main[reversal ch 1 j 0 dot -1.000000] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+GAPDV coCircGap(noisy) st=0 seed=0xf510040f gen=41 Round inGap 0 | br gaps 1 dv 0 (6.94e-10) rv 0 (1.05e-09) | main gaps 17 dv 0 (2.51e-13) rv 0 (1.98e-13) | reversal ch 0 j 1 dot -1.000000
+REG[selfX] axisCusp st=0 seed=0xf5100519 gen=46 n=7 d=0.700835647 Round side=1 mitre=2 chains b3 m3 | br[reversal ch 1 j 0 dot -1.000000] main[line junction not bitwise ch 0 j 1 gap 4.31e-16] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[selfX] coCircGap st=0 seed=0xf5100584 gen=41 n=5 d=0.0556370446 Round side=1 mitre=2 chains b2 m2 | br[reversal ch 0 j 0 dot -1.000000] main[arc-arc gap ch 0 j 0 rel 2.91e-08] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[selfX] axisCusp(noisy) st=0 seed=0xf510068d gen=46 n=7 d=0.672405277 Round side=1 mitre=1.553 chains b3 m3 | br[reversal ch 1 j 0 dot -1.000000] main[line junction not bitwise ch 0 j 1 gap 7.28e-14] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+GAPDV axisCusp(noisy) st=0 seed=0xf51007a0 gen=46 Round inGap 0 | br gaps 1 dv 0 (2e-15) rv 0 (1.11e-15) | main gaps 7 dv 0 (1.11e-15) rv 0 (1.11e-15) | arc-arc gap ch 1 j 0 rel 1.25e-10
+GAPDV axisCusp(noisy) st=0 seed=0xf5100965 gen=46 Round inGap 0 | br gaps 1 dv 0 (7.77e-16) rv 0 (5.83e-16) | main gaps 7 dv 0 (7.77e-16) rv 0 (5.83e-16) | arc-arc gap ch 1 j 0 rel 9.12e-10
+REG[selfX] coCircGap(noisy) st=0 seed=0xf5100a1f gen=41 n=13 d=0.203763383 Round side=1 mitre=2 chains b9 m9 | br[reversal ch 0 j 0 dot -1.000000] main[reversal ch 0 j 0 dot -1.000000] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[selfX] axisCusp st=0 seed=0xf5100aa1 gen=46 n=7 d=1.00668281 Round side=1 mitre=1.707 chains b3 m3 | br[reversal ch 1 j 0 dot -1.000000] main[line junction not bitwise ch 0 j 1 gap 9.55e-16] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[subTolEnd] tieGap(noisy) st=0 seed=0xf5100cb3 gen=40 n=37 d=0.0596159433 Round side=0 mitre=2 chains b34 m36 | br[sub-tol span at open chain end ch 19 sp 0 len 2.23e-08] main[line junction not bitwise ch 1 j 0 gap 2.83e-06] miss other 0 (worst 0 at 0,0) loop 1597 (w 2.83e-06 L 4.82) corner 0
+GAPDV axisCusp(noisy) st=0 seed=0xf5100e98 gen=46 Round inGap 0 | br gaps 1 dv 0 (6.66e-16) rv 0 (6.52e-16) | main gaps 6 dv 0 (6.66e-16) rv 0 (6.66e-16) | arc-arc gap ch 1 j 0 rel 1.13e-10
+REG[moreSplits] tinyLoops st=0 seed=0xf5100eef gen=44 n=213 d=0.00553226535 Round side=1 mitre=2 chains b6 m5 | br[] main[line junction not bitwise ch 0 j 1 gap 8.67e-19] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+fuzz4 fam=5 N=4000 ran 4000 seed0=0xf5100000: identical 715 differ 3285 REGRESSIONS 14 | branch totals: gaps 4 reversals 448 overlaps 62 shortBack 0 suspiciousTips 0 (exact 0; main in differing cases 18) coderBack 0 (exact 0) distViol 0 roundViol 0 dupChains 0 | worstUnder(noST) 2.29e-05 worstOver(noST) 4.82e-07 | splitJoints br 154 main 169 | cases with dropped main loops 44 (max width 9.22e-05, max len 9.92, max dist to branch 1.02), corner-only diffs 24 | cpu 2.8s
+  gen 40: 527 cases, 2 regressions
+  gen 41: 577 cases, 4 regressions
+  gen 42: 589 cases, 0 regressions
+  gen 43: 537 cases, 0 regressions
+  gen 44: 609 cases, 1 regressions
+  gen 45: 580 cases, 0 regressions
+  gen 46: 581 cases, 7 regressions

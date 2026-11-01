@@ -1,0 +1,2 @@
+scene 21 fam 1 side 1 D 2.000 V 0 allow 0.237 sep 0 lpa 0.363 rev 1 n 4 sp 0 len 19.758 th 5.459 3d 0 avoid 1 ramp 2 lead 2 out 1 oc 1.80 start 2 depth 6.67/0.91: [SEVERED tab at (12.627,-6.460) plateau 30.622] [COUNT kept 3 + left 2 != requested 4 (diag M sum 4)]
+SUMMARY seed 81731 fam 1 sep -1 cell 0.050: scenes 50 det 0 gouge 0 clampBad 0 sepOrder 0 | tabs kept 142 checked 142 severed 1 thin(<0.1) 0 minNeck 0.4102 noSeed 0 noTarget 0 | requested 229 left 88 countBad 1 | 72.8s

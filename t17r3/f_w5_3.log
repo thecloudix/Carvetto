@@ -1,0 +1,11 @@
+REG[wideLoopDropped] crossShort st=0 seed=0xf3000604 gen=21 n=655 d=0.211588306 Square side=0 mitre=2.894 chains b9 m10 | br[coverage miss at (-3511.00211,3568.29426) dist-to-output 0.0636] main[line junction not bitwise ch 1 j 0 gap 4.55e-13] miss other 0 (worst 0 at 0,0) loop 11 (w 0.000256 L 0.00662) corner 3
+REG[cov] coCircularNoisy(noisy) st=0 seed=0xf3000e64 gen=24 n=25 d=1.33439084 Square side=1 mitre=2 chains b8 m9 | br[coverage miss at (-1.78030157,-3.30664917) dist-to-output 1] main[arc-arc gap ch 0 j 0 rel 2.63e-05] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 798
+fuzz4 fam=3 N=4000 ran 4000 seed0=0xf3000000: identical 797 differ 3203 REGRESSIONS 2 | branch totals: gaps 1 reversals 78 overlaps 3 shortBack 0 suspiciousTips 1 (exact 0; main in differing cases 60) coderBack 4 (exact 0) distViol 2 roundViol 0 dupChains 0 | worstUnder(noST) 0.0241 worstOver(noST) 4.97e-07 | splitJoints br 351 main 448 | cases with dropped main loops 32 (max width 0.000256, max len 10.9, max dist to branch 1.02), corner-only diffs 35 | cpu 3.4s
+  gen 20: 513 cases, 0 regressions
+  gen 21: 502 cases, 1 regressions
+  gen 22: 474 cases, 0 regressions
+  gen 23: 474 cases, 0 regressions
+  gen 24: 497 cases, 1 regressions
+  gen 25: 490 cases, 0 regressions
+  gen 26: 523 cases, 0 regressions
+  gen 27: 527 cases, 0 regressions

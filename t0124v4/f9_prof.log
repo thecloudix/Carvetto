@@ -1,0 +1,899 @@
+  primary cut: Lloop 143.3169 closed 0 req 9 dist 85.602
+  run at (82.480,-2.678) repeats a tab (overcut) skipped
+  run s [11.6828, 23.9678]
+  run s [24.8916, 37.1766]
+  run s [51.3125, 63.5976]
+  run s [77.7301, 90.0151]
+  run s [104.1477, 116.4327]
+  run s [130.5653, 142.8550]
+     d -4.50 (80.966,-6.916) clr 5.0000 mv 18446744073709551615
+     d -4.40 (81.000,-6.822) clr 5.0000 mv 18446744073709551615
+     d -4.30 (81.034,-6.728) clr 5.0000 mv 18446744073709551615
+     d -4.20 (81.067,-6.634) clr 5.0000 mv 18446744073709551615
+     d -4.10 (81.101,-6.540) clr 5.0000 mv 18446744073709551615
+     d -4.00 (81.135,-6.445) clr 5.0000 mv 18446744073709551615
+     d -3.90 (81.168,-6.351) clr 5.0000 mv 18446744073709551615
+     d -3.80 (81.202,-6.257) clr 5.0000 mv 18446744073709551615
+     d -3.70 (81.236,-6.163) clr 5.0000 mv 18446744073709551615
+     d -3.60 (81.269,-6.069) clr 5.0000 mv 18446744073709551615
+     d -3.50 (81.303,-5.974) clr 5.0000 mv 18446744073709551615
+     d -3.40 (81.337,-5.880) clr 5.0000 mv 18446744073709551615
+     d -3.30 (81.370,-5.786) clr 5.0000 mv 18446744073709551615
+     d -3.20 (81.404,-5.692) clr 5.0000 mv 18446744073709551615
+     d -3.10 (81.437,-5.598) clr 5.0000 mv 18446744073709551615
+     d -3.00 (81.471,-5.504) clr 5.0000 mv 18446744073709551615
+     d -2.90 (81.505,-5.409) clr 5.0000 mv 18446744073709551615
+     d -2.80 (81.538,-5.315) clr 5.0000 mv 18446744073709551615
+     d -2.70 (81.572,-5.221) clr 5.0000 mv 18446744073709551615
+     d -2.60 (81.606,-5.127) clr 5.0000 mv 18446744073709551615
+     d -2.50 (81.639,-5.033) clr 5.0000 mv 18446744073709551615
+     d -2.40 (81.673,-4.939) clr 3.0316 mv 2971
+     d -2.30 (81.707,-4.844) clr 2.9792 mv 2971
+     d -2.20 (81.740,-4.750) clr 2.9278 mv 2971
+     d -2.10 (81.774,-4.656) clr 2.8776 mv 2971
+     d -2.00 (81.807,-4.562) clr 2.8284 mv 2971
+     d -1.90 (81.841,-4.468) clr 2.7804 mv 2971
+     d -1.80 (81.875,-4.374) clr 2.7335 mv 2971
+     d -1.70 (81.908,-4.279) clr 2.6877 mv 2971
+     d -1.60 (81.942,-4.185) clr 2.6432 mv 2971
+     d -1.50 (81.976,-4.091) clr 2.5998 mv 2971
+     d -1.40 (82.009,-3.997) clr 2.5577 mv 2971
+     d -1.30 (82.043,-3.903) clr 2.5169 mv 2971
+     d -1.20 (82.077,-3.809) clr 2.4774 mv 2971
+     d -1.10 (82.110,-3.714) clr 2.4391 mv 2971
+     d -1.00 (82.144,-3.620) clr 2.4022 mv 2971
+     d -0.90 (82.177,-3.526) clr 2.3667 mv 2971
+     d -0.80 (82.211,-3.432) clr 2.3325 mv 2971
+     d -0.70 (82.245,-3.338) clr 2.2998 mv 2971
+     d -0.60 (82.278,-3.243) clr 2.2684 mv 2971
+     d -0.50 (82.312,-3.149) clr 2.2385 mv 2971
+     d -0.40 (82.346,-3.055) clr 2.2101 mv 2971
+     d -0.30 (82.379,-2.961) clr 2.1832 mv 2971
+     d -0.20 (82.413,-2.867) clr 2.1577 mv 2971
+     d -0.10 (82.447,-2.773) clr 2.1338 mv 2971
+     d +0.00 (82.480,-2.678) clr 2.1114 mv 2971
+     d +0.10 (82.514,-2.584) clr 2.0906 mv 2971
+     d +0.20 (82.547,-2.490) clr 2.0714 mv 2971
+     d +0.30 (82.581,-2.396) clr 2.0538 mv 2971
+     d +0.40 (82.615,-2.302) clr 2.0377 mv 2971
+     d +0.50 (82.648,-2.208) clr 2.0233 mv 2971
+     d +0.60 (82.682,-2.113) clr 2.0105 mv 2971
+     d +0.70 (82.716,-2.019) clr 1.9994 mv 2971
+     d +0.80 (82.749,-1.925) clr 1.9899 mv 2971
+     d +0.90 (82.783,-1.831) clr 1.9820 mv 2971
+     d +1.00 (82.817,-1.737) clr 1.9759 mv 2971
+     d +1.10 (82.850,-1.643) clr 1.9714 mv 2971
+     d +1.20 (82.884,-1.548) clr 1.9685 mv 2971
+     d +1.30 (82.917,-1.454) clr 1.9674 mv 2971
+     d +1.40 (82.951,-1.360) clr 1.9679 mv 2971
+     d +1.50 (82.985,-1.266) clr 1.9701 mv 2971
+     d +1.60 (83.018,-1.172) clr 1.4733 mv 3178
+     d +1.70 (83.052,-1.077) clr 1.4590 mv 3178
+     d +1.80 (83.086,-0.983) clr 1.4466 mv 3178
+     d +1.90 (83.119,-0.889) clr 1.4359 mv 3178
+     d +2.00 (83.153,-0.795) clr 1.4271 mv 3178
+     d +2.10 (83.187,-0.701) clr 1.4201 mv 3178
+     d +2.20 (83.220,-0.607) clr 1.4150 mv 3178
+     d +2.30 (83.254,-0.512) clr 1.4117 mv 3178
+     d +2.40 (83.287,-0.418) clr 1.4102 mv 3178
+     d +2.50 (83.321,-0.324) clr 1.4106 mv 3178
+     d +2.60 (83.355,-0.230) clr 1.4128 mv 3178
+     d +2.70 (83.388,-0.136) clr 1.4169 mv 3178
+     d +2.80 (83.422,-0.042) clr 1.4228 mv 3178
+     d +2.90 (83.456,0.053) clr 1.4306 mv 3178
+     d +3.00 (83.489,0.147) clr 1.4402 mv 3178
+     d +3.10 (83.523,0.241) clr 1.4516 mv 3178
+     d +3.20 (83.557,0.335) clr 1.4648 mv 3178
+     d +3.30 (83.590,0.429) clr 1.4798 mv 3178
+     d +3.40 (83.624,0.523) clr 1.4966 mv 3178
+     d +3.50 (83.657,0.618) clr 1.5151 mv 3178
+     d +3.60 (83.691,0.712) clr 1.5354 mv 3178
+     d +3.70 (83.725,0.806) clr 1.5574 mv 3178
+     d +3.80 (83.758,0.900) clr 1.5812 mv 3178
+     d +3.90 (83.792,0.994) clr 1.6066 mv 3178
+     d +4.00 (83.826,1.088) clr 1.6336 mv 3178
+     d +4.10 (83.859,1.183) clr 1.6623 mv 3178
+     d +4.20 (83.893,1.277) clr 1.6927 mv 3178
+     d +4.30 (83.927,1.371) clr 1.7246 mv 3178
+     d +4.40 (83.960,1.465) clr 1.7580 mv 3178
+     cutter mv 2971: 1105 cells
+     cutter mv 2972: 14 cells
+     cutter mv 3178: 602 cells
+     cutter mv 3179: 7 cells
+     cutter mv 3181: 2 cells
+     cutter mv 3196: 520 cells
+     cutter mv 3404: 5 cells
+     |rrrrrrrrrrrrrrrrrrrrrrrxxrrrrrrrrnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrrrrrrrrrrrxxxxxxxxxxxxxxrrrnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrrrrrrrrxxxxxxxxxxxxxxxxxxxrrnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrrrrrrxxxxxxxxxxxxxxxxxxxxxxxrnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxPPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxPPPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx##.PPPPnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx####.PPPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx#####..PPPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx#######..PPPPPnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxx#########...PPPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnrrrrrrrrnnnnnnnnnnnnnnnnnn|
+     |rrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx#########....PPPPPnnnnnnnnnnnnnnnnnnnnnnnrrrrxxxxrrrrrrrrnnnnnnnnnnnnnn|
+     |rrxxxxxxxxxxxxxxxxxxxxxxxxxxxxx###########....PPPPPvnnnnnnnnnnnnnnnnnnnrxxxxxxxxxxxxxxrrrrrnnnnnnnnnnnn|
+     |rrxxxxxxxxxxxxxxxxxxxxxxxxxxxx############......PPPPPvnnnnnnnnnnnnnnnrxxxxxxxxxxxxxxxxxxxrrrrnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxxxxx##############.......PPPPPvnnnnnnnnnnnnxxxxxxxxxxxxxxxxxxxxxxxrrrrnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxxxx###############........PPPPPPvvnnnnnnnvPxxxxxxxxxxxxxxxxxxxxxxxxxrrrnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxxx################..........PPPPPPPPvvvPPPPPxxxxxxxxxxxxxxxxxxxxxxxxxrrrnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxxx#################............PPPPPPPPPPPP.xxxxxxxxxxxxxxxxxxxxxxxxxxrrrnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxx##################..............PPPPPPPP..##xxxxxxxxxxxxxxxxxxxxxxxxxxrrrnnnn|
+     |xxxxxxxxxxxxxxxxxxxxxxxxx###################.......................###xxxxxxxxxxxxxxxxxxxxxxxxxxxrrrnnn|
+     |xxxxxxxxxxxxxxxxxxxxxxxx####################.....................######xxxxxxxxxxxxxxxxxxxxxxxxxxxrrrnn|
+     |xxxxxxxxxxxxxxxxxxxxxxx#####################....................########xxxxxxxxxxxxxxxxxxxxxxxxxxxrrnn|
+     |xxxxxxxxxxxxxxxxxxxxxx######################....................########xxxxxxxxxxxxxxxxxxxxxxxxxxxrrrn|
+     |rxxxxxxxxxxxxxxxxxxxxx######################...................##########xxxxxxxxxxxxxxxxxxxxxxxxxxxrrn|
+     |rxxxxxxxxxxxxxxxxxxxx#######################..................###########xxxxxxxxxxxxxxxxxxxxxxxxxxxrrr|
+     |rxxxxxxxxxxxxxxxxxxx#######################...................############xxxxxxxxxxxxxxxxxxxxxxxxxxxrr|
+     |rxxxxxxxxxxxxxxxxxx########################..................##############xxxxxxxxxxxxxxxxxxxxxxxxxxrr|
+     |rxxxxxxxxxxxxxxxxx#########################..................##############xxxxxxxxxxxxxxxxxxxxxxxxxxxr|
+     |rrxxxxxxxxxxxxxxx#########################..................################xxxxxxxxxxxxxxxxxxxxxxxxxxr|
+     |rrxxxxxxxxxxxxxx##########################..................################xxxxxxxxxxxxxxxxxxxxxxxxxxr|
+     |rrxxxxxxxxxxxxxx#########################...................#################xxxxxxxxxxxxxxxxxxxxxxxxxr|
+     |rrrxxxxxxxxxxxx##########################...................#################xxxxxxxxxxxxxxxxxxxxxxxxxx|
+     |nrrxxxxxxxxxxx##########################...................###################xxxxxxxxxxxxxxxxxxxxxxxxx|
+     |nnrrxxxxxxxxx##########################....................####################xxxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnrxxxxxxx###########################....................####################xxxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnxxxxxx###########################.....................#####################xxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnxxxxW##########################......................#####################xxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnxxxWW.######################........................######################xxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnxWWWW.####################..........................######################xxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnwWWWWW.###############.............................######################xxxxxxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnWWWWW...#########................................#######################xxxxxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnnwWWWW...........................................#######################xxxxxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnnnwWWWW...........................................#######################xxxxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnnnnwWWWWW.........................................########################xxxxxxxxxxxxxxxxrr|
+     |nnnnnnnnnnnnnnnnWWWWW.........................................#######################xxxxxxxxxxxxxxxxrn|
+     |nnnnnnnnnnnnnnnnnwWWWWW.......................................########################xxxxxxxxxxxxxxrrn|
+     |nnnnnnnnnnnnnnnnnnwWWWWW.......................................#######################xxxxxxxxxxxxxxrnn|
+     |nnnnnnnnnnnnnnnnnnnnwWWWWW......................................#######################xxxxxxxxxxxxrnnn|
+     |nnnnnnnnnnnnnnnnnnnnnwWWWWW......................................#######################xxxxxxxxxxrrnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnwWWWWW.....................................######################xxxxxxxxxxrnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnwWWWWW.....................................######################xxxxxxxxrnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnwWWWWW....................................#####################xxxxxxxrnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWWWW....................................###################Wxxxxxnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWWWW....................................###############.WWWxxxnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWWWW.....................................########...WWWWWxnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWWWWW..........................................WWWWWWWwnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWWWWW......................................WWWWWWWwnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWWWWWWW...............................WWWWWWWWwnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWWWWWWW........................WWWWWWWWWwwnnnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwwWWWWWWWWWWWW.............WWWWWWWWWWWWwnnnnnnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwwWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWwnnnnnnnnnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwwWWWWWWWWWWWWWWWWWWWWWWWwwnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwwwwwWWWWWWWwwwwwnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+  tab (82.480,-2.678) plateau 12.285 joined 1 neck 1.1997 | plateau ends (77.3044,0.5713)-(88.3921,-2.2109) 11.4314 apart (2r 8.0000)
+     d -4.50 (66.937,17.627) clr 5.0000 mv 18446744073709551615
+     d -4.40 (66.855,17.569) clr 5.0000 mv 18446744073709551615
+     d -4.30 (66.774,17.511) clr 5.0000 mv 18446744073709551615
+     d -4.20 (66.693,17.452) clr 5.0000 mv 18446744073709551615
+     d -4.10 (66.612,17.394) clr 5.0000 mv 18446744073709551615
+     d -4.00 (66.531,17.335) clr 5.0000 mv 18446744073709551615
+     d -3.90 (66.449,17.277) clr 5.0000 mv 18446744073709551615
+     d -3.80 (66.368,17.219) clr 5.0000 mv 18446744073709551615
+     d -3.70 (66.287,17.160) clr 5.0000 mv 18446744073709551615
+     d -3.60 (66.206,17.102) clr 5.0000 mv 18446744073709551615
+     d -3.50 (66.125,17.044) clr 5.0000 mv 18446744073709551615
+     d -3.40 (66.043,16.985) clr 5.0000 mv 18446744073709551615
+     d -3.30 (65.962,16.927) clr 5.0000 mv 18446744073709551615
+     d -3.20 (65.881,16.869) clr 5.0000 mv 18446744073709551615
+     d -3.10 (65.800,16.810) clr 5.0000 mv 18446744073709551615
+     d -3.00 (65.719,16.752) clr 5.0000 mv 18446744073709551615
+     d -2.90 (65.637,16.693) clr 5.0000 mv 18446744073709551615
+     d -2.80 (65.556,16.635) clr 5.0000 mv 18446744073709551615
+     d -2.70 (65.475,16.577) clr 5.0000 mv 18446744073709551615
+     d -2.60 (65.394,16.518) clr 5.0000 mv 18446744073709551615
+     d -2.50 (65.313,16.460) clr 5.0000 mv 18446744073709551615
+     d -2.40 (65.231,16.402) clr 5.0000 mv 18446744073709551615
+     d -2.30 (65.150,16.343) clr 5.0000 mv 18446744073709551615
+     d -2.20 (65.069,16.285) clr 5.0000 mv 18446744073709551615
+     d -2.10 (64.988,16.227) clr 5.0000 mv 18446744073709551615
+     d -2.00 (64.907,16.168) clr 5.0000 mv 18446744073709551615
+     d -1.90 (64.825,16.110) clr 5.0000 mv 18446744073709551615
+     d -1.80 (64.744,16.051) clr 5.0000 mv 18446744073709551615
+     d -1.70 (64.663,15.993) clr 5.0000 mv 18446744073709551615
+     d -1.60 (64.582,15.935) clr 5.0000 mv 18446744073709551615
+     d -1.50 (64.501,15.876) clr 5.0000 mv 18446744073709551615
+     d -1.40 (64.419,15.818) clr 5.0000 mv 18446744073709551615
+     d -1.30 (64.338,15.760) clr 5.0000 mv 18446744073709551615
+     d -1.20 (64.257,15.701) clr 5.0000 mv 18446744073709551615
+     d -1.10 (64.176,15.643) clr 5.0000 mv 18446744073709551615
+     d -1.00 (64.095,15.584) clr 5.0000 mv 18446744073709551615
+     d -0.90 (64.013,15.526) clr 5.0000 mv 18446744073709551615
+     d -0.80 (63.932,15.468) clr 2.2596 mv 3511
+     d -0.70 (63.851,15.409) clr 2.2379 mv 3511
+     d -0.60 (63.770,15.351) clr 2.2177 mv 3511
+     d -0.50 (63.689,15.293) clr 2.1991 mv 3511
+     d -0.40 (63.607,15.234) clr 2.1821 mv 3511
+     d -0.30 (63.526,15.176) clr 2.1666 mv 3511
+     d -0.20 (63.445,15.118) clr 2.1527 mv 3511
+     d -0.10 (63.364,15.059) clr 2.1404 mv 3511
+     d +0.00 (63.283,15.001) clr 2.1298 mv 3511
+     d +0.10 (63.201,14.942) clr 2.0951 mv 3462
+     d +0.20 (63.120,14.884) clr 2.0972 mv 3462
+     d +0.30 (63.039,14.826) clr 2.1009 mv 3462
+     d +0.40 (62.958,14.767) clr 2.1033 mv 3511
+     d +0.50 (62.876,14.709) clr 2.1007 mv 3511
+     d +0.60 (62.795,14.651) clr 2.0998 mv 3511
+     d +0.70 (62.714,14.592) clr 2.1006 mv 3511
+     d +0.80 (62.633,14.534) clr 2.1029 mv 3511
+     d +0.90 (62.552,14.476) clr 2.1070 mv 3511
+     d +1.00 (62.470,14.417) clr 2.1126 mv 3511
+     d +1.10 (62.389,14.359) clr 2.1199 mv 3511
+     d +1.20 (62.308,14.300) clr 2.1288 mv 3511
+     d +1.30 (62.227,14.242) clr 2.1393 mv 3511
+     d +1.40 (62.146,14.184) clr 2.1514 mv 3511
+     d +1.50 (62.064,14.125) clr 2.1651 mv 3511
+     d +1.60 (61.983,14.067) clr 2.1804 mv 3511
+     d +1.70 (61.902,14.009) clr 2.1973 mv 3511
+     d +1.80 (61.821,13.950) clr 5.0000 mv 18446744073709551615
+     d +1.90 (61.740,13.892) clr 5.0000 mv 18446744073709551615
+     d +2.00 (61.658,13.834) clr 5.0000 mv 18446744073709551615
+     d +2.10 (61.577,13.775) clr 5.0000 mv 18446744073709551615
+     d +2.20 (61.496,13.717) clr 5.0000 mv 18446744073709551615
+     d +2.30 (61.415,13.658) clr 5.0000 mv 18446744073709551615
+     d +2.40 (61.334,13.600) clr 5.0000 mv 18446744073709551615
+     d +2.50 (61.252,13.542) clr 5.0000 mv 18446744073709551615
+     d +2.60 (61.171,13.483) clr 5.0000 mv 18446744073709551615
+     d +2.70 (61.090,13.425) clr 5.0000 mv 18446744073709551615
+     d +2.80 (61.009,13.367) clr 5.0000 mv 18446744073709551615
+     d +2.90 (60.928,13.308) clr 5.0000 mv 18446744073709551615
+     d +3.00 (60.846,13.250) clr 5.0000 mv 18446744073709551615
+     d +3.10 (60.765,13.192) clr 5.0000 mv 18446744073709551615
+     d +3.20 (60.684,13.133) clr 5.0000 mv 18446744073709551615
+     d +3.30 (60.603,13.075) clr 5.0000 mv 18446744073709551615
+     d +3.40 (60.522,13.016) clr 5.0000 mv 18446744073709551615
+     d +3.50 (60.440,12.958) clr 5.0000 mv 18446744073709551615
+     d +3.60 (60.359,12.900) clr 5.0000 mv 18446744073709551615
+     d +3.70 (60.278,12.841) clr 5.0000 mv 18446744073709551615
+     d +3.80 (60.197,12.783) clr 5.0000 mv 18446744073709551615
+     d +3.90 (60.116,12.725) clr 5.0000 mv 18446744073709551615
+     d +4.00 (60.034,12.666) clr 5.0000 mv 18446744073709551615
+     d +4.10 (59.953,12.608) clr 5.0000 mv 18446744073709551615
+     d +4.20 (59.872,12.550) clr 5.0000 mv 18446744073709551615
+     d +4.30 (59.791,12.491) clr 5.0000 mv 18446744073709551615
+     d +4.40 (59.710,12.433) clr 5.0000 mv 18446744073709551615
+     cutter mv 3462: 1125 cells
+     cutter mv 3511: 1112 cells
+     cutter mv 3512: 11 cells
+     |rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrrrrrrrrrrrxxxxxxxxxxxxxrrrnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrrrrrrrrrxxxxxxxxxxxxxxxxxxrrnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrrrrrrxxxxxxxxxxxxxxxxxxxxxxxrnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxWWwnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxWWWWwnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx##WWWWwnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx####WWWWwnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx####.WWWWwnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx######.WWWWwnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx########.WWWWwnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx#########..WWWWwnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrxxxxxxxxxxxxxxxxxxxxxxxxxxxxx###########..WWWWwnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrxxxxxxxxxxxxxxxxxxxxxxxxxxxx############...WWWWwnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxxxxx##############...WWWWwnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxxxxx##############....WWWWnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxxxx###############.....WWWWnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxxx#################.....WWWWnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxx##################......WWWwnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |xxxxxxxxxxxxxxxxxxxxxxxxx###################.......WWWwnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |xxxxxxxxxxxxxxxxxxxxxxxx####################.......WWWWwnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |xxxxxxxxxxxxxxxxxxxxxxx#####################........WWWWnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |xxxxxxxxxxxxxxxxxxxxxxx#####################.........WWWWnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxx######################..........WWWwnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxx#######################...........WWWwnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxx#######################.............WWWwnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxx########################.............WWWWnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxx#########################..............WWWWnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrxxxxxxxxxxxxxxx#########################................WWWwnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrxxxxxxxxxxxxxx##########################.................WWWwnnnnnnnnnnnnnnnnnnnnnn|
+     |rrxxxxxxxxxxxxx###########################.................WWWWnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrxxxxxxxxxxxx##########################...................WWWwnnnnnnnnnnnnnnnnnnnnn|
+     |rrrxxxxxxxxxxx##########################.....................WWWwnnnnnnnnnnnnnnnnnnnn|
+     |nrrrxxxxxxxxx###########################.....................WWWWnnnnnnnnnnnnnnnnnnnn|
+     |nnnrrxxxxxxx###########################.......................WWWWnnnnnnnnnnnnnnnnnnn|
+     |nnnnrxxxxxx###########################.........................WWWwnnnnnnnnnnnnnnnnnn|
+     |nnnnnnxxxx.##########################...........................WWWwnnnnnnnnnnnnnnnnn|
+     |nnnnnnnxxPPP#######################.............................WWWWnnnnnnnnnnnnnnnnn|
+     |nnnnnnnnvPPPP.####################...............................WWWwnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnvPPPP..################..................................WWWwnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnvPPPP....##########.....................................WWWWnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnvPPPP...................................................WWWwnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnvPPPP...................................................WWWnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnvPPP...................................................WWWWnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnvPPP...................................................WWWwnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnvPPP...................................................WWWnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnvPPP..................................................WWWwnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnvPPP..................................................WWWwnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnPPPP.................................................WWWWnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnPPPP..................................##########.....WWWwnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnvPPP...............................################...WWWrnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnvPPP............................####################.WWxxxnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnvPPP.........................#######################.xxxxxnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnPPPP.......................########################xxxxxxxnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnPPP......................########################xxxxxxxxrrnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnvPPP....................#########################xxxxxxxxxrrnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnvPPP..................#########################xxxxxxxxxxxrrn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnPPPP................#########################xxxxxxxxxxxxrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnPPP................#########################xxxxxxxxxxxxxrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnvPPP..............#########################xxxxxxxxxxxxxxrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnvPPP.............########################xxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnPPP............########################xxxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnvPPP...........########################xxxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnvPPP..........#######################xxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnPPP.........#######################xxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnvPPP........######################xxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnvPPP.......######################xxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnPPP.......#####################xxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnvPPP......####################xxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnvPPP.....###################xxxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnPPP.....###################xxxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnvPPP....##################xxxxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnPPP....#################xxxxxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnvPPP...#################xxxxxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnvPPP...###############xxxxxxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnPPP...##############xxxxxxxxxxxxxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnvPPP..##############xxxxxxxxxxxxxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnPPP...############xxxxxxxxxxxxxxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnvPPP..###########xxxxxxxxxxxxxxxxxxxxxxxxxxxxrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnvPPP..#########xxxxxxxxxxxxxxxxxxxxxxxxxxxxxrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnPPPP..########xxxxxxxxxxxxxxxxxxxxxxxxxxxxrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnPPPP.#######xxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnvPPPP.#####xxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnvPPPP.####xxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnvPPPP.##xxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnPPPPPxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnvPPxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnvPxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnrxxxxxxxxxxxxxxxxxxxxxxrrrrrrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnrrxxxxxxxxxxxxxxxxxxrrrrrrrrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnrrxxxxxxxxxxxxxrrrrrrrrrrrrrrrrr|
+  tab (63.283,15.001) plateau 12.285 joined 1 neck 1.1997 | plateau ends (66.8189,10.0370)-(59.2311,19.6009) 12.2083 apart (2r 8.0000)
+     d -4.50 (47.247,18.192) clr -3.7089 mv 3657
+     d -4.40 (47.162,18.138) clr -3.7041 mv 3657
+     d -4.30 (47.078,18.085) clr -3.6677 mv 3657
+     d -4.20 (46.993,18.031) clr -3.6086 mv 3657
+     d -4.10 (46.909,17.977) clr -3.5352 mv 3657
+     d -4.00 (46.824,17.924) clr -3.4533 mv 3657
+     d -3.90 (46.740,17.870) clr -3.3662 mv 3657
+     d -3.80 (46.655,17.817) clr -3.2758 mv 3657
+     d -3.70 (46.571,17.763) clr -3.1831 mv 3657
+     d -3.60 (46.487,17.710) clr -3.0889 mv 3657
+     d -3.50 (46.402,17.656) clr -2.9935 mv 3657
+     d -3.40 (46.318,17.602) clr -2.8974 mv 3657
+     d -3.30 (46.233,17.549) clr -2.8006 mv 3657
+     d -3.20 (46.149,17.495) clr -2.7033 mv 3657
+     d -3.10 (46.064,17.442) clr -2.6056 mv 3657
+     d -3.00 (45.980,17.388) clr -2.5076 mv 3657
+     d -2.90 (45.896,17.335) clr -2.4094 mv 3657
+     d -2.80 (45.811,17.281) clr -2.3110 mv 3657
+     d -2.70 (45.727,17.227) clr -2.2124 mv 3657
+     d -2.60 (45.642,17.174) clr -2.1136 mv 3657
+     d -2.50 (45.558,17.120) clr -2.0147 mv 3657
+     d -2.40 (45.473,17.067) clr -1.9158 mv 3657
+     d -2.30 (45.389,17.013) clr -1.8167 mv 3657
+     d -2.20 (45.304,16.959) clr -1.7175 mv 3657
+     d -2.10 (45.220,16.906) clr -1.6183 mv 3657
+     d -2.00 (45.136,16.852) clr -1.5190 mv 3657
+     d -1.90 (45.051,16.799) clr -1.4197 mv 3657
+     d -1.80 (44.967,16.745) clr -1.3203 mv 3657
+     d -1.70 (44.882,16.692) clr -1.2208 mv 3657
+     d -1.60 (44.798,16.638) clr -1.1213 mv 3657
+     d -1.50 (44.713,16.584) clr -1.0218 mv 3657
+     d -1.40 (44.629,16.531) clr -0.9223 mv 3657
+     d -1.30 (44.545,16.477) clr -0.8227 mv 3657
+     d -1.20 (44.460,16.424) clr -0.7231 mv 3657
+     d -1.10 (44.376,16.370) clr -0.6235 mv 3657
+     d -1.00 (44.291,16.317) clr -0.5239 mv 3657
+     d -0.90 (44.207,16.263) clr -0.4242 mv 3657
+     d -0.80 (44.122,16.209) clr -0.3245 mv 3657
+     d -0.70 (44.038,16.156) clr -0.2248 mv 3657
+     d -0.60 (43.953,16.102) clr -0.1251 mv 3657
+     d -0.50 (43.869,16.049) clr -0.0254 mv 3657
+     d -0.40 (43.785,15.995) clr 0.0744 mv 3657
+     d -0.30 (43.700,15.942) clr 0.1741 mv 3657
+     d -0.20 (43.616,15.888) clr 0.2739 mv 3657
+     d -0.10 (43.531,15.834) clr 0.3737 mv 3657
+     d +0.00 (43.447,15.781) clr 0.4735 mv 3657
+     d +0.10 (43.362,15.727) clr 0.5733 mv 3657
+     d +0.20 (43.278,15.674) clr 0.6731 mv 3657
+     d +0.30 (43.194,15.620) clr 0.7729 mv 3657
+     d +0.40 (43.109,15.567) clr 0.8727 mv 3657
+     d +0.50 (43.025,15.513) clr 0.9725 mv 3657
+     d +0.60 (42.940,15.459) clr 1.0724 mv 3657
+     d +0.70 (42.856,15.406) clr 1.1722 mv 3657
+     d +0.80 (42.771,15.352) clr 1.2720 mv 3657
+     d +0.90 (42.687,15.299) clr 1.3719 mv 3657
+     d +1.00 (42.602,15.245) clr 1.4718 mv 3657
+     d +1.10 (42.518,15.192) clr 1.5716 mv 3657
+     d +1.20 (42.434,15.138) clr 1.6715 mv 3657
+     d +1.30 (42.349,15.084) clr 1.7714 mv 3657
+     d +1.40 (42.265,15.031) clr 1.8712 mv 3657
+     d +1.50 (42.180,14.977) clr 1.9711 mv 3657
+     d +1.60 (42.096,14.924) clr 2.0710 mv 3657
+     d +1.70 (42.011,14.870) clr 2.1709 mv 3657
+     d +1.80 (41.927,14.816) clr 5.0000 mv 18446744073709551615
+     d +1.90 (41.843,14.763) clr 5.0000 mv 18446744073709551615
+     d +2.00 (41.758,14.709) clr 5.0000 mv 18446744073709551615
+     d +2.10 (41.674,14.656) clr 5.0000 mv 18446744073709551615
+     d +2.20 (41.589,14.602) clr 5.0000 mv 18446744073709551615
+     d +2.30 (41.505,14.549) clr 5.0000 mv 18446744073709551615
+     d +2.40 (41.420,14.495) clr 5.0000 mv 18446744073709551615
+     d +2.50 (41.336,14.441) clr 5.0000 mv 18446744073709551615
+     d +2.60 (41.251,14.388) clr 5.0000 mv 18446744073709551615
+     d +2.70 (41.167,14.334) clr 5.0000 mv 18446744073709551615
+     d +2.80 (41.083,14.281) clr 5.0000 mv 18446744073709551615
+     d +2.90 (40.998,14.227) clr 5.0000 mv 18446744073709551615
+     d +3.00 (40.914,14.174) clr 5.0000 mv 18446744073709551615
+     d +3.10 (40.829,14.120) clr 5.0000 mv 18446744073709551615
+     d +3.20 (40.745,14.066) clr 5.0000 mv 18446744073709551615
+     d +3.30 (40.660,14.013) clr 5.0000 mv 18446744073709551615
+     d +3.40 (40.576,13.959) clr 5.0000 mv 18446744073709551615
+     d +3.50 (40.492,13.906) clr 5.0000 mv 18446744073709551615
+     d +3.60 (40.407,13.852) clr 5.0000 mv 18446744073709551615
+     d +3.70 (40.323,13.799) clr 5.0000 mv 18446744073709551615
+     d +3.80 (40.238,13.745) clr 5.0000 mv 18446744073709551615
+     d +3.90 (40.154,13.691) clr 5.0000 mv 18446744073709551615
+     d +4.00 (40.069,13.638) clr 5.0000 mv 18446744073709551615
+     d +4.10 (39.985,13.584) clr 5.0000 mv 18446744073709551615
+     d +4.20 (39.900,13.531) clr 5.0000 mv 18446744073709551615
+     d +4.30 (39.816,13.477) clr 5.0000 mv 18446744073709551615
+     d +4.40 (39.732,13.424) clr 5.0000 mv 18446744073709551615
+     cutter mv 3655: 2 cells
+     cutter mv 3656: 2 cells
+     cutter mv 3657: 1118 cells
+     cutter mv 3715: 1097 cells
+     cutter mv 3716: 13 cells
+     |rrrrrrrrrrrrrrrrrrrrrrrxxrrrrrrrrrnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnrrrrrrrrrrrrrrrrrrr|
+     |rrrrrrrrrrrrrrrrrxxxxxxxxxxxxxxrrrrnnnnnnnnnnnnnnnnnnnnnnnnnnnnnrrrrrrrrrrrrrrrrrrrr|
+     |rrrrrrrrrrrrrrxxxxxxxxxxxxxxxxxxxrrrnnnnnnnnnnnnnnnnnnnnnnnnnnrrrrrrrrrrrrrrrrrrrrrr|
+     |rrrrrrrrrrrrxxxxxxxxxxxxxxxxxxxxxxxrrnnnnnnnnnnnnnnnnnnnnnnnrrrrrrrrrrrrrrrrrrrrrrrr|
+     |rrrrrrrrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxrnnnnnnnnnnnnnnnnnnnnnrrrrrrrrrrrrrrrrrrrrrrrrr|
+     |rrrrrrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrnnnnnnnnnnnnnnnnnnnrrrrrrrrrrrrrrrrrrrrrrrrrr|
+     |rrrrrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxnnnnnnnnnnnnnnnnrrrrrrrrrrrrrrrrrrrrrrrrrrrr|
+     |rrrrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxnnnnnnnnnnnnnnrrrrrrrrrrrrrrrrrrrrrrrrrrrrr|
+     |rrrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxnnnnnnnnnnnnrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr|
+     |rrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxWnnnnnnnnnnnrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr|
+     |rrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxWWWWnnnnnnnnnrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr|
+     |rrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx##WWWwnnnnnnrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr|
+     |rrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx###.WWWwnnnnrrrrrrrxxxxxxxxrrrrrrrrrrrrrrrrrrrr|
+     |rrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx#####.WWWwnnrrrrxxxxxxxxxxxxxxxxrrrrrrrrrrrrrrrr|
+     |rrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx######.WWWWnrrrxxxxxxxxxxxxxxxxxxxxrrrrrrrrrrrrrr|
+     |rrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx########.WWWWrxxxxxxxxxxxxxxxxxxxxxxxxrrrrrrrrrrrr|
+     |rrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx##########..WWWxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrrrrrr|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx############..WWxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrrrrr|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxxxxxx#############..WWxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrrrr|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxxxxx##############...Wxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrrr|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxxxx################...xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrr|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxxx#################..#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrr|
+     |xxxxxxxxxxxxxxxxxxxxxxxxx###################.##xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrr|
+     |xxxxxxxxxxxxxxxxxxxxxxxx#######################xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrr|
+     |xxxxxxxxxxxxxxxxxxxxxxx########################xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrr|
+     |xxxxxxxxxxxxxxxxxxxxxx##########################xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrr|
+     |rxxxxxxxxxxxxxxxxxxxx############################xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrr|
+     |rxxxxxxxxxxxxxxxxxxx###############################xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrr|
+     |rxxxxxxxxxxxxxxxxx##################################xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrr|
+     |rxxxxxxxxxxxxxxxx####################################xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxr|
+     |rxxxxxxxxxxxxxxx######################################xxxxxxxxxxxxxxxxxxxxxxxxxxxxxr|
+     |rrxxxxxxxxxxxxx########################################xxxxxxxxxxxxxxxxxxxxxxxxxxxxr|
+     |rrxxxxxxxxxxxx##########################################xxxxxxxxxxxxxxxxxxxxxxxxxxxr|
+     |nrxxxxxxxxxx##############################################xxxxxxxxxxxxxxxxxxxxxxxxxr|
+     |nnrxxxxxxxx################################################xxxxxxxxxxxxxxxxxxxxxxxxr|
+     |nnnxxxxxxx##################################################xxxxxxxxxxxxxxxxxxxxxxxr|
+     |nnnnxxxxx##############################.#####################xxxxxxxxxxxxxxxxxxxxxxr|
+     |nnnnnxxx.##############################.######################xxxxxxxxxxxxxxxxxxxxxr|
+     |nnnnnxPPP.############################..#######################xxxxxxxxxxxxxxxxxxxxr|
+     |nnnnnnvPPP.#########################....#########################xxxxxxxxxxxxxxxxxxr|
+     |nnnnnnnvPPP..######################......#########################xxxxxxxxxxxxxxxxxr|
+     |nnnnnnnnvPPP..###################........##########################xxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnPPPP...###############..........###########################xxxxxxxxxxxxxxrr|
+     |nnnnnnnnnvPPP.......########..............############################xxxxxxxxxxxxrr|
+     |nnnnnnnnnnvPPP............................#############################xxxxxxxxxxxrr|
+     |nnnnnnnnnnnvPPP............................#############################xxxxxxxxxrrn|
+     |nnnnnnnnnnnnPPPP...........................##############################xxxxxxxxrnn|
+     |nnnnnnnnnnnnnPPP............................##############################xxxxxxrnnn|
+     |nnnnnnnnnnnnnvPPP............................##############################.xxxxnnnn|
+     |nnnnnnnnnnnnnnvPPP............................############################.PPxxnnnnn|
+     |nnnnnnnnnnnnnnnPPP.............................##########################.PPPvnnnnnn|
+     |nnnnnnnnnnnnnnnvPPP.............................########################.PPPPnnnnnnn|
+     |nnnnnnnnnnnnnnnnvPPP.............................######################..PPPvnnnnnnn|
+     |nnnnnnnnnnnnnnnnnPPP...............................##################...PPPvnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnvPPP................................##############....PPPvnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnvPPP...................................#####.........PPPnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnPPP................................................PPPvnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnvPPP..............................................PPPvnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnvPPP.............................................PPPnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnPPP............................................PPPnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnvPPP..........................................PPPvnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnvPPP.........................................PPPnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnPPP........................................PPPvnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnvPPP......................................PPPvnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnvPP......................................PPPnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnPPP....................................PPPvnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnvPPP..................................PPPPnnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnPPPP.................................PPPnnnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnPPPP...............................PPPvnnnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnvPPPP.............................PPPvnnnnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnvPPPP..........................PPPPvnnnnnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnvPPPP........................PPPPvnnnnnnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnPPPPP....................PPPPPvnnnnnnnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnvPPPPPP...............PPPPPvnnnnnnnnnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnvPPPPPPP........PPPPPPPPvnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnvPPPPPPPPPPPPPPPPPPPvnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnvvPPPPPPPPPPPPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnvvvvvvvvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+  tab (43.447,15.781) plateau 12.285 joined 0 neck 0.0000 | plateau ends (47.0615,18.4164)-(39.8501,20.7543) 7.5808 apart (2r 8.0000)
+     d -4.50 (19.798,23.020) clr 0.1379 mv 3955
+     d -4.40 (19.880,22.963) clr 0.1118 mv 3955
+     d -4.30 (19.962,22.905) clr 0.0880 mv 3955
+     d -4.20 (20.044,22.848) clr 0.0664 mv 3955
+     d -4.10 (20.125,22.791) clr 0.0473 mv 3955
+     d -4.00 (20.207,22.733) clr 0.0305 mv 3955
+     d -3.90 (20.289,22.676) clr 0.0161 mv 3955
+     d -3.80 (20.371,22.618) clr 0.0042 mv 3955
+     d -3.70 (20.453,22.561) clr -0.0052 mv 3955
+     d -3.60 (20.535,22.504) clr -0.0122 mv 3955
+     d -3.50 (20.617,22.446) clr -0.0166 mv 3955
+     d -3.40 (20.699,22.389) clr -0.0186 mv 3955
+     d -3.30 (20.781,22.332) clr -0.0180 mv 3955
+     d -3.20 (20.862,22.274) clr -0.0149 mv 3955
+     d -3.10 (20.944,22.217) clr -0.0094 mv 3955
+     d -3.00 (21.026,22.159) clr -0.0013 mv 3955
+     d -2.90 (21.108,22.102) clr 0.0093 mv 3955
+     d -2.80 (21.190,22.045) clr 0.0223 mv 3955
+     d -2.70 (21.272,21.987) clr 0.0377 mv 3955
+     d -2.60 (21.354,21.930) clr 0.0556 mv 3955
+     d -2.50 (21.436,21.872) clr 0.0758 mv 3955
+     d -2.40 (21.518,21.815) clr 0.0984 mv 3955
+     d -2.30 (21.600,21.758) clr 0.1232 mv 3955
+     d -2.20 (21.681,21.700) clr 0.1504 mv 3955
+     d -2.10 (21.763,21.643) clr 0.1797 mv 3955
+     d -2.00 (21.845,21.585) clr 0.2112 mv 3955
+     d -1.90 (21.927,21.528) clr 0.2449 mv 3955
+     d -1.80 (22.009,21.471) clr 0.2806 mv 3955
+     d -1.70 (22.091,21.413) clr 0.3183 mv 3955
+     d -1.60 (22.173,21.356) clr 0.3580 mv 3955
+     d -1.50 (22.255,21.298) clr 0.3997 mv 3955
+     d -1.40 (22.337,21.241) clr 0.4431 mv 3955
+     d -1.30 (22.418,21.184) clr 0.4884 mv 3955
+     d -1.20 (22.500,21.126) clr 0.5355 mv 3955
+     d -1.10 (22.582,21.069) clr 0.5842 mv 3955
+     d -1.00 (22.664,21.012) clr 0.6346 mv 3955
+     d -0.90 (22.746,20.954) clr 0.6866 mv 3955
+     d -0.80 (22.828,20.897) clr 0.7401 mv 3955
+     d -0.70 (22.910,20.839) clr 0.7951 mv 3955
+     d -0.60 (22.992,20.782) clr 0.8515 mv 3955
+     d -0.50 (23.074,20.725) clr 0.9094 mv 3955
+     d -0.40 (23.155,20.667) clr 0.9685 mv 3955
+     d -0.30 (23.237,20.610) clr 1.0290 mv 3955
+     d -0.20 (23.319,20.552) clr 1.0907 mv 3955
+     d -0.10 (23.401,20.495) clr 1.1536 mv 3955
+     d +0.00 (23.483,20.438) clr 1.2177 mv 3955
+     d +0.10 (23.565,20.380) clr 1.2829 mv 3955
+     d +0.20 (23.647,20.323) clr 1.3491 mv 3955
+     d +0.30 (23.729,20.265) clr 1.4164 mv 3955
+     d +0.40 (23.811,20.208) clr 1.4847 mv 3955
+     d +0.50 (23.893,20.151) clr 1.5540 mv 3955
+     d +0.60 (23.974,20.093) clr 1.6242 mv 3955
+     d +0.70 (24.056,20.036) clr 2.0314 mv 3844
+     d +0.80 (24.138,19.979) clr 5.0000 mv 18446744073709551615
+     d +0.90 (24.220,19.921) clr 5.0000 mv 18446744073709551615
+     d +1.00 (24.302,19.864) clr 5.0000 mv 18446744073709551615
+     d +1.10 (24.384,19.806) clr 5.0000 mv 18446744073709551615
+     d +1.20 (24.466,19.749) clr 5.0000 mv 18446744073709551615
+     d +1.30 (24.548,19.692) clr 5.0000 mv 18446744073709551615
+     d +1.40 (24.630,19.634) clr 5.0000 mv 18446744073709551615
+     d +1.50 (24.711,19.577) clr 5.0000 mv 18446744073709551615
+     d +1.60 (24.793,19.519) clr 5.0000 mv 18446744073709551615
+     d +1.70 (24.875,19.462) clr 5.0000 mv 18446744073709551615
+     d +1.80 (24.957,19.405) clr 5.0000 mv 18446744073709551615
+     d +1.90 (25.039,19.347) clr 5.0000 mv 18446744073709551615
+     d +2.00 (25.121,19.290) clr 5.0000 mv 18446744073709551615
+     d +2.10 (25.203,19.232) clr 5.0000 mv 18446744073709551615
+     d +2.20 (25.285,19.175) clr 5.0000 mv 18446744073709551615
+     d +2.30 (25.367,19.118) clr 5.0000 mv 18446744073709551615
+     d +2.40 (25.448,19.060) clr 5.0000 mv 18446744073709551615
+     d +2.50 (25.530,19.003) clr 5.0000 mv 18446744073709551615
+     d +2.60 (25.612,18.945) clr 5.0000 mv 18446744073709551615
+     d +2.70 (25.694,18.888) clr 5.0000 mv 18446744073709551615
+     d +2.80 (25.776,18.831) clr 5.0000 mv 18446744073709551615
+     d +2.90 (25.858,18.773) clr 5.0000 mv 18446744073709551615
+     d +3.00 (25.940,18.716) clr 5.0000 mv 18446744073709551615
+     d +3.10 (26.022,18.659) clr 5.0000 mv 18446744073709551615
+     d +3.20 (26.104,18.601) clr 5.0000 mv 18446744073709551615
+     d +3.30 (26.185,18.544) clr 5.0000 mv 18446744073709551615
+     d +3.40 (26.267,18.486) clr 5.0000 mv 18446744073709551615
+     d +3.50 (26.349,18.429) clr 5.0000 mv 18446744073709551615
+     d +3.60 (26.431,18.372) clr 5.0000 mv 18446744073709551615
+     d +3.70 (26.513,18.314) clr 5.0000 mv 18446744073709551615
+     d +3.80 (26.595,18.257) clr 5.0000 mv 18446744073709551615
+     d +3.90 (26.677,18.199) clr 5.0000 mv 18446744073709551615
+     d +4.00 (26.759,18.142) clr 5.0000 mv 18446744073709551615
+     d +4.10 (26.841,18.085) clr 5.0000 mv 18446744073709551615
+     d +4.20 (26.923,18.027) clr 5.0000 mv 18446744073709551615
+     d +4.30 (27.004,17.970) clr 5.0000 mv 18446744073709551615
+     d +4.40 (27.086,17.912) clr 5.0000 mv 18446744073709551615
+     cutter mv 3843: 3 cells
+     cutter mv 3844: 1125 cells
+     cutter mv 3955: 1116 cells
+     cutter mv 3956: 7 cells
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnrrrrrrrrrrrrrrrrrrrrrrrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnrxxxxxxxxxxxxxrrrrrrrrrrrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnxxxxxxxxxxxxxxxxxxxrrrrrrrrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnxxxxxxxxxxxxxxxxxxxxxxxrrrrrrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnWWWWWxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWWW#xxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWW.###xxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnWWWWW.####xxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWWW.######xxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWW..########xxxxxxxxxxxxxxxxxxxxxxxxxxxrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWW..#########xxxxxxxxxxxxxxxxxxxxxxxxxxxxrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWW..###########xxxxxxxxxxxxxxxxxxxxxxxxxxxrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWW...###########xxxxxxxxxxxxxxxxxxxxxxxxxxxxrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWW...#############xxxxxxxxxxxxxxxxxxxxxxxxxxxrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWW....##############xxxxxxxxxxxxxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWW.....##############xxxxxxxxxxxxxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWW.....################xxxxxxxxxxxxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWW......#################xxxxxxxxxxxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWW.......#################xxxxxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWW........##################xxxxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnWWWW........###################xxxxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnWWWW.........####################xxxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWW..........#####################xxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWW...........#####################xxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWW.............#####################xxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnWWWW.............######################xxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnwwwwWWWWWWWWW..............######################xxxxxxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnnnnnnnnnwwWWWWWWWWWWWWWWW...............#######################xxxxxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnnnnnnwWWWWWWWWWWWWWWWWWW................########################xxxxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnnnrxxWWWWWWWWWW..........................#######################xxxxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnrxxxxxWWW................................########################xxxxxxxxxxxxxxxxrr|
+     |nnnnnnnnnrxxxxxxx.############.......................########################xxxxxxxxxxxxxxxrr|
+     |nnnnnnnrrxxxxxxxxx##############.....................########################xxxxxxxxxxxxxxrrr|
+     |nnnnnrrrxxxxxxxxxx################....................########################xxxxxxxxxxxxxrrr|
+     |nnnnrrrxxxxxxxxxxx##################...................#######################xxxxxxxxxxxxrrrr|
+     |nnrrrrxxxxxxxxxxxxx##################...................#######################xxxxxxxxxxxrrrr|
+     |nrrrrxxxxxxxxxxxxxx###################...................#######################xxxxxxxxxrrrrr|
+     |rrrrxxxxxxxxxxxxxxx####################...................######################xxxxxxxxrrrrrr|
+     |rrrrxxxxxxxxxxxxxxxx####################...................######################xxxxxxrrrrrrr|
+     |rrrxxxxxxxxxxxxxxxxx#####################....................###################.Pxxxxrrrrrrrr|
+     |rrrxxxxxxxxxxxxxxxxx#####################......................###############..PPxxxrnnnnnnrr|
+     |rrxxxxxxxxxxxxxxxxxxx#####################........................#########....PPPPxnnnnnnnnnn|
+     |rrxxxxxxxxxxxxxxxxxxx#####################...................................PPPPvnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxx######################.................................PPPPvnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxx#####################................................PPPPvnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxx#####################...............................PPPPnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxx#####################..............................PPPPnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxxx#####################............................PPPPnnnnnnnnnnnnnnnnnn|
+     |xxxxxxxxxxxxxxxxxxxxxxx#####################...........................PPPPnnnnnnnnnnnnnnnnnnn|
+     |xxxxxxxxxxxxxxxxxxxxxxx#####################...........................PPPvnnnnnnnnnnnnnnnnnnn|
+     |xxxxxxxxxxxxxxxxxxxxxxxx####################..........................PPPvnnnnnnnnnnnnnnnnnnnn|
+     |xxxxxxxxxxxxxxxxxxxxxxxx####################.........................PPPvnnnnnnnnnnnnnnnnnnnnn|
+     |xxxxxxxxxxxxxxxxxxxxxxxx####################........................PPPvnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxxxxx###################.......................PPPPnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxxxxx##################........................PPPnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxxxxx##################.......................PPPvnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxx#################......................PPPvnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxx#################......................PPPnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrxxxxxxxxxxxxxxxxxxxxxxxx################......................PPPvnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrxxxxxxxxxxxxxxxxxxxxxxxxx###############.....................PPPvnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrxxxxxxxxxxxxxxxxxxxxxxxx##############......................PPPnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrxxxxxxxxxxxxxxxxxxxxxxxx##############.....................PPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrxxxxxxxxxxxxxxxxxxxxxxxx############.....................PPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrxxxxxxxxxxxxxxxxxxxxxxxx###########......................PPPnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrxxxxxxxxxxxxxxxxxxxxxxx##########......................PPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrxxxxxxxxxxxxxxxxxxxxxxx########......................PPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrxxxxxxxxxxxxxxxxxxxxxx#######......................PPPPnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrrxxxxxxxxxxxxxxxxxxxxx######......................PPPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrrrxxxxxxxxxxxxxxxxxxxxx###.......................PPPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrrrrxxxxxxxxxxxxxxxxxxxx.........................PPPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrrrrrxxxxxxxxxxxxxxxxxxxPP.....................PPPPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrrrrrrrxxxxxxxxxxxxxxxxxPPPP.................PPPPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrrrrrrrrrxxxxxxxxxxxxxxxPPPPPP.............PPPPPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrrrrrrrrrrrrrxxxxxxxxxxrnvPPPPPPPPPPPPPPPPPPPPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrrrrrrrrrrrrrrrrrrrrrrnnnnnvPPPPPPPPPPPPPPPPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrrrrrrrrrrrrrrrrrrrrrrrrrnnnnnnnnnvvPPPPPPPPPvvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+  tab (23.483,20.438) plateau 12.285 joined 1 neck 1.1997 | plateau ends (27.7435,24.8090)-(18.4364,19.1126) 10.9119 apart (2r 8.0000)
+     d -4.50 (1.458,7.127) clr 5.0000 mv 18446744073709551615
+     d -4.40 (1.535,7.064) clr 5.0000 mv 18446744073709551615
+     d -4.30 (1.612,7.000) clr 5.0000 mv 18446744073709551615
+     d -4.20 (1.689,6.937) clr 5.0000 mv 18446744073709551615
+     d -4.10 (1.767,6.873) clr 5.0000 mv 18446744073709551615
+     d -4.00 (1.844,6.810) clr 5.0000 mv 18446744073709551615
+     d -3.90 (1.921,6.746) clr 5.0000 mv 18446744073709551615
+     d -3.80 (1.998,6.683) clr 5.0000 mv 18446744073709551615
+     d -3.70 (2.075,6.619) clr 5.0000 mv 18446744073709551615
+     d -3.60 (2.153,6.556) clr 5.0000 mv 18446744073709551615
+     d -3.50 (2.230,6.492) clr 5.0000 mv 18446744073709551615
+     d -3.40 (2.307,6.428) clr 5.0000 mv 18446744073709551615
+     d -3.30 (2.384,6.365) clr 5.0000 mv 18446744073709551615
+     d -3.20 (2.462,6.301) clr 5.0000 mv 18446744073709551615
+     d -3.10 (2.539,6.238) clr 5.0000 mv 18446744073709551615
+     d -3.00 (2.616,6.174) clr 5.0000 mv 18446744073709551615
+     d -2.90 (2.693,6.111) clr 5.0000 mv 18446744073709551615
+     d -2.80 (2.770,6.047) clr 5.0000 mv 18446744073709551615
+     d -2.70 (2.848,5.984) clr 5.0000 mv 18446744073709551615
+     d -2.60 (2.925,5.920) clr 5.0000 mv 18446744073709551615
+     d -2.50 (3.002,5.857) clr 2.5503 mv 4026
+     d -2.40 (3.079,5.793) clr 2.5161 mv 4026
+     d -2.30 (3.157,5.730) clr 2.4833 mv 4026
+     d -2.20 (3.234,5.666) clr 2.4519 mv 4026
+     d -2.10 (3.311,5.603) clr 2.4219 mv 4026
+     d -2.00 (3.388,5.539) clr 2.3933 mv 4026
+     d -1.90 (3.466,5.476) clr 2.3662 mv 4026
+     d -1.80 (3.543,5.412) clr 2.3405 mv 4026
+     d -1.70 (3.620,5.348) clr 2.3163 mv 4026
+     d -1.60 (3.697,5.285) clr 2.2936 mv 4026
+     d -1.50 (3.774,5.221) clr 2.2724 mv 4026
+     d -1.40 (3.852,5.158) clr 2.2528 mv 4026
+     d -1.30 (3.929,5.094) clr 2.2346 mv 4026
+     d -1.20 (4.006,5.031) clr 2.2181 mv 4026
+     d -1.10 (4.083,4.967) clr 2.1039 mv 4122
+     d -1.00 (4.161,4.904) clr 2.0976 mv 4122
+     d -0.90 (4.238,4.840) clr 2.0930 mv 4122
+     d -0.80 (4.315,4.777) clr 2.0900 mv 4122
+     d -0.70 (4.392,4.713) clr 2.0887 mv 4122
+     d -0.60 (4.470,4.650) clr 2.0890 mv 4122
+     d -0.50 (4.547,4.586) clr 2.0909 mv 4122
+     d -0.40 (4.624,4.523) clr 2.0945 mv 4122
+     d -0.30 (4.701,4.459) clr 2.0997 mv 4122
+     d -0.20 (4.778,4.396) clr 2.1065 mv 4122
+     d -0.10 (4.856,4.332) clr 2.1150 mv 4122
+     d +0.00 (4.933,4.268) clr 2.1251 mv 4122
+     d +0.10 (5.010,4.205) clr 2.1368 mv 4122
+     d +0.20 (5.087,4.141) clr 2.1501 mv 4122
+     d +0.30 (5.165,4.078) clr 2.1620 mv 4026
+     d +0.40 (5.242,4.014) clr 2.1712 mv 4026
+     d +0.50 (5.319,3.951) clr 2.1996 mv 4122
+     d +0.60 (5.396,3.887) clr 2.2192 mv 4122
+     d +0.70 (5.473,3.824) clr 2.2403 mv 4122
+     d +0.80 (5.551,3.760) clr 2.2630 mv 4122
+     d +0.90 (5.628,3.697) clr 2.2872 mv 4122
+     d +1.00 (5.705,3.633) clr 2.3129 mv 4122
+     d +1.10 (5.782,3.570) clr 2.3400 mv 4122
+     d +1.20 (5.860,3.506) clr 2.3686 mv 4122
+     d +1.30 (5.937,3.443) clr 2.3987 mv 4122
+     d +1.40 (6.014,3.379) clr 5.0000 mv 18446744073709551615
+     d +1.50 (6.091,3.316) clr 5.0000 mv 18446744073709551615
+     d +1.60 (6.169,3.252) clr 5.0000 mv 18446744073709551615
+     d +1.70 (6.246,3.189) clr 5.0000 mv 18446744073709551615
+     d +1.80 (6.323,3.125) clr 5.0000 mv 18446744073709551615
+     d +1.90 (6.400,3.061) clr 5.0000 mv 18446744073709551615
+     d +2.00 (6.477,2.998) clr 5.0000 mv 18446744073709551615
+     d +2.10 (6.555,2.934) clr 5.0000 mv 18446744073709551615
+     d +2.20 (6.632,2.871) clr 5.0000 mv 18446744073709551615
+     d +2.30 (6.709,2.807) clr 5.0000 mv 18446744073709551615
+     d +2.40 (6.786,2.744) clr 5.0000 mv 18446744073709551615
+     d +2.50 (6.864,2.680) clr 5.0000 mv 18446744073709551615
+     d +2.60 (6.941,2.617) clr 5.0000 mv 18446744073709551615
+     d +2.70 (7.018,2.553) clr 5.0000 mv 18446744073709551615
+     d +2.80 (7.095,2.490) clr 5.0000 mv 18446744073709551615
+     d +2.90 (7.172,2.426) clr 5.0000 mv 18446744073709551615
+     d +3.00 (7.250,2.363) clr 5.0000 mv 18446744073709551615
+     d +3.10 (7.327,2.299) clr 5.0000 mv 18446744073709551615
+     d +3.20 (7.404,2.236) clr 5.0000 mv 18446744073709551615
+     d +3.30 (7.481,2.172) clr 5.0000 mv 18446744073709551615
+     d +3.40 (7.559,2.109) clr 5.0000 mv 18446744073709551615
+     d +3.50 (7.636,2.045) clr 5.0000 mv 18446744073709551615
+     d +3.60 (7.713,1.981) clr 5.0000 mv 18446744073709551615
+     d +3.70 (7.790,1.918) clr 5.0000 mv 18446744073709551615
+     d +3.80 (7.868,1.854) clr 5.0000 mv 18446744073709551615
+     d +3.90 (7.945,1.791) clr 5.0000 mv 18446744073709551615
+     d +4.00 (8.022,1.727) clr 5.0000 mv 18446744073709551615
+     d +4.10 (8.099,1.664) clr 5.0000 mv 18446744073709551615
+     d +4.20 (8.176,1.600) clr 5.0000 mv 18446744073709551615
+     d +4.30 (8.254,1.537) clr 5.0000 mv 18446744073709551615
+     d +4.40 (8.331,1.473) clr 5.0000 mv 18446744073709551615
+     cutter mv 4026: 1132 cells
+     cutter mv 4122: 1110 cells
+     cutter mv 4123: 11 cells
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnrrrrrrxxxxxxxxxxxxxrrrrrrrrrrrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnrrrrxxxxxxxxxxxxxxxxxxxrrrrrrrrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnrrrxxxxxxxxxxxxxxxxxxxxxxxrrrrrrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnrxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnWWWxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnWWWW#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWW###xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWW.#####xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnWWWW#######xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnWWWW.########xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWW..##########xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWW..############xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnWWWW..#############xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnWWWW...###############xxxxxxxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWW....################xxxxxxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWW.....#################xxxxxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnWWWW....####################xxxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnWWWW.....#####################xxxxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWW.......######################xxxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWW........#######################xxxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWWW........########################xxxxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnWWWW.........##########################xxxxxxxxxxxxxxxxx|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWW..........###########################xxxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWW............###########################xxxxxxxxxxxxxxr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnwWWW.............#############################xxxxxxxxxxxxr|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnnWWWW.............##############################xxxxxxxxxxrn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnnWWWW...............###############################xxxxxxxxrn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnnwWWW................################################xxxxxxxnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnnwWWW..................################################xxxxxnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnnwWWW....................###############################.Pxxnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnnwWWWW.....................#############################.PPPxnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnwWWWW.......................###########################.PPPvnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnnWWWW.........................#########################..PPPnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnnWWWW...........................#######################..PPPvnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnnWWWW..............................###################...PPPvnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnnWWWW.................................###############....PPPvnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnnWWWW.....................................#########.......PPPnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnnWWWW.....................................................PPPvnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnnWWWW.....................................................PPPvnnnnnnnnnn|
+     |nnnnnnnnnnnnnnnnWWWW.....................................................PPPvnnnnnnnnnnn|
+     |nnnnnnnnnnnnnnwWWWW......................................................PPPnnnnnnnnnnnn|
+     |nnnnnnnnnnnnnwWWWW......................................................PPPvnnnnnnnnnnnn|
+     |nnnnnnnnnnnnwWWWW......................................................PPPvnnnnnnnnnnnnn|
+     |nnnnnnnnnnnWWWWW...##########.........................................PPPvnnnnnnnnnnnnnn|
+     |nnnnnnnnnxxWWWW.################......................................PPPnnnnnnnnnnnnnnn|
+     |nnnnnnnnxxxxW.####################...................................PPPvnnnnnnnnnnnnnnn|
+     |nnnnnnrxxxxxx######################.................................PPPvnnnnnnnnnnnnnnnn|
+     |nnnnnrxxxxxxx########################..............................PPPvnnnnnnnnnnnnnnnnn|
+     |nnnnrxxxxxxxxx########################............................PPPPnnnnnnnnnnnnnnnnnn|
+     |nnnnrxxxxxxxxxx########################...........................PPPnnnnnnnnnnnnnnnnnnn|
+     |nnnrxxxxxxxxxxx#########################.........................PPPvnnnnnnnnnnnnnnnnnnn|
+     |nnrxxxxxxxxxxxxx########################........................PPPvnnnnnnnnnnnnnnnnnnnn|
+     |nnrxxxxxxxxxxxxxx########################......................PPPvnnnnnnnnnnnnnnnnnnnnn|
+     |nrxxxxxxxxxxxxxxx#########################....................PPPPnnnnnnnnnnnnnnnnnnnnnn|
+     |rrxxxxxxxxxxxxxxxx########################....................PPPvnnnnnnnnnnnnnnnnnnnnnn|
+     |rrxxxxxxxxxxxxxxxxx#######################...................PPPvnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxx########################.................PPPvnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxx#######################................PPPvnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxx######################...............PPPPnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxx#######################.............PPPPnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |xxxxxxxxxxxxxxxxxxxxxx######################.............PPPnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |xxxxxxxxxxxxxxxxxxxxxxx#####################............PPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |xxxxxxxxxxxxxxxxxxxxxxxx####################...........PPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |xxxxxxxxxxxxxxxxxxxxxxxx####################..........PPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |xxxxxxxxxxxxxxxxxxxxxxxxx###################.........PPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxx##################........PPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxx##################.......PPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxxx################.......PPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxxxx###############......PPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rxxxxxxxxxxxxxxxxxxxxxxxxxxx###############.....PPPPnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrxxxxxxxxxxxxxxxxxxxxxxxxxxx#############.....PPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrxxxxxxxxxxxxxxxxxxxxxxxxxxxx############....PPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrxxxxxxxxxxxxxxxxxxxxxxxxxxxx###########....PPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |rrrxxxxxxxxxxxxxxxxxxxxxxxxxxxx##########...PPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |nrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxx########..PPPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |nrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxx#######..PPPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |nnrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxx######.PPPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |nnnrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxx####.PPPPnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |nnnrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxx##.PPPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |nnnnrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxx.PPPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |nnnnnrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxPPPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |nnnnnnrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxPvnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |nnnnnnnrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnrrrrxxxxxxxxxxxxxxxxxxxxxxnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnrrrrrxxxxxxxxxxxxxxxxxxrnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+     |nnnnnnnnnnnnrrrrrrxxxxxxxxxxxxrrnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+  tab (4.933,4.268) plateau 12.290 joined 1 neck 1.1997 | plateau ends (8.6647,9.1493)-(0.5492,-0.0094) 12.2370 apart (2r 8.0000)
+scene 0 fam 99 side 2 D 8.000 V 0 allow 0.306 sep 0 lpa 0.921 rev 0 n 9 sp 0 len 4.285 th 0.696 3d 0 avoid 0 ramp 3 lead 0 out 0 oc 0.00 start 2 depth 13.33/4.72: [SEVERED tab at (43.447,15.781) plateau 12.285]
+   diag 10 vector 0: 4 of 9 tab(s) left out (4 with no room (they would overlap, run past an open end, cover where the tool plunges or leave no stretch cut to full depth))
+   diag 12 vector 0: spiral ramp needs a closed path; smooth ramp used
+SUMMARY seed 1 fam 99 sep -1 cell 0.050: scenes 1 det 0 gouge 0 clampBad 0 sepOrder 0 | tabs kept 5 checked 5 severed 1 thin(<0.1) 0 minNeck 1.1997 noSeed 0 noTarget 0 | requested 9 left 4 countBad 0 | 1.7s

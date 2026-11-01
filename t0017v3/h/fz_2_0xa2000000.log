@@ -1,0 +1,12 @@
+REG[selfX] coCircular-tie st=0 seed=0xa2000089 gen=12 n=25 d=0.136915773 Round side=1 mitre=2 chains b29 m31 | br[reversal ch 5 j 0 dot -1.000000] main[line junction not bitwise ch 0 j 3 gap 1.57e-16] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[selfX] coCircular-tie st=0 seed=0xa200079d gen=12 n=29 d=0.121433917 Round side=1 mitre=2 chains b35 m37 | br[reversal ch 20 j 1 dot -1.000000] main[line junction not bitwise ch 1 j 0 gap 1.31e-14] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[selfX] coCircular-tie st=0 seed=0xa2000cb0 gen=12 n=25 d=0.112354761 Round side=1 mitre=1.942 chains b19 m20 | br[reversal ch 0 j 6 dot -1.000000] main[arc-arc gap ch 0 j 0 rel 2.36e-08] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+fuzz4 fam=2 N=6000 ran 6000 seed0=0xa2000000: identical 1049 differ 4951 REGRESSIONS 3 | branch totals: gaps 0 reversals 135 overlaps 0 shortBack 0 suspiciousTips 0 (exact 0; main in differing cases 0) coderBack 0 (exact 0) distViol 0 roundViol 0 dupChains 0 | worstUnder(noST) 1.24e-07 worstOver(noST) 4.97e-07 | splitJoints br 449 main 568 | cases with dropped main loops 0 (max width 0, max len 0, max dist to branch 0), corner-only diffs 26 | cpu 3.7s
+  gen 10: 759 cases, 0 regressions
+  gen 11: 729 cases, 0 regressions
+  gen 12: 742 cases, 3 regressions
+  gen 13: 793 cases, 0 regressions
+  gen 14: 739 cases, 0 regressions
+  gen 15: 770 cases, 0 regressions
+  gen 16: 747 cases, 0 regressions
+  gen 17: 721 cases, 0 regressions

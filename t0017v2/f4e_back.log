@@ -1,0 +1,139 @@
+BACK lensSlot st=0 seed=0xe400001f gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999999
+BACK lensSlot(noisy) st=0 seed=0xe4000040 gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+BACK lensSlot st=0 seed=0xe400004b gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+BACK lensSlot st=0 seed=0xe4000067 gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999997
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4000069 gen=30 n=5 d=0.896782719 Round side=0 mitre=2 chains b0 m1 | br[coverage miss at (9.24548931e-18,0.896588641) dist-to-output 1] main[line junction not bitwise ch 0 j 0 gap 1.13e-16] miss other 0 (worst 0 at 0,0) loop 60 (w 0.000194 L 0.0306) corner 0
+REG[wideLoopDropped] lensSlot(noisy) st=0 seed=0xe400009d gen=30 n=5 d=0.210547146 Round side=0 mitre=2 chains b1 m2 | br[coverage miss at (-3.69362788e-11,0.21021017) dist-to-output 1] main[line junction not bitwise ch 0 j 0 gap 5.96e-16] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000337 L 0.46) corner 0
+REG[wideLoopDropped] lensSlot(noisy) st=0 seed=0xe4000176 gen=30 n=5 d=0.721708408 Square side=0 mitre=2.846 chains b1 m2 | br[coverage miss at (0.76090434,0.680585277) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 2.3e-11] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000256 L 3.22) corner 0
+BACK lensSlot st=0 seed=0xe40001c0 gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+BACK lensSlot st=0 seed=0xe40001f6 gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999975
+REG[wideLoopDropped] lensSlot(noisy) st=0 seed=0xe4000225 gen=30 n=5 d=0.361064608 Square side=0 mitre=2 chains b2 m3 | br[coverage miss at (2807.40392,3863.74864) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 7.88e-11] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000128 L 3.38) corner 0
+REG[wideLoopDropped] lensSlot st=0 seed=0xe400022c gen=30 n=5 d=0.0515290355 Square side=0 mitre=2.718 chains b2 m3 | br[coverage miss at (0.826121218,0.467044703) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 1.58e-10] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000341 L 5.48) corner 0
+BACK lensSlot st=0 seed=0xe4000256 gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999975
+BACK lensSlot st=0 seed=0xe400027d gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+REG[wideLoopDropped] lensSlot st=0 seed=0xe40002ee gen=30 n=5 d=0.0761672603 Square side=0 mitre=2 chains b4 m5 | br[coverage miss at (10000,-9999.92402) dist-to-output 0.211] main[line junction not bitwise ch 2 j 0 gap 1.82e-12] miss other 0 (worst 0 at 0,0) loop 58 (w 0.000185 L 0.0294) corner 0
+BACK lensSlot st=0 seed=0xe4000340 gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+BACK lensSlot st=0 seed=0xe4000364 gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999984
+REG[wideLoopDropped] lensSlot st=0 seed=0xe40003c1 gen=30 n=5 d=0.106886407 Round side=0 mitre=2 chains b4 m5 | br[coverage miss at (10000,-9999.89324) dist-to-output 0.219] main[] miss other 0 (worst 0 at 0,0) loop 22 (w 0.000126 L 0.0113) corner 0
+BACK lensSlot st=0 seed=0xe400040a gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999999
+BACK lensSlot st=0 seed=0xe400042d gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999994
+BACK coCircNear(noisy) st=0 seed=0xe400045b gen=33 Round coderBack br 1 main 1 | susp br 0 main 0 | reversal ch 0 j 1 dot -1.000000
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4000467 gen=30 n=5 d=0.941494197 Square side=0 mitre=2.841 chains b1 m2 | br[coverage miss at (-0.906566307,0.94142504) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 1.03e-09] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000142 L 5.07) corner 0
+REG[wideLoopDropped] lensSlot st=0 seed=0xe400048f gen=30 n=5 d=0.0908784987 Square side=0 mitre=1.176 chains b2 m3 | br[coverage miss at (5.37687191e-15,0.0906403348) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 6.23e-13] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000238 L 0.818) corner 0
+REG[wideLoopDropped] lensSlot st=0 seed=0xe400049b gen=30 n=5 d=0.70090064 Sharp side=0 mitre=2 chains b2 m3 | br[coverage miss at (-0.764993512,0.700757686) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 4.35e-14] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000478 L 3.65) corner 0
+BACK lensSlot(noisy) st=0 seed=0xe4000543 gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999977
+REG[wideLoopDropped] lensSlot st=0 seed=0xe400056b gen=30 n=5 d=0.119736175 Round side=0 mitre=2 chains b1 m2 | br[coverage miss at (-10000,-9999.88045) dist-to-output 1] main[reversal ch 0 j 0 dot -0.999953] miss other 0 (worst 0 at 0,0) loop 310 (w 0.000188 L 0.155) corner 0
+BACK lensSlot st=0 seed=0xe4000598 gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+BACK lensSlot(noisy) st=0 seed=0xe40005b4 gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+BACK lensSlot st=0 seed=0xe40005f5 gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+BACK lensSlot st=0 seed=0xe400063d gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+REG[wideLoopDropped] lensSlot(noisy) st=0 seed=0xe4000684 gen=30 n=5 d=0.273289057 Square side=0 mitre=3.217 chains b2 m3 | br[coverage miss at (1.59747948,3.52471798) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 7.18e-12] miss other 0 (worst 0 at 0,0) loop 798 (w 0.00037 L 16.1) corner 0
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4000728 gen=30 n=5 d=0.185321627 Square side=0 mitre=3.867 chains b2 m3 | br[coverage miss at (0.15555432,-0.100378826) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 2.42e-14] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000192 L 0.772) corner 0
+REG[wideLoopDropped] lensSlot st=0 seed=0xe40007eb gen=30 n=5 d=0.125500316 Square side=0 mitre=2 chains b5 m6 | br[coverage miss at (5.85243001e-17,0.125232565) dist-to-output 0.693] main[line junction not bitwise ch 1 j 0 gap 5.82e-17] miss other 0 (worst 0 at 0,0) loop 180 (w 0.000268 L 0.0905) corner 0
+BACK lensSlot st=0 seed=0xe40007fe gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 0 j 0 dot -0.999983
+BACK lensSlot st=0 seed=0xe4000815 gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 0 j 0 dot -0.999995
+BACK lensSlot st=0 seed=0xe4000846 gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 0 j 0 dot -0.999952
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4000848 gen=30 n=5 d=1.06222409 Square side=0 mitre=1.457 chains b0 m1 | br[coverage miss at (-10000.2631,10001.0621) dist-to-output 1] main[reversal ch 0 j 0 dot -0.999997] miss other 0 (worst 0 at 0,0) loop 798 (w 0.00038 L 1.3) corner 0
+BACK lensSlot st=0 seed=0xe4000890 gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999998
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4000924 gen=30 n=5 d=0.435345942 Sharp side=0 mitre=2 chains b1 m2 | br[coverage miss at (1006.24015,-4661.27343) dist-to-output 1] main[line junction not bitwise ch 0 j 0 gap 1.03e-11] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000259 L 0.658) corner 0
+REG[wideLoopDropped] lensSlot st=0 seed=0xe400092d gen=30 n=5 d=0.866106613 Sharp side=0 mitre=2.383 chains b2 m3 | br[coverage miss at (4904.78582,-2119.36749) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 9.09e-13] miss other 0 (worst 0 at 0,0) loop 798 (w 0.00046 L 15.3) corner 0
+BACK lensSlot st=0 seed=0xe4000937 gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999998
+BACK lensSlot st=0 seed=0xe4000953 gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+REG[wideLoopDropped] lensSlot st=0 seed=0xe400095a gen=30 n=5 d=0.14599321 Round side=0 mitre=2.296 chains b2 m3 | br[coverage miss at (9999.28105,10000.146) dist-to-output 0.992] main[reversal ch 1 j 0 dot -1.000000] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000174 L 3.19) corner 0
+REG[wideLoopDropped] lensSlot(noisy) st=0 seed=0xe40009a9 gen=30 n=5 d=0.991291923 Square side=0 mitre=2.283 chains b2 m3 | br[coverage miss at (9995.36464,-9999.00873) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 2.57e-12] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000314 L 19.3) corner 0
+REG[wideLoopDropped] lensSlot(noisy) st=0 seed=0xe40009af gen=30 n=5 d=0.251474885 Sharp side=0 mitre=2 chains b2 m3 | br[coverage miss at (0.250560358,0.0165281092) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 5.73e-13] miss other 0 (worst 0 at 0,0) loop 798 (w 0.00037 L 0.697) corner 0
+BACK lensSlot st=0 seed=0xe40009f4 gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4000a1f gen=30 n=5 d=0.26678957 Square side=0 mitre=2 chains b2 m3 | br[coverage miss at (-0.264361815,-0.0336619623) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 5.53e-13] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000293 L 0.636) corner 0
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4000a42 gen=30 n=5 d=1.38333096 Sharp side=0 mitre=2 chains b2 m3 | br[coverage miss at (-4.21661192,1.38331992) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 9.85e-12] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000141 L 17.6) corner 0
+REG[cov] lensSlot st=0 seed=0xe4000a7f gen=30 n=5 d=0.140624236 Sharp side=0 mitre=2 chains b4 m5 | br[coverage miss at (2.78429433e-18,0.140415006) dist-to-output 0.289] main[line junction not bitwise ch 0 j 0 gap 5.72e-14] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 34
+BACK lensSlot st=0 seed=0xe4000af9 gen=30 Sharp coderBack br 2 main 3 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+BACK lensSlot(noisy) st=0 seed=0xe4000b0d gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999995
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4000bb6 gen=30 n=5 d=0.204213051 Round side=0 mitre=2 chains b4 m5 | br[coverage miss at (9111.7968,1435.31589) dist-to-output 0.434] main[line junction not bitwise ch 2 j 1 gap 2.27e-13] miss other 0 (worst 0 at 0,0) loop 44 (w 0.000131 L 0.0223) corner 0
+REG[wideLoopDropped] lensSlot(noisy) st=0 seed=0xe4000be1 gen=30 n=5 d=1.05661905 Sharp side=0 mitre=2 chains b2 m3 | br[coverage miss at (-10004.5186,10001.0566) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 4.07e-12] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000225 L 18.8) corner 0
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4000c81 gen=30 n=5 d=0.41760317 Square side=0 mitre=2 chains b2 m3 | br[coverage miss at (-0.299278083,0.417419715) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 7.79e-14] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000287 L 1.99) corner 0
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4000cc6 gen=30 n=5 d=0.0687731997 Sharp side=0 mitre=2 chains b4 m5 | br[coverage miss at (6800.08808,-493.342613) dist-to-output 0.156] main[line junction not bitwise ch 0 j 1 gap 9.37e-13] miss other 0 (worst 0 at 0,0) loop 50 (w 0.000311 L 0.0256) corner 0
+BACK lensSlot st=0 seed=0xe4000ccf gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999999
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4000ce9 gen=30 n=5 d=0.138792543 Round side=0 mitre=2 chains b2 m3 | br[coverage miss at (0.104395287,0.0912626014) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 1.34e-14] miss other 0 (worst 0 at 0,0) loop 798 (w 0.00013 L 0.502) corner 0
+BACK coCircNear(noisy) st=0 seed=0xe4000d06 gen=33 Sharp coderBack br 1 main 1 | susp br 0 main 0 | reversal ch 0 j 1 dot -1.000000
+BACK lensSlot st=0 seed=0xe4000d32 gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999989
+BACK lensSlot(noisy) st=0 seed=0xe4000d5a gen=30 Sharp coderBack br 0 main 1 | susp br 1 main 1 | reversal ch 0 j 0 dot -0.999995
+REG[wideLoopDropped] lensSlot(noisy) st=0 seed=0xe4000d79 gen=30 n=5 d=0.256646367 Round side=0 mitre=2 chains b1 m2 | br[coverage miss at (9072.17357,-683.096414) dist-to-output 1] main[line junction not bitwise ch 0 j 0 gap 1.14e-13] miss other 0 (worst 0 at 0,0) loop 218 (w 0.000209 L 0.109) corner 0
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4000da3 gen=30 n=5 d=0.182573609 Round side=0 mitre=2 chains b2 m3 | br[coverage miss at (4324.37623,-6768.281) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 3.75e-12] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000129 L 8.39) corner 0
+BACK lensSlot(noisy) st=0 seed=0xe4000dee gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 0 j 0 dot -0.999922
+BACK lensSlot st=0 seed=0xe4000e7b gen=30 Sharp coderBack br 0 main 1 | susp br 1 main 2 | reversal ch 1 j 0 dot -1.000000
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4000ef2 gen=30 n=5 d=1.52465795 Square side=0 mitre=2 chains b1 m2 | br[coverage miss at (-4.48023317,1.52463409) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 4.99e-12] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000304 L 18.7) corner 0
+BACK lensSlot st=0 seed=0xe4000f45 gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999970
+BACK lensSlot st=0 seed=0xe4000f6d gen=30 Round coderBack br 0 main 1 | susp br 1 main 2 | reversal ch 0 j 0 dot -0.999993
+BACK coCircNear(noisy) st=0 seed=0xe400105c gen=33 Square coderBack br 1 main 1 | susp br 0 main 0 | reversal ch 0 j 1 dot -1.000000
+BACK lensSlot st=0 seed=0xe400108f gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+BACK lensSlot(noisy) st=0 seed=0xe4001091 gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999999
+BACK lensSlot st=0 seed=0xe40010e8 gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4001110 gen=30 n=5 d=0.239187949 Sharp side=0 mitre=3.215 chains b2 m3 | br[coverage miss at (5037.20695,2891.78233) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 3.11e-08] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000142 L 17.3) corner 0
+BACK lensSlot(noisy) st=0 seed=0xe4001149 gen=30 Sharp coderBack br 0 main 1 | susp br 1 main 2 | reversal ch 1 j 0 dot -1.000000
+BACK lensSlot st=0 seed=0xe400116f gen=30 Sharp coderBack br 0 main 2 | susp br 1 main 2 | reversal ch 1 j 0 dot -1.000000
+REG[wideLoopDropped] lensSlot st=0 seed=0xe40011a2 gen=30 n=5 d=0.103056018 Round side=0 mitre=3.313 chains b3 m4 | br[coverage miss at (-1.93377565,0.103044556) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 1.26e-12] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000146 L 8.06) corner 0
+REG[wideLoopDropped] lensSlot(noisy) st=0 seed=0xe4001275 gen=30 n=5 d=0.0510645093 Square side=0 mitre=3.58 chains b2 m3 | br[coverage miss at (0.793944195,-0.00686205514) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 4.79e-13] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000135 L 3.92) corner 0
+BACK lensSlot st=0 seed=0xe40012e5 gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999999
+BACK lensSlot st=0 seed=0xe40012f5 gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999935
+BACK lensSlot st=0 seed=0xe4001331 gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+BACK lensSlot st=0 seed=0xe4001352 gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+REG[selfX] lensSlot st=0 seed=0xe400137f gen=30 n=5 d=0.0896334089 Round side=0 mitre=2 chains b2 m3 | br[self-x ch 1 spans 0,4 at (-6304.11569,-8203.64763)] main[line junction not bitwise ch 1 j 0 gap 3.75e-12] miss other 0 (worst 0 at 0,0) loop 798 (w 0.00012 L 12.3) corner 0
+BACK lensSlot st=0 seed=0xe4001384 gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 0 j 0 dot -0.999927
+REG[wideLoopDropped] lensSlot st=0 seed=0xe40013d0 gen=30 n=5 d=0.0517237499 Sharp side=0 mitre=2 chains b5 m6 | br[coverage miss at (5.01428075e-17,0.0514895209) dist-to-output 0.412] main[line junction not bitwise ch 1 j 0 gap 8.78e-17] miss other 0 (worst 0 at 0,0) loop 156 (w 0.000234 L 0.0783) corner 0
+BACK lensSlot st=0 seed=0xe40013d1 gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999979
+BACK lensSlot(noisy) st=0 seed=0xe40013e6 gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999993
+BACK lensSlot(noisy) st=0 seed=0xe40013f6 gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999999
+BACK lensSlot(noisy) st=0 seed=0xe4001424 gen=30 Square coderBack br 0 main 1 | susp br 1 main 2 | reversal ch 1 j 0 dot -1.000000
+BACK lensSlot st=0 seed=0xe400144c gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+BACK lensSlot st=0 seed=0xe40014af gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999994
+REG[wideLoopDropped] lensSlot st=0 seed=0xe40014e6 gen=30 n=5 d=1.00743138 Round side=0 mitre=2 chains b1 m2 | br[coverage miss at (9187.72515,-7957.07667) dist-to-output 1] main[reversal ch 1 j 0 dot -1.000000] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000473 L 4.29) corner 0
+REG[wideLoopDropped] lensSlot st=0 seed=0xe400150a gen=30 n=5 d=0.226759617 Round side=0 mitre=4.082 chains b2 m3 | br[coverage miss at (-0.301510687,0.226676064) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 5.55e-14] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000129 L 2.03) corner 0
+REG[wideLoopDropped] lensSlot st=0 seed=0xe400151f gen=30 n=5 d=0.102430175 Square side=0 mitre=2.311 chains b2 m3 | br[coverage miss at (9999.67997,10000.1023) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 6e-11] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000203 L 2.4) corner 0
+REG[wideLoopDropped] lensSlot st=0 seed=0xe400153d gen=30 n=5 d=0.598482592 Square side=0 mitre=1.994 chains b2 m3 | br[coverage miss at (2167.18688,5935.6174) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 4.55e-13] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000183 L 5.4) corner 0
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4001542 gen=30 n=5 d=0.574057791 Square side=0 mitre=2.898 chains b1 m2 | br[coverage miss at (10000,10000.5739) dist-to-output 1] main[reversal ch 0 j 0 dot -0.999993] miss other 0 (worst 0 at 0,0) loop 658 (w 0.000157 L 0.329) corner 0
+REG[wideLoopDropped] lensSlot(noisy) st=0 seed=0xe4001564 gen=30 n=5 d=0.155803563 Round side=0 mitre=1.56 chains b2 m3 | br[coverage miss at (-0.252143074,0.155765813) dist-to-output 0.965] main[line junction not bitwise ch 1 j 0 gap 5.83e-15] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000465 L 1.05) corner 0
+REG[wideLoopDropped] lensSlot st=0 seed=0xe40015f6 gen=30 n=5 d=0.271701935 Square side=0 mitre=2 chains b1 m2 | br[coverage miss at (10000,-9999.72855) dist-to-output 1] main[reversal ch 0 j 0 dot -0.999971] miss other 0 (worst 0 at 0,0) loop 530 (w 0.000251 L 0.265) corner 0
+BACK lensSlot st=0 seed=0xe400165f gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 0 j 0 dot -0.999952
+BACK lensSlot st=0 seed=0xe4001688 gen=30 Square coderBack br 2 main 3 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999997
+REG[wideLoopDropped] lensSlot(noisy) st=0 seed=0xe4001710 gen=30 n=5 d=0.952274201 Round side=0 mitre=2.275 chains b1 m2 | br[coverage miss at (6373.60562,-6663.4827) dist-to-output 1] main[reversal ch 1 j 0 dot -1.000000] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000232 L 3.92) corner 0
+REG[wideLoopDropped] lensSlot st=0 seed=0xe400174b gen=30 n=5 d=0.120370621 Round side=0 mitre=2 chains b1 m2 | br[coverage miss at (2.58671636e-16,0.1201439) dist-to-output 1] main[line junction not bitwise ch 0 j 0 gap 4.99e-16] miss other 0 (worst 0 at 0,0) loop 350 (w 0.000227 L 0.175) corner 0
+BACK lensSlot(noisy) st=0 seed=0xe400177e gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999999
+REG[wideLoopDropped] lensSlot st=0 seed=0xe40017ac gen=30 n=5 d=0.124369458 Round side=0 mitre=2 chains b5 m6 | br[coverage miss at (-9549.86967,3625.57501) dist-to-output 0.668] main[line junction not bitwise ch 3 j 1 gap 4.55e-13] miss other 0 (worst 0 at 0,0) loop 120 (w 0.000128 L 0.0606) corner 0
+REG[wideLoopDropped] lensSlot(noisy) st=0 seed=0xe40017b6 gen=30 n=5 d=0.243878671 Square side=0 mitre=2 chains b1 m2 | br[coverage miss at (3.57591586e-12,0.243734325) dist-to-output 1] main[line junction not bitwise ch 0 j 0 gap 3.54e-16] miss other 0 (worst 0 at 0,0) loop 490 (w 0.000144 L 0.245) corner 0
+BACK lensSlot(noisy) st=0 seed=0xe40017f1 gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999999
+REG[wideLoopDropped] lensSlot st=0 seed=0xe400181a gen=30 n=5 d=0.0751354997 Sharp side=0 mitre=1.527 chains b2 m3 | br[coverage miss at (-0.199431853,-0.212244401) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 6.08e-14] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000176 L 1.63) corner 0
+REG[wideLoopDropped] lensSlot(noisy) st=0 seed=0xe400184c gen=30 n=5 d=0.0851402415 Round side=0 mitre=1.466 chains b2 m3 | br[coverage miss at (-9.73817531e-10,0.0850093212) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 1.74e-14] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000131 L 0.971) corner 0
+REG[wideLoopDropped] lensSlot(noisy) st=0 seed=0xe4001889 gen=30 n=5 d=0.273487114 Round side=0 mitre=2.504 chains b1 m2 | br[coverage miss at (-0.267573906,-0.0553826942) dist-to-output 1] main[line junction not bitwise ch 0 j 0 gap 6.75e-16] miss other 0 (worst 0 at 0,0) loop 380 (w 0.000242 L 0.191) corner 0
+REG[wideLoopDropped] lensSlot st=0 seed=0xe40018b8 gen=30 n=5 d=0.0871372122 Round side=0 mitre=2 chains b5 m6 | br[coverage miss at (0.0499191466,-0.0712031717) dist-to-output 0.323] main[line junction not bitwise ch 1 j 0 gap 2.83e-16] miss other 0 (worst 0 at 0,0) loop 82 (w 0.000179 L 0.0414) corner 0
+REG[wideLoopDropped] lensSlot(noisy) st=0 seed=0xe40018f4 gen=30 n=5 d=0.295052551 Sharp side=0 mitre=1.651 chains b2 m3 | br[coverage miss at (3.50706037,-0.664281285) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 2.68e-09] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000318 L 14.8) corner 0
+REG[wideLoopDropped] lensSlot st=0 seed=0xe40018fc gen=30 n=5 d=0.103480006 Square side=0 mitre=1.178 chains b2 m3 | br[coverage miss at (7653.89712,6056.99508) dist-to-output 1] main[reversal ch 1 j 0 dot -0.999974] miss other 0 (worst 0 at 0,0) loop 798 (w 0.00043 L 0.479) corner 0
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4001930 gen=30 n=5 d=0.557008367 Square side=0 mitre=2.453 chains b2 m3 | br[coverage miss at (9995.75426,-9999.44301) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 5.46e-12] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000178 L 17.7) corner 0
+BACK lensSlot(noisy) st=0 seed=0xe4001932 gen=30 Square coderBack br 0 main 1 | susp br 1 main 2 | reversal ch 1 j 0 dot -1.000000
+BACK lensSlot st=0 seed=0xe400194f gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 0 j 0 dot -0.999940
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4001999 gen=30 n=5 d=0.327589713 Square side=0 mitre=2 chains b1 m2 | br[coverage miss at (4.82184799e-16,0.327435349) dist-to-output 1] main[line junction not bitwise ch 0 j 0 gap 2.58e-14] miss other 0 (worst 0 at 0,0) loop 394 (w 0.000154 L 0.197) corner 0
+BACK lensSlot st=0 seed=0xe40019f7 gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999978
+BACK lensSlot st=0 seed=0xe4001a39 gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999980
+BACK lensSlot st=0 seed=0xe4001a3b gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 0 j 0 dot -0.999966
+BACK lensSlot st=0 seed=0xe4001a3f gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999995
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4001a4b gen=30 n=5 d=0.436125187 Round side=0 mitre=2 chains b2 m3 | br[coverage miss at (-0.800215357,0.435986348) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 9.36e-14] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000385 L 4) corner 0
+BACK lensSlot st=0 seed=0xe4001a7f gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+BACK coCircNear(noisy) st=0 seed=0xe4001ac5 gen=33 Sharp coderBack br 1 main 1 | susp br 0 main 0 | reversal ch 0 j 1 dot -1.000000
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4001ae6 gen=30 n=5 d=0.065701267 Sharp side=0 mitre=2 chains b2 m3 | br[coverage miss at (2.79655254e-15,0.0654158872) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 1.04e-12] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000285 L 0.646) corner 0
+BACK coCircNear(noisy) st=0 seed=0xe4001b0a gen=33 Round coderBack br 0 main 0 | susp br 1 main 1 | reversal ch 0 j 1 dot -1.000000
+REG[wideLoopDropped] lensSlot(noisy) st=0 seed=0xe4001b15 gen=30 n=5 d=0.172985188 Round side=0 mitre=2 chains b2 m3 | br[coverage miss at (-5346.04958,-7722.6758) dist-to-output 1] main[reversal ch 1 j 0 dot -1.000000] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000342 L 4.42) corner 0
+BACK lensSlot(noisy) st=0 seed=0xe4001b7d gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999995
+BACK lensSlot st=0 seed=0xe4001bb3 gen=30 Sharp coderBack br 2 main 3 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999999
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4001c15 gen=30 n=5 d=0.990483795 Sharp side=0 mitre=1.46 chains b1 m2 | br[coverage miss at (-2.02297764,0.990457336) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 2.76e-10] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000337 L 8.43) corner 0
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4001c76 gen=30 n=5 d=0.164483804 Round side=0 mitre=1.236 chains b2 m3 | br[coverage miss at (-9722.36697,5888.66867) dist-to-output 1] main[reversal ch 1 j 0 dot -0.999996] miss other 0 (worst 0 at 0,0) loop 798 (w 0.000452 L 1.31) corner 0
+REG[wideLoopDropped] lensSlot st=0 seed=0xe4001d8d gen=30 n=5 d=0.0964985242 Square side=0 mitre=2.392 chains b1 m2 | br[coverage miss at (-9735.2642,9381.39035) dist-to-output 1] main[reversal ch 0 j 0 dot -0.999962] miss other 0 (worst 0 at 0,0) loop 534 (w 0.000291 L 0.268) corner 0
+BACK lensSlot st=0 seed=0xe4001d98 gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 0 j 0 dot -0.999931
+BACK lensSlot st=0 seed=0xe4001e89 gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999986
+BACK lensSlot st=0 seed=0xe4001f3f gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999998
+fuzz4 fam=4 N=8000 ran 8000 seed0=0xe4000000: identical 2549 differ 5451 REGRESSIONS 61 | branch totals: gaps 0 reversals 718 overlaps 16 shortBack 0 suspiciousTips 124 (exact 97; main in differing cases 509) coderBack 120 (exact 94) distViol 91 roundViol 0 dupChains 0 | worstUnder(noST) 5.81e-06 worstOver(noST) 4.94e-07 | splitJoints br 3 main 7 | cases with dropped main loops 414 (max width 0.000478, max len 19.7, max dist to branch 1.02), corner-only diffs 17 | cpu 2.6s
+  gen 30: 1180 cases, 61 regressions
+  gen 31: 1129 cases, 0 regressions
+  gen 32: 1080 cases, 0 regressions
+  gen 33: 1129 cases, 0 regressions
+  gen 34: 1124 cases, 0 regressions
+  gen 35: 1121 cases, 0 regressions
+  gen 36: 1237 cases, 0 regressions

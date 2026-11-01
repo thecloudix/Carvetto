@@ -1,0 +1,3 @@
+scene 135 fam 1 side 1 D 12.000 V 0 allow 0.246 sep 1 lpa 0.074 rev 0 n 3 sp 0 len 3.679 th 0.325 3d 1 avoid 0 ramp 3 lead 1 out 1 oc 15.48 start 1 depth 7.99/2.24: [SEVERED tab at (18.242,-7.086) plateau 15.679]
+scene 161 fam 1 side 1 D 8.000 V 0 allow 0.253 sep 1 lpa 0.960 rev 0 n 7 sp 0 len 1.582 th 3.706 3d 0 avoid 1 ramp 2 lead 1 out 1 oc 9.22 start 2 depth 6.60/0.58: [SEVERED tab at (17.564,-8.458) plateau 9.582]
+SUMMARY seed 41003 fam 1 sep 1 cell 0.040: scenes 300 det 0 gouge 0 clampBad 0 sepOrder 0 | tabs kept 925 checked 919 severed 2 thin(<0.1) 0 minNeck 0.2458 noSeed 0 noTarget 6 | requested 1263 left 338 countBad 0 | 472.6s

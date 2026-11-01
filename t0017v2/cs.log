@@ -1,0 +1,9 @@
+CS T=0 dir=0 g=1e-10 d=1.03287 side=0 join=0: dv 0 (1.87e-11) rv 0 (1.01e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+CS T=0 dir=0 g=1e-10 d=0.206574 side=0 join=0: dv 0 (1.87e-11) rv 0 (1.01e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+CS T=0 dir=1 g=1e-10 d=1.03287 side=0 join=0: dv 0 (1.87e-11) rv 0 (1.01e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+CS T=0 dir=1 g=1e-10 d=0.206574 side=0 join=0: dv 0 (1.87e-11) rv 0 (1.01e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+CS T=0 dir=2 g=1e-10 d=1.03287 side=0 join=0: dv 0 (1.87e-11) rv 0 (1.01e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+CS T=0 dir=2 g=1e-10 d=0.206574 side=0 join=0: dv 0 (1.87e-11) rv 0 (1.01e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+CS T=0 dir=3 g=1e-10 d=1.03287 side=0 join=0: dv 0 (1.87e-11) rv 0 (1.01e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+CS T=0 dir=3 g=1e-10 d=0.206574 side=0 join=0: dv 0 (1.87e-11) rv 0 (1.01e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+cs: 7776 offsets, 8 with violations

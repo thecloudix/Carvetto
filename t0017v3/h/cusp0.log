@@ -1,0 +1,2 @@
+FLAG which=0 g=6.31e-11 shift=(0,0) side=0 | br chains 4 gaps 0 sx 1 cb 0 dv 0 (1.87e-11) rv 0 (8.97e-11) ov 0 rev 2 [reversal ch 1 j 6 dot -1.000000] | main chains 4 gaps 12 sx 0 cb 1 dv 0 rv 0 ov 0 rev 2 [line junction not bitwise ch 1 j 1 gap 3.55e-15]
+cusp which=0 d=1.03287 nG=40 gmax=1e-06 log=1 neg=1: cases 972 flagged 1 | branch gaps 0 sx 1 coderBack 0 dv 0 (worstUnder 4.56e-10) rv 0 (worstOver 4.46e-08) ov 40 rev 758 bridges<1e-6 178 (max len 7.09e-07) | main gaps 3935 sx 120 coderBack 792 dv 0 (1e-09) rv 0 (2.7e-12) ov 638 rev 1170 | allowance 1.21e-07

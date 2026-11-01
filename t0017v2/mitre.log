@@ -1,0 +1,1 @@
+mitre oracle: tested 24000 (expect round 9142, mitre 5432, chamfer 9426), agree 24000, mismatch 0, skipped(near-tangent chamfer) 0

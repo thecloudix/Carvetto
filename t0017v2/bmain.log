@@ -1,0 +1,47 @@
+[1/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/vec2.cpp.o
+[2/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/box2.cpp.o
+[3/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/transform2.cpp.o
+[4/46] Building C object core/CMakeFiles/carvetto_miniz.dir/__/_deps/miniz-src/miniz.c.o
+[5/46] Linking C static library core/libcarvetto_miniz.a
+[6/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/span.cpp.o
+[7/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/polyline.cpp.o
+[8/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/contour.cpp.o
+[9/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/contour_ops.cpp.o
+[10/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/toolpath/move.cpp.o
+[11/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/toolpath/toolpath.cpp.o
+[12/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/toolpath/pass_plan.cpp.o
+[13/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/toolpath/linking.cpp.o
+[14/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/toolpath/time.cpp.o
+[15/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/intersect.cpp.o
+[16/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/tooling/tool.cpp.o
+[17/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/tooling/tool_database.cpp.o
+[18/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/post/variables.cpp.o
+[19/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/post/parser.cpp.o
+[20/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/tooling/json_io.cpp.o
+[21/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/job.cpp.o
+[22/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/sheet.cpp.o
+[23/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/object.cpp.o
+[24/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/post/interpreter.cpp.o
+[25/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/selection.cpp.o
+[26/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/variables.cpp.o
+[27/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/undo_stack.cpp.o
+[28/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/commands.cpp.o
+[29/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/document.cpp.o
+[30/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/clipper_interop.cpp.o
+[31/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/boolean.cpp.o
+[32/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/offset.cpp.o
+[33/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/carv_zip.cpp.o
+[34/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/carv_json_reader.cpp.o
+[35/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/io/dxf_pairs.cpp.o
+[36/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/io/dxf_text.cpp.o
+[37/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/io/dxf_curves.cpp.o
+[38/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/io/dxf_colour.cpp.o
+[39/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/carv_io.cpp.o
+[40/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/io/dxf_export.cpp.o
+[41/46] Building CXX object core/CMakeFiles/carvetto_core.dir/src/io/dxf_import.cpp.o
+[42/46] Building CXX object _deps/clipper2-build/CMakeFiles/Clipper2.dir/Clipper2Lib/src/clipper.offset.cpp.o
+[43/46] Building CXX object _deps/clipper2-build/CMakeFiles/Clipper2.dir/Clipper2Lib/src/clipper.engine.cpp.o
+[44/46] Building CXX object _deps/clipper2-build/CMakeFiles/Clipper2.dir/Clipper2Lib/src/clipper.rectclip.cpp.o
+[45/46] Linking CXX static library _deps/clipper2-build/libClipper2.a
+[46/46] Linking CXX static library core/libcarvetto_core.a
+MAIN_DONE 0

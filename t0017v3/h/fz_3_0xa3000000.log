@@ -1,0 +1,1 @@
+REG[wideLoopDropped] crossShort st=0 seed=0xa30006f4 gen=21 n=94 d=0.545132449 Round side=0 mitre=2.866 chains b4 m5 | br[] main[line junction not bitwise ch 0 j 1 gap 6.2e-12] miss other 0 (worst 0 at 0,0) loop 11 (w 1e+09 L 0.00619) corner 0

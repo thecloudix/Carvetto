@@ -1,0 +1,4 @@
+scene 483 kind 0 side 0 dir 0 tool EM6.000 allow 0.580 sep 1(lpa 0.421) tabs 1(3d 0 n 7 len 2.90 th 0.95 sp 0) ramp 0 lead 2 out 1 oc 0.00 start 0 moves 36 diags: 10 10
+   - TAB COUNT vector 0: placed 0 + dropped 6 != requested 7
+seed 53002: scenes 500 empty 2 | gouge 0 soft 219 allowViol 0 side 0 z 0 rapid 0 vert 0 descent 0 arc 0 tinyArc 0 fullCircle(note) 0 det 0 diag 0
+seed 53002: coverage 0/248 tabHeight 0 tabInterior 0 tabIntLen 0 tabCount 1/240 tabLen 0/203 finOrder 0/94 levels 0/10 | worst EM -4.9994e-05 cone -4.97744e-05 | 207.4s

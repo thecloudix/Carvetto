@@ -1,0 +1,12 @@
+near-collinear zig-zag sweep, translation 10000
+jy 0e+00   cases 100 | branch bad 0 (rev 0, overlaps 0, shortBack 0, gaps 0, distViol 0, worstUnder 3.1e-12) first t=0 | main bad 38 (rev 0 ov 0 sb 0 dv 0)
+jy 1e-13   cases 100 | branch bad 0 (rev 0, overlaps 0, shortBack 0, gaps 0, distViol 0, worstUnder 3.1e-12) first t=0 | main bad 50 (rev 0 ov 0 sb 0 dv 0)
+jy 1e-12   cases 100 | branch bad 0 (rev 0, overlaps 0, shortBack 0, gaps 0, distViol 0, worstUnder 2.7e-12) first t=0 | main bad 98 (rev 0 ov 0 sb 0 dv 0)
+jy 1e-11   cases 100 | branch bad 0 (rev 0, overlaps 0, shortBack 0, gaps 0, distViol 0, worstUnder 1.7e-11) first t=0 | main bad 99 (rev 0 ov 0 sb 0 dv 0)
+jy 1e-10   cases 100 | branch bad 0 (rev 0, overlaps 0, shortBack 0, gaps 0, distViol 0, worstUnder 1.8e-10) first t=0 | main bad 100 (rev 0 ov 17 sb 0 dv 0)
+jy 1e-09   cases 100 | branch bad 0 (rev 0, overlaps 0, shortBack 0, gaps 0, distViol 0, worstUnder 1.8e-09) first t=0 | main bad 100 (rev 0 ov 305 sb 0 dv 0)
+jy 1e-08   cases 100 | branch bad 0 (rev 0, overlaps 0, shortBack 0, gaps 0, distViol 0, worstUnder 8.5e-09) first t=0 | main bad 100 (rev 0 ov 1502 sb 0 dv 0)
+jy 1e-07   cases 100 | branch bad 0 (rev 0, overlaps 0, shortBack 0, gaps 0, distViol 0, worstUnder 8.5e-08) first t=0 | main bad 100 (rev 0 ov 465 sb 0 dv 0)
+jy 1e-06   cases 100 | branch bad 0 (rev 0, overlaps 0, shortBack 0, gaps 0, distViol 0, worstUnder 2.6e-12) first t=0 | main bad 100 (rev 0 ov 54 sb 0 dv 0)
+jy 1e-05   cases 100 | branch bad 0 (rev 0, overlaps 0, shortBack 0, gaps 0, distViol 0, worstUnder 2.7e-12) first t=0 | main bad 99 (rev 0 ov 10 sb 0 dv 0)
+jy 1e-04   cases 100 | branch bad 0 (rev 0, overlaps 0, shortBack 0, gaps 0, distViol 0, worstUnder 2.7e-12) first t=0 | main bad 99 (rev 0 ov 0 sb 0 dv 0)

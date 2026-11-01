@@ -1,0 +1,4 @@
+scene 5 fam 4 side 0 D 8.000 V 0 allow 0.188 sep 0 lpa 0.021 rev 0 n 9 sp 0 len 14.213 th 19.391 3d 0 avoid 0 ramp 2 lead 1 out 1 oc 6.99 start 1 depth 17.88/2.80: [SEVERED tab at (-0.336,13.190) plateau 26.534] [COUNT kept 3 + left 7 != requested 9 (diag M sum 9)]
+scene 20 fam 4 side 2 D 12.000 V 0 allow 0.179 sep 0 lpa 0.533 rev 0 n 7 sp 0 len 1.880 th 2.751 3d 0 avoid 0 ramp 2 lead 2 out 1 oc 6.66 start 1 depth 19.82/1.22: [THIN tab at (-8.855,13.262) plateau 13.892 neck 0.0973] [COUNT kept 4 + left 4 != requested 7 (diag M sum 7)]
+scene 33 fam 4 side 2 D 12.000 V 0 allow 0.000 sep 1 lpa 0.395 rev 0 n 9 sp 0 len 0.320 th 3.699 3d 0 avoid 1 ramp 0 lead 0 out 1 oc 2.77 start 1 depth 11.79/6.12: [SEVERED tab at (6.503,21.628) plateau 12.320]
+SUMMARY seed 81740 fam 4 sep -1 cell 0.050: scenes 50 det 0 gouge 0 clampBad 0 sepOrder 0 | tabs kept 128 checked 128 severed 2 thin(<0.1) 1 minNeck 0.0973 noSeed 0 noTarget 0 | requested 220 left 94 countBad 2 | 111.5s

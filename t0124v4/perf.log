@@ -1,0 +1,12 @@
+n 500 sep 1 kind 2: moves 24223 diags 977 (tab diags 500) cpu 10.83s wall 10.96s
+n 500 sep 1 kind 2: moves 23500 diags 477 (tab diags 0) cpu 7.99s wall 8.11s
+n 500 sep 0 kind 2: moves 17926 diags 944 (tab diags 500) cpu 4.22s wall 4.30s
+n 500 sep 0 kind 2: moves 17500 diags 444 (tab diags 0) cpu 3.48s wall 3.52s
+n 500 sep 1 kind 0: moves 32046 diags 0 (tab diags 0) cpu 9.47s wall 9.55s
+n 500 sep 1 kind 0: moves 15500 diags 0 (tab diags 0) cpu 5.69s wall 5.76s
+n 500 sep 0 kind 0: moves 20000 diags 0 (tab diags 0) cpu 2.83s wall 2.88s
+n 500 sep 0 kind 0: moves 11250 diags 0 (tab diags 0) cpu 2.59s wall 2.63s
+n 500 sep 1 kind 1: moves 53589 diags 0 (tab diags 0) cpu 14.99s wall 15.22s
+n 500 sep 1 kind 1: moves 36500 diags 0 (tab diags 0) cpu 8.76s wall 8.88s
+n 500 sep 0 kind 1: moves 37000 diags 0 (tab diags 0) cpu 3.14s wall 3.14s
+n 500 sep 0 kind 1: moves 27500 diags 0 (tab diags 0) cpu 2.79s wall 2.81s

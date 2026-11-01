@@ -1,0 +1,11 @@
+walk2000 seed a11ce                      spans   2000 d=1 worst CPU 0.0190 s
+walk2000 seed a11ce                      spans   2000 d=2 worst CPU 0.0360 s
+walk2000 seed b0b5                       spans   2000 d=1 worst CPU 0.0170 s
+walk2000 seed b0b5                       spans   2000 d=2 worst CPU 0.0346 s
+walk2000 seed c4a1                       spans   2000 d=1 worst CPU 0.0223 s
+walk2000 seed c4a1                       spans   2000 d=2 worst CPU 0.0445 s
+walk2000 seed d00d                       spans   2000 d=1 worst CPU 0.0178 s
+walk2000 seed d00d                       spans   2000 d=2 worst CPU 0.0362 s
+hypotrochoid8000 (closed)                spans   8000 d=2 worst CPU 0.3035 s
+textLoops8000                            spans   8000 d=2 worst CPU 0.1218 s
+zigzag 4000 pitch .05 amp .2 d=5         spans   4000 d=5 worst CPU 14.4342 s

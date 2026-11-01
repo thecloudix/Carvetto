@@ -1,0 +1,12 @@
+kind 3 seed 301 [discchain M=5] chordal 0.01 allow 0: 600 diam | lost>1e-3 0 (>2e-3 0, >5e-3 0) worst  | gougeEdges 0  | marginEat 0 worstMargin -5.00e-03 | outside 0 | msgs 0 
+kind 3 seed 301 [discchain M=5] chordal 0.01 allow 0: 4000 diam | lost>1e-3 0 (>2e-3 0, >5e-3 0) worst  | gougeEdges 0  | marginEat 0 worstMargin -5.00e-03 | outside 0 | msgs 0 
+kind 3 seed 700 [discchain M=3] chordal 0.01 allow 0: 4000 diam | lost>1e-3 0 (>2e-3 0, >5e-3 0) worst  | gougeEdges 0  | marginEat 0 worstMargin -5.00e-03 | outside 0 | msgs 0 
+kind 3 seed 606 [discchain M=4] chordal 0.5 allow 0: 4000 diam | lost>1e-3 0 (>2e-3 0, >5e-3 0) worst  | gougeEdges 0  | marginEat 0 worstMargin -2.50e-01 | outside 0 | msgs 0 
+kind 3 seed 505 [discchain M=6] chordal 0.01 allow 0: 4000 diam | lost>1e-3 0 (>2e-3 0, >5e-3 0) worst  | gougeEdges 0  | marginEat 0 worstMargin -5.00e-03 | outside 0 | msgs 0 
+kind 10 seed 101 [gap_poly] chordal 0.01 allow 0: 4000 diam | lost>1e-3 0 (>2e-3 0, >5e-3 0) worst  | gougeEdges 0  | marginEat 0 worstMargin -5.00e-03 | outside 0 | msgs 0 
+kind 6 seed 101 [plate+12 islands] chordal 0.01 allow 0: 4000 diam | lost>1e-3 0 (>2e-3 0, >5e-3 0) worst  | gougeEdges 0  | marginEat 1 worstMargin -5.00e-03 | outside 0 | msgs 0 
+lobe kind 3 seeds 700..+40 chordal 0.01 allow 0: checks 8440 drops 0 (with msg 0) gouges 0 | drops by log10(delta):
+lobe kind 3 seeds 300..+40 chordal 0.1 allow 0: checks 9240 drops 0 (with msg 0) gouges 0 | drops by log10(delta):
+lobe kind 8 seeds 300..+40 chordal 0.01 allow 0: checks 51960 drops 0 (with msg 0) gouges 0 | drops by log10(delta):
+lobe kind 10 seeds 1..+1 chordal 0.01 allow 0: checks 1320 drops 0 (with msg 0) gouges 0 | drops by log10(delta):
+DONE

@@ -1,0 +1,6 @@
+scene 2 fam 3 side 1 D 8.000 V 0 allow 0.317 sep 0 lpa 0.023 rev 1 n 7 sp 0 len 1.206 th 5.774 3d 1 avoid 1 ramp 1 lead 1 out 1 oc 0.00 start 1 depth 7.81/0.68: [COUNT kept 8 + left 5 != requested 14 (diag M sum 7)]
+scene 45 fam 3 side 1 D 12.000 V 0 allow 0.000 sep 1 lpa 0.019 rev 0 n 2 sp 0 len 1.915 th 1.509 3d 0 avoid 0 ramp 2 lead 0 out 1 oc 2.65 start 0 depth 16.44/1.12: [COUNT kept 0 + left 4 != requested 0 (diag M sum 4)]
+scene 50 fam 3 side 0 D 2.000 V 0 allow 0.060 sep 1 lpa 0.014 rev 0 n 3 sp 0 len 1.690 th 1.045 3d 0 avoid 1 ramp 3 lead 0 out 0 oc 12.85 start 1 depth 10.87/6.06: [roughing after finishing / classification] [COUNT kept 6 + left 4 != requested 6 (diag M sum 9)]
+scene 51 fam 3 side 0 D 3.175 V 0 allow 0.491 sep 0 lpa 0.713 rev 0 n 8 sp 0 len 7.840 th 1.604 3d 0 avoid 1 ramp 1 lead 2 out 1 oc 0.00 start 1 depth 12.93/4.30: [COUNT kept 9 + left 6 != requested 16 (diag M sum 8)]
+scene 127 fam 3 side 1 D 8.000 V 0 allow 0.000 sep 0 lpa 0.467 rev 1 n 3 sp 0 len 8.147 th 0.687 3d 0 avoid 1 ramp 1 lead 2 out 1 oc 0.00 start 2 depth 3.01/1.13: [COUNT kept 7 + left 4 != requested 12 (diag M sum 9)]
+SUMMARY seed 41007 fam 3 sep -1 cell 0.040: scenes 150 det 0 gouge 0 clampBad 0 sepOrder 1 | tabs kept 1004 checked 1003 severed 0 thin(<0.1) 0 minNeck 0.3548 noSeed 0 noTarget 1 | requested 2065 left 1066 countBad 5 | 1967.0s

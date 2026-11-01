@@ -1,0 +1,2 @@
+seed 91000616 [flower] [d=5.4515 so=5.4515 pd=1.614][d=1.5594 so=0.5113 pd=1.644][d=0.3843 so=0.3774 pd=1.969] strat=1 dir=1 ang=-1.200719520577 pp=2 allow=0.000 ramp=1 rd=12.40 cut=4.826 start=0.339 chord=0.0066 exact=0: REST-AIR moves=33 tool 1 move 324 at (17.660,17.556) dist to rest material 4.472 > r 0.780 | travel 18 engaged 0 pen 0.0000; links 33 engaged 21; retracts 12 81 36 regions 0
+sweep3: 50 scenes from seed 91000600: 1 failed, 0 crash/timeout, 0 unbuildable, 800.5s

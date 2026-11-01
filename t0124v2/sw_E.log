@@ -1,0 +1,3 @@
+scene 19 fam 6 side 0 D 12.000 V 0 allow 0.377 sep 0 lpa 0.045 rev 1 n 8 sp 0 len 2.593 th 5.524 3d 0 avoid 1 ramp 1 lead 2 out 1 oc 0.00 start 2 depth 6.10/1.24: [COUNT kept 7 + left 0 != requested 8 (diag M sum 0)]
+scene 64 fam 6 side 1 D 3.175 V 0 allow 0.000 sep 0 lpa 0.534 rev 1 n 9 sp 0 len 0.450 th 19.206 3d 1 avoid 0 ramp 1 lead 2 out 0 oc 11.47 start 0 depth 16.70/3.73: [COUNT kept 2 + left 6 != requested 9 (diag M sum 9)]
+SUMMARY seed 41005 fam 6 sep -1 cell 0.040: scenes 250 det 0 gouge 0 clampBad 0 sepOrder 0 | tabs kept 1051 checked 1051 severed 0 thin(<0.1) 0 minNeck 0.1790 noSeed 0 noTarget 0 | requested 1177 left 124 countBad 2 | 364.5s

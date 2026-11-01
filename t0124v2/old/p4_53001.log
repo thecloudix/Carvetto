@@ -1,0 +1,6 @@
+scene 98 kind 5 side 0 dir 1 tool V12.700@30 allow 0.125 sep 0(lpa 0.565) tabs 1(3d 0 n 6 len 13.04 th 0.76 sp 1) ramp 3 lead 0 out 1 oc 0.00 start 2 moves 151 diags: 10 10 10 10 10
+   - arc radius mismatch
+scene 330 kind 3 side 1 dir 1 tool EM3.175 allow 0.250 sep 0(lpa 0.099) tabs 1(3d 1 n 5 len 3.76 th 0.66 sp 0) ramp 0 lead 2 out 0 oc 0.00 start 1 moves 90 diags: 9 7 9 7 10 10 10 10
+   - TAB COUNT vector 1: placed 2 + dropped 8 != requested 5
+seed 53001: scenes 500 empty 9 | gouge 0 soft 225 allowViol 0 side 0 z 0 rapid 0 vert 0 descent 0 arc 1 tinyArc 0 fullCircle(note) 0 det 0 diag 0
+seed 53001: coverage 0/245 tabHeight 0 tabInterior 0 tabIntLen 0 tabCount 1/224 tabLen 0/240 finOrder 0/91 levels 0/7 | worst EM -4.99804e-05 cone -4.6067e-05 | 156.6s

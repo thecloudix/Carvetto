@@ -1,0 +1,44 @@
+scene 140 kind 6 side 1 dir 1 tool EM3.00 allow 0.230 sep 0 tabs 0(3d 1) ramp 0 lead 2 start 0 moves 3173 diags: 9 7 9 9 7
+   - StartMoved although a lead fits at the original start (26.7468,0.0154), margin 0.2301
+scene 170 kind 6 side 1 dir 0 tool EM6.00 allow 0.369 sep 0 tabs 0(3d 0) ramp 2 lead 1 start 0 moves 15992 diags: 5 5 5 9
+   - StartMoved although a lead fits at the original start (-20.7750,-32.5049), margin 0.2704
+   - StartMoved although a lead fits at the original start (-20.8196,-8.4623), margin 0.06222
+scene 173 kind 5 side 0 dir 0 tool EM6.00 allow 0.258 sep 0 tabs 0(3d 0) ramp 0 lead 1 start 2 moves 5813 diags: 5 5 5 9 7
+   - StartMoved although a lead fits at the original start (-4.1116,65.8912), margin 0.2575
+scene 185 kind 5 side 2 dir 1 tool V6.35 allow 0.043 sep 0 tabs 1(3d 0) ramp 0 lead 2 start 1 moves 350 diags: 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10
+   - arc radius mismatch 1.36e-06 (r=4.1442)
+   - tab notched: tool at z -2.9411 below tab top -0.0476 inside a raised stretch at (0.2467,13.8561) move 35 plunge
+   - tab notched: tool at z -2.9411 below tab top -0.0476 inside a raised stretch at (-2.0363,34.8117) move 118 plunge
+   - tab notched: tool at z -2.9411 below tab top -0.0476 inside a raised stretch at (16.0154,31.6676) move 218 plunge
+   - tab notched: tool at z -2.9411 below tab top -0.0476 inside a raised stretch at (33.7430,2.6421) move 270 plunge
+scene 189 kind 1 side 1 dir 0 tool EM6.00 allow 0.000 sep 1 tabs 0(3d 0) ramp 0 lead 1 start 0 moves 417 diags: 5 5 9 7 7 7 7 8 7 7
+   - finishing order differs from roughing order
+scene 206 kind 6 side 0 dir 0 tool EM6.35 allow 0.000 sep 0 tabs 1(3d 0) ramp 2 lead 2 start 0 moves 105 diags: 13 9 7 7 10 10 10
+   - cut on wrong side
+scene 225 kind 5 side 0 dir 1 tool EM6.00 allow 0.550 sep 0 tabs 0(3d 1) ramp 1 lead 2 start 2 moves 4796 diags: 5 9 9 9 7 9 7 9 7 7 8 7 7 7 8 8 7 8 7 8
+   - StartMoved although a lead fits at the original start (48.0278,19.3231), margin 0.5501
+   - StartMoved although a lead fits at the original start (10.6354,19.2128), margin 0.5501
+   - StartMoved although a lead fits at the original start (-8.2356,38.3140), margin 0.5501
+scene 226 kind 4 side 1 dir 1 tool EM3.00 allow 0.556 sep 1 tabs 1(3d 0) ramp 3 lead 2 start 0 moves 148 diags: 6 6 7 7 7 8 8 10 10 10 10 12 12
+   - finishing order differs from roughing order
+scene 268 kind 5 side 1 dir 0 tool EM10.00 allow 0.388 sep 0 tabs 1(3d 0) ramp 3 lead 2 start 1 moves 2080 diags: 4 4 5 7 9 7 10 10 10 10
+   - StartMoved although a lead fits at the original start (25.1507,-4.1676), margin 0.3668
+scene 302 kind 2 side 1 dir 1 tool V10.00 allow 0.318 sep 0 tabs 0(3d 1) ramp 2 lead 2 start 0 moves 592 diags: 5 5 9 7 7
+   - StartMoved although a lead fits at the original start (-1.4481,22.7831), margin 0.2332
+scene 304 kind 2 side 1 dir 0 tool EM6.35 allow 0.000 sep 1 tabs 1(3d 0) ramp 1 lead 1 start 1 moves 6841 diags: 5 7 10 7 7
+   - tab notched: tool at z -7.6012 below tab top -6.0534 inside a raised stretch at (14.1321,-2.0059) move 5523 plunge
+scene 309 kind 5 side 0 dir 1 tool V3.00 allow 0.451 sep 0 tabs 1(3d 0) ramp 0 lead 1 start 0 moves 3149 diags: 5 5 5 5 5 5 5 5 5 5 5 5 6 6 6 6 6 6 6 6 6 6 6 6 8 9 7 7 10 10
+   - StartMoved although a lead fits at the original start (9.4717,24.7620), margin 0.2344
+scene 427 kind 5 side 0 dir 0 tool V3.00 allow 0.591 sep 0 tabs 1(3d 1) ramp 0 lead 2 start 0 moves 1079 diags: 9 10 10 10
+   - tab notched: tool at z -3.3372 below tab top -0.8987 inside a raised stretch at (62.5233,0.0000) move 3 plunge
+   - StartMoved although a lead fits at the original start (87.6461,0.0221), margin 0.5906
+scene 432 kind 8 side 0 dir 1 tool EM10.00 allow 0.000 sep 1 tabs 0(3d 1) ramp 3 lead 1 start 2 moves 3490 diags: 4 5 5 5 5 5 6 6 6 6 6 12 7
+   - finishing order differs from roughing order
+scene 442 kind 3 side 0 dir 1 tool EM6.00 allow 0.059 sep 0 tabs 1(3d 0) ramp 0 lead 1 start 1 moves 398 diags: 10
+   - tabs placed 2 + dropped 3 != 4 x 1 cuts
+scene 503 kind 5 side 1 dir 0 tool EM3.00 allow 0.388 sep 0 tabs 0(3d 0) ramp 3 lead 2 start 1 moves 7184 diags: 5 5 7 7 9 7 7 7 7 9 7 7 9 7
+   - StartMoved although a lead fits at the original start (16.6351,25.6487), margin 0.01206
+scene 562 kind 2 side 0 dir 1 tool EM10.00 allow 0.144 sep 0 tabs 0(3d 0) ramp 3 lead 2 start 1 moves 6030 diags: 5 7 9 7
+   - StartMoved although a lead fits at the original start (1.2221,-14.6377), margin 0.1426
+seed 53003 EXTRA: vGouge(sharpInt) 0 | bottomFail 0 | tabCount 1/15 | notch 6 (at start 0) | finOrder 3/103 | startMoved 49 unneeded 13
+seed 53003: scenes 600 empty 15 | gouge 0 (soft<tol 0) side 1 z 0 rapid 0 vert 0 descent 0 arc 1 det 0 diag 0 tab 0 | worst margin 0.000625273 | 1386.5s

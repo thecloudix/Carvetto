@@ -1,0 +1,57 @@
+MAIN dv 0 rv 0 gaps 10 (maxArcGapRel 1.03e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 1.03e-10)
+CS T=0 dir=0 g=7.94328e-11 d=1.03287 side=0 join=0: dv 0 (1.87e-11) rv 0 (8.03e-11) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+MAIN dv 0 rv 0 gaps 10 (maxArcGapRel 1.06e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 1.06e-10)
+CS T=0 dir=0 g=7.94328e-11 d=0.206574 side=0 join=0: dv 0 (1.87e-11) rv 0 (8.03e-11) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+MAIN dv 0 rv 0 gaps 10 (maxArcGapRel 1.23e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 1.23e-10)
+CS T=0 dir=0 g=1e-10 d=1.03287 side=0 join=0: dv 0 (1.87e-11) rv 0 (1.01e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+MAIN dv 0 rv 0 gaps 10 (maxArcGapRel 1.27e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 1.27e-10)
+CS T=0 dir=0 g=1e-10 d=0.206574 side=0 join=0: dv 0 (1.87e-11) rv 0 (1.01e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+MAIN dv 0 rv 0 gaps 11 (maxArcGapRel 1.48e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 1.48e-10)
+CS T=0 dir=0 g=1.25893e-10 d=1.03287 side=0 join=0: dv 0 (1.87e-11) rv 0 (1.27e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+MAIN dv 0 rv 0 gaps 9 (maxArcGapRel 1.52e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 1.52e-10)
+CS T=0 dir=0 g=1.25893e-10 d=0.206574 side=0 join=0: dv 0 (1.87e-11) rv 0 (1.27e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+MAIN dv 0 rv 0 gaps 10 (maxArcGapRel 1.79e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 1.79e-10)
+CS T=0 dir=0 g=1.58489e-10 d=1.03287 side=0 join=0: dv 0 (1.87e-11) rv 0 (1.59e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+MAIN dv 0 rv 0 gaps 10 (maxArcGapRel 1.85e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 1.85e-10)
+CS T=0 dir=0 g=1.58489e-10 d=0.206574 side=0 join=0: dv 0 (1.87e-11) rv 0 (1.59e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+MAIN dv 0 rv 0 gaps 14 (maxArcGapRel 2.19e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 2.19e-10)
+CS T=0 dir=0 g=1.99526e-10 d=1.03287 side=0 join=0: dv 0 (1.87e-11) rv 0 (2e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+MAIN dv 0 rv 0 gaps 11 (maxArcGapRel 2.26e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 2.26e-10)
+CS T=0 dir=0 g=1.99526e-10 d=0.206574 side=0 join=0: dv 0 (1.87e-11) rv 0 (1.28e-15) gaps 2 back 0 | arc-arc gap ch 1 j 6 rel 1.13e-10
+MAIN dv 0 rv 0 gaps 10 (maxArcGapRel 2.69e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 2.69e-10)
+CS T=0 dir=0 g=2.51189e-10 d=1.03287 side=0 join=0: dv 0 (1.87e-11) rv 0 (2.52e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+MAIN dv 0 rv 0 gaps 14 (maxArcGapRel 1.08e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 1.08e-10)
+CS T=0 dir=0 g=2.51189e-10 d=2.58218 side=0 join=0: dv 0 (1.87e-11) rv 0 (2.52e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+MAIN dv 0 rv 0 gaps 10 (maxArcGapRel 2.78e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 2.78e-10)
+CS T=0 dir=0 g=2.51189e-10 d=0.206574 side=0 join=0: dv 0 (1.87e-11) rv 0 (1.28e-15) gaps 2 back 0 | arc-arc gap ch 1 j 6 rel 1.42e-10
+MAIN dv 0 rv 0 gaps 12 (maxArcGapRel 3.32e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 3.32e-10)
+CS T=0 dir=0 g=3.16228e-10 d=1.03287 side=0 join=0: dv 0 (1.87e-11) rv 0 (3.17e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+MAIN dv 0 rv 0 gaps 13 (maxArcGapRel 1.33e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 1.33e-10)
+CS T=0 dir=0 g=3.16228e-10 d=2.58218 side=0 join=0: dv 0 (1.87e-11) rv 0 (3.17e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+MAIN dv 0 rv 0 gaps 9 (maxArcGapRel 3.43e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 3.43e-10)
+CS T=0 dir=0 g=3.16228e-10 d=0.206574 side=0 join=0: dv 0 (1.87e-11) rv 0 (1.28e-15) gaps 2 back 0 | arc-arc gap ch 1 j 6 rel 1.79e-10
+MAIN dv 0 rv 0 gaps 10 (maxArcGapRel 4.11e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 4.11e-10)
+CS T=0 dir=0 g=3.98107e-10 d=1.03287 side=0 join=0: dv 0 (1.87e-11) rv 0 (3.99e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+MAIN dv 0 rv 0 gaps 11 (maxArcGapRel 1.65e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 1.64e-10)
+CS T=0 dir=0 g=3.98107e-10 d=2.58218 side=0 join=0: dv 0 (1.87e-11) rv 0 (3.99e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+MAIN dv 0 rv 0 gaps 11 (maxArcGapRel 4.25e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 4.25e-10)
+CS T=0 dir=0 g=3.98107e-10 d=0.206574 side=0 join=0: dv 0 (1.87e-11) rv 0 (1.28e-15) gaps 2 back 0 | arc-arc gap ch 1 j 6 rel 2.25e-10
+MAIN dv 0 rv 0 gaps 13 (maxArcGapRel 5.11e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 5.11e-10)
+CS T=0 dir=0 g=5.01187e-10 d=1.03287 side=0 join=0: dv 0 (1.87e-11) rv 0 (5.02e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+MAIN dv 0 rv 0 gaps 11 (maxArcGapRel 2.05e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 2.04e-10)
+CS T=0 dir=0 g=5.01187e-10 d=2.58218 side=0 join=0: dv 0 (1.87e-11) rv 0 (5.02e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+MAIN dv 0 rv 0 gaps 10 (maxArcGapRel 5.28e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 5.28e-10)
+CS T=0 dir=0 g=5.01187e-10 d=0.206574 side=0 join=0: dv 0 (1.87e-11) rv 0 (1.28e-15) gaps 2 back 0 | arc-arc gap ch 1 j 6 rel 2.83e-10
+MAIN dv 0 rv 0 gaps 11 (maxArcGapRel 6.37e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 6.37e-10)
+CS T=0 dir=0 g=6.30957e-10 d=1.03287 side=0 join=0: dv 0 (1.87e-11) rv 0 (6.32e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+MAIN dv 0 rv 0 gaps 12 (maxArcGapRel 2.55e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 2.55e-10)
+CS T=0 dir=0 g=6.30957e-10 d=2.58218 side=0 join=0: dv 0 (1.87e-11) rv 0 (6.32e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+MAIN dv 0 rv 0 gaps 11 (maxArcGapRel 6.58e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 6.58e-10)
+CS T=0 dir=0 g=6.30957e-10 d=0.206574 side=0 join=0: dv 0 (1.87e-11) rv 0 (1.28e-15) gaps 2 back 0 | arc-arc gap ch 1 j 6 rel 3.57e-10
+MAIN dv 0 rv 0 gaps 9 (maxArcGapRel 7.95e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 7.95e-10)
+CS T=0 dir=0 g=7.94328e-10 d=1.03287 side=0 join=0: dv 0 (1.87e-11) rv 0 (7.95e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+MAIN dv 0 rv 0 gaps 12 (maxArcGapRel 3.18e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 3.18e-10)
+CS T=0 dir=0 g=7.94328e-10 d=2.58218 side=0 join=0: dv 0 (1.87e-11) rv 0 (7.95e-10) gaps 1 back 0 | reversal ch 1 j 6 dot -1.000000
+MAIN dv 0 rv 0 gaps 9 (maxArcGapRel 8.21e-10) back 1 chains 4 vs br 4 (br maxArcGapRel 8.21e-10)
+CS T=0 dir=0 g=7.94328e-10 d=0.206574 side=0 join=0: dv 0 (1.87e-11) rv 0 (7.49e-16) gaps 2 back 0 | arc-arc gap ch 1 j 6 rel 4.49e-10
+cs: 2556 offsets, 28 with violations

@@ -1,0 +1,15 @@
+fam 0: runs 1200, raw partial-phantom rings 0, raw full phantoms 1005, gouges 0, msgs 0
+fam 0: runs 480, raw partial-phantom rings 0, raw full phantoms 418, gouges 0, msgs 0
+fam 1: runs 1200, raw partial-phantom rings 0, raw full phantoms 893, gouges 0, msgs 0
+fam 1 seed 22 d=6.155816 partial ring n=39 bad=16 worst=0.0464 | C parts 12 worst edge-(r) 5.000e-02 at (10.9804,6.5540) msgs 0
+fam 1 seed 30 d=19.765802 partial ring n=507 bad=7 worst=0.8403 | C parts 3 worst edge-(r) 5.000e-02 at (11.2423,0.1236) msgs 0
+fam 1 seed 31 d=10.325512 partial ring n=16 bad=8 worst=0.0763 | C parts 2 worst edge-(r) 5.000e-02 at (8.3378,-2.0200) msgs 0
+fam 1 seed 31 d=10.210685 partial ring n=16 bad=8 worst=0.0729 | C parts 2 worst edge-(r) 5.000e-02 at (8.3346,-2.0773) msgs 0
+fam 1 seed 39 d=16.577570 partial ring n=352 bad=3 worst=0.3043 | C parts 4 worst edge-(r) 5.000e-02 at (7.7528,-0.2198) msgs 0
+fam 1: runs 480, raw partial-phantom rings 5, raw full phantoms 378, gouges 0, msgs 0
+fam 2: runs 1200, raw partial-phantom rings 0, raw full phantoms 1136, gouges 0, msgs 0
+fam 2 seed 19 d=2.658679 partial ring n=22 bad=1 worst=0.0203 | C parts 26 worst edge-(r) 5.000e-02 at (-0.6890,22.1594) msgs 0
+fam 2 seed 24 d=5.939828 partial ring n=18 bad=2 worst=0.0290 | C parts 3 worst edge-(r) 5.000e-02 at (15.1591,0.8178) msgs 0
+fam 2: runs 480, raw partial-phantom rings 2, raw full phantoms 458, gouges 0, msgs 0
+fam 3: runs 1200, raw partial-phantom rings 0, raw full phantoms 1135, gouges 0, msgs 0
+fam 3: runs 480, raw partial-phantom rings 0, raw full phantoms 463, gouges 0, msgs 0

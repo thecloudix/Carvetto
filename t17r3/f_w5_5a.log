@@ -1,0 +1,23 @@
+REG[wideLoopDropped] needleTrans st=0 seed=0xf500032a gen=45 n=3 d=0.0296381578 Round side=0 mitre=1.388 chains b1 m2 | br[coverage miss at (-99995.2527,0.0296413465) dist-to-output 1] main[line junction not bitwise ch 1 j 0 gap 2.79e-15] miss other 0 (worst 0 at 0,0) loop 794 (w 0.000126 L 0.511) corner 0
+REG[selfX] coCircGap(noisy) st=0 seed=0xf50003d3 gen=41 n=13 d=0.438937057 Round side=1 mitre=3.929 chains b6 m7 | br[reversal ch 1 j 0 dot -1.000000] main[line junction not bitwise ch 0 j 1 gap 2.68e-14] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[selfX] coCircGap(noisy) st=0 seed=0xf5000892 gen=41 n=5 d=0.150076234 Round side=1 mitre=2 chains b2 m2 | br[reversal ch 1 j 0 dot -1.000000] main[reversal ch 1 j 0 dot -1.000000] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[selfX] axisCusp(noisy) st=0 seed=0xf5000961 gen=46 n=7 d=0.453934074 Round side=1 mitre=3.843 chains b3 m3 | br[reversal ch 1 j 0 dot -1.000000] main[line junction not bitwise ch 0 j 1 gap 4.44e-16] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[selfX] tieGap st=0 seed=0xf5000aa2 gen=40 n=29 d=1.21859079 Round side=0 mitre=2.713 chains b2 m2 | br[reversal ch 1 j 7 dot -1.000000] main[line junction not bitwise ch 0 j 4 gap 1.78e-15] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[selfX] axisCusp st=0 seed=0xf5000b35 gen=46 n=7 d=2.76920126 Round side=1 mitre=3.981 chains b3 m3 | br[reversal ch 1 j 0 dot -1.000000] main[line junction not bitwise ch 0 j 1 gap 8.01e-16] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[selfX] axisCusp(noisy) st=0 seed=0xf5000b74 gen=46 n=7 d=3.41535691 Round side=1 mitre=2 chains b3 m3 | br[reversal ch 1 j 0 dot -1.000000] main[line junction not bitwise ch 0 j 1 gap 4.97e-16] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[wideLoopDropped] needleTrans st=0 seed=0xf5000cd6 gen=45 n=3 d=0.0322662844 Round side=0 mitre=2 chains b1 m2 | br[coverage miss at (0.555078686,0.0322662844) dist-to-output 0.48] main[reversal ch 1 j 0 dot -0.999999] miss other 0 (worst 0 at 0,0) loop 410 (w 0.000125 L 0.206) corner 0
+REG[selfX] coCircGap(noisy) st=0 seed=0xf5000da2 gen=41 n=21 d=0.189747239 Round side=1 mitre=1.73 chains b23 m24 | br[reversal ch 0 j 0 dot -1.000000] main[reversal ch 0 j 0 dot -1.000000] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[moreSplits] tieGap(noisy) st=0 seed=0xf5000fc3 gen=40 n=21 d=1.30575754 Round side=0 mitre=2 chains b7 m6 | br[overlap ch1 sp0 / ch3 sp0 kind 0 ov 1.51] main[line junction not bitwise ch 0 j 2 gap 8.88e-16] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[selfX] axisCusp st=0 seed=0xf5001128 gen=46 n=7 d=0.660215326 Round side=1 mitre=2 chains b3 m3 | br[reversal ch 1 j 0 dot -1.000000] main[line junction not bitwise ch 0 j 1 gap 1.24e-16] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[under] axisCusp(noisy) st=0 seed=0xf50011fd gen=46 n=7 d=0.819999876 Round side=0 mitre=2 chains b1 m1 | br[distance violation span 4 under 1.72e-07 (allow 1.52e-07) kind 1 len 2.56] main[line junction not bitwise ch 0 j 4 gap 3.33e-16] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[mainPtsMissing] coCircGap(noisy) st=0 seed=0xf5001267 gen=41 n=13 d=0.337261577 Round side=1 mitre=2 chains b9 m9 | br[] main[arc-arc gap ch 0 j 1 rel 1.72e-08] miss other 18 (worst 1.02 at -8014.9048,-2273.65276) loop 0 (w 0 L 0) corner 0
+REG[selfX] axisCusp(noisy) st=0 seed=0xf5001917 gen=46 n=7 d=0.614913135 Round side=1 mitre=2.042 chains b2 m3 | br[reversal ch 0 j 2 dot -1.000000] main[line junction not bitwise ch 0 j 1 gap 9.09e-13] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+REG[moreSplits] tieGap(noisy) st=0 seed=0xf5001d58 gen=40 n=17 d=1.02062502 Round side=0 mitre=2 chains b6 m5 | br[overlap ch3 sp2 / ch3 sp0 kind 0 ov 0.727] main[line junction not bitwise ch 0 j 0 gap 2.65e-06] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+fuzz4 fam=5 N=8000 ran 8000 seed0=0xf5000000: identical 1375 differ 6625 REGRESSIONS 15 | branch totals: gaps 0 reversals 925 overlaps 105 shortBack 0 suspiciousTips 0 (exact 0; main in differing cases 51) coderBack 10 (exact 4) distViol 3 roundViol 0 dupChains 0 | worstUnder(noST) 0.000139 worstOver(noST) 4.62e-07 | splitJoints br 294 main 378 | cases with dropped main loops 91 (max width 0.000126, max len 13.2, max dist to branch 1.02), corner-only diffs 49 | cpu 5.1s
+  gen 40: 1126 cases, 3 regressions
+  gen 41: 1133 cases, 4 regressions
+  gen 42: 1131 cases, 0 regressions
+  gen 43: 1144 cases, 0 regressions
+  gen 44: 1137 cases, 0 regressions
+  gen 45: 1178 cases, 2 regressions
+  gen 46: 1151 cases, 6 regressions

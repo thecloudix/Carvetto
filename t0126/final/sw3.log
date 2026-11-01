@@ -1,0 +1,2 @@
+seed 8800100 [flower] [d=3.6596 so=2.0877 pd=1.897][d=1.2226 so=0.8661 pd=0.912] strat=1 dir=1 ang=1.570796326795 pp=0 allow=0.072 ramp=1 rd=13.32 cut=1.230 start=0.000 chord=0.0100 exact=1: REST-AIR moves=30 tool 1 move 48 at (18.952,5.206) dist to rest material 1.082 > r 0.611 COVERAGE(reach tool 0): reach=119896 miss=1926 real=1830 first (-2.271,-26.515) worst excess 0.7003 | travel 0 engaged 0 pen 0.0000; links 76 engaged 76; retracts 12 212 regions 0
+sweep3: 50 scenes from seed 8800100: 1 failed, 0 crash/timeout, 0 unbuildable, 1033.3s

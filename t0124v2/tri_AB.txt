@@ -1,0 +1,35 @@
+A 8: [SEVERED tab at (-7.718,-9.255) plateau 18.287] [COUNT kept 3 + left 0 != requested 5 (diag M sum 0)]
+A 31: 
+A 32: 
+A 79: 
+A 84: 
+A 90: [COUNT kept 0 + left 4 != requested 5 (diag M sum 5)]
+A 119: 
+A 158: [COUNT kept 0 + left 6 != requested 0 (diag M sum 9)]
+A 167: 
+A 173: 
+A 174: [COUNT kept 3 + left 4 != requested 8 (diag M sum 8)]
+A 197: 
+A 205: 
+A 207: 
+A 208: 
+A 213: 
+A 237: 
+A 304: 
+A 314: [SEVERED tab at (12.724,7.525) plateau 6.388] [SEVERED tab at (11.089,-9.776) plateau 6.388] [SEVERED tab at (-5.871,-13.567) plateau 6.388] [SEVERED tab at (-14.717,1.391) plateau 6.388] [SEVERED tab at (-3.225,14.427) plateau 6.388]
+A 322: [COUNT kept 0 + left 3 != requested 0 (diag M sum 3)]
+A 352: 
+B 0: [COUNT kept 0 + left 5 != requested 0 (diag M sum 9)]
+B 15: [SEVERED tab at (-10.707,4.435) plateau 4.292] [SEVERED tab at (-10.707,-4.435) plateau 4.292] [SEVERED tab at (-4.435,-10.707) plateau 4.292] [SEVERED tab at (4.435,-10.707) plateau 4.292] [SEVERED tab at (10.707,-4.435) plateau 4.292] [SEVERED tab 
+B 54: [COUNT kept 0 + left 5 != requested 0 (diag M sum 9)]
+B 58: 
+B 60: [SEVERED tab at (67.532,18.322) plateau 7.959]
+B 98: [COUNT kept 0 + left 8 != requested 0 (diag M sum 9)]
+B 104: [COUNT kept 2 + left 0 != requested 3 (diag M sum 0)]
+B 111: 
+B 178: [COUNT kept 0 + left 7 != requested 0 (diag M sum 9)]
+B 199: 
+B 224: [COUNT kept 0 + left 5 != requested 0 (diag M sum 9)]
+B 235: [SEVERED tab at (-5.300,9.574) plateau 3.840]
+B 258: 
+B 260: [roughing after finishing / classification] [COUNT kept 0 + left 16 != requested 8 (diag M sum 16)]

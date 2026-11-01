@@ -1,0 +1,1 @@
+-DFETCHCONTENT_SOURCE_DIR_CATCH2=/home/claude/vscratch/t0126/deps/catch2-src -DFETCHCONTENT_SOURCE_DIR_CLIPPER2=/home/claude/vscratch/t0126/deps/clipper2-src -DFETCHCONTENT_SOURCE_DIR_MINIZ=/home/claude/vscratch/t0126/deps/miniz-src -DFETCHCONTENT_SOURCE_DIR_NLOHMANN_JSON=/home/claude/vscratch/t0126/deps/nlohmann_json-src

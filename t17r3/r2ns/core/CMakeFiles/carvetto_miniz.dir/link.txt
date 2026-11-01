@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcarvetto_miniz.a "CMakeFiles/carvetto_miniz.dir/home/claude/wt-T-0017/build-rel/_deps/miniz-src/miniz.c.o"
+/usr/bin/ranlib libcarvetto_miniz.a

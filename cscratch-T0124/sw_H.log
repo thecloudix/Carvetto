@@ -1,0 +1,2 @@
+scene 47 fam 7 side 1 D 8.000 V 0 allow 0.219 sep 0 lpa 0.225 rev 1 n 3 sp 0 len 2.259 th 15.782 3d 1 avoid 1 ramp 1 lead 2 out 0 oc 0.04 start 0 depth 15.46/1.07: [COUNT kept 2 + left 0 != requested 3 (diag M sum 0)]
+SUMMARY seed 41008 fam 7 sep -1 cell 0.040: scenes 150 det 0 gouge 0 clampBad 0 sepOrder 0 | tabs kept 441 checked 441 severed 0 thin(<0.1) 0 minNeck 0.1913 noSeed 0 noTarget 0 | requested 640 left 198 countBad 1 | 2728.5s

@@ -1,0 +1,10 @@
+2discs ov0.200000 not simple
+2discs ov0.500000 not simple
+2discs ov0.800000 not simple
+2discs ov0.950000 not simple
+cusp 3discs: 16 configs, 0 fail
+cusp wedge5: 16 configs, 0 fail
+cusp wedge10: 16 configs, 0 fail
+cusp wedge20: 16 configs, 0 fail
+cusp star7: 16 configs, 0 fail
+cusp: 80 runs, 0 fail

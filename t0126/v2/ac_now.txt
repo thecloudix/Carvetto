@@ -1,0 +1,20 @@
+  AC1 st0 pp0 tool 0: moves=61 retracts=1 minMargin=0.010000
+  AC1 st0 pp0 coverage (reach of tool 0): reachable=147732 missed=0 outsideHit=0
+  AC1 st0 pp1 tool 0: moves=63 retracts=1 minMargin=0.010000
+  AC1 st0 pp1 coverage (reach of tool 0): reachable=147732 missed=0 outsideHit=0
+  AC1 st0 pp2 tool 0: moves=61 retracts=1 minMargin=0.010000
+  AC1 st0 pp2 coverage (reach of tool 0): reachable=147732 missed=0 outsideHit=0
+  AC1 st1 pp1 tool 0: moves=53 retracts=1 minMargin=0.010000
+  AC1 st1 pp1 coverage (reach of tool 0): reachable=147732 missed=0 outsideHit=0
+  AC1 st1 pp2 tool 0: moves=53 retracts=1 minMargin=0.010000
+  AC1 st1 pp2 coverage (reach of tool 0): reachable=147732 missed=0 outsideHit=0
+AC1 exact 0.05 grid (reach minus 0.02 skin): 0/596760 missed, worst excess 0.0000
+AC2 st0 pp0 so1.2: island min dist 3.005000, wall margin 0.005000, retracts 1
+AC2 st0 pp0 so2.4: island min dist 3.005000, wall margin 0.005000, retracts 1
+AC2 st0 pp0 so6.0: island min dist 3.005000, wall margin 0.005000, retracts 1
+AC2 st0 pp1 so1.2: island min dist 3.005000, wall margin 0.005000, retracts 1
+AC2 st0 pp1 so2.4: island min dist 3.005000, wall margin 0.005000, retracts 1
+AC2 st0 pp1 so6.0: island min dist 3.005000, wall margin 0.005000, retracts 1
+AC2 st0 pp2 so1.2: island min dist 3.005000, wall margin 0.005000, retracts 1
+AC2 st0 pp2 so2.4: island min dist 3.005000, wall margin 0.005000, retracts 1
+AC2 st0 pp2 so6.0: island min dist 3.005000, wall margin 0.005000, retracts 1

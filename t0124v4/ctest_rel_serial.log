@@ -1,0 +1,1016 @@
+Internal ctest changing into directory: /home/claude/vscratch/t0124v3/br
+Test project /home/claude/vscratch/t0124v3/br
+        Start   1: Vec2 arithmetic
+  1/505 Test   #1: Vec2 arithmetic ..................................................................................   Passed    0.52 sec
+        Start   2: Vec2 normalized and perp
+  2/505 Test   #2: Vec2 normalized and perp .........................................................................   Passed    0.01 sec
+        Start   3: Box2 starts empty and absorbs points
+  3/505 Test   #3: Box2 starts empty and absorbs points .............................................................   Passed    0.01 sec
+        Start   4: Box2 corner constructor orders corners
+  4/505 Test   #4: Box2 corner constructor orders corners ...........................................................   Passed    0.01 sec
+        Start   5: Box2 containment and intersection
+  5/505 Test   #5: Box2 containment and intersection ................................................................   Passed    0.01 sec
+        Start   6: Box2 inflate and approxEqual
+  6/505 Test   #6: Box2 inflate and approxEqual .....................................................................   Passed    0.01 sec
+        Start   7: Transform2 identity and translation
+  7/505 Test   #7: Transform2 identity and translation ..............................................................   Passed    0.01 sec
+        Start   8: Transform2 rotation by pi/2 maps (1,0) to (0,1)
+  8/505 Test   #8: Transform2 rotation by pi/2 maps (1,0) to (0,1) ..................................................   Passed    0.01 sec
+        Start   9: Transform2 compose(A,B).apply(p) == A.apply(B.apply(p))
+  9/505 Test   #9: Transform2 compose(A,B).apply(p) == A.apply(B.apply(p)) ..........................................   Passed    0.01 sec
+        Start  10: Transform2 rotation about a centre keeps the centre fixed
+ 10/505 Test  #10: Transform2 rotation about a centre keeps the centre fixed ........................................   Passed    0.01 sec
+        Start  11: Transform2 scaling
+ 11/505 Test  #11: Transform2 scaling ...............................................................................   Passed    0.01 sec
+        Start  12: Transform2 mirrors
+ 12/505 Test  #12: Transform2 mirrors ...............................................................................   Passed    0.01 sec
+        Start  13: Transform2 inverse
+ 13/505 Test  #13: Transform2 inverse ...............................................................................   Passed    0.01 sec
+        Start  14: Transform2 conformality
+ 14/505 Test  #14: Transform2 conformality ..........................................................................   Passed    0.01 sec
+        Start  15: LineSpan basics
+ 15/505 Test  #15: LineSpan basics ..................................................................................   Passed    0.01 sec
+        Start  16: ArcSpan full circle r=10 has length 2*pi*10
+ 16/505 Test  #16: ArcSpan full circle r=10 has length 2*pi*10 ......................................................   Passed    0.01 sec
+        Start  17: ArcSpan pointAt(0.5) on CCW half circle (10,0)->(-10,0) is (0,10)
+ 17/505 Test  #17: ArcSpan pointAt(0.5) on CCW half circle (10,0)->(-10,0) is (0,10) ................................   Passed    0.01 sec
+        Start  18: ArcSpan sweep wraps across the +X axis
+ 18/505 Test  #18: ArcSpan sweep wraps across the +X axis ...........................................................   Passed    0.01 sec
+        Start  19: ArcSpan tangent, reverse and bounds
+ 19/505 Test  #19: ArcSpan tangent, reverse and bounds ..............................................................   Passed    0.01 sec
+        Start  20: ArcSpan segment count honours chordal tolerance
+ 20/505 Test  #20: ArcSpan segment count honours chordal tolerance ..................................................   Passed    0.01 sec
+        Start  21: ArcSpan to Beziers approximates the circle
+ 21/505 Test  #21: ArcSpan to Beziers approximates the circle .......................................................   Passed    0.01 sec
+        Start  22: BezierSpan adaptive length agrees with a 10k-segment estimate
+ 22/505 Test  #22: BezierSpan adaptive length agrees with a 10k-segment estimate ....................................   Passed    0.04 sec
+        Start  23: BezierSpan evaluation, split, reverse, tangent
+ 23/505 Test  #23: BezierSpan evaluation, split, reverse, tangent ...................................................   Passed    0.03 sec
+        Start  24: BezierSpan bounds are tight
+ 24/505 Test  #24: BezierSpan bounds are tight ......................................................................   Passed    0.01 sec
+        Start  25: Span free functions dispatch to each alternative
+ 25/505 Test  #25: Span free functions dispatch to each alternative .................................................   Passed    0.01 sec
+        Start  26: Span transformed keeps arcs under conformal maps
+ 26/505 Test  #26: Span transformed keeps arcs under conformal maps .................................................   Passed    0.01 sec
+        Start  27: Span transformed converts arcs to Beziers under non-uniform scale
+ 27/505 Test  #27: Span transformed converts arcs to Beziers under non-uniform scale ................................   Passed    0.01 sec
+        Start  28: polygoniseInto excludes start and includes end
+ 28/505 Test  #28: polygoniseInto excludes start and includes end ...................................................   Passed    0.01 sec
+        Start  29: Polyline counts, length and bounds
+ 29/505 Test  #29: Polyline counts, length and bounds ...............................................................   Passed    0.01 sec
+        Start  30: Polyline pointAt is linear in arc length
+ 30/505 Test  #30: Polyline pointAt is linear in arc length .........................................................   Passed    0.01 sec
+        Start  31: Polyline reverse
+ 31/505 Test  #31: Polyline reverse .................................................................................   Passed    0.01 sec
+        Start  32: Polyline transform
+ 32/505 Test  #32: Polyline transform ...............................................................................   Passed    0.01 sec
+        Start  33: Polyline removeDuplicates
+ 33/505 Test  #33: Polyline removeDuplicates ........................................................................   Passed    0.00 sec
+        Start  34: Contour factories
+ 34/505 Test  #34: Contour factories ................................................................................   Passed    0.01 sec
+        Start  35: Contour length, pointAt and continuity
+ 35/505 Test  #35: Contour length, pointAt and continuity ...........................................................   Passed    0.06 sec
+        Start  36: Polygonising a circle r=10 at 0.01 keeps deviation <= 0.01 with < 200 vertices
+ 36/505 Test  #36: Polygonising a circle r=10 at 0.01 keeps deviation <= 0.01 with < 200 vertices ...................   Passed    0.04 sec
+        Start  37: Contour reverse of a closed contour yields the reversed vertex set
+ 37/505 Test  #37: Contour reverse of a closed contour yields the reversed vertex set ...............................   Passed    0.02 sec
+        Start  38: Contour bounds match the polygonised bounds within tolerance
+ 38/505 Test  #38: Contour bounds match the polygonised bounds within tolerance .....................................   Passed    0.01 sec
+        Start  39: Contour transform
+ 39/505 Test  #39: Contour transform ................................................................................   Passed    0.21 sec
+        Start  40: Signed area of a 10x10 square is +100 CCW and -100 CW (AC3)
+ 40/505 Test  #40: Signed area of a 10x10 square is +100 CCW and -100 CW (AC3) ......................................   Passed    0.01 sec
+        Start  41: Signed area is exact for arcs
+ 41/505 Test  #41: Signed area is exact for arcs ....................................................................   Passed    0.01 sec
+        Start  42: Signed area of Bezier contours matches a fine polygonisation
+ 42/505 Test  #42: Signed area of Bezier contours matches a fine polygonisation .....................................   Passed    0.01 sec
+        Start  43: Area of open and degenerate contours
+ 43/505 Test  #43: Area of open and degenerate contours .............................................................   Passed    0.01 sec
+        Start  44: Signed area is translation invariant
+ 44/505 Test  #44: Signed area is translation invariant .............................................................   Passed    0.01 sec
+        Start  45: setOrientation reverses only when needed
+ 45/505 Test  #45: setOrientation reverses only when needed .........................................................   Passed    0.01 sec
+        Start  46: isInside: (5,5) inside and (15,5) outside a square of either orientation (AC3)
+ 46/505 Test  #46: isInside: (5,5) inside and (15,5) outside a square of either orientation (AC3) ...................   Passed    0.01 sec
+        Start  47: Winding number sign follows orientation
+ 47/505 Test  #47: Winding number sign follows orientation ..........................................................   Passed    0.00 sec
+        Start  48: Point location against arcs and Beziers
+ 48/505 Test  #48: Point location against arcs and Beziers ..........................................................   Passed    0.01 sec
+        Start  49: Ray through vertices is handled by the half-open rule
+ 49/505 Test  #49: Ray through vertices is handled by the half-open rule ............................................   Passed    0.00 sec
+        Start  50: Points on the boundary are OnBoundary and count as inside
+ 50/505 Test  #50: Points on the boundary are OnBoundary and count as inside ........................................   Passed    0.00 sec
+        Start  51: Fill rules differ only for self-overlapping regions
+ 51/505 Test  #51: Fill rules differ only for self-overlapping regions ..............................................   Passed    0.00 sec
+        Start  52: Open contours are implicitly closed for point tests; empty contours contain nothing
+ 52/505 Test  #52: Open contours are implicitly closed for point tests; empty contours contain nothing ..............   Passed    0.01 sec
+        Start  53: Closest point on a half-circle arc from an external point is analytic (AC4)
+ 53/505 Test  #53: Closest point on a half-circle arc from an external point is analytic (AC4) ......................   Passed    0.01 sec
+        Start  54: Closest point on lines
+ 54/505 Test  #54: Closest point on lines ...........................................................................   Passed    0.01 sec
+        Start  55: Closest point on Beziers
+ 55/505 Test  #55: Closest point on Beziers .........................................................................   Passed    0.01 sec
+        Start  56: Closest point on a contour picks the right span
+ 56/505 Test  #56: Closest point on a contour picks the right span ..................................................   Passed    0.01 sec
+        Start  57: Closest point on a Bezier finds the global minimum (verifier repro)
+ 57/505 Test  #57: Closest point on a Bezier finds the global minimum (verifier repro) ..............................   Passed    0.01 sec
+        Start  58: Closest point on Beziers matches brute force (generative)
+ 58/505 Test  #58: Closest point on Beziers matches brute force (generative) ........................................   Passed   10.82 sec
+        Start  59: Closest point on a contour and distanceTo inherit the global Bezier search
+ 59/505 Test  #59: Closest point on a contour and distanceTo inherit the global Bezier search .......................   Passed    1.41 sec
+        Start  60: Line-line crossing intersection
+ 60/505 Test  #60: Line-line crossing intersection ..................................................................   Passed    0.01 sec
+        Start  61: Line-line: segments whose infinite lines cross outside them do not intersect
+ 61/505 Test  #61: Line-line: segments whose infinite lines cross outside them do not intersect .....................   Passed    0.01 sec
+        Start  62: Line-line: hit at a shared end point is reported once with clamped parameters
+ 62/505 Test  #62: Line-line: hit at a shared end point is reported once with clamped parameters ....................   Passed    0.01 sec
+        Start  63: Line-line: parallel offset segments do not intersect
+ 63/505 Test  #63: Line-line: parallel offset segments do not intersect .............................................   Passed    0.01 sec
+        Start  64: Line-line: collinear overlapping segments report an overlap
+ 64/505 Test  #64: Line-line: collinear overlapping segments report an overlap ......................................   Passed    0.01 sec
+        Start  65: Line-line: collinear overlap with opposite direction keeps B parameters in B's order
+ 65/505 Test  #65: Line-line: collinear overlap with opposite direction keeps B parameters in B's order .............   Passed    0.01 sec
+        Start  66: Line-line: identical segments overlap fully
+ 66/505 Test  #66: Line-line: identical segments overlap fully ......................................................   Passed    0.01 sec
+        Start  67: Line-line: collinear segments touching end to end give one tangent point
+ 67/505 Test  #67: Line-line: collinear segments touching end to end give one tangent point .........................   Passed    0.01 sec
+        Start  68: Line-line: collinear disjoint segments do not intersect
+ 68/505 Test  #68: Line-line: collinear disjoint segments do not intersect ..........................................   Passed    0.01 sec
+        Start  69: Degenerate (zero-length) spans behave as points
+ 69/505 Test  #69: Degenerate (zero-length) spans behave as points ..................................................   Passed    0.01 sec
+        Start  70: Line-line: near-parallel crossing is found in both argument orders
+ 70/505 Test  #70: Line-line: near-parallel crossing is found in both argument orders ...............................   Passed    0.01 sec
+        Start  71: Line-line: near-parallel lines that are not collinear still cross
+ 71/505 Test  #71: Line-line: near-parallel lines that are not collinear still cross ................................   Passed    0.01 sec
+        Start  72: Line-line: end point within tolerance of the other segment is a contact
+ 72/505 Test  #72: Line-line: end point within tolerance of the other segment is a contact ..........................   Passed    0.01 sec
+        Start  73: Line-line: intersect(a,b) and intersect(b,a) agree for random pairs
+ 73/505 Test  #73: Line-line: intersect(a,b) and intersect(b,a) agree for random pairs ..............................   Passed    0.01 sec
+        Start  74: Line-arc: secant through a circle gives two points
+ 74/505 Test  #74: Line-arc: secant through a circle gives two points ...............................................   Passed    0.01 sec
+        Start  75: Line-arc: only the hit inside the arc's sweep is reported
+ 75/505 Test  #75: Line-arc: only the hit inside the arc's sweep is reported ........................................   Passed    0.01 sec
+        Start  76: Line-arc: tangent contact returns one intersection with the tangent flag (AC2)
+ 76/505 Test  #76: Line-arc: tangent contact returns one intersection with the tangent flag (AC2) ...................   Passed    0.01 sec
+        Start  77: Line-arc: a line that misses the circle by more than tolerance does not intersect
+ 77/505 Test  #77: Line-arc: a line that misses the circle by more than tolerance does not intersect ................   Passed    0.00 sec
+        Start  78: Line-arc: a line ending just short of the circle still hits within tolerance
+ 78/505 Test  #78: Line-arc: a line ending just short of the circle still hits within tolerance .....................   Passed    0.00 sec
+        Start  79: Line-arc: long lines through small circles stay precise
+ 79/505 Test  #79: Line-arc: long lines through small circles stay precise ..........................................   Passed    0.01 sec
+        Start  80: Arc-arc: two overlapping circles meet in two points
+ 80/505 Test  #80: Arc-arc: two overlapping circles meet in two points ..............................................   Passed    0.01 sec
+        Start  81: Arc-arc: externally and internally tangent circles give one tangent point
+ 81/505 Test  #81: Arc-arc: externally and internally tangent circles give one tangent point ........................   Passed    0.01 sec
+        Start  82: Arc-arc: separated or nested circles do not intersect
+ 82/505 Test  #82: Arc-arc: separated or nested circles do not intersect ............................................   Passed    0.00 sec
+        Start  83: Arc-arc: sweep filtering keeps only hits on both arcs
+ 83/505 Test  #83: Arc-arc: sweep filtering keeps only hits on both arcs ............................................   Passed    0.01 sec
+        Start  84: Arc-arc: coincident arcs on the same circle report overlaps
+ 84/505 Test  #84: Arc-arc: coincident arcs on the same circle report overlaps ......................................   Passed    0.01 sec
+        Start  85: Arc-arc: coincident arcs running opposite ways keep B parameters in B's order
+ 85/505 Test  #85: Arc-arc: coincident arcs running opposite ways keep B parameters in B's order ....................   Passed    0.00 sec
+        Start  86: Arc-arc: coincident arcs that only touch end to end give one tangent point
+ 86/505 Test  #86: Arc-arc: coincident arcs that only touch end to end give one tangent point .......................   Passed    0.00 sec
+        Start  87: Arc-arc: identical full circles overlap everywhere
+ 87/505 Test  #87: Arc-arc: identical full circles overlap everywhere ...............................................   Passed    0.01 sec
+        Start  88: Arc-arc: full circle against a partial arc on it
+ 88/505 Test  #88: Arc-arc: full circle against a partial arc on it .................................................   Passed    0.01 sec
+        Start  89: Bezier-line: crossing is refined to within tolerance
+ 89/505 Test  #89: Bezier-line: crossing is refined to within tolerance .............................................   Passed    0.01 sec
+        Start  90: Bezier-line: an S-curve crossing its chord three times
+ 90/505 Test  #90: Bezier-line: an S-curve crossing its chord three times ...........................................   Passed    0.01 sec
+        Start  91: Bezier-arc: a Bezier quarter circle meets a true circle along the whole piece or at ends
+ 91/505 Test  #91: Bezier-arc: a Bezier quarter circle meets a true circle along the whole piece or at ends .........   Passed    0.01 sec
+        Start  92: Bezier-Bezier: two crossing curves
+ 92/505 Test  #92: Bezier-Bezier: two crossing curves ...............................................................   Passed    0.01 sec
+        Start  93: Bezier-line: tangent contact is found and flagged
+ 93/505 Test  #93: Bezier-line: tangent contact is found and flagged ................................................   Passed    0.01 sec
+        Start  94: Bezier: coincident spans are reported as sampled tangent points, not overlaps
+ 94/505 Test  #94: Bezier: coincident spans are reported as sampled tangent points, not overlaps ....................   Passed    0.01 sec
+        Start  95: Bezier-line: no false positives for a nearby but separate line
+ 95/505 Test  #95: Bezier-line: no false positives for a nearby but separate line ...................................   Passed    0.01 sec
+        Start  96: Two unit squares offset by (0.5,0.5) intersect in exactly 2 points (AC1)
+ 96/505 Test  #96: Two unit squares offset by (0.5,0.5) intersect in exactly 2 points (AC1) .........................   Passed    0.01 sec
+        Start  97: Contour intersection: hits at a shared vertex are reported once
+ 97/505 Test  #97: Contour intersection: hits at a shared vertex are reported once ..................................   Passed    0.01 sec
+        Start  98: Contour intersection: circle through a square
+ 98/505 Test  #98: Contour intersection: circle through a square ....................................................   Passed    0.01 sec
+        Start  99: Contour intersection: shared edge yields an overlap
+ 99/505 Test  #99: Contour intersection: shared edge yields an overlap ..............................................   Passed    0.01 sec
+        Start 100: Disjoint contours have no intersections
+100/505 Test #100: Disjoint contours have no intersections ..........................................................   Passed    0.01 sec
+        Start 101: A figure-eight reports self-intersection; a square does not (AC5)
+101/505 Test #101: A figure-eight reports self-intersection; a square does not (AC5) ................................   Passed    0.01 sec
+        Start 102: Self-intersection ignores junctions but catches fold-backs and open-contour crossings
+102/505 Test #102: Self-intersection ignores junctions but catches fold-backs and open-contour crossings ............   Passed    0.01 sec
+        Start 103: Self-intersection: an open contour whose ends meet is not self-intersecting
+103/505 Test #103: Self-intersection: an open contour whose ends meet is not self-intersecting ......................   Passed    0.01 sec
+        Start 104: Self-intersection: a looping cubic Bezier crosses itself
+104/505 Test #104: Self-intersection: a looping cubic Bezier crosses itself .........................................   Passed    0.01 sec
+        Start 105: Arc-arc: near-tangent internal circles with close centres (verifier repro)
+105/505 Test #105: Arc-arc: near-tangent internal circles with close centres (verifier repro) .......................   Passed    0.01 sec
+        Start 106: Arc-arc: nearly concentric circles meet only when their closest approach is within tolerance
+106/505 Test #106: Arc-arc: nearly concentric circles meet only when their closest approach is within tolerance .....   Passed    0.00 sec
+        Start 107: Arc-arc: generative near-tangent internal and external circle pairs
+107/505 Test #107: Arc-arc: generative near-tangent internal and external circle pairs ..............................   Passed    0.29 sec
+        Start 108: Arc-arc: generative random arcs report points on both arcs
+108/505 Test #108: Arc-arc: generative random arcs report points on both arcs .......................................   Passed    0.03 sec
+        Start 109: Line-line: reported point agrees with A(tA) for ill-conditioned crossings at large coordinates
+109/505 Test #109: Line-line: reported point agrees with A(tA) for ill-conditioned crossings at large coordinates ...   Passed    0.02 sec
+        Start 110: T-0005 AC1: closed contours of two spans ignore both junctions
+110/505 Test #110: T-0005 AC1: closed contours of two spans ignore both junctions ...................................   Passed    0.06 sec
+        Start 111: T-0005 AC1: a two-span closed contour that crosses itself still reports the crossing
+111/505 Test #111: T-0005 AC1: a two-span closed contour that crosses itself still reports the crossing .............   Passed    0.01 sec
+        Start 112: T-0005 AC1: closed contours of one span
+112/505 Test #112: T-0005 AC1: closed contours of one span ..........................................................   Passed    0.01 sec
+        Start 113: T-0005 AC2: nearly concentric circles within tolerance of touching give one tangent hit
+113/505 Test #113: T-0005 AC2: nearly concentric circles within tolerance of touching give one tangent hit ..........   Passed    0.01 sec
+        Start 114: T-0005 AC2: generative near-concentric arc pairs around the tolerance boundary
+114/505 Test #114: T-0005 AC2: generative near-concentric arc pairs around the tolerance boundary ...................   Passed    0.05 sec
+        Start 115: T-0005 AC3: arc/Bezier shallow double crossing is found in both argument orders
+115/505 Test #115: T-0005 AC3: arc/Bezier shallow double crossing is found in both argument orders ..................   Passed    0.01 sec
+        Start 116: T-0005 AC3: two crossings closer than tolerance merge into one tangent hit
+116/505 Test #116: T-0005 AC3: two crossings closer than tolerance merge into one tangent hit .......................   Passed    0.01 sec
+        Start 117: T-0005 AC3: symmetry fuzz over arc/Bezier and Bezier/Bezier pairs
+117/505 Test #117: T-0005 AC3: symmetry fuzz over arc/Bezier and Bezier/Bezier pairs ................................   Passed   11.16 sec
+        Start 118: T-0005 AC3: every clearly separated crossing of a hugging Bezier is reported
+118/505 Test #118: T-0005 AC3: every clearly separated crossing of a hugging Bezier is reported .....................   Passed    2.14 sec
+        Start 119: T-0005 AC1: generative 1-span to 3-span closed contours match a brute-force reference
+119/505 Test #119: T-0005 AC1: generative 1-span to 3-span closed contours match a brute-force reference ............   Passed    0.67 sec
+        Start 120: T-0005 AC3: crossing between different branches near a cubic's loop is found
+120/505 Test #120: T-0005 AC3: crossing between different branches near a cubic's loop is found .....................   Passed    0.02 sec
+        Start 121: T-0005 AC3: generative perturbed copies of looping and tightly bent cubics vs brute force
+121/505 Test #121: T-0005 AC3: generative perturbed copies of looping and tightly bent cubics vs brute force ........   Passed    5.70 sec
+        Start 122: T-0005 AC3: a tangent line shifted 0.1*tol off a convex cubic is one tangent hit
+122/505 Test #122: T-0005 AC3: a tangent line shifted 0.1*tol off a convex cubic is one tangent hit .................   Passed    0.01 sec
+        Start 123: T-0005 AC3: touches within tolerance are reported once and gaps beyond it are not (h-sweep)
+123/505 Test #123: T-0005 AC3: touches within tolerance are reported once and gaps beyond it are not (h-sweep) ......   Passed    0.51 sec
+        Start 124: T-0005 AC3: curves hugging within tolerance report crossings and true closest approaches only
+124/505 Test #124: T-0005 AC3: curves hugging within tolerance report crossings and true closest approaches only ....   Passed    2.15 sec
+        Start 125: T-0007 AC1: verifier regressions, circles touching a cubic near piece cuts and the span start
+125/505 Test #125: T-0007 AC1: verifier regressions, circles touching a cubic near piece cuts and the span start ....   Passed    0.01 sec
+        Start 126: T-0007 AC1: external circles and arcs touching convex cubics, dense near cuts and ends
+126/505 Test #126: T-0007 AC1: external circles and arcs touching convex cubics, dense near cuts and ends ...........   Passed    1.77 sec
+        Start 127: T-0007 AC1: partial arcs starting or ending just before a touch near a steep span end
+127/505 Test #127: T-0007 AC1: partial arcs starting or ending just before a touch near a steep span end ............   Passed    2.84 sec
+        Start 128: T-0007 AC1: circles just beyond tolerance give nothing
+128/505 Test #128: T-0007 AC1: circles just beyond tolerance give nothing ...........................................   Passed    0.09 sec
+        Start 129: T-0007 AC2: verifier regression, both end touches of an arc and a Bezier
+129/505 Test #129: T-0007 AC2: verifier regression, both end touches of an arc and a Bezier .........................   Passed    0.01 sec
+        Start 130: T-0007 AC2: an end within tolerance of the other span is a touch whichever span it belongs to
+130/505 Test #130: T-0007 AC2: an end within tolerance of the other span is a touch whichever span it belongs to ....   Passed    0.93 sec
+        Start 131: T-0007 AC2: an arc ending 16 um from a hugging Bezier's interior, next to a crossing
+131/505 Test #131: T-0007 AC2: an arc ending 16 um from a hugging Bezier's interior, next to a crossing .............   Passed    0.01 sec
+        Start 132: T-0007 AC2: end touches of a Bezier hugging an arc are not lost (no regression vs T-0005)
+132/505 Test #132: T-0007 AC2: end touches of a Bezier hugging an arc are not lost (no regression vs T-0005) ........   Passed    0.01 sec
+        Start 133: T-0007 AC2: a double crossing confined to the last sample piece before a span end
+133/505 Test #133: T-0007 AC2: a double crossing confined to the last sample piece before a span end ................   Passed    0.01 sec
+        Start 134: T-0007 AC3: thin sliver self-loops of a single cubic are found
+134/505 Test #134: T-0007 AC3: thin sliver self-loops of a single cubic are found ...................................   Passed    0.34 sec
+        Start 135: T-0007 AC3: loops no larger than the tolerance are cusps, not self-intersections
+135/505 Test #135: T-0007 AC3: loops no larger than the tolerance are cusps, not self-intersections .................   Passed    0.00 sec
+        Start 136: T-0007 AC3: small lopsided loops are judged by their largest extent
+136/505 Test #136: T-0007 AC3: small lopsided loops are judged by their largest extent ..............................   Passed    0.31 sec
+        Start 137: T-0007 AC4: verifier regression, Bezier bulging past the arc it joins and re-crossing it
+137/505 Test #137: T-0007 AC4: verifier regression, Bezier bulging past the arc it joins and re-crossing it .........   Passed    0.00 sec
+        Start 138: T-0007 AC4: generative re-crossings within 2-10 tol of a Bezier/arc junction
+138/505 Test #138: T-0007 AC4: generative re-crossings within 2-10 tol of a Bezier/arc junction .....................   Passed    0.19 sec
+        Start 139: T-0008 AC1: regression, a line starting exactly where an arc ends
+139/505 Test #139: T-0008 AC1: regression, a line starting exactly where an arc ends ................................   Passed    0.01 sec
+        Start 140: T-0008 AC1: oblique end touches of lines and arcs, both orders
+140/505 Test #140: T-0008 AC1: oblique end touches of lines and arcs, both orders ...................................   Passed    0.00 sec
+        Start 141: T-0008 AC2: generative end touches of analytic pairs against brute force
+141/505 Test #141: T-0008 AC2: generative end touches of analytic pairs against brute force .........................   Passed    4.49 sec
+        Start 142: T-0008 AC3: near-tangent line/circle and circle/circle crossings further apart than tol
+142/505 Test #142: T-0008 AC3: near-tangent line/circle and circle/circle crossings further apart than tol ..........   Passed    0.02 sec
+        Start 143: T-0008 AC3: a re-crossing next to a contour junction is not erased with the junction
+143/505 Test #143: T-0008 AC3: a re-crossing next to a contour junction is not erased with the junction .............   Passed    0.01 sec
+        Start 144: T-0008 AC5: closestPoint(ArcSpan) parameter a rounding error outside the sweep
+144/505 Test #144: T-0008 AC5: closestPoint(ArcSpan) parameter a rounding error outside the sweep ...................   Passed    0.02 sec
+        Start 145: T-0008 AC6: ends of Beziers hugging arcs that extend past them are reported
+145/505 Test #145: T-0008 AC6: ends of Beziers hugging arcs that extend past them are reported ......................   Passed    4.23 sec
+        Start 146: FillRule is one type shared by booleans and point-in-contour
+146/505 Test #146: FillRule is one type shared by booleans and point-in-contour .....................................   Passed    0.01 sec
+        Start 147: Vec3 minimal arithmetic
+147/505 Test #147: Vec3 minimal arithmetic ..........................................................................   Passed    0.01 sec
+        Start 148: Move factories set kind and payload
+148/505 Test #148: Move factories set kind and payload ..............................................................   Passed    0.01 sec
+        Start 149: Linear move lengths
+149/505 Test #149: Linear move lengths ..............................................................................   Passed    0.01 sec
+        Start 150: Arc move sweep, radius and length
+150/505 Test #150: Arc move sweep, radius and length ................................................................   Passed    0.01 sec
+        Start 151: Move bounds
+151/505 Test #151: Move bounds ......................................................................................   Passed    0.01 sec
+        Start 152: Empty toolpath queries
+152/505 Test #152: Empty toolpath queries ...........................................................................   Passed    0.01 sec
+        Start 153: AC3: length by kind for a 10x10 square at one depth is analytic
+153/505 Test #153: AC3: length by kind for a 10x10 square at one depth is analytic ..................................   Passed    0.01 sec
+        Start 154: Length by kind includes arcs under feed and ignores dwells
+154/505 Test #154: Length by kind includes arcs under feed and ignores dwells .......................................   Passed    0.01 sec
+        Start 155: Bounds, Z range and end point
+155/505 Test #155: Bounds, Z range and end point ....................................................................   Passed    0.00 sec
+        Start 156: startOf and append
+156/505 Test #156: startOf and append ...............................................................................   Passed    0.01 sec
+        Start 157: ToolSnapshot is a plain value
+157/505 Test #157: ToolSnapshot is a plain value ....................................................................   Passed    0.01 sec
+        Start 158: AC1: 0 -> 12 mm by 5 mm
+158/505 Test #158: AC1: 0 -> 12 mm by 5 mm ..........................................................................   Passed    0.01 sec
+        Start 159: Equalised passes may grow the step by up to 15 percent
+159/505 Test #159: Equalised passes may grow the step by up to 15 percent ...........................................   Passed    0.01 sec
+        Start 160: Start depth offsets every level
+160/505 Test #160: Start depth offsets every level ..................................................................   Passed    0.01 sec
+        Start 161: Pass depth greater than or equal to total depth gives a single pass
+161/505 Test #161: Pass depth greater than or equal to total depth gives a single pass ..............................   Passed    0.01 sec
+        Start 162: Exact multiples do not produce a zero-length final pass
+162/505 Test #162: Exact multiples do not produce a zero-length final pass ..........................................   Passed    0.01 sec
+        Start 163: Degenerate inputs
+163/505 Test #163: Degenerate inputs ................................................................................   Passed    0.01 sec
+        Start 164: Last pass thickness reserves the final pass
+164/505 Test #164: Last pass thickness reserves the final pass ......................................................   Passed    0.01 sec
+        Start 165: Levels are strictly decreasing and end at the bottom
+165/505 Test #165: Levels are strictly decreasing and end at the bottom .............................................   Passed    0.01 sec
+        Start 166: AC2: linking two closed contours at -3
+166/505 Test #166: AC2: linking two closed contours at -3 ...........................................................   Passed    0.00 sec
+        Start 167: Arc spans become arc moves with the same centre and direction
+167/505 Test #167: Arc spans become arc moves with the same centre and direction ....................................   Passed    0.00 sec
+        Start 168: Bezier spans are polygonised into feed moves within the chordal tolerance
+168/505 Test #168: Bezier spans are polygonised into feed moves within the chordal tolerance ........................   Passed    0.04 sec
+        Start 169: Zero-length spans produce no moves
+169/505 Test #169: Zero-length spans produce no moves ...............................................................   Passed    0.00 sec
+        Start 170: Empty inputs produce nothing
+170/505 Test #170: Empty inputs produce nothing .....................................................................   Passed    0.00 sec
+        Start 171: Single-level overload matches the multi-level overload with one level
+171/505 Test #171: Single-level overload matches the multi-level overload with one level ............................   Passed    0.00 sec
+        Start 172: Multi-level linking of a closed contour plunges between passes
+172/505 Test #172: Multi-level linking of a closed contour plunges between passes ...................................   Passed    0.00 sec
+        Start 173: Multi-level linking of an open contour alternates direction
+173/505 Test #173: Multi-level linking of an open contour alternates direction ......................................   Passed    0.01 sec
+        Start 174: Linking is deterministic
+174/505 Test #174: Linking is deterministic .........................................................................   Passed    0.00 sec
+        Start 175: AC4: 1000 mm at 1000 mm/min
+175/505 Test #175: AC4: 1000 mm at 1000 mm/min ......................................................................   Passed    0.00 sec
+        Start 176: moveTime trapezoid and triangle regimes
+176/505 Test #176: moveTime trapezoid and triangle regimes ..........................................................   Passed    0.00 sec
+        Start 177: Estimate is split by kind and honours rates, overrides and dwells
+177/505 Test #177: Estimate is split by kind and honours rates, overrides and dwells ................................   Passed    0.00 sec
+        Start 178: MachineRates::fromTool takes feed and plunge from the snapshot
+178/505 Test #178: MachineRates::fromTool takes feed and plunge from the snapshot ...................................   Passed    0.00 sec
+        Start 179: Empty toolpath and zero-length moves take no time
+179/505 Test #179: Empty toolpath and zero-length moves take no time ................................................   Passed    0.01 sec
+        Start 180: Estimate is deterministic
+180/505 Test #180: Estimate is deterministic ........................................................................   Passed    0.00 sec
+        Start 181: ArcLengthPath: points, wrapping and exact extraction
+181/505 Test #181: ArcLengthPath: points, wrapping and exact extraction .............................................   Passed    0.00 sec
+        Start 182: ZProfile: evaluation and point-wise maximum
+182/505 Test #182: ZProfile: evaluation and point-wise maximum ......................................................   Passed    0.00 sec
+        Start 183: appendLeg: helical arcs, vertical jumps and inserts
+183/505 Test #183: appendLeg: helical arcs, vertical jumps and inserts ..............................................   Passed    0.01 sec
+        Start 184: Clearance: violations along a path are found and bracketed
+184/505 Test #184: Clearance: violations along a path are found and bracketed .......................................   Passed    0.01 sec
+        Start 185: Tabs: equal spacing, constant distance and corner avoidance
+185/505 Test #185: Tabs: equal spacing, constant distance and corner avoidance ......................................   Passed    0.01 sec
+        Start 186: Leads come from the waste side and join the path
+186/505 Test #186: Leads come from the waste side and join the path .................................................   Passed    0.01 sec
+        Start 187: planPass: ramps on closed and open paths
+187/505 Test #187: planPass: ramps on closed and open paths .........................................................   Passed    0.01 sec
+        Start 188: orderCuts: containment first, then strategy
+188/505 Test #188: orderCuts: containment first, then strategy ......................................................   Passed    0.01 sec
+        Start 189: AC1: outside profile of a 100x50 rectangle, 3 passes, 2 tabs
+189/505 Test #189: AC1: outside profile of a 100x50 rectangle, 3 passes, 2 tabs .....................................   Passed    0.01 sec
+        Start 190: AC2: inside profile of a circle r=10 with a 6 mm tool is an r=7 arc
+190/505 Test #190: AC2: inside profile of a circle r=10 with a 6 mm tool is an r=7 arc ..............................   Passed    0.00 sec
+        Start 191: AC2: inside profile of a circle r=2.9 with a 6 mm tool yields no toolpath and a reason
+191/505 Test #191: AC2: inside profile of a circle r=2.9 with a 6 mm tool yields no toolpath and a reason ...........   Passed    0.01 sec
+        Start 192: AC3: climb and conventional run in opposite directions
+192/505 Test #192: AC3: climb and conventional run in opposite directions ...........................................   Passed    0.00 sec
+        Start 193: AC3: separate last pass with 0.2 mm allowance gives two loops at r+0.2 and r
+193/505 Test #193: AC3: separate last pass with 0.2 mm allowance gives two loops at r+0.2 and r .....................   Passed    0.01 sec
+        Start 194: Allowance offset moves the cut away from (or into) the vector
+194/505 Test #194: Allowance offset moves the cut away from (or into) the vector ....................................   Passed    0.01 sec
+        Start 195: AC4: smooth ramp over 20 mm reaches the pass depth exactly 20 mm along the path
+195/505 Test #195: AC4: smooth ramp over 20 mm reaches the pass depth exactly 20 mm along the path ..................   Passed    0.00 sec
+        Start 196: AC4: smooth ramp by angle uses drop / tan(angle)
+196/505 Test #196: AC4: smooth ramp by angle uses drop / tan(angle) .................................................   Passed    0.00 sec
+        Start 197: AC4: spiral ramp on a closed contour descends one pass depth per revolution
+197/505 Test #197: AC4: spiral ramp on a closed contour descends one pass depth per revolution ......................   Passed    0.00 sec
+        Start 198: Zig-zag ramp walks back and forth and returns to the start before the pass
+198/505 Test #198: Zig-zag ramp walks back and forth and returns to the start before the pass .......................   Passed    0.01 sec
+        Start 199: AC4: leads start off the material and keep the tool radius from every vector
+199/505 Test #199: AC4: leads start off the material and keep the tool radius from every vector .....................   Passed    0.01 sec
+        Start 200: AC5: ordering modes on a 3x3 grid of squares
+200/505 Test #200: AC5: ordering modes on a 3x3 grid of squares .....................................................   Passed    0.01 sec
+        Start 201: AC5: inner vectors are always cut before the vectors containing them
+201/505 Test #201: AC5: inner vectors are always cut before the vectors containing them .............................   Passed    0.01 sec
+        Start 202: Tabs: constant distance, avoid corners and 3D tabs
+202/505 Test #202: Tabs: constant distance, avoid corners and 3D tabs ...............................................   Passed    0.01 sec
+        Start 203: Open vectors: Right/Left offsets, alternating passes, On keeps the vector
+203/505 Test #203: Open vectors: Right/Left offsets, alternating passes, On keeps the vector ........................   Passed    0.00 sec
+        Start 204: Nearby closed vectors are offset together instead of gouging each other
+204/505 Test #204: Nearby closed vectors are offset together instead of gouging each other ..........................   Passed    0.02 sec
+        Start 205: An open vector's cut is trimmed where it would gouge a neighbour
+205/505 Test #205: An open vector's cut is trimmed where it would gouge a neighbour .................................   Passed    0.00 sec
+        Start 206: Start points: vector start, optimised, closest on bounding box
+206/505 Test #206: Start points: vector start, optimised, closest on bounding box ...................................   Passed    0.00 sec
+        Start 207: V-bit corners: sharp external mitres, sharp internal corner climbs
+207/505 Test #207: V-bit corners: sharp external mitres, sharp internal corner climbs ...............................   Passed    0.00 sec
+        Start 208: Profile output is deterministic and invalid input is reported
+208/505 Test #208: Profile output is deterministic and invalid input is reported ....................................   Passed    0.03 sec
+        Start 209: Tabs on a loop shorter than one tab are left out, so the hole is still cut through
+209/505 Test #209: Tabs on a loop shorter than one tab are left out, so the hole is still cut through ...............   Passed    0.00 sec
+        Start 210: 3D tab ramps count towards overlap: neighbouring 3D tabs never merge above the bottom
+210/505 Test #210: 3D tab ramps count towards overlap: neighbouring 3D tabs never merge above the bottom ............   Passed    0.01 sec
+        Start 211: Generative: tabbed and untabbed outlines are cut to full depth everywhere but the tabs
+211/505 Test #211: Generative: tabbed and untabbed outlines are cut to full depth everywhere but the tabs ...........   Passed    0.95 sec
+        Start 212: Tabs never cover the cut start: plunge, lead-in and overcut lead-out stay out of tabs
+212/505 Test #212: Tabs never cover the cut start: plunge, lead-in and overcut lead-out stay out of tabs ............   Passed    0.03 sec
+        Start 213: Without a ramp, closed cuts step down vertically and every level is a full flat loop
+213/505 Test #213: Without a ramp, closed cuts step down vertically and every level is a full flat loop .............   Passed    0.01 sec
+        Start 214: V-bit sharp internal corners only at genuine corners, safe next to curved walls
+214/505 Test #214: V-bit sharp internal corners only at genuine corners, safe next to curved walls ..................   Passed    0.26 sec
+        Start 215: V-bit sharp internal corners keep the cone inside the walls for any start depth
+215/505 Test #215: V-bit sharp internal corners keep the cone inside the walls for any start depth ..................   Passed    0.07 sec
+        Start 216: Separate last pass: finishing cuts follow the roughing order
+216/505 Test #216: Separate last pass: finishing cuts follow the roughing order .....................................   Passed    0.01 sec
+        Start 217: Inside profiles starting at a corner still get their lead-in
+217/505 Test #217: Inside profiles starting at a corner still get their lead-in .....................................   Passed    0.02 sec
+        Start 218: Separate last pass: every finishing tab is covered by the roughing cut
+218/505 Test #218: Separate last pass: every finishing tab is covered by the roughing cut ...........................   Passed    0.04 sec
+        Start 219: Generative: with a separate last pass no move cuts below the tab top over tab material
+219/505 Test #219: Generative: with a separate last pass no move cuts below the tab top over tab material ...........   Passed    3.08 sec
+        Start 220: Tab thickness beyond the cut depth is clamped and reported
+220/505 Test #220: Tab thickness beyond the cut depth is clamped and reported .......................................   Passed    0.01 sec
+        Start 221: Leads keep the tool radius plus the allowance from every vector
+221/505 Test #221: Leads keep the tool radius plus the allowance from every vector ..................................   Passed    0.01 sec
+        Start 222: Separate last pass: a short tab on a concave curve is not cut through by the roughing cut
+222/505 Test #222: Separate last pass: a short tab on a concave curve is not cut through by the roughing cut ........   Passed    0.05 sec
+        Start 223: Separate last pass: a tab whose material a lobe of the roughing cut crosses is left out
+223/505 Test #223: Separate last pass: a tab whose material a lobe of the roughing cut crosses is left out ..........   Passed    1.14 sec
+        Start 224: Short tabs centred on sharp convex corners are kept whole or left out and reported
+224/505 Test #224: Short tabs centred on sharp convex corners are kept whole or left out and reported ...............   Passed    1.51 sec
+        Start 225: Generative: every kept tab still joins the part to the waste (rasterised)
+225/505 Test #225: Generative: every kept tab still joins the part to the waste (rasterised) ........................   Passed    3.40 sec
+        Start 226: Tabs at an inside corner of the cut are kept joined or left out and reported
+226/505 Test #226: Tabs at an inside corner of the cut are kept joined or left out and reported .....................   Passed    2.05 sec
+        Start 227: Tabs in the roots of a gear are kept joined or left out and reported
+227/505 Test #227: Tabs in the roots of a gear are kept joined or left out and reported .............................   Passed    1.49 sec
+        Start 228: A tab starting at a V-bit sharp inside corner is cut flat at the tab top
+228/505 Test #228: A tab starting at a V-bit sharp inside corner is cut flat at the tab top .........................   Passed    0.01 sec
+        Start 229: AC1: profile move list matches the hand-checked golden
+229/505 Test #229: AC1: profile move list matches the hand-checked golden ...........................................   Passed    0.15 sec
+        Start 230: AC6: profile G-code through the Grbl post matches the golden
+230/505 Test #230: AC6: profile G-code through the Grbl post matches the golden .....................................   Passed    0.18 sec
+        Start 231: AC6: random scenes never bring a cutting move within tool radius of a vector
+231/505 Test #231: AC6: random scenes never bring a cutting move within tool radius of a vector .....................   Passed   10.30 sec
+        Start 232: AC6: Bezier vectors stay gouge-free too
+232/505 Test #232: AC6: Bezier vectors stay gouge-free too ..........................................................   Passed    1.67 sec
+        Start 233: ToolType names round-trip
+233/505 Test #233: ToolType names round-trip ........................................................................   Passed    0.01 sec
+        Start 234: V-bit 90 deg diameter 12.7 cuts 6 mm wide at depth 3 (AC1)
+234/505 Test #234: V-bit 90 deg diameter 12.7 cuts 6 mm wide at depth 3 (AC1) .......................................   Passed    0.00 sec
+        Start 235: V-bit 60 deg follows 2*d*tan(a/2)
+235/505 Test #235: V-bit 60 deg follows 2*d*tan(a/2) ................................................................   Passed    0.01 sec
+        Start 236: End mill and diamond drag widths are constant
+236/505 Test #236: End mill and diamond drag widths are constant ....................................................   Passed    0.01 sec
+        Start 237: Ball nose width is the sphere chord
+237/505 Test #237: Ball nose width is the sphere chord ..............................................................   Passed    0.01 sec
+        Start 238: Tapered ball nose follows ball then tangent taper
+238/505 Test #238: Tapered ball nose follows ball then tangent taper ................................................   Passed    0.00 sec
+        Start 239: Tapered ball nose with zero taper is a cylinder of the tip diameter
+239/505 Test #239: Tapered ball nose with zero taper is a cylinder of the tip diameter ..............................   Passed    0.00 sec
+        Start 240: Engraving cutter adds its flat tip to the V
+240/505 Test #240: Engraving cutter adds its flat tip to the V ......................................................   Passed    0.00 sec
+        Start 241: Radiused end mill is flat core plus corner chord
+241/505 Test #241: Radiused end mill is flat core plus corner chord .................................................   Passed    0.00 sec
+        Start 242: Radiused end mill with corner radius = D/2 behaves like a ball nose
+242/505 Test #242: Radiused end mill with corner radius = D/2 behaves like a ball nose ..............................   Passed    0.00 sec
+        Start 243: Form tool width interpolates its half profile
+243/505 Test #243: Form tool width interpolates its half profile ....................................................   Passed    0.00 sec
+        Start 244: Drill follows the point angle until full diameter
+244/505 Test #244: Drill follows the point angle until full diameter ................................................   Passed    0.01 sec
+        Start 245: Cutting width never exceeds the diameter for any type
+245/505 Test #245: Cutting width never exceeds the diameter for any type ............................................   Passed    0.00 sec
+        Start 246: Cutting data lookup falls back to the default and says so (AC4)
+246/505 Test #246: Cutting data lookup falls back to the default and says so (AC4) ..................................   Passed    0.00 sec
+        Start 247: Cutting data set/replace/remove
+247/505 Test #247: Cutting data set/replace/remove ..................................................................   Passed    0.01 sec
+        Start 248: Effective stepovers and chip load
+248/505 Test #248: Effective stepovers and chip load ................................................................   Passed    0.00 sec
+        Start 249: validate accepts well-formed tools of every type
+249/505 Test #249: validate accepts well-formed tools of every type .................................................   Passed    0.01 sec
+        Start 250: validate rejects bad geometry
+250/505 Test #250: validate rejects bad geometry ....................................................................   Passed    0.01 sec
+        Start 251: Tool CRUD
+251/505 Test #251: Tool CRUD ........................................................................................   Passed    0.00 sec
+        Start 252: copyTool duplicates geometry and cutting data under a new id
+252/505 Test #252: copyTool duplicates geometry and cutting data under a new id .....................................   Passed    0.01 sec
+        Start 253: Groups nest, list children and remove by re-homing contents
+253/505 Test #253: Groups nest, list children and remove by re-homing contents ......................................   Passed    0.01 sec
+        Start 254: Materials: add, rename, duplicate with/without cutting data, remove
+254/505 Test #254: Materials: add, rename, duplicate with/without cutting data, remove ..............................   Passed    0.00 sec
+        Start 255: Machines: add, update, duplicate, remove keeping or deleting cutting data
+255/505 Test #255: Machines: add, update, duplicate, remove keeping or deleting cutting data ........................   Passed    0.01 sec
+        Start 256: Merge without overwrite keeps existing cutting data and adds new tools (AC3)
+256/505 Test #256: Merge without overwrite keeps existing cutting data and adds new tools (AC3) .....................   Passed    0.01 sec
+        Start 257: Merge with overwrite replaces existing items (AC3)
+257/505 Test #257: Merge with overwrite replaces existing items (AC3) ...............................................   Passed    0.01 sec
+        Start 258: Merge is idempotent and merging an empty database changes nothing
+258/505 Test #258: Merge is idempotent and merging an empty database changes nothing ................................   Passed    0.01 sec
+        Start 259: Merge brings a tool's group along so the tool stays in it
+259/505 Test #259: Merge brings a tool's group along so the tool stays in it ........................................   Passed    0.01 sec
+        Start 260: Merge breaks group parent cycles introduced by the incoming data
+260/505 Test #260: Merge breaks group parent cycles introduced by the incoming data .................................   Passed    0.01 sec
+        Start 261: Export -> import -> export is byte-identical (AC2)
+261/505 Test #261: Export -> import -> export is byte-identical (AC2) ...............................................   Passed    0.01 sec
+        Start 262: Export is deterministic and independent of insertion order
+262/505 Test #262: Export is deterministic and independent of insertion order .......................................   Passed    0.01 sec
+        Start 263: Export writes fixed precision: 1e-6 rounding, degrees, no negative zero
+263/505 Test #263: Export writes fixed precision: 1e-6 rounding, degrees, no negative zero ..........................   Passed    0.01 sec
+        Start 264: Import reproduces the database contents
+264/505 Test #264: Import reproduces the database contents ..........................................................   Passed    0.01 sec
+        Start 265: Empty database round-trips
+265/505 Test #265: Empty database round-trips .......................................................................   Passed    0.01 sec
+        Start 266: Import accepts groups listed before their parents and fills defaults
+266/505 Test #266: Import accepts groups listed before their parents and fills defaults .............................   Passed    0.01 sec
+        Start 267: Import rejects malformed input with a descriptive error
+267/505 Test #267: Import rejects malformed input with a descriptive error ..........................................   Passed    0.01 sec
+        Start 268: Imported file can be merged into an existing database
+268/505 Test #268: Imported file can be merged into an existing database ............................................   Passed    0.01 sec
+        Start 269: AC2: [X|A|X|1.3] renders 12.3456 as X12.346
+269/505 Test #269: AC2: [X|A|X|1.3] renders 12.3456 as X12.346 ......................................................   Passed    0.01 sec
+        Start 270: Number formats: decimals, padding, sign, rounding, no negative zero
+270/505 Test #270: Number formats: decimals, padding, sign, rounding, no negative zero ..............................   Passed    0.01 sec
+        Start 271: parseNumberFormat accepts [+]W.D and rejects junk
+271/505 Test #271: parseNumberFormat accepts [+]W.D and rejects junk ................................................   Passed    0.01 sec
+        Start 272: parseVarSpec: modes, prefix spaces, multiplier
+272/505 Test #272: parseVarSpec: modes, prefix spaces, multiplier ...................................................   Passed    0.01 sec
+        Start 273: parseVarSpec errors name the line
+273/505 Test #273: parseVarSpec errors name the line ................................................................   Passed    0.01 sec
+        Start 274: Tag table and default definitions
+274/505 Test #274: Tag table and default definitions ................................................................   Passed    0.00 sec
+        Start 275: Parser: comments, settings, VARs and blocks
+275/505 Test #275: Parser: comments, settings, VARs and blocks ......................................................   Passed    0.01 sec
+        Start 276: Parser: defaults when settings are absent
+276/505 Test #276: Parser: defaults when settings are absent ........................................................   Passed    0.01 sec
+        Start 277: Parser: CRLF source files parse the same
+277/505 Test #277: Parser: CRLF source files parse the same .........................................................   Passed    0.01 sec
+        Start 278: AC4: unknown block names are a warning, not a failure
+278/505 Test #278: AC4: unknown block names are a warning, not a failure ............................................   Passed    0.01 sec
+        Start 279: AC4: unknown variable tags are an error naming the line
+279/505 Test #279: AC4: unknown variable tags are an error naming the line ..........................................   Passed    0.01 sec
+        Start 280: Parser: unknown settings and duplicates are warnings
+280/505 Test #280: Parser: unknown settings and duplicates are warnings .............................................   Passed    0.01 sec
+        Start 281: Parser: structural errors name the line
+281/505 Test #281: Parser: structural errors name the line ..........................................................   Passed    0.00 sec
+        Start 282: Parser: invalid setting values are errors naming the line
+282/505 Test #282: Parser: invalid setting values are errors naming the line ........................................   Passed    0.00 sec
+        Start 283: AC2: [X|A|X|1.3] in a block writes X12.346
+283/505 Test #283: AC2: [X|A|X|1.3] in a block writes X12.346 .......................................................   Passed    0.01 sec
+        Start 284: AC2: incremental mode renders deltas
+284/505 Test #284: AC2: incremental mode renders deltas .............................................................   Passed    0.00 sec
+        Start 285: Incremental deltas telescope without rounding drift
+285/505 Test #285: Incremental deltas telescope without rounding drift ..............................................   Passed    0.01 sec
+        Start 286: Modal (C) variables are suppressed when unchanged and reset per toolpath
+286/505 Test #286: Modal (C) variables are suppressed when unchanged and reset per toolpath .........................   Passed    0.00 sec
+        Start 287: A line whose variables are all suppressed is dropped; literal empty lines are kept
+287/505 Test #287: A line whose variables are all suppressed is dropped; literal empty lines are kept ...............   Passed    0.01 sec
+        Start 288: AC3: arcs use CW/CCW_ARC_MOVE with I/J relative to the start
+288/505 Test #288: AC3: arcs use CW/CCW_ARC_MOVE with I/J relative to the start .....................................   Passed    0.01 sec
+        Start 289: Arc tags: IA/JA, start, mid, signed radius, angle
+289/505 Test #289: Arc tags: IA/JA, start, mid, signed radius, angle ................................................   Passed    0.01 sec
+        Start 290: Helical arcs use the helical block when present, otherwise the arc block with Z
+290/505 Test #290: Helical arcs use the helical block when present, otherwise the arc block with Z ..................   Passed    0.01 sec
+        Start 291: AC3: without arc blocks arcs are linearised within the tolerance
+291/505 Test #291: AC3: without arc blocks arcs are linearised within the tolerance .................................   Passed    0.01 sec
+        Start 292: Arcs outside MIN/MAX_ARC_RADIUS are linearised
+292/505 Test #292: Arcs outside MIN/MAX_ARC_RADIUS are linearised ...................................................   Passed    0.01 sec
+        Start 293: R-form posts write a full circle as two half circles
+293/505 Test #293: R-form posts write a full circle as two half circles .............................................   Passed    0.01 sec
+        Start 294: AC5: ROTARY_WRAP_Y wraps Y into A (Y = pi*25 on a 50 mm cylinder is 180 degrees)
+294/505 Test #294: AC5: ROTARY_WRAP_Y wraps Y into A (Y = pi*25 on a 50 mm cylinder is 180 degrees) .................   Passed    0.01 sec
+        Start 295: Without rotary wrap, [A] is 0
+295/505 Test #295: Without rotary wrap, [A] is 0 ....................................................................   Passed    0.01 sec
+        Start 296: Line numbering increments and wraps at LINE_NUMBER_MAXIMUM
+296/505 Test #296: Line numbering increments and wraps at LINE_NUMBER_MAXIMUM .......................................   Passed    0.01 sec
+        Start 297: Line numbering defaults start at 0 step 1; LINE_ENDING is applied
+297/505 Test #297: Line numbering defaults start at 0 step 1; LINE_ENDING is applied ................................   Passed    0.01 sec
+        Start 298: Inch output scales lengths and feeds but not speeds, angles or counts
+298/505 Test #298: Inch output scales lengths and feeds but not speeds, angles or counts ............................   Passed    0.01 sec
+        Start 299: Inverse-time mode: [F] and [FI] give 1/minutes for cutting moves
+299/505 Test #299: Inverse-time mode: [F] and [FI] give 1/minutes for cutting moves .................................   Passed    0.01 sec
+        Start 300: FEED_RATE_CHANGE is written only when the feed changes
+300/505 Test #300: FEED_RATE_CHANGE is written only when the feed changes ...........................................   Passed    0.01 sec
+        Start 301: Missing blocks fall back or are skipped
+301/505 Test #301: Missing blocks fall back or are skipped ..........................................................   Passed    0.01 sec
+        Start 302: FIRST_* and INITIAL_* blocks apply to the first move of each toolpath
+302/505 Test #302: FIRST_* and INITIAL_* blocks apply to the first move of each toolpath ............................   Passed    0.01 sec
+        Start 303: Empty toolpath list writes only HEADER and FOOTER
+303/505 Test #303: Empty toolpath list writes only HEADER and FOOTER ................................................   Passed    0.01 sec
+        Start 304: Multiple toolpaths: TOOLCHANGE + SPINDLE_ON on a new tool, NEW_SEGMENT otherwise
+304/505 Test #304: Multiple toolpaths: TOOLCHANGE + SPINDLE_ON on a new tool, NEW_SEGMENT otherwise .................   Passed    0.01 sec
+        Start 305: Text variables: SUBSTITUTE and context strings
+305/505 Test #305: Text variables: SUBSTITUTE and context strings ...................................................   Passed    0.01 sec
+        Start 306: Dwell writes DWELL_MOVE with the pause in seconds
+306/505 Test #306: Dwell writes DWELL_MOVE with the pause in seconds ................................................   Passed    0.01 sec
+        Start 307: Output is deterministic
+307/505 Test #307: Output is deterministic ..........................................................................   Passed    0.01 sec
+        Start 308: Shipped Grbl post parses cleanly
+308/505 Test #308: Shipped Grbl post parses cleanly .................................................................   Passed    0.01 sec
+        Start 309: AC1: Grbl post + square profile matches golden grbl_square.nc exactly
+309/505 Test #309: AC1: Grbl post + square profile matches golden grbl_square.nc exactly ............................   Passed    0.01 sec
+        Start 310: Grbl post: tool change, arcs and dwell
+310/505 Test #310: Grbl post: tool change, arcs and dwell ...........................................................   Passed    0.01 sec
+        Start 311: Shipped posts parse with no warnings and declare their dialect
+311/505 Test #311: Shipped posts parse with no warnings and declare their dialect ...................................   Passed    0.01 sec
+        Start 312: AC1: every shipped post reproduces its golden output for the shared fixture
+312/505 Test #312: AC1: every shipped post reproduces its golden output for the shared fixture ......................   Passed    0.01 sec
+        Start 313: AC2: every golden program passes the machine-safety checklist
+313/505 Test #313: AC2: every golden program passes the machine-safety checklist ....................................   Passed    0.01 sec
+        Start 314: Safety checker catches the hazards it is meant to catch
+314/505 Test #314: Safety checker catches the hazards it is meant to catch ..........................................   Passed    0.01 sec
+        Start 315: AC3: starter tool database loads and every tool validates
+315/505 Test #315: AC3: starter tool database loads and every tool validates ........................................   Passed    0.22 sec
+        Start 316: AC3: starter database exports byte-identically
+316/505 Test #316: AC3: starter database exports byte-identically ...................................................   Passed    0.01 sec
+        Start 317: AC3: every starter tool has cutting data for at least one material
+317/505 Test #317: AC3: every starter tool has cutting data for at least one material ...............................   Passed    0.02 sec
+        Start 318: Starter cutting data is conservative and plausible
+318/505 Test #318: Starter cutting data is conservative and plausible ...............................................   Passed    0.01 sec
+        Start 319: Starter database covers the tools the card asks for
+319/505 Test #319: Starter database covers the tools the card asks for ..............................................   Passed    0.01 sec
+        Start 320: units convert between mm and inches
+320/505 Test #320: units convert between mm and inches ..............................................................   Passed    0.01 sec
+        Start 321: AC1: a 10x10x0.5 in job is stored in mm and queried in inches
+321/505 Test #321: AC1: a 10x10x0.5 in job is stored in mm and queried in inches ....................................   Passed    0.00 sec
+        Start 322: setDisplaySize converts from the display unit
+322/505 Test #322: setDisplaySize converts from the display unit ....................................................   Passed    0.01 sec
+        Start 323: datum anchors and offsets place the material rectangle
+323/505 Test #323: datum anchors and offsets place the material rectangle ...........................................   Passed    0.01 sec
+        Start 324: double-sided job keeps flip direction
+324/505 Test #324: double-sided job keeps flip direction ............................................................   Passed    0.01 sec
+        Start 325: rotary job unwraps length x circumference and stores the diameter
+325/505 Test #325: rotary job unwraps length x circumference and stores the diameter ................................   Passed    0.01 sec
+        Start 326: job validity rejects non-positive sizes and a cylinder-axis zero on flat jobs
+326/505 Test #326: job validity rejects non-positive sizes and a cylinder-axis zero on flat jobs ....................   Passed    0.01 sec
+        Start 327: sheet takes size, Z-zero and datum from the job
+327/505 Test #327: sheet takes size, Z-zero and datum from the job ..................................................   Passed    0.01 sec
+        Start 328: variable names must start with a letter and use letters, digits or underscore
+328/505 Test #328: variable names must start with a letter and use letters, digits or underscore ....................   Passed    0.01 sec
+        Start 329: variables are set, read, overwritten and removed
+329/505 Test #329: variables are set, read, overwritten and removed .................................................   Passed    0.01 sec
+        Start 330: a referenced variable cannot be removed until released
+330/505 Test #330: a referenced variable cannot be removed until released ...........................................   Passed    0.01 sec
+        Start 331: variables export to text and re-import overwriting same names
+331/505 Test #331: variables export to text and re-import overwriting same names ....................................   Passed    0.01 sec
+        Start 332: variable import skips comments and reports bad lines
+332/505 Test #332: variable import skips comments and reports bad lines .............................................   Passed    0.01 sec
+        Start 333: selection keeps insertion order and rejects duplicates and null ids
+333/505 Test #333: selection keeps insertion order and rejects duplicates and null ids ..............................   Passed    0.01 sec
+        Start 334: ids are strongly typed, comparable and hashable
+334/505 Test #334: ids are strongly typed, comparable and hashable ..................................................   Passed    0.01 sec
+        Start 335: undo stack applies, undoes and redoes in order
+335/505 Test #335: undo stack applies, undoes and redoes in order ...................................................   Passed    0.01 sec
+        Start 336: a new push discards the redo tail
+336/505 Test #336: a new push discards the redo tail ................................................................   Passed    0.01 sec
+        Start 337: a no-op command is not recorded
+337/505 Test #337: a no-op command is not recorded ..................................................................   Passed    0.01 sec
+        Start 338: mergeable commands coalesce into one step until the run is broken
+338/505 Test #338: mergeable commands coalesce into one step until the run is broken ................................   Passed    0.01 sec
+        Start 339: macros group several pushes into one undo step
+339/505 Test #339: macros group several pushes into one undo step ...................................................   Passed    0.01 sec
+        Start 340: undo limit drops the oldest steps
+340/505 Test #340: undo limit drops the oldest steps ................................................................   Passed    0.01 sec
+        Start 341: clean state tracks the saved point
+341/505 Test #341: clean state tracks the saved point ...............................................................   Passed    0.01 sec
+        Start 342: a new document has one sheet and one layer sized from the job
+342/505 Test #342: a new document has one sheet and one layer sized from the job ....................................   Passed    0.01 sec
+        Start 343: layers are ordered, reorderable and protected when last or non-empty
+343/505 Test #343: layers are ordered, reorderable and protected when last or non-empty .............................   Passed    0.01 sec
+        Start 344: sheets are protected when last or non-empty
+344/505 Test #344: sheets are protected when last or non-empty ......................................................   Passed    0.01 sec
+        Start 345: objects get monotonically increasing ids and iterate in id order
+345/505 Test #345: objects get monotonically increasing ids and iterate in id order .................................   Passed    0.01 sec
+        Start 346: object kinds, payload accessors and bounds
+346/505 Test #346: object kinds, payload accessors and bounds .......................................................   Passed    0.01 sec
+        Start 347: copyObjects deep-copies groups with their descendants
+347/505 Test #347: copyObjects deep-copies groups with their descendants ............................................   Passed    0.01 sec
+        Start 348: AC2: add object, undo, redo round-trips identity and layer membership
+348/505 Test #348: AC2: add object, undo, redo round-trips identity and layer membership ............................   Passed    0.01 sec
+        Start 349: AC3: deleting a layer moves its objects to the default layer unless deleteContents
+349/505 Test #349: AC3: deleting a layer moves its objects to the default layer unless deleteContents ...............   Passed    0.01 sec
+        Start 350: AC4: 10 000 inserts, undo all and redo all complete under one second
+350/505 Test #350: AC4: 10 000 inserts, undo all and redo all complete under one second .............................   Passed    0.48 sec
+        Start 351: AC5: object ids are unique across undo/redo and paste assigns new ids
+351/505 Test #351: AC5: object ids are unique across undo/redo and paste assigns new ids ............................   Passed    0.01 sec
+        Start 352: remove objects is undoable and detaches children from surviving groups
+352/505 Test #352: remove objects is undoable and detaches children from surviving groups ...........................   Passed    0.01 sec
+        Start 353: group and ungroup round-trip
+353/505 Test #353: group and ungroup round-trip .....................................................................   Passed    0.01 sec
+        Start 354: move objects between layers and sheets
+354/505 Test #354: move objects between layers and sheets ...........................................................   Passed    0.01 sec
+        Start 355: transform objects snapshots geometry and coalesces a drag
+355/505 Test #355: transform objects snapshots geometry and coalesces a drag ........................................   Passed    0.01 sec
+        Start 356: layer property edits coalesce and reorder is undoable
+356/505 Test #356: layer property edits coalesce and reorder is undoable ............................................   Passed    0.01 sec
+        Start 357: sheet commands: add, edit, delete with contents
+357/505 Test #357: sheet commands: add, edit, delete with contents ..................................................   Passed    0.01 sec
+        Start 358: job setup edits coalesce into one step
+358/505 Test #358: job setup edits coalesce into one step ...........................................................   Passed    0.01 sec
+        Start 359: document variable commands validate names, coalesce and respect references
+359/505 Test #359: document variable commands validate names, coalesce and respect references .......................   Passed    0.01 sec
+        Start 360: macro on the document groups several commands
+360/505 Test #360: macro on the document groups several commands ....................................................   Passed    0.01 sec
+        Start 361: regression: ungrouping a nested group splices its children into the outer group
+361/505 Test #361: regression: ungrouping a nested group splices its children into the outer group ..................   Passed    0.01 sec
+        Start 362: regression: delete layer with contents drops children of groups on other layers
+362/505 Test #362: regression: delete layer with contents drops children of groups on other layers ..................   Passed    0.01 sec
+        Start 363: regression: delete layer with contents dissolves a group whose child is elsewhere
+363/505 Test #363: regression: delete layer with contents dissolves a group whose child is elsewhere ................   Passed    0.01 sec
+        Start 364: a group emptied by a removal is removed with it, recursively
+364/505 Test #364: a group emptied by a removal is removed with it, recursively .....................................   Passed    0.01 sec
+        Start 365: moving a group to a layer moves its descendants
+365/505 Test #365: moving a group to a layer moves its descendants ..................................................   Passed    0.01 sec
+        Start 366: moving a child to another sheet detaches it from its group
+366/505 Test #366: moving a child to another sheet detaches it from its group .......................................   Passed    0.01 sec
+        Start 367: adding an object into a group links both ways
+367/505 Test #367: adding an object into a group links both ways ....................................................   Passed    0.01 sec
+        Start 368: checkIntegrity reports each kind of violation
+368/505 Test #368: checkIntegrity reports each kind of violation ....................................................   Passed    0.01 sec
+        Start 369: randomized edit sequences keep the document consistent through undo and redo
+369/505 Test #369: randomized edit sequences keep the document consistent through undo and redo .....................   Passed    0.17 sec
+        Start 370: AC1: the id generator stops at the documented ceiling
+370/505 Test #370: AC1: the id generator stops at the documented ceiling ............................................   Passed    0.01 sec
+        Start 371: AC1: reserving at or past the ceiling exhausts the generator without wrapping
+371/505 Test #371: AC1: reserving at or past the ceiling exhausts the generator without wrapping ....................   Passed    0.01 sec
+        Start 372: AC1: allocating commands are no-ops once ids run out
+372/505 Test #372: AC1: allocating commands are no-ops once ids run out .............................................   Passed    0.01 sec
+        Start 373: AC1: commands that need no new id keep working when exhausted
+373/505 Test #373: AC1: commands that need no new id keep working when exhausted ....................................   Passed    0.01 sec
+        Start 374: AC1: paste is all-or-nothing near the ceiling
+374/505 Test #374: AC1: paste is all-or-nothing near the ceiling ....................................................   Passed    0.01 sec
+        Start 375: AC2: checkIntegrity flags ids at or above the ceiling
+375/505 Test #375: AC2: checkIntegrity flags ids at or above the ceiling ............................................   Passed    0.01 sec
+        Start 376: AC2: checkIntegrity flags a next id at or below an existing id
+376/505 Test #376: AC2: checkIntegrity flags a next id at or below an existing id ...................................   Passed    0.01 sec
+        Start 377: AC3: no public command sequence near the ceiling yields a duplicate or out-of-range id
+377/505 Test #377: AC3: no public command sequence near the ceiling yields a duplicate or out-of-range id ...........   Passed    0.09 sec
+        Start 378: AC3 regression: an object cannot take the default layer's id
+378/505 Test #378: AC3 regression: an object cannot take the default layer's id .....................................   Passed    0.01 sec
+        Start 379: every preset-id command refuses an id held by any sheet, layer or object
+379/505 Test #379: every preset-id command refuses an id held by any sheet, layer or object .........................   Passed    0.01 sec
+        Start 380: every preset-id command refuses an id below the generator's next id
+380/505 Test #380: every preset-id command refuses an id below the generator's next id ..............................   Passed    0.01 sec
+        Start 381: a fresh preset id is accepted, reserves the generator and survives undo/redo
+381/505 Test #381: a fresh preset id is accepted, reserves the generator and survives undo/redo .....................   Passed    0.01 sec
+        Start 382: checkIntegrity reports an id shared across kinds
+382/505 Test #382: checkIntegrity reports an id shared across kinds .................................................   Passed    0.01 sec
+        Start 383: randomized preset-id commands never produce a shared id, through undo and redo
+383/505 Test #383: randomized preset-id commands never produce a shared id, through undo and redo ...................   Passed    0.10 sec
+        Start 384: checkIntegrity reports an object whose stored id differs from its key
+384/505 Test #384: checkIntegrity reports an object whose stored id differs from its key ............................   Passed    0.01 sec
+        Start 385: checkIntegrity is fast on a 60 000-deep chain of nested groups
+385/505 Test #385: checkIntegrity is fast on a 60 000-deep chain of nested groups ...................................   Passed    0.45 sec
+        Start 386: checkIntegrity is fast on one group with 200 000 children
+386/505 Test #386: checkIntegrity is fast on one group with 200 000 children ........................................   Passed    1.68 sec
+        Start 387: checkIntegrity finds a cycle closed at depth 50 000 of a 60 000-deep chain
+387/505 Test #387: checkIntegrity finds a cycle closed at depth 50 000 of a 60 000-deep chain .......................   Passed    0.47 sec
+        Start 388: checkIntegrity reports loops the same way at small scale
+388/505 Test #388: checkIntegrity reports loops the same way at small scale .........................................   Passed    0.01 sec
+        Start 389: Offset square outwards with round joins
+389/505 Test #389: Offset square outwards with round joins ..........................................................   Passed    0.01 sec
+        Start 390: Offset square outwards with sharp and square joins
+390/505 Test #390: Offset square outwards with sharp and square joins ...............................................   Passed    0.01 sec
+        Start 391: Offset square inwards past its half-size vanishes
+391/505 Test #391: Offset square inwards past its half-size vanishes ................................................   Passed    0.01 sec
+        Start 392: Offset out then in returns to the original rounded shape
+392/505 Test #392: Offset out then in returns to the original rounded shape .........................................   Passed    0.12 sec
+        Start 393: Offset direction follows the outermost contour's orientation
+393/505 Test #393: Offset direction follows the outermost contour's orientation .....................................   Passed    0.01 sec
+        Start 394: Offset of an outer with a hole keeps both
+394/505 Test #394: Offset of an outer with a hole keeps both ........................................................   Passed    0.01 sec
+        Start 395: Offset merges overlapping results
+395/505 Test #395: Offset merges overlapping results ................................................................   Passed    0.01 sec
+        Start 396: Offset of a circle contour is a circle
+396/505 Test #396: Offset of a circle contour is a circle ...........................................................   Passed    0.01 sec
+        Start 397: Offset edge cases
+397/505 Test #397: Offset edge cases ................................................................................   Passed    0.00 sec
+        Start 398: Open polyline offset left/right keeps the span count
+398/505 Test #398: Open polyline offset left/right keeps the span count .............................................   Passed    0.01 sec
+        Start 399: Open zig-zag offset with sharp joins keeps the span count
+399/505 Test #399: Open zig-zag offset with sharp joins keeps the span count ........................................   Passed    0.00 sec
+        Start 400: Open contour offset handles arcs exactly
+400/505 Test #400: Open contour offset handles arcs exactly .........................................................   Passed    0.00 sec
+        Start 401: Open contour offset edge cases
+401/505 Test #401: Open contour offset edge cases ...................................................................   Passed    0.01 sec
+        Start 402: AC5: U-shape offset to the outside adds one join span per outside corner
+402/505 Test #402: AC5: U-shape offset to the outside adds one join span per outside corner .........................   Passed    0.01 sec
+        Start 403: AC5: acute zig-zag with Sharp joins falls back to chamfers past the mitre limit
+403/505 Test #403: AC5: acute zig-zag with Sharp joins falls back to chamfers past the mitre limit ..................   Passed    0.01 sec
+        Start 404: AC5: an inside corner that consumes a span reduces the count
+404/505 Test #404: AC5: an inside corner that consumes a span reduces the count .....................................   Passed    0.01 sec
+        Start 405: Offsets reject non-finite distances
+405/505 Test #405: Offsets reject non-finite distances ..............................................................   Passed    0.01 sec
+        Start 406: AC5: outside corners involving arcs cost at most one join span
+406/505 Test #406: AC5: outside corners involving arcs cost at most one join span ...................................   Passed    0.01 sec
+        Start 407: AC5: a span consumed between two inside corners is removed
+407/505 Test #407: AC5: a span consumed between two inside corners is removed .......................................   Passed    0.01 sec
+        Start 408: AC5 generative: random polylines with short spans keep the distance property
+408/505 Test #408: AC5 generative: random polylines with short spans keep the distance property .....................   Passed    0.16 sec
+        Start 409: AC5 generative: random line/arc paths keep the distance property
+409/505 Test #409: AC5 generative: random line/arc paths keep the distance property .................................   Passed    0.34 sec
+        Start 410: AC5 generative: span count follows the rule when nothing is consumed
+410/505 Test #410: AC5 generative: span count follows the rule when nothing is consumed .............................   Passed    0.52 sec
+        Start 411: T-0004 AC1: inside of a narrow hairpin returns every chain in path order
+411/505 Test #411: T-0004 AC1: inside of a narrow hairpin returns every chain in path order .........................   Passed    0.01 sec
+        Start 412: T-0004 AC1: a pinched U comes back as a funnel chain and a chamber loop
+412/505 Test #412: T-0004 AC1: a pinched U comes back as a funnel chain and a chamber loop ..........................   Passed    0.01 sec
+        Start 413: T-0004: a slot narrower than 2d with sharp joins returns no overlapping copies
+413/505 Test #413: T-0004: a slot narrower than 2d with sharp joins returns no overlapping copies ...................   Passed    0.01 sec
+        Start 414: T-0004 AC4: regression repro A splits the loop from the tail
+414/505 Test #414: T-0004 AC4: regression repro A splits the loop from the tail .....................................   Passed    0.01 sec
+        Start 415: T-0004 AC4: a crossing offset is cut into tail, loop and tail
+415/505 Test #415: T-0004 AC4: a crossing offset is cut into tail, loop and tail ....................................   Passed    0.01 sec
+        Start 416: T-0004 AC2/AC4 generative: every chain is simple, at distance d, and nothing is dropped
+416/505 Test #416: T-0004 AC2/AC4 generative: every chain is simple, at distance d, and nothing is dropped ..........   Passed    0.94 sec
+        Start 417: T-0004: the result is deterministic and independent of the distance sign
+417/505 Test #417: T-0004: the result is deterministic and independent of the distance sign .........................   Passed    0.03 sec
+        Start 418: T-0004 AC3: a 2000-span polyline offsets correctly (timing checked in Release)
+418/505 Test #418: T-0004 AC3: a 2000-span polyline offsets correctly (timing checked in Release) ...................   Passed    0.43 sec
+        Start 419: Union of two overlapping squares is one contour
+419/505 Test #419: Union of two overlapping squares is one contour ..................................................   Passed    0.01 sec
+        Start 420: Difference with a contained square yields an outer and a hole
+420/505 Test #420: Difference with a contained square yields an outer and a hole ....................................   Passed    0.01 sec
+        Start 421: Intersection and Xor of overlapping squares
+421/505 Test #421: Intersection and Xor of overlapping squares ......................................................   Passed    0.01 sec
+        Start 422: Union with circles respects the chordal tolerance
+422/505 Test #422: Union with circles respects the chordal tolerance ................................................   Passed    0.01 sec
+        Start 423: Fill rules
+423/505 Test #423: Fill rules .......................................................................................   Passed    0.01 sec
+        Start 424: Union of text-like glyphs keeps holes (weld behaviour)
+424/505 Test #424: Union of text-like glyphs keeps holes (weld behaviour) ...........................................   Passed    0.01 sec
+        Start 425: Boolean edge cases
+425/505 Test #425: Boolean edge cases ...............................................................................   Passed    0.01 sec
+        Start 426: Open subject contours are clipped as open paths
+426/505 Test #426: Open subject contours are clipped as open paths ..................................................   Passed    0.01 sec
+        Start 427: AC1: save -> load -> save gives byte-identical job.json and archive
+427/505 Test #427: AC1: save -> load -> save gives byte-identical job.json and archive ..............................   Passed    0.02 sec
+        Start 428: AC2: an unknown top-level JSON field is kept on re-save
+428/505 Test #428: AC2: an unknown top-level JSON field is kept on re-save ..........................................   Passed    0.02 sec
+        Start 429: AC3: a file with a higher major version fails with a clear error
+429/505 Test #429: AC3: a file with a higher major version fails with a clear error .................................   Passed    0.01 sec
+        Start 430: unknown fields on every record and unknown archive members are preserved
+430/505 Test #430: unknown fields on every record and unknown archive members are preserved .........................   Passed    0.01 sec
+        Start 431: creation parameters of an unknown kind (e.g. text) are kept verbatim
+431/505 Test #431: creation parameters of an unknown kind (e.g. text) are kept verbatim .............................   Passed    0.01 sec
+        Start 432: an empty document round-trips
+432/505 Test #432: an empty document round-trips ....................................................................   Passed    0.01 sec
+        Start 433: every job type, span, object and creation-parameter kind round-trips
+433/505 Test #433: every job type, span, object and creation-parameter kind round-trips .............................   Passed    0.01 sec
+        Start 434: doubles round-trip bit for bit
+434/505 Test #434: doubles round-trip bit for bit ...................................................................   Passed    0.04 sec
+        Start 435: groups and nested groups round-trip
+435/505 Test #435: groups and nested groups round-trip ..............................................................   Passed    0.01 sec
+        Start 436: the id high-water mark, active layer/sheet and a clean history are restored
+436/505 Test #436: the id high-water mark, active layer/sheet and a clean history are restored ......................   Passed    0.01 sec
+        Start 437: documents after randomized command sequences round-trip
+437/505 Test #437: documents after randomized command sequences round-trip ..........................................   Passed    0.05 sec
+        Start 438: output is deterministic with zeroed zip timestamps
+438/505 Test #438: output is deterministic with zeroed zip timestamps ...............................................   Passed    0.01 sec
+        Start 439: saving to and loading from a file
+439/505 Test #439: saving to and loading from a file ................................................................   Passed    0.02 sec
+        Start 440: the hand-written minimal file loads
+440/505 Test #440: the hand-written minimal file loads ..............................................................   Passed    0.01 sec
+        Start 441: archive-level defects are reported
+441/505 Test #441: archive-level defects are reported ...............................................................   Passed    0.01 sec
+        Start 442: JSON-level defects are reported with the member and item
+442/505 Test #442: JSON-level defects are reported with the member and item .........................................   Passed    0.01 sec
+        Start 443: fuzz: flipped and truncated archive bytes never crash the loader
+443/505 Test #443: fuzz: flipped and truncated archive bytes never crash the loader .................................   Passed    0.06 sec
+        Start 444: fuzz: mutated job.json text never crashes the loader
+444/505 Test #444: fuzz: mutated job.json text never crashes the loader .............................................   Passed    0.92 sec
+        Start 445: bombs from the verification reports are refused in bounded time and memory
+445/505 Test #445: bombs from the verification reports are refused in bounded time and memory .......................   Passed   17.01 sec
+        Start 446: group structure is pre-checked linearly
+446/505 Test #446: group structure is pre-checked linearly ..........................................................   Passed    2.82 sec
+        Start 447: each load limit fires with ResourceLimit
+447/505 Test #447: each load limit fires with ResourceLimit .........................................................   Passed    0.03 sec
+        Start 448: archive size caps are enforced before decompression
+448/505 Test #448: archive size caps are enforced before decompression ..............................................   Passed    0.73 sec
+        Start 449: ids at or beyond 2^62 are rejected; next_id may equal 2^62
+449/505 Test #449: ids at or beyond 2^62 are rejected; next_id may equal 2^62 .......................................   Passed    0.01 sec
+        Start 450: a legitimate 100k-object document loads within the limits
+450/505 Test #450: a legitimate 100k-object document loads within the limits ........................................   Passed    3.42 sec
+        Start 451: damaged deflate streams fail fast instead of hanging
+451/505 Test #451: damaged deflate streams fail fast instead of hanging .............................................   Passed    0.02 sec
+        Start 452: overlapping central-directory entries and the held-bytes cap
+452/505 Test #452: overlapping central-directory entries and the held-bytes cap .....................................   Passed   13.40 sec
+        Start 453: fuzz under a per-load timeout: no hangs, no crashes
+453/505 Test #453: fuzz under a per-load timeout: no hangs, no crashes ..............................................   Passed    7.21 sec
+        Start 454: AC1: every supported entity imports to its analytic geometry
+454/505 Test #454: AC1: every supported entity imports to its analytic geometry .....................................   Passed    0.30 sec
+        Start 455: binary DXF (R13+ and R12 layouts) imports the same as ASCII
+455/505 Test #455: binary DXF (R13+ and R12 layouts) imports the same as ASCII ......................................   Passed    0.01 sec
+        Start 456: AC4: nested INSERTs with rotation, scale and mirror flatten correctly
+456/505 Test #456: AC4: nested INSERTs with rotation, scale and mirror flatten correctly ............................   Passed    0.01 sec
+        Start 457: an R12 file with R12 entities only
+457/505 Test #457: an R12 file with R12 entities only ...............................................................   Passed    0.01 sec
+        Start 458: AC3: $INSUNITS inches scale to millimetres
+458/505 Test #458: AC3: $INSUNITS inches scale to millimetres .......................................................   Passed    0.01 sec
+        Start 459: units: other $INSUNITS codes, $MEASUREMENT fallback, unitless default, forced scale
+459/505 Test #459: units: other $INSUNITS codes, $MEASUREMENT fallback, unitless default, forced scale ..............   Passed    0.01 sec
+        Start 460: joinContiguous option joins touching consecutive entities; default keeps them apart
+460/505 Test #460: joinContiguous option joins touching consecutive entities; default keeps them apart ..............   Passed    0.01 sec
+        Start 461: text decoding: control codes, MTEXT formatting, code pages and \U+ escapes
+461/505 Test #461: text decoding: control codes, MTEXT formatting, code pages and \U+ escapes .......................   Passed    0.01 sec
+        Start 462: text placement follows block transforms (rotation, scale, mirror)
+462/505 Test #462: text placement follows block transforms (rotation, scale, mirror) ................................   Passed    0.01 sec
+        Start 463: Carvetto-specific checks: colours, budgets, depth and malformed structure
+463/505 Test #463: Carvetto-specific checks: colours, budgets, depth and malformed structure ........................   Passed    0.15 sec
+        Start 464: AC2: export -> import round trip of a random document; export is deterministic
+464/505 Test #464: AC2: export -> import round trip of a random document; export is deterministic ...................   Passed    0.06 sec
+        Start 465: AC2: near-full arcs and full circles inside contours round-trip within 1e-9
+465/505 Test #465: AC2: near-full arcs and full circles inside contours round-trip within 1e-9 ......................   Passed    0.10 sec
+        Start 466: regression: one-span near-full arc keeps its radius
+466/505 Test #466: regression: one-span near-full arc keeps its radius ..............................................   Passed    0.01 sec
+        Start 467: AC3: export writes $INSUNITS = millimetres
+467/505 Test #467: AC3: export writes $INSUNITS = millimetres .......................................................   Passed    0.00 sec
+        Start 468: export entity mapping and argument checks
+468/505 Test #468: export entity mapping and argument checks ........................................................   Passed    0.01 sec
+        Start 469: AC2: tampered split-arc XDATA falls back to the bulge pieces
+469/505 Test #469: AC2: tampered split-arc XDATA falls back to the bulge pieces .....................................   Passed    0.01 sec
+        Start 470: unit-circle Bezier error bound matches measurement
+470/505 Test #470: unit-circle Bezier error bound matches measurement ...............................................   Passed    0.01 sec
+        Start 471: elliptical arcs: circular case is one exact arc, general case within tolerance
+471/505 Test #471: elliptical arcs: circular case is one exact arc, general case within tolerance ...................   Passed    0.00 sec
+        Start 472: NURBS: degree-2 elevation is exact, rational conics within tolerance, budget enforced
+472/505 Test #472: NURBS: degree-2 elevation is exact, rational conics within tolerance, budget enforced ............   Passed    0.01 sec
+        Start 473: AC5: fuzzed DXF never crashes or hangs
+473/505 Test #473: AC5: fuzzed DXF never crashes or hangs ...........................................................   Passed    0.12 sec
+        Start 474: AC5: 100 MB of garbage fails fast or imports with warnings
+474/505 Test #474: AC5: 100 MB of garbage fails fast or imports with warnings .......................................   Passed    2.53 sec
+        Start 475: pathological but valid inputs stay bounded
+475/505 Test #475: pathological but valid inputs stay bounded .......................................................   Passed    0.01 sec
+        Start 476: AC1: world->screen->world round-trips within 1e-9 mm
+476/505 Test #476: AC1: world->screen->world round-trips within 1e-9 mm .............................................   Passed    0.15 sec
+        Start 477: screen Y points down while world Y points up
+477/505 Test #477: screen Y points down while world Y points up .....................................................   Passed    0.01 sec
+        Start 478: AC1: zooming about a cursor keeps the world point under it
+478/505 Test #478: AC1: zooming about a cursor keeps the world point under it .......................................   Passed    0.01 sec
+        Start 479: zoom is clamped and the anchor still holds at the limit
+479/505 Test #479: zoom is clamped and the anchor still holds at the limit ..........................................   Passed    0.01 sec
+        Start 480: panning moves the content with the mouse
+480/505 Test #480: panning moves the content with the mouse .........................................................   Passed    0.01 sec
+        Start 481: AC1: zoom-to-fit 254x254 mm in 1000x800 px with 5% margin fits exactly on Y
+481/505 Test #481: AC1: zoom-to-fit 254x254 mm in 1000x800 px with 5% margin fits exactly on Y ......................   Passed    0.01 sec
+        Start 482: zoom-to-fit picks X when the box is wide and handles an offset box
+482/505 Test #482: zoom-to-fit picks X when the box is wide and handles an offset box ...............................   Passed    0.01 sec
+        Start 483: zoom-to-fit refuses empty input
+483/505 Test #483: zoom-to-fit refuses empty input ..................................................................   Passed    0.01 sec
+        Start 484: visibleWorld covers the viewport
+484/505 Test #484: visibleWorld covers the viewport .................................................................   Passed    0.01 sec
+        Start 485: AC2: major ticks stay 50-150 px apart for zoom 0.01..1000 px/mm
+485/505 Test #485: AC2: major ticks stay 50-150 px apart for zoom 0.01..1000 px/mm ..................................   Passed    0.04 sec
+        Start 486: AC2: steps are 1/2/5 x 10^n and the smallest that reaches 50 px
+486/505 Test #486: AC2: steps are 1/2/5 x 10^n and the smallest that reaches 50 px ..................................   Passed    0.01 sec
+        Start 487: AC2: labels are exact decimals
+487/505 Test #487: AC2: labels are exact decimals ...................................................................   Passed    0.00 sec
+        Start 488: AC2: 0.1-in steps never print 0.30000000000000004
+488/505 Test #488: AC2: 0.1-in steps never print 0.30000000000000004 ................................................   Passed    0.00 sec
+        Start 489: ruler ticks sit at the right screen positions with minor subdivisions
+489/505 Test #489: ruler ticks sit at the right screen positions with minor subdivisions ............................   Passed    0.00 sec
+        Start 490: ruler is empty for a zero viewport or absurd pan
+490/505 Test #490: ruler is empty for a zero viewport or absurd pan .................................................   Passed    0.00 sec
+        Start 491: cursor coordinates are shown in display units
+491/505 Test #491: cursor coordinates are shown in display units ....................................................   Passed    0.00 sec
+        Start 492: fixed formatting has no negative zero and ignores locale
+492/505 Test #492: fixed formatting has no negative zero and ignores locale .........................................   Passed    0.00 sec
+        Start 493: scene shows the material rectangle and datum in screen pixels
+493/505 Test #493: scene shows the material rectangle and datum in screen pixels ....................................   Passed    0.01 sec
+        Start 494: scene polygonises document contours and follows undo
+494/505 Test #494: scene polygonises document contours and follows undo .............................................   Passed    0.01 sec
+        Start 495: screen polygonisation honours the pixel tolerance
+495/505 Test #495: screen polygonisation honours the pixel tolerance ................................................   Passed    0.01 sec
+        Start 496: scene skips hidden layers, other sheets and off-screen objects
+496/505 Test #496: scene skips hidden layers, other sheets and off-screen objects ...................................   Passed    0.00 sec
+        Start 497: pixel rectangles are clipped to the image
+497/505 Test #497: pixel rectangles are clipped to the image ........................................................   Passed    0.00 sec
+        Start 498: countPixelsDiffering counts only inside the region and under the mask
+498/505 Test #498: countPixelsDiffering counts only inside the region and under the mask ............................   Passed    0.00 sec
+        Start 499: AC3: valid input gives exactly Job::singleSided in both units
+499/505 Test #499: AC3: valid input gives exactly Job::singleSided in both units ....................................   Passed    0.00 sec
+        Start 500: AC3: zero, negative and non-finite sizes are rejected
+500/505 Test #500: AC3: zero, negative and non-finite sizes are rejected ............................................   Passed    0.00 sec
+        Start 501: all errors are reported together
+501/505 Test #501: all errors are reported together .................................................................   Passed    0.00 sec
+        Start 502: double-sided, rotary and offset forms map to the core factories
+502/505 Test #502: double-sided, rotary and offset forms map to the core factories ..................................   Passed    0.00 sec
+        Start 503: switching units converts every length
+503/505 Test #503: switching units converts every length ............................................................   Passed    0.00 sec
+        Start 504: formFromJob round-trips through validation
+504/505 Test #504: formFromJob round-trips through validation .......................................................   Passed    0.00 sec
+        Start 505: viewmodel.qt_free
+505/505 Test #505: viewmodel.qt_free ................................................................................   Passed    1.78 sec
+
+100% tests passed, 0 tests failed out of 505
+
+Total Test time (real) = 137.91 sec

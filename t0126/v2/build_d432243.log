@@ -1,0 +1,49 @@
+[1/48] Building C object core/CMakeFiles/carvetto_miniz.dir/home/claude/wt-T-0121/build-verify4/_deps/miniz-src/miniz.c.o
+[2/48] Linking C static library core/libcarvetto_miniz.a
+[3/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/vec2.cpp.o
+[4/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/box2.cpp.o
+[5/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/transform2.cpp.o
+[6/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/span.cpp.o
+[7/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/polyline.cpp.o
+[8/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/contour.cpp.o
+[9/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/contour_ops.cpp.o
+[10/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/intersect.cpp.o
+[11/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/toolpath/move.cpp.o
+[12/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/toolpath/toolpath.cpp.o
+[13/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/toolpath/pass_plan.cpp.o
+[14/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/toolpath/linking.cpp.o
+[15/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/toolpath/time.cpp.o
+[16/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/tooling/tool.cpp.o
+[17/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/tooling/tool_database.cpp.o
+[18/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/tooling/json_io.cpp.o
+[19/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/post/variables.cpp.o
+[20/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/post/parser.cpp.o
+[21/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/post/interpreter.cpp.o
+[22/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/job.cpp.o
+[23/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/sheet.cpp.o
+[24/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/object.cpp.o
+[25/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/selection.cpp.o
+[26/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/variables.cpp.o
+[27/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/undo_stack.cpp.o
+[28/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/document.cpp.o
+[29/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/commands.cpp.o
+[30/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/clipper_interop.cpp.o
+[31/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/offset.cpp.o
+[32/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/geometry/boolean.cpp.o
+[33/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/carv_zip.cpp.o
+[34/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/carv_json_reader.cpp.o
+[35/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/document/carv_io.cpp.o
+[36/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/io/dxf_pairs.cpp.o
+[37/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/io/dxf_text.cpp.o
+[38/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/io/dxf_curves.cpp.o
+[39/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/io/dxf_colour.cpp.o
+[40/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/io/dxf_import.cpp.o
+[41/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/io/dxf_export.cpp.o
+[42/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/toolpath/pocket.cpp.o
+[43/48] Building CXX object core/CMakeFiles/carvetto_core.dir/src/toolpath/pocket_ramp.cpp.o
+[44/48] Building CXX object _deps/clipper2-build/CMakeFiles/Clipper2.dir/Clipper2Lib/src/clipper.engine.cpp.o
+[45/48] Building CXX object _deps/clipper2-build/CMakeFiles/Clipper2.dir/Clipper2Lib/src/clipper.offset.cpp.o
+[46/48] Building CXX object _deps/clipper2-build/CMakeFiles/Clipper2.dir/Clipper2Lib/src/clipper.rectclip.cpp.o
+[47/48] Linking CXX static library _deps/clipper2-build/libClipper2.a
+[48/48] Linking CXX static library core/libcarvetto_core.a
+EXIT 0

@@ -1,0 +1,38 @@
+A 81650 sc22 side 0 sep 0.187 sp 1: | seam1: balanced | seam0: COUNT kept 1 + left 5 != requested 7 (diag M sum 7)
+A 81653 sc24 side 2 sep 0.349 sp 1: | seam1: balanced | seam0: COUNT kept 3 + left 8 != requested 12 (diag M sum 9)
+C 81671 sc8 side 1 sep 0.556 sp 0: | seam1: COUNT kept 0 + left 1 != requested 2 (diag M sum 1) | seam0: COUNT kept 0 + left 1 != requested 2 (diag M sum 1)
+E 81690 sc1 side 2 sep 0.500 sp 0: | seam1: COUNT kept 13 + left 0 != requested 12 (diag M sum 0) | seam0: balanced
+E 81690 sc40 side 0 sep 0.473 sp 0: | seam1: COUNT kept 5 + left 0 != requested 9 (diag M sum 0) | seam0: COUNT kept 5 + left 0 != requested 9 (diag M sum 0)
+E 81691 sc2 side 0 sep 0.805 sp 0: | seam1: COUNT kept 6 + left 3 != requested 10 (diag M sum 9) | seam0: COUNT kept 6 + left 3 != requested 10 (diag M sum 9)
+E 81691 sc40 side 1 sep 0.015 sp 0: | seam1: COUNT kept 3 + left 5 != requested 7 (diag M sum 7) | seam0: balanced
+E 81692 sc27 side 0 sep 0.111 sp 0: | seam1: COUNT kept 3 + left 0 != requested 4 (diag M sum 0) | seam0: COUNT kept 3 + left 0 != requested 4 (diag M sum 0)
+E 81692 sc45 side 1 sep 0.913 sp 0: | seam1: COUNT kept 0 + left 18 != requested 9 (diag M sum 18) | seam0: COUNT kept 0 + left 18 != requested 9 (diag M sum 18)
+E 81693 sc17 side 1 sep 0.159 sp 1: | seam1: COUNT kept 3 + left 6 != requested 8 (diag M sum 8) | seam0: balanced
+F 81700 sc3 side 1 sep 0.539 sp 0: | seam1: COUNT kept 2 + left 2 != requested 3 (diag M sum 3) | seam0: balanced
+F 81700 sc17 side 2 sep 0.217 sp 0: | seam1: COUNT kept 2 + left 8 != requested 9 (diag M sum 9) | seam0: balanced
+F 81700 sc34 side 0 sep 0.604 sp 0: | seam1: COUNT kept 3 + left 0 != requested 2 (diag M sum 0) | seam0: balanced
+F 81700 sc35 side 0 sep 0.762 sp 0: | seam1: COUNT kept 2 + left 2 != requested 3 (diag M sum 3) | seam0: balanced
+F 81700 sc37 side 0 sep 0.375 sp 0: | seam1: COUNT kept 2 + left 1 != requested 2 (diag M sum 2) | seam0: balanced
+F 81700 sc40 side 0 sep 0.397 sp 0: | seam1: COUNT kept 2 + left 4 != requested 5 (diag M sum 5) | seam0: balanced
+F 81700 sc42 side 0 sep 0.973 sp 0: | seam1: COUNT kept 3 + left 3 != requested 5 (diag M sum 5) | seam0: balanced
+F 81701 sc3 side 1 sep 0.997 sp 0: | seam1: COUNT kept 2 + left 8 != requested 9 (diag M sum 9) | seam0: balanced
+F 81701 sc20 side 0 sep 0.472 sp 1: | seam1: COUNT kept 4 + left 0 != requested 3 (diag M sum 0) | seam0: balanced
+F 81701 sc41 side 2 sep 0.184 sp 1: | seam1: COUNT kept 5 + left 0 != requested 4 (diag M sum 0) | seam0: balanced
+F 81702 sc9 side 1 sep 0.842 sp 0: | seam1: COUNT kept 3 + left 7 != requested 9 (diag M sum 9) | seam0: balanced
+F 81702 sc19 side 1 sep 0.097 sp 0: | seam1: COUNT kept 3 + left 3 != requested 5 (diag M sum 5) | seam0: balanced
+F 81703 sc4 side 1 sep 0.398 sp 1: | seam1: COUNT kept 4 + left 4 != requested 7 (diag M sum 7) | seam0: balanced
+F 81703 sc8 side 0 sep 0.269 sp 0: | seam1: COUNT kept 1 + left 1 != requested 3 (diag M sum 2) | seam0: COUNT kept 1 + left 1 != requested 3 (diag M sum 2)
+F 81703 sc20 side 1 sep 0.637 sp 0: | seam1: COUNT kept 5 + left 4 != requested 8 (diag M sum 8) | seam0: balanced
+F 81703 sc26 side 2 sep 0.858 sp 0: | seam1: COUNT kept 9 + left 0 != requested 8 (diag M sum 0) | seam0: balanced
+F 81703 sc27 side 1 sep 0.926 sp 0: | seam1: COUNT kept 3 + left 3 != requested 5 (diag M sum 5) | seam0: balanced
+F 81703 sc40 side 2 sep 0.675 sp 1: | seam1: COUNT kept 2 + left 0 != requested 1 (diag M sum 0) | seam0: balanced
+G 81710 sc21 side 0 sep 0.021 sp 0: | seam1: COUNT kept 25 + left 0 != requested 24 (diag M sum 0) | seam0: balanced
+G 81710 sc36 side 1 sep 0.571 sp 1: | seam1: COUNT kept 6 + left 183 != requested 126 (diag M sum 189) | seam0: COUNT kept 6 + left 183 != requested 126 (diag M sum 189)
+G 81711 sc17 side 0 sep 0.308 sp 0: | seam1: COUNT kept 14 + left 20 != requested 32 (diag M sum 24) | seam0: balanced
+G 81712 sc9 side 2 sep 0.218 sp 1: | seam1: COUNT kept 22 + left 15 != requested 36 (diag M sum 27) | seam0: balanced
+H 81721 sc18 side 0 sep 0.354 sp 1: | seam1: COUNT kept 7 + left 0 != requested 8 (diag M sum 0) | seam0: COUNT kept 7 + left 0 != requested 8 (diag M sum 0)
+H 81721 sc28 side 1 sep 0.937 sp 0: | seam1: COUNT kept 4 + left 1 != requested 7 (diag M sum 5) | seam0: COUNT kept 4 + left 1 != requested 7 (diag M sum 5)
+I 81731 sc21 side 1 sep 0.363 sp 0: | seam1: COUNT kept 3 + left 2 != requested 4 (diag M sum 4) | seam0: balanced
+J 81740 sc5 side 0 sep 0.021 sp 0: | seam1: COUNT kept 3 + left 7 != requested 9 (diag M sum 9) | seam0: balanced
+J 81740 sc20 side 2 sep 0.533 sp 0: | seam1: COUNT kept 4 + left 4 != requested 7 (diag M sum 7) | seam0: balanced
+K 81750 sc28 side 2 sep 0.568 sp 1: | seam1: COUNT kept 4 + left 4 != requested 7 (diag M sum 7) | seam0: balanced

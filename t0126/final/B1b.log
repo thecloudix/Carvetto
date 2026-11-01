@@ -1,0 +1,64 @@
+2discs ov0.200000 not simple
+2discs ov0.500000 not simple
+2discs ov0.800000 not simple
+2discs ov0.950000 not simple
+cusp 3discs: 16 configs, 0 fail
+cusp wedge5: 16 configs, 0 fail
+cusp wedge10: 16 configs, 0 fail
+cusp wedge20: 16 configs, 0 fail
+cusp star7: 16 configs, 0 fail
+cusp: 80 runs, 0 fail
+cusp2 2discs ov0.100000: 16 configs, 0 fail
+cusp2 2discs ov0.300000: 16 configs, 0 fail
+cusp2 2discs ov0.600000: 16 configs, 0 fail
+terminate called after throwing an instance of 'std::length_error'
+  what():  vector::_M_default_append
+cusp2 2discs ov0.900000 CRASH/TIMEOUT rc=106
+terminate called after throwing an instance of 'std::length_error'
+  what():  vector::_M_default_append
+cusp2 2discs ov0.900000 CRASH/TIMEOUT rc=106
+terminate called after throwing an instance of 'std::length_error'
+  what():  vector::_M_default_append
+cusp2 2discs ov0.900000 CRASH/TIMEOUT rc=106
+terminate called after throwing an instance of 'std::length_error'
+  what():  vector::_M_default_append
+cusp2 2discs ov0.900000 CRASH/TIMEOUT rc=106
+terminate called after throwing an instance of 'std::length_error'
+  what():  vector::_M_default_append
+cusp2 2discs ov0.900000 CRASH/TIMEOUT rc=106
+terminate called after throwing an instance of 'std::length_error'
+  what():  vector::_M_default_append
+cusp2 2discs ov0.900000 CRASH/TIMEOUT rc=106
+terminate called after throwing an instance of 'std::length_error'
+  what():  vector::_M_default_append
+cusp2 2discs ov0.900000 CRASH/TIMEOUT rc=106
+terminate called after throwing an instance of 'std::length_error'
+  what():  vector::_M_default_append
+cusp2 2discs ov0.900000 CRASH/TIMEOUT rc=106
+terminate called after throwing an instance of 'std::length_error'
+  what():  vector::_M_default_append
+cusp2 2discs ov0.900000 CRASH/TIMEOUT rc=106
+terminate called after throwing an instance of 'std::length_error'
+  what():  vector::_M_default_append
+cusp2 2discs ov0.900000 CRASH/TIMEOUT rc=106
+terminate called after throwing an instance of 'std::length_error'
+  what():  vector::_M_default_append
+cusp2 2discs ov0.900000 CRASH/TIMEOUT rc=106
+terminate called after throwing an instance of 'std::length_error'
+  what():  vector::_M_default_append
+cusp2 2discs ov0.900000 CRASH/TIMEOUT rc=106
+terminate called after throwing an instance of 'std::length_error'
+  what():  vector::_M_default_append
+cusp2 2discs ov0.900000 CRASH/TIMEOUT rc=106
+terminate called after throwing an instance of 'std::length_error'
+  what():  vector::_M_default_append
+cusp2 2discs ov0.900000 CRASH/TIMEOUT rc=106
+terminate called after throwing an instance of 'std::length_error'
+  what():  vector::_M_default_append
+cusp2 2discs ov0.900000 CRASH/TIMEOUT rc=106
+terminate called after throwing an instance of 'std::length_error'
+  what():  vector::_M_default_append
+cusp2 2discs ov0.900000 CRASH/TIMEOUT rc=106
+cusp2 2discs ov0.900000: 16 configs, 16 fail
+cusp2 2discs+isl: 16 configs, 0 fail
+cusp2: 80 runs, 16 fail

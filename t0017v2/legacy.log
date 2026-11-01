@@ -1,0 +1,9 @@
+BRANCH ISSUE subtolIn=1 seed=0xf00615cf gen=4 n=15 closed=0 d=0.0580205 Sharp side=1 mitre=2 : coverage miss at (-0.800875962,-0.435882213) dist-to-output 0.0749 [lj0 ag0 rev0 z0 se0 dv0 rv0 sx0 cm>tol 2 (subtol 0)]
+BRANCH ISSUE subtolIn=1 seed=0xf0061f6b gen=4 n=21 closed=0 d=0.0693253 Round side=0 mitre=1.16 : coverage miss at (-0.852478652,1.28911122) dist-to-output 0.00375 [lj0 ag0 rev0 z0 se0 dv0 rv0 sx0 cm>tol 3 (subtol 0)]
+BRANCH ISSUE subtolIn=1 seed=0xf0062abf gen=4 n=2 closed=0 d=0.71354 Square side=0 mitre=2.95 : distance violation span 0 under 0.000449 (allow 1.75e-07) kind 1 len 1.59 [lj0 ag0 rev0 z0 se0 dv1 rv0 sx0 cm>tol 0 (subtol 0)]
+BRANCH ISSUE subtolIn=1 seed=0xf0063381 gen=4 n=8 closed=0 d=1.1498 Square side=1 mitre=1.67 : distance violation span 4 under 0.000684 (allow 1.09e-07) kind 1 len 3.28 [lj0 ag0 rev0 z0 se0 dv1 rv0 sx0 cm>tol 0 (subtol 0)]
+BRANCH ISSUE subtolIn=1 seed=0xf0063c7c gen=4 n=22 closed=0 d=4.56357 Round side=0 mitre=2 : distance violation span 0 under 0.00052 (allow 2.74e-08) kind 1 len 2.83 [lj0 ag0 rev0 z0 se0 dv1 rv0 sx0 cm>tol 0 (subtol 0)]
+BRANCH ISSUE subtolIn=0 seed=0xf0063eb3 gen=1 n=16 closed=0 d=0.0502076 Square side=0 mitre=2 : coverage miss at (15.5587115,41.0889083) dist-to-output 0.079 [lj0 ag0 rev0 z0 se0 dv0 rv0 sx0 cm>tol 4 (subtol 0)]
+REGRESSION subtolIn=0 seed=0xf0063eb3 gen=1 d=0.0502076 Square side=0 mitre=2: branch[dv0 under1.32e-14 cm4 sx0 rv0 rev0] main[dv0 under2.1e-14 cm0 sx0 rv0 rev0] br:coverage miss at (15.5587115,41.0889083) dist-to-output 0.079 | main:line junction not bitwise ch 3 j 3 gap 3.55e-15
+fuzz N=20000 seed0=0xf0060000: branch cases with issues 6; chains 39955 spans 224996; maxArcGapRel 1.21e-15; worstUnder 0.000684; worstOver(Round) 4.64e-07; coverage samples 1201651 misses 9; selfX-near-junction 0; cpu branch 4.41s
+vs main: identical 4133, differ 15867 (main had issues in 14284 of them; branch strictly better in 14282), regressions 1; cpu main 4.77s
