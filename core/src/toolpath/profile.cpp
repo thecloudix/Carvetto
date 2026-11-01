@@ -706,7 +706,7 @@ std::vector<TabSection> ProfileBuilder::tabSections(const Cut& c, const TabSpan&
     }
     const double outer = radius_ + (p_.separateLastPass ? p_.lastPassAllowance : 0.0) - 0.02;
     // On the vector there is no vector side: the material runs across the whole kerf.
-    const double inner = c.distance <= tol_.distance ? outer : c.distance - 0.02;
+    const double inner = p_.side == ProfileSide::On ? outer : c.distance - 0.02;
     auto section = [&](Vec2 p, Vec2 tg) {
         Vec2 toVector{-tg.y, tg.x};  // left of travel
         if (!c.contourOnLeft) {
@@ -965,7 +965,7 @@ bool ProfileBuilder::tabHolds(const Cut& c, const TabSpan& t, const std::vector<
     // 0 = blocked, 1 = open, 2 = tab material next to the vector, 3 = waste beyond the kerf.
     std::vector<char> state(cells, 0);
     bool anyWaste = false;
-    const bool on = c.distance <= tol_.distance;
+    const bool on = p_.side == ProfileSide::On;  // (Cut::distance is |allowance| there)
     bool anyPart = !on;
     // A profile On the vector has no vector side: there the left of travel plays its part (the
     // tab joins the waste left of the cut to the waste right of it).
@@ -1187,10 +1187,35 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
         return std::min({gap(u - len), gap(u), gap(u + len)});
     };
     const double localReach = 2.0 * radius_;
+    // Profiles On the vector (conservative guard, pending card T-0127): the material of a tab on
+    // the vector is cut from both sides, and round a sharp turn of the cut the tool just outside
+    // either end of its raised stretch can close it off. So on every pass the tool positions within
+    // two tool radii outside the two ends of each of the group's raised stretches must stay at
+    // least 2r + 2|allowance| + max(0.25 mm, 0.05 D) apart; otherwise the tab is dropped (as cut
+    // through), however the connectivity check would judge it.
+    auto onGuard = [&](std::size_t g) {
+        const double need = 2.0 * radius_ + 2.0 * std::fabs(p_.allowance) + std::max(0.25, 0.1 * radius_);
+        for (const Ref& r : groups[g]) {
+            const ArcLengthPath& w = (r.second ? secondary[r.cut] : primary[r.cut]).walk;
+            const double ramp = p_.tabs.threeD ? p_.tabs.thickness : 0.0;
+            const int n = std::max(1, static_cast<int>(std::ceil((2.0 * radius_ + ramp) / 0.1)));
+            for (int i = 0; i <= n; ++i) {
+                const Vec2 pa = w.pointAt(r.span.a - (2.0 * radius_ + ramp) * i / n);
+                for (int j = 0; j <= n; ++j) {
+                    const Vec2 pb = w.pointAt(r.span.b + (2.0 * radius_ + ramp) * j / n);
+                    if (geometry::distance(pa, pb) < need) return false;
+                }
+            }
+        }
+        return true;
+    };
     // True when group g's tab is swept (or severed) by the samples open now.
     auto sweptNow = [&](std::size_t g) {
         const std::vector<TabSection>& sections = material[g];
         const Ref& own = groups[g].front();
+        if (p_.side == ProfileSide::On && !onGuard(g)) {
+            return true;
+        }
         const geometry::Box2& box = materialBox[g];
         std::vector<Vec2> nicks;   // tools of the tab's own cut near it that reach its material
         std::vector<Vec2> nearby;  // every open tool near the tab
@@ -1240,7 +1265,7 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
                 const double len = std::hypot(dir.x, dir.y);
                 if (len > 0.0 && geometry::distance(f.p0, l.p0) >= 0.2 && geometry::distance(f.p1, l.p1) >= 0.2) {
                     // (On the vector both ends must reach the waste beyond the kerf.)
-                    const bool on = ownCut.distance <= tol_.distance;
+                    const bool on = p_.side == ProfileSide::On;
                     auto reachesWaste = [&](Vec2 from, Vec2 d) {
                         const TabSection ext{from, from + d * (0.4 / len)};
                         return allField_.distance(ext.p1) >= beyond &&

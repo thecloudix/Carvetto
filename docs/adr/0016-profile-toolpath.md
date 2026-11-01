@@ -157,8 +157,14 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     it counts too), on the waste side every cell; every open tool position cuts the cells within
     its radius plus 1.5 cells; the tab holds when uncut cells join the material next to the vector
     to the waste beyond the kerf (or when there is no such waste near it at all: a hole smaller
-    than the kerf). On the vector (side On) the left of travel plays the vector side and must
-    itself reach the waste beyond the kerf. So a short tab centred on a sharp turn of the cut — a
+    than the kerf). On the vector (side On, decided by the profile side: `Cut::distance` is
+    |allowance| there) the left of travel plays the vector side and must itself reach the waste
+    beyond the kerf. **On guard (conservative, pending card T-0127):** On the vector a tab is
+    kept only if, in addition, on every pass the tool positions within two tool radii (plus the 3D
+    ramp) outside the two ends of each of its raised stretches stay at least
+    2r + 2·|allowance| + max(0.25 mm, 0.05·D) apart; otherwise it is dropped and reported as cut
+    through. So On tabs on sharp turns of the cut are conservatively dropped; T-0127 is to judge
+    them properly. So a short tab centred on a sharp turn of the cut — a
     convex corner or spike tip, an inside corner (Inside of a square), a gear root, the tip of a
     narrow arm — where the tool at the two ends of the raised stretch seals the tab's material off
     from the waste, is dropped and reported; so
@@ -168,8 +174,9 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     1.3 × the time without tabs). Together: no pass cuts below the tab top into any cross-section
     of a kept tab except its own pass's nicks, which leave the material joined, so every kept tab
     joins the part to the waste beyond the kerf.
-    Counting: kept + left out = requested per vector, counted on the primary cuts (the finishing
-    cuts with a separate last pass, otherwise the only cuts); one `TabsNotPlaced` diagnostic per
+    Counting: kept + left out = requested per primary cut (the finishing cuts with a separate last
+    pass, otherwise the only cuts), so per vector when its offset is one loop, and per loop when
+    the offset splits into several (each loop gets the requested tabs; the diagnostic sums them); one `TabsNotPlaced` diagnostic per
     vector says "N of M tab(s) left out" with the count for each reason (no room, could not be
     matched on the roughing cut, would be cut through); another reports tabs that could not avoid
     a corner. Where a V-bit corner climb is inserted at the start of a raised stretch, the tool

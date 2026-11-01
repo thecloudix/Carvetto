@@ -7,7 +7,9 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstdlib>
 #include <iterator>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <variant>
@@ -1307,7 +1309,10 @@ int checkTabsJoin(const ProfileResult& r, const std::vector<Contour>& vectors, c
     const auto cuts = cutRanges(r.toolpath);
     const double zTab = p.passes.bottomZ() + p.tabs.thickness;
     const double rad = d / 2;
-    const double kerfOuter = p.allowance + (p.separateLastPass ? p.lastPassAllowance : 0.0) + d;
+    const bool on = p.side == ProfileSide::On || std::any_of(vectors.begin(), vectors.end(), [](const Contour& v) { return !v.closed; });
+    // (On the vector the kerf reaches a radius + |allowance| (+ last pass) to each side.)
+    const double kerfOuter = on ? std::fabs(p.allowance) + (p.separateLastPass ? p.lastPassAllowance : 0.0) + rad + 0.05
+                                : p.allowance + (p.separateLastPass ? p.lastPassAllowance : 0.0) + d;
     const double res = std::max(0.1, d / 80.0);
     std::vector<Vec2> done;
     int checked = 0;
@@ -1322,7 +1327,7 @@ int checkTabsJoin(const ProfileResult& r, const std::vector<Contour>& vectors, c
             }
             done.push_back(mid);
             const test::TabJoin j = test::tabJoins(r.toolpath, vectors, p.side == ProfileSide::Inside, mid,
-                                                   0.5 * len + kerfOuter + 1.0, zTab, rad, kerfOuter, res);
+                                                   0.5 * len + kerfOuter + 1.0, zTab, rad, kerfOuter, res, on);
             if (!j.slug) continue;
             INFO("tab at " << mid.x << ", " << mid.y << " (raised run " << len << " mm)");
             CHECK(j.joined);
@@ -1700,5 +1705,197 @@ TEST_CASE("A tab starting at a V-bit sharp inside corner is cut flat at the tab 
         for (const Vec2& q : test::runCore(run, 0.0, true)) {
             CHECK_FALSE(deep.covers(q, 0.05));
         }
+    }
+}
+
+namespace {
+
+/// Reads a verifier scene dump (contours, then the ProfileParams fields it varies; hexadecimal
+/// floats). Returns the tool diameter; `vbitDeg` is non-zero for a V-bit.
+double readScene(const std::string& text, std::vector<Contour>& cs, ProfileParams& p, int& vbitDeg) {
+    std::istringstream in(text);
+    std::string tag;
+    auto num = [&]() {
+        std::string t;
+        in >> t;
+        return std::strtod(t.c_str(), nullptr);
+    };
+    auto integer = [&]() { return static_cast<int>(num()); };
+    double d = 0.0;
+    while (in >> tag) {
+        if (tag == "C") {
+            cs.emplace_back();
+            cs.back().closed = integer() != 0;
+        } else if (tag == "L") {
+            const double a = num(), b = num(), c = num(), e = num();
+            cs.back().spans.push_back(LineSpan{{a, b}, {c, e}});
+        } else if (tag == "A") {
+            const double a = num(), b = num(), c = num(), e = num(), f = num();
+            cs.back().spans.push_back(ArcSpan{{a, b}, c, e, f, static_cast<geometry::ArcDirection>(integer())});
+        } else if (tag == "B") {
+            double v[8];
+            for (double& x : v) x = num();
+            cs.back().spans.push_back(geometry::BezierSpan{{v[0], v[1]}, {v[2], v[3]}, {v[4], v[5]}, {v[6], v[7]}});
+        } else if (tag == "P") {
+            d = num();
+            vbitDeg = integer();
+            p.allowance = num();
+            p.side = static_cast<ProfileSide>(integer());
+            p.direction = static_cast<CutDirection>(integer());
+            p.passes.startDepth = num();
+            p.passes.cutDepth = num();
+            p.passes.passDepth = num();
+            p.passes.lastPassThickness = num();
+            p.safeZ = num();
+            p.separateLastPass = integer() != 0;
+            p.lastPassAllowance = num();
+            p.lastPassReverse = integer() != 0;
+            p.tabs.enabled = integer() != 0;
+            p.tabs.length = num();
+            p.tabs.thickness = num();
+            p.tabs.spacing = static_cast<TabSpacing>(integer());
+            p.tabs.count = integer();
+            p.tabs.distance = num();
+            num();
+            p.tabs.avoidCorners = integer() != 0;
+            p.tabs.threeD = integer() != 0;
+            num();
+            p.ramp.type = static_cast<RampType>(integer());
+            p.ramp.distance = num();
+            p.ramp.useAngle = integer() != 0;
+            p.ramp.onLeadIn = integer() != 0;
+            p.ramp.angle = num();
+            p.leads.length = num();
+            p.leads.angle = num();
+            p.leads.radius = num();
+            p.leads.type = static_cast<LeadType>(integer());
+            p.leads.sweep = num();
+            p.leads.leadOut = integer() != 0;
+            integer();
+            p.leads.overcut = num();
+            num();
+            p.startAt = static_cast<StartAt>(integer());
+            p.startAnchor = static_cast<BoxAnchor>(integer());
+            p.order.selectionOrder = integer() != 0;
+            p.order.leftToRight = integer() != 0;
+            p.order.bottomToTop = integer() != 0;
+            p.order.grid = integer() != 0;
+            p.startPosition.x = num();
+            p.startPosition.y = num();
+            p.corners.mitreLimit = num();
+        } else if (tag == "K") {
+            p.corners.sharpExternal = integer() != 0;
+            p.corners.sharpInternal = integer() != 0;
+        }
+    }
+    return d;
+}
+
+}  // namespace
+
+TEST_CASE("On the vector: tabs at sharp turns of the cut are kept joined or left out and reported",
+          "[toolpath][profile][tabs]") {
+    // Verifier repro on_corner: the 30 x 30 square cut On the vector, 6 mm tool, 4 tabs starting
+    // at the bottom centre, so each is centred on a corner. Cut::distance is |allowance| On the
+    // vector, so with an allowance the tab check took the profile for an Inside/Outside one and
+    // kept tabs whose raised-stretch ends stand 5 mm apart (< 2r): cut through.
+    const std::vector<Contour> cs{Contour::rectangle(Box2{{0, 0}, {30, 30}})};
+    int joined = 0;
+    for (const double allowance : {0.3, 0.1, 0.0, -0.3}) {
+        for (const bool separate : {false, true}) {
+            for (const double length : {1.0, 3.0, 6.0}) {
+                ProfileParams p = baseParams(6.0, 3.0);
+                p.side = ProfileSide::On;
+                p.allowance = allowance;
+                p.separateLastPass = separate;
+                p.lastPassAllowance = 0.3;
+                p.tabs.enabled = true;
+                p.tabs.count = 4;
+                p.tabs.length = length;
+                p.tabs.thickness = 1.5;
+                p.startAt = StartAt::ClosestOnBoundingBox;
+                p.startAnchor = BoxAnchor::BottomCentre;
+                const ProfileResult r = profileToolpath(cs, test::endMill(6.0), p);
+                REQUIRE(r.ok());
+                INFO("allowance " << allowance << ", separate " << separate << ", tab length " << length);
+                const auto cuts = cutRanges(r.toolpath);
+                const double zTab = p.passes.bottomZ() + p.tabs.thickness;
+                const std::size_t kept = test::raisedRuns(r.toolpath, cuts.back().first, cuts.back().second, zTab).size();
+                CHECK(kept + tabsLeftOut(r) == 4);
+                joined += checkTabsJoin(r, cs, p, 6.0);
+            }
+        }
+    }
+    CHECK(joined > 0);  // 6 mm tabs are kept (and joined)
+}
+
+TEST_CASE("On the vector: verifier sweep scenes keep no severed tab", "[toolpath][profile][tabs]") {
+    // Scenes from the verifier's round-3 connectivity sweeps (conn6 dumps) whose kept tabs On the
+    // vector were cut through, and F9 (an open curve On the vector).
+    const std::vector<std::pair<std::string, std::string>> scenes{
+        {"sev_D_81682_34",
+         "C 1\n"
+         "L 0x1.71646141fb01bp-1 0x0p+0 0x1.327114df89b15p+6 0x0p+0\n"
+         "L 0x1.327114df89b15p+6 0x0p+0 0x1.3553dda20da75p+6 0x1.71646141fb01bp-1\n"
+         "L 0x1.3553dda20da75p+6 0x1.71646141fb01bp-1 0x1.3553dda20da75p+6 0x1.d826ea421356p+5\n"
+         "L 0x1.3553dda20da75p+6 0x1.d826ea421356p+5 0x1.327114df89b15p+6 0x1.ddec7bc71b42p+5\n"
+         "L 0x1.327114df89b15p+6 0x1.ddec7bc71b42p+5 0x1.71646141fb01bp-1 0x1.ddec7bc71b42p+5\n"
+         "L 0x1.71646141fb01bp-1 0x1.ddec7bc71b42p+5 0x0p+0 0x1.d826ea421356p+5\n"
+         "L 0x0p+0 0x1.d826ea421356p+5 0x0p+0 0x1.71646141fb01bp-1\n"
+         "L 0x0p+0 0x1.71646141fb01bp-1 0x1.71646141fb01bp-1 0x0p+0\n"
+         "P 0x1.8p+3 0 0x1.0bcbffb0af359p-4 2 1 0x0p+0 0x1.97e6a5ee333bep+3 0x1.55e74e2f9400ep-1 0x0p+0 0x1.4p+2 0 0x1.0c1d5c97ee265p-1 1 1 0x1.c03232f23e528p+1 0x1.0015e1e4ddbccp+0 0 1 0x1.9ab520c4075fp+4 0x0p+0 0 0 0x0p+0 1 0x1.297928fb2b2f5p+5 0 0 0x1.eb29bd255ad36p-2 0x1.b3e5a9f605bfdp+3 0x1.47231b7cb4472p+0 0x1.d75fa7bb036f8p+1 0 0x1.59c8a64ec6127p+0 1 0 0x1.4c6628f8fdd15p+1 0x0p+0 0 5 0 1 0 0 -0x1.8a04e3acaf6p-4 0x1.13b9d863a99fap+5 0x1p+1\n"
+         "K 0 0\n"},
+        {"sev_D_81682_42",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.8d9c16f36c8eap+6 0x0p+0\n"
+         "L 0x1.8d9c16f36c8eap+6 0x0p+0 0x1.8d9c16f36c8eap+6 0x1.80421eef8cb07p+5\n"
+         "L 0x1.8d9c16f36c8eap+6 0x1.80421eef8cb07p+5 0x0p+0 0x1.80421eef8cb07p+5\n"
+         "L 0x0p+0 0x1.80421eef8cb07p+5 0x0p+0 0x0p+0\n"
+         "P 0x1.8p+3 0 0x1.dc30bedbaa527p-2 2 1 0x0p+0 0x1.330d92a272917p+4 0x1.dc475c1741ac1p+0 0x0p+0 0x1.4p+2 0 0x1.2c3c9911c3ecbp-1 1 1 0x1.32061a463dce8p+1 0x1.23c1687bf0eaep+2 0 6 0x1.fb4a1d6f61bccp+5 0x0p+0 0 0 0x0p+0 0 0x1.e64be69aab16bp+4 1 0 0x1.a4a3b92a33ba9p-3 0x1.9295ab7cb33cp+2 0x1.623522270ab8p+0 0x1.4f27dc9c50dc4p+3 1 0x1.847975846d041p-1 0 0 0x0p+0 0x0p+0 2 5 0 0 0 0 -0x1.dee64998177cp+3 0x1.6490db1c7c71ep+5 0x1p+1\n"
+         "K 0 0\n"},
+        {"sev_J_81741_45",
+         "C 1\n"
+         "B 0x1.e117437138716p+3 0x1.a2f7cf99ee104p-2 0x1.d51b1b2d89a1cp+3 0x1.d73b55e8bdbbap+1 0x1.1165816022ac9p+3 0x1.82d1b3cb330bp+2 0x1.314b7e441af26p+2 0x1.0afc6dc78b7edp+3\n"
+         "B 0x1.314b7e441af26p+2 0x1.0afc6dc78b7edp+3 0x1.fe5fce3f845dp-1 0x1.549001a97d782p+3 -0x1.1eb19a64de61ep+2 0x1.f2e09b3a461dfp+3 -0x1.e6ce94068d85cp+2 0x1.c68d35c87b485p+3\n"
+         "B -0x1.e6ce94068d85cp+2 0x1.c68d35c87b485p+3 -0x1.5775c6d41e54dp+3 0x1.9a39d056b072bp+3 -0x1.c0f77ad0c426fp+3 0x1.1c671580912ebp+2 -0x1.bfb12dc2fff29p+3 0x1.080d1cca7ce81p-5\n"
+         "B -0x1.bfb12dc2fff29p+3 0x1.080d1cca7ce81p-5 -0x1.be6ae0b53bbe3p+3 -0x1.1846e10d673b1p+2 -0x1.5bcc20c533ea3p+3 -0x1.4c140a80e42d8p+3 -0x1.d782f7615b114p+2 -0x1.8877bc0c79565p+3\n"
+         "B -0x1.d782f7615b114p+2 -0x1.8877bc0c79565p+3 -0x1.eedb5a709c9c3p+1 -0x1.c4db6d980e7f2p+3 0x1.a454ee1f556p+1 -0x1.ace605ea4098ep+3 0x1.c11d61704caep+2 -0x1.694e1c28b477cp+3\n"
+         "B 0x1.c11d61704caep+2 -0x1.694e1c28b477cp+3 0x1.580825e87756p+3 -0x1.25b632672856ap+3 0x1.ed136bb4e741p+3 -0x1.6e7d62024237ap+1 0x1.e117437138716p+3 0x1.a2f7cf99ee104p-2\n"
+         "P 0x1p+3 0 0x1.5e377fb98562bp-2 2 0 0x0p+0 0x1.a4d082e46868p+2 0x1.a01a79d6f566ep-2 0x0p+0 0x1.4p+2 0 0x1.e3af922e8dc07p-4 1 1 0x1.f60409f1faap-1 0x1.ca0eafdb7672dp+2 1 9 0x1.7b03a6fa62c56p+5 0x0p+0 1 0 0x0p+0 0 0x1.25353c4a86512p+5 0 0 0x1.1f48e8138f3b7p-2 0x1.902af42b91e08p+2 0x1.9e9637db27c46p-1 0x1.52ad558017531p+3 1 0x1.2a331b2abefdfp+0 1 0 0x1.185c1d1f14398p+1 0x0p+0 1 6 0 0 0 0 0x1.1c8873bb08adcp+5 0x1.15b88ff0832bcp+5 0x1p+1\n"
+         "K 0 0\n"},
+        {"sev_C_81672_29",
+         "C 1\n"
+         "A 0x1.dc56dc6823964p+0 0x1.358b4651b7b4ep-1 0x1.8408163a90d43p+2 -0x1.991dfd9b8a79cp-4 0x1.74d6b71d405d4p-1 0\n"
+         "A 0x1.0c842e74ac703p+2 0x1.7194be341497p+2 0x1.3bc6c2d2d16ddp+1 -0x1.e9912136c1565p-2 0x1.2e785db633755p+1 0\n"
+         "A 0x1.c36714445575ap-53 0x1.8929f7a60670cp+2 0x1.65b79d4bcfcc6p+1 0x1.050c962c26e1ap-1 0x1.50dc8fb939191p+1 0\n"
+         "A -0x1.3e19ff6c14257p+2 0x1.b5d4483e968b1p+2 0x1.4f034c5f90772p+1 0x1.077d870fddc18p-2 -0x1.1235ea715702cp+1 1\n"
+         "A -0x1.71ad7416f507dp+2 0x1.e0764a60f284dp+0 0x1.6a2808a7743d9p+1 0x1.c9bad9b6910fdp+0 -0x1.354a2ab5bc4b7p+1 0\n"
+         "A -0x1.f81fbc997897dp+2 -0x1.4799806512dc4p+1 0x1.479b40a3af9dep+1 0x1.93c7312c5600fp+0 -0x1.e5db6aeedcf41p-1 1\n"
+         "A -0x1.29d5d447a6b67p+1 -0x1.99ef617f375bbp+1 0x1.13955843b9ea6p+2 -0x1.66920b1543cbfp+1 -0x1.98ce4bc7cd194p+0 0\n"
+         "A -0x1.c1f3499bab82p-50 -0x1.187201ddece31p+3 0x1.5f39cd37e405p+1 0x1.5539e98e323c1p+1 0x1.e72e5db084aafp-2 1\n"
+         "A 0x1.7ec45f81869e4p+0 -0x1.076ab66a02664p+1 0x1.61f1857f502dfp+2 -0x1.6635a6be3f645p+0 -0x1.f15b3181dcc3fp-2 0\n"
+         "A 0x1.9c09378b08907p+2 -0x1.0bc1d9964601ap+1 0x1.4630443364df6p+1 -0x1.975bd4e5fa98ep+0 0x1.ed04b2622623dp-1 0\n"
+         "P 0x1p+3 0 0x0p+0 2 1 0x1.48f3223035718p-1 0x1.1878d8010ee08p+3 0x1.327285ff20ddcp+2 0x0p+0 0x1.4p+2 0 0x1.2ab1e3dd1931bp-4 1 1 0x1.2e6bd13d43da9p+0 0x1.73797b7064cep+1 1 3 0x1.563b5a6d288bdp+5 0x0p+0 0 1 0x0p+0 3 0x1.b13d72c179452p+4 0 0 0x1.21845ec09b645p-4 0x1.02697ed8593e6p+3 0x1.93897fcc94645p-1 0x1.693fe15bb9e66p+0 1 0x1.b266a92b17d24p-3 0 0 0x1.de20fc572ab6ap+3 0x0p+0 0 3 0 0 0 0 0x1.d45fe91deee4p+4 -0x1.8f1f697b3df29p+5 0x1p+1\n"
+         "K 0 0\n"},
+        {"F9 (conn seed 41006 fam 5 scene 9)",
+         "C 0\n"
+         "B 0x0p+0 0x0p+0 0x1.d89cebd797a35p+2 0x1.218fb996f4a91p+2 0x1.d89cebd797a36p+3 0x1.77c3fced7980ep+4 0x1.6275b0e1b1ba8p+4 0x1.2f600e87bc56ap+4\n"
+         "B 0x1.6275b0e1b1ba8p+4 0x1.2f600e87bc56ap+4 0x1.d89cebd797a35p+4 0x1.f0c8061601802p+4 0x1.27621366bec61p+5 0x1.b10b3cd1301d4p+4 0x1.6275b0e1b1ba8p+5 0x1.df468a85d5e78p+3\n"
+         "B 0x1.6275b0e1b1ba8p+5 0x1.df468a85d5e78p+3 0x1.9d894e5ca4aefp+5 0x1.b835369f04db4p+4 0x1.d89cebd797a35p+5 0x1.7312aa33f83d8p+4 0x1.09d844a9454bep+6 0x1.550171afbcacp+3\n"
+         "B 0x1.09d844a9454bep+6 0x1.550171afbcacp+3 0x1.27621366bec61p+6 0x1.6e61bc575c023p+2 0x1.44ebe22438405p+6 -0x1.a910e2320e61fp+2 0x1.6275b0e1b1ba8p+6 -0x1.b5beeca7c4308p+0\n"
+         "P 0x1p+3 0 0x1.3947efce62fd3p-2 2 1 0x0p+0 0x1.aa71e0949fc39p+3 0x1.2e3005e3e1522p+2 0x0p+0 0x1.4p+2 0 0x1.d787878de93a3p-1 0 1 0x1.123e5d3488c0dp+2 0x1.648209a2b6704p-1 0 9 0x1.56687611a2e48p+6 0x0p+0 0 0 0x0p+0 3 0x1.86d28ddb82351p+4 0 0 0x1.01051c12feb17p-1 0x1.9c92f218c1be4p+1 0x1.8ab4d04cfa66cp-3 0x1.730f85bab12ep+0 0 0x1.ae74078f39455p-1 0 0 0x0p+0 0x0p+0 2 5 0 0 0 0 0x1.3a19161677f3ap+5 -0x1.7a50bc3137ba6p+4 0x1p+1\n"
+         "K 0 0\n"},
+    };
+    for (const auto& [name, text] : scenes) {
+        std::vector<Contour> cs;
+        ProfileParams p;
+        int vbitDeg = 0;
+        const double d = readScene(text, cs, p, vbitDeg);
+        REQUIRE(vbitDeg == 0);
+        REQUIRE(p.side == ProfileSide::On);
+        INFO("scene " << name);
+        const ProfileResult r = profileToolpath(cs, test::endMill(d), p);
+        REQUIRE(r.ok());
+        checkTabsJoin(r, cs, p, d);
     }
 }

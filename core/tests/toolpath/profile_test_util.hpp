@@ -438,9 +438,11 @@ struct TabJoin {
 /// polylines of every span, every 0.05 mm) are told apart per row; waste cells farther than
 /// `kerfOuter` + 0.1 from the vectors lie beyond the kerf. `joined` is true when uncut cells
 /// connect (4-neighbour) the part side to such a waste cell, i.e. some tab bridges the kerf.
+/// With `onVector` (side On, or an open vector) both sides are waste: `joined` when uncut cells
+/// join two separate far regions (beyond the kerf band) of the window, `slug` when there are two.
 inline TabJoin tabJoins(const toolpath::Toolpath& tp, const std::vector<geometry::Contour>& vectors,
                         bool wasteInside, geometry::Vec2 centre, double half, double zTab, double r,
-                        double kerfOuter, double res) {
+                        double kerfOuter, double res, bool onVector = false) {
     const int n = static_cast<int>(std::ceil(2.0 * half / res));
     const double x0 = centre.x - half;
     const double y0 = centre.y - half;
@@ -498,6 +500,54 @@ inline TabJoin tabJoins(const toolpath::Toolpath& tp, const std::vector<geometry
             stamp(nearVec, q, kerfOuter + 0.1);
             since = 0.0;
         }
+    }
+    if (onVector) {
+        // Both sides of the vector are waste: the far parts (beyond the kerf band) split into
+        // separate regions in the window; the tab bridges the band when uncut cells join two of
+        // them.
+        std::vector<int> farId(cut.size(), -1);
+        int regions = 0;
+        auto flood = [&](std::size_t seed, std::vector<int>& id, int value, auto pass) {
+            std::vector<std::size_t> st{seed};
+            id[seed] = value;
+            while (!st.empty()) {
+                const std::size_t c = st.back();
+                st.pop_back();
+                const int i = static_cast<int>(c % static_cast<std::size_t>(n));
+                const int j = static_cast<int>(c / static_cast<std::size_t>(n));
+                const int di[4] = {1, -1, 0, 0};
+                const int dj[4] = {0, 0, 1, -1};
+                for (int e = 0; e < 4; ++e) {
+                    const int ii = i + di[e];
+                    const int jj = j + dj[e];
+                    if (ii < 0 || jj < 0 || ii >= n || jj >= n) continue;
+                    const std::size_t k = at(ii, jj);
+                    if (id[k] != -1 || !pass(k)) continue;
+                    id[k] = value;
+                    st.push_back(k);
+                }
+            }
+        };
+        auto far = [&](std::size_t k) { return !cut[k] && !nearVec[k]; };
+        for (std::size_t c = 0; c < cut.size(); ++c) {
+            if (far(c) && farId[c] == -1) flood(c, farId, regions++, far);
+        }
+        TabJoin out;
+        out.slug = regions >= 2;
+        std::vector<int> comp(cut.size(), -1);
+        int comps = 0;
+        for (std::size_t c = 0; c < cut.size() && !out.joined; ++c) {
+            if (cut[c] || comp[c] != -1) continue;
+            flood(c, comp, comps, [&](std::size_t k) { return !cut[k]; });
+            int first = -1;
+            for (std::size_t k = 0; k < cut.size() && !out.joined; ++k) {
+                if (comp[k] != comps || farId[k] < 0) continue;
+                if (first < 0) first = farId[k];
+                else if (farId[k] != first) out.joined = true;
+            }
+            ++comps;
+        }
+        return out;
     }
     // Sides, row by row (even-odd crossings left of each cell centre).
     std::vector<char> inside(cut.size(), 0);
