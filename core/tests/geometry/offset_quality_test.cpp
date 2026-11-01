@@ -2603,20 +2603,20 @@ TEST_CASE("T-0017: a reversal between nearly co-circular arcs is kept wherever i
                                   0.76780841659784071,
                                   ArcDirection::CW});
     const double d = 0.41368496906985969;
-    const std::vector<Contour> far =
+    const std::vector<Contour> farChains =
         offsetOpenContour(in, d, OffsetSide::Right, JoinType::Square, kTol, 3.1518687530154437);
-    const std::vector<Contour> near = offsetOpenContour(translated(in, Vec2{1e4, -1e4}), d, OffsetSide::Right,
+    const std::vector<Contour> nearChains = offsetOpenContour(translated(in, Vec2{1e4, -1e4}), d, OffsetSide::Right,
                                                         JoinType::Square, kTol, 3.1518687530154437);
-    REQUIRE(far.size() == near.size());
+    REQUIRE(farChains.size() == nearChains.size());
     double farLength = 0.0;
     double nearLength = 0.0;
-    for (std::size_t i = 0; i < far.size(); ++i) {
+    for (std::size_t i = 0; i < farChains.size(); ++i) {
         CAPTURE(i);
-        CHECK(far[i].spans.size() == near[i].spans.size());
-        for (const Span& s : far[i].spans) {
+        CHECK(farChains[i].spans.size() == nearChains[i].spans.size());
+        for (const Span& s : farChains[i].spans) {
             farLength += length(s);
         }
-        for (const Span& s : near[i].spans) {
+        for (const Span& s : nearChains[i].spans) {
             nearLength += length(s);
         }
     }
