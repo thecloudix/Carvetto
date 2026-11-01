@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <initializer_list>
 #include <limits>
 #include <map>
 #include <optional>
@@ -1250,42 +1251,68 @@ bool startsBehind(const Span& a, const Span& b) {
     return (startPoint(b) - endPoint(a)).dot(tangentAt(a, 1.0)) < 0.0;
 }
 
-// Closes the junction a -> b by turning b's start angle only, so that b's end point stays
-// bit-identical: b's start becomes a's end exactly if some angle within a few ulps of the
-// direction of a's end gives it, else the nearest such start that lies level with or ahead of
-// a's end along a's travel, within 1e-12 x max(1, |x|, |y|, r). Returns false (b unchanged)
-// where no angle does.
+// Closes the junction a -> b by turning b's start angle only, which leaves b's centre, radius
+// and end angle alone: b's start becomes a's end exactly if some angle near the direction of a's
+// end gives it, else the nearest such start that lies level with or ahead of a's end along a's
+// travel, within 1e-12 x max(1, |x|, |y|, r). Where a's end lies off b's circle by rho and the
+// arcs meet at a corner, the start must move round b by about rho (n . ta) / (t . ta) to stand
+// level with it; that turn is solved for, and the angles around it and around the direction
+// of a's end are searched. One ulp of the angle moves the start by only r x ulp(angle) (1e-15 mm
+// at r = 21), far below one ulp of the coordinates at 1e4 mm (1.8e-12), so the angles tried are
+// spaced a quarter of a coordinate ulp apart along the circle, 64 either side. Returns false
+// (b unchanged) where no angle does.
 bool exactJunctionByAngle(const Span& a, ArcSpan& b) {
     const Vec2 j = endPoint(a);
     const Vec2 bEnd = b.endPoint();
     const Vec2 ta = tangentAt(a, 1.0);
     const double scale = std::max({1.0, std::fabs(j.x), std::fabs(j.y), b.radius});
     // The angle of a's end about b's centre, taken next to b's current start angle.
-    double wrapped = normalizeAngle((j - b.centre).angle() - b.startAngle);
+    const Vec2 radial = j - b.centre;
+    double wrapped = normalizeAngle(radial.angle() - b.startAngle);
     if (wrapped > 0.5 * kTwoPi) {
         wrapped -= kTwoPi;
     }
     const double target = b.startAngle + wrapped;
+    // The turn (as an angle) that brings b's start level with a's end along ta.
+    const double dist = radial.length();
+    double turn = 0.0;
+    if (dist > 0.0) {
+        const Vec2 n = radial / dist;
+        const Vec2 increasing = n.perp();  // where a larger angle moves the point
+        const double rho = dist - b.radius;
+        const double along = increasing.dot(ta);
+        if (std::fabs(along) > 1e-3) {
+            turn = rho * n.dot(ta) / along / b.radius;
+        }
+    }
+    const double coord = std::max({1.0, std::fabs(j.x), std::fabs(j.y)});
+    const double coordUlp = std::nextafter(coord, kInf) - coord;
+    const double angleUlp = std::nextafter(std::fabs(target), kInf) - std::fabs(target);
+    const double step = std::max(angleUlp, 0.25 * coordUlp / b.radius);
     std::optional<ArcSpan> best;
     double bestGap = 1e-12 * scale;
-    for (int k = -16; k <= 16; ++k) {
-        ArcSpan c = b;
-        c.startAngle = target;
-        for (int i = 0; i < (k < 0 ? -k : k); ++i) {
-            c.startAngle = std::nextafter(c.startAngle, k < 0 ? -kInf : kInf);
+    for (const double centre : {target, target + turn}) {
+        for (int k = -64; k <= 64; ++k) {
+            ArcSpan c = b;
+            c.startAngle = centre + k * step;
+            // The end angle is startAngle + sweep, recomputed from the new start: its rounding
+            // can move the end point, which must stay where the previous junction put it.
+            if (!(c.endPoint() == bEnd)) {
+                continue;
+            }
+            const Vec2 st = c.startPoint();
+            if (st == j) {
+                b = c;
+                return true;
+            }
+            const double gap = geometry::distance(st, j);
+            if (gap <= bestGap && (st - j).dot(ta) >= 0.0) {
+                bestGap = gap;
+                best = c;
+            }
         }
-        if (!(c.endPoint() == bEnd)) {
-            continue;  // the sweep's rounding moved the end: not a candidate
-        }
-        const Vec2 st = c.startPoint();
-        if (st == j) {
-            b = c;
-            return true;
-        }
-        const double gap = geometry::distance(st, j);
-        if (gap <= bestGap && (st - j).dot(ta) >= 0.0) {
-            bestGap = gap;
-            best = c;
+        if (turn == 0.0) {
+            break;
         }
     }
     if (best) {
@@ -1303,7 +1330,10 @@ bool exactJunctionByAngle(const Span& a, ArcSpan& b) {
 // centre and so reopens the first junction by a few ulps, in a direction that is rounding noise.
 // Where that leaves the second arc starting behind the first's end, the loop is closed instead
 // by turning the first arc's start angle, which keeps its end point (0xa5000ba6, a 4-arc loop
-// at 1e5 mm: 7.2e-12 mm behind).
+// at 1e5 mm: 7.2e-12 mm behind). Where even that leaves a junction behind (the turn needed
+// would open the closing junction beyond 1e-12 of the scale, seen only for input with gaps),
+// the walk is tried from each other arc in turn and the first without a backward junction is
+// kept; if none is, the walk from the first arc stays.
 void exactJunctions(std::vector<Span>& spans, bool closed) {
     const std::size_t m = spans.size();
     if (m < 2) {
@@ -1318,17 +1348,42 @@ void exactJunctions(std::vector<Span>& spans, bool closed) {
         first = allArcs ? 0 : static_cast<std::size_t>(line - spans.begin());
     }
     const std::size_t junctions = closed ? m : m - 1;
-    for (std::size_t k = 0; k + 1 < junctions; ++k) {
-        const std::size_t i = (first + k) % m;
-        exactJunction(spans[i], spans[(i + 1) % m]);
+    // The walk from `from`; for a loop of arcs, closed by turning arc `from` where needed.
+    auto walk = [&](std::vector<Span>& sp, std::size_t from) {
+        for (std::size_t k = 0; k + 1 < junctions; ++k) {
+            const std::size_t i = (from + k) % m;
+            exactJunction(sp[i], sp[(i + 1) % m]);
+        }
+        const std::size_t i = (from + junctions - 1) % m;
+        const std::size_t b = (i + 1) % m;
+        const Span before = sp[b];
+        exactJunction(sp[i], sp[b]);
+        if (allArcs && startsBehind(sp[b], sp[(b + 1) % m])) {
+            ArcSpan turned = std::get<ArcSpan>(before);
+            if (exactJunctionByAngle(sp[i], turned)) {
+                sp[b] = turned;
+            }
+        }
+    };
+    if (!allArcs) {
+        walk(spans, first);
+        return;
     }
-    const std::size_t i = (first + junctions - 1) % m;
-    const Span before = spans[(i + 1) % m];
-    exactJunction(spans[i], spans[(i + 1) % m]);
-    if (allArcs && startsBehind(spans[0], spans[1])) {
-        ArcSpan turned = std::get<ArcSpan>(before);
-        if (exactJunctionByAngle(spans[m - 1], turned)) {
-            spans[0] = turned;
+    auto anyBehind = [&](const std::vector<Span>& sp) {
+        for (std::size_t i = 0; i < m; ++i) {
+            if (startsBehind(sp[i], sp[(i + 1) % m])) {
+                return true;
+            }
+        }
+        return false;
+    };
+    const std::vector<Span> original = spans;
+    walk(spans, 0);
+    for (std::size_t from = 1; from < m && anyBehind(spans); ++from) {
+        std::vector<Span> attempt = original;
+        walk(attempt, from);
+        if (!anyBehind(attempt)) {
+            spans = std::move(attempt);
         }
     }
 }

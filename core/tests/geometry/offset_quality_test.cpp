@@ -2771,6 +2771,162 @@ TEST_CASE("T-0017: a closed loop of arcs only does not step back at its first ju
     CHECK(js.notIdentical == 0);
 }
 
+namespace {
+
+// One ulp step of `v` per unit of `k`, up or down.
+double ulpSteps(double v, int k) {
+    const double inf = std::numeric_limits<double>::infinity();
+    for (; k > 0; --k) {
+        v = std::nextafter(v, inf);
+    }
+    for (; k < 0; ++k) {
+        v = std::nextafter(v, -inf);
+    }
+    return v;
+}
+
+// A closed loop of arcs through `pts` (sweeps in `sweeps`, signed: > 0 CCW), made bit-continuous
+// by nudging each arc's centre and radius a few ulps onto the previous end and the last arc's
+// end angle onto the first start. Empty where that does not succeed.
+std::optional<Contour> continuousArcLoop(const std::vector<Vec2>& pts, const std::vector<double>& sweeps) {
+    Contour c;
+    c.closed = true;
+    const std::size_t n = pts.size();
+    for (std::size_t i = 0; i < n; ++i) {
+        const Vec2 p0 = pts[i];
+        const Vec2 p1 = pts[(i + 1) % n];
+        const double sw = sweeps[i];
+        const Vec2 chord = p1 - p0;
+        const double len = chord.length();
+        const double r = len / (2.0 * std::sin(std::fabs(sw) / 2.0));
+        const Vec2 normal = chord.perp() / len;
+        const double h = std::sqrt(std::max(0.0, r * r - len * len / 4.0));
+        const Vec2 centre = (p0 + p1) * 0.5 + normal * (sw > 0.0 ? h : -h);
+        c.spans.emplace_back(ArcSpan{centre, r, (p0 - centre).angle(), (p1 - centre).angle(),
+                                     sw > 0.0 ? ArcDirection::CCW : ArcDirection::CW});
+    }
+    for (std::size_t i = 1; i < n; ++i) {
+        const Vec2 j = endPoint(c.spans[i - 1]);
+        auto& arc = std::get<ArcSpan>(c.spans[i]);
+        ArcSpan base = arc;
+        base.centre = j - Vec2::fromAngle(arc.startAngle, arc.radius);
+        bool hit = base.startPoint() == j;
+        ArcSpan found = base;
+        for (int dr = -4; dr <= 4 && !hit; ++dr) {
+            for (int dx = -4; dx <= 4 && !hit; ++dx) {
+                for (int dy = -4; dy <= 4 && !hit; ++dy) {
+                    found = base;
+                    found.radius = ulpSteps(base.radius, dr);
+                    found.centre = Vec2{ulpSteps(base.centre.x, dx), ulpSteps(base.centre.y, dy)};
+                    hit = found.startPoint() == j;
+                }
+            }
+        }
+        if (!hit) {
+            return std::nullopt;
+        }
+        arc = found;
+    }
+    const Vec2 j0 = startPoint(c.spans[0]);
+    auto& last = std::get<ArcSpan>(c.spans[n - 1]);
+    const double e0 = last.endAngle + std::remainder((j0 - last.centre).angle() - last.endAngle, 2.0 * kPi);
+    for (int k = -64; k <= 64; ++k) {
+        ArcSpan t = last;
+        t.endAngle = ulpSteps(e0, k);
+        if (t.endPoint() == j0) {
+            last = t;
+            return c;
+        }
+    }
+    return std::nullopt;
+}
+
+}  // namespace
+
+TEST_CASE("T-0017: closed loops of arcs only never step back far from the origin under ulp noise",
+          "[geometry][offset][open][t0017]") {
+    // A closed loop of arcs has no line to end the exact-junction walk on, so the arc that closes
+    // it is turned by its start angle (moving its centre would reopen its own first junction a few
+    // ulps behind). Round 3 turned it by single angle ulps, ~1e-15 mm at r = 21, against 1.8e-12
+    // mm coordinate ulps at 1e4 mm, so it rarely helped: the verifier's 3-arc loop below (bit-
+    // continuous input) kept its first junction 2.0e-12 mm behind, and ~7% of such loops at
+    // 1e4..2e5 mm did.
+    SECTION("verifier repro: 3 arcs at (1e4, -8e3)") {
+        Contour in;
+        in.closed = true;
+        in.spans.emplace_back(ArcSpan{{9983.0018315241668, -7985.8356249752496}, 20.899133891249114,
+                                      -0.27495478339630758, -1.0921978125326512, ArcDirection::CW});
+        in.spans.emplace_back(ArcSpan{{9998.6116614581879, -8003.1964218735147}, 6.1022177852037727,
+                                      -2.9453011998537355, -0.96720173187117575, ArcDirection::CCW});
+        in.spans.emplace_back(ArcSpan{{9968.5842862924146, -7997.747088651955}, 35.090437701744214,
+                                      -0.30308470313606828, 0.17869817934407367, ArcDirection::CCW});
+        for (std::size_t i = 0; i < 3; ++i) {
+            REQUIRE(endPoint(in.spans[i]) == startPoint(in.spans[(i + 1) % 3]));
+        }
+        const std::vector<Contour> chains =
+            offsetOpenContour(in, 0.072003004263852685, OffsetSide::Left, JoinType::Round, kTol, 2.0);
+        REQUIRE(chains.size() == 1);
+        CHECK(chains[0].closed);
+        JunctionStats js;
+        checkJunctions(chains, js);
+        CHECK(js.backward == 0);
+        CHECK(js.maxGap <= 1e-12 * 1e4);
+    }
+    SECTION("generated loops at 1e4..2e5 mm, d nudged by ulps") {
+        const Vec2 places[] = {{1e4, -8e3}, {-1e5, -4e4}, {3e4, 7e4}, {2e5, 1.3e5}};
+        const JoinType joins[] = {JoinType::Round, JoinType::Sharp, JoinType::Square};
+        SplitMix rng(0x7017A0C5u);
+        std::size_t loops = 0;
+        std::size_t arcLoops = 0;
+        std::size_t stepsBack = 0;
+        std::size_t offsets = 0;
+        while (loops < 48) {
+            const Vec2 at = places[loops % 4];
+            const int n = 3 + static_cast<int>(rng.uniform(0.0, 4.0));
+            const double radius = rng.logUniform(0.3, 30.0);
+            const double a0 = rng.uniform(0.0, 2.0 * kPi);
+            std::vector<Vec2> pts;
+            std::vector<double> sweeps;
+            for (int i = 0; i < n; ++i) {
+                const double a = a0 + 2.0 * kPi * (i + rng.uniform(-0.3, 0.3)) / n;
+                pts.push_back(at + Vec2::fromAngle(a, radius * rng.uniform(0.6, 1.4)));
+                const double sw = rng.uniform(0.2, 2.6);
+                sweeps.push_back(rng.uniform(0.0, 1.0) < 0.3 ? -sw : sw);
+            }
+            const double d = rng.logUniform(0.01, 3.0);
+            const OffsetSide side = rng.uniform(0.0, 1.0) < 0.5 ? OffsetSide::Left : OffsetSide::Right;
+            const std::optional<Contour> in = continuousArcLoop(pts, sweeps);
+            if (!in) {
+                continue;
+            }
+            ++loops;
+            for (const JoinType join : joins) {
+                for (int k = -4; k <= 4; ++k) {
+                    const std::vector<Contour> chains =
+                        offsetOpenContour(*in, ulpSteps(d, k), side, join, kTol, 2.0);
+                    ++offsets;
+                    for (const Contour& c : chains) {
+                        const bool onlyArcs = std::all_of(c.spans.begin(), c.spans.end(), [](const Span& sp) {
+                            return std::holds_alternative<ArcSpan>(sp);
+                        });
+                        if (c.closed && c.spans.size() >= 2 && onlyArcs) {
+                            ++arcLoops;
+                        }
+                    }
+                    JunctionStats js;
+                    checkJunctions(chains, js);
+                    CAPTURE(loops, k);
+                    CHECK(js.notIdentical == 0);
+                    stepsBack += js.backward;
+                }
+            }
+        }
+        CHECK(offsets == 48 * 27);
+        CHECK(arcLoops > 500);
+        CHECK(stepsBack == 0);
+    }
+}
+
 TEST_CASE(
     "T-0017: nearly collinear chamfer copies are joined by moving a line end, not a zero-length span "
     "(0xe2000055)",

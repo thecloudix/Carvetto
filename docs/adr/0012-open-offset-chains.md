@@ -122,8 +122,21 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     junction moves the first arc's centre and reopens its first junction by a few ulps; where
     that leaves the second arc starting behind, the loop is closed instead by turning the first
     arc's start angle (its end point bit-identical), exactly or, failing that, level with or
-    ahead within the same bound (fam5 0xa5000ba6, a 4-arc loop at 1e5 mm, 7.2e-12 mm behind). Two arcs whose circles only nearly touch (Round arcs about vertices
-    2d + g apart meeting at a cusp) were snapped to a point on neither circle and kept a gap of
+    ahead within the same bound (fam5 0xa5000ba6, a 4-arc loop at 1e5 mm, 7.2e-12 mm behind).
+    One angle ulp moves the start by only r·ulp(angle) (1e-15 mm at r = 21) against 1.8e-12 mm
+    coordinate ulps at 1e4 mm, so the turn is solved for (a's end may lie ρ off b's circle at a
+    corner: the start moves round by ρ (n·ta)/(t·ta)) and angles a quarter of a coordinate ulp
+    apart are searched around it (T-0017 round-3 re-verification: single-ulp steps left ~7% of
+    bit-continuous arc loops at 1e4…2e5 mm stepping back, 2.0e-12 mm in the verifier's 3-arc
+    repro). Where even that fails (the turn would open the closing junction beyond 1e-12 of
+    the scale, seen only for input with gaps), the walk is repeated from each other arc and the
+    first result without a backward junction is kept. Verifier perturbation driver, 1.75 M
+    offsets (arcs-only loops exact and noisy, mixed closed/open, large radii, at up to 2e5
+    mm): 0 backward junctions (45b2205: 26 000+). Where the input has gaps, arc-arc junctions
+    can stay open by a few times the input gap, always ahead (2.4× seen, as on 45b2205, in
+    mixed closed loops; 1.55× in arcs-only loops, where 45b2205 reached 1.0×: 56 gaps above
+    1e-12 of the scale in 168 000 noisy arcs-only offsets, 45b2205 42, 0cd9abc 75). Two arcs whose circles only nearly touch
+    (Round arcs about vertices 2d + g apart meeting at a cusp) were snapped to a point on neither circle and kept a gap of
     about g, 1.1e-10…8.3e-10 mm for g ≈ 8e-11…9e-10 (T-0017 round 3, B-1, as on main); such a
     snap is now refused when the residual exceeds the 1e-10 limit, and the junction is bridged by
     a checked straight line of about g instead (exact again for every g). That is for continuous input: where the input's own spans do not meet,
