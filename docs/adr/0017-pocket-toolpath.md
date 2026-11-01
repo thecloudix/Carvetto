@@ -37,8 +37,8 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
 
    **Phantom test (by depth, T-0126).** A result region is genuine when some point of it keeps
    the full distance (the inset less the join tolerance) from the source and lies inside it: the
-   first outer vertex that keeps the distance, or else the centroid of the outer ring when it lies
-   in the region. Such a point belongs to the true inset, so the region does too. An inside-out
+   first outer vertex that keeps the distance, or else (for a region that is not a sliver, see
+   below) the centroid of the outer ring when it lies in the region. Such a point belongs to the true inset, so the region does too. An inside-out
    region has no such point: all of it is closer to the walls than the inset. Before T-0126 the
    test counted vertices (most outer vertices had to keep the distance), so a 900 mm² region whose
    small bulge towards a wall held most of its vertices was rejected silently (verifier cases C2
@@ -72,8 +72,11 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
 
    - **Slivers:** where a lobe collapses, Clipper2 leaves dozens of zero-area sliver regions,
      some with a vertex at full depth. A sliver (area / perimeter under half the join tolerance)
-     is kept if it passes as it is and otherwise dropped without a report: an inset only makes
-     it vanish, and it holds nothing the tolerance does not already allow for (knobs scan seed
+     is kept if it passes as it is and otherwise dropped without a report, and its centroid
+     never counts as a point at depth (a thin crescent of a collapsing knob in the verifier's S3
+     scan, knobs seed 3383 at chordal 0.5, d = 5.666, had its centroid at depth, all of its
+     vertices too close, and its pulled-in remains 2e-6 mm² outside Clipper's raw inset). An
+     inset only makes a sliver vanish, and it holds nothing the tolerance does not already allow for (knobs scan seed
      7852, fixture `knob_poly.txt`, d = 6.696687, where the first T-0126 build reported such
      slivers as lost).
 

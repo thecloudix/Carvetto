@@ -695,7 +695,10 @@ std::vector<Contour> guardInset(const std::vector<Contour>& cs, const std::vecto
         if (good && !insideRegion(base, *good, 0.0)) {
             continue;  // keeps the distance, but outside the source: a phantom
         }
-        if (!good && g.outer.size() >= 3) {
+        // No vertex at full depth: the centroid can still show a genuine region, unless the
+        // region is a sliver (see below), where a centroid "at depth" is Clipper2 debris of a
+        // collapsing lobe, not room for the tool.
+        if (!good && g.outer.size() >= 3 && groupArea(g) > 0.5 * tol.chordal * groupPerimeter(g)) {
             Vec2 c{0.0, 0.0};
             for (const Vec2 v : g.outer) {
                 c = c + v;
