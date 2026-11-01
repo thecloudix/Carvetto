@@ -141,10 +141,10 @@ struct PocketResult {
 /// cluster lifts to the floor of the previous level (the surface for the first level), which is
 /// already cleared there, and feeds along a straight segment or a route along the rings of the
 /// offset tree (Offset) or of the part itself (Raster, rest areas) inside the region (Raster
-/// without a boundary pass leaves wall scallops, so it never travels at depth); between rest
-/// clusters in one part of the centre region the tool lifts to the top of the cut and travels
-/// inside that part. Only when there is no such way does the tool retract to safe Z, so a
-/// connected pocket retracts once whatever its islands. Entry into the material is a vertical
+/// without a boundary pass leaves wall scallops, so it never travels at depth). Only when there
+/// is no such way does the tool retract to safe Z, so a connected pocket retracts once whatever
+/// its islands. Between clusters (separate regions, or separate rest areas) it always retracts.
+/// Entry into the material is a vertical
 /// plunge or, with `rampPlunge`, a zig-zag ramp along the path (`appendPathRamp`, the shared ramp
 /// module). Parameters that would make the work explode (pass depth, stepover or chordal
 /// tolerance too small for the pocket) are refused with a diagnostic and an empty toolpath.

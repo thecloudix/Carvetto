@@ -180,9 +180,10 @@ TEST_CASE("AC4: a 0.1 mm rest tool on a 200-tooth comb works only over the rest 
         INFO("CPU seconds " << t);
         CHECK(r.diagnostics.empty());
         REQUIRE_FALSE(r.toolpaths[1].isEmpty());
-        // Every gap is a rest area of its own, all in one connected region: one retract.
+        // Every gap is a rest area of its own; the tool retracts between rest areas (owner
+        // decision 2026-11-01), once per area.
         CHECK(r.plans[1].paths.back().cluster + 1 >= static_cast<std::size_t>(teeth));
-        CHECK(r.toolpaths[1].count(MoveKind::Retract) == 1);
+        CHECK(r.toolpaths[1].count(MoveKind::Retract) == r.plans[1].paths.back().cluster + 1);
         if constexpr (kRelease) {
             CHECK(t < 4.0);  // >= 5x faster than the 23.7 s at the T-0121 merge
         }

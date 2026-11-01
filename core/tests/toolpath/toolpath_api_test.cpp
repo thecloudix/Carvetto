@@ -443,7 +443,7 @@ TEST_CASE("AC5: raster pockets split by islands retract only between disconnecte
     CHECK(scalloped.toolpaths[0].count(MoveKind::Retract) > 1);
 }
 
-TEST_CASE("AC5: far-apart rest areas retract only between disconnected regions",
+TEST_CASE("AC5: rest areas are cut through all levels each and retract between areas",
           "[toolpath][pocket][linking][rest][T-0123]") {
     const PocketTool big = orc::endMill("B", 1, 12.0, 4.8, 3.0);
     const PocketTool small = orc::endMill("S", 2, 2.0, 0.8, 3.0);
@@ -456,28 +456,29 @@ TEST_CASE("AC5: far-apart rest areas retract only between disconnected regions",
             p.strategy = s;
             p.rampPlunge = ramp;
             p.rampDistance = 3.0;
-            // Four corners of one pocket: one region, one retract.
+            // Four corners of one pocket: owner decision 2026-11-01, the tool retracts to safe Z
+            // between rest areas (even within one connected region) and only there: each corner
+            // is cut through both levels without a retract.
             const PocketResult corners = pocketToolpath({rect(0, 0, 100, 60)}, {big, small}, p);
             REQUIRE(corners.diagnostics.empty());
             const Toolpath& rest = corners.toolpaths[1];
             CHECK(corners.plans[1].paths.back().cluster == 3);
-            CHECK(rest.count(MoveKind::Retract) == 1);
+            CHECK(corners.plans[1].levels.size() == 2);
+            CHECK(rest.count(MoveKind::Retract) == 4);
+            CHECK(rest.count(MoveKind::Rapid) == 4);
             const orc::GougeReport g = orc::gougeCheck(rest, {orc::rectPoly(0, 0, 100, 60)}, -1.0, p.safeZ);
             CHECK(g.allInside);
             CHECK(g.minDistance >= 1.0);
-            // Between corners the tool lifts to the top of the cut and travels there.
-            std::size_t lifts = 0;
-            for (std::size_t i = 0; i < rest.moves.size(); ++i) {
-                const Move& mv = rest.moves[i];
-                if (mv.kind == MoveKind::Feed && mv.to.z > rest.startOf(i).z && mv.to.z == -1.0) {
-                    ++lifts;
+            // Every rapid between areas starts from safe Z, right after a retract.
+            for (std::size_t i = 1; i < rest.moves.size(); ++i) {
+                if (rest.moves[i].kind == MoveKind::Rapid) {
+                    CHECK(rest.moves[i - 1].kind == MoveKind::Retract);
                 }
             }
-            CHECK(lifts >= 3);
-            // Two separate pockets (four corners each): one retract per pocket.
+            // Two separate pockets (four corners each): one retract per rest area.
             const PocketResult two = pocketToolpath({rect(0, 0, 40, 40), rect(60, 0, 100, 40)}, {big, small}, p);
             CHECK(two.plans[1].paths.back().cluster == 7);
-            CHECK(two.toolpaths[1].count(MoveKind::Retract) == 2);
+            CHECK(two.toolpaths[1].count(MoveKind::Retract) == 8);
             const orc::GougeReport g2 = orc::gougeCheck(
                 two.toolpaths[1], {orc::rectPoly(0, 0, 40, 40), orc::rectPoly(60, 0, 100, 40)}, -1.0, p.safeZ);
             CHECK(g2.allInside);

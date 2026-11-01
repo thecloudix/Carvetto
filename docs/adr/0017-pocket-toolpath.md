@@ -194,8 +194,7 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
    n times (AC5). A rest cluster travels only inside its own part of the need region (∩ C): other
    rest clusters may still hold material at every depth. **Amended by T-0123 (ADR-0018 §10):**
    Raster parts and rest areas route travel along their own rings like Offset (they used straight
-   travel only), and between rest clusters in one part of the centre region the tool lifts to the
-   top of the cut and travels inside that part instead of retracting.
+   travel only); between rest clusters the tool retracts to safe Z (owner decision 2026-11-01).
 9. **Descent.** It is a vertical `Plunge`. With `rampPlunge`, the tool plunges through the air to
    the floor already cut (the surface for the first level) and then makes a **zig-zag ramp**
    (`toolpath/pocket_ramp.hpp`, `appendPathRamp`). The ramp runs forward along the path for

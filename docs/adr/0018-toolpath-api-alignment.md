@@ -34,7 +34,9 @@ The card fixes the outcomes (one ramp, Tool + cutting data in, one diagnostics t
    bottomDepth) → PassTool{snapshot, radius, stepover, passDepth}`. The radius is half
    `cuttingWidthAtDepth` at the bottom of the cut, as Profile already did (ADR-0016 §2): D/2 for an
    end mill (so all existing pockets are unchanged), the radius at the material surface for a
-   V-bit or ball nose (the top edge of the cut keeps the distance).
+   V-bit or ball nose (the top edge of the cut keeps the distance). **Owner decision
+   (2026-11-01): the pocket uses this same rule as Profile** — half the cutting width at the
+   bottom of the pocket.
 4. **Both operations take `tooling::Tool` + optional cutting data the same way**: Profile
    `profileToolpath(contours, Tool, ProfileParams)` with `ProfileParams::cuttingData`; Pocket a
    list of `PocketTool { Tool tool; optional<CuttingData> cuttingData; }` (one entry per tool:
@@ -94,11 +96,13 @@ The card fixes the outcomes (one ramp, Tool + cutting data in, one diagnostics t
     and island rings), so a link blocked by an island is routed along the rings and bridges like
     the Offset strategy's, at the floor of the previous level (cleared there when the boundary
     pass is cut; Raster + Profile Pass None still never travels at depth). Rest clusters route
-    inside their own rest area through their pattern's tree. Between two rest clusters in the same
-    part of the tool's centre region the tool lifts to the top of the cut (−start depth, where
-    Offset's first-level travel already runs) and travels along a route inside that part instead
-    of retracting. So a connected pocket retracts once whatever its islands, and rest areas
-    retract only between disconnected parts.
+    inside their own rest area through their pattern's tree. So a connected pocket retracts once
+    whatever its islands. **Owner decision (2026-11-01): between separate rest areas (clusters)
+    the tool retracts to safe Z**, even when they lie in one connected part of the centre region;
+    it does not feed across the top of the cut there (the first T-0123 build did). A rest
+    toolpath therefore retracts once per rest area; each area is cut through all its levels with
+    routed links and no retract inside it, and the areas are ordered part by part, nearest first,
+    to keep the rapids short.
 11. **Raster pattern memory** (closes the ADR-0017 §12 correction). Lines are clipped in batches
     of 256 (open paths do not interact: the pieces are the same) and counted against a budget of
     move cap / (6 × levels) pieces (each piece costs at least 6 moves per level); past it the tool
@@ -108,9 +112,8 @@ The card fixes the outcomes (one ramp, Tool + cutting data in, one diagnostics t
 - The CLI (T-0122) can include `profile.hpp` and `pocket.hpp` together and build both operations
   from a tool-database `Tool` and the cutting data it looks up.
 - Rest rings follow the rest areas' boundaries, so a rest toolpath has more (polygonal) vertices
-  than the old clipped straight pieces, and far fewer retracts.
-- Travel between rest clusters feeds across the top of the cut (as Offset's first level always
-  did); if the stock top is uneven above −start depth, that is the user's start depth to set.
+  than the old clipped straight pieces, and fewer retracts (one per rest area instead of one per
+  clipped piece: the 4-corner case 16–33 → 4).
 - Still quadratic and left for follow-up cards: Raster zig-zag linking scans a whole row per step
   (a 1,000-tooth comb inside the caps: 6–14 s); Profile's separate-last-pass matching of finishing
   to roughing cuts compares every pair (only with a separate last pass); Clipper2's sweep over a

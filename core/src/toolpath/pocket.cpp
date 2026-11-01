@@ -5,7 +5,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
-#include <numeric>
 #include <optional>
 #include <string>
 #include <type_traits>
@@ -1615,19 +1614,6 @@ std::vector<Vec2> route(const RingTree& tree, std::size_t na, Vec2 P, std::size_
 
 // ------------------------------------------------------------------------- move emission
 
-/// A connected part of the tool's centre region, prepared for routing travel moves across it
-/// (between rest clusters, over the top of the cut): its rings as a one-node `RingTree` and an
-/// index for inside tests.
-struct TravelArea {
-    TravelArea(std::size_t partId, const Group& g) : id(partId), index(ringsOf(g)) {
-        tree.rings = {ringsOf(g)};
-        tree.parent = {kNoNode};
-    }
-    std::size_t id;
-    RegionIndex index;
-    RingTree tree;
-};
-
 class Emitter {
    public:
     /// `allowTravel` false: every way that is not a short link at depth retracts (used when the
@@ -1643,12 +1629,10 @@ class Emitter {
     /// depth; longer ways (and the way back to the first path of the next level) travel inside the
     /// centre region at the floor of the previous level (the surface for the first), which is
     /// already cleared there, along a straight segment or a route through `tree`; only when
-    /// neither exists does the tool retract to safe Z. When the previous cluster lay in the same
-    /// `area` (a part of the centre region; rest clusters), the tool reaches this cluster by
-    /// lifting to the top of the cut and travelling inside the area instead of retracting.
+    /// neither exists does the tool retract to safe Z. Between clusters (separate regions, or
+    /// separate rest areas: owner decision 2026-11-01) the tool always retracts.
     void cluster(const std::vector<const PocketPath*>& paths, const std::vector<std::size_t>& nodes,
-                 const std::vector<double>& levels, const RegionIndex& region, const RingTree* tree,
-                 const TravelArea* area = nullptr) {
+                 const std::vector<double>& levels, const RegionIndex& region, const RingTree* tree) {
         const double tol = p_.tolerance.distance;
         for (std::size_t k = 0; k < levels.size(); ++k) {
             const double z = levels[k];
@@ -1666,9 +1650,6 @@ class Emitter {
                 } else if (allowTravel_ && !atSafe_ && inCluster_ && z_ <= zTop &&
                            travel(s, zTop, node, region, tree)) {
                     enter(path, zTop, z);
-                } else if (!atSafe_ && !inCluster_ && k == 0 && area != nullptr && area->id == lastArea_ &&
-                           travelAcross(s, zTop, *area)) {
-                    enter(path, zTop, z);
                 } else {
                     retract();
                     rapidTo(s);
@@ -1680,7 +1661,6 @@ class Emitter {
             }
         }
         inCluster_ = false;
-        lastArea_ = area != nullptr ? area->id : kNoNode;
     }
 
     void finish() { retract(); }
@@ -1703,27 +1683,6 @@ class Emitter {
         }
         for (std::size_t i = 1; i < way.size(); ++i) {
             feedTo(way[i], zTravel);
-        }
-        return true;
-    }
-    /// Lifts to `zTop` (the top of the cut: clear inside the whole centre region) and feeds to
-    /// `s` along a way inside `area`; false when there is none.
-    bool travelAcross(Vec2 s, double zTop, const TravelArea& area) {
-        const double tol = p_.tolerance.distance;
-        std::vector<Vec2> way;
-        if (area.index.segmentInside(pos_, s, tol)) {
-            way = {pos_, s};
-        } else {
-            way = route(area.tree, 0, pos_, 0, s, area.index, tol);
-        }
-        if (way.size() < 2 || z_ > zTop) {
-            return false;
-        }
-        if (z_ < zTop) {
-            feedTo(pos_, zTop);  // up out of the finished cluster
-        }
-        for (std::size_t i = 1; i < way.size(); ++i) {
-            feedTo(way[i], zTop);
         }
         return true;
     }
@@ -1777,7 +1736,6 @@ class Emitter {
     bool started_{false};
     bool atSafe_{true};
     bool inCluster_{false};
-    std::size_t lastArea_{kNoNode};
     std::size_t node_{kNoNode};
     Vec2 pos_;
     double z_{0.0};
@@ -2090,13 +2048,11 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
                 cutArea = offsetBy(restAreas, r, fine);
             }
         }
-        // The part of the centre region each cluster lies in: between clusters of one part (rest
-        // areas) the tool travels over the top of the cut instead of retracting (T-0123). Rest
-        // areas are cut part by part, nearest first, so the tool leaves a part only once.
-        std::vector<std::size_t> partOf(parts.size(), kNoNode);
-        if (!isRest) {
-            std::iota(partOf.begin(), partOf.end(), std::size_t{0});
-        } else {
+        // Rest areas are cut part of the centre region by part, nearest first, which keeps the
+        // rapids between them short (the tool retracts between rest areas: owner decision
+        // 2026-11-01).
+        if (isRest) {
+            std::vector<std::size_t> partOf(parts.size(), kNoNode);
             std::vector<Box2> centreBoxes;
             for (const Group& g : centre) {
                 centreBoxes.push_back(ringBox(g.outer).inflated(tol.distance));
@@ -2112,13 +2068,10 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
             }
             const std::vector<std::size_t> order = nearestFirst(parts, partOf);
             std::vector<Group> sortedParts;
-            std::vector<std::size_t> sortedPartOf;
             for (const std::size_t c : order) {
                 sortedParts.push_back(std::move(parts[c]));
-                sortedPartOf.push_back(partOf[c]);
             }
             parts = std::move(sortedParts);
-            partOf = std::move(sortedPartOf);
         }
         Pattern pattern = fullPattern(parts, ctx);
         if (overBudget) {
@@ -2163,8 +2116,6 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
             }());
         }
 
-        std::vector<std::optional<TravelArea>> areas(centre.size());
-
         Toolpath& tp = result.toolpaths[ti];
         Emitter emitter(tp, params, 2.0 * d, !scalloped);
         for (std::size_t start = 0; start < plan.paths.size();) {
@@ -2178,17 +2129,9 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
                 ++end;
             }
             // Travel within the cluster stays inside its own part (of the centre region, or rest
-            // area); between clusters inside the part of the centre region holding both.
+            // area); between clusters the tool retracts.
             const RingTree* tree = cl < trees.size() && !trees[cl].rings.empty() ? &trees[cl] : nullptr;
-            const TravelArea* area = nullptr;
-            if (isRest && cl < parts.size() && partOf[cl] != kNoNode) {
-                std::optional<TravelArea>& a = areas[partOf[cl]];
-                if (!a) {
-                    a.emplace(partOf[cl], centre[partOf[cl]]);
-                }
-                area = &*a;
-            }
-            emitter.cluster(members, memberNodes, plan.levels, RegionIndex(ringsOf(parts[cl])), tree, area);
+            emitter.cluster(members, memberNodes, plan.levels, RegionIndex(ringsOf(parts[cl])), tree);
             start = end;
         }
         emitter.finish();
