@@ -105,6 +105,8 @@ add_library(carvetto_core STATIC
   src/io/dxf_colour.cpp
   src/io/dxf_import.cpp
   src/io/dxf_export.cpp
+  src/toolpath/pocket.cpp
+  src/toolpath/pocket_ramp.cpp
 )
 target_include_directories(carvetto_core PUBLIC include)
 target_link_libraries(carvetto_core

@@ -7,6 +7,7 @@ What it rewrites, from the current sources:
   - core/tests/golden/post/grbl_square.nc;
   - core/tests/golden/toolpath/profile_rect_tabs.moves and profile_rect_tabs_grbl.nc (T-0120; hand-check
     against the notes in docs/adr/0016-profile-toolpath.md);
+  - core/tests/golden/toolpath/pocket_rect_grbl.nc (T-0121 pocket through the Grbl post);
   - data/tools/starter_tools.json, re-exported in the exporter's canonical form (sorted keys,
     id order, rounded numbers), so hand edits to the database become byte-stable.
 

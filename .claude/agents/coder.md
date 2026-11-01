@@ -18,6 +18,7 @@ Rules:
 7. Commit on your branch with a message starting with the task ID, e.g. `T-0123: offset vectors with arc corners`, ending with the attribution lines given in your instructions.
 8. Portability: code must also compile on MSVC 2022 with /W4 /WX (CI checks it; you only have GCC locally). Known traps: `<cmath>` functions (`std::fabs`, `std::sqrt`, …) are not `constexpr` on MSVC — don't call them from `constexpr` functions; avoid GCC-only builtins/extensions, VLAs, and `__attribute__`; watch implicit narrowing (C4244/C4267) and unreferenced parameters (C4100).
 9. If you need a decision that isn't implementation detail, stop and report `BLOCKED: <precise question, with the options you see>`. Do not guess product behaviour.
+10. Shared machine: several agents build and test in other worktrees at the same time. Never run broad `pkill`/`killall` patterns; kill only processes you started, by PID.
 
 Report format when done:
 ```

@@ -86,7 +86,8 @@ Acceptance criteria:
 
 Re-scoped by director after 3 verification rounds (2026-10-26, owner decision: re-scope, do not merge): AC1 speed and AC2 mitres verified clean; AC3 fixed for exactly and near-collinear steep zig-zags (noise sweep 1e-13…1e-4 clean), but the round-3 "nearly the same carrier" grouping is worse than main in ~25/10k new adversarial cases (offset inside d, Round beyond d, spurious chains) and the back-step safety net skips 3-span chains. Not merged; work continues on branch task/T-0006-offset-quality (b722cf2, pushed) under T-0017.
 
-### T-0017 Open-offset quality II: residuals of T-0006   [status: in-progress]
+### T-0017 Open-offset quality II: residuals of T-0006   [status: verifying — round 3 of 3 @ ec0856e (pass rule: no worse than main, owner 2026-10-31)]
+Paused 2026-10-26 (owner). Branch task/T-0017-offset-quality-ii @ f8e4506 (WIP, pushed; builds, 494/494 serial). Round-1 verifier FAIL (7 items + translation-dependent needle removal); coder reports 6/7 + needle removal fixed; item 5 (self-crossing 0xe400137f) is a cancellation bug in core/src/geometry/intersect.cpp general intersect() — needs its own card. On resume: coder runs fam2/3/4 + hp/lens sweeps, -j8 repeat, CHANGELOG line, then round-2 verification.
 Phase: 1 (before Profile/Pocket ship)   Module: core/geometry   Depends on: T-0006 branch (b722cf2)   ADR: 0012 (amend A1)
 Goal: Finish T-0006 so it can merge: everything T-0006 verified clean stays clean (AC1 speed, AC2 mitre oracle, steep zig-zags exact and noisy, R1/R2/R3, needle-tip classification), and the round-3 verifier's residuals are fixed. Repros and harness: T-0006 round-3 verifier scratchpad `t0006v3/` (repro_r4/r5/r6.cpp, vdrv3.cpp with gen3.inc, bnd.cpp).
 Acceptance criteria:
@@ -277,7 +278,8 @@ Acceptance criteria:
   3. The starter tool database loads, validates, and every tool has cutting data for at least one material.
 Clean-room: no text from any vendor post. Marlin/Grbl/LinuxCNC/Mach dialect facts come from their public docs.
 
-### T-0120 2D Profile toolpath   [status: in-progress]
+### T-0120 2D Profile toolpath   [status: re-scoped → T-0124 (owner decision 2026-10-30: follow-up card on the same branch, merge when it passes)]
+Paused 2026-10-26 (owner). Branch task/T-0120-profile @ d75742a (pushed). Round 3 verifier: ACs 1–5 PASS, B1–B4 fixed, ~9,700 scenes 0 gouges; FAIL on one residual B5: with a separate last pass a finishing tab can be missing from the roughing cut, so roughing cuts through it at full depth with no diagnostic (repro scratchpad t0120v3/tabmin1.cpp). Proposed: re-scope B5 into a small follow-up card. Non-blocking: leads checked against r − tol not r + allowance; tab thickness > cut depth not clamped; zero-length plunge; tab length on curves.
 Phase: 1   Module: core/toolpath   Depends on: T-0040 (offset API in main; T-0017 quality fixes land in parallel — owner decision 2026-10-26)   ADR: 0016
 Goal: `profileToolpath(contours, Tool, ProfileParams) → Toolpath` per feature-inventory §5 "2D Profile Toolpath": Machine Vectors Outside/Inside/On (open vectors Left/Right), Climb/Conventional, Allowance Offset, Do Separate Last Pass (allowance, reverse), Use Vector Start Point, Tabs (length, thickness, constant number / constant distance, avoid corners; 3D tabs), Ramps (Smooth distance/angle, Zig-Zag, Spiral), Leads (straight / circular, lead-out, overcut), Order (vector selection / left-to-right / bottom-to-top / grid), Start At (keep / optimise / closest on bounding box), Corners (sharp external via V-bit when tool is V, sharp internal 3D). Multi-pass via PassPlan. Inner contours before outer. Deterministic.
 Acceptance criteria:
@@ -288,7 +290,8 @@ Acceptance criteria:
   5. Ordering modes produce the documented orders on a 3×3 grid of squares; inner-first holds for nested contours.
   6. Golden G-code through the Grbl post for the AC1 case; randomized property test: no feed move ever comes closer than tool radius − tol to the uncut side of any input contour.
 
-### T-0121 Pocket toolpath (offset and raster, profile pass, ramp plunge)   [status: in-progress]
+### T-0121 Pocket toolpath (offset and raster, profile pass, ramp plunge)   [status: done (with T-0125, 2026-10-31)]
+Paused 2026-10-26 (owner). Branch task/T-0121-pocket @ d432243 (pushed). Round 3 verifier: ACs 1–6 PASS, ~3,200 scenes 0 gouges, fold flags confirmed generator artefacts; FAIL on one residual: the Strict centre-region inset guard can drop a genuine lobe whose one vertex sits ~1e-6 past the slack → whole reachable area silently uncut (rare: ~1/4,000 diameters; repro scratchpad t0121v3/gap_poly.txt + gap4.cpp). Proposed: re-scope into a small follow-up card. To T-0123: raster pattern memory unbounded inside caps (bad_alloc at 1000-tooth comb), rest raster quadratic, rest tools re-trace link-cut scallops.
 Phase: 1   Module: core/toolpath   Depends on: T-0040 (offset API in main; T-0017 quality fixes land in parallel — owner decision 2026-10-26)   ADR: 0017
 Goal: `pocketToolpath(contours, tools, PocketParams)` per §5 "Pocketing Toolpath": Offset strategy (climb/conv, stepover, linking with minimal retracts) or Raster (angle, stepover, boundary pass), Profile Pass first/last/none, Pocket Allowance, Ramp Plunge, multi-tool clearance + rest tool (rest regions computed as the area the larger tool could not reach), islands (inner contours) respected.
 Acceptance criteria:
@@ -299,7 +302,99 @@ Acceptance criteria:
   5. Linking: number of retracts in the offset strategy ≤ number of disconnected regions + 1 for simple shapes.
   6. Golden G-code through Grbl for AC1; gouge-free property test as in T-0120.
 
+### T-0124 Profile: roughing tabs must match finishing tabs (residual of T-0120)   [status: in-progress — round 3 FAIL (On profiles only); owner 2026-11-01: add conservative On guard, verify the guard, merge; On fix → T-0127]
+Phase: 1   Module: core/toolpath   Branch: task/T-0120-profile (continues d75742a)   ADR: 0016
+Goal: Finish T-0120 so it can merge. With a separate last pass, a finishing tab can be missing from the roughing cut, so roughing cuts through it at full depth with no diagnostic (T-0120 round-3 verifier: 96/576 rectangle configs; 38/300 random scenes with separate last pass forced on).
+Acceptance criteria:
+  1. With a separate last pass, every finishing tab has a matching raised stretch on the roughing cut covering it, or both are dropped together and reported. No move of any pass goes below the tab top over finishing-tab material. Regressions: t0120v3/tabmin1.cpp (inside 100×50, 7 tabs 4×3, cutDepth 12, pass 6, allowance 0.1) and `MID=1 ./tabchk 9303 300 -1 1` → 0.
+  2. TabsNotPlaced is consistent: kept + dropped = requested, per pass or per vector as documented.
+  3. Everything T-0120 verified stays clean (ACs 1–6, B1–B4, ≥ 2,000-scene gouge sweep, golden unchanged).
+  4. Non-blocking items from the round-3 report fixed where cheap: leads checked against r + allowance; tab thickness > cut depth clamped with a diagnostic; zero-length plunge removed; projected tab length on curves.
+
+### T-0125 Pocket: centre-region guard must never drop a genuine region (residual of T-0121)   [status: done]
+Phase: 1   Module: core/toolpath   Branch: task/T-0121-pocket (continues d432243)   ADR: 0017
+Goal: Finish T-0121 so it can merge. The Strict inset guard rejects a whole centre-region lobe when one vertex sits ~1e-6 past the slack (Clipper grid + round-join sag), so a reachable part of the pocket is silently left uncut (~1 in 4,000 diameters).
+Acceptance criteria:
+  1. The guard tolerates Clipper's 1e-6 grid and join sag, or re-checks a dropped region by its deepest point so a region that clearly holds the tool is never discarded; phantom inside-out regions are still rejected. Regression: t0121v3/gap_poly.txt with d = 2.029 (and the 1.74–1.75 diameters) → lobe cut, coverage complete.
+  2. Property test: across a diameter scan (≥ 4,000 diameters on several lobed shapes) no reachable region is dropped (independent oracle).
+  3. Everything T-0121 verified stays clean (ACs 1–6, ≥ 2,000-scene sweep, caps, owner decision on Profile Pass).
+  4. ADR §12 corrected: raster pattern memory is not bounded before the cap check (moved to T-0123).
+
+### T-0021 intersect(): arc/arc cancellation with very different radii   [status: done]
+Phase: 1   Module: core/geometry   Depends on: —
+Goal: Found by the T-0017 coder: the general `intersect()` in core/src/geometry/intersect.cpp has a cancellation bug for arcs with very different radii (r = 39785 vs r = 0.09), reporting a false second crossing ~1e-5 mm from the real one (repro T-0017 seed 0xe400137f; offset junction exact at 50 digits). The coder had a fix + unit test, reverted as out of scope.
+Acceptance criteria:
+  1. Arc/arc and line/arc crossings computed without cancellation; regression for the reported pair and a generative test over radius ratios 1e-6…1e6 vs high-precision reference.
+  2. No result worse than main on the T-0007/T-0008 regression families.
+
+### T-0022 Arc angular slack and threshold crossings: distance-based tolerances   [status: done]
+Phase: 1   Module: core/geometry   Depends on: T-0021
+Goal: Found by the T-0021 verifier (both pre-existing on main). (a) `closestPoint(ArcSpan)` and the end-contact code accept query directions within `containsAngle`'s fixed 1e-9 rad slack, which is real distance on large arcs (1.26e-4 mm at r = 1.26e5, the full tolerance at r = 1e6): an end lying that far beyond an arc's end is treated as exact and reported untangent. Repro: arc centre (0,0), r = 125593, start 1.0, end 1.5, CCW; line from E − 0.5·(cos a, sin a) to E with a = 1.0 − 3.2e-10, E = r·(cos a, sin a) → one untangent hit, distance to arc 4.0e-5 mm. (b) When a chord 2h exceeds tol only at rounding level, `addPoint` merges the two crossings into one hit not flagged tangent, contrary to ADR-0009 (~25 of 179k threshold pairs).
+Acceptance criteria:
+  1. Angular slack is distance-based (≈ ε or tol/r scaled), so ends beyond an arc by more than rounding are end contacts flagged tangent; regression for the repro and a radius sweep 1e-3…1e6.
+  2. Two crossings merged by the threshold rule are always flagged tangent; regression at 2h − tol ≈ ±1e-15.
+  3. No result worse than main on the T-0007/T-0008/T-0021 families.
+
+### T-0128 Open offsets: narrow loops and needles must not lose cut coverage   [status: blocked]
+(Unblocks when T-0017 merges.)
+Phase: 1   Module: core/geometry   Depends on: T-0017
+Goal: Found by the T-0017 round-3 verifier (2026-11-01, non-blocking under "no worse than main"). T-0017 drops sub-tolerance lens loops and closed out-and-back needles as "narrow loops", and merges opposite copies within the snapping allowance. That follows the T-0017 header and AC3, but in rare cases it removes a toolpath that main keeps. (a) Seed 0xc5000544 (fam5, tieGap): an out-and-back needle 3.6 mm long and 5e-6 mm wide (x 6.43..10.08, y ≈ −5014.0939) has coincident ends, so it is closed and dropped; main keeps it. (b) Slot-width band: for a channel 2d + w wide, main keeps the needle for w ≥ ~3e-9, but T-0017 only keeps it above the snapping allowance (drops w up to 4e-7 at d = 0.1317, 1e-7 at d = 1, 3e-8 at d = 3.175). A DXF slot exactly one tool width wide plus coordinate noise can lose its path. Repro: a straight channel of width 2d + w and length 3.6, offset by d both sides (the verifier's vdrv6 `chan` driver was not preserved; seeds use the fuzz4 generators of `verifier-harness` t0017v2/gen5.inc). Also in scope: the reversal-cusp self-crossings (≤ 2.4e-8 mm; outlier 0xc500076c, a lens 2.1e-4 × 1.9e-9 mm) that contradict the header's "no returned chain intersects or touches itself".
+Acceptance criteria:
+  1. A degenerate loop or needle that a tool centre would still traverse (length ≫ tol) is returned as an open chain instead of being dropped; only loops whose whole extent is sub-tolerance are dropped. Regression for 0xc5000544 and a channel sweep w ∈ [0, 1e-5] at d = 0.1317, 1, 3.175: a path is returned for every w ≥ 0.
+  2. No returned chain crosses itself at reversal cusps (regression for 0xc500076c and the cusp which=1 sweep), without reintroducing main's junction gaps.
+  3. No result worse than T-0017 on its fuzz families (fam2–5, legacy, cusp sweeps).
+
+### T-0126 Pocket guard hardening: edge checks after pull-in, area-weighted phantom test   [status: in-progress — fix committed @ f85d8f7 (pushed); final test runs pending, then verification]
+Phase: 1 (before Pocket ships to users)   Module: core/toolpath   Depends on: T-0121/T-0125 merged   ADR: 0017
+Goal: Non-blocking findings of the T-0125 round-2 verifier (scratchpad t0125v2/adv.cpp raw-injection harness). (N1) After a convex vertex is pulled in or removed, only vertices are re-checked: removing a vertex on a concave join arc lets the new chord sag ~4× the arc step inside the limit (0.015 mm at chordal 0.01, 0.15 at 0.1, 0.71 at 0.5) — a gouge into exact walls. Never seen with real Clipper output, but a gap in the guard. (N2) The phantom test counts vertices, so a real 900 mm² region whose small bulge holds most vertices is rejected silently; a successful inset repair can lose 76 mm² at chordal 0.5 without a message.
+Acceptance criteria:
+  1. After pull-in or removal every new edge is distance-checked (exact segment-to-wall), falling back to the inset repair; regression from the raw-injection cases at chordal 0.01/0.1/0.5.
+  2. Phantom classification is area- or depth-weighted; the C2/C4 cases are kept; a message whenever the repair inset exceeds ~chordal or loses area beyond a small bound.
+  3. Everything T-0121/T-0125 verified stays clean (diameter scans, phantom probes, sweeps).
+
+### T-0127 Profile On-vector tabs: exact classification and connectivity on sharp turns   [status: blocked]
+(Unblocks when T-0120/T-0124 merge.)
+Phase: 1   Module: core/toolpath   Depends on: T-0124   ADR: 0016 §14
+Goal: T-0124 round-3 verifier (harness branch `verifier-harness`, t0124v4/): for profiles On the vector, a short tab on a sharp turn of the cut is kept although its own pass cuts it through (repro/on_corner.cpp; sweep scenes repro/sev_*.scn; F9 = seed 41006 fam 5 scene 9). T-0124 merges with a conservative guard that drops such tabs ("cut through"); this card replaces the guard with an exact rule so On tabs are kept whenever they really hold.
+Acceptance criteria:
+  1. On is decided by the profile side, not by `Cut::distance`; left/right material classification is correct near corners (allowance −, 0, +; with and without a separate last pass).
+  2. Every kept On tab joins part and waste (independent raster oracle conn6/flood) over ≥ 1,500 new-seed scenes; tabs dropped by the T-0124 guard that would hold are kept.
+  3. "kept + left out = requested" stated correctly (per loop when an offset splits) and consistent; thin necks < 0.1 mm either avoided or reported.
+  4. Inside/Outside and tab-free toolpaths byte-identical to the T-0124 merge.
+  5. Negative allowance (found by the T-0124 On-guard verifier, harness t0124v5/, pre-existing on c2f4709): with Inside/Outside and allowance between −r and about −r + 0.5 the tool centre runs close to the vector and tabs that are cut through are kept with no diagnostic (Outside, 30×30 square, 6 mm end mill, allowance −2.99/−2.9/−2.5, 4 tabs L=1 on the corners: whole-scene flood "part free"; scenes t0124v5/scn/neg2_s0_da*.scn, neg_s{0,1}_D6_da0_*_L1.scn). Tab survival is decided by the actual cut geometry for every side, so no kept tab is severed for any allowance ≥ −r; when r + allowance ≈ 0 the result is consistent (T-0124 changed Inside/Outside output there, driver t0124v5/tools/negallow.cpp).
+  6. Short On tabs on straight edges hold (T-0124 guard drops every tab with length < 2|allowance| + max(0.25, 0.05·D), e.g. D 12, L 1, allowance ±0.3 on a straight edge; driver t0124v5/tools/straight.cpp); ADR-0016 §14 wording matches.
+Note: conn6 reports false "severed" for some On tabs on straight edges and gentle curves; cross-check with the windowed flood t0124v5/wflood.py.
+
+### T-0018 offsetContours: inward offsets past the inradius must vanish, not invert   [status: ready]
+Phase: 1   Module: core/geometry   Depends on: —
+Goal: Found by the T-0121 coder: a closed contour offset inward by more than its inradius comes back inside out instead of empty (a 17 mm circle shrunk by 19.2 mm returns a 2.2 mm circle; by 30 mm a 13 mm circle). Pocket guards against it locally (`insetBy`); every other caller of `offsetContours` is exposed. Also document (or fix) that Clipper drops pieces of an open path lying exactly on a clip boundary.
+Acceptance criteria:
+  1. Inward offset ≥ inradius of a region yields no contour (or only the genuinely surviving lobes of a multi-lobed shape), for circles, polygons, arcs/Beziers, with and without holes, all join types; generative test vs a brute-force inradius/medial check.
+  2. No output contour has the opposite orientation of its source region unless it is a genuine hole; regression for the reported cases.
+  3. Pocket's local guard can be removed or kept as defence; if kept, document why. Behaviour of open paths on clip boundaries documented in ADR-0006 (or fixed), with a test.
+
+### T-0019 Make the T-0004 AC3 timing test CPU-time based   [status: ready]
+Phase: 1   Module: core/tests   Depends on: —
+Goal: "T-0004 AC3" in `open_offset_chains_test.cpp` asserts a wall-clock bound (< 0.5 s) and fails intermittently under `ctest -j8` (seen by the T-0120 coder). Convert it to process CPU time (GetProcessTimes on Windows, std::clock elsewhere) or a complexity ratio, like the other timing tests. Coordinate with T-0017 if it lands first (T-0017 AC6 touches the timing helper).
+Acceptance criteria:
+  1. The test measures CPU time or a ratio; it passes 20× under `ctest -j8 --repeat until-fail:20`.
+
+### T-0123 Toolpath API alignment: shared ramps, Tool → pass tool conversion, result types   [status: blocked]
+Phase: 1   Module: core/toolpath   Depends on: T-0120, T-0121
+Goal: Profile (T-0120) and Pocket (T-0121) were built in parallel. Unify: one ramp module (Profile's `ramp_entry` vs Pocket's `pocket_ramp`), one result shape (`ProfileResult`/`PocketResult` with diagnostics), a `tooling::Tool` + `CuttingData` → pocket tool conversion (feeds, stepover, pass depth), and shared ordering/linking where it overlaps. Add a spatial index where vector-pair checks are O(n²) (Profile grouping/nesting/clearance; Pocket inset guard) so text-heavy jobs with thousands of vectors stay fast.
+Acceptance criteria:
+  1. One ramp implementation used by both; existing Profile and Pocket tests and goldens unchanged (or regenerated with a hand-checked diff explained).
+  2. Both take `tooling::Tool` (+ cutting data) and return the same diagnostics type.
+  3. 5,000 small closed vectors profile and pocket in < 2 s Release (CPU time), scaling ≤ 2.5× per doubling.
+  4. Pocket rest tools build their pattern only over the rest areas (not the full pattern then clipped): the 200-tooth comb with a 0.1 mm rest tool (T-0121 verifier) runs ≥ 5× faster than at T-0121 merge.
+  5. Raster and rest toolpaths route links through cleared area (as Offset does since T-0121 round 2), so raster pockets split by islands and far-apart rest areas retract only between disconnected regions.
+
+Owner decisions 2026-10-31/11-01: run heavy verification one task at a time (machine capacity); T-0017 passes on "no worse than main" (findings identical to main become follow-up cards); T-0124 round-3 FAIL limited to On profiles → merge with a conservative On guard, exact fix in T-0127; director moved from the cloud session to Chris's local WSL machine (see docs/HANDOFF.md).
+
+Owner decisions 2026-10-26 for T-0120/T-0121 (record in ADR-0016/0017): tab length = material left (raised path = length + tool diameter); separate last pass runs after all roughing; nested closed vectors form a region (inner = hole); climb assumes M3 (clockwise) spindle, ramps at feed rate, 3D tabs ramp at 45°, leads only on each cut's first entry and last exit, left-to-right ordering column by column — accepted as proposed; Pocket Profile Pass First/Last/None applies to the Offset strategy too (not only Raster); when a lead-in does not fit at the chosen start, Profile moves the start along the vector and warns (StartMoved).
+
 ### T-0122 Headless CLI: carvetto-cli   [status: blocked]
+(Unblocks when T-0124 and T-0125 merge.)
 Phase: 1   Module: app/cli   Depends on: T-0100, T-0110, T-0120, T-0121
 Goal: A small console program `carvetto-cli` (no Qt): `import <dxf> → .carv`, `toolpath profile|pocket <params.json> <in.carv> <out.carv>`, `post <post.pp> <in.carv> <out.nc>`, `info`. Used by CI for the end-to-end test and by users for scripting.
 Acceptance criteria:

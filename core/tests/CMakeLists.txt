@@ -19,6 +19,8 @@ add_executable(carvetto_tests
   geometry/intersect_residuals_test.cpp
   geometry/intersect_residuals_ii_test.cpp
   geometry/intersect_ends_test.cpp
+  geometry/intersect_cancellation_test.cpp
+  geometry/intersect_slack_test.cpp
   geometry/fill_rule_test.cpp
   toolpath/move_test.cpp
   toolpath/toolpath_test.cpp
@@ -53,17 +55,26 @@ add_executable(carvetto_tests
   io/dxf_export_test.cpp
   io/dxf_curves_test.cpp
   io/dxf_fuzz_test.cpp
+  toolpath/pocket_coverage_test.cpp
+  toolpath/pocket_test.cpp
+  toolpath/pocket_gouge_test.cpp
+  toolpath/pocket_golden_test.cpp
+  toolpath/pocket_centre_test.cpp
+  toolpath/pocket_guard_test.cpp
 )
 # carv_io_test uses the internal zip helper (core/src/document/carv_zip.hpp) to craft archives.
 target_include_directories(carvetto_tests PRIVATE ${PROJECT_SOURCE_DIR}/core/src/document)
 # DXF tests use internal io helpers (pair reader value types, curve conversions).
 target_include_directories(carvetto_tests PRIVATE ${PROJECT_SOURCE_DIR}/core/src/io)
+# Pocket guard tests feed hand-made insets to the internal strict guard (core/src/toolpath/pocket_guard.hpp).
+target_include_directories(carvetto_tests PRIVATE ${PROJECT_SOURCE_DIR}/core/src/toolpath)
 # Golden files and shipped posts are read from the source tree via absolute paths.
 target_compile_definitions(carvetto_tests PRIVATE
   CARVETTO_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/golden"
   CARVETTO_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
   CARVETTO_STARTER_TOOLS="${PROJECT_SOURCE_DIR}/data/tools/starter_tools.json"
   CARVETTO_DXF_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dxf"
+  CARVETTO_POCKET_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/pocket"
 )
 target_link_libraries(carvetto_tests PRIVATE carvetto::core Catch2::Catch2WithMain carvetto_warnings)
 
