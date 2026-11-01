@@ -1924,7 +1924,8 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
         if (!finite(d) || !(d > 0.0) || !finite(pt.stepover) || !(pt.stepover > 0.0) ||
             pt.stepover > d * (1.0 + 1e-12) || !finite(pt.passDepth) || !(pt.passDepth > 0.0)) {
             say(ToolpathIssue::InvalidTool,
-                label + ": skipped, needs diameter > 0, 0 < stepover <= diameter and pass depth > 0", ti);
+                label + ": skipped, needs a cutting width > 0 at the pocket depth, 0 < stepover <= that "
+                        "width and pass depth > 0", ti);
             continue;
         }
         if (pt.stepover < 10.0 * userTol.distance) {

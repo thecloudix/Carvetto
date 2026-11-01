@@ -13,13 +13,20 @@ namespace {
 constexpr double kMaxCellsPerAxis = 2048.0;
 constexpr std::size_t kMaxCellsPerBox = 64;
 
+/// True when the box's corners and its width and height are finite (a box from -1e308 to 1e308
+/// has finite corners but an infinite width). Other boxes are kept out of the grid.
+bool gridable(const geometry::Box2& b) {
+    return std::isfinite(b.min.x) && std::isfinite(b.min.y) && std::isfinite(b.max.x) && std::isfinite(b.max.y) &&
+           std::isfinite(b.width()) && std::isfinite(b.height());
+}
+
 }  // namespace
 
 BoxIndex::BoxIndex(std::vector<geometry::Box2> boxes) : boxes_(std::move(boxes)) {
     std::vector<double> sizes;
     sizes.reserve(boxes_.size());
     for (const geometry::Box2& b : boxes_) {
-        if (!b.isEmpty() && std::isfinite(b.width()) && std::isfinite(b.height())) {
+        if (!b.isEmpty() && gridable(b)) {
             all_.expand(b);
             sizes.push_back(std::max(b.width(), b.height()));
         }
@@ -32,8 +39,12 @@ BoxIndex::BoxIndex(std::vector<geometry::Box2> boxes) : boxes_(std::move(boxes))
     const double extent = std::max(all_.width(), all_.height());
     const double byCount = std::sqrt(all_.width() * all_.height() / (4.0 * static_cast<double>(sizes.size())));
     cell_ = std::max({*mid, byCount, extent / kMaxCellsPerAxis, 1e-9});
-    nx_ = static_cast<std::size_t>(all_.width() / cell_) + 1;
-    ny_ = static_cast<std::size_t>(all_.height() / cell_) + 1;
+    if (std::isfinite(extent) && std::isfinite(cell_)) {
+        nx_ = static_cast<std::size_t>(all_.width() / cell_) + 1;
+        ny_ = static_cast<std::size_t>(all_.height() / cell_) + 1;
+    } else {
+        nx_ = ny_ = 1;  // extents that overflow a double: one cell (col/row then return 0)
+    }
     start_.assign(nx_ * ny_ + 1, 0);
     for (int pass = 0; pass < 2; ++pass) {
         std::vector<std::size_t> fill;
@@ -49,8 +60,7 @@ BoxIndex::BoxIndex(std::vector<geometry::Box2> boxes) : boxes_(std::move(boxes))
             if (b.isEmpty()) {
                 continue;
             }
-            if (!std::isfinite(b.min.x) || !std::isfinite(b.min.y) || !std::isfinite(b.max.x) ||
-                !std::isfinite(b.max.y)) {
+            if (!gridable(b)) {
                 if (pass == 0) {
                     big_.push_back(i);
                 }
@@ -79,12 +89,24 @@ BoxIndex::BoxIndex(std::vector<geometry::Box2> boxes) : boxes_(std::move(boxes))
 }
 
 std::size_t BoxIndex::col(double x) const {
+    if (nx_ <= 1) {
+        return 0;
+    }
     const double f = std::floor((x - all_.min.x) / cell_);
+    if (!(f > 0.0)) {
+        return 0;  // also NaN
+    }
     return static_cast<std::size_t>(std::clamp(f, 0.0, static_cast<double>(nx_ - 1)));
 }
 
 std::size_t BoxIndex::row(double y) const {
+    if (ny_ <= 1) {
+        return 0;
+    }
     const double f = std::floor((y - all_.min.y) / cell_);
+    if (!(f > 0.0)) {
+        return 0;  // also NaN
+    }
     return static_cast<std::size_t>(std::clamp(f, 0.0, static_cast<double>(ny_ - 1)));
 }
 

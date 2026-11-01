@@ -54,8 +54,10 @@ The card fixes the outcomes (one ramp, Tool + cutting data in, one diagnostics t
 
 ### Spatial index
 6. **`BoxIndex`** (`toolpath/box_index.hpp`): a uniform grid over a fixed set of bounding boxes.
-   Cell size = max(median box size, extent / √(4n), extent / 2048); a box touching more than 64
-   cells (a frame round everything) goes to a list every query checks. A query applies the exact
+   Cell size = max(median box size, √(width · height / (4n)) of the overall bounds,
+   extent / 2048, 10⁻⁹ mm); a box touching more than 64 cells (a frame round everything), or
+   whose corners or width/height are not finite, goes to a list every query checks, and extents
+   that overflow a double fall back to a single cell. A query applies the exact
    `Box2::intersects` test and returns indices **ascending**, so a loop over the result visits
    candidates in the same order as the quadratic loop it replaces and gives the same answer
    (including ties). A uniform grid rather than an R-tree: the inputs are many similar-sized

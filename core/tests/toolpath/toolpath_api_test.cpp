@@ -332,6 +332,34 @@ TEST_CASE("AC3: BoxIndex returns exactly the intersecting boxes, ascending", "[t
     CHECK(BoxIndex(std::vector<Box2>{Box2{}}).query(Box2{{0, 0}, {1, 1}}).empty());
 }
 
+TEST_CASE("AC3: BoxIndex stays exact with huge and non-finite boxes", "[toolpath][index][T-0123]") {
+    const double big = 1e308;
+    const double inf = std::numeric_limits<double>::infinity();
+    const std::vector<Box2> boxes{
+        Box2{{-big, -big}, {-big + 1e300, -big + 1e300}},
+        Box2{{big - 1e300, big - 1e300}, {big, big}},  // bounds of these two overflow a double
+        Box2{{-big, 0}, {big, 1}},                     // finite corners, infinite width
+        Box2{{0, 0}, {1, 1}},
+        Box2{{-inf, -1}, {inf, 1}},
+    };
+    const BoxIndex index(boxes);
+    const std::vector<Box2> queries{Box2{{0.5, 0.5}, {0.5, 0.5}}, Box2{{-big, -big}, {big, big}},
+                                    Box2{{5e307, 0.5}, {5e307, 0.5}}, Box2{{2, -0.5}, {3, 0.5}},
+                                    Box2{{-inf, -inf}, {inf, inf}}};
+    for (const Box2& q : queries) {
+        std::vector<std::size_t> brute;
+        for (std::size_t i = 0; i < boxes.size(); ++i) {
+            if (boxes[i].intersects(q)) {
+                brute.push_back(i);
+            }
+        }
+        CHECK(index.query(q) == brute);
+    }
+    // Only one ordinary box beside a box whose width overflows: still found outside the others.
+    const BoxIndex two(std::vector<Box2>{Box2{{0, 0}, {1, 1}}, Box2{{-big, 5}, {big, 6}}});
+    CHECK(two.containing({1e300, 5.5}) == std::vector<std::size_t>{1});
+}
+
 TEST_CASE("AC3: indexed ClearanceField equals the brute-force minimum, with exclusions",
           "[toolpath][index][T-0123]") {
     SplitMix rng{0x7123'0002ULL};
