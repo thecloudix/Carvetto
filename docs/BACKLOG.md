@@ -361,6 +361,9 @@ Acceptance criteria:
   2. Every kept On tab joins part and waste (independent raster oracle conn6/flood) over ≥ 1,500 new-seed scenes; tabs dropped by the T-0124 guard that would hold are kept.
   3. "kept + left out = requested" stated correctly (per loop when an offset splits) and consistent; thin necks < 0.1 mm either avoided or reported.
   4. Inside/Outside and tab-free toolpaths byte-identical to the T-0124 merge.
+  5. Negative allowance (found by the T-0124 On-guard verifier, harness t0124v5/, pre-existing on c2f4709): with Inside/Outside and allowance between −r and about −r + 0.5 the tool centre runs close to the vector and tabs that are cut through are kept with no diagnostic (Outside, 30×30 square, 6 mm end mill, allowance −2.99/−2.9/−2.5, 4 tabs L=1 on the corners: whole-scene flood "part free"; scenes t0124v5/scn/neg2_s0_da*.scn, neg_s{0,1}_D6_da0_*_L1.scn). Tab survival is decided by the actual cut geometry for every side, so no kept tab is severed for any allowance ≥ −r; when r + allowance ≈ 0 the result is consistent (T-0124 changed Inside/Outside output there, driver t0124v5/tools/negallow.cpp).
+  6. Short On tabs on straight edges hold (T-0124 guard drops every tab with length < 2|allowance| + max(0.25, 0.05·D), e.g. D 12, L 1, allowance ±0.3 on a straight edge; driver t0124v5/tools/straight.cpp); ADR-0016 §14 wording matches.
+Note: conn6 reports false "severed" for some On tabs on straight edges and gentle curves; cross-check with the windowed flood t0124v5/wflood.py.
 
 ### T-0018 offsetContours: inward offsets past the inradius must vanish, not invert   [status: ready]
 Phase: 1   Module: core/geometry   Depends on: —
