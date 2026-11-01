@@ -13,3 +13,4 @@ Original locations (scripts may hard-code these; adjust paths when reusing):
 - t0017v3/  -> /home/claude/vscratch/t0017v3 (T-0017 round-3 verifier, partial; killed by restart)
 - t17r3/    -> /home/claude/t17r3 (T-0017 coder round 3)
 - t0126/    -> /home/claude/vscratch/t0126 (Pocket guard coder: v3src, jobs, final2/ logs)
+- t0124v5/: T-0124 On-guard verifier (2026-11-01, local WSL; PASS on 736f955). Paths were /tmp/claude-1000/.../scratchpad/h. Includes negallow/neg*.scn repros for the negative-allowance tab defect and wflood.py (windowed flood oracle).

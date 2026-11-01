@@ -1,0 +1,45 @@
+ONTAB seed 83701 sc 5 len 5.180 joined 1 neck 1.1997 D 3.175
+ONSTAT seed 83701 sc 5 fam 5 kept 1 left 0 req 1 countable 0 D 3.175 len 2.005 sep 1 allow 0.471
+ONTAB seed 83701 sc 6 len 3.566 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83701 sc 6 len 3.566 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83701 sc 6 len 3.566 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83701 sc 6 len 3.566 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83701 sc 6 len 3.566 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83701 sc 6 len 3.566 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83701 sc 6 len 3.566 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83701 sc 6 len 3.566 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83701 sc 6 len 3.566 joined 1 neck 1.1997 D 2.000
+ONSTAT seed 83701 sc 6 fam 5 kept 9 left 0 req 9 countable 1 D 2.000 len 1.566 sep 0 allow 0.351
+ONTAB seed 83701 sc 12 len 4.484 joined 1 neck 1.1997 D 2.000
+ONSTAT seed 83701 sc 12 fam 5 kept 1 left 0 req 1 countable 1 D 2.000 len 2.484 sep 1 allow 0.000
+ONTAB seed 83701 sc 14 len 7.182 joined 1 neck 1.1997 D 3.175
+ONSTAT seed 83701 sc 14 fam 5 kept 1 left 0 req 1 countable 1 D 3.175 len 4.007 sep 1 allow 0.000
+ONTAB seed 83701 sc 16 len 7.019 joined 1 neck 0.9902 D 6.000
+ONSTAT seed 83701 sc 16 fam 5 kept 1 left 0 req 1 countable 1 D 6.000 len 1.019 sep 0 allow 0.290
+ONTAB seed 83701 sc 25 len 18.069 joined 1 neck 1.1997 D 12.000
+ONSTAT seed 83701 sc 25 fam 5 kept 1 left 0 req 1 countable 1 D 12.000 len 6.069 sep 0 allow 0.475
+scene 28 fam 5 side 1 D 3.175 V 0 allow 0.491 sep 0 lpa 0.092 rev 0 n 5 sp 0 len 1.472 th 3.479 3d 0 avoid 1 ramp 3 lead 0 out 1 oc 9.16 start 2 depth 17.82/1.03: [COUNT kept 6 + left 0 != requested 5 (diag M sum 0)]
+ONSTAT seed 83701 sc 29 fam 5 kept 0 left 2 req 2 countable 1 D 12.000 len 3.972 sep 1 allow 0.478
+ONTAB seed 83701 sc 33 len 9.932 joined 1 neck 1.1997 D 3.175
+ONTAB seed 83701 sc 33 len 9.932 joined 1 neck 1.1997 D 3.175
+ONTAB seed 83701 sc 33 len 9.932 joined 1 neck 1.1997 D 3.175
+ONSTAT seed 83701 sc 33 fam 5 kept 3 left 6 req 9 countable 1 D 3.175 len 6.757 sep 1 allow 0.000
+scene 34 fam 5 side 1 D 12.000 V 0 allow 0.081 sep 0 lpa 0.148 rev 1 n 7 sp 0 len 2.497 th 1.751 3d 0 avoid 0 ramp 2 lead 0 out 1 oc 0.00 start 0 depth 16.07/1.06: [COUNT kept 3 + left 5 != requested 7 (diag M sum 7)]
+ONTAB seed 83701 sc 35 len 5.378 joined 1 neck 1.1997 D 3.175
+ONTAB seed 83701 sc 35 len 5.378 joined 1 neck 1.1997 D 3.175
+ONTAB seed 83701 sc 35 len 5.378 joined 1 neck 1.1997 D 3.175
+ONSTAT seed 83701 sc 35 fam 5 kept 3 left 0 req 3 countable 1 D 3.175 len 2.203 sep 1 allow 0.000
+ONSTAT seed 83701 sc 36 fam 5 kept 0 left 7 req 7 countable 1 D 2.000 len 19.137 sep 1 allow 0.000
+ONTAB seed 83701 sc 40 len 7.173 joined 1 neck 0.8051 D 6.000
+ONTAB seed 83701 sc 40 len 7.173 joined 1 neck 0.9560 D 6.000
+ONSTAT seed 83701 sc 40 fam 5 kept 2 left 0 req 2 countable 0 D 6.000 len 1.173 sep 0 allow 0.047
+ONTAB seed 83701 sc 41 len 8.801 joined 1 neck 0.6340 D 8.000
+ONSTAT seed 83701 sc 41 fam 5 kept 1 left 4 req 5 countable 1 D 8.000 len 0.772 sep 0 allow 0.045
+ONTAB seed 83701 sc 43 len 1.842 joined 1 neck 1.1997 D 6.000
+ONTAB seed 83701 sc 43 len 13.734 joined 1 neck 1.1997 D 6.000
+ONSTAT seed 83701 sc 43 fam 5 kept 2 left 0 req 1 countable 1 D 6.000 len 7.734 sep 0 allow 0.000
+scene 43 fam 5 side 2 D 6.000 V 0 allow 0.000 sep 0 lpa 0.077 rev 1 n 1 sp 0 len 7.734 th 1.256 3d 0 avoid 1 ramp 3 lead 1 out 1 oc 0.00 start 2 depth 14.27/1.06: [COUNT kept 2 + left 0 != requested 1 (diag M sum 0)]
+ONSTAT seed 83701 sc 45 fam 5 kept 0 left 2 req 2 countable 1 D 8.000 len 2.071 sep 1 allow 0.480
+scene 46 fam 5 side 0 D 6.000 V 0 allow 0.000 sep 0 lpa 0.023 rev 1 n 3 sp 0 len 3.136 th 3.755 3d 0 avoid 0 ramp 3 lead 2 out 0 oc 0.00 start 0 depth 6.87/0.47: [GOUGE -0.00100]
+ONSTAT seed 83701 sc 48 fam 5 kept 0 left 1 req 1 countable 0 D 8.000 len 19.001 sep 1 allow 0.355
+SUMMARY seed 83701 fam 5 sep -1 cell 0.050: scenes 50 det 0 gouge 1 clampBad 0 sepOrder 0 | tabs kept 88 checked 87 severed 0 thin(<0.1) 0 minNeck 0.2815 noSeed 0 noTarget 1 | requested 181 left 94 countBad 3 | 31.7s

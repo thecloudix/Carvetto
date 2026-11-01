@@ -1,0 +1,67 @@
+ONTAB seed 83660 sc 4 len 15.871 joined 1 neck 1.1997 D 12.000
+ONSTAT seed 83660 sc 4 fam 5 kept 1 left 4 req 5 countable 1 D 12.000 len 3.871 sep 1 allow 0.499
+ONTAB seed 83660 sc 6 len 3.887 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83660 sc 6 len 3.887 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83660 sc 6 len 3.887 joined 1 neck 1.1997 D 2.000
+ONSTAT seed 83660 sc 6 fam 9 kept 3 left 0 req 3 countable 1 D 2.000 len 1.887 sep 1 allow 0.326
+ONTAB seed 83660 sc 7 len 4.106 joined 1 neck 0.8599 D 3.175
+ONTAB seed 83660 sc 7 len 4.106 joined 1 neck 0.8950 D 3.175
+ONTAB seed 83660 sc 7 len 4.106 joined 1 neck 0.8959 D 3.175
+ONSTAT seed 83660 sc 7 fam 4 kept 3 left 0 req 3 countable 1 D 3.175 len 0.931 sep 1 allow 0.000
+ONTAB seed 83660 sc 12 len 8.374 joined 1 neck 0.3308 D 8.000
+ONTAB seed 83660 sc 12 len 8.374 joined 1 neck 0.3308 D 8.000
+ONTAB seed 83660 sc 12 len 8.374 joined 1 neck 0.3308 D 8.000
+ONTAB seed 83660 sc 12 len 8.374 joined 1 neck 0.3308 D 8.000
+ONTAB seed 83660 sc 12 len 8.374 joined 1 neck 0.3308 D 8.000
+ONSTAT seed 83660 sc 12 fam 3 kept 5 left 16 req 21 countable 1 D 8.000 len 0.374 sep 1 allow 0.434
+ONSTAT seed 83660 sc 14 fam 9 kept 1 left 13 req 14 countable 1 D 8.000 len 2.820 sep 1 allow 0.022
+ONTAB seed 83660 sc 15 len 8.318 joined 1 neck 0.2766 D 8.000
+ONTAB seed 83660 sc 15 len 8.318 joined 1 neck 0.2766 D 8.000
+ONTAB seed 83660 sc 15 len 8.318 joined 1 neck 0.2766 D 8.000
+ONTAB seed 83660 sc 15 len 8.318 joined 1 neck 0.2766 D 8.000
+ONTAB seed 83660 sc 15 len 8.318 joined 1 neck 0.2766 D 8.000
+ONTAB seed 83660 sc 15 len 8.318 joined 1 neck 0.2766 D 8.000
+ONTAB seed 83660 sc 15 len 8.318 joined 1 neck 0.2766 D 8.000
+ONSTAT seed 83660 sc 15 fam 3 kept 7 left 4 req 11 countable 1 D 8.000 len 0.318 sep 1 allow 0.239
+ONTAB seed 83660 sc 16 len 13.851 joined 1 neck 1.1997 D 12.000
+ONTAB seed 83660 sc 16 len 13.851 joined 1 neck 1.1997 D 12.000
+ONSTAT seed 83660 sc 16 fam 3 kept 2 left 28 req 30 countable 1 D 12.000 len 1.851 sep 1 allow 0.187
+ONTAB seed 83660 sc 19 len 3.346 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83660 sc 19 len 3.346 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83660 sc 19 len 3.346 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83660 sc 19 len 3.346 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83660 sc 19 len 3.346 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83660 sc 19 len 3.346 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83660 sc 19 len 3.346 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83660 sc 19 len 3.346 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83660 sc 19 len 3.346 joined 1 neck 1.1997 D 2.000
+ONSTAT seed 83660 sc 19 fam 1 kept 9 left 0 req 9 countable 1 D 2.000 len 1.346 sep 1 allow 0.423
+ONSTAT seed 83660 sc 26 fam 1 kept 0 left 5 req 5 countable 1 D 8.000 len 1.195 sep 1 allow 0.000
+ONTAB seed 83660 sc 27 len 8.115 joined 1 neck 1.1997 D 6.000
+ONTAB seed 83660 sc 27 len 8.115 joined 1 neck 1.1997 D 6.000
+ONTAB seed 83660 sc 27 len 8.115 joined 1 neck 1.1997 D 6.000
+ONSTAT seed 83660 sc 27 fam 1 kept 3 left 6 req 9 countable 1 D 6.000 len 2.115 sep 1 allow 0.099
+ONTAB seed 83660 sc 36 len 4.133 joined 1 neck 0.8769 D 3.175
+ONTAB seed 83660 sc 36 len 4.133 joined 0 neck 0.0000 D 3.175
+ONTAB seed 83660 sc 36 len 4.133 joined 1 neck 0.8977 D 3.175
+ONTAB seed 83660 sc 36 len 4.133 joined 1 neck 0.8610 D 3.175
+ONTAB seed 83660 sc 36 len 4.133 joined 1 neck 0.9146 D 3.175
+ONSTAT seed 83660 sc 36 fam 4 kept 6 left 0 req 6 countable 1 D 3.175 len 0.958 sep 1 allow 0.000
+scene 36 fam 4 side 2 D 3.175 V 0 allow 0.000 sep 1 lpa 0.075 rev 1 n 6 sp 0 len 0.958 th 3.691 3d 0 avoid 0 ramp 2 lead 2 out 1 oc 14.15 start 2 depth 7.24/3.65: [SEVERED tab at (-7.540,7.630) plateau 4.133]
+ONTAB seed 83660 sc 42 len 4.071 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83660 sc 42 len 4.071 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83660 sc 42 len 4.071 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83660 sc 42 len 4.071 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83660 sc 42 len 4.071 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83660 sc 42 len 4.071 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83660 sc 42 len 4.071 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83660 sc 42 len 4.071 joined 1 neck 1.1997 D 2.000
+ONTAB seed 83660 sc 42 len 4.071 joined 1 neck 1.1997 D 2.000
+ONSTAT seed 83660 sc 42 fam 6 kept 9 left 0 req 9 countable 1 D 2.000 len 2.071 sep 1 allow 0.047
+ONSTAT seed 83660 sc 44 fam 5 kept 0 left 1 req 1 countable 1 D 8.000 len 1.334 sep 1 allow 0.000
+ONTAB seed 83660 sc 48 len 12.664 joined 1 neck 0.6360 D 12.000
+ONTAB seed 83660 sc 48 len 12.664 joined 1 neck 0.6360 D 12.000
+ONTAB seed 83660 sc 48 len 12.664 joined 1 neck 0.6360 D 12.000
+ONTAB seed 83660 sc 48 len 12.664 joined 1 neck 0.6360 D 12.000
+ONSTAT seed 83660 sc 48 fam 9 kept 6 left 10 req 16 countable 1 D 12.000 len 0.664 sep 1 allow 0.201
+SUMMARY seed 83660 fam 0 sep 1 cell 0.050: scenes 50 det 0 gouge 0 clampBad 0 sepOrder 0 | tabs kept 186 checked 182 severed 1 thin(<0.1) 0 minNeck 0.2766 noSeed 0 noTarget 4 | requested 364 left 178 countBad 0 | 38.1s

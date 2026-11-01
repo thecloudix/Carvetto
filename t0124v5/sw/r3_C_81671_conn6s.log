@@ -1,0 +1,24 @@
+ONTAB seed 81671 sc 4 len 4.580 joined 1 neck 0.9949 D 3.175
+ONSTAT seed 81671 sc 4 fam 2 kept 1 left 0 req 1 countable 1 D 3.175 len 1.405 sep 1 allow 0.000
+scene 8 fam 2 side 1 D 8.000 V 0 allow 0.000 sep 1 lpa 0.556 rev 1 n 1 sp 1 len 2.568 th 2.998 3d 0 avoid 1 ramp 0 lead 2 out 0 oc 18.74 start 1 depth 4.10/7.69: [COUNT kept 0 + left 1 != requested 2 (diag M sum 1)]
+ONSTAT seed 81671 sc 11 fam 2 kept 0 left 6 req 6 countable 1 D 8.000 len 0.870 sep 1 allow 0.000
+ONTAB seed 81671 sc 16 len 11.639 joined 1 neck 1.1997 D 8.000
+ONTAB seed 81671 sc 16 len 11.639 joined 1 neck 0.7901 D 8.000
+ONSTAT seed 81671 sc 16 fam 2 kept 2 left 1 req 3 countable 1 D 8.000 len 3.639 sep 0 allow 0.491
+ONSTAT seed 81671 sc 17 fam 2 kept 0 left 1 req 1 countable 1 D 12.000 len 0.646 sep 1 allow 0.466
+ONSTAT seed 81671 sc 20 fam 2 kept 0 left 9 req 9 countable 1 D 8.000 len 1.951 sep 1 allow 0.332
+ONTAB seed 81671 sc 21 len 9.705 joined 1 neck 1.1997 D 6.000
+ONSTAT seed 81671 sc 21 fam 2 kept 1 left 0 req 1 countable 1 D 6.000 len 3.705 sep 1 allow 0.196
+ONSTAT seed 81671 sc 24 fam 2 kept 0 left 9 req 9 countable 1 D 6.000 len 2.758 sep 1 allow 0.387
+ONSTAT seed 81671 sc 30 fam 2 kept 0 left 2 req 2 countable 1 D 6.000 len 3.494 sep 1 allow 0.111
+ONSTAT seed 81671 sc 32 fam 2 kept 0 left 7 req 7 countable 1 D 6.000 len 1.993 sep 0 allow 0.199
+ONSTAT seed 81671 sc 33 fam 2 kept 0 left 4 req 4 countable 1 D 6.000 len 0.761 sep 0 allow 0.000
+ONSTAT seed 81671 sc 34 fam 2 kept 0 left 9 req 9 countable 1 D 12.000 len 2.448 sep 0 allow 0.005
+ONSTAT seed 81671 sc 35 fam 2 kept 0 left 1 req 1 countable 1 D 8.000 len 1.219 sep 1 allow 0.479
+ONSTAT seed 81671 sc 36 fam 2 kept 0 left 9 req 9 countable 1 D 8.000 len 2.873 sep 1 allow 0.075
+ONTAB seed 81671 sc 37 len 15.789 joined 1 neck 1.1997 D 12.000
+ONSTAT seed 81671 sc 37 fam 2 kept 1 left 4 req 5 countable 1 D 12.000 len 3.789 sep 1 allow 0.245
+ONSTAT seed 81671 sc 39 fam 2 kept 0 left 7 req 7 countable 1 D 6.000 len 1.378 sep 1 allow 0.163
+ONSTAT seed 81671 sc 45 fam 2 kept 0 left 5 req 5 countable 1 D 6.000 len 1.041 sep 0 allow 0.332
+ONSTAT seed 81671 sc 49 fam 2 kept 0 left 9 req 9 countable 1 D 12.000 len 0.664 sep 1 allow 0.360
+SUMMARY seed 81671 fam 2 sep -1 cell 0.050: scenes 50 det 0 gouge 0 clampBad 0 sepOrder 0 | tabs kept 48 checked 48 severed 0 thin(<0.1) 0 minNeck 0.1690 noSeed 0 noTarget 0 | requested 193 left 144 countBad 1 | 19.2s

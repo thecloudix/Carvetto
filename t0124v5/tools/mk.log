@@ -1,0 +1,30 @@
+In file included from flood.cpp:13:
+/home/claude/vscratch/t0124v2/scene_io.hpp: In function 'bool readScene(const char*, std::vector<carvetto::geometry::Contour>&, carvetto::toolpath::ProfileParams&, double&, int&)':
+/home/claude/vscratch/t0124v2/scene_io.hpp:40:44: warning: ignoring return value of 'int fscanf(FILE*, const char*, ...)' declared with attribute 'warn_unused_result' [-Wunused-result]
+   40 |         if (t == "C") { int cl; std::fscanf(f, "%d", &cl); cs.emplace_back(); cs.back().closed = cl; }
+      |                                 ~~~~~~~~~~~^~~~~~~~~~~~~~
+/home/claude/vscratch/t0124v2/scene_io.hpp:41:60: warning: ignoring return value of 'int fscanf(FILE*, const char*, ...)' declared with attribute 'warn_unused_result' [-Wunused-result]
+   41 |         else if (t == "L") { double a, b, c, d; std::fscanf(f, "%la %la %la %la", &a, &b, &c, &d); cs.back().spans.push_back(geometry::LineSpan{{a, b}, {c, d}}); }
+      |                                                 ~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/claude/vscratch/t0124v2/scene_io.hpp:42:72: warning: ignoring return value of 'int fscanf(FILE*, const char*, ...)' declared with attribute 'warn_unused_result' [-Wunused-result]
+   42 |         else if (t == "A") { double a, b, c, d, e; int dir; std::fscanf(f, "%la %la %la %la %la %d", &a, &b, &c, &d, &e, &dir); cs.back().spans.push_back(geometry::ArcSpan{{a, b}, c, d, e, (geometry::ArcDirection)dir}); }
+      |                                                             ~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/claude/vscratch/t0124v2/scene_io.hpp:43:54: warning: ignoring return value of 'int fscanf(FILE*, const char*, ...)' declared with attribute 'warn_unused_result' [-Wunused-result]
+   43 |         else if (t == "B") { double v[8]; std::fscanf(f, "%la %la %la %la %la %la %la %la", &v[0], &v[1], &v[2], &v[3], &v[4], &v[5], &v[6], &v[7]); cs.back().spans.push_back(geometry::BezierSpan{{v[0], v[1]}, {v[2], v[3]}, {v[4], v[5]}, {v[6], v[7]}}); }
+      |                                           ~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/claude/vscratch/t0124v2/scene_io.hpp:47:24: warning: ignoring return value of 'int fscanf(FILE*, const char*, ...)' declared with attribute 'warn_unused_result' [-Wunused-result]
+   47 |             std::fscanf(f, "%la %d %la %d %d %la %la %la %la %la %d %la %d %d %la %la %d %d %la %la %d %d %la %d %la %d %d %la %la %la %la %d %la %d %d %la %la %d %d %d %d %d %d %la %la %la",
+      |             ~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   48 |                         &D, &vbitDeg, &p.allowance, &side, &dir, &p.passes.startDepth, &p.passes.cutDepth, &p.passes.passDepth, &p.passes.lastPassThickness, &p.safeZ,
+      |                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   49 |                         &sep, &p.lastPassAllowance, &rev, &en, &p.tabs.length, &p.tabs.thickness, &sp, &p.tabs.count, &p.tabs.distance,
+      |                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   50 |                         &dd1, &avoid, &th3, &dd2, &rt, &p.ramp.distance, &ua, &ol, &p.ramp.angle,
+      |                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   51 |                         &p.leads.length, &p.leads.angle, &p.leads.radius, &lt, &p.leads.sweep, &lo, &dummy, &p.leads.overcut, &dd3,
+      |                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   52 |                         &sa, &an, &so, &l2r, &b2t, &grid, &p.startPosition.x, &p.startPosition.y, &p.corners.mitreLimit);
+      |                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/claude/vscratch/t0124v2/scene_io.hpp:57:53: warning: ignoring return value of 'int fscanf(FILE*, const char*, ...)' declared with attribute 'warn_unused_result' [-Wunused-result]
+   57 |         } else if (t == "K") { int a, b; std::fscanf(f, "%d %d", &a, &b); p.corners.sharpExternal = a; p.corners.sharpInternal = b; }
+      |                                          ~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~
