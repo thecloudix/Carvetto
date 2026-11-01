@@ -1,0 +1,36 @@
+done new 1001 rc=0
+done old 1001 rc=0
+done new 1002 rc=0
+done old 1002 rc=0
+done new 1003 rc=0
+done old 1003 rc=0
+done new 1004 rc=0
+done old 1004 rc=0
+done new 1006 rc=0
+done old 1006 rc=0
+done new 1005 rc=0
+done old 1005 rc=0
+done old 2001 rc=0
+done new 2001 rc=0
+done old 2002 rc=0
+done new 2002 rc=0
+done old 2003 rc=0
+done new 2003 rc=0
+done new 2004 rc=0
+done old 2004 rc=0
+done new 2005 rc=0
+done old 2005 rc=0
+done new 2006 rc=0
+done old 2006 rc=0
+done new 3001 rc=0
+done new 3002 rc=0
+Terminated                 printf '%s\n' "${jobs[@]}" | while read s n m; do
+    for v in new old;
+    do
+        echo "$v $s $n $m";
+    done;
+done | xargs -P 4 -L 1 bash -c 'timeout 3000 ./pm_$0 $1 $2 $3 > out/p_$0_$1_$3.txt 2>&1; echo "done $0 $1 rc=$?"'
+done old 3002 rc=15
+done new 3003 rc=15
+done old 3003 rc=15
+done old 3001 rc=15

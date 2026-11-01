@@ -1,0 +1,125 @@
+scene 0 kind 0 [rect+6 islands] strat 1 pp 1 nt 3 moves 4342 retr 3,1,1, hash 20e8344c50c4cde6 dhash 14650fb0739d0383 t 0.012
+  CHECK h=0.0402 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 1 kind 4 [saw T=13 w=5.69] strat 1 pp 1 nt 2 moves 2141 retr 0,1, hash 003fa3ee1f9acc50 dhash e0e35c0fd041a599 t 0.003
+  diags: [4/t0] tool 1 (T1): too large for the pocket, nothing to cut; 
+  CHECK h=0.0550 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 2 kind 4 [saw T=8 w=4.99] strat 1 pp 1 nt 2 moves 696 retr 0,1, hash 28600fa2defeed88 dhash e0e35c0fd041a599 t 0.001
+  diags: [4/t0] tool 1 (T1): too large for the pocket, nothing to cut; 
+  CHECK h=0.0319 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 3 kind 7 [rows 3x2] strat 1 pp 2 nt 3 moves 3288 retr 4,1,1, hash d0f33e1ead6f675f dhash 14650fb0739d0383 t 0.029
+  CHECK h=0.0443 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 4 kind 5 [nested S=40.6] strat 1 pp 2 nt 1 moves 3069 retr 2, hash ab2ce6ecb7f95c4c dhash 14650fb0739d0383 t 0.001
+  CHECK h=0.0676 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 5 kind 4 [saw T=11 w=4.92] strat 1 pp 1 nt 1 moves 1210 retr 1, hash 8c77fb32f01cbea2 dhash 14650fb0739d0383 t 0.001
+  CHECK h=0.0987 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 6 kind 4 [saw T=9 w=6.53] strat 1 pp 1 nt 1 moves 391 retr 5, hash 445d511cfe67d187 dhash 14650fb0739d0383 t 0.001
+  CHECK h=0.0453 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 7 kind 0 [rect+5 islands] strat 1 pp 0 nt 1 moves 192 retr 24, hash fcb89a62a0c26cad dhash 14650fb0739d0383 t 0.000
+  CHECK h=0.0743 refused 0 scal 1 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 8 kind 6 [dumbbell cw=1.09] strat 1 pp 1 nt 2 moves 1556 retr 2,1, hash 43e3de7203367e84 dhash 14650fb0739d0383 t 0.003
+  CHECK h=0.0735 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 9 kind 7 [rows 1x2] strat 1 pp 2 nt 1 moves 2914 retr 1, hash 7469fa70357c969d dhash 14650fb0739d0383 t 0.003
+  CHECK h=0.0963 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 10 kind 3 [star K=29] strat 1 pp 0 nt 3 moves 4478 retr 4,90,300, hash 2279ab715cbfa1e4 dhash 14650fb0739d0383 t 0.043
+  CHECK h=0.0458 refused 0 scal 1 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 11 kind 7 [rows 4x1] strat 1 pp 2 nt 3 moves 2068 retr 2,1,1, hash 4f2584523afd63c6 dhash 14650fb0739d0383 t 0.011
+  CHECK h=0.0375 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 12 kind 2 [rooms n=3] strat 1 pp 0 nt 2 moves 24502 retr 15,1493, hash 0c5112de12da3dfe dhash 14650fb0739d0383 t 0.028
+  CHECK h=0.0470 refused 0 scal 1 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 13 kind 6 [dumbbell cw=0.72] strat 1 pp 0 nt 3 moves 4235 retr 8,104,525, hash d595c125d103a647 dhash 14650fb0739d0383 t 0.023
+  CHECK h=0.0375 refused 0 scal 1 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 14 kind 2 [rooms n=2] strat 1 pp 2 nt 3 moves 1070 retr 3,2,2, hash 1e55bb16236f3891 dhash 14650fb0739d0383 t 0.005
+  CHECK h=0.0514 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 15 kind 5 [nested S=46.2] strat 1 pp 1 nt 2 moves 2373 retr 2,2, hash 56fbb69e8b664441 dhash 14650fb0739d0383 t 0.006
+  CHECK h=0.0770 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 16 kind 7 [rows 4x2] strat 1 pp 2 nt 2 moves 2344 retr 3,1, hash 5656b5a8af98df6b dhash 14650fb0739d0383 t 0.024
+  CHECK h=0.0623 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 17 kind 3 [star K=80] strat 1 pp 2 nt 2 moves 5352 retr 3,3, hash fb52296102dee9c6 dhash 14650fb0739d0383 t 0.012
+  CHECK h=0.0665 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 18 kind 2 [rooms n=2] strat 1 pp 2 nt 1 moves 229 retr 3, hash 2f5fd24db0036c66 dhash 14650fb0739d0383 t 0.000
+  CHECK h=0.0536 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 19 kind 3 [star K=35] strat 1 pp 1 nt 3 moves 5570 retr 1,1,1, hash 94e6a19ea3d3c97f dhash 14650fb0739d0383 t 0.018
+  CHECK h=0.0375 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 20 kind 6 [dumbbell cw=2.40] strat 1 pp 2 nt 1 moves 150 retr 2, hash e71b48cf9dcf3b48 dhash 14650fb0739d0383 t 0.000
+  CHECK h=0.0749 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 21 kind 1 [comb M=11] strat 1 pp 1 nt 3 moves 4714 retr 1,1,1, hash 21c48ae946a4b95a dhash 14650fb0739d0383 t 0.018
+  CHECK h=0.0509 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 22 kind 7 [rows 6x3] strat 1 pp 2 nt 2 moves 29866 retr 1,1, hash 655ee169dc529058 dhash 14650fb0739d0383 t 0.085
+  CHECK h=0.0780 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 23 kind 6 [dumbbell cw=4.67] strat 1 pp 2 nt 1 moves 188 retr 2, hash fb5bee4f977cb4f4 dhash 14650fb0739d0383 t 0.000
+  CHECK h=0.0858 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 24 kind 4 [saw T=12 w=5.40] strat 1 pp 0 nt 1 moves 0 retr 0, hash 14650fb0739d0383 dhash e0e35c0fd041a599 t 0.000
+  diags: [4/t0] tool 1 (T1): too large for the pocket, nothing to cut; 
+  CHECK h=0.0578 refused 0 scal 1 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 25 kind 0 [rect+2 islands] strat 1 pp 1 nt 1 moves 701 retr 2, hash 72ef2e8b0ad1aa1c dhash 14650fb0739d0383 t 0.001
+  CHECK h=0.0484 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 26 kind 0 [rect+4 islands] strat 1 pp 0 nt 1 moves 192 retr 20, hash 0715bb8850566cd3 dhash 14650fb0739d0383 t 0.000
+  CHECK h=0.0360 refused 0 scal 1 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 27 kind 0 [rect+2 islands] strat 1 pp 0 nt 3 moves 3624 retr 27,78,365, hash e717c52199872908 dhash 14650fb0739d0383 t 0.054
+  CHECK h=0.0495 refused 0 scal 1 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 28 kind 3 [star K=76] strat 1 pp 1 nt 2 moves 3906 retr 3,1, hash e29272034832ed28 dhash 14650fb0739d0383 t 0.013
+  CHECK h=0.0642 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 29 kind 7 [rows 3x2] strat 1 pp 2 nt 3 moves 8328 retr 1,1,1, hash 65ffea22c13a7ef2 dhash 14650fb0739d0383 t 0.013
+  CHECK h=0.0375 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 30 kind 6 [dumbbell cw=1.64] strat 1 pp 1 nt 3 moves 2177 retr 2,1,1, hash 4eae9f8807b520b9 dhash 14650fb0739d0383 t 0.006
+  CHECK h=0.0545 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 31 kind 1 [comb M=6] strat 1 pp 1 nt 2 moves 644 retr 1,1, hash 6b7c6d9c8a15dbd4 dhash 14650fb0739d0383 t 0.003
+  CHECK h=0.0417 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 32 kind 7 [rows 5x1] strat 1 pp 0 nt 2 moves 480 retr 7,22, hash 62e9d6d809873411 dhash 14650fb0739d0383 t 0.012
+  CHECK h=0.0634 refused 0 scal 1 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 33 kind 7 [rows 2x1] strat 1 pp 2 nt 2 moves 1500 retr 1,1, hash c39d1e229e36de4e dhash 14650fb0739d0383 t 0.004
+  CHECK h=0.0845 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 34 kind 4 [saw T=14 w=7.99] strat 1 pp 0 nt 3 moves 7543 retr 154,271,863, hash 12f919780e0d94fd dhash 14650fb0739d0383 t 0.098
+  CHECK h=0.1077 refused 0 scal 1 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 35 kind 1 [comb M=10] strat 1 pp 0 nt 2 moves 60 retr 0,12, hash ed9f602def4d5375 dhash e0e35c0fd041a599 t 0.000
+  diags: [4/t0] tool 1 (T1): too large for the pocket, nothing to cut; 
+  CHECK h=0.0490 refused 0 scal 1 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 36 kind 5 [nested S=36.1] strat 1 pp 0 nt 2 moves 1724 retr 2,264, hash fd2d6e78db8e66cb dhash 14650fb0739d0383 t 0.017
+  CHECK h=0.0602 refused 0 scal 1 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 37 kind 2 [rooms n=3] strat 1 pp 2 nt 3 moves 1683 retr 2,3,3, hash 80271dfa3cd6bbae dhash 14650fb0739d0383 t 0.006
+  CHECK h=0.0639 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 38 kind 6 [dumbbell cw=4.94] strat 1 pp 1 nt 3 moves 4345 retr 1,1,1, hash f22a283bf1c18983 dhash 14650fb0739d0383 t 0.008
+  CHECK h=0.0610 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 39 kind 0 [rect+0 islands] strat 1 pp 0 nt 1 moves 54 retr 3, hash 45914f6c54042716 dhash 14650fb0739d0383 t 0.000
+  CHECK h=0.0660 refused 0 scal 1 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 40 kind 7 [rows 3x3] strat 1 pp 2 nt 1 moves 14527 retr 1, hash 6da121e54636acca dhash 14650fb0739d0383 t 0.026
+  CHECK h=0.0804 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 41 kind 6 [dumbbell cw=4.50] strat 1 pp 1 nt 1 moves 640 retr 1, hash b5e69b7e0e66558a dhash 14650fb0739d0383 t 0.001
+  CHECK h=0.0499 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 42 kind 5 [nested S=30.7] strat 1 pp 2 nt 3 moves 1429 retr 1,2,1, hash b0c755e33c1ccded dhash 14650fb0739d0383 t 0.003
+  CHECK h=0.0375 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 43 kind 4 [saw T=11 w=5.13] strat 1 pp 1 nt 2 moves 4916 retr 1,1, hash 76c28cde23620581 dhash 14650fb0739d0383 t 0.018
+  CHECK h=0.0664 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 44 kind 2 [rooms n=2] strat 1 pp 1 nt 3 moves 1313 retr 3,2,2, hash 2d1ff4cb4e6ea1c1 dhash 14650fb0739d0383 t 0.006
+  CHECK h=0.0475 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 45 kind 6 [dumbbell cw=1.22] strat 1 pp 0 nt 2 moves 976 retr 12,106, hash 4e18c093c3a68147 dhash 14650fb0739d0383 t 0.005
+  CHECK h=0.0722 refused 0 scal 1 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 46 kind 4 [saw T=10 w=4.41] strat 1 pp 0 nt 3 moves 22688 retr 12,60,2720, hash 35018e6be5389ddf dhash 14650fb0739d0383 t 0.049
+  CHECK h=0.0356 refused 0 scal 1 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 47 kind 7 [rows 6x2] strat 1 pp 1 nt 3 moves 9079 retr 1,1,1, hash d3e36bb7481cf2e2 dhash 14650fb0739d0383 t 0.037
+  CHECK h=0.0747 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 48 kind 7 [rows 1x2] strat 1 pp 2 nt 3 moves 2711 retr 1,1,1, hash 1846f5925a398ee6 dhash 14650fb0739d0383 t 0.006
+  CHECK h=0.0691 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 49 kind 3 [star K=63] strat 1 pp 2 nt 2 moves 3335 retr 1,3, hash a8b312a11531664c dhash 14650fb0739d0383 t 0.010
+  CHECK h=0.0682 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 50 kind 4 [saw T=6 w=3.99] strat 1 pp 1 nt 2 moves 1722 retr 6,1, hash 766b90964ebdb301 dhash 14650fb0739d0383 t 0.017
+  CHECK h=0.0362 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 51 kind 2 [rooms n=4] strat 1 pp 0 nt 3 moves 6355 retr 36,318,714, hash a09ff2d40db7e986 dhash 14650fb0739d0383 t 0.045
+  CHECK h=0.0784 refused 0 scal 1 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 52 kind 6 [dumbbell cw=2.39] strat 1 pp 0 nt 2 moves 364 retr 6,44, hash d1e9ea0b06c5e645 dhash 14650fb0739d0383 t 0.004
+  CHECK h=0.0686 refused 0 scal 1 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 53 kind 3 [star K=61] strat 1 pp 0 nt 3 moves 5482 retr 2,28,444, hash 8ac0e37e6a7e45f5 dhash 14650fb0739d0383 t 0.019
+  CHECK h=0.0647 refused 0 scal 1 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 54 kind 7 [rows 6x2] strat 1 pp 1 nt 2 moves 5421 retr 3,1, hash b9725e04114e72ad dhash 14650fb0739d0383 t 0.032
+  CHECK h=0.0762 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 55 kind 6 [dumbbell cw=2.13] strat 1 pp 2 nt 3 moves 2352 retr 4,2,1, hash 83b0a2ef329392f1 dhash 14650fb0739d0383 t 0.009
+  CHECK h=0.0521 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 56 kind 6 [dumbbell cw=3.56] strat 1 pp 2 nt 1 moves 2098 retr 2, hash 139b81a6dabc0adc dhash 14650fb0739d0383 t 0.001
+  CHECK h=0.0789 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 57 kind 1 [comb M=22] strat 1 pp 0 nt 1 moves 0 retr 0, hash 14650fb0739d0383 dhash e0e35c0fd041a599 t 0.000
+  diags: [4/t0] tool 1 (T1): too large for the pocket, nothing to cut; 
+  CHECK h=0.1190 refused 0 scal 1 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 58 kind 1 [comb M=17] strat 1 pp 2 nt 3 moves 8105 retr 1,1,1, hash 1ca60e88ac30ee32 dhash 14650fb0739d0383 t 0.034
+  CHECK h=0.0533 refused 0 scal 0 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 
+scene 59 kind 0 [rect+5 islands] strat 1 pp 0 nt 1 moves 240 retr 56, hash 48ac8bd4bfb6aca3 dhash 14650fb0739d0383 t 0.000
+  CHECK h=0.0851 refused 0 scal 1 | GOUGE 0  | OUTSIDE 0 | OVERLOAD 0  | MISS 0  | RAPID 0 | RETR 

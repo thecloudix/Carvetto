@@ -1,0 +1,13 @@
+scene 0 K 216 side 1 V 1 tabs 1 moves 5064 diags 496 hash 0ef2f54cb620e993
+scene 1 K 211 side 0 V 0 tabs 1 moves 293639 diags 435 hash 7cdaa16f415bc86e
+scene 2 K 443 side 2 V 0 tabs 0 moves 30665 diags 38 hash 007988b472d22a46
+scene 3 K 264 side 2 V 0 tabs 0 moves 267915 diags 31 hash 662d64e16637d9e5
+scene 4 K 239 side 0 V 0 tabs 1 moves 27253 diags 518 hash 0181f1432d86dc6a
+scene 5 K 315 side 1 V 0 tabs 0 moves 422776 diags 259 hash a3df259594a74bef
+scene 6 K 142 side 2 V 0 tabs 1 moves 75969 diags 232 hash c00d4a55d259e7ee
+scene 7 K 98 side 1 V 0 tabs 0 moves 168315 diags 170 hash d91f002fe24c503c
+scene 8 K 55 side 0 V 0 tabs 0 moves 24608 diags 89 hash caa69991070a5637
+scene 9 K 138 side 0 V 0 tabs 1 moves 362337 diags 319 hash 889c9e5fca69b9a5
+scene 10 K 45 side 0 V 0 tabs 0 moves 56359 diags 80 hash 69a9501af05f0cf2
+scene 11 K 90 side 2 V 0 tabs 0 moves 45794 diags 14 hash 741d09d3a746d499
+scene 12 K 279 side 0 V 0 tabs 0 moves 162002 diags 718 hash ebcb08be9a62a384
