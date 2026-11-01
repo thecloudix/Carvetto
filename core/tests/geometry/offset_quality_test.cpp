@@ -1546,13 +1546,13 @@ TEST_CASE("T-0017 AC3: a thin needle tip is the same wherever it lies (0x840117a
     CHECK(ex.under <= distanceAllowance(d, Vec2{-1e4, 1e4}));
     // The same input moved to the origin gives the same chains, needle included.
     const Vec2 shift{1e4, -1e4};
-    const std::vector<Contour> near =
+    const std::vector<Contour> nearOrigin =
         offsetOpenContour(translated(in, shift), d, OffsetSide::Left, JoinType::Square, kTol, 2.0);
-    REQUIRE(near.size() == chains.size());
+    REQUIRE(nearOrigin.size() == chains.size());
     for (std::size_t i = 0; i < chains.size(); ++i) {
         CAPTURE(i);
-        CHECK(near[i].spans.size() == chains[i].spans.size());
-        CHECK(near[i].closed == chains[i].closed);
+        CHECK(nearOrigin[i].spans.size() == chains[i].spans.size());
+        CHECK(nearOrigin[i].closed == chains[i].closed);
     }
 }
 
