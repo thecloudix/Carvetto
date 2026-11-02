@@ -17,7 +17,9 @@ choices. Behaviour descriptions come from `docs/reference/` only.
    diagnostics; }` rather than a bare `Toolpath`, because AC2 needs "no toolpath with a clear
    reason" and a profile over many vectors can partly succeed (one hole too small for the tool,
    one lead shortened). Diagnostics carry a `ProfileIssue` code, the input vector index and a
-   message. An empty toolpath always has at least one diagnostic.
+   message. An empty toolpath always has at least one diagnostic. (T-0123, ADR-0018: the types
+   are the shared `ToolpathDiagnostic`/`ToolpathIssue`, of which `ProfileDiagnostic`/`ProfileIssue`
+   are aliases; `CutDirection` is shared with Pocket.)
 2. The tool is a `tooling::Tool`; feeds, speeds, tool number and the default pass depth come
    from `ProfileParams::cuttingData` or else the tool's `defaultCuttingData`. The offset radius
    is half `cuttingWidthAtDepth(tool, bottom of cut)`, so for a V-bit the top edge of the cut
@@ -236,9 +238,9 @@ the −12 pass only (computed independently in Python). The G-code was checked a
 I/J = centre − start, plunge at F300 and feeds at F1000 restated, retract, M5, M30).
 
 ## Consequences
-- Merged neighbours lose arcs; refitting belongs to the Fit Curves card. Grouping is pairwise
-  O(n²) with box pre-filters (as are nesting and containment); thousands of vectors (text) will
-  need a spatial index.
+- Merged neighbours lose arcs; refitting belongs to the Fit Curves card. Grouping, nesting,
+  trimming, containment and nearest ordering were pairwise O(n²) with box pre-filters; since
+  T-0123 they query a `BoxIndex` and an indexed `ClearanceField` (ADR-0018), with identical results.
 - The gouge guarantee against a vector's own exact offset rests on ADR-0012 and inherits its
   documented sub-tolerance-span limitation (T-0009); T-0017 changes offset quality, not this
   code. Tests keep inputs free of sub-tolerance spans and of Sharp joins on zig-zags.

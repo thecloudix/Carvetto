@@ -278,7 +278,7 @@ Acceptance criteria:
   3. The starter tool database loads, validates, and every tool has cutting data for at least one material.
 Clean-room: no text from any vendor post. Marlin/Grbl/LinuxCNC/Mach dialect facts come from their public docs.
 
-### T-0120 2D Profile toolpath   [status: re-scoped → T-0124 (owner decision 2026-10-30: follow-up card on the same branch, merge when it passes)]
+### T-0120 2D Profile toolpath   [status: done (with T-0124, 2026-11-01, #23)]
 Paused 2026-10-26 (owner). Branch task/T-0120-profile @ d75742a (pushed). Round 3 verifier: ACs 1–5 PASS, B1–B4 fixed, ~9,700 scenes 0 gouges; FAIL on one residual B5: with a separate last pass a finishing tab can be missing from the roughing cut, so roughing cuts through it at full depth with no diagnostic (repro scratchpad t0120v3/tabmin1.cpp). Proposed: re-scope B5 into a small follow-up card. Non-blocking: leads checked against r − tol not r + allowance; tab thickness > cut depth not clamped; zero-length plunge; tab length on curves.
 Phase: 1   Module: core/toolpath   Depends on: T-0040 (offset API in main; T-0017 quality fixes land in parallel — owner decision 2026-10-26)   ADR: 0016
 Goal: `profileToolpath(contours, Tool, ProfileParams) → Toolpath` per feature-inventory §5 "2D Profile Toolpath": Machine Vectors Outside/Inside/On (open vectors Left/Right), Climb/Conventional, Allowance Offset, Do Separate Last Pass (allowance, reverse), Use Vector Start Point, Tabs (length, thickness, constant number / constant distance, avoid corners; 3D tabs), Ramps (Smooth distance/angle, Zig-Zag, Spiral), Leads (straight / circular, lead-out, overcut), Order (vector selection / left-to-right / bottom-to-top / grid), Start At (keep / optimise / closest on bounding box), Corners (sharp external via V-bit when tool is V, sharp internal 3D). Multi-pass via PassPlan. Inner contours before outer. Deterministic.
@@ -302,7 +302,7 @@ Acceptance criteria:
   5. Linking: number of retracts in the offset strategy ≤ number of disconnected regions + 1 for simple shapes.
   6. Golden G-code through Grbl for AC1; gouge-free property test as in T-0120.
 
-### T-0124 Profile: roughing tabs must match finishing tabs (residual of T-0120)   [status: in-progress — round 3 FAIL (On profiles only); owner 2026-11-01: add conservative On guard, verify the guard, merge; On fix → T-0127]
+### T-0124 Profile: roughing tabs must match finishing tabs (residual of T-0120)   [status: done (2026-11-01, #23; conservative On guard, exact rule → T-0127)]
 Phase: 1   Module: core/toolpath   Branch: task/T-0120-profile (continues d75742a)   ADR: 0016
 Goal: Finish T-0120 so it can merge. With a separate last pass, a finishing tab can be missing from the roughing cut, so roughing cuts through it at full depth with no diagnostic (T-0120 round-3 verifier: 96/576 rectangle configs; 38/300 random scenes with separate last pass forced on).
 Acceptance criteria:
@@ -344,7 +344,7 @@ Acceptance criteria:
   2. No returned chain crosses itself at reversal cusps (regression for 0xc500076c and the cusp which=1 sweep), without reintroducing main's junction gaps.
   3. No result worse than T-0017 on its fuzz families (fam2–5, legacy, cusp sweeps).
 
-### T-0126 Pocket guard hardening: edge checks after pull-in, area-weighted phantom test   [status: in-progress — fix committed @ f85d8f7 (pushed); final test runs pending, then verification]
+### T-0126 Pocket guard hardening: edge checks after pull-in, area-weighted phantom test   [status: done (2026-11-01, #22)]
 Phase: 1 (before Pocket ships to users)   Module: core/toolpath   Depends on: T-0121/T-0125 merged   ADR: 0017
 Goal: Non-blocking findings of the T-0125 round-2 verifier (scratchpad t0125v2/adv.cpp raw-injection harness). (N1) After a convex vertex is pulled in or removed, only vertices are re-checked: removing a vertex on a concave join arc lets the new chord sag ~4× the arc step inside the limit (0.015 mm at chordal 0.01, 0.15 at 0.1, 0.71 at 0.5) — a gouge into exact walls. Never seen with real Clipper output, but a gap in the guard. (N2) The phantom test counts vertices, so a real 900 mm² region whose small bulge holds most vertices is rejected silently; a successful inset repair can lose 76 mm² at chordal 0.5 without a message.
 Acceptance criteria:
@@ -352,8 +352,7 @@ Acceptance criteria:
   2. Phantom classification is area- or depth-weighted; the C2/C4 cases are kept; a message whenever the repair inset exceeds ~chordal or loses area beyond a small bound.
   3. Everything T-0121/T-0125 verified stays clean (diameter scans, phantom probes, sweeps).
 
-### T-0127 Profile On-vector tabs: exact classification and connectivity on sharp turns   [status: blocked]
-(Unblocks when T-0120/T-0124 merge.)
+### T-0127 Profile On-vector tabs: exact classification and connectivity on sharp turns   [status: in-progress]
 Phase: 1   Module: core/toolpath   Depends on: T-0124   ADR: 0016 §14
 Goal: T-0124 round-3 verifier (harness branch `verifier-harness`, t0124v4/): for profiles On the vector, a short tab on a sharp turn of the cut is kept although its own pass cuts it through (repro/on_corner.cpp; sweep scenes repro/sev_*.scn; F9 = seed 41006 fam 5 scene 9). T-0124 merges with a conservative guard that drops such tabs ("cut through"); this card replaces the guard with an exact rule so On tabs are kept whenever they really hold.
 Acceptance criteria:
@@ -364,6 +363,48 @@ Acceptance criteria:
   5. Negative allowance (found by the T-0124 On-guard verifier, harness t0124v5/, pre-existing on c2f4709): with Inside/Outside and allowance between −r and about −r + 0.5 the tool centre runs close to the vector and tabs that are cut through are kept with no diagnostic (Outside, 30×30 square, 6 mm end mill, allowance −2.99/−2.9/−2.5, 4 tabs L=1 on the corners: whole-scene flood "part free"; scenes t0124v5/scn/neg2_s0_da*.scn, neg_s{0,1}_D6_da0_*_L1.scn). Tab survival is decided by the actual cut geometry for every side, so no kept tab is severed for any allowance ≥ −r; when r + allowance ≈ 0 the result is consistent (T-0124 changed Inside/Outside output there, driver t0124v5/tools/negallow.cpp).
   6. Short On tabs on straight edges hold (T-0124 guard drops every tab with length < 2|allowance| + max(0.25, 0.05·D), e.g. D 12, L 1, allowance ±0.3 on a straight edge; driver t0124v5/tools/straight.cpp); ADR-0016 §14 wording matches.
 Note: conn6 reports false "severed" for some On tabs on straight edges and gentle curves; cross-check with the windowed flood t0124v5/wflood.py.
+
+### T-0129 Profile: reject an allowance below −r   [status: blocked]
+(Unblocks when T-0127 merges.)
+Phase: 1   Module: core/toolpath   Depends on: T-0127   ADR: 0016
+Goal: Owner decision 2026-11-01 (raised by the T-0127 coder): an allowance below −r (tool radius, at the cut depth for V-bits) moves the tool centre across the vector, so Outside silently behaves like Inside (and vice versa) and On/open Left/Right swap sides. Profile must reject such settings instead.
+Acceptance criteria:
+  1. `profileToolpath` refuses allowance < −r (and allowance + separate-last-pass allowance < −r) with a clear per-operation diagnostic naming the allowance and the limit; no moves are produced for the affected passes. Exactly −r stays valid (T-0127).
+  2. Tests at −r, −r − 1e-9, −r − 1 for Inside/Outside/On/Left/Right, end mill and V-bit, with and without a separate last pass.
+  3. ADR-0016 records the rule; output for allowance ≥ −r unchanged (byte-identical to the T-0127 merge).
+
+### T-0131 Toolpath scaling and index residuals of T-0123   [status: ready]
+Phase: 1   Module: core/toolpath   Depends on: T-0123   ADR: 0018
+Goal: Found by the T-0123 coder and verifiers (harness t0123v1/, t0123v2/). (a) `BoxIndex` drops non-finite boxes when no box in the set is finite (constructor returns on `sizes.empty()` before `big_` is filled): `BoxIndex({Box2{{-1e308,0},{1e308,1}}}).query(Box2{{0,0},{1,1}})` returns {} (brute force {0}); same for an infinite box alone and `containing`. Driver t0123v2/bi3.cpp. (b) ADR-0017 §9 still names the removed `toolpath/pocket_ramp.hpp`; box_index.hpp comment omits the 1e-9 floor. (c) Raster zig-zag linking is quadratic (1,000-tooth comb within the caps: 6–14 s). (d) Profile with a separate last pass scales 4.2× per doubling (16 s → 69 s at 1,250 → 2,500 vectors): finishing-to-roughing tab matching compares every pair. (e) Pocket with a rest tool on a text page scales ~3× per doubling (2.3 / 7.5 / 22 s at 1,250 / 2,500 / 5,000 vectors; Clipper2 sweeps). (f) Tabs on 5,000 vectors take 17 s (linear but slow).
+Acceptance criteria:
+  1. (a) fixed with a one-box unit test vs brute force (finite, huge, infinite, NaN boxes).
+  2. (b) docs corrected.
+  3. (c)–(f): each ≤ 2.5× per doubling in Release CPU time up to 5,000 vectors (1,000 teeth for the comb), with absolute bounds recorded in the test; outputs byte-identical to the T-0123 merge (or a hand-checked, explained diff).
+
+### T-0132 Native toolpath records in .carv (ADR-0003 job.json)   [status: in-progress — round 1 FAIL (member-count boundary); owner 2026-11-02: move budget tied to file size (~1 move per file byte, cap 8M), exact allocation]
+Phase: 1   Module: core/document   Depends on: T-0122, T-0123   ADR: 0003, 0013, 0019
+Goal: Replace T-0122's interim `toolpaths/NNNN.json` members (ADR-0019) with real toolpath records as ADR-0003 planned: the document holds toolpath definitions (name, operation, parameters, vector selection, tool snapshot) in `job.json`, with computed moves in a compact binary `toolpaths/NNNN.bin` cache that has its own budget, so large jobs (≥ 2M moves) save and reload. Owner decision 2026-11-01: needed before the app saves toolpaths.
+Acceptance criteria:
+  1. Document/Object model holds toolpath records; undo/redo and integrity checks cover them; format version bumped with a loader that still reads 1.0 files and migrates T-0122 interim members.
+  2. A 2,000,000-move toolpath saves and reloads within the loader's resource budget and time limits (bounded, fuzzed like the rest of .carv I/O).
+  3. carvetto-cli uses the native records; the CLI golden stays byte-identical.
+
+### T-0133 Post safety: no G-code injection through text, finite numbers only   [status: done (2026-11-02, #28; remaining documented gap: template text after a value)]
+Phase: 1   Module: core/post   Depends on: T-0030, T-0110
+Goal: Found by the T-0122 verifier (harness t0122v1/, pre-existing on main). The post's text tags (toolpath name, tool name, notes …) only apply SUBSTITUTE, so a newline or other control character in a name becomes live G-code: a toolpath named "Evil\nG0 Z-50" emits the line "G0 Z-50)". Reachable today through tool-database names, and through toolpath names / crafted .carv members once T-0122 merges. Separately, the post prints non-finite or absurd numbers ("Z-inf", "Xinf", 300-digit Z from cut_depth 1e300).
+Acceptance criteria:
+  1. Every text value rendered by the post (all text tags, comments, headers) has control characters (U+0000–U+001F, U+007F, and the post's comment delimiters where the .pp defines them) replaced or removed, so no input can start a new block or close a comment early; regression tests for newline, CR, tab, NUL, ")" / ";" inside a name for every shipped post.
+  2. The post refuses to emit a non-finite coordinate, feed, speed or dwell, and values beyond a sane machine range (document the limit, e.g. |coordinate| ≤ 1e6 mm), with a clear error instead of output; tests with ±inf, NaN, 1e300.
+  3. Shipped post goldens unchanged (names in the fixtures have no control characters); posts/README safety checklist updated.
+  4. (Owner decision 2026-11-02, after verifier round 1) Every text value is written as printable ASCII in every post: bytes ≥ 0x80 and Grbl realtime characters `~ ! ?` become '_' (an obvious ASCII letter allowed for Latin letters), because Grbl acts on them anywhere in the stream, even inside comments.
+  5. (Owner decision 2026-11-02) LinuxCNC/Mach active comments are neutralised in the sanitiser: a text value at the start of a comment that begins with a word followed by a comma (LOGOPEN, LOGAPPEND, PROBEOPEN, MSG, DEBUG, PRINT, ABORT, py, …; case-insensitive, spaces ignored) has the comma replaced, so it stays plain text. Shipped goldens unchanged.
+
+### T-0134 Post-safety and CLI residuals (T-0133 / T-0122 verifiers)   [status: ready]
+Phase: 1   Module: core/post, app/cli   Depends on: T-0133, T-0122
+Goal: Non-blocking findings (harness t0133v3/, t0122v1/). Post (custom .pp only, no shipped post exposed): (a) form feed / vertical tab / CR in template text between "(" and a value end the word run (commentPositionAt treats only ' ' and '\t' as spaces), so `"(\f[TOOLPATH_NAME])"` with "MSG,hi" stays active on LinuxCNC (isspace skip) — driver ff.cpp; (b) the shipped-post gap test only catches a template comma, not template keyword completions like `([TOOLPATH_NAME]OPEN)` (mut.cpp); (c) ADR-0020 sentence "no shipped post has template text between ( and a value" should read "after a value"; (d) [TOOLS_USED] at comment start now prints "(EndMill_ Drill)". CLI: (e) duplicate keys in params.json silently accepted (last wins); (f) number overflow (1e400) error lacks the "params file:" prefix; (g) `toolpath` prints "added …" before a failing final write; (h) a crafted .carv can carry zero/negative tool diameter, feeds, dwell (decoder accepts).
+Acceptance criteria:
+  1. (a) all whitespace/control characters in template text handled (treat isspace as space, or reject control characters in .pp lines at parse time) with tests; (b) a structural test: in every shipped post a text tag is followed only by ")", end of line or another tag; (c)/(d) docs and [TOOLS_USED] separator decided (e.g. "; " outside the word run) with goldens unchanged.
+  2. (e)–(h) fixed with tests; CLI golden unchanged.
 
 ### T-0018 offsetContours: inward offsets past the inradius must vanish, not invert   [status: ready]
 Phase: 1   Module: core/geometry   Depends on: —
@@ -379,7 +420,7 @@ Goal: "T-0004 AC3" in `open_offset_chains_test.cpp` asserts a wall-clock bound (
 Acceptance criteria:
   1. The test measures CPU time or a ratio; it passes 20× under `ctest -j8 --repeat until-fail:20`.
 
-### T-0123 Toolpath API alignment: shared ramps, Tool → pass tool conversion, result types   [status: blocked]
+### T-0123 Toolpath API alignment: shared ramps, Tool → pass tool conversion, result types   [status: done (2026-11-01, #25)]
 Phase: 1   Module: core/toolpath   Depends on: T-0120, T-0121
 Goal: Profile (T-0120) and Pocket (T-0121) were built in parallel. Unify: one ramp module (Profile's `ramp_entry` vs Pocket's `pocket_ramp`), one result shape (`ProfileResult`/`PocketResult` with diagnostics), a `tooling::Tool` + `CuttingData` → pocket tool conversion (feeds, stepover, pass depth), and shared ordering/linking where it overlaps. Add a spatial index where vector-pair checks are O(n²) (Profile grouping/nesting/clearance; Pocket inset guard) so text-heavy jobs with thousands of vectors stay fast.
 Acceptance criteria:
@@ -388,18 +429,20 @@ Acceptance criteria:
   3. 5,000 small closed vectors profile and pocket in < 2 s Release (CPU time), scaling ≤ 2.5× per doubling.
   4. Pocket rest tools build their pattern only over the rest areas (not the full pattern then clipped): the 200-tooth comb with a 0.1 mm rest tool (T-0121 verifier) runs ≥ 5× faster than at T-0121 merge.
   5. Raster and rest toolpaths route links through cleared area (as Offset does since T-0121 round 2), so raster pockets split by islands and far-apart rest areas retract only between disconnected regions.
+Owner decisions 2026-11-01 (coder's open points): between separate rest areas/clusters the tool retracts to safe Z (no feeding across the top of the cut), even within one connected region; the Pocket tool radius is half the cutting width at the pocket bottom, the same rule as Profile (changes V-bit/ball-nose pockets). T-0123 takes ADR-0018; T-0122's interim-storage ADR is 0019.
 
 Owner decisions 2026-10-31/11-01: run heavy verification one task at a time (machine capacity); T-0017 passes on "no worse than main" (findings identical to main become follow-up cards); T-0124 round-3 FAIL limited to On profiles → merge with a conservative On guard, exact fix in T-0127; director moved from the cloud session to Chris's local WSL machine (see docs/HANDOFF.md).
 
 Owner decisions 2026-10-26 for T-0120/T-0121 (record in ADR-0016/0017): tab length = material left (raised path = length + tool diameter); separate last pass runs after all roughing; nested closed vectors form a region (inner = hole); climb assumes M3 (clockwise) spindle, ramps at feed rate, 3D tabs ramp at 45°, leads only on each cut's first entry and last exit, left-to-right ordering column by column — accepted as proposed; Pocket Profile Pass First/Last/None applies to the Offset strategy too (not only Raster); when a lead-in does not fit at the chosen start, Profile moves the start along the vector and warns (StartMoved).
 
-### T-0122 Headless CLI: carvetto-cli   [status: blocked]
-(Unblocks when T-0124 and T-0125 merge.)
+### T-0122 Headless CLI: carvetto-cli   [status: done (2026-11-02, #26)]
 Phase: 1   Module: app/cli   Depends on: T-0100, T-0110, T-0120, T-0121
 Goal: A small console program `carvetto-cli` (no Qt): `import <dxf> → .carv`, `toolpath profile|pocket <params.json> <in.carv> <out.carv>`, `post <post.pp> <in.carv> <out.nc>`, `info`. Used by CI for the end-to-end test and by users for scripting.
 Acceptance criteria:
   1. CI job: DXF fixture → profile with tabs + pocket → Grbl `.nc` whose checksum matches the golden; runs on Linux and Windows.
   2. Errors are clear and exit codes non-zero; `--help` documents every command.
+Owner decisions 2026-11-01 (from the coder's BLOCKED report): (1) toolpaths are stored in the .carv as interim archive members `toolpaths/NNNN.json` (name, tool snapshot, moves, the params they came from) via two small public accessors in `carv_io.hpp` (read a preserved member; copy with a member added); an ADR marks this interim until a card implements ADR-0003's job.json toolpath records. (2) T-0123 merges first; the CLI is written against its API. (3) params.json: snake_case keys mirroring ProfileParams/PocketParams; lengths in mm, angles in degrees (converted at the CLI edge); tool = {"tool": {"database": <path, default data/tools/starter_tools.json>, "id": …}} plus optional material/machine for cutting data; optional "layers": [names] (default all vectors); unknown keys rejected with an error naming the key. nlohmann/json (already used) — no new dependency.
+Owner decision 2026-11-01 (coder's open point): the interim JSON storage is capped by the loader's 2M-value budget for unknown content (ADR-0013 §9), ~300k–400k moves per file; accepted for now — the CLI reloads before writing and refuses with a clear error. The real fix is T-0132.
 
 ### Batch B — drawing & editing (viewmodel + Qt), to be carded after Batch A is dispatched
 - Drawing tools, snapping/guides, selection & node editing, transforms, align, group; boolean/shape ops UI (weld/subtract/overlap/trim/fillet/offset wrappers over T-0003/T-0004/T-0005), curve fit, join/close.

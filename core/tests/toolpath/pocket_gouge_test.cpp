@@ -21,6 +21,7 @@
 #include "carvetto/geometry/polyline.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "pocket_oracle.hpp"
+#include "pocket_test_util.hpp"
 
 using namespace carvetto::toolpath;
 using carvetto::geometry::Contour;
@@ -87,15 +88,10 @@ Case makeCase(std::uint64_t seed) {
         }
     }
     auto makeTool = [&](double d, int number) {
-        PocketTool t;
-        t.tool.name = "T" + std::to_string(number);
-        t.tool.toolNumber = number;
-        t.tool.diameter = d;
-        t.tool.feedRate = 1200;
-        t.tool.plungeRate = 400;
-        t.stepover = rng.uniform(0.1, 1.0) * d;
-        t.passDepth = rng.uniform(1.0, 6.0);
-        return t;
+        const double stepover = rng.uniform(0.1, 1.0) * d;
+        const double passDepth = rng.uniform(1.0, 6.0);
+        return carvetto::test::pocket::endMill("T" + std::to_string(number), number, d, stepover, passDepth,
+                                               1200, 400, 0);
     };
     const double d1 = rng.uniform(3.0, 12.0);
     c.tools.push_back(makeTool(d1, 1));

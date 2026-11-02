@@ -8,6 +8,8 @@ Decisions here are binding for coder agents. Changes go through an ADR in `docs/
 app/        Qt 6 desktop application (Windows first, Linux later). Thin: views, forms, commands.
 app/viewmodel/  carvetto_viewmodel — Qt-free view logic (view transform, rulers, canvas scene,
             unit formatting, form validation). Headless-tested; the Qt layer is glue (ADR-0014).
+app/cli/    carvetto-cli — Qt-free console front end (import, toolpath, post, info) for scripting and CI
+            end-to-end tests (ADR-0019).
 core/       carvetto_core — static library, C++20, NO Qt. Everything testable headless.
 posts/      Post-processor templates (.pp text format) written for Carvetto.
 tools/      Developer scripts (golden-file regeneration, format checks).

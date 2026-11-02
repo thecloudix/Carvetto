@@ -1,0 +1,13 @@
+{
+  "name": "Cut out",
+  "layers": ["Outline"],
+  "side": "outside",
+  "direction": "climb",
+  "passes": {"cut_depth": 6, "pass_depth": 3},
+  "safe_z": 5,
+  "tabs": {"enabled": true, "count": 4, "length": 8, "thickness": 2},
+  "tool": {
+    "database": "tools.json",
+    "id": "end-mill-3mm"
+  }
+}

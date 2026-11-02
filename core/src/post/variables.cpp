@@ -164,7 +164,7 @@ Result<VarDef> parseVarSpec(std::string_view spec, int line) {
     v.format = fmt.value();
     if (fields.size() == 5) {
         const auto mult = detail::parseDouble(fields[4]);
-        if (!mult) {
+        if (!mult || !std::isfinite(*mult)) {
             return Error{line, "invalid multiplier '" + std::string(fields[4]) + "'"};
         }
         v.multiplier = *mult;

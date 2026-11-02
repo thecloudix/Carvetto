@@ -20,6 +20,7 @@
 #include <optional>
 #include <set>
 #include <span>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -89,6 +90,47 @@ std::vector<std::string> CarvExtras::memberNames() const {
         }
     }
     return out;
+}
+
+const std::vector<std::uint8_t>* CarvExtras::member(std::string_view name) const {
+    if (!impl_) {
+        return nullptr;
+    }
+    const auto it = impl_->members.find(std::string(name));
+    return it == impl_->members.end() ? nullptr : &it->second;
+}
+
+CarvExtras CarvExtras::withMember(std::string name, std::vector<std::uint8_t> bytes) const {
+    const auto bad = [&](const char* why) {
+        throw std::invalid_argument("invalid .carv member name '" + name + "': " + why);
+    };
+    if (name.empty()) {
+        bad("empty");
+    }
+    if (name.size() > 255) {
+        bad("longer than 255 bytes");
+    }
+    if (name == "manifest.json" || name == "job.json") {
+        bad("reserved");
+    }
+    if (name.front() == '/' || name.find('\\') != std::string::npos || name.find(':') != std::string::npos) {
+        bad("absolute paths, backslashes and drive letters are not allowed");
+    }
+    std::size_t start = 0;
+    while (start <= name.size()) {
+        std::size_t end = name.find('/', start);
+        if (end == std::string::npos) {
+            end = name.size();
+        }
+        const std::string_view seg(name.data() + start, end - start);
+        if (seg.empty() || seg == "." || seg == "..") {
+            bad("empty, '.' and '..' path segments are not allowed");
+        }
+        start = end + 1;
+    }
+    auto impl = impl_ ? std::make_shared<Impl>(*impl_) : std::make_shared<Impl>();
+    impl->members[std::move(name)] = std::move(bytes);
+    return CarvExtras(std::move(impl));
 }
 
 namespace {

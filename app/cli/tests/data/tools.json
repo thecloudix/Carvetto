@@ -1,0 +1,217 @@
+{
+  "format": "carvetto-tool-database",
+  "groups": [
+    {
+      "id": "group-end-mills",
+      "name": "End Mills",
+      "parent_id": ""
+    }
+  ],
+  "machines": [
+    {
+      "acceleration_angular_deg_s2": 0.0,
+      "acceleration_mm_s2": [
+        500.0,
+        500.0,
+        250.0
+      ],
+      "associated_posts": [],
+      "default_post": "",
+      "id": "machine-generic-router",
+      "name": "Generic Router"
+    }
+  ],
+  "materials": [
+    {
+      "id": "material-acrylic",
+      "name": "Acrylic"
+    },
+    {
+      "id": "material-aluminium",
+      "name": "Aluminium"
+    },
+    {
+      "id": "material-hardwood-mdf",
+      "name": "Hardwood / MDF"
+    },
+    {
+      "id": "material-softwood",
+      "name": "Softwood"
+    }
+  ],
+  "tools": [
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1280.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.9,
+            "plunge_mm_min": 430.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 1.2,
+            "tool_number": 5
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 640.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.3,
+            "plunge_mm_min": 210.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 0.9,
+            "tool_number": 5
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-aluminium"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1440.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.2,
+            "plunge_mm_min": 480.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 1.2,
+            "tool_number": 5
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1800.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.5,
+            "plunge_mm_min": 600.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 1.2,
+            "tool_number": 5
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 1440.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 1.2,
+        "plunge_mm_min": 480.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 1.2,
+        "tool_number": 5
+      },
+      "diameter_mm": 3.0,
+      "flutes": 2,
+      "group_id": "group-end-mills",
+      "id": "end-mill-3mm",
+      "included_angle_deg": 0.0,
+      "name": "End Mill 3 mm",
+      "notes": "CLI end-to-end fixture (copied from the starter database).",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "end_mill"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.8,
+            "plunge_mm_min": 670.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 2.4,
+            "tool_number": 8
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.5,
+            "plunge_mm_min": 330.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 1.8,
+            "tool_number": 8
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-aluminium"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2300.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 2.4,
+            "plunge_mm_min": 770.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 2.4,
+            "tool_number": 8
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2880.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 3.0,
+            "plunge_mm_min": 960.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 2.4,
+            "tool_number": 8
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 2300.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 2.4,
+        "plunge_mm_min": 770.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 2.4,
+        "tool_number": 8
+      },
+      "diameter_mm": 6.0,
+      "flutes": 2,
+      "group_id": "group-end-mills",
+      "id": "end-mill-6mm",
+      "included_angle_deg": 0.0,
+      "name": "End Mill 6 mm",
+      "notes": "CLI end-to-end fixture (copied from the starter database).",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "end_mill"
+    }
+  ],
+  "version": 1
+}
