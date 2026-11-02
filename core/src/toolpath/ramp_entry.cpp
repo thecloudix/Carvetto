@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 namespace carvetto::toolpath {
@@ -14,10 +15,9 @@ double smoothRampLength(const RampOptions& ramp, double drop) {
     return ramp.distance;
 }
 
-namespace {
-
-void zigZag(std::vector<PathLeg>& legs, double u, double dir, double L, double zFrom, double zTo,
-            const RampOptions& ramp) {
+std::vector<PathLeg> zigZagLegs(double u, double dir, double L, double zFrom, double zTo,
+                                const RampOptions& ramp) {
+    std::vector<PathLeg> legs;
     const double drop = zFrom - zTo;
     int m = 2;
     if (ramp.useAngle) {
@@ -34,6 +34,15 @@ void zigZag(std::vector<PathLeg>& legs, double u, double dir, double L, double z
         const double b = out ? u + dir * L : u;
         legs.push_back({a, b, ZProfile::linear(za, zb, L)});
     }
+    return legs;
+}
+
+namespace {
+
+void zigZag(std::vector<PathLeg>& legs, double u, double dir, double L, double zFrom, double zTo,
+            const RampOptions& ramp) {
+    const std::vector<PathLeg> ramped = zigZagLegs(u, dir, L, zFrom, zTo, ramp);
+    legs.insert(legs.end(), ramped.begin(), ramped.end());
 }
 
 }  // namespace
@@ -97,6 +106,36 @@ PassLegs planPass(const ArcLengthPath& path, double u, double zFrom, double zTo,
     p.legs.push_back({e, f, ZProfile::flat(zTo)});
     p.endU = f;
     return p;
+}
+
+bool appendPathRamp(const geometry::Polyline& path, double zFrom, double zTo, double maxLength, double minLength,
+                    const geometry::Tolerance& tol, Toolpath& out) {
+    const geometry::Vec2 start = path.points.empty() ? geometry::Vec2{} : path.points.front();
+    const double total = path.points.size() < 2 ? 0.0 : path.length();
+    const double rampLength = std::min(maxLength, total);
+    if (path.points.size() < 2 || !(rampLength > minLength)) {
+        out.append(Move::plunge(Vec3{start, zTo}));
+        return false;
+    }
+    // Zero-length segments carry no move (and would emit empty feeds).
+    geometry::Polyline clean{{}, path.closed};
+    for (const geometry::Vec2& q : path.points) {
+        if (clean.points.empty() || geometry::distance(clean.points.back(), q) > 0.0) {
+            clean.points.push_back(q);
+        }
+    }
+    while (clean.closed && clean.points.size() > 1 &&
+           geometry::distance(clean.points.back(), clean.points.front()) <= 0.0) {
+        clean.points.pop_back();
+    }
+    const ArcLengthPath walk(geometry::Contour::fromPolyline(clean), tol);
+    RampOptions zig;
+    zig.type = RampType::ZigZag;
+    zig.distance = rampLength;
+    for (const PathLeg& leg : zigZagLegs(0.0, 1.0, rampLength, zFrom, zTo, zig)) {
+        appendLeg(walk, leg.u0, leg.u1, leg.z, out);
+    }
+    return true;
 }
 
 }  // namespace carvetto::toolpath

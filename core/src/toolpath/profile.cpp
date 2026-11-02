@@ -9,6 +9,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -17,6 +18,7 @@
 #include "carvetto/geometry/contour_ops.hpp"
 #include "carvetto/geometry/fill_rule.hpp"
 #include "carvetto/geometry/offset.hpp"
+#include "carvetto/toolpath/box_index.hpp"
 #include "carvetto/toolpath/clearance.hpp"
 #include "carvetto/toolpath/path_walk.hpp"
 
@@ -27,11 +29,6 @@ using geometry::Orientation;
 using geometry::Span;
 using geometry::Tolerance;
 using geometry::Vec2;
-
-bool ProfileResult::has(ProfileIssue issue) const {
-    return std::any_of(diagnostics.begin(), diagnostics.end(),
-                       [&](const ProfileDiagnostic& d) { return d.issue == issue; });
-}
 
 double profileToolRadius(const tooling::Tool& tool, const PassPlan& passes) {
     return 0.5 * tooling::cuttingWidthAtDepth(tool, passes.startDepth + passes.cutDepth);
@@ -141,13 +138,14 @@ std::vector<int> nestingDepths(const std::vector<Contour>& cs, const std::vector
             boxes[i] = cs[i].bounds();
         }
     }
+    const BoxIndex index(boxes);
     for (std::size_t i = 0; i < n; ++i) {
         if (!use[i]) {
             continue;
         }
         const Vec2 p = probePoint(cs[i]);
-        for (std::size_t j = 0; j < n; ++j) {
-            if (j == i || !use[j] || !boxes[j].contains(p)) {
+        for (std::size_t j : index.containing(p)) {
+            if (j == i || !use[j]) {
                 continue;
             }
             if (geometry::locatePoint(cs[j], p, geometry::FillRule::EvenOdd, tol) == geometry::PointLocation::Inside) {
@@ -178,7 +176,7 @@ class ProfileBuilder {
 
    private:
     void diag(ProfileIssue issue, std::optional<std::size_t> contour, std::string message) {
-        result_.diagnostics.push_back({issue, contour, std::move(message)});
+        result_.diagnostics.push_back({issue, contour, std::move(message), std::nullopt});
     }
     bool validate();
     void prepareInputs();
@@ -240,13 +238,14 @@ class ProfileBuilder {
     bool sharpInternal_{false};
     double vbitTan_{1.0};  // tan(half included angle) of a V-bit
     Input in_;
-    ClearanceField allField_;
+    ClearanceField allField_;  // every valid vector, by input index
+    BoxIndex inputIndex_;      // boxes of the valid vectors, by input index
     ProfileResult result_;
     std::vector<bool> tooLargeReported_;
 };
 
 bool ProfileBuilder::validate() {
-    cd_ = p_.cuttingData.value_or(tool_.defaultCuttingData);
+    cd_ = effectiveCuttingData(tool_, p_.cuttingData);
     passes_ = p_.passes;
     if (!(passes_.passDepth > 0.0)) {
         passes_.passDepth = cd_.passDepth;
@@ -336,13 +335,18 @@ void ProfileBuilder::prepareInputs() {
         // distance tolerance of the curve so the offset stays within tolerance of r.
         offTol_.chordal = std::min(tol_.chordal, 0.5 * tol_.distance);
     }
-    std::vector<Contour> valid;
+    // Every valid vector, indexed as the input (invalid ones excluded), and their boxes.
+    std::vector<std::size_t> invalid;
+    std::vector<geometry::Box2> boxes(n);
     for (std::size_t i = 0; i < n; ++i) {
         if (in_.valid[i]) {
-            valid.push_back(in_.contours[i]);
+            boxes[i] = in_.contours[i].bounds();
+        } else {
+            invalid.push_back(i);
         }
     }
-    allField_ = ClearanceField(std::move(valid));
+    allField_ = ClearanceField(in_.contours).excluding(std::move(invalid));
+    inputIndex_ = BoxIndex(std::move(boxes));
 }
 
 // Signed outward distance for a pass with `extra` added (last-pass allowance for roughing).
@@ -407,11 +411,8 @@ std::vector<Cut> ProfileBuilder::buildCuts(double extra, bool finishing) {
             for (const Contour& ch : chains[i]) {
                 const ArcLengthPath walk(ch, offTol_);
                 const geometry::Box2 cb = ch.bounds().inflated(d);
-                for (std::size_t j = 0; j < n; ++j) {
+                for (std::size_t j : inputIndex_.query(cb)) {
                     if (j == i || !in_.valid[j] || !in_.contours[j].closed || sets.find(i) == sets.find(j)) {
-                        continue;
-                    }
-                    if (!cb.intersects(in_.contours[j].bounds())) {
                         continue;
                     }
                     const ClearanceField fj({in_.contours[j]});
@@ -441,13 +442,14 @@ std::vector<Cut> ProfileBuilder::buildCuts(double extra, bool finishing) {
 
     // Region offsets of merged groups (polygonal). The extra chordal margin keeps the result at
     // least d from the true curves, which bulge up to `chordal` beyond their polygonisation.
-    for (std::size_t root = 0; root < n; ++root) {
-        std::vector<std::size_t> group;
-        for (std::size_t i = 0; i < n; ++i) {
-            if (merge[i] && sets.find(i) == root) {
-                group.push_back(i);
-            }
+    std::vector<std::vector<std::size_t>> groups(n);
+    for (std::size_t i = 0; i < n; ++i) {
+        if (merge[i]) {
+            groups[sets.find(i)].push_back(i);
         }
+    }
+    for (std::size_t root = 0; root < n; ++root) {
+        const std::vector<std::size_t> group = std::move(groups[root]);
         if (group.empty()) {
             continue;
         }
@@ -467,7 +469,7 @@ std::vector<Cut> ProfileBuilder::buildCuts(double extra, bool finishing) {
         int base = 0;
         {
             const Vec2 probe = probePoint(in_.contours[outer]);
-            for (std::size_t j = 0; j < n; ++j) {
+            for (std::size_t j : inputIndex_.containing(probe)) {
                 if (!in_.valid[j] || !in_.contours[j].closed || std::find(group.begin(), group.end(), j) != group.end()) {
                     continue;
                 }
@@ -537,16 +539,9 @@ void ProfileBuilder::orient(Cut& c, bool finishing) const {
 std::vector<Cut> ProfileBuilder::trim(std::vector<Cut> cuts) {
     std::vector<Cut> out;
     for (Cut& cut : cuts) {
-        std::vector<Contour> others;
-        for (std::size_t j = 0; j < in_.contours.size(); ++j) {
-            // An exact offset is at least its distance from its own vector by construction; a
-            // merged region offset is checked against every vector.
-            const bool own = std::find(cut.sources.begin(), cut.sources.end(), j) != cut.sources.end();
-            if (in_.valid[j] && (!own || !cut.exact)) {
-                others.push_back(in_.contours[j]);
-            }
-        }
-        const ClearanceField field(std::move(others));
+        // An exact offset is at least its distance from its own vector by construction; a
+        // merged region offset is checked against every vector.
+        const ClearanceField field = cut.exact ? allField_.excluding(cut.sources) : allField_;
         const ArcLengthPath walk(cut.path, offTol_);
         const double len = walk.length();
         // Strict: trimmed cuts keep within 1.5 x guardTol() of the full distance (merged regions are
@@ -1780,13 +1775,7 @@ ProfileResult ProfileBuilder::run() {
     if (!validate()) {
         return std::move(result_);
     }
-    ToolSnapshot& snap = result_.toolpath.tool;
-    snap.name = tool_.name;
-    snap.toolNumber = cd_.toolNumber;
-    snap.diameter = tool_.diameter;
-    snap.feedRate = cd_.feedRate;
-    snap.plungeRate = cd_.plungeRate;
-    snap.spindleSpeed = cd_.spindleSpeed;
+    result_.toolpath.tool = toolSnapshot(tool_, cd_);
 
     prepareInputs();
     const std::vector<double> levels = passes_.levels();
@@ -1883,11 +1872,9 @@ ProfileResult ProfileBuilder::run() {
     }
     // Roughing and finishing report the same vector-level issue once.
     std::vector<ProfileDiagnostic> unique;
+    std::set<std::tuple<ProfileIssue, std::optional<std::size_t>, std::string>> seen;
     for (ProfileDiagnostic& d : result_.diagnostics) {
-        const bool seen = std::any_of(unique.begin(), unique.end(), [&](const ProfileDiagnostic& u) {
-            return u.issue == d.issue && u.contour == d.contour && u.message == d.message;
-        });
-        if (!seen) {
+        if (seen.insert({d.issue, d.contour, d.message}).second) {
             unique.push_back(std::move(d));
         }
     }

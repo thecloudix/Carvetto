@@ -1,12 +1,14 @@
 #pragma once
 
 #include <cstddef>
+#include <memory>
 #include <utility>
 #include <vector>
 
 #include "carvetto/geometry/box2.hpp"
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/geometry/vec2.hpp"
+#include "carvetto/toolpath/box_index.hpp"
 #include "carvetto/toolpath/path_walk.hpp"
 
 // Shared toolpath machinery (T-0120, ADR-0016): "does this tool-centre path stay at least r away
@@ -16,23 +18,35 @@
 namespace carvetto::toolpath {
 
 /// Distance from points to a fixed set of contours (exact closest points on lines, arcs and
-/// Beziers), with a bounding-box prefilter so far-away contours cost one box test.
+/// Beziers). The obstacles' bounding boxes are kept in a `BoxIndex` (T-0123): a query looks at
+/// the boxes within a growing square round the point and stops as soon as the nearest distance
+/// found lies inside the square, so far-away contours cost nothing and a field over thousands of
+/// vectors answers in time proportional to the vectors near the point. The value is the minimum
+/// over all (non-excluded) obstacles, exactly as a scan over all of them would give.
 class ClearanceField {
    public:
     ClearanceField() = default;
     explicit ClearanceField(std::vector<geometry::Contour> obstacles);
 
-    bool isEmpty() const { return obstacles_.empty(); }
-    std::size_t size() const { return obstacles_.size(); }
-    /// Bounds of all obstacles.
-    const geometry::Box2& bounds() const { return all_; }
+    bool isEmpty() const { return size() == 0; }
+    /// Number of obstacles that count (excluded ones do not).
+    std::size_t size() const;
+    /// Bounds of all obstacles (excluded ones included: a superset is all callers need).
+    const geometry::Box2& bounds() const;
     /// Distance from `p` to the nearest obstacle (infinity when there are none).
     double distance(geometry::Vec2 p) const;
+    /// The same field without the obstacles at the given indices (into the constructor's
+    /// vector). Cheap: the obstacles and their index are shared, not copied.
+    ClearanceField excluding(std::vector<std::size_t> indices) const;
 
    private:
-    std::vector<geometry::Contour> obstacles_;
-    std::vector<geometry::Box2> boxes_;
-    geometry::Box2 all_;
+    struct Data {
+        std::vector<geometry::Contour> obstacles;
+        BoxIndex index;
+    };
+    bool skipped(std::size_t i) const;
+    std::shared_ptr<const Data> data_;
+    std::vector<std::size_t> skip_;  // sorted, unique
 };
 
 /// Stretches [a, b] (arc length along `path`, within [u0, u1], u0 <= u1) where the distance to
