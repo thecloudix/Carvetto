@@ -1,0 +1,63 @@
+scene 0 kind 0 [rect+1 islands] strat 0 pp 0 nt 3 moves 1430 retr 1,1,1, hash a288e42a2d4f40f2 dhash 14650fb0739d0383 t 0.006
+scene 1 kind 5 [nested S=25.4] strat 1 pp 1 nt 3 moves 2582 retr 2,2,1, hash 852e40eb2420bd08 dhash 14650fb0739d0383 t 0.006
+scene 2 kind 0 [rect+0 islands] strat 1 pp 0 nt 2 moves 778 retr 3,53, hash 57d494c2eb9d2b97 dhash 14650fb0739d0383 t 0.014
+scene 3 kind 3 [star K=62] strat 0 pp 2 nt 1 moves 719 retr 2, hash 95f7cfbc7b57a975 dhash 14650fb0739d0383 t 0.002
+scene 4 kind 7 [rows 4x1] strat 0 pp 0 nt 3 moves 8947 retr 2,1,1, hash af97b163097a627e dhash 14650fb0739d0383 t 0.017
+scene 5 kind 4 [saw T=12 w=7.44] strat 1 pp 1 nt 2 moves 5728 retr 1,1, hash b5b44a311ab74e20 dhash 14650fb0739d0383 t 0.030
+scene 6 kind 4 [saw T=4 w=3.25] strat 1 pp 0 nt 1 moves 72 retr 12, hash acb18c0b34a0cf88 dhash 14650fb0739d0383 t 0.000
+scene 7 kind 1 [comb M=22] strat 1 pp 2 nt 1 moves 667 retr 1, hash 6999e6e32c3aaadc dhash 14650fb0739d0383 t 0.001
+scene 8 kind 5 [nested S=41.8] strat 0 pp 2 nt 2 moves 1066 retr 2,2, hash 764dca5f5860b98b dhash 14650fb0739d0383 t 0.005
+scene 9 kind 6 [dumbbell cw=2.80] strat 0 pp 1 nt 3 moves 923 retr 2,1,1, hash 21964db4ded9c049 dhash 14650fb0739d0383 t 0.007
+scene 10 kind 4 [saw T=8 w=2.74] strat 1 pp 2 nt 3 moves 2807 retr 1,5,1, hash 6d7183fd950042f7 dhash 14650fb0739d0383 t 0.017
+scene 11 kind 1 [comb M=15] strat 1 pp 2 nt 2 moves 802 retr 3,1, hash fb4888bb722923e4 dhash 14650fb0739d0383 t 0.013
+scene 12 kind 7 [rows 1x3] strat 1 pp 0 nt 2 moves 2889 retr 18,245, hash 36e952f7870852a8 dhash 14650fb0739d0383 t 0.027
+scene 13 kind 3 [star K=48] strat 0 pp 2 nt 2 moves 569 retr 1,2, hash 9b0671b701ce5f69 dhash 14650fb0739d0383 t 0.007
+scene 14 kind 6 [dumbbell cw=1.20] strat 0 pp 1 nt 2 moves 2567 retr 3,2, hash 68016fb1e512882c dhash 14650fb0739d0383 t 0.007
+scene 15 kind 7 [rows 3x1] strat 1 pp 0 nt 3 moves 6000 retr 36,256,321, hash 4c4d4eefbefe215f dhash 14650fb0739d0383 t 0.097
+scene 16 kind 5 [nested S=30.7] strat 1 pp 2 nt 3 moves 3089 retr 2,2,2, hash 2e5ff201baa23dd9 dhash 14650fb0739d0383 t 0.006
+scene 17 kind 3 [star K=23] strat 1 pp 1 nt 2 moves 3330 retr 1,1, hash 751c73ef4603ab2c dhash 14650fb0739d0383 t 0.007
+scene 18 kind 0 [rect+2 islands] strat 0 pp 0 nt 3 moves 1284 retr 2,1,1, hash fef690b1c57f1729 dhash 14650fb0739d0383 t 0.009
+scene 19 kind 3 [star K=30] strat 0 pp 1 nt 2 moves 1594 retr 2,1, hash f456976b10bb432a dhash 14650fb0739d0383 t 0.012
+scene 20 kind 1 [comb M=23] strat 0 pp 1 nt 1 moves 737 retr 1, hash b042c8dfd18aa89c dhash 14650fb0739d0383 t 0.001
+scene 21 kind 1 [comb M=9] strat 1 pp 1 nt 1 moves 218 retr 1, hash d8394db35323db63 dhash 14650fb0739d0383 t 0.000
+scene 22 kind 5 [nested S=35.8] strat 0 pp 2 nt 3 moves 2370 retr 2,2,2, hash b90e165c03a402d5 dhash 14650fb0739d0383 t 0.005
+scene 23 kind 5 [nested S=39.5] strat 0 pp 2 nt 1 moves 518 retr 2, hash 26c81d11a32f4917 dhash 14650fb0739d0383 t 0.001
+scene 24 kind 5 [nested S=32.3] strat 0 pp 1 nt 2 moves 466 retr 1,2, hash 84bb1435018d31b3 dhash 14650fb0739d0383 t 0.002
+scene 25 kind 1 [comb M=5] strat 1 pp 1 nt 2 moves 422 retr 2,1, hash dcfd01484915866e dhash 14650fb0739d0383 t 0.003
+scene 26 kind 1 [comb M=23] strat 1 pp 2 nt 1 moves 296 retr 1, hash ed94023352743992 dhash 14650fb0739d0383 t 0.001
+scene 27 kind 2 [rooms n=4] strat 1 pp 2 nt 1 moves 149 retr 6, hash 134b2e69c1fd7ad1 dhash 14650fb0739d0383 t 0.000
+scene 28 kind 1 [comb M=9] strat 1 pp 2 nt 1 moves 618 retr 1, hash fa866f1a9a1561d5 dhash 14650fb0739d0383 t 0.001
+scene 29 kind 1 [comb M=25] strat 0 pp 0 nt 2 moves 8199 retr 1,1, hash 79e83c80b3549f71 dhash 14650fb0739d0383 t 0.041
+scene 30 kind 7 [rows 6x3] strat 0 pp 1 nt 1 moves 294 retr 10, hash 9a0e664e13183b63 dhash 14650fb0739d0383 t 0.001
+scene 31 kind 4 [saw T=6 w=6.64] strat 0 pp 2 nt 2 moves 3881 retr 1,1, hash c468a710cb92f981 dhash 14650fb0739d0383 t 0.010
+scene 32 kind 5 [nested S=46.8] strat 1 pp 1 nt 3 moves 3327 retr 2,2,0, hash a9a431435b016bd8 dhash f508572f618c1544 t 0.005
+  diags: [22/t2] tool 3 (T3): cannot reach the rest material, nothing to cut; 
+scene 33 kind 1 [comb M=16] strat 1 pp 0 nt 3 moves 16071 retr 19,207,2348, hash 5d32b8357d99d1bd dhash 14650fb0739d0383 t 0.140
+scene 34 kind 3 [star K=28] strat 1 pp 0 nt 3 moves 4230 retr 4,51,102, hash 2a74718716b44e5e dhash 14650fb0739d0383 t 0.032
+scene 35 kind 2 [rooms n=3] strat 0 pp 2 nt 2 moves 3653 retr 4,3, hash 776546dde630a1f5 dhash 14650fb0739d0383 t 0.007
+scene 36 kind 6 [dumbbell cw=1.13] strat 0 pp 0 nt 1 moves 88 retr 1, hash 7f8be889cf1c8c53 dhash 14650fb0739d0383 t 0.000
+scene 37 kind 7 [rows 4x3] strat 0 pp 2 nt 3 moves 19213 retr 1,1,1, hash a3af5c699027e661 dhash 14650fb0739d0383 t 0.040
+scene 38 kind 5 [nested S=38.8] strat 1 pp 2 nt 2 moves 818 retr 2,2, hash 34b1fb7d8c5b8728 dhash 14650fb0739d0383 t 0.004
+scene 39 kind 3 [star K=71] strat 1 pp 1 nt 2 moves 574 retr 1,2, hash 83569d7c7dbae756 dhash 14650fb0739d0383 t 0.007
+scene 40 kind 3 [star K=57] strat 0 pp 1 nt 3 moves 12446 retr 1,2,1, hash 5c698a120ed61b3a dhash 14650fb0739d0383 t 0.040
+scene 41 kind 0 [rect+5 islands] strat 1 pp 0 nt 1 moves 132 retr 14, hash 72f46a4940f14c75 dhash 14650fb0739d0383 t 0.000
+scene 42 kind 6 [dumbbell cw=1.90] strat 1 pp 0 nt 1 moves 468 retr 30, hash e4de42148d77cbe1 dhash 14650fb0739d0383 t 0.000
+scene 43 kind 2 [rooms n=3] strat 0 pp 0 nt 1 moves 0 retr 0, hash 14650fb0739d0383 dhash e0e35c0fd041a599 t 0.000
+  diags: [4/t0] tool 1 (T1): too large for the pocket, nothing to cut; 
+scene 44 kind 5 [nested S=41.5] strat 1 pp 1 nt 2 moves 1684 retr 2,2, hash a7701544f75b0767 dhash 14650fb0739d0383 t 0.005
+scene 45 kind 7 [rows 2x1] strat 0 pp 1 nt 1 moves 1497 retr 1, hash a73889cff1baeb57 dhash 14650fb0739d0383 t 0.001
+scene 46 kind 1 [comb M=4] strat 0 pp 1 nt 3 moves 1191 retr 1,1,1, hash 1bd407f01d0e1cb8 dhash 14650fb0739d0383 t 0.007
+scene 47 kind 6 [dumbbell cw=3.05] strat 0 pp 0 nt 3 moves 643 retr 2,1,1, hash d26bac38f997ccc1 dhash 14650fb0739d0383 t 0.008
+scene 48 kind 4 [saw T=7 w=3.69] strat 0 pp 0 nt 2 moves 1689 retr 7,1, hash 2786c221480be27d dhash 14650fb0739d0383 t 0.023
+scene 49 kind 4 [saw T=10 w=2.81] strat 0 pp 2 nt 2 moves 9553 retr 10,2, hash 662e60c5f181d5ba dhash 14650fb0739d0383 t 0.049
+scene 50 kind 0 [rect+0 islands] strat 1 pp 0 nt 2 moves 1476 retr 8,147, hash 05cf567b89437837 dhash 14650fb0739d0383 t 0.011
+scene 51 kind 2 [rooms n=2] strat 0 pp 2 nt 2 moves 169 retr 1,2, hash f2a703259e4fb272 dhash 14650fb0739d0383 t 0.003
+scene 52 kind 1 [comb M=7] strat 1 pp 0 nt 1 moves 58 retr 6, hash e7ed25ea89ade9ca dhash 14650fb0739d0383 t 0.000
+scene 53 kind 2 [rooms n=3] strat 0 pp 1 nt 3 moves 3063 retr 4,3,3, hash cb8aeefa8e219b4f dhash 14650fb0739d0383 t 0.018
+scene 54 kind 4 [saw T=9 w=3.87] strat 0 pp 1 nt 1 moves 0 retr 0, hash 14650fb0739d0383 dhash e0e35c0fd041a599 t 0.000
+  diags: [4/t0] tool 1 (T1): too large for the pocket, nothing to cut; 
+scene 55 kind 3 [star K=72] strat 0 pp 2 nt 2 moves 3886 retr 2,1, hash 1d464c0e60671f6e dhash 14650fb0739d0383 t 0.018
+scene 56 kind 7 [rows 6x2] strat 1 pp 1 nt 3 moves 4879 retr 3,1,1, hash cda1f2bb2dc3a12b dhash 14650fb0739d0383 t 0.056
+scene 57 kind 6 [dumbbell cw=3.99] strat 0 pp 0 nt 1 moves 198 retr 2, hash aaad0e14a7e66874 dhash 14650fb0739d0383 t 0.000
+scene 58 kind 3 [star K=19] strat 1 pp 0 nt 1 moves 640 retr 55, hash a71358f20e1e9483 dhash 14650fb0739d0383 t 0.001
+scene 59 kind 1 [comb M=10] strat 1 pp 2 nt 3 moves 1983 retr 1,1,1, hash f057e96ab3af56d2 dhash 14650fb0739d0383 t 0.023

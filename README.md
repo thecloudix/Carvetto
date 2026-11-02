@@ -19,3 +19,4 @@ Original locations (scripts may hard-code these; adjust paths when reusing):
 - t0127v1/: T-0127 round-1 verifier (FAIL on 9c3680c: kept tab holds nothing, part free). wsf4.cpp/wsf6.cpp = whole-scene flood oracle (exact capsules); wsh.cpp+cmph.py hashing; wsc.cpp counts; repro scenes in dumpnew/ d4new/ cnt/. Paths were /home/chris/wt-T0127/build-verify/drv.
 - t17r4/: T-0017 verifier of 0cd9abc (pert.cpp ulp-perturbation driver, repro_arcloop.cpp).
 - t17r5/: T-0017 verifier of 328008b (pert2.cpp large-radius/tiny-arc loops, retry_case.inc, gap_case.inc, mutants offset.mA/B/C.cpp).
+- t0123v2/: T-0123 delta verifier (PASS 524c7ff): pc2.cpp (pockcheck with rest==clusters), rr2.cpp, bi2/bi3.cpp (BoxIndex edge cases).
