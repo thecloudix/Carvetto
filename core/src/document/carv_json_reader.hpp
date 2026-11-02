@@ -6,6 +6,7 @@
 // are re-written as compact canonical text. Every allocation the parse can cause is charged to
 // one `LoadBudget` shared by all members of an archive. Tests include this header directly.
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -50,8 +51,11 @@ struct LoadLimits {
     /// Deepest array/object nesting.
     int maxDepth{64};
     /// Toolpath moves across all toolpath records, from move caches and migrated interim members
-    /// (ADR-0021); about 72 bytes each once decoded. `saveCarv` refuses to write more.
+    /// (ADR-0021); about 72 bytes each once decoded. The limit for one archive is the smaller of
+    /// this cap and `movesPerArchiveByte` x the archive's size (owner decision 2026-11-02), so a
+    /// small file can only claim a few moves. `saveCarv` refuses to write more.
     std::uint64_t maxMoves{kCarvMaxToolpathMoves};
+    std::uint64_t movesPerArchiveByte{kCarvMovesPerFileByte};
 };
 
 /// Global resource accounting for one load; throws `LoadFailure` (ResourceLimit) when exceeded.
@@ -86,9 +90,20 @@ class LoadBudget {
                      " MiB");
         }
     }
+    /// Sets the archive size the move limit is derived from (until called: `maxMoves`).
+    void setArchiveBytes(std::uint64_t bytes) {
+        const std::uint64_t perByte = limits_.movesPerArchiveByte;
+        const std::uint64_t bySize =
+            perByte == 0 ? 0 : (bytes > limits_.maxMoves / perByte ? limits_.maxMoves : bytes * perByte);
+        moveLimit_ = std::min(limits_.maxMoves, bySize);
+        archiveBytes_ = bytes;
+    }
     void chargeMoves(std::uint64_t n) {
-        if (n > limits_.maxMoves || moves_ > limits_.maxMoves - n) {
-            exceeded("more than " + std::to_string(limits_.maxMoves) + " toolpath moves");
+        if (n > moveLimit_ || moves_ > moveLimit_ - n) {
+            exceeded("more than " + std::to_string(moveLimit_) + " toolpath moves (a .carv file holds at most " +
+                     std::to_string(limits_.movesPerArchiveByte) + " per byte of its size, " +
+                     std::to_string(archiveBytes_) + " bytes here, and at most " +
+                     std::to_string(limits_.maxMoves) + ")");
         }
         moves_ += n;
     }
@@ -114,6 +129,8 @@ class LoadBudget {
     std::uint64_t document_{0};
     std::uint64_t extras_{0};
     std::uint64_t moves_{0};
+    std::uint64_t moveLimit_{limits_.maxMoves};
+    std::uint64_t archiveBytes_{0};
 };
 
 /// A sequential byte source.

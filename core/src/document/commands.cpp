@@ -741,11 +741,47 @@ void RemoveDocumentVariableCommand::revert(Document& doc) {
 
 // --- Toolpaths -----------------------------------------------------------------------------------
 
-bool AddToolpathCommand::apply(Document& doc) {
-    if (!applied_) {
-        if (!canTakeId(doc, record_.id.value)) {
+namespace {
+
+// True when every id in `sel` was allocated and names nothing or an item of the right kind, and
+// `all` stands alone: what `checkIntegrity` requires of a toolpath selection (ADR-0021).
+bool selectionValid(const Document& doc, const VectorSelection& sel, ToolpathId self) {
+    if (sel.all && (!sel.layers.empty() || !sel.objects.empty())) {
+        return false;
+    }
+    const std::uint64_t next = doc.idGenerator().peek();
+    const auto allocated = [next](std::uint64_t v) { return v != 0 && v < IdGenerator::kMaxId && v < next; };
+    for (const LayerId id : sel.layers) {
+        if (!allocated(id.value) || doc.findSheet(SheetId{id.value}) || doc.hasObject(ObjectId{id.value}) ||
+            doc.findToolpath(ToolpathId{id.value}) || id.value == self.value) {
             return false;
         }
+    }
+    for (const ObjectId id : sel.objects) {
+        if (!allocated(id.value) || doc.findSheet(SheetId{id.value}) || doc.findLayer(LayerId{id.value}) ||
+            doc.findToolpath(ToolpathId{id.value}) || id.value == self.value) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Tool-database input that is not part of a record (ADR-0021): cleared so the stored record
+// equals what a save and load give back.
+void normalise(ToolpathRecord& record) {
+    if (auto* profile = std::get_if<toolpath::ProfileParams>(&record.params)) {
+        profile->cuttingData.reset();
+    }
+}
+
+}  // namespace
+
+bool AddToolpathCommand::apply(Document& doc) {
+    if (!applied_) {
+        if (!canTakeId(doc, record_.id.value) || !selectionValid(doc, record_.selection, record_.id)) {
+            return false;
+        }
+        normalise(record_);
         if (record_.id.isNull()) {
             record_.id = doc.allocateToolpathId();
         }
@@ -779,8 +815,9 @@ void RemoveToolpathsCommand::revert(Document& doc) {
 }
 
 bool SetToolpathCommand::apply(Document& doc) {
+    normalise(after_);
     ToolpathRecord* record = doc.findToolpath(after_.id);
-    if (!record || *record == after_) {
+    if (!record || *record == after_ || !selectionValid(doc, after_.selection, after_.id)) {
         return false;
     }
     before_ = *record;

@@ -85,9 +85,10 @@ struct ToolpathRecord {
     bool operator==(const ToolpathRecord& other) const;
 };
 
-/// Shares `moves` as a record's computed moves.
-inline SharedMoves shareMoves(std::vector<toolpath::Move> moves) {
-    return std::make_shared<const std::vector<toolpath::Move>>(std::move(moves));
-}
+/// Shares `moves` as a record's computed moves. Fields a move's kind ignores (ADR-0008: the
+/// centre of a non-arc, the seconds of a non-dwell, a feed override on a rapid or dwell) are
+/// cleared, as the `.carv` move cache does not store them, so a record equals its saved and
+/// reloaded copy.
+SharedMoves shareMoves(std::vector<toolpath::Move> moves);
 
 }  // namespace carvetto::document

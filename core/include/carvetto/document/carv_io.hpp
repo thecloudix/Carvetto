@@ -35,6 +35,10 @@ inline constexpr int kCarvFormatMinor = 1;
 /// Most toolpath moves (summed over every toolpath record) a `.carv` file may hold: `loadCarv`
 /// refuses files with more and `saveCarv` refuses to write them (ADR-0021).
 inline constexpr std::uint64_t kCarvMaxToolpathMoves = 8'000'000;
+/// Toolpath moves allowed per byte of the `.carv` file (owner decision 2026-11-02): a file of S
+/// bytes holds at most min(S x this, `kCarvMaxToolpathMoves`) moves. Real files take 6-9 bytes
+/// per move, so only crafted (or degenerate, highly repetitive) toolpaths reach it.
+inline constexpr std::uint64_t kCarvMovesPerFileByte = 1;
 /// Most toolpath records with computed moves a `.carv` file may hold (their caches are named
 /// `toolpaths/0001.bin` .. `toolpaths/9999.bin` by position).
 inline constexpr std::size_t kCarvMaxCachedToolpaths = 9999;
@@ -129,8 +133,11 @@ struct LoadedCarv {
 
 /// Serialises `doc` (plus preserved `extras`) to `.carv` archive bytes. Selection and undo
 /// history are not saved. Fails (ResourceLimit) rather than write a file `loadCarv` would refuse
-/// for its toolpaths: more than `kCarvMaxToolpathMoves` moves, or a toolpath with moves at a
-/// position past `kCarvMaxCachedToolpaths`; fails (InvalidContent) for a non-finite move value.
+/// for its size or toolpaths: more toolpath moves than `kCarvMaxToolpathMoves` or than
+/// `kCarvMovesPerFileByte` x the size of the resulting file, a toolpath with moves at a position
+/// past `kCarvMaxCachedToolpaths`, more archive members than the loader accepts (10,000,
+/// preserved members included), or a member or archive over the loader's size caps; fails
+/// (InvalidContent) for a non-finite move value.
 CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvExtras& extras = {});
 
 /// Writes `doc` to `path` (via a temporary file renamed into place).

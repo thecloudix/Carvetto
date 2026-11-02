@@ -209,10 +209,13 @@ confines forward-compat logic to the I/O layer.
   claim that `.json` members are streamed now holds for every `.json` member.
 - **A2 (2026-11-01, T-0132): toolpath records, format 1.1.** `job.json` gains an optional
   `toolpaths` array and the archive one binary move cache `toolpaths/NNNN.bin` per computed
-  toolpath (schema, cache layout and limits in ADR-0021). Additions to §9: a global budget of
-  8,000,000 toolpath moves per file (`LoadLimits::maxMoves`, charged from `job.json` before any
-  cache is inflated), at most 10,000 toolpath records, and the 20:1 binary ratio checks no longer
-  apply to move caches (they are decoded straight into moves, never held). Caches are written in
+  toolpath (schema, cache layout and limits in ADR-0021). Additions to §9: a budget of toolpath
+  moves per file of min(1 per byte of the file, 8,000,000) (owner decision 2026-11-02;
+  `LoadLimits::maxMoves`, `movesPerArchiveByte`, charged from `job.json` before any cache is
+  inflated; the decoder reserves exactly the declared count), at most 10,000 toolpath records,
+  and the 20:1 binary ratio checks no longer apply to move caches (they are decoded straight into
+  moves, never held). `saveCarv` refuses to write a file that breaks the move rule, the 10,000
+  member limit (preserved members included) or the member/total size caps. Caches are written in
   name order among the preserved members (§1). T-0122's interim `toolpaths/NNNN.json` members are
   converted to records on load instead of being kept as unknown members. The toolpath parameter
   keys follow carvetto-cli's params.json (lengths without the `_mm` suffix of §5; angles in

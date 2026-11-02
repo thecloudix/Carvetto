@@ -188,7 +188,9 @@ std::string decodeMoves(CharSource& source, std::uint64_t expectedCount, std::ve
     if (count != expectedCount) {
         return "holds " + std::to_string(count) + " moves but job.json says " + std::to_string(expectedCount);
     }
-    out.reserve(out.size() + static_cast<std::size_t>(std::min<std::uint64_t>(count, std::uint64_t{1} << 16)));
+    // Exactly what is declared: the count was charged to the move budget (at most one move per
+    // byte of the file), so no doubling past it.
+    out.reserve(out.size() + static_cast<std::size_t>(count));
     double px = 0.0;
     double py = 0.0;
     double pz = 0.0;

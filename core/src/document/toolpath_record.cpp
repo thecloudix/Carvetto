@@ -1,6 +1,9 @@
 #include "carvetto/document/toolpath_record.hpp"
 
+#include <memory>
+#include <utility>
 #include <variant>
+#include <vector>
 
 namespace carvetto::document {
 
@@ -16,6 +19,21 @@ toolpath::Toolpath ToolpathRecord::toolpath() const {
         tp.moves = *moves;
     }
     return tp;
+}
+
+SharedMoves shareMoves(std::vector<toolpath::Move> moves) {
+    for (toolpath::Move& m : moves) {
+        if (!toolpath::isArc(m.kind)) {
+            m.centre = {};
+        }
+        if (m.kind != toolpath::MoveKind::Dwell) {
+            m.dwellSeconds = 0.0;
+        }
+        if (!toolpath::isCutting(m.kind)) {
+            m.feedOverride.reset();
+        }
+    }
+    return std::make_shared<const std::vector<toolpath::Move>>(std::move(moves));
 }
 
 bool ToolpathRecord::operator==(const ToolpathRecord& other) const {

@@ -528,6 +528,53 @@ TEST_CASE("toolpath ids share the document's id generator", "[document][toolpath
     CHECK(doc.checkIntegrity().empty());
 }
 
+TEST_CASE("toolpath commands refuse invalid selections and normalise records", "[document][toolpath][undo]") {
+    Sample s = makeSample();
+    Document& doc = s.doc;
+    const std::size_t before = doc.toolpaths().size();
+    ToolpathRecord r;
+    r.name = "x";
+    r.selection.objects = {ObjectId{doc.idGenerator().peek() + 3}};  // never allocated
+    CHECK_FALSE(doc.execute(std::make_unique<AddToolpathCommand>(r)));
+    r.selection.objects = {ObjectId{s.cut.value}};  // a layer
+    CHECK_FALSE(doc.execute(std::make_unique<AddToolpathCommand>(r)));
+    r.selection.objects.clear();
+    r.selection.layers = {LayerId{s.square.value}};  // an object
+    CHECK_FALSE(doc.execute(std::make_unique<AddToolpathCommand>(r)));
+    r.selection.layers = {LayerId{doc.toolpaths()[0].id.value}};  // a toolpath
+    CHECK_FALSE(doc.execute(std::make_unique<AddToolpathCommand>(r)));
+    r.selection = VectorSelection::allVectors();
+    r.selection.layers = {s.cut};
+    CHECK_FALSE(doc.execute(std::make_unique<AddToolpathCommand>(r)));
+    CHECK(doc.toolpaths().size() == before);
+
+    ToolpathRecord edit = doc.toolpaths()[1];
+    edit.selection.objects.push_back(ObjectId{doc.idGenerator().peek()});
+    CHECK_FALSE(doc.execute(std::make_unique<SetToolpathCommand>(edit)));
+    CHECK(doc.checkIntegrity().empty());
+
+    // cuttingData is cleared and ignored move fields are zeroed, so the record equals its saved
+    // and reloaded copy.
+    ToolpathRecord n;
+    n.name = "normalised";
+    n.selection = VectorSelection::allVectors();
+    auto profile = fullProfile();
+    profile.cuttingData = tooling::CuttingData{};
+    n.params = profile;
+    Move rapid = Move::rapid({1, 2, 3});
+    rapid.feedOverride = 99.0;
+    rapid.centre = {4, 5};
+    Move feed = Move::feed({4, 5, 6});
+    feed.dwellSeconds = 2.0;
+    n.moves = shareMoves({rapid, feed});
+    CHECK((*n.moves)[0] == Move::rapid({1, 2, 3}));
+    CHECK((*n.moves)[1] == Move::feed({4, 5, 6}));
+    REQUIRE(doc.execute(std::make_unique<AddToolpathCommand>(n)));
+    CHECK_FALSE(std::get<toolpath::ProfileParams>(doc.toolpaths().back().params).cuttingData);
+    LoadedCarv back = load(save(doc));
+    requireSameToolpaths(doc, back.document);
+}
+
 TEST_CASE("integrity checks cover toolpath ids and selections", "[document][toolpath][integrity]") {
     using Kind = IntegrityIssue::Kind;
     const auto kinds = [](const Document& doc) {
@@ -864,6 +911,16 @@ TEST_CASE("T-0122 interim toolpath members are migrated to records", "[document]
                                      Move::arcCW({3, 2, -3}, {2, 2}), Move::dwell({3, 2, -3}, 0.25),
                                      Move::feed({4, 2, -3}),         Move::retract({4, 2, 5})};
     CHECK(*tps[1].moves == expected);
+    // Layer order is canonical, as carvetto-cli writes it: names as listed, each name's layers in
+    // stacking order.
+    {
+        const std::string ordered = R"({"layers":["Layer 1","Outline"],"tool":{"id":"t"}})";
+        const std::string reversed = R"({"layers":["Outline","Layer 1"],"tool":{"id":"t"}})";
+        LoadedCarv a = load(legacyFile({{"toolpaths/0001.json", interimMember("pocket", ordered, "[]")}}));
+        LoadedCarv b = load(legacyFile({{"toolpaths/0001.json", interimMember("pocket", reversed, "[]")}}));
+        CHECK(a.document.toolpaths()[0].selection.layers == std::vector<LayerId>{LayerId{2}, LayerId{3}, LayerId{4}});
+        CHECK(b.document.toolpaths()[0].selection.layers == std::vector<LayerId>{LayerId{3}, LayerId{4}, LayerId{2}});
+    }
     // A name that matches no layer selects nothing (not everything).
     CHECK(tps[2].selection == VectorSelection{});
 
@@ -924,8 +981,8 @@ TEST_CASE("damaged interim members and toolpath records are reported", "[documen
          withText(good, "job.json", replaced(job, "\"count\": 11", "\"count\": 12")), Code::InvalidContent,
          "toolpaths/0002.bin"},
         {"record: declared size cannot hold the count",
-         withText(good, "job.json", replaced(job, "\"count\": 11", "\"count\": 1000000")), Code::InvalidContent,
-         "cannot hold 1000000 moves"},
+         withText(good, "job.json", replaced(job, "\"count\": 11", "\"count\": 1500")), Code::InvalidContent,
+         "cannot hold 1500 moves"},
         {"cache: damaged content",
          withMember(good, "toolpaths/0002.bin", Bytes{'C', 'V', 'T', 'P', 1, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0x07}),
          Code::InvalidContent, ""},
@@ -956,17 +1013,153 @@ TEST_CASE("a move cache no record names is dropped; deflate ratio does not apply
     CHECK(back.extras.empty());
     CHECK(save(back.document, back.extras) == good);
 
-    // 300,000 identical moves compress far beyond the 20:1 binary ratio; they still load.
+    // 1,200,000 identical moves (1 byte each in the cache) compress far beyond the 20:1 binary
+    // ratio. With enough other content in the file (random padding) they are within one move per
+    // byte of the file and load; on their own the file is far too small for them and saveCarv
+    // refuses, as the loader would.
     Document doc;
     ToolpathRecord r;
     r.name = "same";
-    r.moves = shareMoves(std::vector<Move>(300'000, Move::feed({1, 2, 3}, 500.0)));
+    r.selection = VectorSelection::allVectors();
+    r.moves = shareMoves(std::vector<Move>(1'200'000, Move::feed({1, 2, 3}, 500.0)));
     doc.insertToolpath(r);
-    const Bytes file = save(doc);
-    const auto ms = members(file);
-    CHECK(ms[2].data.size() > 300'000);
+    const auto alone = saveCarv(doc);
+    REQUIRE_FALSE(alone.ok());
+    CHECK(alone.error().code == Code::ResourceLimit);
+    CHECK(contains(alone.error().message, "move per byte"));
+    std::mt19937 rng(7);
+    Bytes pad(1'250'000);
+    for (auto& b : pad) {
+        b = static_cast<std::uint8_t>(rng());
+    }
+    const Bytes file = save(doc, CarvExtras{}.withMember("pad.bin", pad));
+    CHECK(memberBytes(file, "toolpaths/0001.bin").size() > 1'200'000);
     LoadedCarv loaded = load(file);
     requireSameToolpaths(doc, loaded.document);
+}
+
+TEST_CASE("moves per byte of the file: the exact boundary, and small crafted files",
+          "[document][toolpath][carv][limits]") {
+    // A file of S bytes holds at most S moves (owner decision 2026-11-02). Build a file whose size
+    // equals its move count exactly by padding it, then add one move.
+    constexpr std::size_t kMoves = 50'000;
+    Document doc;
+    ToolpathRecord r;
+    r.name = "boundary";
+    r.selection = VectorSelection::allVectors();
+    r.moves = shareMoves(std::vector<Move>(kMoves, Move::rapid({0, 0, 5})));
+    doc.insertToolpath(r);
+    std::mt19937 rng(11);
+    Bytes pad(kMoves * 2);
+    for (auto& b : pad) {
+        b = static_cast<std::uint8_t>(rng());
+    }
+    const Bytes reference = save(doc, CarvExtras{}.withMember("pad.bin", pad));
+    const auto zipWithPad = [&](std::size_t padBytes, const Bytes& cache, const std::string& job) {
+        std::vector<detail::ZipMember> ms;
+        for (const auto& m : members(reference)) {
+            if (m.name == "pad.bin") {
+                ms.push_back({m.name, Bytes(pad.begin(), pad.begin() + static_cast<std::ptrdiff_t>(padBytes))});
+            } else if (m.name == "toolpaths/0001.bin") {
+                ms.push_back({m.name, cache});
+            } else if (m.name == "job.json") {
+                ms.push_back({m.name, Bytes(job.begin(), job.end())});
+            } else {
+                ms.push_back(m);
+            }
+        }
+        auto z = detail::writeZip(ms);
+        REQUIRE(z.ok);
+        return z.bytes;
+    };
+    const Bytes cache = memberBytes(reference, "toolpaths/0001.bin");
+    const std::string job = memberText(reference, "job.json");
+    // Binary search for the padding that makes the file exactly kMoves bytes long.
+    std::size_t lo = 0;
+    std::size_t hi = pad.size();
+    while (lo < hi) {
+        const std::size_t mid = (lo + hi) / 2;
+        if (zipWithPad(mid, cache, job).size() < kMoves) {
+            lo = mid + 1;
+        } else {
+            hi = mid;
+        }
+    }
+    const Bytes exact = zipWithPad(lo, cache, job);
+    REQUIRE(exact.size() == kMoves);
+    CHECK(load(exact).document.toolpaths()[0].moveCount() == kMoves);
+    // The same file one move longer (cache and count) is one move over.
+    const Bytes cache1 = cacheOf(std::vector<Move>(kMoves + 1, Move::rapid({0, 0, 5})));
+    const std::string job1 =
+        replaced(job, "\"count\": " + std::to_string(kMoves), "\"count\": " + std::to_string(kMoves + 1));
+    const Bytes over = zipWithPad(lo, cache1, job1);
+    REQUIRE(over.size() == kMoves);
+    const CarvError err = loadError(over);
+    CHECK(err.code == Code::ResourceLimit);
+    CHECK(contains(err.message, "more than 50000 toolpath moves"));
+    CHECK(contains(err.message, "per byte of its size"));
+    // saveCarv draws the same line: with the padding that gave the exact file it saves kMoves...
+    const CarvExtras atPad = CarvExtras{}.withMember("pad.bin", Bytes(pad.begin(), pad.begin() + static_cast<std::ptrdiff_t>(lo)));
+    CHECK(saveCarv(doc, atPad).ok());
+    // ...and refuses kMoves + 1.
+    Document more;
+    r.moves = shareMoves(std::vector<Move>(kMoves + 1, Move::rapid({0, 0, 5})));
+    more.insertToolpath(r);
+    const auto refused = saveCarv(more, atPad);
+    REQUIRE_FALSE(refused.ok());
+    CHECK(refused.error().code == Code::ResourceLimit);
+
+    // A small crafted file claiming the whole 8M budget is refused from job.json, before any
+    // cache is read (the T-0132 verifier's 9 KB file loaded 8M moves at 581 MiB).
+    const Bytes small = save(makeSample().doc);
+    REQUIRE(small.size() < 20'000);
+    const std::string smallJob = memberText(small, "job.json");
+    const CarvError claim =
+        loadError(withText(small, "job.json", replaced(smallJob, "\"count\": 11", "\"count\": 8000000")));
+    CHECK(claim.code == Code::ResourceLimit);
+    CHECK(contains(claim.message, "per byte of its size"));
+#if defined(__linux__)
+    // Worst case from a file of S bytes: S moves of 72 bytes, reserved exactly.
+    const std::int64_t peak = childPeakGrowth(exact);
+    WARN("a " << exact.size() << "-byte file at the move boundary: peak RSS growth " << peak / 1024 << " KiB");
+    if (peak >= 0) {
+        CHECK(peak < static_cast<std::int64_t>(kMoves) * 72 * 2 + (std::int64_t{16} << 20));
+    }
+#endif
+}
+
+TEST_CASE("saveCarv counts every archive member against the loader's member limit (T-0132 B1)",
+          "[document][toolpath][carv][limits]") {
+    // manifest + job + one cache per computed toolpath (+ preserved members) <= 10,000.
+    const SharedMoves one = shareMoves({Move::rapid({0, 0, 5})});
+    const auto docWith = [&one](std::size_t computed) {
+        auto d = std::make_unique<Document>();
+        for (std::size_t i = 0; i < computed; ++i) {
+            ToolpathRecord t;
+            t.moves = one;
+            d->insertToolpath(t);
+        }
+        return d;
+    };
+    const auto at9998 = docWith(9998);
+    const Bytes ok = save(*at9998);
+    CHECK(load(ok).document.toolpaths().size() == 9998);
+    const auto at9999 = docWith(9999);
+    const auto refused = saveCarv(*at9999);
+    REQUIRE_FALSE(refused.ok());
+    CHECK(refused.error().code == Code::ResourceLimit);
+    CHECK(contains(refused.error().message, "10001 archive members"));
+    // Preserved members count too.
+    const CarvExtras extra = CarvExtras{}.withMember("notes.txt", Bytes{'x'});
+    const auto at9997 = docWith(9997);
+    CHECK(load(save(*at9997, extra)).document.toolpaths().size() == 9997);
+    const auto withExtra = saveCarv(*at9998, extra);
+    REQUIRE_FALSE(withExtra.ok());
+    CHECK(withExtra.error().code == Code::ResourceLimit);
+    // Records without moves write no member.
+    auto mixed = docWith(9998);
+    mixed->insertToolpath(ToolpathRecord{});
+    CHECK(saveCarv(*mixed).ok());
 }
 
 TEST_CASE("the move budget is enforced on load and on save", "[document][toolpath][carv][limits]") {

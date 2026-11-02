@@ -42,8 +42,8 @@ std::string encodeMoves(const std::vector<toolpath::Move>& moves, std::vector<st
 
 /// Reads a whole cache from `source`: the header must declare `expectedCount` moves, every move
 /// must be well formed with finite values, and nothing may follow the last move. Appends to
-/// `out` (growing as data arrives, never reserving more than `expectedCount`). Returns an empty
-/// string on success, otherwise the defect.
+/// `out`, reserving exactly `expectedCount` more moves first (the caller bounds it by the move
+/// budget). Returns an empty string on success, otherwise the defect.
 std::string decodeMoves(CharSource& source, std::uint64_t expectedCount, std::vector<toolpath::Move>& out);
 
 }  // namespace carvetto::document::detail

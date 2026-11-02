@@ -2415,6 +2415,7 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
                           "the archive has no manifest.json (not a .carv file?)"};
     }
     LoadBudget budget(limits);  // one budget for every member of the archive
+    budget.setArchiveBytes(bytes.size());  // toolpath moves: at most one per byte of the file
     auto extras = std::make_shared<CarvExtras::Impl>();
     LoadedCarv out{};
 
@@ -2670,9 +2671,14 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
         if (!legacy.layers || legacy.layers->empty()) {
             record.selection = VectorSelection::allVectors();
         } else {
-            for (const Layer& l : doc.layers()) {
-                if (std::find(legacy.layers->begin(), legacy.layers->end(), l.name) != legacy.layers->end()) {
-                    record.selection.layers.push_back(l.id);
+            // Canonical order, the same as carvetto-cli's: names as listed, each name's layers in
+            // stacking order, every layer once.
+            for (const std::string& name : *legacy.layers) {
+                for (const Layer& l : doc.layers()) {
+                    auto& ids = record.selection.layers;
+                    if (l.name == name && std::find(ids.begin(), ids.end(), l.id) == ids.end()) {
+                        ids.push_back(l.id);
+                    }
                 }
             }
         }
@@ -2779,6 +2785,30 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
                                  std::to_string(kCarvMaxToolpathMoves) +
                                  " (use fewer moves: larger stepover or pass depth, coarser tolerance, or split the job)"};
         }
+        // Every member counts against the loader's member limit: manifest, job, caches, and the
+        // preserved members a cache does not replace.
+        const detail::ZipLimits zipLimits;
+        {
+            std::set<std::string> names;
+            for (std::size_t i = 0; i < doc.toolpaths().size(); ++i) {
+                if (doc.toolpaths()[i].hasMoves()) {
+                    names.insert(cacheMemberName(i));
+                }
+            }
+            if (ex) {
+                for (const auto& [name, data] : ex->members) {
+                    names.insert(name);
+                }
+            }
+            const std::uint64_t count = 2 + names.size();
+            if (count > zipLimits.maxMembers) {
+                return CarvError{CarvError::Code::ResourceLimit,
+                                 "the file would have " + std::to_string(count) + " archive members (" +
+                                     std::to_string(names.size() - (ex ? ex->members.size() : 0)) +
+                                     " toolpath move caches among them); a .carv file holds at most " +
+                                     std::to_string(zipLimits.maxMembers)};
+            }
+        }
         std::map<std::string, std::vector<std::uint8_t>> caches;
         json toolpaths = json::array();
         for (std::size_t i = 0; i < doc.toolpaths().size(); ++i) {
@@ -2828,9 +2858,35 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
             }
         }
         flushCachesBefore(nullptr);
+        // The loader's archive caps (ADR-0013 §9), checked on what is about to be written.
+        std::uint64_t totalBytes = 0;
+        for (const detail::ZipMember& m : members) {
+            const bool isJson = m.name.size() >= 5 && m.name.compare(m.name.size() - 5, 5, ".json") == 0;
+            const std::uint64_t cap = isJson ? zipLimits.maxJsonMemberBytes : zipLimits.maxBinaryMemberBytes;
+            if (m.data.size() > cap) {
+                return CarvError{CarvError::Code::ResourceLimit,
+                                 "member '" + m.name + "' would hold " + std::to_string(m.data.size()) +
+                                     " bytes; the limit is " + std::to_string(cap)};
+            }
+            totalBytes += m.data.size();
+        }
+        if (totalBytes > zipLimits.maxTotalBytes) {
+            return CarvError{CarvError::Code::ResourceLimit,
+                             "the file would expand to " + std::to_string(totalBytes) + " bytes; the limit is " +
+                                 std::to_string(zipLimits.maxTotalBytes)};
+        }
         detail::ZipWriteResult zip = detail::writeZip(members);
         if (!zip.ok) {
             return CarvError{CarvError::Code::InvalidArchive, zip.error};
+        }
+        // At most kCarvMovesPerFileByte moves per byte of the file (owner decision 2026-11-02);
+        // only known now that the file is compressed.
+        if (totalMoves > zip.bytes.size() * kCarvMovesPerFileByte) {
+            return CarvError{CarvError::Code::ResourceLimit,
+                             "the toolpaths hold " + std::to_string(totalMoves) + " moves but the file would be only " +
+                                 std::to_string(zip.bytes.size()) + " bytes; a .carv file holds at most " +
+                                 std::to_string(kCarvMovesPerFileByte) +
+                                 " move per byte of its size (are the toolpaths highly repetitive?)"};
         }
         return std::move(zip.bytes);
     } catch (const std::bad_alloc&) {

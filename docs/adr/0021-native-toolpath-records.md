@@ -1,6 +1,7 @@
 # ADR-0021: Native toolpath records in `.carv` (job.json definitions, binary move caches)
 
-Date: 2026-11-01 · Status: proposed (T-0132) · Supersedes the interim storage of ADR-0019 §1
+Date: 2026-11-01 · Status: proposed (T-0132) · Supersedes the interim storage of ADR-0019 §1 ·
+Move budget tied to file size by the project owner (2026-11-02, after verifier round 1)
 
 ## Context
 ADR-0003 (owner decision) puts toolpath definitions in `job.json` and computed moves in optional
@@ -27,15 +28,22 @@ schema, the cache format and its budget open; they are decided here.
 - The document holds `std::vector<ToolpathRecord>`; position = job order (the order of cutting and
   posting), like layers. Raw mutators `insertToolpath` / `takeToolpath` / `moveToolpath`; toolpath
   ids come from the document's single `IdGenerator` (ADR-0007), so a value names one sheet, layer,
-  object or toolpath, and preset ids follow amendment A2.
+  object or toolpath, and preset ids follow amendment A2. **Toolpaths are a fourth id kind**
+  next to sheets, layers and objects (recorded as ADR-0007 amendment A5).
 - Commands: `AddToolpathCommand`, `RemoveToolpathsCommand`, `SetToolpathCommand` (replace a record;
-  consecutive edits of one toolpath coalesce) and `MoveToolpathCommand`.
+  consecutive edits of one toolpath coalesce) and `MoveToolpathCommand`. Add and Set refuse (no-op)
+  a selection `checkIntegrity` would reject (an unallocated id, an item of another kind, `all` with
+  lists), and clear `cuttingData`. `shareMoves` zeroes the fields a move's kind ignores (see §3),
+  so a record built through these equals its saved and reloaded copy. Records built by hand and
+  inserted raw are not normalised.
 - **Vector selection.** `VectorSelection{ bool all; vector<LayerId> layers; vector<ObjectId> objects }`.
   `all` = every vector object. Otherwise the listed objects (a group stands for its descendant
   vectors) and the vectors on the listed layers; an empty selection selects nothing (so a layer
   name that no longer matches, after migration, does not turn into "everything").
   `Document::selectedVectors` resolves it: listed objects in list order (groups expanded in id
-  order), then layer vectors in id order, each once.
+  order), then layer vectors in id order, each once. Layer ids made from names (carvetto-cli, and
+  migration below) are in one canonical order: names as listed, each name's layers in stacking
+  order, each layer once.
 - **Deleted references are allowed.** Deleting a vector or layer does not edit the selections that
   name it: ids are never reused, so the reference names nothing until an undo brings the item
   back, and then names it again. No object or layer command had to learn about toolpaths.
@@ -68,7 +76,11 @@ schema, the cache format and its budget open; they are decided here.
 
 ### 3. Move cache `toolpaths/NNNN.bin`
 - One member per record with computed moves, NNNN = its 1-based position in the job order (so at
-  most 9999 such records, `kCarvMaxCachedToolpaths`). The member is always written when the record
+  most 9999 such records, `kCarvMaxCachedToolpaths`). Every member counts against the loader's
+  limit of 10,000 archive members (ADR-0013 §9): manifest + job + caches + preserved members, so
+  without preserved members at most **9,998** computed toolpaths fit, one fewer per preserved
+  member. `saveCarv` counts them all and refuses (ResourceLimit) before writing; it also checks
+  the member-size (256 MiB) and total-size (1 GiB) caps on what it is about to write. The member is always written when the record
   has moves: the loader cannot recompute toolpaths (that needs the tool database and the
   operation code), so dropping the cache would lose them. Templates (`.carvt`) may omit them later.
 - Layout (little-endian; doubles as their IEEE bits, so every value round-trips exactly):
@@ -83,31 +95,42 @@ schema, the cache format and its budget open; they are decided here.
 - A cache member that no record names is dropped on load, unread. `CarvExtras::withMember` refuses
   cache names, since `saveCarv` owns them.
 
-### 4. Loader budget for moves
-- New absolute limit `LoadLimits::maxMoves` = `kCarvMaxToolpathMoves` = **8,000,000 moves per file**
-  (all records, caches and migrated interim members together), about 550 MiB decoded at 72 bytes
-  per `Move`. A record's `moves.count` is charged while `job.json` is parsed, so an oversized
-  count is refused before any cache is inflated. `saveCarv` refuses to write a document over the
-  limit (ResourceLimit with a hint), so no file the loader refuses is ever written; the CLI's
-  reload check (ADR-0019 §1) is gone.
-- Before inflating a cache its declared size must lie in [16 + count, 16 + 49 · count], so the
-  inflate work is bounded by the count, and the count by the budget. The cache is decoded straight
-  from the bounded inflate stream (ADR-0013 §9) into moves, never held as bytes; the vector grows
-  as moves arrive. The CRC is checked at the end: a CRC failure is reported as `InvalidArchive`,
+### 4. Loader budget for moves (owner decision 2026-11-02: tied to file size)
+- A file of S bytes may hold at most **min(S × 1, 8,000,000) toolpath moves**
+  (`kCarvMovesPerFileByte` = 1, `kCarvMaxToolpathMoves` = 8,000,000; `LoadLimits::maxMoves` and
+  `movesPerArchiveByte`), counting all records, caches and migrated interim members together.
+  Real toolpaths take 6–9 bytes of file per move (the AC2 job: 6.2), so only crafted or
+  degenerate, highly repetitive toolpaths reach the rule. A record's `moves.count` is charged while
+  `job.json` is parsed, so an oversized count is refused before any cache is inflated: a 9 KB file
+  can claim about 9,000 moves.
+- `saveCarv` applies the same rule to the compressed archive it is about to return (it knows the
+  size only then) and refuses (ResourceLimit, with a hint) instead of writing, so no file the
+  loader refuses is written; the CLI's reload check (ADR-0019 §1) is gone. A highly repetitive
+  toolpath (e.g. 1.2 M identical moves) is refused on its own and saves once the file holds enough
+  other content.
+- The decoder reserves exactly the declared count (no power-of-two growth), so a load's memory for
+  moves is at most 72 bytes per byte of the file: measured (Release, forked child) 1.6 MiB peak
+  growth for a 10.5 KB file at the limit, 71 MiB for 1.0 MB and 558 MiB for 7.9 MB (padded files
+  of one-byte moves, the worst case per byte); 138 MiB for a realistic 2 M-move 18 MB file, and
+  550 MiB for 8 M moves in 73 MB. Migrated interim moves (no declared count) grow geometrically,
+  still bounded by the same budget.
+- Before inflating a cache its declared size must lie in [16 + count, 16 + 49 · count + 48], so
+  the inflate work is bounded by the count, and the count by the budget. The cache is decoded
+  straight from the bounded inflate stream (ADR-0013 §9) into moves, never held as bytes. The CRC is checked at the end: a CRC failure is reported as `InvalidArchive`,
   otherwise defects are `InvalidContent` naming the member and move.
 - Caches are exempt from the 20:1 binary ratio checks (per member and overall), which exist to
   bound bytes held in memory: caches are not held, and a regular toolpath can compress far better
   (300,000 identical moves are 1 byte each). The total-size cap (1 GiB) and member cap (256 MiB)
-  still apply. Absolute bounds rather than file-relative ones follow ADR-0013 §9's approach; the
-  price is that a small crafted file can make a load allocate up to the move budget (550 MiB).
+  still apply; the move-per-byte rule bounds what a cache can decode to.
 - At most 10,000 toolpath records per file (`ResourceLimit`), each charged as a record (256 bytes)
   plus its strings and selection ids to the document budget; params text is charged as document
   bytes once decoded.
 - Measured (GCC 15, this machine, process CPU time, AC2 test): a 2,000,000-move toolpath (raster
-  feeds, ramps, arcs, plunges, retracts) saves in 1.57 s Release / 2.2 s Debug (mostly deflating
-  the 19.6 MB cache) and loads in 0.26 s Release / 0.47 s Debug, with 176 MiB peak RSS growth for
-  the load (forked child, the ADR-0013 method; the decoded moves alone are 144 MB). The test
-  asserts save < 6 s and load < 3 s CPU under NDEBUG and < 400 MiB peak growth on Linux.
+  feeds, ramps, arcs, plunges, retracts; 12.3 MB file) saves in about 1.4 s Release / 2 s Debug
+  (mostly deflating the 19.6 MB cache) and loads in about 0.23 s Release / 0.35 s Debug, with
+  141 MiB peak RSS growth for the load (forked child, the ADR-0013 method; the decoded moves alone
+  are 144 MB). The test asserts save < 6 s and load < 3 s CPU under NDEBUG and < 400 MiB peak
+  growth on Linux.
 
 ### 5. Version and migration
 - The format becomes **1.1** (`kCarvFormatMinor` = 1): a minor bump, since `toolpaths` and the
@@ -120,7 +143,7 @@ schema, the cache format and its budget open; they are decided here.
   (creation) order, with fresh ids. Its params.json is read with the same key tables in the
   degrees dialect (same arithmetic as the CLI, so the radians are bit-identical to what the CLI
   computed), its `tool.id/machine/material` become `toolSource`, its `layers` names select every
-  layer of that name (no `layers`: every vector). The member is not kept: the next save writes the
+  layer of that name in the canonical order of §1 (no `layers`: every vector). The member is not kept: the next save writes the
   record natively. A damaged interim member fails the load with a message naming it.
 
 ### 6. carvetto-cli
@@ -142,9 +165,9 @@ schema, the cache format and its budget open; they are decided here.
 - **Moves in `job.json` or a JSON member:** the problem T-0132 exists to fix (budget, size, speed).
 - **float32 or delta-encoded coordinates:** smaller, but not exact; the same-as-previous flags keep
   exactness and still halve the size of typical toolpaths.
-- **A file-relative move budget** (moves per archive byte): tighter against crafted files, but a
-  regular toolpath (drilling, repeated passes) can compress so well that a legitimate file would
-  be refused.
+- **An absolute move budget only** (round 1 of T-0132): a 9 KB crafted file could make a load
+  allocate 581 MiB; the owner chose the per-byte rule, accepting that a degenerate repetitive
+  toolpath alone in a file is refused on save.
 
 ## Consequences
 - The app (Batch B/C) can create, edit, reorder and undo toolpaths and save them; recalculation
@@ -152,4 +175,9 @@ schema, the cache format and its budget open; they are decided here.
 - Adding an operation means a new variant alternative, its params codec (both dialects) and an
   `operation` name; files written then are still 1.x if the old operations keep their schema.
 - `ToolpathRecord::operator==` compares moves by content (the AC tests use it).
-- Open: the 8 M move budget and the per-file absolute bound are a trade-off the owner may tune.
+- **Known limitation for the app:** a record holds one `ToolSnapshot`, so a multi-tool pocket
+  (clearance + rest tools) is one record per tool, each with its own moves; it cannot be one
+  recalculable record. A later card can widen `ToolSource`/the snapshot to a tool list.
+- Round trips drop what the format does not store: unknown keys nested in params/selection/tool,
+  `cuttingData`, and move fields a kind ignores. Records made through the commands and
+  `shareMoves` are normalised so `==` still holds.
