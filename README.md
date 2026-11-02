@@ -37,3 +37,4 @@ Original locations (scripts may hard-code these; adjust paths when reusing):
 - t0129v1/: T-0129 verifier (PASS 968fbc2): ac.cpp allowance-limit matrix, wsh.cpp (mode 4: allowances around -r), cmp.py, mk.sh.
 - t0018v1/: T-0018 verifier (PASS 9fca907): inr.cpp inradius/coverage/orientation oracle, cmpdump.cpp, dust.cpp (grid dust rings), clipb.cpp, edge.cpp, ann.cpp, hd.py/hdp.py path deviation.
 - t0135c/: T-0135 coder harness (7d00ce6): agg.py, sweep aggregates, scenes.
+- t0136v1/: T-0136 verifier (PASS d701656): adv4.cpp limit/name/NaN probes, adv5.cpp names that grow when stored, mkbase.cpp fuzz bases; big3/peak3 patched with a valid tool.
