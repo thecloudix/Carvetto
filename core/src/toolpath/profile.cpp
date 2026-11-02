@@ -747,8 +747,12 @@ void ProfileBuilder::placeTabsOn(std::vector<Cut>& primary, const std::vector<Cu
     }
     const double raised = p_.tabs.length + 2.0 * radius_;
     for (Cut& c : primary) {
-        // At least a tool radius cut to full depth between neighbouring tabs, so they stay apart.
-        const TabPlacement tp = placeTabs(c.walk, raised, p_.tabs, otherStarts(c, otherPass), radius_);
+        // At least a tool radius cut to full depth between neighbouring tabs, so they stay apart. A
+        // tab moved off the other pass's start keeps two tolerances + 0.01 mm more from it: its
+        // roughing cover (its ends projected and widened by the tolerance) must clear that start.
+        const double moveMargin = otherPass.empty() ? 0.0 : 2.0 * tol_.distance + 0.01;
+        const TabPlacement tp =
+            placeTabs(c.walk, raised, p_.tabs, otherStarts(c, otherPass), radius_, moveMargin);
         c.tabs.clear();
         for (double u : tp.centres) {
             c.tabs.push_back({u - 0.5 * raised, u + 0.5 * raised});
@@ -1891,9 +1895,44 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
         }
         found.push_back(piece);
     };
-    for (const Cut& c : primary) {
-        if (!c.walk.closed()) continue;
-        const geometry::Box2 box = c.walk.contour().bounds().inflated(rt + 0.5);
+    // The regions searched: each closed primary cut, and each cluster of open primary cuts whose
+    // boxes come within two tab-layer radii + 0.5 mm of each other (a loop trimmed into pieces
+    // near another vector still encloses material, but no single piece's box holds it).
+    struct Region {
+        geometry::Box2 bounds;
+        std::size_t source;
+    };
+    std::vector<Region> regions;
+    {
+        std::vector<std::size_t> open;
+        for (std::size_t k = 0; k < primary.size(); ++k) {
+            if (primary[k].walk.closed()) {
+                regions.push_back({primary[k].walk.contour().bounds(), primary[k].sources.front()});
+            } else if (!primary[k].walk.isEmpty()) {
+                open.push_back(k);
+            }
+        }
+        DisjointSets sets(open.size());
+        std::vector<geometry::Box2> ob;
+        for (std::size_t k : open) ob.push_back(primary[k].walk.contour().bounds().inflated(rt + 0.25));
+        std::vector<std::size_t> byX(open.size());
+        std::iota(byX.begin(), byX.end(), std::size_t{0});
+        std::sort(byX.begin(), byX.end(), [&](std::size_t x, std::size_t y) { return ob[x].min.x < ob[y].min.x; });
+        for (std::size_t i = 0; i < byX.size(); ++i) {
+            for (std::size_t j = i + 1; j < byX.size() && ob[byX[j]].min.x <= ob[byX[i]].max.x; ++j) {
+                if (ob[byX[i]].intersects(ob[byX[j]])) sets.unite(byX[i], byX[j]);
+            }
+        }
+        std::map<std::size_t, std::size_t> regionOf;  // cluster root -> index in regions
+        for (std::size_t a = 0; a < open.size(); ++a) {
+            const std::size_t root = sets.find(a);
+            const auto [it, added] = regionOf.try_emplace(root, regions.size());
+            if (added) regions.push_back({geometry::Box2{}, primary[open[a]].sources.front()});
+            regions[it->second].bounds.expand(primary[open[a]].walk.contour().bounds());
+        }
+    }
+    for (const Region& region : regions) {
+        const geometry::Box2 box = region.bounds.inflated(rt + 0.5);
         // Exact answer without the raster: the material the cuts leave near the loop is what the
         // bands of the loop and of every cut near it (both passes; each band the path grown by the
         // radius on both sides) leave, and an enclosed piece is a hole of their union. No hole
@@ -2004,7 +2043,7 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
                     // Attributed to the innermost closed primary cut that contains it (a hole's slug
                     // to the hole), or else to the nearest cut.
                     const Vec2 probe = geometry::startPoint(hole.spans.front());
-                    std::size_t src = c.sources.front();
+                    std::size_t src = region.source;
                     double loopArea = std::numeric_limits<double>::infinity();
                     for (const Cut* o : nearCuts) {
                         const std::less<const Cut*> before;
@@ -2175,7 +2214,7 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
                 // Attribute it to the vector of the nearest cut.
                 const Vec2 x = ras.centre(i, j);
                 double best = std::numeric_limits<double>::infinity();
-                std::size_t src = c.sources.front();
+                std::size_t src = region.source;
                 for (const Pos* q : nearPos) {
                     const double d = geometry::distance(q->p, x);
                     if (d < best) {

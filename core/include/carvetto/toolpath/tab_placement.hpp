@@ -53,9 +53,10 @@ struct TabPlacement {
 /// tab: centre_i = (i + 1/2) · L / n. With `avoidCorners`, each tab moves to the nearest
 /// position whose raised stretch lies within one line span (wrapping on closed paths). Tabs
 /// whose footprint (`tabFootprint`) does not fit are dropped as `fitTabs` describes (with
-/// `keepClear`), so every pass keeps a stretch at full depth.
+/// `keepClear`, `moveMargin`), so every pass keeps a stretch at full depth.
 TabPlacement placeTabs(const ArcLengthPath& path, double raisedLength, const TabOptions& options,
-                       const std::vector<double>& keepClear = {}, double minGap = kMinTabGap);
+                       const std::vector<double>& keepClear = {}, double minGap = kMinTabGap,
+                       double moveMargin = 0.0);
 
 /// Length of path one tab occupies: the raised stretch, plus (3D tabs) a 45° ramp of
 /// `thickness` on each side, as `tabCeiling` draws it.
@@ -68,12 +69,13 @@ double tabFootprint(double raisedLength, const TabOptions& options);
 /// one (`minGap`, at least `kMinTabGap`, between footprints); none is kept when one footprint does
 /// not fit at all. Footprints are also moved off every
 /// position in `keepClear` (arc lengths on this path, e.g. where another pass plunges), to the
-/// nearer side, and dropped when there is no room (a footprint within 1e-9 mm of the gap counts
-/// as clear, so a tab moved to exactly the gap is never dropped by rounding). The others are
-/// counted in `dropped`, so
-/// kept + dropped = the number of centres given.
+/// nearer side, leaving `kMinTabGap` + `moveMargin` between the point and the footprint (room for
+/// what another pass adds round a moved tab), and dropped when there is no room (a footprint
+/// within 1e-9 mm of the gap counts as clear, so a moved tab is never dropped by rounding). The
+/// others are counted in `dropped`, so kept + dropped = the number of centres given.
 TabPlacement fitTabs(const ArcLengthPath& path, std::vector<double> centres, double footprint,
-                     const std::vector<double>& keepClear = {}, double minGap = kMinTabGap);
+                     const std::vector<double>& keepClear = {}, double minGap = kMinTabGap,
+                     double moveMargin = 0.0);
 
 /// One tab's raised stretch on a path: arc lengths a < b (the path is raised over [a, b]; a 3D
 /// tab adds its ramps outside). Used where a tab's stretch is not a fixed length around a centre,

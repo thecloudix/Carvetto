@@ -115,8 +115,11 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     - moves footprints off `keepClear` points (to the nearer side), dropping them when there is
       no room. With a separate last pass these are the other pass's cut starts projected onto
       the cut (within a tool radius + allowance), so neither pass plunges into the other's tab.
-      A footprint within 1e-9 mm of the gap counts as clear, so a tab moved to exactly the gap is
-      kept (before T-0135 the re-check decided it by rounding, about half the time either way);
+      A moved tab keeps two tolerances + 0.01 mm more from the point (room for its roughing
+      cover, which is its projected ends widened by the tolerance, so it can still be matched), and
+      a footprint within 1e-9 mm of the gap counts as clear, so a moved tab is always kept (T-0135;
+      before, the tab went to exactly the gap and the re-check decided by rounding, about half the
+      time either way, and a kept one could never be matched past the roughing start);
     - drops a tab whose footprint would come closer than a tool radius to the previous one, or
       to the first across the start, so neighbouring tabs never merge and every pass still
       reaches its level between them;
@@ -212,7 +215,9 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     joins them. **Loose pieces.** A kept tab holds the material next to it, but a piece elsewhere
     (the kerf consuming a neck of the part, a remnant between the finishing and roughing kerfs at a
     corner) may have no tab: after the tab check, whenever tabs are on (also when every tab was left
-    out), pieces of material inside a closed primary cut that join the outside through no kept tab
+    out), pieces of material inside a closed primary cut, or inside a cluster of open primary cuts (a
+    loop trimmed into pieces near another vector; boxes within two tab-layer radii + 0.5 mm of each
+    other, searched as one region, T-0135), that join the outside through no kept tab
     are looked for and reported, on a best-effort basis (known gaps below). First: the material the cuts leave near the loop is what the bands of the
     loop and of every cut near it (both passes; each the path grown by the radius on both sides)
     leave, and an enclosed piece is a hole of their union (offsets and a union). No hole inside the
@@ -241,7 +246,9 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     check (a lead crossing the part is a separate issue); pieces between neighbouring vectors that
     reach out of the loop's box are not seen; a sliver thinner than about 0.06 mm can be missed by
     the 0.05 mm raster (it must show one cell 0.025 mm clear of the cut: verifier scene
-    m1_402012_7, 0.136 mm² of a sliver between two kerfs); a tab whose two "pieces" in its window
+    m1_402012_7, 0.136 mm² of a sliver between two kerfs; 503012_1, a 0.052 mm sliver), and a tiny
+    piece can be counted larger on the 0.05 mm cells than it is (502009_40: two pieces of 0.018 mm²
+    reported as about 0.06); a tab whose two "pieces" in its window
     are one piece joined beyond the window (overlapping vectors, scene 401007_36) is kept although
     it holds nothing new (redundant, never severed). Not a gap but the rule: a tab that leaves a
     piece near it loose is dropped even when a neighbouring tab holds that piece (each tab holds on

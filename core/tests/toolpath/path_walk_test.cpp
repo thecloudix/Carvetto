@@ -250,6 +250,12 @@ TEST_CASE("Tabs moved off a keep-clear point are kept, never dropped by rounding
     }
     CHECK(kept == 2 * static_cast<std::size_t>(n));
     CHECK(exact > 0);  // some moved centres really do come out a few ulps short
+    // With a move margin (room for another pass's cover) the moved tab keeps that much more.
+    for (const double offset : {0.3, -0.3}) {
+        const TabPlacement tp = fitTabs(lp, {40.0 + offset}, footprint, {40.0}, kMinTabGap, 0.012);
+        REQUIRE(tp.centres.size() == 1);
+        CHECK(std::fabs(std::fabs(tp.centres.front() - 40.0) - (reach + 0.012)) < 1e-12);
+    }
     // A centre clearly inside the gap with no room to move (both sides blocked) is still dropped.
     const TabPlacement blocked = fitTabs(lp, {50.0}, footprint, {49.5, 51.0});
     CHECK(blocked.centres.empty());

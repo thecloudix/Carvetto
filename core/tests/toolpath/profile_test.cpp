@@ -2437,8 +2437,10 @@ TEST_CASE("Sided tabs: survival judged by the cut at the tab layer; every loose 
          "P 0x1.8p+2 60 -0x1.7bfe5c91d14e4p+1 1 1 0x1.90a3d70a3d70ap+0 0x1.7a5e353f7ced9p+2 0x1.ecac083126e98p+2 0x1.e978d4fdf3b64p-3 0x1.4p+2 0 0x1.051eb851eb852p-2 0 1 0x1.e4dd2f1a9fbe7p-1 0x1.604189374bc6ap+0 0 1 0x1.9p+6 0x0p+0 1 0 0x0p+0 0 0x1.4p+3 0 0 0x1.657184ae74489p-4 0x1.4p+2 0x1.921fb54442d18p-1 0x1.4p+2 0 0x1.921fb54442d18p+0 0 0 0x0p+0 0x0p+0 0 0 0 0 0 0 0x0p+0 0x0p+0 0x1p+1\n"
          "K 0 0\n"         , 0, 0},
         // (13 since the merge with T-0017/T-0123: the roughing start projected onto the finishing
-        // cut moved by ulps, so fitTabs now keeps a tab it used to drop as clashing; that tab maps
-        // across the roughing start and is left out as unmatched. The tabs kept all hold.)
+        // cut moved by ulps, so fitTabs kept a tab it used to drop as clashing, which then mapped
+        // across the roughing start and was left out as unmatched. 12 since T-0135: a tab moved off
+        // a roughing start is always kept, with room for its roughing cover, and is matched. The
+        // six tabs kept all hold, whole-scene flood.)
         {"m1_292000_22",
          "C 1\n"
          "L 0x1.3c6ea3c9e402bp+3 0x0p+0 0x1.a702888c3fa3ap+3 0x1.63ae597e95724p+0\n"
@@ -2499,7 +2501,7 @@ TEST_CASE("Sided tabs: survival judged by the cut at the tab layer; every loose 
          "L 0x1.61ecc2c47c357p+4 0x1.3519e91240829p+3 0x1.61ecc2c47c357p+4 -0x1.56af106ec1e77p+3\n"
          "L 0x1.61ecc2c47c357p+4 -0x1.56af106ec1e77p+3 0x1.8c41da281b482p+4 -0x1.ab593f36000cep+3\n"
          "P 0x1.8p+2 60 -0x1.3bb50eb711cdep+1 1 0 0x0p+0 0x1.43d9b9a17053p+2 0x1.63933f4486ce8p+1 0x0p+0 0x1.4p+2 1 0x1.fc5840336296p-1 1 1 0x1.0c4a9c12fe117p+3 0x1.67767a509549ap-1 0 9 0x1.3d160aa3a3803p+6 0x0p+0 0 0 0x0p+0 2 0x1.59e721232e2fep+4 1 1 0x1.a30619857a99cp-3 0x1.28d8e95d1bd2ap+3 0x1.d5b25836d4cfdp-1 0x1.032110acff6d6p+3 2 0x1.95699f25a558bp-1 1 0 0x0p+0 0x0p+0 1 8 0 0 0 0 -0x1.2a449fee686dep+5 -0x1.52bfbcd538f6cp+5 0x1p+1\n"
-         "K 1 0\n"         , 13, 0},
+         "K 1 0\n"         , 12, 0},
         {"m1_292002_25",
          "C 1\n"
          "L 0x0p+0 0x0p+0 0x1.02ffddc9af687p+6 0x0p+0\n"
@@ -2906,4 +2908,38 @@ TEST_CASE("Loose pieces: slugs inside a part are pieces of their own; slivers ar
             CHECK(g.message.find("comes free") == std::string::npos);
         }
     }
+}
+
+TEST_CASE("Loose pieces: material enclosed by a loop trimmed into open pieces is checked", "[toolpath][profile][tabs]") {
+    // T-0135 sweep (wsf8): a blob merged with a nearby slot and trimmed near it, so its cut is a
+    // chain of open pieces, Outside with allowance -0.009 (D12); the blob's part (1144.2 mm2 in
+    // the flood) comes free, but only closed cuts were searched for loose pieces and no single
+    // open piece's box holds it. Clusters of open cuts are searched as one region now.
+    std::vector<Contour> cs;
+    ProfileParams p;
+    int vbitDeg = 0;
+    const double d = readScene(
+         "C 1\n"
+         "L 0x1.a4c8213de8af8p+2 -0x1.8c44dcb817b78p+2 -0x1.77ea73a011558p-1 0x1.200b603a205c3p+3\n"
+         "A -0x1.d3c56fb1eada3p+1 0x1.e62dce962c37fp+2 0x1.9ecbd16289c2p+1 0x1.cb26570f786f2p-2 -0x1.58baea6253c3ap+1 0\n"
+         "L -0x1.a4c8213de8af8p+2 0x1.8c44dcb817b78p+2 0x1.77ea73a011558p-1 -0x1.200b603a205c3p+3\n"
+         "A 0x1.d3c56fb1eada3p+1 -0x1.e62dce962c37fp+2 0x1.9ecbd16289c2p+1 -0x1.58baea6253c3ap+1 0x1.cb26570f786f2p-2 0\n"
+         "C 1\n"
+         "A 0x1.537b620bef78p+5 0x1.fe09ed9c8dfbep+2 0x1.d4545155e2629p+3 -0x1.de05c6fc3a33ep-2 0x1.04d09381a8af4p+1 0\n"
+         "A 0x1.080b39d21ff76p+4 0x1.4ba8be41f0749p+4 0x1.3593137371483p+4 0x1.068cb7d60efb6p-6 -0x1.9639e8239b0d7p+0 1\n"
+         "A 0x1.43e385eef9a5ep+5 0x1.814b0cb4df6abp+2 0x1.8bb684ec20c95p+4 -0x1.79fae58a24779p+1 -0x1.c26954b87f858p+0 0\n"
+         "A 0x1.50c7c1f4af6aep+5 -0x1.376e2f5539a77p+2 0x1.d956bc6084f6p+3 -0x1.00e3a90468a5ep+1 0x1.be9e731239e88p-2 0\n"
+         "P 0x1.8p+3 0 -0x1.28eabe9927de3p-7 0 1 0x1.71603df6554eep-2 0x1.6118ff7dea821p+1 0x1.15faf4d9a60b6p-1 0x1.db8d1a919b678p-1 0x1.4p+2 0 0x1.ab245cb50a617p-5 1 1 0x1.ad7694f6840d4p-2 0x1.d00b860952017p-2 1 9 0x1.1cd76c8879e5ep+6 0x0p+0 1 0 0x0p+0 3 0x1.e3bceab79f173p+3 0 0 0x1.4c61f2a82a7cep-2 0x1.0e5997e5ca2eap+3 0x1.a4d16453502d7p-2 0x1.cd3afe298a8bap+1 0 0x1.5ef84af2b0fbbp+0 0 0 0x0p+0 0x0p+0 1 4 0 1 0 0 -0x1.cb8b122e60e87p+4 0x1.2f3eb9dbd7b8p+1 0x1p+1\n"
+         "K 0 0\n"
+        , cs, p, vbitDeg);
+    const ProfileResult r = profileToolpath(cs, test::endMill(d), p);
+    REQUIRE(r.ok());
+    std::vector<double> areas;
+    for (const ProfileDiagnostic& g : r.diagnostics) {
+        if (g.message.find("comes free") == std::string::npos) continue;
+        INFO(g.message);
+        areas.push_back(std::stod(g.message.substr(g.message.find("(about ") + 7)));
+    }
+    REQUIRE(areas.size() == 1);
+    CHECK(std::fabs(areas.front() - 1144.2) < 5.0);
 }
