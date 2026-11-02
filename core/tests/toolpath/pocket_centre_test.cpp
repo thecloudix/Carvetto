@@ -26,6 +26,7 @@
 #include "carvetto/geometry/polyline.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "pocket_oracle.hpp"
+#include "pocket_test_util.hpp"
 
 using namespace carvetto::toolpath;
 using carvetto::geometry::Contour;
@@ -207,13 +208,9 @@ TEST_CASE("T-0125 regression: the lobe of gap_poly is kept and cut at d = 2.029 
         p.cutDepth = 1.0;
         p.strategy = PocketStrategy::Raster;
         p.profilePass = ProfilePass::First;
-        PocketTool t;
-        t.tool.name = "T";
-        t.tool.diameter = d;
-        t.stepover = d / 2;
-        t.passDepth = 1.0;
+        const PocketTool t = orc::endMill("T", 0, d, d / 2, 1.0);
         const PocketResult res = pocketToolpath({input}, {t}, p);
-        CHECK(res.messages.empty());
+        CHECK(res.diagnostics.empty());
         CHECK(res.plans[0].centreRegion.size() == 3);
         // Coverage of the lobe around (-8.0, -2.65): every cell the tool can reach there (a valid
         // centre within r - band) is swept.
@@ -271,7 +268,7 @@ TEST_CASE("T-0125 regression: Clipper spike vertices no longer cost a whole regi
     for (double d : {5.0, 5.04, 5.0673, 5.09, 5.10}) {
         INFO("d " << d);
         PocketParams p;
-        std::vector<std::string> messages;
+        std::vector<ToolpathDiagnostic> messages;
         const std::vector<Contour> centre = pocketCentreRegion({input}, d, p, &messages);
         CHECK(messages.empty());
         const std::vector<orc::Poly> cp = polysOf(centre);
@@ -298,7 +295,7 @@ TEST_CASE("T-0126 regression: Clipper slivers of a collapsing knob are not repor
     const WallIndex walls(poly, 0.5);
     for (double d : {6.696687, 6.69, 6.70, 6.71}) {
         INFO("d " << d);
-        std::vector<std::string> messages;
+        std::vector<ToolpathDiagnostic> messages;
         const std::vector<Contour> centre = pocketCentreRegion({input}, d, p, &messages);
         CHECK(messages.empty());
         CHECK(!centre.empty());
@@ -386,7 +383,7 @@ TEST_CASE("T-0125 property: no reachable part of the pocket is dropped across 4,
         for (std::size_t k = 0; k < s.diameters.size(); ++k) {
             const double d = s.diameters[k], r = d / 2;
             INFO(s.name << " d " << d);
-            std::vector<std::string> messages;
+            std::vector<ToolpathDiagnostic> messages;
             const std::vector<Contour> centre = pocketCentreRegion({input}, d, p, &messages);
             CHECK(messages.empty());
             const std::vector<orc::Poly> cp = polysOf(centre);
@@ -420,11 +417,7 @@ TEST_CASE("T-0125 property: no reachable part of the pocket is dropped across 4,
             }
             // Every 200th: the full toolpath plans exactly this region and cuts it.
             if (k % 200 == 0) {
-                PocketTool t;
-                t.tool.name = "T";
-                t.tool.diameter = d;
-                t.stepover = d / 2;
-                t.passDepth = 1.0;
+                const PocketTool t = orc::endMill("T", 0, d, d / 2, 1.0);
                 PocketParams pp = p;
                 pp.cutDepth = 1.0;
                 pp.strategy = PocketStrategy::Raster;

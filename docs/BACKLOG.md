@@ -86,7 +86,7 @@ Acceptance criteria:
 
 Re-scoped by director after 3 verification rounds (2026-10-26, owner decision: re-scope, do not merge): AC1 speed and AC2 mitres verified clean; AC3 fixed for exactly and near-collinear steep zig-zags (noise sweep 1e-13…1e-4 clean), but the round-3 "nearly the same carrier" grouping is worse than main in ~25/10k new adversarial cases (offset inside d, Round beyond d, spurious chains) and the back-step safety net skips 3-span chains. Not merged; work continues on branch task/T-0006-offset-quality (b722cf2, pushed) under T-0017.
 
-### T-0017 Open-offset quality II: residuals of T-0006   [status: verifying — round 3 of 3 @ ec0856e (pass rule: no worse than main, owner 2026-10-31)]
+### T-0017 Open-offset quality II: residuals of T-0006   [status: done (2026-11-02, #24)]
 Paused 2026-10-26 (owner). Branch task/T-0017-offset-quality-ii @ f8e4506 (WIP, pushed; builds, 494/494 serial). Round-1 verifier FAIL (7 items + translation-dependent needle removal); coder reports 6/7 + needle removal fixed; item 5 (self-crossing 0xe400137f) is a cancellation bug in core/src/geometry/intersect.cpp general intersect() — needs its own card. On resume: coder runs fam2/3/4 + hp/lens sweeps, -j8 repeat, CHANGELOG line, then round-2 verification.
 Phase: 1 (before Profile/Pocket ship)   Module: core/geometry   Depends on: T-0006 branch (b722cf2)   ADR: 0012 (amend A1)
 Goal: Finish T-0006 so it can merge: everything T-0006 verified clean stays clean (AC1 speed, AC2 mitre oracle, steep zig-zags exact and noisy, R1/R2/R3, needle-tip classification), and the round-3 verifier's residuals are fixed. Repros and harness: T-0006 round-3 verifier scratchpad `t0006v3/` (repro_r4/r5/r6.cpp, vdrv3.cpp with gen3.inc, bnd.cpp).
@@ -119,7 +119,7 @@ Acceptance criteria:
   6. Ends inside near-coincident (hugging) stretches — e.g. a Bezier lying within tol of an arc that extends past it — are reported: an end of either span within tol of the other's interior gives one tangent hit even when the curves run within tol of each other along that stretch. Today ~38–45% are missed (main and T-0007 alike; T-0007 round-3 verifier measured 44.5% and 44.8% on two seeds). Generator: Beziers within tol of an arc extending ≤ 0.3 rad past them, ≥ 6,000 pairs, vs brute force → 0 misses of ends whose foot is ≥ 0.01 mm from the other span's end.
   5. Root-cause fix found in T-0007: `closestPoint(ArcSpan)` (contour_ops.cpp) returns the start point but parameter 1 when the query's angle lies a rounding error before the arc's start. Fix it at the source (parameter 0), add a fine-angle regression around both ends of CW/CCW partial arcs, and remove T-0007's wrapper in intersect.cpp. Check every other caller (contour closestPoint/distanceTo, offset pruning) is unaffected or improved.
 
-### T-0009 Offsets of inputs with sub-tolerance spans   [status: blocked]
+### T-0009 Offsets of inputs with sub-tolerance spans   [status: in-progress]
 Phase: 1 (before Profile/Pocket ship)   Module: core/geometry   Depends on: T-0017
 Goal: `flattenForOffset` drops spans ≤ `tol.distance`, so the distance/coverage guarantees of `offsetOpenContour` hold only for the flattened input. Next to a dropped span an offset point can be short of d by up to ~tol (9e-4 mm seen), a Round arc about the neighbouring vertex can be up to ~tol over d (8e-4 mm seen), and up to ~1 mm of valid offset can be missing (seed 0x60660ace). About 1 in 1000 such inputs; already in main before T-0006. Found by the T-0006 verifier and coder.
 Acceptance criteria:
@@ -128,7 +128,7 @@ Acceptance criteria:
   3. No result worse than main on inputs without sub-tolerance spans; T-0006 speed criteria still hold.
   4. The limitation note in offset.hpp and ADR-0012 A1 is removed or narrowed to what remains.
 
-### T-0016 Sharp/Square offset cost on dense hatch-like vectors   [status: blocked]
+### T-0016 Sharp/Square offset cost on dense hatch-like vectors   [status: ready]
 Phase: 1 (alongside T-0120/T-0121)   Module: core/geometry   Depends on: T-0017
 Goal: Scaling is linear, but on dense zig-zags with d ≫ pitch Sharp/Square joins are 10–20× slower than Round (1000-span zig-zag, pitch 0.02, amplitude 1, d=7: ~14 s Release vs 0.7 s Round). Hatch- and fill-like vectors will hit this in Profile/Pocket.
 Acceptance criteria:
@@ -335,8 +335,7 @@ Acceptance criteria:
   2. Two crossings merged by the threshold rule are always flagged tangent; regression at 2h − tol ≈ ±1e-15.
   3. No result worse than main on the T-0007/T-0008/T-0021 families.
 
-### T-0128 Open offsets: narrow loops and needles must not lose cut coverage   [status: blocked]
-(Unblocks when T-0017 merges.)
+### T-0128 Open offsets: narrow loops and needles must not lose cut coverage   [status: ready]
 Phase: 1   Module: core/geometry   Depends on: T-0017
 Goal: Found by the T-0017 round-3 verifier (2026-11-01, non-blocking under "no worse than main"). T-0017 drops sub-tolerance lens loops and closed out-and-back needles as "narrow loops", and merges opposite copies within the snapping allowance. That follows the T-0017 header and AC3, but in rare cases it removes a toolpath that main keeps. (a) Seed 0xc5000544 (fam5, tieGap): an out-and-back needle 3.6 mm long and 5e-6 mm wide (x 6.43..10.08, y ≈ −5014.0939) has coincident ends, so it is closed and dropped; main keeps it. (b) Slot-width band: for a channel 2d + w wide, main keeps the needle for w ≥ ~3e-9, but T-0017 only keeps it above the snapping allowance (drops w up to 4e-7 at d = 0.1317, 1e-7 at d = 1, 3e-8 at d = 3.175). A DXF slot exactly one tool width wide plus coordinate noise can lose its path. Repro: a straight channel of width 2d + w and length 3.6, offset by d both sides (the verifier's vdrv6 `chan` driver was not preserved; seeds use the fuzz4 generators of `verifier-harness` t0017v2/gen5.inc). Also in scope: the reversal-cusp self-crossings (≤ 2.4e-8 mm; outlier 0xc500076c, a lens 2.1e-4 × 1.9e-9 mm) that contradict the header's "no returned chain intersects or touches itself".
 Acceptance criteria:
@@ -352,7 +351,7 @@ Acceptance criteria:
   2. Phantom classification is area- or depth-weighted; the C2/C4 cases are kept; a message whenever the repair inset exceeds ~chordal or loses area beyond a small bound.
   3. Everything T-0121/T-0125 verified stays clean (diameter scans, phantom probes, sweeps).
 
-### T-0127 Profile On-vector tabs: exact classification and connectivity on sharp turns   [status: ready]
+### T-0127 Profile On-vector tabs: exact classification and connectivity on sharp turns   [status: merging — round 3 FAIL only on AC3 loose-piece reporting gaps; owner 2026-11-02: merge now, follow-up T-0135]
 Phase: 1   Module: core/toolpath   Depends on: T-0124   ADR: 0016 §14
 Goal: T-0124 round-3 verifier (harness branch `verifier-harness`, t0124v4/): for profiles On the vector, a short tab on a sharp turn of the cut is kept although its own pass cuts it through (repro/on_corner.cpp; sweep scenes repro/sev_*.scn; F9 = seed 41006 fam 5 scene 9). T-0124 merges with a conservative guard that drops such tabs ("cut through"); this card replaces the guard with an exact rule so On tabs are kept whenever they really hold.
 Acceptance criteria:
@@ -364,6 +363,58 @@ Acceptance criteria:
   6. Short On tabs on straight edges hold (T-0124 guard drops every tab with length < 2|allowance| + max(0.25, 0.05·D), e.g. D 12, L 1, allowance ±0.3 on a straight edge; driver t0124v5/tools/straight.cpp); ADR-0016 §14 wording matches.
 Note: conn6 reports false "severed" for some On tabs on straight edges and gentle curves; cross-check with the windowed flood t0124v5/wflood.py.
 
+### T-0129 Profile: reject an allowance below −r   [status: blocked]
+(Unblocks when T-0127 merges.)
+Phase: 1   Module: core/toolpath   Depends on: T-0127   ADR: 0016
+Goal: Owner decision 2026-11-01 (raised by the T-0127 coder): an allowance below −r (tool radius, at the cut depth for V-bits) moves the tool centre across the vector, so Outside silently behaves like Inside (and vice versa) and On/open Left/Right swap sides. Profile must reject such settings instead.
+Acceptance criteria:
+  1. `profileToolpath` refuses allowance < −r (and allowance + separate-last-pass allowance < −r) with a clear per-operation diagnostic naming the allowance and the limit; no moves are produced for the affected passes. Exactly −r stays valid (T-0127).
+  2. Tests at −r, −r − 1e-9, −r − 1 for Inside/Outside/On/Left/Right, end mill and V-bit, with and without a separate last pass.
+  3. ADR-0016 records the rule; output for allowance ≥ −r unchanged (byte-identical to the T-0127 merge).
+
+### T-0131 Toolpath scaling and index residuals of T-0123   [status: ready]
+Phase: 1   Module: core/toolpath   Depends on: T-0123   ADR: 0018
+Goal: Found by the T-0123 coder and verifiers (harness t0123v1/, t0123v2/). (a) `BoxIndex` drops non-finite boxes when no box in the set is finite (constructor returns on `sizes.empty()` before `big_` is filled): `BoxIndex({Box2{{-1e308,0},{1e308,1}}}).query(Box2{{0,0},{1,1}})` returns {} (brute force {0}); same for an infinite box alone and `containing`. Driver t0123v2/bi3.cpp. (b) ADR-0017 §9 still names the removed `toolpath/pocket_ramp.hpp`; box_index.hpp comment omits the 1e-9 floor. (c) Raster zig-zag linking is quadratic (1,000-tooth comb within the caps: 6–14 s). (d) Profile with a separate last pass scales 4.2× per doubling (16 s → 69 s at 1,250 → 2,500 vectors): finishing-to-roughing tab matching compares every pair. (e) Pocket with a rest tool on a text page scales ~3× per doubling (2.3 / 7.5 / 22 s at 1,250 / 2,500 / 5,000 vectors; Clipper2 sweeps). (f) Tabs on 5,000 vectors take 17 s (linear but slow).
+Acceptance criteria:
+  1. (a) fixed with a one-box unit test vs brute force (finite, huge, infinite, NaN boxes).
+  2. (b) docs corrected.
+  3. (c)–(f): each ≤ 2.5× per doubling in Release CPU time up to 5,000 vectors (1,000 teeth for the comb), with absolute bounds recorded in the test; outputs byte-identical to the T-0123 merge (or a hand-checked, explained diff).
+
+### T-0132 Native toolpath records in .carv (ADR-0003 job.json)   [status: in-progress — round 1 FAIL (member-count boundary); owner 2026-11-02: move budget tied to file size (~1 move per file byte, cap 8M), exact allocation]
+Phase: 1   Module: core/document   Depends on: T-0122, T-0123   ADR: 0003, 0013, 0019
+Goal: Replace T-0122's interim `toolpaths/NNNN.json` members (ADR-0019) with real toolpath records as ADR-0003 planned: the document holds toolpath definitions (name, operation, parameters, vector selection, tool snapshot) in `job.json`, with computed moves in a compact binary `toolpaths/NNNN.bin` cache that has its own budget, so large jobs (≥ 2M moves) save and reload. Owner decision 2026-11-01: needed before the app saves toolpaths.
+Acceptance criteria:
+  1. Document/Object model holds toolpath records; undo/redo and integrity checks cover them; format version bumped with a loader that still reads 1.0 files and migrates T-0122 interim members.
+  2. A 2,000,000-move toolpath saves and reloads within the loader's resource budget and time limits (bounded, fuzzed like the rest of .carv I/O).
+  3. carvetto-cli uses the native records; the CLI golden stays byte-identical.
+
+### T-0133 Post safety: no G-code injection through text, finite numbers only   [status: done (2026-11-02, #28; remaining documented gap: template text after a value)]
+Phase: 1   Module: core/post   Depends on: T-0030, T-0110
+Goal: Found by the T-0122 verifier (harness t0122v1/, pre-existing on main). The post's text tags (toolpath name, tool name, notes …) only apply SUBSTITUTE, so a newline or other control character in a name becomes live G-code: a toolpath named "Evil\nG0 Z-50" emits the line "G0 Z-50)". Reachable today through tool-database names, and through toolpath names / crafted .carv members once T-0122 merges. Separately, the post prints non-finite or absurd numbers ("Z-inf", "Xinf", 300-digit Z from cut_depth 1e300).
+Acceptance criteria:
+  1. Every text value rendered by the post (all text tags, comments, headers) has control characters (U+0000–U+001F, U+007F, and the post's comment delimiters where the .pp defines them) replaced or removed, so no input can start a new block or close a comment early; regression tests for newline, CR, tab, NUL, ")" / ";" inside a name for every shipped post.
+  2. The post refuses to emit a non-finite coordinate, feed, speed or dwell, and values beyond a sane machine range (document the limit, e.g. |coordinate| ≤ 1e6 mm), with a clear error instead of output; tests with ±inf, NaN, 1e300.
+  3. Shipped post goldens unchanged (names in the fixtures have no control characters); posts/README safety checklist updated.
+  4. (Owner decision 2026-11-02, after verifier round 1) Every text value is written as printable ASCII in every post: bytes ≥ 0x80 and Grbl realtime characters `~ ! ?` become '_' (an obvious ASCII letter allowed for Latin letters), because Grbl acts on them anywhere in the stream, even inside comments.
+  5. (Owner decision 2026-11-02) LinuxCNC/Mach active comments are neutralised in the sanitiser: a text value at the start of a comment that begins with a word followed by a comma (LOGOPEN, LOGAPPEND, PROBEOPEN, MSG, DEBUG, PRINT, ABORT, py, …; case-insensitive, spaces ignored) has the comma replaced, so it stays plain text. Shipped goldens unchanged.
+
+### T-0134 Post-safety and CLI residuals (T-0133 / T-0122 verifiers)   [status: ready]
+Phase: 1   Module: core/post, app/cli   Depends on: T-0133, T-0122
+Goal: Non-blocking findings (harness t0133v3/, t0122v1/). Post (custom .pp only, no shipped post exposed): (a) form feed / vertical tab / CR in template text between "(" and a value end the word run (commentPositionAt treats only ' ' and '\t' as spaces), so `"(\f[TOOLPATH_NAME])"` with "MSG,hi" stays active on LinuxCNC (isspace skip) — driver ff.cpp; (b) the shipped-post gap test only catches a template comma, not template keyword completions like `([TOOLPATH_NAME]OPEN)` (mut.cpp); (c) ADR-0020 sentence "no shipped post has template text between ( and a value" should read "after a value"; (d) [TOOLS_USED] at comment start now prints "(EndMill_ Drill)". CLI: (e) duplicate keys in params.json silently accepted (last wins); (f) number overflow (1e400) error lacks the "params file:" prefix; (g) `toolpath` prints "added …" before a failing final write; (h) a crafted .carv can carry zero/negative tool diameter, feeds, dwell (decoder accepts).
+Acceptance criteria:
+  1. (a) all whitespace/control characters in template text handled (treat isspace as space, or reject control characters in .pp lines at parse time) with tests; (b) a structural test: in every shipped post a text tag is followed only by ")", end of line or another tag; (c)/(d) docs and [TOOLS_USED] separator decided (e.g. "; " outside the word run) with goldens unchanged.
+  2. (e)–(h) fixed with tests; CLI golden unchanged.
+  3. (Owner decision 2026-11-02, raised by the T-0134 verifier) The post refuses spindle speed ≤ 0 (or non-finite) whenever it would write [S] or start the spindle, and refuses feeds, plunge rates, feed overrides and dwell that are > 0 but print as zero in the post's precision (F0, P0.00); clear errors, ADR-0020 updated, goldens unchanged.
+
+### T-0135 Profile loose-piece reporting gaps and tab residuals (T-0127 round 3)   [status: blocked]
+(Unblocks when T-0127 merges.)
+Phase: 1   Module: core/toolpath   Depends on: T-0127   ADR: 0016 §14
+Goal: Found by the T-0127 round-3 verifier (harness t0127v3/; main reports no loose pieces at all, so these are gaps, not regressions). (a) The diagnostics de-duplication in run() merges loose-piece messages whose rounded areas are equal (symmetric parts): repro t0127v3/repro/h.scn (H shape, On, D6, a 0) → two free pieces 0.626/0.621 mm², one report. (b) addPiece treats bounding-box overlap as the same piece, so a piece inside another's concave notch is dropped: repro/abc_2_1_2.scn (B 374.7 mm² and C 64.4 mm² free, C unreported). Mutant inst/profile_mut.cpp FIX_MSG/FIX_BOX fixes both. Residuals: (c) In/Out with negative allowance and a separate last pass drops tabs as "could not be matched on the roughing cut" that main matched and that hold (repro/m1_402002_27.scn, m2_403003_37.scn); (d) conservative drops of 3D tabs with V-bits (repro/m2_403000_48.scn vs _flat.scn); (e) 0.06 mm slivers below the 0.05 mm raster (repro/m1_402012_7.scn); (f) 401007_36 keeps a redundant tab on overlapping vectors.
+Acceptance criteria:
+  1. Every free piece ≥ 0.04 mm² (oracle wsf8 CNT) is reported, one message per piece (numbered or listing areas), over ≥ 2,000 new-seed scenes with leads off; held pieces never reported; regressions for h.scn and abc_2_1_2.scn.
+  2. (c) tabs that hold are kept with a separate last pass (no class where main keeps holding tabs the branch drops); (d)/(e)/(f) improved or documented.
+  3. No kept tab severed/partial/thin (whole-scene flood); AC4 byte identity of T-0127 preserved; perf within 10% of T-0127.
+
 ### T-0018 offsetContours: inward offsets past the inradius must vanish, not invert   [status: ready]
 Phase: 1   Module: core/geometry   Depends on: —
 Goal: Found by the T-0121 coder: a closed contour offset inward by more than its inradius comes back inside out instead of empty (a 17 mm circle shrunk by 19.2 mm returns a 2.2 mm circle; by 30 mm a 13 mm circle). Pocket guards against it locally (`insetBy`); every other caller of `offsetContours` is exposed. Also document (or fix) that Clipper drops pieces of an open path lying exactly on a clip boundary.
@@ -372,13 +423,13 @@ Acceptance criteria:
   2. No output contour has the opposite orientation of its source region unless it is a genuine hole; regression for the reported cases.
   3. Pocket's local guard can be removed or kept as defence; if kept, document why. Behaviour of open paths on clip boundaries documented in ADR-0006 (or fixed), with a test.
 
-### T-0019 Make the T-0004 AC3 timing test CPU-time based   [status: ready]
+### T-0019 Make the T-0004 AC3 timing test CPU-time based   [status: done (by T-0017: T-0004 AC3 timing uses process CPU time, cpu_time.hpp)]
 Phase: 1   Module: core/tests   Depends on: —
 Goal: "T-0004 AC3" in `open_offset_chains_test.cpp` asserts a wall-clock bound (< 0.5 s) and fails intermittently under `ctest -j8` (seen by the T-0120 coder). Convert it to process CPU time (GetProcessTimes on Windows, std::clock elsewhere) or a complexity ratio, like the other timing tests. Coordinate with T-0017 if it lands first (T-0017 AC6 touches the timing helper).
 Acceptance criteria:
   1. The test measures CPU time or a ratio; it passes 20× under `ctest -j8 --repeat until-fail:20`.
 
-### T-0123 Toolpath API alignment: shared ramps, Tool → pass tool conversion, result types   [status: ready]
+### T-0123 Toolpath API alignment: shared ramps, Tool → pass tool conversion, result types   [status: done (2026-11-01, #25)]
 Phase: 1   Module: core/toolpath   Depends on: T-0120, T-0121
 Goal: Profile (T-0120) and Pocket (T-0121) were built in parallel. Unify: one ramp module (Profile's `ramp_entry` vs Pocket's `pocket_ramp`), one result shape (`ProfileResult`/`PocketResult` with diagnostics), a `tooling::Tool` + `CuttingData` → pocket tool conversion (feeds, stepover, pass depth), and shared ordering/linking where it overlaps. Add a spatial index where vector-pair checks are O(n²) (Profile grouping/nesting/clearance; Pocket inset guard) so text-heavy jobs with thousands of vectors stay fast.
 Acceptance criteria:
@@ -387,17 +438,20 @@ Acceptance criteria:
   3. 5,000 small closed vectors profile and pocket in < 2 s Release (CPU time), scaling ≤ 2.5× per doubling.
   4. Pocket rest tools build their pattern only over the rest areas (not the full pattern then clipped): the 200-tooth comb with a 0.1 mm rest tool (T-0121 verifier) runs ≥ 5× faster than at T-0121 merge.
   5. Raster and rest toolpaths route links through cleared area (as Offset does since T-0121 round 2), so raster pockets split by islands and far-apart rest areas retract only between disconnected regions.
+Owner decisions 2026-11-01 (coder's open points): between separate rest areas/clusters the tool retracts to safe Z (no feeding across the top of the cut), even within one connected region; the Pocket tool radius is half the cutting width at the pocket bottom, the same rule as Profile (changes V-bit/ball-nose pockets). T-0123 takes ADR-0018; T-0122's interim-storage ADR is 0019.
 
 Owner decisions 2026-10-31/11-01: run heavy verification one task at a time (machine capacity); T-0017 passes on "no worse than main" (findings identical to main become follow-up cards); T-0124 round-3 FAIL limited to On profiles → merge with a conservative On guard, exact fix in T-0127; director moved from the cloud session to Chris's local WSL machine (see docs/HANDOFF.md).
 
 Owner decisions 2026-10-26 for T-0120/T-0121 (record in ADR-0016/0017): tab length = material left (raised path = length + tool diameter); separate last pass runs after all roughing; nested closed vectors form a region (inner = hole); climb assumes M3 (clockwise) spindle, ramps at feed rate, 3D tabs ramp at 45°, leads only on each cut's first entry and last exit, left-to-right ordering column by column — accepted as proposed; Pocket Profile Pass First/Last/None applies to the Offset strategy too (not only Raster); when a lead-in does not fit at the chosen start, Profile moves the start along the vector and warns (StartMoved).
 
-### T-0122 Headless CLI: carvetto-cli   [status: ready]
+### T-0122 Headless CLI: carvetto-cli   [status: done (2026-11-02, #26)]
 Phase: 1   Module: app/cli   Depends on: T-0100, T-0110, T-0120, T-0121
 Goal: A small console program `carvetto-cli` (no Qt): `import <dxf> → .carv`, `toolpath profile|pocket <params.json> <in.carv> <out.carv>`, `post <post.pp> <in.carv> <out.nc>`, `info`. Used by CI for the end-to-end test and by users for scripting.
 Acceptance criteria:
   1. CI job: DXF fixture → profile with tabs + pocket → Grbl `.nc` whose checksum matches the golden; runs on Linux and Windows.
   2. Errors are clear and exit codes non-zero; `--help` documents every command.
+Owner decisions 2026-11-01 (from the coder's BLOCKED report): (1) toolpaths are stored in the .carv as interim archive members `toolpaths/NNNN.json` (name, tool snapshot, moves, the params they came from) via two small public accessors in `carv_io.hpp` (read a preserved member; copy with a member added); an ADR marks this interim until a card implements ADR-0003's job.json toolpath records. (2) T-0123 merges first; the CLI is written against its API. (3) params.json: snake_case keys mirroring ProfileParams/PocketParams; lengths in mm, angles in degrees (converted at the CLI edge); tool = {"tool": {"database": <path, default data/tools/starter_tools.json>, "id": …}} plus optional material/machine for cutting data; optional "layers": [names] (default all vectors); unknown keys rejected with an error naming the key. nlohmann/json (already used) — no new dependency.
+Owner decision 2026-11-01 (coder's open point): the interim JSON storage is capped by the loader's 2M-value budget for unknown content (ADR-0013 §9), ~300k–400k moves per file; accepted for now — the CLI reloads before writing and refuses with a clear error. The real fix is T-0132.
 
 ### Batch B — drawing & editing (viewmodel + Qt), to be carded after Batch A is dispatched
 - Drawing tools, snapping/guides, selection & node editing, transforms, align, group; boolean/shape ops UI (weld/subtract/overlap/trim/fillet/offset wrappers over T-0003/T-0004/T-0005), curve fit, join/close.

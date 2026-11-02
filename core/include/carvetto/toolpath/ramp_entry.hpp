@@ -2,10 +2,15 @@
 
 #include <vector>
 
+#include "carvetto/geometry/polyline.hpp"
+#include "carvetto/geometry/tolerance.hpp"
 #include "carvetto/toolpath/path_walk.hpp"
+#include "carvetto/toolpath/toolpath.hpp"
 
-// Shared toolpath machinery (T-0120, ADR-0016): stepping down to a new pass level along the cut
-// path instead of plunging (smooth, zig-zag and spiral ramps).
+// Shared toolpath machinery (T-0120, ADR-0016; shared with Pocket since T-0123, ADR-0018):
+// stepping down to a new pass level along the cut path instead of plunging (smooth, zig-zag and
+// spiral ramps). The one ramp implementation of every operation: Profile plans whole passes with
+// `planPass`; Pocket's "Ramp Plunge Moves" use the same zig-zag legs through `appendPathRamp`.
 
 namespace carvetto::toolpath {
 
@@ -62,5 +67,27 @@ PassLegs planPass(const ArcLengthPath& path, double u, double zFrom, double zTo,
 
 /// Length over which a Smooth ramp descends `drop` mm (`distance`, or drop / tan(angle)).
 double smoothRampLength(const RampOptions& ramp, double drop);
+
+/// The zig-zag descent on its own: legs back and forth between path positions `u` and
+/// `u + direction · length` (direction +1 forwards, −1 backwards), Z linear in the distance
+/// travelled from `zFrom` to `zTo`, ending back at `u` exactly at `zTo`. Two legs (out to the
+/// midway height and back); with `ramp.useAngle`, more pairs so that no leg descends more than
+/// length · tan(angle). `planPass` uses it for `RampType::ZigZag`.
+std::vector<PathLeg> zigZagLegs(double u, double direction, double length, double zFrom, double zTo,
+                                const RampOptions& ramp);
+
+/// Appends a zig-zag ramp that takes the tool from `zFrom` down to `zTo` along the start of
+/// `path` and back, so the tool enters the material on the path it is about to cut instead of
+/// plunging vertically (feature-inventory §5 Pocketing "Ramp Plunge Moves"; ADR-0017 §9).
+///
+/// The tool is assumed to sit at `path`'s first point at `zFrom`. The ramp is `zigZagLegs` with
+/// two legs over L = min(`maxLength`, path length) (a closed path's closing segment counts),
+/// walked with `appendLeg`: forward to the midway height, then back over the same points to the
+/// first point, arriving exactly at `zTo`. Every move is a `Feed` on the path itself (lines only:
+/// a polyline has no arcs), so the ramp never leaves the area the path cuts. When L is not longer
+/// than `minLength` (or the path has fewer than two points) a single vertical `Plunge` to `zTo`
+/// is emitted instead. Returns true when a ramp was emitted, false for the plunge fallback.
+bool appendPathRamp(const geometry::Polyline& path, double zFrom, double zTo, double maxLength,
+                    double minLength, const geometry::Tolerance& tol, Toolpath& out);
 
 }  // namespace carvetto::toolpath

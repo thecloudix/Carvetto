@@ -5,7 +5,6 @@
 #include <array>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
-#include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -18,6 +17,8 @@
 
 #include "carvetto/geometry/offset.hpp"
 #include "carvetto/geometry/transform2.hpp"
+#include "cpu_time.hpp"
+#include "offset_chain_checks.hpp"
 
 using namespace carvetto::geometry;
 
@@ -250,32 +251,46 @@ ChainStats sampleChain(const Contour& chain, const Contour& input) {
     return st;
 }
 
-// Per chain: continuous, no needless degenerate span, no retracing at a junction, a closed chain
-// really closes, no self-intersection (exact), every point >= d (to 1e-6), Round points exactly d.
+// Per chain: exactly continuous, sub-tolerance spans only where continuity needs them, no
+// retracing at a junction, a closed chain really closes, no self-intersection (exact), every
+// point >= d (to 1e-6), Round points exactly d.
 void checkChains(const std::vector<Contour>& chains, const Contour& input, double d, JoinType join) {
+    const Tolerance exact{1e-12, 1e-9, 1e-12};
     for (std::size_t k = 0; k < chains.size(); ++k) {
         const Contour& c = chains[k];
         CAPTURE(k);
         REQUIRE_FALSE(c.isEmpty());
-        CHECK(c.isContinuous(kTol));
-        for (std::size_t i = 0; i < c.spans.size(); ++i) {
-            // A span no longer than the tolerance only where leaving it out would open a gap
-            // wider than the tolerance (never first or last).
+        // ADR-0012 A1 (T-0006): consecutive spans meet exactly (to 1e-12), for G-code.
+        CHECK(c.isContinuous(exact));
+        const std::size_t n = c.spans.size();
+        for (std::size_t i = 0; i < n; ++i) {
+            // A span no longer than the tolerance. T-0004 allowed one only where leaving it out
+            // opened a gap wider than the tolerance, because chains were continuous only within
+            // the tolerance. Since ADR-0012 A1 (T-0006) chains are exactly continuous, so such a
+            // span is also kept where the offset really has a sub-tolerance feature that its
+            // neighbours cannot be joined across. It must still have length, sit between two
+            // spans (never at an open chain's ends), meet both exactly and not step backwards.
             if (isDegenerate(c.spans[i], kTol)) {
-                CHECK(i > 0);
-                CHECK(i + 1 < c.spans.size());
-                CHECK((i > 0 && distance(endPoint(c.spans[i - 1]), endPoint(c.spans[i])) > kTol.distance));
-            }
-            if (i > 0 && tangentAt(c.spans[i - 1], 1.0).dot(tangentAt(c.spans[i], 0.0)) < -0.9999) {
-                // A near-reversal is only legitimate as the tip of a needle-shaped feature; the
-                // chain must not run back over itself.
-                const Span& a = c.spans[i - 1];
-                const Span& b = c.spans[i];
-                const Span& shorter = length(a) < length(b) ? a : b;
-                const Span& longer = length(a) < length(b) ? b : a;
-                CHECK(distanceToSpan(pointAt(shorter, 0.5), longer) > 1e-6);
+                CHECK(length(c.spans[i]) > 1e-12);
+                CHECK((c.closed || (i > 0 && i + 1 < n)));
+                const Span& prev = c.spans[(i + n - 1) % n];
+                const Span& next = c.spans[(i + 1) % n];
+                if (c.closed || i > 0) {
+                    CHECK(distance(endPoint(prev), startPoint(c.spans[i])) <= 1e-12);
+                }
+                if (c.closed || i + 1 < n) {
+                    CHECK(distance(endPoint(c.spans[i]), startPoint(next)) <= 1e-12);
+                }
             }
         }
+        // No backward step anywhere (T-0006): no span starts behind the previous end or retraces
+        // it (a near-reversal passes only as a needle tip whose sides diverge at every probe), on
+        // every junction including the closing one, and no short span runs against both of its
+        // neighbours. See offset_chain_checks.hpp.
+        std::string backWhy;
+        const std::size_t backSteps = carvetto::geometry::testing::countBackwardSteps(c, kTol, &backWhy);
+        CAPTURE(backWhy);
+        CHECK(backSteps == 0);
         if (c.closed) {
             CHECK(distance(c.startPoint(), c.endPoint()) <= kTol.distance);
         }
@@ -855,15 +870,16 @@ TEST_CASE("T-0004 AC3: a 2000-span polyline offsets correctly (timing checked in
     for (const JoinType join : kJoins) {
         for (const OffsetSide side : kSides) {
             CAPTURE(static_cast<int>(join), static_cast<int>(side));
-            const auto t0 = std::chrono::steady_clock::now();
+            // Process CPU time, not wall-clock, so parallel ctest load does not fail it (T-0006), on
+            // Windows too (T-0017).
+            const double t0 = carvetto::test::processCpuSeconds();
             const std::vector<Contour> chains = offsetOpenContour(in, 1.5, side, join, kTol);
-            const double seconds =
-                std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+            const double seconds = carvetto::test::processCpuSeconds() - t0;
             REQUIRE_FALSE(chains.empty());
 #ifdef NDEBUG
             CHECK(seconds < 0.5);  // AC3: Release build
 #else
-            CHECK(seconds < 20.0);  // Debug: only guards against pathological blow-ups
+            (void)seconds;  // Debug: the complexity ratio below guards the cost instead
 #endif
             // Spot-check the distance property on every seventh span.
             std::size_t k = 0;
@@ -876,4 +892,25 @@ TEST_CASE("T-0004 AC3: a 2000-span polyline offsets correctly (timing checked in
             }
         }
     }
+}
+
+TEST_CASE("T-0004 AC3: offset cost grows about linearly with the span count (CPU-time ratio)",
+          "[geometry][offset][open][t0004][perf]") {
+    // Same spiral sampled with 1000 and 4000 spans: linear cost gives a ratio of ~4, quadratic
+    // ~16. A ratio of CPU times holds in Debug and Release alike (T-0006).
+    const Contour shortSpiral = densePolyline(1000);
+    const Contour longSpiral = densePolyline(4000);
+    auto cost = [](const Contour& in, int reps) {
+        const double t0 = carvetto::test::processCpuSeconds();
+        std::size_t chains = 0;
+        for (int r = 0; r < reps; ++r) {
+            chains += offsetOpenContour(in, 1.5, OffsetSide::Left, JoinType::Round, kTol).size();
+        }
+        CHECK(chains > 0);
+        return (carvetto::test::processCpuSeconds() - t0) / reps;
+    };
+    const double smallCost = std::max(cost(shortSpiral, 4), 1e-4);
+    const double largeCost = cost(longSpiral, 1);
+    CAPTURE(smallCost, largeCost);
+    CHECK(largeCost < 8.0 * smallCost);
 }

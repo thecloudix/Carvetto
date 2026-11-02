@@ -5,3 +5,4 @@
 core/tests/golden/** -text
 posts/*.pp -text
 data/tools/*.json -text
+app/cli/tests/data/** -text
