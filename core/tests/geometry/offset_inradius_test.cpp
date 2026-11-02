@@ -662,7 +662,7 @@ TEST_CASE("T-0018 AC2: holes grow and stay holes while the region shrinks", "[ge
 
 // --- AC3: open paths lying on a clip boundary (ADR-0006 §7) -------------------------------------
 
-TEST_CASE("T-0018 AC3: open paths on a clip boundary: documented Clipper2 behaviour (ADR-0006 §7)",
+TEST_CASE("T-0018 AC3: open paths on a clip boundary: documented Clipper2 behaviour (ADR-0006 section 7)",
           "[geometry][boolean][inradius]") {
     const Contour square = Contour::rectangle(Box2{{0.0, 0.0}, {10.0, 10.0}});
     auto length = [](const std::vector<Contour>& cs) {
