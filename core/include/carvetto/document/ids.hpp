@@ -26,6 +26,7 @@ struct Id {
 struct ObjectTag {};
 struct LayerTag {};
 struct SheetTag {};
+struct ToolpathTag {};
 
 /// Identifier of a drawing object (vector, bitmap or group).
 using ObjectId = Id<ObjectTag>;
@@ -33,6 +34,8 @@ using ObjectId = Id<ObjectTag>;
 using LayerId = Id<LayerTag>;
 /// Identifier of a sheet.
 using SheetId = Id<SheetTag>;
+/// Identifier of a toolpath record (T-0132, ADR-0021).
+using ToolpathId = Id<ToolpathTag>;
 
 /// Monotonic id allocator shared by every id kind in a document. Ids are never handed out twice,
 /// so an object removed by undo and re-created by redo keeps its identity while a pasted copy

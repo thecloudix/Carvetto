@@ -11,6 +11,7 @@
 #include <set>
 #include <span>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -277,6 +278,32 @@ const ZipEntry* ZipArchive::find(const std::string& name) const {
     return nullptr;
 }
 
+namespace {
+
+bool isNumberedToolpathName(std::string_view name, std::string_view suffix) {
+    constexpr std::string_view prefix = "toolpaths/";
+    if (name.size() != prefix.size() + 4 + suffix.size() || name.substr(0, prefix.size()) != prefix ||
+        name.substr(prefix.size() + 4) != suffix) {
+        return false;
+    }
+    for (const char c : name.substr(prefix.size(), 4)) {
+        if (c < '0' || c > '9') {
+            return false;
+        }
+    }
+    return true;
+}
+
+}  // namespace
+
+bool isToolpathCacheName(std::string_view name) {
+    return isNumberedToolpathName(name, ".bin");
+}
+
+bool isInterimToolpathName(std::string_view name) {
+    return isNumberedToolpathName(name, ".json");
+}
+
 bool ZipArchive::open(const ZipLimits& limits, std::string& error, bool& limitExceeded) {
     limitExceeded = false;
     if (impl_->bytes.empty()) {
@@ -325,15 +352,19 @@ bool ZipArchive::open(const ZipLimits& limits, std::string& error, bool& limitEx
             limitExceeded = true;
             return false;
         }
+        // A toolpath move cache is decoded straight into moves under the loader's move budget,
+        // never held as bytes, so the ratio checks (which bound held bytes) do not apply to it:
+        // regular toolpaths can compress far better than 20:1.
+        const bool cache = isToolpathCacheName(name);
         const std::uint64_t ratio = json ? limits.maxJsonRatio : limits.maxBinaryRatio;
-        if (st.m_uncomp_size > limits.ratioFromBytes && st.m_uncomp_size / ratio > st.m_comp_size) {
+        if (!cache && st.m_uncomp_size > limits.ratioFromBytes && st.m_uncomp_size / ratio > st.m_comp_size) {
             error = "zip member '" + name + "' expands " + std::to_string(st.m_comp_size) + " bytes to " +
                     std::to_string(st.m_uncomp_size) + " (more than " + std::to_string(ratio) +
                     ":1; a decompression bomb?)";
             limitExceeded = true;
             return false;
         }
-        if (!json) {
+        if (!json && !cache) {
             binaryBytes += st.m_uncomp_size;
             binaryCompressed += st.m_comp_size;
             // Binary members are held in memory, so many small (individually unchecked) members
@@ -374,6 +405,7 @@ bool ZipArchive::open(const ZipLimits& limits, std::string& error, bool& limitEx
         }
         ZipEntry entry{i,    name, st.m_uncomp_size, st.m_comp_size, st.m_crc32,
                        json, lh,   dataOffset,       dataEnd,        st.m_method == 0};
+        entry.toolpathCache = cache;
         if (entry.stored && entry.compressedSize != entry.size) {
             error = "zip member '" + name + "' is stored but its sizes differ";
             return false;

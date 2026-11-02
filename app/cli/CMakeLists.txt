@@ -18,8 +18,6 @@ add_library(carvetto_cli_lib STATIC
   src/cli.hpp
   src/params.cpp
   src/params.hpp
-  src/toolpath_store.cpp
-  src/toolpath_store.hpp
   src/starter_tools.hpp
   ${CMAKE_CURRENT_BINARY_DIR}/starter_tools_embedded.cpp
 )

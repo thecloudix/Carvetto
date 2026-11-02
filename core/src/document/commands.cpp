@@ -3,9 +3,12 @@
 #include <algorithm>
 #include <cstdint>
 #include <map>
+#include <optional>
 #include <set>
 #include <type_traits>
+#include <utility>
 #include <variant>
+#include <vector>
 
 #include "carvetto/document/document.hpp"
 
@@ -68,17 +71,17 @@ void ObjectChangeSet::clear() {
 
 namespace {
 
-// True when `value` is the id of any sheet, layer or object. The three kinds share one generator,
-// so a value names at most one item of any kind (ADR-0007, amendment A2).
+// True when `value` is the id of any sheet, layer, object or toolpath. The kinds share one
+// generator, so a value names at most one item of any kind (ADR-0007, amendment A2).
 bool idInUse(const Document& doc, std::uint64_t value) {
     return doc.findSheet(SheetId{value}) != nullptr || doc.findLayer(LayerId{value}) != nullptr ||
-           doc.hasObject(ObjectId{value});
+           doc.hasObject(ObjectId{value}) || doc.findToolpath(ToolpathId{value}) != nullptr;
 }
 
 // Id-allocation guard shared by every command that creates something (ADR-0007, amendments A1
 // and A2). A null id needs one free id in the generator. A preset id must be fresh: below the
 // ceiling, not below the generator's next id (so it was never handed out, and an id freed by
-// undoing an add cannot be taken again), and not used by any sheet, layer or object. When this
+// undoing an add cannot be taken again), and not used by any sheet, layer, object or toolpath. When this
 // fails the command's first `apply` returns false, so nothing changes and nothing is recorded.
 // Redo must not call it: the command's own id is below the next id by then.
 bool canTakeId(const Document& doc, std::uint64_t presetId) {
@@ -734,6 +737,130 @@ bool RemoveDocumentVariableCommand::apply(Document& doc) {
 
 void RemoveDocumentVariableCommand::revert(Document& doc) {
     doc.variables().set(name_, previous_);
+}
+
+// --- Toolpaths -----------------------------------------------------------------------------------
+
+namespace {
+
+// True when every id in `sel` was allocated and names nothing or an item of the right kind, and
+// `all` stands alone: what `checkIntegrity` requires of a toolpath selection (ADR-0021).
+bool selectionValid(const Document& doc, const VectorSelection& sel, ToolpathId self) {
+    if (sel.all && (!sel.layers.empty() || !sel.objects.empty())) {
+        return false;
+    }
+    const std::uint64_t next = doc.idGenerator().peek();
+    const auto allocated = [next](std::uint64_t v) { return v != 0 && v < IdGenerator::kMaxId && v < next; };
+    for (const LayerId id : sel.layers) {
+        if (!allocated(id.value) || doc.findSheet(SheetId{id.value}) || doc.hasObject(ObjectId{id.value}) ||
+            doc.findToolpath(ToolpathId{id.value}) || id.value == self.value) {
+            return false;
+        }
+    }
+    for (const ObjectId id : sel.objects) {
+        if (!allocated(id.value) || doc.findSheet(SheetId{id.value}) || doc.findLayer(LayerId{id.value}) ||
+            doc.findToolpath(ToolpathId{id.value}) || id.value == self.value) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Tool-database input that is not part of a record (ADR-0021): cleared so the stored record
+// equals what a save and load give back.
+template <class IdT>
+void dropDuplicates(std::vector<IdT>& ids) {
+    std::set<IdT> seen;
+    std::erase_if(ids, [&seen](IdT id) { return !seen.insert(id).second; });
+}
+
+// Also drops repeated ids from the selection (first occurrence kept), which `checkIntegrity`
+// would report.
+void normalise(ToolpathRecord& record) {
+    if (auto* profile = std::get_if<toolpath::ProfileParams>(&record.params)) {
+        profile->cuttingData.reset();
+    }
+    dropDuplicates(record.selection.layers);
+    dropDuplicates(record.selection.objects);
+}
+
+}  // namespace
+
+bool AddToolpathCommand::apply(Document& doc) {
+    if (!applied_) {
+        normalise(record_);
+        if (!canTakeId(doc, record_.id.value) || !selectionValid(doc, record_.selection, record_.id)) {
+            return false;
+        }
+        if (record_.id.isNull()) {
+            record_.id = doc.allocateToolpathId();
+        }
+        applied_ = true;
+    }
+    doc.insertToolpath(record_, index_);
+    return true;
+}
+
+void AddToolpathCommand::revert(Document& doc) {
+    doc.takeToolpath(record_.id);
+}
+
+bool RemoveToolpathsCommand::apply(Document& doc) {
+    removed_.clear();
+    for (const ToolpathId id : ids_) {
+        const auto index = doc.toolpathIndex(id);
+        if (!index) {
+            continue;  // unknown, or listed twice
+        }
+        auto record = doc.takeToolpath(id);
+        removed_.emplace_back(*index, std::move(*record));
+    }
+    return !removed_.empty();
+}
+
+void RemoveToolpathsCommand::revert(Document& doc) {
+    for (auto it = removed_.rbegin(); it != removed_.rend(); ++it) {
+        doc.insertToolpath(it->second, it->first);
+    }
+}
+
+bool SetToolpathCommand::apply(Document& doc) {
+    normalise(after_);
+    ToolpathRecord* record = doc.findToolpath(after_.id);
+    if (!record || *record == after_ || !selectionValid(doc, after_.selection, after_.id)) {
+        return false;
+    }
+    before_ = *record;
+    *record = after_;
+    return true;
+}
+
+void SetToolpathCommand::revert(Document& doc) {
+    if (ToolpathRecord* record = doc.findToolpath(after_.id)) {
+        *record = before_;
+    }
+}
+
+bool SetToolpathCommand::mergeWith(const Command& next) {
+    const auto* other = dynamic_cast<const SetToolpathCommand*>(&next);
+    if (!other || other->after_.id != after_.id) {
+        return false;
+    }
+    after_ = other->after_;
+    return true;
+}
+
+bool MoveToolpathCommand::apply(Document& doc) {
+    const auto index = doc.toolpathIndex(id_);
+    if (!index || *index == newIndex_ || !doc.moveToolpath(id_, newIndex_)) {
+        return false;
+    }
+    oldIndex_ = *index;
+    return true;
+}
+
+void MoveToolpathCommand::revert(Document& doc) {
+    doc.moveToolpath(id_, oldIndex_);
 }
 
 }  // namespace carvetto::document

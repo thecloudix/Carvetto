@@ -13,6 +13,7 @@
 #include "carvetto/document/layer.hpp"
 #include "carvetto/document/object.hpp"
 #include "carvetto/document/sheet.hpp"
+#include "carvetto/document/toolpath_record.hpp"
 #include "carvetto/geometry/transform2.hpp"
 #include "carvetto/geometry/vec2.hpp"
 
@@ -37,9 +38,10 @@
 /// `apply` returns false, so `Document::execute` reports a no-op and nothing is recorded. Redo
 /// never allocates.
 ///
-/// Preset ids (ADR-0007, amendment A2): add object/layer/sheet also accept a caller-supplied id
-/// only when it is fresh: not used by any sheet, layer or object and not below the generator's
-/// next id (`IdGenerator::peek()`). Otherwise the first `apply` is a no-op in the same way.
+/// Preset ids (ADR-0007, amendment A2): add object/layer/sheet/toolpath also accept a
+/// caller-supplied id only when it is fresh: not used by any sheet, layer, object or toolpath and
+/// not below the generator's next id (`IdGenerator::peek()`). Otherwise the first `apply` is a
+/// no-op in the same way.
 namespace carvetto::document {
 
 /// Before/after snapshots of the objects one command touched. `recordBefore` is called before an
@@ -362,6 +364,76 @@ class SetDocumentVariableCommand : public Command {
     std::string name_;
     double value_;
     std::optional<double> previous_;
+};
+
+// --- Toolpaths (T-0132, ADR-0021) ---------------------------------------------------------------
+// Toolpath records keep their vector selection when vectors or layers are deleted: the ids then
+// name nothing, and name the items again when the deletion is undone (ids are never reused).
+
+/// Adds a toolpath record (id allocated on first apply) at `index` or at the end of the job
+/// order. No-op when no id is left, a preset id is not fresh (see "Preset ids" above), or the
+/// selection names an id that was never allocated or an item of another kind (or combines `all`
+/// with layers/objects). Repeated selection ids are dropped (first kept) and
+/// `ProfileParams::cuttingData` is cleared (it is not part of a record).
+class AddToolpathCommand : public Command {
+   public:
+    explicit AddToolpathCommand(ToolpathRecord record, std::optional<std::size_t> index = std::nullopt)
+        : record_(std::move(record)), index_(index) {}
+    bool apply(Document& doc) override;
+    void revert(Document& doc) override;
+    std::string text() const override { return "Add toolpath"; }
+    ToolpathId id() const { return record_.id; }
+
+   private:
+    ToolpathRecord record_;
+    std::optional<std::size_t> index_;
+    bool applied_{false};  // first apply done: redo reuses `record_.id` without re-checking it
+};
+
+/// Deletes toolpath records. Unknown ids are ignored; no-op when none exists.
+class RemoveToolpathsCommand : public Command {
+   public:
+    explicit RemoveToolpathsCommand(std::vector<ToolpathId> ids) : ids_(std::move(ids)) {}
+    bool apply(Document& doc) override;
+    void revert(Document& doc) override;
+    std::string text() const override { return "Delete toolpaths"; }
+
+   private:
+    std::vector<ToolpathId> ids_;
+    /// Removed records with their former index, in removal order (undone in reverse).
+    std::vector<std::pair<std::size_t, ToolpathRecord>> removed_;
+};
+
+/// Replaces a toolpath record (matched by id): name, parameters, selection, tool and moves, e.g.
+/// after the user edits and recalculates it. No-op when the id is unknown, nothing changes, or the
+/// selection is invalid (as for `AddToolpathCommand`); `cuttingData` is cleared as there.
+/// Consecutive edits of the same toolpath coalesce. The moves are shared, so the history keeps
+/// no extra copy of them.
+class SetToolpathCommand : public Command {
+   public:
+    explicit SetToolpathCommand(ToolpathRecord record) : after_(std::move(record)) {}
+    bool apply(Document& doc) override;
+    void revert(Document& doc) override;
+    std::string text() const override { return "Edit toolpath"; }
+    bool mergeWith(const Command& next) override;
+
+   private:
+    ToolpathRecord after_;
+    ToolpathRecord before_;
+};
+
+/// Moves a toolpath within the job order.
+class MoveToolpathCommand : public Command {
+   public:
+    MoveToolpathCommand(ToolpathId id, std::size_t newIndex) : id_(id), newIndex_(newIndex) {}
+    bool apply(Document& doc) override;
+    void revert(Document& doc) override;
+    std::string text() const override { return "Reorder toolpaths"; }
+
+   private:
+    ToolpathId id_;
+    std::size_t newIndex_;
+    std::size_t oldIndex_{0};
 };
 
 /// Removes a document variable. No-op when undefined or still referenced by a toolpath.

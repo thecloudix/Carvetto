@@ -50,9 +50,11 @@ add_executable(carvetto_tests
   document/integrity_scale_test.cpp
   geometry/offset_test.cpp
   geometry/open_offset_chains_test.cpp
+  geometry/offset_quality_test.cpp
   geometry/boolean_test.cpp
   document/carv_io_test.cpp
   document/carv_extras_member_test.cpp
+  document/carv_toolpath_test.cpp
   io/dxf_import_test.cpp
   io/dxf_export_test.cpp
   io/dxf_curves_test.cpp
@@ -70,6 +72,8 @@ add_executable(carvetto_tests
 target_include_directories(carvetto_tests PRIVATE ${PROJECT_SOURCE_DIR}/core/src/document)
 # DXF tests use internal io helpers (pair reader value types, curve conversions).
 target_include_directories(carvetto_tests PRIVATE ${PROJECT_SOURCE_DIR}/core/src/io)
+# Offset tests check the internal start-angle junction turn (core/src/geometry/offset_junction.hpp).
+target_include_directories(carvetto_tests PRIVATE ${PROJECT_SOURCE_DIR}/core/src/geometry)
 # Pocket guard tests feed hand-made insets to the internal strict guard (core/src/toolpath/pocket_guard.hpp).
 target_include_directories(carvetto_tests PRIVATE ${PROJECT_SOURCE_DIR}/core/src/toolpath)
 # Golden files and shipped posts are read from the source tree via absolute paths.

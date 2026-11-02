@@ -14,6 +14,7 @@
 #include "carvetto/document/object.hpp"
 #include "carvetto/document/selection.hpp"
 #include "carvetto/document/sheet.hpp"
+#include "carvetto/document/toolpath_record.hpp"
 #include "carvetto/document/undo_stack.hpp"
 #include "carvetto/document/variables.hpp"
 #include "carvetto/geometry/box2.hpp"
@@ -42,10 +43,13 @@ struct IntegrityIssue {
                               ///< (across kinds, or two sheets/layers sharing an id). An
                               ///< object's stored `id` counts as well as its map key.
         IdKeyMismatch,        ///< An object's stored `id` differs from the key it is stored under.
+        BadToolpathSelection, ///< A toolpath's vector selection names an id that was never
+                              ///< allocated or belongs to another kind of item, lists an id
+                              ///< twice, or combines `all` with explicit layers/objects (ADR-0021).
     };
     Kind kind;
-    /// The object (or zero) the issue is about. Zero for id issues on a layer or sheet; the
-    /// message names the kind and value.
+    /// The object (or zero) the issue is about. Zero for id issues on a layer, sheet or toolpath
+    /// and for toolpath selections; the message names the kind and value.
     ObjectId object;
     /// Second object involved (the child or parent), or zero.
     ObjectId related;
@@ -53,8 +57,8 @@ struct IntegrityIssue {
     std::string message;
 };
 
-/// The in-memory design: one job, its sheets, ordered layers, objects, selection, document
-/// variables and undo history.
+/// The in-memory design: one job, its sheets, ordered layers, objects, toolpath records,
+/// selection, document variables and undo history.
 ///
 /// Two levels of mutation exist. The *raw* mutators (`insertObject`, `takeObject`, `insertLayer`,
 /// `takeLayer`, …) change state directly and are what `Command`s are built from. User-level edits
@@ -143,9 +147,29 @@ class Document {
 
     /// Lists every structural inconsistency (group links, missing layers/sheets, cycles, stale
     /// active layer/sheet or selection, ids outside `[1, IdGenerator::kMaxId)` or not below the
-    /// generator's next id, one id value used by several sheets/layers/objects). Empty for a consistent
+    /// generator's next id, one id value used by several sheets/layers/objects/toolpaths, toolpath
+    /// selections naming unallocated ids or items of another kind). Empty for a consistent
     /// document; every command keeps it so.
     std::vector<IntegrityIssue> checkIntegrity() const;
+
+    // --- Toolpaths (T-0132, ADR-0021) ------------------------------------------------------
+    /// Toolpath records in job order (the order they are cut and posted).
+    const std::vector<ToolpathRecord>& toolpaths() const { return toolpaths_; }
+    const ToolpathRecord* findToolpath(ToolpathId id) const;
+    ToolpathRecord* findToolpath(ToolpathId id);
+    std::optional<std::size_t> toolpathIndex(ToolpathId id) const;
+    /// Raw: inserts `record` (allocating an id when null) at `index` or at the end. Returns the
+    /// id. A non-null id must be unused. Exhausted generator: as `insertSheet`.
+    ToolpathId insertToolpath(ToolpathRecord record, std::optional<std::size_t> index = std::nullopt);
+    /// Raw: removes a toolpath record. Nullopt when absent.
+    std::optional<ToolpathRecord> takeToolpath(ToolpathId id);
+    /// Raw: moves a toolpath to `newIndex` in the job order. Returns false on a bad id/index.
+    bool moveToolpath(ToolpathId id, std::size_t newIndex);
+    /// The vector objects `selection` names, each once: the listed objects in list order (a
+    /// group expanded to its descendant vectors in id order), then the vectors on the listed
+    /// layers in id order; with `all`, every vector object in id order. Ids that name nothing
+    /// (deleted items) are skipped.
+    std::vector<ObjectId> selectedVectors(const VectorSelection& selection) const;
 
     // --- Ids -------------------------------------------------------------------------------
     // Each returns a null id when the generator is exhausted (and asserts in Debug); commands
@@ -153,6 +177,7 @@ class Document {
     ObjectId allocateObjectId() { return ObjectId{ids_.allocate()}; }
     LayerId allocateLayerId() { return LayerId{ids_.allocate()}; }
     SheetId allocateSheetId() { return SheetId{ids_.allocate()}; }
+    ToolpathId allocateToolpathId() { return ToolpathId{ids_.allocate()}; }
     const IdGenerator& idGenerator() const { return ids_; }
 
     // --- Selection, variables, undo --------------------------------------------------------
@@ -175,6 +200,7 @@ class Document {
     std::vector<Layer> layers_;
     LayerId activeLayer_;
     std::map<ObjectId, Object> objects_;
+    std::vector<ToolpathRecord> toolpaths_;
     Selection selection_;
     DocumentVariables variables_;
     UndoStack undo_;
