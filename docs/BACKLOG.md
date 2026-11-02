@@ -381,8 +381,7 @@ Acceptance criteria:
   2. (b) docs corrected.
   3. (c)–(f): each ≤ 2.5× per doubling in Release CPU time up to 5,000 vectors (1,000 teeth for the comb), with absolute bounds recorded in the test; outputs byte-identical to the T-0123 merge (or a hand-checked, explained diff).
 
-### T-0132 Native toolpath records in .carv (ADR-0003 job.json)   [status: blocked]
-(Unblocks when T-0122 merges.)
+### T-0132 Native toolpath records in .carv (ADR-0003 job.json)   [status: ready]
 Phase: 1   Module: core/document   Depends on: T-0122, T-0123   ADR: 0003, 0013, 0019
 Goal: Replace T-0122's interim `toolpaths/NNNN.json` members (ADR-0019) with real toolpath records as ADR-0003 planned: the document holds toolpath definitions (name, operation, parameters, vector selection, tool snapshot) in `job.json`, with computed moves in a compact binary `toolpaths/NNNN.bin` cache that has its own budget, so large jobs (≥ 2M moves) save and reload. Owner decision 2026-11-01: needed before the app saves toolpaths.
 Acceptance criteria:
@@ -397,6 +396,8 @@ Acceptance criteria:
   1. Every text value rendered by the post (all text tags, comments, headers) has control characters (U+0000–U+001F, U+007F, and the post's comment delimiters where the .pp defines them) replaced or removed, so no input can start a new block or close a comment early; regression tests for newline, CR, tab, NUL, ")" / ";" inside a name for every shipped post.
   2. The post refuses to emit a non-finite coordinate, feed, speed or dwell, and values beyond a sane machine range (document the limit, e.g. |coordinate| ≤ 1e6 mm), with a clear error instead of output; tests with ±inf, NaN, 1e300.
   3. Shipped post goldens unchanged (names in the fixtures have no control characters); posts/README safety checklist updated.
+  4. (Owner decision 2026-11-02, after verifier round 1) Every text value is written as printable ASCII in every post: bytes ≥ 0x80 and Grbl realtime characters `~ ! ?` become '_' (an obvious ASCII letter allowed for Latin letters), because Grbl acts on them anywhere in the stream, even inside comments.
+  5. (Owner decision 2026-11-02) LinuxCNC/Mach active comments are neutralised in the sanitiser: a text value at the start of a comment that begins with a word followed by a comma (LOGOPEN, LOGAPPEND, PROBEOPEN, MSG, DEBUG, PRINT, ABORT, py, …; case-insensitive, spaces ignored) has the comma replaced, so it stays plain text. Shipped goldens unchanged.
 
 ### T-0018 offsetContours: inward offsets past the inradius must vanish, not invert   [status: ready]
 Phase: 1   Module: core/geometry   Depends on: —
@@ -427,7 +428,7 @@ Owner decisions 2026-10-31/11-01: run heavy verification one task at a time (mac
 
 Owner decisions 2026-10-26 for T-0120/T-0121 (record in ADR-0016/0017): tab length = material left (raised path = length + tool diameter); separate last pass runs after all roughing; nested closed vectors form a region (inner = hole); climb assumes M3 (clockwise) spindle, ramps at feed rate, 3D tabs ramp at 45°, leads only on each cut's first entry and last exit, left-to-right ordering column by column — accepted as proposed; Pocket Profile Pass First/Last/None applies to the Offset strategy too (not only Raster); when a lead-in does not fit at the chosen start, Profile moves the start along the vector and warns (StartMoved).
 
-### T-0122 Headless CLI: carvetto-cli   [status: in-progress]
+### T-0122 Headless CLI: carvetto-cli   [status: done (2026-11-02, #26)]
 Phase: 1   Module: app/cli   Depends on: T-0100, T-0110, T-0120, T-0121
 Goal: A small console program `carvetto-cli` (no Qt): `import <dxf> → .carv`, `toolpath profile|pocket <params.json> <in.carv> <out.carv>`, `post <post.pp> <in.carv> <out.nc>`, `info`. Used by CI for the end-to-end test and by users for scripting.
 Acceptance criteria:
