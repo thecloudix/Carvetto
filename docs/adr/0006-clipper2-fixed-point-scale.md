@@ -1,6 +1,7 @@
 # ADR-0006: Clipper2 for offsets and booleans, and its fixed-point scale
 
-Date: 2026-10-24 · Status: accepted (director, 2026-10-24; residual open-offset defect tracked in T-0004)
+Date: 2026-10-24 · Status: accepted (director, 2026-10-24; residual open-offset defect tracked in T-0004;
+§6 and §7 added by T-0018, 2026-11-02)
 
 ## Decision
 1. Polygon offsetting (`geometry/offset.hpp`) and boolean operations (`geometry/boolean.hpp`) are
@@ -27,6 +28,56 @@ Date: 2026-10-24 · Status: accepted (director, 2026-10-24; residual open-offset
    d-neighbourhood boundary (vertex circles, opposite-side offsets), and keep only pieces at
    distance >= d from the input. Consumed spans and collapsed arcs thereby disappear without
    case analysis, and the distance property holds by construction.
+6. **Over-shrunk insets (T-0018): one upstream fix is backported into Clipper2 1.4.0.** At a
+   concave join of an offset (a convex corner of the region when it shrinks) `ClipperOffset`
+   emits the two offset edge ends and, between them, the original vertex, so that wherever the
+   offset passes "through" the region (an inset past the local inradius) the raw path loops back
+   with negative winding and the final Positive-fill union removes it. Version 1.4.0 skips that
+   vertex when the join turns by less than about 8 degrees (`cos_a < 0.99`, issue #405). A
+   polygonised curve turns by a few degrees per vertex, so an over-shrunk circle became its
+   point reflection (orientation preserved) and survived the union: a 17 mm circle inset by
+   19.2 mm came back as a 2.2 mm circle, by 30 mm as a 13 mm one (a 16-gon, turning by 22.5
+   degrees per vertex, was already correct). Upstream later made the vertex unconditional
+   (issues #873, #916; current Clipper2 emits it at every concave join). `core/CMakeLists.txt`
+   applies exactly that one-line change to the fetched `clipper.offset.cpp` at configure time
+   (idempotent; configuration fails loudly if the source no longer matches 1.4.0). An upgrade
+   to a Clipper2 version with the fix drops the patch step.
+   - Patching the dependency was chosen over working around it in `offsetContours`: the only
+     sound workaround is to subtract the boundary's d-neighbourhood from the result, which costs
+     a second boolean on every inset and leaves slivers along every true edge; filtering result
+     regions by depth (as Pocket's `insetBy` does) is not sound in general, because a phantom
+     can touch a genuine region and be merged with it by the union.
+   - The extra vertex lies within d of the boundary, so it never reaches a genuine result
+     region; it only changes which edge pairs the union intersects. On valid insets the result
+     is the same region, but a vertex where two nearly collinear offset edges meet can move
+     along that near-straight boundary by up to about 0.4 µm (4 of 900 random raw insets in a
+     direct comparison), and toolpaths built on such regions can make different downstream
+     choices (Pocket rings and rest areas, Profile's merged-region cuts). No golden file
+     changed, and verifier oracles (gouge, coverage, engagement, retracts) report the same
+     results before and after. Profile no longer reports "part of the cut was left out"
+     (`TrimmedNearVector`) for merged-region phantoms its clearance guard used to trim away
+     whole; with the guard off those phantoms were cut.
+   - Contract (now tested generatively against a brute-force inradius/distance oracle,
+     `offset_inradius_test.cpp`): every point of an inset by d lies inside the region at
+     distance >= d (less the polygonisation and join tolerance, 2·chordal) from its boundary,
+     so an inset by d >= inradius yields nothing; every lobe deep enough survives; an output
+     contour wound against the outermost input is a genuine hole (nested at odd depth).
+7. **Open paths lying on a clip boundary are not decided by geometry.** `booleanOp` clips open
+   subject paths with Clipper2. A stretch of an open path that runs exactly along an edge of
+   the clip polygon (collinear and overlapping on the integer grid) is returned by the
+   Intersection, by the Difference, or by both, depending on where the edge lies in Clipper2's
+   sweep and on the path's direction, not on a geometric rule (Clipper2 1.4.0 drops the bottom
+   side of a CCW square from the Intersection but keeps its top side, and returns its right
+   side from both). In the cases tested it was never dropped from both. This is documented
+   rather than fixed: deciding it would mean re-classifying every piece against the clip
+   boundary after clipping, and no Carvetto caller relies on it: Pocket's rest tools no longer
+   clip paths against a region's own boundary (ADR-0017 §10, since T-0123), and its raster lines
+   (at half-pitch positions) meet the case only where one runs exactly along a parallel edge of
+   the centre region; that stretch lies on the region's boundary, where the tool centre may go,
+   so keeping or dropping it is safe either way. **Callers that need a decided
+   side grow or shrink the clip by a tolerance first** (e.g. `offsetContours(clip,
+   +tol.distance)` keeps boundary stretches in the Intersection). Pinned by the AC3 test in
+   `offset_inradius_test.cpp`.
 
 ## Rationale
 - Clipper2 is the de-facto robust polygon clipper for CAM; it is deterministic, header-light,

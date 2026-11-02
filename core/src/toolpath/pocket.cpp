@@ -557,9 +557,11 @@ class RegionIndex {
 /// Phantom test (both guards, T-0126): a result region is genuine when some point of it (an outer
 /// vertex, or the centroid of its outer ring when that lies in the region) keeps the full
 /// distance from the source and lies inside it. Such a point belongs to the true inset, so the
-/// region does too. A phantom (Clipper2's inside-out result past the inradius) has no such
+/// region does too. A phantom (Clipper2 1.4.0's inside-out result past the inradius) has no such
 /// point: every point of it is closer to the walls than the inset. The test is by depth, not by
-/// vertex count, so a large region whose small bulge holds most of its vertices is kept.
+/// vertex count, so a large region whose small bulge holds most of its vertices is kept. Since
+/// T-0018 `offsetContours` no longer returns phantoms (ADR-0006 §6); the test is kept as a cheap
+/// local defence of a gouge-relevant invariant (ADR-0017 §4); it is no longer expected to fire.
 enum class InsetGuard {
     /// For the tool-centre region, where a vertex or an edge too close to a wall would be a gouge.
     /// Outer and hole vertices are checked. In a genuine region, failing convex vertices are
@@ -602,10 +604,10 @@ double groupPerimeter(const Group& g) {
 }
 
 /// Insets the region of `cs` by d > 0 (offsetContours with −d) and keeps only genuine result
-/// regions, as `guard` describes. Clipper2 1.4.0 turns a polygon inset beyond its inradius
-/// inside out (a circle inset by more than its radius comes back as a growing circle), so a
-/// valid-looking region can appear where nothing fits; every point of a true inset is at
-/// distance >= d from the input, which rejects those. Distances use an edge grid; the inside
+/// regions, as `guard` describes. Unpatched Clipper2 1.4.0 turned a polygon inset beyond its
+/// inradius inside out (a circle inset by more than its radius came back as a growing circle);
+/// T-0018 fixed that at the source, and the phantom rejection stays as defence (every point of a
+/// true inset is at distance >= d from the input). Distances use an edge grid; the inside
 /// test is made once per region at a point that keeps the distance. With `Strict`, a genuine
 /// region that cannot be repaired, or is trimmed noticeably, is counted in `*report` (never
 /// silently lost).
