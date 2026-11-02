@@ -458,6 +458,12 @@ Acceptance criteria:
   1. Every free piece ≥ 0.04 mm² reported for Inside/Outside allowance ≥ 0 (whole-scene flood, ≥ 2,000 new-seed scenes, leads off); held pieces never reported.
   2. Moves byte-identical to the T-0135 merge (diagnostics may only gain loose-piece messages); perf within 10%.
 
+### T-0141 Offset/Profile robustness residuals (T-0138 verifier)   [status: ready]
+Phase: 1   Module: core/geometry, core/toolpath   Depends on: —   ADR: 0006, 0016
+Goal: Pre-existing findings from the T-0138 verifier (harness t0138v1/, wt-T0138/build-verify3/h/). (a) A single row of 20,000 small rectangles takes ~45–50 s in offsetContours (same with no dust; likely Clipper2's sweep) — profile and fix or bound (col.cpp mode 1, rownd.cpp). (b) profileToolpath does not validate its Tolerance (Pocket requires 1e-4 ≤ chordal and 0 < distance ≤ chordal); decide and add the same validation with a clear diagnostic. (c) Clipper2 erosion of acute rings is not monotone (the T-0138 dust band is 3.6–5.6 grid units); decide whether a monotone dust test is wanted.
+Acceptance criteria:
+  1. (a) ≤ 2.5× per doubling up to 20k rings, or documented limit with a clear diagnostic; (b) Profile refuses invalid tolerances with tests, valid output byte-identical; (c) decision recorded in ADR-0006.
+
 ### T-0019 Make the T-0004 AC3 timing test CPU-time based   [status: done (by T-0017: T-0004 AC3 timing uses process CPU time, cpu_time.hpp)]
 Phase: 1   Module: core/tests   Depends on: —
 Goal: "T-0004 AC3" in `open_offset_chains_test.cpp` asserts a wall-clock bound (< 0.5 s) and fails intermittently under `ctest -j8` (seen by the T-0120 coder). Convert it to process CPU time (GetProcessTimes on Windows, std::clock elsewhere) or a complexity ratio, like the other timing tests. Coordinate with T-0017 if it lands first (T-0017 AC6 touches the timing helper).
