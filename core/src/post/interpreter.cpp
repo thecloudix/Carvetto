@@ -12,13 +12,23 @@
 // Arcs are written with the arc blocks when the post has them; otherwise (and when the radius
 // is outside MIN/MAX_ARC_RADIUS, or a rotary wrap is active) they are linearised into feed moves
 // whose chordal deviation stays within `PostContext::arcTolerance`.
+//
+// Output safety (T-0133, ADR-0020) is enforced here, in the render path every tag goes
+// through, so no post can bypass it: text values are sanitised for the comment context they
+// land in (`detail::sanitiseText`), and every number is checked to be finite and within the
+// supported machine range before it is formatted. Move data is checked up front as well, so a
+// bad coordinate is refused even when the post never writes that axis.
 
 #include <algorithm>
+#include <array>
+#include <charconv>
 #include <cmath>
+#include <cstddef>
 #include <map>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <vector>
 
 #include "carvetto/geometry/vec2.hpp"
@@ -42,6 +52,80 @@ using toolpath::ToolSnapshot;
 constexpr double kMmPerInch = 25.4;
 constexpr double kZeroLength = 1e-9;
 
+/// Largest magnitude accepted for a length (mm), feed (mm/min), spindle speed (rpm), dwell (s)
+/// or angle (degrees) before conversion to the post's units (ADR-0020).
+constexpr double kMaxMachineValue = 1e6;
+/// Largest inverse-time feed `[FI]` accepted (1/min); short moves make it legitimately large.
+constexpr double kMaxInverseTime = 1e9;
+/// Largest magnitude of any number as written (after unit conversion and the VAR multiplier).
+constexpr double kMaxWrittenValue = 1e9;
+/// Accepted range of `PostContext::arcTolerance` (mm): finer would ask for more chords than the
+/// segment cap allows (and below ~1e-13 r the chord angle rounds to zero), coarser is no arc.
+constexpr double kMinArcTolerance = 1e-6;
+constexpr double kMaxArcTolerance = 1.0;
+/// Most chords one linearised arc is split into.
+constexpr double kMaxArcSegments = 100000.0;
+/// Names quoted in error messages are cut to this many bytes.
+constexpr std::size_t kMaxQuotedName = 64;
+
+/// A number for an error message: shortest round-trip form, "NaN", "+inf" or "-inf".
+std::string describeValue(double v) {
+    if (std::isnan(v)) {
+        return "NaN";
+    }
+    if (std::isinf(v)) {
+        return v > 0.0 ? "+inf" : "-inf";
+    }
+    std::array<char, 64> buf{};
+    const auto r = std::to_chars(buf.data(), buf.data() + buf.size(), v);
+    return r.ec == std::errc{} ? std::string(buf.data(), r.ptr) : std::string("?");
+}
+
+/// A user-supplied name for an error message: quoted, sanitised and cut short.
+std::string quoted(std::string_view name) {
+    const std::string s = detail::sanitiseText(name.substr(0, kMaxQuotedName), {});
+    return "'" + s + (name.size() > kMaxQuotedName ? "...'" : "'");
+}
+
+/// The supported range of a numeric tag's value before unit conversion (ADR-0020).
+struct ValueLimit {
+    double max;
+    const char* unit;
+};
+
+/// The limit for a tag, or nullopt for the interpreter's own integer counters (N, T, TP, DB).
+std::optional<ValueLimit> limitFor(const TagInfo& info) {
+    switch (info.kind) {
+        case TagKind::Length:
+            return ValueLimit{kMaxMachineValue, "mm"};
+        case TagKind::FeedRate:
+            return ValueLimit{kMaxMachineValue, "mm/min"};
+        case TagKind::Angle:
+            return ValueLimit{kMaxMachineValue, "degrees"};
+        case TagKind::Number:
+            if (info.tag == "FI") return ValueLimit{kMaxInverseTime, "1/min"};
+            if (info.tag == "S") return ValueLimit{kMaxMachineValue, "rpm"};
+            if (info.tag == "DWELL") return ValueLimit{kMaxMachineValue, "s"};
+            return std::nullopt;
+        case TagKind::Text:
+            return std::nullopt;
+    }
+    return std::nullopt;
+}
+
+/// Why `v` is not acceptable against `limit` ("" when it is).
+std::string rangeProblem(double v, double limit, std::string_view unit) {
+    if (!std::isfinite(v)) {
+        return describeValue(v) + " is not a finite number";
+    }
+    if (std::fabs(v) > limit) {
+        const std::string u = unit.empty() ? std::string{} : " " + std::string(unit);
+        return describeValue(v) + u + " is outside the supported range -" + describeValue(limit) + ".." +
+               describeValue(limit) + u;
+    }
+    return {};
+}
+
 /// What the tags of the block being written refer to.
 struct Frame {
     Vec3 from;
@@ -63,8 +147,25 @@ class Interpreter {
             return Error{
                 0, "the post wraps a linear axis onto a rotary axis but the job has no rotary diameter"};
         }
+        if (s_.rotaryWrapX || s_.rotaryWrapY) {
+            if (const std::string problem = rangeProblem(ctx_.rotaryDiameter, kMaxMachineValue, "mm");
+                !problem.empty()) {
+                return Error{0, "cannot write G-code: job rotary diameter " + problem};
+            }
+        }
+        if (!(ctx_.arcTolerance >= kMinArcTolerance && ctx_.arcTolerance <= kMaxArcTolerance)) {
+            return Error{0, "cannot write G-code: arc tolerance " + describeValue(ctx_.arcTolerance) +
+                                " mm is outside the supported range " + describeValue(kMinArcTolerance) +
+                                ".." + describeValue(kMaxArcTolerance) + " mm"};
+        }
         lineNumber_ = s_.lineNumberStart;
         radiusOnlyArcs_ = arcsUseRadiusOnly();
+        for (const auto& [value, what] : {std::pair{ctx_.home.x, "home X"}, std::pair{ctx_.home.y, "home Y"},
+                                          std::pair{ctx_.home.z, "home Z"}}) {
+            if (const std::string problem = rangeProblem(value, kMaxMachineValue, "mm"); !problem.empty()) {
+                return Error{0, "cannot write G-code: job " + std::string(what) + " " + problem};
+            }
+        }
 
         std::vector<const Toolpath*> active;
         for (const Toolpath& tp : toolpaths_) {
@@ -84,6 +185,9 @@ class Interpreter {
         lastFeed_ = tool_.feedRate;
         setStationary();
         emit("HEADER");
+        if (failure_) {
+            return *failure_;
+        }
 
         for (std::size_t i = 0; i < active.size(); ++i) {
             const Toolpath& tp = *active[i];
@@ -109,15 +213,32 @@ class Interpreter {
                 emit("NEW_SEGMENT");
             }
 
+            if (failure_) {
+                return *failure_;
+            }
+
+            moveIndex_ = 0;
             for (const Move& m : tp.moves) {
+                ++moveIndex_;
+                if (auto err = validateMove(m)) {
+                    return *err;
+                }
                 if (auto err = doMove(m)) {
                     return *err;
                 }
+                if (failure_) {
+                    return *failure_;
+                }
             }
+            moveIndex_ = 0;
         }
 
+        inFooter_ = true;
         setStationary();
         emit("FOOTER");
+        if (failure_) {
+            return *failure_;
+        }
         return PostOutput{std::move(out_), std::move(warnings_)};
     }
 
@@ -157,6 +278,87 @@ class Interpreter {
             }
         }
         warnings_.push_back({0, message});
+    }
+
+    // ---- safety checks (ADR-0020) -----------------------------------------------------------
+
+    /// Where the interpreter is, for error messages.
+    std::string where() const {
+        std::string w = "in " + std::string(block_);
+        if (toolpath_ != nullptr && !inFooter_) {
+            w += " of toolpath " + quoted(toolpath_->name);
+            if (moveIndex_ > 0) {
+                w += ", move " + std::to_string(moveIndex_);
+            }
+        }
+        return w;
+    }
+
+    /// Refuses a move whose coordinates, arc centre, feed override or dwell are not finite or
+    /// beyond the machine range, before anything is computed from it.
+    std::optional<Error> validateMove(const Move& m) const {
+        std::vector<std::pair<double, const char*>> values{{m.to.x, "X"}, {m.to.y, "Y"}, {m.to.z, "Z"}};
+        if (m.kind == MoveKind::ArcCW || m.kind == MoveKind::ArcCCW) {
+            values.emplace_back(m.centre.x, "arc centre X");
+            values.emplace_back(m.centre.y, "arc centre Y");
+        }
+        for (const auto& [value, what] : values) {
+            if (const std::string problem = rangeProblem(value, kMaxMachineValue, "mm"); !problem.empty()) {
+                return Error{0, "cannot write G-code: toolpath " + quoted(toolpath_->name) + ", move " +
+                                    std::to_string(moveIndex_) + ": " + what + " " + problem};
+            }
+        }
+        std::optional<std::pair<double, const char*>> other;
+        if (m.feedOverride && m.kind != MoveKind::Rapid && m.kind != MoveKind::Dwell) {
+            other = std::pair{*m.feedOverride, "mm/min"};
+        } else if (m.kind == MoveKind::Dwell) {
+            other = std::pair{m.dwellSeconds, "s"};
+        }
+        if (other) {
+            if (const std::string problem = rangeProblem(other->first, kMaxMachineValue, other->second);
+                !problem.empty()) {
+                return Error{0, "cannot write G-code: toolpath " + quoted(toolpath_->name) + ", move " +
+                                    std::to_string(moveIndex_) + ": " +
+                                    (m.kind == MoveKind::Dwell ? "dwell " : "feed ") + problem};
+            }
+        }
+        return std::nullopt;
+    }
+
+    /// Checks a numeric tag value before conversion; records the first failure.
+    bool acceptValue(const TagInfo& info, double v) {
+        std::optional<ValueLimit> limit = limitFor(info);
+        if (info.tag == "F" && s_.inverseTimeMode && frame_.cutting) {
+            limit = ValueLimit{kMaxInverseTime, "1/min"};  // [F] writes [FI] here
+        }
+        if (!limit) {
+            return true;
+        }
+        const std::string problem = rangeProblem(v, limit->max, limit->unit);
+        if (problem.empty()) {
+            return true;
+        }
+        fail(0, "[" + std::string(info.tag) + "] " + problem);
+        return false;
+    }
+
+    /// Checks a numeric value as it will be written (after units and multiplier).
+    bool acceptWritten(const VarDef& def, double v) {
+        const std::string problem = rangeProblem(v, kMaxWrittenValue, "");
+        if (problem.empty()) {
+            return true;
+        }
+        // Blame the VAR line only when its multiplier took part.
+        fail(def.multiplier != 1.0 ? def.line : 0, "[" + def.tag + "] would be written as " + problem +
+                           (def.multiplier != 1.0 ? " (VAR multiplier " + describeValue(def.multiplier) + ")"
+                                                  : std::string{}));
+        return false;
+    }
+
+    void fail(int line, const std::string& message) {
+        if (!failure_) {
+            failure_ = Error{line, "cannot write G-code " + where() + ": " + message};
+        }
     }
 
     // ---- moves -----------------------------------------------------------------------------
@@ -333,7 +535,7 @@ class Interpreter {
     }
 
     std::optional<Error> lineariseArc(const Move& m, Vec3 from, double r, double sweep) {
-        const double tol = ctx_.arcTolerance > 0.0 ? ctx_.arcTolerance : 0.01;
+        const double tol = ctx_.arcTolerance;  // validated in run()
         double segments = 1.0;
         if (r > tol) {
             const double maxStep = 2.0 * std::acos(1.0 - tol / r);
@@ -341,7 +543,12 @@ class Interpreter {
         } else if (r > kZeroLength) {
             segments = std::ceil(std::fabs(sweep) / (kPi / 2.0));
         }
-        const int n = static_cast<int>(std::clamp(segments, 1.0, 100000.0));
+        if (!(segments >= 1.0)) {
+            segments = 1.0;  // zero sweep (or NaN, which validated inputs cannot produce)
+        }
+        // An infinite count (chord angle rounded to zero) is capped like any large one, never
+        // collapsed to a single chord.
+        const int n = static_cast<int>(std::min(segments, kMaxArcSegments));
         const double a0 = std::atan2(from.y - m.centre.y, from.x - m.centre.x);
         for (int k = 1; k <= n; ++k) {
             const double t = static_cast<double>(k) / static_cast<double>(n);
@@ -369,9 +576,11 @@ class Interpreter {
 
     void emit(std::string_view blockName) {
         const PostBlock* b = pp_.block(blockName);
-        if (b == nullptr) {
+        if (b == nullptr || failure_) {
             return;
         }
+        const std::string_view outerBlock = block_;
+        block_ = b->name;
         for (const std::string& line : b->lines) {
             std::string lineText;
             bool hadTag = false;
@@ -384,7 +593,7 @@ class Interpreter {
                 }
                 lineText.append(line, i, open - i);
                 const std::size_t close = line.find(']', open);  // validated by the parser
-                lineText += render(std::string_view(line).substr(open + 1, close - open - 1));
+                lineText += render(std::string_view(line).substr(open + 1, close - open - 1), lineText);
                 hadTag = true;
                 i = close + 1;
             }
@@ -397,6 +606,7 @@ class Interpreter {
             out_ += lineText;
             out_ += s_.lineEnding;
         }
+        block_ = outerBlock;
     }
 
     /// Rotary angle in degrees for a point, from whichever linear axis is wrapped.
@@ -505,7 +715,9 @@ class Interpreter {
         return v;
     }
 
-    std::string render(std::string_view tag) {
+    /// Renders one `[tag]`. `before` is the output line written so far; it decides the comment
+    /// context a text value is sanitised for.
+    std::string render(std::string_view tag, std::string_view before) {
         const TagInfo* info = findTag(tag);  // never null: the parser rejected unknown tags
         const VarDef* defined = pp_.var(tag);
         const VarDef def = defined != nullptr ? *defined : defaultVarDef(tag);
@@ -526,18 +738,37 @@ class Interpreter {
                     }
                 }
             }
+            // After SUBSTITUTE, so no post setting can reintroduce a control character or an
+            // early comment close. The prefix is part of the line before the value.
+            body = detail::sanitiseText(body, detail::commentPositionAt(std::string(before) + def.prefix));
         } else if (def.incremental) {
             const double scale = std::pow(10.0, def.format.decimals);
             const auto quantise = [&](double v) { return std::round(v * scale) / scale; };
-            const double end = toOutputUnits(*info, axisValue(tag, frame_.to)) * def.multiplier;
-            const double start = toOutputUnits(*info, axisValue(tag, frame_.from)) * def.multiplier;
+            const double endRaw = axisValue(tag, frame_.to);
+            const double startRaw = axisValue(tag, frame_.from);
+            if (!acceptValue(*info, endRaw) || !acceptValue(*info, startRaw)) {
+                return {};
+            }
+            const double end = toOutputUnits(*info, endRaw) * def.multiplier;
+            const double start = toOutputUnits(*info, startRaw) * def.multiplier;
+            if (!acceptWritten(def, end) || !acceptWritten(def, start)) {
+                return {};
+            }
             const double delta = quantise(end) - quantise(start);
             if (def.mode == OutputMode::Changed && std::fabs(delta) < 0.5 / scale) {
                 return {};
             }
             return def.prefix + formatNumber(def.format, delta);
         } else {
-            body = formatNumber(def.format, toOutputUnits(*info, number(tag)) * def.multiplier);
+            const double raw = number(tag);
+            if (!acceptValue(*info, raw)) {
+                return {};
+            }
+            const double written = toOutputUnits(*info, raw) * def.multiplier;
+            if (!acceptWritten(def, written)) {
+                return {};
+            }
+            body = formatNumber(def.format, written);
         }
 
         if (tag == "N") {
@@ -574,6 +805,10 @@ class Interpreter {
     long long lineNumber_{0};
     double lastFeed_{0.0};
     std::optional<double> lastFeedWritten_;
+    std::optional<Error> failure_;     // first unsafe value met while rendering (ADR-0020)
+    std::string_view block_{"the program"};  // block being expanded, for error messages
+    std::size_t moveIndex_{0};         // 1-based move of the current toolpath; 0 = none
+    bool inFooter_{false};
     bool radiusOnlyArcs_{false};
     bool firstRapid_{true};
     bool firstFeed_{true};

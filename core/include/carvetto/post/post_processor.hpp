@@ -83,9 +83,9 @@ struct PostContext {
     /// Material extents (`[XMIN]`, `[XMAX]`, `[XLENGTH]`, and Y/Z equivalents), mm.
     geometry::Vec3 materialMin{0.0, 0.0, 0.0};
     geometry::Vec3 materialMax{0.0, 0.0, 0.0};
-    /// Cylinder diameter for `ROTARY_WRAP_X/Y`, mm. Must be > 0 when the post wraps.
+    /// Cylinder diameter for `ROTARY_WRAP_X/Y`, mm. Must be > 0 and <= 1e6 when the post wraps.
     double rotaryDiameter{0.0};
-    /// Maximum chordal deviation when arcs are linearised, mm.
+    /// Maximum chordal deviation when arcs are linearised, mm; must be 1e-6..1 (ADR-0020).
     double arcTolerance{0.01};
 };
 
