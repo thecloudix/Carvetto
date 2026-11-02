@@ -1,0 +1,94 @@
+#pragma once
+
+#include <cstddef>
+#include <memory>
+#include <string>
+#include <utility>
+#include <variant>
+#include <vector>
+
+#include "carvetto/document/ids.hpp"
+#include "carvetto/toolpath/move.hpp"
+#include "carvetto/toolpath/pocket.hpp"
+#include "carvetto/toolpath/profile.hpp"
+#include "carvetto/toolpath/toolpath.hpp"
+
+// Toolpath records in the document (T-0132, ADR-0021): what a toolpath was made from (operation
+// parameters, vector selection, tool) plus its computed moves. Saved in `job.json` (definitions)
+// and `toolpaths/NNNN.bin` (moves) by `saveCarv`.
+
+namespace carvetto::document {
+
+/// Which vectors a toolpath machines. Ids are never reused, so a reference to an object or layer
+/// that has since been deleted names nothing (and names it again if the deletion is undone).
+struct VectorSelection {
+    /// Every vector object of the document (`layers` and `objects` are then empty).
+    bool all{false};
+    /// Layers whose vector objects are machined.
+    std::vector<LayerId> layers;
+    /// Individual objects; a group stands for its descendant vectors.
+    std::vector<ObjectId> objects;
+
+    bool operator==(const VectorSelection&) const = default;
+
+    /// The selection of every vector object.
+    static VectorSelection allVectors() { return VectorSelection{true, {}, {}}; }
+};
+
+/// Where the tool of a toolpath came from in the tool database, for recalculation. Any field may
+/// be empty (unknown).
+struct ToolSource {
+    /// Tool id in the tool database.
+    std::string toolId;
+    /// Machine and material ids that chose the cutting data (both or neither).
+    std::string machine;
+    std::string material;
+
+    bool operator==(const ToolSource&) const = default;
+};
+
+/// The operation of a toolpath and its parameters. `cuttingData` inside `ProfileParams` is input
+/// from the tool database and is not part of a saved record (it loads empty); the feeds the
+/// toolpath was computed with are in `ToolpathRecord::tool`.
+using ToolpathParams = std::variant<toolpath::ProfileParams, toolpath::PocketParams>;
+
+/// Discriminator for `ToolpathRecord::operation()`.
+enum class ToolpathOperation { Profile, Pocket };
+
+/// Computed moves of a toolpath, shared and immutable so copies (undo history, clipboard) are cheap.
+using SharedMoves = std::shared_ptr<const std::vector<toolpath::Move>>;
+
+/// One toolpath of the job: identity, name, what it was made from and its computed moves.
+struct ToolpathRecord {
+    ToolpathId id{};
+    /// Display name, also the name passed to the post-processor.
+    std::string name;
+    ToolpathParams params{toolpath::ProfileParams{}};
+    VectorSelection selection;
+    /// Tool values copied when the moves were computed (name, number, diameter, feeds).
+    toolpath::ToolSnapshot tool;
+    ToolSource toolSource;
+    /// Computed moves; null when the toolpath has not been computed (or the cache was not saved).
+    SharedMoves moves;
+
+    ToolpathOperation operation() const { return static_cast<ToolpathOperation>(params.index()); }
+    /// Absolute safe Z of the operation's parameters (mm).
+    double safeZ() const;
+    /// True when computed moves are held (possibly an empty list).
+    bool hasMoves() const { return moves != nullptr; }
+    /// Number of computed moves (0 when none are held).
+    std::size_t moveCount() const { return moves ? moves->size() : 0; }
+    /// The record as a `toolpath::Toolpath` (name, tool snapshot and a copy of the moves).
+    toolpath::Toolpath toolpath() const;
+
+    /// Equal when every field is equal; moves compare by content.
+    bool operator==(const ToolpathRecord& other) const;
+};
+
+/// Shares `moves` as a record's computed moves. Fields a move's kind ignores (ADR-0008: the
+/// centre of a non-arc, the seconds of a non-dwell, a feed override on a rapid or dwell) are
+/// cleared, as the `.carv` move cache does not store them, so a record equals its saved and
+/// reloaded copy.
+SharedMoves shareMoves(std::vector<toolpath::Move> moves);
+
+}  // namespace carvetto::document

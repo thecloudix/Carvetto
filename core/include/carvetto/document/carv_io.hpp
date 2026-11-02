@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <memory>
@@ -14,10 +15,13 @@
 
 /// Native `.carv` file I/O (ADR-0003, details in ADR-0013).
 ///
-/// A `.carv` file is a zip archive holding `manifest.json` (format and app version) and
-/// `job.json` (job, sheets, layers in stacking order, objects in id order with their contours and
-/// creation parameters, group links, document variables, active layer/sheet and the id generator's
-/// high-water mark). Output is deterministic: sorted keys, fixed member order, shortest round-trip
+/// A `.carv` file is a zip archive holding `manifest.json` (format and app version), `job.json`
+/// (job, sheets, layers in stacking order, objects in id order with their contours and creation
+/// parameters, group links, toolpath records in job order, document variables, active
+/// layer/sheet and the id generator's high-water mark) and one binary move cache
+/// `toolpaths/NNNN.bin` per toolpath record with computed moves (ADR-0021). Interim toolpath
+/// members `toolpaths/NNNN.json` written by carvetto-cli before format 1.1 (ADR-0019) are
+/// converted to toolpath records on load. Output is deterministic: sorted keys, fixed member order, shortest round-trip
 /// number formatting and zeroed zip timestamps, so save -> load -> save reproduces the archive byte
 /// for byte. Fields and archive members this version does not understand are kept in `CarvExtras`
 /// and written back on the next save.
@@ -26,7 +30,19 @@ namespace carvetto::document {
 /// Format version written by this build (`manifest.json` -> `format_version`).
 inline constexpr int kCarvFormatMajor = 1;
 /// Minor format version written by this build. Minor bumps only add optional content.
-inline constexpr int kCarvFormatMinor = 0;
+/// 1.1 (T-0132, ADR-0021) adds toolpath records (`job.json` `toolpaths`) and their move caches.
+inline constexpr int kCarvFormatMinor = 1;
+/// Most toolpath moves (summed over every toolpath record) a `.carv` file may hold: `loadCarv`
+/// refuses files with more and `saveCarv` refuses to write them (ADR-0021).
+inline constexpr std::uint64_t kCarvMaxToolpathMoves = 8'000'000;
+/// Toolpath moves allowed per byte of the `.carv` file (owner decision 2026-11-02): a file of S
+/// bytes holds at most min(S x this, `kCarvMaxToolpathMoves`) moves. Real files take 6-9 bytes
+/// per move, so only crafted (or degenerate, highly repetitive) toolpaths reach it.
+inline constexpr std::uint64_t kCarvMovesPerFileByte = 1;
+/// Highest position (1-based) a toolpath with computed moves may have, since caches are named
+/// `toolpaths/0001.bin` .. `toolpaths/9999.bin` by position. The archive's 10,000-member limit
+/// (manifest and job.json included) means at most 9,998 computed toolpaths fit in practice.
+inline constexpr std::size_t kCarvMaxCachedToolpaths = 9999;
 
 /// Why a `.carv` operation failed.
 struct CarvError {
@@ -90,10 +106,13 @@ class CarvExtras {
     /// Bytes of the preserved archive member `name`; null when there is none.
     const std::vector<std::uint8_t>* member(std::string_view name) const;
     /// A copy holding everything this one holds, with member `name` set to `bytes` (added, or
-    /// replacing a member of that name). `saveCarv` writes it as given, so a `.json` member must
-    /// hold well-formed JSON or the file will not load again. Throws `std::invalid_argument` for
-    /// a name `saveCarv` should not write: empty, `manifest.json` or `job.json`, absolute, with a
-    /// backslash or colon, a `.`/`..` segment or an empty segment, or longer than 255 bytes.
+    /// replacing a member of that name). `saveCarv` writes it as given and refuses to save when
+    /// the result would not load (e.g. a `.json` member that is not well-formed JSON).
+    /// Throws `std::invalid_argument` for a name `saveCarv` should not write: empty,
+    /// `manifest.json` or `job.json`, a toolpath move cache name (`toolpaths/NNNN.bin`), an
+    /// interim toolpath member name (`toolpaths/NNNN.json`, ADR-0019; toolpaths are records now),
+    /// absolute, with a backslash or colon, a `.`/`..` segment or an empty segment, or longer than
+    /// 255 bytes.
     CarvExtras withMember(std::string name, std::vector<std::uint8_t> bytes) const;
     /// Implementation access; null when empty.
     const Impl* impl() const { return impl_.get(); }
@@ -115,7 +134,16 @@ struct LoadedCarv {
 };
 
 /// Serialises `doc` (plus preserved `extras`) to `.carv` archive bytes. Selection and undo
-/// history are not saved.
+/// history are not saved. Never returns bytes `loadCarv` would refuse: the finished archive is
+/// loaded once in memory with the loader's own limits, and any failure is returned with the
+/// loader's message ("the file would not load again: ..."), with the loader's error code. This
+/// costs about one load (a 2,000,000-move toolpath: ~0.2 s Release and the decoded moves held
+/// twice while it runs). Common cases are refused earlier with specific messages: more toolpath
+/// moves than `kCarvMaxToolpathMoves` or than `kCarvMovesPerFileByte` x the file's size, a
+/// computed toolpath past `kCarvMaxCachedToolpaths`, more than 10,000 archive members, member or
+/// archive size caps (ResourceLimit), non-finite move values (InvalidContent). A file that loads
+/// may still be refused on re-save when re-saving makes it smaller (stale caches dropped,
+/// canonical re-encoding) so that it no longer satisfies the move-per-byte rule.
 CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvExtras& extras = {});
 
 /// Writes `doc` to `path` (via a temporary file renamed into place).
