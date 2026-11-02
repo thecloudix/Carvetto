@@ -33,3 +33,4 @@ Original locations (scripts may hard-code these; adjust paths when reusing):
 - t0127v3/: T-0127 round-3 verifier (FAIL 5ff8a09 on AC3 loose-piece under-reporting): wsf8.cpp/wsf8v.cpp flood oracle (CNT, TABS), inst/profile_mut.cpp (MUT_KEEP, FIX_BOX, FIX_MSG), mkh.cpp/mkabc.cpp generators, repro/ scenes.
 - t0132v3/: T-0132 round-3 verifier (PASS 3817e44): adv3.cpp invariant cases, big3.cpp save/load cost, peak3.cpp, fuzz3.cpp, set3.cpp, rep3.cpp, nan3.cpp, consist.cpp, build.sh.
 - t0134v3/: T-0134 round-3 verifier (PASS acebb3b): pp/ incl. new inverse-time posts (c_inv_inch_mul, c_inv_fi_everywhere, c_inv_neg, c_fi_normal_inch), zl.cpp inverse probe, time.sh params timing.
+- t0009c/: T-0009 coder harness (feffe02): t9.cpp sub-tol fuzz driver, corrected vdrv4 checker copy (see ADR-0012 A2 for the four checker fixes).
