@@ -1,7 +1,7 @@
 # ADR-0006: Clipper2 for offsets and booleans, and its fixed-point scale
 
 Date: 2026-10-24 · Status: accepted (director, 2026-10-24; residual open-offset defect tracked in T-0004;
-§6 and §7 added by T-0018, 2026-11-02)
+§6 and §7 added by T-0018, 2026-11-02; §8 added by T-0138, 2026-11-02)
 
 ## Decision
 1. Polygon offsetting (`geometry/offset.hpp`) and boolean operations (`geometry/boolean.hpp`) are
@@ -79,6 +79,40 @@ Date: 2026-10-24 · Status: accepted (director, 2026-10-24; residual open-offset
    +tol.distance)` keeps boundary stretches in the Intersection). Pinned by the AC3 test in
    `offset_inradius_test.cpp`.
 
+8. **Grid-level dust is dropped from `offsetContours` results (T-0138).** Within a few
+   nanometres of collapse (an inset by about the region's inradius) Clipper2 1.4.0 can return
+   rings a few grid units wide: genuine regions shrunk to the rounding level (e.g. the lenses at
+   the outward bulges of a Bezier circle, 1–2.5 units wide over 3–7 µm) and debris of the
+   rounded intersections (3 vertices, 0.1–0.3 units wide, |area| ~1e-11 mm²), some of which is
+   wound against its nesting or nested inside a genuine ring of the same orientation. That broke
+   the contract sentence of §6 ("an output contour wound against the outermost input is a
+   genuine hole"). After `Execute`, every ring into which no disk of radius ρ fits is removed,
+   with every ring nested inside a removed one (narrower still; removed explicitly so the
+   rounding of the test can never leave a hole without its outer):
+   - ρ = 4 grid units (4e-6 mm) × max(1, 16 ε M), M the largest output coordinate in grid
+     units, ε the double epsilon. Clipper2 rounds every vertex to the grid (≤ 0.71 units in the
+     plane) and computes offset and intersection points in double from int64 coordinates, a few
+     ulps of M; that exceeds one unit only beyond M ≈ 3e14 units (3e8 mm), where ρ grows with it.
+     In the T-0018 verifier's oracle (about 37,000 insets around and past collapse over 40 seeds)
+     the rings wound against their nesting were 0.1–0.3 units wide and the rounding-level lenses
+     up to 2.5 units (inradius); 4 units leaves a margin above both. A removed ring is narrower
+     than 8e-6 mm everywhere: 125× below the default tol.distance, 12× below the smallest
+     chordal tolerance Pocket accepts (1e-4 mm), and far inside the contract's own slack
+     (result points may lie 2·chordal short of |distance|). Every point of a removed region lies
+     within ρ of its boundary, i.e. within 4 nm of where the offset collapses, which no toolpath
+     resolves; the threshold does not depend on `tol` so that a coarse
+     tolerance never drops genuine thin regions (an area threshold such as tol.distance² would
+     drop a 0.5 µm tool-centre disk, a pocket corner the tool just fits, and a long strip of
+     any width below tol.distance²/length).
+   - Test: a ring of inradius r satisfies |area| ≤ r·perimeter (every point lies within r of
+     its boundary), so only rings with |area| < ρ·perimeter are candidates; for those, the ring
+     alone is eroded by ρ (Clipper2 `InflatePaths`, round joins) and dropped if nothing is left.
+     A mean-width test alone (2|area|/perimeter) would also drop a genuine region with a long
+     hair-thin tail. The cost is negligible: candidates are rare and tiny.
+   - Per ring, not per region: a frame narrow only between an outer and its hole is two
+     correctly wound genuine rings and is kept; a dust-thin hole inside a genuine region is
+     dropped (filled).
+
 ## Rationale
 - Clipper2 is the de-facto robust polygon clipper for CAM; it is deterministic, header-light,
   integer-exact in its sweep, and licence-compatible. Writing our own Vatti/Greiner–Hormann
@@ -101,7 +135,8 @@ Date: 2026-10-24 · Status: accepted (director, 2026-10-24; residual open-offset
 - Results of `offsetContours`/`booleanOp` are polygonal; callers needing arcs run Fit Curves
   afterwards. Area of a polygonised circle is systematically low by ≈ 2/3 · sag · perimeter,
   which tests account for by choosing the chordal tolerance.
-- Features smaller than 1e-6 mm collapse to a point; that is intended (they are noise).
+- Features smaller than 1e-6 mm collapse to a point; that is intended (they are noise). Offset
+  result rings narrower than 8e-6 mm are dropped (§8).
 - `Tolerance::chordal` controls both the input polygonisation and Clipper2's round-join arc
   approximation, so one knob governs the whole error budget: round-trip offset(+d) then
   offset(−d) stays within 2·chordal of the original (acceptance criterion 4).

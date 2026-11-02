@@ -37,6 +37,113 @@ Clipper2Lib::JoinType toClipperJoin(JoinType join) {
     return Clipper2Lib::JoinType::Round;
 }
 
+// Grid-level dust (T-0138). Within a few nanometres of collapse Clipper2 can return rings no
+// wider than a few grid units: genuine regions shrunk to the rounding level, and debris wound
+// against its nesting (ADR-0006 §8). A ring is dust when no disk of radius kDustRadiusUnits
+// (scaled up for coordinates where double rounding exceeds the grid) fits inside it.
+constexpr double kDustRadiusUnits = 4.0;
+
+double dustRadiusUnits(const Clipper2Lib::Paths64& paths) {
+    double maxAbs = 0.0;
+    for (const auto& path : paths) {
+        for (const auto& p : path) {
+            const double ax = std::abs(static_cast<double>(p.x));
+            const double ay = std::abs(static_cast<double>(p.y));
+            maxAbs = std::max({maxAbs, ax, ay});
+        }
+    }
+    // Clipper2 computes offset and intersection points in double from the int64 grid: a few
+    // ulps of the coordinates, which exceed one unit only beyond ~1e14 units (1e8 mm).
+    const double rounding = 16.0 * std::numeric_limits<double>::epsilon() * maxAbs;
+    return kDustRadiusUnits * std::max(1.0, rounding);
+}
+
+double perimeterUnits(const Clipper2Lib::Path64& path) {
+    double len = 0.0;
+    for (std::size_t i = 0, n = path.size(); i < n; ++i) {
+        const auto& a = path[i];
+        const auto& b = path[(i + 1) % n];
+        len += std::hypot(static_cast<double>(b.x - a.x), static_cast<double>(b.y - a.y));
+    }
+    return len;
+}
+
+// True when no disk of radius `radius` (grid units) fits inside the ring. A ring of inradius r
+// satisfies |area| <= r x perimeter (every point lies within r of the boundary), so rings with
+// |area| / perimeter >= radius are kept without the erosion test.
+bool isDustRing(const Clipper2Lib::Path64& path, double radius) {
+    if (path.size() < 3) {
+        return true;
+    }
+    const double perimeter = perimeterUnits(path);
+    if (!(perimeter > 0.0)) {
+        return true;
+    }
+    if (std::abs(Clipper2Lib::Area(path)) >= radius * perimeter) {
+        return false;
+    }
+    // A lone ring shrinks whichever way it is wound (Clipper2 takes the orientation of the
+    // outermost path of a group as "outwards").
+    const Clipper2Lib::Paths64 eroded = Clipper2Lib::InflatePaths(
+        Clipper2Lib::Paths64{path}, -radius, Clipper2Lib::JoinType::Round, Clipper2Lib::EndType::Polygon);
+    return eroded.empty();
+}
+
+// Removes dust rings (see isDustRing) and any ring nested inside a removed one.
+void dropDustRings(Clipper2Lib::Paths64& paths) {
+    if (paths.empty()) {
+        return;
+    }
+    const double radius = dustRadiusUnits(paths);
+    std::vector<bool> dust(paths.size(), false);
+    bool any = false;
+    for (std::size_t i = 0; i < paths.size(); ++i) {
+        dust[i] = isDustRing(paths[i], radius);
+        any = any || dust[i];
+    }
+    if (!any) {
+        return;
+    }
+    // A ring inside a dust ring is narrower still, so the erosion test drops it too, up to the
+    // rounding of that test; drop such rings explicitly so that no hole outlives its outer.
+    for (std::size_t i = 0; i < paths.size(); ++i) {
+        if (!dust[i] || paths[i].size() < 3) {
+            continue;
+        }
+        const Clipper2Lib::Rect64 box = Clipper2Lib::GetBounds(paths[i]);
+        for (std::size_t j = 0; j < paths.size(); ++j) {
+            if (dust[j] || paths[j].empty()) {
+                continue;
+            }
+            bool inside = false;
+            bool outside = false;
+            for (const auto& p : paths[j]) {
+                if (p.x < box.left || p.x > box.right || p.y < box.top || p.y > box.bottom) {
+                    outside = true;
+                    break;
+                }
+                const auto where = Clipper2Lib::PointInPolygon(p, paths[i]);
+                if (where == Clipper2Lib::PointInPolygonResult::IsOutside) {
+                    outside = true;
+                    break;
+                }
+                inside = inside || where == Clipper2Lib::PointInPolygonResult::IsInside;
+            }
+            dust[j] = inside && !outside;
+        }
+    }
+    std::size_t kept = 0;
+    for (std::size_t i = 0; i < paths.size(); ++i) {
+        if (!dust[i]) {
+            if (kept != i) {
+                paths[kept] = std::move(paths[i]);
+            }
+            ++kept;
+        }
+    }
+    paths.resize(kept);
+}
+
 }  // namespace
 
 std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double distance, JoinType join,
@@ -74,6 +181,7 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
     }
     Clipper2Lib::Paths64 out;
     offsetter.Execute(detail::toClipperDistance(distance), out);
+    dropDustRings(out);
     return detail::contoursFromClipper(out, true);
 }
 

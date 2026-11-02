@@ -33,6 +33,16 @@ enum class OffsetSide { Left, Right };
 /// lobes deeper than |distance|; a result contour wound against the outermost input is a genuine
 /// hole (T-0018, ADR-0006 §6).
 ///
+/// Grid-level dust is dropped (T-0138, ADR-0006 §8): a result contour that no disk of radius
+/// 4e-6 mm (four grid units of `kFixedPointScale`; more only beyond ~1e8 mm, where double
+/// rounding exceeds the grid) fits inside is removed, with any contour nested inside it. Near
+/// collapse Clipper2 can return rings a few nanometres wide, some wound against their nesting;
+/// so every result contour holds a disk 8e-6 mm across, contours nested at even depth
+/// are wound like the outermost input and those at odd depth (holes) against it. The test is
+/// per contour, on its own interior: a region narrow only between an outer and its hole (a frame)
+/// is kept. The width does not depend on `tol`; it lies far below tol.distance and
+/// 2 x tol.chordal for any tolerance the toolpaths accept (chordal >= 1e-4 mm).
+///
 /// Approach: polygonise at `tol.chordal`, scale by `kFixedPointScale`, run Clipper2's offset
 /// engine (round joins are approximated within `tol.chordal`), convert back to polygonal
 /// contours of line spans. Arcs are not refitted. Open contours in the list are *outlined*:
