@@ -31,7 +31,6 @@
 using namespace carvetto::toolpath;
 using carvetto::geometry::Box2;
 using carvetto::geometry::Contour;
-using carvetto::geometry::Polyline;
 using carvetto::geometry::Vec2;
 namespace orc = carvetto::test::pocket;
 
@@ -60,7 +59,7 @@ std::vector<Contour> textLike(std::size_t n) {
                 cs.push_back(Contour::rectangle(Box2{{x, y}, {x + 4, y + 4}}));
                 break;
             case 1:
-                cs.push_back(Contour::fromPolyline(Polyline{
+                cs.push_back(Contour::fromPolyline(carvetto::geometry::Polyline{
                     {{x, y}, {x + 4, y}, {x + 4, y + 1.5}, {x + 1.5, y + 1.5}, {x + 1.5, y + 4}, {x, y + 4}}, true}));
                 break;
             case 2:
@@ -168,7 +167,7 @@ TEST_CASE("AC4: a 0.1 mm rest tool on a 200-tooth comb works only over the rest 
     }
     pts.push_back({double(teeth), -5});
     pts.push_back({0, -5});
-    const Contour comb = Contour::fromPolyline(Polyline{pts, true});
+    const Contour comb = Contour::fromPolyline(carvetto::geometry::Polyline{pts, true});
     const std::vector<PocketTool> tools{orc::endMill("B", 1, 1.0, 0.4, 9.0), orc::endMill("S", 2, 0.1, 0.04, 9.0)};
     for (const PocketStrategy s : {PocketStrategy::Raster, PocketStrategy::Offset}) {
         INFO("strategy " << static_cast<int>(s));
