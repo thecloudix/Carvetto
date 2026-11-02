@@ -1,0 +1,101 @@
+mode 0 new {'G': 8031, 'hold': 8006, 'nohold': 23, 'sev': 0, 'part': 2, 'thin': 2, 'left': 5268, 'req': 7578, 'scenes': 2184, 'free': 367, 'freeNoAllLost': 27, 'On': 2184, 'V': 438}
+mode 0 old {'G': 3159, 'hold': 3139, 'nohold': 20, 'sev': 0, 'part': 0, 'thin': 0, 'left': 5174, 'req': 6107, 'scenes': 1387, 'free': 617, 'freeNoAllLost': 7, 'On': 1387, 'V': 287}
+  FEWER ('271000', '9') new G 4 left 3 old G 5 left 2 side 2 a 0.0 sep 1 V 0
+  FEWER ('271001', '31') new G 2 left 14 old G 4 left 12 side 2 a 0.0376 sep 1 V 0
+  FEWER ('271010', '10') new G 1 left 3 old G 2 left 2 side 2 a 0.3279 sep 0 V 0
+  FEWER ('271010', '47') new G 0 left 2 old G 2 left 0 side 2 a 0.1291 sep 0 V 0
+  FEWER ('274010', '26') new G 6 left 8 old G 8 left 6 side 2 a -0.0127 sep 0 V 0
+mode 0 paired {'pairs': 1387, 'G_new': 5004, 'G_old': 3159, 'left_new': 3323, 'left_old': 5174, 'more': 484, 'fewer': 5, 'old_sev_or_part': 0, 'new_sev_or_part': 2}
+mode 1 new {'G': 5341, 'hold': 5306, 'nohold': 28, 'sev': 0, 'part': 7, 'thin': 1, 'left': 3545, 'req': 5099, 'scenes': 1380, 'free': 192, 'freeNoAllLost': 21, 'On': 0, 'V': 292}
+mode 1 old {'G': 3598, 'hold': 3507, 'nohold': 65, 'sev': 17, 'part': 9, 'thin': 5, 'left': 2681, 'req': 3748, 'scenes': 983, 'free': 163, 'freeNoAllLost': 23, 'On': 0, 'V': 209}
+  FEWER ('272000', '18') new G 0 left 6 old G 2 left 4 side 0 a -1.519 sep 0 V 0
+  FEWER ('272000', '34') new G 0 left 18 old G 3 left 15 side 0 a -2.8818 sep 0 V 0
+  FEWER ('272000', '37') new G 11 left 5 old G 13 left 3 side 1 a -1.1353 sep 0 V 0
+  FEWER ('272001', '23') new G 2 left 6 old G 4 left 4 side 0 a -1.5875 sep 1 V 0
+  FEWER ('272001', '34') new G 6 left 47 old G 8 left 45 side 0 a -3.5755 sep 0 V 0
+  FEWER ('272001', '43') new G 5 left 0 old G 7 left 0 side 1 a -3.0 sep 1 V 90
+  FEWER ('272001', '5') new G 16 left 14 old G 18 left 12 side 0 a -0.7227 sep 0 V 0
+  FEWER ('272002', '2') new G 0 left 6 old G 2 left 4 side 0 a -3.5759 sep 1 V 0
+  FEWER ('272002', '22') new G 2 left 1 old G 3 left 0 side 0 a -3.8406 sep 0 V 0
+  FEWER ('272002', '30') new G 9 left 9 old G 10 left 8 side 0 a -2.4298 sep 0 V 0
+  FEWER ('272002', '40') new G 0 left 2 old G 2 left 0 side 0 a -5.5201 sep 1 V 0
+  FEWER ('272002', '46') new G 0 left 6 old G 2 left 4 side 0 a -3.8998 sep 0 V 0
+  FEWER ('272003', '14') new G 12 left 6 old G 15 left 3 side 0 a -1.4897 sep 1 V 60
+  FEWER ('272003', '29') new G 0 left 7 old G 1 left 6 side 0 a -4.0 sep 1 V 0
+  FEWER ('272003', '3') new G 5 left 7 old G 6 left 6 side 0 a -3.2466 sep 1 V 120
+  FEWER ('272003', '37') new G 6 left 8 old G 8 left 6 side 0 a -3.9475 sep 1 V 0
+  FEWER ('272003', '42') new G 0 left 1 old G 1 left 0 side 0 a -2.6636 sep 1 V 0
+  FEWER ('272003', '5') new G 0 left 9 old G 2 left 7 side 0 a -3.3416 sep 1 V 0
+  FEWER ('272003', '7') new G 6 left 1 old G 7 left 0 side 0 a -5.6543 sep 0 V 0
+  FEWER ('272004', '4') new G 0 left 6 old G 3 left 3 side 0 a -2.7382 sep 0 V 0
+  FEWER ('272004', '42') new G 0 left 2 old G 2 left 0 side 0 a -2.7851 sep 1 V 0
+  FEWER ('272004', '44') new G 0 left 2 old G 2 left 0 side 0 a -3.0 sep 0 V 0
+  FEWER ('272004', '49') new G 1 left 1 old G 2 left 0 side 0 a -3.8942 sep 1 V 0
+  FEWER ('272005', '17') new G 8 left 1 old G 9 left 0 side 1 a -0.9775 sep 0 V 0
+  FEWER ('272005', '20') new G 0 left 5 old G 1 left 4 side 1 a -3.0 sep 1 V 0
+  FEWER ('272005', '24') new G 5 left 7 old G 6 left 6 side 0 a -5.6372 sep 0 V 0
+  FEWER ('272005', '26') new G 0 left 4 old G 1 left 3 side 0 a -1.5117 sep 1 V 0
+  FEWER ('272005', '44') new G 0 left 9 old G 1 left 8 side 1 a -6.0 sep 1 V 0
+  FEWER ('272005', '6') new G 9 left 15 old G 10 left 14 side 1 a -2.6671 sep 0 V 0
+  FEWER ('272006', '11') new G 2 left 8 old G 3 left 7 side 0 a -5.8637 sep 1 V 0
+  FEWER ('272006', '27') new G 7 left 2 old G 9 left 0 side 1 a -2.7832 sep 0 V 0
+  FEWER ('272006', '28') new G 1 left 11 old G 2 left 10 side 0 a -6.0 sep 1 V 0
+  FEWER ('272007', '26') new G 3 left 2 old G 5 left 0 side 0 a -1.4169 sep 0 V 0
+  FEWER ('272007', '38') new G 5 left 6 old G 6 left 5 side 1 a -4.2575 sep 0 V 120
+  FEWER ('272007', '9') new G 0 left 8 old G 5 left 3 side 0 a -5.6006 sep 1 V 0
+  FEWER ('275000', '44') new G 1 left 15 old G 2 left 14 side 0 a -3.4671 sep 0 V 120
+  FEWER ('275002', '22') new G 0 left 8 old G 1 left 7 side 1 a -6.0 sep 1 V 0
+  FEWER ('275002', '29') new G 2 left 8 old G 3 left 7 side 0 a -6.0 sep 0 V 0
+  FEWER ('275002', '41') new G 3 left 1 old G 4 left 0 side 0 a -2.2036 sep 1 V 0
+  FEWER ('275002', '45') new G 1 left 3 old G 2 left 2 side 0 a -1.5489 sep 1 V 60
+  FEWER ('275002', '5') new G 0 left 5 old G 5 left 0 side 0 a -2.3407 sep 1 V 60
+  FEWER ('275003', '25') new G 3 left 3 old G 4 left 2 side 0 a -4.2024 sep 1 V 90
+  FEWER ('275003', '41') new G 2 left 2 old G 3 left 1 side 0 a -2.5574 sep 1 V 0
+  FEWER ('275004', '17') new G 7 left 1 old G 8 left 0 side 0 a -5.0905 sep 1 V 90
+  FEWER ('275004', '2') new G 0 left 2 old G 1 left 1 side 0 a -5.9217 sep 0 V 0
+  FEWER ('275004', '23') new G 1 left 1 old G 2 left 0 side 0 a -1.0 sep 0 V 0
+  FEWER ('275004', '40') new G 3 left 4 old G 7 left 0 side 0 a -3.8887 sep 1 V 0
+  FEWER ('275004', '9') new G 2 left 14 old G 4 left 12 side 1 a -0.8109 sep 0 V 0
+  FEWER ('275005', '2') new G 0 left 9 old G 4 left 5 side 0 a -4.6525 sep 1 V 90
+  FEWER ('275005', '28') new G 0 left 3 old G 3 left 0 side 0 a -3.6906 sep 0 V 0
+  FEWER ('275005', '34') new G 8 left 1 old G 9 left 0 side 1 a -2.1935 sep 1 V 0
+  FEWER ('275005', '44') new G 0 left 6 old G 4 left 2 side 1 a -6.0 sep 0 V 0
+  FEWER ('275005', '48') new G 0 left 3 old G 1 left 2 side 0 a -4.698 sep 1 V 120
+  FEWER ('275006', '28') new G 1 left 3 old G 2 left 2 side 1 a -1.5056 sep 0 V 0
+  FEWER ('275007', '27') new G 7 left 2 old G 8 left 1 side 0 a -1.3072 sep 1 V 0
+  FEWER ('275007', '39') new G 0 left 1 old G 1 left 0 side 0 a -1.0 sep 0 V 0
+  FEWER ('275007', '42') new G 1 left 4 old G 2 left 3 side 1 a -3.9385 sep 1 V 0
+  FEWER ('275007', '49') new G 0 left 6 old G 3 left 3 side 0 a -1.5201 sep 0 V 0
+  FEWER ('275008', '11') new G 0 left 8 old G 2 left 6 side 0 a -3.7476 sep 0 V 0
+  FEWER ('275008', '15') new G 3 left 17 old G 7 left 13 side 1 a -6.0 sep 1 V 0
+  FEWER ('275008', '37') new G 2 left 1 old G 3 left 0 side 1 a -5.5812 sep 0 V 0
+  FEWER ('275008', '40') new G 1 left 7 old G 2 left 6 side 0 a -3.3402 sep 1 V 0
+  FEWER ('275008', '47') new G 10 left 10 old G 13 left 6 side 1 a -0.5279 sep 1 V 0
+  FEWER ('275008', '6') new G 6 left 26 old G 10 left 22 side 1 a -6.0 sep 0 V 120
+  FEWER ('275009', '24') new G 0 left 4 old G 2 left 2 side 0 a -5.4378 sep 1 V 0
+  FEWER ('275009', '3') new G 0 left 1 old G 1 left 0 side 0 a -3.9384 sep 1 V 0
+  FEWER ('275009', '4') new G 0 left 2 old G 2 left 0 side 0 a -3.7116 sep 0 V 0
+  FEWER ('275010', '45') new G 0 left 1 old G 1 left 0 side 0 a -3.927 sep 0 V 0
+  FEWER ('275011', '14') new G 0 left 3 old G 1 left 2 side 0 a -2.5914 sep 0 V 0
+  FEWER ('275011', '15') new G 0 left 6 old G 3 left 3 side 0 a -2.3853 sep 0 V 0
+mode 1 paired {'pairs': 983, 'G_new': 3766, 'G_old': 3598, 'left_new': 2512, 'left_old': 2681, 'more': 92, 'fewer': 70, 'old_sev_or_part': 26, 'new_sev_or_part': 6}
+mode 2 new {'G': 3658, 'hold': 3658, 'nohold': 0, 'sev': 0, 'part': 0, 'thin': 1, 'left': 2399, 'req': 3422, 'scenes': 994, 'free': 147, 'freeNoAllLost': 9, 'On': 348, 'V': 187}
+mode 2 old {'G': 1857, 'hold': 1825, 'nohold': 21, 'sev': 11, 'part': 0, 'thin': 4, 'left': 1860, 'req': 2385, 'scenes': 598, 'free': 179, 'freeNoAllLost': 9, 'On': 213, 'V': 100}
+  FEWER ('276000', '18') new G 0 left 4 old G 4 left 0 side 0 a -5.8051 sep 1 V 0
+  FEWER ('276000', '27') new G 3 left 9 old G 5 left 7 side 1 a -1.7136 sep 0 V 0
+  FEWER ('276000', '29') new G 0 left 14 old G 7 left 7 side 0 a -5.5005 sep 0 V 0
+  FEWER ('276001', '0') new G 2 left 2 old G 3 left 1 side 0 a -0.4841 sep 1 V 0
+  FEWER ('276002', '21') new G 2 left 2 old G 4 left 0 side 0 a -2.9982 sep 0 V 90
+  FEWER ('276002', '49') new G 0 left 3 old G 3 left 0 side 0 a -5.6225 sep 1 V 0
+  FEWER ('276003', '16') new G 1 left 4 old G 2 left 3 side 0 a -4.2775 sep 0 V 0
+  FEWER ('276003', '31') new G 0 left 8 old G 3 left 5 side 0 a -4.0 sep 1 V 0
+  FEWER ('276003', '47') new G 0 left 6 old G 2 left 4 side 2 a 0.5799 sep 0 V 0
+  FEWER ('276004', '12') new G 3 left 8 old G 5 left 6 side 0 a -1.449 sep 1 V 0
+  FEWER ('276004', '34') new G 4 left 6 old G 6 left 4 side 0 a -1.6804 sep 1 V 0
+  FEWER ('276004', '36') new G 4 left 4 old G 8 left 0 side 0 a -1.3765 sep 0 V 0
+  FEWER ('276004', '39') new G 5 left 5 old G 7 left 3 side 0 a -2.8592 sep 1 V 120
+  FEWER ('276005', '27') new G 1 left 15 old G 4 left 12 side 0 a -1.3626 sep 0 V 0
+  FEWER ('276009', '3') new G 1 left 8 old G 2 left 7 side 0 a -3.9073 sep 1 V 0
+  FEWER ('276010', '1') new G 0 left 9 old G 5 left 4 side 0 a -3.744 sep 1 V 0
+  FEWER ('276011', '14') new G 7 left 7 old G 10 left 4 side 0 a -0.7204 sep 0 V 0
+mode 2 paired {'pairs': 598, 'G_new': 2196, 'G_old': 1857, 'left_new': 1520, 'left_old': 1860, 'more': 116, 'fewer': 17, 'old_sev_or_part': 11, 'new_sev_or_part': 0}

@@ -1,0 +1,10 @@
+T-0127 round 2 (coder). Primary oracle: the verifier's whole-scene flood wsf4 (harness t0127v1),
+built with mk.sh against the worktree build-hr (new) and main e4da396 build-hr (_old).
+  jobs4.txt / run4.sh   seeds 271000-271031 (mode 0), 272000-272015 (1), 273000-273007 (2) = the
+                        verifier's set, new only (main logs reused from t0127v1/sw4), plus
+                        274000-274011 (0), 275000-275011 (1), 276000-276011 (2) new and main.
+  agg.py                the verifier's aggregator -> results/agg_wsf4.txt
+  freechk.sh            every FREE scene: is the loose piece reported ("not held by any kept tab")?
+                        -> results/freechk_final.txt (fields: name, biggest area, allLost, kept G, reported N)
+Unreported FREE (27): 18 caused by leads (no FREE with leads off: lead type 0 in the P line),
+9 crumbs below the 0.05 mm2 report threshold (0.01-0.04 mm2).

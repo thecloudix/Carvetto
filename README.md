@@ -21,3 +21,5 @@ Original locations (scripts may hard-code these; adjust paths when reusing):
 - t17r5/: T-0017 verifier of 328008b (pert2.cpp large-radius/tiny-arc loops, retry_case.inc, gap_case.inc, mutants offset.mA/B/C.cpp).
 - t0123v2/: T-0123 delta verifier (PASS 524c7ff): pc2.cpp (pockcheck with rest==clusters), rr2.cpp, bi2/bi3.cpp (BoxIndex edge cases).
 - t0122v1/: T-0122 CLI verifier (PASS 2d7e3fa): driver.cpp (CLI == in-process toolpaths, angle checks), driver2.cpp (storage identity, bad member names), gcheck.py (G-code safety checker), mkmal.py (24 malicious .carv variants), gen.py (DXF generator).
+- t0133v1/: T-0133 post-safety verifier (FAIL aec8e83): drv.cpp text-injection sweep, num.cpp number sweep (diff branch vs main), arc.cpp (B1), rt.cpp (Grbl realtime bytes / LinuxCNC LOGOPEN), mk2.py (rename toolpaths in .carv).
+- t0127c/round2/: T-0127 coder round-2 harness (free-piece checker, aggregator).
