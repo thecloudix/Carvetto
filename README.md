@@ -35,3 +35,4 @@ Original locations (scripts may hard-code these; adjust paths when reusing):
 - t0134v3/: T-0134 round-3 verifier (PASS acebb3b): pp/ incl. new inverse-time posts (c_inv_inch_mul, c_inv_fi_everywhere, c_inv_neg, c_fi_normal_inch), zl.cpp inverse probe, time.sh params timing.
 - t0009c/: T-0009 coder harness (feffe02): t9.cpp sub-tol fuzz driver, corrected vdrv4 checker copy (see ADR-0012 A2 for the four checker fixes).
 - t0129v1/: T-0129 verifier (PASS 968fbc2): ac.cpp allowance-limit matrix, wsh.cpp (mode 4: allowances around -r), cmp.py, mk.sh.
+- t0018v1/: T-0018 verifier (PASS 9fca907): inr.cpp inradius/coverage/orientation oracle, cmpdump.cpp, dust.cpp (grid dust rings), clipb.cpp, edge.cpp, ann.cpp, hd.py/hdp.py path deviation.
