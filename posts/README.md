@@ -62,7 +62,20 @@ one, the test fails.
    followed by the controller's program-end code. Marlin has no program-end code, so it ends
    with `M5` (see below).
 
-Hand-review result: all eight goldens pass all eight points.
+9. **Names cannot become G-code.** Text tags (`[TOOLNAME]`, `[TOOLPATH_NAME]`, `[TP_FILENAME]`,
+   …) sit inside a comment: `( … )`, or after `;` on Marlin. The interpreter replaces control
+   characters (newline, CR, tab, NUL …) in every text value with spaces, and inside an open
+   `( … )` comment turns `(`/`)` into `[`/`]`, so no name can start a new block or close the
+   comment early (ADR-0020). Keep `SUBSTITUTE = "([)]"` in paren-comment posts anyway, for
+   readers of the post. `post_safety_test.cpp` checks every shipped post with hostile names and
+   that text tags appear only inside comments.
+10. **Numbers are finite and in range.** The interpreter refuses to write a non-finite number,
+    a length, feed, spindle speed, dwell or angle beyond 1e6 (mm, mm/min, rpm, s, degrees), or
+    any value that would be written beyond 1e9 after unit conversion and the VAR multiplier;
+    the post run fails with an error naming the toolpath, move and value (ADR-0020).
+
+Hand-review result: all eight goldens pass points 1–8; points 9 and 10 are enforced by the
+interpreter and tested on every post.
 
 ## Dialect choices per controller
 
