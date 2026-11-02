@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstdio>
 #include <limits>
 #include <map>
 #include <numeric>
@@ -359,20 +360,22 @@ class ProfileBuilder {
     void placeTabsOn(std::vector<Cut>& primary, const std::vector<Cut>& otherPass);
     void matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut>& rough);
     void dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& secondary);
+    void reportLoosePieces(const std::vector<Cut>& primary, const std::vector<Cut>& secondary);
     bool mapTab(const Cut& from, const TabSpan& t, const Cut& onto, TabSpan& out, bool& near) const;
     std::vector<TabSection> tabSections(const Cut& c, const TabSpan& t) const;
     bool tabHolds(const Cut& c, const TabSpan& t, const std::vector<Vec2>& tools) const;
-    bool tabHoldsSided(const Cut& c, const TabSpan& t, const std::vector<TabSpan>& others,
-                       const std::vector<Vec2>& tools) const;
+    /// What becomes of a tab: it holds, the tools cut it through, or it would hold nothing (the
+    /// tools leave no part, or no waste, beyond the kerf near it).
+    enum class TabFate { Holds, Severed, Empty };
+    TabFate tabHoldsSided(const Cut& c, const TabSpan& t, const std::vector<Vec2>& tools) const;
     /// ThinRemnant: the tools leave part or waste beyond the kerf, but none survives the widening;
     /// ThinNeck: the exact cut joins the part to the waste, the widened one does not.
-    enum class SidedVerdict { Holds, Severed, ThinRemnant, ThinNeck, TooBig };
+    enum class SidedVerdict { Holds, Severed, ThinRemnant, ThinNeck, TooBig, Empty };
     /// Finest raster cell of tabHoldsSided: its 1.5-cell widening of the tools stays >= 0.05 mm,
     /// so a kept tab's neck is about 0.1 mm or more.
     static constexpr double kFinestTabCell = 0.035;
     /// One raster of tabHoldsSided with cells of `h` mm.
-    SidedVerdict sidedRaster(const Cut& c, const TabSpan& t, const std::vector<TabSpan>& others,
-                             const std::vector<Vec2>& tools, double h) const;
+    SidedVerdict sidedRaster(const Cut& c, const TabSpan& t, const std::vector<Vec2>& tools, double h) const;
     /// Tab material is judged by the sides of the cut itself (sidedTabs_): how far the kerf of the
     /// primary cut (and of its roughing cut, with a separate last pass) reaches from the cut
     /// towards the vector side, and towards the other side.
@@ -408,6 +411,7 @@ class ProfileBuilder {
     std::map<std::size_t, std::size_t> tabsDropped_;    // all left out, per vector
     std::map<std::size_t, std::size_t> tabsUnmatched_;  // of those: no match on the roughing cut
     std::map<std::size_t, std::size_t> tabsSevered_;    // of those: a cut would cut them through
+    std::map<std::size_t, std::size_t> tabsEmpty_;      // of those: the cut leaves nothing for them to hold
     std::map<std::size_t, std::size_t> tabsOnCorner_;
     void emit(const Cut& cut, const std::vector<double>& levels, bool finishing);
     void emitLeg(const Cut& cut, const PathLeg& leg, bool lastLevel, std::vector<bool>& cornerDone);
@@ -1271,12 +1275,11 @@ bool ProfileBuilder::tabHolds(const Cut& c, const TabSpan& t, const std::vector<
 // of its nearest point on the cut (PathSides: exact, and right across a corner of the cut). The
 // part to hold is every cell on the vector side (On: the left of travel) beyond the kerf there,
 // the waste every cell on the other side beyond the kerf there. In between, only cells whose
-// nearest cut point lies on the raised stretch of this tab or of another live tab of the same cut
-// (`others`) may carry material, and the cut may only be crossed (from a cell on one side to a
-// neighbour on the other) where both lie on this tab's stretch: so tabs may hold a part together
-// (two tabs on both edges of an arm narrower than two kerfs), but a tab never borrows another
-// tab's bridge. The rest of the kerf band counts as cut, and so do the cells beyond an open end of
-// the cut (left and right meet there). Every tool position
+// nearest cut point lies on this tab's raised stretch may carry material, and the cut may only be
+// crossed (from a cell on one side to a neighbour on the other) there; the rest of the kerf band
+// counts as cut, and so do the cells beyond an open end of the cut (left and right meet there).
+// `tools` holds every open tool position and the raised stretches of the other live tabs, so a
+// tab must hold on its own and never borrows another tab's bridge. Every tool position
 // in `tools` cuts the cells within its radius at the tab's layer (tabLayerRadius: a V-bit's cone
 // just below the tab top) plus 1.5 cells, and the kerf is that wide too. The tab holds when uncut cells join
 // the part to the waste, or when the tools leave no part or no waste near it at all (a loop or arm
@@ -1286,25 +1289,26 @@ bool ProfileBuilder::tabHolds(const Cut& c, const TabSpan& t, const std::vector<
 // refined, halving the cells down to kFinestTabCell; there a remnant thinner than the widening
 // counts as nothing to hold, a neck that thin (under about 0.1 mm) as cut through, and so does
 // anything the refinement cannot reach within 4 million cells.
-bool ProfileBuilder::tabHoldsSided(const Cut& c, const TabSpan& t, const std::vector<TabSpan>& others,
-                                   const std::vector<Vec2>& tools) const {
+ProfileBuilder::TabFate ProfileBuilder::tabHoldsSided(const Cut& c, const TabSpan& t,
+                                                      const std::vector<Vec2>& tools) const {
     if (t.b - t.a < 2.0 * radius_) {
-        return false;
+        return TabFate::Severed;
     }
     for (double h = std::max(0.05, radius_ / 40.0);; h *= 0.5) {
-        const SidedVerdict v = sidedRaster(c, t, others, tools, h);
-        if (v == SidedVerdict::Holds) return true;
-        if (v == SidedVerdict::Severed || v == SidedVerdict::TooBig) return false;
+        const SidedVerdict v = sidedRaster(c, t, tools, h);
+        if (v == SidedVerdict::Holds) return TabFate::Holds;
+        if (v == SidedVerdict::Empty) return TabFate::Empty;
+        if (v == SidedVerdict::Severed || v == SidedVerdict::TooBig) return TabFate::Severed;
         if (0.5 * h < kFinestTabCell) {
-            // Finest cells: a remnant thinner than the widening is nothing to hold; a neck that
-            // thin (under about 0.1 mm) is not trusted.
-            return v == SidedVerdict::ThinRemnant;
+            // Finest cells: what is left is thinner than the widening (under about 0.1 mm); such a
+            // remnant or neck is not trusted to hold.
+            return TabFate::Severed;
         }
     }
 }
 
-ProfileBuilder::SidedVerdict ProfileBuilder::sidedRaster(const Cut& c, const TabSpan& t, const std::vector<TabSpan>& others,
-                                                         const std::vector<Vec2>& tools, double h) const {
+ProfileBuilder::SidedVerdict ProfileBuilder::sidedRaster(const Cut& c, const TabSpan& t, const std::vector<Vec2>& tools,
+                                                         double h) const {
     const double ca = t.a + radius_;
     const double cb = t.b - radius_;
     // The tools cut the tab's layer (just below its top, where they cut widest) with radius rt.
@@ -1355,8 +1359,7 @@ ProfileBuilder::SidedVerdict ProfileBuilder::sidedRaster(const Cut& c, const Tab
             if (hit.distance >= (vectorSide ? kv : ko)) {
                 state[k] = vectorSide ? char{2} : char{3};
                 (vectorSide ? anyPart : anyWaste) = true;
-            } else if (own[k] || std::any_of(others.begin(), others.end(),
-                                             [&](const TabSpan& o) { return onStretch(hit.u, o); })) {
+            } else if (own[k]) {
                 state[k] = 1;
             }
         }
@@ -1396,7 +1399,7 @@ ProfileBuilder::SidedVerdict ProfileBuilder::sidedRaster(const Cut& c, const Tab
         }
     }
     if (!anyPart || !anyWaste) {
-        return SidedVerdict::Holds;
+        return SidedVerdict::Empty;
     }
     // Flood from the part to the waste over cells `blocked` leaves open; the cut may only be
     // crossed on this tab's own stretch.
@@ -1581,7 +1584,7 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
     // True when group g's tab is swept (or severed) by the samples open now. With sidedTabs_ the
     // quick answer also counts the raised stretches of the other live tabs as cut, so it only
     // accepts a bridge of the tab's own material.
-    auto sweptNow = [&](std::size_t g) {
+    auto sweptNow = [&](std::size_t g) -> TabFate {
         const std::vector<TabSection>& sections = material[g];
         const Ref& own = groups[g].front();
         const geometry::Box2& box = materialBox[g];
@@ -1601,7 +1604,7 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
                                        pathGap(primary[own.cut].walk, q.u, own.span) < localReach;
                     const double d = sectionDistance(q.p, sections);
                     if (!local && d < radius_ - 1e-3) {
-                        return true;
+                        return TabFate::Severed;
                     }
                     nearby.push_back(q.p);
                     if (local && d < radius_ + 0.1) {
@@ -1610,8 +1613,8 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
                 }
             }
         }
-        if (nicks.empty()) {
-            return false;
+        if (nicks.empty() && !sidedTabs_) {
+            return TabFate::Holds;  // (sided: whether anything beyond the kerf is left is still to judge)
         }
         // Quick answer: a run of at least three whole cross-sections (no tool within a radius +
         // 0.1 mm) whose ends lie at least 0.2 mm apart at both walls, where the middle one, carried
@@ -1644,7 +1647,7 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
                     if (!sidedTabs_) {
                         const TabSection ext{m.p1, m.p1 + dir * (0.4 / len)};
                         if (allField_.distance(ext.p1) >= beyond && clearOfTools(ext)) {
-                            return false;
+                            return TabFate::Holds;
                         }
                     } else {
                         if (!ownSides) ownSides.emplace(ownCut.walk);
@@ -1657,7 +1660,7 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
                                    clearOfTools(ext);
                         };
                         if (reachesBeyond(m.p1, dir, false) && reachesBeyond(m.p0, dir * -1.0, true)) {
-                            return false;
+                            return TabFate::Holds;
                         }
                     }
                 }
@@ -1677,23 +1680,16 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
                 const auto it = grid.find({cx, cy});
                 if (it == grid.end()) continue;
                 for (std::size_t i : it->second) {
-                    if (open(samples[i])) tools.push_back(samples[i].p);
+                    const Sample& q = samples[i];
+                    // (Sided: the other live tabs count as cut, so the tab must hold on its own.)
+                    if (open(q) || (sidedTabs_ && !coveredBy(q, g))) tools.push_back(q.p);
                 }
             }
         }
         if (!sidedTabs_) {
-            return !tabHolds(ownCut, own.span, tools);
+            return tabHolds(ownCut, own.span, tools) ? TabFate::Holds : TabFate::Severed;
         }
-        // The raised stretches of the other live tabs on the same cut (their material may carry the
-        // connection, but the cut may only be crossed on this tab's own stretch).
-        std::vector<TabSpan> others;
-        for (std::size_t o = 0; o < groups.size(); ++o) {
-            if (o == g || !alive[o]) continue;
-            for (const Ref& r : groups[o]) {
-                if (!r.second && r.cut == own.cut) others.push_back(r.span);
-            }
-        }
-        return !tabHoldsSided(ownCut, own.span, others, tools);
+        return tabHoldsSided(ownCut, own.span, tools);
     };
     // Worklist, lowest group first: dropping a group exposes the samples its raised stretches
     // protected, so the live groups whose material lies within reach of them are checked again.
@@ -1704,10 +1700,12 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
     while (!work.empty()) {
         const std::size_t g = *work.begin();
         work.erase(work.begin());
-        if (!alive[g] || !sweptNow(g)) continue;
+        if (!alive[g]) continue;
+        const TabFate fate = sweptNow(g);
+        if (fate == TabFate::Holds) continue;
         alive[g] = false;
         ++tabsDropped_[groupSource[g]];
-        ++tabsSevered_[groupSource[g]];
+        ++(fate == TabFate::Empty ? tabsEmpty_ : tabsSevered_)[groupSource[g]];
         for (std::size_t o = 0; o < groups.size(); ++o) {
             if (alive[o] && !material[o].empty() && !protectBox[g].isEmpty() &&
                 materialBox[o].intersects(protectBox[g].inflated(h))) {
@@ -1726,6 +1724,191 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
     auto byStart = [](const TabSpan& x, const TabSpan& y) { return x.a < y.a; };
     for (Cut& c : primary) std::sort(c.tabs.begin(), c.tabs.end(), byStart);
     for (Cut& c : secondary) std::sort(c.tabs.begin(), c.tabs.end(), byStart);
+}
+
+void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const std::vector<Cut>& secondary) {
+    // Loose pieces (sidedTabs_, where the kerf can consume the part; also when every tab was left
+    // out): with the kept tabs, every
+    // piece of material the tools leave inside a closed cut must still join what lies outside it,
+    // through some kept tab. A raster over each closed primary cut (0.05 mm cells, coarser only
+    // beyond 4 million of them) marks a cell cut when an open tool position
+    // (every 0.05 mm) comes within the tab-layer radius + 2 µm; uncut cells not joined (4-neighbour)
+    // to the frame round the cut form loose pieces, and each piece of 0.05 mm² or more is reported
+    // against the vector of the nearest cut.
+    if (!sidedTabs_ || !p_.tabs.enabled) {
+        return;
+    }
+    {
+        const double rt = tabLayerRadius();
+        const double reachCut = rt + 2e-3;
+        std::map<std::size_t, double> loose;  // vector -> largest loose piece (mm²)
+        // Open tool positions: every 0.05 mm along every cut of both passes, outside the kept tabs'
+        // raised stretches.
+        struct Pos {
+            Vec2 p;
+            std::size_t source;
+        };
+        std::vector<Pos> openPos;
+        for (const std::vector<Cut>* pass : {&primary, &secondary}) {
+            for (const Cut& c : *pass) {
+                const ArcLengthPath& w = c.walk;
+                const double len = w.length();
+                const int n = std::max(1, static_cast<int>(std::ceil(len / 0.05)));
+                for (int i = 0; i <= n; ++i) {
+                    const double u = len * i / n;
+                    const bool raised = std::any_of(c.tabs.begin(), c.tabs.end(), [&](const TabSpan& t) {
+                        for (double x : {u - len, u, u + len}) {
+                            if (x > t.a && x < t.b && (w.closed() || x == u)) return true;
+                        }
+                        return false;
+                    });
+                    if (!raised) openPos.push_back({w.pointAt(u), c.sources.front()});
+                }
+                for (const TabSpan& t : c.tabs) {  // the tool goes back down at the exact ends
+                    openPos.push_back({w.pointAt(t.a), c.sources.front()});
+                    openPos.push_back({w.pointAt(t.b), c.sources.front()});
+                }
+            }
+        }
+        for (const Cut& c : primary) {
+            if (!c.walk.closed()) continue;
+            // Quick exact answer: with no other vector's cut nearby, the interior the cut leaves is
+            // the loop eroded by the kerf (the roughing cut at most the last-pass allowance further).
+            // When that is a single piece and a tab on this cut holds (the tab check found part
+            // beyond the kerf joined to it), it is held; otherwise rasterise (tab material may join
+            // pieces, other cuts may split them).
+            {
+                Contour loop = c.walk.contour();
+                geometry::setOrientation(loop, Orientation::CCW, tol_);
+                auto countPieces = [&](double erode) {
+                    std::size_t n = 0;
+                    for (const Contour& piece : geometry::offsetContours({loop}, -erode, geometry::JoinType::Round, offTol_,
+                                                                         p_.corners.mitreLimit)) {
+                        if (geometry::area(piece) > 0.0) ++n;
+                    }
+                    return n;
+                };
+                // Nothing left even by this cut alone; or one piece even with the roughing cut's
+                // allowance added on every side and necks under 0.1 mm counted as cut.
+                const std::size_t least = countPieces(rt + 1e-3);
+                const std::size_t pieces =
+                    least == 0 ? 0 : countPieces(rt + (p_.separateLastPass ? p_.lastPassAllowance : 0.0) + 0.05);
+                // (Only when no cut of another vector comes near: those may split the interior too.)
+                const geometry::Box2 near0 = c.walk.contour().bounds().inflated(2.0 * rt + 0.6);
+                bool crowded = false;
+                for (const std::vector<Cut>* pass : {&primary, &secondary}) {
+                    for (const Cut& o : *pass) {
+                        if (o.sources != c.sources && o.walk.contour().bounds().intersects(near0)) crowded = true;
+                    }
+                }
+                if (!crowded && (least == 0 || (least == 1 && pieces == 1 && !c.tabs.empty()))) continue;
+            }
+            const geometry::Box2 box = c.walk.contour().bounds().inflated(rt + 0.5);
+            double hh = 0.05;
+            const double boxArea = box.width() * box.height();
+            if (boxArea / (hh * hh) > 4e6) hh = std::sqrt(boxArea / 4e6);
+            const int nx = static_cast<int>(std::ceil(box.width() / hh)) + 1;
+            const int ny = static_cast<int>(std::ceil(box.height() / hh)) + 1;
+            const auto cells = static_cast<std::size_t>(nx) * static_cast<std::size_t>(ny);
+            auto index = [&](int i, int j) { return static_cast<std::size_t>(j) * static_cast<std::size_t>(nx) + static_cast<std::size_t>(i); };
+            // Open tool positions near the box, bucketed by cells at least as wide as their reach.
+            const double gb = std::max(reachCut, 0.25);
+            const int bx = static_cast<int>(std::ceil(box.width() / gb)) + 1;
+            const int by = static_cast<int>(std::ceil(box.height() / gb)) + 1;
+            std::vector<std::vector<Vec2>> buckets(static_cast<std::size_t>(bx) * static_cast<std::size_t>(by));
+            const geometry::Box2 reachBox = box.inflated(reachCut);
+            for (const Pos& op : openPos) {
+                const Vec2 q = op.p;
+                if (!reachBox.contains(q)) continue;
+                const int i0 = std::clamp(static_cast<int>(std::floor((q.x - box.min.x) / gb)), 0, bx - 1);
+                const int j0 = std::clamp(static_cast<int>(std::floor((q.y - box.min.y) / gb)), 0, by - 1);
+                buckets[static_cast<std::size_t>(j0) * static_cast<std::size_t>(bx) + static_cast<std::size_t>(i0)].push_back(q);
+            }
+            std::vector<signed char> cutMemo(cells, -1);
+            auto isCut = [&](int i, int j) {
+                signed char& m = cutMemo[index(i, j)];
+                if (m < 0) {
+                    const Vec2 x{box.min.x + (i + 0.5) * hh, box.min.y + (j + 0.5) * hh};
+                    const int ci = std::clamp(static_cast<int>(std::floor((x.x - box.min.x) / gb)), 0, bx - 1);
+                    const int cj = std::clamp(static_cast<int>(std::floor((x.y - box.min.y) / gb)), 0, by - 1);
+                    m = 0;
+                    for (int dj = -1; dj <= 1 && m == 0; ++dj) {
+                        for (int di = -1; di <= 1 && m == 0; ++di) {
+                            const int ii = ci + di;
+                            const int jj = cj + dj;
+                            if (ii < 0 || jj < 0 || ii >= bx || jj >= by) continue;
+                            for (const Vec2& q : buckets[static_cast<std::size_t>(jj) * static_cast<std::size_t>(bx) + static_cast<std::size_t>(ii)]) {
+                                if (geometry::distance(q, x) <= reachCut) {
+                                    m = 1;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                return m == 1;
+            };
+            std::vector<char> seen(cells, 0);
+            std::vector<std::size_t> queue;
+            auto flood = [&](std::size_t start) {
+                queue.assign(1, start);
+                seen[start] = 1;
+                for (std::size_t q = 0; q < queue.size(); ++q) {
+                    const int i = static_cast<int>(queue[q] % static_cast<std::size_t>(nx));
+                    const int j = static_cast<int>(queue[q] / static_cast<std::size_t>(nx));
+                    const int di[4] = {1, -1, 0, 0};
+                    const int dj[4] = {0, 0, 1, -1};
+                    for (int e = 0; e < 4; ++e) {
+                        const int ii = i + di[e];
+                        const int jj = j + dj[e];
+                        if (ii < 0 || jj < 0 || ii >= nx || jj >= ny) continue;
+                        const std::size_t k = index(ii, jj);
+                        if (seen[k] || isCut(ii, jj)) continue;
+                        seen[k] = 1;
+                        queue.push_back(k);
+                    }
+                }
+                return queue.size();
+            };
+            for (int i = 0; i < nx; ++i) {
+                for (int j : {0, ny - 1}) {
+                    if (!seen[index(i, j)] && !isCut(i, j)) flood(index(i, j));
+                }
+            }
+            for (int j = 0; j < ny; ++j) {
+                for (int i : {0, nx - 1}) {
+                    if (!seen[index(i, j)] && !isCut(i, j)) flood(index(i, j));
+                }
+            }
+            for (int j = 1; j + 1 < ny; ++j) {
+                for (int i = 1; i + 1 < nx; ++i) {
+                    if (seen[index(i, j)] || isCut(i, j)) continue;
+                    const std::size_t n = flood(index(i, j));
+                    const double pieceArea = static_cast<double>(n) * hh * hh;
+                    if (n < 3 || pieceArea < 0.05) continue;
+                    // Attribute it to the vector of the nearest cut.
+                    const Vec2 x{box.min.x + (i + 0.5) * hh, box.min.y + (j + 0.5) * hh};
+                    double best = std::numeric_limits<double>::infinity();
+                    std::size_t src = c.sources.front();
+                    for (const Pos& op : openPos) {
+                        const double d = geometry::distance(op.p, x);
+                        if (d < best) {
+                            best = d;
+                            src = op.source;
+                        }
+                    }
+                    loose[src] = std::max(loose[src], pieceArea);
+                }
+            }
+        }
+        for (const auto& [src, pieceArea] : loose) {
+            char buf[32];
+            std::snprintf(buf, sizeof buf, "%.2f", pieceArea);
+            diag(ProfileIssue::TabsNotPlaced, src,
+                 vecName(src) + ": a piece of material inside the cut (about " + buf +
+                     " square mm) is not held by any kept tab and comes free");
+        }
+    }
 }
 
 // Points (every 0.1 mm) along the stretch of each tab that leaves material: its footprint minus a
@@ -1778,7 +1961,8 @@ void ProfileBuilder::reportTabs() {
             // Reasons, most specific first; the rest had no room where they were placed.
             const std::size_t severed = tabsSevered_[src];
             const std::size_t unmatched = tabsUnmatched_[src];
-            const std::size_t noRoom = n - severed - unmatched;
+            const std::size_t empty = tabsEmpty_[src];
+            const std::size_t noRoom = n - severed - unmatched - empty;
             std::string why;
             auto add = [&](std::size_t k, const char* text) {
                 if (k == 0) return;
@@ -1789,6 +1973,7 @@ void ProfileBuilder::reportTabs() {
             add(unmatched, "could not be matched on the roughing cut");
             add(severed, "would be cut through by the tool (at a corner or turn of the cut, or by another stretch "
                          "of a cut)");
+            add(empty, "would hold nothing (the cut removes all the material on one side of them)");
             diag(ProfileIssue::TabsNotPlaced, src,
                  vecName(src) + ": " + std::to_string(n) + " of " + std::to_string(tabsRequested_[src]) +
                      " tab(s) left out (" + why + ")");
@@ -2264,9 +2449,11 @@ ProfileResult ProfileBuilder::run() {
         placeTabsOn(finish, rough);
         matchRoughingTabs(finish, rough);
         dropSweptTabs(finish, rough);
+        reportLoosePieces(finish, rough);
     } else {
         placeTabsOn(rough, {});
         dropSweptTabs(rough, finish);
+        reportLoosePieces(rough, finish);
     }
     reportTabs();
     collectTabMaterial(rough);
