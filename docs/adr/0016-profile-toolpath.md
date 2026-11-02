@@ -1,6 +1,6 @@
 # ADR-0016: 2D Profile toolpath
 
-Date: 2026-10-26 · Status: accepted 2026-11-01 (T-0120; amended in place by T-0124, 2026-10-30/11-01)
+Date: 2026-10-26 · Status: accepted 2026-11-01 (T-0120; amended in place by T-0124, 2026-10-30/11-01, and T-0127)
 
 ## Context
 T-0120 asks for `profileToolpath(contours, Tool, ProfileParams)` with the options of
@@ -34,7 +34,9 @@ choices. Behaviour descriptions come from `docs/reference/` only.
    number of others is a hole). They are oriented region-on-the-left (outer CCW, hole CW, island
    CCW). Outside keeps the region: the tool runs outside outer boundaries and inside holes;
    Inside runs inside the region. Open vectors: Outside = right of travel, Inside = left (the
-   enum has `Right`/`Left` aliases). On runs on the vector (offset by the allowance only).
+   enum has `Right`/`Left` aliases). On runs on the vector (offset by the allowance only). An
+   allowance of exactly −r also puts the cut on the vector; the profile side still decides the
+   direction of cut and which side is the part (T-0127; before, Inside turned into Outside there).
 5. **Exact offsets first.** Each vector is offset by r + allowance with
    `geometry::offsetOpenContour` (the public API as on main; closed contours are accepted), so
    lines and arcs stay exact: an inside profile of an r = 10 circle with a 6 mm tool is one
@@ -159,18 +161,81 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     it counts too), on the waste side every cell; every open tool position cuts the cells within
     its radius plus 1.5 cells; the tab holds when uncut cells join the material next to the vector
     to the waste beyond the kerf (or when there is no such waste near it at all: a hole smaller
-    than the kerf). On the vector (side On, decided by the profile side: `Cut::distance` is
-    |allowance| there) the left of travel plays the vector side and must itself reach the waste
-    beyond the kerf. **On guard (conservative, pending card T-0127):** On the vector a tab is
-    kept only if, in addition, on every pass the tool positions within two tool radii (plus the 3D
-    ramp) outside the two ends of each of its raised stretches stay at least
-    2r + 2·|allowance| + max(0.25 mm, 0.05·D) apart; otherwise it is dropped and reported as cut
-    through. So On tabs on sharp turns of the cut are conservatively dropped; T-0127 is to judge
-    them properly. So a short tab centred on a sharp turn of the cut — a
-    convex corner or spike tip, an inside corner (Inside of a square), a gear root, the tip of a
-    narrow arm — where the tool at the two ends of the raised stretch seals the tab's material off
-    from the waste, is dropped and reported; so
-    is one left hanging on the part by a sliver (verify rounds 2 and 3). The check runs as a
+    than the kerf). This distance rule serves Inside/Outside with allowance ≥ 0, where the kerf
+    lies wholly on the waste side of the vector. **Sided tabs (T-0127).** On the vector, and for Inside/Outside with a negative
+    allowance (the kerf then crosses the vector, so the distance to the vectors no longer tells
+    the part from the waste), a tab is judged by the pieces of material the cut leaves, decided by
+    the profile side and the allowance (never by `Cut::distance`), with no cross-section shortcut:
+    the layer just below the tab top, where every tool position cuts a disc of the tab-layer
+    radius (a V-bit's cone there: tab thickness × tan(half angle), at most the radius at the
+    bottom). On a raster (0.05 mm cells) round the tab's raised stretches (both passes) out to two
+    radii + 0.6 mm: the pieces are the cells no tool position cuts with every tab lowered, this one
+    too; the tab's own material is the cells only its own lowered stretches would cut; a component
+    of its material joins the pieces it touches. A piece counts when it covers 0.01 mm² and is
+    thicker than 0.05 mm somewhere; the tab holds when it joins every counting piece within the
+    radius + 0.3 mm (+ 2 cells) of its raised stretches (their exact ends included) into one, and there are at least two. (The
+    cross-sections, which place the roughing cover, run across the whole kerf here: a tool radius
+    to each side of the cut, plus the last-pass allowance on the side where the roughing cut runs:
+    away from the vector, but towards it On with a negative allowance.) The
+    other live tabs count as cut, so a tab holds on its own and never borrows another tab's bridge.
+    This is judged with the tools exactly as wide (+ 0.01 mm, which closes hairline gaps between
+    cell centres) and again widened by 0.055 mm (on 0.05 mm cells, and where that fails on 0.025 mm
+    cells), where the tab must not leave a near
+    piece unjoined: every kept tab joins the material on both sides through a neck of about 0.1 mm
+    or more, and leaves no counting piece near it loose. With fewer than two counting pieces the
+    tab would hold nothing (a loop or arm narrower than the kerf, the tip of an arm the kerf
+    consumes): it is dropped and reported as such ("would hold nothing"); a tab that leaves a near
+    piece unjoined is dropped as cut through. Tool positions every k-th sample along the cuts (at
+    most sqrt(0.04·r) apart), their discs grown by the sagitta of the gap (≤ 5 µm), stand for the
+    sweep. Two exact quick answers skip the raster: when every tool position within 2r + 0.7 mm
+    (plus the sample gap) of the raised stretches lies on one of the tab's own cuts close to the
+    stretch along it (within 2.5 times that distance), and the cut there either bends gently (no
+    corner: between samples 0.25 mm apart at most 2° or the turn of an arc of radius 2r + 1 mm), or
+    turns at most 120° over any 2r + 1 mm and a run of at least three cross-sections of the tab's
+    material, with their middle one carried 0.4 mm past both walls, stays clear of every tool by the
+    widened radius + 0.06 mm; in the first, the core of every raised stretch of the tab (less
+    r + 0.17 mm and the sample gap at each end) is clear of every tool by r + 0.12 mm and the gap
+    (a roughing cover shorter than its finishing stretch leaves roughing tools there). Then no other cut
+    reaches the material within r + 0.3 mm of the
+    stretch, the cut leaves exactly its two sides as counting pieces there, and the tab's material
+    joins them. **Loose pieces.** A kept tab holds the material next to it, but a piece elsewhere
+    (the kerf consuming a neck of the part, a remnant between the finishing and roughing kerfs at a
+    corner) may have no tab: after the tab check, whenever tabs are on (also when every tab was left
+    out), pieces of material inside a closed primary cut that join the outside through no kept tab
+    are looked for and reported, on a best-effort basis (known gaps below). First: the material the cuts leave near the loop is what the bands of the
+    loop and of every cut near it (both passes; each the path grown by the radius on both sides)
+    leave, and an enclosed piece is a hole of their union (offsets and a union). No hole inside the
+    loop's box, or one hole that stays one when the bands grow 0.03 mm more and has a kept tab (of
+    any cut near) within the tab-layer radius + 0.3 mm of it (the tab check joined it to the pieces
+    beside the tab): no loose piece. If no cut near keeps a tab, every such hole is loose and
+    reported as it is. Otherwise a raster over the loop's box
+    (0.05 mm cells, coarser only beyond 4 million) stamps the open tool positions (as above, with
+    the kept tabs' exact ends, sorted by x so a raster stamps only those near it), and uncut
+    components not joined to the frame are loose. A loose piece of 0.04 mm² or more, thicker
+    than 0.05 mm somewhere (a hairline sliver between two kerfs does not count), is reported
+    against the vector of the loop that contains it, or else of the nearest cut ("a piece of
+    material inside the cut (about A square mm) is not held by any kept tab and comes free"), at
+    most five per vector, the last saying how many smaller ones remain. Known gaps (follow-up card
+    T-0135): reports of loose pieces whose rounded areas are equal are merged by the diagnostics
+    de-duplication in run() (a symmetric H shape reports one of its pieces); a piece whose bounding
+    box overlaps an already reported piece's (one in another's concave notch) is taken for the
+    same piece and skipped; leads are not part of this check (a lead crossing the part is a
+    separate issue); and pieces between neighbouring vectors that reach out of the loop's box are
+    not seen. Cost: about 1.2–1.3 × main on the dense negative-allowance page (500 close
+    rectangles, separate last pass, allowance −1: neighbouring kerfs overlap, so nearly every tab
+    goes to the raster and holds nothing); On the vector, 500 small shapes, about 0.3 s, no slower
+    than main (other pages within a few per cent of main). So a short tab centred on a sharp
+    turn of the cut — a convex corner or spike tip, an inside corner (Inside of a square), a gear
+    root, the tip of a narrow arm — where the tool at the two ends of the raised stretch seals the
+    tab's material off from the waste, is dropped and reported (On a 30 × 30 square with a 6 mm
+    tool the tools at the two ends of a corner tab's raised stretch stand (L/2 + r)·√2 apart and
+    overlap for L < 2.49 mm; the tab is kept once the neck between them survives the widened
+    check: from L = 2.8 mm at allowance 0 and −0.3, 2.6 mm at +0.3, where the corner of the cut is
+    rounded), and so is one left hanging on the part by a sliver (verify rounds 2 and 3);
+    tabs that hold — short tabs on straight edges, longer tabs on corners — are kept, for every
+    allowance ≥ −r. (T-0124 merged with a conservative On guard that dropped every On tab whose
+    raised-stretch ends came within 2r + 2|allowance| + max(0.25, 0.05·D) of each other; T-0127
+    replaced it with this rule.) The check runs as a
     worklist: when a tab is dropped, only the tabs whose material lies within reach of the cut it
     protected are checked again (a separate last pass with tabs on 500 close vectors costs about
     1.3 × the time without tabs). Together: no pass cuts below the tab top into any cross-section
@@ -180,7 +245,7 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     pass, otherwise the only cuts), so per vector when its offset is one loop, and per loop when
     the offset splits into several (each loop gets the requested tabs; the diagnostic sums them); one `TabsNotPlaced` diagnostic per
     vector says "N of M tab(s) left out" with the count for each reason (no room, could not be
-    matched on the roughing cut, would be cut through); another reports tabs that could not avoid
+    matched on the roughing cut, would be cut through, would hold nothing); another reports tabs that could not avoid
     a corner. Where a V-bit corner climb is inserted at the start of a raised stretch, the tool
     goes back up to the tab top vertically after the climb (inserts end at the leg's height there;
     path breaks closer than the tiny length merge into the last of them), so a tab is always cut
