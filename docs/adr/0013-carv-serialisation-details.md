@@ -1,6 +1,6 @@
 # ADR-0013: `.carv` serialisation details
 
-Date: 2026-10-24 · Status: accepted (director, 2026-10-24) · Amended 2026-10-24 (A1, T-0015), 2026-11-01 (A2, T-0132)
+Date: 2026-10-24 · Status: accepted (director, 2026-10-24) · Amended 2026-10-24 (A1, T-0015), 2026-11-01 (A2, T-0132; finite-params exception added by T-0136/T-0139)
 
 ## Context
 ADR-0003 fixes the container (zip of `manifest.json`, `job.json` and optional binary members).
@@ -221,4 +221,6 @@ confines forward-compat logic to the I/O layer.
   name order among the preserved members (§1). T-0122's interim `toolpaths/NNNN.json` members are
   converted to records on load instead of being kept as unknown members. The toolpath parameter
   keys follow carvetto-cli's params.json (lengths without the `_mm` suffix of §5; angles in
-  radians under `_rad` keys).
+  radians under `_rad` keys). Exception to decision 3 (T-0136): every number in a toolpath record's `params`
+  must be finite; the strings `"NaN"`, `"Infinity"` and `"-Infinity"` are refused there on load
+  and on save (ADR-0021 §2, "Parameters are finite numbers"). Other doubles keep decision 3.
