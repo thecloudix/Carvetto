@@ -83,6 +83,16 @@ class Decoder {
         return d;
     }
 
+    /// A finite number greater than zero (tool diameter, feeds, dwell): a crafted file must not
+    /// hand the post a zero or negative value.
+    double positive(const json& v, const std::string& what) const {
+        const double d = number(v, what);
+        if (!(d > 0.0)) {
+            fail(what + " must be greater than zero");
+        }
+        return d;
+    }
+
     std::string string(const json& v, const std::string& what) const {
         if (!v.is_string()) {
             fail(what + " must be a string");
@@ -109,14 +119,14 @@ class Decoder {
         if (toolpath::isArc(m.kind)) {
             m.centre = {number(a[4], where + " centre x"), number(a[5], where + " centre y")};
         } else if (m.kind == MoveKind::Dwell) {
-            m.dwellSeconds = number(a[4], where + " seconds");
+            m.dwellSeconds = positive(a[4], where + " seconds");
         }
         if (a.size() == fixed + 1) {
             const json& extra = a[fixed];
             if (!extra.is_object() || extra.size() != 1 || !extra.contains("feed") || !toolpath::isCutting(m.kind)) {
                 fail(where + " has an invalid feed override");
             }
-            m.feedOverride = number(extra["feed"], where + " feed");
+            m.feedOverride = positive(extra["feed"], where + " feed");
         }
         return m;
     }
@@ -189,9 +199,9 @@ StoredToolpath decodeToolpath(std::string member, const std::vector<std::uint8_t
         d.fail("'tool.tool_number' must be a whole number from 0 to 1000000");
     }
     t.toolNumber = static_cast<int>(number.get<long long>());
-    t.diameter = d.number(d.field(tool, "diameter"), "'tool.diameter'");
-    t.feedRate = d.number(d.field(tool, "feed_rate"), "'tool.feed_rate'");
-    t.plungeRate = d.number(d.field(tool, "plunge_rate"), "'tool.plunge_rate'");
+    t.diameter = d.positive(d.field(tool, "diameter"), "'tool.diameter'");
+    t.feedRate = d.positive(d.field(tool, "feed_rate"), "'tool.feed_rate'");
+    t.plungeRate = d.positive(d.field(tool, "plunge_rate"), "'tool.plunge_rate'");
     t.spindleSpeed = d.number(d.field(tool, "spindle_speed"), "'tool.spindle_speed'");
     const json& moves = d.field(j, "moves");
     if (!moves.is_array()) {

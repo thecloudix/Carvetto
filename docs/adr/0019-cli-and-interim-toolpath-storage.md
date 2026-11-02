@@ -54,6 +54,7 @@ definitions in `job.json` with an optional `toolpaths/*.bin` cache, and no card 
   - Without them the tool's default cutting data is used.
 - `"layers": [names]` restricts the vectors. The default is every vector object, in creation order.
 - Unknown keys are errors that name the key and list the keys known at that level.
+- Duplicate keys are errors that name the key path (T-0134); JSON parsers would otherwise keep the last one silently.
 
 Implementation choices made here:
 - **Relative paths.** A relative `tool.database` is resolved against the params file's directory.

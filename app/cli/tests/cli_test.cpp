@@ -201,6 +201,8 @@ TEST_CASE("AC2: failing commands exit with 1 and a clear message", "[cli][errors
                   "allowance": 30})");
     writeFile(dir + "/emptypocket.json", R"({"tool": {"id": "end-mill-6mm"}, "layers": ["Pockets"]})");
     writeFile(dir + "/bad.pp", "begin HEADER\n\"[NO_SUCH_TAG]\"\nend\n");
+    writeFile(dir + "/dup.json", R"({"tool": {"id": "end-mill-6mm"}, "safe_z": 5, "safe_z": 50})");
+    writeFile(dir + "/overflow.json", R"({"tool": {"id": "end-mill-6mm"}, "safe_z": 1e400})");
 
     struct Case {
         std::vector<std::string> args;
@@ -214,6 +216,8 @@ TEST_CASE("AC2: failing commands exit with 1 and a clear message", "[cli][errors
         {{"toolpath", "profile", missing + ".json", carv, carv}, "cannot read params file"},
         {{"toolpath", "profile", dir + "/bad.json", carv, carv}, "bad.json: params: not valid JSON"},
         {{"toolpath", "profile", dir + "/typo.json", carv, carv}, "unknown key 'tabs.lenght'"},
+        {{"toolpath", "profile", dir + "/dup.json", carv, carv}, "dup.json: params: duplicate key 'safe_z'"},
+        {{"toolpath", "profile", dir + "/overflow.json", carv, carv}, "overflow.json: params: not valid JSON"},
         {{"toolpath", "profile", dir + "/notool.json", carv, carv},
          "the built-in starter tool database has no tool with id 'no-such-tool'"},
         {{"toolpath", "profile", dir + "/nolayer.json", carv, carv}, "has no layer named 'Nope'"},
@@ -425,4 +429,19 @@ TEST_CASE("toolpath refuses to write a file the loader would reject", "[cli][too
     CHECK_THAT(r.err, ContainsSubstring("interim toolpath storage"));
     CHECK_FALSE(fs::exists(dir + "/out.carv"));
     CHECK_FALSE(fs::exists(dir + "/out.carv.tmp"));
+    CHECK(r.out.empty());  // T-0134: no "added ..." for a toolpath that was never written
+}
+
+TEST_CASE("T-0134: toolpath reports added toolpaths only after a successful write", "[cli][toolpath]") {
+    const std::string dir = workDir("added");
+    const std::string carv = importedFixture(dir);
+    const Outcome bad = runCli({"toolpath", "pocket", kData + "/pocket.json", carv, dir + "/no/such/dir/out.carv"});
+    CHECK(bad.code == cli::kExitFailure);
+    CHECK_THAT(bad.err, ContainsSubstring("no/such/dir/out.carv"));
+    CHECK(bad.out.empty());
+
+    const Outcome good = runCli({"toolpath", "pocket", kData + "/pocket.json", carv, dir + "/out.carv"});
+    REQUIRE(good.code == 0);
+    CHECK_THAT(good.out, StartsWith("added pocket toolpath '"));
+    CHECK_THAT(good.out, ContainsSubstring("as toolpaths/0001.json\nwrote '" + dir + "/out.carv'\n"));
 }

@@ -360,15 +360,16 @@ int cmdToolpath(const std::vector<std::string>& a, std::ostream& out, std::ostre
     }
 
     document::CarvExtras extras = loaded.extras;
+    std::string added;  // reported only once the file is written
     for (toolpath::Toolpath& tp : results) {
         const std::string member = nextToolpathMember(extras);
-        out << "added " << op << " toolpath '" << tp.name << "' (" << tp.moveCount() << " moves, tool '" << tp.tool.name
-            << "') as " << member << '\n';
+        added += "added " + op + " toolpath '" + tp.name + "' (" + std::to_string(tp.moveCount()) + " moves, tool '" +
+                 tp.tool.name + "') as " + member + '\n';
         StoredToolpath stored{member, op, paramsJson, safeZ, std::move(tp)};
         extras = extras.withMember(member, encodeToolpath(stored));
     }
     saveVerified(loaded.document, outPath, extras);
-    out << "wrote '" << outPath << "'\n";
+    out << added << "wrote '" << outPath << "'\n";
     return kExitOk;
 }
 

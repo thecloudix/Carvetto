@@ -13,6 +13,7 @@
 #include <sstream>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "carvetto/geometry/vec2.hpp"
 #include "carvetto/tooling/json_io.hpp"
@@ -152,10 +153,54 @@ class Fields {
     std::set<std::string> known_;
 };
 
+/// Parses a params file. Duplicate keys (which JSON parsers silently resolve to the last one)
+/// are refused, naming the key with its path, and every JSON error, number overflow such as
+/// `1e400` included, is reported as invalid JSON.
 json parseJson(std::string_view text) {
+    // One frame per open object or array: its dotted path and, for an object, the keys seen.
+    struct Frame {
+        std::string path;
+        bool isObject{false};
+        std::set<std::string> keys;
+    };
+    std::vector<Frame> frames;
+    std::string lastKey;
+    const auto childPath = [&]() -> std::string {
+        if (frames.empty()) {
+            return {};
+        }
+        const Frame& parent = frames.back();
+        if (!parent.isObject) {
+            return parent.path + "[]";
+        }
+        return parent.path.empty() ? lastKey : parent.path + "." + lastKey;
+    };
+    const json::parser_callback_t onEvent = [&](int /*depth*/, json::parse_event_t event, json& parsed) {
+        switch (event) {
+            case json::parse_event_t::object_start:
+            case json::parse_event_t::array_start:
+                frames.push_back({childPath(), event == json::parse_event_t::object_start, {}});
+                break;
+            case json::parse_event_t::object_end:
+            case json::parse_event_t::array_end:
+                if (!frames.empty()) {
+                    frames.pop_back();
+                }
+                break;
+            case json::parse_event_t::key:
+                lastKey = parsed.get<std::string>();
+                if (!frames.empty() && !frames.back().keys.insert(lastKey).second) {
+                    throw CliError("params: duplicate key '" + childPath() + "'");
+                }
+                break;
+            case json::parse_event_t::value:
+                break;
+        }
+        return true;
+    };
     try {
-        return json::parse(text.begin(), text.end());
-    } catch (const json::parse_error& e) {
+        return json::parse(text.begin(), text.end(), onEvent);
+    } catch (const json::exception& e) {
         throw CliError(std::string("params: not valid JSON: ") + e.what());
     }
 }

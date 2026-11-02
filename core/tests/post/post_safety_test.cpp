@@ -232,7 +232,7 @@ end
     b.tool.name = "u\rv";
     b.tool.toolNumber = 2;
     const std::string out = runOk(pp, {a, b}, ctx);
-    CHECK(out == "r s|p q|r s, u v|1 2|3 4|5 6|7 8|9 0|a b|c d|e  f\n");
+    CHECK(out == "r s|p q|r s; u v|1 2|3 4|5 6|7 8|9 0|a b|c d|e  f\n");
 }
 
 TEST_CASE("AC1: parentheses are mapped only inside an open ( ) comment, even without SUBSTITUTE",
@@ -862,4 +862,145 @@ TEST_CASE("AC3: shipped posts define no VAR prefix that could move a text tag ou
             }
         }
     }
+}
+
+// ---- T-0134: residuals of the T-0133 verification ----------------------------------------------
+
+namespace {
+
+/// Every place in `source` (a .pp file) where a text tag in an output line is followed by
+/// something other than `)`, the end of the line or another text tag without a VAR prefix:
+/// template text right after a value, which the sanitiser cannot judge (ADR-0020 gap).
+std::vector<std::string> textAfterValue(const std::string& source, const PostProcessor& pp) {
+    const auto isText = [](std::string_view tag) {
+        const TagInfo* info = findTag(tag);
+        return info != nullptr && info->kind == TagKind::Text;
+    };
+    std::vector<std::string> found;
+    std::istringstream in(source);
+    std::string line;
+    while (std::getline(in, line)) {
+        if (!line.empty() && line.back() == '\r') {
+            line.pop_back();
+        }
+        const std::size_t first = line.find_first_not_of(" \t");
+        const std::size_t last = line.find_last_not_of(" \t");
+        if (first == std::string::npos || line[first] != '"' || last <= first || line[last] != '"') {
+            continue;  // not an output line
+        }
+        const std::string text = line.substr(first + 1, last - first - 1);
+        std::size_t i = 0;
+        while ((i = text.find('[', i)) != std::string::npos) {
+            const std::size_t close = text.find(']', i);
+            REQUIRE(close != std::string::npos);
+            const std::string tag = text.substr(i + 1, close - i - 1);
+            i = close + 1;
+            if (!isText(tag) || i == text.size() || text[i] == ')') {
+                continue;
+            }
+            bool ok = false;
+            if (text[i] == '[') {
+                const std::size_t nextClose = text.find(']', i);
+                REQUIRE(nextClose != std::string::npos);
+                const std::string next = text.substr(i + 1, nextClose - i - 1);
+                const VarDef* def = pp.var(next);
+                ok = isText(next) && (def == nullptr || def->prefix.empty());
+            }
+            if (!ok) {
+                found.push_back(line);
+            }
+        }
+    }
+    return found;
+}
+
+std::string replaceAll(std::string s, const std::string& from, const std::string& to) {
+    for (std::size_t at = s.find(from); at != std::string::npos; at = s.find(from, at + to.size())) {
+        s.replace(at, from.size(), to);
+    }
+    return s;
+}
+
+}  // namespace
+
+TEST_CASE("T-0134: shipped posts follow a text tag only by ')', the line end or another text tag",
+          "[post][safety][text]") {
+    for (const Shipped& p : shipped()) {
+        INFO(p.stem);
+        const std::string source = readFile(std::string(CARVETTO_POSTS_DIR) + "/" + p.stem + ".pp");
+        const PostProcessor pp = parseText(source);
+        CHECK(textAfterValue(source, pp).empty());
+
+        // The check catches the gap shapes: template commas and keyword completions after a value.
+        for (const char* add : {",x", " ,x", "OPEN", "CLOSE", " x", "[T]"}) {
+            INFO(add);
+            const std::string mutated =
+                replaceAll(replaceAll(source, "([TOOLPATH_NAME])", std::string("([TOOLPATH_NAME]") + add + ")"),
+                           "; [TOOLPATH_NAME]\"", std::string("; [TOOLPATH_NAME]") + add + "\"");
+            REQUIRE(mutated != source);
+            CHECK_FALSE(textAfterValue(mutated, parseText(mutated)).empty());
+        }
+    }
+    // Another text tag is fine, unless a VAR prefix puts template text between the two.
+    const std::string adjacent = "begin HEADER\n\"([TOOLNAME][TOOLPATH_NAME])\"\nend\n";
+    CHECK(textAfterValue(adjacent, parseText(adjacent)).empty());
+    const std::string prefixed = "VAR NAME = [TOOLPATH_NAME|A|OPEN|1.0]\n" + adjacent;
+    CHECK_FALSE(textAfterValue(prefixed, parseText(prefixed)).empty());
+}
+
+TEST_CASE("T-0134: the parser refuses control characters other than tab in .pp lines", "[post][safety][text]") {
+    struct Bad {
+        std::string ch;
+        const char* code;
+    };
+    for (const Bad& b : {Bad{"\f", "0x0C"}, Bad{"\v", "0x0B"}, Bad{"\r", "0x0D"}, Bad{"\x01", "0x01"},
+                         Bad{"\x1b", "0x1B"}, Bad{"\x7f", "0x7F"}, Bad{std::string(1, '\0'), "0x00"}}) {
+        INFO(b.code);
+        // In an output line between "(" and a value: LinuxCNC would skip it as whitespace and
+        // run "(MSG,hi)" (verifier driver ff.cpp).
+        auto r = PostProcessor::parse("begin HEADER\n\"(" + b.ch + "[TOOLPATH_NAME])\"\nend\n");
+        REQUIRE_FALSE(r.ok());
+        CHECK(r.error().line == 2);
+        CHECK_THAT(r.error().message, ContainsSubstring(std::string("control character ") + b.code));
+        // In a VAR prefix and in a setting.
+        auto v = PostProcessor::parse("+ c\nVAR NAME = [TOOLPATH_NAME|A|(" + b.ch + "|1.0]\n");
+        REQUIRE_FALSE(v.ok());
+        CHECK(v.error().line == 2);
+        auto s = PostProcessor::parse("POST_NAME = \"a" + b.ch + "b\"\n");
+        REQUIRE_FALSE(s.ok());
+        CHECK(s.error().line == 1);
+    }
+    // Tab is allowed (and counts as a space in the word run); CR LF line ends and comment lines
+    // are unaffected.
+    const PostProcessor tab = parseText(
+        "begin HEADER\r\n\"(\t[TOOLPATH_NAME])\"\r\nend\r\nbegin RAPID_MOVE\r\nend\r\n+ \f note\r\n");
+    Toolpath tp = simple({Move::rapid({0, 0, 5})});
+    tp.name = "MSG,hi";
+    CHECK(runOk(tab, {tp}, {}) == "(\tMSG_hi)\n");
+}
+
+TEST_CASE("T-0134: [TOOLS_USED] joins names with '; ' so the comma rule does not touch them",
+          "[post][safety][text]") {
+    const PostProcessor pp = parseText(R"PP(
+begin HEADER
+"([TOOLS_USED])"
+"; [TOOLS_USED]"
+"(Tools: [TOOLS_USED])"
+end
+begin TOOLCHANGE
+end
+begin RAPID_MOVE
+end
+)PP");
+    const auto run = [&](const std::string& a, const std::string& b) {
+        Toolpath t1 = simple({Move::rapid({0, 0, 5})});
+        t1.tool.name = a;
+        Toolpath t2 = simple({Move::rapid({0, 0, 5})});
+        t2.tool.toolNumber = t1.tool.toolNumber + 1;
+        t2.tool.name = b;
+        return runOk(pp, {t1, t2}, {});
+    };
+    CHECK(run("EndMill", "Drill") == "(EndMill; Drill)\n; EndMill; Drill\n(Tools: EndMill; Drill)\n");
+    // The first name's own commas still continue its word run; the "; " ends it.
+    CHECK(run("MSG,a", "b,c") == "(MSG_a; b,c)\n; MSG_a; b,c\n(Tools: MSG,a; b,c)\n");
 }

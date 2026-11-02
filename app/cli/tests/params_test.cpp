@@ -13,6 +13,7 @@
 
 using Catch::Approx;
 using Catch::Matchers::ContainsSubstring;
+using Catch::Matchers::StartsWith;
 using namespace carvetto;
 using namespace carvetto::cli;
 
@@ -164,6 +165,24 @@ TEST_CASE("omitted keys keep the core defaults", "[cli][params]") {
     const PocketJob b = parsePocketParams(R"({"tool": {"id": "t"}})");
     CHECK(b.params.profilePass == toolpath::PocketParams{}.profilePass);
     CHECK(b.params.rasterAngle == 0.0);
+}
+
+TEST_CASE("T-0134: duplicate keys and number overflow are refused", "[cli][params][errors]") {
+    CHECK(errorOf(R"({"tool": {"id": "t"}, "safe_z": 5, "safe_z": 50})") == "params: duplicate key 'safe_z'");
+    CHECK(errorOf(R"({"tool": {"id": "t", "id": "u"}})") == "params: duplicate key 'tool.id'");
+    CHECK(errorOf(R"({"tool": {"id": "t"}, "tabs": {"count": 2, "count": 4}})") ==
+          "params: duplicate key 'tabs.count'");
+    CHECK(errorOf(R"({"tool": {"id": "t"}, "tolerance": {"distance": 0.01, "distance": 0.01}})", true) ==
+          "params: duplicate key 'tolerance.distance'");
+    // The same key in different objects is fine.
+    CHECK(errorOf(R"({"tool": {"id": "end-mill-6mm"}, "tabs": {"enabled": true}, "passes": {"enabled": true}})")
+              .find("duplicate") == std::string::npos);
+    for (const char* big : {"1e400", "-1e400", "1e309"}) {
+        INFO(big);
+        const std::string e = errorOf(std::string(R"({"tool": {"id": "t"}, "safe_z": )") + big + "}");
+        CHECK_THAT(e, StartsWith("params: not valid JSON: "));
+        CHECK_THAT(e, ContainsSubstring("overflow"));
+    }
 }
 
 TEST_CASE("every params key is documented in the toolpath help", "[cli][params][help]") {

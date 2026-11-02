@@ -685,9 +685,11 @@ class Interpreter {
         if (tag == "TOOLNAME") return tool_.name;
         if (tag == "TOOLPATH_NAME") return toolpath_ != nullptr ? toolpath_->name : std::string{};
         if (tag == "TOOLS_USED") {
+            // Joined with "; ", not ", ": a comma right after the first name would continue
+            // its word run at the start of a comment and be neutralised to `_` (ADR-0020).
             std::string joined;
             for (const std::string& n : toolsUsed_) {
-                joined += joined.empty() ? n : ", " + n;
+                joined += joined.empty() ? n : "; " + n;
             }
             return joined;
         }

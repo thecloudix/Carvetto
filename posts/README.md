@@ -72,7 +72,9 @@ one, the test fails.
    `(MSG,…)`, alone or together: while a comment holds only words and spaces, commas in a value
    that continue the words become `_`, and a value completing PROBEOPEN/PROBECLOSE/LOGCLOSE gets
    a leading `_`. In a custom post, do not put template text right after a text tag at the
-   start of a comment (ADR-0020 lists this gap). Keep `SUBSTITUTE = "([)]"` in paren-comment posts anyway, for
+   start of a comment (ADR-0020 lists this gap); every shipped post follows a text tag only with
+   `)`, the end of the line or another text tag, and a test checks this. The parser refuses
+   control characters other than tab in `.pp` lines. `[TOOLS_USED]` separates names with `; `. Keep `SUBSTITUTE = "([)]"` in paren-comment posts anyway, for
    readers of the post. `post_safety_test.cpp` checks every shipped post with hostile names and
    that text tags appear only inside comments.
 10. **Numbers are finite and in range.** The interpreter refuses to write a non-finite number,

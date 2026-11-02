@@ -87,6 +87,31 @@ TEST_CASE("malformed toolpath members are reported with the member name", "[cli]
     CHECK_THAT(decodeError("{" + head + R"("moves":{}})"), ContainsSubstring("'moves' must be an array"));
 }
 
+TEST_CASE("T-0134: crafted members with zero or negative tool sizes, feeds or dwell are refused",
+          "[cli][store][errors]") {
+    const auto member = [](const std::string& diameter, const std::string& feed, const std::string& plunge,
+                           const std::string& moves) {
+        return R"({"format":"carvetto-toolpath","format_version":1,"operation":"profile","name":"n",)"
+               R"("params":{},"safe_z":5,"tool":{"name":"t","tool_number":1,"diameter":)" +
+               diameter + R"(,"feed_rate":)" + feed + R"(,"plunge_rate":)" + plunge +
+               R"(,"spindle_speed":1},"moves":)" + moves + "}";
+    };
+    CHECK(decodeError(member("6", "1000", "300", R"([["dwell",0,0,0,0.5],["feed",1,0,0,{"feed":5}]])")).empty());
+    for (const char* bad : {"0", "-6", "-0.0", "-1e-300"}) {
+        INFO(bad);
+        CHECK_THAT(decodeError(member(bad, "1000", "300", "[]")),
+                   ContainsSubstring("toolpath member 'toolpaths/0003.json': 'tool.diameter' must be greater than zero"));
+        CHECK_THAT(decodeError(member("6", bad, "300", "[]")),
+                   ContainsSubstring("'tool.feed_rate' must be greater than zero"));
+        CHECK_THAT(decodeError(member("6", "1000", bad, "[]")),
+                   ContainsSubstring("'tool.plunge_rate' must be greater than zero"));
+        CHECK_THAT(decodeError(member("6", "1000", "300", std::string(R"([["dwell",0,0,0,)") + bad + "]]")),
+                   ContainsSubstring("move 0 seconds must be greater than zero"));
+        CHECK_THAT(decodeError(member("6", "1000", "300", std::string(R"([["feed",1,0,0,{"feed":)") + bad + "}]]")),
+                   ContainsSubstring("move 0 feed must be greater than zero"));
+    }
+}
+
 TEST_CASE("toolpath member names are numbered from 0001", "[cli][store]") {
     CHECK(isToolpathMember("toolpaths/0001.json"));
     CHECK(isToolpathMember("toolpaths/9999.json"));
