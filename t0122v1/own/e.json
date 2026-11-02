@@ -1,0 +1,1 @@
+{"name":"All outside","layers":["Ring","Star","Box"],"side":"outside","separate_last_pass":true,"last_pass_allowance":0.25,"passes":{"cut_depth":12,"pass_depth":4},"order":{"left_to_right":true},"start_at":"optimise","tabs":{"enabled":true,"spacing":"constant_distance","distance":60,"length":6,"thickness":3},"tool":{"id":"end-mill-1-4in"}}

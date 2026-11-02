@@ -1,0 +1,1 @@
+{"name":"Ring+Box pocket","layers":["Ring","Box"],"cut_depth":5,"strategy":"offset","profile_pass":"first","ramp_plunge":true,"ramp_distance":8,"tool":{"id":"end-mill-6mm","machine":"machine-generic-router","material":"material-softwood"}}

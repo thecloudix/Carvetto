@@ -1,0 +1,1 @@
+{"name":"Star inside","layers":["Star"],"side":"inside","passes":{"cut_depth":8,"pass_depth":2.5},"tabs":{"enabled":true,"count":3,"length":5,"thickness":1.5,"three_d":true},"ramp":{"type":"smooth","distance":6},"leads":{"type":"circular","radius":2,"sweep":90,"lead_out":true},"tool":{"id":"end-mill-3mm"}}

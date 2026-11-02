@@ -1,0 +1,9 @@
+file: huge_num.carv
+format: 1.0 (written by Carvetto 0.0.1)
+job: single-sided, 300 x 300 x 18 mm, display units mm, Z zero on the material surface
+layers: 2
+  'Outline': 1 object(s), 1 closed and 0 open vector(s)
+  'Pockets': 2 object(s), 2 closed and 0 open vector(s)
+vectors extent: X 0 .. 120, Y 0 .. 80 mm
+toolpaths: 1
+  toolpaths/0001.json: profile 'Cut out', tool T5 'End Mill 3 mm' D3 mm, 36 moves, Z -6 .. 5 mm, cutting 845.85 mm, rapid 11 mm

@@ -20,3 +20,4 @@ Original locations (scripts may hard-code these; adjust paths when reusing):
 - t17r4/: T-0017 verifier of 0cd9abc (pert.cpp ulp-perturbation driver, repro_arcloop.cpp).
 - t17r5/: T-0017 verifier of 328008b (pert2.cpp large-radius/tiny-arc loops, retry_case.inc, gap_case.inc, mutants offset.mA/B/C.cpp).
 - t0123v2/: T-0123 delta verifier (PASS 524c7ff): pc2.cpp (pockcheck with rest==clusters), rr2.cpp, bi2/bi3.cpp (BoxIndex edge cases).
+- t0122v1/: T-0122 CLI verifier (PASS 2d7e3fa): driver.cpp (CLI == in-process toolpaths, angle checks), driver2.cpp (storage identity, bad member names), gcheck.py (G-code safety checker), mkmal.py (24 malicious .carv variants), gen.py (DXF generator).

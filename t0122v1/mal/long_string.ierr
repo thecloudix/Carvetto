@@ -1,0 +1,1 @@
+carvetto-cli: error: cannot load 'long_string.carv': long_string.carv: zip member 'toolpaths/0001.json' expands 10407 bytes to 10002022 (more than 200:1; a decompression bomb?)

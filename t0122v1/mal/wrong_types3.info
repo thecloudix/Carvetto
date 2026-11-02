@@ -1,0 +1,7 @@
+file: wrong_types3.carv
+format: 1.0 (written by Carvetto 0.0.1)
+job: single-sided, 300 x 300 x 18 mm, display units mm, Z zero on the material surface
+layers: 2
+  'Outline': 1 object(s), 1 closed and 0 open vector(s)
+  'Pockets': 2 object(s), 2 closed and 0 open vector(s)
+vectors extent: X 0 .. 120, Y 0 .. 80 mm

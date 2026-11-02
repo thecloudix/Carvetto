@@ -1,0 +1,1 @@
+carvetto-cli: error: cannot load 'not_json.carv': not_json.carv: toolpaths/0001.json: malformed JSON at byte 1: expected a string key
