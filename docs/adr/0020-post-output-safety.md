@@ -112,7 +112,8 @@ through, so no post, block or tag can bypass them.
      speed 0 rpm; it must be greater than zero (for a manual spindle, set any positive nominal
      speed)`. Manual-spindle users set any positive nominal speed; a post for a manual spindle
      can simply not write `[S]` (and have no `SPINDLE_ON`). A job with no toolpaths has no
-     spindle speed to check.
+     spindle speed to check; likewise the feed, spindle and dwell rules below check nothing in
+     such a job (its header and footer cut nothing).
    - **No rate printed as zero** (owner decision 2026-11-02, T-0134). A feed (`[F]`, `[FC]`,
      `[FP]`, `[FI]`, feed overrides), spindle speed or dwell that is above zero but that the
      post's number format rounds to zero (`0.001` mm/min as `F0`, a 0.004 s dwell as `P0.00`, a
@@ -122,8 +123,13 @@ through, so no post, block or tag can bypass them.
    - **Feeds and dwells of zero or less** (owner decision 2026-11-02, T-0134). A feed rate,
      plunge rate or feed override of zero or below is refused wherever a feed tag writes it
      (`[F] feed 0 mm/min would be written as F0; feeds must be greater than zero`); a feed the
-     post never writes (a drill toolpath's cutting feed) is not checked. Inverse-time `[F]`/`[FI]`
-     is exempt from this sign rule: a zero-length move legitimately has inverse time 0. A dwell
+     post never writes (a drill toolpath's cutting feed) is not checked. Inverse time (`[FI]`, and
+     `[F]` on cutting moves under `INVERSE_TIME_MODE`) is judged by the feed it is computed from:
+     on a cutting move longer than the zero-length tolerance (1e-9 mm) that feed (tool feed,
+     plunge rate or the move's feed override) must be above zero, and an inverse time that is
+     written as zero is refused even when the quotient underflowed to exactly 0 (a denormal
+     feed). Only a cutting move of zero length, whose inverse time is 0 by definition, and `[FI]`
+     outside a cutting move are exempt. A dwell
      move of zero seconds or less is refused when the move is validated, before anything is
      written and even when the post drops dwells (`toolpath 'Drill', move 7: dwell 0 s must be
      greater than zero`); the CLI's toolpath-member decoder refuses the same values on load.

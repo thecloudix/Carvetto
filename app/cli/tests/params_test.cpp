@@ -5,6 +5,8 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
+#include <algorithm>
+#include <ctime>
 #include <cstddef>
 #include <nlohmann/json.hpp>
 #include <string>
@@ -216,6 +218,69 @@ TEST_CASE("T-0134: deep nesting is refused early with a clear error", "[cli][par
         INFO(n);
         CHECK(errorOf(nested('[', ']', n)) == tooDeep);
         CHECK(errorOf(nested('{', '}', n)) == tooDeep);
+    }
+}
+
+namespace {
+
+/// Process CPU time (immune to other processes competing for the cores; on MSVC std::clock() is
+/// wall-clock, and the Windows CI runs ctest serially).
+double cpuSeconds() {
+    return static_cast<double>(std::clock()) / static_cast<double>(CLOCKS_PER_SEC);
+}
+
+/// {"tool": …, "x": [{"a": 1}, … n times]} or {"tool": …, "x": {"k0": {}, … n times}}.
+std::string wide(bool arrayOfObjects, std::size_t n) {
+    std::string s = R"({"tool": {"id": "t"}, "x": )";
+    s += arrayOfObjects ? '[' : '{';
+    for (std::size_t i = 0; i < n; ++i) {
+        s += i == 0 ? "" : ",";
+        s += arrayOfObjects ? std::string(R"({"a":1})") : "\"k" + std::to_string(i) + "\":{}";
+    }
+    s += arrayOfObjects ? ']' : '}';
+    return s + "}";
+}
+
+/// CPU seconds to run `f`, best of three (the minimum filters out scheduling noise).
+template <class F>
+double timed(F&& f) {
+    double best = 1e300;
+    for (int k = 0; k < 3; ++k) {
+        const double t0 = cpuSeconds();
+        f();
+        best = std::min(best, cpuSeconds() - t0);
+    }
+    return best;
+}
+
+}  // namespace
+
+TEST_CASE("T-0134: params parsing stays linear for wide arrays of objects and objects of objects",
+          "[cli][params][limits]") {
+#ifdef NDEBUG
+    const double absolute = 1.0;
+#else
+    const double absolute = 10.0;
+#endif
+    for (bool arrayOfObjects : {true, false}) {
+        INFO((arrayOfObjects ? "array of objects" : "object of objects"));
+        const std::string small = wide(arrayOfObjects, 50'000);
+        const std::string large = wide(arrayOfObjects, 100'000);
+        std::string e;
+        const double tSmall = timed([&] { e = errorOf(small); });
+        CHECK_THAT(e, ContainsSubstring("unknown key 'x'"));  // parsed through, then the schema
+        const double tLarge = timed([&] { e = errorOf(large); });
+        CHECK_THAT(e, ContainsSubstring("unknown key 'x'"));
+        // Baseline: the plain JSON parse the checks come on top of.
+        std::size_t plainSize = 0;
+        const double tPlain = timed([&] { plainSize = nlohmann::json::parse(large).size(); });
+        CHECK(plainSize == 2);
+        INFO("50k " << tSmall << " s, 100k " << tLarge << " s, plain parse of 100k " << tPlain << " s");
+        CHECK(tLarge < absolute);
+        // Quadratic work would take 4x when the input doubles (the T-0134 verifier measured
+        // 2.7 s at 10k and 10.8 s at 20k with nlohmann's callback parser).
+        CHECK(tLarge <= 3.0 * tSmall + 0.02);
+        CHECK(tLarge <= 4.0 * tPlain + 0.02);
     }
 }
 

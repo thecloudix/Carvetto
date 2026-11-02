@@ -79,9 +79,9 @@ TEST_CASE("malformed toolpath members are reported with the member name", "[cli]
     CHECK_THAT(decodeError(R"({"format":"carvetto-toolpath","format_version":2})"),
                ContainsSubstring("unsupported format_version"));
     CHECK_THAT(decodeError("{" + head + R"("moves":[["warp",0,0,0]]})"), ContainsSubstring("unknown kind 'warp'"));
-    CHECK_THAT(decodeError("{" + head + R"("moves":[["feed",0,0]]})"), ContainsSubstring("move 0 has 3 elements"));
+    CHECK_THAT(decodeError("{" + head + R"("moves":[["feed",0,0]]})"), ContainsSubstring("move 1 has 3 elements"));
     CHECK_THAT(decodeError("{" + head + R"("moves":[["arc_cw",0,0,0]]})"), ContainsSubstring("has 4 elements"));
-    CHECK_THAT(decodeError("{" + head + R"("moves":[["feed",0,"y",0]]})"), ContainsSubstring("move 0 y must be a number"));
+    CHECK_THAT(decodeError("{" + head + R"("moves":[["feed",0,"y",0]]})"), ContainsSubstring("move 1: y must be a number"));
     CHECK_THAT(decodeError("{" + head + R"("moves":[["rapid",0,0,0,{"feed":3}]]})"),
                ContainsSubstring("invalid feed override"));
     CHECK_THAT(decodeError("{" + head + R"("moves":{}})"), ContainsSubstring("'moves' must be an array"));
@@ -97,6 +97,9 @@ TEST_CASE("T-0134: crafted members with zero or negative tool sizes, feeds or dw
                R"(,"spindle_speed":1},"moves":)" + moves + "}";
     };
     CHECK(decodeError(member("6", "1000", "300", R"([["dwell",0,0,0,0.5],["feed",1,0,0,{"feed":5}]])")).empty());
+    // Move numbers are 1-based, as in the post's errors.
+    CHECK_THAT(decodeError(member("6", "1000", "300", R"([["feed",1,0,0],["dwell",1,0,0,0]])")),
+               ContainsSubstring("toolpath member 'toolpaths/0003.json': move 2: dwell seconds must be greater than zero"));
     for (const char* bad : {"0", "-6", "-0.0", "-1e-300"}) {
         INFO(bad);
         CHECK_THAT(decodeError(member(bad, "1000", "300", "[]")),
@@ -106,9 +109,9 @@ TEST_CASE("T-0134: crafted members with zero or negative tool sizes, feeds or dw
         CHECK_THAT(decodeError(member("6", "1000", bad, "[]")),
                    ContainsSubstring("'tool.plunge_rate' must be greater than zero"));
         CHECK_THAT(decodeError(member("6", "1000", "300", std::string(R"([["dwell",0,0,0,)") + bad + "]]")),
-                   ContainsSubstring("move 0 seconds must be greater than zero"));
+                   ContainsSubstring("move 1: dwell seconds must be greater than zero"));
         CHECK_THAT(decodeError(member("6", "1000", "300", std::string(R"([["feed",1,0,0,{"feed":)") + bad + "}]]")),
-                   ContainsSubstring("move 0 feed must be greater than zero"));
+                   ContainsSubstring("move 1: feed override must be greater than zero"));
     }
 }
 

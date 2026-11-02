@@ -101,11 +101,11 @@ class Decoder {
     }
 
     Move move(const json& a, std::size_t i) const {
-        const std::string where = "move " + std::to_string(i);
+        const std::string where = "move " + std::to_string(i + 1);  // 1-based, as in post errors
         if (!a.is_array() || a.empty()) {
             fail(where + " must be a non-empty array");
         }
-        const auto kind = parseKind(string(a[0], where + " kind"));
+        const auto kind = parseKind(string(a[0], where + ": kind"));
         if (!kind) {
             fail(where + " has an unknown kind '" + a[0].get<std::string>() + "'");
         }
@@ -115,18 +115,18 @@ class Decoder {
         if (a.size() != fixed && a.size() != fixed + 1) {
             fail(where + " has " + std::to_string(a.size()) + " elements");
         }
-        m.to = {number(a[1], where + " x"), number(a[2], where + " y"), number(a[3], where + " z")};
+        m.to = {number(a[1], where + ": x"), number(a[2], where + ": y"), number(a[3], where + ": z")};
         if (toolpath::isArc(m.kind)) {
-            m.centre = {number(a[4], where + " centre x"), number(a[5], where + " centre y")};
+            m.centre = {number(a[4], where + ": centre x"), number(a[5], where + ": centre y")};
         } else if (m.kind == MoveKind::Dwell) {
-            m.dwellSeconds = positive(a[4], where + " seconds");
+            m.dwellSeconds = positive(a[4], where + ": dwell seconds");
         }
         if (a.size() == fixed + 1) {
             const json& extra = a[fixed];
             if (!extra.is_object() || extra.size() != 1 || !extra.contains("feed") || !toolpath::isCutting(m.kind)) {
                 fail(where + " has an invalid feed override");
             }
-            m.feedOverride = positive(extra["feed"], where + " feed");
+            m.feedOverride = positive(extra["feed"], where + ": feed override");
         }
         return m;
     }

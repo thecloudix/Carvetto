@@ -157,10 +157,39 @@ class Fields {
 /// (root, "tool"/"tabs"/..., "layers"); the cap keeps parsing cheap for crafted files.
 constexpr std::size_t kMaxParamsDepth = 32;
 
-/// Parses a params file. Duplicate keys (which JSON parsers silently resolve to the last one)
-/// are refused, naming the key with its path; nesting deeper than kMaxParamsDepth is refused;
-/// every JSON error, number overflow such as `1e400` included, is reported as invalid JSON.
-json parseJson(std::string_view text) {
+/// A SAX pass over a params file that refuses duplicate keys (naming the key with its dotted
+/// path) and nesting deeper than kMaxParamsDepth. It runs before the normal parse, without
+/// building anything: nlohmann's callback parser rescans the parent container whenever an object
+/// closes, which is quadratic for wide arrays of objects, so a callback is not used (T-0134).
+class StructureCheck final : public nlohmann::json_sax<json> {
+   public:
+    bool null() override { return true; }
+    bool boolean(bool /*value*/) override { return true; }
+    bool number_integer(number_integer_t /*value*/) override { return true; }
+    bool number_unsigned(number_unsigned_t /*value*/) override { return true; }
+    bool number_float(number_float_t /*value*/, const string_t& /*text*/) override { return true; }
+    bool string(string_t& /*value*/) override { return true; }
+    bool binary(binary_t& /*value*/) override { return true; }
+
+    bool start_object(std::size_t /*elements*/) override { return open(true); }
+    bool start_array(std::size_t /*elements*/) override { return open(false); }
+    bool end_object() override { return close(); }
+    bool end_array() override { return close(); }
+
+    bool key(string_t& value) override {
+        lastKey_ = value;
+        if (!frames_.empty() && !frames_.back().keys.insert(value).second) {
+            throw CliError("params: duplicate key '" + pathTo(value) + "'");
+        }
+        return true;
+    }
+
+    bool parse_error(std::size_t /*position*/, const std::string& /*token*/,
+                     const nlohmann::detail::exception& /*error*/) override {
+        return false;  // the normal parse that follows reports it
+    }
+
+   private:
     // One frame per open object or array: the key it sits under in its parent (empty inside an
     // array) and, for an object, the keys seen so far. The dotted path is built only for an
     // error message, so memory stays linear in the file size.
@@ -169,46 +198,43 @@ json parseJson(std::string_view text) {
         bool isObject{false};
         std::set<std::string> keys;
     };
-    std::vector<Frame> frames;
-    std::string lastKey;
-    const auto pathTo = [&](const std::string& leaf) {
-        std::string path;
-        for (std::size_t i = 1; i < frames.size(); ++i) {  // frames[0] is the root object
-            path += frames[i - 1].isObject ? (path.empty() ? "" : ".") + frames[i].key : "[]";
+
+    bool open(bool isObject) {
+        if (frames_.size() >= kMaxParamsDepth) {
+            throw CliError("params: objects and arrays are nested more than " + std::to_string(kMaxParamsDepth) +
+                           " levels deep");
         }
-        return path.empty() ? leaf : path + "." + leaf;
-    };
-    const json::parser_callback_t onEvent = [&](int /*depth*/, json::parse_event_t event, json& parsed) {
-        switch (event) {
-            case json::parse_event_t::object_start:
-            case json::parse_event_t::array_start:
-                if (frames.size() >= kMaxParamsDepth) {
-                    throw CliError("params: objects and arrays are nested more than " +
-                                   std::to_string(kMaxParamsDepth) + " levels deep");
-                }
-                frames.push_back({!frames.empty() && frames.back().isObject ? lastKey : std::string(),
-                                  event == json::parse_event_t::object_start,
-                                  {}});
-                break;
-            case json::parse_event_t::object_end:
-            case json::parse_event_t::array_end:
-                if (!frames.empty()) {
-                    frames.pop_back();
-                }
-                break;
-            case json::parse_event_t::key:
-                lastKey = parsed.get<std::string>();
-                if (!frames.empty() && !frames.back().keys.insert(lastKey).second) {
-                    throw CliError("params: duplicate key '" + pathTo(lastKey) + "'");
-                }
-                break;
-            case json::parse_event_t::value:
-                break;
+        frames_.push_back({!frames_.empty() && frames_.back().isObject ? lastKey_ : std::string(), isObject, {}});
+        return true;
+    }
+
+    bool close() {
+        if (!frames_.empty()) {
+            frames_.pop_back();
         }
         return true;
-    };
+    }
+
+    std::string pathTo(const std::string& leaf) const {
+        std::string path;
+        for (std::size_t i = 1; i < frames_.size(); ++i) {  // frames_[0] is the root object
+            path += frames_[i - 1].isObject ? (path.empty() ? "" : ".") + frames_[i].key : "[]";
+        }
+        return path.empty() ? leaf : path + "." + leaf;
+    }
+
+    std::vector<Frame> frames_;
+    std::string lastKey_;
+};
+
+/// Parses a params file. Duplicate keys (which JSON parsers silently resolve to the last one)
+/// are refused, naming the key with its path; nesting deeper than kMaxParamsDepth is refused;
+/// every JSON error, number overflow such as `1e400` included, is reported as invalid JSON.
+json parseJson(std::string_view text) {
     try {
-        return json::parse(text.begin(), text.end(), onEvent);
+        StructureCheck check;
+        json::sax_parse(text.begin(), text.end(), &check);
+        return json::parse(text.begin(), text.end());
     } catch (const json::exception& e) {
         throw CliError(std::string("params: not valid JSON: ") + e.what());
     }

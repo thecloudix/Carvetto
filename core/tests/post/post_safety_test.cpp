@@ -17,10 +17,12 @@
 #include <fstream>
 #include <functional>
 #include <limits>
+#include <optional>
 #include <random>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "carvetto/post/post_processor.hpp"
@@ -1177,4 +1179,81 @@ TEST_CASE("T-0134 AC3: a zero dwell is refused even when the post drops dwells",
     CHECK_THAT(runError(pp, {tp}, {}), ContainsSubstring("move 2: dwell 0 s must be greater than zero"));
     tp.moves[1].dwellSeconds = 0.5;
     CHECK(runError(pp, {tp}, {}).empty());  // dropped with a warning, as before
+}
+
+TEST_CASE("T-0134 AC3: inverse-time feeds are judged by the feed they come from", "[post][safety][number]") {
+    // Two custom posts (shipped posts do not use inverse time): INVERSE_TIME_MODE, where [F] writes
+    // inverse time on cutting moves, and an inch post writing [FI] directly.
+    const PostProcessor inverseMode = parseText(R"PP(
+UNITS = "MM"
+INVERSE_TIME_MODE = "YES"
+VAR SPINDLE_SPEED = [S|A| S|1.0]
+VAR FEED_RATE = [F|A| F|1.1]
+begin HEADER
+"M3[S]"
+end
+begin RAPID_MOVE
+"G94 G0[X][Y][Z]"
+end
+begin FEED_MOVE
+"G93 G1[X][Y][Z][F]"
+end
+)PP");
+    const PostProcessor fiTag = parseText(R"PP(
+UNITS = "INCHES"
+VAR SPINDLE_SPEED = [S|A| S|1.0]
+VAR INV = [FI|A| F|1.2]
+begin HEADER
+"M3[S]"
+end
+begin RAPID_MOVE
+"G0[X][Y][Z]"
+end
+begin FEED_MOVE
+"G93 G1[X][Y][Z][FI]"
+end
+)PP");
+    // Plunge 1 mm, cut 20 mm, retract 6 mm.
+    const auto job = [](double feed, double plunge, std::optional<double> override) {
+        Toolpath t = simple({Move::rapid({0, 0, 5}), Move::plunge({0, 0, -1}), Move::feed({20, 0, -1}),
+                             Move::retract({20, 0, 5})});
+        t.tool.feedRate = feed;
+        t.tool.plungeRate = plunge;
+        t.tool.spindleSpeed = 18000.0;
+        t.moves[2].feedOverride = override;
+        return std::vector<Toolpath>{t};
+    };
+    for (const PostProcessor* pp : {&inverseMode, &fiTag}) {
+        INFO((pp == &inverseMode ? "INVERSE_TIME_MODE" : "[FI]"));
+        CHECK(runError(*pp, job(1000.0, 300.0, std::nullopt), {}).empty());
+        for (double bad : {0.0, -0.0, -5.0}) {
+            INFO(bad);
+            for (const auto& [what, tps] :
+                 {std::pair{"feed", job(bad, 300.0, std::nullopt)}, std::pair{"plunge", job(1000.0, bad, std::nullopt)},
+                  std::pair{"override", job(1000.0, 300.0, bad)}}) {
+                INFO(what);
+                const std::string msg = runError(*pp, tps, {});
+                INFO(msg);
+                CHECK_THAT(msg, ContainsSubstring(" mm/min (inverse time "));
+                CHECK_THAT(msg, ContainsSubstring("feeds must be greater than zero"));
+            }
+        }
+        // A feed above zero whose inverse time prints as zero (or underflows to exactly 0).
+        for (double tiny : {1e-6, std::numeric_limits<double>::denorm_min()}) {
+            INFO(tiny);
+            const std::string msg = runError(*pp, job(tiny, 300.0, std::nullopt), {});
+            INFO(msg);
+            CHECK_THAT(msg, ContainsSubstring("above zero but too small"));
+        }
+        // A zero-length cutting move has inverse time 0 by definition and is written.
+        std::vector<Toolpath> still = job(1000.0, 300.0, std::nullopt);
+        still[0].moves.insert(still[0].moves.begin() + 3, Move::feed({20, 0, -1}));
+        CHECK(runError(*pp, still, {}).empty());
+    }
+}
+
+TEST_CASE("T-0134 AC3: a job without toolpaths checks neither spindle nor feed tags", "[post][safety][number]") {
+    const PostProcessor pp = parseText(
+        "begin HEADER\n\"M3 S[S] F[F] F[FC] F[FP]\"\nend\nbegin RAPID_MOVE\n\"G0[X]\"\nend\n");
+    CHECK(runError(pp, {}, {}).empty());
 }

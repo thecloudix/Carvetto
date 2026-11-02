@@ -134,6 +134,7 @@ struct Frame {
     double feed{0.0};           // mm/min
     double inverseTime{0.0};    // 1/min
     double dwell{0.0};          // seconds
+    double length{0.0};         // cutting moves: path length (mm), for inverse time
     bool cutting{false};        // Feed/Plunge/Retract/Arc: [F] may be inverse time
 };
 
@@ -375,30 +376,41 @@ class Interpreter {
 
     /// Refuses a feed, spindle speed or dwell above zero that the post's number format would
     /// write as zero (F0, P0.00 …), and a feed rate, plunge rate or feed override of zero or less
-    /// (F0, F-5): a zero feed or dwell is never what the toolpath asked for (owner decision
-    /// 2026-11-02, ADR-0020).
+    /// (F0, F-5): a zero feed or dwell is never what the toolpath asked for (owner decisions
+    /// 2026-11-02, ADR-0020). Inverse time is judged by the feed it comes from; only a cutting
+    /// move of zero length (inverse time 0 by definition) is exempt. In a job without toolpaths
+    /// nothing cuts, so nothing is checked (as for the spindle speed).
     bool acceptNonZero(const TagInfo& info, const VarDef& def, double raw, const std::string& body) {
         const bool rate =
             info.kind == TagKind::FeedRate || info.tag == "FI" || info.tag == "S" || info.tag == "DWELL";
-        if (!rate) {
+        if (!rate || toolpath_ == nullptr) {
             return true;
+        }
+        const bool inverse = info.tag == "FI" || (info.tag == "F" && s_.inverseTimeMode && frame_.cutting);
+        if (inverse && (!frame_.cutting || frame_.length <= kZeroLength)) {
+            return true;  // [FI] outside a cut, or a zero-length move: inverse time 0 is right
         }
         const std::optional<ValueLimit> limit = limitFor(info);
-        const bool inverse = info.tag == "FI" || (info.tag == "F" && s_.inverseTimeMode && frame_.cutting);
         const std::string unit = inverse ? "1/min" : limit ? limit->unit : "";
         const std::string written = std::string(detail::trim(def.prefix)) + body;
-        const int line = def.multiplier != 1.0 ? def.line : 0;
-        if (info.kind == TagKind::FeedRate && !inverse && !(raw > 0.0)) {
-            fail(0, "[" + std::string(info.tag) + "] feed " + describeValue(raw) + " " + unit +
-                        " would be written as " + written + "; feeds must be greater than zero");
-            return false;
+        const bool zeroWritten = body.find_first_of("123456789") == std::string::npos;
+        if (info.kind == TagKind::FeedRate || inverse) {
+            const double feed = inverse ? frame_.feed : raw;
+            if (!(feed > 0.0)) {
+                fail(0, "[" + std::string(info.tag) + "] feed " + describeValue(feed) + " mm/min" +
+                            (inverse ? " (inverse time " + describeValue(raw) + " 1/min)" : std::string()) +
+                            " would be written as " + written + "; feeds must be greater than zero");
+                return false;
+            }
         }
-        if (!(raw > 0.0) || body.find_first_of("123456789") != std::string::npos) {
+        // Above zero (for inverse time: from a feed above zero, even if the quotient underflowed).
+        if (!zeroWritten || !(inverse || raw > 0.0)) {
             return true;
         }
-        fail(line, "[" + std::string(info.tag) + "] " + describeValue(raw) + " " + unit + " would be written as " +
-                       written + "; it is above zero but too small for the post's " +
-                       std::to_string(def.format.decimals) + "-decimal format");
+        fail(def.multiplier != 1.0 ? def.line : 0,
+             "[" + std::string(info.tag) + "] " + describeValue(raw) + " " + unit + " would be written as " +
+                 written + "; it is above zero but too small for the post's " +
+                 std::to_string(def.format.decimals) + "-decimal format");
         return false;
     }
 
@@ -454,6 +466,7 @@ class Interpreter {
         frame_.to = to;
         frame_.feed = feed;
         frame_.inverseTime = length > kZeroLength ? feed / length : 0.0;
+        frame_.length = length;
         frame_.cutting = true;
     }
 
