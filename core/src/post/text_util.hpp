@@ -56,6 +56,12 @@ struct CommentPosition {
     std::string lead;
 };
 
+/// True for ASCII control characters (0x00-0x1F, 0x7F).
+inline bool isControl(char c) {
+    const auto u = static_cast<unsigned char>(c);
+    return u < 0x20 || u == 0x7F;
+}
+
 /// True for the characters an active-comment keyword is made of (ASCII letters, digits, `_`).
 inline bool isWordChar(char c) {
     return std::isalnum(static_cast<unsigned char>(c)) != 0 || c == '_';
@@ -71,7 +77,9 @@ inline CommentPosition commentPositionAt(std::string_view before) {
         } else if (pos.context != CommentContext::None) {
             if (isWordChar(c)) {
                 pos.lead += static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
-            } else if (c != ' ' && c != '\t') {
+            } else if (c != ' ' && !isControl(c)) {
+                // Every control character counts as a space here, as LinuxCNC skips all
+                // whitespace in a comment's keyword; the parser refuses them in templates anyway.
                 pos.plain = false;
             }
         } else if (c == '(') {

@@ -105,6 +105,20 @@ schema, the cache format and its budget open; they are decided here.
   deflated). Fields a kind ignores (centre of a line, seconds of a non-dwell, feed override of a
   rapid or dwell; ADR-0008) are not stored and load as zero/empty. Non-finite values are refused
   by both `saveCarv` (InvalidContent, naming the toolpath) and the loader.
+- **Positive tool sizes, feeds and dwells (T-0134).** A dwell's seconds and a feed override must
+  also be greater than zero (0, -0.0 and negative values are refused). A record **with computed
+  moves** (job.json `moves` present, i.e. a cache, even one of zero moves) must also have a tool
+  `diameter`, `feed_rate` and `plunge_rate` that are finite and > 0, because those moves go to
+  the post. A record **without computed moves** keeps T-0132's behaviour: any snapshot, the
+  default all-zero one included, saves and loads (it is filled in when the toolpath is
+  calculated). Interim members always carry moves, so their tool and moves are checked on
+  migration. `saveCarv` refuses an offending computed record before writing (InvalidContent,
+  naming the toolpath; the loader check behind it would refuse it anyway), and the loader
+  refuses it with the member and move, e.g.
+  `toolpaths/0001.bin: move 1: dwell seconds must be greater than zero` or
+  `job.json.toolpaths[0].tool.diameter: must be a finite number greater than zero for a toolpath
+  with computed moves`. Moves in cache messages are numbered from 1, as in the post's errors
+  (JSON paths of interim members keep their 0-based array indices).
 - Deflated at level 6 with the other members, written in name order with them (ADR-0013 §1).
 - A cache member that no record names is dropped on load, unread. `CarvExtras::withMember` refuses
   cache names, since `saveCarv` owns them.

@@ -612,7 +612,7 @@ end
                             "T1 M6",
                             "M3 S18000",
                             "G0 X1.0",
-                            "(used: Tool 1, Ball Nose)",
+                            "(used: Tool 1; Ball Nose)",
                         });
 }
 

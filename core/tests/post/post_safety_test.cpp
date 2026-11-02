@@ -17,10 +17,12 @@
 #include <fstream>
 #include <functional>
 #include <limits>
+#include <optional>
 #include <random>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "carvetto/post/post_processor.hpp"
@@ -232,7 +234,7 @@ end
     b.tool.name = "u\rv";
     b.tool.toolNumber = 2;
     const std::string out = runOk(pp, {a, b}, ctx);
-    CHECK(out == "r s|p q|r s, u v|1 2|3 4|5 6|7 8|9 0|a b|c d|e  f\n");
+    CHECK(out == "r s|p q|r s; u v|1 2|3 4|5 6|7 8|9 0|a b|c d|e  f\n");
 }
 
 TEST_CASE("AC1: parentheses are mapped only inside an open ( ) comment, even without SUBSTITUTE",
@@ -358,7 +360,12 @@ TEST_CASE("AC2: every shipped post refuses non-finite and out-of-range numbers",
             CHECK_THAT(msg, ContainsSubstring("cannot write G-code"));
             const bool finiteProblem = msg.find("is not a finite number") != std::string::npos;
             const bool rangeProblem = msg.find("is outside the supported range") != std::string::npos;
-            CHECK((finiteProblem || rangeProblem));
+            // T-0134 AC3: a spindle speed that is not above zero (NaN included) gets the spindle
+            // message, naming the tool.
+            const bool spindleProblem = std::string(bad.what) == "spindle" &&
+                                        msg.find("has spindle speed") != std::string::npos &&
+                                        msg.find("must be greater than zero") != std::string::npos;
+            CHECK((finiteProblem || rangeProblem || spindleProblem));
             // The message stays short: no 300-digit number.
             CHECK(msg.size() < 300);
         }
@@ -862,4 +869,391 @@ TEST_CASE("AC3: shipped posts define no VAR prefix that could move a text tag ou
             }
         }
     }
+}
+
+// ---- T-0134: residuals of the T-0133 verification ----------------------------------------------
+
+namespace {
+
+/// Every place in `source` (a .pp file) where a text tag in an output line is followed by
+/// something other than `)`, the end of the line or another text tag without a VAR prefix:
+/// template text right after a value, which the sanitiser cannot judge (ADR-0020 gap).
+std::vector<std::string> textAfterValue(const std::string& source, const PostProcessor& pp) {
+    const auto isText = [](std::string_view tag) {
+        const TagInfo* info = findTag(tag);
+        return info != nullptr && info->kind == TagKind::Text;
+    };
+    std::vector<std::string> found;
+    std::istringstream in(source);
+    std::string line;
+    while (std::getline(in, line)) {
+        if (!line.empty() && line.back() == '\r') {
+            line.pop_back();
+        }
+        const std::size_t first = line.find_first_not_of(" \t");
+        const std::size_t last = line.find_last_not_of(" \t");
+        if (first == std::string::npos || line[first] != '"' || last <= first || line[last] != '"') {
+            continue;  // not an output line
+        }
+        const std::string text = line.substr(first + 1, last - first - 1);
+        std::size_t i = 0;
+        while ((i = text.find('[', i)) != std::string::npos) {
+            const std::size_t close = text.find(']', i);
+            REQUIRE(close != std::string::npos);
+            const std::string tag = text.substr(i + 1, close - i - 1);
+            i = close + 1;
+            if (!isText(tag) || i == text.size() || text[i] == ')') {
+                continue;
+            }
+            bool ok = false;
+            if (text[i] == '[') {
+                const std::size_t nextClose = text.find(']', i);
+                REQUIRE(nextClose != std::string::npos);
+                const std::string next = text.substr(i + 1, nextClose - i - 1);
+                const VarDef* def = pp.var(next);
+                ok = isText(next) && (def == nullptr || def->prefix.empty());
+            }
+            if (!ok) {
+                found.push_back(line);
+            }
+        }
+    }
+    return found;
+}
+
+std::string replaceAll(std::string s, const std::string& from, const std::string& to) {
+    for (std::size_t at = s.find(from); at != std::string::npos; at = s.find(from, at + to.size())) {
+        s.replace(at, from.size(), to);
+    }
+    return s;
+}
+
+}  // namespace
+
+TEST_CASE("T-0134: shipped posts follow a text tag only by ')', the line end or another text tag",
+          "[post][safety][text]") {
+    for (const Shipped& p : shipped()) {
+        INFO(p.stem);
+        const std::string source = readFile(std::string(CARVETTO_POSTS_DIR) + "/" + p.stem + ".pp");
+        const PostProcessor pp = parseText(source);
+        CHECK(textAfterValue(source, pp).empty());
+
+        // The check catches the gap shapes: template commas and keyword completions after a value.
+        for (const char* add : {",x", " ,x", "OPEN", "CLOSE", " x", "[T]"}) {
+            INFO(add);
+            const std::string mutated =
+                replaceAll(replaceAll(source, "([TOOLPATH_NAME])", std::string("([TOOLPATH_NAME]") + add + ")"),
+                           "; [TOOLPATH_NAME]\"", std::string("; [TOOLPATH_NAME]") + add + "\"");
+            REQUIRE(mutated != source);
+            CHECK_FALSE(textAfterValue(mutated, parseText(mutated)).empty());
+        }
+    }
+    // Another text tag is fine, unless a VAR prefix puts template text between the two.
+    const std::string adjacent = "begin HEADER\n\"([TOOLNAME][TOOLPATH_NAME])\"\nend\n";
+    CHECK(textAfterValue(adjacent, parseText(adjacent)).empty());
+    const std::string prefixed = "VAR NAME = [TOOLPATH_NAME|A|OPEN|1.0]\n" + adjacent;
+    CHECK_FALSE(textAfterValue(prefixed, parseText(prefixed)).empty());
+}
+
+TEST_CASE("T-0134: the parser refuses control characters other than tab in .pp lines", "[post][safety][text]") {
+    struct Bad {
+        std::string ch;
+        const char* code;
+    };
+    for (const Bad& b : {Bad{"\f", "0x0C"}, Bad{"\v", "0x0B"}, Bad{"\r", "0x0D"}, Bad{"\x01", "0x01"},
+                         Bad{"\x1b", "0x1B"}, Bad{"\x7f", "0x7F"}, Bad{std::string(1, '\0'), "0x00"}}) {
+        INFO(b.code);
+        // In an output line between "(" and a value: LinuxCNC would skip it as whitespace and
+        // run "(MSG,hi)" (verifier driver ff.cpp).
+        auto r = PostProcessor::parse("begin HEADER\n\"(" + b.ch + "[TOOLPATH_NAME])\"\nend\n");
+        REQUIRE_FALSE(r.ok());
+        CHECK(r.error().line == 2);
+        CHECK_THAT(r.error().message, ContainsSubstring(std::string("control character ") + b.code));
+        // In a VAR prefix and in a setting.
+        auto v = PostProcessor::parse("+ c\nVAR NAME = [TOOLPATH_NAME|A|(" + b.ch + "|1.0]\n");
+        REQUIRE_FALSE(v.ok());
+        CHECK(v.error().line == 2);
+        auto s = PostProcessor::parse("POST_NAME = \"a" + b.ch + "b\"\n");
+        REQUIRE_FALSE(s.ok());
+        CHECK(s.error().line == 1);
+    }
+    // Tab is allowed (and counts as a space in the word run); CR LF line ends and comment lines
+    // are unaffected.
+    const PostProcessor tab = parseText(
+        "begin HEADER\r\n\"(\t[TOOLPATH_NAME])\"\r\nend\r\nbegin RAPID_MOVE\r\nend\r\n+ \f note\r\n");
+    Toolpath tp = simple({Move::rapid({0, 0, 5})});
+    tp.name = "MSG,hi";
+    CHECK(runOk(tab, {tp}, {}) == "(\tMSG_hi)\n");
+}
+
+TEST_CASE("T-0134: [TOOLS_USED] joins names with '; ' so the comma rule does not touch them",
+          "[post][safety][text]") {
+    const PostProcessor pp = parseText(R"PP(
+begin HEADER
+"([TOOLS_USED])"
+"; [TOOLS_USED]"
+"(Tools: [TOOLS_USED])"
+end
+begin TOOLCHANGE
+end
+begin RAPID_MOVE
+end
+)PP");
+    const auto run = [&](const std::string& a, const std::string& b) {
+        Toolpath t1 = simple({Move::rapid({0, 0, 5})});
+        t1.tool.name = a;
+        Toolpath t2 = simple({Move::rapid({0, 0, 5})});
+        t2.tool.toolNumber = t1.tool.toolNumber + 1;
+        t2.tool.name = b;
+        return runOk(pp, {t1, t2}, {});
+    };
+    CHECK(run("EndMill", "Drill") == "(EndMill; Drill)\n; EndMill; Drill\n(Tools: EndMill; Drill)\n");
+    // The first name's own commas still continue its word run; the "; " ends it.
+    CHECK(run("MSG,a", "b,c") == "(MSG_a; b,c)\n; MSG_a; b,c\n(Tools: MSG,a; b,c)\n");
+}
+
+// ---- T-0134 AC3 (owner decision 2026-11-02): spindle speed above zero, no rate printed as zero
+
+namespace {
+
+/// The run's error message ("" when it succeeds).
+std::string runError(const PostProcessor& pp, const std::vector<Toolpath>& tps, const PostContext& ctx) {
+    const auto r = pp.run(tps, ctx);
+    return r.ok() ? std::string() : r.error().describe();
+}
+
+/// One unit of the last printed digit of `tag` in `pp`, in internal units (mm/min, rpm, s).
+double printStep(const PostProcessor& pp, const char* tag, bool lengthUnits) {
+    const VarDef* def = pp.var(tag);
+    REQUIRE(def != nullptr);
+    double step = std::pow(10.0, -def->format.decimals) / def->multiplier;
+    if (lengthUnits && pp.settings().units == Units::Inches) {
+        step *= 25.4;
+    }
+    return step;
+}
+
+}  // namespace
+
+TEST_CASE("T-0134 AC3: every shipped post refuses a spindle speed that is not above zero",
+          "[post][safety][number]") {
+    for (const Shipped& p : shipped()) {
+        INFO(p.stem);
+        const PostProcessor pp = loadShipped(p);
+        const PostContext ctx = carvetto::test::fixtureContext();
+        for (double bad : {0.0, -0.0, -5.0, std::numeric_limits<double>::quiet_NaN(), 0.4}) {
+            INFO(bad);
+            // The first tool (spindle started in the header) and the tool after a change (SPINDLE_ON).
+            for (std::size_t which : {std::size_t{0}, std::size_t{2}}) {
+                std::vector<Toolpath> tps = carvetto::test::fixtureToolpaths();
+                tps[which].tool.spindleSpeed = bad;
+                const std::string msg = runError(pp, tps, ctx);
+                INFO(msg);
+                CHECK_THAT(msg, ContainsSubstring("cannot write G-code"));
+                CHECK_THAT(msg, ContainsSubstring("of toolpath '" + tps[which].name + "'"));
+                if (bad == 0.4) {
+                    // Positive but printed as S0.
+                    CHECK_THAT(msg, ContainsSubstring("[S] 0.4 rpm would be written as S0"));
+                } else {
+                    CHECK_THAT(msg, ContainsSubstring("tool '" + tps[which].tool.name + "' has spindle speed"));
+                    CHECK_THAT(msg, ContainsSubstring("must be greater than zero"));
+                }
+            }
+        }
+        // Just above the print threshold: S1.
+        std::vector<Toolpath> tps = carvetto::test::fixtureToolpaths();
+        tps[0].tool.spindleSpeed = 0.6;
+        tps[2].tool.spindleSpeed = 0.6;
+        CHECK(runError(pp, tps, ctx).empty());
+    }
+}
+
+TEST_CASE("T-0134 AC3: the spindle check covers SPINDLE_ON without [S] and skips posts that never start it",
+          "[post][safety][number]") {
+    const std::string moves = "begin RAPID_MOVE\n\"G0[X]\"\nend\nbegin FEED_MOVE\n\"G1[X]\"\nend\n";
+    Toolpath a = simple({Move::rapid({1, 0, 5})});
+    a.tool.spindleSpeed = 1000.0;
+    Toolpath b = a;
+    b.name = "Second";
+    b.tool.toolNumber = 2;
+    b.tool.name = "Manual";
+    b.tool.spindleSpeed = 0.0;
+
+    const PostProcessor m3 = parseText("begin TOOLCHANGE\n\"M0\"\nend\nbegin SPINDLE_ON\n\"M3\"\nend\n" + moves);
+    const std::string msg = runError(m3, {a, b}, {});
+    CHECK_THAT(msg, ContainsSubstring("in SPINDLE_ON of toolpath 'Second': tool 'Manual' has spindle speed 0 rpm"));
+
+    // A manual-spindle post that never writes [S] nor SPINDLE_ON writes any speed.
+    const PostProcessor manual = parseText("begin TOOLCHANGE\n\"M0\"\nend\n" + moves);
+    CHECK(runError(manual, {a, b}, {}).empty());
+
+    // A job without toolpaths has no spindle to check.
+    const PostProcessor header = parseText("begin HEADER\n\"M3 S[S]\"\nend\n" + moves);
+    CHECK(runError(header, {}, {}).empty());
+}
+
+TEST_CASE("T-0134 AC3: every shipped post refuses a feed or dwell above zero that would print as zero",
+          "[post][safety][number]") {
+    for (const Shipped& p : shipped()) {
+        INFO(p.stem);
+        const PostProcessor pp = loadShipped(p);
+        const PostContext ctx = carvetto::test::fixtureContext();
+        const double feedStep = printStep(pp, "F", true);
+        const double dwellStep = printStep(pp, "DWELL", false);
+        struct Case {
+            const char* what;
+            const char* tag;
+            double step;
+            std::function<void(std::vector<Toolpath>&, double)> apply;
+        };
+        const std::vector<Case> cases{
+            {"feed rate", "[F]", feedStep, [](std::vector<Toolpath>& t, double v) { t[0].tool.feedRate = v; }},
+            {"plunge rate", "[F]", feedStep, [](std::vector<Toolpath>& t, double v) { t[0].tool.plungeRate = v; }},
+            {"feed override", "[F]", feedStep,
+             [](std::vector<Toolpath>& t, double v) { t[0].moves[2].feedOverride = v; }},
+            {"dwell", "[DWELL]", dwellStep, [](std::vector<Toolpath>& t, double v) { t[2].moves[6].dwellSeconds = v; }},
+        };
+        for (const Case& c : cases) {
+            INFO(c.what);
+            for (double tiny : {0.4 * c.step, 1e-6 * c.step, std::numeric_limits<double>::denorm_min()}) {
+                INFO(tiny);
+                std::vector<Toolpath> tps = carvetto::test::fixtureToolpaths();
+                c.apply(tps, tiny);
+                const std::string msg = runError(pp, tps, ctx);
+                INFO(msg);
+                CHECK_THAT(msg, ContainsSubstring(std::string(c.tag) + " "));
+                CHECK_THAT(msg, ContainsSubstring("would be written as "));
+                CHECK_THAT(msg, ContainsSubstring("above zero but too small"));
+            }
+            // Just above the threshold, the value prints as the smallest non-zero number.
+            std::vector<Toolpath> tps = carvetto::test::fixtureToolpaths();
+            c.apply(tps, 0.6 * c.step);
+            CHECK(runError(pp, tps, ctx).empty());
+        }
+    }
+}
+
+TEST_CASE("T-0134 AC3: every shipped post refuses feeds of zero or less and dwells of zero or less",
+          "[post][safety][number]") {
+    for (const Shipped& p : shipped()) {
+        INFO(p.stem);
+        const PostProcessor pp = loadShipped(p);
+        const PostContext ctx = carvetto::test::fixtureContext();
+        struct Case {
+            const char* what;
+            std::function<void(std::vector<Toolpath>&, double)> apply;
+        };
+        const std::vector<Case> feeds{
+            {"feed rate", [](std::vector<Toolpath>& t, double v) { t[0].tool.feedRate = v; }},
+            {"plunge rate", [](std::vector<Toolpath>& t, double v) { t[0].tool.plungeRate = v; }},
+            {"later tool plunge rate", [](std::vector<Toolpath>& t, double v) { t[2].tool.plungeRate = v; }},
+            {"feed override", [](std::vector<Toolpath>& t, double v) { t[0].moves[2].feedOverride = v; }},
+        };
+        for (const Case& c : feeds) {
+            INFO(c.what);
+            for (double bad : {0.0, -0.0, -5.0, -1e-300}) {
+                INFO(bad);
+                std::vector<Toolpath> tps = carvetto::test::fixtureToolpaths();
+                c.apply(tps, bad);
+                const std::string msg = runError(pp, tps, ctx);
+                INFO(msg);
+                CHECK_THAT(msg, ContainsSubstring("cannot write G-code"));
+                CHECK_THAT(msg, ContainsSubstring("[F] feed "));
+                CHECK_THAT(msg, ContainsSubstring("feeds must be greater than zero"));
+            }
+        }
+        for (double bad : {0.0, -0.0, -0.5, -1e-300}) {
+            INFO("dwell " << bad);
+            std::vector<Toolpath> tps = carvetto::test::fixtureToolpaths();
+            tps[2].moves[6].dwellSeconds = bad;
+            const std::string msg = runError(pp, tps, ctx);
+            CHECK_THAT(msg, ContainsSubstring("toolpath 'Drill', move 7: dwell "));
+            CHECK_THAT(msg, ContainsSubstring(" s must be greater than zero"));
+        }
+    }
+}
+
+TEST_CASE("T-0134 AC3: a zero dwell is refused even when the post drops dwells", "[post][safety][number]") {
+    const PostProcessor pp = parseText("begin RAPID_MOVE\n\"G0[X]\"\nend\nbegin FEED_MOVE\n\"G1[X]\"\nend\n");
+    Toolpath tp = simple({Move::rapid({1, 0, 5}), Move::dwell({1, 0, 5}, 0.0)});
+    CHECK_THAT(runError(pp, {tp}, {}), ContainsSubstring("move 2: dwell 0 s must be greater than zero"));
+    tp.moves[1].dwellSeconds = 0.5;
+    CHECK(runError(pp, {tp}, {}).empty());  // dropped with a warning, as before
+}
+
+TEST_CASE("T-0134 AC3: inverse-time feeds are judged by the feed they come from", "[post][safety][number]") {
+    // Two custom posts (shipped posts do not use inverse time): INVERSE_TIME_MODE, where [F] writes
+    // inverse time on cutting moves, and an inch post writing [FI] directly.
+    const PostProcessor inverseMode = parseText(R"PP(
+UNITS = "MM"
+INVERSE_TIME_MODE = "YES"
+VAR SPINDLE_SPEED = [S|A| S|1.0]
+VAR FEED_RATE = [F|A| F|1.1]
+begin HEADER
+"M3[S]"
+end
+begin RAPID_MOVE
+"G94 G0[X][Y][Z]"
+end
+begin FEED_MOVE
+"G93 G1[X][Y][Z][F]"
+end
+)PP");
+    const PostProcessor fiTag = parseText(R"PP(
+UNITS = "INCHES"
+VAR SPINDLE_SPEED = [S|A| S|1.0]
+VAR INV = [FI|A| F|1.2]
+begin HEADER
+"M3[S]"
+end
+begin RAPID_MOVE
+"G0[X][Y][Z]"
+end
+begin FEED_MOVE
+"G93 G1[X][Y][Z][FI]"
+end
+)PP");
+    // Plunge 1 mm, cut 20 mm, retract 6 mm.
+    const auto job = [](double feed, double plunge, std::optional<double> override) {
+        Toolpath t = simple({Move::rapid({0, 0, 5}), Move::plunge({0, 0, -1}), Move::feed({20, 0, -1}),
+                             Move::retract({20, 0, 5})});
+        t.tool.feedRate = feed;
+        t.tool.plungeRate = plunge;
+        t.tool.spindleSpeed = 18000.0;
+        t.moves[2].feedOverride = override;
+        return std::vector<Toolpath>{t};
+    };
+    for (const PostProcessor* pp : {&inverseMode, &fiTag}) {
+        INFO((pp == &inverseMode ? "INVERSE_TIME_MODE" : "[FI]"));
+        CHECK(runError(*pp, job(1000.0, 300.0, std::nullopt), {}).empty());
+        for (double bad : {0.0, -0.0, -5.0}) {
+            INFO(bad);
+            for (const auto& [what, tps] :
+                 {std::pair{"feed", job(bad, 300.0, std::nullopt)}, std::pair{"plunge", job(1000.0, bad, std::nullopt)},
+                  std::pair{"override", job(1000.0, 300.0, bad)}}) {
+                INFO(what);
+                const std::string msg = runError(*pp, tps, {});
+                INFO(msg);
+                CHECK_THAT(msg, ContainsSubstring(" mm/min (inverse time "));
+                CHECK_THAT(msg, ContainsSubstring("feeds must be greater than zero"));
+            }
+        }
+        // A feed above zero whose inverse time prints as zero (or underflows to exactly 0).
+        for (double tiny : {1e-6, std::numeric_limits<double>::denorm_min()}) {
+            INFO(tiny);
+            const std::string msg = runError(*pp, job(tiny, 300.0, std::nullopt), {});
+            INFO(msg);
+            CHECK_THAT(msg, ContainsSubstring("above zero but too small"));
+        }
+        // A zero-length cutting move has inverse time 0 by definition and is written.
+        std::vector<Toolpath> still = job(1000.0, 300.0, std::nullopt);
+        still[0].moves.insert(still[0].moves.begin() + 3, Move::feed({20, 0, -1}));
+        CHECK(runError(*pp, still, {}).empty());
+    }
+}
+
+TEST_CASE("T-0134 AC3: a job without toolpaths checks neither spindle nor feed tags", "[post][safety][number]") {
+    const PostProcessor pp = parseText(
+        "begin HEADER\n\"M3 S[S] F[F] F[FC] F[FP]\"\nend\nbegin RAPID_MOVE\n\"G0[X]\"\nend\n");
+    CHECK(runError(pp, {}, {}).empty());
 }
