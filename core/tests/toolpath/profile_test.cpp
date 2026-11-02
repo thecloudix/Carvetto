@@ -2436,6 +2436,9 @@ TEST_CASE("Sided tabs: survival judged by the cut at the tab layer; every loose 
          "L 0x1.ep+4 0x1.17p+5 0x1.ep+4 0x1.ep+4\n"
          "P 0x1.8p+2 60 -0x1.7bfe5c91d14e4p+1 1 1 0x1.90a3d70a3d70ap+0 0x1.7a5e353f7ced9p+2 0x1.ecac083126e98p+2 0x1.e978d4fdf3b64p-3 0x1.4p+2 0 0x1.051eb851eb852p-2 0 1 0x1.e4dd2f1a9fbe7p-1 0x1.604189374bc6ap+0 0 1 0x1.9p+6 0x0p+0 1 0 0x0p+0 0 0x1.4p+3 0 0 0x1.657184ae74489p-4 0x1.4p+2 0x1.921fb54442d18p-1 0x1.4p+2 0 0x1.921fb54442d18p+0 0 0 0x0p+0 0x0p+0 0 0 0 0 0 0 0x0p+0 0x0p+0 0x1p+1\n"
          "K 0 0\n"         , 0, 0},
+        // (13 since the merge with T-0017/T-0123: the roughing start projected onto the finishing
+        // cut moved by ulps, so fitTabs now keeps a tab it used to drop as clashing; that tab maps
+        // across the roughing start and is left out as unmatched. The tabs kept all hold.)
         {"m1_292000_22",
          "C 1\n"
          "L 0x1.3c6ea3c9e402bp+3 0x0p+0 0x1.a702888c3fa3ap+3 0x1.63ae597e95724p+0\n"
@@ -2496,7 +2499,7 @@ TEST_CASE("Sided tabs: survival judged by the cut at the tab layer; every loose 
          "L 0x1.61ecc2c47c357p+4 0x1.3519e91240829p+3 0x1.61ecc2c47c357p+4 -0x1.56af106ec1e77p+3\n"
          "L 0x1.61ecc2c47c357p+4 -0x1.56af106ec1e77p+3 0x1.8c41da281b482p+4 -0x1.ab593f36000cep+3\n"
          "P 0x1.8p+2 60 -0x1.3bb50eb711cdep+1 1 0 0x0p+0 0x1.43d9b9a17053p+2 0x1.63933f4486ce8p+1 0x0p+0 0x1.4p+2 1 0x1.fc5840336296p-1 1 1 0x1.0c4a9c12fe117p+3 0x1.67767a509549ap-1 0 9 0x1.3d160aa3a3803p+6 0x0p+0 0 0 0x0p+0 2 0x1.59e721232e2fep+4 1 1 0x1.a30619857a99cp-3 0x1.28d8e95d1bd2ap+3 0x1.d5b25836d4cfdp-1 0x1.032110acff6d6p+3 2 0x1.95699f25a558bp-1 1 0 0x0p+0 0x0p+0 1 8 0 0 0 0 -0x1.2a449fee686dep+5 -0x1.52bfbcd538f6cp+5 0x1p+1\n"
-         "K 1 0\n"         , 12, 0},
+         "K 1 0\n"         , 13, 0},
         {"m1_292002_25",
          "C 1\n"
          "L 0x0p+0 0x0p+0 0x1.02ffddc9af687p+6 0x0p+0\n"
