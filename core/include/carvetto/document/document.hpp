@@ -44,8 +44,8 @@ struct IntegrityIssue {
                               ///< object's stored `id` counts as well as its map key.
         IdKeyMismatch,        ///< An object's stored `id` differs from the key it is stored under.
         BadToolpathSelection, ///< A toolpath's vector selection names an id that was never
-                              ///< allocated or belongs to another kind of item, or combines
-                              ///< `all` with explicit layers/objects (ADR-0021).
+                              ///< allocated or belongs to another kind of item, lists an id
+                              ///< twice, or combines `all` with explicit layers/objects (ADR-0021).
     };
     Kind kind;
     /// The object (or zero) the issue is about. Zero for id issues on a layer, sheet or toolpath

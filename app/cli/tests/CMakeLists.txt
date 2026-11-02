@@ -15,6 +15,8 @@ add_executable(carvetto_cli_tests
   cli_test.cpp
   params_test.cpp
 )
+# The migration tests write T-0122-style interim members with the internal zip helper.
+target_include_directories(carvetto_cli_tests PRIVATE ${PROJECT_SOURCE_DIR}/core/src/document)
 target_link_libraries(carvetto_cli_tests PRIVATE carvetto_cli_lib nlohmann_json::nlohmann_json
                       Catch2::Catch2WithMain carvetto_warnings)
 target_compile_definitions(carvetto_cli_tests PRIVATE

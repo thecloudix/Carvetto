@@ -120,6 +120,9 @@ CarvExtras CarvExtras::withMember(std::string name, std::vector<std::uint8_t> by
     if (detail::isToolpathCacheName(name)) {
         bad("reserved for toolpath move caches, which saveCarv writes from the toolpath records");
     }
+    if (detail::isInterimToolpathName(name)) {
+        bad("an interim toolpath member (ADR-0019); toolpaths are stored as toolpath records now");
+    }
     if (name.front() == '/' || name.find('\\') != std::string::npos || name.find(':') != std::string::npos) {
         bad("absolute paths, backslashes and drive letters are not allowed");
     }
@@ -2021,7 +2024,11 @@ toolpath::Move decodeInterimMove(JsonReader& r, const Path& p) {
     return m;
 }
 
-InterimToolpath decodeInterim(JsonReader& r) {
+/// Decodes an interim member. With `countOnly` the moves are validated and counted (in
+/// `moveCount`) but not kept; otherwise exactly `reserve` moves are reserved first, so a counting
+/// pass beforehand gives an exact allocation (no geometric growth, ADR-0021 §4).
+InterimToolpath decodeInterim(JsonReader& r, bool countOnly = false, std::uint64_t reserve = 0,
+                              std::uint64_t* moveCount = nullptr) {
     const Path root{nullptr, r.member(), 0, false};
     Record rec(r, root, kInterimKeys);
     InterimToolpath out;
@@ -2030,6 +2037,8 @@ InterimToolpath decodeInterim(JsonReader& r) {
     std::string operation;
     std::string paramsText;
     std::vector<toolpath::Move> moves;
+    moves.reserve(static_cast<std::size_t>(reserve));
+    std::uint64_t counted = 0;
     while (rec.next()) {
         const Path f = rec.field();
         const std::string& k = rec.key();
@@ -2076,7 +2085,11 @@ InterimToolpath decodeInterim(JsonReader& r) {
             r.beginArray();
             for (std::size_t i = 0; r.nextElement(); ++i) {
                 r.budget().chargeMoves(1);
-                moves.push_back(decodeInterimMove(r, f.at(i)));
+                const toolpath::Move m = decodeInterimMove(r, f.at(i));
+                ++counted;
+                if (!countOnly) {
+                    moves.push_back(m);
+                }
             }
         } else {
             rec.skip();
@@ -2096,6 +2109,9 @@ InterimToolpath decodeInterim(JsonReader& r) {
     tp.params = decodeParamsOf(op, paramsText, root.field("params"), ParamsDialect::ParamsJson, &legacy);
     tp.toolSource = std::move(legacy.tool);
     out.layers = std::move(legacy.layers);
+    if (moveCount) {
+        *moveCount = counted;
+    }
     tp.moves = shareMoves(std::move(moves));
     return out;
 }
@@ -2515,7 +2531,18 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
         }
         if (detail::isInterimToolpathName(e.name)) {
             // carvetto-cli's interim storage before format 1.1 (ADR-0019): becomes a record.
-            interim.emplace(e.name, decodeMember(zip, e, budget, decodeInterim));
+            // Two passes: count the moves under a throwaway budget with the same limits, then
+            // decode for real with exactly that many reserved. Interim members come from the
+            // T-0122 CLI, whose files held at most ~350,000 moves, so the extra pass is cheap.
+            std::uint64_t count = 0;
+            {
+                LoadBudget probe(budget.limits());
+                probe.setArchiveBytes(bytes.size());
+                decodeMember(zip, e, probe, [&count](JsonReader& r) { return decodeInterim(r, true, 0, &count); });
+            }
+            interim.emplace(e.name, decodeMember(zip, e, budget, [count](JsonReader& r) {
+                                return decodeInterim(r, false, count, nullptr);
+                            }));
             continue;
         }
         hold(e);
@@ -2887,6 +2914,18 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
                                  std::to_string(zip.bytes.size()) + " bytes; a .carv file holds at most " +
                                  std::to_string(kCarvMovesPerFileByte) +
                                  " move per byte of its size (are the toolpaths highly repetitive?)"};
+        }
+        // The promise "saveCarv never writes a file loadCarv refuses" is made structurally true:
+        // the finished archive goes through the real load path, with the loader's own limits.
+        // Cost: about one load (2M moves: ~0.2 s Release, plus the decoded copy in memory while
+        // it runs). The checks above only give clearer messages for the common cases.
+        try {
+            (void)loadImpl(zip.bytes, detail::LoadLimits{}, detail::ZipLimits{});
+        } catch (const LoadFailure& f) {
+            return CarvError{f.code, "the file would not load again: " + f.message};
+        } catch (const std::bad_alloc&) {
+            return CarvError{CarvError::Code::ResourceLimit,
+                             "the file would not load again: out of memory while checking it"};
         }
         return std::move(zip.bytes);
     } catch (const std::bad_alloc&) {

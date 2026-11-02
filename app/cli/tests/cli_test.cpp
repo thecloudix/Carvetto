@@ -8,8 +8,10 @@
 #include <filesystem>
 #include <fstream>
 #include <ios>
+#include <span>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "carvetto/document/carv_io.hpp"
@@ -18,6 +20,7 @@
 #include "carvetto/toolpath/profile.hpp"
 #include "carvetto/tooling/json_io.hpp"
 #include "carvetto/tooling/tool_database.hpp"
+#include "carv_zip.hpp"
 #include "starter_tools.hpp"
 
 namespace fs = std::filesystem;
@@ -82,6 +85,21 @@ std::string pipeline(const std::string& dir) {
         CHECK(r.err.empty());
     }
     return readFile(nc);
+}
+
+/// Writes `path` again with `extra` members appended (raw, as the T-0122 CLI added its interim
+/// toolpath members; `CarvExtras::withMember` refuses those names since T-0132).
+void addRawMembers(const std::string& path, const std::vector<std::pair<std::string, std::string>>& extra) {
+    const std::string bytes = readFile(path);
+    auto zip = document::detail::readZip(std::span<const std::uint8_t>(
+        reinterpret_cast<const std::uint8_t*>(bytes.data()), bytes.size()));
+    REQUIRE(zip.ok);
+    for (const auto& [name, text] : extra) {
+        zip.members.push_back({name, std::vector<std::uint8_t>(text.begin(), text.end())});
+    }
+    const auto out = document::detail::writeZip(zip.members);
+    REQUIRE(out.ok);
+    writeFile(path, std::string(out.bytes.begin(), out.bytes.end()));
 }
 
 /// A .carv with the fixture imported.
@@ -417,7 +435,7 @@ TEST_CASE("a file with T-0122 interim toolpath members is migrated and posts the
         REQUIRE(copy.ok());
         legacyDoc = std::move(copy.value().document);
     }
-    document::CarvExtras extras;
+    std::vector<std::pair<std::string, std::string>> interim;
     int n = 0;
     for (const auto& r : native.value().document.toolpaths()) {
         legacyDoc.takeToolpath(r.id);
@@ -453,12 +471,12 @@ TEST_CASE("a file with T-0122 interim toolpath members is migrated and posts the
                                  R"(,"feed_rate":)" + num(r.tool.feedRate) + R"(,"plunge_rate":)" +
                                  num(r.tool.plungeRate) + R"(,"spindle_speed":)" + num(r.tool.spindleSpeed) +
                                  R"(},"moves":[)" + moves + "]}";
-        extras = extras.withMember("toolpaths/000" + std::to_string(++n) + ".json",
-                                   std::vector<std::uint8_t>(text.begin(), text.end()));
+        interim.emplace_back("toolpaths/000" + std::to_string(++n) + ".json", text);
     }
     REQUIRE(legacyDoc.toolpaths().empty());
     const std::string legacy = dir + "/legacy.carv";
-    REQUIRE(document::saveCarv(legacyDoc, fs::path(legacy), extras).ok());
+    REQUIRE(document::saveCarv(legacyDoc, fs::path(legacy)).ok());
+    addRawMembers(legacy, interim);
 
     const Outcome r = runCli({"post", kGrbl, legacy, dir + "/part.nc"});
     INFO(r.err);
@@ -483,12 +501,8 @@ TEST_CASE("a file with T-0122 interim toolpath members is migrated and posts the
 TEST_CASE("a damaged interim toolpath member is reported, not crashed on", "[cli][post]") {
     const std::string dir = workDir("damaged");
     const std::string carv = importedFixture(dir);
-    auto loaded = document::loadCarv(fs::path(carv));
-    REQUIRE(loaded.ok());
-    const std::string bad = R"({"format":"carvetto-toolpath","format_version":1,"moves":[["warp",0,0,0]]})";
-    const auto extras =
-        loaded.value().extras.withMember("toolpaths/0001.json", std::vector<std::uint8_t>(bad.begin(), bad.end()));
-    REQUIRE(document::saveCarv(loaded.value().document, fs::path(carv), extras).ok());
+    addRawMembers(carv, {{"toolpaths/0001.json",
+                          R"({"format":"carvetto-toolpath","format_version":1,"moves":[["warp",0,0,0]]})"}});
     const Outcome r = runCli({"post", kGrbl, carv, dir + "/x.nc"});
     CHECK(r.code == cli::kExitFailure);
     CHECK_THAT(r.err, ContainsSubstring("toolpaths/0001.json"));

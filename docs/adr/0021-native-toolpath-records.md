@@ -1,7 +1,8 @@
 # ADR-0021: Native toolpath records in `.carv` (job.json definitions, binary move caches)
 
 Date: 2026-11-01 · Status: proposed (T-0132) · Supersedes the interim storage of ADR-0019 §1 ·
-Move budget tied to file size by the project owner (2026-11-02, after verifier round 1)
+Move budget tied to file size by the project owner (2026-11-02, after verifier round 1) ·
+saveCarv verifies its output with the loader (verifier round 2)
 
 ## Context
 ADR-0003 (owner decision) puts toolpath definitions in `job.json` and computed moves in optional
@@ -31,9 +32,9 @@ schema, the cache format and its budget open; they are decided here.
   object or toolpath, and preset ids follow amendment A2. **Toolpaths are a fourth id kind**
   next to sheets, layers and objects (recorded as ADR-0007 amendment A5).
 - Commands: `AddToolpathCommand`, `RemoveToolpathsCommand`, `SetToolpathCommand` (replace a record;
-  consecutive edits of one toolpath coalesce) and `MoveToolpathCommand`. Add and Set refuse (no-op)
-  a selection `checkIntegrity` would reject (an unallocated id, an item of another kind, `all` with
-  lists), and clear `cuttingData`. `shareMoves` zeroes the fields a move's kind ignores (see §3),
+  consecutive edits of one toolpath coalesce) and `MoveToolpathCommand`. Add and Set drop repeated
+  selection ids (first kept), refuse (no-op) a selection `checkIntegrity` would reject (an
+  unallocated id, an item of another kind, `all` with lists), and clear `cuttingData`. `shareMoves` zeroes the fields a move's kind ignores (see §3),
   so a record built through these equals its saved and reloaded copy. Records built by hand and
   inserted raw are not normalised.
 - **Vector selection.** `VectorSelection{ bool all; vector<LayerId> layers; vector<ObjectId> objects }`.
@@ -50,7 +51,8 @@ schema, the cache format and its budget open; they are decided here.
 - **Integrity** (`checkIntegrity`, so also every load): toolpath ids are range-checked and counted
   in `DuplicateId`; new kind `BadToolpathSelection` for a selection id that was never allocated
   (≥ next id, 0, ≥ 2^62), that belongs to an item of another kind (a layer id listed as an object,
-  a toolpath id, …), or `all` combined with explicit layers/objects.
+  a toolpath id, …), an id listed twice, or `all` combined with explicit layers/objects. At most
+  one such issue is reported per toolpath, so a hostile file cannot make the report huge.
 
 ### 2. `job.json` schema (format 1.1)
 - Optional root key `toolpaths`: an array of records in job order, each one line per leaf record
@@ -80,7 +82,19 @@ schema, the cache format and its budget open; they are decided here.
   limit of 10,000 archive members (ADR-0013 §9): manifest + job + caches + preserved members, so
   without preserved members at most **9,998** computed toolpaths fit, one fewer per preserved
   member. `saveCarv` counts them all and refuses (ResourceLimit) before writing; it also checks
-  the member-size (256 MiB) and total-size (1 GiB) caps on what it is about to write. The member is always written when the record
+  the member-size (256 MiB) and total-size (1 GiB) caps on what it is about to write.
+- **saveCarv verifies its output (verifier round 2).** Hand-written pre-checks drifted from the
+  loader twice (member count, then the 10,000-record cap, repeated selection ids, string caps,
+  JSON ratio, interim extras). So the finished archive now goes through the real load path
+  (`loadImpl` with the default `LoadLimits` / `ZipLimits`) before `saveCarv` returns it; any
+  failure is returned with the loader's own code and message, prefixed "the file would not load
+  again:", and nothing is written. The promise "saveCarv never writes a file loadCarv refuses"
+  is therefore structural. Cost: one in-memory load (0.17–0.18 s Release for the AC2 job's 2 M
+  moves); measured save times went from 1.36–1.43 s to 1.39–1.47 s Release (deflate dominates and
+  varies), 2.3 s Debug, and the moves are decoded a second time while the check runs (+144 MB
+  transiently). The pre-checks stay for clearer messages.
+- `CarvExtras::withMember` also refuses interim names `toolpaths/NNNN.json`: records replace them,
+  and a member added that way would turn into an extra record on the next load. The member is always written when the record
   has moves: the loader cannot recompute toolpaths (that needs the tool database and the
   operation code), so dropping the cache would lose them. Templates (`.carvt`) may omit them later.
 - Layout (little-endian; doubles as their IEEE bits, so every value round-trips exactly):
@@ -101,19 +115,25 @@ schema, the cache format and its budget open; they are decided here.
   `movesPerArchiveByte`), counting all records, caches and migrated interim members together.
   Real toolpaths take 6–9 bytes of file per move (the AC2 job: 6.2), so only crafted or
   degenerate, highly repetitive toolpaths reach the rule. A record's `moves.count` is charged while
-  `job.json` is parsed, so an oversized count is refused before any cache is inflated: a 9 KB file
-  can claim about 9,000 moves.
+  `job.json` is parsed, so an oversized count is refused before any cache is inflated (the
+  records before it in `job.json`, objects included, are parsed first, within the document
+  budget): a 9 KB file can claim about 9,000 moves.
 - `saveCarv` applies the same rule to the compressed archive it is about to return (it knows the
   size only then) and refuses (ResourceLimit, with a hint) instead of writing, so no file the
   loader refuses is written; the CLI's reload check (ADR-0019 §1) is gone. A highly repetitive
   toolpath (e.g. 1.2 M identical moves) is refused on its own and saves once the file holds enough
-  other content.
+  other content. A file that loads can still be refused on re-save if re-saving makes it smaller
+  (stale caches dropped, padding members removed, canonical re-encoding) so that it no longer
+  holds one byte per move; the refusal is clean (no file written).
 - The decoder reserves exactly the declared count (no power-of-two growth), so a load's memory for
   moves is at most 72 bytes per byte of the file: measured (Release, forked child) 1.6 MiB peak
   growth for a 10.5 KB file at the limit, 71 MiB for 1.0 MB and 558 MiB for 7.9 MB (padded files
   of one-byte moves, the worst case per byte); 138 MiB for a realistic 2 M-move 18 MB file, and
-  550 MiB for 8 M moves in 73 MB. Migrated interim moves (no declared count) grow geometrically,
-  still bounded by the same budget.
+  550 MiB for 8 M moves in 73 MB. Migrated interim members have no declared count, so each is
+  read twice: a counting pass under a throwaway budget with the same limits, then the real pass
+  with exactly that many moves reserved (a realistic 400,000-move interim member in a 7.7 MB file:
+  0.45 s Release for both passes, 28 MiB peak, i.e. 72 bytes per move). Interim files from the
+  T-0122 CLI held at most ~350,000 moves, so the second pass is cheap.
 - Before inflating a cache its declared size must lie in [16 + count, 16 + 49 · count + 48], so
   the inflate work is bounded by the count, and the count by the budget. The cache is decoded
   straight from the bounded inflate stream (ADR-0013 §9) into moves, never held as bytes. The CRC is checked at the end: a CRC failure is reported as `InvalidArchive`,

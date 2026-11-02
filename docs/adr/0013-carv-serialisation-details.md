@@ -214,8 +214,10 @@ confines forward-compat logic to the I/O layer.
   `LoadLimits::maxMoves`, `movesPerArchiveByte`, charged from `job.json` before any cache is
   inflated; the decoder reserves exactly the declared count), at most 10,000 toolpath records,
   and the 20:1 binary ratio checks no longer apply to move caches (they are decoded straight into
-  moves, never held). `saveCarv` refuses to write a file that breaks the move rule, the 10,000
-  member limit (preserved members included) or the member/total size caps. Caches are written in
+  moves, never held). `saveCarv` never returns a file the loader refuses: it loads its finished
+  archive in memory with these same limits and returns the loader's error instead (ADR-0021 §3);
+  specific pre-checks (move rule, 10,000 members including preserved ones, size caps) give clearer
+  messages first. Caches are written in
   name order among the preserved members (§1). T-0122's interim `toolpaths/NNNN.json` members are
   converted to records on load instead of being kept as unknown members. The toolpath parameter
   keys follow carvetto-cli's params.json (lengths without the `_mm` suffix of §5; angles in

@@ -606,37 +606,54 @@ std::vector<IntegrityIssue> Document::checkIntegrity() const {
 
     // Toolpath selections (ADR-0021): a reference may name a deleted item (ids are never reused,
     // so it can never come to name another one), but never an id that was not handed out yet or
-    // an item of another kind.
+    // an item of another kind, and never the same id twice. At most one issue per toolpath, so a
+    // hostile file cannot make the report itself huge.
     for (const ToolpathRecord& tp : toolpaths_) {
         const std::string who = "toolpath #" + std::to_string(tp.id.value);
         const VectorSelection& sel = tp.selection;
-        if (sel.all && (!sel.layers.empty() || !sel.objects.empty())) {
-            report(Kind::BadToolpathSelection, {}, {}, who + " selects all vectors and also lists layers or objects");
-        }
-        const auto checkRef = [&](std::uint64_t value, bool isLayer) {
-            const std::string what = std::string(isLayer ? "layer" : "object") + " #" + std::to_string(value);
-            if (value == 0 || value >= IdGenerator::kMaxId || value >= next) {
-                report(Kind::BadToolpathSelection, {}, {}, who + " selects " + what + ", which was never allocated");
-                return;
+        const auto problem = [&]() -> std::optional<std::string> {
+            if (sel.all && (!sel.layers.empty() || !sel.objects.empty())) {
+                return who + " selects all vectors and also lists layers or objects";
             }
-            const auto it = owners.find(value);
-            if (it == owners.end()) {
-                return;  // a deleted item
-            }
-            const char* expected = isLayer ? "layer" : "object";
-            for (const std::string& owner : it->second.names) {
-                if (owner != expected) {
-                    report(Kind::BadToolpathSelection, {}, {},
-                           who + " selects " + what + ", which is a " + owner);
-                    return;
+            const auto checkRef = [&](std::uint64_t value, bool isLayer) -> std::optional<std::string> {
+                const std::string what = std::string(isLayer ? "layer" : "object") + " #" + std::to_string(value);
+                if (value == 0 || value >= IdGenerator::kMaxId || value >= next) {
+                    return who + " selects " + what + ", which was never allocated";
+                }
+                const auto it = owners.find(value);
+                if (it == owners.end()) {
+                    return std::nullopt;  // a deleted item
+                }
+                const char* expected = isLayer ? "layer" : "object";
+                for (const std::string& owner : it->second.names) {
+                    if (owner != expected) {
+                        return who + " selects " + what + ", which is a " + owner;
+                    }
+                }
+                return std::nullopt;
+            };
+            std::set<std::uint64_t> seen;
+            for (const LayerId layer : sel.layers) {
+                if (auto p = checkRef(layer.value, true)) {
+                    return p;
+                }
+                if (!seen.insert(layer.value).second) {
+                    return who + " lists layer #" + std::to_string(layer.value) + " more than once";
                 }
             }
-        };
-        for (const LayerId layer : sel.layers) {
-            checkRef(layer.value, true);
-        }
-        for (const ObjectId object : sel.objects) {
-            checkRef(object.value, false);
+            seen.clear();
+            for (const ObjectId object : sel.objects) {
+                if (auto p = checkRef(object.value, false)) {
+                    return p;
+                }
+                if (!seen.insert(object.value).second) {
+                    return who + " lists object #" + std::to_string(object.value) + " more than once";
+                }
+            }
+            return std::nullopt;
+        }();
+        if (problem) {
+            report(Kind::BadToolpathSelection, {}, {}, *problem);
         }
     }
     return issues;

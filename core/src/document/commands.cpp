@@ -768,20 +768,30 @@ bool selectionValid(const Document& doc, const VectorSelection& sel, ToolpathId 
 
 // Tool-database input that is not part of a record (ADR-0021): cleared so the stored record
 // equals what a save and load give back.
+template <class IdT>
+void dropDuplicates(std::vector<IdT>& ids) {
+    std::set<IdT> seen;
+    std::erase_if(ids, [&seen](IdT id) { return !seen.insert(id).second; });
+}
+
+// Also drops repeated ids from the selection (first occurrence kept), which `checkIntegrity`
+// would report.
 void normalise(ToolpathRecord& record) {
     if (auto* profile = std::get_if<toolpath::ProfileParams>(&record.params)) {
         profile->cuttingData.reset();
     }
+    dropDuplicates(record.selection.layers);
+    dropDuplicates(record.selection.objects);
 }
 
 }  // namespace
 
 bool AddToolpathCommand::apply(Document& doc) {
     if (!applied_) {
+        normalise(record_);
         if (!canTakeId(doc, record_.id.value) || !selectionValid(doc, record_.selection, record_.id)) {
             return false;
         }
-        normalise(record_);
         if (record_.id.isNull()) {
             record_.id = doc.allocateToolpathId();
         }

@@ -373,7 +373,8 @@ class SetDocumentVariableCommand : public Command {
 /// Adds a toolpath record (id allocated on first apply) at `index` or at the end of the job
 /// order. No-op when no id is left, a preset id is not fresh (see "Preset ids" above), or the
 /// selection names an id that was never allocated or an item of another kind (or combines `all`
-/// with layers/objects). `ProfileParams::cuttingData` is cleared (it is not part of a record).
+/// with layers/objects). Repeated selection ids are dropped (first kept) and
+/// `ProfileParams::cuttingData` is cleared (it is not part of a record).
 class AddToolpathCommand : public Command {
    public:
     explicit AddToolpathCommand(ToolpathRecord record, std::optional<std::size_t> index = std::nullopt)

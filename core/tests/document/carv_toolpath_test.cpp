@@ -14,6 +14,7 @@
 #include <optional>
 #include <random>
 #include <span>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <variant>
@@ -1514,3 +1515,246 @@ TEST_CASE("fuzz under a per-load timeout: toolpath caches, records and interim m
     CHECK(inconsistent == 0);
 }
 #endif
+
+// ------------------------------------------------------------------------------------------------
+// saveCarv never writes a file loadCarv refuses (T-0132 verifier rounds 1-2): saveCarv runs the
+// loader on its own output.
+// ------------------------------------------------------------------------------------------------
+
+namespace {
+
+ToolpathRecord plainRecord(std::vector<Move> moves, bool withMoves = true) {
+    ToolpathRecord r;
+    r.name = "t";
+    r.selection = VectorSelection::allVectors();
+    r.tool = {"tool", 1, 6.0, 1000.0, 300.0, 18000.0};
+    if (withMoves) {
+        r.moves = shareMoves(std::move(moves));
+    }
+    return r;
+}
+
+std::vector<Move> randomMoves(std::size_t n, unsigned seed) {
+    std::mt19937_64 g(seed);
+    std::uniform_real_distribution<double> d(-500, 500);
+    std::vector<Move> v;
+    v.reserve(n);
+    for (std::size_t i = 0; i < n; ++i) {
+        v.push_back(Move::feed({d(g), d(g), d(g)}));
+    }
+    return v;
+}
+
+/// Saves; when that succeeds the file must load, and re-save to the same bytes. Returns whether
+/// the save succeeded (and the refusal message when not).
+bool consistent(const Document& doc, const CarvExtras& extras = {}, std::string* why = nullptr) {
+    const auto saved = saveCarv(doc, extras);
+    if (!saved.ok()) {
+        CHECK_FALSE(saved.error().message.empty());
+        if (why) {
+            *why = saved.error().message;
+        }
+        return false;
+    }
+    const auto loaded = loadCarv(std::span<const std::uint8_t>(saved.value()));
+    INFO((loaded.ok() ? std::string() : loaded.error().message));
+    REQUIRE(loaded.ok());
+    const auto again = saveCarv(loaded.value().document, loaded.value().extras);
+    REQUIRE(again.ok());
+    CHECK(again.value() == saved.value());
+    return true;
+}
+
+}  // namespace
+
+TEST_CASE("consistency: toolpath record counts (nomoves, count)", "[document][toolpath][carv][limits]") {
+    std::string why;
+    Document atLimit;
+    for (int i = 0; i < 10000; ++i) {
+        atLimit.insertToolpath(plainRecord({}, false));
+    }
+    CHECK(consistent(atLimit));
+    atLimit.insertToolpath(plainRecord({}, false));  // 10,001 records, none computed
+    CHECK_FALSE(consistent(atLimit, {}, &why));
+    CHECK(contains(why, "would not load again"));
+    CHECK(contains(why, "more than 10000 toolpaths"));
+
+    Document mixed;
+    const SharedMoves two = shareMoves(randomMoves(2, 1));
+    for (int i = 0; i < 9998; ++i) {
+        ToolpathRecord r = plainRecord({}, false);
+        r.moves = two;
+        mixed.insertToolpath(r);
+    }
+    CHECK(consistent(mixed));
+    for (int i = 0; i < 3000; ++i) {
+        mixed.insertToolpath(plainRecord({}, false));
+    }
+    CHECK_FALSE(consistent(mixed, {}, &why));
+    CHECK(contains(why, "more than 10000 toolpaths"));
+}
+
+TEST_CASE("consistency: selections with repeated or unusual ids (dupsel, zero)", "[document][toolpath][carv][limits]") {
+    Document doc;
+    Layer l;
+    l.name = "a";
+    const LayerId layer = doc.insertLayer(l);
+    ToolpathRecord r = plainRecord({Move::rapid({1, 2, 30})});
+    r.selection = {};
+    r.selection.layers.assign(400'000, layer);
+    auto add = std::make_unique<AddToolpathCommand>(r);
+    REQUIRE(doc.execute(std::move(add)));
+    CHECK(doc.toolpaths().back().selection.layers == std::vector<LayerId>{layer});  // deduplicated
+    CHECK(doc.checkIntegrity().empty());
+    CHECK(consistent(doc));
+    // A raw insert can still hold repeats: checkIntegrity reports them once, and saveCarv refuses.
+    ToolpathRecord raw = r;
+    raw.id = {};
+    doc.insertToolpath(raw);
+    const auto issues = doc.checkIntegrity();
+    REQUIRE(issues.size() == 1);
+    CHECK(issues[0].kind == IntegrityIssue::Kind::BadToolpathSelection);
+    CHECK(contains(issues[0].message, "more than once"));
+    std::string why;
+    CHECK_FALSE(consistent(doc, {}, &why));
+    CHECK(contains(why, "would not load again"));
+    // With few repeats the file is small enough for every other limit: the integrity check names it.
+    raw.selection.layers.assign(3, layer);
+    doc.takeToolpath(doc.toolpaths().back().id);
+    doc.insertToolpath(raw);
+    CHECK_FALSE(consistent(doc, {}, &why));
+    CHECK(contains(why, "more than once"));
+
+    // Distinct, allocated but unused ids are valid. 13M of them (the verifier's case) exceed the
+    // loader's document budget and are refused by saveCarv's verification; that needs ~1 GB, so
+    // this test only checks that a large valid selection round-trips.
+    Document many;
+    {
+        Layer marker;
+        marker.id = LayerId{100'000};
+        many.insertLayer(marker);
+        many.takeLayer(marker.id);
+    }
+    ToolpathRecord unused = plainRecord({});
+    unused.selection = {};
+    for (std::uint64_t i = 0; i < 50'000; ++i) {
+        unused.selection.objects.push_back(ObjectId{100 + i});
+    }
+    REQUIRE(many.execute(std::make_unique<AddToolpathCommand>(unused)));
+    CHECK(consistent(many));
+
+    // zero: empty but computed moves, no moves, a dwell of -0.0 seconds.
+    Document z;
+    z.insertToolpath(plainRecord({}));
+    z.insertToolpath(plainRecord({}, false));
+    z.insertToolpath(plainRecord({Move::dwell({0, 0, 0}, -0.0)}));
+    CHECK(consistent(z));
+}
+
+TEST_CASE("consistency: long strings and interim extras (strings, interimextra)", "[document][toolpath][carv][limits]") {
+    const std::string longText(1'100'000, 'n');  // over the loader's 1 MiB string cap
+    std::string why;
+    {
+        Document d;
+        ToolpathRecord r = plainRecord({Move::rapid({1, 2, 30})});
+        r.name = longText;
+        d.insertToolpath(r);
+        CHECK_FALSE(consistent(d, {}, &why));
+        CHECK(contains(why, "would not load again"));
+    }
+    {
+        Document d;
+        ToolpathRecord r = plainRecord({Move::rapid({1, 2, 30})});
+        r.tool.name = longText;
+        d.insertToolpath(r);
+        CHECK_FALSE(consistent(d));
+    }
+    {
+        Document d;
+        ToolpathRecord r = plainRecord({Move::rapid({1, 2, 30})});
+        r.toolSource.toolId = longText;
+        d.insertToolpath(r);
+        CHECK_FALSE(consistent(d));
+    }
+    {
+        Document d;
+        Layer l;
+        l.name = longText;
+        d.insertLayer(l);
+        CHECK_FALSE(consistent(d));
+        Document ok;
+        Layer shortName;
+        shortName.name = std::string(1000, 'n');
+        ok.insertLayer(shortName);
+        CHECK(consistent(ok));
+    }
+    // Interim members can no longer be added through the API; a preserved .json member that is
+    // not valid JSON is refused on save.
+    CHECK_THROWS_AS(CarvExtras{}.withMember("toolpaths/0001.json", Bytes{'{', '}'}), std::invalid_argument);
+    const CarvExtras broken = CarvExtras{}.withMember("notes.json", Bytes{'{', 'x'});
+    CHECK_FALSE(consistent(Document{}, broken, &why));
+    CHECK(contains(why, "notes.json"));
+}
+
+TEST_CASE("consistency: the move budget sweep (movebudget)", "[document][toolpath][carv][limits]") {
+    int saved = 0;
+    int refused = 0;
+    for (std::size_t n = 2000; n <= 200'000; n = n * 13 / 10) {
+        for (const std::size_t other : {std::size_t{0}, std::size_t{50}, std::size_t{2500}}) {
+            Document d;
+            d.insertToolpath(plainRecord(std::vector<Move>(n, Move::rapid({1, 2, 3}))));
+            d.insertToolpath(plainRecord(randomMoves(other + 1, 3)));
+            (consistent(d) ? saved : refused) += 1;
+        }
+    }
+    CHECK(saved > 0);
+    CHECK(refused > 0);
+}
+
+TEST_CASE("generative: documents near every limit either save and load or are refused on save",
+          "[document][toolpath][carv][limits][fuzz]") {
+    std::mt19937 rng(20261102);
+    int saved = 0;
+    int refused = 0;
+    for (int round = 0; round < 24; ++round) {
+        INFO("round " << round);
+        Document d;
+        CarvExtras extras;
+        const bool manyRecords = rng() % 4 == 0;
+        const std::size_t records = manyRecords ? 9995 + rng() % 8 : 1 + rng() % 5;
+        const SharedMoves small = shareMoves(randomMoves(1 + rng() % 3, static_cast<unsigned>(round)));
+        for (std::size_t i = 0; i < records; ++i) {
+            ToolpathRecord r = plainRecord({}, false);
+            if (rng() % 3 != 0) {
+                r.moves = small;
+            }
+            d.insertToolpath(r);
+        }
+        if (rng() % 3 == 0) {  // repetitive moves near one move per file byte
+            const std::size_t n = 20'000 + rng() % 60'000;
+            ToolpathRecord r = plainRecord(std::vector<Move>(n, Move::rapid({0, 0, 5})));
+            d.insertToolpath(r);
+            Bytes pad(n - n / 8 + rng() % (n / 4));
+            for (auto& b : pad) {
+                b = static_cast<std::uint8_t>(rng());
+            }
+            extras = extras.withMember("pad.bin", pad);
+        }
+        for (unsigned e = 0; e < rng() % 4; ++e) {
+            extras = extras.withMember("extra/" + std::to_string(e) + ".bin", Bytes(10, 1));
+        }
+        if (rng() % 5 == 0) {  // a name at the string cap (1 MiB) or just over it
+            ToolpathRecord& r = *d.findToolpath(d.toolpaths()[0].id);
+            r.name = std::string((std::size_t{1} << 20) - 3 + rng() % 7, 'q');
+        }
+        if (rng() % 6 == 0) {  // a raw repeated selection id
+            ToolpathRecord& r = *d.findToolpath(d.toolpaths()[0].id);
+            r.selection = {};
+            r.selection.layers = {d.defaultLayer(), d.defaultLayer()};
+        }
+        (consistent(d, extras) ? saved : refused) += 1;
+    }
+    WARN("generative near-limit documents: " << saved << " saved and loaded, " << refused << " refused on save");
+    CHECK(saved > 0);
+    CHECK(refused > 0);
+}

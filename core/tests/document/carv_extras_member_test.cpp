@@ -26,11 +26,11 @@ std::vector<std::uint8_t> bytesOf(const std::string& s) {
 
 TEST_CASE("CarvExtras::member is null for empty extras and unknown names", "[document][carv][extras]") {
     const CarvExtras none;
-    CHECK(none.member("toolpaths/0001.json") == nullptr);
-    const CarvExtras one = none.withMember("toolpaths/0001.json", bytesOf("{}"));
-    CHECK(one.member("toolpaths/0002.json") == nullptr);
-    REQUIRE(one.member("toolpaths/0001.json") != nullptr);
-    CHECK(*one.member("toolpaths/0001.json") == bytesOf("{}"));
+    CHECK(none.member("notes/0001.json") == nullptr);
+    const CarvExtras one = none.withMember("notes/0001.json", bytesOf("{}"));
+    CHECK(one.member("notes/0002.json") == nullptr);
+    REQUIRE(one.member("notes/0001.json") != nullptr);
+    CHECK(*one.member("notes/0001.json") == bytesOf("{}"));
     CHECK_FALSE(one.empty());
     CHECK(none.empty());  // the original is unchanged
 }
@@ -77,6 +77,7 @@ TEST_CASE("withMember refuses names saveCarv cannot write", "[document][carv][ex
     }
     CHECK_THROWS_AS(e.withMember(std::string(256, 'a'), {}), std::invalid_argument);
     CHECK_NOTHROW(e.withMember(std::string(255, 'a'), {}));
-    CHECK_NOTHROW(e.withMember("toolpaths/0001.json", {}));  // an interim member, migrated on load
+    CHECK_THROWS_AS(e.withMember("toolpaths/0001.json", {}), std::invalid_argument);  // interim (ADR-0019)
+    CHECK_NOTHROW(e.withMember("toolpaths/notes.json", {}));
     CHECK_NOTHROW(e.withMember("toolpaths/1.bin", {}));        // not a move cache name
 }
