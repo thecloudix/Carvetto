@@ -820,6 +820,16 @@ double readDouble(JsonReader& r, const Path& p) {
     fail(p, "must be a number");
 }
 
+/// A tool size, feed or dwell: finite and greater than zero (T-0134; a crafted file must not hand
+/// the post a zero or negative value).
+double readPositive(JsonReader& r, const Path& p) {
+    const double v = readDouble(r, p);
+    if (!std::isfinite(v) || !(v > 0.0)) {
+        fail(p, "must be a finite number greater than zero");
+    }
+    return v;
+}
+
 std::int64_t readInteger(JsonReader& r, const Path& p, std::int64_t lo, std::int64_t hi) {
     if (r.peek() != JKind::Number) {
         fail(p, "must be an integer");
@@ -1886,11 +1896,11 @@ DecodedToolpath decodeToolpath(JsonReader& r, const Path& p) {
                 } else if (tk == "tool_number") {
                     tp.tool.toolNumber = readInt(r, tf, kIntMin, kIntMax);
                 } else if (tk == "diameter") {
-                    tp.tool.diameter = readDouble(r, tf);
+                    tp.tool.diameter = readPositive(r, tf);
                 } else if (tk == "feed_rate") {
-                    tp.tool.feedRate = readDouble(r, tf);
+                    tp.tool.feedRate = readPositive(r, tf);
                 } else if (tk == "plunge_rate") {
-                    tp.tool.plungeRate = readDouble(r, tf);
+                    tp.tool.plungeRate = readPositive(r, tf);
                 } else if (tk == "spindle_speed") {
                     tp.tool.spindleSpeed = readDouble(r, tf);
                 } else {
@@ -2002,6 +2012,9 @@ toolpath::Move decodeInterimMove(JsonReader& r, const Path& p) {
         m.centre = {v[3], v[4]};
     } else if (m.kind == toolpath::MoveKind::Dwell) {
         m.dwellSeconds = v[3];
+        if (!(m.dwellSeconds > 0.0)) {
+            fail(p.at(4), "dwell seconds must be greater than zero");
+        }
     }
     if (r.nextElement()) {
         const Path f = p.at(fixed + 1);
@@ -2011,7 +2024,7 @@ toolpath::Move decodeInterimMove(JsonReader& r, const Path& p) {
         Record feed(r, f, kFeedKeys);
         while (feed.next()) {
             if (feed.known()) {
-                m.feedOverride = readFinite(r, feed.field());
+                m.feedOverride = readPositive(r, feed.field());
             } else {
                 fail(f, "unknown key '" + feed.key() + "'");
             }
@@ -2066,11 +2079,11 @@ InterimToolpath decodeInterim(JsonReader& r, bool countOnly = false, std::uint64
                 } else if (tk == "tool_number") {
                     tp.tool.toolNumber = readInt(r, tf, 0, 1'000'000);
                 } else if (tk == "diameter") {
-                    tp.tool.diameter = readFinite(r, tf);
+                    tp.tool.diameter = readPositive(r, tf);
                 } else if (tk == "feed_rate") {
-                    tp.tool.feedRate = readFinite(r, tf);
+                    tp.tool.feedRate = readPositive(r, tf);
                 } else if (tk == "plunge_rate") {
-                    tp.tool.plungeRate = readFinite(r, tf);
+                    tp.tool.plungeRate = readPositive(r, tf);
                 } else if (tk == "spindle_speed") {
                     tp.tool.spindleSpeed = readFinite(r, tf);
                 } else {
@@ -2840,6 +2853,16 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
         json toolpaths = json::array();
         for (std::size_t i = 0; i < doc.toolpaths().size(); ++i) {
             const ToolpathRecord& tp = doc.toolpaths()[i];
+            // The loader refuses these (T-0134); say so here with the toolpath's name.
+            for (const auto& [value, what] : {std::pair{tp.tool.diameter, "diameter"},
+                                              std::pair{tp.tool.feedRate, "feed rate"},
+                                              std::pair{tp.tool.plungeRate, "plunge rate"}}) {
+                if (!std::isfinite(value) || !(value > 0.0)) {
+                    return CarvError{CarvError::Code::InvalidContent,
+                                     "toolpath '" + tp.name + "' (#" + std::to_string(tp.id.value) + "): tool " +
+                                         what + " must be a finite number greater than zero"};
+                }
+            }
             std::string member;
             if (tp.hasMoves()) {
                 member = cacheMemberName(i);
