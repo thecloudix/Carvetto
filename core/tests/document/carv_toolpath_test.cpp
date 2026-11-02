@@ -1221,7 +1221,8 @@ TEST_CASE("the move budget is enforced on load and on save", "[document][toolpat
         ms.push_back({"toolpaths/0001.json", Bytes(member.begin(), member.end())});
         const CarvError err = loadError(detail::writeZip(ms).bytes);
         CHECK(err.code == Code::ResourceLimit);
-        CHECK(contains(err.message, "toolpaths with computed moves"));
+        CHECK(contains(err.message, "the toolpath at position 10000 (#"));
+        CHECK(contains(err.message, "only toolpaths at positions 1 to 9999 can keep computed moves"));
     }
     {
         const std::string many = manyRecords(10001);

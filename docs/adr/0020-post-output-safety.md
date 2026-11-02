@@ -1,6 +1,6 @@
 # ADR-0020: Post output safety (text sanitising, number limits)
 
-Date: 2026-11-01 · Status: proposed (T-0133), amended 2026-11-02 (T-0134)
+Date: 2026-11-01 · Status: proposed (T-0133), amended 2026-11-02 (T-0134, T-0136)
 
 ## Context
 The post interpreter (ADR-0011) wrote text tags (`[TOOLNAME]`, `[TOOLPATH_NAME]`, `[TP_FILENAME]`,
@@ -114,6 +114,18 @@ through, so no post, block or tag can bypass them.
      can simply not write `[S]` (and have no `SPINDLE_ON`). A job with no toolpaths has no
      spindle speed to check; likewise the feed, spindle and dwell rules below check nothing in
      such a job (its header and footer cut nothing).
+   - **Toolpaths without moves** (T-0136). A toolpath with zero moves cuts nothing and is
+     skipped entirely: it is not written, its tool is not in `[TOOLS_USED]`, it causes no tool
+     change, and its tool's spindle speed, feeds and dwells are not checked. The header tool (the
+     `[T]`, `[S]`, `[TOOLNAME]` … the header writes) is the tool of the **first toolpath with
+     moves**, so its spindle speed is the one checked for a `SPINDLE_ON`/`[S]` in the header. A
+     job whose toolpaths all have zero moves is posted exactly like a job with no toolpaths:
+     header and footer with the default (empty) tool, nothing checked. On a post whose header
+     starts the spindle that writes `M3 S0` (as for an empty job since T-0133), which runs
+     nothing. Refusing such a job was the alternative; it was not chosen because an empty job is
+     posted the same way and a recalculated toolpath can legitimately come out empty (all vectors
+     too small for the tool). Records without computed moves (`moves` null) are refused earlier
+     by carvetto-cli `post` (ADR-0021 §6); a computed record of zero moves reaches this rule.
    - **No rate printed as zero** (owner decision 2026-11-02, T-0134). A feed (`[F]`, `[FC]`,
      `[FP]`, `[FI]`, feed overrides), spindle speed or dwell that is above zero but that the
      post's number format rounds to zero (`0.001` mm/min as `F0`, a 0.004 s dwell as `P0.00`, a

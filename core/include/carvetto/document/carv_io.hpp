@@ -137,11 +137,13 @@ struct LoadedCarv {
 /// history are not saved. Never returns bytes `loadCarv` would refuse: the finished archive is
 /// loaded once in memory with the loader's own limits, and any failure is returned with the
 /// loader's message ("the file would not load again: ..."), with the loader's error code. This
-/// costs about one load (a 2,000,000-move toolpath: ~0.2 s Release and the decoded moves held
-/// twice while it runs). Common cases are refused earlier with specific messages: more toolpath
+/// costs about one load (a 2,000,000-move toolpath: ~0.2 s Release); the move caches are only
+/// validated, not decoded into a second copy (T-0136). Common cases are refused earlier with
+/// specific messages: more toolpath
 /// moves than `kCarvMaxToolpathMoves` or than `kCarvMovesPerFileByte` x the file's size, a
 /// computed toolpath past `kCarvMaxCachedToolpaths`, more than 10,000 archive members, member or
-/// archive size caps (ResourceLimit), non-finite move values (InvalidContent). A file that loads
+/// archive size caps (ResourceLimit), non-finite move values or toolpath parameters
+/// (InvalidContent); an over-long name is reported as "name too long" with its field. A file that loads
 /// may still be refused on re-save when re-saving makes it smaller (stale caches dropped,
 /// canonical re-encoding) so that it no longer satisfies the move-per-byte rule.
 CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvExtras& extras = {});
