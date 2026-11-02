@@ -62,7 +62,28 @@ one, the test fails.
    followed by the controller's program-end code. Marlin has no program-end code, so it ends
    with `M5` (see below).
 
-Hand-review result: all eight goldens pass all eight points.
+9. **Names cannot become G-code.** Text tags (`[TOOLNAME]`, `[TOOLPATH_NAME]`, `[TP_FILENAME]`,
+   …) sit inside a comment: `( … )`, or after `;` on Marlin. The interpreter replaces control
+   characters (newline, CR, tab, NUL …) in every text value with spaces, and inside an open
+   `( … )` comment turns `(`/`)` into `[`/`]`, so no name can start a new block or close the
+   comment early. Every text value is printable ASCII: `~ ! ?` and non-ASCII characters (Grbl
+   realtime commands, even inside comments) become `_`, accented Latin letters their plain
+   letter. Values cannot form an active comment such as LinuxCNC's `(LOGOPEN,file)` or Mach's
+   `(MSG,…)`, alone or together: while a comment holds only words and spaces, commas in a value
+   that continue the words become `_`, and a value completing PROBEOPEN/PROBECLOSE/LOGCLOSE gets
+   a leading `_`. In a custom post, do not put template text right after a text tag at the
+   start of a comment (ADR-0020 lists this gap). Keep `SUBSTITUTE = "([)]"` in paren-comment posts anyway, for
+   readers of the post. `post_safety_test.cpp` checks every shipped post with hostile names and
+   that text tags appear only inside comments.
+10. **Numbers are finite and in range.** The interpreter refuses to write a non-finite number,
+    a length, feed, spindle speed, dwell or angle beyond 1e6 (mm, mm/min, rpm, s, degrees), or
+    any value that would be written beyond 1e9 after unit conversion and the VAR multiplier
+    (inverse time may reach 1e9); the arc tolerance must be 1e-6 to 1 mm and a linearised arc has
+    at most 100,000 chords; a wrapped job's rotary diameter must be finite and at most 1e6 mm;
+    the post run fails with an error naming the toolpath, move and value (ADR-0020).
+
+Hand-review result: all eight goldens pass points 1–8; points 9 and 10 are enforced by the
+interpreter and tested on every post.
 
 ## Dialect choices per controller
 
