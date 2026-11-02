@@ -1,0 +1,9 @@
+SIDE=0 ALLOW=-1.0 perf2 500 1 2 | new cpu 16.89s | main cpu 15.07s
+SIDE=2 ALLOW=0 perf2 500 0 0 | new cpu 0.30s | main cpu 0.37s
+SIDE=2 ALLOW=0 perf2 500 0 1 | new cpu 0.33s | main cpu 0.43s
+SIDE=2 ALLOW=0.3 perf2 500 0 0 | new cpu 0.49s | main 
+SIDE=2 ALLOW=0 perf2 500 1 0 | new cpu 4.11s | main cpu 3.91s
+SIDE=0 ALLOW=-0.5 perf2 500 0 0 | new cpu 4.72s | main cpu 4.63s
+SIDE=0 ALLOW=-0.5 perf2 500 0 1 | new cpu 14.03s | main cpu 13.77s
+SIDE=0 ALLOW=0 perf2 500 1 2 | new cpu 8.38s | main cpu 8.56s
+SIDE=1 ALLOW=0 perf2 500 0 0 | new cpu 2.60s | main cpu 2.54s

@@ -1,0 +1,4 @@
+T-0127 round 3 harness (coder). Sources: scratchpad h3 (wsf7 flood/oracle driver, mk.sh, run.sh, jobs.txt,
+agg3.py, classify.sh (rerun UNREP/FALSEREP scenes with leads off), perf2.cpp + perfrun.sh, inst/ mutant).
+Runner: NEWONLY=1 ./mk.sh wsf7.cpp wsf7; grep "^wsf7 " jobs.txt | xargs -P 4 -L 1 ./run.sh (PID file under the
+worktree build-hr). Results: sw/*.log, agg_r3c.txt, classify_r3c.out, perf_r3b.txt, ac4_cmpagg7.txt (h/cmp nontab3).

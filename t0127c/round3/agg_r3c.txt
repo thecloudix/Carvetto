@@ -1,0 +1,13 @@
+mode 0 wsf7 {'G': 3181, 'hold': 3178, 'nohold': 3, 'sev': 0, 'part': 0, 'thin': 0, 'scenes': 797, 'free': 90, 'unrep': 4, 'falserep': 2}
+mode 0 wsf7_old {'G': 2014, 'hold': 2007, 'nohold': 6, 'sev': 1, 'part': 0, 'thin': 0, 'scenes': 797, 'free': 337, 'unrep': 335, 'falserep': 0}
+mode 0 wsf7_mut {'G': 855, 'hold': 854, 'nohold': 0, 'sev': 0, 'part': 1, 'thin': 0, 'scenes': 199, 'free': 21, 'unrep': 1, 'falserep': 1}
+   paired vs wsf7_old {'pairs': 797, 'G_new': 3181, 'G_wsf7_old': 2014, 'hold_new': 3178, 'hold_wsf7_old': 2007, 'more': 332, 'fewer': 2, 'free_new': 90, 'free_wsf7_old': 337}
+   paired vs wsf7_mut {'pairs': 199, 'G_new': 868, 'G_wsf7_mut': 855, 'hold_new': 868, 'hold_wsf7_mut': 854, 'more': 2, 'fewer': 2, 'free_new': 20, 'free_wsf7_mut': 21}
+mode 1 wsf7 {'G': 3105, 'hold': 3091, 'nohold': 14, 'sev': 0, 'part': 0, 'thin': 0, 'scenes': 794, 'free': 79, 'unrep': 0, 'falserep': 0}
+mode 1 wsf7_old {'G': 2845, 'hold': 2765, 'nohold': 55, 'sev': 24, 'part': 1, 'thin': 2, 'scenes': 794, 'free': 146, 'unrep': 142, 'falserep': 0}
+mode 1 wsf7_mut {'G': 775, 'hold': 770, 'nohold': 3, 'sev': 0, 'part': 2, 'thin': 0, 'scenes': 197, 'free': 19, 'unrep': 0, 'falserep': 0}
+   paired vs wsf7_old {'pairs': 794, 'G_new': 3105, 'G_wsf7_old': 2845, 'hold_new': 3091, 'hold_wsf7_old': 2765, 'more': 126, 'fewer': 35, 'free_new': 79, 'free_wsf7_old': 146}
+   paired vs wsf7_mut {'pairs': 197, 'G_new': 773, 'G_wsf7_mut': 775, 'hold_new': 770, 'hold_wsf7_mut': 770, 'more': 0, 'fewer': 2, 'free_new': 20, 'free_wsf7_mut': 19}
+mode 2 wsf7 {'G': 3200, 'hold': 3183, 'nohold': 17, 'sev': 0, 'part': 0, 'thin': 0, 'scenes': 791, 'free': 89, 'unrep': 3, 'falserep': 0}
+mode 2 wsf7_old {'G': 2591, 'hold': 2525, 'nohold': 42, 'sev': 23, 'part': 1, 'thin': 1, 'scenes': 791, 'free': 223, 'unrep': 222, 'falserep': 0}
+   paired vs wsf7_old {'pairs': 791, 'G_new': 3200, 'G_wsf7_old': 2591, 'hold_new': 3183, 'hold_wsf7_old': 2525, 'more': 199, 'fewer': 31, 'free_new': 89, 'free_wsf7_old': 223}

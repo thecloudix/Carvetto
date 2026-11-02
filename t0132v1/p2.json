@@ -1,0 +1,2 @@
+{"name": "Raster", "layers": ["Pockets", "Outline", "Pockets"], "cut_depth": 3, "strategy": "raster", "raster_angle": 12.34, "profile_pass": "first", "ramp_plunge": true, "ramp_distance": 6, "allowance": 0.05, "tolerance": {"angle": 0.0001},
+ "tool": {"database": "tools.json", "id": "end-mill-6mm"}}

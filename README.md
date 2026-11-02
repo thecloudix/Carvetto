@@ -26,3 +26,5 @@ Original locations (scripts may hard-code these; adjust paths when reusing):
 - t0133v2/: T-0133 round-2 verifier (FAIL c3b1be6, B4 adjacent text values): adv.cpp fuzzer with LinuxCNC/Grbl model, gap.cpp repros, mk3.py (sets tool snapshot name), e2e/custom.pp.
 - t0133v3/: T-0133 round-3 verifier (PASS 88904b5): adv3.cpp AC5 fuzzer (REAL/GAP/authored), mut.cpp, edge.cpp, ff.cpp (\f/\v/\r template gap), mk.sh.
 - t0127v2/: T-0127 round-2 verifier (FAIL bddd93f): wsf7.cpp/wsf7w.cpp oracle (loose-piece cross-check, ANYRUN, NOFLOOD), wsh2.cpp+cmph2.py, hole.cpp V-bit hole repro, inst/ mutants, repro scenes d1/ d/wsf7/.
+- t0132v1/: T-0132 verifier (FAIL 0305fe4): adv.cpp small-file worst cases, combo.cpp, fuzz.cpp zip-level lies, many.cpp (B1 member-count repro), ac1.cpp, rt.cpp, peak.cpp (forked peak RSS), mkbig.cpp, dump.cpp.
+- t0127c/round3/: T-0127 coder round-3 harness/results.

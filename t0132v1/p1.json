@@ -1,0 +1,10 @@
+{"name": "Angles", "side": "inside", "direction": "conventional", "allowance": 0.1,
+ "passes": {"cut_depth": 5, "pass_depth": 1.7, "maintain_exact_step": false, "last_pass_thickness": 0.3, "start_depth": 0.2},
+ "safe_z": 7.25, "separate_last_pass": true, "last_pass_allowance": 0.15, "last_pass_reverse": true,
+ "tabs": {"enabled": true, "count": 3, "length": 6, "thickness": 1.5, "three_d": true, "avoid_corners": true},
+ "ramp": {"type": "smooth", "distance": 7, "use_angle": true, "angle": 7.3, "on_lead_in": true},
+ "leads": {"type": "circular", "length": 4, "angle": 33.3, "radius": 3.3, "sweep": 77.7, "lead_out": true, "overcut": 0.5},
+ "order": {"left_to_right": true}, "start_at": "optimise", "start_anchor": "top_right", "start_position": [1.5, -2.25],
+ "corners": {"sharp_external": false, "sharp_internal": false, "mitre_limit": 3},
+ "tolerance": {"distance": 0.002, "angle": 0.001, "chordal": 0.02},
+ "tool": {"database": "tools.json", "id": "end-mill-3mm"}}
