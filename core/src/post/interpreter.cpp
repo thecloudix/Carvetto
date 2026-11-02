@@ -322,6 +322,12 @@ class Interpreter {
                                     (m.kind == MoveKind::Dwell ? "dwell " : "feed ") + problem};
             }
         }
+        if (m.kind == MoveKind::Dwell && !(m.dwellSeconds > 0.0)) {
+            // T-0134 (owner decision 2026-11-02): a dwell of zero or less is no pause.
+            return Error{0, "cannot write G-code: toolpath " + quoted(toolpath_->name) + ", move " +
+                                std::to_string(moveIndex_) + ": dwell " + describeValue(m.dwellSeconds) +
+                                " s must be greater than zero"};
+        }
         return std::nullopt;
     }
 
@@ -368,21 +374,31 @@ class Interpreter {
     }
 
     /// Refuses a feed, spindle speed or dwell above zero that the post's number format would
-    /// write as zero (F0, P0.00 …): a zero feed or dwell is never what the toolpath asked for.
+    /// write as zero (F0, P0.00 …), and a feed rate, plunge rate or feed override of zero or less
+    /// (F0, F-5): a zero feed or dwell is never what the toolpath asked for (owner decision
+    /// 2026-11-02, ADR-0020).
     bool acceptNonZero(const TagInfo& info, const VarDef& def, double raw, const std::string& body) {
         const bool rate =
             info.kind == TagKind::FeedRate || info.tag == "FI" || info.tag == "S" || info.tag == "DWELL";
-        if (!rate || !(raw > 0.0) || body.find_first_of("123456789") != std::string::npos) {
+        if (!rate) {
             return true;
         }
         const std::optional<ValueLimit> limit = limitFor(info);
         const bool inverse = info.tag == "FI" || (info.tag == "F" && s_.inverseTimeMode && frame_.cutting);
         const std::string unit = inverse ? "1/min" : limit ? limit->unit : "";
         const std::string written = std::string(detail::trim(def.prefix)) + body;
-        fail(def.multiplier != 1.0 ? def.line : 0,
-             "[" + std::string(info.tag) + "] " + describeValue(raw) + " " + unit + " would be written as " +
-                 written + "; it is above zero but too small for the post's " +
-                 std::to_string(def.format.decimals) + "-decimal format");
+        const int line = def.multiplier != 1.0 ? def.line : 0;
+        if (info.kind == TagKind::FeedRate && !inverse && !(raw > 0.0)) {
+            fail(0, "[" + std::string(info.tag) + "] feed " + describeValue(raw) + " " + unit +
+                        " would be written as " + written + "; feeds must be greater than zero");
+            return false;
+        }
+        if (!(raw > 0.0) || body.find_first_of("123456789") != std::string::npos) {
+            return true;
+        }
+        fail(line, "[" + std::string(info.tag) + "] " + describeValue(raw) + " " + unit + " would be written as " +
+                       written + "; it is above zero but too small for the post's " +
+                       std::to_string(def.format.decimals) + "-decimal format");
         return false;
     }
 

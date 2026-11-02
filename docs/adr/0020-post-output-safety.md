@@ -119,7 +119,14 @@ through, so no post, block or tag can bypass them.
      denormal) fails the run instead of writing the zero, e.g. `[F] 0.001 mm/min would be
      written as F0; it is above zero but too small for the post's 0-decimal format`. The check
      looks at the written digits, so it follows the post's decimals, units and multiplier.
-     Values of zero or below are not covered by this rule (signs are otherwise not checked).
+   - **Feeds and dwells of zero or less** (owner decision 2026-11-02, T-0134). A feed rate,
+     plunge rate or feed override of zero or below is refused wherever a feed tag writes it
+     (`[F] feed 0 mm/min would be written as F0; feeds must be greater than zero`); a feed the
+     post never writes (a drill toolpath's cutting feed) is not checked. Inverse-time `[F]`/`[FI]`
+     is exempt from this sign rule: a zero-length move legitimately has inverse time 0. A dwell
+     move of zero seconds or less is refused when the move is validated, before anything is
+     written and even when the post drops dwells (`toolpath 'Drill', move 7: dwell 0 s must be
+     greater than zero`); the CLI's toolpath-member decoder refuses the same values on load.
    - A failure aborts the run with an `Error` and no output, e.g.
      `cannot write G-code: toolpath 'Profile', move 2: Z -inf is not a finite number` or
      `cannot write G-code in SPINDLE_ON of toolpath 'Drill': [S] 1e+300 rpm is outside the
@@ -134,8 +141,8 @@ through, so no post, block or tag can bypass them.
   comments, where they used to get broken output.
 - Names with accents or symbols lose them in the G-code comments (`Ñ` → `N`, `×` → `_`); the
   job file keeps them.
-- Signs are not checked (a negative feed within range is still written; spindle speed must be
-  above zero since T-0134), and
+- Signs are not checked for coordinates and other values; since T-0134 spindle speed, feeds
+  and dwells must be above zero (see above), and
   overly long names are not shortened; a controller with a line-length limit rejects such a line,
   which stops the program safely.
 - ADR-0011 §10 (`SUBSTITUTE` applies to text tags only) still holds; this sanitising runs after it.

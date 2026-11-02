@@ -1130,3 +1130,51 @@ TEST_CASE("T-0134 AC3: every shipped post refuses a feed or dwell above zero tha
         }
     }
 }
+
+TEST_CASE("T-0134 AC3: every shipped post refuses feeds of zero or less and dwells of zero or less",
+          "[post][safety][number]") {
+    for (const Shipped& p : shipped()) {
+        INFO(p.stem);
+        const PostProcessor pp = loadShipped(p);
+        const PostContext ctx = carvetto::test::fixtureContext();
+        struct Case {
+            const char* what;
+            std::function<void(std::vector<Toolpath>&, double)> apply;
+        };
+        const std::vector<Case> feeds{
+            {"feed rate", [](std::vector<Toolpath>& t, double v) { t[0].tool.feedRate = v; }},
+            {"plunge rate", [](std::vector<Toolpath>& t, double v) { t[0].tool.plungeRate = v; }},
+            {"later tool plunge rate", [](std::vector<Toolpath>& t, double v) { t[2].tool.plungeRate = v; }},
+            {"feed override", [](std::vector<Toolpath>& t, double v) { t[0].moves[2].feedOverride = v; }},
+        };
+        for (const Case& c : feeds) {
+            INFO(c.what);
+            for (double bad : {0.0, -0.0, -5.0, -1e-300}) {
+                INFO(bad);
+                std::vector<Toolpath> tps = carvetto::test::fixtureToolpaths();
+                c.apply(tps, bad);
+                const std::string msg = runError(pp, tps, ctx);
+                INFO(msg);
+                CHECK_THAT(msg, ContainsSubstring("cannot write G-code"));
+                CHECK_THAT(msg, ContainsSubstring("[F] feed "));
+                CHECK_THAT(msg, ContainsSubstring("feeds must be greater than zero"));
+            }
+        }
+        for (double bad : {0.0, -0.0, -0.5, -1e-300}) {
+            INFO("dwell " << bad);
+            std::vector<Toolpath> tps = carvetto::test::fixtureToolpaths();
+            tps[2].moves[6].dwellSeconds = bad;
+            const std::string msg = runError(pp, tps, ctx);
+            CHECK_THAT(msg, ContainsSubstring("toolpath 'Drill', move 7: dwell "));
+            CHECK_THAT(msg, ContainsSubstring(" s must be greater than zero"));
+        }
+    }
+}
+
+TEST_CASE("T-0134 AC3: a zero dwell is refused even when the post drops dwells", "[post][safety][number]") {
+    const PostProcessor pp = parseText("begin RAPID_MOVE\n\"G0[X]\"\nend\nbegin FEED_MOVE\n\"G1[X]\"\nend\n");
+    Toolpath tp = simple({Move::rapid({1, 0, 5}), Move::dwell({1, 0, 5}, 0.0)});
+    CHECK_THAT(runError(pp, {tp}, {}), ContainsSubstring("move 2: dwell 0 s must be greater than zero"));
+    tp.moves[1].dwellSeconds = 0.5;
+    CHECK(runError(pp, {tp}, {}).empty());  // dropped with a warning, as before
+}

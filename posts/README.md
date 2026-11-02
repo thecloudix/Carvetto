@@ -85,7 +85,8 @@ one, the test fails.
     the post run fails with an error naming the toolpath, move and value (ADR-0020). A tool's
     spindle speed must be above zero wherever `[S]` is written or `SPINDLE_ON` runs (for a
     manual spindle, set any positive nominal speed), and a feed, spindle speed or dwell above
-    zero that the post would print as zero (`F0`, `P0.00`) is refused.
+    zero that the post would print as zero (`F0`, `P0.00`) is refused, as is a written feed of
+    zero or less and a dwell of zero seconds or less.
 
 Hand-review result: all eight goldens pass points 1–8; points 9 and 10 are enforced by the
 interpreter and tested on every post.
