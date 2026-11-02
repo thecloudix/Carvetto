@@ -86,7 +86,7 @@ Acceptance criteria:
 
 Re-scoped by director after 3 verification rounds (2026-10-26, owner decision: re-scope, do not merge): AC1 speed and AC2 mitres verified clean; AC3 fixed for exactly and near-collinear steep zig-zags (noise sweep 1e-13…1e-4 clean), but the round-3 "nearly the same carrier" grouping is worse than main in ~25/10k new adversarial cases (offset inside d, Round beyond d, spurious chains) and the back-step safety net skips 3-span chains. Not merged; work continues on branch task/T-0006-offset-quality (b722cf2, pushed) under T-0017.
 
-### T-0017 Open-offset quality II: residuals of T-0006   [status: verifying — round 3 of 3 @ ec0856e (pass rule: no worse than main, owner 2026-10-31)]
+### T-0017 Open-offset quality II: residuals of T-0006   [status: done (2026-11-02, #24)]
 Paused 2026-10-26 (owner). Branch task/T-0017-offset-quality-ii @ f8e4506 (WIP, pushed; builds, 494/494 serial). Round-1 verifier FAIL (7 items + translation-dependent needle removal); coder reports 6/7 + needle removal fixed; item 5 (self-crossing 0xe400137f) is a cancellation bug in core/src/geometry/intersect.cpp general intersect() — needs its own card. On resume: coder runs fam2/3/4 + hp/lens sweeps, -j8 repeat, CHANGELOG line, then round-2 verification.
 Phase: 1 (before Profile/Pocket ship)   Module: core/geometry   Depends on: T-0006 branch (b722cf2)   ADR: 0012 (amend A1)
 Goal: Finish T-0006 so it can merge: everything T-0006 verified clean stays clean (AC1 speed, AC2 mitre oracle, steep zig-zags exact and noisy, R1/R2/R3, needle-tip classification), and the round-3 verifier's residuals are fixed. Repros and harness: T-0006 round-3 verifier scratchpad `t0006v3/` (repro_r4/r5/r6.cpp, vdrv3.cpp with gen3.inc, bnd.cpp).
@@ -119,7 +119,7 @@ Acceptance criteria:
   6. Ends inside near-coincident (hugging) stretches — e.g. a Bezier lying within tol of an arc that extends past it — are reported: an end of either span within tol of the other's interior gives one tangent hit even when the curves run within tol of each other along that stretch. Today ~38–45% are missed (main and T-0007 alike; T-0007 round-3 verifier measured 44.5% and 44.8% on two seeds). Generator: Beziers within tol of an arc extending ≤ 0.3 rad past them, ≥ 6,000 pairs, vs brute force → 0 misses of ends whose foot is ≥ 0.01 mm from the other span's end.
   5. Root-cause fix found in T-0007: `closestPoint(ArcSpan)` (contour_ops.cpp) returns the start point but parameter 1 when the query's angle lies a rounding error before the arc's start. Fix it at the source (parameter 0), add a fine-angle regression around both ends of CW/CCW partial arcs, and remove T-0007's wrapper in intersect.cpp. Check every other caller (contour closestPoint/distanceTo, offset pruning) is unaffected or improved.
 
-### T-0009 Offsets of inputs with sub-tolerance spans   [status: blocked]
+### T-0009 Offsets of inputs with sub-tolerance spans   [status: in-progress]
 Phase: 1 (before Profile/Pocket ship)   Module: core/geometry   Depends on: T-0017
 Goal: `flattenForOffset` drops spans ≤ `tol.distance`, so the distance/coverage guarantees of `offsetOpenContour` hold only for the flattened input. Next to a dropped span an offset point can be short of d by up to ~tol (9e-4 mm seen), a Round arc about the neighbouring vertex can be up to ~tol over d (8e-4 mm seen), and up to ~1 mm of valid offset can be missing (seed 0x60660ace). About 1 in 1000 such inputs; already in main before T-0006. Found by the T-0006 verifier and coder.
 Acceptance criteria:
@@ -128,7 +128,7 @@ Acceptance criteria:
   3. No result worse than main on inputs without sub-tolerance spans; T-0006 speed criteria still hold.
   4. The limitation note in offset.hpp and ADR-0012 A1 is removed or narrowed to what remains.
 
-### T-0016 Sharp/Square offset cost on dense hatch-like vectors   [status: blocked]
+### T-0016 Sharp/Square offset cost on dense hatch-like vectors   [status: ready]
 Phase: 1 (alongside T-0120/T-0121)   Module: core/geometry   Depends on: T-0017
 Goal: Scaling is linear, but on dense zig-zags with d ≫ pitch Sharp/Square joins are 10–20× slower than Round (1000-span zig-zag, pitch 0.02, amplitude 1, d=7: ~14 s Release vs 0.7 s Round). Hatch- and fill-like vectors will hit this in Profile/Pocket.
 Acceptance criteria:
@@ -335,8 +335,7 @@ Acceptance criteria:
   2. Two crossings merged by the threshold rule are always flagged tangent; regression at 2h − tol ≈ ±1e-15.
   3. No result worse than main on the T-0007/T-0008/T-0021 families.
 
-### T-0128 Open offsets: narrow loops and needles must not lose cut coverage   [status: blocked]
-(Unblocks when T-0017 merges.)
+### T-0128 Open offsets: narrow loops and needles must not lose cut coverage   [status: ready]
 Phase: 1   Module: core/geometry   Depends on: T-0017
 Goal: Found by the T-0017 round-3 verifier (2026-11-01, non-blocking under "no worse than main"). T-0017 drops sub-tolerance lens loops and closed out-and-back needles as "narrow loops", and merges opposite copies within the snapping allowance. That follows the T-0017 header and AC3, but in rare cases it removes a toolpath that main keeps. (a) Seed 0xc5000544 (fam5, tieGap): an out-and-back needle 3.6 mm long and 5e-6 mm wide (x 6.43..10.08, y ≈ −5014.0939) has coincident ends, so it is closed and dropped; main keeps it. (b) Slot-width band: for a channel 2d + w wide, main keeps the needle for w ≥ ~3e-9, but T-0017 only keeps it above the snapping allowance (drops w up to 4e-7 at d = 0.1317, 1e-7 at d = 1, 3e-8 at d = 3.175). A DXF slot exactly one tool width wide plus coordinate noise can lose its path. Repro: a straight channel of width 2d + w and length 3.6, offset by d both sides (the verifier's vdrv6 `chan` driver was not preserved; seeds use the fuzz4 generators of `verifier-harness` t0017v2/gen5.inc). Also in scope: the reversal-cusp self-crossings (≤ 2.4e-8 mm; outlier 0xc500076c, a lens 2.1e-4 × 1.9e-9 mm) that contradict the header's "no returned chain intersects or touches itself".
 Acceptance criteria:
@@ -415,7 +414,7 @@ Acceptance criteria:
   2. No output contour has the opposite orientation of its source region unless it is a genuine hole; regression for the reported cases.
   3. Pocket's local guard can be removed or kept as defence; if kept, document why. Behaviour of open paths on clip boundaries documented in ADR-0006 (or fixed), with a test.
 
-### T-0019 Make the T-0004 AC3 timing test CPU-time based   [status: ready]
+### T-0019 Make the T-0004 AC3 timing test CPU-time based   [status: done (by T-0017: T-0004 AC3 timing uses process CPU time, cpu_time.hpp)]
 Phase: 1   Module: core/tests   Depends on: —
 Goal: "T-0004 AC3" in `open_offset_chains_test.cpp` asserts a wall-clock bound (< 0.5 s) and fails intermittently under `ctest -j8` (seen by the T-0120 coder). Convert it to process CPU time (GetProcessTimes on Windows, std::clock elsewhere) or a complexity ratio, like the other timing tests. Coordinate with T-0017 if it lands first (T-0017 AC6 touches the timing helper).
 Acceptance criteria:
