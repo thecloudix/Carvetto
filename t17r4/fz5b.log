@@ -1,0 +1,9 @@
+BACK axisCusp(noisy) st=0 seed=0x7a6013dc gen=46 Round coderBack br 1 main 1 | susp br 1 main 1 | reversal ch 1 j 0 dot -1.000000
+fuzz4 fam=5 N=6000 ran 6000 seed0=0x7a600000: identical 5978 differ 22 REGRESSIONS 0 | branch totals: gaps 0 reversals 758 overlaps 98 shortBack 0 suspiciousTips 1 (exact 0; main in differing cases 0) coderBack 1 (exact 0) distViol 2 roundViol 0 dupChains 0 | worstUnder(noST) 2.05e-05 worstOver(noST) 4.88e-07 | splitJoints br 239 main 239 | cases with dropped main loops 0 (max width 0, max len 0, max dist to branch 0), corner-only diffs 0 | cpu 3.1s
+  gen 40: 865 cases, 0 regressions
+  gen 41: 866 cases, 0 regressions
+  gen 42: 814 cases, 0 regressions
+  gen 43: 876 cases, 0 regressions
+  gen 44: 893 cases, 0 regressions
+  gen 45: 868 cases, 0 regressions
+  gen 46: 818 cases, 0 regressions

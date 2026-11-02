@@ -1,0 +1,2244 @@
+{
+  "format": "carvetto-tool-database",
+  "groups": [
+    {
+      "id": "group-ball-noses",
+      "name": "Ball Noses",
+      "parent_id": ""
+    },
+    {
+      "id": "group-drills",
+      "name": "Drills",
+      "parent_id": ""
+    },
+    {
+      "id": "group-end-mills",
+      "name": "End Mills",
+      "parent_id": ""
+    },
+    {
+      "id": "group-engraving",
+      "name": "Engraving",
+      "parent_id": ""
+    },
+    {
+      "id": "group-v-bits",
+      "name": "V-Bits",
+      "parent_id": ""
+    }
+  ],
+  "machines": [
+    {
+      "acceleration_angular_deg_s2": 0.0,
+      "acceleration_mm_s2": [
+        500.0,
+        500.0,
+        250.0
+      ],
+      "associated_posts": [],
+      "default_post": "",
+      "id": "machine-generic-router",
+      "name": "Generic Router"
+    }
+  ],
+  "materials": [
+    {
+      "id": "material-acrylic",
+      "name": "Acrylic"
+    },
+    {
+      "id": "material-aluminium",
+      "name": "Aluminium"
+    },
+    {
+      "id": "material-hardwood-mdf",
+      "name": "Hardwood / MDF"
+    },
+    {
+      "id": "material-softwood",
+      "name": "Softwood"
+    }
+  ],
+  "tools": [
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.95,
+            "plunge_mm_min": 670.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 0.64,
+            "tool_number": 18
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2300.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.27,
+            "plunge_mm_min": 770.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 0.64,
+            "tool_number": 18
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2880.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.59,
+            "plunge_mm_min": 960.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 0.64,
+            "tool_number": 18
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 2300.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 1.27,
+        "plunge_mm_min": 770.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 0.64,
+        "tool_number": 18
+      },
+      "diameter_mm": 6.35,
+      "flutes": 2,
+      "group_id": "group-ball-noses",
+      "id": "ball-nose-1-4in",
+      "included_angle_deg": 0.0,
+      "name": "Ball Nose 1/4 in",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "ball_nose"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1280.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.48,
+            "plunge_mm_min": 430.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 0.32,
+            "tool_number": 16
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1440.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.64,
+            "plunge_mm_min": 480.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 0.32,
+            "tool_number": 16
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1800.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.79,
+            "plunge_mm_min": 600.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 0.32,
+            "tool_number": 16
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 1440.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 0.64,
+        "plunge_mm_min": 480.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 0.32,
+        "tool_number": 16
+      },
+      "diameter_mm": 3.175,
+      "flutes": 2,
+      "group_id": "group-ball-noses",
+      "id": "ball-nose-1-8in",
+      "included_angle_deg": 0.0,
+      "name": "Ball Nose 1/8 in",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "ball_nose"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1280.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.45,
+            "plunge_mm_min": 430.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 0.3,
+            "tool_number": 17
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1440.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.6,
+            "plunge_mm_min": 480.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 0.3,
+            "tool_number": 17
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1800.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.75,
+            "plunge_mm_min": 600.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 0.3,
+            "tool_number": 17
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 1440.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 0.6,
+        "plunge_mm_min": 480.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 0.3,
+        "tool_number": 17
+      },
+      "diameter_mm": 3.0,
+      "flutes": 2,
+      "group_id": "group-ball-noses",
+      "id": "ball-nose-3mm",
+      "included_angle_deg": 0.0,
+      "name": "Ball Nose 3 mm",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "ball_nose"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.9,
+            "plunge_mm_min": 670.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 0.6,
+            "tool_number": 19
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2300.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.2,
+            "plunge_mm_min": 770.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 0.6,
+            "tool_number": 19
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2880.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.5,
+            "plunge_mm_min": 960.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 0.6,
+            "tool_number": 19
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 2300.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 1.2,
+        "plunge_mm_min": 770.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 0.6,
+        "tool_number": 19
+      },
+      "diameter_mm": 6.0,
+      "flutes": 2,
+      "group_id": "group-ball-noses",
+      "id": "ball-nose-6mm",
+      "included_angle_deg": 0.0,
+      "name": "Ball Nose 6 mm",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "ball_nose"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 450.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.59,
+            "plunge_mm_min": 450.0,
+            "spindle_rpm": 10000.0,
+            "stepover_mm": 0.0,
+            "tool_number": 28
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 600.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 3.17,
+            "plunge_mm_min": 600.0,
+            "spindle_rpm": 10000.0,
+            "stepover_mm": 0.0,
+            "tool_number": 28
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 450.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 1.59,
+        "plunge_mm_min": 450.0,
+        "spindle_rpm": 10000.0,
+        "stepover_mm": 0.0,
+        "tool_number": 28
+      },
+      "diameter_mm": 3.175,
+      "flutes": 2,
+      "group_id": "group-drills",
+      "id": "drill-1-8in",
+      "included_angle_deg": 118.0,
+      "name": "Drill 1/8 in",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "drill"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 680.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 3.0,
+            "plunge_mm_min": 680.0,
+            "spindle_rpm": 10000.0,
+            "stepover_mm": 0.0,
+            "tool_number": 29
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 900.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 4.0,
+            "plunge_mm_min": 900.0,
+            "spindle_rpm": 10000.0,
+            "stepover_mm": 0.0,
+            "tool_number": 29
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 680.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 3.0,
+        "plunge_mm_min": 680.0,
+        "spindle_rpm": 10000.0,
+        "stepover_mm": 0.0,
+        "tool_number": 29
+      },
+      "diameter_mm": 6.0,
+      "flutes": 2,
+      "group_id": "group-drills",
+      "id": "drill-6mm",
+      "included_angle_deg": 118.0,
+      "name": "Drill 6 mm",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "drill"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 720.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.48,
+            "plunge_mm_min": 240.0,
+            "spindle_rpm": 12000.0,
+            "stepover_mm": 0.64,
+            "tool_number": 2
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 360.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.16,
+            "plunge_mm_min": 120.0,
+            "spindle_rpm": 12000.0,
+            "stepover_mm": 0.48,
+            "tool_number": 2
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-aluminium"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 720.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.64,
+            "plunge_mm_min": 240.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 0.64,
+            "tool_number": 2
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 900.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.79,
+            "plunge_mm_min": 300.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 0.64,
+            "tool_number": 2
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 720.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 0.64,
+        "plunge_mm_min": 240.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 0.64,
+        "tool_number": 2
+      },
+      "diameter_mm": 1.5875,
+      "flutes": 2,
+      "group_id": "group-end-mills",
+      "id": "end-mill-1-16in",
+      "included_angle_deg": 0.0,
+      "name": "End Mill 1/16 in",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "end_mill"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 2.0,
+            "plunge_mm_min": 670.0,
+            "spindle_rpm": 14000.0,
+            "stepover_mm": 5.08,
+            "tool_number": 12
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.5,
+            "plunge_mm_min": 330.0,
+            "spindle_rpm": 12000.0,
+            "stepover_mm": 3.81,
+            "tool_number": 12
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-aluminium"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2500.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 3.0,
+            "plunge_mm_min": 830.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 5.08,
+            "tool_number": 12
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 3000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 4.0,
+            "plunge_mm_min": 1000.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 5.08,
+            "tool_number": 12
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 2500.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 3.0,
+        "plunge_mm_min": 830.0,
+        "spindle_rpm": 16000.0,
+        "stepover_mm": 5.08,
+        "tool_number": 12
+      },
+      "diameter_mm": 12.7,
+      "flutes": 2,
+      "group_id": "group-end-mills",
+      "id": "end-mill-1-2in",
+      "included_angle_deg": 0.0,
+      "name": "End Mill 1/2 in",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "end_mill"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.9,
+            "plunge_mm_min": 670.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 2.54,
+            "tool_number": 7
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.5,
+            "plunge_mm_min": 330.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 1.9,
+            "tool_number": 7
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-aluminium"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2300.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 2.54,
+            "plunge_mm_min": 770.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 2.54,
+            "tool_number": 7
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2880.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 3.17,
+            "plunge_mm_min": 960.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 2.54,
+            "tool_number": 7
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 2300.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 2.54,
+        "plunge_mm_min": 770.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 2.54,
+        "tool_number": 7
+      },
+      "diameter_mm": 6.35,
+      "flutes": 2,
+      "group_id": "group-end-mills",
+      "id": "end-mill-1-4in",
+      "included_angle_deg": 0.0,
+      "name": "End Mill 1/4 in",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "end_mill"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1280.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.95,
+            "plunge_mm_min": 430.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 1.27,
+            "tool_number": 4
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 640.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.32,
+            "plunge_mm_min": 210.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 0.95,
+            "tool_number": 4
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-aluminium"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1440.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.27,
+            "plunge_mm_min": 480.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 1.27,
+            "tool_number": 4
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1800.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.59,
+            "plunge_mm_min": 600.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 1.27,
+            "tool_number": 4
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 1440.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 1.27,
+        "plunge_mm_min": 480.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 1.27,
+        "tool_number": 4
+      },
+      "diameter_mm": 3.175,
+      "flutes": 2,
+      "group_id": "group-end-mills",
+      "id": "end-mill-1-8in",
+      "included_angle_deg": 0.0,
+      "name": "End Mill 1/8 in",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "end_mill"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 2.0,
+            "plunge_mm_min": 670.0,
+            "spindle_rpm": 14000.0,
+            "stepover_mm": 4.0,
+            "tool_number": 11
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.5,
+            "plunge_mm_min": 330.0,
+            "spindle_rpm": 12000.0,
+            "stepover_mm": 3.0,
+            "tool_number": 11
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-aluminium"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2500.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 3.0,
+            "plunge_mm_min": 830.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 4.0,
+            "tool_number": 11
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 3000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 4.0,
+            "plunge_mm_min": 1000.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 4.0,
+            "tool_number": 11
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 2500.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 3.0,
+        "plunge_mm_min": 830.0,
+        "spindle_rpm": 16000.0,
+        "stepover_mm": 4.0,
+        "tool_number": 11
+      },
+      "diameter_mm": 10.0,
+      "flutes": 2,
+      "group_id": "group-end-mills",
+      "id": "end-mill-10mm",
+      "included_angle_deg": 0.0,
+      "name": "End Mill 10 mm",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "end_mill"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 2.0,
+            "plunge_mm_min": 670.0,
+            "spindle_rpm": 14000.0,
+            "stepover_mm": 4.8,
+            "tool_number": 13
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.5,
+            "plunge_mm_min": 330.0,
+            "spindle_rpm": 12000.0,
+            "stepover_mm": 3.6,
+            "tool_number": 13
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-aluminium"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2500.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 3.0,
+            "plunge_mm_min": 830.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 4.8,
+            "tool_number": 13
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 3000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 4.0,
+            "plunge_mm_min": 1000.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 4.8,
+            "tool_number": 13
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 2500.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 3.0,
+        "plunge_mm_min": 830.0,
+        "spindle_rpm": 16000.0,
+        "stepover_mm": 4.8,
+        "tool_number": 13
+      },
+      "diameter_mm": 12.0,
+      "flutes": 2,
+      "group_id": "group-end-mills",
+      "id": "end-mill-12mm",
+      "included_angle_deg": 0.0,
+      "name": "End Mill 12 mm",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "end_mill"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 720.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.3,
+            "plunge_mm_min": 240.0,
+            "spindle_rpm": 12000.0,
+            "stepover_mm": 0.4,
+            "tool_number": 1
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 360.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.1,
+            "plunge_mm_min": 120.0,
+            "spindle_rpm": 12000.0,
+            "stepover_mm": 0.3,
+            "tool_number": 1
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-aluminium"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 580.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.4,
+            "plunge_mm_min": 190.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 0.4,
+            "tool_number": 1
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 720.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.5,
+            "plunge_mm_min": 240.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 0.4,
+            "tool_number": 1
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 580.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 0.4,
+        "plunge_mm_min": 190.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 0.4,
+        "tool_number": 1
+      },
+      "diameter_mm": 1.0,
+      "flutes": 2,
+      "group_id": "group-end-mills",
+      "id": "end-mill-1mm",
+      "included_angle_deg": 0.0,
+      "name": "End Mill 1 mm",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "end_mill"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 720.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.6,
+            "plunge_mm_min": 240.0,
+            "spindle_rpm": 12000.0,
+            "stepover_mm": 0.8,
+            "tool_number": 3
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 360.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.2,
+            "plunge_mm_min": 120.0,
+            "spindle_rpm": 12000.0,
+            "stepover_mm": 0.6,
+            "tool_number": 3
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-aluminium"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 860.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.8,
+            "plunge_mm_min": 290.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 0.8,
+            "tool_number": 3
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1080.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.0,
+            "plunge_mm_min": 360.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 0.8,
+            "tool_number": 3
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 860.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 0.8,
+        "plunge_mm_min": 290.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 0.8,
+        "tool_number": 3
+      },
+      "diameter_mm": 2.0,
+      "flutes": 2,
+      "group_id": "group-end-mills",
+      "id": "end-mill-2mm",
+      "included_angle_deg": 0.0,
+      "name": "End Mill 2 mm",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "end_mill"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 2.0,
+            "plunge_mm_min": 670.0,
+            "spindle_rpm": 14000.0,
+            "stepover_mm": 3.81,
+            "tool_number": 10
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.5,
+            "plunge_mm_min": 330.0,
+            "spindle_rpm": 12000.0,
+            "stepover_mm": 2.86,
+            "tool_number": 10
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-aluminium"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2500.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 3.0,
+            "plunge_mm_min": 830.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 3.81,
+            "tool_number": 10
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 3000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 4.0,
+            "plunge_mm_min": 1000.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 3.81,
+            "tool_number": 10
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 2500.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 3.0,
+        "plunge_mm_min": 830.0,
+        "spindle_rpm": 16000.0,
+        "stepover_mm": 3.81,
+        "tool_number": 10
+      },
+      "diameter_mm": 9.525,
+      "flutes": 2,
+      "group_id": "group-end-mills",
+      "id": "end-mill-3-8in",
+      "included_angle_deg": 0.0,
+      "name": "End Mill 3/8 in",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "end_mill"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1280.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.9,
+            "plunge_mm_min": 430.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 1.2,
+            "tool_number": 5
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 640.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.3,
+            "plunge_mm_min": 210.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 0.9,
+            "tool_number": 5
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-aluminium"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1440.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.2,
+            "plunge_mm_min": 480.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 1.2,
+            "tool_number": 5
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1800.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.5,
+            "plunge_mm_min": 600.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 1.2,
+            "tool_number": 5
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 1440.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 1.2,
+        "plunge_mm_min": 480.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 1.2,
+        "tool_number": 5
+      },
+      "diameter_mm": 3.0,
+      "flutes": 2,
+      "group_id": "group-end-mills",
+      "id": "end-mill-3mm",
+      "included_angle_deg": 0.0,
+      "name": "End Mill 3 mm",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "end_mill"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1540.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.2,
+            "plunge_mm_min": 510.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 1.6,
+            "tool_number": 6
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 770.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.4,
+            "plunge_mm_min": 260.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 1.2,
+            "tool_number": 6
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-aluminium"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1730.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.6,
+            "plunge_mm_min": 580.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 1.6,
+            "tool_number": 6
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2160.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 2.0,
+            "plunge_mm_min": 720.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 1.6,
+            "tool_number": 6
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 1730.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 1.6,
+        "plunge_mm_min": 580.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 1.6,
+        "tool_number": 6
+      },
+      "diameter_mm": 4.0,
+      "flutes": 2,
+      "group_id": "group-end-mills",
+      "id": "end-mill-4mm",
+      "included_angle_deg": 0.0,
+      "name": "End Mill 4 mm",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "end_mill"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.8,
+            "plunge_mm_min": 670.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 2.4,
+            "tool_number": 8
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.5,
+            "plunge_mm_min": 330.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 1.8,
+            "tool_number": 8
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-aluminium"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2300.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 2.4,
+            "plunge_mm_min": 770.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 2.4,
+            "tool_number": 8
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2880.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 3.0,
+            "plunge_mm_min": 960.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 2.4,
+            "tool_number": 8
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 2300.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 2.4,
+        "plunge_mm_min": 770.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 2.4,
+        "tool_number": 8
+      },
+      "diameter_mm": 6.0,
+      "flutes": 2,
+      "group_id": "group-end-mills",
+      "id": "end-mill-6mm",
+      "included_angle_deg": 0.0,
+      "name": "End Mill 6 mm",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "end_mill"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 2.0,
+            "plunge_mm_min": 670.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 3.2,
+            "tool_number": 9
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.5,
+            "plunge_mm_min": 330.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 2.4,
+            "tool_number": 9
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-aluminium"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2500.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 3.0,
+            "plunge_mm_min": 830.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 3.2,
+            "tool_number": 9
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 3000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 4.0,
+            "plunge_mm_min": 1000.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 3.2,
+            "tool_number": 9
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 2500.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 3.0,
+        "plunge_mm_min": 830.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 3.2,
+        "tool_number": 9
+      },
+      "diameter_mm": 8.0,
+      "flutes": 2,
+      "group_id": "group-end-mills",
+      "id": "end-mill-8mm",
+      "included_angle_deg": 0.0,
+      "name": "End Mill 8 mm",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "end_mill"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 400.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.3,
+            "plunge_mm_min": 130.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 0.1,
+            "tool_number": 26
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 500.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.4,
+            "plunge_mm_min": 170.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 0.1,
+            "tool_number": 26
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 600.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.5,
+            "plunge_mm_min": 200.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 0.1,
+            "tool_number": 26
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 500.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 0.4,
+        "plunge_mm_min": 170.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 0.1,
+        "tool_number": 26
+      },
+      "diameter_mm": 3.175,
+      "flutes": 1,
+      "group_id": "group-engraving",
+      "id": "engraving-30-0.2mm",
+      "included_angle_deg": 30.0,
+      "name": "Engraving Bit 30° 0.2 mm tip",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.2,
+      "type": "engraving"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.9,
+            "plunge_mm_min": 670.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 2.54,
+            "tool_number": 15
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.5,
+            "plunge_mm_min": 330.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 1.9,
+            "tool_number": 15
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-aluminium"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 2000.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 1.9,
+        "plunge_mm_min": 670.0,
+        "spindle_rpm": 16000.0,
+        "stepover_mm": 2.54,
+        "tool_number": 15
+      },
+      "diameter_mm": 6.35,
+      "flutes": 1,
+      "group_id": "group-end-mills",
+      "id": "o-flute-1-4in",
+      "included_angle_deg": 0.0,
+      "name": "Single Flute End Mill 1/4 in",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "end_mill"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1280.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.95,
+            "plunge_mm_min": 430.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 1.27,
+            "tool_number": 14
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 640.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.32,
+            "plunge_mm_min": 210.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 0.95,
+            "tool_number": 14
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-aluminium"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 1280.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 0.95,
+        "plunge_mm_min": 430.0,
+        "spindle_rpm": 16000.0,
+        "stepover_mm": 1.27,
+        "tool_number": 14
+      },
+      "diameter_mm": 3.175,
+      "flutes": 1,
+      "group_id": "group-end-mills",
+      "id": "o-flute-1-8in",
+      "included_angle_deg": 0.0,
+      "name": "Single Flute End Mill 1/8 in",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "end_mill"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1200.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.8,
+            "plunge_mm_min": 400.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 0.1,
+            "tool_number": 27
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1500.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.0,
+            "plunge_mm_min": 500.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 0.1,
+            "tool_number": 27
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 1200.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 0.8,
+        "plunge_mm_min": 400.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 0.1,
+        "tool_number": 27
+      },
+      "diameter_mm": 6.35,
+      "flutes": 2,
+      "group_id": "group-ball-noses",
+      "id": "tapered-ball-nose-1mm",
+      "included_angle_deg": 10.0,
+      "name": "Tapered Ball Nose 1 mm ball, 10° taper",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 1.0,
+      "type": "tapered_ball_nose"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1200.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.75,
+            "plunge_mm_min": 400.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 2.54,
+            "tool_number": 25
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1600.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.2,
+            "plunge_mm_min": 530.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 2.54,
+            "tool_number": 25
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.5,
+            "plunge_mm_min": 670.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 2.54,
+            "tool_number": 25
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 1600.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 1.2,
+        "plunge_mm_min": 530.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 2.54,
+        "tool_number": 25
+      },
+      "diameter_mm": 12.7,
+      "flutes": 2,
+      "group_id": "group-v-bits",
+      "id": "v-bit-120-1-2in",
+      "included_angle_deg": 120.0,
+      "name": "V-Bit 120° 1/2 in",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "v_bit"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 900.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.5,
+            "plunge_mm_min": 300.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 1.27,
+            "tool_number": 24
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1200.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.8,
+            "plunge_mm_min": 400.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 1.27,
+            "tool_number": 24
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1500.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.0,
+            "plunge_mm_min": 500.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 1.27,
+            "tool_number": 24
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 1200.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 0.8,
+        "plunge_mm_min": 400.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 1.27,
+        "tool_number": 24
+      },
+      "diameter_mm": 6.35,
+      "flutes": 2,
+      "group_id": "group-v-bits",
+      "id": "v-bit-120-1-4in",
+      "included_angle_deg": 120.0,
+      "name": "V-Bit 120° 1/4 in",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "v_bit"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1200.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.5,
+            "plunge_mm_min": 400.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 2.54,
+            "tool_number": 21
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1600.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 2.4,
+            "plunge_mm_min": 530.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 2.54,
+            "tool_number": 21
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 3.0,
+            "plunge_mm_min": 670.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 2.54,
+            "tool_number": 21
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 1600.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 2.4,
+        "plunge_mm_min": 530.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 2.54,
+        "tool_number": 21
+      },
+      "diameter_mm": 12.7,
+      "flutes": 2,
+      "group_id": "group-v-bits",
+      "id": "v-bit-60-1-2in",
+      "included_angle_deg": 60.0,
+      "name": "V-Bit 60° 1/2 in",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "v_bit"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 900.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.0,
+            "plunge_mm_min": 300.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 1.27,
+            "tool_number": 20
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1200.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.6,
+            "plunge_mm_min": 400.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 1.27,
+            "tool_number": 20
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1500.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 2.0,
+            "plunge_mm_min": 500.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 1.27,
+            "tool_number": 20
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 1200.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 1.6,
+        "plunge_mm_min": 400.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 1.27,
+        "tool_number": 20
+      },
+      "diameter_mm": 6.35,
+      "flutes": 2,
+      "group_id": "group-v-bits",
+      "id": "v-bit-60-1-4in",
+      "included_angle_deg": 60.0,
+      "name": "V-Bit 60° 1/4 in",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "v_bit"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1200.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.25,
+            "plunge_mm_min": 400.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 2.54,
+            "tool_number": 23
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1600.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 2.0,
+            "plunge_mm_min": 530.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 2.54,
+            "tool_number": 23
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 2000.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 2.5,
+            "plunge_mm_min": 670.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 2.54,
+            "tool_number": 23
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 1600.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 2.0,
+        "plunge_mm_min": 530.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 2.54,
+        "tool_number": 23
+      },
+      "diameter_mm": 12.7,
+      "flutes": 2,
+      "group_id": "group-v-bits",
+      "id": "v-bit-90-1-2in",
+      "included_angle_deg": 90.0,
+      "name": "V-Bit 90° 1/2 in",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "v_bit"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 900.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 0.75,
+            "plunge_mm_min": 300.0,
+            "spindle_rpm": 16000.0,
+            "stepover_mm": 1.27,
+            "tool_number": 22
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-acrylic"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1200.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.2,
+            "plunge_mm_min": 400.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 1.27,
+            "tool_number": 22
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-hardwood-mdf"
+        },
+        {
+          "data": {
+            "clearance_pass_stepover_mm": 0.0,
+            "feed_mm_min": 1500.0,
+            "final_pass_stepover_mm": 0.0,
+            "max_burn_rate_mm_min": 0.0,
+            "pass_depth_mm": 1.5,
+            "plunge_mm_min": 500.0,
+            "spindle_rpm": 18000.0,
+            "stepover_mm": 1.27,
+            "tool_number": 22
+          },
+          "machine_id": "machine-generic-router",
+          "material_id": "material-softwood"
+        }
+      ],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 1200.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 1.2,
+        "plunge_mm_min": 400.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 1.27,
+        "tool_number": 22
+      },
+      "diameter_mm": 6.35,
+      "flutes": 2,
+      "group_id": "group-v-bits",
+      "id": "v-bit-90-1-4in",
+      "included_angle_deg": 90.0,
+      "name": "V-Bit 90° 1/4 in",
+      "notes": "Starter data: conservative values for a typical hobby router. Check them against the tool maker's recommendations and adjust for your machine.",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "v_bit"
+    }
+  ],
+  "version": 1
+}

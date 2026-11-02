@@ -1,0 +1,37 @@
+BACK coCircNear(noisy) st=0 seed=0x7a40000f gen=33 Square coderBack br 1 main 1 | susp br 0 main 0 | reversal ch 0 j 1 dot -1.000000
+BACK lensSlot st=0 seed=0x7a4000a5 gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+BACK lensSlot st=0 seed=0x7a40015a gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999953
+BACK lensSlot(noisy) st=0 seed=0x7a4001d9 gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999992
+BACK coCircNear(noisy) st=0 seed=0x7a40048b gen=33 Square coderBack br 1 main 1 | susp br 0 main 0 | reversal ch 0 j 1 dot -1.000000
+BACK lensSlot st=0 seed=0x7a4004e7 gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999935
+BACK lensSlot st=0 seed=0x7a4005ad gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 0 j 0 dot -0.999939
+BACK lensSlot(noisy) st=0 seed=0x7a400683 gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999977
+BACK coCircNear(noisy) st=0 seed=0x7a40079d gen=33 Sharp coderBack br 1 main 1 | susp br 0 main 0 | reversal ch 0 j 1 dot -1.000000
+BACK lensSlot st=0 seed=0x7a4007f9 gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+BACK lensSlot st=0 seed=0x7a400922 gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 0 j 0 dot -0.999990
+BACK lensSlot st=0 seed=0x7a400987 gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 0 j 0 dot -0.999900
+BACK lensSlot st=0 seed=0x7a40098d gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+REG[selfX] lensSlot st=0 seed=0x7a400a31 gen=30 n=5 d=0.0606379684 Round side=0 mitre=1.124 chains b2 m2 | br[self-x ch 1 spans 0,4 at (4.73558672,0.0607910082)] main[coderChecker: next span starts behind the previous end at span 4] miss other 0 (worst 0 at 0,0) loop 0 (w 0 L 0) corner 0
+BACK lensSlot st=0 seed=0x7a400b24 gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999997
+BACK lensSlot st=0 seed=0x7a400b86 gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999999
+BACK lensSlot st=0 seed=0x7a400be3 gen=30 Round coderBack br 0 main 0 | susp br 1 main 1 | reversal ch 1 j 0 dot -1.000000
+BACK lensSlot st=0 seed=0x7a400c0b gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 0 j 0 dot -0.999936
+BACK lensSlot st=0 seed=0x7a400cc7 gen=30 Round coderBack br 0 main 0 | susp br 1 main 1 | reversal ch 1 j 0 dot -1.000000
+BACK lensSlot(noisy) st=0 seed=0x7a400fd1 gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -1.000000
+BACK lensSlot(noisy) st=0 seed=0x7a40101f gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999952
+BACK lensSlot st=0 seed=0x7a40108b gen=30 Sharp coderBack br 0 main 0 | susp br 1 main 1 | reversal ch 1 j 0 dot -0.999999
+BACK lensSlot(noisy) st=0 seed=0x7a4010a1 gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 0 j 0 dot -0.999964
+BACK lensSlot(noisy) st=0 seed=0x7a40115b gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999993
+BACK lensSlot(noisy) st=0 seed=0x7a4011c2 gen=30 Sharp coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999999
+BACK lensSlot st=0 seed=0x7a4011e5 gen=30 Round coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 1 j 0 dot -0.999975
+BACK coCircNear(noisy) st=0 seed=0x7a4012e3 gen=33 Sharp coderBack br 1 main 1 | susp br 0 main 0 | reversal ch 0 j 1 dot -1.000000
+BACK lensSlot(noisy) st=0 seed=0x7a4012f4 gen=30 Square coderBack br 2 main 2 | susp br 2 main 2 | reversal ch 0 j 0 dot -0.999964
+BACK lensSlot(noisy) st=0 seed=0x7a401349 gen=30 Square coderBack br 0 main 0 | susp br 1 main 1 | reversal ch 1 j 0 dot -1.000000
+fuzz4 fam=4 N=5000 ran 5000 seed0=0x7a400000: identical 4913 differ 87 REGRESSIONS 1 | branch totals: gaps 0 reversals 398 overlaps 13 shortBack 0 suspiciousTips 44 (exact 27; main in differing cases 0) coderBack 44 (exact 24) distViol 48 roundViol 0 dupChains 0 | worstUnder(noST) 5.71e-06 worstOver(noST) 4.99e-07 | splitJoints br 0 main 0 | cases with dropped main loops 0 (max width 0, max len 0, max dist to branch 0), corner-only diffs 0 | cpu 1.2s
+  gen 30: 685 cases, 1 regressions
+  gen 31: 700 cases, 0 regressions
+  gen 32: 720 cases, 0 regressions
+  gen 33: 738 cases, 0 regressions
+  gen 34: 710 cases, 0 regressions
+  gen 35: 708 cases, 0 regressions
+  gen 36: 739 cases, 0 regressions

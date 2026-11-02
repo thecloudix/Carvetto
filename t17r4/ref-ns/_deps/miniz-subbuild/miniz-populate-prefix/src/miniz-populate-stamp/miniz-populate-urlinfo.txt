@@ -1,0 +1,12 @@
+# This is a generated file and its contents are an internal implementation detail.
+# The download step will be re-executed if anything in this file changes.
+# No other meaning or use of this file is supported.
+
+method=url
+command=/usr/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/miniz-subbuild/miniz-populate-prefix/src/miniz-populate-stamp/download-miniz-populate.cmake;COMMAND;/usr/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/miniz-subbuild/miniz-populate-prefix/src/miniz-populate-stamp/verify-miniz-populate.cmake;COMMAND;/usr/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/miniz-subbuild/miniz-populate-prefix/src/miniz-populate-stamp/extract-miniz-populate.cmake
+source_dir=/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/miniz-src
+work_dir=/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps
+url(s)=https://github.com/richgel999/miniz/releases/download/3.0.2/miniz-3.0.2.zip
+hash=SHA256=ada38db0b703a56d3dd6d57bf84a9c5d664921d870d8fea4db153979fb5332c5
+      no_extract=
+

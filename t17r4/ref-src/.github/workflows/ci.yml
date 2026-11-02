@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  linux-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCARVETTO_BUILD_APP=OFF
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      # T-0014: timing-sensitive tests must hold under parallel load. Runs the suite with 8 jobs;
+      # each test is repeated up to 3 times and the step fails as soon as any repetition fails.
+      - name: Test (parallel stress, -j8)
+        run: ctest --test-dir build --output-on-failure -j8 --repeat until-fail:5
+
+  linux-app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y ninja-build libgl1-mesa-dev libxkbcommon-dev libegl1
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.7.*'
+          cache: true
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release 2>&1 | tee configure.log || (echo "::error title=CMake configure failed::$(tail -30 configure.log | tr '\n' '|')"; exit 1)
+      - name: Build
+        run: |
+          set -o pipefail
+          cmake --build build 2>&1 | tee build.log || { echo "::error title=Build failed::$(grep -E 'error' build.log | head -25 | tr '\n' '|')"; exit 1; }
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      - name: App self-test (headless)
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          if [ -x build/app/carvetto ]; then build/app/carvetto --self-test || { echo "::error title=App self-test failed::exit $?"; exit 1; }; else echo "app not built yet - skipping"; fi
+
+  windows-app:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.7.*'
+          cache: true
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - name: Install Ninja
+        run: choco install ninja --no-progress -y
+      - name: Configure
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release 2>&1 | Tee-Object -FilePath configure.log
+          if ($LASTEXITCODE -ne 0) {
+            $tail = (Get-Content configure.log -Tail 40) -join '%0A'
+            Write-Host "::error title=CMake configure failed::$tail"
+            exit 1
+          }
+      - name: Build
+        shell: pwsh
+        run: |
+          cmake --build build 2>&1 | Tee-Object -FilePath build.log
+          if ($LASTEXITCODE -ne 0) {
+            $tail = (Select-String -Path build.log -Pattern 'error|warning C' | Select-Object -First 25 | ForEach-Object { $_.Line }) -join '%0A'
+            Write-Host "::error title=Build failed::$tail"
+            exit 1
+          }
+      - name: Test
+        shell: pwsh
+        run: |
+          ctest --test-dir build --output-on-failure 2>&1 | Tee-Object -FilePath test.log
+          if ($LASTEXITCODE -ne 0) {
+            $fails = (Select-String -Path test.log -Pattern 'FAILED|Failed|failed|REQUIRE|CHECK|with expansion|==' | Select-Object -Last 40 | ForEach-Object { $_.Line }) -join '%0A'
+            Write-Host "::error title=Tests failed::$fails"
+            exit 1
+          }
+      - name: App self-test (headless)
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          if (Test-Path build/app/carvetto.exe) {
+            # carvetto.exe is a GUI-subsystem app: PowerShell does not wait for it unless asked.
+            $p = Start-Process -FilePath build/app/carvetto.exe -ArgumentList '--self-test' -Wait -PassThru -NoNewWindow -RedirectStandardOutput selftest.out -RedirectStandardError selftest.err
+            $msg = ((Get-Content selftest.out -ErrorAction SilentlyContinue) + (Get-Content selftest.err -ErrorAction SilentlyContinue)) -join '%0A'
+            if ($p.ExitCode -ne 0) { Write-Host "::error title=App self-test failed (exit $($p.ExitCode))::$msg"; exit 1 }
+            Write-Host "self-test passed: $msg"
+          } else { Write-Host "app not built yet - skipping" }
+      - name: Upload app
+        uses: actions/upload-artifact@v4
+        with:
+          name: carvetto-windows
+          path: build/app/carvetto.exe
+          if-no-files-found: warn

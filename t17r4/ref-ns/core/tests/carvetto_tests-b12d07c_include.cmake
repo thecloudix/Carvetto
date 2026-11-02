@@ -1,0 +1,5 @@
+if(EXISTS "/home/chris/wt-T0017/build-verify2/h/ref-ns/core/tests/carvetto_tests-b12d07c_tests.cmake")
+  include("/home/chris/wt-T0017/build-verify2/h/ref-ns/core/tests/carvetto_tests-b12d07c_tests.cmake")
+else()
+  add_test(carvetto_tests_NOT_BUILT-b12d07c carvetto_tests_NOT_BUILT-b12d07c)
+endif()

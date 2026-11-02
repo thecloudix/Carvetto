@@ -1,0 +1,410 @@
+999
+Carvetto test fixture (hand-written): nested and arrayed block inserts, DXF R12
+  0
+SECTION
+  2
+HEADER
+  9
+$ACADVER
+  1
+AC1009
+  0
+ENDSEC
+  0
+SECTION
+  2
+TABLES
+  0
+TABLE
+  2
+LAYER
+ 70
+8
+  0
+LAYER
+  2
+0
+ 70
+0
+ 62
+7
+  6
+CONTINUOUS
+  0
+LAYER
+  2
+Top
+ 70
+0
+ 62
+7
+  6
+CONTINUOUS
+  0
+LAYER
+  2
+Arr
+ 70
+0
+ 62
+7
+  6
+CONTINUOUS
+  0
+LAYER
+  2
+Rot
+ 70
+0
+ 62
+7
+  6
+CONTINUOUS
+  0
+LAYER
+  2
+Loop
+ 70
+0
+ 62
+7
+  6
+CONTINUOUS
+  0
+LAYER
+  2
+Ring
+ 70
+0
+ 62
+7
+  6
+CONTINUOUS
+  0
+LAYER
+  2
+LeafLayer
+ 70
+0
+ 62
+7
+  6
+CONTINUOUS
+  0
+LAYER
+  2
+MidLayer
+ 70
+0
+ 62
+7
+  6
+CONTINUOUS
+  0
+ENDTAB
+  0
+ENDSEC
+  0
+SECTION
+  2
+BLOCKS
+  0
+BLOCK
+  8
+0
+  2
+LEAF
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+LEAF
+  0
+LINE
+  8
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 11
+1.0
+ 21
+0.0
+ 31
+0.0
+  0
+ARC
+  8
+LeafLayer
+ 10
+1.0
+ 20
+0.0
+ 30
+0.0
+ 40
+0.5
+ 50
+0.0
+ 51
+90.0
+  0
+ENDBLK
+  8
+0
+  0
+BLOCK
+  8
+0
+  2
+MID
+ 70
+0
+ 10
+1.0
+ 20
+1.0
+ 30
+0.0
+  3
+MID
+  0
+INSERT
+  8
+0
+  2
+LEAF
+ 10
+2.0
+ 20
+0.0
+ 30
+0.0
+ 41
+-2.0
+ 42
+2.0
+ 43
+2.0
+ 50
+90.0
+  0
+LINE
+  8
+MidLayer
+ 10
+1.0
+ 20
+1.0
+ 30
+0.0
+ 11
+1.0
+ 21
+2.0
+ 31
+0.0
+  0
+ENDBLK
+  8
+0
+  0
+BLOCK
+  8
+0
+  2
+LOOP
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+LOOP
+  0
+LINE
+  8
+Loop
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 11
+0.0
+ 21
+1.0
+ 31
+0.0
+  0
+INSERT
+  8
+Loop
+  2
+LOOP
+ 10
+1.0
+ 20
+0.0
+ 30
+0.0
+  0
+ENDBLK
+  8
+0
+  0
+BLOCK
+  8
+0
+  2
+RING
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+RING
+  0
+CIRCLE
+  8
+Ring
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+10.0
+  0
+ENDBLK
+  8
+0
+  0
+ENDSEC
+  0
+SECTION
+  2
+ENTITIES
+  0
+INSERT
+  8
+Top
+  2
+MID
+ 10
+10.0
+ 20
+10.0
+ 30
+0.0
+ 41
+1.5
+ 42
+1.5
+ 43
+1.5
+ 50
+30.0
+  0
+INSERT
+  8
+Arr
+  2
+LEAF
+ 10
+100.0
+ 20
+0.0
+ 30
+0.0
+ 70
+2
+ 71
+2
+ 44
+5.0
+ 45
+3.0
+  0
+INSERT
+  8
+Rot
+  2
+LEAF
+ 10
+200.0
+ 20
+0.0
+ 30
+0.0
+ 50
+90.0
+ 70
+2
+ 71
+1
+ 44
+5.0
+  0
+INSERT
+  8
+Loop
+  2
+LOOP
+ 10
+300.0
+ 20
+0.0
+ 30
+0.0
+  0
+INSERT
+  8
+Ring
+  2
+RING
+ 10
+400.0
+ 20
+0.0
+ 30
+0.0
+ 41
+3.0
+ 42
+1.0
+ 43
+1.0
+  0
+INSERT
+  8
+Ring
+  2
+NOSUCH
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  0
+ENDSEC
+  0
+EOF

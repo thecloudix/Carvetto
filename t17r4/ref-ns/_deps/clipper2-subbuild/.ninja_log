@@ -1,0 +1,21 @@
+# ninja log v7
+0	11	1793564056252001816	clipper2-populate-prefix/src/clipper2-populate-stamp/clipper2-populate-mkdir	9fab37afa231f9b3
+0	11	1793564056252001816	/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/clipper2-subbuild/clipper2-populate-prefix/src/clipper2-populate-stamp/clipper2-populate-mkdir	9fab37afa231f9b3
+11	1357	1793564057596000714	clipper2-populate-prefix/src/clipper2-populate-stamp/clipper2-populate-download	cf0261f962bed3a7
+11	1357	1793564057596000714	/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/clipper2-subbuild/clipper2-populate-prefix/src/clipper2-populate-stamp/clipper2-populate-download	cf0261f962bed3a7
+1357	1368	1793564057596000714	clipper2-populate-prefix/src/clipper2-populate-stamp/clipper2-populate-update	bce3f697c6bab05a
+1357	1368	1793564057596000714	/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/clipper2-subbuild/clipper2-populate-prefix/src/clipper2-populate-stamp/clipper2-populate-update	bce3f697c6bab05a
+1368	1379	1793564057620000695	clipper2-populate-prefix/src/clipper2-populate-stamp/clipper2-populate-patch	319c6656c261908a
+1368	1379	1793564057620000695	/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/clipper2-subbuild/clipper2-populate-prefix/src/clipper2-populate-stamp/clipper2-populate-patch	319c6656c261908a
+1379	1389	1793564057628000688	clipper2-populate-prefix/src/clipper2-populate-stamp/clipper2-populate-configure	acddfcf3500a70a
+1379	1389	1793564057628000688	/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/clipper2-subbuild/clipper2-populate-prefix/src/clipper2-populate-stamp/clipper2-populate-configure	acddfcf3500a70a
+1389	1401	1793564057640000678	clipper2-populate-prefix/src/clipper2-populate-stamp/clipper2-populate-build	f22d5a0ca52bb2fc
+1389	1401	1793564057640000678	/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/clipper2-subbuild/clipper2-populate-prefix/src/clipper2-populate-stamp/clipper2-populate-build	f22d5a0ca52bb2fc
+1401	1415	1793564057656000665	clipper2-populate-prefix/src/clipper2-populate-stamp/clipper2-populate-install	1948d21136bc262
+1401	1415	1793564057656000665	/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/clipper2-subbuild/clipper2-populate-prefix/src/clipper2-populate-stamp/clipper2-populate-install	1948d21136bc262
+1415	1427	1793564057668000655	clipper2-populate-prefix/src/clipper2-populate-stamp/clipper2-populate-test	fbcce855c116025
+1415	1427	1793564057668000655	/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/clipper2-subbuild/clipper2-populate-prefix/src/clipper2-populate-stamp/clipper2-populate-test	fbcce855c116025
+1427	1442	1793564057684000642	CMakeFiles/clipper2-populate-complete	4fdb8433ad673651
+1427	1442	1793564057684000642	clipper2-populate-prefix/src/clipper2-populate-stamp/clipper2-populate-done	4fdb8433ad673651
+1427	1442	1793564057684000642	/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/clipper2-subbuild/CMakeFiles/clipper2-populate-complete	4fdb8433ad673651
+1427	1442	1793564057684000642	/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/clipper2-subbuild/clipper2-populate-prefix/src/clipper2-populate-stamp/clipper2-populate-done	4fdb8433ad673651

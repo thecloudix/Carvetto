@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/chris/wt-T0017/build-verify2/h/br-rel/_deps/catch2-subbuild/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

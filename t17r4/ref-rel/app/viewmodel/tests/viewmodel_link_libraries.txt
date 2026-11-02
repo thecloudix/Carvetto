@@ -1,0 +1,1 @@
+carvetto::core;carvetto_warnings;carvetto::core;$<LINK_ONLY:carvetto_warnings>;carvetto_warnings;nlohmann_json::nlohmann_json;Clipper2;carvetto_miniz;$<LINK_ONLY:carvetto_warnings>;$<LINK_ONLY:nlohmann_json::nlohmann_json>;$<LINK_ONLY:Clipper2>;$<LINK_ONLY:carvetto_miniz>

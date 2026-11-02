@@ -1,0 +1,21 @@
+# ninja log v7
+1	12	1793564058076000321	catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-mkdir	80fa757f98dc6e55
+1	12	1793564058076000321	/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/catch2-subbuild/catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-mkdir	80fa757f98dc6e55
+12	3511	1793564061575997449	catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-download	9b51fea35f32bc75
+12	3511	1793564061575997449	/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/catch2-subbuild/catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-download	9b51fea35f32bc75
+3511	3522	1793564061575997449	catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-update	7cf032d35e9488a8
+3511	3522	1793564061575997449	/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/catch2-subbuild/catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-update	7cf032d35e9488a8
+3522	3533	1793564061595997429	catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-patch	4321876ac864c604
+3522	3533	1793564061595997429	/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/catch2-subbuild/catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-patch	4321876ac864c604
+3533	3544	1793564061607997417	catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-configure	d206f41dd9a6a75b
+3533	3544	1793564061607997417	/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/catch2-subbuild/catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-configure	d206f41dd9a6a75b
+3544	3554	1793564061619997404	catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-build	17348a1e1aab1965
+3544	3554	1793564061619997404	/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/catch2-subbuild/catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-build	17348a1e1aab1965
+3554	3565	1793564061627997396	catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-install	365d980c452c5c83
+3554	3565	1793564061627997396	/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/catch2-subbuild/catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-install	365d980c452c5c83
+3565	3575	1793564061639997384	catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-test	c976ec8f0bae7eb2
+3565	3575	1793564061639997384	/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/catch2-subbuild/catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-test	c976ec8f0bae7eb2
+3575	3590	1793564061655997368	CMakeFiles/catch2-populate-complete	a2e69fb178a11bec
+3575	3590	1793564061655997368	catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-done	a2e69fb178a11bec
+3575	3590	1793564061655997368	/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/catch2-subbuild/CMakeFiles/catch2-populate-complete	a2e69fb178a11bec
+3575	3590	1793564061655997368	/home/chris/wt-T0017/build-verify2/h/ref-ns/_deps/catch2-subbuild/catch2-populate-prefix/src/catch2-populate-stamp/catch2-populate-done	a2e69fb178a11bec

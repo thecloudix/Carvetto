@@ -1,0 +1,6 @@
+arcLoopClosed  offs 168000 chains 167419 arcLoops 129727 junc 1126689 behind(<0) 72311 behind(<-1e-12) 37553 [in arc loops 69704] worstBehind 1.77e-09 lineNotIdent 0 arcGap>1e-12rel 29 worstGapRel 1.49e-11 countBackwardSteps 37553
+mixClosed      offs 168000 chains 161723 arcLoops 11810 junc 1066718 behind(<0) 13111 behind(<-1e-12) 3226 [in arc loops 5722] worstBehind 1.67e-09 lineNotIdent 0 arcGap>1e-12rel 5 worstGapRel 5.06e-12 countBackwardSteps 3226
+mixOpen        offs 168000 chains 163360 arcLoops 525 junc 635379 behind(<0) 4996 behind(<-1e-12) 294 [in arc loops 155] worstBehind 6.67e-10 lineNotIdent 0 arcGap>1e-12rel 3 worstGapRel 3.67e-12 countBackwardSteps 294
+bigRadiusOpen  offs 168000 chains 157983 arcLoops 105 junc 646325 behind(<0) 10139 behind(<-1e-12) 832 [in arc loops 90] worstBehind 6.8e-10 lineNotIdent 0 arcGap>1e-12rel 0 worstGapRel 3.3e-13 countBackwardSteps 832
+arcLoopExact   offs 58608 chains 58483 arcLoops 44622 junc 383141 behind(<0) 15527 behind(<-1e-12) 11397 [in arc loops 15508] worstBehind 7.16e-11 lineNotIdent 0 arcGap>1e-12rel 0 worstGapRel 1.08e-15 countBackwardSteps 11397
+arcLoopExact skipped (not exactifiable) 109392

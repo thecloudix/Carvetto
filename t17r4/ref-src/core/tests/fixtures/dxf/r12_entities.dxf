@@ -1,0 +1,234 @@
+999
+Carvetto test fixture (hand-written): R12 entities only, DXF R12
+  0
+SECTION
+  2
+HEADER
+  9
+$ACADVER
+  1
+AC1009
+  0
+ENDSEC
+  0
+SECTION
+  2
+TABLES
+  0
+TABLE
+  2
+LAYER
+ 70
+3
+  0
+LAYER
+  2
+0
+ 70
+0
+ 62
+7
+  6
+CONTINUOUS
+  0
+LAYER
+  2
+A
+ 70
+0
+ 62
+1
+  6
+CONTINUOUS
+  0
+LAYER
+  2
+B
+ 70
+0
+ 62
+5
+  6
+CONTINUOUS
+  0
+ENDTAB
+  0
+ENDSEC
+  0
+SECTION
+  2
+BLOCKS
+  0
+BLOCK
+  8
+0
+  2
+TICK
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+TICK
+  0
+LINE
+  8
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 11
+0.0
+ 21
+1.0
+ 31
+0.0
+  0
+ENDBLK
+  8
+0
+  0
+ENDSEC
+  0
+SECTION
+  2
+ENTITIES
+  0
+LINE
+  8
+A
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 11
+10.0
+ 21
+0.0
+ 31
+0.0
+  0
+ARC
+  8
+A
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+2.0
+ 50
+90.0
+ 51
+180.0
+  0
+CIRCLE
+  8
+B
+ 10
+5.0
+ 20
+5.0
+ 30
+0.0
+ 40
+1.0
+  0
+POLYLINE
+  8
+B
+ 66
+1
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 70
+1
+  0
+VERTEX
+  8
+B
+ 10
+0.0
+ 20
+10.0
+ 30
+0.0
+ 42
+1.0
+  0
+VERTEX
+  8
+B
+ 10
+4.0
+ 20
+10.0
+ 30
+0.0
+  0
+VERTEX
+  8
+B
+ 10
+4.0
+ 20
+14.0
+ 30
+0.0
+  0
+SEQEND
+  8
+B
+  0
+INSERT
+  8
+B
+  2
+TICK
+ 10
+20.0
+ 20
+0.0
+ 30
+0.0
+ 41
+2.0
+ 42
+2.0
+ 43
+2.0
+ 50
+0.0
+  0
+TEXT
+  8
+A
+ 10
+1.0
+ 20
+2.0
+ 30
+0.0
+ 40
+1.5
+  1
+R12 text
+  0
+ENDSEC
+  0
+EOF

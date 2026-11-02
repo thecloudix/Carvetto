@@ -1,0 +1,100 @@
+GAP new id=1f40a106 gap=4.32e-11 rel=1.38e-12 inGap=2.05e-09 closed=1 i=0 n=8
+GAP new id=1f413a10 gap=7.84e-12 rel=3.11e-12 inGap=1.1e-11 closed=1 i=0 n=10
+GAP new id=1f413a11 gap=4.52e-12 rel=1.8e-12 inGap=1.1e-11 closed=1 i=0 n=10
+GAP new id=1f413a17 gap=5.03e-12 rel=2e-12 inGap=2.21e-11 closed=1 i=0 n=10
+GAP new id=1f413a18 gap=1.52e-11 rel=6.06e-12 inGap=2.47e-11 closed=1 i=0 n=10
+GAP new id=1f413a1e gap=5.74e-12 rel=2.28e-12 inGap=1.21e-11 closed=1 i=0 n=10
+GAP new id=1f413a1f gap=4.78e-12 rel=1.9e-12 inGap=2.58e-11 closed=1 i=0 n=10
+GAP new id=1f413a25 gap=1.28e-11 rel=5.07e-12 inGap=1.06e-10 closed=1 i=0 n=10
+GAP new id=1f413a2d gap=8.69e-12 rel=3.45e-12 inGap=8.28e-10 closed=1 i=0 n=10
+GAP new id=1f42fa9c gap=1.11e-10 rel=1.26e-11 inGap=8.58e-10 closed=1 i=0 n=16
+GAP new id=1f47e46c gap=1e-10 rel=2.2e-12 inGap=1.51e-09 closed=1 i=0 n=17
+GAP new id=1f4900bf gap=1.54e-10 rel=3.66e-12 inGap=2.54e-10 closed=1 i=0 n=12
+GAP new id=1f49db86 gap=1.74e-10 rel=8.56e-12 inGap=6.18e-10 closed=1 i=0 n=10
+GAP new id=1f4a0730 gap=5.98e-10 rel=1.11e-12 inGap=8.32e-10 closed=1 i=0 n=9
+GAP new id=1f4a0731 gap=5.98e-10 rel=1.11e-12 inGap=8.32e-10 closed=1 i=0 n=9
+GAP new id=1f4a0737 gap=6.69e-10 rel=1.24e-12 inGap=1.57e-09 closed=1 i=0 n=9
+GAP new id=1f4a0738 gap=7.47e-10 rel=1.39e-12 inGap=1.05e-09 closed=1 i=0 n=9
+GAP new id=1f4a073f gap=5.83e-10 rel=1.08e-12 inGap=2.48e-09 closed=1 i=0 n=9
+GAP new id=1f4a0745 gap=5.39e-10 rel=1e-12 inGap=9.83e-09 closed=1 i=0 n=9
+GAP new id=1f4a0746 gap=1.22e-09 rel=2.28e-12 inGap=4.83e-09 closed=1 i=0 n=9
+GAP new id=1f4a074c gap=9.45e-10 rel=1.76e-12 inGap=1.92e-08 closed=1 i=0 n=9
+GAP new id=1f4a074d gap=1.34e-09 rel=2.48e-12 inGap=2.75e-08 closed=1 i=0 n=9
+GAP new id=1f4b18ae gap=7.21e-10 rel=1.86e-12 inGap=2.26e-09 closed=1 i=0 n=12
+CBS new id=1f4b5b08 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=8.88e-15
+CBS new id=1f4b5b09 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=8.88e-15
+CBS new id=1f4b5b0f n=2 closed=1 why=next span retraces the previous one at span 0 inGap=1.64e-14
+CBS new id=1f4b5b10 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=1.19e-14
+CBS new id=1f4b5b16 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=1.24e-14
+CBS new id=1f4b5b17 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=2.17e-14
+CBS new id=1f4b5b1d n=2 closed=1 why=next span retraces the previous one at span 0 inGap=7.01e-14
+CBS new id=1f4b5b1e n=2 closed=1 why=next span retraces the previous one at span 0 inGap=5.62e-15
+CBS new id=1f4b5b24 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=1.38e-13
+CBS new id=1f4b5b25 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=8.9e-13
+GAP new id=1f4ceef8 gap=2.4e-10 rel=1.11e-12 inGap=3.14e-10 closed=1 i=0 n=16
+GAP new id=1f4ff78f gap=1.6e-09 rel=3.83e-12 inGap=3.68e-09 closed=1 i=0 n=7
+GAP new id=1f4ff79d gap=5.37e-10 rel=1.29e-12 inGap=3.05e-08 closed=1 i=0 n=7
+GAP new id=1f50fe08 gap=1.3e-10 rel=1.25e-12 inGap=4.35e-10 closed=1 i=0 n=12
+CBS new id=1f5510f8 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=0
+CBS new id=1f5510f9 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=0
+CBS new id=1f5510ff n=2 closed=1 why=next span retraces the previous one at span 0 inGap=0
+CBS new id=1f551100 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=0
+CBS new id=1f551106 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=0
+CBS new id=1f551107 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=0
+CBS new id=1f55110d n=2 closed=1 why=next span retraces the previous one at span 0 inGap=0
+CBS new id=1f55110e n=2 closed=1 why=next span retraces the previous one at span 0 inGap=0
+CBS new id=1f551114 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=0
+CBS new id=1f551115 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=0
+GAP new id=1f55b13c gap=1.32e-09 rel=1.02e-12 inGap=7.79e-08 closed=1 i=0 n=10
+GAP new id=1f56298d gap=7.37e-10 rel=6.93e-12 inGap=1.1e-09 closed=1 i=4 n=13
+GAP new id=1f59b55d gap=7.23e-12 rel=1.16e-12 inGap=1.33e-10 closed=1 i=8 n=10
+CBS new id=1f5b37f8 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=0
+CBS new id=1f5b37f9 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=0
+CBS new id=1f5b37ff n=2 closed=1 why=next span retraces the previous one at span 0 inGap=0
+CBS new id=1f5b3800 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=0
+CBS new id=1f5b3806 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=0
+CBS new id=1f5b3807 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=0
+CBS new id=1f5b380d n=2 closed=1 why=next span retraces the previous one at span 0 inGap=0
+CBS new id=1f5b380e n=2 closed=1 why=next span retraces the previous one at span 0 inGap=0
+CBS new id=1f5b3814 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=0
+CBS new id=1f5b3815 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=0
+CBS new id=1f5c6d58 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=3.64e-12
+CBS new id=1f5c6d59 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=3.64e-12
+CBS new id=1f5c6d5f n=2 closed=1 why=next span retraces the previous one at span 0 inGap=3.64e-12
+CBS new id=1f5c6d60 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=3.64e-12
+CBS new id=1f5c6d66 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=3.64e-12
+CBS new id=1f5c6d67 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=3.64e-12
+CBS new id=1f5c6d6d n=2 closed=1 why=next span retraces the previous one at span 0 inGap=3.64e-12
+CBS new id=1f5c6d6e n=2 closed=1 why=next span retraces the previous one at span 0 inGap=3.64e-12
+CBS new id=1f5c6d74 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=3.64e-12
+CBS new id=1f5c6d75 n=2 closed=1 why=next span retraces the previous one at span 0 inGap=3.64e-12
+GAP new id=1f62cef0 gap=5.35e-11 rel=2.56e-12 inGap=5.62e-11 closed=1 i=0 n=8
+GAP new id=1f62cef1 gap=5.35e-11 rel=2.56e-12 inGap=5.62e-11 closed=1 i=0 n=8
+GAP new id=1f62cef7 gap=5.32e-11 rel=2.55e-12 inGap=1.21e-10 closed=1 i=0 n=8
+GAP new id=1f62cef8 gap=9.2e-11 rel=4.41e-12 inGap=1.54e-10 closed=1 i=0 n=8
+GAP new id=1f62cefe gap=9.03e-11 rel=4.33e-12 inGap=3.33e-10 closed=1 i=0 n=8
+GAP new id=1f62ceff gap=1.19e-10 rel=5.72e-12 inGap=1.12e-10 closed=1 i=0 n=8
+GAP new id=1f62cf05 gap=2.62e-11 rel=1.26e-12 inGap=1.37e-10 closed=1 i=0 n=8
+GAP new id=1f62cf06 gap=8.3e-11 rel=3.98e-12 inGap=1.14e-09 closed=1 i=0 n=8
+GAP new id=1f62cf0c gap=5.41e-11 rel=2.59e-12 inGap=4.12e-09 closed=1 i=0 n=8
+GAP new id=1f62cf0d gap=1.07e-10 rel=5.12e-12 inGap=6.85e-09 closed=1 i=0 n=8
+GAP new id=1f65a0df gap=9.6e-10 rel=1.25e-12 inGap=1.4e-09 closed=1 i=0 n=6
+GAP new id=1f672013 gap=6.03e-11 rel=6.03e-11 inGap=8.22e-16 closed=1 i=1 n=34
+GAP new id=1f672019 gap=4.06e-11 rel=4.06e-11 inGap=3.65e-15 closed=1 i=1 n=34
+GAP new id=1f672021 gap=4.07e-11 rel=4.07e-11 inGap=1.17e-14 closed=1 i=1 n=34
+GAP new id=1f69587d gap=5.16e-11 rel=1.56e-12 inGap=4.44e-09 closed=1 i=0 n=17
+GAP new id=1f6a4916 gap=7.19e-11 rel=1.01e-12 inGap=1.15e-09 closed=1 i=0 n=15
+GAP new id=1f6bd2dd gap=7.5e-12 rel=1.44e-12 inGap=7.18e-10 closed=1 i=0 n=11
+GAP new id=1f6e2167 gap=1.32e-09 rel=1.48e-12 inGap=1.44e-09 closed=1 i=0 n=6
+GAP new id=1f71a247 gap=5.82e-11 rel=1.55e-12 inGap=1.22e-10 closed=1 i=0 n=9
+GAP new id=1f72df7e gap=1.58e-11 rel=2.33e-12 inGap=1.95e-11 closed=1 i=0 n=16
+GAP new id=1f741cbd gap=4.48e-10 rel=1.1e-12 inGap=9.21e-10 closed=1 i=9 n=12
+GAP new id=1f771a5c gap=2.06e-10 rel=2.26e-12 inGap=2.12e-08 closed=1 i=0 n=8
+GAP new id=1f771a5d gap=3.34e-10 rel=3.65e-12 inGap=2.3e-08 closed=1 i=0 n=8
+GAP new id=1f78c4de gap=2.57e-10 rel=1.86e-12 inGap=8.29e-10 closed=1 i=0 n=8
+GAP new id=1f7af2b5 gap=6.5e-11 rel=1.46e-12 inGap=2.96e-10 closed=1 i=4 n=19
+bigRadiusLoop  offs 100000 chains 100103 arcLoops 87308 junc 791540 behind(<0) 0 behind(<-1e-12) 0 [in arc loops 0] worstBehind 0 lineNotIdent 0 arcGap>1e-12rel 52 worstGapRel 1.26e-11 countBackwardSteps 0 skipped 0
+tinyArcsLoop   offs 100000 chains 225932 arcLoops 35061 junc 2978726 behind(<0) 0 behind(<-1e-12) 0 [in arc loops 0] worstBehind 0 lineNotIdent 0 arcGap>1e-12rel 3 worstGapRel 6.03e-11 countBackwardSteps 0 skipped 0
+lensNearFull   offs 100000 chains 96060 arcLoops 74232 junc 328158 behind(<0) 0 behind(<-1e-12) 0 [in arc loops 0] worstBehind 0 lineNotIdent 0 arcGap>1e-12rel 0 worstGapRel 7.09e-14 countBackwardSteps 80 skipped 0
+bigRadExact    offs 10869 chains 10813 arcLoops 9641 junc 81307 behind(<0) 0 behind(<-1e-12) 0 [in arc loops 0] worstBehind 0 lineNotIdent 0 arcGap>1e-12rel 0 worstGapRel 1.08e-13 countBackwardSteps 0 skipped 89131
+DONE

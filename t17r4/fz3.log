@@ -1,0 +1,9 @@
+fuzz4 fam=3 N=5000 ran 5000 seed0=0x7a300000: identical 4974 differ 26 REGRESSIONS 0 | branch totals: gaps 1 reversals 102 overlaps 2 shortBack 0 suspiciousTips 0 (exact 0; main in differing cases 0) coderBack 0 (exact 0) distViol 3 roundViol 0 dupChains 0 | worstUnder(noST) 0.0177 worstOver(noST) 4.64e-07 | splitJoints br 506 main 506 | cases with dropped main loops 0 (max width 0, max len 0, max dist to branch 0), corner-only diffs 0 | cpu 3.9s
+  gen 20: 602 cases, 0 regressions
+  gen 21: 600 cases, 0 regressions
+  gen 22: 615 cases, 0 regressions
+  gen 23: 623 cases, 0 regressions
+  gen 24: 632 cases, 0 regressions
+  gen 25: 664 cases, 0 regressions
+  gen 26: 631 cases, 0 regressions
+  gen 27: 633 cases, 0 regressions

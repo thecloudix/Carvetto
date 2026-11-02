@@ -17,3 +17,5 @@ Original locations (scripts may hard-code these; adjust paths when reusing):
 - t0123v1/: T-0123 verifier (2026-11-01, local; FAIL on 3f3af16 only for rest-travel owner decision). pockcheck.cpp = pocket safety oracle (gouge/inside/one-level/coverage/retracts), profmulti.cpp, bi.cpp, perf.cpp, restretract.cpp; build with mk.sh (EXTRA=-DNEWAPI). Paths were /home/chris/wt-T0123/build-verify/drv.
 - t0127c/: T-0127 coder harness (2026-11-01, local): conn7 (On/NEGA modes), nontab3 hashing, mkscn, floodd, perf2; results/ and scn/ repros. See t0127c/README.
 - t0127v1/: T-0127 round-1 verifier (FAIL on 9c3680c: kept tab holds nothing, part free). wsf4.cpp/wsf6.cpp = whole-scene flood oracle (exact capsules); wsh.cpp+cmph.py hashing; wsc.cpp counts; repro scenes in dumpnew/ d4new/ cnt/. Paths were /home/chris/wt-T0127/build-verify/drv.
+- t17r4/: T-0017 verifier of 0cd9abc (pert.cpp ulp-perturbation driver, repro_arcloop.cpp).
+- t17r5/: T-0017 verifier of 328008b (pert2.cpp large-radius/tiny-arc loops, retry_case.inc, gap_case.inc, mutants offset.mA/B/C.cpp).

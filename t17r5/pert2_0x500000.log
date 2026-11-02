@@ -1,0 +1,5 @@
+bigRadiusLoop  offs 100000 chains 100103 arcLoops 87308 junc 791540 behind(<0) 0 behind(<-1e-12) 0 [in arc loops 0] worstBehind 0 lineNotIdent 0 arcGap>1e-12rel 52 worstGapRel 1.26e-11 countBackwardSteps 0 skipped 0
+tinyArcsLoop   offs 100000 chains 225932 arcLoops 35061 junc 2978726 behind(<0) 0 behind(<-1e-12) 0 [in arc loops 0] worstBehind 0 lineNotIdent 0 arcGap>1e-12rel 3 worstGapRel 6.03e-11 countBackwardSteps 0 skipped 0
+lensNearFull   offs 100000 chains 96060 arcLoops 74232 junc 328158 behind(<0) 0 behind(<-1e-12) 0 [in arc loops 0] worstBehind 0 lineNotIdent 0 arcGap>1e-12rel 0 worstGapRel 7.09e-14 countBackwardSteps 80 skipped 0
+bigRadExact    offs 10869 chains 10813 arcLoops 9641 junc 81307 behind(<0) 0 behind(<-1e-12) 0 [in arc loops 0] worstBehind 0 lineNotIdent 0 arcGap>1e-12rel 0 worstGapRel 1.08e-13 countBackwardSteps 0 skipped 89131
+DONE
