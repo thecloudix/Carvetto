@@ -28,3 +28,4 @@ Original locations (scripts may hard-code these; adjust paths when reusing):
 - t0127v2/: T-0127 round-2 verifier (FAIL bddd93f): wsf7.cpp/wsf7w.cpp oracle (loose-piece cross-check, ANYRUN, NOFLOOD), wsh2.cpp+cmph2.py, hole.cpp V-bit hole repro, inst/ mutants, repro scenes d1/ d/wsf7/.
 - t0132v1/: T-0132 verifier (FAIL 0305fe4): adv.cpp small-file worst cases, combo.cpp, fuzz.cpp zip-level lies, many.cpp (B1 member-count repro), ac1.cpp, rt.cpp, peak.cpp (forked peak RSS), mkbig.cpp, dump.cpp.
 - t0127c/round3/: T-0127 coder round-3 harness/results.
+- t0134v1/: T-0134 verifier (FAIL d7c2232, quadratic params nesting memory): pa.cpp parser control chars, adv3b.cpp, tu.cpp TOOLS_USED fuzzer, mutrun.py, mkh.py (crafted tool/feed/dwell). Deep-nesting repro: python one-liner in the report (60k nested arrays).
