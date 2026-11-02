@@ -24,3 +24,4 @@ Original locations (scripts may hard-code these; adjust paths when reusing):
 - t0133v1/: T-0133 post-safety verifier (FAIL aec8e83): drv.cpp text-injection sweep, num.cpp number sweep (diff branch vs main), arc.cpp (B1), rt.cpp (Grbl realtime bytes / LinuxCNC LOGOPEN), mk2.py (rename toolpaths in .carv).
 - t0127c/round2/: T-0127 coder round-2 harness (free-piece checker, aggregator).
 - t0133v2/: T-0133 round-2 verifier (FAIL c3b1be6, B4 adjacent text values): adv.cpp fuzzer with LinuxCNC/Grbl model, gap.cpp repros, mk3.py (sets tool snapshot name), e2e/custom.pp.
+- t0133v3/: T-0133 round-3 verifier (PASS 88904b5): adv3.cpp AC5 fuzzer (REAL/GAP/authored), mut.cpp, edge.cpp, ff.cpp (\f/\v/\r template gap), mk.sh.
