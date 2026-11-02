@@ -59,6 +59,12 @@ constexpr double kMaxMachineValue = 1e6;
 constexpr double kMaxInverseTime = 1e9;
 /// Largest magnitude of any number as written (after unit conversion and the VAR multiplier).
 constexpr double kMaxWrittenValue = 1e9;
+/// Accepted range of `PostContext::arcTolerance` (mm): finer would ask for more chords than the
+/// segment cap allows (and below ~1e-13 r the chord angle rounds to zero), coarser is no arc.
+constexpr double kMinArcTolerance = 1e-6;
+constexpr double kMaxArcTolerance = 1.0;
+/// Most chords one linearised arc is split into.
+constexpr double kMaxArcSegments = 100000.0;
 /// Names quoted in error messages are cut to this many bytes.
 constexpr std::size_t kMaxQuotedName = 64;
 
@@ -77,8 +83,7 @@ std::string describeValue(double v) {
 
 /// A user-supplied name for an error message: quoted, sanitised and cut short.
 std::string quoted(std::string_view name) {
-    std::string s(name.substr(0, kMaxQuotedName));
-    detail::sanitiseText(s, detail::CommentContext::None);
+    const std::string s = detail::sanitiseText(name.substr(0, kMaxQuotedName), {});
     return "'" + s + (name.size() > kMaxQuotedName ? "...'" : "'");
 }
 
@@ -141,6 +146,17 @@ class Interpreter {
         if ((s_.rotaryWrapX || s_.rotaryWrapY) && !(ctx_.rotaryDiameter > 0.0)) {
             return Error{
                 0, "the post wraps a linear axis onto a rotary axis but the job has no rotary diameter"};
+        }
+        if (s_.rotaryWrapX || s_.rotaryWrapY) {
+            if (const std::string problem = rangeProblem(ctx_.rotaryDiameter, kMaxMachineValue, "mm");
+                !problem.empty()) {
+                return Error{0, "cannot write G-code: job rotary diameter " + problem};
+            }
+        }
+        if (!(ctx_.arcTolerance >= kMinArcTolerance && ctx_.arcTolerance <= kMaxArcTolerance)) {
+            return Error{0, "cannot write G-code: arc tolerance " + describeValue(ctx_.arcTolerance) +
+                                " mm is outside the supported range " + describeValue(kMinArcTolerance) +
+                                ".." + describeValue(kMaxArcTolerance) + " mm"};
         }
         lineNumber_ = s_.lineNumberStart;
         radiusOnlyArcs_ = arcsUseRadiusOnly();
@@ -311,7 +327,10 @@ class Interpreter {
 
     /// Checks a numeric tag value before conversion; records the first failure.
     bool acceptValue(const TagInfo& info, double v) {
-        const std::optional<ValueLimit> limit = limitFor(info);
+        std::optional<ValueLimit> limit = limitFor(info);
+        if (info.tag == "F" && s_.inverseTimeMode && frame_.cutting) {
+            limit = ValueLimit{kMaxInverseTime, "1/min"};  // [F] writes [FI] here
+        }
         if (!limit) {
             return true;
         }
@@ -515,7 +534,7 @@ class Interpreter {
     }
 
     std::optional<Error> lineariseArc(const Move& m, Vec3 from, double r, double sweep) {
-        const double tol = ctx_.arcTolerance > 0.0 ? ctx_.arcTolerance : 0.01;
+        const double tol = ctx_.arcTolerance;  // validated in run()
         double segments = 1.0;
         if (r > tol) {
             const double maxStep = 2.0 * std::acos(1.0 - tol / r);
@@ -523,10 +542,12 @@ class Interpreter {
         } else if (r > kZeroLength) {
             segments = std::ceil(std::fabs(sweep) / (kPi / 2.0));
         }
-        if (!std::isfinite(segments)) {
-            segments = 1.0;  // unreachable for validated moves; keeps the cast below defined
+        if (!(segments >= 1.0)) {
+            segments = 1.0;  // zero sweep (or NaN, which validated inputs cannot produce)
         }
-        const int n = static_cast<int>(std::clamp(segments, 1.0, 100000.0));
+        // An infinite count (chord angle rounded to zero) is capped like any large one, never
+        // collapsed to a single chord.
+        const int n = static_cast<int>(std::min(segments, kMaxArcSegments));
         const double a0 = std::atan2(from.y - m.centre.y, from.x - m.centre.x);
         for (int k = 1; k <= n; ++k) {
             const double t = static_cast<double>(k) / static_cast<double>(n);
@@ -718,7 +739,7 @@ class Interpreter {
             }
             // After SUBSTITUTE, so no post setting can reintroduce a control character or an
             // early comment close. The prefix is part of the line before the value.
-            detail::sanitiseText(body, detail::commentContextAt(std::string(before) + def.prefix));
+            body = detail::sanitiseText(body, detail::commentPositionAt(std::string(before) + def.prefix));
         } else if (def.incremental) {
             const double scale = std::pow(10.0, def.format.decimals);
             const auto quantise = [&](double v) { return std::round(v * scale) / scale; };

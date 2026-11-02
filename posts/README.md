@@ -66,12 +66,18 @@ one, the test fails.
    …) sit inside a comment: `( … )`, or after `;` on Marlin. The interpreter replaces control
    characters (newline, CR, tab, NUL …) in every text value with spaces, and inside an open
    `( … )` comment turns `(`/`)` into `[`/`]`, so no name can start a new block or close the
-   comment early (ADR-0020). Keep `SUBSTITUTE = "([)]"` in paren-comment posts anyway, for
+   comment early. Every text value is printable ASCII: `~ ! ?` and non-ASCII characters (Grbl
+   realtime commands, even inside comments) become `_`, accented Latin letters their plain
+   letter. A value at the start of a comment cannot form an active comment such as LinuxCNC's
+   `(LOGOPEN,file)` or Mach's `(MSG,…)`: a comma after the first word becomes `_`, and
+   PROBEOPEN/PROBECLOSE/LOGCLOSE get a leading `_` (ADR-0020). Keep `SUBSTITUTE = "([)]"` in paren-comment posts anyway, for
    readers of the post. `post_safety_test.cpp` checks every shipped post with hostile names and
    that text tags appear only inside comments.
 10. **Numbers are finite and in range.** The interpreter refuses to write a non-finite number,
     a length, feed, spindle speed, dwell or angle beyond 1e6 (mm, mm/min, rpm, s, degrees), or
-    any value that would be written beyond 1e9 after unit conversion and the VAR multiplier;
+    any value that would be written beyond 1e9 after unit conversion and the VAR multiplier
+    (inverse time may reach 1e9); the arc tolerance must be 1e-6 to 1 mm and a linearised arc has
+    at most 100,000 chords; a wrapped job's rotary diameter must be finite and at most 1e6 mm;
     the post run fails with an error naming the toolpath, move and value (ADR-0020).
 
 Hand-review result: all eight goldens pass points 1–8; points 9 and 10 are enforced by the

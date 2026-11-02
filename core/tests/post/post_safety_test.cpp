@@ -11,6 +11,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
+#include <cctype>
 #include <cmath>
 #include <cstddef>
 #include <fstream>
@@ -460,4 +461,234 @@ TEST_CASE("AC2: a refused run produces no partial output and stops early", "[pos
     const auto r = pp.run(tps, carvetto::test::fixtureContext());
     REQUIRE_FALSE(r.ok());
     CHECK_THAT(r.error().describe(), ContainsSubstring("toolpath 'Drill', move 12"));
+}
+
+// ---- round 2: arc tolerance, rotary diameter, inverse time (verifier B1 and notes) -------------
+
+namespace {
+
+const char* const kLinearOnly =
+    "VAR X = [X|A|X|1.3]\nVAR Y = [Y|A|Y|1.3]\nVAR Z = [Z|A|Z|1.3]\nbegin RAPID_MOVE\n\"G0[X][Y][Z]\"\nend\n"
+    "begin FEED_MOVE\n\"G1[X][Y][Z]\"\nend\n";
+
+std::size_t countLines(const std::string& text) {
+    std::size_t n = 0;
+    for (char c : text) {
+        n += c == '\n' ? 1 : 0;
+    }
+    return n;
+}
+
+}  // namespace
+
+TEST_CASE("B1: an arc tolerance outside 1e-6..1 mm is refused, never a single chord",
+          "[post][safety][arc]") {
+    const PostProcessor pp = parseText(kLinearOnly);
+    const Toolpath semi = simple({Move::rapid({25, 0, -1}), Move::arcCCW({-25, 0, -1}, {0, 0})});
+    for (double tol : {1e-12, 1e-15, 1e-17, 1e-20, 0.0, -0.01, std::numeric_limits<double>::quiet_NaN(), kInf,
+                       -kInf, 1e300, 1.5, 9e-7}) {
+        INFO("tolerance " << tol);
+        PostContext ctx;
+        ctx.arcTolerance = tol;
+        const auto r = pp.run({semi}, ctx);
+        REQUIRE_FALSE(r.ok());
+        CHECK_THAT(r.error().describe(), ContainsSubstring("arc tolerance"));
+        CHECK_THAT(r.error().describe(), ContainsSubstring("outside the supported range 1e-06..1 mm"));
+    }
+    // The bounds themselves are accepted and give many chords.
+    for (double tol : {1e-6, 1.0}) {
+        PostContext ctx;
+        ctx.arcTolerance = tol;
+        const std::string out = runOk(pp, {semi}, ctx);
+        CHECK(countLines(out) > 4);
+        CHECK(out.substr(out.size() - 24) == "G1X-25.000Y0.000Z-1.000\n");
+    }
+}
+
+TEST_CASE("B1: a huge arc at the finest tolerance is capped at 100000 chords, not collapsed",
+          "[post][safety][arc]") {
+    const PostProcessor pp = parseText(kLinearOnly);
+    PostContext ctx;
+    ctx.arcTolerance = 1e-6;
+    // r = 1e6 mm full circle: needs ~2.2 million chords at 1e-6 mm; capped.
+    const std::string out =
+        runOk(pp, {simple({Move::rapid({1e6, 0, 0}), Move::arcCCW({1e6, 0, 0}, {0, 0})})}, ctx);
+    CHECK(countLines(out) == 1 + 100000);
+}
+
+TEST_CASE("Rotary diameter must be finite and at most 1e6 mm when the post wraps", "[post][safety][rotary]") {
+    const PostProcessor wrap =
+        parseText("ROTARY_WRAP_Y = \"A\"\nVAR A = [A|A| A|1.3]\nbegin RAPID_MOVE\n\"G0[A]\"\nend\n");
+    for (double d : {kInf, 1e300, 1e6 + 1.0, std::numeric_limits<double>::quiet_NaN()}) {
+        INFO("diameter " << d);
+        PostContext ctx;
+        ctx.rotaryDiameter = d;
+        const auto r = wrap.run({simple({Move::rapid({0, 10, 5})})}, ctx);
+        REQUIRE_FALSE(r.ok());
+        CHECK_THAT(r.error().describe(), ContainsSubstring("rotary diameter"));
+    }
+    PostContext ok;
+    ok.rotaryDiameter = 1e6;
+    CHECK(wrap.run({simple({Move::rapid({0, 10, 5})})}, ok).ok());
+    // Without a wrap the diameter is not used and not checked.
+    const PostProcessor plain = parseText(kLinearOnly);
+    PostContext unused;
+    unused.rotaryDiameter = kInf;
+    CHECK(plain.run({simple({Move::rapid({0, 10, 5})})}, unused).ok());
+}
+
+TEST_CASE("Inverse-time [F] uses the inverse-time limit (1e9 1/min), not the feed limit",
+          "[post][safety][number]") {
+    const PostProcessor pp = parseText("INVERSE_TIME_MODE = YES\nVAR F = [F|A| F|1.1]\nbegin RAPID_MOVE\n"
+                                       "\"G0\"\nend\nbegin FEED_MOVE\n\"G1[F]\"\nend\n");
+    // 1000 mm/min over 1e-4 mm: 1e7 1/min, above the 1e6 feed limit but a valid inverse time.
+    const std::string out = runOk(pp, {simple({Move::rapid({0, 0, 0}), Move::feed({1e-4, 0, 0})})}, {});
+    CHECK(out == "G0\nG1 F10000000.0\n");
+    // 1000 mm/min over 1e-8 mm: 1e11 1/min.
+    const auto r = pp.run({simple({Move::rapid({0, 0, 0}), Move::feed({1e-8, 0, 0})})}, {});
+    REQUIRE_FALSE(r.ok());
+    CHECK_THAT(r.error().describe(), ContainsSubstring("1/min is outside the supported range -1e+09..1e+09"));
+}
+
+// ---- round 2: printable ASCII only (verifier B2, owner decision "ASCII-only, all posts") --------
+
+TEST_CASE("B2: text values are printable ASCII; Grbl realtime bytes never reach the output",
+          "[post][safety][text]") {
+    // U+00D1 U+00D7 U+00DB (Grbl feed +10 %, rapid 25 %, spindle -10 % bytes), ~ ! ?, é, €, a
+    // stray continuation byte, a truncated sequence, 0xFF and an overlong encoding.
+    std::string name = "\xC3\x91\xC3\x97" "10 \xC3\x9B\xC3\x97" "9 ~!? \xC3\xA9 \xE2\x82\xAC \x80 \xE2\x82 \xFF \xC0\xAF";
+    const std::string expected = "N_10 U_9 ___ e _ _ __ _ __";
+    for (const Shipped& p : shipped()) {
+        INFO(p.stem);
+        std::vector<Toolpath> tps = carvetto::test::fixtureToolpaths();
+        for (Toolpath& tp : tps) {
+            tp.name = name;
+            tp.tool.name = name;
+        }
+        PostContext ctx = carvetto::test::fixtureContext();
+        ctx.fileName = name;
+        ctx.product = name;
+        const std::string out = runOk(loadShipped(p), tps, ctx);
+        for (char c : out) {
+            const auto u = static_cast<unsigned char>(c);
+            CHECK((u < 0x80 && c != '~' && c != '!' && c != '?'));
+        }
+        CHECK_THAT(out, ContainsSubstring(expected));
+    }
+}
+
+TEST_CASE("B2: Latin-1 letters fold to plain letters, everything else non-ASCII to one _",
+          "[post][safety][text]") {
+    const PostProcessor pp =
+        parseText("begin HEADER\n\"[TOOLPATH_NAME]\"\nend\nbegin RAPID_MOVE\nend\n");
+    Toolpath tp = simple({Move::rapid({0, 0, 5})});
+    tp.name = "\xC3\x80\xC3\x85\xC3\x87\xC3\x89\xC3\x8F\xC3\x91\xC3\x96\xC3\x98\xC3\x9C\xC3\x9D"  // ÀÅÇÉÏÑÖØÜÝ
+              "\xC3\xA0\xC3\xA7\xC3\xA8\xC3\xB1\xC3\xB6\xC3\xBC\xC3\xBF"                          // àçèñöüÿ
+              " \xC3\x86\xC3\x9F\xC3\xB7\xC2\xB0 \xF0\x9F\x99\x82 \xE6\x97\xA5";  // Æß÷° emoji 日
+    CHECK(runOk(pp, {tp}, {}) == "AACEINOOUYacenouy ____ _ _\n");
+}
+
+TEST_CASE("B2: error messages quote names as printable ASCII", "[post][safety][text]") {
+    const PostProcessor pp = parseText(kLinearOnly);
+    Toolpath tp = simple({Move::rapid({0, 0, kInf})});
+    tp.name = "\xC3\x91~\n\xFF";
+    const auto r = pp.run({tp}, {});
+    REQUIRE_FALSE(r.ok());
+    CHECK_THAT(r.error().describe(), ContainsSubstring("toolpath 'N_ _'"));
+    for (char c : r.error().describe()) {
+        CHECK(static_cast<unsigned char>(c) < 0x80);
+    }
+}
+
+// ---- round 2: active comments (verifier B3, owner decision "neutralise in sanitiser") ----------
+
+TEST_CASE("B3: a value at the start of a comment cannot form an active comment", "[post][safety][text]") {
+    const PostProcessor pp = parseText(R"PP(
+begin HEADER
+"([TOOLPATH_NAME])"
+"( [TOOLPATH_NAME])"
+"; [TOOLPATH_NAME]"
+"(Name: [TOOLPATH_NAME])"
+"[TOOLPATH_NAME]"
+end
+begin RAPID_MOVE
+end
+)PP");
+    const auto render = [&](const std::string& name) {
+        Toolpath tp = simple({Move::rapid({0, 0, 5})});
+        tp.name = name;
+        return runOk(pp, {tp}, {});
+    };
+    for (const char* keyword : {"MSG", "DEBUG", "PRINT", "LOG", "LOGOPEN", "LOGAPPEND", "ABORT", "PY", "PYRUN"}) {
+        INFO(keyword);
+        const std::string k(keyword);
+        CHECK(render(k + ",/home/cnc/mill.hal") == "(" + k + "_/home/cnc/mill.hal)\n( " + k +
+                                                       "_/home/cnc/mill.hal)\n; " + k +
+                                                       "_/home/cnc/mill.hal\n(Name: " + k +
+                                                       ",/home/cnc/mill.hal)\n" + k + ",/home/cnc/mill.hal\n");
+    }
+    // Mixed case, leading spaces and spaces inside the keyword.
+    CHECK(render("  lOgOpEn,x").substr(0, 15) == "(  lOgOpEn_x)\n(");
+    CHECK(render("Log Open , x").substr(0, 15) == "(Log Open _ x)\n");
+    CHECK(render("\tmsg,hi").substr(0, 9) == "( msg_hi)");
+    // Any word, not just known keywords; only the first comma.
+    CHECK(render("Profile,1,2").substr(0, 14) == "(Profile_1,2)\n");
+    // No-comma keywords get a leading _.
+    CHECK(render("PROBEOPEN /tmp/x").substr(0, 19) == "(_PROBEOPEN /tmp/x)");
+    CHECK(render("probe close").substr(0, 14) == "(_probe close)");
+    CHECK(render("LogClose").substr(0, 11) == "(_LogClose)");
+    // Ordinary names are untouched.
+    CHECK(render("Profile 1").substr(0, 12) == "(Profile 1)\n");
+    CHECK(render("Pocket - 3 mm, rough").substr(0, 23) == "(Pocket - 3 mm, rough)\n");
+}
+
+TEST_CASE("B3: a VAR prefix that opens the comment counts as comment start", "[post][safety][text]") {
+    const PostProcessor pp = parseText(R"PP(
+VAR NAME = [TOOLPATH_NAME|A|(|1.0]
+begin HEADER
+"[TOOLPATH_NAME])"
+end
+begin RAPID_MOVE
+end
+)PP");
+    Toolpath tp = simple({Move::rapid({0, 0, 5})});
+    tp.name = "LOGOPEN,/etc/x";
+    CHECK(runOk(pp, {tp}, {}) == "(LOGOPEN_/etc/x)\n");
+}
+
+TEST_CASE("B3: no shipped post writes an active comment for a hostile name", "[post][safety][text]") {
+    for (const Shipped& p : shipped()) {
+        INFO(p.stem);
+        for (const char* name : {"LOGOPEN,/home/cnc/mill.hal", " msg ,hi", "PROBEOPEN /tmp/p", "py,import os"}) {
+            INFO(name);
+            std::vector<Toolpath> tps = carvetto::test::fixtureToolpaths();
+            for (Toolpath& tp : tps) {
+                tp.name = name;
+                tp.tool.name = name;
+            }
+            PostContext ctx = carvetto::test::fixtureContext();
+            ctx.fileName = name;
+            for (const std::string& line : splitLines(runOk(loadShipped(p), tps, ctx), p.lineEnding)) {
+                // Every comment's text, spaces dropped and upper-cased, must not start with a
+                // word followed by a comma, nor with an argument-less active keyword.
+                std::size_t open = std::string::npos;
+                for (std::size_t i = 0; i < line.size(); ++i) {
+                    if (line[i] == '(' || (line[i] == ';' && open == std::string::npos)) {
+                        open = i;
+                        std::string squashed;
+                        for (std::size_t k = i + 1; k < line.size() && line[k] != ')'; ++k) {
+                            if (line[k] != ' ') {
+                                squashed += static_cast<char>(std::toupper(static_cast<unsigned char>(line[k])));
+                            }
+                        }
+                        INFO(line);
+                        const std::size_t word = squashed.find_first_not_of(
+                            "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_");
+                        CHECK_FALSE((word != std::string::npos && squashed[word] == ','));
+                        CHECK(squashed.rfind("PROBEOPEN", 0) == std::string::npos);
+                    }
+                }
+            }
+        }
+    }
 }
