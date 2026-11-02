@@ -421,7 +421,7 @@ Acceptance criteria:
   1. (a)–(d) fixed or documented exactly, with tests where behaviour changes; save/load invariant preserved (fuzz from t0132v3).
   2. (e) behaviour documented in ADR-0020 and tested; goldens unchanged.
 
-### T-0018 offsetContours: inward offsets past the inradius must vanish, not invert   [status: ready]
+### T-0018 offsetContours: inward offsets past the inradius must vanish, not invert   [status: verifying — owner 2026-11-02: backport upstream Clipper2 fix (unconditional corner vertex) to pinned 1.4.0 at configure time, ADR-0006 §6]
 Phase: 1   Module: core/geometry   Depends on: —
 Goal: Found by the T-0121 coder: a closed contour offset inward by more than its inradius comes back inside out instead of empty (a 17 mm circle shrunk by 19.2 mm returns a 2.2 mm circle; by 30 mm a 13 mm circle). Pocket guards against it locally (`insetBy`); every other caller of `offsetContours` is exposed. Also document (or fix) that Clipper drops pieces of an open path lying exactly on a clip boundary.
 Acceptance criteria:
