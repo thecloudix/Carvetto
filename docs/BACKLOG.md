@@ -450,6 +450,14 @@ Goal: Non-blocking findings (harness t0136v1/). (a) Names that grow when stored 
 Acceptance criteria:
   1. (a)–(d) fixed with tests where behaviour changes; save/load invariant preserved (fuzz3).
 
+### T-0140 Profile: loose-piece check for Inside/Outside with allowance ≥ 0   [status: blocked]
+(Unblocks when T-0135 merges.)
+Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §14
+Goal: Found by the T-0135 verifier (harness t0135v1/scn/m3_630018_3.scn): the loose-piece report runs only for sided cuts (On, allowance < 0), so with Inside/Outside and allowance ≥ 0 pieces that no kept tab holds come free unreported (15.1 mm² in that scene, leads off; same in T-0127). Extend the check to all tabbed profiles without changing toolpaths.
+Acceptance criteria:
+  1. Every free piece ≥ 0.04 mm² reported for Inside/Outside allowance ≥ 0 (whole-scene flood, ≥ 2,000 new-seed scenes, leads off); held pieces never reported.
+  2. Moves byte-identical to the T-0135 merge (diagnostics may only gain loose-piece messages); perf within 10%.
+
 ### T-0019 Make the T-0004 AC3 timing test CPU-time based   [status: done (by T-0017: T-0004 AC3 timing uses process CPU time, cpu_time.hpp)]
 Phase: 1   Module: core/tests   Depends on: —
 Goal: "T-0004 AC3" in `open_offset_chains_test.cpp` asserts a wall-clock bound (< 0.5 s) and fails intermittently under `ctest -j8` (seen by the T-0120 coder). Convert it to process CPU time (GetProcessTimes on Windows, std::clock elsewhere) or a complexity ratio, like the other timing tests. Coordinate with T-0017 if it lands first (T-0017 AC6 touches the timing helper).
