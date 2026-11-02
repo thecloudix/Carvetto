@@ -160,57 +160,70 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     its radius plus 1.5 cells; the tab holds when uncut cells join the material next to the vector
     to the waste beyond the kerf (or when there is no such waste near it at all: a hole smaller
     than the kerf). This distance rule serves Inside/Outside with allowance ≥ 0, where the kerf
-    lies wholly on the waste side of the vector. **Sides of the cut (T-0127).** On the vector, and
-    for Inside/Outside with a negative allowance (the kerf then crosses the vector, so the distance
-    to the vectors no longer tells the part from the waste), a tab is judged by the sides of its own
-    cut path instead, decided by the profile side and the allowance (never by `Cut::distance`). The
-    cross-sections run across the whole kerf: a tool radius to each side of the cut, plus the
-    last-pass allowance on the side where the roughing cut runs (away from the vector, but towards
-    it On with a negative allowance, where the finishing cut runs left of the vector). The raster
-    gives each cell the side of its nearest point on the cut, exact on lines and arcs; where that
-    point is a junction of two spans, the side both spans agree on, or else (the cell lies in the
-    junction's normal cone) the outer side of the turn, so the material across a corner of the cut
-    is classified right. The part is every cell on the vector side (On: the left of travel) beyond
-    the kerf there, the waste every cell on the other side beyond the kerf there. In between, only
-    cells whose nearest cut point lies on this tab's raised stretch may carry material, and the cut
-    may only be crossed (from a cell on one side to a neighbour on the other) there; the raised
-    stretches of the other live tabs count as cut, so a tab holds on its own and never borrows
-    another tab's bridge (two tabs that could only hold a part together are both dropped, and the
-    loose part is reported, below). The rest of the kerf band counts as cut, and so do the cells
-    beyond an open end of the cut (left and right meet there). The tools cut with their radius at
-    the tab's layer, just below its top, where they cut widest (a V-bit's cone there: tab thickness
-    × tan(half angle), at most the radius at the bottom), and the kerf is that wide. The quick
-    answer must reach beyond the kerf on both sides, by the same classification (counting the other
-    tabs' stretches as cut). When the tools (at that radius + 1 µm) leave no part or no
-    waste beyond the kerf near the tab (a loop or arm narrower than the kerf, the tip of an arm the
-    kerf consumes) the tab would hold nothing: it is dropped and reported as such ("would hold
-    nothing"). Any remnant they leave counts as part, so a tab that does not hold it is dropped too.
-    When what they leave is thinner
-    than the raster's 1.5-cell widening of the tools (a part barely wider than two kerfs, a 0.14 mm
-    sliver; or a 0.18 mm strip of part between two kerfs joining the part to the tab), so that the
-    exact cut would join the part to the waste but the widened one does not, the raster is refined,
-    halving the cells (big tools start at a fortieth of the radius) down to 0.035 mm, where the
-    widening is still ≥ 0.05 mm. There a remnant or a neck still thinner than the widening (under
-    about 0.1 mm) counts as cut through, and so does anything the refinement cannot reach within 4
-    million cells. **Loose pieces.** A kept tab holds the material next to it, but a piece of the
-    part elsewhere (the kerf consuming a neck of the part) may have no tab: after the tab check
-    (whenever tabs are on, also when every tab was left out), with the kept tabs, a raster over
-    each closed primary cut (0.05 mm cells, coarser only beyond 4 million of them) marks every cell within the tab-layer radius + 2 µm of an open tool position (every
-    0.05 mm along every cut of both passes, outside the kept raised stretches) cut; uncut cells not
-    joined to the frame round the cut form loose pieces, and each of 0.05 mm² or more is reported against the vector of the nearest cut ("a piece of
-    material inside the cut … is not held by any kept tab and comes free"). The raster is skipped
-    when an exact answer is at hand: no other vector's cut within two radii + 0.6 mm of the loop,
-    and its interior eroded by the radius + 1 µm (an offset) is empty, or is one piece that stays
-    one piece when also eroded by the last-pass allowance + 0.05 mm and the cut keeps a tab (which
-    the tab check found joined to the part). Leads are not part of this check (a lead crossing the
-    part is a separate issue). So a short tab centred on a sharp turn of the cut — a convex
-    corner or spike tip, an inside corner (Inside of a square), a gear root, the tip of a narrow
-    arm — where the tool at the two ends of the raised stretch seals the tab's material off from
-    the waste, is dropped and reported (On a 30 × 30 square with a 6 mm tool and allowance 0 or
-    ±0.3, the tools at the two ends of a corner tab's raised stretch stand (L/2 + r)·√2 apart and
-    overlap for L < 2.49 mm; the tab is kept once they leave a neck of about 0.15 mm, the raster's
-    1.5-cell widening on both sides: from L ≈ 2.7 mm, at 2.6 mm with allowance +0.3, where the
-    corner of the cut is rounded), and so is one left hanging on the part by a sliver (verify rounds 2 and 3);
+    lies wholly on the waste side of the vector. **Sided tabs (T-0127).** On the vector, and for Inside/Outside with a negative
+    allowance (the kerf then crosses the vector, so the distance to the vectors no longer tells
+    the part from the waste), a tab is judged by the pieces of material the cut leaves, decided by
+    the profile side and the allowance (never by `Cut::distance`), with no cross-section shortcut:
+    the layer just below the tab top, where every tool position cuts a disc of the tab-layer
+    radius (a V-bit's cone there: tab thickness × tan(half angle), at most the radius at the
+    bottom). On a raster (0.05 mm cells) round the tab's raised stretches (both passes) out to two
+    radii + 0.6 mm: the pieces are the cells no tool position cuts with every tab lowered, this one
+    too; the tab's own material is the cells only its own lowered stretches would cut; a component
+    of its material joins the pieces it touches. A piece counts when it covers 0.01 mm² and is
+    thicker than 0.05 mm somewhere; the tab holds when it joins every counting piece within the
+    radius + 0.3 mm (+ 2 cells) of its raised stretches (their exact ends included) into one, and there are at least two. (The
+    cross-sections, which place the roughing cover, run across the whole kerf here: a tool radius
+    to each side of the cut, plus the last-pass allowance on the side where the roughing cut runs:
+    away from the vector, but towards it On with a negative allowance.) The
+    other live tabs count as cut, so a tab holds on its own and never borrows another tab's bridge.
+    This is judged with the tools exactly as wide (+ 0.01 mm, which closes hairline gaps between
+    cell centres) and again widened by 0.055 mm (on 0.05 mm cells, and where that fails on 0.025 mm
+    cells), where the tab must not leave a near
+    piece unjoined: every kept tab joins the material on both sides through a neck of about 0.1 mm
+    or more, and leaves no counting piece near it loose. With fewer than two counting pieces the
+    tab would hold nothing (a loop or arm narrower than the kerf, the tip of an arm the kerf
+    consumes): it is dropped and reported as such ("would hold nothing"); a tab that leaves a near
+    piece unjoined is dropped as cut through. Tool positions every k-th sample along the cuts (at
+    most sqrt(0.04·r) apart), their discs grown by the sagitta of the gap (≤ 5 µm), stand for the
+    sweep. Two exact quick answers skip the raster: when every tool position within 2r + 0.7 mm
+    (plus the sample gap) of the raised stretches lies on one of the tab's own cuts close to the
+    stretch along it (within 2.5 times that distance), and the cut there either bends gently (no
+    corner: between samples 0.25 mm apart at most 2° or the turn of an arc of radius 2r + 1 mm), or
+    turns at most 120° over any 2r + 1 mm and a run of at least three cross-sections of the tab's
+    material, with their middle one carried 0.4 mm past both walls, stays clear of every tool by the
+    widened radius + 0.06 mm; in the first, the core of every raised stretch of the tab (less
+    r + 0.17 mm and the sample gap at each end) is clear of every tool by r + 0.12 mm and the gap
+    (a roughing cover shorter than its finishing stretch leaves roughing tools there). Then no other cut
+    reaches the material within r + 0.3 mm of the
+    stretch, the cut leaves exactly its two sides as counting pieces there, and the tab's material
+    joins them. **Loose pieces.** A kept tab holds the material next to it, but a piece elsewhere
+    (the kerf consuming a neck of the part, a remnant between the finishing and roughing kerfs at a
+    corner) may have no tab: after the tab check, whenever tabs are on (also when every tab was left
+    out), every piece of material inside a closed primary cut must still join the outside through
+    a kept tab. Exactly, first: the material the cuts leave near the loop is what the bands of the
+    loop and of every cut near it (both passes; each the path grown by the radius on both sides)
+    leave, and an enclosed piece is a hole of their union (offsets and a union). No hole inside the
+    loop's box, or one hole that stays one when the bands grow 0.03 mm more and a loop that keeps a
+    tab (the tab check found it joined to the piece beside it): no loose piece. If no cut near keeps
+    a tab, every such hole is loose and reported as it is. Otherwise a raster over the loop's box
+    (0.05 mm cells, coarser only beyond 4 million) stamps the open tool positions (as above, with
+    the kept tabs' exact ends, sorted by x so a raster stamps only those near it), and uncut
+    components not joined to the frame are loose. Each loose piece of 0.05 mm² or more, thicker
+    than 0.05 mm somewhere (a hairline sliver between two kerfs does not count), is reported
+    against the vector of the loop that contains it, or else of the nearest cut ("a piece of
+    material inside the cut (about A square mm) is not held by any kept tab and comes free"), at
+    most five per vector, the last saying how many smaller ones remain. Leads are not part of this
+    check (a lead crossing the part is a separate issue), and pieces between neighbouring vectors
+    that reach out of the loop's box are not seen. Cost: on 500 close rectangles with a separate
+    last pass, allowance −1 (the slowest page measured), the profile takes about 1.2 × main's time;
+    On the vector, 500 small shapes, about 0.25 s, as before. So a short tab centred on a sharp
+    turn of the cut — a convex corner or spike tip, an inside corner (Inside of a square), a gear
+    root, the tip of a narrow arm — where the tool at the two ends of the raised stretch seals the
+    tab's material off from the waste, is dropped and reported (On a 30 × 30 square with a 6 mm
+    tool the tools at the two ends of a corner tab's raised stretch stand (L/2 + r)·√2 apart and
+    overlap for L < 2.49 mm; the tab is kept once the neck between them survives the widened
+    check: from L = 2.8 mm at allowance 0 and −0.3, 2.6 mm at +0.3, where the corner of the cut is
+    rounded), and so is one left hanging on the part by a sliver (verify rounds 2 and 3);
     tabs that hold — short tabs on straight edges, longer tabs on corners — are kept, for every
     allowance ≥ −r. (T-0124 merged with a conservative On guard that dropped every On tab whose
     raised-stretch ends came within 2r + 2|allowance| + max(0.25, 0.05·D) of each other; T-0127

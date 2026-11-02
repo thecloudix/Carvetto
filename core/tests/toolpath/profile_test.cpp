@@ -2393,3 +2393,201 @@ TEST_CASE("Sided tabs: a kept tab holds material, and a piece no kept tab holds 
         }
     }
 }
+
+TEST_CASE("Sided tabs: survival judged by the cut at the tab layer; every loose piece reported", "[toolpath][profile][tabs]") {
+    // T-0127 round-2 verifier (harness t0127v2, whole-scene flood wsf7). The first five scenes lost
+    // tabs that hold (On D12 next to another vector's cut; Inside holes with a V-bit, whose cone at
+    // the tab layer cuts far less than its bottom radius; an end-mill scene keeping 10 of 18),
+    // because another cut coming within the bottom radius of a cross-section dropped the tab
+    // outright; the flood shows all their tabs hold and no piece comes free. The last two leave 3
+    // and 4 loose remnants of 0.2-0.4 mm2 between the finishing and roughing kerfs at corners
+    // (V-bit, separate last pass), which a quick skip failed to report. Expected counts are the
+    // flood-verified ones.
+    struct Case {
+        const char* name;
+        const char* text;
+        std::size_t left;
+        std::size_t loose;
+    };
+    const std::vector<Case> cases{
+        {"m0_291000_29",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.18c7c0089d3ap+6 0x0p+0\n"
+         "L 0x1.18c7c0089d3ap+6 0x0p+0 0x1.18c7c0089d3ap+6 0x1.5e0ab0ea33a1bp+5\n"
+         "L 0x1.18c7c0089d3ap+6 0x1.5e0ab0ea33a1bp+5 0x0p+0 0x1.5e0ab0ea33a1bp+5\n"
+         "L 0x0p+0 0x1.5e0ab0ea33a1bp+5 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "L 0x1.23864fd069c38p+2 0x1.422453aebab3ap+3 0x1.80832c8606b1p+4 0x1.422453aebab3ap+3\n"
+         "L 0x1.80832c8606b1p+4 0x1.422453aebab3ap+3 0x1.80832c8606b1p+4 0x1.7b367b0a4f86bp+4\n"
+         "L 0x1.80832c8606b1p+4 0x1.7b367b0a4f86bp+4 0x1.23864fd069c38p+2 0x1.7b367b0a4f86bp+4\n"
+         "L 0x1.23864fd069c38p+2 0x1.7b367b0a4f86bp+4 0x1.23864fd069c38p+2 0x1.422453aebab3ap+3\n"
+         "P 0x1.8p+3 0 0x0p+0 2 0 0x0p+0 0x1.9f24c53bce873p+3 0x1.9ca5f979ce331p+2 0x1.09a8a73023943p-1 0x1.4p+2 0 0x1.8c500d0a72e39p-1 1 1 0x1.2519795e4957bp+3 0x1.21126da16717bp+2 0 2 0x1.8bcdefa85b888p+4 0x0p+0 1 0 0x0p+0 2 0x1.4dda458457edcp+4 1 0 0x1.bd21758620c09p-2 0x1.9b2ec25f38dc9p+3 0x1.2eda2cd59c903p-2 0x1.6d82cb52e232fp+2 0 0x1.f676b6a6ba85ap-3 1 0 0x0p+0 0x0p+0 0 0 0 0 0 1 0x1.a03e5fefc22ap+1 -0x1.92be0b0a30a27p+4 0x1p+1\n"
+         "K 0 0\n"         , 0, 0},
+        {"hole1",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.03p+6 0x0p+0\n"
+         "L 0x1.03p+6 0x0p+0 0x1.03p+6 0x1.1d95810624dd3p+6\n"
+         "L 0x1.03p+6 0x1.1d95810624dd3p+6 0x0p+0 0x1.1d95810624dd3p+6\n"
+         "L 0x0p+0 0x1.1d95810624dd3p+6 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "L 0x1.ep+4 0x1.ep+4 0x1.27b851eb851ecp+5 0x1.ep+4\n"
+         "L 0x1.27b851eb851ecp+5 0x1.ep+4 0x1.27b851eb851ecp+5 0x1.17p+5\n"
+         "L 0x1.27b851eb851ecp+5 0x1.17p+5 0x1.ep+4 0x1.17p+5\n"
+         "L 0x1.ep+4 0x1.17p+5 0x1.ep+4 0x1.ep+4\n"
+         "P 0x1.8p+2 60 -0x1.7bfe5c91d14e4p+1 1 1 0x1.90a3d70a3d70ap+0 0x1.7a5e353f7ced9p+2 0x1.ecac083126e98p+2 0x1.e978d4fdf3b64p-3 0x1.4p+2 0 0x1.051eb851eb852p-2 0 1 0x1.e4dd2f1a9fbe7p-1 0x1.604189374bc6ap+0 0 1 0x1.9p+6 0x0p+0 1 0 0x0p+0 0 0x1.4p+3 0 0 0x1.657184ae74489p-4 0x1.4p+2 0x1.921fb54442d18p-1 0x1.4p+2 0 0x1.921fb54442d18p+0 0 0 0x0p+0 0x0p+0 0 0 0 0 0 0 0x0p+0 0x0p+0 0x1p+1\n"
+         "K 0 0\n"         , 0, 0},
+        {"m1_292000_22",
+         "C 1\n"
+         "L 0x1.3c6ea3c9e402bp+3 0x0p+0 0x1.a702888c3fa3ap+3 0x1.63ae597e95724p+0\n"
+         "L 0x1.a702888c3fa3ap+3 0x1.63ae597e95724p+0 0x1.9ad8cadbe3863p+3 0x1.b858257810ebp+1\n"
+         "L 0x1.9ad8cadbe3863p+3 0x1.b858257810ebp+1 0x1.276a369cfda2ep+3 0x1.c598bbce60501p+1\n"
+         "L 0x1.276a369cfda2ep+3 0x1.c598bbce60501p+1 0x1.1209ced5405eap+3 0x1.3c6ea3c9e402ap+2\n"
+         "L 0x1.1209ced5405eap+3 0x1.3c6ea3c9e402ap+2 0x1.581b74c01436p+3 0x1.f40460dc01d21p+2\n"
+         "L 0x1.581b74c01436p+3 0x1.f40460dc01d21p+2 0x1.2cc2c17ddf4b7p+3 0x1.2cc2c17ddf4b7p+3\n"
+         "L 0x1.2cc2c17ddf4b7p+3 0x1.2cc2c17ddf4b7p+3 0x1.8e4642ae50889p+2 0x1.ebd3f74802a21p+2\n"
+         "L 0x1.8e4642ae50889p+2 0x1.ebd3f74802a21p+2 0x1.3c6ea3c9e402cp+2 0x1.1209ced5405eap+3\n"
+         "L 0x1.3c6ea3c9e402cp+2 0x1.1209ced5405eap+3 0x1.5a00b03c7d757p+2 0x1.84913fefe6e44p+3\n"
+         "L 0x1.5a00b03c7d757p+2 0x1.84913fefe6e44p+3 0x1.b858257810eb7p+1 0x1.9ad8cadbe3863p+3\n"
+         "L 0x1.b858257810eb7p+1 0x1.9ad8cadbe3863p+3 0x1.8c01d7c7e28e7p+0 0x1.3889504ac0585p+3\n"
+         "L 0x1.8c01d7c7e28e7p+0 0x1.3889504ac0585p+3 0x1.5d0b7d62c9306p-51 0x1.3c6ea3c9e402bp+3\n"
+         "L 0x1.5d0b7d62c9306p-51 0x1.3c6ea3c9e402bp+3 -0x1.63ae597e9571cp+0 0x1.a702888c3fa3bp+3\n"
+         "L -0x1.63ae597e9571cp+0 0x1.a702888c3fa3bp+3 -0x1.b858257810eadp+1 0x1.9ad8cadbe3863p+3\n"
+         "L -0x1.b858257810eadp+1 0x1.9ad8cadbe3863p+3 -0x1.c598bbce604fdp+1 0x1.276a369cfda2ep+3\n"
+         "L -0x1.c598bbce604fdp+1 0x1.276a369cfda2ep+3 -0x1.3c6ea3c9e4029p+2 0x1.1209ced5405eap+3\n"
+         "L -0x1.3c6ea3c9e4029p+2 0x1.1209ced5405eap+3 -0x1.f40460dc01d1fp+2 0x1.581b74c01436p+3\n"
+         "L -0x1.f40460dc01d1fp+2 0x1.581b74c01436p+3 -0x1.2cc2c17ddf4b7p+3 0x1.2cc2c17ddf4b7p+3\n"
+         "L -0x1.2cc2c17ddf4b7p+3 0x1.2cc2c17ddf4b7p+3 -0x1.ebd3f74802a2p+2 0x1.8e4642ae5088bp+2\n"
+         "L -0x1.ebd3f74802a2p+2 0x1.8e4642ae5088bp+2 -0x1.1209ced5405eap+3 0x1.3c6ea3c9e402ap+2\n"
+         "L -0x1.1209ced5405eap+3 0x1.3c6ea3c9e402ap+2 -0x1.84913fefe6e45p+3 0x1.5a00b03c7d752p+2\n"
+         "L -0x1.84913fefe6e45p+3 0x1.5a00b03c7d752p+2 -0x1.9ad8cadbe3863p+3 0x1.b858257810eabp+1\n"
+         "L -0x1.9ad8cadbe3863p+3 0x1.b858257810eabp+1 -0x1.3889504ac0584p+3 0x1.8c01d7c7e28eap+0\n"
+         "L -0x1.3889504ac0584p+3 0x1.8c01d7c7e28eap+0 -0x1.3c6ea3c9e402bp+3 0x1.5d0b7d62c9306p-50\n"
+         "L -0x1.3c6ea3c9e402bp+3 0x1.5d0b7d62c9306p-50 -0x1.a702888c3fa3ap+3 -0x1.63ae597e95726p+0\n"
+         "L -0x1.a702888c3fa3ap+3 -0x1.63ae597e95726p+0 -0x1.9ad8cadbe3863p+3 -0x1.b858257810eb2p+1\n"
+         "L -0x1.9ad8cadbe3863p+3 -0x1.b858257810eb2p+1 -0x1.276a369cfda2ep+3 -0x1.c598bbce604fcp+1\n"
+         "L -0x1.276a369cfda2ep+3 -0x1.c598bbce604fcp+1 -0x1.1209ced5405ebp+3 -0x1.3c6ea3c9e4028p+2\n"
+         "L -0x1.1209ced5405ebp+3 -0x1.3c6ea3c9e4028p+2 -0x1.581b74c014361p+3 -0x1.f40460dc01d1fp+2\n"
+         "L -0x1.581b74c014361p+3 -0x1.f40460dc01d1fp+2 -0x1.2cc2c17ddf4b8p+3 -0x1.2cc2c17ddf4b7p+3\n"
+         "L -0x1.2cc2c17ddf4b8p+3 -0x1.2cc2c17ddf4b7p+3 -0x1.8e4642ae5088dp+2 -0x1.ebd3f74802a1fp+2\n"
+         "L -0x1.8e4642ae5088dp+2 -0x1.ebd3f74802a1fp+2 -0x1.3c6ea3c9e403p+2 -0x1.1209ced5405e8p+3\n"
+         "L -0x1.3c6ea3c9e403p+2 -0x1.1209ced5405e8p+3 -0x1.5a00b03c7d75fp+2 -0x1.84913fefe6e42p+3\n"
+         "L -0x1.5a00b03c7d75fp+2 -0x1.84913fefe6e42p+3 -0x1.b858257810ec8p+1 -0x1.9ad8cadbe3862p+3\n"
+         "L -0x1.b858257810ec8p+1 -0x1.9ad8cadbe3862p+3 -0x1.8c01d7c7e28ecp+0 -0x1.3889504ac0584p+3\n"
+         "L -0x1.8c01d7c7e28ecp+0 -0x1.3889504ac0584p+3 -0x1.05c89e0a16e44p-49 -0x1.3c6ea3c9e402bp+3\n"
+         "L -0x1.05c89e0a16e44p-49 -0x1.3c6ea3c9e402bp+3 0x1.63ae597e95707p+0 -0x1.a702888c3fa3bp+3\n"
+         "L 0x1.63ae597e95707p+0 -0x1.a702888c3fa3bp+3 0x1.b858257810ea3p+1 -0x1.9ad8cadbe3864p+3\n"
+         "L 0x1.b858257810ea3p+1 -0x1.9ad8cadbe3864p+3 0x1.c598bbce60505p+1 -0x1.276a369cfda2ep+3\n"
+         "L 0x1.c598bbce60505p+1 -0x1.276a369cfda2ep+3 0x1.3c6ea3c9e402cp+2 -0x1.1209ced5405eap+3\n"
+         "L 0x1.3c6ea3c9e402cp+2 -0x1.1209ced5405eap+3 0x1.f40460dc01d1dp+2 -0x1.581b74c014361p+3\n"
+         "L 0x1.f40460dc01d1dp+2 -0x1.581b74c014361p+3 0x1.2cc2c17ddf4b6p+3 -0x1.2cc2c17ddf4b8p+3\n"
+         "L 0x1.2cc2c17ddf4b6p+3 -0x1.2cc2c17ddf4b8p+3 0x1.ebd3f74802a25p+2 -0x1.8e4642ae50885p+2\n"
+         "L 0x1.ebd3f74802a25p+2 -0x1.8e4642ae50885p+2 0x1.1209ced5405e8p+3 -0x1.3c6ea3c9e403p+2\n"
+         "L 0x1.1209ced5405e8p+3 -0x1.3c6ea3c9e403p+2 0x1.84913fefe6e42p+3 -0x1.5a00b03c7d76p+2\n"
+         "L 0x1.84913fefe6e42p+3 -0x1.5a00b03c7d76p+2 0x1.9ad8cadbe3862p+3 -0x1.b858257810ec9p+1\n"
+         "L 0x1.9ad8cadbe3862p+3 -0x1.b858257810ec9p+1 0x1.3889504ac0584p+3 -0x1.8c01d7c7e28fp+0\n"
+         "L 0x1.3889504ac0584p+3 -0x1.8c01d7c7e28fp+0 0x1.3c6ea3c9e402bp+3 0x0p+0\n"
+         "C 1\n"
+         "L 0x1.8c41da281b482p+4 -0x1.ab593f36000cep+3 0x1.f1ed64a18e077p+5 -0x1.ab593f36000cep+3\n"
+         "L 0x1.f1ed64a18e077p+5 -0x1.ab593f36000cep+3 0x1.038bf829aec86p+6 -0x1.56af106ec1e77p+3\n"
+         "L 0x1.038bf829aec86p+6 -0x1.56af106ec1e77p+3 0x1.038bf829aec86p+6 0x1.3519e91240829p+3\n"
+         "L 0x1.038bf829aec86p+6 0x1.3519e91240829p+3 0x1.f1ed64a18e077p+5 0x1.89c417d97ea8p+3\n"
+         "L 0x1.f1ed64a18e077p+5 0x1.89c417d97ea8p+3 0x1.8c41da281b482p+4 0x1.89c417d97ea8p+3\n"
+         "L 0x1.8c41da281b482p+4 0x1.89c417d97ea8p+3 0x1.61ecc2c47c357p+4 0x1.3519e91240829p+3\n"
+         "L 0x1.61ecc2c47c357p+4 0x1.3519e91240829p+3 0x1.61ecc2c47c357p+4 -0x1.56af106ec1e77p+3\n"
+         "L 0x1.61ecc2c47c357p+4 -0x1.56af106ec1e77p+3 0x1.8c41da281b482p+4 -0x1.ab593f36000cep+3\n"
+         "P 0x1.8p+2 60 -0x1.3bb50eb711cdep+1 1 0 0x0p+0 0x1.43d9b9a17053p+2 0x1.63933f4486ce8p+1 0x0p+0 0x1.4p+2 1 0x1.fc5840336296p-1 1 1 0x1.0c4a9c12fe117p+3 0x1.67767a509549ap-1 0 9 0x1.3d160aa3a3803p+6 0x0p+0 0 0 0x0p+0 2 0x1.59e721232e2fep+4 1 1 0x1.a30619857a99cp-3 0x1.28d8e95d1bd2ap+3 0x1.d5b25836d4cfdp-1 0x1.032110acff6d6p+3 2 0x1.95699f25a558bp-1 1 0 0x0p+0 0x0p+0 1 8 0 0 0 0 -0x1.2a449fee686dep+5 -0x1.52bfbcd538f6cp+5 0x1p+1\n"
+         "K 1 0\n"         , 12, 0},
+        {"m1_292002_25",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.02ffddc9af687p+6 0x0p+0\n"
+         "L 0x1.02ffddc9af687p+6 0x0p+0 0x1.02ffddc9af687p+6 0x1.1d95953f29694p+6\n"
+         "L 0x1.02ffddc9af687p+6 0x1.1d95953f29694p+6 0x0p+0 0x1.1d95953f29694p+6\n"
+         "L 0x0p+0 0x1.1d95953f29694p+6 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "L 0x1.c617078517c16p+5 0x1.f1c9fd83a48d9p+4 0x1.fdce35ba8dbbp+5 0x1.f1c9fd83a48d9p+4\n"
+         "L 0x1.fdce35ba8dbbp+5 0x1.f1c9fd83a48d9p+4 0x1.fdce35ba8dbbp+5 0x1.1fe538b40b426p+5\n"
+         "L 0x1.fdce35ba8dbbp+5 0x1.1fe538b40b426p+5 0x1.c617078517c16p+5 0x1.1fe538b40b426p+5\n"
+         "L 0x1.c617078517c16p+5 0x1.1fe538b40b426p+5 0x1.c617078517c16p+5 0x1.f1c9fd83a48d9p+4\n"
+         "C 1\n"
+         "L 0x1.e63c47580602p+4 0x1.5315c003e2218p+5 0x1.3fb71a902b56cp+5 0x1.5315c003e2218p+5\n"
+         "L 0x1.3fb71a902b56cp+5 0x1.5315c003e2218p+5 0x1.3fb71a902b56cp+5 0x1.88b4067064c3ep+5\n"
+         "L 0x1.3fb71a902b56cp+5 0x1.88b4067064c3ep+5 0x1.e63c47580602p+4 0x1.88b4067064c3ep+5\n"
+         "L 0x1.e63c47580602p+4 0x1.88b4067064c3ep+5 0x1.e63c47580602p+4 0x1.5315c003e2218p+5\n"
+         "P 0x1.8p+2 60 -0x1.7bffcb0b4397dp+1 1 1 0x1.9099ed9e9cffap+0 0x1.7a5de54010ebap+2 0x1.eca82bfbbb783p+2 0x1.ea14da1f33c52p-3 0x1.4p+2 0 0x1.051d57a45bd7p-2 0 1 0x1.e4d379f081e2bp-1 0x1.603100e475485p+0 0 1 0x1.25aa1e2d538aap+6 0x0p+0 1 1 0x0p+0 2 0x1.818421ee6298ap+2 0 0 0x1.bd51a925f616bp-2 0x1.28a50516f3eaep+1 0x1.e8f8ed18c8ee9p-1 0x1.4704a8b42a24bp+3 0 0x1.78fad54048bc1p-3 1 0 0x1.64e1ccb905711p+2 0x0p+0 1 1 0 1 0 1 -0x1.4859c93d17404p+3 -0x1.684eb48465b42p+5 0x1p+1\n"
+         "K 1 0\n"         , 0, 0},
+        {"m1_292003_7",
+         "C 1\n"
+         "L 0x1.c1f1858f2e7ebp+3 0x0p+0 0x1.0ac653728a875p+2 0x1.9215e4ae6351dp+1\n"
+         "L 0x1.0ac653728a875p+2 0x1.9215e4ae6351dp+1 0x1.326c557a86647p+2 0x1.d7896ae24e00cp+3\n"
+         "L 0x1.326c557a86647p+2 0x1.d7896ae24e00cp+3 -0x1.9a01b6c745e11p+0 0x1.356f89d8b2e21p+2\n"
+         "L -0x1.9a01b6c745e11p+0 0x1.356f89d8b2e21p+2 -0x1.728beaf192496p+3 0x1.0d37c3b2d3cfcp+3\n"
+         "L -0x1.728beaf192496p+3 0x1.0d37c3b2d3cfcp+3 -0x1.3e22b9f25eae6p+2 0x1.44d4d272f09b7p-3\n"
+         "L -0x1.3e22b9f25eae6p+2 0x1.44d4d272f09b7p-3 -0x1.85afefc4c2423p+3 -0x1.1b1fd626b574fp+3\n"
+         "L -0x1.85afefc4c2423p+3 -0x1.1b1fd626b574fp+3 -0x1.60c35c4537edp+0 -0x1.d49f99f2d55c5p+1\n"
+         "L -0x1.60c35c4537edp+0 -0x1.d49f99f2d55c5p+1 0x1.2dfcb6de27e64p+2 -0x1.d0b5e0f15981cp+3\n"
+         "L 0x1.2dfcb6de27e64p+2 -0x1.d0b5e0f15981cp+3 0x1.1ea76b1361b59p+2 -0x1.aff38bab5ec3fp+1\n"
+         "L 0x1.1ea76b1361b59p+2 -0x1.aff38bab5ec3fp+1 0x1.c1f1858f2e7ebp+3 0x0p+0\n"
+         "C 1\n"
+         "L 0x1.45fefc2fdb7e6p+4 -0x1.d8b631f0db8e4p+3 0x1.f82898d76ed05p+5 -0x1.d8b631f0db8e4p+3\n"
+         "L 0x1.f82898d76ed05p+5 -0x1.d8b631f0db8e4p+3 0x1.12dd3dc119fcep+6 -0x1.226ea745c6e8ap+3\n"
+         "L 0x1.12dd3dc119fcep+6 -0x1.226ea745c6e8ap+3 0x1.12dd3dc119fcep+6 0x1.7e8790635e55ap+3\n"
+         "L 0x1.12dd3dc119fcep+6 0x1.7e8790635e55ap+3 0x1.f82898d76ed05p+5 0x1.1a678d87397dap+4\n"
+         "L 0x1.f82898d76ed05p+5 0x1.1a678d87397dap+4 0x1.45fefc2fdb7e6p+4 0x1.1a678d87397dap+4\n"
+         "L 0x1.45fefc2fdb7e6p+4 0x1.1a678d87397dap+4 0x1.d5b66db4a2572p+3 0x1.7e8790635e55ap+3\n"
+         "L 0x1.d5b66db4a2572p+3 0x1.7e8790635e55ap+3 0x1.d5b66db4a2572p+3 -0x1.226ea745c6e8ap+3\n"
+         "L 0x1.d5b66db4a2572p+3 -0x1.226ea745c6e8ap+3 0x1.45fefc2fdb7e6p+4 -0x1.d8b631f0db8e4p+3\n"
+         "P 0x1.9666666666666p+1 0 -0x1.6bb2ec7ca9ecep+0 0 0 0x0p+0 0x1.bd90def0b51e7p+3 0x1.36590b4eca72dp+2 0x0p+0 0x1.4p+2 0 0x1.acc6145041861p-2 0 1 0x1.0283c4bab757fp+2 0x1.54d56306506acp+1 0 9 0x1.0b9a86ef55023p+3 0x0p+0 1 0 0x0p+0 0 0x1.8f2f53f0a56bp+4 1 0 0x1.7c4370a0d6cp-2 0x1.de0fcda8252fbp+3 0x1.3e79ecc03ebeep-1 0x1.0ee25c4f105e8p+0 0 0x1.fd0807692e42ep-1 1 0 0x0p+0 0x0p+0 2 4 0 0 0 0 -0x1.70a1bb9f46a78p+2 0x1.16b3bc6a2d53p+1 0x1p+1\n"
+         "K 0 0\n"         , 0, 0},
+        {"m1_292007_6",
+         "C 1\n"
+         "L 0x1.baf2ff349ab6ap+4 0x0p+0 0x1.43ceb8654c3a1p+2 0x1.04aee8e3c5fa5p+3\n"
+         "L 0x1.43ceb8654c3a1p+2 0x1.04aee8e3c5fa5p+3 -0x1.04d6d2a97673ap+4 0x1.c3c962cc1040ep+4\n"
+         "L -0x1.04d6d2a97673ap+4 0x1.c3c962cc1040ep+4 -0x1.ed00e5adb9ac2p+2 0x1.6d78574882f97p-2\n"
+         "L -0x1.ed00e5adb9ac2p+2 0x1.6d78574882f97p-2 -0x1.cbcf09ee473dfp+3 -0x1.8e34bff96efc5p+4\n"
+         "L -0x1.cbcf09ee473dfp+3 -0x1.8e34bff96efc5p+4 0x1.0a1f06fbe85a3p+2 -0x1.9f135d9b90f39p+2\n"
+         "L 0x1.0a1f06fbe85a3p+2 -0x1.9f135d9b90f39p+2 0x1.baf2ff349ab6ap+4 0x0p+0\n"
+         "P 0x1.8p+2 120 -0x1.5b328de7f8165p+0 1 0 0x0p+0 0x1.23c8bccd6f722p+2 0x1.14e6f7e389488p+0 0x1.ddebb3d8831bep-3 0x1.4p+2 1 0x1.947d98b3c077ap-1 0 1 0x1.9e570c51275fap+1 0x1.f78f2eef958e2p-3 0 1 0x1.72d8444836cbp+4 0x0p+0 1 1 0x0p+0 1 0x1.250f4a0a7a755p+4 0 0 0x1.a32f93ac778a4p-2 0x1.117e0a571544ap+1 0x1.639cbc106d5dbp-2 0x1.0ac69272ae812p+3 1 0x1.845f084e3845fp+0 0 0 0x1.f63aca7141b86p+1 0x0p+0 2 5 0 1 0 0 0x1.1ec9ebc645206p+5 0x1.8c8b6878d10d8p+2 0x1p+1\n"
+         "K 0 0\n"         , 0, 3},
+        {"m2_293000_17",
+         "C 1\n"
+         "L 0x1.c709af18f91cdp+4 0x0p+0 0x1.35c3345553485p+2 0x1.5323e09a66f96p+2\n"
+         "L 0x1.35c3345553485p+2 0x1.5323e09a66f96p+2 0x1.cfd189438947p-50 0x1.a47b66ac19dfdp+4\n"
+         "L 0x1.cfd189438947p-50 0x1.a47b66ac19dfdp+4 -0x1.673cee10a3094p+2 0x1.556084a85c215p+2\n"
+         "L -0x1.673cee10a3094p+2 0x1.556084a85c215p+2 -0x1.ae5c98a02419dp+4 0x1.dab766537913ep-49\n"
+         "L -0x1.ae5c98a02419dp+4 0x1.dab766537913ep-49 -0x1.5c5a9da8209fp+2 -0x1.3ee74a510f1f4p+2\n"
+         "L -0x1.5c5a9da8209fp+2 -0x1.3ee74a510f1f4p+2 -0x1.5a09e1ffa5487p-48 -0x1.a246964ed7fcep+4\n"
+         "L -0x1.5a09e1ffa5487p-48 -0x1.a246964ed7fcep+4 0x1.27dac3b86fe27p+2 -0x1.3c0cc090758c1p+2\n"
+         "L 0x1.27dac3b86fe27p+2 -0x1.3c0cc090758c1p+2 0x1.c709af18f91cdp+4 0x0p+0\n"
+         "P 0x1.8p+2 60 -0x1.ec3605e72f71cp+0 1 1 0x0p+0 0x1.7358c5e35d2c3p+2 0x1.9b26c5175da51p+2 0x0p+0 0x1.4p+2 1 0x1.9ff6a36e834b4p-1 0 1 0x1.07879169c778cp+0 0x1.874c7a78c7c96p-1 0 4 0x1.9f5fe9650ef28p+5 0x0p+0 0 1 0x0p+0 0 0x1.ad01e45e5c4efp+3 0 0 0x1.0b2222517329cp-2 0x1.1b2c5d17ba15ep+3 0x1.bcf4e84861c18p-3 0x1.81c1da61e3cb8p+0 1 0x1.4bc50faaae157p+0 1 0 0x1.ec58f71c47032p+3 0x0p+0 1 8 0 0 0 0 -0x1.cf61936ff8c0ap+4 -0x1.5ce4faf98fe78p+3 0x1p+1\n"
+         "K 1 0\n"         , 0, 4},
+        // A roughing cover shorter than its finishing stretch (last pass 0.001 mm): only the tabs
+        // that hold are kept (a quick answer once kept one the roughing cut severs).
+        {"m0_301012_20",
+         "C 1\n"
+         "L 0x1.f04e6207aec9cp+3 -0x1.01ccffb61ac3ap+3 -0x1.ff431448768cp-2 0x1.1785212e6b132p+4\n"
+         "A -0x1.00243d54f93f1p+3 0x1.986ba1097874fp+3 0x1.1b7cdf848e82fp+3 0x1.1ecb56c2daa48p-1 -0x1.4a6cdf938c286p+1 0\n"
+         "L -0x1.f04e6207aec9cp+3 0x1.01ccffb61ac3ap+3 0x1.ff431448768cp-2 -0x1.1785212e6b132p+4\n"
+         "A 0x1.00243d54f93f1p+3 -0x1.986ba1097874fp+3 0x1.1b7cdf848e82fp+3 -0x1.4a6cdf938c286p+1 0x1.1ecb56c2daa48p-1 0\n"
+         "P 0x1.8p+3 0 0x0p+0 2 0 0x0p+0 0x1.280c513b877ddp+1 0x1.a809074ced7c8p-1 0x0p+0 0x1.4p+2 1 0x1.7d70e5d1b354p-11 0 1 0x1.53c98607de9a8p-1 0x1.65041009c716cp+0 0 9 0x1.75f122fd8ef7p+5 0x0p+0 0 1 0x0p+0 2 0x1.b1102616c7e8dp+1 1 0 0x1.96a0fa8d86107p-2 0x1.fbe7b3a1a550ap+2 0x1.29e9d0a8d6e34p-3 0x1.be64fc5511842p+2 1 0x1.4ae953775cc2fp-2 0 0 0x0p+0 0x0p+0 2 1 0 1 0 1 0x1.bfedc4d5afc14p+4 -0x1.7cbe57514a44ap+5 0x1p+1\n"
+         "K 0 0\n"         , 7, 0},
+    };
+    for (const Case& k : cases) {
+        std::vector<Contour> cs;
+        ProfileParams p;
+        int vbitDeg = 0;
+        const double d = readScene(k.text, cs, p, vbitDeg);
+        tooling::Tool tool = test::endMill(d);
+        if (vbitDeg > 0) {
+            tool.type = tooling::ToolType::VBit;
+            tool.includedAngle = vbitDeg * geometry::kPi / 180.0;
+        }
+        INFO("scene " << k.name);
+        const ProfileResult r = profileToolpath(cs, tool, p);
+        REQUIRE(r.ok());
+        const auto loose = static_cast<std::size_t>(std::count_if(r.diagnostics.begin(), r.diagnostics.end(), [](const ProfileDiagnostic& g) {
+            return g.message.find("not held by any kept tab") != std::string::npos;
+        }));
+        CHECK(tabsLeftOut(r) == k.left);
+        CHECK(loose == k.loose);
+    }
+}
