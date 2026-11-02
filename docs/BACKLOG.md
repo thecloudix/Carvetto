@@ -131,6 +131,7 @@ Acceptance criteria:
 ### T-0016 Sharp/Square offset cost on dense hatch-like vectors   [status: ready]
 Phase: 1 (alongside T-0120/T-0121)   Module: core/geometry   Depends on: T-0017
 Goal: Scaling is linear, but on dense zig-zags with d ≫ pitch Sharp/Square joins are 10–20× slower than Round (1000-span zig-zag, pitch 0.02, amplitude 1, d=7: ~14 s Release vs 0.7 s Round). Hatch- and fill-like vectors will hit this in Profile/Pocket.
+Also (found by the T-0009 coder, 2026-11-02): input made largely of sub-tolerance spans is now offset (main returned nothing) but slowly — a closed circle of 8,000 spans of 0.4 µm ~6 s Release at d=1; random walks of 0.5 µm steps 0.44 / 1.55 / 3.4 s at 2,000 / 4,000 / 8,000 steps (super-linear). Bring it to the same scaling bound as the hatch cases.
 Acceptance criteria:
   1. The 1000-span case above runs within 3× of Round for Sharp and Square (Release, CPU time), and 4000 spans scale ≤ 2.5× per doubling.
   2. Results bit-identical to, or judged no worse than, the T-0006 output on the T-0006 fuzz set (all joins, both sides).
