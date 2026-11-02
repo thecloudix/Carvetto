@@ -111,22 +111,29 @@ namespace {
 constexpr double kParamEps = 1e-9;
 constexpr double kInf = std::numeric_limits<double>::infinity();
 
-// Flattened input span list: lines and arcs only, Beziers polygonised, degenerate pieces gone.
+// Flattened input span list: lines and arcs only, Beziers polygonised. Every span of positive
+// length stays, however short (T-0009): leaving out spans no longer than the tolerance broke the
+// distance and coverage guarantees next to them (up to ~tol short of d, ~1 mm of offset missing).
+// Only spans of zero length go: they have no direction, and the corner is taken between their
+// neighbours.
 std::vector<Span> flattenForOffset(const Contour& c, const Tolerance& tol) {
     std::vector<Span> out;
+    auto usable = [](const Span& s) {
+        const Vec2 t0 = tangentAt(s, 0.0);
+        const Vec2 t1 = tangentAt(s, 1.0);
+        return length(s) > 0.0 && std::isfinite(t0.x) && std::isfinite(t0.y) && std::isfinite(t1.x) &&
+               std::isfinite(t1.y) && t0.lengthSquared() > 0.5 && t1.lengthSquared() > 0.5;
+    };
     for (const Span& s : c.spans) {
-        if (isDegenerate(s, tol)) {
-            continue;
-        }
         if (const auto* bez = std::get_if<BezierSpan>(&s)) {
             std::vector<Vec2> pts{bez->p0};
             polygoniseInto(s, tol, pts);
             for (std::size_t i = 1; i < pts.size(); ++i) {
-                if (!tol.equalPoints(pts[i - 1], pts[i])) {
+                if (pts[i - 1] != pts[i]) {
                     out.emplace_back(LineSpan{pts[i - 1], pts[i]});
                 }
             }
-        } else {
+        } else if (usable(s)) {
             out.push_back(s);
         }
     }
@@ -976,6 +983,18 @@ bool snapJunction(Span& a, Span& b, const SnapContext& ctx) {
         const std::optional<double> ta = extensionParam(a, p, true);
         const std::optional<double> tb = extensionParam(b, p, false);
         if (!ta || !tb || geometry::distance(p, e) > reach || geometry::distance(p, s) > reach) {
+            continue;
+        }
+        // An arc reaches a meeting point just behind its own start only the long way round (the
+        // whole gap outside its sweep counts as extension), and the checks below look at the short
+        // way: an arc 3e-8 rad from the meeting point was extended into a full circle 0.59 mm deep
+        // inside d (T-0009, nearly coincident Round joins about the ends of a 2e-10 mm jog).
+        auto shortWay = [&](const Span& span, double t, bool pastEnd, Vec2 end) {
+            const double extension = (pastEnd ? t - 1.0 : -t) * length(span);
+            return !std::holds_alternative<ArcSpan>(span) ||
+                   extension <= 2.0 * geometry::distance(p, end) + rounding;
+        };
+        if ((*ta > 1.0 && !shortWay(a, *ta, true, e)) || (*tb < 0.0 && !shortWay(b, *tb, false, s))) {
             continue;
         }
         const int extensions = (*ta > 1.0 ? 1 : 0) + (*tb < 0.0 ? 1 : 0);
@@ -2019,10 +2038,28 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
             rc.posB.push_back(b);
         }
     };
+    // A Round offset of an arc whose radius is within the snapping allowance of zero (a corner
+    // rounded off at rounding level, T-0009) is that of a vertex at which the direction turns
+    // on the offset side: its inverted offset (radius d - r about the centre) runs straight back
+    // along the Round join about its start, within r of it, and pruning and the merging of
+    // opposite copies would drop both. Such an arc gets the straight connector of an inside
+    // corner instead, between its end normals, so the joins about its two end points are those
+    // of the arc's own end tangents.
+    const double tinyArc = std::min(5e-7 * std::max(1.0, d), 0.1 * tol.distance * tol.distance / d);
     for (std::size_t i = 0; i < input.size(); ++i) {
         std::optional<Span> next = offsetSpan(input[i], d, sign);
         if (!next) {
-            next = invertedOffset(input[i], d, sign);
+            const auto* arc = std::get_if<ArcSpan>(&input[i]);
+            if (join == JoinType::Round && arc && arc->radius <= tinyArc) {
+                const Vec2 a = startPoint(input[i]) + tangentAt(input[i], 0.0).perp() * (d * sign);
+                const Vec2 b = endPoint(input[i]) + tangentAt(input[i], 1.0).perp() * (d * sign);
+                if (a == b) {
+                    continue;
+                }
+                next = LineSpan{a, b};
+            } else {
+                next = invertedOffset(input[i], d, sign);
+            }
             if (!next) {
                 continue;  // offsets to (nearly) the arc's centre point: nothing to add
             }
@@ -2567,14 +2604,37 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     //    bounded by its two offsets and the halves of its end circles facing away from it). So
     //    a vertex contributes that arc (angle = turn angle, widened by a hair so the split set
     //    is a superset), a reversal a full circle, and the path's two ends their full circles.
-    //    So does a "vertex" where the flattened input is not continuous (a sub-tolerance span
-    //    was left out): both ends there get full circles. Splitting at whole circles cost one
-    //    split per raw element per vertex within d, which dominated dense input at a large d
-    //    (T-0006).
+    //    So does a "vertex" where the input is not continuous (an input gap): both ends there
+    //    get full circles. Splitting at whole circles cost one split per raw element per vertex
+    //    within d, which dominated dense input at a large d (T-0006).
     std::vector<Span> boundary;
+    // Crowded vertices: input vertices with another vertex within the tolerance, the two ends of
+    // a sub-tolerance span or a vertex the path comes back to (T-0009). Vertex i is the start of
+    // input span i (for an open path, vertex n is the end of the last span).
+    const std::size_t vertexCount = input.size() + (cyclic ? 0 : 1);
+    auto vertexAt = [&](std::size_t v) {
+        return v < input.size() ? startPoint(input[v]) : endPoint(input.back());
+    };
+    std::vector<bool> crowded(vertexCount, false);
+    {
+        PointIndex vertices(tol.distance);
+        for (std::size_t v = 0; v < vertexCount; ++v) {
+            vertices.add(vertexAt(v), v);
+        }
+        for (std::size_t v = 0; v < vertexCount; ++v) {
+            vertices.forEachNear(vertexAt(v), [&](std::size_t w) {
+                if (w != v) {
+                    crowded[v] = true;
+                }
+            });
+        }
+    }
+    // End points of the boundary elements at crowded vertices (see below).
+    std::vector<Vec2> clusterCorners;
     for (std::size_t i = 0; i < input.size(); ++i) {
         const Span& s = input[i];
         const Span& prev = input[i == 0 ? input.size() - 1 : i - 1];
+        const std::size_t firstOfVertex = boundary.size();
         if (i == 0 && !cyclic) {
             boundary.emplace_back(ArcSpan::fullCircle(startPoint(s), d));
         } else if (geometry::distance(endPoint(prev), startPoint(s)) > 1e-9 * std::max(1.0, d)) {
@@ -2604,6 +2664,15 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
                 boundary.push_back(*inv);
             }
         }
+        if (crowded[i] || crowded[(i + 1) % vertexCount]) {
+            for (std::size_t b = firstOfVertex; b < boundary.size(); ++b) {
+                const auto* arc = std::get_if<ArcSpan>(&boundary[b]);
+                if (!arc || !arc->isFullCircle()) {
+                    clusterCorners.push_back(startPoint(boundary[b]));
+                    clusterCorners.push_back(endPoint(boundary[b]));
+                }
+            }
+        }
     }
     if (!cyclic) {
         boundary.emplace_back(ArcSpan::fullCircle(endPoint(input.back()), d));
@@ -2617,6 +2686,36 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
                 if (inUnit(t) && (wholeCarrier || inUnit(carrierParam(b, p)))) {
                     splits[i].push_back(t);
                 }
+            }
+        });
+    }
+    //    Next to a sub-tolerance span the vertices lie closer together than any feature, and
+    //    the circles about them (raw joins, inverted offsets of tiny arcs) nearly coincide. Such a
+    //    circle can pass within the pruning margin inside the end point of a neighbouring
+    //    boundary element without crossing it, and run from "on the boundary" (kept) straight
+    //    into the interior of that neighbour's offset strip (T-0009: 0.03 d deep). So each raw
+    //    element is also split where it passes that close to the end point of a boundary
+    //    element at such a vertex (at its closest point); a split too many is harmless.
+    const double cornerTouch = 2.0 * (d - keepAbove);
+    for (const Vec2 e : clusterCorners) {
+        const double reach = cornerTouch + 16.0 * std::numeric_limits<double>::epsilon() *
+                                               std::max({1.0, std::fabs(e.x), std::fabs(e.y), d});
+        rawGrid.query(Box2{e - Vec2{reach, reach}, e + Vec2{reach, reach}}, [&](std::size_t i) {
+            Vec2 foot;
+            if (const auto* line = std::get_if<LineSpan>(&raw[i])) {
+                const Vec2 u = line->end - line->start;
+                foot = line->start + u * ((e - line->start).dot(u) / u.lengthSquared());
+            } else {
+                const auto& arc = std::get<ArcSpan>(raw[i]);
+                const Vec2 v = e - arc.centre;
+                if (v.lengthSquared() == 0.0) {
+                    return;
+                }
+                foot = arc.centre + v * (arc.radius / v.length());
+            }
+            const double t = carrierParam(raw[i], foot);
+            if (geometry::distance(foot, e) <= reach && t > kParamEps && t < 1.0 - kParamEps) {
+                splits[i].push_back(t);
             }
         });
     }
@@ -2651,6 +2750,85 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     };
     std::vector<Piece> kept;
     std::size_t witness = input.size();
+    // Next to a sub-tolerance span the circles about its end points (and about the ends of a
+    // tiny arc) nearly coincide, and a raw element can run from within the pruning margin of
+    // the neighbourhood boundary into the interior by a few times that margin without crossing
+    // any boundary element (T-0009: a Round join about one end of a 5e-9 mm arc lies up to
+    // 3e-9 mm inside the circle about its other end, the split between them sitting at the
+    // start of the join). Judged by three samples such a piece goes as a whole, losing the
+    // stretch that is within the margin, where the circles are still one boundary to rounding.
+    // So a failing piece near such a span whose samples all lie within a few margins of d is
+    // sampled finely, and if it is clear at exactly one end, its stretch at least keepAbove from
+    // the input from that end (the other end of it located by bisection) is kept.
+    std::vector<Box2> clusterBoxes;
+    for (std::size_t v = 0; v < vertexCount; ++v) {
+        if (crowded[v]) {
+            const double reach = d + 2.0 * tol.distance;
+            const Vec2 at = vertexAt(v);
+            clusterBoxes.push_back(Box2{at - Vec2{reach, reach}, at + Vec2{reach, reach}});
+        }
+    }
+    BoxGrid clusterGrid(clusterBoxes);
+    auto clearAt = [&](std::size_t i, double t) {
+        const Vec2 q = pointAt(raw[i], t);
+        return !closerThan(q, keepAbove, input, inputGrid, witness) && !inWedge(q);
+    };
+    // True when every sample of the piece lies within a few pruning margins of d from the
+    // input (and outside the corner regions): only then can part of it be within the margin.
+    const double band = 8.0 * (d - keepAbove);
+    auto marginal = [&](const Piece& piece) {
+        for (const double f : {0.25, 0.5, 0.75}) {
+            const Vec2 q = pointAt(raw[piece.element], piece.t0 + (piece.t1 - piece.t0) * f);
+            if (closerThan(q, d - band, input, inputGrid, witness) || inWedge(q)) {
+                return false;
+            }
+        }
+        return true;
+    };
+    auto keepClearStretches = [&](const Piece& piece) {
+        constexpr std::size_t kFine = 32;
+        const double len = length(raw[piece.element]);
+        std::vector<double> ts(kFine + 1);
+        std::vector<char> clear(kFine + 1);
+        for (std::size_t k = 0; k <= kFine; ++k) {
+            ts[k] = piece.t0 + (piece.t1 - piece.t0) * (static_cast<double>(k) / static_cast<double>(kFine));
+            clear[k] = clearAt(piece.element, ts[k]) ? 1 : 0;
+        }
+        // Only a piece that runs from within the margin at one end into the interior at the
+        // other is refined; one that dips in the middle (clear at both ends, a sliver between
+        // them) or is cut at both ends goes as before, so no new sub-tolerance gap appears
+        // inside a raw element.
+        if (clear.front() == clear.back()) {
+            return;
+        }
+        // Boundary between a clear and a cut sample, to the clear side.
+        auto edge = [&](double good, double bad) {
+            for (int it = 0; it < 50; ++it) {
+                const double mid = 0.5 * (good + bad);
+                (clearAt(piece.element, mid) ? good : bad) = mid;
+            }
+            return good;
+        };
+        std::size_t k = 0;
+        if (clear.front()) {
+            while (k + 1 <= kFine && clear[k + 1]) {
+                ++k;
+            }
+            const double hi = edge(ts[k], ts[k + 1]);
+            if ((hi - piece.t0) * len > 1e-9) {
+                kept.push_back(Piece{piece.element, piece.t0, hi});
+            }
+        } else {
+            k = kFine;
+            while (k > 0 && clear[k - 1]) {
+                --k;
+            }
+            const double lo = edge(ts[k], ts[k - 1]);
+            if ((piece.t1 - lo) * len > 1e-9) {
+                kept.push_back(Piece{piece.element, lo, piece.t1});
+            }
+        }
+    };
     for (std::size_t i = 0; i < m; ++i) {
         if (dead[i]) {
             continue;
@@ -2678,6 +2856,12 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
             }
             if (ok) {
                 kept.push_back(piece);
+            } else if (!clusterBoxes.empty()) {
+                const Vec2 mid = pointAt(raw[i], 0.5 * (piece.t0 + piece.t1));
+                if (clusterGrid.queryUntil(Box2{mid, mid}, [](std::size_t) { return true; }) &&
+                    marginal(piece)) {
+                    keepClearStretches(piece);
+                }
             }
         }
     }
@@ -2939,15 +3123,24 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
         }
         // The dropped pieces are remembered next to the span they preceded, in case the junction
         // they leave cannot be snapped shut (see snapChain).
-        const auto lastSolid = std::find(tiny.rbegin(), tiny.rend(), false);
-        const std::size_t solidEnd = static_cast<std::size_t>(tiny.rend() - lastSolid);  // one past
+        // Trailing tiny pieces go too, as far as they stay within the tolerance of the chain's
+        // end (one past the last piece that may be kept).
+        std::size_t solidEnd = spans.size();
+        while (solidEnd > 0 && tiny[solidEnd - 1] &&
+               geometry::distance(startPoint(spans[solidEnd - 1]), endPoint(spans.back())) <= tol.distance) {
+            --solidEnd;
+        }
         double total = 0.0;
         std::vector<Span> solid;
         std::vector<std::vector<Span>> dropped(1);
         std::vector<Span> leading;
         for (std::size_t k = 0; k < solidEnd; ++k) {
-            if (tiny[k] && (solid.empty() ||
-                            geometry::distance(endPoint(solid.back()), endPoint(spans[k])) <= tol.distance)) {
+            // A tiny piece is dropped while it ends within the tolerance of the last piece kept
+            // (or, before the first, of the chain's start). Leading tiny pieces used to be
+            // dropped however far they reached, so an offset made only of sub-tolerance pieces
+            // (a polyline sampled every 0.4 um, T-0009) vanished.
+            const Vec2 anchor = solid.empty() ? startPoint(spans.front()) : endPoint(solid.back());
+            if (tiny[k] && geometry::distance(anchor, endPoint(spans[k])) <= tol.distance) {
                 (solid.empty() ? leading : dropped.back()).push_back(spans[k]);
                 continue;
             }

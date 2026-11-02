@@ -77,8 +77,8 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     within d of one input *line* are discarded before splitting (distance to a segment is convex);
     (c) a vertex contributes only the arc of its circle between the neighbours' offsets on the
     outer side of the turn (the rest lies inside the neighbourhood of one of the two spans), a
-    reversal or a discontinuity of the flattened input (a dropped sub-tolerance span) a full
-    circle, the path ends their full circles. Release, dev container (2 cores, idle), CPU time per
+    reversal or a discontinuity of the input (an input gap; until T-0009 also a dropped
+    sub-tolerance span, see A2) a full circle, the path ends their full circles. Release, dev container (2 cores, idle), CPU time per
     offset, worst over all joins and sides, re-measured for T-0017: 2000-step walk d = 1 ≤ 0.02 s,
     d = 2 ≤ 0.04 s (four seeds); 8000-span hypotrochoid d = 2 0.23 s; 8000-span text-like loops
     d = 2 0.10 s (round 3: 0.04 / 0.21 / 0.09 s on the same machine; the AC1 bounds are 0.5 s and
@@ -336,15 +336,12 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     Statement in `offset.hpp`, true as written: junctions are exact for continuous input, so no
     span starts behind the previous one's end, and a sub-tolerance span that would step back is
     removed unless no join passes the distance checks (not seen in the T-0017 runs below).
-  - *Known limitation: input with sub-tolerance spans* (present before T-0006, carded as
-    follow-up). Flattening leaves out spans no longer than tol.distance, so the distance and
-    coverage guarantees hold for the flattened input only. Next to such a span an offset point
-    may be short of d by up to ~tol (9e-4 seen), a Round arc about the neighbouring vertex may be
-    up to ~tol over d (8e-4 seen), and up to ~1 mm of valid offset may be missing. How often
-    depends on the inputs: ~1 in 1000 offsets in the general fuzz (where such spans are
-    occasional), ~28 % with the verifier's generator that injects sub-tolerance jogs after ~30 %
-    of the lines. Inputs without sub-tolerance spans are unaffected (worst
-    shortfall 1.5e-6 at d ≈ 0.05, within the bridge bound above). Documented in `offset.hpp`.
+  - *Input with sub-tolerance spans* (known limitation until T-0009, resolved by A2).
+    Flattening left out spans no longer than tol.distance, so the distance and coverage
+    guarantees held for the flattened input only: next to such a span an offset point could be
+    short of d by up to ~tol (9e-4 seen), a Round arc about the neighbouring vertex up to ~tol
+    over d (8e-4 seen), and up to ~1 mm of valid offset could be missing (~1 in 1000 offsets in
+    the general fuzz, ~28 % with the verifier's generator injecting sub-tolerance jogs).
   - *Tests.* The T-0004 chain check now requires exact continuity (1e-12) and allows a span no
     longer than the tolerance wherever it is needed for that continuity (positive length, never
     at an open chain's ends, exact junctions, no backward step); it passes with
@@ -379,3 +376,111 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     allowance, much narrower than the tolerance) as a retrace, where main has 3 and 2 such steps
     for the same inputs (gen3 0x9300ba3, 0x9300c6a; known residual). Noise sweep (300 zig-zags per
     level, 1e-13…1e-4, at 0 and 1e4): clean. R4/R5/R6 as required.
+- **A2 (2026-11-02, T-0009): input with sub-tolerance spans.** Status unchanged.
+  - *Problem.* `flattenForOffset` left out every span no longer than tol.distance, so the
+    distance, Round and coverage guarantees held for the flattened input only (A1, last item).
+    Re-measured on main for this card with the T-0006 verifier's generator (legacy families,
+    sub-tolerance jogs after ~30 % of the lines, its exact checker): 4,188 of 20,738 offsets (20 %) violated distance (2,091; up to 9.9e-4 mm short) or coverage (2,266; up to 1 mm missing).
+  - *Decision (AC1): vertex treatment, not merging.* Every line and arc of positive length
+    stays in the input and is offset like any other span, however short; its end points are
+    ordinary vertices, each with the usual outer-turn arc in the boundary (the full circles the
+    two ends of a left-out span needed are not needed: the span itself is in the input, so the
+    neighbourhood is exact). Merging a short span into a neighbour was rejected: moving the
+    neighbour's end by up to the tolerance moves its offset by as much, so the offset would again
+    be up to ~tol short of d from the input as given, or, pruned against the original input, cut
+    back with gaps where the merged neighbour strays inside. Only spans of zero length go (no
+    direction; the corner is taken between their neighbours). A Bezier polygon keeps every
+    segment of positive length: a segment within the tolerance was skipped before, leaving a gap
+    between its neighbours, and a Bezier no longer than the tolerance was dropped.
+  - *What keeping them needed.* Short spans put vertices closer together than the pruning
+    margin d − keepAbove (§6) can resolve, and the offset of a densely sampled path is made only
+    of sub-tolerance pieces. Five changes:
+    (a) *Boundary end points at crowded vertices.* A vertex is crowded when another input vertex
+    lies within the tolerance: the two ends of a sub-tolerance span, or a vertex the path comes
+    back to. The circles about crowded vertices (Round joins, inverted offsets of tiny arcs)
+    nearly coincide and can pass within the margin inside the end point of a neighbouring
+    boundary element (the start of an offset strip) without crossing it, running from "on the
+    boundary" straight into the strip: 7.2e-3 mm (0.03 d) short of d after a zig-zag of 2e-10 mm
+    lines (fuzz 0x911007b1, shrunk to 6 spans); 3.3e-5 mm where a path came back to within
+    1.5e-9 mm of an earlier vertex just before a tiny arc (0x95000f2d). Each raw element is also
+    split at its closest point to every end point of a boundary element at a crowded vertex,
+    where it passes within twice the margin of it (a split too many is harmless).
+    (b) *Margin band.* A raw element can run from within the margin into the interior by a few
+    margins without crossing any boundary element: the Round join about one end of a 2.9e-9 mm
+    arc lies up to 3e-9 mm inside the circle about its other end (margin 2e-9 at d = 2), the
+    split between them at the start of the join; judged by three samples it went as a whole and
+    ~1 mm of offset that the exact checker requires went with it (0x92300adc). A failing piece
+    within d + 2 tol of a crowded vertex whose three samples all lie within 8 margins of d is
+    sampled at 33 points, and if it is clear at exactly one end, the clear stretch from that end
+    (its far end found by bisection) is kept. A piece clear at both ends with a dip between stays
+    dropped: keeping both ends made a sub-tolerance gap inside one raw element, which the
+    re-merge (§7) stepped over 1.25e-8 mm inside d at d = 11.5 (0x92200744).
+    (c) *Tiny arcs on their collapsing side (Round).* The inverted offset (radius d − r about
+    the centre) of an arc of radius r ≤ min(5e-7·max(1, d), 0.1·tol²/d) runs straight back along
+    the Round join about the arc's start, within r of it; pruning keeps both copies and the merge
+    of opposite copies (A1) drops both, losing the corner arc (0x900007e, a 3.5e-14 mm arc at a
+    path end; 0x9100043f). Such an arc gets the inside-corner connector between its end normals
+    instead, so the joins about its end points are those of its end tangents; every point of
+    the arc lies within 2r of its end points. Sharp and Square keep the inverted offset (their
+    extensions need its carrier; their corner regions carry no coverage requirement).
+    (d) *Chains of sub-tolerance pieces.* Leading and trailing tiny pieces of a chain were
+    dropped however far they reached, so the offset of a closed polyline sampled every 0.4 µm,
+    all of whose pieces are shorter than the tolerance, vanished; they now go only while within
+    the tolerance of the chain's start or end (as interior tiny pieces already went only while
+    within the tolerance of the last piece kept).
+    (e) *Arc snaps the short way only.* snapJunction counted the whole gap outside an arc's sweep
+    as extension past its end, so a meeting point 3.4e-8 rad behind the start of a short arc
+    (two nearly coincident Round joins about the ends of a 2e-10 mm jog) turned it into a full
+    circle, 0.59 mm (= d) inside d, while the checks looked at the short way (0x95200cc5; the same
+    wrap gave main shortfalls of 0.08 and 0.12 mm, = d, on two noisy lensSlot inputs). An
+    arc extension longer than twice the straight distance to the meeting point is refused.
+    (c) only concerns arcs shorter than the tolerance; (a) and (b) only crowded vertices; (d) and
+    (e) change results only where main dropped a stretch longer than the tolerance at a chain's
+    end or wrapped an arc.
+  - *Results (AC2, AC3).* Release, branch at the T-0009 commit, the T-0017 verifiers' harness
+    (vdrv4 checker; see the checker notes below). AC2: (1) T-0009 generator (T-0017 fuzz families
+    2–5 and legacy, sub-tolerance spans injected into ~5–90 % of the spans: jogs in random
+    directions, collinear splits, tiny arcs sweeping up to ±3 rad, runs of 2–6 tiny lines, tiny
+    pieces cut off arcs, lengths from 1e-15 mm to the tolerance, ~8 % rounding-level), 24,000
+    seeds, 20,853 inputs holding sub-tolerance spans (all joins ~1/3 each, both sides, 28 %
+    closed): 0 distance, 0 Round-over-d, 0 coverage violations; coverage points left uncovered
+    occur only within d + tol/2 of another input span (208 inputs; the documented drop of strips
+    and loops narrower than the tolerance; 68 in 6,000 when the same spans are made just longer
+    than the tolerance, where branch and main agree). (2) The T-0006 verifier's generator,
+    20,738 inputs: 0 distance, 0 Round-over-d, 3 coverage (all within d + tol/2 of another span:
+    a dropped 2-span lens and two thin strips, identical on main); main 4,188 (above). AC3:
+    inputs without sub-tolerance spans, compared with main: fuzz4 families 2–5, 24,000 offsets,
+    0 regressions (the verifier's classification); legacy family, 8,000 offsets, 0 issues, 0
+    regressions. Bit-identical to main in 39,158 of 39,621 such inputs (legacy 7,980/7,980; the
+    463 others are vertices within the tolerance of another vertex, (a)/(b), or (d)/(e), all
+    judged no worse; fam3 distance violations of main up to 0.036 mm are gone). T-0006 speed
+    criteria: unchanged (worst over joins and sides, against main in the same process on a loaded
+    shared machine: 2000-step walks d = 1 / 2 ≤ 0.018 / 0.038 s (main 0.018 / 0.039), 8000-span
+    hypotrochoid 0.24 s (0.22), text loops 0.078 s (0.080); on an idle machine 0.011 / 0.026,
+    0.18, 0.07 s; fuzz family CPU within 0–15 % of main).
+  - *Remaining.* (1) Coverage next to strips and loops narrower than the tolerance, as
+    documented since T-0017. (2) Not part of AC2: in the T-0009 fuzz, other T-0017 checks flag
+    overlaps (60 inputs), backward steps (29) and self-crossings at needle tips (15) of 20,853,
+    nearly all in the adversarial tie families and at the same rate as with spans just longer
+    than the tolerance (21 / 2 / 3 in 6,000), i.e. the residuals of A1, not new ones.
+    (3) Cost: input made largely of sub-tolerance spans is offset (main returned nothing for it)
+    but costs more per span, since nearly every junction of its offset needs a repair checked
+    against the input spans within d: Release, d = 1, a closed 0.5 mm-radius circle of 8000
+    0.4 µm spans ~6 s (4000: 1.6 s), a sine of 8000 0.5 µm steps 0.4 s; random walks of 0.5 µm
+    steps, whose joins all overlap, 0.44 / 1.55 / 3.4 s for 2000 / 4000 / 8000 steps (like
+    T-0016's zig-zags); a 0.5 mm walk with 30 % sub-tolerance jogs (11,600 spans, d = 2) 0.34 s
+    (main, dropping them, 0.22 s).
+  - *Checker notes.* The AC2/AC3 runs used the T-0017 verifier's vdrv4 checker with four
+    corrections: corners are taken across zero-length spans (else a 1-ulp spur's corner
+    wedge was missed), an exact reversal's Sharp/Square cap lies ahead of the travel (the
+    checker took either half), circle crossings in the self-crossing test use the
+    cancellation-free form (internally tangent arcs at a junction read as crossing), and
+    coverage misses within d + tol/2 of another span are counted apart.
+  - *Tests.* `core/tests/geometry/offset_subtol_test.cpp`: the card's seed 0x60660ace (main
+    lost ~1 mm of Round offset), a Round and a Square case where main was 9.4e-4 and 9.2e-4 mm
+    short of d, the 2e-10 mm vertex cluster of (a) for all joins, the tiny arcs of (b) and (c),
+    a sub-tolerance Bezier (zero distance returns a continuous polygon; offsets checked against
+    it), and a 240-case fixed-seed version of the AC2 fuzz, each checked independently (distance
+    and Round bounds sampled at 400 points per span, Round coverage of span offsets and corner
+    arcs, exact line junctions, the shared backward-step checker). All but the cluster case fail
+    on main; the cluster case fails without (a), the tiny arcs without (b) and (c).

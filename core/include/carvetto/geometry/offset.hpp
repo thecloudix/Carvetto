@@ -63,18 +63,19 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// when the offset stays in one piece it is one chain of n spans, minus consumed ones, plus one
 /// per joined outside corner, and every point of every chain is at least |distance| from the
 /// input (exactly |distance| for Round), up to the sub-tolerance junction repairs described
-/// under "Junctions" (bounded there) and, for input that is not continuous or holds
-/// sub-tolerance spans, the limitations described there and just below.
+/// under "Junctions" (bounded there) and, for input that is not continuous, the limitations
+/// described there.
 ///
-/// Known limitation (input with sub-tolerance spans): spans no longer than tol.distance are left
-/// out of the input before offsetting, so the guarantees above hold for that flattened input,
-/// not the original. Next to such a span an offset point may be short of |distance| from the
-/// original input by up to about tol.distance, a Round join arc about the neighbouring vertex
-/// may run up to about tol.distance beyond |distance|, and a stretch of valid offset (seen up
-/// to ~1 mm) may be missing. How often depends on the input: about 1 in 1000 offsets in a
-/// general random fuzz whose inputs occasionally contain such spans, but over a quarter of
-/// offsets of inputs deliberately full of sub-tolerance jogs. Inputs without them are
-/// unaffected. Clean the input (join or remove sub-tolerance spans) where this matters.
+/// Spans shorter than the tolerance (T-0009): every line and arc of positive length is offset
+/// like any other, however short, so the properties above hold for the input as given. Only a
+/// span of zero length is left out (it has no direction; the corner is taken between its
+/// neighbours). A Bezier span is polygonised within tol.chordal, every segment of positive
+/// length kept, and the properties hold for that polygon. One special case, Round only: an arc
+/// whose radius is at most min(5e-7 x max(1, |distance|), 0.1 tol.distance^2 / |distance|) and
+/// whose offset towards its centre would collapse is offset like a vertex at which the path
+/// turns: its two end tangents get their Round joins and the turn between them an inside-corner
+/// connector, instead of the arc's inverted offset. Every point of such an arc lies within twice
+/// its radius of its end points, so this is that arc's offset to within twice its radius.
 ///
 /// Approach: build the raw offset (offset spans + joins + inside-corner connectors), split it
 /// at its self-intersections and where it crosses the rest of the |distance|-neighbourhood
@@ -105,6 +106,10 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// slower than Round, because every corner's mitre or chamfer reaches out about |distance| and overlaps
 /// hundreds of its neighbours', which multiplies the pieces to split and prune (pitch 0.02, amplitude 1,
 /// |distance| 7, 1000 spans, Release: about 21 s against 0.7 s for Round; tracked as T-0016).
+/// Input made largely of spans shorter than the tolerance also costs more per span: nearly every
+/// junction of its offset needs one of the repairs below (Release, |distance| 1: a closed polyline
+/// of 8000 0.4 um spans round a 0.5 mm radius about 6 s; random walks of 0.5 um steps, whose joins
+/// all overlap, about 0.4 / 1.5 / 3.4 s for 2000 / 4000 / 8000 steps).
 /// See ADR-0012.
 ///
 /// Several chains: when distant parts of the path come within 2 x |distance| of each other the
@@ -138,8 +143,9 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// for circles overlapping by 5.6e-11 mm, input gaps of 1e-16).
 /// Pieces no longer than
 /// tol.distance are dropped where their neighbours can be joined without them:
-/// trimmed or extended along their own carriers to where these meet (extensions staying at least
-/// |distance| from the input, and for Round not beyond it), or, for a sub-tolerance step
+/// trimmed or extended along their own carriers to where these meet (an arc only the short way
+/// round; extensions staying at least |distance| from the input, and for Round not beyond it),
+/// or, for a sub-tolerance step
 /// sideways, by bending the last tolerance of a neighbour outwards onto the other's end.
 /// Otherwise they are kept (so a chain may hold such a short span where the offset really has a
 /// sub-tolerance feature), and where there is nothing to keep a straight bridge shorter than

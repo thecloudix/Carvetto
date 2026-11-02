@@ -15,6 +15,11 @@
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
+// Leave out the GDI declarations (Polyline, Polygon, ...), which would clash with Carvetto's
+// geometry names in the tests that include this header; only GetProcessTimes is needed.
+#ifndef NOGDI
+#define NOGDI
+#endif
 #include <windows.h>
 #endif
 

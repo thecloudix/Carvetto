@@ -51,6 +51,7 @@ add_executable(carvetto_tests
   geometry/offset_test.cpp
   geometry/open_offset_chains_test.cpp
   geometry/offset_quality_test.cpp
+  geometry/offset_subtol_test.cpp
   geometry/boolean_test.cpp
   document/carv_io_test.cpp
   document/carv_extras_member_test.cpp
