@@ -421,6 +421,14 @@ Acceptance criteria:
   1. (a)–(d) fixed or documented exactly, with tests where behaviour changes; save/load invariant preserved (fuzz from t0132v3).
   2. (e) behaviour documented in ADR-0020 and tested; goldens unchanged.
 
+### T-0137 Profile On: refuse an allowance above +r too   [status: blocked]
+(Unblocks when T-0129 and T-0135 merge — both touch profile.cpp.)
+Phase: 1   Module: core/toolpath   Depends on: T-0129   ADR: 0016 §4
+Goal: Owner decision 2026-11-02 (raised by the T-0129 verifier): for profiles On the vector an allowance above +r moves the tool entirely off the vector just as one below −r does; On profiles refuse |allowance| > r symmetrically (Inside/Outside keep only the −r limit: a large positive allowance there is a normal oversize cut).
+Acceptance criteria:
+  1. On (and open-vector Left/Right where the same geometry applies — decide and document) refuses allowance > +r (and allowance + last-pass allowance > +r) with the T-0129 diagnostic style; exactly +r valid; tests mirror T-0129's matrix.
+  2. Output for |allowance| ≤ r byte-identical to the T-0129/T-0135 merge; ADR-0016 §4 updated; CLI message and exit code checked.
+
 ### T-0018 offsetContours: inward offsets past the inradius must vanish, not invert   [status: verifying — owner 2026-11-02: backport upstream Clipper2 fix (unconditional corner vertex) to pinned 1.4.0 at configure time, ADR-0006 §6]
 Phase: 1   Module: core/geometry   Depends on: —
 Goal: Found by the T-0121 coder: a closed contour offset inward by more than its inradius comes back inside out instead of empty (a 17 mm circle shrunk by 19.2 mm returns a 2.2 mm circle; by 30 mm a 13 mm circle). Pocket guards against it locally (`insetBy`); every other caller of `offsetContours` is exposed. Also document (or fix) that Clipper drops pieces of an open path lying exactly on a clip boundary.
