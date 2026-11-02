@@ -20,7 +20,7 @@ through, so no post, block or tag can bypass them.
    - every control character, bytes 0x00–0x1F and 0x7F (LF, CR, tab, NUL, ESC, DEL …), is
      **replaced by a space**. A space keeps the words of a multi-line note apart and the line
      length unchanged; removal would glue words together. Either is safe.
-   - `~`, `!` and `?` become `_`, and no byte ≥ 0x80 is written (owner decision 2026-11-01:
+   - `~`, `!` and `?` become `_`, and no byte ≥ 0x80 is written (owner decision 2026-11-02:
      "ASCII-only, all posts"). Grbl acts on these as realtime commands anywhere in the stream,
      even inside comments: `~` cycle start/resume, `!` feed hold, `?` status, and bytes 0x80–0xFF
      feed/rapid/spindle overrides, safety door and coolant (UTF-8 `Ñ` is C3 91: feed +10 %). A
@@ -36,19 +36,34 @@ through, so no post, block or tag can bypass them.
    - The comment context is read from the output line written so far, including the VAR prefix:
      `(` opens a comment, `)` closes it, `;` outside parentheses makes the rest of the line a
      comment. After `;` only control characters need replacing; `;`, `(` and `)` are kept.
-   - **Active comments** (owner decision 2026-11-01: "neutralise in sanitiser"). LinuxCNC runs
+   - **Active comments** (owner decision 2026-11-02: "neutralise in sanitiser"). LinuxCNC runs
      comments such as `(LOGOPEN,file)` (truncates the file), `(LOGAPPEND,…)`, `(LOG,…)`,
      `(MSG,…)`, `(DEBUG,…)`, `(PRINT,…)`, `(ABORT,…)`, `(PROBEOPEN file)`, `(PROBECLOSE)`,
      `(LOGCLOSE)` and, with the Python plugin, `(py,…)`/`(pyrun,…)`; Mach runs `(MSG,…)`. The
-     shipped posts put names right after `(`. So when a value lands at the start of a comment
-     (nothing but whitespace written since `(` or `;`, the VAR prefix included), a comma that
-     follows only letters, digits, `_` and spaces becomes `_` — any word, not only the known
-     keywords, so keywords we do not know are covered too — and a value whose leading word
-     (spaces dropped, case ignored) starts with one of the argument-less or space-separated
-     keywords PROBEOPEN, PROBECLOSE, LOGCLOSE gets a `_` in front. `LOGOPEN,/home/cnc/mill.hal`
-     is written `(LOGOPEN_/home/cnc/mill.hal)`. Values further into a comment (`(Tool 1: a,b)`)
-     keep their commas. A post template that itself supplies the comma right after a value at
-     comment start (`"([TOOLPATH_NAME],x)"`) is not covered; no shipped post does this.
+     shipped posts put names right after `(`. The rule looks at the whole comment written so
+     far, not at the value alone, because adjacent values can build a keyword together
+     (`([TOOLNAME][TOOLPATH_NAME])` with "LOGOPEN" and ",/file"; "PROBE" and "OPEN /file"):
+     - While everything written since the `(` or `;` (template text, VAR prefixes and earlier
+       values alike) is only letters, digits, `_` and spaces, that text plus the value is judged
+       as one word run, spaces dropped and case ignored.
+     - Every comma in the value that continues the run becomes `_`. This covers any word, not
+       only the known keywords, so keywords we do not know are covered too. A replaced comma is
+       itself a word character, so the run (and the replacing) goes on through the value and
+       into later values of the same comment.
+     - When the value completes PROBEOPEN, PROBECLOSE or LOGCLOSE (the keywords that take no
+       comma) at the start of the run, the value gets a `_` in front (`(PROBE_OPEN /file)`).
+     - Once any other character has been written in the comment (`(Tool 1: a,b)`,
+       `([TOOLNAME]-[TOOLPATH_NAME])`), no active comment can form there, and commas are kept.
+     - `LOGOPEN,/home/cnc/mill.hal` is written `(LOGOPEN_/home/cnc/mill.hal)`.
+     - **Gap (custom posts only):** template text written *after* a value cannot be judged
+       when the value is written, and values already written are not changed. So template text
+       that completes the active comment right after a value is not covered: a comma
+       (`"([TOOLPATH_NAME],x)"` with the name "LOGOPEN"), or the rest of a keyword from a VAR
+       prefix (prefix `OPEN` after a name "PROBE"). No shipped post has template text between
+       `(` and a value, or after a value, other than `)`. Template text that by itself forms an
+       active comment is the post author's own text.
+     - Comments the template nests or leaves unbalanced (`((a)…`) are outside this rule; nested
+       comments are an error on LinuxCNC and Grbl.
    - Text placed outside any comment (live G-code) is only stripped of control characters, so it
      cannot start a new block. What it says is still written as G-code: putting a text tag there
      is the post author's choice. The shipped posts only place text tags inside comments; a test
@@ -68,7 +83,7 @@ through, so no post, block or tag can bypass them.
    - After unit conversion and the VAR multiplier, the written value must satisfy |v| ≤ **1e9**
      (Marlin's dwell in milliseconds is 1e9 at the 1e6 s limit). This catches a large multiplier.
    - The interpreter's own integer counters (`[N]`, `[T]`, `[TP]`, drill-bank `[DB]`) are not
-     limited.
+     limited by the 1e6 rule; the 1e9 written limit still applies.
    - **Job settings.** `PostContext::arcTolerance` must lie in **1e-6 … 1 mm** (finite, positive;
      the old silent fallback to 0.01 mm for ≤ 0 is gone). Below about 1e-13·r the chord angle
      `2·acos(1 − tol/r)` rounds to zero, and coarser than 1 mm is no longer an arc. A linearised
@@ -81,7 +96,8 @@ through, so no post, block or tag can bypass them.
      `cannot write G-code: toolpath 'Profile', move 2: Z -inf is not a finite number` or
      `cannot write G-code in SPINDLE_ON of toolpath 'Drill': [S] 1e+300 rpm is outside the
      supported range -1e+06..1e+06 rpm`. Names in messages are sanitised the same way and cut to
-     64 bytes. The `Error` line is the VAR's line when its multiplier caused the failure, else 0.
+     64 bytes. The `Error` line is the VAR's line when a written value is out of range and that VAR has a
+     multiplier other than 1, else 0.
 
 ## Consequences
 - The shipped goldens are byte-identical: fixture names have no control characters, and the

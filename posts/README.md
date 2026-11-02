@@ -68,9 +68,11 @@ one, the test fails.
    `( … )` comment turns `(`/`)` into `[`/`]`, so no name can start a new block or close the
    comment early. Every text value is printable ASCII: `~ ! ?` and non-ASCII characters (Grbl
    realtime commands, even inside comments) become `_`, accented Latin letters their plain
-   letter. A value at the start of a comment cannot form an active comment such as LinuxCNC's
-   `(LOGOPEN,file)` or Mach's `(MSG,…)`: a comma after the first word becomes `_`, and
-   PROBEOPEN/PROBECLOSE/LOGCLOSE get a leading `_` (ADR-0020). Keep `SUBSTITUTE = "([)]"` in paren-comment posts anyway, for
+   letter. Values cannot form an active comment such as LinuxCNC's `(LOGOPEN,file)` or Mach's
+   `(MSG,…)`, alone or together: while a comment holds only words and spaces, commas in a value
+   that continue the words become `_`, and a value completing PROBEOPEN/PROBECLOSE/LOGCLOSE gets
+   a leading `_`. In a custom post, do not put template text right after a text tag at the
+   start of a comment (ADR-0020 lists this gap). Keep `SUBSTITUTE = "([)]"` in paren-comment posts anyway, for
    readers of the post. `post_safety_test.cpp` checks every shipped post with hostile names and
    that text tags appear only inside comments.
 10. **Numbers are finite and in range.** The interpreter refuses to write a non-finite number,

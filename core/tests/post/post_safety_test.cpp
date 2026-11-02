@@ -17,8 +17,10 @@
 #include <fstream>
 #include <functional>
 #include <limits>
+#include <random>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "carvetto/post/post_processor.hpp"
@@ -441,6 +443,14 @@ TEST_CASE("AC2: a VAR multiplier cannot push a written value past 1e9", "[post][
     REQUIRE_FALSE(r.ok());
     CHECK(r.error().line == 1);
     CHECK_THAT(r.error().describe(), ContainsSubstring("VAR multiplier 1e+300"));
+    // Without a multiplier the failure is not blamed on the VAR line.
+    const PostProcessor tool = parseText("VAR T = [T|A|T|1.0]\nbegin HEADER\n\"[T]\"\nend\nbegin RAPID_MOVE\nend\n");
+    Toolpath big = simple({Move::rapid({0, 0, 5})});
+    big.tool.toolNumber = 2000000000;
+    const auto t = tool.run({big}, {});
+    REQUIRE_FALSE(t.ok());
+    CHECK(t.error().line == 0);
+    CHECK_THAT(t.error().describe(), ContainsSubstring("[T] would be written as 2e+09"));
     // A sane multiplier (Marlin's seconds -> milliseconds) still works at the limit.
     const PostProcessor ms = parseText("VAR P = [DWELL|A| P|1.0|1000]\nbegin DWELL_MOVE\n\"G4[DWELL]\"\nend\n");
     CHECK(runOk(ms, {simple({Move::dwell({0, 0, 0}, 1e6)})}, {}) == "G4 P1000000000\n");
@@ -631,8 +641,10 @@ end
     CHECK(render("  lOgOpEn,x").substr(0, 15) == "(  lOgOpEn_x)\n(");
     CHECK(render("Log Open , x").substr(0, 15) == "(Log Open _ x)\n");
     CHECK(render("\tmsg,hi").substr(0, 9) == "( msg_hi)");
-    // Any word, not just known keywords; only the first comma.
-    CHECK(render("Profile,1,2").substr(0, 14) == "(Profile_1,2)\n");
+    // Any word, not just known keywords; every comma that continues the word run (a replaced
+    // comma is a word character, so the run goes on).
+    CHECK(render("Profile,1,2").substr(0, 14) == "(Profile_1_2)\n");
+    CHECK(render("Profile,1-2,3").substr(0, 16) == "(Profile_1-2,3)\n");
     // No-comma keywords get a leading _.
     CHECK(render("PROBEOPEN /tmp/x").substr(0, 19) == "(_PROBEOPEN /tmp/x)");
     CHECK(render("probe close").substr(0, 14) == "(_probe close)");
@@ -688,6 +700,165 @@ TEST_CASE("B3: no shipped post writes an active comment for a hostile name", "[p
                         CHECK(squashed.rfind("PROBEOPEN", 0) == std::string::npos);
                     }
                 }
+            }
+        }
+    }
+}
+
+// ---- round 3: active comments assembled from several values (verifier B4) -----------------------
+
+namespace {
+
+/// True when a comment's text (after its `(` or `;`) would run as an active comment: spaces
+/// dropped and upper-cased, a word run followed by a comma, or a leading PROBEOPEN / PROBECLOSE /
+/// LOGCLOSE.
+bool isActiveComment(std::string_view text) {
+    std::string squashed;
+    for (char c : text) {
+        if (c != ' ' && c != '\t') {
+            squashed += static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+        }
+    }
+    const std::size_t stop = squashed.find_first_not_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_");
+    if (stop != std::string::npos && squashed[stop] == ',') {
+        return true;
+    }
+    for (const char* keyword : {"PROBEOPEN", "PROBECLOSE", "LOGCLOSE"}) {
+        if (squashed.rfind(keyword, 0) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/// Every comment of every line of `out`.
+std::vector<std::string> commentsOf(const std::string& out) {
+    std::vector<std::string> comments;
+    std::istringstream in(out);
+    std::string line;
+    while (std::getline(in, line)) {
+        bool paren = false;
+        std::string current;
+        for (std::size_t i = 0; i < line.size(); ++i) {
+            const char c = line[i];
+            if (paren) {
+                if (c == ')') {
+                    comments.push_back(current);
+                    paren = false;
+                } else {
+                    current += c;
+                }
+            } else if (c == '(') {
+                paren = true;
+                current.clear();
+            } else if (c == ';') {
+                comments.push_back(line.substr(i + 1));
+                break;
+            }
+        }
+        if (paren) {
+            comments.push_back(current);
+        }
+    }
+    return comments;
+}
+
+std::string runNames(const PostProcessor& pp, const std::string& tool, const std::string& toolpath,
+                     const std::string& dir = "", const std::string& file = "") {
+    Toolpath tp = simple({Move::rapid({0, 0, 5})});
+    tp.tool.name = tool;
+    tp.name = toolpath;
+    PostContext ctx;
+    ctx.fileDir = dir;
+    ctx.fileName = file;
+    return runOk(pp, {tp}, ctx);
+}
+
+PostProcessor headerPost(const std::string& line, const std::string& vars = "") {
+    return parseText(vars + "begin HEADER\n\"" + line + "\"\nend\nbegin RAPID_MOVE\nend\n");
+}
+
+}  // namespace
+
+TEST_CASE("B4: adjacent values cannot assemble an active comment", "[post][safety][text]") {
+    const std::string hal = ",/home/cnc/linuxcnc/configs/mill/mill.hal";
+    CHECK(runNames(headerPost("([TOOLNAME][TOOLPATH_NAME])"), "LOGOPEN", hal) ==
+          "(LOGOPEN_/home/cnc/linuxcnc/configs/mill/mill.hal)\n");
+    CHECK(runNames(headerPost("([TP_DIR][TP_FILENAME])"), "", "", "LOGOPEN", ",/tmp/x") == "(LOGOPEN_/tmp/x)\n");
+    CHECK(runNames(headerPost(";[TOOLNAME][TOOLPATH_NAME]"), "LOGOPEN", ",/tmp/x") == ";LOGOPEN_/tmp/x\n");
+    CHECK(runNames(headerPost("([TOOLNAME][TOOLPATH_NAME])"), "PROBE", "OPEN /tmp/p") == "(PROBE_OPEN /tmp/p)\n");
+    CHECK(runNames(headerPost("([TOOLNAME][TOOLPATH_NAME])"), "LOG", "CLOSE") == "(LOG_CLOSE)\n");
+    CHECK(runNames(headerPost("([TOOLNAME] [TOOLPATH_NAME])"), "LOGOPEN", ",/tmp/x") == "(LOGOPEN _/tmp/x)\n");
+    CHECK(runNames(headerPost("([TOOLNAME] [TOOLPATH_NAME])"), "probe", "close") == "(probe _close)\n");
+    // Three values, the comma in the last.
+    CHECK(runNames(headerPost("([TOOLNAME][TOOLPATH_NAME][TP_FILENAME])"), "LOG", "OPEN", "", ",/tmp/x") ==
+          "(LOGOPEN_/tmp/x)\n");
+    // A template word between the values at comment start is part of the run.
+    CHECK(runNames(headerPost("([TOOLNAME] and [TOOLPATH_NAME])"), "x", ",/tmp/x") == "(x and _/tmp/x)\n");
+    CHECK(runNames(headerPost("(MSG[TOOLPATH_NAME])"), "", ",hi") == "(MSG_hi)\n");
+    // A VAR prefix word between the values is part of the run.
+    CHECK(runNames(headerPost("([TOOLNAME][TOOLPATH_NAME])", "VAR TP = [TOOLPATH_NAME|A|LOG|1.0]\n"), "x",
+                   "OPEN,/tmp/p") == "(xLOGOPEN_/tmp/p)\n");
+    CHECK(runNames(headerPost("([TOOLNAME][TOOLPATH_NAME])", "VAR TP = [TOOLPATH_NAME|A|PRO|1.0]\n"), "",
+                   "BEOPEN /tmp/p") == "(PRO_BEOPEN /tmp/p)\n");
+}
+
+TEST_CASE("B4: only words and spaces keep the comment 'at its start'", "[post][safety][text]") {
+    // A non-word character before the value ends the keyword run; commas are kept from then on.
+    CHECK(runNames(headerPost("([TOOLNAME]-[TOOLPATH_NAME])"), "LOGOPEN", ",x") == "(LOGOPEN-,x)\n");
+    CHECK(runNames(headerPost("([TOOLNAME][TOOLPATH_NAME])"), "Tool: 1", ",x") == "(Tool: 1,x)\n");
+    // The documented gap: template text written after a value completes the active comment
+    // (here the comma, or the rest of the keyword from a VAR prefix). Values already written
+    // cannot be changed; no shipped post has template text there.
+    CHECK(runNames(headerPost("([TOOLNAME],x)"), "LOGOPEN", "") == "(LOGOPEN,x)\n");
+    CHECK(runNames(headerPost("([TOOLNAME][TOOLPATH_NAME])", "VAR TP = [TOOLPATH_NAME|A|OPEN|1.0]\n"), "PROBE",
+                   " /tmp/p") == "(PROBEOPEN /tmp/p)\n");
+}
+
+TEST_CASE("B4: randomized concatenations of hostile values never form an active comment",
+          "[post][safety][text]") {
+    const std::vector<std::string> pieces{"LOGOPEN", "LOG",  "OPEN",      ",",      ",/tmp/x", " ",       "PROBE",
+                                          "OPEN /p", "msg",  ",hi",       "Py",     "run,",    "CLOSE",   "",
+                                          " , ",     "Lo g", " Open ,x", "probe c", "lose",    "AbOrT,",  "\t,",
+                                          "DEBUG",   "x)(",  "\xC3\x91,", "PRINT ",  "_,",      "logclose"};
+    const std::vector<std::string> templates{
+        "([TOOLNAME][TOOLPATH_NAME][TP_FILENAME])", "([TOOLNAME] [TOOLPATH_NAME] [TP_FILENAME])",
+        ";[TOOLNAME][TOOLPATH_NAME][TP_FILENAME]",  "( [TOOLNAME][TOOLPATH_NAME])",
+        "([TOOLNAME]x[TOOLPATH_NAME])",              "; [TOOLNAME] [TOOLPATH_NAME]",
+        "(ok) ([TOOLNAME][TOOLPATH_NAME])"};
+    std::mt19937 rng(20261102u);  // mt19937's sequence is fixed by the standard
+    const auto pick = [&](std::size_t n) { return static_cast<std::size_t>(rng() % n); };
+    for (const std::string& t : templates) {
+        const PostProcessor pp = headerPost(t);
+        for (int run = 0; run < 400; ++run) {
+            std::string v[3];
+            for (std::string& s : v) {
+                const std::size_t parts = 1 + pick(2);
+                for (std::size_t k = 0; k < parts; ++k) {
+                    s += pieces[pick(pieces.size())];
+                }
+            }
+            const std::string out = runNames(pp, v[0], v[1], "", v[2]);
+            for (const std::string& comment : commentsOf(out)) {
+                INFO(t << " -> " << out);
+                CHECK_FALSE(isActiveComment(comment));
+            }
+        }
+    }
+}
+
+TEST_CASE("AC3: shipped posts define no VAR prefix that could move a text tag out of a comment",
+          "[post][safety][text]") {
+    for (const Shipped& p : shipped()) {
+        INFO(p.stem);
+        const PostProcessor pp = loadShipped(p);
+        for (const char* tag : {"TOOLNAME", "TOOL_NOTES", "TOOLPATH_NAME", "TOOLS_USED", "TIME", "DATE",
+                                "TP_FILENAME", "TP_DIR", "TP_EXT", "PATHNAME", "PRODUCT", "FILE_NOTES",
+                                "CUTTER_COMP"}) {
+            INFO(tag);
+            const VarDef* def = pp.var(tag);
+            if (def != nullptr) {
+                CHECK(def->prefix.find_first_of("();") == std::string::npos);
             }
         }
     }

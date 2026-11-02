@@ -45,33 +45,43 @@ enum class CommentContext {
     Line,   ///< After a `;`: the rest of the line is a comment.
 };
 
-/// The comment context at the end of an output line, and whether nothing but whitespace has
-/// been written since the comment opened (so a value there is the start of the comment text).
+/// The comment position at the end of an output line. While everything written since the
+/// comment opened (template text, VAR prefixes and earlier values alike) is only letters, digits,
+/// `_` and spaces, `plain` is set and `lead` holds that text's word characters, upper-cased with
+/// the spaces dropped: a value written there continues a word that could still become an active
+/// comment keyword.
 struct CommentPosition {
     CommentContext context{CommentContext::None};
-    bool atStart{false};
+    bool plain{false};
+    std::string lead;
 };
+
+/// True for the characters an active-comment keyword is made of (ASCII letters, digits, `_`).
+inline bool isWordChar(char c) {
+    return std::isalnum(static_cast<unsigned char>(c)) != 0 || c == '_';
+}
 
 /// The comment position at the end of `before` (the output line so far). `(` opens a comment
 /// and `)` closes it; `;` outside parentheses comments out the rest of the line.
 inline CommentPosition commentPositionAt(std::string_view before) {
     CommentPosition pos;
     for (char c : before) {
-        if (pos.context == CommentContext::Paren) {
-            if (c == ')') {
-                pos = {};
-            } else if (!isSpace(c)) {
-                pos.atStart = false;
-            }
-        } else if (pos.context == CommentContext::Line) {
-            if (!isSpace(c)) {
-                pos.atStart = false;
+        if (pos.context == CommentContext::Paren && c == ')') {
+            pos = {};
+        } else if (pos.context != CommentContext::None) {
+            if (isWordChar(c)) {
+                pos.lead += static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+            } else if (c != ' ' && c != '\t') {
+                pos.plain = false;
             }
         } else if (c == '(') {
-            pos = {CommentContext::Paren, true};
+            pos = {CommentContext::Paren, true, {}};
         } else if (c == ';') {
-            pos = {CommentContext::Line, true};
+            pos = {CommentContext::Line, true, {}};
         }
+    }
+    if (!pos.plain) {
+        pos.lead.clear();
     }
     return pos;
 }
@@ -132,10 +142,12 @@ inline std::size_t utf8Sequence(std::string_view s, std::size_t i, unsigned& cod
 ///   byte >= 0x80 (Grbl realtime commands again) is written;
 /// - inside an open `( … )` comment, `(` becomes `[` and `)` becomes `]`, so the value can neither
 ///   close the comment early nor nest one;
-/// - at the start of a comment (only whitespace written since it opened), a comma that follows
-///   only letters, digits, `_` and spaces becomes `_`, and a leading PROBEOPEN / PROBECLOSE /
-///   LOGCLOSE (case and spaces ignored) gets a `_` in front, so the value cannot form an active
-///   comment such as LinuxCNC's `(LOGOPEN,file)` or `(MSG,text)`.
+/// - while the comment so far holds only letters, digits, `_` and spaces (`pos.plain`; template
+///   text, prefixes and earlier values included), the comment so far plus this value is judged
+///   as one: every comma in this value that continues the word run becomes `_`, and when
+///   this value completes a leading PROBEOPEN / PROBECLOSE / LOGCLOSE (case and spaces ignored)
+///   it gets a `_` in front, so values cannot form an active comment such as LinuxCNC's
+///   `(LOGOPEN,file)` or `(MSG,text)`, alone or together.
 /// Runs after the post's SUBSTITUTE pairs, so no SUBSTITUTE setting can undo it.
 inline std::string sanitiseText(std::string_view text, CommentPosition pos) {
     std::string out;
@@ -162,22 +174,25 @@ inline std::string sanitiseText(std::string_view text, CommentPosition pos) {
         out += c;
         ++i;
     }
-    if (pos.context != CommentContext::None && pos.atStart) {
-        std::string word;  // leading letters/digits/_ with spaces dropped, upper case
+    if (pos.context != CommentContext::None && pos.plain) {
+        // The comment so far is one run of words; judge it together with this value, and
+        // neutralise inside this value.
+        std::string word = pos.lead;
         std::size_t k = 0;
         for (; k < out.size(); ++k) {
-            const auto c = static_cast<unsigned char>(out[k]);
-            if (std::isalnum(c) != 0 || c == '_') {
-                word += static_cast<char>(std::toupper(c));
-            } else if (c != ' ') {
+            if (out[k] == ',') {
+                out[k] = '_';  // a word char: the run goes on, so every comma in it is replaced
+            }
+            if (isWordChar(out[k])) {
+                word += static_cast<char>(std::toupper(static_cast<unsigned char>(out[k])));
+            } else if (out[k] != ' ') {
                 break;
             }
         }
-        if (k < out.size() && out[k] == ',') {
-            out[k] = '_';
-        }
         for (std::string_view keyword : {"PROBEOPEN", "PROBECLOSE", "LOGCLOSE"}) {
-            if (word.compare(0, keyword.size(), keyword) == 0) {
+            // Only when this value completes the keyword: one the template wrote by itself
+            // before the value is the post author's own text.
+            if (pos.lead.size() < keyword.size() && word.compare(0, keyword.size(), keyword) == 0) {
                 out.insert(0, 1, '_');
                 break;
             }

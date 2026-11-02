@@ -348,7 +348,8 @@ class Interpreter {
         if (problem.empty()) {
             return true;
         }
-        fail(def.line, "[" + def.tag + "] would be written as " + problem +
+        // Blame the VAR line only when its multiplier took part.
+        fail(def.multiplier != 1.0 ? def.line : 0, "[" + def.tag + "] would be written as " + problem +
                            (def.multiplier != 1.0 ? " (VAR multiplier " + describeValue(def.multiplier) + ")"
                                                   : std::string{}));
         return false;
