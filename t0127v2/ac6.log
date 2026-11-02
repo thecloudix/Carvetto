@@ -1,0 +1,144 @@
+F ac6/r_12_-0.3_0_2_0.scn S 0 0 side 2 D 12 V 0 a -0.3000 sep 0 lpa 0.300 n 2 len 1.000 th 1.500 3d 0 | G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.033 6.3s [FREE 1 ge05 1 biggest 58.094 mm2 at (60.00,15.00) allLost 1] [REP 1 max 58.05]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 2 hold 2 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 2 req 2
+F ac6/r_12_-0.3_0_2_1.scn S 0 0 side 2 D 12 V 0 a -0.3000 sep 0 lpa 0.300 n 2 len 1.000 th 1.500 3d 1 | G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.033 6.1s [FREE 1 ge05 1 biggest 58.094 mm2 at (60.00,15.00) allLost 1] [REP 1 max 58.05]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 2 hold 2 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 2 req 2
+F ac6/r_12_-0.3_0_6_0.scn S 0 0 side 2 D 12 V 0 a -0.3000 sep 0 lpa 0.300 n 6 len 1.000 th 1.500 3d 0 | G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 6 req 6 | cell 0.033 6.5s [FREE 1 ge05 1 biggest 58.094 mm2 at (60.00,15.00) allLost 1] [REP 1 max 58.05]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 6 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 6 req 6
+F ac6/r_12_-0.3_0_6_1.scn S 0 0 side 2 D 12 V 0 a -0.3000 sep 0 lpa 0.300 n 6 len 1.000 th 1.500 3d 1 | G 7 hold 7 nohold 0 sev 0 part 0 thin 0 | left 5 req 6 | cell 0.033 7.7s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 7 hold 7 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 5 req 6
+F ac6/r_12_-0.3_1_2_0.scn S 0 0 side 2 D 12 V 0 a -0.3000 sep 1 lpa 0.300 n 2 len 1.000 th 1.500 3d 0 | G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.033 10.8s [FREE 1 ge05 1 biggest 50.263 mm2 at (60.00,15.00) allLost 1] [REP 1 max 50.25]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 2 hold 2 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 2 req 2
+F ac6/r_12_-0.3_1_2_1.scn S 0 0 side 2 D 12 V 0 a -0.3000 sep 1 lpa 0.300 n 2 len 1.000 th 1.500 3d 1 | G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.033 10.5s [FREE 1 ge05 1 biggest 50.263 mm2 at (60.00,15.00) allLost 1] [REP 1 max 50.25]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 2 hold 2 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 2 req 2
+F ac6/r_12_-0.3_1_6_0.scn S 0 0 side 2 D 12 V 0 a -0.3000 sep 1 lpa 0.300 n 6 len 1.000 th 1.500 3d 0 | G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 6 req 6 | cell 0.033 11.0s [FREE 1 ge05 1 biggest 50.263 mm2 at (60.00,15.00) allLost 1] [REP 1 max 50.25]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 6 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 6 req 6
+F ac6/r_12_-0.3_1_6_1.scn S 0 0 side 2 D 12 V 0 a -0.3000 sep 1 lpa 0.300 n 6 len 1.000 th 1.500 3d 1 | G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 6 req 6 | cell 0.033 8.8s [FREE 1 ge05 1 biggest 50.263 mm2 at (60.00,15.00) allLost 1] [REP 1 max 50.25]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 6 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 6 req 6
+F ac6/r_12_0.3_0_2_0.scn S 0 0 side 2 D 12 V 0 a 0.3000 sep 0 lpa 0.300 n 2 len 1.000 th 1.500 3d 0 | G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.033 4.9s [FREE 1 ge05 1 biggest 43.008 mm2 at (60.00,15.00) allLost 1] [REP 1 max 42.98]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 2 hold 2 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 2 req 2
+F ac6/r_12_0.3_0_2_1.scn S 0 0 side 2 D 12 V 0 a 0.3000 sep 0 lpa 0.300 n 2 len 1.000 th 1.500 3d 1 | G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.033 4.9s [FREE 1 ge05 1 biggest 43.008 mm2 at (60.00,15.00) allLost 1] [REP 1 max 42.98]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 2 hold 2 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 2 req 2
+F ac6/r_12_0.3_0_6_0.scn S 0 0 side 2 D 12 V 0 a 0.3000 sep 0 lpa 0.300 n 6 len 1.000 th 1.500 3d 0 | G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 6 req 6 | cell 0.033 5.2s [FREE 1 ge05 1 biggest 43.008 mm2 at (60.00,15.00) allLost 1] [REP 1 max 42.98]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 6 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 6 req 6
+F ac6/r_12_0.3_0_6_1.scn S 0 0 side 2 D 12 V 0 a 0.3000 sep 0 lpa 0.300 n 6 len 1.000 th 1.500 3d 1 | G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 6 req 6 | cell 0.033 5.1s [FREE 1 ge05 1 biggest 43.008 mm2 at (60.00,15.00) allLost 1] [REP 1 max 42.98]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 6 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 6 req 6
+F ac6/r_12_0.3_1_2_0.scn S 0 0 side 2 D 12 V 0 a 0.3000 sep 1 lpa 0.300 n 2 len 1.000 th 1.500 3d 0 | G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.034 8.7s [FREE 1 ge05 1 biggest 36.315 mm2 at (60.00,15.00) allLost 1] [REP 1 max 36.30]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 2 hold 2 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 2 req 2
+F ac6/r_12_0.3_1_2_1.scn S 0 0 side 2 D 12 V 0 a 0.3000 sep 1 lpa 0.300 n 2 len 1.000 th 1.500 3d 1 | G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.034 8.7s [FREE 1 ge05 1 biggest 36.315 mm2 at (60.00,15.00) allLost 1] [REP 1 max 36.30]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 2 hold 2 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 2 req 2
+F ac6/r_12_0.3_1_6_0.scn S 0 0 side 2 D 12 V 0 a 0.3000 sep 1 lpa 0.300 n 6 len 1.000 th 1.500 3d 0 | G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 6 req 6 | cell 0.034 9.0s [FREE 1 ge05 1 biggest 36.315 mm2 at (60.00,15.00) allLost 1] [REP 1 max 36.30]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 6 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 6 req 6
+F ac6/r_12_0.3_1_6_1.scn S 0 0 side 2 D 12 V 0 a 0.3000 sep 1 lpa 0.300 n 6 len 1.000 th 1.500 3d 1 | G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 6 req 6 | cell 0.034 8.7s [FREE 1 ge05 1 biggest 36.315 mm2 at (60.00,15.00) allLost 1] [REP 1 max 36.30]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 6 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 6 req 6
+F ac6/r_12_0_0_2_0.scn S 0 0 side 2 D 12 V 0 a 0.0000 sep 0 lpa 0.300 n 2 len 1.000 th 1.500 3d 0 | G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.033 4.9s [FREE 1 ge05 1 biggest 50.263 mm2 at (60.00,15.00) allLost 1] [REP 1 max 50.25]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 2 hold 2 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 2 req 2
+F ac6/r_12_0_0_2_1.scn S 0 0 side 2 D 12 V 0 a 0.0000 sep 0 lpa 0.300 n 2 len 1.000 th 1.500 3d 1 | G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.033 4.8s [FREE 1 ge05 1 biggest 50.263 mm2 at (60.00,15.00) allLost 1] [REP 1 max 50.25]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 2 hold 2 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 2 req 2
+F ac6/r_12_0_0_6_0.scn S 0 0 side 2 D 12 V 0 a 0.0000 sep 0 lpa 0.300 n 6 len 1.000 th 1.500 3d 0 | G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 6 req 6 | cell 0.033 5.2s [FREE 1 ge05 1 biggest 50.263 mm2 at (60.00,15.00) allLost 1] [REP 1 max 50.25]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 6 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 6 req 6
+F ac6/r_12_0_0_6_1.scn S 0 0 side 2 D 12 V 0 a 0.0000 sep 0 lpa 0.300 n 6 len 1.000 th 1.500 3d 1 | G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 6 req 6 | cell 0.033 5.0s [FREE 1 ge05 1 biggest 50.263 mm2 at (60.00,15.00) allLost 1] [REP 1 max 50.25]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 6 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 6 req 6
+F ac6/r_12_0_1_2_0.scn S 0 0 side 2 D 12 V 0 a 0.0000 sep 1 lpa 0.300 n 2 len 1.000 th 1.500 3d 0 | G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.033 8.0s [FREE 1 ge05 1 biggest 43.008 mm2 at (60.00,15.00) allLost 1] [REP 1 max 42.98]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 2 hold 2 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 2 req 2
+F ac6/r_12_0_1_2_1.scn S 0 0 side 2 D 12 V 0 a 0.0000 sep 1 lpa 0.300 n 2 len 1.000 th 1.500 3d 1 | G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.033 8.2s [FREE 1 ge05 1 biggest 43.008 mm2 at (60.00,15.00) allLost 1] [REP 1 max 42.98]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 2 hold 2 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 2 req 2
+F ac6/r_12_0_1_6_0.scn S 0 0 side 2 D 12 V 0 a 0.0000 sep 1 lpa 0.300 n 6 len 1.000 th 1.500 3d 0 | G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 6 req 6 | cell 0.033 8.8s [FREE 1 ge05 1 biggest 43.008 mm2 at (60.00,15.00) allLost 1] [REP 1 max 42.98]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 6 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 6 req 6
+F ac6/r_12_0_1_6_1.scn S 0 0 side 2 D 12 V 0 a 0.0000 sep 1 lpa 0.300 n 6 len 1.000 th 1.500 3d 1 | G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 6 req 6 | cell 0.033 8.5s [FREE 1 ge05 1 biggest 43.008 mm2 at (60.00,15.00) allLost 1] [REP 1 max 42.98]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 6 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 6 req 6
+F ac6/r_3.175_-0.3_0_2_0.scn S 0 0 side 2 D 3.175 V 0 a -0.3000 sep 0 lpa 0.300 n 2 len 1.000 th 1.500 3d 0 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 1.4s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_-0.3_0_2_1.scn S 0 0 side 2 D 3.175 V 0 a -0.3000 sep 0 lpa 0.300 n 2 len 1.000 th 1.500 3d 1 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 1.7s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_-0.3_0_6_0.scn S 0 0 side 2 D 3.175 V 0 a -0.3000 sep 0 lpa 0.300 n 6 len 1.000 th 1.500 3d 0 | G 12 hold 12 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 1.5s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 12 hold 12 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_-0.3_0_6_1.scn S 0 0 side 2 D 3.175 V 0 a -0.3000 sep 0 lpa 0.300 n 6 len 1.000 th 1.500 3d 1 | G 12 hold 12 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 1.9s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 12 hold 12 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_-0.3_1_2_0.scn S 0 0 side 2 D 3.175 V 0 a -0.3000 sep 1 lpa 0.300 n 2 len 1.000 th 1.500 3d 0 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 1.8s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_-0.3_1_2_1.scn S 0 0 side 2 D 3.175 V 0 a -0.3000 sep 1 lpa 0.300 n 2 len 1.000 th 1.500 3d 1 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 2.1s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_-0.3_1_6_0.scn S 0 0 side 2 D 3.175 V 0 a -0.3000 sep 1 lpa 0.300 n 6 len 1.000 th 1.500 3d 0 | G 12 hold 12 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 1.9s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 12 hold 12 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_-0.3_1_6_1.scn S 0 0 side 2 D 3.175 V 0 a -0.3000 sep 1 lpa 0.300 n 6 len 1.000 th 1.500 3d 1 | G 12 hold 12 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 2.5s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 12 hold 12 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_0.3_0_2_0.scn S 0 0 side 2 D 3.175 V 0 a 0.3000 sep 0 lpa 0.300 n 2 len 1.000 th 1.500 3d 0 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 1.4s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_0.3_0_2_1.scn S 0 0 side 2 D 3.175 V 0 a 0.3000 sep 0 lpa 0.300 n 2 len 1.000 th 1.500 3d 1 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 1.6s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_0.3_0_6_0.scn S 0 0 side 2 D 3.175 V 0 a 0.3000 sep 0 lpa 0.300 n 6 len 1.000 th 1.500 3d 0 | G 12 hold 12 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 1.5s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 12 hold 12 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_0.3_0_6_1.scn S 0 0 side 2 D 3.175 V 0 a 0.3000 sep 0 lpa 0.300 n 6 len 1.000 th 1.500 3d 1 | G 12 hold 12 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 2.0s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 12 hold 12 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_0.3_1_2_0.scn S 0 0 side 2 D 3.175 V 0 a 0.3000 sep 1 lpa 0.300 n 2 len 1.000 th 1.500 3d 0 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 1.8s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_0.3_1_2_1.scn S 0 0 side 2 D 3.175 V 0 a 0.3000 sep 1 lpa 0.300 n 2 len 1.000 th 1.500 3d 1 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 2.0s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_0.3_1_6_0.scn S 0 0 side 2 D 3.175 V 0 a 0.3000 sep 1 lpa 0.300 n 6 len 1.000 th 1.500 3d 0 | G 12 hold 12 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 1.8s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 12 hold 12 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_0.3_1_6_1.scn S 0 0 side 2 D 3.175 V 0 a 0.3000 sep 1 lpa 0.300 n 6 len 1.000 th 1.500 3d 1 | G 12 hold 12 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 2.4s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 12 hold 12 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_0_0_2_0.scn S 0 0 side 2 D 3.175 V 0 a 0.0000 sep 0 lpa 0.300 n 2 len 1.000 th 1.500 3d 0 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 1.6s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_0_0_2_1.scn S 0 0 side 2 D 3.175 V 0 a 0.0000 sep 0 lpa 0.300 n 2 len 1.000 th 1.500 3d 1 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 1.6s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_0_0_6_0.scn S 0 0 side 2 D 3.175 V 0 a 0.0000 sep 0 lpa 0.300 n 6 len 1.000 th 1.500 3d 0 | G 12 hold 12 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 1.6s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 12 hold 12 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_0_0_6_1.scn S 0 0 side 2 D 3.175 V 0 a 0.0000 sep 0 lpa 0.300 n 6 len 1.000 th 1.500 3d 1 | G 12 hold 12 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 1.7s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 12 hold 12 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_0_1_2_0.scn S 0 0 side 2 D 3.175 V 0 a 0.0000 sep 1 lpa 0.300 n 2 len 1.000 th 1.500 3d 0 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 1.7s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_0_1_2_1.scn S 0 0 side 2 D 3.175 V 0 a 0.0000 sep 1 lpa 0.300 n 2 len 1.000 th 1.500 3d 1 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 2.0s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_0_1_6_0.scn S 0 0 side 2 D 3.175 V 0 a 0.0000 sep 1 lpa 0.300 n 6 len 1.000 th 1.500 3d 0 | G 12 hold 12 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 1.7s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 12 hold 12 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_3.175_0_1_6_1.scn S 0 0 side 2 D 3.175 V 0 a 0.0000 sep 1 lpa 0.300 n 6 len 1.000 th 1.500 3d 1 | G 12 hold 12 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.030 2.3s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 12 hold 12 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_6_-0.3_0_2_0.scn S 0 0 side 2 D 6 V 0 a -0.3000 sep 0 lpa 0.300 n 2 len 1.000 th 1.500 3d 0 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.031 2.3s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_6_-0.3_0_2_1.scn S 0 0 side 2 D 6 V 0 a -0.3000 sep 0 lpa 0.300 n 2 len 1.000 th 1.500 3d 1 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.031 2.6s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_6_-0.3_0_6_0.scn S 0 0 side 2 D 6 V 0 a -0.3000 sep 0 lpa 0.300 n 6 len 1.000 th 1.500 3d 0 | G 11 hold 11 nohold 0 sev 0 part 0 thin 0 | left 1 req 6 | cell 0.031 2.4s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 11 hold 11 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 1 req 6
+F ac6/r_6_-0.3_0_6_1.scn S 0 0 side 2 D 6 V 0 a -0.3000 sep 0 lpa 0.300 n 6 len 1.000 th 1.500 3d 1 | G 9 hold 9 nohold 0 sev 0 part 0 thin 0 | left 3 req 6 | cell 0.031 2.7s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 9 hold 9 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 3 req 6
+F ac6/r_6_-0.3_1_2_0.scn S 0 0 side 2 D 6 V 0 a -0.3000 sep 1 lpa 0.300 n 2 len 1.000 th 1.500 3d 0 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.031 3.3s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_6_-0.3_1_2_1.scn S 0 0 side 2 D 6 V 0 a -0.3000 sep 1 lpa 0.300 n 2 len 1.000 th 1.500 3d 1 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.031 3.8s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_6_-0.3_1_6_0.scn S 0 0 side 2 D 6 V 0 a -0.3000 sep 1 lpa 0.300 n 6 len 1.000 th 1.500 3d 0 | G 11 hold 11 nohold 0 sev 0 part 0 thin 0 | left 1 req 6 | cell 0.031 3.2s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 11 hold 11 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 1 req 6
+F ac6/r_6_-0.3_1_6_1.scn S 0 0 side 2 D 6 V 0 a -0.3000 sep 1 lpa 0.300 n 6 len 1.000 th 1.500 3d 1 | G 9 hold 9 nohold 0 sev 0 part 0 thin 0 | left 3 req 6 | cell 0.031 4.4s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 9 hold 9 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 3 req 6
+F ac6/r_6_0.3_0_2_0.scn S 0 0 side 2 D 6 V 0 a 0.3000 sep 0 lpa 0.300 n 2 len 1.000 th 1.500 3d 0 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.031 2.4s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_6_0.3_0_2_1.scn S 0 0 side 2 D 6 V 0 a 0.3000 sep 0 lpa 0.300 n 2 len 1.000 th 1.500 3d 1 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.031 2.7s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_6_0.3_0_6_0.scn S 0 0 side 2 D 6 V 0 a 0.3000 sep 0 lpa 0.300 n 6 len 1.000 th 1.500 3d 0 | G 11 hold 11 nohold 0 sev 0 part 0 thin 0 | left 1 req 6 | cell 0.031 2.2s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 11 hold 11 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 1 req 6
+F ac6/r_6_0.3_0_6_1.scn S 0 0 side 2 D 6 V 0 a 0.3000 sep 0 lpa 0.300 n 6 len 1.000 th 1.500 3d 1 | G 8 hold 8 nohold 0 sev 0 part 0 thin 0 | left 4 req 6 | cell 0.031 2.6s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 8 hold 8 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 4 req 6
+F ac6/r_6_0.3_1_2_0.scn S 0 0 side 2 D 6 V 0 a 0.3000 sep 1 lpa 0.300 n 2 len 1.000 th 1.500 3d 0 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.031 3.3s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_6_0.3_1_2_1.scn S 0 0 side 2 D 6 V 0 a 0.3000 sep 1 lpa 0.300 n 2 len 1.000 th 1.500 3d 1 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.031 3.9s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_6_0.3_1_6_0.scn S 0 0 side 2 D 6 V 0 a 0.3000 sep 1 lpa 0.300 n 6 len 1.000 th 1.500 3d 0 | G 11 hold 11 nohold 0 sev 0 part 0 thin 0 | left 1 req 6 | cell 0.031 3.5s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 11 hold 11 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 1 req 6
+F ac6/r_6_0.3_1_6_1.scn S 0 0 side 2 D 6 V 0 a 0.3000 sep 1 lpa 0.300 n 6 len 1.000 th 1.500 3d 1 | G 8 hold 8 nohold 0 sev 0 part 0 thin 0 | left 4 req 6 | cell 0.031 4.1s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 8 hold 8 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 4 req 6
+F ac6/r_6_0_0_2_0.scn S 0 0 side 2 D 6 V 0 a 0.0000 sep 0 lpa 0.300 n 2 len 1.000 th 1.500 3d 0 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.031 2.1s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_6_0_0_2_1.scn S 0 0 side 2 D 6 V 0 a 0.0000 sep 0 lpa 0.300 n 2 len 1.000 th 1.500 3d 1 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.031 2.4s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_6_0_0_6_0.scn S 0 0 side 2 D 6 V 0 a 0.0000 sep 0 lpa 0.300 n 6 len 1.000 th 1.500 3d 0 | G 11 hold 11 nohold 0 sev 0 part 0 thin 0 | left 1 req 6 | cell 0.031 2.3s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 11 hold 11 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 1 req 6
+F ac6/r_6_0_0_6_1.scn S 0 0 side 2 D 6 V 0 a 0.0000 sep 0 lpa 0.300 n 6 len 1.000 th 1.500 3d 1 | G 8 hold 8 nohold 0 sev 0 part 0 thin 0 | left 4 req 6 | cell 0.031 2.5s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 8 hold 8 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 4 req 6
+F ac6/r_6_0_1_2_0.scn S 0 0 side 2 D 6 V 0 a 0.0000 sep 1 lpa 0.300 n 2 len 1.000 th 1.500 3d 0 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.031 3.2s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_6_0_1_2_1.scn S 0 0 side 2 D 6 V 0 a 0.0000 sep 1 lpa 0.300 n 2 len 1.000 th 1.500 3d 1 | G 4 hold 4 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.031 4.3s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 4 hold 4 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+F ac6/r_6_0_1_6_0.scn S 0 0 side 2 D 6 V 0 a 0.0000 sep 1 lpa 0.300 n 6 len 1.000 th 1.500 3d 0 | G 11 hold 11 nohold 0 sev 0 part 0 thin 0 | left 1 req 6 | cell 0.031 3.7s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 11 hold 11 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 1 req 6
+F ac6/r_6_0_1_6_1.scn S 0 0 side 2 D 6 V 0 a 0.0000 sep 1 lpa 0.300 n 6 len 1.000 th 1.500 3d 1 | G 8 hold 8 nohold 0 sev 0 part 0 thin 0 | left 4 req 6 | cell 0.031 4.7s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 8 hold 8 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 4 req 6
