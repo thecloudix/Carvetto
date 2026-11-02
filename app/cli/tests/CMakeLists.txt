@@ -14,7 +14,6 @@ endif()
 add_executable(carvetto_cli_tests
   cli_test.cpp
   params_test.cpp
-  toolpath_store_test.cpp
 )
 target_link_libraries(carvetto_cli_tests PRIVATE carvetto_cli_lib nlohmann_json::nlohmann_json
                       Catch2::Catch2WithMain carvetto_warnings)

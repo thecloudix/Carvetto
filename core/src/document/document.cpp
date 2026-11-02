@@ -290,6 +290,99 @@ std::vector<Object> Document::copyObjects(const std::vector<ObjectId>& ids) cons
     return out;
 }
 
+// --- Toolpaths -----------------------------------------------------------------------------------
+
+const ToolpathRecord* Document::findToolpath(ToolpathId id) const {
+    const auto it = findById(toolpaths_, id);
+    return it == toolpaths_.end() ? nullptr : &*it;
+}
+
+ToolpathRecord* Document::findToolpath(ToolpathId id) {
+    const auto it = findById(toolpaths_, id);
+    return it == toolpaths_.end() ? nullptr : &*it;
+}
+
+std::optional<std::size_t> Document::toolpathIndex(ToolpathId id) const {
+    const auto it = findById(toolpaths_, id);
+    if (it == toolpaths_.end()) {
+        return std::nullopt;
+    }
+    return static_cast<std::size_t>(it - toolpaths_.begin());
+}
+
+ToolpathId Document::insertToolpath(ToolpathRecord record, std::optional<std::size_t> index) {
+    if (record.id.isNull()) {
+        record.id = allocateToolpathId();
+        if (record.id.isNull()) {
+            return {};  // generator exhausted (asserted in allocate)
+        }
+    } else {
+        assert(!findToolpath(record.id) && "duplicate toolpath id");
+        ids_.reserveThrough(record.id.value);
+    }
+    const ToolpathId id = record.id;
+    const std::size_t at = std::min(index.value_or(toolpaths_.size()), toolpaths_.size());
+    toolpaths_.insert(toolpaths_.begin() + static_cast<std::ptrdiff_t>(at), std::move(record));
+    return id;
+}
+
+std::optional<ToolpathRecord> Document::takeToolpath(ToolpathId id) {
+    const auto it = findById(toolpaths_, id);
+    if (it == toolpaths_.end()) {
+        return std::nullopt;
+    }
+    ToolpathRecord record = std::move(*it);
+    toolpaths_.erase(it);
+    return record;
+}
+
+bool Document::moveToolpath(ToolpathId id, std::size_t newIndex) {
+    const auto from = toolpathIndex(id);
+    if (!from || newIndex >= toolpaths_.size()) {
+        return false;
+    }
+    if (*from == newIndex) {
+        return true;
+    }
+    ToolpathRecord record = std::move(toolpaths_[*from]);
+    toolpaths_.erase(toolpaths_.begin() + static_cast<std::ptrdiff_t>(*from));
+    toolpaths_.insert(toolpaths_.begin() + static_cast<std::ptrdiff_t>(newIndex), std::move(record));
+    return true;
+}
+
+std::vector<ObjectId> Document::selectedVectors(const VectorSelection& selection) const {
+    std::vector<ObjectId> out;
+    if (selection.all) {
+        for (const auto& [id, obj] : objects_) {
+            if (obj.isVector()) {
+                out.push_back(id);
+            }
+        }
+        return out;
+    }
+    std::set<ObjectId> taken;
+    const auto take = [&](ObjectId id) {
+        const Object* obj = findObject(id);
+        if (obj && obj->isVector() && taken.insert(id).second) {
+            out.push_back(id);
+        }
+    };
+    for (const ObjectId id : selection.objects) {
+        for (const ObjectId member : withDescendants({id})) {  // id order; just `id` for a vector
+            take(member);
+        }
+    }
+    if (!selection.layers.empty()) {
+        const std::set<LayerId> layers(selection.layers.begin(), selection.layers.end());
+        for (const auto& [id, obj] : objects_) {
+            if (layers.contains(obj.layer)) {
+                take(id);
+            }
+        }
+    }
+    return out;
+}
+
 // --- Integrity -----------------------------------------------------------------------------------
 
 namespace {
@@ -396,6 +489,9 @@ std::vector<IntegrityIssue> Document::checkIntegrity() const {
     for (const Layer& layer : layers_) {
         checkId(layer.id.value, {}, "layer");
     }
+    for (const ToolpathRecord& tp : toolpaths_) {
+        checkId(tp.id.value, {}, "toolpath");
+    }
     for (const auto& [id, obj] : objects_) {
         checkId(id.value, id, "object");
         if (obj.id != id) {
@@ -432,6 +528,9 @@ std::vector<IntegrityIssue> Document::checkIntegrity() const {
         if (obj.id != id) {
             addObjectOwner(obj.id.value, id, "object (stored id)");
         }
+    }
+    for (const ToolpathRecord& tp : toolpaths_) {
+        owners[tp.id.value].names.push_back("toolpath");
     }
     for (const auto& [value, entry] : owners) {
         if (value == 0 || entry.names.size() < 2) {
@@ -502,6 +601,42 @@ std::vector<IntegrityIssue> Document::checkIntegrity() const {
         }
         if (const auto it = cycleEntry.find(id); it != cycleEntry.end()) {
             report(Kind::Cycle, id, it->second, "parent chain of " + idText(id) + " loops");
+        }
+    }
+
+    // Toolpath selections (ADR-0021): a reference may name a deleted item (ids are never reused,
+    // so it can never come to name another one), but never an id that was not handed out yet or
+    // an item of another kind.
+    for (const ToolpathRecord& tp : toolpaths_) {
+        const std::string who = "toolpath #" + std::to_string(tp.id.value);
+        const VectorSelection& sel = tp.selection;
+        if (sel.all && (!sel.layers.empty() || !sel.objects.empty())) {
+            report(Kind::BadToolpathSelection, {}, {}, who + " selects all vectors and also lists layers or objects");
+        }
+        const auto checkRef = [&](std::uint64_t value, bool isLayer) {
+            const std::string what = std::string(isLayer ? "layer" : "object") + " #" + std::to_string(value);
+            if (value == 0 || value >= IdGenerator::kMaxId || value >= next) {
+                report(Kind::BadToolpathSelection, {}, {}, who + " selects " + what + ", which was never allocated");
+                return;
+            }
+            const auto it = owners.find(value);
+            if (it == owners.end()) {
+                return;  // a deleted item
+            }
+            const char* expected = isLayer ? "layer" : "object";
+            for (const std::string& owner : it->second.names) {
+                if (owner != expected) {
+                    report(Kind::BadToolpathSelection, {}, {},
+                           who + " selects " + what + ", which is a " + owner);
+                    return;
+                }
+            }
+        };
+        for (const LayerId layer : sel.layers) {
+            checkRef(layer.value, true);
+        }
+        for (const ObjectId object : sel.objects) {
+            checkRef(object.value, false);
         }
     }
     return issues;

@@ -1,6 +1,6 @@
 # ADR-0013: `.carv` serialisation details
 
-Date: 2026-10-24 · Status: accepted (director, 2026-10-24) · Amended 2026-10-24 (A1, T-0015)
+Date: 2026-10-24 · Status: accepted (director, 2026-10-24) · Amended 2026-10-24 (A1, T-0015), 2026-11-01 (A2, T-0132)
 
 ## Context
 ADR-0003 fixes the container (zip of `manifest.json`, `job.json` and optional binary members).
@@ -207,3 +207,13 @@ confines forward-compat logic to the I/O layer.
   unknown `.json` members, replacing the "Known limitations (tracked as T-0015)" list. The
   figures under *Zip-layer attacks* were measured with the T-0015 regression tests. Decision 8's
   claim that `.json` members are streamed now holds for every `.json` member.
+- **A2 (2026-11-01, T-0132): toolpath records, format 1.1.** `job.json` gains an optional
+  `toolpaths` array and the archive one binary move cache `toolpaths/NNNN.bin` per computed
+  toolpath (schema, cache layout and limits in ADR-0021). Additions to §9: a global budget of
+  8,000,000 toolpath moves per file (`LoadLimits::maxMoves`, charged from `job.json` before any
+  cache is inflated), at most 10,000 toolpath records, and the 20:1 binary ratio checks no longer
+  apply to move caches (they are decoded straight into moves, never held). Caches are written in
+  name order among the preserved members (§1). T-0122's interim `toolpaths/NNNN.json` members are
+  converted to records on load instead of being kept as unknown members. The toolpath parameter
+  keys follow carvetto-cli's params.json (lengths without the `_mm` suffix of §5; angles in
+  radians under `_rad` keys).

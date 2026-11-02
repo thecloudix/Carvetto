@@ -49,6 +49,9 @@ struct LoadLimits {
     std::uint64_t maxUnknownContainerElements{1'000'000};
     /// Deepest array/object nesting.
     int maxDepth{64};
+    /// Toolpath moves across all toolpath records, from move caches and migrated interim members
+    /// (ADR-0021); about 72 bytes each once decoded. `saveCarv` refuses to write more.
+    std::uint64_t maxMoves{kCarvMaxToolpathMoves};
 };
 
 /// Global resource accounting for one load; throws `LoadFailure` (ResourceLimit) when exceeded.
@@ -83,6 +86,12 @@ class LoadBudget {
                      " MiB");
         }
     }
+    void chargeMoves(std::uint64_t n) {
+        if (n > limits_.maxMoves || moves_ > limits_.maxMoves - n) {
+            exceeded("more than " + std::to_string(limits_.maxMoves) + " toolpath moves");
+        }
+        moves_ += n;
+    }
     void refundExtras(std::uint64_t bytes) { extras_ = bytes > extras_ ? 0 : extras_ - bytes; }
     void refundUnknownValues(std::uint64_t n) {
         unknownValues_ = n > unknownValues_ ? 0 : unknownValues_ - n;
@@ -92,6 +101,7 @@ class LoadBudget {
     std::uint64_t unknownValues() const { return unknownValues_; }
     std::uint64_t documentBytes() const { return document_; }
     std::uint64_t extrasBytes() const { return extras_; }
+    std::uint64_t moves() const { return moves_; }
 
    private:
     [[noreturn]] static void exceeded(const std::string& what) {
@@ -103,6 +113,7 @@ class LoadBudget {
     std::uint64_t unknownValues_{0};
     std::uint64_t document_{0};
     std::uint64_t extras_{0};
+    std::uint64_t moves_{0};
 };
 
 /// A sequential byte source.

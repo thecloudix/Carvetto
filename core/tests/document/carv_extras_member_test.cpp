@@ -1,5 +1,5 @@
-// T-0122: the CarvExtras member accessors used by carvetto-cli to keep computed toolpaths in a
-// .carv (interim storage, ADR-0019).
+// T-0122: the CarvExtras member accessors (added for carvetto-cli's interim toolpath storage,
+// ADR-0019; since T-0132 toolpaths are native records and these serve any preserved member).
 
 #include <catch2/catch_test_macros.hpp>
 #include <cstdint>
@@ -51,16 +51,16 @@ TEST_CASE("members added with withMember are saved and loaded back", "[document]
     doc.insertObject(document::Object::vector(geometry::Contour::rectangle(geometry::Box2{{0, 0}, {10, 5}}),
                                               doc.defaultLayer(), doc.activeSheet()));
     const CarvExtras extras = CarvExtras{}
-                                  .withMember("toolpaths/0001.json", bytesOf(R"({"name":"Profile"})"))
-                                  .withMember("toolpaths/0002.json", bytesOf(R"({"name":"Pocket"})"));
+                                  .withMember("notes/0001.json", bytesOf(R"({"name":"Profile"})"))
+                                  .withMember("notes/0002.json", bytesOf(R"({"name":"Pocket"})"));
     const auto saved = document::saveCarv(doc, extras);
     REQUIRE(saved.ok());
     const auto loaded = document::loadCarv(saved.value());
     REQUIRE(loaded.ok());
     const CarvExtras& back = loaded.value().extras;
-    CHECK(back.memberNames() == std::vector<std::string>{"toolpaths/0001.json", "toolpaths/0002.json"});
-    REQUIRE(back.member("toolpaths/0002.json") != nullptr);
-    CHECK(*back.member("toolpaths/0002.json") == bytesOf(R"({"name":"Pocket"})"));
+    CHECK(back.memberNames() == std::vector<std::string>{"notes/0001.json", "notes/0002.json"});
+    REQUIRE(back.member("notes/0002.json") != nullptr);
+    CHECK(*back.member("notes/0002.json") == bytesOf(R"({"name":"Pocket"})"));
     // Saving again with the loaded extras is byte-identical.
     const auto again = document::saveCarv(loaded.value().document, back);
     REQUIRE(again.ok());
@@ -70,11 +70,13 @@ TEST_CASE("members added with withMember are saved and loaded back", "[document]
 TEST_CASE("withMember refuses names saveCarv cannot write", "[document][carv][extras]") {
     const CarvExtras e;
     for (const char* name : {"", "manifest.json", "job.json", "/abs.json", "a\\b.json", "c:x", "toolpaths/",
-                             "toolpaths//a.json", "./a", "a/../b", ".."}) {
+                             "toolpaths//a.json", "./a", "a/../b", "..", "toolpaths/0001.bin",
+                             "toolpaths/9999.bin"}) {
         INFO(name);
         CHECK_THROWS_AS(e.withMember(name, {}), std::invalid_argument);
     }
     CHECK_THROWS_AS(e.withMember(std::string(256, 'a'), {}), std::invalid_argument);
     CHECK_NOTHROW(e.withMember(std::string(255, 'a'), {}));
-    CHECK_NOTHROW(e.withMember("toolpaths/0001.json", {}));
+    CHECK_NOTHROW(e.withMember("toolpaths/0001.json", {}));  // an interim member, migrated on load
+    CHECK_NOTHROW(e.withMember("toolpaths/1.bin", {}));        // not a move cache name
 }

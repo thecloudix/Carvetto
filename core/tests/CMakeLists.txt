@@ -52,6 +52,7 @@ add_executable(carvetto_tests
   geometry/boolean_test.cpp
   document/carv_io_test.cpp
   document/carv_extras_member_test.cpp
+  document/carv_toolpath_test.cpp
   io/dxf_import_test.cpp
   io/dxf_export_test.cpp
   io/dxf_curves_test.cpp

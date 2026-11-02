@@ -30,7 +30,9 @@
 #include <vector>
 
 #include "carv_json_reader.hpp"
+#include "carv_moves.hpp"
 #include "carv_zip.hpp"
+#include "carvetto/geometry/vec2.hpp"
 
 #ifndef CARVETTO_VERSION_STRING
 #define CARVETTO_VERSION_STRING "0.0.0"
@@ -66,6 +68,8 @@ struct CarvExtras::Impl {
     std::map<std::uint64_t, ExtraMap> sheets;
     std::map<std::uint64_t, ExtraMap> layers;
     std::map<std::uint64_t, ExtraMap> objects;
+    /// Unknown keys of each toolpath record, by id.
+    std::map<std::uint64_t, ExtraMap> toolpaths;
     /// Creation parameters of a kind this version does not know (canonical text), by object id.
     /// Loaded as `NoParams` and written back while the object still has `NoParams`.
     std::map<std::uint64_t, std::string> params;
@@ -74,7 +78,7 @@ struct CarvExtras::Impl {
 
     bool empty() const {
         return manifest.empty() && root.empty() && job.empty() && sheets.empty() && layers.empty() &&
-               objects.empty() && params.empty() && members.empty();
+               objects.empty() && toolpaths.empty() && params.empty() && members.empty();
     }
 };
 
@@ -112,6 +116,9 @@ CarvExtras CarvExtras::withMember(std::string name, std::vector<std::uint8_t> by
     }
     if (name == "manifest.json" || name == "job.json") {
         bad("reserved");
+    }
+    if (detail::isToolpathCacheName(name)) {
+        bad("reserved for toolpath move caches, which saveCarv writes from the toolpath records");
     }
     if (name.front() == '/' || name.find('\\') != std::string::npos || name.find(':') != std::string::npos) {
         bad("absolute paths, backslashes and drive letters are not allowed");
@@ -330,6 +337,45 @@ constexpr EnumName<RectangleParams::CornerStyle> kCorners[] = {
     {RectangleParams::CornerStyle::Rounded, "rounded"},
     {RectangleParams::CornerStyle::Chamfered, "chamfered"}};
 
+// Toolpath parameter enums (ADR-0021: the params.json names of T-0122, ADR-0019). Aliases come
+// after the canonical name, which is the one written.
+constexpr EnumName<toolpath::ProfileSide> kProfileSides[] = {{toolpath::ProfileSide::Outside, "outside"},
+                                                            {toolpath::ProfileSide::Inside, "inside"},
+                                                            {toolpath::ProfileSide::On, "on"},
+                                                            {toolpath::ProfileSide::Right, "right"},
+                                                            {toolpath::ProfileSide::Left, "left"}};
+constexpr EnumName<toolpath::CutDirection> kCutDirections[] = {{toolpath::CutDirection::Climb, "climb"},
+                                                              {toolpath::CutDirection::Conventional, "conventional"}};
+constexpr EnumName<toolpath::TabSpacing> kTabSpacings[] = {
+    {toolpath::TabSpacing::ConstantNumber, "constant_number"},
+    {toolpath::TabSpacing::ConstantDistance, "constant_distance"}};
+constexpr EnumName<toolpath::RampType> kRampTypes[] = {{toolpath::RampType::None, "none"},
+                                                      {toolpath::RampType::Smooth, "smooth"},
+                                                      {toolpath::RampType::ZigZag, "zig_zag"},
+                                                      {toolpath::RampType::Spiral, "spiral"}};
+constexpr EnumName<toolpath::LeadType> kLeadTypes[] = {{toolpath::LeadType::None, "none"},
+                                                      {toolpath::LeadType::Straight, "straight"},
+                                                      {toolpath::LeadType::Circular, "circular"}};
+constexpr EnumName<toolpath::StartAt> kStartAts[] = {{toolpath::StartAt::VectorStart, "vector_start"},
+                                                    {toolpath::StartAt::Optimise, "optimise"},
+                                                    {toolpath::StartAt::ClosestOnBoundingBox, "closest_on_bounding_box"}};
+constexpr EnumName<toolpath::BoxAnchor> kBoxAnchors[] = {{toolpath::BoxAnchor::BottomLeft, "bottom_left"},
+                                                        {toolpath::BoxAnchor::BottomCentre, "bottom_centre"},
+                                                        {toolpath::BoxAnchor::BottomRight, "bottom_right"},
+                                                        {toolpath::BoxAnchor::CentreLeft, "centre_left"},
+                                                        {toolpath::BoxAnchor::Centre, "centre"},
+                                                        {toolpath::BoxAnchor::CentreRight, "centre_right"},
+                                                        {toolpath::BoxAnchor::TopLeft, "top_left"},
+                                                        {toolpath::BoxAnchor::TopCentre, "top_centre"},
+                                                        {toolpath::BoxAnchor::TopRight, "top_right"}};
+constexpr EnumName<toolpath::PocketStrategy> kPocketStrategies[] = {
+    {toolpath::PocketStrategy::Offset, "offset"}, {toolpath::PocketStrategy::Raster, "raster"}};
+constexpr EnumName<toolpath::ProfilePass> kProfilePasses[] = {{toolpath::ProfilePass::None, "none"},
+                                                             {toolpath::ProfilePass::First, "first"},
+                                                             {toolpath::ProfilePass::Last, "last"}};
+constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Profile, "profile"},
+                                                      {ToolpathOperation::Pocket, "pocket"}};
+
 template <class E, std::size_t N>
 const char* nameOf(const EnumName<E> (&table)[N], E value) {
     for (const auto& item : table) {
@@ -539,6 +585,149 @@ json encodeObject(const Object& obj, const CarvExtras::Impl* extras) {
     return j;
 }
 
+// --- Toolpath records (ADR-0021). Parameters use the params.json keys of carvetto-cli (T-0122,
+// ADR-0019): lengths in mm without a suffix; angles in radians under "<key>_rad" (params.json
+// gives them in degrees under "<key>"), so they round-trip exactly. `cuttingData` is not saved.
+
+json encodeTolerance(const geometry::Tolerance& t) {
+    json j = json::object();
+    j["distance"] = t.distance;
+    j["angle_rad"] = t.angle;
+    j["chordal"] = t.chordal;
+    return j;
+}
+
+json encodeProfileParams(const toolpath::ProfileParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["side"] = nameOf(kProfileSides, p.side);
+    j["direction"] = nameOf(kCutDirections, p.direction);
+    j["allowance"] = p.allowance;
+    json passes = json::object();
+    passes["start_depth"] = p.passes.startDepth;
+    passes["cut_depth"] = p.passes.cutDepth;
+    passes["pass_depth"] = p.passes.passDepth;
+    passes["maintain_exact_step"] = p.passes.maintainExactStep;
+    passes["last_pass_thickness"] = p.passes.lastPassThickness;
+    j["passes"] = std::move(passes);
+    j["safe_z"] = p.safeZ;
+    j["separate_last_pass"] = p.separateLastPass;
+    j["last_pass_allowance"] = p.lastPassAllowance;
+    j["last_pass_reverse"] = p.lastPassReverse;
+    json tabs = json::object();
+    tabs["enabled"] = p.tabs.enabled;
+    tabs["length"] = p.tabs.length;
+    tabs["thickness"] = p.tabs.thickness;
+    tabs["spacing"] = nameOf(kTabSpacings, p.tabs.spacing);
+    tabs["count"] = p.tabs.count;
+    tabs["distance"] = p.tabs.distance;
+    tabs["avoid_corners"] = p.tabs.avoidCorners;
+    tabs["three_d"] = p.tabs.threeD;
+    j["tabs"] = std::move(tabs);
+    json ramp = json::object();
+    ramp["type"] = nameOf(kRampTypes, p.ramp.type);
+    ramp["distance"] = p.ramp.distance;
+    ramp["use_angle"] = p.ramp.useAngle;
+    ramp["angle_rad"] = p.ramp.angle;
+    ramp["on_lead_in"] = p.ramp.onLeadIn;
+    j["ramp"] = std::move(ramp);
+    json leads = json::object();
+    leads["type"] = nameOf(kLeadTypes, p.leads.type);
+    leads["length"] = p.leads.length;
+    leads["angle_rad"] = p.leads.angle;
+    leads["radius"] = p.leads.radius;
+    leads["sweep_rad"] = p.leads.sweep;
+    leads["lead_out"] = p.leads.leadOut;
+    leads["overcut"] = p.leads.overcut;
+    j["leads"] = std::move(leads);
+    json order = json::object();
+    order["selection_order"] = p.order.selectionOrder;
+    order["left_to_right"] = p.order.leftToRight;
+    order["bottom_to_top"] = p.order.bottomToTop;
+    order["grid"] = p.order.grid;
+    j["order"] = std::move(order);
+    j["start_at"] = nameOf(kStartAts, p.startAt);
+    j["start_anchor"] = nameOf(kBoxAnchors, p.startAnchor);
+    j["start_position"] = encodePoint(p.startPosition);
+    json corners = json::object();
+    corners["sharp_external"] = p.corners.sharpExternal;
+    corners["sharp_internal"] = p.corners.sharpInternal;
+    corners["mitre_limit"] = p.corners.mitreLimit;
+    j["corners"] = std::move(corners);
+    j["tolerance"] = encodeTolerance(p.tolerance);
+    return j;
+}
+
+json encodePocketParams(const toolpath::PocketParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["start_depth"] = p.startDepth;
+    j["cut_depth"] = p.cutDepth;
+    j["maintain_exact_step"] = p.maintainExactStep;
+    j["last_pass_thickness"] = p.lastPassThickness;
+    j["safe_z"] = p.safeZ;
+    j["strategy"] = nameOf(kPocketStrategies, p.strategy);
+    j["direction"] = nameOf(kCutDirections, p.direction);
+    j["raster_angle_rad"] = p.rasterAngle;
+    j["profile_pass"] = nameOf(kProfilePasses, p.profilePass);
+    j["allowance"] = p.allowance;
+    j["ramp_plunge"] = p.rampPlunge;
+    j["ramp_distance"] = p.rampDistance;
+    j["tolerance"] = encodeTolerance(p.tolerance);
+    return j;
+}
+
+/// Name of the move cache of the toolpath at `index` (0-based) in the job order.
+std::string cacheMemberName(std::size_t index) {
+    std::string digits = std::to_string(index + 1);
+    digits.insert(0, digits.size() < 4 ? 4 - digits.size() : 0, '0');
+    return "toolpaths/" + digits + ".bin";
+}
+
+json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, const CarvExtras::Impl* extras) {
+    json j = json::object();
+    j["id"] = tp.id.value;
+    j["name"] = tp.name;
+    j["operation"] = nameOf(kOperations, tp.operation());
+    if (const auto* profile = std::get_if<toolpath::ProfileParams>(&tp.params)) {
+        j["params"] = encodeProfileParams(*profile);
+    } else {
+        j["params"] = encodePocketParams(std::get<toolpath::PocketParams>(tp.params));
+    }
+    json selection = json::object();
+    selection["all"] = tp.selection.all;
+    json layers = json::array();
+    for (const LayerId id : tp.selection.layers) {
+        layers.push_back(id.value);
+    }
+    selection["layers"] = std::move(layers);
+    json objects = json::array();
+    for (const ObjectId id : tp.selection.objects) {
+        objects.push_back(id.value);
+    }
+    selection["objects"] = std::move(objects);
+    j["selection"] = std::move(selection);
+    json tool = json::object();
+    tool["id"] = tp.toolSource.toolId;
+    tool["machine"] = tp.toolSource.machine;
+    tool["material"] = tp.toolSource.material;
+    tool["name"] = tp.tool.name;
+    tool["tool_number"] = tp.tool.toolNumber;
+    tool["diameter"] = tp.tool.diameter;
+    tool["feed_rate"] = tp.tool.feedRate;
+    tool["plunge_rate"] = tp.tool.plungeRate;
+    tool["spindle_speed"] = tp.tool.spindleSpeed;
+    j["tool"] = std::move(tool);
+    if (cacheMember) {
+        json moves = json::object();
+        moves["count"] = static_cast<std::uint64_t>(tp.moveCount());
+        moves["member"] = *cacheMember;
+        j["moves"] = std::move(moves);
+    }
+    mergeUnknown(j, findExtra(extras, &CarvExtras::Impl::toolpaths, tp.id.value));
+    return j;
+}
+
 // ------------------------------------------------------------------------------------------------
 // Decoding: untrusted JSON is streamed through `detail::JsonReader` straight into records; no DOM
 // is ever built. Every allocation is charged to the archive-wide `detail::LoadBudget`. Any defect
@@ -561,6 +750,7 @@ constexpr std::uint64_t kCostString = 32;   // plus the length
 constexpr std::size_t kMaxLayers = 1000;
 constexpr std::size_t kMaxSheets = 1000;
 constexpr std::int64_t kMaxGroupDepth = 1024;
+constexpr std::size_t kMaxToolpaths = 10000;
 /// After a parse error, members up to this size are drained to tell damage (CRC) from bad JSON.
 constexpr std::uint64_t kDrainForCrcBytes = std::uint64_t{16} << 20;
 
@@ -1256,6 +1446,660 @@ DecodedObject decodeObject(JsonReader& r, const Path& p) {
     return out;
 }
 
+// --- Toolpath records (ADR-0021) ---------------------------------------------------------------
+
+/// Which params schema is read: job.json (angles in radians under "<key>_rad") or a params.json of
+/// an interim toolpath member (angles in degrees under "<key>", plus "tool" and "layers").
+enum class ParamsDialect { JobJson, ParamsJson };
+
+/// What an interim member's params.json says besides the operation parameters.
+struct LegacyParamsExtras {
+    ToolSource tool;
+    std::optional<std::vector<std::string>> layers;
+};
+
+constexpr double kRadPerDeg = geometry::kPi / 180.0;
+
+/// Reads the members of one params object. Every key is optional (the core default stays);
+/// unknown keys, and keys of the other dialect, are validated and skipped (ADR-0013 §7).
+class ParamsRecord {
+   public:
+    ParamsRecord(JsonReader& r, const Path& p, std::span<const std::string_view> keys, ParamsDialect dialect)
+        : r_(r), rec_(r, p, keys), dialect_(dialect) {}
+
+    /// Next known member; skips unknown ones. Returns false at the end of the object.
+    bool next() {
+        while (rec_.next()) {
+            if (rec_.known()) {
+                return true;
+            }
+            rec_.skip();
+        }
+        return false;
+    }
+    const std::string& key() const { return rec_.key(); }
+    Path field() const { return rec_.field(); }
+    /// True when the current key is `base` in this dialect's spelling of an angle.
+    bool isAngle(std::string_view base) const {
+        const std::string& k = rec_.key();
+        if (dialect_ == ParamsDialect::ParamsJson) {
+            return k == base;
+        }
+        return k.size() == base.size() + 4 && k.compare(0, base.size(), base) == 0 &&
+               k.compare(base.size(), 4, "_rad") == 0;
+    }
+    double number() { return readDouble(r_, field()); }
+    double angle() {
+        const double v = readDouble(r_, field());
+        return dialect_ == ParamsDialect::ParamsJson ? v * kRadPerDeg : v;
+    }
+    bool boolean() { return readBool(r_, field()); }
+    int integer() {
+        return readInt(r_, field(), std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+    }
+    std::string string() { return readStoredString(r_, field()); }
+    template <class E, std::size_t N>
+    E choice(const EnumName<E> (&table)[N]) {
+        return readEnum(r_, field(), table);
+    }
+    JsonReader& reader() { return r_; }
+    void skip() { rec_.skip(); }
+
+   private:
+    JsonReader& r_;
+    Record rec_;
+    ParamsDialect dialect_;
+};
+
+constexpr std::array<std::string_view, 3> kToleranceKeysJob{"distance", "angle_rad", "chordal"};
+constexpr std::array<std::string_view, 3> kToleranceKeysParams{"distance", "angle", "chordal"};
+
+geometry::Tolerance decodeTolerance(JsonReader& r, const Path& p, ParamsDialect d) {
+    geometry::Tolerance t;
+    ParamsRecord rec(r, p, d == ParamsDialect::JobJson ? std::span<const std::string_view>(kToleranceKeysJob)
+                                                       : std::span<const std::string_view>(kToleranceKeysParams),
+                     d);
+    while (rec.next()) {
+        if (rec.key() == "distance") {
+            t.distance = rec.number();
+        } else if (rec.isAngle("angle")) {
+            t.angle = rec.angle();
+        } else {
+            t.chordal = rec.number();
+        }
+    }
+    return t;
+}
+
+constexpr std::array<std::string_view, 4> kLegacyToolKeys{"id", "database", "machine", "material"};
+
+/// The "tool" and "layers" members of an interim params.json (T-0122's schema).
+void decodeLegacyCommon(ParamsRecord& rec, LegacyParamsExtras& out) {
+    JsonReader& r = rec.reader();
+    const Path f = rec.field();
+    if (rec.key() == "tool") {
+        Record tool(r, f, kLegacyToolKeys);
+        while (tool.next()) {
+            const Path tf = tool.field();
+            if (tool.key() == "id") {
+                out.tool.toolId = readStoredString(r, tf);
+            } else if (tool.key() == "machine") {
+                out.tool.machine = readStoredString(r, tf);
+            } else if (tool.key() == "material") {
+                out.tool.material = readStoredString(r, tf);
+            } else {
+                tool.skip();  // "database" (a path relative to the params file) and unknown keys
+            }
+        }
+        return;
+    }
+    if (r.peek() != JKind::Array) {
+        fail(f, "must be an array of layer names");
+    }
+    std::vector<std::string> names;
+    r.beginArray();
+    for (std::size_t i = 0; r.nextElement(); ++i) {
+        names.push_back(readStoredString(r, f.at(i)));
+    }
+    out.layers = std::move(names);
+}
+
+constexpr std::array<std::string_view, 5> kPassKeys{"start_depth", "cut_depth", "pass_depth", "maintain_exact_step",
+                                                    "last_pass_thickness"};
+constexpr std::array<std::string_view, 8> kTabKeys{"enabled", "length",   "thickness",     "spacing",
+                                                   "count",   "distance", "avoid_corners", "three_d"};
+constexpr std::array<std::string_view, 5> kRampKeysJob{"type", "distance", "use_angle", "angle_rad", "on_lead_in"};
+constexpr std::array<std::string_view, 5> kRampKeysParams{"type", "distance", "use_angle", "angle", "on_lead_in"};
+constexpr std::array<std::string_view, 7> kLeadKeysJob{"type",      "length",   "angle_rad", "radius",
+                                                       "sweep_rad", "lead_out", "overcut"};
+constexpr std::array<std::string_view, 7> kLeadKeysParams{"type",  "length",   "angle",  "radius",
+                                                          "sweep", "lead_out", "overcut"};
+constexpr std::array<std::string_view, 4> kOrderKeys{"selection_order", "left_to_right", "bottom_to_top", "grid"};
+constexpr std::array<std::string_view, 3> kCornerKeys{"sharp_external", "sharp_internal", "mitre_limit"};
+constexpr std::array<std::string_view, 20> kProfileKeys{
+    "name",         "side",           "direction",   "allowance",          "passes",
+    "safe_z",       "separate_last_pass", "last_pass_allowance", "last_pass_reverse", "tabs",
+    "ramp",         "leads",          "order",       "start_at",           "start_anchor",
+    "start_position", "corners",      "tolerance",   "tool",               "layers"};
+constexpr std::array<std::string_view, 16> kPocketKeysJob{
+    "name",     "start_depth",      "cut_depth",    "maintain_exact_step", "last_pass_thickness", "safe_z",
+    "strategy", "direction",        "raster_angle_rad", "profile_pass",    "allowance",           "ramp_plunge",
+    "ramp_distance", "tolerance",   "tool",         "layers"};
+constexpr std::array<std::string_view, 16> kPocketKeysParams{
+    "name",     "start_depth",      "cut_depth",    "maintain_exact_step", "last_pass_thickness", "safe_z",
+    "strategy", "direction",        "raster_angle", "profile_pass",        "allowance",           "ramp_plunge",
+    "ramp_distance", "tolerance",   "tool",         "layers"};
+
+template <std::size_t N>
+std::span<const std::string_view> keysFor(const std::array<std::string_view, N>& keys, ParamsDialect d) {
+    // "tool" and "layers" (always the last two) belong to params.json only.
+    return d == ParamsDialect::ParamsJson ? std::span<const std::string_view>(keys)
+                                          : std::span<const std::string_view>(keys.data(), N - 2);
+}
+
+toolpath::ProfileParams decodeProfileParams(JsonReader& r, const Path& p, ParamsDialect d,
+                                            LegacyParamsExtras* legacy) {
+    toolpath::ProfileParams out;
+    ParamsRecord rec(r, p, keysFor(kProfileKeys, d), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        const Path f = rec.field();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "side") {
+            out.side = rec.choice(kProfileSides);
+        } else if (k == "direction") {
+            out.direction = rec.choice(kCutDirections);
+        } else if (k == "allowance") {
+            out.allowance = rec.number();
+        } else if (k == "passes") {
+            ParamsRecord g(r, f, kPassKeys, d);
+            while (g.next()) {
+                const std::string& gk = g.key();
+                if (gk == "start_depth") {
+                    out.passes.startDepth = g.number();
+                } else if (gk == "cut_depth") {
+                    out.passes.cutDepth = g.number();
+                } else if (gk == "pass_depth") {
+                    out.passes.passDepth = g.number();
+                } else if (gk == "maintain_exact_step") {
+                    out.passes.maintainExactStep = g.boolean();
+                } else {
+                    out.passes.lastPassThickness = g.number();
+                }
+            }
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else if (k == "separate_last_pass") {
+            out.separateLastPass = rec.boolean();
+        } else if (k == "last_pass_allowance") {
+            out.lastPassAllowance = rec.number();
+        } else if (k == "last_pass_reverse") {
+            out.lastPassReverse = rec.boolean();
+        } else if (k == "tabs") {
+            ParamsRecord g(r, f, kTabKeys, d);
+            while (g.next()) {
+                const std::string& gk = g.key();
+                if (gk == "enabled") {
+                    out.tabs.enabled = g.boolean();
+                } else if (gk == "length") {
+                    out.tabs.length = g.number();
+                } else if (gk == "thickness") {
+                    out.tabs.thickness = g.number();
+                } else if (gk == "spacing") {
+                    out.tabs.spacing = g.choice(kTabSpacings);
+                } else if (gk == "count") {
+                    out.tabs.count = g.integer();
+                } else if (gk == "distance") {
+                    out.tabs.distance = g.number();
+                } else if (gk == "avoid_corners") {
+                    out.tabs.avoidCorners = g.boolean();
+                } else {
+                    out.tabs.threeD = g.boolean();
+                }
+            }
+        } else if (k == "ramp") {
+            ParamsRecord g(r, f, d == ParamsDialect::JobJson ? kRampKeysJob : kRampKeysParams, d);
+            while (g.next()) {
+                const std::string& gk = g.key();
+                if (gk == "type") {
+                    out.ramp.type = g.choice(kRampTypes);
+                } else if (gk == "distance") {
+                    out.ramp.distance = g.number();
+                } else if (gk == "use_angle") {
+                    out.ramp.useAngle = g.boolean();
+                } else if (g.isAngle("angle")) {
+                    out.ramp.angle = g.angle();
+                } else {
+                    out.ramp.onLeadIn = g.boolean();
+                }
+            }
+        } else if (k == "leads") {
+            ParamsRecord g(r, f, d == ParamsDialect::JobJson ? kLeadKeysJob : kLeadKeysParams, d);
+            while (g.next()) {
+                const std::string& gk = g.key();
+                if (gk == "type") {
+                    out.leads.type = g.choice(kLeadTypes);
+                } else if (gk == "length") {
+                    out.leads.length = g.number();
+                } else if (g.isAngle("angle")) {
+                    out.leads.angle = g.angle();
+                } else if (gk == "radius") {
+                    out.leads.radius = g.number();
+                } else if (g.isAngle("sweep")) {
+                    out.leads.sweep = g.angle();
+                } else if (gk == "lead_out") {
+                    out.leads.leadOut = g.boolean();
+                } else {
+                    out.leads.overcut = g.number();
+                }
+            }
+        } else if (k == "order") {
+            ParamsRecord g(r, f, kOrderKeys, d);
+            while (g.next()) {
+                const std::string& gk = g.key();
+                if (gk == "selection_order") {
+                    out.order.selectionOrder = g.boolean();
+                } else if (gk == "left_to_right") {
+                    out.order.leftToRight = g.boolean();
+                } else if (gk == "bottom_to_top") {
+                    out.order.bottomToTop = g.boolean();
+                } else {
+                    out.order.grid = g.boolean();
+                }
+            }
+        } else if (k == "start_at") {
+            out.startAt = rec.choice(kStartAts);
+        } else if (k == "start_anchor") {
+            out.startAnchor = rec.choice(kBoxAnchors);
+        } else if (k == "start_position") {
+            out.startPosition = readPoint(r, f);
+        } else if (k == "corners") {
+            ParamsRecord g(r, f, kCornerKeys, d);
+            while (g.next()) {
+                const std::string& gk = g.key();
+                if (gk == "sharp_external") {
+                    out.corners.sharpExternal = g.boolean();
+                } else if (gk == "sharp_internal") {
+                    out.corners.sharpInternal = g.boolean();
+                } else {
+                    out.corners.mitreLimit = g.number();
+                }
+            }
+        } else if (k == "tolerance") {
+            out.tolerance = decodeTolerance(r, f, d);
+        } else if (legacy) {  // "tool" or "layers" (params.json only)
+            decodeLegacyCommon(rec, *legacy);
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
+toolpath::PocketParams decodePocketParams(JsonReader& r, const Path& p, ParamsDialect d,
+                                          LegacyParamsExtras* legacy) {
+    toolpath::PocketParams out;
+    ParamsRecord rec(r, p, keysFor(d == ParamsDialect::JobJson ? kPocketKeysJob : kPocketKeysParams, d), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "start_depth") {
+            out.startDepth = rec.number();
+        } else if (k == "cut_depth") {
+            out.cutDepth = rec.number();
+        } else if (k == "maintain_exact_step") {
+            out.maintainExactStep = rec.boolean();
+        } else if (k == "last_pass_thickness") {
+            out.lastPassThickness = rec.number();
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else if (k == "strategy") {
+            out.strategy = rec.choice(kPocketStrategies);
+        } else if (k == "direction") {
+            out.direction = rec.choice(kCutDirections);
+        } else if (rec.isAngle("raster_angle")) {
+            out.rasterAngle = rec.angle();
+        } else if (k == "profile_pass") {
+            out.profilePass = rec.choice(kProfilePasses);
+        } else if (k == "allowance") {
+            out.allowance = rec.number();
+        } else if (k == "ramp_plunge") {
+            out.rampPlunge = rec.boolean();
+        } else if (k == "ramp_distance") {
+            out.rampDistance = rec.number();
+        } else if (k == "tolerance") {
+            out.tolerance = decodeTolerance(r, rec.field(), d);
+        } else if (legacy) {
+            decodeLegacyCommon(rec, *legacy);
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
+/// Decodes params captured as canonical text (already charged to the budget) for `operation`.
+ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& text, const Path& p,
+                              ParamsDialect d, LegacyParamsExtras* legacy) {
+    LoadBudget local;  // the text is already charged; this only bounds the re-read
+    detail::StringSource src(text);
+    JsonReader r(src, local, "params", text.size() + 1);
+    if (operation == ToolpathOperation::Profile) {
+        return decodeProfileParams(r, p, d, legacy);
+    }
+    return decodePocketParams(r, p, d, legacy);
+}
+
+/// Captures the value at `r` as canonical text; it is charged as unknown content only while held.
+std::string captureParams(JsonReader& r, const Path& f) {
+    if (r.peek() != JKind::Object) {
+        fail(f, "must be a JSON object");
+    }
+    const std::uint64_t extrasBefore = r.budget().extrasBytes();
+    const std::uint64_t unknownBefore = r.budget().unknownValues();
+    std::string text;
+    r.readCanonical(&text);
+    r.budget().refundExtras(r.budget().extrasBytes() - extrasBefore);
+    r.budget().refundUnknownValues(r.budget().unknownValues() - unknownBefore);
+    // Charged as document content instead: one value per byte is a generous upper bound.
+    r.budget().chargeDocument(kCostString + text.size());
+    return text;
+}
+
+struct DecodedToolpath {
+    ToolpathRecord record;
+    ExtraMap unknown;
+    /// The move cache named in job.json, and its move count.
+    std::optional<std::string> cacheMember;
+    std::uint64_t moveCount{0};
+};
+
+constexpr std::array<std::string_view, 7> kToolpathKeys{"id",        "name", "operation", "params",
+                                                        "selection", "tool", "moves"};
+constexpr std::array<std::string_view, 3> kSelectionKeys{"all", "layers", "objects"};
+constexpr std::array<std::string_view, 9> kToolKeys{"id",        "machine",     "material",    "name",         "tool_number",
+                                                    "diameter",  "feed_rate",   "plunge_rate", "spindle_speed"};
+constexpr std::array<std::string_view, 2> kMovesKeys{"count", "member"};
+
+DecodedToolpath decodeToolpath(JsonReader& r, const Path& p) {
+    Record rec(r, p, kToolpathKeys);
+    DecodedToolpath out;
+    ToolpathRecord& tp = out.record;
+    std::string paramsText;
+    std::string operation;
+    while (rec.next()) {
+        const Path f = rec.field();
+        const std::string& k = rec.key();
+        if (k == "id") {
+            tp.id = ToolpathId{readEntityId(r, f)};
+        } else if (k == "name") {
+            tp.name = readStoredString(r, f);
+        } else if (k == "operation") {
+            operation = readString(r, f);
+        } else if (k == "params") {
+            paramsText = captureParams(r, f);
+        } else if (k == "selection") {
+            Record sel(r, f, kSelectionKeys);
+            while (sel.next()) {
+                const Path sf = sel.field();
+                if (sel.key() == "all") {
+                    tp.selection.all = readBool(r, sf);
+                } else if (sel.key() == "layers" || sel.key() == "objects") {
+                    const bool layers = sel.key() == "layers";
+                    if (r.peek() != JKind::Array) {
+                        fail(sf, "must be a JSON array of ids");
+                    }
+                    r.beginArray();
+                    for (std::size_t i = 0; r.nextElement(); ++i) {
+                        r.budget().chargeDocument(kCostChild);
+                        const std::uint64_t id = readEntityId(r, sf.at(i));
+                        if (layers) {
+                            tp.selection.layers.push_back(LayerId{id});
+                        } else {
+                            tp.selection.objects.push_back(ObjectId{id});
+                        }
+                    }
+                } else {
+                    sel.skip();
+                }
+            }
+        } else if (k == "tool") {
+            Record tool(r, f, kToolKeys);
+            constexpr int kIntMax = std::numeric_limits<int>::max();
+            constexpr int kIntMin = std::numeric_limits<int>::min();
+            while (tool.next()) {
+                const Path tf = tool.field();
+                const std::string& tk = tool.key();
+                if (tk == "id") {
+                    tp.toolSource.toolId = readStoredString(r, tf);
+                } else if (tk == "machine") {
+                    tp.toolSource.machine = readStoredString(r, tf);
+                } else if (tk == "material") {
+                    tp.toolSource.material = readStoredString(r, tf);
+                } else if (tk == "name") {
+                    tp.tool.name = readStoredString(r, tf);
+                } else if (tk == "tool_number") {
+                    tp.tool.toolNumber = readInt(r, tf, kIntMin, kIntMax);
+                } else if (tk == "diameter") {
+                    tp.tool.diameter = readDouble(r, tf);
+                } else if (tk == "feed_rate") {
+                    tp.tool.feedRate = readDouble(r, tf);
+                } else if (tk == "plunge_rate") {
+                    tp.tool.plungeRate = readDouble(r, tf);
+                } else if (tk == "spindle_speed") {
+                    tp.tool.spindleSpeed = readDouble(r, tf);
+                } else {
+                    tool.skip();
+                }
+            }
+            for (const char* key : {"name", "tool_number", "diameter", "feed_rate", "plunge_rate", "spindle_speed"}) {
+                tool.require(key);
+            }
+        } else if (k == "moves") {
+            Record moves(r, f, kMovesKeys);
+            while (moves.next()) {
+                const Path mf = moves.field();
+                if (moves.key() == "count") {
+                    if (r.peek() != JKind::Number) {
+                        fail(mf, "must be a move count");
+                    }
+                    const std::string_view t = r.readNumber();
+                    std::uint64_t n = 0;
+                    const auto res = std::from_chars(t.data(), t.data() + t.size(), n);
+                    if (res.ec != std::errc{} || res.ptr != t.data() + t.size()) {
+                        fail(mf, "must be a move count");
+                    }
+                    r.budget().chargeMoves(n);  // refused here, before the cache is read
+                    out.moveCount = n;
+                } else if (moves.key() == "member") {
+                    out.cacheMember = readString(r, mf);
+                    if (!detail::isToolpathCacheName(*out.cacheMember)) {
+                        fail(mf, "must name a move cache \"toolpaths/NNNN.bin\"");
+                    }
+                } else {
+                    moves.skip();
+                }
+            }
+            moves.requireAll();
+        } else {
+            rec.keep(out.unknown);
+        }
+    }
+    for (const char* key : {"id", "name", "operation", "params", "selection", "tool"}) {
+        rec.require(key);
+    }
+    const auto where = [&p, &tp]() { return p.str() + " (id " + std::to_string(tp.id.value) + ")"; };
+    ToolpathOperation op = ToolpathOperation::Profile;
+    bool knownOp = false;
+    for (const auto& item : kOperations) {
+        if (operation == item.name) {
+            op = item.value;
+            knownOp = true;
+        }
+    }
+    if (!knownOp) {
+        fail(where() + ".operation",
+             "unsupported toolpath operation '" + operation + "' (written by a newer Carvetto?)");
+    }
+    tp.params = decodeParamsOf(op, paramsText, p.field("params"), ParamsDialect::JobJson, nullptr);
+    if (tp.selection.all && (!tp.selection.layers.empty() || !tp.selection.objects.empty())) {
+        fail(where() + ".selection", "'all' cannot be combined with layers or objects");
+    }
+    return out;
+}
+
+/// A T-0122 interim toolpath member `toolpaths/NNNN.json` (ADR-0019), decoded for migration.
+struct InterimToolpath {
+    ToolpathRecord record;  // id null; selection filled in once the layers exist
+    std::optional<std::vector<std::string>> layers;
+};
+
+constexpr std::array<std::string_view, 8> kInterimKeys{"format", "format_version", "operation", "name",
+                                                       "params", "safe_z",         "tool",      "moves"};
+constexpr std::array<std::string_view, 6> kInterimToolKeys{"name",      "tool_number", "diameter",
+                                                           "feed_rate", "plunge_rate", "spindle_speed"};
+constexpr std::array<std::string_view, 7> kInterimKinds{"rapid", "feed", "plunge", "retract", "arc_cw", "arc_ccw", "dwell"};
+constexpr std::array<std::string_view, 1> kFeedKeys{"feed"};
+
+double readFinite(JsonReader& r, const Path& p) {
+    const double v = readDouble(r, p);
+    if (!std::isfinite(v)) {
+        fail(p, "must be finite");
+    }
+    return v;
+}
+
+toolpath::Move decodeInterimMove(JsonReader& r, const Path& p) {
+    if (r.peek() != JKind::Array) {
+        fail(p, "must be an array [\"kind\", x, y, z, ...]");
+    }
+    r.beginArray();
+    if (!r.nextElement()) {
+        fail(p, "must not be empty");
+    }
+    const std::string kind = readString(r, p.at(0));
+    const auto it = std::find(kInterimKinds.begin(), kInterimKinds.end(), kind);
+    if (it == kInterimKinds.end()) {
+        fail(p.at(0), "unknown move kind '" + kind + "'");
+    }
+    toolpath::Move m;
+    m.kind = static_cast<toolpath::MoveKind>(it - kInterimKinds.begin());
+    const std::size_t fixed = toolpath::isArc(m.kind) ? 5 : m.kind == toolpath::MoveKind::Dwell ? 4 : 3;
+    std::array<double, 5> v{};
+    for (std::size_t i = 0; i < fixed; ++i) {
+        if (!r.nextElement()) {
+            fail(p, "has too few elements");
+        }
+        v[i] = readFinite(r, p.at(i + 1));
+    }
+    m.to = {v[0], v[1], v[2]};
+    if (toolpath::isArc(m.kind)) {
+        m.centre = {v[3], v[4]};
+    } else if (m.kind == toolpath::MoveKind::Dwell) {
+        m.dwellSeconds = v[3];
+    }
+    if (r.nextElement()) {
+        const Path f = p.at(fixed + 1);
+        if (!toolpath::isCutting(m.kind)) {
+            fail(f, "a feed override is only valid on a cutting move");
+        }
+        Record feed(r, f, kFeedKeys);
+        while (feed.next()) {
+            if (feed.known()) {
+                m.feedOverride = readFinite(r, feed.field());
+            } else {
+                fail(f, "unknown key '" + feed.key() + "'");
+            }
+        }
+        feed.requireAll();
+        if (r.nextElement()) {
+            fail(p, "has too many elements");
+        }
+    }
+    return m;
+}
+
+InterimToolpath decodeInterim(JsonReader& r) {
+    const Path root{nullptr, r.member(), 0, false};
+    Record rec(r, root, kInterimKeys);
+    InterimToolpath out;
+    ToolpathRecord& tp = out.record;
+    std::string format;
+    std::string operation;
+    std::string paramsText;
+    std::vector<toolpath::Move> moves;
+    while (rec.next()) {
+        const Path f = rec.field();
+        const std::string& k = rec.key();
+        if (k == "format") {
+            format = readString(r, f);
+        } else if (k == "format_version") {
+            if (readInteger(r, f, 0, std::numeric_limits<std::int64_t>::max()) != 1) {
+                fail(f, "unsupported interim toolpath version (this build migrates version 1)");
+            }
+        } else if (k == "operation") {
+            operation = readString(r, f);
+        } else if (k == "name") {
+            tp.name = readStoredString(r, f);
+        } else if (k == "params") {
+            paramsText = captureParams(r, f);
+        } else if (k == "safe_z") {
+            readFinite(r, f);  // the params' safe_z, repeated
+        } else if (k == "tool") {
+            Record tool(r, f, kInterimToolKeys);
+            while (tool.next()) {
+                const Path tf = tool.field();
+                const std::string& tk = tool.key();
+                if (tk == "name") {
+                    tp.tool.name = readStoredString(r, tf);
+                } else if (tk == "tool_number") {
+                    tp.tool.toolNumber = readInt(r, tf, 0, 1'000'000);
+                } else if (tk == "diameter") {
+                    tp.tool.diameter = readFinite(r, tf);
+                } else if (tk == "feed_rate") {
+                    tp.tool.feedRate = readFinite(r, tf);
+                } else if (tk == "plunge_rate") {
+                    tp.tool.plungeRate = readFinite(r, tf);
+                } else if (tk == "spindle_speed") {
+                    tp.tool.spindleSpeed = readFinite(r, tf);
+                } else {
+                    tool.skip();
+                }
+            }
+            tool.requireAll();
+        } else if (k == "moves") {
+            if (r.peek() != JKind::Array) {
+                fail(f, "must be a JSON array");
+            }
+            r.beginArray();
+            for (std::size_t i = 0; r.nextElement(); ++i) {
+                r.budget().chargeMoves(1);
+                moves.push_back(decodeInterimMove(r, f.at(i)));
+            }
+        } else {
+            rec.skip();
+        }
+    }
+    rec.requireAll();
+    if (format != "carvetto-toolpath") {
+        fail(root.field("format"), "is not \"carvetto-toolpath\"");
+    }
+    ToolpathOperation op = ToolpathOperation::Profile;
+    if (operation == "pocket") {
+        op = ToolpathOperation::Pocket;
+    } else if (operation != "profile") {
+        fail(root.field("operation"), "unknown operation '" + operation + "'");
+    }
+    LegacyParamsExtras legacy;
+    tp.params = decodeParamsOf(op, paramsText, root.field("params"), ParamsDialect::ParamsJson, &legacy);
+    tp.toolSource = std::move(legacy.tool);
+    out.layers = std::move(legacy.layers);
+    tp.moves = shareMoves(std::move(moves));
+    return out;
+}
+
 /// The parsed manifest.json.
 struct ManifestFile {
     std::string format;
@@ -1308,14 +2152,16 @@ struct JobFile {
     std::vector<std::pair<Sheet, ExtraMap>> sheets;
     std::vector<std::pair<Layer, ExtraMap>> layers;
     std::vector<DecodedObject> objects;
+    std::vector<DecodedToolpath> toolpaths;
     std::vector<std::pair<std::string, double>> variables;
     std::uint64_t nextId{0};
     std::uint64_t activeSheet{0};
     std::uint64_t activeLayer{0};
 };
 
-constexpr std::array<std::string_view, 8> kRootKeys{"active_layer", "active_sheet", "job",    "layers",
-                                                    "next_id",      "objects",      "sheets", "variables"};
+constexpr std::array<std::string_view, 9> kRootKeys{"active_layer", "active_sheet", "job",
+                                                    "layers",       "next_id",      "objects",
+                                                    "sheets",       "toolpaths",    "variables"};
 
 JobFile decodeJobFile(JsonReader& r) {
     const Path root{nullptr, kJobName, 0, false};
@@ -1370,6 +2216,19 @@ JobFile decodeJobFile(JsonReader& r) {
                 r.budget().chargeDocument(kCostObject);
                 jf.objects.push_back(decodeObject(r, f.at(i)));
             }
+        } else if (k == "toolpaths") {
+            if (r.peek() != JKind::Array) {
+                fail(f, "must be a JSON array");
+            }
+            r.beginArray();
+            for (std::size_t i = 0; r.nextElement(); ++i) {
+                if (i >= kMaxToolpaths) {
+                    fail(f, "more than " + std::to_string(kMaxToolpaths) + " toolpaths",
+                         CarvError::Code::ResourceLimit);
+                }
+                r.budget().chargeDocument(kCostRecord);
+                jf.toolpaths.push_back(decodeToolpath(r, f.at(i)));
+            }
         } else if (k == "variables") {
             if (r.peek() != JKind::Object) {
                 fail(f, "must be a JSON object");
@@ -1392,7 +2251,11 @@ JobFile decodeJobFile(JsonReader& r) {
             rec.keep(jf.rootUnknown);
         }
     }
-    rec.requireAll();
+    for (const std::string_view key : kRootKeys) {
+        if (key != "toolpaths") {  // optional: added in format 1.1
+            rec.require(key);
+        }
+    }
     return jf;
 }
 
@@ -1592,6 +2455,18 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
     const std::uint64_t heldCap =
         std::max(budget.limits().minHeldBytes, budget.limits().heldBytesPerArchiveByte * bytes.size());
     std::uint64_t held = 0;
+    // Toolpath move caches named by job.json: member -> index in jf.toolpaths (ADR-0021).
+    std::map<std::string, std::size_t> caches;
+    for (std::size_t i = 0; i < jf.toolpaths.size(); ++i) {
+        if (const auto& member = jf.toolpaths[i].cacheMember) {
+            if (!caches.emplace(*member, i).second) {
+                fail(std::string(kJobName) + ".toolpaths[" + std::to_string(i) + "].moves.member",
+                     "'" + *member + "' is named by two toolpaths");
+            }
+        }
+    }
+    std::set<std::string> cachesRead;
+    std::map<std::string, InterimToolpath> interim;  // by member name, i.e. creation order
     const auto hold = [&](const detail::ZipEntry& e) {
         held += e.size;
         if (held > heldCap) {
@@ -1603,6 +2478,43 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
     };
     for (const detail::ZipEntry& e : zip.entries()) {
         if (e.name == kManifestName || e.name == kJobName) {
+            continue;
+        }
+        if (e.toolpathCache) {
+            const auto it = caches.find(e.name);
+            if (it == caches.end()) {
+                continue;  // a cache no toolpath names: stale, dropped unread (ADR-0021)
+            }
+            DecodedToolpath& d = jf.toolpaths[it->second];
+            // The declared size must fit the declared count before anything is inflated
+            // (1 to kMaxMoveBytes bytes per move), so the move budget bounds the work.
+            const std::uint64_t count = d.moveCount;
+            if (e.size < detail::kMovesHeaderBytes + count ||
+                (e.size - detail::kMovesHeaderBytes) / detail::kMaxMoveBytes > count) {
+                throw LoadFailure{CarvError::Code::InvalidContent,
+                                  e.name + ": " + std::to_string(e.size) + " bytes cannot hold " +
+                                      std::to_string(count) + " moves"};
+            }
+            std::string error;
+            auto stream = zip.stream(e, error);
+            if (!stream) {
+                throw LoadFailure{CarvError::Code::InvalidArchive, error};
+            }
+            std::vector<toolpath::Move> moves;
+            const std::string defect = detail::decodeMoves(stream->source(), count, moves);
+            if (!stream->finish(error)) {
+                throw LoadFailure{CarvError::Code::InvalidArchive, error};  // damage, not bad content
+            }
+            if (!defect.empty()) {
+                throw LoadFailure{CarvError::Code::InvalidContent, e.name + ": " + defect};
+            }
+            d.record.moves = shareMoves(std::move(moves));
+            cachesRead.insert(e.name);
+            continue;
+        }
+        if (detail::isInterimToolpathName(e.name)) {
+            // carvetto-cli's interim storage before format 1.1 (ADR-0019): becomes a record.
+            interim.emplace(e.name, decodeMember(zip, e, budget, decodeInterim));
             continue;
         }
         hold(e);
@@ -1620,6 +2532,14 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
             throw LoadFailure{CarvError::Code::InvalidArchive, error};
         }
         extras->members.emplace(e.name, std::move(data));
+    }
+
+    for (const auto& [member, index] : caches) {
+        if (!cachesRead.contains(member)) {
+            throw LoadFailure{CarvError::Code::MissingMember,
+                              std::string(kJobName) + ".toolpaths[" + std::to_string(index) + "].moves.member: the archive has no '" +
+                                  member + "'"};
+        }
     }
 
     // --- references and ids
@@ -1657,6 +2577,9 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
         if (!sheetIds.contains(o.sheet.value)) {
             fail(ow(), "sheet " + std::to_string(o.sheet.value) + " does not exist");
         }
+    }
+    for (std::size_t i = 0; i < jf.toolpaths.size(); ++i) {
+        claimId(jf.toolpaths[i].record.id.value, where + ".toolpaths[" + std::to_string(i) + "]");
     }
     if (jf.nextId <= maxId) {
         fail(where + ".next_id", std::to_string(jf.nextId) + " must be greater than every id in the file (" +
@@ -1729,6 +2652,41 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
     }
     jf.objects.clear();
     jf.objects.shrink_to_fit();
+    for (DecodedToolpath& d : jf.toolpaths) {
+        if (!d.unknown.empty()) {
+            extras->toolpaths[d.record.id.value] = std::move(d.unknown);
+        }
+        doc.insertToolpath(std::move(d.record));
+    }
+    // Interim members become records after the file's own, in member-name (creation) order, with
+    // fresh ids. Their "layers" names select every layer of that name; names that match no layer
+    // select nothing.
+    if (!interim.empty() && !doc.idGenerator().canAllocate(interim.size())) {
+        throw LoadFailure{CarvError::Code::InvalidContent,
+                          "no ids are left for the toolpaths in toolpaths/NNNN.json members"};
+    }
+    for (auto& [member, legacy] : interim) {
+        ToolpathRecord& record = legacy.record;
+        if (!legacy.layers || legacy.layers->empty()) {
+            record.selection = VectorSelection::allVectors();
+        } else {
+            for (const Layer& l : doc.layers()) {
+                if (std::find(legacy.layers->begin(), legacy.layers->end(), l.name) != legacy.layers->end()) {
+                    record.selection.layers.push_back(l.id);
+                }
+            }
+        }
+        doc.insertToolpath(std::move(record));
+    }
+    // saveCarv names caches by position, so a computed toolpath past the last name could be
+    // loaded but never saved again.
+    for (std::size_t i = kCarvMaxCachedToolpaths; i < doc.toolpaths().size(); ++i) {
+        if (doc.toolpaths()[i].hasMoves()) {
+            throw LoadFailure{CarvError::Code::ResourceLimit,
+                              "more than " + std::to_string(kCarvMaxCachedToolpaths) +
+                                  " toolpaths with computed moves"};
+        }
+    }
     doc.setActiveSheet(SheetId{jf.activeSheet});
     doc.setActiveLayer(LayerId{jf.activeLayer});
     for (const auto& [name, value] : jf.variables) {
@@ -1803,6 +2761,44 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
         }
         root["objects"] = std::move(objects);
 
+        // Toolpath records in job order; computed moves go to toolpaths/NNNN.bin, NNNN being the
+        // 1-based position (ADR-0021). Checked first so no file the loader refuses is written.
+        std::uint64_t totalMoves = 0;
+        for (std::size_t i = 0; i < doc.toolpaths().size(); ++i) {
+            const ToolpathRecord& tp = doc.toolpaths()[i];
+            if (tp.hasMoves() && i >= kCarvMaxCachedToolpaths) {
+                return CarvError{CarvError::Code::ResourceLimit,
+                                 "cannot save more than " + std::to_string(kCarvMaxCachedToolpaths) +
+                                     " toolpaths with computed moves"};
+            }
+            totalMoves += tp.moveCount();
+        }
+        if (totalMoves > kCarvMaxToolpathMoves) {
+            return CarvError{CarvError::Code::ResourceLimit,
+                             "the toolpaths hold " + std::to_string(totalMoves) + " moves; a .carv file holds at most " +
+                                 std::to_string(kCarvMaxToolpathMoves) +
+                                 " (use fewer moves: larger stepover or pass depth, coarser tolerance, or split the job)"};
+        }
+        std::map<std::string, std::vector<std::uint8_t>> caches;
+        json toolpaths = json::array();
+        for (std::size_t i = 0; i < doc.toolpaths().size(); ++i) {
+            const ToolpathRecord& tp = doc.toolpaths()[i];
+            std::string member;
+            if (tp.hasMoves()) {
+                member = cacheMemberName(i);
+                std::vector<std::uint8_t> bytes;
+                bytes.reserve(detail::kMovesHeaderBytes + tp.moveCount() * 26);
+                const std::string error = detail::encodeMoves(*tp.moves, bytes);
+                if (!error.empty()) {
+                    return CarvError{CarvError::Code::InvalidContent,
+                                     "toolpath '" + tp.name + "' (#" + std::to_string(tp.id.value) + "): " + error};
+                }
+                caches.emplace(member, std::move(bytes));
+            }
+            toolpaths.push_back(encodeToolpath(tp, tp.hasMoves() ? &member : nullptr, ex));
+        }
+        root["toolpaths"] = std::move(toolpaths);
+
         json variables = json::object();
         for (const auto& [name, value] : doc.variables().all()) {
             variables[name] = value;
@@ -1813,11 +2809,25 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
         std::vector<detail::ZipMember> members;
         members.push_back({kManifestName, canonicalBytes(manifest)});
         members.push_back({kJobName, canonicalBytes(root)});
+        // Move caches and preserved members, merged in name order (a cache wins over a preserved
+        // member of the same name, which `CarvExtras::withMember` never creates).
+        auto cache = caches.begin();
+        const auto flushCachesBefore = [&](const std::string* name) {
+            while (cache != caches.end() && (!name || cache->first <= *name)) {
+                members.push_back({cache->first, std::move(cache->second)});
+                ++cache;
+            }
+        };
         if (ex) {
             for (const auto& [name, data] : ex->members) {  // sorted by name
-                members.push_back({name, data});
+                const bool shadowed = caches.contains(name);
+                flushCachesBefore(&name);
+                if (!shadowed) {
+                    members.push_back({name, data});
+                }
             }
         }
+        flushCachesBefore(nullptr);
         detail::ZipWriteResult zip = detail::writeZip(members);
         if (!zip.ok) {
             return CarvError{CarvError::Code::InvalidArchive, zip.error};

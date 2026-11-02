@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <memory>
@@ -14,10 +15,13 @@
 
 /// Native `.carv` file I/O (ADR-0003, details in ADR-0013).
 ///
-/// A `.carv` file is a zip archive holding `manifest.json` (format and app version) and
-/// `job.json` (job, sheets, layers in stacking order, objects in id order with their contours and
-/// creation parameters, group links, document variables, active layer/sheet and the id generator's
-/// high-water mark). Output is deterministic: sorted keys, fixed member order, shortest round-trip
+/// A `.carv` file is a zip archive holding `manifest.json` (format and app version), `job.json`
+/// (job, sheets, layers in stacking order, objects in id order with their contours and creation
+/// parameters, group links, toolpath records in job order, document variables, active
+/// layer/sheet and the id generator's high-water mark) and one binary move cache
+/// `toolpaths/NNNN.bin` per toolpath record with computed moves (ADR-0021). Interim toolpath
+/// members `toolpaths/NNNN.json` written by carvetto-cli before format 1.1 (ADR-0019) are
+/// converted to toolpath records on load. Output is deterministic: sorted keys, fixed member order, shortest round-trip
 /// number formatting and zeroed zip timestamps, so save -> load -> save reproduces the archive byte
 /// for byte. Fields and archive members this version does not understand are kept in `CarvExtras`
 /// and written back on the next save.
@@ -26,7 +30,14 @@ namespace carvetto::document {
 /// Format version written by this build (`manifest.json` -> `format_version`).
 inline constexpr int kCarvFormatMajor = 1;
 /// Minor format version written by this build. Minor bumps only add optional content.
-inline constexpr int kCarvFormatMinor = 0;
+/// 1.1 (T-0132, ADR-0021) adds toolpath records (`job.json` `toolpaths`) and their move caches.
+inline constexpr int kCarvFormatMinor = 1;
+/// Most toolpath moves (summed over every toolpath record) a `.carv` file may hold: `loadCarv`
+/// refuses files with more and `saveCarv` refuses to write them (ADR-0021).
+inline constexpr std::uint64_t kCarvMaxToolpathMoves = 8'000'000;
+/// Most toolpath records with computed moves a `.carv` file may hold (their caches are named
+/// `toolpaths/0001.bin` .. `toolpaths/9999.bin` by position).
+inline constexpr std::size_t kCarvMaxCachedToolpaths = 9999;
 
 /// Why a `.carv` operation failed.
 struct CarvError {
@@ -91,9 +102,11 @@ class CarvExtras {
     const std::vector<std::uint8_t>* member(std::string_view name) const;
     /// A copy holding everything this one holds, with member `name` set to `bytes` (added, or
     /// replacing a member of that name). `saveCarv` writes it as given, so a `.json` member must
-    /// hold well-formed JSON or the file will not load again. Throws `std::invalid_argument` for
-    /// a name `saveCarv` should not write: empty, `manifest.json` or `job.json`, absolute, with a
-    /// backslash or colon, a `.`/`..` segment or an empty segment, or longer than 255 bytes.
+    /// hold well-formed JSON or the file will not load again (and a `toolpaths/NNNN.json` member
+    /// must be a valid interim toolpath, ADR-0019: it is converted to a toolpath record on load).
+    /// Throws `std::invalid_argument` for a name `saveCarv` should not write: empty,
+    /// `manifest.json` or `job.json`, a toolpath move cache name (`toolpaths/NNNN.bin`), absolute,
+    /// with a backslash or colon, a `.`/`..` segment or an empty segment, or longer than 255 bytes.
     CarvExtras withMember(std::string name, std::vector<std::uint8_t> bytes) const;
     /// Implementation access; null when empty.
     const Impl* impl() const { return impl_.get(); }
@@ -115,7 +128,9 @@ struct LoadedCarv {
 };
 
 /// Serialises `doc` (plus preserved `extras`) to `.carv` archive bytes. Selection and undo
-/// history are not saved.
+/// history are not saved. Fails (ResourceLimit) rather than write a file `loadCarv` would refuse
+/// for its toolpaths: more than `kCarvMaxToolpathMoves` moves, or a toolpath with moves at a
+/// position past `kCarvMaxCachedToolpaths`; fails (InvalidContent) for a non-finite move value.
 CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvExtras& extras = {});
 
 /// Writes `doc` to `path` (via a temporary file renamed into place).
