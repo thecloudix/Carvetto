@@ -40,7 +40,8 @@ Clipper2Lib::JoinType toClipperJoin(JoinType join) {
 // Grid-level dust (T-0138). Within a few nanometres of collapse Clipper2 can return rings no
 // wider than a few grid units: genuine regions shrunk to the rounding level, and debris wound
 // against its nesting (ADR-0006 §8). A ring is dust when no disk of radius kDustRadiusUnits
-// (scaled up for coordinates where double rounding exceeds the grid) fits inside it.
+// (scaled up for coordinates where double rounding exceeds the grid) fits inside it, up to the
+// grid rounding of the erosion test.
 constexpr double kDustRadiusUnits = 4.0;
 
 double dustRadiusUnits(const Clipper2Lib::Paths64& paths) {
@@ -53,7 +54,7 @@ double dustRadiusUnits(const Clipper2Lib::Paths64& paths) {
         }
     }
     // Clipper2 computes offset and intersection points in double from the int64 grid: a few
-    // ulps of the coordinates, which exceed one unit only beyond ~1e14 units (1e8 mm).
+    // ulps of the coordinates, which exceed one unit only beyond ~2.8e14 units (2.8e8 mm).
     const double rounding = 16.0 * std::numeric_limits<double>::epsilon() * maxAbs;
     return kDustRadiusUnits * std::max(1.0, rounding);
 }
@@ -105,23 +106,41 @@ void dropDustRings(Clipper2Lib::Paths64& paths) {
         return;
     }
     // A ring inside a dust ring is narrower still, so the erosion test drops it too, up to the
-    // rounding of that test; drop such rings explicitly so that no hole outlives its outer.
+    // rounding of that test; drop such rings explicitly so that no hole outlives its outer. A
+    // nested ring's bounding box lies inside its outer's, so only rings whose left edge falls
+    // within a dust ring's x-range are tested (rings sorted by left edge, binary search).
+    std::vector<Clipper2Lib::Rect64> boxes(paths.size());
+    std::vector<std::size_t> byLeft;
+    std::vector<std::size_t> work;
     for (std::size_t i = 0; i < paths.size(); ++i) {
-        if (!dust[i] || paths[i].size() < 3) {
+        boxes[i] = Clipper2Lib::GetBounds(paths[i]);
+        if (dust[i]) {
+            work.push_back(i);
+        } else if (!paths[i].empty()) {
+            byLeft.push_back(i);
+        }
+    }
+    std::sort(byLeft.begin(), byLeft.end(), [&boxes](std::size_t a, std::size_t b) {
+        return boxes[a].left < boxes[b].left || (boxes[a].left == boxes[b].left && a < b);
+    });
+    while (!work.empty()) {
+        const std::size_t i = work.back();
+        work.pop_back();
+        if (paths[i].size() < 3) {
             continue;
         }
-        const Clipper2Lib::Rect64 box = Clipper2Lib::GetBounds(paths[i]);
-        for (std::size_t j = 0; j < paths.size(); ++j) {
-            if (dust[j] || paths[j].empty()) {
+        const Clipper2Lib::Rect64& box = boxes[i];
+        auto it = std::lower_bound(byLeft.begin(), byLeft.end(), box.left,
+                                   [&boxes](std::size_t a, std::int64_t x) { return boxes[a].left < x; });
+        for (; it != byLeft.end() && boxes[*it].left <= box.right; ++it) {
+            const std::size_t j = *it;
+            const Clipper2Lib::Rect64& bj = boxes[j];
+            if (dust[j] || bj.right > box.right || bj.top < box.top || bj.bottom > box.bottom) {
                 continue;
             }
             bool inside = false;
             bool outside = false;
             for (const auto& p : paths[j]) {
-                if (p.x < box.left || p.x > box.right || p.y < box.top || p.y > box.bottom) {
-                    outside = true;
-                    break;
-                }
                 const auto where = Clipper2Lib::PointInPolygon(p, paths[i]);
                 if (where == Clipper2Lib::PointInPolygonResult::IsOutside) {
                     outside = true;
@@ -129,7 +148,10 @@ void dropDustRings(Clipper2Lib::Paths64& paths) {
                 }
                 inside = inside || where == Clipper2Lib::PointInPolygonResult::IsInside;
             }
-            dust[j] = inside && !outside;
+            if (inside && !outside) {
+                dust[j] = true;
+                work.push_back(j);
+            }
         }
     }
     std::size_t kept = 0;

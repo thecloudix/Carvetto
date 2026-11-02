@@ -82,22 +82,28 @@ Date: 2026-10-24 · Status: accepted (director, 2026-10-24; residual open-offset
 8. **Grid-level dust is dropped from `offsetContours` results (T-0138).** Within a few
    nanometres of collapse (an inset by about the region's inradius) Clipper2 1.4.0 can return
    rings a few grid units wide: genuine regions shrunk to the rounding level (e.g. the lenses at
-   the outward bulges of a Bezier circle, 1–2.5 units wide over 3–7 µm) and debris of the
+   the outward bulges of a Bezier circle, inradius 1–2.5 units over 3–7 µm in the card's repro)
+   and debris of the
    rounded intersections (3 vertices, 0.1–0.3 units wide, |area| ~1e-11 mm²), some of which is
    wound against its nesting or nested inside a genuine ring of the same orientation. That broke
    the contract sentence of §6 ("an output contour wound against the outermost input is a
-   genuine hole"). After `Execute`, every ring into which no disk of radius ρ fits is removed,
+   genuine hole"). After `Execute`, every ring into which no disk of radius ρ fits (up to the
+   grid rounding of the test below, about half a unit either way: kept rings with inradius
+   3.84–3.97 units and removed ones up to ~4.5 units have been seen) is removed,
    with every ring nested inside a removed one (narrower still; removed explicitly so the
    rounding of the test can never leave a hole without its outer):
    - ρ = 4 grid units (4e-6 mm) × max(1, 16 ε M), M the largest output coordinate in grid
      units, ε the double epsilon. Clipper2 rounds every vertex to the grid (≤ 0.71 units in the
      plane) and computes offset and intersection points in double from int64 coordinates, a few
-     ulps of M; that exceeds one unit only beyond M ≈ 3e14 units (3e8 mm), where ρ grows with it.
+     ulps of M; that exceeds one unit only beyond M ≈ 2.8e14 units (2.8e8 mm), where ρ grows with it.
      In the T-0018 verifier's oracle (about 37,000 insets around and past collapse over 40 seeds)
      the rings wound against their nesting were 0.1–0.3 units wide and the rounding-level lenses
-     up to 2.5 units (inradius); 4 units leaves a margin above both. A removed ring is narrower
-     than 8e-6 mm everywhere: 125× below the default tol.distance, 12× below the smallest
-     chordal tolerance Pocket accepts (1e-4 mm), and far inside the contract's own slack
+     up to 2.5 units (inradius); 4 units leaves a margin above both. Rounding-level lenses are
+     not bounded by that, though: near-collapse Pocket annuli keep lens triangles ~4 µm long
+     with inradius 3.7–4.7 units on either side of ρ (as before T-0138; each still gives one
+     plunge). A removed ring is narrower than about 8e-6 mm everywhere: 12.5× below the
+     smallest chordal tolerance the toolpaths accept (1e-4 mm; tol.distance has no lower
+     bound, so no claim is made against it), and far inside the contract's own slack
      (result points may lie 2·chordal short of |distance|). Every point of a removed region lies
      within ρ of its boundary, i.e. within 4 nm of where the offset collapses, which no toolpath
      resolves; the threshold does not depend on `tol` so that a coarse
@@ -108,7 +114,11 @@ Date: 2026-10-24 · Status: accepted (director, 2026-10-24; residual open-offset
      its boundary), so only rings with |area| < ρ·perimeter are candidates; for those, the ring
      alone is eroded by ρ (Clipper2 `InflatePaths`, round joins) and dropped if nothing is left.
      A mean-width test alone (2|area|/perimeter) would also drop a genuine region with a long
-     hair-thin tail. The cost is negligible: candidates are rare and tiny.
+     hair-thin tail. Candidates are rare in practice, but not bounded: the nesting pass tests
+     each removed ring against the rings whose bounding box starts within its x-range (rings
+     sorted by left edge), so it is O(dust × rings) only when many removed rings span the
+     same x-range as many others (adversarial input, e.g. thousands of thin rings in one
+     column).
    - Per ring, not per region: a frame narrow only between an outer and its hole is two
      correctly wound genuine rings and is kept; a dust-thin hole inside a genuine region is
      dropped (filled).
