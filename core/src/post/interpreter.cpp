@@ -134,6 +134,7 @@ struct Frame {
     double feed{0.0};           // mm/min
     double inverseTime{0.0};    // 1/min
     double dwell{0.0};          // seconds
+    double length{0.0};         // cutting moves: path length (mm), for inverse time
     bool cutting{false};        // Feed/Plunge/Retract/Arc: [F] may be inverse time
 };
 
@@ -322,6 +323,12 @@ class Interpreter {
                                     (m.kind == MoveKind::Dwell ? "dwell " : "feed ") + problem};
             }
         }
+        if (m.kind == MoveKind::Dwell && !(m.dwellSeconds > 0.0)) {
+            // T-0134 (owner decision 2026-11-02): a dwell of zero or less is no pause.
+            return Error{0, "cannot write G-code: toolpath " + quoted(toolpath_->name) + ", move " +
+                                std::to_string(moveIndex_) + ": dwell " + describeValue(m.dwellSeconds) +
+                                " s must be greater than zero"};
+        }
         return std::nullopt;
     }
 
@@ -352,6 +359,58 @@ class Interpreter {
         fail(def.multiplier != 1.0 ? def.line : 0, "[" + def.tag + "] would be written as " + problem +
                            (def.multiplier != 1.0 ? " (VAR multiplier " + describeValue(def.multiplier) + ")"
                                                   : std::string{}));
+        return false;
+    }
+
+    /// Refuses a spindle speed that is not a finite number above zero while a toolpath is being
+    /// written: checked wherever [S] is written and before SPINDLE_ON (owner decision
+    /// 2026-11-02, ADR-0020). A manual spindle takes any positive nominal speed.
+    bool acceptSpindleSpeed() {
+        if (toolpath_ == nullptr || (std::isfinite(tool_.spindleSpeed) && tool_.spindleSpeed > 0.0)) {
+            return true;
+        }
+        fail(0, "tool " + quoted(tool_.name) + " has spindle speed " + describeValue(tool_.spindleSpeed) +
+                    " rpm; it must be greater than zero (for a manual spindle, set any positive nominal speed)");
+        return false;
+    }
+
+    /// Refuses a feed, spindle speed or dwell above zero that the post's number format would
+    /// write as zero (F0, P0.00 …), and a feed rate, plunge rate or feed override of zero or less
+    /// (F0, F-5): a zero feed or dwell is never what the toolpath asked for (owner decisions
+    /// 2026-11-02, ADR-0020). Inverse time is judged by the feed it comes from; only a cutting
+    /// move of zero length (inverse time 0 by definition) is exempt. In a job without toolpaths
+    /// nothing cuts, so nothing is checked (as for the spindle speed).
+    bool acceptNonZero(const TagInfo& info, const VarDef& def, double raw, const std::string& body) {
+        const bool rate =
+            info.kind == TagKind::FeedRate || info.tag == "FI" || info.tag == "S" || info.tag == "DWELL";
+        if (!rate || toolpath_ == nullptr) {
+            return true;
+        }
+        const bool inverse = info.tag == "FI" || (info.tag == "F" && s_.inverseTimeMode && frame_.cutting);
+        if (inverse && (!frame_.cutting || frame_.length <= kZeroLength)) {
+            return true;  // [FI] outside a cut, or a zero-length move: inverse time 0 is right
+        }
+        const std::optional<ValueLimit> limit = limitFor(info);
+        const std::string unit = inverse ? "1/min" : limit ? limit->unit : "";
+        const std::string written = std::string(detail::trim(def.prefix)) + body;
+        const bool zeroWritten = body.find_first_of("123456789") == std::string::npos;
+        if (info.kind == TagKind::FeedRate || inverse) {
+            const double feed = inverse ? frame_.feed : raw;
+            if (!(feed > 0.0)) {
+                fail(0, "[" + std::string(info.tag) + "] feed " + describeValue(feed) + " mm/min" +
+                            (inverse ? " (inverse time " + describeValue(raw) + " 1/min)" : std::string()) +
+                            " would be written as " + written + "; feeds must be greater than zero");
+                return false;
+            }
+        }
+        // Above zero (for inverse time: from a feed above zero, even if the quotient underflowed).
+        if (!zeroWritten || !(inverse || raw > 0.0)) {
+            return true;
+        }
+        fail(def.multiplier != 1.0 ? def.line : 0,
+             "[" + std::string(info.tag) + "] " + describeValue(raw) + " " + unit + " would be written as " +
+                 written + "; it is above zero but too small for the post's " +
+                 std::to_string(def.format.decimals) + "-decimal format");
         return false;
     }
 
@@ -407,6 +466,7 @@ class Interpreter {
         frame_.to = to;
         frame_.feed = feed;
         frame_.inverseTime = length > kZeroLength ? feed / length : 0.0;
+        frame_.length = length;
         frame_.cutting = true;
     }
 
@@ -579,6 +639,15 @@ class Interpreter {
         if (b == nullptr || failure_) {
             return;
         }
+        if (blockName == "SPINDLE_ON") {
+            const std::string_view outer = block_;
+            block_ = b->name;
+            const bool ok = acceptSpindleSpeed();
+            block_ = outer;
+            if (!ok) {
+                return;
+            }
+        }
         const std::string_view outerBlock = block_;
         block_ = b->name;
         for (const std::string& line : b->lines) {
@@ -685,9 +754,11 @@ class Interpreter {
         if (tag == "TOOLNAME") return tool_.name;
         if (tag == "TOOLPATH_NAME") return toolpath_ != nullptr ? toolpath_->name : std::string{};
         if (tag == "TOOLS_USED") {
+            // Joined with "; ", not ", ": a comma right after the first name would continue
+            // its word run at the start of a comment and be neutralised to `_` (ADR-0020).
             std::string joined;
             for (const std::string& n : toolsUsed_) {
-                joined += joined.empty() ? n : ", " + n;
+                joined += joined.empty() ? n : "; " + n;
             }
             return joined;
         }
@@ -761,6 +832,9 @@ class Interpreter {
             return def.prefix + formatNumber(def.format, delta);
         } else {
             const double raw = number(tag);
+            if (tag == "S" && !acceptSpindleSpeed()) {
+                return {};
+            }
             if (!acceptValue(*info, raw)) {
                 return {};
             }
@@ -769,6 +843,9 @@ class Interpreter {
                 return {};
             }
             body = formatNumber(def.format, written);
+            if (!acceptNonZero(*info, def, raw, body)) {
+                return {};
+            }
         }
 
         if (tag == "N") {

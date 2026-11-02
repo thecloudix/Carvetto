@@ -332,6 +332,7 @@ int cmdToolpath(const std::vector<std::string>& a, std::ostream& out, std::ostre
     }
 
     document::Document& doc = loaded.document;
+    std::string added;  // reported only once the file is written
     for (toolpath::Toolpath& tp : results) {
         document::ToolpathRecord record;
         record.name = tp.name;
@@ -339,15 +340,15 @@ int cmdToolpath(const std::vector<std::string>& a, std::ostream& out, std::ostre
         record.selection = selection;
         record.tool = tp.tool;
         record.toolSource = {common.tool.id, common.tool.machine, common.tool.material};
-        out << "added " << op << " toolpath '" << tp.name << "' (" << tp.moveCount() << " moves, tool '" << tp.tool.name
-            << "') as toolpath " << doc.toolpaths().size() + 1 << '\n';
+        added += "added " + op + " toolpath '" + tp.name + "' (" + std::to_string(tp.moveCount()) + " moves, tool '" +
+                 tp.tool.name + "') as toolpath " + std::to_string(doc.toolpaths().size() + 1) + '\n';
         record.moves = document::shareMoves(std::move(tp.moves));
         if (!doc.execute(std::make_unique<document::AddToolpathCommand>(std::move(record)))) {
             throw CliError("'" + inPath + "' has no ids left for another toolpath");
         }
     }
     saveDocument(doc, outPath, loaded.extras);
-    out << "wrote '" << outPath << "'\n";
+    out << added << "wrote '" << outPath << "'\n";
     return kExitOk;
 }
 

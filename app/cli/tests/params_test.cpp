@@ -5,6 +5,9 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
+#include <algorithm>
+#include <ctime>
+#include <cstddef>
 #include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
@@ -13,6 +16,7 @@
 
 using Catch::Approx;
 using Catch::Matchers::ContainsSubstring;
+using Catch::Matchers::StartsWith;
 using namespace carvetto;
 using namespace carvetto::cli;
 
@@ -164,6 +168,120 @@ TEST_CASE("omitted keys keep the core defaults", "[cli][params]") {
     const PocketJob b = parsePocketParams(R"({"tool": {"id": "t"}})");
     CHECK(b.params.profilePass == toolpath::PocketParams{}.profilePass);
     CHECK(b.params.rasterAngle == 0.0);
+}
+
+TEST_CASE("T-0134: duplicate keys and number overflow are refused", "[cli][params][errors]") {
+    CHECK(errorOf(R"({"tool": {"id": "t"}, "safe_z": 5, "safe_z": 50})") == "params: duplicate key 'safe_z'");
+    CHECK(errorOf(R"({"tool": {"id": "t", "id": "u"}})") == "params: duplicate key 'tool.id'");
+    CHECK(errorOf(R"({"tool": {"id": "t"}, "tabs": {"count": 2, "count": 4}})") ==
+          "params: duplicate key 'tabs.count'");
+    CHECK(errorOf(R"({"tool": {"id": "t"}, "tolerance": {"distance": 0.01, "distance": 0.01}})", true) ==
+          "params: duplicate key 'tolerance.distance'");
+    // The same key in different objects is fine.
+    CHECK(errorOf(R"({"tool": {"id": "end-mill-6mm"}, "tabs": {"enabled": true}, "passes": {"enabled": true}})")
+              .find("duplicate") == std::string::npos);
+    for (const char* big : {"1e400", "-1e400", "1e309"}) {
+        INFO(big);
+        const std::string e = errorOf(std::string(R"({"tool": {"id": "t"}, "safe_z": )") + big + "}");
+        CHECK_THAT(e, StartsWith("params: not valid JSON: "));
+        CHECK_THAT(e, ContainsSubstring("overflow"));
+    }
+}
+
+TEST_CASE("T-0134: duplicate keys inside arrays are named with their path", "[cli][params][errors]") {
+    CHECK(errorOf(R"({"tool": {"id": "t"}, "layers": [{"a": 1, "a": 2}]})") ==
+          "params: duplicate key 'layers[].a'");
+    CHECK(errorOf(R"({"tool": {"id": "t"}, "x": {"y": [[{"z": {"k": 1, "k": 2}}]]}})") ==
+          "params: duplicate key 'x.y[][].z.k'");
+}
+
+TEST_CASE("T-0134: deep nesting is refused early with a clear error", "[cli][params][errors][limits]") {
+    const auto nested = [](char open, char close, std::size_t n) {
+        std::string s = R"({"tool": {"id": "t"}, "zz": )";
+        for (std::size_t i = 0; i < n; ++i) {
+            s += open;
+            if (open == '{') {
+                s += R"("k": )";
+            }
+        }
+        s += "1";
+        s.append(n, close);
+        return s + "}";
+    };
+    const std::string tooDeep = "params: objects and arrays are nested more than 32 levels deep";
+    // 31 levels under the root object are allowed (the schema then rejects the unknown key)...
+    CHECK_THAT(errorOf(nested('[', ']', 31)), ContainsSubstring("unknown key 'zz'"));
+    CHECK_THAT(errorOf(nested('{', '}', 31)), ContainsSubstring("unknown key 'zz'"));
+    // ...one more is refused, and so is a crafted file of a million levels (about 2 MB), without
+    // building anything for the levels past the cap (the T-0134 verifier saw gigabytes otherwise).
+    for (std::size_t n : {std::size_t{32}, std::size_t{60'000}, std::size_t{1'000'000}}) {
+        INFO(n);
+        CHECK(errorOf(nested('[', ']', n)) == tooDeep);
+        CHECK(errorOf(nested('{', '}', n)) == tooDeep);
+    }
+}
+
+namespace {
+
+/// Process CPU time (immune to other processes competing for the cores; on MSVC std::clock() is
+/// wall-clock, and the Windows CI runs ctest serially).
+double cpuSeconds() {
+    return static_cast<double>(std::clock()) / static_cast<double>(CLOCKS_PER_SEC);
+}
+
+/// {"tool": …, "x": [{"a": 1}, … n times]} or {"tool": …, "x": {"k0": {}, … n times}}.
+std::string wide(bool arrayOfObjects, std::size_t n) {
+    std::string s = R"({"tool": {"id": "t"}, "x": )";
+    s += arrayOfObjects ? '[' : '{';
+    for (std::size_t i = 0; i < n; ++i) {
+        s += i == 0 ? "" : ",";
+        s += arrayOfObjects ? std::string(R"({"a":1})") : "\"k" + std::to_string(i) + "\":{}";
+    }
+    s += arrayOfObjects ? ']' : '}';
+    return s + "}";
+}
+
+/// CPU seconds to run `f`, best of three (the minimum filters out scheduling noise).
+template <class F>
+double timed(F&& f) {
+    double best = 1e300;
+    for (int k = 0; k < 3; ++k) {
+        const double t0 = cpuSeconds();
+        f();
+        best = std::min(best, cpuSeconds() - t0);
+    }
+    return best;
+}
+
+}  // namespace
+
+TEST_CASE("T-0134: params parsing stays linear for wide arrays of objects and objects of objects",
+          "[cli][params][limits]") {
+#ifdef NDEBUG
+    const double absolute = 1.0;
+#else
+    const double absolute = 10.0;
+#endif
+    for (bool arrayOfObjects : {true, false}) {
+        INFO((arrayOfObjects ? "array of objects" : "object of objects"));
+        const std::string small = wide(arrayOfObjects, 50'000);
+        const std::string large = wide(arrayOfObjects, 100'000);
+        std::string e;
+        const double tSmall = timed([&] { e = errorOf(small); });
+        CHECK_THAT(e, ContainsSubstring("unknown key 'x'"));  // parsed through, then the schema
+        const double tLarge = timed([&] { e = errorOf(large); });
+        CHECK_THAT(e, ContainsSubstring("unknown key 'x'"));
+        // Baseline: the plain JSON parse the checks come on top of.
+        std::size_t plainSize = 0;
+        const double tPlain = timed([&] { plainSize = nlohmann::json::parse(large).size(); });
+        CHECK(plainSize == 2);
+        INFO("50k " << tSmall << " s, 100k " << tLarge << " s, plain parse of 100k " << tPlain << " s");
+        CHECK(tLarge < absolute);
+        // Quadratic work would take 4x when the input doubles (the T-0134 verifier measured
+        // 2.7 s at 10k and 10.8 s at 20k with nlohmann's callback parser).
+        CHECK(tLarge <= 3.0 * tSmall + 0.02);
+        CHECK(tLarge <= 4.0 * tPlain + 0.02);
+    }
 }
 
 TEST_CASE("every params key is documented in the toolpath help", "[cli][params][help]") {

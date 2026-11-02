@@ -72,7 +72,9 @@ one, the test fails.
    `(MSG,…)`, alone or together: while a comment holds only words and spaces, commas in a value
    that continue the words become `_`, and a value completing PROBEOPEN/PROBECLOSE/LOGCLOSE gets
    a leading `_`. In a custom post, do not put template text right after a text tag at the
-   start of a comment (ADR-0020 lists this gap). Keep `SUBSTITUTE = "([)]"` in paren-comment posts anyway, for
+   start of a comment (ADR-0020 lists this gap); every shipped post follows a text tag only with
+   `)`, the end of the line or another text tag, and a test checks this. The parser refuses
+   control characters other than tab in `.pp` lines. `[TOOLS_USED]` separates names with `; `. Keep `SUBSTITUTE = "([)]"` in paren-comment posts anyway, for
    readers of the post. `post_safety_test.cpp` checks every shipped post with hostile names and
    that text tags appear only inside comments.
 10. **Numbers are finite and in range.** The interpreter refuses to write a non-finite number,
@@ -80,7 +82,11 @@ one, the test fails.
     any value that would be written beyond 1e9 after unit conversion and the VAR multiplier
     (inverse time may reach 1e9); the arc tolerance must be 1e-6 to 1 mm and a linearised arc has
     at most 100,000 chords; a wrapped job's rotary diameter must be finite and at most 1e6 mm;
-    the post run fails with an error naming the toolpath, move and value (ADR-0020).
+    the post run fails with an error naming the toolpath, move and value (ADR-0020). A tool's
+    spindle speed must be above zero wherever `[S]` is written or `SPINDLE_ON` runs (for a
+    manual spindle, set any positive nominal speed), and a feed, spindle speed or dwell above
+    zero that the post would print as zero (`F0`, `P0.00`) is refused, as is a written feed of
+    zero or less and a dwell of zero seconds or less.
 
 Hand-review result: all eight goldens pass points 1–8; points 9 and 10 are enforced by the
 interpreter and tested on every post.
