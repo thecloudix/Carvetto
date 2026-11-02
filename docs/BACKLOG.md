@@ -405,6 +405,7 @@ Goal: Non-blocking findings (harness t0133v3/, t0122v1/). Post (custom .pp only,
 Acceptance criteria:
   1. (a) all whitespace/control characters in template text handled (treat isspace as space, or reject control characters in .pp lines at parse time) with tests; (b) a structural test: in every shipped post a text tag is followed only by ")", end of line or another tag; (c)/(d) docs and [TOOLS_USED] separator decided (e.g. "; " outside the word run) with goldens unchanged.
   2. (e)–(h) fixed with tests; CLI golden unchanged.
+  3. (Owner decision 2026-11-02, raised by the T-0134 verifier) The post refuses spindle speed ≤ 0 (or non-finite) whenever it would write [S] or start the spindle, and refuses feeds, plunge rates, feed overrides and dwell that are > 0 but print as zero in the post's precision (F0, P0.00); clear errors, ADR-0020 updated, goldens unchanged.
 
 ### T-0018 offsetContours: inward offsets past the inradius must vanish, not invert   [status: ready]
 Phase: 1   Module: core/geometry   Depends on: —
