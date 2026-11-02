@@ -10,8 +10,8 @@
 #include <iterator>
 #include <iomanip>
 #include <map>
+#include <memory>
 #include <new>
-#include <nlohmann/json.hpp>
 #include <optional>
 #include <span>
 #include <sstream>
@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "carvetto/document/carv_io.hpp"
+#include "carvetto/document/commands.hpp"
 #include "carvetto/document/document.hpp"
 #include "carvetto/document/job.hpp"
 #include "carvetto/document/layer.hpp"
@@ -34,8 +35,8 @@
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/profile.hpp"
 #include "carvetto/toolpath/toolpath.hpp"
+#include "carvetto/document/toolpath_record.hpp"
 #include "params.hpp"
-#include "toolpath_store.hpp"
 
 #ifndef CARVETTO_VERSION_STRING
 #define CARVETTO_VERSION_STRING "0.0.0"
@@ -69,16 +70,16 @@ constexpr std::string_view kToolpathHelp = R"(Usage: carvetto-cli toolpath profi
 
 Computes a 2D profile or pocket toolpath for the vectors of <in.carv> (all of them, or those
 on the layers named in the params file) and writes <out.carv> (which may be <in.carv>) with
-the toolpath added after the ones already there. Each toolpath is stored as an archive member
-toolpaths/NNNN.json holding its name, tool, moves and the params it came from. Diagnostics
-(e.g. tabs that could not be placed) are printed as warnings; when no toolpath can be
-produced at all, the command fails and nothing is written.
+the toolpath added after the ones already there. Each toolpath is stored as a toolpath record
+of the document: its name, the params it came from, the layers it machines, the tool, and
+its computed moves. Diagnostics (e.g. tabs that could not be placed) are printed as warnings;
+when no toolpath can be produced at all, the command fails and nothing is written.
 
 )";
 
 constexpr std::string_view kPostHelp = R"(Usage: carvetto-cli post <post.pp> <in.carv> <out.nc>
 
-Runs every toolpath stored in <in.carv>, in the order they were added, through the
+Runs every toolpath of <in.carv>, in the order they were added, through the
 post-processor <post.pp> (Carvetto ships posts in posts/, e.g. posts/grbl_mm.pp) and writes
 the program to <out.nc>. [TP_FILENAME] is the file name of <out.nc> without its extension;
 [DATE] and [TIME] are left empty so the output is reproducible. Safe Z and the home position
@@ -88,7 +89,7 @@ the program to <out.nc>. [TP_FILENAME] is the file name of <out.nc> without its 
 constexpr std::string_view kInfoHelp = R"(Usage: carvetto-cli info <file.carv>
 
 Prints a summary of a .carv document: format version, job setup, layers with their vector
-counts, the extent of the vectors and every stored toolpath (operation, tool, moves, Z range,
+counts, the extent of the vectors and every toolpath (operation, tool, moves, Z range,
 length).
 )";
 
@@ -164,43 +165,6 @@ void saveDocument(const document::Document& doc, const std::string& path, const 
     }
 }
 
-/// Saves like `saveDocument`, but first checks that the archive loads again: the interim
-/// toolpath members count against the loader's budget for unknown content (ADR-0013 §9, about
-/// two million JSON values in all, roughly 350,000 moves per file), and a file the next command
-/// cannot open must never be written (ADR-0019).
-void saveVerified(const document::Document& doc, const std::string& path, const document::CarvExtras& extras) {
-    const auto bytes = document::saveCarv(doc, extras);
-    if (!bytes) {
-        throw CliError("cannot save '" + path + "': " + bytes.error().message);
-    }
-    const auto reloaded = document::loadCarv(bytes.value());
-    if (!reloaded) {
-        throw CliError("cannot save '" + path + "': the result would not load again (" + reloaded.error().message +
-                       "); the toolpaths are too large for the interim toolpath storage (ADR-0019). Use fewer "
-                       "moves (larger stepover or pass depth, coarser tolerance) or split the job into several files");
-    }
-    const std::filesystem::path target(path);
-    std::filesystem::path tmp = target;
-    tmp += ".tmp";
-    {
-        std::ofstream file(tmp, std::ios::binary | std::ios::trunc);
-        file.write(reinterpret_cast<const char*>(bytes.value().data()),
-                   static_cast<std::streamsize>(bytes.value().size()));
-        file.close();
-        if (!file) {
-            std::error_code ignored;
-            std::filesystem::remove(tmp, ignored);
-            throw CliError("cannot write '" + path + "'");
-        }
-    }
-    std::error_code ec;
-    std::filesystem::rename(tmp, target, ec);
-    if (ec) {
-        std::filesystem::remove(tmp, ec);
-        throw CliError("cannot write '" + path + "'");
-    }
-}
-
 void warn(std::ostream& err, const std::string& message) {
     err << kProgram << ": warning: " << message << '\n';
 }
@@ -254,16 +218,21 @@ int cmdImport(const std::vector<std::string>& a, std::ostream& out, std::ostream
 
 // ---------------------------------------------------------------------------------- toolpath
 
-/// Contours of the vector objects on the named layers (all when `layers` is empty), in object
-/// (creation) order.
-std::vector<geometry::Contour> selectContours(const document::Document& doc, const std::vector<std::string>& layers,
-                                              const std::string& docPath) {
-    std::vector<document::LayerId> wanted;
+/// The selection of the vector objects on the named layers (every vector object when `layers` is
+/// empty); a name selects every layer of that name.
+document::VectorSelection selectionFor(const document::Document& doc, const std::vector<std::string>& layers,
+                                       const std::string& docPath) {
+    if (layers.empty()) {
+        return document::VectorSelection::allVectors();
+    }
+    document::VectorSelection selection;
     for (const std::string& name : layers) {
         bool found = false;
         for (const document::Layer& l : doc.layers()) {
             if (l.name == name) {
-                wanted.push_back(l.id);
+                if (std::find(selection.layers.begin(), selection.layers.end(), l.id) == selection.layers.end()) {
+                    selection.layers.push_back(l.id);
+                }
                 found = true;
             }
         }
@@ -276,19 +245,20 @@ std::vector<geometry::Contour> selectContours(const document::Document& doc, con
             throw CliError("'" + docPath + "' has no layer named '" + name + "' (layers: " + names + ")");
         }
     }
+    return selection;
+}
+
+/// Contours of the selected vector objects, in object (creation) order.
+std::vector<geometry::Contour> selectedContours(const document::Document& doc,
+                                                const document::VectorSelection& selection,
+                                                const std::string& docPath, bool someLayers) {
     std::vector<geometry::Contour> contours;
-    for (const auto& [id, obj] : doc.objects()) {
-        const document::VectorObject* v = obj.asVector();
-        if (!v) {
-            continue;
-        }
-        if (!wanted.empty() && std::find(wanted.begin(), wanted.end(), obj.layer) == wanted.end()) {
-            continue;
-        }
+    for (const document::ObjectId id : doc.selectedVectors(selection)) {
+        const document::VectorObject* v = doc.findObject(id)->asVector();
         contours.insert(contours.end(), v->contours.begin(), v->contours.end());
     }
     if (contours.empty()) {
-        throw CliError("'" + docPath + "' has no vectors to machine" + (layers.empty() ? "" : " on the chosen layers"));
+        throw CliError("'" + docPath + "' has no vectors to machine" + (someLayers ? " on the chosen layers" : ""));
     }
     return contours;
 }
@@ -321,10 +291,11 @@ int cmdToolpath(const std::vector<std::string>& a, std::ostream& out, std::ostre
         throw CliError(paramsPath + ": " + e.what());
     }
     const CommonParams& common = profile ? profile->common : pocket->common;
-    const std::string paramsJson = nlohmann::json::parse(paramsText).dump();
 
     document::LoadedCarv loaded = loadDocument(inPath);
-    const std::vector<geometry::Contour> contours = selectContours(loaded.document, common.layers, inPath);
+    const document::VectorSelection selection = selectionFor(loaded.document, common.layers, inPath);
+    const std::vector<geometry::Contour> contours =
+        selectedContours(loaded.document, selection, inPath, !common.layers.empty());
     const ResolvedTool tool = resolveTool(common.tool, std::filesystem::path(paramsPath).parent_path());
     for (const std::string& w : tool.warnings) {
         warn(err, w);
@@ -332,7 +303,7 @@ int cmdToolpath(const std::vector<std::string>& a, std::ostream& out, std::ostre
 
     std::vector<toolpath::Toolpath> results;
     std::vector<toolpath::ToolpathDiagnostic> diagnostics;
-    double safeZ = 0.0;
+    document::ToolpathParams recordParams;
     if (profile) {
         profile->params.cuttingData = tool.cuttingData;
         toolpath::ProfileResult r = toolpath::profileToolpath(contours, tool.tool, profile->params);
@@ -340,7 +311,8 @@ int cmdToolpath(const std::vector<std::string>& a, std::ostream& out, std::ostre
         if (r.ok()) {
             results.push_back(std::move(r.toolpath));
         }
-        safeZ = profile->params.safeZ;
+        profile->params.cuttingData.reset();  // tool-database input, not part of the record
+        recordParams = profile->params;
     } else {
         toolpath::PocketResult r =
             toolpath::pocketToolpath(contours, {toolpath::PocketTool{tool.tool, tool.cuttingData}}, pocket->params);
@@ -350,7 +322,7 @@ int cmdToolpath(const std::vector<std::string>& a, std::ostream& out, std::ostre
                 results.push_back(std::move(tp));
             }
         }
-        safeZ = pocket->params.safeZ;
+        recordParams = pocket->params;
     }
     if (results.empty()) {
         throw CliError("no " + op + " toolpath was produced: " + diagnosticsText(diagnostics));
@@ -359,15 +331,22 @@ int cmdToolpath(const std::vector<std::string>& a, std::ostream& out, std::ostre
         warn(err, d.message);
     }
 
-    document::CarvExtras extras = loaded.extras;
+    document::Document& doc = loaded.document;
     for (toolpath::Toolpath& tp : results) {
-        const std::string member = nextToolpathMember(extras);
+        document::ToolpathRecord record;
+        record.name = tp.name;
+        record.params = recordParams;
+        record.selection = selection;
+        record.tool = tp.tool;
+        record.toolSource = {common.tool.id, common.tool.machine, common.tool.material};
         out << "added " << op << " toolpath '" << tp.name << "' (" << tp.moveCount() << " moves, tool '" << tp.tool.name
-            << "') as " << member << '\n';
-        StoredToolpath stored{member, op, paramsJson, safeZ, std::move(tp)};
-        extras = extras.withMember(member, encodeToolpath(stored));
+            << "') as toolpath " << doc.toolpaths().size() + 1 << '\n';
+        record.moves = document::shareMoves(std::move(tp.moves));
+        if (!doc.execute(std::make_unique<document::AddToolpathCommand>(std::move(record)))) {
+            throw CliError("'" + inPath + "' has no ids left for another toolpath");
+        }
     }
-    saveVerified(loaded.document, outPath, extras);
+    saveDocument(doc, outPath, loaded.extras);
     out << "wrote '" << outPath << "'\n";
     return kExitOk;
 }
@@ -389,15 +368,19 @@ int cmdPost(const std::vector<std::string>& a, std::ostream& out, std::ostream& 
     }
 
     const document::LoadedCarv loaded = loadDocument(inPath);
-    std::vector<StoredToolpath> stored = storedToolpaths(loaded.extras);
-    if (stored.empty()) {
+    const std::vector<document::ToolpathRecord>& records = loaded.document.toolpaths();
+    if (records.empty()) {
         throw CliError("'" + inPath + "' holds no toolpaths (add some with 'carvetto-cli toolpath')");
     }
     std::vector<toolpath::Toolpath> toolpaths;
-    double safeZ = stored.front().safeZ;
-    for (StoredToolpath& s : stored) {
-        safeZ = std::max(safeZ, s.safeZ);
-        toolpaths.push_back(std::move(s.toolpath));
+    double safeZ = records.front().safeZ();
+    for (const document::ToolpathRecord& r : records) {
+        if (!r.hasMoves()) {
+            throw CliError("toolpath '" + r.name + "' in '" + inPath +
+                           "' has no computed moves (the file holds only its definition)");
+        }
+        safeZ = std::max(safeZ, r.safeZ());
+        toolpaths.push_back(r.toolpath());
     }
 
     const std::filesystem::path outFs(outPath);
@@ -480,25 +463,27 @@ int cmdInfo(const std::vector<std::string>& a, std::ostream& out, std::ostream& 
             << " .. " << fmt(extent.max.y) << " mm\n";
     }
 
-    const std::vector<StoredToolpath> stored = storedToolpaths(loaded.extras);
-    out << "toolpaths: " << stored.size() << '\n';
-    for (const StoredToolpath& s : stored) {
-        const toolpath::Toolpath& tp = s.toolpath;
+    const std::vector<document::ToolpathRecord>& records = doc.toolpaths();
+    out << "toolpaths: " << records.size() << '\n';
+    for (std::size_t i = 0; i < records.size(); ++i) {
+        const document::ToolpathRecord& r = records[i];
+        const toolpath::Toolpath tp = r.toolpath();
         const toolpath::LengthByKind len = tp.lengthByKind();
-        out << "  " << s.member << ": " << s.operation << " '" << tp.name << "', tool T" << tp.tool.toolNumber << " '"
-            << tp.tool.name << "' D" << fmt(tp.tool.diameter) << " mm, " << tp.moveCount() << " moves";
+        out << "  " << i + 1 << ": " << (r.operation() == document::ToolpathOperation::Profile ? "profile" : "pocket")
+            << " '" << tp.name << "', tool T" << tp.tool.toolNumber << " '" << tp.tool.name << "' D"
+            << fmt(tp.tool.diameter) << " mm, ";
+        if (r.hasMoves()) {
+            out << tp.moveCount() << " moves";
+        } else {
+            out << "not computed";
+        }
         if (!tp.isEmpty()) {
             out << ", Z " << fmt(*tp.minZ()) << " .. " << fmt(*tp.maxZ()) << " mm, cutting " << fmt(len.feed + len.plunge)
                 << " mm, rapid " << fmt(len.rapid + len.retract) << " mm";
         }
         out << '\n';
     }
-    std::size_t others = 0;
-    for (const std::string& name : loaded.extras.memberNames()) {
-        if (!isToolpathMember(name)) {
-            ++others;
-        }
-    }
+    const std::size_t others = loaded.extras.memberNames().size();
     if (others > 0) {
         out << "other preserved archive members: " << others << '\n';
     }
@@ -601,9 +586,9 @@ Commands:
   toolpath pocket <params.json> <in.carv> <out.carv>
       Add a pocket toolpath (offset or raster clearing, boundary pass, ramp plunge).
   post <post.pp> <in.carv> <out.nc>
-      Write every stored toolpath through a post-processor (e.g. posts/grbl_mm.pp).
+      Write every toolpath through a post-processor (e.g. posts/grbl_mm.pp).
   info <file.carv>
-      Summarise a .carv document: job, layers, vectors and stored toolpaths.
+      Summarise a .carv document: job, layers, vectors and toolpaths.
 
 params.json holds the toolpath settings (snake_case keys, mm and degrees); see
 'carvetto-cli help toolpath' for every key.

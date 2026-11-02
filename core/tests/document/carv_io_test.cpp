@@ -342,7 +342,7 @@ TEST_CASE("AC3: a file with a higher major version fails with a clear error", "[
             withMember(original, "manifest.json", replaced(manifest, "\"major\": 1", "\"major\": 2"));
         const CarvError err = loadError(newer);
         CHECK(err.code == Code::UnsupportedVersion);
-        CHECK(contains(err.message, "2.0"));
+        CHECK(contains(err.message, "2." + std::to_string(kCarvFormatMinor)));
         CHECK(contains(err.message, "newer"));
     }
     SECTION("the version is checked before job.json is read") {
@@ -358,11 +358,13 @@ TEST_CASE("AC3: a file with a higher major version fails with a clear error", "[
     }
     SECTION("a higher minor version of the same major loads") {
         const Bytes minor =
-            withMember(original, "manifest.json", replaced(manifest, "\"minor\": 0", "\"minor\": 7"));
+            withMember(original, "manifest.json",
+                       replaced(manifest, "\"minor\": " + std::to_string(kCarvFormatMinor), "\"minor\": 7"));
         LoadedCarv loaded = load(minor);
         CHECK(loaded.formatMinor == 7);
         // Re-saved with this build's version.
-        CHECK(contains(memberText(save(loaded.document, loaded.extras), "manifest.json"), "\"minor\": 0"));
+        CHECK(contains(memberText(save(loaded.document, loaded.extras), "manifest.json"),
+                       "\"minor\": " + std::to_string(kCarvFormatMinor)));
     }
 }
 
@@ -392,12 +394,12 @@ TEST_CASE("unknown fields on every record and unknown archive members are preser
         replaced(manifest, "\"format\": \"carvetto\"", "\"format\": \"carvetto\", \"zz_manifest\": \"m\"");
     const std::string blob("\x00\x01\x02\xff binary", 11);
     Bytes edited = withMember(withMember(original, "job.json", job), "manifest.json", manifest);
-    edited = withMember(edited, "toolpaths/0001.bin", blob);
+    edited = withMember(edited, "components/0001.hf", blob);
     edited = withMember(edited, "bitmaps/a.png", "");
 
     LoadedCarv loaded = load(edited);
     requireSameDocument(doc, loaded.document);
-    CHECK(loaded.extras.memberNames() == std::vector<std::string>{"bitmaps/a.png", "toolpaths/0001.bin"});
+    CHECK(loaded.extras.memberNames() == std::vector<std::string>{"bitmaps/a.png", "components/0001.hf"});
 
     const Bytes resaved = save(loaded.document, loaded.extras);
     const std::string resavedJob = memberText(resaved, "job.json");
@@ -408,7 +410,7 @@ TEST_CASE("unknown fields on every record and unknown archive members are preser
     CHECK(contains(resavedJob, "\"k\": -0.5"));
     CHECK(contains(resavedJob, "\"zz_job\": 42"));
     CHECK(contains(memberText(resaved, "manifest.json"), "\"zz_manifest\": \"m\""));
-    CHECK(memberText(resaved, "toolpaths/0001.bin") == blob);
+    CHECK(memberText(resaved, "components/0001.hf") == blob);
     CHECK(memberText(resaved, "bitmaps/a.png").empty());
     // Member order: manifest, job, then preserved members sorted by name.
     const auto ms = members(resaved);
@@ -416,7 +418,7 @@ TEST_CASE("unknown fields on every record and unknown archive members are preser
     CHECK(ms[0].name == "manifest.json");
     CHECK(ms[1].name == "job.json");
     CHECK(ms[2].name == "bitmaps/a.png");
-    CHECK(ms[3].name == "toolpaths/0001.bin");
+    CHECK(ms[3].name == "components/0001.hf");
     LoadedCarv again = load(resaved);
     CHECK(save(again.document, again.extras) == resaved);
 

@@ -8,15 +8,20 @@
 #include <filesystem>
 #include <fstream>
 #include <ios>
+#include <span>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "carvetto/document/carv_io.hpp"
+#include "carvetto/document/toolpath_record.hpp"
+#include "carvetto/toolpath/pocket.hpp"
+#include "carvetto/toolpath/profile.hpp"
 #include "carvetto/tooling/json_io.hpp"
 #include "carvetto/tooling/tool_database.hpp"
+#include "carv_zip.hpp"
 #include "starter_tools.hpp"
-#include "toolpath_store.hpp"
 
 namespace fs = std::filesystem;
 using Catch::Matchers::ContainsSubstring;
@@ -80,6 +85,21 @@ std::string pipeline(const std::string& dir) {
         CHECK(r.err.empty());
     }
     return readFile(nc);
+}
+
+/// Writes `path` again with `extra` members appended (raw, as the T-0122 CLI added its interim
+/// toolpath members; `CarvExtras::withMember` refuses those names since T-0132).
+void addRawMembers(const std::string& path, const std::vector<std::pair<std::string, std::string>>& extra) {
+    const std::string bytes = readFile(path);
+    auto zip = document::detail::readZip(std::span<const std::uint8_t>(
+        reinterpret_cast<const std::uint8_t*>(bytes.data()), bytes.size()));
+    REQUIRE(zip.ok);
+    for (const auto& [name, text] : extra) {
+        zip.members.push_back({name, std::vector<std::uint8_t>(text.begin(), text.end())});
+    }
+    const auto out = document::detail::writeZip(zip.members);
+    REQUIRE(out.ok);
+    writeFile(path, std::string(out.bytes.begin(), out.bytes.end()));
 }
 
 /// A .carv with the fixture imported.
@@ -276,39 +296,50 @@ TEST_CASE("import warns about skipped text and DXF warnings but succeeds", "[cli
 
 // ------------------------------------------------------------------------------- toolpath
 
-TEST_CASE("toolpaths are appended as numbered members holding their params", "[cli][toolpath]") {
+TEST_CASE("toolpaths are appended as native toolpath records holding their params", "[cli][toolpath]") {
     const std::string dir = workDir("append");
     const std::string carv = importedFixture(dir);
     const std::string out1 = dir + "/one.carv";
     const Outcome a = runCli({"toolpath", "pocket", kData + "/pocket.json", carv, out1});
     REQUIRE(a.code == 0);
     CHECK_THAT(a.out, ContainsSubstring("added pocket toolpath 'Pockets'"));
-    CHECK_THAT(a.out, ContainsSubstring("as toolpaths/0001.json"));
+    CHECK_THAT(a.out, ContainsSubstring("as toolpath 1\n"));
     const Outcome b = runCli({"toolpath", "profile", kData + "/profile.json", out1, out1});
     REQUIRE(b.code == 0);
-    CHECK_THAT(b.out, ContainsSubstring("as toolpaths/0002.json"));
+    CHECK_THAT(b.out, ContainsSubstring("as toolpath 2\n"));
 
     const auto loaded = document::loadCarv(fs::path(out1));
     REQUIRE(loaded.ok());
-    CHECK(loaded.value().extras.memberNames() ==
-          std::vector<std::string>{"toolpaths/0001.json", "toolpaths/0002.json"});
-    const auto stored = cli::storedToolpaths(loaded.value().extras);
-    REQUIRE(stored.size() == 2);
-    CHECK(stored[0].operation == "pocket");
-    CHECK(stored[0].toolpath.tool.name == "End Mill 6 mm");
-    CHECK(stored[0].toolpath.tool.feedRate == 2300.0);  // hardwood/MDF cutting data
-    CHECK_THAT(stored[0].paramsJson, ContainsSubstring("\"material\":\"material-hardwood-mdf\""));
-    CHECK(stored[1].operation == "profile");
-    CHECK(stored[1].toolpath.name == "Cut out");
-    CHECK(*stored[1].toolpath.minZ() == -6.0);
+    CHECK(loaded.value().extras.memberNames().empty());  // no interim members any more (T-0132)
+    const document::Document& doc = loaded.value().document;
+    const auto& records = doc.toolpaths();
+    REQUIRE(records.size() == 2);
+    CHECK(records[0].operation() == document::ToolpathOperation::Pocket);
+    CHECK(records[0].tool.name == "End Mill 6 mm");
+    CHECK(records[0].tool.feedRate == 2300.0);  // hardwood/MDF cutting data
+    CHECK(records[0].toolSource.toolId == "end-mill-6mm");
+    CHECK(records[0].toolSource.material == "material-hardwood-mdf");
+    CHECK(std::get<toolpath::PocketParams>(records[0].params).name == "Pockets");
+    CHECK(records[1].operation() == document::ToolpathOperation::Profile);
+    CHECK(records[1].name == "Cut out");
+    CHECK(std::get<toolpath::ProfileParams>(records[1].params).tabs.enabled);
+    CHECK_FALSE(std::get<toolpath::ProfileParams>(records[1].params).cuttingData.has_value());
+    CHECK(*records[1].toolpath().minZ() == -6.0);
+    // The selection names the layers the params file asked for, by id.
+    for (const auto& r : records) {
+        CHECK_FALSE(r.selection.all);
+        REQUIRE(r.selection.layers.size() == 1);
+        CHECK(doc.findLayer(r.selection.layers[0]) != nullptr);
+    }
+    CHECK(doc.findLayer(records[1].selection.layers[0])->name == "Outline");
 
     const Outcome info = runCli({"info", out1});
     REQUIRE(info.code == 0);
     CHECK_THAT(info.out, ContainsSubstring("toolpaths: 2"));
-    CHECK_THAT(info.out, ContainsSubstring("toolpaths/0002.json: profile 'Cut out', tool T5 'End Mill 3 mm' D3 mm"));
+    CHECK_THAT(info.out, ContainsSubstring("  2: profile 'Cut out', tool T5 'End Mill 3 mm' D3 mm"));
     CHECK_THAT(info.out, ContainsSubstring("Z -6 .. 5 mm"));
     // The input file is untouched when writing elsewhere.
-    CHECK(document::loadCarv(fs::path(carv)).value().extras.memberNames().empty());
+    CHECK(document::loadCarv(fs::path(carv)).value().document.toolpaths().empty());
 }
 
 TEST_CASE("without a database the built-in starter database is used", "[cli][toolpath]") {
@@ -320,11 +351,24 @@ TEST_CASE("without a database the built-in starter database is used", "[cli][too
     const Outcome r = runCli({"toolpath", "profile", dir + "/p.json", carv, carv});
     INFO(r.err);
     REQUIRE(r.code == 0);
-    const auto stored = cli::storedToolpaths(document::loadCarv(fs::path(carv)).value().extras);
-    REQUIRE(stored.size() == 1);
-    CHECK(stored[0].toolpath.tool.name == "End Mill 6 mm");
-    CHECK(stored[0].toolpath.tool.feedRate == 2300.0);  // the tool's default cutting data
-    CHECK(stored[0].toolpath.name == "Profile");
+    const auto records = document::loadCarv(fs::path(carv)).value().document.toolpaths();
+    REQUIRE(records.size() == 1);
+    CHECK(records[0].tool.name == "End Mill 6 mm");
+    CHECK(records[0].tool.feedRate == 2300.0);  // the tool's default cutting data
+    CHECK(records[0].name == "Profile");
+    CHECK(records[0].toolSource.machine.empty());
+}
+
+TEST_CASE("without layers in the params file every vector is selected", "[cli][toolpath]") {
+    const std::string dir = workDir("all_layers");
+    const std::string carv = importedFixture(dir);
+    writeFile(dir + "/p.json", R"({"tool": {"id": "end-mill-6mm"}, "passes": {"cut_depth": 3}})");
+    const Outcome r = runCli({"toolpath", "profile", dir + "/p.json", carv, carv});
+    INFO(r.err);
+    REQUIRE(r.code == 0);
+    const auto records = document::loadCarv(fs::path(carv)).value().document.toolpaths();
+    REQUIRE(records.size() == 1);
+    CHECK(records[0].selection == document::VectorSelection::allVectors());
 }
 
 TEST_CASE("a tool without data for the machine/material falls back with a warning", "[cli][toolpath]") {
@@ -376,25 +420,101 @@ TEST_CASE("post names the program after the output file and refuses unwritable p
     CHECK_THAT(bad.err, ContainsSubstring("cannot write"));
 }
 
-TEST_CASE("a damaged toolpath member is reported, not crashed on", "[cli][post]") {
+TEST_CASE("a file with T-0122 interim toolpath members is migrated and posts the same program",
+          "[cli][post][migration]") {
+    // Before T-0132 the CLI stored each toolpath as an archive member toolpaths/NNNN.json
+    // (ADR-0019). Rebuild such a file from the native one and post it: same G-code.
+    const std::string dir = workDir("migrate");
+    pipeline(dir);
+    const auto native = document::loadCarv(fs::path(dir + "/part.carv"));
+    REQUIRE(native.ok());
+    document::Document legacyDoc;
+    {
+        // Same layers and vectors; the toolpaths go in as interim members.
+        auto copy = document::loadCarv(fs::path(dir + "/part.carv"));
+        REQUIRE(copy.ok());
+        legacyDoc = std::move(copy.value().document);
+    }
+    std::vector<std::pair<std::string, std::string>> interim;
+    int n = 0;
+    for (const auto& r : native.value().document.toolpaths()) {
+        legacyDoc.takeToolpath(r.id);
+        const auto num = [](double v) {
+            std::ostringstream ss;
+            ss.precision(17);
+            ss << v;
+            return ss.str();
+        };
+        std::string moves;
+        for (const toolpath::Move& m : *r.moves) {
+            static const char* kinds[] = {"rapid", "feed", "plunge", "retract", "arc_cw", "arc_ccw", "dwell"};
+            moves += moves.empty() ? "[" : ",[";
+            moves += "\"" + std::string(kinds[static_cast<int>(m.kind)]) + "\"";
+            for (double v : {m.to.x, m.to.y, m.to.z}) {
+                moves += "," + num(v);
+            }
+            if (toolpath::isArc(m.kind)) {
+                moves += "," + num(m.centre.x) + "," + num(m.centre.y);
+            }
+            if (m.feedOverride && toolpath::isCutting(m.kind)) {
+                moves += ",{\"feed\":" + num(*m.feedOverride) + "}";
+            }
+            moves += "]";
+        }
+        const bool pocket = r.operation() == document::ToolpathOperation::Pocket;
+        const std::string params = readFile(kData + (pocket ? "/pocket.json" : "/profile.json"));
+        const std::string text = R"({"format":"carvetto-toolpath","format_version":1,"operation":")" +
+                                 std::string(pocket ? "pocket" : "profile") + R"(","name":")" + r.name +
+                                 R"(","params":)" + params + R"(,"safe_z":)" + num(r.safeZ()) +
+                                 R"(,"tool":{"name":")" + r.tool.name + R"(","tool_number":)" +
+                                 std::to_string(r.tool.toolNumber) + R"(,"diameter":)" + num(r.tool.diameter) +
+                                 R"(,"feed_rate":)" + num(r.tool.feedRate) + R"(,"plunge_rate":)" +
+                                 num(r.tool.plungeRate) + R"(,"spindle_speed":)" + num(r.tool.spindleSpeed) +
+                                 R"(},"moves":[)" + moves + "]}";
+        interim.emplace_back("toolpaths/000" + std::to_string(++n) + ".json", text);
+    }
+    REQUIRE(legacyDoc.toolpaths().empty());
+    const std::string legacy = dir + "/legacy.carv";
+    REQUIRE(document::saveCarv(legacyDoc, fs::path(legacy)).ok());
+    addRawMembers(legacy, interim);
+
+    const Outcome r = runCli({"post", kGrbl, legacy, dir + "/part.nc"});
+    INFO(r.err);
+    REQUIRE(r.code == 0);
+    CHECK(readFile(dir + "/part.nc") == readFile(kGolden));
+    const auto migrated = document::loadCarv(fs::path(legacy));
+    REQUIRE(migrated.ok());
+    CHECK(migrated.value().extras.memberNames().empty());
+    REQUIRE(migrated.value().document.toolpaths().size() == 2);
+    for (std::size_t i = 0; i < 2; ++i) {
+        const auto& a = migrated.value().document.toolpaths()[i];
+        const auto& b = native.value().document.toolpaths()[i];
+        CHECK(a.name == b.name);
+        CHECK(a.params == b.params);
+        CHECK(a.tool == b.tool);
+        CHECK(a.toolSource == b.toolSource);
+        CHECK(*a.moves == *b.moves);
+        CHECK(a.selection == b.selection);
+    }
+}
+
+TEST_CASE("a damaged interim toolpath member is reported, not crashed on", "[cli][post]") {
     const std::string dir = workDir("damaged");
     const std::string carv = importedFixture(dir);
-    auto loaded = document::loadCarv(fs::path(carv));
-    REQUIRE(loaded.ok());
-    const std::string bad = R"({"format":"carvetto-toolpath","format_version":1,"moves":[["warp",0,0,0]]})";
-    const auto extras =
-        loaded.value().extras.withMember("toolpaths/0001.json", std::vector<std::uint8_t>(bad.begin(), bad.end()));
-    REQUIRE(document::saveCarv(loaded.value().document, fs::path(carv), extras).ok());
+    addRawMembers(carv, {{"toolpaths/0001.json",
+                          R"({"format":"carvetto-toolpath","format_version":1,"moves":[["warp",0,0,0]]})"}});
     const Outcome r = runCli({"post", kGrbl, carv, dir + "/x.nc"});
     CHECK(r.code == cli::kExitFailure);
-    CHECK_THAT(r.err, ContainsSubstring("toolpath member 'toolpaths/0001.json': missing 'operation'"));
+    CHECK_THAT(r.err, ContainsSubstring("toolpaths/0001.json"));
+    CHECK_THAT(r.err, ContainsSubstring("unknown move kind 'warp'"));
     const Outcome i = runCli({"info", carv});
     CHECK(i.code == cli::kExitFailure);
 }
 
-TEST_CASE("toolpath refuses to write a file the loader would reject", "[cli][toolpath][limits]") {
-    // Fill the unknown-content budget (2,000,000 JSON values, ADR-0013 §9) almost completely with
-    // a preserved member; the pocket's ~1,500 moves then push the file over it.
+TEST_CASE("toolpaths no longer count against the loader's budget for unknown content", "[cli][toolpath][limits]") {
+    // Before T-0132 the interim JSON toolpath members counted against the 2,000,000-value budget
+    // for unknown content (ADR-0013 §9), and this case was refused. With native records the moves
+    // are in a binary cache with its own budget, so the same file is written and loads.
     const std::string dir = workDir("limit");
     const std::string carv = importedFixture(dir);
     auto loaded = document::loadCarv(fs::path(carv));
@@ -413,16 +533,13 @@ TEST_CASE("toolpath refuses to write a file the loader would reject", "[cli][too
     const auto extras =
         loaded.value().extras.withMember("filler.json", std::vector<std::uint8_t>(filler.begin(), filler.end()));
     REQUIRE(document::saveCarv(loaded.value().document, fs::path(carv), extras).ok());
-    {
-        const auto check = document::loadCarv(fs::path(carv));
-        INFO((check.ok() ? std::string() : check.error().message));
-        REQUIRE(check.ok());
-    }
 
     const Outcome r = runCli({"toolpath", "pocket", kData + "/pocket.json", carv, dir + "/out.carv"});
-    CHECK(r.code == cli::kExitFailure);
-    CHECK_THAT(r.err, ContainsSubstring("the result would not load again"));
-    CHECK_THAT(r.err, ContainsSubstring("interim toolpath storage"));
-    CHECK_FALSE(fs::exists(dir + "/out.carv"));
-    CHECK_FALSE(fs::exists(dir + "/out.carv.tmp"));
+    INFO(r.err);
+    CHECK(r.code == cli::kExitOk);
+    const auto out = document::loadCarv(fs::path(dir + "/out.carv"));
+    INFO((out.ok() ? std::string() : out.error().message));
+    REQUIRE(out.ok());
+    CHECK(out.value().document.toolpaths().size() == 1);
+    CHECK(out.value().extras.memberNames() == std::vector<std::string>{"filler.json"});
 }

@@ -93,11 +93,13 @@ add_library(carvetto_core STATIC
   src/document/undo_stack.cpp
   src/document/document.cpp
   src/document/commands.cpp
+  src/document/toolpath_record.cpp
   src/geometry/clipper_interop.cpp
   src/geometry/offset.cpp
   src/geometry/boolean.cpp
   src/document/carv_zip.cpp
   src/document/carv_json_reader.cpp
+  src/document/carv_moves.cpp
   src/document/carv_io.cpp
   src/io/dxf_pairs.cpp
   src/io/dxf_text.cpp

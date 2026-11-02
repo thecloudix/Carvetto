@@ -94,6 +94,8 @@ struct ProfileParams {
     /// (`effectiveCuttingData`). Look up machine/material data with `Tool::cuttingDataFor`.
     std::optional<tooling::CuttingData> cuttingData;
     geometry::Tolerance tolerance{geometry::Tolerance::defaults()};
+
+    bool operator==(const ProfileParams&) const = default;
 };
 
 /// Profile diagnostics use the shared operation types (T-0123, operation.hpp); the profile's

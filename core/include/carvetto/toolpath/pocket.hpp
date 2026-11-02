@@ -75,6 +75,8 @@ struct PocketParams {
 
     /// Geometric tolerance. `chordal` governs polygonisation and the safety margin (ADR-0017).
     geometry::Tolerance tolerance{geometry::Tolerance::defaults()};
+
+    bool operator==(const PocketParams&) const = default;
 };
 
 /// What a planned pocket path is for.
