@@ -123,25 +123,35 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     that leaves the second arc starting behind, the loop is closed instead by turning the first
     arc's start angle (its end point bit-identical), exactly or, failing that, level with or
     ahead within the same bound (fam5 0xa5000ba6, a 4-arc loop at 1e5 mm, 7.2e-12 mm behind).
-    One angle ulp moves the start by only r·ulp(angle) (1e-15 mm at r = 21) against 1.8e-12 mm
-    coordinate ulps at 1e4 mm, so the turn is solved for (a's end may lie ρ off b's circle at a
-    corner: the start moves round by ρ (n·ta)/(t·ta)) and angles a quarter of a coordinate ulp
-    apart are searched around it (T-0017 round-3 re-verification: single-ulp steps left ~7% of
-    bit-continuous arc loops at 1e4…2e5 mm stepping back, 2.0e-12 mm in the verifier's 3-arc
-    repro). Where even that fails (the turn would open the closing junction beyond 1e-12 of
-    the scale, seen only for input with gaps), the walk is repeated from each other arc and the
-    first result without a backward junction is kept. Verifier perturbation driver, 1.75 M
-    offsets (arcs-only loops exact and noisy, mixed closed/open, large radii, at up to 2e5
-    mm): 0 backward junctions (45b2205: 26 000+). Where the input has gaps, arc-arc junctions
-    can stay open by a few times the input gap, always ahead (2.4× seen, as on 45b2205, in
-    mixed closed loops; 1.55× in arcs-only loops, where 45b2205 reached 1.0×: 56 gaps above
-    1e-12 of the scale in 168 000 noisy arcs-only offsets, 45b2205 42, 0cd9abc 75). Two arcs whose circles only nearly touch
-    (Round arcs about vertices 2d + g apart meeting at a cusp) were snapped to a point on neither circle and kept a gap of
-    about g, 1.1e-10…8.3e-10 mm for g ≈ 8e-11…9e-10 (T-0017 round 3, B-1, as on main); such a
-    snap is now refused when the residual exceeds the 1e-10 limit, and the junction is bridged by
-    a checked straight line of about g instead (exact again for every g). That is for continuous input: where the input's own spans do not meet,
-    an arc-to-arc junction can keep a gap of about that input gap (8.5e-10 mm seen for a 9.4e-10
-    mm input gap). A Round join at such a gap was one arc about the next span's start through the
+    One angle ulp moves the start by only r·ulp(angle) (about 1e-15…1e-14 mm at r = 21) against
+    1.8e-12 mm coordinate ulps at 1e4 mm, so the turn is solved for (a's end may lie ρ off b's
+    circle at a corner: the start moves round by ρ (n·ta)/(t·ta)) and angles a quarter of a
+    coordinate ulp apart are searched around it (T-0017 round-3 re-verification: single-ulp
+    steps left ~7% of bit-continuous arc loops at 1e4…2e5 mm stepping back, 2.0e-12 mm in the
+    verifier's 3-arc repro). A turn cannot help where a arrives almost square to b's circle
+    (along its radius, t·ta ≈ 0) and its end lies just inside or outside the circle: moving the
+    start round the circle then moves it across a's travel, not along it. This happens on
+    continuous input too (verifier repro, a 6-arc loop at (3e4, 7e4): 1.7e-11 mm behind). There
+    the walk is repeated from each other arc and the first result without a backward junction
+    is kept. If no arc gave one, the walk from the first arc would stay, with a step back of a
+    few coordinate ulps at one junction; that was never seen. Verifier perturbation driver, about
+    1.75 M offsets (arcs-only loops exact and noisy, mixed closed/open, large radii, at up to
+    2e5 mm), and the round-3 re-verifier's ~4 M offsets including loops of 12–72 tiny arcs:
+    0 backward junctions (45b2205: 26 000+ in the first). Tests reach each part on its own: the
+    turn through an internal hook (`detail::turnArcOntoJunction`, core/src/geometry/
+    offset_junction.hpp), the retry through the 6-arc repro.
+    Two arcs whose circles only nearly touch (Round arcs about vertices 2d + g apart meeting at a
+    cusp) were snapped to a point on neither circle and kept a gap of about g,
+    1.1e-10…8.3e-10 mm for g ≈ 8e-11…9e-10 (T-0017 round 3, B-1, as on main); such a snap is now
+    refused when the residual exceeds the 1e-10 limit, and the junction is bridged by a checked
+    straight line of about g instead (exact again for every g). That is for continuous input.
+    Where the input's own spans do not meet, an arc-to-arc junction can stay open, always ahead
+    of the previous end, by up to the larger of about that input gap (8.5e-10 mm seen for a
+    9.4e-10 mm input gap; up to 2.4× it where the gap is larger than rounding) and the 1e-10
+    snapping limit of the scale, where two circles nearly touch (6.0e-11 mm at ~1 mm for circles
+    overlapping by 5.6e-11 mm, input gaps 1e-16: as on 45b2205). Noisy arcs-only loops: 56 arc
+    gaps above 1e-12 of the scale in 168 000 offsets (45b2205 42, 0cd9abc 75).
+    A Round join at an input gap was one arc about the next span's start through the
     previous offset's end, so up to the gap beyond d (2.4e-5 mm seen for a 1e-4 mm gap) and, where
     the gap runs along the corner, up to ~1e-8 mm inside d of the previous span's end, enough for
     the pruning to cut it and split the chain (T-0017 fix round 2, 0xe30005b6); it is now an arc

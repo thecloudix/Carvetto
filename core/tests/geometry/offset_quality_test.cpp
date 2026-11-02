@@ -19,6 +19,7 @@
 #include "carvetto/geometry/offset.hpp"
 #include "cpu_time.hpp"
 #include "offset_chain_checks.hpp"
+#include "offset_junction.hpp"
 #include "test_rng.hpp"
 
 using namespace carvetto::geometry;
@@ -2924,6 +2925,111 @@ TEST_CASE("T-0017: closed loops of arcs only never step back far from the origin
         CHECK(offsets == 48 * 27);
         CHECK(arcLoops > 500);
         CHECK(stepsBack == 0);
+    }
+}
+
+TEST_CASE("T-0017: a closed loop of arcs is closed from another arc where the first still steps back",
+          "[geometry][offset][open][t0017]") {
+    // Verifier repro (round-3 re-verification of 328008b): a bit-continuous 6-arc loop at
+    // (3e4, 7e4), Right, Round. Its 10-arc offset loop, closed at its first arc (by moving that
+    // arc's centre, then by turning its start angle), keeps junction 0 1.7e-11 mm behind; the walk
+    // from another arc leaves none. Continuous input, so the retry is not only for noisy input.
+    Contour in;
+    in.closed = true;
+    const ArcDirection ccw = ArcDirection::CCW;
+    const ArcDirection cw = ArcDirection::CW;
+    auto arc = [&](double cx, double cy, double r, double sa, double ea, ArcDirection dir) {
+        in.spans.emplace_back(ArcSpan{{cx, cy}, r, sa, ea, dir});
+    };
+        arc(30000.180913933084, 70000.253272835995, 0.31824608042059538,
+            -1.1191829023721562, 0.33503067533139391, ccw);
+        arc(30000.179649078265, 70000.178564530011, 0.35108199884117636,
+            0.5361626033054907, 2.4588088149956593, ccw);
+        arc(30001.003447359588, 69999.410283359888, 1.4769221008991804,
+            2.4071463537549498, 2.7171557266167103, ccw);
+        arc(29999.686043219965, 69999.892209663405, 0.12945151686999248,
+            1.7925509700410036, -0.77176575536161041, cw);
+        arc(30006.382976843193, 70017.829718138557, 19.199376387476235,
+            -1.9219462091717359, -1.9003792319706851, ccw);
+        arc(30000.186626543051, 69999.844057065886, 0.18120207731024246,
+            -1.6675096977127655, 0.74519387427812267, ccw);
+    for (std::size_t i = 0; i < in.spans.size(); ++i) {
+        REQUIRE(endPoint(in.spans[i]) == startPoint(in.spans[(i + 1) % in.spans.size()]));
+    }
+    const std::vector<Contour> chains =
+        offsetOpenContour(in, 0.031527132982214531, OffsetSide::Right, JoinType::Round, kTol, 2.0);
+    std::size_t arcLoops = 0;
+    for (const Contour& c : chains) {
+        const bool onlyArcs = std::all_of(c.spans.begin(), c.spans.end(),
+                                          [](const Span& sp) { return std::holds_alternative<ArcSpan>(sp); });
+        if (c.closed && c.spans.size() >= 2 && onlyArcs) {
+            ++arcLoops;
+        }
+        // Strictly: not even a rounding-level step back.
+        const std::size_t n = c.spans.size();
+        for (std::size_t i = 0; c.closed && i < n; ++i) {
+            const Span& a = c.spans[i];
+            const Span& b = c.spans[(i + 1) % n];
+            CAPTURE(i);
+            CHECK((startPoint(b) - endPoint(a)).dot(tangentAt(a, 1.0)) >= 0.0);
+        }
+    }
+    CHECK(arcLoops >= 1);
+    JunctionStats js;
+    checkJunctions(chains, js);
+    CHECK(js.backward == 0);
+}
+
+TEST_CASE("T-0017: turning an arc's start angle closes a junction level with or ahead of the previous end",
+          "[geometry][offset][open][t0017]") {
+    // detail::turnArcOntoJunction on its own (inside offsetOpenContour the retry from another arc
+    // can hide it). b's centre, radius and end point must not change; its start must land on a's
+    // end or level with/ahead of it along a's travel, within 1e-12 x the scale.
+    const Vec2 places[] = {{1e4, -8e3}, {-1e5, -4e4}, {3e4, 7e4}, {2e5, 1.3e5}};
+    SplitMix rng(0x7017B0A7u);
+    auto check = [&](bool offCircle) {
+        std::size_t turned = 0;
+        for (int t = 0; t < 400; ++t) {
+            const Vec2 at = places[t % 4];
+            const double r = rng.logUniform(0.3, 30.0);
+            const Vec2 centre = at + Vec2{rng.uniform(-5.0, 5.0), rng.uniform(-5.0, 5.0)};
+            const double phi = rng.uniform(-kPi, kPi);
+            const double coord = std::max(std::fabs(at.x), std::fabs(at.y)) + 10.0;
+            const double coordUlp = std::nextafter(coord, std::numeric_limits<double>::infinity()) - coord;
+            // On the circle to rounding, or off it by 40..200 coordinate ulps either way.
+            const double rhoSign = rng.uniform(0.0, 1.0) < 0.5 ? -1.0 : 1.0;
+            const double rhoUlps = rng.uniform(40.0, 200.0);
+            const double rho = offCircle ? rhoSign * rhoUlps * coordUlp : 0.0;
+            const Vec2 j = centre + Vec2::fromAngle(phi, r + rho);
+            const double sweep = (rng.uniform(0.0, 1.0) < 0.5 ? -1.0 : 1.0) * rng.uniform(0.2, 2.5);
+            const ArcDirection dir = sweep > 0.0 ? ArcDirection::CCW : ArcDirection::CW;
+            ArcSpan b{centre, r, phi + rng.uniform(-1e-9, 1e-9), phi + sweep, dir};
+            // a arrives at j at a corner: 0.25..1.3 rad off b's direction of travel.
+            const Vec2 tb = b.tangentAt(0.0);
+            const double corner = (rng.uniform(0.0, 1.0) < 0.5 ? -1.0 : 1.0) * rng.uniform(0.25, 1.3);
+            const Vec2 ta = Vec2::fromAngle(tb.angle() + corner);
+            const Span a = LineSpan{j - ta, j};
+            const ArcSpan before = b;
+            const Vec2 end = b.endPoint();
+            CAPTURE(t, offCircle);
+            REQUIRE(detail::turnArcOntoJunction(a, b));
+            CHECK(b.centre == before.centre);
+            CHECK(b.radius == before.radius);
+            CHECK(b.endPoint() == end);
+            const Vec2 start = b.startPoint();
+            CHECK((start - j).dot(tangentAt(a, 1.0)) >= 0.0);
+            CHECK(distance(start, j) <= 1e-12 * std::max({1.0, std::fabs(j.x), std::fabs(j.y), r}));
+            if (!(b == before)) {
+                ++turned;
+            }
+        }
+        CHECK(turned > 300);
+    };
+    SECTION("a's end on b's circle: steps of a fraction of a coordinate ulp along it") {
+        check(false);
+    }
+    SECTION("a's end off b's circle at a corner: the solved turn") {
+        check(true);
     }
 }
 

@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "clipper_interop.hpp"
+#include "offset_junction.hpp"
 
 namespace carvetto::geometry {
 
@@ -1257,8 +1258,8 @@ bool startsBehind(const Span& a, const Span& b) {
 // travel, within 1e-12 x max(1, |x|, |y|, r). Where a's end lies off b's circle by rho and the
 // arcs meet at a corner, the start must move round b by about rho (n . ta) / (t . ta) to stand
 // level with it; that turn is solved for, and the angles around it and around the direction
-// of a's end are searched. One ulp of the angle moves the start by only r x ulp(angle) (1e-15 mm
-// at r = 21), far below one ulp of the coordinates at 1e4 mm (1.8e-12), so the angles tried are
+// of a's end are searched. One ulp of the angle moves the start by only r x ulp(angle) (1e-15 to
+// 1e-14 mm at r = 21), far below one ulp of the coordinates at 1e4 mm (1.8e-12), so the angles tried are
 // spaced a quarter of a coordinate ulp apart along the circle, 64 either side. Returns false
 // (b unchanged) where no angle does.
 bool exactJunctionByAngle(const Span& a, ArcSpan& b) {
@@ -1295,8 +1296,9 @@ bool exactJunctionByAngle(const Span& a, ArcSpan& b) {
         for (int k = -64; k <= 64; ++k) {
             ArcSpan c = b;
             c.startAngle = centre + k * step;
-            // The end angle is startAngle + sweep, recomputed from the new start: its rounding
-            // can move the end point, which must stay where the previous junction put it.
+            // endPoint() is taken at startAngle + normalize(endAngle - startAngle), so a new
+            // start angle can round the end point differently (seen for 47k of 12.9M turns);
+            // it must stay where the previous junction put it.
             if (!(c.endPoint() == bEnd)) {
                 continue;
             }
@@ -1330,10 +1332,12 @@ bool exactJunctionByAngle(const Span& a, ArcSpan& b) {
 // centre and so reopens the first junction by a few ulps, in a direction that is rounding noise.
 // Where that leaves the second arc starting behind the first's end, the loop is closed instead
 // by turning the first arc's start angle, which keeps its end point (0xa5000ba6, a 4-arc loop
-// at 1e5 mm: 7.2e-12 mm behind). Where even that leaves a junction behind (the turn needed
-// would open the closing junction beyond 1e-12 of the scale, seen only for input with gaps),
-// the walk is tried from each other arc in turn and the first without a backward junction is
-// kept; if none is, the walk from the first arc stays.
+// at 1e5 mm: 7.2e-12 mm behind). A turn cannot help where the previous arc arrives almost
+// square to the first arc's circle and ends just off it: turning moves the start across its
+// travel, not along it (continuous input too: a 6-arc loop at (3e4, 7e4), 1.7e-11 mm behind).
+// Where a junction is still behind, the walk is tried from each other arc in turn and the first
+// result without a backward junction is kept; if none is (never seen), the walk from the first
+// arc stays, a few coordinate ulps behind at one junction.
 void exactJunctions(std::vector<Span>& spans, bool closed) {
     const std::size_t m = spans.size();
     if (m < 2) {
@@ -3027,5 +3031,13 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     }
     return result;
 }
+
+namespace detail {
+
+bool turnArcOntoJunction(const Span& a, ArcSpan& b) {
+    return exactJunctionByAngle(a, b);
+}
+
+}  // namespace detail
 
 }  // namespace carvetto::geometry
