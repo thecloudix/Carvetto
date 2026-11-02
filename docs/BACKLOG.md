@@ -381,7 +381,7 @@ Acceptance criteria:
   2. (b) docs corrected.
   3. (c)–(f): each ≤ 2.5× per doubling in Release CPU time up to 5,000 vectors (1,000 teeth for the comb), with absolute bounds recorded in the test; outputs byte-identical to the T-0123 merge (or a hand-checked, explained diff).
 
-### T-0132 Native toolpath records in .carv (ADR-0003 job.json)   [status: ready]
+### T-0132 Native toolpath records in .carv (ADR-0003 job.json)   [status: in-progress — round 1 FAIL (member-count boundary); owner 2026-11-02: move budget tied to file size (~1 move per file byte, cap 8M), exact allocation]
 Phase: 1   Module: core/document   Depends on: T-0122, T-0123   ADR: 0003, 0013, 0019
 Goal: Replace T-0122's interim `toolpaths/NNNN.json` members (ADR-0019) with real toolpath records as ADR-0003 planned: the document holds toolpath definitions (name, operation, parameters, vector selection, tool snapshot) in `job.json`, with computed moves in a compact binary `toolpaths/NNNN.bin` cache that has its own budget, so large jobs (≥ 2M moves) save and reload. Owner decision 2026-11-01: needed before the app saves toolpaths.
 Acceptance criteria:
@@ -389,7 +389,7 @@ Acceptance criteria:
   2. A 2,000,000-move toolpath saves and reloads within the loader's resource budget and time limits (bounded, fuzzed like the rest of .carv I/O).
   3. carvetto-cli uses the native records; the CLI golden stays byte-identical.
 
-### T-0133 Post safety: no G-code injection through text, finite numbers only   [status: in-progress — priority: machine safety]
+### T-0133 Post safety: no G-code injection through text, finite numbers only   [status: done (2026-11-02, #28; remaining documented gap: template text after a value)]
 Phase: 1   Module: core/post   Depends on: T-0030, T-0110
 Goal: Found by the T-0122 verifier (harness t0122v1/, pre-existing on main). The post's text tags (toolpath name, tool name, notes …) only apply SUBSTITUTE, so a newline or other control character in a name becomes live G-code: a toolpath named "Evil\nG0 Z-50" emits the line "G0 Z-50)". Reachable today through tool-database names, and through toolpath names / crafted .carv members once T-0122 merges. Separately, the post prints non-finite or absurd numbers ("Z-inf", "Xinf", 300-digit Z from cut_depth 1e300).
 Acceptance criteria:
@@ -399,8 +399,7 @@ Acceptance criteria:
   4. (Owner decision 2026-11-02, after verifier round 1) Every text value is written as printable ASCII in every post: bytes ≥ 0x80 and Grbl realtime characters `~ ! ?` become '_' (an obvious ASCII letter allowed for Latin letters), because Grbl acts on them anywhere in the stream, even inside comments.
   5. (Owner decision 2026-11-02) LinuxCNC/Mach active comments are neutralised in the sanitiser: a text value at the start of a comment that begins with a word followed by a comma (LOGOPEN, LOGAPPEND, PROBEOPEN, MSG, DEBUG, PRINT, ABORT, py, …; case-insensitive, spaces ignored) has the comma replaced, so it stays plain text. Shipped goldens unchanged.
 
-### T-0134 Post-safety and CLI residuals (T-0133 / T-0122 verifiers)   [status: blocked]
-(Unblocks when T-0133 merges.)
+### T-0134 Post-safety and CLI residuals (T-0133 / T-0122 verifiers)   [status: ready]
 Phase: 1   Module: core/post, app/cli   Depends on: T-0133, T-0122
 Goal: Non-blocking findings (harness t0133v3/, t0122v1/). Post (custom .pp only, no shipped post exposed): (a) form feed / vertical tab / CR in template text between "(" and a value end the word run (commentPositionAt treats only ' ' and '\t' as spaces), so `"(\f[TOOLPATH_NAME])"` with "MSG,hi" stays active on LinuxCNC (isspace skip) — driver ff.cpp; (b) the shipped-post gap test only catches a template comma, not template keyword completions like `([TOOLPATH_NAME]OPEN)` (mut.cpp); (c) ADR-0020 sentence "no shipped post has template text between ( and a value" should read "after a value"; (d) [TOOLS_USED] at comment start now prints "(EndMill_ Drill)". CLI: (e) duplicate keys in params.json silently accepted (last wins); (f) number overflow (1e400) error lacks the "params file:" prefix; (g) `toolpath` prints "added …" before a failing final write; (h) a crafted .carv can carry zero/negative tool diameter, feeds, dwell (decoder accepts).
 Acceptance criteria:
