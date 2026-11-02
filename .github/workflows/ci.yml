@@ -18,6 +18,27 @@ jobs:
         run: cmake --build build
       - name: Test
         run: ctest --test-dir build --output-on-failure
+      # T-0122 AC1: the real carvetto-cli, DXF -> pocket + profile with tabs -> Grbl, checksum vs golden.
+      - name: CLI end-to-end (DXF to Grbl G-code)
+        run: |
+          set -euo pipefail
+          cli=build/app/cli/carvetto-cli
+          d=app/cli/tests/data
+          w=build/cli-e2e
+          rm -rf "$w" && mkdir -p "$w"
+          "$cli" import "$d/part.dxf" "$w/part.carv"
+          "$cli" toolpath pocket "$d/pocket.json" "$w/part.carv" "$w/part.carv"
+          "$cli" toolpath profile "$d/profile.json" "$w/part.carv" "$w/part.carv"
+          "$cli" info "$w/part.carv"
+          "$cli" post posts/grbl_mm.pp "$w/part.carv" "$w/part.nc"
+          want=$(sha256sum core/tests/golden/cli/part_grbl.nc | cut -d' ' -f1)
+          got=$(sha256sum "$w/part.nc" | cut -d' ' -f1)
+          echo "golden sha256 $want, output sha256 $got"
+          if [ "$want" != "$got" ]; then
+            diff core/tests/golden/cli/part_grbl.nc "$w/part.nc" | head -40 || true
+            echo "::error title=CLI end-to-end::G-code checksum differs from core/tests/golden/cli/part_grbl.nc"
+            exit 1
+          fi
       # T-0014: timing-sensitive tests must hold under parallel load. Runs the suite with 8 jobs;
       # each test is repeated up to 3 times and the step fails as soon as any repetition fails.
       - name: Test (parallel stress, -j8)
@@ -90,6 +111,35 @@ jobs:
             Write-Host "::error title=Tests failed::$fails"
             exit 1
           }
+      # T-0122 AC1: the real carvetto-cli (MSVC build), DXF -> pocket + profile with tabs -> Grbl,
+      # checksum vs the same golden as Linux.
+      - name: CLI end-to-end (DXF to Grbl G-code)
+        shell: pwsh
+        run: |
+          $cli = "build/app/cli/carvetto-cli.exe"
+          $d = "app/cli/tests/data"
+          $w = "build/cli-e2e"
+          if (Test-Path $w) { Remove-Item -Recurse -Force $w }
+          New-Item -ItemType Directory -Path $w | Out-Null
+          $steps = @(
+            @("import", "$d/part.dxf", "$w/part.carv"),
+            @("toolpath", "pocket", "$d/pocket.json", "$w/part.carv", "$w/part.carv"),
+            @("toolpath", "profile", "$d/profile.json", "$w/part.carv", "$w/part.carv"),
+            @("info", "$w/part.carv"),
+            @("post", "posts/grbl_mm.pp", "$w/part.carv", "$w/part.nc")
+          )
+          foreach ($a in $steps) {
+            & $cli @a
+            if ($LASTEXITCODE -ne 0) { Write-Host "::error title=CLI end-to-end::carvetto-cli $($a -join ' ') failed (exit $LASTEXITCODE)"; exit 1 }
+          }
+          $want = (Get-FileHash -Algorithm SHA256 core/tests/golden/cli/part_grbl.nc).Hash
+          $got = (Get-FileHash -Algorithm SHA256 "$w/part.nc").Hash
+          Write-Host "golden sha256 $want, output sha256 $got"
+          if ($want -ne $got) {
+            $diff = Compare-Object (Get-Content core/tests/golden/cli/part_grbl.nc) (Get-Content "$w/part.nc") | Select-Object -First 20 | ForEach-Object { "$($_.SideIndicator) $($_.InputObject)" }
+            Write-Host "::error title=CLI end-to-end::G-code checksum differs from the golden%0A$($diff -join '%0A')"
+            exit 1
+          }
       - name: App self-test (headless)
         shell: pwsh
         env:
@@ -106,5 +156,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: carvetto-windows
-          path: build/app/carvetto.exe
+          path: |
+            build/app/carvetto.exe
+            build/app/cli/carvetto-cli.exe
           if-no-files-found: warn

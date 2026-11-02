@@ -8,11 +8,14 @@ What it rewrites, from the current sources:
   - core/tests/golden/toolpath/profile_rect_tabs.moves and profile_rect_tabs_grbl.nc (T-0120; hand-check
     against the notes in docs/adr/0016-profile-toolpath.md);
   - core/tests/golden/toolpath/pocket_rect_grbl.nc (T-0121 pocket through the Grbl post);
+  - core/tests/golden/cli/part_grbl.nc (T-0122 carvetto-cli end to end: app/cli/tests/data/part.dxf
+    -> pocket.json -> profile.json with tabs -> posts/grbl_mm.pp; the ctest cli.end_to_end_grbl and
+    CI compare the real executable's output with it by SHA-256);
   - data/tools/starter_tools.json, re-exported in the exporter's canonical form (sorted keys,
     id order, rounded numbers), so hand edits to the database become byte-stable.
 
 It does this by running the hidden Catch2 test cases tagged [.regen] in the already-built test
-binary. These tests are never run by ctest. Build first, for example:
+binaries (carvetto_tests, and carvetto_cli_tests when the CLI is built). These tests are never run by ctest. Build first, for example:
 
     cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCARVETTO_BUILD_APP=OFF
     cmake --build build
@@ -31,19 +34,17 @@ import subprocess
 import sys
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
-OUTPUTS = ["core/tests/golden/post", "core/tests/golden/toolpath", "data/tools/starter_tools.json"]
+OUTPUTS = ["core/tests/golden/post", "core/tests/golden/toolpath", "core/tests/golden/cli",
+           "data/tools/starter_tools.json"]
 
 
-def find_test_binary(build_dir: pathlib.Path) -> pathlib.Path:
-    candidates = [
-        build_dir / "core" / "tests" / "carvetto_tests",
-        build_dir / "core" / "tests" / "carvetto_tests.exe",
-    ]
-    candidates += sorted(build_dir.glob("core/tests/*/carvetto_tests.exe"))  # multi-config builds
+def find_binary(build_dir: pathlib.Path, subdir: str, name: str):
+    candidates = [build_dir / subdir / name, build_dir / subdir / f"{name}.exe"]
+    candidates += sorted(build_dir.glob(f"{subdir}/*/{name}.exe"))  # multi-config builds
     for c in candidates:
         if c.is_file():
             return c
-    sys.exit(f"carvetto_tests not found under {build_dir}; build the project first")
+    return None
 
 
 def main() -> int:
@@ -51,11 +52,19 @@ def main() -> int:
     parser.add_argument("--build-dir", default=str(REPO / "build"), help="CMake build directory")
     args = parser.parse_args()
 
-    binary = find_test_binary(pathlib.Path(args.build_dir).resolve())
-    result = subprocess.run([str(binary), "[.regen]"], cwd=REPO)
-    if result.returncode != 0:
-        print("regeneration failed; nothing should be committed", file=sys.stderr)
-        return result.returncode
+    build_dir = pathlib.Path(args.build_dir).resolve()
+    core_tests = find_binary(build_dir, "core/tests", "carvetto_tests")
+    if core_tests is None:
+        sys.exit(f"carvetto_tests not found under {build_dir}; build the project first")
+    cli_tests = find_binary(build_dir, "app/cli/tests", "carvetto_cli_tests")
+    if cli_tests is None:
+        print("warning: carvetto_cli_tests not found (CARVETTO_BUILD_CLI=OFF?); "
+              "the CLI golden is not regenerated", file=sys.stderr)
+    for binary in [b for b in (core_tests, cli_tests) if b is not None]:
+        result = subprocess.run([str(binary), "[.regen]"], cwd=REPO)
+        if result.returncode != 0:
+            print("regeneration failed; nothing should be committed", file=sys.stderr)
+            return result.returncode
 
     diff = subprocess.run(["git", "status", "--short", "--", *OUTPUTS], cwd=REPO,
                           capture_output=True, text=True)

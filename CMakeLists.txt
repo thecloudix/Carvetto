@@ -8,6 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(CARVETTO_BUILD_APP   "Build the Qt desktop application" ON)
 option(CARVETTO_BUILD_TESTS "Build unit tests" ON)
+option(CARVETTO_BUILD_CLI   "Build the Qt-free command-line tool carvetto-cli" ON)
 option(CARVETTO_BUILD_VIEWMODEL "Build the Qt-free app view-model library (always on when the app is built)" ON)
 
 # Warnings as errors everywhere.
@@ -33,6 +34,11 @@ endif()
 # Qt-free view logic for the app (ADR-0014): built and tested even where Qt is unavailable.
 if(CARVETTO_BUILD_VIEWMODEL OR CARVETTO_BUILD_APP)
   add_subdirectory(app/viewmodel)
+endif()
+
+# Headless console front end (T-0122): Qt-free, built in the headless configuration too.
+if(CARVETTO_BUILD_CLI)
+  add_subdirectory(app/cli)
 endif()
 
 if(CARVETTO_BUILD_APP)

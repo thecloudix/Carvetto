@@ -1,0 +1,16 @@
+{
+  "name": "Pockets",
+  "layers": ["Pockets"],
+  "start_depth": 0,
+  "cut_depth": 4,
+  "safe_z": 5,
+  "strategy": "offset",
+  "direction": "climb",
+  "profile_pass": "last",
+  "tool": {
+    "database": "tools.json",
+    "id": "end-mill-6mm",
+    "machine": "machine-generic-router",
+    "material": "material-hardwood-mdf"
+  }
+}

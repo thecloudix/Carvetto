@@ -5,6 +5,7 @@
 #include <memory>
 #include <span>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -86,6 +87,14 @@ class CarvExtras {
     bool empty() const;
     /// Names of preserved archive members, sorted.
     std::vector<std::string> memberNames() const;
+    /// Bytes of the preserved archive member `name`; null when there is none.
+    const std::vector<std::uint8_t>* member(std::string_view name) const;
+    /// A copy holding everything this one holds, with member `name` set to `bytes` (added, or
+    /// replacing a member of that name). `saveCarv` writes it as given, so a `.json` member must
+    /// hold well-formed JSON or the file will not load again. Throws `std::invalid_argument` for
+    /// a name `saveCarv` should not write: empty, `manifest.json` or `job.json`, absolute, with a
+    /// backslash or colon, a `.`/`..` segment or an empty segment, or longer than 255 bytes.
+    CarvExtras withMember(std::string name, std::vector<std::uint8_t> bytes) const;
     /// Implementation access; null when empty.
     const Impl* impl() const { return impl_.get(); }
 
