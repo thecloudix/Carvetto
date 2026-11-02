@@ -153,33 +153,42 @@ class Fields {
     std::set<std::string> known_;
 };
 
+/// Deepest nesting of objects and arrays a params file may use. The schema needs three levels
+/// (root, "tool"/"tabs"/..., "layers"); the cap keeps parsing cheap for crafted files.
+constexpr std::size_t kMaxParamsDepth = 32;
+
 /// Parses a params file. Duplicate keys (which JSON parsers silently resolve to the last one)
-/// are refused, naming the key with its path, and every JSON error, number overflow such as
-/// `1e400` included, is reported as invalid JSON.
+/// are refused, naming the key with its path; nesting deeper than kMaxParamsDepth is refused;
+/// every JSON error, number overflow such as `1e400` included, is reported as invalid JSON.
 json parseJson(std::string_view text) {
-    // One frame per open object or array: its dotted path and, for an object, the keys seen.
+    // One frame per open object or array: the key it sits under in its parent (empty inside an
+    // array) and, for an object, the keys seen so far. The dotted path is built only for an
+    // error message, so memory stays linear in the file size.
     struct Frame {
-        std::string path;
+        std::string key;
         bool isObject{false};
         std::set<std::string> keys;
     };
     std::vector<Frame> frames;
     std::string lastKey;
-    const auto childPath = [&]() -> std::string {
-        if (frames.empty()) {
-            return {};
+    const auto pathTo = [&](const std::string& leaf) {
+        std::string path;
+        for (std::size_t i = 1; i < frames.size(); ++i) {  // frames[0] is the root object
+            path += frames[i - 1].isObject ? (path.empty() ? "" : ".") + frames[i].key : "[]";
         }
-        const Frame& parent = frames.back();
-        if (!parent.isObject) {
-            return parent.path + "[]";
-        }
-        return parent.path.empty() ? lastKey : parent.path + "." + lastKey;
+        return path.empty() ? leaf : path + "." + leaf;
     };
     const json::parser_callback_t onEvent = [&](int /*depth*/, json::parse_event_t event, json& parsed) {
         switch (event) {
             case json::parse_event_t::object_start:
             case json::parse_event_t::array_start:
-                frames.push_back({childPath(), event == json::parse_event_t::object_start, {}});
+                if (frames.size() >= kMaxParamsDepth) {
+                    throw CliError("params: objects and arrays are nested more than " +
+                                   std::to_string(kMaxParamsDepth) + " levels deep");
+                }
+                frames.push_back({!frames.empty() && frames.back().isObject ? lastKey : std::string(),
+                                  event == json::parse_event_t::object_start,
+                                  {}});
                 break;
             case json::parse_event_t::object_end:
             case json::parse_event_t::array_end:
@@ -190,7 +199,7 @@ json parseJson(std::string_view text) {
             case json::parse_event_t::key:
                 lastKey = parsed.get<std::string>();
                 if (!frames.empty() && !frames.back().keys.insert(lastKey).second) {
-                    throw CliError("params: duplicate key '" + childPath() + "'");
+                    throw CliError("params: duplicate key '" + pathTo(lastKey) + "'");
                 }
                 break;
             case json::parse_event_t::value:

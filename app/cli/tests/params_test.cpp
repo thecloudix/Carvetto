@@ -5,6 +5,7 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
+#include <cstddef>
 #include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
@@ -182,6 +183,39 @@ TEST_CASE("T-0134: duplicate keys and number overflow are refused", "[cli][param
         const std::string e = errorOf(std::string(R"({"tool": {"id": "t"}, "safe_z": )") + big + "}");
         CHECK_THAT(e, StartsWith("params: not valid JSON: "));
         CHECK_THAT(e, ContainsSubstring("overflow"));
+    }
+}
+
+TEST_CASE("T-0134: duplicate keys inside arrays are named with their path", "[cli][params][errors]") {
+    CHECK(errorOf(R"({"tool": {"id": "t"}, "layers": [{"a": 1, "a": 2}]})") ==
+          "params: duplicate key 'layers[].a'");
+    CHECK(errorOf(R"({"tool": {"id": "t"}, "x": {"y": [[{"z": {"k": 1, "k": 2}}]]}})") ==
+          "params: duplicate key 'x.y[][].z.k'");
+}
+
+TEST_CASE("T-0134: deep nesting is refused early with a clear error", "[cli][params][errors][limits]") {
+    const auto nested = [](char open, char close, std::size_t n) {
+        std::string s = R"({"tool": {"id": "t"}, "zz": )";
+        for (std::size_t i = 0; i < n; ++i) {
+            s += open;
+            if (open == '{') {
+                s += R"("k": )";
+            }
+        }
+        s += "1";
+        s.append(n, close);
+        return s + "}";
+    };
+    const std::string tooDeep = "params: objects and arrays are nested more than 32 levels deep";
+    // 31 levels under the root object are allowed (the schema then rejects the unknown key)...
+    CHECK_THAT(errorOf(nested('[', ']', 31)), ContainsSubstring("unknown key 'zz'"));
+    CHECK_THAT(errorOf(nested('{', '}', 31)), ContainsSubstring("unknown key 'zz'"));
+    // ...one more is refused, and so is a crafted file of a million levels (about 2 MB), without
+    // building anything for the levels past the cap (the T-0134 verifier saw gigabytes otherwise).
+    for (std::size_t n : {std::size_t{32}, std::size_t{60'000}, std::size_t{1'000'000}}) {
+        INFO(n);
+        CHECK(errorOf(nested('[', ']', n)) == tooDeep);
+        CHECK(errorOf(nested('{', '}', n)) == tooDeep);
     }
 }
 

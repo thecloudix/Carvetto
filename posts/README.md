@@ -82,7 +82,10 @@ one, the test fails.
     any value that would be written beyond 1e9 after unit conversion and the VAR multiplier
     (inverse time may reach 1e9); the arc tolerance must be 1e-6 to 1 mm and a linearised arc has
     at most 100,000 chords; a wrapped job's rotary diameter must be finite and at most 1e6 mm;
-    the post run fails with an error naming the toolpath, move and value (ADR-0020).
+    the post run fails with an error naming the toolpath, move and value (ADR-0020). A tool's
+    spindle speed must be above zero wherever `[S]` is written or `SPINDLE_ON` runs (for a
+    manual spindle, set any positive nominal speed), and a feed, spindle speed or dwell above
+    zero that the post would print as zero (`F0`, `P0.00`) is refused.
 
 Hand-review result: all eight goldens pass points 1–8; points 9 and 10 are enforced by the
 interpreter and tested on every post.

@@ -355,6 +355,37 @@ class Interpreter {
         return false;
     }
 
+    /// Refuses a spindle speed that is not a finite number above zero while a toolpath is being
+    /// written: checked wherever [S] is written and before SPINDLE_ON (owner decision
+    /// 2026-11-02, ADR-0020). A manual spindle takes any positive nominal speed.
+    bool acceptSpindleSpeed() {
+        if (toolpath_ == nullptr || (std::isfinite(tool_.spindleSpeed) && tool_.spindleSpeed > 0.0)) {
+            return true;
+        }
+        fail(0, "tool " + quoted(tool_.name) + " has spindle speed " + describeValue(tool_.spindleSpeed) +
+                    " rpm; it must be greater than zero (for a manual spindle, set any positive nominal speed)");
+        return false;
+    }
+
+    /// Refuses a feed, spindle speed or dwell above zero that the post's number format would
+    /// write as zero (F0, P0.00 …): a zero feed or dwell is never what the toolpath asked for.
+    bool acceptNonZero(const TagInfo& info, const VarDef& def, double raw, const std::string& body) {
+        const bool rate =
+            info.kind == TagKind::FeedRate || info.tag == "FI" || info.tag == "S" || info.tag == "DWELL";
+        if (!rate || !(raw > 0.0) || body.find_first_of("123456789") != std::string::npos) {
+            return true;
+        }
+        const std::optional<ValueLimit> limit = limitFor(info);
+        const bool inverse = info.tag == "FI" || (info.tag == "F" && s_.inverseTimeMode && frame_.cutting);
+        const std::string unit = inverse ? "1/min" : limit ? limit->unit : "";
+        const std::string written = std::string(detail::trim(def.prefix)) + body;
+        fail(def.multiplier != 1.0 ? def.line : 0,
+             "[" + std::string(info.tag) + "] " + describeValue(raw) + " " + unit + " would be written as " +
+                 written + "; it is above zero but too small for the post's " +
+                 std::to_string(def.format.decimals) + "-decimal format");
+        return false;
+    }
+
     void fail(int line, const std::string& message) {
         if (!failure_) {
             failure_ = Error{line, "cannot write G-code " + where() + ": " + message};
@@ -579,6 +610,15 @@ class Interpreter {
         if (b == nullptr || failure_) {
             return;
         }
+        if (blockName == "SPINDLE_ON") {
+            const std::string_view outer = block_;
+            block_ = b->name;
+            const bool ok = acceptSpindleSpeed();
+            block_ = outer;
+            if (!ok) {
+                return;
+            }
+        }
         const std::string_view outerBlock = block_;
         block_ = b->name;
         for (const std::string& line : b->lines) {
@@ -763,6 +803,9 @@ class Interpreter {
             return def.prefix + formatNumber(def.format, delta);
         } else {
             const double raw = number(tag);
+            if (tag == "S" && !acceptSpindleSpeed()) {
+                return {};
+            }
             if (!acceptValue(*info, raw)) {
                 return {};
             }
@@ -771,6 +814,9 @@ class Interpreter {
                 return {};
             }
             body = formatNumber(def.format, written);
+            if (!acceptNonZero(*info, def, raw, body)) {
+                return {};
+            }
         }
 
         if (tag == "N") {

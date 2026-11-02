@@ -358,7 +358,12 @@ TEST_CASE("AC2: every shipped post refuses non-finite and out-of-range numbers",
             CHECK_THAT(msg, ContainsSubstring("cannot write G-code"));
             const bool finiteProblem = msg.find("is not a finite number") != std::string::npos;
             const bool rangeProblem = msg.find("is outside the supported range") != std::string::npos;
-            CHECK((finiteProblem || rangeProblem));
+            // T-0134 AC3: a spindle speed that is not above zero (NaN included) gets the spindle
+            // message, naming the tool.
+            const bool spindleProblem = std::string(bad.what) == "spindle" &&
+                                        msg.find("has spindle speed") != std::string::npos &&
+                                        msg.find("must be greater than zero") != std::string::npos;
+            CHECK((finiteProblem || rangeProblem || spindleProblem));
             // The message stays short: no 300-digit number.
             CHECK(msg.size() < 300);
         }
@@ -1003,4 +1008,125 @@ end
     CHECK(run("EndMill", "Drill") == "(EndMill; Drill)\n; EndMill; Drill\n(Tools: EndMill; Drill)\n");
     // The first name's own commas still continue its word run; the "; " ends it.
     CHECK(run("MSG,a", "b,c") == "(MSG_a; b,c)\n; MSG_a; b,c\n(Tools: MSG,a; b,c)\n");
+}
+
+// ---- T-0134 AC3 (owner decision 2026-11-02): spindle speed above zero, no rate printed as zero
+
+namespace {
+
+/// The run's error message ("" when it succeeds).
+std::string runError(const PostProcessor& pp, const std::vector<Toolpath>& tps, const PostContext& ctx) {
+    const auto r = pp.run(tps, ctx);
+    return r.ok() ? std::string() : r.error().describe();
+}
+
+/// One unit of the last printed digit of `tag` in `pp`, in internal units (mm/min, rpm, s).
+double printStep(const PostProcessor& pp, const char* tag, bool lengthUnits) {
+    const VarDef* def = pp.var(tag);
+    REQUIRE(def != nullptr);
+    double step = std::pow(10.0, -def->format.decimals) / def->multiplier;
+    if (lengthUnits && pp.settings().units == Units::Inches) {
+        step *= 25.4;
+    }
+    return step;
+}
+
+}  // namespace
+
+TEST_CASE("T-0134 AC3: every shipped post refuses a spindle speed that is not above zero",
+          "[post][safety][number]") {
+    for (const Shipped& p : shipped()) {
+        INFO(p.stem);
+        const PostProcessor pp = loadShipped(p);
+        const PostContext ctx = carvetto::test::fixtureContext();
+        for (double bad : {0.0, -0.0, -5.0, std::numeric_limits<double>::quiet_NaN(), 0.4}) {
+            INFO(bad);
+            // The first tool (spindle started in the header) and the tool after a change (SPINDLE_ON).
+            for (std::size_t which : {std::size_t{0}, std::size_t{2}}) {
+                std::vector<Toolpath> tps = carvetto::test::fixtureToolpaths();
+                tps[which].tool.spindleSpeed = bad;
+                const std::string msg = runError(pp, tps, ctx);
+                INFO(msg);
+                CHECK_THAT(msg, ContainsSubstring("cannot write G-code"));
+                CHECK_THAT(msg, ContainsSubstring("of toolpath '" + tps[which].name + "'"));
+                if (bad == 0.4) {
+                    // Positive but printed as S0.
+                    CHECK_THAT(msg, ContainsSubstring("[S] 0.4 rpm would be written as S0"));
+                } else {
+                    CHECK_THAT(msg, ContainsSubstring("tool '" + tps[which].tool.name + "' has spindle speed"));
+                    CHECK_THAT(msg, ContainsSubstring("must be greater than zero"));
+                }
+            }
+        }
+        // Just above the print threshold: S1.
+        std::vector<Toolpath> tps = carvetto::test::fixtureToolpaths();
+        tps[0].tool.spindleSpeed = 0.6;
+        tps[2].tool.spindleSpeed = 0.6;
+        CHECK(runError(pp, tps, ctx).empty());
+    }
+}
+
+TEST_CASE("T-0134 AC3: the spindle check covers SPINDLE_ON without [S] and skips posts that never start it",
+          "[post][safety][number]") {
+    const std::string moves = "begin RAPID_MOVE\n\"G0[X]\"\nend\nbegin FEED_MOVE\n\"G1[X]\"\nend\n";
+    Toolpath a = simple({Move::rapid({1, 0, 5})});
+    a.tool.spindleSpeed = 1000.0;
+    Toolpath b = a;
+    b.name = "Second";
+    b.tool.toolNumber = 2;
+    b.tool.name = "Manual";
+    b.tool.spindleSpeed = 0.0;
+
+    const PostProcessor m3 = parseText("begin TOOLCHANGE\n\"M0\"\nend\nbegin SPINDLE_ON\n\"M3\"\nend\n" + moves);
+    const std::string msg = runError(m3, {a, b}, {});
+    CHECK_THAT(msg, ContainsSubstring("in SPINDLE_ON of toolpath 'Second': tool 'Manual' has spindle speed 0 rpm"));
+
+    // A manual-spindle post that never writes [S] nor SPINDLE_ON writes any speed.
+    const PostProcessor manual = parseText("begin TOOLCHANGE\n\"M0\"\nend\n" + moves);
+    CHECK(runError(manual, {a, b}, {}).empty());
+
+    // A job without toolpaths has no spindle to check.
+    const PostProcessor header = parseText("begin HEADER\n\"M3 S[S]\"\nend\n" + moves);
+    CHECK(runError(header, {}, {}).empty());
+}
+
+TEST_CASE("T-0134 AC3: every shipped post refuses a feed or dwell above zero that would print as zero",
+          "[post][safety][number]") {
+    for (const Shipped& p : shipped()) {
+        INFO(p.stem);
+        const PostProcessor pp = loadShipped(p);
+        const PostContext ctx = carvetto::test::fixtureContext();
+        const double feedStep = printStep(pp, "F", true);
+        const double dwellStep = printStep(pp, "DWELL", false);
+        struct Case {
+            const char* what;
+            const char* tag;
+            double step;
+            std::function<void(std::vector<Toolpath>&, double)> apply;
+        };
+        const std::vector<Case> cases{
+            {"feed rate", "[F]", feedStep, [](std::vector<Toolpath>& t, double v) { t[0].tool.feedRate = v; }},
+            {"plunge rate", "[F]", feedStep, [](std::vector<Toolpath>& t, double v) { t[0].tool.plungeRate = v; }},
+            {"feed override", "[F]", feedStep,
+             [](std::vector<Toolpath>& t, double v) { t[0].moves[2].feedOverride = v; }},
+            {"dwell", "[DWELL]", dwellStep, [](std::vector<Toolpath>& t, double v) { t[2].moves[6].dwellSeconds = v; }},
+        };
+        for (const Case& c : cases) {
+            INFO(c.what);
+            for (double tiny : {0.4 * c.step, 1e-6 * c.step, std::numeric_limits<double>::denorm_min()}) {
+                INFO(tiny);
+                std::vector<Toolpath> tps = carvetto::test::fixtureToolpaths();
+                c.apply(tps, tiny);
+                const std::string msg = runError(pp, tps, ctx);
+                INFO(msg);
+                CHECK_THAT(msg, ContainsSubstring(std::string(c.tag) + " "));
+                CHECK_THAT(msg, ContainsSubstring("would be written as "));
+                CHECK_THAT(msg, ContainsSubstring("above zero but too small"));
+            }
+            // Just above the threshold, the value prints as the smallest non-zero number.
+            std::vector<Toolpath> tps = carvetto::test::fixtureToolpaths();
+            c.apply(tps, 0.6 * c.step);
+            CHECK(runError(pp, tps, ctx).empty());
+        }
+    }
 }

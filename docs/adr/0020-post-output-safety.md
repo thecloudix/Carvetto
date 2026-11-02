@@ -104,6 +104,22 @@ through, so no post, block or tag can bypass them.
      finite, positive and ≤ 1e6 mm (an infinite diameter made every `[A]` 0). The job home must be
      finite and within ±1e6 mm.
    - A VAR multiplier that is not finite (`inf`, `nan`, `1e400`) is a parse error.
+   - **Spindle speed above zero** (owner decision 2026-11-02, T-0134). While a toolpath is
+     written, its tool's spindle speed must be a finite number greater than zero wherever `[S]`
+     is written and before every `SPINDLE_ON` block (whether or not that block writes `[S]`).
+     Otherwise the run fails naming the toolpath and the tool:
+     `cannot write G-code in SPINDLE_ON of toolpath 'Drill': tool 'Drill (3 mm)' has spindle
+     speed 0 rpm; it must be greater than zero (for a manual spindle, set any positive nominal
+     speed)`. Manual-spindle users set any positive nominal speed; a post for a manual spindle
+     can simply not write `[S]` (and have no `SPINDLE_ON`). A job with no toolpaths has no
+     spindle speed to check.
+   - **No rate printed as zero** (owner decision 2026-11-02, T-0134). A feed (`[F]`, `[FC]`,
+     `[FP]`, `[FI]`, feed overrides), spindle speed or dwell that is above zero but that the
+     post's number format rounds to zero (`0.001` mm/min as `F0`, a 0.004 s dwell as `P0.00`, a
+     denormal) fails the run instead of writing the zero, e.g. `[F] 0.001 mm/min would be
+     written as F0; it is above zero but too small for the post's 0-decimal format`. The check
+     looks at the written digits, so it follows the post's decimals, units and multiplier.
+     Values of zero or below are not covered by this rule (signs are otherwise not checked).
    - A failure aborts the run with an `Error` and no output, e.g.
      `cannot write G-code: toolpath 'Profile', move 2: Z -inf is not a finite number` or
      `cannot write G-code in SPINDLE_ON of toolpath 'Drill': [S] 1e+300 rpm is outside the
@@ -118,7 +134,8 @@ through, so no post, block or tag can bypass them.
   comments, where they used to get broken output.
 - Names with accents or symbols lose them in the G-code comments (`Ñ` → `N`, `×` → `_`); the
   job file keeps them.
-- Signs are not checked (a negative feed or spindle speed within range is still written), and
+- Signs are not checked (a negative feed within range is still written; spindle speed must be
+  above zero since T-0134), and
   overly long names are not shortened; a controller with a line-length limit rejects such a line,
   which stops the program safely.
 - ADR-0011 §10 (`SUBSTITUTE` applies to text tags only) still holds; this sanitising runs after it.

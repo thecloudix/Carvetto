@@ -203,6 +203,8 @@ TEST_CASE("AC2: failing commands exit with 1 and a clear message", "[cli][errors
     writeFile(dir + "/bad.pp", "begin HEADER\n\"[NO_SUCH_TAG]\"\nend\n");
     writeFile(dir + "/dup.json", R"({"tool": {"id": "end-mill-6mm"}, "safe_z": 5, "safe_z": 50})");
     writeFile(dir + "/overflow.json", R"({"tool": {"id": "end-mill-6mm"}, "safe_z": 1e400})");
+    writeFile(dir + "/deep.json", R"({"tool": {"id": "end-mill-6mm"}, "zz": )" + std::string(1'000'000, '[') +
+                                      std::string(1'000'000, ']') + "}");
 
     struct Case {
         std::vector<std::string> args;
@@ -218,6 +220,7 @@ TEST_CASE("AC2: failing commands exit with 1 and a clear message", "[cli][errors
         {{"toolpath", "profile", dir + "/typo.json", carv, carv}, "unknown key 'tabs.lenght'"},
         {{"toolpath", "profile", dir + "/dup.json", carv, carv}, "dup.json: params: duplicate key 'safe_z'"},
         {{"toolpath", "profile", dir + "/overflow.json", carv, carv}, "overflow.json: params: not valid JSON"},
+        {{"toolpath", "profile", dir + "/deep.json", carv, carv}, "deep.json: params: objects and arrays are nested"},
         {{"toolpath", "profile", dir + "/notool.json", carv, carv},
          "the built-in starter tool database has no tool with id 'no-such-tool'"},
         {{"toolpath", "profile", dir + "/nolayer.json", carv, carv}, "has no layer named 'Nope'"},
