@@ -174,7 +174,10 @@ std::string encodeMoves(const std::vector<Move>& moves, std::vector<std::uint8_t
     return {};
 }
 
-std::string decodeMoves(CharSource& source, std::uint64_t expectedCount, std::vector<Move>& out) {
+namespace {
+
+/// Decodes into `out`, or only validates when `out` is null.
+std::string decodeImpl(CharSource& source, std::uint64_t expectedCount, std::vector<Move>* out) {
     Reader r(source);
     std::array<std::uint8_t, 4> magic{};
     std::array<std::uint8_t, 4> version{};
@@ -196,7 +199,9 @@ std::string decodeMoves(CharSource& source, std::uint64_t expectedCount, std::ve
     }
     // Exactly what is declared: the count was charged to the move budget (at most one move per
     // byte of the file), so no doubling past it.
-    out.reserve(out.size() + static_cast<std::size_t>(count));
+    if (out) {
+        out->reserve(out->size() + static_cast<std::size_t>(count));
+    }
     double px = 0.0;
     double py = 0.0;
     double pz = 0.0;
@@ -264,12 +269,24 @@ std::string decodeMoves(CharSource& source, std::uint64_t expectedCount, std::ve
         px = m.to.x;
         py = m.to.y;
         pz = m.to.z;
-        out.push_back(m);
+        if (out) {
+            out->push_back(m);
+        }
     }
     if (!r.atEnd()) {
         return "data follows the last move";
     }
     return {};
+}
+
+}  // namespace
+
+std::string decodeMoves(CharSource& source, std::uint64_t expectedCount, std::vector<Move>& out) {
+    return decodeImpl(source, expectedCount, &out);
+}
+
+std::string validateMoves(CharSource& source, std::uint64_t expectedCount) {
+    return decodeImpl(source, expectedCount, nullptr);
 }
 
 }  // namespace carvetto::document::detail

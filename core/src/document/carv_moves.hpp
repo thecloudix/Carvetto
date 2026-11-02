@@ -46,4 +46,9 @@ std::string encodeMoves(const std::vector<toolpath::Move>& moves, std::vector<st
 /// budget). Returns an empty string on success, otherwise the defect.
 std::string decodeMoves(CharSource& source, std::uint64_t expectedCount, std::vector<toolpath::Move>& out);
 
+/// Checks a whole cache exactly as `decodeMoves` does (same defects, same messages) without
+/// keeping the moves: memory use does not depend on the count. `saveCarv` verifies its output
+/// with it (T-0136, ADR-0021 §3).
+std::string validateMoves(CharSource& source, std::uint64_t expectedCount);
+
 }  // namespace carvetto::document::detail
