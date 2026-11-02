@@ -26,7 +26,12 @@ enum class OffsetSide { Left, Right };
 /// the outermost input contour defines "outwards", so a lone clockwise square still grows with a
 /// positive distance, and the result keeps that convention (outers in the outermost input's
 /// orientation, holes opposite). Overlapping results are merged and shapes that collapse vanish,
-/// so the result may hold fewer or more contours than the input.
+/// so the result may hold fewer or more contours than the input. An inward offset never comes
+/// back inside out: every result point lies inside the region at least |distance| (less
+/// 2 x tol.chordal of polygonisation and join error) from its boundary, so an inset by the
+/// region's inradius or more yields nothing, and a shape with several lobes keeps exactly the
+/// lobes deeper than |distance|; a result contour wound against the outermost input is a genuine
+/// hole (T-0018, ADR-0006 §6).
 ///
 /// Approach: polygonise at `tol.chordal`, scale by `kFixedPointScale`, run Clipper2's offset
 /// engine (round joins are approximated within `tol.chordal`), convert back to polygonal
