@@ -223,3 +223,35 @@ TEST_CASE("orderCuts: containment first, then strategy", "[toolpath][order]") {
     CHECK(orderCuts(items, ltr, {0, 0}, geometry::Tolerance::defaults()) == std::vector<std::size_t>{1, 0, 2});
     CHECK(travelLength(items, {1, 0, 2}, {0, 0}) == Approx(std::hypot(10, 10) * 2 + 60));
 }
+
+TEST_CASE("Tabs moved off a keep-clear point are kept, never dropped by rounding", "[toolpath][tabs]") {
+    // T-0135 (g): fitTabs moves a centre within `reach` of a keep-clear point to exactly `reach`
+    // from it and then re-checks |c - f| < reach, which (f + reach) - f decided by rounding: about
+    // half of these tabs were dropped. Now the moved tab is always kept, on either side.
+    Contour line;
+    line.append(LineSpan{{0, 0}, {100, 0}});
+    const ArcLengthPath lp(line, geometry::Tolerance::defaults());
+    const double footprint = 2.0;
+    const double reach = 0.5 * footprint + kMinTabGap;
+    std::size_t kept = 0;
+    std::size_t exact = 0;
+    const int n = 2000;
+    for (int k = 0; k < n; ++k) {
+        const double f = 10.0 + k * 0.0371234;
+        for (const double offset : {0.3, -0.3}) {
+            const TabPlacement tp = fitTabs(lp, {f + offset}, footprint, {f});
+            REQUIRE(tp.centres.size() + tp.dropped == 1);
+            if (tp.centres.size() == 1) {
+                ++kept;
+                CHECK(std::fabs(std::fabs(tp.centres.front() - f) - reach) < 1e-9);
+                if (std::fabs(tp.centres.front() - f) < reach) ++exact;
+            }
+        }
+    }
+    CHECK(kept == 2 * static_cast<std::size_t>(n));
+    CHECK(exact > 0);  // some moved centres really do come out a few ulps short
+    // A centre clearly inside the gap with no room to move (both sides blocked) is still dropped.
+    const TabPlacement blocked = fitTabs(lp, {50.0}, footprint, {49.5, 51.0});
+    CHECK(blocked.centres.empty());
+    CHECK(blocked.dropped == 1);
+}

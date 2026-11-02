@@ -114,7 +114,9 @@ choices. Behaviour descriptions come from `docs/reference/` only.
       start); on an open cut a tab past an end is dropped;
     - moves footprints off `keepClear` points (to the nearer side), dropping them when there is
       no room. With a separate last pass these are the other pass's cut starts projected onto
-      the cut (within a tool radius + allowance), so neither pass plunges into the other's tab;
+      the cut (within a tool radius + allowance), so neither pass plunges into the other's tab.
+      A footprint within 1e-9 mm of the gap counts as clear, so a tab moved to exactly the gap is
+      kept (before T-0135 the re-check decided it by rounding, about half the time either way);
     - drops a tab whose footprint would come closer than a tool radius to the previous one, or
       to the first across the start, so neighbouring tabs never merge and every pass still
       reaches its level between them;
@@ -140,8 +142,13 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     refused when the projections are ambiguous (mapped length off by more than 2·(allowance +
     radius), or a point along the tab projecting outside the mapped stretch: a nearby lobe), when
     the cut passes the tab only in part, or when the mapped stretch would cover a roughing start,
-    a finishing start projected onto it, or another roughing tab. A refused match drops the
-    finishing tab too, so both passes always agree. Finally every tab group (a tab and its
+    a finishing start projected onto it, or another roughing tab. With a negative allowance
+    Inside/Outside the cross-sections cross the vector with the kerf (below), and round a concave
+    corner of the part the roughing cut on the other leg reaches their far ends, so the cover grows
+    into a start or another tab; a tab refused that way is tried once more with the cover placed by
+    sections from the vector out (as for allowance >= 0), and the exact sided check below keeps it
+    only if it holds (T-0135; T-0127 left such tabs out as "could not be matched on the roughing
+    cut"). A refused match drops the finishing tab too, so both passes always agree. Finally every tab group (a tab and its
     roughing cover) is checked against all cuts of both passes (and without a separate last pass
     the only pass against itself): if any cut position outside the kept raised stretches comes
     closer than a tool radius (less 1 µm) to the tab's cross-sections — the opposite wall of a
@@ -176,7 +183,11 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     radius + 0.3 mm (+ 2 cells) of its raised stretches (their exact ends included) into one, and there are at least two. (The
     cross-sections, which place the roughing cover, run across the whole kerf here: a tool radius
     to each side of the cut, plus the last-pass allowance on the side where the roughing cut runs:
-    away from the vector, but towards it On with a negative allowance.) The
+    away from the vector, but towards it On with a negative allowance.) When the tab fails on that
+    raster but two groups of the near pieces it leaves unjoined reach the raster's frame (they may
+    be one piece joined beyond it), it is judged again on rasters reaching twice and four times as
+    far, with the tools there (T-0135: a tab between two vectors was dropped as cut through although
+    the flood shows it holds, and its part came free). The
     other live tabs count as cut, so a tab holds on its own and never borrows another tab's bridge.
     This is judged with the tools exactly as wide (+ 0.01 mm, which closes hairline gaps between
     cell centres) and again widened by 0.055 mm (on 0.05 mm cells, and where that fails on 0.025 mm
@@ -208,20 +219,34 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     loop's box, or one hole that stays one when the bands grow 0.03 mm more and has a kept tab (of
     any cut near) within the tab-layer radius + 0.3 mm of it (the tab check joined it to the pieces
     beside the tab): no loose piece. If no cut near keeps a tab, every such hole is loose and
-    reported as it is. Otherwise a raster over the loop's box
+    reported as it is, less the islands inside it (the band of a hole in the part, with the hole's
+    slug, itself a hole of the union, inside it: T-0135, before the part's area included its
+    holes and the slugs went unreported). Otherwise a raster over the loop's box
     (0.05 mm cells, coarser only beyond 4 million) stamps the open tool positions (as above, with
     the kept tabs' exact ends, sorted by x so a raster stamps only those near it), and uncut
-    components not joined to the frame are loose. A loose piece of 0.04 mm² or more, thicker
+    components not joined to the frame are loose; one under 1 mm² with fewer than 16 cells
+    0.025 mm clear of the tools is checked again on cells a quarter the size over its box grown by 0.3 mm, and dropped if it reaches that window's frame
+    there (a pocket of a sliver between two kerfs whose hairline neck fell between the coarse cell
+    centres; T-0135). A loose piece of 0.04 mm² or more, thicker
     than 0.05 mm somewhere (a hairline sliver between two kerfs does not count), is reported
-    against the vector of the loop that contains it, or else of the nearest cut ("a piece of
-    material inside the cut (about A square mm) is not held by any kept tab and comes free"), at
-    most five per vector, the last saying how many smaller ones remain. Known gaps (follow-up card
-    T-0135): reports of loose pieces whose rounded areas are equal are merged by the diagnostics
-    de-duplication in run() (a symmetric H shape reports one of its pieces); a piece whose bounding
-    box overlaps an already reported piece's (one in another's concave notch) is taken for the
-    same piece and skipped; leads are not part of this check (a lead crossing the part is a
-    separate issue); and pieces between neighbouring vectors that reach out of the loop's box are
-    not seen. Cost: about 1.2–1.3 × main on the dense negative-allowance page (500 close
+    against the vector of the innermost loop that contains it (a hole of the bands) or of the
+    nearest cut (a raster piece, or no loop contains it) ("a piece of material inside the cut (about A square mm) is not held by any kept tab and comes free"), one
+    message per piece, numbered per vector, largest first ("vector 3: loose piece 2 of 4: ..."), so
+    the de-duplication in run() never merges two pieces (T-0135; before, equal rounded areas were
+    merged and only five were listed). A piece is seen from every loop whose box holds it; it is
+    the same piece as one already found when it holds that piece's inner point (one at least
+    0.025 mm clear of the tools, so every view of the same piece holds it: inside the hole of the
+    bands and none of its islands, or in the raster cell or one next to it), so a piece in
+    another's concave notch, whose box overlaps, is still reported. Known gaps: leads are not part of this
+    check (a lead crossing the part is a separate issue); pieces between neighbouring vectors that
+    reach out of the loop's box are not seen; a sliver thinner than about 0.06 mm can be missed by
+    the 0.05 mm raster (it must show one cell 0.025 mm clear of the cut: verifier scene
+    m1_402012_7, 0.136 mm² of a sliver between two kerfs); a tab whose two "pieces" in its window
+    are one piece joined beyond the window (overlapping vectors, scene 401007_36) is kept although
+    it holds nothing new (redundant, never severed). Not a gap but the rule: a tab that leaves a
+    piece near it loose is dropped even when a neighbouring tab holds that piece (each tab holds on
+    its own; V-bit scene m2_403000_48, flat or 3D alike: a 59 mm² piece beside two tabs, which a
+    keep-all comparison counted as one tab group). Cost: about 1.2–1.3 × main on the dense negative-allowance page (500 close
     rectangles, separate last pass, allowance −1: neighbouring kerfs overlap, so nearly every tab
     goes to the raster and holds nothing); On the vector, 500 small shapes, about 0.3 s, no slower
     than main (other pages within a few per cent of main). So a short tab centred on a sharp

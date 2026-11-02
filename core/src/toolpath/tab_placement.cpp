@@ -99,8 +99,13 @@ TabPlacement fitTabs(const ArcLengthPath& path, std::vector<double> centres, dou
     }
     const double lo = reach;
     const double hi = len - reach;
+    // A centre within `reach` of a keep-clear point is moved to exactly `reach` from it, which may
+    // come out a few ulps short; the test allows kKeepClearSlack (1e-9 mm, far below kMinTabGap) so
+    // the moved tab is always accepted there instead of kept or dropped by rounding.
+    constexpr double kKeepClearSlack = 1e-9;
+    auto within = [&](double c, double f) { return std::fabs(c - f) < reach - kKeepClearSlack; };
     auto clashes = [&](double c) {
-        return std::any_of(keepClear.begin(), keepClear.end(), [&](double f) { return std::fabs(c - f) < reach; });
+        return std::any_of(keepClear.begin(), keepClear.end(), [&](double f) { return within(c, f); });
     };
     std::vector<double> placed;
     for (double c : centres) {
@@ -112,7 +117,7 @@ TabPlacement fitTabs(const ArcLengthPath& path, std::vector<double> centres, dou
         }
         // Move it off any other point that must stay clear, to the nearer side.
         for (double f : keepClear) {
-            if (std::fabs(c - f) < reach) {
+            if (within(c, f)) {
                 c = c < f ? f - reach : f + reach;
             }
         }

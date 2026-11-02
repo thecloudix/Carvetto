@@ -2581,7 +2581,8 @@ TEST_CASE("Sided tabs: survival judged by the cut at the tab layer; every loose 
          "L 0x1.54a4612df075bp+5 -0x1.15d02522edfa6p+3 0x1.cdf2d31028ef4p+5 -0x1.81552d859e26fp+1\n"
          "P 0x1.8p+3 0 -0x1.7c1a5dfa1a37cp+2 0 0 0x0p+0 0x1.750e33fb06dcfp+1 0x1.065a286a79a69p+0 0x0p+0 0x1.4p+2 0 0x1.371f320f45b5dp-1 1 1 0x1.2251c73b7ce62p+0 0x1.1c87d2060fb7cp+1 1 8 0x1.2b7890ff28d15p+5 0x0p+0 0 0 0x0p+0 1 0x1.c9347d512eaf1p+3 0 0 0x1.c7eacf9a01509p-2 0x1.de02f51eb055bp+3 0x1.b91ee8b07361bp-1 0x1.c2713c9dc3511p+2 0 0x1.48e201a17371cp+0 0 0 0x1.67259b1808192p+2 0x0p+0 0 5 0 0 0 0 0x1.8fd97e40b5d52p+5 -0x1.9f68161677a18p+4 0x1p+1\n"
          "K 0 0\n"         , 2, 1},
-        // A small loose piece (about 0.05 square mm) at a pocket corner: reported.
+        // Two small loose pieces (about 0.05 square mm each) at two pocket corners: both reported (one
+        // message each since T-0135; the de-duplication used to merge their equal rounded areas).
         {"m2_303014_28",
          "C 1\n"
          "L 0x0p+0 0x0p+0 0x1.084762f0ae4fap+5 0x0p+0\n"
@@ -2593,7 +2594,7 @@ TEST_CASE("Sided tabs: survival judged by the cut at the tab layer; every loose 
          "L 0x1.f2a155790459dp+2 0x1.084762f0ae4fap+5 0x0p+0 0x1.084762f0ae4fap+5\n"
          "L 0x0p+0 0x1.084762f0ae4fap+5 0x0p+0 0x0p+0\n"
          "P 0x1.8p+2 0 -0x1.8e87d918b99d9p+0 1 0 0x0p+0 0x1.9da97e7631fe9p+2 0x1.4a8856dc1a03ap+0 0x0p+0 0x1.4p+2 1 0x1.a3800b0a070a8p-6 1 1 0x1.5727393b8a41bp+1 0x1.9cca2f16ecea1p+1 1 4 0x1.315ce81f0af2dp+5 0x0p+0 1 0 0x0p+0 3 0x1.26cba71f06d8p+4 1 1 0x1.09a3b1dd14939p-1 0x1.00512dbc0e0bcp+2 0x1.f0da4080b2992p-1 0x1.02472f956c8fp+3 0 0x1.10705aa6e84cbp+0 1 0 0x1.30b2522bdc40cp+4 0x0p+0 0 5 0 0 0 0 -0x1.c5ba342557c67p+4 0x1.37265a711219cp+5 0x1p+1\n"
-         "K 0 0\n"         , 4, 1},
+         "K 0 0\n"         , 4, 2},
         // A roughing cover shorter than its finishing stretch (last pass 0.001 mm): only the tabs
         // that hold are kept (a quick answer once kept one the roughing cut severs).
         {"m0_301012_20",
@@ -2623,5 +2624,286 @@ TEST_CASE("Sided tabs: survival judged by the cut at the tab layer; every loose 
         }));
         CHECK(tabsLeftOut(r) == k.left);
         CHECK(loose == k.loose);
+    }
+}
+
+TEST_CASE("Loose pieces: one message per piece, pieces in a notch kept apart", "[toolpath][profile][tabs]") {
+    // T-0135 (a)/(b), T-0127 round-3 verifier (harness t0127v3, whole-scene flood wsf8). An H
+    // On the vector (D6, allowance 0) leaves two free pieces of 0.626 and 0.621 mm2; both were
+    // reported with the same text, and the de-duplication in run() kept one. Three shapes On the
+    // vector: B (375 mm2) and C (64 mm2, in a concave notch of B's outline, so their boxes overlap)
+    // come free, and C was taken for B. Now every piece has its own numbered message.
+    struct Case {
+        const char* name;
+        const char* text;
+        std::vector<double> areas;  // the flood's free pieces, largest first
+    };
+    const std::vector<Case> cases{
+        {"h",
+         "C 1\n"
+         "L -0x1.e353f7ced9168p+2 -0x1.e353f7ced9168p+2 -0x1.1cccccccccccdp+1 -0x1.e353f7ced9168p+2\n"
+         "L -0x1.1cccccccccccdp+1 -0x1.e353f7ced9168p+2 -0x1.1cccccccccccdp+1 -0x1.272b020c49ba6p+0\n"
+         "L -0x1.1cccccccccccdp+1 -0x1.272b020c49ba6p+0 0x1.4fbe76c8b4396p+2 -0x1.272b020c49ba6p+0\n"
+         "L 0x1.4fbe76c8b4396p+2 -0x1.272b020c49ba6p+0 0x1.4fbe76c8b4396p+2 -0x1.e353f7ced9168p+2\n"
+         "L 0x1.4fbe76c8b4396p+2 -0x1.e353f7ced9168p+2 0x1.525604189374cp+3 -0x1.e353f7ced9168p+2\n"
+         "L 0x1.525604189374cp+3 -0x1.e353f7ced9168p+2 0x1.525604189374cp+3 0x1.525604189374cp+3\n"
+         "L 0x1.525604189374cp+3 0x1.525604189374cp+3 0x1.4fbe76c8b4396p+2 0x1.525604189374cp+3\n"
+         "L 0x1.4fbe76c8b4396p+2 0x1.525604189374cp+3 0x1.4fbe76c8b4396p+2 0x1.0b22d0e560419p+2\n"
+         "L 0x1.4fbe76c8b4396p+2 0x1.0b22d0e560419p+2 -0x1.1cccccccccccdp+1 0x1.0b22d0e560419p+2\n"
+         "L -0x1.1cccccccccccdp+1 0x1.0b22d0e560419p+2 -0x1.1cccccccccccdp+1 0x1.525604189374cp+3\n"
+         "L -0x1.1cccccccccccdp+1 0x1.525604189374cp+3 -0x1.e353f7ced9168p+2 0x1.525604189374cp+3\n"
+         "L -0x1.e353f7ced9168p+2 0x1.525604189374cp+3 -0x1.e353f7ced9168p+2 -0x1.e353f7ced9168p+2\n"
+         "P 0x1.8p+2 0 0x0p+0 2 0 0x0p+0 0x1.ccccccccccccdp+3 0x1.3333333333333p+0 0x0p+0 0x1.4p+2 0 0x1.999999999999ap-5 0 1 0x1.5c28f5c28f5c3p-1 0x1.0666666666666p+2 0 2 0x1.9p+6 0x0p+0 0 0 0x0p+0 0 0x1.4p+2 0 0 0x1.657184ae74489p-4 0x1.4p+2 0x1.921fb54442d18p-1 0x1.4p+2 0 0x1.921fb54442d18p+0 0 0 0x0p+0 0x0p+0 2 0 0 0 0 0 0x0p+0 0x0p+0 0x1p+1\n"
+         "K 0 0\n"
+         , {0.626, 0.621}},
+        {"abc_2_1_2",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.4p+5 0x0p+0\n"
+         "L 0x1.4p+5 0x0p+0 0x1.4p+5 0x1.28p+4\n"
+         "L 0x1.4p+5 0x1.28p+4 0x1.9p+5 0x1.28p+4\n"
+         "L 0x1.9p+5 0x1.28p+4 0x1.9p+5 0x0p+0\n"
+         "L 0x1.9p+5 0x0p+0 0x1.68p+6 0x0p+0\n"
+         "L 0x1.68p+6 0x0p+0 0x1.68p+6 0x1.8p+3\n"
+         "L 0x1.68p+6 0x1.8p+3 0x1.42p+6 0x1.8p+3\n"
+         "L 0x1.42p+6 0x1.8p+3 0x1.42p+6 0x1.6p+4\n"
+         "L 0x1.42p+6 0x1.6p+4 0x1.58p+6 0x1.6p+4\n"
+         "L 0x1.58p+6 0x1.6p+4 0x1.58p+6 0x1.2p+5\n"
+         "L 0x1.58p+6 0x1.2p+5 0x1.2p+6 0x1.2p+5\n"
+         "L 0x1.2p+6 0x1.2p+5 0x1.2p+6 0x1.6p+4\n"
+         "L 0x1.2p+6 0x1.6p+4 0x1.36p+6 0x1.6p+4\n"
+         "L 0x1.36p+6 0x1.6p+4 0x1.36p+6 0x1.8p+3\n"
+         "L 0x1.36p+6 0x1.8p+3 0x1.fp+5 0x1.8p+3\n"
+         "L 0x1.fp+5 0x1.8p+3 0x1.fp+5 0x1.4p+5\n"
+         "L 0x1.fp+5 0x1.4p+5 0x1.9p+5 0x1.4p+5\n"
+         "L 0x1.9p+5 0x1.4p+5 0x1.9p+5 0x1.58p+4\n"
+         "L 0x1.9p+5 0x1.58p+4 0x1.4p+5 0x1.58p+4\n"
+         "L 0x1.4p+5 0x1.58p+4 0x1.4p+5 0x1.4p+5\n"
+         "L 0x1.4p+5 0x1.4p+5 0x0p+0 0x1.4p+5\n"
+         "L 0x0p+0 0x1.4p+5 0x0p+0 0x0p+0\n"
+         "P 0x1.8p+2 0 0x0p+0 2 0 0x0p+0 0x1.8p+2 0x1.8p+1 0x0p+0 0x1.4p+2 0 0x1.999999999999ap-3 0 1 0x1p+2 0x1.8p+0 0 1 0x1.9p+6 0x0p+0 0 0 0x0p+0 0 0x1.4p+3 0 0 0x1.657184ae74489p-4 0x1.4p+2 0x1.921fb54442d18p-1 0x1.4p+2 0 0x1.921fb54442d18p+0 0 0 0x0p+0 0x0p+0 2 2 0 0 0 0 0x0p+0 0x0p+0 0x1p+1\n"
+         "K 0 0\n"
+         , {374.7, 64.4}},
+    };
+    for (const Case& k : cases) {
+        std::vector<Contour> cs;
+        ProfileParams p;
+        int vbitDeg = 0;
+        const double d = readScene(k.text, cs, p, vbitDeg);
+        INFO("scene " << k.name);
+        const ProfileResult r = profileToolpath(cs, test::endMill(d), p);
+        REQUIRE(r.ok());
+        std::vector<std::string> loose;
+        for (const ProfileDiagnostic& g : r.diagnostics) {
+            if (g.message.find("comes free") != std::string::npos) loose.push_back(g.message);
+        }
+        REQUIRE(loose.size() == k.areas.size());
+        for (std::size_t i = 0; i < loose.size(); ++i) {
+            INFO(loose[i]);
+            const std::string n = "loose piece " + std::to_string(i + 1) + " of " + std::to_string(loose.size()) + ":";
+            CHECK(loose[i].find(n) != std::string::npos);
+            const std::size_t at = loose[i].find("(about ");
+            REQUIRE(at != std::string::npos);
+            const double area = std::stod(loose[i].substr(at + 7));
+            CHECK(std::fabs(area - k.areas[i]) < 0.02 * k.areas[i] + 0.01);
+        }
+    }
+}
+
+TEST_CASE("Separate last pass, negative allowance: tabs that hold are matched on the roughing cut",
+          "[toolpath][profile][tabs]") {
+    // T-0135 (c), T-0127 round-3 verifier: Outside with allowance -1.8 (D8) / -5.1 (D12) and a separate last
+    // pass, T-0127 left out tabs as "could not be matched on the roughing cut" that the T-0124
+    // merge matched and that hold (whole-scene flood): the cross-sections that place the roughing
+    // cover cross the vector with the kerf, so at a concave corner of the part the cover grew into
+    // a neighbouring tab or start. Such a tab is now matched again with the cover placed from the
+    // vector out, and kept when the exact check says it holds. Expected counts are flood-verified
+    // (every kept tab holds; 15 and 4 kept, the T-0124 merge 14 and 4, T-0127 12 and 3).
+    struct Case {
+        const char* name;
+        const char* text;
+        std::size_t left;
+    };
+    const std::vector<Case> cases{
+        {"m1_402002_27",
+         "C 1\n"
+         "L 0x1.dd82abb1ec249p+4 0x0p+0 0x1.142c3db02faffp+2 0x1.1892a576ee98p+2\n"
+         "L 0x1.142c3db02faffp+2 0x1.1892a576ee98p+2 0x1.ce556a3e12eadp-50 0x1.a322cbd1a1937p+4\n"
+         "L 0x1.ce556a3e12eadp-50 0x1.a322cbd1a1937p+4 -0x1.6c6095b99b904p+2 0x1.7c124425a5b5cp+2\n"
+         "L -0x1.6c6095b99b904p+2 0x1.7c124425a5b5cp+2 -0x1.d6fe8001d646bp+4 0x1.03c4ae770ca4ep-48\n"
+         "L -0x1.d6fe8001d646bp+4 0x1.03c4ae770ca4ep-48 -0x1.9aa7b9c475dcfp+2 -0x1.b1dfcb1a14ab5p+2\n"
+         "L -0x1.9aa7b9c475dcfp+2 -0x1.b1dfcb1a14ab5p+2 -0x1.8e9659678c5a5p-48 -0x1.e1cb511eda43fp+4\n"
+         "L -0x1.8e9659678c5a5p-48 -0x1.e1cb511eda43fp+4 0x1.9503552e872fdp+2 -0x1.a3e98032a0d17p+2\n"
+         "L 0x1.9503552e872fdp+2 -0x1.a3e98032a0d17p+2 0x1.dd82abb1ec249p+4 0x0p+0\n"
+         "C 1\n"
+         "A 0x1.fcf7d51658504p+5 0x1.4fb90c77fd368p+1 0x1.4e8d6cf5d5f83p+4 0x1.753ae29b9caddp-7 0x1.8f353f7f0b982p+0 0\n"
+         "A 0x1.7623be4fdbc44p+5 0x1.3f3e485f17135p+4 0x1.176577b8dd8dep+4 0x1.a6a97df8df288p-3 -0x1.c6f4e5035eb6ap+0 1\n"
+         "A 0x1.c2d651d3371bbp+5 -0x1.292f93dd0b09p+2 0x1.e4eec06ed0ba8p+3 0x1.4fcf498ad7157p+1 -0x1.0d7eddd16b597p+0 0\n"
+         "A 0x1.69db8f376ebc8p+6 -0x1.7be877deec562p+4 0x1.b425d6b092dbp+4 0x1.76076dda38f57p+1 0x1.ca5044185689ap+0 1\n"
+         "P 0x1p+3 0 -0x1.cc29aed359599p+0 0 1 0x0p+0 0x1.c31079c96bff4p+1 0x1.35c38b6e26cp+0 0x0p+0 0x1.4p+2 1 0x1.2892648f4a083p-4 1 1 0x1.57de30f1a586dp+1 0x1.64b8c5a624b6ap+0 0 9 0x1.ff1d464625ca3p+5 0x0p+0 0 0 0x0p+0 2 0x1.0f94a87fe5848p+5 0 0 0x1.79275e5da79b3p-3 0x1.5a641b1ea9bc7p+3 0x1.ad8c32b3e735p-1 0x1.49787b28b0082p+2 0 0x1.ca6de50a2917ap-2 0 0 0x0p+0 0x0p+0 0 4 0 0 0 1 -0x1.6edb34ad5eba8p+5 -0x1.415749f156884p+3 0x1p+1\n"
+         "K 0 0\n"
+         , 3},
+        {"m2_403003_37",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.9ad18d11f539cp+5 0x0p+0\n"
+         "L 0x1.9ad18d11f539cp+5 0x0p+0 0x1.9ad18d11f539cp+5 0x1.46997b693b63ep+5\n"
+         "L 0x1.9ad18d11f539cp+5 0x1.46997b693b63ep+5 0x0p+0 0x1.46997b693b63ep+5\n"
+         "L 0x0p+0 0x1.46997b693b63ep+5 0x0p+0 0x0p+0\n"
+         "P 0x1.8p+3 0 -0x1.4513f7bd5863dp+2 0 1 0x0p+0 0x1.dd0b327940cadp+2 0x1.76b6c4f9d983ap+2 0x1.18d1720910265p-2 0x1.4p+2 1 0x1.4a1ab742e425cp-7 0 1 0x1.39a6f226e093bp+2 0x1.b147e69bff2a6p+0 0 9 0x1.59f2b258c58p+3 0x0p+0 0 0 0x0p+0 2 0x1.85d13f2a0da99p+2 1 0 0x1.77dd0c339da01p-2 0x1.b8ddd157ec117p+2 0x1.dfa3b097b2ac4p-2 0x1.a8662ad776d6p+2 0 0x1.7133141dd9a4ep+0 0 0 0x0p+0 0x0p+0 1 6 0 0 0 0 0x1.6a4a4e048d094p+5 0x1.6dc023c50f6f4p+4 0x1p+1\n"
+         "K 0 0\n"
+         , 5},
+        // T-0135 sweep: two closed vectors (D12, Outside, allowance -5.58, last pass 0.61). The
+        // inner vector's one tab holds (flood), but its check saw the material between the
+        // vectors as two pieces, joined only beyond its raster window, so it was dropped as cut
+        // through and its part came free. It is judged again on a wider window and kept.
+        {"m1_502001_32",
+         "C 1\n"
+         "A 0x0p+0 0x0p+0 0x1.040bbcb8cb282p+5 -0x1.a1bd920dee676p-1 -0x1.29b050c0c737bp+1 0\n"
+         "L -0x1.645fb754ac602p+4 -0x1.7ace02ba974bap+4 0x1.645fb754ac602p+4 -0x1.7ace02ba974b9p+4\n"
+         "C 1\n"
+         "L 0x1.e808e06f94991p+5 -0x1.f5a63e4f6eb9ep+0 0x1.bdfae793978edp+5 0x1.3673a225341bp+1\n"
+         "A 0x1.9ddc310ed4ea3p+5 -0x1.31a61fdd801e9p+1 0x1.912709a683606p+2 0x1.c04ba158c3ecp-1 -0x1.220cccee11d68p+1 0\n"
+         "L 0x1.7dbd7a8a12459p+5 -0x1.ccdff0f01a2cp+2 0x1.a7cb73660f4fdp+5 -0x1.72c1a8cb47f4p+3\n"
+         "A 0x1.c7ea29ead1f47p+5 -0x1.b176709535cb4p+2 0x1.912709a683606p+2 -0x1.220cccee11d68p+1 0x1.c04ba158c3ecp-1 0\n"
+         "P 0x1.8p+3 0 -0x1.64e4a36e7a252p+2 0 1 0x0p+0 0x1.847f478991884p+3 0x1.349825e96f908p+1 0x0p+0 0x1.4p+2 1 0x1.3a017750c8d84p-1 1 1 0x1.5c12f409108bbp+1 0x1.ba053eac5778ap+0 1 6 0x1.c6719fb131e56p+5 0x0p+0 0 0 0x0p+0 3 0x1.b267f398cafbdp+3 0 0 0x1.b037257ccb2fdp-2 0x1.3f740aa7a3b3ap+3 0x1.2f7974e46a9bbp+0 0x1.5a962d746cb06p+3 0 0x1.51cb73a231e41p-1 0 0 0x0p+0 0x0p+0 0 8 0 1 0 0 0x1.57cb878b69a58p+2 -0x1.96a5da5f3fa54p+3 0x1p+1\n"
+         "K 0 0\n"
+         , 0},
+    };
+    for (const Case& k : cases) {
+        std::vector<Contour> cs;
+        ProfileParams p;
+        int vbitDeg = 0;
+        const double d = readScene(k.text, cs, p, vbitDeg);
+        INFO("scene " << k.name);
+        const ProfileResult r = profileToolpath(cs, test::endMill(d), p);
+        REQUIRE(r.ok());
+        for (const ProfileDiagnostic& g : r.diagnostics) {
+            INFO(g.message);
+            CHECK(g.message.find("could not be matched") == std::string::npos);
+            CHECK(g.message.find("comes free") == std::string::npos);
+        }
+        CHECK(tabsLeftOut(r) == k.left);
+    }
+}
+
+TEST_CASE("Loose pieces: slugs inside a part are pieces of their own; slivers are not", "[toolpath][profile][tabs]") {
+    // T-0135 sweep (whole-scene flood wsf8, seeds 50xxxx). (1) A plate with three holes, Outside
+    // with allowance -r (D2) and every tab cut through: the plate (1937.8 mm2) and the three slugs
+    // (112.3, 50.2, 16.3 mm2) come free. The plate was a hole of the cut bands with the holes'
+    // bands as islands inside it: reported as 2313.9 mm2 (islands included), the slugs taken for
+    // the plate. Each slug is now reported against its hole. (2) On the vector, a V-bit with a
+    // separate last pass leaves a 0.04 mm sliver ring between the two kerfs; a pocket of it at a
+    // concave corner showed one 0.05 mm cell just clear of the tools and was reported as a loose
+    // 0.14 mm2 piece, though the flood (to 0.005 mm cells) finds nothing free: small pieces are
+    // checked again on finer cells, where the sliver's hairline joins them to the rest.
+    {
+        std::vector<Contour> cs;
+        ProfileParams p;
+        int vbitDeg = 0;
+        const double d = readScene(
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.43845c9375423p+5 0x0p+0\n"
+         "L 0x1.43845c9375423p+5 0x0p+0 0x1.43845c9375423p+5 0x1.f1dcb918ffa76p+5\n"
+         "L 0x1.43845c9375423p+5 0x1.f1dcb918ffa76p+5 0x0p+0 0x1.f1dcb918ffa76p+5\n"
+         "L 0x0p+0 0x1.f1dcb918ffa76p+5 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "A 0x1.b5bb8b27b2d8cp+4 0x1.4a6059582e2bbp+4 0x1.bea167ffc28bcp+2 0x0p+0 0x0p+0 0\n"
+         "C 1\n"
+         "A 0x1.b6b0bc185a1fap+4 0x1.86a2c7f6cdd5cp+5 0x1.3fc4490c2a6d7p+2 0x0p+0 0x0p+0 0\n"
+         "C 1\n"
+         "L 0x1.d649e1ca744d5p+3 0x1.ca9e8d680907bp+2 0x1.5f7e11e4b6a4ep+4 0x1.ca9e8d680907bp+2\n"
+         "L 0x1.5f7e11e4b6a4ep+4 0x1.ca9e8d680907bp+2 0x1.5f7e11e4b6a4ep+4 0x1.883274e67f9aep+3\n"
+         "L 0x1.5f7e11e4b6a4ep+4 0x1.883274e67f9aep+3 0x1.d649e1ca744d5p+3 0x1.883274e67f9aep+3\n"
+         "L 0x1.d649e1ca744d5p+3 0x1.883274e67f9aep+3 0x1.d649e1ca744d5p+3 0x1.ca9e8d680907bp+2\n"
+         "P 0x1p+1 0 -0x1p+0 0 1 0x0p+0 0x1.58401f06b465cp+3 0x1.201dbbf08f21dp+0 0x0p+0 0x1.4p+2 0 0x1.ac6037db2f75p-5 0 1 0x1.ac6175a101b81p-4 0x1.0daeef1938d3p+1 1 1 0x1.e108842babc05p+5 0x0p+0 0 0 0x0p+0 2 0x1.8045045c77dfap+1 0 0 0x1.59d33e31ae597p-2 0x1.52642d73e54e8p+2 0x1.5d479606a7e87p-1 0x1.8ec3a3ed23a8ap+1 0 0x1.39958a5141bd5p+0 0 0 0x0p+0 0x0p+0 2 0 0 1 0 0 0x1.fa2a78c557p-3 -0x1.e1b2b49dcc0a8p+3 0x1p+1\n"
+         "K 0 0\n"
+            , cs, p, vbitDeg);
+        const ProfileResult r = profileToolpath(cs, test::endMill(d), p);
+        REQUIRE(r.ok());
+        const std::vector<std::pair<std::size_t, double>> expected{{0, 1937.8}, {1, 112.3}, {2, 50.2}, {3, 16.3}};
+        std::vector<std::pair<std::size_t, double>> got;
+        for (const ProfileDiagnostic& g : r.diagnostics) {
+            if (g.message.find("comes free") == std::string::npos) continue;
+            INFO(g.message);
+            CHECK(g.message.find("loose piece 1 of 1:") != std::string::npos);
+            REQUIRE(g.contour.has_value());
+            got.push_back({*g.contour, std::stod(g.message.substr(g.message.find("(about ") + 7))});
+        }
+        REQUIRE(got.size() == expected.size());
+        std::sort(got.begin(), got.end());
+        for (std::size_t i = 0; i < got.size(); ++i) {
+            CHECK(got[i].first == expected[i].first);
+            CHECK(std::fabs(got[i].second - expected[i].second) < 0.01 * expected[i].second + 0.05);
+        }
+    }
+    {
+        std::vector<Contour> cs;
+        ProfileParams p;
+        int vbitDeg = 0;
+        const double d = readScene(
+         "C 1\n"
+         "L 0x1.4521c8b10277bp+4 0x0p+0 0x1.6ed7831263aedp+4 0x1.1c923cc9e8ccp+1\n"
+         "L 0x1.6ed7831263aedp+4 0x1.1c923cc9e8ccp+1 0x1.65da48cf0938ep+4 0x1.60cfa0e7732d5p+2\n"
+         "L 0x1.65da48cf0938ep+4 0x1.60cfa0e7732d5p+2 0x1.32b36962c05a7p+4 0x1.afa7c9417ff44p+2\n"
+         "L 0x1.32b36962c05a7p+4 0x1.afa7c9417ff44p+2 0x1.1fe3db047de2dp+4 0x1.2e3156110edb5p+3\n"
+         "L 0x1.1fe3db047de2dp+4 0x1.2e3156110edb5p+3 0x1.344a9d708dfcbp+4 0x1.93f421c5f6857p+3\n"
+         "L 0x1.344a9d708dfcbp+4 0x1.93f421c5f6857p+3 0x1.13df78e6fcf33p+4 0x1.e8cddfa3323f8p+3\n"
+         "L 0x1.13df78e6fcf33p+4 0x1.e8cddfa3323f8p+3 0x1.bad70dc041e74p+3 0x1.dc2afbe6114ccp+3\n"
+         "L 0x1.bad70dc041e74p+3 0x1.dc2afbe6114ccp+3 0x1.71645b57305d8p+3 0x1.0b940fb0a152ap+4\n"
+         "L 0x1.71645b57305d8p+3 0x1.0b940fb0a152ap+4 0x1.663afefcccc81p+3 0x1.421c9d9bc9307p+4\n"
+         "L 0x1.663afefcccc81p+3 0x1.421c9d9bc9307p+4 0x1.056358f560521p+3 0x1.589ca29f6faf7p+4\n"
+         "L 0x1.056358f560521p+3 0x1.589ca29f6faf7p+4 0x1.55a88442560fap+2 0x1.39b63e4bf5af5p+4\n"
+         "L 0x1.55a88442560fap+2 0x1.39b63e4bf5af5p+4 0x1.3985cac1d7884p+1 0x1.42c2ea7be3298p+4\n"
+         "L 0x1.3985cac1d7884p+1 0x1.42c2ea7be3298p+4 0x1.1cfcb638b2bfp-1 0x1.70746e9bc01ebp+4\n"
+         "L 0x1.1cfcb638b2bfp-1 0x1.70746e9bc01ebp+4 -0x1.6366ff3c8fa36p+1 0x1.6de00ca167d4p+4\n"
+         "L -0x1.6366ff3c8fa36p+1 0x1.6de00ca167d4p+4 -0x1.18a2240f16369p+2 0x1.3d78e2c388afp+4\n"
+         "L -0x1.18a2240f16369p+2 0x1.3d78e2c388afp+4 -0x1.cd2c6d1d077e9p+2 0x1.3000f09f88ef5p+4\n"
+         "L -0x1.cd2c6d1d077e9p+2 0x1.3000f09f88ef5p+4 -0x1.46b00043d855fp+3 0x1.4a63a866aa01dp+4\n"
+         "L -0x1.46b00043d855fp+3 0x1.4a63a866aa01dp+4 -0x1.a2bc11a7ae5f2p+3 0x1.2f52289389defp+4\n"
+         "L -0x1.a2bc11a7ae5f2p+3 0x1.2f52289389defp+4 -0x1.a35150990152p+3 0x1.f101c773a6eb2p+3\n"
+         "L -0x1.a35150990152p+3 0x1.f101c773a6eb2p+3 -0x1.e6bac3882a818p+3 0x1.af346a8804f8bp+3\n"
+         "L -0x1.e6bac3882a818p+3 0x1.af346a8804f8bp+3 -0x1.2a2c5b437288fp+4 0x1.b145681182f17p+3\n"
+         "L -0x1.2a2c5b437288fp+4 0x1.b145681182f17p+3 -0x1.465887d30b8f3p+4 0x1.568f1ab1d0fa3p+3\n"
+         "L -0x1.465887d30b8f3p+4 0x1.568f1ab1d0fa3p+3 -0x1.2d21054826e4ep+4 0x1.ea6c1f50ea48ap+2\n"
+         "L -0x1.2d21054826e4ep+4 0x1.ea6c1f50ea48ap+2 -0x1.3baf29557b1dfp+4 0x1.373c97db4554bp+2\n"
+         "L -0x1.3baf29557b1dfp+4 0x1.373c97db4554bp+2 -0x1.6cb1e3b6df4ffp+4 0x1.aa06a004b1f93p+1\n"
+         "L -0x1.6cb1e3b6df4ffp+4 0x1.aa06a004b1f93p+1 -0x1.708ffb4483438p+4 0x1.968c40b646f91p-49\n"
+         "L -0x1.708ffb4483438p+4 0x1.968c40b646f91p-49 -0x1.439d37ded0a52p+4 -0x1.f61380601c48dp+0\n"
+         "L -0x1.439d37ded0a52p+4 -0x1.f61380601c48dp+0 -0x1.3baf29557b1ep+4 -0x1.373c97db45546p+2\n"
+         "L -0x1.3baf29557b1ep+4 -0x1.373c97db45546p+2 -0x1.5bab56b968536p+4 -0x1.e950a78cbba52p+2\n"
+         "L -0x1.5bab56b968536p+4 -0x1.e950a78cbba52p+2 -0x1.465887d30b8f6p+4 -0x1.568f1ab1d0f9bp+3\n"
+         "L -0x1.465887d30b8f6p+4 -0x1.568f1ab1d0f9bp+3 -0x1.0ff69322b8dap+4 -0x1.645a4f2ceb388p+3\n"
+         "L -0x1.0ff69322b8dap+4 -0x1.645a4f2ceb388p+3 -0x1.e6bac3882a819p+3 -0x1.af346a8804f89p+3\n"
+         "L -0x1.e6bac3882a819p+3 -0x1.af346a8804f89p+3 -0x1.f5fe64354b8dep+3 -0x1.0de2ffebf6338p+4\n"
+         "L -0x1.f5fe64354b8dep+3 -0x1.0de2ffebf6338p+4 -0x1.a2bc11a7ae5f5p+3 -0x1.2f52289389deep+4\n"
+         "L -0x1.a2bc11a7ae5f5p+3 -0x1.2f52289389deep+4 -0x1.3c047a1264c03p+3 -0x1.1c27aa99b181p+4\n"
+         "L -0x1.3c047a1264c03p+3 -0x1.1c27aa99b181p+4 -0x1.cd2c6d1d077f3p+2 -0x1.3000f09f88ef4p+4\n"
+         "L -0x1.cd2c6d1d077f3p+2 -0x1.3000f09f88ef4p+4 -0x1.834bd8c5a35b3p+2 -0x1.639deb9d8904dp+4\n"
+         "L -0x1.834bd8c5a35b3p+2 -0x1.639deb9d8904dp+4 -0x1.6366ff3c8fa4fp+1 -0x1.6de00ca167d4p+4\n"
+         "L -0x1.6366ff3c8fa4fp+1 -0x1.6de00ca167d4p+4 -0x1.f6cf5b590c819p-2 -0x1.45097b19824f5p+4\n"
+         "L -0x1.f6cf5b590c819p-2 -0x1.45097b19824f5p+4 0x1.3985cac1d788dp+1 -0x1.42c2ea7be3298p+4\n"
+         "L 0x1.3985cac1d788dp+1 -0x1.42c2ea7be3298p+4 0x1.3e1eaa8aa34a8p+2 -0x1.67e1268efdd35p+4\n"
+         "L 0x1.3e1eaa8aa34a8p+2 -0x1.67e1268efdd35p+4 0x1.056358f56051ep+3 -0x1.589ca29f6faf7p+4\n"
+         "L 0x1.056358f56051ep+3 -0x1.589ca29f6faf7p+4 0x1.203104ca37a58p+3 -0x1.2375018af6fe6p+4\n"
+         "L 0x1.203104ca37a58p+3 -0x1.2375018af6fe6p+4 0x1.71645b57305cbp+3 -0x1.0b940fb0a152ep+4\n"
+         "L 0x1.71645b57305cbp+3 -0x1.0b940fb0a152ep+4 0x1.db5447f44998ap+3 -0x1.19b2b3e680888p+4\n"
+         "L 0x1.db5447f44998ap+3 -0x1.19b2b3e680888p+4 0x1.13df78e6fcf2dp+4 -0x1.e8cddfa332406p+3\n"
+         "L 0x1.13df78e6fcf2dp+4 -0x1.e8cddfa332406p+3 0x1.07098bb4777a5p+4 -0x1.7e372e7014fffp+3\n"
+         "L 0x1.07098bb4777a5p+4 -0x1.7e372e7014fffp+3 0x1.1fe3db047de2dp+4 -0x1.2e3156110edb3p+3\n"
+         "L 0x1.1fe3db047de2dp+4 -0x1.2e3156110edb3p+3 0x1.555a69d1c9b05p+4 -0x1.15f74a832dce8p+3\n"
+         "L 0x1.555a69d1c9b05p+4 -0x1.15f74a832dce8p+3 0x1.65da48cf0938ep+4 -0x1.60cfa0e7732d7p+2\n"
+         "L 0x1.65da48cf0938ep+4 -0x1.60cfa0e7732d7p+2 0x1.41b85ca3830d5p+4 -0x1.77d2f67242d06p+1\n"
+         "L 0x1.41b85ca3830d5p+4 -0x1.77d2f67242d06p+1 0x1.4521c8b10277bp+4 0x0p+0\n"
+         "P 0x1.8p+2 120 0x1.e9d65f0ef5f29p+0 2 1 0x1.cc34425c031fap-3 0x1.10d23f94a1bf8p+2 0x1.90df8e8792f9p+2 0x0p+0 0x1.4p+2 1 0x1.f5b1fa0ccd4d1p-1 1 1 0x1.cac3cb958897p+0 0x1.14a44e6cc0918p-2 1 3 0x1.fe42ad649a49bp+5 0x0p+0 1 0 0x0p+0 2 0x1.5ac67fa3cfec1p+4 0 0 0x1.3f1ec3cfa6b09p-3 0x1.f0dd1b76d1bbcp+0 0x1.4d83a955091abp-3 0x1.63a3babb5a03p+1 0 0x1.6004baac90bdcp+0 0 0 0x0p+0 0x0p+0 1 5 0 0 0 0 0x1.14dd58b854b74p+4 0x1.77234e3f7a8ecp+3 0x1p+1\n"
+         "K 0 1\n"
+            , cs, p, vbitDeg);
+        tooling::Tool tool = test::endMill(d);
+        tool.type = tooling::ToolType::VBit;
+        tool.includedAngle = vbitDeg * geometry::kPi / 180.0;
+        const ProfileResult r = profileToolpath(cs, tool, p);
+        REQUIRE(r.ok());
+        for (const ProfileDiagnostic& g : r.diagnostics) {
+            INFO(g.message);
+            CHECK(g.message.find("comes free") == std::string::npos);
+        }
     }
 }

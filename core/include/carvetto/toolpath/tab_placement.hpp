@@ -68,7 +68,9 @@ double tabFootprint(double raisedLength, const TabOptions& options);
 /// one (`minGap`, at least `kMinTabGap`, between footprints); none is kept when one footprint does
 /// not fit at all. Footprints are also moved off every
 /// position in `keepClear` (arc lengths on this path, e.g. where another pass plunges), to the
-/// nearer side, and dropped when there is no room. The others are counted in `dropped`, so
+/// nearer side, and dropped when there is no room (a footprint within 1e-9 mm of the gap counts
+/// as clear, so a tab moved to exactly the gap is never dropped by rounding). The others are
+/// counted in `dropped`, so
 /// kept + dropped = the number of centres given.
 TabPlacement fitTabs(const ArcLengthPath& path, std::vector<double> centres, double footprint,
                      const std::vector<double>& keepClear = {}, double minGap = kMinTabGap);
