@@ -1,0 +1,56 @@
+old scenes where branch keeps fewer holding tabs, by class (tabs short): {'IO EM': 1} [(('502006', '22'), 10, 9)]
+old holding tabs absent in branch (by position), by class: {'IO V sep': 3, 'IO EM sep': 5, 'IO EM': 3}
+  EX old IO V sep [(('502004', '17'), (1.371, 17.939, 17.392, 1, 1)), (('502002', '8'), (46.067, 46.563, 14.483, 1, 1)), (('502002', '8'), (0.0, 5.584, 14.483, 1, 1))]
+  EX old IO EM sep [(('502004', '33'), (-26.756, -15.965, 9.479, 1, 1)), (('502004', '33'), (-25.231, 15.494, 9.479, 1, 1)), (('502004', '33'), (28.143, 15.4, 9.479, 1, 1)), (('502006', '8'), (30.082, -8.598, 22.739, 1, 1)), (('502006', '42'), (7.863, 14.327, 5.002, 1, 1))]
+  EX old IO EM [(('502002', '21'), (-8.06, -13.69, 11.607, 1, 1)), (('502006', '22'), (48.443, 36.551, 14.072, 1, 1)), (('502000', '17'), (1.352, -30.307, 2.81, 1, 1))]
+t127 scenes where branch keeps fewer holding tabs, by class (tabs short): {'IO EM sep': 1} [(('502006', '8'), 3, 2)]
+t127 holding tabs absent in branch (by position), by class: {'IO EM sep': 1}
+  EX t127 IO EM sep [(('502006', '8'), (34.926, 13.552, 28.044, 1, 1))]
+branch CNT 3
+branch UNREP 2
+branch holdOK (on old scenes) 1350
+branch holdOK (on t127 scenes) 1350
+branch kept 8101
+branch left 4944
+branch nohold 18
+branch part 0
+branch req 7256
+branch scenes with free pieces 221
+branch sev 0
+branch thin 0
+old CNT 68
+old holdOK 1190
+old kept 1228
+old nohold 16
+old part 0
+old scenes 347
+old sev 16
+old thin 6
+scenes 2082
+scenes mode0 696
+scenes mode1 692
+scenes mode2 694
+t127 CNT 3
+t127 holdOK 1344
+t127 kept 1347
+t127 nohold 3
+t127 part 0
+t127 scenes 347
+t127 sev 0
+t127 thin 0
+BAD 15
+  CNT ('502009', '40') S 502009 40 side 0 D 8 V 0 a -3.1740 sep 0 lpa 0.610 n 1 len 1.008 th 2.696 3d 0 | G 1 hold 1 nohold 0 sev 0 part 0 thin 0 | left 1 req 1 | cell 0.021 6.5s [FREE 2 ge05 0 biggest 0.018 mm2 at (-2.75,1.20) allLost 1] [REP 2 max 0.06] [CNT free04 0 rep 2:]
+  CNT ('503012', '1')  1 side 2 D 25 V 120 a 0.0000 sep 1 lpa 0.727 n 1 len 3.537 th 3.160 3d 1 | G 1 hold 1 nohold 0 sev 0 part 0 thin 0 | left 1 req 1 | cell 0.039 47.4s [FREE 1 ge05 1 biggest 0.287 mm2 at (90.51,-3.57) allLost 1] [UNREP] [CNT free04 1 rep 0: 0.287@(90.51,-3.57)]
+  CNT ('503013', '42') e 0 D 12 V 0 a -0.0091 sep 0 lpa 0.052 n 9 len 0.419 th 0.453 3d 0 | G 1 hold 1 nohold 0 sev 0 part 0 thin 0 | left 37 req 38 | cell 0.028 3.0s [FREE 1 ge05 1 biggest 1144.231 mm2 at (40.31,-0.10) allLost 0] [UNREP] [CNT free04 1 rep 0: 1144.231@(40.31,-0.10)]
+  UNREP ('503012', '1')  1 side 2 D 25 V 120 a 0.0000 sep 1 lpa 0.727 n 1 len 3.537 th 3.160 3d 1 | G 1 hold 1 nohold 0 sev 0 part 0 thin 0 | left 1 req 1 | cell 0.039 47.4s [FREE 1 ge05 1 biggest 0.287 mm2 at (90.51,-3.57) allLost 1] [UNREP] [CNT free04 1 rep 0: 0.287@(90.51,-3.57)]
+  UNREP ('503013', '42') e 0 D 12 V 0 a -0.0091 sep 0 lpa 0.052 n 9 len 0.419 th 0.453 3d 0 | G 1 hold 1 nohold 0 sev 0 part 0 thin 0 | left 37 req 38 | cell 0.028 3.0s [FREE 1 ge05 1 biggest 1144.231 mm2 at (40.31,-0.10) allLost 0] [UNREP] [CNT free04 1 rep 0: 1144.231@(40.31,-0.10)]
+  nohold ('501007', '44') S 501007 44 side 2 D 12 V 60 a -1.6386 sep 0 lpa 0.318 n 9 len 1.360 th 0.444 3d 1 | G 2 hold 0 nohold 2 sev 0 part 0 thin 0 | left 6 req 9 | cell 0.020 0.2s [NOHOLD g0 (0.777,2.222) len 6.46] [NOHOLD g1 (1.447,-0.667) len 6.46]
+  nohold ('502005', '34') S 502005 34 side 0 D 25 V 120 a -5.1588 sep 0 lpa 0.879 n 5 len 11.327 th 0.614 3d 0 | G 1 hold 0 nohold 1 sev 0 part 0 thin 0 | left 3 req 5 | cell 0.020 1.2s [NOHOLD g0 (-11.542,-4.301) len 22.75]
+  nohold ('502006', '38') S 502006 38 side 0 D 12 V 120 a -3.6413 sep 0 lpa 0.334 n 8 len 3.264 th 0.383 3d 0 | G 2 hold 0 nohold 2 sev 0 part 0 thin 0 | left 5 req 8 | cell 0.020 0.7s [NOHOLD g0 (-7.408,12.591) len 15.26] [NOHOLD g1 (13.882,-4.551) len 15.26]
+  nohold ('502008', '8') ide 1 D 25 V 90 a -5.6073 sep 0 lpa 0.112 n 4 len 4.156 th 1.692 3d 1 | G 3 hold 0 nohold 3 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.029 1.4s [NOHOLD g0 (13.198,-10.004) len 15.37] [NOHOLD g1 (12.971,13.678) len 15.37] [NOHOLD g2 (-18.994,16.775) len 15.37]
+  nohold ('502012', '41') S 502012 41 side 0 D 12 V 0 a -5.3898 sep 0 lpa 0.610 n 3 len 1.103 th 1.153 3d 0 | G 1 hold 0 nohold 1 sev 0 part 0 thin 0 | left 1 req 3 | cell 0.020 1.9s [NOHOLD g0 (0.951,-10.130) len 13.10]
+  nohold ('503008', '32') S 503008 32 side 2 D 8 V 0 a -3.7708 sep 0 lpa 0.420 n 5 len 0.574 th 0.404 3d 0 | G 2 hold 0 nohold 2 sev 0 part 0 thin 0 | left 2 req 5 | cell 0.020 0.4s [NOHOLD g0 (-9.217,4.930) len 8.57] [NOHOLD g1 (-0.767,9.217) len 8.57]
+  nohold ('503010', '15') S 503010 15 side 0 D 25 V 90 a -3.3142 sep 0 lpa 0.336 n 7 len 3.863 th 2.983 3d 1 | G 10 hold 9 nohold 1 sev 0 part 0 thin 0 | left 18 req 21 | cell 0.034 18.9s [NOHOLD g1 (52.276,12.888) len 13.09]
+  nohold ('503010', '41') S 503010 41 side 2 D 12 V 0 a 0.0000 sep 0 lpa 0.361 n 2 len 11.201 th 0.706 3d 0 | G 2 hold 0 nohold 2 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.025 3.5s [NOHOLD g0 (11.194,-19.890) len 23.20] [NOHOLD g1 (-27.860,3.374) len 23.20]
+  nohold ('503013', '12') side 0 D 12 V 0 a -5.5761 sep 0 lpa 0.419 n 9 len 5.289 th 1.680 3d 1 | G 3 hold 0 nohold 3 sev 0 part 0 thin 0 | left 5 req 9 | cell 0.023 6.8s [NOHOLD g0 (9.717,25.757) len 17.29] [NOHOLD g1 (-14.583,15.588) len 17.29] [NOHOLD g2 (-11.130,-16.202) len 17.29]
+  nohold ('503013', '35') S 503013 35 side 0 D 8 V 0 a -4.0000 sep 0 lpa 0.274 n 7 len 11.170 th 0.729 3d 1 | G 1 hold 0 nohold 1 sev 0 part 0 thin 0 | left 5 req 7 | cell 0.020 1.3s [NOHOLD g0 (-9.371,-5.251) len 19.17]

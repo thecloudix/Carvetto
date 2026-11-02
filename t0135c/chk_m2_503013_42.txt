@@ -1,0 +1,7 @@
+== m2_503013_42
+br : G 1 hold 1 nohold 0 sev 0 part 0 thin 0 | left 37 req 38 | cell 0.028 3.8s [FREE 1 ge05 1 biggest 1144.231 mm2 at (40.31,-0.10) allLost 0] [UNREP] [CNT free04 1 rep 0: 1144.231@(40.31,-0.10)]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 1 hold 1 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 37 req 38
+base: G 1 hold 1 nohold 0 sev 0 part 0 thin 0 | left 37 req 38 | cell 0.028 3.8s [FREE 1 ge05 1 biggest 1144.231 mm2 at (40.31,-0.10) allLost 0] [UNREP] [CNT free04 1 rep 0: 1144.231@(40.31,-0.10)]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 1 hold 1 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 37 req 38
+any: G 1 hold 1 nohold 0 sev 0 part 0 thin 0 | left 37 req 38 | cell 0.028 4.0s [FREE 1 ge05 1 biggest 1144.231 mm2 at (40.31,-0.10) allLost 0] [UNREP] [CNT free04 1 rep 0: 1144.231@(40.31,-0.10)]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 1 hold 1 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 37 req 38

@@ -1,0 +1,7 @@
+== m2_503010_41
+br : G 2 hold 0 nohold 2 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.025 4.5s [NOHOLD g0 (11.194,-19.890) len 23.20] [NOHOLD g1 (-27.860,3.374) len 23.20]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 2 hold 0 nohold 2 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+base: G 2 hold 0 nohold 2 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.025 4.5s [NOHOLD g0 (11.194,-19.890) len 23.20] [NOHOLD g1 (-27.860,3.374) len 23.20]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 2 hold 0 nohold 2 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0
+any: G 3 hold 3 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.025 5.1s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 3 hold 3 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 0 req 0

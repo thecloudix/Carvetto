@@ -1,0 +1,7 @@
+== m1_502012_41
+br : G 1 hold 0 nohold 1 sev 0 part 0 thin 0 | left 1 req 3 | cell 0.020 2.0s [NOHOLD g0 (0.951,-10.130) len 13.10]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 1 hold 0 nohold 1 severed 0 partial 0 thin 0 | freeScenes 0 | left 1 req 3
+base: G 1 hold 0 nohold 1 sev 0 part 0 thin 0 | left 1 req 3 | cell 0.020 2.0s [NOHOLD g0 (0.951,-10.130) len 13.10]
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 1 hold 0 nohold 1 severed 0 partial 0 thin 0 | freeScenes 0 | left 1 req 3
+any: G 2 hold 2 nohold 0 sev 0 part 0 thin 0 | left 1 req 3 | cell 0.020 2.7s
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 2 hold 2 nohold 0 severed 0 partial 0 thin 0 | freeScenes 0 | left 1 req 3

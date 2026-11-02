@@ -36,3 +36,4 @@ Original locations (scripts may hard-code these; adjust paths when reusing):
 - t0009c/: T-0009 coder harness (feffe02): t9.cpp sub-tol fuzz driver, corrected vdrv4 checker copy (see ADR-0012 A2 for the four checker fixes).
 - t0129v1/: T-0129 verifier (PASS 968fbc2): ac.cpp allowance-limit matrix, wsh.cpp (mode 4: allowances around -r), cmp.py, mk.sh.
 - t0018v1/: T-0018 verifier (PASS 9fca907): inr.cpp inradius/coverage/orientation oracle, cmpdump.cpp, dust.cpp (grid dust rings), clipb.cpp, edge.cpp, ann.cpp, hd.py/hdp.py path deviation.
+- t0135c/: T-0135 coder harness (7d00ce6): agg.py, sweep aggregates, scenes.
