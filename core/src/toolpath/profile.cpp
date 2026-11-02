@@ -48,6 +48,14 @@ struct Cut {
     double distance{0.0};  // |offset| from the vectors
     ArcLengthPath walk;
     std::vector<TabSpan> tabs;  // raised stretches (arc length on `walk`)
+    // How the tabs were placed (placeTabsOn), so matchRoughingTabs can place them again without
+    // one it refuses: the centres asked for, the requested centre each tab came from, the points
+    // kept clear, the move margin, and how many fitting dropped.
+    std::vector<double> tabRequested;
+    std::vector<std::size_t> tabOrigin;
+    std::vector<double> tabKeepClear;
+    double tabMoveMargin{0.0};
+    std::size_t tabFitDropped{0};
     Contour leadIn;  // planned lead-in (empty: none or none fits)
 };
 
@@ -751,12 +759,16 @@ void ProfileBuilder::placeTabsOn(std::vector<Cut>& primary, const std::vector<Cu
         // tab moved off the other pass's start keeps two tolerances + 0.01 mm more from it: its
         // roughing cover (its ends projected and widened by the tolerance) must clear that start.
         const double moveMargin = otherPass.empty() ? 0.0 : 2.0 * tol_.distance + 0.01;
-        const TabPlacement tp =
-            placeTabs(c.walk, raised, p_.tabs, otherStarts(c, otherPass), radius_, moveMargin);
+        c.tabKeepClear = otherStarts(c, otherPass);
+        TabPlacement tp = placeTabs(c.walk, raised, p_.tabs, c.tabKeepClear, radius_, moveMargin);
         c.tabs.clear();
         for (double u : tp.centres) {
             c.tabs.push_back({u - 0.5 * raised, u + 0.5 * raised});
         }
+        c.tabRequested = std::move(tp.requested);
+        c.tabOrigin = std::move(tp.origin);
+        c.tabMoveMargin = moveMargin;
+        c.tabFitDropped = tp.dropped;
         tabsRequested_[c.sources.front()] += tp.centres.size() + tp.dropped;
         tabsDropped_[c.sources.front()] += tp.dropped;
         tabsOnCorner_[c.sources.front()] += tp.notAvoided;
@@ -1000,10 +1012,29 @@ void ProfileBuilder::matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut
         roughKeepClear[k] = otherStarts(rough[k], finish);
     }
     tabLinks_.assign(finish.size(), {});
+    const double raised = p_.tabs.length + 2.0 * radius_;
+    const double footprint = tabFootprint(raised, p_.tabs);
     for (std::size_t fi = 0; fi < finish.size(); ++fi) {
         Cut& f = finish[fi];
+        const std::size_t src = f.sources.front();
+        // A refused tab may have pushed a neighbour out when the tabs were fitted (overlap, or a
+        // tab moved off a start onto it). Then the tabs are fitted again without it and this cut
+        // is matched again, so a tab that cannot be matched never costs another one.
+        std::vector<char> excluded(f.tabRequested.size(), 0);
+        std::vector<std::size_t> roughSizes(rough.size());
+        for (std::size_t k = 0; k < rough.size(); ++k) roughSizes[k] = rough[k].tabs.size();
         std::vector<TabSpan> kept;
-        for (const TabSpan& t : f.tabs) {
+        std::vector<std::vector<std::pair<std::size_t, TabSpan>>> links;
+        std::size_t unmatched = 0;
+        bool again = true;
+        while (again) {
+        again = false;
+        kept.clear();
+        links.clear();
+        unmatched = 0;
+        for (std::size_t k = 0; k < rough.size(); ++k) rough[k].tabs.resize(roughSizes[k]);
+        for (std::size_t ti = 0; ti < f.tabs.size(); ++ti) {
+            const TabSpan& t = f.tabs[ti];
             std::vector<std::pair<std::size_t, TabSpan>> mapped;
             bool ok = false;
             const bool retry = sidedTabs_ && p_.side != ProfileSide::On;
@@ -1022,17 +1053,72 @@ void ProfileBuilder::matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut
                 }
             }
             if (!ok) {
-                ++tabsDropped_[f.sources.front()];
-                ++tabsUnmatched_[f.sources.front()];
+                if (ti < f.tabOrigin.size()) {
+                    // Keep the other tabs where they are and add back, where they now fit (their
+                    // footprints clear of every tab kept), the asked-for tabs that fitting dropped;
+                    // match this cut again only if one comes back.
+                    std::vector<char> trial = excluded;
+                    trial[f.tabOrigin[ti]] = 1;
+                    std::vector<std::pair<double, std::size_t>> keep;  // centre, requested index
+                    std::vector<char> isKept(f.tabRequested.size(), 0);
+                    for (std::size_t q = 0; q < f.tabs.size(); ++q) {
+                        isKept[f.tabOrigin[q]] = 1;
+                        if (q != ti) keep.push_back({0.5 * (f.tabs[q].a + f.tabs[q].b), f.tabOrigin[q]});
+                    }
+                    const double len = f.walk.length();
+                    const double gap = footprint + std::max(radius_, kMinTabGap);
+                    auto clear = [&](double c) {
+                        return std::none_of(keep.begin(), keep.end(), [&](const std::pair<double, std::size_t>& o) {
+                            const double d = std::fabs(c - o.first);
+                            return d < gap || (f.walk.closed() && len - d < gap);
+                        });
+                    };
+                    std::vector<std::pair<double, std::size_t>> back;
+                    for (std::size_t q = 0; q < f.tabRequested.size(); ++q) {
+                        if (trial[q] || isKept[q]) continue;
+                        const TabPlacement one = fitTabs(f.walk, {f.tabRequested[q]}, footprint, f.tabKeepClear,
+                                                         radius_, f.tabMoveMargin);
+                        if (!one.centres.empty()) back.push_back({one.centres.front(), q});
+                    }
+                    std::sort(back.begin(), back.end());
+                    std::size_t added = 0;
+                    for (const auto& b : back) {
+                        if (!clear(b.first)) continue;
+                        keep.push_back(b);
+                        ++added;
+                    }
+                    if (added > 0) {
+                        excluded = std::move(trial);
+                        ++tabsDropped_[src];
+                        ++tabsUnmatched_[src];
+                        tabsDropped_[src] -= added;  // fitting had dropped them
+                        f.tabFitDropped -= added;
+                        std::sort(keep.begin(), keep.end());
+                        f.tabs.clear();
+                        f.tabOrigin.clear();
+                        for (const auto& [c, q] : keep) {
+                            f.tabs.push_back({c - 0.5 * raised, c + 0.5 * raised});
+                            f.tabOrigin.push_back(q);
+                        }
+                        again = true;
+                        break;
+                    }
+                }
+                ++unmatched;
                 continue;
             }
             for (const auto& [k, m] : mapped) {
                 rough[k].tabs.push_back(m);
             }
             kept.push_back(t);
-            tabLinks_[fi].push_back(mapped);
+            links.push_back(mapped);
         }
+        }
+        tabsDropped_[src] += unmatched;
+        tabsUnmatched_[src] += unmatched;
         f.tabs = std::move(kept);
+        f.tabOrigin.clear();
+        tabLinks_[fi] = std::move(links);
     }
     for (Cut& r : rough) {
         std::sort(r.tabs.begin(), r.tabs.end(), [](const TabSpan& x, const TabSpan& y) { return x.a < y.a; });
@@ -1268,7 +1354,6 @@ ProfileBuilder::PieceVerdict ProfileBuilder::sidedPieces(const std::vector<Vec2>
     std::vector<int> label(cells, -1);
     std::vector<std::size_t> area;
     std::vector<char> thick;  // 0 unknown, 1 thick, 2 thin
-    std::vector<char> frame;  // the piece reaches the raster's frame
     std::vector<std::size_t> firstCell;
     std::vector<std::size_t> stack;
     const int di[4] = {1, -1, 0, 0};
@@ -1278,7 +1363,6 @@ ProfileBuilder::PieceVerdict ProfileBuilder::sidedPieces(const std::vector<Vec2>
         const int l = static_cast<int>(area.size());
         area.push_back(0);
         thick.push_back(0);
-        frame.push_back(0);
         firstCell.push_back(k0);
         label[k0] = l;
         stack.assign(1, k0);
@@ -1288,7 +1372,6 @@ ProfileBuilder::PieceVerdict ProfileBuilder::sidedPieces(const std::vector<Vec2>
             ++area[static_cast<std::size_t>(l)];
             const int i = static_cast<int>(k % static_cast<std::size_t>(nx));
             const int j = static_cast<int>(k / static_cast<std::size_t>(nx));
-            if (i == 0 || j == 0 || i == nx - 1 || j == ny - 1) frame[static_cast<std::size_t>(l)] = 1;
             for (int e = 0; e < 4; ++e) {
                 const int ii = i + di[e];
                 const int jj = j + dj[e];
@@ -1364,15 +1447,31 @@ ProfileBuilder::PieceVerdict ProfileBuilder::sidedPieces(const std::vector<Vec2>
         }
     }
     std::map<int, std::size_t> groupsOf;
-    std::set<int> atFrame;  // groups with a piece at the frame: they may join beyond it
-    for (int l : nearPieces) {
-        ++groupsOf[find(l)];
-        if (frame[static_cast<std::size_t>(l)]) atFrame.insert(find(l));
-    }
+    for (int l : nearPieces) ++groupsOf[find(l)];
     std::size_t largest = 0;
     for (const auto& [root, n] : groupsOf) largest = std::max(largest, n);
     if (largest == nearPieces.size()) return PieceVerdict::Hold;
-    limited = atFrame.size() >= 2;
+    // Groups with a near piece at the frame: two of them may join beyond it.
+    {
+        std::vector<char> frame(area.size(), 0);
+        auto mark = [&](int i, int j) {
+            const int l = label[ras.index(i, j)];
+            if (l >= 0) frame[static_cast<std::size_t>(l)] = 1;
+        };
+        for (int i = 0; i < nx; ++i) {
+            mark(i, 0);
+            mark(i, ny - 1);
+        }
+        for (int j = 0; j < ny; ++j) {
+            mark(0, j);
+            mark(nx - 1, j);
+        }
+        std::set<int> atFrame;
+        for (int l : nearPieces) {
+            if (frame[static_cast<std::size_t>(l)]) atFrame.insert(find(l));
+        }
+        limited = atFrame.size() >= 2;
+    }
     return largest >= 2 ? PieceVerdict::Partial : PieceVerdict::Severed;
 }
 
@@ -2006,8 +2105,59 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
                 }
                 return false;
             };
+            // Several holes: each one stays one when the bands grow 0.03 mm more, and the kept tabs
+            // link every hole to the outside: a tab beside one hole joins it to the material on
+            // its other side, which is no hole here; a tab beside several joins them (its check
+            // joined every piece near it). Then no piece is loose here.
+            auto allLinked = [&]() {
+                if (holes.size() < 2) return false;
+                const Boundaries grown = bandsUnion(reachCut + 0.03);
+                std::vector<int> inside(holes.size(), 0);
+                for (std::size_t g : holesOf(grown)) {
+                    const std::size_t at =
+                        innermost(bandsAll, geometry::startPoint(grown.c[g].spans.front()), bandsAll.c.size());
+                    const auto it = std::find(holeIdx.begin(), holeIdx.end(), at);
+                    if (it == holeIdx.end()) return false;
+                    ++inside[static_cast<std::size_t>(it - holeIdx.begin())];
+                }
+                if (std::any_of(inside.begin(), inside.end(), [](int n) { return n != 1; })) return false;
+                const std::size_t out = holes.size();
+                DisjointSets links(holes.size() + 1);
+                const double reachTab = rt + 0.3;
+                std::vector<geometry::Box2> hb;
+                for (const Contour& h : holes) hb.push_back(h.bounds().inflated(reachTab));
+                const BoxIndex holeIndex(hb);
+                std::vector<std::size_t> beside;
+                std::vector<Vec2> stretch;
+                for (const Cut* o : nearCuts) {
+                    for (const TabSpan& t : o->tabs) {
+                        beside.clear();
+                        stretch.clear();
+                        geometry::Box2 sb;
+                        const int nt = std::max(1, static_cast<int>(std::ceil((t.b - t.a) / 0.1)));
+                        for (int k = 0; k <= nt; ++k) {
+                            stretch.push_back(o->walk.pointAt(t.a + (t.b - t.a) * k / nt));
+                            sb.expand(stretch.back());
+                        }
+                        for (std::size_t h : holeIndex.query(sb)) {
+                            for (const Vec2& q : stretch) {
+                                if (hb[h].contains(q) && geometry::closestPoint(holes[h], q).distance <= reachTab) {
+                                    beside.push_back(h);
+                                    break;
+                                }
+                            }
+                        }
+                        if (beside.size() == 1) links.unite(beside.front(), out);
+                        for (std::size_t m = 1; m < beside.size(); ++m) links.unite(beside.front(), beside[m]);
+                    }
+                }
+                for (std::size_t h = 0; h < holes.size(); ++h) {
+                    if (links.find(h) != links.find(out)) return false;
+                }
+                return true;
+            };
             if (holes.empty() ||
-                (holes.size() == 1 && enclosedCount(reachCut + 0.03) == 1 && tabBeside(holes.front()))) {
+                (holes.size() == 1 && enclosedCount(reachCut + 0.03) == 1 && tabBeside(holes.front())) || allLinked()) {
                 continue;
             }
             // No cut near keeps a tab: every enclosed piece comes free (attributed to the innermost
@@ -2243,18 +2393,29 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
         }
     }
     // One message per piece, numbered per vector (largest first), so no two are alike and the
-    // de-duplication in run() keeps every one.
+    // de-duplication in run() keeps every one; beyond kMaxPieceMessages per vector, one more
+    // message sums up the rest.
+    constexpr std::size_t kMaxPieceMessages = 50;
     std::map<std::size_t, std::vector<double>> loose;  // vector -> its loose pieces (mm²)
     for (const Piece& f : found) loose[f.source].push_back(f.area);
     for (auto& [src, pieces] : loose) {
         std::sort(pieces.begin(), pieces.end(), std::greater<double>());
-        for (std::size_t k = 0; k < pieces.size(); ++k) {
+        const std::size_t shown = std::min(pieces.size(), kMaxPieceMessages);
+        for (std::size_t k = 0; k < shown; ++k) {
             char buf[32];
             std::snprintf(buf, sizeof buf, "%.2f", pieces[k]);
             std::string text = vecName(src) + ": loose piece " + std::to_string(k + 1) + " of " +
                                std::to_string(pieces.size()) + ": a piece of material inside the cut (about " +
                                buf + " square mm) is not held by any kept tab and comes free";
             diag(ProfileIssue::TabsNotPlaced, src, text);
+        }
+        if (pieces.size() > shown) {
+            const double rest = std::accumulate(pieces.begin() + static_cast<std::ptrdiff_t>(shown), pieces.end(), 0.0);
+            char buf[32];
+            std::snprintf(buf, sizeof buf, "%.2f", rest);
+            diag(ProfileIssue::TabsNotPlaced, src,
+                 vecName(src) + ": and " + std::to_string(pieces.size() - shown) +
+                     " more loose pieces (about " + buf + " square mm in all) are not held by any kept tab and come free");
         }
     }
 }

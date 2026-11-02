@@ -2757,6 +2757,36 @@ TEST_CASE("Separate last pass, negative allowance: tabs that hold are matched on
         // inner vector's one tab holds (flood), but its check saw the material between the
         // vectors as two pieces, joined only beyond its raster window, so it was dropped as cut
         // through and its part came free. It is judged again on a wider window and kept.
+        // T-0135 round 1 (Outside, D12, allowance -0.0101): a finishing tab moved off a roughing
+        // start pushed its neighbour out and was then refused on the roughing cut (T-0127 kept 3
+        // tabs, the first branch 2). The tabs are now fitted again without the refused one: 4 kept,
+        // all holding (flood).
+        {"m1_502006_8",
+         "C 1\n"
+         "L -0x1.18e2048cecb54p+3 -0x1.9499354fd8bcbp+2 0x1.18e2048cecb54p+3 -0x1.9499354fd8bcbp+2\n"
+         "L 0x1.18e2048cecb54p+3 -0x1.9499354fd8bcbp+2 0x1.512a5717df47fp+3 -0x1.24089039f3975p+2\n"
+         "L 0x1.512a5717df47fp+3 -0x1.24089039f3975p+2 0x1.512a5717df47fp+3 0x1.24089039f3975p+2\n"
+         "L 0x1.512a5717df47fp+3 0x1.24089039f3975p+2 0x1.18e2048cecb54p+3 0x1.9499354fd8bcbp+2\n"
+         "L 0x1.18e2048cecb54p+3 0x1.9499354fd8bcbp+2 -0x1.18e2048cecb54p+3 0x1.9499354fd8bcbp+2\n"
+         "L -0x1.18e2048cecb54p+3 0x1.9499354fd8bcbp+2 -0x1.512a5717df47fp+3 0x1.24089039f3975p+2\n"
+         "L -0x1.512a5717df47fp+3 0x1.24089039f3975p+2 -0x1.512a5717df47fp+3 -0x1.24089039f3975p+2\n"
+         "L -0x1.512a5717df47fp+3 -0x1.24089039f3975p+2 -0x1.18e2048cecb54p+3 -0x1.9499354fd8bcbp+2\n"
+         "C 1\n"
+         "L 0x1.9a102fe2b8664p+5 -0x1.9e953c5ef31fep+0 0x1.5a8ec1164fbdap+5 -0x1.0c6522bab1cacp-1\n"
+         "L 0x1.5a8ec1164fbdap+5 -0x1.0c6522bab1cacp-1 0x1.6cdd2920c1d6ap+5 0x1.719d24aebf8f8p+2\n"
+         "L 0x1.6cdd2920c1d6ap+5 0x1.719d24aebf8f8p+2 0x1.49c41ff8eea07p+5 0x1.87a602f859cb6p+0\n"
+         "L 0x1.49c41ff8eea07p+5 0x1.87a602f859cb6p+0 0x1.23cc6899772dep+5 0x1.b384e2da5f9c8p+2\n"
+         "L 0x1.23cc6899772dep+5 0x1.b384e2da5f9c8p+2 0x1.3b728d663f4aap+5 -0x1.40dfeda6ea691p-1\n"
+         "L 0x1.3b728d663f4aap+5 -0x1.40dfeda6ea691p-1 0x1.076289d5b7de7p+5 -0x1.9e953c5ef31f9p+0\n"
+         "L 0x1.076289d5b7de7p+5 -0x1.9e953c5ef31f9p+0 0x1.332285eafdb39p+5 -0x1.a10ce438a3b06p+1\n"
+         "L 0x1.332285eafdb39p+5 -0x1.a10ce438a3b06p+1 0x1.27d8311444994p+5 -0x1.255fa2d3c7207p+3\n"
+         "L 0x1.27d8311444994p+5 -0x1.255fa2d3c7207p+3 0x1.498826e7cb77fp+5 -0x1.40abf1ed99c44p+2\n"
+         "L 0x1.498826e7cb77fp+5 -0x1.40abf1ed99c44p+2 0x1.7062433110d32p+5 -0x1.38d6e5a7284efp+3\n"
+         "L 0x1.7062433110d32p+5 -0x1.38d6e5a7284efp+3 0x1.629747e4f1f03p+5 -0x1.b2cc85240e63bp+1\n"
+         "L 0x1.629747e4f1f03p+5 -0x1.b2cc85240e63bp+1 0x1.9a102fe2b8664p+5 -0x1.9e953c5ef31fep+0\n"
+         "P 0x1.8p+3 0 -0x1.498b02b7734f3p-7 0 0 0x0p+0 0x1.24702d9833b6ap+3 0x1.28f7a95b508d9p+2 0x0p+0 0x1.4p+2 1 0x1.dd533d5e95dccp-1 1 1 0x1.1375b36f3725ep+3 0x1.889d50d4d6373p+1 0 9 0x1.3ee6003cef4e5p+6 0x0p+0 0 1 0x0p+0 1 0x1.252c10bc735cap+4 0 0 0x1.46094c1b2891bp-4 0x1.023a567bd261bp+2 0x1.042661f523fd1p-2 0x1.8a2c6b603c673p+2 0 0x1.991bbcc2bd5bcp-1 0 0 0x0p+0 0x0p+0 0 5 0 0 0 0 -0x1.4f96292b478bap+5 -0x1.9a092ef3c248p+4 0x1p+1\n"
+         "K 0 0\n"
+         , 14},
         {"m1_502001_32",
          "C 1\n"
          "A 0x0p+0 0x0p+0 0x1.040bbcb8cb282p+5 -0x1.a1bd920dee676p-1 -0x1.29b050c0c737bp+1 0\n"
@@ -2780,7 +2810,10 @@ TEST_CASE("Separate last pass, negative allowance: tabs that hold are matched on
         REQUIRE(r.ok());
         for (const ProfileDiagnostic& g : r.diagnostics) {
             INFO(g.message);
-            CHECK(g.message.find("could not be matched") == std::string::npos);
+            // (m1_502006_8 leaves one tab per vector out as unmatched: it cannot be covered.)
+            if (std::string(k.name) != "m1_502006_8") {
+                CHECK(g.message.find("could not be matched") == std::string::npos);
+            }
             CHECK(g.message.find("comes free") == std::string::npos);
         }
         CHECK(tabsLeftOut(r) == k.left);
@@ -2942,4 +2975,53 @@ TEST_CASE("Loose pieces: material enclosed by a loop trimmed into open pieces is
     }
     REQUIRE(areas.size() == 1);
     CHECK(std::fabs(areas.front() - 1144.2) < 5.0);
+}
+
+TEST_CASE("Loose pieces: at most 50 messages per vector, then one summing up the rest", "[toolpath][profile][tabs]") {
+    // T-0135 round 1: a chain of 60 square beads (3 x 3 mm) joined by 0.5 mm necks, On the vector
+    // with a 1 mm end mill: the kerf takes every neck, so 60 pieces of 4 mm2 come free (no tabs
+    // asked for). 50 are listed one by one, then one message gives the other 10.
+    Contour c;
+    c.closed = true;
+    std::vector<Vec2> pts;
+    const int beads = 60;
+    for (int i = 0; i < beads; ++i) {  // bottom edge, left to right
+        const double x = 4.0 * i;
+        pts.push_back({x, 0.0});
+        pts.push_back({x + 3.0, 0.0});
+        if (i + 1 < beads) {
+            pts.push_back({x + 3.0, 1.25});
+            pts.push_back({x + 4.0, 1.25});
+        }
+    }
+    for (int i = beads - 1; i >= 0; --i) {  // top edge, right to left
+        const double x = 4.0 * i;
+        pts.push_back({x + 3.0, 3.0});
+        pts.push_back({x, 3.0});
+        if (i > 0) {
+            pts.push_back({x, 1.75});
+            pts.push_back({x - 1.0, 1.75});
+        }
+    }
+    for (std::size_t k = 0; k < pts.size(); ++k) c.append(geometry::LineSpan{pts[k], pts[(k + 1) % pts.size()]});
+    ProfileParams p;
+    p.side = ProfileSide::On;
+    p.passes.cutDepth = 3.0;
+    p.passes.passDepth = 3.0;
+    p.tabs.enabled = true;
+    p.tabs.count = 0;
+    p.tabs.thickness = 1.0;
+    const ProfileResult r = profileToolpath({c}, test::endMill(1.0), p);
+    REQUIRE(r.ok());
+    std::size_t listed = 0;
+    std::size_t summaries = 0;
+    for (const ProfileDiagnostic& g : r.diagnostics) {
+        if (g.message.find("comes free") != std::string::npos) {
+            ++listed;
+            CHECK(g.message.find(" of 60:") != std::string::npos);
+        }
+        if (g.message.find("and 10 more loose pieces") != std::string::npos) ++summaries;
+    }
+    CHECK(listed == 50);
+    CHECK(summaries == 1);
 }

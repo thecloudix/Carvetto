@@ -116,8 +116,12 @@ choices. Behaviour descriptions come from `docs/reference/` only.
       no room. With a separate last pass these are the other pass's cut starts projected onto
       the cut (within a tool radius + allowance), so neither pass plunges into the other's tab.
       A moved tab keeps two tolerances + 0.01 mm more from the point (room for its roughing
-      cover, which is its projected ends widened by the tolerance, so it can still be matched), and
-      a footprint within 1e-9 mm of the gap counts as clear, so a moved tab is always kept (T-0135;
+      cover, which is its projected ends widened by the tolerance; that is enough on straight
+      stretches, but where the cover is extended round a corner, or the other pass's start lies
+      across the mapped stretch, the tab can still be refused, see below), and
+      a footprint within 1e-9 mm of the gap counts as clear, so a moved tab is always kept unless
+      it would overlap a tab that was not moved (moved tabs are fitted last, so they never push an
+      unmoved one out) (T-0135;
       before, the tab went to exactly the gap and the re-check decided by rounding, about half the
       time either way, and a kept one could never be matched past the roughing start);
     - drops a tab whose footprint would come closer than a tool radius to the previous one, or
@@ -151,7 +155,10 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     into a start or another tab; a tab refused that way is tried once more with the cover placed by
     sections from the vector out (as for allowance >= 0), and the exact sided check below keeps it
     only if it holds (T-0135; T-0127 left such tabs out as "could not be matched on the roughing
-    cut"). A refused match drops the finishing tab too, so both passes always agree. Finally every tab group (a tab and its
+    cut"). A refused match drops the finishing tab too, so both passes always agree; and because a
+    refused tab may have kept out a neighbour when the tabs were fitted (they overlapped), the
+    finishing tabs dropped by fitting are then added back where they clear every tab still kept (the
+    kept ones stay where they are), and when one comes back that cut is matched again (T-0135). Finally every tab group (a tab and its
     roughing cover) is checked against all cuts of both passes (and without a separate last pass
     the only pass against itself): if any cut position outside the kept raised stretches comes
     closer than a tool radius (less 1 µm) to the tab's cross-sections — the opposite wall of a
@@ -214,8 +221,9 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     stretch, the cut leaves exactly its two sides as counting pieces there, and the tab's material
     joins them. **Loose pieces.** A kept tab holds the material next to it, but a piece elsewhere
     (the kerf consuming a neck of the part, a remnant between the finishing and roughing kerfs at a
-    corner) may have no tab: after the tab check, whenever tabs are on (also when every tab was left
-    out), pieces of material inside a closed primary cut, or inside a cluster of open primary cuts (a
+    corner) may have no tab: after the tab check of sided tabs (On the vector, or Inside/Outside
+    with a negative allowance; not for Inside/Outside with allowance >= 0, a known gap), whenever
+    tabs are on (also when every tab was left out), pieces of material inside a closed primary cut, or inside a cluster of open primary cuts (a
     loop trimmed into pieces near another vector; boxes within two tab-layer radii + 0.5 mm of each
     other, searched as one region, T-0135), that join the outside through no kept tab
     are looked for and reported, on a best-effort basis (known gaps below). First: the material the cuts leave near the loop is what the bands of the
@@ -223,7 +231,10 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     leave, and an enclosed piece is a hole of their union (offsets and a union). No hole inside the
     loop's box, or one hole that stays one when the bands grow 0.03 mm more and has a kept tab (of
     any cut near) within the tab-layer radius + 0.3 mm of it (the tab check joined it to the pieces
-    beside the tab): no loose piece. If no cut near keeps a tab, every such hole is loose and
+    beside the tab): no loose piece. Likewise for several holes when each stays one and the kept
+    tabs link every hole to the outside (a tab beside one hole joins it to the material on its other
+    side, which is no hole here; a tab beside several joins them; T-0135, so a page of open cuts
+    enclosing many held pieces needs no raster). If no cut near keeps a tab, every such hole is loose and
     reported as it is, less the islands inside it (the band of a hole in the part, with the hole's
     slug, itself a hole of the union, inside it: T-0135, before the part's area included its
     holes and the slugs went unreported). Otherwise a raster over the loop's box
@@ -236,7 +247,8 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     than 0.05 mm somewhere (a hairline sliver between two kerfs does not count), is reported
     against the vector of the innermost loop that contains it (a hole of the bands) or of the
     nearest cut (a raster piece, or no loop contains it) ("a piece of material inside the cut (about A square mm) is not held by any kept tab and comes free"), one
-    message per piece, numbered per vector, largest first ("vector 3: loose piece 2 of 4: ..."), so
+    message per piece, numbered per vector, largest first ("vector 3: loose piece 2 of 4: ...", at
+    most 50 per vector, then one "and N more loose pieces (about A square mm in all)"), so
     the de-duplication in run() never merges two pieces (T-0135; before, equal rounded areas were
     merged and only five were listed). A piece is seen from every loop whose box holds it; it is
     the same piece as one already found when it holds that piece's inner point (one at least
@@ -250,7 +262,11 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     piece can be counted larger on the 0.05 mm cells than it is (502009_40: two pieces of 0.018 mm²
     reported as about 0.06); a tab whose two "pieces" in its window
     are one piece joined beyond the window (overlapping vectors, scene 401007_36) is kept although
-    it holds nothing new (redundant, never severed). Not a gap but the rule: a tab that leaves a
+    it holds nothing new (redundant, never severed); the recheck of small pieces on finer cells uses
+    the same tool discs, so where the discs leave a channel of 0.03-0.07 mm that the swept tool in
+    fact cuts, a free piece can be taken as joined and not reported (a4_610000_325, 0.0775 mm²); and
+    a tab judged on a wider window (above) may join the main pieces beside it yet leave a sliver
+    unjoined, which is then reported loose (a2_610000_162: 0.33 mm², 0.072 mm thick). Not a gap but the rule: a tab that leaves a
     piece near it loose is dropped even when a neighbouring tab holds that piece (each tab holds on
     its own; V-bit scene m2_403000_48, flat or 3D alike: a 59 mm² piece beside two tabs, which a
     keep-all comparison counted as one tab group). Cost: about 1.2–1.3 × main on the dense negative-allowance page (500 close

@@ -73,10 +73,12 @@ TabPlacement placeTabs(const ArcLengthPath& path, double raisedLength, const Tab
         }
         centres.push_back(c);
     }
-    const TabPlacement fitted =
+    TabPlacement fitted =
         fitTabs(path, std::move(centres), tabFootprint(raisedLength, options), keepClear, minGap, moveMargin);
-    result.centres = fitted.centres;
+    result.centres = std::move(fitted.centres);
     result.dropped = fitted.dropped;
+    result.requested = std::move(fitted.requested);
+    result.origin = std::move(fitted.origin);
     return result;
 }
 
@@ -88,6 +90,7 @@ TabPlacement fitTabs(const ArcLengthPath& path, std::vector<double> centres, dou
                      const std::vector<double>& keepClear, double minGap, double moveMargin) {
     minGap = std::max(minGap, kMinTabGap);
     TabPlacement result;
+    result.requested = centres;
     const double len = path.length();
     const double half = 0.5 * footprint;
     const double reach = half + kMinTabGap;  // centre-to-point distance that keeps a point clear
@@ -107,8 +110,16 @@ TabPlacement fitTabs(const ArcLengthPath& path, std::vector<double> centres, dou
     auto clashes = [&](double c) {
         return std::any_of(keepClear.begin(), keepClear.end(), [&](double f) { return within(c, f); });
     };
-    std::vector<double> placed;
-    for (double c : centres) {
+    struct Placed {
+        double c;
+        std::size_t from;  // index in `centres`
+        bool moved;        // moved off a keep-clear point
+        bool operator<(const Placed& o) const { return c < o.c || (c == o.c && from < o.from); }
+    };
+    std::vector<Placed> placed;
+    for (std::size_t i = 0; i < centres.size(); ++i) {
+        double c = centres[i];
+        bool moved = false;
         if (path.closed()) {
             c = std::clamp(c, lo, hi);  // move it off the start
         } else if (c < lo || c > hi) {
@@ -120,25 +131,47 @@ TabPlacement fitTabs(const ArcLengthPath& path, std::vector<double> centres, dou
             if (within(c, f)) {
                 const double away = reach + std::max(0.0, moveMargin);
                 c = c < f ? f - away : f + away;
+                moved = true;
             }
         }
         if (c < lo || c > hi || clashes(c)) {
             ++result.dropped;  // no room next to the points that must stay clear
             continue;
         }
-        placed.push_back(c);
+        placed.push_back({c, i, moved});
     }
     std::sort(placed.begin(), placed.end());
-    for (double c : placed) {
-        if (!result.centres.empty() && c - result.centres.back() < footprint + minGap) {
+    // Tabs that stayed where they were asked for first (each dropped when it overlaps the previous
+    // one kept, or the first across the start); then the tabs moved off keep-clear points, each
+    // only where it overlaps none kept, so a moved tab never pushes out one that was not moved.
+    std::vector<Placed> kept;
+    for (const Placed& t : placed) {
+        if (t.moved) continue;
+        if (!kept.empty() && t.c - kept.back().c < footprint + minGap) {
             ++result.dropped;  // overlaps (or touches) the previous tab
             continue;
         }
-        if (path.closed() && !result.centres.empty() && result.centres.front() + len - c < footprint + minGap) {
+        if (path.closed() && !kept.empty() && kept.front().c + len - t.c < footprint + minGap) {
             ++result.dropped;  // overlaps the first tab across the start
             continue;
         }
-        result.centres.push_back(c);
+        kept.push_back(t);
+    }
+    for (const Placed& t : placed) {
+        if (!t.moved) continue;
+        const bool overlaps = std::any_of(kept.begin(), kept.end(), [&](const Placed& o) {
+            const double d = std::fabs(t.c - o.c);
+            return d < footprint + minGap || (path.closed() && len - d < footprint + minGap);
+        });
+        if (overlaps) {
+            ++result.dropped;  // would overlap a tab already kept
+            continue;
+        }
+        kept.insert(std::upper_bound(kept.begin(), kept.end(), t), t);
+    }
+    for (const Placed& t : kept) {
+        result.centres.push_back(t.c);
+        result.origin.push_back(t.from);
     }
     return result;
 }

@@ -256,6 +256,20 @@ TEST_CASE("Tabs moved off a keep-clear point are kept, never dropped by rounding
         REQUIRE(tp.centres.size() == 1);
         CHECK(std::fabs(std::fabs(tp.centres.front() - 40.0) - (reach + 0.012)) < 1e-12);
     }
+    // A moved tab never pushes out one that was not moved: 11.5 moves off 11.2 to 12.201, which
+    // would overlap the tab at 13.5; the unmoved one is kept (before T-0135 the sorted greedy pass
+    // kept the moved one and dropped 13.5).
+    {
+        const TabPlacement tp = fitTabs(lp, {11.5, 13.5}, footprint, {11.2});
+        REQUIRE(tp.centres.size() == 1);
+        CHECK(tp.centres.front() == 13.5);
+        CHECK(tp.dropped == 1);
+        REQUIRE(tp.origin.size() == 1);
+        CHECK(tp.origin.front() == 1);
+        // ... and is kept where it overlaps nothing.
+        const TabPlacement free = fitTabs(lp, {11.5, 20.0}, footprint, {11.2});
+        CHECK(free.centres.size() == 2);
+    }
     // A centre clearly inside the gap with no room to move (both sides blocked) is still dropped.
     const TabPlacement blocked = fitTabs(lp, {50.0}, footprint, {49.5, 51.0});
     CHECK(blocked.centres.empty());

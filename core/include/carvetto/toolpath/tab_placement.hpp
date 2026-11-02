@@ -45,6 +45,10 @@ struct TabPlacement {
     std::size_t notAvoided{0};
     /// Number of tabs dropped because they overlapped an earlier one or did not fit the path.
     std::size_t dropped{0};
+    /// The centres asked for, before fitting (`placeTabs`: after corner avoidance; `fitTabs`: as
+    /// given), and for each kept centre the index of the one it came from.
+    std::vector<double> requested;
+    std::vector<std::size_t> origin;
 };
 
 /// Places tabs on `path`. `raisedLength` is the length of each raised stretch along the path
@@ -71,8 +75,10 @@ double tabFootprint(double raisedLength, const TabOptions& options);
 /// position in `keepClear` (arc lengths on this path, e.g. where another pass plunges), to the
 /// nearer side, leaving `kMinTabGap` + `moveMargin` between the point and the footprint (room for
 /// what another pass adds round a moved tab), and dropped when there is no room (a footprint
-/// within 1e-9 mm of the gap counts as clear, so a moved tab is never dropped by rounding). The
-/// others are counted in `dropped`, so kept + dropped = the number of centres given.
+/// within 1e-9 mm of the gap counts as clear, so a moved tab is never dropped by rounding). A
+/// moved tab is kept only where it overlaps none of the tabs that were not moved, so it never
+/// pushes one of them out. The others are counted in `dropped`, so kept + dropped = the number of
+/// centres given.
 TabPlacement fitTabs(const ArcLengthPath& path, std::vector<double> centres, double footprint,
                      const std::vector<double>& keepClear = {}, double minGap = kMinTabGap,
                      double moveMargin = 0.0);
