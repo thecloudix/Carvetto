@@ -373,8 +373,7 @@ Acceptance criteria:
   2. Tests at −r, −r − 1e-9, −r − 1 for Inside/Outside/On/Left/Right, end mill and V-bit, with and without a separate last pass.
   3. ADR-0016 records the rule; output for allowance ≥ −r unchanged (byte-identical to the T-0127 merge).
 
-### T-0131 Toolpath scaling and index residuals of T-0123   [status: blocked]
-(Unblocks when T-0123 merges.)
+### T-0131 Toolpath scaling and index residuals of T-0123   [status: ready]
 Phase: 1   Module: core/toolpath   Depends on: T-0123   ADR: 0018
 Goal: Found by the T-0123 coder and verifiers (harness t0123v1/, t0123v2/). (a) `BoxIndex` drops non-finite boxes when no box in the set is finite (constructor returns on `sizes.empty()` before `big_` is filled): `BoxIndex({Box2{{-1e308,0},{1e308,1}}}).query(Box2{{0,0},{1,1}})` returns {} (brute force {0}); same for an infinite box alone and `containing`. Driver t0123v2/bi3.cpp. (b) ADR-0017 §9 still names the removed `toolpath/pocket_ramp.hpp`; box_index.hpp comment omits the 1e-9 floor. (c) Raster zig-zag linking is quadratic (1,000-tooth comb within the caps: 6–14 s). (d) Profile with a separate last pass scales 4.2× per doubling (16 s → 69 s at 1,250 → 2,500 vectors): finishing-to-roughing tab matching compares every pair. (e) Pocket with a rest tool on a text page scales ~3× per doubling (2.3 / 7.5 / 22 s at 1,250 / 2,500 / 5,000 vectors; Clipper2 sweeps). (f) Tabs on 5,000 vectors take 17 s (linear but slow).
 Acceptance criteria:
@@ -396,7 +395,7 @@ Goal: "T-0004 AC3" in `open_offset_chains_test.cpp` asserts a wall-clock bound (
 Acceptance criteria:
   1. The test measures CPU time or a ratio; it passes 20× under `ctest -j8 --repeat until-fail:20`.
 
-### T-0123 Toolpath API alignment: shared ramps, Tool → pass tool conversion, result types   [status: in-progress]
+### T-0123 Toolpath API alignment: shared ramps, Tool → pass tool conversion, result types   [status: done (2026-11-01, #25)]
 Phase: 1   Module: core/toolpath   Depends on: T-0120, T-0121
 Goal: Profile (T-0120) and Pocket (T-0121) were built in parallel. Unify: one ramp module (Profile's `ramp_entry` vs Pocket's `pocket_ramp`), one result shape (`ProfileResult`/`PocketResult` with diagnostics), a `tooling::Tool` + `CuttingData` → pocket tool conversion (feeds, stepover, pass depth), and shared ordering/linking where it overlaps. Add a spatial index where vector-pair checks are O(n²) (Profile grouping/nesting/clearance; Pocket inset guard) so text-heavy jobs with thousands of vectors stay fast.
 Acceptance criteria:
@@ -411,7 +410,7 @@ Owner decisions 2026-10-31/11-01: run heavy verification one task at a time (mac
 
 Owner decisions 2026-10-26 for T-0120/T-0121 (record in ADR-0016/0017): tab length = material left (raised path = length + tool diameter); separate last pass runs after all roughing; nested closed vectors form a region (inner = hole); climb assumes M3 (clockwise) spindle, ramps at feed rate, 3D tabs ramp at 45°, leads only on each cut's first entry and last exit, left-to-right ordering column by column — accepted as proposed; Pocket Profile Pass First/Last/None applies to the Offset strategy too (not only Raster); when a lead-in does not fit at the chosen start, Profile moves the start along the vector and warns (StartMoved).
 
-### T-0122 Headless CLI: carvetto-cli   [status: blocked — waits for T-0123 (owner 2026-11-01)]
+### T-0122 Headless CLI: carvetto-cli   [status: in-progress]
 Phase: 1   Module: app/cli   Depends on: T-0100, T-0110, T-0120, T-0121
 Goal: A small console program `carvetto-cli` (no Qt): `import <dxf> → .carv`, `toolpath profile|pocket <params.json> <in.carv> <out.carv>`, `post <post.pp> <in.carv> <out.nc>`, `info`. Used by CI for the end-to-end test and by users for scripting.
 Acceptance criteria:
