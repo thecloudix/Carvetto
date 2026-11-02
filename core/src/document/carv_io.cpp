@@ -1896,11 +1896,11 @@ DecodedToolpath decodeToolpath(JsonReader& r, const Path& p) {
                 } else if (tk == "tool_number") {
                     tp.tool.toolNumber = readInt(r, tf, kIntMin, kIntMax);
                 } else if (tk == "diameter") {
-                    tp.tool.diameter = readPositive(r, tf);
+                    tp.tool.diameter = readDouble(r, tf);
                 } else if (tk == "feed_rate") {
-                    tp.tool.feedRate = readPositive(r, tf);
+                    tp.tool.feedRate = readDouble(r, tf);
                 } else if (tk == "plunge_rate") {
-                    tp.tool.plungeRate = readPositive(r, tf);
+                    tp.tool.plungeRate = readDouble(r, tf);
                 } else if (tk == "spindle_speed") {
                     tp.tool.spindleSpeed = readDouble(r, tf);
                 } else {
@@ -1942,6 +1942,18 @@ DecodedToolpath decodeToolpath(JsonReader& r, const Path& p) {
     }
     for (const char* key : {"id", "name", "operation", "params", "selection", "tool"}) {
         rec.require(key);
+    }
+    if (out.cacheMember) {
+        // A toolpath with computed moves goes to the post: its tool must be real (T-0134). A record
+        // without moves may keep a default (zero) snapshot until it is calculated (ADR-0021 §3).
+        const Path toolPath = p.field("tool");
+        for (const auto& [value, key] : {std::pair{tp.tool.diameter, "diameter"},
+                                         std::pair{tp.tool.feedRate, "feed_rate"},
+                                         std::pair{tp.tool.plungeRate, "plunge_rate"}}) {
+            if (!std::isfinite(value) || !(value > 0.0)) {
+                fail(toolPath.field(key), "must be a finite number greater than zero for a toolpath with computed moves");
+            }
+        }
     }
     const auto where = [&p, &tp]() { return p.str() + " (id " + std::to_string(tp.id.value) + ")"; };
     ToolpathOperation op = ToolpathOperation::Profile;
@@ -2853,14 +2865,16 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
         json toolpaths = json::array();
         for (std::size_t i = 0; i < doc.toolpaths().size(); ++i) {
             const ToolpathRecord& tp = doc.toolpaths()[i];
-            // The loader refuses these (T-0134); say so here with the toolpath's name.
+            // The loader refuses these for a toolpath with computed moves (T-0134); say so here
+            // with the toolpath's name. Uncomputed records may keep a default snapshot.
             for (const auto& [value, what] : {std::pair{tp.tool.diameter, "diameter"},
                                               std::pair{tp.tool.feedRate, "feed rate"},
                                               std::pair{tp.tool.plungeRate, "plunge rate"}}) {
-                if (!std::isfinite(value) || !(value > 0.0)) {
+                if (tp.hasMoves() && (!std::isfinite(value) || !(value > 0.0))) {
                     return CarvError{CarvError::Code::InvalidContent,
                                      "toolpath '" + tp.name + "' (#" + std::to_string(tp.id.value) + "): tool " +
-                                         what + " must be a finite number greater than zero"};
+                                         what + " must be a finite number greater than zero for a toolpath with "
+                                                "computed moves"};
                 }
             }
             std::string member;
