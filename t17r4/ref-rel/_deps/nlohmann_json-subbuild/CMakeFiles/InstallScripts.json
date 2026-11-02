@@ -1,7 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"/home/chris/wt-T0017/build-verify2/h/ref-rel/_deps/nlohmann_json-subbuild/cmake_install.cmake"
-	],
-	"Parallel" : false
-}
