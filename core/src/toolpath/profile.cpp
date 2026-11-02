@@ -1755,7 +1755,7 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
 // box (0.05 mm cells, coarser only beyond 4 million of them) marks the cells within the tab-layer
 // radius + 2 µm of an open tool position (every 0.05 mm along every cut of both passes, outside the
 // kept raised stretches, with their exact ends) cut; uncut cells not joined (4-neighbour) to the
-// frame form loose pieces, and each of 0.05 mm² or more, thicker than 0.05 mm somewhere, is
+// frame form loose pieces, and each of 0.04 mm² or more, thicker than 0.05 mm somewhere, is
 // reported against the vector of the nearest cut (at most five per vector, then a count of the
 // rest). Tool positions are kept sorted
 // by x, so each raster only stamps the positions near its own box; most cuts are answered exactly
@@ -1816,8 +1816,8 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
         // Exact answer without the raster: the material the cuts leave near the loop is what the
         // bands of the loop and of every cut near it (both passes; each band the path grown by the
         // radius on both sides) leave, and an enclosed piece is a hole of their union. No hole
-        // lying inside the box, or one that stays one when the bands grow 0.03 mm more and a cut
-        // that keeps a tab (which the tab check found joined to the piece beside it): no loose
+        // lying inside the box, or one that stays one when the bands grow 0.03 mm more with a kept
+        // tab within reach of it (whose check joined it to the pieces beside the tab): no loose
         // piece here.
         {
             const geometry::Box2 around = box.inflated(rt + 0.1);
@@ -1852,7 +1852,28 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
                 return holes;
             };
             const std::vector<Contour> holes = enclosed(reachCut);
-            if (holes.empty() || (holes.size() == 1 && !c.tabs.empty() && enclosed(reachCut + 0.03).size() == 1)) {
+            // A kept tab (of any cut near) within reach of the piece: its check joined every piece
+            // near it, this one included.
+            auto tabBeside = [&](const Contour& hole) {
+                const double reachTab = rt + 0.3;
+                const geometry::Box2 hb = hole.bounds();
+                for (const Cut* o : nearCuts) {
+                    for (const TabSpan& t : o->tabs) {
+                        const int nt = std::max(1, static_cast<int>(std::ceil((t.b - t.a) / 0.1)));
+                        for (int k = 0; k <= nt; ++k) {
+                            const Vec2 q = o->walk.pointAt(t.a + (t.b - t.a) * k / nt);
+                            if (q.x < hb.min.x - reachTab || q.x > hb.max.x + reachTab || q.y < hb.min.y - reachTab ||
+                                q.y > hb.max.y + reachTab) {
+                                continue;
+                            }
+                            if (geometry::closestPoint(hole, q).distance <= reachTab) return true;
+                        }
+                    }
+                }
+                return false;
+            };
+            if (holes.empty() ||
+                (holes.size() == 1 && enclosed(reachCut + 0.03).size() == 1 && tabBeside(holes.front()))) {
                 continue;
             }
             // No cut near keeps a tab: every enclosed piece comes free (attributed to the loop
@@ -1863,7 +1884,7 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
                 const std::vector<Contour> thickHoles = enclosed(reachCut + 0.025);
                 for (const Contour& hole : holes) {
                     const double pieceArea = geometry::area(hole);
-                    if (pieceArea < 0.05) continue;
+                    if (pieceArea < 0.04) continue;
                     if (std::none_of(thickHoles.begin(), thickHoles.end(),
                                      [&](const Contour& t) { return t.bounds().intersects(hole.bounds()); })) {
                         continue;
@@ -1952,7 +1973,7 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
                 const std::size_t k = ras.index(i, j);
                 if (seen[k] || cut[k]) continue;
                 const double pieceArea = static_cast<double>(flood(k)) * hh * hh;
-                if (pieceArea < 0.05 || !pieceThick) continue;
+                if (pieceArea < 0.04 || !pieceThick) continue;
                 // Attribute it to the vector of the nearest cut.
                 const Vec2 x = ras.centre(i, j);
                 double best = std::numeric_limits<double>::infinity();

@@ -2560,6 +2560,37 @@ TEST_CASE("Sided tabs: survival judged by the cut at the tab layer; every loose 
          "L 0x1.27dac3b86fe27p+2 -0x1.3c0cc090758c1p+2 0x1.c709af18f91cdp+4 0x0p+0\n"
          "P 0x1.8p+2 60 -0x1.ec3605e72f71cp+0 1 1 0x0p+0 0x1.7358c5e35d2c3p+2 0x1.9b26c5175da51p+2 0x0p+0 0x1.4p+2 1 0x1.9ff6a36e834b4p-1 0 1 0x1.07879169c778cp+0 0x1.874c7a78c7c96p-1 0 4 0x1.9f5fe9650ef28p+5 0x0p+0 0 1 0x0p+0 0 0x1.ad01e45e5c4efp+3 0 0 0x1.0b2222517329cp-2 0x1.1b2c5d17ba15ep+3 0x1.bcf4e84861c18p-3 0x1.81c1da61e3cb8p+0 1 0x1.4bc50faaae157p+0 1 0 0x1.ec58f71c47032p+3 0x0p+0 1 8 0 0 0 0 -0x1.cf61936ff8c0ap+4 -0x1.5ce4faf98fe78p+3 0x1p+1\n"
          "K 1 0\n"         , 0, 4},
+        // One enclosed piece that no kept tab is beside (the loop's one tab holds elsewhere): reported.
+        {"m1_302014_9",
+         "C 1\n"
+         "L 0x1.31f9b584fcaeep+3 -0x1.5eb6d48d58263p+3 0x1.36c1676408ab3p+1 0x1.cae5759116b1bp+3\n"
+         "A -0x1.c892b757f5083p+1 0x1.94ce250f376bfp+3 0x1.8e9fedcb343b9p+2 0x1.196e6e8a795aap-2 -0x1.6ef1e772f3a63p+1 0\n"
+         "L -0x1.31f9b584fcaeep+3 0x1.5eb6d48d58263p+3 -0x1.36c1676408ab3p+1 -0x1.cae5759116b1bp+3\n"
+         "A 0x1.c892b757f5083p+1 -0x1.94ce250f376bfp+3 0x1.8e9fedcb343b9p+2 -0x1.6ef1e772f3a63p+1 0x1.196e6e8a795abp-2 0\n"
+         "C 1\n"
+         "L 0x1.cdf2d31028ef4p+5 -0x1.81552d859e26fp+1 0x1.4d85093a260c4p+5 0x1.5448c8305c9e6p+0\n"
+         "L 0x1.4d85093a260c4p+5 0x1.5448c8305c9e6p+0 0x1.29ea041e47e19p+5 0x1.11974b1b26c22p+4\n"
+         "L 0x1.29ea041e47e19p+5 0x1.11974b1b26c22p+4 0x1.08ce16f3d5478p+5 0x1.22427c05a6392p+0\n"
+         "L 0x1.08ce16f3d5478p+5 0x1.22427c05a6392p+0 0x1.2e62bb9475be8p+4 -0x1.81552d859e26ap+1\n"
+         "L 0x1.2e62bb9475be8p+4 -0x1.81552d859e26ap+1 0x1.0585a0f858f2bp+5 -0x1.fe2a59933fb68p+2\n"
+         "L 0x1.0585a0f858f2bp+5 -0x1.fe2a59933fb68p+2 0x1.29ea041e47e19p+5 -0x1.542f636465e8fp+4\n"
+         "L 0x1.29ea041e47e19p+5 -0x1.542f636465e8fp+4 0x1.54a4612df075bp+5 -0x1.15d02522edfa6p+3\n"
+         "L 0x1.54a4612df075bp+5 -0x1.15d02522edfa6p+3 0x1.cdf2d31028ef4p+5 -0x1.81552d859e26fp+1\n"
+         "P 0x1.8p+3 0 -0x1.7c1a5dfa1a37cp+2 0 0 0x0p+0 0x1.750e33fb06dcfp+1 0x1.065a286a79a69p+0 0x0p+0 0x1.4p+2 0 0x1.371f320f45b5dp-1 1 1 0x1.2251c73b7ce62p+0 0x1.1c87d2060fb7cp+1 1 8 0x1.2b7890ff28d15p+5 0x0p+0 0 0 0x0p+0 1 0x1.c9347d512eaf1p+3 0 0 0x1.c7eacf9a01509p-2 0x1.de02f51eb055bp+3 0x1.b91ee8b07361bp-1 0x1.c2713c9dc3511p+2 0 0x1.48e201a17371cp+0 0 0 0x1.67259b1808192p+2 0x0p+0 0 5 0 0 0 0 0x1.8fd97e40b5d52p+5 -0x1.9f68161677a18p+4 0x1p+1\n"
+         "K 0 0\n"         , 2, 1},
+        // A small loose piece (about 0.05 square mm) at a pocket corner: reported.
+        {"m2_303014_28",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.084762f0ae4fap+5 0x0p+0\n"
+         "L 0x1.084762f0ae4fap+5 0x0p+0 0x1.084762f0ae4fap+5 0x1.084762f0ae4fap+5\n"
+         "L 0x1.084762f0ae4fap+5 0x1.084762f0ae4fap+5 0x1.93e670831b88dp+4 0x1.084762f0ae4fap+5\n"
+         "L 0x1.93e670831b88dp+4 0x1.084762f0ae4fap+5 0x1.93e670831b88dp+4 0x1.f2a155790459dp+2\n"
+         "L 0x1.93e670831b88dp+4 0x1.f2a155790459dp+2 0x1.f2a155790459dp+2 0x1.f2a155790459dp+2\n"
+         "L 0x1.f2a155790459dp+2 0x1.f2a155790459dp+2 0x1.f2a155790459dp+2 0x1.084762f0ae4fap+5\n"
+         "L 0x1.f2a155790459dp+2 0x1.084762f0ae4fap+5 0x0p+0 0x1.084762f0ae4fap+5\n"
+         "L 0x0p+0 0x1.084762f0ae4fap+5 0x0p+0 0x0p+0\n"
+         "P 0x1.8p+2 0 -0x1.8e87d918b99d9p+0 1 0 0x0p+0 0x1.9da97e7631fe9p+2 0x1.4a8856dc1a03ap+0 0x0p+0 0x1.4p+2 1 0x1.a3800b0a070a8p-6 1 1 0x1.5727393b8a41bp+1 0x1.9cca2f16ecea1p+1 1 4 0x1.315ce81f0af2dp+5 0x0p+0 1 0 0x0p+0 3 0x1.26cba71f06d8p+4 1 1 0x1.09a3b1dd14939p-1 0x1.00512dbc0e0bcp+2 0x1.f0da4080b2992p-1 0x1.02472f956c8fp+3 0 0x1.10705aa6e84cbp+0 1 0 0x1.30b2522bdc40cp+4 0x0p+0 0 5 0 0 0 0 -0x1.c5ba342557c67p+4 0x1.37265a711219cp+5 0x1p+1\n"
+         "K 0 0\n"         , 4, 1},
         // A roughing cover shorter than its finishing stretch (last pass 0.001 mm): only the tabs
         // that hold are kept (a quick answer once kept one the roughing cut severs).
         {"m0_301012_20",
