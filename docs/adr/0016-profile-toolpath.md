@@ -199,8 +199,8 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     joins them. **Loose pieces.** A kept tab holds the material next to it, but a piece elsewhere
     (the kerf consuming a neck of the part, a remnant between the finishing and roughing kerfs at a
     corner) may have no tab: after the tab check, whenever tabs are on (also when every tab was left
-    out), every piece of material inside a closed primary cut must still join the outside through
-    a kept tab. Exactly, first: the material the cuts leave near the loop is what the bands of the
+    out), pieces of material inside a closed primary cut that join the outside through no kept tab
+    are looked for and reported, on a best-effort basis (known gaps below). First: the material the cuts leave near the loop is what the bands of the
     loop and of every cut near it (both passes; each the path grown by the radius on both sides)
     leave, and an enclosed piece is a hole of their union (offsets and a union). No hole inside the
     loop's box, or one hole that stays one when the bands grow 0.03 mm more and has a kept tab (of
@@ -209,17 +209,20 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     reported as it is. Otherwise a raster over the loop's box
     (0.05 mm cells, coarser only beyond 4 million) stamps the open tool positions (as above, with
     the kept tabs' exact ends, sorted by x so a raster stamps only those near it), and uncut
-    components not joined to the frame are loose. Each loose piece of 0.04 mm² or more, thicker
+    components not joined to the frame are loose. A loose piece of 0.04 mm² or more, thicker
     than 0.05 mm somewhere (a hairline sliver between two kerfs does not count), is reported
     against the vector of the loop that contains it, or else of the nearest cut ("a piece of
     material inside the cut (about A square mm) is not held by any kept tab and comes free"), at
-    most five per vector, the last saying how many smaller ones remain. Leads are not part of this
-    check (a lead crossing the part is a separate issue), and pieces between neighbouring vectors
-    that reach out of the loop's box are not seen. Cost: on 500 close rectangles with a separate
-    last pass, allowance −1 (the slowest page measured: neighbouring kerfs overlap, so nearly every
-    tab goes to the raster and holds nothing), the profile takes about 1.22 × main's time (14.4 s
-    against 11.8 s); On the vector, 500 small shapes, about 0.3 s, no slower than main (other pages within a
-    few per cent of main). So a short tab centred on a sharp
+    most five per vector, the last saying how many smaller ones remain. Known gaps (follow-up card
+    T-0135): reports of loose pieces whose rounded areas are equal are merged by the diagnostics
+    de-duplication in run() (a symmetric H shape reports one of its pieces); a piece whose bounding
+    box overlaps an already reported piece's (one in another's concave notch) is taken for the
+    same piece and skipped; leads are not part of this check (a lead crossing the part is a
+    separate issue); and pieces between neighbouring vectors that reach out of the loop's box are
+    not seen. Cost: about 1.2–1.3 × main on the dense negative-allowance page (500 close
+    rectangles, separate last pass, allowance −1: neighbouring kerfs overlap, so nearly every tab
+    goes to the raster and holds nothing); On the vector, 500 small shapes, about 0.3 s, no slower
+    than main (other pages within a few per cent of main). So a short tab centred on a sharp
     turn of the cut — a convex corner or spike tip, an inside corner (Inside of a square), a gear
     root, the tip of a narrow arm — where the tool at the two ends of the raised stretch seals the
     tab's material off from the waste, is dropped and reported (On a 30 × 30 square with a 6 mm
