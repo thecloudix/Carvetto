@@ -1,0 +1,14 @@
+SIDE=0 ALLOW=-1.0 perf2 500 1 2: n 500 sep 1 kind 2: moves 23256 diags 1853 (tab diags 1353) cpu 24.77s wall 30.25s
+SIDE=0 ALLOW=-1.0 perf2_old 500 1 2: n 500 sep 1 kind 2: moves 23256 diags 1000 (tab diags 500) cpu 20.67s wall 36.49s
+SIDE=2 ALLOW=0 perf2 500 0 0: n 500 sep 0 kind 0: moves 16250 diags 0 (tab diags 0) cpu 0.49s wall 0.70s
+SIDE=2 ALLOW=0 perf2_old 500 0 0: n 500 sep 0 kind 0: moves 16250 diags 0 (tab diags 0) cpu 0.55s wall 0.73s
+SIDE=2 ALLOW=0 perf2 500 1 0: n 500 sep 1 kind 0: moves 31598 diags 0 (tab diags 0) cpu 5.67s wall 8.15s
+SIDE=2 ALLOW=0 perf2_old 500 1 0: n 500 sep 1 kind 0: moves 31598 diags 0 (tab diags 0) cpu 5.68s wall 9.61s
+SIDE=2 ALLOW=0.3 perf2 500 0 0: n 500 sep 0 kind 0: moves 20468 diags 0 (tab diags 0) cpu 0.61s wall 1.30s
+SIDE=2 ALLOW=0.3 perf2_old 500 0 0: Terminated                 SIDE=$1 ALLOW=$2 ./bin/$b $3 $4 $5
+SIDE=0 ALLOW=-0.5 perf2 500 0 1: n 500 sep 0 kind 1: moves 36982 diags 500 (tab diags 0) cpu 14.86s wall 14.86s
+SIDE=0 ALLOW=-0.5 perf2_old 500 0 1: n 500 sep 0 kind 1: moves 36982 diags 500 (tab diags 0) cpu 13.95s wall 13.95s
+SIDE=0 ALLOW=0 perf2 500 1 2: n 500 sep 1 kind 2: moves 24223 diags 977 (tab diags 500) cpu 9.07s wall 9.07s
+SIDE=0 ALLOW=0 perf2_old 500 1 2: n 500 sep 1 kind 2: moves 24223 diags 977 (tab diags 500) cpu 11.28s wall 11.37s
+SIDE=1 ALLOW=0 perf2 500 0 0: n 500 sep 0 kind 0: moves 17250 diags 250 (tab diags 0) cpu 3.59s wall 4.72s
+SIDE=1 ALLOW=0 perf2_old 500 0 0: n 500 sep 0 kind 0: moves 17250 diags 250 (tab diags 0) cpu 3.59s wall 5.04s

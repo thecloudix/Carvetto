@@ -1,0 +1,39 @@
+401000 27 | branch: CNT free04 3 rep 2 | nolead: CNT free04 3 rep 2 | nolead+fixes: ok
+401000 7 | branch: CNT free04 2 rep 1 | nolead: CNT free04 2 rep 1 | nolead+fixes: ok
+401002 0 | branch: CNT free04 3 rep 1 | nolead: CNT free04 3 rep 1 | nolead+fixes: ok
+401002 18 | branch: CNT free04 2 rep 0 | nolead: ok | nolead+fixes: ok
+401002 32 | branch: CNT free04 0 rep 1 | nolead: ok | nolead+fixes: ok
+401003 14 | branch: CNT free04 1 rep 0 | nolead: CNT free04 1 rep 0 | nolead+fixes: CNT free04 1 rep 0: 0.045@(42.57,20.02)]
+401003 22 | branch: CNT free04 1 rep 0 | nolead: ok | nolead+fixes: ok
+401004 1 | branch: CNT free04 2 rep 0 | nolead: ok | nolead+fixes: ok
+401004 4 | branch: CNT free04 2 rep 1 | nolead: ok | nolead+fixes: ok
+401004 9 | branch: CNT free04 3 rep 2 | nolead: ok | nolead+fixes: ok
+401005 15 | branch: CNT free04 3 rep 2 | nolead: CNT free04 3 rep 2 | nolead+fixes: ok
+401007 3 | branch: CNT free04 2 rep 1 | nolead: CNT free04 2 rep 1 | nolead+fixes: ok
+401007 45 | branch: CNT free04 2 rep 1 | nolead: CNT free04 2 rep 1 | nolead+fixes: ok
+401008 18 | branch: CNT free04 2 rep 1 | nolead: ok | nolead+fixes: ok
+401010 32 | branch: CNT free04 2 rep 1 | nolead: CNT free04 2 rep 1 | nolead+fixes: ok
+401010 46 | branch: CNT free04 1 rep 0 | nolead: ok | nolead+fixes: ok
+401011 48 | branch: CNT free04 1 rep 0 | nolead: ok | nolead+fixes: ok
+401012 6 | branch: CNT free04 2 rep 1 | nolead: CNT free04 2 rep 1 | nolead+fixes: ok
+401013 31 | branch: CNT free04 2 rep 1 | nolead: ok | nolead+fixes: ok
+401013 48 | branch: CNT free04 1 rep 0 | nolead: ok | nolead+fixes: ok
+401014 11 | branch: CNT free04 7 rep 1 | nolead: CNT free04 2 rep 1 | nolead+fixes: ok
+401014 37 | branch: CNT free04 4 rep 3 | nolead: CNT free04 4 rep 3 | nolead+fixes: ok
+402000 25 | branch: CNT free04 2 rep 1 | nolead: CNT free04 2 rep 1 | nolead+fixes: ok
+402001 10 | branch: CNT free04 2 rep 1 | nolead: CNT free04 2 rep 1 | nolead+fixes: ok
+402003 33 | branch: CNT free04 2 rep 1 | nolead: CNT free04 2 rep 1 | nolead+fixes: ok
+402003 41 | branch: CNT free04 2 rep 1 | nolead: CNT free04 2 rep 1 | nolead+fixes: ok
+402011 30 | branch: CNT free04 2 rep 1 | nolead: CNT free04 2 rep 1 | nolead+fixes: ok
+402012 3 | branch: CNT free04 3 rep 2 | nolead: CNT free04 3 rep 2 | nolead+fixes: ok
+402012 7 | branch: CNT free04 1 rep 0 | nolead: CNT free04 1 rep 0 | nolead+fixes: CNT free04 1 rep 0: 0.136@(15.54,-11.95)]
+402013 18 | branch: CNT free04 2 rep 1 | nolead: CNT free04 2 rep 1 | nolead+fixes: ok
+402013 5 | branch: CNT free04 2 rep 1 | nolead: CNT free04 2 rep 1 | nolead+fixes: ok
+402015 12 | branch: CNT free04 2 rep 1 | nolead: CNT free04 2 rep 1 | nolead+fixes: ok
+403003 32 | branch: CNT free04 2 rep 1 | nolead: CNT free04 2 rep 1 | nolead+fixes: CNT free04 2 rep 1: 57.387@(42.91,-3.53) 0.049@(33.12,-8.79)]
+403004 35 | branch: CNT free04 2 rep 1 | nolead: CNT free04 2 rep 1 | nolead+fixes: ok
+403006 31 | branch: CNT free04 8 rep 5 | nolead: CNT free04 8 rep 5 | nolead+fixes: CNT free04 8 rep 5: 12.616@(8.53,7.75) 291.535@(31.23,15.81) 32.639@(8.22,18.67) 2.388@(15.23,18.01) 33.324@(24.99,27.09
+403007 17 | branch: CNT free04 5 rep 4 | nolead: CNT free04 5 rep 4 | nolead+fixes: ok
+403012 46 | branch: CNT free04 0 rep 1 | nolead: ok | nolead+fixes: ok
+403013 22 | branch: CNT free04 1 rep 0 | nolead: ok | nolead+fixes: ok
+403015 11 | branch: CNT free04 3 rep 1 | nolead: CNT free04 3 rep 1 | nolead+fixes: ok

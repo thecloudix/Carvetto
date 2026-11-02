@@ -30,3 +30,4 @@ Original locations (scripts may hard-code these; adjust paths when reusing):
 - t0127c/round3/: T-0127 coder round-3 harness/results.
 - t0134v1/: T-0134 verifier (FAIL d7c2232, quadratic params nesting memory): pa.cpp parser control chars, adv3b.cpp, tu.cpp TOOLS_USED fuzzer, mutrun.py, mkh.py (crafted tool/feed/dwell). Deep-nesting repro: python one-liner in the report (60k nested arrays).
 - t0132v2/: T-0132 round-2 verifier (FAIL a01c130): consist.cpp save/load consistency probes (modes count/nomoves/interimextra/strings/dupsel/movebudget/cap/zero), peak2.cpp, fuzz2.cpp (load->save->load), big2.cpp, mig.cpp, combo.cpp, build.sh.
+- t0127v3/: T-0127 round-3 verifier (FAIL 5ff8a09 on AC3 loose-piece under-reporting): wsf8.cpp/wsf8v.cpp flood oracle (CNT, TABS), inst/profile_mut.cpp (MUT_KEEP, FIX_BOX, FIX_MSG), mkh.cpp/mkabc.cpp generators, repro/ scenes.
