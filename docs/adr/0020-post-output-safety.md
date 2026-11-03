@@ -116,13 +116,19 @@ through, so no post, block or tag can bypass them.
      such a job (its header and footer cut nothing).
    - **Toolpaths that run with the spindle off** (owner decision 2026-11-03, T-0154). The rule
      above has exactly one exemption: a toolpath whose tool snapshot has `spindleOff` set. Only
-     Quick Engrave sets it, for diamond-drag tools (whose snapshot then has spindle speed 0); the
-     native record allows it on engrave records only (the loader, `saveCarv` and the toolpath
-     commands refuse it elsewhere), so Profile, Pocket, Drill and Quick Engrave with any other
+     Quick Engrave sets it, for diamond-drag tools (whose snapshot then has spindle speed 0 and
+     records `toolType` = `diamond_drag`); the native record allows it only on engrave records
+     whose snapshot records that tool type (the loader, `saveCarv` and the toolpath commands
+     refuse it elsewhere, ADR-0021 §2), and the interpreter refuses a spindle-off toolpath whose
+     snapshot is not a diamond drag tool's as a second guard (`toolpath 'X' is marked to run with
+     the spindle off, but its tool 'Y' is not a diamond drag tool`). `Document::insertToolpath`
+     is an internal API without these checks; the guards are at the commands, save, load and the
+     post, so Profile, Pocket, Drill and Quick Engrave with any other
      tool stay under the rule; a test posts each of them with spindle speed 0 through every
      shipped post and expects the refusal. For such a toolpath the interpreter:
-     - needs the post's `SPINDLE_OFF_PAUSE` block; a post without it refuses the run before
-       writing anything (`toolpath 'Drag' runs with the spindle off (tool 'X' must not turn), but
+     - needs the post's `SPINDLE_OFF_PAUSE` block, and that block must write an `M5` and an `M0`
+       as template text outside comments (read with the tokeniser below); a post without it, or
+       with an empty or M5-less or M0-less block, refuses the run before writing anything (`toolpath 'Drag' runs with the spindle off (tool 'X' must not turn), but
        the post has no SPINDLE_OFF_PAUSE block to stop the spindle and pause for the operator
        before it`). Jobs without such toolpaths never use the block.
      - writes HEADER (when it is the first toolpath), TOOLCHANGE or NEW_SEGMENT as usual but
@@ -138,10 +144,15 @@ through, so no post, block or tag can bypass them.
        as their manual tool-change stop. On every shipped post the pause is `M0`, also on Mach3,
        Mach4 and LinuxCNC, whose tool change is `M6`: `M6` is a tool change that a controller
        may be set to ignore, `M0` is the program stop every one of them honours.
-     - refuses `[S]` anywhere else while the toolpath is written (move blocks, the pause), and,
+     - refuses `[S]` anywhere else while the toolpath is written (move blocks, the pauses), and,
        as a second guard, any written line whose G-code outside comments holds a spindle start
-       or speed word (`M3`, `M4`, `M03`, `S…`: a letter at the start of a word directly followed
-       by a number), whatever the post's template text says.
+       or speed word, whatever the post's template text says. Words are read the way RS274/NGC
+       controllers and Grbl read them: spaces and tabs are ignored everywhere, letters are
+       case-insensitive, a value may have a sign or a leading `.`, and every letter followed by a
+       number is a word wherever it stands (`M 3`, `M<TAB>03`, `m4`, `M+3`, `S 1000`, `S.5`,
+       `G0M3`, `/M3`, `N10M3`, and `M[T]` with tool 3 are all refused). Letters without a value
+       (Marlin's `M0 Drag tool 3 spindle off` message) are not words. The same tokeniser decides
+       which `[S]` lines are spindle-only and whether the pause blocks write `M5`/`M0`.
      - treats a change between a spindle-off and a spinning toolpath as a tool change even when
        the tool number and name are equal, so the spindle restarts only through TOOLCHANGE +
        SPINDLE_ON (and its `[S]` > 0 check).
@@ -152,7 +163,7 @@ through, so no post, block or tag can bypass them.
        before FOOTER (director decision 2026-11-03: the next program could otherwise start a
        spindle that is still locked). The block is
        written in the drag toolpath's context (`[T]`, `[TOOLNAME]` are the drag tool's) and is
-       under the same spindle-word guards. The shipped posts write `M5`, safe Z, a comment "Diamond
+       under the same spindle-word guards. It must write an `M0` (as above; `M5` is not required). The shipped posts write `M5`, safe Z, a comment "Diamond
        drag tool N done: unlock the spindle before it starts again", `M0` (Marlin: `M0 Unlock
        spindle then resume`) and safe Z. A post without the block refuses every job with a
        spindle-off toolpath that needs it: a spinning toolpath after a spindle-off one

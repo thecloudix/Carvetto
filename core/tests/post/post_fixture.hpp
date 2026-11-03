@@ -104,6 +104,7 @@ inline toolpath::ToolSnapshot fixtureDragTool() {
     t.plungeRate = 400.0;
     t.spindleSpeed = 0.0;
     t.spindleOff = true;
+    t.toolType = toolpath::kDiamondDragToolType;
     return t;
 }
 

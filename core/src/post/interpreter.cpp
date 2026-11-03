@@ -153,42 +153,70 @@ bool isDigit(char c) {
     return c >= '0' && c <= '9';
 }
 
-/// Length of the number starting at `i` (digits with an optional decimal part); 0 when none.
-std::size_t numberLength(std::string_view s, std::size_t i) {
-    std::size_t j = i;
-    while (j < s.size() && (isDigit(s[j]) || s[j] == '.')) {
-        ++j;
+char upperLetter(char c) {
+    return c >= 'a' && c <= 'z' ? static_cast<char>(c - 'a' + 'A') : c;
+}
+
+/// One word of live G-code as a controller reads it: an address letter and its value.
+struct GWord {
+    char letter;       ///< upper case
+    double value;      ///< signed value
+    std::string text;  ///< as written, without spaces, e.g. "M03", "S.5", "M+3"
+};
+
+/// The words of live (comment-free) G-code, read the way RS274/NGC controllers and Grbl read
+/// them (T-0154): spaces and tabs are ignored everywhere, so `M 3`, `M<TAB>03` and `S 1000` are
+/// words; a value may have a sign and a leading `.` (`M+3`, `S.5`); letters are case-insensitive.
+/// A letter without a value (message text such as Marlin's `M0 Drag tool 3 spindle off`) is
+/// skipped, so every letter followed by a number counts, wherever it stands.
+std::vector<GWord> gcodeWords(std::string_view code) {
+    std::string c;
+    for (const char ch : code) {
+        if (ch != ' ' && ch != '\t') {
+            c += ch;
+        }
     }
-    return j > i && isDigit(s[i]) ? j - i : 0;
+    std::vector<GWord> words;
+    for (std::size_t i = 0; i < c.size(); ++i) {
+        if (!isLetter(c[i])) {
+            continue;
+        }
+        std::size_t j = i + 1;
+        bool negative = false;
+        if (j < c.size() && (c[j] == '+' || c[j] == '-')) {
+            negative = c[j] == '-';
+            ++j;
+        }
+        const std::size_t numberStart = j;
+        bool digit = false;
+        while (j < c.size() && (isDigit(c[j]) || c[j] == '.')) {
+            digit = digit || isDigit(c[j]);
+            ++j;
+        }
+        if (!digit) {
+            continue;
+        }
+        double v = 0.0;
+        const auto r = std::from_chars(c.data() + numberStart, c.data() + j, v);
+        if (r.ec != std::errc{}) {
+            v = 0.0;  // malformed (e.g. "1.2.3"): still a word, its letter is what matters
+        }
+        words.push_back(GWord{upperLetter(c[i]), negative ? -v : v, c.substr(i, j - i)});
+        i = j - 1;
+    }
+    return words;
 }
 
-/// True for an `M` word starting the spindle: M3 / M4 (also M03, M3.0 …).
-bool isSpindleStartCode(std::string_view number) {
-    double v = 0.0;
-    const auto r = std::from_chars(number.data(), number.data() + number.size(), v);
-    return r.ec == std::errc{} && (v == 3.0 || v == 4.0);
+bool isSpindleStart(const GWord& w) {
+    return w.letter == 'M' && (w.value == 3.0 || w.value == 4.0);
 }
 
-/// The first word in live G-code `code` that starts the spindle or sets a speed (M3, M4, S…),
-/// or "" when there is none (T-0154). A word is a letter at the start of a word (not preceded by
-/// another letter) directly followed by a number, so a message such as Marlin's
-/// `M0 Drag tool 3 spindle off` holds none.
+/// The first word in live G-code `code` that starts the spindle or sets a speed (M3, M4, any S
+/// word), or "" when there is none (T-0154).
 std::string spindleWord(std::string_view code) {
-    for (std::size_t i = 0; i < code.size(); ++i) {
-        const char c = code[i];
-        if (!isLetter(c) || (i > 0 && isLetter(code[i - 1]))) {
-            continue;
-        }
-        const char u = c >= 'a' ? static_cast<char>(c - 'a' + 'A') : c;
-        if (u != 'M' && u != 'S') {
-            continue;
-        }
-        const std::size_t n = numberLength(code, i + 1);
-        if (n == 0) {
-            continue;
-        }
-        if (u == 'S' || isSpindleStartCode(code.substr(i + 1, n))) {
-            return std::string(code.substr(i, n + 1));
+    for (const GWord& w : gcodeWords(code)) {
+        if (w.letter == 'S' || isSpindleStart(w)) {
+            return w.text;
         }
     }
     return {};
@@ -201,35 +229,91 @@ std::string spindleWord(std::string_view code) {
 /// tool change or another code.
 bool spindleOnlyLine(std::string_view line) {
     const std::string code = liveCode(line);
-    std::string_view s(code);
-    std::size_t i = 0;
-    while (i < s.size()) {
-        const char c = s[i];
-        if (detail::isSpace(c)) {
-            ++i;
-        } else if (c == '[') {
-            const std::size_t close = s.find(']', i);
-            if (close == std::string_view::npos) {
+    // Tags become markers: [S] -> '#', [N] -> nothing; any other tag disqualifies the line.
+    std::string rest;
+    for (std::size_t i = 0; i < code.size(); ++i) {
+        if (code[i] == '[') {
+            const std::size_t close = code.find(']', i);
+            if (close == std::string::npos) {
                 return false;
             }
-            const std::string_view tag = s.substr(i + 1, close - i - 1);
-            if (tag != "S" && tag != "N") {
+            const std::string_view tag = std::string_view(code).substr(i + 1, close - i - 1);
+            if (tag == "S") {
+                rest += '#';
+            } else if (tag != "N") {
                 return false;
             }
-            i = close + 1;
-        } else if ((c == 'S' || c == 's') && s.substr(i + 1, 3) == "[S]") {
-            ++i;
-        } else if (c == 'M' || c == 'm') {
-            const std::size_t n = numberLength(s, i + 1);
-            if (n == 0 || !isSpindleStartCode(s.substr(i + 1, n))) {
-                return false;
-            }
-            i += 1 + n;
+            i = close;
         } else {
+            rest += code[i];
+        }
+    }
+    // Every remaining word must be M3/M4; besides words only '#', a literal S before it and spaces.
+    for (const GWord& w : gcodeWords(rest)) {
+        if (!isSpindleStart(w)) {
             return false;
         }
     }
+    std::string stripped;
+    for (const char ch : rest) {
+        if (ch != ' ' && ch != '\t') {
+            stripped += ch;
+        }
+    }
+    for (std::size_t i = 0; i < stripped.size(); ++i) {
+        const char ch = stripped[i];
+        if (ch == '#') {
+            continue;
+        }
+        if (upperLetter(ch) == 'S' && i + 1 < stripped.size() && stripped[i + 1] == '#') {
+            continue;
+        }
+        if (upperLetter(ch) == 'M') {
+            std::size_t j = i + 1;
+            while (j < stripped.size() && (isDigit(stripped[j]) || stripped[j] == '.' || stripped[j] == '+')) {
+                ++j;
+            }
+            if (j == i + 1) {
+                return false;  // a bare M
+            }
+            i = j - 1;
+            continue;
+        }
+        return false;
+    }
     return true;
+}
+
+/// The words a block writes as template text, outside comments and with its tags left out
+/// (used to check that a pause block stops the spindle and pauses).
+std::vector<GWord> blockWords(const PostBlock& block) {
+    std::vector<GWord> out;
+    for (const std::string& line : block.lines) {
+        std::string code = liveCode(line);
+        std::string untagged;
+        for (std::size_t i = 0; i < code.size(); ++i) {
+            if (code[i] == '[') {
+                const std::size_t close = code.find(']', i);
+                i = close == std::string::npos ? code.size() : close;
+                untagged += ' ';
+            } else {
+                untagged += code[i];
+            }
+        }
+        for (GWord& w : gcodeWords(untagged)) {
+            out.push_back(std::move(w));
+        }
+    }
+    return out;
+}
+
+bool hasWord(const std::vector<GWord>& words, char letter, double value) {
+    for (const GWord& w : words) {
+        if (w.letter == letter && w.value == value) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /// What the tags of the block being written refer to.
@@ -284,35 +368,44 @@ class Interpreter {
             }
         }
 
-        // A toolpath that runs with the spindle off (T-0154) needs the post's SPINDLE_OFF_PAUSE
-        // block: without it the post cannot stop the spindle and pause before the toolpath.
-        if (!has("SPINDLE_OFF_PAUSE")) {
+        // A toolpath that runs with the spindle off (T-0154) must be a diamond drag tool's (the
+        // snapshot records it; second guard after the record checks) and needs the post's
+        // SPINDLE_OFF_PAUSE block, which must stop the spindle (M5) and pause (M0).
+        for (const Toolpath* tp : active) {
+            if (tp->tool.spindleOff && tp->tool.toolType != toolpath::kDiamondDragToolType) {
+                return Error{0, "cannot write G-code: toolpath " + quoted(tp->name) +
+                                    " is marked to run with the spindle off, but its tool " + quoted(tp->tool.name) +
+                                    " is not a diamond drag tool; only diamond-drag toolpaths run with the spindle off"};
+            }
+        }
+        const std::string offProblem = pauseBlockProblem("SPINDLE_OFF_PAUSE", true);
+        if (!offProblem.empty()) {
             for (const Toolpath* tp : active) {
                 if (tp->tool.spindleOff) {
                     return Error{0, "cannot write G-code: toolpath " + quoted(tp->name) +
                                         " runs with the spindle off (tool " + quoted(tp->tool.name) +
-                                        " must not turn), but the post has no SPINDLE_OFF_PAUSE block to stop "
-                                        "the spindle and pause for the operator before it"};
+                                        " must not turn), but " + offProblem +
+                                        " to stop the spindle and pause for the operator before it"};
                 }
             }
         }
         // After the last spindle-off toolpath of a drag section, before a spinning toolpath can
-        // start the spindle, the operator unlocks it (owner decision 2026-11-03): SPINDLE_UNLOCK_PAUSE.
-        if (!has("SPINDLE_UNLOCK_PAUSE")) {
+        // start the spindle or the program ends, the operator unlocks it (owner and director
+        // decisions 2026-11-03): SPINDLE_UNLOCK_PAUSE, which must pause (M0).
+        const std::string unlockProblem = pauseBlockProblem("SPINDLE_UNLOCK_PAUSE", false);
+        if (!unlockProblem.empty()) {
             if (!active.empty() && active.back()->tool.spindleOff) {
                 // The next program could start a spindle that is still locked (director 2026-11-03).
                 return Error{0, "cannot write G-code: the job ends with the spindle-off toolpath " +
-                                    quoted(active.back()->name) +
-                                    ", but the post has no SPINDLE_UNLOCK_PAUSE block to pause for the operator "
-                                    "to unlock the spindle before the program ends"};
+                                    quoted(active.back()->name) + ", but " + unlockProblem +
+                                    " to pause for the operator to unlock the spindle before the program ends"};
             }
             for (std::size_t i = 1; i < active.size(); ++i) {
                 if (active[i - 1]->tool.spindleOff && !active[i]->tool.spindleOff) {
                     return Error{0, "cannot write G-code: toolpath " + quoted(active[i]->name) +
                                         " starts the spindle after the spindle-off toolpath " +
-                                        quoted(active[i - 1]->name) +
-                                        ", but the post has no SPINDLE_UNLOCK_PAUSE block to pause for the "
-                                        "operator to unlock the spindle before it"};
+                                        quoted(active[i - 1]->name) + ", but " + unlockProblem +
+                                        " to pause for the operator to unlock the spindle before it"};
                 }
             }
         }
@@ -410,6 +503,24 @@ class Interpreter {
     // ---- block selection -------------------------------------------------------------------
 
     bool has(std::string_view name) const { return pp_.hasBlock(name); }
+
+    /// Why the post's spindle-off pause block cannot serve (T-0154): missing, or (by the
+    /// controller-style tokeniser) without an M0 pause, or without an M5 spindle stop when
+    /// `needStop`. Empty when the block is usable.
+    std::string pauseBlockProblem(std::string_view name, bool needStop) const {
+        const PostBlock* b = pp_.block(name);
+        if (b == nullptr) {
+            return "the post has no " + std::string(name) + " block";
+        }
+        const std::vector<GWord> words = blockWords(*b);
+        if (needStop && !hasWord(words, 'M', 5.0)) {
+            return "the post's " + std::string(name) + " block writes no M5 (spindle stop)";
+        }
+        if (!hasWord(words, 'M', 0.0)) {
+            return "the post's " + std::string(name) + " block writes no M0 (program pause)";
+        }
+        return {};
+    }
 
     /// True when the post's arc blocks give the arc by radius only (no I/J/IA/JA), so full
     /// circles must be split in two.

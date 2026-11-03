@@ -276,19 +276,61 @@ TEST_CASE("T-0154: spindle-off engrave records save and load exactly",
     const Bytes once = save(doc);
     const std::string job = jobText(once);
     CHECK(contains(job, "\"spindle_off\": true"));
+    CHECK(contains(job, "\"tool_type\": \"diamond_drag\""));
+    CHECK(doc.toolpaths()[0].tool.toolType == toolpath::kDiamondDragToolType);
     LoadedCarv back = load(once);
     REQUIRE(back.document.toolpaths().size() == 1);
     CHECK(back.document.toolpaths()[0] == doc.toolpaths()[0]);
     CHECK(back.document.toolpaths()[0].toolpath().tool.spindleOff);
     CHECK(save(back.document, back.extras) == once);
 
-    // Other records do not write the key (their job.json is unchanged).
-    CHECK_FALSE(contains(jobText(save(engraveDocument(fullEngrave()))), "spindle_off"));
-    // The key must be a boolean; false is accepted and equals an absent key.
+    // Other records write neither key (their job.json is unchanged).
+    const std::string vbitJob = jobText(save(engraveDocument(fullEngrave())));
+    CHECK_FALSE(contains(vbitJob, "spindle_off"));
+    CHECK_FALSE(contains(vbitJob, "tool_type"));
+    // The key must be a boolean.
     CHECK(contains(loadError(withJob(once, replaced(job, "\"spindle_off\": true", "\"spindle_off\": 1"))).message,
                    "must be true or false"));
-    const LoadedCarv off = load(withJob(once, replaced(job, "\"spindle_off\": true", "\"spindle_off\": false")));
-    CHECK_FALSE(off.document.toolpaths()[0].tool.spindleOff);
+    // A tool type without spindle_off is refused (it is recorded only for spindle-off snapshots).
+    CHECK(contains(loadError(withJob(once, replaced(job, "\"spindle_off\": true", "\"spindle_off\": false"))).message,
+                   "tool.tool_type: a tool type is only recorded for spindle-off (diamond-drag) tools"));
+    // spindle_off without the diamond drag tool type is refused: missing, or another type.
+    for (const std::string& type : {std::string("\"tool_type\": \"v_bit\""), std::string("\"tool_type\": \"\"")}) {
+        INFO(type);
+        const CarvError e = loadError(withJob(once, replaced(job, "\"tool_type\": \"diamond_drag\"", type)));
+        CHECK(contains(e.message, "tool.spindle_off: only diamond-drag tools may run with the spindle off"));
+    }
+}
+
+TEST_CASE("T-0154: a crafted V-bit engrave record with spindle_off is refused",
+          "[document][toolpath][carv][engrave][spindle-off]") {
+    // A real V-bit engrave record, then job.json edited to mark it spindle-off (no tool type).
+    Document doc = engraveDocument(fullEngrave());
+    const Bytes good = save(doc);
+    const std::string job = jobText(good);
+    const CarvError e = loadError(
+        withJob(good, replaced(job, "\"spindle_speed\": ", "\"spindle_off\": true, \"spindle_speed\": ")));
+    INFO(e.message);
+    CHECK(contains(e.message, "tool.spindle_off: only diamond-drag tools may run with the spindle off"));
+    // ... and claiming the drag tool type is not enough to pass the post: the record is then a
+    // drag record by its snapshot, which only Quick Engrave writes (the post checks the type).
+    ToolpathRecord edit = doc.toolpaths()[0];
+    edit.tool.spindleOff = true;
+    CHECK_FALSE(spindleOffAllowed(edit));
+    CHECK_FALSE(doc.execute(std::make_unique<SetToolpathCommand>(edit)));
+    edit.tool.toolType = "v_bit";
+    CHECK_FALSE(doc.execute(std::make_unique<SetToolpathCommand>(edit)));
+    edit.tool.spindleOff = false;
+    CHECK_FALSE(spindleOffAllowed(edit));  // a type without the flag
+    CHECK_FALSE(doc.execute(std::make_unique<SetToolpathCommand>(edit)));
+    // saveCarv refuses one inserted through the internal API.
+    ToolpathRecord raw = doc.toolpaths()[0];
+    raw.id = ToolpathId{};
+    raw.tool.spindleOff = true;
+    doc.insertToolpath(raw);
+    const auto refused = saveCarv(doc);
+    REQUIRE_FALSE(refused.ok());
+    CHECK(contains(refused.error().message, "only diamond-drag tools may run with the spindle off"));
 }
 
 TEST_CASE("T-0154: only engrave records may run with the spindle off", "[document][toolpath][carv][spindle-off]") {
@@ -310,6 +352,7 @@ TEST_CASE("T-0154: only engrave records may run with the spindle off", "[documen
     profile.moves = shareMoves({toolpath::Move::rapid({0, 0, 5}), toolpath::Move::plunge({0, 0, -1})});
     ToolpathRecord flagged = profile;
     flagged.tool.spindleOff = true;
+    flagged.tool.toolType = toolpath::kDiamondDragToolType;  // even with the drag type: not an engrave
     CHECK_FALSE(spindleOffAllowed(flagged));
     for (const ToolpathParams& params :
          {ToolpathParams{toolpath::PocketParams{}}, ToolpathParams{toolpath::DrillParams{}}}) {
@@ -340,5 +383,5 @@ TEST_CASE("T-0154: only engrave records may run with the spindle off", "[documen
         withJob(good, replaced(job, "\"spindle_speed\": ", "\"spindle_off\": true, \"spindle_speed\": ")));
     INFO(e.message);
     CHECK(contains(e.message, "tool.spindle_off"));
-    CHECK(contains(e.message, "is only allowed on engrave toolpaths"));
+    CHECK(contains(e.message, "only engrave toolpaths (diamond-drag tools) may run with the spindle off"));
 }

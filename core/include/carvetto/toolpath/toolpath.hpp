@@ -29,11 +29,18 @@ struct ToolSnapshot {
     /// Quick Engrave sets it, for diamond-drag tools (with `spindleSpeed` 0). The post writes no
     /// spindle start for such a toolpath and stops the spindle and pauses for the operator before
     /// it (`SPINDLE_OFF_PAUSE`); it is the only exemption from the spindle speed > 0 rule. The
-    /// native record allows it on engrave records only.
+    /// native record allows it on engrave records with `toolType` diamond drag only.
     bool spindleOff{false};
+    /// The tool's type, recorded only for a spindle-off snapshot (T-0154): `kDiamondDragToolType`.
+    /// The record checks and the post refuse a spindle-off snapshot of any other type, and a
+    /// type on a snapshot that is not spindle-off. Empty otherwise.
+    std::string toolType{};
 
     bool operator==(const ToolSnapshot&) const = default;
 };
+
+/// `ToolSnapshot::toolType` of a diamond drag tool (the tool database's type name).
+inline constexpr const char* kDiamondDragToolType = "diamond_drag";
 
 /// Travel length broken down by move kind, in millimetres. Arcs count under `feed`.
 struct LengthByKind {

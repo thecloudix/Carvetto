@@ -217,6 +217,7 @@ TEST_CASE("T-0154: the same tool number and name running spindle off and on is a
     const PostProcessor pp = parseText(kSmall + kPause + kUnlock);
     ToolSnapshot same = test::fixtureDragTool();
     same.spindleOff = false;
+    same.toolType.clear();
     same.spindleSpeed = 5000.0;
     const std::string text = runOk(pp, {drag(), cut("Spun", same), drag("Drag 2")});
     // Spindle on only through TOOLCHANGE + SPINDLE_ON, never through NEW_SEGMENT.
@@ -491,6 +492,90 @@ TEST_CASE("T-0154: hostile tool names in the spindle-off pause stay inside the c
             CHECK(text.find("(LOGOPEN,") == std::string::npos);
             CHECK(text.find("(MSG,") == std::string::npos);
             CHECK(text.find_first_of("~!?") == std::string::npos);
+        }
+    }
+}
+
+TEST_CASE("T-0154: spindle words are found the way a controller reads them", "[post][spindle-off]") {
+    // Spaces and tabs between letter and value, signs, a leading '.', lower case, words glued to
+    // others, block delete and line numbers: all spindle starts or speeds, in any block of the
+    // spindle-off section (TOOLCHANGE, the pause, NEW_SEGMENT).
+    const std::vector<std::string> attacks{"M 3",    "M 03",   "M\t3",  "S 1000", "S.5",     "M+3",   "m 4",
+                                           "s 1",    "M3.0",   "M004",   "G0M3",   "/M3",     "N10M3", "G0 X1M3",
+                                           "M[T]",   "M 0 3",  "S-5",    "M + 3",  "S\t.25"};
+    for (const std::string& attack : attacks) {
+        INFO(attack);
+        const std::string line = "\"" + attack + "\"\n";
+        // In TOOLCHANGE before a drag toolpath (tool 3: "M[T]" renders M3).
+        const std::string tc = "begin TOOLCHANGE\n" + line + "end\nbegin SPINDLE_ON\n\"M3[S]\"\nend\n" +
+                               "VAR SPINDLE_SPEED = [S|A| S|1.0]\n" + kMoves + kPause + kUnlock;
+        CHECK_THAT(runError(parseText(tc), {cut("Mill", spinning(1)), drag()}),
+                   ContainsSubstring("but the post writes"));
+        // In the spindle-off pause itself.
+        const std::string pause =
+            "begin SPINDLE_OFF_PAUSE\n\"M5\"\n" + line + "\"M0\"\nend\n" + kMoves + kUnlock;
+        CHECK_THAT(runError(parseText(pause), {drag()}), ContainsSubstring("in SPINDLE_OFF_PAUSE of toolpath"));
+        // In the unlock pause.
+        const std::string unlock =
+            "begin SPINDLE_UNLOCK_PAUSE\n" + line + "\"M0\"\nend\n" + kMoves + kPause;
+        CHECK_THAT(runError(parseText(unlock), {drag()}), ContainsSubstring("in SPINDLE_UNLOCK_PAUSE of toolpath"));
+    }
+    // Spindle start lines with spaces or signs are still recognised as spindle-only and left out.
+    for (const char* line : {"\"M 3 [S]\"", "\"M\t03 S [S]\"", "\"[N] M+4[S]\""}) {
+        INFO(line);
+        const std::string post = std::string("VAR SPINDLE_SPEED = [S|A||1.0]\n") + "begin HEADER\n" + line +
+                                 "\nend\n" + kMoves + kPause + kUnlock;
+        CHECK(runError(parseText(post), {drag()}).empty());
+    }
+    // Not spindle words: letters without a value, comments, other codes.
+    for (const char* harmless : {"M0 Unlock spindle then resume", "M 30", "M 5", "( M 3 )", "; S 1000", "M 6 T 3"}) {
+        INFO(harmless);
+        std::string post = "begin NEW_SEGMENT\n\"" + std::string(harmless) + "\"\nend\n" + kMoves + kPause + kUnlock;
+        CHECK(runError(parseText(post), {drag("A"), drag("B")}).empty());
+    }
+}
+
+TEST_CASE("T-0154: the pause blocks must stop the spindle and pause", "[post][spindle-off]") {
+    const std::string base = kSmall;
+    struct Case {
+        std::string pause;
+        std::string unlock;
+        const char* error;
+    };
+    const std::vector<Case> cases{
+        {"begin SPINDLE_OFF_PAUSE\nend\n", kUnlock, "SPINDLE_OFF_PAUSE block writes no M5"},
+        {"begin SPINDLE_OFF_PAUSE\n\"M0\"\nend\n", kUnlock, "SPINDLE_OFF_PAUSE block writes no M5"},
+        {"begin SPINDLE_OFF_PAUSE\n\"M5\"\nend\n", kUnlock, "SPINDLE_OFF_PAUSE block writes no M0"},
+        {"begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"(M0)\"\nend\n", kUnlock, "SPINDLE_OFF_PAUSE block writes no M0"},
+        {"begin SPINDLE_OFF_PAUSE\n\"(M5) M0\"\nend\n", kUnlock, "SPINDLE_OFF_PAUSE block writes no M5"},
+        {kPause, "begin SPINDLE_UNLOCK_PAUSE\nend\n", "SPINDLE_UNLOCK_PAUSE block writes no M0"},
+        {kPause, "begin SPINDLE_UNLOCK_PAUSE\n\"M5\"\n\"; M0\"\nend\n", "SPINDLE_UNLOCK_PAUSE block writes no M0"},
+    };
+    for (const Case& c : cases) {
+        INFO(c.pause << c.unlock);
+        const PostProcessor pp = parseText(base + c.pause + c.unlock);
+        CHECK_THAT(runError(pp, {cut("Mill", spinning(1)), drag()}), ContainsSubstring(c.error));
+        // Jobs without spindle-off toolpaths do not use the blocks.
+        CHECK(runError(pp, {cut("Mill", spinning(1))}).empty());
+    }
+    // Spaced and zero-padded words count as the controller reads them.
+    const PostProcessor spaced = parseText(base + "begin SPINDLE_OFF_PAUSE\n\"M 05\"\n\"m 0\"\nend\n" +
+                                           "begin SPINDLE_UNLOCK_PAUSE\n\"M00\"\nend\n");
+    CHECK(runError(spaced, {cut("Mill", spinning(1)), drag()}).empty());
+}
+
+TEST_CASE("T-0154: the post refuses a spindle-off toolpath whose tool is not a diamond drag tool",
+          "[post][spindle-off][safety]") {
+    for (const std::string& stem : shippedStems()) {
+        INFO(stem);
+        const PostProcessor pp = loadShipped(stem);
+        for (const char* type : {"", "v_bit", "end_mill", "Diamond_Drag"}) {
+            INFO(type);
+            Toolpath crafted = drag("Crafted");
+            crafted.tool.toolType = type;
+            const std::string msg = runError(pp, {cut("Mill", spinning(1)), crafted});
+            CHECK_THAT(msg, ContainsSubstring("toolpath 'Crafted' is marked to run with the spindle off"));
+            CHECK_THAT(msg, ContainsSubstring("is not a diamond drag tool"));
         }
     }
 }

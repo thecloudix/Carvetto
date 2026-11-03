@@ -104,11 +104,17 @@ SharedMoves shareMoves(std::vector<toolpath::Move> moves);
 /// refuses to write them and the loader refuses them.
 std::string nonFiniteParam(const ToolpathParams& params);
 
-/// False when the record's tool snapshot runs with the spindle off (`ToolSnapshot::spindleOff`,
-/// T-0154) but the record is not a quick engrave: only Quick Engrave sets the flag (for
-/// diamond-drag tools), so no other toolpath can bypass the post's spindle speed > 0 rule
-/// (ADR-0020). `AddToolpathCommand`/`SetToolpathCommand` refuse such records, `saveCarv` refuses
-/// to write them and the loader refuses them.
+/// Why the record's spindle-off marking is not allowed (T-0154), or "" when it is. Only Quick
+/// Engrave marks a snapshot `spindleOff`, and only for diamond-drag tools, recording
+/// `toolType` = `toolpath::kDiamondDragToolType`; so a spindle-off snapshot must be an engrave
+/// record's with that tool type, and a snapshot that is not spindle-off records no tool type.
+/// No other toolpath can thereby bypass the post's spindle speed > 0 rule (ADR-0020).
+/// `AddToolpathCommand`/`SetToolpathCommand` refuse such records, `saveCarv` refuses to write
+/// them, the loader refuses them, and the post refuses a spindle-off toolpath whose snapshot is
+/// not a diamond drag tool's.
+std::string spindleOffProblem(const ToolpathRecord& record);
+
+/// True when `spindleOffProblem(record)` is empty.
 bool spindleOffAllowed(const ToolpathRecord& record);
 
 }  // namespace carvetto::document

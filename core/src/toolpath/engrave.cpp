@@ -347,6 +347,7 @@ EngraveResult engraveToolpath(const std::vector<Contour>& contours, const toolin
         // that ignored the flag (a build before T-0154 reading the record) refuses it (T-0134).
         result.toolpath.tool.spindleOff = true;
         result.toolpath.tool.spindleSpeed = 0.0;
+        result.toolpath.tool.toolType = kDiamondDragToolType;
     }
     if (const std::string bad = toolProblem(tool, pt); !bad.empty()) {
         result.diagnostics.push_back(ToolpathDiagnostic{ToolpathIssue::InvalidTool, std::nullopt, bad, std::nullopt});

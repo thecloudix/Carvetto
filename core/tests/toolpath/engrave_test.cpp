@@ -537,7 +537,9 @@ TEST_CASE("T-0154: diamond-drag tools engrave like an end mill, with the spindle
         ToolSnapshot expected = m.toolpath.tool;
         expected.spindleSpeed = 0.0;
         expected.spindleOff = true;
+        expected.toolType = kDiamondDragToolType;
         CHECK(r.toolpath.tool == expected);
+        CHECK(m.toolpath.tool.toolType.empty());
     }
     // Fill keeps the drag tool's width (its diameter) inside the vectors, through Pocket.
     EngraveParams fill = fillParams(0.05, 1, PocketStrategy::Offset, 0.2);

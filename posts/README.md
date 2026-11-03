@@ -105,14 +105,16 @@ one, the test fails.
     `M3`/`M4` and no `S` word; the spindle starts again only after a tool change (`M0` or `M6`)
     with the next tool's speed. The interpreter leaves out the spindle start lines of HEADER,
     TOOLCHANGE and NEW_SEGMENT for such a toolpath and never writes SPINDLE_ON; it refuses a
-    post without `SPINDLE_OFF_PAUSE`, a line that writes `[S]` together with other codes, and
-    any spindle start or speed word in the drag toolpath's output. No other toolpath can skip
+    post without `SPINDLE_OFF_PAUSE` (or whose block writes no `M5` or no `M0`), a line that
+    writes `[S]` together with other codes, and any spindle start or speed word in the drag
+    toolpath's output, read as a controller reads it (spaces ignored: `M 3`, `S .5`, `M+3`
+    count), and a spindle-off toolpath whose tool is not a diamond drag tool. No other toolpath can skip
     the spindle: only Quick Engrave marks a toolpath spindle-off, and only for diamond-drag tools
     (ADR-0020, ADR-0024). After the last drag toolpath of a drag section, before a toolpath that
     starts the spindle again, the post writes its `SPINDLE_UNLOCK_PAUSE` block: `M5`, safe Z, a
     comment asking the operator to unlock the spindle, `M0` (Marlin: `M0 Unlock spindle then
     resume`), safe Z; once per drag section, not between drag toolpaths, and also before the
-    program end when the job ends with drag toolpaths. A post without it refuses such jobs. Profile and Pocket refuse diamond-drag tools. In a custom post that offers
+    program end when the job ends with drag toolpaths. A post without it (or whose block writes no `M0`) refuses such jobs. Profile and Pocket refuse diamond-drag tools. In a custom post that offers
     `SPINDLE_OFF_PAUSE`, start the spindle in HEADER, TOOLCHANGE and NEW_SEGMENT on a line of its
     own (`M3[S]`).
 
