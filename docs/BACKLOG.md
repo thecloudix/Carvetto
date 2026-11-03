@@ -478,6 +478,7 @@ Acceptance criteria:
   1. (a) winding correct for bridges/endpoints on the test ray at every angle (generative test vs a robust oracle), all callers (Pocket, Profile, Drill) unchanged elsewhere; (b) limit consistent with message and ADR, boundary test.
 
 ### T-0154 No-spindle toolpaths for diamond-drag engraving   [status: in-progress]
+Owner decision 2026-11-03 (after round 3 FAIL: "M/3", fractional M words, M259): one extra round with an allowlist: drag-section template lines may contain only listed words as plain integer words; no "/" except leading block delete, no controller real-time characters.
 Phase: 1 (Batch C)   Module: core/post, core/toolpath   Depends on: T-0151   ADR: 0020, 0024
 Goal: Owner decision 2026-11-03: Quick Engrave refuses diamond-drag tools until the post supports toolpaths that run with the spindle off. A drag toolpath must skip SPINDLE_ON/[S], stop the spindle (M5) before it, and pause for the operator (tool-change style stop with a message) so the spindle is confirmed off/locked; T-0134's spindle > 0 rule exempts exactly these toolpaths.
 Acceptance criteria:
@@ -503,7 +504,7 @@ Acceptance criteria:
   3. (Follow-ups from the T-0145 verifier) Tighten the T-0006 AC1 ratio bound from 3.5 to ~2.5 (linear measures 1.5–1.8; 3.5 misses a 3× quadratic term); add an assert/comment in cpu_scaling.hpp that small calls must be ≥ ~1 ms so the floor cannot swallow the ratio; replace the remaining std::clock absolute bounds (dxf_fuzz_test.cpp, carv_io_test.cpp) with processCpuSeconds.
   2. (Found by the T-0155 coder) PassPlan's absolute 1e-9 mm rounding guard drops one level at nanometre pass depths with maintainExactStep (cutDepth 1e-6, passDepth 1e-9 → 999 levels, not 1000; core/src/toolpath/pass_plan.cpp planStretch) — use a relative epsilon; level counts for realistic pass depths unchanged (Profile/Pocket/Drill/Engrave hashes vs main).
 
-### T-0146 Changelog fragments (no more CHANGELOG.md conflicts)   [status: in-progress — round 3 FAIL (fragment-duplicate deadlock); owner 2026-11-03: one narrow extra round]
+### T-0146 Changelog fragments (no more CHANGELOG.md conflicts)   [status: done (2026-11-03, #46)]
 Phase: 1   Module: tools, docs, CI   Depends on: —
 Goal: Owner decision 2026-11-03: every card currently adds a line at the top of CHANGELOG.md, so each merge makes every other open PR conflict and re-run CI (~40 min). Instead each card writes its entry to its own file `changelog.d/T-XXXX.md` (one bullet line, same style as today), never editing CHANGELOG.md; a script assembles the fragments into CHANGELOG.md's Unreleased section at release time and deletes them.
 Acceptance criteria:
