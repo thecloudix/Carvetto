@@ -36,7 +36,7 @@ Carvetto is built by a small hierarchy of agents coordinated by one human, the *
 
 ### Coder agents (many, task-scoped)
 - Receive one task card. Work only inside their worktree/branch. May read anything in the repo and `docs/`.
-- Deliver: code + unit tests + changelog line (+ ADR if they made an architectural choice). Run the build and `ctest` locally before reporting.
+- Deliver: code + unit tests + one changelog fragment `changelog.d/T-XXXX.md` (one bullet line; see `changelog.d/README.md`) — never an edit to `CHANGELOG.md` (+ ADR if they made an architectural choice). Run the build and `ctest` locally before reporting.
 - Must not: widen the task's scope, touch unrelated files, change public interfaces owned by another in-flight task (listed on the card), or make product decisions. If blocked on a decision, they report `BLOCKED: <question>` to the director instead of guessing.
 - Follow `CONTRIBUTING.md` (clean-room rules, conventions).
 
@@ -77,6 +77,7 @@ Review findings (non-blocking): ...
 - Branch per task: `task/T-0123-short-slug`. One task, one branch.
 - `main` is always green. Only the director merges.
 - Squash-merge with the task ID in the commit title. Commits end with the attribution lines the session provides.
+- Changelog: exactly one fragment per task in `changelog.d/` (`changelog.d/README.md`); nobody edits `CHANGELOG.md` by hand. At release time the director runs `python3 tools/changelog.py assemble` in its own PR (the fragments move into *Unreleased*, newest card first, and are deleted). Cutting a release is another PR that only inserts one `## X.Y.Z` (or `## X.Y.Z - YYYY-MM-DD`) heading and a blank line directly below `## Unreleased`. CI's `tools/changelog.py check --base` compares `CHANGELOG.md` byte for byte with the merge base and fails every other change, and fails a PR that deletes a fragment without assembling it or adding a replacement (rename/merge); details in `changelog.d/README.md`.
 - CI (`.github/workflows/ci.yml`) builds core+tests on Linux and the full Qt app on Windows. A red CI on `main` is the director's top priority.
 
 ## Concurrency guidance
