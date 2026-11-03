@@ -1,0 +1,7 @@
+mut/spindle0.nc grbl_mm bottom=-0.549019 safe=11.4386 plunge=-1
+mut/rapidplunge.nc grbl_mm bottom=-0.549019 safe=11.4386 plunge=-1
+mut/deeper.nc grbl_mm bottom=-0.549019 safe=11.4386 plunge=-1
+mut/incline.nc grbl_mm bottom=-0.549019 safe=11.4386 plunge=-1
+mut/nospindle.nc grbl_mm bottom=-0.549019 safe=11.4386 plunge=-1
+mut/endlow.nc grbl_mm bottom=-0.549019 safe=11.4386 plunge=-1
+mut/arcbad.nc grbl_mm bottom=-0.549019 safe=11.4386 plunge=-1
