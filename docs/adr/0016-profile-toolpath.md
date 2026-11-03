@@ -1,6 +1,6 @@
 # ADR-0016: 2D Profile toolpath
 
-Date: 2026-10-26 · Status: accepted 2026-11-01 (T-0120; amended in place by T-0124, 2026-10-30/11-01, T-0127 and T-0129)
+Date: 2026-10-26 · Status: accepted 2026-11-01 (T-0120; amended in place by T-0124, 2026-10-30/11-01, T-0127, T-0129 and T-0141)
 
 ## Context
 T-0120 asks for `profileToolpath(contours, Tool, ProfileParams)` with the options of
@@ -312,6 +312,14 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     `CornerNeedsVBit` for other tools.
 17. **Bezier input.** Beziers are polygonised before offsetting; when present the offset chordal
     tolerance is tightened to tol.distance/2 so the cut stays within tolerance of r.
+18. **Tolerance bounds (T-0141).** `ProfileParams::tolerance` must satisfy the same bounds as
+    Pocket's (ADR-0017): 1e-4 mm <= chordal <= 1 mm and 0 < distance <= chordal, all finite.
+    Otherwise nothing is cut and the result carries one `InvalidParameters` diagnostic, "invalid
+    tolerance: chordal must be between 0.0001 and 1 mm, distance > 0 and <= chordal" (the CLI
+    prints it after "no profile toolpath was produced:"). Before T-0141 any tolerance was
+    accepted, so a near-zero chordal tolerance multiplied the polygon vertex count without bound,
+    and the offset dust filter's width budget (ADR-0006 §8) stays inside the offset slack
+    only for chordal tolerances well above 1e-5 mm. Valid tolerances give byte-identical output.
 
 ### Golden hand-check (AC1 / AC6)
 `core/tests/golden/toolpath/profile_rect_tabs.moves` and `profile_rect_tabs_grbl.nc` were

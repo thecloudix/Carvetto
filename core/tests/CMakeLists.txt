@@ -27,7 +27,7 @@ add_executable(carvetto_tests
   toolpath/pass_plan_test.cpp
   toolpath/linking_test.cpp
   toolpath/time_test.cpp
-  toolpath/path_walk_test.cpp toolpath/profile_test.cpp toolpath/profile_allowance_limit_test.cpp toolpath/profile_golden_test.cpp toolpath/profile_property_test.cpp
+  toolpath/path_walk_test.cpp toolpath/profile_test.cpp toolpath/profile_allowance_limit_test.cpp toolpath/profile_tolerance_test.cpp toolpath/profile_golden_test.cpp toolpath/profile_property_test.cpp
   tooling/tool_test.cpp
   tooling/tool_database_test.cpp
   tooling/json_io_test.cpp
@@ -53,6 +53,7 @@ add_executable(carvetto_tests
   geometry/offset_quality_test.cpp
   geometry/offset_inradius_test.cpp
   geometry/offset_dust_test.cpp
+  geometry/offset_batch_test.cpp
   geometry/boolean_test.cpp
   document/carv_io_test.cpp
   document/carv_extras_member_test.cpp
