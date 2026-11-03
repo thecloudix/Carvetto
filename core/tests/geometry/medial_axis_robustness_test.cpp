@@ -190,10 +190,38 @@ TEST_CASE("medial axis robustness: coordinates beyond the tolerance budget are f
         const MedialAxis far1 = medialAxis({Contour::rectangle(Box2{{off, off}, {off + 20, off + 8}})}, kTol);
         CHECK(far1.accuracyCapped);
     }
+    // The flag is also set when nothing usable is left (zero-area contour far out).
+    const MedialAxis empty = medialAxis({polygon({{1e11, 1e11}, {1e11 + 5, 1e11}, {1e11 + 10, 1e11}})}, kTol);
+    CHECK(empty.nodes.empty());
+    CHECK(empty.accuracyCapped);
     // A coarser tolerance moves the limit.
     Tolerance coarse;
     coarse.chordal = 0.1;
     CHECK_FALSE(medialAxis({Contour::rectangle(Box2{{1e10, 1e10}, {1e10 + 20, 1e10 + 8}})}, coarse).accuracyCapped);
+}
+
+TEST_CASE("medial axis robustness: small regions far from the origin are kept", "[geometry][medial][ac2]") {
+    // The shoelace area of a 1 x 0.5 mm rectangle at 1e8 mm cancels to zero in absolute
+    // coordinates; classification must not drop it (verifier repro at 103699999.99999999).
+    for (double o : {1e6, 1e7, 1e8, 1e9}) {
+        for (double w : {5.0, 1.0, 0.1}) {
+            for (int j = 0; j < 5; ++j) {
+                const double ox = j == 0 && o == 1e8 ? 103699999.99999999 : o * (1 + 0.037 * j);
+                const double oy = o == 1e8 && j == 0 ? 73570000.0 : 0.7 * o * (1 + 0.051 * j);
+                INFO("o " << o << " w " << w << " j " << j);
+                const MedialAxis ax = medialAxis({polygon({{ox, oy}, {ox + w, oy}, {ox + w, oy + w / 2}, {ox, oy + w / 2}})}, kTol);
+                CHECK(ax.ignoredContours == 0);
+                CHECK_FALSE(ax.accuracyCapped);
+                REQUIRE_FALSE(ax.nodes.empty());
+                // The widest inscribed circle has radius w / 4.
+                double rmax = 0.0;
+                for (const MedialPoint& p : orc::allPoints(ax)) {
+                    rmax = std::max(rmax, p.radius);
+                }
+                CHECK(std::fabs(rmax - w / 4) <= kTol.chordal);
+            }
+        }
+    }
 }
 
 TEST_CASE("medial axis robustness: crossing and invalid contours", "[geometry][medial][ac2]") {

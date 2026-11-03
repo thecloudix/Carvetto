@@ -33,7 +33,11 @@ by at most 2.5× per doubling of boundary segments up to 50,000 (text-heavy jobs
    expansion arithmetic, after the method published by J. R. Shewchuk, 1997; written from the
    paper, no code copied; TwoProduct uses std::fma, so exactness does not depend on
    floating-point contraction; points are scaled by a power of two before exact evaluation;
-   exact for coordinates below ~1e70 with non-zero differences at least ~1e-70 of the largest), `delaunay.*` (incremental Bowyer-Watson triangulation inside a super
+   exact when the largest coordinate magnitude M is below ~1e70 and every non-zero coordinate
+   and coordinate difference is at least ~1e-70·M (one tiny non-zero coordinate, ~1e-150·M or
+   less, breaks it even with large differences); IEEE doubles with 53-bit rounding are assumed,
+   i.e. SSE2 or x87 in double-precision mode, since x87 extended precision can double-round in
+   the error-free sums), `delaunay.*` (incremental Bowyer-Watson triangulation inside a super
    triangle, visibility-walk location, exact predicates, duplicate points return the existing
    vertex), `medial_axis.cpp`.
 2. **Region.** Closed contours under a fill rule (`MedialAxisOptions::fillRule`, default
@@ -107,21 +111,26 @@ by at most 2.5× per doubling of boundary segments up to 50,000 (text-heavy jobs
    segments. Parts of the region narrower than twice the chordal tolerance (inscribed radius
    below it) and the last ~chordal of a sharp corner's branch may have no skeleton. Branches into
    obtuse convex corners are shortened much more by the spoke test, since there the two walls are
-   nearly one line: about 2·chordal of branch at 120°, 8·chordal at 150°, ~80·chordal at 170°,
-   and the whole bisector branch near 178° (measured by the T-0152 verifier). The inscribed
-   circles of the remaining skeleton still reach the boundary to within ~0.34·chordal, so carved
+   nearly one line (measured by the T-0152 verifiers: 2–3·chordal of branch at 120°,
+   8–13·chordal at 150°, 80–125·chordal at 170°, ~250·chordal at 174°, the whole bisector branch
+   at 178°). The inscribed circles of the remaining skeleton still reach the boundary to within
+   ~0.38·chordal, so carved
    depth stays within tolerance, but T-0153 must not assume that every convex corner has a
    branch reaching it (corner sharpening has to find corners from the boundary, not from branch
-   ends). Coordinates are supported up to ~1e9 mm: when 1e-12 of the largest coordinate exceeds
-   chordal/2 (beyond ~1e10 mm at the default tolerance) the rounding floors exceed the tolerance
-   budget, and the result is computed but flagged `accuracyCapped`.
+   ends). Coordinates are supported while 1e-12 of the largest coordinate magnitude stays below
+   chordal/2 (about 5e9 mm at the default tolerance), small features far from the origin
+   included: the classification area is computed about each contour's own box centre, since the
+   shoelace on absolute coordinates cancels (a 1 × 0.5 mm rectangle at 1e8 mm gave area 0 and
+   was dropped; the shared `signedArea` is left as is, carded separately). Beyond that limit the
+   result is computed but flagged `accuracyCapped`, empty results included.
    Deterministic for a given input (own shuffle, total orders everywhere, count-based budgets).
 
 ## Consequences
 - No dependency or licence change; THIRD_PARTY_NOTICES unchanged.
 - Cost is driven by the sample density the point-sample Voronoi needs near walls (spacing about
   √(8·emax·r)): 30–50 samples per boundary segment on glyph-like text at the default tolerance,
-  ~10–15 µs of Release CPU and ~1.1 KB of peak memory per sample. Measured on the T-0152
+  ~10–15 µs of Release CPU (up to ~60 µs on spiky adversarial outlines) and ~1.1 KB of peak
+  memory per sample. Measured on the T-0152
   machine (Release, shared): glyph pages ~0.6–0.8 s per 1,000 segments (50,003 segments: 33 s,
   2.3 M samples, ~2.5 GB peak), scaling ~2.1–2.3× per doubling up to 50,000 segments; a
   50,000-vertex polygonal outline ~0.5 s; a polygonal circle of 16,000 vertices 0.08 s. Spiky

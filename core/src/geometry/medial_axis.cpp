@@ -19,6 +19,7 @@
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/geometry/contour_ops.hpp"
 #include "carvetto/geometry/span.hpp"
+#include "carvetto/geometry/transform2.hpp"
 #include "delaunay.hpp"
 
 // Medial axis by a refined Delaunay triangulation of boundary samples (ADR-0023).
@@ -997,7 +998,10 @@ void Solver::classifyContours(std::vector<int>& leftInside) {
             continue;
         }
         const Contour& c = contours_[i];
-        const double area = signedArea(c);
+        // Area relative to the contour's own box centre: the shoelace on absolute coordinates
+        // cancels to zero for small contours far from the origin (a 1 x 0.5 mm rectangle at 1e8).
+        const Contour local = c.transformed(Transform2::translation(-boxes[i].centre()));
+        const double area = signedArea(local);
         if (!(area != 0.0) || !std::isfinite(area)) {
             continue;
         }
@@ -1907,16 +1911,29 @@ MedialAxis Solver::run() {
     classifyContours(leftInside);
     buildPieces(leftInside);
     MedialAxis out;
+    // Beyond ~1e10 mm the rounding floors exceed the tolerance budget: the result is still
+    // computed, but flagged (the guarantees cannot hold there). Judged on every usable input
+    // contour, before any early return, so an empty result is flagged too.
+    Box2 inputBox;
+    for (std::size_t i = 0; i < contours_.size(); ++i) {
+        if (usable_[i] != 0) {
+            inputBox.expand(contourBoxes_[i]);
+        }
+    }
+    if (!inputBox.isEmpty()) {
+        const double inputScale = std::max({std::fabs(inputBox.min.x), std::fabs(inputBox.min.y), std::fabs(inputBox.max.x),
+                                            std::fabs(inputBox.max.y), inputBox.width(), inputBox.height()});
+        beyondScale_ = 1e-12 * inputScale > 0.5 * chordal_;
+    }
     if (pieces_.empty() || bounds_.isEmpty()) {
         out.ignoredContours = ignored_;
+        out.accuracyCapped = beyondScale_;
         return out;
     }
     scale_ = std::max({std::fabs(bounds_.min.x), std::fabs(bounds_.min.y), std::fabs(bounds_.max.x),
                        std::fabs(bounds_.max.y), bounds_.width(), bounds_.height()});
     const double fpFloor = 1e-12 * scale_;
-    // Beyond ~1e10 mm the rounding floors exceed the tolerance budget: the result is still
-    // computed, but flagged (the guarantees cannot hold there).
-    beyondScale_ = fpFloor > 0.5 * chordal_;
+    beyondScale_ = beyondScale_ || fpFloor > 0.5 * chordal_;
     emax_ = std::max(0.5 * chordal_, fpFloor);
     hmin_ = std::max(0.5 * chordal_, fpFloor);
     tieTol_ = fpFloor;
