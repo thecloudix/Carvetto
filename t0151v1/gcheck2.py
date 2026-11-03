@@ -2,14 +2,22 @@
 # checker. Rules: printable ASCII; units + G90 before motion; XY rapids only at safe Z; no rapid
 # below safe Z at all; spindle on with S > 0 before any G1/G2/G3; tool change with spindle off at
 # safe Z; no cut below the deepest engrave depth; program ends at safe Z with the spindle off.
+# T-0154 drag rule (manifest key drag=1 allows spindle-off cuts): a cut with the spindle off is
+# allowed only in a drag section, which starts at an operator stop M0 that comes with the
+# spindle off, after an M5 that follows the last cut and spindle start, and is announced as a spindle stop ("spindle" on the M0 line or in the
+# two lines before it) and ends at the next tool change stop (M0 not announced so, or M6).
+# Inside a drag section no M3/M4 and no S word may appear: the spindle restarts only via a tool
+# change. Without drag=1 every cut needs the spindle on, as before.
 import re, sys
-def check(path, post, bottom, safe, plunge=-1):
+def check(path, post, bottom, safe, plunge=-1, drag=False):
     inch = 'inch' in post; k = 25.4 if inch else 1.0
     eps = 0.0026 if inch else 0.0011
     x = y = z = None; spindle = False; S = 0.0; units = None; absolute = False; mode_g = None; errs = []; cuts = 0; F = None
     def E(n, msg): errs.append(f"{n}: {msg}")
+    dragsec = False; dragcuts = 0; recent = []; m5 = False  # m5: M5 since the last spindle start / cut
     for n, line in enumerate(open(path, newline=''), 1):
         s = line.rstrip('\r\n')
+        announced = 'spindle' in ' '.join(recent[-2:] + [s]).lower(); recent.append(s)
         if any(ord(ch) < 32 or ord(ch) > 126 for ch in s): E(n, "non-printable")
         s = re.sub(r"\(.*?\)", "", s); s = s.split(';')[0].strip()
         if not s: continue
@@ -19,7 +27,9 @@ def check(path, post, bottom, safe, plunge=-1):
             codes = codes[:[i for i, c in enumerate(codes) if c[0] == 'M' and c[1] == '0'][0] + 1]
         gs = [v for kk, v in codes if kk == 'G']; ms = [int(float(v)) for kk, v in codes if kk == 'M']
         w = {kk: float(v) for kk, v in codes if kk in 'XYZFSPIJR'}
-        if 'S' in w: S = w['S']
+        if 'S' in w:
+            S = w['S']
+            if dragsec: E(n, "S word during a spindle-off (drag) toolpath")
         if 'F' in w: F = w['F'] * k
         for g in gs:
             if g == '21': units = 'mm'
@@ -30,14 +40,17 @@ def check(path, post, bottom, safe, plunge=-1):
             if g in ('0', '00', '1', '01', '2', '02', '3', '03'): mode_g = int(g)
             if g == '43': z = None
         for m in ms:
-            if m == 3:
+            if m in (3, 4):
+                if dragsec: E(n, "spindle started after a spindle-off pause without a tool change stop")
+                dragsec = False; m5 = False
                 spindle = True
-                if not S > 0: E(n, "M3 without positive S")
-            if m == 5: spindle = False
+                if not S > 0: E(n, f"M{m} without positive S")
+            if m == 5: spindle = False; m5 = True
             if m in (0, 6):
                 if spindle: E(n, "tool change with spindle on")
                 if z is not None and z < safe - eps: E(n, "tool change below safe Z")
                 z = None
+                dragsec = (m == 0 and not spindle and m5 and announced)
         if '4' in gs or '04' in gs: continue
         if not any(a in w for a in 'XYZ') and not any(a in w for a in 'IJ'): continue
         if units is None or not absolute: E(n, "motion before units/G90")
@@ -48,8 +61,9 @@ def check(path, post, bottom, safe, plunge=-1):
             if xy and (z is None or z < safe - eps or nz is None or nz < safe - eps): E(n, f"XY rapid not at safe Z z={z}->{nz}")
             if nz is not None and nz < safe - eps: E(n, f"rapid below safe Z ({nz})")
         elif mode_g in (1, 2, 3):
-            cuts += 1
-            if not spindle or not S > 0: E(n, "cut with spindle off")
+            cuts += 1; m5 = False
+            if drag and dragsec and not spindle: dragcuts += 1
+            elif not spindle or not S > 0: E(n, "cut with spindle off")
             if x is None or y is None or z is None: E(n, "cut from unknown position")
             if nz is not None and nz < bottom - eps: E(n, f"below engrave depth {nz} < {bottom}")
             if nz is not None and nz > safe + eps: E(n, f"cut above safe Z {nz}")
@@ -67,6 +81,7 @@ def check(path, post, bottom, safe, plunge=-1):
         else: E(n, "motion without mode")
         x, y, z = nx, ny, nz
     if cuts == 0: E('end', "no cuts")
+    if drag and dragcuts == 0: E('end', "drag=1 but no spindle-off (drag) cuts")
     if spindle: E('end', "program ends with spindle on")
     if z is None or z < safe - eps: E('end', f"program does not end at safe Z (z={z})")
     return errs
@@ -74,7 +89,7 @@ total = 0; files = 0
 for line in open(sys.argv[1]):
     parts = line.split(); path, post = parts[0], parts[1]
     P = {kv.split('=')[0]: float(kv.split('=')[1]) for kv in parts[2:]}
-    errs = check(path, post, P['bottom'], P['safe'], P.get('plunge', -1)); files += 1
+    errs = check(path, post, P['bottom'], P['safe'], P.get('plunge', -1), P.get('drag', 0) > 0); files += 1
     if errs:
         total += len(errs); print(path, len(errs), "errors")
         for e in errs[:6]: print("   ", e)
