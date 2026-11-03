@@ -532,6 +532,13 @@ Goal: Found by the T-0147 verifier (harness t0147v1/far.cpp): with signedArea fi
 Acceptance criteria:
   1. Small Profile parts (circles, rectangles, holes; 0.5–10 mm) at 1e6–1e9 mm give the same toolpath as at the origin (up to translation, within tolerance) in ≥ 19/20 placements, or a documented limit with a diagnostic; normal-scale output unchanged (hashes).
 
+### T-0158 Profile: platform-stable cut start at convex tips   [status: ready]
+Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §11
+Goal: Found while merging T-0135 (MSVC CI): with "start at the vector's start point" on a convex tip, the Outside cut's round join is an arc centred on that tip, so every point of the arc is equally near the start; ArcLengthPath::project → closestPoint(ArcSpan) takes the direction of a ~1e-15 vector, which depends on rounding/libm, so GCC and MSVC choose different cut starts — tab layouts then differ (both safe; scene m1_402002_27, also m2_800016_13). Pre-existing on main/T-0127. A tie-break ("target within tolerance of an arc centre at the nearest distance → start at that arc's start", searching all arcs) was prototyped by the T-0135 coder (harness wt-T0135/build-drv pert.cpp, hsw/): stable under 1e-9 perturbations but changes start points in ~10% of scenes (owner-visible output change).
+Acceptance criteria:
+  1. Cut start deterministic across compilers and under ≤ 1e-9 relative perturbation for starts on convex tips (generative test with ±ulp scaling); ADR-0016 §11 documents the rule; goldens regenerated only if needed, with hand-checked diffs; tab safety unchanged (flood oracle).
+  2. Restore exact tab-count assertions in the T-0135 test for m1_402002_27 once the start is stable.
+
 ### T-0019 Make the T-0004 AC3 timing test CPU-time based   [status: done (by T-0017: T-0004 AC3 timing uses process CPU time, cpu_time.hpp)]
 Phase: 1   Module: core/tests   Depends on: —
 Goal: "T-0004 AC3" in `open_offset_chains_test.cpp` asserts a wall-clock bound (< 0.5 s) and fails intermittently under `ctest -j8` (seen by the T-0120 coder). Convert it to process CPU time (GetProcessTimes on Windows, std::clock elsewhere) or a complexity ratio, like the other timing tests. Coordinate with T-0017 if it lands first (T-0017 AC6 touches the timing helper).
