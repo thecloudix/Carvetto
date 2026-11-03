@@ -1,0 +1,53 @@
+dt trial 0 big=1 verts=389 alive=773
+dt trial 1 big=1e-300 verts=375 alive=745
+dt trial 2 big=1e-200 verts=378 alive=751
+dt trial 3 big=1e+60 verts=384 alive=763
+dt trial 4 big=1 verts=390 alive=775
+dt trial 5 big=1e-300 verts=379 alive=753
+dt trial 6 big=1e-200 verts=379 alive=753
+dt trial 7 big=1e+60 verts=389 alive=773
+dt trial 8 big=1 verts=380 alive=755
+dt trial 9 big=1e-300 verts=376 alive=747
+dt trial 10 big=1e-200 verts=377 alive=749
+dt trial 11 big=1e+60 verts=384 alive=763
+dt trial 12 big=1 verts=387 alive=767
+dt trial 13 big=1e-300 verts=382 alive=759
+dt trial 14 big=1e-200 verts=381 alive=757
+dt trial 15 big=1e+60 verts=381 alive=757
+dt trial 16 big=1 verts=394 alive=783
+dt trial 17 big=1e-300 verts=378 alive=751
+dt trial 18 big=1e-200 verts=379 alive=753
+dt trial 19 big=1e+60 verts=377 alive=749
+dt trial 20 big=1 verts=384 alive=763
+dt trial 21 big=1e-300 verts=373 alive=741
+dt trial 22 big=1e-200 verts=380 alive=755
+dt trial 23 big=1e+60 verts=380 alive=755
+dt trial 24 big=1 verts=386 alive=767
+dt trial 25 big=1e-300 verts=381 alive=757
+dt trial 26 big=1e-200 verts=377 alive=749
+dt trial 27 big=1e+60 verts=380 alive=755
+dt trial 28 big=1 verts=381 alive=757
+dt trial 29 big=1e-300 verts=379 alive=753
+dt trial 30 big=1e-200 verts=380 alive=755
+dt trial 31 big=1e+60 verts=386 alive=767
+dt trial 32 big=1 verts=385 alive=765
+dt trial 33 big=1e-300 verts=373 alive=741
+dt trial 34 big=1e-200 verts=379 alive=753
+dt trial 35 big=1e+60 verts=378 alive=751
+dt trial 36 big=1 verts=381 alive=757
+dt trial 37 big=1e-300 verts=380 alive=755
+dt trial 38 big=1e-200 verts=379 alive=753
+dt trial 39 big=1e+60 verts=385 alive=765
+medial: nodes=6 br=5 smp=243 capped=0 ign=0
+medial: nodes=6 br=5 smp=236 capped=0 ign=0
+medial: nodes=0 br=0 smp=0 capped=0 ign=1
+medial: nodes=0 br=0 smp=0 capped=0 ign=1
+medial: nodes=0 br=0 smp=3 capped=1 ign=0
+medial: nodes=0 br=0 smp=0 capped=0 ign=1
+medial: nodes=0 br=0 smp=4 capped=1 ign=0
+mix 0: nodes=6 capped=0
+mix 10: nodes=6 capped=0
+mix 20: nodes=6 capped=0
+mix 30: nodes=6 capped=0
+mix 40: nodes=6 capped=0
+done

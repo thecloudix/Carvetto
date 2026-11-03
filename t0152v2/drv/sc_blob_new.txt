@@ -1,0 +1,5 @@
+blob     spans=   1562 contours=     1 cpu=   0.060s wall=   0.060s ratio= 0.00 samples=    7773 smp/span=  5.0 capped=0 pts=8946
+blob     spans=   3124 contours=     1 cpu=   0.069s wall=   0.069s ratio= 1.15 samples=    8286 smp/span=  2.7 capped=0 pts=9782
+blob     spans=   6248 contours=     1 cpu=   0.099s wall=   0.099s ratio= 1.45 samples=   10481 smp/span=  1.7 capped=0 pts=11721
+blob     spans=  12496 contours=     1 cpu=   0.132s wall=   0.132s ratio= 1.32 samples=   14558 smp/span=  1.2 capped=0 pts=15447
+blob     spans=  24992 contours=     1 cpu=   0.249s wall=   0.249s ratio= 1.89 samples=   24992 smp/span=  1.0 capped=0 pts=25375
