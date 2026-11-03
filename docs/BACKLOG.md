@@ -502,7 +502,7 @@ Acceptance criteria:
   1. All CPU-time ratio tests use an interleaved/robust measurement helper in core/tests (shared with cpu_time.hpp); a deliberately quadratic mutant still fails each test; 0 flakes over ≥ 200 runs under ctest -j16 load.
   2. (Found by the T-0155 coder) PassPlan's absolute 1e-9 mm rounding guard drops one level at nanometre pass depths with maintainExactStep (cutDepth 1e-6, passDepth 1e-9 → 999 levels, not 1000; core/src/toolpath/pass_plan.cpp planStretch) — use a relative epsilon; level counts for realistic pass depths unchanged (Profile/Pocket/Drill/Engrave hashes vs main).
 
-### T-0146 Changelog fragments (no more CHANGELOG.md conflicts)   [status: in-progress]
+### T-0146 Changelog fragments (no more CHANGELOG.md conflicts)   [status: in-progress — round 3 FAIL (fragment-duplicate deadlock); owner 2026-11-03: one narrow extra round]
 Phase: 1   Module: tools, docs, CI   Depends on: —
 Goal: Owner decision 2026-11-03: every card currently adds a line at the top of CHANGELOG.md, so each merge makes every other open PR conflict and re-run CI (~40 min). Instead each card writes its entry to its own file `changelog.d/T-XXXX.md` (one bullet line, same style as today), never editing CHANGELOG.md; a script assembles the fragments into CHANGELOG.md's Unreleased section at release time and deletes them.
 Acceptance criteria:
