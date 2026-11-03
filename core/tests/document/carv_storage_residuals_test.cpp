@@ -30,6 +30,7 @@
 #include "carvetto/document/commands.hpp"
 #include "carvetto/document/document.hpp"
 #include "carvetto/document/toolpath_record.hpp"
+#include "carvetto/toolpath/engrave.hpp"
 #include "carvetto/toolpath/move.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/profile.hpp"
@@ -699,6 +700,21 @@ std::vector<ParamField> drillFields() {
     };
 }
 
+std::vector<ParamField> engraveFields() {
+    const auto P = [](ToolpathParams& p) -> toolpath::EngraveParams& { return std::get<toolpath::EngraveParams>(p); };
+    return {
+        {"depth", [P](ToolpathParams& p, double v) { P(p).depth = v; }},
+        {"safe_z", [P](ToolpathParams& p, double v) { P(p).safeZ = v; }},
+        {"stepover", [P](ToolpathParams& p, double v) { P(p).stepover = v; }},
+        {"raster_angle_rad", [P](ToolpathParams& p, double v) { P(p).rasterAngle = v; }},
+        {"start_position[0]", [P](ToolpathParams& p, double v) { P(p).startPosition.x = v; }},
+        {"start_position[1]", [P](ToolpathParams& p, double v) { P(p).startPosition.y = v; }},
+        {"tolerance.distance", [P](ToolpathParams& p, double v) { P(p).tolerance.distance = v; }},
+        {"tolerance.angle_rad", [P](ToolpathParams& p, double v) { P(p).tolerance.angle = v; }},
+        {"tolerance.chordal", [P](ToolpathParams& p, double v) { P(p).tolerance.chordal = v; }},
+    };
+}
+
 /// Params with every number set to a distinct value (777.015625, 778.015625, ...).
 ToolpathParams distinctParams(const ToolpathParams& base, const std::vector<ParamField>& fields) {
     ToolpathParams p = base;
@@ -719,7 +735,8 @@ TEST_CASE("T-0136 f: non-finite toolpath parameters are refused by the loader, s
     const std::vector<std::pair<ToolpathParams, std::vector<ParamField>>> operations{
         {toolpath::ProfileParams{}, profileFields()},
         {toolpath::PocketParams{}, pocketFields()},
-        {toolpath::DrillParams{}, drillFields()}};
+        {toolpath::DrillParams{}, drillFields()},
+        {toolpath::EngraveParams{}, engraveFields()}};
     for (const auto& [base, fields] : operations) {
         INFO("operation " << base.index());
         CHECK(nonFiniteParam(base).empty());

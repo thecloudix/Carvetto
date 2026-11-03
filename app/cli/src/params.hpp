@@ -10,11 +10,13 @@
 #include "carvetto/tooling/cutting_data.hpp"
 #include "carvetto/tooling/tool.hpp"
 #include "carvetto/toolpath/drill.hpp"
+#include "carvetto/toolpath/engrave.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/profile.hpp"
 
-// params.json for `carvetto-cli toolpath profile|pocket|drill` (T-0122, ADR-0019; owner decision
-// 2026-11-01; drill T-0150): snake_case keys mirroring ProfileParams / PocketParams / DrillParams,
+// params.json for `carvetto-cli toolpath profile|pocket|drill|engrave` (T-0122, ADR-0019; owner
+// decision 2026-11-01; drill T-0150; engrave T-0151): snake_case keys mirroring ProfileParams /
+// PocketParams / DrillParams / EngraveParams,
 // lengths in mm, times in seconds, angles in
 // degrees (converted to radians here, at the CLI edge), the tool as
 // {"tool": {"database": <path>, "id": <tool id>, "machine": <id>, "material": <id>}} and an
@@ -66,6 +68,12 @@ struct DrillJob {
     CommonParams common;
 };
 
+/// A parsed quick engrave params file.
+struct EngraveJob {
+    toolpath::EngraveParams params;
+    CommonParams common;
+};
+
 /// Parses a profile params file's text. Throws `CliError` naming the offending key.
 ProfileJob parseProfileParams(std::string_view text);
 
@@ -74,6 +82,9 @@ PocketJob parsePocketParams(std::string_view text);
 
 /// Parses a drill params file's text. Throws `CliError` naming the offending key.
 DrillJob parseDrillParams(std::string_view text);
+
+/// Parses a quick engrave params file's text. Throws `CliError` naming the offending key.
+EngraveJob parseEngraveParams(std::string_view text);
 
 /// The tool and the cutting data to use with it.
 struct ResolvedTool {

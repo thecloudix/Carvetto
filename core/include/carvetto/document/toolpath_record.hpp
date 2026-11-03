@@ -9,6 +9,7 @@
 
 #include "carvetto/document/ids.hpp"
 #include "carvetto/toolpath/drill.hpp"
+#include "carvetto/toolpath/engrave.hpp"
 #include "carvetto/toolpath/move.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/profile.hpp"
@@ -50,12 +51,14 @@ struct ToolSource {
 
 /// The operation of a toolpath and its parameters. `cuttingData` inside `ProfileParams` is input
 /// from the tool database and is not part of a saved record (it loads empty); the feeds the
-/// toolpath was computed with are in `ToolpathRecord::tool`. Drilling (T-0150) takes its cutting
-/// data as a separate argument, so `DrillParams` holds only record content.
-using ToolpathParams = std::variant<toolpath::ProfileParams, toolpath::PocketParams, toolpath::DrillParams>;
+/// toolpath was computed with are in `ToolpathRecord::tool`. Drilling (T-0150) and quick engraving
+/// (T-0151) take their cutting data as a separate argument, so `DrillParams` and `EngraveParams`
+/// hold only record content.
+using ToolpathParams =
+    std::variant<toolpath::ProfileParams, toolpath::PocketParams, toolpath::DrillParams, toolpath::EngraveParams>;
 
 /// Discriminator for `ToolpathRecord::operation()` (same order as the `ToolpathParams` variant).
-enum class ToolpathOperation { Profile, Pocket, Drill };
+enum class ToolpathOperation { Profile, Pocket, Drill, Engrave };
 
 /// Computed moves of a toolpath, shared and immutable so copies (undo history, clipboard) are cheap.
 using SharedMoves = std::shared_ptr<const std::vector<toolpath::Move>>;
