@@ -1008,21 +1008,28 @@ void Solver::classifyContours(std::vector<int>& leftInside) {
         const bool ccw = area > 0.0;
         // Probe a point on the contour that is clear of every other contour: the winding number
         // of the others there, plus this contour's own side, gives the region on each side.
+        // T-0153: up to 16 probes spread over the contour (several per span when it has few
+        // spans): one probe per span left a one-arc circle near another contour (a hole 0.005 mm
+        // from a wall) without a clear probe, and the hole was ignored.
         const std::size_t spans = c.spans.size();
-        const std::size_t probes = std::min<std::size_t>(spans, 8);
+        constexpr std::size_t kProbes = 16;
+        const std::size_t perSpan = spans >= kProbes ? 1 : (kProbes + spans - 1) / spans;
+        const std::size_t probes = spans >= kProbes ? kProbes : spans * perSpan;
         bool found = false;
         int wl = 0;
         int wr = 0;
         const Span* firstProbe = nullptr;
         for (std::size_t k = 0; k < probes && !found; ++k) {
-            const Span& sp = c.spans[(k * spans) / probes];
+            const Span& sp = spans >= kProbes ? c.spans[(k * spans) / kProbes] : c.spans[k / perSpan];
             if (zeroSpan(sp)) {
                 continue;
             }
             if (firstProbe == nullptr) {
                 firstProbe = &sp;
             }
-            const Vec2 p = pointAt(sp, 0.5);
+            const double tProbe =
+                spans >= kProbes ? 0.5 : (static_cast<double>(k % perSpan) + 0.5) / static_cast<double>(perSpan);
+            const Vec2 p = pointAt(sp, tProbe);
             bool clear = true;
             int w = 0;
             tree.stab(p, [&](std::size_t j) {
@@ -1419,15 +1426,59 @@ bool Solver::encroached(int a, int b, int hint) const {
     if (t2 < 0) {
         return true;
     }
+    auto inDisc = [&](int v) {
+        const Vec2 pf = dt_->point(v);
+        return (pa - pf).dot(pb - pf) < 0.0;
+    };
+    bool hidden = false;  // an exempt sample inside the diametral circle may hide others
     for (int t : {t1, t2}) {
         for (int v : dt_->triangle(t).v) {
-            if (!counts(v)) {
+            if (v == a || v == b || Delaunay::isSuper(v) || !inDisc(v)) {
                 continue;
             }
-            const Vec2 pf = dt_->point(v);
-            if ((pa - pf).dot(pb - pf) < 0.0) {
+            if (counts(v)) {
                 return true;
             }
+            hidden = true;
+        }
+    }
+    if (!hidden) {
+        return false;
+    }
+    // T-0153: the opposite vertex lies in the circle but is exempt (within gapTol_ of the
+    // sub-edge, e.g. the neighbour sample of a flat corner), so it says nothing about the other
+    // samples in the circle: a thin band with such corners at both ends of its long edge had no
+    // refinement and an empty skeleton. Look at every triangle reaching into the diametral disc
+    // (bounded; when the bound is hit, count the sub-edge as encroached).
+    const Vec2 centre = (pa + pb) * 0.5;
+    const double radius = 0.5 * distance(pa, pb);
+    std::vector<int> stack{t1, t2};
+    std::vector<int> seen{t1, t2};
+    constexpr std::size_t kMaxVisit = 512;
+    while (!stack.empty()) {
+        const int t = stack.back();
+        stack.pop_back();
+        const auto& tr = dt_->triangle(t);
+        for (int k = 0; k < 3; ++k) {
+            const int v = tr.v[idx(k)];
+            if (v != a && v != b && !Delaunay::isSuper(v) && inDisc(v) && counts(v)) {
+                return true;
+            }
+            const int nb = tr.n[idx(k)];
+            if (nb < 0 || std::find(seen.begin(), seen.end(), nb) != seen.end()) {
+                continue;
+            }
+            // Cross the edge opposite v[k] only when it reaches into the disc.
+            const Vec2 e0 = dt_->point(tr.v[idx((k + 1) % 3)]);
+            const Vec2 e1 = dt_->point(tr.v[idx((k + 2) % 3)]);
+            if (segmentDistance(e0, e1, centre) >= radius) {
+                continue;
+            }
+            if (seen.size() >= kMaxVisit) {
+                return true;
+            }
+            seen.push_back(nb);
+            stack.push_back(nb);
         }
     }
     return false;

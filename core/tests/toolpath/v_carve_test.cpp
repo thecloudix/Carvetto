@@ -104,7 +104,10 @@ PocketParams flatPocket(const VCarvingParams& p, double limit, double allowance)
     pocket.allowance = allowance;
     pocket.rampPlunge = p.rampPlunge;
     pocket.rampDistance = p.rampDistance;
+    // Pocket runs at the internal tolerance (a third of the chordal), part of the accuracy budget.
     pocket.tolerance = p.tolerance;
+    pocket.tolerance.chordal = p.tolerance.chordal / 3.0;
+    pocket.tolerance.distance = std::min(p.tolerance.distance, pocket.tolerance.chordal);
     return pocket;
 }
 
@@ -153,8 +156,8 @@ TEST_CASE("V-carve of a rectangle follows its skeleton at radius / tan(half angl
     CHECK(r.toolpath.name == "V-Carve");
     CHECK(r.toolpath.tool.name == "V-bit");
     checkStructure(r.toolpath);
-    // The middle line is 3 mm from both long walls: depth (3 - chordal/2) / tan(45 deg).
-    const double margin = 0.5 * p.tolerance.chordal;
+    // The middle line is 3 mm from both long walls: depth (3 - chordal/6) / tan(45 deg).
+    const double margin = p.tolerance.chordal / 6.0;  // half of the internal chordal/3 (ADR-0025 §1)
     CHECK(std::fabs(deepest(r.toolpath) - (3.0 - margin)) < 1e-9);
     bool middle = false;
     for (const Move& m : r.toolpath.moves) {
@@ -201,7 +204,7 @@ TEST_CASE("V-carve of a circle is one plunge at its centre", "[toolpath][v_carve
     CHECK(r.toolpath.moves[1].kind == MoveKind::Plunge);
     CHECK(std::fabs(r.toolpath.moves[1].to.x - 10.0) < 1e-6);
     CHECK(std::fabs(r.toolpath.moves[1].to.y - 5.0) < 1e-6);
-    const double expected = (3.0 - 0.5 * p.tolerance.chordal) / std::tan(geometry::kPi / 6.0);
+    const double expected = (3.0 - p.tolerance.chordal / 6.0) / std::tan(geometry::kPi / 6.0);
     CHECK(std::fabs(-r.toolpath.moves[1].to.z - expected) < 1e-5);
     CHECK(r.toolpath.moves[2].kind == MoveKind::Retract);
 }
@@ -212,7 +215,7 @@ TEST_CASE("V-carve with a ball nose: depth from the ball's chord", "[toolpath][v
     const VCarvingResult r = vCarvingToolpath(circle, ball, std::nullopt, {}, VCarvingParams{});
     REQUIRE(r.ok());
     REQUIRE(r.toolpath.moves.size() == 3);
-    const double s = 2.0 - 0.005;
+    const double s = 2.0 - 0.01 / 6.0;
     CHECK(std::fabs(-r.toolpath.moves[1].to.z - (3.0 - std::sqrt(9.0 - s * s))) < 1e-5);
 
     // A glyph with a ball nose passes the cone/wall check.
@@ -289,6 +292,9 @@ TEST_CASE("V-carve flat depth with clearance tools: Pocket with the V-bit's widt
             p.clearanceRasterAngle = 0.3;
             const VCarvingResult r = vCarvingToolpath(plate, tool, std::nullopt, clear, p);
             REQUIRE(r.ok());
+            for (const ToolpathDiagnostic& d : r.diagnostics) {
+                UNSCOPED_INFO(d.message);
+            }
             CHECK(r.diagnostics.empty());
             REQUIRE(r.clearance.size() == 2);
             CHECK(r.clearance[0].name == "Sign [EM 3]");
@@ -302,8 +308,22 @@ TEST_CASE("V-carve flat depth with clearance tools: Pocket with the V-bit's widt
 
             // The clearance is Pocket's, move for move, moved down by the start depth.
             const double allowance = 1.5;  // the 90-degree V-bit's footprint at 1.5 mm
-            PocketResult pocket = pocketToolpath(plate, clear, flatPocket(p, 1.5, allowance));
-            REQUIRE(pocket.toolpaths.size() == 2);
+            // The carving tool follows the end mills as Pocket's last rest tool (stepover limited
+            // to its width at the flat depth), clearing what they could not reach.
+            std::vector<PocketTool> withCarver = clear;
+            tooling::CuttingData restData = tool.defaultCuttingData;
+            restData.stepover = std::min(restData.stepover, 2.0 * allowance);
+            withCarver.push_back(PocketTool{tool, restData});
+            PocketResult pocket = pocketToolpath(plate, withCarver, flatPocket(p, 1.5, allowance));
+            REQUIRE(pocket.toolpaths.size() == 3);
+            {
+                std::vector<Move> rest = pocket.toolpaths[2].moves;
+                for (Move& m : rest) {
+                    m.to.z -= start;
+                }
+                REQUIRE(r.toolpath.moves.size() >= rest.size());
+                CHECK(std::equal(rest.begin(), rest.end(), r.toolpath.moves.begin()));
+            }
             for (std::size_t t = 0; t < 2; ++t) {
                 std::vector<Move> moved = pocket.toolpaths[t].moves;
                 for (Move& m : moved) {
@@ -409,7 +429,7 @@ TEST_CASE("V-carve groups regions and orders them and reports skipped vectors", 
     CHECK_FALSE(none.diagnostics.empty());
     // A strip narrower than the chordal tolerance: no inscribed circle wider than the margin,
     // nothing to carve.
-    const VCarvingResult thin = vCarvingToolpath({polygon({{0, 0}, {10, 0}, {10, 0.004}, {0, 0.004}})}, tool,
+    const VCarvingResult thin = vCarvingToolpath({polygon({{0, 0}, {10, 0}, {10, 0.002}, {0, 0.002}})}, tool,
                                              std::nullopt, {}, VCarvingParams{});
     CHECK_FALSE(thin.ok());
     CHECK(thin.has(ToolpathIssue::NoRegion));
@@ -460,6 +480,67 @@ TEST_CASE("V-carve splits nested vectors into parts: a frame round letters is a 
     REQUIRE(r.ok());
     CHECK(r.diagnostics.empty());
     CHECK(r.regions == 6);  // the frame and five letters (the O and D with their counters)
+}
+
+TEST_CASE("V-carve never cuts through a hole nearly touching a wall or a crossing cluster",
+          "[toolpath][v_carve][crossing]") {
+    // A one-arc hole 0.005 mm from the outer wall (the medial axis once ignored it), and a hole
+    // 0.003 mm from a circle of a crossing pair (the pair's polygon once cut into it).
+    Contour hole = Contour::circle({7, 5}, 2.995, geometry::ArcDirection::CW);
+    const std::vector<Contour> nearWall{Contour::rectangle(Box2{Vec2{0, 0}, Vec2{10, 10}}), hole};
+    const std::vector<Contour> nearCluster{Contour::circle({0, 0}, 6.0), Contour::circle({8, 0}, 4.0),
+                                           Contour::circle({0, 4.997}, 1.0, geometry::ArcDirection::CW)};
+    struct Job {
+        const std::vector<Contour>* region;
+        double chordal;
+        Vec2 holeCentre;
+        double holeRadius;
+    };
+    for (const Job& j : {Job{&nearWall, 0.01, {7, 5}, 2.995}, Job{&nearCluster, 0.05, {0, 4.997}, 1.0}}) {
+        const tooling::Tool tool = vBit(90.0, 12.0);
+        VCarvingParams p;
+        p.tolerance.chordal = j.chordal;
+        const VCarvingResult r = vCarvingToolpath(*j.region, tool, std::nullopt, {}, p);
+        REQUIRE(r.ok());
+        for (const Move& m : r.toolpath.moves) {
+            if (m.to.z < 0.0) {
+                CHECK(geometry::distance(Vec2{m.to.x, m.to.y}, j.holeCentre) >= j.holeRadius);
+            }
+        }
+        const orc::ConeReport cone = orc::coneCheck(r.toolpath, *j.region, tool, 0.0, kSafeZ, 1e-5);
+        CHECK(cone.minClearance >= 0.0);
+        CHECK(cone.allInside);
+    }
+}
+
+TEST_CASE("V-carve carves a frame crossed by letters completely", "[toolpath][v_carve][crossing]") {
+    std::vector<Contour> sign{Contour::rectangle(Box2{Vec2{0, 0}, Vec2{18, 12}}),
+                              Contour::rectangle(Box2{Vec2{1, 1}, Vec2{17, 11}})};
+    test::medial::appendGlyph(sign, 0, Vec2{-1.5, 2.0});
+    test::medial::appendGlyph(sign, 0, Vec2{14.5, 3.0});
+    const tooling::Tool tool = vBit(60.0, 6.0);
+    VCarvingParams p;
+    const VCarvingResult r = vCarvingToolpath(sign, tool, std::nullopt, {}, p);
+    REQUIRE(r.ok());
+    CHECK_FALSE(r.has(ToolpathIssue::NoRegion));  // no part left uncarved
+    CHECK(orc::coneCheck(r.toolpath, sign, tool, 0.0, kSafeZ, 1e-5).minClearance >= 0.0);
+    // Coverage within the tolerance on a grid over the frame band.
+    double worst = 0.0;
+    for (double x = 0.05; x < 18.0; x += 0.37) {
+        for (const double y : {0.5, 11.5}) {
+            const Vec2 q{x, y};
+            if (!orc::insideRegion(sign, q)) {
+                continue;
+            }
+            const double dist = orc::boundaryDistance(sign, q);
+            const double want = vCarvingDepthForRadius(tool, dist);
+            const double c = orc::carvedDepth(r.toolpath, tool, 0.0, q, 0.05 * p.tolerance.chordal);
+            if (c < want) {
+                worst = std::max(worst, dist - orc::footprintAt(tool, c));
+            }
+        }
+    }
+    CHECK(worst <= p.tolerance.chordal);
 }
 
 TEST_CASE("V-carve refuses bad tools and parameters", "[toolpath][v_carve][errors]") {
@@ -611,7 +692,9 @@ TEST_CASE("AC1: generative sweep - the carving tool never crosses a wall and the
         // Depth = radius / tan(angle / 2) within the tolerance: at every cut point above the limit
         // the footprint is within the chordal tolerance of the boundary distance (skipped where
         // the carving tool clears flat areas itself: its pocket passes are not skeleton cuts).
-        const bool selfClear = sc.clearance.empty() && (p.flatDepth > 0.0 || r.has(ToolpathIssue::CarveDepthLimited));
+        // With flat areas the carving tool also clears (alone, or as the end mills' rest tool):
+        // those pocket passes are not skeleton cuts.
+        const bool selfClear = p.flatDepth > 0.0 || r.has(ToolpathIssue::CarveDepthLimited);
         if (!selfClear) {
             for (const Move& m : r.toolpath.moves) {
                 const double depth = -p.startDepth - m.to.z;
@@ -625,10 +708,8 @@ TEST_CASE("AC1: generative sweep - the carving tool never crosses a wall and the
             }
         }
         // Coverage (every third case): every inside point whose depth is above the limit is carved
-        // to its depth within 1.5 x the chordal tolerance as a footprint radius (ADR-0025 §1: the
-        // margin chordal/2 plus the medial axis' resolution of ~chordal; +chordal/8 for resolved
-        // crossing input; +0.025 x chordal for the oracle's sampling). Points that need the flat
-        // depth are floor, cleared by Pocket (ridges and corners there are not bounded here).
+        // to its depth within the chordal tolerance as a footprint radius (ADR-0025 §1). Points
+        // that need the flat depth are floor, cleared by Pocket (not bounded here).
         if (k % 3 == 0) {
             test::SplitMix rng{k * 7 + 1};
             Box2 box;
@@ -650,8 +731,7 @@ TEST_CASE("AC1: generative sweep - the carving tool never crosses a wall and the
                 const double c = orc::carvedDepth(r.toolpath, sc.tool, p.startDepth, q, 0.05 * chordal);
                 if (c < want) {
                     const double shortfall = dist - orc::footprintAt(sc.tool, c);
-                    const double bound = (r.has(ToolpathIssue::CrossingVectorsResolved) ? 1.625 : 1.5) + 0.025;
-                    CHECK(shortfall <= bound * chordal);
+                    CHECK(shortfall <= chordal);
                     worstCoverage = std::max(worstCoverage, shortfall / chordal);
                 }
             }

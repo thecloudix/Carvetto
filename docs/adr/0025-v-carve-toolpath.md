@@ -15,26 +15,34 @@ bound on text-heavy jobs (≥ 5,000 glyph-like regions). The geometry comes from
 
 ## Decision
 
-### 1. Depth rule: the footprint at the start plane, less half the chordal tolerance
+### 1. Depth rule and accuracy: the user's chordal tolerance is the whole budget
 - The tool's *footprint* at depth d is half `tooling::cuttingWidthAtDepth(tool, d)`, its
   cross-section at the start plane (the tool is narrower below it). At a skeleton point with
-  inscribed radius r the tool goes to the depth whose footprint is r − chordal/2
+  inscribed radius r the tool goes to the depth whose footprint is r − margin
   (`vCarvingDepthForRadius`: V-bit r/tan(θ/2), ball nose R − sqrt(R² − r²)), limited by the depth
-  limit (§3). So the tool touches both walls within the chordal tolerance and never crosses one.
-- The margin of chordal/2 covers the medial axis' linear radius interpolation between points
-  (≤ chordal/4, ADR-0023 §5) and the walk simplification (≤ chordal/16, §4).
-- **Accuracy (honest bound).** At every cut point above the limit the footprint is within
-  chordal of the boundary distance (measured ≤ 0.87·chordal). Over the whole region, every point
-  whose depth is above the limit is carved to within **1.5·chordal** of its depth, measured as a
-  footprint radius (V-bit: depth within 1.5·chordal/tan(θ/2)); 1.625·chordal in resolved crossing
-  parts (§4). The bound is the margin (0.5·chordal) plus the medial axis' resolution: gaps
-  narrower than ~2·chordal have no skeleton and branch ends stop up to ~chordal short of corner
-  tips (ADR-0023). Measured: up to 1.499·chordal (T-0153 verifier harness), asserted in the sweep.
-  Points that need the full limit depth are flat floor (§3), not bounded by this: a V-bit's own
-  clearing leaves ridges, end mills leave corners.
+  limit (§3). So the tool touches both walls within the tolerance and never crosses one.
+- **Accuracy (director decision, round 2: "depth = radius / tan(θ/2) within tolerance" means the
+  user's chordal tolerance).** Every point of the region whose depth is above the limit is carved
+  to within **1·chordal** of its depth, measured as a footprint radius (V-bit: depth within
+  chordal/tan(θ/2)). The budget is split: the medial axis runs at an internal tolerance
+  c = chordal/3 (`kInnerDivisor`), the margin is c/2 = chordal/6 (it covers the medial axis' linear
+  radius interpolation, ≤ c/4, and the walk simplification, ≤ c/16), and the medial axis'
+  resolution is about c (gaps narrower than ~2c have no skeleton, branch ends stop up to ~c short
+  of corner tips, ADR-0023): about chordal/2 in total, plus chordal/8 in resolved crossing parts
+  (§4). Pocket (flat areas, wall rings) runs at the same internal tolerance, since its safety
+  margin (its chordal) is the gap between the wall rings and the flat area's edge. The chordal
+  tolerance must be at least 0.0003 mm (Pocket's minimum is 0.0001). The first version ran the medial axis at the user's tolerance with a margin of chordal/2
+  and measured up to 1.5·chordal (2.3× at a Bezier cusp, more in crossing slivers). Measured now:
+  see §8. Points that need the full limit depth are flat floor (§3), not bounded by this.
+- Walks are kept whenever some point has a positive allowed footprint: a ball nose's depth for a
+  small footprint is tiny (r²/2R) and walks below the distance tolerance were once dropped,
+  leaving thin parts uncut (10·chordal short).
 - **Start depth** moves the whole carve down: the carve is computed from the plane at
   −start depth, the material above it being assumed gone over the regions (carving into a pocket
   floor); flat depth is measured from that plane. Safe Z must be above the material surface.
+  Above the start plane the cone is wider than its footprint; that is the expected behaviour
+  (the reference behaviour: start depth is used after a pocket to that depth, so there is no
+  material there). With material left above the start plane, the cone cuts the walls above it.
 - Z is linear between consecutive points. Every segment is first cut where the depth rule
   min(limit, depth(max(0, r − margin))) has a kink: where r − margin reaches 0 and where it
   reaches the footprint at the limit. Without that cut, linear Z across the limit kink makes a
@@ -69,6 +77,19 @@ bound on text-heavy jobs (≥ 5,000 glyph-like regions). The geometry comes from
   walls at every depth: gouge-free by the pocket oracle). The carving tool then cuts the walls of
   the flat areas at the limit along `pocketCentreRegion` (inset by the footprint plus Pocket's
   chordal margin), so the walls are cut by the V-bit, not the end mill.
+- **The carving tool clears what the end mills cannot reach.** With clearance tools, the carving
+  tool is added to Pocket's tool list as the last rest tool (same allowance): Pocket's rest
+  machining gives it only the material the end mills left (flat areas narrower than the
+  smallest end mill, inside corners). Its centres keep the allowance plus its own footprint off
+  the walls, so its footprint reaches every point of the flat area to within Pocket's chordal
+  margin of its edge, where the wall rings cut. Its stepover is limited to the width it cuts at
+  the limit (Pocket's rule). "Nothing left" (`NoRestMaterial`), "cannot reach the rest"
+  (`RestUnreachable`) and "too large" (`ToolTooLarge`: a flat area narrower than its rest pass,
+  covered by its walls and skeleton) are not reported for it: the end mills' leftovers in the inside corners of a
+  flat area are out of reach of any pointed tool at the flat depth (the wall ring at the corner
+  slopes the floor up into it), and reporting that for every letter would be noise. This was chosen
+  over a warning: the floor gets cleared, with the same machinery, and the moves come first in
+  that region's part of the carving toolpath.
 - **Without clearance tools** the carving tool clears the flat areas itself with `pocketToolpath`
   (its cutting data's stepover and pass depth; the boundary pass is the same walls), prepended to
   its carve. A V-bit floor has ridges of stepover/(2·tan(θ/2)); clearance tools avoid them.
@@ -90,7 +111,14 @@ bound on text-heavy jobs (≥ 5,000 glyph-like regions). The geometry comes from
   their even-odd region with `geometry::unionContours`, as Pocket resolves its region: each
   cluster of crossing vectors separately (even-odd membership is the parity over all contours,
   so the region is the same), polygonised within chordal/8; the rest keep their exact lines,
-  arcs and Beziers. `CrossingVectorsResolved` reports it, and the margin of those parts grows by
+  arcs and Beziers. A resolved polygon can lie up to chordal/8 away from its curves, so it can
+  cut a vector closer than that (round 2: a hole 0.003 mm from a circle of a crossing pair was
+  cut through). Every resolved polygon is therefore checked against the vectors outside its
+  cluster (`geometry::intersect`, pairs pruned by their boxes); a vector it crosses or touches
+  joins the cluster, which is resolved again, until no polygon touches an outside vector. A
+  union polygon that touches itself at a vertex (two pieces meeting at a point, e.g. a letter
+  tangent to a frame edge) is cut into loops there (parities add up), since the medial axis needs
+  simple contours; the nesting probes skip points on the candidate's boundary. `CrossingVectorsResolved` reports it, and the margin of those parts grows by
   chordal/8 (the polygon may lie that far outside a curved wall). The medial axis of crossing
   input has nodes and branches outside the even-odd region (ADR-0023: "every contour then still
   acts as a wall"); before this the carve plunged there (verifier round 1: up to 2.5 mm deep
@@ -118,7 +146,10 @@ bound on text-heavy jobs (≥ 5,000 glyph-like regions). The geometry comes from
 
 ### 5. The medial axis must be accurate
 When `medialAxis` reports `accuracyCapped` (sample or work budget, or coordinates beyond its
-limit) for any region, nothing is produced and `MedialAxisCapped` names each capped region's
+limit) for any region, nothing is produced; the same when it ignores a boundary that encloses
+area (every boundary of a part separates inside from outside by construction, so an ignored
+one is a medial axis failure and carving on would cut through a hole: round 2 found such cases,
+fixed in §7, and this guard keeps any future one from reaching the machine) and `MedialAxisCapped` names each capped region's
 vectors, with the advice to use a coarser chordal tolerance or simplify. A partial or degraded
 carve is never returned silently, and a capped skeleton has no accuracy guarantee to make AC1
 hold. Known non-capped limits (ADR-0023): gaps narrower than ~2·chordal have no skeleton (not
@@ -126,16 +157,16 @@ carved: their depth is below ~chordal/tan(θ/2)); obtuse convex corners lose bra
 remaining inscribed circles reach the vertex within ~0.5·chordal, so the carve stays within the
 tolerance (within the coverage bound of §1).
 
-### 6. Corner sharpening is out of scope (follow-up)
+### 6. Corner sharpening is out of scope (follow-up card T-0160, owner decision 2026-11-03)
 The inventory names "Corner Sharpen" without describing it. Corners of the region are already
 carved by the skeleton to within the tolerance (§5), so the option is not needed for accuracy;
 defining what it does beyond that (e.g. lifting along corner bisectors in flat-area corners the
 clearance tool cannot reach) is product behaviour to be specified first. Whatever it becomes, it
 must find corners from the boundary, not from skeleton branch ends (ADR-0023: obtuse corners may
-have no branch). Proposed as a follow-up card.
+have no branch). Moved to its own card, T-0160 (owner decision).
 
-### 7. Medial axis fix
-Symmetric input could leave the skeleton empty: splitting the base of an isosceles triangle with
+### 7. Medial axis fixes (T-0152 code)
+(a) Symmetric input could leave the skeleton empty: splitting the base of an isosceles triangle with
 an obtuse apex at its middle puts both circumcentres exactly on the legs, neither inside nor
 outside, so no interior triangle ever asked for refinement. `medialAxis` now also refines where
 a circumcentre lies on the boundary (within the merge distance) with a circumradius above half
@@ -144,33 +175,53 @@ junctions of symmetric frames (two nested squares): their skeleton lacked the ar
 corners, whose junction with the outer corner's bisector lies at radius 10 − 5√2 ≈ 2.93 for a
 5 mm wide frame; the T-0152 test asserted every radius ≤ 2.5 and now checks that junction.
 
-### 8. Safety evidence (AC1)
+(b) Classification probes: a contour's sides were read at one probe per span (the span's middle),
+up to 8; a probe within chordal + distance of another contour does not count. A one-arc circle has
+one probe, so a hole 0.005 mm from a wall (and small letter counters at a coarse tolerance) had no
+clear probe and was ignored. Now up to 16 probes are spread over the contour, several per span
+when it has few spans.
+
+(c) Gabriel test hidden by an exempt sample: a sub-edge counted as encroached only when one of the
+two opposite vertices of its Delaunay triangles lies in its diametral circle and is not exempt
+(within 2·chordal of the sub-edge, a gap not worth refining). When the opposite vertex is in the
+circle but exempt (the neighbour sample of a flat corner), other samples in the circle were never
+looked at: a thin band from a frame crossed by letters had no refinement and an empty skeleton.
+Now the triangles reaching into the diametral disc are searched (at most 512; beyond that the
+sub-edge counts as encroached).
+Regression tests for (b) and (c) in `medial_axis_test.cpp`.
+
+### 8. Safety and accuracy evidence (AC1)
 `core/tests/toolpath/v_carve_oracle.hpp` checks every non-rapid move below the start plane over
 its whole length: dist(centre, boundary) − footprint(depth) ≥ 0, with exact closest points on every
 line, arc and Bezier span, certified subdivision (the distance is 1-Lipschitz, the footprint
 monotone in depth) and an even-odd inside test over the original vectors. The generative sweep
 (stars, holed stars, symmetric polygons, rounded rectangles, glyphs, Bezier blobs, thin strips,
 rings with neighbours, overlapping glyphs, overlapping circles and polygons, self-crossing
-Bezier figures-of-eight and bow ties; V-bits 30–150°, ball noses; flat depths with and without
-one or two clearance tools; start depths; chordal 0.01–0.05) runs 120 cases in Debug and 800 in
-Release in ctest and asserts the cone check, the end mills' allowance, the lateral accuracy at
-cut points and the coverage bound of §1. The verifier's independent harness
-(`/home/chris/harness/t0153v1`, crossing and non-crossing seeds) finds no cone violation after
-round 1 (worst +1.0e-3 mm; crossing input included) and lateral coverage ≤ 1.499·chordal. Every
-shipped post's output passes the safety rules (inclined G1 cuts allowed).
+Bezier figures-of-eight and bow ties, one-arc holes nearly touching a wall, frames crossed by
+letters; V-bits 30–150°, ball noses; flat depths with and without one or two clearance tools;
+start depths; chordal 0.01–0.05) runs 120 cases in Debug and 800 in Release in ctest and asserts
+the cone check, the end mills' allowance, the lateral accuracy at cut points and the coverage
+bound of §1 (≤ chordal). The oracle counts every span as a wall, so the sweep avoids edges that
+coincide exactly (they cancel under even-odd). The verifier's independent harness
+(`/home/chris/harness/t0153v2`, vc2 over its 16 families) after round 2: no real cone violation;
+lateral shortfall ≤ 0.5·chordal on non-crossing input and ≤ 0.55·chordal on resolved crossing
+input, except family 15 (exactly coincident edges), whose coverage numbers the verifier marks as
+artefacts of the cancelled edges. Every shipped post's output passes the safety rules (inclined
+G1 cuts allowed).
 
 ### 9. Time bound (AC2)
-Release, the T-0153 machine (shared): 5,000 glyph-like regions (45,000 segments) in ~11–14 s of
-CPU (~1.9 M moves); the same page with a 0.5 mm flat depth (the V-bit clearing the flat areas,
-Pocket per region) ~14 s (~2.8 M moves); linear in the number of regions. The documented bound,
-checked in Release builds (the Linux app job and Windows CI run the suite in Release), is
-**≤ 60 s of CPU for 5,000 regions, with or without a flat depth**, with ≤ 2.5× per doubling
-(625 → 1,250 regions, interleaved runs with T-0145's `interleavedCpuSeconds`, robust to parallel
-ctest load); Debug builds check the doubling on 60 → 120 regions and run the flat page with 120. The
-medial axis needs no speed-up for this: per part it costs ~0.24 s per 1,000 segments. Its
-point-sample skeleton zig-zags within the tolerance, which keeps ~400 moves per 5 × 8 mm glyph
-at the default tolerance and a slight Z jitter; projecting output points onto the exact
-bisectors (ADR-0023's proposed speed-up) would also smooth and thin them.
+Release, the T-0153 machine (shared, under load from other agents): 5,000 glyph-like regions
+(45,000 segments) in ~23 s of CPU (~3.3 M moves); the same page with a 0.5 mm flat depth (the V-bit
+clearing the flat areas, Pocket per region) ~29 s (~4.7 M moves); linear in the number of regions
+(doubling ratio 1.93). Round 1 measured ~11 s / ~14 s: the internal tolerance of §1 (medial axis
+at chordal/3) roughly doubles the samples and moves. The documented bound, checked in Release
+builds (the Linux app job and Windows CI run the suite in Release), is **≤ 60 s of CPU for 5,000
+regions, with or without a flat depth**, with ≤ 2.5× per doubling (625 → 1,250 regions,
+interleaved runs with T-0145's `interleavedCpuSeconds`, robust to parallel ctest load); Debug
+builds check the doubling on 60 → 120 regions and run the flat page with 120. The medial axis
+needs no speed-up for this bound; projecting output points onto the exact bisectors (ADR-0023's
+proposed speed-up) would also smooth the skeleton's zig-zag (a slight Z jitter within the
+tolerance) and thin the moves, which is the next lever if the bound or the G-code size matters.
 
 ### 10. Names, API, record and params.json
 - **Names (owner decision 2026-11-03).** The run-together product name is a trademark and

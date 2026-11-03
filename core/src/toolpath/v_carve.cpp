@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstddef>
 #include <limits>
+#include <map>
 #include <numeric>
 #include <optional>
 #include <string>
@@ -19,7 +20,9 @@
 #include "carvetto/geometry/fill_rule.hpp"
 #include "carvetto/geometry/intersect.hpp"
 #include "carvetto/geometry/medial_axis.hpp"
+#include "carvetto/geometry/polyline.hpp"
 #include "carvetto/geometry/span.hpp"
+#include "carvetto/geometry/transform2.hpp"
 #include "carvetto/toolpath/box_index.hpp"
 #include "carvetto/toolpath/move.hpp"
 
@@ -32,7 +35,7 @@ using geometry::Contour;
 using geometry::MedialAxis;
 using geometry::Vec2;
 
-constexpr double kMinChordal = 1e-4;      // mm
+constexpr double kMinChordal = 3e-4;      // mm (the medial axis and Pocket run at a third of it)
 constexpr double kMaxMoves = 20000000.0;  // moves per V-carve (as Pocket, Drill, Engrave)
 
 /// A number for a message: whole numbers in full, others to 6 significant digits.
@@ -73,7 +76,7 @@ std::string paramProblem(const VCarvingParams& p) {
     }
     const geometry::Tolerance& t = p.tolerance;
     if (t.chordal < kMinChordal || t.chordal > 1.0 || !(t.distance > 0.0) || t.distance > t.chordal) {
-        return "invalid tolerance: chordal must be between 0.0001 and 1 mm, distance > 0 and <= chordal";
+        return "invalid tolerance: chordal must be between 0.0003 and 1 mm, distance > 0 and <= chordal";
     }
     return {};
 }
@@ -134,6 +137,8 @@ struct Boundary {
 /// Crossing input is polygonised at this fraction of the chordal tolerance; the carve margin of
 /// such regions grows by the same amount (the polygon may lie that far outside a curved wall).
 constexpr double kResolveFraction = 0.125;
+/// The medial axis runs at the user's chordal tolerance divided by this (ADR-0025 §1).
+constexpr double kInnerDivisor = 3.0;
 
 std::size_t findRoot(std::vector<std::size_t>& parent, std::size_t i) {
     while (parent[i] != i) {
@@ -141,6 +146,39 @@ std::size_t findRoot(std::vector<std::size_t>& parent, std::size_t i) {
         i = parent[i];
     }
     return i;
+}
+
+/// A polygon of the boolean union may touch itself at a vertex (two pieces of the region meeting
+/// at a point, e.g. a letter tangent to a frame's inner edge); the medial axis needs simple
+/// contours, so it is cut into loops at every repeated vertex. Even-odd membership is unchanged
+/// (each loop keeps its direction; the parities add up), and the loops only touch.
+std::vector<Contour> splitAtTouchingVertices(const Contour& poly) {
+    std::vector<Vec2> stack;
+    std::map<std::pair<double, double>, std::size_t> at;
+    std::vector<Contour> out;
+    auto emit = [&out](const std::vector<Vec2>& pts) {
+        if (pts.size() >= 3) {
+            out.push_back(Contour::fromPolyline(geometry::Polyline{pts, true}));
+        }
+    };
+    for (const geometry::Span& sp : poly.spans) {
+        const Vec2 v = geometry::startPoint(sp);
+        const auto key = std::make_pair(v.x, v.y);
+        const auto it = at.find(key);
+        if (it == at.end()) {
+            at.emplace(key, stack.size());
+            stack.push_back(v);
+            continue;
+        }
+        const std::size_t from = it->second;
+        emit(std::vector<Vec2>(stack.begin() + static_cast<std::ptrdiff_t>(from), stack.end()));
+        for (std::size_t k = from + 1; k < stack.size(); ++k) {
+            at.erase(std::make_pair(stack[k].x, stack[k].y));
+        }
+        stack.resize(from + 1);
+    }
+    emit(stack);
+    return out;
 }
 
 /// The usable closed vectors as non-crossing boundaries of the same even-odd region: vectors
@@ -179,13 +217,53 @@ std::vector<Boundary> resolveCrossings(const std::vector<Contour>& contours, con
             }
         }
     }
+    geometry::Tolerance fine = tol;
+    fine.chordal = tol.chordal * kResolveFraction;
+    fine.distance = std::min(tol.distance, fine.chordal);
+    // The polygon of a resolved cluster lies up to `fine.chordal` inside or outside its curves, so
+    // it can cut a vector that is closer than that without touching the curves (a hole 0.003 mm
+    // from a circle of a crossing pair). Such vectors join the cluster, until no polygon crosses
+    // or touches a vector outside its cluster.
+    std::vector<std::vector<Contour>> resolved(n);
+    for (bool changed = true; changed;) {
+        changed = false;
+        std::vector<std::vector<std::size_t>> members(n);
+        for (std::size_t k = 0; k < n; ++k) {
+            members[findRoot(parent, k)].push_back(k);
+        }
+        for (std::size_t k = 0; k < n && !changed; ++k) {
+            bool cross = false;
+            for (const std::size_t m : members[k]) {
+                cross = cross || crossing[m];
+            }
+            if (members[k].empty() || !cross) {
+                resolved[k].clear();
+                continue;
+            }
+            std::vector<Contour> cluster;
+            for (const std::size_t m : members[k]) {
+                cluster.push_back(contours[usable[m]]);
+            }
+            resolved[k] = geometry::unionContours(cluster, fine, geometry::FillRule::EvenOdd);
+            for (const Contour& poly : resolved[k]) {
+                for (const std::size_t j : index.query(poly.bounds().inflated(fine.chordal + tol.distance))) {
+                    if (findRoot(parent, j) == k) {
+                        continue;
+                    }
+                    if (!geometry::intersect(poly, contours[usable[j]], tol).isEmpty()) {
+                        crossing[j] = true;
+                        const std::size_t rj = findRoot(parent, j);
+                        parent[std::max(k, rj)] = std::min(k, rj);
+                        changed = true;
+                    }
+                }
+            }
+        }
+    }
     std::vector<std::vector<std::size_t>> members(n);
     for (std::size_t k = 0; k < n; ++k) {
         members[findRoot(parent, k)].push_back(k);
     }
-    geometry::Tolerance fine = tol;
-    fine.chordal = tol.chordal * kResolveFraction;
-    fine.distance = std::min(tol.distance, fine.chordal);
     std::vector<Boundary> out;
     clusters = 0;
     for (std::size_t k = 0; k < n; ++k) {
@@ -201,17 +279,16 @@ std::vector<Boundary> resolveCrossings(const std::vector<Contour>& contours, con
             continue;
         }
         ++clusters;
-        std::vector<Contour> cluster;
-        for (const std::size_t m : members[k]) {
-            cluster.push_back(contours[usable[m]]);
-        }
-        for (Contour& c : geometry::unionContours(cluster, fine, geometry::FillRule::EvenOdd)) {
-            const Box2 box = c.bounds();
-            out.push_back(Boundary{std::move(c), usable[k], true, box, 0.0});
+        for (const Contour& poly : resolved[k]) {
+            for (Contour& c : splitAtTouchingVertices(poly)) {
+                const Box2 box = c.bounds();
+                out.push_back(Boundary{std::move(c), usable[k], true, box, 0.0});
+            }
         }
     }
     for (Boundary& b : out) {
-        b.area = std::fabs(geometry::area(b.contour));
+        // About the box centre, so small contours far from the origin do not cancel.
+        b.area = std::fabs(geometry::signedArea(b.contour.transformed(geometry::Transform2::translation(-b.box.centre()))));
     }
     return out;
 }
@@ -239,15 +316,23 @@ std::vector<Group> nestRegions(const std::vector<Boundary>& bs, const geometry::
         if (bs[i].contour.isEmpty()) {
             continue;
         }
-        // The boundaries do not cross or touch, so any point of one decides its nesting.
-        const Vec2 probe = geometry::pointAt(bs[i].contour.spans.front(), 0.5);
+        // The boundaries do not cross, but the polygons of a resolved cluster may share vertices
+        // or edges (a hole touching its outer); a point of one off the other decides the nesting.
+        const Contour& ci = bs[i].contour;
+        const std::size_t spans = ci.spans.size();
         double best = std::numeric_limits<double>::infinity();
         for (const std::size_t j : index.query(boxes[i])) {
             if (j == i || !(bs[j].area > bs[i].area) || !(bs[j].area < best) || !boxes[j].contains(boxes[i])) {
                 continue;
             }
-            if (geometry::locatePoint(bs[j].contour, probe, geometry::FillRule::EvenOdd, tol) ==
-                geometry::PointLocation::Inside) {
+            geometry::PointLocation loc = geometry::PointLocation::OnBoundary;
+            for (std::size_t k = 0; k < std::min<std::size_t>(spans, 16) * 3 && loc == geometry::PointLocation::OnBoundary;
+                 ++k) {
+                const geometry::Span& sp = ci.spans[((k / 3) * spans) / std::min<std::size_t>(spans, 16)];
+                const Vec2 probe = geometry::pointAt(sp, 0.25 * static_cast<double>(k % 3 + 1));
+                loc = geometry::locatePoint(bs[j].contour, probe, geometry::FillRule::EvenOdd, tol);
+            }
+            if (loc == geometry::PointLocation::Inside) {
                 parent[i] = j;
                 best = bs[j].area;
             }
@@ -736,6 +821,13 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
     const std::vector<Group> groups = nestRegions(boundaries, tol);
     result.regions = groups.size();
 
+    // The user's chordal tolerance is the carve's accuracy budget (ADR-0025 §1): the medial axis
+    // runs at a third of it, the margin is half of that, so the margin (chordal/6) plus the
+    // skeleton's resolution (~chordal/3) stay within the tolerance.
+    geometry::Tolerance inner = tol;
+    inner.chordal = tol.chordal / kInnerDivisor;
+    inner.distance = std::min(tol.distance, inner.chordal);
+
     // Medial axis and skeleton cuts per region.
     std::vector<GroupResult> carved(groups.size());
     std::size_t ignored = 0;
@@ -746,8 +838,24 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
         for (const std::size_t b : groups[g].boundaries) {
             gr.local.push_back(boundaries[b].contour);
         }
-        gr.margin = (0.5 + (groups[g].resolved ? kResolveFraction : 0.0)) * tol.chordal;
-        const MedialAxis ax = geometry::medialAxis(gr.local, tol);
+        gr.margin = 0.5 * inner.chordal + (groups[g].resolved ? kResolveFraction * tol.chordal : 0.0);
+        const MedialAxis ax = geometry::medialAxis(gr.local, inner);
+        std::size_t zeroArea = 0;
+        for (const std::size_t b : groups[g].boundaries) {
+            if (!(boundaries[b].area > 0.0)) {
+                ++zeroArea;
+            }
+        }
+        if (ax.ignoredContours > zeroArea) {
+            // Every boundary of a part encloses area and separates inside from outside (they
+            // do not cross and are nested by containment): the medial axis must use them all,
+            // or a hole would be carved through. Never carve on a skeleton that dropped one.
+            anyCapped = true;
+            say(ToolpathIssue::MedialAxisCapped, groups[g].sources.front(),
+                "the medial axis of " + vecName(groups[g].sources.front()) +
+                    " did not use every boundary of the region (a hole would be cut through); nothing is carved");
+            continue;
+        }
         if (ax.ignoredContours > 0) {
             ignored += ax.ignoredContours;
             if (!firstIgnored) {
@@ -780,13 +888,13 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
                 gr.maxRadius = std::max(gr.maxRadius, sp.r);
             }
             Cut cut;
-            cut.points = carvePoints(simplify(walk, tol.chordal / 16.0), rule);
+            cut.points = carvePoints(simplify(walk, inner.chordal / 16.0), rule);
             double deepest = 0.0;
             for (const CarvePoint& c : cut.points) {
                 deepest = std::max(deepest, c.depth);
             }
-            if (!(deepest >= tol.distance)) {
-                continue;  // touches nothing
+            if (!(deepest > 0.0)) {
+                continue;  // touches nothing (a ball nose cuts very shallow footprints too)
             }
             gr.cuts.push_back(std::move(cut));
         }
@@ -859,15 +967,25 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
     pocket.allowance = multi ? limitRadius : 0.0;
     pocket.rampPlunge = params.rampPlunge;
     pocket.rampDistance = params.rampDistance;
-    pocket.tolerance = tol;
+    pocket.tolerance = inner;  // its safety margin is part of the accuracy budget (ADR-0025 §1)
     PocketParams walls = pocket;
     walls.allowance = 0.0;
+    // Without clearance tools the carving tool clears the flat areas itself. With them it comes
+    // last as a rest tool (Pocket's rest machining: only what the end mills could not reach, e.g.
+    // flat areas narrower than the smallest end mill), with its stepover limited to the width it
+    // cuts at the flat depth so Pocket accepts it (ADR-0025 §3).
     std::vector<PocketTool> pocketTools;
     if (multi) {
         pocketTools = clearanceTools;
+        tooling::CuttingData rest = data;
+        const double width = 2.0 * limitRadius;
+        rest.stepover = rest.stepover > 0.0 ? std::min(rest.stepover, width) : 0.5 * width;
+        rest.passDepth = rest.passDepth > 0.0 ? rest.passDepth : limit;
+        pocketTools.push_back(PocketTool{tool, rest});
     } else {
         pocketTools.push_back(PocketTool{tool, cuttingData});
     }
+    const std::size_t carverIndex = pocketTools.size() - 1;
     for (std::size_t i = 0; i < clearanceTools.size(); ++i) {
         Toolpath tp;
         tp.name = params.name + " [" + clearanceTools[i].tool.name + "]";
@@ -893,11 +1011,22 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
         PocketResult pr = pocketToolpath(gr.local, pocketTools, pocket);
         bool refused = false;
         for (ToolpathDiagnostic& d : pr.diagnostics) {
+            const bool carver = d.tool == std::optional<std::size_t>{carverIndex};
+            if (multi && carver &&
+                (d.issue == ToolpathIssue::NoRestMaterial || d.issue == ToolpathIssue::RestUnreachable ||
+                 d.issue == ToolpathIssue::ToolTooLarge)) {
+                // The end mills cleared everything, or what they left is only the inside corners
+                // of the flat area, which no tool with a point reaches flat, or the flat area is
+                // narrower than the carving tool's own rest pass (its walls and skeleton cover it):
+                // the usual cases.
+                continue;
+            }
             d.contour = sourceOf(d.contour);
-            if (!multi) {
+            if (carver) {
                 d.tool.reset();
             }
-            d.message = "flat area clearance: " + d.message;
+            d.message = (multi && carver ? "flat area rest clearing by the carving tool: " : "flat area clearance: ") +
+                        d.message;
             refused = refused || refusal(d.issue);
             merged.add(std::move(d));
         }
@@ -905,6 +1034,11 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
             merged.flushInto(result.diagnostics);
             result.clearance.clear();
             return result;
+        }
+        if (carverIndex < pr.toolpaths.size()) {
+            selfClear[g] = std::move(pr.toolpaths[carverIndex].moves);
+            shiftZ(selfClear[g], params.startDepth);
+            estimate += static_cast<double>(selfClear[g].size());
         }
         if (multi) {
             for (std::size_t t = 0; t < clearanceTools.size() && t < pr.toolpaths.size(); ++t) {
@@ -931,10 +1065,6 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
                     gr.cuts.push_back(std::move(cut));
                 }
             }
-        } else if (!pr.toolpaths.empty()) {
-            selfClear[g] = std::move(pr.toolpaths.front().moves);
-            shiftZ(selfClear[g], params.startDepth);
-            estimate += static_cast<double>(selfClear[g].size());
         }
         if (!(estimate <= kMaxMoves)) {
             break;

@@ -52,7 +52,7 @@ enum class ToolpathIssue {
     HoleWiderThanVector,  ///< The tool is wider than the vector round its centre; drilled anyway (Drill).
     DuplicateHole,        ///< Holes at the same centre were drilled once (Drill).
     CarveDepthLimited,    ///< The carve depth was limited to the tool's full-width depth (V-Carve).
-    MedialAxisCapped,     ///< The medial axis hit its accuracy budget; nothing produced (V-Carve).
+    MedialAxisCapped,     ///< The medial axis hit its budget or missed a boundary; nothing produced (V-Carve).
     CrossingVectorsResolved,  ///< Crossing or touching vectors were resolved into their even-odd region (V-Carve).
 };
 

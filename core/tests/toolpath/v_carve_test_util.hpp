@@ -137,7 +137,7 @@ struct SweepCase {
 inline SweepCase sweepCase(std::uint64_t k) {
     SplitMix rng{0x5EEDC0DEULL ^ (k * 0x9E3779B97F4A7C15ULL)};
     SweepCase sc;
-    const auto kind = static_cast<int>(k % 11);
+    const auto kind = static_cast<int>(k % 13);
     const Vec2 o{rng.uniform(-50.0, 50.0), rng.uniform(-50.0, 50.0)};
     switch (kind) {
         case 0: {
@@ -235,6 +235,32 @@ inline SweepCase sweepCase(std::uint64_t k) {
             } else {
                 sc.region.push_back(polygon({o, o + Vec2{w, h}, o + Vec2{w, 0.0}, o + Vec2{0.0, h}}));
             }
+            break;
+        }
+        case 11: {
+            // A one-arc circular hole nearly touching the outer wall (gap 0 .. 2 x chordal; the
+            // medial axis once ignored such holes: ADR-0025 §7).
+            sc.what = "near-tangent hole";
+            const double w = rng.uniform(6.0, 14.0);
+            const double h = rng.uniform(6.0, 10.0);
+            sc.region.push_back(Contour::rectangle(Box2{o, o + Vec2{w, h}}));
+            const double r = rng.uniform(1.0, 0.45 * h);
+            const double gap = rng.uniform(0.0, 0.1);
+            sc.region.push_back(Contour::circle(o + Vec2{w - r - gap, 0.5 * h}, r, geometry::ArcDirection::CW));
+            break;
+        }
+        case 12: {
+            // A frame crossed by letters (crossing input with nested parts).
+            sc.what = "frame crossed by glyphs";
+            const double w = rng.uniform(14.0, 22.0);
+            sc.region.push_back(Contour::rectangle(Box2{o, o + Vec2{w, 12.0}}));
+            sc.region.push_back(Contour::rectangle(Box2{o + Vec2{1.0, 1.0}, o + Vec2{w - 1.0, 11.0}}));
+            // Random offsets: an edge exactly on a frame edge would cancel under even-odd, which
+            // the oracle's distance (over every span) cannot tell apart from a wall.
+            medial::appendGlyph(sc.region, static_cast<int>(rng.next() % 5),
+                                o + Vec2{rng.uniform(-2.0, 2.0), rng.uniform(1.5, 2.5)});
+            medial::appendGlyph(sc.region, static_cast<int>(rng.next() % 5),
+                                o + Vec2{w - rng.uniform(3.0, 6.0), rng.uniform(2.5, 3.5)});
             break;
         }
         default: {

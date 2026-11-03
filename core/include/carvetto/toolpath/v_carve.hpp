@@ -53,8 +53,8 @@ struct VCarvingParams {
     OrderOptions order;
     /// Tool position before the first cut (XY).
     geometry::Vec2 startPosition{0.0, 0.0};
-    /// Geometric tolerance: `chordal` is the medial axis accuracy, the lateral accuracy of the
-    /// carved walls and the flat-area safety margin as in Pocket.
+    /// Geometric tolerance: `chordal` (0.0003 to 1 mm) is the lateral accuracy of the carve; the
+    /// medial axis and the flat-area Pocket runs use a third of it (ADR-0025 §1).
     geometry::Tolerance tolerance{geometry::Tolerance::defaults()};
 
     bool operator==(const VCarvingParams&) const = default;
@@ -108,11 +108,12 @@ double vCarvingDepthForRadius(const tooling::Tool& tool, double r);
 ///
 /// Carve: `geometry::medialAxis` gives, along the skeleton of each group, the radius r of the
 /// largest inscribed circle. The tool follows every skeleton branch at the depth where its
-/// footprint at the start plane has radius r − chordal/2 (V-bit: depth = r / tan(angle/2) less
-/// that margin), so it touches both walls within the chordal tolerance and never crosses one;
+/// footprint at the start plane has radius r − margin (V-bit: depth = r / tan(angle/2) less the
+/// margin), so it touches both walls within the chordal tolerance and never crosses one;
 /// the depth is limited to the flat depth (when set) and to the tool's full-width depth.
-/// Lateral accuracy: every point of the region whose depth is above the limit is carved to
-/// within 1.5 x chordal of its depth as a footprint radius (1.625 x for resolved crossing parts).
+/// Accuracy: the medial axis runs at chordal/3 and the margin is chordal/6, so every point of the
+/// region whose depth is above the limit is carved to within the chordal tolerance of its depth
+/// as a footprint radius (ADR-0025 §1).
 /// Branches are joined into as few continuous cuts as the skeleton allows (each: rapid at safe
 /// Z, plunge, cut along the skeleton with Z following the depth, retract). Groups are ordered
 /// with the shared `orderCuts` and `order`; the cuts of a group nearest first.
@@ -122,15 +123,17 @@ double vCarvingDepthForRadius(const tooling::Tool& tool, double r);
 /// bottomed. With clearance tools, `pocketToolpath` clears them (the tools in list order, later
 /// ones as rest tools; allowance = the carving tool's footprint radius at the flat depth, so
 /// the end mills keep off the carved walls) and the carving tool cuts the walls of the flat
-/// areas along `pocketCentreRegion` at the flat depth; Pocket runs region by region. Without
+/// areas along `pocketCentreRegion` at the flat depth; the carving tool also follows the end
+/// mills as Pocket's last rest tool, clearing what they could not reach. Pocket runs region by
+/// region. Without
 /// clearance tools the carving tool
 /// clears the flat areas itself with `pocketToolpath` (its cutting data's stepover and pass
 /// depth), the boundary pass being the same walls. Pocket's diagnostics are passed on; when it
 /// refuses (invalid tool, parameters or work limit) the whole V-carve is refused.
 ///
 /// The medial axis must be accurate: when it reports `accuracyCapped` (sample or work budget, or
-/// coordinates too far from the origin for the tolerance) for any group, nothing is produced
-/// and `MedialAxisCapped` names the group's vectors.
+/// coordinates too far from the origin for the tolerance) or ignores a boundary that encloses
+/// area, for any part, nothing is produced and `MedialAxisCapped` names the part's vectors.
 ///
 /// Tools: `tool` must be a V-bit or ball nose (`vCarvingToolAllowed`) passing `tooling::validate`
 /// with feed and plunge rates > 0; clearance tools must be end mills. `cuttingData` empty = the
