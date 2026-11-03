@@ -176,8 +176,9 @@ decision added by T-0141, 2026-11-02)
    - Batching applies only when at least `kOffsetBatchMinDepth` = 32 batches overlap one
      horizontal line (all of them would share the active edge list) and no open contour is
      being outlined; otherwise everything goes into one Clipper2 call as before, and the result
-     is byte-identical to the result before T-0141. Below that threshold one call costs at most
-     ~32 batches' edges per scanbeam, linear in n. Batches are offset in input order of their
+     is byte-identical to the result before T-0141. Below that threshold one call holds at most
+     ~32 batches side by side, which is linear in n only while each batch is small (see the
+     remaining quadratic cases below). Batches are offset in input order of their
      first contour and their results concatenated (each in Clipper2's order); the §8 filter
      then runs over the concatenation, with the same decisions (ρ depends on the largest
      coordinate overall; nesting never crosses batches).
@@ -192,7 +193,17 @@ decision added by T-0141, 2026-11-02)
      (1.1e-5 mm), typically 1–2. The ring order also differs (batch by batch instead of
      Clipper2's sweep order). Profile offsets region by region, so it does not reach the
      threshold in practice; Pocket offsets its whole centre region at once, so a pocket over 32
-     or more shapes side by side can move by those few nanometres.
+     or more shapes side by side is batched.
+   - **Downstream the drift is larger than the rings' few grid units, but safety is unchanged.**
+     Pocket builds rings, rest areas, rasters and links on these regions, and a grid-level
+     change can tip its discrete choices. On wide pockets (rows of 32–70 rooms, T-0141
+     verifier) the safety statistics (gouge, coverage, engagement) were identical to before
+     T-0141 in 50 of 50 scenes, but the move hashes differed in 41 and the move counts in 32:
+     ring vertices moved by up to ~5e-3 mm (different vertices picked along arcs, within the
+     0.01 mm chordal tolerance), one rest-tool raster line end slid 0.021 mm, ring start
+     points and link routes changed, and retract counts changed in 2 scenes (2230 → 2235,
+     1650 → 1653). Toolpaths of such jobs are therefore not reproducible against releases
+     before T-0141, only equally safe.
    - Measured (Release, `offsetContours` on the verifier's rows at -(0.1 − 3e-6) mm, CPU time,
      best of 7): 20,000 rectangles in a row 36–50 s → 0.06 s (2,500 → 20,000: 2.0–2.3× per
      doubling; before: 3.8–6.6×); the same with heights jittered (many scanbeams) about the
@@ -202,6 +213,13 @@ decision added by T-0141, 2026-11-02)
      lone holes side by side (wound against the lowest contour, which no Carvetto caller
      produces) stay in one call and stay quadratic. `booleanOp` (`unionContours`) has the same
      sweep cost (a 10,000-rectangle row: ~1.3 s) and is not batched here (follow-up).
+   - **Remaining quadratic cases (T-0142).** Batching only helps when the shapes side by side
+     are in different batches. One batch holding many edges side by side is still one sweep,
+     ~4.4× per doubling and unchanged from before T-0141: an outer containing a row of n holes
+     (1.31 s / 6.10 s at 10,000 / 20,000) and a row whose outsets merge into one region
+     (1.44 s / 5.99 s). Nested arrangements such as a spiral of nested corners stay ~4.5× per
+     doubling because `separableBatches` peels off one box per cut level (still about 5×
+     faster than before T-0141).
 
 ## Rationale
 - Clipper2 is the de-facto robust polygon clipper for CAM; it is deterministic, header-light,
