@@ -94,9 +94,9 @@ Date: 2026-10-24 · Status: accepted (director, 2026-10-24; residual open-offset
    which is not exact on acute rings and not even monotone in the radius (an acute triangle
    eroded by 4.0 units can vanish while by 4.5 units it leaves a ring; e.g. the triangle
    (0.019917, 0.098387), (0.024209, 0.096417), (0.024216, 0.096426) mm, exact inradius 5.54
-   units, is removed). Over 419,000 random thin (~4 µm) integer triangles removed rings had an
-   inradius of up to 5.64 units and kept ones down to 3.62 units, so ρ is a nominal radius
-   with that band around it:
+   units, is removed). Measured over about 6 million random thin (~4 µm) integer triangles,
+   removed rings had an inradius of up to about 5.7 units and kept ones down to about 3.6
+   units (a measurement, not a bound), so ρ is a nominal radius with that band around it:
    - ρ = 4 grid units (4e-6 mm) × max(1, 16 ε M), M the largest output coordinate in grid
      units, ε the double epsilon. Clipper2 rounds every vertex to the grid (≤ 0.71 units in the
      plane) and computes offset and intersection points in double from int64 coordinates, a few
