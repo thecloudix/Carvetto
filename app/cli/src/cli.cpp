@@ -32,6 +32,7 @@
 #include "carvetto/io/dxf.hpp"
 #include "carvetto/post/post_processor.hpp"
 #include "carvetto/toolpath/drill.hpp"
+#include "carvetto/toolpath/engrave.hpp"
 #include "carvetto/toolpath/operation.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/profile.hpp"
@@ -69,8 +70,9 @@ the default single-sided job (300 x 300 x 18 mm, Z zero on the material surface)
 constexpr std::string_view kToolpathHelp = R"(Usage: carvetto-cli toolpath profile <params.json> <in.carv> <out.carv>
        carvetto-cli toolpath pocket  <params.json> <in.carv> <out.carv>
        carvetto-cli toolpath drill   <params.json> <in.carv> <out.carv>
+       carvetto-cli toolpath engrave <params.json> <in.carv> <out.carv>
 
-Computes a 2D profile, pocket or drilling toolpath for the vectors of <in.carv> (all of them,
+Computes a 2D profile, pocket, drilling or quick engrave toolpath for the vectors of <in.carv> (all of them,
 or those on the layers named in the params file) and writes <out.carv> (which may be <in.carv>)
 with the toolpath added after the ones already there. Each toolpath is stored as a toolpath record
 of the document: its name, the params it came from, the layers it machines, the tool, and
@@ -284,18 +286,24 @@ int cmdToolpath(const std::vector<std::string>& a, std::ostream& out, std::ostre
     std::optional<ProfileJob> profile;
     std::optional<PocketJob> pocket;
     std::optional<DrillJob> drill;
+    std::optional<EngraveJob> engrave;
     try {
         if (op == "profile") {
             profile = parseProfileParams(paramsText);
         } else if (op == "drill") {
             drill = parseDrillParams(paramsText);
+        } else if (op == "engrave") {
+            engrave = parseEngraveParams(paramsText);
         } else {
             pocket = parsePocketParams(paramsText);
         }
     } catch (const CliError& e) {
         throw CliError(paramsPath + ": " + e.what());
     }
-    const CommonParams& common = profile ? profile->common : drill ? drill->common : pocket->common;
+    const CommonParams& common = profile   ? profile->common
+                                 : drill   ? drill->common
+                                 : engrave ? engrave->common
+                                           : pocket->common;
 
     document::LoadedCarv loaded = loadDocument(inPath);
     const document::VectorSelection selection = selectionFor(loaded.document, common.layers, inPath);
@@ -325,6 +333,13 @@ int cmdToolpath(const std::vector<std::string>& a, std::ostream& out, std::ostre
             results.push_back(std::move(r.toolpath));
         }
         recordParams = drill->params;
+    } else if (engrave) {
+        toolpath::EngraveResult r = toolpath::engraveToolpath(contours, tool.tool, tool.cuttingData, engrave->params);
+        diagnostics = r.diagnostics;
+        if (r.ok()) {
+            results.push_back(std::move(r.toolpath));
+        }
+        recordParams = engrave->params;
     } else {
         toolpath::PocketResult r =
             toolpath::pocketToolpath(contours, {toolpath::PocketTool{tool.tool, tool.cuttingData}}, pocket->params);
@@ -430,6 +445,7 @@ const char* operationName(document::ToolpathOperation op) {
         case document::ToolpathOperation::Profile: return "profile";
         case document::ToolpathOperation::Pocket: return "pocket";
         case document::ToolpathOperation::Drill: return "drill";
+        case document::ToolpathOperation::Engrave: return "engrave";
     }
     return "?";
 }
@@ -585,8 +601,9 @@ int dispatch(const std::vector<std::string>& args, std::ostream& out, std::ostre
                              std::to_string(rest.size()),
                          std::string(it->name)};
     }
-    if (it->name == "toolpath" && rest[0] != "profile" && rest[0] != "pocket" && rest[0] != "drill") {
-        throw UsageError{"unknown toolpath operation '" + rest[0] + "' (expected profile, pocket or drill)",
+    if (it->name == "toolpath" && rest[0] != "profile" && rest[0] != "pocket" && rest[0] != "drill" &&
+        rest[0] != "engrave") {
+        throw UsageError{"unknown toolpath operation '" + rest[0] + "' (expected profile, pocket, drill or engrave)",
                          "toolpath"};
     }
     return it->fn(rest, out, err);
@@ -610,6 +627,8 @@ Commands:
       Add a pocket toolpath (offset or raster clearing, boundary pass, ramp plunge).
   toolpath drill <params.json> <in.carv> <out.carv>
       Add a drilling toolpath (a hole at the centre of every closed vector, peck, dwell).
+  toolpath engrave <params.json> <in.carv> <out.carv>
+      Add a quick engrave toolpath (outline or fill at a shallow depth, passes).
   post <post.pp> <in.carv> <out.nc>
       Write every toolpath through a post-processor (e.g. posts/grbl_mm.pp).
   info <file.carv>

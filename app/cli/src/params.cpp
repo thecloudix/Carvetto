@@ -447,6 +447,27 @@ DrillJob parseDrillParams(std::string_view text) {
     return job;
 }
 
+EngraveJob parseEngraveParams(std::string_view text) {
+    using namespace toolpath;
+    const json root = parseJson(text);
+    EngraveJob job;
+    EngraveParams& p = job.params;
+    Fields f(root, "");
+    f.string("name", p.name);
+    f.number("depth", p.depth);
+    f.integer("passes", p.passes);
+    f.number("safe_z", p.safeZ);
+    f.choice("strategy", p.strategy, {{"outline", EngraveStrategy::Outline}, {"fill", EngraveStrategy::Fill}});
+    f.choice("fill_pattern", p.fillPattern, {{"offset", PocketStrategy::Offset}, {"raster", PocketStrategy::Raster}});
+    f.number("stepover", p.stepover);
+    f.angle("raster_angle", p.rasterAngle);
+    readStartPosition(f, p.startPosition);
+    readTolerance(f, p.tolerance);
+    readCommon(f, job.common);
+    f.finish();
+    return job;
+}
+
 ResolvedTool resolveTool(const ToolChoice& choice, const std::filesystem::path& baseDir) {
     std::string text;
     std::string dbName;
@@ -556,6 +577,17 @@ or an end mill):
   "order": {"selection_order": false, "left_to_right": false,
             "bottom_to_top": false, "grid": false}   (none: nearest hole first)
   "start_position": [0, 0]       tool XY before the first hole
+
+engrave (quick engraving; tool: a V-bit, engraving tool, end mill, ball nose or diamond drag):
+  "depth": 0 (> 0 required)      engrave depth below the surface
+  "passes": 1                    number of equal passes to the depth (1 to 1000)
+  "strategy": "outline"          outline (the tool centre follows every vector, open or closed)
+                                 | fill (closed vectors cleared like a pocket; open ones ignored)
+  "fill_pattern": "offset"       offset | raster (fill only)
+  "stepover": 0                  fill only; 0 = the cutting data's stepover; at most the width
+                                 the tool cuts at the engrave depth
+  "raster_angle": 0              fill with the raster pattern
+  "start_position": [0, 0]       tool XY before the first outline cut (nearest first)
 )";
 }
 

@@ -18,6 +18,7 @@
 #include "carvetto/document/carv_io.hpp"
 #include "carvetto/document/toolpath_record.hpp"
 #include "carvetto/toolpath/drill.hpp"
+#include "carvetto/toolpath/engrave.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/profile.hpp"
 #include "carvetto/tooling/json_io.hpp"
@@ -35,6 +36,7 @@ namespace {
 const std::string kData = CARVETTO_CLI_DATA_DIR;
 const std::string kGolden = std::string(CARVETTO_GOLDEN_DIR) + "/cli/part_grbl.nc";
 const std::string kDrillGolden = std::string(CARVETTO_GOLDEN_DIR) + "/cli/part_drill_grbl.nc";
+const std::string kEngraveGolden = std::string(CARVETTO_GOLDEN_DIR) + "/cli/part_engrave_grbl.nc";
 const std::string kGrbl = std::string(CARVETTO_POSTS_DIR) + "/grbl_mm.pp";
 
 struct Outcome {
@@ -99,6 +101,25 @@ std::string drillPipeline(const std::string& dir) {
              {"import", kData + "/part.dxf", carv},
              {"toolpath", "drill", kData + "/drill.json", carv, carv},
              {"toolpath", "profile", kData + "/profile.json", carv, carv},
+             {"post", kGrbl, carv, nc},
+         }) {
+        const Outcome r = runCli(args);
+        INFO(args[0] << ": " << r.err);
+        REQUIRE(r.code == cli::kExitOk);
+        CHECK(r.err.empty());
+    }
+    return readFile(nc);
+}
+
+/// The T-0151 quick engrave pipeline: DXF -> V-bit raster fill of the pockets layer in two passes
+/// -> V-bit outline of the outline layer -> Grbl; returns the G-code.
+std::string engravePipeline(const std::string& dir) {
+    const std::string carv = dir + "/part.carv";
+    const std::string nc = dir + "/part.nc";
+    for (const auto& args : std::vector<std::vector<std::string>>{
+             {"import", kData + "/part.dxf", carv},
+             {"toolpath", "engrave", kData + "/engrave_fill.json", carv, carv},
+             {"toolpath", "engrave", kData + "/engrave_outline.json", carv, carv},
              {"post", kGrbl, carv, nc},
          }) {
         const Outcome r = runCli(args);
@@ -247,6 +268,90 @@ TEST_CASE("T-0150: toolpath drill reports diagnostics and refuses unusable tools
     CHECK_THAT(t.err, ContainsSubstring("typo.json: params: unknown key 'cut_depht'"));
 }
 
+// ---------------------------------------------------------------------------- T-0151 engrave
+
+TEST_CASE("T-0151: DXF -> engrave fill + outline -> Grbl matches the engraving golden", "[cli][golden][engrave]") {
+    const std::string a = workDir("engrave_e2e");
+    const std::string b = workDir("engrave_e2e_again");
+    CHECK(engravePipeline(a) == readFile(kEngraveGolden));
+    CHECK(engravePipeline(b) == readFile(kEngraveGolden));  // deterministic
+    CHECK(readFile(a + "/part.carv") == readFile(b + "/part.carv"));
+}
+
+TEST_CASE("T-0151: the engraving golden is sane: one V-bit, two fill passes, outline at depth",
+          "[cli][golden][engrave]") {
+    const std::string g = readFile(kEngraveGolden);
+    CHECK_THAT(g, StartsWith("(part)\n"));
+    CHECK_THAT(g, ContainsSubstring("(Tool 12: V-Bit 90)"));
+    CHECK_THAT(g, ContainsSubstring("(Fill)"));
+    CHECK_THAT(g, ContainsSubstring("(Border)"));
+    CHECK(g.find("Change to tool") == std::string::npos);  // the same tool throughout
+    CHECK_THAT(g, ContainsSubstring("M3 S18000"));
+    CHECK_THAT(g, ContainsSubstring("G1 Z-0.500 F500"));  // first fill pass / the outline depth
+    CHECK_THAT(g, ContainsSubstring("G1 Z-1.000"));       // second fill pass
+    CHECK(g.find("Z-1.001") == std::string::npos);
+    CHECK_THAT(g, ContainsSubstring("G0 X0.000 Y0.000 Z5.000"));  // the outline starts at its first corner
+    CHECK_THAT(g, ContainsSubstring("M30"));
+}
+
+// Hidden (tag [.regen]): rewrites the engraving CLI golden (tools/regen_golden.py).
+TEST_CASE("Regenerate the engraving CLI golden", "[.regen]") {
+    writeFile(kEngraveGolden, engravePipeline(workDir("regen_engrave")));
+}
+
+TEST_CASE("T-0151: toolpath engrave stores an engrave record; info names it", "[cli][toolpath][engrave]") {
+    const std::string dir = workDir("engrave_record");
+    const std::string carv = importedFixture(dir);
+    const Outcome r = runCli({"toolpath", "engrave", kData + "/engrave_fill.json", carv, carv});
+    INFO(r.err);
+    REQUIRE(r.code == 0);
+    CHECK(r.err.empty());
+    CHECK_THAT(r.out, ContainsSubstring("added engrave toolpath 'Fill' ("));
+    CHECK_THAT(r.out, ContainsSubstring("tool 'V-Bit 90') as toolpath 1"));
+    auto loaded = document::loadCarv(fs::path(carv));
+    REQUIRE(loaded.ok());
+    const auto& records = loaded.value().document.toolpaths();
+    REQUIRE(records.size() == 1);
+    CHECK(records[0].operation() == document::ToolpathOperation::Engrave);
+    const auto& p = std::get<toolpath::EngraveParams>(records[0].params);
+    CHECK(p.name == "Fill");
+    CHECK(p.depth == 1.0);
+    CHECK(p.passes == 2);
+    CHECK(p.strategy == toolpath::EngraveStrategy::Fill);
+    CHECK(p.fillPattern == toolpath::PocketStrategy::Raster);
+    CHECK(p.stepover == 0.8);
+    CHECK(records[0].toolSource.toolId == "v-bit-90");
+    CHECK(records[0].tool.feedRate == 1500.0);
+    CHECK(records[0].selection.layers.size() == 1);
+    const Outcome info = runCli({"info", carv});
+    CHECK_THAT(info.out, ContainsSubstring("  1: engrave 'Fill', tool T12 'V-Bit 90' D12.7 mm, "));
+}
+
+TEST_CASE("T-0151: toolpath engrave reports diagnostics and refuses unusable tools",
+          "[cli][toolpath][engrave][errors]") {
+    const std::string dir = workDir("engrave_errors");
+    const std::string carv = importedFixture(dir);
+    // A drill: refused, nothing written.
+    writeFile(dir + "/drill.json", R"({"tool": {"id": "drill-3mm", "database": ")" + kData +
+                                       R"(/tools.json"}, "depth": 0.5})");
+    const Outcome d = runCli({"toolpath", "engrave", dir + "/drill.json", carv, dir + "/out.carv"});
+    CHECK(d.code == cli::kExitFailure);
+    CHECK_THAT(d.err, ContainsSubstring("no engrave toolpath was produced: tool 'Drill 3 mm' is a drill"));
+    CHECK_FALSE(fs::exists(dir + "/out.carv"));
+    // Fill with the V-bit's cutting-data stepover (2.54 mm) at 0.5 mm deep (1 mm wide): refused.
+    writeFile(dir + "/wide.json", R"({"tool": {"id": "v-bit-90", "database": ")" + kData +
+                                      R"(/tools.json"}, "depth": 0.5, "strategy": "fill"})");
+    const Outcome w = runCli({"toolpath", "engrave", dir + "/wide.json", carv, dir + "/out.carv"});
+    CHECK(w.code == cli::kExitFailure);
+    CHECK_THAT(w.err, ContainsSubstring("the stepover 2.54 mm is wider than the"));
+    CHECK_FALSE(fs::exists(dir + "/out.carv"));
+    // Unknown keys are refused, naming the file and the key.
+    writeFile(dir + "/typo.json", R"({"tool": {"id": "v-bit-90"}, "dpeth": 2})");
+    const Outcome t = runCli({"toolpath", "engrave", dir + "/typo.json", carv, carv});
+    CHECK(t.code == cli::kExitFailure);
+    CHECK_THAT(t.err, ContainsSubstring("typo.json: params: unknown key 'dpeth'"));
+}
+
 // ------------------------------------------------------------------------------------ help
 
 TEST_CASE("AC2: --help documents every command", "[cli][help]") {
@@ -256,7 +361,8 @@ TEST_CASE("AC2: --help documents every command", "[cli][help]") {
     CHECK(r.err.empty());
     for (const char* usage : {"import <in.dxf> <out.carv>", "toolpath profile <params.json> <in.carv> <out.carv>",
                               "toolpath pocket <params.json> <in.carv> <out.carv>",
-                              "toolpath drill <params.json> <in.carv> <out.carv>", "post <post.pp> <in.carv> <out.nc>",
+                              "toolpath drill <params.json> <in.carv> <out.carv>",
+                              "toolpath engrave <params.json> <in.carv> <out.carv>", "post <post.pp> <in.carv> <out.nc>",
                               "info <file.carv>", "Exit status"}) {
         CHECK_THAT(r.out, ContainsSubstring(usage));
     }
@@ -292,7 +398,7 @@ TEST_CASE("AC2: wrong command lines exit with 2 and say why", "[cli][errors]") {
         {{"import", "a.dxf"}, "'import' takes 2 argument(s), got 1"},
         {{"import", "a.dxf", "b.carv", "c"}, "'import' takes 2 argument(s), got 3"},
         {{"post", "--force", "a", "b"}, "unknown option '--force'"},
-        {{"toolpath", "vcarve", "p.json", "a.carv", "b.carv"}, "unknown toolpath operation 'vcarve' (expected profile, pocket or drill)"},
+        {{"toolpath", "vcarve", "p.json", "a.carv", "b.carv"}, "unknown toolpath operation 'vcarve' (expected profile, pocket, drill or engrave)"},
         {{"toolpath", "profile", "a.carv", "b.carv"}, "'toolpath' takes 4 argument(s), got 3"},
         {{"info"}, "'info' takes 1 argument(s), got 0"},
         {{"help", "nope"}, "unknown command 'nope'"},

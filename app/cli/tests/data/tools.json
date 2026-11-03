@@ -10,6 +10,11 @@
       "id": "group-end-mills",
       "name": "End Mills",
       "parent_id": ""
+    },
+    {
+      "id": "group-v-bits",
+      "name": "V-Bits",
+      "parent_id": ""
     }
   ],
   "machines": [
@@ -241,6 +246,31 @@
       "profile_mm": [],
       "tip_diameter_mm": 0.0,
       "type": "end_mill"
+    },
+    {
+      "corner_radius_mm": 0.0,
+      "cutting_data": [],
+      "default_cutting_data": {
+        "clearance_pass_stepover_mm": 0.0,
+        "feed_mm_min": 1500.0,
+        "final_pass_stepover_mm": 0.0,
+        "max_burn_rate_mm_min": 0.0,
+        "pass_depth_mm": 1.0,
+        "plunge_mm_min": 500.0,
+        "spindle_rpm": 18000.0,
+        "stepover_mm": 2.54,
+        "tool_number": 12
+      },
+      "diameter_mm": 12.7,
+      "flutes": 2,
+      "group_id": "group-v-bits",
+      "id": "v-bit-90",
+      "included_angle_deg": 90.0,
+      "name": "V-Bit 90",
+      "notes": "CLI end-to-end fixture (quick engraving, T-0151).",
+      "profile_mm": [],
+      "tip_diameter_mm": 0.0,
+      "type": "v_bit"
     }
   ],
   "version": 1

@@ -412,3 +412,85 @@ TEST_CASE("drill params: unknown keys and bad values are errors naming the key",
     CHECK_THAT(drillErrorOf(R"({"tool": {"id": "t"}, "retract_gap": 1, "retract_gap": 2})"),
                ContainsSubstring("duplicate key 'retract_gap'"));
 }
+
+// ----------------------------------------------------------------------------- T-0151 engrave
+
+namespace {
+
+/// Every engrave key with a non-default value.
+const char* kFullEngrave = R"({
+  "name": "Sign", "depth": 0.8, "passes": 4, "safe_z": 8, "strategy": "fill", "fill_pattern": "raster",
+  "stepover": 0.25, "raster_angle": 30, "start_position": [10, -20],
+  "tolerance": {"distance": 0.002, "angle": 0.001, "chordal": 0.02},
+  "tool": {"database": "db.json", "id": "v-bit-60", "machine": "m", "material": "w"},
+  "layers": ["Text"]
+})";
+
+std::string engraveErrorOf(const std::string& text) {
+    try {
+        parseEngraveParams(text);
+    } catch (const CliError& e) {
+        return e.what();
+    }
+    return "";
+}
+
+}  // namespace
+
+TEST_CASE("engrave params: every key maps to EngraveParams", "[cli][params][engrave]") {
+    const EngraveJob job = parseEngraveParams(kFullEngrave);
+    const toolpath::EngraveParams& p = job.params;
+    CHECK(p.name == "Sign");
+    CHECK(p.depth == 0.8);
+    CHECK(p.passes == 4);
+    CHECK(p.safeZ == 8.0);
+    CHECK(p.strategy == toolpath::EngraveStrategy::Fill);
+    CHECK(p.fillPattern == toolpath::PocketStrategy::Raster);
+    CHECK(p.stepover == 0.25);
+    CHECK(p.rasterAngle == Approx(30 * kDeg));
+    CHECK(p.startPosition == geometry::Vec2{10, -20});
+    CHECK(p.tolerance.distance == 0.002);
+    CHECK(p.tolerance.angle == Approx(0.001 * kDeg));
+    CHECK(p.tolerance.chordal == 0.02);
+    CHECK(job.common.tool.database == "db.json");
+    CHECK(job.common.tool.id == "v-bit-60");
+    CHECK(job.common.tool.machine == "m");
+    CHECK(job.common.tool.material == "w");
+    CHECK(job.common.layers == std::vector<std::string>{"Text"});
+
+    const EngraveJob defaults = parseEngraveParams(R"({"tool": {"id": "t"}})");
+    CHECK(defaults.params == toolpath::EngraveParams{});
+    CHECK(parseEngraveParams(R"({"tool": {"id": "t"}, "strategy": "outline", "fill_pattern": "offset"})").params ==
+          toolpath::EngraveParams{});
+}
+
+TEST_CASE("engrave params: every key is documented in the toolpath help", "[cli][params][engrave][help]") {
+    const std::string help = paramsHelp();
+    std::vector<std::string> keys;
+    keyPaths(nlohmann::json::parse(kFullEngrave), "", keys);
+    for (const std::string& key : keys) {
+        INFO(key);
+        CHECK_THAT(help, ContainsSubstring("\"" + key + "\""));
+    }
+    CHECK_THAT(help, ContainsSubstring("outline"));
+    CHECK_THAT(help, ContainsSubstring("diamond drag"));
+}
+
+TEST_CASE("engrave params: unknown keys and bad values are errors naming the key", "[cli][params][engrave][errors]") {
+    CHECK_THAT(engraveErrorOf(R"({"tool": {"id": "t"}, "cut_depth": 1})"),
+               ContainsSubstring("unknown key 'cut_depth' (known keys: "));
+    CHECK_THAT(engraveErrorOf(R"({"tool": {"id": "t"}, "strategy": "hatch"})"),
+               ContainsSubstring("'strategy' must be one of: outline, fill (got 'hatch')"));
+    CHECK_THAT(engraveErrorOf(R"({"tool": {"id": "t"}, "fill_pattern": "spiral"})"),
+               ContainsSubstring("'fill_pattern' must be one of: offset, raster (got 'spiral')"));
+    CHECK_THAT(engraveErrorOf(R"({"tool": {"id": "t"}, "passes": 2.5})"),
+               ContainsSubstring("'passes' must be a whole number"));
+    CHECK_THAT(engraveErrorOf(R"({"tool": {"id": "t"}, "passes": 10000000000})"),
+               ContainsSubstring("'passes' is out of range"));
+    CHECK_THAT(engraveErrorOf(R"({"tool": {"id": "t"}, "depth": "1"})"), ContainsSubstring("'depth' must be a number"));
+    CHECK_THAT(engraveErrorOf(R"({"tool": {"id": "t"}, "start_position": [1]})"),
+               ContainsSubstring("'start_position' must be an array of two numbers"));
+    CHECK_THAT(engraveErrorOf(R"({"depth": 3})"), ContainsSubstring("missing key 'tool'"));
+    CHECK_THAT(engraveErrorOf(R"({"tool": {"id": "t"}, "depth": 1, "depth": 2})"),
+               ContainsSubstring("duplicate key 'depth'"));
+}
