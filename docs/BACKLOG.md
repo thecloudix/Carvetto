@@ -471,7 +471,7 @@ Goal: Found by the T-0141 coder. (a) booleanOp/unionContours has the same O(n²)
 Acceptance criteria:
   1. (a) ≤ 2.5× per doubling up to 20k shapes, output identical below the batching threshold and within a few grid units above it; (b) no leftover rings in the repro and a generative check; Pocket/Profile safety unchanged.
   2. (c) Remaining quadratic offset cases from the T-0141 verifier (harness t0141v1/perf.cpp): an outer containing a row of n holes (1.31/6.10 s at 10k/20k), a row whose outsets merge (1.44/5.99 s), the nested-corner spiral (~4.5× per doubling) — ≤ 2.5× per doubling or documented limit. (d) Profile: tol.distance has no lower bound and Bezier offsets use min(chordal, distance/2), so {distance 1e-8, chordal 1e-4} runs > 120 s and degrades output (bez.cpp) — add a lower bound on distance or a floor on the offset chordal (Profile and Pocket consistently), and fix the T-0141 test that accepts {1e-9, …}.
-  3. (e) From the T-0131 verifier (harness t0131v1/clip90.cpp): Raster line clipping in booleanOp walks an active edge list holding every tooth. A 90° raster on a 1,000-tooth comb grows 3.5/5.2/6.6× per doubling (45°: 3.2×, 30°: 3.0×). Also covers Pocket's rest-tool whole-page boolean difference/intersection (~2.4–2.6× per doubling at 5,000 vectors; BuildIntersectList ×3.2). Target ≤ 2.5× per doubling; then tighten the T-0131 (e) test bound back to 2.5.
+  3. (e) From the T-0131 verifier (harness t0131v1/clip90.cpp): Raster line clipping in booleanOp walks an active edge list holding every tooth. A 90° raster on a 1,000-tooth comb grows 3.5/5.2/6.6× per doubling (45°: 3.2×, 30°: 3.0×). Also covers Pocket's rest-tool whole-page boolean difference/intersection (~2.4–2.6× per doubling at 5,000 vectors; BuildIntersectList ×3.2). Target ≤ 2.5× per doubling; then tighten the T-0131 (c) and (e) test bounds back to 2.5 per doubling. Add a cheap guard for Pocket's nearestFirst (T-0131 fix): about 20k synthetic single-part groups, order equal to a brute-force nearest-first, ratio ≤ 2.5 per doubling (harness t0131v2/: reverting it is not caught by test e).
 
 ### T-0143 Point-in-contour degeneracy and drill pass cap (T-0150 verifier)   [status: done (2026-11-03, #40)]
 Phase: 1   Module: core/geometry, core/toolpath   Depends on: T-0150   ADR: 0005/0009, 0022
@@ -544,6 +544,19 @@ Acceptance criteria:
   1. Cut start deterministic across compilers and under ≤ 1e-9 relative perturbation for starts on convex tips (generative test with ±ulp scaling); ADR-0016 §11 documents the rule; goldens regenerated only if needed, with hand-checked diffs; tab safety unchanged (flood oracle).
   2. Restore exact tab-count assertions in the T-0135 test for m1_402002_27 once the start is stable.
 
+
+### T-0159 GCC 15 / Ubuntu 26.04 Release test failures (CI runner change)   [status: ready]
+Phase: 1   Module: core (tests)   Depends on: —   ADR: —
+Goal: On 2026-11-03, GitHub's `ubuntu-latest` moved from 24.04 (GCC 13.3) to 26.04 (GCC 15.2). The Release linux-app job then failed on main (run 41704973044, same code as the green 4a5d1c8) and on PR #47 (run 41706009986, job 126161390264). The failures: "T-0147 AC1: the repro rectangle 1 x 0.5 mm at 1e8 mm keeps its area" (sanity check `naiveWrong >= 10` got 6: the naive shoelace comparison is compiler-dependent), "T-0135 round 2: exact loose pieces; add-back and fitting never cost a holding tab", "AC5 generative: span count follows the rule when nothing is consumed", and once "AC4: 10 000 inserts, undo all and redo all complete under one second" (timing). Linux jobs are pinned to ubuntu-24.04 meanwhile (task/T-0159-pin-runner).
+Acceptance criteria:
+  1. Each failure reproduced with GCC 15.2 Release (same flags as CI) and root-caused: a real product bug is fixed; a test that depends on compiler floating-point behaviour (contraction/FMA, excess precision, libm) is made robust without weakening what it guards.
+  2. CI runs both ubuntu-24.04 and ubuntu-26.04 (or GCC 13 and 15) for the Release app job, both green; then unpin.
+
+### T-0160 V-Carve corner sharpening   [status: blocked (T-0153)]
+Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0153   ADR: 0025 amendment
+Goal: Owner decision 2026-11-03: corner sharpening is split out of T-0153. Behaviour per feature-inventory "V-Carve Toolpath": at sharp convex corners of the boundary, the V-bit lifts along the corner bisector so the carved corner comes to a sharp point instead of the rounding left by the inscribed circle. Corners are found from the boundary, not the skeleton. The exact behaviour (corner angle threshold, which corners, interaction with flat depth and clearance) is written into this card with the owner before dispatch.
+Acceptance criteria:
+  1. To be finalised with the owner; at least: the cone never crosses a boundary (the same exact oracle as T-0153); corners sharpened within chordal; goldens; post safety.
 ### T-0019 Make the T-0004 AC3 timing test CPU-time based   [status: done (by T-0017: T-0004 AC3 timing uses process CPU time, cpu_time.hpp)]
 Phase: 1   Module: core/tests   Depends on: —
 Goal: "T-0004 AC3" in `open_offset_chains_test.cpp` asserts a wall-clock bound (< 0.5 s) and fails intermittently under `ctest -j8` (seen by the T-0120 coder). Convert it to process CPU time (GetProcessTimes on Windows, std::clock elsewhere) or a complexity ratio, like the other timing tests. Coordinate with T-0017 if it lands first (T-0017 AC6 touches the timing helper).
@@ -598,6 +611,7 @@ Acceptance criteria:
   3. ADR records the algorithm (e.g. segment Voronoi via a library already allowed by the dependency policy, or an own implementation) and the dependency/licence decision; any new dependency goes to the owner first.
 
 ### T-0153 V-Carve toolpath   [status: in-progress]
+Owner decision 2026-11-03: corner sharpening split out to T-0160.
 Owner decision 2026-11-03: identifiers `v_carve` (code, CLI command, job.json "operation"), UI label "V-Carve"; "vcarve" matches the VCarve trademark (CONTRIBUTING).
 Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0152, T-0123, T-0132   ADR: new
 Goal: V-carve closed regions with a V-bit (behaviour per feature-inventory "V-Carve Toolpath"): depth from the medial axis radius and bit angle, start depth, optional flat depth (flat-bottom areas cleared with clearance tools, Offset or Raster strategy reusing Pocket), corner sharpening, ordering, safe links; native record + CLI.
