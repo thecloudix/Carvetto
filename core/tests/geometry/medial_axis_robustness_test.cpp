@@ -46,7 +46,7 @@ constexpr bool kRelease = false;
 const Tolerance kTol{};
 
 Contour polygon(std::vector<Vec2> pts) {
-    return Contour::fromPolyline(Polyline{std::move(pts), true});
+    return Contour::fromPolyline(carvetto::geometry::Polyline{std::move(pts), true});
 }
 
 /// Runs the medial axis and checks the invariants that hold for any input: finite values,
