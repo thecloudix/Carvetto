@@ -1,0 +1,12 @@
+T-0154 narrow-check verifier round 7 (branch task/T-0154-no-spindle @ 77bb1c6: tabs refused in drag sections, N refused on ';'-posts). VERDICT PASS.
+build.sh src out   - builds a driver against /home/chris/wt-T0154/build-verify7
+postatk7/5/6, legit/legit2, longn, longn2 - copies of t0154v6 drivers, re-run: S6, S7, T1, T1b now REFUSED ("a tab");
+                     S4 (';' '[N] M0') and postatk6 E4 (';' '[N] M5','[N] M0') now refused ("an N word"); all else unchanged.
+                     legit .nc outputs (72 files) byte-identical to 65aae68; gcheck2 72/0 errors; longn2 12000 moves x 8 posts ok, gcheck2 8/0.
+postatk8.cpp       - whitespace/separator attacks on ';' and paren posts: VT, FF, NUL, CR mid-line, BS, DEL (parse errors),
+                     NBSP UTF-8/Latin-1 (non-ASCII parse errors), leading/trailing spaces (accepted; Marlin queue.cpp/parser.cpp
+                     skip ' ', Grbl/LinuxCNC drop spaces: harmless), tabs via VAR prefix / TOOLCHANGE / move template / tool name
+                     (refused or sanitised), N in ';' comment ok. G1..G3: non-blocking (ADR-0020 "other words are the post author's
+                     responsibility"): Grbl LINE_BUFFER_SIZE 80 overflow or an erroring word ('M5 M6', 'M5 G0 G1') drops the whole
+                     M5 line on Grbl; checker accepts.
+man.txt/manlong.txt - gcheck2 manifests (t0151v1/gcheck2.py); results/ - driver outputs, gcheck2, ctest tail (919/919)
