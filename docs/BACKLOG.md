@@ -510,6 +510,13 @@ Acceptance criteria:
   2. CI runs `tools/changelog.py check` on every PR and fails on a malformed fragment or on a PR that edits CHANGELOG.md's Unreleased section directly (allow the assemble commit itself, e.g. by a marker or by path rule — document).
   3. CONTRIBUTING.md, docs/WORKFLOW.md and .claude/agents/coder.md / verifier.md / director.md say: one fragment per task in changelog.d/, never edit CHANGELOG.md; the director's merge checklist ("exactly one CHANGELOG line per task") becomes "exactly one fragment per task". Existing CHANGELOG.md content unchanged.
 
+### T-0147 signedArea cancellation for small contours far from the origin   [status: ready]
+Phase: 1   Module: core/geometry   Depends on: —   ADR: 0005
+Goal: Found by the T-0152 verifier (harness t0152v2/drv/one.cpp, rect*.cpp): geometry signedArea (contour_ops.cpp ~52) evaluates the shoelace sum on absolute coordinates, so a small contour far from the origin cancels to 0 (1×0.5 mm at 1e8 mm: 17/20 placements give area 0; even 0.05×0.025 mm at 3e6). Callers that classify by area/orientation (nesting, region building, Pocket/Profile/Drill, medial axis) can then drop or misorient such contours.
+Acceptance criteria:
+  1. signedArea (and any orientation/area helper with the same pattern) computed relative to a local origin or compensated, exact to rounding for small contours up to 1e9 mm; generative test vs an exact oracle.
+  2. Outputs of Pocket/Profile/Drill/offsets unchanged for normal inputs (hash comparison vs main), changes only where the old area was wrong (explained).
+
 ### T-0019 Make the T-0004 AC3 timing test CPU-time based   [status: done (by T-0017: T-0004 AC3 timing uses process CPU time, cpu_time.hpp)]
 Phase: 1   Module: core/tests   Depends on: —
 Goal: "T-0004 AC3" in `open_offset_chains_test.cpp` asserts a wall-clock bound (< 0.5 s) and fails intermittently under `ctest -j8` (seen by the T-0120 coder). Convert it to process CPU time (GetProcessTimes on Windows, std::clock elsewhere) or a complexity ratio, like the other timing tests. Coordinate with T-0017 if it lands first (T-0017 AC6 touches the timing helper).
