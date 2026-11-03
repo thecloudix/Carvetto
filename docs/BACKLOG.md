@@ -545,7 +545,7 @@ Acceptance criteria:
   2. Restore exact tab-count assertions in the T-0135 test for m1_402002_27 once the start is stable.
 
 
-### T-0159 GCC 15 / Ubuntu 26.04 Release test failures (CI runner change)   [status: ready]
+### T-0159 GCC 15 / Ubuntu 26.04 Release test failures (CI runner change)   [status: done (2026-11-03, #50)]
 Phase: 1   Module: core (tests)   Depends on: —   ADR: —
 Goal: On 2026-11-03, GitHub's `ubuntu-latest` moved from 24.04 (GCC 13.3) to 26.04 (GCC 15.2). The Release linux-app job then failed on main (run 41704973044, same code as the green 4a5d1c8) and on PR #47 (run 41706009986, job 126161390264). The failures: "T-0147 AC1: the repro rectangle 1 x 0.5 mm at 1e8 mm keeps its area" (sanity check `naiveWrong >= 10` got 6: the naive shoelace comparison is compiler-dependent), "T-0135 round 2: exact loose pieces; add-back and fitting never cost a holding tab", "AC5 generative: span count follows the rule when nothing is consumed", and once "AC4: 10 000 inserts, undo all and redo all complete under one second" (timing). Linux jobs are pinned to ubuntu-24.04 meanwhile (task/T-0159-pin-runner).
 Acceptance criteria:
@@ -557,6 +557,13 @@ Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0153   ADR: 0025 amen
 Goal: Owner decision 2026-11-03: corner sharpening is split out of T-0153. Behaviour per feature-inventory "V-Carve Toolpath": at sharp convex corners of the boundary, the V-bit lifts along the corner bisector so the carved corner comes to a sharp point instead of the rounding left by the inscribed circle. Corners are found from the boundary, not the skeleton. The exact behaviour (corner angle threshold, which corners, interaction with flat depth and clearance) is written into this card with the owner before dispatch.
 Acceptance criteria:
   1. To be finalised with the owner; at least: the cone never crosses a boundary (the same exact oracle as T-0153); corners sharpened within chordal; goldens; post safety.
+
+### T-0161 Drag-pause M5 lines and T-0154 leftovers   [status: blocked (T-0154)]
+Phase: 1   Module: core/post   Depends on: T-0154   ADR: 0020
+Goal: Found by the T-0154 verifiers (harness t0154v7/postatk8.cpp G1–G3). On Grbl, a line that errors is dropped whole, so a pause block's M5 line that also carries other words can be lost: more than 79 characters (LINE_BUFFER_SIZE 80, error:overflow), 'M5 M6' (unsupported), 'M5 G0 G1' (modal-group violation). That needs a custom post; shipped posts are fine. Also: stale comments in interpreter.cpp (allowlistProblem "spaces or tabs", nonAsciiProblem "or tab", unreachable tab handling); the tab shows as a space in refusal messages; Grbl refuses N > 9,999,999 (MAX_LINE_NUMBER) while the allowlist allows 9 digits.
+Acceptance criteria:
+  1. In drag pause blocks the M5 line is bare like M0 (optional N + M5 + optional comment), and drag-section lines are at most 79 characters; shipped goldens unchanged.
+  2. Comments corrected and the tab shown visibly in messages; N limited to ≤ 9,999,999 on Grbl-dialect posts, or documented.
 ### T-0019 Make the T-0004 AC3 timing test CPU-time based   [status: done (by T-0017: T-0004 AC3 timing uses process CPU time, cpu_time.hpp)]
 Phase: 1   Module: core/tests   Depends on: —
 Goal: "T-0004 AC3" in `open_offset_chains_test.cpp` asserts a wall-clock bound (< 0.5 s) and fails intermittently under `ctest -j8` (seen by the T-0120 coder). Convert it to process CPU time (GetProcessTimes on Windows, std::clock elsewhere) or a complexity ratio, like the other timing tests. Coordinate with T-0017 if it lands first (T-0017 AC6 touches the timing helper).
