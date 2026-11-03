@@ -116,6 +116,7 @@ const std::string kMoves =
     "begin RAPID_MOVE\n\"G0[X][Y][Z]\"\nend\n"
     "begin FEED_MOVE\n\"G1[X][Y][Z][F]\"\nend\n";
 const std::string kPause = "begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"(spindle off)\"\n\"M0\"\nend\n";
+const std::string kUnlock = "begin SPINDLE_UNLOCK_PAUSE\n\"(unlock [T])\"\n\"M0\"\nend\n";
 const std::string kSmall =
     "VAR SPINDLE_SPEED = [S|A| S|1.0]\n"
     "VAR X_POSITION = [X|C| X|1.3]\nVAR Y_POSITION = [Y|C| Y|1.3]\nVAR Z_POSITION = [Z|C| Z|1.3]\n"
@@ -185,7 +186,7 @@ tooling::Tool makeTool(tooling::ToolType type, double rpm) {
 }  // namespace
 
 TEST_CASE("T-0154: a spindle-off toolpath skips the spindle start and gets the pause", "[post][spindle-off]") {
-    const PostProcessor pp = parseText(kSmall + kPause);
+    const PostProcessor pp = parseText(kSmall + kPause + kUnlock);
 
     // First toolpath: the header's spindle start line is left out, the pause follows the header.
     const std::string first = runOk(pp, {drag("A"), drag("B")});
@@ -203,7 +204,7 @@ TEST_CASE("T-0154: a spindle-off toolpath skips the spindle start and gets the p
     const std::string mixed = runOk(pp, {cut("Mill", spinning(1)), drag(), cut("Mill again", spinning(1))});
     CHECK(count(mixed, "M3 S1000") == 2);
     CHECK(count(mixed, "M6 T") == 2);
-    CHECK(count(mixed, "M0\n") == 1);
+    CHECK(count(mixed, "M0\n") == 2);  // the spindle-off pause and the unlock pause
     const std::size_t pause = mixed.find("(spindle off)");
     REQUIRE(pause != std::string::npos);
     CHECK(mixed.find("M6 T3") < pause);
@@ -213,7 +214,7 @@ TEST_CASE("T-0154: a spindle-off toolpath skips the spindle start and gets the p
 
 TEST_CASE("T-0154: the same tool number and name running spindle off and on is a tool change",
           "[post][spindle-off]") {
-    const PostProcessor pp = parseText(kSmall + kPause);
+    const PostProcessor pp = parseText(kSmall + kPause + kUnlock);
     ToolSnapshot same = test::fixtureDragTool();
     same.spindleOff = false;
     same.spindleSpeed = 5000.0;
@@ -223,6 +224,43 @@ TEST_CASE("T-0154: the same tool number and name running spindle off and on is a
     CHECK(count(text, "M6 T3") == 2);
     CHECK(count(text, "M3 S5000") == 1);
     CHECK(count(text, "(spindle off)") == 2);
+}
+
+TEST_CASE("T-0154: the unlock pause comes once per drag section, before the spindle restarts",
+          "[post][spindle-off]") {
+    const PostProcessor pp = parseText(kSmall + kPause + kUnlock);
+    // Two drag toolpaths, then a spinning one: one unlock pause, after the second drag toolpath,
+    // in the drag tool's context, before the tool change that starts the spindle.
+    const std::string a = runOk(pp, {drag("A"), drag("B"), cut("Mill", spinning(1))});
+    CHECK(count(a, "(unlock 3)") == 1);
+    CHECK(a.find("(segment B)") < a.find("(unlock 3)"));
+    CHECK(a.find("(unlock 3)") < a.find("M6 T1"));
+    CHECK(a.find("M6 T1") < a.find("M3 S1000"));
+    // Two drag sections each followed by a spinning toolpath: two unlock pauses.
+    const std::string b =
+        runOk(pp, {cut("M1", spinning(1)), drag("A"), cut("M2", spinning(2)), drag("B"), cut("M3", spinning(1))});
+    CHECK(count(b, "(unlock 3)") == 2);
+    // A job ending with drag toolpaths never restarts the spindle: no unlock pause; neither does
+    // a job without spindle-off toolpaths.
+    CHECK(runOk(pp, {cut("M1", spinning(1)), drag("A"), drag("B")}).find("(unlock") == std::string::npos);
+    CHECK(runOk(pp, {cut("M1", spinning(1)), cut("M2", spinning(2))}).find("(unlock") == std::string::npos);
+
+    // A post without the block refuses jobs that restart the spindle after a drag section ...
+    const PostProcessor noUnlock = parseText(kSmall + kPause);
+    const std::string msg = runError(noUnlock, {drag("Drag"), cut("Mill", spinning(1))});
+    CHECK_THAT(msg, ContainsSubstring("toolpath 'Mill' starts the spindle after the spindle-off toolpath 'Drag'"));
+    CHECK_THAT(msg, ContainsSubstring("no SPINDLE_UNLOCK_PAUSE block"));
+    // ... but not jobs that end with the drag section.
+    CHECK(runError(noUnlock, {cut("Mill", spinning(1)), drag("Drag")}).empty());
+
+    // The unlock pause is still part of the spindle-off section: no spindle word in it.
+    for (const char* body : {"\"M3 S1000\"", "\"M5 S[S]\""}) {
+        INFO(body);
+        const PostProcessor bad =
+            parseText(kSmall + kPause + "begin SPINDLE_UNLOCK_PAUSE\n" + body + "\n\"M0\"\nend\n");
+        CHECK_THAT(runError(bad, {drag("Drag"), cut("Mill", spinning(1))}),
+                   ContainsSubstring("in SPINDLE_UNLOCK_PAUSE of toolpath 'Drag'"));
+    }
 }
 
 TEST_CASE("T-0154: a post without SPINDLE_OFF_PAUSE refuses spindle-off toolpaths", "[post][spindle-off]") {
@@ -307,22 +345,21 @@ TEST_CASE("T-0154: every other toolpath kind with spindle speed 0 is still refus
     const std::vector<Contour> square{Contour::rectangle(Box2{Vec2{0, 0}, Vec2{20, 20}})};
     std::vector<std::pair<std::string, Toolpath>> kinds;
 
-    // Profile and Pocket, with an end mill and with a diamond drag tool (they accept any tool but
-    // never mark it spindle-off).
-    for (const tooling::ToolType type : {tooling::ToolType::EndMill, tooling::ToolType::DiamondDrag}) {
-        const tooling::Tool tool = makeTool(type, 0.0);
+    // Profile and Pocket with an end mill (they never mark a toolpath spindle-off).
+    {
+        const tooling::Tool tool = makeTool(tooling::ToolType::EndMill, 0.0);
         toolpath::ProfileParams pp;
         pp.passes.cutDepth = 1.0;
         const toolpath::ProfileResult pr = toolpath::profileToolpath(square, tool, pp);
         REQUIRE(pr.ok());
-        kinds.emplace_back("profile " + std::to_string(static_cast<int>(type)), pr.toolpath);
+        kinds.emplace_back("profile", pr.toolpath);
         toolpath::PocketParams kp;
         kp.cutDepth = 1.0;
         const toolpath::PocketResult kr =
             toolpath::pocketToolpath(square, {toolpath::PocketTool{tool, std::nullopt}}, kp);
         REQUIRE_FALSE(kr.toolpaths.empty());
         REQUIRE_FALSE(kr.toolpaths.front().isEmpty());
-        kinds.emplace_back("pocket " + std::to_string(static_cast<int>(type)), kr.toolpaths.front());
+        kinds.emplace_back("pocket", kr.toolpaths.front());
     }
     // Drill.
     {
@@ -380,6 +417,52 @@ TEST_CASE("T-0154: every other toolpath kind with spindle speed 0 is still refus
         CHECK(er.toolpath.tool.spindleOff);
         CHECK(runError(pp, {er.toolpath}).empty());
     }
+}
+
+TEST_CASE("T-0154: Profile and Pocket refuse diamond-drag tools and point to Quick Engrave",
+          "[toolpath][spindle-off][tool]") {
+    using geometry::Box2;
+    using geometry::Contour;
+    using geometry::Vec2;
+    const std::vector<Contour> square{Contour::rectangle(Box2{Vec2{0, 0}, Vec2{20, 20}})};
+    tooling::Tool drag = makeTool(tooling::ToolType::DiamondDrag, 12000.0);
+    drag.name = "Drag 90";
+    toolpath::ProfileParams pp;
+    pp.passes.cutDepth = 0.1;
+    const toolpath::ProfileResult pr = toolpath::profileToolpath(square, drag, pp);
+    CHECK_FALSE(pr.ok());
+    REQUIRE(pr.diagnostics.size() == 1);
+    CHECK(pr.diagnostics[0].issue == toolpath::ToolpathIssue::InvalidTool);
+    CHECK(pr.diagnostics[0].message ==
+          "tool 'Drag 90' is a diamond drag tool, which must not turn; use Quick Engrave for diamond-drag tools");
+
+    toolpath::PocketParams kp;
+    kp.cutDepth = 0.1;
+    const toolpath::PocketResult kr = toolpath::pocketToolpath(square, {toolpath::PocketTool{drag, std::nullopt}}, kp);
+    for (const Toolpath& tp : kr.toolpaths) {
+        CHECK(tp.isEmpty());
+    }
+    REQUIRE_FALSE(kr.diagnostics.empty());
+    CHECK(kr.diagnostics[0].issue == toolpath::ToolpathIssue::InvalidTool);
+    CHECK(kr.diagnostics[0].message ==
+          "tool 1 (Drag 90): skipped, a diamond drag tool must not turn; use Quick Engrave for diamond-drag tools");
+    // In a multi-tool pocket only the drag tool is skipped.
+    const toolpath::PocketResult mixed = toolpath::pocketToolpath(
+        square, {toolpath::PocketTool{makeTool(tooling::ToolType::EndMill, 1000.0), std::nullopt},
+                 toolpath::PocketTool{drag, std::nullopt}},
+        kp);
+    REQUIRE_FALSE(mixed.toolpaths.empty());
+    CHECK_FALSE(mixed.toolpaths.front().isEmpty());
+    CHECK(mixed.has(toolpath::ToolpathIssue::InvalidTool));
+
+    // Quick Engrave Fill still fills with the drag tool (Pocket gets it as an end mill).
+    toolpath::EngraveParams ep;
+    ep.depth = 0.1;
+    ep.strategy = toolpath::EngraveStrategy::Fill;
+    ep.stepover = 0.2;
+    const toolpath::EngraveResult er = toolpath::engraveToolpath(square, drag, std::nullopt, ep);
+    REQUIRE(er.ok());
+    CHECK(er.toolpath.tool.spindleOff);
 }
 
 TEST_CASE("T-0154: hostile tool names in the spindle-off pause stay inside the comment",

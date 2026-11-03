@@ -277,7 +277,13 @@ void fill(const std::vector<Contour>& contours, const tooling::Tool& tool, const
     pocket.allowance = 0.0;
     pocket.rampPlunge = false;
     pocket.tolerance = params.tolerance;
-    PocketResult r = pocketToolpath(closed, {PocketTool{tool, fillData}}, pocket);
+    // Pocket refuses diamond drag tools (they must not turn, T-0154); a drag tool cuts its
+    // diameter like an end mill, so Pocket gets it as one. The toolpath keeps the drag snapshot.
+    tooling::Tool fillTool = tool;
+    if (fillTool.type == tooling::ToolType::DiamondDrag) {
+        fillTool.type = tooling::ToolType::EndMill;
+    }
+    PocketResult r = pocketToolpath(closed, {PocketTool{fillTool, fillData}}, pocket);
     for (ToolpathDiagnostic& d : r.diagnostics) {
         d.tool.reset();
         d.message = fillWording(d.message, tool.name);

@@ -33,6 +33,11 @@ G1 X50.000 Y10.000
 G0 Z5.000
 M5
 G0 Z5.000
+; Diamond drag tool 3 done: unlock the spindle before it starts again
+M0 Unlock spindle then resume
+G0 Z5.000
+M5
+G0 Z5.000
 ; Change to tool 1: End Mill (6 mm)
 M0 Load tool 1 then resume
 G0 Z5.000

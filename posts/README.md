@@ -108,13 +108,20 @@ one, the test fails.
     post without `SPINDLE_OFF_PAUSE`, a line that writes `[S]` together with other codes, and
     any spindle start or speed word in the drag toolpath's output. No other toolpath can skip
     the spindle: only Quick Engrave marks a toolpath spindle-off, and only for diamond-drag tools
-    (ADR-0020, ADR-0024). In a custom post that offers `SPINDLE_OFF_PAUSE`, start the spindle in
-    HEADER, TOOLCHANGE and NEW_SEGMENT on a line of its own (`M3[S]`).
+    (ADR-0020, ADR-0024). After the last drag toolpath of a drag section, before a toolpath that
+    starts the spindle again, the post writes its `SPINDLE_UNLOCK_PAUSE` block: `M5`, safe Z, a
+    comment asking the operator to unlock the spindle, `M0` (Marlin: `M0 Unlock spindle then
+    resume`), safe Z; once per drag section, not between drag toolpaths, and not when the job ends
+    with drag toolpaths. A post without it refuses jobs that restart the spindle after drag
+    toolpaths. Profile and Pocket refuse diamond-drag tools. In a custom post that offers
+    `SPINDLE_OFF_PAUSE`, start the spindle in HEADER, TOOLCHANGE and NEW_SEGMENT on a line of its
+    own (`M3[S]`).
 
 Hand-review result: all eight goldens pass points 1–8; points 9 and 10 are enforced by the
 interpreter and tested on every post. All eight drag goldens (T-0154) were reviewed against
 points 1–8 and 11 (two pauses in a row where a tool change leads into a drag toolpath: the tool
-change stop, then the spindle-off pause) and are checked by the same test with the drag rule.
+change stop, then the spindle-off pause; and the unlock pause, then the tool change stop, where
+the end mill follows the drag toolpaths) and are checked by the same test with the drag rule.
 
 ## Dialect choices per controller
 
@@ -178,8 +185,8 @@ changes, and modal X/Y/Z (written only when they change).
 - **Spindle-off pause.** Every post pauses with `M0` before a diamond-drag toolpath, including
   Mach3, Mach4 and LinuxCNC, whose tool change is `M6`: `M6` can be configured to do nothing,
   while `M0` always stops the program until Cycle Start. If you lock the spindle for drag
-  engraving, unlock it before resuming after the next tool change: the next spinning toolpath
-  starts the spindle right after that tool change.
+  engraving, the unlock pause after the drag toolpaths (also `M0`) is where you unlock it: the
+  next spinning toolpath starts the spindle right after the tool change that follows.
 - **Spindle spin-up.** None of the posts add a dwell after `M3`. Marlin waits for its configured
   power-up delay. On Grbl, Mach and LinuxCNC, configure spindle-at-speed (or add a dwell to
   `SPINDLE_ON`/`HEADER`) if your spindle needs time to reach speed.
@@ -190,6 +197,6 @@ changes, and modal X/Y/Z (written only when they change).
 2. Add it to `shippedPosts()` in `core/tests/post/shipped_posts_test.cpp` with its units, tool
    change, program end and dwell words, and to the stem lists of `post_safety_test.cpp`,
    `spindle_off_test.cpp` and the toolpath post tests.
-3. Give it a `SPINDLE_OFF_PAUSE` block (point 11).
+3. Give it `SPINDLE_OFF_PAUSE` and `SPINDLE_UNLOCK_PAUSE` blocks (point 11).
 4. Generate its `<stem>_fixture.nc` and `<stem>_drag.nc` goldens. Review them by hand against the
    checklist, then commit them with the post.

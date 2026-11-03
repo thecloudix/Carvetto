@@ -25,6 +25,7 @@ constexpr auto kKnownBlocks = std::to_array<std::string_view>({
     "NEW_SEGMENT",
     "SPINDLE_ON",
     "SPINDLE_OFF_PAUSE",
+    "SPINDLE_UNLOCK_PAUSE",
     "INITIAL_RAPID_MOVE",
     "RAPID_MOVE",
     "FIRST_RAPID_MOVE",

@@ -145,6 +145,20 @@ through, so no post, block or tag can bypass them.
      - treats a change between a spindle-off and a spinning toolpath as a tool change even when
        the tool number and name are equal, so the spindle restarts only through TOOLCHANGE +
        SPINDLE_ON (and its `[S]` > 0 check).
+     - **Unlock pause** (owner decision 2026-11-03). Before that TOOLCHANGE, i.e. after the last
+       spindle-off toolpath of a drag section and before a spinning toolpath can start the
+       spindle, it writes the post's `SPINDLE_UNLOCK_PAUSE` block: once per drag section, never
+       between consecutive spindle-off toolpaths, and not at all when the job ends with the drag
+       section (the program never restarts the spindle; the footer stops it). The block is
+       written in the drag toolpath's context (`[T]`, `[TOOLNAME]` are the drag tool's) and is
+       under the same spindle-word guards. The shipped posts write `M5`, safe Z, a comment "Diamond
+       drag tool N done: unlock the spindle before it starts again", `M0` (Marlin: `M0 Unlock
+       spindle then resume`) and safe Z. A post without the block refuses a job in which a
+       spinning toolpath follows a spindle-off one (`toolpath 'Mill' starts the spindle after the
+       spindle-off toolpath 'Drag', but the post has no SPINDLE_UNLOCK_PAUSE block …`).
+     - Profile and Pocket refuse diamond-drag tools (`InvalidTool`, "… is a diamond drag tool,
+       which must not turn; use Quick Engrave for diamond-drag tools"; Pocket skips just that
+       tool), so a drag tool can no longer run in a spinning toolpath of those operations.
    - **Toolpaths without moves** (T-0136). A toolpath with zero moves cuts nothing and is
      skipped entirely: it is not written, its tool is not in `[TOOLS_USED]`, it causes no tool
      change, and its tool's spindle speed, feeds and dwells are not checked. The header tool (the
@@ -193,9 +207,8 @@ through, so no post, block or tag can bypass them.
 - T-0154: the shipped posts gained `SPINDLE_OFF_PAUSE`; goldens of jobs without spindle-off
   toolpaths are byte-identical, and each post has a drag golden (`<post>_drag.nc`). A build from
   before T-0154 drops the record's `spindle_off` key and, seeing spindle speed 0, refuses to post
-  the drag toolpath (it never spins the drag tool). Not covered: the operator is told the spindle
-  may be locked, and after the drag toolpaths the spindle restarts after the next tool change
-  stop; on a controller with an automatic tool changer that stop does not involve the operator.
+  the drag toolpath (it never spins the drag tool). The unlock pause covers a locked spindle
+  before it restarts, also on a controller whose tool change involves no operator.
 - Signs are not checked for coordinates and other values; since T-0134 spindle speed, feeds
   and dwells must be above zero (see above), and
   overly long names are not shortened; a controller with a line-length limit rejects such a line,

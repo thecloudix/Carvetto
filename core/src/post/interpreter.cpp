@@ -296,6 +296,19 @@ class Interpreter {
                 }
             }
         }
+        // After the last spindle-off toolpath of a drag section, before a spinning toolpath can
+        // start the spindle, the operator unlocks it (owner decision 2026-11-03): SPINDLE_UNLOCK_PAUSE.
+        if (!has("SPINDLE_UNLOCK_PAUSE")) {
+            for (std::size_t i = 1; i < active.size(); ++i) {
+                if (active[i - 1]->tool.spindleOff && !active[i]->tool.spindleOff) {
+                    return Error{0, "cannot write G-code: toolpath " + quoted(active[i]->name) +
+                                        " starts the spindle after the spindle-off toolpath " +
+                                        quoted(active[i - 1]->name) +
+                                        ", but the post has no SPINDLE_UNLOCK_PAUSE block to pause for the "
+                                        "operator to unlock the spindle before it"};
+                }
+            }
+        }
 
         pos_ = ctx_.home;
         if (!active.empty()) {
@@ -315,6 +328,15 @@ class Interpreter {
             // tool change too, so the spindle is restarted only through TOOLCHANGE + SPINDLE_ON.
             const bool toolChanged = i > 0 && (tp.tool.toolNumber != tool_.toolNumber || tp.tool.name != tool_.name ||
                                                tp.tool.spindleOff != tool_.spindleOff);
+            if (toolChanged && tool_.spindleOff && !tp.tool.spindleOff) {
+                // End of a drag section (T-0154): still in the context of the last spindle-off
+                // toolpath ([T], [TOOLNAME] are the drag tool's; no spindle word may be written).
+                setStationary();
+                emit("SPINDLE_UNLOCK_PAUSE");
+                if (failure_) {
+                    return *failure_;
+                }
+            }
             previousToolNumber_ = i > 0 ? tool_.toolNumber : 0;
             tool_ = tp.tool;
             toolpath_ = &tp;

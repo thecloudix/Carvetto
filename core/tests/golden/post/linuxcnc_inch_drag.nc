@@ -34,6 +34,11 @@ G1 X1.9685 Y0.3937
 G0 Z0.1969
 M5
 G0 Z0.1969
+(Diamond drag tool 3 done: unlock the spindle before it starts again)
+M0
+G0 Z0.1969
+M5
+G0 Z0.1969
 (Tool 1: End Mill [6 mm])
 T1 M6
 G43 H1

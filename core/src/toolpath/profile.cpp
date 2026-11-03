@@ -343,6 +343,14 @@ class ProfileBuilder {
 };
 
 bool ProfileBuilder::validate() {
+    if (tool_.type == tooling::ToolType::DiamondDrag) {
+        // T-0154 (owner decision 2026-11-03): a drag tool must not turn; only Quick Engrave runs
+        // toolpaths with the spindle off.
+        diag(ProfileIssue::InvalidTool, std::nullopt,
+             "tool '" + tool_.name +
+                 "' is a diamond drag tool, which must not turn; use Quick Engrave for diamond-drag tools");
+        return false;
+    }
     cd_ = effectiveCuttingData(tool_, p_.cuttingData);
     passes_ = p_.passes;
     if (!(passes_.passDepth > 0.0)) {

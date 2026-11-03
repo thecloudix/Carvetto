@@ -90,6 +90,16 @@ begin SPINDLE_OFF_PAUSE
 "[N] G0[SAFEZ]"
 end
 
++ After the last spindle-off toolpath of a drag section, before a toolpath that
++ starts the spindle again: pause so the operator can unlock the spindle.
+begin SPINDLE_UNLOCK_PAUSE
+"[N] M5"
+"[N] G0[SAFEZ]"
+"(Diamond drag tool [T] done: unlock the spindle before it starts again)"
+"[N] M0"
+"[N] G0[SAFEZ]"
+end
+
 + A further toolpath with the same tool.
 begin NEW_SEGMENT
 "([TOOLPATH_NAME])"

@@ -11,8 +11,9 @@
 //      plus the controller's program end at the end.
 // T-0154: the drag fixture (post_fixture.hpp dragToolpaths) reproduces <post>_drag.nc and passes
 //      the same checklist plus the drag rule: a cut with the spindle off is allowed only after an
-//      M5 (after the last cut) and an operator stop (M0 announced as a spindle stop), and from that pause no M3/M4 or S
-//      word until a tool change stop: the spindle restarts only behind a tool change.
+//      M5 (after the last cut) and an operator stop (M0 announced as a spindle stop); from that
+//      pause no M3/M4 or S word until a tool change stop; and after drag cuts the spindle starts
+//      again only behind an unlock pause (M0 announced with "unlock", once per drag section).
 
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
@@ -150,6 +151,13 @@ bool mentionsSpindle(std::string text) {
     return text.find("spindle") != std::string::npos;
 }
 
+bool mentionsUnlock(std::string text) {
+    for (char& c : text) {
+        if (c >= 'A' && c <= 'Z') c = static_cast<char>(c - 'A' + 'a');
+    }
+    return text.find("unlock") != std::string::npos;
+}
+
 /// Runs the safety checklist over a program; returns the problems found (empty = safe).
 /// `dwellWords` are the dwell words the program must contain, in order (the shared fixture's two
 /// by default). With `dragAllowed`, cuts with the spindle off are allowed after the drag pause
@@ -178,6 +186,7 @@ std::vector<std::string> safetyProblems(const ShippedPost& p, const std::string&
     // until the next tool change stop; the spindle must not start nor get a speed meanwhile.
     bool dragReady = false;
     bool stoppedSinceCut = false;  // an M5 since the last spindle start or cut
+    bool unlockDue = false;        // drag cuts happened since the last unlock pause
 
     const std::vector<std::string> lines = splitLines(program, p.lineEnding);
     for (std::size_t i = 0; i < lines.size(); ++i) {
@@ -214,11 +223,17 @@ std::vector<std::string> safetyProblems(const ShippedPost& p, const std::string&
                     if (dragReady)
                         problems.push_back(where +
                                            "spindle started after a spindle-off pause without a tool change stop");
+                    if (unlockDue)
+                        problems.push_back(where + "spindle started after a drag toolpath without an unlock pause");
                     dragReady = false;
                     stoppedSinceCut = false;
                 } else if (w.text == "5") {
                     spindleOn = false;
                     stoppedSinceCut = true;
+                } else if (w.text == "0" && !spindleOn && mentionsUnlock(announced)) {
+                    toolChange = true;  // the unlock pause (T-0154): ends the drag section
+                    dragReady = false;
+                    unlockDue = false;
                 } else if (w.text == "0" && !spindleOn && stoppedSinceCut && mentionsSpindle(announced)) {
                     toolChange = true;  // the drag pause (T-0154): M0 on every post
                     dragReady = true;
@@ -266,7 +281,7 @@ std::vector<std::string> safetyProblems(const ShippedPost& p, const std::string&
         } else if (motion >= 1) {
             stoppedSinceCut = false;
             if (dragAllowed && dragReady && !spindleOn) {
-                // a drag toolpath: the spindle is meant to be off (T-0154)
+                unlockDue = true;  // a drag toolpath: the spindle is meant to be off (T-0154)
             } else if (!spindleOn || !(spindleSpeed > 0.0)) {
                 problems.push_back(where + "cutting with the spindle off");
             }
@@ -416,24 +431,35 @@ TEST_CASE("T-0154: every drag golden passes the checklist and the drag rule", "[
         // Without the drag allowance the same program is refused: its drag cuts run spindle off.
         CHECK_FALSE(safetyProblems(p, golden, std::vector<std::string>{}, false).empty());
 
-        // Spindle starts: only the end mill's, once, with its speed; three drag pauses.
+        // Spindle starts: only the end mill's, once, with its speed; three drag pauses and one
+        // unlock pause (only the drag section before the end mill needs one).
         const std::vector<std::string> lines = splitLines(golden, p.lineEnding);
         int starts = 0;
         int stops = 0;
         int pauses = 0;
+        int unlocks = 0;
         for (std::size_t i = 0; i < lines.size(); ++i) {
             for (const Word& w : words(lines[i])) {
                 if (w.letter == 'M' && (w.text == "3" || w.text == "4")) ++starts;
                 if (w.letter == 'M' && w.text == "5") ++stops;
-                if (w.letter == 'M' && w.text == "0" &&
-                    (mentionsSpindle(lines[i]) || (i > 0 && mentionsSpindle(lines[i - 1]))))
+                const std::string here = lines[i] + (i > 0 ? " " + lines[i - 1] : std::string());
+                if (w.letter == 'M' && w.text == "0" && mentionsUnlock(here)) {
+                    ++unlocks;
+                } else if (w.letter == 'M' && w.text == "0" && mentionsSpindle(here)) {
                     ++pauses;
+                }
                 if (w.letter == 'S') CHECK(w.value == 18000.0);
             }
         }
         CHECK(starts == 1);
         CHECK(pauses == 3);
-        CHECK(stops >= 4);  // three pauses and the program end (and the tool changes)
+        CHECK(unlocks == 1);
+        CHECK(stops >= 5);  // the pauses and the program end (and the tool changes)
+        // The unlock pause comes after the second drag toolpath and before the end mill's start.
+        const std::size_t unlock = golden.find("unlock the spindle");
+        REQUIRE(unlock != std::string::npos);
+        CHECK(golden.find("Drag text") < unlock);
+        CHECK(unlock < golden.find("M3 S18000"));
         CHECK(golden.find("S0") == std::string::npos);
     }
 }
@@ -456,11 +482,13 @@ TEST_CASE("T-0154: the drag rule catches spindle hazards around drag toolpaths",
     CHECK(fails("G90 G21\nG0 Z5.000\n" + pause + "M3 S1000\n" + cut + "M5\nM30\n"));
     // The spindle restarted straight after the drag cuts, with no tool change stop.
     CHECK(fails("G90 G21\nG0 Z5.000\n" + pause + cut + "M3 S1000\nG1 Z-1.000 F100\nG0 Z5.000\nM5\nM30\n"));
-    CHECK(safetyProblems(grbl,
-                         "G90 G21\nG0 Z5.000\n" + pause + cut + "M5\nG0 Z5.000\nM0\nG0 Z5.000\nM3 S1000\n"
-                         "G1 Z-1.000 F100\nG0 Z5.000\nM5\nM30\n",
-                         none, true)
-              .empty());
+    // ... or after a tool change stop but without the unlock pause.
+    const std::string change = "M5\nG0 Z5.000\nM0\nG0 Z5.000\nM3 S1000\nG1 Z-1.000 F100\nG0 Z5.000\nM5\nM30\n";
+    const std::string unlock = "M5\nG0 Z5.000\n(Drag tool 3 done: unlock the spindle)\nM0\nG0 Z5.000\n";
+    CHECK(fails("G90 G21\nG0 Z5.000\n" + pause + cut + change));
+    CHECK(safetyProblems(grbl, "G90 G21\nG0 Z5.000\n" + pause + cut + unlock + change, none, true).empty());
+    // The unlock pause ends the drag section: no spindle-off cut after it.
+    CHECK(fails("G90 G21\nG0 Z5.000\n" + pause + cut + unlock + cut + "M5\nM30\n"));
 }
 
 // Hidden test (tag [.regen], never run by ctest): rewrites every <post>_drag.nc golden (T-0154).
