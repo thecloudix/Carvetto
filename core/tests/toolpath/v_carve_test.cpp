@@ -27,7 +27,7 @@
 #include "v_carve_oracle.hpp"
 #include "v_carve_test_util.hpp"
 // Last: on Windows it includes <windows.h> (macros such as near/far).
-#include "../geometry/cpu_time.hpp"
+#include "../geometry/cpu_scaling.hpp"
 
 using namespace carvetto;
 using namespace carvetto::toolpath;
@@ -665,51 +665,54 @@ TEST_CASE("AC1: generative sweep - the carving tool never crosses a wall and the
 
 TEST_CASE("AC2: 5000 glyph-like regions within the documented CPU time", "[toolpath][v_carve][ac2][perf]") {
     // ADR-0025: in a Release build, 5,000 glyph-like regions (45,000 boundary segments) V-carve
-    // in at most 60 s of CPU time (measured ~11 s on the T-0153 machine); the cost grows
-    // linearly with the number of regions (each region's medial axis is computed on its own).
-    // Debug builds run a smaller ladder with the same scaling rule.
-    const std::vector<std::size_t> sizes =
-        kRelease ? std::vector<std::size_t>{1250, 2500, 5000} : std::vector<std::size_t>{125, 250};
+    // in at most 60 s of CPU time (measured ~11-14 s on the T-0153 machine), with or without a
+    // flat depth; the cost grows linearly with the number of regions (each part's medial axis is
+    // computed on its own): doubling the page costs at most 2.5x, measured with interleaved runs
+    // (T-0145's load-robust helper). Debug builds check the doubling on smaller pages.
     const tooling::Tool tool = vBit(60.0, 12.7);
-    double prev = 0.0;
-    std::string log;
-    for (std::size_t i = 0; i < sizes.size(); ++i) {
+    auto pageOf = [](std::size_t count) {
         std::vector<Contour> page;
-        std::size_t segments = 0;
-        for (std::size_t k = 0; k < sizes[i]; ++k) {
+        for (std::size_t k = 0; k < count; ++k) {
             const Vec2 o{static_cast<double>(k % 100) * 7.0, static_cast<double>(k / 100) * 9.0};
-            segments += test::medial::appendGlyph(page, static_cast<int>(k % 5), o);
+            test::medial::appendGlyph(page, static_cast<int>(k % 5), o);
         }
+        return page;
+    };
+    const std::size_t half = kRelease ? 625 : 60;
+    const std::vector<Contour> smallPage = pageOf(half);
+    const std::vector<Contour> largePage = pageOf(2 * half);
+    VCarvingResult smallResult;
+    VCarvingResult largeResult;
+    const test::ScalingTimes times = test::interleavedCpuSeconds(
+        3, [&] { smallResult = vCarvingToolpath(smallPage, tool, std::nullopt, {}, VCarvingParams{}); },
+        [&] { largeResult = vCarvingToolpath(largePage, tool, std::nullopt, {}, VCarvingParams{}); });
+    INFO(half << " regions: " << times.smallSeconds << " s CPU, " << 2 * half << " regions: " << times.largeSeconds
+              << " s CPU, ratio " << times.ratio());
+    REQUIRE(smallResult.ok());
+    REQUIRE(largeResult.ok());
+    CHECK(largeResult.regions == 2 * half);
+    CHECK(largeResult.diagnostics.empty());
+    CHECK(times.ratio() <= 2.5);
+
+    if (kRelease) {
+        const std::vector<Contour> page = pageOf(5000);
         const double t0 = test::processCpuSeconds();
         const VCarvingResult r = vCarvingToolpath(page, tool, std::nullopt, {}, VCarvingParams{});
         const double t = test::processCpuSeconds() - t0;
-        log += std::to_string(sizes[i]) + " regions, " + std::to_string(segments) + " segments: " +
-               std::to_string(t) + " s CPU, " + std::to_string(r.toolpath.moveCount()) + " moves\n";
-        INFO(log);
+        INFO("5000 regions: " << t << " s CPU, " << r.toolpath.moveCount() << " moves");
         REQUIRE(r.ok());
-        CHECK(r.regions == sizes[i]);
-        CHECK(r.diagnostics.empty());
-        if (i > 0) {
-            CHECK(t <= 2.5 * prev + 0.25);  // + scheduler-tick noise on small runs
-        }
-        if (kRelease && sizes[i] >= 5000) {
-            CHECK(t <= 60.0);
-        }
-        prev = t;
+        CHECK(r.regions == 5000);
+        CHECK(t <= 60.0);
     }
 
     // With a flat depth the flat areas are cleared region by region (Pocket per region), so the
     // same page stays within the bound: 0.5 mm flat depth, the V-bit clearing the flat areas.
-    const std::size_t count = kRelease ? 5000 : 250;
-    std::vector<Contour> page;
-    for (std::size_t k = 0; k < count; ++k) {
-        const Vec2 o{static_cast<double>(k % 100) * 7.0, static_cast<double>(k / 100) * 9.0};
-        test::medial::appendGlyph(page, static_cast<int>(k % 5), o);
-    }
+    const std::size_t count = kRelease ? 5000 : 120;
+    const std::vector<Contour> flatPage = pageOf(count);
     VCarvingParams flat;
     flat.flatDepth = 0.5;
     const double t0 = test::processCpuSeconds();
-    const VCarvingResult r = vCarvingToolpath(page, tool, std::nullopt, {}, flat);
+    const VCarvingResult r = vCarvingToolpath(flatPage, tool, std::nullopt, {}, flat);
     const double t = test::processCpuSeconds() - t0;
     INFO(count << " regions with a 0.5 mm flat depth: " << t << " s CPU, " << r.toolpath.moveCount() << " moves");
     REQUIRE(r.ok());

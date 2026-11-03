@@ -164,8 +164,9 @@ Release, the T-0153 machine (shared): 5,000 glyph-like regions (45,000 segments)
 CPU (~1.9 M moves); the same page with a 0.5 mm flat depth (the V-bit clearing the flat areas,
 Pocket per region) ~14 s (~2.8 M moves); linear in the number of regions. The documented bound,
 checked in Release builds (the Linux app job and Windows CI run the suite in Release), is
-**≤ 60 s of CPU for 5,000 regions, with or without a flat depth**, with ≤ 2.5× per doubling;
-Debug builds check the doubling rule on 125/250 regions and run the flat page with 250. The
+**≤ 60 s of CPU for 5,000 regions, with or without a flat depth**, with ≤ 2.5× per doubling
+(625 → 1,250 regions, interleaved runs with T-0145's `interleavedCpuSeconds`, robust to parallel
+ctest load); Debug builds check the doubling on 60 → 120 regions and run the flat page with 120. The
 medial axis needs no speed-up for this: per part it costs ~0.24 s per 1,000 segments. Its
 point-sample skeleton zig-zags within the tolerance, which keeps ~400 moves per 5 × 8 mm glyph
 at the default tolerance and a slight Z jitter; projecting output points onto the exact
