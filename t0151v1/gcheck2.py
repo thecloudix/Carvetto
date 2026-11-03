@@ -12,6 +12,43 @@
 # that ends after drag cuts needs that unlock pause before its end too.
 # Without drag=1 every cut needs the spindle on, as before.
 import re, sys
+# T-0154 drag-section allowlist (same set as the interpreter, ADR-0020).
+DRAG_G = {"0","1","2","3","4","17","20","21","40","43","49","80","90","91","91.1","94"}
+DRAG_M = {0, 1, 2, 5, 6, 30}
+def norm(v):
+    w, _, f = v.partition('.'); w = w.lstrip('0') or '0'; f = f.rstrip('0')
+    return w + ('.' + f if f else '')
+def allow_problem(live, marlin):
+    t = live.strip(' \t')  # a leading '/' is refused too (no block delete in drag sections)
+    i = 0; words = []
+    while True:
+        while i < len(t) and t[i] in ' \t': i += 1
+        if i >= len(t):
+            # An M0/M1 line is bare: an optional N word and the M0/M1, nothing else.
+            if any(L == 'M' and int(v) in (0, 1) for L, v in words):
+                if not (len(words) == 1 or (len(words) == 2 and words[0][0] == 'N')): return "M0/M1 line with other words"
+            return None
+        L = t[i]
+        if not ('A' <= L <= 'Z'): return f"character {L!r}"
+        j = i + 1
+        while j < len(t) and (t[j].isdigit() or t[j] in '.+-'): j += 1
+        v = t[i + 1:j]
+        if not v: return f"letter {L} without value"
+        wd, _, fr = v.lstrip('+-').partition('.')
+        if (len(wd) > 8 or len(fr) > 6) if L in 'XYZIJFP' else (len(wd) + len(fr) > (9 if L == 'N' else 5)): return f"{L}{v} too many digits"
+        plain = re.fullmatch(r"\d+(\.\d*)?", v); signed = re.fullmatch(r"[+-]?\d+(\.\d*)?", v)
+        if L in 'XYZIJFP':
+            if not signed: return f"{L}{v}"
+        elif L in 'NTH':
+            if not v.isdigit(): return f"{L}{v}"
+        elif L == 'G':
+            if not plain or norm(v) not in DRAG_G: return f"G{v}"
+        elif L == 'M':
+            if not v.isdigit() or int(v) not in DRAG_M: return f"M{v}"
+        else: return f"letter {L}"
+        if j < len(t) and t[j] not in ' \t': return f"character {t[j]!r} after {L}{v}"
+        words.append((L, v))
+        i = j
 def check(path, post, bottom, safe, plunge=-1, drag=False):
     inch = 'inch' in post; k = 25.4 if inch else 1.0
     eps = 0.0026 if inch else 0.0011
@@ -23,7 +60,17 @@ def check(path, post, bottom, safe, plunge=-1, drag=False):
         window = ' '.join(recent[-2:] + [s]).lower(); recent.append(s)
         announced = 'spindle' in window; unlock = 'unlock' in window
         if any(ord(ch) < 32 or ord(ch) > 126 for ch in s): E(n, "non-printable")
-        s = re.sub(r"\(.*?\)", "", s); s = s.split(';')[0].strip()
+        raw = s
+        s = re.sub(r"\(.*?\)", "", s); s = s.split(';')[0].strip()  # a comment ends at the first ')'
+        if dragsec and ('(' in s or ')' in s): E(n, "unbalanced or nested parentheses in a drag section")
+        if dragsec and ('#' in s or '[' in s): E(n, "parameter or expression ('#', '[') in a drag section")
+        if dragsec and any(ch in raw for ch in '~!?\x18'): E(n, "Grbl realtime character in a drag section")
+        if dragsec and re.search(r"M0*(108|112|410|876)(?!\d)", re.sub(r"[ \t]", "", raw).upper()):
+            E(n, "Marlin emergency-parser code in a drag section")
+        if dragsec and 'marlin' in post and re.search(r"[()]", raw.split(';')[0]): E(n, "parenthesis in live code on a ';' post")
+        if dragsec and s:
+            pr = allow_problem(s, 'marlin' in post)
+            if pr: E(n, f"not on the drag-section allowlist: {pr}")
         if not s: continue
         # Read words as a controller does (T-0154): spaces/tabs ignored, any case, signed values
         # and a leading '.' ("M 3", "m03", "S.5", "M+3").
