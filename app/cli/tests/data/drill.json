@@ -1,0 +1,14 @@
+{
+  "name": "Holes",
+  "layers": ["Pockets"],
+  "cut_depth": 7,
+  "safe_z": 5,
+  "peck": true,
+  "peck_retract": "above_start",
+  "retract_gap": 1,
+  "dwell_time": 0.5,
+  "tool": {
+    "database": "tools.json",
+    "id": "drill-3mm"
+  }
+}

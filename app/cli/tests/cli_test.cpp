@@ -12,10 +12,12 @@
 #include <sstream>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "carvetto/document/carv_io.hpp"
 #include "carvetto/document/toolpath_record.hpp"
+#include "carvetto/toolpath/drill.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/profile.hpp"
 #include "carvetto/tooling/json_io.hpp"
@@ -32,6 +34,7 @@ namespace {
 
 const std::string kData = CARVETTO_CLI_DATA_DIR;
 const std::string kGolden = std::string(CARVETTO_GOLDEN_DIR) + "/cli/part_grbl.nc";
+const std::string kDrillGolden = std::string(CARVETTO_GOLDEN_DIR) + "/cli/part_drill_grbl.nc";
 const std::string kGrbl = std::string(CARVETTO_POSTS_DIR) + "/grbl_mm.pp";
 
 struct Outcome {
@@ -76,6 +79,25 @@ std::string pipeline(const std::string& dir) {
     for (const auto& args : std::vector<std::vector<std::string>>{
              {"import", kData + "/part.dxf", carv},
              {"toolpath", "pocket", kData + "/pocket.json", carv, carv},
+             {"toolpath", "profile", kData + "/profile.json", carv, carv},
+             {"post", kGrbl, carv, nc},
+         }) {
+        const Outcome r = runCli(args);
+        INFO(args[0] << ": " << r.err);
+        REQUIRE(r.code == cli::kExitOk);
+        CHECK(r.err.empty());
+    }
+    return readFile(nc);
+}
+
+/// The T-0150 drilling pipeline: DXF -> peck-drilled holes with dwell -> profile cut-out with
+/// tabs -> Grbl; returns the G-code.
+std::string drillPipeline(const std::string& dir) {
+    const std::string carv = dir + "/part.carv";
+    const std::string nc = dir + "/part.nc";
+    for (const auto& args : std::vector<std::vector<std::string>>{
+             {"import", kData + "/part.dxf", carv},
+             {"toolpath", "drill", kData + "/drill.json", carv, carv},
              {"toolpath", "profile", kData + "/profile.json", carv, carv},
              {"post", kGrbl, carv, nc},
          }) {
@@ -143,6 +165,88 @@ TEST_CASE("Regenerate the CLI golden", "[.regen]") {
     writeFile(kGolden, pipeline(workDir("regen")));
 }
 
+// ------------------------------------------------------------------------------ T-0150 drill
+
+TEST_CASE("T-0150: DXF -> drill + profile -> Grbl matches the drilling golden", "[cli][golden][drill]") {
+    const std::string a = workDir("drill_e2e");
+    const std::string b = workDir("drill_e2e_again");
+    CHECK(drillPipeline(a) == readFile(kDrillGolden));
+    CHECK(drillPipeline(b) == readFile(kDrillGolden));  // deterministic
+    CHECK(readFile(a + "/part.carv") == readFile(b + "/part.carv"));
+}
+
+TEST_CASE("T-0150: the drilling golden is sane: drill then end mill, pecks, dwells, no canned cycles",
+          "[cli][golden][drill]") {
+    const std::string g = readFile(kDrillGolden);
+    CHECK_THAT(g, StartsWith("(part)\n"));
+    CHECK_THAT(g, ContainsSubstring("(Tool 28: Drill 3 mm)"));
+    CHECK_THAT(g, ContainsSubstring("(Holes)"));
+    CHECK_THAT(g, ContainsSubstring("(Change to tool 5: End Mill 3 mm)"));
+    CHECK_THAT(g, ContainsSubstring("G0 X40.000 Y40.000 Z5.000"));  // slot centre (nearest first)
+    CHECK_THAT(g, ContainsSubstring("G0 X90.000\n"));                // circle centre (Y modal)
+    CHECK_THAT(g, ContainsSubstring("G1 Z-2.000 F300"));             // first peck at the plunge rate
+    CHECK_THAT(g, ContainsSubstring("G0 Z1.000"));                   // peck retract: surface + gap
+    CHECK_THAT(g, ContainsSubstring("G1 Z-7.000"));                  // hole bottom
+    CHECK_THAT(g, ContainsSubstring("G4 P0.50"));
+    CHECK(g.find("G8") == std::string::npos);  // no G81-G89 canned cycles
+    CHECK(g.find("G73") == std::string::npos);
+    CHECK_THAT(g, ContainsSubstring("M30"));
+}
+
+// Hidden (tag [.regen]): rewrites the drilling CLI golden (tools/regen_golden.py).
+TEST_CASE("Regenerate the drilling CLI golden", "[.regen]") {
+    writeFile(kDrillGolden, drillPipeline(workDir("regen_drill")));
+}
+
+TEST_CASE("T-0150: toolpath drill stores a drill record; info names it", "[cli][toolpath][drill]") {
+    const std::string dir = workDir("drill_record");
+    const std::string carv = importedFixture(dir);
+    const Outcome r = runCli({"toolpath", "drill", kData + "/drill.json", carv, carv});
+    INFO(r.err);
+    REQUIRE(r.code == 0);
+    CHECK(r.err.empty());
+    CHECK_THAT(r.out, ContainsSubstring("added drill toolpath 'Holes' ("));
+    CHECK_THAT(r.out, ContainsSubstring("tool 'Drill 3 mm') as toolpath 1"));
+    auto loaded = document::loadCarv(fs::path(carv));
+    REQUIRE(loaded.ok());
+    const auto& records = loaded.value().document.toolpaths();
+    REQUIRE(records.size() == 1);
+    CHECK(records[0].operation() == document::ToolpathOperation::Drill);
+    const auto& p = std::get<toolpath::DrillParams>(records[0].params);
+    CHECK(p.name == "Holes");
+    CHECK(p.cutDepth == 7.0);
+    CHECK(p.peck);
+    CHECK(p.dwellTime == 0.5);
+    CHECK(records[0].toolSource.toolId == "drill-3mm");
+    CHECK(records[0].tool.plungeRate == 300.0);
+    CHECK(records[0].selection.layers.size() == 1);
+    const Outcome info = runCli({"info", carv});
+    CHECK_THAT(info.out, ContainsSubstring("  1: drill 'Holes', tool T28 'Drill 3 mm' D3 mm, "));
+}
+
+TEST_CASE("T-0150: toolpath drill reports diagnostics and refuses unusable tools", "[cli][toolpath][drill][errors]") {
+    const std::string dir = workDir("drill_errors");
+    const std::string carv = importedFixture(dir);
+    // A V-bit from the starter database: refused, nothing written.
+    writeFile(dir + "/vbit.json", R"({"tool": {"id": "v-bit-90-1-4in"}, "cut_depth": 2})");
+    const Outcome v = runCli({"toolpath", "drill", dir + "/vbit.json", carv, dir + "/out.carv"});
+    CHECK(v.code == cli::kExitFailure);
+    CHECK_THAT(v.err, ContainsSubstring("no drill toolpath was produced: tool 'V-Bit 90"));
+    CHECK_THAT(v.err, ContainsSubstring("drilling needs a drill or an end mill"));
+    CHECK_FALSE(fs::exists(dir + "/out.carv"));
+    // Without layers every closed vector gets a hole (the outline's centre too); the end mill fits.
+    writeFile(dir + "/all.json", R"({"tool": {"id": "end-mill-6mm"}, "cut_depth": 2, "order": {"selection_order": true}})");
+    const Outcome a = runCli({"toolpath", "drill", dir + "/all.json", carv, carv});
+    INFO(a.err);
+    REQUIRE(a.code == 0);
+    CHECK_THAT(a.out, ContainsSubstring("(9 moves, tool 'End Mill 6 mm')"));
+    // Unknown keys are refused, naming the file and the key.
+    writeFile(dir + "/typo.json", R"({"tool": {"id": "drill-6mm"}, "cut_depht": 2})");
+    const Outcome t = runCli({"toolpath", "drill", dir + "/typo.json", carv, carv});
+    CHECK(t.code == cli::kExitFailure);
+    CHECK_THAT(t.err, ContainsSubstring("typo.json: params: unknown key 'cut_depht'"));
+}
+
 // ------------------------------------------------------------------------------------ help
 
 TEST_CASE("AC2: --help documents every command", "[cli][help]") {
@@ -151,7 +255,8 @@ TEST_CASE("AC2: --help documents every command", "[cli][help]") {
     CHECK(r.out == cli::helpText());
     CHECK(r.err.empty());
     for (const char* usage : {"import <in.dxf> <out.carv>", "toolpath profile <params.json> <in.carv> <out.carv>",
-                              "toolpath pocket <params.json> <in.carv> <out.carv>", "post <post.pp> <in.carv> <out.nc>",
+                              "toolpath pocket <params.json> <in.carv> <out.carv>",
+                              "toolpath drill <params.json> <in.carv> <out.carv>", "post <post.pp> <in.carv> <out.nc>",
                               "info <file.carv>", "Exit status"}) {
         CHECK_THAT(r.out, ContainsSubstring(usage));
     }
@@ -187,7 +292,7 @@ TEST_CASE("AC2: wrong command lines exit with 2 and say why", "[cli][errors]") {
         {{"import", "a.dxf"}, "'import' takes 2 argument(s), got 1"},
         {{"import", "a.dxf", "b.carv", "c"}, "'import' takes 2 argument(s), got 3"},
         {{"post", "--force", "a", "b"}, "unknown option '--force'"},
-        {{"toolpath", "drill", "p.json", "a.carv", "b.carv"}, "unknown toolpath operation 'drill'"},
+        {{"toolpath", "vcarve", "p.json", "a.carv", "b.carv"}, "unknown toolpath operation 'vcarve' (expected profile, pocket or drill)"},
         {{"toolpath", "profile", "a.carv", "b.carv"}, "'toolpath' takes 4 argument(s), got 3"},
         {{"info"}, "'info' takes 1 argument(s), got 0"},
         {{"help", "nope"}, "unknown command 'nope'"},

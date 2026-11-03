@@ -58,6 +58,7 @@ add_executable(carvetto_tests
   document/carv_extras_member_test.cpp
   document/carv_toolpath_test.cpp
   document/carv_storage_residuals_test.cpp
+  document/carv_drill_record_test.cpp
   io/dxf_import_test.cpp
   io/dxf_export_test.cpp
   io/dxf_curves_test.cpp
@@ -70,6 +71,8 @@ add_executable(carvetto_tests
   toolpath/pocket_guard_test.cpp
   toolpath/toolpath_api_test.cpp
   toolpath/toolpath_scale_test.cpp
+  toolpath/drill_test.cpp
+  toolpath/drill_post_test.cpp
 )
 # carv_io_test uses the internal zip helper (core/src/document/carv_zip.hpp) to craft archives.
 target_include_directories(carvetto_tests PRIVATE ${PROJECT_SOURCE_DIR}/core/src/document)

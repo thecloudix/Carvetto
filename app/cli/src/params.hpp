@@ -9,11 +9,13 @@
 
 #include "carvetto/tooling/cutting_data.hpp"
 #include "carvetto/tooling/tool.hpp"
+#include "carvetto/toolpath/drill.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/profile.hpp"
 
-// params.json for `carvetto-cli toolpath profile|pocket` (T-0122, ADR-0019; owner decision
-// 2026-11-01): snake_case keys mirroring ProfileParams / PocketParams, lengths in mm, angles in
+// params.json for `carvetto-cli toolpath profile|pocket|drill` (T-0122, ADR-0019; owner decision
+// 2026-11-01; drill T-0150): snake_case keys mirroring ProfileParams / PocketParams / DrillParams,
+// lengths in mm, times in seconds, angles in
 // degrees (converted to radians here, at the CLI edge), the tool as
 // {"tool": {"database": <path>, "id": <tool id>, "machine": <id>, "material": <id>}} and an
 // optional "layers": [names]. Unknown keys are errors naming the key.
@@ -58,11 +60,20 @@ struct PocketJob {
     CommonParams common;
 };
 
+/// A parsed drill params file.
+struct DrillJob {
+    toolpath::DrillParams params;
+    CommonParams common;
+};
+
 /// Parses a profile params file's text. Throws `CliError` naming the offending key.
 ProfileJob parseProfileParams(std::string_view text);
 
 /// Parses a pocket params file's text. Throws `CliError` naming the offending key.
 PocketJob parsePocketParams(std::string_view text);
+
+/// Parses a drill params file's text. Throws `CliError` naming the offending key.
+DrillJob parseDrillParams(std::string_view text);
 
 /// The tool and the cutting data to use with it.
 struct ResolvedTool {
@@ -77,7 +88,7 @@ struct ResolvedTool {
 /// database) and finds the tool and its cutting data. Throws `CliError`.
 ResolvedTool resolveTool(const ToolChoice& choice, const std::filesystem::path& baseDir);
 
-/// Help text describing every params.json key of both operations.
+/// Help text describing every params.json key of every operation.
 std::string paramsHelp();
 
 }  // namespace carvetto::cli
