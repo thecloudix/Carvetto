@@ -921,6 +921,7 @@ private:
     Box2 bounds_;
     std::size_t ignored_{0};
     bool capped_{false};
+    bool beyondScale_{false};  // coordinates so large that 1e-12 x scale exceeds chordal / 2
 
     std::vector<Piece> pieces_;
     std::vector<std::pair<int, int>> contourRanges_;  // first and last piece of each contour
@@ -1913,6 +1914,9 @@ MedialAxis Solver::run() {
     scale_ = std::max({std::fabs(bounds_.min.x), std::fabs(bounds_.min.y), std::fabs(bounds_.max.x),
                        std::fabs(bounds_.max.y), bounds_.width(), bounds_.height()});
     const double fpFloor = 1e-12 * scale_;
+    // Beyond ~1e10 mm the rounding floors exceed the tolerance budget: the result is still
+    // computed, but flagged (the guarantees cannot hold there).
+    beyondScale_ = fpFloor > 0.5 * chordal_;
     emax_ = std::max(0.5 * chordal_, fpFloor);
     hmin_ = std::max(0.5 * chordal_, fpFloor);
     tieTol_ = fpFloor;
@@ -1948,7 +1952,7 @@ MedialAxis Solver::run() {
     evaluateCreated(nullptr);
     out = assemble();
     out.ignoredContours = ignored_;
-    out.accuracyCapped = capped_;
+    out.accuracyCapped = capped_ || beyondScale_;
     out.boundarySamples = samples_.size();
     return out;
 }

@@ -14,6 +14,9 @@
 
 namespace carvetto::geometry::detail {
 
+/// Error-free product: x = fl(a * b) and x + y == a * b exactly (barring overflow/underflow).
+void twoProduct(double a, double b, double& x, double& y);
+
 /// Sign of the orientation determinant: +1 when a, b, c turn counter-clockwise, -1 clockwise,
 /// 0 when exactly collinear.
 int orient2dSign(Vec2 a, Vec2 b, Vec2 c);

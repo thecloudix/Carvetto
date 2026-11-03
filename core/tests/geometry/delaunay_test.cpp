@@ -2,6 +2,7 @@
 // triangulation the medial axis is built on (core/src/geometry/robust_predicates.hpp,
 // delaunay.hpp).
 
+#include <array>
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
 #include <cstddef>
@@ -20,6 +21,48 @@ using carvetto::geometry::Vec2;
 using carvetto::geometry::detail::Delaunay;
 using carvetto::geometry::detail::incircleSign;
 using carvetto::geometry::detail::orient2dSign;
+using carvetto::geometry::detail::twoProduct;
+
+namespace {
+
+/// Splits a finite double into three parts of at most 18 significant bits each (by integer
+/// manipulation of its mantissa, no floating-point products), so that every product of two
+/// parts is exact in double whatever the compiler contracts.
+std::array<double, 3> split18(double a) {
+    int e = 0;
+    const double f = std::frexp(a, &e);  // a = f * 2^e, |f| in [0.5, 1)
+    const auto m = static_cast<long long>(std::ldexp(f, 54));  // exact: at most 53 bits
+    const long long hi = m / (1LL << 36);
+    const long long mid = (m - hi * (1LL << 36)) / (1LL << 18);
+    const long long lo = m - hi * (1LL << 36) - mid * (1LL << 18);
+    return {std::ldexp(static_cast<double>(hi), e - 54 + 36), std::ldexp(static_cast<double>(mid), e - 54 + 18),
+            std::ldexp(static_cast<double>(lo), e - 54)};
+}
+
+/// Exact sum of doubles by repeated error-free addition (additions only: no contraction).
+double exactSumSign(std::vector<double> terms) {
+    // Distillation: repeat TwoSum passes until at most one non-zero term remains or the leading
+    // term dominates; the sign of the exact sum is the sign of the largest term afterwards.
+    for (int pass = 0; pass < 200; ++pass) {
+        bool changed = false;
+        for (std::size_t i = 0; i + 1 < terms.size(); ++i) {
+            const double x = terms[i] + terms[i + 1];
+            const double bv = x - terms[i];
+            const double err = (terms[i] - (x - bv)) + (terms[i + 1] - bv);
+            if (terms[i + 1] != x || terms[i] != err) {
+                changed = true;
+            }
+            terms[i] = err;
+            terms[i + 1] = x;
+        }
+        if (!changed) {
+            break;
+        }
+    }
+    return terms.back();
+}
+
+}  // namespace
 
 TEST_CASE("robust predicates: orientation is exact near collinearity", "[geometry][medial][predicates]") {
     // Points on a grid of one unit in the last place around (0.5, 0.5): the sign of the
@@ -37,6 +80,47 @@ TEST_CASE("robust predicates: orientation is exact near collinearity", "[geometr
     }
     CHECK(orient2dSign({0, 0}, {1e6, 1e6}, {2e6, 2e6}) == 0);
     CHECK(orient2dSign({1e6, -1e6}, {1e6 + 1e-9, -1e6}, {1e6, -1e6 + 1e-9}) == 1);
+}
+
+TEST_CASE("robust predicates: TwoProduct is error-free (independent of FP contraction)", "[geometry][medial][predicates]") {
+    // Known cases: x = fl(a b), y = a b - x exactly.
+    double x = 0.0;
+    double y = 0.0;
+    const double t27 = std::ldexp(1.0, -27);
+    twoProduct(1.0 + t27, 1.0 + t27, x, y);
+    CHECK(x == 1.0 + 2.0 * t27);
+    CHECK(y == t27 * t27);
+    const double t52 = std::ldexp(1.0, -52);
+    twoProduct(1.0 + t52, -(1.0 + t52), x, y);
+    CHECK(x == -(1.0 + 2.0 * t52));
+    CHECK(y == -(t52 * t52));
+    // Random operands: a b - x - y == 0, checked through 18-bit partial products (exact) and
+    // additions only.
+    carvetto::test::SplitMix rng{0x2F0D};
+    for (int i = 0; i < 20000; ++i) {
+        const double a = rng.uniform(-1.0, 1.0) * std::ldexp(1.0, static_cast<int>(rng.uniform(-200, 200)));
+        const double b = rng.uniform(-1.0, 1.0) * std::ldexp(1.0, static_cast<int>(rng.uniform(-200, 200)));
+        twoProduct(a, b, x, y);
+        REQUIRE(x == a * b);
+        std::vector<double> terms{-x, -y};
+        for (double pa : split18(a)) {
+            for (double pb : split18(b)) {
+                terms.push_back(pa * pb);
+            }
+        }
+        CHECK(exactSumSign(terms) == 0.0);
+    }
+}
+
+TEST_CASE("robust predicates: tiny magnitudes are scaled, not underflowed", "[geometry][medial][predicates]") {
+    for (double m : {1e-60, 1e-100, 1e-140}) {
+        INFO("m " << m);
+        CHECK(incircleSign({m, 0}, {0, m}, {-m, 0}, {0, -m}) == 0);
+        CHECK(incircleSign({m, 0}, {0, m}, {-m, 0}, {0, std::nextafter(-m, 0.0)}) == 1);
+        CHECK(incircleSign({m, 0}, {0, m}, {-m, 0}, {0, std::nextafter(-m, -1.0)}) == -1);
+        CHECK(orient2dSign({0, 0}, {m, m}, {2 * m, 2 * m}) == 0);
+        CHECK(orient2dSign({0, 0}, {m, m}, {std::nextafter(2 * m, 1.0), 2 * m}) == -1);
+    }
 }
 
 TEST_CASE("robust predicates: in-circle is exact for co-circular points", "[geometry][medial][predicates]") {

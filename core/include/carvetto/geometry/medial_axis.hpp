@@ -53,8 +53,8 @@ struct MedialBranch {
 struct MedialAxisOptions {
     /// Which parts of the plane the closed contours enclose (as for point-in-contour queries).
     FillRule fillRule{FillRule::EvenOdd};
-    /// Upper bound on boundary samples (memory and time guard, about 250 bytes and 10-25 us of
-    /// Release CPU each). 0 = automatic: max(250,000, 64 per boundary piece), where pieces are
+    /// Upper bound on boundary samples (memory and time guard, about 1.1 KB of peak memory and
+    /// 10-25 us of Release CPU each: the 50,000-segment glyph page needs ~2.3 M samples, ~2.5 GB). 0 = automatic: max(250,000, 64 per boundary piece), where pieces are
     /// lines, arcs of up to 45 degrees and Bezier sub-curves. A matching work budget (300 search
     /// steps per allowed sample) bounds inputs whose queries are unusually expensive. When either
     /// is reached, refinement stops and `MedialAxis::accuracyCapped` is set. Text needs about
@@ -96,7 +96,16 @@ struct MedialAxis {
 /// tolerance, from two boundary features); between consecutive points the radius interpolates
 /// linearly within tol.chordal. Parts of the region narrower than twice tol.chordal (every
 /// inscribed circle below the tolerance) and the last ~tol.chordal of a sharp corner's branch
-/// may have no skeleton. Output is deterministic.
+/// may have no skeleton. Branches into obtuse convex corners are shortened much more, since
+/// the spoke test drops the part where the two walls are nearly one line: about 2 x tol.chordal
+/// of branch at 120 degrees, 8 x at 150, ~80 x at 170, and the whole bisector branch near 178
+/// degrees. The inscribed circles of the remaining skeleton still reach the boundary to within
+/// ~0.34 x tol.chordal, so carved depth stays within tolerance, but callers must not assume
+/// that every convex corner has a branch reaching it.
+///
+/// Coordinates: up to ~1e9 mm (1e-12 of the largest coordinate must stay below tol.chordal / 2);
+/// beyond that the result is still computed but `accuracyCapped` is set, since rounding then
+/// exceeds the tolerance budget. Output is deterministic.
 MedialAxis medialAxis(const std::vector<Contour>& contours, const Tolerance& tol,
                       const MedialAxisOptions& options = {});
 

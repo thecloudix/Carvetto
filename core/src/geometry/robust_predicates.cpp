@@ -1,10 +1,20 @@
 #include "robust_predicates.hpp"
 
+#include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <vector>
 
 namespace carvetto::geometry::detail {
+
+// x + y == a * b exactly, x = fl(a * b). std::fma rounds a * b - x once, and that value is
+// exactly representable, so y is exact whatever the compiler does with floating-point
+// contraction (a Dekker split is not: fusing some of its products but not others breaks it).
+void twoProduct(double a, double b, double& x, double& y) {
+    x = a * b;
+    y = std::fma(a, b, -x);
+}
 
 namespace {
 
@@ -31,30 +41,6 @@ inline void twoDiff(double a, double b, double& x, double& y) {
     const double br = bv - b;
     const double ar = a - av;
     y = ar + br;
-}
-
-// Splits a into hi + lo, each with at most 26 significant bits.
-inline void split(double a, double& hi, double& lo) {
-    constexpr double kSplitter = 134217729.0;  // 2^27 + 1
-    const double c = kSplitter * a;
-    const double abig = c - a;
-    hi = c - abig;
-    lo = a - hi;
-}
-
-// x + y == a * b exactly, x = fl(a * b).
-inline void twoProduct(double a, double b, double& x, double& y) {
-    x = a * b;
-    double ahi = 0.0;
-    double alo = 0.0;
-    double bhi = 0.0;
-    double blo = 0.0;
-    split(a, ahi, alo);
-    split(b, bhi, blo);
-    const double err1 = x - ahi * bhi;
-    const double err2 = err1 - alo * bhi;
-    const double err3 = err2 - ahi * blo;
-    y = alo * blo - err3;
 }
 
 Expansion twoTermDiff(double a, double b) {
@@ -193,7 +179,31 @@ Expansion productTerm(double a, double b) {
     return e;
 }
 
+/// Scales points by a power of two (exact) so that the largest coordinate magnitude is about 1
+/// when it is smaller than that: the signs are invariant under uniform scaling, and products of
+/// tiny coordinates would otherwise underflow in the expansions.
+template <std::size_t N>
+void prescale(std::array<Vec2, N>& pts) {
+    double m = 0.0;
+    for (const Vec2& p : pts) {
+        m = std::max({m, std::fabs(p.x), std::fabs(p.y)});
+    }
+    if (!(m > 0.0) || m >= 1.0) {
+        return;
+    }
+    int e = 0;
+    std::frexp(m, &e);
+    for (Vec2& p : pts) {
+        p = {std::ldexp(p.x, -e), std::ldexp(p.y, -e)};
+    }
+}
+
 int orient2dExact(Vec2 a, Vec2 b, Vec2 c) {
+    std::array<Vec2, 3> pts{a, b, c};
+    prescale(pts);
+    a = pts[0];
+    b = pts[1];
+    c = pts[2];
     // (ax-cx)(by-cy) - (ay-cy)(bx-cx), expanded so every term is a product of two inputs
     // (the cx*cy terms cancel).
     Expansion s = productTerm(a.x, b.y);
@@ -206,6 +216,12 @@ int orient2dExact(Vec2 a, Vec2 b, Vec2 c) {
 }
 
 int incircleExact(Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
+    std::array<Vec2, 4> pts{a, b, c, d};
+    prescale(pts);
+    a = pts[0];
+    b = pts[1];
+    c = pts[2];
+    d = pts[3];
     const Expansion adx = twoTermDiff(a.x, d.x);
     const Expansion ady = twoTermDiff(a.y, d.y);
     const Expansion bdx = twoTermDiff(b.x, d.x);
@@ -229,6 +245,7 @@ constexpr double kEps = 1.1102230246251565e-16;  // 2^-53
 // (3 + 16 eps) eps and (10 + 96 eps) eps.
 constexpr double kOrientBound = 4.0 * kEps;
 constexpr double kIncircleBound = 12.0 * kEps;
+constexpr double kUnderflowGuard = 1e-280;
 
 }  // namespace
 
@@ -236,11 +253,13 @@ int orient2dSign(Vec2 a, Vec2 b, Vec2 c) {
     const double detLeft = (a.x - c.x) * (b.y - c.y);
     const double detRight = (a.y - c.y) * (b.x - c.x);
     const double det = detLeft - detRight;
-    const double bound = kOrientBound * (std::fabs(detLeft) + std::fabs(detRight));
-    if (det > bound) {
+    const double permanent = std::fabs(detLeft) + std::fabs(detRight);
+    const double bound = kOrientBound * permanent;
+    // Near the underflow range rounding errors are no longer relative: decide exactly there.
+    if (permanent > kUnderflowGuard && det > bound) {
         return 1;
     }
-    if (-det > bound) {
+    if (permanent > kUnderflowGuard && -det > bound) {
         return -1;
     }
     return orient2dExact(a, b, c);
@@ -267,10 +286,10 @@ int incircleSign(Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
                              (std::fabs(cdxady) + std::fabs(adxcdy)) * blift +
                              (std::fabs(adxbdy) + std::fabs(bdxady)) * clift;
     const double bound = kIncircleBound * permanent;
-    if (det > bound) {
+    if (permanent > kUnderflowGuard && det > bound) {
         return 1;
     }
-    if (-det > bound) {
+    if (permanent > kUnderflowGuard && -det > bound) {
         return -1;
     }
     return incircleExact(a, b, c, d);

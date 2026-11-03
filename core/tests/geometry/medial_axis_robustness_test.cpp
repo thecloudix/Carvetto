@@ -180,6 +180,22 @@ TEST_CASE("medial axis robustness: large coordinates", "[geometry][medial][ac2]"
     runChecked({Contour::rectangle(Box2{{1e6, 1e6}, {1e6 + 20, 1e6 + 0.5}})});
 }
 
+TEST_CASE("medial axis robustness: coordinates beyond the tolerance budget are flagged", "[geometry][medial][ac2]") {
+    // 1e-12 of the largest coordinate must stay below chordal / 2 (0.005 mm by default).
+    const MedialAxis ok = medialAxis({Contour::rectangle(Box2{{1e8, 1e8}, {1e8 + 20, 1e8 + 8}})}, kTol);
+    CHECK_FALSE(ok.accuracyCapped);
+    CHECK(ok.branches.size() == 5);
+    for (double off : {1e10, 1e12}) {
+        INFO("offset " << off);
+        const MedialAxis far1 = medialAxis({Contour::rectangle(Box2{{off, off}, {off + 20, off + 8}})}, kTol);
+        CHECK(far1.accuracyCapped);
+    }
+    // A coarser tolerance moves the limit.
+    Tolerance coarse;
+    coarse.chordal = 0.1;
+    CHECK_FALSE(medialAxis({Contour::rectangle(Box2{{1e10, 1e10}, {1e10 + 20, 1e10 + 8}})}, coarse).accuracyCapped);
+}
+
 TEST_CASE("medial axis robustness: crossing and invalid contours", "[geometry][medial][ac2]") {
     // Self-intersecting bow tie (zero net area: ignored) and a figure with a loop.
     const MedialAxis bow = runChecked({polygon({{0, 0}, {10, 10}, {10, 0}, {0, 10}})});

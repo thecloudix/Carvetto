@@ -31,7 +31,9 @@ by at most 2.5× per doubling of boundary segments up to 50,000 (text-heavy jobs
    own implementation. Internal parts: `robust_predicates.*` (exact `orient2d` / `incircle`: a
    double-precision filter with a forward error bound, falling back to floating-point
    expansion arithmetic, after the method published by J. R. Shewchuk, 1997; written from the
-   paper, no code copied), `delaunay.*` (incremental Bowyer-Watson triangulation inside a super
+   paper, no code copied; TwoProduct uses std::fma, so exactness does not depend on
+   floating-point contraction; points are scaled by a power of two before exact evaluation;
+   exact for coordinates below ~1e70 with non-zero differences at least ~1e-70 of the largest), `delaunay.*` (incremental Bowyer-Watson triangulation inside a super
    triangle, visibility-walk location, exact predicates, duplicate points return the existing
    vertex), `medial_axis.cpp`.
 2. **Region.** Closed contours under a fill rule (`MedialAxisOptions::fillRule`, default
@@ -103,15 +105,25 @@ by at most 2.5× per doubling of boundary segments up to 50,000 (text-heavy jobs
    neighbours lie within radius + chordal/2, i.e. the point is equidistant within the tolerance
    from two boundary features; the radius interpolates linearly within the tolerance along
    segments. Parts of the region narrower than twice the chordal tolerance (inscribed radius
-   below it) and the last ~chordal of a sharp corner's branch may have no skeleton.
+   below it) and the last ~chordal of a sharp corner's branch may have no skeleton. Branches into
+   obtuse convex corners are shortened much more by the spoke test, since there the two walls are
+   nearly one line: about 2·chordal of branch at 120°, 8·chordal at 150°, ~80·chordal at 170°,
+   and the whole bisector branch near 178° (measured by the T-0152 verifier). The inscribed
+   circles of the remaining skeleton still reach the boundary to within ~0.34·chordal, so carved
+   depth stays within tolerance, but T-0153 must not assume that every convex corner has a
+   branch reaching it (corner sharpening has to find corners from the boundary, not from branch
+   ends). Coordinates are supported up to ~1e9 mm: when 1e-12 of the largest coordinate exceeds
+   chordal/2 (beyond ~1e10 mm at the default tolerance) the rounding floors exceed the tolerance
+   budget, and the result is computed but flagged `accuracyCapped`.
    Deterministic for a given input (own shuffle, total orders everywhere, count-based budgets).
 
 ## Consequences
 - No dependency or licence change; THIRD_PARTY_NOTICES unchanged.
 - Cost is driven by the sample density the point-sample Voronoi needs near walls (spacing about
   √(8·emax·r)): 30–50 samples per boundary segment on glyph-like text at the default tolerance,
-  ~10–15 µs of Release CPU per sample. Measured on the T-0152 machine (Release, shared): glyph
-  pages ~0.5 s per 1,000 segments, scaling ~2.1–2.3× per doubling up to 50,000 segments; a
+  ~10–15 µs of Release CPU and ~1.1 KB of peak memory per sample. Measured on the T-0152
+  machine (Release, shared): glyph pages ~0.6–0.8 s per 1,000 segments (50,003 segments: 33 s,
+  2.3 M samples, ~2.5 GB peak), scaling ~2.1–2.3× per doubling up to 50,000 segments; a
   50,000-vertex polygonal outline ~0.5 s; a polygonal circle of 16,000 vertices 0.08 s. Spiky
   adversarial outlines (thousands of long spikes, Bezier bulges, grid-snapped overlaps) cost up
   to ~60 µs per sample and end at the budgets (e.g. 6,500 spans: ~55 s, capped). Scaling tests:
