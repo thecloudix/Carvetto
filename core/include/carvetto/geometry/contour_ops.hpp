@@ -15,8 +15,10 @@ namespace carvetto::geometry {
 
 /// Signed area enclosed by a closed contour (Green's theorem), positive when the contour runs
 /// counter-clockwise. Exact for lines and arcs; Bezier contributions are integrated with a
-/// 3-point Gauss–Legendre rule, which is exact for the degree-5 integrand. Open contours
-/// return 0, matching `Polyline::signedArea`.
+/// 3-point Gauss–Legendre rule, which is exact for the degree-5 integrand. Coordinates are taken
+/// relative to the contour's start point, so the result is accurate to rounding relative to the
+/// contour's own size wherever it lies; span ends that do not meet exactly are joined by straight
+/// gaps. Open contours return 0, matching `Polyline::signedArea`.
 double signedArea(const Contour& c);
 
 /// Absolute enclosed area of a closed contour (0 when open).
