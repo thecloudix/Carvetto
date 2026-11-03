@@ -1,0 +1,5 @@
+run 1 | T-0131 c:* | rc=0 | load=4.64 | CPU seconds: 250 teeth 0.0477937, 1000 teeth 0.27976, ratio 5.36623
+run 1 | T-0131 d: Profile* | rc=0 | load=4.42 | CPU seconds: 2500 vectors 0.90581, 5000 vectors 1.88727, ratio 2.06499
+run 1 | T-0131 d: tabs* | rc=0 | load=4.23 | CPU seconds: 312 vectors 1.23379, 624 vectors 2.48972, ratio 2.01794
+run 1 | T-0131 e:* | rc=0 | load=3.39 | CPU seconds: 1250 vectors 0.96928, 5000 vectors 5.74736, ratio 5.40416
+run 1 | T-0131 f:* | rc=0 | load=3.09 | CPU seconds: 1250 vectors 2.53868, 5000 vectors 9.7935, ratio 3.85771

@@ -1,0 +1,105 @@
+Test project /home/chris/wt-T0131/build-verify2-rel
+    Start 762: T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear
+    Start 763: T-0131 d: Profile with a separate last pass is near-linear in the vector count
+    Start 764: T-0131 d: tabs with a separate last pass are matched near-linearly
+    Start 765: T-0131 e: Pocket with a rest tool on a page of vectors is near-linear
+    Start 766: T-0131 f: Profile tabs on a page of vectors stay linear
+    Test #762: T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear .............   Passed    2.75 sec
+    Start 762: T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear
+    Test #762: T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear .............   Passed    2.79 sec
+    Start 762: T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear
+    Test #764: T-0131 d: tabs with a separate last pass are matched near-linearly ...............   Passed    6.98 sec
+    Start 764: T-0131 d: tabs with a separate last pass are matched near-linearly
+    Test #762: T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear .............   Passed    2.90 sec
+    Start 762: T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear
+    Test #763: T-0131 d: Profile with a separate last pass is near-linear in the vector count ...   Passed    9.01 sec
+    Start 763: T-0131 d: Profile with a separate last pass is near-linear in the vector count
+    Test #762: T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear .............   Passed    2.88 sec
+    Start 762: T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear
+    Test #764: T-0131 d: tabs with a separate last pass are matched near-linearly ...............   Passed    6.79 sec
+    Start 764: T-0131 d: tabs with a separate last pass are matched near-linearly
+    Test #762: T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear .............   Passed    2.92 sec
+    Start 762: T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear
+    Test #762: T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear .............   Passed    3.10 sec
+    Start 762: T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear
+    Test #763: T-0131 d: Profile with a separate last pass is near-linear in the vector count ...   Passed    9.56 sec
+    Start 763: T-0131 d: Profile with a separate last pass is near-linear in the vector count
+    Test #762: T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear .............   Passed    3.34 sec
+    Start 762: T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear
+    Test #766: T-0131 f: Profile tabs on a page of vectors stay linear ..........................   Passed   20.79 sec
+    Start 766: T-0131 f: Profile tabs on a page of vectors stay linear
+    Test #764: T-0131 d: tabs with a separate last pass are matched near-linearly ...............   Passed    7.54 sec
+    Start 764: T-0131 d: tabs with a separate last pass are matched near-linearly
+    Test #762: T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear .............   Passed    4.26 sec
+    Start 762: T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear
+    Test #763: T-0131 d: Profile with a separate last pass is near-linear in the vector count ...   Passed    9.20 sec
+    Start 763: T-0131 d: Profile with a separate last pass is near-linear in the vector count
+    Test #762: T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear .............   Passed    2.92 sec
+    Start 762: T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear
+    Test #764: T-0131 d: tabs with a separate last pass are matched near-linearly ...............   Passed    6.99 sec
+    Start 764: T-0131 d: tabs with a separate last pass are matched near-linearly
+    Test #765: T-0131 e: Pocket with a rest tool on a page of vectors is near-linear ............   Passed   29.37 sec
+    Start 765: T-0131 e: Pocket with a rest tool on a page of vectors is near-linear
+1/5 Test #762: T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear .............   Passed    4.17 sec
+    Test #764: T-0131 d: tabs with a separate last pass are matched near-linearly ...............   Passed    6.88 sec
+    Start 764: T-0131 d: tabs with a separate last pass are matched near-linearly
+    Test #763: T-0131 d: Profile with a separate last pass is near-linear in the vector count ...   Passed    8.92 sec
+    Start 763: T-0131 d: Profile with a separate last pass is near-linear in the vector count
+    Test #766: T-0131 f: Profile tabs on a page of vectors stay linear ..........................   Passed   20.44 sec
+    Start 766: T-0131 f: Profile tabs on a page of vectors stay linear
+    Test #764: T-0131 d: tabs with a separate last pass are matched near-linearly ...............   Passed    6.87 sec
+    Start 764: T-0131 d: tabs with a separate last pass are matched near-linearly
+    Test #763: T-0131 d: Profile with a separate last pass is near-linear in the vector count ...   Passed    8.89 sec
+    Start 763: T-0131 d: Profile with a separate last pass is near-linear in the vector count
+    Test #764: T-0131 d: tabs with a separate last pass are matched near-linearly ...............   Passed    6.55 sec
+    Start 764: T-0131 d: tabs with a separate last pass are matched near-linearly
+    Test #763: T-0131 d: Profile with a separate last pass is near-linear in the vector count ...   Passed    8.70 sec
+    Start 763: T-0131 d: Profile with a separate last pass is near-linear in the vector count
+    Test #764: T-0131 d: tabs with a separate last pass are matched near-linearly ...............   Passed    6.41 sec
+    Start 764: T-0131 d: tabs with a separate last pass are matched near-linearly
+    Test #765: T-0131 e: Pocket with a rest tool on a page of vectors is near-linear ............   Passed   28.12 sec
+    Start 765: T-0131 e: Pocket with a rest tool on a page of vectors is near-linear
+    Test #766: T-0131 f: Profile tabs on a page of vectors stay linear ..........................   Passed   18.94 sec
+    Start 766: T-0131 f: Profile tabs on a page of vectors stay linear
+    Test #764: T-0131 d: tabs with a separate last pass are matched near-linearly ...............   Passed    5.68 sec
+    Start 764: T-0131 d: tabs with a separate last pass are matched near-linearly
+    Test #763: T-0131 d: Profile with a separate last pass is near-linear in the vector count ...   Passed    7.94 sec
+    Start 763: T-0131 d: Profile with a separate last pass is near-linear in the vector count
+2/5 Test #764: T-0131 d: tabs with a separate last pass are matched near-linearly ...............   Passed    6.45 sec
+    Test #763: T-0131 d: Profile with a separate last pass is near-linear in the vector count ...   Passed    8.38 sec
+    Start 763: T-0131 d: Profile with a separate last pass is near-linear in the vector count
+    Test #763: T-0131 d: Profile with a separate last pass is near-linear in the vector count ...   Passed    8.68 sec
+    Start 763: T-0131 d: Profile with a separate last pass is near-linear in the vector count
+    Test #766: T-0131 f: Profile tabs on a page of vectors stay linear ..........................   Passed   19.59 sec
+    Start 766: T-0131 f: Profile tabs on a page of vectors stay linear
+    Test #765: T-0131 e: Pocket with a rest tool on a page of vectors is near-linear ............   Passed   27.26 sec
+    Start 765: T-0131 e: Pocket with a rest tool on a page of vectors is near-linear
+3/5 Test #763: T-0131 d: Profile with a separate last pass is near-linear in the vector count ...   Passed    8.42 sec
+    Test #766: T-0131 f: Profile tabs on a page of vectors stay linear ..........................   Passed   18.69 sec
+    Start 766: T-0131 f: Profile tabs on a page of vectors stay linear
+    Test #765: T-0131 e: Pocket with a rest tool on a page of vectors is near-linear ............   Passed   26.82 sec
+    Start 765: T-0131 e: Pocket with a rest tool on a page of vectors is near-linear
+    Test #766: T-0131 f: Profile tabs on a page of vectors stay linear ..........................   Passed   18.53 sec
+    Start 766: T-0131 f: Profile tabs on a page of vectors stay linear
+    Test #766: T-0131 f: Profile tabs on a page of vectors stay linear ..........................   Passed   18.77 sec
+    Start 766: T-0131 f: Profile tabs on a page of vectors stay linear
+    Test #765: T-0131 e: Pocket with a rest tool on a page of vectors is near-linear ............   Passed   27.24 sec
+    Start 765: T-0131 e: Pocket with a rest tool on a page of vectors is near-linear
+    Test #766: T-0131 f: Profile tabs on a page of vectors stay linear ..........................   Passed   18.08 sec
+    Start 766: T-0131 f: Profile tabs on a page of vectors stay linear
+    Test #765: T-0131 e: Pocket with a rest tool on a page of vectors is near-linear ............   Passed   26.47 sec
+    Start 765: T-0131 e: Pocket with a rest tool on a page of vectors is near-linear
+    Test #766: T-0131 f: Profile tabs on a page of vectors stay linear ..........................   Passed   18.02 sec
+    Start 766: T-0131 f: Profile tabs on a page of vectors stay linear
+4/5 Test #766: T-0131 f: Profile tabs on a page of vectors stay linear ..........................   Passed   17.80 sec
+    Test #765: T-0131 e: Pocket with a rest tool on a page of vectors is near-linear ............   Passed   25.41 sec
+    Start 765: T-0131 e: Pocket with a rest tool on a page of vectors is near-linear
+    Test #765: T-0131 e: Pocket with a rest tool on a page of vectors is near-linear ............   Passed   25.64 sec
+    Start 765: T-0131 e: Pocket with a rest tool on a page of vectors is near-linear
+    Test #765: T-0131 e: Pocket with a rest tool on a page of vectors is near-linear ............   Passed   25.96 sec
+    Start 765: T-0131 e: Pocket with a rest tool on a page of vectors is near-linear
+5/5 Test #765: T-0131 e: Pocket with a rest tool on a page of vectors is near-linear ............   Passed   26.74 sec
+
+100% tests passed, 0 tests failed out of 5
+
+Total Test time (real) = 269.04 sec

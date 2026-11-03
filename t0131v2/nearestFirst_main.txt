@@ -1,0 +1,48 @@
+std::vector<std::size_t> nearestFirst(const std::vector<Group>& parts, const std::vector<std::size_t>& partOf) {
+    const std::size_t n = parts.size();
+    std::vector<Vec2> centres(n);
+    std::vector<Box2> points(n);
+    Box2 all;
+    for (std::size_t i = 0; i < n; ++i) {
+        centres[i] = ringBox(parts[i].outer).centre();
+        points[i] = Box2{centres[i], centres[i]};
+        all.expand(centres[i]);
+    }
+    const BoxIndex index(points);
+    const double extent = std::max({all.width(), all.height(), 1e-9});
+    std::vector<char> used(n, 0);
+    std::vector<std::size_t> out;
+    std::vector<std::size_t> groupIds(partOf);
+    std::sort(groupIds.begin(), groupIds.end());
+    groupIds.erase(std::unique(groupIds.begin(), groupIds.end()), groupIds.end());
+    for (const std::size_t gid : groupIds) {
+        std::optional<std::size_t> cur;
+        for (std::size_t i = 0; i < n; ++i) {
+            if (partOf[i] == gid && (!cur || centres[i].y < centres[*cur].y ||
+                                     (centres[i].y == centres[*cur].y && centres[i].x < centres[*cur].x))) {
+                cur = i;
+            }
+        }
+        while (cur) {
+            used[*cur] = 1;
+            out.push_back(*cur);
+            const Vec2 at = centres[*cur];
+            cur.reset();
+            double best = std::numeric_limits<double>::infinity();
+            for (double h = extent / std::sqrt(static_cast<double>(n)) + 1e-9;; h *= 2.0) {
+                for (const std::size_t j : index.query(Box2{at - Vec2{h, h}, at + Vec2{h, h}})) {
+                    const double dd = geometry::distance(at, centres[j]);
+                    if (used[j] == 0 && partOf[j] == gid && dd < best) {
+                        best = dd;
+                        cur = j;
+                    }
+                }
+                // Anything outside the square is farther than h; done once the square covers all.
+                if (best <= h || h > 2.0 * extent) {
+                    break;
+                }
+            }
+        }
+    }
+    return out;
+}

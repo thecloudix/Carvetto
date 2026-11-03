@@ -1,0 +1,13 @@
+T-0131 verifier round 2 (2138aae). Release, -Werror, build-verify2-rel. Machine 16 threads, shared with 3 agents.
+Load: load.sh (clean Release rebuild loop, -j6) on top of other agents; loadavg 3.4-11.1 during runs.
+rep.sh x10 under load (load_j6.txt), ratio min..max vs bound, all 50 runs pass:
+  c  4.90..5.98  (bound 6.25)   large 0.29..0.39 s (bound 3.0)
+  d  1.92..2.12  (bound 2.5)    large 2.11..2.53 s (bound 6.0)
+  dt 1.81..2.12  (bound 2.5)    large 2.9..3.2 s (bound 10)
+  e  4.64..5.35  (bound 9.0)    large 6.1..7.8 s (no absolute bound)
+  f  3.40..4.57  (bound 6.25)   large 10.9..13.0 s (bound 30)
+ctest -R "T-0131 [c-f]" -j5 --repeat until-fail:10 under load.sh: 5/5 x10 passed (ctest_j5_repeat10_load.txt).
+c alone x30 under a clean-rebuild loop: 3.75..5.70, 30/30 pass (c_x30_load.txt). Tightest margin of the set: max 5.98 of 6.25 over 41 loaded runs.
+Mutant: nearestFirst reverted to main (nearestFirst_main.txt spliced into pocket.cpp), test e: 1250 1.39 s, 5000 10.62 s, ratio 7.51 -> passes (bound 9.0). Confirms coder's stated gap: e's ratio does not guard the nearest-first fix.
+ident2.sh: 14 card workloads with t0131v1/pf.cpp on the branch build: all hashes SAME as t0131v1 main results (ident2_br.txt).
+Debug full ctest: 895/895 pass. changelog.py check --base origin/main: ok.

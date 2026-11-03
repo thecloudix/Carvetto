@@ -1,0 +1,50 @@
+run 1 | T-0131 c:* | rc=0 | load=3.38 | CPU seconds: 250 teeth 0.0483453, 1000 teeth 0.291101, ratio 5.51614
+run 1 | T-0131 d: Profile* | rc=0 | load=4.16 | CPU seconds: 2500 vectors 1.05256, 5000 vectors 2.4835, ratio 2.07637
+run 1 | T-0131 d: tabs* | rc=0 | load=4.55 | CPU seconds: 312 vectors 1.54101, 624 vectors 2.91647, ratio 1.89258
+run 1 | T-0131 e:* | rc=0 | load=6.01 | CPU seconds: 1250 vectors 1.16933, 5000 vectors 6.77654, ratio 4.94472
+run 1 | T-0131 f:* | rc=0 | load=6.57 | CPU seconds: 1250 vectors 2.91262, 5000 vectors 11.6528, ratio 4.0008
+run 2 | T-0131 c:* | rc=0 | load=6.57 | CPU seconds: 250 teeth 0.0584013, 1000 teeth 0.329894, ratio 5.3744
+run 2 | T-0131 d: Profile* | rc=0 | load=6.79 | CPU seconds: 2500 vectors 1.05658, 5000 vectors 2.30945, ratio 2.02048
+run 2 | T-0131 d: tabs* | rc=0 | load=6.89 | CPU seconds: 312 vectors 1.49305, 624 vectors 2.99103, ratio 2.0033
+run 2 | T-0131 e:* | rc=0 | load=7.52 | CPU seconds: 1250 vectors 1.25072, 5000 vectors 6.7186, ratio 4.76045
+run 2 | T-0131 f:* | rc=0 | load=7.07 | CPU seconds: 1250 vectors 3.19558, 5000 vectors 10.8522, ratio 3.396
+run 3 | T-0131 c:* | rc=0 | load=7.23 | CPU seconds: 250 teeth 0.0590737, 1000 teeth 0.328833, ratio 5.15287
+run 3 | T-0131 d: Profile* | rc=0 | load=7.29 | CPU seconds: 2500 vectors 1.09072, 5000 vectors 2.37157, ratio 2.05984
+run 3 | T-0131 d: tabs* | rc=0 | load=7.56 | CPU seconds: 312 vectors 1.49897, 624 vectors 3.02502, ratio 2.01807
+run 3 | T-0131 e:* | rc=0 | load=8.47 | CPU seconds: 1250 vectors 1.23436, 5000 vectors 6.92686, ratio 4.63522
+run 3 | T-0131 f:* | rc=0 | load=8.91 | CPU seconds: 1250 vectors 3.14818, 5000 vectors 13.0101, ratio 4.13257
+run 4 | T-0131 c:* | rc=0 | load=8.99 | CPU seconds: 250 teeth 0.0609035, 1000 teeth 0.39445, ratio 5.97552
+run 4 | T-0131 d: Profile* | rc=0 | load=9.15 | CPU seconds: 2500 vectors 1.23273, 5000 vectors 2.53027, ratio 1.94422
+run 4 | T-0131 d: tabs* | rc=0 | load=9.36 | CPU seconds: 312 vectors 1.60145, 624 vectors 3.15872, ratio 1.97241
+run 4 | T-0131 e:* | rc=0 | load=9.72 | CPU seconds: 1250 vectors 1.22344, 5000 vectors 7.09445, ratio 5.12753
+run 4 | T-0131 f:* | rc=0 | load=9.58 | CPU seconds: 1250 vectors 2.80907, 5000 vectors 12.8243, ratio 4.5653
+run 5 | T-0131 c:* | rc=0 | load=9.61 | CPU seconds: 250 teeth 0.0488933, 1000 teeth 0.348723, ratio 5.10371
+run 5 | T-0131 d: Profile* | rc=0 | load=9.72 | CPU seconds: 2500 vectors 1.17138, 5000 vectors 2.43079, ratio 2.02036
+run 5 | T-0131 d: tabs* | rc=0 | load=9.84 | CPU seconds: 312 vectors 1.54884, 624 vectors 3.15084, ratio 2.03433
+run 5 | T-0131 e:* | rc=0 | load=10.02 | CPU seconds: 1250 vectors 1.27801, 5000 vectors 7.24395, ratio 5.03282
+run 5 | T-0131 f:* | rc=0 | load=10.30 | CPU seconds: 1250 vectors 3.15935, 5000 vectors 12.6811, ratio 4.01384
+run 6 | T-0131 c:* | rc=0 | load=10.36 | CPU seconds: 250 teeth 0.064543, 1000 teeth 0.357517, ratio 4.90282
+run 6 | T-0131 d: Profile* | rc=0 | load=10.30 | CPU seconds: 2500 vectors 1.10159, 5000 vectors 2.34878, ratio 2.05355
+run 6 | T-0131 d: tabs* | rc=0 | load=10.44 | CPU seconds: 312 vectors 1.55344, 624 vectors 3.29248, ratio 2.11947
+run 6 | T-0131 e:* | rc=0 | load=11.08 | CPU seconds: 1250 vectors 1.42891, 5000 vectors 7.78281, ratio 5.34897
+run 6 | T-0131 f:* | rc=0 | load=10.80 | CPU seconds: 1250 vectors 3.32845, 5000 vectors 12.0168, ratio 3.61033
+run 7 | T-0131 c:* | rc=0 | load=10.66 | CPU seconds: 250 teeth 0.0619447, 1000 teeth 0.330349, ratio 5.07625
+run 7 | T-0131 d: Profile* | rc=0 | load=10.52 | CPU seconds: 2500 vectors 1.10062, 5000 vectors 2.32262, ratio 2.07676
+run 7 | T-0131 d: tabs* | rc=0 | load=10.29 | CPU seconds: 312 vectors 1.52873, 624 vectors 2.96493, ratio 1.93946
+run 7 | T-0131 e:* | rc=0 | load=9.85 | CPU seconds: 1250 vectors 1.35791, 5000 vectors 7.01952, ratio 4.74866
+run 7 | T-0131 f:* | rc=0 | load=9.61 | CPU seconds: 1250 vectors 3.07132, 5000 vectors 12.2899, ratio 4.00149
+run 8 | T-0131 c:* | rc=0 | load=9.56 | CPU seconds: 250 teeth 0.061198, 1000 teeth 0.332837, ratio 5.4387
+run 8 | T-0131 d: Profile* | rc=0 | load=9.51 | CPU seconds: 2500 vectors 1.1134, 5000 vectors 2.35575, ratio 2.11582
+run 8 | T-0131 d: tabs* | rc=0 | load=9.47 | CPU seconds: 312 vectors 1.45728, 624 vectors 2.99117, ratio 2.05258
+run 8 | T-0131 e:* | rc=0 | load=8.79 | CPU seconds: 1250 vectors 1.17714, 5000 vectors 6.12053, ratio 4.81741
+run 8 | T-0131 f:* | rc=0 | load=8.70 | CPU seconds: 1250 vectors 3.2709, 5000 vectors 11.7349, ratio 3.58768
+run 9 | T-0131 c:* | rc=0 | load=8.64 | CPU seconds: 250 teeth 0.0520077, 1000 teeth 0.32375, ratio 5.42298
+run 9 | T-0131 d: Profile* | rc=0 | load=8.59 | CPU seconds: 2500 vectors 1.04224, 5000 vectors 2.11054, ratio 1.92097
+run 9 | T-0131 d: tabs* | rc=0 | load=8.50 | CPU seconds: 312 vectors 1.58301, 624 vectors 2.86739, ratio 1.81135
+run 9 | T-0131 e:* | rc=0 | load=8.41 | CPU seconds: 1250 vectors 1.23953, 5000 vectors 6.50871, ratio 4.82986
+run 9 | T-0131 f:* | rc=0 | load=8.32 | CPU seconds: 1250 vectors 2.87406, 5000 vectors 11.7682, ratio 4.09462
+run 10 | T-0131 c:* | rc=0 | load=8.29 | CPU seconds: 250 teeth 0.052271, 1000 teeth 0.324958, ratio 4.93018
+run 10 | T-0131 d: Profile* | rc=0 | load=8.27 | CPU seconds: 2500 vectors 1.03885, 5000 vectors 2.1828, ratio 2.10117
+run 10 | T-0131 d: tabs* | rc=0 | load=8.25 | CPU seconds: 312 vectors 1.35948, 624 vectors 2.61924, ratio 1.92666
+run 10 | T-0131 e:* | rc=0 | load=7.94 | CPU seconds: 1250 vectors 1.12239, 5000 vectors 6.54797, ratio 5.00241
+run 10 | T-0131 f:* | rc=0 | load=7.95 | CPU seconds: 1250 vectors 3.08312, 5000 vectors 11.821, ratio 3.83409

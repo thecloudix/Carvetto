@@ -1,0 +1,14 @@
+ANG=0 | comb n=250 var=0 cpu 0.060 moves 91322 diags 0 retr 1 hash e95135dae75e7950 | SAME
+ANG=90 | comb n=250 var=0 cpu 0.026 moves 9968 diags 0 retr 1 hash 6e6b608ef0f5048a | SAME
+ANG=45 | comb n=1000 var=0 cpu 0.636 moves 273895 diags 0 retr 1 hash 382484bb9ca307b6 | SAME
+RD=0.1 TOOL=1 | comb n=500 var=0 cpu 0.586 moves 512134 diags 0 retr 503 hash 5feef3dd947d08fa | SAME
+PP=1 ANG=90 | comb n=300 var=0 cpu 0.034 moves 12898 diags 0 retr 1 hash 4ecc9fb64a295996 | SAME
+X=1 | sep n=1250 var=0 cpu 0.493 moves 25630 diags 225 retr 2304 hash 4c8441d1e90cfb23 | SAME
+TABS=1 | sep n=1250 var=1 cpu 5.850 moves 32329 diags 733 retr 2305 hash 608c764783b6d39c | SAME
+X=1 | rest n=1250 var=2 cpu 1.611 moves 101837 diags 1 retr 2117 hash 09edb8c349e855ca | SAME
+X=1 | tabs n=1250 var=0 cpu 3.019 moves 15327 diags 459 retr 1202 hash 6995705c561de9b1 | SAME
+REV=1 SIDE=1 | sep n=1250 var=0 cpu 0.197 moves 15486 diags 767 retr 2108 hash c6abe7a14d7facf0 | SAME
+TABS=1 LEADS=1 ORDER=1 LPA=0.05 | sep n=1250 var=1 cpu 6.888 moves 34230 diags 1460 retr 2389 hash 9242f4b28c69bf2b | SAME
+RASTER=1 ANG=90 RD=0.5 | rest n=1250 var=2 cpu 1.305 moves 85037 diags 1 retr 2104 hash 639cce8ec8e6f12f | SAME
+RASTER=1 ANG=45 | pockpage n=2000 var=1 cpu 0.111 moves 54610 diags 1 retr 1412 hash 56b4ac630a9cbd24 | SAME
+SIDE=2 | tabs n=1250 var=2 cpu 5.619 moves 37298 diags 876 retr 1250 hash 336b35797c2598b0 | SAME
