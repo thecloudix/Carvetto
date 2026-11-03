@@ -384,7 +384,8 @@ constexpr EnumName<toolpath::EngraveStrategy> kEngraveStrategies[] = {
 constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Profile, "profile"},
                                                       {ToolpathOperation::Pocket, "pocket"},
                                                       {ToolpathOperation::Drill, "drill"},
-                                                      {ToolpathOperation::Engrave, "engrave"}};
+                                                      {ToolpathOperation::Engrave, "engrave"},
+                                                      {ToolpathOperation::VCarve, "vcarve"}};
 
 template <class E, std::size_t N>
 const char* nameOf(const EnumName<E> (&table)[N], E value) {
@@ -722,6 +723,23 @@ json encodeEngraveParams(const toolpath::EngraveParams& p) {
     return j;
 }
 
+json encodeVCarveParams(const toolpath::VCarveParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["start_depth"] = p.startDepth;
+    j["flat_depth"] = p.flatDepth;
+    j["safe_z"] = p.safeZ;
+    j["clearance_strategy"] = nameOf(kPocketStrategies, p.clearanceStrategy);
+    j["clearance_direction"] = nameOf(kCutDirections, p.clearanceDirection);
+    j["clearance_raster_angle_rad"] = p.clearanceRasterAngle;
+    j["ramp_plunge"] = p.rampPlunge;
+    j["ramp_distance"] = p.rampDistance;
+    j["order"] = encodeOrder(p.order);
+    j["start_position"] = encodePoint(p.startPosition);
+    j["tolerance"] = encodeTolerance(p.tolerance);
+    return j;
+}
+
 /// Name of the move cache of the toolpath at `index` (0-based) in the job order.
 std::string cacheMemberName(std::size_t index) {
     std::string digits = std::to_string(index + 1);
@@ -740,6 +758,8 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
         j["params"] = encodeDrillParams(*drill);
     } else if (const auto* engrave = std::get_if<toolpath::EngraveParams>(&tp.params)) {
         j["params"] = encodeEngraveParams(*engrave);
+    } else if (const auto* vcarve = std::get_if<toolpath::VCarveParams>(&tp.params)) {
+        j["params"] = encodeVCarveParams(*vcarve);
     } else {
         j["params"] = encodePocketParams(std::get<toolpath::PocketParams>(tp.params));
     }
@@ -1680,6 +1700,13 @@ constexpr std::array<std::string_view, 12> kEngraveKeysParams{
     "name",     "depth",        "passes",         "safe_z",    "strategy", "fill_pattern",
     "stepover", "raster_angle", "start_position", "tolerance", "tool",     "layers"};
 
+// V-carve records exist only in job.json (no interim T-0122 members); "tool" and "layers" close
+// the list so `keysFor` drops them.
+constexpr std::array<std::string_view, 14> kVCarveKeys{
+    "name",          "start_depth", "flat_depth",     "safe_z",    "clearance_strategy", "clearance_direction",
+    "clearance_raster_angle_rad", "ramp_plunge", "ramp_distance", "order", "start_position", "tolerance",
+    "tool",          "layers"};
+
 template <std::size_t N>
 std::span<const std::string_view> keysFor(const std::array<std::string_view, N>& keys, ParamsDialect d) {
     // "tool" and "layers" (always the last two) belong to params.json only.
@@ -1960,6 +1987,45 @@ toolpath::EngraveParams decodeEngraveParams(JsonReader& r, const Path& p, Params
     return out;
 }
 
+toolpath::VCarveParams decodeVCarveParams(JsonReader& r, const Path& p, ParamsDialect d,
+                                          LegacyParamsExtras* legacy) {
+    toolpath::VCarveParams out;
+    ParamsRecord rec(r, p, keysFor(kVCarveKeys, d), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "start_depth") {
+            out.startDepth = rec.number();
+        } else if (k == "flat_depth") {
+            out.flatDepth = rec.number();
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else if (k == "clearance_strategy") {
+            out.clearanceStrategy = rec.choice(kPocketStrategies);
+        } else if (k == "clearance_direction") {
+            out.clearanceDirection = rec.choice(kCutDirections);
+        } else if (rec.isAngle("clearance_raster_angle")) {
+            out.clearanceRasterAngle = rec.angle();
+        } else if (k == "ramp_plunge") {
+            out.rampPlunge = rec.boolean();
+        } else if (k == "ramp_distance") {
+            out.rampDistance = rec.number();
+        } else if (k == "order") {
+            out.order = decodeOrder(r, rec.field(), d);
+        } else if (k == "start_position") {
+            out.startPosition = readFinitePoint(r, rec.field());
+        } else if (k == "tolerance") {
+            out.tolerance = decodeTolerance(r, rec.field(), d);
+        } else if (legacy) {
+            decodeLegacyCommon(rec, *legacy);
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
 /// Decodes params captured as canonical text (already charged to the budget) for `operation`.
 ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& text, const Path& p,
                               ParamsDialect d, LegacyParamsExtras* legacy) {
@@ -1974,6 +2040,9 @@ ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& te
     }
     if (operation == ToolpathOperation::Engrave) {
         return decodeEngraveParams(r, p, d, legacy);
+    }
+    if (operation == ToolpathOperation::VCarve) {
+        return decodeVCarveParams(r, p, d, legacy);
     }
     return decodePocketParams(r, p, d, legacy);
 }

@@ -51,6 +51,8 @@ enum class ToolpathIssue {
     CentreOutsideVector,  ///< A vector's centre is not inside it (e.g. a C shape); not drilled (Drill).
     HoleWiderThanVector,  ///< The tool is wider than the vector round its centre; drilled anyway (Drill).
     DuplicateHole,        ///< Holes at the same centre were drilled once (Drill).
+    CarveDepthLimited,    ///< The carve depth was limited to the tool's full-width depth (VCarve).
+    MedialAxisCapped,     ///< The medial axis hit its accuracy budget; nothing produced (VCarve).
 };
 
 /// One diagnostic of a toolpath operation.

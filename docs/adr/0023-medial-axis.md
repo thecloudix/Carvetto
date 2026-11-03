@@ -147,3 +147,7 @@ by at most 2.5× per doubling of boundary segments up to 50,000 (text-heavy jobs
 - T-0153 walks branches from node to node, reads depth from `MedialPoint::radius`, and can use
   `MedialBranch::sides` to tell which boundary spans a stretch carves against (e.g. to recognise
   branches that run into a corner for corner sharpening).
+- **Amended by T-0153 (ADR-0025 §7):** refinement also runs where a circumcentre lies exactly on
+  the boundary (within the merge distance) with a circumradius above chordal/2. Symmetric input
+  (an isosceles triangle with an obtuse apex, nested squares) put circumcentres there, neither
+  inside nor outside, and the skeleton came out empty or without the frame's corner junctions.

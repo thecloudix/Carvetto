@@ -106,6 +106,16 @@ std::string nonFiniteParam(const ToolpathParams& params) {
                                           {"start_position[1]", e->startPosition.y}});
         return key.empty() ? nonFiniteTolerance(e->tolerance) : key;
     }
+    if (const auto* v = std::get_if<toolpath::VCarveParams>(&params)) {
+        std::string key = firstNonFinite({{"start_depth", v->startDepth},
+                                          {"flat_depth", v->flatDepth},
+                                          {"safe_z", v->safeZ},
+                                          {"clearance_raster_angle_rad", v->clearanceRasterAngle},
+                                          {"ramp_distance", v->rampDistance},
+                                          {"start_position[0]", v->startPosition.x},
+                                          {"start_position[1]", v->startPosition.y}});
+        return key.empty() ? nonFiniteTolerance(v->tolerance) : key;
+    }
     const auto& p = std::get<toolpath::PocketParams>(params);
     std::string key = firstNonFinite({{"start_depth", p.startDepth},
                                       {"cut_depth", p.cutDepth},

@@ -1,0 +1,14 @@
+{
+  "name": "Panel",
+  "layers": ["Panel"],
+  "safe_z": 5,
+  "flat_depth": 1.5,
+  "clearance_tools": [{"database": "tools.json", "id": "end-mill-3mm"}],
+  "clearance_strategy": "raster",
+  "clearance_raster_angle": 45,
+  "tolerance": {"chordal": 0.05},
+  "tool": {
+    "database": "tools.json",
+    "id": "v-bit-90"
+  }
+}

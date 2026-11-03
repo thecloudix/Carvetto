@@ -1656,6 +1656,13 @@ void Solver::evaluateCreated(std::vector<SplitRequest>* requests) {
         if (d.interior && requests != nullptr && rr - nr.dist > emax_) {
             requests->push_back({nr.piece, nr.u, t, spacingFor(nr.dist)});
             d.requested = true;
+        } else if (!d.interior && requests != nullptr && nr.piece >= 0 && nr.dist <= mergeTol_ && rr > emax_) {
+            // T-0153: a circumcentre exactly on the boundary (symmetric input: the base of an
+            // isosceles triangle split at its middle under an obtuse apex puts both circumcentres
+            // on the legs) is neither inside nor outside, so no interior triangle would ever ask
+            // for refinement and the skeleton stayed empty. Sample the boundary there.
+            requests->push_back({nr.piece, nr.u, t, spacingFor(rr)});
+            d.requested = true;
         }
     }
     if (requests == nullptr) {

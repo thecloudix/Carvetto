@@ -271,23 +271,30 @@ void readStartPosition(Fields& f, geometry::Vec2& out) {
     }
 }
 
+/// A tool object ({"id", "database", "machine", "material"}) at `path`.
+ToolChoice readToolChoice(const json& t, const std::string& path) {
+    ToolChoice choice;
+    Fields g(t, path);
+    g.string("database", choice.database);
+    g.string("id", choice.id);
+    g.string("machine", choice.machine);
+    g.string("material", choice.material);
+    g.finish();
+    if (choice.id.empty()) {
+        throw CliError("params: missing key '" + path + ".id' (the id of a tool in the tool database)");
+    }
+    if (choice.machine.empty() != choice.material.empty()) {
+        throw CliError("params: '" + path + ".machine' and '" + path + ".material' must be given together");
+    }
+    return choice;
+}
+
 void readCommon(Fields& f, CommonParams& common) {
     const json* t = f.object("tool");
     if (!t) {
         throw CliError("params: missing key 'tool' (e.g. \"tool\": {\"id\": \"end-mill-6mm\"})");
     }
-    Fields g(*t, "tool");
-    g.string("database", common.tool.database);
-    g.string("id", common.tool.id);
-    g.string("machine", common.tool.machine);
-    g.string("material", common.tool.material);
-    g.finish();
-    if (common.tool.id.empty()) {
-        throw CliError("params: missing key 'tool.id' (the id of a tool in the tool database)");
-    }
-    if (common.tool.machine.empty() != common.tool.material.empty()) {
-        throw CliError("params: 'tool.machine' and 'tool.material' must be given together");
-    }
+    common.tool = readToolChoice(*t, "tool");
     if (const json* layers = f.get("layers")) {
         if (!layers->is_array()) {
             f.fail("layers", "must be an array of layer names");
@@ -468,6 +475,43 @@ EngraveJob parseEngraveParams(std::string_view text) {
     return job;
 }
 
+VCarveJob parseVCarveParams(std::string_view text) {
+    using namespace toolpath;
+    const json root = parseJson(text);
+    VCarveJob job;
+    VCarveParams& p = job.params;
+    Fields f(root, "");
+    f.string("name", p.name);
+    f.number("start_depth", p.startDepth);
+    f.number("flat_depth", p.flatDepth);
+    f.number("safe_z", p.safeZ);
+    f.choice("clearance_strategy", p.clearanceStrategy,
+             {{"offset", PocketStrategy::Offset}, {"raster", PocketStrategy::Raster}});
+    f.choice("clearance_direction", p.clearanceDirection,
+             {{"climb", CutDirection::Climb}, {"conventional", CutDirection::Conventional}});
+    f.angle("clearance_raster_angle", p.clearanceRasterAngle);
+    f.boolean("ramp_plunge", p.rampPlunge);
+    f.number("ramp_distance", p.rampDistance);
+    readOrder(f, p.order);
+    readStartPosition(f, p.startPosition);
+    readTolerance(f, p.tolerance);
+    readCommon(f, job.common);
+    if (const json* list = f.get("clearance_tools")) {
+        if (!list->is_array()) {
+            f.fail("clearance_tools", "must be an array of tool objects");
+        }
+        for (std::size_t i = 0; i < list->size(); ++i) {
+            const std::string path = "clearance_tools[" + std::to_string(i) + "]";
+            if (!(*list)[i].is_object()) {
+                throw CliError("params: '" + path + "' must be a JSON object");
+            }
+            job.clearanceTools.push_back(readToolChoice((*list)[i], path));
+        }
+    }
+    f.finish();
+    return job;
+}
+
 ResolvedTool resolveTool(const ToolChoice& choice, const std::filesystem::path& baseDir) {
     std::string text;
     std::string dbName;
@@ -589,6 +633,23 @@ tools are refused until spindle-off support exists):
                                  the tool cuts at the engrave depth
   "raster_angle": 0              fill with the raster pattern
   "start_position": [0, 0]       tool XY before the first outline cut (nearest first)
+
+vcarve (V-carving of closed vectors; tool: a V-bit or a ball nose; the depth follows the
+medial axis, so the tool touches both walls):
+  "start_depth": 0               depth of the plane the carve starts from (e.g. a pocket floor)
+  "flat_depth": 0                0 = none; else the carve stops at this depth below the start
+                                 depth and the flat bottom is cleared
+  "clearance_tools": [{"id": "end-mill-3mm", "database": "tools.json"}, ...]
+                                 end mills clearing the flat areas, in order (later ones as
+                                 rest tools); none: the carving tool clears them itself
+  "clearance_strategy": "offset" offset | raster
+  "clearance_direction": "climb" climb | conventional
+  "clearance_raster_angle": 0
+  "ramp_plunge": false, "ramp_distance": 10   (clearance)
+  "order": {"selection_order": false, "left_to_right": false,
+            "bottom_to_top": false, "grid": false}   order of the regions (letters with
+                                 their counters); none: nearest region first
+  "start_position": [0, 0]       tool XY before the first cut
 )";
 }
 

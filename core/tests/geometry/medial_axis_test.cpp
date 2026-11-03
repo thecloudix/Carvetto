@@ -356,10 +356,17 @@ TEST_CASE("medial axis: non-zero fill rule", "[geometry][medial][ac1]") {
     CHECK(nz.ignoredContours == 1);
     const MedialAxis eo = medialAxis(cs, kTol);
     CHECK(eo.ignoredContours == 0);
-    // Even-odd: a frame, whose axis is a loop at radius 2.5 plus corner branches.
+    // Even-odd: a frame, whose axis is a loop at radius 2.5 along the sides; at each corner the
+    // parabolic arcs round the inner corner meet the outer corner's bisector at radius
+    // 10 - 5 sqrt 2 (equidistant from both outer walls and the inner corner). T-0153: before the
+    // on-boundary circumcentre fix those corner junctions were missed and every radius was <= 2.5.
+    const double junction = 10.0 - 5.0 * std::sqrt(2.0);
+    double rMax = 0.0;
     for (const MedialPoint& p : orc::allPoints(eo)) {
-        CHECK(p.radius <= 2.5 + 1e-9);
+        CHECK(p.radius <= junction + 1e-9);
+        rMax = std::max(rMax, p.radius);
     }
+    CHECK(rMax >= junction - kTol.chordal);
 }
 
 TEST_CASE("medial axis: output is deterministic", "[geometry][medial][ac1]") {

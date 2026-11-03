@@ -37,6 +37,7 @@
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/profile.hpp"
 #include "carvetto/toolpath/toolpath.hpp"
+#include "carvetto/toolpath/vcarve.hpp"
 #include "carvetto/document/toolpath_record.hpp"
 #include "params.hpp"
 
@@ -71,10 +72,12 @@ constexpr std::string_view kToolpathHelp = R"(Usage: carvetto-cli toolpath profi
        carvetto-cli toolpath pocket  <params.json> <in.carv> <out.carv>
        carvetto-cli toolpath drill   <params.json> <in.carv> <out.carv>
        carvetto-cli toolpath engrave <params.json> <in.carv> <out.carv>
+       carvetto-cli toolpath vcarve  <params.json> <in.carv> <out.carv>
 
-Computes a 2D profile, pocket, drilling or quick engrave toolpath for the vectors of <in.carv> (all of them,
-or those on the layers named in the params file) and writes <out.carv> (which may be <in.carv>)
-with the toolpath added after the ones already there. Each toolpath is stored as a toolpath record
+Computes a 2D profile, pocket, drilling, quick engrave or V-carve toolpath for the vectors of <in.carv> (all
+of them, or those on the layers named in the params file) and writes <out.carv> (which may be <in.carv>)
+with the toolpath added after the ones already there (a V-carve with clearance tools adds one
+toolpath per clearance tool, then the carving tool's, in machining order). Each toolpath is stored as a toolpath record
 of the document: its name, the params it came from, the layers it machines, the tool, and
 its computed moves. Diagnostics (e.g. tabs that could not be placed) are printed as warnings;
 when no toolpath can be produced at all, the command fails and nothing is written.
@@ -287,6 +290,7 @@ int cmdToolpath(const std::vector<std::string>& a, std::ostream& out, std::ostre
     std::optional<PocketJob> pocket;
     std::optional<DrillJob> drill;
     std::optional<EngraveJob> engrave;
+    std::optional<VCarveJob> vcarve;
     try {
         if (op == "profile") {
             profile = parseProfileParams(paramsText);
@@ -294,6 +298,8 @@ int cmdToolpath(const std::vector<std::string>& a, std::ostream& out, std::ostre
             drill = parseDrillParams(paramsText);
         } else if (op == "engrave") {
             engrave = parseEngraveParams(paramsText);
+        } else if (op == "vcarve") {
+            vcarve = parseVCarveParams(paramsText);
         } else {
             pocket = parsePocketParams(paramsText);
         }
@@ -303,6 +309,7 @@ int cmdToolpath(const std::vector<std::string>& a, std::ostream& out, std::ostre
     const CommonParams& common = profile   ? profile->common
                                  : drill   ? drill->common
                                  : engrave ? engrave->common
+                                 : vcarve  ? vcarve->common
                                            : pocket->common;
 
     document::LoadedCarv loaded = loadDocument(inPath);
@@ -315,6 +322,7 @@ int cmdToolpath(const std::vector<std::string>& a, std::ostream& out, std::ostre
     }
 
     std::vector<toolpath::Toolpath> results;
+    std::vector<document::ToolSource> sources;  // per result; empty = the params file's tool
     std::vector<toolpath::ToolpathDiagnostic> diagnostics;
     document::ToolpathParams recordParams;
     if (profile) {
@@ -340,6 +348,30 @@ int cmdToolpath(const std::vector<std::string>& a, std::ostream& out, std::ostre
             results.push_back(std::move(r.toolpath));
         }
         recordParams = engrave->params;
+    } else if (vcarve) {
+        std::vector<toolpath::PocketTool> clearance;
+        for (const ToolChoice& c : vcarve->clearanceTools) {
+            const ResolvedTool ct = resolveTool(c, std::filesystem::path(paramsPath).parent_path());
+            for (const std::string& w : ct.warnings) {
+                warn(err, w);
+            }
+            clearance.push_back(toolpath::PocketTool{ct.tool, ct.cuttingData});
+        }
+        toolpath::VCarveResult r =
+            toolpath::vcarveToolpath(contours, tool.tool, tool.cuttingData, clearance, vcarve->params);
+        diagnostics = r.diagnostics;
+        if (r.ok()) {
+            for (std::size_t i = 0; i < r.clearance.size(); ++i) {
+                if (!r.clearance[i].isEmpty()) {
+                    const ToolChoice& c = vcarve->clearanceTools[i];
+                    results.push_back(std::move(r.clearance[i]));
+                    sources.push_back({c.id, c.machine, c.material});
+                }
+            }
+            results.push_back(std::move(r.toolpath));
+            sources.push_back({common.tool.id, common.tool.machine, common.tool.material});
+        }
+        recordParams = vcarve->params;
     } else {
         toolpath::PocketResult r =
             toolpath::pocketToolpath(contours, {toolpath::PocketTool{tool.tool, tool.cuttingData}}, pocket->params);
@@ -360,13 +392,16 @@ int cmdToolpath(const std::vector<std::string>& a, std::ostream& out, std::ostre
 
     document::Document& doc = loaded.document;
     std::string added;  // reported only once the file is written
-    for (toolpath::Toolpath& tp : results) {
+    for (std::size_t i = 0; i < results.size(); ++i) {
+        toolpath::Toolpath& tp = results[i];
         document::ToolpathRecord record;
         record.name = tp.name;
         record.params = recordParams;
         record.selection = selection;
         record.tool = tp.tool;
-        record.toolSource = {common.tool.id, common.tool.machine, common.tool.material};
+        record.toolSource = i < sources.size() ? sources[i]
+                                               : document::ToolSource{common.tool.id, common.tool.machine,
+                                                                      common.tool.material};
         added += "added " + op + " toolpath '" + tp.name + "' (" + std::to_string(tp.moveCount()) + " moves, tool '" +
                  tp.tool.name + "') as toolpath " + std::to_string(doc.toolpaths().size() + 1) + '\n';
         record.moves = document::shareMoves(std::move(tp.moves));
@@ -446,6 +481,7 @@ const char* operationName(document::ToolpathOperation op) {
         case document::ToolpathOperation::Pocket: return "pocket";
         case document::ToolpathOperation::Drill: return "drill";
         case document::ToolpathOperation::Engrave: return "engrave";
+        case document::ToolpathOperation::VCarve: return "vcarve";
     }
     return "?";
 }
@@ -602,9 +638,10 @@ int dispatch(const std::vector<std::string>& args, std::ostream& out, std::ostre
                          std::string(it->name)};
     }
     if (it->name == "toolpath" && rest[0] != "profile" && rest[0] != "pocket" && rest[0] != "drill" &&
-        rest[0] != "engrave") {
-        throw UsageError{"unknown toolpath operation '" + rest[0] + "' (expected profile, pocket, drill or engrave)",
-                         "toolpath"};
+        rest[0] != "engrave" && rest[0] != "vcarve") {
+        throw UsageError{
+            "unknown toolpath operation '" + rest[0] + "' (expected profile, pocket, drill, engrave or vcarve)",
+            "toolpath"};
     }
     return it->fn(rest, out, err);
 }
@@ -629,6 +666,8 @@ Commands:
       Add a drilling toolpath (a hole at the centre of every closed vector, peck, dwell).
   toolpath engrave <params.json> <in.carv> <out.carv>
       Add a quick engrave toolpath (outline or fill at a shallow depth, passes).
+  toolpath vcarve <params.json> <in.carv> <out.carv>
+      Add a V-carve toolpath (depth from the medial axis, flat depth, clearance tools).
   post <post.pp> <in.carv> <out.nc>
       Write every toolpath through a post-processor (e.g. posts/grbl_mm.pp).
   info <file.carv>

@@ -65,3 +65,14 @@ add_test(NAME cli.end_to_end_engrave_grbl
     -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/e2e_engrave
     -P ${CMAKE_CURRENT_SOURCE_DIR}/end_to_end_engrave.cmake
 )
+# T-0153: V-carving: sign.dxf -> V-bit letters -> flat-bottomed panel (end mill clearance, V-bit walls)
+# -> Grbl, checksum equal to the V-carve golden. CI also runs this pipeline on Linux and Windows.
+add_test(NAME cli.end_to_end_vcarve_grbl
+  COMMAND ${CMAKE_COMMAND}
+    -DCLI=$<TARGET_FILE:carvetto-cli>
+    -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR}/data
+    -DPOST=${PROJECT_SOURCE_DIR}/posts/grbl_mm.pp
+    -DGOLDEN=${PROJECT_SOURCE_DIR}/core/tests/golden/cli/sign_vcarve_grbl.nc
+    -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/e2e_vcarve
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/end_to_end_vcarve.cmake
+)
