@@ -43,3 +43,14 @@ add_test(NAME cli.end_to_end_grbl
     -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/e2e
     -P ${CMAKE_CURRENT_SOURCE_DIR}/end_to_end.cmake
 )
+# T-0150 AC3: the same with drilling: DXF -> peck drilling with dwell -> profile with tabs -> Grbl,
+# checksum equal to the drilling golden. CI also runs this pipeline on Linux and Windows.
+add_test(NAME cli.end_to_end_drill_grbl
+  COMMAND ${CMAKE_COMMAND}
+    -DCLI=$<TARGET_FILE:carvetto-cli>
+    -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR}/data
+    -DPOST=${PROJECT_SOURCE_DIR}/posts/grbl_mm.pp
+    -DGOLDEN=${PROJECT_SOURCE_DIR}/core/tests/golden/cli/part_drill_grbl.nc
+    -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/e2e_drill
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/end_to_end_drill.cmake
+)

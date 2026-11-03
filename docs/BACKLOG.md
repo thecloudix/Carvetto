@@ -508,7 +508,7 @@ Acceptance criteria:
 Owner decisions 2026-11-01 (from the coder's BLOCKED report): (1) toolpaths are stored in the .carv as interim archive members `toolpaths/NNNN.json` (name, tool snapshot, moves, the params they came from) via two small public accessors in `carv_io.hpp` (read a preserved member; copy with a member added); an ADR marks this interim until a card implements ADR-0003's job.json toolpath records. (2) T-0123 merges first; the CLI is written against its API. (3) params.json: snake_case keys mirroring ProfileParams/PocketParams; lengths in mm, angles in degrees (converted at the CLI edge); tool = {"tool": {"database": <path, default data/tools/starter_tools.json>, "id": …}} plus optional material/machine for cutting data; optional "layers": [names] (default all vectors); unknown keys rejected with an error naming the key. nlohmann/json (already used) — no new dependency.
 Owner decision 2026-11-01 (coder's open point): the interim JSON storage is capped by the loader's 2M-value budget for unknown content (ADR-0013 §9), ~300k–400k moves per file; accepted for now — the CLI reloads before writing and refuses with a clear error. The real fix is T-0132.
 
-### T-0150 Drilling toolpath   [status: verifying — owner 2026-11-03: chip-breaking peck retracts (upward Z-only rapid inside the drilled hole) accepted]
+### T-0150 Drilling toolpath   [status: done (2026-11-03, #36)]
 Phase: 1 (Batch C, owner decision 2026-11-03: Batch C toolpaths first)   Module: core/toolpath   Depends on: T-0123, T-0132   ADR: new
 Goal: Drill the centres of selected closed vectors (behaviour per docs/reference/feature-inventory.md "Drilling Toolpath"): drill or end-mill tool, start depth, cut depth, optional peck drilling (pass depth from the tool; retract above the cutting start by a retract gap, or above the previous pass), optional dwell at the bottom of each pass, ordering of holes, safe-Z links. Output through the existing post with plunge/retract moves (no canned cycles required); stored as a native toolpath record; CLI `toolpath drill`.
 Acceptance criteria:
@@ -516,8 +516,7 @@ Acceptance criteria:
   2. Safety: every rapid at safe Z; plunges at the plunge rate; peck retracts never below the start surface + retract gap; dwell > 0 only; tested against the T-0133/T-0134 post rules on every shipped post; golden G-code for a fixture.
   3. Native record round trip (params in job.json, ADR-0021 schema), CLI `toolpath drill <params.json>` with params.json keys documented in --help; CLI end-to-end test extended; MSVC CI green.
 
-### T-0151 Quick Engrave toolpath   [status: blocked]
-(After T-0150 merges — same plumbing.)
+### T-0151 Quick Engrave toolpath   [status: ready]
 Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0150   ADR: new
 Goal: Engrave along vectors (behaviour per feature-inventory "Quick Engraving Toolpath"): depth to engrave, strategy Outline (follow the vectors at depth) or Fill (fill closed regions with a pattern and stepover), number of passes; diamond-drag tools follow the vector at the surface depth given. Nose-cone/pressure and "output direct to machine" are out of scope (no machine connection).
 Acceptance criteria:

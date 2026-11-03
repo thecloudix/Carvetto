@@ -48,6 +48,9 @@ one, the test fails.
    a tool change pause (`M0`/`M6`), because the operator may have re-zeroed, and after `G43`. So
    every post lifts to safe Z before the first XY move and again after each tool change.
    Z-only rapids inside a hole (peck retracts) are allowed.
+   A peck retract may be an upward Z-only rapid inside an already-drilled hole (the drilling
+   toolpath's "retract above previous pass" chip breaking, owner decision 2026-11-03, ADR-0022),
+   never sideways and never downward below safe Z.
 4. **Spindle on before plunge.** `M3 S<rpm>` (with a non-zero speed) comes before any
    `G1`/`G2`/`G3`. After a tool change the spindle is started again with the new tool's speed.
 5. **Tool change.** The spindle is stopped (`M5`) and the tool is at safe Z before the change
