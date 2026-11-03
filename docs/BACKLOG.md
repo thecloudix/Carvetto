@@ -489,7 +489,7 @@ Goal: (a) Fill's diagnostic rewording replaces "pocket" anywhere, including insi
 Acceptance criteria:
   1. (a)–(c) fixed with tests; goldens unchanged.
 
-### T-0144 GCC 15 Release build: -Wmaybe-uninitialized false positive in document.cpp   [status: merging — verified PASS 218d67d, PR #41]
+### T-0144 GCC 15 Release build: -Wmaybe-uninitialized false positive in document.cpp   [status: done (2026-11-03, #41)]
 Phase: 1   Module: core/document   Depends on: —   ADR: —
 Goal: Every local Release build with GCC 15 (-O3 -Werror) fails on a -Wmaybe-uninitialized false positive in core/src/document/document.cpp (~283, Document::copyObjects; object.hpp ~131); every verifier works around it with -Wno-error=maybe-uninitialized. CI's compilers don't hit it, but a contributor on a current distro cannot build Release as documented.
 Acceptance criteria:
