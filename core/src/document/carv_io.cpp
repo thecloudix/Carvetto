@@ -830,6 +830,15 @@ double readPositive(JsonReader& r, const Path& p) {
     return v;
 }
 
+/// A number that must not be NaN or infinite (toolpath parameters, interim move values).
+double readFinite(JsonReader& r, const Path& p) {
+    const double v = readDouble(r, p);
+    if (!std::isfinite(v)) {
+        fail(p, "must be finite");
+    }
+    return v;
+}
+
 std::int64_t readInteger(JsonReader& r, const Path& p, std::int64_t lo, std::int64_t hi) {
     if (r.peek() != JKind::Number) {
         fail(p, "must be an integer");
@@ -916,6 +925,15 @@ std::array<double, N> readTuple(JsonReader& r, const Path& p, const char* shape)
 Vec2 readPoint(JsonReader& r, const Path& p) {
     const auto v = readTuple<2>(r, p, "[x, y] pair");
     return {v[0], v[1]};
+}
+
+/// An [x, y] pair of finite numbers (toolpath parameters).
+Vec2 readFinitePoint(JsonReader& r, const Path& p) {
+    const Vec2 v = readPoint(r, p);
+    if (!std::isfinite(v.x) || !std::isfinite(v.y)) {
+        fail(p.at(std::isfinite(v.x) ? 1 : 0), "must be finite");
+    }
+    return v;
 }
 
 JobSize readSize(JsonReader& r, const Path& p) {
@@ -1501,9 +1519,11 @@ class ParamsRecord {
         return k.size() == base.size() + 4 && k.compare(0, base.size(), base) == 0 &&
                k.compare(base.size(), 4, "_rad") == 0;
     }
-    double number() { return readDouble(r_, field()); }
+    // Parameters must be finite (T-0136): the ADR-0013 "NaN"/"Infinity" spellings are refused
+    // here, as AddToolpathCommand/SetToolpathCommand and saveCarv refuse such values.
+    double number() { return readFinite(r_, field()); }
     double angle() {
-        const double v = readDouble(r_, field());
+        const double v = readFinite(r_, field());
         return dialect_ == ParamsDialect::ParamsJson ? v * kRadPerDeg : v;
     }
     bool boolean() { return readBool(r_, field()); }
@@ -1726,7 +1746,7 @@ toolpath::ProfileParams decodeProfileParams(JsonReader& r, const Path& p, Params
         } else if (k == "start_anchor") {
             out.startAnchor = rec.choice(kBoxAnchors);
         } else if (k == "start_position") {
-            out.startPosition = readPoint(r, f);
+            out.startPosition = readFinitePoint(r, f);
         } else if (k == "corners") {
             ParamsRecord g(r, f, kCornerKeys, d);
             while (g.next()) {
@@ -1987,14 +2007,6 @@ constexpr std::array<std::string_view, 6> kInterimToolKeys{"name",      "tool_nu
                                                            "feed_rate", "plunge_rate", "spindle_speed"};
 constexpr std::array<std::string_view, 7> kInterimKinds{"rapid", "feed", "plunge", "retract", "arc_cw", "arc_ccw", "dwell"};
 constexpr std::array<std::string_view, 1> kFeedKeys{"feed"};
-
-double readFinite(JsonReader& r, const Path& p) {
-    const double v = readDouble(r, p);
-    if (!std::isfinite(v)) {
-        fail(p, "must be finite");
-    }
-    return v;
-}
 
 toolpath::Move decodeInterimMove(JsonReader& r, const Path& p) {
     if (r.peek() != JKind::Array) {
@@ -2439,8 +2451,12 @@ auto decodeMember(detail::ZipArchive& zip, const detail::ZipEntry& entry, LoadBu
     }
 }
 
+/// What the loader does with the moves of a cache. `saveCarv`'s verification load only validates
+/// them (same checks and messages), so it never holds a second decoded copy (T-0136).
+enum class CacheMoves { Keep, ValidateOnly };
+
 LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimits& limits,
-                    const detail::ZipLimits& zipLimits) {
+                    const detail::ZipLimits& zipLimits, CacheMoves cacheMoves = CacheMoves::Keep) {
     detail::ZipArchive zip(bytes);
     {
         std::string error;
@@ -2543,26 +2559,32 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
                 throw LoadFailure{CarvError::Code::InvalidArchive, error};
             }
             std::vector<toolpath::Move> moves;
-            const std::string defect = detail::decodeMoves(stream->source(), count, moves);
+            const std::string defect = cacheMoves == CacheMoves::Keep
+                                           ? detail::decodeMoves(stream->source(), count, moves)
+                                           : detail::validateMoves(stream->source(), count);
             if (!stream->finish(error)) {
                 throw LoadFailure{CarvError::Code::InvalidArchive, error};  // damage, not bad content
             }
             if (!defect.empty()) {
                 throw LoadFailure{CarvError::Code::InvalidContent, e.name + ": " + defect};
             }
+            // Validated only: an empty list still marks the record as computed for the checks below.
             d.record.moves = shareMoves(std::move(moves));
             cachesRead.insert(e.name);
             continue;
         }
         if (detail::isInterimToolpathName(e.name)) {
             // carvetto-cli's interim storage before format 1.1 (ADR-0019): becomes a record.
-            // Two passes: count the moves under a throwaway budget with the same limits, then
+            // Two passes: count the moves under a throwaway copy of the budget, then
             // decode for real with exactly that many reserved. Interim members come from the
             // T-0122 CLI, whose files held at most ~350,000 moves, so the extra pass is cheap.
+            // The probe starts as a copy of the shared budget (T-0136), so the count it accepts is
+            // what the shared budget can still take: the real pass never reserves moves that the
+            // shared budget then refuses, and a member the shared budget would refuse fails here
+            // with the same message.
             std::uint64_t count = 0;
             {
-                LoadBudget probe(budget.limits());
-                probe.setArchiveBytes(bytes.size());
+                LoadBudget probe = budget;
                 decodeMember(zip, e, probe, [&count](JsonReader& r) { return decodeInterim(r, true, 0, &count); });
             }
             interim.emplace(e.name, decodeMember(zip, e, budget, [count](JsonReader& r) {
@@ -2741,8 +2763,10 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
     for (std::size_t i = kCarvMaxCachedToolpaths; i < doc.toolpaths().size(); ++i) {
         if (doc.toolpaths()[i].hasMoves()) {
             throw LoadFailure{CarvError::Code::ResourceLimit,
-                              "more than " + std::to_string(kCarvMaxCachedToolpaths) +
-                                  " toolpaths with computed moves"};
+                              "the toolpath at position " + std::to_string(i + 1) + " (#" +
+                                  std::to_string(doc.toolpaths()[i].id.value) +
+                                  ") has computed moves; only toolpaths at positions 1 to " +
+                                  std::to_string(kCarvMaxCachedToolpaths) + " can keep computed moves"};
         }
     }
     doc.setActiveSheet(SheetId{jf.activeSheet});
@@ -2766,6 +2790,67 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
         out.extras = CarvExtras(std::move(extras));
     }
     return out;
+}
+
+/// The longest string (value or key) in a JSON tree, with its loader-style path.
+struct LongestString {
+    std::string path;
+    std::size_t bytes{0};
+};
+
+/// A name or key for a message: at most 64 bytes, longer ones cut with "..." (the bytes are
+/// shown as they are; messages are not G-code).
+std::string clipped(const std::string& text) {
+    constexpr std::size_t kMax = 64;
+    return text.size() <= kMax ? text : text.substr(0, kMax) + "...";
+}
+
+void findLongestString(const json& j, const std::string& path, LongestString& best) {
+    if (j.is_string()) {
+        const std::size_t n = j.get_ref<const std::string&>().size();
+        if (n > best.bytes) {
+            best = {path, n};
+        }
+    } else if (j.is_object()) {
+        for (auto it = j.begin(); it != j.end(); ++it) {
+            const std::string child = path + "." + clipped(it.key());
+            if (it.key().size() > best.bytes) {
+                best = {child + " (key)", it.key().size()};
+            }
+            findLongestString(it.value(), child, best);
+        }
+    } else if (j.is_array()) {
+        for (std::size_t i = 0; i < j.size(); ++i) {
+            findLongestString(j[i], path + "[" + std::to_string(i) + "]", best);
+        }
+    }
+}
+
+/// Explains a verification failure of job.json caused by a long string (T-0136): the loader
+/// refuses a string over its cap without naming it, and a long repetitive string makes job.json
+/// compress beyond the 200:1 ratio check before any string is read. Returns an empty string when
+/// the failure has another cause.
+std::string explainLongString(const json& root, std::size_t jobBytes, const std::string& failure) {
+    const detail::LoadLimits limits;
+    const detail::ZipLimits zipLimits;
+    const bool tooLong = failure.starts_with(std::string(kJobName) + ": a string is longer than");
+    const bool ratio = failure.starts_with("zip member '" + std::string(kJobName) + "' expands");
+    if (!tooLong && !ratio) {
+        return {};
+    }
+    LongestString best;
+    findLongestString(root, kJobName, best);
+    if (best.bytes > limits.maxStringBytes) {
+        return "name too long: " + best.path + " holds " + std::to_string(best.bytes) +
+               " bytes; a name or text holds at most " + std::to_string(limits.maxStringBytes);
+    }
+    // Blamed only when it makes up a large part of job.json; otherwise the loader's message stays.
+    if (ratio && best.bytes >= jobBytes / 4) {
+        return "name too long: " + best.path + " holds " + std::to_string(best.bytes) +
+               " bytes of repetitive text, so job.json would expand more than " +
+               std::to_string(zipLimits.maxJsonRatio) + ":1 and be refused as a possible decompression bomb";
+    }
+    return {};
 }
 
 }  // namespace
@@ -2822,13 +2907,7 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
         // Toolpath records in job order; computed moves go to toolpaths/NNNN.bin, NNNN being the
         // 1-based position (ADR-0021). Checked first so no file the loader refuses is written.
         std::uint64_t totalMoves = 0;
-        for (std::size_t i = 0; i < doc.toolpaths().size(); ++i) {
-            const ToolpathRecord& tp = doc.toolpaths()[i];
-            if (tp.hasMoves() && i >= kCarvMaxCachedToolpaths) {
-                return CarvError{CarvError::Code::ResourceLimit,
-                                 "cannot save more than " + std::to_string(kCarvMaxCachedToolpaths) +
-                                     " toolpaths with computed moves"};
-            }
+        for (const ToolpathRecord& tp : doc.toolpaths()) {
             totalMoves += tp.moveCount();
         }
         if (totalMoves > kCarvMaxToolpathMoves) {
@@ -2854,17 +2933,47 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
             }
             const std::uint64_t count = 2 + names.size();
             if (count > zipLimits.maxMembers) {
+                // A preserved member that a cache replaces is not counted twice.
+                const std::uint64_t preserved = ex ? ex->members.size() : 0;
+                std::uint64_t computed = 0;
+                for (const ToolpathRecord& tp : doc.toolpaths()) {
+                    computed += tp.hasMoves() ? 1U : 0U;
+                }
+                const std::uint64_t kept = names.size() - computed;  // preserved members kept
+                const std::uint64_t fit = zipLimits.maxMembers > 2 + kept ? zipLimits.maxMembers - 2 - kept : 0;
                 return CarvError{CarvError::Code::ResourceLimit,
                                  "the file would have " + std::to_string(count) + " archive members (" +
-                                     std::to_string(names.size() - (ex ? ex->members.size() : 0)) +
-                                     " toolpath move caches among them); a .carv file holds at most " +
-                                     std::to_string(zipLimits.maxMembers)};
+                                     std::to_string(computed) + " toolpath move caches among them); a .carv file "
+                                     "holds at most " + std::to_string(zipLimits.maxMembers) +
+                                     " members including manifest.json and job.json, so at most " +
+                                     std::to_string(fit) + " toolpaths with computed moves fit" +
+                                     (preserved > 0 ? " next to the " + std::to_string(kept) + " preserved members"
+                                                    : std::string{}) +
+                                     " (clear the moves of some toolpaths, or split the job)"};
+            }
+        }
+        // Caches are named by position (toolpaths/0001.bin .. 9999.bin), so a computed toolpath
+        // must sit at position 9,999 or earlier, however few toolpaths are computed.
+        for (std::size_t i = kCarvMaxCachedToolpaths; i < doc.toolpaths().size(); ++i) {
+            const ToolpathRecord& tp = doc.toolpaths()[i];
+            if (tp.hasMoves()) {
+                return CarvError{CarvError::Code::ResourceLimit,
+                                 "toolpath '" + clipped(tp.name) + "' (#" + std::to_string(tp.id.value) + ") is at position " +
+                                     std::to_string(i + 1) + " of the job and has computed moves; only toolpaths at "
+                                     "positions 1 to " + std::to_string(kCarvMaxCachedToolpaths) +
+                                     " can keep computed moves (move it up the job order, or clear its moves)"};
             }
         }
         std::map<std::string, std::vector<std::uint8_t>> caches;
         json toolpaths = json::array();
         for (std::size_t i = 0; i < doc.toolpaths().size(); ++i) {
             const ToolpathRecord& tp = doc.toolpaths()[i];
+            // Parameters must be finite (T-0136); the loader refuses them too.
+            if (const std::string key = nonFiniteParam(tp.params); !key.empty()) {
+                return CarvError{CarvError::Code::InvalidContent,
+                                 "toolpath '" + clipped(tp.name) + "' (#" + std::to_string(tp.id.value) + "): parameter " + key +
+                                     " is not a finite number"};
+            }
             // The loader refuses these for a toolpath with computed moves (T-0134); say so here
             // with the toolpath's name. Uncomputed records may keep a default snapshot.
             for (const auto& [value, what] : {std::pair{tp.tool.diameter, "diameter"},
@@ -2939,10 +3048,16 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
                              "the file would expand to " + std::to_string(totalBytes) + " bytes; the limit is " +
                                  std::to_string(zipLimits.maxTotalBytes)};
         }
+        const std::size_t jobBytes = members[1].data.size();
         detail::ZipWriteResult zip = detail::writeZip(members);
         if (!zip.ok) {
             return CarvError{CarvError::Code::InvalidArchive, zip.error};
         }
+        // The uncompressed caches are not needed any more: free them before the verification
+        // load below (up to 49 bytes per move).
+        members.clear();
+        members.shrink_to_fit();
+        caches.clear();
         // At most kCarvMovesPerFileByte moves per byte of the file (owner decision 2026-11-02);
         // only known now that the file is compressed.
         if (totalMoves > zip.bytes.size() * kCarvMovesPerFileByte) {
@@ -2954,12 +3069,14 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
         }
         // The promise "saveCarv never writes a file loadCarv refuses" is made structurally true:
         // the finished archive goes through the real load path, with the loader's own limits.
-        // Cost: about one load (2M moves: ~0.2 s Release, plus the decoded copy in memory while
-        // it runs). The checks above only give clearer messages for the common cases.
+        // Cost: about one load (2M moves: ~0.2 s Release). The caches are validated as they are
+        // inflated, not decoded into a second copy of the moves (T-0136). The checks above only
+        // give clearer messages for the common cases.
         try {
-            (void)loadImpl(zip.bytes, detail::LoadLimits{}, detail::ZipLimits{});
+            (void)loadImpl(zip.bytes, detail::LoadLimits{}, detail::ZipLimits{}, CacheMoves::ValidateOnly);
         } catch (const LoadFailure& f) {
-            return CarvError{f.code, "the file would not load again: " + f.message};
+            const std::string why = explainLongString(root, jobBytes, f.message);
+            return CarvError{f.code, "the file would not load again: " + (why.empty() ? f.message : why)};
         } catch (const std::bad_alloc&) {
             return CarvError{CarvError::Code::ResourceLimit,
                              "the file would not load again: out of memory while checking it"};

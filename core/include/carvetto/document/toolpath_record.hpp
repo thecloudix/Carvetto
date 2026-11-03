@@ -91,4 +91,12 @@ struct ToolpathRecord {
 /// reloaded copy.
 SharedMoves shareMoves(std::vector<toolpath::Move> moves);
 
+/// Toolpath parameters must be finite numbers (T-0136, ADR-0021 §2): returns the job.json key
+/// path inside `params` of the first number that is NaN or infinite (e.g. `"safe_z"`,
+/// `"passes.cut_depth"`, `"start_position[1]"`, angles with their `_rad` suffix), or an empty
+/// string when every number is finite. `ProfileParams::cuttingData` is not part of a record and
+/// is not checked. `AddToolpathCommand`/`SetToolpathCommand` refuse such parameters, `saveCarv`
+/// refuses to write them and the loader refuses them.
+std::string nonFiniteParam(const ToolpathParams& params);
+
 }  // namespace carvetto::document

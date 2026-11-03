@@ -414,7 +414,7 @@ Acceptance criteria:
   2. (c) tabs that hold are kept with a separate last pass (no class where main keeps holding tabs the branch drops); (d)/(e)/(f) improved or documented.
   3. No kept tab severed/partial/thin (whole-scene flood); AC4 byte identity of T-0127 preserved; perf within 10% of T-0127.
 
-### T-0136 Native toolpath storage residuals (T-0132 / T-0134 verifiers)   [status: in-progress]
+### T-0136 Native toolpath storage residuals (T-0132 / T-0134 verifiers)   [status: done (2026-11-02, #33)]
 Phase: 1   Module: core/document, core/post   Depends on: T-0132   ADR: 0021, 0020
 Goal: Non-blocking findings (harness t0132v3/, t0134v3/). (a) ADR-0021 §3 documents the save-time validation cost only at 2M moves; at the 8M cap the save peak grows by ~+0.5 GiB (second decoded copy during the verification load) — document it, or validate caches by streaming without holding a second copy. (b) Misleading message "cannot save more than 9999 toolpaths with computed moves" also when the problem is position (last computed record at position 10,000) and suggests 9,999 fit (the member limit allows 9,998). (c) Over-long names/strings are refused as a job.json "decompression bomb" ratio error; report "name too long" instead. (d) The interim counting pass uses a fresh probe budget, so the real pass may reserve up to min(S, 8M) moves for a member the shared budget then refuses (untouched pages on Linux; commit charge on Windows). (f) NaN/Infinity accepted in toolpath params on load (e.g. safe_z "NaN"; record != reloaded copy) — refuse non-finite params in the loader and commands. (e) A toolpath with zero moves counts as "no toolpaths" for the post, so the header still writes `M3 S0` (same as main; nothing cuts) — decide and document: skip empty toolpaths, or check spindle speed of the first non-empty toolpath for the header.
 Acceptance criteria:
@@ -443,6 +443,26 @@ Goal: Found by the T-0018 verifier (harness t0018v1/dust.cpp; pre-existing, iden
 Acceptance criteria:
   1. Rings with |area| below a documented threshold (e.g. tol.distance²) or width below the grid are dropped from offsetContours results; repros clean; generative check (t0018v1/inr.cpp orientation-vs-nesting) shows 0 violations.
   2. No genuine region lost (coverage check in inr.cpp); Pocket/Profile outputs change only where dust rings were present; contract sentence true as written.
+
+### T-0139 Storage message and test nits (T-0136 verifier)   [status: ready]
+Phase: 1   Module: core/document   Depends on: T-0136   ADR: 0021, 0013
+Goal: Non-blocking findings (harness t0136v1/). (a) Names that grow when stored (control characters escaped as \u0001, quotes, invalid UTF-8) are still blamed as a job.json ratio bomb, or reported with their in-memory size: measure the escaped/stored length in explainLongString (repro adv5.cpp: 200,000 × '\x01'). (b) The RSS test "T-0136 a: saveCarv's verification load holds no second copy" fails under ASan (41 vs 34 MiB): skip under __SANITIZE_ADDRESS__ / has_feature(address_sanitizer). (c) ADR-0021 §2 cites "ADR-0013 §1" for non-finite spellings (it is decision 3); cross-amend ADR-0013 A2 for the finite-params exception. (d) Awkward member-limit wording ("next to the 0 preserved members", "(0 toolpath move caches among them)").
+Acceptance criteria:
+  1. (a)–(d) fixed with tests where behaviour changes; save/load invariant preserved (fuzz3).
+
+### T-0140 Profile: loose-piece check for Inside/Outside with allowance ≥ 0   [status: blocked]
+(Unblocks when T-0135 merges.)
+Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §14
+Goal: Found by the T-0135 verifier (harness t0135v1/scn/m3_630018_3.scn): the loose-piece report runs only for sided cuts (On, allowance < 0), so with Inside/Outside and allowance ≥ 0 pieces that no kept tab holds come free unreported (15.1 mm² in that scene, leads off; same in T-0127). Extend the check to all tabbed profiles without changing toolpaths.
+Acceptance criteria:
+  1. Every free piece ≥ 0.04 mm² reported for Inside/Outside allowance ≥ 0 (whole-scene flood, ≥ 2,000 new-seed scenes, leads off); held pieces never reported.
+  2. Moves byte-identical to the T-0135 merge (diagnostics may only gain loose-piece messages); perf within 10%.
+
+### T-0141 Offset/Profile robustness residuals (T-0138 verifier)   [status: ready]
+Phase: 1   Module: core/geometry, core/toolpath   Depends on: —   ADR: 0006, 0016
+Goal: Pre-existing findings from the T-0138 verifier (harness t0138v1/, wt-T0138/build-verify3/h/). (a) A single row of 20,000 small rectangles takes ~45–50 s in offsetContours (same with no dust; likely Clipper2's sweep) — profile and fix or bound (col.cpp mode 1, rownd.cpp). (b) profileToolpath does not validate its Tolerance (Pocket requires 1e-4 ≤ chordal and 0 < distance ≤ chordal); decide and add the same validation with a clear diagnostic. (c) Clipper2 erosion of acute rings is not monotone (the T-0138 dust band is 3.6–5.6 grid units); decide whether a monotone dust test is wanted.
+Acceptance criteria:
+  1. (a) ≤ 2.5× per doubling up to 20k rings, or documented limit with a clear diagnostic; (b) Profile refuses invalid tolerances with tests, valid output byte-identical; (c) decision recorded in ADR-0006.
 
 ### T-0019 Make the T-0004 AC3 timing test CPU-time based   [status: done (by T-0017: T-0004 AC3 timing uses process CPU time, cpu_time.hpp)]
 Phase: 1   Module: core/tests   Depends on: —

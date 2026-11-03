@@ -2,7 +2,8 @@
 
 Date: 2026-11-01 · Status: proposed (T-0132) · Supersedes the interim storage of ADR-0019 §1 ·
 Move budget tied to file size by the project owner (2026-11-02, after verifier round 1) ·
-saveCarv verifies its output with the loader (verifier round 2)
+saveCarv verifies its output with the loader (verifier round 2) · Storage residuals (T-0136):
+verification without a second decoded copy, clearer limit messages, finite parameters
 
 ## Context
 ADR-0003 (owner decision) puts toolpath definitions in `job.json` and computed moves in optional
@@ -69,6 +70,18 @@ schema, the cache format and its budget open; they are decided here.
   load → save must be byte-identical (ADR-0013 §1). This deviates from ADR-0013 §5's `_mm` suffix
   rule for lengths, so that one set of keys serves both files. params.json's `tool` object becomes
   the record's `tool` (plus the snapshot), and its `layers` names become `selection.layers` ids.
+- **Parameters are finite numbers (T-0136).** Every number in `params` (lengths, angles,
+  tolerances, `start_position`) must be finite. Unlike other `job.json` doubles (ADR-0013 §1,
+  e.g. an empty box is ±infinity) the spellings `"NaN"`, `"Infinity"` and `"-Infinity"` are
+  refused there, in both dialects (`job.json.toolpaths[0].params.safe_z: must be finite`,
+  `toolpaths/0001.json.params.raster_angle: must be finite`); a NaN parameter also broke
+  `record == reloaded copy`. `nonFiniteParam` (`toolpath_record.hpp`) names the first offending
+  key in the same job.json spelling; `AddToolpathCommand` / `SetToolpathCommand` refuse such a
+  record (no-op) and `saveCarv` refuses it (InvalidContent, `toolpath 'X' (#7): parameter
+  leads.angle_rad is not a finite number`). Everything else keeps its T-0132/T-0134 behaviour:
+  move values must be finite (the cache cannot hold anything else), a computed record's tool
+  diameter and feeds must be finite and positive, and an uncomputed record's snapshot (spindle
+  speed included) may still hold any double.
 - Every params key is optional on load (the core default stays), like params.json; unknown keys
   nested inside `params`, `selection`, `tool` and `moves` are validated and dropped, unknown keys of
   the record itself are preserved per toolpath id (ADR-0013 §7). An unknown `operation` is an
@@ -91,8 +104,44 @@ schema, the cache format and its budget open; they are decided here.
   again:", and nothing is written. The promise "saveCarv never writes a file loadCarv refuses"
   is therefore structural. Cost: one in-memory load (0.17–0.18 s Release for the AC2 job's 2 M
   moves); measured save times went from 1.36–1.43 s to 1.39–1.47 s Release (deflate dominates and
-  varies), 2.3 s Debug, and the moves are decoded a second time while the check runs (+144 MB
-  transiently). The pre-checks stay for clearer messages.
+  varies), 2.3 s Debug. The pre-checks stay for clearer messages.
+- **No second decoded copy (T-0136).** Until T-0136 the verification load decoded every move again
+  (72 bytes each: +144 MB at 2 M moves, about +0.5 GiB at the 8 M cap on top of the encoded caches
+  and the archive). The verification now runs the loader with its caches in *validate-only* mode
+  (`detail::validateMoves`): each cache is inflated and checked move by move with exactly the
+  decoder's checks and messages (same code path, a test compares the two on 3,000 mutated caches),
+  but no move is kept; the record gets an empty move list, which is enough for the checks that
+  look only at whether a record is computed. The uncompressed caches are also freed once the
+  archive is written, before the check. The invariant is unchanged: everything the loader checks,
+  including every move, is checked on the finished bytes.
+  Measured (GCC 15 Release, this machine, peak RSS growth of `saveCarv` in a forked child, harness
+  t0132v3/big3.cpp with a valid tool; before → after): raster 2 M moves 184 → 60 MiB, noisy 2 M
+  199 → 90 MiB, raster 8 M (46 MB file) 724 → 218 MiB, noisy 8 M (115 MB file) 790 → 350 MiB.
+  What remains is the encoded caches (1–49 bytes per move, ~25 for noisy coordinates) and the
+  compressed archive, both needed to write the file; save CPU is unchanged within noise (2.1 s
+  Release for raster 2 M). The test asserts < 36 bytes per move for 1 M moves on Linux (was 98 MiB
+  for 1 M moves in Debug before).
+- **Limit messages (T-0136).** Too many archive members names how many computed toolpaths fit:
+  `the file would have 10001 archive members (9999 toolpath move caches among them); a .carv file
+  holds at most 10000 members including manifest.json and job.json, so at most 9998 toolpaths with
+  computed moves fit (clear the moves of some toolpaths, or split the job)` (with preserved
+  members: `… fit next to the 1 preserved members`). It is checked before the position rule, and a
+  computed toolpath past position 9,999 is named with its position (`toolpath 'Late' (#12) is at
+  position 10000 of the job and has computed moves; only toolpaths at positions 1 to 9999 can keep
+  computed moves (move it up the job order, or clear its moves)`); the loader says the same for a
+  crafted file (`the toolpath at position 10000 (#…) has computed moves; …`).
+- **Over-long names (T-0136).** A string over the loader's 1 MiB cap is refused by the loader
+  without a field name, and a long repetitive string makes `job.json` compress beyond the 200:1
+  ratio check, which then fires first ("a decompression bomb?"). When the verification fails with
+  either of these job.json errors, `saveCarv` looks for the longest string (value or key) in the
+  `job.json` it wrote and reports it with its path: over 1 MiB, `the file would not load again:
+  name too long: job.json.toolpaths[0].name holds 1100000 bytes; a name or text holds at most
+  1048576`; under it but at least a quarter of `job.json` with a ratio failure, `name too long:
+  job.json.toolpaths[0].name holds 700000 bytes of repetitive text, so job.json would expand more
+  than 200:1 and be refused as a possible decompression bomb`. Otherwise the loader's message is
+  kept. Known gap: an unknown field preserved from a newer file may hold a string up to 16 MiB;
+  if such a string is the longest when a *known* string exceeds 1 MiB, the message names the
+  unknown one (the refusal itself is right).
 - `CarvExtras::withMember` also refuses interim names `toolpaths/NNNN.json`: records replace them,
   and a member added that way would turn into an extra record on the next load. The member is always written when the record
   has moves: the loader cannot recompute toolpaths (that needs the tool database and the
@@ -144,7 +193,10 @@ schema, the cache format and its budget open; they are decided here.
   growth for a 10.5 KB file at the limit, 71 MiB for 1.0 MB and 558 MiB for 7.9 MB (padded files
   of one-byte moves, the worst case per byte); 138 MiB for a realistic 2 M-move 18 MB file, and
   550 MiB for 8 M moves in 73 MB. Migrated interim members have no declared count, so each is
-  read twice: a counting pass under a throwaway budget with the same limits, then the real pass
+  read twice: a counting pass under a throwaway copy of the load budget (T-0136: a copy, not a
+  fresh budget, so it stops where the shared budget would and the real pass never reserves moves
+  the shared budget then refuses; before, a member could reserve up to min(S, 8 M) moves first,
+  untouched pages on Linux but commit charge on Windows), then the real pass
   with exactly that many moves reserved (a realistic 400,000-move interim member in a 7.7 MB file:
   0.45 s Release for both passes, 28 MiB peak, i.e. 72 bytes per move). Interim files from the
   T-0122 CLI held at most ~350,000 moves, so the second pass is cheap.

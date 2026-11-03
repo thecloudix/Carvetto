@@ -1257,3 +1257,57 @@ TEST_CASE("T-0134 AC3: a job without toolpaths checks neither spindle nor feed t
         "begin HEADER\n\"M3 S[S] F[F] F[FC] F[FP]\"\nend\nbegin RAPID_MOVE\n\"G0[X]\"\nend\n");
     CHECK(runError(pp, {}, {}).empty());
 }
+
+// ---- T-0136 (e): toolpaths without moves are skipped, also for the header tool (ADR-0020)
+
+namespace {
+
+/// The run's output; fails the test when the run fails.
+std::string runText(const PostProcessor& pp, const std::vector<Toolpath>& tps, const PostContext& ctx) {
+    const auto r = pp.run(tps, ctx);
+    if (!r.ok()) {
+        FAIL("run failed: " << r.error().describe());
+    }
+    return r.value().text;
+}
+
+/// An empty toolpath whose tool would be refused (spindle 0, other number) if it were written.
+Toolpath emptyWithBadTool(const std::string& name) {
+    Toolpath t;
+    t.name = name;
+    t.tool.name = "Unset";
+    t.tool.toolNumber = 7;
+    t.tool.spindleSpeed = 0.0;
+    return t;
+}
+
+}  // namespace
+
+TEST_CASE("T-0136 e: every shipped post skips toolpaths without moves, also when choosing the header tool",
+          "[post][safety][number]") {
+    for (const Shipped& p : shipped()) {
+        INFO(p.stem);
+        const PostProcessor pp = loadShipped(p);
+        const PostContext ctx = carvetto::test::fixtureContext();
+        const std::vector<Toolpath> fixture = carvetto::test::fixtureToolpaths();
+        const std::string expected = runText(pp, fixture, ctx);
+        CHECK(expected == golden(p));  // the shipped golden is unchanged
+
+        // Empty toolpaths first, between and last: the header takes the first non-empty
+        // toolpath's tool and spindle speed, no tool change goes to an empty one's tool, and
+        // their spindle speed of 0 is never checked.
+        std::vector<Toolpath> padded;
+        padded.push_back(emptyWithBadTool("Empty first"));
+        padded.push_back(fixture[0]);
+        padded.push_back(emptyWithBadTool("Empty between"));
+        padded.push_back(fixture[1]);
+        padded.push_back(fixture[2]);
+        padded.push_back(emptyWithBadTool("Empty last"));
+        CHECK(runText(pp, padded, ctx) == expected);
+
+        // Only empty toolpaths: posted exactly like a job with no toolpaths (header and footer
+        // with the default tool, nothing checked), whatever their tools say.
+        const std::string none = runText(pp, {}, ctx);
+        CHECK(runText(pp, {emptyWithBadTool("A"), emptyWithBadTool("B")}, ctx) == none);
+    }
+}
