@@ -1,0 +1,9 @@
+T-0154 round-4 (allowlist) verifier drivers (branch task/T-0154-no-spindle @ 0f1ddda).
+build.sh src out   - builds a driver against /home/chris/wt-T0154/build-verify4
+postatk5.cpp       - attacks outside the per-line allowlist: LINE_ENDING literal text (A1, accepted: "M5 M3 S12000"),
+                     ';'-style custom post "M0 [TOOLNAME]" message (A2, accepted: "M0 M3 S18000"; Marlin "M0 S1"/"M0 P1"),
+                     VAR prefix "/N" block-deleting the pause (A3), "M0[T]" -> "M05" (A4), Grbl 8-digit read_float (A5),
+                     Grbl-rejected words on the M0 line (A6), emergency-code false positives (A7), X.5 (A8)
+legit2.cpp         - 8 shipped posts x drag tool names (false positives "Drag 3mm 108", "... 112 deg", "... 410")
+gcheck2.py         - snapshot of t0151v1/gcheck2.py with its uncommitted drag-allowlist checks
+Re-ran t0154v3/postatk4 (13 accepted, all safe: values inside comments or a balanced live paren comment) and legit (72 files, gcheck2 0 errors).
