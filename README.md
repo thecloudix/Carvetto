@@ -42,3 +42,4 @@ Original locations (scripts may hard-code these; adjust paths when reusing):
 - t0138v1/: T-0138 verifier (PASS fc80d44): dor.cpp near-collapse orientation oracle (large offsets), cmpd.py, ac2.cpp threshold cases, pk.cpp/pk2.cpp Pocket/Profile near collapse, cost.cpp/cost2.cpp, ab.sh.
 - t0009v1/: T-0009 round-1 verifier (FAIL feffe02): v9.cpp independent sub-tol injector (modes st/one/poly/shrinkpoly/time), vchk.cpp checker, repro_wrap.cpp (Sharp full-circle wrap B1), big.cpp/zz.cpp/zzc.cpp cost probes (cubic), edge.cpp, logs/shrink_*.
 - t0135v2/: T-0135 round-2 verifier (FAIL 42d38af): lnk.cpp shortcut repro, dl.cpp/dl2.cpp in-process mutant screens (NOLINK/NOADD/OLDORDER), mkmut.sh + mutant sources, wsf8y.cpp, fcand*.sh, fcmp.py, hcmp.py, gfit2.cpp fitTabs loss repro, cap.cpp, perf.sh, scn/.
+- t0134v2/: T-0134 round-2 verifier (FAIL 05d3eac): adv.cpp + cmp.py AC3 differential, one.cpp, pp/ custom posts (c_inverse, c_inv_fi, ...), pj/ params stress inputs.
