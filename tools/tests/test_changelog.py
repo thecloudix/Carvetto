@@ -203,13 +203,13 @@ class CheckInvalid(RepoTest):
         self.repo.write_changelog("# Changelog\n\n## 0.1.0\n\n- T-0009: x\n")
         code, _, err = self.repo.check()
         self.assertEqual(code, 1)
-        self.assertIn("no '## Unreleased' heading", err)
+        self.assertIn("exactly one '## Unreleased' heading (byte-exact), found 0", err)
 
     def test_two_unreleased_headings(self):
         self.repo.write_changelog(CHANGELOG + "\n## Unreleased\n\n- T-0150: x\n")
         code, _, err = self.repo.check()
         self.assertEqual(code, 1)
-        self.assertIn("2 '## Unreleased' headings", err)
+        self.assertIn("found 2", err)
 
     def test_missing_backlog(self):
         (self.repo.dir / "docs" / "BACKLOG.md").unlink()
@@ -362,7 +362,7 @@ class Assemble(RepoTest):
 
 @unittest.skipIf(shutil.which("git") is None, "git not available")
 class CheckBase(RepoTest):
-    """check --base REF: hand edits to the Unreleased section are refused in a PR."""
+    """check --base REF: hand edits to CHANGELOG.md are refused in a PR."""
 
     def git(self, *args):
         subprocess.run(["git", *args], cwd=str(self.repo.dir), check=True, capture_output=True)
@@ -397,7 +397,7 @@ class CheckBase(RepoTest):
         self.commit("pr")
         code, _, err = self.check_base()
         self.assertEqual(code, 1)
-        self.assertIn("line added by hand", err)
+        self.assertIn("edited by hand (first difference at line 5: - T-0151: by hand)", err)
 
     def test_uncommitted_direct_edit_fails(self):
         self.repo.write_changelog(CHANGELOG + "- T-0151: by hand\n")
@@ -408,7 +408,7 @@ class CheckBase(RepoTest):
         self.commit("pr")
         code, _, err = self.check_base()
         self.assertEqual(code, 1)
-        self.assertIn("removed or edited", err)
+        self.assertIn("edited by hand", err)
 
     def test_reordering_fails(self):
         self.repo.write_changelog("# Changelog\n\n## Unreleased\n\n- T-0009: oldest entry\n"
@@ -416,7 +416,7 @@ class CheckBase(RepoTest):
         self.commit("pr")
         code, _, err = self.check_base()
         self.assertEqual(code, 1)
-        self.assertIn("reordered", err)
+        self.assertIn("first difference at line 5: - T-0009: oldest entry", err)
 
     def test_assemble_pr_passes(self):
         self.assertEqual(self.repo.assemble()[0], 0)
@@ -469,11 +469,11 @@ class CheckBase(RepoTest):
             with self.subTest(heading=heading):
                 self.assert_base_fails(
                     CHANGELOG.replace("## Unreleased\n\n", "## Unreleased\n\n%s\n\n- T-0151: hand\n" % heading),
-                    "line added by hand (write a fragment in changelog.d/ instead): - T-0151: hand")
+                    "edited by hand (first difference at line 5: %s)" % heading)
 
     def test_h1_heading_alone_fails(self):
         self.assert_base_fails(CHANGELOG.replace("## Unreleased\n\n", "## Unreleased\n\n# x\n\n"),
-                               "line added by hand (write a fragment in changelog.d/ instead): # x")
+                               "edited by hand (first difference at line 5: # x)")
 
     def test_line_above_unreleased_fails(self):
         self.assert_base_fails(CHANGELOG.replace("## Unreleased", "- T-0151: on top\n\n## Unreleased"),
@@ -495,16 +495,16 @@ class CheckBase(RepoTest):
         self.commit("release on main")
         self.git("branch", "-f", "main")
         self.assert_base_fails(base.replace("- T-0124: released", "- T-0124: released, reworded"),
-                               "removed or edited")
+                               "edited by hand")
 
     def test_fragment_line_assembled_twice_fails(self):
         self.assertEqual(self.repo.assemble()[0], 0)
-        self.assert_base_fails(self.repo.changelog() + "- T-0150: drilling\n", "deleted only 1 time")
+        self.assert_base_fails(self.repo.changelog() + "- T-0150: drilling\n", "first difference at line 8: - T-0150: drilling")
 
     def test_assembled_line_outside_unreleased_fails(self):
         (self.repo.dir / "changelog.d" / "T-0150.md").unlink()
         self.assert_base_fails(CHANGELOG.replace("# Changelog\n", "# Changelog\n\n- T-0150: drilling\n"),
-                               "outside '## Unreleased'")
+                               "is not what tools/changelog.py assemble makes")
 
     def test_duplicated_existing_line_fails(self):
         self.assert_base_fails(CHANGELOG + "- T-0009: oldest entry\n", "- T-0009: oldest entry")
@@ -513,6 +513,223 @@ class CheckBase(RepoTest):
         code, _, err = self.repo.check("--base", "no-such-ref")
         self.assertEqual(code, 1)
         self.assertIn("cannot compare with no-such-ref", err)
+
+
+BASE2 = ("# Changelog\n\n## Unreleased\n\n- T-0017: older entry\n- T-0009: oldest entry\n\n"
+         "## 0.1.0\n\n- T-0124: released two\n- T-0120: released\n")
+
+
+@unittest.skipIf(shutil.which("git") is None, "git not available")
+class CheckBaseExact(RepoTest):
+    """The exact-structure rule (T-0146 round 2): HEAD = base after none / assemble / release."""
+
+    git = CheckBase.git
+    commit = CheckBase.commit
+    check_base = CheckBase.check_base
+
+    def setUp(self):
+        super().setUp()
+        self.git("init", "-q", "-b", "main")
+        for k, v in (("user.email", "test@example.invalid"), ("user.name", "test"),
+                     ("core.autocrlf", "false"), ("commit.gpgsign", "false")):
+            self.git("config", k, v)
+        self.repo.write_changelog(BASE2)
+        self.repo.frag("T-0150.md", "- T-0150: drilling\n")
+        self.repo.frag("T-0151.md", "- T-0151: engrave\n")
+        self.commit("base")
+        self.git("checkout", "-q", "-b", "pr")
+
+    def write_raw(self, data):
+        (self.repo.dir / "CHANGELOG.md").write_bytes(data)
+
+    def rm_frag(self, name):
+        (self.repo.dir / "changelog.d" / name).unlink()
+
+    def expect(self, code, needle=None):
+        self.commit("pr")
+        got, out, err = self.check_base()
+        self.assertEqual(got, code, out + err)
+        self.assertNotIn("Traceback", err)
+        if needle is not None:
+            self.assertIn(needle, err if code else out)
+
+    HAND = "edited by hand"
+    # (name, transformation of BASE2, expected needle); every one must fail.
+    EDITS = [
+        ("nbsp_unreleased_heading", lambda t: t.replace("## 0.1.0", "## Unreleased \n\n- T-0146: hand\n\n## 0.1.0"), HAND),
+        ("cyrillic_heading_alone", lambda t: t.replace("## 0.1.0", "## Unrеleased\n\n## 0.1.0"), HAND),
+        ("cyrillic_heading_capturing", lambda t: t.replace("## Unreleased\n", "## Unreleased\n\n## Unrеleased\n"), HAND),
+        ("crlf_one_line", lambda t: t.replace("- T-0009: oldest entry\n", "- T-0009: oldest entry\r\n"), HAND),
+        ("crlf_heading", lambda t: t.replace("## Unreleased\n", "## Unreleased\r\n"), HAND),
+        ("lone_cr", lambda t: t.replace("- T-0017: older entry\n", "- T-0017: older entry\r- T-0146: hand\n"), HAND),
+        ("whole_file_crlf", lambda t: t.replace("\n", "\r\n"), HAND),
+        ("fake_version", lambda t: t.replace("## Unreleased\n", "## Unreleased\n\n## Hello world, hand text\n"), HAND),
+        ("entry_as_heading", lambda t: t.replace("## 0.1.0", "## - T-0146: hand entry as heading\n\n## 0.1.0"), HAND),
+        ("version_below_with_moved_line", lambda t: t.replace("- T-0017: older entry\n", "") + "\n## 0.0.9\n\n- T-0017: older entry\n", HAND),
+        ("released_line_into_unreleased", lambda t: t.replace("- T-0120: released\n", "").replace("- T-0017", "- T-0120: released\n- T-0017"), HAND),
+        ("unreleased_line_into_release", lambda t: t.replace("- T-0017: older entry\n", "").replace("- T-0120: released", "- T-0017: older entry\n- T-0120: released"), HAND),
+        ("reorder_release", lambda t: t.replace("- T-0124: released two\n- T-0120: released\n", "- T-0120: released\n- T-0124: released two\n"), HAND),
+        ("duplicate_version", lambda t: t.replace("## Unreleased\n\n", "## Unreleased\n\n## 0.1.0\n\n"), "version 0.1.0 is already in the file"),
+        ("version_with_trailing_text", lambda t: t.replace("## Unreleased\n\n", "## Unreleased\n\n## 0.2.0 hand\n\n"), HAND),
+        ("version_bad_date", lambda t: t.replace("## Unreleased\n\n", "## Unreleased\n\n## 0.2.0 - 2026-11\n\n"), HAND),
+        ("version_not_at_top", lambda t: t.replace("- T-0009", "## 0.2.0\n\n- T-0009"), HAND),
+        ("duplicated_line", lambda t: t + "- T-0120: released\n", HAND),
+        ("blank_lines_appended", lambda t: t + "\n\n\n", HAND),
+        ("trailing_space_on_heading", lambda t: t.replace("## Unreleased\n", "## Unreleased  \n"), "byte-exact"),
+        ("line_above_unreleased", lambda t: t.replace("## Unreleased", "- T-0146: on top\n\n## Unreleased"), HAND),
+    ]
+
+    def test_hand_edits_fail(self):
+        for name, edit, needle in self.EDITS:
+            with self.subTest(name=name):
+                self.git("checkout", "-q", "-f", "pr")
+                self.git("reset", "-q", "--hard", "main")
+                self.write_raw(edit(BASE2).encode("utf-8"))
+                self.expect(1, needle)
+
+    def test_binary_and_invalid_utf8_changelog(self):
+        for name, data, needle in (("nul", b"# Changelog\n\x00\x01\x02\n", "contains NUL bytes"),
+                                   ("invalid_utf8", BASE2.encode() + b"\xff\xfe", "is not valid UTF-8"),
+                                   ("bom", b"\xef\xbb\xbf" + BASE2.encode(), "starts with a UTF-8 byte order mark")):
+            with self.subTest(name=name):
+                self.git("reset", "-q", "--hard", "main")
+                self.write_raw(data)
+                self.expect(1, "error: CHANGELOG.md " + needle)
+                code, _, err = self.repo.check()  # plain check too
+                self.assertEqual(code, 1)
+                self.assertNotIn("Traceback", err)
+                code, _, err = self.repo.assemble()
+                self.assertEqual(code, 1)
+                self.assertNotIn("Traceback", err)
+
+    def test_invalid_utf8_at_merge_base(self):
+        self.git("checkout", "-q", "main")
+        self.write_raw(BASE2.encode() + b"\xff")
+        self.commit("bad base")
+        self.git("checkout", "-q", "pr")
+        self.git("reset", "-q", "--hard", "main")
+        self.write_raw(BASE2.encode())
+        self.expect(1, "at the merge base is not valid UTF-8")
+
+    def test_altered_fragment_line_fails(self):
+        self.rm_frag("T-0150.md")
+        self.write_raw(BASE2.replace("## Unreleased\n\n", "## Unreleased\n\n- T-0150: drilling!\n").encode())
+        self.expect(1, "is not what tools/changelog.py assemble makes")
+
+    def test_other_fragments_line_fails(self):
+        self.rm_frag("T-0150.md")
+        self.write_raw(BASE2.replace("## Unreleased\n\n", "## Unreleased\n\n- T-0151: engrave\n").encode())
+        self.expect(1, "is not what tools/changelog.py assemble makes")
+
+    def test_partial_assemble_of_deleted_fragments_fails(self):
+        self.rm_frag("T-0150.md")
+        self.rm_frag("T-0151.md")
+        self.write_raw(BASE2.replace("## Unreleased\n\n", "## Unreleased\n\n- T-0151: engrave\n").encode())
+        self.expect(1, "(T-0151.md, T-0150.md)")
+
+    def test_assemble_in_wrong_order_fails(self):
+        self.rm_frag("T-0150.md")
+        self.rm_frag("T-0151.md")
+        self.write_raw(BASE2.replace("## Unreleased\n\n",
+                                     "## Unreleased\n\n- T-0150: drilling\n- T-0151: engrave\n").encode())
+        self.expect(1, "is not what tools/changelog.py assemble makes")
+
+    def test_delete_fragment_without_assembling_fails(self):
+        self.rm_frag("T-0150.md")
+        self.expect(1, "T-0150.md deleted without being assembled")
+
+    def test_rename_fragment_passes(self):
+        self.rm_frag("T-0150.md")
+        self.repo.frag("T-0146.md", "- T-0146: drilling\n")
+        self.expect(0, "no hand edits")
+
+    def test_merge_two_fragments_passes(self):
+        self.rm_frag("T-0150.md")
+        self.rm_frag("T-0151.md")
+        self.repo.frag("T-0150-0151.md", "- T-0150/T-0151: drilling and engraving\n")
+        self.expect(0)
+
+    def test_rename_with_unmatched_content_fails(self):
+        self.rm_frag("T-0150.md")
+        self.repo.frag("T-0146.md", "- T-0150: drilling\n")
+        self.expect(1, "must start with '- T-0146: '")
+
+    def test_rename_plus_assembled_old_line_fails(self):
+        self.rm_frag("T-0150.md")
+        self.repo.frag("T-0146.md", "- T-0146: drilling\n")
+        self.write_raw(BASE2.replace("## Unreleased\n\n", "## Unreleased\n\n- T-0150: drilling\n").encode())
+        self.expect(1, "an assemble PR only assembles and deletes fragments")
+
+    def test_assemble_passes(self):
+        self.assertEqual(self.repo.assemble()[0], 0)
+        self.assertEqual(self.repo.changelog(), BASE2.replace(
+            "## Unreleased\n\n", "## Unreleased\n\n- T-0151: engrave\n- T-0150: drilling\n"))
+        self.expect(0)
+
+    def test_assemble_into_empty_unreleased_passes(self):
+        empty = "# Changelog\n\n## Unreleased\n\n## 0.1.0\n\n- T-0120: released\n"
+        self.git("checkout", "-q", "main")
+        self.write_raw(empty.encode())
+        self.commit("empty unreleased")
+        self.git("checkout", "-q", "pr")
+        self.git("reset", "-q", "--hard", "main")
+        self.assertEqual(self.repo.assemble()[0], 0)
+        self.assertEqual(self.repo.changelog(), empty.replace(
+            "## Unreleased\n\n", "## Unreleased\n\n- T-0151: engrave\n- T-0150: drilling\n\n"))
+        self.expect(0)
+
+    def test_release_passes(self):
+        for heading in ("## 0.2.0", "## 0.2.0 - 2026-11-03", "## 10.20.30"):
+            with self.subTest(heading=heading):
+                self.git("reset", "-q", "--hard", "main")
+                self.write_raw(BASE2.replace("## Unreleased\n\n", "## Unreleased\n\n%s\n\n" % heading).encode())
+                self.expect(0)
+
+    def test_release_written_as_heading_then_blank_passes(self):
+        # sed 's/^## Unreleased/&\n\n## 0.2.0/' gives the same bytes as inserting below the blank line.
+        self.write_raw(BASE2.replace("## Unreleased\n", "## Unreleased\n\n## 0.2.0\n").encode())
+        self.expect(0)
+
+    def test_release_of_empty_unreleased_fails(self):
+        empty = "# Changelog\n\n## Unreleased\n\n## 0.1.0\n\n- T-0120: released\n"
+        self.git("checkout", "-q", "main")
+        self.write_raw(empty.encode())
+        self.commit("empty unreleased")
+        self.git("checkout", "-q", "pr")
+        self.git("reset", "-q", "--hard", "main")
+        self.write_raw(empty.replace("## Unreleased\n\n", "## Unreleased\n\n## 0.2.0\n\n").encode())
+        self.expect(1, "empty '## Unreleased' section")
+
+    def test_release_with_fragment_deletion_fails(self):
+        self.rm_frag("T-0150.md")
+        self.write_raw(BASE2.replace("## Unreleased\n\n", "## Unreleased\n\n## 0.2.0\n\n").encode())
+        self.expect(1, "is not what tools/changelog.py assemble makes")
+
+    def ci_merge_commit(self):
+        """Like actions/checkout on a PR: main has moved on, HEAD is the merge of the PR into main."""
+        self.commit("pr")
+        self.git("checkout", "-q", "main")
+        self.repo.frag("T-0146.md", "- T-0146: landed on main meanwhile\n")
+        self.commit("other PR merged")
+        self.git("checkout", "-q", "--detach", "main")
+        self.git("merge", "-q", "--no-ff", "-m", "merge pr", "pr")
+
+    def test_assemble_on_ci_merge_commit_passes(self):
+        self.assertEqual(self.repo.assemble()[0], 0)
+        self.ci_merge_commit()
+        code, out, err = self.check_base()
+        self.assertEqual(code, 0, out + err)
+
+    def test_release_on_ci_merge_commit_passes(self):
+        self.write_raw(BASE2.replace("## Unreleased\n\n", "## Unreleased\n\n## 0.2.0 - 2026-11-03\n\n").encode())
+        self.ci_merge_commit()
+        code, out, err = self.check_base()
+        self.assertEqual(code, 0, out + err)
+
+    def test_hand_edit_on_ci_merge_commit_fails(self):
+        self.write_raw((BASE2 + "- T-0146: hand\n").encode())
+        self.ci_merge_commit()
+        self.assertEqual(self.check_base()[0], 1)
 
 
 if __name__ == "__main__":

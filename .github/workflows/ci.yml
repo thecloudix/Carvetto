@@ -13,9 +13,9 @@ jobs:
         with:
           fetch-depth: 0  # T-0146: the changelog check compares with the PR's merge base
       # T-0146: entries live in changelog.d/ (one fragment per card), never in CHANGELOG.md.
-      # `check` validates the fragments; on PRs `--base` also refuses hand edits anywhere in
-      # CHANGELOG.md. Only an assemble PR (added lines = fragments the same PR deletes) and a release
-      # PR (a new `## <version>` heading, lines only moved) pass (see changelog.d/README.md).
+      # `check` validates the fragments; on PRs `--base` compares CHANGELOG.md byte for byte with
+      # the merge base: only an unchanged file, the exact output of `assemble` for the fragments
+      # the PR deletes, or one inserted `## X.Y.Z` release heading pass (see changelog.d/README.md).
       - name: Changelog fragments
         env:
           EVENT: ${{ github.event_name }}

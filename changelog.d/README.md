@@ -14,18 +14,37 @@ conflict on the top of `CHANGELOG.md`.
 - **Check locally:** `python3 tools/changelog.py check` (also run by `ctest` as
   `tools.changelog_check` and by CI on every PR).
 
-CI (`python3 tools/changelog.py check --base origin/main` on every PR) compares the whole of
-`CHANGELOG.md` with the PR's merge base, as multisets of non-blank lines, and accepts only two
-kinds of change; anything else (a line added anywhere by hand, an existing line edited, removed or
-duplicated, a second `## Unreleased`, existing Unreleased lines reordered) fails the PR:
+CI (`python3 tools/changelog.py check --base origin/main` on every PR) compares `CHANGELOG.md`
+byte for byte with its version at the PR's merge base. It must be identical except for exactly
+one of these three changes; anything else fails the PR (a line added, edited, removed, moved or
+reordered anywhere, a look-alike or second `## Unreleased`, changed line endings or whitespace,
+even added blank lines):
 
-1. **Assemble PR** (the director, when collecting entries): run `python3 tools/changelog.py assemble`
-   on a branch and commit the `CHANGELOG.md` change together with the fragment deletions, nothing
-   else in `CHANGELOG.md`. It passes because every line it adds sits under `## Unreleased` and is
-   the line of a fragment the same PR deletes (each once).
-2. **Release PR** (cutting a version): insert a `## <version>` heading directly below
-   `## Unreleased`, so the existing entries now sit under the version and `## Unreleased` is empty
-   again. Only the heading is new; every other line keeps its count (it merely moved), so it passes.
-   Do not reword entries in the same PR. Assemble first (PR 1), then release (PR 2).
+1. **No change** (every ordinary PR). The PR may add fragments. It may delete fragments only if it
+   also adds at least one: renaming a fragment, or merging `T-0120.md` and `T-0124.md` into
+   `T-0120-0124.md` when cards are squashed. Deleting a fragment outright fails (the entry would
+   be lost).
+2. **Assemble PR** (the director, when collecting entries): on a branch, run
+   `python3 tools/changelog.py assemble` and commit its result as is: the `CHANGELOG.md` change plus
+   the deleted fragments, no new fragment. Passes only if the lines of exactly the deleted
+   fragments, each once, were inserted at the top of `## Unreleased` in `assemble`'s order and
+   layout (newest card first, one blank line below the heading), with no other byte changed.
+3. **Release PR** (cutting a version; deletes no fragment): insert one heading
+   `## X.Y.Z` or `## X.Y.Z - YYYY-MM-DD` (ASCII digits, a version not yet in the file) at the top of a
+   non-empty `## Unreleased`, followed by a blank line:
+
+   ```
+   ## Unreleased
+
+   ## 0.2.0 - 2026-12-01
+
+   - T-0151: ...   (all the former Unreleased lines, unchanged and in order)
+   ```
+
+   Every former Unreleased line now belongs to the release and `## Unreleased` is empty again.
+   Assemble first (PR 2), then release in a separate PR. Never reword entries.
+
+Line endings: `.gitattributes` keeps `CHANGELOG.md` and `changelog.d/*.md` as LF in every checkout;
+a PR converting `CHANGELOG.md`'s line endings is refused like any other edit.
 
 This README is ignored by the tools.
