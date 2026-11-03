@@ -12,9 +12,14 @@ void planStretch(const PassPlan& plan, double top, double depth, std::vector<dou
     if (depth <= 0.0) {
         return;
     }
-    // Round-off guard: 12 / 4 must count as exactly 3 passes, not 4.
+    // Round-off guards: 12 / 4 must count as exactly 3 passes, not 4. `kEps` applies to the
+    // dimensionless pass ratio; `eps` is the same tolerance relative to the stretch, in mm, so the
+    // guard scales with the depths (an absolute 1e-9 mm swallowed a whole pass at nanometre pass
+    // depths: cut 1e-6 mm in 1e-9 mm passes gave 999 levels, not 1000). The step-slack test is
+    // relative to the step. For stretches and steps near 1 mm all three are the old 1e-9 mm.
     constexpr double kEps = 1e-9;
-    if (plan.passDepth <= 0.0 || plan.passDepth >= depth - kEps) {
+    const double eps = kEps * depth;
+    if (plan.passDepth <= 0.0 || plan.passDepth >= depth - eps) {
         outDepths.push_back(top + depth);
         return;
     }
@@ -22,7 +27,7 @@ void planStretch(const PassPlan& plan, double top, double depth, std::vector<dou
         const auto full = static_cast<std::size_t>(std::floor(depth / plan.passDepth + kEps));
         for (std::size_t i = 1; i <= full; ++i) {
             const double d = static_cast<double>(i) * plan.passDepth;
-            if (d < depth - kEps) {
+            if (d < depth - eps) {
                 outDepths.push_back(top + d);
             }
         }
@@ -31,7 +36,8 @@ void planStretch(const PassPlan& plan, double top, double depth, std::vector<dou
     }
     // Equalised passes: prefer fewer passes if the step grows by at most kStepSlack.
     auto n = static_cast<std::size_t>(std::ceil(depth / plan.passDepth - kEps));
-    if (n > 1 && depth / static_cast<double>(n - 1) <= plan.passDepth * (1.0 + PassPlan::kStepSlack) + kEps) {
+    if (n > 1 &&
+        depth / static_cast<double>(n - 1) <= plan.passDepth * (1.0 + PassPlan::kStepSlack) * (1.0 + kEps)) {
         --n;
     }
     const double step = depth / static_cast<double>(n);

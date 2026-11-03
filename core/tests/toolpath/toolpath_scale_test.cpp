@@ -2,12 +2,13 @@
 // profile and pocket in near-linear time, and a rest tool on a 200-tooth comb builds its pattern
 // only over the rest areas.
 //
-// Time is process CPU time (`processCpuSeconds`, cpu_time.hpp), best of a few runs, so other
-// processes under parallel ctest do not count. The absolute bounds are Release bounds and are
-// checked only under NDEBUG; the scaling ratio (time for 2n over time for n, at most 2.5) is
-// checked in every build, at smaller sizes in Debug. Reference numbers on the T-0123 machine
-// (Release): 5,000 vectors profile 0.24 s, pocket 0.65 s; comb raster rest 0.27 s, against 23.7 s
-// at the T-0121 merge (799dba3) for the same case.
+// Time is process CPU time (`processCpuSeconds`, cpu_time.hpp), so other processes under
+// parallel ctest do not count; the n and 2n runs alternate (`interleavedCpuSeconds`,
+// cpu_scaling.hpp, T-0145) so a load swing affects both sizes. The absolute bounds are Release
+// bounds on the least 2n time and are checked only under NDEBUG; the scaling ratio (time for 2n
+// over time for n, at most 2.5) is checked in every build, at smaller sizes in Debug. Reference
+// numbers on the T-0123 machine (Release): 5,000 vectors profile 0.24 s, pocket 0.65 s; comb
+// raster rest 0.27 s, against 23.7 s at the T-0121 merge (799dba3) for the same case.
 
 #include <algorithm>
 #include <catch2/catch_test_macros.hpp>
@@ -26,7 +27,7 @@
 #include "pocket_oracle.hpp"
 #include "pocket_test_util.hpp"
 // Last: on Windows it includes <windows.h> (macros such as near/far).
-#include "../geometry/cpu_time.hpp"
+#include "../geometry/cpu_scaling.hpp"
 
 using namespace carvetto::toolpath;
 using carvetto::geometry::Box2;
@@ -98,9 +99,6 @@ double bestCpu(int runs, F&& f) {
     return best;
 }
 
-/// Lower bound for the small-size time in the ratio, so a coarse clock tick cannot fail it.
-constexpr double kTimeFloor = 0.02;
-
 }  // namespace
 
 TEST_CASE("AC3: thousands of small closed vectors profile in near-linear time", "[toolpath][profile][perf][T-0123]") {
@@ -110,18 +108,20 @@ TEST_CASE("AC3: thousands of small closed vectors profile in near-linear time", 
     const std::vector<Contour> large = textLike(kLarge);
     ProfileResult rs;
     ProfileResult rl;
-    const int runs = kRelease ? 3 : 2;
-    const double ts = bestCpu(runs, [&] { rs = profileToolpath(small, profileTool(), p); });
-    const double tl = bestCpu(runs, [&] { rl = profileToolpath(large, profileTool(), p); });
-    INFO("CPU seconds: " << kSmall << " vectors " << ts << ", " << kLarge << " vectors " << tl);
+    const int pairs = kRelease ? 3 : 2;
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+        pairs, [&] { rs = profileToolpath(small, profileTool(), p); },
+        [&] { rl = profileToolpath(large, profileTool(), p); });
+    INFO("CPU seconds: " << kSmall << " vectors " << t.smallSeconds << ", " << kLarge << " vectors "
+                         << t.largeSeconds << ", ratio " << t.ratio());
     CHECK(rs.diagnostics.empty());
     CHECK(rl.diagnostics.empty());
     // Every vector is cut once (one retract per cut).
     CHECK(rs.toolpath.count(MoveKind::Retract) == kSmall);
     CHECK(rl.toolpath.count(MoveKind::Retract) == kLarge);
-    CHECK(tl <= 2.5 * std::max(ts, kTimeFloor));
+    CHECK(t.ratio() <= 2.5);
     if constexpr (kRelease) {
-        CHECK(tl < 2.0);
+        CHECK(t.largeSeconds < 2.0);
     }
 }
 
@@ -133,10 +133,12 @@ TEST_CASE("AC3: thousands of small closed vectors pocket in near-linear time", "
     const std::vector<Contour> large = textLike(kLarge);
     PocketResult rs;
     PocketResult rl;
-    const int runs = kRelease ? 3 : 2;
-    const double ts = bestCpu(runs, [&] { rs = pocketToolpath(small, {tool}, p); });
-    const double tl = bestCpu(runs, [&] { rl = pocketToolpath(large, {tool}, p); });
-    INFO("CPU seconds: " << kSmall << " vectors " << ts << ", " << kLarge << " vectors " << tl);
+    const int pairs = kRelease ? 3 : 2;
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+        pairs, [&] { rs = pocketToolpath(small, {tool}, p); },
+        [&] { rl = pocketToolpath(large, {tool}, p); });
+    INFO("CPU seconds: " << kSmall << " vectors " << t.smallSeconds << ", " << kLarge << " vectors "
+                         << t.largeSeconds << ", ratio " << t.ratio());
     CHECK(rs.diagnostics.empty());
     CHECK(rl.diagnostics.empty());
     // One cluster (and one retract) per pocketed region: every shape but the holes, whose
@@ -144,9 +146,9 @@ TEST_CASE("AC3: thousands of small closed vectors pocket in near-linear time", "
     REQUIRE_FALSE(rl.plans[0].paths.empty());
     CHECK(rl.toolpaths[0].count(MoveKind::Retract) == rl.plans[0].paths.back().cluster + 1);
     CHECK(rl.toolpaths[0].count(MoveKind::Retract) >= kLarge * 3 / 4);
-    CHECK(tl <= 2.5 * std::max(ts, kTimeFloor));
+    CHECK(t.ratio() <= 2.5);
     if constexpr (kRelease) {
-        CHECK(tl < 2.0);
+        CHECK(t.largeSeconds < 2.0);
     }
 }
 

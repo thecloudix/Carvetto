@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "carvetto/geometry/offset.hpp"
-#include "cpu_time.hpp"
+#include "cpu_scaling.hpp"
 #include "offset_batch.hpp"
 #include "test_rng.hpp"
 
@@ -288,24 +288,20 @@ TEST_CASE("T-0141 (a): a row of rectangles offsets in about linear time (CPU-tim
     const Tolerance tol{0.001, 1e-9, 0.001};
     const std::vector<Contour> small = rectangleRow(5000);
     const std::vector<Contour> large = rectangleRow(20000);
-    auto cost = [&tol](const std::vector<Contour>& row, std::size_t expect) {
-        double best = std::numeric_limits<double>::infinity();
-        for (int rep = 0; rep < 2; ++rep) {
-            const double t0 = carvetto::test::processCpuSeconds();
-            const std::size_t rings = offsetContours(row, -(0.1 - 3e-6), JoinType::Round, tol).size();
-            best = std::min(best, carvetto::test::processCpuSeconds() - t0);
-            CHECK(rings == expect);
-        }
-        return best;
-    };
-    // Floor well above the ~15.6 ms process-time resolution on Windows (GetProcessTimes), so a
-    // one-tick small run cannot fail the ratio; a quadratic large run still costs seconds.
-    const double smallCost = std::max(cost(small, 2500), 0.05);
-    const double largeCost = cost(large, 10000);
-    CAPTURE(smallCost, largeCost);
-    CHECK(largeCost < 6.25 * smallCost);
+    std::size_t smallRings = 0;
+    std::size_t largeRings = 0;
+    // Interleaved small and large runs (T-0145); the small time is floored at kCpuTimeFloor, well
+    // above the ~15.6 ms process-time resolution on Windows (GetProcessTimes), so a one-tick small
+    // run cannot fail the ratio; a quadratic large run still costs seconds.
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+        2, [&] { smallRings = offsetContours(small, -(0.1 - 3e-6), JoinType::Round, tol).size(); },
+        [&] { largeRings = offsetContours(large, -(0.1 - 3e-6), JoinType::Round, tol).size(); });
+    CHECK(smallRings == 2500);
+    CHECK(largeRings == 10000);
+    CAPTURE(t.smallSeconds, t.largeSeconds, t.ratio());
+    CHECK(t.ratio() < 6.25);
 #ifdef NDEBUG
-    CHECK(largeCost < 2.0);
+    CHECK(t.largeSeconds < 2.0);
 #endif
 }
 
@@ -324,20 +320,14 @@ TEST_CASE("T-0141 (a): a column of dust-thin rectangles offsets in about linear 
     };
     const std::vector<Contour> small = column(5000);
     const std::vector<Contour> large = column(20000);
-    auto cost = [&tol](const std::vector<Contour>& cs, std::size_t expect) {
-        double best = std::numeric_limits<double>::infinity();
-        for (int rep = 0; rep < 2; ++rep) {
-            const double t0 = carvetto::test::processCpuSeconds();
-            const std::size_t rings = offsetContours(cs, -(0.1 - 3e-6), JoinType::Round, tol).size();
-            best = std::min(best, carvetto::test::processCpuSeconds() - t0);
-            CHECK(rings == expect);
-        }
-        return best;
-    };
-    // Floor well above the ~15.6 ms process-time resolution on Windows (GetProcessTimes), so a
-    // one-tick small run cannot fail the ratio; a quadratic large run still costs seconds.
-    const double smallCost = std::max(cost(small, 2500), 0.05);
-    const double largeCost = cost(large, 10000);
-    CAPTURE(smallCost, largeCost);
-    CHECK(largeCost < 6.25 * smallCost);
+    std::size_t smallRings = 0;
+    std::size_t largeRings = 0;
+    // Interleaved runs, small time floored above the Windows process-clock tick (as above).
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+        2, [&] { smallRings = offsetContours(small, -(0.1 - 3e-6), JoinType::Round, tol).size(); },
+        [&] { largeRings = offsetContours(large, -(0.1 - 3e-6), JoinType::Round, tol).size(); });
+    CHECK(smallRings == 2500);
+    CHECK(largeRings == 10000);
+    CAPTURE(t.smallSeconds, t.largeSeconds, t.ratio());
+    CHECK(t.ratio() < 6.25);
 }

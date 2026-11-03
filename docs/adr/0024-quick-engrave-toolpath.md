@@ -21,7 +21,8 @@ start depth, so `EngraveParams` has `depth` (> 0, below the material surface Z =
 start depth 0, cut depth = depth, pass depth = depth / passes and `maintainExactStep` = true,
 which yields exactly `passes` levels (−depth·k/passes) with the last one exactly −depth. Each
 pass must be at least `kEngraveMinPassDepth` = 0.000001 mm deep (depth / passes); below that
-PassPlan's 1e-9 mm rounding guard merges levels, so such parameters are refused with
+PassPlan's then absolute 1e-9 mm rounding guard merged levels (relative since T-0145; the limit
+stays, as no machine resolves thinner passes), so such parameters are refused with
 `InvalidParameters` ("each pass must be at least 0.000001 mm deep …") and `engraveLevels`
 returns no levels (T-0155). Fill
 hands the same plan to Pocket, so both strategies cut the same levels. Safe Z must be above the

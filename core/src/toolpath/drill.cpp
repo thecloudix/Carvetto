@@ -278,7 +278,7 @@ DrillResult drillToolpath(const std::vector<Contour>& contours, const tooling::T
     plan.maintainExactStep = true;
     // The cap is on the passes PassPlan actually makes: exactly kMaxLevels passes are allowed,
     // one more is refused (T-0143). The estimate ceil(cut/pass) can exceed the true count by one
-    // (PassPlan's 1e-9 round-off guard), so it only screens out plans far too large to build.
+    // (PassPlan's relative 1e-9 round-off guard), so it only screens out plans far too large to build.
     const auto tooManyPasses = [&] {
         say(ToolpathIssue::WorkLimitExceeded, std::nullopt,
             "more than " + num(kMaxLevels) + " passes per hole (pass depth " + num(pt.passDepth) +

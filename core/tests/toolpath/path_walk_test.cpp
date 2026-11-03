@@ -223,3 +223,58 @@ TEST_CASE("orderCuts: containment first, then strategy", "[toolpath][order]") {
     CHECK(orderCuts(items, ltr, {0, 0}, geometry::Tolerance::defaults()) == std::vector<std::size_t>{1, 0, 2});
     CHECK(travelLength(items, {1, 0, 2}, {0, 0}) == Approx(std::hypot(10, 10) * 2 + 60));
 }
+
+TEST_CASE("Tabs moved off a keep-clear point are kept, never dropped by rounding", "[toolpath][tabs]") {
+    // T-0135 (g): fitTabs moves a centre within `reach` of a keep-clear point to exactly `reach`
+    // from it and then re-checks |c - f| < reach, which (f + reach) - f decided by rounding: about
+    // half of these tabs were dropped. Now the moved tab is always kept, on either side.
+    Contour line;
+    line.append(LineSpan{{0, 0}, {100, 0}});
+    const ArcLengthPath lp(line, geometry::Tolerance::defaults());
+    const double footprint = 2.0;
+    const double reach = 0.5 * footprint + kMinTabGap;
+    std::size_t kept = 0;
+    std::size_t exact = 0;
+    const int n = 2000;
+    for (int k = 0; k < n; ++k) {
+        const double f = 10.0 + k * 0.0371234;
+        for (const double offset : {0.3, -0.3}) {
+            const TabPlacement tp = fitTabs(lp, {f + offset}, footprint, {f});
+            REQUIRE(tp.centres.size() + tp.dropped == 1);
+            if (tp.centres.size() == 1) {
+                ++kept;
+                CHECK(std::fabs(std::fabs(tp.centres.front() - f) - reach) < 1e-9);
+                if (std::fabs(tp.centres.front() - f) < reach) ++exact;
+            }
+        }
+    }
+    CHECK(kept == 2 * static_cast<std::size_t>(n));
+    CHECK(exact > 0);  // some moved centres really do come out a few ulps short
+    // With a move margin (room for another pass's cover) the moved tab keeps that much more.
+    for (const double offset : {0.3, -0.3}) {
+        const TabPlacement tp = fitTabs(lp, {40.0 + offset}, footprint, {40.0}, kMinTabGap, 0.012);
+        REQUIRE(tp.centres.size() == 1);
+        CHECK(std::fabs(std::fabs(tp.centres.front() - 40.0) - (reach + 0.012)) < 1e-12);
+    }
+    // T-0135 round 2 (verifier gfit2): tabs are fitted in order along the path, moved ones too, as
+    // T-0127 did. Footprint 4, gap 3, keep-clear 30, asked {29.5, 33, 36}: 29.5 moves to 27.999,
+    // 33 overlaps it and is dropped, 36 is kept (a rule fitting moved tabs last kept only 33).
+    {
+        const TabPlacement tp = fitTabs(lp, {29.5, 33.0, 36.0}, 4.0, {30.0}, 3.0);
+        REQUIRE(tp.centres.size() == 2);
+        CHECK(tp.centres[0] == Approx(27.999).margin(1e-9));
+        CHECK(tp.centres[1] == 36.0);
+        CHECK(tp.dropped == 1);
+        REQUIRE(tp.origin.size() == 2);
+        CHECK(tp.origin[0] == 0);
+        CHECK(tp.origin[1] == 2);
+        Contour sq = Contour::rectangle(Box2{{0, 0}, {25, 25}});
+        const ArcLengthPath sp(sq, geometry::Tolerance::defaults());
+        const TabPlacement ts = fitTabs(sp, {29.5, 33.0, 36.0}, 4.0, {30.0}, 3.0);
+        CHECK(ts.centres.size() == 2);
+    }
+    // A centre clearly inside the gap with no room to move (both sides blocked) is still dropped.
+    const TabPlacement blocked = fitTabs(lp, {50.0}, footprint, {49.5, 51.0});
+    CHECK(blocked.centres.empty());
+    CHECK(blocked.dropped == 1);
+}

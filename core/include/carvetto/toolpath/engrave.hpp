@@ -70,9 +70,10 @@ struct EngraveResult {
 /// ball nose and diamond drag tool (T-0154; its toolpath runs with the spindle off).
 bool engraveToolAllowed(tooling::ToolType type);
 
-/// Smallest depth of one pass, mm (`depth / passes`). Below it the pass levels are no longer
-/// distinguishable from rounding (PassPlan's 1e-9 mm guard would merge them), so `engraveLevels`
-/// returns nothing and `engraveToolpath` refuses with `InvalidParameters` (ADR-0024 §1).
+/// Smallest depth of one pass, mm (`depth / passes`). Thinner passes are far below any machine's
+/// resolution (and merged levels while PassPlan's rounding guard was an absolute 1e-9 mm, before
+/// T-0145), so `engraveLevels` returns nothing and `engraveToolpath` refuses with
+/// `InvalidParameters` (ADR-0024 §1).
 inline constexpr double kEngraveMinPassDepth = 1e-6;
 
 /// The Z level of every pass: exactly `passes` equal steps down to −`depth`, the last exactly

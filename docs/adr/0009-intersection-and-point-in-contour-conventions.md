@@ -49,6 +49,12 @@ Date: 2026-10-24 · Status: accepted (director, 2026-10-24); amendments of 2026-
 6. `signedArea` is exact via Green's theorem (lines: shoelace term, arcs: closed-form sector
    term, Beziers: 3-point Gauss–Legendre, exact for the degree-5 integrand); positive means CCW.
    Open contours have area 0 and `Orientation::Degenerate`, matching `Polyline::signedArea`.
+   (T-0147) The integral is evaluated about a local origin, the contour's start point, so a small
+   contour far from the global origin does not cancel to rounding noise (a 1 × 0.5 mm rectangle at
+   1e8 mm used to give 0). Every place where two span ends do not meet exactly (span junctions,
+   the closing junction, and an arc's computed end points against its exact ones) is joined by a
+   straight gap, as in point-in-contour, so the measured region is closed at any magnitude.
+   `Polyline::signedArea` and the Pocket ring area use the first vertex as the local origin.
 
 7. `closestPoint(BezierSpan)` is global. Every root in [0,1] of the quintic
    g(t) = (B(t) − q)·B′(t) is isolated by de Casteljau subdivision of its Bernstein coefficients

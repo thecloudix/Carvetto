@@ -6,13 +6,14 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include <algorithm>
-#include <ctime>
 #include <cstddef>
 #include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
 
 #include "carvetto/geometry/vec2.hpp"
+// Last: on Windows it includes <windows.h> (macros such as near/far).
+#include "../../../core/tests/geometry/cpu_scaling.hpp"
 
 using Catch::Approx;
 using Catch::Matchers::ContainsSubstring;
@@ -223,12 +224,6 @@ TEST_CASE("T-0134: deep nesting is refused early with a clear error", "[cli][par
 
 namespace {
 
-/// Process CPU time (immune to other processes competing for the cores; on MSVC std::clock() is
-/// wall-clock, and the Windows CI runs ctest serially).
-double cpuSeconds() {
-    return static_cast<double>(std::clock()) / static_cast<double>(CLOCKS_PER_SEC);
-}
-
 /// {"tool": …, "x": [{"a": 1}, … n times]} or {"tool": …, "x": {"k0": {}, … n times}}.
 std::string wide(bool arrayOfObjects, std::size_t n) {
     std::string s = R"({"tool": {"id": "t"}, "x": )";
@@ -239,18 +234,6 @@ std::string wide(bool arrayOfObjects, std::size_t n) {
     }
     s += arrayOfObjects ? ']' : '}';
     return s + "}";
-}
-
-/// CPU seconds to run `f`, best of three (the minimum filters out scheduling noise).
-template <class F>
-double timed(F&& f) {
-    double best = 1e300;
-    for (int k = 0; k < 3; ++k) {
-        const double t0 = cpuSeconds();
-        f();
-        best = std::min(best, cpuSeconds() - t0);
-    }
-    return best;
 }
 
 }  // namespace
@@ -266,21 +249,29 @@ TEST_CASE("T-0134: params parsing stays linear for wide arrays of objects and ob
         INFO((arrayOfObjects ? "array of objects" : "object of objects"));
         const std::string small = wide(arrayOfObjects, 50'000);
         const std::string large = wide(arrayOfObjects, 100'000);
-        std::string e;
-        const double tSmall = timed([&] { e = errorOf(small); });
-        CHECK_THAT(e, ContainsSubstring("unknown key 'x'"));  // parsed through, then the schema
-        const double tLarge = timed([&] { e = errorOf(large); });
-        CHECK_THAT(e, ContainsSubstring("unknown key 'x'"));
-        // Baseline: the plain JSON parse the checks come on top of.
+        // Process CPU time (cpu_time.hpp; GetProcessTimes on Windows), runs of the two sizes
+        // alternating (`interleavedCpuSeconds`, T-0145), so a load swing between them cannot move
+        // the ratio; the smaller time is floored above the Windows process-clock tick.
+        std::string eSmall;
+        std::string eLarge;
+        const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+            3, [&] { eSmall = errorOf(small); }, [&] { eLarge = errorOf(large); });
+        CHECK_THAT(eSmall, ContainsSubstring("unknown key 'x'"));  // parsed through, then the schema
+        CHECK_THAT(eLarge, ContainsSubstring("unknown key 'x'"));
+        // Baseline: the plain JSON parse the checks come on top of, alternating with the checked
+        // parse of the same input.
         std::size_t plainSize = 0;
-        const double tPlain = timed([&] { plainSize = nlohmann::json::parse(large).size(); });
+        const carvetto::test::ScalingTimes vsPlain = carvetto::test::interleavedCpuSeconds(
+            3, [&] { plainSize = nlohmann::json::parse(large).size(); }, [&] { eLarge = errorOf(large); });
         CHECK(plainSize == 2);
-        INFO("50k " << tSmall << " s, 100k " << tLarge << " s, plain parse of 100k " << tPlain << " s");
-        CHECK(tLarge < absolute);
+        INFO("50k " << t.smallSeconds << " s, 100k " << t.largeSeconds << " s (ratio " << t.ratio()
+                    << "), plain parse of 100k " << vsPlain.smallSeconds << " s (ratio "
+                    << vsPlain.ratio() << ")");
+        CHECK(std::min(t.largeSeconds, vsPlain.largeSeconds) < absolute);
         // Quadratic work would take 4x when the input doubles (the T-0134 verifier measured
         // 2.7 s at 10k and 10.8 s at 20k with nlohmann's callback parser).
-        CHECK(tLarge <= 3.0 * tSmall + 0.02);
-        CHECK(tLarge <= 4.0 * tPlain + 0.02);
+        CHECK(t.ratio() <= 3.0);
+        CHECK(vsPlain.ratio() <= 4.0);
     }
 }
 
