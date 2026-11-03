@@ -187,8 +187,13 @@ through, so no post, block or tag can bypass them.
          starts with `;` and none holds a `(`: Marlin) text after `;` is a comment and no `(` or
          `)` may appear before it (Marlin without `PAREN_COMMENTS` has no paren comments); on
          other posts `;` is not a comment for this check.
+       - No tab anywhere in a line written in a drag section, on every post: Marlin does not treat
+         a tab as a separator (`N0<TAB>M0` is an unknown command and the pause is skipped), and no
+         shipped post writes tabs. On `;`-style posts no `N` word either: hosts such as OctoPrint
+         and Printrun prefix their own `N…*checksum` and Marlin skips only one `N`, so
+         `N57 N1 M0` would be an unknown command (the shipped Marlin post writes no line numbers).
        - *Live G-code* of the written line (outside comments): only words LETTER+VALUE separated
-         by spaces or tabs, the letter upper case and directly followed by its value. Any other
+         by spaces, the letter upper case and directly followed by its value. Any other
          character refuses the line, including `/` anywhere (block delete has no place in a drag
          section; a VAR prefix `/N` is refused too), `#`, `[`, `*`, `=`, `%`, `$`, `@`, `^`, `;`
          on paren posts, lower case, a letter without a value and a space inside a word. Allowed

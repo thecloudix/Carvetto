@@ -570,6 +570,11 @@ std::string renderedProblem(std::string_view text, bool semicolonComments) {
     if (std::string bad = nonAsciiProblem(text); !bad.empty()) {
         return bad;
     }
+    if (text.find('\t') != std::string_view::npos) {
+        // Marlin does not treat a tab as a separator ("N0<TAB>M0" is an unknown command, so the
+        // pause is skipped); no shipped post writes tabs, so none are allowed in a drag section.
+        return "a tab (separate words with spaces)";
+    }
     if (const std::size_t at = text.find_first_of("~!?"); at != std::string_view::npos) {
         return std::string("the Grbl realtime character '") + text[at] + "'";
     }
@@ -577,8 +582,14 @@ std::string renderedProblem(std::string_view text, bool semicolonComments) {
         return bad;
     }
     bool pauseLine = false;
-    if (std::string bad = allowlistProblem(liveCode(text, semicolonComments), pauseLine); !bad.empty()) {
+    const std::string live = liveCode(text, semicolonComments);
+    if (std::string bad = allowlistProblem(live, pauseLine); !bad.empty()) {
         return bad;
+    }
+    if (semicolonComments && live.find('N') != std::string::npos) {
+        // Hosts (OctoPrint, Printrun) prefix their own N...*checksum and Marlin skips only one N,
+        // so "N57 N1 M0" would be an unknown command: no N words on ';'-style posts.
+        return "an N word (line numbers are not allowed in a drag section on ';'-comment posts)";
     }
     if (pauseLine && !semicolonComments && std::count(text.begin(), text.end(), '(') > 1) {
         return "more than one comment on a line with M0 or M1";

@@ -747,7 +747,7 @@ TEST_CASE("T-0154 bare M0: an M0/M1 line in a drag section holds only [N] M0 and
         CHECK_THAT(runError(parseText(parenPost(line)), {drag()}), ContainsSubstring("runs with the spindle off"));
     }
     // Bare forms, with one comment, are fine.
-    for (const char* line : {"M0", "M00", "N10 M0", "M0 ; pause"}) {
+    for (const char* line : {"M0", "M00", "M0 ; pause"}) {
         INFO(line);
         CHECK(runError(parseText(semiPost(line)), {drag()}).empty());
     }
@@ -832,4 +832,33 @@ TEST_CASE("T-0154 round 4: pause content is judged on the written lines; no bloc
     const std::string padded = "VAR SAFE_Z = [SAFEZ|A| Z|20.3]\n" + kMoves +
                                "begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"G0[SAFEZ]\"\n\"M0\"\nend\n" + kUnlock;
     CHECK_THAT(runError(parseText(padded), {drag()}), ContainsSubstring("too many digits"));
+}
+
+TEST_CASE("T-0154: no tabs in drag sections; no N words on ';'-style posts", "[post][spindle-off][allowlist]") {
+    // postatk7 S6/S7/T1b: Marlin keeps tabs, so "N0<TAB>M0" or "<TAB>M0" is an unknown command and
+    // the pause (and in T1b the M5) would be skipped.
+    const std::string semiHeader = "begin HEADER\n\"; [TOOLPATH_NAME]\"\nend\n";
+    const std::string semiUnlock = "begin SPINDLE_UNLOCK_PAUSE\n\"M5\"\n\"M0\"\nend\n";
+    const auto semiPause = [&](const std::string& lines) {
+        return kMoves + semiHeader + "begin SPINDLE_OFF_PAUSE\n" + lines + "end\n" + semiUnlock;
+    };
+    for (const char* lines : {"\"M5\"\n\"N0\tM0\"\n", "\"M5\"\n\"\tM0\"\n", "\"\tM5\"\n\"\tM0\"\n"}) {
+        INFO(lines);
+        CHECK_THAT(runError(parseText(semiPause(lines)), {drag()}), ContainsSubstring("a tab"));
+    }
+    // Tabs are refused on paren posts too (no shipped post writes them).
+    CHECK_THAT(runError(parseText(kMoves + "begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"\tM0\"\nend\n" + kUnlock), {drag()}),
+               ContainsSubstring("a tab"));
+    // N words on a ';' post: hosts add their own N...*checksum and Marlin skips only one.
+    for (const char* lines : {"\"M5\"\n\"N1 M0\"\n", "\"N1 M5\"\n\"M0\"\n"}) {
+        INFO(lines);
+        CHECK_THAT(runError(parseText(semiPause(lines)), {drag()}), ContainsSubstring("an N word"));
+    }
+    const std::string numbered = "VAR LINE_NUMBER = [N|A|N|1.0]\n" + kMoves + semiHeader +
+                                 "begin RAPID_MOVE\n\"[N] G0[X][Y][Z]\"\nend\n" +
+                                 "begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"M0\"\nend\n" + semiUnlock;
+    CHECK_THAT(runError(parseText(numbered), {drag()}), ContainsSubstring("an N word"));
+    // N words stay fine on paren posts (Mach3 numbers its lines).
+    CHECK(runError(parseText(kMoves + "begin SPINDLE_OFF_PAUSE\n\"N10 M5\"\n\"N20 M0\"\nend\n" + kUnlock), {drag()})
+              .empty());
 }
