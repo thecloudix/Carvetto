@@ -298,7 +298,9 @@ TEST_CASE("T-0141 (a): a row of rectangles offsets in about linear time (CPU-tim
         }
         return best;
     };
-    const double smallCost = std::max(cost(small, 2500), 1e-3);
+    // Floor well above the ~15.6 ms process-time resolution on Windows (GetProcessTimes), so a
+    // one-tick small run cannot fail the ratio; a quadratic large run still costs seconds.
+    const double smallCost = std::max(cost(small, 2500), 0.05);
     const double largeCost = cost(large, 10000);
     CAPTURE(smallCost, largeCost);
     CHECK(largeCost < 6.25 * smallCost);
@@ -332,7 +334,9 @@ TEST_CASE("T-0141 (a): a column of dust-thin rectangles offsets in about linear 
         }
         return best;
     };
-    const double smallCost = std::max(cost(small, 2500), 1e-3);
+    // Floor well above the ~15.6 ms process-time resolution on Windows (GetProcessTimes), so a
+    // one-tick small run cannot fail the ratio; a quadratic large run still costs seconds.
+    const double smallCost = std::max(cost(small, 2500), 0.05);
     const double largeCost = cost(large, 10000);
     CAPTURE(smallCost, largeCost);
     CHECK(largeCost < 6.25 * smallCost);
