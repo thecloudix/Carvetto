@@ -18,13 +18,17 @@ Fragment rules (enforced by `check`):
   - changelog.d/README.md and dotfiles are ignored; any other file is an error.
 
 Subcommands:
-  check                 validate all fragments and that CHANGELOG.md has a "## Unreleased" heading.
-  check --base <ref>    additionally compare against the merge base of <ref> and HEAD (used by CI on
-                        pull requests): the PR must not edit CHANGELOG.md's Unreleased section by hand.
-                        Allowed: every line the PR adds to the section is the line of a fragment the
-                        same PR deletes (that is what `assemble` produces), and every line it removes
-                        from the section still appears elsewhere in CHANGELOG.md (moved to a release
-                        section); the lines kept stay in the same order.
+  check                 validate all fragments, that docs/BACKLOG.md exists and that CHANGELOG.md has
+                        exactly one "## Unreleased" heading.
+  check --base <ref>    additionally compare CHANGELOG.md with the merge base of <ref> and HEAD (used
+                        by CI on pull requests): nobody edits CHANGELOG.md by hand. The whole file is
+                        compared as multisets of non-blank lines. Allowed changes:
+                          - lines of fragments the same PR deletes, each at most once, inside the
+                            Unreleased section (an assemble PR);
+                          - new "## <version>" headings, with existing lines moved under them (a
+                            release PR: moving a line keeps the counts unchanged);
+                        and nothing else: no line may be removed or edited, no other line added, no
+                        second "## Unreleased", and lines that stay in Unreleased keep their order.
   assemble              insert all fragments under "## Unreleased" (above the existing entries),
                         newest first by card number (the highest id of a multi-card fragment, ties
                         broken by the full id list, then the name), then delete the fragments.
@@ -40,6 +44,8 @@ Examples:
 """
 
 import argparse
+import collections
+import os
 import pathlib
 import re
 import subprocess
@@ -53,8 +59,8 @@ BACKLOG = "docs/BACKLOG.md"
 UNRELEASED = "## Unreleased"
 IGNORED = {"README.md"}
 
-NAME_RE = re.compile(r"^T-(\d{4}(?:-\d{4})*)\.md$")
-CARD_RE = re.compile(r"^### (T-\d{4})\b", re.MULTILINE)
+NAME_RE = re.compile(r"^T-([0-9]{4}(?:-[0-9]{4})*)\.md$")
+CARD_RE = re.compile(r"^### (T-[0-9]{4})(?![0-9])", re.MULTILINE)
 # Unicode categories refused in a fragment line: control, format (zero-width, bidi, BOM),
 # surrogate, private use, unassigned, line and paragraph separators.
 BAD_CATEGORIES = {"Cc", "Cf", "Cs", "Co", "Cn", "Zl", "Zp"}
@@ -127,6 +133,14 @@ def validate_fragment(name, data, known_cards=None):
     return Fragment(name, ids, text), []
 
 
+def read_backlog(root):
+    """docs/BACKLOG.md text (fragment ids are checked against its cards), or an error."""
+    backlog = root / BACKLOG
+    if not backlog.is_file():
+        return "", ["%s is missing (fragment card ids are checked against it)" % BACKLOG]
+    return backlog.read_text(encoding="utf-8"), []
+
+
 def known_cards_from(backlog_text):
     return set(CARD_RE.findall(backlog_text))
 
@@ -190,6 +204,10 @@ def unreleased_bounds(lines):
     return None
 
 
+def count_unreleased(lines):
+    return sum(1 for ln in lines if ln.rstrip() == UNRELEASED)
+
+
 def section_entries(lines):
     """Non-blank lines of the Unreleased section (None if there is no such section)."""
     b = unreleased_bounds(lines)
@@ -228,16 +246,20 @@ def cmd_check(root, base):
     for name, data in entries.items():
         if data is None:
             errors.append("%s/%s: unexpected directory" % (FRAGMENT_DIR, name))
-    backlog = root / BACKLOG
-    backlog_text = backlog.read_text(encoding="utf-8") if backlog.is_file() else None
+    backlog_text, err = read_backlog(root)
+    errors += err
     fragments, errs = check_fragment_set({k: v for k, v in entries.items() if v is not None},
                                          backlog_text)
     errors += errs
     changelog = root / CHANGELOG
     if not changelog.is_file():
         errors.append("%s is missing" % CHANGELOG)
-    elif section_entries(split_lines(changelog.read_text(encoding="utf-8"))[0]) is None:
-        errors.append("%s has no '%s' heading" % (CHANGELOG, UNRELEASED))
+    else:
+        n = count_unreleased(split_lines(changelog.read_text(encoding="utf-8"))[0])
+        if n == 0:
+            errors.append("%s has no '%s' heading" % (CHANGELOG, UNRELEASED))
+        elif n > 1:
+            errors.append("%s has %d '%s' headings; exactly one is allowed" % (CHANGELOG, n, UNRELEASED))
     if base is not None and not errors:
         errors += check_against_base(root, base)
     for e in errors:
@@ -247,8 +269,8 @@ def cmd_check(root, base):
               % (len(errors), "" if len(errors) == 1 else "s"), file=sys.stderr)
         return 1
     print("changelog check ok: %d fragment%s%s" % (len(fragments), "" if len(fragments) == 1 else "s",
-                                                   "" if base is None else ", no direct edits to the "
-                                                   "Unreleased section"))
+                                                   "" if base is None else ", no hand edits to "
+                                                   "CHANGELOG.md"))
     return 0
 
 
@@ -267,7 +289,14 @@ def fragments_at(root, rev):
 
 
 def check_against_base(root, base):
-    """Errors if HEAD edits the Unreleased section other than by assembling deleted fragments."""
+    """Errors if HEAD changes CHANGELOG.md other than by assembling deleted fragments or a release move.
+
+    The whole file is compared as multisets of non-blank lines (HEAD vs the merge base):
+      - no non-blank line may disappear (moving a line between sections keeps the counts);
+      - every added line is either the line of a fragment this PR deletes, at most once each and
+        inside the Unreleased section, or a '## <version>' release heading (not a second Unreleased);
+      - lines that stay inside the Unreleased section keep their relative order.
+    """
     try:
         mb = git(root, "merge-base", base, "HEAD").decode("ascii").strip()
         base_text = git(root, "show", "%s:%s" % (mb, CHANGELOG)).decode("utf-8")
@@ -276,31 +305,45 @@ def check_against_base(root, base):
         return ["cannot compare with %s: %s" % (base, e)]
     head_lines = split_lines((root / CHANGELOG).read_text(encoding="utf-8"))[0]
     base_lines = split_lines(base_text)[0]
-    base_entries = section_entries(base_lines) or []
-    head_entries = section_entries(head_lines) or []
     head_names = set((read_fragment_dir(root) or {}).keys())
-    deleted = set()
+    deleted = collections.Counter()
     for name, data in base_frags.items():
         if name not in head_names:
             frag, _ = validate_fragment(name, data)
             if frag is not None:
-                deleted.add(frag.line)
-    hb = unreleased_bounds(head_lines)
-    elsewhere = set(head_lines[:hb[0]] + head_lines[hb[1]:]) if hb else set(head_lines)
+                deleted[frag.line] += 1
     errors = []
+    if count_unreleased(head_lines) != 1:
+        return ["%s must keep exactly one '%s' heading" % (CHANGELOG, UNRELEASED)]
+    hb = unreleased_bounds(head_lines)
+    head_unreleased = collections.Counter(ln for ln in head_lines[hb[0] + 1:hb[1]] if ln.strip())
+    base_count = collections.Counter(ln for ln in base_lines if ln.strip())
+    head_count = collections.Counter(ln for ln in head_lines if ln.strip())
+    for line in sorted(base_count - head_count):
+        errors.append("%s: line removed or edited (existing lines are never edited): %s"
+                      % (CHANGELOG, short(line)))
+    added = head_count - base_count
+    for line in sorted(added):
+        n = added[line]
+        if line.startswith("## ") and line.rstrip() != UNRELEASED and line[3:].strip() and n == 1:
+            continue  # a release heading
+        if line in deleted:
+            if n > deleted[line]:
+                errors.append("%s: line added %d times but its fragment was deleted only %d time(s): %s"
+                              % (CHANGELOG, n, deleted[line], short(line)))
+            elif head_unreleased[line] < n:
+                errors.append("%s: assembled line placed outside '%s': %s"
+                              % (CHANGELOG, UNRELEASED, short(line)))
+            continue
+        errors.append("%s: line added by hand (write a fragment in %s/ instead): %s"
+                      % (CHANGELOG, FRAGMENT_DIR, short(line)))
+    base_entries = section_entries(base_lines) or []
+    head_entries = section_entries(head_lines) or []
     base_set, head_set = set(base_entries), set(head_entries)
-    for line in head_entries:
-        if line not in base_set and line not in deleted:
-            errors.append("%s: line added to '%s' by hand (write a fragment in %s/ instead): %s"
-                          % (CHANGELOG, UNRELEASED, FRAGMENT_DIR, short(line)))
-    for line in base_entries:
-        if line not in head_set and line not in elsewhere:
-            errors.append("%s: line removed or edited in '%s' (existing entries are not edited): %s"
-                          % (CHANGELOG, UNRELEASED, short(line)))
     kept_head = [ln for ln in head_entries if ln in base_set]
     kept_base = [ln for ln in base_entries if ln in head_set]
-    if kept_head != kept_base:
-        errors.append("%s: existing '%s' lines were reordered or duplicated" % (CHANGELOG, UNRELEASED))
+    if not errors and kept_head != kept_base:
+        errors.append("%s: existing '%s' lines were reordered" % (CHANGELOG, UNRELEASED))
     return errors
 
 
@@ -310,10 +353,12 @@ def short(line):
 
 def cmd_assemble(root):
     entries = read_fragment_dir(root) or {}
-    backlog = root / BACKLOG
-    backlog_text = backlog.read_text(encoding="utf-8") if backlog.is_file() else None
-    fragments, errors = check_fragment_set({k: v for k, v in entries.items() if v is not None},
-                                           backlog_text)
+    errors = []
+    backlog_text, err = read_backlog(root)
+    errors += err
+    fragments, errs = check_fragment_set({k: v for k, v in entries.items() if v is not None},
+                                         backlog_text)
+    errors += errs
     changelog = root / CHANGELOG
     if not changelog.is_file():
         errors.append("%s is missing" % CHANGELOG)
@@ -329,11 +374,24 @@ def cmd_assemble(root):
     except ValueError as e:
         print("error: %s" % e, file=sys.stderr)
         return 1
-    if new != old:
-        with open(changelog, "w", encoding="utf-8", newline="") as f:
-            f.write(new)
-    for frag in fragments:  # only after CHANGELOG.md is written
-        (root / FRAGMENT_DIR / frag.name).unlink()
+    try:
+        if new != old:
+            if not os.access(str(changelog), os.W_OK):
+                raise OSError("%s is not writable" % changelog)
+            tmp = changelog.with_name(CHANGELOG + ".tmp")
+            try:
+                with open(tmp, "w", encoding="utf-8", newline="") as f:
+                    f.write(new)
+                os.replace(str(tmp), str(changelog))  # atomic: never a half-written CHANGELOG.md
+            finally:
+                if tmp.exists():
+                    tmp.unlink()
+        for frag in fragments:  # only after CHANGELOG.md is written
+            (root / FRAGMENT_DIR / frag.name).unlink()
+    except OSError as e:
+        print("error: %s" % e, file=sys.stderr)
+        print("assemble did not finish; run it again after fixing this (it is idempotent)", file=sys.stderr)
+        return 1
     print("assembled %d fragment%s into %s" % (len(fragments), "" if len(fragments) == 1 else "s",
                                                CHANGELOG))
     for frag in fragments:
@@ -352,6 +410,9 @@ def main(argv=None):
                          help="also refuse hand edits to the Unreleased section since merge-base(REF, HEAD)")
     sub.add_parser("assemble", help="move the fragments into CHANGELOG.md and delete them")
     args = parser.parse_args(argv)
+    for stream in (sys.stdout, sys.stderr):  # e.g. a cp1252 Windows console: never UnicodeEncodeError
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="backslashreplace")
     root = pathlib.Path(args.root).resolve()
     if args.command == "check":
         return cmd_check(root, args.base)

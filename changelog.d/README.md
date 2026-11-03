@@ -14,10 +14,18 @@ conflict on the top of `CHANGELOG.md`.
 - **Check locally:** `python3 tools/changelog.py check` (also run by `ctest` as
   `tools.changelog_check` and by CI on every PR).
 
-At release time the director runs `python3 tools/changelog.py assemble` on a branch: it inserts all
-fragments under `## Unreleased` in `CHANGELOG.md`, newest card first, and deletes them. That commit
-(the `CHANGELOG.md` change plus the fragment deletions, nothing else in `CHANGELOG.md`) goes through a
-normal PR. CI accepts it because every line it adds to the Unreleased section comes from a fragment
-the same PR deletes; any other edit to the Unreleased section fails `check --base`.
+CI (`python3 tools/changelog.py check --base origin/main` on every PR) compares the whole of
+`CHANGELOG.md` with the PR's merge base, as multisets of non-blank lines, and accepts only two
+kinds of change; anything else (a line added anywhere by hand, an existing line edited, removed or
+duplicated, a second `## Unreleased`, existing Unreleased lines reordered) fails the PR:
+
+1. **Assemble PR** (the director, when collecting entries): run `python3 tools/changelog.py assemble`
+   on a branch and commit the `CHANGELOG.md` change together with the fragment deletions, nothing
+   else in `CHANGELOG.md`. It passes because every line it adds sits under `## Unreleased` and is
+   the line of a fragment the same PR deletes (each once).
+2. **Release PR** (cutting a version): insert a `## <version>` heading directly below
+   `## Unreleased`, so the existing entries now sit under the version and `## Unreleased` is empty
+   again. Only the heading is new; every other line keeps its count (it merely moved), so it passes.
+   Do not reword entries in the same PR. Assemble first (PR 1), then release (PR 2).
 
 This README is ignored by the tools.

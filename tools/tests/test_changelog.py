@@ -6,8 +6,10 @@ Run: python3 tools/tests/test_changelog.py   (ctest runs it as tools.changelog_u
 
 import contextlib
 import io
+import os
 import pathlib
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -203,6 +205,26 @@ class CheckInvalid(RepoTest):
         self.assertEqual(code, 1)
         self.assertIn("no '## Unreleased' heading", err)
 
+    def test_two_unreleased_headings(self):
+        self.repo.write_changelog(CHANGELOG + "\n## Unreleased\n\n- T-0150: x\n")
+        code, _, err = self.repo.check()
+        self.assertEqual(code, 1)
+        self.assertIn("2 '## Unreleased' headings", err)
+
+    def test_missing_backlog(self):
+        (self.repo.dir / "docs" / "BACKLOG.md").unlink()
+        self.repo.frag("T-0150.md", "- T-0150: drilling\n")
+        code, _, err = self.repo.check()
+        self.assertEqual(code, 1)
+        self.assertIn("docs/BACKLOG.md is missing", err)
+        code, _, err = self.repo.assemble()
+        self.assertEqual(code, 1)
+        self.assertEqual(self.repo.names(), ["README.md", "T-0150.md"])
+
+    def test_non_ascii_digits(self):
+        # Arabic-Indic digits are Unicode decimal digits but not card ids.
+        self.assert_fails("T-\u0660\u0661\u0664\u0666.md", "- T-0146: x\n", "bad file name")
+
     def test_missing_fragment_dir(self):
         shutil.rmtree(self.repo.dir / "changelog.d")
         code, _, err = self.repo.check()
@@ -313,6 +335,22 @@ class Assemble(RepoTest):
         self.assertEqual(self.repo.changelog(), CHANGELOG)
         self.assertEqual(self.repo.names(), ["README.md", "T-0150.md", "T-0151.md"])
 
+    @unittest.skipIf(hasattr(os, "geteuid") and os.geteuid() == 0, "root ignores file permissions")
+    def test_read_only_changelog_clean_error(self):
+        self.repo.frag("T-0150.md", "- T-0150: drilling\n")
+        path = self.repo.dir / "CHANGELOG.md"
+        path.chmod(stat.S_IREAD)
+        try:
+            code, _, err = self.repo.assemble()
+        finally:
+            path.chmod(stat.S_IREAD | stat.S_IWRITE)
+        self.assertEqual(code, 1)
+        self.assertIn("not writable", err)
+        self.assertNotIn("Traceback", err)
+        self.assertEqual(self.repo.changelog(), CHANGELOG)
+        self.assertEqual(self.repo.names(), ["README.md", "T-0150.md"])
+        self.assertFalse((self.repo.dir / "CHANGELOG.md.tmp").exists())
+
     def test_no_unreleased_heading_changes_nothing(self):
         text = "# Changelog\n\n- T-0009: x\n"
         self.repo.write_changelog(text)
@@ -352,14 +390,14 @@ class CheckBase(RepoTest):
         self.commit("pr")
         code, out, err = self.check_base()
         self.assertEqual(code, 0, err)
-        self.assertIn("no direct edits", out)
+        self.assertIn("no hand edits", out)
 
     def test_direct_edit_fails(self):
         self.repo.write_changelog(CHANGELOG.replace("## Unreleased\n\n", "## Unreleased\n\n- T-0151: by hand\n"))
         self.commit("pr")
         code, _, err = self.check_base()
         self.assertEqual(code, 1)
-        self.assertIn("added to '## Unreleased' by hand", err)
+        self.assertIn("line added by hand", err)
 
     def test_uncommitted_direct_edit_fails(self):
         self.repo.write_changelog(CHANGELOG + "- T-0151: by hand\n")
@@ -411,6 +449,65 @@ class CheckBase(RepoTest):
         self.repo.frag("T-0151.md", "- T-0151: engraving\n")
         self.commit("pr")
         self.assertEqual(self.check_base()[0], 0)
+
+    def test_release_move_with_entries_under_version_passes(self):
+        self.repo.write_changelog("# Changelog\n\n## Unreleased\n\n## 0.1.0\n\n"
+                                  "- T-0017: older entry — with ≤ 0.5 mm and 45°\n- T-0009: oldest entry\n")
+        self.commit("release")
+        self.assertEqual(self.check_base()[0], 0)
+
+    # Bypasses found by the T-0146 round-1 verifier: the whole file is compared, not one section.
+    def assert_base_fails(self, text, needle):
+        self.repo.write_changelog(text)
+        self.commit("pr")
+        code, _, err = self.check_base()
+        self.assertEqual(code, 1, err)
+        self.assertIn(needle, err)
+
+    def test_fake_heading_inside_unreleased_fails(self):
+        for heading in ("# x", "## anything"):
+            with self.subTest(heading=heading):
+                self.assert_base_fails(
+                    CHANGELOG.replace("## Unreleased\n\n", "## Unreleased\n\n%s\n\n- T-0151: hand\n" % heading),
+                    "line added by hand (write a fragment in changelog.d/ instead): - T-0151: hand")
+
+    def test_h1_heading_alone_fails(self):
+        self.assert_base_fails(CHANGELOG.replace("## Unreleased\n\n", "## Unreleased\n\n# x\n\n"),
+                               "line added by hand (write a fragment in changelog.d/ instead): # x")
+
+    def test_line_above_unreleased_fails(self):
+        self.assert_base_fails(CHANGELOG.replace("## Unreleased", "- T-0151: on top\n\n## Unreleased"),
+                               "- T-0151: on top")
+
+    def test_second_unreleased_section_fails(self):
+        self.assert_base_fails(CHANGELOG + "\n## Unreleased\n\n- T-0151: hand\n", "'## Unreleased'")
+
+    def test_line_added_to_release_section_fails(self):
+        base = CHANGELOG + "\n## 0.1.0\n\n- T-0009: released\n"
+        self.repo.write_changelog(base)
+        self.commit("release on main")
+        self.git("branch", "-f", "main")
+        self.assert_base_fails(base + "- T-0151: hand in release\n", "- T-0151: hand in release")
+
+    def test_line_edited_in_release_section_fails(self):
+        base = CHANGELOG + "\n## 0.1.0\n\n- T-0124: released\n"
+        self.repo.write_changelog(base)
+        self.commit("release on main")
+        self.git("branch", "-f", "main")
+        self.assert_base_fails(base.replace("- T-0124: released", "- T-0124: released, reworded"),
+                               "removed or edited")
+
+    def test_fragment_line_assembled_twice_fails(self):
+        self.assertEqual(self.repo.assemble()[0], 0)
+        self.assert_base_fails(self.repo.changelog() + "- T-0150: drilling\n", "deleted only 1 time")
+
+    def test_assembled_line_outside_unreleased_fails(self):
+        (self.repo.dir / "changelog.d" / "T-0150.md").unlink()
+        self.assert_base_fails(CHANGELOG.replace("# Changelog\n", "# Changelog\n\n- T-0150: drilling\n"),
+                               "outside '## Unreleased'")
+
+    def test_duplicated_existing_line_fails(self):
+        self.assert_base_fails(CHANGELOG + "- T-0009: oldest entry\n", "- T-0009: oldest entry")
 
     def test_unknown_ref(self):
         code, _, err = self.repo.check("--base", "no-such-ref")

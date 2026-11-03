@@ -77,7 +77,7 @@ Review findings (non-blocking): ...
 - Branch per task: `task/T-0123-short-slug`. One task, one branch.
 - `main` is always green. Only the director merges.
 - Squash-merge with the task ID in the commit title. Commits end with the attribution lines the session provides.
-- Changelog: exactly one fragment per task in `changelog.d/` (`changelog.d/README.md`); nobody edits `CHANGELOG.md` by hand. At release time the director runs `python3 tools/changelog.py assemble` in its own PR (the fragments move into *Unreleased*, newest card first, and are deleted). CI's `tools/changelog.py check --base` fails any other PR that changes the *Unreleased* section.
+- Changelog: exactly one fragment per task in `changelog.d/` (`changelog.d/README.md`); nobody edits `CHANGELOG.md` by hand. At release time the director runs `python3 tools/changelog.py assemble` in its own PR (the fragments move into *Unreleased*, newest card first, and are deleted). Cutting a release is its own PR that only inserts a `## <version>` heading below `## Unreleased`. CI's `tools/changelog.py check --base` compares the whole file and fails any other change to `CHANGELOG.md` (details in `changelog.d/README.md`).
 - CI (`.github/workflows/ci.yml`) builds core+tests on Linux and the full Qt app on Windows. A red CI on `main` is the director's top priority.
 
 ## Concurrency guidance

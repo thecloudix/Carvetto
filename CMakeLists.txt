@@ -38,6 +38,8 @@ if(CARVETTO_BUILD_TESTS)
       COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/changelog.py --root ${PROJECT_SOURCE_DIR} check)
     add_test(NAME tools.changelog_unit
       COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/tests/test_changelog.py)
+    # UTF-8 console output on Windows (cp1252) too: messages quote fragment text verbatim.
+    set_tests_properties(tools.changelog_check tools.changelog_unit PROPERTIES ENVIRONMENT "PYTHONUTF8=1")
   else()
     message(STATUS "Python 3 not found - skipping the changelog tool tests (CI still runs the check)")
   endif()
