@@ -245,17 +245,6 @@ bool isSpindleStart(const GWord& w) {
     return w.letter == 'M' && (w.value == 3.0 || w.value == 4.0);
 }
 
-/// The first word in live G-code `code` that starts the spindle or sets a speed (M3, M4, any S
-/// word), or "" when there is none (T-0154).
-std::string spindleWord(std::string_view code) {
-    for (const GWord& w : gcodeWords(code)) {
-        if (w.letter == 'S' || isSpindleStart(w)) {
-            return w.text;
-        }
-    }
-    return {};
-}
-
 /// True when a block line (template text) that writes `[S]` does nothing but start the spindle:
 /// outside its comments it holds only `M3`/`M4` words, `[S]` (optionally after a literal `S`),
 /// `[N]` and spaces. Such a line is left out for a toolpath that runs with the spindle off
@@ -320,8 +309,9 @@ bool spindleOnlyLine(std::string_view line, bool semicolonComments) {
 
 /// The words a block writes as template text, outside comments and with its tags left out
 /// (used to check that a pause block stops the spindle and pauses). Lines that start with `/`
-/// (block delete: the controller may skip them) do not count.
-std::vector<GWord> blockWords(const PostBlock& block, bool semicolonComments) {
+/// (block delete: the controller may skip them) do not count; with `firstWordOnly` (Marlin, one
+/// command per line) only the first word of each line counts.
+std::vector<GWord> blockWords(const PostBlock& block, bool semicolonComments, bool firstWordOnly) {
     std::vector<GWord> out;
     for (const std::string& line : block.lines) {
         const std::string_view trimmed = detail::trim(line);
@@ -339,7 +329,11 @@ std::vector<GWord> blockWords(const PostBlock& block, bool semicolonComments) {
                 untagged += code[i];
             }
         }
-        for (GWord& w : gcodeWords(untagged)) {
+        std::vector<GWord> words = gcodeWords(untagged);
+        if (firstWordOnly && words.size() > 1) {
+            words.resize(1);  // Marlin runs one command per line: only the first counts
+        }
+        for (GWord& w : words) {
             out.push_back(std::move(w));
         }
     }
@@ -389,26 +383,170 @@ std::string templateProblem(std::string_view line, bool semicolonComments) {
     return {};
 }
 
+/// The allowlist of the live G-code written in a drag section (T-0154, owner decision
+/// 2026-11-03: an allowlist, not a blocklist). Exactly the codes the shipped posts write there.
+/// G codes, by value: 0 1 2 3 4 17 20 21 40 43 49 80 90 91 91.1 94.
+constexpr std::array<std::string_view, 16> kDragGCodes{"0",  "1",  "2",  "3",  "4",  "17", "20",   "21",
+                                                       "40", "43", "49", "80", "90", "91", "91.1", "94"};
+/// M codes, by integer value: 0 1 2 5 6 30 (never 3 or 4: the spindle stays off).
+constexpr std::array<int, 6> kDragMCodes{0, 1, 2, 5, 6, 30};
+
+bool allDigits(std::string_view v) {
+    return !v.empty() && std::all_of(v.begin(), v.end(), [](char c) { return isDigit(c); });
+}
+
+/// `v` without leading zeros in its integer part and trailing zeros in its fraction ("091.10" ->
+/// "91.1", "00" -> "0"); `v` is digits with at most one '.'.
+std::string normalisedDecimal(std::string_view v) {
+    const std::size_t dot = v.find('.');
+    std::string_view whole = v.substr(0, dot);
+    std::string_view frac = dot == std::string_view::npos ? std::string_view() : v.substr(dot + 1);
+    while (whole.size() > 1 && whole.front() == '0') {
+        whole.remove_prefix(1);
+    }
+    while (!frac.empty() && frac.back() == '0') {
+        frac.remove_suffix(1);
+    }
+    return std::string(whole.empty() ? "0" : whole) + (frac.empty() ? "" : "." + std::string(frac));
+}
+
+/// True for digits with at most one decimal point, a digit first ("12", "0.100", "3."). With
+/// `sign`, an optional leading '+' or '-'.
+bool isPlainNumber(std::string_view v, bool sign) {
+    if (sign && !v.empty() && (v.front() == '+' || v.front() == '-')) {
+        v.remove_prefix(1);
+    }
+    if (v.empty() || !isDigit(v.front()) || std::count(v.begin(), v.end(), '.') > 1) {
+        return false;
+    }
+    return std::all_of(v.begin(), v.end(), [](char c) { return isDigit(c) || c == '.'; });
+}
+
+/// Why one word of drag-section live G-code is not on the allowlist ("" when it is).
+std::string wordProblem(char letter, std::string_view value) {
+    const std::string word = std::string(1, letter) + std::string(value);
+    switch (letter) {
+        case 'X':
+        case 'Y':
+        case 'Z':
+        case 'I':
+        case 'J':
+        case 'F':
+        case 'P':
+            return isPlainNumber(value, true) ? std::string() : "the word " + word + " (not a plain number)";
+        case 'N':
+        case 'T':
+        case 'H':
+            return allDigits(value) ? std::string() : "the word " + word + " (needs plain digits)";
+        case 'G': {
+            if (!isPlainNumber(value, false)) {
+                return "the word " + word + " (not a plain number)";
+            }
+            const std::string n = normalisedDecimal(value);
+            const bool ok = std::find(kDragGCodes.begin(), kDragGCodes.end(), n) != kDragGCodes.end();
+            return ok ? std::string() : "the code " + word + " (not on the drag-section allowlist)";
+        }
+        case 'M': {
+            if (!allDigits(value)) {
+                return "the word " + word + " (M codes need plain digits)";
+            }
+            const std::string n = normalisedDecimal(value);
+            const bool ok = n.size() <= 2 && std::find(kDragMCodes.begin(), kDragMCodes.end(), std::stoi(n)) !=
+                                                 kDragMCodes.end();
+            return ok ? std::string() : "the code " + word + " (not on the drag-section allowlist)";
+        }
+        default:
+            return "the word " + word + " (the letter " + std::string(1, letter) +
+                   " is not on the drag-section allowlist)";
+    }
+}
+
+/// Why the live G-code of a line written in a drag section is not on the allowlist ("" when it
+/// is). After an optional single leading '/', it must be only words LETTER + value separated by
+/// spaces or tabs: upper-case letters X Y Z I J F P (signed plain numbers), N T H (plain digits),
+/// G (a code from `kDragGCodes`) and M (a code from `kDragMCodes`, plain digits). Any other
+/// character refuses the line. On ';'-style posts (Marlin) the text after an M0 or M1 word is its
+/// message: printable ASCII is allowed there (the realtime and emergency-parser checks of
+/// `renderedProblem` still apply).
+std::string allowlistProblem(std::string_view live, bool semicolonComments) {
+    std::size_t i = 0;
+    const auto skipSpaces = [&] {
+        while (i < live.size() && (live[i] == ' ' || live[i] == '\t')) {
+            ++i;
+        }
+    };
+    skipSpaces();
+    if (i < live.size() && live[i] == '/') {
+        ++i;
+    }
+    while (true) {
+        skipSpaces();
+        if (i >= live.size()) {
+            return {};
+        }
+        const char letter = live[i];
+        if (letter < 'A' || letter > 'Z') {
+            return std::string("the character '") + letter + "' (only upper-case words are allowed here)";
+        }
+        ++i;
+        const std::size_t start = i;
+        while (i < live.size() && (isDigit(live[i]) || live[i] == '.' || live[i] == '+' || live[i] == '-')) {
+            ++i;
+        }
+        const std::string_view value = live.substr(start, i - start);
+        if (value.empty()) {
+            return std::string("the letter ") + letter + " without a value";
+        }
+        if (std::string bad = wordProblem(letter, value); !bad.empty()) {
+            return bad;
+        }
+        if (i < live.size() && live[i] != ' ' && live[i] != '\t') {
+            return std::string("the character '") + live[i] + "' after " + letter + std::string(value);
+        }
+        if (semicolonComments && letter == 'M' && (normalisedDecimal(value) == "0" || normalisedDecimal(value) == "1")) {
+            return {};  // Marlin: the rest is the M0/M1 message
+        }
+    }
+}
+
 /// Why a written line (template text with its values) may not be written while a spindle-off
-/// toolpath is active ("" when it may): any byte that is not printable ASCII, parentheses that
-/// are not plain comments, a `#` or `[` in the live G-code (parameters, expressions), or a spindle
-/// start or speed word in the live G-code. Values inside comments are already sanitised
-/// (ADR-0020), so a tool named "S12 drill" in a comment is fine.
+/// toolpath is active ("" when it may), T-0154. Anywhere in the line, comments included: only
+/// printable ASCII, none of Grbl's realtime characters `~ ! ?`, and none of Marlin's
+/// emergency-parser codes M108, M112, M410, M876. Parentheses must be plain comments (a comment
+/// ends at the first `)`). The live G-code outside comments must pass `allowlistProblem`.
+/// Values inside comments are already sanitised (ADR-0020), so a tool named "S12 drill" in a
+/// comment is fine.
 std::string renderedProblem(std::string_view text, bool semicolonComments) {
     if (std::string bad = nonAsciiProblem(text); !bad.empty()) {
         return bad;
     }
+    if (const std::size_t at = text.find_first_of("~!?"); at != std::string_view::npos) {
+        return std::string("the Grbl realtime character '") + text[at] + "'";
+    }
+    std::string squeezed;
+    for (const char c : text) {
+        if (c != ' ' && c != '\t') {
+            squeezed += upperLetter(c);
+        }
+    }
+    for (std::size_t at = squeezed.find('M'); at != std::string::npos; at = squeezed.find('M', at + 1)) {
+        std::size_t j = at + 1;
+        while (j < squeezed.size() && squeezed[j] == '0') {
+            ++j;
+        }
+        std::size_t k = j;
+        while (k < squeezed.size() && isDigit(squeezed[k])) {
+            ++k;
+        }
+        const std::string_view code = std::string_view(squeezed).substr(j, k - j);
+        if (code == "108" || code == "112" || code == "410" || code == "876") {
+            return "the Marlin emergency-parser code M" + std::string(code);
+        }
+    }
     if (std::string bad = parenProblem(text, semicolonComments); !bad.empty()) {
         return bad;
     }
-    const std::string live = liveCode(text, semicolonComments);
-    if (live.find_first_of("#[") != std::string::npos) {
-        return "a '#' or '[' in the G-code (parameters and expressions are not allowed here)";
-    }
-    if (std::string word = spindleWord(live); !word.empty()) {
-        return "the spindle word " + word;
-    }
-    return {};
+    return allowlistProblem(liveCode(text, semicolonComments), semicolonComments);
 }
 
 bool hasWord(const std::vector<GWord>& words, char letter, double value) {
@@ -625,7 +763,7 @@ class Interpreter {
         }
         // Text after ';' never counts here (a comment on most controllers): conservative for a
         // block that must contain these words.
-        const std::vector<GWord> words = blockWords(*b, true);
+        const std::vector<GWord> words = blockWords(*b, true, semicolonComments_);
         if (needStop && !hasWord(words, 'M', 5.0)) {
             return "the post's " + std::string(name) + " block writes no M5 (spindle stop)";
         }

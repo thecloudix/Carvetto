@@ -116,10 +116,12 @@ one, the test fails.
     comment asking the operator to unlock the spindle, `M0` (Marlin: `M0 Unlock spindle then
     resume`), safe Z; once per drag section, not between drag toolpaths, and also before the
     program end when the job ends with drag toolpaths. A post without it (or whose block writes no `M5` or no `M0`) refuses such jobs.
-    In a drag section the template text must also follow a strict rule (ADR-0020): printable
-    ASCII only (non-ASCII output text is a parse error for every post), no `#`, no `M[tag]` or
-    `S[tag]`, plain unnested comments (a comment ends at the first `)`), and no M3/M4/S-number
-    word anywhere, comments included. Profile and Pocket refuse diamond-drag tools. In a custom post that offers
+    In a drag section every written line must pass an allowlist (ADR-0020): printable ASCII
+    only (non-ASCII output text is a parse error for every post), no `~ ! ?`, no Marlin
+    emergency codes, plain unnested comments (a comment ends at the first `)`), no M3/M4/S word
+    in the template text even in comments, and live G-code made only of upper-case words
+    `X Y Z I J F P` (signed numbers), `N T H` (digits), `G0 G1 G2 G3 G4 G17 G20 G21 G40 G43
+    G49 G80 G90 G91 G91.1 G94` and `M0 M1 M2 M5 M6 M30`, plus Marlin's M0 message text. Profile and Pocket refuse diamond-drag tools. In a custom post that offers
     `SPINDLE_OFF_PAUSE`, start the spindle in HEADER, TOOLCHANGE and NEW_SEGMENT on a line of its
     own (`M3[S]`).
 

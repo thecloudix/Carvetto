@@ -146,15 +146,8 @@ through, so no post, block or tag can bypass them.
        as their manual tool-change stop. On every shipped post the pause is `M0`, also on Mach3,
        Mach4 and LinuxCNC, whose tool change is `M6`: `M6` is a tool change that a controller
        may be set to ignore, `M0` is the program stop every one of them honours.
-     - refuses `[S]` anywhere else while the toolpath is written (move blocks, the pauses), and,
-       as a second guard, any written line whose G-code outside comments holds a spindle start
-       or speed word, whatever the post's template text says. Words are read the way RS274/NGC
-       controllers and Grbl read them: spaces and tabs are ignored everywhere, letters are
-       case-insensitive, a value may have a sign or a leading `.`, and every letter followed by a
-       number is a word wherever it stands (`M 3`, `M<TAB>03`, `m4`, `M+3`, `S 1000`, `S.5`,
-       `G0M3`, `/M3`, `N10M3`, and `M[T]` with tool 3 are all refused). Letters without a value
-       (Marlin's `M0 Drag tool 3 spindle off` message) are not words. The same tokeniser decides
-       which `[S]` lines are spindle-only and whether the pause blocks write `M5`/`M0`.
+     - refuses `[S]` anywhere else while the toolpath is written (move blocks, the pauses), and
+       checks every written line against the drag-section allowlist below.
      - treats a change between a spindle-off and a spinning toolpath as a tool change even when
        the tool number and name are equal, so the spindle restarts only through TOOLCHANGE +
        SPINDLE_ON (and its `[S]` > 0 check).
@@ -175,25 +168,50 @@ through, so no post, block or tag can bypass them.
      - Profile and Pocket refuse diamond-drag tools (`InvalidTool`, "… is a diamond drag tool,
        which must not turn; use Quick Engrave for diamond-drag tools"; Pocket skips just that
        tool), so a drag tool can no longer run in a spinning toolpath of those operations.
-     - **Strict template rule** (T-0154 verifier round 3, director 2026-11-03). Every output line
-       of a `.pp` block must be printable ASCII (bytes ≥ 0x80 are a parse error for all posts:
-       Grbl drops or acts on them, so `M<NBSP>3` would run M3; control characters were already
-       refused). While a spindle-off toolpath is written (its HEADER, TOOLCHANGE or NEW_SEGMENT,
-       both pause blocks and its move blocks), every template line that is written must have:
-       no `#` (RS274/NGC parameters, `M#1`); no M or S directly followed (after spaces) by a tag
-       (`M[T]`); only plain comments, where a comment ends at the first `)` as on Grbl and Mach,
-       and a `(` inside an open comment, a `)` without one or an unclosed comment is refused;
-       and no M3/M4/S-number word anywhere in the template text, comments included (it is the
-       post author's fixed text and has no reason to mention them there). The written line
-       (with its values) is checked again: printable ASCII, plain comments, no `#` or `[` in the
-       live G-code, and no spindle word in the live G-code; values inside comments are sanitised
-       already, so a tool named "S12 drill" in a comment is fine. Text after `;` is a comment for
-       these checks only on posts whose comment style is `;` (some block line starts with `;` and
-       none holds a `(`, i.e. Marlin); on other posts it counts as G-code. For the pause-content
-       requirement (both pause blocks must write `M5` and `M0`), lines starting with `/` (block
-       delete) and text after `;` never count. O-words, `M98` subroutine calls and user M-code
-       macros (LinuxCNC `M100`–`M199`, Mach macros) in a post are the post author's
-       responsibility: Carvetto cannot see what they do.
+     - **Drag-section allowlist** (T-0154; owner decision 2026-11-03 after verifier round 3: an
+       allowlist, not a blocklist). Every output line of a `.pp` block must be printable ASCII
+       (bytes ≥ 0x80 are a parse error for all posts: Grbl drops or acts on them, so `M<NBSP>3`
+       would run M3; control characters were already refused). While a spindle-off toolpath is
+       written (its HEADER, TOOLCHANGE or NEW_SEGMENT, both pause blocks and its move blocks):
+       - *Template text* of every written line: no `#`; no M or S followed (after spaces) by a
+         tag (`M[T]`); only plain comments, where a comment ends at the FIRST `)` as on Grbl and
+         Mach (a `(` inside an open comment, a `)` without one, or an unclosed comment is
+         refused); and no M3/M4/S-number word anywhere, comments included.
+       - *Whole written line*, comments included: printable ASCII only; none of Grbl's realtime
+         characters `~ ! ?`; none of Marlin's emergency-parser codes `M108 M112 M410 M876`
+         (spaces ignored, leading zeros allowed); parentheses as above.
+       - *Live G-code* of the written line (outside plain comments; text after `;` is a comment
+         only on `;`-style posts, i.e. some block line starts with `;` and none holds a `(`:
+         Marlin): after one optional leading `/`, only words LETTER+VALUE separated by spaces or
+         tabs, the letter upper case and directly followed by its value. Any other character
+         (`/` elsewhere, `#`, `[`, `*`, `=`, `%`, `$`, `@`, `^`, `;` on paren posts, lower case,
+         a letter without a value, a space inside a word) refuses the line. Allowed words, which
+         is exactly what the eight shipped posts write in drag sections:
+         - `X Y Z I J F P`: a plain number with an optional sign (`-0.100`, `+5`, `400`);
+         - `N T H`: plain digits (`N10`, `T3`, `H3`);
+         - `G`: plain digits with an optional decimal part, whose value is one of
+           `0 1 2 3 4 17 20 21 40 43 49 80 90 91 91.1 94` (leading zeros allowed: `G01`);
+         - `M`: plain digits (leading zeros allowed, no sign, no decimal point) with the value
+           `0 1 2 5 6 30` (`M6` for the tool change into a drag toolpath on Mach and LinuxCNC);
+         - on `;`-style posts the text after an `M0` or `M1` word is its message (Marlin's
+           `M0 Drag tool 3 spindle off then resume`): free printable ASCII within the checks
+           above.
+         So `M/3`, `S/1000` (Grbl drops `/` anywhere), `M3.004`, `M3.00005`, `M2.99995`, `M3.5`
+         (controllers round or take the integer part), `M259` (Grbl truncates to 8 bits), any
+         S word, other letters (`D E R K A B C Q L O S`) and other G or M codes are refused,
+         also when a tool name places them in live G-code. Custom posts that need more in a
+         drag section are refused; the set can be widened case by case.
+       - Values inside comments are sanitised already (above), so a tool named "S12 drill M3"
+         in a comment is fine.
+       - The pause blocks must write `M5` and `M0` (as template text, outside comments). Lines
+         starting with `/` (block delete) and text after `;` never count, and on `;`-style posts
+         (Marlin runs one command per line) only the first word of a line counts, so `M5 M0` on
+         one line gives no M0.
+       - Unverified: whether Mach3/Mach4 treat `;` as a comment. Carvetto treats `;` as a
+         comment only on `;`-style posts; on the paren posts a `;` in a drag section is refused.
+       - O-words, `M98` subroutine calls and user M-code macros (LinuxCNC `M100`–`M199`, Mach
+         macros) are refused in drag sections by the allowlist; elsewhere they are the post
+         author's responsibility: Carvetto cannot see what they do.
    - **Toolpaths without moves** (T-0136). A toolpath with zero moves cuts nothing and is
      skipped entirely: it is not written, its tool is not in `[TOOLS_USED]`, it causes no tool
      change, and its tool's spindle speed, feeds and dwells are not checked. The header tool (the
