@@ -483,7 +483,7 @@ Goal: Owner decision 2026-11-03: Quick Engrave refuses diamond-drag tools until 
 Acceptance criteria:
   1. Diamond-drag Quick Engrave toolpaths post with spindle off, M5 + operator pause before them on every shipped post; no other toolpath can bypass the spindle rule (tests); posts/README checklist updated; goldens for existing toolpaths unchanged.
 
-### T-0155 Engrave residuals (T-0151 verifier)   [status: in-progress]
+### T-0155 Engrave residuals (T-0151 verifier)   [status: ready]
 Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0151   ADR: 0024
 Goal: (a) Fill's diagnostic rewording replaces "pocket" anywhere, including inside a quoted tool name ("my pocket cutter" → "my fill area cutter"; harness t0151v1/edge.cpp) — replace only Pocket's fixed phrases. (b) engraveLevels/PassPlan return fewer than `passes` levels when depth/passes ≤ 1e-9 mm (engraveLevels(1e-6, 1000) → 999; lv.cpp), contradicting ADR-0024 §1 — floor depth/passes or document. (c) Cosmetic: widths printed as 0.9999999999999999 mm in the stepover refusal.
 Acceptance criteria:
