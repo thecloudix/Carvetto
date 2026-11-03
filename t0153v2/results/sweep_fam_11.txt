@@ -1,0 +1,9 @@
+case 62 seed 211 fam 11 frametext-crossing res=1 tool=0 D=14.953 ang=106.9 chord=0.050 flat=0.000 start=0.000 ncl=0 emD=0.000/0.000: ok lat=1.872*ch at (10.55373,3.36069) kink=NA over=-1.07e-05 flatShort=-1.000 at (0.0000,0.0000) dist 0.0000 limR 7.4763
+case 66 seed 211 fam 11 frametext-crossing res=1 tool=1 D=6.598 ang=148.2 chord=0.020 flat=0.000 start=0.000 ncl=0 emD=0.000/0.000: ok lat=2.042*ch at (0.10087,3.34298) kink=NA over=NA flatShort=-1.000 at (0.0000,0.0000) dist 0.9871 limR 3.2991
+case 100 seed 211 fam 11 frametext-crossing res=1 tool=1 D=3.962 ang=45.2 chord=0.005 flat=0.000 start=0.000 ncl=0 emD=0.000/0.000: ok lat=6.234*ch at (4.17817,1.88779) kink=NA over=NA flatShort=-1.000 at (0.0000,0.0000) dist 0.5576 limR 1.9810
+SUMMARY seed=211 fam=11 far=0 scale=1 cases=120 ok=120 refused=0 resolved=32 fails=3 realViolations=0 falseAlarms(coincident)=0 worstCone=1.016e-03 worstEMallow=2.087e-02 latNonRes=1.495 latRes=6.234 kinkNonRes=1.485 kinkRes=0.8864 worstOver=7.22e-16 worstFlatShortEndMills=1.227 worstFlatShortSelf=0.5369 startPlaneOutsideMoves=0
+  fails 11:coverage: 3
+  issue 17: 22
+  issue 26: 23
+  issue 28: 32
+  issue 4: 11

@@ -1,0 +1,5 @@
+SUMMARY seed=29 fam=9 far=0 scale=1 cases=120 ok=112 refused=8 resolved=120 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=2.597e-03 worstEMallow=9.999e-03 latNonRes=NA latRes=1.093 kinkNonRes=NA kinkRes=1.085 worstOver=1.11e-16 worstFlatShortEndMills=0.8882 worstFlatShortSelf=1.606 startPlaneOutsideMoves=0
+  issue 17: 8
+  issue 26: 29
+  issue 28: 120
+  issue 4: 8

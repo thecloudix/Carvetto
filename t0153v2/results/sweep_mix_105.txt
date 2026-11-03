@@ -1,0 +1,13 @@
+case 33 seed 105 fam 14 cluster+near-inside g=0.001200 res=1 tool=0 D=12.387 ang=22.2 chord=0.020 flat=23.699 start=0.000 ncl=0 emD=0.000/0.000: centre outside region (-10.5166,-1.1178) depth 6.2189 dist 1.2346 lat=1.086*ch at (-2.13390,-11.46955) kink=NA over=-9.66e-03 flatShort=-1.000 at (0.0000,0.0000) dist 1.4219 limR 4.6570
+case 185 seed 105 fam 8 overcircles-inttangent res=1 tool=1 D=9.704 ang=49.3 chord=0.010 flat=3.390 start=0.000 ncl=1 emD=4.249/0.000: ok lat=5.243*ch at (-3.71205,-0.41190) kink=NA over=NA flatShort=-1.000 at (0.0000,0.0000) dist 0.4769 limR 4.6266
+case 253 seed 105 fam 11 frametext-crossing res=1 tool=0 D=4.071 ang=46.9 chord=0.010 flat=0.517 start=0.000 ncl=2 emD=2.596/2.146: ok lat=22.234*ch at (7.83213,1.03227) kink=22.234 over=-3.68e-04 flatShort=0.517 at (6.6174,7.5294) dist 0.2793 limR 0.2244
+SUMMARY seed=105 fam=-1 far=0 scale=1 cases=300 ok=295 refused=5 resolved=150 fails=3 realViolations=11 falseAlarms(coincident)=377 worstCone=0.000e+00 worstEMallow=0.000e+00 latNonRes=1.5 latRes=22.23 kinkNonRes=1.498 kinkRes=22.23 worstOver=4.44e-16 worstFlatShortEndMills=1.989 worstFlatShortSelf=2.356 startPlaneOutsideMoves=0
+  fails 11:coverage: 1
+  fails 14:safety: 1
+  fails 8:coverage: 1
+  issue 17: 74
+  issue 21: 3
+  issue 22: 1
+  issue 26: 79
+  issue 28: 150
+  issue 4: 33

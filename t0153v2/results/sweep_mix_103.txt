@@ -1,0 +1,16 @@
+case 29 seed 103 fam 15 partialoverlapedge res=1 tool=0 D=12.334 ang=146.0 chord=0.005 flat=0.815 start=0.000 ncl=1 emD=4.600/0.000: ok lat=36.348*ch at (13.65758,-7.08044) kink=1.000 over=NA flatShort=0.100 at (12.6379,-5.9950) dist 3.0013 limR 2.6693
+case 67 seed 103 fam 11 frametext-crossing res=1 tool=0 D=5.778 ang=62.6 chord=0.020 flat=3.410 start=0.000 ncl=0 emD=0.000/0.000: ok lat=1.641*ch at (4.01211,7.25412) kink=NA over=-2.61e-04 flatShort=-1.000 at (0.0000,0.0000) dist 0.1468 limR 2.0725
+case 90 seed 103 fam 4 ringneigh-apart res=0 tool=0 D=19.569 ang=121.3 chord=0.100 flat=0.000 start=0.502 ncl=0 emD=0.000/0.000: centre outside region (6.8873,-7.5454) depth 1.7151 dist 3.1006 lat=0.758*ch at (-4.07083,-12.00911) kink=NA over=-5.34e-04 flatShort=-1.000 at (0.0000,0.0000) dist 3.7562 limR 9.7847
+case 124 seed 103 fam 14 cluster+near-inside g=0.006250 res=1 tool=0 D=2.392 ang=80.1 chord=0.100 flat=1.344 start=0.000 ncl=1 emD=1.327/0.000: centre outside region (-7.3577,1.6070) depth 1.3436 dist 3.0177 lat=1.125*ch at (15.35526,-8.62779) kink=1.125 over=0.00e+00 flatShort=0.128 at (7.7388,3.7075) dist 1.1320 limR 1.1299
+case 186 seed 103 fam 14 cluster+near-inside g=0.003125 res=1 tool=0 D=19.746 ang=124.9 chord=0.050 flat=4.595 start=0.000 ncl=2 emD=5.935/0.652: centre outside region (-3.7074,0.0988) depth 1.0005 dist 1.9505 lat=0.988*ch at (-7.30337,1.72912) kink=NA over=-8.77e-04 flatShort=-1.000 at (0.0000,0.0000) dist 0.3333 limR 8.8098
+case 248 seed 103 fam 14 cluster+near-inside g=0.001563 res=1 tool=0 D=17.218 ang=78.6 chord=0.050 flat=10.784 start=2.455 ncl=0 emD=0.000/0.000: centre outside region (-10.6997,2.1286) depth 1.3336 dist 1.1158 lat=1.008*ch at (0.74070,-3.53615) kink=NA over=2.68e+00 flatShort=-1.000 at (0.0000,0.0000) dist 0.7107 limR 8.6088
+SUMMARY seed=103 fam=-1 far=0 scale=1 cases=300 ok=293 refused=7 resolved=154 fails=6 realViolations=44 falseAlarms(coincident)=3620 worstCone=-2.192e+00 worstEMallow=0.000e+00 latNonRes=1.499 latRes=36.35 kinkNonRes=1.495 kinkRes=1.487 worstOver=2.68e+00 worstFlatShortEndMills=3.209 worstFlatShortSelf=5.423 startPlaneOutsideMoves=0
+  fails 11:coverage: 1
+  fails 14:safety: 3
+  fails 15:coverage: 1
+  fails 4:safety: 1
+  issue 17: 136
+  issue 21: 3
+  issue 26: 57
+  issue 28: 154
+  issue 4: 38

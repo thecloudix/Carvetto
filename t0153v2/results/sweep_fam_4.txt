@@ -1,0 +1,8 @@
+case 62 seed 24 fam 4 ringneigh-apart res=0 tool=0 D=9.027 ang=81.4 chord=0.100 flat=5.381 start=0.000 ncl=0 emD=0.000/0.000: centre outside region (20.7433,0.7811) depth 2.9244 dist 2.5640 lat=0.849*ch at (10.57596,4.51626) kink=NA over=-3.83e-03 flatShort=-1.000 at (0.0000,0.0000) dist 1.1366 limR 4.5135
+case 106 seed 24 fam 4 ringneigh-apart res=0 tool=0 D=12.665 ang=71.5 chord=0.050 flat=0.000 start=0.000 ncl=0 emD=0.000/0.000: centre outside region (9.1327,3.5033) depth 3.9329 dist 2.8548 lat=0.788*ch at (1.84262,-0.35288) kink=NA over=-4.92e-03 flatShort=-1.000 at (0.0000,0.0000) dist 1.7423 limR 6.3324
+SUMMARY seed=24 fam=4 far=0 scale=1 cases=120 ok=120 refused=0 resolved=81 fails=2 realViolations=4 falseAlarms(coincident)=0 worstCone=1.820e-03 worstEMallow=2.529e-03 latNonRes=1.5 latRes=1.158 kinkNonRes=1.5 kinkRes=1.125 worstOver=1.11e-15 worstFlatShortEndMills=1.608 worstFlatShortSelf=1.437 startPlaneOutsideMoves=0
+  fails 4:safety: 2
+  issue 21: 4
+  issue 26: 23
+  issue 28: 81
+  issue 4: 16

@@ -1,0 +1,21 @@
+T-0153 round 2 (619ec07) verifier results. Files sweep_*.txt: SUMMARY lines + failing cases of vc2 (latNonRes/latRes =
+worst lateral shortfall in x chordal for points above the limit, non-resolved / resolved crossing input; family 15
+coverage and its cone false alarms are artefacts of coincident edges).
+Round-1 regressions fixed: rep sq2/c19 no cone violation; tri 1.00 x chordal (was 9.2); star5 1.00 (was 11);
+VCCROSS vc seed 21: 0 fails, worstLat 1.498 (was 33 fails, 126 x); 5,000 regions with flat depth carve (12.1 s).
+Open (blocking):
+ A. medialAxis ignores a single-span hole whose probe lies within chordal + distance of another contour (diag 17
+    "enclose no area ... ignored"); V-carve carves on through the hole: repro2/hole_ignored_min.txt (57 moves in the
+    hole, Z-4.99), nearint_c7 (cone -3.28 mm), slivercircles_c18 (plunge Z-3.41 in the hole), scale005_c36 (O counter
+    at chordal 0.1), scale005_c52, nearsq_c14/c57, overpoly_c82 (resolved sliver, -0.013 mm). Pre-existing in main's
+    medialAxis (max_main), unguarded in V-carve.
+ B. crossing cluster polygonised at chordal/8 cuts a non-crossing contour closer than that: hole_near_cluster_min.txt
+    (plunge Z-0.95 at the hole centre, chordal 0.05, gaps 0.0011-0.004); sweep family 14: 22/120 cases.
+ C. empty medial axis for a resolved part (frame crossed by two O glyphs): frame_O_crossing.txt -> band of 5.5 mm2
+    uncarved, diag "nothing to carve (too narrow)"; band_empty_skeleton.txt: medialAxis gives 0 branches (main too).
+ D. documented coverage bound (1.5 / 1.625 x chordal) exceeded: bezblob_lat2.txt 2.29 x (non-crossing, chordal 0.1),
+    frame/glyph crossing 1.87-6.2 x, sliver crescents up to 15 x, ball-nose parts skipped below the distance tolerance
+    (sliver_c82.txt, 10 x).
+Clean: families 5 (text), 9 (self-crossing), 12 (holes in holes), 8 (overlapping/tangent circles), far 2e5, nest
+layouts; AC2 Release 10.2-10.9 s / 12.1-13.9 s (flat) / 17.4 s (plate with 5,000 letter holes, 933 MB) / 12.5 s (end
+mill clearance); doubling ratio 1.91-1.92; G-code: 56 jobs x 8 posts, 0 errors (gcheck3 incline=1).

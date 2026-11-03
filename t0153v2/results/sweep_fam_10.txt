@@ -1,0 +1,10 @@
+case 5 seed 210 fam 10 nearint g=0.002500 res=0 tool=0 D=9.252 ang=115.1 chord=0.020 flat=0.621 start=0.000 ncl=2 emD=2.050/0.800: centre outside region (8.6302,-3.7356) depth 0.6210 dist 2.3104 lat=38.231*ch at (10.76795,-8.99830) kink=1.494 over=1.11e-16 flatShort=0.155 at (4.9529,0.0192) dist 1.2494 limR 0.9760
+case 22 seed 210 fam 10 nearint g=0.001250 res=0 tool=0 D=18.215 ang=144.6 chord=0.010 flat=0.000 start=0.000 ncl=0 emD=0.000/0.000: CONE VIOLATION -6.437e+00 at (6.23687,6.48000) depth 2.91068 footprint 9.10732 lat=230.415*ch at (14.40898,3.65868) kink=NA over=2.06e+00 flatShort=-1.000 at (0.0000,0.0000) dist 2.4176 limR 9.1073
+SUMMARY seed=210 fam=10 far=0 scale=1 cases=120 ok=119 refused=1 resolved=53 fails=2 realViolations=4 falseAlarms(coincident)=0 worstCone=-6.437e+00 worstEMallow=2.452e-03 latNonRes=230.4 latRes=1.125 kinkNonRes=1.496 kinkRes=1.125 worstOver=2.06e+00 worstFlatShortEndMills=2.571 worstFlatShortSelf=5.488 startPlaneOutsideMoves=0
+  fails 10:safety: 2
+  issue 17: 25
+  issue 21: 3
+  issue 22: 1
+  issue 26: 23
+  issue 28: 53
+  issue 4: 14

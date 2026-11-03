@@ -1,0 +1,20 @@
+case 32 seed 102 fam 15 sharededge res=1 tool=0 D=1.452 ang=51.8 chord=0.010 flat=0.000 start=0.000 ncl=0 emD=0.000/0.000: ok lat=26.463*ch at (9.34352,-6.80971) kink=26.463 over=NA flatShort=0.598 at (14.5592,-4.6516) dist 2.7679 limR 0.7258
+case 133 seed 102 fam 13 slivercircles res=1 tool=1 D=9.141 ang=133.6 chord=0.005 flat=4.422 start=0.000 ncl=0 emD=0.000/0.000: ok lat=3.390*ch at (14.57817,6.00531) kink=NA over=NA flatShort=-1.000 at (0.0000,0.0000) dist 10.5477 limR 4.5682
+case 169 seed 102 fam 4 ringneigh-apart res=0 tool=0 D=8.174 ang=124.0 chord=0.100 flat=0.000 start=0.000 ncl=0 emD=0.000/0.000: centre outside region (7.9605,0.2118) depth 1.5999 dist 3.0616 lat=0.732*ch at (-2.42835,-2.77629) kink=NA over=-2.02e-03 flatShort=-1.000 at (0.0000,0.0000) dist 0.0340 limR 4.0870
+case 198 seed 102 fam 15 sharededge res=1 tool=0 D=4.567 ang=72.6 chord=0.005 flat=1.200 start=0.130 ncl=0 emD=0.000/0.000: ok lat=117.025*ch at (8.00806,10.44761) kink=85.471 over=NA flatShort=0.888 at (5.0579,10.3650) dist 1.7607 limR 0.8812
+case 223 seed 102 fam 14 cluster+near-inside g=0.003125 res=1 tool=0 D=22.950 ang=26.9 chord=0.050 flat=0.000 start=0.000 ncl=0 emD=0.000/0.000: centre outside region (1.4529,-6.7612) depth 4.4106 dist 1.0873 lat=1.074*ch at (6.67004,2.12434) kink=NA over=-4.24e-03 flatShort=-1.000 at (0.0000,0.0000) dist 3.8137 limR 11.4749
+case 262 seed 102 fam 13 slivercircles res=1 tool=1 D=4.934 ang=105.4 chord=0.005 flat=0.583 start=0.000 ncl=0 emD=0.000/0.000: ok lat=6.126*ch at (9.69183,-4.69939) kink=NA over=NA flatShort=-1.000 at (0.0000,0.0000) dist 7.6294 limR 1.5921
+case 286 seed 102 fam 14 cluster+near-inside g=0.010000 res=1 tool=0 D=12.603 ang=110.1 chord=0.100 flat=5.148 start=2.850 ncl=2 emD=6.299/6.085: centre outside region (-5.5289,-4.0507) depth 1.5709 dist 2.3141 lat=1.054*ch at (-9.10879,-4.46047) kink=NA over=-1.79e-03 flatShort=-1.000 at (0.0000,0.0000) dist 0.5751 limR 6.3013
+case 297 seed 102 fam 10 nearsq g=0.012500 res=0 tool=0 D=14.871 ang=114.5 chord=0.100 flat=5.426 start=1.836 ncl=0 emD=0.000/0.000: CONE VIOLATION -1.280e-01 at (6.78914,2.54338) depth 1.59514 footprint 2.48172 lat=0.918*ch at (7.04715,2.05589) kink=NA over=1.91e+00 flatShort=-1.000 at (0.0000,0.0000) dist 0.0000 limR 7.4354
+SUMMARY seed=102 fam=-1 far=0 scale=1 cases=300 ok=294 refused=6 resolved=144 fails=8 realViolations=41 falseAlarms(coincident)=293 worstCone=-2.969e+00 worstEMallow=0.000e+00 latNonRes=1.499 latRes=117 kinkNonRes=1.495 kinkRes=85.47 worstOver=1.91e+00 worstFlatShortEndMills=1.338 worstFlatShortSelf=4.717 startPlaneOutsideMoves=0
+  fails 10:safety: 1
+  fails 13:coverage: 2
+  fails 14:safety: 2
+  fails 15:coverage: 2
+  fails 4:safety: 1
+  issue 17: 57
+  issue 21: 2
+  issue 22: 1
+  issue 26: 61
+  issue 28: 144
+  issue 4: 39

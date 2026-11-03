@@ -1,0 +1,18 @@
+case 34 seed 303 fam 5 text-apart res=0 tool=0 D=1.242 ang=48.2 chord=0.100 flat=0.000 start=0.565 ncl=0 emD=0.000/0.000: centre outside region (1.0520,0.1962) depth 0.0851 dist 0.0205 lat=0.540*ch at (1.05024,0.37097) kink=NA over=2.52e-02 flatShort=-1.000 at (0.0000,0.0000) dist 0.0756 limR 0.6209
+case 36 seed 303 fam 0 lib:O_glyph_bez res=0 tool=0 D=0.944 ang=129.2 chord=0.100 flat=0.233 start=2.025 ncl=0 emD=0.000/0.000: centre outside region (2.0816,2.5866) depth 0.0855 dist 0.1362 lat=0.522*ch at (2.32309,2.40678) kink=NA over=2.46e-02 flatShort=-1.000 at (0.0000,0.0000) dist 2.8820 limR 0.4720
+case 52 seed 303 fam 12 holesinholes res=0 tool=0 D=1.191 ang=37.8 chord=0.100 flat=1.210 start=0.000 ncl=0 emD=0.000/0.000: centre outside region (0.0450,0.1745) depth 1.1157 dist 0.1102 lat=0.703*ch at (-0.18200,0.97462) kink=0.640 over=7.23e-01 flatShort=-1.000 at (0.0000,0.0000) dist 0.0699 limR 0.4142
+case 56 seed 303 fam 11 frametext res=0 tool=1 D=0.511 ang=135.9 chord=0.050 flat=0.000 start=1.527 ncl=0 emD=0.000/0.000: centre outside region (0.0837,0.1608) depth 0.0005 dist 0.0404 lat=0.509*ch at (0.72652,0.27469) kink=NA over=NA flatShort=-1.000 at (0.0000,0.0000) dist 0.0309 limR 0.2557
+case 61 seed 303 fam 5 text-touchbox res=0 tool=1 D=0.294 ang=25.0 chord=0.005 flat=0.133 start=0.000 ncl=0 emD=0.000/0.000: ok lat=2.952*ch at (0.41933,0.17036) kink=NA over=NA flatShort=-1.000 at (0.0000,0.0000) dist 0.0337 limR 0.1462
+case 87 seed 303 fam 5 text-overlap res=0 tool=0 D=1.165 ang=120.3 chord=0.050 flat=0.376 start=1.232 ncl=2 emD=0.190/0.284: CONE VIOLATION -5.572e-03 at (0.41606,0.13821) depth 0.00725 footprint 0.01263 lat=0.531*ch at (0.09757,0.20969) kink=NA over=7.02e-03 flatShort=-1.000 at (0.0000,0.0000) dist 0.0033 limR 0.5825
+SUMMARY seed=303 fam=-1 far=0 scale=0.05 cases=100 ok=84 refused=16 resolved=46 fails=6 realViolations=61 falseAlarms(coincident)=50 worstCone=-2.716e-01 worstEMallow=0.000e+00 latNonRes=2.952 latRes=1.125 kinkNonRes=1.469 kinkRes=1.125 worstOver=7.23e-01 worstFlatShortEndMills=0.0761 worstFlatShortSelf=0.1736 startPlaneOutsideMoves=0
+  fails 0:safety: 1
+  fails 11:safety: 1
+  fails 12:safety: 1
+  fails 5:coverage: 1
+  fails 5:safety: 2
+  fails falseAlarmFam15: 50
+  issue 15: 1
+  issue 17: 107
+  issue 26: 14
+  issue 28: 46
+  issue 4: 14

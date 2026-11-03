@@ -1,0 +1,15 @@
+case 33 seed 213 fam 13 slivercircles res=0 tool=1 D=11.757 ang=87.8 chord=0.100 flat=0.000 start=0.000 ncl=0 emD=0.000/0.000: centre outside region (3.3769,-4.8723) depth 5.8787 dist 14.3899 lat=0.604*ch at (-9.38266,-11.67528) kink=NA over=NA flatShort=-1.000 at (0.0000,0.0000) dist 8.5085 limR 5.8787
+case 42 seed 213 fam 13 slivercircles res=0 tool=0 D=14.149 ang=48.2 chord=0.050 flat=2.198 start=0.000 ncl=0 emD=0.000/0.000: centre outside region (-1.7087,-3.4629) depth 2.1978 dist 13.6044 lat=1.360*ch at (9.15578,4.84427) kink=NA over=-3.36e-03 flatShort=-1.000 at (0.0000,0.0000) dist 9.7610 limR 0.9832
+case 46 seed 213 fam 13 slivercircles res=1 tool=1 D=10.622 ang=158.0 chord=0.020 flat=1.658 start=0.000 ncl=2 emD=1.125/0.749: ok lat=3.723*ch at (-11.16010,-3.75179) kink=NA over=NA flatShort=-1.000 at (0.0000,0.0000) dist 4.8927 limR 3.8554
+case 65 seed 213 fam 13 slivercircles res=0 tool=0 D=21.564 ang=87.5 chord=0.010 flat=7.680 start=0.000 ncl=1 emD=1.570/0.000: centre outside region (4.0203,3.4481) depth 6.5966 dist 6.2816 lat=0.348*ch at (4.91150,9.69708) kink=NA over=1.74e-02 flatShort=-1.000 at (0.0000,0.0000) dist 1.0059 limR 7.3474
+case 67 seed 213 fam 13 slivercircles res=0 tool=0 D=17.238 ang=146.8 chord=0.100 flat=0.000 start=0.000 ncl=0 emD=0.000/0.000: centre outside region (2.9485,3.8869) depth 1.5897 dist 5.3472 lat=0.139*ch at (-2.22886,5.28220) kink=NA over=-6.34e-04 flatShort=-1.000 at (0.0000,0.0000) dist 0.4765 limR 8.6191
+case 75 seed 213 fam 13 slivercircles res=0 tool=0 D=13.179 ang=70.5 chord=0.100 flat=5.765 start=0.000 ncl=0 emD=0.000/0.000: centre outside region (1.1828,0.1485) depth 5.7650 dist 9.7619 lat=0.402*ch at (10.61722,-2.52084) kink=NA over=-1.28e-03 flatShort=-1.000 at (0.0000,0.0000) dist 8.5923 limR 4.0779
+case 77 seed 213 fam 13 sliverrects res=1 tool=1 D=10.746 ang=75.8 chord=0.005 flat=3.307 start=1.279 ncl=0 emD=0.000/0.000: ok lat=15.264*ch at (-0.42141,4.92509) kink=NA over=NA flatShort=-1.000 at (0.0000,0.0000) dist 4.3442 limR 4.9601
+case 112 seed 213 fam 13 slivercircles res=0 tool=0 D=12.580 ang=135.6 chord=0.050 flat=2.152 start=0.000 ncl=0 emD=0.000/0.000: centre outside region (-3.3201,2.4228) depth 2.1521 dist 9.3925 lat=0.345*ch at (-10.62697,8.36428) kink=NA over=-3.54e-03 flatShort=-1.000 at (0.0000,0.0000) dist 5.3231 limR 5.2777
+SUMMARY seed=213 fam=13 far=0 scale=1 cases=120 ok=110 refused=10 resolved=109 fails=8 realViolations=14 falseAlarms(coincident)=0 worstCone=-2.911e-02 worstEMallow=1.000e+300 latNonRes=1.36 latRes=15.26 kinkNonRes=NA kinkRes=0.7309 worstOver=1.74e-02 worstFlatShortEndMills=0.006184 worstFlatShortSelf=NA startPlaneOutsideMoves=0
+  fails 13:coverage: 2
+  fails 13:safety: 6
+  issue 17: 229
+  issue 26: 12
+  issue 28: 109
+  issue 4: 6

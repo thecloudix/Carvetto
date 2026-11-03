@@ -1,0 +1,13 @@
+case 19 seed 302 fam 14 cluster+near-inside g=0.002500 res=1 tool=0 D=10.957 ang=98.0 chord=0.020 flat=3.149 start=0.000 ncl=1 emD=4.424/0.000: CONE VIOLATION -1.319e-01 at (20004.77788,-14007.37997) depth 2.17658 footprint 2.50341 lat=57.419*ch at (19996.96477,-14001.62562) kink=NA over=2.91e+00 flatShort=0.270 at (20001.1533,-13998.1350) dist 3.9550 limR 3.6222
+case 32 seed 302 fam 15 partialoverlapedge res=1 tool=0 D=12.606 ang=46.0 chord=0.050 flat=4.224 start=0.000 ncl=0 emD=0.000/0.000: ok lat=7.043*ch at (20009.44013,-14003.72080) kink=7.043 over=NA flatShort=2.406 at (20008.3985,-13998.6190) dist 2.9273 limR 1.7937
+case 47 seed 302 fam 14 cluster+near-inside g=0.006250 res=1 tool=0 D=1.563 ang=35.1 chord=0.100 flat=0.973 start=0.000 ncl=0 emD=0.000/0.000: centre outside region (19995.7397,-14005.5007) depth 0.9727 dist 0.9187 lat=1.125*ch at (20010.30196,-14004.46663) kink=1.125 over=-4.39e-04 flatShort=0.663 at (20005.8261,-14004.9894) dist 0.8393 limR 0.3081
+case 61 seed 302 fam 15 sharededge res=1 tool=0 D=2.360 ang=26.1 chord=0.020 flat=2.747 start=0.507 ncl=0 emD=0.000/0.000: ok lat=13.534*ch at (20012.74687,-14001.00634) kink=13.463 over=NA flatShort=1.631 at (20014.1190,-13999.6729) dist 1.9251 limR 0.6357
+case 82 seed 302 fam 14 cluster+near-inside g=0.001200 res=1 tool=0 D=24.167 ang=74.4 chord=0.005 flat=7.551 start=0.487 ncl=0 emD=0.000/0.000: CONE VIOLATION -1.051e-02 at (20000.61766,-14002.19999) depth 2.87537 footprint 2.18081 lat=1.017*ch at (20006.29831,-14007.30309) kink=NA over=2.86e+00 flatShort=-1.000 at (0.0000,0.0000) dist 24411.0493 limR 5.7270
+SUMMARY seed=302 fam=-1 far=20000 scale=1 cases=100 ok=97 refused=3 resolved=50 fails=5 realViolations=183 falseAlarms(coincident)=140 worstCone=-3.621e+00 worstEMallow=4.904e-03 latNonRes=1.49 latRes=57.42 kinkNonRes=1.488 kinkRes=13.46 worstOver=2.91e+00 worstFlatShortEndMills=3.103 worstFlatShortSelf=4.238 startPlaneOutsideMoves=0
+  fails 14:safety: 3
+  fails 15:coverage: 2
+  fails falseAlarmFam15: 140
+  issue 17: 13
+  issue 26: 22
+  issue 28: 50
+  issue 4: 6

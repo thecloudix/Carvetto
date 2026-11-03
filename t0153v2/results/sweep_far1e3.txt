@@ -1,0 +1,10 @@
+case 13 seed 301 fam 13 slivercircles res=1 tool=1 D=2.114 ang=141.1 chord=0.005 flat=0.818 start=0.000 ncl=1 emD=3.010/0.000: ok lat=3.703*ch at (997.12366,-683.63804) kink=NA over=NA flatShort=-1.000 at (0.0000,0.0000) dist 1204.9018 limR 1.0295
+case 50 seed 301 fam 13 slivercircles res=0 tool=0 D=6.508 ang=156.0 chord=0.050 flat=0.308 start=0.000 ncl=0 emD=0.000/0.000: centre outside region (997.0134,-696.2977) depth 0.3078 dist 12.7142 lat=1.909*ch at (987.91549,-687.25964) kink=NA over=-1.71e-03 flatShort=-1.000 at (0.0000,0.0000) dist 1203.1668 limR 1.4485
+SUMMARY seed=301 fam=-1 far=1000 scale=1 cases=100 ok=99 refused=1 resolved=56 fails=2 realViolations=2 falseAlarms(coincident)=98 worstCone=0.000e+00 worstEMallow=2.499e-03 latNonRes=1.909 latRes=3.703 kinkNonRes=1.499 kinkRes=1.498 worstOver=2.22e-16 worstFlatShortEndMills=2.876 worstFlatShortSelf=2.923 startPlaneOutsideMoves=0
+  fails 13:coverage: 1
+  fails 13:safety: 1
+  fails falseAlarmFam15: 98
+  issue 17: 28
+  issue 26: 21
+  issue 28: 56
+  issue 4: 13

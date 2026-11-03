@@ -1,0 +1,7 @@
+case 82 seed 27 fam 7 overpoly res=1 tool=0 D=3.018 ang=94.6 chord=0.050 flat=1.570 start=0.000 ncl=1 emD=3.700/0.000: CONE VIOLATION -5.709e-03 at (0.16410,-0.90740) depth 0.00808 footprint 0.00875 lat=1.003*ch at (4.52610,1.85862) kink=1.000 over=-1.26e-03 flatShort=0.158 at (4.3707,3.6598) dist 1.7615 limR 1.5092
+SUMMARY seed=27 fam=7 far=0 scale=1 cases=120 ok=120 refused=0 resolved=110 fails=1 realViolations=6 falseAlarms(coincident)=0 worstCone=-1.342e-02 worstEMallow=2.499e-03 latNonRes=1 latRes=1.087 kinkNonRes=1 kinkRes=1 worstOver=2.78e-16 worstFlatShortEndMills=1.86 worstFlatShortSelf=2.439 startPlaneOutsideMoves=0
+  fails 7:safety: 1
+  issue 17: 18
+  issue 26: 21
+  issue 28: 110
+  issue 4: 24
