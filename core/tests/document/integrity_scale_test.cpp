@@ -2,17 +2,18 @@
 // depth or width, because file loading (T-0012) runs it on untrusted input. Documents are built with
 // the raw mutators (they do not maintain group links, so the tests set both sides explicitly).
 //
-// Timing method, as for the AC4 undo/redo test in commands_test.cpp: process CPU time from
-// `std::clock()` (on POSIX, unaffected by other processes under parallel ctest), best of two runs.
-// Each shape gets an absolute bound (1 s with NDEBUG; 10 s in Debug, where the Debug standard
-// library is several times slower) and a machine-independent scaling check, time(2N) < 3 x time(N):
-// N log N work gives a ratio slightly above 2, while the quadratic behaviour this replaces gave >= 4.
+// Timing method, as for the AC4 undo/redo test in commands_test.cpp: process CPU time
+// (`processCpuSeconds`, cpu_time.hpp; unaffected by other processes under parallel ctest), with
+// the N and 2N checks alternating (`interleavedCpuSeconds`, cpu_scaling.hpp, T-0145). Each shape
+// gets an absolute bound on the least 2N time (1 s with NDEBUG; 10 s in Debug, where the Debug
+// standard library is several times slower) and a machine-independent scaling check,
+// time(2N) < 3 x time(N): N log N work gives a ratio slightly above 2, while the quadratic
+// behaviour this replaces gave >= 4.
 
 #include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 #include <cstddef>
 #include <cstdint>
-#include <ctime>
 #include <limits>
 #include <string>
 #include <utility>
@@ -21,6 +22,8 @@
 #include "carvetto/document/document.hpp"
 #include "carvetto/document/ids.hpp"
 #include "carvetto/document/object.hpp"
+// Last: on Windows it includes <windows.h> (macros such as near/far).
+#include "../geometry/cpu_scaling.hpp"
 
 using namespace carvetto::document;
 using Kind = IntegrityIssue::Kind;
@@ -32,10 +35,6 @@ constexpr double kBoundSeconds = 1.0;
 #else
 constexpr double kBoundSeconds = 10.0;
 #endif
-/// Lower bound for the time(N) term of the scaling check, so a coarse `std::clock()` tick
-/// (~16 ms on Windows) cannot fail it on a fast optimised build.
-constexpr double kClockFloorSeconds = 0.05;
-
 std::size_t countKind(const std::vector<IntegrityIssue>& issues, Kind kind) {
     return static_cast<std::size_t>(std::count_if(
         issues.begin(), issues.end(), [kind](const IntegrityIssue& i) { return i.kind == kind; }));
@@ -104,12 +103,25 @@ ObjectId buildWide(Document& doc, std::size_t width) {
 double timeCheck(const Document& doc, std::vector<IntegrityIssue>& issues) {
     double best = std::numeric_limits<double>::infinity();
     for (int run = 0; run < 2; ++run) {
-        const std::clock_t start = std::clock();
+        const double start = carvetto::test::processCpuSeconds();
         issues = doc.checkIntegrity();
-        const std::clock_t stop = std::clock();
-        best = std::min(best, static_cast<double>(stop - start) / static_cast<double>(CLOCKS_PER_SEC));
+        best = std::min(best, carvetto::test::processCpuSeconds() - start);
     }
     return best;
+}
+
+/// Interleaved checkIntegrity() timings of `small` and `big` (three pairs; the small time is
+/// floored above the Windows process-clock tick). Both must report no issues.
+carvetto::test::ScalingTimes timeScaling(const Document& small, const Document& big) {
+    std::vector<IntegrityIssue> smallIssues;
+    std::vector<IntegrityIssue> bigIssues;
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+        3, [&] { smallIssues = small.checkIntegrity(); }, [&] { bigIssues = big.checkIntegrity(); });
+    INFO(firstMessages(smallIssues));
+    REQUIRE(smallIssues.empty());
+    INFO(firstMessages(bigIssues));
+    REQUIRE(bigIssues.empty());
+    return t;
 }
 
 }  // namespace
@@ -119,16 +131,11 @@ TEST_CASE("checkIntegrity is fast on a 60 000-deep chain of nested groups", "[do
     buildChain(small, 30000);
     Document big;
     buildChain(big, 60000);
-    std::vector<IntegrityIssue> issues;
-    const double tSmall = timeCheck(small, issues);
-    INFO(firstMessages(issues));
-    REQUIRE(issues.empty());
-    const double tBig = timeCheck(big, issues);
-    INFO(firstMessages(issues));
-    REQUIRE(issues.empty());
-    INFO("CPU seconds: 30k = " << tSmall << ", 60k = " << tBig);
-    CHECK(tBig < kBoundSeconds);
-    CHECK(tBig < 3.0 * std::max(tSmall, kClockFloorSeconds));
+    const carvetto::test::ScalingTimes t = timeScaling(small, big);
+    INFO("CPU seconds: 30k = " << t.smallSeconds << ", 60k = " << t.largeSeconds
+                        << ", ratio " << t.ratio());
+    CHECK(t.largeSeconds < kBoundSeconds);
+    CHECK(t.ratio() < 3.0);
 }
 
 TEST_CASE("checkIntegrity is fast on one group with 200 000 children", "[document][integrity][perf]") {
@@ -136,16 +143,11 @@ TEST_CASE("checkIntegrity is fast on one group with 200 000 children", "[documen
     buildWide(small, 100000);
     Document big;
     buildWide(big, 200000);
-    std::vector<IntegrityIssue> issues;
-    const double tSmall = timeCheck(small, issues);
-    INFO(firstMessages(issues));
-    REQUIRE(issues.empty());
-    const double tBig = timeCheck(big, issues);
-    INFO(firstMessages(issues));
-    REQUIRE(issues.empty());
-    INFO("CPU seconds: 100k = " << tSmall << ", 200k = " << tBig);
-    CHECK(tBig < kBoundSeconds);
-    CHECK(tBig < 3.0 * std::max(tSmall, kClockFloorSeconds));
+    const carvetto::test::ScalingTimes t = timeScaling(small, big);
+    INFO("CPU seconds: 100k = " << t.smallSeconds << ", 200k = " << t.largeSeconds
+                        << ", ratio " << t.ratio());
+    CHECK(t.largeSeconds < kBoundSeconds);
+    CHECK(t.ratio() < 3.0);
 }
 
 TEST_CASE("checkIntegrity finds a cycle closed at depth 50 000 of a 60 000-deep chain",

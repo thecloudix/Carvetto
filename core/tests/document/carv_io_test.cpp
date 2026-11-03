@@ -37,6 +37,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #endif
+// Last: on Windows it includes <windows.h> (macros such as near/far).
+#include "../geometry/cpu_scaling.hpp"
 
 using namespace carvetto::document;
 using carvetto::geometry::ArcDirection;
@@ -1482,8 +1484,10 @@ TEST_CASE("group structure is pre-checked linearly", "[document][carv][limits]")
     }
     SECTION("a group with 200,000 children loads quickly") {
         // Linear in the width: loading twice the children takes at most ~3x the CPU time (a
-        // quadratic check would take ~4x), independent of how loaded the machine is.
-        const auto timeWidth = [](std::uint64_t width) {
+        // quadratic check would take ~4x), independent of how loaded the machine is. The loads of
+        // both widths alternate (`interleavedCpuSeconds`, T-0145); the 100k time is floored above
+        // the Windows process-clock tick.
+        const auto fileOfWidth = [](std::uint64_t width) {
             std::string objects;
             std::string children;
             for (std::uint64_t i = 0; i < width; ++i) {
@@ -1491,20 +1495,33 @@ TEST_CASE("group structure is pre-checked linearly", "[document][carv][limits]")
                 children += (i ? "," : "") + std::to_string(10 + i);
             }
             objects += groupRecord(5, children, 0);
-            const Bytes file = structureFile(objects, 10 + width);
-            const double t0 = cpuSeconds();
-            auto r = loadCarv(std::span<const std::uint8_t>(file));
-            const double seconds = cpuSeconds() - t0;
+            return structureFile(objects, 10 + width);
+        };
+        const auto checkLoaded = [](const CarvResult<LoadedCarv>& r, std::uint64_t width) {
             INFO((r ? std::string() : r.error().message));
             REQUIRE(r.ok());
             CHECK(r.value().document.objectCount() == width + 1);
             CHECK(r.value().document.findObject(ObjectId{5})->asGroup()->children.size() == width);
-            return seconds;
         };
-        const double half = timeWidth(100000);
-        const double full = timeWidth(200000);
-        INFO("100k children: " << half << " s CPU, 200k children: " << full << " s CPU");
-        CHECK(full < 3.0 * std::max(half, 0.05));
+        const Bytes halfFile = fileOfWidth(100000);
+        const Bytes fullFile = fileOfWidth(200000);
+        std::optional<CarvResult<LoadedCarv>> halfResult;
+        std::optional<CarvResult<LoadedCarv>> fullResult;
+        const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+            2,
+            [&] {
+                halfResult.reset();
+                halfResult.emplace(loadCarv(std::span<const std::uint8_t>(halfFile)));
+            },
+            [&] {
+                fullResult.reset();
+                fullResult.emplace(loadCarv(std::span<const std::uint8_t>(fullFile)));
+            });
+        checkLoaded(*halfResult, 100000);
+        checkLoaded(*fullResult, 200000);
+        INFO("100k children: " << t.smallSeconds << " s CPU, 200k children: " << t.largeSeconds
+                               << " s CPU, ratio " << t.ratio());
+        CHECK(t.ratio() < 3.0);
     }
     SECTION("a cycle is reported without walking it forever") {
         const std::string objects = groupRecord(10, "11", 11) + "," + groupRecord(11, "10", 10);

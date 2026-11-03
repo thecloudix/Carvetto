@@ -2,6 +2,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
+#include <cstddef>
 #include <vector>
 
 using namespace carvetto::toolpath;
@@ -155,6 +156,56 @@ TEST_CASE("Levels are strictly decreasing and end at the bottom", "[toolpath][pa
                 }
                 CHECK(-lv.front() <= pass * (1.0 + PassPlan::kStepSlack) + 1e-9);
             }
+        }
+    }
+}
+
+TEST_CASE("T-0145: the rounding guard is relative, so nanometre pass depths keep every level",
+          "[toolpath][passplan][T-0145]") {
+    // The guard used to be an absolute 1e-9 mm: with 1e-9 mm passes the 999th multiple (1e-6 -
+    // 1e-9) fell within it of the bottom and was dropped, giving 999 levels instead of 1000.
+    PassPlan plan;
+    plan.cutDepth = 1e-6;
+    plan.passDepth = 1e-9;
+    plan.maintainExactStep = true;
+    const std::vector<double> lv = plan.levels();
+    REQUIRE(lv.size() == 1000);
+    CHECK(lv.back() == -1e-6);
+    CHECK_THAT(lv.front(), WithinAbs(-1e-9, 1e-21));
+    CHECK_THAT(lv[998], WithinAbs(-999e-9, 1e-20));
+    for (std::size_t i = 1; i < lv.size(); ++i) {
+        CHECK(lv[i] < lv[i - 1]);
+    }
+    // Equalised, 999 passes of 1e-6 / 999 are within the 15 % step slack, as at any scale.
+    plan.maintainExactStep = false;
+    CHECK(plan.passCount() == 999);
+}
+
+TEST_CASE("T-0145: pass counts at an exact multiple and just past it are the same at every scale",
+          "[toolpath][passplan][T-0145]") {
+    // k passes of `pass` cover cut = k * pass exactly; a remainder of 1e-12 of the cut is rounding
+    // (k levels), one of 1e-7 is a real thin last pass (k + 1 levels, exact step). The same from
+    // nanometre to metre scale.
+    for (const double pass : {1e-9, 1e-6, 1e-3, 0.1, 1.0, 3.0, 25.4, 1000.0}) {
+        for (const int k : {2, 3, 7, 10, 999, 1000}) {
+            CAPTURE(pass, k);
+            const double cut = static_cast<double>(k) * pass;
+            PassPlan plan;
+            plan.passDepth = pass;
+            plan.cutDepth = cut;
+            CHECK(plan.passCount() == static_cast<std::size_t>(k));
+            // Equalised: one pass fewer when the step then grows by at most 15 % (k >= 8).
+            plan.maintainExactStep = false;
+            CHECK(plan.passCount() == static_cast<std::size_t>(k >= 8 ? k - 1 : k));
+            plan.maintainExactStep = true;
+            plan.cutDepth = cut * (1.0 + 1e-12);
+            CHECK(plan.passCount() == static_cast<std::size_t>(k));
+            plan.cutDepth = cut * (1.0 + 1e-7);
+            CHECK(plan.passCount() == static_cast<std::size_t>(k) + 1);
+            // Pass depth equal to the cut (to rounding) is one pass.
+            plan.passDepth = cut * (1.0 - 1e-12);
+            plan.cutDepth = cut;
+            CHECK(plan.passCount() == 1);
         }
     }
 }
