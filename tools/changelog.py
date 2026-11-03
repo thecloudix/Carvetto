@@ -29,16 +29,21 @@ Subcommands:
                              assemble's order, inserted at the top of Unreleased exactly as `assemble`
                              does; the PR adds no fragment;
                           3. release (no fragment deleted): one "## X.Y.Z" or "## X.Y.Z - YYYY-MM-DD"
-                             heading for a version not yet in the file, inserted at the top of a
-                             non-empty Unreleased section followed by a blank line, so all former
-                             Unreleased lines now belong to the release and Unreleased is empty.
-                        Line endings count as bytes: converting the file's line endings is refused
-                        too (the repository keeps CHANGELOG.md and changelog.d/ as LF, .gitattributes).
+                             heading (no leading zeros, a real calendar date) for a version greater
+                             than every version in the file, inserted at the top of a non-empty
+                             Unreleased section followed by a blank line, so all former Unreleased
+                             lines now belong to the release and Unreleased is empty.
+                        Both sides are read from committed git blobs (HEAD and the merge base), not
+                        the working tree; CHANGELOG.md and the fragments must be regular files (mode
+                        100644). A deleted fragment whose line is already in CHANGELOG.md counts as
+                        assembled. Line endings count as bytes: converting the file's line endings is
+                        refused too (the repository keeps CHANGELOG.md and changelog.d/ as LF).
   assemble              insert all fragments under "## Unreleased" (above the existing entries),
                         newest first by card number (the highest id of a multi-card fragment, ties
                         broken by the full id list, then the name), then delete the fragments.
-                        Deterministic; idempotent (a fragment line already in the section is not
-                        inserted twice, and with no fragments nothing changes).
+                        Deterministic; idempotent (a fragment whose line is already anywhere in
+                        CHANGELOG.md is deleted without inserting it again, and with no fragments
+                        nothing changes). `check` refuses such a fragment up front.
 
 Exit codes: 0 ok, 1 validation error (messages on stderr), 2 usage error.
 
@@ -49,6 +54,7 @@ Examples:
 """
 
 import argparse
+import datetime
 import os
 import pathlib
 import re
@@ -67,6 +73,11 @@ NAME_RE = re.compile(r"^T-([0-9]{4}(?:-[0-9]{4})*)\.md$")
 CARD_RE = re.compile(r"^### (T-[0-9]{4})(?![0-9])", re.MULTILINE)
 # A release heading: '## X.Y.Z' or '## X.Y.Z - YYYY-MM-DD' (ASCII digits).
 VERSION_RE = re.compile(r"^## ([0-9]+\.[0-9]+\.[0-9]+)( - [0-9]{4}-[0-9]{2}-[0-9]{2})?$")
+# A new release's version: no leading zeros (00.1.0 would alias 0.1.0).
+STRICT_VERSION_RE = re.compile(r"^## (0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)"
+                               r"(?: - ([0-9]{4})-([0-9]{2})-([0-9]{2}))?$")
+# Any existing version heading, for the "newer than every release" rule.
+EXISTING_VERSION_RE = re.compile(r"^## ([0-9]+)\.([0-9]+)\.([0-9]+)(?![0-9.])")
 # Unicode categories refused in a fragment line: control, format (zero-width, bidi, BOM),
 # surrogate, private use, unassigned, line and paragraph separators.
 BAD_CATEGORIES = {"Cc", "Cf", "Cs", "Co", "Cn", "Zl", "Zp"}
@@ -262,17 +273,36 @@ def section_entries(lines):
     return [content(ln) for ln in lines[h + 1:end] if not is_blank(ln)]
 
 
+def changelog_line_set(changelog_text):
+    """Every line of CHANGELOG.md (without terminators), for 'already in the file' tests."""
+    return {content(ln) for ln in split_raw(changelog_text)}
+
+
+def split_present(fragments, changelog_text):
+    """(fragments whose line is not yet anywhere in CHANGELOG.md, those whose line already is)."""
+    present = changelog_line_set(changelog_text)
+    return ([f for f in fragments if f.line not in present], [f for f in fragments if f.line in present])
+
+
+def fragment_line_conflicts(fragments, changelog_text, where=""):
+    """`check` refuses a fragment whose line is already in CHANGELOG.md (it would be a duplicate)."""
+    return ["%s/%s%s: this line is already in %s; delete the fragment (the entry exists) or write a "
+            "different one" % (FRAGMENT_DIR, f.name, where, CHANGELOG)
+            for f in split_present(fragments, changelog_text)[1]]
+
+
 def assemble_text(changelog_text, fragments):
-    """CHANGELOG text with the fragment lines inserted (pure; lines already there are skipped)."""
-    lines = split_raw(changelog_text)
-    present = set(section_entries(lines))
-    new = [f.line for f in fragments if f.line not in present]
-    return "".join(insert_below_unreleased(lines, new)) if new else changelog_text
+    """CHANGELOG text with the fragment lines inserted (pure). A fragment whose line is already
+    anywhere in the file is skipped (idempotence; `check` refuses such fragments up front)."""
+    new = [f.line for f in split_present(fragments, changelog_text)[0]]
+    return "".join(insert_below_unreleased(split_raw(changelog_text), new)) if new else changelog_text
 
 
 def read_changelog(root):
     """(text, None) or (None, error) for the working tree's CHANGELOG.md, read as raw bytes."""
     path = root / CHANGELOG
+    if path.is_symlink():
+        return None, "%s must be a regular file, not a symlink" % CHANGELOG
     if not path.is_file():
         return None, "%s is missing" % CHANGELOG
     try:
@@ -288,9 +318,11 @@ def cmd_check(root, base):
     if entries is None:
         errors.append("%s/ is missing (it holds README.md and the fragments)" % FRAGMENT_DIR)
         entries = {}
-    for name, data in entries.items():
+    for name, data in sorted(entries.items()):
         if data is None:
             errors.append("%s/%s: unexpected directory" % (FRAGMENT_DIR, name))
+        elif (root / FRAGMENT_DIR / name).is_symlink() and name not in IGNORED and not name.startswith("."):
+            errors.append("%s/%s: must be a regular file, not a symlink" % (FRAGMENT_DIR, name))
     backlog_text, err = read_backlog(root)
     errors += err
     fragments, errs = check_fragment_set({k: v for k, v in entries.items() if v is not None},
@@ -304,8 +336,9 @@ def cmd_check(root, base):
             unreleased_section(split_raw(text))
         except ValueError as e:
             errors.append(str(e))
+        errors += fragment_line_conflicts(fragments, text)
     if base is not None and not errors:
-        errors += check_against_base(root, base, text)
+        errors += check_against_base(root, base, backlog_text)
     for e in errors:
         print("error: " + e, file=sys.stderr)
     if errors:
@@ -325,11 +358,42 @@ def git(root, *args):
     return r.stdout
 
 
-def fragments_at(root, rev):
-    out = git(root, "ls-tree", "--name-only", rev, FRAGMENT_DIR + "/").decode("utf-8")
-    names = [ln.split("/", 1)[1] for ln in out.splitlines() if "/" in ln]
-    return {n: git(root, "show", "%s:%s/%s" % (rev, FRAGMENT_DIR, n)) for n in names
-            if n not in IGNORED and not n.startswith(".")}
+def tree_entries(root, rev, path):
+    """[(mode, type, path)] from `git ls-tree` (children when `path` ends with '/')."""
+    out = git(root, "ls-tree", "-z", rev, "--", path).decode("utf-8", "surrogateescape")
+    entries = []
+    for rec in out.split("\0"):
+        if rec:
+            meta, name = rec.split("\t", 1)
+            mode, typ, _ = meta.split(" ")
+            entries.append((mode, typ, name))
+    return entries
+
+
+def changelog_at(root, rev, label):
+    """(bytes, None) or (None, error): CHANGELOG.md's committed blob at `rev`, a regular file."""
+    entries = tree_entries(root, rev, CHANGELOG)
+    if not entries:
+        return None, "%s is missing %s" % (CHANGELOG, label)
+    mode, typ, _ = entries[0]
+    if typ != "blob" or mode != "100644":
+        return None, "%s %s must be a regular file (mode 100644), found mode %s %s" % (CHANGELOG, label, mode, typ)
+    return git(root, "show", "%s:%s" % (rev, CHANGELOG)), None
+
+
+def fragments_at(root, rev, label):
+    """({name: bytes}, errors): the committed fragments at `rev`; each must be a regular file."""
+    out, errors = {}, []
+    for mode, typ, path in tree_entries(root, rev, FRAGMENT_DIR + "/"):
+        name = path.split("/", 1)[1]
+        if name in IGNORED or name.startswith("."):
+            continue
+        if typ != "blob" or mode != "100644":
+            errors.append("%s/%s %s must be a regular file (mode 100644), found mode %s %s"
+                          % (FRAGMENT_DIR, name, label, mode, typ))
+            continue
+        out[name] = git(root, "show", "%s:%s" % (rev, path))
+    return out, errors
 
 
 def first_difference(a, b):
@@ -348,26 +412,53 @@ def release_candidate(base_lines, head_lines):
     return content(head_lines[k]) if k < len(head_lines) else None
 
 
-def check_against_base(root, base, head_text):
+def check_against_base(root, base, backlog_text):
     """Errors unless HEAD's CHANGELOG.md is the merge base's, byte for byte, after exactly one of:
       - nothing (any PR; deleting fragments then requires adding at least one, i.e. a rename/merge);
       - assemble: the lines of all fragments the PR deletes, each once, in assemble's order, at the
         top of Unreleased (see insert_below_unreleased); the PR adds no fragment;
-      - release (no fragment deleted): one '## X.Y.Z' or '## X.Y.Z - YYYY-MM-DD' heading, for a
-        version not yet in the file, inserted at the top of a non-empty Unreleased section, so all
-        its former lines now belong to the release and Unreleased is empty.
+      - release (no fragment deleted): one '## X.Y.Z' or '## X.Y.Z - YYYY-MM-DD' heading (no leading
+        zeros, a real date), for a version greater than every version in the file, inserted at the
+        top of a non-empty Unreleased section, so all its former lines now belong to the release
+        and Unreleased is empty.
+    Both sides are read from committed git blobs (HEAD and the merge base), never the working tree;
+    CHANGELOG.md and the fragments must be regular files (mode 100644). A fragment deleted whose
+    line is already in the merge base's CHANGELOG.md counts as assembled (nothing to insert).
     """
     try:
+        status = git(root, "status", "--porcelain", "--", CHANGELOG, FRAGMENT_DIR).decode("utf-8", "replace")
+        if status.strip():
+            print("note: uncommitted changes to %s or %s/ are not judged by check --base (it reads "
+                  "the committed HEAD, like CI):\n%s" % (CHANGELOG, FRAGMENT_DIR, status.rstrip()),
+                  file=sys.stderr)
         mb = git(root, "merge-base", base, "HEAD").decode("ascii").strip()
-        base_data = git(root, "show", "%s:%s" % (mb, CHANGELOG))
-        base_frags = fragments_at(root, mb)
+        base_data, err_b = changelog_at(root, mb, "at the merge base")
+        head_data, err_h = changelog_at(root, "HEAD", "at HEAD")
+        base_frags, errs_b = fragments_at(root, mb, "at the merge base")
+        head_frags, errs_h = fragments_at(root, "HEAD", "at HEAD")
     except RuntimeError as e:
         return ["cannot compare with %s: %s" % (base, e)]
+    errors = [e for e in (err_b, err_h) if e] + errs_b + errs_h
+    if errors:
+        return errors
     base_text, err = decode_changelog(base_data, "%s at the merge base" % CHANGELOG)
     if err:
         return [err]
-    head_entries = read_fragment_dir(root) or {}
-    deleted, errors = [], []
+    head_text, err = decode_changelog(head_data, "%s at HEAD" % CHANGELOG)
+    if err:
+        return [err]
+    # Re-validate what is committed (the working tree may differ, e.g. through .gitattributes filters).
+    head_valid, errors = check_fragment_set(head_frags, backlog_text)
+    errors = ["at HEAD: " + e for e in errors]
+    errors += fragment_line_conflicts(head_valid, head_text, " at HEAD")
+    try:
+        unreleased_section(split_raw(head_text))
+    except ValueError as e:
+        errors.append("at HEAD: %s" % e)
+    if errors:
+        return errors
+    head_entries = head_frags
+    deleted = []
     for name in sorted(base_frags):
         if name not in head_entries:
             frag, errs = validate_fragment(name, base_frags[name])
@@ -380,9 +471,10 @@ def check_against_base(root, base, head_text):
         return errors
     added = [n for n in head_entries if n not in base_frags and n not in IGNORED and not n.startswith(".")]
     deleted.sort(key=Fragment.sort_key)
-    names = ", ".join(f.name for f in deleted)
+    to_insert = split_present(deleted, base_text)[0]
+    names = ", ".join(f.name for f in to_insert)
     if head_text == base_text:
-        if deleted and not added:
+        if to_insert and not added:
             return ["%s deleted without being assembled into %s (and no fragment added in its place); "
                     "keep it, or run tools/changelog.py assemble" % (names, CHANGELOG)]
         return []
@@ -391,28 +483,36 @@ def check_against_base(root, base, head_text):
         unreleased_section(base_lines)
     except ValueError as e:
         return ["at the merge base: %s" % e]
-    if deleted:
+    if to_insert:
         if added:
             return ["%s changed together with adding %s: an assemble PR only assembles and deletes "
                     "fragments; add new fragments in another PR" % (CHANGELOG, ", ".join(sorted(added)))]
-        present = set(section_entries(base_lines))
-        dup = [f.name for f in deleted if f.line in present]
-        if dup:
-            return ["the line of %s is already in '%s' at the merge base; delete the fragment without "
-                    "touching %s" % (", ".join(dup), UNRELEASED, CHANGELOG)]
-        expected = insert_below_unreleased(base_lines, [f.line for f in deleted])
+        expected = insert_below_unreleased(base_lines, [f.line for f in to_insert])
         if head_lines == expected:
             return []
         n, line = first_difference(expected, head_lines)
         return ["%s is not what tools/changelog.py assemble makes of the fragments this PR deletes (%s); "
                 "first difference at line %d: %s. Never edit %s by hand"
                 % (CHANGELOG, names, n, short(content(line)), CHANGELOG)]
-    version = release_candidate(base_lines, head_lines)
+    version = release_candidate(base_lines, head_lines) if not deleted else None
     m = VERSION_RE.match(version or "")
     if m:
-        known = {mm.group(1) for mm in (VERSION_RE.match(content(ln)) for ln in base_lines) if mm}
-        if m.group(1) in known:
+        strict = STRICT_VERSION_RE.match(version)
+        if not strict:
+            return ["%s: release heading %r: write the version without leading zeros" % (CHANGELOG, version)]
+        if strict.group(4):
+            try:
+                datetime.date(int(strict.group(4)), int(strict.group(5)), int(strict.group(6)))
+            except ValueError:
+                return ["%s: release heading %r: not a valid date" % (CHANGELOG, version)]
+        new = tuple(int(strict.group(i)) for i in (1, 2, 3))
+        known = [tuple(int(x) for x in mm.groups())
+                 for mm in (EXISTING_VERSION_RE.match(content(ln)) for ln in base_lines) if mm]
+        if new in known:
             return ["%s: version %s is already in the file" % (CHANGELOG, m.group(1))]
+        if known and new < max(known):
+            return ["%s: version %s is not greater than the latest release %s"
+                    % (CHANGELOG, m.group(1), ".".join(str(x) for x in max(known)))]
         if not section_entries(base_lines):
             return ["%s: release %s with an empty '%s' section" % (CHANGELOG, m.group(1), UNRELEASED)]
         expected = insert_below_unreleased(base_lines, [version], release=True)
@@ -448,6 +548,7 @@ def cmd_assemble(root):
             print("error: " + e, file=sys.stderr)
         print("nothing assembled; fix the fragments first", file=sys.stderr)
         return 1
+    skipped = split_present(fragments, old)[1]
     try:
         new = assemble_text(old, fragments)
     except ValueError as e:
@@ -474,7 +575,8 @@ def cmd_assemble(root):
     print("assembled %d fragment%s into %s" % (len(fragments), "" if len(fragments) == 1 else "s",
                                                CHANGELOG))
     for frag in fragments:
-        print("  " + frag.name)
+        print("  " + frag.name + ("  (line already in %s: deleted, not inserted again)" % CHANGELOG
+                                  if frag in skipped else ""))
     return 0
 
 

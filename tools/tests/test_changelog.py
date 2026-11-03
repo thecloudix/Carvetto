@@ -225,6 +225,29 @@ class CheckInvalid(RepoTest):
         # Arabic-Indic digits are Unicode decimal digits but not card ids.
         self.assert_fails("T-\u0660\u0661\u0664\u0666.md", "- T-0146: x\n", "bad file name")
 
+    def test_fragment_line_already_in_changelog(self):
+        # CHANGELOG fixture holds "- T-0017: older entry — with ≤ 0.5 mm and 45°".
+        self.assert_fails("T-0017.md", "- T-0017: older entry — with ≤ 0.5 mm and 45°\n",
+                          "T-0017.md: this line is already in CHANGELOG.md")
+
+    @unittest.skipIf(not hasattr(os, "symlink"), "no symlinks")
+    def test_symlinks_refused(self):
+        try:
+            os.symlink("README.md", str(self.repo.dir / "changelog.d" / "T-0150.md"))
+        except OSError:
+            self.skipTest("cannot create symlinks here")
+        code, _, err = self.repo.check()
+        self.assertEqual(code, 1)
+        self.assertIn("T-0150.md: must be a regular file, not a symlink", err)
+        (self.repo.dir / "changelog.d" / "T-0150.md").unlink()
+        real = self.repo.dir / "docs" / "cl.md"
+        real.write_text(CHANGELOG, encoding="utf-8")
+        (self.repo.dir / "CHANGELOG.md").unlink()
+        os.symlink(os.path.join("docs", "cl.md"), str(self.repo.dir / "CHANGELOG.md"))
+        code, _, err = self.repo.check()
+        self.assertEqual(code, 1)
+        self.assertIn("CHANGELOG.md must be a regular file, not a symlink", err)
+
     def test_missing_fragment_dir(self):
         shutil.rmtree(self.repo.dir / "changelog.d")
         code, _, err = self.repo.check()
@@ -399,8 +422,13 @@ class CheckBase(RepoTest):
         self.assertEqual(code, 1)
         self.assertIn("edited by hand (first difference at line 5: - T-0151: by hand)", err)
 
-    def test_uncommitted_direct_edit_fails(self):
+    def test_uncommitted_edit_is_not_judged_but_noted(self):
+        # check --base reads committed blobs (what CI sees); the working tree only gets a note.
         self.repo.write_changelog(CHANGELOG + "- T-0151: by hand\n")
+        code, _, err = self.check_base()
+        self.assertEqual(code, 0, err)
+        self.assertIn("note: uncommitted changes", err)
+        self.commit("now committed")
         self.assertEqual(self.check_base()[0], 1)
 
     def test_editing_existing_line_fails(self):
@@ -515,6 +543,7 @@ class CheckBase(RepoTest):
         self.assertIn("cannot compare with no-such-ref", err)
 
 
+HAND_MSG = "CHANGELOG.md edited by hand"
 BASE2 = ("# Changelog\n\n## Unreleased\n\n- T-0017: older entry\n- T-0009: oldest entry\n\n"
          "## 0.1.0\n\n- T-0124: released two\n- T-0120: released\n")
 
@@ -619,7 +648,7 @@ class CheckBaseExact(RepoTest):
     def test_other_fragments_line_fails(self):
         self.rm_frag("T-0150.md")
         self.write_raw(BASE2.replace("## Unreleased\n\n", "## Unreleased\n\n- T-0151: engrave\n").encode())
-        self.expect(1, "is not what tools/changelog.py assemble makes")
+        self.expect(1, "T-0151.md: this line is already in CHANGELOG.md")
 
     def test_partial_assemble_of_deleted_fragments_fails(self):
         self.rm_frag("T-0150.md")
@@ -704,6 +733,114 @@ class CheckBaseExact(RepoTest):
         self.rm_frag("T-0150.md")
         self.write_raw(BASE2.replace("## Unreleased\n\n", "## Unreleased\n\n## 0.2.0\n\n").encode())
         self.expect(1, "is not what tools/changelog.py assemble makes")
+
+    # Round 3: duplicate lines, committed blobs and file modes, release versions.
+    def dup_fragment_on_main(self):
+        """The stuck state: main holds a fragment whose line is already in CHANGELOG.md."""
+        self.git("checkout", "-q", "main")
+        self.repo.frag("T-0017.md", "- T-0017: older entry\n")
+        self.commit("legacy duplicate fragment")
+        self.git("checkout", "-q", "pr")
+        self.git("reset", "-q", "--hard", "main")
+
+    def test_adding_fragment_with_existing_line_fails(self):
+        self.repo.frag("T-0017.md", "- T-0017: older entry\n")
+        self.expect(1, "T-0017.md: this line is already in CHANGELOG.md")
+
+    def test_duplicate_fragment_cleared_by_deleting_it(self):
+        self.dup_fragment_on_main()
+        self.rm_frag("T-0017.md")
+        self.expect(0)
+
+    def test_duplicate_fragment_cleared_by_assemble(self):
+        self.dup_fragment_on_main()
+        code, out, _ = self.repo.assemble()
+        self.assertEqual(code, 0)
+        self.assertIn("T-0017.md  (line already in CHANGELOG.md: deleted, not inserted again)", out)
+        self.assertEqual(self.repo.names(), ["README.md"])
+        self.assertEqual(self.repo.changelog().count("- T-0017: older entry\n"), 1)
+        self.expect(0)
+
+    def test_duplicate_fragment_deleted_with_hand_edit_fails(self):
+        self.dup_fragment_on_main()
+        self.rm_frag("T-0017.md")
+        self.write_raw((BASE2 + "- T-0146: hand\n").encode())
+        self.expect(1, HAND_MSG)
+
+    def test_reads_committed_blobs_not_working_tree(self):
+        # The committed CHANGELOG.md has a hand edit; the working tree shows the base bytes.
+        self.write_raw((BASE2 + "- T-0146: hand\n").encode())
+        self.commit("hand edit")
+        self.write_raw(BASE2.encode())
+        code, _, err = self.check_base()
+        self.assertEqual(code, 1, err)
+        self.assertIn(HAND_MSG, err)
+
+    def test_working_tree_encoding_trick_fails(self):
+        # .gitattributes working-tree-encoding makes the checkout look like the base while the
+        # committed blob is mojibake: the blob is what counts.
+        mojibake = BASE2.replace("## 0.1.0", "## 0.1.0 \u2014 x").encode("utf-8").decode("latin-1").encode("utf-8")
+        self.git("checkout", "-q", "main")
+        self.write_raw(BASE2.replace("## 0.1.0", "## 0.1.0 \u2014 x").encode())
+        self.commit("dash")
+        self.git("checkout", "-q", "pr")
+        self.git("reset", "-q", "--hard", "main")
+        sha = subprocess.run(["git", "hash-object", "-w", "--stdin", "--no-filters"], cwd=str(self.repo.dir),
+                             input=mojibake, capture_output=True, check=True).stdout.decode().strip()
+        self.git("update-index", "--cacheinfo", "100644,%s,CHANGELOG.md" % sha)
+        self.git("commit", "-q", "-m", "mojibake")
+        self.git("checkout", "-q", "--", "CHANGELOG.md")
+        code, _, err = self.check_base()
+        self.assertEqual(code, 1, err)
+        self.assertIn(HAND_MSG, err)
+
+    def blob_with_mode(self, path, data, mode):
+        sha = subprocess.run(["git", "hash-object", "-w", "--stdin"], cwd=str(self.repo.dir),
+                             input=data, capture_output=True, check=True).stdout.decode().strip()
+        self.git("update-index", "--add", "--cacheinfo", "%s,%s,%s" % (mode, sha, path))
+        self.git("commit", "-q", "-m", "mode " + mode)
+
+    def test_symlink_changelog_blob_fails(self):
+        self.blob_with_mode("CHANGELOG.md", b"docs/BACKLOG.md", "120000")
+        # The working tree keeps a regular file (plain check passes); the committed blob is the link.
+        code, _, err = self.check_base()
+        self.assertEqual(code, 1, err)
+        self.assertIn("CHANGELOG.md at HEAD must be a regular file (mode 100644), found mode 120000", err)
+
+    def test_symlink_fragment_blob_fails(self):
+        self.blob_with_mode("changelog.d/T-0146.md", b"T-0150.md", "120000")
+        # The working tree keeps a regular file (plain check passes); the committed blob is the link.
+        code, _, err = self.check_base()
+        self.assertEqual(code, 1, err)
+        self.assertIn("mode 100644), found mode 120000", err)
+
+    def test_executable_fragment_blob_fails(self):
+        self.blob_with_mode("changelog.d/T-0146.md", b"- T-0146: x\n", "100755")
+        code, _, err = self.check_base()
+        self.assertEqual(code, 1, err)
+        self.assertIn("changelog.d/T-0146.md at HEAD must be a regular file (mode 100644), found mode 100755", err)
+
+    def test_release_version_rules(self):
+        cases = [("## 00.1.0", 1, "without leading zeros"), ("## 0.01.0", 1, "without leading zeros"),
+                 ("## 0.0.1", 1, "not greater than the latest release 0.1.0"),
+                 ("## 0.1.0 - 2026-12-01", 1, "already in the file"),
+                 ("## 0.2.0 - 2026-99-99", 1, "not a valid date"), ("## 0.2.0 - 2026-02-30", 1, "not a valid date"),
+                 ("## 0.2.0 - 2028-02-29", 0, None), ("## 0.1.1", 0, None), ("## 1.0.0", 0, None),
+                 ("## 0.10.0", 0, None)]
+        for heading, code, needle in cases:
+            with self.subTest(heading=heading):
+                self.git("reset", "-q", "--hard", "main")
+                self.write_raw(BASE2.replace("## Unreleased\n\n", "## Unreleased\n\n%s\n\n" % heading).encode())
+                self.expect(code, needle)
+
+    def test_release_compares_versions_numerically(self):
+        self.git("checkout", "-q", "main")
+        self.write_raw(BASE2.replace("## 0.1.0", "## 0.9.0").encode())
+        self.commit("0.9.0")
+        self.git("checkout", "-q", "pr")
+        self.git("reset", "-q", "--hard", "main")
+        self.write_raw(BASE2.replace("## 0.1.0", "## 0.9.0").replace("## Unreleased\n\n", "## Unreleased\n\n## 0.10.0\n\n").encode())
+        self.expect(0)
 
     def ci_merge_commit(self):
         """Like actions/checkout on a PR: main has moved on, HEAD is the merge of the PR into main."""
