@@ -689,7 +689,10 @@ chain that is closed exactly.
    was never counted. It is now 0 (Outside), and Drill no longer drills such a ring (ADR-0022 §1).
 3. **Who changes.** Only queries whose horizontal line passes between a junction's two computed end
    points (a gap of a few ulps up to `tol.distance`) can change, and only from a wrong count to the
-   right one. Callers: `cut_order` (nesting), Profile (region parity), Drill (centroid inside its
+   right one. Contours with real interior gaps (larger than `tol.distance`) also change: every gap
+   is now bridged by a straight link, so their winding is that of the implicit polygon through all
+   span end points (consistent with "implicitly closed"), where before such gaps gave unbalanced
+   counts; Drill already skips gapped vectors. Callers: `cut_order` (nesting), Profile (region parity), Drill (centroid inside its
    vector); Pocket and the booleans use Clipper2 and do not call it. Verified by a generative test
    against an angle-summation oracle (rings at bridges every 15° and special angles, lines, arcs and
    Beziers mixed; integer-grid contours with retraced chords, horizontal edges, half-circle arcs and
