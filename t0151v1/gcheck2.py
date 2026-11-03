@@ -65,6 +65,8 @@ def check(path, post, bottom, safe, plunge=-1, drag=False):
         if dragsec and ('(' in s or ')' in s): E(n, "unbalanced or nested parentheses in a drag section")
         if dragsec and ('#' in s or '[' in s): E(n, "parameter or expression ('#', '[') in a drag section")
         if dragsec and any(ch in raw for ch in '~!?\x18'): E(n, "Grbl realtime character in a drag section")
+        if dragsec and '\t' in raw: E(n, "tab in a drag section (Marlin: unknown command)")
+        if dragsec and 'marlin' in post and 'N' in s: E(n, "N word in a drag section on a ';' post")
         if dragsec and re.search(r"M0*(108|112|410|876)(?!\d)", re.sub(r"[ \t]", "", raw).upper()):
             E(n, "Marlin emergency-parser code in a drag section")
         if dragsec and 'marlin' in post and re.search(r"[()]", raw.split(';')[0]): E(n, "parenthesis in live code on a ';' post")
