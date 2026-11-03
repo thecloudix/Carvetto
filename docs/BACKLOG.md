@@ -373,6 +373,7 @@ Acceptance criteria:
   3. ADR-0016 records the rule; output for allowance ≥ −r unchanged (byte-identical to the T-0127 merge).
 
 ### T-0131 Toolpath scaling and index residuals of T-0123   [status: in progress]
+Director decision 2026-11-03: the rest-tool case (e) is accepted at ~2.4–2.6× per doubling because the excess is in the Clipper2 boolean sweep (T-0142 item 3). Its test bound gets headroom until T-0142 lands.
 Phase: 1   Module: core/toolpath   Depends on: T-0123   ADR: 0018
 Goal: Found by the T-0123 coder and verifiers (harness t0123v1/, t0123v2/). (a) `BoxIndex` drops non-finite boxes when no box in the set is finite (constructor returns on `sizes.empty()` before `big_` is filled): `BoxIndex({Box2{{-1e308,0},{1e308,1}}}).query(Box2{{0,0},{1,1}})` returns {} (brute force {0}); same for an infinite box alone and `containing`. Driver t0123v2/bi3.cpp. (b) ADR-0017 §9 still names the removed `toolpath/pocket_ramp.hpp`; box_index.hpp comment omits the 1e-9 floor. (c) Raster zig-zag linking is quadratic (1,000-tooth comb within the caps: 6–14 s). (d) Profile with a separate last pass scales 4.2× per doubling (16 s → 69 s at 1,250 → 2,500 vectors): finishing-to-roughing tab matching compares every pair. (e) Pocket with a rest tool on a text page scales ~3× per doubling (2.3 / 7.5 / 22 s at 1,250 / 2,500 / 5,000 vectors; Clipper2 sweeps). (f) Tabs on 5,000 vectors take 17 s (linear but slow).
 Acceptance criteria:
@@ -470,6 +471,7 @@ Goal: Found by the T-0141 coder. (a) booleanOp/unionContours has the same O(n²)
 Acceptance criteria:
   1. (a) ≤ 2.5× per doubling up to 20k shapes, output identical below the batching threshold and within a few grid units above it; (b) no leftover rings in the repro and a generative check; Pocket/Profile safety unchanged.
   2. (c) Remaining quadratic offset cases from the T-0141 verifier (harness t0141v1/perf.cpp): an outer containing a row of n holes (1.31/6.10 s at 10k/20k), a row whose outsets merge (1.44/5.99 s), the nested-corner spiral (~4.5× per doubling) — ≤ 2.5× per doubling or documented limit. (d) Profile: tol.distance has no lower bound and Bezier offsets use min(chordal, distance/2), so {distance 1e-8, chordal 1e-4} runs > 120 s and degrades output (bez.cpp) — add a lower bound on distance or a floor on the offset chordal (Profile and Pocket consistently), and fix the T-0141 test that accepts {1e-9, …}.
+  3. (e) From the T-0131 verifier (harness t0131v1/clip90.cpp): Raster line clipping in booleanOp walks an active edge list holding every tooth. A 90° raster on a 1,000-tooth comb grows 3.5/5.2/6.6× per doubling (45°: 3.2×, 30°: 3.0×). Also covers Pocket's rest-tool whole-page boolean difference/intersection (~2.4–2.6× per doubling at 5,000 vectors; BuildIntersectList ×3.2). Target ≤ 2.5× per doubling; then tighten the T-0131 (e) test bound back to 2.5.
 
 ### T-0143 Point-in-contour degeneracy and drill pass cap (T-0150 verifier)   [status: done (2026-11-03, #40)]
 Phase: 1   Module: core/geometry, core/toolpath   Depends on: T-0150   ADR: 0005/0009, 0022
@@ -478,6 +480,8 @@ Acceptance criteria:
   1. (a) winding correct for bridges/endpoints on the test ray at every angle (generative test vs a robust oracle), all callers (Pocket, Profile, Drill) unchanged elsewhere; (b) limit consistent with message and ADR, boundary test.
 
 ### T-0154 No-spindle toolpaths for diamond-drag engraving   [status: in-progress]
+Owner decision 2026-11-03 (after round 3 FAIL: "M/3", fractional M words, M259): one extra round with an allowlist: drag-section template lines may contain only listed words as plain integer words; no "/" except leading block delete, no controller real-time characters.
+Owner decision 2026-11-03 (extra round FAIL: LINE_ENDING appended after the check, M0 message exemption on ;-posts, /-prefixed pause lines): ONE final round scoped to those fixes.
 Phase: 1 (Batch C)   Module: core/post, core/toolpath   Depends on: T-0151   ADR: 0020, 0024
 Goal: Owner decision 2026-11-03: Quick Engrave refuses diamond-drag tools until the post supports toolpaths that run with the spindle off. A drag toolpath must skip SPINDLE_ON/[S], stop the spindle (M5) before it, and pause for the operator (tool-change style stop with a message) so the spindle is confirmed off/locked; T-0134's spindle > 0 rule exempts exactly these toolpaths.
 Acceptance criteria:
@@ -503,7 +507,7 @@ Acceptance criteria:
   3. (Follow-ups from the T-0145 verifier) Tighten the T-0006 AC1 ratio bound from 3.5 to ~2.5 (linear measures 1.5–1.8; 3.5 misses a 3× quadratic term); add an assert/comment in cpu_scaling.hpp that small calls must be ≥ ~1 ms so the floor cannot swallow the ratio; replace the remaining std::clock absolute bounds (dxf_fuzz_test.cpp, carv_io_test.cpp) with processCpuSeconds.
   2. (Found by the T-0155 coder) PassPlan's absolute 1e-9 mm rounding guard drops one level at nanometre pass depths with maintainExactStep (cutDepth 1e-6, passDepth 1e-9 → 999 levels, not 1000; core/src/toolpath/pass_plan.cpp planStretch) — use a relative epsilon; level counts for realistic pass depths unchanged (Profile/Pocket/Drill/Engrave hashes vs main).
 
-### T-0146 Changelog fragments (no more CHANGELOG.md conflicts)   [status: in-progress — round 3 FAIL (fragment-duplicate deadlock); owner 2026-11-03: one narrow extra round]
+### T-0146 Changelog fragments (no more CHANGELOG.md conflicts)   [status: done (2026-11-03, #46)]
 Phase: 1   Module: tools, docs, CI   Depends on: —
 Goal: Owner decision 2026-11-03: every card currently adds a line at the top of CHANGELOG.md, so each merge makes every other open PR conflict and re-run CI (~40 min). Instead each card writes its entry to its own file `changelog.d/T-XXXX.md` (one bullet line, same style as today), never editing CHANGELOG.md; a script assembles the fragments into CHANGELOG.md's Unreleased section at release time and deletes them.
 Acceptance criteria:
@@ -593,6 +597,7 @@ Acceptance criteria:
   3. ADR records the algorithm (e.g. segment Voronoi via a library already allowed by the dependency policy, or an own implementation) and the dependency/licence decision; any new dependency goes to the owner first.
 
 ### T-0153 V-Carve toolpath   [status: in-progress]
+Owner decision 2026-11-03: identifiers `v_carve` (code, CLI command, job.json "operation"), UI label "V-Carve"; "vcarve" matches the VCarve trademark (CONTRIBUTING).
 Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0152, T-0123, T-0132   ADR: new
 Goal: V-carve closed regions with a V-bit (behaviour per feature-inventory "V-Carve Toolpath"): depth from the medial axis radius and bit angle, start depth, optional flat depth (flat-bottom areas cleared with clearance tools, Offset or Raster strategy reusing Pocket), corner sharpening, ordering, safe links; native record + CLI.
 Acceptance criteria:
