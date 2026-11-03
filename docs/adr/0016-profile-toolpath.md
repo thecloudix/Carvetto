@@ -202,7 +202,7 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     a·b − c into one fma, T-0159), which lost a tab against the GCC 13/MSVC result. So T-0127's
     candidate is placed both ways, deterministically: such a tab refused (within 1e-9 mm beyond the
     gap) and accepted (within 1e-9 mm short of it); each is matched and checked, a tie going to the
-    accepted one. The scene thus never keeps fewer tabs than T-0127 did under either rounding. The
+    accepted one. The scene thus never keeps fewer tabs than T-0127 did when every moved tab rounds the same way (all refused or all accepted); a scene where rounding would mix the two is not covered, and other knife-edge rounding (start points, fitting) can still change counts between compilers (T-0159 verifier: 82 of 10,000 scenes differ between plain and x86-64-v3 builds, against 97 before). The
     extra runs happen only when they would differ: T-0127's when some cut's tabs are placed
     differently or a run used the second try (the refused variant only when it places the tabs
     differently from the accepted one), the one without add-back when add-back changed something. Finally every tab group (a tab and its

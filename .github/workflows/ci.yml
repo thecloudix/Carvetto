@@ -103,7 +103,7 @@ jobs:
         run: ctest --test-dir build --output-on-failure -j8 --repeat until-fail:5
 
   # T-0159: the Release build runs on both runner images: ubuntu-24.04 (GCC 13) and ubuntu-26.04
-  # (GCC 15, whose Release build contracts a * b - c into fma), so results that depend on the
+  # (GCC 15; its Release build there contracts a * b - c into fma, for a reason the Compiler step reports), so results that depend on the
   # compiler's floating-point evaluation show up on a PR instead of when ubuntu-latest moves.
   linux-app:
     strategy:
