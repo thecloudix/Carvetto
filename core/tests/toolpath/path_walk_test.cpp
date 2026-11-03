@@ -256,19 +256,22 @@ TEST_CASE("Tabs moved off a keep-clear point are kept, never dropped by rounding
         REQUIRE(tp.centres.size() == 1);
         CHECK(std::fabs(std::fabs(tp.centres.front() - 40.0) - (reach + 0.012)) < 1e-12);
     }
-    // A moved tab never pushes out one that was not moved: 11.5 moves off 11.2 to 12.201, which
-    // would overlap the tab at 13.5; the unmoved one is kept (before T-0135 the sorted greedy pass
-    // kept the moved one and dropped 13.5).
+    // T-0135 round 2 (verifier gfit2): tabs are fitted in order along the path, moved ones too, as
+    // T-0127 did. Footprint 4, gap 3, keep-clear 30, asked {29.5, 33, 36}: 29.5 moves to 27.999,
+    // 33 overlaps it and is dropped, 36 is kept (a rule fitting moved tabs last kept only 33).
     {
-        const TabPlacement tp = fitTabs(lp, {11.5, 13.5}, footprint, {11.2});
-        REQUIRE(tp.centres.size() == 1);
-        CHECK(tp.centres.front() == 13.5);
+        const TabPlacement tp = fitTabs(lp, {29.5, 33.0, 36.0}, 4.0, {30.0}, 3.0);
+        REQUIRE(tp.centres.size() == 2);
+        CHECK(tp.centres[0] == Approx(27.999).margin(1e-9));
+        CHECK(tp.centres[1] == 36.0);
         CHECK(tp.dropped == 1);
-        REQUIRE(tp.origin.size() == 1);
-        CHECK(tp.origin.front() == 1);
-        // ... and is kept where it overlaps nothing.
-        const TabPlacement free = fitTabs(lp, {11.5, 20.0}, footprint, {11.2});
-        CHECK(free.centres.size() == 2);
+        REQUIRE(tp.origin.size() == 2);
+        CHECK(tp.origin[0] == 0);
+        CHECK(tp.origin[1] == 2);
+        Contour sq = Contour::rectangle(Box2{{0, 0}, {25, 25}});
+        const ArcLengthPath sp(sq, geometry::Tolerance::defaults());
+        const TabPlacement ts = fitTabs(sp, {29.5, 33.0, 36.0}, 4.0, {30.0}, 3.0);
+        CHECK(ts.centres.size() == 2);
     }
     // A centre clearly inside the gap with no room to move (both sides blocked) is still dropped.
     const TabPlacement blocked = fitTabs(lp, {50.0}, footprint, {49.5, 51.0});

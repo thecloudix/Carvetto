@@ -253,7 +253,7 @@ class ProfileBuilder {
     void chooseStarts(std::vector<Cut>& cuts);
     std::vector<std::size_t> order(const std::vector<Cut>& cuts) const;
     void placeTabsOn(std::vector<Cut>& primary, const std::vector<Cut>& otherPass);
-    void matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut>& rough);
+    bool matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut>& rough, bool addBack);
     void dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& secondary);
     void reportLoosePieces(const std::vector<Cut>& primary, const std::vector<Cut>& secondary);
     bool mapTab(const Cut& from, const TabSpan& t, const Cut& onto, TabSpan& out, bool& near,
@@ -1003,7 +1003,8 @@ bool ProfileBuilder::mapTab(const Cut& from, const TabSpan& t, const Cut& onto, 
 // that way is tried again with the cover placed as for allowance >= 0 (sections from the vector
 // out); the shorter cover only nicks the tab's material on the part side, and dropSweptTabs judges
 // the result exactly (the tab is dropped as cut through if it no longer holds).
-void ProfileBuilder::matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut>& rough) {
+bool ProfileBuilder::matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut>& rough, bool addBack) {
+    bool addedBack = false;
     for (Cut& r : rough) {
         r.tabs.clear();
     }
@@ -1017,9 +1018,10 @@ void ProfileBuilder::matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut
     for (std::size_t fi = 0; fi < finish.size(); ++fi) {
         Cut& f = finish[fi];
         const std::size_t src = f.sources.front();
-        // A refused tab may have pushed a neighbour out when the tabs were fitted (overlap, or a
-        // tab moved off a start onto it). Then the tabs are fitted again without it and this cut
-        // is matched again, so a tab that cannot be matched never costs another one.
+        // Add-back (`addBack`): a refused tab may have kept a neighbour out when the tabs were
+        // fitted (they overlapped). Then the tabs fitting dropped are added back where they clear
+        // every tab still kept, and this cut is matched again. (run() keeps this result only if,
+        // after the tab check, it has more tabs than matching without add-back.)
         std::vector<char> excluded(f.tabRequested.size(), 0);
         std::vector<std::size_t> roughSizes(rough.size());
         for (std::size_t k = 0; k < rough.size(); ++k) roughSizes[k] = rough[k].tabs.size();
@@ -1053,7 +1055,7 @@ void ProfileBuilder::matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut
                 }
             }
             if (!ok) {
-                if (ti < f.tabOrigin.size()) {
+                if (addBack && ti < f.tabOrigin.size()) {
                     // Keep the other tabs where they are and add back, where they now fit (their
                     // footprints clear of every tab kept), the asked-for tabs that fitting dropped;
                     // match this cut again only if one comes back.
@@ -1088,6 +1090,7 @@ void ProfileBuilder::matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut
                         ++added;
                     }
                     if (added > 0) {
+                        addedBack = true;
                         excluded = std::move(trial);
                         ++tabsDropped_[src];
                         ++tabsUnmatched_[src];
@@ -1123,6 +1126,7 @@ void ProfileBuilder::matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut
     for (Cut& r : rough) {
         std::sort(r.tabs.begin(), r.tabs.end(), [](const TabSpan& x, const TabSpan& y) { return x.a < y.a; });
     }
+    return addedBack;
 }
 
 // Inside/Outside with allowance >= 0 (otherwise judgeSidedTab): true when the material of tab `t`
@@ -1920,39 +1924,10 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
         return;
     }
     const double rt = tabLayerRadius();
-    // Tool positions at most sqrt(0.04 r) apart (at least 0.05 mm), their discs grown by the
-    // sagitta of the gap (at most 5 µm), cover what the tool sweeps between them.
+    // The bands are the cut paths grown by the tab-layer radius + 2 µm, + the sagitta T-0127's
+    // sampled tool positions allowed for (at most 5 µm), so the pieces are as T-0127 measured them.
     const double spacing = std::max(0.05, std::sqrt(0.04 * rt));
     const double reachCut = rt + 2e-3 + spacing * spacing / (8.0 * rt);
-    struct Pos {
-        Vec2 p;
-        std::size_t source;
-    };
-    std::vector<Pos> openPos;
-    for (const std::vector<Cut>* pass : {&primary, &secondary}) {
-        for (const Cut& c : *pass) {
-            const ArcLengthPath& w = c.walk;
-            const double len = w.length();
-            const int n = std::max(1, static_cast<int>(std::ceil(len / spacing)));
-            for (int i = 0; i <= n; ++i) {
-                const double u = len * i / n;
-                const bool raised = std::any_of(c.tabs.begin(), c.tabs.end(), [&](const TabSpan& t) {
-                    for (double x : {u - len, u, u + len}) {
-                        if (x > t.a && x < t.b && (w.closed() || x == u)) return true;
-                    }
-                    return false;
-                });
-                if (!raised) openPos.push_back({w.pointAt(u), c.sources.front()});
-            }
-            for (const TabSpan& t : c.tabs) {  // the tool goes back down at the exact ends
-                openPos.push_back({w.pointAt(t.a), c.sources.front()});
-                openPos.push_back({w.pointAt(t.b), c.sources.front()});
-            }
-        }
-    }
-    std::sort(openPos.begin(), openPos.end(), [](const Pos& x, const Pos& y) {
-        return x.p.x < y.p.x || (x.p.x == y.p.x && (x.p.y < y.p.y || (x.p.y == y.p.y && x.source < y.source)));
-    });
     // The boundaries of a union of bands (they never cross), with their boxes and areas.
     struct Boundaries {
         std::vector<Contour> c;
@@ -2032,26 +2007,57 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
     }
     for (const Region& region : regions) {
         const geometry::Box2 box = region.bounds.inflated(rt + 0.5);
-        // Exact answer without the raster: the material the cuts leave near the loop is what the
-        // bands of the loop and of every cut near it (both passes; each band the path grown by the
-        // radius on both sides) leave, and an enclosed piece is a hole of their union. No hole
-        // lying inside the box, or one that stays one when the bands grow 0.03 mm more with a kept
-        // tab within reach of it (whose check joined it to the pieces beside the tab): no loose
-        // piece here.
-        {
-            const geometry::Box2 around = box.inflated(rt + 0.1);
-            std::vector<const Cut*> nearCuts;
-            for (const std::vector<Cut>* pass : {&primary, &secondary}) {
-                for (const Cut& o : *pass) {
-                    if (o.walk.contour().bounds().intersects(around)) nearCuts.push_back(&o);
-                }
+        // Every cut whose band can reach into the box (both passes).
+        const geometry::Box2 around = box.inflated(rt + 0.1);
+        std::vector<const Cut*> nearCuts;
+        for (const std::vector<Cut>* pass : {&primary, &secondary}) {
+            for (const Cut& o : *pass) {
+                if (o.walk.contour().bounds().intersects(around)) nearCuts.push_back(&o);
             }
-            // The union of the bands, and the enclosed pieces (its holes) lying inside the box.
-            auto bandsUnion = [&](double grow) {
-                std::vector<Contour> bands;
-                for (const Cut* o : nearCuts) {
-                    Contour path = o->walk.contour();
-                    path.closed = false;
+        }
+        // The stretches of a cut that cut the tab layer: all of it, or (`raised`) all but its
+        // raised stretches, whose exact ends stay in (the tool goes back down there).
+        auto stretches = [&](const Cut& o, bool raised) {
+            std::vector<Contour> out;
+            Contour whole = o.walk.contour();
+            whole.closed = false;
+            if (!raised || o.tabs.empty()) {
+                out.push_back(std::move(whole));
+                return out;
+            }
+            std::vector<TabSpan> ts = o.tabs;
+            std::sort(ts.begin(), ts.end(), [](const TabSpan& x, const TabSpan& y) { return x.a < y.a; });
+            const double len = o.walk.length();
+            std::vector<std::pair<double, double>> open;
+            if (o.walk.closed()) {
+                for (std::size_t i = 0; i < ts.size(); ++i) {
+                    const double u0 = ts[i].b;
+                    const double u1 = i + 1 < ts.size() ? ts[i + 1].a : ts.front().a + len;
+                    open.push_back({u0, u1});
+                }
+            } else {
+                double u = 0.0;
+                for (const TabSpan& t : ts) {
+                    open.push_back({u, t.a});
+                    u = t.b;
+                }
+                open.push_back({u, len});
+            }
+            for (const auto& [u0, u1] : open) {
+                if (u1 - u0 <= 1e-9) continue;
+                Contour piece;
+                piece.closed = false;
+                piece.spans = o.walk.extract(u0, u1);
+                if (!piece.spans.empty()) out.push_back(std::move(piece));
+            }
+            return out;
+        };
+        // The union of the bands of those stretches (each grown by `grow` on both sides), with the
+        // boxes and areas of its boundaries.
+        auto bandsUnion = [&](double grow, bool raised) {
+            std::vector<Contour> bands;
+            for (const Cut* o : nearCuts) {
+                for (Contour& path : stretches(*o, raised)) {
                     std::vector<Contour> band =
                         geometry::offsetContours({path}, grow, geometry::JoinType::Round, offTol_, p_.corners.mitreLimit);
                     std::size_t outer = 0;
@@ -2063,334 +2069,100 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
                         bands.push_back(std::move(band[k]));
                     }
                 }
-                Boundaries u;
-                u.c = geometry::unionContours(bands, offTol_, geometry::FillRule::NonZero);
-                for (const Contour& b : u.c) {
-                    u.box.push_back(b.bounds());
-                    u.signedArea.push_back(geometry::signedArea(b));
-                    u.area.push_back(std::fabs(u.signedArea.back()));
-                }
-                return u;
-            };
-            auto holesOf = [&](const Boundaries& all) {
-                std::vector<std::size_t> out;
-                const geometry::Box2 inner = box.inflated(-1e-6);
-                for (std::size_t k = 0; k < all.c.size(); ++k) {
-                    if (all.signedArea[k] < 0.0 && inner.contains(all.box[k])) out.push_back(k);
-                }
-                return out;
-            };
-            auto enclosedCount = [&](double grow) { return holesOf(bandsUnion(grow)).size(); };
-            const Boundaries bandsAll = bandsUnion(reachCut);
-            const std::vector<std::size_t> holeIdx = holesOf(bandsAll);
-            std::vector<Contour> holes;
-            for (std::size_t k : holeIdx) holes.push_back(bandsAll.c[k]);
-            // A kept tab (of any cut near) within reach of the piece: its check joined every piece
-            // near it, this one included.
-            auto tabBeside = [&](const Contour& hole) {
-                const double reachTab = rt + 0.3;
-                const geometry::Box2 hb = hole.bounds();
-                for (const Cut* o : nearCuts) {
-                    for (const TabSpan& t : o->tabs) {
-                        const int nt = std::max(1, static_cast<int>(std::ceil((t.b - t.a) / 0.1)));
-                        for (int k = 0; k <= nt; ++k) {
-                            const Vec2 q = o->walk.pointAt(t.a + (t.b - t.a) * k / nt);
-                            if (q.x < hb.min.x - reachTab || q.x > hb.max.x + reachTab || q.y < hb.min.y - reachTab ||
-                                q.y > hb.max.y + reachTab) {
-                                continue;
-                            }
-                            if (geometry::closestPoint(hole, q).distance <= reachTab) return true;
-                        }
-                    }
-                }
-                return false;
-            };
-            // Several holes: each one stays one when the bands grow 0.03 mm more, and the kept tabs
-            // link every hole to the outside: a tab beside one hole joins it to the material on
-            // its other side, which is no hole here; a tab beside several joins them (its check
-            // joined every piece near it). Then no piece is loose here.
-            auto allLinked = [&]() {
-                if (holes.size() < 2) return false;
-                const Boundaries grown = bandsUnion(reachCut + 0.03);
-                std::vector<int> inside(holes.size(), 0);
-                for (std::size_t g : holesOf(grown)) {
-                    const std::size_t at =
-                        innermost(bandsAll, geometry::startPoint(grown.c[g].spans.front()), bandsAll.c.size());
-                    const auto it = std::find(holeIdx.begin(), holeIdx.end(), at);
-                    if (it == holeIdx.end()) return false;
-                    ++inside[static_cast<std::size_t>(it - holeIdx.begin())];
-                }
-                if (std::any_of(inside.begin(), inside.end(), [](int n) { return n != 1; })) return false;
-                const std::size_t out = holes.size();
-                DisjointSets links(holes.size() + 1);
-                const double reachTab = rt + 0.3;
-                std::vector<geometry::Box2> hb;
-                for (const Contour& h : holes) hb.push_back(h.bounds().inflated(reachTab));
-                const BoxIndex holeIndex(hb);
-                std::vector<std::size_t> beside;
-                std::vector<Vec2> stretch;
-                for (const Cut* o : nearCuts) {
-                    for (const TabSpan& t : o->tabs) {
-                        beside.clear();
-                        stretch.clear();
-                        geometry::Box2 sb;
-                        const int nt = std::max(1, static_cast<int>(std::ceil((t.b - t.a) / 0.1)));
-                        for (int k = 0; k <= nt; ++k) {
-                            stretch.push_back(o->walk.pointAt(t.a + (t.b - t.a) * k / nt));
-                            sb.expand(stretch.back());
-                        }
-                        for (std::size_t h : holeIndex.query(sb)) {
-                            for (const Vec2& q : stretch) {
-                                if (hb[h].contains(q) && geometry::closestPoint(holes[h], q).distance <= reachTab) {
-                                    beside.push_back(h);
-                                    break;
-                                }
-                            }
-                        }
-                        if (beside.size() == 1) links.unite(beside.front(), out);
-                        for (std::size_t m = 1; m < beside.size(); ++m) links.unite(beside.front(), beside[m]);
-                    }
-                }
-                for (std::size_t h = 0; h < holes.size(); ++h) {
-                    if (links.find(h) != links.find(out)) return false;
-                }
-                return true;
-            };
-            if (holes.empty() ||
-                (holes.size() == 1 && enclosedCount(reachCut + 0.03) == 1 && tabBeside(holes.front())) || allLinked()) {
-                continue;
             }
-            // No cut near keeps a tab: every enclosed piece comes free (attributed to the innermost
-            // loop that contains it, or else to the nearest cut).
-            if (std::none_of(nearCuts.begin(), nearCuts.end(), [](const Cut* o) { return !o->tabs.empty(); })) {
-                // (A piece counts when it is thicker than 0.05 mm somewhere: it survives bands
-                // 0.025 mm wider.)
-                const Boundaries thickAll = bandsUnion(reachCut + 0.025);
-                std::vector<Contour> thickHoles;
-                for (std::size_t k : holesOf(thickAll)) thickHoles.push_back(thickAll.c[k]);
-                const Boundaries& all = bandsAll;
-                for (std::size_t hi = 0; hi < holes.size(); ++hi) {
-                    const Contour& hole = holes[hi];
-                    const std::size_t self = holeIdx[hi];
-                    // The piece is the hole less the islands in it (another loop's band with its own
-                    // enclosed piece inside, e.g. a hole's slug inside the part).
-                    double pieceArea = all.area[self];
-                    for (std::size_t k = 0; k < all.c.size(); ++k) {
-                        if (k == self || all.signedArea[k] <= 0.0 || !all.box[self].contains(all.box[k])) continue;
-                        if (innermost(all, geometry::startPoint(all.c[k].spans.front()), k) == self) {
-                            pieceArea -= all.area[k];
-                        }
+            Boundaries u;
+            u.c = geometry::unionContours(bands, offTol_, geometry::FillRule::NonZero);
+            for (const Contour& b : u.c) {
+                u.box.push_back(b.bounds());
+                u.signedArea.push_back(geometry::signedArea(b));
+                u.area.push_back(std::fabs(u.signedArea.back()));
+            }
+            return u;
+        };
+        // The holes of a union lying inside the box: the pieces it encloses there.
+        auto holesOf = [&](const Boundaries& all) {
+            std::vector<std::size_t> out;
+            const geometry::Box2 inner = box.inflated(-1e-6);
+            for (std::size_t k = 0; k < all.c.size(); ++k) {
+                if (all.signedArea[k] < 0.0 && inner.contains(all.box[k])) out.push_back(k);
+            }
+            return out;
+        };
+        // With every tab lowered nothing is enclosed here: then nothing is with the tabs either (a
+        // kept tab's material only joins pieces, of which there is only the outside here).
+        const Boundaries lowered = bandsUnion(reachCut, false);
+        if (holesOf(lowered).empty()) continue;
+        // The material the cuts leave at the tab layer is what the bands of their open stretches
+        // leave, and a piece no kept tab joins to the outside is a hole of that union. A hole
+        // lying inside the box is such a piece in the whole scene too: every cut that reaches into
+        // the box is near, and other cuts could only cut it further, never join it to the outside.
+        const bool raised = std::any_of(nearCuts.begin(), nearCuts.end(), [](const Cut* o) { return !o->tabs.empty(); });
+        const Boundaries open = raised ? bandsUnion(reachCut, true) : lowered;
+        const std::vector<std::size_t> holeIdx = holesOf(open);
+        if (holeIdx.empty()) continue;
+        std::vector<Contour> holes;
+        for (std::size_t k : holeIdx) holes.push_back(open.c[k]);
+            // (A piece counts when it is thicker than 0.05 mm somewhere: it survives bands
+            // 0.025 mm wider.)
+            const Boundaries thickAll = bandsUnion(reachCut + 0.025, raised);
+            std::vector<Contour> thickHoles;
+            for (std::size_t k : holesOf(thickAll)) thickHoles.push_back(thickAll.c[k]);
+            const Boundaries& all = open;
+            for (std::size_t hi = 0; hi < holes.size(); ++hi) {
+                const Contour& hole = holes[hi];
+                const std::size_t self = holeIdx[hi];
+                // The piece is the hole less the islands in it (another loop's band with its own
+                // enclosed piece inside, e.g. a hole's slug inside the part).
+                double pieceArea = all.area[self];
+                for (std::size_t k = 0; k < all.c.size(); ++k) {
+                    if (k == self || all.signedArea[k] <= 0.0 || !all.box[self].contains(all.box[k])) continue;
+                    if (innermost(all, geometry::startPoint(all.c[k].spans.front()), k) == self) {
+                        pieceArea -= all.area[k];
                     }
-                    if (pieceArea < 0.04) continue;
-                    // Its thick part: a hole of the wider bands inside it (not inside an island).
-                    const auto thick = std::find_if(thickHoles.begin(), thickHoles.end(), [&](const Contour& t) {
-                        return t.bounds().intersects(hole.bounds()) &&
-                               innermost(all, geometry::startPoint(t.spans.front()), all.c.size()) == self;
-                    });
-                    if (thick == thickHoles.end()) {
-                        continue;
+                }
+                if (pieceArea < 0.04) continue;
+                // Its thick part: a hole of the wider bands inside it (not inside an island).
+                const auto thick = std::find_if(thickHoles.begin(), thickHoles.end(), [&](const Contour& t) {
+                    return t.bounds().intersects(hole.bounds()) &&
+                           innermost(all, geometry::startPoint(t.spans.front()), all.c.size()) == self;
+                });
+                if (thick == thickHoles.end()) {
+                    continue;
+                }
+                // Attributed to the innermost closed primary cut that contains it (a hole's slug
+                // to the hole), or else to the nearest cut.
+                const Vec2 probe = geometry::startPoint(hole.spans.front());
+                std::size_t src = region.source;
+                double loopArea = std::numeric_limits<double>::infinity();
+                for (const Cut* o : nearCuts) {
+                    const std::less<const Cut*> before;
+                    const bool isPrimary =
+                        !primary.empty() && !before(o, primary.data()) && before(o, primary.data() + primary.size());
+                    if (!isPrimary || !o->walk.closed() || !o->walk.contour().bounds().contains(probe)) continue;
+                    const double a = geometry::area(o->walk.contour());
+                    if (a < loopArea && geometry::locatePoint(o->walk.contour(), probe, geometry::FillRule::EvenOdd,
+                                                              tol_) == geometry::PointLocation::Inside) {
+                        loopArea = a;
+                        src = o->sources.front();
                     }
-                    // Attributed to the innermost closed primary cut that contains it (a hole's slug
-                    // to the hole), or else to the nearest cut.
-                    const Vec2 probe = geometry::startPoint(hole.spans.front());
-                    std::size_t src = region.source;
-                    double loopArea = std::numeric_limits<double>::infinity();
+                }
+                if (loopArea == std::numeric_limits<double>::infinity()) {
+                    double best = std::numeric_limits<double>::infinity();
                     for (const Cut* o : nearCuts) {
-                        const std::less<const Cut*> before;
-                        const bool isPrimary =
-                            !primary.empty() && !before(o, primary.data()) && before(o, primary.data() + primary.size());
-                        if (!isPrimary || !o->walk.closed() || !o->walk.contour().bounds().contains(probe)) continue;
-                        const double a = geometry::area(o->walk.contour());
-                        if (a < loopArea && geometry::locatePoint(o->walk.contour(), probe, geometry::FillRule::EvenOdd,
-                                                                  tol_) == geometry::PointLocation::Inside) {
-                            loopArea = a;
+                        const double d = geometry::distanceTo(o->walk.contour(), probe);
+                        if (d < best) {
+                            best = d;
                             src = o->sources.front();
                         }
                     }
-                    if (loopArea == std::numeric_limits<double>::infinity()) {
-                        double best = std::numeric_limits<double>::infinity();
-                        for (const Cut* o : nearCuts) {
-                            const double d = geometry::distanceTo(o->walk.contour(), probe);
-                            if (d < best) {
-                                best = d;
-                                src = o->sources.front();
-                            }
-                        }
-                    }
-                    Piece piece;
-                    piece.bounds = hole.bounds();
-                    piece.area = pieceArea;
-                    piece.source = src;
-                    piece.inner = geometry::startPoint(thick->spans.front());
-                    addPiece(piece, [&](Vec2 q) { return innermost(all, q, all.c.size()) == self; });
-                }
-                continue;
-            }
-        }
-        double hh = 0.05;
-        const double boxArea = box.width() * box.height();
-        if (boxArea / (hh * hh) > 4e6) hh = std::sqrt(boxArea / 4e6);
-        DiscRaster ras(box, hh);
-        const geometry::Box2 reachBox = box.inflated(reachCut);
-        const auto lo = std::lower_bound(openPos.begin(), openPos.end(), reachBox.min.x,
-                                         [](const Pos& q, double x) { return q.p.x < x; });
-        std::vector<const Pos*> nearPos;
-        for (auto it = lo; it != openPos.end() && it->p.x <= reachBox.max.x; ++it) {
-            if (it->p.y >= reachBox.min.y && it->p.y <= reachBox.max.y) {
-                nearPos.push_back(&*it);
-                ras.add(it->p, reachCut);
-            }
-        }
-        const std::vector<char> cut = ras.mask();
-        for (const Pos* q : nearPos) ras.add(q->p, reachCut + 0.025);
-        const std::vector<char> thin = ras.mask();  // cells within 0.025 mm of the cut
-        const int nx = ras.nx();
-        const int ny = ras.ny();
-        std::vector<int> seen(ras.cells(), 0);  // 0 unseen, else the flood that reached the cell
-        int floods = 0;
-        std::vector<std::size_t> stack;
-        geometry::Box2 pieceBox;
-        bool pieceThick = false;
-        Vec2 pieceInner{};
-        std::size_t pieceThickCells = 0;
-        auto flood = [&](std::size_t start) {
-            std::size_t n = 0;
-            ++floods;
-            stack.assign(1, start);
-            seen[start] = floods;
-            pieceBox = geometry::Box2{};
-            pieceThick = false;
-            pieceThickCells = 0;
-            while (!stack.empty()) {
-                const std::size_t k = stack.back();
-                stack.pop_back();
-                ++n;
-                if (!thin[k]) {
-                    ++pieceThickCells;
-                    if (!pieceThick) {
-                        pieceThick = true;
-                        pieceInner = ras.centre(static_cast<int>(k % static_cast<std::size_t>(nx)),
-                                                static_cast<int>(k / static_cast<std::size_t>(nx)));
-                    }
-                }
-                const int i = static_cast<int>(k % static_cast<std::size_t>(nx));
-                const int j = static_cast<int>(k / static_cast<std::size_t>(nx));
-                pieceBox.expand(ras.centre(i, j));
-                const int di[4] = {1, -1, 0, 0};
-                const int dj[4] = {0, 0, 1, -1};
-                for (int e = 0; e < 4; ++e) {
-                    const int ii = i + di[e];
-                    const int jj = j + dj[e];
-                    if (ii < 0 || jj < 0 || ii >= nx || jj >= ny) continue;
-                    const std::size_t kk = ras.index(ii, jj);
-                    if (seen[kk] || cut[kk]) continue;
-                    seen[kk] = floods;
-                    stack.push_back(kk);
-                }
-            }
-            return n;
-        };
-        // True when the piece holding `at` (inside `pb`) stays enclosed on cells of hh / 4 over
-        // `pb` grown by 0.3 mm (with the same tool positions).
-        auto isolatedFine = [&](const geometry::Box2& pb, Vec2 at, const std::vector<const Pos*>& positions) {
-            const geometry::Box2 win = pb.inflated(0.3);
-            const double hf = std::max(0.25 * hh, std::sqrt(win.width() * win.height() / 4e6));
-            DiscRaster fine(win, hf);
-            const geometry::Box2 reachWin = win.inflated(reachCut);
-            for (const Pos* q : positions) {
-                if (reachWin.contains(q->p)) fine.add(q->p, reachCut);
-            }
-            const std::vector<char> fineCut = fine.mask();
-            const int fx = fine.nx();
-            const int fy = fine.ny();
-            std::vector<char> reached(fine.cells(), 0);
-            std::vector<std::size_t> st;
-            auto seed = [&](int i, int j) {
-                const std::size_t k = fine.index(i, j);
-                if (!fineCut[k] && !reached[k]) {
-                    reached[k] = 1;
-                    st.push_back(k);
-                }
-            };
-            for (int i = 0; i < fx; ++i) {
-                seed(i, 0);
-                seed(i, fy - 1);
-            }
-            for (int j = 0; j < fy; ++j) {
-                seed(0, j);
-                seed(fx - 1, j);
-            }
-            while (!st.empty()) {
-                const std::size_t k = st.back();
-                st.pop_back();
-                const int i = static_cast<int>(k % static_cast<std::size_t>(fx));
-                const int j = static_cast<int>(k / static_cast<std::size_t>(fx));
-                if (i > 0) seed(i - 1, j);
-                if (i + 1 < fx) seed(i + 1, j);
-                if (j > 0) seed(i, j - 1);
-                if (j + 1 < fy) seed(i, j + 1);
-            }
-            // The fine cells round `at` (a coarse cell at least 0.025 mm clear of the tools).
-            const int ci = static_cast<int>(std::floor((at.x - win.min.x) / hf));
-            const int cj = static_cast<int>(std::floor((at.y - win.min.y) / hf));
-            for (int j = std::max(0, cj - 1); j <= std::min(fy - 1, cj + 1); ++j) {
-                for (int i = std::max(0, ci - 1); i <= std::min(fx - 1, ci + 1); ++i) {
-                    if (reached[fine.index(i, j)]) return false;
-                }
-            }
-            return true;
-        };
-        for (int i = 0; i < nx; ++i) {
-            for (int j : {0, ny - 1}) {
-                if (!seen[ras.index(i, j)] && !cut[ras.index(i, j)]) flood(ras.index(i, j));
-            }
-        }
-        for (int j = 0; j < ny; ++j) {
-            for (int i : {0, nx - 1}) {
-                if (!seen[ras.index(i, j)] && !cut[ras.index(i, j)]) flood(ras.index(i, j));
-            }
-        }
-        for (int j = 1; j + 1 < ny; ++j) {
-            for (int i = 1; i + 1 < nx; ++i) {
-                const std::size_t k = ras.index(i, j);
-                if (seen[k] || cut[k]) continue;
-                const double pieceArea = static_cast<double>(flood(k)) * hh * hh;
-                if (pieceArea < 0.04 || !pieceThick) continue;
-                // A small piece barely clear of the tools (a few cells 0.025 mm from them) may be a
-                // pocket of a sliver between two kerfs whose hairline neck to the rest falls
-                // between cell centres: on cells a quarter the size, round the piece, it must not
-                // reach the frame of that window.
-                if (pieceArea < 1.0 && pieceThickCells < 16 && !isolatedFine(pieceBox, pieceInner, nearPos)) continue;
-                // Attribute it to the vector of the nearest cut.
-                const Vec2 x = ras.centre(i, j);
-                double best = std::numeric_limits<double>::infinity();
-                std::size_t src = region.source;
-                for (const Pos* q : nearPos) {
-                    const double d = geometry::distance(q->p, x);
-                    if (d < best) {
-                        best = d;
-                        src = q->source;
-                    }
                 }
                 Piece piece;
-                piece.bounds = pieceBox.inflated(hh);
+                piece.bounds = hole.bounds();
                 piece.area = pieceArea;
                 piece.source = src;
-                piece.inner = pieceInner;
-                const int label = floods;
-                addPiece(piece, [&](Vec2 q) {
-                    // The cell holding q or one next to it (the rasters of two loops are offset).
-                    const int qi = static_cast<int>(std::floor((q.x - box.min.x) / hh));
-                    const int qj = static_cast<int>(std::floor((q.y - box.min.y) / hh));
-                    for (int jj = std::max(0, qj - 1); jj <= std::min(ny - 1, qj + 1); ++jj) {
-                        for (int ii = std::max(0, qi - 1); ii <= std::min(nx - 1, qi + 1); ++ii) {
-                            if (seen[ras.index(ii, jj)] == label) return true;
-                        }
-                    }
-                    return false;
-                });
+                piece.inner = geometry::startPoint(thick->spans.front());
+                addPiece(piece, [&](Vec2 q) { return innermost(all, q, all.c.size()) == self; });
             }
-        }
     }
     // One message per piece, numbered per vector (largest first), so no two are alike and the
     // de-duplication in run() keeps every one; beyond kMaxPieceMessages per vector, one more
@@ -2413,9 +2185,13 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
             const double rest = std::accumulate(pieces.begin() + static_cast<std::ptrdiff_t>(shown), pieces.end(), 0.0);
             char buf[32];
             std::snprintf(buf, sizeof buf, "%.2f", rest);
+            const std::size_t more = pieces.size() - shown;
             diag(ProfileIssue::TabsNotPlaced, src,
-                 vecName(src) + ": and " + std::to_string(pieces.size() - shown) +
-                     " more loose pieces (about " + buf + " square mm in all) are not held by any kept tab and come free");
+                 vecName(src) + ": and " + std::to_string(more) +
+                     (more == 1 ? std::string(" more loose piece (about ") + buf +
+                                      " square mm) is not held by any kept tab and comes free"
+                                : std::string(" more loose pieces (about ") + buf +
+                                      " square mm in all) are not held by any kept tab and come free"));
         }
     }
 }
@@ -2950,8 +2726,43 @@ ProfileResult ProfileBuilder::run() {
     planLeadIns(finish);
     if (separate) {
         placeTabsOn(finish, rough);
-        matchRoughingTabs(finish, rough);
+        // Matching with add-back (a refused tab gives way to tabs fitting dropped beside it), then
+        // the tab check. When add-back changed anything, both are run again without it, and its
+        // result is kept only if it ends with more kept tabs (a tie keeps the plain result), so
+        // add-back never leaves fewer tabs than matching without it.
+        struct TabState {
+            std::vector<Cut> finish, rough;
+            std::map<std::size_t, std::size_t> dropped, unmatched, severed, empty;
+            std::vector<std::vector<std::vector<std::pair<std::size_t, TabSpan>>>> links;
+        };
+        auto save = [&]() {
+            return TabState{finish, rough, tabsDropped_, tabsUnmatched_, tabsSevered_, tabsEmpty_, tabLinks_};
+        };
+        auto restore = [&](TabState st) {
+            finish = std::move(st.finish);
+            rough = std::move(st.rough);
+            tabsDropped_ = std::move(st.dropped);
+            tabsUnmatched_ = std::move(st.unmatched);
+            tabsSevered_ = std::move(st.severed);
+            tabsEmpty_ = std::move(st.empty);
+            tabLinks_ = std::move(st.links);
+        };
+        auto keptTabs = [&]() {
+            std::size_t n = 0;
+            for (const Cut& c : finish) n += c.tabs.size();
+            return n;
+        };
+        TabState placed = save();
+        const bool addedBack = matchRoughingTabs(finish, rough, true);
         dropSweptTabs(finish, rough);
+        if (addedBack) {
+            const std::size_t withAddBack = keptTabs();
+            TabState result = save();
+            restore(std::move(placed));
+            matchRoughingTabs(finish, rough, false);
+            dropSweptTabs(finish, rough);
+            if (withAddBack > keptTabs()) restore(std::move(result));
+        }
         reportLoosePieces(finish, rough);
     } else {
         placeTabsOn(rough, {});
