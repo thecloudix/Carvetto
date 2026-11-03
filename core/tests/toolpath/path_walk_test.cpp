@@ -278,3 +278,26 @@ TEST_CASE("Tabs moved off a keep-clear point are kept, never dropped by rounding
     CHECK(blocked.centres.empty());
     CHECK(blocked.dropped == 1);
 }
+
+TEST_CASE("T-0159: a negative clear slack refuses every tab moved to the gap, deterministically",
+          "[toolpath][tabs]") {
+    // Profile's T-0127 candidate is placed both ways (ADR-0016): a tab moved to exactly the gap
+    // accepted (kKeepClearSlack) or refused (-kKeepClearSlack), instead of rounding deciding.
+    Contour line;
+    line.append(LineSpan{{0, 0}, {100, 0}});
+    const ArcLengthPath lp(line, geometry::Tolerance::defaults());
+    const double footprint = 2.0;
+    for (int k = 0; k < 2000; ++k) {
+        const double f = 10.0 + k * 0.0371234;
+        for (const double offset : {0.3, -0.3}) {
+            const TabPlacement refused = fitTabs(lp, {f + offset}, footprint, {f}, kMinTabGap, 0.0, -kKeepClearSlack);
+            CHECK(refused.centres.empty());
+            CHECK(refused.dropped == 1);
+            const TabPlacement accepted = fitTabs(lp, {f + offset}, footprint, {f}, kMinTabGap, 0.0, kKeepClearSlack);
+            CHECK(accepted.centres.size() == 1);
+        }
+    }
+    // A tab clear of the point by more than the slack is kept either way.
+    const TabPlacement clear = fitTabs(lp, {40.0}, footprint, {38.0}, kMinTabGap, 0.0, -kKeepClearSlack);
+    CHECK(clear.centres.size() == 1);
+}

@@ -103,10 +103,10 @@ TabPlacement fitTabs(const ArcLengthPath& path, std::vector<double> centres, dou
     const double lo = reach;
     const double hi = len - reach;
     // A centre within `reach` of a keep-clear point is moved to `reach` (+ moveMargin) from it, which
-    // may come out a few ulps short; the test allows `clearSlack` (kKeepClearSlack = 1e-9 mm, far
-    // below kMinTabGap) so the moved tab is always accepted there instead of kept or dropped by
-    // rounding.
-    const double slack = std::max(0.0, clearSlack);
+    // may come out a few ulps short or long; the test allows `clearSlack` (kKeepClearSlack = 1e-9 mm,
+    // far below kMinTabGap) so the moved tab is always accepted there instead of kept or dropped by
+    // rounding. A negative slack refuses it there instead, just as deterministically (T-0159).
+    const double slack = clearSlack;
     auto within = [&](double c, double f) { return std::fabs(c - f) < reach - slack; };
     auto clashes = [&](double c) {
         return std::any_of(keepClear.begin(), keepClear.end(), [&](double f) { return within(c, f); });

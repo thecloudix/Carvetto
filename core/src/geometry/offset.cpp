@@ -606,6 +606,21 @@ std::vector<Vec2> carrierIntersections(const Span& a, const Span& b) {
         const double qb = 2.0 * w.dot(u);
         const double qc = w.lengthSquared() - arc.radius * arc.radius;
         double disc = qb * qb - 4.0 * qa * qc;
+        // A line at distance r from the centre to rounding (an offset line touching the circle
+        // of radius d about its own input vertex, where two collinear input lines meet) is one
+        // tangent contact. The discriminant's cancellation leaves noise of either sign there:
+        // positive noise gave two crossings ~1e-7 mm apart, and the sliver between them, dropped
+        // by the pruning, left a gap the junction snap closed or bridged depending on its last
+        // bits (with FMA contraction, GCC 15 at x86-64-v3, an extra span, T-0159). The distance
+        // from the centre to the line is accurate to a few ulps of the coordinates, so within
+        // that band the contact is tangent whatever the noise.
+        const double h = std::fabs(w.cross(u)) / std::sqrt(qa);
+        const double scale = std::max({1.0, arc.radius, std::fabs(line.start.x), std::fabs(line.start.y),
+                                       std::fabs(line.end.x), std::fabs(line.end.y), std::fabs(arc.centre.x),
+                                       std::fabs(arc.centre.y)});
+        if (std::fabs(h - arc.radius) <= 64.0 * std::numeric_limits<double>::epsilon() * scale) {
+            disc = 0.0;
+        }
         if (disc < 0.0) {
             if (disc < -1e-9 * qa * arc.radius * arc.radius) {
                 return out;

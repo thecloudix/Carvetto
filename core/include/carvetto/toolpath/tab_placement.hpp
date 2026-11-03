@@ -15,7 +15,8 @@ namespace carvetto::toolpath {
 inline constexpr double kMinTabGap = 1e-3;
 
 /// How much short of the gap a tab moved off a keep-clear point may come out and still count as
-/// clear (see `fitTabs`); 0 reproduces the T-0127 behaviour, where rounding decided.
+/// clear (see `fitTabs`). At 0 rounding decides (the T-0127 behaviour, which changes with the
+/// compiler's floating-point contraction, T-0159); `-kKeepClearSlack` refuses such a tab instead.
 inline constexpr double kKeepClearSlack = 1e-9;
 
 /// How automatic tabs are spread along a path (feature-inventory §5 "Toolpath Tabs").
@@ -79,7 +80,8 @@ double tabFootprint(double raisedLength, const TabOptions& options);
 /// position in `keepClear` (arc lengths on this path, e.g. where another pass plunges), to the
 /// nearer side, leaving `kMinTabGap` + `moveMargin` between the point and the footprint (room for
 /// what another pass adds round a moved tab), and dropped when there is no room (a footprint
-/// within `clearSlack` of the gap counts as clear, so a moved tab is never dropped by rounding; it is
+/// within `clearSlack` of the gap counts as clear, so a moved tab is never dropped by rounding (a
+/// negative `clearSlack` refuses every footprint within that much beyond the gap instead); it is
 /// still dropped when the move lands within the gap of another keep-clear point or past the
 /// allowed range). The others are counted in `dropped`, so kept + dropped = the number of centres
 /// given.

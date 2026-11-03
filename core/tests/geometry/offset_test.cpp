@@ -1014,3 +1014,44 @@ TEST_CASE("AC5 generative: span count follows the rule when nothing is consumed"
         }
     }
 }
+
+TEST_CASE("T-0159: an offset line touching the circle about its own collinear vertex adds no span",
+          "[geometry][offset][open]") {
+    // Where two input lines meet on one heading, both offset lines touch the circle of radius d
+    // about the shared vertex. The line/circle intersection used for the splits found two crossings
+    // there when the discriminant's rounding noise came out positive (~1e-7 mm apart); the sliver
+    // between them was pruned and the gap left behind was bridged with an extra short line when
+    // it exceeded the snap's 1e-9 x |x| (GCC 15 with FMA contraction: AC5 generative trial 38).
+    // The contact is now tangent to rounding, so the chain keeps exactly the two offset lines.
+    // The first path is that trial's 5th to 7th spans; the rest vary heading, lengths and place.
+    std::vector<Contour> paths;
+    {
+        Contour c;
+        c.spans.emplace_back(LineSpan{{53.311298657398062, 3.8006866650106801}, {68.99341886905944, 10.988803064487463}});
+        c.spans.emplace_back(LineSpan{{68.99341886905944, 10.988803064487463}, {81.67937804911351, 16.803587672338594}});
+        paths.push_back(c);
+    }
+    TestRng rng(20261103u);
+    for (int trial = 0; trial < 400; ++trial) {
+        const Vec2 p0{rng.signedRange(0.0, 200.0), rng.signedRange(0.0, 200.0)};
+        const double h = rng.range(-kPi, kPi);
+        const Vec2 p1 = p0 + Vec2::fromAngle(h, rng.range(5.0, 30.0));
+        const Vec2 p2 = p1 + Vec2::fromAngle(h, rng.range(5.0, 30.0));
+        Contour c;
+        c.spans.emplace_back(LineSpan{p0, p1});
+        c.spans.emplace_back(LineSpan{p1, p2});
+        paths.push_back(c);
+    }
+    for (std::size_t k = 0; k < paths.size(); ++k) {
+        for (const double d : {0.5, 1.0, 2.5}) {
+            for (const JoinType join : kAllJoins) {
+                for (const OffsetSide side : kBothSides) {
+                    CAPTURE(k, d, static_cast<int>(join), static_cast<int>(side));
+                    const Contour out = oneChain(paths[k], d, side, join, kTol, 2.0);
+                    CHECK(out.spanCount() == 2);
+                    requireValidOpenOffset(out, paths[k], d, join, 2.0);
+                }
+            }
+        }
+    }
+}
