@@ -1,0 +1,3 @@
+   endnode-to-vertex max=0.0019 (r=0.0011) at (0.0015,0.0011)
+A_glyph            OK   t=0.017s smp=1536 nodes=12 br=12 seg=1565 capped=0 ign=0 | radErr=0.00e+00 defect=4.91e-04@(6.6616,12.9834 r=1.6238) interp=2.13e-04 out=0 nf=0 topo=0 | tags: bad=0 side=0 eqErr=4.98e-04 | cov: max=0.0000@(0.000,0.000 d=0.0000) >c:0 >3c:0 of 17760 | nearMed=0 maxMiss=0.0000@(0.000,0.000 r=0.000)
+fails=0

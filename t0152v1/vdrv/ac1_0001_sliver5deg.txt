@@ -1,0 +1,3 @@
+   endnode-to-vertex max=0.0213 (r=0.0009) at (0.0212,0.0009)
+sliver5deg         OK   t=0.016s smp=2159 nodes=6 br=4 seg=1906 capped=0 ign=0 | radErr=8.91e-16 defect=4.78e-04@(0.5713,0.0247 r=0.0247) interp=1.97e-04 out=0 nf=0 topo=0 | tags: bad=0 side=0 eqErr=4.96e-04 | cov: max=0.0000@(0.000,0.000 d=0.0000) >c:0 >3c:0 of 2109 | nearMed=0 maxMiss=0.0000@(0.000,0.000 r=0.000)
+fails=0

@@ -1,0 +1,28 @@
+  29 ok       2.81s spiky n=985                                        [capped smp ign br pts err] 1 250000 0 768 4700 0.000e+00 sig=0 exit=0
+  45 ok       2.85s spiky n=983                                        [capped smp ign br pts err] 1 250000 0 876 5547 0.000e+00 sig=0 exit=0
+  61 ok       3.62s spiky n=1425                                       [capped smp ign br pts err] 1 250000 0 944 4205 0.000e+00 sig=0 exit=0
+  93 ok       3.38s spiky n=1246                                       [capped smp ign br pts err] 1 250000 0 968 4598 0.000e+00 sig=0 exit=0
+ 125 ok       3.52s spiky n=1345                                       [capped smp ign br pts err] 1 250000 0 991 4852 0.000e+00 sig=0 exit=0
+ 141 ok       3.53s spiky n=681                                        [capped smp ign br pts err] 1 250000 0 2907 35281 0.000e+00 sig=0 exit=0
+ 151 ok       5.80s scaled slot_arcs 10000.000000                      [capped smp ign br pts err] 0 15232 0 1 14722 0.000e+00 sig=0 exit=0
+ 189 ok       4.38s spiky n=1188                                       [capped smp ign br pts err] 1 250000 0 797 3817 0.000e+00 sig=0 exit=0
+ 205 ok       3.50s spiky n=803                                        [capped smp ign br pts err] 1 250000 0 1097 7954 0.000e+00 sig=0 exit=0
+ 221 ok       3.53s spiky n=1044                                       [capped smp ign br pts err] 1 250000 0 887 5152 0.000e+00 sig=0 exit=0
+ 237 ok       2.63s spiky n=792                                        [capped smp ign br pts err] 1 250000 0 1175 7802 0.000e+00 sig=0 exit=0
+ 269 ok       3.26s spiky n=1312                                       [capped smp ign br pts err] 1 250000 0 974 4495 0.000e+00 sig=0 exit=0
+ 285 ok       3.00s spiky n=1208                                       [capped smp ign br pts err] 1 250000 0 973 4869 0.000e+00 sig=0 exit=0
+ 333 ok       3.27s spiky n=1309                                       [capped smp ign br pts err] 1 250000 0 985 4715 0.000e+00 sig=0 exit=0
+ 349 ok       2.55s spiky n=814                                        [capped smp ign br pts err] 1 250000 0 1067 7368 0.000e+00 sig=0 exit=0
+ 381 ok       2.73s spiky n=1032                                       [capped smp ign br pts err] 1 250000 0 748 4754 0.000e+00 sig=0 exit=0
+ 397 ok       2.68s spiky n=1063                                       [capped smp ign br pts err] 1 250000 0 907 5493 0.000e+00 sig=0 exit=0
+ 413 ok       2.57s spiky n=970                                        [capped smp ign br pts err] 1 250000 0 819 5208 0.000e+00 sig=0 exit=0
+ 445 ok       2.61s spiky n=999                                        [capped smp ign br pts err] 1 250000 0 851 5307 0.000e+00 sig=0 exit=0
+ 477 ok       2.58s spiky n=943                                        [capped smp ign br pts err] 1 250000 0 871 6015 0.000e+00 sig=0 exit=0
+ 509 ok       2.71s spiky n=734                                        [capped smp ign br pts err] 1 250000 0 2459 17073 0.000e+00 sig=0 exit=0
+ 525 ok       3.34s spiky n=1347                                       [capped smp ign br pts err] 1 250000 0 982 4544 0.000e+00 sig=0 exit=0
+ 541 ok       3.51s spiky n=1469                                       [capped smp ign br pts err] 1 250000 0 1034 4268 0.000e+00 sig=0 exit=0
+ 557 ok       3.00s spiky n=1153                                       [capped smp ign br pts err] 1 250000 0 905 5144 0.000e+00 sig=0 exit=0
+ 573 ok       2.52s spiky n=754                                        [capped smp ign br pts err] 1 250000 0 1516 10312 0.000e+00 sig=0 exit=0
+ 621 ok       2.59s spiky n=990                                        [capped smp ign br pts err] 1 250000 0 809 5087 0.000e+00 sig=0 exit=0
+ 637 ok       2.73s spiky n=1096                                       [capped smp ign br pts err] 1 250000 0 942 4736 0.000e+00 sig=0 exit=0
+cases=640 crashes=0 hangs=0 bad=0 capped=26

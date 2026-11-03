@@ -1,0 +1,62 @@
+== chordal 0.01
+rect40x20 OK t=0.001s smp=440 seg=346 radErr=1.67e-16 defect=4.16e-03@(37.3459,2.6583 r=2.6541) out=0 nf=0 d=0.0000) >c:0 of 24200
+square_cw OK t=0.001s smp=273 seg=246 radErr=6.22e-15 defect=4.78e-03@(0.4619,9.5333 r=0.4619) out=0 nf=0 d=0.0000) >c:0 of 48400
+circle OK t=0.000s smp=64 seg=0 radErr=0.00e+00 defect=0.00e+00@(0.0000,0.0000 r=0.0000) out=0 nf=0 d=0.0000) >c:0 of 38024
+ellipse_bez OK t=0.002s smp=216 seg=131 radErr=1.72e-07 defect=1.79e-07@(15.1943,-0.0000 r=4.4783) out=0 nf=0 d=0.0000) >c:0 of 15220
+L OK t=0.002s smp=411 seg=389 radErr=8.88e-16 defect=4.51e-03@(3.4524,13.4569 r=1.5431) out=0 nf=0 d=0.0000) >c:0 of 18150
+T OK t=0.002s smp=464 seg=466 radErr=0.00e+00 defect=4.98e-03@(1.2031,11.1981 r=1.1981) out=0 nf=0 d=0.0000) >c:0 of 13482
+star5 OK t=0.002s smp=611 seg=629 radErr=7.55e-15 defect=4.77e-03@(6.6081,2.1444 r=0.9999) out=0 nf=0 d=0.0004) >c:0 of 15736
+star12_sharp OK t=0.005s smp=865 seg=1000 radErr=0.00e+00 defect=4.79e-03@(-7.7574,0.0027 r=1.0925) out=0 nf=0 d=0.0002) >c:0 of 26368
+sq_holes OK t=0.004s smp=782 seg=756 radErr=2.66e-15 defect=4.98e-03@(0.4861,29.5189 r=0.4811) out=0 nf=0 d=0.0000) >c:0 of 43099
+annulus OK t=0.004s smp=456 seg=456 radErr=2.22e-15 defect=4.20e-03@(-6.3452,-4.8688 r=1.9979) out=0 nf=0 d=0.0003) >c:0 of 24332
+dumbbell_neck05 OK t=0.003s smp=547 seg=555 radErr=0.00e+00 defect=4.76e-03@(8.6040,3.3912 r=1.6040) out=0 nf=0 d=0.0000) >c:0 of 16964
+neck_0.03 OK t=0.003s smp=643 seg=523 radErr=0.00e+00 defect=4.75e-03@(8.6105,3.3847 r=1.6105) out=0 nf=0 d=0.0000) >c:0 of 16928
+neck_0.021 OK t=0.004s smp=707 seg=717 radErr=0.00e+00 defect=7.23e-03@(7.0144,2.5000 r=0.0178) out=0 nf=0 d=0.0000) >c:0 of 16928
+slot_arcs OK t=0.001s smp=170 seg=131 radErr=4.44e-16 defect=4.07e-03@(5.1562,-0.0020 r=2.9980) out=0 nf=0 d=0.0000) >c:0 of 10656
+C_glyph_arcs OK t=0.003s smp=440 seg=409 radErr=2.00e-15 defect=3.37e-03@(2.4679,8.1356 r=1.4983) out=0 nf=0 d=0.0000) >c:0 of 15406
+S_glyph_bez OK t=0.008s smp=876 seg=873 radErr=1.18e-14 defect=4.94e-03@(15.1730,7.2070 r=1.1347) out=0 nf=0 d=0.0009) >c:0 of 12816
+O_glyph_bez OK t=0.004s smp=576 seg=576 radErr=6.44e-15 defect=4.29e-03@(5.0194,6.2017 r=1.3938) out=0 nf=0 d=0.0014) >c:0 of 14292
+A_glyph OK t=0.002s smp=504 seg=511 radErr=0.00e+00 defect=4.94e-03@(7.1739,15.5763 r=0.4237) out=0 nf=0 d=0.0007) >c:0 of 17760
+sliver5deg OK t=0.002s smp=711 seg=625 radErr=4.44e-16 defect=4.80e-03@(0.1893,0.0059 r=0.0059) out=0 nf=0 d=0.0008) >c:0 of 2109
+thin_rect_0.1 OK t=0.003s smp=1170 seg=1165 radErr=0.00e+00 defect=3.67e-03@(0.0586,0.0482 r=0.0482) out=0 nf=0 d=0.0000) >c:0 of 220
+concave_arc_notch OK t=0.002s smp=429 seg=403 radErr=1.78e-15 defect=4.94e-03@(4.6476,8.4121 r=1.5829) out=0 nf=0 d=0.0000) >c:0 of 21154
+fails=0             
+== chordal 0.1
+rect40x20 OK t=0.001s smp=151 seg=136 radErr=0.00e+00 defect=4.80e-02@(32.1739,7.7781 r=7.7781) out=0 nf=0 d=0.0000) >c:0 of 24200
+square_cw OK t=0.000s smp=90 seg=86 radErr=0.00e+00 defect=4.48e-02@(4.3302,4.3750 r=4.3302) out=0 nf=0 d=0.0227) >c:0 of 48400
+circle OK t=0.000s smp=24 seg=0 radErr=8.88e-16 defect=0.00e+00@(0.0000,0.0000 r=0.0000) out=0 nf=0 d=0.0000) >c:0 of 38024
+ellipse_bez OK t=0.001s smp=72 seg=59 radErr=4.44e-15 defect=1.87e-05@(-13.9053,-0.0000 r=5.2137) out=0 nf=0 d=0.0006) >c:0 of 15220
+L OK t=0.001s smp=135 seg=131 radErr=0.00e+00 defect=3.97e-02@(17.9167,2.0437 r=2.0437) out=0 nf=0 d=0.0000) >c:0 of 18150
+T OK t=0.000s smp=143 seg=141 radErr=0.00e+00 defect=4.69e-02@(16.1250,10.8281 r=0.8281) out=0 nf=0 d=0.0068) >c:0 of 13482
+star5 OK t=0.001s smp=187 seg=161 radErr=1.78e-15 defect=4.77e-02@(4.1915,-5.8121 r=0.9067) out=0 nf=0 d=0.0116) >c:2 of 15736
+star12_sharp OK t=0.002s smp=289 seg=289 radErr=0.00e+00 defect=4.43e-02@(0.0254,-8.4956 r=0.7123) out=0 nf=0 d=0.0363) >c:0 of 26368
+sq_holes OK t=0.002s smp=244 seg=232 radErr=2.66e-15 defect=4.63e-02@(17.0455,4.9992 r=4.9992) out=0 nf=0 d=0.0027) >c:0 of 43099
+annulus OK t=0.002s smp=168 seg=168 radErr=1.55e-15 defect=2.35e-02@(-1.6864,-7.8082 r=1.9882) out=0 nf=0 d=0.0003) >c:0 of 24332
+dumbbell_neck05 OK t=0.001s smp=144 seg=114 radErr=0.00e+00 defect=3.80e-02@(7.7045,0.7425 r=0.7045) out=0 nf=0 d=0.0068) >c:32 of 16964
+neck_0.03 OK t=0.001s smp=148 seg=114 radErr=0.00e+00 defect=3.78e-02@(7.7077,0.7455 r=0.7077) out=0 nf=0 d=0.0091) >c:0 of 16928
+neck_0.021 OK t=0.001s smp=164 seg=114 radErr=0.00e+00 defect=3.78e-02@(4.2909,4.2531 r=0.7091) out=0 nf=0 d=0.0091) >c:0 of 16928
+slot_arcs OK t=0.000s smp=68 seg=53 radErr=0.00e+00 defect=3.78e-02@(3.3333,-0.0189 r=2.9811) out=0 nf=0 d=0.0000) >c:0 of 10656
+C_glyph_arcs OK t=0.002s smp=142 seg=127 radErr=1.78e-15 defect=3.77e-02@(-1.1070,8.4086 r=1.4812) out=0 nf=0 d=0.0089) >c:0 of 15406
+S_glyph_bez OK t=0.003s smp=302 seg=299 radErr=1.11e-14 defect=4.90e-02@(-0.1774,13.7269 r=1.2560) out=0 nf=0 d=0.0004) >c:0 of 12816
+O_glyph_bez OK t=0.002s smp=200 seg=200 radErr=4.22e-15 defect=4.53e-02@(-4.0359,-7.6181 r=1.3196) out=0 nf=0 d=0.0001) >c:0 of 14292
+A_glyph OK t=0.001s smp=161 seg=161 radErr=0.00e+00 defect=4.50e-02@(7.2690,11.9783 r=1.3112) out=0 nf=0 d=0.0252) >c:0 of 17760
+sliver5deg OK t=0.001s smp=207 seg=195 radErr=0.00e+00 defect=4.45e-02@(13.3574,0.6055 r=0.5610) out=0 nf=0 d=0.0093) >c:9 of 2109
+thin_rect_0.1 OK t=0.001s smp=258 seg=63 radErr=0.00e+00 defect=1.07e-03@(19.7396,0.0500 r=0.0500) out=0 nf=0 d=0.0455) >c:0 of 220
+concave_arc_notch OK t=0.001s smp=131 seg=120 radErr=1.33e-15 defect=4.45e-02@(17.7273,2.2282 r=2.2282) out=0 nf=0 d=0.0026) >c:0 of 21154
+fails=0             
+== chordal 0.001
+rect40x20 OK t=0.004s smp=1314 seg=1016 radErr=3.11e-14 defect=4.81e-04@(0.3493,19.6512 r=0.3488) out=0 nf=0 d=0.0000) >c:0 of 24200
+square_cw OK t=0.004s smp=811 seg=496 radErr=2.11e-15 defect=4.19e-04@(0.0699,0.0703 r=0.0699) out=0 nf=0 d=0.0000) >c:0 of 48400
+circle OK t=0.002s smp=192 seg=0 radErr=0.00e+00 defect=0.00e+00@(0.0000,0.0000 r=0.0000) out=0 nf=0 d=0.0000) >c:0 of 38024
+ellipse_bez OK t=0.005s smp=688 seg=349 radErr=9.13e-10 defect=9.50e-10@(15.5136,-0.0000 r=4.2651) out=0 nf=0 d=0.0000) >c:0 of 15220
+L OK t=0.006s smp=1384 seg=1327 radErr=0.00e+00 defect=4.65e-04@(2.4512,2.4507 r=2.4507) out=0 nf=0 d=0.0000) >c:0 of 18150
+T OK t=0.007s smp=1385 seg=1410 radErr=0.00e+00 defect=4.68e-04@(0.5855,10.5859 r=0.5855) out=0 nf=0 d=0.0000) >c:0 of 13482
+star5 OK t=0.010s smp=1971 seg=2031 radErr=1.52e-15 defect=4.87e-04@(-8.3022,2.6973 r=0.4169) out=0 nf=0 d=0.0001) >c:0 of 15736
+star12_sharp OK t=0.011s smp=2624 seg=2900 radErr=2.22e-15 defect=4.91e-04@(7.3338,-4.2338 r=0.7476) out=0 nf=0 d=0.0000) >c:0 of 26368
+sq_holes OK t=0.014s smp=2578 seg=2294 radErr=2.66e-15 defect=4.99e-04@(26.3498,14.5322 r=3.6497) out=0 nf=0 d=0.0000) >c:0 of 43099
+annulus OK t=0.011s smp=1424 seg=1424 radErr=2.00e-15 defect=4.25e-04@(6.6516,-4.4444 r=1.9998) out=0 nf=0 d=0.0000) >c:0 of 24332
+dumbbell_neck05 OK t=0.009s smp=1695 seg=1494 radErr=2.16e-15 defect=4.65e-04@(11.9544,4.9549 r=0.0451) out=0 nf=0 d=0.0000) >c:0 of 16964
+neck_0.03 OK t=0.011s smp=1806 seg=1366 radErr=2.16e-15 defect=5.99e-04@(4.8467,2.5000 r=0.1540) out=0 nf=0 d=0.0000) >c:0 of 16928
+neck_0.021 OK t=0.021s smp=1930 seg=1416 radErr=2.16e-15 defect=6.49e-04@(7.0760,2.5000 r=0.0767) out=0 nf=0 d=0.0000) >c:0 of 16928
+slot_arcs OK t=0.003s smp=640 seg=257 radErr=0.00e+00 defect=6.51e-10@(0.0391,0.0000 r=3.0000) out=0 nf=0 d=0.0000) >c:0 of 10656
+C_glyph_arcs OK t=0.011s smp=1504 seg=1417 radErr=2.22e-15 defect=3.31e-04@(-1.2816,8.4027 r=1.4998) out=0 nf=0 d=0.0000) >c:0 of 15406
