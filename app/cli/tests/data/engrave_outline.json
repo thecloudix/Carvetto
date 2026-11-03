@@ -1,0 +1,11 @@
+{
+  "name": "Border",
+  "layers": ["Outline"],
+  "depth": 0.5,
+  "safe_z": 5,
+  "strategy": "outline",
+  "tool": {
+    "database": "tools.json",
+    "id": "v-bit-90"
+  }
+}

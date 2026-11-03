@@ -1,7 +1,8 @@
 # ADR-0006: Clipper2 for offsets and booleans, and its fixed-point scale
 
 Date: 2026-10-24 · Status: accepted (director, 2026-10-24; residual open-offset defect tracked in T-0004;
-§6 and §7 added by T-0018, 2026-11-02; §8 added by T-0138, 2026-11-02)
+§6 and §7 added by T-0018, 2026-11-02; §8 added by T-0138, 2026-11-02; §9 and the §8 dust-test
+decision added by T-0141, 2026-11-02)
 
 ## Decision
 1. Polygon offsetting (`geometry/offset.hpp`) and boolean operations (`geometry/boolean.hpp`) are
@@ -109,10 +110,10 @@ Date: 2026-10-24 · Status: accepted (director, 2026-10-24; residual open-offset
      plunge). A removed ring is narrower than about 11.3e-6 mm everywhere (twice the largest
      removed inradius): about 8.9× below the smallest chordal tolerance Pocket accepts (1e-4
      mm), and so inside the contract's own slack there (result points may lie 2·chordal short
-     of |distance|). Profile does not validate its tolerance: it offsets at the caller's
-     tol.chordal (at most 0.5·tol.distance with Bezier input), so only a chordal tolerance near
-     1e-5 mm or below brings the removed width up to that slack. tol.distance has no lower
-     bound, so no claim is made against it. Every point of a removed region lies within about
+     of |distance|). Profile enforces the same tolerance bounds since T-0141 (ADR-0016 §18), but
+     with Bezier input it offsets at min(tol.chordal, 0.5·tol.distance), and tol.distance has
+     no lower bound, so only a distance tolerance below about 1.1e-5 mm brings the removed width
+     up to that slack. No claim is made against tol.distance itself. Every point of a removed region lies within about
      5.6 nm of its boundary, i.e. of where the offset collapses, which no toolpath resolves;
      the threshold does not depend on `tol` so that a coarse
      tolerance never drops genuine thin regions (an area threshold such as tol.distance² would
@@ -134,6 +135,91 @@ Date: 2026-10-24 · Status: accepted (director, 2026-10-24; residual open-offset
    - Per ring, not per region: a frame narrow only between an outer and its hole is two
      correctly wound genuine rings and is kept; a dust-thin hole inside a genuine region is
      dropped (filled).
+   - **No monotone dust test (T-0141, recommendation to the director).** The erosion is not
+     monotone in the radius, so the cut between removed and kept rings is a band (inradius
+     about 3.6–5.7 grid units) rather than a line. An exact, monotone test would need each
+     candidate ring's true inradius (the largest inscribed disk: a segment Voronoi diagram or
+     medial axis of the ring), i.e. new geometry code, for no observable gain: the whole band
+     lies below 5.7e-6 mm of inradius (1.13e-5 mm of width), 8.9× below the smallest chordal
+     tolerance Pocket and now Profile accept, no caller depends on where in the band a ring
+     falls, and the guarantees that matter (every kept ring holds a disk about 7e-6 mm
+     across and is wound for its nesting depth; nothing wider than the band is removed) hold
+     either way. Simpler monotone substitutes are not sound: a mean-width test (2|area| /
+     perimeter) removes genuine regions with long hair-thin tails, an area threshold removes
+     long thin strips. So the band stays, documented and pinned by the acute-triangle test in
+     `offset_dust_test.cpp`; revisit only if a caller needs tolerances near 1e-5 mm.
+   - The nesting pass scans, per removed ring, whichever is smaller: the rings whose left edge
+     lies in its x-range, or those whose top edge lies in its y-range (T-0141), so a column
+     of thousands of rings (one shared x-range) no longer costs O(dust × rings). Same result:
+     the closure does not depend on the order pairs are asked in.
+
+9. **Far-apart closed contours are offset in separate Clipper2 calls when many sit side by side
+   (T-0141).** Clipper2's union sweep keeps every edge crossing the current scanline in a linked
+   active edge list and walks the whole list on every scanbeam (`DoTopOfScanbeam`,
+   `BuildIntersectList`); inserting a local minimum scans the list from its head
+   (`InsertLeftEdge`), and finding a maxima pair that is horizontal walks to its end
+   (`GetMaximaPair`). With n shapes side by side the list holds ~n edges for ~n scanbeams:
+   O(n²). A row of 20,000 small rectangles took 36–50 s in Release (profile: 53 %
+   `GetMaximaPair`, 30 % `InsertLeftEdge`; with varying heights the per-scanbeam walks
+   dominate), with or without the §8 filter. Patching those two functions would only cure
+   equal heights; the per-scanbeam walks are the sweep itself.
+   - `offsetContours` grows every closed path's bounding box by reach × |distance| + one grid
+     unit, where reach is 1 for round joins (offset edges and arcs lie at |distance|, the
+     original vertex of a concave join on the path), √2 for square joins and max(√2,
+     mitreLimit) for Sharp ones (square beyond the limit); every point Clipper2 emits for the
+     path lies in that box. Recursive cuts along x and y at coordinates no grown box covers
+     split the paths into batches (`detail::separableBatches`, `offset_batch.hpp`), so raw
+     offsets of different batches never meet and each batch's union is the global union
+     restricted to it. Clipper2 offsets a whole group the way its lowest path (largest y) is
+     wound (§4): a batch whose own lowest path is wound against the global lowest path joins
+     that path's batch, which then decides for it exactly as one call would.
+   - Batching applies only when at least `kOffsetBatchMinDepth` = 32 batches overlap one
+     horizontal line (all of them would share the active edge list) and no open contour is
+     being outlined; otherwise everything goes into one Clipper2 call as before, and the result
+     is byte-identical to the result before T-0141. Below that threshold one call holds at most
+     ~32 batches side by side, which is linear in n only while each batch is small (see the
+     remaining quadratic cases below). Batches are offset in input order of their
+     first contour and their results concatenated (each in Clipper2's order); the §8 filter
+     then runs over the concatenation, with the same decisions (ρ depends on the largest
+     coordinate overall; nesting never crosses batches).
+   - **Not bit-identical to one call.** Clipper2's result for a shape depends at the grid level
+     on unrelated shapes at the same height: it rounds intersection points within scanbeams and
+     clamps them to the scanbeam, and every vertex height of every shape subdivides the
+     scanbeams. A batch's rings can therefore differ from one call's by a few grid units,
+     along nearly parallel edges. Over about 18,000 random scenes (rectangles, circles,
+     triangles, slivers, holes, mixed orientation, all join types, insets near collapse,
+     outsets, zero distance) the ring count was always the same, 5.7 % of the cases differed
+     at all, and the largest Hausdorff distance between the two results was 11 grid units
+     (1.1e-5 mm), typically 1–2. The ring order also differs (batch by batch instead of
+     Clipper2's sweep order). Profile offsets region by region, so it does not reach the
+     threshold in practice; Pocket offsets its whole centre region at once, so a pocket over 32
+     or more shapes side by side is batched.
+   - **Downstream the drift is larger than the rings' few grid units, but safety is unchanged.**
+     Pocket builds rings, rest areas, rasters and links on these regions, and a grid-level
+     change can tip its discrete choices. On wide pockets (rows of 32–70 rooms, T-0141
+     verifier) the safety statistics (gouge, coverage, engagement) were identical to before
+     T-0141 in 50 of 50 scenes, but the move hashes differed in 41 and the move counts in 32:
+     ring vertices moved by up to ~5e-3 mm (different vertices picked along arcs, within the
+     0.01 mm chordal tolerance), one rest-tool raster line end slid 0.021 mm, ring start
+     points and link routes changed, and retract counts changed in 2 scenes (2230 → 2235,
+     1650 → 1653). Toolpaths of such jobs are therefore not reproducible against releases
+     before T-0141, only equally safe.
+   - Measured (Release, `offsetContours` on the verifier's rows at -(0.1 − 3e-6) mm, CPU time,
+     best of 7): 20,000 rectangles in a row 36–50 s → 0.06 s (2,500 → 20,000: 2.0–2.3× per
+     doubling; before: 3.8–6.6×); the same with heights jittered (many scanbeams) about the
+     same; a column of the same rectangles (half of them dust) 0.28–0.33 s → 0.08 s.
+   - Rejected: a sentinel path per batch to force the global orientation (more machinery than
+     merging, with its own output to filter); merging has one adversarial cost: thousands of
+     lone holes side by side (wound against the lowest contour, which no Carvetto caller
+     produces) stay in one call and stay quadratic. `booleanOp` (`unionContours`) has the same
+     sweep cost (a 10,000-rectangle row: ~1.3 s) and is not batched here (follow-up).
+   - **Remaining quadratic cases (T-0142).** Batching only helps when the shapes side by side
+     are in different batches. One batch holding many edges side by side is still one sweep,
+     ~4.4× per doubling and unchanged from before T-0141: an outer containing a row of n holes
+     (1.31 s / 6.10 s at 10,000 / 20,000) and a row whose outsets merge into one region
+     (1.44 s / 5.99 s). Nested arrangements such as a spiral of nested corners stay ~4.5× per
+     doubling because `separableBatches` peels off one box per cut level (still about 5×
+     faster than before T-0141).
 
 ## Rationale
 - Clipper2 is the de-facto robust polygon clipper for CAM; it is deterministic, header-light,

@@ -87,6 +87,25 @@ std::string nonFiniteParam(const ToolpathParams& params) {
                                           {"corners.mitre_limit", p->corners.mitreLimit}});
         return key.empty() ? nonFiniteTolerance(p->tolerance) : key;
     }
+    if (const auto* d = std::get_if<toolpath::DrillParams>(&params)) {
+        std::string key = firstNonFinite({{"start_depth", d->startDepth},
+                                          {"cut_depth", d->cutDepth},
+                                          {"safe_z", d->safeZ},
+                                          {"retract_gap", d->retractGap},
+                                          {"dwell_time", d->dwellTime},
+                                          {"start_position[0]", d->startPosition.x},
+                                          {"start_position[1]", d->startPosition.y}});
+        return key.empty() ? nonFiniteTolerance(d->tolerance) : key;
+    }
+    if (const auto* e = std::get_if<toolpath::EngraveParams>(&params)) {
+        std::string key = firstNonFinite({{"depth", e->depth},
+                                          {"safe_z", e->safeZ},
+                                          {"stepover", e->stepover},
+                                          {"raster_angle_rad", e->rasterAngle},
+                                          {"start_position[0]", e->startPosition.x},
+                                          {"start_position[1]", e->startPosition.y}});
+        return key.empty() ? nonFiniteTolerance(e->tolerance) : key;
+    }
     const auto& p = std::get<toolpath::PocketParams>(params);
     std::string key = firstNonFinite({{"start_depth", p.startDepth},
                                       {"cut_depth", p.cutDepth},

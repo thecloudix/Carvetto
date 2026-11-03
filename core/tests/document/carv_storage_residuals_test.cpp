@@ -30,6 +30,7 @@
 #include "carvetto/document/commands.hpp"
 #include "carvetto/document/document.hpp"
 #include "carvetto/document/toolpath_record.hpp"
+#include "carvetto/toolpath/engrave.hpp"
 #include "carvetto/toolpath/move.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/profile.hpp"
@@ -683,6 +684,37 @@ std::vector<ParamField> pocketFields() {
     };
 }
 
+std::vector<ParamField> drillFields() {
+    const auto P = [](ToolpathParams& p) -> toolpath::DrillParams& { return std::get<toolpath::DrillParams>(p); };
+    return {
+        {"start_depth", [P](ToolpathParams& p, double v) { P(p).startDepth = v; }},
+        {"cut_depth", [P](ToolpathParams& p, double v) { P(p).cutDepth = v; }},
+        {"safe_z", [P](ToolpathParams& p, double v) { P(p).safeZ = v; }},
+        {"retract_gap", [P](ToolpathParams& p, double v) { P(p).retractGap = v; }},
+        {"dwell_time", [P](ToolpathParams& p, double v) { P(p).dwellTime = v; }},
+        {"start_position[0]", [P](ToolpathParams& p, double v) { P(p).startPosition.x = v; }},
+        {"start_position[1]", [P](ToolpathParams& p, double v) { P(p).startPosition.y = v; }},
+        {"tolerance.distance", [P](ToolpathParams& p, double v) { P(p).tolerance.distance = v; }},
+        {"tolerance.angle_rad", [P](ToolpathParams& p, double v) { P(p).tolerance.angle = v; }},
+        {"tolerance.chordal", [P](ToolpathParams& p, double v) { P(p).tolerance.chordal = v; }},
+    };
+}
+
+std::vector<ParamField> engraveFields() {
+    const auto P = [](ToolpathParams& p) -> toolpath::EngraveParams& { return std::get<toolpath::EngraveParams>(p); };
+    return {
+        {"depth", [P](ToolpathParams& p, double v) { P(p).depth = v; }},
+        {"safe_z", [P](ToolpathParams& p, double v) { P(p).safeZ = v; }},
+        {"stepover", [P](ToolpathParams& p, double v) { P(p).stepover = v; }},
+        {"raster_angle_rad", [P](ToolpathParams& p, double v) { P(p).rasterAngle = v; }},
+        {"start_position[0]", [P](ToolpathParams& p, double v) { P(p).startPosition.x = v; }},
+        {"start_position[1]", [P](ToolpathParams& p, double v) { P(p).startPosition.y = v; }},
+        {"tolerance.distance", [P](ToolpathParams& p, double v) { P(p).tolerance.distance = v; }},
+        {"tolerance.angle_rad", [P](ToolpathParams& p, double v) { P(p).tolerance.angle = v; }},
+        {"tolerance.chordal", [P](ToolpathParams& p, double v) { P(p).tolerance.chordal = v; }},
+    };
+}
+
 /// Params with every number set to a distinct value (777.015625, 778.015625, ...).
 ToolpathParams distinctParams(const ToolpathParams& base, const std::vector<ParamField>& fields) {
     ToolpathParams p = base;
@@ -701,7 +733,10 @@ std::string distinctText(std::size_t i) {
 TEST_CASE("T-0136 f: non-finite toolpath parameters are refused by the loader, saveCarv and the commands",
           "[document][toolpath][carv][errors]") {
     const std::vector<std::pair<ToolpathParams, std::vector<ParamField>>> operations{
-        {toolpath::ProfileParams{}, profileFields()}, {toolpath::PocketParams{}, pocketFields()}};
+        {toolpath::ProfileParams{}, profileFields()},
+        {toolpath::PocketParams{}, pocketFields()},
+        {toolpath::DrillParams{}, drillFields()},
+        {toolpath::EngraveParams{}, engraveFields()}};
     for (const auto& [base, fields] : operations) {
         INFO("operation " << base.index());
         CHECK(nonFiniteParam(base).empty());

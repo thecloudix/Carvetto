@@ -250,6 +250,27 @@ void readTolerance(Fields& f, geometry::Tolerance& tol) {
     }
 }
 
+void readOrder(Fields& f, toolpath::OrderOptions& order) {
+    if (const json* j = f.object("order")) {
+        Fields g(*j, f.keyPath("order"));
+        g.boolean("selection_order", order.selectionOrder);
+        g.boolean("left_to_right", order.leftToRight);
+        g.boolean("bottom_to_top", order.bottomToTop);
+        g.boolean("grid", order.grid);
+        g.finish();
+    }
+}
+
+void readStartPosition(Fields& f, geometry::Vec2& out) {
+    if (const json* j = f.get("start_position")) {
+        if (!j->is_array() || j->size() != 2 || !(*j)[0].is_number() || !(*j)[1].is_number() ||
+            !std::isfinite((*j)[0].get<double>()) || !std::isfinite((*j)[1].get<double>())) {
+            f.fail("start_position", "must be an array of two numbers [x, y]");
+        }
+        out = geometry::Vec2{(*j)[0].get<double>(), (*j)[1].get<double>()};
+    }
+}
+
 void readCommon(Fields& f, CommonParams& common) {
     const json* t = f.object("tool");
     if (!t) {
@@ -348,14 +369,7 @@ ProfileJob parseProfileParams(std::string_view text) {
         g.number("overcut", p.leads.overcut);
         g.finish();
     }
-    if (const json* j = f.object("order")) {
-        Fields g(*j, "order");
-        g.boolean("selection_order", p.order.selectionOrder);
-        g.boolean("left_to_right", p.order.leftToRight);
-        g.boolean("bottom_to_top", p.order.bottomToTop);
-        g.boolean("grid", p.order.grid);
-        g.finish();
-    }
+    readOrder(f, p.order);
     f.choice("start_at", p.startAt,
              {{"vector_start", StartAt::VectorStart},
               {"optimise", StartAt::Optimise},
@@ -370,13 +384,7 @@ ProfileJob parseProfileParams(std::string_view text) {
               {"top_left", BoxAnchor::TopLeft},
               {"top_centre", BoxAnchor::TopCentre},
               {"top_right", BoxAnchor::TopRight}});
-    if (const json* j = f.get("start_position")) {
-        if (!j->is_array() || j->size() != 2 || !(*j)[0].is_number() || !(*j)[1].is_number() ||
-            !std::isfinite((*j)[0].get<double>()) || !std::isfinite((*j)[1].get<double>())) {
-            f.fail("start_position", "must be an array of two numbers [x, y]");
-        }
-        p.startPosition = geometry::Vec2{(*j)[0].get<double>(), (*j)[1].get<double>()};
-    }
+    readStartPosition(f, p.startPosition);
     if (const json* j = f.object("corners")) {
         Fields g(*j, "corners");
         g.boolean("sharp_external", p.corners.sharpExternal);
@@ -410,6 +418,50 @@ PocketJob parsePocketParams(std::string_view text) {
     f.number("allowance", p.allowance);
     f.boolean("ramp_plunge", p.rampPlunge);
     f.number("ramp_distance", p.rampDistance);
+    readTolerance(f, p.tolerance);
+    readCommon(f, job.common);
+    f.finish();
+    return job;
+}
+
+DrillJob parseDrillParams(std::string_view text) {
+    using namespace toolpath;
+    const json root = parseJson(text);
+    DrillJob job;
+    DrillParams& p = job.params;
+    Fields f(root, "");
+    f.string("name", p.name);
+    f.number("start_depth", p.startDepth);
+    f.number("cut_depth", p.cutDepth);
+    f.number("safe_z", p.safeZ);
+    f.boolean("peck", p.peck);
+    f.choice("peck_retract", p.peckRetract,
+             {{"above_start", PeckRetract::AboveStart}, {"above_previous_pass", PeckRetract::AbovePreviousPass}});
+    f.number("retract_gap", p.retractGap);
+    f.number("dwell_time", p.dwellTime);
+    readOrder(f, p.order);
+    readStartPosition(f, p.startPosition);
+    readTolerance(f, p.tolerance);
+    readCommon(f, job.common);
+    f.finish();
+    return job;
+}
+
+EngraveJob parseEngraveParams(std::string_view text) {
+    using namespace toolpath;
+    const json root = parseJson(text);
+    EngraveJob job;
+    EngraveParams& p = job.params;
+    Fields f(root, "");
+    f.string("name", p.name);
+    f.number("depth", p.depth);
+    f.integer("passes", p.passes);
+    f.number("safe_z", p.safeZ);
+    f.choice("strategy", p.strategy, {{"outline", EngraveStrategy::Outline}, {"fill", EngraveStrategy::Fill}});
+    f.choice("fill_pattern", p.fillPattern, {{"offset", PocketStrategy::Offset}, {"raster", PocketStrategy::Raster}});
+    f.number("stepover", p.stepover);
+    f.angle("raster_angle", p.rasterAngle);
+    readStartPosition(f, p.startPosition);
     readTolerance(f, p.tolerance);
     readCommon(f, job.common);
     f.finish();
@@ -464,10 +516,10 @@ ResolvedTool resolveTool(const ToolChoice& choice, const std::filesystem::path& 
 }
 
 std::string paramsHelp() {
-    return R"(params.json reference (lengths in mm, angles in degrees; every key is optional
-unless marked "required"; unknown keys are errors):
+    return R"(params.json reference (lengths in mm, angles in degrees, times in seconds; every key is
+optional unless marked "required"; unknown keys are errors):
 
-Both operations:
+Every operation:
   "tool": {                      required
     "id": "end-mill-6mm",        required: tool id in the tool database
     "database": "tools.json",    tool database file, relative to the params file
@@ -478,9 +530,11 @@ Both operations:
   "layers": ["Layer 1", ...]     machine only the vectors on these layers (default: all)
   "name": "..."                  toolpath name
   "safe_z": 5                    absolute Z of moves between cuts
+  "tolerance": {"distance": 0.001, "angle": 5.7e-8, "chordal": 0.01}
+
+profile and pocket:
   "direction": "climb"           climb | conventional
   "allowance": 0                 material left on the vectors (profile: negative cuts in)
-  "tolerance": {"distance": 0.001, "angle": 5.7e-8, "chordal": 0.01}
 
 profile:
   "side": "outside"              outside | inside | on | right (= outside) | left (= inside)
@@ -510,6 +564,31 @@ pocket:
   "raster_angle": 0
   "profile_pass": "last"         none | first | last
   "ramp_plunge": false, "ramp_distance": 10
+
+drill (one hole at the centre - area centroid - of every closed vector; tool: a drill
+or an end mill):
+  "start_depth": 0, "cut_depth": 0 (> 0 required for a toolpath)
+  "peck": false                  peck drilling in passes of the cutting data's pass depth
+  "peck_retract": "above_start"  between passes retract to the cutting start + retract_gap
+                                 (above_start) or retract_gap above the depth just reached
+                                 (above_previous_pass)
+  "retract_gap": 1               mm (> 0 when peck is true)
+  "dwell_time": 0                seconds at the bottom of every pass (0 = no dwell)
+  "order": {"selection_order": false, "left_to_right": false,
+            "bottom_to_top": false, "grid": false}   (none: nearest hole first)
+  "start_position": [0, 0]       tool XY before the first hole
+
+engrave (quick engraving; tool: a V-bit, engraving tool, end mill or ball nose; diamond-drag
+tools are refused until spindle-off support exists):
+  "depth": 0 (> 0 required)      engrave depth below the surface
+  "passes": 1                    number of equal passes to the depth (1 to 1000)
+  "strategy": "outline"          outline (the tool centre follows every vector, open or closed)
+                                 | fill (closed vectors cleared like a pocket; open ones ignored)
+  "fill_pattern": "offset"       offset | raster (fill only)
+  "stepover": 0                  fill only; 0 = the cutting data's stepover; at most the width
+                                 the tool cuts at the engrave depth
+  "raster_angle": 0              fill with the raster pattern
+  "start_position": [0, 0]       tool XY before the first outline cut (nearest first)
 )";
 }
 

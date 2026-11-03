@@ -26,8 +26,8 @@ enum class CutDirection { Climb, Conventional };
 enum class ToolpathIssue {
     InvalidParameters,    ///< Non-finite or out-of-range parameter; nothing produced (all).
     NoPasses,             ///< The pass plan yields no levels; nothing produced (Profile).
-    EmptyContour,         ///< A vector without spans was skipped (Profile).
-    DiscontinuousContour, ///< A vector whose spans do not join was skipped (Profile).
+    EmptyContour,         ///< A vector without spans was skipped (Profile, Drill).
+    DiscontinuousContour, ///< A vector whose spans do not join was skipped (Profile, Drill).
     ToolTooLarge,         ///< No room for the tool (an offset vanished; a pocket holds none) (all).
     MergedWithNeighbour,  ///< Offsets of nearby vectors overlapped and were merged (Profile).
     TrimmedNearVector,    ///< A stretch of cut too close to another vector was removed (Profile).
@@ -39,14 +39,18 @@ enum class ToolpathIssue {
     SpiralNeedsClosed,    ///< Spiral ramp on an open vector; a smooth ramp was used (Profile).
     TabThicknessClamped,  ///< Tab thickness exceeded the cut depth; clamped (Profile).
     NoTool,               ///< No tool was given; nothing produced (Pocket).
-    InvalidTool,          ///< Unusable tool or cutting data (diameter, stepover, pass depth) (Pocket).
-    OpenContourIgnored,   ///< Open vectors were ignored: closed ones are needed (Pocket).
-    NoRegion,             ///< The closed vectors enclose no area; nothing produced (Pocket).
-    WorkLimitExceeded,    ///< Refused: detail, pass depth or stepover too small (Pocket).
+    InvalidTool,          ///< Unusable tool or cutting data (diameter, stepover, pass depth) (Pocket, Drill).
+    OpenContourIgnored,   ///< Open vectors were ignored: closed ones are needed (Pocket, Drill).
+    NoRegion,             ///< The closed vectors enclose no area; nothing produced (Pocket); a vector
+                          ///< without area was skipped (Drill).
+    WorkLimitExceeded,    ///< Refused: detail, pass depth or stepover too small (Pocket, Drill).
     RegionNotKept,        ///< A part could not be kept within the safety margin; not cut (Pocket).
     RegionTrimmed,        ///< A part was trimmed by more than the tolerance (Pocket).
     NoRestMaterial,       ///< A rest tool found nothing left by the earlier tools (Pocket).
     RestUnreachable,      ///< A rest tool cannot reach the material left (Pocket).
+    CentreOutsideVector,  ///< A vector's centre is not inside it (e.g. a C shape); not drilled (Drill).
+    HoleWiderThanVector,  ///< The tool is wider than the vector round its centre; drilled anyway (Drill).
+    DuplicateHole,        ///< Holes at the same centre were drilled once (Drill).
 };
 
 /// One diagnostic of a toolpath operation.
