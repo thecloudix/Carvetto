@@ -40,3 +40,4 @@ Original locations (scripts may hard-code these; adjust paths when reusing):
 - t0136v1/: T-0136 verifier (PASS d701656): adv4.cpp limit/name/NaN probes, adv5.cpp names that grow when stored, mkbase.cpp fuzz bases; big3/peak3 patched with a valid tool.
 - t0135v1/: T-0135 round-1 verifier (FAIL 7d00ce6): wsf8x.cpp + chk.py (area matching), wsf8p.cpp probe maps, adv.cpp adversarial generator, wsh3.cpp (FORCEIOPOS), gfit.cpp fitTabs differential, perf3.cpp open-cut cluster pages, scn/ repros.
 - t0138v1/: T-0138 verifier (PASS fc80d44): dor.cpp near-collapse orientation oracle (large offsets), cmpd.py, ac2.cpp threshold cases, pk.cpp/pk2.cpp Pocket/Profile near collapse, cost.cpp/cost2.cpp, ab.sh.
+- t0009v1/: T-0009 round-1 verifier (FAIL feffe02): v9.cpp independent sub-tol injector (modes st/one/poly/shrinkpoly/time), vchk.cpp checker, repro_wrap.cpp (Sharp full-circle wrap B1), big.cpp/zz.cpp/zzc.cpp cost probes (cubic), edge.cpp, logs/shrink_*.
