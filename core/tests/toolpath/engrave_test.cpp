@@ -469,13 +469,13 @@ TEST_CASE("AC2: Fill is gouge-free by the pocket oracle for V-bits, end mills an
     CHECK(checked >= 30);
 }
 
-TEST_CASE("AC1: V-bit, engraving tool, end mill, ball nose and diamond drag are accepted",
+TEST_CASE("AC1: V-bit, engraving tool, end mill and ball nose are accepted",
           "[toolpath][engrave][tool]") {
     CHECK(engraveToolAllowed(tooling::ToolType::VBit));
     CHECK(engraveToolAllowed(tooling::ToolType::Engraving));
     CHECK(engraveToolAllowed(tooling::ToolType::EndMill));
     CHECK(engraveToolAllowed(tooling::ToolType::BallNose));
-    CHECK(engraveToolAllowed(tooling::ToolType::DiamondDrag));
+    CHECK_FALSE(engraveToolAllowed(tooling::ToolType::DiamondDrag));  // owner decision 2026-11-03
     CHECK_FALSE(engraveToolAllowed(tooling::ToolType::Drill));
     CHECK_FALSE(engraveToolAllowed(tooling::ToolType::FormTool));
     CHECK_FALSE(engraveToolAllowed(tooling::ToolType::TaperedBallNose));
@@ -485,7 +485,7 @@ TEST_CASE("AC1: V-bit, engraving tool, end mill, ball nose and diamond drag are 
     tooling::Tool engraving = vBit(30.0);
     engraving.type = tooling::ToolType::Engraving;
     engraving.tipDiameter = 0.2;
-    for (const tooling::Tool& t : {vBit(), engraving, endMill(), ballNose(), diamondDrag()}) {
+    for (const tooling::Tool& t : {vBit(), engraving, endMill(), ballNose()}) {
         INFO(t.name);
         const EngraveResult r = engraveToolpath(square, t, std::nullopt, outlineParams(0.2));
         CHECK(r.ok());
@@ -501,13 +501,39 @@ TEST_CASE("AC1: V-bit, engraving tool, end mill, ball nose and diamond drag are 
     CHECK(refused.diagnostics[0].message.find("is a drill") != std::string::npos);
 }
 
-TEST_CASE("AC1: a diamond drag tool follows the vector at the given depth", "[toolpath][engrave][tool]") {
+TEST_CASE("AC1: diamond-drag tools are refused until spindle-off support exists", "[toolpath][engrave][tool]") {
+    // Owner decision 2026-11-03 (ADR-0024 section 6): a drag tool must not run with the spindle on,
+    // and toolpaths cannot yet leave it off.
     const Contour line = polygon({{0, 0}, {25, 0}, {25, 10}}, false);
-    const EngraveResult r = engraveToolpath({line}, diamondDrag(), std::nullopt, outlineParams(0.05));
-    REQUIRE(r.ok());
-    checkMoveRules(r.toolpath, 0.05);
-    CHECK(distinctCutZ(r.toolpath) == std::vector<double>{-0.05});
-    CHECK(r.toolpath.tool.name == "Diamond drag");
+    for (const EngraveStrategy s : {EngraveStrategy::Outline, EngraveStrategy::Fill}) {
+        EngraveParams p = outlineParams(0.05);
+        p.strategy = s;
+        const EngraveResult r =
+            engraveToolpath({line, Contour::rectangle(Box2{Vec2{0, 20}, Vec2{10, 30}})}, diamondDrag(), std::nullopt, p);
+        CHECK_FALSE(r.ok());
+        REQUIRE(r.diagnostics.size() == 1);
+        CHECK(r.diagnostics[0].issue == ToolpathIssue::InvalidTool);
+        CHECK(r.diagnostics[0].message ==
+              "tool 'Diamond drag' is a diamond drag tool; diamond-drag tools need spindle-off support, not yet available");
+    }
+}
+
+TEST_CASE("AC2: Fill words Pocket's diagnostics for the engraving", "[toolpath][engrave][fill][diagnostics]") {
+    // A 2 mm square holds no 3 mm end mill: Pocket's "too large for the pocket" reads as a fill.
+    const std::vector<Contour> small{Contour::rectangle(Box2{Vec2{0, 0}, Vec2{2, 2}})};
+    const EngraveResult r = engraveToolpath(small, endMill(3.0), std::nullopt, fillParams(0.2, 1, PocketStrategy::Offset));
+    CHECK_FALSE(r.ok());
+    REQUIRE(r.diagnostics.size() == 1);
+    CHECK(r.diagnostics[0].issue == ToolpathIssue::ToolTooLarge);
+    CHECK_FALSE(r.diagnostics[0].tool.has_value());
+    CHECK(r.diagnostics[0].message == "tool 'End mill': too large for the fill area, nothing to cut");
+    const EngraveResult open =
+        engraveToolpath({polygon({{0, 0}, {5, 0}}, false)}, endMill(), std::nullopt, fillParams(0.2, 1, PocketStrategy::Raster));
+    REQUIRE_FALSE(open.diagnostics.empty());
+    for (const ToolpathDiagnostic& d : open.diagnostics) {
+        INFO(d.message);
+        CHECK(d.message.find("pocket") == std::string::npos);
+    }
 }
 
 TEST_CASE("AC1: unusable tools and cutting data are refused", "[toolpath][engrave][tool]") {

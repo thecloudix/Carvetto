@@ -83,9 +83,12 @@ const char* toolTypeText(tooling::ToolType type) {
 /// What is wrong with the tool for this toolpath; empty when usable.
 std::string toolProblem(const tooling::Tool& tool, const PassTool& pt) {
     const std::string label = "tool '" + tool.name + "'";
+    if (tool.type == tooling::ToolType::DiamondDrag) {
+        return label + " is a diamond drag tool; diamond-drag tools need spindle-off support, not yet available";
+    }
     if (!engraveToolAllowed(tool.type)) {
         return label + " is " + toolTypeText(tool.type) +
-               "; quick engraving needs a V-bit, an engraving tool, an end mill, a ball nose or a diamond drag tool";
+               "; quick engraving needs a V-bit, an engraving tool, an end mill or a ball nose";
     }
     if (const std::optional<std::string> bad = tooling::validate(tool)) {
         return label + ": " + *bad;
@@ -173,6 +176,27 @@ void outline(const std::vector<Contour>& contours, const EngraveParams& params, 
     }
 }
 
+void replaceAll(std::string& text, const std::string& from, const std::string& to) {
+    for (std::size_t at = text.find(from); at != std::string::npos; at = text.find(from, at + to.size())) {
+        text.replace(at, from.size(), to);
+    }
+}
+
+/// Pocket's diagnostics in the words of an engraving: "tool 1 (name)" becomes "tool 'name'" and
+/// the pocket becomes the fill area (ADR-0024 §3).
+std::string fillWording(std::string message, const std::string& toolName) {
+    replaceAll(message, "tool 1 (" + toolName + ")", "tool '" + toolName + "'");
+    replaceAll(message, "invalid pocket parameters", "invalid fill parameters");
+    replaceAll(message, "at the pocket depth", "at the engrave depth");
+    replaceAll(message, "a pocket needs closed vectors", "filling needs closed vectors");
+    replaceAll(message, "region to pocket", "region to fill");
+    replaceAll(message, "pocket size", "fill area");
+    replaceAll(message, "pocket boundary", "fill boundary");
+    replaceAll(message, "the pocket", "the fill area");
+    replaceAll(message, "pocket", "fill area");
+    return message;
+}
+
 void fill(const std::vector<Contour>& contours, const tooling::Tool& tool, const tooling::CuttingData& data,
           const PassTool& pt, const EngraveParams& params, EngraveResult& result) {
     auto say = [&result](ToolpathIssue issue, std::optional<std::size_t> contour, std::string message) {
@@ -237,6 +261,7 @@ void fill(const std::vector<Contour>& contours, const tooling::Tool& tool, const
     PocketResult r = pocketToolpath(closed, {PocketTool{tool, fillData}}, pocket);
     for (ToolpathDiagnostic& d : r.diagnostics) {
         d.tool.reset();
+        d.message = fillWording(std::move(d.message), tool.name);
         result.diagnostics.push_back(std::move(d));
     }
     if (!r.toolpaths.empty()) {
@@ -254,8 +279,10 @@ bool engraveToolAllowed(tooling::ToolType type) {
         case tooling::ToolType::VBit:
         case tooling::ToolType::Engraving:
         case tooling::ToolType::EndMill:
-        case tooling::ToolType::BallNose:
-        case tooling::ToolType::DiamondDrag: return true;
+        case tooling::ToolType::BallNose: return true;
+        // Owner decision 2026-11-03 (ADR-0024 §6): refused until toolpaths can run with the
+        // spindle off.
+        case tooling::ToolType::DiamondDrag:
         case tooling::ToolType::TaperedBallNose:
         case tooling::ToolType::RadiusedEndMill:
         case tooling::ToolType::FormTool:

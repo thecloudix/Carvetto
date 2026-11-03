@@ -1,6 +1,6 @@
 # ADR-0024: Quick Engrave toolpath (depth and passes, Fill through Pocket, record schema)
 
-Date: 2026-11-03 · Status: proposed (T-0151) · Diamond-drag spindle handling open (owner question)
+Date: 2026-11-03 · Status: proposed (T-0151) · Diamond-drag tools refused for now (owner decision 2026-11-03)
 
 ## Context
 T-0151 adds the quick engraving toolpath (feature-inventory §5 "Quick Engraving Toolpath"): mark
@@ -48,7 +48,9 @@ start depth 0, cut depth = depth, pass depth = depth / passes with `maintainExac
 chosen pattern (`PocketStrategy::Offset` or `Raster`, with `rasterAngle`), climb, the boundary
 pass **last** (clean edges of the marking; for Raster it also removes the wall scallops), no
 allowance, no ramp, the same tolerance and safe Z. Pocket's moves become the engraving's moves
-unchanged and its diagnostics are passed on (their `tool` index cleared: there is one tool). No
+unchanged and its diagnostics are passed on, their `tool` index cleared (there is one tool) and
+their wording made the engraving's: "tool 1 (name)" becomes "tool 'name'" and the pocket the fill
+area ("too large for the fill area", "filling needs closed vectors", "at the engrave depth"). No
 fill code is duplicated; the tests compare Fill with a direct `pocketToolpath` call move for
 move.
 
@@ -79,17 +81,23 @@ with no way to tell from the parameters; a second Outline toolpath on the same s
 that explicitly.
 
 ### 6. Tools
-`engraveToolAllowed` accepts `VBit`, `Engraving`, `EndMill`, `BallNose` and `DiamondDrag`, the
-tools the card names. Tapered ball noses, radiused end mills, form tools and drills are refused
-with `InvalidTool` ("tool 'X' is a drill; quick engraving needs a V-bit, an engraving tool, an
-end mill, a ball nose or a diamond drag tool"); the list can be widened without a format change.
-The tool must pass `tooling::validate`, have a cutting width > 0 at the depth and feed and plunge
-rates > 0. A diamond-drag tool follows the vector at the given depth exactly like the other tools
-(Outline; Fill with its constant width works as well). **Open:** what the post writes for its
-spindle. Today the toolpath carries the cutting data's spindle speed like any tool, and the
-posts' T-0134 rule (ADR-0020) refuses a speed ≤ 0 wherever `[S]` is written or `SPINDLE_ON`
-runs; the owner decides whether a diamond-drag toolpath should start the spindle at all (see
-the T-0151 hand-back).
+`engraveToolAllowed` accepts `VBit`, `Engraving`, `EndMill` and `BallNose`. Tapered ball noses,
+radiused end mills, form tools and drills are refused with `InvalidTool` ("tool 'X' is a drill;
+quick engraving needs a V-bit, an engraving tool, an end mill or a ball nose"); the list can be
+widened without a format change. The tool must pass `tooling::validate`, have a cutting width
+> 0 at the depth and feed and plunge rates > 0.
+
+**Diamond-drag tools are refused (owner decision 2026-11-03).** The card names them, but a drag
+tool must not turn, and every toolpath today starts the spindle with its tool's speed: the posts'
+T-0134 rule (ADR-0020) refuses a speed ≤ 0 wherever `[S]` is written or `SPINDLE_ON` runs, and a
+positive speed spins the tool. Of the options put to the owner (keep the rule with a nominal
+speed; "no spindle" toolpaths; those plus `M5` and an operator stop before the drag toolpath;
+refuse drag tools for now) the owner chose to refuse them: `engraveToolpath` returns
+`InvalidTool` "tool 'X' is a diamond drag tool; diamond-drag tools need spindle-off support, not
+yet available", for Outline and Fill. Proper spindle-off toolpaths (spindle off, `M5` and an
+operator stop before the drag toolpath) are a separate follow-up card; when they exist, a drag
+tool follows the vector at the given depth exactly like the other tools, and only
+`engraveToolAllowed` changes.
 
 ### 7. API, record and params.json
 `engraveToolpath(contours, const tooling::Tool&, const std::optional<tooling::CuttingData>&,

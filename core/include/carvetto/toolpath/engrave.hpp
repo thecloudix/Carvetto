@@ -66,8 +66,9 @@ struct EngraveResult {
     bool has(ToolpathIssue issue) const { return hasIssue(diagnostics, issue); }
 };
 
-/// True for the tool types quick engraving accepts (ADR-0024): V-bit, engraving tool, end mill,
-/// ball nose and diamond drag.
+/// True for the tool types quick engraving accepts (ADR-0024): V-bit, engraving tool, end mill
+/// and ball nose. Diamond-drag tools are refused until toolpaths can run with the spindle off
+/// (owner decision 2026-11-03).
 bool engraveToolAllowed(tooling::ToolType type);
 
 /// The Z level of every pass: `passes` equal steps down to −`depth`, the last exactly −`depth`.
@@ -88,7 +89,8 @@ std::vector<double> engraveLevels(double depth, int passes);
 /// `pocketToolpath` with one tool, the given pattern and stepover, cut depth = engrave depth,
 /// pass depth = depth / passes and a boundary pass last; so the tool keeps the width it cuts at
 /// the engrave depth (a V-bit's cone at that depth) inside the vectors, exactly as Pocket does.
-/// Open vectors are ignored (`OpenContourIgnored`).
+/// Open vectors are ignored (`OpenContourIgnored`). Pocket's diagnostics are passed on, worded for
+/// the engraving ("too large for the fill area").
 ///
 /// Tool: one of `engraveToolAllowed` (`InvalidTool` otherwise) passing `tooling::validate`, with
 /// feed and plunge rates > 0 and a cutting width > 0 at the depth. `cuttingData` empty = the

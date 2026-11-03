@@ -473,7 +473,7 @@ TEST_CASE("engrave params: every key is documented in the toolpath help", "[cli]
         CHECK_THAT(help, ContainsSubstring("\"" + key + "\""));
     }
     CHECK_THAT(help, ContainsSubstring("outline"));
-    CHECK_THAT(help, ContainsSubstring("diamond drag"));
+    CHECK_THAT(help, ContainsSubstring("diamond-drag\ntools are refused"));
 }
 
 TEST_CASE("engrave params: unknown keys and bad values are errors naming the key", "[cli][params][engrave][errors]") {
