@@ -87,11 +87,16 @@ Date: 2026-10-24 · Status: accepted (director, 2026-10-24; residual open-offset
    rounded intersections (3 vertices, 0.1–0.3 units wide, |area| ~1e-11 mm²), some of which is
    wound against its nesting or nested inside a genuine ring of the same orientation. That broke
    the contract sentence of §6 ("an output contour wound against the outermost input is a
-   genuine hole"). After `Execute`, every ring into which no disk of radius ρ fits (up to the
-   grid rounding of the test below, about half a unit either way: kept rings with inradius
-   3.84–3.97 units and removed ones up to ~4.5 units have been seen) is removed,
-   with every ring nested inside a removed one (narrower still; removed explicitly so the
-   rounding of the test can never leave a hole without its outer):
+   genuine hole"). After `Execute`, every ring into which no disk of radius ρ fits, as judged
+   by the erosion test below, is removed, with every ring nested inside a removed one, directly
+   or through other rings (normally narrower still; removed explicitly so the inexactness of the
+   test can never leave a hole without its outer). The erosion is Clipper2's `InflatePaths`,
+   which is not exact on acute rings and not even monotone in the radius (an acute triangle
+   eroded by 4.0 units can vanish while by 4.5 units it leaves a ring; e.g. the triangle
+   (0.019917, 0.098387), (0.024209, 0.096417), (0.024216, 0.096426) mm, exact inradius 5.54
+   units, is removed). Over 419,000 random thin (~4 µm) integer triangles removed rings had an
+   inradius of up to 5.64 units and kept ones down to 3.62 units, so ρ is a nominal radius
+   with that band around it:
    - ρ = 4 grid units (4e-6 mm) × max(1, 16 ε M), M the largest output coordinate in grid
      units, ε the double epsilon. Clipper2 rounds every vertex to the grid (≤ 0.71 units in the
      plane) and computes offset and intersection points in double from int64 coordinates, a few
@@ -101,12 +106,15 @@ Date: 2026-10-24 · Status: accepted (director, 2026-10-24; residual open-offset
      up to 2.5 units (inradius); 4 units leaves a margin above both. Rounding-level lenses are
      not bounded by that, though: near-collapse Pocket annuli keep lens triangles ~4 µm long
      with inradius 3.7–4.7 units on either side of ρ (as before T-0138; each still gives one
-     plunge). A removed ring is narrower than about 8e-6 mm everywhere: 12.5× below the
-     smallest chordal tolerance the toolpaths accept (1e-4 mm; tol.distance has no lower
-     bound, so no claim is made against it), and far inside the contract's own slack
-     (result points may lie 2·chordal short of |distance|). Every point of a removed region lies
-     within ρ of its boundary, i.e. within 4 nm of where the offset collapses, which no toolpath
-     resolves; the threshold does not depend on `tol` so that a coarse
+     plunge). A removed ring is narrower than about 11.3e-6 mm everywhere (twice the largest
+     removed inradius): about 8.9× below the smallest chordal tolerance Pocket accepts (1e-4
+     mm), and so inside the contract's own slack there (result points may lie 2·chordal short
+     of |distance|). Profile does not validate its tolerance: it offsets at the caller's
+     tol.chordal (at most 0.5·tol.distance with Bezier input), so only a chordal tolerance near
+     1e-5 mm or below brings the removed width up to that slack. tol.distance has no lower
+     bound, so no claim is made against it. Every point of a removed region lies within about
+     5.6 nm of its boundary, i.e. of where the offset collapses, which no toolpath resolves;
+     the threshold does not depend on `tol` so that a coarse
      tolerance never drops genuine thin regions (an area threshold such as tol.distance² would
      drop a 0.5 µm tool-centre disk, a pocket corner the tool just fits, and a long strip of
      any width below tol.distance²/length).
@@ -118,7 +126,11 @@ Date: 2026-10-24 · Status: accepted (director, 2026-10-24; residual open-offset
      each removed ring against the rings whose bounding box starts within its x-range (rings
      sorted by left edge), so it is O(dust × rings) only when many removed rings span the
      same x-range as many others (adversarial input, e.g. thousands of thin rings in one
-     column).
+     column). The pass removes the whole closure (rings nested in a removed ring, then rings
+     nested in those, in any order); for crossing rings that closure could differ from a single
+     ordered pass, but Clipper2's union output never holds crossing rings, so it cannot differ
+     in practice. The pass is `detail::markNestedInDust` (`offset_dust.hpp`), tested against a
+     brute-force closure.
    - Per ring, not per region: a frame narrow only between an outer and its hole is two
      correctly wound genuine rings and is kept; a dust-thin hole inside a genuine region is
      dropped (filled).

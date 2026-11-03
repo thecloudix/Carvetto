@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "clipper_interop.hpp"
+#include "offset_dust.hpp"
 #include "offset_junction.hpp"
 
 namespace carvetto::geometry {
@@ -40,8 +41,9 @@ Clipper2Lib::JoinType toClipperJoin(JoinType join) {
 // Grid-level dust (T-0138). Within a few nanometres of collapse Clipper2 can return rings no
 // wider than a few grid units: genuine regions shrunk to the rounding level, and debris wound
 // against its nesting (ADR-0006 §8). A ring is dust when no disk of radius kDustRadiusUnits
-// (scaled up for coordinates where double rounding exceeds the grid) fits inside it, up to the
-// grid rounding of the erosion test.
+// (scaled up for coordinates where double rounding exceeds the grid) fits inside it, as judged
+// by Clipper2's erosion, which is not exact on acute rings (removed rings have an inradius of up
+// to about 5.6 units, kept ones down to about 3.6).
 constexpr double kDustRadiusUnits = 4.0;
 
 double dustRadiusUnits(const Clipper2Lib::Paths64& paths) {
@@ -105,55 +107,31 @@ void dropDustRings(Clipper2Lib::Paths64& paths) {
     if (!any) {
         return;
     }
-    // A ring inside a dust ring is narrower still, so the erosion test drops it too, up to the
-    // rounding of that test; drop such rings explicitly so that no hole outlives its outer. A
-    // nested ring's bounding box lies inside its outer's, so only rings whose left edge falls
-    // within a dust ring's x-range are tested (rings sorted by left edge, binary search).
-    std::vector<Clipper2Lib::Rect64> boxes(paths.size());
-    std::vector<std::size_t> byLeft;
-    std::vector<std::size_t> work;
+    // A ring inside a dust ring is normally narrower still, so the erosion test drops it too,
+    // but that test is not exact (ADR-0006 §8); drop such rings explicitly so that no hole
+    // outlives its outer.
+    std::vector<detail::GridBox> boxes(paths.size());
+    std::vector<bool> usable(paths.size());
     for (std::size_t i = 0; i < paths.size(); ++i) {
-        boxes[i] = Clipper2Lib::GetBounds(paths[i]);
-        if (dust[i]) {
-            work.push_back(i);
-        } else if (!paths[i].empty()) {
-            byLeft.push_back(i);
-        }
+        const Clipper2Lib::Rect64 b = Clipper2Lib::GetBounds(paths[i]);
+        boxes[i] = {b.left, b.top, b.right, b.bottom};
+        // Outers need 3 points; inner rings any point (an empty path is never tested).
+        usable[i] = !paths[i].empty();
     }
-    std::sort(byLeft.begin(), byLeft.end(), [&boxes](std::size_t a, std::size_t b) {
-        return boxes[a].left < boxes[b].left || (boxes[a].left == boxes[b].left && a < b);
+    detail::markNestedInDust(boxes, usable, dust, [&paths](std::size_t outer, std::size_t inner) {
+        if (paths[outer].size() < 3) {
+            return false;
+        }
+        bool inside = false;
+        for (const auto& p : paths[inner]) {
+            const auto where = Clipper2Lib::PointInPolygon(p, paths[outer]);
+            if (where == Clipper2Lib::PointInPolygonResult::IsOutside) {
+                return false;
+            }
+            inside = inside || where == Clipper2Lib::PointInPolygonResult::IsInside;
+        }
+        return inside;
     });
-    while (!work.empty()) {
-        const std::size_t i = work.back();
-        work.pop_back();
-        if (paths[i].size() < 3) {
-            continue;
-        }
-        const Clipper2Lib::Rect64& box = boxes[i];
-        auto it = std::lower_bound(byLeft.begin(), byLeft.end(), box.left,
-                                   [&boxes](std::size_t a, std::int64_t x) { return boxes[a].left < x; });
-        for (; it != byLeft.end() && boxes[*it].left <= box.right; ++it) {
-            const std::size_t j = *it;
-            const Clipper2Lib::Rect64& bj = boxes[j];
-            if (dust[j] || bj.right > box.right || bj.top < box.top || bj.bottom > box.bottom) {
-                continue;
-            }
-            bool inside = false;
-            bool outside = false;
-            for (const auto& p : paths[j]) {
-                const auto where = Clipper2Lib::PointInPolygon(p, paths[i]);
-                if (where == Clipper2Lib::PointInPolygonResult::IsOutside) {
-                    outside = true;
-                    break;
-                }
-                inside = inside || where == Clipper2Lib::PointInPolygonResult::IsInside;
-            }
-            if (inside && !outside) {
-                dust[j] = true;
-                work.push_back(j);
-            }
-        }
-    }
     std::size_t kept = 0;
     for (std::size_t i = 0; i < paths.size(); ++i) {
         if (!dust[i]) {
@@ -167,6 +145,48 @@ void dropDustRings(Clipper2Lib::Paths64& paths) {
 }
 
 }  // namespace
+
+namespace detail {
+
+void markNestedInDust(const std::vector<GridBox>& boxes, const std::vector<bool>& usable,
+                      std::vector<bool>& dust,
+                      const std::function<bool(std::size_t outer, std::size_t inner)>& nested) {
+    std::vector<std::size_t> byLeft;
+    std::vector<std::size_t> work;
+    for (std::size_t i = 0; i < boxes.size(); ++i) {
+        if (!usable[i]) {
+            continue;
+        }
+        if (dust[i]) {
+            work.push_back(i);
+        } else {
+            byLeft.push_back(i);
+        }
+    }
+    std::sort(byLeft.begin(), byLeft.end(), [&boxes](std::size_t a, std::size_t b) {
+        return boxes[a].left < boxes[b].left || (boxes[a].left == boxes[b].left && a < b);
+    });
+    while (!work.empty()) {
+        const std::size_t i = work.back();
+        work.pop_back();
+        const GridBox& box = boxes[i];
+        auto it = std::lower_bound(byLeft.begin(), byLeft.end(), box.left,
+                                   [&boxes](std::size_t a, std::int64_t x) { return boxes[a].left < x; });
+        for (; it != byLeft.end() && boxes[*it].left <= box.right; ++it) {
+            const std::size_t j = *it;
+            const GridBox& bj = boxes[j];
+            if (dust[j] || bj.right > box.right || bj.top < box.top || bj.bottom > box.bottom) {
+                continue;
+            }
+            if (nested(i, j)) {
+                dust[j] = true;
+                work.push_back(j);
+            }
+        }
+    }
+}
+
+}  // namespace detail
 
 std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double distance, JoinType join,
                                     const Tolerance& tol, double mitreLimit) {

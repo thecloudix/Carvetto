@@ -5,12 +5,14 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "carvetto/geometry/fixed_point.hpp"
 #include "carvetto/geometry/offset.hpp"
+#include "offset_dust.hpp"
 #include "test_rng.hpp"
 
 using namespace carvetto::geometry;
@@ -264,4 +266,88 @@ TEST_CASE("T-0138 AC2: dust is judged per ring; a hole inside a dropped outer go
     const auto frame = offsetContours(frameIn, 0.0, JoinType::Round, kFine);
     REQUIRE(frame.size() == 2);
     CHECK(orientationViolations(frame, 1.0) == 0);
+}
+
+// --- The nesting pass on its own, against a brute-force closure ---------------------------------
+
+TEST_CASE("T-0138: the dust nesting pass matches a brute-force closure", "[geometry][offset][dust]") {
+    using detail::GridBox;
+    carvetto::test::SplitMix rng{138};
+    const auto within = [](const GridBox& in, const GridBox& out) {
+        return in.left >= out.left && in.right <= out.right && in.top >= out.top && in.bottom <= out.bottom;
+    };
+    int marked = 0;
+    for (int trial = 0; trial < 300; ++trial) {
+        const int layout = trial % 3;  // 0: small grid (shared edges), 1: one column, 2: wide spread
+        const std::size_t n = 5 + static_cast<std::size_t>(rng.uniform(0.0, 60.0));
+        const auto pick = [&rng](std::int64_t lo, std::int64_t hi) {
+            return lo + static_cast<std::int64_t>(rng.uniform(0.0, static_cast<double>(hi - lo + 1)));
+        };
+        std::vector<GridBox> boxes(n);
+        std::vector<bool> usable(n);
+        std::vector<bool> dust(n);
+        for (std::size_t i = 0; i < n; ++i) {
+            GridBox b;
+            if (layout == 1) {
+                b.left = 0;
+                b.right = pick(0, 3) * 10;  // equal left edges, often equal right edges too
+            } else {
+                const std::int64_t span = layout == 0 ? 8 : 1000;
+                b.left = pick(-span, span);
+                b.right = b.left + pick(0, span);  // zero-width boxes included
+            }
+            b.top = pick(-8, 8);
+            b.bottom = b.top + pick(0, 8);
+            boxes[i] = b;
+            usable[i] = rng.uniform(0.0, 1.0) < 0.9;
+            dust[i] = rng.uniform(0.0, 1.0) < 0.2;
+        }
+        // Nesting is decided by more than the boxes: some box-contained pairs are not nested.
+        const auto nestedRule = [](std::size_t outer, std::size_t inner) {
+            return outer != inner && (outer * 7 + inner * 3) % 5 != 0;
+        };
+        std::vector<bool> expect = dust;
+        for (bool changed = true; changed;) {
+            changed = false;
+            for (std::size_t o = 0; o < n; ++o) {
+                for (std::size_t i = 0; i < n; ++i) {
+                    if (expect[o] && !expect[i] && usable[o] && usable[i] && within(boxes[i], boxes[o]) &&
+                        nestedRule(o, i)) {
+                        expect[i] = true;
+                        changed = true;
+                    }
+                }
+            }
+        }
+        bool badCall = false;
+        std::vector<bool> got = dust;
+        detail::markNestedInDust(boxes, usable, got, [&](std::size_t outer, std::size_t inner) {
+            // Only asked for usable pairs, inner not dust yet, inner's box within outer's.
+            if (!usable[outer] || !usable[inner] || got[inner] || !within(boxes[inner], boxes[outer])) {
+                badCall = true;
+            }
+            return nestedRule(outer, inner);
+        });
+        INFO("trial " << trial);
+        CHECK_FALSE(badCall);
+        CHECK(got == expect);
+        for (std::size_t i = 0; i < n; ++i) {
+            marked += (got[i] && !dust[i]) ? 1 : 0;
+        }
+    }
+    CHECK(marked > 300);  // the closure did real work, chains included
+}
+
+// The erosion that judges dust is Clipper2's and not exact on acute rings (ADR-0006 section 8):
+// this thin triangle has an exact inradius of 5.54 grid units, above the nominal 4, and is
+// still removed. Pinned so the documented band stays true.
+TEST_CASE("T-0138: an acute triangle of inradius 5.5 grid units is judged dust (documented band)",
+          "[geometry][offset][dust]") {
+    const Contour t = polygon({{0.019917, 0.098387}, {0.024209, 0.096417}, {0.024216, 0.096426}});
+    CHECK(offsetContours({t}, 0.0, JoinType::Round, kFine).empty());
+    // Scaled up 3x about its first vertex (inradius ~16.6 units) it is kept.
+    const Vec2 a{0.019917, 0.098387};
+    const Contour big =
+        polygon({a, a + (Vec2{0.024209, 0.096417} - a) * 3.0, a + (Vec2{0.024216, 0.096426} - a) * 3.0});
+    CHECK(offsetContours({big}, 0.0, JoinType::Round, kFine).size() == 1);
 }

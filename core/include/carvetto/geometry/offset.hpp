@@ -33,16 +33,20 @@ enum class OffsetSide { Left, Right };
 /// lobes deeper than |distance|; a result contour wound against the outermost input is a genuine
 /// hole (T-0018, ADR-0006 §6).
 ///
-/// Grid-level dust is dropped (T-0138, ADR-0006 §8): a result contour that no disk of radius
-/// 4e-6 mm fits inside (four grid units of `kFixedPointScale`, up to the grid rounding of the
-/// test, about half a unit either way; more only beyond ~2.8e8 mm, where double rounding
-/// exceeds the grid) is removed, with any contour nested inside it. Near collapse Clipper2 can
-/// return rings a few nanometres wide, some wound against their nesting; so every result
-/// contour holds a disk about 8e-6 mm across, contours nested at even depth are wound like the
-/// outermost input and those at odd depth (holes) against it. The test is per contour, on its
-/// own interior: a region narrow only between an outer and its hole (a frame) is kept. The width
-/// does not depend on `tol`; it is 12.5x below the smallest chordal tolerance the toolpaths
-/// accept (1e-4 mm), so far inside the 2 x tol.chordal allowance above.
+/// Grid-level dust is dropped (T-0138, ADR-0006 §8): a result contour that Clipper2's erosion by
+/// 4e-6 mm (four grid units of `kFixedPointScale`; more only beyond ~2.8e8 mm, where double
+/// rounding exceeds the grid) leaves empty is removed, with any contour nested inside it. That
+/// erosion is not exact on acute rings (not monotone in the radius): measured on thin
+/// triangles, removed contours have an inradius of up to about 5.6e-6 mm and kept ones down to
+/// about 3.6e-6 mm. Near collapse Clipper2 can return rings a few nanometres wide, some wound
+/// against their nesting; so every result contour holds a disk about 7e-6 mm across, contours
+/// nested at even depth are wound like the outermost input and those at odd depth (holes)
+/// against it. The test is per contour, on its own interior: a region narrow only between an
+/// outer and its hole (a frame) is kept. The width does not depend on `tol`: a removed contour
+/// is narrower than about 1.13e-5 mm, about 8.9x below the smallest chordal tolerance Pocket
+/// accepts (1e-4 mm). Profile does not validate its tolerance and offsets at tol.chordal (at
+/// most 0.5 x tol.distance with Bezier input), so only a chordal tolerance near 1e-5 mm or
+/// below brings this width up to its 2 x tol.chordal allowance.
 ///
 /// Approach: polygonise at `tol.chordal`, scale by `kFixedPointScale`, run Clipper2's offset
 /// engine (round joins are approximated within `tol.chordal`), convert back to polygonal
