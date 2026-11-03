@@ -1,0 +1,8 @@
+T-0154 round-3 verifier drivers (branch task/T-0154-no-spindle @ 9e5ed07).
+build.sh src out        - builds a driver against /home/chris/wt-T0154/build-verify3
+postatk4.cpp            - strict-template-rule attacks (r2 re-runs, forms, values, blocks)
+legit.cpp outdir        - 8 shipped posts x 9 job orders, spindle-word-like tool names
+gcheck2.py man.txt      - copy of t0151v1/gcheck2.py incl. its uncommitted paren/#/[ drag checks
+Bypasses found (accepted by the guard): "M/3", "S/1000" (Grbl drops '/' anywhere),
+"M3.004"/"M4.004" (Grbl mantissa rounds to 0), "M3.00005"/"M2.99995" (LinuxCNC 1e-4 integer
+tolerance), "M3.5" (Marlin integer codenum), "M259" (Grbl uint8_t int_value), tool name "M/3" in live code.
