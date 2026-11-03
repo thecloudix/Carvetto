@@ -7,7 +7,7 @@ The director moved from a 2-core cloud session to Chris's local WSL machine (i9-
 Act as `.claude/agents/director.md`. Coders and verifiers are spawned with the Agent tool using the instructions in `.claude/agents/coder.md` / `verifier.md` (pass the file's content or tell the agent to read it first). Key rules recap:
 
 - Fresh-context verifiers; never forward the coder's summary to a verifier. Up to 3 fix rounds per card, then the owner decides (re-scope / merge with follow-up / extra round).
-- Merge only via PR with green CI on all three jobs (linux-core, linux-app, windows-app MSVC); squash-merge; one CHANGELOG line per task; clean rebuild after rebase; never `git add -A` blindly.
+- Merge only via PR with green CI on all three jobs (linux-core, linux-app, windows-app MSVC); squash-merge; one changelog fragment per task (`changelog.d/`, T-0146); clean rebuild after rebase; never `git add -A` blindly.
 - Commits: author `Chris Wood <thecloudix@gmail.com>`, message ends with a `Co-Authored-By: Claude …` line. PR bodies end with "🤖 Generated with Claude Code".
 - Agents kill only their own PIDs (no broad pkill/killall).
 - MSVC: include every std header used; no `fopen`/`fscanf` (C4996 is an error) — use `std::ifstream`; no constexpr `std::fabs`; CPU-time tests use GetProcessTimes on Windows.

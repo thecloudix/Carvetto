@@ -10,6 +10,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # T-0146: the changelog check compares with the PR's merge base
+      # T-0146: entries live in changelog.d/ (one fragment per card), never in CHANGELOG.md.
+      # `check` validates the fragments; on PRs `--base` also refuses hand edits to CHANGELOG.md's
+      # Unreleased section. An assemble PR passes because every line it adds comes from a fragment
+      # the same PR deletes (see changelog.d/README.md).
+      - name: Changelog fragments
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ "$EVENT" = "pull_request" ]; then
+            python3 tools/changelog.py check --base "origin/$BASE_REF"
+          else
+            python3 tools/changelog.py check
+          fi
       - name: Install tools
         run: sudo apt-get update && sudo apt-get install -y ninja-build
       - name: Configure
