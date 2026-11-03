@@ -670,3 +670,27 @@ pairs (T-0008 item 4). Everything not mentioned below is unchanged.
   about 5e-5 mm, the single merged hit may be the exact (untangent) contact rather than the tangent
   one; both are allowed by the merge rule. `isFullCircle`'s angular 1e-9 rad threshold is unchanged:
   consistent at `tol.distance` up to r = 1e6 mm (the ends are then within tol), not beyond.
+
+### 2026-11-02 — T-0143 (point-in-contour with vertices and bridges on the test ray) · Status: proposed (T-0143)
+Decision 5 is unchanged in its rule (ray towards +X, half-open `y >= p.y`); it is now applied to a
+chain that is closed exactly.
+1. **The pieces form one exactly closed chain.** Each piece's start is compared with the previous
+   piece's computed end; when they differ by any amount (a junction gap within tolerance, or an
+   arc end evaluated by sin/cos — `sin(2π)` is −2.4·10⁻¹⁶·r, not 0 — against the exact end of the
+   next line) the two are joined by a straight link, counted like any other segment, and the
+   contour is closed from the last computed end to the first computed start (formerly from
+   `endPoint()` to `startPoint()` only, with interior junction gaps ignored). Every vertex is then
+   classified above or below the ray exactly once, so upward and downward crossings balance for
+   every horizontal line, whatever lies on it: coincident or retraced bridges on the ray, arc and
+   line ends on it, horizontal edges.
+2. **Repro fixed.** A ring drawn as one loop — outer arc 0..2π CCW, bridge (10,0)→(5,0), inner arc
+   reversed, bridge back — gave winding −1 at its centre: the outer arc's end (10, −2.4·10⁻¹⁵) lay
+   below the ray while the bridge's start (10, 0) lay on it, so the outer arc's last upward crossing
+   was never counted. It is now 0 (Outside), and Drill no longer drills such a ring (ADR-0022 §1).
+3. **Who changes.** Only queries whose horizontal line passes between a junction's two computed end
+   points (a gap of a few ulps up to `tol.distance`) can change, and only from a wrong count to the
+   right one. Callers: `cut_order` (nesting), Profile (region parity), Drill (centroid inside its
+   vector); Pocket and the booleans use Clipper2 and do not call it. Verified by a generative test
+   against an angle-summation oracle (rings at bridges every 15° and special angles, lines, arcs and
+   Beziers mixed; integer-grid contours with retraced chords, horizontal edges, half-circle arcs and
+   implicit closure, queried on the vertex rays) and by Pocket/Profile output hashes against `main`.

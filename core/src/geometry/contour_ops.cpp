@@ -93,20 +93,28 @@ void setOrientation(Contour& c, Orientation want, const Tolerance& tol) {
 
 namespace {
 
+// Ray casting towards +X with the half-open rule y >= p.y. Every piece starts with `moveTo`,
+// which joins it to the previous piece's computed end point when the two differ (span junctions
+// within tolerance, arc end points evaluated by trigonometry against exact line end points). The
+// pieces therefore form one exactly closed chain, so each vertex is classified above or below the
+// ray once and only once and the crossings always balance (T-0143).
 struct RayCaster {
     Vec2 p;
     int winding{0};
+    bool started{false};
+    Vec2 first{};
+    Vec2 last{};
 
     bool above(Vec2 q) const { return q.y >= p.y; }
 
-    // A y-monotone piece from a to b crossing the horizontal through p at x.
+    // A y-monotone piece crossing the horizontal through p at x.
     void countCrossing(double x, bool upward) {
         if (x > p.x) {
             winding += upward ? 1 : -1;
         }
     }
 
-    void addSegment(Vec2 a, Vec2 b) {
+    void rawSegment(Vec2 a, Vec2 b) {
         const bool aAbove = above(a);
         const bool bAbove = above(b);
         if (aAbove == bAbove) {
@@ -114,6 +122,23 @@ struct RayCaster {
         }
         const double x = a.x + (b.x - a.x) * (p.y - a.y) / (b.y - a.y);
         countCrossing(x, bAbove);
+    }
+
+    // Starts a piece at a: links it to the chain's current end point first.
+    void moveTo(Vec2 a) {
+        if (!started) {
+            started = true;
+            first = a;
+        } else if (a.x != last.x || a.y != last.y) {
+            rawSegment(last, a);
+        }
+        last = a;
+    }
+
+    void addSegment(Vec2 a, Vec2 b) {
+        moveTo(a);
+        rawSegment(a, b);
+        last = b;
     }
 
     void addArc(const ArcSpan& arc) {
@@ -133,9 +158,11 @@ struct RayCaster {
         std::sort(params.begin(), params.end());
         const double dy = p.y - arc.centre.y;
         const double half = std::sqrt(std::max(0.0, arc.radius * arc.radius - dy * dy));
+        moveTo(arc.pointAt(params[0]));
         for (std::size_t i = 1; i < params.size(); ++i) {
-            const Vec2 a = arc.pointAt(params[i - 1]);
+            const Vec2 a = last;
             const Vec2 b = arc.pointAt(params[i]);
+            last = b;
             const bool aAbove = above(a);
             const bool bAbove = above(b);
             if (aAbove == bAbove) {
@@ -165,6 +192,14 @@ struct RayCaster {
             },
             s);
     }
+
+    // Closes the chain back to its first point (explicitly for open contours, across any small
+    // gap for closed ones).
+    void close() {
+        if (started) {
+            moveTo(first);
+        }
+    }
 };
 
 }  // namespace
@@ -177,8 +212,7 @@ int windingNumber(const Contour& c, Vec2 p, const Tolerance& tol) {
     for (const Span& s : c.spans) {
         caster.addSpan(s, tol);
     }
-    // Close the loop (explicitly when open, and across any small gap when closed).
-    caster.addSegment(c.endPoint(), c.startPoint());
+    caster.close();
     return caster.winding;
 }
 

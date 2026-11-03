@@ -92,7 +92,10 @@ data's pass depth, the last one taking the remainder (the usual peck-drilling be
   rapid inside the drilled hole (posts/README.md checklist item 3 allows peck retracts), never an
   XY rapid and never a downward rapid below safe Z.
 - Work caps as Pocket's: more than 10,000 passes per hole or 20,000,000 moves is refused
-  (`WorkLimitExceeded`) before any moves are made.
+  (`WorkLimitExceeded`) before any moves are made. The pass cap counts the levels `PassPlan`
+  actually makes: exactly 10,000 passes are drilled, 10,001 refused (T-0143; the T-0150 check
+  `ceil(cut / pass) + 1 ≤ 10000` refused exactly 10,000 and, within PassPlan's 1e-9 round-off
+  guard, 9,999).
 
 ### 4. Order
 The holes go through the shared `orderCuts` with `OrderOptions` (selection, left-to-right,
