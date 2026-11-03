@@ -30,7 +30,7 @@
 #include "carvetto/tooling/tool.hpp"
 #include "carvetto/toolpath/toolpath.hpp"
 
-namespace carvetto::test::vcarve {
+namespace carvetto::test::v_carve {
 
 using geometry::Contour;
 using geometry::Vec2;
@@ -52,7 +52,9 @@ inline double boundaryDistance(const std::vector<Contour>& contours, Vec2 p) {
 
 /// Even-odd inside test over the closed contours (points on a boundary count as inside).
 inline bool insideRegion(const std::vector<Contour>& contours, Vec2 p) {
-    const geometry::Tolerance tol;
+    // Fine tolerance: point location polygonises curves at tol.chordal, which must resolve thin
+    // slivers between nearly tangent curves (self-crossing Beziers).
+    const geometry::Tolerance tol{1e-7, 1e-9, 1e-5};
     bool in = false;
     for (const Contour& c : contours) {
         if (!c.closed || c.isEmpty()) {
@@ -206,4 +208,4 @@ inline double carvedDepth(const toolpath::Toolpath& tp, const tooling::Tool& too
     return best;
 }
 
-}  // namespace carvetto::test::vcarve
+}  // namespace carvetto::test::v_carve

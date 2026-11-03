@@ -385,7 +385,7 @@ constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Profi
                                                       {ToolpathOperation::Pocket, "pocket"},
                                                       {ToolpathOperation::Drill, "drill"},
                                                       {ToolpathOperation::Engrave, "engrave"},
-                                                      {ToolpathOperation::VCarve, "vcarve"}};
+                                                      {ToolpathOperation::VCarving, "v_carve"}};
 
 template <class E, std::size_t N>
 const char* nameOf(const EnumName<E> (&table)[N], E value) {
@@ -723,7 +723,7 @@ json encodeEngraveParams(const toolpath::EngraveParams& p) {
     return j;
 }
 
-json encodeVCarveParams(const toolpath::VCarveParams& p) {
+json encodeVCarvingParams(const toolpath::VCarvingParams& p) {
     json j = json::object();
     j["name"] = p.name;
     j["start_depth"] = p.startDepth;
@@ -758,8 +758,8 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
         j["params"] = encodeDrillParams(*drill);
     } else if (const auto* engrave = std::get_if<toolpath::EngraveParams>(&tp.params)) {
         j["params"] = encodeEngraveParams(*engrave);
-    } else if (const auto* vcarve = std::get_if<toolpath::VCarveParams>(&tp.params)) {
-        j["params"] = encodeVCarveParams(*vcarve);
+    } else if (const auto* vCarving = std::get_if<toolpath::VCarvingParams>(&tp.params)) {
+        j["params"] = encodeVCarvingParams(*vCarving);
     } else {
         j["params"] = encodePocketParams(std::get<toolpath::PocketParams>(tp.params));
     }
@@ -1702,7 +1702,7 @@ constexpr std::array<std::string_view, 12> kEngraveKeysParams{
 
 // V-carve records exist only in job.json (no interim T-0122 members); "tool" and "layers" close
 // the list so `keysFor` drops them.
-constexpr std::array<std::string_view, 14> kVCarveKeys{
+constexpr std::array<std::string_view, 14> kVCarvingKeys{
     "name",          "start_depth", "flat_depth",     "safe_z",    "clearance_strategy", "clearance_direction",
     "clearance_raster_angle_rad", "ramp_plunge", "ramp_distance", "order", "start_position", "tolerance",
     "tool",          "layers"};
@@ -1987,10 +1987,10 @@ toolpath::EngraveParams decodeEngraveParams(JsonReader& r, const Path& p, Params
     return out;
 }
 
-toolpath::VCarveParams decodeVCarveParams(JsonReader& r, const Path& p, ParamsDialect d,
+toolpath::VCarvingParams decodeVCarvingParams(JsonReader& r, const Path& p, ParamsDialect d,
                                           LegacyParamsExtras* legacy) {
-    toolpath::VCarveParams out;
-    ParamsRecord rec(r, p, keysFor(kVCarveKeys, d), d);
+    toolpath::VCarvingParams out;
+    ParamsRecord rec(r, p, keysFor(kVCarvingKeys, d), d);
     while (rec.next()) {
         const std::string& k = rec.key();
         if (k == "name") {
@@ -2041,8 +2041,8 @@ ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& te
     if (operation == ToolpathOperation::Engrave) {
         return decodeEngraveParams(r, p, d, legacy);
     }
-    if (operation == ToolpathOperation::VCarve) {
-        return decodeVCarveParams(r, p, d, legacy);
+    if (operation == ToolpathOperation::VCarving) {
+        return decodeVCarvingParams(r, p, d, legacy);
     }
     return decodePocketParams(r, p, d, legacy);
 }

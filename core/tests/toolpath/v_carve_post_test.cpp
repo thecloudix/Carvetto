@@ -4,7 +4,7 @@
 // of T-0110/T-0133/T-0134 (units and absolute mode first, rapids only at safe Z, spindle on with a
 // speed > 0 before any cutting move, tool changes with the spindle off at safe Z, nothing below
 // the deepest V-carve depth, printable ASCII only), and the Grbl output against a golden
-// (core/tests/golden/toolpath/vcarve_grbl.nc, regenerated only by tools/regen_golden.py and
+// (core/tests/golden/toolpath/v_carve_grbl.nc, regenerated only by tools/regen_golden.py and
 // hand-checked against the posts/README.md checklist and ADR-0025).
 
 #include <catch2/catch_test_macros.hpp>
@@ -21,15 +21,15 @@
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/post/post_processor.hpp"
 #include "carvetto/tooling/tool.hpp"
-#include "carvetto/toolpath/vcarve.hpp"
-#include "vcarve_test_util.hpp"
+#include "carvetto/toolpath/v_carve.hpp"
+#include "v_carve_test_util.hpp"
 
 using namespace carvetto;
 using namespace carvetto::toolpath;
 using geometry::Box2;
 using geometry::Contour;
 using geometry::Vec2;
-namespace orc = carvetto::test::vcarve;
+namespace orc = carvetto::test::v_carve;
 
 namespace {
 
@@ -55,27 +55,27 @@ void writeFile(const std::string& path, const std::string& text) {
 /// The V-carve fixture (polygons only, so the medial axis uses no curve maths): a "V" glyph with
 /// a 60-degree V-bit; a framed plate with a triangular island, flat depth 1.5 mm from a start
 /// depth of 1 mm, an end mill clearing the flat area; a small diamond with a ball nose.
-std::vector<Toolpath> vcarveJob() {
+std::vector<Toolpath> vCarvingJob() {
     std::vector<Toolpath> out;
     std::vector<Contour> glyph;
     test::medial::appendGlyph(glyph, 3, {0, 0});
-    VCarveParams carve;
+    VCarvingParams carve;
     carve.name = "V glyph";
     carve.safeZ = kSafeZ;
     carve.tolerance.chordal = 0.05;
-    const VCarveResult a = vcarveToolpath(glyph, orc::vBit(60.0, 12.7, "V-bit 60", 3), std::nullopt, {}, carve);
+    const VCarvingResult a = vCarvingToolpath(glyph, orc::vBit(60.0, 12.7, "V-bit 60", 3), std::nullopt, {}, carve);
     REQUIRE(a.ok());
     CHECK(a.diagnostics.empty());
     out.push_back(a.toolpath);
 
     const std::vector<Contour> plate{Contour::rectangle(Box2{Vec2{10, 0}, Vec2{22, 8}}),
                                      orc::polygon({{14, 3}, {17, 3}, {15.5, 5}})};
-    VCarveParams flat = carve;
+    VCarvingParams flat = carve;
     flat.name = "Plate";
     flat.startDepth = 1.0;
     flat.flatDepth = 1.5;
     flat.clearanceStrategy = PocketStrategy::Offset;
-    const VCarveResult b = vcarveToolpath(plate, orc::vBit(90.0, 12.7, "V-bit 90", 4), std::nullopt,
+    const VCarvingResult b = vCarvingToolpath(plate, orc::vBit(90.0, 12.7, "V-bit 90", 4), std::nullopt,
                                           {PocketTool{orc::endMill(1.0, "End Mill 1 mm", 5), std::nullopt}}, flat);
     REQUIRE(b.ok());
     CHECK(b.diagnostics.empty());
@@ -83,10 +83,10 @@ std::vector<Toolpath> vcarveJob() {
         out.push_back(tp);
     }
 
-    VCarveParams ball = carve;
+    VCarvingParams ball = carve;
     ball.name = "Diamond";
     const std::vector<Contour> diamond{orc::polygon({{30, 4}, {34, 0}, {38, 4}, {34, 8}})};
-    const VCarveResult c = vcarveToolpath(diamond, orc::ballNose(8.0, "Ball 8 mm", 6), std::nullopt, {}, ball);
+    const VCarvingResult c = vCarvingToolpath(diamond, orc::ballNose(8.0, "Ball 8 mm", 6), std::nullopt, {}, ball);
     REQUIRE(c.ok());
     out.push_back(c.toolpath);
     return out;
@@ -245,16 +245,16 @@ std::string run(const std::string& stem, const std::vector<Toolpath>& job, const
     return r.value().text;
 }
 
-const std::string kGolden = std::string(CARVETTO_GOLDEN_DIR) + "/toolpath/vcarve_grbl.nc";
+const std::string kGolden = std::string(CARVETTO_GOLDEN_DIR) + "/toolpath/v_carve_grbl.nc";
 
 }  // namespace
 
-TEST_CASE("AC1: V-carving through every shipped post passes the safety rules", "[toolpath][vcarve][post][safety]") {
-    const std::vector<Toolpath> job = vcarveJob();
+TEST_CASE("AC1: V-carving through every shipped post passes the safety rules", "[toolpath][v_carve][post][safety]") {
+    const std::vector<Toolpath> job = vCarvingJob();
     REQUIRE(job.size() == 4);
     for (const ShippedPost& p : kPosts) {
         INFO(p.stem);
-        const std::string program = run(p.stem, job, "vcarve");
+        const std::string program = run(p.stem, job, "v_carve");
         for (const std::string& problem : problems(p, program)) {
             UNSCOPED_INFO(problem);
         }
@@ -262,9 +262,9 @@ TEST_CASE("AC1: V-carving through every shipped post passes the safety rules", "
     }
 }
 
-TEST_CASE("AC1: the safety rules catch V-carving hazards", "[toolpath][vcarve][post][safety]") {
+TEST_CASE("AC1: the safety rules catch V-carving hazards", "[toolpath][v_carve][post][safety]") {
     const ShippedPost& grbl = kPosts.front();
-    const std::string ok = run(grbl.stem, vcarveJob(), "vcarve");
+    const std::string ok = run(grbl.stem, vCarvingJob(), "v_carve");
     REQUIRE(problems(grbl, ok).empty());
     auto replaced = [&](const std::string& from, const std::string& to) {
         std::string s = ok;
@@ -278,11 +278,11 @@ TEST_CASE("AC1: the safety rules catch V-carving hazards", "[toolpath][vcarve][p
     CHECK_FALSE(problems(grbl, replaced("M3 S18000", "M5")).empty());          // spindle off
 }
 
-TEST_CASE("AC1: the V-carve fixture through the Grbl post matches the golden", "[toolpath][vcarve][post][golden]") {
-    CHECK(run("grbl_mm", vcarveJob(), "vcarve") == readFile(kGolden));
+TEST_CASE("AC1: the V-carve fixture through the Grbl post matches the golden", "[toolpath][v_carve][post][golden]") {
+    CHECK(run("grbl_mm", vCarvingJob(), "v_carve") == readFile(kGolden));
 }
 
-TEST_CASE("AC1: the V-carve golden reads as the fixture says", "[toolpath][vcarve][post][golden]") {
+TEST_CASE("AC1: the V-carve golden reads as the fixture says", "[toolpath][v_carve][post][golden]") {
     const std::string g = readFile(kGolden);
     for (const char* name : {"(V glyph)", "(Plate [End Mill 1 mm])", "(Plate [V-bit 90])", "(Diamond)"}) {
         INFO(name);
@@ -298,5 +298,5 @@ TEST_CASE("AC1: the V-carve golden reads as the fixture says", "[toolpath][vcarv
 // Hidden (tag [.regen], never run by ctest): rewrites the V-carve golden. Run via
 // tools/regen_golden.py and hand-check the diff against posts/README.md before committing.
 TEST_CASE("Regenerate the V-carve golden", "[.regen]") {
-    writeFile(kGolden, run("grbl_mm", vcarveJob(), "vcarve"));
+    writeFile(kGolden, run("grbl_mm", vCarvingJob(), "v_carve"));
 }

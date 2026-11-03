@@ -475,11 +475,11 @@ EngraveJob parseEngraveParams(std::string_view text) {
     return job;
 }
 
-VCarveJob parseVCarveParams(std::string_view text) {
+VCarvingJob parseVCarvingParams(std::string_view text) {
     using namespace toolpath;
     const json root = parseJson(text);
-    VCarveJob job;
-    VCarveParams& p = job.params;
+    VCarvingJob job;
+    VCarvingParams& p = job.params;
     Fields f(root, "");
     f.string("name", p.name);
     f.number("start_depth", p.startDepth);
@@ -634,7 +634,7 @@ tools are refused until spindle-off support exists):
   "raster_angle": 0              fill with the raster pattern
   "start_position": [0, 0]       tool XY before the first outline cut (nearest first)
 
-vcarve (V-carving of closed vectors; tool: a V-bit or a ball nose; the depth follows the
+v_carve (V-carving of closed vectors; tool: a V-bit or a ball nose; the depth follows the
 medial axis, so the tool touches both walls):
   "start_depth": 0               depth of the plane the carve starts from (e.g. a pocket floor)
   "flat_depth": 0                0 = none; else the carve stops at this depth below the start

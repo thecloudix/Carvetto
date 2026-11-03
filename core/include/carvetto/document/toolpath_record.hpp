@@ -14,7 +14,7 @@
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/profile.hpp"
 #include "carvetto/toolpath/toolpath.hpp"
-#include "carvetto/toolpath/vcarve.hpp"
+#include "carvetto/toolpath/v_carve.hpp"
 
 // Toolpath records in the document (T-0132, ADR-0021): what a toolpath was made from (operation
 // parameters, vector selection, tool) plus its computed moves. Saved in `job.json` (definitions)
@@ -55,13 +55,13 @@ struct ToolSource {
 /// toolpath was computed with are in `ToolpathRecord::tool`. Drilling (T-0150) and quick engraving
 /// (T-0151) take their cutting data as a separate argument, so `DrillParams` and `EngraveParams`
 /// hold only record content. A V-carve (T-0153) takes its tools (carving tool, clearance tools)
-/// as arguments too; each toolpath it makes is its own record with the same `VCarveParams` and
+/// as arguments too; each toolpath it makes is its own record with the same `VCarvingParams` and
 /// its own tool.
 using ToolpathParams = std::variant<toolpath::ProfileParams, toolpath::PocketParams, toolpath::DrillParams,
-                                    toolpath::EngraveParams, toolpath::VCarveParams>;
+                                    toolpath::EngraveParams, toolpath::VCarvingParams>;
 
 /// Discriminator for `ToolpathRecord::operation()` (same order as the `ToolpathParams` variant).
-enum class ToolpathOperation { Profile, Pocket, Drill, Engrave, VCarve };
+enum class ToolpathOperation { Profile, Pocket, Drill, Engrave, VCarving };
 
 /// Computed moves of a toolpath, shared and immutable so copies (undo history, clipboard) are cheap.
 using SharedMoves = std::shared_ptr<const std::vector<toolpath::Move>>;

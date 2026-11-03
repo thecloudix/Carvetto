@@ -37,7 +37,7 @@
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/profile.hpp"
 #include "carvetto/toolpath/toolpath.hpp"
-#include "carvetto/toolpath/vcarve.hpp"
+#include "carvetto/toolpath/v_carve.hpp"
 #include "carvetto/document/toolpath_record.hpp"
 #include "params.hpp"
 
@@ -72,7 +72,7 @@ constexpr std::string_view kToolpathHelp = R"(Usage: carvetto-cli toolpath profi
        carvetto-cli toolpath pocket  <params.json> <in.carv> <out.carv>
        carvetto-cli toolpath drill   <params.json> <in.carv> <out.carv>
        carvetto-cli toolpath engrave <params.json> <in.carv> <out.carv>
-       carvetto-cli toolpath vcarve  <params.json> <in.carv> <out.carv>
+       carvetto-cli toolpath v_carve  <params.json> <in.carv> <out.carv>
 
 Computes a 2D profile, pocket, drilling, quick engrave or V-carve toolpath for the vectors of <in.carv> (all
 of them, or those on the layers named in the params file) and writes <out.carv> (which may be <in.carv>)
@@ -290,7 +290,7 @@ int cmdToolpath(const std::vector<std::string>& a, std::ostream& out, std::ostre
     std::optional<PocketJob> pocket;
     std::optional<DrillJob> drill;
     std::optional<EngraveJob> engrave;
-    std::optional<VCarveJob> vcarve;
+    std::optional<VCarvingJob> vCarving;
     try {
         if (op == "profile") {
             profile = parseProfileParams(paramsText);
@@ -298,8 +298,8 @@ int cmdToolpath(const std::vector<std::string>& a, std::ostream& out, std::ostre
             drill = parseDrillParams(paramsText);
         } else if (op == "engrave") {
             engrave = parseEngraveParams(paramsText);
-        } else if (op == "vcarve") {
-            vcarve = parseVCarveParams(paramsText);
+        } else if (op == "v_carve") {
+            vCarving = parseVCarvingParams(paramsText);
         } else {
             pocket = parsePocketParams(paramsText);
         }
@@ -309,7 +309,7 @@ int cmdToolpath(const std::vector<std::string>& a, std::ostream& out, std::ostre
     const CommonParams& common = profile   ? profile->common
                                  : drill   ? drill->common
                                  : engrave ? engrave->common
-                                 : vcarve  ? vcarve->common
+                                 : vCarving  ? vCarving->common
                                            : pocket->common;
 
     document::LoadedCarv loaded = loadDocument(inPath);
@@ -348,22 +348,22 @@ int cmdToolpath(const std::vector<std::string>& a, std::ostream& out, std::ostre
             results.push_back(std::move(r.toolpath));
         }
         recordParams = engrave->params;
-    } else if (vcarve) {
+    } else if (vCarving) {
         std::vector<toolpath::PocketTool> clearance;
-        for (const ToolChoice& c : vcarve->clearanceTools) {
+        for (const ToolChoice& c : vCarving->clearanceTools) {
             const ResolvedTool ct = resolveTool(c, std::filesystem::path(paramsPath).parent_path());
             for (const std::string& w : ct.warnings) {
                 warn(err, w);
             }
             clearance.push_back(toolpath::PocketTool{ct.tool, ct.cuttingData});
         }
-        toolpath::VCarveResult r =
-            toolpath::vcarveToolpath(contours, tool.tool, tool.cuttingData, clearance, vcarve->params);
+        toolpath::VCarvingResult r =
+            toolpath::vCarvingToolpath(contours, tool.tool, tool.cuttingData, clearance, vCarving->params);
         diagnostics = r.diagnostics;
         if (r.ok()) {
             for (std::size_t i = 0; i < r.clearance.size(); ++i) {
                 if (!r.clearance[i].isEmpty()) {
-                    const ToolChoice& c = vcarve->clearanceTools[i];
+                    const ToolChoice& c = vCarving->clearanceTools[i];
                     results.push_back(std::move(r.clearance[i]));
                     sources.push_back({c.id, c.machine, c.material});
                 }
@@ -371,7 +371,7 @@ int cmdToolpath(const std::vector<std::string>& a, std::ostream& out, std::ostre
             results.push_back(std::move(r.toolpath));
             sources.push_back({common.tool.id, common.tool.machine, common.tool.material});
         }
-        recordParams = vcarve->params;
+        recordParams = vCarving->params;
     } else {
         toolpath::PocketResult r =
             toolpath::pocketToolpath(contours, {toolpath::PocketTool{tool.tool, tool.cuttingData}}, pocket->params);
@@ -481,7 +481,7 @@ const char* operationName(document::ToolpathOperation op) {
         case document::ToolpathOperation::Pocket: return "pocket";
         case document::ToolpathOperation::Drill: return "drill";
         case document::ToolpathOperation::Engrave: return "engrave";
-        case document::ToolpathOperation::VCarve: return "vcarve";
+        case document::ToolpathOperation::VCarving: return "v_carve";
     }
     return "?";
 }
@@ -638,9 +638,9 @@ int dispatch(const std::vector<std::string>& args, std::ostream& out, std::ostre
                          std::string(it->name)};
     }
     if (it->name == "toolpath" && rest[0] != "profile" && rest[0] != "pocket" && rest[0] != "drill" &&
-        rest[0] != "engrave" && rest[0] != "vcarve") {
+        rest[0] != "engrave" && rest[0] != "v_carve") {
         throw UsageError{
-            "unknown toolpath operation '" + rest[0] + "' (expected profile, pocket, drill, engrave or vcarve)",
+            "unknown toolpath operation '" + rest[0] + "' (expected profile, pocket, drill, engrave or v_carve)",
             "toolpath"};
     }
     return it->fn(rest, out, err);
@@ -666,7 +666,7 @@ Commands:
       Add a drilling toolpath (a hole at the centre of every closed vector, peck, dwell).
   toolpath engrave <params.json> <in.carv> <out.carv>
       Add a quick engrave toolpath (outline or fill at a shallow depth, passes).
-  toolpath vcarve <params.json> <in.carv> <out.carv>
+  toolpath v_carve <params.json> <in.carv> <out.carv>
       Add a V-carve toolpath (depth from the medial axis, flat depth, clearance tools).
   post <post.pp> <in.carv> <out.nc>
       Write every toolpath through a post-processor (e.g. posts/grbl_mm.pp).

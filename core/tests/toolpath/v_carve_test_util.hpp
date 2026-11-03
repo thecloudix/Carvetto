@@ -21,9 +21,9 @@
 #include "carvetto/geometry/vec2.hpp"
 #include "carvetto/tooling/tool.hpp"
 #include "carvetto/toolpath/pocket.hpp"
-#include "carvetto/toolpath/vcarve.hpp"
+#include "carvetto/toolpath/v_carve.hpp"
 
-namespace carvetto::test::vcarve {
+namespace carvetto::test::v_carve {
 
 using geometry::Box2;
 using geometry::Contour;
@@ -129,7 +129,7 @@ struct SweepCase {
     std::vector<Contour> region;
     tooling::Tool tool;
     std::vector<toolpath::PocketTool> clearance;
-    toolpath::VCarveParams params;
+    toolpath::VCarvingParams params;
 };
 
 /// Case `k` of the generative sweep: the region kind, tool, flat depth, clearance tools, start
@@ -137,7 +137,7 @@ struct SweepCase {
 inline SweepCase sweepCase(std::uint64_t k) {
     SplitMix rng{0x5EEDC0DEULL ^ (k * 0x9E3779B97F4A7C15ULL)};
     SweepCase sc;
-    const auto kind = static_cast<int>(k % 8);
+    const auto kind = static_cast<int>(k % 11);
     const Vec2 o{rng.uniform(-50.0, 50.0), rng.uniform(-50.0, 50.0)};
     switch (kind) {
         case 0: {
@@ -200,6 +200,43 @@ inline SweepCase sweepCase(std::uint64_t k) {
             sc.region.push_back(polygon({o, o + Vec2{len, 0.0}, o + Vec2{len, width}, o + Vec2{0.0, width}}));
             break;
         }
+        case 8: {
+            // Crossing input: overlapping letters (carved as their even-odd region).
+            sc.what = "crossing glyphs";
+            medial::appendGlyph(sc.region, static_cast<int>(rng.next() % 5), o);
+            medial::appendGlyph(sc.region, static_cast<int>(rng.next() % 5),
+                                o + Vec2{rng.uniform(0.5, 4.0), rng.uniform(-3.0, 3.0)});
+            break;
+        }
+        case 9: {
+            sc.what = "crossing circles and polygons";
+            const int n = 2 + static_cast<int>(rng.next() % 3);
+            for (int i = 0; i < n; ++i) {
+                const Vec2 c = o + Vec2{rng.uniform(-4.0, 4.0), rng.uniform(-4.0, 4.0)};
+                if (rng.next() % 2 == 0) {
+                    sc.region.push_back(Contour::circle(c, rng.uniform(1.5, 5.0)));
+                } else {
+                    sc.region.push_back(starPolygon(rng, c, 3 + static_cast<int>(rng.next() % 6), 1.5, 5.0));
+                }
+            }
+            break;
+        }
+        case 10: {
+            // A self-crossing outline: a figure-of-eight of Beziers, or a bow-tie polygon.
+            sc.what = "self-crossing outline";
+            const double w = rng.uniform(4.0, 12.0);
+            const double h = rng.uniform(2.0, 8.0);
+            if (rng.next() % 2 == 0) {
+                Contour eight;
+                eight.closed = true;
+                eight.append(geometry::BezierSpan{o, o + Vec2{0.5 * w, h}, o + Vec2{w, h}, o + Vec2{w, 0.0}});
+                eight.append(geometry::BezierSpan{o + Vec2{w, 0.0}, o + Vec2{w, -h}, o + Vec2{0.5 * w, h}, o});
+                sc.region.push_back(eight);
+            } else {
+                sc.region.push_back(polygon({o, o + Vec2{w, h}, o + Vec2{w, 0.0}, o + Vec2{0.0, h}}));
+            }
+            break;
+        }
         default: {
             sc.what = "ring and neighbours";
             const double r = rng.uniform(3.0, 8.0);
@@ -215,7 +252,7 @@ inline SweepCase sweepCase(std::uint64_t k) {
         static const double angles[] = {30.0, 60.0, 90.0, 120.0, 150.0};
         sc.tool = vBit(angles[rng.next() % 5], rng.uniform(3.0, 20.0));
     }
-    toolpath::VCarveParams& p = sc.params;
+    toolpath::VCarvingParams& p = sc.params;
     static const double chordals[] = {0.01, 0.02, 0.05};
     p.tolerance.chordal = chordals[rng.next() % 3];
     if (rng.next() % 3 == 0) {
@@ -234,7 +271,7 @@ inline SweepCase sweepCase(std::uint64_t k) {
         if (sc.clearance.empty()) {
             // The carving tool clears the flat areas itself: its stepover must fit the width it
             // cuts at the flat depth.
-            const double depth = std::min(p.flatDepth, toolpath::vcarveFullWidthDepth(sc.tool));
+            const double depth = std::min(p.flatDepth, toolpath::vCarvingFullWidthDepth(sc.tool));
             sc.tool.defaultCuttingData.stepover =
                 std::min(0.25, 0.8 * tooling::cuttingWidthAtDepth(sc.tool, depth));
         }
@@ -243,4 +280,4 @@ inline SweepCase sweepCase(std::uint64_t k) {
     return sc;
 }
 
-}  // namespace carvetto::test::vcarve
+}  // namespace carvetto::test::v_carve

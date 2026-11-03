@@ -106,7 +106,7 @@ std::string nonFiniteParam(const ToolpathParams& params) {
                                           {"start_position[1]", e->startPosition.y}});
         return key.empty() ? nonFiniteTolerance(e->tolerance) : key;
     }
-    if (const auto* v = std::get_if<toolpath::VCarveParams>(&params)) {
+    if (const auto* v = std::get_if<toolpath::VCarvingParams>(&params)) {
         std::string key = firstNonFinite({{"start_depth", v->startDepth},
                                           {"flat_depth", v->flatDepth},
                                           {"safe_z", v->safeZ},

@@ -1,5 +1,5 @@
 // T-0153: V-carve toolpaths as native toolpath records (ADR-0021 schema, ADR-0025): the
-// VCarveParams variant alternative, its job.json params (snake_case keys like carvetto-cli's
+// VCarvingParams variant alternative, its job.json params (snake_case keys like carvetto-cli's
 // params.json), one record per toolpath of a V-carve (clearance tools, then the carving tool),
 // exact round trips, and refusal of damaged params.
 
@@ -23,7 +23,7 @@
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/tooling/tool.hpp"
 #include "carvetto/toolpath/pocket.hpp"
-#include "carvetto/toolpath/vcarve.hpp"
+#include "carvetto/toolpath/v_carve.hpp"
 
 using namespace carvetto;
 using namespace carvetto::document;
@@ -89,8 +89,8 @@ std::string replaced(std::string text, const std::string& from, const std::strin
 }
 
 /// V-carve parameters with every value away from its default, with awkward doubles.
-toolpath::VCarveParams fullVCarve() {
-    toolpath::VCarveParams p;
+toolpath::VCarvingParams fullVCarving() {
+    toolpath::VCarvingParams p;
     p.name = "Sign \"V\" \xC3\xA9";
     p.startDepth = 0.30000000000000004;
     p.flatDepth = 1.2000000000000002;
@@ -130,7 +130,7 @@ tooling::Tool endMill() {
 
 /// A document with a framed square (flat bottom) and a computed V-carve with one clearance tool:
 /// two records (clearance, then V-bit) sharing the parameters.
-Document vcarveDocument(const toolpath::VCarveParams& params) {
+Document vCarvingDocument(const toolpath::VCarvingParams& params) {
     Document doc;
     const ObjectId a = doc.insertObject(Object::vector(geometry::Contour::rectangle({{0, 0}, {20, 12}}),
                                                        doc.defaultLayer(), doc.activeSheet()));
@@ -139,8 +139,8 @@ Document vcarveDocument(const toolpath::VCarveParams& params) {
         const auto& cs = doc.findObject(id)->asVector()->contours;
         contours.insert(contours.end(), cs.begin(), cs.end());
     }
-    toolpath::VCarveResult r =
-        toolpath::vcarveToolpath(contours, vBit(), std::nullopt, {toolpath::PocketTool{endMill(), std::nullopt}}, params);
+    toolpath::VCarvingResult r =
+        toolpath::vCarvingToolpath(contours, vBit(), std::nullopt, {toolpath::PocketTool{endMill(), std::nullopt}}, params);
     REQUIRE(r.ok());
     const std::vector<toolpath::Toolpath> tps = r.toolpaths();
     REQUIRE(tps.size() == 2);
@@ -160,17 +160,17 @@ Document vcarveDocument(const toolpath::VCarveParams& params) {
 }  // namespace
 
 TEST_CASE("T-0153: V-carve records save and load exactly; save -> load -> save is byte-identical",
-          "[document][toolpath][carv][vcarve]") {
-    const Document doc = vcarveDocument(fullVCarve());
+          "[document][toolpath][carv][v_carve]") {
+    const Document doc = vCarvingDocument(fullVCarving());
     REQUIRE(doc.toolpaths().size() == 2);
-    CHECK(doc.toolpaths()[0].operation() == ToolpathOperation::VCarve);
-    CHECK(doc.toolpaths()[1].operation() == ToolpathOperation::VCarve);
+    CHECK(doc.toolpaths()[0].operation() == ToolpathOperation::VCarving);
+    CHECK(doc.toolpaths()[1].operation() == ToolpathOperation::VCarving);
     CHECK(doc.toolpaths()[0].name == "Sign \"V\" \xC3\xA9 [End mill 2]");
     CHECK(doc.toolpaths()[1].name == "Sign \"V\" \xC3\xA9 [V-bit 90]");
     CHECK(doc.toolpaths()[0].safeZ() == 12.000000000000002);
     const Bytes once = save(doc);
     const std::string job = jobText(once);
-    CHECK(contains(job, "\"operation\": \"vcarve\""));
+    CHECK(contains(job, "\"operation\": \"v_carve\""));
     for (const char* line : {
              "\"clearance_direction\": \"conventional\",", "\"clearance_raster_angle_rad\": 0.7853981633974483,",
              "\"clearance_strategy\": \"raster\",", "\"flat_depth\": 1.2000000000000002,",
@@ -185,49 +185,49 @@ TEST_CASE("T-0153: V-carve records save and load exactly; save -> load -> save i
     LoadedCarv back = load(once);
     REQUIRE(back.document.toolpaths().size() == 2);
     CHECK(back.document.toolpaths() == doc.toolpaths());
-    CHECK(std::get<toolpath::VCarveParams>(back.document.toolpaths()[1].params) == fullVCarve());
+    CHECK(std::get<toolpath::VCarvingParams>(back.document.toolpaths()[1].params) == fullVCarving());
     CHECK(back.document.checkIntegrity().empty());
     CHECK(save(back.document, back.extras) == once);
 }
 
-TEST_CASE("T-0153: every V-carve option round-trips with the defaults", "[document][toolpath][carv][vcarve]") {
+TEST_CASE("T-0153: every V-carve option round-trips with the defaults", "[document][toolpath][carv][v_carve]") {
     for (const auto strategy : {toolpath::PocketStrategy::Offset, toolpath::PocketStrategy::Raster}) {
         for (const auto direction : {toolpath::CutDirection::Climb, toolpath::CutDirection::Conventional}) {
-            toolpath::VCarveParams p;
+            toolpath::VCarvingParams p;
             p.flatDepth = 1.0;
             p.clearanceStrategy = strategy;
             p.clearanceDirection = direction;
             p.order.selectionOrder = direction == toolpath::CutDirection::Climb;
-            const Document doc = vcarveDocument(p);
+            const Document doc = vCarvingDocument(p);
             const LoadedCarv back = load(save(doc));
             CHECK(back.document.toolpaths() == doc.toolpaths());
-            CHECK(std::get<toolpath::VCarveParams>(back.document.toolpaths()[0].params) == p);
+            CHECK(std::get<toolpath::VCarvingParams>(back.document.toolpaths()[0].params) == p);
         }
     }
     Document doc;
     ToolpathRecord pending;
     pending.name = "Not computed";
-    pending.params = toolpath::VCarveParams{};
+    pending.params = toolpath::VCarvingParams{};
     REQUIRE(doc.execute(std::make_unique<AddToolpathCommand>(pending)));
     const LoadedCarv back = load(save(doc));
     CHECK(back.document.toolpaths()[0] == doc.toolpaths()[0]);
-    CHECK(back.document.toolpaths()[0].operation() == ToolpathOperation::VCarve);
+    CHECK(back.document.toolpaths()[0].operation() == ToolpathOperation::VCarving);
 }
 
 TEST_CASE("T-0153: V-carve params keys are optional; unknown keys dropped; bad values refused",
-          "[document][toolpath][carv][vcarve][errors]") {
-    toolpath::VCarveParams p;
+          "[document][toolpath][carv][v_carve][errors]") {
+    toolpath::VCarvingParams p;
     p.flatDepth = 1.0;
-    const Document doc = vcarveDocument(p);
+    const Document doc = vCarvingDocument(p);
     const Bytes good = save(doc);
     const std::string job = jobText(good);
-    const std::size_t from = job.find("\"params\": {", job.find("\"operation\": \"vcarve\""));
+    const std::size_t from = job.find("\"params\": {", job.find("\"operation\": \"v_carve\""));
     REQUIRE(from != std::string::npos);
     const std::string paramsObject = job.substr(from, job.find("\n      },", from) + 8 - from);
 
     // Every key optional: an empty params object loads the defaults.
     const LoadedCarv empty = load(withJob(good, replaced(job, paramsObject, "\"params\": {}")));
-    CHECK(std::get<toolpath::VCarveParams>(empty.document.toolpaths()[0].params) == toolpath::VCarveParams{});
+    CHECK(std::get<toolpath::VCarvingParams>(empty.document.toolpaths()[0].params) == toolpath::VCarvingParams{});
 
     // Unknown keys inside params (and the params.json spelling of the angle) are dropped.
     const LoadedCarv extra = load(withJob(good, replaced(job, "\"flat_depth\": 1.0,",
@@ -254,7 +254,7 @@ TEST_CASE("T-0153: V-carve params keys are optional; unknown keys dropped; bad v
          "job.json.toolpaths[0].params.clearance_raster_angle_rad: must be finite"},
         {"\"start_position\": [0.0, 0.0]", "\"start_position\": [0.0]", "job.json.toolpaths[0].params.start_position"},
         {"\"grid\": false", "\"grid\": 1", "job.json.toolpaths[0].params.order.grid"},
-        {"\"operation\": \"vcarve\"", "\"operation\": \"vcarve2\"", "unsupported toolpath operation 'vcarve2'"},
+        {"\"operation\": \"v_carve\"", "\"operation\": \"v_carve2\"", "unsupported toolpath operation 'v_carve2'"},
     };
     for (const Bad& b : bad) {
         INFO(b.to);
@@ -264,16 +264,16 @@ TEST_CASE("T-0153: V-carve params keys are optional; unknown keys dropped; bad v
     }
 }
 
-TEST_CASE("T-0153: V-carve records go through the toolpath commands with undo", "[document][toolpath][vcarve][undo]") {
-    Document doc = vcarveDocument(fullVCarve());
+TEST_CASE("T-0153: V-carve records go through the toolpath commands with undo", "[document][toolpath][v_carve][undo]") {
+    Document doc = vCarvingDocument(fullVCarving());
     ToolpathRecord edit = doc.toolpaths()[1];
-    std::get<toolpath::VCarveParams>(edit.params).flatDepth = 0.5;
+    std::get<toolpath::VCarvingParams>(edit.params).flatDepth = 0.5;
     REQUIRE(doc.execute(std::make_unique<SetToolpathCommand>(edit)));
-    CHECK(std::get<toolpath::VCarveParams>(doc.toolpaths()[1].params).flatDepth == 0.5);
+    CHECK(std::get<toolpath::VCarvingParams>(doc.toolpaths()[1].params).flatDepth == 0.5);
     REQUIRE(doc.undo());
-    CHECK(std::get<toolpath::VCarveParams>(doc.toolpaths()[1].params) == fullVCarve());
+    CHECK(std::get<toolpath::VCarvingParams>(doc.toolpaths()[1].params) == fullVCarving());
     // Non-finite V-carve parameters are refused by the commands (nonFiniteParam names them).
-    std::get<toolpath::VCarveParams>(edit.params).rampDistance = std::numeric_limits<double>::infinity();
+    std::get<toolpath::VCarvingParams>(edit.params).rampDistance = std::numeric_limits<double>::infinity();
     CHECK(nonFiniteParam(edit.params) == "ramp_distance");
     CHECK_FALSE(doc.execute(std::make_unique<SetToolpathCommand>(edit)));
 }

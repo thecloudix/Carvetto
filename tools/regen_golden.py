@@ -10,7 +10,7 @@ What it rewrites, from the current sources:
   - core/tests/golden/toolpath/pocket_rect_grbl.nc (T-0121 pocket through the Grbl post);
   - core/tests/golden/toolpath/drill_holes_grbl.nc (T-0150 drilling fixture through the Grbl post);
   - core/tests/golden/toolpath/engrave_grbl.nc (T-0151 quick engrave fixture through the Grbl post);
-  - core/tests/golden/toolpath/vcarve_grbl.nc (T-0153 V-carve fixture through the Grbl post);
+  - core/tests/golden/toolpath/v_carve_grbl.nc (T-0153 V-carve fixture through the Grbl post);
   - core/tests/golden/cli/part_grbl.nc (T-0122 carvetto-cli end to end: app/cli/tests/data/part.dxf
     -> pocket.json -> profile.json with tabs -> posts/grbl_mm.pp; the ctest cli.end_to_end_grbl and
     CI compare the real executable's output with it by SHA-256);
@@ -18,8 +18,8 @@ What it rewrites, from the current sources:
     the ctest cli.end_to_end_drill_grbl and CI compare it the same way);
   - core/tests/golden/cli/part_engrave_grbl.nc (T-0151: part.dxf -> engrave_fill.json -> engrave_outline.json
     -> grbl_mm.pp; the ctest cli.end_to_end_engrave_grbl and CI compare it the same way);
-  - core/tests/golden/cli/sign_vcarve_grbl.nc (T-0153: sign.dxf -> vcarve_letters.json ->
-    vcarve_flat.json -> grbl_mm.pp; the ctest cli.end_to_end_vcarve_grbl and CI compare it the same way);
+  - core/tests/golden/cli/sign_v_carve_grbl.nc (T-0153: sign.dxf -> v_carve_letters.json ->
+    v_carve_flat.json -> grbl_mm.pp; the ctest cli.end_to_end_v_carve_grbl and CI compare it the same way);
   - data/tools/starter_tools.json, re-exported in the exporter's canonical form (sorted keys,
     id order, rounded numbers), so hand edits to the database become byte-stable.
 

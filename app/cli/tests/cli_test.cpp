@@ -22,7 +22,7 @@
 #include "carvetto/toolpath/engrave.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/profile.hpp"
-#include "carvetto/toolpath/vcarve.hpp"
+#include "carvetto/toolpath/v_carve.hpp"
 #include "carvetto/tooling/json_io.hpp"
 #include "carvetto/tooling/tool_database.hpp"
 #include "carv_zip.hpp"
@@ -39,7 +39,7 @@ const std::string kData = CARVETTO_CLI_DATA_DIR;
 const std::string kGolden = std::string(CARVETTO_GOLDEN_DIR) + "/cli/part_grbl.nc";
 const std::string kDrillGolden = std::string(CARVETTO_GOLDEN_DIR) + "/cli/part_drill_grbl.nc";
 const std::string kEngraveGolden = std::string(CARVETTO_GOLDEN_DIR) + "/cli/part_engrave_grbl.nc";
-const std::string kVCarveGolden = std::string(CARVETTO_GOLDEN_DIR) + "/cli/sign_vcarve_grbl.nc";
+const std::string kVCarvingGolden = std::string(CARVETTO_GOLDEN_DIR) + "/cli/sign_v_carve_grbl.nc";
 const std::string kGrbl = std::string(CARVETTO_POSTS_DIR) + "/grbl_mm.pp";
 
 struct Outcome {
@@ -133,13 +133,13 @@ std::string engravePipeline(const std::string& dir) {
     return readFile(nc);
 }
 
-std::string vcarvePipeline(const std::string& dir) {
+std::string vCarvingPipeline(const std::string& dir) {
     const std::string carv = dir + "/sign.carv";
     const std::string nc = dir + "/sign.nc";
     for (const auto& args : std::vector<std::vector<std::string>>{
              {"import", kData + "/sign.dxf", carv},
-             {"toolpath", "vcarve", kData + "/vcarve_letters.json", carv, carv},
-             {"toolpath", "vcarve", kData + "/vcarve_flat.json", carv, carv},
+             {"toolpath", "v_carve", kData + "/v_carve_letters.json", carv, carv},
+             {"toolpath", "v_carve", kData + "/v_carve_flat.json", carv, carv},
              {"post", kGrbl, carv, nc},
          }) {
         const Outcome r = runCli(args);
@@ -419,7 +419,7 @@ TEST_CASE("AC2: wrong command lines exit with 2 and say why", "[cli][errors]") {
         {{"import", "a.dxf", "b.carv", "c"}, "'import' takes 2 argument(s), got 3"},
         {{"post", "--force", "a", "b"}, "unknown option '--force'"},
         {{"toolpath", "fluting", "p.json", "a.carv", "b.carv"},
-         "unknown toolpath operation 'fluting' (expected profile, pocket, drill, engrave or vcarve)"},
+         "unknown toolpath operation 'fluting' (expected profile, pocket, drill, engrave or v_carve)"},
         {{"toolpath", "profile", "a.carv", "b.carv"}, "'toolpath' takes 4 argument(s), got 3"},
         {{"info"}, "'info' takes 1 argument(s), got 0"},
         {{"help", "nope"}, "unknown command 'nope'"},
@@ -819,19 +819,19 @@ TEST_CASE("T-0134: toolpath reports added toolpaths only after a successful writ
     CHECK_THAT(good.out, ContainsSubstring("as toolpath 1\nwrote '" + dir + "/out.carv'\n"));
 }
 
-// ---------------------------------------------------------------------------- T-0153 vcarve
+// ---------------------------------------------------------------------------- T-0153 v_carve
 
-TEST_CASE("T-0153: DXF -> V-carve letters + flat panel -> Grbl matches the V-carve golden", "[cli][golden][vcarve]") {
-    const std::string a = workDir("vcarve_e2e");
-    const std::string b = workDir("vcarve_e2e_again");
-    CHECK(vcarvePipeline(a) == readFile(kVCarveGolden));
-    CHECK(vcarvePipeline(b) == readFile(kVCarveGolden));  // deterministic
+TEST_CASE("T-0153: DXF -> V-carve letters + flat panel -> Grbl matches the V-carve golden", "[cli][golden][v_carve]") {
+    const std::string a = workDir("v_carve_e2e");
+    const std::string b = workDir("v_carve_e2e_again");
+    CHECK(vCarvingPipeline(a) == readFile(kVCarvingGolden));
+    CHECK(vCarvingPipeline(b) == readFile(kVCarvingGolden));  // deterministic
     CHECK(readFile(a + "/sign.carv") == readFile(b + "/sign.carv"));
 }
 
 TEST_CASE("T-0153: the V-carve golden is sane: V-bit letters then end mill clearance then V-bit walls",
-          "[cli][golden][vcarve]") {
-    const std::string g = readFile(kVCarveGolden);
+          "[cli][golden][v_carve]") {
+    const std::string g = readFile(kVCarvingGolden);
     CHECK_THAT(g, StartsWith("(sign)\n"));
     CHECK_THAT(g, ContainsSubstring("(Tool 12: V-Bit 90)"));
     CHECK_THAT(g, ContainsSubstring("(Letters)"));
@@ -847,28 +847,28 @@ TEST_CASE("T-0153: the V-carve golden is sane: V-bit letters then end mill clear
 
 // Hidden (tag [.regen]): rewrites the V-carve CLI golden (tools/regen_golden.py).
 TEST_CASE("Regenerate the V-carve CLI golden", "[.regen]") {
-    writeFile(kVCarveGolden, vcarvePipeline(workDir("regen_vcarve")));
+    writeFile(kVCarvingGolden, vCarvingPipeline(workDir("regen_v_carve")));
 }
 
-TEST_CASE("T-0153: toolpath vcarve stores one record per tool; info names them", "[cli][toolpath][vcarve]") {
-    const std::string dir = workDir("vcarve_record");
+TEST_CASE("T-0153: toolpath v_carve stores one record per tool; info names them", "[cli][toolpath][v_carve]") {
+    const std::string dir = workDir("v_carve_record");
     const std::string carv = dir + "/sign.carv";
     REQUIRE(runCli({"import", kData + "/sign.dxf", carv}).code == 0);
-    const Outcome r = runCli({"toolpath", "vcarve", kData + "/vcarve_flat.json", carv, carv});
+    const Outcome r = runCli({"toolpath", "v_carve", kData + "/v_carve_flat.json", carv, carv});
     INFO(r.err);
     REQUIRE(r.code == 0);
     CHECK(r.err.empty());
-    CHECK_THAT(r.out, ContainsSubstring("added vcarve toolpath 'Panel [End Mill 3 mm]' ("));
+    CHECK_THAT(r.out, ContainsSubstring("added v_carve toolpath 'Panel [End Mill 3 mm]' ("));
     CHECK_THAT(r.out, ContainsSubstring("tool 'End Mill 3 mm') as toolpath 1"));
-    CHECK_THAT(r.out, ContainsSubstring("added vcarve toolpath 'Panel [V-Bit 90]' ("));
+    CHECK_THAT(r.out, ContainsSubstring("added v_carve toolpath 'Panel [V-Bit 90]' ("));
     CHECK_THAT(r.out, ContainsSubstring("tool 'V-Bit 90') as toolpath 2"));
     auto loaded = document::loadCarv(fs::path(carv));
     REQUIRE(loaded.ok());
     const auto& records = loaded.value().document.toolpaths();
     REQUIRE(records.size() == 2);
     for (const auto& rec : records) {
-        CHECK(rec.operation() == document::ToolpathOperation::VCarve);
-        const auto& p = std::get<toolpath::VCarveParams>(rec.params);
+        CHECK(rec.operation() == document::ToolpathOperation::VCarving);
+        const auto& p = std::get<toolpath::VCarvingParams>(rec.params);
         CHECK(p.name == "Panel");
         CHECK(p.flatDepth == 1.5);
         CHECK(p.clearanceStrategy == toolpath::PocketStrategy::Raster);
@@ -880,38 +880,38 @@ TEST_CASE("T-0153: toolpath vcarve stores one record per tool; info names them",
     CHECK(records[1].toolSource.toolId == "v-bit-90");
     CHECK(records[1].tool.feedRate == 1500.0);
     const Outcome info = runCli({"info", carv});
-    CHECK_THAT(info.out, ContainsSubstring("  1: vcarve 'Panel [End Mill 3 mm]', tool T5 'End Mill 3 mm' D3 mm, "));
-    CHECK_THAT(info.out, ContainsSubstring("  2: vcarve 'Panel [V-Bit 90]', tool T12 'V-Bit 90' D12.7 mm, "));
+    CHECK_THAT(info.out, ContainsSubstring("  1: v_carve 'Panel [End Mill 3 mm]', tool T5 'End Mill 3 mm' D3 mm, "));
+    CHECK_THAT(info.out, ContainsSubstring("  2: v_carve 'Panel [V-Bit 90]', tool T12 'V-Bit 90' D12.7 mm, "));
 }
 
-TEST_CASE("T-0153: toolpath vcarve reports diagnostics and refuses unusable tools", "[cli][toolpath][vcarve][errors]") {
-    const std::string dir = workDir("vcarve_errors");
+TEST_CASE("T-0153: toolpath v_carve reports diagnostics and refuses unusable tools", "[cli][toolpath][v_carve][errors]") {
+    const std::string dir = workDir("v_carve_errors");
     const std::string carv = dir + "/sign.carv";
     REQUIRE(runCli({"import", kData + "/sign.dxf", carv}).code == 0);
     // An end mill as the carving tool: refused, nothing written.
     writeFile(dir + "/em.json", R"({"tool": {"id": "end-mill-3mm", "database": ")" + kData + R"(/tools.json"}})");
-    const Outcome e = runCli({"toolpath", "vcarve", dir + "/em.json", carv, dir + "/out.carv"});
+    const Outcome e = runCli({"toolpath", "v_carve", dir + "/em.json", carv, dir + "/out.carv"});
     CHECK(e.code == cli::kExitFailure);
-    CHECK_THAT(e.err, ContainsSubstring("no vcarve toolpath was produced: tool 'End Mill 3 mm' is an end mill"));
+    CHECK_THAT(e.err, ContainsSubstring("no v_carve toolpath was produced: tool 'End Mill 3 mm' is an end mill"));
     CHECK_FALSE(fs::exists(dir + "/out.carv"));
     // A V-bit as a clearance tool: refused.
     writeFile(dir + "/vclear.json", R"({"tool": {"id": "v-bit-90", "database": ")" + kData +
                                         R"(/tools.json"}, "flat_depth": 1, "clearance_tools": [{"id": "v-bit-90", "database": ")" +
                                         kData + R"(/tools.json"}]})");
-    const Outcome v = runCli({"toolpath", "vcarve", dir + "/vclear.json", carv, dir + "/out.carv"});
+    const Outcome v = runCli({"toolpath", "v_carve", dir + "/vclear.json", carv, dir + "/out.carv"});
     CHECK(v.code == cli::kExitFailure);
     CHECK_THAT(v.err, ContainsSubstring("clearance tools must be end mills"));
     // A clearance tool missing from the database: an error naming it.
     writeFile(dir + "/missing.json", R"({"tool": {"id": "v-bit-90", "database": ")" + kData +
                                          R"(/tools.json"}, "clearance_tools": [{"id": "nope", "database": ")" + kData +
                                          R"(/tools.json"}]})");
-    const Outcome m = runCli({"toolpath", "vcarve", dir + "/missing.json", carv, dir + "/out.carv"});
+    const Outcome m = runCli({"toolpath", "v_carve", dir + "/missing.json", carv, dir + "/out.carv"});
     CHECK(m.code == cli::kExitFailure);
     CHECK_THAT(m.err, ContainsSubstring("has no tool with id 'nope'"));
     // Warnings are printed and the toolpath is still written (the panel is wider than the bit
     // can carve without a flat depth).
     writeFile(dir + "/wide.json", R"({"tool": {"id": "v-bit-60-1-4in"}, "layers": ["Panel"], "tolerance": {"chordal": 0.05}})");
-    const Outcome w = runCli({"toolpath", "vcarve", dir + "/wide.json", carv, carv});
+    const Outcome w = runCli({"toolpath", "v_carve", dir + "/wide.json", carv, carv});
     INFO(w.err);
     CHECK(w.code == 0);
     CHECK_THAT(w.err, ContainsSubstring("warning: 1 region(s) are wider than tool"));

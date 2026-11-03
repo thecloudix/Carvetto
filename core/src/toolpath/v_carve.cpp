@@ -1,4 +1,4 @@
-#include "carvetto/toolpath/vcarve.hpp"
+#include "carvetto/toolpath/v_carve.hpp"
 
 #include <algorithm>
 #include <array>
@@ -13,8 +13,11 @@
 #include <variant>
 #include <vector>
 
+#include "carvetto/geometry/boolean.hpp"
 #include "carvetto/geometry/box2.hpp"
+#include "carvetto/geometry/contour_ops.hpp"
 #include "carvetto/geometry/fill_rule.hpp"
+#include "carvetto/geometry/intersect.hpp"
 #include "carvetto/geometry/medial_axis.hpp"
 #include "carvetto/geometry/span.hpp"
 #include "carvetto/toolpath/box_index.hpp"
@@ -46,7 +49,7 @@ std::string vecName(std::size_t i) {
     return "vector " + std::to_string(i);
 }
 
-std::string paramProblem(const VCarveParams& p) {
+std::string paramProblem(const VCarvingParams& p) {
     const double values[] = {p.startDepth,       p.flatDepth,       p.safeZ,
                              p.clearanceRasterAngle, p.rampDistance, p.startPosition.x,
                              p.startPosition.y,  p.tolerance.distance, p.tolerance.chordal,
@@ -92,13 +95,13 @@ const char* toolTypeText(tooling::ToolType type) {
 
 std::string toolProblem(const tooling::Tool& tool, const ToolSnapshot& s) {
     const std::string label = "tool '" + tool.name + "'";
-    if (!vcarveToolAllowed(tool.type)) {
+    if (!vCarvingToolAllowed(tool.type)) {
         return label + " is " + toolTypeText(tool.type) + "; V-carving needs a V-bit or a ball nose";
     }
     if (const std::optional<std::string> bad = tooling::validate(tool)) {
         return label + ": " + *bad;
     }
-    if (!(vcarveFullWidthDepth(tool) > 0.0) || !std::isfinite(vcarveFullWidthDepth(tool))) {
+    if (!(vCarvingFullWidthDepth(tool) > 0.0) || !std::isfinite(vCarvingFullWidthDepth(tool))) {
         return label + " has no usable cutting depth";
     }
     if (!std::isfinite(s.plungeRate) || !(s.plungeRate > 0.0)) {
@@ -117,13 +120,20 @@ double footprint(const tooling::Tool& tool, double depth) {
 
 // ----------------------------------------------------------------------------- regions
 
-/// Closed vectors whose bounding boxes overlap, transitively: carved together (a letter with
-/// its counters; overlapping or touching shapes). Boxes that do not overlap cannot interact
-/// under the even-odd rule, so each group's medial axis is that of its part of the region.
-struct Group {
-    std::vector<std::size_t> contours;  // input indices, ascending
+/// A boundary contour of the region once crossings are resolved.
+struct Boundary {
+    Contour contour;
+    /// Smallest input index it comes from (names it in diagnostics and selection order).
+    std::size_t source{0};
+    /// Polygonised by the even-odd union of crossing input (`kResolveFraction` of chordal).
+    bool resolved{false};
     Box2 box;
+    double area{0.0};
 };
+
+/// Crossing input is polygonised at this fraction of the chordal tolerance; the carve margin of
+/// such regions grows by the same amount (the polygon may lie that far outside a curved wall).
+constexpr double kResolveFraction = 0.125;
 
 std::size_t findRoot(std::vector<std::size_t>& parent, std::size_t i) {
     while (parent[i] != i) {
@@ -133,40 +143,157 @@ std::size_t findRoot(std::vector<std::size_t>& parent, std::size_t i) {
     return i;
 }
 
-std::vector<Group> groupContours(const std::vector<Contour>& contours, const std::vector<std::size_t>& usable) {
-    std::vector<Box2> boxes;
-    boxes.reserve(usable.size());
-    for (const std::size_t i : usable) {
-        boxes.push_back(contours[i].bounds());
+/// The usable closed vectors as non-crossing boundaries of the same even-odd region: vectors
+/// that cross, touch or overlap each other or themselves (`geometry::intersect`,
+/// `hasSelfIntersections`) are resolved together with `geometry::unionContours` under the
+/// even-odd rule, as Pocket resolves its region; the rest stay as they are (exact curves).
+/// Even-odd membership is the parity over all contours, so resolving each crossing cluster on
+/// its own gives the same region.
+std::vector<Boundary> resolveCrossings(const std::vector<Contour>& contours, const std::vector<std::size_t>& usable,
+                                       const geometry::Tolerance& tol, std::size_t& clusters) {
+    const std::size_t n = usable.size();
+    std::vector<Box2> boxes(n);
+    for (std::size_t k = 0; k < n; ++k) {
+        boxes[k] = contours[usable[k]].bounds();
     }
     const BoxIndex index(boxes);
-    std::vector<std::size_t> parent(usable.size());
+    std::vector<std::size_t> parent(n);
     std::iota(parent.begin(), parent.end(), std::size_t{0});
-    for (std::size_t k = 0; k < usable.size(); ++k) {
+    std::vector<bool> crossing(n, false);
+    for (std::size_t k = 0; k < n; ++k) {
+        if (geometry::hasSelfIntersections(contours[usable[k]], tol)) {
+            crossing[k] = true;
+        }
         for (const std::size_t j : index.query(boxes[k])) {
             if (j <= k) {
                 continue;
             }
-            const std::size_t a = findRoot(parent, k);
-            const std::size_t b = findRoot(parent, j);
-            if (a != b) {
-                parent[std::max(a, b)] = std::min(a, b);
+            if (!geometry::intersect(contours[usable[k]], contours[usable[j]], tol).isEmpty()) {
+                crossing[k] = true;
+                crossing[j] = true;
+                const std::size_t ra = findRoot(parent, k);
+                const std::size_t rb = findRoot(parent, j);
+                if (ra != rb) {
+                    parent[std::max(ra, rb)] = std::min(ra, rb);
+                }
             }
         }
     }
-    std::vector<Group> groups;
-    std::vector<std::size_t> slot(usable.size(), std::numeric_limits<std::size_t>::max());
-    for (std::size_t k = 0; k < usable.size(); ++k) {
-        const std::size_t root = findRoot(parent, k);
-        if (slot[root] == std::numeric_limits<std::size_t>::max()) {
-            slot[root] = groups.size();
-            groups.emplace_back();
-        }
-        Group& g = groups[slot[root]];
-        g.contours.push_back(usable[k]);
-        g.box.expand(boxes[k]);
+    std::vector<std::vector<std::size_t>> members(n);
+    for (std::size_t k = 0; k < n; ++k) {
+        members[findRoot(parent, k)].push_back(k);
     }
-    return groups;  // ordered by their first vector (roots are the smallest index)
+    geometry::Tolerance fine = tol;
+    fine.chordal = tol.chordal * kResolveFraction;
+    fine.distance = std::min(tol.distance, fine.chordal);
+    std::vector<Boundary> out;
+    clusters = 0;
+    for (std::size_t k = 0; k < n; ++k) {
+        if (members[k].empty()) {
+            continue;  // not a cluster root
+        }
+        bool cross = false;
+        for (const std::size_t m : members[k]) {
+            cross = cross || crossing[m];
+        }
+        if (!cross) {
+            out.push_back(Boundary{contours[usable[k]], usable[k], false, boxes[k], 0.0});
+            continue;
+        }
+        ++clusters;
+        std::vector<Contour> cluster;
+        for (const std::size_t m : members[k]) {
+            cluster.push_back(contours[usable[m]]);
+        }
+        for (Contour& c : geometry::unionContours(cluster, fine, geometry::FillRule::EvenOdd)) {
+            const Box2 box = c.bounds();
+            out.push_back(Boundary{std::move(c), usable[k], true, box, 0.0});
+        }
+    }
+    for (Boundary& b : out) {
+        b.area = std::fabs(geometry::area(b.contour));
+    }
+    return out;
+}
+
+/// One connected part of the even-odd region: an outer boundary (at even nesting depth) and the
+/// boundaries directly inside it (its holes). Parts cannot interact, so each gets its own medial
+/// axis; a frame round a block of text is one part and every letter another.
+struct Group {
+    std::vector<std::size_t> boundaries;  // [0] the outer, then its holes
+    std::vector<std::size_t> sources;     // input vectors, ascending, unique
+    Box2 box;
+    bool resolved{false};
+};
+
+std::vector<Group> nestRegions(const std::vector<Boundary>& bs, const geometry::Tolerance& tol) {
+    const std::size_t n = bs.size();
+    std::vector<Box2> boxes(n);
+    for (std::size_t i = 0; i < n; ++i) {
+        boxes[i] = bs[i].box;
+    }
+    const BoxIndex index(boxes);
+    constexpr std::size_t kNone = std::numeric_limits<std::size_t>::max();
+    std::vector<std::size_t> parent(n, kNone);
+    for (std::size_t i = 0; i < n; ++i) {
+        if (bs[i].contour.isEmpty()) {
+            continue;
+        }
+        // The boundaries do not cross or touch, so any point of one decides its nesting.
+        const Vec2 probe = geometry::pointAt(bs[i].contour.spans.front(), 0.5);
+        double best = std::numeric_limits<double>::infinity();
+        for (const std::size_t j : index.query(boxes[i])) {
+            if (j == i || !(bs[j].area > bs[i].area) || !(bs[j].area < best) || !boxes[j].contains(boxes[i])) {
+                continue;
+            }
+            if (geometry::locatePoint(bs[j].contour, probe, geometry::FillRule::EvenOdd, tol) ==
+                geometry::PointLocation::Inside) {
+                parent[i] = j;
+                best = bs[j].area;
+            }
+        }
+    }
+    std::vector<int> depth(n, -1);
+    for (std::size_t i = 0; i < n; ++i) {
+        std::vector<std::size_t> chain;
+        std::size_t c = i;
+        while (c != kNone && depth[c] < 0) {
+            chain.push_back(c);
+            c = parent[c];
+        }
+        int d = c == kNone ? -1 : depth[c];
+        for (auto it = chain.rbegin(); it != chain.rend(); ++it) {
+            depth[*it] = ++d;
+        }
+    }
+    std::vector<Group> groups;
+    std::vector<std::size_t> groupOf(n, kNone);
+    for (std::size_t i = 0; i < n; ++i) {
+        if (depth[i] % 2 == 0) {
+            groupOf[i] = groups.size();
+            Group g;
+            g.boundaries.push_back(i);
+            g.box = boxes[i];
+            groups.push_back(std::move(g));
+        }
+    }
+    for (std::size_t i = 0; i < n; ++i) {
+        if (depth[i] % 2 == 1) {
+            Group& g = groups[groupOf[parent[i]]];
+            g.boundaries.push_back(i);
+        }
+    }
+    for (Group& g : groups) {
+        for (const std::size_t i : g.boundaries) {
+            g.sources.push_back(bs[i].source);
+            g.resolved = g.resolved || bs[i].resolved;
+        }
+        std::sort(g.sources.begin(), g.sources.end());
+        g.sources.erase(std::unique(g.sources.begin(), g.sources.end()), g.sources.end());
+    }
+    std::stable_sort(groups.begin(), groups.end(),
+                     [](const Group& x, const Group& y) { return x.sources.front() < y.sources.front(); });
+    return groups;
 }
 
 // ----------------------------------------------------------------------------- skeleton walks
@@ -313,7 +440,7 @@ struct DepthRule {
     double margin{0.0};    // subtracted from the inscribed radius
     double flatDepth{0.0}; // the depth limit (flat depth or the tool's full-width depth)
     double limitRadius{0.0};  // the footprint radius at the limit
-    double depth(double r) const { return std::min(flatDepth, vcarveDepthForRadius(*tool, std::max(0.0, r - margin))); }
+    double depth(double r) const { return std::min(flatDepth, vCarvingDepthForRadius(*tool, std::max(0.0, r - margin))); }
 };
 
 /// Slope dd/ds of the ball nose's depth as a function of its footprint radius s (its inverse
@@ -349,18 +476,14 @@ void appendBallPiece(const DepthRule& rule, const SkelPoint& a, double da, const
     out.push_back(CarvePoint{b.p, db});
 }
 
-/// Appends the carve points of the segment a → b (a excluded), Z linear between them. For a
-/// V-bit the footprint is linear in depth and the depth linear in the radius (clamping to the
-/// limit only makes it shallower), so the footprint along the segment stays at the interpolated
-/// radius less the margin. For a ball nose the segment is first cut where the allowed footprint
-/// reaches 0 or the limit's footprint (there the depth rule changes form), then each piece in
-/// between is refined by `appendBallPiece`.
+/// Appends the carve points of the segment a → b (a excluded), Z linear between them. The
+/// segment is first cut where the allowed footprint r − margin reaches 0 or the footprint at the
+/// limit: there the depth rule min(limit, depth(max(0, r − margin))) has a kink, and linear Z
+/// across it would cut too shallow (at the limit) or too deep (at 0). Between kinks a V-bit's
+/// depth is linear in the radius, so its footprint follows the interpolated radius less the
+/// margin exactly; a ball nose's pieces are refined by `appendBallPiece`.
 void appendSegment(const DepthRule& rule, const SkelPoint& a, double da, const SkelPoint& b, double db,
                    std::vector<CarvePoint>& out) {
-    if (rule.tool->type == tooling::ToolType::VBit) {
-        out.push_back(CarvePoint{b.p, db});
-        return;
-    }
     const double kinks[] = {rule.margin, rule.limitRadius + rule.margin};
     std::vector<double> cuts;
     for (const double k : kinks) {
@@ -371,14 +494,23 @@ void appendSegment(const DepthRule& rule, const SkelPoint& a, double da, const S
     std::sort(cuts.begin(), cuts.end());
     SkelPoint from = a;
     double dFrom = da;
+    const bool vBit = rule.tool->type == tooling::ToolType::VBit;
     for (const double t : cuts) {
         const SkelPoint m{a.p + (b.p - a.p) * t, a.r + (b.r - a.r) * t};
         const double dm = rule.depth(m.r);
-        appendBallPiece(rule, from, dFrom, m, dm, out, 0);
+        if (vBit) {
+            out.push_back(CarvePoint{m.p, dm});
+        } else {
+            appendBallPiece(rule, from, dFrom, m, dm, out, 0);
+        }
         from = m;
         dFrom = dm;
     }
-    appendBallPiece(rule, from, dFrom, b, db, out, 0);
+    if (vBit) {
+        out.push_back(CarvePoint{b.p, db});
+    } else {
+        appendBallPiece(rule, from, dFrom, b, db, out, 0);
+    }
 }
 
 std::vector<CarvePoint> carvePoints(const Trail& trail, const DepthRule& rule) {
@@ -403,11 +535,38 @@ struct Cut {
 };
 
 struct GroupResult {
+    std::vector<Contour> local;  // the group's boundaries (outer first)
     std::vector<Cut> cuts;
     double maxRadius{0.0};
-    bool capped{false};
-    std::size_t ignored{0};
+    double margin{0.0};
     bool flat{false};  // has an area deeper than the depth limit
+};
+
+/// Pocket diagnostics of many regions: the first of each kind (issue and tool) is kept, later
+/// ones only counted, so 5,000 letters do not repeat one warning 5,000 times.
+struct DiagnosticMerger {
+    std::vector<ToolpathDiagnostic> kept;
+    std::vector<std::size_t> extra;
+    void add(ToolpathDiagnostic d) {
+        for (std::size_t i = 0; i < kept.size(); ++i) {
+            if (kept[i].issue == d.issue && kept[i].tool == d.tool) {
+                ++extra[i];
+                return;
+            }
+        }
+        kept.push_back(std::move(d));
+        extra.push_back(0);
+    }
+    void flushInto(std::vector<ToolpathDiagnostic>& out) {
+        for (std::size_t i = 0; i < kept.size(); ++i) {
+            if (extra[i] > 0) {
+                kept[i].message += " (and in " + std::to_string(extra[i]) + " more region(s))";
+            }
+            out.push_back(std::move(kept[i]));
+        }
+        kept.clear();
+        extra.clear();
+    }
 };
 
 void emitCut(const Cut& cut, double startDepth, double safeZ, std::vector<Move>& out) {
@@ -450,7 +609,7 @@ bool refusal(ToolpathIssue i) {
 
 }  // namespace
 
-std::vector<Toolpath> VCarveResult::toolpaths() const {
+std::vector<Toolpath> VCarvingResult::toolpaths() const {
     std::vector<Toolpath> out;
     for (const Toolpath& c : clearance) {
         if (!c.isEmpty()) {
@@ -463,15 +622,15 @@ std::vector<Toolpath> VCarveResult::toolpaths() const {
     return out;
 }
 
-bool vcarveToolAllowed(tooling::ToolType type) {
+bool vCarvingToolAllowed(tooling::ToolType type) {
     return type == tooling::ToolType::VBit || type == tooling::ToolType::BallNose;
 }
 
-bool vcarveClearanceToolAllowed(tooling::ToolType type) {
+bool vCarvingClearanceToolAllowed(tooling::ToolType type) {
     return type == tooling::ToolType::EndMill;
 }
 
-double vcarveFullWidthDepth(const tooling::Tool& tool) {
+double vCarvingFullWidthDepth(const tooling::Tool& tool) {
     const double radius = 0.5 * tool.diameter;
     if (!(radius > 0.0) || !std::isfinite(radius)) {
         return 0.0;
@@ -486,8 +645,8 @@ double vcarveFullWidthDepth(const tooling::Tool& tool) {
     return 0.0;
 }
 
-double vcarveDepthForRadius(const tooling::Tool& tool, double r) {
-    const double full = vcarveFullWidthDepth(tool);
+double vCarvingDepthForRadius(const tooling::Tool& tool, double r) {
+    const double full = vCarvingFullWidthDepth(tool);
     const double radius = 0.5 * tool.diameter;
     if (!(full > 0.0) || !(r > 0.0)) {
         return 0.0;
@@ -504,10 +663,10 @@ double vcarveDepthForRadius(const tooling::Tool& tool, double r) {
     return std::clamp(d, 0.0, full);
 }
 
-VCarveResult vcarveToolpath(const std::vector<Contour>& contours, const tooling::Tool& tool,
-                            const std::optional<tooling::CuttingData>& cuttingData,
-                            const std::vector<PocketTool>& clearanceTools, const VCarveParams& params) {
-    VCarveResult result;
+VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tooling::Tool& tool,
+                                const std::optional<tooling::CuttingData>& cuttingData,
+                                const std::vector<PocketTool>& clearanceTools, const VCarvingParams& params) {
+    VCarvingResult result;
     auto say = [&result](ToolpathIssue issue, std::optional<std::size_t> contour, std::string message,
                          std::optional<std::size_t> toolIndex = std::nullopt) {
         result.diagnostics.push_back(ToolpathDiagnostic{issue, contour, std::move(message), toolIndex});
@@ -526,7 +685,7 @@ VCarveResult vcarveToolpath(const std::vector<Contour>& contours, const tooling:
     }
     for (std::size_t i = 0; i < clearanceTools.size(); ++i) {
         const tooling::Tool& ct = clearanceTools[i].tool;
-        if (!vcarveClearanceToolAllowed(ct.type)) {
+        if (!vCarvingClearanceToolAllowed(ct.type)) {
             say(ToolpathIssue::InvalidTool, std::nullopt,
                 "clearance tool " + std::to_string(i + 1) + " ('" + ct.name + "') is " + toolTypeText(ct.type) +
                     "; clearance tools must be end mills",
@@ -536,7 +695,7 @@ VCarveResult vcarveToolpath(const std::vector<Contour>& contours, const tooling:
     }
 
     const geometry::Tolerance& tol = params.tolerance;
-    const double full = vcarveFullWidthDepth(tool);
+    const double full = vCarvingFullWidthDepth(tool);
     const double limit = params.flatDepth > 0.0 ? std::min(params.flatDepth, full) : full;
     if (params.flatDepth > full) {
         say(ToolpathIssue::CarveDepthLimited, std::nullopt,
@@ -544,11 +703,6 @@ VCarveResult vcarveToolpath(const std::vector<Contour>& contours, const tooling:
                 "' reaches at its full width; the flat areas are cut at " + num(full) + " mm");
     }
     const double limitRadius = footprint(tool, limit);
-    DepthRule rule;
-    rule.tool = &tool;
-    rule.margin = 0.5 * tol.chordal;
-    rule.flatDepth = limit;
-    rule.limitRadius = limitRadius;
 
     // Usable vectors.
     std::vector<std::size_t> usable;
@@ -577,49 +731,53 @@ VCarveResult vcarveToolpath(const std::vector<Contour>& contours, const tooling:
         say(ToolpathIssue::OpenContourIgnored, firstOpen,
             std::to_string(openCount) + " open vector(s) ignored: V-carving needs closed vectors");
     }
-    const std::vector<Group> groups = groupContours(contours, usable);
+    std::size_t crossingClusters = 0;
+    const std::vector<Boundary> boundaries = resolveCrossings(contours, usable, tol, crossingClusters);
+    const std::vector<Group> groups = nestRegions(boundaries, tol);
     result.regions = groups.size();
 
-    // Medial axis and cuts per group.
+    // Medial axis and skeleton cuts per region.
     std::vector<GroupResult> carved(groups.size());
     std::size_t ignored = 0;
     std::optional<std::size_t> firstIgnored;
     bool anyCapped = false;
     for (std::size_t g = 0; g < groups.size(); ++g) {
-        std::vector<Contour> local;
-        local.reserve(groups[g].contours.size());
-        for (const std::size_t i : groups[g].contours) {
-            local.push_back(contours[i]);
-        }
-        const MedialAxis ax = geometry::medialAxis(local, tol);
         GroupResult& gr = carved[g];
-        gr.capped = ax.accuracyCapped;
-        gr.ignored = ax.ignoredContours;
+        for (const std::size_t b : groups[g].boundaries) {
+            gr.local.push_back(boundaries[b].contour);
+        }
+        gr.margin = (0.5 + (groups[g].resolved ? kResolveFraction : 0.0)) * tol.chordal;
+        const MedialAxis ax = geometry::medialAxis(gr.local, tol);
         if (ax.ignoredContours > 0) {
             ignored += ax.ignoredContours;
             if (!firstIgnored) {
-                firstIgnored = groups[g].contours.front();
+                firstIgnored = groups[g].sources.front();
             }
         }
-        if (gr.capped) {
+        if (ax.accuracyCapped) {
             anyCapped = true;
             std::string names;
-            for (const std::size_t i : groups[g].contours) {
+            for (const std::size_t i : groups[g].sources) {
                 names += names.empty() ? "" : ", ";
                 names += std::to_string(i);
             }
-            say(ToolpathIssue::MedialAxisCapped, groups[g].contours.front(),
+            say(ToolpathIssue::MedialAxisCapped, groups[g].sources.front(),
                 "the medial axis of vector(s) " + names +
                     " could not be computed within the tolerance (too detailed for its budget, or too far from "
                     "the origin); nothing is carved: use a coarser chordal tolerance or simplify the vectors");
             continue;
         }
         if (anyCapped) {
-            continue;  // nothing will be produced; only report the other capped groups
+            continue;  // nothing will be produced; only report the other capped regions
         }
+        DepthRule rule;
+        rule.tool = &tool;
+        rule.margin = gr.margin;
+        rule.flatDepth = limit;
+        rule.limitRadius = limitRadius;
         for (const Trail& walk : skeletonTrails(ax)) {
-            for (const SkelPoint& s : walk) {
-                gr.maxRadius = std::max(gr.maxRadius, s.r);
+            for (const SkelPoint& sp : walk) {
+                gr.maxRadius = std::max(gr.maxRadius, sp.r);
             }
             Cut cut;
             cut.points = carvePoints(simplify(walk, tol.chordal / 16.0), rule);
@@ -632,135 +790,159 @@ VCarveResult vcarveToolpath(const std::vector<Contour>& contours, const tooling:
             }
             gr.cuts.push_back(std::move(cut));
         }
-        gr.flat = gr.maxRadius - rule.margin > limitRadius;
+        gr.flat = gr.maxRadius - gr.margin > limitRadius;
     }
     if (anyCapped) {
         return result;
+    }
+    if (crossingClusters > 0) {
+        say(ToolpathIssue::CrossingVectorsResolved, std::nullopt,
+            std::to_string(crossingClusters) +
+                " group(s) of crossing or touching vectors were resolved into their even-odd region (polygonised "
+                "within " + num(tol.chordal * kResolveFraction) + " mm)");
     }
     if (ignored > 0) {
         say(ToolpathIssue::NoRegion, firstIgnored,
             std::to_string(ignored) +
                 " closed vector(s) enclose no area, or are cancelled by a coincident vector (even-odd); ignored");
     }
-
-    // Flat areas.
-    std::vector<std::size_t> flatContours;  // input indices of the groups with a flat area
     std::size_t flatGroups = 0;
+    std::optional<std::size_t> firstFlat;
     for (std::size_t g = 0; g < groups.size(); ++g) {
         if (carved[g].flat) {
             ++flatGroups;
-            flatContours.insert(flatContours.end(), groups[g].contours.begin(), groups[g].contours.end());
+            if (!firstFlat) {
+                firstFlat = groups[g].sources.front();
+            }
         }
     }
-    std::sort(flatContours.begin(), flatContours.end());
     if (flatGroups > 0 && !(params.flatDepth > 0.0)) {
-        say(ToolpathIssue::CarveDepthLimited, flatContours.front(),
+        say(ToolpathIssue::CarveDepthLimited, firstFlat,
             std::to_string(flatGroups) + " region(s) are wider than tool '" + tool.name + "' (" + num(tool.diameter) +
                 " mm) can carve: carved to its full depth of " + num(full) + " mm, the flat bottom cleared");
     }
-    std::vector<Move> selfClear;
-    if (flatGroups > 0) {
-        std::vector<Contour> flatInput;
-        flatInput.reserve(flatContours.size());
-        for (const std::size_t i : flatContours) {
-            flatInput.push_back(contours[i]);
+
+    // Order: regions by the chosen strategy (each region's cuts nearest first, below).
+    std::vector<OrderItem> regionItems;
+    std::vector<std::size_t> regionOf;
+    for (std::size_t g = 0; g < groups.size(); ++g) {
+        if (carved[g].cuts.empty()) {
+            say(ToolpathIssue::NoRegion, groups[g].sources.front(),
+                vecName(groups[g].sources.front()) +
+                    ": nothing to carve (too narrow for the tolerance: no part is deeper than the distance tolerance)");
+            continue;
         }
-        PocketParams pocket;
-        pocket.name = params.name;
-        pocket.startDepth = 0.0;  // from the start plane; moved down afterwards
-        pocket.cutDepth = limit;
-        pocket.maintainExactStep = true;
-        pocket.lastPassThickness = 0.0;
-        pocket.safeZ = params.safeZ + params.startDepth;
-        pocket.strategy = params.clearanceStrategy;
-        pocket.direction = params.clearanceDirection;
-        pocket.rasterAngle = params.clearanceRasterAngle;
-        pocket.profilePass = ProfilePass::Last;
-        pocket.allowance = multi ? limitRadius : 0.0;
-        pocket.rampPlunge = params.rampPlunge;
-        pocket.rampDistance = params.rampDistance;
-        pocket.tolerance = tol;
-        std::vector<PocketTool> tools;
-        if (multi) {
-            tools = clearanceTools;
-        } else {
-            tools.push_back(PocketTool{tool, cuttingData});
+        OrderItem item;
+        item.path.append(geometry::LineSpan{groups[g].box.min, groups[g].box.max});
+        item.path.closed = false;
+        item.selectionIndex = groups[g].sources.front();
+        item.start = groups[g].box.centre();
+        item.end = item.start;
+        regionItems.push_back(std::move(item));
+        regionOf.push_back(g);
+    }
+    const std::vector<std::size_t> order = orderCuts(regionItems, params.order, params.startPosition, tol);
+
+    // Flat areas, region by region in machining order: Pocket per region keeps its work caps and
+    // cost per region (one call over 5,000 letters would hit Pocket's vertex cap).
+    PocketParams pocket;
+    pocket.name = params.name;
+    pocket.startDepth = 0.0;  // from the start plane; moved down afterwards
+    pocket.cutDepth = limit;
+    pocket.maintainExactStep = true;
+    pocket.lastPassThickness = 0.0;
+    pocket.safeZ = params.safeZ + params.startDepth;
+    pocket.strategy = params.clearanceStrategy;
+    pocket.direction = params.clearanceDirection;
+    pocket.rasterAngle = params.clearanceRasterAngle;
+    pocket.profilePass = ProfilePass::Last;
+    pocket.allowance = multi ? limitRadius : 0.0;
+    pocket.rampPlunge = params.rampPlunge;
+    pocket.rampDistance = params.rampDistance;
+    pocket.tolerance = tol;
+    PocketParams walls = pocket;
+    walls.allowance = 0.0;
+    std::vector<PocketTool> pocketTools;
+    if (multi) {
+        pocketTools = clearanceTools;
+    } else {
+        pocketTools.push_back(PocketTool{tool, cuttingData});
+    }
+    for (std::size_t i = 0; i < clearanceTools.size(); ++i) {
+        Toolpath tp;
+        tp.name = params.name + " [" + clearanceTools[i].tool.name + "]";
+        tp.tool = toolSnapshot(clearanceTools[i].tool,
+                               effectiveCuttingData(clearanceTools[i].tool, clearanceTools[i].cuttingData));
+        result.clearance.push_back(std::move(tp));
+    }
+    DiagnosticMerger merged;
+    std::vector<std::vector<Move>> selfClear(groups.size());
+    double estimate = 0.0;
+    for (const std::size_t k : order) {
+        const std::size_t g = regionOf[k];
+        GroupResult& gr = carved[g];
+        if (!gr.flat) {
+            continue;
         }
-        PocketResult pr = pocketToolpath(flatInput, tools, pocket);
+        auto sourceOf = [&](std::optional<std::size_t> local) -> std::optional<std::size_t> {
+            if (local && *local < groups[g].boundaries.size()) {
+                return boundaries[groups[g].boundaries[*local]].source;
+            }
+            return local;
+        };
+        PocketResult pr = pocketToolpath(gr.local, pocketTools, pocket);
         bool refused = false;
         for (ToolpathDiagnostic& d : pr.diagnostics) {
-            if (d.contour && *d.contour < flatContours.size()) {
-                d.contour = flatContours[*d.contour];
-            }
+            d.contour = sourceOf(d.contour);
             if (!multi) {
                 d.tool.reset();
             }
             d.message = "flat area clearance: " + d.message;
             refused = refused || refusal(d.issue);
-            result.diagnostics.push_back(std::move(d));
+            merged.add(std::move(d));
         }
         if (refused) {
+            merged.flushInto(result.diagnostics);
+            result.clearance.clear();
             return result;
         }
         if (multi) {
-            for (std::size_t i = 0; i < clearanceTools.size(); ++i) {
-                Toolpath tp;
-                if (i < pr.toolpaths.size()) {
-                    tp = std::move(pr.toolpaths[i]);
-                }
-                tp.name = params.name + " [" + clearanceTools[i].tool.name + "]";
-                tp.tool = toolSnapshot(clearanceTools[i].tool,
-                                       effectiveCuttingData(clearanceTools[i].tool, clearanceTools[i].cuttingData));
-                shiftZ(tp.moves, params.startDepth);
-                result.clearance.push_back(std::move(tp));
+            for (std::size_t t = 0; t < clearanceTools.size() && t < pr.toolpaths.size(); ++t) {
+                std::vector<Move>& moves = pr.toolpaths[t].moves;
+                shiftZ(moves, params.startDepth);
+                estimate += static_cast<double>(moves.size());
+                result.clearance[t].moves.insert(result.clearance[t].moves.end(), moves.begin(), moves.end());
             }
             // The carving tool cuts the walls of the flat areas at the limit.
-            PocketParams walls = pocket;
-            walls.allowance = 0.0;
-            for (std::size_t g = 0; g < groups.size(); ++g) {
-                if (!carved[g].flat) {
-                    continue;
+            std::vector<ToolpathDiagnostic> wd;
+            const std::vector<Contour> rings = pocketCentreRegion(gr.local, 2.0 * limitRadius, walls, &wd);
+            for (ToolpathDiagnostic& d : wd) {
+                d.contour = sourceOf(d.contour);
+                d.message = "flat area walls: " + d.message;
+                merged.add(std::move(d));
+            }
+            for (const Contour& ring : rings) {
+                Cut cut;
+                cut.closed = true;
+                for (const geometry::Span& sp : ring.spans) {
+                    cut.points.push_back(CarvePoint{geometry::startPoint(sp), limit});
                 }
-                std::vector<Contour> local;
-                for (const std::size_t i : groups[g].contours) {
-                    local.push_back(contours[i]);
-                }
-                std::vector<ToolpathDiagnostic> wd;
-                const std::vector<Contour> rings = pocketCentreRegion(local, 2.0 * limitRadius, walls, &wd);
-                for (ToolpathDiagnostic& d : wd) {
-                    if (d.contour && *d.contour < groups[g].contours.size()) {
-                        d.contour = groups[g].contours[*d.contour];
-                    }
-                    d.message = "flat area walls: " + d.message;
-                    result.diagnostics.push_back(std::move(d));
-                }
-                for (const Contour& ring : rings) {
-                    Cut cut;
-                    cut.closed = true;
-                    for (const geometry::Span& s : ring.spans) {
-                        cut.points.push_back(CarvePoint{geometry::startPoint(s), limit});
-                    }
-                    if (!cut.points.empty()) {
-                        carved[g].cuts.push_back(std::move(cut));
-                    }
+                if (!cut.points.empty()) {
+                    gr.cuts.push_back(std::move(cut));
                 }
             }
         } else if (!pr.toolpaths.empty()) {
-            selfClear = std::move(pr.toolpaths.front().moves);
-            shiftZ(selfClear, params.startDepth);
+            selfClear[g] = std::move(pr.toolpaths.front().moves);
+            shiftZ(selfClear[g], params.startDepth);
+            estimate += static_cast<double>(selfClear[g].size());
         }
-    } else {
-        for (std::size_t i = 0; i < clearanceTools.size(); ++i) {
-            Toolpath tp;
-            tp.name = params.name + " [" + clearanceTools[i].tool.name + "]";
-            tp.tool = toolSnapshot(clearanceTools[i].tool,
-                                   effectiveCuttingData(clearanceTools[i].tool, clearanceTools[i].cuttingData));
-            result.clearance.push_back(std::move(tp));
+        if (!(estimate <= kMaxMoves)) {
+            break;
         }
     }
+    merged.flushInto(result.diagnostics);
 
-    // Work cap before any carve moves are made.
-    double estimate = static_cast<double>(selfClear.size());
+    // Work cap before the carve moves are made.
     for (const GroupResult& gr : carved) {
         for (const Cut& c : gr.cuts) {
             estimate += static_cast<double>(cutMoves(c));
@@ -773,29 +955,17 @@ VCarveResult vcarveToolpath(const std::vector<Contour>& contours, const tooling:
         return result;
     }
 
-    // Order: regions by the chosen strategy, then the cuts of each region nearest first.
-    std::vector<OrderItem> regionItems;
-    std::vector<std::size_t> regionOf;
-    for (std::size_t g = 0; g < groups.size(); ++g) {
-        if (carved[g].cuts.empty()) {
-            say(ToolpathIssue::NoRegion, groups[g].contours.front(),
-                vecName(groups[g].contours.front()) +
-                    ": nothing to carve (too narrow for the tolerance: no part is deeper than the distance tolerance)");
-            continue;
-        }
-        OrderItem item;
-        item.path.append(geometry::LineSpan{groups[g].box.min, groups[g].box.max});
-        item.path.closed = false;
-        item.selectionIndex = groups[g].contours.front();
-        item.start = groups[g].box.centre();
-        item.end = item.start;
-        regionItems.push_back(std::move(item));
-        regionOf.push_back(g);
-    }
-    std::vector<Move> carve;
+    // Moves: per region, its own flat-area clearing (without clearance tools), then its cuts
+    // nearest first from where the tool is.
     Vec2 pos = params.startPosition;
-    for (const std::size_t k : orderCuts(regionItems, params.order, params.startPosition, tol)) {
-        const GroupResult& gr = carved[regionOf[k]];
+    for (const std::size_t k : order) {
+        const std::size_t g = regionOf[k];
+        const GroupResult& gr = carved[g];
+        result.toolpath.moves.insert(result.toolpath.moves.end(), selfClear[g].begin(), selfClear[g].end());
+        if (!selfClear[g].empty()) {
+            const Vec3 at = selfClear[g].back().to;
+            pos = Vec2{at.x, at.y};
+        }
         std::vector<OrderItem> items(gr.cuts.size());
         for (std::size_t c = 0; c < gr.cuts.size(); ++c) {
             items[c].selectionIndex = c;
@@ -803,12 +973,10 @@ VCarveResult vcarveToolpath(const std::vector<Contour>& contours, const tooling:
             items[c].end = gr.cuts[c].closed ? items[c].start : gr.cuts[c].points.back().p;
         }
         for (const std::size_t c : orderCuts(items, OrderOptions{}, pos, tol)) {
-            emitCut(gr.cuts[c], params.startDepth, params.safeZ, carve);
+            emitCut(gr.cuts[c], params.startDepth, params.safeZ, result.toolpath.moves);
             pos = items[c].end;
         }
     }
-    result.toolpath.moves = std::move(selfClear);
-    result.toolpath.moves.insert(result.toolpath.moves.end(), carve.begin(), carve.end());
     if (result.toolpath.isEmpty()) {
         result.clearance.clear();
         if (result.diagnostics.empty() || groups.empty()) {

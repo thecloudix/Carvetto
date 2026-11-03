@@ -14,8 +14,8 @@ function(cli)
 endfunction()
 
 cli(import "${DATA_DIR}/sign.dxf" "${WORK_DIR}/sign.carv")
-cli(toolpath vcarve "${DATA_DIR}/vcarve_letters.json" "${WORK_DIR}/sign.carv" "${WORK_DIR}/sign.carv")
-cli(toolpath vcarve "${DATA_DIR}/vcarve_flat.json" "${WORK_DIR}/sign.carv" "${WORK_DIR}/sign.carv")
+cli(toolpath v_carve "${DATA_DIR}/v_carve_letters.json" "${WORK_DIR}/sign.carv" "${WORK_DIR}/sign.carv")
+cli(toolpath v_carve "${DATA_DIR}/v_carve_flat.json" "${WORK_DIR}/sign.carv" "${WORK_DIR}/sign.carv")
 cli(info "${WORK_DIR}/sign.carv")
 cli(post "${POST}" "${WORK_DIR}/sign.carv" "${WORK_DIR}/sign.nc")
 

@@ -31,7 +31,7 @@
 #include "carvetto/document/document.hpp"
 #include "carvetto/document/toolpath_record.hpp"
 #include "carvetto/toolpath/engrave.hpp"
-#include "carvetto/toolpath/vcarve.hpp"
+#include "carvetto/toolpath/v_carve.hpp"
 #include "carvetto/toolpath/move.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/profile.hpp"
@@ -716,8 +716,8 @@ std::vector<ParamField> engraveFields() {
     };
 }
 
-std::vector<ParamField> vcarveFields() {
-    const auto P = [](ToolpathParams& p) -> toolpath::VCarveParams& { return std::get<toolpath::VCarveParams>(p); };
+std::vector<ParamField> vCarvingFields() {
+    const auto P = [](ToolpathParams& p) -> toolpath::VCarvingParams& { return std::get<toolpath::VCarvingParams>(p); };
     return {
         {"start_depth", [P](ToolpathParams& p, double v) { P(p).startDepth = v; }},
         {"flat_depth", [P](ToolpathParams& p, double v) { P(p).flatDepth = v; }},
@@ -754,7 +754,7 @@ TEST_CASE("T-0136 f: non-finite toolpath parameters are refused by the loader, s
         {toolpath::PocketParams{}, pocketFields()},
         {toolpath::DrillParams{}, drillFields()},
         {toolpath::EngraveParams{}, engraveFields()},
-        {toolpath::VCarveParams{}, vcarveFields()}};
+        {toolpath::VCarvingParams{}, vCarvingFields()}};
     for (const auto& [base, fields] : operations) {
         INFO("operation " << base.index());
         CHECK(nonFiniteParam(base).empty());
