@@ -15,6 +15,7 @@ add_executable(carvetto_tests
   geometry/polyline_test.cpp
   geometry/contour_test.cpp
   geometry/contour_ops_test.cpp
+  geometry/winding_degeneracy_test.cpp
   geometry/intersect_test.cpp
   geometry/intersect_residuals_test.cpp
   geometry/intersect_residuals_ii_test.cpp

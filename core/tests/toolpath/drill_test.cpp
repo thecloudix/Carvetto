@@ -431,6 +431,29 @@ TEST_CASE("AC1: a vector whose centre lies outside it is not drilled", "[toolpat
     CHECK(none.has(ToolpathIssue::CentreOutsideVector));
 }
 
+TEST_CASE("T-0143: a ring drawn as one loop with its bridges on the ray is not drilled",
+          "[toolpath][drill][diagnostics]") {
+    // Verifier repro (harness t0150v1/ring.cpp): outer arc, bridge in, inner arc reversed, bridge
+    // back, with the bridges and the arc ends on the horizontal through the centre.
+    for (const double deg : {0.0, 90.0, 180.0, 270.0, 30.0}) {
+        INFO("bridge at " << deg << " deg");
+        const double a = deg * geometry::kPi / 180.0;
+        const Vec2 c{3.0, 4.0};
+        const Vec2 po = c + Vec2::fromAngle(a, 10.0);
+        const Vec2 pi = c + Vec2::fromAngle(a, 5.0);
+        Contour ring;
+        ring.closed = true;
+        ring.append(ArcSpan{c, 10.0, a, a + 2.0 * geometry::kPi, ArcDirection::CCW});
+        ring.append(LineSpan{po, pi});
+        ring.append(ArcSpan{c, 5.0, a, a + 2.0 * geometry::kPi, ArcDirection::CW});
+        ring.append(LineSpan{pi, po});
+        const DrillResult r = drillToolpath({ring}, drillTool(), std::nullopt, params());
+        CHECK_FALSE(r.ok());
+        CHECK(r.holes.empty());
+        CHECK(r.has(ToolpathIssue::CentreOutsideVector));
+    }
+}
+
 TEST_CASE("AC1: vectors smaller than the tool are drilled and reported", "[toolpath][drill][diagnostics]") {
     // A 1 mm marker circle with a 3 mm drill; a 3 mm circle exactly fits (no report); a 2 mm wide
     // slot is narrower than the drill round its centre.
@@ -572,6 +595,30 @@ TEST_CASE("AC1: a pass depth too small for the cut is refused before any work", 
     CHECK_FALSE(r.ok());
     REQUIRE(r.diagnostics.size() == 1);
     CHECK(r.diagnostics[0].issue == ToolpathIssue::WorkLimitExceeded);
+}
+
+TEST_CASE("T-0143: exactly 10000 passes per hole are drilled, 10001 are refused", "[toolpath][drill][limits]") {
+    // Pass depth 0.5 mm is exact in binary, so cut / pass is exact: 5000 mm -> 10000 passes.
+    DrillParams p = params(5000.0);
+    p.peck = true;
+    p.safeZ = 5.0;
+    const DrillResult ok = drillToolpath({Contour::circle({0, 0}, 5.0)}, drillTool(3.0, 0.5), std::nullopt, p);
+    REQUIRE(ok.ok());
+    CHECK(ok.toolpath.count(MoveKind::Plunge) == 10000);
+
+    p.cutDepth = 5000.25;  // 10000 full passes and a 0.25 mm last one
+    const DrillResult over = drillToolpath({Contour::circle({0, 0}, 5.0)}, drillTool(3.0, 0.5), std::nullopt, p);
+    CHECK_FALSE(over.ok());
+    REQUIRE(over.diagnostics.size() == 1);
+    CHECK(over.diagnostics[0].issue == ToolpathIssue::WorkLimitExceeded);
+    CHECK(over.diagnostics[0].message.find("more than 10000 passes per hole") != std::string::npos);
+    CHECK(over.toolpath.moves.empty());
+
+    // Within PassPlan's round-off guard of exactly 10000 passes: still 10000, still drilled.
+    p.cutDepth = 5000.0 * (1.0 + 1e-15);
+    const DrillResult guard = drillToolpath({Contour::circle({0, 0}, 5.0)}, drillTool(3.0, 0.5), std::nullopt, p);
+    REQUIRE(guard.ok());
+    CHECK(guard.toolpath.count(MoveKind::Plunge) == 10000);
 }
 
 // ----------------------------------------------------------------------------------- ordering
