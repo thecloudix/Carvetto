@@ -126,6 +126,112 @@ std::string rangeProblem(double v, double limit, std::string_view unit) {
     return {};
 }
 
+/// The G-code of a line outside its comments: `( … )` (nesting counted) and `;` to the line end.
+std::string liveCode(std::string_view line) {
+    std::string code;
+    int depth = 0;
+    for (const char c : line) {
+        if (c == ';' && depth == 0) {
+            break;
+        }
+        if (c == '(') {
+            ++depth;
+        } else if (c == ')') {
+            depth = depth > 0 ? depth - 1 : 0;
+        } else if (depth == 0) {
+            code += c;
+        }
+    }
+    return code;
+}
+
+bool isLetter(char c) {
+    return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+}
+
+bool isDigit(char c) {
+    return c >= '0' && c <= '9';
+}
+
+/// Length of the number starting at `i` (digits with an optional decimal part); 0 when none.
+std::size_t numberLength(std::string_view s, std::size_t i) {
+    std::size_t j = i;
+    while (j < s.size() && (isDigit(s[j]) || s[j] == '.')) {
+        ++j;
+    }
+    return j > i && isDigit(s[i]) ? j - i : 0;
+}
+
+/// True for an `M` word starting the spindle: M3 / M4 (also M03, M3.0 …).
+bool isSpindleStartCode(std::string_view number) {
+    double v = 0.0;
+    const auto r = std::from_chars(number.data(), number.data() + number.size(), v);
+    return r.ec == std::errc{} && (v == 3.0 || v == 4.0);
+}
+
+/// The first word in live G-code `code` that starts the spindle or sets a speed (M3, M4, S…),
+/// or "" when there is none (T-0154). A word is a letter at the start of a word (not preceded by
+/// another letter) directly followed by a number, so a message such as Marlin's
+/// `M0 Drag tool 3 spindle off` holds none.
+std::string spindleWord(std::string_view code) {
+    for (std::size_t i = 0; i < code.size(); ++i) {
+        const char c = code[i];
+        if (!isLetter(c) || (i > 0 && isLetter(code[i - 1]))) {
+            continue;
+        }
+        const char u = c >= 'a' ? static_cast<char>(c - 'a' + 'A') : c;
+        if (u != 'M' && u != 'S') {
+            continue;
+        }
+        const std::size_t n = numberLength(code, i + 1);
+        if (n == 0) {
+            continue;
+        }
+        if (u == 'S' || isSpindleStartCode(code.substr(i + 1, n))) {
+            return std::string(code.substr(i, n + 1));
+        }
+    }
+    return {};
+}
+
+/// True when a block line (template text) that writes `[S]` does nothing but start the spindle:
+/// outside its comments it holds only `M3`/`M4` words, `[S]` (optionally after a literal `S`),
+/// `[N]` and spaces. Such a line is left out for a toolpath that runs with the spindle off
+/// (T-0154); any other line writing `[S]` there is an error, so leaving it out never drops a
+/// tool change or another code.
+bool spindleOnlyLine(std::string_view line) {
+    const std::string code = liveCode(line);
+    std::string_view s(code);
+    std::size_t i = 0;
+    while (i < s.size()) {
+        const char c = s[i];
+        if (detail::isSpace(c)) {
+            ++i;
+        } else if (c == '[') {
+            const std::size_t close = s.find(']', i);
+            if (close == std::string_view::npos) {
+                return false;
+            }
+            const std::string_view tag = s.substr(i + 1, close - i - 1);
+            if (tag != "S" && tag != "N") {
+                return false;
+            }
+            i = close + 1;
+        } else if ((c == 'S' || c == 's') && s.substr(i + 1, 3) == "[S]") {
+            ++i;
+        } else if (c == 'M' || c == 'm') {
+            const std::size_t n = numberLength(s, i + 1);
+            if (n == 0 || !isSpindleStartCode(s.substr(i + 1, n))) {
+                return false;
+            }
+            i += 1 + n;
+        } else {
+            return false;
+        }
+    }
+    return true;
+}
+
 /// What the tags of the block being written refer to.
 struct Frame {
     Vec3 from;
@@ -178,6 +284,19 @@ class Interpreter {
             }
         }
 
+        // A toolpath that runs with the spindle off (T-0154) needs the post's SPINDLE_OFF_PAUSE
+        // block: without it the post cannot stop the spindle and pause before the toolpath.
+        if (!has("SPINDLE_OFF_PAUSE")) {
+            for (const Toolpath* tp : active) {
+                if (tp->tool.spindleOff) {
+                    return Error{0, "cannot write G-code: toolpath " + quoted(tp->name) +
+                                        " runs with the spindle off (tool " + quoted(tp->tool.name) +
+                                        " must not turn), but the post has no SPINDLE_OFF_PAUSE block to stop "
+                                        "the spindle and pause for the operator before it"};
+                }
+            }
+        }
+
         pos_ = ctx_.home;
         if (!active.empty()) {
             tool_ = active.front()->tool;
@@ -192,8 +311,10 @@ class Interpreter {
 
         for (std::size_t i = 0; i < active.size(); ++i) {
             const Toolpath& tp = *active[i];
-            const bool toolChanged =
-                i > 0 && (tp.tool.toolNumber != tool_.toolNumber || tp.tool.name != tool_.name);
+            // Going from a spindle-off toolpath to a spinning one (or back) with the same tool is a
+            // tool change too, so the spindle is restarted only through TOOLCHANGE + SPINDLE_ON.
+            const bool toolChanged = i > 0 && (tp.tool.toolNumber != tool_.toolNumber || tp.tool.name != tool_.name ||
+                                               tp.tool.spindleOff != tool_.spindleOff);
             previousToolNumber_ = i > 0 ? tool_.toolNumber : 0;
             tool_ = tp.tool;
             toolpath_ = &tp;
@@ -212,6 +333,10 @@ class Interpreter {
                 emit("SPINDLE_ON");
             } else {
                 emit("NEW_SEGMENT");
+            }
+            if (tool_.spindleOff) {
+                // T-0154: spindle stop and operator pause right before the spindle-off toolpath.
+                emit("SPINDLE_OFF_PAUSE");
             }
 
             if (failure_) {
@@ -412,6 +537,15 @@ class Interpreter {
                  written + "; it is above zero but too small for the post's " +
                  std::to_string(def.format.decimals) + "-decimal format");
         return false;
+    }
+
+    /// True while the toolpath being written (from its HEADER, TOOLCHANGE or NEW_SEGMENT to its
+    /// last move) runs with the spindle off (T-0154).
+    bool spindleOff() const { return toolpath_ != nullptr && !inFooter_ && tool_.spindleOff; }
+
+    /// What a spindle-off toolpath is called in error messages.
+    std::string spindleOffWhat() const {
+        return "the toolpath runs with the spindle off (tool " + quoted(tool_.name) + " must not turn)";
     }
 
     void fail(int line, const std::string& message) {
@@ -639,6 +773,13 @@ class Interpreter {
         if (b == nullptr || failure_) {
             return;
         }
+        const bool off = spindleOff();
+        if (blockName == "SPINDLE_ON" && off) {
+            return;  // T-0154: the spindle stays off; SPINDLE_OFF_PAUSE follows instead
+        }
+        // Blocks that start the spindle of the shipped posts on a line of its own (T-0154).
+        const bool dropSpindleLines =
+            off && (blockName == "HEADER" || blockName == "TOOLCHANGE" || blockName == "NEW_SEGMENT");
         if (blockName == "SPINDLE_ON") {
             const std::string_view outer = block_;
             block_ = b->name;
@@ -651,6 +792,14 @@ class Interpreter {
         const std::string_view outerBlock = block_;
         block_ = b->name;
         for (const std::string& line : b->lines) {
+            if (dropSpindleLines && line.find("[S]") != std::string::npos) {
+                if (spindleOnlyLine(line)) {
+                    continue;  // the spindle start of a spinning toolpath: left out
+                }
+                fail(0, spindleOffWhat() + ", but the line " + quoted(line) +
+                            " writes [S] together with other codes; start the spindle on a line of its own");
+                break;
+            }
             std::string lineText;
             bool hadTag = false;
             std::size_t i = 0;
@@ -669,8 +818,19 @@ class Interpreter {
             while (!lineText.empty() && detail::isSpace(lineText.back())) {
                 lineText.pop_back();
             }
+            if (failure_) {
+                break;
+            }
             if (lineText.empty() && hadTag) {
                 continue;  // every variable on the line was suppressed
+            }
+            if (off) {
+                // Second guard (T-0154): no spindle start or speed reaches the output of a
+                // spindle-off toolpath, whatever the post's template text says.
+                if (const std::string word = spindleWord(liveCode(lineText)); !word.empty()) {
+                    fail(0, spindleOffWhat() + ", but the post writes " + word + " (line " + quoted(lineText) + ")");
+                    break;
+                }
             }
             out_ += lineText;
             out_ += s_.lineEnding;
@@ -832,6 +992,10 @@ class Interpreter {
             return def.prefix + formatNumber(def.format, delta);
         } else {
             const double raw = number(tag);
+            if (tag == "S" && spindleOff()) {
+                fail(0, spindleOffWhat() + "; the post writes [S] here");
+                return {};
+            }
             if (tag == "S" && !acceptSpindleSpeed()) {
                 return {};
             }

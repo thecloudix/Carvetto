@@ -766,6 +766,9 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
     tool["feed_rate"] = tp.tool.feedRate;
     tool["plunge_rate"] = tp.tool.plungeRate;
     tool["spindle_speed"] = tp.tool.spindleSpeed;
+    if (tp.tool.spindleOff) {
+        tool["spindle_off"] = true;  // T-0154: written only when set, so other records are unchanged
+    }
     j["tool"] = std::move(tool);
     if (cacheMember) {
         json moves = json::object();
@@ -2005,8 +2008,9 @@ struct DecodedToolpath {
 constexpr std::array<std::string_view, 7> kToolpathKeys{"id",        "name", "operation", "params",
                                                         "selection", "tool", "moves"};
 constexpr std::array<std::string_view, 3> kSelectionKeys{"all", "layers", "objects"};
-constexpr std::array<std::string_view, 9> kToolKeys{"id",        "machine",     "material",    "name",         "tool_number",
-                                                    "diameter",  "feed_rate",   "plunge_rate", "spindle_speed"};
+constexpr std::array<std::string_view, 10> kToolKeys{"id",          "machine",       "material",   "name",
+                                                     "tool_number", "diameter",      "feed_rate",  "plunge_rate",
+                                                     "spindle_speed", "spindle_off"};
 constexpr std::array<std::string_view, 2> kMovesKeys{"count", "member"};
 
 DecodedToolpath decodeToolpath(JsonReader& r, const Path& p) {
@@ -2076,6 +2080,8 @@ DecodedToolpath decodeToolpath(JsonReader& r, const Path& p) {
                     tp.tool.plungeRate = readDouble(r, tf);
                 } else if (tk == "spindle_speed") {
                     tp.tool.spindleSpeed = readDouble(r, tf);
+                } else if (tk == "spindle_off") {
+                    tp.tool.spindleOff = readBool(r, tf);
                 } else {
                     tool.skip();
                 }
@@ -2142,6 +2148,10 @@ DecodedToolpath decodeToolpath(JsonReader& r, const Path& p) {
              "unsupported toolpath operation '" + operation + "' (written by a newer Carvetto?)");
     }
     tp.params = decodeParamsOf(op, paramsText, p.field("params"), ParamsDialect::JobJson, nullptr);
+    if (!spindleOffAllowed(tp)) {
+        // T-0154: only Quick Engrave runs a toolpath with the spindle off (diamond-drag tools).
+        fail(where() + ".tool.spindle_off", "is only allowed on engrave toolpaths (diamond-drag tools)");
+    }
     if (tp.selection.all && (!tp.selection.layers.empty() || !tp.selection.objects.empty())) {
         fail(where() + ".selection", "'all' cannot be combined with layers or objects");
     }
@@ -3198,6 +3208,11 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
                 return CarvError{CarvError::Code::InvalidContent,
                                  "toolpath '" + clipped(tp.name) + "' (#" + std::to_string(tp.id.value) + "): parameter " + key +
                                      " is not a finite number"};
+            }
+            if (!spindleOffAllowed(tp)) {
+                return CarvError{CarvError::Code::InvalidContent,
+                                 "toolpath '" + clipped(tp.name) + "' (#" + std::to_string(tp.id.value) +
+                                     "): only engrave toolpaths (diamond-drag tools) may run with the spindle off"};
             }
             // The loader refuses these for a toolpath with computed moves (T-0134); say so here
             // with the toolpath's name. Uncomputed records may keep a default snapshot.

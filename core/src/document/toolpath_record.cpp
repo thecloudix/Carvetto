@@ -117,6 +117,10 @@ std::string nonFiniteParam(const ToolpathParams& params) {
     return key.empty() ? nonFiniteTolerance(p.tolerance) : key;
 }
 
+bool spindleOffAllowed(const ToolpathRecord& record) {
+    return !record.tool.spindleOff || record.operation() == ToolpathOperation::Engrave;
+}
+
 bool ToolpathRecord::operator==(const ToolpathRecord& other) const {
     if (!(id == other.id && name == other.name && params == other.params && selection == other.selection &&
           tool == other.tool && toolSource == other.toolSource)) {

@@ -5,6 +5,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cstddef>
 #include <cstdint>
+#include <initializer_list>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -113,8 +114,18 @@ tooling::Tool vBit() {
     return t;
 }
 
+tooling::Tool diamondDrag() {
+    tooling::Tool t;
+    t.id = "drag-90";
+    t.name = "Diamond drag 90";
+    t.type = tooling::ToolType::DiamondDrag;
+    t.diameter = 0.3;
+    t.defaultCuttingData = {0.1, 0.1, 0.0, 0.0, 0.0, 1500.0, 400.0, 0.0, 7};
+    return t;
+}
+
 /// A document with two squares and a computed engrave record.
-Document engraveDocument(const toolpath::EngraveParams& params) {
+Document engraveDocument(const toolpath::EngraveParams& params, const tooling::Tool& tool = vBit()) {
     Document doc;
     const ObjectId a = doc.insertObject(Object::vector(geometry::Contour::rectangle({{0, 0}, {10, 10}}),
                                                        doc.defaultLayer(), doc.activeSheet()));
@@ -125,7 +136,7 @@ Document engraveDocument(const toolpath::EngraveParams& params) {
         const auto& cs = doc.findObject(id)->asVector()->contours;
         contours.insert(contours.end(), cs.begin(), cs.end());
     }
-    toolpath::EngraveResult r = toolpath::engraveToolpath(contours, vBit(), std::nullopt, params);
+    toolpath::EngraveResult r = toolpath::engraveToolpath(contours, tool, std::nullopt, params);
     REQUIRE(r.ok());
     ToolpathRecord rec;
     rec.name = r.toolpath.name;
@@ -250,4 +261,84 @@ TEST_CASE("T-0151: engrave records go through the toolpath commands with undo", 
     std::get<toolpath::EngraveParams>(edit.params).stepover = std::numeric_limits<double>::infinity();
     CHECK(nonFiniteParam(edit.params) == "stepover");
     CHECK_FALSE(doc.execute(std::make_unique<SetToolpathCommand>(edit)));
+}
+
+TEST_CASE("T-0154: spindle-off engrave records save and load exactly",
+          "[document][toolpath][carv][engrave][spindle-off]") {
+    toolpath::EngraveParams params = fullEngrave();
+    params.depth = 0.1;
+    params.passes = 1;
+    const Document doc = engraveDocument(params, diamondDrag());
+    REQUIRE(doc.toolpaths().size() == 1);
+    CHECK(doc.toolpaths()[0].tool.spindleOff);
+    CHECK(doc.toolpaths()[0].tool.spindleSpeed == 0.0);
+    CHECK(spindleOffAllowed(doc.toolpaths()[0]));
+    const Bytes once = save(doc);
+    const std::string job = jobText(once);
+    CHECK(contains(job, "\"spindle_off\": true"));
+    LoadedCarv back = load(once);
+    REQUIRE(back.document.toolpaths().size() == 1);
+    CHECK(back.document.toolpaths()[0] == doc.toolpaths()[0]);
+    CHECK(back.document.toolpaths()[0].toolpath().tool.spindleOff);
+    CHECK(save(back.document, back.extras) == once);
+
+    // Other records do not write the key (their job.json is unchanged).
+    CHECK_FALSE(contains(jobText(save(engraveDocument(fullEngrave()))), "spindle_off"));
+    // The key must be a boolean; false is accepted and equals an absent key.
+    CHECK(contains(loadError(withJob(once, replaced(job, "\"spindle_off\": true", "\"spindle_off\": 1"))).message,
+                   "must be true or false"));
+    const LoadedCarv off = load(withJob(once, replaced(job, "\"spindle_off\": true", "\"spindle_off\": false")));
+    CHECK_FALSE(off.document.toolpaths()[0].tool.spindleOff);
+}
+
+TEST_CASE("T-0154: only engrave records may run with the spindle off", "[document][toolpath][carv][spindle-off]") {
+    // A profile record with the flag: refused by the commands, by saveCarv and by the loader.
+    Document doc;
+    doc.insertObject(Object::vector(geometry::Contour::rectangle({{0, 0}, {10, 10}}), doc.defaultLayer(),
+                                    doc.activeSheet()));
+    ToolpathRecord profile;
+    profile.name = "Profile";
+    toolpath::ProfileParams pp;
+    pp.passes.cutDepth = 1.0;
+    profile.params = pp;
+    profile.selection = VectorSelection::allVectors();
+    profile.tool.name = "Mill";
+    profile.tool.toolNumber = 1;
+    profile.tool.diameter = 3.0;
+    profile.tool.feedRate = 1000.0;
+    profile.tool.plungeRate = 300.0;
+    profile.moves = shareMoves({toolpath::Move::rapid({0, 0, 5}), toolpath::Move::plunge({0, 0, -1})});
+    ToolpathRecord flagged = profile;
+    flagged.tool.spindleOff = true;
+    CHECK_FALSE(spindleOffAllowed(flagged));
+    for (const ToolpathParams& params :
+         {ToolpathParams{toolpath::PocketParams{}}, ToolpathParams{toolpath::DrillParams{}}}) {
+        ToolpathRecord other = flagged;
+        other.params = params;
+        CHECK_FALSE(spindleOffAllowed(other));
+    }
+    CHECK_FALSE(doc.execute(std::make_unique<AddToolpathCommand>(flagged)));
+    CHECK(doc.toolpaths().empty());
+    REQUIRE(doc.execute(std::make_unique<AddToolpathCommand>(profile)));
+    ToolpathRecord edit = doc.toolpaths()[0];
+    edit.tool.spindleOff = true;
+    CHECK_FALSE(doc.execute(std::make_unique<SetToolpathCommand>(edit)));
+    CHECK_FALSE(doc.toolpaths()[0].tool.spindleOff);
+
+    const Bytes good = save(doc);
+    const std::string job = jobText(good);
+
+    // saveCarv refuses a document that holds one anyway.
+    doc.insertToolpath(flagged);
+    const auto refused = saveCarv(doc);
+    REQUIRE_FALSE(refused.ok());
+    CHECK(contains(refused.error().message,
+                   "only engrave toolpaths (diamond-drag tools) may run with the spindle off"));
+
+    // The loader refuses the key on a profile record.
+    const CarvError e = loadError(
+        withJob(good, replaced(job, "\"spindle_speed\": ", "\"spindle_off\": true, \"spindle_speed\": ")));
+    INFO(e.message);
+    CHECK(contains(e.message, "tool.spindle_off"));
+    CHECK(contains(e.message, "is only allowed on engrave toolpaths"));
 }

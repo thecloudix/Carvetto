@@ -25,6 +25,12 @@ struct ToolSnapshot {
     double plungeRate{0.0};
     /// Spindle speed in rpm (0 = not set).
     double spindleSpeed{0.0};
+    /// The toolpath runs with the spindle off (T-0154, ADR-0020): the tool must not turn. Only
+    /// Quick Engrave sets it, for diamond-drag tools (with `spindleSpeed` 0). The post writes no
+    /// spindle start for such a toolpath and stops the spindle and pauses for the operator before
+    /// it (`SPINDLE_OFF_PAUSE`); it is the only exemption from the spindle speed > 0 rule. The
+    /// native record allows it on engrave records only.
+    bool spindleOff{false};
 
     bool operator==(const ToolSnapshot&) const = default;
 };

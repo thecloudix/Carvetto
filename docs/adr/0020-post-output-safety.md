@@ -1,6 +1,6 @@
 # ADR-0020: Post output safety (text sanitising, number limits)
 
-Date: 2026-11-01 · Status: proposed (T-0133), amended 2026-11-02 (T-0134, T-0136)
+Date: 2026-11-01 · Status: proposed (T-0133), amended 2026-11-02 (T-0134, T-0136), 2026-11-03 (T-0154)
 
 ## Context
 The post interpreter (ADR-0011) wrote text tags (`[TOOLNAME]`, `[TOOLPATH_NAME]`, `[TP_FILENAME]`,
@@ -114,6 +114,37 @@ through, so no post, block or tag can bypass them.
      can simply not write `[S]` (and have no `SPINDLE_ON`). A job with no toolpaths has no
      spindle speed to check; likewise the feed, spindle and dwell rules below check nothing in
      such a job (its header and footer cut nothing).
+   - **Toolpaths that run with the spindle off** (owner decision 2026-11-03, T-0154). The rule
+     above has exactly one exemption: a toolpath whose tool snapshot has `spindleOff` set. Only
+     Quick Engrave sets it, for diamond-drag tools (whose snapshot then has spindle speed 0); the
+     native record allows it on engrave records only (the loader, `saveCarv` and the toolpath
+     commands refuse it elsewhere), so Profile, Pocket, Drill and Quick Engrave with any other
+     tool stay under the rule; a test posts each of them with spindle speed 0 through every
+     shipped post and expects the refusal. For such a toolpath the interpreter:
+     - needs the post's `SPINDLE_OFF_PAUSE` block; a post without it refuses the run before
+       writing anything (`toolpath 'Drag' runs with the spindle off (tool 'X' must not turn), but
+       the post has no SPINDLE_OFF_PAUSE block to stop the spindle and pause for the operator
+       before it`). Jobs without such toolpaths never use the block.
+     - writes HEADER (when it is the first toolpath), TOOLCHANGE or NEW_SEGMENT as usual but
+       leaves out every line of those blocks that writes `[S]` and does nothing else: outside its
+       comments only `M3`/`M4` words, `[S]` (after an optional literal `S`), `[N]` and spaces.
+       A line that writes `[S]` together with other codes (`T1 M6 M3 S[S]`) is refused rather
+       than dropped, so leaving a line out never loses a tool change. SPINDLE_ON is not written.
+     - then writes `SPINDLE_OFF_PAUSE` right before the toolpath's first move, every time a
+       spindle-off toolpath starts (also after another spindle-off toolpath with the same tool).
+       The shipped posts write `M5`, safe Z, a comment saying the spindle stays off for the drag
+       tool and asking the operator to check it is stopped or locked, `M0` (Marlin: `M0` with a
+       message), and safe Z again (Z may have been re-zeroed during the pause), the same shape
+       as their manual tool-change stop. On every shipped post the pause is `M0`, also on Mach3,
+       Mach4 and LinuxCNC, whose tool change is `M6`: `M6` is a tool change that a controller
+       may be set to ignore, `M0` is the program stop every one of them honours.
+     - refuses `[S]` anywhere else while the toolpath is written (move blocks, the pause), and,
+       as a second guard, any written line whose G-code outside comments holds a spindle start
+       or speed word (`M3`, `M4`, `M03`, `S…`: a letter at the start of a word directly followed
+       by a number), whatever the post's template text says.
+     - treats a change between a spindle-off and a spinning toolpath as a tool change even when
+       the tool number and name are equal, so the spindle restarts only through TOOLCHANGE +
+       SPINDLE_ON (and its `[S]` > 0 check).
    - **Toolpaths without moves** (T-0136). A toolpath with zero moves cuts nothing and is
      skipped entirely: it is not written, its tool is not in `[TOOLS_USED]`, it causes no tool
      change, and its tool's spindle speed, feeds and dwells are not checked. The header tool (the
@@ -159,6 +190,12 @@ through, so no post, block or tag can bypass them.
   comments, where they used to get broken output.
 - Names with accents or symbols lose them in the G-code comments (`Ñ` → `N`, `×` → `_`); the
   job file keeps them.
+- T-0154: the shipped posts gained `SPINDLE_OFF_PAUSE`; goldens of jobs without spindle-off
+  toolpaths are byte-identical, and each post has a drag golden (`<post>_drag.nc`). A build from
+  before T-0154 drops the record's `spindle_off` key and, seeing spindle speed 0, refuses to post
+  the drag toolpath (it never spins the drag tool). Not covered: the operator is told the spindle
+  may be locked, and after the drag toolpaths the spindle restarts after the next tool change
+  stop; on a controller with an automatic tool changer that stop does not involve the operator.
 - Signs are not checked for coordinates and other values; since T-0134 spindle speed, feeds
   and dwells must be above zero (see above), and
   overly long names are not shortened; a controller with a line-length limit rejects such a line,

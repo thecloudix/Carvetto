@@ -469,13 +469,13 @@ TEST_CASE("AC2: Fill is gouge-free by the pocket oracle for V-bits, end mills an
     CHECK(checked >= 30);
 }
 
-TEST_CASE("AC1: V-bit, engraving tool, end mill and ball nose are accepted",
+TEST_CASE("AC1: V-bit, engraving tool, end mill, ball nose and diamond drag are accepted",
           "[toolpath][engrave][tool]") {
     CHECK(engraveToolAllowed(tooling::ToolType::VBit));
     CHECK(engraveToolAllowed(tooling::ToolType::Engraving));
     CHECK(engraveToolAllowed(tooling::ToolType::EndMill));
     CHECK(engraveToolAllowed(tooling::ToolType::BallNose));
-    CHECK_FALSE(engraveToolAllowed(tooling::ToolType::DiamondDrag));  // owner decision 2026-11-03
+    CHECK(engraveToolAllowed(tooling::ToolType::DiamondDrag));  // T-0154: runs with the spindle off
     CHECK_FALSE(engraveToolAllowed(tooling::ToolType::Drill));
     CHECK_FALSE(engraveToolAllowed(tooling::ToolType::FormTool));
     CHECK_FALSE(engraveToolAllowed(tooling::ToolType::TaperedBallNose));
@@ -490,6 +490,9 @@ TEST_CASE("AC1: V-bit, engraving tool, end mill and ball nose are accepted",
         const EngraveResult r = engraveToolpath(square, t, std::nullopt, outlineParams(0.2));
         CHECK(r.ok());
         CHECK(r.diagnostics.empty());
+        // Only a diamond drag tool runs with the spindle off (T-0154).
+        CHECK_FALSE(r.toolpath.tool.spindleOff);
+        CHECK(r.toolpath.tool.spindleSpeed == t.defaultCuttingData.spindleSpeed);
     }
     tooling::Tool drill = endMill(3.0);
     drill.type = tooling::ToolType::Drill;
@@ -498,24 +501,59 @@ TEST_CASE("AC1: V-bit, engraving tool, end mill and ball nose are accepted",
     CHECK_FALSE(refused.ok());
     REQUIRE(refused.diagnostics.size() == 1);
     CHECK(refused.diagnostics[0].issue == ToolpathIssue::InvalidTool);
-    CHECK(refused.diagnostics[0].message.find("is a drill") != std::string::npos);
+    CHECK(refused.diagnostics[0].message ==
+          "tool 'End mill' is a drill; quick engraving needs a V-bit, an engraving tool, an end mill, a ball nose or "
+          "a diamond drag tool");
 }
 
-TEST_CASE("AC1: diamond-drag tools are refused until spindle-off support exists", "[toolpath][engrave][tool]") {
-    // Owner decision 2026-11-03 (ADR-0024 section 6): a drag tool must not run with the spindle on,
-    // and toolpaths cannot yet leave it off.
+TEST_CASE("T-0154: diamond-drag tools engrave like an end mill, with the spindle off", "[toolpath][engrave][tool]") {
+    // Owner decision 2026-11-03 (ADR-0024 section 6): a drag tool follows the vectors at the depth
+    // given exactly like the other tools; its toolpath is marked to run with the spindle off.
     const Contour line = polygon({{0, 0}, {25, 0}, {25, 10}}, false);
+    const std::vector<Contour> marks{line, Contour::rectangle(Box2{Vec2{0, 20}, Vec2{10, 30}}),
+                                     Contour::circle({20, 25}, 3.0)};
+    tooling::Tool drag = diamondDrag(0.5);
+    drag.defaultCuttingData.spindleSpeed = 12000.0;  // whatever the data says, the spindle stays off
+    tooling::Tool mill = endMill(0.5);
+    mill.defaultCuttingData = drag.defaultCuttingData;
+    mill.name = drag.name;
     for (const EngraveStrategy s : {EngraveStrategy::Outline, EngraveStrategy::Fill}) {
-        EngraveParams p = outlineParams(0.05);
+        INFO(static_cast<int>(s));
+        EngraveParams p = outlineParams(0.05, 2);
         p.strategy = s;
-        const EngraveResult r =
-            engraveToolpath({line, Contour::rectangle(Box2{Vec2{0, 20}, Vec2{10, 30}})}, diamondDrag(), std::nullopt, p);
-        CHECK_FALSE(r.ok());
-        REQUIRE(r.diagnostics.size() == 1);
-        CHECK(r.diagnostics[0].issue == ToolpathIssue::InvalidTool);
-        CHECK(r.diagnostics[0].message ==
-              "tool 'Diamond drag' is a diamond drag tool; diamond-drag tools need spindle-off support, not yet available");
+        p.fillPattern = PocketStrategy::Raster;
+        const EngraveResult r = engraveToolpath(marks, drag, std::nullopt, p);
+        REQUIRE(r.ok());
+        const EngraveResult m = engraveToolpath(marks, mill, std::nullopt, p);
+        REQUIRE(m.ok());
+        CHECK(r.diagnostics == m.diagnostics);
+        CHECK(r.toolpath.moves == m.toolpath.moves);
+        checkMoveRules(r.toolpath, 0.05);
+        CHECK(r.toolpath.tool.spindleOff);
+        CHECK(r.toolpath.tool.spindleSpeed == 0.0);
+        CHECK_FALSE(m.toolpath.tool.spindleOff);
+        CHECK(m.toolpath.tool.spindleSpeed == 12000.0);
+        // Apart from the spindle the snapshot is the tool's.
+        ToolSnapshot expected = m.toolpath.tool;
+        expected.spindleSpeed = 0.0;
+        expected.spindleOff = true;
+        CHECK(r.toolpath.tool == expected);
     }
+    // Fill keeps the drag tool's width (its diameter) inside the vectors, through Pocket.
+    EngraveParams fill = fillParams(0.05, 1, PocketStrategy::Offset, 0.2);
+    const EngraveResult f =
+        engraveToolpath({Contour::rectangle(Box2{Vec2{0, 0}, Vec2{10, 6}})}, drag, std::nullopt, fill);
+    REQUIRE(f.ok());
+    CHECK(f.toolpath.tool.spindleOff);
+    const Box2 b = f.toolpath.bounds();
+    CHECK(b.min.x >= 0.25 - 1e-9);
+    CHECK(b.max.y <= 6.0 - 0.25 + 1e-9);
+    // A drag tool still needs feeds and a valid shape like any other.
+    tooling::Tool noFeed = drag;
+    noFeed.defaultCuttingData.feedRate = 0.0;
+    const EngraveResult refused = engraveToolpath({line}, noFeed, std::nullopt, outlineParams(0.05));
+    CHECK_FALSE(refused.ok());
+    CHECK(refused.has(ToolpathIssue::InvalidTool));
 }
 
 TEST_CASE("AC2: Fill words Pocket's diagnostics for the engraving", "[toolpath][engrave][fill][diagnostics]") {

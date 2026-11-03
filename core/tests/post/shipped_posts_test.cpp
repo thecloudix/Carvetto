@@ -9,6 +9,10 @@
 //      Z unknown), spindle on before any cutting move, spindle off before a tool change pause,
 //      arcs whose start and end radii agree, dwell words in the controller's unit, and spindle off
 //      plus the controller's program end at the end.
+// T-0154: the drag fixture (post_fixture.hpp dragToolpaths) reproduces <post>_drag.nc and passes
+//      the same checklist plus the drag rule: a cut with the spindle off is allowed only after an
+//      M5 (after the last cut) and an operator stop (M0 announced as a spindle stop), and from that pause no M3/M4 or S
+//      word until a tool change stop: the spindle restarts only behind a tool change.
 
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
@@ -139,8 +143,20 @@ std::vector<std::string> splitLines(const std::string& text, const std::string& 
     return lines;
 }
 
+bool mentionsSpindle(std::string text) {
+    for (char& c : text) {
+        if (c >= 'A' && c <= 'Z') c = static_cast<char>(c - 'A' + 'a');
+    }
+    return text.find("spindle") != std::string::npos;
+}
+
 /// Runs the safety checklist over a program; returns the problems found (empty = safe).
-std::vector<std::string> safetyProblems(const ShippedPost& p, const std::string& program) {
+/// `dwellWords` are the dwell words the program must contain, in order (the shared fixture's two
+/// by default). With `dragAllowed`, cuts with the spindle off are allowed after the drag pause
+/// (T-0154); otherwise every cut needs the spindle on.
+std::vector<std::string> safetyProblems(const ShippedPost& p, const std::string& program,
+                                        std::optional<std::vector<std::string>> dwellWords = std::nullopt,
+                                        bool dragAllowed = false) {
     std::vector<std::string> problems;
     const bool inch = p.units == Units::Inches;
     const double unit = inch ? 25.4 : 1.0;
@@ -158,6 +174,10 @@ std::vector<std::string> safetyProblems(const ShippedPost& p, const std::string&
     bool ended = false;
     bool cutAlready = false;
     std::vector<std::string> dwells;
+    // T-0154 drag rule: true from the drag pause (M5, then an M0 announced as a spindle stop)
+    // until the next tool change stop; the spindle must not start nor get a speed meanwhile.
+    bool dragReady = false;
+    bool stoppedSinceCut = false;  // an M5 since the last spindle start or cut
 
     const std::vector<std::string> lines = splitLines(program, p.lineEnding);
     for (std::size_t i = 0; i < lines.size(); ++i) {
@@ -169,6 +189,9 @@ std::vector<std::string> safetyProblems(const ShippedPost& p, const std::string&
         std::map<char, double> axis;
         bool dwell = false;
         bool toolChange = false;
+        // The drag pause announces itself as a spindle stop on the M0 line or the two lines before.
+        std::string announced = lines[i];
+        for (std::size_t k = 1; k <= 2 && k <= i; ++k) announced += " " + lines[i - k];
         for (const Word& w : ws) {
             if (w.letter == 'G') {
                 if (w.text == "20" || w.text == "21") {
@@ -188,10 +211,20 @@ std::vector<std::string> safetyProblems(const ShippedPost& p, const std::string&
             } else if (w.letter == 'M') {
                 if (w.text == "3" || w.text == "4") {
                     spindleOn = true;
+                    if (dragReady)
+                        problems.push_back(where +
+                                           "spindle started after a spindle-off pause without a tool change stop");
+                    dragReady = false;
+                    stoppedSinceCut = false;
                 } else if (w.text == "5") {
                     spindleOn = false;
+                    stoppedSinceCut = true;
+                } else if (w.text == "0" && !spindleOn && stoppedSinceCut && mentionsSpindle(announced)) {
+                    toolChange = true;  // the drag pause (T-0154): M0 on every post
+                    dragReady = true;
                 } else if (w.text == "0" || w.text == "6") {
                     toolChange = true;
+                    dragReady = false;
                     if ("M" + w.text != p.toolChange)
                         problems.push_back(where + "unexpected tool change code");
                 } else if (w.text == "2" || w.text == "30") {
@@ -200,6 +233,7 @@ std::vector<std::string> safetyProblems(const ShippedPost& p, const std::string&
                 }
             } else if (w.letter == 'S') {
                 spindleSpeed = w.value;
+                if (dragReady) problems.push_back(where + "S word during a spindle-off toolpath");
             } else if (w.letter == 'P' && dwell) {
                 dwells.push_back("P" + w.text);
             } else if (w.letter == 'X' || w.letter == 'Y' || w.letter == 'Z' || w.letter == 'I' ||
@@ -230,8 +264,12 @@ std::vector<std::string> safetyProblems(const ShippedPost& p, const std::string&
                 problems.push_back(where + "XY rapid while the tool is not known to be at safe Z");
             }
         } else if (motion >= 1) {
-            if (!spindleOn || !(spindleSpeed > 0.0))
+            stoppedSinceCut = false;
+            if (dragAllowed && dragReady && !spindleOn) {
+                // a drag toolpath: the spindle is meant to be off (T-0154)
+            } else if (!spindleOn || !(spindleSpeed > 0.0)) {
                 problems.push_back(where + "cutting with the spindle off");
+            }
             if (!x || !y || !z) problems.push_back(where + "cutting move from an unknown position");
             cutAlready = true;
             if ((motion == 2 || motion == 3) && x && y && nx && ny) {
@@ -250,7 +288,7 @@ std::vector<std::string> safetyProblems(const ShippedPost& p, const std::string&
     }
     if (spindleOn) problems.push_back("program ends with the spindle on");
     if (p.programEnd[0] != '\0' && !ended) problems.push_back(std::string("missing ") + p.programEnd);
-    if (dwells != std::vector<std::string>{p.dwellHalfSec, p.dwellQuarter}) {
+    if (dwells != dwellWords.value_or(std::vector<std::string>{p.dwellHalfSec, p.dwellQuarter})) {
         problems.push_back("dwell words differ from the controller's unit convention");
     }
     if (!z || *z < safeZ - 1e-9) problems.push_back("program does not end at safe Z");
@@ -345,6 +383,97 @@ TEST_CASE("Safety checker catches the hazards it is meant to catch", "[post][shi
     CHECK(
         fails("G90 G21\nG0 Z5.000\nM3 S1000\nG0 X1.000 Y1.000\nG1 Z-1.000 F100\nG2 X3.000 Y1.500 I1.000 "
               "J0.000\nG0 Z5.000\nG4 P0.50\nG4 P0.25\nM5\nM30\n"));
+}
+
+std::string dragGoldenPath(const ShippedPost& p) {
+    return std::string(CARVETTO_GOLDEN_DIR) + "/post/" + p.stem + "_drag.nc";
+}
+
+TEST_CASE("T-0154: every shipped post reproduces its golden output for the drag fixture",
+          "[post][shipped][golden][spindle-off]") {
+    for (const ShippedPost& p : shippedPosts()) {
+        INFO(p.stem);
+        const PostProcessor pp = loadPost(p);
+        CHECK(pp.hasBlock("SPINDLE_OFF_PAUSE"));
+        const auto r = pp.run(carvetto::test::dragToolpaths(), carvetto::test::fixtureContext());
+        if (!r.ok()) {
+            FAIL(r.error().describe());
+        }
+        CHECK(r.value().warnings.empty());
+        CHECK(r.value().text == readFile(dragGoldenPath(p)));
+    }
+}
+
+TEST_CASE("T-0154: every drag golden passes the checklist and the drag rule", "[post][shipped][safety][spindle-off]") {
+    for (const ShippedPost& p : shippedPosts()) {
+        INFO(p.stem);
+        const std::string golden = readFile(dragGoldenPath(p));
+        const std::vector<std::string> problems = safetyProblems(p, golden, std::vector<std::string>{}, true);
+        for (const std::string& problem : problems) {
+            UNSCOPED_INFO(problem);
+        }
+        CHECK(problems.empty());
+        // Without the drag allowance the same program is refused: its drag cuts run spindle off.
+        CHECK_FALSE(safetyProblems(p, golden, std::vector<std::string>{}, false).empty());
+
+        // Spindle starts: only the end mill's, once, with its speed; three drag pauses.
+        const std::vector<std::string> lines = splitLines(golden, p.lineEnding);
+        int starts = 0;
+        int stops = 0;
+        int pauses = 0;
+        for (std::size_t i = 0; i < lines.size(); ++i) {
+            for (const Word& w : words(lines[i])) {
+                if (w.letter == 'M' && (w.text == "3" || w.text == "4")) ++starts;
+                if (w.letter == 'M' && w.text == "5") ++stops;
+                if (w.letter == 'M' && w.text == "0" &&
+                    (mentionsSpindle(lines[i]) || (i > 0 && mentionsSpindle(lines[i - 1]))))
+                    ++pauses;
+                if (w.letter == 'S') CHECK(w.value == 18000.0);
+            }
+        }
+        CHECK(starts == 1);
+        CHECK(pauses == 3);
+        CHECK(stops >= 4);  // three pauses and the program end (and the tool changes)
+        CHECK(golden.find("S0") == std::string::npos);
+    }
+}
+
+TEST_CASE("T-0154: the drag rule catches spindle hazards around drag toolpaths",
+          "[post][shipped][safety][spindle-off]") {
+    const ShippedPost& grbl = shippedPosts().front();
+    const std::vector<std::string> none;
+    const std::string pause = "M5\n(Spindle stays off for diamond drag tool 3: D)\nM0\nG0 Z5.000\n";
+    const std::string cut = "G0 X1.000 Y1.000\nG1 Z-0.100 F100\nG1 X2.000\nG0 Z5.000\n";
+    const std::string good = "G90 G21\nG0 Z5.000\n" + pause + cut + "M5\nM30\n";
+    CHECK(safetyProblems(grbl, good, none, true).empty());
+    const auto fails = [&](const std::string& program) { return !safetyProblems(grbl, program, none, true).empty(); };
+    // No operator stop, no spindle announcement with it, or no M5 between the last cut and it.
+    CHECK(fails("G90 G21\nG0 Z5.000\nM5\n" + cut + "M5\nM30\n"));
+    CHECK(fails("G90 G21\nG0 Z5.000\nM5\nM0\nG0 Z5.000\n" + cut + "M5\nM30\n"));
+    CHECK(fails("G90 G21\nG0 Z5.000\n" + pause + cut + "(Spindle off)\nM0\nG0 Z5.000\n" + cut + "M5\nM30\n"));
+    // A spindle start or speed during the drag toolpath.
+    CHECK(fails("G90 G21\nG0 Z5.000\n" + pause + "S1000\n" + cut + "M5\nM30\n"));
+    CHECK(fails("G90 G21\nG0 Z5.000\n" + pause + "M3 S1000\n" + cut + "M5\nM30\n"));
+    // The spindle restarted straight after the drag cuts, with no tool change stop.
+    CHECK(fails("G90 G21\nG0 Z5.000\n" + pause + cut + "M3 S1000\nG1 Z-1.000 F100\nG0 Z5.000\nM5\nM30\n"));
+    CHECK(safetyProblems(grbl,
+                         "G90 G21\nG0 Z5.000\n" + pause + cut + "M5\nG0 Z5.000\nM0\nG0 Z5.000\nM3 S1000\n"
+                         "G1 Z-1.000 F100\nG0 Z5.000\nM5\nM30\n",
+                         none, true)
+              .empty());
+}
+
+// Hidden test (tag [.regen], never run by ctest): rewrites every <post>_drag.nc golden (T-0154).
+// Hand-review the goldens against posts/README.md (checklist and the spindle-off rule).
+TEST_CASE("Regenerate shipped-post drag goldens", "[.regen]") {
+    for (const ShippedPost& p : shippedPosts()) {
+        INFO(p.stem);
+        const auto r = loadPost(p).run(carvetto::test::dragToolpaths(), carvetto::test::fixtureContext());
+        REQUIRE(r.ok());
+        std::ofstream out(dragGoldenPath(p), std::ios::binary);
+        REQUIRE(out);
+        out << r.value().text;
+    }
 }
 
 // Hidden test (tag [.regen], never run by ctest): rewrites every <post>_fixture.nc golden from the

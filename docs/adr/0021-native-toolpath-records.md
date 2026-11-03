@@ -61,7 +61,8 @@ schema, the cache format and its budget open; they are decided here.
   `{"id", "name", "operation": "profile" | "pocket", "params": {…}, "selection": {"all", "layers",
   "objects"}, "tool": {"id", "machine", "material", "name", "tool_number", "diameter", "feed_rate",
   "plunge_rate", "spindle_speed"}, "moves": {"count", "member"}}`. `moves` is absent when the
-  record has no computed moves.
+  record has no computed moves. `tool` may also hold `"spindle_off": true` (T-0154, ADR-0020,
+  ADR-0024 §6): written only when set, allowed on engrave records only.
 - **Parameters use carvetto-cli's params.json schema** (ADR-0019 §2, owner decision for the CLI):
   the same snake_case keys and nesting mirroring `ProfileParams` / `PocketParams`, lengths in mm
   without a suffix. One difference: params.json gives angles in degrees under `<key>`; job.json

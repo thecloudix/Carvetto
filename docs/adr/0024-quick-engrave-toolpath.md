@@ -1,6 +1,6 @@
 # ADR-0024: Quick Engrave toolpath (depth and passes, Fill through Pocket, record schema)
 
-Date: 2026-11-03 · Status: proposed (T-0151) · Diamond-drag tools refused for now (owner decision 2026-11-03)
+Date: 2026-11-03 · Status: proposed (T-0151), amended 2026-11-03 (T-0154: diamond-drag tools run with the spindle off)
 
 ## Context
 T-0151 adds the quick engraving toolpath (feature-inventory §5 "Quick Engraving Toolpath"): mark
@@ -86,23 +86,32 @@ with no way to tell from the parameters; a second Outline toolpath on the same s
 that explicitly.
 
 ### 6. Tools
-`engraveToolAllowed` accepts `VBit`, `Engraving`, `EndMill` and `BallNose`. Tapered ball noses,
-radiused end mills, form tools and drills are refused with `InvalidTool` ("tool 'X' is a drill;
-quick engraving needs a V-bit, an engraving tool, an end mill or a ball nose"); the list can be
-widened without a format change. The tool must pass `tooling::validate`, have a cutting width
-> 0 at the depth and feed and plunge rates > 0.
+`engraveToolAllowed` accepts `VBit`, `Engraving`, `EndMill`, `BallNose` and (since T-0154)
+`DiamondDrag`. Tapered ball noses, radiused end mills, form tools and drills are refused with
+`InvalidTool` ("tool 'X' is a drill; quick engraving needs a V-bit, an engraving tool, an end
+mill, a ball nose or a diamond drag tool"); the list can be widened without a format change. The
+tool must pass `tooling::validate`, have a cutting width > 0 at the depth and feed and plunge
+rates > 0.
 
-**Diamond-drag tools are refused (owner decision 2026-11-03).** The card names them, but a drag
-tool must not turn, and every toolpath today starts the spindle with its tool's speed: the posts'
-T-0134 rule (ADR-0020) refuses a speed ≤ 0 wherever `[S]` is written or `SPINDLE_ON` runs, and a
-positive speed spins the tool. Of the options put to the owner (keep the rule with a nominal
-speed; "no spindle" toolpaths; those plus `M5` and an operator stop before the drag toolpath;
-refuse drag tools for now) the owner chose to refuse them: `engraveToolpath` returns
-`InvalidTool` "tool 'X' is a diamond drag tool; diamond-drag tools need spindle-off support, not
-yet available", for Outline and Fill. Proper spindle-off toolpaths (spindle off, `M5` and an
-operator stop before the drag toolpath) are a separate follow-up card; when they exist, a drag
-tool follows the vector at the given depth exactly like the other tools, and only
-`engraveToolAllowed` changes.
+**Diamond-drag tools run with the spindle off (owner decision 2026-11-03, T-0154).** A drag tool
+must not turn, and every other toolpath starts the spindle with its tool's speed (the posts'
+T-0134 rule, ADR-0020, refuses a speed ≤ 0 wherever `[S]` is written or `SPINDLE_ON` runs). Of
+the options put to the owner (keep the rule with a nominal speed; "no spindle" toolpaths; those
+plus `M5` and an operator stop before the drag toolpath; refuse drag tools for now) the owner
+first chose to refuse them (T-0151), then had T-0154 build the third: a drag tool follows the
+vectors at the given depth exactly like the other tools (Outline and Fill alike; its cutting
+width is its diameter), and `engraveToolpath` marks the toolpath's tool snapshot `spindleOff`
+with spindle speed 0, whatever the cutting data's speed. The post then writes no spindle start
+for it and writes the post's `SPINDLE_OFF_PAUSE` (`M5`, safe Z, a message, `M0`, safe Z) before
+it (ADR-0020). Quick Engrave is the only operation that sets the flag; the record format allows
+it on engrave records only (§7).
+
+**Fill with a drag tool is allowed.** A drag tool marks at a constant depth along any path and
+has no cutting direction, so Pocket's offset rings or raster lines at the engrave depth (plunging
+at the plunge rate, no ramps: Fill turns ramps off) fill a region with lines one drag-tool width
+apart, like a hatch; the stepover (§4) is at most the drag tool's diameter. Refusing Fill would
+leave drag users without filled marking for no safety gain: the spindle rule is the same for
+both strategies.
 
 ### 7. API, record and params.json
 `engraveToolpath(contours, const tooling::Tool&, const std::optional<tooling::CuttingData>&,
@@ -115,7 +124,9 @@ same snake_case keys: `name`, `depth`, `passes` (an integer), `safe_z`, `strateg
 (`"outline"` | `"fill"`), `fill_pattern` (`"offset"` | `"raster"`), `stepover`,
 `raster_angle_rad` (params.json: `raster_angle` in degrees), `start_position` ([x, y]) and
 `tolerance`; params.json adds `tool` and `layers`, and unknown keys are errors there.
-`nonFiniteParam` names engrave keys the same way. The format stays **1.1** (a new optional
+`nonFiniteParam` names engrave keys the same way. The record's `tool` object gains an optional boolean `spindle_off`
+(T-0154), written only when true; the loader refuses it on profile, pocket and drill records, and
+`saveCarv` and the toolpath commands refuse such records. The format stays **1.1** (a new optional
 variant alternative, as ADR-0021 foresaw); a build from before T-0151 refuses a file with an
 engrave record ("unsupported toolpath operation 'engrave'").
 

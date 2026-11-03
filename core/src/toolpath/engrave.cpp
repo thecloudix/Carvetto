@@ -91,12 +91,9 @@ const char* toolTypeText(tooling::ToolType type) {
 /// What is wrong with the tool for this toolpath; empty when usable.
 std::string toolProblem(const tooling::Tool& tool, const PassTool& pt) {
     const std::string label = "tool '" + tool.name + "'";
-    if (tool.type == tooling::ToolType::DiamondDrag) {
-        return label + " is a diamond drag tool; diamond-drag tools need spindle-off support, not yet available";
-    }
     if (!engraveToolAllowed(tool.type)) {
         return label + " is " + toolTypeText(tool.type) +
-               "; quick engraving needs a V-bit, an engraving tool, an end mill or a ball nose";
+               "; quick engraving needs a V-bit, an engraving tool, an end mill, a ball nose or a diamond drag tool";
     }
     if (const std::optional<std::string> bad = tooling::validate(tool)) {
         return label + ": " + *bad;
@@ -301,10 +298,9 @@ bool engraveToolAllowed(tooling::ToolType type) {
         case tooling::ToolType::VBit:
         case tooling::ToolType::Engraving:
         case tooling::ToolType::EndMill:
-        case tooling::ToolType::BallNose: return true;
-        // Owner decision 2026-11-03 (ADR-0024 §6): refused until toolpaths can run with the
-        // spindle off.
-        case tooling::ToolType::DiamondDrag:
+        case tooling::ToolType::BallNose:
+        // Runs with the spindle off (T-0154, ADR-0024 §6): see `engraveToolpath`.
+        case tooling::ToolType::DiamondDrag: return true;
         case tooling::ToolType::TaperedBallNose:
         case tooling::ToolType::RadiusedEndMill:
         case tooling::ToolType::FormTool:
@@ -339,6 +335,13 @@ EngraveResult engraveToolpath(const std::vector<Contour>& contours, const toolin
     const tooling::CuttingData& data = effectiveCuttingData(tool, cuttingData);
     const PassTool pt = passTool(tool, data, params.depth);
     result.toolpath.tool = pt.snapshot;
+    if (tool.type == tooling::ToolType::DiamondDrag) {
+        // A drag tool must not turn (T-0154, ADR-0024 §6): the only toolpath the post writes with
+        // the spindle off, after M5 and an operator pause. No spindle speed is kept, so a post run
+        // that ignored the flag (a build before T-0154 reading the record) refuses it (T-0134).
+        result.toolpath.tool.spindleOff = true;
+        result.toolpath.tool.spindleSpeed = 0.0;
+    }
     if (const std::string bad = toolProblem(tool, pt); !bad.empty()) {
         result.diagnostics.push_back(ToolpathDiagnostic{ToolpathIssue::InvalidTool, std::nullopt, bad, std::nullopt});
         return result;
