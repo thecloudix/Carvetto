@@ -54,3 +54,4 @@ Original locations (scripts may hard-code these; adjust paths when reusing):
 - t0135v3/: T-0135 round-3 verifier (PASS d8f7e7d): vfree.cpp exact vector free-piece oracle (+vfreey/vfreez), wsf8w.cpp faster flood, dl3.cpp hash screen with per-vector left-out counts, adv3.cpp, gfit3.cpp, profile_dbg.cpp, profile_alwaysA.cpp, scn/ (incl. m1_1320038_46 THIN).
 - t0154v1/: T-0154 verifier (FAIL f604969): postatk.cpp custom-post spindle-word attacks, trans.cpp 8x8 transitions, dragcheck.py independent drag checker (+mut/), rec_test.cpp .carv record attacks, qe.cpp drag vs end-mill sweep.
 - t0145v1/: T-0145 verifier (PASS ad82030): pp.cpp/pp2.cpp old vs new PassPlan sweep, helper.cpp synthetic scaling check, flake.sh, mk.sh/runh.sh.
+- t0147v1/: T-0147 verifier (PASS 21fc03f): dump.cpp + oracle.py (160-digit Decimal area oracle), wn.cpp, far.cpp (far-origin Pocket/Profile/Drill), drh.cpp drill hashes, perf*.cpp.

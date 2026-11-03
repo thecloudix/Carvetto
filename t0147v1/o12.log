@@ -1,0 +1,23 @@
+counts {'degen': 1682, 'slot': 1612, 'open': 1626, 'mix': 1667, 'gapped': 3288, 'large': 1701, 'circle': 1759, 'arcs': 1698, 'star': 1640, 'bez': 1708, 'selfx': 1619}
+bad 0 flips 0
+worst/eps*S^2*n degen 0.07894111634317683 9125
+worst/eps*S^2*n Q 0.15246614586245866 7606
+worst/eps*S^2*n slot 0.3112248265337976 16461
+worst/eps*S^2*n mix 0.45664127384918274 1889
+worst/eps*S^2*n gapped 0.9545824572901265 16832
+worst/eps*S^2*n large 0.42174154168432043 9962
+worst/eps*S^2*n circle 0.7700188886530471 3477
+worst/eps*S^2*n arcs 0.5998830932572747 19657
+worst/eps*S^2*n star 0.12394465141796346 5290
+worst/eps*S^2*n bez 0.27756723401923117 7650
+worst/eps*S^2*n selfx 0.15246614586245866 7606
+vs pure-geometric degen 0.07894111634317683 9125
+vs pure-geometric slot 0.3112248265337976 16461
+vs pure-geometric mix 1941123.9991230678 11251
+vs pure-geometric gapped 9940537.066123141 12592
+vs pure-geometric large 0.4217415416843205 9962
+vs pure-geometric circle 0.7700188886529991 3477
+vs pure-geometric arcs 773699.259513724 575
+vs pure-geometric star 0.12394465141796346 5290
+vs pure-geometric bez 0.27756723401923117 7650
+vs pure-geometric selfx 0.15246614586245866 7606
