@@ -481,6 +481,24 @@ TEST_CASE("AC2: failing commands exit with 1 and a clear message", "[cli][errors
     CHECK(loaded.value().extras.memberNames().empty());
 }
 
+TEST_CASE("T-0141: an invalid tolerance is refused with the reason, profile and pocket alike", "[cli][errors]") {
+    const std::string dir = workDir("badtol");
+    const std::string carv = importedFixture(dir);
+    writeFile(dir + "/profile.json", R"({"tool": {"id": "end-mill-6mm"}, "passes": {"cut_depth": 1},
+                                         "tolerance": {"distance": 0.00001, "chordal": 0.00001}})");
+    writeFile(dir + "/pocket.json", R"({"tool": {"id": "end-mill-6mm"}, "layers": ["Pockets"], "cut_depth": 1,
+                                        "tolerance": {"distance": 0.00001, "chordal": 0.00001}})");
+    const std::string reason = "invalid tolerance: chordal must be between 0.0001 and 1 mm, distance > 0 and <= chordal";
+    for (const std::string op : {"profile", "pocket"}) {
+        const Outcome r = runCli({"toolpath", op, dir + "/" + op + ".json", carv, dir + "/out.carv"});
+        INFO(r.err);
+        CHECK(r.code == cli::kExitFailure);
+        CHECK_THAT(r.err, StartsWith("carvetto-cli: error: no " + op + " toolpath was produced: "));
+        CHECK_THAT(r.err, ContainsSubstring(reason));
+    }
+    CHECK_FALSE(fs::exists(dir + "/out.carv"));
+}
+
 // --------------------------------------------------------------------------------- import
 
 TEST_CASE("import maps DXF layers and contours into the document", "[cli][import]") {

@@ -458,14 +458,13 @@ Acceptance criteria:
   1. Every free piece ≥ 0.04 mm² reported for Inside/Outside allowance ≥ 0 (whole-scene flood, ≥ 2,000 new-seed scenes, leads off); held pieces never reported.
   2. Moves byte-identical to the T-0135 merge (diagnostics may only gain loose-piece messages); perf within 10%.
 
-### T-0141 Offset/Profile robustness residuals (T-0138 verifier)   [status: verifying — director: batched-offset drift ≤ ~1e-5 mm accepted; (c) no monotone dust test accepted]
+### T-0141 Offset/Profile robustness residuals (T-0138 verifier)   [status: done (2026-11-03, #37)]
 Phase: 1   Module: core/geometry, core/toolpath   Depends on: —   ADR: 0006, 0016
 Goal: Pre-existing findings from the T-0138 verifier (harness t0138v1/, wt-T0138/build-verify3/h/). (a) A single row of 20,000 small rectangles takes ~45–50 s in offsetContours (same with no dust; likely Clipper2's sweep) — profile and fix or bound (col.cpp mode 1, rownd.cpp). (b) profileToolpath does not validate its Tolerance (Pocket requires 1e-4 ≤ chordal and 0 < distance ≤ chordal); decide and add the same validation with a clear diagnostic. (c) Clipper2 erosion of acute rings is not monotone (the T-0138 dust band is 3.6–5.6 grid units); decide whether a monotone dust test is wanted.
 Acceptance criteria:
   1. (a) ≤ 2.5× per doubling up to 20k rings, or documented limit with a clear diagnostic; (b) Profile refuses invalid tolerances with tests, valid output byte-identical; (c) decision recorded in ADR-0006.
 
-### T-0142 Boolean sweep cost and outward-offset leftovers (T-0141 coder)   [status: blocked]
-(Unblocks when T-0141 merges.)
+### T-0142 Boolean sweep cost and outward-offset leftovers (T-0141 coder)   [status: ready]
 Phase: 1   Module: core/geometry   Depends on: T-0141   ADR: 0006
 Goal: Found by the T-0141 coder. (a) booleanOp/unionContours has the same O(n²) Clipper2 sweep as offsets had (a 10k row ~1.3 s); Pocket calls it on all of its input — apply the T-0141 batching (or equivalent) where results cannot interact. (b) A lone CW ring offset outward under a CCW lowest contour leaves hundreds of tiny leftover rings from Clipper2's corner joins (a 1 mm circle → ~920 at +0.3 mm; same on main) — find the cause and remove them without losing genuine regions.
 Acceptance criteria:
@@ -484,6 +483,13 @@ Phase: 1 (Batch C)   Module: core/post, core/toolpath   Depends on: T-0151   ADR
 Goal: Owner decision 2026-11-03: Quick Engrave refuses diamond-drag tools until the post supports toolpaths that run with the spindle off. A drag toolpath must skip SPINDLE_ON/[S], stop the spindle (M5) before it, and pause for the operator (tool-change style stop with a message) so the spindle is confirmed off/locked; T-0134's spindle > 0 rule exempts exactly these toolpaths.
 Acceptance criteria:
   1. Diamond-drag Quick Engrave toolpaths post with spindle off, M5 + operator pause before them on every shipped post; no other toolpath can bypass the spindle rule (tests); posts/README checklist updated; goldens for existing toolpaths unchanged.
+
+### T-0155 Engrave residuals (T-0151 verifier)   [status: blocked]
+(Unblocks when T-0151 merges.)
+Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0151   ADR: 0024
+Goal: (a) Fill's diagnostic rewording replaces "pocket" anywhere, including inside a quoted tool name ("my pocket cutter" → "my fill area cutter"; harness t0151v1/edge.cpp) — replace only Pocket's fixed phrases. (b) engraveLevels/PassPlan return fewer than `passes` levels when depth/passes ≤ 1e-9 mm (engraveLevels(1e-6, 1000) → 999; lv.cpp), contradicting ADR-0024 §1 — floor depth/passes or document. (c) Cosmetic: widths printed as 0.9999999999999999 mm in the stepover refusal.
+Acceptance criteria:
+  1. (a)–(c) fixed with tests; goldens unchanged.
 
 ### T-0019 Make the T-0004 AC3 timing test CPU-time based   [status: done (by T-0017: T-0004 AC3 timing uses process CPU time, cpu_time.hpp)]
 Phase: 1   Module: core/tests   Depends on: —

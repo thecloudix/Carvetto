@@ -44,9 +44,17 @@ enum class OffsetSide { Left, Right };
 /// against it. The test is per contour, on its own interior: a region narrow only between an
 /// outer and its hole (a frame) is kept. The width does not depend on `tol`: a removed contour
 /// is narrower than about 1.13e-5 mm, about 8.9x below the smallest chordal tolerance Pocket
-/// accepts (1e-4 mm). Profile does not validate its tolerance and offsets at tol.chordal (at
-/// most 0.5 x tol.distance with Bezier input), so only a chordal tolerance near 1e-5 mm or
-/// below brings this width up to its 2 x tol.chordal allowance.
+/// accepts (1e-4 mm), as Profile since T-0141; Profile offsets at min(tol.chordal, 0.5 x
+/// tol.distance) with Bezier input, so only a distance tolerance below about 1.1e-5 mm brings
+/// this width up to its 2 x tol.chordal allowance.
+///
+/// Many closed contours side by side (T-0141, ADR-0006 §9): when at least 32 groups of closed
+/// contours whose offsets cannot meet overlap one horizontal line, each group is offset on its
+/// own (Clipper2's sweep is quadratic in the shapes it holds side by side), and the results
+/// come back group by group in input order. They can then differ from offsetting everything at
+/// once by a few grid units (Clipper2 rounds intersections within scanbeams that other shapes
+/// subdivide); ring counts and orientation rules are the same. Fewer groups side by side, or
+/// any open contour in the list: one Clipper2 call, as before.
 ///
 /// Approach: polygonise at `tol.chordal`, scale by `kFixedPointScale`, run Clipper2's offset
 /// engine (round joins are approximated within `tol.chordal`), convert back to polygonal
