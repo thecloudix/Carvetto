@@ -469,15 +469,43 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     length, not that of the pieces kept for snapping, and its tiny end spans are dropped only as
     far as the tolerance from either end: the tops of a tiny zig-zag (Round, Left) gave an empty
     result although the chain of lens arcs along them was millimetres long (main: also empty).
+    (j) *Re-merge only near d.* The stretch of a raw element between two of its pieces that the
+    chain steps over is re-emitted with them only where it stays within tol²/(8d) of d (7 samples):
+    re-merged across such a sliver a line came 2.7e-8 mm inside d at d = 5.4 (v9 0xd9000591),
+    within the old documented tol²/(4d) but beyond the bridge sagitta.
+    (k) *Collapsed arcs.* An arc whose offset towards its centre collapses to its centre point
+    (radius d to rounding: a needle tip) added no raw element, and the next corner joined the
+    previous span's offset to the following one about the far end with an arc of radius 0.614 for
+    d = 0.603 (v9 0xd93009e2, 3.7e-3 mm beyond d). It now gets the connector between its end
+    normals with Round corners on both sides.
     (c) only concerns arcs shorter than the tolerance; (a), (b) and (h) crowded vertices; (g) runs
-    of sub-tolerance spans; (d), (e), (f) and (i) change results only where main dropped a stretch
+    of sub-tolerance spans; (d), (e), (f), (i), (j) and (k) change results only where main dropped a stretch
     longer than the tolerance at a chain's end, wrapped an arc, merged pieces across a gap longer
-    than the tolerance, or dropped a chain longer than the tolerance.
-  - *Results (AC2, AC3).* @RESULTS2@
+    than the tolerance or far from d, dropped a chain longer than the tolerance, or met a collapsed arc.
+  - *Results (AC2, AC3).* Release, T-0009 round-2 build. AC2: (1) the T-0009 verifier's v9
+    injector (sub-tolerance spans and Beziers injected into the T-0017 families; its vchk checker
+    on the polygonised input), 24,000 seeds, 21,140 inputs holding sub-tolerance spans: 0
+    distance, 0 Round-over-d, 0 coverage violations; 220 inputs with coverage points left
+    uncovered within d + tol/2 of another span (the classification below); 2 arc-to-arc gaps of
+    1.5e-10 and 2.4e-11 of the scale, both on noisy input with gaps of its own (documented).
+    (2) The T-0009 generator (jogs, collinear splits, tiny arcs of up to ±3 rad, runs of tiny
+    lines, pieces cut off arcs; lengths 1e-15 mm to the tolerance), 24,000 seeds, 20,853
+    qualifying inputs (all joins, both sides, 28 % closed): 0 / 0 / 0, 208 in the tie class.
+    (3) Rounding-radius arcs (1e-16 to 1e-8 mm, any sweep) between nearly collinear lines,
+    7,000 inputs, 42,000 offsets (all joins and sides, half translated up to 1e3 mm): no point
+    inside d beyond the allowance, largest arc sweep 0.0011 rad. AC3, inputs without
+    sub-tolerance spans compared with main: fuzz4 families 2–5, 24,000 offsets, 0 regressions
+    except 5 flagged "sub-tolerance span at a chain end" (fam4 1, fam5 4), the trade of (i):
+    the branch keeps a 3–9e-4 mm end span where main dropped more than the tolerance of offset
+    (main misses 1.4–1.6e-3 mm of coverage in 4 of them); legacy family 8,000 offsets, 0 issues, 0
+    regressions; bit-identical to main in 29,359 of 29,717 such offsets (legacy 5,986/5,986;
+    the others at crowded vertices, wrapped arcs, re-merges or chains of tiny pieces). Speed:
+    T-0006 criteria hold (tests pass in Release); fuzz family CPU 7–20 % above main (the
+    crowded-vertex work).
   - *Remaining.* (1) Coverage next to strips and loops narrower than the tolerance, as
     documented since T-0017 (the misses classified below). (2) Not part of AC2: the other T-0017
     checks (overlaps, backward steps, self-crossings at needle tips) flag inputs in the adversarial
-    tie families at the same rate as with spans just longer than the tolerance (@OTHER2@), i.e.
+    tie families at the same rate as with spans just longer than the tolerance (T-0009 generator: overlaps 59, backward steps 29, self-crossings 15 of 20,853 inputs; v9: 63 / 19 / 16 of 21,140; with spans just longer than the tolerance, where branch and main agree: 21 / 2 / 3 of 6,000), i.e.
     the residuals of A1. (3) Cost: dense sub-tolerance input is about linear (Release, d = 1,
     worst join and side, 2000 / 4000 / 8000 spans: micro-cluster of 1e-7 mm steps before a 5 mm
     line 0.05 / 0.11 / 0.31 s; zig-zag 2e-4 × 3e-4 mm 0.04 / 0.07 / 0.13 s; random walk of 0.5 µm
