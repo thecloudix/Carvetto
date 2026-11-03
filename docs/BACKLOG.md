@@ -119,7 +119,7 @@ Acceptance criteria:
   6. Ends inside near-coincident (hugging) stretches — e.g. a Bezier lying within tol of an arc that extends past it — are reported: an end of either span within tol of the other's interior gives one tangent hit even when the curves run within tol of each other along that stretch. Today ~38–45% are missed (main and T-0007 alike; T-0007 round-3 verifier measured 44.5% and 44.8% on two seeds). Generator: Beziers within tol of an arc extending ≤ 0.3 rad past them, ≥ 6,000 pairs, vs brute force → 0 misses of ends whose foot is ≥ 0.01 mm from the other span's end.
   5. Root-cause fix found in T-0007: `closestPoint(ArcSpan)` (contour_ops.cpp) returns the start point but parameter 1 when the query's angle lies a rounding error before the arc's start. Fix it at the source (parameter 0), add a fine-angle regression around both ends of CW/CCW partial arcs, and remove T-0007's wrapper in intersect.cpp. Check every other caller (contour closestPoint/distanceTo, offset pruning) is unaffected or improved.
 
-### T-0009 Offsets of inputs with sub-tolerance spans   [status: in-progress]
+### T-0009 Offsets of inputs with sub-tolerance spans   [status: in-progress — round 1 FAIL (Sharp wrap gouge; cubic cost on dense sub-tol input)]
 Phase: 1 (before Profile/Pocket ship)   Module: core/geometry   Depends on: T-0017
 Goal: `flattenForOffset` drops spans ≤ `tol.distance`, so the distance/coverage guarantees of `offsetOpenContour` hold only for the flattened input. Next to a dropped span an offset point can be short of d by up to ~tol (9e-4 mm seen), a Round arc about the neighbouring vertex can be up to ~tol over d (8e-4 mm seen), and up to ~1 mm of valid offset can be missing (seed 0x60660ace). About 1 in 1000 such inputs; already in main before T-0006. Found by the T-0006 verifier and coder.
 Acceptance criteria:
@@ -364,7 +364,7 @@ Acceptance criteria:
   6. Short On tabs on straight edges hold (T-0124 guard drops every tab with length < 2|allowance| + max(0.25, 0.05·D), e.g. D 12, L 1, allowance ±0.3 on a straight edge; driver t0124v5/tools/straight.cpp); ADR-0016 §14 wording matches.
 Note: conn6 reports false "severed" for some On tabs on straight edges and gentle curves; cross-check with the windowed flood t0124v5/wflood.py.
 
-### T-0129 Profile: reject an allowance below −r   [status: ready]
+### T-0129 Profile: reject an allowance below −r   [status: done (2026-11-02, #31)]
 Phase: 1   Module: core/toolpath   Depends on: T-0127   ADR: 0016
 Goal: Owner decision 2026-11-01 (raised by the T-0127 coder): an allowance below −r (tool radius, at the cut depth for V-bits) moves the tool centre across the vector, so Outside silently behaves like Inside (and vice versa) and On/open Left/Right swap sides. Profile must reject such settings instead.
 Acceptance criteria:
@@ -398,7 +398,7 @@ Acceptance criteria:
   4. (Owner decision 2026-11-02, after verifier round 1) Every text value is written as printable ASCII in every post: bytes ≥ 0x80 and Grbl realtime characters `~ ! ?` become '_' (an obvious ASCII letter allowed for Latin letters), because Grbl acts on them anywhere in the stream, even inside comments.
   5. (Owner decision 2026-11-02) LinuxCNC/Mach active comments are neutralised in the sanitiser: a text value at the start of a comment that begins with a word followed by a comma (LOGOPEN, LOGAPPEND, PROBEOPEN, MSG, DEBUG, PRINT, ABORT, py, …; case-insensitive, spaces ignored) has the comma replaced, so it stays plain text. Shipped goldens unchanged.
 
-### T-0134 Post-safety and CLI residuals (T-0133 / T-0122 verifiers)   [status: merging — round 3 PASS (acebb3b); porting (h) to the native loader after T-0132]
+### T-0134 Post-safety and CLI residuals (T-0133 / T-0122 verifiers)   [status: done (2026-11-02, #32)]
 Phase: 1   Module: core/post, app/cli   Depends on: T-0133, T-0122
 Goal: Non-blocking findings (harness t0133v3/, t0122v1/). Post (custom .pp only, no shipped post exposed): (a) form feed / vertical tab / CR in template text between "(" and a value end the word run (commentPositionAt treats only ' ' and '\t' as spaces), so `"(\f[TOOLPATH_NAME])"` with "MSG,hi" stays active on LinuxCNC (isspace skip) — driver ff.cpp; (b) the shipped-post gap test only catches a template comma, not template keyword completions like `([TOOLPATH_NAME]OPEN)` (mut.cpp); (c) ADR-0020 sentence "no shipped post has template text between ( and a value" should read "after a value"; (d) [TOOLS_USED] at comment start now prints "(EndMill_ Drill)". CLI: (e) duplicate keys in params.json silently accepted (last wins); (f) number overflow (1e400) error lacks the "params file:" prefix; (g) `toolpath` prints "added …" before a failing final write; (h) a crafted .carv can carry zero/negative tool diameter, feeds, dwell (decoder accepts).
 Acceptance criteria:
@@ -406,7 +406,7 @@ Acceptance criteria:
   2. (e)–(h) fixed with tests; CLI golden unchanged.
   3. (Owner decision 2026-11-02, raised by the T-0134 verifier) The post refuses spindle speed ≤ 0 (or non-finite) whenever it would write [S] or start the spindle, and refuses feeds, plunge rates, feed overrides and dwell that are > 0 but print as zero in the post's precision (F0, P0.00); clear errors, ADR-0020 updated, goldens unchanged.
 
-### T-0135 Profile loose-piece reporting gaps and tab residuals (T-0127 round 3)   [status: ready]
+### T-0135 Profile loose-piece reporting gaps and tab residuals (T-0127 round 3)   [status: verifying — round 2 @ 42d38af]
 Phase: 1   Module: core/toolpath   Depends on: T-0127   ADR: 0016 §14
 Goal: Found by the T-0127 round-3 verifier (harness t0127v3/; main reports no loose pieces at all, so these are gaps, not regressions). (a) The diagnostics de-duplication in run() merges loose-piece messages whose rounded areas are equal (symmetric parts): repro t0127v3/repro/h.scn (H shape, On, D6, a 0) → two free pieces 0.626/0.621 mm², one report. (b) addPiece treats bounding-box overlap as the same piece, so a piece inside another's concave notch is dropped: repro/abc_2_1_2.scn (B 374.7 mm² and C 64.4 mm² free, C unreported). Mutant inst/profile_mut.cpp FIX_MSG/FIX_BOX fixes both. Residuals: (c) In/Out with negative allowance and a separate last pass drops tabs as "could not be matched on the roughing cut" that main matched and that hold (repro/m1_402002_27.scn, m2_403003_37.scn); (d) conservative drops of 3D tabs with V-bits (repro/m2_403000_48.scn vs _flat.scn); (e) 0.06 mm slivers below the 0.05 mm raster (repro/m1_402012_7.scn); (f) 401007_36 keeps a redundant tab on overlapping vectors. (g) Found at the T-0127 merge: `fitTabs` (core/src/toolpath/tab_placement.cpp, shared, pre-existing) moves a tab centre to exactly f + reach and then tests |c − f| < reach, so a tab exactly `reach` from a keep-clear point is kept or dropped by rounding (scene m1_292000_22 flips with a 62-ulp change from T-0017); use a tolerance or skip the re-check for the point the tab was moved off.
 Acceptance criteria:
@@ -414,20 +414,108 @@ Acceptance criteria:
   2. (c) tabs that hold are kept with a separate last pass (no class where main keeps holding tabs the branch drops); (d)/(e)/(f) improved or documented.
   3. No kept tab severed/partial/thin (whole-scene flood); AC4 byte identity of T-0127 preserved; perf within 10% of T-0127.
 
-### T-0136 Native toolpath storage residuals (T-0132 / T-0134 verifiers)   [status: ready]
+### T-0136 Native toolpath storage residuals (T-0132 / T-0134 verifiers)   [status: done (2026-11-02, #33)]
 Phase: 1   Module: core/document, core/post   Depends on: T-0132   ADR: 0021, 0020
 Goal: Non-blocking findings (harness t0132v3/, t0134v3/). (a) ADR-0021 §3 documents the save-time validation cost only at 2M moves; at the 8M cap the save peak grows by ~+0.5 GiB (second decoded copy during the verification load) — document it, or validate caches by streaming without holding a second copy. (b) Misleading message "cannot save more than 9999 toolpaths with computed moves" also when the problem is position (last computed record at position 10,000) and suggests 9,999 fit (the member limit allows 9,998). (c) Over-long names/strings are refused as a job.json "decompression bomb" ratio error; report "name too long" instead. (d) The interim counting pass uses a fresh probe budget, so the real pass may reserve up to min(S, 8M) moves for a member the shared budget then refuses (untouched pages on Linux; commit charge on Windows). (f) NaN/Infinity accepted in toolpath params on load (e.g. safe_z "NaN"; record != reloaded copy) — refuse non-finite params in the loader and commands. (e) A toolpath with zero moves counts as "no toolpaths" for the post, so the header still writes `M3 S0` (same as main; nothing cuts) — decide and document: skip empty toolpaths, or check spindle speed of the first non-empty toolpath for the header.
 Acceptance criteria:
   1. (a)–(d) fixed or documented exactly, with tests where behaviour changes; save/load invariant preserved (fuzz from t0132v3).
   2. (e) behaviour documented in ADR-0020 and tested; goldens unchanged.
 
-### T-0018 offsetContours: inward offsets past the inradius must vanish, not invert   [status: verifying — owner 2026-11-02: backport upstream Clipper2 fix (unconditional corner vertex) to pinned 1.4.0 at configure time, ADR-0006 §6]
+### T-0137 Profile On: refuse an allowance above +r too   [status: blocked]
+(Unblocks when T-0129 and T-0135 merge — both touch profile.cpp.)
+Phase: 1   Module: core/toolpath   Depends on: T-0129   ADR: 0016 §4
+Goal: Owner decision 2026-11-02 (raised by the T-0129 verifier): for profiles On the vector an allowance above +r moves the tool entirely off the vector just as one below −r does; On profiles refuse |allowance| > r symmetrically (Inside/Outside keep only the −r limit: a large positive allowance there is a normal oversize cut).
+Acceptance criteria:
+  1. On (and open-vector Left/Right where the same geometry applies — decide and document) refuses allowance > +r (and allowance + last-pass allowance > +r) with the T-0129 diagnostic style; exactly +r valid; tests mirror T-0129's matrix.
+  2. Output for |allowance| ≤ r byte-identical to the T-0129/T-0135 merge; ADR-0016 §4 updated; CLI message and exit code checked.
+
+### T-0018 offsetContours: inward offsets past the inradius must vanish, not invert   [status: done (2026-11-02, #30; Clipper2 1.4.0 + backported fix)]
 Phase: 1   Module: core/geometry   Depends on: —
 Goal: Found by the T-0121 coder: a closed contour offset inward by more than its inradius comes back inside out instead of empty (a 17 mm circle shrunk by 19.2 mm returns a 2.2 mm circle; by 30 mm a 13 mm circle). Pocket guards against it locally (`insetBy`); every other caller of `offsetContours` is exposed. Also document (or fix) that Clipper drops pieces of an open path lying exactly on a clip boundary.
 Acceptance criteria:
   1. Inward offset ≥ inradius of a region yields no contour (or only the genuinely surviving lobes of a multi-lobed shape), for circles, polygons, arcs/Beziers, with and without holes, all join types; generative test vs a brute-force inradius/medial check.
   2. No output contour has the opposite orientation of its source region unless it is a genuine hole; regression for the reported cases.
   3. Pocket's local guard can be removed or kept as defence; if kept, document why. Behaviour of open paths on clip boundaries documented in ADR-0006 (or fixed), with a test.
+
+### T-0138 offsetContours: drop grid-level dust rings near collapse   [status: done (2026-11-03, #35)]
+Phase: 1   Module: core/geometry   Depends on: T-0018   ADR: 0006
+Goal: Found by the T-0018 verifier (harness t0018v1/dust.cpp; pre-existing, identical before the Clipper2 backport). Within ~2 µm of collapse, offsetContours can return 3-vertex rings ~0.3 µm long with |area| ~1e-11 mm², some wound against their nesting (annulus with Bezier outer at (32.939392279875733, −76.249769660635266), ro 10.338534503623912, CW hole ri 6.7009639741650435, inset by (ro−ri)/2 + 0.0015, Round, chordal 0.0002 → 8 dust rings, 2 reversed; circle r 21.723669301678942 inset by r − 0.0016 → a same-orientation dust ring nested in the genuine ring). This contradicts the offset.hpp contract sentence "a result contour wound against the outermost input is a genuine hole".
+Acceptance criteria:
+  1. Rings with |area| below a documented threshold (e.g. tol.distance²) or width below the grid are dropped from offsetContours results; repros clean; generative check (t0018v1/inr.cpp orientation-vs-nesting) shows 0 violations.
+  2. No genuine region lost (coverage check in inr.cpp); Pocket/Profile outputs change only where dust rings were present; contract sentence true as written.
+
+### T-0139 Storage message and test nits (T-0136 verifier)   [status: done (2026-11-03, #34)]
+Phase: 1   Module: core/document   Depends on: T-0136   ADR: 0021, 0013
+Goal: Non-blocking findings (harness t0136v1/). (a) Names that grow when stored (control characters escaped as \u0001, quotes, invalid UTF-8) are still blamed as a job.json ratio bomb, or reported with their in-memory size: measure the escaped/stored length in explainLongString (repro adv5.cpp: 200,000 × '\x01'). (b) The RSS test "T-0136 a: saveCarv's verification load holds no second copy" fails under ASan (41 vs 34 MiB): skip under __SANITIZE_ADDRESS__ / has_feature(address_sanitizer). (c) ADR-0021 §2 cites "ADR-0013 §1" for non-finite spellings (it is decision 3); cross-amend ADR-0013 A2 for the finite-params exception. (d) Awkward member-limit wording ("next to the 0 preserved members", "(0 toolpath move caches among them)").
+Acceptance criteria:
+  1. (a)–(d) fixed with tests where behaviour changes; save/load invariant preserved (fuzz3).
+
+### T-0140 Profile: loose-piece check for Inside/Outside with allowance ≥ 0   [status: blocked]
+(Unblocks when T-0135 merges.)
+Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §14
+Goal: Found by the T-0135 verifier (harness t0135v1/scn/m3_630018_3.scn): the loose-piece report runs only for sided cuts (On, allowance < 0), so with Inside/Outside and allowance ≥ 0 pieces that no kept tab holds come free unreported (15.1 mm² in that scene, leads off; same in T-0127). Extend the check to all tabbed profiles without changing toolpaths.
+Acceptance criteria:
+  1. Every free piece ≥ 0.04 mm² reported for Inside/Outside allowance ≥ 0 (whole-scene flood, ≥ 2,000 new-seed scenes, leads off); held pieces never reported.
+  2. Moves byte-identical to the T-0135 merge (diagnostics may only gain loose-piece messages); perf within 10%.
+
+### T-0141 Offset/Profile robustness residuals (T-0138 verifier)   [status: done (2026-11-03, #37)]
+Phase: 1   Module: core/geometry, core/toolpath   Depends on: —   ADR: 0006, 0016
+Goal: Pre-existing findings from the T-0138 verifier (harness t0138v1/, wt-T0138/build-verify3/h/). (a) A single row of 20,000 small rectangles takes ~45–50 s in offsetContours (same with no dust; likely Clipper2's sweep) — profile and fix or bound (col.cpp mode 1, rownd.cpp). (b) profileToolpath does not validate its Tolerance (Pocket requires 1e-4 ≤ chordal and 0 < distance ≤ chordal); decide and add the same validation with a clear diagnostic. (c) Clipper2 erosion of acute rings is not monotone (the T-0138 dust band is 3.6–5.6 grid units); decide whether a monotone dust test is wanted.
+Acceptance criteria:
+  1. (a) ≤ 2.5× per doubling up to 20k rings, or documented limit with a clear diagnostic; (b) Profile refuses invalid tolerances with tests, valid output byte-identical; (c) decision recorded in ADR-0006.
+
+### T-0142 Boolean sweep cost and outward-offset leftovers (T-0141 coder)   [status: ready]
+Phase: 1   Module: core/geometry   Depends on: T-0141   ADR: 0006
+Goal: Found by the T-0141 coder. (a) booleanOp/unionContours has the same O(n²) Clipper2 sweep as offsets had (a 10k row ~1.3 s); Pocket calls it on all of its input — apply the T-0141 batching (or equivalent) where results cannot interact. (b) A lone CW ring offset outward under a CCW lowest contour leaves hundreds of tiny leftover rings from Clipper2's corner joins (a 1 mm circle → ~920 at +0.3 mm; same on main) — find the cause and remove them without losing genuine regions.
+Acceptance criteria:
+  1. (a) ≤ 2.5× per doubling up to 20k shapes, output identical below the batching threshold and within a few grid units above it; (b) no leftover rings in the repro and a generative check; Pocket/Profile safety unchanged.
+  2. (c) Remaining quadratic offset cases from the T-0141 verifier (harness t0141v1/perf.cpp): an outer containing a row of n holes (1.31/6.10 s at 10k/20k), a row whose outsets merge (1.44/5.99 s), the nested-corner spiral (~4.5× per doubling) — ≤ 2.5× per doubling or documented limit. (d) Profile: tol.distance has no lower bound and Bezier offsets use min(chordal, distance/2), so {distance 1e-8, chordal 1e-4} runs > 120 s and degrades output (bez.cpp) — add a lower bound on distance or a floor on the offset chordal (Profile and Pocket consistently), and fix the T-0141 test that accepts {1e-9, …}.
+
+### T-0143 Point-in-contour degeneracy and drill pass cap (T-0150 verifier)   [status: done (2026-11-03, #40)]
+Phase: 1   Module: core/geometry, core/toolpath   Depends on: T-0150   ADR: 0005/0009, 0022
+Goal: (a) geometry::locatePoint/windingNumber return Inside (winding −1) at the centre of a ring drawn as one loop (outer arc, bridge, inner arc reversed, bridge back) when the bridge segments lie on the +X test ray and arc endpoints sit on it, so Drill drills the centre of such a ring although ADR-0022 says rings are not drilled (repro: harness t0150v1/ring.cpp — outer ArcSpan{{0,0},10,0,2π,CCW}, LineSpan (10,0)→(5,0), ArcSpan{{0,0},5,0,2π,CW}, LineSpan (5,0)→(10,0)). Fix the ray-crossing degeneracy for coincident bridge segments and endpoints on the ray. (b) Drill refuses exactly 10,000 passes although the message/ADR say "more than 10000" (check uses ceil(cut/pass)+1 ≤ 10000).
+Acceptance criteria:
+  1. (a) winding correct for bridges/endpoints on the test ray at every angle (generative test vs a robust oracle), all callers (Pocket, Profile, Drill) unchanged elsewhere; (b) limit consistent with message and ADR, boundary test.
+
+### T-0154 No-spindle toolpaths for diamond-drag engraving   [status: ready]
+Phase: 1 (Batch C)   Module: core/post, core/toolpath   Depends on: T-0151   ADR: 0020, 0024
+Goal: Owner decision 2026-11-03: Quick Engrave refuses diamond-drag tools until the post supports toolpaths that run with the spindle off. A drag toolpath must skip SPINDLE_ON/[S], stop the spindle (M5) before it, and pause for the operator (tool-change style stop with a message) so the spindle is confirmed off/locked; T-0134's spindle > 0 rule exempts exactly these toolpaths.
+Acceptance criteria:
+  1. Diamond-drag Quick Engrave toolpaths post with spindle off, M5 + operator pause before them on every shipped post; no other toolpath can bypass the spindle rule (tests); posts/README checklist updated; goldens for existing toolpaths unchanged.
+
+### T-0155 Engrave residuals (T-0151 verifier)   [status: done (2026-11-03, #42)]
+Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0151   ADR: 0024
+Goal: (a) Fill's diagnostic rewording replaces "pocket" anywhere, including inside a quoted tool name ("my pocket cutter" → "my fill area cutter"; harness t0151v1/edge.cpp) — replace only Pocket's fixed phrases. (b) engraveLevels/PassPlan return fewer than `passes` levels when depth/passes ≤ 1e-9 mm (engraveLevels(1e-6, 1000) → 999; lv.cpp), contradicting ADR-0024 §1 — floor depth/passes or document. (c) Cosmetic: widths printed as 0.9999999999999999 mm in the stepover refusal.
+Acceptance criteria:
+  1. (a)–(c) fixed with tests; goldens unchanged.
+
+### T-0144 GCC 15 Release build: -Wmaybe-uninitialized false positive in document.cpp   [status: done (2026-11-03, #41)]
+Phase: 1   Module: core/document   Depends on: —   ADR: —
+Goal: Every local Release build with GCC 15 (-O3 -Werror) fails on a -Wmaybe-uninitialized false positive in core/src/document/document.cpp (~283, Document::copyObjects; object.hpp ~131); every verifier works around it with -Wno-error=maybe-uninitialized. CI's compilers don't hit it, but a contributor on a current distro cannot build Release as documented.
+Acceptance criteria:
+  1. GCC 15 Release -Werror builds cleanly without disabling the warning globally (restructure the code or initialise explicitly; a targeted, commented pragma only if no clean fix exists); behaviour unchanged (full ctest); CI green.
+
+### T-0145 Timing tests robust under machine load   [status: ready]
+Phase: 1   Module: core/tests   Depends on: —
+Goal: Found by the T-0144 verifier: CPU-time ratio tests (e.g. toolpath_scale_test.cpp "AC3: thousands of small closed vectors pocket in near-linear time") measure n and 2n in separate windows (best of 3 each); on a loaded SMT machine a ~25% load swing between windows can push a true ×2.0 ratio past the ×2.5 bound (0 failures in 130 runs, but thin margins: Release 1.15–1.30 s vs < 2.0 s). Make ratio tests interleave the n and 2n runs (alternate, take per-pair minima) or otherwise robust to load swings, without weakening what they detect (quadratic stays caught).
+Acceptance criteria:
+  1. All CPU-time ratio tests use an interleaved/robust measurement helper in core/tests (shared with cpu_time.hpp); a deliberately quadratic mutant still fails each test; 0 flakes over ≥ 200 runs under ctest -j16 load.
+  2. (Found by the T-0155 coder) PassPlan's absolute 1e-9 mm rounding guard drops one level at nanometre pass depths with maintainExactStep (cutDepth 1e-6, passDepth 1e-9 → 999 levels, not 1000; core/src/toolpath/pass_plan.cpp planStretch) — use a relative epsilon; level counts for realistic pass depths unchanged (Profile/Pocket/Drill/Engrave hashes vs main).
+
+### T-0146 Changelog fragments (no more CHANGELOG.md conflicts)   [status: in-progress — round 3 FAIL (fragment-duplicate deadlock); owner 2026-11-03: one narrow extra round]
+Phase: 1   Module: tools, docs, CI   Depends on: —
+Goal: Owner decision 2026-11-03: every card currently adds a line at the top of CHANGELOG.md, so each merge makes every other open PR conflict and re-run CI (~40 min). Instead each card writes its entry to its own file `changelog.d/T-XXXX.md` (one bullet line, same style as today), never editing CHANGELOG.md; a script assembles the fragments into CHANGELOG.md's Unreleased section at release time and deletes them.
+Acceptance criteria:
+  1. `tools/changelog.py` (Python 3, stdlib only): `check` validates fragments (name T-XXXX.md or T-XXXX-YYYY.md matching a card id, exactly one non-empty bullet line, ASCII-safe like today's lines), `assemble` inserts them under "## Unreleased" newest-first by card number (deterministic), removes the fragments, idempotent; tests for both (pytest-free, run via ctest or a CI step).
+  2. CI runs `tools/changelog.py check` on every PR and fails on a malformed fragment or on a PR that edits CHANGELOG.md's Unreleased section directly (allow the assemble commit itself, e.g. by a marker or by path rule — document).
+  3. CONTRIBUTING.md, docs/WORKFLOW.md and .claude/agents/coder.md / verifier.md / director.md say: one fragment per task in changelog.d/, never edit CHANGELOG.md; the director's merge checklist ("exactly one CHANGELOG line per task") becomes "exactly one fragment per task". Existing CHANGELOG.md content unchanged.
+
+### T-0147 signedArea cancellation for small contours far from the origin   [status: ready]
+Phase: 1   Module: core/geometry   Depends on: —   ADR: 0005
+Goal: Found by the T-0152 verifier (harness t0152v2/drv/one.cpp, rect*.cpp): geometry signedArea (contour_ops.cpp ~52) evaluates the shoelace sum on absolute coordinates, so a small contour far from the origin cancels to 0 (1×0.5 mm at 1e8 mm: 17/20 placements give area 0; even 0.05×0.025 mm at 3e6). Callers that classify by area/orientation (nesting, region building, Pocket/Profile/Drill, medial axis) can then drop or misorient such contours.
+Acceptance criteria:
+  1. signedArea (and any orientation/area helper with the same pattern) computed relative to a local origin or compensated, exact to rounding for small contours up to 1e9 mm; generative test vs an exact oracle.
+  2. Outputs of Pocket/Profile/Drill/offsets unchanged for normal inputs (hash comparison vs main), changes only where the old area was wrong (explained).
 
 ### T-0019 Make the T-0004 AC3 timing test CPU-time based   [status: done (by T-0017: T-0004 AC3 timing uses process CPU time, cpu_time.hpp)]
 Phase: 1   Module: core/tests   Depends on: —
@@ -458,6 +546,37 @@ Acceptance criteria:
   2. Errors are clear and exit codes non-zero; `--help` documents every command.
 Owner decisions 2026-11-01 (from the coder's BLOCKED report): (1) toolpaths are stored in the .carv as interim archive members `toolpaths/NNNN.json` (name, tool snapshot, moves, the params they came from) via two small public accessors in `carv_io.hpp` (read a preserved member; copy with a member added); an ADR marks this interim until a card implements ADR-0003's job.json toolpath records. (2) T-0123 merges first; the CLI is written against its API. (3) params.json: snake_case keys mirroring ProfileParams/PocketParams; lengths in mm, angles in degrees (converted at the CLI edge); tool = {"tool": {"database": <path, default data/tools/starter_tools.json>, "id": …}} plus optional material/machine for cutting data; optional "layers": [names] (default all vectors); unknown keys rejected with an error naming the key. nlohmann/json (already used) — no new dependency.
 Owner decision 2026-11-01 (coder's open point): the interim JSON storage is capped by the loader's 2M-value budget for unknown content (ADR-0013 §9), ~300k–400k moves per file; accepted for now — the CLI reloads before writing and refuses with a clear error. The real fix is T-0132.
+
+### T-0150 Drilling toolpath   [status: done (2026-11-03, #36)]
+Phase: 1 (Batch C, owner decision 2026-11-03: Batch C toolpaths first)   Module: core/toolpath   Depends on: T-0123, T-0132   ADR: new
+Goal: Drill the centres of selected closed vectors (behaviour per docs/reference/feature-inventory.md "Drilling Toolpath"): drill or end-mill tool, start depth, cut depth, optional peck drilling (pass depth from the tool; retract above the cutting start by a retract gap, or above the previous pass), optional dwell at the bottom of each pass, ordering of holes, safe-Z links. Output through the existing post with plunge/retract moves (no canned cycles required); stored as a native toolpath record; CLI `toolpath drill`.
+Acceptance criteria:
+  1. `drillToolpath(contours, tooling::Tool + CuttingData, DrillParams)` returns moves and the shared ToolpathDiagnostic type: one hole per closed vector at its centre (define and document "centre": bounding-box centre vs area centroid — ADR), open vectors and vectors smaller than … reported; peck and dwell options; ordering (selection / nearest / left-to-right) reusing the shared cut-order helper.
+  2. Safety: every rapid at safe Z; plunges at the plunge rate; peck retracts never below the start surface + retract gap; dwell > 0 only; tested against the T-0133/T-0134 post rules on every shipped post; golden G-code for a fixture.
+  3. Native record round trip (params in job.json, ADR-0021 schema), CLI `toolpath drill <params.json>` with params.json keys documented in --help; CLI end-to-end test extended; MSVC CI green.
+
+### T-0151 Quick Engrave toolpath   [status: done (2026-11-03, #38; diamond drag refused → T-0154)]
+Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0150   ADR: new
+Goal: Engrave along vectors (behaviour per feature-inventory "Quick Engraving Toolpath"): depth to engrave, strategy Outline (follow the vectors at depth) or Fill (fill closed regions with a pattern and stepover), number of passes; diamond-drag tools follow the vector at the surface depth given. Nose-cone/pressure and "output direct to machine" are out of scope (no machine connection).
+Acceptance criteria:
+  1. Outline and Fill strategies with stepover; multi-pass; native record + CLI; goldens; safety rules as T-0150.
+  2. Fill reuses the Pocket raster/offset machinery (T-0121/T-0123) — no duplicate fill code; gouge-free by the pocket oracle.
+
+### T-0152 Medial axis of 2D regions (geometry core for V-carving)   [status: in-progress]
+Phase: 1 (Batch C)   Module: core/geometry   Depends on: —   ADR: new (algorithm choice; clean-room — no proprietary code)
+Goal: Compute the medial axis (inner Voronoi skeleton) of a closed region with holes made of lines, arcs and Beziers, with the inscribed-circle radius along it, within the chordal tolerance. This is the basis for V-carve depth = radius / tan(half angle).
+Acceptance criteria:
+  1. API returns skeleton edges (polyline/arc approximations) with radius at every vertex; regions with holes, sharp and rounded corners, thin necks, arcs and Beziers; radius error ≤ chordal tolerance against a brute-force distance oracle; skeleton points within tolerance of the true medial axis (equidistant from ≥ 2 boundary features).
+  2. Robust on degenerate input (collinear, near-touching, tiny features, large coordinates), no crashes or hangs (fuzz); ≤ 2.5× per doubling in CPU time up to 50k boundary segments (text-heavy jobs).
+  3. ADR records the algorithm (e.g. segment Voronoi via a library already allowed by the dependency policy, or an own implementation) and the dependency/licence decision; any new dependency goes to the owner first.
+
+### T-0153 V-Carve toolpath   [status: blocked]
+(After T-0152 merges.)
+Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0152, T-0123, T-0132   ADR: new
+Goal: V-carve closed regions with a V-bit (behaviour per feature-inventory "V-Carve Toolpath"): depth from the medial axis radius and bit angle, start depth, optional flat depth (flat-bottom areas cleared with clearance tools, Offset or Raster strategy reusing Pocket), corner sharpening, ordering, safe links; native record + CLI.
+Acceptance criteria:
+  1. Every V-bit move stays within the region (the cone never crosses a boundary) — exact cone/wall check over a generative sweep; depth = radius / tan(θ/2) within tolerance; flat depth honoured with clearance pocketing; goldens; post safety rules.
+  2. Text-heavy jobs (≥ 5,000 glyph-like regions) within a documented time bound.
 
 ### Batch B — drawing & editing (viewmodel + Qt), to be carded after Batch A is dispatched
 - Drawing tools, snapping/guides, selection & node editing, transforms, align, group; boolean/shape ops UI (weld/subtract/overlap/trim/fillet/offset wrappers over T-0003/T-0004/T-0005), curve fit, join/close.

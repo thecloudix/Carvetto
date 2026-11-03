@@ -6,6 +6,7 @@
 #include <array>
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
+#include <cstring>
 #include <csignal>
 #include <cstddef>
 #include <cstdint>
@@ -16,6 +17,7 @@
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -54,6 +56,10 @@ using Code = CarvError::Code;
 namespace {
 
 // --- Helpers ----------------------------------------------------------------------------------
+
+/// A tool snapshot a toolpath with computed moves needs: diameter, feed and plunge rate above zero
+/// (T-0134; uncomputed records may keep the default snapshot).
+const toolpath::ToolSnapshot kValidTool{"tool", 1, 6.0, 1000.0, 300.0, 18000.0};
 
 Bytes save(const Document& doc, const CarvExtras& extras = {}) {
     auto r = saveCarv(doc, extras);
@@ -557,6 +563,7 @@ TEST_CASE("toolpath commands refuse invalid selections and normalise records", "
     // cuttingData is cleared and ignored move fields are zeroed, so the record equals its saved
     // and reloaded copy.
     ToolpathRecord n;
+    n.tool = kValidTool;  // computed moves need a real tool (T-0134)
     n.name = "normalised";
     n.selection = VectorSelection::allVectors();
     auto profile = fullProfile();
@@ -661,6 +668,7 @@ TEST_CASE("random command sequences with toolpaths keep the document consistent 
                     r.selection.layers.push_back(doc.layers()[rng() % doc.layers().size()].id);
                     if (rng() % 2) {
                         r.moves = shareMoves(sampleMoves());
+                        r.tool = kValidTool;  // computed moves need a real tool (T-0134)
                     }
                     doc.execute(std::make_unique<AddToolpathCommand>(r, rng() % 4));
                     break;
@@ -675,6 +683,9 @@ TEST_CASE("random command sequences with toolpaths keep the document consistent 
                         ToolpathRecord r = *doc.findToolpath(*id);
                         r.name += "+";
                         r.moves = (rng() % 2) ? shareMoves({Move::rapid({1.0 * step, 0, 5})}) : nullptr;
+                        if (r.moves) {
+                            r.tool = kValidTool;  // computed moves need a real tool (T-0134)
+                        }
                         doc.execute(std::make_unique<SetToolpathCommand>(r));
                     }
                     break;
@@ -1020,6 +1031,7 @@ TEST_CASE("a move cache no record names is dropped; deflate ratio does not apply
     // refuses, as the loader would.
     Document doc;
     ToolpathRecord r;
+    r.tool = kValidTool;  // computed moves need a real tool (T-0134)
     r.name = "same";
     r.selection = VectorSelection::allVectors();
     r.moves = shareMoves(std::vector<Move>(1'200'000, Move::feed({1, 2, 3}, 500.0)));
@@ -1046,6 +1058,7 @@ TEST_CASE("moves per byte of the file: the exact boundary, and small crafted fil
     constexpr std::size_t kMoves = 50'000;
     Document doc;
     ToolpathRecord r;
+    r.tool = kValidTool;  // computed moves need a real tool (T-0134)
     r.name = "boundary";
     r.selection = VectorSelection::allVectors();
     r.moves = shareMoves(std::vector<Move>(kMoves, Move::rapid({0, 0, 5})));
@@ -1137,6 +1150,7 @@ TEST_CASE("saveCarv counts every archive member against the loader's member limi
         auto d = std::make_unique<Document>();
         for (std::size_t i = 0; i < computed; ++i) {
             ToolpathRecord t;
+            t.tool = kValidTool;  // computed moves need a real tool (T-0134)
             t.moves = one;
             d->insertToolpath(t);
         }
@@ -1207,7 +1221,8 @@ TEST_CASE("the move budget is enforced on load and on save", "[document][toolpat
         ms.push_back({"toolpaths/0001.json", Bytes(member.begin(), member.end())});
         const CarvError err = loadError(detail::writeZip(ms).bytes);
         CHECK(err.code == Code::ResourceLimit);
-        CHECK(contains(err.message, "toolpaths with computed moves"));
+        CHECK(contains(err.message, "the toolpath at position 10000 (#"));
+        CHECK(contains(err.message, "only toolpaths at positions 1 to 9999 can keep computed moves"));
     }
     {
         const std::string many = manyRecords(10001);
@@ -1223,6 +1238,7 @@ TEST_CASE("the move budget is enforced on load and on save", "[document][toolpat
     const SharedMoves block = shareMoves(std::vector<Move>(kCarvMaxToolpathMoves / 4 + 1, Move::rapid({0, 0, 5})));
     for (int i = 0; i < 4; ++i) {
         ToolpathRecord t;
+        t.tool = kValidTool;  // computed moves need a real tool (T-0134)
         t.moves = block;
         doc.insertToolpath(t);
     }
@@ -1233,6 +1249,7 @@ TEST_CASE("the move budget is enforced on load and on save", "[document][toolpat
     // And a non-finite move value.
     Document nan;
     ToolpathRecord t;
+    t.tool = kValidTool;  // computed moves need a real tool (T-0134)
     t.name = "bad";
     t.moves = shareMoves({Move::feed({0, std::numeric_limits<double>::infinity(), 0})});
     nan.insertToolpath(t);
@@ -1247,6 +1264,7 @@ TEST_CASE("AC2: a 2,000,000-move toolpath saves and reloads within budget and ti
     doc.insertObject(Object::vector(geometry::Contour::rectangle(geometry::Box2{{0, 0}, {100, 100}}),
                                     doc.defaultLayer(), doc.activeSheet()));
     ToolpathRecord r;
+    r.tool = kValidTool;  // computed moves need a real tool (T-0134)
     r.name = "Big pocket";
     r.params = fullPocket();
     r.selection = VectorSelection::allVectors();
@@ -1643,12 +1661,16 @@ TEST_CASE("consistency: selections with repeated or unusual ids (dupsel, zero)",
     REQUIRE(many.execute(std::make_unique<AddToolpathCommand>(unused)));
     CHECK(consistent(many));
 
-    // zero: empty but computed moves, no moves, a dwell of -0.0 seconds.
+    // zero: empty but computed moves, no moves.
     Document z;
     z.insertToolpath(plainRecord({}));
     z.insertToolpath(plainRecord({}, false));
-    z.insertToolpath(plainRecord({Move::dwell({0, 0, 0}, -0.0)}));
     CHECK(consistent(z));
+    // A dwell of -0.0 seconds is refused since T-0134 (no zero or negative pause).
+    z.insertToolpath(plainRecord({Move::dwell({0, 0, 0}, -0.0)}));
+    std::string zeroWhy;
+    CHECK_FALSE(consistent(z, {}, &zeroWhy));
+    CHECK(zeroWhy.find("move 1: dwell seconds must be greater than zero") != std::string::npos);
 }
 
 TEST_CASE("consistency: long strings and interim extras (strings, interimextra)", "[document][toolpath][carv][limits]") {
@@ -1757,4 +1779,146 @@ TEST_CASE("generative: documents near every limit either save and load or are re
     WARN("generative near-limit documents: " << saved << " saved and loaded, " << refused << " refused on save");
     CHECK(saved > 0);
     CHECK(refused > 0);
+}
+
+// --- T-0134 (h): zero or negative tool sizes, feeds and dwell are refused on load and save -----
+
+namespace {
+
+/// A one-move cache written by hand (the encoder refuses these values): `kind` with x, y, z
+/// stored, then the dwell seconds or the feed override.
+Bytes handCache(MoveKind kind, double value) {
+    Bytes out{'C', 'V', 'T', 'P', 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0};
+    const bool dwell = kind == MoveKind::Dwell;
+    out.push_back(static_cast<std::uint8_t>(static_cast<int>(kind) | (dwell ? 0 : 0x08)));
+    for (double v : {1.0, 2.0, -3.0, value}) {
+        std::uint64_t bits = 0;
+        std::memcpy(&bits, &v, sizeof bits);
+        for (int i = 0; i < 8; ++i) {
+            out.push_back(static_cast<std::uint8_t>(bits >> (8 * i)));
+        }
+    }
+    return out;
+}
+
+}  // namespace
+
+TEST_CASE("T-0134: loading refuses zero or negative tool sizes, feeds, feed overrides and dwell",
+          "[document][toolpath][carv][errors]") {
+    const Bytes good = save(makeSample().doc);
+    const std::string job = memberText(good, "job.json");
+    for (const char* bad : {"0.0", "-0.0", "-3.0", "\"NaN\"", "\"-Infinity\""}) {
+        INFO(bad);
+        // Native record: the tool snapshot in job.json.
+        for (const auto& [key, value] : {std::pair{"diameter", "3.0"}, std::pair{"feed_rate", "1500.0"},
+                                         std::pair{"plunge_rate", "500.0"}}) {
+            INFO(key);
+            const std::string from = std::string("\"") + key + "\": " + value;
+            auto r = loadCarv(std::span<const std::uint8_t>(withText(good, "job.json", replaced(job, from, std::string("\"") + key + "\": " + bad))));
+            REQUIRE_FALSE(r.ok());
+            INFO(r.error().message);
+            CHECK(r.error().code == Code::InvalidContent);
+            CHECK(contains(r.error().message, std::string("tool.") + key + ": must be a finite number greater than zero"));
+        }
+        // Interim member being migrated: tool snapshot, dwell and feed override.
+        const std::string tool = interimMember("pocket", "{}", kInterimMoves);
+        for (const auto& [from, to, mention] :
+             {std::tuple{std::string("\"diameter\":6.0"), std::string("\"diameter\":") + bad, std::string("tool.diameter: must be a finite number greater than zero")},
+              std::tuple{std::string("\"feed_rate\":2300.0"), std::string("\"feed_rate\":") + bad, std::string("tool.feed_rate: must be a finite number greater than zero")},
+              std::tuple{std::string("\"plunge_rate\":800.0"), std::string("\"plunge_rate\":") + bad, std::string("tool.plunge_rate: must be a finite number greater than zero")},
+              std::tuple{std::string("-3.0,0.25]"), std::string("-3.0,") + bad + "]", std::string("moves[3][4]: ")},
+              std::tuple{std::string("{\"feed\":300.0}"), std::string("{\"feed\":") + bad + "}", std::string("moves[1][4].feed: must be a finite number greater than zero")}}) {
+            INFO(from);
+            auto r = loadCarv(std::span<const std::uint8_t>(legacyFile({{"toolpaths/0001.json", replaced(tool, from, to)}})));
+            REQUIRE_FALSE(r.ok());
+            INFO(r.error().message);
+            CHECK(r.error().code == Code::InvalidContent);
+            CHECK(contains(r.error().message, "toolpaths/0001.json"));
+            CHECK(contains(r.error().message, mention));
+        }
+    }
+
+    // Binary move cache: dwell seconds and feed overrides, moves numbered from 1.
+    for (double bad : {0.0, -0.0, -1.0, -std::numeric_limits<double>::denorm_min()}) {
+        INFO(bad);
+        CHECK(contains(decodeError(handCache(MoveKind::Dwell, bad), 1), "move 1: dwell seconds must be greater than zero"));
+        CHECK(contains(decodeError(handCache(MoveKind::Feed, bad), 1), "move 1: feed override must be greater than zero"));
+        // In a whole file: a record with one computed dwell, its cache swapped for the bad one.
+        Document d;
+        d.insertToolpath(plainRecord({Move::dwell({1, 2, -3}, 0.5)}));
+        const Bytes file = withMember(save(d), "toolpaths/0001.bin", handCache(MoveKind::Dwell, bad));
+        const CarvError e = loadError(file);
+        CHECK(e.code == Code::InvalidContent);
+        CHECK(contains(e.message, "toolpaths/0001.bin: move 1: dwell seconds must be greater than zero"));
+    }
+    CHECK(decodeError(handCache(MoveKind::Dwell, 0.25), 1).empty());
+    CHECK(decodeError(handCache(MoveKind::Feed, 300.0), 1).empty());
+}
+
+TEST_CASE("T-0134: saving refuses zero or negative tool sizes, feeds, feed overrides and dwell",
+          "[document][toolpath][carv][errors]") {
+    const auto saveError = [](const ToolpathRecord& r) {
+        Document d;
+        d.insertToolpath(r);
+        const auto saved = saveCarv(d, CarvExtras{});
+        REQUIRE_FALSE(saved.ok());
+        CHECK(saved.error().code == Code::InvalidContent);
+        return saved.error().message;
+    };
+    for (double bad : {0.0, -0.0, -2.0, std::numeric_limits<double>::quiet_NaN()}) {
+        INFO(bad);
+        ToolpathRecord r = plainRecord({Move::rapid({0, 0, 5})});
+        r.tool.diameter = bad;
+        CHECK(contains(saveError(r), "toolpath 't' (#"));
+        CHECK(contains(saveError(r), "tool diameter must be a finite number greater than zero"));
+        r = plainRecord({Move::rapid({0, 0, 5})});
+        r.tool.feedRate = bad;
+        CHECK(contains(saveError(r), "tool feed rate must be a finite number greater than zero"));
+        r = plainRecord({Move::rapid({0, 0, 5})});
+        r.tool.plungeRate = bad;
+        CHECK(contains(saveError(r), "tool plunge rate must be a finite number greater than zero"));
+        if (std::isfinite(bad)) {
+            CHECK(contains(saveError(plainRecord({Move::rapid({0, 0, 5}), Move::dwell({0, 0, 5}, bad)})),
+                           "move 2: dwell seconds must be greater than zero"));
+            CHECK(contains(saveError(plainRecord({Move::rapid({0, 0, 5}), Move::feed({1, 0, 5}, bad)})),
+                           "move 2: feed override must be greater than zero"));
+        }
+    }
+    // Computed but empty (zero moves) still counts as computed.
+    ToolpathRecord empty = plainRecord({});
+    empty.tool = {};
+    CHECK(contains(saveError(empty), "tool diameter must be a finite number greater than zero"));
+}
+
+TEST_CASE("T-0134: a record without computed moves keeps a default (zero) tool snapshot",
+          "[document][toolpath][carv]") {
+    // T-0132 behaviour: an uncomputed record may have the default snapshot; it saves and loads.
+    Document d;
+    d.insertToolpath(ToolpathRecord{});
+    ToolpathRecord negative = plainRecord({}, false);
+    negative.tool.diameter = -1.0;
+    negative.tool.feedRate = 0.0;
+    d.insertToolpath(negative);
+    const Bytes file = save(d);
+    const LoadedCarv back = load(file);
+    REQUIRE(back.document.toolpaths().size() == 2);
+    CHECK(back.document.toolpaths()[0].tool == toolpath::ToolSnapshot{});
+    CHECK(back.document.toolpaths()[1].tool.diameter == -1.0);
+    CHECK(consistent(d));
+
+    // The same zero tool on a computed record is refused on save and on load.
+    Document computed;
+    computed.insertToolpath(plainRecord({Move::rapid({0, 0, 5})}));
+    const Bytes good = save(computed);
+    const std::string job = memberText(good, "job.json");
+    const CarvError e = loadError(withText(good, "job.json", replaced(job, "\"diameter\": 6.0", "\"diameter\": 0.0")));
+    CHECK(e.code == Code::InvalidContent);
+    CHECK(contains(e.message, "tool.diameter: must be a finite number greater than zero for a toolpath with computed moves"));
+    ToolpathRecord zero = plainRecord({Move::rapid({0, 0, 5})});
+    zero.tool = {};
+    Document z;
+    z.insertToolpath(zero);
+    const auto saved = saveCarv(z, CarvExtras{});
+    REQUIRE_FALSE(saved.ok());
+    CHECK(contains(saved.error().message, "tool diameter must be a finite number greater than zero for a toolpath with computed moves"));
 }

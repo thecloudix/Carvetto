@@ -193,6 +193,17 @@ Result<PostProcessor> PostProcessor::parse(std::string_view source) {
         if (t.empty() || t.front() == '+') {
             continue;
         }
+        // Control characters other than tab (form feed, vertical tab, a CR inside the line …)
+        // would be written raw into the G-code and can hide or split words, e.g. end the word run
+        // of an active-comment check (ADR-0020). A CR LF line end is trimmed above.
+        for (char c : t) {
+            const auto u = static_cast<unsigned char>(c);
+            if ((u < 0x20 && c != '\t') || u == 0x7F) {
+                static constexpr char kHex[] = "0123456789ABCDEF";
+                const std::string code{'0', 'x', kHex[u >> 4], kHex[u & 0x0F]};
+                return Error{lineNo, "control character " + code + " in line (only tab is allowed)"};
+            }
+        }
 
         if (open != nullptr) {
             if (detail::iequals(t, "end")) {

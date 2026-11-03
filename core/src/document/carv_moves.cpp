@@ -120,7 +120,7 @@ std::string encodeMoves(const std::vector<Move>& moves, std::vector<std::uint8_t
         const Move& m = moves[i];
         const int kind = static_cast<int>(m.kind);
         if (kind < 0 || kind >= kKindCount) {
-            return "move " + std::to_string(i) + " has an invalid kind";
+            return "move " + std::to_string(i + 1) + " has an invalid kind";
         }
         const bool arc = toolpath::isArc(m.kind);
         const bool dwell = m.kind == MoveKind::Dwell;
@@ -130,7 +130,13 @@ std::string encodeMoves(const std::vector<Move>& moves, std::vector<std::uint8_t
         finite = finite && (!dwell || std::isfinite(m.dwellSeconds));
         finite = finite && (!hasFeed || std::isfinite(*m.feedOverride));
         if (!finite) {
-            return "move " + std::to_string(i) + " has a non-finite value";
+            return "move " + std::to_string(i + 1) + " has a non-finite value";
+        }
+        if (dwell && !(m.dwellSeconds > 0.0)) {
+            return "move " + std::to_string(i + 1) + ": dwell seconds must be greater than zero";
+        }
+        if (hasFeed && !(*m.feedOverride > 0.0)) {
+            return "move " + std::to_string(i + 1) + ": feed override must be greater than zero";
         }
         auto tag = static_cast<std::uint8_t>(kind);
         const bool sameX = bitsOf(m.to.x) == bitsOf(px);
@@ -168,7 +174,10 @@ std::string encodeMoves(const std::vector<Move>& moves, std::vector<std::uint8_t
     return {};
 }
 
-std::string decodeMoves(CharSource& source, std::uint64_t expectedCount, std::vector<Move>& out) {
+namespace {
+
+/// Decodes into `out`, or only validates when `out` is null.
+std::string decodeImpl(CharSource& source, std::uint64_t expectedCount, std::vector<Move>* out) {
     Reader r(source);
     std::array<std::uint8_t, 4> magic{};
     std::array<std::uint8_t, 4> version{};
@@ -190,13 +199,16 @@ std::string decodeMoves(CharSource& source, std::uint64_t expectedCount, std::ve
     }
     // Exactly what is declared: the count was charged to the move budget (at most one move per
     // byte of the file), so no doubling past it.
-    out.reserve(out.size() + static_cast<std::size_t>(count));
+    if (out) {
+        out->reserve(out->size() + static_cast<std::size_t>(count));
+    }
     double px = 0.0;
     double py = 0.0;
     double pz = 0.0;
     std::optional<double> lastFeed;
     for (std::uint64_t i = 0; i < count; ++i) {
-        const auto bad = [i](const char* what) { return "move " + std::to_string(i) + ": " + what; };
+        // Moves are numbered from 1, as in the post's errors.
+        const auto bad = [i](const char* what) { return "move " + std::to_string(i + 1) + ": " + what; };
         std::uint8_t tag = 0;
         if (!r.byte(tag)) {
             return bad("the move cache ends early");
@@ -247,15 +259,34 @@ std::string decodeMoves(CharSource& source, std::uint64_t expectedCount, std::ve
             (m.feedOverride && !std::isfinite(*m.feedOverride))) {
             return bad("a non-finite value");
         }
+        // A zero or negative pause or feed is never what a toolpath asks for (T-0134).
+        if (m.kind == MoveKind::Dwell && !(m.dwellSeconds > 0.0)) {
+            return bad("dwell seconds must be greater than zero");
+        }
+        if (m.feedOverride && !(*m.feedOverride > 0.0)) {
+            return bad("feed override must be greater than zero");
+        }
         px = m.to.x;
         py = m.to.y;
         pz = m.to.z;
-        out.push_back(m);
+        if (out) {
+            out->push_back(m);
+        }
     }
     if (!r.atEnd()) {
         return "data follows the last move";
     }
     return {};
+}
+
+}  // namespace
+
+std::string decodeMoves(CharSource& source, std::uint64_t expectedCount, std::vector<Move>& out) {
+    return decodeImpl(source, expectedCount, &out);
+}
+
+std::string validateMoves(CharSource& source, std::uint64_t expectedCount) {
+    return decodeImpl(source, expectedCount, nullptr);
 }
 
 }  // namespace carvetto::document::detail

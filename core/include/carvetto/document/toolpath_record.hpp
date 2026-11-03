@@ -8,6 +8,8 @@
 #include <vector>
 
 #include "carvetto/document/ids.hpp"
+#include "carvetto/toolpath/drill.hpp"
+#include "carvetto/toolpath/engrave.hpp"
 #include "carvetto/toolpath/move.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/profile.hpp"
@@ -49,11 +51,14 @@ struct ToolSource {
 
 /// The operation of a toolpath and its parameters. `cuttingData` inside `ProfileParams` is input
 /// from the tool database and is not part of a saved record (it loads empty); the feeds the
-/// toolpath was computed with are in `ToolpathRecord::tool`.
-using ToolpathParams = std::variant<toolpath::ProfileParams, toolpath::PocketParams>;
+/// toolpath was computed with are in `ToolpathRecord::tool`. Drilling (T-0150) and quick engraving
+/// (T-0151) take their cutting data as a separate argument, so `DrillParams` and `EngraveParams`
+/// hold only record content.
+using ToolpathParams =
+    std::variant<toolpath::ProfileParams, toolpath::PocketParams, toolpath::DrillParams, toolpath::EngraveParams>;
 
-/// Discriminator for `ToolpathRecord::operation()`.
-enum class ToolpathOperation { Profile, Pocket };
+/// Discriminator for `ToolpathRecord::operation()` (same order as the `ToolpathParams` variant).
+enum class ToolpathOperation { Profile, Pocket, Drill, Engrave };
 
 /// Computed moves of a toolpath, shared and immutable so copies (undo history, clipboard) are cheap.
 using SharedMoves = std::shared_ptr<const std::vector<toolpath::Move>>;
@@ -90,5 +95,13 @@ struct ToolpathRecord {
 /// cleared, as the `.carv` move cache does not store them, so a record equals its saved and
 /// reloaded copy.
 SharedMoves shareMoves(std::vector<toolpath::Move> moves);
+
+/// Toolpath parameters must be finite numbers (T-0136, ADR-0021 §2): returns the job.json key
+/// path inside `params` of the first number that is NaN or infinite (e.g. `"safe_z"`,
+/// `"passes.cut_depth"`, `"start_position[1]"`, angles with their `_rad` suffix), or an empty
+/// string when every number is finite. `ProfileParams::cuttingData` is not part of a record and
+/// is not checked. `AddToolpathCommand`/`SetToolpathCommand` refuse such parameters, `saveCarv`
+/// refuses to write them and the loader refuses them.
+std::string nonFiniteParam(const ToolpathParams& params);
 
 }  // namespace carvetto::document

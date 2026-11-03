@@ -789,7 +789,8 @@ void normalise(ToolpathRecord& record) {
 bool AddToolpathCommand::apply(Document& doc) {
     if (!applied_) {
         normalise(record_);
-        if (!canTakeId(doc, record_.id.value) || !selectionValid(doc, record_.selection, record_.id)) {
+        if (!canTakeId(doc, record_.id.value) || !selectionValid(doc, record_.selection, record_.id) ||
+            !nonFiniteParam(record_.params).empty()) {
             return false;
         }
         if (record_.id.isNull()) {
@@ -827,7 +828,8 @@ void RemoveToolpathsCommand::revert(Document& doc) {
 bool SetToolpathCommand::apply(Document& doc) {
     normalise(after_);
     ToolpathRecord* record = doc.findToolpath(after_.id);
-    if (!record || *record == after_ || !selectionValid(doc, after_.selection, after_.id)) {
+    if (!record || *record == after_ || !selectionValid(doc, after_.selection, after_.id) ||
+        !nonFiniteParam(after_.params).empty()) {
         return false;
     }
     before_ = *record;

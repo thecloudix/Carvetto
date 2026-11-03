@@ -376,8 +376,15 @@ constexpr EnumName<toolpath::PocketStrategy> kPocketStrategies[] = {
 constexpr EnumName<toolpath::ProfilePass> kProfilePasses[] = {{toolpath::ProfilePass::None, "none"},
                                                              {toolpath::ProfilePass::First, "first"},
                                                              {toolpath::ProfilePass::Last, "last"}};
+constexpr EnumName<toolpath::PeckRetract> kPeckRetracts[] = {
+    {toolpath::PeckRetract::AboveStart, "above_start"},
+    {toolpath::PeckRetract::AbovePreviousPass, "above_previous_pass"}};
+constexpr EnumName<toolpath::EngraveStrategy> kEngraveStrategies[] = {
+    {toolpath::EngraveStrategy::Outline, "outline"}, {toolpath::EngraveStrategy::Fill, "fill"}};
 constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Profile, "profile"},
-                                                      {ToolpathOperation::Pocket, "pocket"}};
+                                                      {ToolpathOperation::Pocket, "pocket"},
+                                                      {ToolpathOperation::Drill, "drill"},
+                                                      {ToolpathOperation::Engrave, "engrave"}};
 
 template <class E, std::size_t N>
 const char* nameOf(const EnumName<E> (&table)[N], E value) {
@@ -600,6 +607,15 @@ json encodeTolerance(const geometry::Tolerance& t) {
     return j;
 }
 
+json encodeOrder(const toolpath::OrderOptions& o) {
+    json order = json::object();
+    order["selection_order"] = o.selectionOrder;
+    order["left_to_right"] = o.leftToRight;
+    order["bottom_to_top"] = o.bottomToTop;
+    order["grid"] = o.grid;
+    return order;
+}
+
 json encodeProfileParams(const toolpath::ProfileParams& p) {
     json j = json::object();
     j["name"] = p.name;
@@ -643,12 +659,7 @@ json encodeProfileParams(const toolpath::ProfileParams& p) {
     leads["lead_out"] = p.leads.leadOut;
     leads["overcut"] = p.leads.overcut;
     j["leads"] = std::move(leads);
-    json order = json::object();
-    order["selection_order"] = p.order.selectionOrder;
-    order["left_to_right"] = p.order.leftToRight;
-    order["bottom_to_top"] = p.order.bottomToTop;
-    order["grid"] = p.order.grid;
-    j["order"] = std::move(order);
+    j["order"] = encodeOrder(p.order);
     j["start_at"] = nameOf(kStartAts, p.startAt);
     j["start_anchor"] = nameOf(kBoxAnchors, p.startAnchor);
     j["start_position"] = encodePoint(p.startPosition);
@@ -680,6 +691,37 @@ json encodePocketParams(const toolpath::PocketParams& p) {
     return j;
 }
 
+json encodeDrillParams(const toolpath::DrillParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["start_depth"] = p.startDepth;
+    j["cut_depth"] = p.cutDepth;
+    j["safe_z"] = p.safeZ;
+    j["peck"] = p.peck;
+    j["peck_retract"] = nameOf(kPeckRetracts, p.peckRetract);
+    j["retract_gap"] = p.retractGap;
+    j["dwell_time"] = p.dwellTime;
+    j["order"] = encodeOrder(p.order);
+    j["start_position"] = encodePoint(p.startPosition);
+    j["tolerance"] = encodeTolerance(p.tolerance);
+    return j;
+}
+
+json encodeEngraveParams(const toolpath::EngraveParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["depth"] = p.depth;
+    j["passes"] = p.passes;
+    j["safe_z"] = p.safeZ;
+    j["strategy"] = nameOf(kEngraveStrategies, p.strategy);
+    j["fill_pattern"] = nameOf(kPocketStrategies, p.fillPattern);
+    j["stepover"] = p.stepover;
+    j["raster_angle_rad"] = p.rasterAngle;
+    j["start_position"] = encodePoint(p.startPosition);
+    j["tolerance"] = encodeTolerance(p.tolerance);
+    return j;
+}
+
 /// Name of the move cache of the toolpath at `index` (0-based) in the job order.
 std::string cacheMemberName(std::size_t index) {
     std::string digits = std::to_string(index + 1);
@@ -694,6 +736,10 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
     j["operation"] = nameOf(kOperations, tp.operation());
     if (const auto* profile = std::get_if<toolpath::ProfileParams>(&tp.params)) {
         j["params"] = encodeProfileParams(*profile);
+    } else if (const auto* drill = std::get_if<toolpath::DrillParams>(&tp.params)) {
+        j["params"] = encodeDrillParams(*drill);
+    } else if (const auto* engrave = std::get_if<toolpath::EngraveParams>(&tp.params)) {
+        j["params"] = encodeEngraveParams(*engrave);
     } else {
         j["params"] = encodePocketParams(std::get<toolpath::PocketParams>(tp.params));
     }
@@ -820,6 +866,25 @@ double readDouble(JsonReader& r, const Path& p) {
     fail(p, "must be a number");
 }
 
+/// A tool size, feed or dwell: finite and greater than zero (T-0134; a crafted file must not hand
+/// the post a zero or negative value).
+double readPositive(JsonReader& r, const Path& p) {
+    const double v = readDouble(r, p);
+    if (!std::isfinite(v) || !(v > 0.0)) {
+        fail(p, "must be a finite number greater than zero");
+    }
+    return v;
+}
+
+/// A number that must not be NaN or infinite (toolpath parameters, interim move values).
+double readFinite(JsonReader& r, const Path& p) {
+    const double v = readDouble(r, p);
+    if (!std::isfinite(v)) {
+        fail(p, "must be finite");
+    }
+    return v;
+}
+
 std::int64_t readInteger(JsonReader& r, const Path& p, std::int64_t lo, std::int64_t hi) {
     if (r.peek() != JKind::Number) {
         fail(p, "must be an integer");
@@ -906,6 +971,15 @@ std::array<double, N> readTuple(JsonReader& r, const Path& p, const char* shape)
 Vec2 readPoint(JsonReader& r, const Path& p) {
     const auto v = readTuple<2>(r, p, "[x, y] pair");
     return {v[0], v[1]};
+}
+
+/// An [x, y] pair of finite numbers (toolpath parameters).
+Vec2 readFinitePoint(JsonReader& r, const Path& p) {
+    const Vec2 v = readPoint(r, p);
+    if (!std::isfinite(v.x) || !std::isfinite(v.y)) {
+        fail(p.at(std::isfinite(v.x) ? 1 : 0), "must be finite");
+    }
+    return v;
 }
 
 JobSize readSize(JsonReader& r, const Path& p) {
@@ -1491,9 +1565,11 @@ class ParamsRecord {
         return k.size() == base.size() + 4 && k.compare(0, base.size(), base) == 0 &&
                k.compare(base.size(), 4, "_rad") == 0;
     }
-    double number() { return readDouble(r_, field()); }
+    // Parameters must be finite (T-0136): the ADR-0013 "NaN"/"Infinity" spellings are refused
+    // here, as AddToolpathCommand/SetToolpathCommand and saveCarv refuse such values.
+    double number() { return readFinite(r_, field()); }
     double angle() {
-        const double v = readDouble(r_, field());
+        const double v = readFinite(r_, field());
         return dialect_ == ParamsDialect::ParamsJson ? v * kRadPerDeg : v;
     }
     bool boolean() { return readBool(r_, field()); }
@@ -1592,6 +1668,17 @@ constexpr std::array<std::string_view, 16> kPocketKeysParams{
     "name",     "start_depth",      "cut_depth",    "maintain_exact_step", "last_pass_thickness", "safe_z",
     "strategy", "direction",        "raster_angle", "profile_pass",        "allowance",           "ramp_plunge",
     "ramp_distance", "tolerance",   "tool",         "layers"};
+
+constexpr std::array<std::string_view, 13> kDrillKeys{
+    "name",        "start_depth", "cut_depth", "safe_z",         "peck",      "peck_retract", "retract_gap",
+    "dwell_time",  "order",       "start_position", "tolerance", "tool",      "layers"};
+
+constexpr std::array<std::string_view, 12> kEngraveKeysJob{
+    "name",     "depth",            "passes",         "safe_z",    "strategy", "fill_pattern",
+    "stepover", "raster_angle_rad", "start_position", "tolerance", "tool",     "layers"};
+constexpr std::array<std::string_view, 12> kEngraveKeysParams{
+    "name",     "depth",        "passes",         "safe_z",    "strategy", "fill_pattern",
+    "stepover", "raster_angle", "start_position", "tolerance", "tool",     "layers"};
 
 template <std::size_t N>
 std::span<const std::string_view> keysFor(const std::array<std::string_view, N>& keys, ParamsDialect d) {
@@ -1716,7 +1803,7 @@ toolpath::ProfileParams decodeProfileParams(JsonReader& r, const Path& p, Params
         } else if (k == "start_anchor") {
             out.startAnchor = rec.choice(kBoxAnchors);
         } else if (k == "start_position") {
-            out.startPosition = readPoint(r, f);
+            out.startPosition = readFinitePoint(r, f);
         } else if (k == "corners") {
             ParamsRecord g(r, f, kCornerKeys, d);
             while (g.next()) {
@@ -1783,6 +1870,96 @@ toolpath::PocketParams decodePocketParams(JsonReader& r, const Path& p, ParamsDi
     return out;
 }
 
+toolpath::OrderOptions decodeOrder(JsonReader& r, const Path& f, ParamsDialect d) {
+    toolpath::OrderOptions out;
+    ParamsRecord g(r, f, kOrderKeys, d);
+    while (g.next()) {
+        const std::string& gk = g.key();
+        if (gk == "selection_order") {
+            out.selectionOrder = g.boolean();
+        } else if (gk == "left_to_right") {
+            out.leftToRight = g.boolean();
+        } else if (gk == "bottom_to_top") {
+            out.bottomToTop = g.boolean();
+        } else {
+            out.grid = g.boolean();
+        }
+    }
+    return out;
+}
+
+toolpath::DrillParams decodeDrillParams(JsonReader& r, const Path& p, ParamsDialect d,
+                                        LegacyParamsExtras* legacy) {
+    toolpath::DrillParams out;
+    ParamsRecord rec(r, p, keysFor(kDrillKeys, d), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "start_depth") {
+            out.startDepth = rec.number();
+        } else if (k == "cut_depth") {
+            out.cutDepth = rec.number();
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else if (k == "peck") {
+            out.peck = rec.boolean();
+        } else if (k == "peck_retract") {
+            out.peckRetract = rec.choice(kPeckRetracts);
+        } else if (k == "retract_gap") {
+            out.retractGap = rec.number();
+        } else if (k == "dwell_time") {
+            out.dwellTime = rec.number();
+        } else if (k == "order") {
+            out.order = decodeOrder(r, rec.field(), d);
+        } else if (k == "start_position") {
+            out.startPosition = readFinitePoint(r, rec.field());
+        } else if (k == "tolerance") {
+            out.tolerance = decodeTolerance(r, rec.field(), d);
+        } else if (legacy) {
+            decodeLegacyCommon(rec, *legacy);
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
+toolpath::EngraveParams decodeEngraveParams(JsonReader& r, const Path& p, ParamsDialect d,
+                                            LegacyParamsExtras* legacy) {
+    toolpath::EngraveParams out;
+    ParamsRecord rec(r, p, keysFor(d == ParamsDialect::JobJson ? kEngraveKeysJob : kEngraveKeysParams, d), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "depth") {
+            out.depth = rec.number();
+        } else if (k == "passes") {
+            out.passes = rec.integer();
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else if (k == "strategy") {
+            out.strategy = rec.choice(kEngraveStrategies);
+        } else if (k == "fill_pattern") {
+            out.fillPattern = rec.choice(kPocketStrategies);
+        } else if (k == "stepover") {
+            out.stepover = rec.number();
+        } else if (rec.isAngle("raster_angle")) {
+            out.rasterAngle = rec.angle();
+        } else if (k == "start_position") {
+            out.startPosition = readFinitePoint(r, rec.field());
+        } else if (k == "tolerance") {
+            out.tolerance = decodeTolerance(r, rec.field(), d);
+        } else if (legacy) {
+            decodeLegacyCommon(rec, *legacy);
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
 /// Decodes params captured as canonical text (already charged to the budget) for `operation`.
 ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& text, const Path& p,
                               ParamsDialect d, LegacyParamsExtras* legacy) {
@@ -1791,6 +1968,12 @@ ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& te
     JsonReader r(src, local, "params", text.size() + 1);
     if (operation == ToolpathOperation::Profile) {
         return decodeProfileParams(r, p, d, legacy);
+    }
+    if (operation == ToolpathOperation::Drill) {
+        return decodeDrillParams(r, p, d, legacy);
+    }
+    if (operation == ToolpathOperation::Engrave) {
+        return decodeEngraveParams(r, p, d, legacy);
     }
     return decodePocketParams(r, p, d, legacy);
 }
@@ -1933,6 +2116,18 @@ DecodedToolpath decodeToolpath(JsonReader& r, const Path& p) {
     for (const char* key : {"id", "name", "operation", "params", "selection", "tool"}) {
         rec.require(key);
     }
+    if (out.cacheMember) {
+        // A toolpath with computed moves goes to the post: its tool must be real (T-0134). A record
+        // without moves may keep a default (zero) snapshot until it is calculated (ADR-0021 §3).
+        const Path toolPath = p.field("tool");
+        for (const auto& [value, key] : {std::pair{tp.tool.diameter, "diameter"},
+                                         std::pair{tp.tool.feedRate, "feed_rate"},
+                                         std::pair{tp.tool.plungeRate, "plunge_rate"}}) {
+            if (!std::isfinite(value) || !(value > 0.0)) {
+                fail(toolPath.field(key), "must be a finite number greater than zero for a toolpath with computed moves");
+            }
+        }
+    }
     const auto where = [&p, &tp]() { return p.str() + " (id " + std::to_string(tp.id.value) + ")"; };
     ToolpathOperation op = ToolpathOperation::Profile;
     bool knownOp = false;
@@ -1966,14 +2161,6 @@ constexpr std::array<std::string_view, 6> kInterimToolKeys{"name",      "tool_nu
 constexpr std::array<std::string_view, 7> kInterimKinds{"rapid", "feed", "plunge", "retract", "arc_cw", "arc_ccw", "dwell"};
 constexpr std::array<std::string_view, 1> kFeedKeys{"feed"};
 
-double readFinite(JsonReader& r, const Path& p) {
-    const double v = readDouble(r, p);
-    if (!std::isfinite(v)) {
-        fail(p, "must be finite");
-    }
-    return v;
-}
-
 toolpath::Move decodeInterimMove(JsonReader& r, const Path& p) {
     if (r.peek() != JKind::Array) {
         fail(p, "must be an array [\"kind\", x, y, z, ...]");
@@ -2002,6 +2189,9 @@ toolpath::Move decodeInterimMove(JsonReader& r, const Path& p) {
         m.centre = {v[3], v[4]};
     } else if (m.kind == toolpath::MoveKind::Dwell) {
         m.dwellSeconds = v[3];
+        if (!(m.dwellSeconds > 0.0)) {
+            fail(p.at(4), "dwell seconds must be greater than zero");
+        }
     }
     if (r.nextElement()) {
         const Path f = p.at(fixed + 1);
@@ -2011,7 +2201,7 @@ toolpath::Move decodeInterimMove(JsonReader& r, const Path& p) {
         Record feed(r, f, kFeedKeys);
         while (feed.next()) {
             if (feed.known()) {
-                m.feedOverride = readFinite(r, feed.field());
+                m.feedOverride = readPositive(r, feed.field());
             } else {
                 fail(f, "unknown key '" + feed.key() + "'");
             }
@@ -2066,11 +2256,11 @@ InterimToolpath decodeInterim(JsonReader& r, bool countOnly = false, std::uint64
                 } else if (tk == "tool_number") {
                     tp.tool.toolNumber = readInt(r, tf, 0, 1'000'000);
                 } else if (tk == "diameter") {
-                    tp.tool.diameter = readFinite(r, tf);
+                    tp.tool.diameter = readPositive(r, tf);
                 } else if (tk == "feed_rate") {
-                    tp.tool.feedRate = readFinite(r, tf);
+                    tp.tool.feedRate = readPositive(r, tf);
                 } else if (tk == "plunge_rate") {
-                    tp.tool.plungeRate = readFinite(r, tf);
+                    tp.tool.plungeRate = readPositive(r, tf);
                 } else if (tk == "spindle_speed") {
                     tp.tool.spindleSpeed = readFinite(r, tf);
                 } else {
@@ -2414,8 +2604,12 @@ auto decodeMember(detail::ZipArchive& zip, const detail::ZipEntry& entry, LoadBu
     }
 }
 
+/// What the loader does with the moves of a cache. `saveCarv`'s verification load only validates
+/// them (same checks and messages), so it never holds a second decoded copy (T-0136).
+enum class CacheMoves { Keep, ValidateOnly };
+
 LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimits& limits,
-                    const detail::ZipLimits& zipLimits) {
+                    const detail::ZipLimits& zipLimits, CacheMoves cacheMoves = CacheMoves::Keep) {
     detail::ZipArchive zip(bytes);
     {
         std::string error;
@@ -2518,26 +2712,32 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
                 throw LoadFailure{CarvError::Code::InvalidArchive, error};
             }
             std::vector<toolpath::Move> moves;
-            const std::string defect = detail::decodeMoves(stream->source(), count, moves);
+            const std::string defect = cacheMoves == CacheMoves::Keep
+                                           ? detail::decodeMoves(stream->source(), count, moves)
+                                           : detail::validateMoves(stream->source(), count);
             if (!stream->finish(error)) {
                 throw LoadFailure{CarvError::Code::InvalidArchive, error};  // damage, not bad content
             }
             if (!defect.empty()) {
                 throw LoadFailure{CarvError::Code::InvalidContent, e.name + ": " + defect};
             }
+            // Validated only: an empty list still marks the record as computed for the checks below.
             d.record.moves = shareMoves(std::move(moves));
             cachesRead.insert(e.name);
             continue;
         }
         if (detail::isInterimToolpathName(e.name)) {
             // carvetto-cli's interim storage before format 1.1 (ADR-0019): becomes a record.
-            // Two passes: count the moves under a throwaway budget with the same limits, then
+            // Two passes: count the moves under a throwaway copy of the budget, then
             // decode for real with exactly that many reserved. Interim members come from the
             // T-0122 CLI, whose files held at most ~350,000 moves, so the extra pass is cheap.
+            // The probe starts as a copy of the shared budget (T-0136), so the count it accepts is
+            // what the shared budget can still take: the real pass never reserves moves that the
+            // shared budget then refuses, and a member the shared budget would refuse fails here
+            // with the same message.
             std::uint64_t count = 0;
             {
-                LoadBudget probe(budget.limits());
-                probe.setArchiveBytes(bytes.size());
+                LoadBudget probe = budget;
                 decodeMember(zip, e, probe, [&count](JsonReader& r) { return decodeInterim(r, true, 0, &count); });
             }
             interim.emplace(e.name, decodeMember(zip, e, budget, [count](JsonReader& r) {
@@ -2716,8 +2916,10 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
     for (std::size_t i = kCarvMaxCachedToolpaths; i < doc.toolpaths().size(); ++i) {
         if (doc.toolpaths()[i].hasMoves()) {
             throw LoadFailure{CarvError::Code::ResourceLimit,
-                              "more than " + std::to_string(kCarvMaxCachedToolpaths) +
-                                  " toolpaths with computed moves"};
+                              "the toolpath at position " + std::to_string(i + 1) + " (#" +
+                                  std::to_string(doc.toolpaths()[i].id.value) +
+                                  ") has computed moves; only toolpaths at positions 1 to " +
+                                  std::to_string(kCarvMaxCachedToolpaths) + " can keep computed moves"};
         }
     }
     doc.setActiveSheet(SheetId{jf.activeSheet});
@@ -2741,6 +2943,124 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
         out.extras = CarvExtras(std::move(extras));
     }
     return out;
+}
+
+/// A string of a JSON tree with its loader-style path and three sizes (T-0139): `memory` in
+/// memory; `stored` between the quotes in job.json, where control characters, quotes and
+/// backslashes are escaped and invalid UTF-8 becomes U+FFFD; `decoded` as the loader reads it back
+/// (escapes undone, so only invalid UTF-8 grows: three bytes of U+FFFD per invalid byte). The
+/// loader's string cap applies to `decoded`; job.json's size and compression ratio to `stored`.
+struct LongestString {
+    std::string path;
+    std::size_t memory{0};
+    std::size_t stored{0};
+    std::size_t decoded{0};
+};
+
+/// The longest strings of a JSON tree: by decoded size (the loader's cap) and by stored size.
+struct LongestStrings {
+    LongestString decoded;
+    LongestString stored;
+};
+
+/// A name or key for a message: at most 64 bytes, longer ones cut with "..." (the bytes are
+/// shown as they are; messages are not G-code).
+std::string clipped(const std::string& text) {
+    constexpr std::size_t kMax = 64;
+    return text.size() <= kMax ? text : text.substr(0, kMax) + "...";
+}
+
+/// Measures `text` as stored in job.json and as decoded by the loader (see LongestString).
+void measure(const std::string& text, std::string& scratch, LongestString& out) {
+    scratch.clear();
+    detail::appendJsonString(scratch, text);
+    out.memory = text.size();
+    out.stored = scratch.size() - 2;
+    // appendJsonString writes two-character escapes (quote, backslash, \n ...) and six-character
+    // backslash-u escapes for other control characters; each decodes to one byte.
+    std::size_t decoded = out.stored;
+    for (std::size_t i = 1; i + 1 < scratch.size(); ++i) {
+        if (scratch[i] == '\\') {
+            const bool unicode = scratch[i + 1] == 'u';
+            decoded -= unicode ? 5 : 1;
+            i += unicode ? 5 : 1;
+        }
+    }
+    out.decoded = decoded;
+}
+
+void findLongestStrings(const json& j, const std::string& path, LongestStrings& best, std::string& scratch) {
+    const auto consider = [&best, &scratch](const std::string& text, const std::string& where, bool key) {
+        // A string grows at most sixfold when stored (\u0001) and threefold when decoded
+        // (U+FFFD); skip those that cannot win.
+        if (text.size() * 6 <= best.stored.stored && text.size() * 3 <= best.decoded.decoded) {
+            return;
+        }
+        LongestString m;
+        measure(text, scratch, m);
+        if (m.stored > best.stored.stored || m.decoded > best.decoded.decoded) {
+            m.path = key ? where + " (key)" : where;
+            if (m.stored > best.stored.stored) {
+                best.stored = m;
+            }
+            if (m.decoded > best.decoded.decoded) {
+                best.decoded = std::move(m);
+            }
+        }
+    };
+    if (j.is_string()) {
+        consider(j.get_ref<const std::string&>(), path, false);
+    } else if (j.is_object()) {
+        for (auto it = j.begin(); it != j.end(); ++it) {
+            const std::string child = path + "." + clipped(it.key());
+            consider(it.key(), child, true);
+            findLongestStrings(it.value(), child, best, scratch);
+        }
+    } else if (j.is_array()) {
+        for (std::size_t i = 0; i < j.size(); ++i) {
+            findLongestStrings(j[i], path + "[" + std::to_string(i) + "]", best, scratch);
+        }
+    }
+}
+
+/// Explains a verification failure of job.json caused by a long string (T-0136): the loader
+/// refuses a string over its cap without naming it, and a long repetitive string makes job.json
+/// compress beyond the 200:1 ratio check before any string is read. Strings are measured as
+/// stored in job.json (T-0139). Returns an empty string when the failure has another cause.
+std::string explainLongString(const json& root, std::size_t jobBytes, const std::string& failure) {
+    const detail::LoadLimits limits;
+    const detail::ZipLimits zipLimits;
+    const bool tooLong = failure.starts_with(std::string(kJobName) + ": a string is longer than");
+    const bool ratio = failure.starts_with("zip member '" + std::string(kJobName) + "' expands");
+    if (!tooLong && !ratio) {
+        return {};
+    }
+    LongestStrings best;
+    std::string scratch;
+    findLongestStrings(root, kJobName, best, scratch);
+    const LongestString& big = best.decoded;
+    if (big.decoded > limits.maxStringBytes) {
+        std::string msg = "name too long: " + big.path + " holds " + std::to_string(big.decoded) + " bytes";
+        if (big.decoded != big.memory) {
+            msg += " when loaded (" + std::to_string(big.memory) +
+                   " in memory; invalid UTF-8 is saved as U+FFFD, 3 bytes per invalid byte)";
+        }
+        return msg + "; a name or text holds at most " + std::to_string(limits.maxStringBytes);
+    }
+    // Blamed only when it makes up a large part of job.json; otherwise the loader's message stays.
+    const LongestString& wide = best.stored;
+    if (ratio && wide.stored >= jobBytes / 4) {
+        std::string msg = "name too long: " + wide.path + " holds " + std::to_string(wide.stored) +
+                          " bytes of repetitive text";
+        if (wide.stored != wide.memory) {
+            msg += " when stored (" + std::to_string(wide.memory) +
+                   " in memory; job.json escapes control characters, quotes and backslashes and replaces "
+                   "invalid UTF-8 by U+FFFD)";
+        }
+        return msg + ", so job.json would expand more than " + std::to_string(zipLimits.maxJsonRatio) +
+               ":1 and be refused as a possible decompression bomb";
+    }
+    return {};
 }
 
 }  // namespace
@@ -2797,13 +3117,7 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
         // Toolpath records in job order; computed moves go to toolpaths/NNNN.bin, NNNN being the
         // 1-based position (ADR-0021). Checked first so no file the loader refuses is written.
         std::uint64_t totalMoves = 0;
-        for (std::size_t i = 0; i < doc.toolpaths().size(); ++i) {
-            const ToolpathRecord& tp = doc.toolpaths()[i];
-            if (tp.hasMoves() && i >= kCarvMaxCachedToolpaths) {
-                return CarvError{CarvError::Code::ResourceLimit,
-                                 "cannot save more than " + std::to_string(kCarvMaxCachedToolpaths) +
-                                     " toolpaths with computed moves"};
-            }
+        for (const ToolpathRecord& tp : doc.toolpaths()) {
             totalMoves += tp.moveCount();
         }
         if (totalMoves > kCarvMaxToolpathMoves) {
@@ -2829,17 +3143,74 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
             }
             const std::uint64_t count = 2 + names.size();
             if (count > zipLimits.maxMembers) {
+                // A preserved member that a cache replaces is not counted twice.
+                std::uint64_t computed = 0;
+                for (const ToolpathRecord& tp : doc.toolpaths()) {
+                    computed += tp.hasMoves() ? 1U : 0U;
+                }
+                const std::uint64_t kept = names.size() - computed;  // preserved members kept
+                const std::uint64_t room = zipLimits.maxMembers - 2;  // after manifest and job
+                const auto plural = [](std::uint64_t n, const char* word) {
+                    return std::to_string(n) + " " + word + (n == 1 ? "" : "s");
+                };
+                std::string msg = "the file would have " + std::to_string(count) + " archive members";
+                if (computed > 0) {
+                    msg += " (" + plural(computed, "toolpath move cache") + " among them)";
+                }
+                msg += "; a .carv file holds at most " + std::to_string(zipLimits.maxMembers) +
+                       " members including manifest.json and job.json, so ";
+                if (kept > room) {
+                    // Only possible with preserved members added through CarvExtras::withMember.
+                    msg += "the file has too many preserved members: at most " + std::to_string(room) +
+                           " fit, not " + std::to_string(kept) +
+                           (computed > 0 ? " (even without toolpath move caches)" : "");
+                } else if (kept >= room) {
+                    msg += "no toolpath with computed moves fits next to the " +
+                           plural(kept, "preserved member") + " (clear the moves of every toolpath)";
+                } else {
+                    const std::uint64_t fit = room - kept;
+                    msg += "at most " + plural(fit, "toolpath") + " with computed moves" +
+                           (fit == 1 ? " fits" : " fit") +
+                           (kept > 0 ? " next to the " + plural(kept, "preserved member") : std::string{}) +
+                           " (clear the moves of some toolpaths, or split the job)";
+                }
+                return CarvError{CarvError::Code::ResourceLimit, msg};
+            }
+        }
+        // Caches are named by position (toolpaths/0001.bin .. 9999.bin), so a computed toolpath
+        // must sit at position 9,999 or earlier, however few toolpaths are computed.
+        for (std::size_t i = kCarvMaxCachedToolpaths; i < doc.toolpaths().size(); ++i) {
+            const ToolpathRecord& tp = doc.toolpaths()[i];
+            if (tp.hasMoves()) {
                 return CarvError{CarvError::Code::ResourceLimit,
-                                 "the file would have " + std::to_string(count) + " archive members (" +
-                                     std::to_string(names.size() - (ex ? ex->members.size() : 0)) +
-                                     " toolpath move caches among them); a .carv file holds at most " +
-                                     std::to_string(zipLimits.maxMembers)};
+                                 "toolpath '" + clipped(tp.name) + "' (#" + std::to_string(tp.id.value) + ") is at position " +
+                                     std::to_string(i + 1) + " of the job and has computed moves; only toolpaths at "
+                                     "positions 1 to " + std::to_string(kCarvMaxCachedToolpaths) +
+                                     " can keep computed moves (move it up the job order, or clear its moves)"};
             }
         }
         std::map<std::string, std::vector<std::uint8_t>> caches;
         json toolpaths = json::array();
         for (std::size_t i = 0; i < doc.toolpaths().size(); ++i) {
             const ToolpathRecord& tp = doc.toolpaths()[i];
+            // Parameters must be finite (T-0136); the loader refuses them too.
+            if (const std::string key = nonFiniteParam(tp.params); !key.empty()) {
+                return CarvError{CarvError::Code::InvalidContent,
+                                 "toolpath '" + clipped(tp.name) + "' (#" + std::to_string(tp.id.value) + "): parameter " + key +
+                                     " is not a finite number"};
+            }
+            // The loader refuses these for a toolpath with computed moves (T-0134); say so here
+            // with the toolpath's name. Uncomputed records may keep a default snapshot.
+            for (const auto& [value, what] : {std::pair{tp.tool.diameter, "diameter"},
+                                              std::pair{tp.tool.feedRate, "feed rate"},
+                                              std::pair{tp.tool.plungeRate, "plunge rate"}}) {
+                if (tp.hasMoves() && (!std::isfinite(value) || !(value > 0.0))) {
+                    return CarvError{CarvError::Code::InvalidContent,
+                                     "toolpath '" + tp.name + "' (#" + std::to_string(tp.id.value) + "): tool " +
+                                         what + " must be a finite number greater than zero for a toolpath with "
+                                                "computed moves"};
+                }
+            }
             std::string member;
             if (tp.hasMoves()) {
                 member = cacheMemberName(i);
@@ -2902,10 +3273,16 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
                              "the file would expand to " + std::to_string(totalBytes) + " bytes; the limit is " +
                                  std::to_string(zipLimits.maxTotalBytes)};
         }
+        const std::size_t jobBytes = members[1].data.size();
         detail::ZipWriteResult zip = detail::writeZip(members);
         if (!zip.ok) {
             return CarvError{CarvError::Code::InvalidArchive, zip.error};
         }
+        // The uncompressed caches are not needed any more: free them before the verification
+        // load below (up to 49 bytes per move).
+        members.clear();
+        members.shrink_to_fit();
+        caches.clear();
         // At most kCarvMovesPerFileByte moves per byte of the file (owner decision 2026-11-02);
         // only known now that the file is compressed.
         if (totalMoves > zip.bytes.size() * kCarvMovesPerFileByte) {
@@ -2917,12 +3294,14 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
         }
         // The promise "saveCarv never writes a file loadCarv refuses" is made structurally true:
         // the finished archive goes through the real load path, with the loader's own limits.
-        // Cost: about one load (2M moves: ~0.2 s Release, plus the decoded copy in memory while
-        // it runs). The checks above only give clearer messages for the common cases.
+        // Cost: about one load (2M moves: ~0.2 s Release). The caches are validated as they are
+        // inflated, not decoded into a second copy of the moves (T-0136). The checks above only
+        // give clearer messages for the common cases.
         try {
-            (void)loadImpl(zip.bytes, detail::LoadLimits{}, detail::ZipLimits{});
+            (void)loadImpl(zip.bytes, detail::LoadLimits{}, detail::ZipLimits{}, CacheMoves::ValidateOnly);
         } catch (const LoadFailure& f) {
-            return CarvError{f.code, "the file would not load again: " + f.message};
+            const std::string why = explainLongString(root, jobBytes, f.message);
+            return CarvError{f.code, "the file would not load again: " + (why.empty() ? f.message : why)};
         } catch (const std::bad_alloc&) {
             return CarvError{CarvError::Code::ResourceLimit,
                              "the file would not load again: out of memory while checking it"};

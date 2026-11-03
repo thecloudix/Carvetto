@@ -1,6 +1,6 @@
 # ADR-0016: 2D Profile toolpath
 
-Date: 2026-10-26 · Status: accepted 2026-11-01 (T-0120; amended in place by T-0124, 2026-10-30/11-01, and T-0127)
+Date: 2026-10-26 · Status: accepted 2026-11-01 (T-0120; amended in place by T-0124, 2026-10-30/11-01, T-0127, T-0129 and T-0141)
 
 ## Context
 T-0120 asks for `profileToolpath(contours, Tool, ProfileParams)` with the options of
@@ -37,6 +37,30 @@ choices. Behaviour descriptions come from `docs/reference/` only.
    enum has `Right`/`Left` aliases). On runs on the vector (offset by the allowance only). An
    allowance of exactly −r also puts the cut on the vector; the profile side still decides the
    direction of cut and which side is the part (T-0127; before, Inside turned into Outside there).
+   **Allowance limit (T-0129, owner decision 2026-11-01).** An allowance below −r (r as in 2:
+   half the cutting width at start + cut depth, a V-bit's cone radius there) would put the tool
+   centre across the vector, so Outside would cut like Inside (and the reverse) and On, Left and
+   Right would swap sides. `profileToolpath` refuses it: no moves, and one `InvalidParameters`
+   diagnostic (no vector) naming the allowance and the limit, e.g. "allowance -4 mm is below
+   minus the tool radius (-3 mm at the cut depth): the tool would cross the vector to its other
+   side; nothing is cut". Numbers print in the shortest form that reads back exactly, so an
+   allowance one ulp below the limit never prints as the limit. The rule applies to each pass's
+   distance: the allowance (finishing, or the only pass) and, with a separate last pass, the
+   allowance + last-pass allowance (roughing). Since a negative last-pass allowance is already
+   refused and rounded addition is monotone, the roughing distance is never below the finishing
+   one, so only the allowance decides in practice; the message says which passes cross. When only
+   the finishing pass crosses (allowance < −r ≤ allowance + last-pass allowance) the whole
+   operation is refused, roughing included: emitting the roughing alone would leave a part that
+   looks machined but is a last-pass allowance oversize, with nothing in the toolpath list to
+   show the finishing is missing (conservative; the user fixes the allowance). **Tolerance:**
+   none. The test is `allowance < −r` in doubles; in IEEE arithmetic r + a == 0 exactly when
+   a == −r and r + a < 0 exactly when a < −r, so the boundary is the same one `buildCuts` keys
+   the side on (s == 0 keeps the profile side, T-0127), and a roughing sum (r + a) + lpa with
+   r + a ≥ 0, lpa ≥ 0 can never round below zero. Exactly −r stays valid; one ulp below is
+   refused. A tolerance band would either accept allowances whose offset lands (by a sub-ulp
+   amount) on the wrong side, or need snapping values just below −r to −r, which buys nothing
+   for typed values (−D/2 is exact for any D, since halving is exact) and for computed V-bit
+   radii only shifts the edge. Output for every allowance ≥ −r is unchanged.
 5. **Exact offsets first.** Each vector is offset by r + allowance with
    `geometry::offsetOpenContour` (the public API as on main; closed contours are accepted), so
    lines and arcs stay exact: an inside profile of an r = 10 circle with a 6 mm tool is one
@@ -350,6 +374,14 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     `CornerNeedsVBit` for other tools.
 17. **Bezier input.** Beziers are polygonised before offsetting; when present the offset chordal
     tolerance is tightened to tol.distance/2 so the cut stays within tolerance of r.
+18. **Tolerance bounds (T-0141).** `ProfileParams::tolerance` must satisfy the same bounds as
+    Pocket's (ADR-0017): 1e-4 mm <= chordal <= 1 mm and 0 < distance <= chordal, all finite.
+    Otherwise nothing is cut and the result carries one `InvalidParameters` diagnostic, "invalid
+    tolerance: chordal must be between 0.0001 and 1 mm, distance > 0 and <= chordal" (the CLI
+    prints it after "no profile toolpath was produced:"). Before T-0141 any tolerance was
+    accepted, so a near-zero chordal tolerance multiplied the polygon vertex count without bound,
+    and the offset dust filter's width budget (ADR-0006 §8) stays inside the offset slack
+    only for chordal tolerances well above 1e-5 mm. Valid tolerances give byte-identical output.
 
 ### Golden hand-check (AC1 / AC6)
 `core/tests/golden/toolpath/profile_rect_tabs.moves` and `profile_rect_tabs_grbl.nc` were

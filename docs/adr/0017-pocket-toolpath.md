@@ -35,10 +35,20 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
    the true walls or islands (AC2 and AC6 hold strictly). The price is a wall skin of at most
    1.5·chordal (0.015 mm by default) left on top of the allowance.
 4. **Centre region and inset guard.** `C = inset(R, radius + allowance + margin)`. Every inward
-   offset goes through `insetBy`. Clipper2 1.4.0 turns a polygon inset past its inradius inside
-   out: a 17 mm circle inset by 19.2 comes back as a 2.2 mm circle, by 30 as a 13 mm one. Without
-   the guard, offset levels never end, and a tool too big for a small pocket would get a phantom
-   region to cut. Distances use a uniform grid over the source edges.
+   offset goes through `insetBy`. Clipper2 1.4.0 turned a polygon inset past its inradius inside
+   out: a 17 mm circle inset by 19.2 came back as a 2.2 mm circle, by 30 as a 13 mm one. Without
+   the guard, offset levels never ended, and a tool too big for a small pocket got a phantom
+   region to cut. Distances use a uniform grid over the source edges. **Amended by T-0018:** the
+   cause is fixed in `offsetContours` (ADR-0006 §6), so no phantom reaches `insetBy` any more.
+   The guard stays, for two reasons: its `Strict` repair (below) is still needed for the
+   tool-centre region, whatever the offset engine, because Clipper2's grid and join chords leave
+   vertices a hair too close to the walls; and the phantom test costs little next to the inset
+   and keeps a gouge-relevant invariant (every centre region holds a point at the full distance)
+   checked locally, so a future engine change (or a regression in a Clipper2 upgrade) cannot
+   silently reintroduce phantom regions to cut. It is no longer expected to reject anything: in a
+   verifier-harness sweep (scan2 kinds 2/3/8/12/13/14 and 120 pockcheck scenes) it rejected 241
+   regions before the fix (3 phantoms, 238 phantom slivers) and none after. The T-0018 generative
+   test in `offset_inradius_test.cpp` checks the offsets themselves.
 
    **Phantom test (by depth, T-0126).** A result region is genuine when some point of it keeps
    the full distance (the inset less the join tolerance) from the source and lies inside it: the

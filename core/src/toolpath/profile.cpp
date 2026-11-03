@@ -1,6 +1,8 @@
 #include "carvetto/toolpath/profile.hpp"
 
 #include <algorithm>
+#include <array>
+#include <charconv>
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
@@ -234,6 +236,14 @@ std::string vecName(std::size_t i) {
     return "vector " + std::to_string(i);
 }
 
+// A length in the shortest form that reads back to the same double, so an allowance just below
+// the limit never prints the same as the limit.
+std::string mmText(double v) {
+    std::array<char, 64> buf{};
+    const auto res = std::to_chars(buf.data(), buf.data() + buf.size(), v);
+    return std::string(buf.data(), res.ptr) + " mm";
+}
+
 class ProfileBuilder {
    public:
     ProfileBuilder(const std::vector<Contour>& contours, const tooling::Tool& tool, const ProfileParams& params)
@@ -246,6 +256,7 @@ class ProfileBuilder {
         result_.diagnostics.push_back({issue, contour, std::move(message), std::nullopt});
     }
     bool validate();
+    bool allowanceWithinLimit();
     void prepareInputs();
     std::vector<Cut> buildCuts(double extra, bool finishing);
     void orient(Cut& c, bool finishing) const;
@@ -366,6 +377,15 @@ bool ProfileBuilder::validate() {
             return false;
         }
     }
+    // T-0141: the same tolerance bounds as Pocket (ADR-0016 §18). The offsets and the dust
+    // filter's width budget (ADR-0006 §8) assume chordal >= 1e-4 mm.
+    const Tolerance& t = p_.tolerance;
+    if (!std::isfinite(t.chordal) || t.chordal < 1e-4 || t.chordal > 1.0 || !std::isfinite(t.distance) ||
+        !(t.distance > 0.0) || t.distance > t.chordal) {
+        diag(ProfileIssue::InvalidParameters, std::nullopt,
+             "invalid tolerance: chordal must be between 0.0001 and 1 mm, distance > 0 and <= chordal");
+        return false;
+    }
     if (!(radius_ > 0.0)) {
         diag(ProfileIssue::InvalidParameters, std::nullopt, "the tool has no cutting width at the cut depth");
         return false;
@@ -376,6 +396,9 @@ bool ProfileBuilder::validate() {
     }
     if (p_.separateLastPass && p_.lastPassAllowance < 0.0) {
         diag(ProfileIssue::InvalidParameters, std::nullopt, "last pass allowance must not be negative");
+        return false;
+    }
+    if (!allowanceWithinLimit()) {
         return false;
     }
     if (passes_.levels().empty()) {
@@ -403,6 +426,39 @@ bool ProfileBuilder::validate() {
         }
     }
     return true;
+}
+
+// T-0129 (owner decision 2026-11-01): an allowance below minus the tool radius puts the tool
+// centre across the vector, so Outside would cut like Inside (and the reverse) and On, Left and
+// Right would swap sides. Each pass's distance (the allowance; for the roughing of a separate last
+// pass, the allowance + the last-pass allowance) must be at least -r, compared exactly: in IEEE
+// arithmetic r + a == 0 exactly when a == -r and r + a < 0 exactly when a < -r, so this is the
+// same boundary buildCuts keys the side on (s == 0, T-0127). Exactly -r stays valid. When either
+// pass is refused nothing is cut, roughing included (ADR-0016 §4).
+bool ProfileBuilder::allowanceWithinLimit() {
+    const double limit = -radius_;
+    // validate() has refused a negative last-pass allowance, and rounded addition is monotone, so
+    // the roughing allowance is never below the finishing one: only the allowance itself decides.
+    const double roughAllowance = p_.separateLastPass ? p_.allowance + p_.lastPassAllowance : p_.allowance;
+    if (!(p_.allowance < limit) && !(roughAllowance < limit)) {
+        return true;
+    }
+    const std::string limitText = "minus the tool radius (" + mmText(limit) + " at the cut depth)";
+    std::string msg;
+    if (!p_.separateLastPass) {
+        msg = "allowance " + mmText(p_.allowance) + " is below " + limitText +
+              ": the tool would cross the vector to its other side; nothing is cut";
+    } else if (roughAllowance < limit) {
+        msg = "allowance " + mmText(p_.allowance) + " and allowance + last pass allowance " + mmText(roughAllowance) +
+              " are below " + limitText + ": the tool would cross the vector to its other side; nothing is cut";
+    } else {
+        msg = "allowance " + mmText(p_.allowance) + " is below " + limitText +
+              ": the last pass would cross the vector to its other side; nothing is cut (the roughing at allowance"
+              " + last pass allowance " +
+              mmText(roughAllowance) + " is not cut on its own)";
+    }
+    diag(ProfileIssue::InvalidParameters, std::nullopt, std::move(msg));
+    return false;
 }
 
 void ProfileBuilder::prepareInputs() {

@@ -15,6 +15,7 @@ add_executable(carvetto_tests
   geometry/polyline_test.cpp
   geometry/contour_test.cpp
   geometry/contour_ops_test.cpp
+  geometry/winding_degeneracy_test.cpp
   geometry/intersect_test.cpp
   geometry/intersect_residuals_test.cpp
   geometry/intersect_residuals_ii_test.cpp
@@ -27,7 +28,7 @@ add_executable(carvetto_tests
   toolpath/pass_plan_test.cpp
   toolpath/linking_test.cpp
   toolpath/time_test.cpp
-  toolpath/path_walk_test.cpp toolpath/profile_test.cpp toolpath/profile_golden_test.cpp toolpath/profile_property_test.cpp
+  toolpath/path_walk_test.cpp toolpath/profile_test.cpp toolpath/profile_allowance_limit_test.cpp toolpath/profile_tolerance_test.cpp toolpath/profile_golden_test.cpp toolpath/profile_property_test.cpp
   tooling/tool_test.cpp
   tooling/tool_database_test.cpp
   tooling/json_io_test.cpp
@@ -51,10 +52,16 @@ add_executable(carvetto_tests
   geometry/offset_test.cpp
   geometry/open_offset_chains_test.cpp
   geometry/offset_quality_test.cpp
+  geometry/offset_inradius_test.cpp
+  geometry/offset_dust_test.cpp
+  geometry/offset_batch_test.cpp
   geometry/boolean_test.cpp
   document/carv_io_test.cpp
   document/carv_extras_member_test.cpp
   document/carv_toolpath_test.cpp
+  document/carv_storage_residuals_test.cpp
+  document/carv_drill_record_test.cpp
+  document/carv_engrave_record_test.cpp
   io/dxf_import_test.cpp
   io/dxf_export_test.cpp
   io/dxf_curves_test.cpp
@@ -67,6 +74,10 @@ add_executable(carvetto_tests
   toolpath/pocket_guard_test.cpp
   toolpath/toolpath_api_test.cpp
   toolpath/toolpath_scale_test.cpp
+  toolpath/drill_test.cpp
+  toolpath/drill_post_test.cpp
+  toolpath/engrave_test.cpp
+  toolpath/engrave_post_test.cpp
 )
 # carv_io_test uses the internal zip helper (core/src/document/carv_zip.hpp) to craft archives.
 target_include_directories(carvetto_tests PRIVATE ${PROJECT_SOURCE_DIR}/core/src/document)

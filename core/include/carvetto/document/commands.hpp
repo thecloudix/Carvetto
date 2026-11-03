@@ -373,7 +373,8 @@ class SetDocumentVariableCommand : public Command {
 /// Adds a toolpath record (id allocated on first apply) at `index` or at the end of the job
 /// order. No-op when no id is left, a preset id is not fresh (see "Preset ids" above), or the
 /// selection names an id that was never allocated or an item of another kind (or combines `all`
-/// with layers/objects). Repeated selection ids are dropped (first kept) and
+/// with layers/objects), or a parameter is not a finite number (`nonFiniteParam`, T-0136).
+/// Repeated selection ids are dropped (first kept) and
 /// `ProfileParams::cuttingData` is cleared (it is not part of a record).
 class AddToolpathCommand : public Command {
    public:
@@ -406,7 +407,8 @@ class RemoveToolpathsCommand : public Command {
 
 /// Replaces a toolpath record (matched by id): name, parameters, selection, tool and moves, e.g.
 /// after the user edits and recalculates it. No-op when the id is unknown, nothing changes, or the
-/// selection is invalid (as for `AddToolpathCommand`); `cuttingData` is cleared as there.
+/// selection is invalid or a parameter is not finite (as for `AddToolpathCommand`); `cuttingData`
+/// is cleared as there.
 /// Consecutive edits of the same toolpath coalesce. The moves are shared, so the history keeps
 /// no extra copy of them.
 class SetToolpathCommand : public Command {
