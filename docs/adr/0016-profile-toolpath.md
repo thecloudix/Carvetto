@@ -276,7 +276,9 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     reach out of the region's box are not seen (also pieces enclosed by open cuts that are not one
     cluster: a5_770001_273, a5_770001_60, missed by T-0127 too); the cut paths stand for the tool's
     moves, so links, plunges and ramps that cut more than the paths are not part of it, and a piece
-    they cut away or split may be reported (m1_881008_35, also in T-0127); a tab whose two "pieces" in its window
+    they cut away or split may be reported (m1_881008_35, 713003_20, also in T-0127); the bands carry
+    T-0127's allowance of up to 7 µm over the tab-layer radius, so a piece within about that much of
+    the 0.05 mm thickness threshold can be left out (713004_23: a 0.052 mm² piece); a tab whose two "pieces" in its window
     are one piece joined beyond the window (overlapping vectors, scene 401007_36) is kept although
     it holds nothing new (redundant, never severed); and a tab judged on a wider window (above) may join the main pieces beside it yet leave a sliver
     unjoined, which is then reported loose (a2_610000_162: 0.33 mm², 0.072 mm thick). Not a gap but the rule: a tab that leaves a
