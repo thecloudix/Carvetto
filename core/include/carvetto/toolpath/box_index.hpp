@@ -14,8 +14,8 @@ namespace carvetto::toolpath {
 /// Uniform grid over a fixed set of bounding boxes, answering "which boxes intersect this box"
 /// in time proportional to the boxes near the query.
 ///
-/// The cell size is the largest of the median box size, √(area of the bounds / 4n) and
-/// extent / 2048 (at most 2048 cells per axis). A box is listed in every cell it touches; boxes
+/// The cell size is the largest of the median box size, √(area of the bounds / 4n),
+/// extent / 2048 (at most 2048 cells per axis) and 10⁻⁹ mm. A box is listed in every cell it touches; boxes
 /// touching more than 64 cells (a frame round everything), or with non-finite corners or extent,
 /// are kept in a separate list that every query checks; bounds that overflow a double use one
 /// cell. Queries apply the exact `Box2::intersects` test and
