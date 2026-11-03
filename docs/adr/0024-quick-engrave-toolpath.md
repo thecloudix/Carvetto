@@ -130,8 +130,9 @@ same snake_case keys: `name`, `depth`, `passes` (an integer), `safe_z`, `strateg
 `raster_angle_rad` (params.json: `raster_angle` in degrees), `start_position` ([x, y]) and
 `tolerance`; params.json adds `tool` and `layers`, and unknown keys are errors there.
 `nonFiniteParam` names engrave keys the same way. The record's `tool` object gains an optional boolean `spindle_off`
-(T-0154), written only when true; the loader refuses it on profile, pocket and drill records, and
-`saveCarv` and the toolpath commands refuse such records. The format stays **1.1** (a new optional
+and `tool_type` (T-0154), both written only for a spindle-off snapshot (`"tool_type":
+"diamond_drag"`); `spindle_off` requires an engrave record with that tool type, and the loader,
+`saveCarv` and the toolpath commands refuse anything else (ADR-0021 §2). The format stays **1.1** (a new optional
 variant alternative, as ADR-0021 foresaw); a build from before T-0151 refuses a file with an
 engrave record ("unsupported toolpath operation 'engrave'").
 

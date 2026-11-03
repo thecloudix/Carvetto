@@ -74,8 +74,10 @@ through, so no post, block or tag can bypass them.
      - **`[TOOLS_USED]`** joins the tool names with `"; "` (T-0134), not `", "`: a comma after the
        first name at the start of a comment would continue its word run and be written as `_`
        (`(EndMill_ Drill)`). A `;` ends the run, so later names keep their commas.
-     - Comments the template nests or leaves unbalanced (`((a)…`) are outside this rule; nested
-       comments are an error on LinuxCNC and Grbl.
+     - Comments the template nests or leaves unbalanced (`((a)…`) are outside this rule. Nested
+       comments are an error on LinuxCNC; Grbl and Mach end a comment at the first `)`, so text
+       after it runs as G-code (corrected in T-0154; in a drag section such templates are refused,
+       see below).
    - Text placed outside any comment (live G-code) is only stripped of control characters, so it
      cannot start a new block. What it says is still written as G-code: putting a text tag there
      is the post author's choice. The shipped posts only place text tags inside comments; a test
@@ -163,7 +165,7 @@ through, so no post, block or tag can bypass them.
        before FOOTER (director decision 2026-11-03: the next program could otherwise start a
        spindle that is still locked). The block is
        written in the drag toolpath's context (`[T]`, `[TOOLNAME]` are the drag tool's) and is
-       under the same spindle-word guards. It must write an `M0` (as above; `M5` is not required). The shipped posts write `M5`, safe Z, a comment "Diamond
+       under the same spindle-word guards. It must write an `M5` and an `M0`, like `SPINDLE_OFF_PAUSE`. The shipped posts write `M5`, safe Z, a comment "Diamond
        drag tool N done: unlock the spindle before it starts again", `M0` (Marlin: `M0 Unlock
        spindle then resume`) and safe Z. A post without the block refuses every job with a
        spindle-off toolpath that needs it: a spinning toolpath after a spindle-off one
@@ -173,6 +175,25 @@ through, so no post, block or tag can bypass them.
      - Profile and Pocket refuse diamond-drag tools (`InvalidTool`, "… is a diamond drag tool,
        which must not turn; use Quick Engrave for diamond-drag tools"; Pocket skips just that
        tool), so a drag tool can no longer run in a spinning toolpath of those operations.
+     - **Strict template rule** (T-0154 verifier round 3, director 2026-11-03). Every output line
+       of a `.pp` block must be printable ASCII (bytes ≥ 0x80 are a parse error for all posts:
+       Grbl drops or acts on them, so `M<NBSP>3` would run M3; control characters were already
+       refused). While a spindle-off toolpath is written (its HEADER, TOOLCHANGE or NEW_SEGMENT,
+       both pause blocks and its move blocks), every template line that is written must have:
+       no `#` (RS274/NGC parameters, `M#1`); no M or S directly followed (after spaces) by a tag
+       (`M[T]`); only plain comments, where a comment ends at the first `)` as on Grbl and Mach,
+       and a `(` inside an open comment, a `)` without one or an unclosed comment is refused;
+       and no M3/M4/S-number word anywhere in the template text, comments included (it is the
+       post author's fixed text and has no reason to mention them there). The written line
+       (with its values) is checked again: printable ASCII, plain comments, no `#` or `[` in the
+       live G-code, and no spindle word in the live G-code; values inside comments are sanitised
+       already, so a tool named "S12 drill" in a comment is fine. Text after `;` is a comment for
+       these checks only on posts whose comment style is `;` (some block line starts with `;` and
+       none holds a `(`, i.e. Marlin); on other posts it counts as G-code. For the pause-content
+       requirement (both pause blocks must write `M5` and `M0`), lines starting with `/` (block
+       delete) and text after `;` never count. O-words, `M98` subroutine calls and user M-code
+       macros (LinuxCNC `M100`–`M199`, Mach macros) in a post are the post author's
+       responsibility: Carvetto cannot see what they do.
    - **Toolpaths without moves** (T-0136). A toolpath with zero moves cuts nothing and is
      skipped entirely: it is not written, its tool is not in `[TOOLS_USED]`, it causes no tool
      change, and its tool's spindle speed, feeds and dwells are not checked. The header tool (the

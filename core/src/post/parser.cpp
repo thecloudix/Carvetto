@@ -157,6 +157,10 @@ std::optional<Error> checkReferences(std::string_view text, int line) {
 
 }  // namespace
 
+std::vector<std::string_view> PostProcessor::knownBlockNames() {
+    return {kKnownBlocks.begin(), kKnownBlocks.end()};
+}
+
 bool PostProcessor::isKnownBlock(std::string_view name) {
     for (std::string_view b : kKnownBlocks) {
         if (b == name) {
@@ -223,6 +227,16 @@ Result<PostProcessor> PostProcessor::parse(std::string_view source) {
                     return Error{lineNo, "output line is missing its closing quote"};
                 }
                 const std::string_view text = t.substr(1, t.size() - 2);
+                // Output text is printable ASCII only (owner decision 2026-11-02 "ASCII-only, all
+                // posts", T-0154): Grbl drops or acts on bytes >= 0x80, so `M<NBSP>3` would run M3.
+                for (const char c : text) {
+                    const auto u = static_cast<unsigned char>(c);
+                    if (u >= 0x80) {
+                        static constexpr char kHex[] = "0123456789ABCDEF";
+                        const std::string code{'0', 'x', kHex[u >> 4], kHex[u & 0x0F]};
+                        return Error{lineNo, "byte " + code + " in output line (output text must be printable ASCII)"};
+                    }
+                }
                 if (auto err = checkReferences(text, lineNo)) {
                     return *err;
                 }

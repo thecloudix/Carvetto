@@ -105,7 +105,8 @@ one, the test fails.
     `M3`/`M4` and no `S` word; the spindle starts again only after a tool change (`M0` or `M6`)
     with the next tool's speed. The interpreter leaves out the spindle start lines of HEADER,
     TOOLCHANGE and NEW_SEGMENT for such a toolpath and never writes SPINDLE_ON; it refuses a
-    post without `SPINDLE_OFF_PAUSE` (or whose block writes no `M5` or no `M0`), a line that
+    post without `SPINDLE_OFF_PAUSE` (or whose block writes no `M5` or no `M0`; lines starting
+    with `/` and text after `;` do not count), a line that
     writes `[S]` together with other codes, and any spindle start or speed word in the drag
     toolpath's output, read as a controller reads it (spaces ignored: `M 3`, `S .5`, `M+3`
     count), and a spindle-off toolpath whose tool is not a diamond drag tool. No other toolpath can skip
@@ -114,7 +115,11 @@ one, the test fails.
     starts the spindle again, the post writes its `SPINDLE_UNLOCK_PAUSE` block: `M5`, safe Z, a
     comment asking the operator to unlock the spindle, `M0` (Marlin: `M0 Unlock spindle then
     resume`), safe Z; once per drag section, not between drag toolpaths, and also before the
-    program end when the job ends with drag toolpaths. A post without it (or whose block writes no `M0`) refuses such jobs. Profile and Pocket refuse diamond-drag tools. In a custom post that offers
+    program end when the job ends with drag toolpaths. A post without it (or whose block writes no `M5` or no `M0`) refuses such jobs.
+    In a drag section the template text must also follow a strict rule (ADR-0020): printable
+    ASCII only (non-ASCII output text is a parse error for every post), no `#`, no `M[tag]` or
+    `S[tag]`, plain unnested comments (a comment ends at the first `)`), and no M3/M4/S-number
+    word anywhere, comments included. Profile and Pocket refuse diamond-drag tools. In a custom post that offers
     `SPINDLE_OFF_PAUSE`, start the spindle in HEADER, TOOLCHANGE and NEW_SEGMENT on a line of its
     own (`M3[S]`).
 

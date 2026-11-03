@@ -126,23 +126,57 @@ std::string rangeProblem(double v, double limit, std::string_view unit) {
     return {};
 }
 
-/// The G-code of a line outside its comments: `( … )` (nesting counted) and `;` to the line end.
-std::string liveCode(std::string_view line) {
+/// The G-code of a line outside its comments, as Grbl and Mach read it: `(` opens a comment and
+/// the FIRST `)` closes it (no nesting); with `semicolonComments` (posts whose comment style is
+/// `;`, such as Marlin) `;` outside a comment makes the rest of the line a comment.
+std::string liveCode(std::string_view line, bool semicolonComments) {
     std::string code;
-    int depth = 0;
+    bool open = false;
     for (const char c : line) {
-        if (c == ';' && depth == 0) {
+        if (open) {
+            open = c != ')';
+        } else if (c == '(') {
+            open = true;
+        } else if (c == ';' && semicolonComments) {
             break;
-        }
-        if (c == '(') {
-            ++depth;
-        } else if (c == ')') {
-            depth = depth > 0 ? depth - 1 : 0;
-        } else if (depth == 0) {
+        } else {
             code += c;
         }
     }
     return code;
+}
+
+/// Why the parentheses of a line are not plain, unnested, closed comments ("" when they are):
+/// a `(` inside an open comment, a `)` without one, or a comment left open (T-0154).
+std::string parenProblem(std::string_view line, bool semicolonComments) {
+    bool open = false;
+    for (const char c : line) {
+        if (open) {
+            if (c == '(') {
+                return "a '(' inside an open comment (comments end at the first ')')";
+            }
+            open = c != ')';
+        } else if (c == '(') {
+            open = true;
+        } else if (c == ')') {
+            return "a ')' without an open comment";
+        } else if (c == ';' && semicolonComments) {
+            return {};
+        }
+    }
+    return open ? "a comment that is not closed on its line" : std::string();
+}
+
+/// The first byte that is not printable ASCII (0x20-0x7E) or tab, described; "" when none.
+std::string nonAsciiProblem(std::string_view text) {
+    for (const char ch : text) {
+        const auto b = static_cast<unsigned char>(ch);
+        if ((b < 0x20 || b > 0x7E) && b != '\t') {
+            static const char* const kHex = "0123456789ABCDEF";
+            return std::string("the byte 0x") + kHex[b >> 4] + kHex[b & 0xF] + " (not printable ASCII)";
+        }
+    }
+    return {};
 }
 
 bool isLetter(char c) {
@@ -227,8 +261,8 @@ std::string spindleWord(std::string_view code) {
 /// `[N]` and spaces. Such a line is left out for a toolpath that runs with the spindle off
 /// (T-0154); any other line writing `[S]` there is an error, so leaving it out never drops a
 /// tool change or another code.
-bool spindleOnlyLine(std::string_view line) {
-    const std::string code = liveCode(line);
+bool spindleOnlyLine(std::string_view line, bool semicolonComments) {
+    const std::string code = liveCode(line, semicolonComments);
     // Tags become markers: [S] -> '#', [N] -> nothing; any other tag disqualifies the line.
     std::string rest;
     for (std::size_t i = 0; i < code.size(); ++i) {
@@ -285,11 +319,16 @@ bool spindleOnlyLine(std::string_view line) {
 }
 
 /// The words a block writes as template text, outside comments and with its tags left out
-/// (used to check that a pause block stops the spindle and pauses).
-std::vector<GWord> blockWords(const PostBlock& block) {
+/// (used to check that a pause block stops the spindle and pauses). Lines that start with `/`
+/// (block delete: the controller may skip them) do not count.
+std::vector<GWord> blockWords(const PostBlock& block, bool semicolonComments) {
     std::vector<GWord> out;
     for (const std::string& line : block.lines) {
-        std::string code = liveCode(line);
+        const std::string_view trimmed = detail::trim(line);
+        if (!trimmed.empty() && trimmed.front() == '/') {
+            continue;
+        }
+        std::string code = liveCode(line, semicolonComments);
         std::string untagged;
         for (std::size_t i = 0; i < code.size(); ++i) {
             if (code[i] == '[') {
@@ -305,6 +344,71 @@ std::vector<GWord> blockWords(const PostBlock& block) {
         }
     }
     return out;
+}
+
+/// Why a block line (template text) may not be written while a spindle-off toolpath is active
+/// ("" when it may), T-0154. Strict on purpose: printable ASCII only; no `#` (RS274/NGC
+/// parameters); no M or S followed by a tag (`M[T]`); plain, unnested, closed comments; and no
+/// M3/M4/S-number word anywhere in the template text, comments included (it is the post author's
+/// fixed text and has no reason to mention them there). Tags count as spaces.
+std::string templateProblem(std::string_view line, bool semicolonComments) {
+    if (std::string bad = nonAsciiProblem(line); !bad.empty()) {
+        return bad;
+    }
+    if (line.find('#') != std::string_view::npos) {
+        return "a '#' (parameters are not allowed here)";
+    }
+    if (std::string bad = parenProblem(line, semicolonComments); !bad.empty()) {
+        return bad;
+    }
+    std::string untagged;
+    for (std::size_t i = 0; i < line.size(); ++i) {
+        const char u = upperLetter(line[i]);
+        if (u == 'M' || u == 'S') {
+            std::size_t j = i + 1;
+            while (j < line.size() && (line[j] == ' ' || line[j] == '\t')) {
+                ++j;
+            }
+            if (j < line.size() && line[j] == '[') {
+                return std::string("an ") + u + " followed by a tag";
+            }
+        }
+        if (line[i] == '[') {
+            const std::size_t close = line.find(']', i);
+            i = close == std::string_view::npos ? line.size() : close;
+            untagged += ' ';
+        } else {
+            untagged += line[i];
+        }
+    }
+    for (const GWord& w : gcodeWords(untagged)) {
+        if (w.letter == 'S' || isSpindleStart(w)) {
+            return "the spindle word " + w.text + " (refused anywhere in the template text, comments included)";
+        }
+    }
+    return {};
+}
+
+/// Why a written line (template text with its values) may not be written while a spindle-off
+/// toolpath is active ("" when it may): any byte that is not printable ASCII, parentheses that
+/// are not plain comments, a `#` or `[` in the live G-code (parameters, expressions), or a spindle
+/// start or speed word in the live G-code. Values inside comments are already sanitised
+/// (ADR-0020), so a tool named "S12 drill" in a comment is fine.
+std::string renderedProblem(std::string_view text, bool semicolonComments) {
+    if (std::string bad = nonAsciiProblem(text); !bad.empty()) {
+        return bad;
+    }
+    if (std::string bad = parenProblem(text, semicolonComments); !bad.empty()) {
+        return bad;
+    }
+    const std::string live = liveCode(text, semicolonComments);
+    if (live.find_first_of("#[") != std::string::npos) {
+        return "a '#' or '[' in the G-code (parameters and expressions are not allowed here)";
+    }
+    if (std::string word = spindleWord(live); !word.empty()) {
+        return "the spindle word " + word;
+    }
+    return {};
 }
 
 bool hasWord(const std::vector<GWord>& words, char letter, double value) {
@@ -351,6 +455,7 @@ class Interpreter {
         }
         lineNumber_ = s_.lineNumberStart;
         radiusOnlyArcs_ = arcsUseRadiusOnly();
+        semicolonComments_ = usesSemicolonComments();
         for (const auto& [value, what] : {std::pair{ctx_.home.x, "home X"}, std::pair{ctx_.home.y, "home Y"},
                                           std::pair{ctx_.home.z, "home Z"}}) {
             if (const std::string problem = rangeProblem(value, kMaxMachineValue, "mm"); !problem.empty()) {
@@ -391,8 +496,8 @@ class Interpreter {
         }
         // After the last spindle-off toolpath of a drag section, before a spinning toolpath can
         // start the spindle or the program ends, the operator unlocks it (owner and director
-        // decisions 2026-11-03): SPINDLE_UNLOCK_PAUSE, which must pause (M0).
-        const std::string unlockProblem = pauseBlockProblem("SPINDLE_UNLOCK_PAUSE", false);
+        // decisions 2026-11-03): SPINDLE_UNLOCK_PAUSE, which must stop the spindle (M5) and pause (M0).
+        const std::string unlockProblem = pauseBlockProblem("SPINDLE_UNLOCK_PAUSE", true);
         if (!unlockProblem.empty()) {
             if (!active.empty() && active.back()->tool.spindleOff) {
                 // The next program could start a spindle that is still locked (director 2026-11-03).
@@ -512,7 +617,15 @@ class Interpreter {
         if (b == nullptr) {
             return "the post has no " + std::string(name) + " block";
         }
-        const std::vector<GWord> words = blockWords(*b);
+        for (const std::string& line : b->lines) {
+            if (const std::string bad = templateProblem(line, semicolonComments_); !bad.empty()) {
+                return "the post's " + std::string(name) + " block line " + quoted(line) + " holds " + bad +
+                       ", so it cannot serve";
+            }
+        }
+        // Text after ';' never counts here (a comment on most controllers): conservative for a
+        // block that must contain these words.
+        const std::vector<GWord> words = blockWords(*b, true);
         if (needStop && !hasWord(words, 'M', 5.0)) {
             return "the post's " + std::string(name) + " block writes no M5 (spindle stop)";
         }
@@ -520,6 +633,25 @@ class Interpreter {
             return "the post's " + std::string(name) + " block writes no M0 (program pause)";
         }
         return {};
+    }
+
+    /// True when the post's comment style is `;` (Marlin): some block line starts with `;` and no
+    /// block line holds a `(`. Only then is text after `;` treated as a comment by the spindle-off
+    /// checks (T-0154); for other posts it counts as G-code.
+    bool usesSemicolonComments() const {
+        bool semicolon = false;
+        for (std::string_view name : PostProcessor::knownBlockNames()) {
+            if (const PostBlock* b = pp_.block(name)) {
+                for (const std::string& line : b->lines) {
+                    if (line.find('(') != std::string::npos) {
+                        return false;
+                    }
+                    const std::string_view t = detail::trim(line);
+                    semicolon = semicolon || (!t.empty() && t.front() == ';');
+                }
+            }
+        }
+        return semicolon;
     }
 
     /// True when the post's arc blocks give the arc by radius only (no I/J/IA/JA), so full
@@ -942,12 +1074,20 @@ class Interpreter {
         block_ = b->name;
         for (const std::string& line : b->lines) {
             if (dropSpindleLines && line.find("[S]") != std::string::npos) {
-                if (spindleOnlyLine(line)) {
+                if (spindleOnlyLine(line, semicolonComments_)) {
                     continue;  // the spindle start of a spinning toolpath: left out
                 }
                 fail(0, spindleOffWhat() + ", but the line " + quoted(line) +
                             " writes [S] together with other codes; start the spindle on a line of its own");
                 break;
+            }
+            if (off) {
+                // T-0154 strict rule: the template text of every block written while a spindle-off
+                // toolpath is active.
+                if (const std::string bad = templateProblem(line, semicolonComments_); !bad.empty()) {
+                    fail(0, spindleOffWhat() + ", but the line " + quoted(line) + " of the post holds " + bad);
+                    break;
+                }
             }
             std::string lineText;
             bool hadTag = false;
@@ -976,8 +1116,8 @@ class Interpreter {
             if (off) {
                 // Second guard (T-0154): no spindle start or speed reaches the output of a
                 // spindle-off toolpath, whatever the post's template text says.
-                if (const std::string word = spindleWord(liveCode(lineText)); !word.empty()) {
-                    fail(0, spindleOffWhat() + ", but the post writes " + word + " (line " + quoted(lineText) + ")");
+                if (const std::string bad = renderedProblem(lineText, semicolonComments_); !bad.empty()) {
+                    fail(0, spindleOffWhat() + ", but the post writes " + bad + " (line " + quoted(lineText) + ")");
                     break;
                 }
             }
@@ -1200,6 +1340,7 @@ class Interpreter {
     std::size_t moveIndex_{0};         // 1-based move of the current toolpath; 0 = none
     bool inFooter_{false};
     bool radiusOnlyArcs_{false};
+    bool semicolonComments_{false};  // the post's comment style is ';' (T-0154)
     bool firstRapid_{true};
     bool firstFeed_{true};
     bool firstPlunge_{true};
