@@ -495,7 +495,7 @@ Goal: Every local Release build with GCC 15 (-O3 -Werror) fails on a -Wmaybe-uni
 Acceptance criteria:
   1. GCC 15 Release -Werror builds cleanly without disabling the warning globally (restructure the code or initialise explicitly; a targeted, commented pragma only if no clean fix exists); behaviour unchanged (full ctest); CI green.
 
-### T-0145 Timing tests robust under machine load   [status: merging — verified PASS ad82030 (items 1–2); item 3 follow-ups open]
+### T-0145 Timing tests robust under machine load   [status: done (2026-11-03)]
 Phase: 1   Module: core/tests   Depends on: —
 Goal: Found by the T-0144 verifier: CPU-time ratio tests (e.g. toolpath_scale_test.cpp "AC3: thousands of small closed vectors pocket in near-linear time") measure n and 2n in separate windows (best of 3 each); on a loaded SMT machine a ~25% load swing between windows can push a true ×2.0 ratio past the ×2.5 bound (0 failures in 130 runs, but thin margins: Release 1.15–1.30 s vs < 2.0 s). Make ratio tests interleave the n and 2n runs (alternate, take per-pair minima) or otherwise robust to load swings, without weakening what they detect (quadratic stays caught).
 Acceptance criteria:
@@ -511,7 +511,7 @@ Acceptance criteria:
   2. CI runs `tools/changelog.py check` on every PR and fails on a malformed fragment or on a PR that edits CHANGELOG.md's Unreleased section directly (allow the assemble commit itself, e.g. by a marker or by path rule — document).
   3. CONTRIBUTING.md, docs/WORKFLOW.md and .claude/agents/coder.md / verifier.md / director.md say: one fragment per task in changelog.d/, never edit CHANGELOG.md; the director's merge checklist ("exactly one CHANGELOG line per task") becomes "exactly one fragment per task". Existing CHANGELOG.md content unchanged.
 
-### T-0147 signedArea cancellation for small contours far from the origin   [status: merging — verified PASS 21fc03f]
+### T-0147 signedArea cancellation for small contours far from the origin   [status: done (2026-11-03)]
 Phase: 1   Module: core/geometry   Depends on: —   ADR: 0005
 Goal: Found by the T-0152 verifier (harness t0152v2/drv/one.cpp, rect*.cpp): geometry signedArea (contour_ops.cpp ~52) evaluates the shoelace sum on absolute coordinates, so a small contour far from the origin cancels to 0 (1×0.5 mm at 1e8 mm: 17/20 placements give area 0; even 0.05×0.025 mm at 3e6). Callers that classify by area/orientation (nesting, region building, Pocket/Profile/Drill, medial axis) can then drop or misorient such contours.
 Acceptance criteria:
