@@ -280,12 +280,15 @@ std::vector<Object> Document::copyObjects(const std::vector<ObjectId>& ids) cons
     std::vector<Object> out;
     out.reserve(wantedIds.size());
     for (ObjectId id : wantedIds) {
-        Object copy = *findObject(id);
+        // Copy-construct straight into the vector and patch the element in place. A local
+        // `Object copy` that is then moved into `out` makes GCC 15 -O3 inline the variant's move
+        // and destructor dispatch and report the inactive alternatives' members as
+        // -Wmaybe-uninitialized (a false positive, T-0144); this form has no such temporary.
+        Object& copy = out.emplace_back(*findObject(id));
         // A copied child whose parent is not in the clipboard becomes top-level.
         if (copy.parent && !wanted.contains(*copy.parent)) {
             copy.parent.reset();
         }
-        out.push_back(std::move(copy));
     }
     return out;
 }
