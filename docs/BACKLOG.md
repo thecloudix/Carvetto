@@ -406,7 +406,7 @@ Acceptance criteria:
   2. (e)–(h) fixed with tests; CLI golden unchanged.
   3. (Owner decision 2026-11-02, raised by the T-0134 verifier) The post refuses spindle speed ≤ 0 (or non-finite) whenever it would write [S] or start the spindle, and refuses feeds, plunge rates, feed overrides and dwell that are > 0 but print as zero in the post's precision (F0, P0.00); clear errors, ADR-0020 updated, goldens unchanged.
 
-### T-0135 Profile loose-piece reporting gaps and tab residuals (T-0127 round 3)   [status: verifying — round 2 @ 42d38af]
+### T-0135 Profile loose-piece reporting gaps and tab residuals (T-0127 round 3)   [status: merging — round 3 PASS d8f7e7d; branch-only THIN tab (neck ~0.086 mm) accepted by director]
 Phase: 1   Module: core/toolpath   Depends on: T-0127   ADR: 0016 §14
 Goal: Found by the T-0127 round-3 verifier (harness t0127v3/; main reports no loose pieces at all, so these are gaps, not regressions). (a) The diagnostics de-duplication in run() merges loose-piece messages whose rounded areas are equal (symmetric parts): repro t0127v3/repro/h.scn (H shape, On, D6, a 0) → two free pieces 0.626/0.621 mm², one report. (b) addPiece treats bounding-box overlap as the same piece, so a piece inside another's concave notch is dropped: repro/abc_2_1_2.scn (B 374.7 mm² and C 64.4 mm² free, C unreported). Mutant inst/profile_mut.cpp FIX_MSG/FIX_BOX fixes both. Residuals: (c) In/Out with negative allowance and a separate last pass drops tabs as "could not be matched on the roughing cut" that main matched and that hold (repro/m1_402002_27.scn, m2_403003_37.scn); (d) conservative drops of 3D tabs with V-bits (repro/m2_403000_48.scn vs _flat.scn); (e) 0.06 mm slivers below the 0.05 mm raster (repro/m1_402012_7.scn); (f) 401007_36 keeps a redundant tab on overlapping vectors. (g) Found at the T-0127 merge: `fitTabs` (core/src/toolpath/tab_placement.cpp, shared, pre-existing) moves a tab centre to exactly f + reach and then tests |c − f| < reach, so a tab exactly `reach` from a keep-clear point is kept or dropped by rounding (scene m1_292000_22 flips with a 62-ulp change from T-0017); use a tolerance or skip the re-check for the point the tab was moved off.
 Acceptance criteria:
@@ -516,6 +516,14 @@ Goal: Found by the T-0152 verifier (harness t0152v2/drv/one.cpp, rect*.cpp): geo
 Acceptance criteria:
   1. signedArea (and any orientation/area helper with the same pattern) computed relative to a local origin or compensated, exact to rounding for small contours up to 1e9 mm; generative test vs an exact oracle.
   2. Outputs of Pocket/Profile/Drill/offsets unchanged for normal inputs (hash comparison vs main), changes only where the old area was wrong (explained).
+
+### T-0156 Profile loose pieces: V-bit corner moves, vanished finishing cuts, out-of-box pieces (T-0135 verifier)   [status: blocked]
+(Unblocks when T-0135 merges.)
+Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §14
+Goal: Pre-existing gaps found by the T-0135 round-3 verifier (harness t0135v3/, vfree.cpp exact oracle): (a) V-bit sharp-corner moves are not in the band model of the loose-piece search or the tab check — m2_1310149_15 leaves a 134 mm² part free with no message and a flood-PARTIAL kept tab (identical on T-0127/main); (b) when a finishing cut vanishes, its roughing loop is never searched (m0_1310036_24, 2.1 mm² slug); (c) pieces lying wholly outside every region box are not found ("#" of four bars, three circles with overlapping kerfs); (d) ADR §14 wording: band sampling allowance is up to ~11 µm for tab-layer radius < 0.0625 mm (not "at most 5 µm"), and bands are 2–7 µm wider than the cut (not "exactly"); (e) second-try tabs can have necks ≈ 0.086 mm (m1_1320038_46) — judge them with margin or document.
+Acceptance criteria:
+  1. (a)–(c) every free piece ≥ 0.04 mm² reported in the repro scenes and a ≥ 10k-scene vfree screen with V-bit corners on; no held piece reported; no kept tab severed/partial because of corner moves.
+  2. (d)/(e) docs true as written or behaviour changed; holding tabs never fewer than the T-0135 merge.
 
 ### T-0019 Make the T-0004 AC3 timing test CPU-time based   [status: done (by T-0017: T-0004 AC3 timing uses process CPU time, cpu_time.hpp)]
 Phase: 1   Module: core/tests   Depends on: —
