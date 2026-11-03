@@ -303,10 +303,18 @@ TEST_CASE("T-0131 d: tabs with a separate last pass are matched near-linearly",
 TEST_CASE("T-0131 e: Pocket with a rest tool on a page of vectors is near-linear",
           "[toolpath][pocket][rest][perf][T-0131]") {
     // The rest areas were ordered by a nearest-first search whose square grew over the whole
-    // page at the end of every part (one index over all parts). Release, 1,250 / 2,500 / 5,000
-    // vectors: 1.2 / 2.7 / 6.7 s (T-0123 merge, the verifier's page: 2.3 / 7.5 / 22 s). What
-    // remains superlinear is Clipper2's boolean sweep over the whole page (rest material, rest
-    // areas), left to T-0142.
+    // page at the end of every part (one index over all parts). Release, this page, 1,250 /
+    // 2,500 / 5,000 vectors: 0.84 / 2.0 / 4.9 s idle, up to 6.7 s at 5,000 under load (main:
+    // 1.1 / 3.2 / 9.0 s; the verifier's page at the T-0123 merge: 2.3 / 7.5 / 22 s).
+    //
+    // Accepted at this limit until T-0142 (director, 2026-11-03): what remains superlinear is
+    // Clipper2's boolean sweep over the whole page (BuildIntersectList; rest material and rest
+    // areas), ~2.4-2.6x per doubling. So the bound is 3.0 per doubling (9.0 over the two), the
+    // ratio taken over three interleaved pairs; T-0142 item 3 should tighten it to 2.5.
+    //
+    // No absolute bound: on this page the branch is under 2x faster than main at 5,000 vectors
+    // (4.9 vs 9.0 s idle, the branch up to 6.7 s under load), so no bound sits safely between
+    // them on every CI machine, and a bound above main guards nothing. The ratio is the guard.
     const std::size_t nSmall = kRelease ? 1250 : 156;
     const std::size_t nLarge = 4 * nSmall;
     PocketParams p;
@@ -318,7 +326,7 @@ TEST_CASE("T-0131 e: Pocket with a rest tool on a page of vectors is near-linear
     PocketResult rs;
     PocketResult rl;
     const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
-        kRelease ? 1 : 2, [&] { rs = pocketToolpath(cs, tools, p); },
+        3, [&] { rs = pocketToolpath(cs, tools, p); },
         [&] { rl = pocketToolpath(cl, tools, p); });
     INFO("CPU seconds: " << nSmall << " vectors " << t.smallSeconds << ", " << nLarge << " vectors "
                          << t.largeSeconds << ", ratio " << t.ratio());
@@ -326,10 +334,7 @@ TEST_CASE("T-0131 e: Pocket with a rest tool on a page of vectors is near-linear
     // The rest tool works in the corners of most shapes: one retract per rest area.
     CHECK(rl.toolpaths[1].count(MoveKind::Retract) >= nLarge);
     CHECK(rl.toolpaths[1].count(MoveKind::Retract) == rl.plans[1].paths.back().cluster + 1);
-    CHECK(t.ratio() <= 2.5 * 2.5);
-    if constexpr (kRelease) {
-        CHECK(t.largeSeconds < 15.0);
-    }
+    CHECK(t.ratio() <= 3.0 * 3.0);  // T-0142 item 3: tighten to 2.5 * 2.5
 }
 
 TEST_CASE("T-0131 f: Profile tabs on a page of vectors stay linear",
@@ -359,6 +364,6 @@ TEST_CASE("T-0131 f: Profile tabs on a page of vectors stay linear",
     CHECK(rl.toolpath.count(MoveKind::Retract) >= nLarge * 3 / 4);
     CHECK(t.ratio() <= 2.5 * 2.5);
     if constexpr (kRelease) {
-        CHECK(t.largeSeconds < 15.0);
+        CHECK(t.largeSeconds < 30.0);  // a loose guard: the criterion here is linearity (the ratio)
     }
 }

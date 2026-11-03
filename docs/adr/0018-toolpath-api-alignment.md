@@ -159,8 +159,11 @@ The card fixes the outcomes (one ramp, Tool + cutting data in, one diagnostics t
     3.3 / 6.5 / 12.7 s, linear (about 30 % less than main on the verifier's page; the per-tab
     raster with a distance query per 0.05 mm cell is the cost). What remains superlinear is
     Clipper2's own sweep: the boolean difference / intersection over a whole page for rest tools
-    and the inset of a comb's outline (T-0142), and the line clipping at oblique raster angles,
-    whose active edge list holds every tooth (a 1,000-tooth comb at 30°: ~3.9× per doubling).
+    and the inset of a comb's outline (T-0142), and the line clipping at other raster angles,
+    whose active edge list holds every tooth: a comb at 30° ~3.9× per doubling at 500 → 1,000
+    teeth, at 90° 3.5 / 5.2 / 6.6× per doubling over 250 → 500 → 1,000 → 2,000 teeth (T-0131
+    verifier); both left to T-0142 item 3. Pocket with a rest tool is accepted at ~2.4–2.6× per
+    doubling until then (director, 2026-11-03); its test bounds 3.0 per doubling.
 
 ## Consequences
 - The CLI (T-0122) can include `profile.hpp` and `pocket.hpp` together and build both operations
