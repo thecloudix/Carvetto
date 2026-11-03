@@ -22,8 +22,10 @@ struct GridBox {
 /// marked: `nested(outer, inner)` decides nesting and is asked only for pairs where `inner` is not
 /// dust yet and `boxes[inner]` lies within `boxes[outer]` (edges included); rings with
 /// `usable[i]` false are never asked about, as outer or inner. Rings are sorted by left edge and
-/// each dust ring visits only the rings whose left edge lies within its x-range, so the cost is
-/// O(n log n) plus the pairs whose x-ranges overlap that way.
+/// by top edge; each dust ring visits only the rings whose left edge lies within its x-range or
+/// those whose top edge lies within its y-range, whichever are fewer (T-0141: a column of rings
+/// shares one x-range), so the cost is O(n log n) plus, per dust ring, the smaller of those two
+/// sets.
 void markNestedInDust(const std::vector<GridBox>& boxes, const std::vector<bool>& usable,
                       std::vector<bool>& dust,
                       const std::function<bool(std::size_t outer, std::size_t inner)>& nested);

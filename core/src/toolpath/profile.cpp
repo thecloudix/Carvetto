@@ -360,6 +360,15 @@ bool ProfileBuilder::validate() {
             return false;
         }
     }
+    // T-0141: the same tolerance bounds as Pocket (ADR-0016 §18). The offsets and the dust
+    // filter's width budget (ADR-0006 §8) assume chordal >= 1e-4 mm.
+    const Tolerance& t = p_.tolerance;
+    if (!std::isfinite(t.chordal) || t.chordal < 1e-4 || t.chordal > 1.0 || !std::isfinite(t.distance) ||
+        !(t.distance > 0.0) || t.distance > t.chordal) {
+        diag(ProfileIssue::InvalidParameters, std::nullopt,
+             "invalid tolerance: chordal must be between 0.0001 and 1 mm, distance > 0 and <= chordal");
+        return false;
+    }
     if (!(radius_ > 0.0)) {
         diag(ProfileIssue::InvalidParameters, std::nullopt, "the tool has no cutting width at the cut depth");
         return false;
