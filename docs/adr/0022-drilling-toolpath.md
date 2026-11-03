@@ -1,6 +1,7 @@
 # ADR-0022: Drilling toolpath (hole centre, tools, pecks, record schema)
 
-Date: 2026-11-02 · Status: proposed (T-0150)
+Date: 2026-11-02 · Status: proposed (T-0150) · Chip-breaking peck retract inside the hole accepted by
+the project owner (2026-11-03)
 
 ## Context
 T-0150 adds the drilling toolpath (feature-inventory §5 "Drilling Toolpath"): drill the centres
@@ -82,6 +83,11 @@ data's pass depth, the last one taking the remainder (the usual peck-drilling be
 - `retractGap` must be > 0 when pecking (0 would make AbovePreviousPass a zero-length retract);
   `dwellTime` ≥ 0 (0 = no dwell; a dwell move is only emitted when > 0); cut depth > 0, start
   depth ≥ 0, safe Z above the cutting start, every value finite, tolerance as Pocket.
+- **Owner decision (2026-11-03):** "Retract above previous pass" (chip breaking) is accepted as
+  is, with upward Z-only `G0` retracts inside the drilled hole. T-0150 AC2's "peck retracts never
+  below the start surface + retract gap" therefore applies to AboveStart; for AbovePreviousPass a
+  peck retract is never below the depth just reached + retract gap, always straight up (Z only)
+  inside the already-drilled hole, and never sideways. posts/README.md checklist item 3 says so.
 - The shipped posts write `Retract` as `G0 Z…`: with AbovePreviousPass that is an upward Z-only
   rapid inside the drilled hole (posts/README.md checklist item 3 allows peck retracts), never an
   XY rapid and never a downward rapid below safe Z.
