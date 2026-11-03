@@ -7,17 +7,20 @@
 # spindle off, after an M5 that follows the last cut and spindle start, and is announced as a spindle stop ("spindle" on the M0 line or in the
 # two lines before it) and ends at the next tool change stop (M0 not announced so, or M6).
 # Inside a drag section no M3/M4 and no S word may appear: the spindle restarts only via a tool
-# change. Without drag=1 every cut needs the spindle on, as before.
+# change. After drag cuts the spindle may start again only behind an unlock pause: an M0 announced
+# with "unlock" (on its line or the two before), which also ends the drag section.
+# Without drag=1 every cut needs the spindle on, as before.
 import re, sys
 def check(path, post, bottom, safe, plunge=-1, drag=False):
     inch = 'inch' in post; k = 25.4 if inch else 1.0
     eps = 0.0026 if inch else 0.0011
     x = y = z = None; spindle = False; S = 0.0; units = None; absolute = False; mode_g = None; errs = []; cuts = 0; F = None
     def E(n, msg): errs.append(f"{n}: {msg}")
-    dragsec = False; dragcuts = 0; recent = []; m5 = False  # m5: M5 since the last spindle start / cut
+    dragsec = False; dragcuts = 0; recent = []; m5 = False; unlockdue = False  # m5: M5 since the last spindle start / cut
     for n, line in enumerate(open(path, newline=''), 1):
         s = line.rstrip('\r\n')
-        announced = 'spindle' in ' '.join(recent[-2:] + [s]).lower(); recent.append(s)
+        window = ' '.join(recent[-2:] + [s]).lower(); recent.append(s)
+        announced = 'spindle' in window; unlock = 'unlock' in window
         if any(ord(ch) < 32 or ord(ch) > 126 for ch in s): E(n, "non-printable")
         s = re.sub(r"\(.*?\)", "", s); s = s.split(';')[0].strip()
         if not s: continue
@@ -42,6 +45,7 @@ def check(path, post, bottom, safe, plunge=-1, drag=False):
         for m in ms:
             if m in (3, 4):
                 if dragsec: E(n, "spindle started after a spindle-off pause without a tool change stop")
+                if unlockdue: E(n, "spindle started after a drag toolpath without an unlock pause")
                 dragsec = False; m5 = False
                 spindle = True
                 if not S > 0: E(n, f"M{m} without positive S")
@@ -50,7 +54,8 @@ def check(path, post, bottom, safe, plunge=-1, drag=False):
                 if spindle: E(n, "tool change with spindle on")
                 if z is not None and z < safe - eps: E(n, "tool change below safe Z")
                 z = None
-                dragsec = (m == 0 and not spindle and m5 and announced)
+                if m == 0 and not spindle and unlock: dragsec = False; unlockdue = False
+                else: dragsec = (m == 0 and not spindle and m5 and announced)
         if '4' in gs or '04' in gs: continue
         if not any(a in w for a in 'XYZ') and not any(a in w for a in 'IJ'): continue
         if units is None or not absolute: E(n, "motion before units/G90")
@@ -62,7 +67,7 @@ def check(path, post, bottom, safe, plunge=-1, drag=False):
             if nz is not None and nz < safe - eps: E(n, f"rapid below safe Z ({nz})")
         elif mode_g in (1, 2, 3):
             cuts += 1; m5 = False
-            if drag and dragsec and not spindle: dragcuts += 1
+            if drag and dragsec and not spindle: dragcuts += 1; unlockdue = True
             elif not spindle or not S > 0: E(n, "cut with spindle off")
             if x is None or y is None or z is None: E(n, "cut from unknown position")
             if nz is not None and nz < bottom - eps: E(n, f"below engrave depth {nz} < {bottom}")
