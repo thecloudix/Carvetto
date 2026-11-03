@@ -1,0 +1,22 @@
+case 4 seed 13 bezblob tool=0 D=1.097 ang=131.2 chord=0.050 flat=0.000 start=0.000 ncl=0 emD=0.000/0.000 strat=1: ok lat=1.278*ch at (1.0846,-10.6217) D=0.0793 ideal=0.1082 over=-1.08e-03 flatShort=0.096
+case 7 seed 13 ringneigh tool=1 D=7.532 ang=60.0 chord=0.050 flat=0.000 start=1.678 ncl=0 emD=0.000/0.000 strat=0: ok lat=1.294*ch at (-12.1950,3.7495) D=0.0000 ideal=0.0006 over=-1.00e+300 flatShort=0.002
+case 43 seed 13 concave_arc_notch tool=0 D=1.430 ang=116.3 chord=0.100 flat=0.000 start=2.910 ncl=0 emD=0.000/0.000 strat=1: ok lat=1.286*ch at (-20.6998,3.7019) D=0.0000 ideal=0.0799 over=-1.19e-03 flatShort=0.169
+case 46 seed 13 ellipse_bez tool=0 D=6.533 ang=141.4 chord=0.020 flat=0.000 start=0.000 ncl=0 emD=0.000/0.000 strat=1: ok lat=1.329*ch at (-35.1835,54.8446) D=0.5130 ideal=0.5223 over=-2.28e-03 flatShort=0.441
+case 53 seed 13 holedstar tool=0 D=4.269 ang=75.6 chord=0.005 flat=1.448 start=0.000 ncl=1 emD=4.596/0.000 strat=0: ok lat=12.060*ch at (16.6333,-7.3318) D=0.2565 ideal=0.3343 over=0.00e+00 flatShort=0.776
+case 85 seed 13 circle tool=0 D=2.718 ang=91.7 chord=0.020 flat=0.000 start=0.000 ncl=0 emD=0.000/0.000 strat=0: ok lat=1.488*ch at (-34.8585,50.9587) D=0.8069 ideal=0.8358 over=-1.89e-03 flatShort=0.170
+case 101 seed 13 circle tool=0 D=2.837 ang=135.3 chord=0.100 flat=0.000 start=0.000 ncl=0 emD=0.000/0.000 strat=0: ok lat=1.480*ch at (3.7406,35.1861) D=0.2741 ideal=0.3350 over=-3.51e-03 flatShort=0.231
+case 113 seed 13 circle tool=0 D=8.883 ang=45.5 chord=0.005 flat=0.000 start=2.052 ncl=0 emD=0.000/0.000 strat=0: ok lat=1.499*ch at (-9.6075,18.8623) D=6.5925 ideal=6.6104 over=-1.61e-02 flatShort=2.186
+case 116 seed 13 holedstar tool=0 D=5.964 ang=81.9 chord=0.050 flat=0.000 start=0.000 ncl=0 emD=0.000/0.000 strat=1: ok lat=1.292*ch at (23.2675,8.9012) D=0.5585 ideal=0.6330 over=-1.62e-03 flatShort=0.485
+case 131 seed 13 star tool=0 D=16.510 ang=69.9 chord=0.020 flat=0.000 start=0.000 ncl=0 emD=0.000/0.000 strat=0: ok lat=1.701*ch at (1.2217,-9.8494) D=11.1630 ideal=11.2116 over=-1.43e-02 flatShort=3.115
+case 148 seed 13 star tool=0 D=20.260 ang=117.5 chord=0.020 flat=5.948 start=0.000 ncl=1 emD=1.713/0.000 strat=0: ok lat=12.555*ch at (25.2390,11.5450) D=0.2536 ideal=0.4059 over=0.00e+00 flatShort=0.000
+case 161 seed 13 square_cw tool=0 D=22.858 ang=45.2 chord=0.005 flat=4.437 start=0.000 ncl=2 emD=3.733/2.961 strat=1: ok lat=57.789*ch at (-0.7522,-27.5031) D=0.2545 ideal=0.9487 over=0.00e+00 flatShort=0.495
+case 195 seed 13 holedstar tool=0 D=5.919 ang=130.5 chord=0.100 flat=0.000 start=0.000 ncl=0 emD=0.000/0.000 strat=0: ok lat=4.536*ch at (-12.0988,7.0147) D=0.4016 ideal=0.6107 over=-1.32e-03 flatShort=0.544
+case 207 seed 13 holedstar tool=0 D=3.223 ang=125.9 chord=0.020 flat=0.961 start=0.000 ncl=0 emD=0.000/0.000 strat=0: ok lat=10.338*ch at (10.0943,3.9216) D=0.3985 ideal=0.5042 over=-2.99e-04 flatShort=0.250
+case 230 seed 13 sq_holes tool=0 D=10.049 ang=48.1 chord=0.005 flat=7.787 start=0.543 ncl=0 emD=0.000/0.000 strat=0: ok lat=13.566*ch at (3.1481,-40.4131) D=4.8372 ideal=4.9892 over=-2.14e-03 flatShort=0.004
+case 249 seed 13 star tool=0 D=21.039 ang=108.2 chord=0.005 flat=0.000 start=0.000 ncl=0 emD=0.000/0.000 strat=1: ok lat=1.444*ch at (15.4128,-14.9288) D=6.8099 ideal=6.8151 over=-1.03e-03 flatShort=-1.000
+skipped crossing inputs: 18
+SUMMARY seed=13 cases=232 ok=232 refused=0 fails=16 worstCone=1.181e-03 worstEMallow=2.499e-03 worstEMwall=2.084e-01 worstLat=57.789*ch worstOver=8.88e-16 worstFlatShort=3.115
+  worst lateral shortfall by mode (no flat / flat self-clear / flat + clearance tools): 4.536 13.566 57.789 *chordal
+  issue 21: 1
+  issue 26: 44
+  issue 4: 33

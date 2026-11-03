@@ -1,0 +1,15 @@
+case 1 seed 11 sq_holes tool=0 D=3.741 ang=69.4 chord=0.050 flat=0.000 start=0.000 ncl=0 emD=0.000/0.000 strat=1: ok lat=6.059*ch at (-68.3113,-1.7107) D=1.3027 ideal=1.7400 over=-1.81e-03 flatShort=1.073
+case 52 seed 11 holedstar tool=0 D=16.615 ang=149.4 chord=0.050 flat=1.086 start=0.000 ncl=1 emD=7.575/0.000 strat=0: ok lat=6.812*ch at (-27.5212,27.4941) D=0.2792 ideal=0.3725 over=-2.86e-03 flatShort=0.291
+case 76 seed 11 star tool=0 D=16.445 ang=106.5 chord=0.020 flat=5.524 start=0.000 ncl=2 emD=7.655/3.952 strat=0: ok lat=14.113*ch at (-3.7517,8.4932) D=0.9609 ideal=1.1717 over=0.00e+00 flatShort=0.006
+case 86 seed 11 holedstar tool=0 D=18.291 ang=138.2 chord=0.010 flat=1.170 start=2.457 ncl=0 emD=0.000/0.000 strat=1: ok lat=12.297*ch at (2.8099,12.3096) D=0.0726 ideal=0.1196 over=-1.70e-04 flatShort=0.071
+case 136 seed 11 holedstar tool=0 D=4.098 ang=156.7 chord=0.005 flat=0.264 start=0.000 ncl=0 emD=0.000/0.000 strat=1: ok lat=36.545*ch at (26.6769,26.3077) D=0.0000 ideal=0.0377 over=-1.83e-04 flatShort=0.128
+case 158 seed 11 sq_holes tool=0 D=5.099 ang=149.2 chord=0.005 flat=0.000 start=1.766 ncl=0 emD=0.000/0.000 strat=0: ok lat=19.846*ch at (-38.5669,-28.4611) D=0.2671 ideal=0.2944 over=-6.54e-04 flatShort=0.275
+case 187 seed 11 holedstar tool=0 D=10.097 ang=80.8 chord=0.020 flat=4.289 start=2.128 ncl=1 emD=2.268/0.000 strat=0: ok lat=11.904*ch at (1.1469,11.8039) D=2.8346 ideal=3.1144 over=8.88e-16 flatShort=0.265
+case 189 seed 11 ringneigh tool=0 D=6.865 ang=133.7 chord=0.005 flat=0.000 start=0.000 ncl=0 emD=0.000/0.000 strat=1: ok lat=1.498*ch at (10.5015,5.0169) D=1.1598 ideal=1.1630 over=-1.06e-03 flatShort=0.005
+skipped crossing inputs: 15
+SUMMARY seed=11 cases=235 ok=233 refused=2 fails=8 worstCone=1.170e-03 worstEMallow=2.500e-03 worstEMwall=2.845e-01 worstLat=36.545*ch worstOver=8.88e-16 worstFlatShort=2.443
+  worst lateral shortfall by mode (no flat / flat self-clear / flat + clearance tools): 19.846 36.545 14.113 *chordal
+  issue 17: 2
+  issue 22: 1
+  issue 26: 41
+  issue 4: 24
