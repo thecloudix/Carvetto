@@ -477,7 +477,7 @@ Goal: (a) geometry::locatePoint/windingNumber return Inside (winding −1) at th
 Acceptance criteria:
   1. (a) winding correct for bridges/endpoints on the test ray at every angle (generative test vs a robust oracle), all callers (Pocket, Profile, Drill) unchanged elsewhere; (b) limit consistent with message and ADR, boundary test.
 
-### T-0154 No-spindle toolpaths for diamond-drag engraving   [status: ready]
+### T-0154 No-spindle toolpaths for diamond-drag engraving   [status: in-progress]
 Phase: 1 (Batch C)   Module: core/post, core/toolpath   Depends on: T-0151   ADR: 0020, 0024
 Goal: Owner decision 2026-11-03: Quick Engrave refuses diamond-drag tools until the post supports toolpaths that run with the spindle off. A drag toolpath must skip SPINDLE_ON/[S], stop the spindle (M5) before it, and pause for the operator (tool-change style stop with a message) so the spindle is confirmed off/locked; T-0134's spindle > 0 rule exempts exactly these toolpaths.
 Acceptance criteria:
@@ -495,7 +495,7 @@ Goal: Every local Release build with GCC 15 (-O3 -Werror) fails on a -Wmaybe-uni
 Acceptance criteria:
   1. GCC 15 Release -Werror builds cleanly without disabling the warning globally (restructure the code or initialise explicitly; a targeted, commented pragma only if no clean fix exists); behaviour unchanged (full ctest); CI green.
 
-### T-0145 Timing tests robust under machine load   [status: ready]
+### T-0145 Timing tests robust under machine load   [status: in-progress]
 Phase: 1   Module: core/tests   Depends on: —
 Goal: Found by the T-0144 verifier: CPU-time ratio tests (e.g. toolpath_scale_test.cpp "AC3: thousands of small closed vectors pocket in near-linear time") measure n and 2n in separate windows (best of 3 each); on a loaded SMT machine a ~25% load swing between windows can push a true ×2.0 ratio past the ×2.5 bound (0 failures in 130 runs, but thin margins: Release 1.15–1.30 s vs < 2.0 s). Make ratio tests interleave the n and 2n runs (alternate, take per-pair minima) or otherwise robust to load swings, without weakening what they detect (quadratic stays caught).
 Acceptance criteria:
@@ -510,7 +510,7 @@ Acceptance criteria:
   2. CI runs `tools/changelog.py check` on every PR and fails on a malformed fragment or on a PR that edits CHANGELOG.md's Unreleased section directly (allow the assemble commit itself, e.g. by a marker or by path rule — document).
   3. CONTRIBUTING.md, docs/WORKFLOW.md and .claude/agents/coder.md / verifier.md / director.md say: one fragment per task in changelog.d/, never edit CHANGELOG.md; the director's merge checklist ("exactly one CHANGELOG line per task") becomes "exactly one fragment per task". Existing CHANGELOG.md content unchanged.
 
-### T-0147 signedArea cancellation for small contours far from the origin   [status: ready]
+### T-0147 signedArea cancellation for small contours far from the origin   [status: in-progress]
 Phase: 1   Module: core/geometry   Depends on: —   ADR: 0005
 Goal: Found by the T-0152 verifier (harness t0152v2/drv/one.cpp, rect*.cpp): geometry signedArea (contour_ops.cpp ~52) evaluates the shoelace sum on absolute coordinates, so a small contour far from the origin cancels to 0 (1×0.5 mm at 1e8 mm: 17/20 placements give area 0; even 0.05×0.025 mm at 3e6). Callers that classify by area/orientation (nesting, region building, Pocket/Profile/Drill, medial axis) can then drop or misorient such contours.
 Acceptance criteria:
