@@ -437,7 +437,7 @@ Acceptance criteria:
   2. No output contour has the opposite orientation of its source region unless it is a genuine hole; regression for the reported cases.
   3. Pocket's local guard can be removed or kept as defence; if kept, document why. Behaviour of open paths on clip boundaries documented in ADR-0006 (or fixed), with a test.
 
-### T-0138 offsetContours: drop grid-level dust rings near collapse   [status: ready]
+### T-0138 offsetContours: drop grid-level dust rings near collapse   [status: done (2026-11-03, #35)]
 Phase: 1   Module: core/geometry   Depends on: T-0018   ADR: 0006
 Goal: Found by the T-0018 verifier (harness t0018v1/dust.cpp; pre-existing, identical before the Clipper2 backport). Within ~2 µm of collapse, offsetContours can return 3-vertex rings ~0.3 µm long with |area| ~1e-11 mm², some wound against their nesting (annulus with Bezier outer at (32.939392279875733, −76.249769660635266), ro 10.338534503623912, CW hole ri 6.7009639741650435, inset by (ro−ri)/2 + 0.0015, Round, chordal 0.0002 → 8 dust rings, 2 reversed; circle r 21.723669301678942 inset by r − 0.0016 → a same-orientation dust ring nested in the genuine ring). This contradicts the offset.hpp contract sentence "a result contour wound against the outermost input is a genuine hole".
 Acceptance criteria:
