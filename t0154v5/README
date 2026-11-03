@@ -1,0 +1,13 @@
+T-0154 final-round verifier drivers (branch task/T-0154-no-spindle @ 8424d36). VERDICT FAIL.
+build.sh src out   - builds a driver against /home/chris/wt-T0154/build-verify5
+postatk6.cpp       - final-round attacks: LINE_ENDING (B1), Marlin M0 timeouts via uppercase message words ending in S/P
+                     before a digits-only word (C2 'M0 SPINDLE STOP 1', C3 'M0 UNLOCK UP 5', C5 VAR prefix 'TOOLS ' ->
+                     'M0 TOOLS 3', C13 'M0 TOOL UP [T]': ACCEPTED, Marlin reads S3/P1/P5), paren 'M0 P1' (C9), VAR prefix
+                     '/N' (D), M0[T] (E), digit caps (F), emergency false positives (G), BOM (I),
+                     ';'-style post 'M0 [T]' -> 'M0 3' (K1-K4 ACCEPTED: Grbl/LinuxCNC drop spaces -> M03 spindle start)
+marlin_m0.py       - model of Marlin 2.1 FASTER_GCODE_PARSER parameter scan: which M0 lines carry an S/P timeout
+longn.cpp [n]      - long drag toolpath on all 8 shipped posts: mach3_mm/mach3_inch refuse at N100000 (~10k lines)
+gcheck2.py man.txt - snapshot of t0151v1/gcheck2.py (uncommitted drag-allowlist edits; mirrors the interpreter rule,
+                     so it shares the M0-message blind spot); legit 72 files 0 errors
+Re-ran postatk4 (13 accepted, values in comments, safe), postatk5 (10 accepted: A6 unused words, A7 no false
+positives, A8b/A9 legit), legit (72 files, gcheck2 0 errors), legit2 (all ok).
