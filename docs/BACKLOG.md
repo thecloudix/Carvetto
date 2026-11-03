@@ -495,11 +495,12 @@ Goal: Every local Release build with GCC 15 (-O3 -Werror) fails on a -Wmaybe-uni
 Acceptance criteria:
   1. GCC 15 Release -Werror builds cleanly without disabling the warning globally (restructure the code or initialise explicitly; a targeted, commented pragma only if no clean fix exists); behaviour unchanged (full ctest); CI green.
 
-### T-0145 Timing tests robust under machine load   [status: in-progress]
+### T-0145 Timing tests robust under machine load   [status: merging — verified PASS ad82030 (items 1–2); item 3 follow-ups open]
 Phase: 1   Module: core/tests   Depends on: —
 Goal: Found by the T-0144 verifier: CPU-time ratio tests (e.g. toolpath_scale_test.cpp "AC3: thousands of small closed vectors pocket in near-linear time") measure n and 2n in separate windows (best of 3 each); on a loaded SMT machine a ~25% load swing between windows can push a true ×2.0 ratio past the ×2.5 bound (0 failures in 130 runs, but thin margins: Release 1.15–1.30 s vs < 2.0 s). Make ratio tests interleave the n and 2n runs (alternate, take per-pair minima) or otherwise robust to load swings, without weakening what they detect (quadratic stays caught).
 Acceptance criteria:
   1. All CPU-time ratio tests use an interleaved/robust measurement helper in core/tests (shared with cpu_time.hpp); a deliberately quadratic mutant still fails each test; 0 flakes over ≥ 200 runs under ctest -j16 load.
+  3. (Follow-ups from the T-0145 verifier) Tighten the T-0006 AC1 ratio bound from 3.5 to ~2.5 (linear measures 1.5–1.8; 3.5 misses a 3× quadratic term); add an assert/comment in cpu_scaling.hpp that small calls must be ≥ ~1 ms so the floor cannot swallow the ratio; replace the remaining std::clock absolute bounds (dxf_fuzz_test.cpp, carv_io_test.cpp) with processCpuSeconds.
   2. (Found by the T-0155 coder) PassPlan's absolute 1e-9 mm rounding guard drops one level at nanometre pass depths with maintainExactStep (cutDepth 1e-6, passDepth 1e-9 → 999 levels, not 1000; core/src/toolpath/pass_plan.cpp planStretch) — use a relative epsilon; level counts for realistic pass depths unchanged (Profile/Pocket/Drill/Engrave hashes vs main).
 
 ### T-0146 Changelog fragments (no more CHANGELOG.md conflicts)   [status: in-progress — round 3 FAIL (fragment-duplicate deadlock); owner 2026-11-03: one narrow extra round]
@@ -570,7 +571,7 @@ Acceptance criteria:
   1. Outline and Fill strategies with stepover; multi-pass; native record + CLI; goldens; safety rules as T-0150.
   2. Fill reuses the Pocket raster/offset machinery (T-0121/T-0123) — no duplicate fill code; gouge-free by the pocket oracle.
 
-### T-0152 Medial axis of 2D regions (geometry core for V-carving)   [status: in-progress]
+### T-0152 Medial axis of 2D regions (geometry core for V-carving)   [status: done (2026-11-03, #39)]
 Phase: 1 (Batch C)   Module: core/geometry   Depends on: —   ADR: new (algorithm choice; clean-room — no proprietary code)
 Goal: Compute the medial axis (inner Voronoi skeleton) of a closed region with holes made of lines, arcs and Beziers, with the inscribed-circle radius along it, within the chordal tolerance. This is the basis for V-carve depth = radius / tan(half angle).
 Acceptance criteria:
@@ -578,8 +579,7 @@ Acceptance criteria:
   2. Robust on degenerate input (collinear, near-touching, tiny features, large coordinates), no crashes or hangs (fuzz); ≤ 2.5× per doubling in CPU time up to 50k boundary segments (text-heavy jobs).
   3. ADR records the algorithm (e.g. segment Voronoi via a library already allowed by the dependency policy, or an own implementation) and the dependency/licence decision; any new dependency goes to the owner first.
 
-### T-0153 V-Carve toolpath   [status: blocked]
-(After T-0152 merges.)
+### T-0153 V-Carve toolpath   [status: ready]
 Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0152, T-0123, T-0132   ADR: new
 Goal: V-carve closed regions with a V-bit (behaviour per feature-inventory "V-Carve Toolpath"): depth from the medial axis radius and bit angle, start depth, optional flat depth (flat-bottom areas cleared with clearance tools, Offset or Raster strategy reusing Pocket), corner sharpening, ordering, safe links; native record + CLI.
 Acceptance criteria:

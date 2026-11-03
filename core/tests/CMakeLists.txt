@@ -24,6 +24,9 @@ add_executable(carvetto_tests
   geometry/intersect_cancellation_test.cpp
   geometry/intersect_slack_test.cpp
   geometry/fill_rule_test.cpp
+  geometry/medial_axis_test.cpp
+  geometry/medial_axis_robustness_test.cpp
+  geometry/delaunay_test.cpp
   toolpath/move_test.cpp
   toolpath/toolpath_test.cpp
   toolpath/pass_plan_test.cpp
