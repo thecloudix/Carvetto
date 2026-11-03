@@ -1,0 +1,12 @@
+T-0159 verifier round 1 (branch 3d7222e + 8cb1b8d, main 69eb25a), GCC 15.2 local (default -march=x86-64, no FMA).
+Builds: mainrel/mainv3 = origin/main plain and -march=x86-64-v3; brrel/brv3 = branch; hybrel/hybv3 = main + branch offset.cpp only.
+- main-v3 reproduces the CI GCC 15 failures exactly (naiveWrong 6, AC5 trial 38 12==11/9==8, m3_901028_23 6==5); main plain Release passes.
+- branch: 891/891 in Debug, Release, Release v3, Release -O3 -mfma -mavx2 -ffp-contract=fast.
+- tangent_fuzz: collinear tangent case gives 2 roots on main 34-50% of trials, 1 on the branch (both builds); merged genuine
+  crossings have r-h <= 64 eps scale (2.4e-7 mm at 1e8 mm; half-chord up to 6.8e-3 mm there), never adds a miss.
+- dl3 hash screen, 10000 scenes: tab change alone (hybrel vs brrel / hybv3 vs brv3) changes 517/522 scenes, never leaves a tab
+  more out, keeps more in 172/164; offset fix alone changes ~49% (mostly removal of <1e-6 mm segments; some starts move),
+  leaving more out in 4 plain / 17 FMA scenes (and fewer in 12 / 23). brrel vs brv3 still differ in tab count in 82 scenes.
+- flood oracle on 78 tab-change scenes: 0 worse, 64 better (more tabs held / fewer free pieces).
+- hs (t0131v1) with dumps: Pocket 105/105 scenes bit-identical main vs branch; Profile changes only by sliver removal / start shifts.
+- new offset test fails on main (30/72180 plain, 90 v3), passes on branch.
