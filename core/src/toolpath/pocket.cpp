@@ -69,9 +69,14 @@ Contour contourOf(const Ring& r) {
 }
 
 double ringArea(const Ring& r) {
+    if (r.empty()) {
+        return 0.0;
+    }
+    // About the first vertex, so a small ring far from the origin does not cancel (T-0147).
+    const Vec2 o = r.front();
     double a = 0.0;
     for (std::size_t i = 0, n = r.size(); i < n; ++i) {
-        a += r[i].cross(r[(i + 1) % n]);
+        a += (r[i] - o).cross(r[(i + 1) % n] - o);
     }
     return 0.5 * a;
 }
