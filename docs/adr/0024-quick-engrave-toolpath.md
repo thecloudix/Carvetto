@@ -19,7 +19,11 @@ The inventory form has one depth ("depth to engrave / mark") and a number of pas
 start depth, so `EngraveParams` has `depth` (> 0, below the material surface Z = 0) and
 `passes` (1–1000). The passes are equal: `engraveLevels(depth, passes)` is `PassPlan` with
 start depth 0, cut depth = depth, pass depth = depth / passes and `maintainExactStep` = true,
-which yields exactly `passes` levels (−depth·k/passes) with the last one exactly −depth. Fill
+which yields exactly `passes` levels (−depth·k/passes) with the last one exactly −depth. Each
+pass must be at least `kEngraveMinPassDepth` = 0.000001 mm deep (depth / passes); below that
+PassPlan's 1e-9 mm rounding guard merges levels, so such parameters are refused with
+`InvalidParameters` ("each pass must be at least 0.000001 mm deep …") and `engraveLevels`
+returns no levels (T-0155). Fill
 hands the same plan to Pocket, so both strategies cut the same levels. Safe Z must be above the
 surface (> 0). The cap of 1000 passes keeps Pocket's level cap (10,000) out of reach; a total of
 more than 20,000,000 moves is refused (`WorkLimitExceeded`) as in Pocket and Drill.
@@ -50,7 +54,8 @@ pass **last** (clean edges of the marking; for Raster it also removes the wall s
 allowance, no ramp, the same tolerance and safe Z. Pocket's moves become the engraving's moves
 unchanged and its diagnostics are passed on, their `tool` index cleared (there is one tool) and
 their wording made the engraving's: "tool 1 (name)" becomes "tool 'name'" and the pocket the fill
-area ("too large for the fill area", "filling needs closed vectors", "at the engrave depth"). No
+area ("too large for the fill area", "filling needs closed vectors", "at the engrave depth"). Only
+Pocket's fixed phrases are replaced, never text inside the tool name (T-0155). No
 fill code is duplicated; the tests compare Fill with a direct `pocketToolpath` call move for
 move.
 
