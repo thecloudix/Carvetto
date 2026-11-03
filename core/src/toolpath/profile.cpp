@@ -284,7 +284,8 @@ class ProfileBuilder {
     std::vector<Cut> trim(std::vector<Cut> cuts);
     void chooseStarts(std::vector<Cut>& cuts);
     std::vector<std::size_t> order(const std::vector<Cut>& cuts) const;
-    void placeTabsOn(std::vector<Cut>& primary, const std::vector<Cut>& otherPass, bool asT0127 = false);
+    void placeTabsOn(std::vector<Cut>& primary, const std::vector<Cut>& otherPass, bool asT0127 = false,
+                     bool refuseAtGap = false);
     /// What matchRoughingTabs did beyond T-0127's matching.
     struct MatchExtras {
         bool addedBack{false};  // add-back brought a tab back
@@ -844,7 +845,8 @@ std::vector<double> ProfileBuilder::otherStarts(const Cut& c, const std::vector<
     return out;
 }
 
-void ProfileBuilder::placeTabsOn(std::vector<Cut>& primary, const std::vector<Cut>& otherPass, bool asT0127) {
+void ProfileBuilder::placeTabsOn(std::vector<Cut>& primary, const std::vector<Cut>& otherPass, bool asT0127,
+                                 bool refuseAtGap) {
     if (!p_.tabs.enabled) {
         return;
     }
@@ -854,11 +856,14 @@ void ProfileBuilder::placeTabsOn(std::vector<Cut>& primary, const std::vector<Cu
         // At least a tool radius cut to full depth between neighbouring tabs, so they stay apart. A
         // tab moved off the other pass's start keeps two tolerances + 0.01 mm more from it: its
         // roughing cover (its ends projected and widened by the tolerance) must clear that start.
-        // (`asT0127`: exactly as T-0127 placed them, a moved tab at exactly the gap and no slack.)
+        // (`asT0127`: as T-0127 placed them, a moved tab at exactly the gap. T-0127 then let rounding
+        // decide whether it clashed with the point it was moved off; that depends on the compiler's
+        // floating-point contraction (T-0159), so both outcomes are placed deterministically
+        // instead: accepted within the slack, or with `refuseAtGap` refused within it.)
         const double moveMargin = otherPass.empty() || asT0127 ? 0.0 : 2.0 * tol_.distance + 0.01;
         c.tabKeepClear = otherStarts(c, otherPass, otherIndex);
         TabPlacement tp = placeTabs(c.walk, raised, p_.tabs, c.tabKeepClear, radius_, moveMargin,
-                                    asT0127 ? 0.0 : kKeepClearSlack);
+                                    asT0127 && refuseAtGap ? -kKeepClearSlack : kKeepClearSlack);
         c.tabs.clear();
         for (double u : tp.centres) {
             c.tabs.push_back({u - 0.5 * raised, u + 0.5 * raised});
@@ -2876,7 +2881,9 @@ ProfileResult ProfileBuilder::run() {
     if (separate) {
         // Three candidates, each placed, matched and checked: (A) exactly T-0127's matching: the
         // tabs placed as T-0127 placed them (a tab moved off the other pass's start goes to exactly
-        // the gap, and rounding decides whether it clashes), matched without add-back and without
+        // the gap; T-0127 let rounding decide whether it clashes, which made the result depend on
+        // the compiler's floating-point contraction, so A is run both ways where that places the
+        // tabs differently, T-0159), matched without add-back and without
         // the second try with the cover placed from the vector out; (C) placed with the slack and
         // the move margin, matched with that second try; (B) as C with add-back (a refused tab
         // gives way to tabs fitting dropped beside it). The one that ends with the most kept tabs
@@ -2910,14 +2917,19 @@ ProfileResult ProfileBuilder::run() {
             return n;
         };
         const TabState start = save();
-        placeTabsOn(finish, rough, true);
+        auto samePlacement = [&](const TabState& x, const TabState& y) {
+            for (std::size_t k = 0; k < x.finish.size(); ++k) {
+                if (x.finish[k].tabs != y.finish[k].tabs) return false;
+            }
+            return true;
+        };
+        placeTabsOn(finish, rough, true, true);
+        const TabState placedArefused = save();
+        restore(start);
+        placeTabsOn(finish, rough, true, false);
         const TabState placedA = save();
         restore(start);
         placeTabsOn(finish, rough, false);
-        bool samePlacement = true;
-        for (std::size_t k = 0; k < finish.size() && samePlacement; ++k) {
-            samePlacement = finish[k].tabs == placedA.finish[k].tabs;
-        }
         const TabState placedC = save();
         const MatchExtras fromB = matchRoughingTabs(finish, rough, true, true);
         dropSweptTabs(finish, rough);
@@ -2933,8 +2945,12 @@ ProfileResult ProfileBuilder::run() {
                 best = save();
             }
         }
-        if (!samePlacement || retried) {  // A
-            restore(placedA);
+        // A, with a tab moved to exactly the gap refused (where that places the tabs differently),
+        // then accepted (a tie going to the accepted one).
+        for (const TabState* a : {&placedArefused, &placedA}) {
+            if (a == &placedArefused && samePlacement(placedArefused, placedA)) continue;
+            if (samePlacement(*a, placedC) && !retried) continue;
+            restore(*a);
             matchRoughingTabs(finish, rough, false, false);
             dropSweptTabs(finish, rough);
             if (keptTabs() >= bestKept) {
