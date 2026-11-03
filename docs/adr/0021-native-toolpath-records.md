@@ -71,8 +71,8 @@ schema, the cache format and its budget open; they are decided here.
   rule for lengths, so that one set of keys serves both files. params.json's `tool` object becomes
   the record's `tool` (plus the snapshot), and its `layers` names become `selection.layers` ids.
 - **Parameters are finite numbers (T-0136).** Every number in `params` (lengths, angles,
-  tolerances, `start_position`) must be finite. Unlike other `job.json` doubles (ADR-0013 §1,
-  e.g. an empty box is ±infinity) the spellings `"NaN"`, `"Infinity"` and `"-Infinity"` are
+  tolerances, `start_position`) must be finite. Unlike other `job.json` doubles (ADR-0013 decision 3
+  "Numbers", e.g. an empty box is ±infinity) the spellings `"NaN"`, `"Infinity"` and `"-Infinity"` are
   refused there, in both dialects (`job.json.toolpaths[0].params.safe_z: must be finite`,
   `toolpaths/0001.json.params.raster_angle: must be finite`); a NaN parameter also broke
   `record == reloaded copy`. `nonFiniteParam` (`toolpath_record.hpp`) names the first offending

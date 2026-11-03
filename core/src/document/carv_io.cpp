@@ -2792,10 +2792,22 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
     return out;
 }
 
-/// The longest string (value or key) in a JSON tree, with its loader-style path.
+/// A string of a JSON tree with its loader-style path and three sizes (T-0139): `memory` in
+/// memory; `stored` between the quotes in job.json, where control characters, quotes and
+/// backslashes are escaped and invalid UTF-8 becomes U+FFFD; `decoded` as the loader reads it back
+/// (escapes undone, so only invalid UTF-8 grows: three bytes of U+FFFD per invalid byte). The
+/// loader's string cap applies to `decoded`; job.json's size and compression ratio to `stored`.
 struct LongestString {
     std::string path;
-    std::size_t bytes{0};
+    std::size_t memory{0};
+    std::size_t stored{0};
+    std::size_t decoded{0};
+};
+
+/// The longest strings of a JSON tree: by decoded size (the loader's cap) and by stored size.
+struct LongestStrings {
+    LongestString decoded;
+    LongestString stored;
 };
 
 /// A name or key for a message: at most 64 bytes, longer ones cut with "..." (the bytes are
@@ -2805,31 +2817,63 @@ std::string clipped(const std::string& text) {
     return text.size() <= kMax ? text : text.substr(0, kMax) + "...";
 }
 
-void findLongestString(const json& j, const std::string& path, LongestString& best) {
-    if (j.is_string()) {
-        const std::size_t n = j.get_ref<const std::string&>().size();
-        if (n > best.bytes) {
-            best = {path, n};
+/// Measures `text` as stored in job.json and as decoded by the loader (see LongestString).
+void measure(const std::string& text, std::string& scratch, LongestString& out) {
+    scratch.clear();
+    detail::appendJsonString(scratch, text);
+    out.memory = text.size();
+    out.stored = scratch.size() - 2;
+    // appendJsonString writes two-character escapes (quote, backslash, \n ...) and six-character
+    // backslash-u escapes for other control characters; each decodes to one byte.
+    std::size_t decoded = out.stored;
+    for (std::size_t i = 1; i + 1 < scratch.size(); ++i) {
+        if (scratch[i] == '\\') {
+            const bool unicode = scratch[i + 1] == 'u';
+            decoded -= unicode ? 5 : 1;
+            i += unicode ? 5 : 1;
         }
+    }
+    out.decoded = decoded;
+}
+
+void findLongestStrings(const json& j, const std::string& path, LongestStrings& best, std::string& scratch) {
+    const auto consider = [&best, &scratch](const std::string& text, const std::string& where, bool key) {
+        // A string grows at most sixfold when stored (\u0001) and threefold when decoded
+        // (U+FFFD); skip those that cannot win.
+        if (text.size() * 6 <= best.stored.stored && text.size() * 3 <= best.decoded.decoded) {
+            return;
+        }
+        LongestString m;
+        measure(text, scratch, m);
+        if (m.stored > best.stored.stored || m.decoded > best.decoded.decoded) {
+            m.path = key ? where + " (key)" : where;
+            if (m.stored > best.stored.stored) {
+                best.stored = m;
+            }
+            if (m.decoded > best.decoded.decoded) {
+                best.decoded = std::move(m);
+            }
+        }
+    };
+    if (j.is_string()) {
+        consider(j.get_ref<const std::string&>(), path, false);
     } else if (j.is_object()) {
         for (auto it = j.begin(); it != j.end(); ++it) {
             const std::string child = path + "." + clipped(it.key());
-            if (it.key().size() > best.bytes) {
-                best = {child + " (key)", it.key().size()};
-            }
-            findLongestString(it.value(), child, best);
+            consider(it.key(), child, true);
+            findLongestStrings(it.value(), child, best, scratch);
         }
     } else if (j.is_array()) {
         for (std::size_t i = 0; i < j.size(); ++i) {
-            findLongestString(j[i], path + "[" + std::to_string(i) + "]", best);
+            findLongestStrings(j[i], path + "[" + std::to_string(i) + "]", best, scratch);
         }
     }
 }
 
 /// Explains a verification failure of job.json caused by a long string (T-0136): the loader
 /// refuses a string over its cap without naming it, and a long repetitive string makes job.json
-/// compress beyond the 200:1 ratio check before any string is read. Returns an empty string when
-/// the failure has another cause.
+/// compress beyond the 200:1 ratio check before any string is read. Strings are measured as
+/// stored in job.json (T-0139). Returns an empty string when the failure has another cause.
 std::string explainLongString(const json& root, std::size_t jobBytes, const std::string& failure) {
     const detail::LoadLimits limits;
     const detail::ZipLimits zipLimits;
@@ -2838,17 +2882,30 @@ std::string explainLongString(const json& root, std::size_t jobBytes, const std:
     if (!tooLong && !ratio) {
         return {};
     }
-    LongestString best;
-    findLongestString(root, kJobName, best);
-    if (best.bytes > limits.maxStringBytes) {
-        return "name too long: " + best.path + " holds " + std::to_string(best.bytes) +
-               " bytes; a name or text holds at most " + std::to_string(limits.maxStringBytes);
+    LongestStrings best;
+    std::string scratch;
+    findLongestStrings(root, kJobName, best, scratch);
+    const LongestString& big = best.decoded;
+    if (big.decoded > limits.maxStringBytes) {
+        std::string msg = "name too long: " + big.path + " holds " + std::to_string(big.decoded) + " bytes";
+        if (big.decoded != big.memory) {
+            msg += " when loaded (" + std::to_string(big.memory) +
+                   " in memory; invalid UTF-8 is saved as U+FFFD, 3 bytes per invalid byte)";
+        }
+        return msg + "; a name or text holds at most " + std::to_string(limits.maxStringBytes);
     }
     // Blamed only when it makes up a large part of job.json; otherwise the loader's message stays.
-    if (ratio && best.bytes >= jobBytes / 4) {
-        return "name too long: " + best.path + " holds " + std::to_string(best.bytes) +
-               " bytes of repetitive text, so job.json would expand more than " +
-               std::to_string(zipLimits.maxJsonRatio) + ":1 and be refused as a possible decompression bomb";
+    const LongestString& wide = best.stored;
+    if (ratio && wide.stored >= jobBytes / 4) {
+        std::string msg = "name too long: " + wide.path + " holds " + std::to_string(wide.stored) +
+                          " bytes of repetitive text";
+        if (wide.stored != wide.memory) {
+            msg += " when stored (" + std::to_string(wide.memory) +
+                   " in memory; job.json escapes control characters, quotes and backslashes and replaces "
+                   "invalid UTF-8 by U+FFFD)";
+        }
+        return msg + ", so job.json would expand more than " + std::to_string(zipLimits.maxJsonRatio) +
+               ":1 and be refused as a possible decompression bomb";
     }
     return {};
 }
@@ -2934,22 +2991,37 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
             const std::uint64_t count = 2 + names.size();
             if (count > zipLimits.maxMembers) {
                 // A preserved member that a cache replaces is not counted twice.
-                const std::uint64_t preserved = ex ? ex->members.size() : 0;
                 std::uint64_t computed = 0;
                 for (const ToolpathRecord& tp : doc.toolpaths()) {
                     computed += tp.hasMoves() ? 1U : 0U;
                 }
                 const std::uint64_t kept = names.size() - computed;  // preserved members kept
-                const std::uint64_t fit = zipLimits.maxMembers > 2 + kept ? zipLimits.maxMembers - 2 - kept : 0;
-                return CarvError{CarvError::Code::ResourceLimit,
-                                 "the file would have " + std::to_string(count) + " archive members (" +
-                                     std::to_string(computed) + " toolpath move caches among them); a .carv file "
-                                     "holds at most " + std::to_string(zipLimits.maxMembers) +
-                                     " members including manifest.json and job.json, so at most " +
-                                     std::to_string(fit) + " toolpaths with computed moves fit" +
-                                     (preserved > 0 ? " next to the " + std::to_string(kept) + " preserved members"
-                                                    : std::string{}) +
-                                     " (clear the moves of some toolpaths, or split the job)"};
+                const std::uint64_t room = zipLimits.maxMembers - 2;  // after manifest and job
+                const auto plural = [](std::uint64_t n, const char* word) {
+                    return std::to_string(n) + " " + word + (n == 1 ? "" : "s");
+                };
+                std::string msg = "the file would have " + std::to_string(count) + " archive members";
+                if (computed > 0) {
+                    msg += " (" + plural(computed, "toolpath move cache") + " among them)";
+                }
+                msg += "; a .carv file holds at most " + std::to_string(zipLimits.maxMembers) +
+                       " members including manifest.json and job.json, so ";
+                if (kept > room) {
+                    // Only possible with preserved members added through CarvExtras::withMember.
+                    msg += "the file has too many preserved members: at most " + std::to_string(room) +
+                           " fit, not " + std::to_string(kept) +
+                           (computed > 0 ? " (even without toolpath move caches)" : "");
+                } else if (kept >= room) {
+                    msg += "no toolpath with computed moves fits next to the " +
+                           plural(kept, "preserved member") + " (clear the moves of every toolpath)";
+                } else {
+                    const std::uint64_t fit = room - kept;
+                    msg += "at most " + plural(fit, "toolpath") + " with computed moves" +
+                           (fit == 1 ? " fits" : " fit") +
+                           (kept > 0 ? " next to the " + plural(kept, "preserved member") : std::string{}) +
+                           " (clear the moves of some toolpaths, or split the job)";
+                }
+                return CarvError{CarvError::Code::ResourceLimit, msg};
             }
         }
         // Caches are named by position (toolpaths/0001.bin .. 9999.bin), so a computed toolpath

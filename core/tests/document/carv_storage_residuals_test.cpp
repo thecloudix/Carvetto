@@ -6,6 +6,8 @@
 // (d) the interim counting pass shares the load budget (no over-reservation).
 // (f) non-finite toolpath parameters are refused by the loader, saveCarv and the commands.
 // (e) is tested in core/tests/post/post_safety_test.cpp.
+// T-0139: (a) names measured as stored in job.json, (d) member-limit wording, RSS test skipped
+// under AddressSanitizer.
 
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
@@ -40,6 +42,19 @@
 #include <sys/resource.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#endif
+
+// AddressSanitizer inflates RSS (shadow memory, freed-memory quarantine): RSS bounds are skipped
+// under it (T-0139). GCC and MSVC define __SANITIZE_ADDRESS__; Clang has __has_feature.
+#if defined(__SANITIZE_ADDRESS__)
+#define CARVETTO_TEST_ASAN 1
+#elif defined(__has_feature)
+#if __has_feature(address_sanitizer)
+#define CARVETTO_TEST_ASAN 1
+#endif
+#endif
+#ifndef CARVETTO_TEST_ASAN
+#define CARVETTO_TEST_ASAN 0
 #endif
 
 using namespace carvetto;
@@ -286,13 +301,15 @@ TEST_CASE("T-0136 a: saveCarv's verification load holds no second copy of the mo
         REQUIRE(back.ok());
         CHECK(back.value().document.toolpaths().front() == doc.toolpaths().front());
     }
-#if defined(__linux__)
+#if defined(__linux__) && !CARVETTO_TEST_ASAN
     const std::int64_t peak = peakGrowth([&doc]() { return saveCarv(doc).ok(); });
     INFO("save peak growth " << (peak >> 20) << " MiB for " << kMoves << " moves");
     REQUIRE(peak >= 0);
     // Before T-0136 the verification decoded every move again (72 bytes each, 69 MiB here) on
     // top of the encoded cache and the archive. Now only those remain (about 10 + 6 MB here).
     CHECK(peak < static_cast<std::int64_t>(kMoves) * 72 / 2);
+#elif CARVETTO_TEST_ASAN
+    WARN("peak RSS not checked under AddressSanitizer (its shadow memory and quarantine inflate it)");
 #endif
 }
 
@@ -340,12 +357,152 @@ TEST_CASE("T-0136 b: the member limit message says how many computed toolpaths f
     const CarvExtras extra = CarvExtras{}.withMember("notes.txt", Bytes{'x'});
     const std::string withExtra = saveError(doc, extra);
     INFO(withExtra);
-    CHECK(contains(withExtra, "at most 9997 toolpaths with computed moves fit next to the 1 preserved members"));
+    CHECK(contains(withExtra, "at most 9997 toolpaths with computed moves fit next to the 1 preserved member "));
+}
+
+TEST_CASE("T-0139 d: the member limit message reads well with no caches or no room for one",
+          "[document][toolpath][carv][limits]") {
+    // A file with 9,998 preserved members: manifest + job + 9,998 = the 10,000-member limit.
+    std::vector<detail::ZipMember> ms = members(save(Document{}));
+    for (int i = 0; i < 9998; ++i) {
+        ms.push_back({"notes/" + std::to_string(10000 + i) + ".txt", Bytes{'x'}});
+    }
+    const auto zip = detail::writeZip(ms);
+    REQUIRE(zip.ok);
+    auto loaded = loadCarv(std::span<const std::uint8_t>(zip.bytes));
+    REQUIRE(loaded.ok());
+    const CarvExtras full = loaded.value().extras;
+    // One computed toolpath does not fit next to them.
+    {
+        Document d;
+        d.insertToolpath(computed({Move::rapid({0, 0, 5})}));
+        const std::string why = saveError(d, full);
+        INFO(why);
+        CHECK(contains(why, "10001 archive members (1 toolpath move cache among them)"));
+        CHECK(contains(why, "no toolpath with computed moves fits next to the 9998 preserved members"));
+        CHECK_FALSE(contains(why, "at most 0"));
+    }
+    // No caches at all: one preserved member too many.
+    {
+        const std::string why = saveError(Document{}, full.withMember("notes/extra.txt", Bytes{'y'}));
+        INFO(why);
+        CHECK(contains(why, "the file would have 10001 archive members; a .carv file holds at most 10000"));
+        CHECK(contains(why, "so the file has too many preserved members: at most 9998 fit, not 9999"));
+        CHECK_FALSE(contains(why, "move cache"));
+        // With a computed toolpath too, clearing moves would not be enough: said so.
+        Document d;
+        d.insertToolpath(computed({Move::rapid({0, 0, 5})}));
+        const std::string both = saveError(d, full.withMember("notes/extra.txt", Bytes{'y'}));
+        INFO(both);
+        CHECK(contains(both, "10002 archive members (1 toolpath move cache among them)"));
+        CHECK(contains(both, "too many preserved members: at most 9998 fit, not 9999 (even without toolpath "
+                             "move caches)"));
+        CHECK_FALSE(contains(both, "clear the moves"));
+    }
 }
 
 // ------------------------------------------------------------------------------------------------
 // (c) over-long names
 // ------------------------------------------------------------------------------------------------
+
+TEST_CASE("T-0139 a: names are measured as decoded for the cap and as stored for the ratio",
+          "[document][toolpath][carv][limits]") {
+    const auto nameError = [](const std::string& name) {
+        Document d;
+        ToolpathRecord r;
+        r.name = name;
+        r.selection = VectorSelection::allVectors();
+        d.insertToolpath(r);
+        return saveError(d);
+    };
+    const std::string prefix = "the file would not load again: name too long: job.json.toolpaths[0].name holds ";
+    // Escapes decode to one byte each: under the 1 MiB cap as loaded, these are refused only by
+    // the 200:1 ratio of job.json, and reported with their stored size.
+    struct Repetitive {
+        const char* what;
+        std::string name;
+        std::size_t stored;
+    };
+    const std::vector<Repetitive> repetitive{
+        {"control characters (sixfold)", std::string(200'000, '\x01'), 1'200'000},
+        {"control characters (just over 1 MiB stored)", std::string(180'000, '\x01'), 1'080'000},
+        {"control characters (below 1 MiB stored)", std::string(174'700, '\x01'), 1'048'200},
+        {"control characters (above 1 MiB stored)", std::string(174'800, '\x01'), 1'048'800},
+        {"quotes (twofold)", std::string(600'000, '"'), 1'200'000},
+        {"backslashes (twofold)", std::string(600'000, '\\'), 1'200'000},
+    };
+    for (const Repetitive& c : repetitive) {
+        INFO(c.what);
+        const std::string why = nameError(c.name);
+        INFO(why.substr(0, 400));
+        CHECK(contains(why, prefix + std::to_string(c.stored) + " bytes of repetitive text when stored (" +
+                                std::to_string(c.name.size()) + " in memory"));
+        CHECK(contains(why, "200:1"));
+        CHECK_FALSE(contains(why, "holds at most"));
+        CHECK(why.size() < 400);
+    }
+    // Under 1 MiB as stored, but repetitive enough together with another field.
+    {
+        Document d;
+        ToolpathRecord r;
+        r.name = std::string(100'000, '\x02');  // 600,000 bytes stored
+        r.toolSource.toolId = std::string(500'000, 'b');
+        r.selection = VectorSelection::allVectors();
+        d.insertToolpath(r);
+        const std::string why = saveError(d);
+        INFO(why);
+        CHECK(contains(why, prefix + "600000 bytes of repetitive text when stored (100000 in memory"));
+        CHECK(contains(why, "200:1"));
+    }
+    // Invalid UTF-8 is saved as U+FFFD and grows when loaded: the cap message, with the size the
+    // loader checks (escapes counted once, not as stored).
+    struct OverCap {
+        const char* what;
+        std::string name;
+        std::size_t decoded;
+    };
+    std::string mixed;
+    for (int i = 0; i < 200'000; ++i) {
+        mixed += "\xC3\xA9\x80\"";  // e-acute (2 bytes), an invalid byte (3 when loaded), a quote (1)
+    }
+    const std::vector<OverCap> overCap{
+        {"invalid UTF-8 (threefold)", std::string(400'000, '\xFF'), 1'200'000},
+        {"invalid UTF-8 (just over)", std::string(350'000, '\xFF'), 1'050'000},
+        {"valid and invalid UTF-8 with quotes", mixed, 1'200'000},  // 1,400,000 stored
+    };
+    for (const OverCap& c : overCap) {
+        INFO(c.what);
+        const std::string why = nameError(c.name);
+        INFO(why.substr(0, 400));
+        CHECK(contains(why, prefix + std::to_string(c.decoded) + " bytes when loaded (" +
+                                std::to_string(c.name.size()) + " in memory"));
+        CHECK(contains(why, "; a name or text holds at most 1048576"));
+        CHECK_FALSE(contains(why, "decompression bomb"));
+        CHECK(why.size() < 400);
+    }
+    // Names far over 1 MiB as stored but under it as loaded, and varied enough to compress within
+    // the ratio, save and load back unchanged.
+    std::mt19937 rng(139);
+    for (const bool all : {false, true}) {
+        INFO((all ? "control characters, quotes and backslashes" : "control characters"));
+        std::string name;
+        const int count = all ? 300'000 : 150'000;
+        for (int i = 0; i < count; ++i) {
+            const unsigned pick = static_cast<unsigned>(rng() % 33);
+            name += pick == 31 && all ? '"' : pick == 32 && all ? '\\' : static_cast<char>(1 + pick % 31);
+        }
+        Document d;
+        ToolpathRecord r;
+        r.name = name;
+        r.selection = VectorSelection::allVectors();
+        d.insertToolpath(r);
+        const Bytes file = save(d);
+        CHECK(memberText(file, "job.json").size() > (all ? 1'500'000U : 800'000U));
+        auto back = loadCarv(std::span<const std::uint8_t>(file));
+        REQUIRE(back.ok());
+        CHECK(back.value().document.toolpaths().front().name == name);
+    }
+}
 
 TEST_CASE("T-0136 c: over-long names are reported as such, with the field", "[document][toolpath][carv][limits]") {
     const std::string repetitive(1'100'000, 'n');  // over the 1 MiB string cap, compresses > 1000:1
