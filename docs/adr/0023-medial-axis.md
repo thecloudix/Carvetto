@@ -111,10 +111,12 @@ by at most 2.5× per doubling of boundary segments up to 50,000 (text-heavy jobs
    segments. Parts of the region narrower than twice the chordal tolerance (inscribed radius
    below it) and the last ~chordal of a sharp corner's branch may have no skeleton. Branches into
    obtuse convex corners are shortened much more by the spoke test, since there the two walls are
-   nearly one line (measured by the T-0152 verifiers: 2–3·chordal of branch at 120°,
-   8–13·chordal at 150°, 80–125·chordal at 170°, ~250·chordal at 174°, the whole bisector branch
-   at 178°). The inscribed circles of the remaining skeleton still reach the boundary to within
-   ~0.38·chordal, so carved
+   nearly one line. The loss depends on the corner's size and grows quickly towards 180°;
+   measured examples (T-0152 verifiers, corner circumradii 3–25 mm, in multiples of chordal of
+   branch length): 120° 1.8–3.3, 150° 7.1–12.7, 170° 64–125, 174° 182–312 (the whole branch
+   already for a 3 mm corner), 176° up to 625, and near 178° the whole bisector branch. These are
+   measurements, not bounds. The inscribed circles of the remaining skeleton still reach the
+   corner vertex to within ~0.5·chordal (measured 0.31–0.50·chordal at the vertex), so carved
    depth stays within tolerance, but T-0153 must not assume that every convex corner has a
    branch reaching it (corner sharpening has to find corners from the boundary, not from branch
    ends). Coordinates are supported while 1e-12 of the largest coordinate magnitude stays below
@@ -122,7 +124,9 @@ by at most 2.5× per doubling of boundary segments up to 50,000 (text-heavy jobs
    included: the classification area is computed about each contour's own box centre, since the
    shoelace on absolute coordinates cancels (a 1 × 0.5 mm rectangle at 1e8 mm gave area 0 and
    was dropped; the shared `signedArea` is left as is, carded separately). Beyond that limit the
-   result is computed but flagged `accuracyCapped`, empty results included.
+   result is computed but flagged `accuracyCapped`, empty results included. The limit is judged
+   on all usable input contours (closed, finite, non-empty), including ones later ignored for
+   zero area or equal sides; open or otherwise unusable contours do not count.
    Deterministic for a given input (own shuffle, total orders everywhere, count-based budgets).
 
 ## Consequences

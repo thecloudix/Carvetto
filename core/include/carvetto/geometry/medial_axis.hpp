@@ -98,16 +98,21 @@ struct MedialAxis {
 /// linearly within tol.chordal. Parts of the region narrower than twice tol.chordal (every
 /// inscribed circle below the tolerance) and the last ~tol.chordal of a sharp corner's branch
 /// may have no skeleton. Branches into obtuse convex corners are shortened much more, since
-/// the spoke test drops the part where the two walls are nearly one line (measured: 2-3 x
-/// tol.chordal of branch at 120 degrees, 8-13 x at 150, 80-125 x at 170, ~250 x at 174, the
-/// whole bisector branch near 178). The inscribed circles of the remaining skeleton still reach
-/// the boundary to within ~0.38 x tol.chordal, so carved depth stays within tolerance, but
-/// callers must not assume that every convex corner has a branch reaching it.
+/// the spoke test drops the part where the two walls are nearly one line. The loss depends on
+/// the corner's size and grows quickly towards 180 degrees; measured examples over corner
+/// circumradii 3-25 mm, in multiples of tol.chordal of branch length: 120 degrees 1.8-3.3,
+/// 150 degrees 7.1-12.7, 170 degrees 64-125, 174 degrees 182-312 (the whole branch already for
+/// a 3 mm corner), 176 degrees up to 625; near 178 degrees the whole bisector branch is gone.
+/// These are measurements, not bounds. The inscribed circles of the remaining skeleton still
+/// reach the corner vertex to within ~0.5 x tol.chordal, so carved depth stays within tolerance,
+/// but callers must not assume that every convex corner has a branch reaching it.
 ///
 /// Coordinates: supported while 1e-12 of the largest coordinate magnitude stays below
 /// tol.chordal / 2 (about 5e9 mm at the default tolerance), including small features far from
 /// the origin; beyond that the result is still computed but `accuracyCapped` is set (also for an
-/// empty result), since rounding then exceeds the tolerance budget. Assumes IEEE double
+/// empty result), since rounding then exceeds the tolerance budget. The limit is judged on all
+/// usable input contours (closed, finite, non-empty), including ones later ignored for zero
+/// area or equal sides; open or otherwise unusable contours do not count. Assumes IEEE double
 /// arithmetic with 53-bit rounding (SSE2, or x87 set to double precision). Output is
 /// deterministic.
 MedialAxis medialAxis(const std::vector<Contour>& contours, const Tolerance& tol,
