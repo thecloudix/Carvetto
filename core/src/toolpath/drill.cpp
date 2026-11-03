@@ -276,13 +276,23 @@ DrillResult drillToolpath(const std::vector<Contour>& contours, const tooling::T
     plan.cutDepth = params.cutDepth;
     plan.passDepth = params.peck ? pt.passDepth : 0.0;  // 0: one pass to the bottom
     plan.maintainExactStep = true;
-    if (params.peck && !(std::ceil(params.cutDepth / pt.passDepth) + 1.0 <= kMaxLevels)) {
+    // The cap is on the passes PassPlan actually makes: exactly kMaxLevels passes are allowed,
+    // one more is refused (T-0143). The estimate ceil(cut/pass) can exceed the true count by one
+    // (PassPlan's 1e-9 round-off guard), so it only screens out plans far too large to build.
+    const auto tooManyPasses = [&] {
         say(ToolpathIssue::WorkLimitExceeded, std::nullopt,
             "more than " + num(kMaxLevels) + " passes per hole (pass depth " + num(pt.passDepth) +
                 " mm too small for the cut depth)");
+    };
+    if (params.peck && !(std::ceil(params.cutDepth / pt.passDepth) <= kMaxLevels + 1.0)) {
+        tooManyPasses();
         return result;
     }
     const std::vector<double> levels = plan.levels();
+    if (static_cast<double>(levels.size()) > kMaxLevels) {
+        tooManyPasses();
+        return result;
+    }
     if (levels.empty()) {
         say(ToolpathIssue::InvalidParameters, std::nullopt, "the cut depth yields no passes");
         return result;
