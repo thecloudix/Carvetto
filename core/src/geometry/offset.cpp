@@ -1,6 +1,7 @@
 #include "carvetto/geometry/offset.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -665,6 +666,105 @@ bool closerThan(Vec2 p, double limit, const std::vector<Span>& input, BoxGrid& g
     });
 }
 
+// Convex hull of `pts` (Andrew's monotone chain), counter-clockwise, collinear points dropped.
+std::vector<Vec2> convexHull(std::vector<Vec2> pts) {
+    std::sort(pts.begin(), pts.end(), [](Vec2 a, Vec2 b) { return a.x != b.x ? a.x < b.x : a.y < b.y; });
+    pts.erase(std::unique(pts.begin(), pts.end()), pts.end());
+    if (pts.size() < 3) {
+        return pts;
+    }
+    std::vector<Vec2> h(2 * pts.size());
+    std::size_t k = 0;
+    for (std::size_t i = 0; i < pts.size(); ++i) {
+        while (k >= 2 && (h[k - 1] - h[k - 2]).cross(pts[i] - h[k - 2]) <= 0.0) {
+            --k;
+        }
+        h[k++] = pts[i];
+    }
+    for (std::size_t i = pts.size() - 1, t = k + 1; i > 0; --i) {
+        while (k >= t && (h[k - 1] - h[k - 2]).cross(pts[i - 1] - h[k - 2]) <= 0.0) {
+            --k;
+        }
+        h[k++] = pts[i - 1];
+    }
+    h.resize(k - 1);
+    return h;
+}
+
+// Parameter intervals (open, within [0, 1]) of the line or arc `s` whose points lie closer than
+// `limit` to the point `w`, slightly shrunk so that every point reported is strictly closer.
+void closeIntervals(const Span& s, Vec2 w, double limit, std::vector<std::pair<double, double>>& out) {
+    constexpr double kShrink = 1e-12;
+    if (const auto* line = std::get_if<LineSpan>(&s)) {
+        const Vec2 u = line->end - line->start;
+        const Vec2 f = line->start - w;
+        const double qa = u.lengthSquared();
+        if (qa <= 0.0) {
+            return;
+        }
+        const double qb = 2.0 * u.dot(f);
+        const double qc = f.lengthSquared() - limit * limit;
+        const double disc = qb * qb - 4.0 * qa * qc;
+        if (disc <= 0.0) {
+            return;
+        }
+        const double root = std::sqrt(disc);
+        const double t0 = std::max(0.0, (-qb - root) / (2.0 * qa) + kShrink);
+        const double t1 = std::min(1.0, (-qb + root) / (2.0 * qa) - kShrink);
+        if (t1 > t0) {
+            out.emplace_back(t0, t1);
+        }
+        return;
+    }
+    const auto& arc = std::get<ArcSpan>(s);
+    const double sweep = std::fabs(arc.sweepAngle());
+    const Vec2 cw = w - arc.centre;
+    const double m = cw.length();
+    // |C + R u - w|^2 < L^2  <=>  (w - C).u > (R^2 + m^2 - L^2) / 2R.
+    const double k = (arc.radius * arc.radius + m * m - limit * limit) / (2.0 * arc.radius);
+    if (m <= 0.0 || k <= -m) {
+        if (k < -m || (m <= 0.0 && k < 0.0)) {
+            out.emplace_back(0.0, 1.0);
+        }
+        return;
+    }
+    if (k >= m) {
+        return;
+    }
+    const double half = std::acos(k / m) - kShrink;
+    if (half <= 0.0) {
+        return;
+    }
+    // Relative angle (along the arc's direction from its start) of the interval's first end.
+    const double phi = cw.angle();
+    const double first = arc.direction == ArcDirection::CCW ? normalizeAngle(phi - half - arc.startAngle)
+                                                            : normalizeAngle(arc.startAngle - (phi + half));
+    for (const double shift : {0.0, -kTwoPi}) {
+        const double a0 = std::max(0.0, first + shift);
+        const double a1 = std::min(sweep, first + shift + 2.0 * half);
+        if (a1 > a0) {
+            out.emplace_back(a0 / sweep, a1 / sweep);
+        }
+    }
+}
+
+// The parts of `s` not covered by `dominated` (merged), as intervals of [0, 1].
+std::vector<std::pair<double, double>> uncovered(std::vector<std::pair<double, double>>& dominated) {
+    std::sort(dominated.begin(), dominated.end());
+    std::vector<std::pair<double, double>> live;
+    double at = 0.0;
+    for (const auto& [a, b] : dominated) {
+        if (a > at) {
+            live.emplace_back(at, a);
+        }
+        at = std::max(at, b);
+    }
+    if (at < 1.0) {
+        live.emplace_back(at, 1.0);
+    }
+    return live;
+}
+
 // Points whose convex hull contains the line or arc `s`: a line's end points; for an arc, the
 // end points of sub-arcs of at most 90 degrees plus, for each, the meeting point of its end
 // tangents (at radius r / cos(half sweep) on the bisector).
@@ -712,6 +812,200 @@ std::optional<Span> invertedOffset(const Span& s, double d, double sign) {
     inverted.endAngle += kPi;
     return Span{inverted};
 }
+
+// Bounding volume hierarchy over the input spans in path order, for distance queries next to
+// runs of sub-tolerance spans (T-0009). There thousands of spans lie within a few micrometres of
+// each other and of every query point's distance d, so a grid query visits all of them: a query
+// that has to show that no span is closer than d (a kept piece) cost O(n). Each node bounds its
+// consecutive spans by their convex hull (or, for a hull of more than kMaxHull points, their
+// box); a query skips a node whose bound is no nearer than its limit, so near a cluster it
+// stops at the cluster's hull, at distance d from the points on its outer boundary.
+class SpanTree {
+   public:
+    explicit SpanTree(const std::vector<Span>& input) : input_(input) {
+        if (!input.empty()) {
+            build(0, input.size());
+        }
+    }
+
+    // True when some span is closer than `limit` to `p` (`witness`: last span that was).
+    bool closer(Vec2 p, double limit, std::size_t& witness) const {
+        if (witness < input_.size() && distanceToSpan(p, input_[witness]) < limit) {
+            return true;
+        }
+        bool found = false;
+        visit(p, [&] { return limit; }, [&](std::size_t i) {
+            if (distanceToSpan(p, input_[i]) < limit) {
+                witness = i;
+                found = true;
+            }
+            return found;
+        });
+        return found;
+    }
+
+    // Distance from `p` to the nearest span if below `cap` (otherwise `cap`), and that span's
+    // closest point in `at` (unchanged when none is nearer than `cap`).
+    double nearest(Vec2 p, double cap, Vec2* at = nullptr) const {
+        double best = cap;
+        visit(p, [&] { return best; }, [&](std::size_t i) {
+            const double dist = distanceToSpan(p, input_[i]);
+            if (dist < best) {
+                best = dist;
+                if (at) {
+                    *at = closestOn(input_[i], p);
+                }
+            }
+            return false;
+        });
+        return best;
+    }
+
+   private:
+    static constexpr std::size_t kNoChild = std::numeric_limits<std::size_t>::max();
+    static constexpr std::size_t kLeaf = 8;
+    static constexpr std::size_t kMaxHull = 48;
+
+    // Calls leaf(i) for the spans of every node whose bound is below bound(), nearer nodes first,
+    // until leaf returns true.
+    template <class Bound, class Leaf>
+    void visit(Vec2 p, Bound bound, Leaf leaf) const {
+        stack_.clear();
+        stack_.emplace_back(0, lowerBound(nodes_[0], p));
+        while (!stack_.empty()) {
+            const auto [id, lb] = stack_.back();
+            stack_.pop_back();
+            if (lb >= bound()) {
+                continue;
+            }
+            const Node& n = nodes_[id];
+            if (n.left == kNoChild) {
+                for (std::size_t i = n.lo; i < n.hi; ++i) {
+                    if (leaf(i)) {
+                        return;
+                    }
+                }
+                continue;
+            }
+            const double bl = lowerBound(nodes_[n.left], p);
+            const double br = lowerBound(nodes_[n.right], p);
+            if (bl <= br) {
+                stack_.emplace_back(n.right, br);
+                stack_.emplace_back(n.left, bl);
+            } else {
+                stack_.emplace_back(n.left, bl);
+                stack_.emplace_back(n.right, br);
+            }
+        }
+    }
+
+    struct Node {
+        std::size_t lo{0};
+        std::size_t hi{0};
+        std::size_t left{kNoChild};
+        std::size_t right{kNoChild};
+        Box2 box;
+        std::vector<Vec2> hull;  // empty: use the box
+    };
+
+    static Vec2 closestOn(const Span& s, Vec2 p) {
+        if (const auto* line = std::get_if<LineSpan>(&s)) {
+            const Vec2 ab = line->end - line->start;
+            const double len2 = ab.lengthSquared();
+            return line->start + ab * (len2 > 0.0 ? std::clamp((p - line->start).dot(ab) / len2, 0.0, 1.0) : 0.0);
+        }
+        const auto& arc = std::get<ArcSpan>(s);
+        if (arc.containsAngle((p - arc.centre).angle(), 0.0)) {
+            return arc.centre + (p - arc.centre).normalized() * arc.radius;
+        }
+        return geometry::distance(p, arc.startPoint()) <= geometry::distance(p, arc.endPoint()) ? arc.startPoint()
+                                                                                                 : arc.endPoint();
+    }
+
+    std::size_t build(std::size_t lo, std::size_t hi) {
+        const std::size_t id = nodes_.size();
+        Node node;
+        node.lo = lo;
+        node.hi = hi;
+        nodes_.push_back(std::move(node));
+        std::vector<Vec2> pts;
+        if (hi - lo <= kLeaf) {
+            std::vector<Vec2> sp;
+            for (std::size_t i = lo; i < hi; ++i) {
+                nodes_[id].box.expand(bounds(input_[i]));
+                hullPointsOf(input_[i], sp);
+                pts.insert(pts.end(), sp.begin(), sp.end());
+            }
+        } else {
+            const std::size_t mid = lo + (hi - lo) / 2;
+            const std::size_t l = build(lo, mid);
+            const std::size_t r = build(mid, hi);
+            nodes_[id].left = l;
+            nodes_[id].right = r;
+            nodes_[id].box = nodes_[l].box;
+            nodes_[id].box.expand(nodes_[r].box);
+            if (nodes_[l].hull.empty() || nodes_[r].hull.empty()) {
+                return id;
+            }
+            pts = nodes_[l].hull;
+            pts.insert(pts.end(), nodes_[r].hull.begin(), nodes_[r].hull.end());
+        }
+        std::vector<Vec2> h = convexHull(std::move(pts));
+        if (h.size() <= kMaxHull && h.size() >= 3 && clearlyConvex(h)) {
+            nodes_[id].hull = std::move(h);
+        }
+        return id;
+    }
+
+    // Rounding in the bounds and in the exact distances they stand in for, at the coordinates' scale.
+    static double slack(Vec2 p) { return 1e-12 * std::max({1.0, std::fabs(p.x), std::fabs(p.y)}); }
+
+    // True when every turn of the hull is clearly to the left: points nearly on top of each other
+    // (the hull points of an arc of rounding-size radius) can leave a polygon that is not convex,
+    // 13 points visiting one point twice, whose edges then cut through it (T-0009); such a node
+    // uses its box.
+    static bool clearlyConvex(const std::vector<Vec2>& h) {
+        const std::size_t k = h.size();
+        for (std::size_t i = 0; i < k; ++i) {
+            const Vec2 e1 = h[(i + 1) % k] - h[i];
+            const Vec2 e2 = h[(i + 2) % k] - h[(i + 1) % k];
+            if (!(e1.cross(e2) > 1e-9 * e1.length() * e2.length())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Distance from `p` to the node's hull (0 inside), or to its box.
+    static double lowerBound(const Node& n, Vec2 p) {
+        if (n.hull.empty()) {
+            const double dx = std::max({n.box.min.x - p.x, 0.0, p.x - n.box.max.x});
+            const double dy = std::max({n.box.min.y - p.y, 0.0, p.y - n.box.max.y});
+            return std::max(0.0, std::sqrt(dx * dx + dy * dy) - slack(p));
+        }
+        bool inside = true;
+        double best = kInf;
+        const std::size_t k = n.hull.size();
+        for (std::size_t i = 0; i < k; ++i) {
+            const Vec2 a = n.hull[i];
+            const Vec2 b = n.hull[(i + 1) % k];
+            const Vec2 ab = b - a;
+            if (ab.cross(p - a) < 0.0) {
+                inside = false;
+            }
+            const double len2 = ab.lengthSquared();
+            const double t = len2 > 0.0 ? std::clamp((p - a).dot(ab) / len2, 0.0, 1.0) : 0.0;
+            best = std::min(best, geometry::distance(p, a + ab * t));
+        }
+        return inside ? 0.0 : std::max(0.0, best - slack(p));
+    }
+
+    static void hullPointsOf(const Span& s, std::vector<Vec2>& out) { hullPoints(s, out); }
+
+    const std::vector<Span>& input_;
+    std::vector<Node> nodes_;
+    mutable std::vector<std::pair<std::size_t, double>> stack_;
+};
 
 // Points bucketed on a grid of a few tolerances, to find the ones within tol.distance of a
 // query point without scanning them all.
@@ -2046,37 +2340,63 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
     // corner instead, between its end normals, so the joins about its two end points are those
     // of the arc's own end tangents.
     const double tinyArc = std::min(5e-7 * std::max(1.0, d), 0.1 * tol.distance * tol.distance / d);
+    // A corner between two sub-tolerance spans is Round whatever the join (T-0009). Inside a run of
+    // such spans (noise along a drawn line, a densely sampled curve, a micro-cluster at a vertex)
+    // each turn would otherwise add a mitre or chamfer reaching out up to mitreLimit x d in the
+    // direction of a sub-tolerance step, a spike far larger than the step itself, and thousands of
+    // overlapping spikes made the cost grow with the cube of their number. The corners of such a
+    // run with its longer neighbours keep the requested join.
+    auto cornerJoin = [&](const Span& a, const Span& b) {
+        return join != JoinType::Round && length(a) <= tol.distance && length(b) <= tol.distance
+                   ? JoinType::Round
+                   : join;
+    };
+    // An arc whose offset towards its centre collapses to (nearly) its centre point (radius d to
+    // rounding, a needle tip) adds nothing of its own, but the joins about its end points still
+    // need a raw element to run to: without one the next corner joined the previous span's offset
+    // straight to the following one about the far end, an arc of radius 0.614 for d = 0.603
+    // (T-0009, verifier 0xd93009e2). It gets the connector between its end normals too, with Round
+    // corners on both sides (the centre point is a round tip).
+    bool roundAfter = false;
     for (std::size_t i = 0; i < input.size(); ++i) {
         std::optional<Span> next = offsetSpan(input[i], d, sign);
+        bool collapsed = false;
         if (!next) {
             const auto* arc = std::get_if<ArcSpan>(&input[i]);
-            if (join == JoinType::Round && arc && arc->radius <= tinyArc) {
+            if (arc && join == JoinType::Round && arc->radius <= tinyArc) {
+                collapsed = true;
+            } else {
+                next = invertedOffset(input[i], d, sign);
+                collapsed = arc && !next;
+            }
+            if (collapsed) {
                 const Vec2 a = startPoint(input[i]) + tangentAt(input[i], 0.0).perp() * (d * sign);
                 const Vec2 b = endPoint(input[i]) + tangentAt(input[i], 1.0).perp() * (d * sign);
                 if (a == b) {
                     continue;
                 }
                 next = LineSpan{a, b};
-            } else {
-                next = invertedOffset(input[i], d, sign);
             }
             if (!next) {
-                continue;  // offsets to (nearly) the arc's centre point: nothing to add
+                continue;
             }
         }
         const double at = static_cast<double>(i);
         if (!raw.empty()) {
+            const JoinType j = collapsed || roundAfter ? JoinType::Round : cornerJoin(input[i - 1], input[i]);
             connect(raw, *next, startPoint(input[i]), endPoint(input[i - 1]), tangentAt(input[i - 1], 1.0),
-                    tangentAt(input[i], 0.0), d, sign, join, mitreLimit, tol, wedges);
+                    tangentAt(input[i], 0.0), d, sign, j, mitreLimit, tol, wedges);
             record(at, at);  // joins and connectors sit at the vertex
         }
         raw.push_back(*next);
         record(at, at + 1.0);
+        roundAfter = collapsed;
     }
     if (closed && raw.size() > 1) {
         Span first = raw.front();
         connect(raw, first, startPoint(input.front()), endPoint(input.back()), tangentAt(input.back(), 1.0),
-                tangentAt(input.front(), 0.0), d, sign, join, mitreLimit, tol, wedges);
+                tangentAt(input.front(), 0.0), d, sign,
+                roundAfter ? JoinType::Round : cornerJoin(input.back(), input.front()), mitreLimit, tol, wedges);
         raw.front() = first;
         const double at = static_cast<double>(input.size());
         record(at, at);
@@ -2519,6 +2839,115 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
         inputBoxes.push_back(bounds(s));
     }
     BoxGrid inputGrid(inputBoxes);
+    std::optional<SpanTree> spanTree;
+    // Crowded vertices: input vertices with another vertex within the tolerance, the two ends of
+    // a sub-tolerance span or a vertex the path comes back to (T-0009). Vertex i is the start of
+    // input span i (for an open path, vertex n is the end of the last span).
+    const std::size_t vertexCount = input.size() + (cyclic ? 0 : 1);
+    auto vertexAt = [&](std::size_t v) {
+        return v < input.size() ? startPoint(input[v]) : endPoint(input.back());
+    };
+    std::vector<bool> crowded(vertexCount, false);
+    {
+        // Buckets of the tolerance: the first other vertex found within it settles a vertex, so a
+        // bucket holding thousands of them costs no more than a few distance tests each.
+        const double cell = std::max(tol.distance, 1e-9);
+        std::map<std::pair<long long, long long>, std::vector<std::size_t>> buckets;
+        auto key = [&](Vec2 p) {
+            return std::pair<long long, long long>{static_cast<long long>(std::floor(p.x / cell)),
+                                                   static_cast<long long>(std::floor(p.y / cell))};
+        };
+        for (std::size_t v = 0; v < vertexCount; ++v) {
+            buckets[key(vertexAt(v))].push_back(v);
+        }
+        for (std::size_t v = 0; v < vertexCount && tol.distance > 0.0; ++v) {
+            const Vec2 p = vertexAt(v);
+            const auto [cx, cy] = key(p);
+            for (long long dy = -1; dy <= 1 && !crowded[v]; ++dy) {
+                for (long long dx = -1; dx <= 1 && !crowded[v]; ++dx) {
+                    const auto it = buckets.find({cx + dx, cy + dy});
+                    if (it == buckets.end()) {
+                        continue;
+                    }
+                    for (const std::size_t w : it->second) {
+                        if (w != v && geometry::distance(vertexAt(w), p) <= tol.distance) {
+                            crowded[v] = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // Domination near crowded vertices (T-0009): every raw or boundary element passing closer
+    // than keepAbove to an input vertex is pruned there anyway, and next to a run of
+    // sub-tolerance spans (a cluster of thousands of vertices within a few micrometres, a tiny
+    // zig-zag) nearly all of every join arc is: it sweeps the turn at its vertex, but only a
+    // sliver of it, where the vertex sticks out, lies on the boundary. Testing those elements
+    // against each other made the cost grow with the square (and the pieces with the cube) of the
+    // number of such spans. So each element's stretches strictly within keepAbove of a crowded
+    // vertex near it are found exactly (a circle meets a line or circle in one interval) and left
+    // out: the element is dead if nothing is left, and otherwise only the box of what is left is
+    // used to find candidate pairs. The crowded vertices near a point are those on the convex
+    // hulls of the crowded vertices in the tolerance-sized grid cells around it (a vertex inside
+    // that hull is in the interior of the neighbourhood wherever it would dominate).
+    const double cellSize = std::max(tol.distance, 1e-9);
+    std::map<std::pair<long long, long long>, std::vector<Vec2>> crowdedCells;
+    auto cellOf = [&](Vec2 p) {
+        return std::pair<long long, long long>{static_cast<long long>(std::floor(p.x / cellSize)),
+                                               static_cast<long long>(std::floor(p.y / cellSize))};
+    };
+    for (std::size_t v = 0; v < vertexCount; ++v) {
+        if (crowded[v]) {
+            crowdedCells[cellOf(vertexAt(v))].push_back(vertexAt(v));
+        }
+    }
+    for (auto& [key, pts] : crowdedCells) {
+        pts = convexHull(pts);
+    }
+    if (!crowdedCells.empty()) {
+        spanTree.emplace(input);
+    }
+    // Some input span closer than `limit` to `p` (the same answer with or without the tree).
+    auto closer = [&](Vec2 p, double limit, std::size_t& w) {
+        return spanTree ? spanTree->closer(p, limit, w) : closerThan(p, limit, input, inputGrid, w);
+    };
+    std::vector<Vec2> dominators;
+    auto collectDominators = [&](Vec2 near) {
+        const auto [cx, cy] = cellOf(near);
+        for (long long dy = -1; dy <= 1; ++dy) {
+            for (long long dx = -1; dx <= 1; ++dx) {
+                const auto it = crowdedCells.find({cx + dx, cy + dy});
+                if (it != crowdedCells.end()) {
+                    dominators.insert(dominators.end(), it->second.begin(), it->second.end());
+                }
+            }
+        }
+    };
+    const double dominateBelow =
+        keepAbove - 1e-12 * std::max(1.0, d);  // strictly inside, whatever the rounding
+    // Live parameter intervals of `s` given the crowded vertices near `anchors`; returns false
+    // (and leaves `live` alone) when none is near.
+    std::vector<std::pair<double, double>> dominated;
+    auto liveParts = [&](const Span& s, std::initializer_list<Vec2> anchors,
+                         std::vector<std::pair<double, double>>& live) {
+        dominators.clear();
+        for (const Vec2 a : anchors) {
+            collectDominators(a);
+        }
+        if (dominators.empty()) {
+            return false;
+        }
+        dominated.clear();
+        for (const Vec2 w : dominators) {
+            closeIntervals(s, w, dominateBelow - 1e-12 * std::max(std::fabs(w.x), std::fabs(w.y)), dominated);
+        }
+        live = uncovered(dominated);
+        return true;
+    };
+    auto liveBox = [&](const Span& s, const std::vector<std::pair<double, double>>& live) {
+        return bounds(subSpan(s, live.front().first, live.back().second)).inflated(1e-9);
+    };
 
     // Dead elements: distance to a segment is a convex function of the point, so a raw element
     // whose convex hull points (see hullPoints) are all closer than keepAbove to one input line
@@ -2529,7 +2958,21 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     // between two pieces that are pruned anyway.
     std::vector<bool> dead(m, false);
     std::vector<Vec2> hull;
+    std::vector<std::vector<std::pair<double, double>>> liveOf(m);
+    std::vector<bool> trimmed(m, false);
+    auto vertexIndex = [&](double pos) {
+        const auto v = static_cast<std::size_t>(std::max(0.0, pos));
+        return cyclic ? v % vertexCount : std::min(v, vertexCount - 1);
+    };
     for (std::size_t i = 0; i < m; ++i) {
+        if (!crowdedCells.empty() &&
+            liveParts(raw[i], {vertexAt(vertexIndex(rc.posA[i])), vertexAt(vertexIndex(rc.posB[i]))},
+                      liveOf[i]) &&
+            !(liveOf[i].size() == 1 && liveOf[i].front().first <= 0.0 && liveOf[i].front().second >= 1.0)) {
+            trimmed[i] = true;
+            dead[i] = liveOf[i].empty();
+            continue;
+        }
         hullPoints(raw[i], hull);
         const Vec2 a = hull.front();
         dead[i] = inputGrid.queryUntil(
@@ -2547,7 +2990,7 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     std::vector<Box2> boxes(m);
     for (std::size_t i = 0; i < m; ++i) {
         if (!dead[i]) {
-            boxes[i] = bounds(raw[i]).inflated(1e-9);
+            boxes[i] = trimmed[i] ? liveBox(raw[i], liveOf[i]) : bounds(raw[i]).inflated(1e-9);
         }
     }
     BoxGrid rawGrid(boxes);
@@ -2608,27 +3051,7 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     //    get full circles. Splitting at whole circles cost one split per raw element per vertex
     //    within d, which dominated dense input at a large d (T-0006).
     std::vector<Span> boundary;
-    // Crowded vertices: input vertices with another vertex within the tolerance, the two ends of
-    // a sub-tolerance span or a vertex the path comes back to (T-0009). Vertex i is the start of
-    // input span i (for an open path, vertex n is the end of the last span).
-    const std::size_t vertexCount = input.size() + (cyclic ? 0 : 1);
-    auto vertexAt = [&](std::size_t v) {
-        return v < input.size() ? startPoint(input[v]) : endPoint(input.back());
-    };
-    std::vector<bool> crowded(vertexCount, false);
-    {
-        PointIndex vertices(tol.distance);
-        for (std::size_t v = 0; v < vertexCount; ++v) {
-            vertices.add(vertexAt(v), v);
-        }
-        for (std::size_t v = 0; v < vertexCount; ++v) {
-            vertices.forEachNear(vertexAt(v), [&](std::size_t w) {
-                if (w != v) {
-                    crowded[v] = true;
-                }
-            });
-        }
-    }
+    std::vector<std::array<Vec2, 3>> boundaryAnchors;  // input points each element belongs to
     // End points of the boundary elements at crowded vertices (see below).
     std::vector<Vec2> clusterCorners;
     for (std::size_t i = 0; i < input.size(); ++i) {
@@ -2664,6 +3087,9 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
                 boundary.push_back(*inv);
             }
         }
+        while (boundaryAnchors.size() < boundary.size()) {
+            boundaryAnchors.push_back({endPoint(prev), startPoint(s), endPoint(s)});
+        }
         if (crowded[i] || crowded[(i + 1) % vertexCount]) {
             for (std::size_t b = firstOfVertex; b < boundary.size(); ++b) {
                 const auto* arc = std::get_if<ArcSpan>(&boundary[b]);
@@ -2676,11 +3102,25 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     }
     if (!cyclic) {
         boundary.emplace_back(ArcSpan::fullCircle(endPoint(input.back()), d));
+        const Vec2 e = endPoint(input.back());
+        boundaryAnchors.push_back({e, e, e});
     }
-    for (const Span& b : boundary) {
+    std::vector<std::pair<double, double>> boundaryLive;
+    for (std::size_t bi = 0; bi < boundary.size(); ++bi) {
+        const Span& b = boundary[bi];
         const auto* arc = std::get_if<ArcSpan>(&b);
         const bool wholeCarrier = arc && arc->isFullCircle();
-        rawGrid.query(bounds(b).inflated(1e-9), [&](std::size_t i) {
+        Box2 queryBox = bounds(b).inflated(1e-9);
+        // A stretch of the boundary strictly within keepAbove of an input vertex is not on the
+        // boundary of the neighbourhood: only the rest can separate kept from pruned pieces.
+        const auto& an = boundaryAnchors[bi];
+        if (!crowdedCells.empty() && liveParts(b, {an[0], an[1], an[2]}, boundaryLive)) {
+            if (boundaryLive.empty()) {
+                continue;
+            }
+            queryBox = liveBox(b, boundaryLive);
+        }
+        rawGrid.query(queryBox, [&](std::size_t i) {
             for (const Vec2 p : carrierIntersections(raw[i], b)) {
                 const double t = carrierParam(raw[i], p);
                 if (inUnit(t) && (wholeCarrier || inUnit(carrierParam(b, p)))) {
@@ -2760,18 +3200,39 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     // So a failing piece near such a span whose samples all lie within a few margins of d is
     // sampled finely, and if it is clear at exactly one end, its stretch at least keepAbove from
     // the input from that end (the other end of it located by bisection) is kept.
-    std::vector<Box2> clusterBoxes;
+    // Crowded vertices bucketed by d + 2 tol, to tell whether a point is that close to one (boxes
+    // of that size in a BoxGrid would each fill many cells).
+    const double clusterReach = d + 2.0 * tol.distance;
+    std::map<std::pair<long long, long long>, std::vector<Vec2>> clusterCells;
+    auto clusterKey = [&](Vec2 p) {
+        return std::pair<long long, long long>{static_cast<long long>(std::floor(p.x / clusterReach)),
+                                               static_cast<long long>(std::floor(p.y / clusterReach))};
+    };
     for (std::size_t v = 0; v < vertexCount; ++v) {
         if (crowded[v]) {
-            const double reach = d + 2.0 * tol.distance;
-            const Vec2 at = vertexAt(v);
-            clusterBoxes.push_back(Box2{at - Vec2{reach, reach}, at + Vec2{reach, reach}});
+            clusterCells[clusterKey(vertexAt(v))].push_back(vertexAt(v));
         }
     }
-    BoxGrid clusterGrid(clusterBoxes);
+    auto nearCluster = [&](Vec2 p) {
+        const auto [cx, cy] = clusterKey(p);
+        for (long long dy = -1; dy <= 1; ++dy) {
+            for (long long dx = -1; dx <= 1; ++dx) {
+                const auto it = clusterCells.find({cx + dx, cy + dy});
+                if (it == clusterCells.end()) {
+                    continue;
+                }
+                for (const Vec2 v : it->second) {
+                    if (std::fabs(v.x - p.x) <= clusterReach && std::fabs(v.y - p.y) <= clusterReach) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    };
     auto clearAt = [&](std::size_t i, double t) {
         const Vec2 q = pointAt(raw[i], t);
-        return !closerThan(q, keepAbove, input, inputGrid, witness) && !inWedge(q);
+        return !closer(q, keepAbove, witness) && !inWedge(q);
     };
     // True when every sample of the piece lies within a few pruning margins of d from the
     // input (and outside the corner regions): only then can part of it be within the margin.
@@ -2779,7 +3240,7 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     auto marginal = [&](const Piece& piece) {
         for (const double f : {0.25, 0.5, 0.75}) {
             const Vec2 q = pointAt(raw[piece.element], piece.t0 + (piece.t1 - piece.t0) * f);
-            if (closerThan(q, d - band, input, inputGrid, witness) || inWedge(q)) {
+            if (closer(q, d - band, witness) || inWedge(q)) {
                 return false;
             }
         }
@@ -2792,7 +3253,7 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
         std::vector<char> clear(kFine + 1);
         for (std::size_t k = 0; k <= kFine; ++k) {
             ts[k] = piece.t0 + (piece.t1 - piece.t0) * (static_cast<double>(k) / static_cast<double>(kFine));
-            clear[k] = clearAt(piece.element, ts[k]) ? 1 : 0;
+            clear[k] = clearAt(piece.element, ts[k]) ? char{1} : char{0};
         }
         // Only a piece that runs from within the margin at one end into the interior at the
         // other is refined; one that dips in the middle (clear at both ends, a sliver between
@@ -2846,20 +3307,24 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
                 continue;
             }
             const Piece piece{i, ts[k], ts[k + 1]};
+            if (trimmed[i] && std::none_of(liveOf[i].begin(), liveOf[i].end(), [&](const auto& iv) {
+                    return iv.first < piece.t1 && iv.second > piece.t0;
+                })) {
+                continue;  // wholly within keepAbove of an input vertex
+            }
             bool ok = true;
             for (const double f : {0.25, 0.5, 0.75}) {
                 const Vec2 q = pointAt(raw[i], piece.t0 + (piece.t1 - piece.t0) * f);
-                if (closerThan(q, keepAbove, input, inputGrid, witness) || inWedge(q)) {
+                if (closer(q, keepAbove, witness) || inWedge(q)) {
                     ok = false;
                     break;
                 }
             }
             if (ok) {
                 kept.push_back(piece);
-            } else if (!clusterBoxes.empty()) {
+            } else if (!clusterCells.empty()) {
                 const Vec2 mid = pointAt(raw[i], 0.5 * (piece.t0 + piece.t1));
-                if (clusterGrid.queryUntil(Box2{mid, mid}, [](std::size_t) { return true; }) &&
-                    marginal(piece)) {
+                if (nearCluster(mid) && marginal(piece)) {
                     keepClearStretches(piece);
                 }
             }
@@ -3049,14 +3514,19 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     const SnapContext snap{
         sign,
         tol,
-        [&](Vec2 p) { return !closerThan(p, snapAbove, input, inputGrid, snapWitness) && !inWedge(p); },
+        [&](Vec2 p) { return !closer(p, snapAbove, snapWitness) && !inWedge(p); },
         [&](Vec2 p) {
-            return join != JoinType::Round || closerThan(p, snapBelow, input, inputGrid, farWitness);
+            return join != JoinType::Round || closer(p, snapBelow, farWitness);
         },
         [&](Vec2 p) {
             // Only distances near d matter to the checks (beyond d + 2 tol a Round point already
             // fails notFar), so the query box stays small: with 2d it cost 1.5-2x on dense input.
             const double reach = d + 2.0 * tol.distance;
+            if (spanTree) {
+                const double cap = 1.5 * reach;
+                const double near = spanTree->nearest(p, cap);
+                return near < cap ? near : kInf;
+            }
             double nearest = kInf;
             inputGrid.query(Box2{p - Vec2{reach, reach}, p + Vec2{reach, reach}},
                             [&](std::size_t i) { nearest = std::min(nearest, distanceToSpan(p, input[i])); });
@@ -3066,6 +3536,10 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
             const double reach = 2.0 * d + 2.0 * tol.distance;
             double best = kInf;
             Vec2 at = p;
+            if (spanTree) {
+                spanTree->nearest(p, 1.5 * reach, &at);
+                return at;
+            }
             inputGrid.query(Box2{p - Vec2{reach, reach}, p + Vec2{reach, reach}}, [&](std::size_t i) {
                 Vec2 q;
                 if (const auto* line = std::get_if<LineSpan>(&input[i])) {
@@ -3095,6 +3569,23 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
         d - snapAbove,
         join == JoinType::Round,
         occupied};
+    // The stretch of a raw element between two of its pieces that the chain steps over (a
+    // sub-tolerance sliver) is re-emitted with them only where it stays within the bridge sagitta
+    // tol^2 / (8d) of d: elsewhere the pieces stay apart and the junction is closed like any other
+    // (T-0009: a re-merged line 2.7e-8 mm inside d at d = 5.4, beyond that bound).
+    std::size_t gapWitness = input.size();
+    const double gapBelow = d - tol.distance * tol.distance / (8.0 * d);
+    auto gapClear = [&](std::size_t element, double t0, double t1) {
+        if (t1 <= t0) {
+            return true;
+        }
+        for (int k = 1; k <= 7; ++k) {
+            if (closer(pointAt(raw[element], t0 + (t1 - t0) * k / 8.0), gapBelow, gapWitness)) {
+                return false;
+            }
+        }
+        return true;
+    };
     auto emit = [&](std::vector<Piece>::const_iterator b, std::vector<Piece>::const_iterator e, bool loop) {
         emitting.clear();
         for (auto it = b; it != e; ++it) {
@@ -3103,8 +3594,14 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
         std::sort(emitting.begin(), emitting.end());
         std::vector<Piece> merged;
         for (auto it = b; it != e; ++it) {
+            // Only across a gap no longer than the tolerance: on a raw arc extended nearly all
+            // the way round (a Sharp corner at a rounding-size arc sweeping 4.85 rad), its last
+            // piece starts within the tolerance of its first piece's end, and merging the two
+            // re-emitted the whole circle, pruned stretches through the input included (T-0009).
             if (!merged.empty() && merged.back().element == it->element &&
-                it->t0 >= merged.back().t1 - kParamEps) {
+                it->t0 >= merged.back().t1 - kParamEps &&
+                (it->t0 - merged.back().t1) * length(raw[it->element]) <= tol.distance &&
+                gapClear(it->element, merged.back().t1, it->t0)) {
                 // Same element split at a touching point (or around a sub-tolerance sliver the
                 // chain stepped over): re-merge.
                 merged.back().t1 = it->t1;
@@ -3148,7 +3645,14 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
             solid.push_back(spans[k]);
             dropped.emplace_back();
         }
-        if (total > tol.distance * (loop ? 4.0 : 1.0)) {
+        // The chain's own length decides, not that of the pieces kept above: a chain of
+        // sub-tolerance pieces (the lens arcs along the tops of a tiny zig-zag, T-0009) keeps
+        // only every few of them and went although it was millimetres long.
+        double chainLength = 0.0;
+        for (const Span& sp : spans) {
+            chainLength += length(sp);
+        }
+        if (!solid.empty() && std::max(total, chainLength) > tol.distance * (loop ? 4.0 : 1.0)) {
             // dropped[k] precedes solid[k]; dropped[0] crosses the closing junction (trailing
             // pieces, then leading ones).
             dropped.pop_back();
@@ -3166,14 +3670,26 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
                 // An open chain neither starts nor ends with a span no longer than the
                 // tolerance (ADR-0012 section 7): where a cut or a node left one there (fam5
                 // 0xf50009c9: 7.8e-4 mm), it goes, as the leading and trailing tiny pieces do.
+                // Only as far as the tolerance from either end, though: a chain made only of such
+                // spans (along the tops of a tiny zig-zag, T-0009) keeps the rest of them.
                 if (!piece.closed) {
-                    while (piece.spans.size() > 1 && isDegenerate(piece.spans.front(), tol)) {
+                    double cut = 0.0;
+                    while (piece.spans.size() > 1 && isDegenerate(piece.spans.front(), tol) &&
+                           cut + length(piece.spans.front()) <= tol.distance) {
+                        cut += length(piece.spans.front());
                         piece.spans.erase(piece.spans.begin());
                     }
-                    while (piece.spans.size() > 1 && isDegenerate(piece.spans.back(), tol)) {
+                    cut = 0.0;
+                    while (piece.spans.size() > 1 && isDegenerate(piece.spans.back(), tol) &&
+                           cut + length(piece.spans.back()) <= tol.distance) {
+                        cut += length(piece.spans.back());
                         piece.spans.pop_back();
                     }
-                    if (piece.spans.size() == 1 && isDegenerate(piece.spans.front(), tol)) {
+                    double remaining = 0.0;
+                    for (const Span& sp : piece.spans) {
+                        remaining += length(sp);
+                    }
+                    if (remaining <= tol.distance) {
                         continue;
                     }
                 }

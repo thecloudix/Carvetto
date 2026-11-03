@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "carvetto/geometry/offset.hpp"
+#include "cpu_time.hpp"
 #include "offset_chain_checks.hpp"
 #include "test_rng.hpp"
 
@@ -489,4 +490,180 @@ TEST_CASE("T-0009 AC2 generative: inputs with sub-tolerance spans, all joins, bo
         requireClean(checkOffset(in, out, d, side, join));
     }
     CHECK(withSubTol > cases / 2);
+}
+
+namespace {
+
+double maxArcSweep(const std::vector<Contour>& out) {
+    double sweep = 0.0;
+    for (const Contour& c : out) {
+        for (const Span& s : c.spans) {
+            if (const auto* arc = std::get_if<ArcSpan>(&s)) {
+                sweep = std::max(sweep, std::fabs(arc->sweepAngle()));
+            }
+        }
+    }
+    return sweep;
+}
+
+double minDistanceToInput(const std::vector<Contour>& out, const Contour& in) {
+    double best = 1e300;
+    for (const Contour& c : out) {
+        for (const Span& s : c.spans) {
+            for (int k = 0; k <= 400; ++k) {
+                best = std::min(best, distanceToInput(pointAt(s, k / 400.0), in));
+            }
+        }
+    }
+    return best;
+}
+
+}  // namespace
+
+TEST_CASE("T-0009 round 2: a rounding-radius arc between nearly collinear lines is not wrapped into a circle",
+          "[geometry][offset][open][t0009]") {
+    // Verifier seeds 0xc9200e83, 0xc90008db, 0xc9201371: with Sharp the arc's offset, extended at
+    // both corners nearly all the way round, kept pieces at either end of its sweep whose ends lie
+    // within the tolerance of each other; re-merged across the gap they gave a circle of radius d
+    // through the input (1e-8 mm from it against d = 0.069).
+    struct Case {
+        Contour in;
+        double d;
+        double mitre;
+    };
+    const Case cases[] = {
+        {openContour({LineSpan{{-286.64931065391545, -667.2793053148431}, {-292.45208432818686, -664.71106545508371}},
+                      ArcSpan{{-292.45208432818669, -664.71106545508337}, 3.9653404153571554e-13,
+                              -2.0344439357957027, -6.8817730429172244, ArcDirection::CW},
+                      LineSpan{{-292.45208432818634, -664.7110654550836}, {-312.65154256130393, -655.77102114319712}}}),
+         0.068653772818644987, 2.0},
+        {openContour({LineSpan{{3.6681549236583715, 9.7507350321250676}, {3.6385756065220707, 5.9441539321690033}},
+                      ArcSpan{{3.6385756065220711, 5.9441539321690033}, 5.1267333246122462e-16, 3.1415926535897931,
+                              8.8705911338854726, ArcDirection::CCW},
+                      LineSpan{{3.6385756065220707, 5.9441539321690033}, {3.592169221517957, -0.027913213936717238}}}),
+         1.7780116989105186, 2.5774050735653171},
+        {openContour({LineSpan{{23.024066380607042, 4.3987616220873802}, {15.760295181442771, 13.776157000264629}},
+                      ArcSpan{{15.760295181442773, 13.776157000264629}, 1.3435550662105094e-15, 3.1415926535897931,
+                              -1.8930167051923847, ArcDirection::CW},
+                      LineSpan{{15.760295181442773, 13.776157000264627}, {12.098151102817612, 18.503917830764067}}}),
+         0.14125543441318877, 3.9089467380180274},
+    };
+    for (const Case& c : cases) {
+        for (const JoinType join : kJoins) {
+            for (const OffsetSide side : {OffsetSide::Left, OffsetSide::Right}) {
+                CAPTURE(c.d, static_cast<int>(join), static_cast<int>(side));
+                const auto out = offsetOf(c.in, c.d, side, join, c.mitre);
+                CHECK(minDistanceToInput(out, c.in) >= c.d - allowance(c.d, endPoint(c.in.spans[0])));
+                CHECK(maxArcSweep(out) < kPi);
+                requireClean(checkOffset(c.in, out, c.d, side, join));
+            }
+        }
+    }
+}
+
+TEST_CASE("T-0009 round 2 generative: rounding-radius arcs of any sweep between nearly collinear lines",
+          "[geometry][offset][open][t0009]") {
+    // The neighbourhood of such a path is that of the two lines and a disc about the joint, so no
+    // offset arc sweeps half a turn or more and no point comes inside d (the full sweep: 18,000
+    // offsets in ADR-0012 A2).
+    SplitMix g{0x7009'0b1d'0002ULL};
+    for (int trial = 0; trial < 120; ++trial) {
+        const double h = g.uniform(-kPi, kPi);
+        const double r = g.logUniform(1e-16, 1e-8);
+        const double sweep = g.uniform(0.01, kTwoPi - 0.01) * (g.uniform(0.0, 1.0) < 0.5 ? -1.0 : 1.0);
+        const Vec2 shift = g.uniform(0.0, 1.0) < 0.5 ? Vec2{} : Vec2{g.uniform(-1e3, 1e3), g.uniform(-1e3, 1e3)};
+        const Vec2 v = shift + Vec2{g.uniform(-5.0, 5.0), g.uniform(-5.0, 5.0)};
+        const Vec2 a = v - Vec2::fromAngle(h, g.uniform(0.5, 10.0));
+        const Vec2 left = Vec2::fromAngle(h + kPi / 2.0);
+        const Vec2 centre = sweep > 0.0 ? v + left * r : v - left * r;
+        const double a0 = (v - centre).angle();
+        const ArcSpan arc{centre, r, a0, a0 + sweep, sweep > 0.0 ? ArcDirection::CCW : ArcDirection::CW};
+        const double h2 = h + (g.uniform(0.0, 1.0) < 0.3 ? 0.0 : g.uniform(-1e-3, 1e-3));
+        const Contour in = openContour({LineSpan{a, arc.startPoint()}, arc,
+                                        LineSpan{arc.endPoint(), arc.endPoint() + Vec2::fromAngle(h2, g.uniform(0.5, 10.0))}});
+        const double d = g.logUniform(0.01, 5.0);
+        const double mitre = g.uniform(1.0, 4.0);
+        for (const JoinType join : kJoins) {
+            for (const OffsetSide side : {OffsetSide::Left, OffsetSide::Right}) {
+                CAPTURE(trial, r, sweep, d, static_cast<int>(join), static_cast<int>(side));
+                const auto out = offsetOf(in, d, side, join, mitre);
+                CHECK(minDistanceToInput(out, in) >= d - allowance(d, v));
+                CHECK(maxArcSweep(out) < kPi);
+            }
+        }
+    }
+}
+
+namespace {
+
+// Verifier probes (round 1, B2): n sub-tolerance spans of a 1e-7 mm random walk then a 5 mm line,
+// and a zig-zag of 2e-4 x 3e-4 mm steps.
+Contour microCluster(int n) {
+    SplitMix g{12345};
+    Contour c;
+    Vec2 p{0.0, 0.0};
+    for (int i = 0; i < n; ++i) {
+        const Vec2 q = p + Vec2::fromAngle(g.uniform(0.0, kTwoPi), 1e-7);
+        c.spans.emplace_back(LineSpan{p, q});
+        p = q;
+    }
+    c.spans.emplace_back(LineSpan{p, p + Vec2{5.0, 1.0}});
+    return c;
+}
+
+Contour tinyZigZag(int n) {
+    Contour c;
+    Vec2 p{0.0, 0.0};
+    for (int i = 0; i < n; ++i) {
+        const Vec2 q = p + Vec2{2e-4, (i % 2 ? 1.0 : -1.0) * 3e-4};
+        c.spans.emplace_back(LineSpan{p, q});
+        p = q;
+    }
+    return c;
+}
+
+// Worst CPU time over the joins and sides at d = 1 (best of `repeats`).
+double worstSeconds(const Contour& in, int repeats) {
+    double worst = 0.0;
+    for (const JoinType join : kJoins) {
+        for (const OffsetSide side : {OffsetSide::Left, OffsetSide::Right}) {
+            double best = 1e300;
+            for (int r = 0; r < repeats; ++r) {
+                const double t0 = carvetto::test::processCpuSeconds();
+                const auto out = offsetOpenContour(in, 1.0, side, join, kTol);
+                best = std::min(best, carvetto::test::processCpuSeconds() - t0);
+                CHECK_FALSE(out.empty());
+            }
+            worst = std::max(worst, best);
+        }
+    }
+    return worst;
+}
+
+}  // namespace
+
+TEST_CASE("T-0009 round 2: dense sub-tolerance input offsets in about linear time (CPU time; bounds in Release)",
+          "[geometry][offset][open][t0009][perf]") {
+    // Round 1 grew with about the cube of the span count here (2000-span micro-cluster 21 s, 8000
+    // killed; 1000-span zig-zag 90 s Square).
+    for (const bool zigzag : {false, true}) {
+        CAPTURE(zigzag);
+        const Contour small = zigzag ? tinyZigZag(4000) : microCluster(4000);
+        const Contour large = zigzag ? tinyZigZag(8000) : microCluster(8000);
+        const double t4 = worstSeconds(small, 2);
+        const double t8 = worstSeconds(large, 2);
+        CAPTURE(t4, t8);
+#ifdef NDEBUG
+        CHECK(t8 < 3.0);
+        CHECK(t8 < 3.0 * std::max(t4, 0.02));
+#else
+        CHECK(t8 < 120.0);  // Debug: only guards against blow-ups
+#endif
+    }
+    // Their offsets keep the distance.
+    const Contour in = microCluster(2000);
+    for (const JoinType join : kJoins) {
+        const auto out = offsetOf(in, 1.0, OffsetSide::Left, join);
+        CHECK(minDistanceToInput(out, in) >= 1.0 - allowance(1.0, Vec2{}));
+    }
 }

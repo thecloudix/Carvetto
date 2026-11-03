@@ -70,7 +70,10 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// like any other, however short, so the properties above hold for the input as given. Only a
 /// span of zero length is left out (it has no direction; the corner is taken between its
 /// neighbours). A Bezier span is polygonised within tol.chordal, every segment of positive
-/// length kept, and the properties hold for that polygon. One special case, Round only: an arc
+/// length kept, and the properties hold for that polygon. A corner between two spans no longer
+/// than the tolerance is Round whatever the join (inside a run of such spans a mitre or chamfer
+/// would reach out up to mitreLimit x |distance| in the direction of a sub-tolerance step); the
+/// corners of such a run with longer spans keep the requested join. One special case, Round only: an arc
 /// whose radius is at most min(5e-7 x max(1, |distance|), 0.1 tol.distance^2 / |distance|) and
 /// whose offset towards its centre would collapse is offset like a vertex at which the path
 /// turns: its two end tangents get their Round joins and the turn between them an inside-corner
@@ -106,10 +109,12 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// slower than Round, because every corner's mitre or chamfer reaches out about |distance| and overlaps
 /// hundreds of its neighbours', which multiplies the pieces to split and prune (pitch 0.02, amplitude 1,
 /// |distance| 7, 1000 spans, Release: about 21 s against 0.7 s for Round; tracked as T-0016).
-/// Input made largely of spans shorter than the tolerance also costs more per span: nearly every
-/// junction of its offset needs one of the repairs below (Release, |distance| 1: a closed polyline
-/// of 8000 0.4 um spans round a 0.5 mm radius about 6 s; random walks of 0.5 um steps, whose joins
-/// all overlap, about 0.4 / 1.5 / 3.4 s for 2000 / 4000 / 8000 steps).
+/// Input made largely of spans shorter than the tolerance is offset in about linear time too: next
+/// to such spans, stretches of raw elements within the pruning margin of an input vertex are left
+/// out before splitting, and distances are found through a hierarchy of convex hulls (Release,
+/// |distance| 1, worst join and side, 8000 spans: a micro-cluster of 1e-7 mm steps before a line
+/// 0.3 s, a 2e-4 x 3e-4 mm zig-zag 0.13 s, random walks of 0.5 um steps 0.26 s, a closed polyline of
+/// 0.4 um spans 2 s, each about 2-2.5x per doubling).
 /// See ADR-0012.
 ///
 /// Several chains: when distant parts of the path come within 2 x |distance| of each other the
@@ -156,13 +161,16 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// missing arc about the nearest input point is put in if it passes the checks, and otherwise
 /// the chain is cut there into two chains, each continuous, rather than bridged; snapped
 /// extensions and bends by at most min(5e-7 x max(1, |distance|), 0.1 tol.distance^2 / |distance|).
-/// Pieces of one raw element that the chain steps over a sub-tolerance sliver between are
-/// emitted as one span again; across the sliver that span may dip inside |distance| by up to
-/// about tol.distance^2 / (4 |distance|) (1.7e-7 mm seen at |distance| = 1.4, as on main). No
+/// Pieces of one raw element that the chain steps over a sliver no longer than the tolerance
+/// between are emitted as one span again where the sliver stays within the bridge sagitta
+/// tol.distance^2 / (8 |distance|) of |distance| (checked at 7 points across it); otherwise they
+/// stay apart and the junction is closed like any other. No
 /// extension runs along a piece of another chain (that would traverse the stretch twice); such a
 /// junction is closed by the other repairs above instead (e.g. the checked straight bridge). An open
-/// chain neither starts nor ends with a span no longer than the tolerance: such an end span is
-/// dropped.
+/// chain neither starts nor ends with a span no longer than the tolerance: such end spans are
+/// dropped, as far as the tolerance from either end; a chain made only of such spans (the offset of
+/// a run of sub-tolerance input, e.g. the lens arcs along a tiny zig-zag) keeps the rest of them, and
+/// one no longer than the tolerance in all goes.
 /// Where a junction gap is closed by moving a line's end (gaps up to 1e-9 x max(1, |x|, |y|)),
 /// the moved line is always checked like an extension (at least |distance| from the input
 /// within the allowance above, for Round not beyond it), preferring the end that moves away from
