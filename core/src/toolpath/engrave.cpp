@@ -26,9 +26,14 @@ constexpr double kMinChordal = 1e-4;      // mm
 constexpr int kMaxPasses = 1000;          // passes per toolpath
 constexpr double kMaxMoves = 20000000.0;  // moves per toolpath
 
+/// A number for a message: whole numbers in full, others to 6 significant digits, so a width
+/// of 0.9999999999999999 mm reads "1" and 2.54 reads "2.54".
 std::string num(double v) {
+    if (std::isfinite(v) && std::fabs(v) < 1e15 && v == std::trunc(v)) {
+        return std::to_string(static_cast<long long>(v));
+    }
     std::array<char, 64> buf{};
-    const auto res = std::to_chars(buf.data(), buf.data() + buf.size(), v);
+    const auto res = std::to_chars(buf.data(), buf.data() + buf.size(), v, std::chars_format::general, 6);
     return std::string(buf.data(), res.ptr);
 }
 
@@ -51,6 +56,9 @@ std::string paramProblem(const EngraveParams& p) {
     }
     if (p.passes < 1 || p.passes > kMaxPasses) {
         return "number of passes must be between 1 and " + std::to_string(kMaxPasses);
+    }
+    if (!(p.depth / static_cast<double>(p.passes) >= kEngraveMinPassDepth)) {
+        return "each pass must be at least 0.000001 mm deep (engrave depth / number of passes)";
     }
     if (!(p.safeZ > 0.0)) {
         return "safe Z must be above the material surface";
@@ -183,18 +191,32 @@ void replaceAll(std::string& text, const std::string& from, const std::string& t
 }
 
 /// Pocket's diagnostics in the words of an engraving: "tool 1 (name)" becomes "tool 'name'" and
-/// the pocket becomes the fill area (ADR-0024 §3).
-std::string fillWording(std::string message, const std::string& toolName) {
-    replaceAll(message, "tool 1 (" + toolName + ")", "tool '" + toolName + "'");
-    replaceAll(message, "invalid pocket parameters", "invalid fill parameters");
-    replaceAll(message, "at the pocket depth", "at the engrave depth");
-    replaceAll(message, "a pocket needs closed vectors", "filling needs closed vectors");
-    replaceAll(message, "region to pocket", "region to fill");
-    replaceAll(message, "pocket size", "fill area");
-    replaceAll(message, "pocket boundary", "fill boundary");
-    replaceAll(message, "the pocket", "the fill area");
-    replaceAll(message, "pocket", "fill area");
-    return message;
+/// Pocket's fixed phrases about the pocket name the fill area (ADR-0024 §3). Only those phrases
+/// are replaced, and never inside the tool name ("my pocket cutter" stays as it is).
+std::string fillWording(const std::string& message, const std::string& toolName) {
+    static const std::pair<const char*, const char*> kPhrases[] = {
+        {"invalid pocket parameters", "invalid fill parameters"},
+        {"at the pocket depth", "at the engrave depth"},
+        {"a pocket needs closed vectors", "filling needs closed vectors"},
+        {"region to pocket", "region to fill"},
+        {"for the pocket size", "for the fill area"},
+        {"pocket boundary", "fill boundary"},
+        {"too large for the pocket", "too large for the fill area"},
+        {"too small for the pocket", "too small for the fill area"},
+        {"part(s) of the pocket", "part(s) of the fill area"},
+    };
+    // Pocket's tool label leads the message; the rest is Pocket's own text.
+    const std::string label = "tool 1 (" + toolName + ")";
+    std::string head;
+    std::string rest = message;
+    if (message.compare(0, label.size(), label) == 0) {
+        head = "tool '" + toolName + "'";
+        rest = message.substr(label.size());
+    }
+    for (const auto& [from, to] : kPhrases) {
+        replaceAll(rest, from, to);
+    }
+    return head + rest;
 }
 
 void fill(const std::vector<Contour>& contours, const tooling::Tool& tool, const tooling::CuttingData& data,
@@ -261,7 +283,7 @@ void fill(const std::vector<Contour>& contours, const tooling::Tool& tool, const
     PocketResult r = pocketToolpath(closed, {PocketTool{tool, fillData}}, pocket);
     for (ToolpathDiagnostic& d : r.diagnostics) {
         d.tool.reset();
-        d.message = fillWording(std::move(d.message), tool.name);
+        d.message = fillWording(d.message, tool.name);
         result.diagnostics.push_back(std::move(d));
     }
     if (!r.toolpaths.empty()) {
@@ -292,7 +314,8 @@ bool engraveToolAllowed(tooling::ToolType type) {
 }
 
 std::vector<double> engraveLevels(double depth, int passes) {
-    if (!std::isfinite(depth) || !(depth > 0.0) || passes < 1 || passes > kMaxPasses) {
+    if (!std::isfinite(depth) || !(depth > 0.0) || passes < 1 || passes > kMaxPasses ||
+        !(depth / static_cast<double>(passes) >= kEngraveMinPassDepth)) {
         return {};
     }
     // The same plan Fill hands to Pocket: exact steps of depth / passes, the last at the bottom.

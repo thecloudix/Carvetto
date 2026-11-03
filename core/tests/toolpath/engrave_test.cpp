@@ -613,3 +613,92 @@ TEST_CASE("AC1: engraving is deterministic and refuses runaway work", "[toolpath
     CHECK_FALSE(huge.ok());
     CHECK(huge.has(ToolpathIssue::WorkLimitExceeded));
 }
+
+// T-0155 (a): only Pocket's fixed phrases are reworded; a quoted tool name stays as it is.
+TEST_CASE("T-0155: Fill rewording leaves the tool name untouched", "[toolpath][engrave][fill][diagnostics]") {
+    const std::vector<Contour> small{Contour::rectangle(Box2{Vec2{0, 0}, Vec2{2, 2}})};
+    for (const char* name : {"my pocket cutter", "the pocket", "tool 1 (x)", "pocket boundary too large for the pocket"}) {
+        INFO(name);
+        tooling::Tool tool = endMill(3.0);
+        tool.name = name;
+        const EngraveResult r = engraveToolpath(small, tool, std::nullopt, fillParams(0.2, 1, PocketStrategy::Offset));
+        REQUIRE(r.diagnostics.size() == 1);
+        CHECK(r.diagnostics[0].issue == ToolpathIssue::ToolTooLarge);
+        CHECK(r.diagnostics[0].message == "tool '" + std::string(name) + "': too large for the fill area, nothing to cut");
+    }
+    // Other labelled Pocket messages: the label is rewritten, the name kept, no stray "pocket".
+    tooling::Tool tool = endMill(0.5);
+    tool.name = "pocket";
+    EngraveParams tiny = fillParams(0.2, 1, PocketStrategy::Raster, 0.005);
+    const EngraveResult r = engraveToolpath(small, tool, std::nullopt, tiny);
+    REQUIRE_FALSE(r.diagnostics.empty());
+    for (const ToolpathDiagnostic& d : r.diagnostics) {
+        INFO(d.message);
+        CHECK(d.message.rfind("tool 'pocket'", 0) == 0);
+        CHECK(d.message.find("pocket", std::string("tool 'pocket'").size()) == std::string::npos);
+    }
+}
+
+// T-0155 (b): depth / passes has a floor (kEngraveMinPassDepth); at or above it the levels are
+// exactly `passes`, below it they are refused, never silently fewer.
+TEST_CASE("T-0155: engraveLevels yields exactly passes levels down to the pass-depth floor",
+          "[toolpath][engrave][passes]") {
+    for (const double depth : {1e-6, 1e-5, 1e-4, 1e-3, 0.01, 0.3, 7.0}) {
+        for (const int n : {1, 2, 3, 7, 10, 99, 100, 333, 999, 1000}) {
+            const bool allowed = depth / static_cast<double>(n) >= kEngraveMinPassDepth;
+            const std::vector<double> lv = engraveLevels(depth, n);
+            INFO("depth " << depth << " passes " << n);
+            if (!allowed) {
+                CHECK(lv.empty());
+                continue;
+            }
+            REQUIRE(lv.size() == static_cast<std::size_t>(n));
+            CHECK(lv.back() == -depth);
+            for (std::size_t i = 0; i < lv.size(); ++i) {
+                CHECK(lv[i] == Catch::Approx(-depth * static_cast<double>(i + 1) / n).margin(depth * 1e-12));
+            }
+        }
+    }
+    // Exactly at the floor: 1000 passes of 0.000001 mm.
+    CHECK(engraveLevels(1000.0 * kEngraveMinPassDepth, 1000).size() == 1000);
+    // The harness case from T-0151 verification: once 999 levels, now refused.
+    CHECK(engraveLevels(1e-6, 1000).empty());
+    CHECK(engraveLevels(0.5e-6, 1).empty());
+}
+
+TEST_CASE("T-0155: a pass shallower than the floor is refused with a clear message", "[toolpath][engrave][params]") {
+    const std::vector<Contour> square{Contour::rectangle(Box2{Vec2{0, 0}, Vec2{10, 10}})};
+    for (const EngraveStrategy s : {EngraveStrategy::Outline, EngraveStrategy::Fill}) {
+        EngraveParams p = s == EngraveStrategy::Fill ? fillParams(1e-6, 1000, PocketStrategy::Offset)
+                                                     : outlineParams(1e-6, 1000);
+        const EngraveResult r = engraveToolpath(square, endMill(), std::nullopt, p);
+        CHECK_FALSE(r.ok());
+        REQUIRE(r.diagnostics.size() == 1);
+        CHECK(r.diagnostics[0].issue == ToolpathIssue::InvalidParameters);
+        CHECK(r.diagnostics[0].message ==
+              "each pass must be at least 0.000001 mm deep (engrave depth / number of passes)");
+        CHECK(r.toolpath.isEmpty());
+    }
+    // At the floor the Outline cuts every level: one plunge per pass on a closed vector.
+    const EngraveResult atFloor =
+        engraveToolpath({Contour::circle({0, 0}, 1)}, endMill(), std::nullopt, outlineParams(1e-3, 1000));
+    REQUIRE(atFloor.ok());
+    CHECK(distinctCutZ(atFloor.toolpath).size() == 1000);
+}
+
+// T-0155 (c): numbers in messages are rounded to 6 significant digits.
+TEST_CASE("T-0155: stepover refusal prints widths rounded", "[toolpath][engrave][fill][diagnostics]") {
+    const std::vector<Contour> region{Contour::rectangle(Box2{Vec2{0, 0}, Vec2{20, 10}})};
+    // A 90-degree V-bit 0.5 mm deep cuts 2 * 0.5 * tan(45 deg) = 0.9999999999999999 mm in doubles.
+    const EngraveResult r =
+        engraveToolpath(region, vBit(90.0), std::nullopt, fillParams(0.5, 1, PocketStrategy::Raster, 1.01));
+    REQUIRE(r.diagnostics.size() == 1);
+    CHECK(r.diagnostics[0].message ==
+          "tool 'V-bit': the stepover 1.01 mm is wider than the 1 mm the tool cuts at the engrave depth of 0.5 mm");
+    const EngraveResult third =
+        engraveToolpath(region, vBit(90.0), std::nullopt, fillParams(1.0 / 3.0, 1, PocketStrategy::Raster, 2.54));
+    REQUIRE(third.diagnostics.size() == 1);
+    CHECK(third.diagnostics[0].message ==
+          "tool 'V-bit': the stepover 2.54 mm is wider than the 0.666667 mm the tool cuts at the engrave depth of "
+          "0.333333 mm");
+}
