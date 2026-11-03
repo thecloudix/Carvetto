@@ -16,6 +16,8 @@
 #include <vector>
 
 #include "carvetto/geometry/contour.hpp"
+#include "carvetto/geometry/contour_ops.hpp"
+#include "carvetto/geometry/fill_rule.hpp"
 #include "carvetto/geometry/span.hpp"
 #include "carvetto/toolpath/profile.hpp"
 #include "../geometry/test_rng.hpp"
@@ -2437,8 +2439,10 @@ TEST_CASE("Sided tabs: survival judged by the cut at the tab layer; every loose 
          "P 0x1.8p+2 60 -0x1.7bfe5c91d14e4p+1 1 1 0x1.90a3d70a3d70ap+0 0x1.7a5e353f7ced9p+2 0x1.ecac083126e98p+2 0x1.e978d4fdf3b64p-3 0x1.4p+2 0 0x1.051eb851eb852p-2 0 1 0x1.e4dd2f1a9fbe7p-1 0x1.604189374bc6ap+0 0 1 0x1.9p+6 0x0p+0 1 0 0x0p+0 0 0x1.4p+3 0 0 0x1.657184ae74489p-4 0x1.4p+2 0x1.921fb54442d18p-1 0x1.4p+2 0 0x1.921fb54442d18p+0 0 0 0x0p+0 0x0p+0 0 0 0 0 0 0 0x0p+0 0x0p+0 0x1p+1\n"
          "K 0 0\n"         , 0, 0},
         // (13 since the merge with T-0017/T-0123: the roughing start projected onto the finishing
-        // cut moved by ulps, so fitTabs now keeps a tab it used to drop as clashing; that tab maps
-        // across the roughing start and is left out as unmatched. The tabs kept all hold.)
+        // cut moved by ulps, so fitTabs kept a tab it used to drop as clashing, which then mapped
+        // across the roughing start and was left out as unmatched. 12 since T-0135: a tab moved off
+        // a roughing start is always kept, with room for its roughing cover, and is matched. The
+        // six tabs kept all hold, whole-scene flood.)
         {"m1_292000_22",
          "C 1\n"
          "L 0x1.3c6ea3c9e402bp+3 0x0p+0 0x1.a702888c3fa3ap+3 0x1.63ae597e95724p+0\n"
@@ -2499,7 +2503,7 @@ TEST_CASE("Sided tabs: survival judged by the cut at the tab layer; every loose 
          "L 0x1.61ecc2c47c357p+4 0x1.3519e91240829p+3 0x1.61ecc2c47c357p+4 -0x1.56af106ec1e77p+3\n"
          "L 0x1.61ecc2c47c357p+4 -0x1.56af106ec1e77p+3 0x1.8c41da281b482p+4 -0x1.ab593f36000cep+3\n"
          "P 0x1.8p+2 60 -0x1.3bb50eb711cdep+1 1 0 0x0p+0 0x1.43d9b9a17053p+2 0x1.63933f4486ce8p+1 0x0p+0 0x1.4p+2 1 0x1.fc5840336296p-1 1 1 0x1.0c4a9c12fe117p+3 0x1.67767a509549ap-1 0 9 0x1.3d160aa3a3803p+6 0x0p+0 0 0 0x0p+0 2 0x1.59e721232e2fep+4 1 1 0x1.a30619857a99cp-3 0x1.28d8e95d1bd2ap+3 0x1.d5b25836d4cfdp-1 0x1.032110acff6d6p+3 2 0x1.95699f25a558bp-1 1 0 0x0p+0 0x0p+0 1 8 0 0 0 0 -0x1.2a449fee686dep+5 -0x1.52bfbcd538f6cp+5 0x1p+1\n"
-         "K 1 0\n"         , 13, 0},
+         "K 1 0\n"         , 12, 0},
         {"m1_292002_25",
          "C 1\n"
          "L 0x0p+0 0x0p+0 0x1.02ffddc9af687p+6 0x0p+0\n"
@@ -2581,7 +2585,8 @@ TEST_CASE("Sided tabs: survival judged by the cut at the tab layer; every loose 
          "L 0x1.54a4612df075bp+5 -0x1.15d02522edfa6p+3 0x1.cdf2d31028ef4p+5 -0x1.81552d859e26fp+1\n"
          "P 0x1.8p+3 0 -0x1.7c1a5dfa1a37cp+2 0 0 0x0p+0 0x1.750e33fb06dcfp+1 0x1.065a286a79a69p+0 0x0p+0 0x1.4p+2 0 0x1.371f320f45b5dp-1 1 1 0x1.2251c73b7ce62p+0 0x1.1c87d2060fb7cp+1 1 8 0x1.2b7890ff28d15p+5 0x0p+0 0 0 0x0p+0 1 0x1.c9347d512eaf1p+3 0 0 0x1.c7eacf9a01509p-2 0x1.de02f51eb055bp+3 0x1.b91ee8b07361bp-1 0x1.c2713c9dc3511p+2 0 0x1.48e201a17371cp+0 0 0 0x1.67259b1808192p+2 0x0p+0 0 5 0 0 0 0 0x1.8fd97e40b5d52p+5 -0x1.9f68161677a18p+4 0x1p+1\n"
          "K 0 0\n"         , 2, 1},
-        // A small loose piece (about 0.05 square mm) at a pocket corner: reported.
+        // Two small loose pieces (about 0.05 square mm each) at two pocket corners: both reported (one
+        // message each since T-0135; the de-duplication used to merge their equal rounded areas).
         {"m2_303014_28",
          "C 1\n"
          "L 0x0p+0 0x0p+0 0x1.084762f0ae4fap+5 0x0p+0\n"
@@ -2593,7 +2598,7 @@ TEST_CASE("Sided tabs: survival judged by the cut at the tab layer; every loose 
          "L 0x1.f2a155790459dp+2 0x1.084762f0ae4fap+5 0x0p+0 0x1.084762f0ae4fap+5\n"
          "L 0x0p+0 0x1.084762f0ae4fap+5 0x0p+0 0x0p+0\n"
          "P 0x1.8p+2 0 -0x1.8e87d918b99d9p+0 1 0 0x0p+0 0x1.9da97e7631fe9p+2 0x1.4a8856dc1a03ap+0 0x0p+0 0x1.4p+2 1 0x1.a3800b0a070a8p-6 1 1 0x1.5727393b8a41bp+1 0x1.9cca2f16ecea1p+1 1 4 0x1.315ce81f0af2dp+5 0x0p+0 1 0 0x0p+0 3 0x1.26cba71f06d8p+4 1 1 0x1.09a3b1dd14939p-1 0x1.00512dbc0e0bcp+2 0x1.f0da4080b2992p-1 0x1.02472f956c8fp+3 0 0x1.10705aa6e84cbp+0 1 0 0x1.30b2522bdc40cp+4 0x0p+0 0 5 0 0 0 0 -0x1.c5ba342557c67p+4 0x1.37265a711219cp+5 0x1p+1\n"
-         "K 0 0\n"         , 4, 1},
+         "K 0 0\n"         , 4, 2},
         // A roughing cover shorter than its finishing stretch (last pass 0.001 mm): only the tabs
         // that hold are kept (a quick answer once kept one the roughing cut severs).
         {"m0_301012_20",
@@ -2623,5 +2628,748 @@ TEST_CASE("Sided tabs: survival judged by the cut at the tab layer; every loose 
         }));
         CHECK(tabsLeftOut(r) == k.left);
         CHECK(loose == k.loose);
+    }
+}
+
+TEST_CASE("Loose pieces: one message per piece, pieces in a notch kept apart", "[toolpath][profile][tabs]") {
+    // T-0135 (a)/(b), T-0127 round-3 verifier (harness t0127v3, whole-scene flood wsf8). An H
+    // On the vector (D6, allowance 0) leaves two free pieces of 0.626 and 0.621 mm2; both were
+    // reported with the same text, and the de-duplication in run() kept one. Three shapes On the
+    // vector: B (375 mm2) and C (64 mm2, in a concave notch of B's outline, so their boxes overlap)
+    // come free, and C was taken for B. Now every piece has its own numbered message.
+    struct Case {
+        const char* name;
+        const char* text;
+        std::vector<double> areas;  // the flood's free pieces, largest first
+    };
+    const std::vector<Case> cases{
+        {"h",
+         "C 1\n"
+         "L -0x1.e353f7ced9168p+2 -0x1.e353f7ced9168p+2 -0x1.1cccccccccccdp+1 -0x1.e353f7ced9168p+2\n"
+         "L -0x1.1cccccccccccdp+1 -0x1.e353f7ced9168p+2 -0x1.1cccccccccccdp+1 -0x1.272b020c49ba6p+0\n"
+         "L -0x1.1cccccccccccdp+1 -0x1.272b020c49ba6p+0 0x1.4fbe76c8b4396p+2 -0x1.272b020c49ba6p+0\n"
+         "L 0x1.4fbe76c8b4396p+2 -0x1.272b020c49ba6p+0 0x1.4fbe76c8b4396p+2 -0x1.e353f7ced9168p+2\n"
+         "L 0x1.4fbe76c8b4396p+2 -0x1.e353f7ced9168p+2 0x1.525604189374cp+3 -0x1.e353f7ced9168p+2\n"
+         "L 0x1.525604189374cp+3 -0x1.e353f7ced9168p+2 0x1.525604189374cp+3 0x1.525604189374cp+3\n"
+         "L 0x1.525604189374cp+3 0x1.525604189374cp+3 0x1.4fbe76c8b4396p+2 0x1.525604189374cp+3\n"
+         "L 0x1.4fbe76c8b4396p+2 0x1.525604189374cp+3 0x1.4fbe76c8b4396p+2 0x1.0b22d0e560419p+2\n"
+         "L 0x1.4fbe76c8b4396p+2 0x1.0b22d0e560419p+2 -0x1.1cccccccccccdp+1 0x1.0b22d0e560419p+2\n"
+         "L -0x1.1cccccccccccdp+1 0x1.0b22d0e560419p+2 -0x1.1cccccccccccdp+1 0x1.525604189374cp+3\n"
+         "L -0x1.1cccccccccccdp+1 0x1.525604189374cp+3 -0x1.e353f7ced9168p+2 0x1.525604189374cp+3\n"
+         "L -0x1.e353f7ced9168p+2 0x1.525604189374cp+3 -0x1.e353f7ced9168p+2 -0x1.e353f7ced9168p+2\n"
+         "P 0x1.8p+2 0 0x0p+0 2 0 0x0p+0 0x1.ccccccccccccdp+3 0x1.3333333333333p+0 0x0p+0 0x1.4p+2 0 0x1.999999999999ap-5 0 1 0x1.5c28f5c28f5c3p-1 0x1.0666666666666p+2 0 2 0x1.9p+6 0x0p+0 0 0 0x0p+0 0 0x1.4p+2 0 0 0x1.657184ae74489p-4 0x1.4p+2 0x1.921fb54442d18p-1 0x1.4p+2 0 0x1.921fb54442d18p+0 0 0 0x0p+0 0x0p+0 2 0 0 0 0 0 0x0p+0 0x0p+0 0x1p+1\n"
+         "K 0 0\n"
+         , {0.626, 0.621}},
+        {"abc_2_1_2",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.4p+5 0x0p+0\n"
+         "L 0x1.4p+5 0x0p+0 0x1.4p+5 0x1.28p+4\n"
+         "L 0x1.4p+5 0x1.28p+4 0x1.9p+5 0x1.28p+4\n"
+         "L 0x1.9p+5 0x1.28p+4 0x1.9p+5 0x0p+0\n"
+         "L 0x1.9p+5 0x0p+0 0x1.68p+6 0x0p+0\n"
+         "L 0x1.68p+6 0x0p+0 0x1.68p+6 0x1.8p+3\n"
+         "L 0x1.68p+6 0x1.8p+3 0x1.42p+6 0x1.8p+3\n"
+         "L 0x1.42p+6 0x1.8p+3 0x1.42p+6 0x1.6p+4\n"
+         "L 0x1.42p+6 0x1.6p+4 0x1.58p+6 0x1.6p+4\n"
+         "L 0x1.58p+6 0x1.6p+4 0x1.58p+6 0x1.2p+5\n"
+         "L 0x1.58p+6 0x1.2p+5 0x1.2p+6 0x1.2p+5\n"
+         "L 0x1.2p+6 0x1.2p+5 0x1.2p+6 0x1.6p+4\n"
+         "L 0x1.2p+6 0x1.6p+4 0x1.36p+6 0x1.6p+4\n"
+         "L 0x1.36p+6 0x1.6p+4 0x1.36p+6 0x1.8p+3\n"
+         "L 0x1.36p+6 0x1.8p+3 0x1.fp+5 0x1.8p+3\n"
+         "L 0x1.fp+5 0x1.8p+3 0x1.fp+5 0x1.4p+5\n"
+         "L 0x1.fp+5 0x1.4p+5 0x1.9p+5 0x1.4p+5\n"
+         "L 0x1.9p+5 0x1.4p+5 0x1.9p+5 0x1.58p+4\n"
+         "L 0x1.9p+5 0x1.58p+4 0x1.4p+5 0x1.58p+4\n"
+         "L 0x1.4p+5 0x1.58p+4 0x1.4p+5 0x1.4p+5\n"
+         "L 0x1.4p+5 0x1.4p+5 0x0p+0 0x1.4p+5\n"
+         "L 0x0p+0 0x1.4p+5 0x0p+0 0x0p+0\n"
+         "P 0x1.8p+2 0 0x0p+0 2 0 0x0p+0 0x1.8p+2 0x1.8p+1 0x0p+0 0x1.4p+2 0 0x1.999999999999ap-3 0 1 0x1p+2 0x1.8p+0 0 1 0x1.9p+6 0x0p+0 0 0 0x0p+0 0 0x1.4p+3 0 0 0x1.657184ae74489p-4 0x1.4p+2 0x1.921fb54442d18p-1 0x1.4p+2 0 0x1.921fb54442d18p+0 0 0 0x0p+0 0x0p+0 2 2 0 0 0 0 0x0p+0 0x0p+0 0x1p+1\n"
+         "K 0 0\n"
+         , {374.7, 64.4}},
+    };
+    for (const Case& k : cases) {
+        std::vector<Contour> cs;
+        ProfileParams p;
+        int vbitDeg = 0;
+        const double d = readScene(k.text, cs, p, vbitDeg);
+        INFO("scene " << k.name);
+        const ProfileResult r = profileToolpath(cs, test::endMill(d), p);
+        REQUIRE(r.ok());
+        std::vector<std::string> loose;
+        for (const ProfileDiagnostic& g : r.diagnostics) {
+            if (g.message.find("comes free") != std::string::npos) loose.push_back(g.message);
+        }
+        REQUIRE(loose.size() == k.areas.size());
+        for (std::size_t i = 0; i < loose.size(); ++i) {
+            INFO(loose[i]);
+            const std::string n = "loose piece " + std::to_string(i + 1) + " of " + std::to_string(loose.size()) + ":";
+            CHECK(loose[i].find(n) != std::string::npos);
+            const std::size_t at = loose[i].find("(about ");
+            REQUIRE(at != std::string::npos);
+            const double area = std::stod(loose[i].substr(at + 7));
+            CHECK(std::fabs(area - k.areas[i]) < 0.02 * k.areas[i] + 0.01);
+        }
+    }
+}
+
+TEST_CASE("Separate last pass, negative allowance: tabs that hold are matched on the roughing cut",
+          "[toolpath][profile][tabs]") {
+    // T-0135 (c), T-0127 round-3 verifier: Outside with allowance -1.8 (D8) / -5.1 (D12) and a separate last
+    // pass, T-0127 left out tabs as "could not be matched on the roughing cut" that the T-0124
+    // merge matched and that hold (whole-scene flood): the cross-sections that place the roughing
+    // cover cross the vector with the kerf, so at a concave corner of the part the cover grew into
+    // a neighbouring tab or start. Such a tab is now matched again with the cover placed from the
+    // vector out, and kept when the exact check says it holds. Expected counts are flood-verified
+    // (every kept tab holds; 15 and 4 kept, the T-0124 merge 14 and 4, T-0127 12 and 3).
+    struct Case {
+        const char* name;
+        const char* text;
+        std::size_t left;
+    };
+    const std::vector<Case> cases{
+        {"m1_402002_27",
+         "C 1\n"
+         "L 0x1.dd82abb1ec249p+4 0x0p+0 0x1.142c3db02faffp+2 0x1.1892a576ee98p+2\n"
+         "L 0x1.142c3db02faffp+2 0x1.1892a576ee98p+2 0x1.ce556a3e12eadp-50 0x1.a322cbd1a1937p+4\n"
+         "L 0x1.ce556a3e12eadp-50 0x1.a322cbd1a1937p+4 -0x1.6c6095b99b904p+2 0x1.7c124425a5b5cp+2\n"
+         "L -0x1.6c6095b99b904p+2 0x1.7c124425a5b5cp+2 -0x1.d6fe8001d646bp+4 0x1.03c4ae770ca4ep-48\n"
+         "L -0x1.d6fe8001d646bp+4 0x1.03c4ae770ca4ep-48 -0x1.9aa7b9c475dcfp+2 -0x1.b1dfcb1a14ab5p+2\n"
+         "L -0x1.9aa7b9c475dcfp+2 -0x1.b1dfcb1a14ab5p+2 -0x1.8e9659678c5a5p-48 -0x1.e1cb511eda43fp+4\n"
+         "L -0x1.8e9659678c5a5p-48 -0x1.e1cb511eda43fp+4 0x1.9503552e872fdp+2 -0x1.a3e98032a0d17p+2\n"
+         "L 0x1.9503552e872fdp+2 -0x1.a3e98032a0d17p+2 0x1.dd82abb1ec249p+4 0x0p+0\n"
+         "C 1\n"
+         "A 0x1.fcf7d51658504p+5 0x1.4fb90c77fd368p+1 0x1.4e8d6cf5d5f83p+4 0x1.753ae29b9caddp-7 0x1.8f353f7f0b982p+0 0\n"
+         "A 0x1.7623be4fdbc44p+5 0x1.3f3e485f17135p+4 0x1.176577b8dd8dep+4 0x1.a6a97df8df288p-3 -0x1.c6f4e5035eb6ap+0 1\n"
+         "A 0x1.c2d651d3371bbp+5 -0x1.292f93dd0b09p+2 0x1.e4eec06ed0ba8p+3 0x1.4fcf498ad7157p+1 -0x1.0d7eddd16b597p+0 0\n"
+         "A 0x1.69db8f376ebc8p+6 -0x1.7be877deec562p+4 0x1.b425d6b092dbp+4 0x1.76076dda38f57p+1 0x1.ca5044185689ap+0 1\n"
+         "P 0x1p+3 0 -0x1.cc29aed359599p+0 0 1 0x0p+0 0x1.c31079c96bff4p+1 0x1.35c38b6e26cp+0 0x0p+0 0x1.4p+2 1 0x1.2892648f4a083p-4 1 1 0x1.57de30f1a586dp+1 0x1.64b8c5a624b6ap+0 0 9 0x1.ff1d464625ca3p+5 0x0p+0 0 0 0x0p+0 2 0x1.0f94a87fe5848p+5 0 0 0x1.79275e5da79b3p-3 0x1.5a641b1ea9bc7p+3 0x1.ad8c32b3e735p-1 0x1.49787b28b0082p+2 0 0x1.ca6de50a2917ap-2 0 0 0x0p+0 0x0p+0 0 4 0 0 0 1 -0x1.6edb34ad5eba8p+5 -0x1.415749f156884p+3 0x1p+1\n"
+         "K 0 0\n"
+         , 3},
+        {"m2_403003_37",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.9ad18d11f539cp+5 0x0p+0\n"
+         "L 0x1.9ad18d11f539cp+5 0x0p+0 0x1.9ad18d11f539cp+5 0x1.46997b693b63ep+5\n"
+         "L 0x1.9ad18d11f539cp+5 0x1.46997b693b63ep+5 0x0p+0 0x1.46997b693b63ep+5\n"
+         "L 0x0p+0 0x1.46997b693b63ep+5 0x0p+0 0x0p+0\n"
+         "P 0x1.8p+3 0 -0x1.4513f7bd5863dp+2 0 1 0x0p+0 0x1.dd0b327940cadp+2 0x1.76b6c4f9d983ap+2 0x1.18d1720910265p-2 0x1.4p+2 1 0x1.4a1ab742e425cp-7 0 1 0x1.39a6f226e093bp+2 0x1.b147e69bff2a6p+0 0 9 0x1.59f2b258c58p+3 0x0p+0 0 0 0x0p+0 2 0x1.85d13f2a0da99p+2 1 0 0x1.77dd0c339da01p-2 0x1.b8ddd157ec117p+2 0x1.dfa3b097b2ac4p-2 0x1.a8662ad776d6p+2 0 0x1.7133141dd9a4ep+0 0 0 0x0p+0 0x0p+0 1 6 0 0 0 0 0x1.6a4a4e048d094p+5 0x1.6dc023c50f6f4p+4 0x1p+1\n"
+         "K 0 0\n"
+         , 5},
+        // T-0135 sweep: two closed vectors (D12, Outside, allowance -5.58, last pass 0.61). The
+        // inner vector's one tab holds (flood), but its check saw the material between the
+        // vectors as two pieces, joined only beyond its raster window, so it was dropped as cut
+        // through and its part came free. It is judged again on a wider window and kept.
+        // T-0135 round 1 (Outside, D12, allowance -0.0101): a finishing tab moved off a roughing
+        // start pushed its neighbour out and was then refused on the roughing cut (T-0127 kept 3
+        // tabs, the first branch 2). The tabs are now fitted again without the refused one: 4 kept,
+        // all holding (flood).
+        {"m1_502006_8",
+         "C 1\n"
+         "L -0x1.18e2048cecb54p+3 -0x1.9499354fd8bcbp+2 0x1.18e2048cecb54p+3 -0x1.9499354fd8bcbp+2\n"
+         "L 0x1.18e2048cecb54p+3 -0x1.9499354fd8bcbp+2 0x1.512a5717df47fp+3 -0x1.24089039f3975p+2\n"
+         "L 0x1.512a5717df47fp+3 -0x1.24089039f3975p+2 0x1.512a5717df47fp+3 0x1.24089039f3975p+2\n"
+         "L 0x1.512a5717df47fp+3 0x1.24089039f3975p+2 0x1.18e2048cecb54p+3 0x1.9499354fd8bcbp+2\n"
+         "L 0x1.18e2048cecb54p+3 0x1.9499354fd8bcbp+2 -0x1.18e2048cecb54p+3 0x1.9499354fd8bcbp+2\n"
+         "L -0x1.18e2048cecb54p+3 0x1.9499354fd8bcbp+2 -0x1.512a5717df47fp+3 0x1.24089039f3975p+2\n"
+         "L -0x1.512a5717df47fp+3 0x1.24089039f3975p+2 -0x1.512a5717df47fp+3 -0x1.24089039f3975p+2\n"
+         "L -0x1.512a5717df47fp+3 -0x1.24089039f3975p+2 -0x1.18e2048cecb54p+3 -0x1.9499354fd8bcbp+2\n"
+         "C 1\n"
+         "L 0x1.9a102fe2b8664p+5 -0x1.9e953c5ef31fep+0 0x1.5a8ec1164fbdap+5 -0x1.0c6522bab1cacp-1\n"
+         "L 0x1.5a8ec1164fbdap+5 -0x1.0c6522bab1cacp-1 0x1.6cdd2920c1d6ap+5 0x1.719d24aebf8f8p+2\n"
+         "L 0x1.6cdd2920c1d6ap+5 0x1.719d24aebf8f8p+2 0x1.49c41ff8eea07p+5 0x1.87a602f859cb6p+0\n"
+         "L 0x1.49c41ff8eea07p+5 0x1.87a602f859cb6p+0 0x1.23cc6899772dep+5 0x1.b384e2da5f9c8p+2\n"
+         "L 0x1.23cc6899772dep+5 0x1.b384e2da5f9c8p+2 0x1.3b728d663f4aap+5 -0x1.40dfeda6ea691p-1\n"
+         "L 0x1.3b728d663f4aap+5 -0x1.40dfeda6ea691p-1 0x1.076289d5b7de7p+5 -0x1.9e953c5ef31f9p+0\n"
+         "L 0x1.076289d5b7de7p+5 -0x1.9e953c5ef31f9p+0 0x1.332285eafdb39p+5 -0x1.a10ce438a3b06p+1\n"
+         "L 0x1.332285eafdb39p+5 -0x1.a10ce438a3b06p+1 0x1.27d8311444994p+5 -0x1.255fa2d3c7207p+3\n"
+         "L 0x1.27d8311444994p+5 -0x1.255fa2d3c7207p+3 0x1.498826e7cb77fp+5 -0x1.40abf1ed99c44p+2\n"
+         "L 0x1.498826e7cb77fp+5 -0x1.40abf1ed99c44p+2 0x1.7062433110d32p+5 -0x1.38d6e5a7284efp+3\n"
+         "L 0x1.7062433110d32p+5 -0x1.38d6e5a7284efp+3 0x1.629747e4f1f03p+5 -0x1.b2cc85240e63bp+1\n"
+         "L 0x1.629747e4f1f03p+5 -0x1.b2cc85240e63bp+1 0x1.9a102fe2b8664p+5 -0x1.9e953c5ef31fep+0\n"
+         "P 0x1.8p+3 0 -0x1.498b02b7734f3p-7 0 0 0x0p+0 0x1.24702d9833b6ap+3 0x1.28f7a95b508d9p+2 0x0p+0 0x1.4p+2 1 0x1.dd533d5e95dccp-1 1 1 0x1.1375b36f3725ep+3 0x1.889d50d4d6373p+1 0 9 0x1.3ee6003cef4e5p+6 0x0p+0 0 1 0x0p+0 1 0x1.252c10bc735cap+4 0 0 0x1.46094c1b2891bp-4 0x1.023a567bd261bp+2 0x1.042661f523fd1p-2 0x1.8a2c6b603c673p+2 0 0x1.991bbcc2bd5bcp-1 0 0 0x0p+0 0x0p+0 0 5 0 0 0 0 -0x1.4f96292b478bap+5 -0x1.9a092ef3c248p+4 0x1p+1\n"
+         "K 0 0\n"
+         , 14},
+        {"m1_502001_32",
+         "C 1\n"
+         "A 0x0p+0 0x0p+0 0x1.040bbcb8cb282p+5 -0x1.a1bd920dee676p-1 -0x1.29b050c0c737bp+1 0\n"
+         "L -0x1.645fb754ac602p+4 -0x1.7ace02ba974bap+4 0x1.645fb754ac602p+4 -0x1.7ace02ba974b9p+4\n"
+         "C 1\n"
+         "L 0x1.e808e06f94991p+5 -0x1.f5a63e4f6eb9ep+0 0x1.bdfae793978edp+5 0x1.3673a225341bp+1\n"
+         "A 0x1.9ddc310ed4ea3p+5 -0x1.31a61fdd801e9p+1 0x1.912709a683606p+2 0x1.c04ba158c3ecp-1 -0x1.220cccee11d68p+1 0\n"
+         "L 0x1.7dbd7a8a12459p+5 -0x1.ccdff0f01a2cp+2 0x1.a7cb73660f4fdp+5 -0x1.72c1a8cb47f4p+3\n"
+         "A 0x1.c7ea29ead1f47p+5 -0x1.b176709535cb4p+2 0x1.912709a683606p+2 -0x1.220cccee11d68p+1 0x1.c04ba158c3ecp-1 0\n"
+         "P 0x1.8p+3 0 -0x1.64e4a36e7a252p+2 0 1 0x0p+0 0x1.847f478991884p+3 0x1.349825e96f908p+1 0x0p+0 0x1.4p+2 1 0x1.3a017750c8d84p-1 1 1 0x1.5c12f409108bbp+1 0x1.ba053eac5778ap+0 1 6 0x1.c6719fb131e56p+5 0x0p+0 0 0 0x0p+0 3 0x1.b267f398cafbdp+3 0 0 0x1.b037257ccb2fdp-2 0x1.3f740aa7a3b3ap+3 0x1.2f7974e46a9bbp+0 0x1.5a962d746cb06p+3 0 0x1.51cb73a231e41p-1 0 0 0x0p+0 0x0p+0 0 8 0 1 0 0 0x1.57cb878b69a58p+2 -0x1.96a5da5f3fa54p+3 0x1p+1\n"
+         "K 0 0\n"
+         , 0},
+    };
+    for (const Case& k : cases) {
+        std::vector<Contour> cs;
+        ProfileParams p;
+        int vbitDeg = 0;
+        const double d = readScene(k.text, cs, p, vbitDeg);
+        INFO("scene " << k.name);
+        const ProfileResult r = profileToolpath(cs, test::endMill(d), p);
+        REQUIRE(r.ok());
+        for (const ProfileDiagnostic& g : r.diagnostics) {
+            INFO(g.message);
+            // (m1_502006_8 leaves one tab per vector out as unmatched: it cannot be covered.)
+            if (std::string(k.name) != "m1_502006_8") {
+                CHECK(g.message.find("could not be matched") == std::string::npos);
+            }
+            CHECK(g.message.find("comes free") == std::string::npos);
+        }
+        if (std::string(k.name) != "m1_402002_27") {
+            CHECK(tabsLeftOut(r) == k.left);
+            continue;
+        }
+        // m1_402002_27 starts at the star's convex start vertex, the centre of the cut's round join
+        // there: every point of that arc is equally near, and the cut start (so the tab layout)
+        // follows the rounding of a ~1e-15 radial vector, which differs between GCC and MSVC (3 vs
+        // 2 tabs left out; a scale of 1 +- 1e-15 flips it on Linux; both layouts hold in the flood,
+        // 15 and 16 tabs). That tie predates T-0135 (main and T-0127 share it), so this test asserts
+        // what holds on every platform: no more tabs left out than here (T-0127 left out 6), and
+        // each vector's part stays joined to the waste through the kept tabs (raster flood).
+        CHECK(tabsLeftOut(r) <= k.left);
+        const double zTab = p.passes.bottomZ() + std::min(p.tabs.thickness, p.passes.cutDepth);
+        geometry::Box2 all;
+        for (const Contour& c : cs) all.expand(c.bounds());
+        const geometry::Box2 window = all.inflated(d + 2.0);
+        for (const Contour& c : cs) {
+            // A point of the part well inside the vector (Outside: the part is inside).
+            Vec2 part = c.bounds().centre();
+            double best = -1.0;
+            const geometry::Box2 cb = c.bounds();
+            for (double x = cb.min.x; x <= cb.max.x; x += 0.5) {
+                for (double y = cb.min.y; y <= cb.max.y; y += 0.5) {
+                    const Vec2 q{x, y};
+                    if (geometry::locatePoint(c, q, geometry::FillRule::EvenOdd, geometry::Tolerance{}) !=
+                        geometry::PointLocation::Inside) {
+                        continue;
+                    }
+                    const double dq = geometry::distanceTo(c, q);
+                    if (dq > best) {
+                        best = dq;
+                        part = q;
+                    }
+                }
+            }
+            CHECK(test::floodHeld(r.toolpath, window, zTab, 0.5 * d, part, window.min + Vec2{0.5, 0.5}, 0.05));
+        }
+    }
+}
+
+TEST_CASE("Loose pieces: slugs inside a part are pieces of their own; slivers are not", "[toolpath][profile][tabs]") {
+    // T-0135 sweep (whole-scene flood wsf8, seeds 50xxxx). (1) A plate with three holes, Outside
+    // with allowance -r (D2) and every tab cut through: the plate (1937.8 mm2) and the three slugs
+    // (112.3, 50.2, 16.3 mm2) come free. The plate was a hole of the cut bands with the holes'
+    // bands as islands inside it: reported as 2313.9 mm2 (islands included), the slugs taken for
+    // the plate. Each slug is now reported against its hole. (2) On the vector, a V-bit with a
+    // separate last pass leaves a 0.04 mm sliver ring between the two kerfs; a pocket of it at a
+    // concave corner showed one 0.05 mm cell just clear of the tools and was reported as a loose
+    // 0.14 mm2 piece, though the flood (to 0.005 mm cells) finds nothing free: small pieces are
+    // checked again on finer cells, where the sliver's hairline joins them to the rest.
+    {
+        std::vector<Contour> cs;
+        ProfileParams p;
+        int vbitDeg = 0;
+        const double d = readScene(
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.43845c9375423p+5 0x0p+0\n"
+         "L 0x1.43845c9375423p+5 0x0p+0 0x1.43845c9375423p+5 0x1.f1dcb918ffa76p+5\n"
+         "L 0x1.43845c9375423p+5 0x1.f1dcb918ffa76p+5 0x0p+0 0x1.f1dcb918ffa76p+5\n"
+         "L 0x0p+0 0x1.f1dcb918ffa76p+5 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "A 0x1.b5bb8b27b2d8cp+4 0x1.4a6059582e2bbp+4 0x1.bea167ffc28bcp+2 0x0p+0 0x0p+0 0\n"
+         "C 1\n"
+         "A 0x1.b6b0bc185a1fap+4 0x1.86a2c7f6cdd5cp+5 0x1.3fc4490c2a6d7p+2 0x0p+0 0x0p+0 0\n"
+         "C 1\n"
+         "L 0x1.d649e1ca744d5p+3 0x1.ca9e8d680907bp+2 0x1.5f7e11e4b6a4ep+4 0x1.ca9e8d680907bp+2\n"
+         "L 0x1.5f7e11e4b6a4ep+4 0x1.ca9e8d680907bp+2 0x1.5f7e11e4b6a4ep+4 0x1.883274e67f9aep+3\n"
+         "L 0x1.5f7e11e4b6a4ep+4 0x1.883274e67f9aep+3 0x1.d649e1ca744d5p+3 0x1.883274e67f9aep+3\n"
+         "L 0x1.d649e1ca744d5p+3 0x1.883274e67f9aep+3 0x1.d649e1ca744d5p+3 0x1.ca9e8d680907bp+2\n"
+         "P 0x1p+1 0 -0x1p+0 0 1 0x0p+0 0x1.58401f06b465cp+3 0x1.201dbbf08f21dp+0 0x0p+0 0x1.4p+2 0 0x1.ac6037db2f75p-5 0 1 0x1.ac6175a101b81p-4 0x1.0daeef1938d3p+1 1 1 0x1.e108842babc05p+5 0x0p+0 0 0 0x0p+0 2 0x1.8045045c77dfap+1 0 0 0x1.59d33e31ae597p-2 0x1.52642d73e54e8p+2 0x1.5d479606a7e87p-1 0x1.8ec3a3ed23a8ap+1 0 0x1.39958a5141bd5p+0 0 0 0x0p+0 0x0p+0 2 0 0 1 0 0 0x1.fa2a78c557p-3 -0x1.e1b2b49dcc0a8p+3 0x1p+1\n"
+         "K 0 0\n"
+            , cs, p, vbitDeg);
+        const ProfileResult r = profileToolpath(cs, test::endMill(d), p);
+        REQUIRE(r.ok());
+        const std::vector<std::pair<std::size_t, double>> expected{{0, 1937.8}, {1, 112.3}, {2, 50.2}, {3, 16.3}};
+        std::vector<std::pair<std::size_t, double>> got;
+        for (const ProfileDiagnostic& g : r.diagnostics) {
+            if (g.message.find("comes free") == std::string::npos) continue;
+            INFO(g.message);
+            CHECK(g.message.find("loose piece 1 of 1:") != std::string::npos);
+            REQUIRE(g.contour.has_value());
+            got.push_back({*g.contour, std::stod(g.message.substr(g.message.find("(about ") + 7))});
+        }
+        REQUIRE(got.size() == expected.size());
+        std::sort(got.begin(), got.end());
+        for (std::size_t i = 0; i < got.size(); ++i) {
+            CHECK(got[i].first == expected[i].first);
+            CHECK(std::fabs(got[i].second - expected[i].second) < 0.01 * expected[i].second + 0.05);
+        }
+    }
+    {
+        std::vector<Contour> cs;
+        ProfileParams p;
+        int vbitDeg = 0;
+        const double d = readScene(
+         "C 1\n"
+         "L 0x1.4521c8b10277bp+4 0x0p+0 0x1.6ed7831263aedp+4 0x1.1c923cc9e8ccp+1\n"
+         "L 0x1.6ed7831263aedp+4 0x1.1c923cc9e8ccp+1 0x1.65da48cf0938ep+4 0x1.60cfa0e7732d5p+2\n"
+         "L 0x1.65da48cf0938ep+4 0x1.60cfa0e7732d5p+2 0x1.32b36962c05a7p+4 0x1.afa7c9417ff44p+2\n"
+         "L 0x1.32b36962c05a7p+4 0x1.afa7c9417ff44p+2 0x1.1fe3db047de2dp+4 0x1.2e3156110edb5p+3\n"
+         "L 0x1.1fe3db047de2dp+4 0x1.2e3156110edb5p+3 0x1.344a9d708dfcbp+4 0x1.93f421c5f6857p+3\n"
+         "L 0x1.344a9d708dfcbp+4 0x1.93f421c5f6857p+3 0x1.13df78e6fcf33p+4 0x1.e8cddfa3323f8p+3\n"
+         "L 0x1.13df78e6fcf33p+4 0x1.e8cddfa3323f8p+3 0x1.bad70dc041e74p+3 0x1.dc2afbe6114ccp+3\n"
+         "L 0x1.bad70dc041e74p+3 0x1.dc2afbe6114ccp+3 0x1.71645b57305d8p+3 0x1.0b940fb0a152ap+4\n"
+         "L 0x1.71645b57305d8p+3 0x1.0b940fb0a152ap+4 0x1.663afefcccc81p+3 0x1.421c9d9bc9307p+4\n"
+         "L 0x1.663afefcccc81p+3 0x1.421c9d9bc9307p+4 0x1.056358f560521p+3 0x1.589ca29f6faf7p+4\n"
+         "L 0x1.056358f560521p+3 0x1.589ca29f6faf7p+4 0x1.55a88442560fap+2 0x1.39b63e4bf5af5p+4\n"
+         "L 0x1.55a88442560fap+2 0x1.39b63e4bf5af5p+4 0x1.3985cac1d7884p+1 0x1.42c2ea7be3298p+4\n"
+         "L 0x1.3985cac1d7884p+1 0x1.42c2ea7be3298p+4 0x1.1cfcb638b2bfp-1 0x1.70746e9bc01ebp+4\n"
+         "L 0x1.1cfcb638b2bfp-1 0x1.70746e9bc01ebp+4 -0x1.6366ff3c8fa36p+1 0x1.6de00ca167d4p+4\n"
+         "L -0x1.6366ff3c8fa36p+1 0x1.6de00ca167d4p+4 -0x1.18a2240f16369p+2 0x1.3d78e2c388afp+4\n"
+         "L -0x1.18a2240f16369p+2 0x1.3d78e2c388afp+4 -0x1.cd2c6d1d077e9p+2 0x1.3000f09f88ef5p+4\n"
+         "L -0x1.cd2c6d1d077e9p+2 0x1.3000f09f88ef5p+4 -0x1.46b00043d855fp+3 0x1.4a63a866aa01dp+4\n"
+         "L -0x1.46b00043d855fp+3 0x1.4a63a866aa01dp+4 -0x1.a2bc11a7ae5f2p+3 0x1.2f52289389defp+4\n"
+         "L -0x1.a2bc11a7ae5f2p+3 0x1.2f52289389defp+4 -0x1.a35150990152p+3 0x1.f101c773a6eb2p+3\n"
+         "L -0x1.a35150990152p+3 0x1.f101c773a6eb2p+3 -0x1.e6bac3882a818p+3 0x1.af346a8804f8bp+3\n"
+         "L -0x1.e6bac3882a818p+3 0x1.af346a8804f8bp+3 -0x1.2a2c5b437288fp+4 0x1.b145681182f17p+3\n"
+         "L -0x1.2a2c5b437288fp+4 0x1.b145681182f17p+3 -0x1.465887d30b8f3p+4 0x1.568f1ab1d0fa3p+3\n"
+         "L -0x1.465887d30b8f3p+4 0x1.568f1ab1d0fa3p+3 -0x1.2d21054826e4ep+4 0x1.ea6c1f50ea48ap+2\n"
+         "L -0x1.2d21054826e4ep+4 0x1.ea6c1f50ea48ap+2 -0x1.3baf29557b1dfp+4 0x1.373c97db4554bp+2\n"
+         "L -0x1.3baf29557b1dfp+4 0x1.373c97db4554bp+2 -0x1.6cb1e3b6df4ffp+4 0x1.aa06a004b1f93p+1\n"
+         "L -0x1.6cb1e3b6df4ffp+4 0x1.aa06a004b1f93p+1 -0x1.708ffb4483438p+4 0x1.968c40b646f91p-49\n"
+         "L -0x1.708ffb4483438p+4 0x1.968c40b646f91p-49 -0x1.439d37ded0a52p+4 -0x1.f61380601c48dp+0\n"
+         "L -0x1.439d37ded0a52p+4 -0x1.f61380601c48dp+0 -0x1.3baf29557b1ep+4 -0x1.373c97db45546p+2\n"
+         "L -0x1.3baf29557b1ep+4 -0x1.373c97db45546p+2 -0x1.5bab56b968536p+4 -0x1.e950a78cbba52p+2\n"
+         "L -0x1.5bab56b968536p+4 -0x1.e950a78cbba52p+2 -0x1.465887d30b8f6p+4 -0x1.568f1ab1d0f9bp+3\n"
+         "L -0x1.465887d30b8f6p+4 -0x1.568f1ab1d0f9bp+3 -0x1.0ff69322b8dap+4 -0x1.645a4f2ceb388p+3\n"
+         "L -0x1.0ff69322b8dap+4 -0x1.645a4f2ceb388p+3 -0x1.e6bac3882a819p+3 -0x1.af346a8804f89p+3\n"
+         "L -0x1.e6bac3882a819p+3 -0x1.af346a8804f89p+3 -0x1.f5fe64354b8dep+3 -0x1.0de2ffebf6338p+4\n"
+         "L -0x1.f5fe64354b8dep+3 -0x1.0de2ffebf6338p+4 -0x1.a2bc11a7ae5f5p+3 -0x1.2f52289389deep+4\n"
+         "L -0x1.a2bc11a7ae5f5p+3 -0x1.2f52289389deep+4 -0x1.3c047a1264c03p+3 -0x1.1c27aa99b181p+4\n"
+         "L -0x1.3c047a1264c03p+3 -0x1.1c27aa99b181p+4 -0x1.cd2c6d1d077f3p+2 -0x1.3000f09f88ef4p+4\n"
+         "L -0x1.cd2c6d1d077f3p+2 -0x1.3000f09f88ef4p+4 -0x1.834bd8c5a35b3p+2 -0x1.639deb9d8904dp+4\n"
+         "L -0x1.834bd8c5a35b3p+2 -0x1.639deb9d8904dp+4 -0x1.6366ff3c8fa4fp+1 -0x1.6de00ca167d4p+4\n"
+         "L -0x1.6366ff3c8fa4fp+1 -0x1.6de00ca167d4p+4 -0x1.f6cf5b590c819p-2 -0x1.45097b19824f5p+4\n"
+         "L -0x1.f6cf5b590c819p-2 -0x1.45097b19824f5p+4 0x1.3985cac1d788dp+1 -0x1.42c2ea7be3298p+4\n"
+         "L 0x1.3985cac1d788dp+1 -0x1.42c2ea7be3298p+4 0x1.3e1eaa8aa34a8p+2 -0x1.67e1268efdd35p+4\n"
+         "L 0x1.3e1eaa8aa34a8p+2 -0x1.67e1268efdd35p+4 0x1.056358f56051ep+3 -0x1.589ca29f6faf7p+4\n"
+         "L 0x1.056358f56051ep+3 -0x1.589ca29f6faf7p+4 0x1.203104ca37a58p+3 -0x1.2375018af6fe6p+4\n"
+         "L 0x1.203104ca37a58p+3 -0x1.2375018af6fe6p+4 0x1.71645b57305cbp+3 -0x1.0b940fb0a152ep+4\n"
+         "L 0x1.71645b57305cbp+3 -0x1.0b940fb0a152ep+4 0x1.db5447f44998ap+3 -0x1.19b2b3e680888p+4\n"
+         "L 0x1.db5447f44998ap+3 -0x1.19b2b3e680888p+4 0x1.13df78e6fcf2dp+4 -0x1.e8cddfa332406p+3\n"
+         "L 0x1.13df78e6fcf2dp+4 -0x1.e8cddfa332406p+3 0x1.07098bb4777a5p+4 -0x1.7e372e7014fffp+3\n"
+         "L 0x1.07098bb4777a5p+4 -0x1.7e372e7014fffp+3 0x1.1fe3db047de2dp+4 -0x1.2e3156110edb3p+3\n"
+         "L 0x1.1fe3db047de2dp+4 -0x1.2e3156110edb3p+3 0x1.555a69d1c9b05p+4 -0x1.15f74a832dce8p+3\n"
+         "L 0x1.555a69d1c9b05p+4 -0x1.15f74a832dce8p+3 0x1.65da48cf0938ep+4 -0x1.60cfa0e7732d7p+2\n"
+         "L 0x1.65da48cf0938ep+4 -0x1.60cfa0e7732d7p+2 0x1.41b85ca3830d5p+4 -0x1.77d2f67242d06p+1\n"
+         "L 0x1.41b85ca3830d5p+4 -0x1.77d2f67242d06p+1 0x1.4521c8b10277bp+4 0x0p+0\n"
+         "P 0x1.8p+2 120 0x1.e9d65f0ef5f29p+0 2 1 0x1.cc34425c031fap-3 0x1.10d23f94a1bf8p+2 0x1.90df8e8792f9p+2 0x0p+0 0x1.4p+2 1 0x1.f5b1fa0ccd4d1p-1 1 1 0x1.cac3cb958897p+0 0x1.14a44e6cc0918p-2 1 3 0x1.fe42ad649a49bp+5 0x0p+0 1 0 0x0p+0 2 0x1.5ac67fa3cfec1p+4 0 0 0x1.3f1ec3cfa6b09p-3 0x1.f0dd1b76d1bbcp+0 0x1.4d83a955091abp-3 0x1.63a3babb5a03p+1 0 0x1.6004baac90bdcp+0 0 0 0x0p+0 0x0p+0 1 5 0 0 0 0 0x1.14dd58b854b74p+4 0x1.77234e3f7a8ecp+3 0x1p+1\n"
+         "K 0 1\n"
+            , cs, p, vbitDeg);
+        tooling::Tool tool = test::endMill(d);
+        tool.type = tooling::ToolType::VBit;
+        tool.includedAngle = vbitDeg * geometry::kPi / 180.0;
+        const ProfileResult r = profileToolpath(cs, tool, p);
+        REQUIRE(r.ok());
+        for (const ProfileDiagnostic& g : r.diagnostics) {
+            INFO(g.message);
+            CHECK(g.message.find("comes free") == std::string::npos);
+        }
+    }
+}
+
+TEST_CASE("Loose pieces: material enclosed by a loop trimmed into open pieces is checked", "[toolpath][profile][tabs]") {
+    // T-0135 sweep (wsf8): a blob merged with a nearby slot and trimmed near it, so its cut is a
+    // chain of open pieces, Outside with allowance -0.009 (D12); the blob's part (1144.2 mm2 in
+    // the flood) comes free, but only closed cuts were searched for loose pieces and no single
+    // open piece's box holds it. Clusters of open cuts are searched as one region now.
+    std::vector<Contour> cs;
+    ProfileParams p;
+    int vbitDeg = 0;
+    const double d = readScene(
+         "C 1\n"
+         "L 0x1.a4c8213de8af8p+2 -0x1.8c44dcb817b78p+2 -0x1.77ea73a011558p-1 0x1.200b603a205c3p+3\n"
+         "A -0x1.d3c56fb1eada3p+1 0x1.e62dce962c37fp+2 0x1.9ecbd16289c2p+1 0x1.cb26570f786f2p-2 -0x1.58baea6253c3ap+1 0\n"
+         "L -0x1.a4c8213de8af8p+2 0x1.8c44dcb817b78p+2 0x1.77ea73a011558p-1 -0x1.200b603a205c3p+3\n"
+         "A 0x1.d3c56fb1eada3p+1 -0x1.e62dce962c37fp+2 0x1.9ecbd16289c2p+1 -0x1.58baea6253c3ap+1 0x1.cb26570f786f2p-2 0\n"
+         "C 1\n"
+         "A 0x1.537b620bef78p+5 0x1.fe09ed9c8dfbep+2 0x1.d4545155e2629p+3 -0x1.de05c6fc3a33ep-2 0x1.04d09381a8af4p+1 0\n"
+         "A 0x1.080b39d21ff76p+4 0x1.4ba8be41f0749p+4 0x1.3593137371483p+4 0x1.068cb7d60efb6p-6 -0x1.9639e8239b0d7p+0 1\n"
+         "A 0x1.43e385eef9a5ep+5 0x1.814b0cb4df6abp+2 0x1.8bb684ec20c95p+4 -0x1.79fae58a24779p+1 -0x1.c26954b87f858p+0 0\n"
+         "A 0x1.50c7c1f4af6aep+5 -0x1.376e2f5539a77p+2 0x1.d956bc6084f6p+3 -0x1.00e3a90468a5ep+1 0x1.be9e731239e88p-2 0\n"
+         "P 0x1.8p+3 0 -0x1.28eabe9927de3p-7 0 1 0x1.71603df6554eep-2 0x1.6118ff7dea821p+1 0x1.15faf4d9a60b6p-1 0x1.db8d1a919b678p-1 0x1.4p+2 0 0x1.ab245cb50a617p-5 1 1 0x1.ad7694f6840d4p-2 0x1.d00b860952017p-2 1 9 0x1.1cd76c8879e5ep+6 0x0p+0 1 0 0x0p+0 3 0x1.e3bceab79f173p+3 0 0 0x1.4c61f2a82a7cep-2 0x1.0e5997e5ca2eap+3 0x1.a4d16453502d7p-2 0x1.cd3afe298a8bap+1 0 0x1.5ef84af2b0fbbp+0 0 0 0x0p+0 0x0p+0 1 4 0 1 0 0 -0x1.cb8b122e60e87p+4 0x1.2f3eb9dbd7b8p+1 0x1p+1\n"
+         "K 0 0\n"
+        , cs, p, vbitDeg);
+    const ProfileResult r = profileToolpath(cs, test::endMill(d), p);
+    REQUIRE(r.ok());
+    std::vector<double> areas;
+    for (const ProfileDiagnostic& g : r.diagnostics) {
+        if (g.message.find("comes free") == std::string::npos) continue;
+        INFO(g.message);
+        areas.push_back(std::stod(g.message.substr(g.message.find("(about ") + 7)));
+    }
+    REQUIRE(areas.size() == 1);
+    CHECK(std::fabs(areas.front() - 1144.2) < 5.0);
+}
+
+TEST_CASE("Loose pieces: at most 50 messages per vector, then one summing up the rest", "[toolpath][profile][tabs]") {
+    // T-0135 round 1: a chain of 60 square beads (3 x 3 mm) joined by 0.5 mm necks, On the vector
+    // with a 1 mm end mill: the kerf takes every neck, so 60 pieces of 4 mm2 come free (no tabs
+    // asked for). 50 are listed one by one, then one message gives the other 10.
+    Contour c;
+    c.closed = true;
+    std::vector<Vec2> pts;
+    const int beads = 60;
+    for (int i = 0; i < beads; ++i) {  // bottom edge, left to right
+        const double x = 4.0 * i;
+        pts.push_back({x, 0.0});
+        pts.push_back({x + 3.0, 0.0});
+        if (i + 1 < beads) {
+            pts.push_back({x + 3.0, 1.25});
+            pts.push_back({x + 4.0, 1.25});
+        }
+    }
+    for (int i = beads - 1; i >= 0; --i) {  // top edge, right to left
+        const double x = 4.0 * i;
+        pts.push_back({x + 3.0, 3.0});
+        pts.push_back({x, 3.0});
+        if (i > 0) {
+            pts.push_back({x, 1.75});
+            pts.push_back({x - 1.0, 1.75});
+        }
+    }
+    for (std::size_t k = 0; k < pts.size(); ++k) c.append(geometry::LineSpan{pts[k], pts[(k + 1) % pts.size()]});
+    ProfileParams p;
+    p.side = ProfileSide::On;
+    p.passes.cutDepth = 3.0;
+    p.passes.passDepth = 3.0;
+    p.tabs.enabled = true;
+    p.tabs.count = 0;
+    p.tabs.thickness = 1.0;
+    const ProfileResult r = profileToolpath({c}, test::endMill(1.0), p);
+    REQUIRE(r.ok());
+    std::size_t listed = 0;
+    std::size_t summaries = 0;
+    for (const ProfileDiagnostic& g : r.diagnostics) {
+        if (g.message.find("comes free") != std::string::npos) {
+            ++listed;
+            CHECK(g.message.find(" of 60:") != std::string::npos);
+        }
+        if (g.message.find("and 10 more loose pieces") != std::string::npos) ++summaries;
+    }
+    CHECK(listed == 50);
+    CHECK(summaries == 1);
+}
+
+TEST_CASE("T-0135 round 2: exact loose pieces; add-back and fitting never cost a holding tab",
+          "[toolpath][profile][tabs]") {
+    // Verifier round 2 (harness t0135v2, whole-scene flood wsf8y, leads off). The first nine: a
+    // hole-linking shortcut (now removed) hid these free pieces; T-0127's raster also split or
+    // missed some of them (m1_811007_4, m2_812009_22, m2_902023_44). Loose pieces are now the holes
+    // of the union of the open stretches' bands, so each reports the flood's one free piece
+    // (spur_12: a tab whose two sides are the same hole). The last four lost a holding tab to
+    // add-back (m0_810030_3, m3_820028_27) or to fitting moved tabs last (m3_860019_2,
+    // m3_860014_37); they now leave out exactly as many tabs as T-0127, all kept ones holding.
+    struct Case {
+        const char* name;
+        const char* text;
+        std::size_t left;
+        std::vector<double> areas;  // the flood's free pieces
+    };
+    const std::vector<Case> cases{
+        // (Round 3 screen: Inside, allowance 0, V-bit, separate last pass; and Inside at -r with a
+        // separate last pass. The move margin put a tab T-0127 matched where it could not be
+        // matched; T-0127's placement is now evaluated too and kept on a tie.)
+        // (Outside, allowance -1.77, separate last pass: a tab matched only by the second try took
+        // room another tab's cover needed and was cut through; T-0127's matching is a candidate.)
+        {"m2_800016_13",
+         "C 1\n"
+         "L 0x1.1007a8608f3f4p+4 0x0p+0 0x1.f29ac1fcec938p+1 0x1.1119ba9978168p+1\n"
+         "L 0x1.f29ac1fcec938p+1 0x1.1119ba9978168p+1 0x1.4b5b432d13d0fp+3 0x1.1ef6906df130ap+4\n"
+         "L 0x1.4b5b432d13d0fp+3 0x1.1ef6906df130ap+4 0x1.12c7090aabdcfp-2 0x1.b61612dd087f9p+2\n"
+         "L 0x1.12c7090aabdcfp-2 0x1.b61612dd087f9p+2 -0x1.1fed6ddeab54ep+3 0x1.f2b479f11374dp+3\n"
+         "L -0x1.1fed6ddeab54ep+3 0x1.f2b479f11374dp+3 -0x1.f5310fd92cb2fp+1 0x1.3a58c4d684e67p+1\n"
+         "L -0x1.f5310fd92cb2fp+1 0x1.3a58c4d684e67p+1 -0x1.364811d4898c7p+4 0x1.5642a3748a1cap-49\n"
+         "L -0x1.364811d4898c7p+4 0x1.5642a3748a1cap-49 -0x1.e0ee9255a55e9p+1 -0x1.0b6f515c1a1e4p+1\n"
+         "L -0x1.e0ee9255a55e9p+1 -0x1.0b6f515c1a1e4p+1 -0x1.499b43bbd3d39p+3 -0x1.1d729630dc66bp+4\n"
+         "L -0x1.499b43bbd3d39p+3 -0x1.1d729630dc66bp+4 -0x1.2dbdfd6511d8fp-4 -0x1.4d51c6aa12456p+2\n"
+         "L -0x1.2dbdfd6511d8fp-4 -0x1.4d51c6aa12456p+2 0x1.1149843771d81p+3 -0x1.d958e6aea5213p+3\n"
+         "L 0x1.1149843771d81p+3 -0x1.d958e6aea5213p+3 0x1.84aee0c879f23p+2 -0x1.d554bd94a409bp+1\n"
+         "L 0x1.84aee0c879f23p+2 -0x1.d554bd94a409bp+1 0x1.1007a8608f3f4p+4 0x0p+0\n"
+         "P 0x1.8p+2 0 -0x1.c487ca151f37dp+0 0 0 0x0p+0 0x1.6a7ef6d1bfe66p+1 0x1.c2374880d2c0bp+1 0x0p+0 0x1.4p+2 1 0x1.b21e41f883243p-1 1 1 0x1.64499ce45e4b2p+1 0x1.465e33a88f7aap+0 0 9 0x1.eb604e132f394p+5 0x0p+0 0 1 0x0p+0 1 0x1.5df11dab4989cp+4 1 0 0x1.851a0e357e8e4p-4 0x1.1e496f0aac5edp+3 0x1.2d7e68160f324p+0 0x1.6e4bfc830cff8p+2 0 0x1.c7b304fb8e75p-1 0 0 0x0p+0 0x0p+0 0 8 0 0 0 0 -0x1.13eb499fc42e4p+5 0x1.813a4983a2c08p+2 0x1p+1\n"
+         "K 0 0\n"
+         , 7, {}},
+        {"m3_901032_23",
+         "C 1\n"
+         "L -0x1.059e88f2228c2p+3 -0x1.537988c8ff595p+2 0x1.059e88f2228c2p+3 -0x1.537988c8ff595p+2\n"
+         "L 0x1.059e88f2228c2p+3 -0x1.537988c8ff595p+2 0x1.1ae547522a1fcp+3 -0x1.28ec0c08f0322p+2\n"
+         "L 0x1.1ae547522a1fcp+3 -0x1.28ec0c08f0322p+2 0x1.1ae547522a1fcp+3 0x1.28ec0c08f0322p+2\n"
+         "L 0x1.1ae547522a1fcp+3 0x1.28ec0c08f0322p+2 0x1.059e88f2228c2p+3 0x1.537988c8ff595p+2\n"
+         "L 0x1.059e88f2228c2p+3 0x1.537988c8ff595p+2 -0x1.059e88f2228c2p+3 0x1.537988c8ff595p+2\n"
+         "L -0x1.059e88f2228c2p+3 0x1.537988c8ff595p+2 -0x1.1ae547522a1fcp+3 0x1.28ec0c08f0322p+2\n"
+         "L -0x1.1ae547522a1fcp+3 0x1.28ec0c08f0322p+2 -0x1.1ae547522a1fcp+3 -0x1.28ec0c08f0322p+2\n"
+         "L -0x1.1ae547522a1fcp+3 -0x1.28ec0c08f0322p+2 -0x1.059e88f2228c2p+3 -0x1.537988c8ff595p+2\n"
+         "P 0x1.8p+2 60 0x0p+0 1 1 0x0p+0 0x1.e2c3e29e010e7p+1 0x1.46ce40eeaf792p+2 0x0p+0 0x1.4p+2 1 0x1.674198095f7b1p-1 0 1 0x1.29ac51f39b323p+0 0x1.ee42ad037b89ap-1 0 5 0x1.8678655993372p+4 0x0p+0 0 1 0x0p+0 0 0x1.a1ce7872b7d5p+4 0 0 0x1.f51f3b9a43e3dp-5 0x1.d550551a805e4p+3 0x1.0ad71e94637c2p+0 0x1.3361ee383e058p+3 0 0x1.ce0d167aa6615p-2 0 0 0x0p+0 0x0p+0 0 1 0 0 0 0 0x1.49c7ae5118c6p+0 -0x1.55381dce71b72p+5 0x1p+1\n"
+         "K 0 0\n"
+         , 4, {}},
+        {"m3_901028_23",
+         "C 1\n"
+         "L -0x1.065be320df556p+3 -0x1.065be320df556p+3 0x1.6f4d712e05778p+3 -0x1.065be320df556p+3\n"
+         "L 0x1.6f4d712e05778p+3 -0x1.065be320df556p+3 0x1.6f4d712e05778p+3 0x1.6f4d712e05778p+3\n"
+         "L 0x1.6f4d712e05778p+3 0x1.6f4d712e05778p+3 0x1.39008198ddbd9p+2 0x1.6f4d712e05778p+3\n"
+         "L 0x1.39008198ddbd9p+2 0x1.6f4d712e05778p+3 0x1.39008198ddbd9p+2 -0x1.9c7595fa45e54p+0\n"
+         "L 0x1.39008198ddbd9p+2 -0x1.9c7595fa45e54p+0 -0x1.9c7595fa45e54p+0 -0x1.9c7595fa45e54p+0\n"
+         "L -0x1.9c7595fa45e54p+0 -0x1.9c7595fa45e54p+0 -0x1.9c7595fa45e54p+0 0x1.6f4d712e05778p+3\n"
+         "L -0x1.9c7595fa45e54p+0 0x1.6f4d712e05778p+3 -0x1.065be320df556p+3 0x1.6f4d712e05778p+3\n"
+         "L -0x1.065be320df556p+3 0x1.6f4d712e05778p+3 -0x1.065be320df556p+3 -0x1.065be320df556p+3\n"
+         "P 0x1.9666666666666p+1 0 -0x1.9666666666666p+0 1 0 0x0p+0 0x1.24d7fcef019c4p+3 0x1.619b2f1c87bbcp+0 0x0p+0 0x1.4p+2 1 0x1.f05649c0f584bp-1 1 1 0x1.3468979379e84p+3 0x1.329353131d9cp+1 0 8 0x1.dffea7954dc1p+4 0x0p+0 1 1 0x0p+0 1 0x1.1fe3096c1a727p+5 1 0 0x1.1442cddc7536cp-2 0x1.1311de5c13762p+3 0x1.5a06347a8d1eap-2 0x1.173d5b10d182ap+3 0 0x1.87caafeba5961p+0 0 0 0x0p+0 0x0p+0 2 4 0 1 0 0 0x1.f41471fb8102cp+4 -0x1.fe8c0ea7569cp-1 0x1p+1\n"
+         "K 0 0\n"
+         , 5, {}},
+        {"m1_801019_13",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.0f4aaa7320d64p+6 0x0p+0\n"
+         "L 0x1.0f4aaa7320d64p+6 0x0p+0 0x1.0f4aaa7320d64p+6 0x1.6d64e3690293ap+5\n"
+         "L 0x1.0f4aaa7320d64p+6 0x1.6d64e3690293ap+5 0x0p+0 0x1.6d64e3690293ap+5\n"
+         "L 0x0p+0 0x1.6d64e3690293ap+5 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "A 0x1.ce71c2faae078p+5 0x1.b939752d2579cp+4 0x1.120433ac964e2p+3 0x0p+0 0x0p+0 0\n"
+         "C 1\n"
+         "A 0x1.1fd2592bb81dcp+5 0x1.01f2baa9010e4p+5 0x1.d4e43292285f9p+1 0x0p+0 0x0p+0 0\n"
+         "C 1\n"
+         "A 0x1.a7d97fb848e07p+5 0x1.01e09a6b306aap+5 0x1.2212ad0a247a4p+3 0x0p+0 0x0p+0 0\n"
+         "P 0x1p+1 0 -0x1.d89356953a644p-1 0 1 0x1.6a4dcc292dfc1p+1 0x1.76bbfebd55c1cp+3 0x1.0f111febb5364p+1 0x0p+0 0x1.4p+2 1 0x1.cf6beaf395493p-1 1 1 0x1.8a17c8f8916fbp+1 0x1.522299a72502ap+2 0 1 0x1.0359748eda9ap+4 0x0p+0 0 0 0x0p+0 1 0x1.da63e71886b1ap+3 0 0 0x1.e367cff3db709p-4 0x1.f945a3d062877p+1 0x1.d1d68641b6c89p-4 0x1.7c44d952deef8p+1 0 0x1.525244f56c452p+0 0 0 0x0p+0 0x0p+0 2 6 0 1 0 0 0x1.7e9184d9c1d1p+4 -0x1.d469be7b4869ep+4 0x1p+1\n"
+         "K 0 0\n"
+         , 0, {139.9}},
+        {"m2_802035_25",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.de2f7d191f2d6p+5 0x0p+0\n"
+         "L 0x1.de2f7d191f2d6p+5 0x0p+0 0x1.de2f7d191f2d6p+5 0x1.179492f2ef18ap+5\n"
+         "L 0x1.de2f7d191f2d6p+5 0x1.179492f2ef18ap+5 0x0p+0 0x1.179492f2ef18ap+5\n"
+         "L 0x0p+0 0x1.179492f2ef18ap+5 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "L 0x1.cd3614f375738p+0 0x1.6f7d69e426356p+3 0x1.7cae684ba707cp+4 0x1.6f7d69e426356p+3\n"
+         "L 0x1.7cae684ba707cp+4 0x1.6f7d69e426356p+3 0x1.7cae684ba707cp+4 0x1.ae0b39d5fae31p+4\n"
+         "L 0x1.7cae684ba707cp+4 0x1.ae0b39d5fae31p+4 0x1.cd3614f375738p+0 0x1.ae0b39d5fae31p+4\n"
+         "L 0x1.cd3614f375738p+0 0x1.ae0b39d5fae31p+4 0x1.cd3614f375738p+0 0x1.6f7d69e426356p+3\n"
+         "C 1\n"
+         "A 0x1.03b83e20b60e2p+4 0x1.abaa28ebc5e76p+4 0x1.48da1cd53f226p+2 0x0p+0 0x0p+0 0\n"
+         "P 0x1.9666666666666p+1 0 -0x1.6e8330eae91a7p+0 0 0 0x0p+0 0x1.aec0a69eda8bep+3 0x1.3eb0bb465cb7ap+2 0x0p+0 0x1.4p+2 1 0x1.c0bdee1bb6632p-1 0 1 0x1.0a154f78b20c7p+2 0x1.458afe1df383dp+2 0 7 0x1.efa0fd592ee2p+5 0x0p+0 0 1 0x0p+0 0 0x1.01c091bc3f4cbp+2 0 0 0x1.81292f41805cbp-2 0x1.28ae78399085ep+2 0x1.277f84c7880aap+0 0x1.7706b98b1b661p+3 0 0x1.6d66022fba911p+0 0 0 0x0p+0 0x0p+0 1 2 0 1 0 0 0x1.879c119913d7p+5 -0x1.5dea588c96eeep+4 0x1p+1\n"
+         "K 0 0\n"
+         , 14, {151.5}},
+        {"m1_811007_4",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.0bf1e28edf83ap+6 0x0p+0\n"
+         "L 0x1.0bf1e28edf83ap+6 0x0p+0 0x1.0bf1e28edf83ap+6 0x1.5657a29fb57p+5\n"
+         "L 0x1.0bf1e28edf83ap+6 0x1.5657a29fb57p+5 0x0p+0 0x1.5657a29fb57p+5\n"
+         "L 0x0p+0 0x1.5657a29fb57p+5 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "A 0x1.516ebfe0c7c6cp+5 0x1.c1b3c6c9a137cp+4 0x1.d23a8611eb8adp+2 0x0p+0 0x0p+0 0\n"
+         "C 1\n"
+         "L 0x1.36fbcdd592228p+3 0x1.138eeb0020f16p+4 0x1.cd43400dc8648p+4 0x1.138eeb0020f16p+4\n"
+         "L 0x1.cd43400dc8648p+4 0x1.138eeb0020f16p+4 0x1.cd43400dc8648p+4 0x1.e9990fcbd3abap+4\n"
+         "L 0x1.cd43400dc8648p+4 0x1.e9990fcbd3abap+4 0x1.36fbcdd592228p+3 0x1.e9990fcbd3abap+4\n"
+         "L 0x1.36fbcdd592228p+3 0x1.e9990fcbd3abap+4 0x1.36fbcdd592228p+3 0x1.138eeb0020f16p+4\n"
+         "C 1\n"
+         "A 0x1.0a8c7906b3712p+4 0x1.2ceb8ce4cd7ccp+4 0x1.4889e4aed00c6p+2 0x0p+0 0x0p+0 0\n"
+         "P 0x1p+1 0 -0x1.fa871b4a41fd6p-1 1 1 0x0p+0 0x1.99d3c35342577p+3 0x1.06ccf69156e98p+1 0x0p+0 0x1.4p+2 1 0x1.64c090c2945e2p-1 1 1 0x1.44f88cf34dceep-1 0x1.60285b28c28d4p+1 0 3 0x1.e1c2242eba708p+5 0x0p+0 1 1 0x0p+0 0 0x1.104d9a3a8290fp+5 0 0 0x1.0602c6c661438p-3 0x1.b95acca4521fbp+2 0x1.56cffee3e14c4p+0 0x1.05d46437397dap+2 0 0x1.b9c3a4cd82b69p-1 0 0 0x0p+0 0x0p+0 1 4 0 0 0 0 0x1.cce185f2032dp+4 -0x1.4e26f4c165f5cp+3 0x1p+1\n"
+         "K 0 0\n"
+         , 3, {27.1}},
+        {"m2_812009_22",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.7d281a306b85ep+5 0x0p+0\n"
+         "L 0x1.7d281a306b85ep+5 0x0p+0 0x1.7d281a306b85ep+5 0x1.eec4b396b671cp+5\n"
+         "L 0x1.7d281a306b85ep+5 0x1.eec4b396b671cp+5 0x0p+0 0x1.eec4b396b671cp+5\n"
+         "L 0x0p+0 0x1.eec4b396b671cp+5 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "L 0x1.d52c3176f89b4p+2 0x1.2c73f0dc95896p+5 0x1.3b8c63a9abc3ap+4 0x1.2c73f0dc95896p+5\n"
+         "L 0x1.3b8c63a9abc3ap+4 0x1.2c73f0dc95896p+5 0x1.3b8c63a9abc3ap+4 0x1.71d79c3728b38p+5\n"
+         "L 0x1.3b8c63a9abc3ap+4 0x1.71d79c3728b38p+5 0x1.d52c3176f89b4p+2 0x1.71d79c3728b38p+5\n"
+         "L 0x1.d52c3176f89b4p+2 0x1.71d79c3728b38p+5 0x1.d52c3176f89b4p+2 0x1.2c73f0dc95896p+5\n"
+         "C 1\n"
+         "L 0x1.4862d8deda65bp+4 0x1.d87b43b5c37f4p+4 0x1.3c78854ecb382p+5 0x1.d87b43b5c37f4p+4\n"
+         "L 0x1.3c78854ecb382p+5 0x1.d87b43b5c37f4p+4 0x1.3c78854ecb382p+5 0x1.56d5ccdda3902p+5\n"
+         "L 0x1.3c78854ecb382p+5 0x1.56d5ccdda3902p+5 0x1.4862d8deda65bp+4 0x1.56d5ccdda3902p+5\n"
+         "L 0x1.4862d8deda65bp+4 0x1.56d5ccdda3902p+5 0x1.4862d8deda65bp+4 0x1.d87b43b5c37f4p+4\n"
+         "C 1\n"
+         "A 0x1.fc3eeec94ccd2p+3 0x1.24337f9c517cdp+5 0x1.ae4325b07260bp+2 0x0p+0 0x0p+0 0\n"
+         "P 0x1.9666666666666p+1 0 -0x1.81f16dfe153c7p-1 0 0 0x0p+0 0x1.53744dfc98d95p+3 0x1.0d5044e872f34p+1 0x0p+0 0x1.4p+2 1 0x1.094e64b574d5ep-1 0 1 0x1.1f2605a60c432p+2 0x1.d7b9132bc5c7fp-2 0 8 0x1.6866c20c91de8p+5 0x0p+0 1 0 0x0p+0 0 0x1.3cbf6c9359497p+4 1 0 0x1.bbdb468c68584p-3 0x1.85e47a2e1caa7p+3 0x1.828fe59791832p+0 0x1.e06baa681a215p+0 0 0x1.a3fdb7f1a25dap-4 0 0 0x0p+0 0x0p+0 1 5 0 1 0 0 -0x1.b64550c7ad085p+4 0x1.04744fa86ddc6p+5 0x1p+1\n"
+         "K 0 0\n"
+         , 21, {63.5}},
+        {"m2_812018_9",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.4d56dd96b016bp+5 0x0p+0\n"
+         "L 0x1.4d56dd96b016bp+5 0x0p+0 0x1.4d56dd96b016bp+5 0x1.cd0150342abbep+5\n"
+         "L 0x1.4d56dd96b016bp+5 0x1.cd0150342abbep+5 0x0p+0 0x1.cd0150342abbep+5\n"
+         "L 0x0p+0 0x1.cd0150342abbep+5 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "L 0x1.4d963a7db86b1p+4 0x1.6aaecf20f51eep+5 0x1.d72e7a4b07547p+4 0x1.6aaecf20f51eep+5\n"
+         "L 0x1.d72e7a4b07547p+4 0x1.6aaecf20f51eep+5 0x1.d72e7a4b07547p+4 0x1.9ad74bdc03f08p+5\n"
+         "L 0x1.d72e7a4b07547p+4 0x1.9ad74bdc03f08p+5 0x1.4d963a7db86b1p+4 0x1.9ad74bdc03f08p+5\n"
+         "L 0x1.4d963a7db86b1p+4 0x1.9ad74bdc03f08p+5 0x1.4d963a7db86b1p+4 0x1.6aaecf20f51eep+5\n"
+         "C 1\n"
+         "A 0x1.cf3d9dd6777f5p+4 0x1.88dc90ceef659p+5 0x1.b56341010fdf8p+2 0x0p+0 0x0p+0 0\n"
+         "C 1\n"
+         "L 0x1.54b0186f35cd8p+3 0x1.9f5ff21585436p+4 0x1.670525711e542p+4 0x1.9f5ff21585436p+4\n"
+         "L 0x1.670525711e542p+4 0x1.9f5ff21585436p+4 0x1.670525711e542p+4 0x1.11b95b787d6e6p+5\n"
+         "L 0x1.670525711e542p+4 0x1.11b95b787d6e6p+5 0x1.54b0186f35cd8p+3 0x1.11b95b787d6e6p+5\n"
+         "L 0x1.54b0186f35cd8p+3 0x1.11b95b787d6e6p+5 0x1.54b0186f35cd8p+3 0x1.9f5ff21585436p+4\n"
+         "P 0x1.9666666666666p+1 0 -0x1.4f54af28db8eap+0 1 0 0x0p+0 0x1.c0efe6247d62fp+3 0x1.82c8047e8eb28p+2 0x0p+0 0x1.4p+2 1 0x1.62c780f1be373p-2 0 1 0x1.0d8e45abed4cdp+0 0x1.afa203f67de0dp+0 1 8 0x1.24cc0a57edc96p+5 0x0p+0 1 1 0x0p+0 1 0x1.54200a89691fbp+4 0 0 0x1.bf27c089761e9p-2 0x1.ddcc7ee445182p-1 0x1.f66823d32a1b6p-1 0x1.52e5d2caa6b74p+3 0 0x1.0e8e33fbcea41p+0 0 0 0x0p+0 0x0p+0 0 6 0 1 0 0 -0x1.d1f0402c130a8p+2 0x1.1e912270b8056p+5 0x1p+1\n"
+         "K 0 0\n"
+         , 1, {50.2}},
+        {"m3_820014_21",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.1c87c3a6b155dp+6 0x0p+0\n"
+         "L 0x1.1c87c3a6b155dp+6 0x0p+0 0x1.1c87c3a6b155dp+6 0x1.eed4db2bbb74bp+4\n"
+         "L 0x1.1c87c3a6b155dp+6 0x1.eed4db2bbb74bp+4 0x0p+0 0x1.eed4db2bbb74bp+4\n"
+         "L 0x0p+0 0x1.eed4db2bbb74bp+4 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "A 0x1.915acdb759dap+3 0x1.2b652cb1c7dccp+4 0x1.b552b838a47bcp+2 0x0p+0 0x0p+0 0\n"
+         "C 1\n"
+         "L 0x1.03118332be1e4p+5 0x1.349a1d47cc834p+3 0x1.8c375b1783c1cp+5 0x1.349a1d47cc834p+3\n"
+         "L 0x1.8c375b1783c1cp+5 0x1.349a1d47cc834p+3 0x1.8c375b1783c1cp+5 0x1.5a4ed67dc7cp+4\n"
+         "L 0x1.8c375b1783c1cp+5 0x1.5a4ed67dc7cp+4 0x1.03118332be1e4p+5 0x1.5a4ed67dc7cp+4\n"
+         "L 0x1.03118332be1e4p+5 0x1.5a4ed67dc7cp+4 0x1.03118332be1e4p+5 0x1.349a1d47cc834p+3\n"
+         "C 1\n"
+         "L 0x1.ea7e3a9a92bdp+2 0x1.02093c2396125p+4 0x1.0156e1c20a267p+4 0x1.02093c2396125p+4\n"
+         "L 0x1.0156e1c20a267p+4 0x1.02093c2396125p+4 0x1.0156e1c20a267p+4 0x1.60565cb6c37f5p+4\n"
+         "L 0x1.0156e1c20a267p+4 0x1.60565cb6c37f5p+4 0x1.ea7e3a9a92bdp+2 0x1.60565cb6c37f5p+4\n"
+         "L 0x1.ea7e3a9a92bdp+2 0x1.60565cb6c37f5p+4 0x1.ea7e3a9a92bdp+2 0x1.02093c2396125p+4\n"
+         "P 0x1.9666666666666p+1 0 -0x1.400d78aecfb74p+0 1 0 0x0p+0 0x1.17f45c2ed6928p+3 0x1.93b4c6a559145p+2 0x0p+0 0x1.4p+2 1 0x1.e55c0d6ae2c9ap-1 1 1 0x1.6fa06e7e067d8p+1 0x1.df892f05166f2p+0 0 2 0x1.ce124f8e037e4p+5 0x0p+0 1 0 0x0p+0 0 0x1.3f8f2c27c96ffp+5 1 0 0x1.8122651620db3p-4 0x1.4b112100fe296p+3 0x1.2ec36830d363cp+0 0x1.66fe63c5a83ddp+2 0 0x1.9cb6e8440912ep-3 0 0 0x0p+0 0x0p+0 2 0 0 1 0 0 0x1.36d78ee1a381cp+3 0x1.2f765279cda5cp+5 0x1p+1\n"
+         "K 0 0\n"
+         , 1, {50.1}},
+        {"m2_902023_44",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.8a82b64854536p+5 0x0p+0\n"
+         "L 0x1.8a82b64854536p+5 0x0p+0 0x1.8a82b64854536p+5 0x1.e2683fb1d0541p+4\n"
+         "L 0x1.8a82b64854536p+5 0x1.e2683fb1d0541p+4 0x0p+0 0x1.e2683fb1d0541p+4\n"
+         "L 0x0p+0 0x1.e2683fb1d0541p+4 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "A 0x1.1ae89703c1424p+5 0x1.922e9f32c5bf1p+3 0x1.459b9dfccbfa3p+3 0x0p+0 0x0p+0 0\n"
+         "C 1\n"
+         "L 0x1.11d1717a041d4p+3 0x1.3fe66113a4e59p+3 0x1.af64c61451ad4p+4 0x1.3fe66113a4e59p+3\n"
+         "L 0x1.af64c61451ad4p+4 0x1.3fe66113a4e59p+3 0x1.af64c61451ad4p+4 0x1.6e16d37a23c84p+4\n"
+         "L 0x1.af64c61451ad4p+4 0x1.6e16d37a23c84p+4 0x1.11d1717a041d4p+3 0x1.6e16d37a23c84p+4\n"
+         "L 0x1.11d1717a041d4p+3 0x1.6e16d37a23c84p+4 0x1.11d1717a041d4p+3 0x1.3fe66113a4e59p+3\n"
+         "P 0x1p+3 0 -0x1.f28efe5f8d1dp-4 2 0 0x1.4820520c0c2bfp+1 0x1.1aff5c00670a2p+2 0x1.c75ad93757a55p-1 0x0p+0 0x1.4p+2 1 0x1.f61f2431b7c15p-1 0 1 0x1.1237656902772p+2 0x1.a0fbf1ac828c4p-1 0 8 0x1.ab7a6ea6b8fd8p+3 0x0p+0 1 0 0x0p+0 1 0x1.49720af39acfep+4 0 0 0x1.9550c3beea05p-2 0x1.ef4242766275fp+2 0x1.43a000ce2ea05p+0 0x1.67f5f3795a5f6p+3 0 0x1.7c0b7832f46f9p-1 0 0 0x0p+0 0x0p+0 2 5 0 0 0 0 0x1.9d2ebe9eb448cp+3 0x1.2084bb487e77ap+5 0x1p+1\n"
+         "K 0 0\n"
+         , 19, {155.6}},
+        {"m2_902033_10",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.9e7f5bbf79ba4p+5 0x0p+0\n"
+         "L 0x1.9e7f5bbf79ba4p+5 0x0p+0 0x1.9e7f5bbf79ba4p+5 0x1.25dffcac754bcp+6\n"
+         "L 0x1.9e7f5bbf79ba4p+5 0x1.25dffcac754bcp+6 0x0p+0 0x1.25dffcac754bcp+6\n"
+         "L 0x0p+0 0x1.25dffcac754bcp+6 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "A 0x1.27ebbf15bf0d3p+5 0x1.7b649d83e5634p+5 0x1.5311c1673de38p+3 0x0p+0 0x0p+0 0\n"
+         "C 1\n"
+         "L 0x1.6328a6c82f84fp+4 0x1.d41345cac49abp+5 0x1.d6cc0647167f7p+4 0x1.d41345cac49abp+5\n"
+         "L 0x1.d6cc0647167f7p+4 0x1.d41345cac49abp+5 0x1.d6cc0647167f7p+4 0x1.fc8c7403fbd8dp+5\n"
+         "L 0x1.d6cc0647167f7p+4 0x1.fc8c7403fbd8dp+5 0x1.6328a6c82f84fp+4 0x1.fc8c7403fbd8dp+5\n"
+         "L 0x1.6328a6c82f84fp+4 0x1.fc8c7403fbd8dp+5 0x1.6328a6c82f84fp+4 0x1.d41345cac49abp+5\n"
+         "C 1\n"
+         "L 0x1.3a87342f62e66p+4 0x1.993fbacfdc556p+4 0x1.41a64b3cf008bp+5 0x1.993fbacfdc556p+4\n"
+         "L 0x1.41a64b3cf008bp+5 0x1.993fbacfdc556p+4 0x1.41a64b3cf008bp+5 0x1.3fb1bfcecd2cfp+5\n"
+         "L 0x1.41a64b3cf008bp+5 0x1.3fb1bfcecd2cfp+5 0x1.3a87342f62e66p+4 0x1.3fb1bfcecd2cfp+5\n"
+         "L 0x1.3a87342f62e66p+4 0x1.3fb1bfcecd2cfp+5 0x1.3a87342f62e66p+4 0x1.993fbacfdc556p+4\n"
+         "P 0x1.9666666666666p+1 0 -0x1.73200c4936966p+0 0 0 0x0p+0 0x1.e76b876963ba7p+1 0x1.a1345e01e74c1p+1 0x0p+0 0x1.4p+2 1 0x1.7dd5224a04b87p-1 1 1 0x1.feefeb99e2dbfp+0 0x1.4c7604383b7ffp+0 0 6 0x1.ce77a1b9f7edcp+4 0x0p+0 1 1 0x0p+0 1 0x1.ff9b53c8e9999p+4 1 0 0x1.0d3e05fc5407fp-4 0x1.8a760c859c8bep-1 0x1.64c52d39dd253p-1 0x1.a2ee6e068678fp+2 0 0x1.59d29d6bcd9d4p-2 0 0 0x0p+0 0x0p+0 1 3 0 0 0 1 -0x1.590c495c114a2p+4 -0x1.6cfd3c5b5e6ddp+5 0x1p+1\n"
+         "K 0 0\n"
+         , 12, {190.6}},
+        {"spur_12",
+         "C 1\n"
+         "L 0x1.18p+6 0x1.4p+3 0x1.18p+6 0x1.4p+4\n"
+         "L 0x1.18p+6 0x1.4p+4 0x1.ep+4 0x1.4p+4\n"
+         "L 0x1.ep+4 0x1.4p+4 0x1.ep+4 0x1.5p+3\n"
+         "L 0x1.ep+4 0x1.5p+3 0x1.4p+4 0x1.5p+3\n"
+         "L 0x1.4p+4 0x1.5p+3 0x1.4p+4 0x1.4p+4\n"
+         "L 0x1.4p+4 0x1.4p+4 0x0p+0 0x1.4p+4\n"
+         "L 0x0p+0 0x1.4p+4 0x0p+0 0x0p+0\n"
+         "L 0x0p+0 0x0p+0 0x1.4p+4 0x0p+0\n"
+         "L 0x1.4p+4 0x0p+0 0x1.4p+4 0x1.3p+3\n"
+         "L 0x1.4p+4 0x1.3p+3 0x1.ep+4 0x1.3p+3\n"
+         "L 0x1.ep+4 0x1.3p+3 0x1.ep+4 0x0p+0\n"
+         "L 0x1.ep+4 0x0p+0 0x1.18p+6 0x0p+0\n"
+         "L 0x1.18p+6 0x0p+0 0x1.18p+6 0x1.4p+3\n"
+         "C 0\n"
+         "L 0x1.9p+5 0x0p+0 0x1.9p+5 0x1.8p+3\n"
+         "P 0x1p+1 0 0x0p+0 2 0 0x0p+0 0x1.8p+1 0x1.8p+1 0x0p+0 0x1.4p+2 0 0x1.999999999999ap-3 0 1 0x1p+1 0x1p+0 0 1 0x1.9p+6 0x0p+0 0 0 0x0p+0 0 0x1.4p+3 0 0 0x1.657184ae74489p-4 0x1.4p+2 0x1.921fb54442d18p-1 0x1.4p+2 0 0x1.921fb54442d18p+0 0 0 0x0p+0 0x0p+0 0 0 0 0 0 0 0x0p+0 0x0p+0 0x1p+1\n"
+         "K 0 0\n"
+         , 0, {665.3}},
+        {"m0_810030_3",
+         "C 1\n"
+         "A -0x1.743a97f96e6p-2 -0x1.743a97f96e6p-2 0x1.842074c8edb65p+3 0x1.eb1a0a16b193ap-6 0x1.8a734d1be80b3p+0 0\n"
+         "A -0x1.de5cc8fe336e9p+2 0x1.de5cc8fe336eap+2 0x1.13b530eb5b5a1p+3 0x1.0a8d131569c0fp-1 -0x1.0bb31f677bd9p+1 1\n"
+         "A -0x1.dee77fe9db1b4p+1 -0x1.dee77fe9db1b2p+1 0x1.1b26d9eb479adp+3 0x1.5a3e2f77da0e4p+1 -0x1.225ca9ab714b1p+0 0\n"
+         "A 0x1.6c1579781e74p+3 -0x1.6c1579781e742p+3 0x1.6c4a198008f91p+3 -0x1.8dd2d4dd37121p+1 0x1.8985f4762b529p+0 1\n"
+         "P 0x1p+3 0 -0x1.16be713c9aee8p-2 2 0 0x0p+0 0x1.6bc47be4b3298p+3 0x1.2cff7065bcebcp+2 0x0p+0 0x1.4p+2 1 0x1.8db7618b64909p-4 0 1 0x1.1ef10eb1cfe4cp+2 0x1.0d580e205fbd8p-2 0 9 0x1.9fc97e0711d11p+5 0x0p+0 0 0 0x0p+0 1 0x1.2d92c9da2b536p+4 1 0 0x1.c680c10edc961p-2 0x1.48cc2bfbda608p+3 0x1.89afe79c681a6p+0 0x1.ed583b9786f7cp-1 0 0x1.54cdfdce9ef8ep-1 0 0 0x0p+0 0x0p+0 2 4 0 0 0 0 -0x1.8ada2e6c1e202p+5 -0x1.525393073c304p+3 0x1p+1\n"
+         "K 0 0\n"
+         , 8, {2.13}},
+        {"m3_820028_27",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.8c17e6ec4107ep+6 0x0p+0\n"
+         "L 0x1.8c17e6ec4107ep+6 0x0p+0 0x1.8c17e6ec4107ep+6 0x1.a003b5ea63dc8p+5\n"
+         "L 0x1.8c17e6ec4107ep+6 0x1.a003b5ea63dc8p+5 0x0p+0 0x1.a003b5ea63dc8p+5\n"
+         "L 0x0p+0 0x1.a003b5ea63dc8p+5 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "A 0x1.51832df12149cp+6 0x1.40b7da9c7d646p+3 0x1.3f414c9aeb85p+2 0x0p+0 0x0p+0 0\n"
+         "C 1\n"
+         "A 0x1.32a688ac6ff26p+6 0x1.ea7ca8885266ap+3 0x1.fb319868fb336p+1 0x0p+0 0x0p+0 0\n"
+         "C 1\n"
+         "L 0x1.480f064b06e7bp+4 0x1.afca9ce5c2737p+2 0x1.448a911be554ep+5 0x1.afca9ce5c2737p+2\n"
+         "L 0x1.448a911be554ep+5 0x1.afca9ce5c2737p+2 0x1.448a911be554ep+5 0x1.4caa212bf9a4ap+4\n"
+         "L 0x1.448a911be554ep+5 0x1.4caa212bf9a4ap+4 0x1.480f064b06e7bp+4 0x1.4caa212bf9a4ap+4\n"
+         "L 0x1.480f064b06e7bp+4 0x1.4caa212bf9a4ap+4 0x1.480f064b06e7bp+4 0x1.afca9ce5c2737p+2\n"
+         "P 0x1.8p+3 0 0x1.00f22deffb0e2p-4 2 0 0x0p+0 0x1.078aecf3d49eap+3 0x1.6bb31622054c4p+0 0x0p+0 0x1.4p+2 1 0x1.628277aa9a4c2p-4 1 1 0x1.afc4bed3d115bp+2 0x1.c854be589418p-1 0 9 0x1.86d21921169dp+5 0x0p+0 1 0 0x0p+0 2 0x1.2ac23d3e52f9bp+4 0 0 0x1.9be365656b15cp-2 0x1.d098f7bf5053fp+2 0x1.2491de18a33c9p+0 0x1.f6f8d43c57afp+2 0 0x1.b33a7b2be59bp-3 0 0 0x0p+0 0x0p+0 2 5 0 1 0 0 -0x1.8ff536e895514p+4 0x1.93ac4359b5854p+4 0x1p+1\n"
+         "K 0 0\n"
+         , 27, {}},
+        {"m3_860019_2",
+         "C 1\n"
+         "B 0x1.4d7ec005c167p+3 -0x1.ac07ab2f018f9p-3 0x1.4fa02e5a7c70ap+3 0x1.fd490d4914fcbp+0 0x1.3375fc871debp+3 0x1.485e7932afc64p+2 0x1.039b04379c1b8p+3 0x1.a6506431ae97p+2\n"
+         "B 0x1.039b04379c1b8p+3 0x1.a6506431ae97p+2 0x1.a78017d03498p+2 0x1.0221279856b3ep+3 0x1.c0e960baf619p+1 0x1.10aa9b91150d6p+3 0x1.72e77145b4503p+0 0x1.1325a250406cp+3\n"
+         "B 0x1.72e77145b4503p+0 0x1.1325a250406cp+3 -0x1.3807bdd507236p-1 0x1.15a0a90f6bcaap+3 -0x1.3e5eeabd6058ep+1 0x1.febaddaa70b43p+2 -0x1.0f2aefd91b9bep+2 0x1.c414b527b706bp+2\n"
+         "B -0x1.0f2aefd91b9bep+2 0x1.c414b527b706bp+2 -0x1.7f266a53870b5p+2 0x1.896e8ca4fd593p+2 -0x1.02177bb706588p+3 0x1.3a5a3898a2662p+2 -0x1.219581468bc46p+3 0x1.8ccca3204d8e3p+1\n"
+         "B -0x1.219581468bc46p+3 0x1.8ccca3204d8e3p+1 -0x1.411386d611304p+3 0x1.49c9aa1eaca04p+0 -0x1.590a2813d9df8p+3 -0x1.d6b25cd8579f4p+0 -0x1.44899949ae551p+3 -0x1.e7456a165d674p+1\n"
+         "B -0x1.44899949ae551p+3 -0x1.e7456a165d674p+1 -0x1.30090a7f82caap+3 -0x1.7198d2e0477f7p+2 -0x1.d0fbafea1ef5ep+2 -0x1.de6338d31aa58p+2 -0x1.4d2451130d0bap+2 -0x1.16af30b736ffep+3\n"
+         "B -0x1.4d2451130d0bap+2 -0x1.16af30b736ffep+3 -0x1.9299e477f642cp+1 -0x1.3e2cc504e0adp+3 0x1.0b350d5e56ep-4 -0x1.720d79cf0a7ap+3 0x1.1bf20cee1da6ap+1 -0x1.66c2d4579168ap+3\n"
+         "B 0x1.1bf20cee1da6ap+1 -0x1.66c2d4579168ap+3 0x1.17c538b8a44b2p+2 -0x1.5b782ee018574p+3 0x1.96241d88606edp+2 -0x1.0d9d18dc2ed28p+3 0x1.eda4dc7673c34p+2 -0x1.a5de9fd4c12efp+2\n"
+         "B 0x1.eda4dc7673c34p+2 -0x1.a5de9fd4c12efp+2 0x1.2292cdb2438bep+3 -0x1.30830df124b8dp+2 0x1.4b5d51b1065d6p+3 -0x1.34257c0a6ab05p+1 0x1.4d7ec005c167p+3 -0x1.ac07ab2f018f9p-3\n"
+         "P 0x1.8p+3 0 0x1.9542d8ec37af5p-4 2 0 0x1.f9355b39bc46cp+0 0x1.8ae2323e998e9p+3 0x1.3f32a2ae8db12p+2 0x0p+0 0x1.4p+2 1 0x1.caa1b891b564bp-2 0 1 0x1.0b73447adf8eap-1 0x1.4f351faea46a9p+1 0 9 0x1.c5e903c5b1d97p+5 0x0p+0 0 0 0x0p+0 0 0x1.3ce2e930c3931p+5 0 0 0x1.8a16b3d6dae01p-2 0x1.212c7d150dd6cp+2 0x1.caea5442d7a79p-1 0x1.228b256ad5fbdp+1 1 0x1.42275a71018bp+0 1 0 0x0p+0 0x0p+0 2 0 0 0 0 0 0x1.fe3ec66fe1168p+2 -0x1.8b10abb7906d4p+3 0x1p+1\n"
+         "K 0 0\n"
+         , 8, {}},
+        {"m3_860014_37",
+         "C 1\n"
+         "A 0x0p+0 0x0p+0 0x1.38bc522d4a8a4p+4 -0x1.7182b2c7ecdfdp-1 -0x1.35bf08924799ap+1 0\n"
+         "L -0x1.d587ecde031bep+3 -0x1.9d399f674a822p+3 0x1.d587ecde031bdp+3 -0x1.9d399f674a824p+3\n"
+         "P 0x1.8p+3 0 -0x1.8p+2 2 0 0x1.2b4acc5369d88p-2 0x1.a14311fabb86dp+2 0x1.c2f51dceed99ep+1 0x0p+0 0x1.4p+2 1 0x1.8026fa6ffe052p-8 1 1 0x1.3356dcf8644aep+0 0x1.ac6604d249681p+0 0 5 0x1.fbf1c32bce21bp+4 0x0p+0 0 1 0x0p+0 1 0x1.dc0909f8156b1p+3 0 0 0x1.ef25828904c94p-2 0x1.a80f27193df55p+3 0x1.5ff88bae4bd54p-1 0x1.79ef7fa081749p+3 1 0x1.1c1816c128edbp-3 1 0 0x1.6384efa3966d1p+3 0x0p+0 2 2 0 1 0 0 -0x1.8e7d4b189e3e8p+2 0x1.4717a22b28012p+5 0x1p+1\n"
+         "K 0 0\n"
+         , 3, {}}
+    };
+    for (const Case& k : cases) {
+        std::vector<Contour> cs;
+        ProfileParams p;
+        int vbitDeg = 0;
+        const double d = readScene(k.text, cs, p, vbitDeg);
+        p.leads.type = LeadType::None;
+        p.leads.overcut = 0.0;
+        p.leads.leadOut = false;
+        p.ramp.onLeadIn = false;
+        tooling::Tool tool = test::endMill(d);
+        if (vbitDeg > 0) {
+            tool.type = tooling::ToolType::VBit;
+            tool.includedAngle = vbitDeg * geometry::kPi / 180.0;
+        }
+        INFO("scene " << k.name);
+        const ProfileResult r = profileToolpath(cs, tool, p);
+        REQUIRE(r.ok());
+        std::vector<double> areas;
+        for (const ProfileDiagnostic& g : r.diagnostics) {
+            if (g.message.find("comes free") == std::string::npos) continue;
+            areas.push_back(std::stod(g.message.substr(g.message.find("(about ") + 7)));
+        }
+        CHECK(tabsLeftOut(r) == k.left);
+        REQUIRE(areas.size() == k.areas.size());
+        for (std::size_t i = 0; i < areas.size(); ++i) CHECK(std::fabs(areas[i] - k.areas[i]) < 0.02 * k.areas[i] + 0.1);
     }
 }

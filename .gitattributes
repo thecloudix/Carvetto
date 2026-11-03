@@ -6,3 +6,7 @@ core/tests/golden/** -text
 posts/*.pp -text
 data/tools/*.json -text
 app/cli/tests/data/** -text
+
+# T-0146: tools/changelog.py check --base compares CHANGELOG.md byte for byte; keep LF everywhere.
+CHANGELOG.md text eol=lf
+changelog.d/*.md text eol=lf
