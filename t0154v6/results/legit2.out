@@ -1,0 +1,64 @@
+grbl_mm        S12 drill M3             ok
+grbl_mm        Drag 3mm 108             ok
+grbl_mm        Diamond 1mm 112 deg      ok
+grbl_mm        Drag #2 (90 deg)         ok
+grbl_mm        Drag tip 0.1mm 410       ok
+grbl_mm        Drag 120 deg M5 holder   ok
+grbl_mm        Drag ~ fine?!            ok
+grbl_mm        Drag 30mm M30            ok
+grbl_inch      S12 drill M3             ok
+grbl_inch      Drag 3mm 108             ok
+grbl_inch      Diamond 1mm 112 deg      ok
+grbl_inch      Drag #2 (90 deg)         ok
+grbl_inch      Drag tip 0.1mm 410       ok
+grbl_inch      Drag 120 deg M5 holder   ok
+grbl_inch      Drag ~ fine?!            ok
+grbl_inch      Drag 30mm M30            ok
+linuxcnc_mm    S12 drill M3             ok
+linuxcnc_mm    Drag 3mm 108             ok
+linuxcnc_mm    Diamond 1mm 112 deg      ok
+linuxcnc_mm    Drag #2 (90 deg)         ok
+linuxcnc_mm    Drag tip 0.1mm 410       ok
+linuxcnc_mm    Drag 120 deg M5 holder   ok
+linuxcnc_mm    Drag ~ fine?!            ok
+linuxcnc_mm    Drag 30mm M30            ok
+linuxcnc_inch  S12 drill M3             ok
+linuxcnc_inch  Drag 3mm 108             ok
+linuxcnc_inch  Diamond 1mm 112 deg      ok
+linuxcnc_inch  Drag #2 (90 deg)         ok
+linuxcnc_inch  Drag tip 0.1mm 410       ok
+linuxcnc_inch  Drag 120 deg M5 holder   ok
+linuxcnc_inch  Drag ~ fine?!            ok
+linuxcnc_inch  Drag 30mm M30            ok
+mach3_mm       S12 drill M3             ok
+mach3_mm       Drag 3mm 108             ok
+mach3_mm       Diamond 1mm 112 deg      ok
+mach3_mm       Drag #2 (90 deg)         ok
+mach3_mm       Drag tip 0.1mm 410       ok
+mach3_mm       Drag 120 deg M5 holder   ok
+mach3_mm       Drag ~ fine?!            ok
+mach3_mm       Drag 30mm M30            ok
+mach3_inch     S12 drill M3             ok
+mach3_inch     Drag 3mm 108             ok
+mach3_inch     Diamond 1mm 112 deg      ok
+mach3_inch     Drag #2 (90 deg)         ok
+mach3_inch     Drag tip 0.1mm 410       ok
+mach3_inch     Drag 120 deg M5 holder   ok
+mach3_inch     Drag ~ fine?!            ok
+mach3_inch     Drag 30mm M30            ok
+mach4_mm       S12 drill M3             ok
+mach4_mm       Drag 3mm 108             ok
+mach4_mm       Diamond 1mm 112 deg      ok
+mach4_mm       Drag #2 (90 deg)         ok
+mach4_mm       Drag tip 0.1mm 410       ok
+mach4_mm       Drag 120 deg M5 holder   ok
+mach4_mm       Drag ~ fine?!            ok
+mach4_mm       Drag 30mm M30            ok
+marlin_mm      S12 drill M3             ok
+marlin_mm      Drag 3mm 108             ok
+marlin_mm      Diamond 1mm 112 deg      ok
+marlin_mm      Drag #2 (90 deg)         ok
+marlin_mm      Drag tip 0.1mm 410       ok
+marlin_mm      Drag 120 deg M5 holder   ok
+marlin_mm      Drag ~ fine?!            ok
+marlin_mm      Drag 30mm M30            ok

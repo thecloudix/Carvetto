@@ -1,0 +1,230 @@
+[A1 LINE_ENDING ' M3 S12000[13][10]'] PARSE ERROR line 1: invalid value ' M3 S12000[13][10]' for LINE_ENDING (expected one of [10], [13][10] or [13] (LF, CR LF or CR))
+[A1b LINE_ENDING '[10]M3[10]'] PARSE ERROR line 1: invalid value '[10]M3[10]' for LINE_ENDING (expected one of [10], [13][10] or [13] (LF, CR LF or CR))
+[B1 LINE_ENDING ' M3 S12000[13][10]'] PARSE ERROR line 1: invalid value ' M3 S12000[13][10]' for LINE_ENDING (expected one of [10], [13][10] or [13] (LF, CR LF or CR))
+[B1 LINE_ENDING '[10]M3[10]'] PARSE ERROR line 1: invalid value '[10]M3[10]' for LINE_ENDING (expected one of [10], [13][10] or [13] (LF, CR LF or CR))
+[B1 LINE_ENDING '[10][10]'] PARSE ERROR line 1: invalid value '[10][10]' for LINE_ENDING (expected one of [10], [13][10] or [13] (LF, CR LF or CR))
+[B1 LINE_ENDING '[13][13][10]'] PARSE ERROR line 1: invalid value '[13][13][10]' for LINE_ENDING (expected one of [10], [13][10] or [13] (LF, CR LF or CR))
+[B1 LINE_ENDING '[10][13]'] PARSE ERROR line 1: invalid value '[10][13]' for LINE_ENDING (expected one of [10], [13][10] or [13] (LF, CR LF or CR))
+[B1 LINE_ENDING ''] PARSE ERROR line 1: invalid value '' for LINE_ENDING (expected one of [10], [13][10] or [13] (LF, CR LF or CR))
+[B1 LINE_ENDING '[0][10]'] PARSE ERROR line 1: invalid value '[0][10]' for LINE_ENDING (expected text with [nnn] character codes)
+[B1 LINE_ENDING '[9][10]'] PARSE ERROR line 1: invalid value '[9][10]' for LINE_ENDING (expected one of [10], [13][10] or [13] (LF, CR LF or CR))
+[B1 LINE_ENDING '[10] '] PARSE ERROR line 1: invalid value '[10] ' for LINE_ENDING (expected one of [10], [13][10] or [13] (LF, CR LF or CR))
+[B1 LINE_ENDING '[13][10]'] ACCEPTED:
+(h)<CR>
+M5<CR>
+(pause)<CR>
+M0<CR>
+G0 X1.000 Y1.000 Z5.000<CR>
+G1 Z-0.100 F200<CR>
+G1 X2.000 F600<CR>
+G1 Z5.000 F200<CR>
+M5<CR>
+(unlock)<CR>
+M0<CR>
+M5<CR>
+----
+[B1 LINE_ENDING '[13]'] ACCEPTED:
+(h)<CR>M5<CR>(pause)<CR>M0<CR>G0 X1.000 Y1.000 Z5.000<CR>G1 Z-0.100 F200<CR>G1 X2.000 F600<CR>G1 Z5.000 F200<CR>M5<CR>(unlock)<CR>M0<CR>M5<CR>----
+[B1 LINE_ENDING '[10]'] ACCEPTED:
+(h)
+M5
+(pause)
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[C1 ;-post pause 'M0 LOAD TOOLS [T]' tool 3] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line 'M0 LOAD TOOLS [T]' holds an S followed by a tag, so it cannot serve to stop the spindle and pause for the operator before it
+[C2 ;-post pause 'M0 SPINDLE STOP 1'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter S without a value (line 'M0 SPINDLE STOP 1')
+[C3 ;-post unlock 'M0 UNLOCK UP 5'] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter U without a value (line 'M0 UNLOCK UP 5')
+[C4 ;-post pause 'M0 Load tools [T]' (GCODE_CASE_INSENSITIVE only)] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line 'M0 Load tools [T]' holds an S followed by a tag, so it cannot serve to stop the spindle and pause for the operator before it
+[C5 ;-post pause 'M0 [T]' with VAR prefix 'TOOLS '] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter T without a value (line 'M0 TOOLS 3')
+[C6 ;-post pause 'M0 [T]' with VAR prefix 'S'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word S3 (the letter S is not on the drag-section allowlist) (line 'M0 S3')
+[C7 ;-post pause 'M0 S1'] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line 'M0 S1' holds the spindle word S1 (refused anywhere in the template text, comments included), so it cannot serve to stop the spindle and pause for the operator before it
+[C8 ;-post pause 'M0 P1'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on a line with M0 or M1 (an M0/M1 line holds only [N] M0) (line 'M0 P1')
+[C9 paren-post pause 'M0 P1' (Marlin with PAREN_COMMENTS: 1 ms timeout)] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on a line with M0 or M1 (an M0/M1 line holds only [N] M0) (line 'M0 P1')
+[C10 paren-post pause 'M0 P[T]' tool 3] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on a line with M0 or M1 (an M0/M1 line holds only [N] M0) (line 'M0 P3')
+[C13 ;-post pause 'M0 TOOL UP [T]' tool 3 (P after the [T] deviation)] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter T without a value (line 'M0 TOOL UP 3')
+[C14 ;-post pause 'M0 Lock up [T]' tool 3 (GCODE_CASE_INSENSITIVE only)] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter L without a value (line 'M0 Lock up 3')
+[C15 ;-post pause 'M0 Load tools 3 now' (GCODE_CASE_INSENSITIVE only)] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line 'M0 Load tools 3 now' holds the spindle word s3 (refused anywhere in the template text, comments included), so it cannot serve to stop the spindle and pause for the operator before it
+[C16 ;-post TOOLCHANGE into drag 'M0 LOAD TOOL [T] STEP 2' (not the pause; pause follows)] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter L without a value (line 'M0 LOAD TOOL 3 STEP 2')
+[K1 ;-post pause 'M5','M0','M0 [T]' tool 3 (Grbl/LinuxCNC/Mach read M03)] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the character '3' (only upper-case words are allowed here) (line 'M0 3')
+[K2 ;-post TOOLCHANGE 'M5','M0 [T]' into drag tool 3] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the character '3' (only upper-case words are allowed here) (line 'M0 3')
+[K3 ;-post TOOLCHANGE 'M5','M0 [T]' into drag tool 4] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the character '4' (only upper-case words are allowed here) (line 'M0 4')
+[K4 ;-post unlock 'M5','M0','M0 [T]' tool 3] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the character '3' (only upper-case words are allowed here) (line 'M0 3')
+[C11 ;-post 'M0 [T]' tool 3 (fine)] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the character '3' (only upper-case words are allowed here) (line 'M0 3')
+[C12 ;-post 'M0 [TOOLNAME]' name 'M3 S18000'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'M3 S18000' must not turn), but the post writes the code M3 (not on the drag-section allowlist) (line 'M0 M3 S18000')
+[C12 ;-post 'M0 [TOOLNAME]' name 'x M3'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'x M3' must not turn), but the post writes the character 'x' (only upper-case words are allowed here) (line 'M0 x M3')
+[C12 ;-post 'M0 [TOOLNAME]' name 'S1'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'S1' must not turn), but the post writes the word S1 (the letter S is not on the drag-section allowlist) (line 'M0 S1')
+[C12 ;-post 'M0 [TOOLNAME]' name 'P1'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'P1' must not turn), but the post writes other words on a line with M0 or M1 (an M0/M1 line holds only [N] M0) (line 'M0 P1')
+[C12 ;-post 'M0 [TOOLNAME]' name 'Drag S30'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag S30' must not turn), but the post writes the letter D without a value (line 'M0 Drag S30')
+[C12 ;-post 'M0 [TOOLNAME]' name '( S1000)'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool '( S1000)' must not turn), but the post writes a parenthesis outside the ';' comment (this post's comments start with ';') (line 'M0 ( S1000)')
+[C12 ;-post 'M0 [TOOLNAME]' name 'TOOLS 3'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'TOOLS 3' must not turn), but the post writes the letter T without a value (line 'M0 TOOLS 3')
+[D1 [N] prefix '/N'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the character '/' (only upper-case words are allowed here) (line '/N0 M5')
+[D2 [N] prefix ' /N'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the character '/' (only upper-case words are allowed here) (line ' /N0 M5')
+[D3 [T] prefix ' M' tool 3] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the code M3 (not on the drag-section allowlist) (line 'G0 M3')
+[D4 [T] prefix ' M' tool 5 as the M5] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block writes no M5 (spindle stop) to stop the spindle and pause for the operator before it
+[D5 [T] prefix ' (' unclosed] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes a comment that is not closed on its line (line 'G0 (3')
+[D6 [SAFEZ] prefix ' Z' format 10.3] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word Z0000000005.000 (too many digits) (line 'G0 Z0000000005.000')
+[E1 'M0[T]' tool 5] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block did not write both M5 and M0 (as the first command of a line on ';'-style posts)
+[E2 'M0[T]' tool 3] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the code M03 (not on the drag-section allowlist) (line 'M03')
+[E3 ;-post 'M5 M0' one line] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block writes no M0 (program pause) to stop the spindle and pause for the operator before it
+[E4 ;-post '[N] M5' '[N] M0'] ACCEPTED:
+; h
+N0 M5
+N1 M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+; unlock
+M0
+M5
+----
+[F1 'M000005'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M000005 (too many digits) (line 'M000005')
+[F2 'M00005'] ACCEPTED:
+(h)
+M00005
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[F3 'M00000'] ACCEPTED:
+(h)
+M5
+M00000
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[F4 'G0 Z000000005'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word Z000000005 (too many digits) (line 'G0 Z000000005')
+[G1 paren comment name 'Drag 3mm 108'] ACCEPTED:
+(h)
+M5
+(tool Drag 3mm 108)
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[G1 paren comment name 'Diamond 1mm 112 deg'] ACCEPTED:
+(h)
+M5
+(tool Diamond 1mm 112 deg)
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[G1 paren comment name 'S12 drill M3'] ACCEPTED:
+(h)
+M5
+(tool S12 drill M3)
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[G1 paren comment name 'Tip 0.1mm 410'] ACCEPTED:
+(h)
+M5
+(tool Tip 0.1mm 410)
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[G2 ;-post comment name 'M108'] ACCEPTED:
+; h
+M5
+; tool M108
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+; unlock
+M0
+M5
+----
+[G3 ;-post live '(x)'] REFUSED: cannot write G-code in HEADER of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the character ';' (only upper-case words are allowed here) (line '; h')
+[H1 ;-post 'P000' line (Marlin REALTIME_REPORTING_COMMANDS feed hold)] ACCEPTED:
+; h
+M5
+M0
+P000
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+; unlock
+M0
+M5
+----
+[I1 BOM before .pp] ACCEPTED:
+(h)
+M5
+(pause)
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[J1 footer 'M3 S12000' after drag-ending job] ACCEPTED:
+(h)
+M5
+(pause)
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----

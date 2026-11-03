@@ -1,0 +1,14 @@
+T-0154 narrow-check verifier drivers (branch task/T-0154-no-spindle @ 65aae68, bare-M0 decision). VERDICT FAIL.
+build.sh src out   - builds a driver against /home/chris/wt-T0154/build-verify6
+postatk6/postatk5/longn/legit/legit2 - copies of the t0154v5/t0154v4/t0154v3 drivers, re-run: B-1, B-2, B-3 fixed
+longn2.cpp [n]     - longn that writes longn_<post>.nc (120000 moves: Mach3 wraps N999990 -> N10; all M0 bare)
+postatk7.cpp       - bare-M0 attacks: ';' comment / N / tabs / M1 / digit caps on ';'-posts; paren comments,
+                     glued comments, N, block delete on paren posts. ACCEPTED holes on ';'-posts (Marlin):
+                     S6 'N0<TAB>M0', S7 '<TAB>M0', T1/T1b '<TAB>M5' -> Marlin parser.cpp parse() skips only ' '
+                     before the command letter; '\t' -> command_letter '?' -> unknown command: pause / M5 skipped
+                     (T1b: spindle from M3 S12000 never stopped before the drag cut). Non-blocking: '[N] M0' on
+                     Marlin streamed by OctoPrint/Printrun becomes 'N57 N1 M0*cs' -> unknown command (owner-allowed N);
+                     P17 'N123456789 M0' > Grbl MAX_LINE_NUMBER 10000000 -> error.
+man.txt/manlong.txt - gcheck2 manifests (t0151v1/gcheck2.py): legit 72 files 0 errors, long 120k 8 files 0 errors
+marlin_m0.py       - copy of t0154v5 parser model (message-word timeouts; does not model tabs)
+results/           - driver outputs, ctest tail (918/918), gcheck2 results
