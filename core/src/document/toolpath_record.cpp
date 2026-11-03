@@ -97,6 +97,15 @@ std::string nonFiniteParam(const ToolpathParams& params) {
                                           {"start_position[1]", d->startPosition.y}});
         return key.empty() ? nonFiniteTolerance(d->tolerance) : key;
     }
+    if (const auto* e = std::get_if<toolpath::EngraveParams>(&params)) {
+        std::string key = firstNonFinite({{"depth", e->depth},
+                                          {"safe_z", e->safeZ},
+                                          {"stepover", e->stepover},
+                                          {"raster_angle_rad", e->rasterAngle},
+                                          {"start_position[0]", e->startPosition.x},
+                                          {"start_position[1]", e->startPosition.y}});
+        return key.empty() ? nonFiniteTolerance(e->tolerance) : key;
+    }
     const auto& p = std::get<toolpath::PocketParams>(params);
     std::string key = firstNonFinite({{"start_depth", p.startDepth},
                                       {"cut_depth", p.cutDepth},

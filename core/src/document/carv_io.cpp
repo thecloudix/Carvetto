@@ -379,9 +379,12 @@ constexpr EnumName<toolpath::ProfilePass> kProfilePasses[] = {{toolpath::Profile
 constexpr EnumName<toolpath::PeckRetract> kPeckRetracts[] = {
     {toolpath::PeckRetract::AboveStart, "above_start"},
     {toolpath::PeckRetract::AbovePreviousPass, "above_previous_pass"}};
+constexpr EnumName<toolpath::EngraveStrategy> kEngraveStrategies[] = {
+    {toolpath::EngraveStrategy::Outline, "outline"}, {toolpath::EngraveStrategy::Fill, "fill"}};
 constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Profile, "profile"},
                                                       {ToolpathOperation::Pocket, "pocket"},
-                                                      {ToolpathOperation::Drill, "drill"}};
+                                                      {ToolpathOperation::Drill, "drill"},
+                                                      {ToolpathOperation::Engrave, "engrave"}};
 
 template <class E, std::size_t N>
 const char* nameOf(const EnumName<E> (&table)[N], E value) {
@@ -704,6 +707,21 @@ json encodeDrillParams(const toolpath::DrillParams& p) {
     return j;
 }
 
+json encodeEngraveParams(const toolpath::EngraveParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["depth"] = p.depth;
+    j["passes"] = p.passes;
+    j["safe_z"] = p.safeZ;
+    j["strategy"] = nameOf(kEngraveStrategies, p.strategy);
+    j["fill_pattern"] = nameOf(kPocketStrategies, p.fillPattern);
+    j["stepover"] = p.stepover;
+    j["raster_angle_rad"] = p.rasterAngle;
+    j["start_position"] = encodePoint(p.startPosition);
+    j["tolerance"] = encodeTolerance(p.tolerance);
+    return j;
+}
+
 /// Name of the move cache of the toolpath at `index` (0-based) in the job order.
 std::string cacheMemberName(std::size_t index) {
     std::string digits = std::to_string(index + 1);
@@ -720,6 +738,8 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
         j["params"] = encodeProfileParams(*profile);
     } else if (const auto* drill = std::get_if<toolpath::DrillParams>(&tp.params)) {
         j["params"] = encodeDrillParams(*drill);
+    } else if (const auto* engrave = std::get_if<toolpath::EngraveParams>(&tp.params)) {
+        j["params"] = encodeEngraveParams(*engrave);
     } else {
         j["params"] = encodePocketParams(std::get<toolpath::PocketParams>(tp.params));
     }
@@ -1653,6 +1673,13 @@ constexpr std::array<std::string_view, 13> kDrillKeys{
     "name",        "start_depth", "cut_depth", "safe_z",         "peck",      "peck_retract", "retract_gap",
     "dwell_time",  "order",       "start_position", "tolerance", "tool",      "layers"};
 
+constexpr std::array<std::string_view, 12> kEngraveKeysJob{
+    "name",     "depth",            "passes",         "safe_z",    "strategy", "fill_pattern",
+    "stepover", "raster_angle_rad", "start_position", "tolerance", "tool",     "layers"};
+constexpr std::array<std::string_view, 12> kEngraveKeysParams{
+    "name",     "depth",        "passes",         "safe_z",    "strategy", "fill_pattern",
+    "stepover", "raster_angle", "start_position", "tolerance", "tool",     "layers"};
+
 template <std::size_t N>
 std::span<const std::string_view> keysFor(const std::array<std::string_view, N>& keys, ParamsDialect d) {
     // "tool" and "layers" (always the last two) belong to params.json only.
@@ -1898,6 +1925,41 @@ toolpath::DrillParams decodeDrillParams(JsonReader& r, const Path& p, ParamsDial
     return out;
 }
 
+toolpath::EngraveParams decodeEngraveParams(JsonReader& r, const Path& p, ParamsDialect d,
+                                            LegacyParamsExtras* legacy) {
+    toolpath::EngraveParams out;
+    ParamsRecord rec(r, p, keysFor(d == ParamsDialect::JobJson ? kEngraveKeysJob : kEngraveKeysParams, d), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "depth") {
+            out.depth = rec.number();
+        } else if (k == "passes") {
+            out.passes = rec.integer();
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else if (k == "strategy") {
+            out.strategy = rec.choice(kEngraveStrategies);
+        } else if (k == "fill_pattern") {
+            out.fillPattern = rec.choice(kPocketStrategies);
+        } else if (k == "stepover") {
+            out.stepover = rec.number();
+        } else if (rec.isAngle("raster_angle")) {
+            out.rasterAngle = rec.angle();
+        } else if (k == "start_position") {
+            out.startPosition = readFinitePoint(r, rec.field());
+        } else if (k == "tolerance") {
+            out.tolerance = decodeTolerance(r, rec.field(), d);
+        } else if (legacy) {
+            decodeLegacyCommon(rec, *legacy);
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
 /// Decodes params captured as canonical text (already charged to the budget) for `operation`.
 ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& text, const Path& p,
                               ParamsDialect d, LegacyParamsExtras* legacy) {
@@ -1909,6 +1971,9 @@ ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& te
     }
     if (operation == ToolpathOperation::Drill) {
         return decodeDrillParams(r, p, d, legacy);
+    }
+    if (operation == ToolpathOperation::Engrave) {
+        return decodeEngraveParams(r, p, d, legacy);
     }
     return decodePocketParams(r, p, d, legacy);
 }

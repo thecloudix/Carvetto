@@ -477,19 +477,23 @@ Goal: (a) geometry::locatePoint/windingNumber return Inside (winding −1) at th
 Acceptance criteria:
   1. (a) winding correct for bridges/endpoints on the test ray at every angle (generative test vs a robust oracle), all callers (Pocket, Profile, Drill) unchanged elsewhere; (b) limit consistent with message and ADR, boundary test.
 
-### T-0154 No-spindle toolpaths for diamond-drag engraving   [status: blocked]
-(Unblocks when T-0151 merges.)
+### T-0154 No-spindle toolpaths for diamond-drag engraving   [status: ready]
 Phase: 1 (Batch C)   Module: core/post, core/toolpath   Depends on: T-0151   ADR: 0020, 0024
 Goal: Owner decision 2026-11-03: Quick Engrave refuses diamond-drag tools until the post supports toolpaths that run with the spindle off. A drag toolpath must skip SPINDLE_ON/[S], stop the spindle (M5) before it, and pause for the operator (tool-change style stop with a message) so the spindle is confirmed off/locked; T-0134's spindle > 0 rule exempts exactly these toolpaths.
 Acceptance criteria:
   1. Diamond-drag Quick Engrave toolpaths post with spindle off, M5 + operator pause before them on every shipped post; no other toolpath can bypass the spindle rule (tests); posts/README checklist updated; goldens for existing toolpaths unchanged.
 
-### T-0155 Engrave residuals (T-0151 verifier)   [status: blocked]
-(Unblocks when T-0151 merges.)
+### T-0155 Engrave residuals (T-0151 verifier)   [status: ready]
 Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0151   ADR: 0024
 Goal: (a) Fill's diagnostic rewording replaces "pocket" anywhere, including inside a quoted tool name ("my pocket cutter" → "my fill area cutter"; harness t0151v1/edge.cpp) — replace only Pocket's fixed phrases. (b) engraveLevels/PassPlan return fewer than `passes` levels when depth/passes ≤ 1e-9 mm (engraveLevels(1e-6, 1000) → 999; lv.cpp), contradicting ADR-0024 §1 — floor depth/passes or document. (c) Cosmetic: widths printed as 0.9999999999999999 mm in the stepover refusal.
 Acceptance criteria:
   1. (a)–(c) fixed with tests; goldens unchanged.
+
+### T-0144 GCC 15 Release build: -Wmaybe-uninitialized false positive in document.cpp   [status: in-progress]
+Phase: 1   Module: core/document   Depends on: —   ADR: —
+Goal: Every local Release build with GCC 15 (-O3 -Werror) fails on a -Wmaybe-uninitialized false positive in core/src/document/document.cpp (~283, Document::copyObjects; object.hpp ~131); every verifier works around it with -Wno-error=maybe-uninitialized. CI's compilers don't hit it, but a contributor on a current distro cannot build Release as documented.
+Acceptance criteria:
+  1. GCC 15 Release -Werror builds cleanly without disabling the warning globally (restructure the code or initialise explicitly; a targeted, commented pragma only if no clean fix exists); behaviour unchanged (full ctest); CI green.
 
 ### T-0019 Make the T-0004 AC3 timing test CPU-time based   [status: done (by T-0017: T-0004 AC3 timing uses process CPU time, cpu_time.hpp)]
 Phase: 1   Module: core/tests   Depends on: —
@@ -529,7 +533,7 @@ Acceptance criteria:
   2. Safety: every rapid at safe Z; plunges at the plunge rate; peck retracts never below the start surface + retract gap; dwell > 0 only; tested against the T-0133/T-0134 post rules on every shipped post; golden G-code for a fixture.
   3. Native record round trip (params in job.json, ADR-0021 schema), CLI `toolpath drill <params.json>` with params.json keys documented in --help; CLI end-to-end test extended; MSVC CI green.
 
-### T-0151 Quick Engrave toolpath   [status: in-progress — owner 2026-11-03: diamond-drag refused for now (→ T-0154)]
+### T-0151 Quick Engrave toolpath   [status: done (2026-11-03, #38; diamond drag refused → T-0154)]
 Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0150   ADR: new
 Goal: Engrave along vectors (behaviour per feature-inventory "Quick Engraving Toolpath"): depth to engrave, strategy Outline (follow the vectors at depth) or Fill (fill closed regions with a pattern and stepover), number of passes; diamond-drag tools follow the vector at the surface depth given. Nose-cone/pressure and "output direct to machine" are out of scope (no machine connection).
 Acceptance criteria:

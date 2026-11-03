@@ -54,3 +54,14 @@ add_test(NAME cli.end_to_end_drill_grbl
     -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/e2e_drill
     -P ${CMAKE_CURRENT_SOURCE_DIR}/end_to_end_drill.cmake
 )
+# T-0151: quick engraving: DXF -> V-bit raster fill (two passes) -> V-bit outline -> Grbl, checksum
+# equal to the engraving golden. CI also runs this pipeline on Linux and Windows.
+add_test(NAME cli.end_to_end_engrave_grbl
+  COMMAND ${CMAKE_COMMAND}
+    -DCLI=$<TARGET_FILE:carvetto-cli>
+    -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR}/data
+    -DPOST=${PROJECT_SOURCE_DIR}/posts/grbl_mm.pp
+    -DGOLDEN=${PROJECT_SOURCE_DIR}/core/tests/golden/cli/part_engrave_grbl.nc
+    -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/e2e_engrave
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/end_to_end_engrave.cmake
+)
