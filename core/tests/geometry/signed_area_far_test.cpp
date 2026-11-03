@@ -94,11 +94,18 @@ double exactPolygonArea(const std::vector<Vec2>& pts) {
     return 0.5 * estimate(e);
 }
 
-// The old evaluation on absolute coordinates, to show the cases are hard ones.
+// The old evaluation on absolute coordinates, to show the cases are hard ones. Each product is
+// rounded on its own (volatile): a compiler that contracts x1 * y2 - y1 * x2 into one fma (GCC 15
+// at -march=x86-64-v3, T-0159) computes the cross product more accurately, and the sanity check
+// below would then measure the compiler instead of the fixture.
 double naiveArea(const std::vector<Vec2>& pts) {
     double s = 0.0;
     for (std::size_t i = 0, n = pts.size(); i < n; ++i) {
-        s += pts[i].cross(pts[(i + 1) % n]);
+        const Vec2 a = pts[i];
+        const Vec2 b = pts[(i + 1) % n];
+        const volatile double p = a.x * b.y;
+        const volatile double q = a.y * b.x;
+        s += p - q;
     }
     return 0.5 * s;
 }

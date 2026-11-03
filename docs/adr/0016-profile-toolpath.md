@@ -196,9 +196,16 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     the most kept tabs is used, a tie going to T-0127's, then to the one without add-back. A scene
     thus never keeps fewer tabs than T-0127's matching (the tab check only adds to it: a tab judged
     again on a wider window), nor than the new placement without add-back; where they tie the
-    output is T-0127's, rounding included (the slack decides only when it gains a tab). The extra
-    runs happen only when they would differ: T-0127's when some cut's tabs are placed differently or
-    a run used the second try, the one without add-back when add-back changed something. Finally every tab group (a tab and its
+    output is T-0127's (the slack decides only when it gains a tab). T-0127's placement let rounding
+    decide whether a tab moved to exactly the gap clashed with the point it was moved off, and that
+    rounding changes with the compiler's floating-point contraction (GCC 15 at x86-64-v3 contracts
+    a·b − c into one fma, T-0159), which lost a tab against the GCC 13/MSVC result. So T-0127's
+    candidate is placed both ways, deterministically: such a tab refused (within 1e-9 mm beyond the
+    gap) and accepted (within 1e-9 mm short of it); each is matched and checked, a tie going to the
+    accepted one. The scene thus never keeps fewer tabs than T-0127 did under either rounding. The
+    extra runs happen only when they would differ: T-0127's when some cut's tabs are placed
+    differently or a run used the second try (the refused variant only when it places the tabs
+    differently from the accepted one), the one without add-back when add-back changed something. Finally every tab group (a tab and its
     roughing cover) is checked against all cuts of both passes (and without a separate last pass
     the only pass against itself): if any cut position outside the kept raised stretches comes
     closer than a tool radius (less 1 µm) to the tab's cross-sections — the opposite wall of a

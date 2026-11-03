@@ -157,9 +157,14 @@ TEST_CASE("AC3: deleting a layer moves its objects to the default layer unless d
 //  - The one-second bound (the T-0010 criterion) applies to the best of three 10 000-op runs, which
 //    filters out one-off stalls (page faults, a descheduled timer tick).
 //  - An O(n^2) regression is caught independently of machine speed by a scaling check measured the
-//    same way: best(20 000) < 3 x best(10 000). Linear or n log n work gives a ratio of about 2;
-//    quadratic work gives about 4. Runs of both sizes are interleaved (`interleavedCpuSeconds`,
-//    cpu_scaling.hpp, T-0145) so a slow phase of the machine affects both.
+//    same way: best(40 000) < 9 x best(10 000). Runs of both sizes are interleaved
+//    (`interleavedCpuSeconds`, cpu_scaling.hpp, T-0145) so a slow phase of the machine affects both.
+//    T-0159: the check was best(20 000) < 3 x best(10 000), and failed on GitHub runners (GCC 13
+//    and 15, ratios ~3.2 in every pair): there 10k takes ~6 ms and the larger run falls off a cache
+//    level (the document and undo stack are node-based maps), a one-off constant factor that a
+//    doubling's headroom (3 / 2.1) does not absorb. Quadrupling guards the same exponent (n^1.585:
+//    9 = 4^1.585, 3 = 2^1.585) with twice the headroom for such a step: n log n gives ~4.4,
+//    quadratic work 16.
 namespace {
 
 /// Inserts `count` objects, undoes all and redoes all.
@@ -186,14 +191,14 @@ TEST_CASE("AC4: 10 000 inserts, undo all and redo all complete under one second"
           "[document][commands][perf]") {
     constexpr int kCount = 10000;
     const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
-        3, [&] { insertUndoRedo(kCount); }, [&] { insertUndoRedo(2 * kCount); });
-    INFO("best CPU seconds: 10k = " << t.smallSeconds << ", 20k = " << t.largeSeconds << ", ratio "
+        5, [&] { insertUndoRedo(kCount); }, [&] { insertUndoRedo(4 * kCount); });
+    INFO("best CPU seconds: 10k = " << t.smallSeconds << ", 40k = " << t.largeSeconds << ", ratio "
                                      << t.ratio());
     CHECK(t.smallSeconds < 1.0);
     // Optimised builds finish 10k in a few tens of ms; process-time ticks are ~16 ms on Windows,
     // so the ratio floors the 10k time at kCpuTimeFloor (50 ms). That keeps the check robust
     // there; the unoptimised Linux CI build (10k ~ 0.2 s) is where a quadratic regression shows up.
-    CHECK(t.ratio() < 3.0);
+    CHECK(t.ratio() < 9.0);
 }
 
 TEST_CASE("AC5: object ids are unique across undo/redo and paste assigns new ids", "[document][commands]") {

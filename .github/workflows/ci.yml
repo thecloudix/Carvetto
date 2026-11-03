@@ -102,12 +102,25 @@ jobs:
       - name: Test (parallel stress, -j8)
         run: ctest --test-dir build --output-on-failure -j8 --repeat until-fail:5
 
+  # T-0159: the Release build runs on both runner images: ubuntu-24.04 (GCC 13) and ubuntu-26.04
+  # (GCC 15, whose Release build contracts a * b - c into fma), so results that depend on the
+  # compiler's floating-point evaluation show up on a PR instead of when ubuntu-latest moves.
   linux-app:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-26.04]
+    runs-on: ${{ matrix.os }}
+    name: linux-app (${{ matrix.os }})
     steps:
       - uses: actions/checkout@v4
       - name: Install tools
         run: sudo apt-get update && sudo apt-get install -y ninja-build libgl1-mesa-dev libxkbcommon-dev libegl1
+      - name: Compiler
+        run: |
+          c++ --version | head -1
+          c++ -Q --help=target | grep -E '^\s+-(march|mtune|mfma|mavx2)[= ]' || true
+          echo "CXXFLAGS=${CXXFLAGS:-}"
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
