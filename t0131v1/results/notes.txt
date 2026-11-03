@@ -1,0 +1,11 @@
+T-0131 verifier round 1 (eae3005), clean-ish pt runs with the sweep paused (load ~6-7 from other agents):
+rest var 1 n 2500: small 2.019 large 5.266 ratio 2.346 (minima 2.608, pair 2.346)
+rest var 0 n 2500: small 2.187 large 5.433 ratio 2.453 (minima 2.484, pair 2.453)
+rest var 2 n 2500: small 1.962 large 4.732 ratio 2.245 (minima 2.411, pair 2.245)
+rest var 1 n 1250: small 1.154 large 2.377 ratio 1.915 (minima 2.060, pair 1.915)
+comb 0deg n 250: ratio 2.107 (minima 2.464); n 500: ratio 2.022 (minima 2.775); main n 500: 3.510
+comb 90deg n 500 (500->1000): 5.151; comb 30deg n 500: 2.977
+Committed test "T-0131 e" (Release, 1250->5000, bound 6.25, pairs=1), 8 runs at load 8-12: 5.84 6.58(FAIL) 6.33(FAIL) 5.45 5.36 5.90 5.24 5.84
+Committed test "T-0131 f" largeSeconds (bound 15 s): 12.68 12.40; pf driver tabs 5000 var0: 13.44, 15.89 (load 15)
+perf leaf (rest var1): Clipper2 BuildIntersectList 31.7% of 3.2 s at 2500, 40.0% of 8.28 s at 5000 (3.2x); rest of the run 2.1x
+clip90: 90deg comb line clipping (booleanOp, 256-line batches) 0.044/0.268/2.101 s at 500/1000/2000 teeth; inset 0.010/0.048/0.187 s

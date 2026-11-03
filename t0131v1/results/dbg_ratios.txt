@@ -1,0 +1,10 @@
+  CPU seconds: 156 vectors 1.11329, 624 vectors 5.04399, ratio 4.38579
+  CPU seconds: 312 vectors 1.2564, 624 vectors 1.96721, ratio 1.48417
+  CPU seconds: 62 teeth 0.090125, 248 teeth 0.366051, ratio 3.7798
+  CPU seconds: 78 vectors 1.90164, 312 vectors 8.24351, ratio 4.33495
+  CPU seconds: 78 vectors 4.35017, 156 vectors 8.80304, ratio 2.02361
+  CPU seconds: 156 vectors 1.01823, 624 vectors 4.4138, ratio 4.03225
+  CPU seconds: 312 vectors 1.15746, 624 vectors 1.74069, ratio 1.50389
+  CPU seconds: 62 teeth 0.0808783, 248 teeth 0.323162, ratio 3.72472
+  CPU seconds: 78 vectors 1.70229, 312 vectors 7.64733, ratio 4.49238
+  CPU seconds: 78 vectors 3.74495, 156 vectors 7.91293, ratio 2.11296

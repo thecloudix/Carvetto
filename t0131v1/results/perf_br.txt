@@ -1,0 +1,133 @@
+ANG=0 | comb n=250 var=0 cpu 0.053 moves 91322 diags 0 retr 1 | load 5.90
+ANG=0 | comb n=500 var=0 cpu 0.164 moves 182572 diags 0 retr 1 | load 5.90
+ANG=0 | comb n=1000 var=0 cpu 0.309 moves 365072 diags 0 retr 1 | load 5.90
+ANG=30 | comb n=250 var=0 cpu 0.068 moves 81743 diags 0 retr 1 | load 5.90
+ANG=30 | comb n=500 var=0 cpu 0.201 moves 163495 diags 0 retr 1 | load 5.90
+ANG=30 | comb n=1000 var=0 cpu 0.547 moves 326778 diags 0 retr 1 | load 5.90
+ANG=45 | comb n=250 var=0 cpu 0.064 moves 68524 diags 0 retr 1 | load 5.90
+ANG=45 | comb n=500 var=0 cpu 0.162 moves 136978 diags 0 retr 1 | load 5.90
+ANG=45 | comb n=1000 var=0 cpu 0.582 moves 273895 diags 0 retr 1 | load 5.75
+ANG=90 | comb n=250 var=0 cpu 0.027 moves 9968 diags 0 retr 1 | load 5.75
+ANG=90 | comb n=500 var=0 cpu 0.095 moves 20444 diags 0 retr 1 | load 5.75
+ANG=90 | comb n=1000 var=0 cpu 0.473 moves 46662 diags 0 retr 1 | load 5.75
+RD=0.1 TOOL=1 | comb n=250 var=0 cpu 0.206 moves 256134 diags 0 retr 253 | load 5.75
+OFFSET=1 | comb n=250 var=0 cpu 0.067 moves 38954 diags 0 retr 1 | load 5.75
+RD=0.1 TOOL=1 | comb n=500 var=0 cpu 0.538 moves 512134 diags 0 retr 503 | load 5.75
+OFFSET=1 | comb n=500 var=0 cpu 0.250 moves 78204 diags 0 retr 1 | load 5.75
+RD=0.1 TOOL=1 | comb n=1000 var=0 cpu 0.168 moves 6019 diags 1 retr 1 | load 5.75
+OFFSET=1 | comb n=1000 var=0 cpu 0.889 moves 156704 diags 0 retr 1 | load 5.75
+X=1 | sep n=1250 var=0 cpu 0.415 moves 25630 diags 225 retr 2304 | load 5.75
+TABS=1 | sep n=1250 var=0 cpu 5.563 moves 31254 diags 724 retr 2304 | load 5.61
+X=1 | rest n=1250 var=0 cpu 1.060 moves 86405 diags 1 retr 3760 | load 5.56
+X=1 | tabs n=1250 var=0 cpu 2.741 moves 15327 diags 459 retr 1202 | load 5.56
+X=1 | sep n=2500 var=0 cpu 1.034 moves 52671 diags 505 retr 4593 | load 5.56
+TABS=1 | sep n=2500 var=0 cpu 12.344 moves 63983 diags 1501 retr 4593 | load 6.10
+X=1 | rest n=2500 var=0 cpu 2.562 moves 177573 diags 1 retr 7627 | load 6.10
+X=1 | tabs n=2500 var=0 cpu 6.110 moves 31187 diags 882 retr 2410 | load 6.39
+X=1 | sep n=5000 var=0 cpu 2.264 moves 104630 diags 985 retr 9166 | load 6.39
+TABS=1 | sep n=5000 var=0 cpu 25.894 moves 127366 diags 2964 retr 9166 | load 6.94
+X=1 | rest n=5000 var=0 cpu 6.429 moves 355944 diags 1 retr 15293 | load 7.11
+X=1 | tabs n=5000 var=0 cpu 13.443 moves 62230 diags 1776 retr 4821 | load 7.75
+X=1 | sep n=1250 var=1 cpu 0.553 moves 26665 diags 237 retr 2305 | load 7.75
+TABS=1 | sep n=1250 var=1 cpu 6.208 moves 32329 diags 733 retr 2305 | load 7.85
+X=1 | rest n=1250 var=1 cpu 1.294 moves 86375 diags 1 retr 3788 | load 7.94
+X=1 | tabs n=1250 var=1 cpu 3.242 moves 15839 diags 446 retr 1204 | load 7.94
+X=1 | sep n=2500 var=1 cpu 1.220 moves 52849 diags 460 retr 4594 | load 8.03
+TABS=1 | sep n=2500 var=1 cpu 12.531 moves 64177 diags 1457 retr 4594 | load 8.02
+X=1 | rest n=2500 var=1 cpu 2.536 moves 172963 diags 1 retr 7544 | load 8.10
+X=1 | tabs n=2500 var=1 cpu 6.223 moves 30990 diags 897 retr 2413 | load 8.17
+X=1 | sep n=5000 var=1 cpu 2.574 moves 106500 diags 1008 retr 9173 | load 8.17
+TABS=1 | sep n=5000 var=1 cpu 25.389 moves 129388 diags 2965 retr 9173 | load 8.70
+X=1 | rest n=5000 var=1 cpu 6.486 moves 349127 diags 1 retr 15154 | load 8.72
+X=1 | tabs n=5000 var=1 cpu 12.848 moves 62090 diags 1799 retr 4819 | load 8.76
+X=1 | sep n=1250 var=2 cpu 7.991 moves 121824 diags 631 retr 4022 | load 8.80
+TABS=1 | sep n=1250 var=2 cpu 15.902 moves 131912 diags 1075 retr 4022 | load 8.76
+X=1 | rest n=1250 var=2 cpu 1.594 moves 101837 diags 1 retr 2117 | load 8.76
+X=1 | tabs n=1250 var=2 cpu 7.519 moves 68156 diags 887 retr 2078 | load 8.72
+X=1 | sep n=2500 var=2 cpu 14.121 moves 244605 diags 1267 retr 8099 | load 8.48
+TABS=1 | sep n=2500 var=2 cpu 31.154 moves 264917 diags 2117 retr 8099 | load 8.20
+X=1 | rest n=2500 var=2 cpu 2.175 moves 198062 diags 1 retr 4134 | load 8.20
+X=1 | tabs n=2500 var=2 cpu 17.097 moves 136849 diags 1756 retr 4200 | load 8.91
+X=1 | sep n=5000 var=2 cpu 37.404 moves 490150 diags 2616 retr 16745 | load 10.77
+TABS=1 | sep n=5000 var=2 cpu 85.083 moves 530398 diags 4436 retr 16745 | load 11.32
+X=1 | rest n=5000 var=2 cpu 5.177 moves 401266 diags 1 retr 8088 | load 11.13
+X=1 | tabs n=5000 var=2 cpu 35.644 moves 274735 diags 3675 retr 8659 | load 9.73
+REV=1 SIDE=1 | sep n=1250 var=0 cpu 0.203 moves 15486 diags 767 retr 2108 | load 9.73
+RASTER=1 ANG=30 | rest n=1250 var=0 cpu 1.053 moves 111632 diags 1 retr 3760 | load 9.73
+RD=0.5 | rest n=1250 var=2 cpu 1.345 moves 74226 diags 1 retr 2104 | load 9.73
+TABS=1 LEADS=1 ORDER=1 | sep n=1250 var=1 cpu 7.555 moves 34878 diags 1774 retr 2305 | load 9.54
+REV=1 SIDE=1 | sep n=2500 var=0 cpu 0.390 moves 30220 diags 1603 retr 4133 | load 9.54
+RASTER=1 ANG=30 | rest n=2500 var=0 cpu 2.624 moves 226993 diags 1 retr 7627 | load 9.54
+RD=0.5 | rest n=2500 var=2 cpu 2.078 moves 144289 diags 1 retr 4097 | load 9.41
+TABS=1 LEADS=1 ORDER=1 | sep n=2500 var=1 cpu 16.361 moves 69312 diags 3502 retr 4594 | load 9.25
+REV=1 SIDE=1 | sep n=5000 var=0 cpu 0.901 moves 59914 diags 3300 retr 8202 | load 9.25
+RASTER=1 ANG=30 | rest n=5000 var=0 cpu 6.262 moves 455975 diags 1 retr 15293 | load 9.23
+RD=0.5 | rest n=5000 var=2 cpu 5.058 moves 289537 diags 1 retr 8037 | load 9.21
+TABS=1 LEADS=1 ORDER=1 | sep n=5000 var=1 cpu 29.948 moves 139712 diags 7099 retr 9173 | load 8.92
+TABS=1 LEADS=1 ORDER=1 | sep n=5000 var=1 cpu 30.322 moves 139712 diags 7099 retr 9173 | load 8.54
+RD=0.5 | rest n=5000 var=2 cpu 4.964 moves 289537 diags 1 retr 8037 | load 8.42
+RASTER=1 ANG=30 | rest n=5000 var=0 cpu 5.932 moves 455975 diags 1 retr 15293 | load 8.20
+REV=1 SIDE=1 | sep n=5000 var=0 cpu 0.909 moves 59914 diags 3300 retr 8202 | load 8.20
+TABS=1 LEADS=1 ORDER=1 | sep n=2500 var=1 cpu 15.160 moves 69312 diags 3502 retr 4594 | load 8.15
+RD=0.5 | rest n=2500 var=2 cpu 2.045 moves 144289 diags 1 retr 4097 | load 8.15
+RASTER=1 ANG=30 | rest n=2500 var=0 cpu 2.598 moves 226993 diags 1 retr 7627 | load 8.14
+REV=1 SIDE=1 | sep n=2500 var=0 cpu 0.438 moves 30220 diags 1603 retr 4133 | load 8.14
+TABS=1 LEADS=1 ORDER=1 | sep n=1250 var=1 cpu 8.482 moves 34878 diags 1774 retr 2305 | load 8.58
+RD=0.5 | rest n=1250 var=2 cpu 1.581 moves 74226 diags 1 retr 2104 | load 8.58
+RASTER=1 ANG=30 | rest n=1250 var=0 cpu 1.463 moves 111632 diags 1 retr 3760 | load 8.58
+REV=1 SIDE=1 | sep n=1250 var=0 cpu 0.220 moves 15486 diags 767 retr 2108 | load 8.58
+X=1 | tabs n=5000 var=2 cpu 44.410 moves 274735 diags 3675 retr 8659 | load 11.47
+X=1 | rest n=5000 var=2 cpu 8.172 moves 401266 diags 1 retr 8088 | load 12.32
+TABS=1 | sep n=5000 var=2 cpu 111.613 moves 530398 diags 4436 retr 16745 | load 16.60
+X=1 | sep n=5000 var=2 cpu 40.163 moves 490150 diags 2616 retr 16745 | load 15.76
+X=1 | tabs n=2500 var=2 cpu 24.342 moves 136849 diags 1756 retr 4200 | load 16.18
+X=1 | rest n=2500 var=2 cpu 3.189 moves 198062 diags 1 retr 4134 | load 16.25
+TABS=1 | sep n=2500 var=2 cpu 48.704 moves 264917 diags 2117 retr 8099 | load 16.60
+X=1 | sep n=2500 var=2 cpu 19.899 moves 244605 diags 1267 retr 8099 | load 16.36
+X=1 | tabs n=1250 var=2 cpu 9.828 moves 68156 diags 887 retr 2078 | load 16.15
+X=1 | rest n=1250 var=2 cpu 2.010 moves 101837 diags 1 retr 2117 | load 16.06
+TABS=1 | sep n=1250 var=2 cpu 21.100 moves 131912 diags 1075 retr 4022 | load 15.98
+X=1 | sep n=1250 var=2 cpu 10.870 moves 121824 diags 631 retr 4022 | load 15.82
+X=1 | tabs n=5000 var=1 cpu 16.292 moves 62090 diags 1799 retr 4819 | load 15.39
+X=1 | rest n=5000 var=1 cpu 7.676 moves 349127 diags 1 retr 15154 | load 15.35
+TABS=1 | sep n=5000 var=1 cpu 32.005 moves 129388 diags 2965 retr 9173 | load 15.21
+X=1 | sep n=5000 var=1 cpu 3.637 moves 106500 diags 1008 retr 9173 | load 15.28
+X=1 | tabs n=2500 var=1 cpu 8.099 moves 30990 diags 897 retr 2413 | load 15.39
+X=1 | rest n=2500 var=1 cpu 3.249 moves 172963 diags 1 retr 7544 | load 15.39
+TABS=1 | sep n=2500 var=1 cpu 15.794 moves 64177 diags 1457 retr 4594 | load 15.25
+X=1 | sep n=2500 var=1 cpu 1.398 moves 52849 diags 460 retr 4594 | load 15.25
+X=1 | tabs n=1250 var=1 cpu 3.889 moves 15839 diags 446 retr 1204 | load 15.15
+X=1 | rest n=1250 var=1 cpu 1.565 moves 86375 diags 1 retr 3788 | load 15.15
+TABS=1 | sep n=1250 var=1 cpu 7.600 moves 32329 diags 733 retr 2305 | load 15.13
+X=1 | sep n=1250 var=1 cpu 0.675 moves 26665 diags 237 retr 2305 | load 15.13
+X=1 | tabs n=5000 var=0 cpu 15.886 moves 62230 diags 1776 retr 4821 | load 14.88
+X=1 | rest n=5000 var=0 cpu 8.119 moves 355944 diags 1 retr 15293 | load 14.97
+TABS=1 | sep n=5000 var=0 cpu 34.876 moves 127366 diags 2964 retr 9166 | load 15.08
+X=1 | sep n=5000 var=0 cpu 3.023 moves 104630 diags 985 retr 9166 | load 15.08
+X=1 | tabs n=2500 var=0 cpu 8.293 moves 31187 diags 882 retr 2410 | load 15.14
+X=1 | rest n=2500 var=0 cpu 3.606 moves 177573 diags 1 retr 7627 | load 15.14
+TABS=1 | sep n=2500 var=0 cpu 17.996 moves 63983 diags 1501 retr 4593 | load 15.10
+X=1 | sep n=2500 var=0 cpu 1.483 moves 52671 diags 505 retr 4593 | load 15.10
+X=1 | tabs n=1250 var=0 cpu 4.178 moves 15327 diags 459 retr 1202 | load 15.09
+X=1 | rest n=1250 var=0 cpu 1.485 moves 86405 diags 1 retr 3760 | load 15.09
+TABS=1 | sep n=1250 var=0 cpu 8.193 moves 31254 diags 724 retr 2304 | load 15.00
+X=1 | sep n=1250 var=0 cpu 0.674 moves 25630 diags 225 retr 2304 | load 15.00
+OFFSET=1 | comb n=1000 var=0 cpu 1.054 moves 156704 diags 0 retr 1 | load 15.00
+RD=0.1 TOOL=1 | comb n=1000 var=0 cpu 0.210 moves 6019 diags 1 retr 1 | load 14.92
+OFFSET=1 | comb n=500 var=0 cpu 0.291 moves 78204 diags 0 retr 1 | load 14.92
+RD=0.1 TOOL=1 | comb n=500 var=0 cpu 0.724 moves 512134 diags 0 retr 503 | load 14.92
+OFFSET=1 | comb n=250 var=0 cpu 0.093 moves 38954 diags 0 retr 1 | load 14.92
+RD=0.1 TOOL=1 | comb n=250 var=0 cpu 0.311 moves 256134 diags 0 retr 253 | load 14.92
+ANG=90 | comb n=1000 var=0 cpu 0.553 moves 46662 diags 0 retr 1 | load 14.92
+ANG=90 | comb n=500 var=0 cpu 0.113 moves 20444 diags 0 retr 1 | load 14.92
+ANG=90 | comb n=250 var=0 cpu 0.031 moves 9968 diags 0 retr 1 | load 14.92
+ANG=45 | comb n=1000 var=0 cpu 0.740 moves 273895 diags 0 retr 1 | load 14.92
+ANG=45 | comb n=500 var=0 cpu 0.242 moves 136978 diags 0 retr 1 | load 14.92
+ANG=45 | comb n=250 var=0 cpu 0.095 moves 68524 diags 0 retr 1 | load 14.92
+ANG=30 | comb n=1000 var=0 cpu 0.697 moves 326778 diags 0 retr 1 | load 14.92
+ANG=30 | comb n=500 var=0 cpu 0.240 moves 163495 diags 0 retr 1 | load 14.92
+ANG=30 | comb n=250 var=0 cpu 0.107 moves 81743 diags 0 retr 1 | load 14.92
+ANG=0 | comb n=1000 var=0 cpu 0.415 moves 365072 diags 0 retr 1 | load 14.85
+ANG=0 | comb n=500 var=0 cpu 0.196 moves 182572 diags 0 retr 1 | load 14.85
+ANG=0 | comb n=250 var=0 cpu 0.082 moves 91322 diags 0 retr 1 | load 14.85
+DONE

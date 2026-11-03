@@ -1,0 +1,15 @@
+comb var 0 n 250: small 0.054 large 0.141 ratio 2.237 (minima 2.595, pair 2.237) reps 3
+comb var 0 n 500: small 0.133 large 0.329 ratio 2.063 (minima 2.464, pair 2.063) reps 1
+sep var 0 n 1250: small 0.533 large 1.158 ratio 2.163 (minima 2.175, pair 2.163) reps 1
+sep var 0 n 2500: small 1.231 large 2.508 ratio 1.920 (minima 2.038, pair 1.920) reps 1
+rest var 1 n 1250: small 1.305 large 2.687 ratio 1.993 (minima 2.059, pair 1.993) reps 1
+rest var 1 n 2500: small 2.746 large 7.288 ratio 2.537 (minima 2.654, pair 2.537) reps 1
+tabs var 0 n 1250: small 3.603 large 7.034 ratio 1.837 (minima 1.952, pair 1.837) reps 1
+tabs var 0 n 2500: small 7.585 large 14.679 ratio 1.821 (minima 1.935, pair 1.821) reps 1
+comb var 0 n 250: small 0.026 large 0.099 ratio 3.503 (minima 3.772, pair 3.503) reps 5
+comb var 0 n 500: small 0.094 large 0.529 ratio 4.999 (minima 5.610, pair 4.999) reps 1
+comb var 0 n 500: small 0.208 large 0.693 ratio 3.222 (minima 3.341, pair 3.222) reps 1
+sep var 0 n 1250: small 7.500 large 15.431 ratio 2.036 (minima 2.057, pair 2.036) reps 1
+sep var 0 n 2500: small 15.206 large 27.071 ratio 1.780 (minima 1.780, pair 1.780) reps 1
+sep var 2 n 2500: small 13.639 large 27.942 ratio 1.981 (minima 2.049, pair 1.981) reps 1
+PTDONE

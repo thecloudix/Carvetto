@@ -1,0 +1,2 @@
+queries 240000 mismatches 0
+queries 240000 mismatches 0

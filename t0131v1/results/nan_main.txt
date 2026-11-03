@@ -1,0 +1,16 @@
+scene 0 opt 0 prof 260 moves 1 diags | pock 0 diags hash 3138f1cc1e560d95
+scene 0 opt 1 prof 526 moves 1 diags | pock 0 diags hash 8a15051606eb2b96
+scene 0 opt 2 prof 500 moves 1 diags | pock 0 diags hash a3ea710085cdbb4d
+scene 0 opt 3 prof 1006 moves 1 diags | pock 0 diags hash c6f4f7368e85c3a2
+scene 1 opt 0 prof 260 moves 1 diags | pock 0 diags hash 4d4b3fcc877623f5
+scene 1 opt 1 prof 526 moves 1 diags | pock 1 diags hash 213449e42fff2262
+scene 1 opt 2 prof 500 moves 1 diags | pock 0 diags hash e075a93e0e3fcdd9
+scene 1 opt 3 prof 1006 moves 1 diags | pock 2 diags hash 317f765fede78b75
+scene 2 opt 0 prof 180 moves 1 diags | pock 0 diags hash 3c2fd7f812f0dfda
+scene 2 opt 1 prof 360 moves 1 diags | pock 0 diags hash 3930325942ea2254
+scene 2 opt 2 prof 420 moves 1 diags | pock 0 diags hash 5be411cec8b35472
+scene 2 opt 3 prof 840 moves 1 diags | pock 0 diags hash adc2642875717b20
+scene 3 opt 0 prof 260 moves 1 diags | pock 0 diags hash 3138f1cc1e560d95
+scene 3 opt 1 prof 526 moves 1 diags | pock 0 diags hash 8a15051606eb2b96
+scene 3 opt 2 prof 500 moves 1 diags | pock 0 diags hash a3ea710085cdbb4d
+scene 3 opt 3 prof 1006 moves 1 diags | pock 0 diags hash c6f4f7368e85c3a2
