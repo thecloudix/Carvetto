@@ -69,6 +69,11 @@ G0 X2.7559 Y0.3937 Z0.1969
 G1 Z-0.0039 F15.7
 G1 X3.1496 F59.1
 G0 Z0.1969
+M5
+G0 Z0.1969
+(Diamond drag tool 3 done: unlock the spindle before it starts again)
+M0
+G0 Z0.1969
 G0 Z0.1969
 M5
 G0 X0.0000 Y0.0000

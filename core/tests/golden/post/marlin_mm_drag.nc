@@ -66,6 +66,11 @@ G0 X70.000 Y10.000 Z5.000
 G1 Z-0.100 F400
 G1 X80.000 F1500
 G0 Z5.000
+M5
+G0 Z5.000
+; Diamond drag tool 3 done: unlock the spindle before it starts again
+M0 Unlock spindle then resume
+G0 Z5.000
 G0 Z5.000
 M5
 G0 X0.000 Y0.000

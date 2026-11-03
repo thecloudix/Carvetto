@@ -197,7 +197,7 @@ TEST_CASE("T-0154: a spindle-off toolpath skips the spindle start and gets the p
           "G0 X1.000 Y1.000 Z5.000\nG1 Z-0.100 F400\nG1 X2.000 F1500\nG1 Z5.000 F400\n"
           "(segment B)\nM5\n(spindle off)\nM0\n"
           "G0 X1.000 Y1.000 Z5.000\nG1 Z-0.100 F400\nG1 X2.000 F1500\nG1 Z5.000 F400\n"
-          "M5\nM30\n");
+          "(unlock 3)\nM0\nM5\nM30\n");
 
     // After a spinning toolpath: TOOLCHANGE (no SPINDLE_ON), then the pause; back to the spinning
     // tool: TOOLCHANGE + SPINDLE_ON with its speed.
@@ -240,9 +240,12 @@ TEST_CASE("T-0154: the unlock pause comes once per drag section, before the spin
     const std::string b =
         runOk(pp, {cut("M1", spinning(1)), drag("A"), cut("M2", spinning(2)), drag("B"), cut("M3", spinning(1))});
     CHECK(count(b, "(unlock 3)") == 2);
-    // A job ending with drag toolpaths never restarts the spindle: no unlock pause; neither does
-    // a job without spindle-off toolpaths.
-    CHECK(runOk(pp, {cut("M1", spinning(1)), drag("A"), drag("B")}).find("(unlock") == std::string::npos);
+    // A job ending with drag toolpaths gets it before the footer (the next program could start
+    // a locked spindle); a job without spindle-off toolpaths gets none.
+    const std::string end = runOk(pp, {cut("M1", spinning(1)), drag("A"), drag("B")});
+    CHECK(count(end, "(unlock 3)") == 1);
+    CHECK(end.size() >= 21);
+    CHECK(end.substr(end.size() - 21) == "(unlock 3)\nM0\nM5\nM30\n");
     CHECK(runOk(pp, {cut("M1", spinning(1)), cut("M2", spinning(2))}).find("(unlock") == std::string::npos);
 
     // A post without the block refuses jobs that restart the spindle after a drag section ...
@@ -250,8 +253,11 @@ TEST_CASE("T-0154: the unlock pause comes once per drag section, before the spin
     const std::string msg = runError(noUnlock, {drag("Drag"), cut("Mill", spinning(1))});
     CHECK_THAT(msg, ContainsSubstring("toolpath 'Mill' starts the spindle after the spindle-off toolpath 'Drag'"));
     CHECK_THAT(msg, ContainsSubstring("no SPINDLE_UNLOCK_PAUSE block"));
-    // ... but not jobs that end with the drag section.
-    CHECK(runError(noUnlock, {cut("Mill", spinning(1)), drag("Drag")}).empty());
+    // ... and jobs that end with a drag section.
+    const std::string endMsg = runError(noUnlock, {cut("Mill", spinning(1)), drag("Drag")});
+    CHECK_THAT(endMsg, ContainsSubstring("the job ends with the spindle-off toolpath 'Drag'"));
+    CHECK_THAT(endMsg, ContainsSubstring("no SPINDLE_UNLOCK_PAUSE block"));
+    CHECK(runError(noUnlock, {cut("Mill", spinning(1))}).empty());
 
     // The unlock pause is still part of the spindle-off section: no spindle word in it.
     for (const char* body : {"\"M3 S1000\"", "\"M5 S[S]\""}) {
@@ -278,7 +284,7 @@ TEST_CASE("T-0154: a post without SPINDLE_OFF_PAUSE refuses spindle-off toolpath
 
 TEST_CASE("T-0154: posts cannot start the spindle of a spindle-off toolpath", "[post][spindle-off]") {
     // A spindle start sharing its line with another code is not left out but refused.
-    const std::string shared = kSmall + kPause;
+    const std::string shared = kSmall + kPause + kUnlock;
     std::string header = shared;
     header.replace(header.find("\"M3[S]\"\nend\nbegin TOOLCHANGE"), 7, "\"T1 M3[S]\"");
     CHECK_THAT(runError(parseText(header), {drag()}),
@@ -290,21 +296,21 @@ TEST_CASE("T-0154: posts cannot start the spindle of a spindle-off toolpath", "[
     for (const char* line : {"\"M3[S]\"", "\"M03 S[S]\"", "\"[S] M4\"", "\"M3[S] (start)\"", "\"S[S]\""}) {
         INFO(line);
         std::string post = std::string("VAR SPINDLE_SPEED = [S|A||1.0]\n") +
-                           "begin HEADER\n" + line + "\nend\n" + kMoves + kPause;
+                           "begin HEADER\n" + line + "\nend\n" + kMoves + kPause + kUnlock;
         CHECK(runError(parseText(post), {drag()}).empty());
     }
 
     // [S] in any other block of a spindle-off toolpath is refused.
-    const std::string inPause = kSmall + "begin SPINDLE_OFF_PAUSE\n\"M5 S[S]\"\n\"M0\"\nend\n";
+    const std::string inPause = kSmall + kUnlock + "begin SPINDLE_OFF_PAUSE\n\"M5 S[S]\"\n\"M0\"\nend\n";
     CHECK_THAT(runError(parseText(inPause), {drag()}), ContainsSubstring("the post writes [S] here"));
-    std::string inMove = kPause + "begin HEADER\n\"G21\"\nend\nbegin RAPID_MOVE\n\"G0[X][Y][Z]\"\nend\n"
+    std::string inMove = kPause + kUnlock + "begin HEADER\n\"G21\"\nend\nbegin RAPID_MOVE\n\"G0[X][Y][Z]\"\nend\n"
                                   "begin FEED_MOVE\n\"G1[X][Y][Z] S[S]\"\nend\n";
     CHECK_THAT(runError(parseText(inMove), {drag()}), ContainsSubstring("in FEED_MOVE of toolpath 'Drag'"));
 
     // Literal spindle starts and speeds (no [S] tag) are refused as well: the second guard.
     for (const char* literal : {"M3", "M03", "m4", "M3.0", "S12000", "G0 Z5 M4", "M3(start)"}) {
         INFO(literal);
-        std::string post = "begin NEW_SEGMENT\n\"" + std::string(literal) + "\"\nend\n" + kMoves + kPause;
+        std::string post = "begin NEW_SEGMENT\n\"" + std::string(literal) + "\"\nend\n" + kMoves + kPause + kUnlock;
         const std::string msg = runError(parseText(post), {drag("A"), drag("B")});
         CHECK_THAT(msg, ContainsSubstring("runs with the spindle off"));
         CHECK_THAT(msg, ContainsSubstring("but the post writes"));
@@ -313,7 +319,7 @@ TEST_CASE("T-0154: posts cannot start the spindle of a spindle-off toolpath", "[
     for (const char* harmless : {"M0 Drag tool 3 spindle off then resume", "(M3 S1000)", "; M3 S1000", "M30", "M5",
                                  "G43 H3", "M6 T3"}) {
         INFO(harmless);
-        std::string post = "begin NEW_SEGMENT\n\"" + std::string(harmless) + "\"\nend\n" + kMoves + kPause;
+        std::string post = "begin NEW_SEGMENT\n\"" + std::string(harmless) + "\"\nend\n" + kMoves + kPause + kUnlock;
         CHECK(runError(parseText(post), {drag("A"), drag("B")}).empty());
     }
 }

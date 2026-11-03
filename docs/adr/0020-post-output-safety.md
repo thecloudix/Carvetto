@@ -148,14 +148,17 @@ through, so no post, block or tag can bypass them.
      - **Unlock pause** (owner decision 2026-11-03). Before that TOOLCHANGE, i.e. after the last
        spindle-off toolpath of a drag section and before a spinning toolpath can start the
        spindle, it writes the post's `SPINDLE_UNLOCK_PAUSE` block: once per drag section, never
-       between consecutive spindle-off toolpaths, and not at all when the job ends with the drag
-       section (the program never restarts the spindle; the footer stops it). The block is
+       between consecutive spindle-off toolpaths. A job that ends with a drag section gets it
+       before FOOTER (director decision 2026-11-03: the next program could otherwise start a
+       spindle that is still locked). The block is
        written in the drag toolpath's context (`[T]`, `[TOOLNAME]` are the drag tool's) and is
        under the same spindle-word guards. The shipped posts write `M5`, safe Z, a comment "Diamond
        drag tool N done: unlock the spindle before it starts again", `M0` (Marlin: `M0 Unlock
-       spindle then resume`) and safe Z. A post without the block refuses a job in which a
-       spinning toolpath follows a spindle-off one (`toolpath 'Mill' starts the spindle after the
-       spindle-off toolpath 'Drag', but the post has no SPINDLE_UNLOCK_PAUSE block …`).
+       spindle then resume`) and safe Z. A post without the block refuses every job with a
+       spindle-off toolpath that needs it: a spinning toolpath after a spindle-off one
+       (`toolpath 'Mill' starts the spindle after the spindle-off toolpath 'Drag', but the post
+       has no SPINDLE_UNLOCK_PAUSE block …`) or a job ending with one (`the job ends with the
+       spindle-off toolpath 'Drag', but …`).
      - Profile and Pocket refuse diamond-drag tools (`InvalidTool`, "… is a diamond drag tool,
        which must not turn; use Quick Engrave for diamond-drag tools"; Pocket skips just that
        tool), so a drag tool can no longer run in a spinning toolpath of those operations.

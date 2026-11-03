@@ -103,7 +103,8 @@ vectors at the given depth exactly like the other tools (Outline and Fill alike;
 width is its diameter), and `engraveToolpath` marks the toolpath's tool snapshot `spindleOff`
 with spindle speed 0, whatever the cutting data's speed. The post then writes no spindle start
 for it and writes the post's `SPINDLE_OFF_PAUSE` (`M5`, safe Z, a message, `M0`, safe Z) before
-it, and `SPINDLE_UNLOCK_PAUSE` after the drag section when a spinning toolpath follows (ADR-0020).
+it, and `SPINDLE_UNLOCK_PAUSE` after the drag section, before a spinning toolpath or the program
+end (ADR-0020).
 Quick Engrave is the only operation that sets the flag; the record format allows it on engrave
 records only (§7). Profile and Pocket refuse diamond-drag tools (owner decision 2026-11-03), so
 Fill hands Pocket the drag tool as an end mill of the same diameter (identical moves); the

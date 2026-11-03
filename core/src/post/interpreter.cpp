@@ -299,6 +299,13 @@ class Interpreter {
         // After the last spindle-off toolpath of a drag section, before a spinning toolpath can
         // start the spindle, the operator unlocks it (owner decision 2026-11-03): SPINDLE_UNLOCK_PAUSE.
         if (!has("SPINDLE_UNLOCK_PAUSE")) {
+            if (!active.empty() && active.back()->tool.spindleOff) {
+                // The next program could start a spindle that is still locked (director 2026-11-03).
+                return Error{0, "cannot write G-code: the job ends with the spindle-off toolpath " +
+                                    quoted(active.back()->name) +
+                                    ", but the post has no SPINDLE_UNLOCK_PAUSE block to pause for the operator "
+                                    "to unlock the spindle before the program ends"};
+            }
             for (std::size_t i = 1; i < active.size(); ++i) {
                 if (active[i - 1]->tool.spindleOff && !active[i]->tool.spindleOff) {
                     return Error{0, "cannot write G-code: toolpath " + quoted(active[i]->name) +
@@ -381,6 +388,15 @@ class Interpreter {
             moveIndex_ = 0;
         }
 
+        if (tool_.spindleOff && !active.empty()) {
+            // A job ending with a drag section: unlock before the program ends (T-0154), still in
+            // the last spindle-off toolpath's context.
+            setStationary();
+            emit("SPINDLE_UNLOCK_PAUSE");
+            if (failure_) {
+                return *failure_;
+            }
+        }
         inFooter_ = true;
         setStationary();
         emit("FOOTER");

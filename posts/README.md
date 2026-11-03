@@ -111,9 +111,8 @@ one, the test fails.
     (ADR-0020, ADR-0024). After the last drag toolpath of a drag section, before a toolpath that
     starts the spindle again, the post writes its `SPINDLE_UNLOCK_PAUSE` block: `M5`, safe Z, a
     comment asking the operator to unlock the spindle, `M0` (Marlin: `M0 Unlock spindle then
-    resume`), safe Z; once per drag section, not between drag toolpaths, and not when the job ends
-    with drag toolpaths. A post without it refuses jobs that restart the spindle after drag
-    toolpaths. Profile and Pocket refuse diamond-drag tools. In a custom post that offers
+    resume`), safe Z; once per drag section, not between drag toolpaths, and also before the
+    program end when the job ends with drag toolpaths. A post without it refuses such jobs. Profile and Pocket refuse diamond-drag tools. In a custom post that offers
     `SPINDLE_OFF_PAUSE`, start the spindle in HEADER, TOOLCHANGE and NEW_SEGMENT on a line of its
     own (`M3[S]`).
 
@@ -121,7 +120,7 @@ Hand-review result: all eight goldens pass points 1–8; points 9 and 10 are enf
 interpreter and tested on every post. All eight drag goldens (T-0154) were reviewed against
 points 1–8 and 11 (two pauses in a row where a tool change leads into a drag toolpath: the tool
 change stop, then the spindle-off pause; and the unlock pause, then the tool change stop, where
-the end mill follows the drag toolpaths) and are checked by the same test with the drag rule.
+the end mill follows the drag toolpaths and before the program end) and are checked by the same test with the drag rule.
 
 ## Dialect choices per controller
 
