@@ -92,6 +92,9 @@ add_library(carvetto_core STATIC
   src/geometry/contour.cpp
   src/geometry/contour_ops.cpp
   src/geometry/intersect.cpp
+  src/geometry/robust_predicates.cpp
+  src/geometry/delaunay.cpp
+  src/geometry/medial_axis.cpp
   src/toolpath/move.cpp
   src/toolpath/toolpath.cpp
   src/toolpath/pass_plan.cpp
