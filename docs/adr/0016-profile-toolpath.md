@@ -124,7 +124,8 @@ choices. Behaviour descriptions come from `docs/reference/` only.
       outside the allowed range, and the tabs are then fitted in order along the path as before
       (T-0135;
       before, the tab went to exactly the gap and the re-check decided by rounding, about half the
-      time either way, and a kept one could never be matched past the roughing start);
+      time either way, and a kept one could never be matched past the roughing start; that
+      placement is still computed as one candidate, see the separate last pass below);
     - drops a tab whose footprint would come closer than a tool radius to the previous one, or
       to the first across the start, so neighbouring tabs never merge and every pass still
       reaches its level between them;
@@ -160,10 +161,18 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     refused tab may have kept out a neighbour when the tabs were fitted (they overlapped), the
     finishing tabs dropped by fitting are then added back where they clear every tab still kept (the
     kept ones stay where they are), and when one comes back that cut is matched again (T-0135,
-    "add-back"). A tab added back can itself fail the tab check below where the plain result would
-    have held, so whenever add-back changed anything, matching and the tab check are run once more
-    without it, and the add-back result is kept only if it ends with more kept tabs (a tie keeps the
-    plain result): add-back never leaves fewer tabs than matching without it. Finally every tab group (a tab and its
+    "add-back"). Neither change is better in every case: a tab added back can fail the tab check
+    where the plain result would have held, and a tab moved with the margin can fail matching where
+    T-0127, which put it at exactly the gap and let rounding decide whether it clashed, matched it.
+    So with a separate last pass three results are computed, each placed, matched and checked: the
+    tabs placed exactly as T-0127 placed them (no slack, no margin) and matched without add-back;
+    placed with slack and margin, without add-back; and the same with add-back. The one ending with
+    the most kept tabs is used, a tie going to the T-0127 placement, then to the one without
+    add-back. A scene thus never keeps fewer tabs than T-0127's placement or than either change
+    alone; where they tie the output is T-0127's, rounding included (the slack only decides when it
+    gains a tab). The extra runs happen only when they differ: the T-0127 placement only when some
+    cut's tabs are placed differently, the run without add-back only when add-back changed
+    something. Finally every tab group (a tab and its
     roughing cover) is checked against all cuts of both passes (and without a separate last pass
     the only pass against itself): if any cut position outside the kept raised stretches comes
     closer than a tool radius (less 1 µm) to the tab's cross-sections — the opposite wall of a

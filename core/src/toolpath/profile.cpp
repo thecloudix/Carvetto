@@ -252,7 +252,7 @@ class ProfileBuilder {
     std::vector<Cut> trim(std::vector<Cut> cuts);
     void chooseStarts(std::vector<Cut>& cuts);
     std::vector<std::size_t> order(const std::vector<Cut>& cuts) const;
-    void placeTabsOn(std::vector<Cut>& primary, const std::vector<Cut>& otherPass);
+    void placeTabsOn(std::vector<Cut>& primary, const std::vector<Cut>& otherPass, bool asT0127 = false);
     bool matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut>& rough, bool addBack);
     void dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& secondary);
     void reportLoosePieces(const std::vector<Cut>& primary, const std::vector<Cut>& secondary);
@@ -749,7 +749,7 @@ std::vector<double> ProfileBuilder::otherStarts(const Cut& c, const std::vector<
     return out;
 }
 
-void ProfileBuilder::placeTabsOn(std::vector<Cut>& primary, const std::vector<Cut>& otherPass) {
+void ProfileBuilder::placeTabsOn(std::vector<Cut>& primary, const std::vector<Cut>& otherPass, bool asT0127) {
     if (!p_.tabs.enabled) {
         return;
     }
@@ -758,9 +758,11 @@ void ProfileBuilder::placeTabsOn(std::vector<Cut>& primary, const std::vector<Cu
         // At least a tool radius cut to full depth between neighbouring tabs, so they stay apart. A
         // tab moved off the other pass's start keeps two tolerances + 0.01 mm more from it: its
         // roughing cover (its ends projected and widened by the tolerance) must clear that start.
-        const double moveMargin = otherPass.empty() ? 0.0 : 2.0 * tol_.distance + 0.01;
+        // (`asT0127`: exactly as T-0127 placed them, a moved tab at exactly the gap and no slack.)
+        const double moveMargin = otherPass.empty() || asT0127 ? 0.0 : 2.0 * tol_.distance + 0.01;
         c.tabKeepClear = otherStarts(c, otherPass);
-        TabPlacement tp = placeTabs(c.walk, raised, p_.tabs, c.tabKeepClear, radius_, moveMargin);
+        TabPlacement tp = placeTabs(c.walk, raised, p_.tabs, c.tabKeepClear, radius_, moveMargin,
+                                    asT0127 ? 0.0 : kKeepClearSlack);
         c.tabs.clear();
         for (double u : tp.centres) {
             c.tabs.push_back({u - 0.5 * raised, u + 0.5 * raised});
@@ -2725,44 +2727,72 @@ ProfileResult ProfileBuilder::run() {
     planLeadIns(rough);
     planLeadIns(finish);
     if (separate) {
-        placeTabsOn(finish, rough);
-        // Matching with add-back (a refused tab gives way to tabs fitting dropped beside it), then
-        // the tab check. When add-back changed anything, both are run again without it, and its
-        // result is kept only if it ends with more kept tabs (a tie keeps the plain result), so
-        // add-back never leaves fewer tabs than matching without it.
+        // Three candidates, each placed, matched and checked: (A) the tabs placed exactly as
+        // T-0127 placed them (a tab moved off the other pass's start goes to exactly the gap, and
+        // rounding decides whether it clashes), matched without add-back; (C) placed with the
+        // slack and the move margin, matched without add-back; (B) as C with add-back (a refused
+        // tab gives way to tabs fitting dropped beside it). The one that ends with the most kept
+        // tabs wins, a tie going to A, then C; so no scene keeps fewer tabs than T-0127's way, nor
+        // than either change alone. A and B are only run when they differ (A: some cut's tabs are
+        // placed differently; B: add-back changed something).
         struct TabState {
             std::vector<Cut> finish, rough;
-            std::map<std::size_t, std::size_t> dropped, unmatched, severed, empty;
+            std::map<std::size_t, std::size_t> requested, dropped, unmatched, severed, empty, onCorner;
             std::vector<std::vector<std::vector<std::pair<std::size_t, TabSpan>>>> links;
         };
         auto save = [&]() {
-            return TabState{finish, rough, tabsDropped_, tabsUnmatched_, tabsSevered_, tabsEmpty_, tabLinks_};
+            return TabState{finish,         rough,          tabsRequested_, tabsDropped_, tabsUnmatched_,
+                            tabsSevered_,   tabsEmpty_,     tabsOnCorner_,  tabLinks_};
         };
-        auto restore = [&](TabState st) {
-            finish = std::move(st.finish);
-            rough = std::move(st.rough);
-            tabsDropped_ = std::move(st.dropped);
-            tabsUnmatched_ = std::move(st.unmatched);
-            tabsSevered_ = std::move(st.severed);
-            tabsEmpty_ = std::move(st.empty);
-            tabLinks_ = std::move(st.links);
+        auto restore = [&](const TabState& st) {
+            finish = st.finish;
+            rough = st.rough;
+            tabsRequested_ = st.requested;
+            tabsDropped_ = st.dropped;
+            tabsUnmatched_ = st.unmatched;
+            tabsSevered_ = st.severed;
+            tabsEmpty_ = st.empty;
+            tabsOnCorner_ = st.onCorner;
+            tabLinks_ = st.links;
         };
         auto keptTabs = [&]() {
             std::size_t n = 0;
             for (const Cut& c : finish) n += c.tabs.size();
             return n;
         };
-        TabState placed = save();
+        const TabState start = save();
+        placeTabsOn(finish, rough, true);
+        const TabState placedA = save();
+        restore(start);
+        placeTabsOn(finish, rough, false);
+        bool samePlacement = true;
+        for (std::size_t k = 0; k < finish.size() && samePlacement; ++k) {
+            samePlacement = finish[k].tabs == placedA.finish[k].tabs;
+        }
+        const TabState placedC = save();
         const bool addedBack = matchRoughingTabs(finish, rough, true);
         dropSweptTabs(finish, rough);
-        if (addedBack) {
-            const std::size_t withAddBack = keptTabs();
-            TabState result = save();
-            restore(std::move(placed));
+        TabState best = save();
+        std::size_t bestKept = keptTabs();  // B for now
+        if (addedBack) {  // C
+            restore(placedC);
             matchRoughingTabs(finish, rough, false);
             dropSweptTabs(finish, rough);
-            if (withAddBack > keptTabs()) restore(std::move(result));
+            if (keptTabs() >= bestKept) {
+                bestKept = keptTabs();
+                best = save();
+            }
         }
+        if (!samePlacement) {  // A
+            restore(placedA);
+            matchRoughingTabs(finish, rough, false);
+            dropSweptTabs(finish, rough);
+            if (keptTabs() >= bestKept) {
+                bestKept = keptTabs();
+                best = save();
+            }
+        }
+        restore(best);
         reportLoosePieces(finish, rough);
     } else {
         placeTabsOn(rough, {});
