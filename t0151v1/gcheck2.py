@@ -8,7 +8,8 @@
 # two lines before it) and ends at the next tool change stop (M0 not announced so, or M6).
 # Inside a drag section no M3/M4 and no S word may appear: the spindle restarts only via a tool
 # change. After drag cuts the spindle may start again only behind an unlock pause: an M0 announced
-# with "unlock" (on its line or the two before), which also ends the drag section.
+# with "unlock" (on its line or the two before), which also ends the drag section; a program
+# that ends after drag cuts needs that unlock pause before its end too.
 # Without drag=1 every cut needs the spindle on, as before.
 import re, sys
 def check(path, post, bottom, safe, plunge=-1, drag=False):
@@ -24,10 +25,13 @@ def check(path, post, bottom, safe, plunge=-1, drag=False):
         if any(ord(ch) < 32 or ord(ch) > 126 for ch in s): E(n, "non-printable")
         s = re.sub(r"\(.*?\)", "", s); s = s.split(';')[0].strip()
         if not s: continue
-        codes = re.findall(r"([A-Z])(-?\d+(?:\.\d+)?)", s)
+        # Read words as a controller does (T-0154): spaces/tabs ignored, any case, signed values
+        # and a leading '.' ("M 3", "m03", "S.5", "M+3").
+        codes = re.findall(r"([A-Z])([+-]?(?:\d+\.?\d*|\.\d+))", re.sub(r"[ \t]", "", s).upper())
         if codes and codes[0][0] == 'N': codes = codes[1:]
         if any(c[0] == 'M' and c[1] == '0' for c in codes):
             codes = codes[:[i for i, c in enumerate(codes) if c[0] == 'M' and c[1] == '0'][0] + 1]
+        codes = [(kk, v.lstrip('+')) for kk, v in codes]
         gs = [v for kk, v in codes if kk == 'G']; ms = [int(float(v)) for kk, v in codes if kk == 'M']
         w = {kk: float(v) for kk, v in codes if kk in 'XYZFSPIJR'}
         if 'S' in w:
@@ -87,6 +91,7 @@ def check(path, post, bottom, safe, plunge=-1, drag=False):
         x, y, z = nx, ny, nz
     if cuts == 0: E('end', "no cuts")
     if drag and dragcuts == 0: E('end', "drag=1 but no spindle-off (drag) cuts")
+    if unlockdue: E('end', "program ends after a drag toolpath without an unlock pause")
     if spindle: E('end', "program ends with spindle on")
     if z is None or z < safe - eps: E('end', f"program does not end at safe Z (z={z})")
     return errs
