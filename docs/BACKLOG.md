@@ -545,7 +545,7 @@ Acceptance criteria:
   2. Restore exact tab-count assertions in the T-0135 test for m1_402002_27 once the start is stable.
 
 
-### T-0159 GCC 15 / Ubuntu 26.04 Release test failures (CI runner change)   [status: ready]
+### T-0159 GCC 15 / Ubuntu 26.04 Release test failures (CI runner change)   [status: done (2026-11-03, #50)]
 Phase: 1   Module: core (tests)   Depends on: —   ADR: —
 Goal: On 2026-11-03, GitHub's `ubuntu-latest` moved from 24.04 (GCC 13.3) to 26.04 (GCC 15.2). The Release linux-app job then failed on main (run 41704973044, same code as the green 4a5d1c8) and on PR #47 (run 41706009986, job 126161390264). The failures: "T-0147 AC1: the repro rectangle 1 x 0.5 mm at 1e8 mm keeps its area" (sanity check `naiveWrong >= 10` got 6: the naive shoelace comparison is compiler-dependent), "T-0135 round 2: exact loose pieces; add-back and fitting never cost a holding tab", "AC5 generative: span count follows the rule when nothing is consumed", and once "AC4: 10 000 inserts, undo all and redo all complete under one second" (timing). Linux jobs are pinned to ubuntu-24.04 meanwhile (task/T-0159-pin-runner).
 Acceptance criteria:
