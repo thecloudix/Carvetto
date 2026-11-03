@@ -570,7 +570,7 @@ Acceptance criteria:
   1. Outline and Fill strategies with stepover; multi-pass; native record + CLI; goldens; safety rules as T-0150.
   2. Fill reuses the Pocket raster/offset machinery (T-0121/T-0123) — no duplicate fill code; gouge-free by the pocket oracle.
 
-### T-0152 Medial axis of 2D regions (geometry core for V-carving)   [status: in-progress]
+### T-0152 Medial axis of 2D regions (geometry core for V-carving)   [status: done (2026-11-03, #39)]
 Phase: 1 (Batch C)   Module: core/geometry   Depends on: —   ADR: new (algorithm choice; clean-room — no proprietary code)
 Goal: Compute the medial axis (inner Voronoi skeleton) of a closed region with holes made of lines, arcs and Beziers, with the inscribed-circle radius along it, within the chordal tolerance. This is the basis for V-carve depth = radius / tan(half angle).
 Acceptance criteria:
@@ -578,8 +578,7 @@ Acceptance criteria:
   2. Robust on degenerate input (collinear, near-touching, tiny features, large coordinates), no crashes or hangs (fuzz); ≤ 2.5× per doubling in CPU time up to 50k boundary segments (text-heavy jobs).
   3. ADR records the algorithm (e.g. segment Voronoi via a library already allowed by the dependency policy, or an own implementation) and the dependency/licence decision; any new dependency goes to the owner first.
 
-### T-0153 V-Carve toolpath   [status: blocked]
-(After T-0152 merges.)
+### T-0153 V-Carve toolpath   [status: ready]
 Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0152, T-0123, T-0132   ADR: new
 Goal: V-carve closed regions with a V-bit (behaviour per feature-inventory "V-Carve Toolpath"): depth from the medial axis radius and bit angle, start depth, optional flat depth (flat-bottom areas cleared with clearance tools, Offset or Raster strategy reusing Pocket), corner sharpening, ordering, safe links; native record + CLI.
 Acceptance criteria:
