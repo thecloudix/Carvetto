@@ -71,8 +71,15 @@ struct EngraveResult {
 /// (owner decision 2026-11-03).
 bool engraveToolAllowed(tooling::ToolType type);
 
-/// The Z level of every pass: `passes` equal steps down to −`depth`, the last exactly −`depth`.
-/// Empty when the depth is not > 0 or `passes` is not in 1..1000.
+/// Smallest depth of one pass, mm (`depth / passes`). Thinner passes are far below any machine's
+/// resolution (and merged levels while PassPlan's rounding guard was an absolute 1e-9 mm, before
+/// T-0145), so `engraveLevels` returns nothing and `engraveToolpath` refuses with
+/// `InvalidParameters` (ADR-0024 §1).
+inline constexpr double kEngraveMinPassDepth = 1e-6;
+
+/// The Z level of every pass: exactly `passes` equal steps down to −`depth`, the last exactly
+/// −`depth`. Empty when the depth is not > 0, `passes` is not in 1..1000 or `depth / passes` is
+/// below `kEngraveMinPassDepth`.
 std::vector<double> engraveLevels(double depth, int passes);
 
 /// Computes a quick engrave toolpath.

@@ -103,9 +103,11 @@ double Polyline::signedArea() const {
     if (!closed || points.size() < 3) {
         return 0.0;
     }
+    // About the first vertex, so a small polygon far from the origin does not cancel (T-0147).
+    const Vec2 o = points.front();
     double sum = 0.0;
     for (std::size_t i = 0; i < points.size(); ++i) {
-        sum += segmentStart(i).cross(segmentEnd(i));
+        sum += (segmentStart(i) - o).cross(segmentEnd(i) - o);
     }
     return 0.5 * sum;
 }

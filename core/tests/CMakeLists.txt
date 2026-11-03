@@ -15,6 +15,7 @@ add_executable(carvetto_tests
   geometry/polyline_test.cpp
   geometry/contour_test.cpp
   geometry/contour_ops_test.cpp
+  geometry/signed_area_far_test.cpp
   geometry/winding_degeneracy_test.cpp
   geometry/intersect_test.cpp
   geometry/intersect_residuals_test.cpp
@@ -23,6 +24,9 @@ add_executable(carvetto_tests
   geometry/intersect_cancellation_test.cpp
   geometry/intersect_slack_test.cpp
   geometry/fill_rule_test.cpp
+  geometry/medial_axis_test.cpp
+  geometry/medial_axis_robustness_test.cpp
+  geometry/delaunay_test.cpp
   toolpath/move_test.cpp
   toolpath/toolpath_test.cpp
   toolpath/pass_plan_test.cpp
