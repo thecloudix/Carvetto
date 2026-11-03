@@ -471,7 +471,7 @@ Acceptance criteria:
   1. (a) ≤ 2.5× per doubling up to 20k shapes, output identical below the batching threshold and within a few grid units above it; (b) no leftover rings in the repro and a generative check; Pocket/Profile safety unchanged.
   2. (c) Remaining quadratic offset cases from the T-0141 verifier (harness t0141v1/perf.cpp): an outer containing a row of n holes (1.31/6.10 s at 10k/20k), a row whose outsets merge (1.44/5.99 s), the nested-corner spiral (~4.5× per doubling) — ≤ 2.5× per doubling or documented limit. (d) Profile: tol.distance has no lower bound and Bezier offsets use min(chordal, distance/2), so {distance 1e-8, chordal 1e-4} runs > 120 s and degrades output (bez.cpp) — add a lower bound on distance or a floor on the offset chordal (Profile and Pocket consistently), and fix the T-0141 test that accepts {1e-9, …}.
 
-### T-0143 Point-in-contour degeneracy and drill pass cap (T-0150 verifier)   [status: in-progress]
+### T-0143 Point-in-contour degeneracy and drill pass cap (T-0150 verifier)   [status: done (2026-11-03, #40)]
 Phase: 1   Module: core/geometry, core/toolpath   Depends on: T-0150   ADR: 0005/0009, 0022
 Goal: (a) geometry::locatePoint/windingNumber return Inside (winding −1) at the centre of a ring drawn as one loop (outer arc, bridge, inner arc reversed, bridge back) when the bridge segments lie on the +X test ray and arc endpoints sit on it, so Drill drills the centre of such a ring although ADR-0022 says rings are not drilled (repro: harness t0150v1/ring.cpp — outer ArcSpan{{0,0},10,0,2π,CCW}, LineSpan (10,0)→(5,0), ArcSpan{{0,0},5,0,2π,CW}, LineSpan (5,0)→(10,0)). Fix the ray-crossing degeneracy for coincident bridge segments and endpoints on the ray. (b) Drill refuses exactly 10,000 passes although the message/ADR say "more than 10000" (check uses ceil(cut/pass)+1 ≤ 10000).
 Acceptance criteria:
@@ -489,7 +489,7 @@ Goal: (a) Fill's diagnostic rewording replaces "pocket" anywhere, including insi
 Acceptance criteria:
   1. (a)–(c) fixed with tests; goldens unchanged.
 
-### T-0144 GCC 15 Release build: -Wmaybe-uninitialized false positive in document.cpp   [status: in-progress]
+### T-0144 GCC 15 Release build: -Wmaybe-uninitialized false positive in document.cpp   [status: merging — verified PASS 218d67d, PR #41]
 Phase: 1   Module: core/document   Depends on: —   ADR: —
 Goal: Every local Release build with GCC 15 (-O3 -Werror) fails on a -Wmaybe-uninitialized false positive in core/src/document/document.cpp (~283, Document::copyObjects; object.hpp ~131); every verifier works around it with -Wno-error=maybe-uninitialized. CI's compilers don't hit it, but a contributor on a current distro cannot build Release as documented.
 Acceptance criteria:
