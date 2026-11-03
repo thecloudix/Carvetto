@@ -692,7 +692,7 @@ TEST_CASE("T-0154: drag-section allowlist refuses everything not on it", "[post]
     for (const char* allowed :
          {"G0 X1.5 Y-2 Z+0.100 F400", "G1 X1", "G2 X1 Y1 I0.5 J0", "G3 X0 Y0 I-0.5 J0", "G4 P0.25", "G17 G20 G21",
           "G40 G49 G80", "G90 G91.1 G94", "G91", "G43 H3", "T3 M6", "M5", "M0", "M00", "M1", "M2", "M30", "M05",
-          "N10 G0 Z5", "/G0 Z5", "  G0  Z5  ", "G01 X1", "G091.10"}) {
+          "N10 G0 Z5", "  G0  Z5  ", "G01 X1", "G091.10", "M00005", "N99999", "X12345678.123456"}) {
         INFO(allowed);
         CHECK(runError(parseText(newSegment(allowed)), {drag("A"), drag("B")}).empty());
     }
@@ -727,4 +727,87 @@ TEST_CASE("T-0154: Marlin-style posts: M0 messages, one command per line, emerge
     // A paren-comment post may not write message text after M0.
     CHECK_THAT(runError(parseText(kMoves + "begin HEADER\n\"(h)\"\nend\n" + semiPause + kUnlock), {drag()}),
                ContainsSubstring("runs with the spindle off"));
+}
+
+TEST_CASE("T-0154 round 4: LINE_ENDING may only be LF, CR LF or CR", "[post][spindle-off][allowlist]") {
+    // A1-A1d: the line ending is written after every line.
+    for (const char* ending : {" M3 S12000[13][10]", "[10]M3[10]", "~[10]", "[10][133]", "[10][10]", "x"}) {
+        INFO(ending);
+        const auto parsed = PostProcessor::parse("LINE_ENDING = \"" + std::string(ending) + "\"\n" + kMoves);
+        REQUIRE_FALSE(parsed.ok());
+        CHECK_THAT(parsed.error().describe(), ContainsSubstring("LF, CR LF or CR"));
+    }
+    for (const char* ending : {"[10]", "[13][10]", "[13]"}) {
+        INFO(ending);
+        CHECK(PostProcessor::parse("LINE_ENDING = \"" + std::string(ending) + "\"\n" + kMoves).ok());
+    }
+}
+
+TEST_CASE("T-0154 round 4: M0 messages are template text without letter-digit words",
+          "[post][spindle-off][allowlist]") {
+    const std::string semiHeader = "begin HEADER\n\"; [TOOLPATH_NAME]\"\nend\n";
+    const std::string semiUnlock = "begin SPINDLE_UNLOCK_PAUSE\n\"M5\"\n\"M0 Unlock spindle then resume\"\nend\n";
+    const auto semiPost = [&](const std::string& pauseLine) {
+        return kMoves + semiHeader + "begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"" + pauseLine + "\"\nend\n" + semiUnlock;
+    };
+    // A2/A2b: a text tag in the message is refused whatever it renders.
+    for (const char* line : {"M0 [TOOLNAME]", "M0 Check [TOOLPATH_NAME]", "M0 [TP_FILENAME]"}) {
+        INFO(line);
+        CHECK_THAT(runError(parseText(semiPost(line)), {drag()}), ContainsSubstring("only [T] may be used there"));
+    }
+    // Letter-digit words and single letters (Marlin reads "M0 S1" as a timeout).
+    for (const char* line : {"M0 S1", "M0 P5", "M0 S 1", "M0 Drag 3mm", "M0 tool T3", "M0 x", "M0 M3", "M0 go;M3"}) {
+        INFO(line);
+        CHECK_THAT(runError(parseText(semiPost(line)), {drag()}), ContainsSubstring("runs with the spindle off"));
+    }
+    // Free words, digit words and [T] (renders digits) are fine; so is the shipped message.
+    for (const char* line : {"M0 Drag tool [T] spindle off then resume", "M0 Check: off, then resume", "M0 Go 3 times"}) {
+        INFO(line);
+        CHECK(runError(parseText(semiPost(line)), {drag()}).empty());
+    }
+    // A2c: on a paren post a text tag after M0 is live G-code under the allowlist.
+    std::vector<Toolpath> job{drag()};
+    job[0].tool.name = "M3 S18000";
+    CHECK_THAT(runError(parseText(kMoves + "begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"M0 [TOOLNAME]\"\nend\n" + kUnlock), job),
+               ContainsSubstring("runs with the spindle off"));
+    // N4: emergency-parser codes in template text are refused anywhere; in a value inside a
+    // comment they are harmless ("Drag 3mm 108").
+    CHECK_THAT(runError(parseText(semiPost("M0 resume with M108")), {drag()}), ContainsSubstring("emergency-parser"));
+    std::vector<Toolpath> named{drag()};
+    named[0].tool.name = "Drag 3mm 108 M112";
+    CHECK(runError(parseText(semiPost("M0 Drag tool [T] spindle off then resume")), named).empty());
+    // N5: on a ';' post a '(' in live code is refused (Marlin without PAREN_COMMENTS).
+    std::vector<Toolpath> paren{drag()};
+    paren[0].tool.name = "( S1000)";
+    const std::string a10 = semiPost("M0 Drag tool [T] spindle off then resume") +
+                            "begin PLUNGE_MOVE\n\"G1[Z][F] [TOOLNAME]\"\nend\n";
+    CHECK_THAT(runError(parseText(a10), paren), ContainsSubstring("parenthesis outside the ';' comment"));
+}
+
+TEST_CASE("T-0154 round 4: pause content is judged on the written lines; no block delete",
+          "[post][spindle-off][allowlist]") {
+    // A3: a VAR prefix that makes a line start with '/'.
+    const std::string slashN = "VAR LINE_NUMBER = [N|A|/N|1.0]\n" + kMoves +
+                               "begin SPINDLE_OFF_PAUSE\n\"[N] M5\"\n\"[N] M0\"\nend\n" +
+                               "begin SPINDLE_UNLOCK_PAUSE\n\"[N] M5\"\n\"[N] M0\"\nend\n";
+    CHECK_THAT(runError(parseText(slashN), {drag()}), ContainsSubstring("the character '/'"));
+    // A4/A4b: "M0[T]" writes M05 or M03.
+    for (const int tool : {5, 3}) {
+        INFO(tool);
+        std::vector<Toolpath> job{drag()};
+        job[0].tool.toolNumber = tool;
+        const std::string post = "VAR TOOL_NUMBER = [T|A||1.0]\n" + kMoves +
+                                 "begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"M0[T]\"\nend\n" + kUnlock;
+        CHECK_THAT(runError(parseText(post), job), ContainsSubstring("runs with the spindle off"));
+    }
+    // A5/A5b: digit caps.
+    for (const char* line : {"M000000005", "G00000091.1", "T123456", "N123456", "X123456789", "X1.1234567"}) {
+        INFO(line);
+        const std::string post = "begin NEW_SEGMENT\n\"" + std::string(line) + "\"\nend\n" + kMoves + kPause + kUnlock;
+        CHECK_THAT(runError(parseText(post), {drag("A"), drag("B")}), ContainsSubstring("too many digits"));
+    }
+    // A9: a format that pads coordinates past 8 integer digits.
+    const std::string padded = "VAR SAFE_Z = [SAFEZ|A| Z|20.3]\n" + kMoves +
+                               "begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"G0[SAFEZ]\"\n\"M0\"\nend\n" + kUnlock;
+    CHECK_THAT(runError(parseText(padded), {drag()}), ContainsSubstring("too many digits"));
 }

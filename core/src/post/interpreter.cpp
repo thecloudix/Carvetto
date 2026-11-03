@@ -149,6 +149,15 @@ std::string liveCode(std::string_view line, bool semicolonComments) {
 /// Why the parentheses of a line are not plain, unnested, closed comments ("" when they are):
 /// a `(` inside an open comment, a `)` without one, or a comment left open (T-0154).
 std::string parenProblem(std::string_view line, bool semicolonComments) {
+    if (semicolonComments) {
+        // ';'-style posts (Marlin): '(' is not a comment there (without PAREN_COMMENTS), so no
+        // parenthesis may appear before the ';' comment.
+        const std::string_view live = line.substr(0, line.find(';'));
+        if (live.find_first_of("()") != std::string_view::npos) {
+            return "a parenthesis outside the ';' comment (this post's comments start with ';')";
+        }
+        return {};
+    }
     bool open = false;
     for (const char c : line) {
         if (open) {
@@ -345,9 +354,20 @@ std::vector<GWord> blockWords(const PostBlock& block, bool semicolonComments, bo
 /// parameters); no M or S followed by a tag (`M[T]`); plain, unnested, closed comments; and no
 /// M3/M4/S-number word anywhere in the template text, comments included (it is the post author's
 /// fixed text and has no reason to mention them there). Tags count as spaces.
+bool hasEmergencyCode(std::string_view text);
+std::string messageTemplateProblem(std::string_view line);
+
 std::string templateProblem(std::string_view line, bool semicolonComments) {
     if (std::string bad = nonAsciiProblem(line); !bad.empty()) {
         return bad;
+    }
+    if (hasEmergencyCode(line)) {
+        return "a Marlin emergency-parser code (M108, M112, M410, M876)";
+    }
+    if (semicolonComments) {
+        if (std::string bad = messageTemplateProblem(line); !bad.empty()) {
+            return bad;
+        }
     }
     if (line.find('#') != std::string_view::npos) {
         return "a '#' (parameters are not allowed here)";
@@ -425,6 +445,19 @@ bool isPlainNumber(std::string_view v, bool sign) {
 /// Why one word of drag-section live G-code is not on the allowlist ("" when it is).
 std::string wordProblem(char letter, std::string_view value) {
     const std::string word = std::string(1, letter) + std::string(value);
+    // Digit caps (leading zeros included): codes and counters at most 5 digits; numbers at most 8
+    // integer and 6 decimal digits (controllers truncate or round longer ones).
+    const std::size_t dot = value.find('.');
+    std::string_view whole = value.substr(0, dot);
+    if (!whole.empty() && (whole.front() == '+' || whole.front() == '-')) {
+        whole.remove_prefix(1);
+    }
+    const std::size_t decimals = dot == std::string_view::npos ? 0 : value.size() - dot - 1;
+    const bool number = letter == 'X' || letter == 'Y' || letter == 'Z' || letter == 'I' || letter == 'J' ||
+                        letter == 'F' || letter == 'P';
+    if (number ? (whole.size() > 8 || decimals > 6) : (whole.size() + decimals > 5)) {
+        return "the word " + word + " (too many digits)";
+    }
     switch (letter) {
         case 'X':
         case 'Y':
@@ -461,8 +494,39 @@ std::string wordProblem(char letter, std::string_view value) {
     }
 }
 
+/// Why the message text after an M0/M1 word on a ';'-style post is not allowed ("" when it is):
+/// every space-separated token must be either digits only or a word of at least two letters
+/// (with `, . : ' -` inside), so no letter-digit word such as `S1`, `P5` or `3mm` and no single
+/// letter (Marlin reads `M0 S1` as a 1 s timeout instead of a pause).
+std::string messageProblem(std::string_view text) {
+    std::size_t i = 0;
+    while (i < text.size()) {
+        while (i < text.size() && (text[i] == ' ' || text[i] == '\t')) {
+            ++i;
+        }
+        const std::size_t start = i;
+        while (i < text.size() && text[i] != ' ' && text[i] != '\t') {
+            ++i;
+        }
+        const std::string_view token = text.substr(start, i - start);
+        if (token.empty()) {
+            break;
+        }
+        const bool digits = allDigits(token);
+        const bool word = token.size() >= 2 && isLetter(token.front()) &&
+                          std::all_of(token.begin(), token.end(), [](char c) {
+                              return isLetter(c) || c == ',' || c == '.' || c == ':' || c == '\'' || c == '-';
+                          });
+        if (!digits && !word) {
+            return "the M0 message word '" + std::string(token) +
+                   "' (message words are letters only, at least two, or digits only)";
+        }
+    }
+    return {};
+}
+
 /// Why the live G-code of a line written in a drag section is not on the allowlist ("" when it
-/// is). After an optional single leading '/', it must be only words LETTER + value separated by
+/// is). It must be only words LETTER + value separated by
 /// spaces or tabs: upper-case letters X Y Z I J F P (signed plain numbers), N T H (plain digits),
 /// G (a code from `kDragGCodes`) and M (a code from `kDragMCodes`, plain digits). Any other
 /// character refuses the line. On ';'-style posts (Marlin) the text after an M0 or M1 word is its
@@ -475,10 +539,6 @@ std::string allowlistProblem(std::string_view live, bool semicolonComments) {
             ++i;
         }
     };
-    skipSpaces();
-    if (i < live.size() && live[i] == '/') {
-        ++i;
-    }
     while (true) {
         skipSpaces();
         if (i >= live.size()) {
@@ -504,7 +564,7 @@ std::string allowlistProblem(std::string_view live, bool semicolonComments) {
             return std::string("the character '") + live[i] + "' after " + letter + std::string(value);
         }
         if (semicolonComments && letter == 'M' && (normalisedDecimal(value) == "0" || normalisedDecimal(value) == "1")) {
-            return {};  // Marlin: the rest is the M0/M1 message
+            return messageProblem(live.substr(i));  // Marlin: the rest is the M0/M1 message
         }
     }
 }
@@ -523,6 +583,26 @@ std::string renderedProblem(std::string_view text, bool semicolonComments) {
     if (const std::size_t at = text.find_first_of("~!?"); at != std::string_view::npos) {
         return std::string("the Grbl realtime character '") + text[at] + "'";
     }
+    if (std::string bad = parenProblem(text, semicolonComments); !bad.empty()) {
+        return bad;
+    }
+    return allowlistProblem(liveCode(text, semicolonComments), semicolonComments);
+}
+
+/// The drag check on the exact bytes written for one line (text, VAR prefixes and values
+/// included, plus the line ending): the ending must be LF, CR LF or CR and the rest must pass
+/// `renderedProblem` (T-0154).
+std::string writtenProblem(std::string_view written, std::string_view ending, bool semicolonComments) {
+    if ((ending != "\n" && ending != "\r\n" && ending != "\r") || written.size() < ending.size() ||
+        written.substr(written.size() - ending.size()) != ending) {
+        return "a line ending other than LF, CR LF or CR";
+    }
+    return renderedProblem(written.substr(0, written.size() - ending.size()), semicolonComments);
+}
+
+/// True for the Marlin emergency-parser codes M108, M112, M410, M876 anywhere in `text` (spaces
+/// ignored, any case, leading zeros allowed).
+bool hasEmergencyCode(std::string_view text) {
     std::string squeezed;
     for (const char c : text) {
         if (c != ' ' && c != '\t') {
@@ -540,13 +620,41 @@ std::string renderedProblem(std::string_view text, bool semicolonComments) {
         }
         const std::string_view code = std::string_view(squeezed).substr(j, k - j);
         if (code == "108" || code == "112" || code == "410" || code == "876") {
-            return "the Marlin emergency-parser code M" + std::string(code);
+            return true;
         }
     }
-    if (std::string bad = parenProblem(text, semicolonComments); !bad.empty()) {
-        return bad;
+    return false;
+}
+
+/// On a ';'-style post: why the template text after an M0/M1 word (its message) may not be
+/// written ("" when it may). The message is the post author's text: no tags there except `[T]`
+/// (the tool number, which renders plain digits; the written message is checked again).
+std::string messageTemplateProblem(std::string_view line) {
+    const std::string live = liveCode(line, true);
+    for (std::size_t p = live.find('M'); p != std::string::npos; p = live.find('M', p + 1)) {
+        if (p > 0 && live[p - 1] != ' ' && live[p - 1] != '\t' && live[p - 1] != ']') {
+            continue;
+        }
+        std::size_t q = p + 1;
+        while (q < live.size() && isDigit(live[q])) {
+            ++q;
+        }
+        if (q == p + 1 || (q < live.size() && live[q] != ' ' && live[q] != '\t')) {
+            continue;
+        }
+        const std::string n = normalisedDecimal(std::string_view(live).substr(p + 1, q - p - 1));
+        if (n != "0" && n != "1") {
+            continue;
+        }
+        std::string_view rest = std::string_view(live).substr(q);
+        for (std::size_t t = rest.find('['); t != std::string_view::npos; t = rest.find('[', t + 1)) {
+            if (rest.substr(t, 3) != "[T]") {
+                return "a tag in the M0 message (only [T] may be used there)";
+            }
+        }
+        return {};
     }
-    return allowlistProblem(liveCode(text, semicolonComments), semicolonComments);
+    return {};
 }
 
 bool hasWord(const std::vector<GWord>& words, char letter, double value) {
@@ -1210,6 +1318,9 @@ class Interpreter {
         }
         const std::string_view outerBlock = block_;
         block_ = b->name;
+        // T-0154: the pause blocks must write M5 and M0, judged on the lines actually written.
+        const bool pauseBlock = off && (blockName == "SPINDLE_OFF_PAUSE" || blockName == "SPINDLE_UNLOCK_PAUSE");
+        std::vector<GWord> pauseWords;
         for (const std::string& line : b->lines) {
             if (dropSpindleLines && line.find("[S]") != std::string::npos) {
                 if (spindleOnlyLine(line, semicolonComments_)) {
@@ -1251,16 +1362,28 @@ class Interpreter {
             if (lineText.empty() && hadTag) {
                 continue;  // every variable on the line was suppressed
             }
+            const std::string written = lineText + s_.lineEnding;
             if (off) {
-                // Second guard (T-0154): no spindle start or speed reaches the output of a
-                // spindle-off toolpath, whatever the post's template text says.
-                if (const std::string bad = renderedProblem(lineText, semicolonComments_); !bad.empty()) {
+                // T-0154: the exact bytes written for the line (values and line ending included)
+                // must pass the drag-section allowlist.
+                if (const std::string bad = writtenProblem(written, s_.lineEnding, semicolonComments_);
+                    !bad.empty()) {
                     fail(0, spindleOffWhat() + ", but the post writes " + bad + " (line " + quoted(lineText) + ")");
                     break;
                 }
+                if (pauseBlock) {
+                    std::vector<GWord> words = gcodeWords(liveCode(lineText, true));
+                    if (semicolonComments_ && words.size() > 1) {
+                        words.resize(1);  // Marlin runs one command per line
+                    }
+                    pauseWords.insert(pauseWords.end(), words.begin(), words.end());
+                }
             }
-            out_ += lineText;
-            out_ += s_.lineEnding;
+            out_ += written;
+        }
+        if (pauseBlock && !failure_ && (!hasWord(pauseWords, 'M', 5.0) || !hasWord(pauseWords, 'M', 0.0))) {
+            fail(0, spindleOffWhat() + ", but the post's " + std::string(blockName) +
+                        " block did not write both M5 and M0 (as the first command of a line on ';'-style posts)");
         }
         block_ = outerBlock;
     }

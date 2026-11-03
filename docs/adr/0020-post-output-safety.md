@@ -168,45 +168,63 @@ through, so no post, block or tag can bypass them.
      - Profile and Pocket refuse diamond-drag tools (`InvalidTool`, "… is a diamond drag tool,
        which must not turn; use Quick Engrave for diamond-drag tools"; Pocket skips just that
        tool), so a drag tool can no longer run in a spinning toolpath of those operations.
-     - **Drag-section allowlist** (T-0154; owner decision 2026-11-03 after verifier round 3: an
-       allowlist, not a blocklist). Every output line of a `.pp` block must be printable ASCII
-       (bytes ≥ 0x80 are a parse error for all posts: Grbl drops or acts on them, so `M<NBSP>3`
-       would run M3; control characters were already refused). While a spindle-off toolpath is
-       written (its HEADER, TOOLCHANGE or NEW_SEGMENT, both pause blocks and its move blocks):
+     - **Drag-section allowlist** (T-0154; owner decisions 2026-11-03: an allowlist, not a
+       blocklist, refined in a final round). Every output line of a `.pp` block must be printable
+       ASCII (bytes ≥ 0x80 are a parse error for all posts: Grbl drops or acts on them, so
+       `M<NBSP>3` would run M3; control characters were already refused), and `LINE_ENDING` must
+       be LF, CR LF or CR (`[10]`, `[13][10]`, `[13]`); anything else is a parse error for all
+       posts, since the ending is written after every line (`" M3 S12000[13][10]"` would add a
+       spindle start to each). While a spindle-off toolpath is written (its HEADER, TOOLCHANGE or
+       NEW_SEGMENT, both pause blocks and its move blocks):
        - *Template text* of every written line: no `#`; no M or S followed (after spaces) by a
          tag (`M[T]`); only plain comments, where a comment ends at the FIRST `)` as on Grbl and
          Mach (a `(` inside an open comment, a `)` without one, or an unclosed comment is
-         refused); and no M3/M4/S-number word anywhere, comments included.
-       - *Whole written line*, comments included: printable ASCII only; none of Grbl's realtime
-         characters `~ ! ?`; none of Marlin's emergency-parser codes `M108 M112 M410 M876`
-         (spaces ignored, leading zeros allowed); parentheses as above.
-       - *Live G-code* of the written line (outside plain comments; text after `;` is a comment
-         only on `;`-style posts, i.e. some block line starts with `;` and none holds a `(`:
-         Marlin): after one optional leading `/`, only words LETTER+VALUE separated by spaces or
-         tabs, the letter upper case and directly followed by its value. Any other character
-         (`/` elsewhere, `#`, `[`, `*`, `=`, `%`, `$`, `@`, `^`, `;` on paren posts, lower case,
-         a letter without a value, a space inside a word) refuses the line. Allowed words, which
-         is exactly what the eight shipped posts write in drag sections:
-         - `X Y Z I J F P`: a plain number with an optional sign (`-0.100`, `+5`, `400`);
-         - `N T H`: plain digits (`N10`, `T3`, `H3`);
-         - `G`: plain digits with an optional decimal part, whose value is one of
-           `0 1 2 3 4 17 20 21 40 43 49 80 90 91 91.1 94` (leading zeros allowed: `G01`);
-         - `M`: plain digits (leading zeros allowed, no sign, no decimal point) with the value
-           `0 1 2 5 6 30` (`M6` for the tool change into a drag toolpath on Mach and LinuxCNC);
-         - on `;`-style posts the text after an `M0` or `M1` word is its message (Marlin's
-           `M0 Drag tool 3 spindle off then resume`): free printable ASCII within the checks
-           above.
+         refused); no M3/M4/S-number word anywhere, comments included; and none of Marlin's
+         emergency-parser codes `M108 M112 M410 M876` anywhere (spaces ignored, leading zeros
+         allowed).
+       - *The exact bytes written* for the line (template text, VAR prefixes, values and the line
+         ending) are checked: the line ending as above; printable ASCII only; none of Grbl's
+         realtime characters `~ ! ?`; parentheses as above. On `;`-style posts (some block line
+         starts with `;` and none holds a `(`: Marlin) text after `;` is a comment and no `(` or
+         `)` may appear before it (Marlin without `PAREN_COMMENTS` has no paren comments); on
+         other posts `;` is not a comment for this check.
+       - *Live G-code* of the written line (outside comments): only words LETTER+VALUE separated
+         by spaces or tabs, the letter upper case and directly followed by its value. Any other
+         character refuses the line, including `/` anywhere (block delete has no place in a drag
+         section; a VAR prefix `/N` is refused too), `#`, `[`, `*`, `=`, `%`, `$`, `@`, `^`, `;`
+         on paren posts, lower case, a letter without a value and a space inside a word. Allowed
+         words, which is exactly what the eight shipped posts write in drag sections:
+         - `X Y Z I J F P`: a plain number with an optional sign (`-0.100`, `+5`, `400`), at most
+           8 integer and 6 decimal digits;
+         - `N T H`: plain digits, at most 5;
+         - `G`: plain digits with an optional decimal part, at most 5 digits in all, whose value
+           is one of `0 1 2 3 4 17 20 21 40 43 49 80 90 91 91.1 94` (leading zeros allowed:
+           `G01`);
+         - `M`: plain digits (at most 5, leading zeros allowed, no sign, no decimal point) with
+           the value `0 1 2 5 6 30` (`M6` for the tool change into a drag toolpath on Mach and
+           LinuxCNC);
+         - on `;`-style posts the text after an `M0` or `M1` word is its message. The message is
+           the post author's template text: no tag there except `[T]` (the tool number, which
+           renders plain digits; Marlin's shipped tool change `M0 Load tool [T] then resume` uses
+           it). Each written message word must be digits only or at least two letters (with
+           `, . : ' -`), so no letter-digit word (`S1`, `P5`, `3mm`) and no single letter:
+           Marlin reads `M0 S1` as a 1 s timeout instead of a pause.
          So `M/3`, `S/1000` (Grbl drops `/` anywhere), `M3.004`, `M3.00005`, `M2.99995`, `M3.5`
-         (controllers round or take the integer part), `M259` (Grbl truncates to 8 bits), any
-         S word, other letters (`D E R K A B C Q L O S`) and other G or M codes are refused,
-         also when a tool name places them in live G-code. Custom posts that need more in a
-         drag section are refused; the set can be widened case by case.
+         (controllers round or take the integer part), `M259` (Grbl truncates to 8 bits),
+         `M000000005`, `G00000091.1`, any S word, other letters (`D E R K A B C Q L O S`) and
+         other G or M codes are refused, also when a tool name places them in live G-code.
+         Custom posts that need more in a drag section are refused; the set can be widened case
+         by case.
        - Values inside comments are sanitised already (above), so a tool named "S12 drill M3"
-         in a comment is fine.
-       - The pause blocks must write `M5` and `M0` (as template text, outside comments). Lines
-         starting with `/` (block delete) and text after `;` never count, and on `;`-style posts
-         (Marlin runs one command per line) only the first word of a line counts, so `M5 M0` on
-         one line gives no M0.
+         or "Drag 3mm 108" in a comment is fine.
+       - The pause blocks must write `M5` and `M0`. This is checked on the template text before
+         anything is written (lines starting with `/` and text after `;` do not count) and again
+         on the lines actually written (so `M0[T]` writing `M05` does not count as an M0); on
+         `;`-style posts only the first word of a line counts (Marlin runs one command per line,
+         so `M5 M0` on one line gives no M0).
+       - Unused words on a line (Grbl rejects `M0 P1` with an error) and the arguments a
+         controller gives to allowed codes are the post author's responsibility; such a line can
+         only stop the program, never start the spindle.
        - Unverified: whether Mach3/Mach4 treat `;` as a comment. Carvetto treats `;` as a
          comment only on `;`-style posts; on the paren posts a `;` in a drag section is refused.
        - O-words, `M98` subroutine calls and user M-code macros (LinuxCNC `M100`–`M199`, Mach

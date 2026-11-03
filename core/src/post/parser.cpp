@@ -367,6 +367,10 @@ Result<PostProcessor> PostProcessor::parse(std::string_view source) {
             const auto le = decodeLineEnding(value);
             if (!le) {
                 err = badValue("text with [nnn] character codes");
+            } else if (*le != "\n" && *le != "\r\n" && *le != "\r") {
+                // T-0154: the line ending is written after every line; anything but CR/LF there
+                // would be live G-code no check sees (" M3 S12000[13][10]").
+                err = badValue("one of [10], [13][10] or [13] (LF, CR LF or CR)");
             } else {
                 s.lineEnding = *le;
             }
