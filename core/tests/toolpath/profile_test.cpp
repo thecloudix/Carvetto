@@ -3045,6 +3045,25 @@ TEST_CASE("T-0135 round 2: exact loose pieces; add-back and fitting never cost a
         // (Round 3 screen: Inside, allowance 0, V-bit, separate last pass; and Inside at -r with a
         // separate last pass. The move margin put a tab T-0127 matched where it could not be
         // matched; T-0127's placement is now evaluated too and kept on a tie.)
+        // (Outside, allowance -1.77, separate last pass: a tab matched only by the second try took
+        // room another tab's cover needed and was cut through; T-0127's matching is a candidate.)
+        {"m2_800016_13",
+         "C 1\n"
+         "L 0x1.1007a8608f3f4p+4 0x0p+0 0x1.f29ac1fcec938p+1 0x1.1119ba9978168p+1\n"
+         "L 0x1.f29ac1fcec938p+1 0x1.1119ba9978168p+1 0x1.4b5b432d13d0fp+3 0x1.1ef6906df130ap+4\n"
+         "L 0x1.4b5b432d13d0fp+3 0x1.1ef6906df130ap+4 0x1.12c7090aabdcfp-2 0x1.b61612dd087f9p+2\n"
+         "L 0x1.12c7090aabdcfp-2 0x1.b61612dd087f9p+2 -0x1.1fed6ddeab54ep+3 0x1.f2b479f11374dp+3\n"
+         "L -0x1.1fed6ddeab54ep+3 0x1.f2b479f11374dp+3 -0x1.f5310fd92cb2fp+1 0x1.3a58c4d684e67p+1\n"
+         "L -0x1.f5310fd92cb2fp+1 0x1.3a58c4d684e67p+1 -0x1.364811d4898c7p+4 0x1.5642a3748a1cap-49\n"
+         "L -0x1.364811d4898c7p+4 0x1.5642a3748a1cap-49 -0x1.e0ee9255a55e9p+1 -0x1.0b6f515c1a1e4p+1\n"
+         "L -0x1.e0ee9255a55e9p+1 -0x1.0b6f515c1a1e4p+1 -0x1.499b43bbd3d39p+3 -0x1.1d729630dc66bp+4\n"
+         "L -0x1.499b43bbd3d39p+3 -0x1.1d729630dc66bp+4 -0x1.2dbdfd6511d8fp-4 -0x1.4d51c6aa12456p+2\n"
+         "L -0x1.2dbdfd6511d8fp-4 -0x1.4d51c6aa12456p+2 0x1.1149843771d81p+3 -0x1.d958e6aea5213p+3\n"
+         "L 0x1.1149843771d81p+3 -0x1.d958e6aea5213p+3 0x1.84aee0c879f23p+2 -0x1.d554bd94a409bp+1\n"
+         "L 0x1.84aee0c879f23p+2 -0x1.d554bd94a409bp+1 0x1.1007a8608f3f4p+4 0x0p+0\n"
+         "P 0x1.8p+2 0 -0x1.c487ca151f37dp+0 0 0 0x0p+0 0x1.6a7ef6d1bfe66p+1 0x1.c2374880d2c0bp+1 0x0p+0 0x1.4p+2 1 0x1.b21e41f883243p-1 1 1 0x1.64499ce45e4b2p+1 0x1.465e33a88f7aap+0 0 9 0x1.eb604e132f394p+5 0x0p+0 0 1 0x0p+0 1 0x1.5df11dab4989cp+4 1 0 0x1.851a0e357e8e4p-4 0x1.1e496f0aac5edp+3 0x1.2d7e68160f324p+0 0x1.6e4bfc830cff8p+2 0 0x1.c7b304fb8e75p-1 0 0 0x0p+0 0x0p+0 0 8 0 0 0 0 -0x1.13eb499fc42e4p+5 0x1.813a4983a2c08p+2 0x1p+1\n"
+         "K 0 0\n"
+         , 7, {}},
         {"m3_901032_23",
          "C 1\n"
          "L -0x1.059e88f2228c2p+3 -0x1.537988c8ff595p+2 0x1.059e88f2228c2p+3 -0x1.537988c8ff595p+2\n"

@@ -161,18 +161,20 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     refused tab may have kept out a neighbour when the tabs were fitted (they overlapped), the
     finishing tabs dropped by fitting are then added back where they clear every tab still kept (the
     kept ones stay where they are), and when one comes back that cut is matched again (T-0135,
-    "add-back"). Neither change is better in every case: a tab added back can fail the tab check
-    where the plain result would have held, and a tab moved with the margin can fail matching where
-    T-0127, which put it at exactly the gap and let rounding decide whether it clashed, matched it.
-    So with a separate last pass three results are computed, each placed, matched and checked: the
-    tabs placed exactly as T-0127 placed them (no slack, no margin) and matched without add-back;
-    placed with slack and margin, without add-back; and the same with add-back. The one ending with
-    the most kept tabs is used, a tie going to the T-0127 placement, then to the one without
-    add-back. A scene thus never keeps fewer tabs than T-0127's placement or than either change
-    alone; where they tie the output is T-0127's, rounding included (the slack only decides when it
-    gains a tab). The extra runs happen only when they differ: the T-0127 placement only when some
-    cut's tabs are placed differently, the run without add-back only when add-back changed
-    something. Finally every tab group (a tab and its
+    "add-back"). None of these changes is better in every case: a tab added back can fail the tab
+    check where the plain result would have held; a tab moved with the margin can fail matching
+    where T-0127, which put it at exactly the gap and let rounding decide whether it clashed,
+    matched it; and a tab matched only by the second try (cover from the vector out) can take room
+    another tab's cover needed and still be cut through. So with a separate last pass three results
+    are computed, each placed, matched and checked: exactly T-0127's matching (tabs placed as T-0127
+    placed them, no slack or margin, no second try, no add-back); placed with slack and margin and
+    matched with the second try, without add-back; and the same with add-back. The one ending with
+    the most kept tabs is used, a tie going to T-0127's, then to the one without add-back. A scene
+    thus never keeps fewer tabs than T-0127's matching (the tab check only adds to it: a tab judged
+    again on a wider window), nor than the new placement without add-back; where they tie the
+    output is T-0127's, rounding included (the slack decides only when it gains a tab). The extra
+    runs happen only when they would differ: T-0127's when some cut's tabs are placed differently or
+    a run used the second try, the one without add-back when add-back changed something. Finally every tab group (a tab and its
     roughing cover) is checked against all cuts of both passes (and without a separate last pass
     the only pass against itself): if any cut position outside the kept raised stretches comes
     closer than a tool radius (less 1 µm) to the tab's cross-sections — the opposite wall of a

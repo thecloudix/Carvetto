@@ -253,7 +253,12 @@ class ProfileBuilder {
     void chooseStarts(std::vector<Cut>& cuts);
     std::vector<std::size_t> order(const std::vector<Cut>& cuts) const;
     void placeTabsOn(std::vector<Cut>& primary, const std::vector<Cut>& otherPass, bool asT0127 = false);
-    bool matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut>& rough, bool addBack);
+    /// What matchRoughingTabs did beyond T-0127's matching.
+    struct MatchExtras {
+        bool addedBack{false};  // add-back brought a tab back
+        bool retried{false};    // a tab was matched only with the cover placed from the vector out
+    };
+    MatchExtras matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut>& rough, bool addBack, bool retry);
     void dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& secondary);
     void reportLoosePieces(const std::vector<Cut>& primary, const std::vector<Cut>& secondary);
     bool mapTab(const Cut& from, const TabSpan& t, const Cut& onto, TabSpan& out, bool& near,
@@ -1005,8 +1010,9 @@ bool ProfileBuilder::mapTab(const Cut& from, const TabSpan& t, const Cut& onto, 
 // that way is tried again with the cover placed as for allowance >= 0 (sections from the vector
 // out); the shorter cover only nicks the tab's material on the part side, and dropSweptTabs judges
 // the result exactly (the tab is dropped as cut through if it no longer holds).
-bool ProfileBuilder::matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut>& rough, bool addBack) {
-    bool addedBack = false;
+ProfileBuilder::MatchExtras ProfileBuilder::matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut>& rough,
+                                                              bool addBack, bool retryCover) {
+    MatchExtras extras;
     for (Cut& r : rough) {
         r.tabs.clear();
     }
@@ -1041,7 +1047,7 @@ bool ProfileBuilder::matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut
             const TabSpan& t = f.tabs[ti];
             std::vector<std::pair<std::size_t, TabSpan>> mapped;
             bool ok = false;
-            const bool retry = sidedTabs_ && p_.side != ProfileSide::On;
+            const bool retry = retryCover && sidedTabs_ && p_.side != ProfileSide::On;
             for (int attempt = 0; attempt < (retry ? 2 : 1) && !ok; ++attempt) {
                 mapped.clear();
                 ok = true;
@@ -1049,6 +1055,7 @@ bool ProfileBuilder::matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut
                     TabSpan m;
                     bool near = false;
                     if (mapTab(f, t, rough[k], m, near, attempt == 1)) {
+                        if (attempt == 1) extras.retried = true;
                         ok = spanFits(rough[k], m, roughKeepClear[k]);
                         mapped.push_back({k, m});
                     } else if (near) {
@@ -1092,7 +1099,7 @@ bool ProfileBuilder::matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut
                         ++added;
                     }
                     if (added > 0) {
-                        addedBack = true;
+                        extras.addedBack = true;
                         excluded = std::move(trial);
                         ++tabsDropped_[src];
                         ++tabsUnmatched_[src];
@@ -1128,7 +1135,7 @@ bool ProfileBuilder::matchRoughingTabs(std::vector<Cut>& finish, std::vector<Cut
     for (Cut& r : rough) {
         std::sort(r.tabs.begin(), r.tabs.end(), [](const TabSpan& x, const TabSpan& y) { return x.a < y.a; });
     }
-    return addedBack;
+    return extras;
 }
 
 // Inside/Outside with allowance >= 0 (otherwise judgeSidedTab): true when the material of tab `t`
@@ -2727,14 +2734,16 @@ ProfileResult ProfileBuilder::run() {
     planLeadIns(rough);
     planLeadIns(finish);
     if (separate) {
-        // Three candidates, each placed, matched and checked: (A) the tabs placed exactly as
-        // T-0127 placed them (a tab moved off the other pass's start goes to exactly the gap, and
-        // rounding decides whether it clashes), matched without add-back; (C) placed with the
-        // slack and the move margin, matched without add-back; (B) as C with add-back (a refused
-        // tab gives way to tabs fitting dropped beside it). The one that ends with the most kept
-        // tabs wins, a tie going to A, then C; so no scene keeps fewer tabs than T-0127's way, nor
-        // than either change alone. A and B are only run when they differ (A: some cut's tabs are
-        // placed differently; B: add-back changed something).
+        // Three candidates, each placed, matched and checked: (A) exactly T-0127's matching: the
+        // tabs placed as T-0127 placed them (a tab moved off the other pass's start goes to exactly
+        // the gap, and rounding decides whether it clashes), matched without add-back and without
+        // the second try with the cover placed from the vector out; (C) placed with the slack and
+        // the move margin, matched with that second try; (B) as C with add-back (a refused tab
+        // gives way to tabs fitting dropped beside it). The one that ends with the most kept tabs
+        // wins, a tie going to A, then C; so no scene keeps fewer tabs than T-0127's matching (the
+        // tab check only adds to it: a tab judged again on a wider window), nor than C without
+        // add-back. A and C are only run when they would differ (A: some cut's tabs are placed
+        // differently, or a run used the second try; C: add-back changed something).
         struct TabState {
             std::vector<Cut> finish, rough;
             std::map<std::size_t, std::size_t> requested, dropped, unmatched, severed, empty, onCorner;
@@ -2770,22 +2779,23 @@ ProfileResult ProfileBuilder::run() {
             samePlacement = finish[k].tabs == placedA.finish[k].tabs;
         }
         const TabState placedC = save();
-        const bool addedBack = matchRoughingTabs(finish, rough, true);
+        const MatchExtras fromB = matchRoughingTabs(finish, rough, true, true);
         dropSweptTabs(finish, rough);
         TabState best = save();
         std::size_t bestKept = keptTabs();  // B for now
-        if (addedBack) {  // C
+        bool retried = fromB.retried;
+        if (fromB.addedBack) {  // C
             restore(placedC);
-            matchRoughingTabs(finish, rough, false);
+            retried = matchRoughingTabs(finish, rough, false, true).retried || retried;
             dropSweptTabs(finish, rough);
             if (keptTabs() >= bestKept) {
                 bestKept = keptTabs();
                 best = save();
             }
         }
-        if (!samePlacement) {  // A
+        if (!samePlacement || retried) {  // A
             restore(placedA);
-            matchRoughingTabs(finish, rough, false);
+            matchRoughingTabs(finish, rough, false, false);
             dropSweptTabs(finish, rough);
             if (keptTabs() >= bestKept) {
                 bestKept = keptTabs();
