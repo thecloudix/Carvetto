@@ -16,6 +16,8 @@
 #include <vector>
 
 #include "carvetto/geometry/contour.hpp"
+#include "carvetto/geometry/contour_ops.hpp"
+#include "carvetto/geometry/fill_rule.hpp"
 #include "carvetto/geometry/span.hpp"
 #include "carvetto/toolpath/profile.hpp"
 #include "../geometry/test_rng.hpp"
@@ -2816,7 +2818,43 @@ TEST_CASE("Separate last pass, negative allowance: tabs that hold are matched on
             }
             CHECK(g.message.find("comes free") == std::string::npos);
         }
-        CHECK(tabsLeftOut(r) == k.left);
+        if (std::string(k.name) != "m1_402002_27") {
+            CHECK(tabsLeftOut(r) == k.left);
+            continue;
+        }
+        // m1_402002_27 starts at the star's convex start vertex, the centre of the cut's round join
+        // there: every point of that arc is equally near, and the cut start (so the tab layout)
+        // follows the rounding of a ~1e-15 radial vector, which differs between GCC and MSVC (3 vs
+        // 2 tabs left out; a scale of 1 +- 1e-15 flips it on Linux; both layouts hold in the flood,
+        // 15 and 16 tabs). That tie predates T-0135 (main and T-0127 share it), so this test asserts
+        // what holds on every platform: no more tabs left out than here (T-0127 left out 6), and
+        // each vector's part stays joined to the waste through the kept tabs (raster flood).
+        CHECK(tabsLeftOut(r) <= k.left);
+        const double zTab = p.passes.bottomZ() + std::min(p.tabs.thickness, p.passes.cutDepth);
+        geometry::Box2 all;
+        for (const Contour& c : cs) all.expand(c.bounds());
+        const geometry::Box2 window = all.inflated(d + 2.0);
+        for (const Contour& c : cs) {
+            // A point of the part well inside the vector (Outside: the part is inside).
+            Vec2 part = c.bounds().centre();
+            double best = -1.0;
+            const geometry::Box2 cb = c.bounds();
+            for (double x = cb.min.x; x <= cb.max.x; x += 0.5) {
+                for (double y = cb.min.y; y <= cb.max.y; y += 0.5) {
+                    const Vec2 q{x, y};
+                    if (geometry::locatePoint(c, q, geometry::FillRule::EvenOdd, geometry::Tolerance{}) !=
+                        geometry::PointLocation::Inside) {
+                        continue;
+                    }
+                    const double dq = geometry::distanceTo(c, q);
+                    if (dq > best) {
+                        best = dq;
+                        part = q;
+                    }
+                }
+            }
+            CHECK(test::floodHeld(r.toolpath, window, zTab, 0.5 * d, part, window.min + Vec2{0.5, 0.5}, 0.05));
+        }
     }
 }
 
