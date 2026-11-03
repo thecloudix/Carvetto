@@ -9,7 +9,7 @@ M5
 G0 Z5.000
 ; Spindle stays off for diamond drag tool 3: Diamond Drag (90 deg)
 ; Check that the spindle is stopped or locked, then resume
-M0 Drag tool 3 spindle off then resume
+M0
 G0 Z5.000
 G0 X10.000 Y10.000 Z5.000
 G1 Z-0.100 F400
@@ -24,7 +24,7 @@ M5
 G0 Z5.000
 ; Spindle stays off for diamond drag tool 3: Diamond Drag (90 deg)
 ; Check that the spindle is stopped or locked, then resume
-M0 Drag tool 3 spindle off then resume
+M0
 G0 Z5.000
 G0 X40.000 Y10.000 Z5.000
 G1 Z-0.100 F400
@@ -34,12 +34,13 @@ G0 Z5.000
 M5
 G0 Z5.000
 ; Diamond drag tool 3 done: unlock the spindle before it starts again
-M0 Unlock spindle then resume
+M0
 G0 Z5.000
 M5
 G0 Z5.000
 ; Change to tool 1: End Mill (6 mm)
-M0 Load tool 1 then resume
+; Load tool 1 then resume
+M0
 G0 Z5.000
 ; Profile
 M3 S18000
@@ -53,14 +54,15 @@ G0 Z5.000
 M5
 G0 Z5.000
 ; Change to tool 3: Diamond Drag (90 deg)
-M0 Load tool 3 then resume
+; Load tool 3 then resume
+M0
 G0 Z5.000
 ; Drag again
 M5
 G0 Z5.000
 ; Spindle stays off for diamond drag tool 3: Diamond Drag (90 deg)
 ; Check that the spindle is stopped or locked, then resume
-M0 Drag tool 3 spindle off then resume
+M0
 G0 Z5.000
 G0 X70.000 Y10.000 Z5.000
 G1 Z-0.100 F400
@@ -69,7 +71,7 @@ G0 Z5.000
 M5
 G0 Z5.000
 ; Diamond drag tool 3 done: unlock the spindle before it starts again
-M0 Unlock spindle then resume
+M0
 G0 Z5.000
 G0 Z5.000
 M5

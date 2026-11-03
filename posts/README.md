@@ -100,8 +100,8 @@ one, the test fails.
 11. **Spindle-off toolpaths (diamond drag, T-0154).** A diamond-drag Quick Engrave toolpath
     runs with the spindle off. Before it the post writes its `SPINDLE_OFF_PAUSE` block: `M5`,
     safe Z, a comment saying that the spindle stays off for the drag tool and asking the operator
-    to check that it is stopped or locked, `M0` (Marlin: `M0 Drag tool <n> spindle off then
-    resume`), and safe Z again. From that pause until the next tool change stop there is no
+    to check that it is stopped or locked, a bare `M0` (on every post; Marlin's message is the `;`
+    comment before it), and safe Z again. From that pause until the next tool change stop there is no
     `M3`/`M4` and no `S` word; the spindle starts again only after a tool change (`M0` or `M6`)
     with the next tool's speed. The interpreter leaves out the spindle start lines of HEADER,
     TOOLCHANGE and NEW_SEGMENT for such a toolpath and never writes SPINDLE_ON; it refuses a
@@ -113,8 +113,7 @@ one, the test fails.
     the spindle: only Quick Engrave marks a toolpath spindle-off, and only for diamond-drag tools
     (ADR-0020, ADR-0024). After the last drag toolpath of a drag section, before a toolpath that
     starts the spindle again, the post writes its `SPINDLE_UNLOCK_PAUSE` block: `M5`, safe Z, a
-    comment asking the operator to unlock the spindle, `M0` (Marlin: `M0 Unlock spindle then
-    resume`), safe Z; once per drag section, not between drag toolpaths, and also before the
+    comment asking the operator to unlock the spindle, a bare `M0`, safe Z; once per drag section, not between drag toolpaths, and also before the
     program end when the job ends with drag toolpaths. A post without it (or whose block writes no `M5` or no `M0`) refuses such jobs.
     In a drag section every written line must pass an allowlist (ADR-0020): printable ASCII
     only (non-ASCII output text is a parse error for every post, and `LINE_ENDING` must be LF,
@@ -122,8 +121,9 @@ one, the test fails.
     at the first `)`; no parentheses at all on `;`-comment posts), no M3/M4/S word in the
     template text even in comments, and live G-code made only of upper-case words `X Y Z I J F
     P` (signed numbers), `N T H` (digits), `G0 G1 G2 G3 G4 G17 G20 G21 G40 G43 G49 G80 G90 G91
-    G91.1 G94` and `M0 M1 M2 M5 M6 M30`, no `/` (block delete), digit counts capped, plus
-    Marlin's M0 message text (template text, only `[T]` as a tag, no letter-digit words). Profile and Pocket refuse diamond-drag tools. In a custom post that offers
+    G91.1 G94` and `M0 M1 M2 M5 M6 M30`, no `/` (block delete), digit counts capped (`N` up to
+    9 digits, `M G T H` 5), and every `M0`/`M1` line bare (`[N] M0` and at most one comment, no
+    message text, on every post). Profile and Pocket refuse diamond-drag tools. In a custom post that offers
     `SPINDLE_OFF_PAUSE`, start the spindle in HEADER, TOOLCHANGE and NEW_SEGMENT on a line of its
     own (`M3[S]`).
 
@@ -141,7 +141,7 @@ the end mill follows the drag toolpaths and before the program end) and are chec
 | Mach3 mm / inch | `G90 G94 G91.1 G40 G49 G80 G17 G21`/`G20` | `M5`, safe Z, `T<n> M6`, safe Z, `M3 S` | `G4 P` **seconds** (Mach3's default); a General Config checkbox, commonly labelled "G04 Dwell in Milliseconds", is reported to switch to ms. Verify that it is off (if it is on, dwells get shorter, never longer) | `M30` | `N10`, `N20`… / CR LF | `( )` | "Using Mach3Mill" user manual, Artsoft / Newfangled Solutions: https://www.machsupport.com |
 | Mach4 mm | as Mach3 | as Mach3 | `G4 P` **seconds**, per the official Mach4 Mill manual | `M30` | none / CR LF | `( )` | Mach4 Mill G-code programming manual, Newfangled Solutions: https://www.machsupport.com |
 | LinuxCNC mm / inch | `G17 G40 G49 G80 G90 G91.1 G94 G21`/`G20` | `M5`, safe Z, `T<n> M6`, `G43 H<n>`, safe Z, `M3 S` | `G4 P` **seconds** | `M2` | none / LF | `( )` | LinuxCNC G-code reference: https://linuxcnc.org/docs/html/gcode/g-code.html and M-codes: https://linuxcnc.org/docs/html/gcode/m-code.html |
-| Marlin mm | `G21`, `G90` (no `G17`/`G94`, see below) | `M5`, safe Z, `M0 <message>` pause (**needs an LCD or `EMERGENCY_PARSER`, otherwise ignored**), safe Z, `M3 S`; **no T word** | `G4 P` **milliseconds** (multiplier 1000) | none, see below | none / LF | `;` | Marlin G-code reference: https://marlinfw.org/docs/gcode/ (G0-G1, G2-G3, G4, M0-M1, M3, M5) |
+| Marlin mm | `G21`, `G90` (no `G17`/`G94`, see below) | `M5`, safe Z, `; <message>` comment then a bare `M0` pause (**needs an LCD or `EMERGENCY_PARSER`, otherwise ignored**), safe Z, `M3 S`; **no T word** | `G4 P` **milliseconds** (multiplier 1000) | none, see below | none / LF | `;` | Marlin G-code reference: https://marlinfw.org/docs/gcode/ (G0-G1, G2-G3, G4, M0-M1, M3, M5) |
 
 Every post uses `G2`/`G3` with `I`/`J` measured from the arc start, a feed (`F`) only when it
 changes, and modal X/Y/Z (written only when they change).

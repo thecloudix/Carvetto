@@ -661,8 +661,8 @@ TEST_CASE("T-0154: ';' is a comment only for ';' posts; values in comments may m
     }
     // A Marlin-style (';') post: a value after ';' is a comment.
     const std::string semi = "begin HEADER\n\"; [TOOLNAME]\"\nend\nbegin NEW_SEGMENT\n\"G4 P1 ; [TOOLNAME]\"\nend\n" +
-                             kMoves + "begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"; pause\"\n\"M0 go\"\nend\n" +
-                             "begin SPINDLE_UNLOCK_PAUSE\n\"M5\"\n\"M0 unlock\"\nend\n";
+                             kMoves + "begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"; pause\"\n\"M0\"\nend\n" +
+                             "begin SPINDLE_UNLOCK_PAUSE\n\"M5\"\n\"; unlock\"\n\"M0\"\nend\n";
     std::vector<Toolpath> job{drag("A"), drag("B")};
     job[0].tool.name = job[1].tool.name = "x M3 S100";
     CHECK(runError(parseText(semi), job).empty());
@@ -706,27 +706,90 @@ TEST_CASE("T-0154: drag-section allowlist refuses everything not on it", "[post]
     }
 }
 
-TEST_CASE("T-0154: Marlin-style posts: M0 messages, one command per line, emergency-parser codes",
+TEST_CASE("T-0154: Marlin-style posts: one command per line, emergency-parser codes",
           "[post][spindle-off][allowlist]") {
     const std::string semiMoves = kMoves + "begin HEADER\n\"; [TOOLPATH_NAME]\"\nend\n";
-    const std::string semiPause = "begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"M0 Drag tool [T] spindle off then resume\"\nend\n";
-    const std::string semiUnlock = "begin SPINDLE_UNLOCK_PAUSE\n\"M5\"\n\"M0 Unlock spindle then resume\"\nend\n";
-    // Message text after M0 is fine on a ';' post ...
+    const std::string semiPause = "begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"; Drag tool [T]: spindle off\"\n\"M0\"\nend\n";
+    const std::string semiUnlock = "begin SPINDLE_UNLOCK_PAUSE\n\"M5\"\n\"; Unlock the spindle\"\n\"M0\"\nend\n";
     CHECK(runError(parseText(semiMoves + semiPause + semiUnlock), {drag()}).empty());
-    // ... but emergency-parser codes are refused anywhere, comments and messages included.
-    for (const char* attack : {"M0 go M112", "M0 resume with M108", "; M410", "M0 M 876", "G4 P1 ; M112"}) {
+    // Emergency-parser codes are refused anywhere in template text, comments included.
+    for (const char* attack : {"; M410", "G4 P1 ; M112", "; resume with M 108", "; M0876"}) {
         INFO(attack);
         const std::string post =
             semiMoves + "begin NEW_SEGMENT\n\"" + std::string(attack) + "\"\nend\n" + semiPause + semiUnlock;
         CHECK_THAT(runError(parseText(post), {drag("A"), drag("B")}), ContainsSubstring("emergency-parser code"));
     }
-    // Marlin runs one command per line: "M5 M0" on one line does not count as the pause's M0.
-    const std::string oneLine = "begin SPINDLE_OFF_PAUSE\n\"M5 M0 go\"\nend\n";
+    // Marlin runs one command per line: "M5 M0" on one line does not count as the pause's M0 (and
+    // an M0 line must be bare anyway).
+    const std::string oneLine = "begin SPINDLE_OFF_PAUSE\n\"M5 M0\"\nend\n";
     CHECK_THAT(runError(parseText(semiMoves + oneLine + semiUnlock), {drag()}),
                ContainsSubstring("SPINDLE_OFF_PAUSE block writes no M0"));
-    // A paren-comment post may not write message text after M0.
-    CHECK_THAT(runError(parseText(kMoves + "begin HEADER\n\"(h)\"\nend\n" + semiPause + kUnlock), {drag()}),
-               ContainsSubstring("runs with the spindle off"));
+}
+
+TEST_CASE("T-0154 bare M0: an M0/M1 line in a drag section holds only [N] M0 and one comment",
+          "[post][spindle-off][allowlist]") {
+    const std::string semiHeader = "begin HEADER\n\"; [TOOLPATH_NAME]\"\nend\n";
+    const std::string semiUnlock = "begin SPINDLE_UNLOCK_PAUSE\n\"M5\"\n\"M0\"\nend\n";
+    const auto semiPost = [&](const std::string& pauseLine) {
+        return kMoves + semiHeader + "begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"" + pauseLine + "\"\nend\n" + semiUnlock;
+    };
+    const auto parenPost = [&](const std::string& pauseLine) {
+        return kMoves + "begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"" + pauseLine + "\"\nend\n" + kUnlock;
+    };
+    // postatk6: message text (Marlin's FASTER_GCODE_PARSER reads its upper-case letters as
+    // parameters: "M0 SPINDLE STOP 1" is P1, "M0 TOOL UP [T]" is P3), digits ("M0 3" is M03 on
+    // Grbl/LinuxCNC), and any other word ("M0 P1", "M0 S1", "M0 T[T]", "M5 M0").
+    for (const char* line : {"M0 SPINDLE STOP 1", "M0 UNLOCK UP 5", "M0 TOOL UP [T]", "M0 3", "M0 Drag tool [T] off",
+                             "M0 P1", "M0 S1", "M0 T[T]", "M0 H1", "M5 M0", "M0 M0", "G4 P1 M0", "M1 go", "M00 X",
+                             "M0 [TOOLNAME]", "M0 Check [TOOLPATH_NAME]"}) {
+        INFO(line);
+        CHECK_THAT(runError(parseText(semiPost(line)), {drag()}), ContainsSubstring("runs with the spindle off"));
+        CHECK_THAT(runError(parseText(parenPost(line)), {drag()}), ContainsSubstring("runs with the spindle off"));
+    }
+    // Bare forms, with one comment, are fine.
+    for (const char* line : {"M0", "M00", "N10 M0", "M0 ; pause"}) {
+        INFO(line);
+        CHECK(runError(parseText(semiPost(line)), {drag()}).empty());
+    }
+    for (const char* line : {"M0", "N10 M0", "M0 (pause)", "(pause) M0"}) {
+        INFO(line);
+        CHECK(runError(parseText(parenPost(line)), {drag()}).empty());
+    }
+    CHECK_THAT(runError(parseText(parenPost("(a) M0 (b)")), {drag()}), ContainsSubstring("more than one comment"));
+    // A VAR prefix cannot add a parameter to the M0 line either (postatk6 "TOOLS " -> S3).
+    const std::string prefixed = "VAR TOOL_NUMBER = [T|A|TOOLS |1.0]\n" + semiPost("M0 [T]");
+    CHECK_THAT(runError(parseText(prefixed), {drag()}), ContainsSubstring("runs with the spindle off"));
+    // A text tag in a ';' comment before M0 is fine (the shipped Marlin style).
+    std::vector<Toolpath> job{drag()};
+    job[0].tool.name = "M3 S18000 P1";
+    CHECK(runError(parseText(kMoves + semiHeader + "begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"; Load [TOOLNAME]\"\n\"M0\"\nend\n" +
+                             semiUnlock),
+                   job)
+              .empty());
+    // N5: on a ';' post a '(' in live code is refused (Marlin without PAREN_COMMENTS).
+    std::vector<Toolpath> paren{drag()};
+    paren[0].tool.name = "( S1000)";
+    const std::string a10 = semiPost("M0") + "begin PLUNGE_MOVE\n\"G1[Z][F] [TOOLNAME]\"\nend\n";
+    CHECK_THAT(runError(parseText(a10), paren), ContainsSubstring("parenthesis outside the ';' comment"));
+}
+
+TEST_CASE("T-0154: long Mach3 drag jobs pass (line numbers above 99999)", "[post][spindle-off][allowlist]") {
+    // 12000 drag moves: Mach3 numbers lines N10, N20, ... beyond N100000.
+    Toolpath big = drag("Long");
+    big.moves = {Move::rapid({0, 0, 5}), Move::plunge({0, 0, -0.1})};
+    for (int k = 1; k <= 12000; ++k) {
+        big.moves.push_back(Move::feed({static_cast<double>(k % 100), static_cast<double>(k / 100), -0.1}));
+    }
+    big.moves.push_back(Move::retract({0, 120, 5}));
+    for (const std::string& stem : shippedStems()) {
+        INFO(stem);
+        const std::string err = runError(loadShipped(stem), {cut("Mill", spinning(1)), big, cut("Mill", spinning(1))});
+        CHECK(err.empty());
+        INFO(err);
+    }
+    const auto r = loadShipped("mach3_mm").run({big}, test::fixtureContext());
+    REQUIRE(r.ok());
+    CHECK(r.value().text.find("N100000 ") != std::string::npos);
 }
 
 TEST_CASE("T-0154 round 4: LINE_ENDING may only be LF, CR LF or CR", "[post][spindle-off][allowlist]") {
@@ -741,47 +804,6 @@ TEST_CASE("T-0154 round 4: LINE_ENDING may only be LF, CR LF or CR", "[post][spi
         INFO(ending);
         CHECK(PostProcessor::parse("LINE_ENDING = \"" + std::string(ending) + "\"\n" + kMoves).ok());
     }
-}
-
-TEST_CASE("T-0154 round 4: M0 messages are template text without letter-digit words",
-          "[post][spindle-off][allowlist]") {
-    const std::string semiHeader = "begin HEADER\n\"; [TOOLPATH_NAME]\"\nend\n";
-    const std::string semiUnlock = "begin SPINDLE_UNLOCK_PAUSE\n\"M5\"\n\"M0 Unlock spindle then resume\"\nend\n";
-    const auto semiPost = [&](const std::string& pauseLine) {
-        return kMoves + semiHeader + "begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"" + pauseLine + "\"\nend\n" + semiUnlock;
-    };
-    // A2/A2b: a text tag in the message is refused whatever it renders.
-    for (const char* line : {"M0 [TOOLNAME]", "M0 Check [TOOLPATH_NAME]", "M0 [TP_FILENAME]"}) {
-        INFO(line);
-        CHECK_THAT(runError(parseText(semiPost(line)), {drag()}), ContainsSubstring("only [T] may be used there"));
-    }
-    // Letter-digit words and single letters (Marlin reads "M0 S1" as a timeout).
-    for (const char* line : {"M0 S1", "M0 P5", "M0 S 1", "M0 Drag 3mm", "M0 tool T3", "M0 x", "M0 M3", "M0 go;M3"}) {
-        INFO(line);
-        CHECK_THAT(runError(parseText(semiPost(line)), {drag()}), ContainsSubstring("runs with the spindle off"));
-    }
-    // Free words, digit words and [T] (renders digits) are fine; so is the shipped message.
-    for (const char* line : {"M0 Drag tool [T] spindle off then resume", "M0 Check: off, then resume", "M0 Go 3 times"}) {
-        INFO(line);
-        CHECK(runError(parseText(semiPost(line)), {drag()}).empty());
-    }
-    // A2c: on a paren post a text tag after M0 is live G-code under the allowlist.
-    std::vector<Toolpath> job{drag()};
-    job[0].tool.name = "M3 S18000";
-    CHECK_THAT(runError(parseText(kMoves + "begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"M0 [TOOLNAME]\"\nend\n" + kUnlock), job),
-               ContainsSubstring("runs with the spindle off"));
-    // N4: emergency-parser codes in template text are refused anywhere; in a value inside a
-    // comment they are harmless ("Drag 3mm 108").
-    CHECK_THAT(runError(parseText(semiPost("M0 resume with M108")), {drag()}), ContainsSubstring("emergency-parser"));
-    std::vector<Toolpath> named{drag()};
-    named[0].tool.name = "Drag 3mm 108 M112";
-    CHECK(runError(parseText(semiPost("M0 Drag tool [T] spindle off then resume")), named).empty());
-    // N5: on a ';' post a '(' in live code is refused (Marlin without PAREN_COMMENTS).
-    std::vector<Toolpath> paren{drag()};
-    paren[0].tool.name = "( S1000)";
-    const std::string a10 = semiPost("M0 Drag tool [T] spindle off then resume") +
-                            "begin PLUNGE_MOVE\n\"G1[Z][F] [TOOLNAME]\"\nend\n";
-    CHECK_THAT(runError(parseText(a10), paren), ContainsSubstring("parenthesis outside the ';' comment"));
 }
 
 TEST_CASE("T-0154 round 4: pause content is judged on the written lines; no block delete",
@@ -801,7 +823,7 @@ TEST_CASE("T-0154 round 4: pause content is judged on the written lines; no bloc
         CHECK_THAT(runError(parseText(post), job), ContainsSubstring("runs with the spindle off"));
     }
     // A5/A5b: digit caps.
-    for (const char* line : {"M000000005", "G00000091.1", "T123456", "N123456", "X123456789", "X1.1234567"}) {
+    for (const char* line : {"M000000005", "G00000091.1", "T123456", "N1234567890", "X123456789", "X1.1234567"}) {
         INFO(line);
         const std::string post = "begin NEW_SEGMENT\n\"" + std::string(line) + "\"\nend\n" + kMoves + kPause + kUnlock;
         CHECK_THAT(runError(parseText(post), {drag("A"), drag("B")}), ContainsSubstring("too many digits"));

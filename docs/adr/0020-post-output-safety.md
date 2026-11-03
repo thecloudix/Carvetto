@@ -141,8 +141,8 @@ through, so no post, block or tag can bypass them.
      - then writes `SPINDLE_OFF_PAUSE` right before the toolpath's first move, every time a
        spindle-off toolpath starts (also after another spindle-off toolpath with the same tool).
        The shipped posts write `M5`, safe Z, a comment saying the spindle stays off for the drag
-       tool and asking the operator to check it is stopped or locked, `M0` (Marlin: `M0` with a
-       message), and safe Z again (Z may have been re-zeroed during the pause), the same shape
+       tool and asking the operator to check it is stopped or locked, a bare `M0` (Marlin too: its
+       message is the `;` comment before it), and safe Z again (Z may have been re-zeroed during the pause), the same shape
        as their manual tool-change stop. On every shipped post the pause is `M0`, also on Mach3,
        Mach4 and LinuxCNC, whose tool change is `M6`: `M6` is a tool change that a controller
        may be set to ignore, `M0` is the program stop every one of them honours.
@@ -159,8 +159,7 @@ through, so no post, block or tag can bypass them.
        spindle that is still locked). The block is
        written in the drag toolpath's context (`[T]`, `[TOOLNAME]` are the drag tool's) and is
        under the same spindle-word guards. It must write an `M5` and an `M0`, like `SPINDLE_OFF_PAUSE`. The shipped posts write `M5`, safe Z, a comment "Diamond
-       drag tool N done: unlock the spindle before it starts again", `M0` (Marlin: `M0 Unlock
-       spindle then resume`) and safe Z. A post without the block refuses every job with a
+       drag tool N done: unlock the spindle before it starts again", a bare `M0` and safe Z. A post without the block refuses every job with a
        spindle-off toolpath that needs it: a spinning toolpath after a spindle-off one
        (`toolpath 'Mill' starts the spindle after the spindle-off toolpath 'Drag', but the post
        has no SPINDLE_UNLOCK_PAUSE block …`) or a job ending with one (`the job ends with the
@@ -196,19 +195,23 @@ through, so no post, block or tag can bypass them.
          words, which is exactly what the eight shipped posts write in drag sections:
          - `X Y Z I J F P`: a plain number with an optional sign (`-0.100`, `+5`, `400`), at most
            8 integer and 6 decimal digits;
-         - `N T H`: plain digits, at most 5;
+         - `N`: plain digits, at most 9 (Mach3 numbers lines in steps of 10 up to `N999990`);
+         - `T H`: plain digits, at most 5;
          - `G`: plain digits with an optional decimal part, at most 5 digits in all, whose value
            is one of `0 1 2 3 4 17 20 21 40 43 49 80 90 91 91.1 94` (leading zeros allowed:
            `G01`);
          - `M`: plain digits (at most 5, leading zeros allowed, no sign, no decimal point) with
            the value `0 1 2 5 6 30` (`M6` for the tool change into a drag toolpath on Mach and
            LinuxCNC);
-         - on `;`-style posts the text after an `M0` or `M1` word is its message. The message is
-           the post author's template text: no tag there except `[T]` (the tool number, which
-           renders plain digits; Marlin's shipped tool change `M0 Load tool [T] then resume` uses
-           it). Each written message word must be digits only or at least two letters (with
-           `, . : ' -`), so no letter-digit word (`S1`, `P5`, `3mm`) and no single letter:
-           Marlin reads `M0 S1` as a 1 s timeout instead of a pause.
+         - a line with `M0` or `M1` is bare (owner decision 2026-11-03): an optional `N` word and
+           the `M0`/`M1`, nothing else, plus at most one plain comment (a paren comment on paren
+           posts, a `;` comment on `;`-style posts). There is no message text after `M0` on any
+           post: Marlin's `FASTER_GCODE_PARSER` reads every upper-case letter of a message as a
+           parameter and skips spaces (`M0 SPINDLE STOP 1` is `P1`, a 1 ms timeout instead of a
+           pause; `M0 TOOL UP 3` is `P3`), and Grbl and LinuxCNC drop spaces (`M0 3` is `M03`).
+           The shipped Marlin post writes its pause messages as a `;` comment on the line before
+           the bare `M0` (`; Load tool 3 then resume`, then `M0`), so the LCD shows Marlin's
+           default prompt.
          So `M/3`, `S/1000` (Grbl drops `/` anywhere), `M3.004`, `M3.00005`, `M2.99995`, `M3.5`
          (controllers round or take the integer part), `M259` (Grbl truncates to 8 bits),
          `M000000005`, `G00000091.1`, any S word, other letters (`D E R K A B C Q L O S`) and
@@ -222,9 +225,10 @@ through, so no post, block or tag can bypass them.
          on the lines actually written (so `M0[T]` writing `M05` does not count as an M0); on
          `;`-style posts only the first word of a line counts (Marlin runs one command per line,
          so `M5 M0` on one line gives no M0).
-       - Unused words on a line (Grbl rejects `M0 P1` with an error) and the arguments a
-         controller gives to allowed codes are the post author's responsibility; such a line can
-         only stop the program, never start the spindle.
+       - Unused words on other lines (Grbl rejects `G0 P1` with an error) and the arguments a
+         controller gives to allowed codes are the post author's responsibility. Such lines cannot
+         start the spindle, but they are not harmless in general: Marlin with `PAREN_COMMENTS`
+         reads `M0 P1` as a 1 ms timeout, which is why the `M0` line itself must be bare.
        - Unverified: whether Mach3/Mach4 treat `;` as a comment. Carvetto treats `;` as a
          comment only on `;`-style posts; on the paren posts a `;` in a drag section is refused.
        - O-words, `M98` subroutine calls and user M-code macros (LinuxCNC `M100`–`M199`, Mach
