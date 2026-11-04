@@ -535,6 +535,7 @@ Acceptance criteria:
   1. Small Profile parts (circles, rectangles, holes; 0.5–10 mm) at 1e6–1e9 mm give the same toolpath as at the origin (up to translation, within tolerance) in ≥ 19/20 placements, or a documented limit with a diagnostic; normal-scale output unchanged (hashes).
 
 ### T-0158 Profile: platform-stable cut start at convex tips   [status: ready]
+Owner decision 2026-11-03: adopt the fixed tie-break rule (start at the beginning of the corner arc centred on the tip), accepting that cut starts move in ~10% of such scenes.
 Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §11
 Goal: Found while merging T-0135 (MSVC CI): with "start at the vector's start point" on a convex tip, the Outside cut's round join is an arc centred on that tip, so every point of the arc is equally near the start; ArcLengthPath::project → closestPoint(ArcSpan) takes the direction of a ~1e-15 vector, which depends on rounding/libm, so GCC and MSVC choose different cut starts — tab layouts then differ (both safe; scene m1_402002_27, also m2_800016_13). Pre-existing on main/T-0127. A tie-break ("target within tolerance of an arc centre at the nearest distance → start at that arc's start", searching all arcs) was prototyped by the T-0135 coder (harness wt-T0135/build-drv pert.cpp, hsw/): stable under 1e-9 perturbations but changes start points in ~10% of scenes (owner-visible output change).
 Acceptance criteria:
@@ -561,6 +562,20 @@ Goal: Found by the T-0154 verifiers (harness t0154v7/postatk8.cpp G1–G3). On G
 Acceptance criteria:
   1. In drag pause blocks the M5 line is bare like M0 (optional N + M5 + optional comment), and drag-section lines are at most 79 characters; shipped goldens unchanged.
   2. Comments corrected and the tab shown visibly in messages; N limited to ≤ 9,999,999 on Grbl-dialect posts, or documented.
+
+### T-0162 Drag pause order and long name comments (T-0161 verifier)   [status: ready]
+Phase: 1   Module: core/post   Depends on: T-0161   ADR: 0020
+Goal: Found by the T-0161 verifier (harness t0161v1/atk9.cpp B2, README). (a) A pause block written "M0" then "M5" is accepted: the operator pause comes before the spindle stop (M5 still runs before the drag cuts). Enforce M5 before M0 in SPINDLE_OFF_PAUSE (and decide for SPINDLE_UNLOCK_PAUSE). (b) LinuxCNC counts the whole raw line, comments included, against LINELEN (254, NCE_COMMAND_TOO_LONG); shipped posts write "(Spindle stays off for diamond drag tool N: <name>)", so a ~300-character tool name aborts the program (pre-existing on main, every toolpath comment with names). Cap rendered names in comments (e.g. truncate to keep every written line ≤ 254 characters, or a lower documented limit). grblHAL may buffer comment characters (LINE_BUFFER_SIZE 257): check.
+Acceptance criteria:
+  1. (a) M0 before M5 in a pause block is refused, with tests; shipped goldens unchanged.
+  2. (b) No written line exceeds the documented limit for any tool or toolpath name length; truncation visible and tested on all 8 posts; goldens unchanged for normal names.
+
+### T-0163 Profile crash: lead-in planning on a closed walk with no spans   [status: ready]
+Phase: 1   Module: core/toolpath   Depends on: —   ADR: 0016
+Goal: Found by the T-0137 verifier (harness t0137v1/repro/seg_241_31.scn; tiny-scale page S=0.001, V-bit 30°, D=0.004): profileToolpath segfaults on main in planLeadIns — profile.cpp ~2507 runs `std::stable_sort(spans.begin() + 1, spans.end(), …)` when a closed walk has 0 spans (UB; ASan null read in the comparator). Fix the crash and audit the other walk/span loops for the empty case.
+Acceptance criteria:
+  1. The repro produces a valid result (or a clear diagnostic), never a crash; an ASan/UBSan run of the Profile generative sweeps (tiny scales, V-bits, leads on) is clean.
+  2. Output otherwise byte-identical to main (hash sweep).
 ### T-0019 Make the T-0004 AC3 timing test CPU-time based   [status: done (by T-0017: T-0004 AC3 timing uses process CPU time, cpu_time.hpp)]
 Phase: 1   Module: core/tests   Depends on: —
 Goal: "T-0004 AC3" in `open_offset_chains_test.cpp` asserts a wall-clock bound (< 0.5 s) and fails intermittently under `ctest -j8` (seen by the T-0120 coder). Convert it to process CPU time (GetProcessTimes on Windows, std::clock elsewhere) or a complexity ratio, like the other timing tests. Coordinate with T-0017 if it lands first (T-0017 AC6 touches the timing helper).
