@@ -61,6 +61,27 @@ struct Cut {
     Contour leadIn;  // planned lead-in (empty: none or none fits)
 };
 
+/// Index of the cuts' start points (T-0131), for otherStarts.
+BoxIndex startIndex(const std::vector<Cut>& cuts) {
+    std::vector<geometry::Box2> boxes;
+    boxes.reserve(cuts.size());
+    for (const Cut& c : cuts) {
+        const Vec2 p = c.walk.pointAt(0.0);
+        boxes.push_back(geometry::Box2{p, p});
+    }
+    return BoxIndex(std::move(boxes));
+}
+
+/// Index of the boxes of the cuts' walked paths (T-0131).
+BoxIndex walkIndex(const std::vector<Cut>& cuts) {
+    std::vector<geometry::Box2> boxes;
+    boxes.reserve(cuts.size());
+    for (const Cut& c : cuts) {
+        boxes.push_back(c.walk.contour().bounds());
+    }
+    return BoxIndex(std::move(boxes));
+}
+
 struct Input {
     std::vector<Contour> contours;  // closed ones oriented by nesting parity
     std::vector<bool> valid;
@@ -311,7 +332,8 @@ class ProfileBuilder {
                2.0 * radius_ + 0.7;
     }
     bool spanFits(const Cut& c, const TabSpan& t, const std::vector<double>& keepClear) const;
-    std::vector<double> otherStarts(const Cut& c, const std::vector<Cut>& otherPass) const;
+    std::vector<double> otherStarts(const Cut& c, const std::vector<Cut>& otherPass,
+                                    const BoxIndex& starts) const;
     void reportTabs();
     void collectTabMaterial(const std::vector<Cut>& cuts);
     double leadFloor(const Contour& lead) const;
@@ -356,6 +378,9 @@ class ProfileBuilder {
     Input in_;
     ClearanceField allField_;  // every valid vector, by input index
     BoxIndex inputIndex_;      // boxes of the valid vectors, by input index
+    // Rounding allowance for the T-0131 index queries: a candidate box is grown by this beyond the
+    // distance it is tested at (well above the rounding of distances at the job's coordinates).
+    double indexSlack_{1e-9};
     ProfileResult result_;
     std::vector<bool> tooLargeReported_;
 };
@@ -509,6 +534,11 @@ void ProfileBuilder::prepareInputs() {
     }
     allField_ = ClearanceField(in_.contours).excluding(std::move(invalid));
     inputIndex_ = BoxIndex(std::move(boxes));
+    const geometry::Box2& all = inputIndex_.bounds();
+    const double scale = all.isEmpty() ? 0.0
+                                       : std::max({std::fabs(all.min.x), std::fabs(all.min.y), std::fabs(all.max.x),
+                                                   std::fabs(all.max.y)});
+    indexSlack_ = std::max(tol_.distance, 1e-9) + (std::isfinite(scale) ? 1e-9 * scale : 0.0);
 }
 
 // Signed outward distance for a pass with `extra` added (last-pass allowance for roughing).
@@ -796,13 +826,17 @@ std::vector<std::size_t> ProfileBuilder::order(const std::vector<Cut>& cuts) con
 
 // Positions on `c` (arc length) of the start points of the other pass's cuts that lie near it:
 // where the other pass plunges and its lead arrives, so `c` must not have a tab there either.
-std::vector<double> ProfileBuilder::otherStarts(const Cut& c, const std::vector<Cut>& otherPass) const {
+// `starts` indexes the other pass's start points (startIndex); only those within reach of c's
+// box can be near it, and the index returns them in pass order (T-0131).
+std::vector<double> ProfileBuilder::otherStarts(const Cut& c, const std::vector<Cut>& otherPass,
+                                                const BoxIndex& starts) const {
     std::vector<double> out;
     // Generous reach: at a corner the other pass's start lies allowance / sin(half angle) away,
     // and an extra keep-clear point only shifts a tab.
     const double reach = radius_ + p_.lastPassAllowance + 2.0 * tol_.distance;
-    for (const Cut& o : otherPass) {
-        const Vec2 p = o.walk.pointAt(0.0);
+    const geometry::Box2 around = c.walk.contour().bounds().inflated(reach + indexSlack_);
+    for (std::size_t i : starts.query(around)) {
+        const Vec2 p = otherPass[i].walk.pointAt(0.0);
         const double v = c.walk.project(p);
         if (geometry::distance(c.walk.pointAt(v), p) <= reach) {
             out.push_back(v);
@@ -816,6 +850,7 @@ void ProfileBuilder::placeTabsOn(std::vector<Cut>& primary, const std::vector<Cu
     if (!p_.tabs.enabled) {
         return;
     }
+    const BoxIndex otherIndex = startIndex(otherPass);
     const double raised = p_.tabs.length + 2.0 * radius_;
     for (Cut& c : primary) {
         // At least a tool radius cut to full depth between neighbouring tabs, so they stay apart. A
@@ -826,7 +861,7 @@ void ProfileBuilder::placeTabsOn(std::vector<Cut>& primary, const std::vector<Cu
         // floating-point contraction (T-0159), so both outcomes are placed deterministically
         // instead: accepted within the slack, or with `refuseAtGap` refused within it.)
         const double moveMargin = otherPass.empty() || asT0127 ? 0.0 : 2.0 * tol_.distance + 0.01;
-        c.tabKeepClear = otherStarts(c, otherPass);
+        c.tabKeepClear = otherStarts(c, otherPass, otherIndex);
         TabPlacement tp = placeTabs(c.walk, raised, p_.tabs, c.tabKeepClear, radius_, moveMargin,
                                     asT0127 && refuseAtGap ? -kKeepClearSlack : kKeepClearSlack);
         c.tabs.clear();
@@ -1078,8 +1113,11 @@ ProfileBuilder::MatchExtras ProfileBuilder::matchRoughingTabs(std::vector<Cut>& 
         r.tabs.clear();
     }
     std::vector<std::vector<double>> roughKeepClear(rough.size());
+    const BoxIndex finishStarts = startIndex(finish);
+    const BoxIndex roughIndex = walkIndex(rough);
+    const double mapReach = radius_ + p_.lastPassAllowance + 2.0 * tol_.distance;  // as mapTab
     for (std::size_t k = 0; k < rough.size(); ++k) {
-        roughKeepClear[k] = otherStarts(rough[k], finish);
+        roughKeepClear[k] = otherStarts(rough[k], finish, finishStarts);
     }
     tabLinks_.assign(finish.size(), {});
     const double raised = p_.tabs.length + 2.0 * radius_;
@@ -1109,10 +1147,19 @@ ProfileBuilder::MatchExtras ProfileBuilder::matchRoughingTabs(std::vector<Cut>& 
             std::vector<std::pair<std::size_t, TabSpan>> mapped;
             bool ok = false;
             const bool retry = retryCover && sidedTabs_ && p_.side != ProfileSide::On;
+            // Only roughing cuts within mapTab's reach of the tab's ends or middle can pass it
+            // (the others are not `near`); the index returns them in order (T-0131).
+            geometry::Box2 tabBox;
+            tabBox.expand(f.walk.pointAt(t.a));
+            tabBox.expand(f.walk.pointAt(0.5 * (t.a + t.b)));
+            tabBox.expand(f.walk.pointAt(t.b));
+            const std::vector<std::size_t> passing =
+                roughIndex.query(tabBox.inflated(mapReach + indexSlack_));
             for (int attempt = 0; attempt < (retry ? 2 : 1) && !ok; ++attempt) {
                 mapped.clear();
                 ok = true;
-                for (std::size_t k = 0; k < rough.size() && ok; ++k) {
+                for (std::size_t pi = 0; pi < passing.size() && ok; ++pi) {
+                    const std::size_t k = passing[pi];
                     TabSpan m;
                     bool near = false;
                     if (mapTab(f, t, rough[k], m, near, attempt == 1)) {
@@ -2759,17 +2806,34 @@ ProfileResult ProfileBuilder::run() {
         // median is within the last-pass allowance + a tool radius. A finishing cut without one
         // (e.g. a small loop that vanished at the roughing distance) takes the rank of the
         // roughing cut nearest its start point.
+        //
+        // Indexed (T-0131) with the same result as trying every roughing cut in index order: a
+        // median within `match` needs 9 of the 17 points within `match` of the roughing cut, so
+        // only cuts whose box, grown by `match`, meets the points' box can supply it (the others
+        // have medians above `match` and never win). The nearest start is found by a square
+        // search round the start, grown ×4 until the best distance found is below the square's
+        // half-width by a tolerance (every cut outside the square is farther) or the square
+        // covers every cut. Candidates are visited in ascending order, so ties go as before.
         std::vector<double> key(finish.size(), static_cast<double>(rough.size()));
         const double match = p_.lastPassAllowance + radius_ + tol_.distance;
+        const double margin = indexSlack_;
+        std::vector<geometry::Box2> roughBoxes(rough.size());
+        for (std::size_t r = 0; r < rough.size(); ++r) {
+            roughBoxes[r] = rough[r].walk.contour().bounds();
+        }
+        const BoxIndex roughIndex(std::move(roughBoxes));
         for (std::size_t f = 0; f < finish.size(); ++f) {
             double best = std::numeric_limits<double>::infinity();
-            double nearestStart = std::numeric_limits<double>::infinity();
-            double startKey = key[f];
             const Vec2 start = finish[f].walk.pointAt(0.0);
-            for (std::size_t r = 0; r < rough.size(); ++r) {
+            std::array<Vec2, 17> pts;
+            geometry::Box2 ptsBox;
+            for (int k = 0; k <= 16; ++k) {
+                pts[static_cast<std::size_t>(k)] = finish[f].walk.pointAt(finish[f].walk.length() * k / 16.0);
+                ptsBox.expand(pts[static_cast<std::size_t>(k)]);
+            }
+            for (std::size_t r : roughIndex.query(ptsBox.inflated(match + margin))) {
                 std::vector<double> ds;
-                for (int k = 0; k <= 16; ++k) {
-                    const Vec2 p = finish[f].walk.pointAt(finish[f].walk.length() * k / 16.0);
+                for (const Vec2& p : pts) {
                     ds.push_back(geometry::distanceTo(rough[r].walk.contour(), p));
                 }
                 std::nth_element(ds.begin(), ds.begin() + 8, ds.end());
@@ -2777,13 +2841,33 @@ ProfileResult ProfileBuilder::run() {
                     best = ds[8];
                     key[f] = static_cast<double>(rank[r]);
                 }
-                const double ds0 = geometry::distanceTo(rough[r].walk.contour(), start);
-                if (ds0 < nearestStart) {
-                    nearestStart = ds0;
-                    startKey = static_cast<double>(rank[r]);
-                }
             }
             if (!(best <= match)) {
+                double nearestStart = std::numeric_limits<double>::infinity();
+                double startKey = static_cast<double>(rough.size());
+                for (double h = match + 2.0 * margin;; h *= 4.0) {
+                    const geometry::Box2 square{start - Vec2{h, h}, start + Vec2{h, h}};
+                    const bool all = !(h < std::numeric_limits<double>::max()) ||
+                                     square.contains(roughIndex.bounds()) || roughIndex.bounds().isEmpty();
+                    nearestStart = std::numeric_limits<double>::infinity();
+                    startKey = static_cast<double>(rough.size());
+                    const std::vector<std::size_t> found =
+                        all ? roughIndex.query(geometry::Box2{Vec2{-std::numeric_limits<double>::max(),
+                                                                   -std::numeric_limits<double>::max()},
+                                                              Vec2{std::numeric_limits<double>::max(),
+                                                                   std::numeric_limits<double>::max()}})
+                            : roughIndex.query(square);
+                    for (std::size_t r : found) {
+                        const double ds0 = geometry::distanceTo(rough[r].walk.contour(), start);
+                        if (ds0 < nearestStart) {
+                            nearestStart = ds0;
+                            startKey = static_cast<double>(rank[r]);
+                        }
+                    }
+                    if (all || nearestStart + margin < h) {
+                        break;
+                    }
+                }
                 key[f] = startKey;
             }
         }

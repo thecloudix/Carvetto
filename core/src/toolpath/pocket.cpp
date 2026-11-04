@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <memory>
 #include <optional>
 #include <string>
 #include <type_traits>
@@ -429,8 +430,12 @@ class RegionIndex {
         if (edges_.empty()) {
             return;
         }
-        const double perAxis = std::clamp(std::sqrt(static_cast<double>(edges_.size())), 1.0, 512.0);
-        cell_ = std::max({box_.width() / perAxis, box_.height() / perAxis, 1e-9});
+        // About one edge per cell, at most 2048 cells along the longer side. Square cells over the
+        // area, not over the longer side (T-0131): a long thin region (a comb) got only a few rows
+        // of cells holding hundreds of edges each. The cell size does not change any answer (every
+        // query combines its edges with OR / XOR).
+        cell_ = std::max({std::sqrt(box_.width() * box_.height() / static_cast<double>(edges_.size())),
+                          std::max(box_.width(), box_.height()) / 2048.0, 1e-9});
         nx_ = static_cast<std::size_t>(box_.width() / cell_) + 1;
         ny_ = static_cast<std::size_t>(box_.height() / cell_) + 1;
         start_.assign(nx_ * ny_ + 1, 0);
@@ -468,6 +473,47 @@ class RegionIndex {
                  [&](Vec2 a, Vec2 b) { onBoundary = onBoundary || distToSegment(p, a, b) <= tol; });
         if (onBoundary) {
             return true;
+        }
+        // Here every edge is more than `tol` from p. The crossing of a ray from p with an edge is
+        // then more than `tol` from p, and its computed position is off by a few ulps of the
+        // coordinates, so the side it is counted on is exact whenever `tol` is well above those
+        // ulps: the parity of a ray in any direction is the exact even-odd membership, the same
+        // answer as the ray to the right. So the ray goes the way with the fewest grid cells
+        // (T-0131: in a comb, a ray along the raster crossed every tooth, per link check). With a
+        // tolerance too small for that argument, the ray to the right as before.
+        const double scale = std::max({std::fabs(box_.min.x), std::fabs(box_.max.x), std::fabs(box_.min.y),
+                                       std::fabs(box_.max.y), std::fabs(p.x), std::fabs(p.y)});
+        if (tol > 1e-9 * (1.0 + scale) && std::isfinite(scale) && std::isfinite(p.x) && std::isfinite(p.y)) {
+            const std::size_t i = col(p.x);
+            const std::size_t j = row(p.y);
+            const std::size_t cells[4] = {nx_ - i, i + 1, ny_ - j, j + 1};  // right, left, up, down
+            const std::size_t way = static_cast<std::size_t>(std::min_element(cells, cells + 4) - cells);
+            if (way != 0) {
+                bool parity = false;
+                if (way == 1) {
+                    forEdges(box_.min.x - 1.0, p.y, p.x, p.y, [&](Vec2 a, Vec2 b) {
+                        if ((a.y > p.y) != (b.y > p.y)) {
+                            const double x = a.x + (p.y - a.y) * (b.x - a.x) / (b.y - a.y);
+                            if (x < p.x) {
+                                parity = !parity;
+                            }
+                        }
+                    });
+                } else {
+                    const bool up = way == 2;
+                    const double y0 = up ? p.y : box_.min.y - 1.0;
+                    const double y1 = up ? box_.max.y + 1.0 : p.y;
+                    forEdges(p.x, y0, p.x, y1, [&](Vec2 a, Vec2 b) {
+                        if ((a.x > p.x) != (b.x > p.x)) {
+                            const double y = a.y + (p.x - a.x) * (b.y - a.y) / (b.x - a.x);
+                            if (up ? y > p.y : y < p.y) {
+                                parity = !parity;
+                            }
+                        }
+                    });
+                }
+                return parity;
+            }
         }
         bool in = false;
         forEdges(p.x, p.y, box_.max.x + 1.0, p.y, [&](Vec2 a, Vec2 b) {
@@ -981,11 +1027,15 @@ struct RingBridge {
     Vec2 b;  // on ringB
 };
 
+class RingNearest;
+
 struct RingTree {
     std::vector<std::vector<Ring>> rings;
     std::vector<std::size_t> parent;
     /// Per node, built on first use by `route`: bridges joining all of the node's rings.
     mutable std::vector<std::optional<std::vector<RingBridge>>> bridges;
+    /// Per node, built on first use by `route`: an index of the node's ring edges (T-0131).
+    mutable std::vector<std::shared_ptr<const RingNearest>> nearest;
 };
 
 /// A tool's planned paths plus what the emitter needs to route travel moves between them.
@@ -1221,8 +1271,29 @@ void rasterPattern(const Group& g, const PatternContext& ctx, std::size_t cluste
 
     // Zig-zag: continue on the next row with the piece nearest to the current end when the link
     // stays inside the region and is short; otherwise restart at the first unused piece.
+    //
+    // The next row is searched only round the cursor (T-0131; the whole row made a 1,000-tooth
+    // comb quadratic): a piece is never nearer than the gap along the raster direction between
+    // the cursor and the piece's span [a·u, b·u], so a piece whose span misses the window
+    // cursor·u ± (linkLimit + slack) is farther than linkLimit, and if the nearest piece is that
+    // far the run ends anyway. Rows are sorted by a·u; with the running maximum of b·u the pieces
+    // whose span meets the window are found from the last one starting before its end, backwards,
+    // and are then tried in index order as before (same choice, same ties).
     const RegionIndex region(ringsOf(g));
     const double linkLimit = 2.0 * ctx.diameter;
+    std::vector<std::vector<double>> rowStart(n);  // a·u per piece, ascending
+    std::vector<std::vector<double>> rowReach(n);  // running maximum of b·u
+    for (std::size_t k = 0; k < n; ++k) {
+        rowStart[k].reserve(rows[k].size());
+        rowReach[k].reserve(rows[k].size());
+        double reach = -std::numeric_limits<double>::infinity();
+        for (const RasterPiece& piece : rows[k]) {
+            rowStart[k].push_back(piece.a.dot(u));
+            reach = std::max(reach, piece.b.dot(u));
+            rowReach[k].push_back(reach);
+        }
+    }
+    std::vector<std::size_t> window;
     auto emit = [&](std::size_t k, std::size_t i, bool fromA) {
         RasterPiece& piece = rows[k][i];
         piece.used = true;
@@ -1244,7 +1315,20 @@ void rasterPattern(const Group& g, const PatternContext& ctx, std::size_t cluste
                 std::optional<std::size_t> best;
                 bool bestFromA = true;
                 double bestD = std::numeric_limits<double>::infinity();
-                for (std::size_t i = 0; i < rows[k].size(); ++i) {
+                const double cu = cursor->dot(u);
+                const double slack = linkLimit + tol.distance + 1e-9 * (1.0 + std::fabs(cu) + linkLimit);
+                window.clear();
+                {
+                    const auto last = std::upper_bound(rowStart[k].begin(), rowStart[k].end(), cu + slack);
+                    for (auto i = static_cast<std::size_t>(last - rowStart[k].begin()); i-- > 0;) {
+                        if (rowReach[k][i] < cu - slack) {
+                            break;  // this piece and every earlier one end before the window
+                        }
+                        window.push_back(i);
+                    }
+                    std::reverse(window.begin(), window.end());
+                }
+                for (const std::size_t i : window) {
                     if (rows[k][i].used) {
                         continue;
                     }
@@ -1287,38 +1371,58 @@ void rasterPattern(const Group& g, const PatternContext& ctx, std::size_t cluste
 std::vector<std::size_t> nearestFirst(const std::vector<Group>& parts, const std::vector<std::size_t>& partOf) {
     const std::size_t n = parts.size();
     std::vector<Vec2> centres(n);
-    std::vector<Box2> points(n);
     Box2 all;
     for (std::size_t i = 0; i < n; ++i) {
         centres[i] = ringBox(parts[i].outer).centre();
-        points[i] = Box2{centres[i], centres[i]};
         all.expand(centres[i]);
     }
-    const BoxIndex index(points);
     const double extent = std::max({all.width(), all.height(), 1e-9});
     std::vector<char> used(n, 0);
     std::vector<std::size_t> out;
-    std::vector<std::size_t> groupIds(partOf);
-    std::sort(groupIds.begin(), groupIds.end());
-    groupIds.erase(std::unique(groupIds.begin(), groupIds.end()), groupIds.end());
-    for (const std::size_t gid : groupIds) {
+    // Members of each group, ascending (T-0131: one index per group, so a search for the group's
+    // next part never returns the other groups' parts, and a group is left as soon as all its
+    // parts are used, instead of growing the square over the whole page to find nothing). The
+    // squares, the candidates and their order are those of one index over all parts filtered by
+    // group, so the order is the same.
+    std::vector<std::pair<std::size_t, std::size_t>> byGroup(n);  // (group, part)
+    for (std::size_t i = 0; i < n; ++i) {
+        byGroup[i] = {partOf[i], i};
+    }
+    std::sort(byGroup.begin(), byGroup.end());
+    for (std::size_t g0 = 0; g0 < n;) {
+        const std::size_t gid = byGroup[g0].first;
+        std::size_t g1 = g0;
+        std::vector<std::size_t> members;
+        std::vector<Box2> points;
+        for (; g1 < n && byGroup[g1].first == gid; ++g1) {
+            members.push_back(byGroup[g1].second);
+            points.push_back(Box2{centres[members.back()], centres[members.back()]});
+        }
+        g0 = g1;
+        const BoxIndex index(std::move(points));
         std::optional<std::size_t> cur;
-        for (std::size_t i = 0; i < n; ++i) {
-            if (partOf[i] == gid && (!cur || centres[i].y < centres[*cur].y ||
-                                     (centres[i].y == centres[*cur].y && centres[i].x < centres[*cur].x))) {
+        for (const std::size_t i : members) {
+            if (!cur || centres[i].y < centres[*cur].y ||
+                (centres[i].y == centres[*cur].y && centres[i].x < centres[*cur].x)) {
                 cur = i;
             }
         }
+        std::size_t left = members.size();
         while (cur) {
             used[*cur] = 1;
+            --left;
             out.push_back(*cur);
             const Vec2 at = centres[*cur];
             cur.reset();
+            if (left == 0) {
+                break;
+            }
             double best = std::numeric_limits<double>::infinity();
             for (double h = extent / std::sqrt(static_cast<double>(n)) + 1e-9;; h *= 2.0) {
-                for (const std::size_t j : index.query(Box2{at - Vec2{h, h}, at + Vec2{h, h}})) {
+                for (const std::size_t k : index.query(Box2{at - Vec2{h, h}, at + Vec2{h, h}})) {
+                    const std::size_t j = members[k];
                     const double dd = geometry::distance(at, centres[j]);
-                    if (used[j] == 0 && partOf[j] == gid && dd < best) {
+                    if (used[j] == 0 && dd < best) {
                         best = dd;
                         cur = j;
                     }
@@ -1357,18 +1461,26 @@ struct RingPoint {
     Vec2 point;
 };
 
+/// Distance from `p` to edge `i` of ring `r` (from r[i] to the next vertex), with the parameter
+/// and the point of the edge nearest to `p`.
+double edgeDistance(const Ring& r, std::size_t i, Vec2 p, double& t, Vec2& q) {
+    const Vec2 a = r[i];
+    const Vec2 ab = r[(i + 1) % r.size()] - a;
+    const double l2 = ab.lengthSquared();
+    t = l2 > 0.0 ? std::clamp((p - a).dot(ab) / l2, 0.0, 1.0) : 0.0;
+    q = a + ab * t;
+    return geometry::distance(p, q);
+}
+
 RingPoint nearestOn(const std::vector<Ring>& rings, Vec2 p) {
     RingPoint best;
     double bestD = std::numeric_limits<double>::infinity();
     for (std::size_t ri = 0; ri < rings.size(); ++ri) {
         const Ring& r = rings[ri];
         for (std::size_t i = 0, n = r.size(); i < n; ++i) {
-            const Vec2 a = r[i];
-            const Vec2 ab = r[(i + 1) % n] - a;
-            const double l2 = ab.lengthSquared();
-            const double t = l2 > 0.0 ? std::clamp((p - a).dot(ab) / l2, 0.0, 1.0) : 0.0;
-            const Vec2 q = a + ab * t;
-            const double d = geometry::distance(p, q);
+            double t = 0.0;
+            Vec2 q;
+            const double d = edgeDistance(r, i, p, t, q);
             if (d < bestD) {
                 bestD = d;
                 best = RingPoint{ri, i, t, q};
@@ -1378,38 +1490,145 @@ RingPoint nearestOn(const std::vector<Ring>& rings, Vec2 p) {
     return best;
 }
 
-double polyLength(const std::vector<Vec2>& pts) {
-    double len = 0.0;
-    for (std::size_t i = 1; i < pts.size(); ++i) {
-        len += geometry::distance(pts[i - 1], pts[i]);
+/// `nearestOn` for one fixed set of rings, through a `BoxIndex` of the edges (T-0131: travel
+/// routes along a ring of thousands of edges searched all of them per route). A square of
+/// half-width h round p is searched, ×4 until the best distance found is below h by a margin
+/// (an edge whose box misses the square is farther than h) or the square covers every edge;
+/// candidates are tried in (ring, edge) order with the same strict comparison, so the result is
+/// `nearestOn`'s, ties included. `only` restricts the search to one ring (the result's `ring`
+/// is then that ring).
+class RingNearest {
+   public:
+    explicit RingNearest(const std::vector<Ring>& rings) {
+        std::vector<geometry::Box2> boxes;
+        double scale = 0.0;
+        for (std::size_t ri = 0; ri < rings.size(); ++ri) {
+            const Ring& r = rings[ri];
+            for (std::size_t i = 0, n = r.size(); i < n; ++i) {
+                edges_.emplace_back(ri, i);
+                boxes.emplace_back(r[i], r[(i + 1) % n]);
+                scale = std::max({scale, std::fabs(r[i].x), std::fabs(r[i].y)});
+            }
+        }
+        scale_ = scale;
+        index_ = BoxIndex(std::move(boxes));
+        const geometry::Box2& b = index_.bounds();
+        const double count = static_cast<double>(std::max<std::size_t>(edges_.size(), 1));
+        start_ = std::max(0.5 * std::max(b.width(), b.height()) / std::sqrt(count), 1e-6);
     }
-    return len;
-}
 
-/// The shorter way along ring `r` from `a` to `b` (both on `r`), end points included.
+    RingPoint nearest(const std::vector<Ring>& rings, Vec2 p, std::size_t only = kNoNode) const {
+        RingPoint best;
+        if (only != kNoNode) {
+            best.ring = only;
+        }
+        auto scan = [&](const std::vector<std::size_t>& candidates, bool all) {
+            RingPoint b = best;
+            double bestD = std::numeric_limits<double>::infinity();
+            auto visit = [&](std::size_t e) {
+                const auto [ri, i] = edges_[e];
+                if (only != kNoNode && ri != only) {
+                    return;
+                }
+                double t = 0.0;
+                Vec2 q;
+                const double d = edgeDistance(rings[ri], i, p, t, q);
+                if (d < bestD) {
+                    bestD = d;
+                    b = RingPoint{only != kNoNode ? only : ri, i, t, q};
+                }
+            };
+            if (all) {
+                for (std::size_t e = 0; e < edges_.size(); ++e) visit(e);
+            } else {
+                for (const std::size_t e : candidates) visit(e);
+            }
+            return std::pair<RingPoint, double>{b, bestD};
+        };
+        if (edges_.size() <= 32 || !std::isfinite(p.x) || !std::isfinite(p.y)) {
+            return scan({}, true).first;
+        }
+        const geometry::Box2& bounds = index_.bounds();
+        const double margin = 1e-9 + 1e-10 * std::max({scale_, std::fabs(p.x), std::fabs(p.y)});
+        for (double h = start_;; h *= 4.0) {
+            const geometry::Box2 square{p - Vec2{h, h}, p + Vec2{h, h}};
+            const bool all = !std::isfinite(h) || square.contains(bounds);
+            const auto [b, d] = scan(all ? std::vector<std::size_t>{} : index_.query(square), all);
+            if (all || d + margin < h) {
+                return b;
+            }
+        }
+    }
+
+   private:
+    std::vector<std::pair<std::size_t, std::size_t>> edges_;  // (ring, edge), in nearestOn's order
+    BoxIndex index_;
+    double scale_{0.0};
+    double start_{1e-6};
+};
+
+/// The shorter way along ring `r` from `a` to `b` (both on `r`), end points included: forward
+/// (a, r[a.edge + 1], …, r[b.edge], b) or backward (a, r[a.edge], …, r[b.edge + 1], b), the
+/// forward one when its length (summed in order) is <= the backward one's.
+///
+/// Both ways are walked together, the one with the shorter length so far stepping (T-0131: a
+/// ring of thousands of edges was walked all round per route). A sum of lengths in order never
+/// decreases, so once one way is complete and the other's partial sum already decides the
+/// comparison, the rest of the longer way cannot change it: the choice, and the points, are
+/// those of comparing the two complete sums.
 std::vector<Vec2> walkRing(const Ring& r, const RingPoint& a, const RingPoint& b) {
     const std::size_t n = r.size();
-    std::vector<Vec2> fwd{a.point};
-    if (!(a.edge == b.edge && a.t <= b.t)) {
-        for (std::size_t i = (a.edge + 1) % n;; i = (i + 1) % n) {
-            fwd.push_back(r[i]);
-            if (i == b.edge) {
-                break;
-            }
+    struct Way {
+        std::size_t count;    // ring vertices between the end points
+        bool forward;
+        std::size_t done;     // points visited after a (vertices, then b)
+        double length;
+        Vec2 last;
+    };
+    const std::size_t fwdCount = a.edge == b.edge && a.t <= b.t ? 0 : (b.edge + 2 * n - a.edge - 1) % n + 1;
+    const std::size_t bwdCount = a.edge == b.edge && a.t >= b.t ? 0 : (a.edge + 2 * n - b.edge - 1) % n + 1;
+    Way fwd{fwdCount, true, 0, 0.0, a.point};
+    Way bwd{bwdCount, false, 0, 0.0, a.point};
+    auto pointOf = [&](const Way& w, std::size_t k) {  // k-th point after a, k < count + 1
+        if (k == w.count) {
+            return b.point;
+        }
+        return w.forward ? r[(a.edge + 1 + k) % n] : r[(a.edge + n - k % n) % n];
+    };
+    auto complete = [](const Way& w) { return w.done == w.count + 1; };
+    auto step = [&](Way& w) {
+        const Vec2 q = pointOf(w, w.done);
+        w.length += geometry::distance(w.last, q);
+        w.last = q;
+        ++w.done;
+    };
+    bool forward = true;
+    for (;;) {
+        if (complete(fwd) && complete(bwd)) {
+            forward = fwd.length <= bwd.length;
+            break;
+        }
+        if (complete(fwd) && bwd.length >= fwd.length) {
+            forward = true;  // backward total >= its partial sum >= forward total
+            break;
+        }
+        if (complete(bwd) && fwd.length > bwd.length) {
+            forward = false;  // forward total >= its partial sum > backward total
+            break;
+        }
+        if (!complete(fwd) && (complete(bwd) || fwd.length <= bwd.length)) {
+            step(fwd);
+        } else {
+            step(bwd);
         }
     }
-    fwd.push_back(b.point);
-    std::vector<Vec2> bwd{a.point};
-    if (!(a.edge == b.edge && a.t >= b.t)) {
-        for (std::size_t i = a.edge;; i = (i + n - 1) % n) {
-            bwd.push_back(r[i]);
-            if (i == (b.edge + 1) % n) {
-                break;
-            }
-        }
+    const Way& w = forward ? fwd : bwd;
+    std::vector<Vec2> out{a.point};
+    out.reserve(w.count + 2);
+    for (std::size_t k = 0; k <= w.count; ++k) {
+        out.push_back(pointOf(w, k));
     }
-    bwd.push_back(b.point);
-    return polyLength(fwd) <= polyLength(bwd) ? fwd : bwd;
+    return out;
 }
 
 /// Closest pair of points between rings `ra` and `rb` (vertex/edge pairs, both ways).
@@ -1481,7 +1700,7 @@ std::vector<RingBridge> ringBridges(const std::vector<Ring>& rings, double tol) 
 /// rings and across bridges, ring to ring by the fewest bridges (BFS). Empty when the bridges do
 /// not connect the two rings.
 std::vector<Vec2> acrossRings(const std::vector<Ring>& rings, const std::vector<RingBridge>& bridges,
-                              const RingPoint& a, const RingPoint& b) {
+                              const RingNearest& nearest, const RingPoint& a, const RingPoint& b) {
     if (a.ring == b.ring) {
         return walkRing(rings[a.ring], a, b);
     }
@@ -1513,10 +1732,8 @@ std::vector<Vec2> acrossRings(const std::vector<Ring>& rings, const std::vector<
         const std::size_t from = forward ? br.ringA : br.ringB;
         const Vec2 pf = forward ? br.a : br.b;
         const Vec2 pt = forward ? br.b : br.a;
-        RingPoint leave = nearestOn({rings[from]}, pf);
-        leave.ring = from;
-        RingPoint arrive = nearestOn({rings[r]}, pt);
-        arrive.ring = r;
+        const RingPoint leave = nearest.nearest(rings, pf, from);
+        const RingPoint arrive = nearest.nearest(rings, pt, r);
         hops.emplace_back(leave, arrive);
         r = from;
     }
@@ -1562,10 +1779,19 @@ std::vector<Vec2> route(const RingTree& tree, std::size_t na, Vec2 P, std::size_
     if (lca == kNoNode) {
         return {};
     }
+    if (tree.nearest.size() < tree.rings.size()) {
+        tree.nearest.resize(tree.rings.size());
+    }
+    auto nearestIn = [&](std::size_t node) -> const RingNearest& {
+        if (!tree.nearest[node]) {
+            tree.nearest[node] = std::make_shared<const RingNearest>(tree.rings[node]);
+        }
+        return *tree.nearest[node];
+    };
     auto climb = [&](const std::vector<std::size_t>& anc, Vec2 from) {
         std::vector<Vec2> pts{from};
         for (std::size_t i = 1; i < anc.size() && anc[i - 1] != lca; ++i) {
-            pts.push_back(nearestOn(tree.rings[anc[i]], pts.back()).point);
+            pts.push_back(nearestIn(anc[i]).nearest(tree.rings[anc[i]], pts.back()).point);
         }
         return pts;
     };
@@ -1580,9 +1806,10 @@ std::vector<Vec2> route(const RingTree& tree, std::size_t na, Vec2 P, std::size_
         if (!tree.bridges[node]) {
             tree.bridges[node] = ringBridges(rings, tol);
         }
-        const RingPoint a = nearestOn(rings, up.back());
-        const RingPoint b = nearestOn(rings, down.back());
-        mid = acrossRings(rings, *tree.bridges[node], a, b);
+        const RingNearest& edges = nearestIn(node);
+        const RingPoint a = edges.nearest(rings, up.back());
+        const RingPoint b = edges.nearest(rings, down.back());
+        mid = acrossRings(rings, *tree.bridges[node], edges, a, b);
         if (!mid.empty()) {
             break;
         }
@@ -1590,8 +1817,8 @@ std::vector<Vec2> route(const RingTree& tree, std::size_t na, Vec2 P, std::size_
             return {};
         }
         node = tree.parent[node];
-        up.push_back(nearestOn(tree.rings[node], up.back()).point);
-        down.push_back(nearestOn(tree.rings[node], down.back()).point);
+        up.push_back(nearestIn(node).nearest(tree.rings[node], up.back()).point);
+        down.push_back(nearestIn(node).nearest(tree.rings[node], down.back()).point);
     }
     std::vector<Vec2> way = up;
     way.insert(way.end(), mid.begin(), mid.end());
