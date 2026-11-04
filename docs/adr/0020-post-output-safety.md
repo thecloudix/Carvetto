@@ -1,6 +1,6 @@
 # ADR-0020: Post output safety (text sanitising, number limits)
 
-Date: 2026-11-01 · Status: proposed (T-0133), amended 2026-11-02 (T-0134, T-0136), 2026-11-03 (T-0154)
+Date: 2026-11-01 · Status: proposed (T-0133), amended 2026-11-02 (T-0134, T-0136), 2026-11-03 (T-0154), 2026-11-04 (T-0161, T-0162)
 
 ## Context
 The post interpreter (ADR-0011) wrote text tags (`[TOOLNAME]`, `[TOOLPATH_NAME]`, `[TP_FILENAME]`,
@@ -78,6 +78,30 @@ through, so no post, block or tag can bypass them.
        comments are an error on LinuxCNC; Grbl and Mach end a comment at the first `)`, so text
        after it runs as G-code (corrected in T-0154; in a drag section such templates are refused,
        see below).
+   - **Line length** (T-0162). No line is written longer than **250 characters** (line ending
+     excluded), on every post, in every block. LinuxCNC reads a program line with
+     `fgets(raw_line, LINELEN, …)` (LINELEN 255) and refuses it with `NCE_COMMAND_TOO_LONG` when
+     the read reaches 254 characters, line ending included, aborting the program; grblHAL keeps
+     every character of a line, comments included, in a 257-byte buffer (`LINE_BUFFER_SIZE`, 256
+     characters) and drops a longer line with `error:overflow` (classic Grbl and Marlin skip
+     comment characters; see the 79-character drag-section bound below). 250 plus CR LF is 252,
+     below both. Before T-0162 a ~300-character tool name in `(Tool [T]: [TOOLNAME])` aborted a
+     LinuxCNC program.
+     - A line holding a text tag that comes out longer is expanded again with every text value
+       that lands in a comment (paren or `;`) cut to at most `cap` characters, where a cut value
+       keeps its first `cap − 3` characters and ends in `...`, so the cut is visible. `cap` is the
+       largest value that fits (one cap for all values of the line, so a short name next to a
+       long one stays whole). The cut is applied to the sanitised value, whose every prefix is
+       as safe as the whole (no `)` closes the comment, commas in an active-comment run are
+       already `_`); later values on the line are judged against the cut text. Line numbers and
+       modal values are restored before each expansion, so the written line advances them once.
+     - A line that still does not fit is refused: template text longer than the limit, a long
+       text value in live G-code (not a comment, so not cut), or so many text values that `...`
+       for each is too long (`the line '…' would be 251 characters long; lines are limited to 250
+       (LinuxCNC and grblHAL refuse longer lines)`).
+     - The shipped posts' lines are far shorter (numbers are bounded above), so only names are
+       ever cut: the goldens are unchanged, and a test posts names of 0 to 5000 bytes in every
+       text tag through all eight posts.
    - Text placed outside any comment (live G-code) is only stripped of control characters, so it
      cannot start a new block. What it says is still written as G-code: putting a text tag there
      is the post author's choice. The shipped posts only place text tags inside comments; a test
@@ -245,6 +269,17 @@ through, so no post, block or tag can bypass them.
          on the lines actually written (so `M0[T]` writing `M05` does not count as an M0); on
          `;`-style posts only the first word of a line counts (Marlin runs one command per line,
          so `M5 M0` on one line gives no M0).
+       - **Order** (T-0162): in both pause blocks the first `M5` comes before every `M0` and `M1`.
+         A block written `M0` then `M5` paused for the operator while the spindle could still
+         turn; an `M1` (optional stop) is an operator pause too. Checked on the template text
+         before anything is written (same word reading as above: lines starting with `/` and
+         text after `;` do not count, so `/M5` then `M0` is refused) and again on the lines
+         actually written; the run is refused with `… block pauses (M0 or M1) before it stops the
+         spindle (M5); write the M5 first`. More pauses and stops after the first `M5` are fine.
+         `SPINDLE_UNLOCK_PAUSE` follows the same rule although the spindle is already off at that
+         point (coder's choice, reported to the director): the two blocks then have one rule, the
+         shipped posts already write `M5` first in both, and the operator is never told to unlock
+         a spindle before the program has stopped it.
        - Unused words on other lines (Grbl rejects `G0 P1` with an error) and the arguments a
          controller gives to allowed codes are the post author's responsibility. Such lines cannot
          start the spindle, but they are not harmless in general: Marlin with `PAREN_COMMENTS`
@@ -306,7 +341,6 @@ through, so no post, block or tag can bypass them.
   the drag toolpath (it never spins the drag tool). The unlock pause covers a locked spindle
   before it restarts, also on a controller whose tool change involves no operator.
 - Signs are not checked for coordinates and other values; since T-0134 spindle speed, feeds
-  and dwells must be above zero (see above), and
-  overly long names are not shortened; a controller with a line-length limit rejects such a line,
-  which stops the program safely.
+  and dwells must be above zero (see above). Since T-0162 overly long names are cut to keep each
+  line within 250 characters (above); the job file keeps them whole.
 - ADR-0011 §10 (`SUBSTITUTE` applies to text tags only) still holds; this sanitising runs after it.
