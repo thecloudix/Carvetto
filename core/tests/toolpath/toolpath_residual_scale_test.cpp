@@ -299,7 +299,9 @@ TEST_CASE("T-0131 d: tabs with a separate last pass are matched near-linearly",
     CHECK(rl.toolpath.count(MoveKind::Retract) >= nLarge * 3 / 2);
     CHECK(t.ratio() <= 2.5);
     if constexpr (kRelease) {
-        CHECK(t.largeSeconds < 10.0);
+        // A loose guard: the criterion is linearity (the ratio). Windows CI Release measures
+        // ~10.5 s at 624 vectors since T-0159 places T-0127's tab candidate both ways.
+        CHECK(t.largeSeconds < 30.0);
     }
 }
 
