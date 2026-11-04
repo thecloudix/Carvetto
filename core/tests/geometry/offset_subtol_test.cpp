@@ -73,8 +73,9 @@ struct Report {
 //    allowance: each span sampled at 400 points.
 //  - Round: every point of the requested-side offset of an input span, and of a Round corner arc
 //    about a vertex, that is at least d from the rest of the input lies within the tolerance of
-//    the result. Points within d + tol / 2 of another span are left out: there the offset may run
-//    along a strip or loop narrower than the tolerance, which offset.hpp documents as dropped.
+//    the result. A miss is exempt only where the region beyond d there is thinner than the
+//    tolerance (a strip or loop narrower than the tolerance, documented as dropped), and the loci of
+//    a sub-tolerance near-reversal are not required (owner decision (c), see below).
 //  - Junctions are exact where a line is involved and no span steps back (shared checker).
 Report checkOffset(const Contour& in, const std::vector<Contour>& out, double d, OffsetSide side,
                    JoinType join) {
@@ -109,10 +110,43 @@ Report checkOffset(const Contour& in, const std::vector<Contour>& out, double d,
         return r;
     }
     const double sgn = side == OffsetSide::Left ? 1.0 : -1.0;
-    const double tie = d + 0.5 * kTol.distance;
-    auto expect = [&](Vec2 q) {
+    const double valid = d + 1e-6;  // farther than this from every other span: a point of the boundary
+    // A miss is exempt only where the region beyond d is thinner than the tolerance along the outward
+    // normal (the documented drop of strips and loops narrower than the tolerance).
+    auto thin = [&](Vec2 q, Vec2 normal) {
+        for (int k = 1; k <= 32; ++k) {
+            const Vec2 t = q + normal * (kTol.distance * k / 32.0);
+            if (distanceToInput(t, in) < d - 1e-9 * std::max(1.0, d)) {
+                return true;
+            }
+        }
+        return false;
+    };
+    // Owner decision (c): a turn of more than 135 degrees at a span no longer than the tolerance never
+    // flips the offset to the other side, so the corner arcs and span offsets of such a sub-tolerance
+    // near-reversal and of the sub-tolerance spans within 2 tol of it are not part of the requested side.
+    std::vector<Vec2> reversals;
+    for (std::size_t i = 0; i < in.spans.size(); ++i) {
+        const std::size_t j = i + 1 == in.spans.size() ? 0 : i + 1;
+        if ((j == 0 && !in.closed) || length(in.spans[i]) <= 0.0 || length(in.spans[j]) <= 0.0) {
+            continue;
+        }
+        if (length(in.spans[i]) > kTol.distance && length(in.spans[j]) > kTol.distance) {
+            continue;
+        }
+        const Vec2 t1 = tangentAt(in.spans[i], 1.0);
+        const Vec2 t2 = tangentAt(in.spans[j], 0.0);
+        if (std::fabs(std::atan2(t1.cross(t2), t1.dot(t2))) > 0.75 * kPi) {
+            reversals.push_back(endPoint(in.spans[i]));
+        }
+    }
+    auto nearReversal = [&](Vec2 v) {
+        return std::any_of(reversals.begin(), reversals.end(),
+                           [&](Vec2 w) { return distance(v, w) <= 2.0 * kTol.distance; });
+    };
+    auto expect = [&](Vec2 q, Vec2 normal) {
         const double miss = distanceToOutput(q, out);
-        if (miss > kTol.distance) {
+        if (miss > kTol.distance && !thin(q, normal)) {
             if (r.misses == 0) {
                 r.first = "coverage miss at (" + std::to_string(q.x) + ", " + std::to_string(q.y) + ")";
             }
@@ -128,14 +162,18 @@ Report checkOffset(const Contour& in, const std::vector<Contour>& out, double d,
     }
     for (const std::size_t i : real) {
         const Span& s = in.spans[i];
+        if (length(s) <= kTol.distance && (nearReversal(startPoint(s)) || nearReversal(endPoint(s)))) {
+            continue;
+        }
         for (int k = 1; k <= 9; ++k) {
             const Vec2 p = pointAt(s, k / 10.0);
-            const Vec2 q = p + tangentAt(s, k / 10.0).perp() * (sgn * d);
+            const Vec2 normal = tangentAt(s, k / 10.0).perp() * sgn;
+            const Vec2 q = p + normal * d;
             if (std::fabs(distanceToSpan(q, s) - d) > 1e-9 * std::max(1.0, d)) {
                 continue;  // an arc whose offset radius on this side is negative
             }
-            if (distanceToInput(q, in, i) >= tie) {
-                expect(q);
+            if (distanceToInput(q, in, i) >= valid) {
+                expect(q, normal);
             }
         }
     }
@@ -150,13 +188,17 @@ Report checkOffset(const Contour& in, const std::vector<Contour>& out, double d,
         if (sgn * t1.cross(t2) >= -1e-9 || t1.dot(t2) < -0.999999) {
             continue;  // not an outside corner on this side (or an exact reversal, either way round)
         }
+        const Vec2 v = endPoint(in.spans[a]);
+        if (nearReversal(v)) {
+            continue;
+        }
         const double a1 = (t1.perp() * sgn).angle();
         const double sweep = std::remainder((t2.perp() * sgn).angle() - a1, kTwoPi);
-        const Vec2 v = endPoint(in.spans[a]);
         for (int k2 = 1; k2 <= 4; ++k2) {
-            const Vec2 q = v + Vec2::fromAngle(a1 + sweep * k2 / 5.0, d);
-            if (distanceToInput(q, in) >= d - 1e-9 && distanceToInput(q, in, a, b) >= tie) {
-                expect(q);
+            const Vec2 u = Vec2::fromAngle(a1 + sweep * k2 / 5.0);
+            const Vec2 q = v + u * d;
+            if (distanceToInput(q, in) >= d - 1e-9 && distanceToInput(q, in, a, b) >= valid) {
+                expect(q, u);
             }
         }
     }
@@ -665,5 +707,97 @@ TEST_CASE("T-0009 round 2: dense sub-tolerance input offsets in about linear tim
     for (const JoinType join : kJoins) {
         const auto out = offsetOf(in, 1.0, OffsetSide::Left, join);
         CHECK(minDistanceToInput(out, in) >= 1.0 - allowance(1.0, Vec2{}));
+    }
+}
+
+TEST_CASE("T-0009 round 3: a near-reversal onto a sub-tolerance end span does not swallow valid offset (0xf0003fad)",
+          "[geometry][offset][open][t0009]") {
+    // Round-2 verifier seed, shrunk to 37 spans: an arc of radius 6.13 split by a 9.5e-4 mm piece,
+    // and at the path's end a 171-degree turn onto a 3.6e-15 mm span. The Sharp and Square corner
+    // there reached out 1.5 d along that span and its region swallowed 1.6 mm of the arc's inner
+    // offset. Owner decision (c): such a sub-tolerance near-reversal gets no join.
+    const Contour in = openContour({
+        ArcSpan{{-9.7657935140949483, 3.6832692691671056}, 6.1314298168347152, 1.5727673337095269, 5.0807484666166811, ArcDirection::CCW},
+        ArcSpan{{-9.7657935140949483, 3.6832692691671056}, 6.1314298168347152, 5.0807484666166811, 5.0809032214833456, ArcDirection::CCW},
+        ArcSpan{{-9.7657935140949483, 3.6832692691671056}, 6.1314298168347152, 5.0809032214833456, 5.9757298090547959, ArcDirection::CCW},
+        LineSpan{{-3.9218866236763743, 1.8276874588207921}, {-3.8414065016546917, 1.8310445690061281}},
+        LineSpan{{-3.8414065016546917, 1.8310445690061281}, {-3.6610307423528958, 1.8233317773581352}},
+        LineSpan{{-3.6610307423528958, 1.8233317773581352}, {-3.5620060331626431, 1.8069878609698211}},
+        LineSpan{{-3.5620060331626431, 1.8069878609698211}, {-3.4723562559811869, 1.7778729002709919}},
+        LineSpan{{-3.4723562559811869, 1.7778729002709919}, {-3.4035310245848027, 1.7326523723109197}},
+        LineSpan{{-3.4035310245848027, 1.7326523723109197}, {-3.3669799527497646, 1.6679917541388767}},
+        ArcSpan{{-3.4013608806846363, 1.5485257590971973}, 0.12431481077072599, 1.2905801399630836, -3.0587451747935508, ArcDirection::CW},
+        LineSpan{{-3.5252493053432974, 1.5382383681472691}, {-3.5257646604258466, 1.5376487673821662}},
+        LineSpan{{-3.5257646604258466, 1.5376487673821662}, {-3.5252493053432974, 1.5382383681472691}},
+        LineSpan{{-3.5252493053432974, 1.5382383681472691}, {-4.0940583747297161, 2.5734413416737265}},
+        LineSpan{{-4.0940583747297161, 2.5734413416737265}, {-4.9039182805254775, 4.0473443220252676}},
+        LineSpan{{-4.9039182805254775, 4.0473443220252676}, {-6.4001859664064646, 8.4202933914154947}},
+        LineSpan{{-6.4001859664064646, 8.4202933914154947}, {-6.400185964610742, 8.4202933909548392}},
+        LineSpan{{-6.400185964610742, 8.4202933909548392}, {-6.399989987003126, 8.4209013093871476}},
+        LineSpan{{-6.399989987003126, 8.4209013093871476}, {-6.4004355298061473, 8.4208971859457904}},
+        LineSpan{{-6.4004355298061473, 8.4208971859457904}, {-6.4004089549716632, 8.4199486785755404}},
+        LineSpan{{-6.4004089549716632, 8.4199486785755404}, {-6.4001858117894761, 8.4203908350593011}},
+        LineSpan{{-6.4001858117894761, 8.4203908350593011}, {-6.4003724985285251, 8.4208863903481816}},
+        LineSpan{{-6.4003724985285251, 8.4208863903481816}, {-6.4001859664174887, 8.4202933914477143}},
+        LineSpan{{-6.4001859664174887, 8.4202933914477143}, {-4.9227493885352196, 7.8158725890008522}},
+        LineSpan{{-4.9227493885352196, 7.8158725890008522}, {-3.292449192123907, 7.1489151251775063}},
+        ArcSpan{{-3.1234917151611863, 7.5619120894793275}, 0.4462209335566048, -1.9591237013597871, 1.3156439703307843, ArcDirection::CCW},
+        ArcSpan{{-3.0109582368434329, 7.9933434739771254}, 0.00035455977183647484, 1.3156439703303258, 3.6003834139845878, ArcDirection::CCW},
+        LineSpan{{-3.0112761311219174, 7.9931864521330676}, {-3.0108687484972774, 7.993686554824313}},
+        LineSpan{{-3.0108687484972774, 7.993686554824313}, {-7.0976954952268816, 9.059684174878905}},
+        LineSpan{{-7.0976954952268816, 9.059684174878905}, {-7.1902037239605798, 8.486752939519576}},
+        LineSpan{{-7.1902037239605798, 8.486752939519576}, {-7.1902037240120489, 8.4867529395271912}},
+        LineSpan{{-7.1902037240120489, 8.4867529395271912}, {-7.2076108830038335, 8.3789451772127546}},
+        LineSpan{{-7.2076108830038335, 8.3789451772127546}, {-7.3820328583287953, 7.2986975153056504}},
+        LineSpan{{-7.3820328583287953, 7.2986975153056504}, {-7.3820339809405038, 7.2986971145173518}},
+        LineSpan{{-7.3820339809405038, 7.2986971145173518}, {-7.3821820032373129, 7.2982094346449315}},
+        LineSpan{{-7.3821820032373129, 7.2982094346449315}, {-7.3820328583287953, 7.2986975153056504}},
+        LineSpan{{-7.3820328583287953, 7.2986975153056504}, {-7.7139098457922044, 5.2432836886924115}},
+        LineSpan{{-7.7139098457922044, 5.2432836886924115}, {-7.7139098457922062, 5.243283688692415}},
+    });
+    const double d = 3.753745644092505;
+    for (const JoinType join : kJoins) {
+        CAPTURE(static_cast<int>(join));
+        const auto out = offsetOf(in, d, OffsetSide::Left, join, 2.0341221181052518);
+        requireClean(checkOffset(in, out, d, OffsetSide::Left, join));
+        // The arc's inner offset (radius r - d about its centre) is there between 3.9 and 4.8 rad.
+        const Vec2 centre{-9.7657935140949483, 3.6832692691671056};
+        for (int k = 0; k <= 18; ++k) {
+            const double a = 3.9 + 0.9 * k / 18.0;
+            CHECK(distanceToOutput(centre + Vec2::fromAngle(a, 6.1314298168347152 - d), out) <= kTol.distance);
+        }
+    }
+}
+
+TEST_CASE("T-0009 round 3: a closed loop with a sub-tolerance near-reversal stays closed on its side (0xe0000119)",
+          "[geometry][offset][open][t0009]") {
+    // v9 seed: a micro-cluster with a near-reversal in a closed loop. The Round join at the reversal
+    // wrapped round to the other side, and the Right offset came back as one open chain with a
+    // 0.67 mm gap (owner decision (c): it stays on the requested side and closed).
+    Contour in;
+    in.closed = true;
+    in.spans = {
+        LineSpan{{-2688.0930095459198, -2675.2263265138004}, {-2688.0930095459198, -2678.0977115237588}},
+        LineSpan{{-2688.0930095459198, -2678.0977115237588}, {-2688.0930095517188, -2678.0977115243759}},
+        LineSpan{{-2688.0930095517188, -2678.0977115243759}, {-2688.0936053609507, -2678.0985146503681}},
+        LineSpan{{-2688.0936053609507, -2678.0985146503681}, {-2688.0936053599016, -2678.0985146513608}},
+        LineSpan{{-2688.0936053599016, -2678.0985146513608}, {-2688.0943167007817, -2678.0979507225161}},
+        LineSpan{{-2688.0943167007817, -2678.0979507225161}, {-2688.0943265236151, -2678.0978924870701}},
+        LineSpan{{-2688.0943265236151, -2678.0978924870701}, {-2688.0943574179801, -2678.0978541169575}},
+        LineSpan{{-2688.0943574179801, -2678.0978541169575}, {-2688.0930095459198, -2678.0995265700581}},
+        LineSpan{{-2688.0930095459198, -2678.0995265700581}, {-2687.2990340859446, -2678.5493170777045}},
+        LineSpan{{-2687.2990340859446, -2678.5493170777045}, {-2686.5163241374321, -2678.0801969776116}},
+        LineSpan{{-2686.5163241374321, -2678.0801969776116}, {-2686.577307465815, -2675.5934121983678}},
+        LineSpan{{-2686.577307465815, -2675.5934121983678}, {-2686.5770682204861, -2675.5924412392169}},
+        LineSpan{{-2686.5770682204861, -2675.5924412392169}, {-2686.612981011408, -2674.1387124869143}},
+        LineSpan{{-2686.612981011408, -2674.1387124869143}, {-2688.0930095459198, -2675.2263265138004}},
+    };
+    const double d = 0.91252773458987702;
+    for (const JoinType join : kJoins) {
+        CAPTURE(static_cast<int>(join));
+        const auto out = offsetOf(in, d, OffsetSide::Right, join);
+        REQUIRE(out.size() == 1);
+        CHECK(out.front().closed);
+        requireClean(checkOffset(in, out, d, OffsetSide::Right, join));
     }
 }

@@ -95,7 +95,8 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// described there.
 ///
 /// Spans shorter than the tolerance (T-0009): every line and arc of positive length is offset
-/// like any other, however short, so the properties above hold for the input as given. Only a
+/// like any other, however short, so the distance and Round properties above hold for the input as
+/// given, and so does coverage except at the sub-tolerance near-reversals described below. Only a
 /// span of zero length is left out (it has no direction; the corner is taken between its
 /// neighbours). A Bezier span is polygonised within tol.chordal, every segment of positive
 /// length kept, and the properties hold for that polygon. A corner between two spans no longer
@@ -107,6 +108,19 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// turns: its two end tangents get their Round joins and the turn between them an inside-corner
 /// connector, instead of the arc's inverted offset. Every point of such an arc lies within twice
 /// its radius of its end points, so this is that arc's offset to within twice its radius.
+/// A sub-tolerance near-reversal never flips the offset to the other side (owner decision): a
+/// corner that turns by more than 135 degrees at a span no longer than the tolerance gets no join
+/// on either side, only an inside-corner connector, so the offset stays on the requested side and
+/// a closed loop stays closed. The run of sub-tolerance spans round such a turn (consecutive spans
+/// within a box of diagonal 2 x tol.distance) is joined as one corner between the longer spans
+/// before and after it, with the requested join and the run's two ends as a gap, where it reverses
+/// as a whole (more than 135 degrees), as if those spans were left out; otherwise Round arcs of
+/// radius |distance| about its extreme points keep the part of the neighbourhood that sticks out
+/// on the requested side. At an open path's end such a run simply ends the offset with the longer
+/// neighbour's. The corner arcs and span offsets of such a turn and run (which would wrap round to
+/// the other side) are not part of the requested side's coverage. Known residual (5 of 22,702
+/// fuzzed inputs, ADR-0012 A2): the region of a Sharp or Square corner kept at a sub-tolerance
+/// span can take in up to ~1 mm of valid offset (as main does in some of them).
 ///
 /// Approach: build the raw offset (offset spans + joins + inside-corner connectors), split it
 /// at its self-intersections and where it crosses the rest of the |distance|-neighbourhood
@@ -137,12 +151,14 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// slower than Round, because every corner's mitre or chamfer reaches out about |distance| and overlaps
 /// hundreds of its neighbours', which multiplies the pieces to split and prune (pitch 0.02, amplitude 1,
 /// |distance| 7, 1000 spans, Release: about 21 s against 0.7 s for Round; tracked as T-0016).
-/// Input made largely of spans shorter than the tolerance is offset in about linear time too: next
+/// Input made largely of spans shorter than the tolerance is offset in near-linear time too: next
 /// to such spans, stretches of raw elements within the pruning margin of an input vertex are left
-/// out before splitting, and distances are found through a hierarchy of convex hulls (Release,
-/// |distance| 1, worst join and side, 8000 spans: a micro-cluster of 1e-7 mm steps before a line
-/// 0.3 s, a 2e-4 x 3e-4 mm zig-zag 0.13 s, random walks of 0.5 um steps 0.26 s, a closed polyline of
-/// 0.4 um spans 2 s, each about 2-2.5x per doubling).
+/// out before splitting, and distances are found through a hierarchy of convex hulls (Release, CPU,
+/// |distance| 1, worst join and side, 8000 spans, as measured by the T-0009 verifier on a shared
+/// machine: a micro-cluster of 1e-7 mm steps before a line, a 2e-4 x 3e-4 mm zig-zag and random
+/// walks of 0.5 um steps well under a second at about 2-2.5x per doubling; a closed polyline of
+/// 0.4 um spans 2.7-3.1 s at 2.6-3.0x per doubling). The 2.5x-per-doubling bound for such input
+/// belongs to T-0016.
 /// See ADR-0012.
 ///
 /// Several chains: when distant parts of the path come within 2 x |distance| of each other the

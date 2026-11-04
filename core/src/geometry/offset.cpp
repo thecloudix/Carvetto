@@ -2795,7 +2795,165 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
     // (T-0009, verifier 0xd93009e2). It gets the connector between its end normals too, with Round
     // corners on both sides (the centre point is a round tip).
     bool roundAfter = false;
+    // Sub-tolerance near-reversals (owner decision (c), T-0009 round 3): a corner that turns by more
+    // than 135 degrees at a span no longer than the tolerance gets no join on either side, only the
+    // straight connector of an inside corner. Its outside join would sweep round the turn to the
+    // other side of the path: a near-reversal inside a micro-cluster made the Round offset of a
+    // closed loop wrap round and come back open (the missing stretch emitted on the other side),
+    // and a Sharp or Square corner at a 171-degree turn onto a 3.6e-15 mm end span reached out
+    // 1.5 d along that span and swallowed 1.6 mm of valid offset. The offset stays on the
+    // requested side; the corner region of such a sub-tolerance turn is not part of it.
+    auto nearReversal = [&](const Span& a, const Span& b) {
+        if (length(a) > tol.distance && length(b) > tol.distance) {
+            return false;
+        }
+        const Vec2 ta = tangentAt(a, 1.0);
+        const Vec2 tb = tangentAt(b, 0.0);
+        return std::fabs(std::atan2(ta.cross(tb), ta.dot(tb))) > 0.75 * kPi;
+    };
+    // The run of sub-tolerance spans round such a turn: consecutive spans no longer than the
+    // tolerance, all within a box of diagonal 2 tol. Where the run as a whole reverses (a turn of more
+    // than 135 degrees from the longer span before it to the one after it) it is joined as one corner
+    // between those two spans, with its ends as a gap, as on main. Otherwise its extreme points still
+    // bound the neighbourhood where they stick out past its neighbours' offsets on the requested
+    // side: Round arcs of radius d about the run's convex hull points, over its net turn and a quarter
+    // turn beyond on either side, keep that part (pruning cuts the rest). At an open path's end
+    // neither: the offset ends with the longer neighbour's.
+    const std::size_t n = input.size();
+    auto isShort = [&](std::size_t k) { return length(input[k]) <= tol.distance; };
+    struct Run {
+        std::size_t first, last;
+        bool hasBefore, hasAfter;
+    };
+    // Runs found once, greedily along the path from a longer span (so a closed contour's run is
+    // not cut at the seam): each sub-tolerance span belongs to one run.
+    std::vector<std::size_t> runOf(n, n);
+    std::vector<Run> runs;
+    {
+        // Open: in path order. Closed: from a longer span, round the seam.
+        std::size_t start = 0;
+        if (closed) {
+            for (std::size_t k = 0; k < n; ++k) {
+                if (!isShort(k)) {
+                    start = k;
+                    break;
+                }
+            }
+        }
+        for (std::size_t step = 0; step < n;) {
+            const std::size_t k = (start + step) % n;
+            if (!isShort(k)) {
+                ++step;
+                continue;
+            }
+            Box2 box = bounds(input[k]);
+            std::size_t len = 1;
+            while (step + len < n) {
+                const std::size_t j = (start + step + len) % n;
+                if (!isShort(j)) {
+                    break;
+                }
+                Box2 g = box;
+                g.expand(bounds(input[j]));
+                if (geometry::distance(g.min, g.max) > 2.0 * tol.distance) {
+                    break;
+                }
+                box = g;
+                ++len;
+            }
+            const std::size_t last = (start + step + len - 1) % n;
+            runs.push_back(Run{k, last, closed || k > 0, closed || last + 1 < n});
+            for (std::size_t q = 0; q < len; ++q) {
+                runOf[(k + q) % n] = runs.size() - 1;
+            }
+            step += len;
+        }
+    }
+    auto runAround = [&](std::size_t at) { return runs[runOf[at]]; };
+    std::vector<char> runDone(n, 0);
+    std::vector<char> skip(n, 0);
+    std::vector<std::size_t> collapsedBefore(n, n);  // by the span after a collapsed run
+    for (std::size_t k = closed ? 0 : 1; k < n; ++k) {
+        const std::size_t a = (k + n - 1) % n;
+        if (!nearReversal(input[a], input[k])) {
+            continue;
+        }
+        const Run r = runAround(isShort(a) ? a : k);
+        if (!r.hasBefore || !r.hasAfter) {
+            continue;
+        }
+        const std::size_t before = (r.first + n - 1) % n;
+        const std::size_t after = (r.last + 1) % n;
+        if (isShort(before) || isShort(after) || before == after || collapsedBefore[after] != n) {
+            continue;
+        }
+        const Vec2 ta = tangentAt(input[before], 1.0);
+        const Vec2 tb = tangentAt(input[after], 0.0);
+        if (std::fabs(std::atan2(ta.cross(tb), ta.dot(tb))) > 0.75 * kPi) {
+            for (std::size_t q = r.first;; q = (q + 1) % n) {
+                skip[q] = 1;
+                if (q == r.last) {
+                    break;
+                }
+            }
+            collapsedBefore[after] = before;
+        }
+    }
+    auto runArcs = [&](std::size_t at) {
+        if (!isShort(at)) {
+            return;
+        }
+        const Run r = runAround(at);
+        if (runDone[r.first] || !r.hasBefore || !r.hasAfter) {
+            return;
+        }
+        runDone[r.first] = 1;
+        const Vec2 ta = tangentAt(input[(r.first + n - 1) % n], 1.0);
+        const Vec2 tb = tangentAt(input[(r.last + 1) % n], 0.0);
+        std::vector<Vec2> pts;
+        for (std::size_t k = r.first;; k = (k + 1) % n) {
+            pts.push_back(startPoint(input[k]));
+            pts.push_back(pointAt(input[k], 0.5));
+            pts.push_back(endPoint(input[k]));
+            if (k == r.last) {
+                break;
+            }
+        }
+        // Always in the direction of an outside join (so that an arc on the circle of a join about
+        // the same point is a copy running the same way, merged, not one running against it, which
+        // would cancel both), from a quarter turn before the first normal of the turn to a quarter
+        // turn past the last.
+        const double turn = std::atan2(ta.cross(tb), ta.dot(tb));
+        const ArcDirection dir = sign > 0.0 ? ArcDirection::CW : ArcDirection::CCW;
+        const double ccw = dir == ArcDirection::CCW ? 1.0 : -1.0;
+        const CornerKind kind = classifyCorner(ta, tb, sign);
+        const double sweep = kind == CornerKind::Continuous ? 0.0 : std::fabs(turn);
+        const double width = std::min(sweep + kPi, kTwoPi - 0.1);
+        // The normals turn in the outside direction at an outside corner, against it at an inside one.
+        const Vec2 firstNormal = (kind == CornerKind::Inside ? tb : ta).perp() * sign;
+        const double from = firstNormal.angle() - ccw * 0.5 * (width - sweep);
+        for (const Vec2 h : convexHull(pts)) {
+            raw.emplace_back(ArcSpan{h, d, from, from + ccw * width, dir});
+        }
+    };
+    std::size_t lastEmitted = n;
+    std::size_t firstEmitted = n;
+    auto connectOrBridge = [&](Span& next, std::size_t a, std::size_t b, JoinType j) {
+        if (nearReversal(input[a], input[b])) {
+            const Vec2 e = endPoint(raw.back());
+            if (!tol.equalPoints(e, startPoint(next))) {
+                raw.emplace_back(LineSpan{e, startPoint(next)});
+            }
+            runArcs(length(input[a]) <= tol.distance ? a : b);
+            return;
+        }
+        connect(raw, next, startPoint(input[b]), endPoint(input[a]), tangentAt(input[a], 1.0),
+                tangentAt(input[b], 0.0), d, sign, j, mitreLimit, tol, wedges);
+    };
     for (std::size_t i = 0; i < input.size(); ++i) {
+        if (skip[i]) {
+            continue;
+        }
         std::optional<Span> next = offsetSpan(input[i], d, sign);
         bool collapsed = false;
         if (!next) {
@@ -2820,20 +2978,35 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
         }
         const double at = static_cast<double>(i);
         if (!raw.empty()) {
-            const JoinType j = collapsed || roundAfter ? JoinType::Round : cornerJoin(input[i - 1], input[i]);
-            connect(raw, *next, startPoint(input[i]), endPoint(input[i - 1]), tangentAt(input[i - 1], 1.0),
-                    tangentAt(input[i], 0.0), d, sign, j, mitreLimit, tol, wedges);
+            if (collapsedBefore[i] != n && collapsedBefore[i] == lastEmitted) {
+                connect(raw, *next, startPoint(input[i]), endPoint(input[lastEmitted]),
+                        tangentAt(input[lastEmitted], 1.0), tangentAt(input[i], 0.0), d, sign, join, mitreLimit,
+                        tol, wedges);
+            } else {
+                const JoinType j =
+                    collapsed || roundAfter ? JoinType::Round : cornerJoin(input[i - 1], input[i]);
+                connectOrBridge(*next, i - 1, i, j);
+            }
             record(at, at);  // joins and connectors sit at the vertex
         }
         raw.push_back(*next);
         record(at, at + 1.0);
         roundAfter = collapsed;
+        lastEmitted = i;
+        if (firstEmitted == n) {
+            firstEmitted = i;
+        }
     }
     if (closed && raw.size() > 1) {
         Span first = raw.front();
-        connect(raw, first, startPoint(input.front()), endPoint(input.back()), tangentAt(input.back(), 1.0),
-                tangentAt(input.front(), 0.0), d, sign,
-                roundAfter ? JoinType::Round : cornerJoin(input.back(), input.front()), mitreLimit, tol, wedges);
+        if (firstEmitted != n && collapsedBefore[firstEmitted] != n && collapsedBefore[firstEmitted] == lastEmitted) {
+            connect(raw, first, startPoint(input[firstEmitted]), endPoint(input[lastEmitted]),
+                    tangentAt(input[lastEmitted], 1.0), tangentAt(input[firstEmitted], 0.0), d, sign, join,
+                    mitreLimit, tol, wedges);
+        } else {
+            connectOrBridge(first, input.size() - 1, 0,
+                            roundAfter ? JoinType::Round : cornerJoin(input.back(), input.front()));
+        }
         raw.front() = first;
         const double at = static_cast<double>(input.size());
         record(at, at);
