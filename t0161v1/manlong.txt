@@ -1,0 +1,8 @@
+/home/chris/wt-T0161/build-verify1/drv/l3/grbl_mm.nc grbl_mm bottom=-3 safe=5 drag=1
+/home/chris/wt-T0161/build-verify1/drv/l3/grbl_inch.nc grbl_inch bottom=-3 safe=5 drag=1
+/home/chris/wt-T0161/build-verify1/drv/l3/linuxcnc_mm.nc linuxcnc_mm bottom=-3 safe=5 drag=1
+/home/chris/wt-T0161/build-verify1/drv/l3/linuxcnc_inch.nc linuxcnc_inch bottom=-3 safe=5 drag=1
+/home/chris/wt-T0161/build-verify1/drv/l3/mach3_mm.nc mach3_mm bottom=-3 safe=5 drag=1
+/home/chris/wt-T0161/build-verify1/drv/l3/mach3_inch.nc mach3_inch bottom=-3 safe=5 drag=1
+/home/chris/wt-T0161/build-verify1/drv/l3/mach4_mm.nc mach4_mm bottom=-3 safe=5 drag=1
+/home/chris/wt-T0161/build-verify1/drv/l3/marlin_mm.nc marlin_mm bottom=-3 safe=5 drag=1

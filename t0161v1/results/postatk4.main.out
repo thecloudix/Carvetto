@@ -1,0 +1,359 @@
+[PAUSE r2a NBSP M\xC2\xA03] PARSE ERROR line 23: byte 0xC2 in output line (output text must be printable ASCII)
+[TC r2a NBSP M\xC2\xA03] PARSE ERROR line 12: byte 0xC2 in output line (output text must be printable ASCII)
+[UNLOCK r2a NBSP M\xC2\xA03] PARSE ERROR line 28: byte 0xC2 in output line (output text must be printable ASCII)
+[MOVE r2a NBSP M\xC2\xA03] PARSE ERROR line 35: byte 0xC2 in output line (output text must be printable ASCII)
+[PAUSE r2b (a (b) M3 S1000] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line '(a (b) M3 S1000' holds a '(' inside an open comment (comments end at the first ')'), so it cannot serve to stop the spindle and pause for the operator before it
+[TC r2b (a (b) M3 S1000] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line '(a (b) M3 S1000' of the post holds a '(' inside an open comment (comments end at the first ')')
+[UNLOCK r2b (a (b) M3 S1000] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block line '(a (b) M3 S1000' holds a '(' inside an open comment (comments end at the first ')'), so it cannot serve to pause for the operator to unlock the spindle before it
+[MOVE r2b (a (b) M3 S1000] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line '(a (b) M3 S1000' of the post holds a '(' inside an open comment (comments end at the first ')')
+[PAUSE r2c #1=3 / M#1] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line '#1=3' holds a '#' (parameters are not allowed here), so it cannot serve to stop the spindle and pause for the operator before it
+[TC r2c #1=3 / M#1] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line '#1=3' of the post holds a '#' (parameters are not allowed here)
+[UNLOCK r2c #1=3 / M#1] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block line '#1=3' holds a '#' (parameters are not allowed here), so it cannot serve to pause for the operator to unlock the spindle before it
+[MOVE r2c #1=3 / M#1] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line '#1=3' of the post holds a '#' (parameters are not allowed here)
+[PAUSE r2c S#1] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line 'S#1' holds a '#' (parameters are not allowed here), so it cannot serve to stop the spindle and pause for the operator before it
+[TC r2c S#1] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'S#1' of the post holds a '#' (parameters are not allowed here)
+[UNLOCK r2c S#1] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block line 'S#1' holds a '#' (parameters are not allowed here), so it cannot serve to pause for the operator to unlock the spindle before it
+[MOVE r2c S#1] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'S#1' of the post holds a '#' (parameters are not allowed here)
+[PAUSE tab M<TAB>3] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line 'M 3' holds the spindle word M3 (refused anywhere in the template text, comments included), so it cannot serve to stop the spindle and pause for the operator before it
+[TC tab M<TAB>3] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'M 3' of the post holds the spindle word M3 (refused anywhere in the template text, comments included)
+[UNLOCK tab M<TAB>3] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block line 'M 3' holds the spindle word M3 (refused anywhere in the template text, comments included), so it cannot serve to pause for the operator to unlock the spindle before it
+[MOVE tab M<TAB>3] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'M 3' of the post holds the spindle word M3 (refused anywhere in the template text, comments included)
+[PAUSE lower m3] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line 'm3' holds the spindle word m3 (refused anywhere in the template text, comments included), so it cannot serve to stop the spindle and pause for the operator before it
+[TC lower m3] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'm3' of the post holds the spindle word m3 (refused anywhere in the template text, comments included)
+[UNLOCK lower m3] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block line 'm3' holds the spindle word m3 (refused anywhere in the template text, comments included), so it cannot serve to pause for the operator to unlock the spindle before it
+[MOVE lower m3] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'm3' of the post holds the spindle word m3 (refused anywhere in the template text, comments included)
+[PAUSE lower s1000] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line 's1000' holds the spindle word s1000 (refused anywhere in the template text, comments included), so it cannot serve to stop the spindle and pause for the operator before it
+[TC lower s1000] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 's1000' of the post holds the spindle word s1000 (refused anywhere in the template text, comments included)
+[UNLOCK lower s1000] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block line 's1000' holds the spindle word s1000 (refused anywhere in the template text, comments included), so it cannot serve to pause for the operator to unlock the spindle before it
+[MOVE lower s1000] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 's1000' of the post holds the spindle word s1000 (refused anywhere in the template text, comments included)
+[PAUSE M03] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line 'M03' holds the spindle word M03 (refused anywhere in the template text, comments included), so it cannot serve to stop the spindle and pause for the operator before it
+[TC M03] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'M03' of the post holds the spindle word M03 (refused anywhere in the template text, comments included)
+[UNLOCK M03] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block line 'M03' holds the spindle word M03 (refused anywhere in the template text, comments included), so it cannot serve to pause for the operator to unlock the spindle before it
+[MOVE M03] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'M03' of the post holds the spindle word M03 (refused anywhere in the template text, comments included)
+[PAUSE M3.0] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line 'M3.0' holds the spindle word M3.0 (refused anywhere in the template text, comments included), so it cannot serve to stop the spindle and pause for the operator before it
+[TC M3.0] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'M3.0' of the post holds the spindle word M3.0 (refused anywhere in the template text, comments included)
+[UNLOCK M3.0] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block line 'M3.0' holds the spindle word M3.0 (refused anywhere in the template text, comments included), so it cannot serve to pause for the operator to unlock the spindle before it
+[MOVE M3.0] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'M3.0' of the post holds the spindle word M3.0 (refused anywhere in the template text, comments included)
+[PAUSE M+3] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line 'M+3' holds the spindle word M+3 (refused anywhere in the template text, comments included), so it cannot serve to stop the spindle and pause for the operator before it
+[TC M+3] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'M+3' of the post holds the spindle word M+3 (refused anywhere in the template text, comments included)
+[UNLOCK M+3] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block line 'M+3' holds the spindle word M+3 (refused anywhere in the template text, comments included), so it cannot serve to pause for the operator to unlock the spindle before it
+[MOVE M+3] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'M+3' of the post holds the spindle word M+3 (refused anywhere in the template text, comments included)
+[PAUSE M 3] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line 'M 3' holds the spindle word M3 (refused anywhere in the template text, comments included), so it cannot serve to stop the spindle and pause for the operator before it
+[TC M 3] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'M 3' of the post holds the spindle word M3 (refused anywhere in the template text, comments included)
+[UNLOCK M 3] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block line 'M 3' holds the spindle word M3 (refused anywhere in the template text, comments included), so it cannot serve to pause for the operator to unlock the spindle before it
+[MOVE M 3] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'M 3' of the post holds the spindle word M3 (refused anywhere in the template text, comments included)
+[PAUSE S 1 000] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line 'S 1 000' holds the spindle word S1000 (refused anywhere in the template text, comments included), so it cannot serve to stop the spindle and pause for the operator before it
+[TC S 1 000] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'S 1 000' of the post holds the spindle word S1000 (refused anywhere in the template text, comments included)
+[UNLOCK S 1 000] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block line 'S 1 000' holds the spindle word S1000 (refused anywhere in the template text, comments included), so it cannot serve to pause for the operator to unlock the spindle before it
+[MOVE S 1 000] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'S 1 000' of the post holds the spindle word S1000 (refused anywhere in the template text, comments included)
+[PAUSE N10M3] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line 'N10M3' holds the spindle word M3 (refused anywhere in the template text, comments included), so it cannot serve to stop the spindle and pause for the operator before it
+[TC N10M3] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'N10M3' of the post holds the spindle word M3 (refused anywhere in the template text, comments included)
+[UNLOCK N10M3] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block line 'N10M3' holds the spindle word M3 (refused anywhere in the template text, comments included), so it cannot serve to pause for the operator to unlock the spindle before it
+[MOVE N10M3] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'N10M3' of the post holds the spindle word M3 (refused anywhere in the template text, comments included)
+[PAUSE G0X1M3] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line 'G0 X1 M3' holds the spindle word M3 (refused anywhere in the template text, comments included), so it cannot serve to stop the spindle and pause for the operator before it
+[TC G0X1M3] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'G0 X1 M3' of the post holds the spindle word M3 (refused anywhere in the template text, comments included)
+[UNLOCK G0X1M3] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block line 'G0 X1 M3' holds the spindle word M3 (refused anywhere in the template text, comments included), so it cannot serve to pause for the operator to unlock the spindle before it
+[MOVE G0X1M3] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'G0 X1 M3' of the post holds the spindle word M3 (refused anywhere in the template text, comments included)
+[PAUSE S1e3] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line 'S1e3' holds the spindle word S1 (refused anywhere in the template text, comments included), so it cannot serve to stop the spindle and pause for the operator before it
+[TC S1e3] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'S1e3' of the post holds the spindle word S1 (refused anywhere in the template text, comments included)
+[UNLOCK S1e3] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block line 'S1e3' holds the spindle word S1 (refused anywhere in the template text, comments included), so it cannot serve to pause for the operator to unlock the spindle before it
+[MOVE S1e3] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'S1e3' of the post holds the spindle word S1 (refused anywhere in the template text, comments included)
+[PAUSE M3 in comment] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line '(M3)' holds the spindle word M3 (refused anywhere in the template text, comments included), so it cannot serve to stop the spindle and pause for the operator before it
+[TC M3 in comment] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line '(M3)' of the post holds the spindle word M3 (refused anywhere in the template text, comments included)
+[UNLOCK M3 in comment] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block line '(M3)' holds the spindle word M3 (refused anywhere in the template text, comments included), so it cannot serve to pause for the operator to unlock the spindle before it
+[MOVE M3 in comment] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line '(M3)' of the post holds the spindle word M3 (refused anywhere in the template text, comments included)
+[PAUSE S5 in comment] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line '(speed S5)' holds the spindle word S5 (refused anywhere in the template text, comments included), so it cannot serve to stop the spindle and pause for the operator before it
+[TC S5 in comment] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line '(speed S5)' of the post holds the spindle word S5 (refused anywhere in the template text, comments included)
+[UNLOCK S5 in comment] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block line '(speed S5)' holds the spindle word S5 (refused anywhere in the template text, comments included), so it cannot serve to pause for the operator to unlock the spindle before it
+[MOVE S5 in comment] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line '(speed S5)' of the post holds the spindle word S5 (refused anywhere in the template text, comments included)
+[PAUSE comment-in-word M(c)3] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the code M3 (not on the drag-section allowlist) (line 'M(c)3')
+[TC comment-in-word M(c)3] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the code M3 (not on the drag-section allowlist) (line 'M(c)3')
+[UNLOCK comment-in-word M(c)3] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the code M3 (not on the drag-section allowlist) (line 'M(c)3')
+[MOVE comment-in-word M(c)3] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the code M3 (not on the drag-section allowlist) (line 'M(c)3')
+[PAUSE M3.004 (Grbl mantissa rounds to 0)] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M3.004 (M codes need plain digits) (line 'M3.004')
+[TC M3.004 (Grbl mantissa rounds to 0)] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M3.004 (M codes need plain digits) (line 'M3.004')
+[UNLOCK M3.004 (Grbl mantissa rounds to 0)] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M3.004 (M codes need plain digits) (line 'M3.004')
+[MOVE M3.004 (Grbl mantissa rounds to 0)] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M3.004 (M codes need plain digits) (line 'M3.004')
+[PAUSE M4.004] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M4.004 (M codes need plain digits) (line 'M4.004')
+[TC M4.004] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M4.004 (M codes need plain digits) (line 'M4.004')
+[UNLOCK M4.004] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M4.004 (M codes need plain digits) (line 'M4.004')
+[MOVE M4.004] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M4.004 (M codes need plain digits) (line 'M4.004')
+[PAUSE M3.00005 (LinuxCNC int tol 1e-4)] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M3.00005 (too many digits) (line 'M3.00005')
+[TC M3.00005 (LinuxCNC int tol 1e-4)] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M3.00005 (too many digits) (line 'M3.00005')
+[UNLOCK M3.00005 (LinuxCNC int tol 1e-4)] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M3.00005 (too many digits) (line 'M3.00005')
+[MOVE M3.00005 (LinuxCNC int tol 1e-4)] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M3.00005 (too many digits) (line 'M3.00005')
+[PAUSE M2.99995 (LinuxCNC ceil)] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M2.99995 (too many digits) (line 'M2.99995')
+[TC M2.99995 (LinuxCNC ceil)] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M2.99995 (too many digits) (line 'M2.99995')
+[UNLOCK M2.99995 (LinuxCNC ceil)] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M2.99995 (too many digits) (line 'M2.99995')
+[MOVE M2.99995 (LinuxCNC ceil)] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M2.99995 (too many digits) (line 'M2.99995')
+[PAUSE M3.5 (Marlin codenum 3)] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M3.5 (M codes need plain digits) (line 'M3.5')
+[TC M3.5 (Marlin codenum 3)] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M3.5 (M codes need plain digits) (line 'M3.5')
+[UNLOCK M3.5 (Marlin codenum 3)] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M3.5 (M codes need plain digits) (line 'M3.5')
+[MOVE M3.5 (Marlin codenum 3)] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M3.5 (M codes need plain digits) (line 'M3.5')
+[PAUSE M259 (Grbl uint8 wrap)] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the code M259 (not on the drag-section allowlist) (line 'M259')
+[TC M259 (Grbl uint8 wrap)] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the code M259 (not on the drag-section allowlist) (line 'M259')
+[UNLOCK M259 (Grbl uint8 wrap)] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the code M259 (not on the drag-section allowlist) (line 'M259')
+[MOVE M259 (Grbl uint8 wrap)] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the code M259 (not on the drag-section allowlist) (line 'M259')
+[PAUSE M/3 (Grbl ignores /)] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter M without a value (line 'M/3')
+[TC M/3 (Grbl ignores /)] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter M without a value (line 'M/3')
+[UNLOCK M/3 (Grbl ignores /)] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter M without a value (line 'M/3')
+[MOVE M/3 (Grbl ignores /)] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter M without a value (line 'M/3')
+[PAUSE G0 Z5 M/3] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter M without a value (line 'G0 Z5 M/3')
+[TC G0 Z5 M/3] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter M without a value (line 'G0 Z5 M/3')
+[UNLOCK G0 Z5 M/3] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter M without a value (line 'G0 Z5 M/3')
+[MOVE G0 Z5 M/3] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter M without a value (line 'G0 Z5 M/3')
+[PAUSE S/1000] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter S without a value (line 'S/1000')
+[TC S/1000] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter S without a value (line 'S/1000')
+[UNLOCK S/1000] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter S without a value (line 'S/1000')
+[MOVE S/1000] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter S without a value (line 'S/1000')
+[PAUSE M3 S/1000 after slash? M/4] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter M without a value (line 'M/4')
+[TC M3 S/1000 after slash? M/4] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter M without a value (line 'M/4')
+[UNLOCK M3 S/1000 after slash? M/4] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter M without a value (line 'M/4')
+[MOVE M3 S/1000 after slash? M/4] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter M without a value (line 'M/4')
+[PAUSE /M3 block delete] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line '/M3' holds the spindle word M3 (refused anywhere in the template text, comments included), so it cannot serve to stop the spindle and pause for the operator before it
+[TC /M3 block delete] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line '/M3' of the post holds the spindle word M3 (refused anywhere in the template text, comments included)
+[UNLOCK /M3 block delete] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block line '/M3' holds the spindle word M3 (refused anywhere in the template text, comments included), so it cannot serve to pause for the operator to unlock the spindle before it
+[MOVE /M3 block delete] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line '/M3' of the post holds the spindle word M3 (refused anywhere in the template text, comments included)
+[PAUSE ; M3 non-marlin] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line 'G0 ; M3' holds the spindle word M3 (refused anywhere in the template text, comments included), so it cannot serve to stop the spindle and pause for the operator before it
+[TC ; M3 non-marlin] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'G0 ; M3' of the post holds the spindle word M3 (refused anywhere in the template text, comments included)
+[UNLOCK ; M3 non-marlin] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block line 'G0 ; M3' holds the spindle word M3 (refused anywhere in the template text, comments included), so it cannot serve to pause for the operator to unlock the spindle before it
+[MOVE ; M3 non-marlin] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'G0 ; M3' of the post holds the spindle word M3 (refused anywhere in the template text, comments included)
+[PAUSE realtime ~ after M0] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the Grbl realtime character '~' (line '_')
+[TC realtime ~ after M0] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the Grbl realtime character '~' (line '_')
+[UNLOCK realtime ~ after M0] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the Grbl realtime character '~' (line '_')
+[MOVE realtime ~ after M0] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the Grbl realtime character '~' (line '_')
+[PAUSE $ cmd] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the character '$' (only upper-case words are allowed here) (line '$X')
+[TC $ cmd] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the character '$' (only upper-case words are allowed here) (line '$X')
+[UNLOCK $ cmd] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the character '$' (only upper-case words are allowed here) (line '$X')
+[MOVE $ cmd] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the character '$' (only upper-case words are allowed here) (line '$X')
+[PAUSE CR via \r] PARSE ERROR line 23: control character 0x0D in line (only tab is allowed)
+[TC CR via \r] PARSE ERROR line 12: control character 0x0D in line (only tab is allowed)
+[UNLOCK CR via \r] PARSE ERROR line 28: control character 0x0D in line (only tab is allowed)
+[MOVE CR via \r] PARSE ERROR line 35: control character 0x0D in line (only tab is allowed)
+[PAUSE M-3] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M-3 (M codes need plain digits) (line 'M-3')
+[TC M-3] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M-3 (M codes need plain digits) (line 'M-3')
+[UNLOCK M-3] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M-3 (M codes need plain digits) (line 'M-3')
+[MOVE M-3] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M-3 (M codes need plain digits) (line 'M-3')
+[PAUSE M.3e1] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M.3 (M codes need plain digits) (line 'M.3e1')
+[TC M.3e1] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M.3 (M codes need plain digits) (line 'M.3e1')
+[UNLOCK M.3e1] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M.3 (M codes need plain digits) (line 'M.3e1')
+[MOVE M.3e1] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M.3 (M codes need plain digits) (line 'M.3e1')
+[LIVE TOOLNAME 'M/3'] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'M/3' must not turn), but the post writes the letter M without a value (line 'G1 Z-0.100 F200 M/3')
+[COMMENT TOOLNAME 'M/3'] ACCEPTED:
+(h)
+M5
+(pause)
+M0
+(tool M/3)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+M30
+----
+[LIVE TOOLNAME 'x M3.004'] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'x M3.004' must not turn), but the post writes the character 'x' (only upper-case words are allowed here) (line 'G1 Z-0.100 F200 x M3.004')
+[COMMENT TOOLNAME 'x M3.004'] ACCEPTED:
+(h)
+M5
+(pause)
+M0
+(tool x M3.004)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+M30
+----
+[LIVE TOOLNAME 'M3.5'] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'M3.5' must not turn), but the post writes the word M3.5 (M codes need plain digits) (line 'G1 Z-0.100 F200 M3.5')
+[COMMENT TOOLNAME 'M3.5'] ACCEPTED:
+(h)
+M5
+(pause)
+M0
+(tool M3.5)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+M30
+----
+[LIVE TOOLNAME 'S/9000'] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'S/9000' must not turn), but the post writes the letter S without a value (line 'G1 Z-0.100 F200 S/9000')
+[COMMENT TOOLNAME 'S/9000'] ACCEPTED:
+(h)
+M5
+(pause)
+M0
+(tool S/9000)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+M30
+----
+[LIVE TOOLNAME 'a(b)M3'] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'a(b)M3' must not turn), but the post writes the character 'a' (only upper-case words are allowed here) (line 'G1 Z-0.100 F200 a(b)M3')
+[COMMENT TOOLNAME 'a(b)M3'] ACCEPTED:
+(h)
+M5
+(pause)
+M0
+(tool a[b]M3)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+M30
+----
+[LIVE TOOLNAME 'a;M3'] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'a;M3' must not turn), but the post writes the character 'a' (only upper-case words are allowed here) (line 'G1 Z-0.100 F200 a;M3')
+[COMMENT TOOLNAME 'a;M3'] ACCEPTED:
+(h)
+M5
+(pause)
+M0
+(tool a;M3)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+M30
+----
+[LIVE TOOLNAME '(M3)'] ACCEPTED:
+(h)
+M5
+(pause)
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200 (M3)
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+M30
+----
+[COMMENT TOOLNAME '(M3)'] ACCEPTED:
+(h)
+M5
+(pause)
+M0
+(tool [M3])
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+M30
+----
+[LIVE TOOLNAME 'M3)'] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'M3)' must not turn), but the post writes a ')' without an open comment (line 'G1 Z-0.100 F200 M3)')
+[COMMENT TOOLNAME 'M3)'] ACCEPTED:
+(h)
+M5
+(pause)
+M0
+(tool M3])
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+M30
+----
+[LIVE TOOLNAME 'S12 drill M3'] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'S12 drill M3' must not turn), but the post writes the word S12 (the letter S is not on the drag-section allowlist) (line 'G1 Z-0.100 F200 S12 drill M3')
+[COMMENT TOOLNAME 'S12 drill M3'] ACCEPTED:
+(h)
+M5
+(pause)
+M0
+(tool S12 drill M3)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+M30
+----
+[LIVE TOOLNAME 'M 3'] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'M 3' must not turn), but the post writes the letter M without a value (line 'G1 Z-0.100 F200 M 3')
+[COMMENT TOOLNAME 'M 3'] ACCEPTED:
+(h)
+M5
+(pause)
+M0
+(tool M 3)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+M30
+----
+[LIVE TOOLNAME '~'] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool '_' must not turn), but the post writes the character '_' (only upper-case words are allowed here) (line 'G1 Z-0.100 F200 _')
+[COMMENT TOOLNAME '~'] ACCEPTED:
+(h)
+M5
+(pause)
+M0
+(tool _)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+M30
+----
+[LIVE TOOLNAME 'M#1'] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'M#1' must not turn), but the post writes the letter M without a value (line 'G1 Z-0.100 F200 M#1')
+[COMMENT TOOLNAME 'M#1'] ACCEPTED:
+(h)
+M5
+(pause)
+M0
+(tool M#1)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+M30
+----
+[FOOTER M3 after drag] REFUSED: cannot write G-code in RAPID_MOVE of toolpath 'D', move 1: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word G01.0001.0005.000 (too many digits) (line 'G01.0001.0005.000')

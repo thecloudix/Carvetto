@@ -1,0 +1,300 @@
+[()-B pause 'M5 M0'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on a line with M0 or M1 (an M0/M1 line holds only [N] M0) (line 'M5 M0')
+[()-B pause 'M0 M5'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on a line with M0 or M1 (an M0/M1 line holds only [N] M0) (line 'M0 M5')
+[()-B pause 'M5 N10'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on the M5 line of a pause block (it holds only [N] M5) (line 'M5 N10')
+[()-B pause 'M5 T3'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on the M5 line of a pause block (it holds only [N] M5) (line 'M5 T3')
+[()-B pause 'M5 G4 P1'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on the M5 line of a pause block (it holds only [N] M5) (line 'M5 G4 P1')
+[()-B pause 'M5 F100'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on the M5 line of a pause block (it holds only [N] M5) (line 'M5 F100')
+[()-B pause 'M5 M5'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on the M5 line of a pause block (it holds only [N] M5) (line 'M5 M5')
+[()-B pause 'M005'] ACCEPTED:
+(h)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+M0
+M005
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[()-B pause 'N0010 M0005'] ACCEPTED:
+(h)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+M0
+N0010 M0005
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[()-B pause 'M5 (a)'] ACCEPTED:
+(h)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+M0
+M5 (a)
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[()-B pause 'M5 ; x'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the character ';' (only upper-case words are allowed here) (line 'M5 ; x')
+[()-B pause 'M5 X'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter X without a value (line 'M5 X')
+[;-B pause 'M5 M0'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on a line with M0 or M1 (an M0/M1 line holds only [N] M0) (line 'M5 M0')
+[;-B unlock 'M5 M0'] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on a line with M0 or M1 (an M0/M1 line holds only [N] M0) (line 'M5 M0')
+[;-B pause 'M5 G0'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on the M5 line of a pause block (it holds only [N] M5) (line 'M5 G0')
+[;-B unlock 'M5 G0'] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on the M5 line of a pause block (it holds only [N] M5) (line 'M5 G0')
+[;-B pause 'M5 ; x'] ACCEPTED:
+; h
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+M0
+M5 ; x
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+; unlock
+M0
+M5
+----
+[;-B unlock 'M5 ; x'] ACCEPTED:
+; h
+M5
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5 ; x
+M0
+M5
+M0
+M3 S12000
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+----
+[;-B pause 'M5 (a)'] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the character ';' (only upper-case words are allowed here) (line '; unlock')
+[;-B unlock 'M5 (a)'] REFUSED: cannot write G-code in HEADER of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the character ';' (only upper-case words are allowed here) (line '; h')
+[()-B2 pause 'M0' then 'M5'] ACCEPTED:
+(h)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+M0
+M0
+M5
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[()-B3 TOOLCHANGE 'G0 Z5 M5' + bare pause M5] ACCEPTED:
+(h)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+G0 Z5 M5
+M0
+M5
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[()-B4 pause 'M5','M5 G0 Z5','M0'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on the M5 line of a pause block (it holds only [N] M5) (line 'M5 G0 Z5')
+[()-L79 live in TOOLCHANGE (79)] ACCEPTED:
+(h)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+G0 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X122
+M0
+M5
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[()-L80 live + leading space] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes 80 characters of G-code outside comments (Grbl's line buffer holds 79; a longer line is dropped) (line ' G0 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 ...')
+[()-L comment in the middle] ACCEPTED:
+(h)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+G0 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 (cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc) X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1
+M0
+M5
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[;-L 79 + ;comment] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes 80 characters of G-code outside comments (Grbl's line buffer holds 79; a longer line is dropped) (line 'G0 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X...')
+[()-L CRLF ending with 79] ACCEPTED:
+(h)<CR>
+G0 X1.000 Y1.000 Z5.000<CR>
+G1 Z-0.100 F200<CR>
+G1 X2.000 F600<CR>
+G1 Z5.000 F200<CR>
+M5<CR>
+G0 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X122<CR>
+M0<CR>
+M5<CR>
+M0<CR>
+G0 X1.000 Y1.000 Z5.000<CR>
+G1 Z-0.100 F200<CR>
+G1 X2.000 F600<CR>
+G1 Z5.000 F200<CR>
+M5<CR>
+(unlock)<CR>
+M0<CR>
+M5<CR>
+----
+[()-L 80 outside drag (spinning only)] ACCEPTED:
+ G0 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X1 X122
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+----
+[()-N 'N10000000 M0'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word N10000000 (line numbers above 9999999) (line 'N10000000 M0')
+[()-N 'N010000000 M0'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word N010000000 (line numbers above 9999999) (line 'N010000000 M0')
+[()-N 'N09999999 M0'] ACCEPTED:
+(h)
+M5
+N09999999 M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[()-N 'N0 M0'] ACCEPTED:
+(h)
+M5
+N0 M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[()-N 'N00000000 M0'] ACCEPTED:
+(h)
+M5
+N00000000 M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[()-N counter past cap in moves] REFUSED: cannot write G-code in FEED_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word N10000000 (line numbers above 9999999) (line 'N10000000 G1 Z-0.100 F200')
+[()-T tab in tool name (comment)] ACCEPTED:
+(Tool a b)
+M5
+(T a b)
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[()-T multiple tabs > 64 chars] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block line 'M5<TAB><TAB><TAB><TAB>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...' holds a tab (separate words with spaces), so it cannot serve to stop the spindle and pause for the operator before it
+[S-longnames grbl_mm] ACCEPTED maxLine=345 maxLive=23 longest='(Spindle stays off for diamond drag tool 3: nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn'
+[S-big99999 grbl_mm] ACCEPTED maxLine=69 maxLive=36 longest='(Diamond drag tool 3 done: unlock the spindle before it starts again)'
+[S-big999999 grbl_mm] ACCEPTED maxLine=69 maxLive=38 longest='(Diamond drag tool 3 done: unlock the spindle before it starts again)'
+[S-longnames grbl_inch] ACCEPTED maxLine=345 maxLive=26 longest='(Spindle stays off for diamond drag tool 3: nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn'
+[S-big99999 grbl_inch] ACCEPTED maxLine=69 maxLive=38 longest='(Diamond drag tool 3 done: unlock the spindle before it starts again)'
+[S-big999999 grbl_inch] ACCEPTED maxLine=69 maxLive=40 longest='(Diamond drag tool 3 done: unlock the spindle before it starts again)'
+[S-longnames linuxcnc_mm] ACCEPTED maxLine=345 maxLive=33 longest='(Spindle stays off for diamond drag tool 3: nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn'
+[S-big99999 linuxcnc_mm] ACCEPTED maxLine=69 maxLive=36 longest='(Diamond drag tool 3 done: unlock the spindle before it starts again)'
+[S-big999999 linuxcnc_mm] ACCEPTED maxLine=69 maxLive=38 longest='(Diamond drag tool 3 done: unlock the spindle before it starts again)'
+[S-longnames linuxcnc_inch] ACCEPTED maxLine=345 maxLive=33 longest='(Spindle stays off for diamond drag tool 3: nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn'
+[S-big99999 linuxcnc_inch] ACCEPTED maxLine=69 maxLive=38 longest='(Diamond drag tool 3 done: unlock the spindle before it starts again)'
+[S-big999999 linuxcnc_inch] ACCEPTED maxLine=69 maxLive=40 longest='(Diamond drag tool 3 done: unlock the spindle before it starts again)'
+[S-longnames mach3_mm] ACCEPTED maxLine=345 maxLive=37 longest='(Spindle stays off for diamond drag tool 3: nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn'
+[S-big99999 mach3_mm] ACCEPTED maxLine=69 maxLive=44 longest='(Diamond drag tool 3 done: unlock the spindle before it starts again)'
+[S-big999999 mach3_mm] ACCEPTED maxLine=69 maxLive=46 longest='(Diamond drag tool 3 done: unlock the spindle before it starts again)'
+[S-longnames mach3_inch] ACCEPTED maxLine=345 maxLive=37 longest='(Spindle stays off for diamond drag tool 3: nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn'
+[S-big99999 mach3_inch] ACCEPTED maxLine=69 maxLive=46 longest='(Diamond drag tool 3 done: unlock the spindle before it starts again)'
+[S-big999999 mach3_inch] ACCEPTED maxLine=69 maxLive=48 longest='(Diamond drag tool 3 done: unlock the spindle before it starts again)'
+[S-longnames mach4_mm] ACCEPTED maxLine=345 maxLive=33 longest='(Spindle stays off for diamond drag tool 3: nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn'
+[S-big99999 mach4_mm] ACCEPTED maxLine=69 maxLive=36 longest='(Diamond drag tool 3 done: unlock the spindle before it starts again)'
+[S-big999999 mach4_mm] ACCEPTED maxLine=69 maxLive=38 longest='(Diamond drag tool 3 done: unlock the spindle before it starts again)'
+[S-longnames marlin_mm] ACCEPTED maxLine=345 maxLive=23 longest='; Spindle stays off for diamond drag tool 3: nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn'
+[S-big99999 marlin_mm] ACCEPTED maxLine=69 maxLive=36 longest='; Diamond drag tool 3 done: unlock the spindle before it starts again'
+[S-big999999 marlin_mm] ACCEPTED maxLine=69 maxLive=38 longest='; Diamond drag tool 3 done: unlock the spindle before it starts again'

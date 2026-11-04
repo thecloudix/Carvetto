@@ -1,0 +1,129 @@
+[A1 LINE_ENDING ' M3 S12000[13][10]'] PARSE ERROR line 1: invalid value ' M3 S12000[13][10]' for LINE_ENDING (expected one of [10], [13][10] or [13] (LF, CR LF or CR))
+[A1b LINE_ENDING '[10]M3[10]'] PARSE ERROR line 1: invalid value '[10]M3[10]' for LINE_ENDING (expected one of [10], [13][10] or [13] (LF, CR LF or CR))
+[A1c LINE_ENDING '~[10]'] PARSE ERROR line 1: invalid value '~[10]' for LINE_ENDING (expected one of [10], [13][10] or [13] (LF, CR LF or CR))
+[A1d LINE_ENDING '[10][133]'] PARSE ERROR line 1: invalid value '[10][133]' for LINE_ENDING (expected one of [10], [13][10] or [13] (LF, CR LF or CR))
+[A2 ;-post 'M0 [TOOLNAME]' name 'M3 S18000'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'M3 S18000' must not turn), but the post writes the code M3 (not on the drag-section allowlist) (line 'M0 M3 S18000')
+[A2b ;-post 'M0 Check [TOOLPATH_NAME]' tp name 'M3 S18000'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'M3 S18000': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter C without a value (line 'M0 Check M3 S18000')
+[A2 ;-post 'M0 [TOOLNAME]' name 'x M3'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'x M3' must not turn), but the post writes the character 'x' (only upper-case words are allowed here) (line 'M0 x M3')
+[A2b ;-post 'M0 Check [TOOLPATH_NAME]' tp name 'x M3'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'x M3': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter C without a value (line 'M0 Check x M3')
+[A2 ;-post 'M0 [TOOLNAME]' name 'S1'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'S1' must not turn), but the post writes the word S1 (the letter S is not on the drag-section allowlist) (line 'M0 S1')
+[A2b ;-post 'M0 Check [TOOLPATH_NAME]' tp name 'S1'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'S1': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter C without a value (line 'M0 Check S1')
+[A2 ;-post 'M0 [TOOLNAME]' name 'P1'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'P1' must not turn), but the post writes other words on a line with M0 or M1 (an M0/M1 line holds only [N] M0) (line 'M0 P1')
+[A2b ;-post 'M0 Check [TOOLPATH_NAME]' tp name 'P1'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'P1': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter C without a value (line 'M0 Check P1')
+[A2 ;-post 'M0 [TOOLNAME]' name 'Drag S30'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag S30' must not turn), but the post writes the letter D without a value (line 'M0 Drag S30')
+[A2b ;-post 'M0 Check [TOOLPATH_NAME]' tp name 'Drag S30'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'Drag S30': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the letter C without a value (line 'M0 Check Drag S30')
+[A2c paren-post 'M0 [TOOLNAME]' name 'M3 S18000'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'M3 S18000' must not turn), but the post writes the code M3 (not on the drag-section allowlist) (line 'M0 M3 S18000')
+[A3 [N] prefix '/N' on '[N] M5' '[N] M0'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the character '/' (only upper-case words are allowed here) (line '/N0 M5')
+[A4 'M0[T]' tool 5] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block did not write both M5 and M0 (as the first command of a line on ';'-style posts)
+[A4b 'M0[T]' tool 3] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the code M03 (not on the drag-section allowlist) (line 'M03')
+[A5 'M000000005' as the only M5] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word M000000005 (too many digits) (line 'M000000005')
+[A5b 'G00000091.1' (Grbl reads G91)] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word G00000091.1 (too many digits) (line 'G00000091.1')
+[A6 'M0 P1'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on a line with M0 or M1 (an M0/M1 line holds only [N] M0) (line 'M0 P1')
+[A6b 'M0 T[T]' tool 300] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on a line with M0 or M1 (an M0/M1 line holds only [N] M0) (line 'M0 T300')
+[A6c 'M0 H1'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on a line with M0 or M1 (an M0/M1 line holds only [N] M0) (line 'M0 H1')
+[A6d 'M5 I1'] ACCEPTED:
+(h)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+M0
+M5 I1
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[A7 paren comment name 'Drag 3mm 108'] ACCEPTED:
+(h)
+M5
+(tool Drag 3mm 108)
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[A7 paren comment name 'Diamond 1mm 112 deg'] ACCEPTED:
+(h)
+M5
+(tool Diamond 1mm 112 deg)
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[A7 paren comment name 'S12 drill M3'] ACCEPTED:
+(h)
+M5
+(tool S12 drill M3)
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[A7 paren comment name 'Tip 0.1mm 410'] ACCEPTED:
+(h)
+M5
+(tool Tip 0.1mm 410)
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[A8 'G0 X.5'] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the word X.5 (not a plain number) (line 'G0 X.5')
+[A8b 'G0 X0.5'] ACCEPTED:
+(h)
+M5
+(pause)
+M0
+G0 X0.5
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[A9 Z format 20.3 (Grbl reads 0)] ACCEPTED:
+(h)
+M5
+(pause)
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[A10 ;-post 'G1[Z][F] [TOOLNAME]' name '( S1000)'] REFUSED: cannot write G-code in PLUNGE_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool '( S1000)' must not turn), but the post writes a parenthesis outside the ';' comment (this post's comments start with ';') (line 'G1 Z-0.100 F200 ( S1000)')
