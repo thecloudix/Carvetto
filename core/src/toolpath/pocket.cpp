@@ -2155,6 +2155,13 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
         const PassTool& pt = passTools[ti];
         const double d = 2.0 * pt.radius;  // cutting width at the bottom of the pocket
         const std::string label = "tool " + std::to_string(ti + 1) + " (" + tools[ti].tool.name + ")";
+        if (tools[ti].tool.type == tooling::ToolType::DiamondDrag) {
+            // T-0154 (owner decision 2026-11-03): a drag tool must not turn; only Quick Engrave
+            // runs toolpaths with the spindle off (its Fill hands Pocket an end mill of the same width).
+            say(ToolpathIssue::InvalidTool,
+                label + ": skipped, a diamond drag tool must not turn; use Quick Engrave for diamond-drag tools", ti);
+            continue;
+        }
         if (!finite(d) || !(d > 0.0) || !finite(pt.stepover) || !(pt.stepover > 0.0) ||
             pt.stepover > d * (1.0 + 1e-12) || !finite(pt.passDepth) || !(pt.passDepth > 0.0)) {
             say(ToolpathIssue::InvalidTool,

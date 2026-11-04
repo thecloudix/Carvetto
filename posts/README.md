@@ -32,6 +32,11 @@ Every post runs against the same fixture (`core/tests/post/post_fixture.hpp`):
 The output must match `core/tests/golden/post/<post>_fixture.nc` byte for byte. Each post must
 also parse with no warnings and run with no warnings (`core/tests/post/shipped_posts_test.cpp`).
 
+A second fixture (T-0154) runs diamond-drag toolpaths, which run with the spindle off: a drag
+toolpath first in the job, a second one with the same tool, a profile with the end mill, and a
+drag toolpath again after the tool change. Its output must match
+`core/tests/golden/post/<post>_drag.nc` byte for byte.
+
 ## Machine-safety checklist
 
 A reviewer checked every golden file by hand against this list. The same checks also run
@@ -53,6 +58,7 @@ one, the test fails.
    never sideways and never downward below safe Z.
 4. **Spindle on before plunge.** `M3 S<rpm>` (with a non-zero speed) comes before any
    `G1`/`G2`/`G3`. After a tool change the spindle is started again with the new tool's speed.
+   The only exception is a toolpath that runs with the spindle off (point 11).
 5. **Tool change.** The spindle is stopped (`M5`) and the tool is at safe Z before the change
    (`M0` pause or `T<n> M6`). The controller's own tool-change word is used.
 6. **Dwell units.** The `G4` word is in the unit that controller expects (seconds or
@@ -91,8 +97,41 @@ one, the test fails.
     zero that the post would print as zero (`F0`, `P0.00`) is refused, as is a written feed of
     zero or less and a dwell of zero seconds or less.
 
+11. **Spindle-off toolpaths (diamond drag, T-0154).** A diamond-drag Quick Engrave toolpath
+    runs with the spindle off. Before it the post writes its `SPINDLE_OFF_PAUSE` block: `M5`,
+    safe Z, a comment saying that the spindle stays off for the drag tool and asking the operator
+    to check that it is stopped or locked, a bare `M0` (on every post; Marlin's message is the `;`
+    comment before it), and safe Z again. From that pause until the next tool change stop there is no
+    `M3`/`M4` and no `S` word; the spindle starts again only after a tool change (`M0` or `M6`)
+    with the next tool's speed. The interpreter leaves out the spindle start lines of HEADER,
+    TOOLCHANGE and NEW_SEGMENT for such a toolpath and never writes SPINDLE_ON; it refuses a
+    post without `SPINDLE_OFF_PAUSE` (or whose block writes no `M5` or no `M0`; lines starting
+    with `/` and text after `;` do not count), a line that
+    writes `[S]` together with other codes, and any spindle start or speed word in the drag
+    toolpath's output, read as a controller reads it (spaces ignored: `M 3`, `S .5`, `M+3`
+    count), and a spindle-off toolpath whose tool is not a diamond drag tool. No other toolpath can skip
+    the spindle: only Quick Engrave marks a toolpath spindle-off, and only for diamond-drag tools
+    (ADR-0020, ADR-0024). After the last drag toolpath of a drag section, before a toolpath that
+    starts the spindle again, the post writes its `SPINDLE_UNLOCK_PAUSE` block: `M5`, safe Z, a
+    comment asking the operator to unlock the spindle, a bare `M0`, safe Z; once per drag section, not between drag toolpaths, and also before the
+    program end when the job ends with drag toolpaths. A post without it (or whose block writes no `M5` or no `M0`) refuses such jobs.
+    In a drag section every written line must pass an allowlist (ADR-0020): printable ASCII
+    only (non-ASCII output text is a parse error for every post, and `LINE_ENDING` must be LF,
+    CR LF or CR), no `~ ! ?`, no Marlin emergency codes, plain unnested comments (a comment ends
+    at the first `)`; no parentheses at all on `;`-comment posts), no M3/M4/S word in the
+    template text even in comments, and live G-code made only of upper-case words `X Y Z I J F
+    P` (signed numbers), `N T H` (digits), `G0 G1 G2 G3 G4 G17 G20 G21 G40 G43 G49 G80 G90 G91
+    G91.1 G94` and `M0 M1 M2 M5 M6 M30`, no `/` (block delete), digit counts capped (`N` up to
+    9 digits, `M G T H` 5), and every `M0`/`M1` line bare (`[N] M0` and at most one comment, no
+    message text, on every post). Profile and Pocket refuse diamond-drag tools. In a custom post that offers
+    `SPINDLE_OFF_PAUSE`, start the spindle in HEADER, TOOLCHANGE and NEW_SEGMENT on a line of its
+    own (`M3[S]`).
+
 Hand-review result: all eight goldens pass points 1–8; points 9 and 10 are enforced by the
-interpreter and tested on every post.
+interpreter and tested on every post. All eight drag goldens (T-0154) were reviewed against
+points 1–8 and 11 (two pauses in a row where a tool change leads into a drag toolpath: the tool
+change stop, then the spindle-off pause; and the unlock pause, then the tool change stop, where
+the end mill follows the drag toolpaths and before the program end) and are checked by the same test with the drag rule.
 
 ## Dialect choices per controller
 
@@ -102,7 +141,7 @@ interpreter and tested on every post.
 | Mach3 mm / inch | `G90 G94 G91.1 G40 G49 G80 G17 G21`/`G20` | `M5`, safe Z, `T<n> M6`, safe Z, `M3 S` | `G4 P` **seconds** (Mach3's default); a General Config checkbox, commonly labelled "G04 Dwell in Milliseconds", is reported to switch to ms. Verify that it is off (if it is on, dwells get shorter, never longer) | `M30` | `N10`, `N20`… / CR LF | `( )` | "Using Mach3Mill" user manual, Artsoft / Newfangled Solutions: https://www.machsupport.com |
 | Mach4 mm | as Mach3 | as Mach3 | `G4 P` **seconds**, per the official Mach4 Mill manual | `M30` | none / CR LF | `( )` | Mach4 Mill G-code programming manual, Newfangled Solutions: https://www.machsupport.com |
 | LinuxCNC mm / inch | `G17 G40 G49 G80 G90 G91.1 G94 G21`/`G20` | `M5`, safe Z, `T<n> M6`, `G43 H<n>`, safe Z, `M3 S` | `G4 P` **seconds** | `M2` | none / LF | `( )` | LinuxCNC G-code reference: https://linuxcnc.org/docs/html/gcode/g-code.html and M-codes: https://linuxcnc.org/docs/html/gcode/m-code.html |
-| Marlin mm | `G21`, `G90` (no `G17`/`G94`, see below) | `M5`, safe Z, `M0 <message>` pause (**needs an LCD or `EMERGENCY_PARSER`, otherwise ignored**), safe Z, `M3 S`; **no T word** | `G4 P` **milliseconds** (multiplier 1000) | none, see below | none / LF | `;` | Marlin G-code reference: https://marlinfw.org/docs/gcode/ (G0-G1, G2-G3, G4, M0-M1, M3, M5) |
+| Marlin mm | `G21`, `G90` (no `G17`/`G94`, see below) | `M5`, safe Z, `; <message>` comment then a bare `M0` pause (**needs an LCD or `EMERGENCY_PARSER`, otherwise ignored**), safe Z, `M3 S`; **no T word** | `G4 P` **milliseconds** (multiplier 1000) | none, see below | none / LF | `;` | Marlin G-code reference: https://marlinfw.org/docs/gcode/ (G0-G1, G2-G3, G4, M0-M1, M3, M5) |
 
 Every post uses `G2`/`G3` with `I`/`J` measured from the arc start, a feed (`F`) only when it
 changes, and modal X/Y/Z (written only when they change).
@@ -113,6 +152,10 @@ changes, and modal X/Y/Z (written only when they change).
 > Marlin's tool change relies on `M0`. Without an LCD controller or `EMERGENCY_PARSER`
 > (resume with `M108`), Marlin **ignores `M0`**: the tool change is skipped and the next
 > toolpath runs with the previous tool. Source: https://marlinfw.org/docs/gcode/M000-M001.html
+>
+> **Marlin: the spindle-off pause (diamond drag) uses `M0` too.** Without an LCD controller or
+> `EMERGENCY_PARSER`, Marlin skips that pause as well. The spindle is still stopped (`M5`) before
+> the drag toolpath, but nobody is asked to check it.
 >
 > **Mach3 / Mach4: tool changes must not be set to "ignore".** If the controller is set to
 > ignore tool changes (Mach3: the tool-change option in Config > General Config; Mach4: the
@@ -149,6 +192,11 @@ changes, and modal X/Y/Z (written only when they change).
   - It writes no `M30`, because on Marlin that deletes a file from the SD card.
   - Comments use `;`, because Marlin only understands `( )` with `PAREN_COMMENTS`.
   - Marlin runs `G0` at the last feed rate, so rapids are slower than on a CNC controller.
+- **Spindle-off pause.** Every post pauses with `M0` before a diamond-drag toolpath, including
+  Mach3, Mach4 and LinuxCNC, whose tool change is `M6`: `M6` can be configured to do nothing,
+  while `M0` always stops the program until Cycle Start. If you lock the spindle for drag
+  engraving, the unlock pause after the drag toolpaths (also `M0`) is where you unlock it: the
+  next spinning toolpath starts the spindle right after the tool change that follows.
 - **Spindle spin-up.** None of the posts add a dwell after `M3`. Marlin waits for its configured
   power-up delay. On Grbl, Mach and LinuxCNC, configure spindle-at-speed (or add a dwell to
   `SPINDLE_ON`/`HEADER`) if your spindle needs time to reach speed.
@@ -157,6 +205,8 @@ changes, and modal X/Y/Z (written only when they change).
 
 1. Write it from the controller's public documentation only, and add a row to the table above.
 2. Add it to `shippedPosts()` in `core/tests/post/shipped_posts_test.cpp` with its units, tool
-   change, program end and dwell words.
-3. Generate its `<stem>_fixture.nc` golden. Review it by hand against the checklist, then commit
-   it with the post.
+   change, program end and dwell words, and to the stem lists of `post_safety_test.cpp`,
+   `spindle_off_test.cpp` and the toolpath post tests.
+3. Give it `SPINDLE_OFF_PAUSE` and `SPINDLE_UNLOCK_PAUSE` blocks (point 11).
+4. Generate its `<stem>_fixture.nc` and `<stem>_drag.nc` goldens. Review them by hand against the
+   checklist, then commit them with the post.

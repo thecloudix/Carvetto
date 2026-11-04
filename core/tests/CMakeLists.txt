@@ -42,6 +42,7 @@ add_executable(carvetto_tests
   post/grbl_golden_test.cpp
   post/shipped_posts_test.cpp
   post/post_safety_test.cpp
+  post/spindle_off_test.cpp
   tooling/starter_tools_test.cpp
   document/job_test.cpp
   document/variables_test.cpp

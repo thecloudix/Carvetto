@@ -26,7 +26,8 @@ G0 Z5.000
 M5
 G0 Z5.000
 ; Change to tool 2: Drill (3 mm)
-M0 Load tool 2 then resume
+; Load tool 2 then resume
+M0
 G0 Z5.000
 ; Drill
 M3 S10000

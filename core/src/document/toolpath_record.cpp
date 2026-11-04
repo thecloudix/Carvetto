@@ -117,6 +117,24 @@ std::string nonFiniteParam(const ToolpathParams& params) {
     return key.empty() ? nonFiniteTolerance(p.tolerance) : key;
 }
 
+std::string spindleOffProblem(const ToolpathRecord& record) {
+    const toolpath::ToolSnapshot& t = record.tool;
+    if (!t.spindleOff) {
+        return t.toolType.empty() ? std::string() : "a tool type is only recorded for spindle-off (diamond-drag) tools";
+    }
+    if (record.operation() != ToolpathOperation::Engrave) {
+        return "only engrave toolpaths (diamond-drag tools) may run with the spindle off";
+    }
+    if (t.toolType != toolpath::kDiamondDragToolType) {
+        return "only diamond-drag tools may run with the spindle off (the tool type is not diamond_drag)";
+    }
+    return {};
+}
+
+bool spindleOffAllowed(const ToolpathRecord& record) {
+    return spindleOffProblem(record).empty();
+}
+
 bool ToolpathRecord::operator==(const ToolpathRecord& other) const {
     if (!(id == other.id && name == other.name && params == other.params && selection == other.selection &&
           tool == other.tool && toolSource == other.toolSource)) {

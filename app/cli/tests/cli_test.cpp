@@ -352,6 +352,44 @@ TEST_CASE("T-0151: toolpath engrave reports diagnostics and refuses unusable too
     CHECK_THAT(t.err, ContainsSubstring("typo.json: params: unknown key 'dpeth'"));
 }
 
+TEST_CASE("T-0154: a diamond-drag engraving is stored spindle-off and posted with the spindle off",
+          "[cli][toolpath][engrave][spindle-off]") {
+    const std::string dir = workDir("engrave_drag");
+    const std::string carv = importedFixture(dir);
+    auto db = tooling::importToolDatabaseJson(readFile(kData + "/tools.json"));
+    REQUIRE(db.ok);
+    tooling::Tool drag = *db.database.findTool("end-mill-6mm");
+    drag.id = "drag-90";
+    drag.name = "Diamond Drag 90";
+    drag.type = tooling::ToolType::DiamondDrag;
+    drag.diameter = 0.3;
+    drag.cuttingData.clear();
+    drag.defaultCuttingData.toolNumber = 9;
+    drag.defaultCuttingData.spindleSpeed = 12000.0;  // ignored: a drag tool must not turn
+    REQUIRE(db.database.addTool(drag));
+    writeFile(dir + "/db.json", tooling::exportToolDatabaseJson(db.database));
+    writeFile(dir + "/drag.json", R"({"tool": {"id": "drag-90", "database": "db.json"}, "name": "Drag",
+        "depth": 0.1, "layers": ["Outline"]})");
+    const Outcome r = runCli({"toolpath", "engrave", dir + "/drag.json", carv, carv});
+    INFO(r.err);
+    REQUIRE(r.code == 0);
+    const auto records = document::loadCarv(fs::path(carv)).value().document.toolpaths();
+    REQUIRE(records.size() == 1);
+    CHECK(records[0].tool.spindleOff);
+    CHECK(records[0].tool.spindleSpeed == 0.0);
+
+    const Outcome post = runCli({"post", kGrbl, carv, dir + "/drag.nc"});
+    INFO(post.err);
+    REQUIRE(post.code == 0);
+    const std::string nc = readFile(dir + "/drag.nc");
+    CHECK(nc.find("M3 ") == std::string::npos);
+    CHECK(nc.find("M3\n") == std::string::npos);
+    CHECK(nc.find(" S") == std::string::npos);
+    const std::size_t pause = nc.find("M5\nG0 Z5.000\n(Spindle stays off for diamond drag tool 9: Diamond Drag 90)\n");
+    REQUIRE(pause != std::string::npos);
+    CHECK(nc.find("M0\n", pause) < nc.find("G1 "));
+}
+
 // ------------------------------------------------------------------------------------ help
 
 TEST_CASE("AC2: --help documents every command", "[cli][help]") {

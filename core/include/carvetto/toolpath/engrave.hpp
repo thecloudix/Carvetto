@@ -66,9 +66,8 @@ struct EngraveResult {
     bool has(ToolpathIssue issue) const { return hasIssue(diagnostics, issue); }
 };
 
-/// True for the tool types quick engraving accepts (ADR-0024): V-bit, engraving tool, end mill
-/// and ball nose. Diamond-drag tools are refused until toolpaths can run with the spindle off
-/// (owner decision 2026-11-03).
+/// True for the tool types quick engraving accepts (ADR-0024): V-bit, engraving tool, end mill,
+/// ball nose and diamond drag tool (T-0154; its toolpath runs with the spindle off).
 bool engraveToolAllowed(tooling::ToolType type);
 
 /// Smallest depth of one pass, mm (`depth / passes`). Thinner passes are far below any machine's
@@ -100,7 +99,10 @@ std::vector<double> engraveLevels(double depth, int passes);
 /// the engraving ("too large for the fill area").
 ///
 /// Tool: one of `engraveToolAllowed` (`InvalidTool` otherwise) passing `tooling::validate`, with
-/// feed and plunge rates > 0 and a cutting width > 0 at the depth. `cuttingData` empty = the
+/// feed and plunge rates > 0 and a cutting width > 0 at the depth. A diamond drag tool is used
+/// like the others (Outline and Fill; its width is its diameter) but its tool snapshot has
+/// `spindleOff` set and spindle speed 0, so the post runs it with the spindle off, after M5 and an
+/// operator pause (T-0154, ADR-0024 §6). `cuttingData` empty = the
 /// tool's default data (`effectiveCuttingData`). Every rapid is at safe Z. Output is
 /// deterministic; an empty toolpath always comes with at least one diagnostic.
 EngraveResult engraveToolpath(const std::vector<geometry::Contour>& contours, const tooling::Tool& tool,

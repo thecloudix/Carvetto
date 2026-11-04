@@ -160,6 +160,9 @@ class Document {
     std::optional<std::size_t> toolpathIndex(ToolpathId id) const;
     /// Raw: inserts `record` (allocating an id when null) at `index` or at the end. Returns the
     /// id. A non-null id must be unused. Exhausted generator: as `insertSheet`.
+    /// Internal API for commands, undo and loading: the record is not validated here (finite
+    /// parameters, selection, the spindle-off rule of `spindleOffProblem`). Those guards live in
+    /// `AddToolpathCommand`/`SetToolpathCommand`, `saveCarv`, the loader and the post (T-0154).
     ToolpathId insertToolpath(ToolpathRecord record, std::optional<std::size_t> index = std::nullopt);
     /// Raw: removes a toolpath record. Nullopt when absent.
     std::optional<ToolpathRecord> takeToolpath(ToolpathId id);
