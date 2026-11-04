@@ -1,0 +1,6 @@
+FLOOR case 10 seed 400 fam 0 lib:concave_arc_notch tool=0 D=1.283 ang=37.0 chord=0.1000 flat=0.448 limR=0.1497 ncl=0 emD=0.000/0.000 stepover=0.176: uncut(>half depth) 74/582 floor pts, deepest-in 3.3995 at (-48.60926,42.13249) diags:
+SUMMARY seed=400 fam=0 far=0 scale=1 cases=25 ok=25 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=9.405e-05 worstEMallow=8.322e-04 latNonRes=0.498 latRes=-1e+300 kinkNonRes=0.4978 kinkRes=-1e+300 worstOver=0.00e+00 worstFlatShortEndMills=0.02132 worstFlatShortSelf=0.2618 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=1 worstFrac=0.1271 worstDepthIntoFlat/R=22.716
+  issue 26: 1
+  issue 4: 8
+exit 0

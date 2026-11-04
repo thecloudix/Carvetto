@@ -1,0 +1,10 @@
+FLOOR case 16 seed 5818 fam 18 nestedtight-circ tool=0 D=1.727 ang=153.3 chord=0.1000 flat=0.064 limR=0.2710 ncl=0 emD=0.000/0.000 stepover=0.434: uncut(>half depth) 194/593 floor pts, deepest-in 5.0512 at (-4.26878,-5.27153) diags: [17] [17]
+FLOOR case 24 seed 5818 fam 18 nestedtight-circ tool=0 D=13.916 ang=67.0 chord=0.1000 flat=2.225 limR=1.4721 ncl=0 emD=0.000/0.000 stepover=1.722: uncut(>half depth) 38/315 floor pts, deepest-in 2.7489 at (-2.09536,1.67470) diags: [17] [17]
+SUMMARY seed=5818 fam=18 far=0 scale=1 cases=40 ok=37 refused=3 resolved=5 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.333e-02 worstEMallow=3.333e-02 latNonRes=0.4997 latRes=0.4492 kinkNonRes=0.4997 kinkRes=-0.01011 worstOver=1.67e-16 worstFlatShortEndMills=1.063 worstFlatShortSelf=2.193 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=2 worstFrac=0.3272 worstDepthIntoFlat/R=18.641
+  issue 17: 69
+  issue 21: 1
+  issue 26: 8
+  issue 28: 5
+  issue 4: 5
+exit 0

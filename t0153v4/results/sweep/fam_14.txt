@@ -1,0 +1,9 @@
+FLOOR case 21 seed 4014 fam 14 cluster+near-outside g=0.001200 tool=0 D=10.237 ang=145.0 chord=0.0500 flat=0.573 limR=1.8142 ncl=0 emD=0.000/0.000 stepover=2.619: uncut(>half depth) 16/540 floor pts, deepest-in 3.3837 at (-4.15512,4.67283) diags: [28]
+FLOOR case 22 seed 4014 fam 14 cluster+near-outside g=0.002500 tool=0 D=5.335 ang=84.1 chord=0.0100 flat=1.415 limR=1.2772 ncl=0 emD=0.000/0.000 stepover=2.248: uncut(>half depth) 26/348 floor pts, deepest-in 1.6923 at (-3.74712,0.67305) diags: [28]
+SUMMARY seed=4014 fam=14 far=0 scale=1 cases=25 ok=25 refused=0 resolved=25 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.662e-04 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=0.5646 kinkNonRes=-1e+300 kinkRes=0.4896 worstOver=-8.32e-05 worstFlatShortEndMills=0.2552 worstFlatShortSelf=2.196 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=2 worstFrac=0.0747 worstDepthIntoFlat/R=1.865
+  issue 17: 3
+  issue 26: 8
+  issue 28: 25
+  issue 4: 3
+exit 0

@@ -1,0 +1,7 @@
+FLOOR case 0 seed 466 fam 6 bezblob tool=0 D=6.149 ang=146.2 chord=0.0003 flat=0.260 limR=0.8575 ncl=0 emD=0.000/0.000 stepover=1.071: uncut(>half depth) 86/577 floor pts, deepest-in 2.7653 at (-6.69726,7.36107) diags:
+SUMMARY seed=466 fam=6 far=0 scale=1 cases=8 ok=8 refused=0 resolved=4 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=2.524e-05 worstEMallow=4.963e-05 latNonRes=0.4495 latRes=0.454 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=0.00e+00 worstFlatShortEndMills=0.1898 worstFlatShortSelf=0.8881 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=1 worstFrac=0.1490 worstDepthIntoFlat/R=3.225
+  issue 26: 1
+  issue 28: 4
+  issue 4: 1
+exit 0

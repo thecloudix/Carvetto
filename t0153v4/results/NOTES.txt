@@ -1,0 +1,45 @@
+T-0153 round 4 (209499a) verifier results.
+BLOCKING
+ N1. The new safety net (v_carve.cpp skeletonInside) does not hold: it tests only that each branch's deepest skeleton point
+     (and each isolated node) lies inside the whole even-odd region, never that its inscribed disc is consistent with the
+     region. A wrong-side hole whose skeleton's deepest points fall inside an island (another part) passes the net and is
+     carved. Fault injection (sabotage.patch, never committed): SAB=2 (hole contour read on the wrong side in medialAxis),
+     SAB=4 (hole nested as an outer: the case ADR-0025 sec. 5 says is caught):
+       repro4/annulus_isl_g0.01.txt (circle R8, hole R7.99, island r3 near the centre), V90 D12, chordal 0.05:
+         SAB=2 -> not refused, worst cone -3.316 mm at (0,0) depth 6; SAB=4 -> -5.291 mm (837 moves).
+       repro4/framehole_isl_g0.05.txt (square 10, hole inset 0.05, island [2,8]^2): SAB=2 -1.942 mm, SAB=4 -1.992 mm.
+     The same injection on holes without an island is refused (dhole_*, lune, band, Lhole, Ddeep), so the net works only
+     when the deepest point is not in an island. Natural trigger not found: wrongside.cpp (6,742 non-crossing hugging-hole
+     configurations, chordal 0.0033..0.333, distance 1e-6..1e-3) found 0 wrong-side reads (16 ignored -> guarded); the natural
+     misclassifications seen (near-full D-holes at chordal 1.0: D_g0.0005..0.004_S6/S6.25) are "ignored" and refused by the
+     ignored-boundary guard. Suggested net: also require |r - dist(p, region rings)| <= 2c + d (or dist >= r - 2c - d) at
+     those points.
+FIXED (B1, B2)
+ - All round-3 D-hole repros (repro3/dhole_*.txt): medialAxis ignored=0 and 0 skeleton points outside at inner chordal
+   0.0167/0.0333/0.00033; V-carve clean (dhole_tip_ccw_g0.01 chordal 0.05: 0 violations). Round-3 sweep cases fam 16 seed 316
+   (regenerated with the round-3 library: cases 7/8/14 = -0.199 / -0.513 mm / centre outside with r3) are clean with r4.
+ - adv/ (288 files, 4320 runs incl. chordal 1.0 / distance 1e-5): 0 cone violations, 0 centres outside; 454 "nothing to
+   carve", 131 refusals [27] (thin rings/frames/sandwiches with gaps 0.0005..0.002 and near-full D-holes at chordal 1.0:
+   safe, same as round 3 where checked; framehole_isl_g0.0005 at chordal 0.1 carved inside the hole with r3, refused now).
+ - B2: minch4: 0.0003 and 0.000300001 with flat depth (V-bit self-clear, end mill) succeed; 0.00029 refused (InvalidParameters).
+   Sweep chordal 0.0003 x fam 1/6/10/14/18 (8 cases each, flat in 2/3): 0 violations, lat <= 0.55.
+FAMILY 18 (open class): sweep fam18_ch01 case 2 seed 4818 (chordal 0.1): 3 V-bit moves at the flat depth, cone -0.0139 mm.
+   Contours 5 and 6 cross by 0.00063 mm (left edges x=-7.08085 / -7.08148): a hole sliver 0.63 um wide (< distance 0.001)
+   with region on both sides. The footprint crosses the sliver and reaches 13.3 um into the region strip beyond.
+   repro4/f18.txt reproduces (VC_FIX V 4.857/126.06 chordal 0.1 flat 0.856: -0.0139, 10-15 moves); f18_nosliver.txt (contour
+   6's left edge moved inside contour 5, no sliver) -> 0 violations. = the documented sub-distance class (ADR-0025 known limit /
+   T-0164 (a)); material wrongly cut is the 0.63 um sliver only. nestedsq_cone (r3) unchanged (-0.058 mm, same class).
+   fam_18 / fam18b / fam18_ch01_s5818 (40 more at chordal 0.1): 0 violations.
+SWEEP (sweep4.sh): fam 0..23 x 25, fam18 x 40 + chordal 0.1 x 30 + 40, mix x 2 x 40, far 2e4, scale 0.05: 0 real violations
+   except fam18_ch01 (above) and fam16_s316 case 3 (-1.3e-4 mm, gap 3.1e-5 mm, resolved: sub-distance). fam 15/20/23 and
+   mix_402 c28 coverage/over fails are coincident-edge artefacts (VC_F15=1 and VC_F23=1 clean). lat <= 0.565 x chordal.
+   scale20 killed (exit 137, memory) - not analysed.
+MEDIAL AXIS vs main: ac1 0.01/0.05 21/21 OK both, far BAD 84 (br) vs 104 (main), cap identical, gab identical, fuzz 2 x 640
+   no crash/hang/bad (main 1 x 640 same), scale holes identical samples, scale text (crossing page: 108 touching pairs) fewer
+   samples (39 vs 44 per span) and more skeleton outside the even-odd region than main (18,874 vs 9,536 points; outside the
+   ADR-0023 contract for crossing input; V-carve resolves crossings first). Single glyphs identical to main.
+AC2 (Release, load 17-25): 5000 regions 26.4-28.2 s plain (r3 lib interleaved 26.3-26.9 s), 27.8 s flat, 26.4 s EM, frame
+   40.4 s; doubling 625->1250 2.0-2.2.
+BUILD/TEST: Debug -Werror 280/280; ctest 965/965 (-j6) and --repeat until-fail:2 965/965; Release [v_carve] 29, [medial] 34,
+   [golden] 13, end_to_end/golden ctest 26/26; merged with origin/main (0fa0699, git merge-tree clean) Debug 981/981; goldens
+   regenerated on the merged copy: no changes; changelog check ok.

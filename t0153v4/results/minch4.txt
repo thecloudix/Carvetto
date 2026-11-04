@@ -1,0 +1,60 @@
+glyphA 6mm   em=0 ch=0.00029 flat=0 cpu=0.00s ok=0 moves=0 [0 invalid tolerance: chordal must be between 0.0003 and 1 mm, distance > 0 and <= chordal]
+glyphA 6mm   em=0 ch=0.00029 flat=0.3 cpu=0.00s ok=0 moves=0 [0 invalid tolerance: chordal must be between 0.0003 and 1 mm, distance > 0 and <= chordal]
+glyphA 6mm   em=1 ch=0.00029 flat=0.3 cpu=0.00s ok=0 moves=0 [0 invalid tolerance: chordal must be between 0.0003 and 1 mm, distance > 0 and <= chordal]
+glyphA 6mm   em=0 ch=0.0003 flat=0 cpu=0.01s ok=1 moves=2733 tpV:2733
+glyphA 6mm   em=0 ch=0.0003 flat=0.3 cpu=0.01s ok=1 moves=3988 tpV:3988
+glyphA 6mm   em=1 ch=0.0003 flat=0.3 cpu=0.01s ok=1 moves=3758 tpV:3758 [4 flat area clearance: tool 1 (EM): too large for the pocket, nothing to cut]
+glyphA 6mm   em=0 ch=0.000300001 flat=0 cpu=0.01s ok=1 moves=2733 tpV:2733
+glyphA 6mm   em=0 ch=0.000300001 flat=0.3 cpu=0.01s ok=1 moves=3988 tpV:3988
+glyphA 6mm   em=1 ch=0.000300001 flat=0.3 cpu=0.02s ok=1 moves=3758 tpV:3758 [4 flat area clearance: tool 1 (EM): too large for the pocket, nothing to cut]
+glyphA 6mm   em=0 ch=0.001 flat=0 cpu=0.01s ok=1 moves=1569 tpV:1569
+glyphA 6mm   em=0 ch=0.001 flat=0.3 cpu=0.01s ok=1 moves=2304 tpV:2304
+glyphA 6mm   em=1 ch=0.001 flat=0.3 cpu=0.01s ok=1 moves=2168 tpV:2168 [4 flat area clearance: tool 1 (EM): too large for the pocket, nothing to cut]
+glyphS 6mm   em=0 ch=0.00029 flat=0 cpu=0.00s ok=0 moves=0 [0 invalid tolerance: chordal must be between 0.0003 and 1 mm, distance > 0 and <= chordal]
+glyphS 6mm   em=0 ch=0.00029 flat=0.3 cpu=0.00s ok=0 moves=0 [0 invalid tolerance: chordal must be between 0.0003 and 1 mm, distance > 0 and <= chordal]
+glyphS 6mm   em=1 ch=0.00029 flat=0.3 cpu=0.00s ok=0 moves=0 [0 invalid tolerance: chordal must be between 0.0003 and 1 mm, distance > 0 and <= chordal]
+glyphS 6mm   em=0 ch=0.0003 flat=0 cpu=0.03s ok=1 moves=4234 tpV:4234
+glyphS 6mm   em=0 ch=0.0003 flat=0.3 cpu=0.07s ok=1 moves=8649 tpV:8649
+glyphS 6mm   em=1 ch=0.0003 flat=0.3 cpu=0.13s ok=1 moves=7067 tpV:7067 [4 flat area clearance: tool 1 (EM): too large for the pocket, nothing to cut]
+glyphS 6mm   em=0 ch=0.000300001 flat=0 cpu=0.04s ok=1 moves=4234 tpV:4234
+glyphS 6mm   em=0 ch=0.000300001 flat=0.3 cpu=0.06s ok=1 moves=8649 tpV:8649
+glyphS 6mm   em=1 ch=0.000300001 flat=0.3 cpu=0.12s ok=1 moves=7067 tpV:7067 [4 flat area clearance: tool 1 (EM): too large for the pocket, nothing to cut]
+glyphS 6mm   em=0 ch=0.001 flat=0 cpu=0.02s ok=1 moves=2313 tpV:2313
+glyphS 6mm   em=0 ch=0.001 flat=0.3 cpu=0.03s ok=1 moves=4710 tpV:4710
+glyphS 6mm   em=1 ch=0.001 flat=0.3 cpu=0.05s ok=1 moves=3876 tpV:3876 [4 flat area clearance: tool 1 (EM): too large for the pocket, nothing to cut]
+square 50mm  em=0 ch=0.00029 flat=0 cpu=0.00s ok=0 moves=0 [0 invalid tolerance: chordal must be between 0.0003 and 1 mm, distance > 0 and <= chordal]
+square 50mm  em=0 ch=0.00029 flat=0.3 cpu=0.00s ok=0 moves=0 [0 invalid tolerance: chordal must be between 0.0003 and 1 mm, distance > 0 and <= chordal]
+square 50mm  em=1 ch=0.00029 flat=0.3 cpu=0.00s ok=0 moves=0 [0 invalid tolerance: chordal must be between 0.0003 and 1 mm, distance > 0 and <= chordal]
+square 50mm  em=0 ch=0.0003 flat=0 cpu=0.02s ok=1 moves=10043 tpV:10043 [26 1 region(s) are wider than tool 'V' (12.7 mm) can carve: carved to its full depth of 10.9985 mm, the flat bott]
+square 50mm  em=0 ch=0.0003 flat=0.3 cpu=0.02s ok=1 moves=2789 tpV:2789
+square 50mm  em=1 ch=0.0003 flat=0.3 cpu=0.02s ok=1 moves=2343 tpEM:121 tpV:2343
+square 50mm  em=0 ch=0.000300001 flat=0 cpu=0.02s ok=1 moves=10043 tpV:10043 [26 1 region(s) are wider than tool 'V' (12.7 mm) can carve: carved to its full depth of 10.9985 mm, the flat bott]
+square 50mm  em=0 ch=0.000300001 flat=0.3 cpu=0.02s ok=1 moves=2789 tpV:2789
+square 50mm  em=1 ch=0.000300001 flat=0.3 cpu=0.03s ok=1 moves=2343 tpEM:121 tpV:2343
+square 50mm  em=0 ch=0.001 flat=0 cpu=0.01s ok=1 moves=9169 tpV:9169 [26 1 region(s) are wider than tool 'V' (12.7 mm) can carve: carved to its full depth of 10.9985 mm, the flat bott]
+square 50mm  em=0 ch=0.001 flat=0.3 cpu=0.01s ok=1 moves=1915 tpV:1915
+square 50mm  em=1 ch=0.001 flat=0.3 cpu=0.01s ok=1 moves=1301 tpEM:121 tpV:1301
+circle r25   em=0 ch=0.00029 flat=0 cpu=0.00s ok=0 moves=0 [0 invalid tolerance: chordal must be between 0.0003 and 1 mm, distance > 0 and <= chordal]
+circle r25   em=0 ch=0.00029 flat=0.3 cpu=0.00s ok=0 moves=0 [0 invalid tolerance: chordal must be between 0.0003 and 1 mm, distance > 0 and <= chordal]
+circle r25   em=1 ch=0.00029 flat=0.3 cpu=0.00s ok=0 moves=0 [0 invalid tolerance: chordal must be between 0.0003 and 1 mm, distance > 0 and <= chordal]
+circle r25   em=0 ch=0.0003 flat=0 cpu=9.48s ok=1 moves=2158248 tpV:2158248 [26 1 region(s) are wider than tool 'V' (12.7 mm) can carve: carved to its full depth of 10.9985 mm, the flat bott]
+circle r25   em=0 ch=0.0003 flat=0.3 cpu=11.35s ok=1 moves=260908 tpV:260908
+circle r25   em=1 ch=0.0003 flat=0.3 cpu=2.12s ok=1 moves=1577 tpEM:31461 tpV:1577
+circle r25   em=0 ch=0.000300001 flat=0 cpu=12.21s ok=1 moves=2158248 tpV:2158248 [26 1 region(s) are wider than tool 'V' (12.7 mm) can carve: carved to its full depth of 10.9985 mm, the flat bott]
+circle r25   em=0 ch=0.000300001 flat=0.3 cpu=15.92s ok=1 moves=260908 tpV:260908
+circle r25   em=1 ch=0.000300001 flat=0.3 cpu=2.95s ok=1 moves=1577 tpEM:31461 tpV:1577
+circle r25   em=0 ch=0.001 flat=0 cpu=3.30s ok=1 moves=1186541 tpV:1186541 [26 1 region(s) are wider than tool 'V' (12.7 mm) can carve: carved to its full depth of 10.9985 mm, the flat bott]
+circle r25   em=0 ch=0.001 flat=0.3 cpu=3.92s ok=1 moves=143262 tpV:143262
+circle r25   em=1 ch=0.001 flat=0.3 cpu=0.76s ok=1 moves=867 tpEM:17261 tpV:867
+star 40mm    em=0 ch=0.00029 flat=0 cpu=0.00s ok=0 moves=0 [0 invalid tolerance: chordal must be between 0.0003 and 1 mm, distance > 0 and <= chordal]
+star 40mm    em=0 ch=0.00029 flat=0.3 cpu=0.00s ok=0 moves=0 [0 invalid tolerance: chordal must be between 0.0003 and 1 mm, distance > 0 and <= chordal]
+star 40mm    em=1 ch=0.00029 flat=0.3 cpu=0.00s ok=0 moves=0 [0 invalid tolerance: chordal must be between 0.0003 and 1 mm, distance > 0 and <= chordal]
+star 40mm    em=0 ch=0.0003 flat=0 cpu=0.11s ok=1 moves=37799 tpV:37799 [26 1 region(s) are wider than tool 'V' (12.7 mm) can carve: carved to its full depth of 10.9985 mm, the flat bott]
+star 40mm    em=0 ch=0.0003 flat=0.3 cpu=0.13s ok=1 moves=52086 tpV:52086
+star 40mm    em=1 ch=0.0003 flat=0.3 cpu=0.13s ok=1 moves=15607 tpEM:5064 tpV:15607
+star 40mm    em=0 ch=0.000300001 flat=0 cpu=0.10s ok=1 moves=37799 tpV:37799 [26 1 region(s) are wider than tool 'V' (12.7 mm) can carve: carved to its full depth of 10.9985 mm, the flat bott]
+star 40mm    em=0 ch=0.000300001 flat=0.3 cpu=0.13s ok=1 moves=52087 tpV:52087
+star 40mm    em=1 ch=0.000300001 flat=0.3 cpu=0.13s ok=1 moves=15607 tpEM:5064 tpV:15607
+star 40mm    em=0 ch=0.001 flat=0 cpu=0.05s ok=1 moves=22037 tpV:22037 [26 1 region(s) are wider than tool 'V' (12.7 mm) can carve: carved to its full depth of 10.9985 mm, the flat bott]
+star 40mm    em=0 ch=0.001 flat=0.3 cpu=0.07s ok=1 moves=29599 tpV:29599
+star 40mm    em=1 ch=0.001 flat=0.3 cpu=0.07s ok=1 moves=9855 tpEM:2810 tpV:9855

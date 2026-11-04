@@ -1,0 +1,8 @@
+FLOOR case 5 seed 402 fam 2 holedstar tool=0 D=10.983 ang=31.9 chord=0.0010 flat=3.832 limR=1.0962 ncl=0 emD=0.000/0.000 stepover=1.689: uncut(>half depth) 118/643 floor pts, deepest-in 3.6146 at (-4.40208,-18.13909) diags:
+FLOOR case 21 seed 402 fam 2 holedstar tool=0 D=1.815 ang=57.0 chord=0.0500 flat=0.790 limR=0.4290 ncl=1 emD=6.343/0.000 stepover=0.726: uncut(>half depth) 15/716 floor pts, deepest-in 2.4477 at (-11.29801,-8.72843) diags:
+FLOOR case 24 seed 402 fam 2 holedstar tool=0 D=1.141 ang=142.5 chord=0.0010 flat=0.037 limR=0.1096 ncl=0 emD=0.000/0.000 stepover=0.116: uncut(>half depth) 47/1164 floor pts, deepest-in 4.0015 at (-14.19375,14.33114) diags:
+SUMMARY seed=402 fam=2 far=0 scale=1 cases=25 ok=25 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=10 worstCone=6.979e-05 worstEMallow=0.000e+00 latNonRes=0.3347 latRes=-1e+300 kinkNonRes=0.3343 kinkRes=-1e+300 worstOver=1.11e-16 worstFlatShortEndMills=0.9431 worstFlatShortSelf=4.438 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=3 worstFrac=0.1835 worstDepthIntoFlat/R=36.513
+  fails falseAlarmFam2: 10
+  issue 26: 9
+exit 0

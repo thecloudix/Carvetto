@@ -1,0 +1,7 @@
+FLOOR case 1 seed 461 fam 1 star tool=0 D=5.359 ang=143.5 chord=0.0003 flat=0.274 limR=0.8311 ncl=0 emD=0.000/0.000 stepover=1.230: uncut(>half depth) 66/574 floor pts, deepest-in 2.2584 at (10.56512,7.18397) diags:
+SUMMARY seed=461 fam=1 far=0 scale=1 cases=8 ok=8 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=2 worstCone=1.992e-05 worstEMallow=0.000e+00 latNonRes=0.3366 latRes=-1e+300 kinkNonRes=0.3324 kinkRes=-1e+300 worstOver=0.00e+00 worstFlatShortEndMills=0.08959 worstFlatShortSelf=0.988 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=1 worstFrac=0.1150 worstDepthIntoFlat/R=2.717
+  fails falseAlarmFam1: 2
+  issue 26: 4
+  issue 4: 1
+exit 0

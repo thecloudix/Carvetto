@@ -1,0 +1,5 @@
+holes    spans=   1560 contours=   390 cpu=   0.203s wall=   0.249s ratio= 0.00 samples=   12308 smp/span=  7.9 capped=0 pts=17476
+holes    spans=   3124 contours=   781 cpu=   0.420s wall=   0.421s ratio= 2.07 samples=   23667 smp/span=  7.6 capped=0 pts=34152
+holes    spans=   6248 contours=  1562 cpu=   0.948s wall=   0.949s ratio= 2.26 samples=   46441 smp/span=  7.4 capped=0 pts=67850
+holes    spans=  12496 contours=  3124 cpu=   2.016s wall=   2.019s ratio= 2.13 samples=   91590 smp/span=  7.3 capped=0 pts=134272
+holes    spans=  24992 contours=  6248 cpu=   4.328s wall=   4.343s ratio= 2.15 samples=  181015 smp/span=  7.2 capped=0 pts=266553

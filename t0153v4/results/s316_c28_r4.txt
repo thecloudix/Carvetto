@@ -1,0 +1,8 @@
+case 0 seed 1 fam 3 repro4/s316_c28.txt res=1 tool=0 D=11.521 ang=100.4 chord=0.001 flat=1.942 start=1.274 ncl=1 emD=4.792/0.000: ok lat=0.500*ch at (4.79733,-0.27089) kink=-1000000000000000052504760255204420248704468581108159154915854115511802457988908195786371375080447864043704443832883878176942523235360430575644792184786706982848387200926575803737830233794788090059368953234970799945081119038967640880074652742780142494579258788820056842838115669472196386865459400540160.000 over=-1.62e-04 flatShort=0.923 at (4.1336,-4.0064) dist 3.4464 limR 2.3309
+    diag 28 1 group(s) of crossing or touching vectors were resolved into their even-odd region (polygonised within 0.000125 mm)
+    diag 4 flat area clearance: tool 1 (EM0): too large for the pocket, nothing to cut
+SUMMARY seed=1 fam=-1 far=0 scale=1 cases=1 ok=1 refused=0 resolved=1 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=2.915e-04 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=0.5005 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.62e-04 worstFlatShortEndMills=0.9232 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+  issue 28: 1
+  issue 4: 1
+exit 0

@@ -1,0 +1,16 @@
+band n=  100 w=0.02 ang=0.05: 0.023s samples=6059 branches=3 pts=6029 rmax=0.01000 (w/2=0.01000) capped=0 ign=0
+band n=  100 w=0.02 ang=0.50: 0.030s samples=6234 branches=3 pts=6219 rmax=0.00996 (w/2=0.01000) capped=0 ign=0
+band n=  100 w=0.20 ang=0.05: 0.007s samples=2056 branches=5 pts=2056 rmax=0.09999 (w/2=0.10000) capped=0 ign=0
+band n=  100 w=0.20 ang=0.50: 0.008s samples=2056 branches=5 pts=2057 rmax=0.09991 (w/2=0.10000) capped=0 ign=0
+band n= 1000 w=0.02 ang=0.05: 0.028s samples=6010 branches=3 pts=6008 rmax=0.01000 (w/2=0.01000) capped=0 ign=0
+band n= 1000 w=0.02 ang=0.50: 0.029s samples=6010 branches=3 pts=6008 rmax=0.00997 (w/2=0.01000) capped=0 ign=0
+band n= 1000 w=0.20 ang=0.05: 0.010s samples=2047 branches=5 pts=2049 rmax=0.09999 (w/2=0.10000) capped=0 ign=0
+band n= 1000 w=0.20 ang=0.50: 0.011s samples=2053 branches=5 pts=2054 rmax=0.09996 (w/2=0.10000) capped=0 ign=0
+band n= 4000 w=0.02 ang=0.05: 0.042s samples=8011 branches=5 pts=8012 rmax=0.01000 (w/2=0.01000) capped=0 ign=0
+band n= 4000 w=0.02 ang=0.50: 0.057s samples=8011 branches=5 pts=8012 rmax=0.00997 (w/2=0.01000) capped=0 ign=0
+band n= 4000 w=0.20 ang=0.05: 0.051s samples=8037 branches=5 pts=8038 rmax=0.10000 (w/2=0.10000) capped=0 ign=0
+band n= 4000 w=0.20 ang=0.50: 0.046s samples=8056 branches=5 pts=8057 rmax=0.09997 (w/2=0.10000) capped=0 ign=0
+band n=16000 w=0.02 ang=0.05: 0.238s samples=32010 branches=5 pts=32002 rmax=0.01000 (w/2=0.01000) capped=0 ign=0
+band n=16000 w=0.02 ang=0.50: 0.252s samples=32009 branches=5 pts=31999 rmax=0.00999 (w/2=0.01000) capped=0 ign=0
+band n=16000 w=0.20 ang=0.05: 0.192s samples=32039 branches=5 pts=32037 rmax=0.10000 (w/2=0.10000) capped=0 ign=0
+band n=16000 w=0.20 ang=0.50: 0.235s samples=32058 branches=5 pts=32054 rmax=0.10000 (w/2=0.10000) capped=0 ign=0

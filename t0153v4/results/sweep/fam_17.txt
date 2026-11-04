@@ -1,0 +1,7 @@
+SUMMARY seed=4017 fam=17 far=0 scale=1 cases=25 ok=25 refused=0 resolved=25 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=2.912e-04 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=0.5439 kinkNonRes=-1e+300 kinkRes=0.456 worstOver=-1.05e-06 worstFlatShortEndMills=0.2824 worstFlatShortSelf=0.2482 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+  issue 17: 7
+  issue 26: 4
+  issue 28: 25
+  issue 4: 7
+exit 0
