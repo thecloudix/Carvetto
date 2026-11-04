@@ -68,6 +68,15 @@ constexpr double kMaxArcSegments = 100000.0;
 /// Names quoted in error messages are cut to this many bytes.
 constexpr std::size_t kMaxQuotedName = 64;
 
+/// Longest line written, on every post (T-0162, ADR-0020): characters of the line, comments
+/// included, line ending excluded. LinuxCNC reads a line with `fgets(raw_line, LINELEN, …)`,
+/// LINELEN 255, and refuses one whose read reaches 254 characters with NCE_COMMAND_TOO_LONG (so a
+/// line plus its CR LF must stay below 254); grblHAL keeps comments in its 257-byte line buffer
+/// (256 characters) and drops a longer line with error:overflow. 250 + CR LF is 252.
+constexpr std::size_t kMaxLineLength = 250;
+/// What a text value in a comment that is cut to fit `kMaxLineLength` ends with (T-0162).
+constexpr std::string_view kEllipsis = "...";
+
 /// A number for an error message: shortest round-trip form, "NaN", "+inf" or "-inf".
 std::string describeValue(double v) {
     if (std::isnan(v)) {
@@ -81,9 +90,17 @@ std::string describeValue(double v) {
     return r.ec == std::errc{} ? std::string(buf.data(), r.ptr) : std::string("?");
 }
 
-/// A user-supplied name for an error message: quoted, sanitised and cut short.
+/// A user-supplied name or post line for an error message: quoted, sanitised and cut short. A tab
+/// is shown as `<TAB>` (T-0161): sanitising would turn it into a space, hiding the very character
+/// a drag-section refusal is about.
 std::string quoted(std::string_view name) {
-    const std::string s = detail::sanitiseText(name.substr(0, kMaxQuotedName), {});
+    std::string_view rest = name.substr(0, kMaxQuotedName);
+    std::string s;
+    for (std::size_t tab = rest.find('\t'); tab != std::string_view::npos; tab = rest.find('\t')) {
+        s += detail::sanitiseText(rest.substr(0, tab), {}) + "<TAB>";
+        rest.remove_prefix(tab + 1);
+    }
+    s += detail::sanitiseText(rest, {});
     return "'" + s + (name.size() > kMaxQuotedName ? "...'" : "'");
 }
 
@@ -176,11 +193,17 @@ std::string parenProblem(std::string_view line, bool semicolonComments) {
     return open ? "a comment that is not closed on its line" : std::string();
 }
 
-/// The first byte that is not printable ASCII (0x20-0x7E) or tab, described; "" when none.
+/// The first byte that is not printable ASCII (0x20-0x7E), described; "" when none. Used only on
+/// lines written in a drag section, where a tab is refused too (T-0154): Marlin does not treat a
+/// tab as a separator ("N0<TAB>M0" is an unknown command, so the pause is skipped), and no shipped
+/// post writes tabs.
 std::string nonAsciiProblem(std::string_view text) {
     for (const char ch : text) {
         const auto b = static_cast<unsigned char>(ch);
-        if ((b < 0x20 || b > 0x7E) && b != '\t') {
+        if (ch == '\t') {
+            return "a tab (separate words with spaces)";
+        }
+        if (b < 0x20 || b > 0x7E) {
             static const char* const kHex = "0123456789ABCDEF";
             return std::string("the byte 0x") + kHex[b >> 4] + kHex[b & 0xF] + " (not printable ASCII)";
         }
@@ -327,6 +350,20 @@ std::vector<GWord> firstCommand(std::vector<GWord> words) {
     return words;
 }
 
+/// True when an operator stop (M0 or M1) comes before the first M5 in `words` (T-0162): in a
+/// pause block the spindle must be stopped before the program pauses for the operator.
+bool pauseBeforeStop(const std::vector<GWord>& words) {
+    for (const GWord& w : words) {
+        if (w.letter == 'M' && w.value == 5.0) {
+            return false;
+        }
+        if (w.letter == 'M' && (w.value == 0.0 || w.value == 1.0)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /// The words a block writes as template text, outside comments and with its tags left out
 /// (used to check that a pause block stops the spindle and pauses). Lines that start with `/`
 /// (block delete: the controller may skip them) do not count; with `firstWordOnly` (Marlin, one
@@ -361,7 +398,7 @@ std::vector<GWord> blockWords(const PostBlock& block, bool semicolonComments, bo
 }
 
 /// Why a block line (template text) may not be written while a spindle-off toolpath is active
-/// ("" when it may), T-0154. Strict on purpose: printable ASCII only; no `#` (RS274/NGC
+/// ("" when it may), T-0154. Strict on purpose: printable ASCII only (no tab); no `#` (RS274/NGC
 /// parameters); no M or S followed by a tag (`M[T]`); plain, unnested, closed comments; and no
 /// M3/M4/S-number word anywhere in the template text, comments included (it is the post author's
 /// fixed text and has no reason to mention them there). Tags count as spaces.
@@ -385,7 +422,7 @@ std::string templateProblem(std::string_view line, bool semicolonComments) {
         const char u = upperLetter(line[i]);
         if (u == 'M' || u == 'S') {
             std::size_t j = i + 1;
-            while (j < line.size() && (line[j] == ' ' || line[j] == '\t')) {
+            while (j < line.size() && line[j] == ' ') {
                 ++j;
             }
             if (j < line.size() && line[j] == '[') {
@@ -474,6 +511,14 @@ std::string wordProblem(char letter, std::string_view value) {
         case 'P':
             return isPlainNumber(value, true) ? std::string() : "the word " + word + " (not a plain number)";
         case 'N':
+            if (!allDigits(value)) {
+                return "the word " + word + " (needs plain digits)";
+            }
+            // Grbl refuses a line number above MAX_LINE_NUMBER (10,000,000) and drops the line
+            // (T-0161); the cap holds on every post because a post does not say which controller
+            // it is for. Mach3 numbers lines up to N999990.
+            return normalisedDecimal(value).size() <= 7 ? std::string()
+                                                        : "the word " + word + " (line numbers above 9999999)";
         case 'T':
         case 'H':
             return allDigits(value) ? std::string() : "the word " + word + " (needs plain digits)";
@@ -501,38 +546,47 @@ std::string wordProblem(char letter, std::string_view value) {
 }
 
 /// Why the live G-code of a line written in a drag section is not on the allowlist ("" when it
-/// is). It must be only words LETTER + value separated by
-/// spaces or tabs: upper-case letters X Y Z I J F P (signed plain numbers), N T H (plain digits),
-/// G (a code from `kDragGCodes`) and M (a code from `kDragMCodes`, plain digits). Any other
-/// character refuses the line. A line with M0 or M1 holds nothing but an optional N word and the
-/// M0/M1 (`pauseLine` is set for it), on every post.
-std::string allowlistProblem(std::string_view live, bool& pauseLine) {
+/// is). It must be only words LETTER + value separated by spaces: upper-case letters X Y Z I J F P
+/// (signed plain numbers), N T H (plain digits), G (a code from `kDragGCodes`) and M (a code from
+/// `kDragMCodes`, plain digits). Any other character refuses the line (tabs are refused before
+/// this is called). A line with M0 or M1 holds nothing but an optional N word and the M0/M1
+/// (`pauseLine` is set for it), on every post; with `bareStop` (the lines of the pause blocks,
+/// T-0161) so does a line with M5.
+std::string allowlistProblem(std::string_view live, bool bareStop, bool& pauseLine) {
     pauseLine = false;
     std::vector<std::pair<char, std::string>> words;
     // An M0/M1 line must be bare (owner decision 2026-11-03): an optional N word and the M0/M1,
     // nothing else (Marlin reads letters after M0 as parameters: "M0 UNLOCK UP 5" is a timeout;
-    // Grbl and LinuxCNC drop spaces: "M0 3" is M03).
-    const auto bareCheck = [&words, &pauseLine]() -> std::string {
+    // Grbl and LinuxCNC drop spaces: "M0 3" is M03). In a pause block the M5 line is bare too
+    // (T-0161): Grbl drops a line that errors as a whole, so "M5 M6" (unsupported) or
+    // "M5 G0 G1" (modal-group violation) would lose the spindle stop.
+    const auto bareCheck = [&words, &pauseLine, bareStop]() -> std::string {
         bool pause = false;
+        bool stop = false;
         for (const auto& [l, v] : words) {
-            pause = pause || (l == 'M' && (normalisedDecimal(v) == "0" || normalisedDecimal(v) == "1"));
+            if (l == 'M') {
+                const std::string n = normalisedDecimal(v);
+                pause = pause || n == "0" || n == "1";
+                stop = stop || (bareStop && n == "5");
+            }
         }
-        if (!pause) {
+        if (!pause && !stop) {
             return {};
         }
         pauseLine = true;
         const std::size_t n = words.size();
         const bool bare = (n == 1) || (n == 2 && words[0].first == 'N');
-        return bare ? std::string() : "other words on a line with M0 or M1 (an M0/M1 line holds only [N] M0)";
+        if (bare) {
+            return {};
+        }
+        return pause ? "other words on a line with M0 or M1 (an M0/M1 line holds only [N] M0)"
+                     : "other words on the M5 line of a pause block (it holds only [N] M5)";
     };
     std::size_t i = 0;
-    const auto skipSpaces = [&] {
-        while (i < live.size() && (live[i] == ' ' || live[i] == '\t')) {
+    while (true) {
+        while (i < live.size() && live[i] == ' ') {
             ++i;
         }
-    };
-    while (true) {
-        skipSpaces();
         if (i >= live.size()) {
             return bareCheck();
         }
@@ -552,28 +606,30 @@ std::string allowlistProblem(std::string_view live, bool& pauseLine) {
         if (std::string bad = wordProblem(letter, value); !bad.empty()) {
             return bad;
         }
-        if (i < live.size() && live[i] != ' ' && live[i] != '\t') {
+        if (i < live.size() && live[i] != ' ') {
             return std::string("the character '") + live[i] + "' after " + letter + std::string(value);
         }
         words.emplace_back(letter, std::string(value));
     }
 }
 
+/// Longest live G-code (outside comments, spaces included, line ending excluded) of a line written
+/// in a drag section (T-0161): Grbl's line buffer holds 79 characters (LINE_BUFFER_SIZE 80) and a
+/// longer line is dropped whole with error:overflow. Grbl and Marlin do not buffer comments, so a
+/// long tool name in a comment does not count.
+constexpr std::size_t kMaxDragLiveCode = 79;
+
 /// Why a written line (template text with its values) may not be written while a spindle-off
 /// toolpath is active ("" when it may), T-0154. Anywhere in the line, comments included: only
 /// printable ASCII, none of Grbl's realtime characters `~ ! ?`, and none of Marlin's
 /// emergency-parser codes M108, M112, M410, M876. Parentheses must be plain comments (a comment
-/// ends at the first `)`). The live G-code outside comments must pass `allowlistProblem`.
+/// ends at the first `)`). The live G-code outside comments is at most `kMaxDragLiveCode`
+/// characters and must pass `allowlistProblem` (`bareStop`: the line is in a pause block).
 /// Values inside comments are already sanitised (ADR-0020), so a tool named "S12 drill" in a
 /// comment is fine.
-std::string renderedProblem(std::string_view text, bool semicolonComments) {
+std::string renderedProblem(std::string_view text, bool semicolonComments, bool bareStop) {
     if (std::string bad = nonAsciiProblem(text); !bad.empty()) {
         return bad;
-    }
-    if (text.find('\t') != std::string_view::npos) {
-        // Marlin does not treat a tab as a separator ("N0<TAB>M0" is an unknown command, so the
-        // pause is skipped); no shipped post writes tabs, so none are allowed in a drag section.
-        return "a tab (separate words with spaces)";
     }
     if (const std::size_t at = text.find_first_of("~!?"); at != std::string_view::npos) {
         return std::string("the Grbl realtime character '") + text[at] + "'";
@@ -583,7 +639,11 @@ std::string renderedProblem(std::string_view text, bool semicolonComments) {
     }
     bool pauseLine = false;
     const std::string live = liveCode(text, semicolonComments);
-    if (std::string bad = allowlistProblem(live, pauseLine); !bad.empty()) {
+    if (live.size() > kMaxDragLiveCode) {
+        return std::to_string(live.size()) + " characters of G-code outside comments (Grbl's line buffer holds " +
+               std::to_string(kMaxDragLiveCode) + "; a longer line is dropped)";
+    }
+    if (std::string bad = allowlistProblem(live, bareStop, pauseLine); !bad.empty()) {
         return bad;
     }
     if (semicolonComments && live.find('N') != std::string::npos) {
@@ -592,7 +652,7 @@ std::string renderedProblem(std::string_view text, bool semicolonComments) {
         return "an N word (line numbers are not allowed in a drag section on ';'-comment posts)";
     }
     if (pauseLine && !semicolonComments && std::count(text.begin(), text.end(), '(') > 1) {
-        return "more than one comment on a line with M0 or M1";
+        return "more than one comment on a line with M0 or M1 (or the M5 line of a pause block)";
     }
     return {};
 }
@@ -600,20 +660,21 @@ std::string renderedProblem(std::string_view text, bool semicolonComments) {
 /// The drag check on the exact bytes written for one line (text, VAR prefixes and values
 /// included, plus the line ending): the ending must be LF, CR LF or CR and the rest must pass
 /// `renderedProblem` (T-0154).
-std::string writtenProblem(std::string_view written, std::string_view ending, bool semicolonComments) {
+std::string writtenProblem(std::string_view written, std::string_view ending, bool semicolonComments,
+                           bool bareStop) {
     if ((ending != "\n" && ending != "\r\n" && ending != "\r") || written.size() < ending.size() ||
         written.substr(written.size() - ending.size()) != ending) {
         return "a line ending other than LF, CR LF or CR";
     }
-    return renderedProblem(written.substr(0, written.size() - ending.size()), semicolonComments);
+    return renderedProblem(written.substr(0, written.size() - ending.size()), semicolonComments, bareStop);
 }
 
 /// True for the Marlin emergency-parser codes M108, M112, M410, M876 anywhere in `text` (spaces
-/// ignored, any case, leading zeros allowed).
+/// ignored, any case, leading zeros allowed). Called after `nonAsciiProblem`, so there is no tab.
 bool hasEmergencyCode(std::string_view text) {
     std::string squeezed;
     for (const char c : text) {
-        if (c != ' ' && c != '\t') {
+        if (c != ' ') {
             squeezed += upperLetter(c);
         }
     }
@@ -855,6 +916,10 @@ class Interpreter {
         }
         if (!hasWord(words, 'M', 0.0)) {
             return "the post's " + std::string(name) + " block writes no M0 (program pause)";
+        }
+        if (needStop && pauseBeforeStop(words)) {
+            return "the post's " + std::string(name) +
+                   " block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first";
         }
         return {};
     }
@@ -1316,35 +1381,27 @@ class Interpreter {
                     break;
                 }
             }
-            std::string lineText;
             bool hadTag = false;
-            std::size_t i = 0;
-            while (i < line.size()) {
-                const std::size_t open = line.find('[', i);
-                if (open == std::string::npos) {
-                    lineText.append(line, i, std::string::npos);
-                    break;
-                }
-                lineText.append(line, i, open - i);
-                const std::size_t close = line.find(']', open);  // validated by the parser
-                lineText += render(std::string_view(line).substr(open + 1, close - open - 1), lineText);
-                hadTag = true;
-                i = close + 1;
-            }
-            while (!lineText.empty() && detail::isSpace(lineText.back())) {
-                lineText.pop_back();
-            }
+            const std::string lineText = renderFittingLine(line, hadTag);
             if (failure_) {
                 break;
             }
             if (lineText.empty() && hadTag) {
                 continue;  // every variable on the line was suppressed
             }
+            if (lineText.size() > kMaxLineLength) {
+                // T-0162: only template text, live-code values or many text values on one line get
+                // here; text values in comments were cut to fit by renderFittingLine.
+                fail(0, "the line " + quoted(lineText) + " would be " + std::to_string(lineText.size()) +
+                            " characters long; lines are limited to " + std::to_string(kMaxLineLength) +
+                            " (LinuxCNC and grblHAL refuse longer lines)");
+                break;
+            }
             const std::string written = lineText + s_.lineEnding;
             if (off) {
                 // T-0154: the exact bytes written for the line (values and line ending included)
                 // must pass the drag-section allowlist.
-                if (const std::string bad = writtenProblem(written, s_.lineEnding, semicolonComments_);
+                if (const std::string bad = writtenProblem(written, s_.lineEnding, semicolonComments_, pauseBlock);
                     !bad.empty()) {
                     fail(0, spindleOffWhat() + ", but the post writes " + bad + " (line " + quoted(lineText) + ")");
                     break;
@@ -1363,7 +1420,88 @@ class Interpreter {
             fail(0, spindleOffWhat() + ", but the post's " + std::string(blockName) +
                         " block did not write both M5 and M0 (as the first command of a line on ';'-style posts)");
         }
+        if (pauseBlock && !failure_ && pauseBeforeStop(pauseWords)) {
+            // T-0162: the operator pause comes after the spindle stop, in both pause blocks.
+            fail(0, spindleOffWhat() + ", but the post's " + std::string(blockName) +
+                        " block wrote M0 or M1 before M5; the spindle must be stopped before the pause");
+        }
         block_ = outerBlock;
+    }
+
+    /// Expands one template line (trailing spaces trimmed). `hadTag` is set when it holds a tag.
+    std::string renderLine(const std::string& line, bool& hadTag) {
+        std::string lineText;
+        hadTag = false;
+        std::size_t i = 0;
+        while (i < line.size()) {
+            const std::size_t open = line.find('[', i);
+            if (open == std::string::npos) {
+                lineText.append(line, i, std::string::npos);
+                break;
+            }
+            lineText.append(line, i, open - i);
+            const std::size_t close = line.find(']', open);  // validated by the parser
+            lineText += render(std::string_view(line).substr(open + 1, close - open - 1), lineText);
+            hadTag = true;
+            i = close + 1;
+        }
+        while (!lineText.empty() && detail::isSpace(lineText.back())) {
+            lineText.pop_back();
+        }
+        return lineText;
+    }
+
+    /// True when `line` holds a text tag (`[TOOLNAME]`, `[TOOLPATH_NAME]` …).
+    static bool hasTextTag(const std::string& line) {
+        for (std::size_t open = line.find('['); open != std::string::npos; open = line.find('[', open + 1)) {
+            const std::size_t close = line.find(']', open);
+            if (close == std::string::npos) {
+                break;
+            }
+            const TagInfo* info = findTag(std::string_view(line).substr(open + 1, close - open - 1));
+            if (info != nullptr && info->kind == TagKind::Text) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// Expands one template line so that it fits `kMaxLineLength` when its text values can make it
+    /// fit (T-0162, ADR-0020). A line longer than the limit is expanded again with every text
+    /// value that lands in a comment cut to at most `cap` characters, the cut ones ending in
+    /// `kEllipsis`; `cap` is the largest that fits (binary search, at least the ellipsis). The
+    /// counters and modal memory are restored before each expansion, so the line is written once.
+    /// When even the smallest cap does not fit, the line comes back too long and the caller
+    /// refuses it.
+    std::string renderFittingLine(const std::string& line, bool& hadTag) {
+        if (!hasTextTag(line)) {
+            return renderLine(line, hadTag);
+        }
+        const long long lineNumber = lineNumber_;
+        const std::map<std::string, std::string> modal = modal_;
+        std::string text = renderLine(line, hadTag);
+        if (failure_ || text.size() <= kMaxLineLength) {
+            return text;
+        }
+        const auto renderCapped = [&](std::size_t cap) {
+            lineNumber_ = lineNumber;
+            modal_ = modal;
+            textCap_ = cap;
+            std::string capped = renderLine(line, hadTag);
+            textCap_.reset();
+            return capped;
+        };
+        std::size_t lo = kEllipsis.size();  // the smallest cap; may still not fit
+        std::size_t hi = text.size();       // no value is longer than the whole line
+        while (lo < hi) {
+            const std::size_t mid = lo + (hi - lo + 1) / 2;
+            if (renderCapped(mid).size() <= kMaxLineLength) {
+                lo = mid;
+            } else {
+                hi = mid - 1;
+            }
+        }
+        return renderCapped(lo);
     }
 
     /// Rotary angle in degrees for a point, from whichever linear axis is wrapped.
@@ -1499,7 +1637,13 @@ class Interpreter {
             }
             // After SUBSTITUTE, so no post setting can reintroduce a control character or an
             // early comment close. The prefix is part of the line before the value.
-            body = detail::sanitiseText(body, detail::commentPositionAt(std::string(before) + def.prefix));
+            const detail::CommentPosition pos = detail::commentPositionAt(std::string(before) + def.prefix);
+            body = detail::sanitiseText(body, pos);
+            if (textCap_ && pos.context != detail::CommentContext::None && body.size() > *textCap_) {
+                // T-0162: cut to fit the line limit, visibly. A prefix of the sanitised value stays
+                // safe: nothing in it can close the comment or form an active one.
+                body = body.substr(0, *textCap_ - kEllipsis.size()) + std::string(kEllipsis);
+            }
         } else if (def.incremental) {
             const double scale = std::pow(10.0, def.format.decimals);
             const auto quantise = [&](double v) { return std::round(v * scale) / scale; };
@@ -1575,6 +1719,7 @@ class Interpreter {
     double lastFeed_{0.0};
     std::optional<double> lastFeedWritten_;
     std::optional<Error> failure_;     // first unsafe value met while rendering (ADR-0020)
+    std::optional<std::size_t> textCap_;  // longest text value in a comment, while a line is cut to fit (T-0162)
     std::string_view block_{"the program"};  // block being expanded, for error messages
     std::size_t moveIndex_{0};         // 1-based move of the current toolpath; 0 = none
     bool inFooter_{false};
