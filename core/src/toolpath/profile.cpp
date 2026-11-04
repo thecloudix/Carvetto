@@ -2463,6 +2463,12 @@ void ProfileBuilder::planLeadIns(std::vector<Cut>& cuts) {
         return;
     }
     for (Cut& c : cuts) {
+        // A closed cut that collapsed to a point when its start was chosen (an offset of a tiny
+        // vector that closes within the tolerance) has no spans; it emits nothing, so it needs no
+        // lead (T-0163).
+        if (c.walk.isEmpty()) {
+            continue;
+        }
         const std::size_t src = c.sources.front();
         const bool wasteLeft = !c.contourOnLeft;
         std::vector<double> starts{0.0};
