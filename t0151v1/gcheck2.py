@@ -11,6 +11,10 @@
 # with "unlock" (on its line or the two before), which also ends the drag section; a program
 # that ends after drag cuts needs that unlock pause before its end too.
 # Without drag=1 every cut needs the spindle on, as before.
+# T-0161: in a drag section a line holds at most 79 characters of live code (outside comments; Grbl
+# LINE_BUFFER_SIZE 80), N is at most 9999999 (Grbl MAX_LINE_NUMBER), and the M5 that opens a drag
+# section (the last M5 before the announced M0) is bare ([N] M5). Stricter than the interpreter: every
+# M5 line inside a drag section must be bare too (true for all shipped posts).
 import re, sys
 # T-0154 drag-section allowlist (same set as the interpreter, ADR-0020).
 DRAG_G = {"0","1","2","3","4","17","20","21","40","43","49","80","90","91","91.1","94"}
@@ -25,8 +29,8 @@ def allow_problem(live, marlin):
         while i < len(t) and t[i] in ' \t': i += 1
         if i >= len(t):
             # An M0/M1 line is bare: an optional N word and the M0/M1, nothing else.
-            if any(L == 'M' and int(v) in (0, 1) for L, v in words):
-                if not (len(words) == 1 or (len(words) == 2 and words[0][0] == 'N')): return "M0/M1 line with other words"
+            if any(L == 'M' and int(v) in (0, 1, 5) for L, v in words):
+                if not (len(words) == 1 or (len(words) == 2 and words[0][0] == 'N')): return "M0/M1/M5 line with other words"
             return None
         L = t[i]
         if not ('A' <= L <= 'Z'): return f"character {L!r}"
@@ -37,6 +41,7 @@ def allow_problem(live, marlin):
         wd, _, fr = v.lstrip('+-').partition('.')
         if (len(wd) > 8 or len(fr) > 6) if L in 'XYZIJFP' else (len(wd) + len(fr) > (9 if L == 'N' else 5)): return f"{L}{v} too many digits"
         plain = re.fullmatch(r"\d+(\.\d*)?", v); signed = re.fullmatch(r"[+-]?\d+(\.\d*)?", v)
+        if L == 'N' and v.isdigit() and int(v) > 9999999: return f"N{v} above 9999999"
         if L in 'XYZIJFP':
             if not signed: return f"{L}{v}"
         elif L in 'NTH':
@@ -55,6 +60,7 @@ def check(path, post, bottom, safe, plunge=-1, drag=False):
     x = y = z = None; spindle = False; S = 0.0; units = None; absolute = False; mode_g = None; errs = []; cuts = 0; F = None
     def E(n, msg): errs.append(f"{n}: {msg}")
     dragsec = False; dragcuts = 0; recent = []; m5 = False; unlockdue = False  # m5: M5 since the last spindle start / cut
+    m5bare = True  # the last M5 line held only [N] M5
     for n, line in enumerate(open(path, newline=''), 1):
         s = line.rstrip('\r\n')
         window = ' '.join(recent[-2:] + [s]).lower(); recent.append(s)
@@ -70,6 +76,7 @@ def check(path, post, bottom, safe, plunge=-1, drag=False):
         if dragsec and re.search(r"M0*(108|112|410|876)(?!\d)", re.sub(r"[ \t]", "", raw).upper()):
             E(n, "Marlin emergency-parser code in a drag section")
         if dragsec and 'marlin' in post and re.search(r"[()]", raw.split(';')[0]): E(n, "parenthesis in live code on a ';' post")
+        if dragsec and len(s) > 79: E(n, f"{len(s)} characters of live code in a drag section (Grbl buffer 79)")
         if dragsec and s:
             pr = allow_problem(s, 'marlin' in post)
             if pr: E(n, f"not on the drag-section allowlist: {pr}")
@@ -102,13 +109,18 @@ def check(path, post, bottom, safe, plunge=-1, drag=False):
                 dragsec = False; m5 = False
                 spindle = True
                 if not S > 0: E(n, f"M{m} without positive S")
-            if m == 5: spindle = False; m5 = True
+            if m == 5:
+                spindle = False; m5 = True
+                lw = re.findall(r"[A-Z]", re.sub(r"[ \t]", "", s).upper())
+                m5bare = lw == ['M'] or lw == ['N', 'M']
             if m in (0, 6):
                 if spindle: E(n, "tool change with spindle on")
                 if z is not None and z < safe - eps: E(n, "tool change below safe Z")
                 z = None
                 if m == 0 and not spindle and unlock: dragsec = False; unlockdue = False
-                else: dragsec = (m == 0 and not spindle and m5 and announced)
+                else:
+                    dragsec = (m == 0 and not spindle and m5 and announced)
+                    if dragsec and not m5bare: E(n, "the M5 before this spindle-off pause shares its line with other words")
         if '4' in gs or '04' in gs: continue
         if not any(a in w for a in 'XYZ') and not any(a in w for a in 'IJ'): continue
         if units is None or not absolute: E(n, "motion before units/G90")
