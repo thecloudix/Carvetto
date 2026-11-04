@@ -31,7 +31,9 @@ bound on text-heavy jobs (≥ 5,000 glyph-like regions). The geometry comes from
   of corner tips, ADR-0023): about chordal/2 in total, plus chordal/8 in resolved crossing parts
   (§4). Pocket (flat areas, wall rings) runs at the same internal tolerance, since its safety
   margin (its chordal) is the gap between the wall rings and the flat area's edge. The chordal
-  tolerance must be at least 0.0003 mm (Pocket's minimum is 0.0001). The first version ran the medial axis at the user's tolerance with a margin of chordal/2
+  tolerance must be at least 0.0003 mm; the internal tolerance is floored at Pocket's minimum
+  0.0001 mm (0.0003 / 3 evaluates to 9.999999999999999e-05, which Pocket refused: every flat area
+  at the documented minimum failed in round 3). The first version ran the medial axis at the user's tolerance with a margin of chordal/2
   and measured up to 1.5·chordal (2.3× at a Bezier cusp, more in crossing slivers). Measured now:
   see §8. Points that need the full limit depth are flat floor (§3), not bounded by this.
 - Walks are kept whenever some point has a positive allowed footprint: a ball nose's depth for a
@@ -118,7 +120,10 @@ bound on text-heavy jobs (≥ 5,000 glyph-like regions). The geometry comes from
   joins the cluster, which is resolved again, until no polygon touches an outside vector. A
   union polygon that touches itself at a vertex (two pieces meeting at a point, e.g. a letter
   tangent to a frame edge) is cut into loops there (parities add up), since the medial axis needs
-  simple contours; the nesting probes skip points on the candidate's boundary. `CrossingVectorsResolved` reports it, and the margin of those parts grows by
+  simple contours; the nesting probes skip points on the candidate's boundary: 32 points by arc
+  length, then every span's middle and quarter points (round 3: a D-shaped hole resolved against
+  the circle it touches lay on the outer polygon along its whole arc; the sampled probes all hit
+  the arc, the hole became a part of its own and was carved). `CrossingVectorsResolved` reports it, and the margin of those parts grows by
   chordal/8 (the polygon may lie that far outside a curved wall). The medial axis of crossing
   input has nodes and branches outside the even-odd region (ADR-0023: "every contour then still
   acts as a wall"); before this the carve plunged there (verifier round 1: up to 2.5 mm deep
@@ -149,13 +154,22 @@ When `medialAxis` reports `accuracyCapped` (sample or work budget, or coordinate
 limit) for any region, nothing is produced; the same when it ignores a boundary that encloses
 area (every boundary of a part separates inside from outside by construction, so an ignored
 one is a medial axis failure and carving on would cut through a hole: round 2 found such cases,
-fixed in §7, and this guard keeps any future one from reaching the machine) and `MedialAxisCapped` names each capped region's
+fixed in §7, and this guard keeps any future one from reaching the machine). A boundary read on
+the wrong side, or a hole nested as an outer, is caught too: for every skeleton branch its
+deepest point (and every isolated node) must lie inside the whole even-odd region (not just its
+part, which would contain its own skeleton), by an even-odd ray count over the part's boundaries polygonised
+at the internal tolerance (decided only for radii above twice that tolerance, where the polygon
+cannot be wrong); otherwise nothing is carved and `MedialAxisCapped` says why and `MedialAxisCapped` names each capped region's
 vectors, with the advice to use a coarser chordal tolerance or simplify. A partial or degraded
 carve is never returned silently, and a capped skeleton has no accuracy guarantee to make AC1
 hold. Known non-capped limits (ADR-0023): gaps narrower than ~2·chordal have no skeleton (not
 carved: their depth is below ~chordal/tan(θ/2)); obtuse convex corners lose branch length, but the
 remaining inscribed circles reach the vertex within ~0.5·chordal, so the carve stays within the
 tolerance (within the coverage bound of §1).
+
+Known limit (to be carded): a hole thinner than the distance tolerance touches its own sides
+within that tolerance, is resolved as crossing input and vanishes from the even-odd region, so it
+is cut through; it is reported only as `CrossingVectorsResolved`.
 
 ### 6. Corner sharpening is out of scope (follow-up card T-0160, owner decision 2026-11-03)
 The inventory names "Corner Sharpen" without describing it. Corners of the region are already
@@ -178,8 +192,15 @@ corners, whose junction with the outer corner's bisector lies at radius 10 − 5
 (b) Classification probes: a contour's sides were read at one probe per span (the span's middle),
 up to 8; a probe within chordal + distance of another contour does not count. A one-arc circle has
 one probe, so a hole 0.005 mm from a wall (and small letter counters at a coarse tolerance) had no
-clear probe and was ignored. Now up to 16 probes are spread over the contour, several per span
-when it has few spans.
+clear probe and was ignored. Now 32 probes are spread over the contour by length (a Bezier counted
+by its control polygon: its exact length subdivides exponentially at cusps) (round 3: a
+D-shaped hole whose 170-segment arc hugs the outer circle had all its span-indexed probes on the
+arc, none on the chord). When no probe is clear, the one farthest from the other contours is
+used: farther than chordal from them (exact closest points on their spans) the rings' winding is
+right; closer, but not closer than chordal/64, their winding is counted from their curves
+polygonised at an eighth of that distance. Only when even that fails (coincident contours) do the old offsets at ±2·chordal
+decide; round 3 showed those offsets cross a hole thinner than that and read the wrong side (the
+D-hole was carved ~1 mm deep).
 
 (c) Gabriel test hidden by an exempt sample: a sub-edge counted as encroached only when one of the
 two opposite vertices of its Delaunay triangles lies in its diametral circle and is not exempt

@@ -513,6 +513,107 @@ TEST_CASE("V-carve never cuts through a hole nearly touching a wall or a crossin
     }
 }
 
+namespace {
+
+/// A circle of radius 8 with a D-shaped hole: a 170-segment arc at radius 8 - gap hugging the
+/// circle, closed by a chord, listed so that the chord is span 1 (T-0153 round 3 repro).
+std::vector<Contour> dHole(double gap, bool reversed) {
+    const double r = 8.0 - gap;
+    const double a0 = std::asin(0.76);
+    const double a1 = geometry::kPi - a0;
+    std::vector<Vec2> arc;
+    for (int k = 0; k <= 170; ++k) {
+        const double a = a0 + (a1 - a0) * k / 170.0;
+        arc.push_back({r * std::cos(a), r * std::sin(a)});
+    }
+    // Start one segment before the arc's end, so span 0 is that segment and span 1 the chord.
+    std::vector<Vec2> pts{arc[169], arc[170]};
+    pts.insert(pts.end(), arc.begin(), arc.begin() + 169);
+    Contour hole = polygon(pts);
+    if (reversed) {
+        hole.reverse();
+    }
+    return {Contour::circle({0, 0}, 8.0), hole};
+}
+
+}  // namespace
+
+TEST_CASE("V-carve never carves inside a D-shaped hole hugging the outer wall", "[toolpath][v_carve][holes]") {
+    // Every probe of the hole's arc is within the tolerance of the circle; the classification
+    // once fell back to offsets off the D's thin tip, read the hole as region and the V-bit cut
+    // about 1 mm deep inside it.
+    const tooling::Tool tool = vBit(90.0, 12.0);
+    for (const double gap : {0.003, 0.01, 0.02}) {
+        for (const bool reversed : {false, true}) {
+            INFO("gap " << gap << (reversed ? ", clockwise hole" : ", counter-clockwise hole"));
+            const std::vector<Contour> region = dHole(gap, reversed);
+            const geometry::MedialAxis ax = geometry::medialAxis(region, geometry::Tolerance{0.001, 1e-9, 0.05 / 3.0});
+            CHECK(ax.ignoredContours == 0);
+            for (const geometry::MedialBranch& b : ax.branches) {
+                for (const geometry::MedialPoint& m : b.points) {
+                    if (m.radius > 0.05) {
+                        CHECK(orc::insideRegion(region, m.point));
+                    }
+                }
+            }
+            VCarvingParams p;
+            p.tolerance.chordal = 0.05;
+            const VCarvingResult r = vCarvingToolpath(region, tool, std::nullopt, {}, p);
+            REQUIRE(r.ok());
+            CHECK_FALSE(r.has(ToolpathIssue::MedialAxisCapped));
+            const orc::ConeReport cone = orc::coneCheck(r.toolpath, region, tool, 0.0, kSafeZ, 1e-5);
+            CHECK(cone.minClearance >= 0.0);
+            CHECK(cone.allInside);
+        }
+    }
+}
+
+TEST_CASE("V-carve nests a D-shaped hole resolved against the circle it touches", "[toolpath][v_carve][holes]") {
+    // Gap below the distance tolerance: the pair is resolved as touching input, and the hole's
+    // polygon lies on the outer one along its whole arc. Nesting probes on the arc are on the
+    // boundary; only the chord decides (round 3: the hole became a part of its own and was carved).
+    const tooling::Tool tool = vBit(90.0, 12.0);
+    for (const double chordal : {0.05, 0.01}) {
+        for (const bool reversed : {false, true}) {
+            INFO("chordal " << chordal << (reversed ? ", clockwise hole" : ", counter-clockwise hole"));
+            const std::vector<Contour> region = dHole(0.0005, reversed);
+            VCarvingParams p;
+            p.tolerance.chordal = chordal;
+            const VCarvingResult r = vCarvingToolpath(region, tool, std::nullopt, {}, p);
+            REQUIRE(r.ok());  // (slivers between the polygons are tiny parts of their own)
+            CHECK_FALSE(r.has(ToolpathIssue::MedialAxisCapped));
+            for (const Move& m : r.toolpath.moves) {
+                if (m.to.z < -0.01) {
+                    CHECK(orc::insideRegion(region, Vec2{m.to.x, m.to.y}));
+                }
+            }
+        }
+    }
+}
+
+TEST_CASE("V-carve at the smallest chordal tolerance clears flat areas", "[toolpath][v_carve][flat]") {
+    // 0.0003 mm / 3 is 9.999999999999999e-05, below Pocket's 0.0001: the internal tolerance is
+    // floored at Pocket's minimum, so a flat area is cleared, not refused.
+    const std::vector<Contour> square{Contour::rectangle(Box2{Vec2{0, 0}, Vec2{10, 10}})};
+    tooling::Tool tool = vBit(90.0, 12.7);
+    tool.defaultCuttingData.stepover = 0.25;
+    VCarvingParams p;
+    p.flatDepth = 0.3;
+    p.tolerance.chordal = 0.0003;
+    p.tolerance.distance = 0.0003;
+    const VCarvingResult r = vCarvingToolpath(square, tool, std::nullopt, {}, p);
+    for (const ToolpathDiagnostic& d : r.diagnostics) {
+        UNSCOPED_INFO(d.message);
+    }
+    REQUIRE(r.ok());
+    CHECK(r.diagnostics.empty());
+    CHECK(std::fabs(deepest(r.toolpath) - 0.3) < 1e-12);
+    p.tolerance.chordal = 0.00029;
+    const VCarvingResult below = vCarvingToolpath(square, tool, std::nullopt, {}, p);
+    CHECK_FALSE(below.ok());
+    CHECK(below.has(ToolpathIssue::InvalidParameters));
+}
+
 TEST_CASE("V-carve carves a frame crossed by letters completely", "[toolpath][v_carve][crossing]") {
     std::vector<Contour> sign{Contour::rectangle(Box2{Vec2{0, 0}, Vec2{18, 12}}),
                               Contour::rectangle(Box2{Vec2{1, 1}, Vec2{17, 11}})};

@@ -155,3 +155,7 @@ by at most 2.5× per doubling of boundary segments up to 50,000 (text-heavy jobs
   spread over the contour (a one-arc hole next to a wall was ignored), and a Delaunay sub-edge
   whose opposite vertex is an exempt sample is checked against every sample in its diametral
   disc (a thin band with flat corners had an empty skeleton).
+- **Amended by T-0153 round 4 (ADR-0025 §7 b):** 32 probes by arc length; when none is clear, the
+  probe farthest from the other contours decides with their exact winding at a fine tolerance
+  (the ±2·chordal offsets, now the last resort for coincident contours, read a thin D-shaped hole
+  on the wrong side).

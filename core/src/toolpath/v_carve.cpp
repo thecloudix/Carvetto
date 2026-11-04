@@ -139,6 +139,8 @@ struct Boundary {
 constexpr double kResolveFraction = 0.125;
 /// The medial axis runs at the user's chordal tolerance divided by this (ADR-0025 §1).
 constexpr double kInnerDivisor = 3.0;
+/// Pocket's smallest chordal tolerance (pocket.cpp); the internal tolerance never goes below it.
+constexpr double kPocketMinChordal = 1e-4;
 
 std::size_t findRoot(std::vector<std::size_t>& parent, std::size_t i) {
     while (parent[i] != i) {
@@ -318,19 +320,43 @@ std::vector<Group> nestRegions(const std::vector<Boundary>& bs, const geometry::
         }
         // The boundaries do not cross, but the polygons of a resolved cluster may share vertices
         // or edges (a hole touching its outer); a point of one off the other decides the nesting.
+        // Probes: 32 points spread by arc length, then (when all of them lie on the candidate,
+        // e.g. a hole resolved against an outer it touches along most of its length) every
+        // span's middle and quarter points.
         const Contour& ci = bs[i].contour;
         const std::size_t spans = ci.spans.size();
+        std::vector<double> cum(spans + 1, 0.0);
+        for (std::size_t k = 0; k < spans; ++k) {
+            const geometry::Span& sp = ci.spans[k];
+            const auto* bz = std::get_if<geometry::BezierSpan>(&sp);
+            // A Bezier's control polygon: its exact length() subdivides exponentially at cusps.
+            cum[k + 1] = cum[k] + (bz != nullptr ? geometry::distance(bz->p0, bz->p1) + geometry::distance(bz->p1, bz->p2) +
+                                                       geometry::distance(bz->p2, bz->p3)
+                                                 : geometry::length(sp));
+        }
+        std::vector<Vec2> probes;
+        std::size_t at = 0;
+        for (std::size_t k = 0; k < 32 && cum[spans] > 0.0; ++k) {
+            const double target = cum[spans] * (static_cast<double>(k) + 0.5) / 32.0;
+            while (at + 1 < spans && cum[at + 1] <= target) {
+                ++at;
+            }
+            const double len = cum[at + 1] - cum[at];
+            probes.push_back(geometry::pointAt(ci.spans[at], len > 0.0 ? std::clamp((target - cum[at]) / len, 0.0, 1.0) : 0.5));
+        }
+        for (std::size_t k = 0; k < spans; ++k) {
+            for (const double t : {0.5, 0.25, 0.75}) {
+                probes.push_back(geometry::pointAt(ci.spans[k], t));
+            }
+        }
         double best = std::numeric_limits<double>::infinity();
         for (const std::size_t j : index.query(boxes[i])) {
             if (j == i || !(bs[j].area > bs[i].area) || !(bs[j].area < best) || !boxes[j].contains(boxes[i])) {
                 continue;
             }
             geometry::PointLocation loc = geometry::PointLocation::OnBoundary;
-            for (std::size_t k = 0; k < std::min<std::size_t>(spans, 16) * 3 && loc == geometry::PointLocation::OnBoundary;
-                 ++k) {
-                const geometry::Span& sp = ci.spans[((k / 3) * spans) / std::min<std::size_t>(spans, 16)];
-                const Vec2 probe = geometry::pointAt(sp, 0.25 * static_cast<double>(k % 3 + 1));
-                loc = geometry::locatePoint(bs[j].contour, probe, geometry::FillRule::EvenOdd, tol);
+            for (std::size_t k = 0; k < probes.size() && loc == geometry::PointLocation::OnBoundary; ++k) {
+                loc = geometry::locatePoint(bs[j].contour, probes[k], geometry::FillRule::EvenOdd, tol);
             }
             if (loc == geometry::PointLocation::Inside) {
                 parent[i] = j;
@@ -382,6 +408,78 @@ std::vector<Group> nestRegions(const std::vector<Boundary>& bs, const geometry::
 }
 
 // ----------------------------------------------------------------------------- skeleton walks
+
+/// True when a ray from p towards +x crosses the ring an odd number of times.
+bool insideRing(const std::vector<Vec2>& r, Vec2 p) {
+    bool in = false;
+    for (std::size_t a = 0, n = r.size(), b = n - 1; a < n; b = a++) {
+        if ((r[a].y > p.y) != (r[b].y > p.y)) {
+            const double x = r[b].x + (p.y - r[b].y) * (r[a].x - r[b].x) / (r[a].y - r[b].y);
+            if (x > p.x) {
+                in = !in;
+            }
+        }
+    }
+    return in;
+}
+
+/// Every boundary of the whole job polygonised at the internal tolerance, with a box index, for
+/// the even-odd test of skeleton points against the whole region (not just their part: a hole
+/// mistaken for an outer is a part of its own and contains its own skeleton).
+struct RegionRings {
+    std::vector<std::vector<Vec2>> rings;
+    BoxIndex index;
+    RegionRings(const std::vector<Boundary>& bs, const geometry::Tolerance& tol) {
+        std::vector<Box2> boxes;
+        for (const Boundary& b : bs) {
+            rings.push_back(b.contour.polygonise(tol).points);
+            Box2 box;
+            for (const Vec2 v : rings.back()) {
+                box.expand(v);
+            }
+            boxes.push_back(box);
+        }
+        index = BoxIndex(std::move(boxes));
+    }
+    bool inside(Vec2 p) const {
+        if (index.bounds().isEmpty() || !(index.bounds().max.x > p.x)) {
+            return false;
+        }
+        bool in = false;
+        const Box2 ray{p, Vec2{index.bounds().max.x + 1.0, p.y}};
+        for (const std::size_t k : index.query(ray)) {
+            in = in != insideRing(rings[k], p);
+        }
+        return in;
+    }
+};
+
+/// True when the skeleton lies in the even-odd region: for every branch its deepest point
+/// (largest inscribed radius), and every isolated node, is inside the region. Points whose
+/// radius exceeds the rings' polygonisation error by a clear margin are decided exactly by the
+/// rings. A skeleton on the wrong side of a boundary (a hole read as region) fails this and the
+/// carve is refused (ADR-0025 §5).
+bool skeletonInside(const MedialAxis& ax, const RegionRings& region, const geometry::Tolerance& tol) {
+    const double clear = 2.0 * tol.chordal + tol.distance;
+    auto ok = [&](Vec2 p, double r) { return !(r > clear) || region.inside(p); };
+    for (const geometry::MedialBranch& br : ax.branches) {
+        const geometry::MedialPoint* deepest = nullptr;
+        for (const geometry::MedialPoint& m : br.points) {
+            if (deepest == nullptr || m.radius > deepest->radius) {
+                deepest = &m;
+            }
+        }
+        if (deepest != nullptr && !ok(deepest->point, deepest->radius)) {
+            return false;
+        }
+    }
+    for (const geometry::MedialNode& nd : ax.nodes) {
+        if (nd.branches.empty() && !ok(nd.point, nd.radius)) {
+            return false;
+        }
+    }
+    return true;
+}
 
 struct SkelPoint {
     Vec2 p;
@@ -825,8 +923,12 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
     // runs at a third of it, the margin is half of that, so the margin (chordal/6) plus the
     // skeleton's resolution (~chordal/3) stay within the tolerance.
     geometry::Tolerance inner = tol;
-    inner.chordal = tol.chordal / kInnerDivisor;
+    // Never below Pocket's minimum: at the smallest accepted chordal (0.0003 mm) the division
+    // gives 9.999999999999999e-05, which Pocket would refuse.
+    inner.chordal = std::max(tol.chordal / kInnerDivisor, kPocketMinChordal);
     inner.distance = std::min(tol.distance, inner.chordal);
+
+    const RegionRings regionRings(boundaries, inner);
 
     // Medial axis and skeleton cuts per region.
     std::vector<GroupResult> carved(groups.size());
@@ -846,14 +948,15 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
                 ++zeroArea;
             }
         }
-        if (ax.ignoredContours > zeroArea) {
+        if (ax.ignoredContours > zeroArea || (!ax.accuracyCapped && !skeletonInside(ax, regionRings, inner))) {
             // Every boundary of a part encloses area and separates inside from outside (they
             // do not cross and are nested by containment): the medial axis must use them all,
             // or a hole would be carved through. Never carve on a skeleton that dropped one.
             anyCapped = true;
             say(ToolpathIssue::MedialAxisCapped, groups[g].sources.front(),
                 "the medial axis of " + vecName(groups[g].sources.front()) +
-                    " did not use every boundary of the region (a hole would be cut through); nothing is carved");
+                    " did not separate inside from outside correctly (a boundary ignored or read on the wrong "
+                    "side: a hole would be cut through); nothing is carved");
             continue;
         }
         if (ax.ignoredContours > 0) {
