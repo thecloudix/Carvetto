@@ -607,6 +607,20 @@ Acceptance criteria:
 Owner decisions 2026-11-01 (from the coder's BLOCKED report): (1) toolpaths are stored in the .carv as interim archive members `toolpaths/NNNN.json` (name, tool snapshot, moves, the params they came from) via two small public accessors in `carv_io.hpp` (read a preserved member; copy with a member added); an ADR marks this interim until a card implements ADR-0003's job.json toolpath records. (2) T-0123 merges first; the CLI is written against its API. (3) params.json: snake_case keys mirroring ProfileParams/PocketParams; lengths in mm, angles in degrees (converted at the CLI edge); tool = {"tool": {"database": <path, default data/tools/starter_tools.json>, "id": …}} plus optional material/machine for cutting data; optional "layers": [names] (default all vectors); unknown keys rejected with an error naming the key. nlohmann/json (already used) — no new dependency.
 Owner decision 2026-11-01 (coder's open point): the interim JSON storage is capped by the loader's 2M-value budget for unknown content (ADR-0013 §9), ~300k–400k moves per file; accepted for now — the CLI reloads before writing and refuses with a clear error. The real fix is T-0132.
 
+### T-0164 V-Carve follow-ups (T-0153 round-3 verifier, non-blocking)   [status: blocked (T-0153)]
+Phase: 1   Module: core/toolpath   Depends on: T-0153   ADR: 0025
+Goal: Non-blocking findings from harness t0153v3: (a) holes/slivers thinner than the distance tolerance are cut through, reported only as "crossing resolved"; (b) a D-hole with gap 0.0025 refuses the whole job (repro3/dhole_refused.txt); (c) cluster growth is quadratic in absorbing clusters (grow.cpp, ~3.2× per doubling); (d) the rest-tool stepover clamp to 2·limR leaves ridges up to 0.5–0.84 × the flat depth with no notice (repro3/arm_W*.txt, sq10.txt); (e) the AC1 sweep test skips the lateral cut-point check when flat depth > 0; (f) 9.5 nm cone violation at chordal 0.001 (repro2/nest_frame.txt).
+Acceptance criteria:
+  1. (a) and (d) are reported to the user (diagnostic) or documented in ADR-0025; (c) ≤ 2.5× per doubling; (e) the test checks laterals with a flat depth too; (b) and (f) fixed or documented with reasons.
+
+### T-0165 Profile: collapsed cuts vanish silently; empty walks ordered at the origin (T-0163 coder)   [status: ready]
+Phase: 1   Module: core/toolpath   Depends on: T-0163   ADR: 0016
+Goal: Found by the T-0163 coder. (1) At tiny scale with chordal larger than the vector, a closed roughing offset collapses to one line, then to a point, and the cut disappears with no diagnostic (seg_241_31). (2) A cut whose walk is empty when order() runs (StartAt VectorStart / ClosestOnBoundingBox) enters ordering at (0,0) via pointAt on an empty walk, and adds a (0,0) keep-clear point to other cuts' tab placement. (3) The ASan test build fails under -Werror: carv_storage_residuals_test.cpp:232 peakGrowth unused.
+Acceptance criteria:
+  1. A cut that collapses reports a diagnostic (or is dropped before ordering with one); empty walks never enter ordering or tab keep-clear; regression tests.
+  2. An ASan/UBSan build of the tests compiles with -Werror and passes.
+  3. Output otherwise byte-identical to main (hash sweep).
+
 ### T-0150 Drilling toolpath   [status: done (2026-11-03, #36)]
 Phase: 1 (Batch C, owner decision 2026-11-03: Batch C toolpaths first)   Module: core/toolpath   Depends on: T-0123, T-0132   ADR: new
 Goal: Drill the centres of selected closed vectors (behaviour per docs/reference/feature-inventory.md "Drilling Toolpath"): drill or end-mill tool, start depth, cut depth, optional peck drilling (pass depth from the tool; retract above the cutting start by a retract gap, or above the previous pass), optional dwell at the bottom of each pass, ordering of holes, safe-Z links. Output through the existing post with plunge/retract moves (no canned cycles required); stored as a native toolpath record; CLI `toolpath drill`.
@@ -630,7 +644,7 @@ Acceptance criteria:
   2. Robust on degenerate input (collinear, near-touching, tiny features, large coordinates), no crashes or hangs (fuzz); ≤ 2.5× per doubling in CPU time up to 50k boundary segments (text-heavy jobs).
   3. ADR records the algorithm (e.g. segment Voronoi via a library already allowed by the dependency policy, or an own implementation) and the dependency/licence decision; any new dependency goes to the owner first.
 
-### T-0153 V-Carve toolpath   [status: in-progress]
+### T-0153 V-Carve toolpath   [status: in-progress — round 3 FAIL; owner granted a final round 4 (B1 hole misclassified by medialAxis → carving inside a hole; B2 chordal 0.0003 refuses flat areas)]
 Owner decision 2026-11-03: corner sharpening split out to T-0160.
 Owner decision 2026-11-03: identifiers `v_carve` (code, CLI command, job.json "operation"), UI label "V-Carve"; "vcarve" matches the VCarve trademark (CONTRIBUTING).
 Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0152, T-0123, T-0132   ADR: new
