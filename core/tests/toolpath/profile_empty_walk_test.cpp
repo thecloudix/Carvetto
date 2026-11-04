@@ -56,7 +56,9 @@ tooling::Tool tinyVBit() {
 ProfileParams params(LeadType lead) {
     ProfileParams p;
     p.side = ProfileSide::On;
-    p.passes.cutDepth = 0.0004;
+    // Deep enough that the tool radius at the cut depth (0.002 * tan(15 deg) = 0.000536 mm) stays above
+    // the last-pass allowance, which On requires (T-0137).
+    p.passes.cutDepth = 0.002;
     p.passes.passDepth = 0.005;
     p.separateLastPass = true;
     p.lastPassAllowance = 0.0003777814985338173;
