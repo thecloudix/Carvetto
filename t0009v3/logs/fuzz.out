@@ -1,0 +1,1 @@
+bash: line 1: 2570862 Aborted                    timeout 5400 nice ./x2 g2 1200 838860800 > /home/chris/harness/t0009v3/logs/g2_0.log 2>&1

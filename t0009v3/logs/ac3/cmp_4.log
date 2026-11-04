@@ -1,0 +1,6 @@
+DIFF fam4 seed=0x37400026 n=175 closed=0 d=0.0322056 Round side=0 | br: x[dv0 u4.16e-17 rv0 o2.83e-07 cm0 m0 ml0 tie1 tl0.000438] v[ oth0] | main: x[dv0 u4.16e-17 rv0 o2.83e-07 cm0 m0 ml0 tie1 tl0.000438] v[ oth0]
+WORSE fam4 seed=0x37400470 n=124 closed=0 d=0.0876145 Round side=1 | br: x[dv0 u1.27e-06 rv0 o3.91e-07 cm0 m0 ml0 tie2 tl0.000813] v[sub-tol span at open chain end ch 0 sp 125 len 0.000886 oth1] | main: x[dv0 u1.27e-06 rv0 o3.91e-07 cm0 m0 ml0 tie2 tl0.000938] v[ oth0]
+DIFF fam4 seed=0x37400755 n=3 closed=0 d=0.0729519 Round side=0 | br: x[dv0 u2.91e-16 rv0 o1.39e-17 cm0 m0 ml0 tie0 tl0] v[ oth0] | main: x[dv0 u2.64e-16 rv0 o2.78e-17 cm0 m0 ml0 tie0 tl0] v[ oth0]
+DIFF fam4 seed=0x37400df9 n=76 closed=0 d=0.18128 Round side=1 | br: x[dv0 u5.55e-17 rv0 o5.55e-17 cm0 m0 ml0 tie1 tl0.000688] v[ oth0] | main: x[dv0 u5.55e-17 rv0 o5.55e-17 cm0 m0 ml0 tie1 tl0.000688] v[ oth0]
+DIFF fam4 seed=0x374012d4 n=5 closed=0 d=0.0570758 Round side=0 | br: x[dv0 u6.66e-16 rv0 o4.41e-15 cm0 m0 ml0 tie0 tl0] v[ oth0] | main: x[dv0 u6.66e-16 rv0 o4.41e-15 cm0 m0 ml0 tie0 tl0] v[ oth0]
+SUMMARY cmp fam4 N=5000 s0=0x37400000 inputs 4792 identical 4787 differ 5 worse 1 better 0 bothflagged 4 | cpu branch 1.18 main 0.99
