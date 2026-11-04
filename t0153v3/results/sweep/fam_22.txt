@@ -1,0 +1,6 @@
+FLOOR case 5 seed 322 fam 22 selftouch-bowtie+tangentcircle tool=0 D=10.012 ang=56.4 chord=0.1000 flat=1.063 limR=0.5706 ncl=0 emD=0.000/0.000 stepover=0.927: uncut(>half depth) 61/420 floor pts, deepest-in 0.6670 at (10.17260,-0.37325) diags: [28]
+SUMMARY seed=322 fam=22 far=0 scale=1 cases=40 ok=40 refused=0 resolved=40 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.351e-04 worstEMallow=3.332e-03 latNonRes=-1e+300 latRes=0.4976 kinkNonRes=-1e+300 kinkRes=0.4569 worstOver=0.00e+00 worstFlatShortEndMills=0.08782 worstFlatShortSelf=0.9034 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=1 worstFrac=0.1452 worstDepthIntoFlat/R=1.169
+  issue 26: 11
+  issue 28: 40
+  issue 4: 4

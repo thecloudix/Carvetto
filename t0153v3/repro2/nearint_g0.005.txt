@@ -1,0 +1,4 @@
+contour 0
+    A 0 0 r 8 0 0 dir 0
+contour 1
+    A 4.995 0 r 3 0 0 dir 1

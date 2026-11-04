@@ -1,0 +1,15 @@
+== plain
+625 regions 4847 spans: 2.23 s CPU, 334663 moves, ok=1 diags=0, peak RSS 53 MB
+1250 regions 9691 spans: 4.56 s CPU, 668774 moves, ok=1 diags=0, peak RSS 137 MB
+625 regions 4847 spans: 2.19 s CPU, 334663 moves, ok=1 diags=0, peak RSS 137 MB
+1250 regions 9691 spans: 4.39 s CPU, 668774 moves, ok=1 diags=0, peak RSS 137 MB
+5000 regions 38750 spans: 18.47 s CPU, 2680243 moves, ok=1 diags=0, peak RSS 425 MB
+== flat 0.5
+5000 regions 38750 spans: 23.92 s CPU, 3938993 moves, ok=1 diags=0, peak RSS 737 MB
+== frame
+5000 regions 38750 spans: 30.44 s CPU, 1651346 moves, ok=1 diags=0, peak RSS 1517 MB
+== EM 1.0 flat 0.5
+5000 regions 38750 spans: 24.29 s CPU, 3916493 moves, ok=1 diags=1, peak RSS 479 MB
+   diag 4 flat area clearance: tool 1 (EM): too large for the pocket, nothing to cut (and in 4999 more region(s))
+== EM 3 flat 1.5
+5000 regions 38750 spans: 18.69 s CPU, 2680243 moves, ok=1 diags=0, peak RSS 388 MB

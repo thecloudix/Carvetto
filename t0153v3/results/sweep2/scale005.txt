@@ -1,0 +1,16 @@
+FLOOR case 1 seed 504 fam 10 nearint g=0.001000 tool=0 D=1.035 ang=85.8 chord=0.0500 flat=0.136 limR=0.1259 ncl=0 emD=0.000/0.000 stepover=0.210: uncut(>half depth) 24/544 floor pts, deepest-in 0.1896 at (-0.45087,-0.12635) diags: [28] [17]
+FLOOR case 9 seed 504 fam 6 bezblob tool=0 D=0.102 ang=96.6 chord=0.1000 flat=0.049 limR=0.0509 ncl=0 emD=0.000/0.000 stepover=0.067: uncut(>half depth) 73/577 floor pts, deepest-in 0.1886 at (-0.04854,-0.24885) diags: [26]
+case 26 seed 504 fam 18 nestedtight-sq res=1 tool=0 D=0.292 ang=43.3 chord=0.100 flat=0.418 start=2.046 ncl=0 emD=0.000/0.000: CONE VIOLATION -3.201e-02 at (-0.43045,0.16893) depth 0.36776 footprint 0.14604 lat=0.366*ch at (-0.67945,-0.37117) kink=0.366 over=1.99e-01 flatShort=0.088 at (0.0493,-0.1050) dist 0.3369 limR 0.1460
+case 29 seed 504 fam 20 page-alltouch-squaressharededges res=1 tool=0 D=1.119 ang=145.0 chord=0.050 flat=0.000 start=0.878 ncl=0 emD=0.000/0.000: ok lat=0.358*ch at (1.04575,-0.06339) kink=-1000000000000000052504760255204420248704468581108159154915854115511802457988908195786371375080447864043704443832883878176942523235360430575644792184786706982848387200926575803737830233794788090059368953234970799945081119038967640880074652742780142494579258788820056842838115669472196386865459400540160.000 over=4.51e-02 flatShort=-1.000 at (0.0000,0.0000) dist 0.0359 limR 0.5596
+SUMMARY seed=504 fam=-1 far=0 scale=0.05 cases=30 ok=28 refused=2 resolved=18 fails=2 realViolations=13 falseAlarms(coincident)=337 worstCone=-7.884e-02 worstEMallow=3.333e-03 latNonRes=0.4977 latRes=0.5262 kinkNonRes=0.4958 kinkRes=0.4553 worstOver=1.99e-01 worstFlatShortEndMills=0.04696 worstFlatShortSelf=0.2085 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=2 worstFrac=0.1265 worstDepthIntoFlat/R=3.706
+  fails 18:safety: 1
+  fails 20:coverage: 1
+  fails falseAlarmFam15: 6
+  fails falseAlarmFam20: 331
+  issue 17: 19
+  issue 22: 1
+  issue 26: 7
+  issue 27: 2
+  issue 28: 18
+  issue 4: 5

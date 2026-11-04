@@ -1,0 +1,7 @@
+FLOOR case 24 seed 317 fam 17 touch1-diamondvertex tool=0 D=3.020 ang=86.0 chord=0.0500 flat=0.622 limR=0.5802 ncl=0 emD=0.000/0.000 stepover=0.706: uncut(>half depth) 79/701 floor pts, deepest-in 1.1112 at (0.07843,2.70358) diags: [28]
+SUMMARY seed=317 fam=17 far=0 scale=1 cases=40 ok=40 refused=0 resolved=40 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.642e-04 worstEMallow=2.084e-04 latNonRes=-1e+300 latRes=0.5367 kinkNonRes=-1e+300 kinkRes=0.4581 worstOver=1.11e-16 worstFlatShortEndMills=0.8586 worstFlatShortSelf=1.006 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=1 worstFrac=0.1127 worstDepthIntoFlat/R=1.915
+  issue 17: 7
+  issue 26: 10
+  issue 28: 40
+  issue 4: 4

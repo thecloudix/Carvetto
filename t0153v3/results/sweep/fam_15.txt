@@ -1,0 +1,9 @@
+case 1 seed 415 fam 15 partialoverlapedge res=1 tool=0 D=5.063 ang=152.3 chord=0.005 flat=0.000 start=0.946 ncl=0 emD=0.000/0.000: ok lat=25.009*ch at (12.57339,-5.02559) kink=-1000000000000000052504760255204420248704468581108159154915854115511802457988908195786371375080447864043704443832883878176942523235360430575644792184786706982848387200926575803737830233794788090059368953234970799945081119038967640880074652742780142494579258788820056842838115669472196386865459400540160.000 over=-1.00e+300 flatShort=0.143 at (10.7711,-2.4530) dist 3.1575 limR 2.5317
+case 8 seed 415 fam 15 partialoverlapedge res=1 tool=0 D=1.057 ang=39.2 chord=0.050 flat=1.659 start=0.000 ncl=0 emD=0.000/0.000: ok lat=1.790*ch at (0.15275,3.98003) kink=1.790 over=-1.00e+300 flatShort=0.521 at (-0.2116,5.0562) dist 0.9818 limR 0.5283
+SUMMARY seed=415 fam=15 far=0 scale=1 cases=30 ok=30 refused=0 resolved=30 fails=2 realViolations=0 falseAlarms(coincident)=955 worstCone=0.000e+00 worstEMallow=4.556e-02 latNonRes=-1e+300 latRes=25.01 kinkNonRes=-1e+300 kinkRes=1.79 worstOver=-1.00e+300 worstFlatShortEndMills=0.1002 worstFlatShortSelf=0.7961 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+  fails 15:coverage: 2
+  fails falseAlarmFam15: 955
+  issue 26: 11
+  issue 28: 30
+  issue 4: 1

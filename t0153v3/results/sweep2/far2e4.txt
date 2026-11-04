@@ -1,0 +1,8 @@
+FLOOR case 13 seed 502 fam 15 partialoverlapedge tool=1 D=0.816 ang=142.9 chord=0.0500 flat=0.129 limR=0.2973 ncl=0 emD=0.000/0.000 stepover=0.474: uncut(>half depth) 36/724 floor pts, deepest-in 1.2089 at (20010.90530,-13993.10119) diags: [28]
+SUMMARY seed=502 fam=-1 far=20000 scale=1 cases=25 ok=23 refused=2 resolved=18 fails=0 realViolations=0 falseAlarms(coincident)=33 worstCone=0.000e+00 worstEMallow=1.000e+300 latNonRes=0.4829 latRes=0.7536 kinkNonRes=-0.08647 kinkRes=0.7536 worstOver=-7.73e-06 worstFlatShortEndMills=0.1821 worstFlatShortSelf=0.1595 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=1 worstFrac=0.0497 worstDepthIntoFlat/R=4.066
+  fails falseAlarmFam15: 33
+  issue 17: 24
+  issue 26: 4
+  issue 28: 18
+  issue 4: 2

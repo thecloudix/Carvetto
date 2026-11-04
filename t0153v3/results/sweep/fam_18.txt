@@ -1,0 +1,10 @@
+case 5 seed 318 fam 18 nestedtight-sq res=1 tool=0 D=19.463 ang=149.0 chord=0.005 flat=1.002 start=1.606 ncl=1 emD=1.553/0.000: CONE VIOLATION -8.136e-04 at (-2.62922,3.16560) depth 1.00154 footprint 3.61350 lat=0.389*ch at (14.17170,-13.60690) kink=-1000000000000000052504760255204420248704468581108159154915854115511802457988908195786371375080447864043704443832883878176942523235360430575644792184786706982848387200926575803737830233794788090059368953234970799945081119038967640880074652742780142494579258788820056842838115669472196386865459400540160.000 over=1.60e-02 flatShort=0.012 at (11.6650,-11.3490) dist 3.6568 limR 3.6135
+SUMMARY seed=318 fam=18 far=0 scale=1 cases=40 ok=40 refused=0 resolved=12 fails=1 realViolations=3 falseAlarms(coincident)=3 worstCone=-5.790e-02 worstEMallow=0.000e+00 latNonRes=0.5001 latRes=0.5336 kinkNonRes=0.5001 kinkRes=0.4977 worstOver=1.60e-02 worstFlatShortEndMills=0.2664 worstFlatShortSelf=1.776 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+  fails 18:safety: 1
+  fails falseAlarmFam18: 3
+  issue 17: 52
+  issue 21: 2
+  issue 26: 11
+  issue 28: 12
+  issue 4: 3

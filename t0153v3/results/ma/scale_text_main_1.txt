@@ -1,0 +1,5 @@
+text     spans=   1568 contours=   254 cpu=   0.701s wall=   0.702s ratio= 0.00 samples=   69123 smp/span= 44.1 capped=0 pts=64527
+text     spans=   3131 contours=   510 cpu=   1.580s wall=   1.580s ratio= 2.25 samples=  137438 smp/span= 43.9 capped=0 pts=128430
+text     spans=   6258 contours=  1018 cpu=   3.220s wall=   3.220s ratio= 2.04 samples=  274971 smp/span= 43.9 capped=0 pts=257042
+text     spans=  12502 contours=  2035 cpu=   7.100s wall=   7.100s ratio= 2.21 samples=  549452 smp/span= 43.9 capped=0 pts=513654
+text     spans=  24994 contours=  4069 cpu=  14.478s wall=  14.478s ratio= 2.04 samples= 1097448 smp/span= 43.9 capped=0 pts=1025929

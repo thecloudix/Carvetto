@@ -1,0 +1,24 @@
+T-0153 round 3 (df19a98) verifier results.
+Blocking:
+ B1. medialAxis misclassifies a hole that has no clear probe (every probe within chordal+distance of the wall): the
+     fallback (winding at +-2*chordal off the first probe's normal) lands across the hole's thin tip into the region,
+     the hole's inside is marked region, ignoredContours stays 0, so the V-carve guard (ignored > zero-area) does not
+     fire and the V-bit carves ~1 mm deep inside the hole. Same in main's medialAxis (dma_main), unguarded in V-carve.
+     repro3/dhole_tip_ccw_g0.01.txt (circle R 8 + D-shaped hole: 170-segment arc at R-0.01 closed by a chord, listed
+     from the last arc segment so the chord is span 1): VCVIOL=1 VC_FILE=... VC_FIX="0 12 90 0.05 0 0" vc3 1 1 v ->
+     236 moves end inside the hole, deepest Z-1.064 at a point 1.06 mm inside it. Also g=0.003/0.02, cw/ccw, chordal
+     0.05/0.1; sweep case repro3/dhole_outside.txt (fam 16 seed 316 case 14); dma repro3/dhole_outside.txt 0.0166667 ->
+     ignored=0, 262 of 344 skeleton points outside the region (radius up to 1.05).
+ B2. chordal = 0.0003 (the documented minimum) refuses every job with a flat area: inner chordal 0.0003/3 =
+     9.999999999999999e-05 < Pocket's 1e-4 -> "flat area clearance: invalid tolerance: chordal must be between 0.0001
+     and 1 mm". minch.cpp.
+Non-blocking: see report.
+ Also open: fam 18 nested squares within tolerance -> wall ring / Pocket at chordal/3 drops a 0.8 um outside sliver
+     (repro3/nestedsq_cone.txt, nsq.cpp: -0.058 mm, chordal 0.005; sliver thinner than distance 0.001), and sweep2
+     scale005 case 26 seed 504 (fam 18 at scale 0.05, chordal 0.1, -0.079 mm, not dissected).
+     fam 16 seed 316 case 28 (resolved D-hole, chordal 0.001, worst cone -1.15 mm) not dissected (rerun > 900 s).
+Clean: fam 4/9/10/11/13/14/17/19/21/22, f15exact and f23exact (coincident edges vs exact outline: 0 violations,
+over <= 2e-16), far 1e3/2e4/2e5, chordal 0.0003 (no-flat cases); coverage <= 0.562 x chordal outside B1 / coincident-edge
+artefacts (0.75 in far2e4 resolved). AC2 Release under load: 18.5 s plain, 23.9 s flat, 30.4 s frame, 24.3 s EM;
+doubling 2.04/2.00. Medial axis vs main: ac1 same coverage, far fewer BAD (84 vs 104), fuzz 2x640 no crash/hang,
+scale identical. Debug ctest 924/924 (-j4 and -j1), Release [v_carve] 26 / [medial] 34 pass, merged with T-0159 926/926.

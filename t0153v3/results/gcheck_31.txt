@@ -1,0 +1,32 @@
+/home/chris/wt-T0153/build-verify3/gc/31_1_grbl_mm.nc 1 errors
+    1154: plunge at F 2939.0 not plunge rate 495.0
+/home/chris/wt-T0153/build-verify3/gc/31_1_grbl_inch.nc 6 errors
+    1154: plunge at F 2938.7799999999997 not plunge rate 495.0
+    19881: plunge at F 2938.7799999999997 not plunge rate 495.0
+    38561: plunge at F 2938.7799999999997 not plunge rate 495.0
+    57296: plunge at F 2938.7799999999997 not plunge rate 495.0
+    75867: plunge at F 2938.7799999999997 not plunge rate 495.0
+    94643: plunge at F 2938.7799999999997 not plunge rate 495.0
+/home/chris/wt-T0153/build-verify3/gc/31_1_mach3_mm.nc 1 errors
+    1155: plunge at F 2939.0 not plunge rate 495.0
+/home/chris/wt-T0153/build-verify3/gc/31_1_mach3_inch.nc 6 errors
+    1155: plunge at F 2938.7799999999997 not plunge rate 495.0
+    19882: plunge at F 2938.7799999999997 not plunge rate 495.0
+    38562: plunge at F 2938.7799999999997 not plunge rate 495.0
+    57297: plunge at F 2938.7799999999997 not plunge rate 495.0
+    75868: plunge at F 2938.7799999999997 not plunge rate 495.0
+    94644: plunge at F 2938.7799999999997 not plunge rate 495.0
+/home/chris/wt-T0153/build-verify3/gc/31_1_mach4_mm.nc 1 errors
+    1155: plunge at F 2939.0 not plunge rate 495.0
+/home/chris/wt-T0153/build-verify3/gc/31_1_linuxcnc_mm.nc 1 errors
+    1156: plunge at F 2939.0 not plunge rate 495.0
+/home/chris/wt-T0153/build-verify3/gc/31_1_linuxcnc_inch.nc 6 errors
+    1156: plunge at F 2938.7799999999997 not plunge rate 495.0
+    19883: plunge at F 2938.7799999999997 not plunge rate 495.0
+    38563: plunge at F 2938.7799999999997 not plunge rate 495.0
+    57298: plunge at F 2938.7799999999997 not plunge rate 495.0
+    75869: plunge at F 2938.7799999999997 not plunge rate 495.0
+    94645: plunge at F 2938.7799999999997 not plunge rate 495.0
+/home/chris/wt-T0153/build-verify3/gc/31_1_marlin_mm.nc 1 errors
+    1155: plunge at F 2939.0 not plunge rate 495.0
+216 files, 23 errors

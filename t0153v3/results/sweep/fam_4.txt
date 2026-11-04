@@ -1,0 +1,6 @@
+FLOOR case 12 seed 44 fam 4 ringneigh-touch tool=0 D=1.323 ang=83.2 chord=0.0010 flat=0.617 limR=0.5473 ncl=0 emD=0.000/0.000 stepover=0.695: uncut(>half depth) 99/722 floor pts, deepest-in 2.1188 at (0.73663,-6.63109) diags: [28]
+SUMMARY seed=44 fam=4 far=0 scale=1 cases=30 ok=30 refused=0 resolved=21 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.645e-04 worstEMallow=1.665e-04 latNonRes=0.5007 latRes=0.54 kinkNonRes=0.47 kinkRes=0.4806 worstOver=0.00e+00 worstFlatShortEndMills=0.1087 worstFlatShortSelf=1.286 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=1 worstFrac=0.1371 worstDepthIntoFlat/R=3.871
+  issue 26: 5
+  issue 28: 21
+  issue 4: 3

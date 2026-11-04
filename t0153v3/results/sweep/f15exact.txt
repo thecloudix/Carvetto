@@ -1,0 +1,1 @@
+FLOOR case 1 seed 715 fam 15 sharededge tool=0 D=3.311 ang=88.2 chord=0.0200 flat=1.016 limR=0.9849 ncl=0 emD=0.000/0.000 stepover=1.591: uncut(>half depth) 70/434 floor pts, deepest-in 1.0839 at (6.03296,10.54240) diags: [28]

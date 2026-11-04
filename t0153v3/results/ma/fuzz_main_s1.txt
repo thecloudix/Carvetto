@@ -1,0 +1,50 @@
+  29 ok       2.19s spiky n=985                                        [capped smp ign br pts err] 1 250000 0 768 4700 0.000e+00 sig=0 exit=0
+  45 ok       2.19s spiky n=983                                        [capped smp ign br pts err] 1 250000 0 876 5547 0.000e+00 sig=0 exit=0
+  54 ok       0.00s huge-offset O_glyph_bez 10000000000000.000000      [capped smp ign br pts err] 1 180 0 0 0 0.000e+00 sig=0 exit=0
+  61 ok       2.82s spiky n=1425                                       [capped smp ign br pts err] 1 250000 0 944 4205 0.000e+00 sig=0 exit=0
+  70 ok       0.00s huge-offset S_glyph_bez 100000000000000.000000     [capped smp ign br pts err] 1 207 0 0 0 0.000e+00 sig=0 exit=0
+  93 ok       2.69s spiky n=1246                                       [capped smp ign br pts err] 1 250000 0 968 4598 0.000e+00 sig=0 exit=0
+ 102 ok       0.00s huge-offset star12_sharp 10000000000.000000        [capped smp ign br pts err] 1 712 0 12 876 0.000e+00 sig=0 exit=0
+ 125 ok       2.77s spiky n=1345                                       [capped smp ign br pts err] 1 250000 0 991 4852 0.000e+00 sig=0 exit=0
+ 134 ok       0.00s huge-offset ellipse_bez 10000000000.000000         [capped smp ign br pts err] 1 164 0 1 183 0.000e+00 sig=0 exit=0
+ 141 ok       2.64s spiky n=681                                        [capped smp ign br pts err] 1 250000 0 2907 35281 0.000e+00 sig=0 exit=0
+ 189 ok       2.54s spiky n=1188                                       [capped smp ign br pts err] 1 250000 0 797 3817 0.000e+00 sig=0 exit=0
+ 205 ok       2.19s spiky n=803                                        [capped smp ign br pts err] 1 250000 0 1097 7954 0.000e+00 sig=0 exit=0
+ 221 ok       2.31s spiky n=1044                                       [capped smp ign br pts err] 1 250000 0 887 5152 0.000e+00 sig=0 exit=0
+ 230 ok       0.00s huge-offset dumbbell_neck05 10000000000.000000     [capped smp ign br pts err] 1 361 0 9 376 0.000e+00 sig=0 exit=0
+ 237 ok       2.04s spiky n=792                                        [capped smp ign br pts err] 1 250000 0 1175 7802 0.000e+00 sig=0 exit=0
+ 246 ok       0.00s huge-offset square_cw 10000000000000.000000        [capped smp ign br pts err] 1 4 0 0 0 0.000e+00 sig=0 exit=0
+ 269 ok       2.68s spiky n=1312                                       [capped smp ign br pts err] 1 250000 0 974 4495 0.000e+00 sig=0 exit=0
+ 285 ok       2.52s spiky n=1208                                       [capped smp ign br pts err] 1 250000 0 973 4869 0.000e+00 sig=0 exit=0
+ 294 ok       0.00s huge-offset star5 100000000000000.000000           [capped smp ign br pts err] 1 10 0 0 0 0.000e+00 sig=0 exit=0
+ 310 ok       0.00s huge-offset T 10000000000000.000000                [capped smp ign br pts err] 1 8 0 0 0 0.000e+00 sig=0 exit=0
+ 326 ok       0.00s huge-offset dumbbell_neck05 100000000000000.000000 [capped smp ign br pts err] 1 12 0 0 0 0.000e+00 sig=0 exit=0
+ 333 ok       2.69s spiky n=1309                                       [capped smp ign br pts err] 1 250000 0 985 4715 0.000e+00 sig=0 exit=0
+ 342 ok       0.00s huge-offset circle 10000000000000.000000           [capped smp ign br pts err] 1 64 0 0 0 0.000e+00 sig=0 exit=0
+ 349 ok       2.07s spiky n=814                                        [capped smp ign br pts err] 1 250000 0 1067 7368 0.000e+00 sig=0 exit=0
+ 374 ok       0.00s huge-offset rect40x20 10000000000000.000000        [capped smp ign br pts err] 1 5 0 0 0 0.000e+00 sig=0 exit=0
+ 381 ok       2.25s spiky n=1032                                       [capped smp ign br pts err] 1 250000 0 748 4754 0.000e+00 sig=0 exit=0
+ 390 ok       0.00s huge-offset sq_holes 1000000000000000.000000       [capped smp ign br pts err] 1 56 0 0 0 0.000e+00 sig=0 exit=0
+ 397 ok       2.35s spiky n=1063                                       [capped smp ign br pts err] 1 250000 0 907 5493 0.000e+00 sig=0 exit=0
+ 413 ok       2.29s spiky n=970                                        [capped smp ign br pts err] 1 250000 0 819 5208 0.000e+00 sig=0 exit=0
+ 422 ok       0.00s huge-offset T 10000000000000.000000                [capped smp ign br pts err] 1 8 0 0 0 0.000e+00 sig=0 exit=0
+ 438 ok       0.00s huge-offset slot_arcs 1000000000000.000000         [capped smp ign br pts err] 1 51 0 1 23 0.000e+00 sig=0 exit=0
+ 445 ok       2.26s spiky n=999                                        [capped smp ign br pts err] 1 250000 0 851 5307 0.000e+00 sig=0 exit=0
+ 454 ok       0.00s huge-offset sliver5deg 10000000000000.000000       [capped smp ign br pts err] 1 4 0 0 0 0.000e+00 sig=0 exit=0
+ 470 ok       0.00s huge-offset O_glyph_bez 100000000000000.000000     [capped smp ign br pts err] 1 182 0 0 0 0.000e+00 sig=0 exit=0
+ 477 ok       2.20s spiky n=943                                        [capped smp ign br pts err] 1 250000 0 871 6015 0.000e+00 sig=0 exit=0
+ 486 ok       0.00s huge-offset S_glyph_bez 1000000000000.000000       [capped smp ign br pts err] 1 206 0 0 0 0.000e+00 sig=0 exit=0
+ 502 ok       0.00s huge-offset dumbbell_neck05 1000000000000.000000   [capped smp ign br pts err] 1 18 0 8 16 0.000e+00 sig=0 exit=0
+ 509 ok       2.22s spiky n=734                                        [capped smp ign br pts err] 1 250000 0 2459 17073 0.000e+00 sig=0 exit=0
+ 518 ok       0.00s huge-offset ellipse_bez 100000000000.000000        [capped smp ign br pts err] 1 100 0 1 85 0.000e+00 sig=0 exit=0
+ 525 ok       2.79s spiky n=1347                                       [capped smp ign br pts err] 1 250000 0 982 4544 0.000e+00 sig=0 exit=0
+ 534 ok       0.00s huge-offset concave_arc_notch 1000000000000.000000 [capped smp ign br pts err] 1 42 0 3 23 0.000e+00 sig=0 exit=0
+ 541 ok       3.03s spiky n=1469                                       [capped smp ign br pts err] 1 250000 0 1034 4268 0.000e+00 sig=0 exit=0
+ 557 ok       2.51s spiky n=1153                                       [capped smp ign br pts err] 1 250000 0 905 5144 0.000e+00 sig=0 exit=0
+ 573 ok       2.11s spiky n=754                                        [capped smp ign br pts err] 1 250000 0 1516 10312 0.000e+00 sig=0 exit=0
+ 598 ok       0.00s huge-offset ellipse_bez 10000000000000.000000      [capped smp ign br pts err] 1 104 0 0 0 0.000e+00 sig=0 exit=0
+ 614 ok       0.00s huge-offset sliver5deg 10000000000000.000000       [capped smp ign br pts err] 1 4 0 0 0 0.000e+00 sig=0 exit=0
+ 621 ok       2.15s spiky n=990                                        [capped smp ign br pts err] 1 250000 0 809 5087 0.000e+00 sig=0 exit=0
+ 630 ok       0.00s huge-offset ellipse_bez 1000000000000.000000       [capped smp ign br pts err] 1 108 0 1 41 0.000e+00 sig=0 exit=0
+ 637 ok       2.33s spiky n=1096                                       [capped smp ign br pts err] 1 250000 0 942 4736 0.000e+00 sig=0 exit=0
+cases=640 crashes=0 hangs=0 bad=0 capped=49
