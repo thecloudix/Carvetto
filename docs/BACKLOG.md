@@ -422,8 +422,7 @@ Acceptance criteria:
   1. (a)–(d) fixed or documented exactly, with tests where behaviour changes; save/load invariant preserved (fuzz from t0132v3).
   2. (e) behaviour documented in ADR-0020 and tested; goldens unchanged.
 
-### T-0137 Profile On: refuse an allowance above +r too   [status: blocked]
-(Unblocks when T-0129 and T-0135 merge — both touch profile.cpp.)
+### T-0137 Profile On: refuse an allowance above +r too   [status: in progress]
 Phase: 1   Module: core/toolpath   Depends on: T-0129   ADR: 0016 §4
 Goal: Owner decision 2026-11-02 (raised by the T-0129 verifier): for profiles On the vector an allowance above +r moves the tool entirely off the vector just as one below −r does; On profiles refuse |allowance| > r symmetrically (Inside/Outside keep only the −r limit: a large positive allowance there is a normal oversize cut).
 Acceptance criteria:
@@ -451,8 +450,7 @@ Goal: Non-blocking findings (harness t0136v1/). (a) Names that grow when stored 
 Acceptance criteria:
   1. (a)–(d) fixed with tests where behaviour changes; save/load invariant preserved (fuzz3).
 
-### T-0140 Profile: loose-piece check for Inside/Outside with allowance ≥ 0   [status: blocked]
-(Unblocks when T-0135 merges.)
+### T-0140 Profile: loose-piece check for Inside/Outside with allowance ≥ 0   [status: ready]
 Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §14
 Goal: Found by the T-0135 verifier (harness t0135v1/scn/m3_630018_3.scn): the loose-piece report runs only for sided cuts (On, allowance < 0), so with Inside/Outside and allowance ≥ 0 pieces that no kept tab holds come free unreported (15.1 mm² in that scene, leads off; same in T-0127). Extend the check to all tabbed profiles without changing toolpaths.
 Acceptance criteria:
@@ -523,8 +521,7 @@ Acceptance criteria:
   1. signedArea (and any orientation/area helper with the same pattern) computed relative to a local origin or compensated, exact to rounding for small contours up to 1e9 mm; generative test vs an exact oracle.
   2. Outputs of Pocket/Profile/Drill/offsets unchanged for normal inputs (hash comparison vs main), changes only where the old area was wrong (explained).
 
-### T-0156 Profile loose pieces: V-bit corner moves, vanished finishing cuts, out-of-box pieces (T-0135 verifier)   [status: blocked]
-(Unblocks when T-0135 merges.)
+### T-0156 Profile loose pieces: V-bit corner moves, vanished finishing cuts, out-of-box pieces (T-0135 verifier)   [status: ready]
 Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §14
 Goal: Pre-existing gaps found by the T-0135 round-3 verifier (harness t0135v3/, vfree.cpp exact oracle): (a) V-bit sharp-corner moves are not in the band model of the loose-piece search or the tab check — m2_1310149_15 leaves a 134 mm² part free with no message and a flood-PARTIAL kept tab (identical on T-0127/main); (b) when a finishing cut vanishes, its roughing loop is never searched (m0_1310036_24, 2.1 mm² slug); (c) pieces lying wholly outside every region box are not found ("#" of four bars, three circles with overlapping kerfs); (d) ADR §14 wording: band sampling allowance is up to ~11 µm for tab-layer radius < 0.0625 mm (not "at most 5 µm"), and bands are 2–7 µm wider than the cut (not "exactly"); (e) second-try tabs can have necks ≈ 0.086 mm (m1_1320038_46) — judge them with margin or document.
 Acceptance criteria:
@@ -558,7 +555,7 @@ Goal: Owner decision 2026-11-03: corner sharpening is split out of T-0153. Behav
 Acceptance criteria:
   1. To be finalised with the owner; at least: the cone never crosses a boundary (the same exact oracle as T-0153); corners sharpened within chordal; goldens; post safety.
 
-### T-0161 Drag-pause M5 lines and T-0154 leftovers   [status: ready]
+### T-0161 Drag-pause M5 lines and T-0154 leftovers   [status: in progress]
 Phase: 1   Module: core/post   Depends on: T-0154   ADR: 0020
 Goal: Found by the T-0154 verifiers (harness t0154v7/postatk8.cpp G1–G3). On Grbl, a line that errors is dropped whole, so a pause block's M5 line that also carries other words can be lost: more than 79 characters (LINE_BUFFER_SIZE 80, error:overflow), 'M5 M6' (unsupported), 'M5 G0 G1' (modal-group violation). That needs a custom post; shipped posts are fine. Also: stale comments in interpreter.cpp (allowlistProblem "spaces or tabs", nonAsciiProblem "or tab", unreachable tab handling); the tab shows as a space in refusal messages; Grbl refuses N > 9,999,999 (MAX_LINE_NUMBER) while the allowlist allows 9 digits.
 Acceptance criteria:
