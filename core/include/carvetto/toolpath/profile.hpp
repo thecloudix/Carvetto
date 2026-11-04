@@ -68,7 +68,9 @@ struct ProfileParams {
     CutDirection direction{CutDirection::Climb};
     /// Extra distance between the tool and the vector (negative cuts into it). Must be at least
     /// minus `profileToolRadius` (also with `lastPassAllowance` added); below that the toolpath is
-    /// refused with `InvalidParameters` (T-0129).
+    /// refused with `InvalidParameters` (T-0129). On the vector it must also be at most
+    /// `profileToolRadius` (also with `lastPassAllowance` added), or the tool would run entirely
+    /// off the vector (T-0137); Inside/Outside (and open Left/Right) have no upper limit.
     double allowance{0.0};
     /// Depths. A non-positive `passDepth` takes the cutting data's pass depth.
     PassPlan passes;
