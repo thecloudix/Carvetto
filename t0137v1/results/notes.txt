@@ -1,0 +1,47 @@
+T-0137 round 1 verifier results (branch f38c426 vs origin/main ae8b763)
+== random sweep (sweep.sh; 211/212/231/232 killed for time, 241 segfaults at scene 31 on main and branch, see repro/) ==
+('onabove', 'side2', 'sep0', 'refused') 111
+('onabove', 'side2', 'sep1', 'refused') 578
+('same', 'side0', 'sep0', 'match') 139
+('same', 'side0', 'sep1', 'match') 375
+('same', 'side1', 'sep0', 'match') 156
+('same', 'side1', 'sep1', 'match') 402
+('same', 'side2', 'sep0', 'match') 263
+('same', 'side2', 'sep1', 'match') 625
+onabove_main_cut 689
+partial_files 3
+same_zero_moves 41
+BAD 0
+== stored scenes, originals ==
+('onabove', 'side2', 'sep1', 'refused') 14
+('same', 'side0', 'sep0', 'match') 187
+('same', 'side0', 'sep1', 'match') 187
+('same', 'side1', 'sep0', 'match') 179
+('same', 'side1', 'sep1', 'match') 256
+('same', 'side2', 'sep0', 'match') 710
+('same', 'side2', 'sep1', 'match') 649
+onabove_main_cut 14
+same_zero_moves 23
+BAD 0
+== stored scenes, 37 variants on every 18th ==
+('onabove', 'side2', 'sep0', 'refused') 121
+('onabove', 'side2', 'sep1', 'refused') 370
+('same', 'side0', 'sep0', 'match') 735
+('same', 'side0', 'sep1', 'match') 741
+('same', 'side1', 'sep0', 'match') 735
+('same', 'side1', 'sep1', 'match') 738
+('same', 'side2', 'sep0', 'match') 640
+('same', 'side2', 'sep1', 'match') 397
+onabove_main_cut 491
+same_zero_moves 382
+BAD 0
+== ac (branch) ==
+info open line side 0 a=10: cutting y in [-13, -13] (expect |y| = 13 on one side)
+info open line side 1 a=10: cutting y in [13, 13] (expect |y| = 13 on one side)
+info em(0): ndiag 1 first 'the tool has no cutting width at the cut depth'
+info denormal r=0x0.0093445b87316p-1022 a=r+ulp: moves 0 first 'allowance 5.0000000000007e-311 mm is above the tool radius (5e-311 mm at the cut depth): the tool would run entirely off the vector; nothing is cut'
+info denormal r=0x0.0093445b87316p-1022 a=r: moves 18 first ''
+FAILS 0
+ok lines: 343
+== ac (main, control) ==
+FAILS 108
