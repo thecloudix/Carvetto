@@ -1,6 +1,6 @@
 # ADR-0013: `.carv` serialisation details
 
-Date: 2026-10-24 · Status: accepted (director, 2026-10-24) · Amended 2026-10-24 (A1, T-0015)
+Date: 2026-10-24 · Status: accepted (director, 2026-10-24) · Amended 2026-10-24 (A1, T-0015), 2026-11-01 (A2, T-0132; finite-params exception added by T-0136/T-0139)
 
 ## Context
 ADR-0003 fixes the container (zip of `manifest.json`, `job.json` and optional binary members).
@@ -207,3 +207,20 @@ confines forward-compat logic to the I/O layer.
   unknown `.json` members, replacing the "Known limitations (tracked as T-0015)" list. The
   figures under *Zip-layer attacks* were measured with the T-0015 regression tests. Decision 8's
   claim that `.json` members are streamed now holds for every `.json` member.
+- **A2 (2026-11-01, T-0132): toolpath records, format 1.1.** `job.json` gains an optional
+  `toolpaths` array and the archive one binary move cache `toolpaths/NNNN.bin` per computed
+  toolpath (schema, cache layout and limits in ADR-0021). Additions to §9: a budget of toolpath
+  moves per file of min(1 per byte of the file, 8,000,000) (owner decision 2026-11-02;
+  `LoadLimits::maxMoves`, `movesPerArchiveByte`, charged from `job.json` before any cache is
+  inflated; the decoder reserves exactly the declared count), at most 10,000 toolpath records,
+  and the 20:1 binary ratio checks no longer apply to move caches (they are decoded straight into
+  moves, never held). `saveCarv` never returns a file the loader refuses: it loads its finished
+  archive in memory with these same limits and returns the loader's error instead (ADR-0021 §3);
+  specific pre-checks (move rule, 10,000 members including preserved ones, size caps) give clearer
+  messages first. Caches are written in
+  name order among the preserved members (§1). T-0122's interim `toolpaths/NNNN.json` members are
+  converted to records on load instead of being kept as unknown members. The toolpath parameter
+  keys follow carvetto-cli's params.json (lengths without the `_mm` suffix of §5; angles in
+  radians under `_rad` keys). Exception to decision 3 (T-0136): every number in a toolpath record's `params`
+  must be finite; the strings `"NaN"`, `"Infinity"` and `"-Infinity"` are refused there on load
+  and on save (ADR-0021 §2, "Parameters are finite numbers"). Other doubles keep decision 3.

@@ -37,6 +37,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #endif
+// Last: on Windows it includes <windows.h> (macros such as near/far).
+#include "../geometry/cpu_scaling.hpp"
 
 using namespace carvetto::document;
 using carvetto::geometry::ArcDirection;
@@ -342,7 +344,7 @@ TEST_CASE("AC3: a file with a higher major version fails with a clear error", "[
             withMember(original, "manifest.json", replaced(manifest, "\"major\": 1", "\"major\": 2"));
         const CarvError err = loadError(newer);
         CHECK(err.code == Code::UnsupportedVersion);
-        CHECK(contains(err.message, "2.0"));
+        CHECK(contains(err.message, "2." + std::to_string(kCarvFormatMinor)));
         CHECK(contains(err.message, "newer"));
     }
     SECTION("the version is checked before job.json is read") {
@@ -358,11 +360,13 @@ TEST_CASE("AC3: a file with a higher major version fails with a clear error", "[
     }
     SECTION("a higher minor version of the same major loads") {
         const Bytes minor =
-            withMember(original, "manifest.json", replaced(manifest, "\"minor\": 0", "\"minor\": 7"));
+            withMember(original, "manifest.json",
+                       replaced(manifest, "\"minor\": " + std::to_string(kCarvFormatMinor), "\"minor\": 7"));
         LoadedCarv loaded = load(minor);
         CHECK(loaded.formatMinor == 7);
         // Re-saved with this build's version.
-        CHECK(contains(memberText(save(loaded.document, loaded.extras), "manifest.json"), "\"minor\": 0"));
+        CHECK(contains(memberText(save(loaded.document, loaded.extras), "manifest.json"),
+                       "\"minor\": " + std::to_string(kCarvFormatMinor)));
     }
 }
 
@@ -392,12 +396,12 @@ TEST_CASE("unknown fields on every record and unknown archive members are preser
         replaced(manifest, "\"format\": \"carvetto\"", "\"format\": \"carvetto\", \"zz_manifest\": \"m\"");
     const std::string blob("\x00\x01\x02\xff binary", 11);
     Bytes edited = withMember(withMember(original, "job.json", job), "manifest.json", manifest);
-    edited = withMember(edited, "toolpaths/0001.bin", blob);
+    edited = withMember(edited, "components/0001.hf", blob);
     edited = withMember(edited, "bitmaps/a.png", "");
 
     LoadedCarv loaded = load(edited);
     requireSameDocument(doc, loaded.document);
-    CHECK(loaded.extras.memberNames() == std::vector<std::string>{"bitmaps/a.png", "toolpaths/0001.bin"});
+    CHECK(loaded.extras.memberNames() == std::vector<std::string>{"bitmaps/a.png", "components/0001.hf"});
 
     const Bytes resaved = save(loaded.document, loaded.extras);
     const std::string resavedJob = memberText(resaved, "job.json");
@@ -408,7 +412,7 @@ TEST_CASE("unknown fields on every record and unknown archive members are preser
     CHECK(contains(resavedJob, "\"k\": -0.5"));
     CHECK(contains(resavedJob, "\"zz_job\": 42"));
     CHECK(contains(memberText(resaved, "manifest.json"), "\"zz_manifest\": \"m\""));
-    CHECK(memberText(resaved, "toolpaths/0001.bin") == blob);
+    CHECK(memberText(resaved, "components/0001.hf") == blob);
     CHECK(memberText(resaved, "bitmaps/a.png").empty());
     // Member order: manifest, job, then preserved members sorted by name.
     const auto ms = members(resaved);
@@ -416,7 +420,7 @@ TEST_CASE("unknown fields on every record and unknown archive members are preser
     CHECK(ms[0].name == "manifest.json");
     CHECK(ms[1].name == "job.json");
     CHECK(ms[2].name == "bitmaps/a.png");
-    CHECK(ms[3].name == "toolpaths/0001.bin");
+    CHECK(ms[3].name == "components/0001.hf");
     LoadedCarv again = load(resaved);
     CHECK(save(again.document, again.extras) == resaved);
 
@@ -1480,8 +1484,10 @@ TEST_CASE("group structure is pre-checked linearly", "[document][carv][limits]")
     }
     SECTION("a group with 200,000 children loads quickly") {
         // Linear in the width: loading twice the children takes at most ~3x the CPU time (a
-        // quadratic check would take ~4x), independent of how loaded the machine is.
-        const auto timeWidth = [](std::uint64_t width) {
+        // quadratic check would take ~4x), independent of how loaded the machine is. The loads of
+        // both widths alternate (`interleavedCpuSeconds`, T-0145); the 100k time is floored above
+        // the Windows process-clock tick.
+        const auto fileOfWidth = [](std::uint64_t width) {
             std::string objects;
             std::string children;
             for (std::uint64_t i = 0; i < width; ++i) {
@@ -1489,20 +1495,33 @@ TEST_CASE("group structure is pre-checked linearly", "[document][carv][limits]")
                 children += (i ? "," : "") + std::to_string(10 + i);
             }
             objects += groupRecord(5, children, 0);
-            const Bytes file = structureFile(objects, 10 + width);
-            const double t0 = cpuSeconds();
-            auto r = loadCarv(std::span<const std::uint8_t>(file));
-            const double seconds = cpuSeconds() - t0;
+            return structureFile(objects, 10 + width);
+        };
+        const auto checkLoaded = [](const CarvResult<LoadedCarv>& r, std::uint64_t width) {
             INFO((r ? std::string() : r.error().message));
             REQUIRE(r.ok());
             CHECK(r.value().document.objectCount() == width + 1);
             CHECK(r.value().document.findObject(ObjectId{5})->asGroup()->children.size() == width);
-            return seconds;
         };
-        const double half = timeWidth(100000);
-        const double full = timeWidth(200000);
-        INFO("100k children: " << half << " s CPU, 200k children: " << full << " s CPU");
-        CHECK(full < 3.0 * std::max(half, 0.05));
+        const Bytes halfFile = fileOfWidth(100000);
+        const Bytes fullFile = fileOfWidth(200000);
+        std::optional<CarvResult<LoadedCarv>> halfResult;
+        std::optional<CarvResult<LoadedCarv>> fullResult;
+        const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+            2,
+            [&] {
+                halfResult.reset();
+                halfResult.emplace(loadCarv(std::span<const std::uint8_t>(halfFile)));
+            },
+            [&] {
+                fullResult.reset();
+                fullResult.emplace(loadCarv(std::span<const std::uint8_t>(fullFile)));
+            });
+        checkLoaded(*halfResult, 100000);
+        checkLoaded(*fullResult, 200000);
+        INFO("100k children: " << t.smallSeconds << " s CPU, 200k children: " << t.largeSeconds
+                               << " s CPU, ratio " << t.ratio());
+        CHECK(t.ratio() < 3.0);
     }
     SECTION("a cycle is reported without walking it forever") {
         const std::string objects = groupRecord(10, "11", 11) + "," + groupRecord(11, "10", 10);

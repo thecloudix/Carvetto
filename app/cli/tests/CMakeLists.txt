@@ -14,8 +14,9 @@ endif()
 add_executable(carvetto_cli_tests
   cli_test.cpp
   params_test.cpp
-  toolpath_store_test.cpp
 )
+# The migration tests write T-0122-style interim members with the internal zip helper.
+target_include_directories(carvetto_cli_tests PRIVATE ${PROJECT_SOURCE_DIR}/core/src/document)
 target_link_libraries(carvetto_cli_tests PRIVATE carvetto_cli_lib nlohmann_json::nlohmann_json
                       Catch2::Catch2WithMain carvetto_warnings)
 target_compile_definitions(carvetto_cli_tests PRIVATE
@@ -41,4 +42,26 @@ add_test(NAME cli.end_to_end_grbl
     -DGOLDEN=${PROJECT_SOURCE_DIR}/core/tests/golden/cli/part_grbl.nc
     -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/e2e
     -P ${CMAKE_CURRENT_SOURCE_DIR}/end_to_end.cmake
+)
+# T-0150 AC3: the same with drilling: DXF -> peck drilling with dwell -> profile with tabs -> Grbl,
+# checksum equal to the drilling golden. CI also runs this pipeline on Linux and Windows.
+add_test(NAME cli.end_to_end_drill_grbl
+  COMMAND ${CMAKE_COMMAND}
+    -DCLI=$<TARGET_FILE:carvetto-cli>
+    -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR}/data
+    -DPOST=${PROJECT_SOURCE_DIR}/posts/grbl_mm.pp
+    -DGOLDEN=${PROJECT_SOURCE_DIR}/core/tests/golden/cli/part_drill_grbl.nc
+    -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/e2e_drill
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/end_to_end_drill.cmake
+)
+# T-0151: quick engraving: DXF -> V-bit raster fill (two passes) -> V-bit outline -> Grbl, checksum
+# equal to the engraving golden. CI also runs this pipeline on Linux and Windows.
+add_test(NAME cli.end_to_end_engrave_grbl
+  COMMAND ${CMAKE_COMMAND}
+    -DCLI=$<TARGET_FILE:carvetto-cli>
+    -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR}/data
+    -DPOST=${PROJECT_SOURCE_DIR}/posts/grbl_mm.pp
+    -DGOLDEN=${PROJECT_SOURCE_DIR}/core/tests/golden/cli/part_engrave_grbl.nc
+    -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/e2e_engrave
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/end_to_end_engrave.cmake
 )

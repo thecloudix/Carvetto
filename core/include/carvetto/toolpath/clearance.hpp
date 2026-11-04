@@ -43,8 +43,12 @@ class ClearanceField {
     struct Data {
         std::vector<geometry::Contour> obstacles;
         BoxIndex index;
+        std::vector<std::size_t> spanStart;      // obstacle i's spans: spanBoxes[spanStart[i] ..]
+        std::vector<geometry::Box2> spanBoxes;  // a box round each span (T-0131)
+        double margin{0.0};                     // rounding allowance for skipping a span
     };
     bool skipped(std::size_t i) const;
+    double obstacleDistance(std::size_t i, geometry::Vec2 p, double best) const;
     std::shared_ptr<const Data> data_;
     std::vector<std::size_t> skip_;  // sorted, unique
 };

@@ -1,0 +1,15 @@
+{
+  "name": "Fill",
+  "layers": ["Pockets"],
+  "depth": 1,
+  "passes": 2,
+  "safe_z": 5,
+  "strategy": "fill",
+  "fill_pattern": "raster",
+  "raster_angle": 45,
+  "stepover": 0.8,
+  "tool": {
+    "database": "tools.json",
+    "id": "v-bit-90"
+  }
+}

@@ -76,6 +76,30 @@ begin SPINDLE_ON
 "[N] M3[S]"
 end
 
++ Before a toolpath that runs with the spindle off (diamond drag engraving):
++ stop the spindle, lift to safe Z and pause so the operator can check that the
++ spindle is stopped or locked; after the pause lift to safe Z again (Z may have
++ been re-zeroed). The spindle start lines of HEADER, TOOLCHANGE and NEW_SEGMENT
++ are left out for such a toolpath and SPINDLE_ON is not written.
+begin SPINDLE_OFF_PAUSE
+"[N] M5"
+"[N] G0[SAFEZ]"
+"(Spindle stays off for diamond drag tool [T]: [TOOLNAME])"
+"(Check that the spindle is stopped or locked, then resume)"
+"[N] M0"
+"[N] G0[SAFEZ]"
+end
+
++ After the last spindle-off toolpath of a drag section, before a toolpath that
++ starts the spindle again: pause so the operator can unlock the spindle.
+begin SPINDLE_UNLOCK_PAUSE
+"[N] M5"
+"[N] G0[SAFEZ]"
+"(Diamond drag tool [T] done: unlock the spindle before it starts again)"
+"[N] M0"
+"[N] G0[SAFEZ]"
+end
+
 + A further toolpath with the same tool.
 begin NEW_SEGMENT
 "([TOOLPATH_NAME])"

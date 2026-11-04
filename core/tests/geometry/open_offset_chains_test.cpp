@@ -17,7 +17,7 @@
 
 #include "carvetto/geometry/offset.hpp"
 #include "carvetto/geometry/transform2.hpp"
-#include "cpu_time.hpp"
+#include "cpu_scaling.hpp"
 #include "offset_chain_checks.hpp"
 
 using namespace carvetto::geometry;
@@ -898,19 +898,25 @@ TEST_CASE("T-0004 AC3: offset cost grows about linearly with the span count (CPU
           "[geometry][offset][open][t0004][perf]") {
     // Same spiral sampled with 1000 and 4000 spans: linear cost gives a ratio of ~4, quadratic
     // ~16. A ratio of CPU times holds in Debug and Release alike (T-0006).
+    // The small run offsets the short spiral kSmallReps times, so it is as long as the large run
+    // for linear cost and its time stays well above the clock floor; the per-offset ratio is the
+    // measured ratio times kSmallReps. Small and large runs alternate (T-0145).
     const Contour shortSpiral = densePolyline(1000);
     const Contour longSpiral = densePolyline(4000);
-    auto cost = [](const Contour& in, int reps) {
-        const double t0 = carvetto::test::processCpuSeconds();
-        std::size_t chains = 0;
-        for (int r = 0; r < reps; ++r) {
-            chains += offsetOpenContour(in, 1.5, OffsetSide::Left, JoinType::Round, kTol).size();
-        }
-        CHECK(chains > 0);
-        return (carvetto::test::processCpuSeconds() - t0) / reps;
-    };
-    const double smallCost = std::max(cost(shortSpiral, 4), 1e-4);
-    const double largeCost = cost(longSpiral, 1);
-    CAPTURE(smallCost, largeCost);
-    CHECK(largeCost < 8.0 * smallCost);
+    constexpr int kSmallReps = 4;
+    std::size_t chains = 0;
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+        3,
+        [&] {
+            for (int r = 0; r < kSmallReps; ++r) {
+                chains += offsetOpenContour(shortSpiral, 1.5, OffsetSide::Left, JoinType::Round, kTol).size();
+            }
+        },
+        [&] {
+            chains += offsetOpenContour(longSpiral, 1.5, OffsetSide::Left, JoinType::Round, kTol).size();
+        });
+    CHECK(chains > 0);
+    const double perOffsetRatio = t.ratio() * kSmallReps;
+    CAPTURE(t.smallSeconds, t.largeSeconds, perOffsetRatio);
+    CHECK(perOffsetRatio < 8.0);
 }

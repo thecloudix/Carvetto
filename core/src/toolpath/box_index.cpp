@@ -32,6 +32,13 @@ BoxIndex::BoxIndex(std::vector<geometry::Box2> boxes) : boxes_(std::move(boxes))
         }
     }
     if (sizes.empty()) {
+        // No box can go into the grid: the non-empty ones (non-finite) still go to the list every
+        // query checks, so a set of only such boxes answers like the brute-force loop.
+        for (std::size_t i = 0; i < boxes_.size(); ++i) {
+            if (!boxes_[i].isEmpty()) {
+                big_.push_back(i);
+            }
+        }
         return;
     }
     const auto mid = sizes.begin() + static_cast<std::ptrdiff_t>(sizes.size() / 2);

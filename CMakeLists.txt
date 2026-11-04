@@ -29,6 +29,20 @@ add_subdirectory(core)
 if(CARVETTO_BUILD_TESTS)
   enable_testing()
   add_subdirectory(core/tests)
+
+  # T-0146: changelog fragments. `check` validates changelog.d/ (CI also runs it on every PR, with
+  # --base for hand edits to CHANGELOG.md); the unit tests cover tools/changelog.py itself.
+  find_package(Python3 COMPONENTS Interpreter)
+  if(Python3_Interpreter_FOUND)
+    add_test(NAME tools.changelog_check
+      COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/changelog.py --root ${PROJECT_SOURCE_DIR} check)
+    add_test(NAME tools.changelog_unit
+      COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/tests/test_changelog.py)
+    # UTF-8 console output on Windows (cp1252) too: messages quote fragment text verbatim.
+    set_tests_properties(tools.changelog_check tools.changelog_unit PROPERTIES ENVIRONMENT "PYTHONUTF8=1")
+  else()
+    message(STATUS "Python 3 not found - skipping the changelog tool tests (CI still runs the check)")
+  endif()
 endif()
 
 # Qt-free view logic for the app (ADR-0014): built and tested even where Qt is unavailable.

@@ -17,7 +17,7 @@
 
 #include "carvetto/geometry/intersect.hpp"
 #include "carvetto/geometry/offset.hpp"
-#include "cpu_time.hpp"
+#include "cpu_scaling.hpp"
 #include "offset_chain_checks.hpp"
 #include "offset_junction.hpp"
 #include "test_rng.hpp"
@@ -426,21 +426,24 @@ TEST_CASE("T-0006 AC1: cost grows about linearly with the length of a dense walk
     for (int i = 0; i < 2000; ++i) {
         pts.push_back(pts.back() + Vec2::fromAngle(rng.uniform(-kPi, kPi), 0.5));
     }
+    // Each small run offsets the short walk twice, each large run the long walk once, so both
+    // runs are equally long for linear cost; the per-offset ratio is the measured ratio times
+    // two. Small and large runs alternate (T-0145).
     const Contour longWalk = polyline(pts);
     const Contour shortWalk = polyline(std::vector<Vec2>(pts.begin(), pts.begin() + 1001));
-    auto cost = [](const Contour& in, int reps) {
-        const double t0 = carvetto::test::processCpuSeconds();
-        std::size_t chains = 0;
-        for (int r = 0; r < reps; ++r) {
-            chains += offsetOpenContour(in, 2.0, OffsetSide::Left, JoinType::Round, kTol).size();
-        }
-        CHECK(chains > 0);
-        return cpuSeconds(t0) / reps;
-    };
-    const double shortCost = std::max(cost(shortWalk, 4), 1e-4);
-    const double longCost = cost(longWalk, 2);
-    CAPTURE(shortCost, longCost);
-    CHECK(longCost < 3.5 * shortCost);
+    std::size_t chains = 0;
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+        4,
+        [&] {
+            for (int r = 0; r < 2; ++r) {
+                chains += offsetOpenContour(shortWalk, 2.0, OffsetSide::Left, JoinType::Round, kTol).size();
+            }
+        },
+        [&] { chains += offsetOpenContour(longWalk, 2.0, OffsetSide::Left, JoinType::Round, kTol).size(); });
+    CHECK(chains > 0);
+    const double perOffsetRatio = t.ratio() * 2.0;
+    CAPTURE(t.smallSeconds, t.largeSeconds, perOffsetRatio);
+    CHECK(perOffsetRatio < 3.5);
 }
 
 // --- AC2: exact mitres and chamfers at arc corners ----------------------------------------------

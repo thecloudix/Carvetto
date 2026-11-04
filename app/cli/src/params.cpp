@@ -13,6 +13,7 @@
 #include <sstream>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "carvetto/geometry/vec2.hpp"
 #include "carvetto/tooling/json_io.hpp"
@@ -152,10 +153,89 @@ class Fields {
     std::set<std::string> known_;
 };
 
+/// Deepest nesting of objects and arrays a params file may use. The schema needs three levels
+/// (root, "tool"/"tabs"/..., "layers"); the cap keeps parsing cheap for crafted files.
+constexpr std::size_t kMaxParamsDepth = 32;
+
+/// A SAX pass over a params file that refuses duplicate keys (naming the key with its dotted
+/// path) and nesting deeper than kMaxParamsDepth. It runs before the normal parse, without
+/// building anything: nlohmann's callback parser rescans the parent container whenever an object
+/// closes, which is quadratic for wide arrays of objects, so a callback is not used (T-0134).
+class StructureCheck final : public nlohmann::json_sax<json> {
+   public:
+    bool null() override { return true; }
+    bool boolean(bool /*value*/) override { return true; }
+    bool number_integer(number_integer_t /*value*/) override { return true; }
+    bool number_unsigned(number_unsigned_t /*value*/) override { return true; }
+    bool number_float(number_float_t /*value*/, const string_t& /*text*/) override { return true; }
+    bool string(string_t& /*value*/) override { return true; }
+    bool binary(binary_t& /*value*/) override { return true; }
+
+    bool start_object(std::size_t /*elements*/) override { return open(true); }
+    bool start_array(std::size_t /*elements*/) override { return open(false); }
+    bool end_object() override { return close(); }
+    bool end_array() override { return close(); }
+
+    bool key(string_t& value) override {
+        lastKey_ = value;
+        if (!frames_.empty() && !frames_.back().keys.insert(value).second) {
+            throw CliError("params: duplicate key '" + pathTo(value) + "'");
+        }
+        return true;
+    }
+
+    bool parse_error(std::size_t /*position*/, const std::string& /*token*/,
+                     const nlohmann::detail::exception& /*error*/) override {
+        return false;  // the normal parse that follows reports it
+    }
+
+   private:
+    // One frame per open object or array: the key it sits under in its parent (empty inside an
+    // array) and, for an object, the keys seen so far. The dotted path is built only for an
+    // error message, so memory stays linear in the file size.
+    struct Frame {
+        std::string key;
+        bool isObject{false};
+        std::set<std::string> keys;
+    };
+
+    bool open(bool isObject) {
+        if (frames_.size() >= kMaxParamsDepth) {
+            throw CliError("params: objects and arrays are nested more than " + std::to_string(kMaxParamsDepth) +
+                           " levels deep");
+        }
+        frames_.push_back({!frames_.empty() && frames_.back().isObject ? lastKey_ : std::string(), isObject, {}});
+        return true;
+    }
+
+    bool close() {
+        if (!frames_.empty()) {
+            frames_.pop_back();
+        }
+        return true;
+    }
+
+    std::string pathTo(const std::string& leaf) const {
+        std::string path;
+        for (std::size_t i = 1; i < frames_.size(); ++i) {  // frames_[0] is the root object
+            path += frames_[i - 1].isObject ? (path.empty() ? "" : ".") + frames_[i].key : "[]";
+        }
+        return path.empty() ? leaf : path + "." + leaf;
+    }
+
+    std::vector<Frame> frames_;
+    std::string lastKey_;
+};
+
+/// Parses a params file. Duplicate keys (which JSON parsers silently resolve to the last one)
+/// are refused, naming the key with its path; nesting deeper than kMaxParamsDepth is refused;
+/// every JSON error, number overflow such as `1e400` included, is reported as invalid JSON.
 json parseJson(std::string_view text) {
     try {
+        StructureCheck check;
+        json::sax_parse(text.begin(), text.end(), &check);
         return json::parse(text.begin(), text.end());
-    } catch (const json::parse_error& e) {
+    } catch (const json::exception& e) {
         throw CliError(std::string("params: not valid JSON: ") + e.what());
     }
 }
@@ -167,6 +247,27 @@ void readTolerance(Fields& f, geometry::Tolerance& tol) {
         g.angle("angle", tol.angle);
         g.number("chordal", tol.chordal);
         g.finish();
+    }
+}
+
+void readOrder(Fields& f, toolpath::OrderOptions& order) {
+    if (const json* j = f.object("order")) {
+        Fields g(*j, f.keyPath("order"));
+        g.boolean("selection_order", order.selectionOrder);
+        g.boolean("left_to_right", order.leftToRight);
+        g.boolean("bottom_to_top", order.bottomToTop);
+        g.boolean("grid", order.grid);
+        g.finish();
+    }
+}
+
+void readStartPosition(Fields& f, geometry::Vec2& out) {
+    if (const json* j = f.get("start_position")) {
+        if (!j->is_array() || j->size() != 2 || !(*j)[0].is_number() || !(*j)[1].is_number() ||
+            !std::isfinite((*j)[0].get<double>()) || !std::isfinite((*j)[1].get<double>())) {
+            f.fail("start_position", "must be an array of two numbers [x, y]");
+        }
+        out = geometry::Vec2{(*j)[0].get<double>(), (*j)[1].get<double>()};
     }
 }
 
@@ -268,14 +369,7 @@ ProfileJob parseProfileParams(std::string_view text) {
         g.number("overcut", p.leads.overcut);
         g.finish();
     }
-    if (const json* j = f.object("order")) {
-        Fields g(*j, "order");
-        g.boolean("selection_order", p.order.selectionOrder);
-        g.boolean("left_to_right", p.order.leftToRight);
-        g.boolean("bottom_to_top", p.order.bottomToTop);
-        g.boolean("grid", p.order.grid);
-        g.finish();
-    }
+    readOrder(f, p.order);
     f.choice("start_at", p.startAt,
              {{"vector_start", StartAt::VectorStart},
               {"optimise", StartAt::Optimise},
@@ -290,13 +384,7 @@ ProfileJob parseProfileParams(std::string_view text) {
               {"top_left", BoxAnchor::TopLeft},
               {"top_centre", BoxAnchor::TopCentre},
               {"top_right", BoxAnchor::TopRight}});
-    if (const json* j = f.get("start_position")) {
-        if (!j->is_array() || j->size() != 2 || !(*j)[0].is_number() || !(*j)[1].is_number() ||
-            !std::isfinite((*j)[0].get<double>()) || !std::isfinite((*j)[1].get<double>())) {
-            f.fail("start_position", "must be an array of two numbers [x, y]");
-        }
-        p.startPosition = geometry::Vec2{(*j)[0].get<double>(), (*j)[1].get<double>()};
-    }
+    readStartPosition(f, p.startPosition);
     if (const json* j = f.object("corners")) {
         Fields g(*j, "corners");
         g.boolean("sharp_external", p.corners.sharpExternal);
@@ -330,6 +418,50 @@ PocketJob parsePocketParams(std::string_view text) {
     f.number("allowance", p.allowance);
     f.boolean("ramp_plunge", p.rampPlunge);
     f.number("ramp_distance", p.rampDistance);
+    readTolerance(f, p.tolerance);
+    readCommon(f, job.common);
+    f.finish();
+    return job;
+}
+
+DrillJob parseDrillParams(std::string_view text) {
+    using namespace toolpath;
+    const json root = parseJson(text);
+    DrillJob job;
+    DrillParams& p = job.params;
+    Fields f(root, "");
+    f.string("name", p.name);
+    f.number("start_depth", p.startDepth);
+    f.number("cut_depth", p.cutDepth);
+    f.number("safe_z", p.safeZ);
+    f.boolean("peck", p.peck);
+    f.choice("peck_retract", p.peckRetract,
+             {{"above_start", PeckRetract::AboveStart}, {"above_previous_pass", PeckRetract::AbovePreviousPass}});
+    f.number("retract_gap", p.retractGap);
+    f.number("dwell_time", p.dwellTime);
+    readOrder(f, p.order);
+    readStartPosition(f, p.startPosition);
+    readTolerance(f, p.tolerance);
+    readCommon(f, job.common);
+    f.finish();
+    return job;
+}
+
+EngraveJob parseEngraveParams(std::string_view text) {
+    using namespace toolpath;
+    const json root = parseJson(text);
+    EngraveJob job;
+    EngraveParams& p = job.params;
+    Fields f(root, "");
+    f.string("name", p.name);
+    f.number("depth", p.depth);
+    f.integer("passes", p.passes);
+    f.number("safe_z", p.safeZ);
+    f.choice("strategy", p.strategy, {{"outline", EngraveStrategy::Outline}, {"fill", EngraveStrategy::Fill}});
+    f.choice("fill_pattern", p.fillPattern, {{"offset", PocketStrategy::Offset}, {"raster", PocketStrategy::Raster}});
+    f.number("stepover", p.stepover);
+    f.angle("raster_angle", p.rasterAngle);
+    readStartPosition(f, p.startPosition);
     readTolerance(f, p.tolerance);
     readCommon(f, job.common);
     f.finish();
@@ -384,10 +516,10 @@ ResolvedTool resolveTool(const ToolChoice& choice, const std::filesystem::path& 
 }
 
 std::string paramsHelp() {
-    return R"(params.json reference (lengths in mm, angles in degrees; every key is optional
-unless marked "required"; unknown keys are errors):
+    return R"(params.json reference (lengths in mm, angles in degrees, times in seconds; every key is
+optional unless marked "required"; unknown keys are errors):
 
-Both operations:
+Every operation:
   "tool": {                      required
     "id": "end-mill-6mm",        required: tool id in the tool database
     "database": "tools.json",    tool database file, relative to the params file
@@ -398,9 +530,11 @@ Both operations:
   "layers": ["Layer 1", ...]     machine only the vectors on these layers (default: all)
   "name": "..."                  toolpath name
   "safe_z": 5                    absolute Z of moves between cuts
+  "tolerance": {"distance": 0.001, "angle": 5.7e-8, "chordal": 0.01}
+
+profile and pocket:
   "direction": "climb"           climb | conventional
   "allowance": 0                 material left on the vectors (profile: negative cuts in)
-  "tolerance": {"distance": 0.001, "angle": 5.7e-8, "chordal": 0.01}
 
 profile:
   "side": "outside"              outside | inside | on | right (= outside) | left (= inside)
@@ -430,6 +564,31 @@ pocket:
   "raster_angle": 0
   "profile_pass": "last"         none | first | last
   "ramp_plunge": false, "ramp_distance": 10
+
+drill (one hole at the centre - area centroid - of every closed vector; tool: a drill
+or an end mill):
+  "start_depth": 0, "cut_depth": 0 (> 0 required for a toolpath)
+  "peck": false                  peck drilling in passes of the cutting data's pass depth
+  "peck_retract": "above_start"  between passes retract to the cutting start + retract_gap
+                                 (above_start) or retract_gap above the depth just reached
+                                 (above_previous_pass)
+  "retract_gap": 1               mm (> 0 when peck is true)
+  "dwell_time": 0                seconds at the bottom of every pass (0 = no dwell)
+  "order": {"selection_order": false, "left_to_right": false,
+            "bottom_to_top": false, "grid": false}   (none: nearest hole first)
+  "start_position": [0, 0]       tool XY before the first hole
+
+engrave (quick engraving; tool: a V-bit, engraving tool, end mill, ball nose or diamond drag
+tool; a diamond-drag toolpath is posted with the spindle off, after M5 and an operator pause):
+  "depth": 0 (> 0 required)      engrave depth below the surface
+  "passes": 1                    number of equal passes to the depth (1 to 1000)
+  "strategy": "outline"          outline (the tool centre follows every vector, open or closed)
+                                 | fill (closed vectors cleared like a pocket; open ones ignored)
+  "fill_pattern": "offset"       offset | raster (fill only)
+  "stepover": 0                  fill only; 0 = the cutting data's stepover; at most the width
+                                 the tool cuts at the engrave depth
+  "raster_angle": 0              fill with the raster pattern
+  "start_position": [0, 0]       tool XY before the first outline cut (nearest first)
 )";
 }
 

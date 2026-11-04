@@ -26,7 +26,35 @@ enum class OffsetSide { Left, Right };
 /// the outermost input contour defines "outwards", so a lone clockwise square still grows with a
 /// positive distance, and the result keeps that convention (outers in the outermost input's
 /// orientation, holes opposite). Overlapping results are merged and shapes that collapse vanish,
-/// so the result may hold fewer or more contours than the input.
+/// so the result may hold fewer or more contours than the input. An inward offset never comes
+/// back inside out: every result point lies inside the region at least |distance| (less
+/// 2 x tol.chordal of polygonisation and join error) from its boundary, so an inset by the
+/// region's inradius or more yields nothing, and a shape with several lobes keeps exactly the
+/// lobes deeper than |distance|; a result contour wound against the outermost input is a genuine
+/// hole (T-0018, ADR-0006 §6).
+///
+/// Grid-level dust is dropped (T-0138, ADR-0006 §8): a result contour that Clipper2's erosion by
+/// 4e-6 mm (four grid units of `kFixedPointScale`; more only beyond ~2.8e8 mm, where double
+/// rounding exceeds the grid) leaves empty is removed, with any contour nested inside it. That
+/// erosion is not exact on acute rings (not monotone in the radius): measured on thin
+/// triangles, removed contours have an inradius of up to about 5.6e-6 mm and kept ones down to
+/// about 3.6e-6 mm. Near collapse Clipper2 can return rings a few nanometres wide, some wound
+/// against their nesting; so every result contour holds a disk about 7e-6 mm across, contours
+/// nested at even depth are wound like the outermost input and those at odd depth (holes)
+/// against it. The test is per contour, on its own interior: a region narrow only between an
+/// outer and its hole (a frame) is kept. The width does not depend on `tol`: a removed contour
+/// is narrower than about 1.13e-5 mm, about 8.9x below the smallest chordal tolerance Pocket
+/// accepts (1e-4 mm), as Profile since T-0141; Profile offsets at min(tol.chordal, 0.5 x
+/// tol.distance) with Bezier input, so only a distance tolerance below about 1.1e-5 mm brings
+/// this width up to its 2 x tol.chordal allowance.
+///
+/// Many closed contours side by side (T-0141, ADR-0006 §9): when at least 32 groups of closed
+/// contours whose offsets cannot meet overlap one horizontal line, each group is offset on its
+/// own (Clipper2's sweep is quadratic in the shapes it holds side by side), and the results
+/// come back group by group in input order. They can then differ from offsetting everything at
+/// once by a few grid units (Clipper2 rounds intersections within scanbeams that other shapes
+/// subdivide); ring counts and orientation rules are the same. Fewer groups side by side, or
+/// any open contour in the list: one Clipper2 call, as before.
 ///
 /// Approach: polygonise at `tol.chordal`, scale by `kFixedPointScale`, run Clipper2's offset
 /// engine (round joins are approximated within `tol.chordal`), convert back to polygonal

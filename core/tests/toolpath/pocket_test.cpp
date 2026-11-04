@@ -732,3 +732,30 @@ TEST_CASE("Raster without a boundary pass never travels over the scalloped floor
     CHECK(g.allInside);
     CHECK(g.minDistance >= 1.0);
 }
+
+TEST_CASE("T-0147: a small pocket far from the origin is cut like the same pocket near it",
+          "[toolpath][pocket][T-0147]") {
+    // Pocket's region rings were classified by a shoelace sum on absolute coordinates, which
+    // cancelled for a 3 x 1.5 mm rectangle at 1e8 mm (4 of these 20 placements came back empty).
+    PocketParams p;
+    p.cutDepth = 1.0;
+    p.safeZ = 5.0;
+    const auto run = [&p](double ox, double oy) {
+        const std::vector<Vec2> pts{{ox, oy}, {ox + 3.0, oy}, {ox + 3.0, oy + 1.5}, {ox, oy + 1.5}};
+        return pocketToolpath({Contour::fromPolyline(Polyline{pts, true})}, {tool(0.5, 0.4, 1.0)}, p);
+    };
+    const PocketResult originRes = run(0.0, 0.0);
+    REQUIRE(originRes.diagnostics.empty());
+    REQUIRE(originRes.toolpaths.size() == 1);
+    const std::size_t want = originRes.toolpaths.front().moves.size();
+    REQUIRE(want > 0);
+    for (int k = 0; k < 20; ++k) {
+        const double ox = 1e8 * (1.0 + 0.037 * k);
+        const double oy = 0.7e8 * (1.0 + 0.051 * k);
+        const PocketResult r = run(ox, oy);
+        INFO("placement " << k);
+        CHECK(r.diagnostics.empty());
+        REQUIRE(r.toolpaths.size() == 1);
+        CHECK(r.toolpaths.front().moves.size() == want);
+    }
+}
