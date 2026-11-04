@@ -68,6 +68,15 @@ constexpr double kMaxArcSegments = 100000.0;
 /// Names quoted in error messages are cut to this many bytes.
 constexpr std::size_t kMaxQuotedName = 64;
 
+/// Longest line written, on every post (T-0162, ADR-0020): characters of the line, comments
+/// included, line ending excluded. LinuxCNC reads a line with `fgets(raw_line, LINELEN, …)`,
+/// LINELEN 255, and refuses one whose read reaches 254 characters with NCE_COMMAND_TOO_LONG (so a
+/// line plus its CR LF must stay below 254); grblHAL keeps comments in its 257-byte line buffer
+/// (256 characters) and drops a longer line with error:overflow. 250 + CR LF is 252.
+constexpr std::size_t kMaxLineLength = 250;
+/// What a text value in a comment that is cut to fit `kMaxLineLength` ends with (T-0162).
+constexpr std::string_view kEllipsis = "...";
+
 /// A number for an error message: shortest round-trip form, "NaN", "+inf" or "-inf".
 std::string describeValue(double v) {
     if (std::isnan(v)) {
@@ -339,6 +348,20 @@ std::vector<GWord> firstCommand(std::vector<GWord> words) {
         words.resize(1);
     }
     return words;
+}
+
+/// True when an operator stop (M0 or M1) comes before the first M5 in `words` (T-0162): in a
+/// pause block the spindle must be stopped before the program pauses for the operator.
+bool pauseBeforeStop(const std::vector<GWord>& words) {
+    for (const GWord& w : words) {
+        if (w.letter == 'M' && w.value == 5.0) {
+            return false;
+        }
+        if (w.letter == 'M' && (w.value == 0.0 || w.value == 1.0)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /// The words a block writes as template text, outside comments and with its tags left out
@@ -894,6 +917,10 @@ class Interpreter {
         if (!hasWord(words, 'M', 0.0)) {
             return "the post's " + std::string(name) + " block writes no M0 (program pause)";
         }
+        if (needStop && pauseBeforeStop(words)) {
+            return "the post's " + std::string(name) +
+                   " block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first";
+        }
         return {};
     }
 
@@ -1354,29 +1381,21 @@ class Interpreter {
                     break;
                 }
             }
-            std::string lineText;
             bool hadTag = false;
-            std::size_t i = 0;
-            while (i < line.size()) {
-                const std::size_t open = line.find('[', i);
-                if (open == std::string::npos) {
-                    lineText.append(line, i, std::string::npos);
-                    break;
-                }
-                lineText.append(line, i, open - i);
-                const std::size_t close = line.find(']', open);  // validated by the parser
-                lineText += render(std::string_view(line).substr(open + 1, close - open - 1), lineText);
-                hadTag = true;
-                i = close + 1;
-            }
-            while (!lineText.empty() && detail::isSpace(lineText.back())) {
-                lineText.pop_back();
-            }
+            const std::string lineText = renderFittingLine(line, hadTag);
             if (failure_) {
                 break;
             }
             if (lineText.empty() && hadTag) {
                 continue;  // every variable on the line was suppressed
+            }
+            if (lineText.size() > kMaxLineLength) {
+                // T-0162: only template text, live-code values or many text values on one line get
+                // here; text values in comments were cut to fit by renderFittingLine.
+                fail(0, "the line " + quoted(lineText) + " would be " + std::to_string(lineText.size()) +
+                            " characters long; lines are limited to " + std::to_string(kMaxLineLength) +
+                            " (LinuxCNC and grblHAL refuse longer lines)");
+                break;
             }
             const std::string written = lineText + s_.lineEnding;
             if (off) {
@@ -1401,7 +1420,88 @@ class Interpreter {
             fail(0, spindleOffWhat() + ", but the post's " + std::string(blockName) +
                         " block did not write both M5 and M0 (as the first command of a line on ';'-style posts)");
         }
+        if (pauseBlock && !failure_ && pauseBeforeStop(pauseWords)) {
+            // T-0162: the operator pause comes after the spindle stop, in both pause blocks.
+            fail(0, spindleOffWhat() + ", but the post's " + std::string(blockName) +
+                        " block wrote M0 or M1 before M5; the spindle must be stopped before the pause");
+        }
         block_ = outerBlock;
+    }
+
+    /// Expands one template line (trailing spaces trimmed). `hadTag` is set when it holds a tag.
+    std::string renderLine(const std::string& line, bool& hadTag) {
+        std::string lineText;
+        hadTag = false;
+        std::size_t i = 0;
+        while (i < line.size()) {
+            const std::size_t open = line.find('[', i);
+            if (open == std::string::npos) {
+                lineText.append(line, i, std::string::npos);
+                break;
+            }
+            lineText.append(line, i, open - i);
+            const std::size_t close = line.find(']', open);  // validated by the parser
+            lineText += render(std::string_view(line).substr(open + 1, close - open - 1), lineText);
+            hadTag = true;
+            i = close + 1;
+        }
+        while (!lineText.empty() && detail::isSpace(lineText.back())) {
+            lineText.pop_back();
+        }
+        return lineText;
+    }
+
+    /// True when `line` holds a text tag (`[TOOLNAME]`, `[TOOLPATH_NAME]` …).
+    static bool hasTextTag(const std::string& line) {
+        for (std::size_t open = line.find('['); open != std::string::npos; open = line.find('[', open + 1)) {
+            const std::size_t close = line.find(']', open);
+            if (close == std::string::npos) {
+                break;
+            }
+            const TagInfo* info = findTag(std::string_view(line).substr(open + 1, close - open - 1));
+            if (info != nullptr && info->kind == TagKind::Text) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// Expands one template line so that it fits `kMaxLineLength` when its text values can make it
+    /// fit (T-0162, ADR-0020). A line longer than the limit is expanded again with every text
+    /// value that lands in a comment cut to at most `cap` characters, the cut ones ending in
+    /// `kEllipsis`; `cap` is the largest that fits (binary search, at least the ellipsis). The
+    /// counters and modal memory are restored before each expansion, so the line is written once.
+    /// When even the smallest cap does not fit, the line comes back too long and the caller
+    /// refuses it.
+    std::string renderFittingLine(const std::string& line, bool& hadTag) {
+        if (!hasTextTag(line)) {
+            return renderLine(line, hadTag);
+        }
+        const long long lineNumber = lineNumber_;
+        const std::map<std::string, std::string> modal = modal_;
+        std::string text = renderLine(line, hadTag);
+        if (failure_ || text.size() <= kMaxLineLength) {
+            return text;
+        }
+        const auto renderCapped = [&](std::size_t cap) {
+            lineNumber_ = lineNumber;
+            modal_ = modal;
+            textCap_ = cap;
+            std::string capped = renderLine(line, hadTag);
+            textCap_.reset();
+            return capped;
+        };
+        std::size_t lo = kEllipsis.size();  // the smallest cap; may still not fit
+        std::size_t hi = text.size();       // no value is longer than the whole line
+        while (lo < hi) {
+            const std::size_t mid = lo + (hi - lo + 1) / 2;
+            if (renderCapped(mid).size() <= kMaxLineLength) {
+                lo = mid;
+            } else {
+                hi = mid - 1;
+            }
+        }
+        return renderCapped(lo);
     }
 
     /// Rotary angle in degrees for a point, from whichever linear axis is wrapped.
@@ -1537,7 +1637,13 @@ class Interpreter {
             }
             // After SUBSTITUTE, so no post setting can reintroduce a control character or an
             // early comment close. The prefix is part of the line before the value.
-            body = detail::sanitiseText(body, detail::commentPositionAt(std::string(before) + def.prefix));
+            const detail::CommentPosition pos = detail::commentPositionAt(std::string(before) + def.prefix);
+            body = detail::sanitiseText(body, pos);
+            if (textCap_ && pos.context != detail::CommentContext::None && body.size() > *textCap_) {
+                // T-0162: cut to fit the line limit, visibly. A prefix of the sanitised value stays
+                // safe: nothing in it can close the comment or form an active one.
+                body = body.substr(0, *textCap_ - kEllipsis.size()) + std::string(kEllipsis);
+            }
         } else if (def.incremental) {
             const double scale = std::pow(10.0, def.format.decimals);
             const auto quantise = [&](double v) { return std::round(v * scale) / scale; };
@@ -1613,6 +1719,7 @@ class Interpreter {
     double lastFeed_{0.0};
     std::optional<double> lastFeedWritten_;
     std::optional<Error> failure_;     // first unsafe value met while rendering (ADR-0020)
+    std::optional<std::size_t> textCap_;  // longest text value in a comment, while a line is cut to fit (T-0162)
     std::string_view block_{"the program"};  // block being expanded, for error messages
     std::size_t moveIndex_{0};         // 1-based move of the current toolpath; 0 = none
     bool inFooter_{false};

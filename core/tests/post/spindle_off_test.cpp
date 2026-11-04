@@ -1050,3 +1050,60 @@ TEST_CASE("T-0161: a tab is shown as <TAB> in refusal messages", "[post][spindle
     odd.tool.spindleOff = true;
     CHECK_THAT(runError(parseText(kSmall + kPause + kUnlock), {odd}), ContainsSubstring("'Bad<TAB>name_'"));
 }
+
+TEST_CASE("T-0162: a pause block stops the spindle (M5) before it pauses (M0 or M1)", "[post][spindle-off][allowlist]") {
+    // t0161v1 atk9 B2: 'M0' then 'M5' was accepted, so the operator pause came before the spindle
+    // stop. The order is enforced in both pause blocks, for M0 and the optional stop M1 alike.
+    const std::string semiHeader = "begin HEADER\n\"; [TOOLPATH_NAME]\"\nend\n";
+    for (const char* body : {"\"M0\"\n\"M5\"\n", "\"M1\"\n\"M5\"\n\"M0\"\n", "\"M0\"\n\"M5\"\n\"M0\"\n",
+                             "\"N10 M0\"\n\"(stop)\"\n\"N20 M05\"\n", "\"M00\"\n\"G0 Z5\"\n\"M5\"\n"}) {
+        INFO(body);
+        const std::string block = std::string(body) + "end\n";
+        const std::string off = kMoves + "begin SPINDLE_OFF_PAUSE\n" + block + kUnlock;
+        CHECK_THAT(runError(parseText(off), {drag()}),
+                   ContainsSubstring("SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5)"));
+        const std::string unlock = kMoves + kPause + "begin SPINDLE_UNLOCK_PAUSE\n" + block;
+        CHECK_THAT(runError(parseText(unlock), {drag()}),
+                   ContainsSubstring("SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5)"));
+        CHECK_THAT(runError(parseText(unlock), {drag(), cut("Mill", spinning(1))}),
+                   ContainsSubstring("SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5)"));
+    }
+    // ';'-style post: only the first command of a line counts, the order too.
+    const std::string semi = kMoves + semiHeader + "begin SPINDLE_OFF_PAUSE\n\"M0\"\n\"M5\"\nend\n" +
+                             "begin SPINDLE_UNLOCK_PAUSE\n\"M5\"\n\"M0\"\nend\n";
+    CHECK_THAT(runError(parseText(semi), {drag()}), ContainsSubstring("before it stops the spindle (M5)"));
+    // Jobs without a spindle-off toolpath never use the blocks, so a wrong order there is not refused.
+    CHECK(runError(parseText(kSmall + "begin SPINDLE_OFF_PAUSE\n\"M0\"\n\"M5\"\nend\n" + kUnlock),
+                   {cut("Mill", spinning(1))})
+              .empty());
+    // M5 first is fine, with more pauses and stops after it.
+    for (const char* body : {"\"M5\"\n\"M0\"\n", "\"N10 M5\"\n\"(x)\"\n\"N20 M0\"\n", "\"M5\"\n\"M1\"\n\"M0\"\n",
+                             "\"M5\"\n\"M0\"\n\"M5\"\n\"M0\"\n"}) {
+        INFO(body);
+        const std::string post = kMoves + "begin SPINDLE_OFF_PAUSE\n" + body + "end\nbegin SPINDLE_UNLOCK_PAUSE\n" +
+                                 body + "end\n";
+        CHECK(runError(parseText(post), {drag(), cut("Mill", spinning(1)), drag("B")}).empty());
+    }
+    // Every shipped post writes M5 before M0 in both blocks.
+    for (const std::string& stem : shippedStems()) {
+        INFO(stem);
+        const std::string out = runOk(loadShipped(stem), {drag(), cut("Mill", spinning(1))});
+        std::istringstream in(out);
+        std::string line;
+        std::vector<std::string> stops;
+        while (std::getline(in, line)) {
+            const std::string code = line.substr(0, std::min(line.find('('), line.find(';')));
+            for (const char* w : {"M5", "M0"}) {
+                if (code.find(w) != std::string::npos && code.find("M30") == std::string::npos) {
+                    stops.emplace_back(w);
+                }
+            }
+        }
+        // The drag pause, then the unlock pause (the spindle restart and footer follow).
+        REQUIRE(stops.size() >= 4);
+        CHECK(stops[0] == "M5");
+        CHECK(stops[1] == "M0");
+        CHECK(stops[2] == "M5");
+        CHECK(stops[3] == "M0");
+    }
+}
