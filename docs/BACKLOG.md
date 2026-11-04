@@ -372,7 +372,7 @@ Acceptance criteria:
   2. Tests at −r, −r − 1e-9, −r − 1 for Inside/Outside/On/Left/Right, end mill and V-bit, with and without a separate last pass.
   3. ADR-0016 records the rule; output for allowance ≥ −r unchanged (byte-identical to the T-0127 merge).
 
-### T-0131 Toolpath scaling and index residuals of T-0123   [status: in progress]
+### T-0131 Toolpath scaling and index residuals of T-0123   [status: done (2026-11-03, #47)]
 Director decision 2026-11-03: the rest-tool case (e) is accepted at ~2.4–2.6× per doubling because the excess is in the Clipper2 boolean sweep (T-0142 item 3). Its test bound gets headroom until T-0142 lands.
 Phase: 1   Module: core/toolpath   Depends on: T-0123   ADR: 0018
 Goal: Found by the T-0123 coder and verifiers (harness t0123v1/, t0123v2/). (a) `BoxIndex` drops non-finite boxes when no box in the set is finite (constructor returns on `sizes.empty()` before `big_` is filled): `BoxIndex({Box2{{-1e308,0},{1e308,1}}}).query(Box2{{0,0},{1,1}})` returns {} (brute force {0}); same for an infinite box alone and `containing`. Driver t0123v2/bi3.cpp. (b) ADR-0017 §9 still names the removed `toolpath/pocket_ramp.hpp`; box_index.hpp comment omits the 1e-9 floor. (c) Raster zig-zag linking is quadratic (1,000-tooth comb within the caps: 6–14 s). (d) Profile with a separate last pass scales 4.2× per doubling (16 s → 69 s at 1,250 → 2,500 vectors): finishing-to-roughing tab matching compares every pair. (e) Pocket with a rest tool on a text page scales ~3× per doubling (2.3 / 7.5 / 22 s at 1,250 / 2,500 / 5,000 vectors; Clipper2 sweeps). (f) Tabs on 5,000 vectors take 17 s (linear but slow).
@@ -479,7 +479,7 @@ Goal: (a) geometry::locatePoint/windingNumber return Inside (winding −1) at th
 Acceptance criteria:
   1. (a) winding correct for bridges/endpoints on the test ray at every angle (generative test vs a robust oracle), all callers (Pocket, Profile, Drill) unchanged elsewhere; (b) limit consistent with message and ADR, boundary test.
 
-### T-0154 No-spindle toolpaths for diamond-drag engraving   [status: in-progress]
+### T-0154 No-spindle toolpaths for diamond-drag engraving   [status: done (2026-11-03, #49)]
 Owner decision 2026-11-03 (after round 3 FAIL: "M/3", fractional M words, M259): one extra round with an allowlist: drag-section template lines may contain only listed words as plain integer words; no "/" except leading block delete, no controller real-time characters.
 Owner decision 2026-11-03 (extra round FAIL: LINE_ENDING appended after the check, M0 message exemption on ;-posts, /-prefixed pause lines): ONE final round scoped to those fixes.
 Owner decision 2026-11-03 (final round FAIL: Marlin M0 messages read as P/S timeouts, "M0 3" read as M03 on Grbl/LinuxCNC ;-posts, mach3 N-cap regression): drag-section M0/M1 lines are bare (optional N + M0/M1 + optional comment), shipped Marlin pause messages move to ';' comments, N allows up to 9 digits; narrow check, then merge.
@@ -558,7 +558,7 @@ Goal: Owner decision 2026-11-03: corner sharpening is split out of T-0153. Behav
 Acceptance criteria:
   1. To be finalised with the owner; at least: the cone never crosses a boundary (the same exact oracle as T-0153); corners sharpened within chordal; goldens; post safety.
 
-### T-0161 Drag-pause M5 lines and T-0154 leftovers   [status: blocked (T-0154)]
+### T-0161 Drag-pause M5 lines and T-0154 leftovers   [status: ready]
 Phase: 1   Module: core/post   Depends on: T-0154   ADR: 0020
 Goal: Found by the T-0154 verifiers (harness t0154v7/postatk8.cpp G1–G3). On Grbl, a line that errors is dropped whole, so a pause block's M5 line that also carries other words can be lost: more than 79 characters (LINE_BUFFER_SIZE 80, error:overflow), 'M5 M6' (unsupported), 'M5 G0 G1' (modal-group violation). That needs a custom post; shipped posts are fine. Also: stale comments in interpreter.cpp (allowlistProblem "spaces or tabs", nonAsciiProblem "or tab", unreachable tab handling); the tab shows as a space in refusal messages; Grbl refuses N > 9,999,999 (MAX_LINE_NUMBER) while the allowlist allows 9 digits.
 Acceptance criteria:
