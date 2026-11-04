@@ -187,7 +187,7 @@ through, so no post, block or tag can bypass them.
          starts with `;` and none holds a `(`: Marlin) text after `;` is a comment and no `(` or
          `)` may appear before it (Marlin without `PAREN_COMMENTS` has no paren comments); on
          other posts `;` is not a comment for this check.
-       - No tab anywhere in a line written in a drag section, on every post: Marlin does not treat
+       - No tab anywhere in a line written in a drag section, template text included, on every post: Marlin does not treat
          a tab as a separator (`N0<TAB>M0` is an unknown command and the pause is skipped), and no
          shipped post writes tabs. On `;`-style posts no `N` word either: hosts such as OctoPrint
          and Printrun prefix their own `N…*checksum` and Marlin skips only one `N`, so
@@ -200,7 +200,10 @@ through, so no post, block or tag can bypass them.
          words, which is exactly what the eight shipped posts write in drag sections:
          - `X Y Z I J F P`: a plain number with an optional sign (`-0.100`, `+5`, `400`), at most
            8 integer and 6 decimal digits;
-         - `N`: plain digits, at most 9 (Mach3 numbers lines in steps of 10 up to `N999990`);
+         - `N`: plain digits, at most 9 (Mach3 numbers lines in steps of 10 up to `N999990`),
+           with a value of at most 9,999,999 (T-0161): Grbl refuses a line number above
+           `MAX_LINE_NUMBER` (10,000,000) and drops the line. A post does not say which
+           controller it is for, so the cap holds on every post; no shipped post comes near it;
          - `T H`: plain digits, at most 5;
          - `G`: plain digits with an optional decimal part, at most 5 digits in all, whose value
            is one of `0 1 2 3 4 17 20 21 40 43 49 80 90 91 91.1 94` (leading zeros allowed:
@@ -217,6 +220,18 @@ through, so no post, block or tag can bypass them.
            The shipped Marlin post writes its pause messages as a `;` comment on the line before
            the bare `M0` (`; Load tool 3 then resume`, then `M0`), so the LCD shows Marlin's
            default prompt.
+         - in the two pause blocks the `M5` line is bare too (T-0161): an optional `N` word and the
+           `M5` (leading zeros allowed), plus at most one plain comment. Grbl drops a line that
+           errors as a whole, so `M5 M6` (unsupported word), `M5 G0 G1` (modal-group violation) or
+           a line past its buffer would lose the spindle stop; on Marlin only the first command
+           of a line runs, so `G0 Z5 M5` never stopped it. Elsewhere in a drag section an `M5`
+           may share its line (the pause's bare `M5` follows anyway).
+         - at most 79 characters of live G-code per line (outside comments, spaces and values
+           included, line ending excluded; T-0161): Grbl's `LINE_BUFFER_SIZE` is 80 and a longer
+           line is dropped whole with `error:overflow`. Grbl and Marlin (`MAX_CMD_SIZE` 96) do not
+           buffer comments, so a long tool or toolpath name, which lands only in comments, never
+           causes a refusal. A test posts drag arcs at +-9,876 mm with Mach3's highest line
+           numbers through every shipped post within the bound.
          So `M/3`, `S/1000` (Grbl drops `/` anywhere), `M3.004`, `M3.00005`, `M2.99995`, `M3.5`
          (controllers round or take the integer part), `M259` (Grbl truncates to 8 bits),
          `M000000005`, `G00000091.1`, any S word, other letters (`D E R K A B C Q L O S`) and
@@ -233,7 +248,8 @@ through, so no post, block or tag can bypass them.
        - Unused words on other lines (Grbl rejects `G0 P1` with an error) and the arguments a
          controller gives to allowed codes are the post author's responsibility. Such lines cannot
          start the spindle, but they are not harmless in general: Marlin with `PAREN_COMMENTS`
-         reads `M0 P1` as a 1 ms timeout, which is why the `M0` line itself must be bare.
+         reads `M0 P1` as a 1 ms timeout, which is why the `M0` line itself must be bare (and,
+         since T-0161, the pause blocks' `M5` line).
        - Unverified: whether Mach3/Mach4 treat `;` as a comment. Carvetto treats `;` as a
          comment only on `;`-style posts; on the paren posts a `;` in a drag section is refused.
        - O-words, `M98` subroutine calls and user M-code macros (LinuxCNC `M100`–`M199`, Mach

@@ -11,6 +11,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
+#include <algorithm>
 #include <cstddef>
 #include <fstream>
 #include <initializer_list>
@@ -861,4 +862,191 @@ TEST_CASE("T-0154: no tabs in drag sections; no N words on ';'-style posts", "[p
     // N words stay fine on paren posts (Mach3 numbers its lines).
     CHECK(runError(parseText(kMoves + "begin SPINDLE_OFF_PAUSE\n\"N10 M5\"\n\"N20 M0\"\nend\n" + kUnlock), {drag()})
               .empty());
+}
+
+namespace {
+
+/// A live G-code line of exactly `n` characters (n >= 6) made of allowed words: "G90 X1 X1 ... X12".
+std::string liveLineOfLength(std::size_t n) {
+    std::string s = "G90";
+    while (s.size() < n) {
+        const std::size_t r = n - s.size();
+        s += r >= 6 ? " X1" : r == 5 ? " X123" : r == 4 ? " X12" : " X1";
+    }
+    return s;
+}
+
+}  // namespace
+
+TEST_CASE("T-0161: the M5 line of a pause block is bare like M0", "[post][spindle-off][allowlist]") {
+    // postatk8 G2/G3: Grbl drops a line that errors as a whole, so 'M5 M6' (unsupported) or
+    // 'M5 G0 G1' (modal-group violation) would lose the spindle stop.
+    for (const char* m5 : {"M5 M6", "M5 G0 G1", "M5 G0 Z5", "G0 Z5 M5", "M5 X1", "T3 M5", "N10 M5 G0", "M05 G90"}) {
+        INFO(m5);
+        const std::string line = "\"" + std::string(m5) + "\"\n";
+        const std::string off = kMoves + "begin SPINDLE_OFF_PAUSE\n" + line + "\"M0\"\nend\n" + kUnlock;
+        CHECK_THAT(runError(parseText(off), {drag()}), ContainsSubstring("other words on the M5 line of a pause block"));
+        const std::string unlock = kMoves + kPause + "begin SPINDLE_UNLOCK_PAUSE\n" + line + "\"M0\"\nend\n";
+        CHECK_THAT(runError(parseText(unlock), {drag()}),
+                   ContainsSubstring("other words on the M5 line of a pause block"));
+    }
+    // Two comments on the M5 line, like on the M0 line.
+    CHECK_THAT(runError(parseText(kMoves + "begin SPINDLE_OFF_PAUSE\n\"M5 (a) (b)\"\n\"M0\"\nend\n" + kUnlock), {drag()}),
+               ContainsSubstring("more than one comment"));
+    // ';'-style post (postatk8 G4): 'G0 Z5 M5' never stopped the spindle on Marlin; now it is refused
+    // for what it is, not only for the missing M5.
+    const std::string semiHeader = "begin HEADER\n\"; [TOOLPATH_NAME]\"\nend\n";
+    const std::string semi = kMoves + semiHeader + "begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"G0 Z5 M5\"\n\"M0\"\nend\n" +
+                             "begin SPINDLE_UNLOCK_PAUSE\n\"M5\"\n\"M0\"\nend\n";
+    CHECK_THAT(runError(parseText(semi), {drag()}), ContainsSubstring("other words on the M5 line of a pause block"));
+    // Bare forms are fine: optional N, leading zeros, one comment.
+    for (const char* m5 : {"M5", "N10 M5", "M05", "M5 (stop the spindle)", "(stop) M5"}) {
+        INFO(m5);
+        const std::string post = kMoves + "begin SPINDLE_OFF_PAUSE\n\"" + std::string(m5) + "\"\n\"M0\"\nend\n" +
+                                 "begin SPINDLE_UNLOCK_PAUSE\n\"" + std::string(m5) + "\"\n\"M0\"\nend\n";
+        CHECK(runError(parseText(post), {drag()}).empty());
+    }
+    CHECK(runError(parseText(kMoves + semiHeader + "begin SPINDLE_OFF_PAUSE\n\"M5 ; stop\"\n\"M0\"\nend\n" +
+                             "begin SPINDLE_UNLOCK_PAUSE\n\"M5\"\n\"M0 ; go\"\nend\n"),
+                   {drag()})
+              .empty());
+    // Outside the pause blocks an M5 may share its line (the pause's own bare M5 follows anyway).
+    const std::string seg = "begin NEW_SEGMENT\n\"G0 Z5 M5\"\nend\n" + kMoves + kPause + kUnlock;
+    CHECK(runError(parseText(seg), {drag("A"), drag("B")}).empty());
+}
+
+TEST_CASE("T-0161: drag-section lines hold at most 79 characters of G-code", "[post][spindle-off][allowlist]") {
+    // postatk8 G1: Grbl's line buffer holds 79 characters (LINE_BUFFER_SIZE 80); a longer line is
+    // dropped whole with error:overflow, here the spindle stop.
+    const std::string g1 =
+        "M5 G17 G21 G90 G94 G0 X12345678.123456 Y12345678.123456 Z12345678.123456 F12345678.123456";
+    const std::string g1Post = kMoves + "begin SPINDLE_OFF_PAUSE\n\"" + g1 + "\"\n\"M0\"\nend\n" + kUnlock;
+    CHECK_THAT(runError(parseText(g1Post), {drag()}), ContainsSubstring("characters of G-code outside comments"));
+    // The bound is exact, in every block of a drag section; comments do not count.
+    for (const std::size_t n : {std::size_t{78}, std::size_t{79}, std::size_t{80}, std::size_t{120}}) {
+        INFO(n);
+        const std::string line = liveLineOfLength(n);
+        REQUIRE(line.size() == n);
+        const std::string inSegment = "begin NEW_SEGMENT\n\"" + line + "\"\nend\n" + kMoves + kPause + kUnlock;
+        const std::string inPause =
+            kMoves + "begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"" + line + "\"\n\"M0\"\nend\n" + kUnlock;
+        const std::string commented =
+            "begin NEW_SEGMENT\n\"" + line.substr(0, 70) + " (" + std::string(n, 'c') + ")\"\nend\n" + kMoves +
+            kPause + kUnlock;
+        for (const std::string& post : {inSegment, inPause}) {
+            const std::string err = runError(parseText(post), {drag("A"), drag("B")});
+            if (n <= 79) {
+                CHECK(err.empty());
+            } else {
+                CHECK_THAT(err, ContainsSubstring(std::to_string(n) + " characters of G-code outside comments"));
+            }
+        }
+        CHECK(runError(parseText(commented), {drag("A"), drag("B")}).empty());
+    }
+    // Values count: a move line that grows past 79 characters through its numbers is refused.
+    const std::string wide = "VAR X_POSITION = [X|A| X|8.6]\nVAR Y_POSITION = [Y|A| Y|8.6]\n"
+                             "VAR Z_POSITION = [Z|A| Z|8.6]\nVAR FEED_RATE = [F|A| F|8.6]\n"
+                             "begin RAPID_MOVE\n\"G0[X][Y][Z]\"\nend\n"
+                             "begin FEED_MOVE\n\"N1234567 G90 G94 G17 G21 G1[X][Y][Z][F]\"\nend\n" +
+                             kPause + kUnlock;
+    CHECK_THAT(runError(parseText(wide), {drag()}), ContainsSubstring("characters of G-code outside comments"));
+    // Spindling toolpaths are not limited (the rule is for drag sections).
+    const std::string spinPost = std::string("VAR SPINDLE_SPEED = [S|A| S|1.0]\n") +
+                                 "begin HEADER\n\"" + liveLineOfLength(120) + "\"\n\"M3[S]\"\nend\n" + kMoves;
+    CHECK(runError(parseText(spinPost), {cut("Mill", spinning(1))}).empty());
+}
+
+TEST_CASE("T-0161: shipped posts write drag sections within 79 characters, long names included",
+          "[post][spindle-off][allowlist]") {
+    // A long tool and toolpath name lands in comments only; large coordinates, arcs and Mach3's
+    // highest line numbers stay within Grbl's buffer.
+    for (const std::string& stem : shippedStems()) {
+        INFO(stem);
+        std::string text = readFile(std::string(CARVETTO_POSTS_DIR) + "/" + stem + ".pp");
+        if (const std::size_t at = text.find("LINE_NUMBER_START = 10\n"); at != std::string::npos) {
+            text.replace(at, 23, "LINE_NUMBER_START = 999900\n");  // wraps at N999990
+        }
+        const PostProcessor pp = parseText(text);
+        Toolpath tp = drag(std::string(90, 'p'));
+        tp.tool.name = "Diamond drag engraver 90 degree 3.175 mm shank long holder " + std::string(40, 'n');
+        const double d = -0.25;
+        tp.moves = {Move::rapid({-9876.543, -9876.543, 20}), Move::plunge({-9876.543, -9876.543, d}),
+                    Move::arcCW({9876.543, -9876.543, d}, {0, -9876.543}),
+                    Move::arcCCW({-9876.543, -9876.543, d}, {0, -9876.543}), Move::feed({-9876.543, 9876.543, d}),
+                    Move::retract({-9876.543, 9876.543, 20})};
+        std::vector<Toolpath> job;
+        for (int i = 0; i < 30; ++i) {
+            job.push_back(tp);  // enough lines for Mach3 to pass N999990 and wrap
+        }
+        job.push_back(cut("Mill", spinning(1)));
+        const std::string out = runOk(pp, job);
+        CHECK(out.find("nnnnnnnn") != std::string::npos);
+        std::istringstream in(out);
+        std::string line;
+        bool inDrag = false;
+        int dragLines = 0;
+        while (std::getline(in, line)) {
+            if (!line.empty() && line.back() == '\r') {
+                line.pop_back();
+            }
+            if (line.find("Spindle stays off") != std::string::npos) {
+                inDrag = true;
+            }
+            if (line.find("Mill 1") != std::string::npos) {
+                inDrag = false;  // the tool change comment to the end mill
+            }
+            if (inDrag) {
+                ++dragLines;
+                const std::size_t live = std::min(line.find('('), line.find(';'));
+                CHECK(std::min(live, line.size()) <= 79);
+            }
+        }
+        CHECK(dragLines > 300);
+    }
+}
+
+TEST_CASE("T-0161: drag-section line numbers stay at most 9999999 (Grbl MAX_LINE_NUMBER)",
+          "[post][spindle-off][allowlist]") {
+    // Grbl refuses N above 10,000,000 and drops the line; the cap holds on every post.
+    for (const char* ok : {"N9999999 M0", "N0009999 M0", "N999990 M0", "N1 M0"}) {
+        INFO(ok);
+        const std::string post = kMoves + "begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"" + std::string(ok) + "\"\nend\n" + kUnlock;
+        CHECK(runError(parseText(post), {drag()}).empty());
+    }
+    for (const char* bad : {"N10000000 M0", "N99999999 M0", "N123456789 M0"}) {
+        INFO(bad);
+        const std::string post = kMoves + "begin SPINDLE_OFF_PAUSE\n\"M5\"\n\"" + std::string(bad) + "\"\nend\n" + kUnlock;
+        CHECK_THAT(runError(parseText(post), {drag()}), ContainsSubstring("line numbers above 9999999"));
+    }
+    // A post whose counter runs past the cap is refused at the first drag line beyond it.
+    const std::string counter = "LINE_NUMBER_START = 9999998\nLINE_NUMBER_MAXIMUM = 99999999\n"
+                                "VAR LINE_NUMBER = [N|A|N|1.0]\n" + kMoves +
+                                "begin SPINDLE_OFF_PAUSE\n\"[N] M5\"\n\"[N] M0\"\nend\n"
+                                "begin SPINDLE_UNLOCK_PAUSE\n\"[N] M5\"\n\"[N] M0\"\nend\n";
+    CHECK_THAT(runError(parseText(counter), {drag()}), ContainsSubstring("the word N10000000"));
+    // Outside drag sections line numbers are the post author's business, as before.
+    const std::string spin = "LINE_NUMBER_START = 123456789\nLINE_NUMBER_MAXIMUM = 999999999\n"
+                             "VAR LINE_NUMBER = [N|A|N|1.0]\nbegin RAPID_MOVE\n\"[N] G0[X][Y][Z]\"\nend\n" + kMoves;
+    CHECK(runError(parseText(spin), {cut("Mill", spinning(1))}).empty());
+}
+
+TEST_CASE("T-0161: a tab is shown as <TAB> in refusal messages", "[post][spindle-off][allowlist]") {
+    // Template text of a pause block (checked before anything is written).
+    const std::string pauseTab = kMoves + "begin SPINDLE_OFF_PAUSE\n\"M5\t\"\n\"M0\"\nend\n" + kUnlock;
+    const std::string msg = runError(parseText(pauseTab), {drag()});
+    CHECK_THAT(msg, ContainsSubstring("'M5<TAB>'"));
+    CHECK_THAT(msg, ContainsSubstring("a tab"));
+    // A TOOLCHANGE line into a drag toolpath.
+    const std::string tc = "begin TOOLCHANGE\n\"M5\"\n\"\tM0\"\nend\n" + kMoves + kPause + kUnlock;
+    CHECK_THAT(runError(parseText(tc), {cut("Mill", spinning(1)), drag()}), ContainsSubstring("'<TAB>M0'"));
+    // A written line whose tab comes from a VAR prefix.
+    const std::string prefix = "VAR X_POSITION = [X|C|\tX|1.3]\nVAR Y_POSITION = [Y|C| Y|1.3]\n"
+                               "VAR Z_POSITION = [Z|C| Z|1.3]\nVAR FEED_RATE = [F|C| F|1.0]\n"
+                               "begin RAPID_MOVE\n\"G0[X][Y][Z]\"\nend\nbegin FEED_MOVE\n\"G1[X][Y][Z][F]\"\nend\n" +
+                               kPause + kUnlock;
+    CHECK_THAT(runError(parseText(prefix), {drag()}), ContainsSubstring("G0<TAB>X"));
+    // User names in messages too (and other characters are still sanitised).
+    Toolpath odd = cut("Bad\tname~", spinning(1));
+    odd.tool.spindleOff = true;
+    CHECK_THAT(runError(parseText(kSmall + kPause + kUnlock), {odd}), ContainsSubstring("'Bad<TAB>name_'"));
 }
