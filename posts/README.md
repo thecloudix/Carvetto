@@ -122,8 +122,11 @@ one, the test fails.
     template text even in comments, and live G-code made only of upper-case words `X Y Z I J F
     P` (signed numbers), `N T H` (digits), `G0 G1 G2 G3 G4 G17 G20 G21 G40 G43 G49 G80 G90 G91
     G91.1 G94` and `M0 M1 M2 M5 M6 M30`, no `/` (block delete), digit counts capped (`N` up to
-    9 digits, `M G T H` 5), and every `M0`/`M1` line bare (`[N] M0` and at most one comment, no
-    message text, on every post). Profile and Pocket refuse diamond-drag tools. In a custom post that offers
+    9 digits and at most 9999999, Grbl's limit; `M G T H` 5), every `M0`/`M1` line bare (`[N] M0`
+    and at most one comment, no message text, on every post), the `M5` line of both pause blocks
+    bare too (`[N] M5` and at most one comment: Grbl drops a line with an error as a whole, so
+    `M5 M6` would lose the spindle stop), no tab, and at most 79 characters of G-code outside
+    comments per line (Grbl's line buffer; comments do not count) (T-0161). Profile and Pocket refuse diamond-drag tools. In a custom post that offers
     `SPINDLE_OFF_PAUSE`, start the spindle in HEADER, TOOLCHANGE and NEW_SEGMENT on a line of its
     own (`M3[S]`).
 
