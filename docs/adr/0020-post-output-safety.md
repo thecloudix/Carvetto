@@ -1,6 +1,6 @@
 # ADR-0020: Post output safety (text sanitising, number limits)
 
-Date: 2026-11-01 · Status: proposed (T-0133), amended 2026-11-02 (T-0134, T-0136)
+Date: 2026-11-01 · Status: proposed (T-0133), amended 2026-11-02 (T-0134, T-0136), 2026-11-03 (T-0154)
 
 ## Context
 The post interpreter (ADR-0011) wrote text tags (`[TOOLNAME]`, `[TOOLPATH_NAME]`, `[TP_FILENAME]`,
@@ -74,8 +74,10 @@ through, so no post, block or tag can bypass them.
      - **`[TOOLS_USED]`** joins the tool names with `"; "` (T-0134), not `", "`: a comma after the
        first name at the start of a comment would continue its word run and be written as `_`
        (`(EndMill_ Drill)`). A `;` ends the run, so later names keep their commas.
-     - Comments the template nests or leaves unbalanced (`((a)…`) are outside this rule; nested
-       comments are an error on LinuxCNC and Grbl.
+     - Comments the template nests or leaves unbalanced (`((a)…`) are outside this rule. Nested
+       comments are an error on LinuxCNC; Grbl and Mach end a comment at the first `)`, so text
+       after it runs as G-code (corrected in T-0154; in a drag section such templates are refused,
+       see below).
    - Text placed outside any comment (live G-code) is only stripped of control characters, so it
      cannot start a new block. What it says is still written as G-code: putting a text tag there
      is the post author's choice. The shipped posts only place text tags inside comments; a test
@@ -114,6 +116,129 @@ through, so no post, block or tag can bypass them.
      can simply not write `[S]` (and have no `SPINDLE_ON`). A job with no toolpaths has no
      spindle speed to check; likewise the feed, spindle and dwell rules below check nothing in
      such a job (its header and footer cut nothing).
+   - **Toolpaths that run with the spindle off** (owner decision 2026-11-03, T-0154). The rule
+     above has exactly one exemption: a toolpath whose tool snapshot has `spindleOff` set. Only
+     Quick Engrave sets it, for diamond-drag tools (whose snapshot then has spindle speed 0 and
+     records `toolType` = `diamond_drag`); the native record allows it only on engrave records
+     whose snapshot records that tool type (the loader, `saveCarv` and the toolpath commands
+     refuse it elsewhere, ADR-0021 §2), and the interpreter refuses a spindle-off toolpath whose
+     snapshot is not a diamond drag tool's as a second guard (`toolpath 'X' is marked to run with
+     the spindle off, but its tool 'Y' is not a diamond drag tool`). `Document::insertToolpath`
+     is an internal API without these checks; the guards are at the commands, save, load and the
+     post, so Profile, Pocket, Drill and Quick Engrave with any other
+     tool stay under the rule; a test posts each of them with spindle speed 0 through every
+     shipped post and expects the refusal. For such a toolpath the interpreter:
+     - needs the post's `SPINDLE_OFF_PAUSE` block, and that block must write an `M5` and an `M0`
+       as template text outside comments (read with the tokeniser below); a post without it, or
+       with an empty or M5-less or M0-less block, refuses the run before writing anything (`toolpath 'Drag' runs with the spindle off (tool 'X' must not turn), but
+       the post has no SPINDLE_OFF_PAUSE block to stop the spindle and pause for the operator
+       before it`). Jobs without such toolpaths never use the block.
+     - writes HEADER (when it is the first toolpath), TOOLCHANGE or NEW_SEGMENT as usual but
+       leaves out every line of those blocks that writes `[S]` and does nothing else: outside its
+       comments only `M3`/`M4` words, `[S]` (after an optional literal `S`), `[N]` and spaces.
+       A line that writes `[S]` together with other codes (`T1 M6 M3 S[S]`) is refused rather
+       than dropped, so leaving a line out never loses a tool change. SPINDLE_ON is not written.
+     - then writes `SPINDLE_OFF_PAUSE` right before the toolpath's first move, every time a
+       spindle-off toolpath starts (also after another spindle-off toolpath with the same tool).
+       The shipped posts write `M5`, safe Z, a comment saying the spindle stays off for the drag
+       tool and asking the operator to check it is stopped or locked, a bare `M0` (Marlin too: its
+       message is the `;` comment before it), and safe Z again (Z may have been re-zeroed during the pause), the same shape
+       as their manual tool-change stop. On every shipped post the pause is `M0`, also on Mach3,
+       Mach4 and LinuxCNC, whose tool change is `M6`: `M6` is a tool change that a controller
+       may be set to ignore, `M0` is the program stop every one of them honours.
+     - refuses `[S]` anywhere else while the toolpath is written (move blocks, the pauses), and
+       checks every written line against the drag-section allowlist below.
+     - treats a change between a spindle-off and a spinning toolpath as a tool change even when
+       the tool number and name are equal, so the spindle restarts only through TOOLCHANGE +
+       SPINDLE_ON (and its `[S]` > 0 check).
+     - **Unlock pause** (owner decision 2026-11-03). Before that TOOLCHANGE, i.e. after the last
+       spindle-off toolpath of a drag section and before a spinning toolpath can start the
+       spindle, it writes the post's `SPINDLE_UNLOCK_PAUSE` block: once per drag section, never
+       between consecutive spindle-off toolpaths. A job that ends with a drag section gets it
+       before FOOTER (director decision 2026-11-03: the next program could otherwise start a
+       spindle that is still locked). The block is
+       written in the drag toolpath's context (`[T]`, `[TOOLNAME]` are the drag tool's) and is
+       under the same spindle-word guards. It must write an `M5` and an `M0`, like `SPINDLE_OFF_PAUSE`. The shipped posts write `M5`, safe Z, a comment "Diamond
+       drag tool N done: unlock the spindle before it starts again", a bare `M0` and safe Z. A post without the block refuses every job with a
+       spindle-off toolpath that needs it: a spinning toolpath after a spindle-off one
+       (`toolpath 'Mill' starts the spindle after the spindle-off toolpath 'Drag', but the post
+       has no SPINDLE_UNLOCK_PAUSE block …`) or a job ending with one (`the job ends with the
+       spindle-off toolpath 'Drag', but …`).
+     - Profile and Pocket refuse diamond-drag tools (`InvalidTool`, "… is a diamond drag tool,
+       which must not turn; use Quick Engrave for diamond-drag tools"; Pocket skips just that
+       tool), so a drag tool can no longer run in a spinning toolpath of those operations.
+     - **Drag-section allowlist** (T-0154; owner decisions 2026-11-03: an allowlist, not a
+       blocklist, refined in a final round). Every output line of a `.pp` block must be printable
+       ASCII (bytes ≥ 0x80 are a parse error for all posts: Grbl drops or acts on them, so
+       `M<NBSP>3` would run M3; control characters were already refused), and `LINE_ENDING` must
+       be LF, CR LF or CR (`[10]`, `[13][10]`, `[13]`); anything else is a parse error for all
+       posts, since the ending is written after every line (`" M3 S12000[13][10]"` would add a
+       spindle start to each). While a spindle-off toolpath is written (its HEADER, TOOLCHANGE or
+       NEW_SEGMENT, both pause blocks and its move blocks):
+       - *Template text* of every written line: no `#`; no M or S followed (after spaces) by a
+         tag (`M[T]`); only plain comments, where a comment ends at the FIRST `)` as on Grbl and
+         Mach (a `(` inside an open comment, a `)` without one, or an unclosed comment is
+         refused); no M3/M4/S-number word anywhere, comments included; and none of Marlin's
+         emergency-parser codes `M108 M112 M410 M876` anywhere (spaces ignored, leading zeros
+         allowed).
+       - *The exact bytes written* for the line (template text, VAR prefixes, values and the line
+         ending) are checked: the line ending as above; printable ASCII only; none of Grbl's
+         realtime characters `~ ! ?`; parentheses as above. On `;`-style posts (some block line
+         starts with `;` and none holds a `(`: Marlin) text after `;` is a comment and no `(` or
+         `)` may appear before it (Marlin without `PAREN_COMMENTS` has no paren comments); on
+         other posts `;` is not a comment for this check.
+       - No tab anywhere in a line written in a drag section, on every post: Marlin does not treat
+         a tab as a separator (`N0<TAB>M0` is an unknown command and the pause is skipped), and no
+         shipped post writes tabs. On `;`-style posts no `N` word either: hosts such as OctoPrint
+         and Printrun prefix their own `N…*checksum` and Marlin skips only one `N`, so
+         `N57 N1 M0` would be an unknown command (the shipped Marlin post writes no line numbers).
+       - *Live G-code* of the written line (outside comments): only words LETTER+VALUE separated
+         by spaces, the letter upper case and directly followed by its value. Any other
+         character refuses the line, including `/` anywhere (block delete has no place in a drag
+         section; a VAR prefix `/N` is refused too), `#`, `[`, `*`, `=`, `%`, `$`, `@`, `^`, `;`
+         on paren posts, lower case, a letter without a value and a space inside a word. Allowed
+         words, which is exactly what the eight shipped posts write in drag sections:
+         - `X Y Z I J F P`: a plain number with an optional sign (`-0.100`, `+5`, `400`), at most
+           8 integer and 6 decimal digits;
+         - `N`: plain digits, at most 9 (Mach3 numbers lines in steps of 10 up to `N999990`);
+         - `T H`: plain digits, at most 5;
+         - `G`: plain digits with an optional decimal part, at most 5 digits in all, whose value
+           is one of `0 1 2 3 4 17 20 21 40 43 49 80 90 91 91.1 94` (leading zeros allowed:
+           `G01`);
+         - `M`: plain digits (at most 5, leading zeros allowed, no sign, no decimal point) with
+           the value `0 1 2 5 6 30` (`M6` for the tool change into a drag toolpath on Mach and
+           LinuxCNC);
+         - a line with `M0` or `M1` is bare (owner decision 2026-11-03): an optional `N` word and
+           the `M0`/`M1`, nothing else, plus at most one plain comment (a paren comment on paren
+           posts, a `;` comment on `;`-style posts). There is no message text after `M0` on any
+           post: Marlin's `FASTER_GCODE_PARSER` reads every upper-case letter of a message as a
+           parameter and skips spaces (`M0 SPINDLE STOP 1` is `P1`, a 1 ms timeout instead of a
+           pause; `M0 TOOL UP 3` is `P3`), and Grbl and LinuxCNC drop spaces (`M0 3` is `M03`).
+           The shipped Marlin post writes its pause messages as a `;` comment on the line before
+           the bare `M0` (`; Load tool 3 then resume`, then `M0`), so the LCD shows Marlin's
+           default prompt.
+         So `M/3`, `S/1000` (Grbl drops `/` anywhere), `M3.004`, `M3.00005`, `M2.99995`, `M3.5`
+         (controllers round or take the integer part), `M259` (Grbl truncates to 8 bits),
+         `M000000005`, `G00000091.1`, any S word, other letters (`D E R K A B C Q L O S`) and
+         other G or M codes are refused, also when a tool name places them in live G-code.
+         Custom posts that need more in a drag section are refused; the set can be widened case
+         by case.
+       - Values inside comments are sanitised already (above), so a tool named "S12 drill M3"
+         or "Drag 3mm 108" in a comment is fine.
+       - The pause blocks must write `M5` and `M0`. This is checked on the template text before
+         anything is written (lines starting with `/` and text after `;` do not count) and again
+         on the lines actually written (so `M0[T]` writing `M05` does not count as an M0); on
+         `;`-style posts only the first word of a line counts (Marlin runs one command per line,
+         so `M5 M0` on one line gives no M0).
+       - Unused words on other lines (Grbl rejects `G0 P1` with an error) and the arguments a
+         controller gives to allowed codes are the post author's responsibility. Such lines cannot
+         start the spindle, but they are not harmless in general: Marlin with `PAREN_COMMENTS`
+         reads `M0 P1` as a 1 ms timeout, which is why the `M0` line itself must be bare.
+       - Unverified: whether Mach3/Mach4 treat `;` as a comment. Carvetto treats `;` as a
+         comment only on `;`-style posts; on the paren posts a `;` in a drag section is refused.
+       - O-words, `M98` subroutine calls and user M-code macros (LinuxCNC `M100`–`M199`, Mach
+         macros) are refused in drag sections by the allowlist; elsewhere they are the post
+         author's responsibility: Carvetto cannot see what they do.
    - **Toolpaths without moves** (T-0136). A toolpath with zero moves cuts nothing and is
      skipped entirely: it is not written, its tool is not in `[TOOLS_USED]`, it causes no tool
      change, and its tool's spindle speed, feeds and dwells are not checked. The header tool (the
@@ -159,6 +284,11 @@ through, so no post, block or tag can bypass them.
   comments, where they used to get broken output.
 - Names with accents or symbols lose them in the G-code comments (`Ñ` → `N`, `×` → `_`); the
   job file keeps them.
+- T-0154: the shipped posts gained `SPINDLE_OFF_PAUSE`; goldens of jobs without spindle-off
+  toolpaths are byte-identical, and each post has a drag golden (`<post>_drag.nc`). A build from
+  before T-0154 drops the record's `spindle_off` key and, seeing spindle speed 0, refuses to post
+  the drag toolpath (it never spins the drag tool). The unlock pause covers a locked spindle
+  before it restarts, also on a controller whose tool change involves no operator.
 - Signs are not checked for coordinates and other values; since T-0134 spindle speed, feeds
   and dwells must be above zero (see above), and
   overly long names are not shortened; a controller with a line-length limit rejects such a line,

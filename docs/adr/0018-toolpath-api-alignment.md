@@ -1,6 +1,6 @@
 # ADR-0018: Toolpath API alignment (shared operation types, one ramp, spatial index)
 
-Date: 2026-11-01 · Status: proposed (T-0123)
+Date: 2026-11-01 · Status: proposed (T-0123); amended by T-0131 (2026-11-03, §12)
 
 ## Context
 Profile (T-0120, ADR-0016) and Pocket (T-0121, ADR-0017) were built in parallel and grew two
@@ -110,6 +110,61 @@ The card fixes the outcomes (one ramp, Tool + cutting data in, one diagnostics t
     move cap / (6 × levels) pieces (each piece costs at least 6 moves per level); past it the tool
     is refused with the move-cap message before memory fills.
 
+### Scaling residuals (T-0131)
+12. **Every remaining all-pairs loop the T-0123 verifiers found is indexed, with the same output.**
+    Each change visits the candidates a full scan would accept in the same order with the same
+    comparisons, or argues why the skipped ones cannot change the answer; Profile and Pocket output
+    is byte-identical to main (hash sweeps over the T-0123 verifier generators, every option, and
+    combs, pages and rest pockets).
+    - `BoxIndex` built from boxes none of which fits the grid (only huge, infinite or NaN boxes)
+      keeps them in the every-query list (they were dropped, so queries returned nothing).
+    - Profile, separate last pass: a finishing cut's counterpart (median of 17 distances within
+      the last-pass allowance + r) can only be a roughing cut whose box, grown by that, meets the
+      17 points' box; the nearest-start fallback is a square search grown ×4 until the best
+      distance is a tolerance inside the square. The other pass's start points near a cut
+      (`otherStarts`) and the roughing cuts a finishing tab can be mapped onto (`mapTab` reach) come
+      from `BoxIndex` queries, in index order.
+    - Pocket Raster zig-zag: the next row's pieces are searched only where their span along the
+      raster meets the cursor ± (link limit + slack): a farther piece is farther than the link
+      limit, and then the run ends anyway. Rows are sorted by start; a running maximum of the ends
+      bounds the backward scan.
+    - Travel routes: the nearest ring point comes from a `BoxIndex` of the node's ring edges (a
+      square search, candidates in (ring, edge) order, so ties resolve as before; cached per tree
+      node like the bridges), and `walkRing` walks both ways together, the shorter so far first,
+      and stops once one way is complete and the other's partial length already decides (sums of
+      non-negative lengths in order never decrease), instead of building both ways round a ring of
+      thousands of edges.
+    - `RegionIndex` (Pocket's inside / segment tests): cells are square over the area (about one
+      edge per cell, at most 2048 along the longer side) instead of a fixed count along the longer
+      side, which left a long thin region with a few rows of hundreds of edges; every query
+      combines its edges with OR / XOR, so the cell size changes no answer. The parity ray goes the
+      way (±x, ±y) with the fewest cells when the point is more than the tolerance from every edge
+      and the tolerance exceeds 10⁻⁹ × (1 + coordinate size): the crossings are then more than the
+      tolerance from the point and computed within a few ulps, so every direction gives the exact
+      even-odd answer; otherwise the ray to +x as before.
+    - Rest areas' nearest-first order uses one `BoxIndex` per part of the centre region (the same
+      squares, candidates and order as one index filtered by part) and leaves a part when its areas
+      are used up, instead of growing the square over the whole page to find nothing.
+    - `ClearanceField::distance` (Profile's tab check, trimming, leads): per obstacle, the span whose
+      box lies nearest along x or y is measured first, and spans whose box lies farther along x or y
+      than the best distance so far plus a rounding margin are skipped; the minimum of the same
+      values does not depend on their order. The box-distance test skips the hypot when one axis
+      decides it.
+    Measured (Release, CPU, the T-0131 machine; before = the T-0123 merge on the same machine):
+    1,000-tooth comb, 0.3 mm Raster: 250 / 500 / 1,000 teeth 0.07 / 0.15 / 0.36 s (0.50 / 1.46 /
+    5.65 s). Profile with a separate last pass on a text page: 2,500 / 5,000
+    vectors 1.1 / 2.4 s (main, the verifier's page: 16 / 69 s at 1,250 / 2,500). Pocket with a
+    0.3 mm rest tool on a text page: 1,250 / 2,500 / 5,000 vectors 1.2 / 2.7 / 6.7 s (2.0 / 4.8 /
+    13.6 s on the verifier's page). Tabs (one 1 mm tab per vector): 1,250 / 2,500 / 5,000 vectors
+    3.3 / 6.5 / 12.7 s, linear (about 30 % less than main on the verifier's page; the per-tab
+    raster with a distance query per 0.05 mm cell is the cost). What remains superlinear is
+    Clipper2's own sweep: the boolean difference / intersection over a whole page for rest tools
+    and the inset of a comb's outline (T-0142), and the line clipping at other raster angles,
+    whose active edge list holds every tooth: a comb at 30° ~3.9× per doubling at 500 → 1,000
+    teeth, at 90° 3.5 / 5.2 / 6.6× per doubling over 250 → 500 → 1,000 → 2,000 teeth (T-0131
+    verifier); both left to T-0142 item 3. Pocket with a rest tool is accepted at ~2.4–2.6× per
+    doubling until then (director, 2026-11-03); its test bounds 3.0 per doubling.
+
 ## Consequences
 - The CLI (T-0122) can include `profile.hpp` and `pocket.hpp` together and build both operations
   from a tool-database `Tool` and the cutting data it looks up.
@@ -119,6 +174,7 @@ The card fixes the outcomes (one ramp, Tool + cutting data in, one diagnostics t
 - Still quadratic and left for follow-up cards: Raster zig-zag linking scans a whole row per step
   (a 1,000-tooth comb inside the caps: 6–14 s); Profile's separate-last-pass matching of finishing
   to roughing cuts compares every pair (only with a separate last pass); Clipper2's sweep over a
-  whole region is slightly superlinear (it dominates the remaining pocket scaling).
+  whole region is slightly superlinear (it dominates the remaining pocket scaling). **The first
+  two are resolved by T-0131 (§12); Clipper2's sweep is T-0142's.**
 - The T-0121 verifier's note that rest tools re-trace link-cut scallops is not addressed here (it
   concerns what counts as swept, not the API or the pattern area).

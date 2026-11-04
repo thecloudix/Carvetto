@@ -30,6 +30,7 @@
 #include "medial_axis_oracle.hpp"
 #include "test_rng.hpp"
 // Last: on Windows it includes <windows.h> (macros such as near/far).
+#include "cpu_scaling.hpp"
 #include "cpu_time.hpp"
 
 using namespace carvetto::geometry;
@@ -349,10 +350,13 @@ double bestCpu(int runs, const std::vector<Contour>& cs, MedialAxis& out) {
     return best;
 }
 
-/// Checks t(2n) <= 2.5 t(n) along a ladder of sizes for inputs made by `make`.
+/// Checks t(2n) <= 2.5 t(n) along a ladder of sizes for inputs made by `make`. Each step is timed
+/// as `runs` interleaved pairs of runs of the two sizes (`interleavedCpuSeconds`, T-0145), so a
+/// load swing on a shared machine affects both sizes alike (T-0159: timing the sizes one after the
+/// other failed under parallel ctest and on CI runners).
 template <class Make>
 void checkScaling(const char* what, std::vector<std::size_t> sizes, Make make, int runs) {
-    double prev = 0.0;
+    std::vector<Contour> prevCs;
     std::string log;
     for (std::size_t i = 0; i < sizes.size(); ++i) {
         const std::vector<Contour> cs = make(sizes[i]);
@@ -361,16 +365,26 @@ void checkScaling(const char* what, std::vector<std::size_t> sizes, Make make, i
             spans += c.spans.size();
         }
         MedialAxis ax;
-        const double t = bestCpu(runs, cs, ax);
+        double t = 0.0;
+        double ratio = 0.0;
+        if (i == 0) {
+            t = bestCpu(1, cs, ax);
+        } else {
+            const carvetto::test::ScalingTimes st = carvetto::test::interleavedCpuSeconds(
+                runs, [&] { (void)medialAxis(prevCs, kTol); }, [&] { ax = medialAxis(cs, kTol); });
+            t = st.largeSeconds;
+            ratio = st.ratio();
+        }
         log += std::string(what) + ": " + std::to_string(spans) + " segments, " + std::to_string(t) + " s CPU, " +
-               std::to_string(ax.boundarySamples) + " samples, " + std::to_string(ax.branches.size()) + " branches\n";
+               std::to_string(ax.boundarySamples) + " samples, " + std::to_string(ax.branches.size()) + " branches" +
+               (i > 0 ? ", ratio " + std::to_string(ratio) : std::string()) + "\n";
         INFO(log);
         CHECK_FALSE(ax.accuracyCapped);
         CHECK_FALSE(ax.branches.empty());
         if (i > 0) {
-            CHECK(t <= 2.5 * prev);
+            CHECK(ratio <= 2.5);
         }
-        prev = t;
+        prevCs = cs;
     }
 }
 
@@ -385,10 +399,10 @@ TEST_CASE("medial axis scaling: text-like glyph regions", "[geometry][medial][ac
 TEST_CASE("medial axis scaling: single regions with many segments", "[geometry][medial][ac2][perf]") {
     const std::vector<std::size_t> sizes = kRelease ? std::vector<std::size_t>{12500, 25000, 50000}
                                                     : std::vector<std::size_t>{5000, 10000};
-    checkScaling("wavy", sizes, orc::wavyRegion, 2);
+    checkScaling("wavy", sizes, orc::wavyRegion, 3);
     const std::vector<std::size_t> serp = kRelease ? std::vector<std::size_t>{12500, 25000, 50000}
                                                    : std::vector<std::size_t>{2000, 4000};
-    checkScaling("serpentine", serp, orc::serpentineRegion, 2);
+    checkScaling("serpentine", serp, orc::serpentineRegion, 3);
 }
 
 TEST_CASE("medial axis scaling: glyph regions up to 50k segments", "[.medial-perf-50k]") {

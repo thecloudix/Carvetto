@@ -622,8 +622,8 @@ or an end mill):
             "bottom_to_top": false, "grid": false}   (none: nearest hole first)
   "start_position": [0, 0]       tool XY before the first hole
 
-engrave (quick engraving; tool: a V-bit, engraving tool, end mill or ball nose; diamond-drag
-tools are refused until spindle-off support exists):
+engrave (quick engraving; tool: a V-bit, engraving tool, end mill, ball nose or diamond drag
+tool; a diamond-drag toolpath is posted with the spindle off, after M5 and an operator pause):
   "depth": 0 (> 0 required)      engrave depth below the surface
   "passes": 1                    number of equal passes to the depth (1 to 1000)
   "strategy": "outline"          outline (the tool centre follows every vector, open or closed)

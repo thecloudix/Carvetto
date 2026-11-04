@@ -207,9 +207,9 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
    travel only); between rest clusters the tool retracts to safe Z (owner decision 2026-11-01).
 9. **Descent.** It is a vertical `Plunge`. With `rampPlunge`, the tool plunges through the air to
    the floor already cut (the surface for the first level) and then makes a **zig-zag ramp**
-   (`toolpath/pocket_ramp.hpp`, `appendPathRamp`). The ramp runs forward along the path for
-   min(rampDistance, path length) down to the midway height, then back over the same points,
-   arriving at the start exactly at the level. All ramp moves are `Feed` moves on the path, so a
+   (`toolpath/ramp_entry.hpp`, `appendPathRamp`; `pocket_ramp.hpp` until T-0123 removed it). The
+   ramp runs forward along the path for min(rampDistance, path length) down to the midway height,
+   then back over the same points, arriving at the start exactly at the level. All ramp moves are `Feed` moves on the path, so a
    ramp can never gouge. Paths shorter than 10·tolerance.distance fall back to a plunge. Since
    T-0123 this is the shared ramp module's zig-zag (`ramp_entry.hpp`, `zigZagLegs` walked with
    `appendLeg`), the same legs as Profile's zig-zag ramp (ADR-0018 §5).

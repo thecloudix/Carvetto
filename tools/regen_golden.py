@@ -4,6 +4,8 @@
 What it rewrites, from the current sources:
   - core/tests/golden/post/<post>_fixture.nc for every shipped post (posts/*.pp listed in
     core/tests/post/shipped_posts_test.cpp), from the shared fixture in post_fixture.hpp;
+  - core/tests/golden/post/<post>_drag.nc for every shipped post, from the spindle-off (diamond
+    drag) fixture in post_fixture.hpp (T-0154; hand-check against posts/README.md point 11);
   - core/tests/golden/post/grbl_square.nc;
   - core/tests/golden/toolpath/profile_rect_tabs.moves and profile_rect_tabs_grbl.nc (T-0120; hand-check
     against the notes in docs/adr/0016-profile-toolpath.md);

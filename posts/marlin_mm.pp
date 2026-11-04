@@ -26,10 +26,13 @@
 + - Marlin runs G0 like G1 at the last feed rate, so rapids are slower than
 +   on a dedicated CNC controller.
 + - No T word is written: on Marlin T selects an extruder.
-+ - Tool change: stop the spindle, lift to safe Z, pause with M0 and a
-+   message (resume from the LCD, or send M108 with EMERGENCY_PARSER; see the
++ - Tool change: stop the spindle, lift to safe Z, pause with a bare M0
++   (resume from the LCD, or send M108 with EMERGENCY_PARSER; see the
 +   firmware requirements above), lift to safe Z again in case Z was
-+   re-zeroed, restart the spindle.
++   re-zeroed, restart the spindle. The message is a ';' comment on the line
++   before M0: with FASTER_GCODE_PARSER Marlin reads every upper-case letter
++   of an M0 message as a parameter ("M0 UNLOCK UP 5" is a 5 ms timeout), so
++   M0 is written alone.
 + - G4 P is a dwell in MILLISECONDS on Marlin (G4 S would be seconds), so the
 +   dwell seconds are multiplied by 1000.
 + - M30 is NOT written: on Marlin M30 deletes a file from the SD card. Marlin
@@ -72,13 +75,38 @@ begin TOOLCHANGE
 "M5"
 "G0[SAFEZ]"
 "; Change to tool [T]: [TOOLNAME]"
-"M0 Load tool [T] then resume"
+"; Load tool [T] then resume"
+"M0"
 "G0[SAFEZ]"
 "; [TOOLPATH_NAME]"
 end
 
 begin SPINDLE_ON
 "M3[S]"
+end
+
++ Before a toolpath that runs with the spindle off (diamond drag engraving):
++ stop the spindle, lift to safe Z and pause so the operator can check that the
++ spindle is stopped or locked; after the pause lift to safe Z again (Z may have
++ been re-zeroed). The spindle start lines of HEADER, TOOLCHANGE and NEW_SEGMENT
++ are left out for such a toolpath and SPINDLE_ON is not written.
+begin SPINDLE_OFF_PAUSE
+"M5"
+"G0[SAFEZ]"
+"; Spindle stays off for diamond drag tool [T]: [TOOLNAME]"
+"; Check that the spindle is stopped or locked, then resume"
+"M0"
+"G0[SAFEZ]"
+end
+
++ After the last spindle-off toolpath of a drag section, before a toolpath that
++ starts the spindle again: pause so the operator can unlock the spindle.
+begin SPINDLE_UNLOCK_PAUSE
+"M5"
+"G0[SAFEZ]"
+"; Diamond drag tool [T] done: unlock the spindle before it starts again"
+"M0"
+"G0[SAFEZ]"
 end
 
 + A further toolpath with the same tool.

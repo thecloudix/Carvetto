@@ -2713,6 +2713,44 @@ TEST_CASE("Loose pieces: one message per piece, pieces in a notch kept apart", "
     }
 }
 
+namespace {
+
+// The flood check behind the counts of the tab-matching scenes (T-0159): each closed vector's part
+// (Outside: its deepest inside point; Inside: the window corner beyond it) stays joined to the waste
+// on the other side through the kept tabs, on a 0.05 mm raster at the tab top, independently of
+// the toolpath's own diagnostics. For end mills; the scenes it serves have one vector or parts
+// that do not nest.
+void checkPartsHeld(const ProfileResult& r, const std::vector<Contour>& cs, const ProfileParams& p, double d) {
+    const double zTab = p.passes.bottomZ() + std::min(p.tabs.thickness, p.passes.cutDepth);
+    geometry::Box2 all;
+    for (const Contour& c : cs) all.expand(c.bounds());
+    const geometry::Box2 window = all.inflated(d + 2.0);
+    for (const Contour& c : cs) {
+        // The point of the vector's inside furthest from it.
+        Vec2 inside = c.bounds().centre();
+        double best = -1.0;
+        const geometry::Box2 cb = c.bounds();
+        for (double x = cb.min.x; x <= cb.max.x; x += 0.5) {
+            for (double y = cb.min.y; y <= cb.max.y; y += 0.5) {
+                const Vec2 q{x, y};
+                if (geometry::locatePoint(c, q, geometry::FillRule::EvenOdd, geometry::Tolerance{}) !=
+                    geometry::PointLocation::Inside) {
+                    continue;
+                }
+                const double dq = geometry::distanceTo(c, q);
+                if (dq > best) {
+                    best = dq;
+                    inside = q;
+                }
+            }
+        }
+        INFO("vector bounds " << cb.min.x << "," << cb.min.y << " .. " << cb.max.x << "," << cb.max.y);
+        CHECK(test::floodHeld(r.toolpath, window, zTab, 0.5 * d, inside, window.min + Vec2{0.5, 0.5}, 0.05));
+    }
+}
+
+}  // namespace
+
 TEST_CASE("Separate last pass, negative allowance: tabs that hold are matched on the roughing cut",
           "[toolpath][profile][tabs]") {
     // T-0135 (c), T-0127 round-3 verifier: Outside with allowance -1.8 (D8) / -5.1 (D12) and a separate last
@@ -2818,8 +2856,7 @@ TEST_CASE("Separate last pass, negative allowance: tabs that hold are matched on
             }
             CHECK(g.message.find("comes free") == std::string::npos);
         }
-        if (std::string(k.name) != "m1_402002_27") {
-            CHECK(tabsLeftOut(r) == k.left);
+        if (std::string(k.name) != "m1_402002_27" && tabsLeftOut(r) == k.left) {
             continue;
         }
         // m1_402002_27 starts at the star's convex start vertex, the centre of the cut's round join
@@ -2829,32 +2866,11 @@ TEST_CASE("Separate last pass, negative allowance: tabs that hold are matched on
         // 15 and 16 tabs). That tie predates T-0135 (main and T-0127 share it), so this test asserts
         // what holds on every platform: no more tabs left out than here (T-0127 left out 6), and
         // each vector's part stays joined to the waste through the kept tabs (raster flood).
+        // T-0159: the other scenes' counts are knife-edge in the same way (rounding of the cut's start
+        // and the tab fitting): GCC 15 with FMA contraction keeps one more tab in m1_502006_8. Where a
+        // platform's count differs from the reference, the same platform-independent check applies.
         CHECK(tabsLeftOut(r) <= k.left);
-        const double zTab = p.passes.bottomZ() + std::min(p.tabs.thickness, p.passes.cutDepth);
-        geometry::Box2 all;
-        for (const Contour& c : cs) all.expand(c.bounds());
-        const geometry::Box2 window = all.inflated(d + 2.0);
-        for (const Contour& c : cs) {
-            // A point of the part well inside the vector (Outside: the part is inside).
-            Vec2 part = c.bounds().centre();
-            double best = -1.0;
-            const geometry::Box2 cb = c.bounds();
-            for (double x = cb.min.x; x <= cb.max.x; x += 0.5) {
-                for (double y = cb.min.y; y <= cb.max.y; y += 0.5) {
-                    const Vec2 q{x, y};
-                    if (geometry::locatePoint(c, q, geometry::FillRule::EvenOdd, geometry::Tolerance{}) !=
-                        geometry::PointLocation::Inside) {
-                        continue;
-                    }
-                    const double dq = geometry::distanceTo(c, q);
-                    if (dq > best) {
-                        best = dq;
-                        part = q;
-                    }
-                }
-            }
-            CHECK(test::floodHeld(r.toolpath, window, zTab, 0.5 * d, part, window.min + Vec2{0.5, 0.5}, 0.05));
-        }
+        checkPartsHeld(r, cs, p, d);
     }
 }
 
@@ -3368,7 +3384,18 @@ TEST_CASE("T-0135 round 2: exact loose pieces; add-back and fitting never cost a
             if (g.message.find("comes free") == std::string::npos) continue;
             areas.push_back(std::stod(g.message.substr(g.message.find("(about ") + 7)));
         }
-        CHECK(tabsLeftOut(r) == k.left);
+        // The counts were taken with GCC 13 and MSVC, and some scenes are knife-edge: the cut's start
+        // and the tab fitting follow the last bits of the offset, and GCC 15 with FMA contraction
+        // (x86-64-v3) keeps one more tab in m2_800016_13 (T-0159). Where a platform's count differs,
+        // what the scenes guard is checked instead: no tab lost against the reference, and every
+        // part still held through the kept tabs (raster flood). Scenes with loose pieces keep the
+        // exact count.
+        if (tabsLeftOut(r) != k.left && k.areas.empty()) {
+            CHECK(tabsLeftOut(r) < k.left);
+            checkPartsHeld(r, cs, p, d);
+        } else {
+            CHECK(tabsLeftOut(r) == k.left);
+        }
         REQUIRE(areas.size() == k.areas.size());
         for (std::size_t i = 0; i < areas.size(); ++i) CHECK(std::fabs(areas[i] - k.areas[i]) < 0.02 * k.areas[i] + 0.1);
     }

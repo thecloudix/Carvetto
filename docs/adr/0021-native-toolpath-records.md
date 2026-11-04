@@ -61,7 +61,12 @@ schema, the cache format and its budget open; they are decided here.
   `{"id", "name", "operation": "profile" | "pocket", "params": {…}, "selection": {"all", "layers",
   "objects"}, "tool": {"id", "machine", "material", "name", "tool_number", "diameter", "feed_rate",
   "plunge_rate", "spindle_speed"}, "moves": {"count", "member"}}`. `moves` is absent when the
-  record has no computed moves.
+  record has no computed moves. `tool` may also hold `"spindle_off": true` and
+  `"tool_type": "diamond_drag"` (T-0154, ADR-0020, ADR-0024 §6), both written only for a
+  spindle-off snapshot (additive; the format stays 1.1). `spindle_off` is allowed only on engrave
+  records whose `tool_type` is `diamond_drag`, and `tool_type` only together with
+  `spindle_off`; the loader, `saveCarv` and the toolpath commands refuse anything else
+  (`spindleOffProblem`), so a crafted V-bit engrave record marked spindle-off does not load.
 - **Parameters use carvetto-cli's params.json schema** (ADR-0019 §2, owner decision for the CLI):
   the same snake_case keys and nesting mirroring `ProfileParams` / `PocketParams`, lengths in mm
   without a suffix. One difference: params.json gives angles in degrees under `<key>`; job.json
