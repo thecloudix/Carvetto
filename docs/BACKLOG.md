@@ -569,6 +569,13 @@ Goal: Found by the T-0161 verifier (harness t0161v1/atk9.cpp B2, README). (a) A 
 Acceptance criteria:
   1. (a) M0 before M5 in a pause block is refused, with tests; shipped goldens unchanged.
   2. (b) No written line exceeds the documented limit for any tool or toolpath name length; truncation visible and tested on all 8 posts; goldens unchanged for normal names.
+
+### T-0163 Profile crash: lead-in planning on a closed walk with no spans   [status: ready]
+Phase: 1   Module: core/toolpath   Depends on: —   ADR: 0016
+Goal: Found by the T-0137 verifier (harness t0137v1/repro/seg_241_31.scn; tiny-scale page S=0.001, V-bit 30°, D=0.004): profileToolpath segfaults on main in planLeadIns — profile.cpp ~2507 runs `std::stable_sort(spans.begin() + 1, spans.end(), …)` when a closed walk has 0 spans (UB; ASan null read in the comparator). Fix the crash and audit the other walk/span loops for the empty case.
+Acceptance criteria:
+  1. The repro produces a valid result (or a clear diagnostic), never a crash; an ASan/UBSan run of the Profile generative sweeps (tiny scales, V-bits, leads on) is clean.
+  2. Output otherwise byte-identical to main (hash sweep).
 ### T-0019 Make the T-0004 AC3 timing test CPU-time based   [status: done (by T-0017: T-0004 AC3 timing uses process CPU time, cpu_time.hpp)]
 Phase: 1   Module: core/tests   Depends on: —
 Goal: "T-0004 AC3" in `open_offset_chains_test.cpp` asserts a wall-clock bound (< 0.5 s) and fails intermittently under `ctest -j8` (seen by the T-0120 coder). Convert it to process CPU time (GetProcessTimes on Windows, std::clock elsewhere) or a complexity ratio, like the other timing tests. Coordinate with T-0017 if it lands first (T-0017 AC6 touches the timing helper).
