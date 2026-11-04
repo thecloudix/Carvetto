@@ -61,6 +61,26 @@ choices. Behaviour descriptions come from `docs/reference/` only.
    amount) on the wrong side, or need snapping values just below −r to −r, which buys nothing
    for typed values (−D/2 is exact for any D, since halving is exact) and for computed V-bit
    radii only shifts the edge. Output for every allowance ≥ −r is unchanged.
+   **Upper limit On the vector (T-0137, owner decision 2026-11-02).** On the vector the allowance
+   alone is the tool centre's distance from it (r is not added), so an allowance above +r runs the
+   tool entirely off the vector, just as one below −r does. On refuses it the same way: no moves,
+   one `InvalidParameters` diagnostic (no vector), e.g. "allowance 4 mm is above the tool radius
+   (3 mm at the cut depth): the tool would run entirely off the vector; nothing is cut". Again each
+   pass's distance counts. On, the roughing distance allowance + last-pass allowance is the larger
+   one and can be the only one above +r (allowance ≤ r < allowance + last-pass allowance): then the
+   message names the roughing, and the whole operation is refused, as above: the toolpath is
+   either every pass as set or nothing, never a silently partial one (the finishing pass alone
+   would cut the full depth at once where the user asked for roughing first). The −r check runs first, so a setting that breaks
+   both limits (allowance < −r, allowance + last-pass allowance > +r) gets the −r message. The test
+   is `allowance > r` (and `allowance + lastPassAllowance > r`) in doubles, the same doubles
+   `buildCuts` offsets by, with no tolerance: exactly +r (the tool's edge on the vector) stays
+   valid, one ulp above is refused. **Left/Right (decision of the T-0137 coder, AC1).** Open-vector
+   Left/Right are the Inside/Outside enum values and offset by r + allowance to their side, like
+   closed Inside/Outside: a positive allowance keeps the tool on the profile side and only moves it
+   further from the vector, an oversize cut (e.g. leaving stock along an edge), never a side swap.
+   So they keep only the −r limit, as Inside/Outside do; the +r limit is for On alone, where the
+   vector is the cut's centre line. Output for every |allowance| ≤ r (and every Inside/Outside/
+   Left/Right allowance ≥ −r) is unchanged.
 5. **Exact offsets first.** Each vector is offset by r + allowance with
    `geometry::offsetOpenContour` (the public API as on main; closed contours are accepted), so
    lines and arcs stay exact: an inside profile of an r = 10 circle with a 6 mm tool is one
