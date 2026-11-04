@@ -119,7 +119,7 @@ Acceptance criteria:
   6. Ends inside near-coincident (hugging) stretches — e.g. a Bezier lying within tol of an arc that extends past it — are reported: an end of either span within tol of the other's interior gives one tangent hit even when the curves run within tol of each other along that stretch. Today ~38–45% are missed (main and T-0007 alike; T-0007 round-3 verifier measured 44.5% and 44.8% on two seeds). Generator: Beziers within tol of an arc extending ≤ 0.3 rad past them, ≥ 6,000 pairs, vs brute force → 0 misses of ends whose foot is ≥ 0.01 mm from the other span's end.
   5. Root-cause fix found in T-0007: `closestPoint(ArcSpan)` (contour_ops.cpp) returns the start point but parameter 1 when the query's angle lies a rounding error before the arc's start. Fix it at the source (parameter 0), add a fine-angle regression around both ends of CW/CCW partial arcs, and remove T-0007's wrapper in intersect.cpp. Check every other caller (contour closestPoint/distanceTo, offset pruning) is unaffected or improved.
 
-### T-0009 Offsets of inputs with sub-tolerance spans   [status: in-progress — round 2 READY (ebe23f9), verifying]
+### T-0009 Offsets of inputs with sub-tolerance spans   [status: in-progress — round 2 FAIL (coverage loss seed 0xf0003fad; changelog fragment); round 3]
 Phase: 1 (before Profile/Pocket ship)   Module: core/geometry   Depends on: T-0017
 Goal: `flattenForOffset` drops spans ≤ `tol.distance`, so the distance/coverage guarantees of `offsetOpenContour` hold only for the flattened input. Next to a dropped span an offset point can be short of d by up to ~tol (9e-4 mm seen), a Round arc about the neighbouring vertex can be up to ~tol over d (8e-4 mm seen), and up to ~1 mm of valid offset can be missing (seed 0x60660ace). About 1 in 1000 such inputs; already in main before T-0006. Found by the T-0006 verifier and coder.
 Acceptance criteria:
@@ -127,7 +127,7 @@ Acceptance criteria:
   2. 0 distance, Round-over-d and coverage violations over ≥ 20k fuzzed inputs containing sub-tolerance spans (all joins, both sides, open and closed), judged by an exact checker.
   3. No result worse than main on inputs without sub-tolerance spans; T-0006 speed criteria still hold.
   4. The limitation note in offset.hpp and ADR-0012 A1 is removed or narrowed to what remains.
-Owner decisions 2026-11-04: (a) corners between two sub-tolerance spans are Round whatever the requested join (corners touching a longer span keep the requested join); (b) tiny end spans are trimmed only up to tol from each open-chain end (a chain made only of tiny pieces is offset, not dropped), accepted although 5/24k AC3 offsets differ from main (4 of them main was worse).
+Owner decisions 2026-11-04: (a) corners between two sub-tolerance spans are Round whatever the requested join (corners touching a longer span keep the requested join); (b) tiny end spans are trimmed only up to tol from each open-chain end (a chain made only of tiny pieces is offset, not dropped), accepted although 5/24k AC3 offsets differ from main (4 of them main was worse). (c) a sub-tolerance near-reversal never flips the offset to the other side: the offset stays on the requested side and closed loops stay closed (as on main), at the cost of at most a tolerance-sized deviation near the cluster.
 
 ### T-0016 Sharp/Square offset cost on dense hatch-like vectors   [status: ready]
 Phase: 1 (alongside T-0120/T-0121)   Module: core/geometry   Depends on: T-0017
@@ -564,7 +564,7 @@ Acceptance criteria:
   1. In drag pause blocks the M5 line is bare like M0 (optional N + M5 + optional comment), and drag-section lines are at most 79 characters; shipped goldens unchanged.
   2. Comments corrected and the tab shown visibly in messages; N limited to ≤ 9,999,999 on Grbl-dialect posts, or documented.
 
-### T-0162 Drag pause order and long name comments (T-0161 verifier)   [status: in progress]
+### T-0162 Drag pause order and long name comments (T-0161 verifier)   [status: done (2026-11-04, #55)]
 Phase: 1   Module: core/post   Depends on: T-0161   ADR: 0020
 Goal: Found by the T-0161 verifier (harness t0161v1/atk9.cpp B2, README). (a) A pause block written "M0" then "M5" is accepted: the operator pause comes before the spindle stop (M5 still runs before the drag cuts). Enforce M5 before M0 in SPINDLE_OFF_PAUSE (and decide for SPINDLE_UNLOCK_PAUSE). (b) LinuxCNC counts the whole raw line, comments included, against LINELEN (254, NCE_COMMAND_TOO_LONG); shipped posts write "(Spindle stays off for diamond drag tool N: <name>)", so a ~300-character tool name aborts the program (pre-existing on main, every toolpath comment with names). Cap rendered names in comments (e.g. truncate to keep every written line ≤ 254 characters, or a lower documented limit). grblHAL may buffer comment characters (LINE_BUFFER_SIZE 257): check.
 Acceptance criteria:
