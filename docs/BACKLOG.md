@@ -423,7 +423,7 @@ Acceptance criteria:
   1. (a)–(d) fixed or documented exactly, with tests where behaviour changes; save/load invariant preserved (fuzz from t0132v3).
   2. (e) behaviour documented in ADR-0020 and tested; goldens unchanged.
 
-### T-0137 Profile On: refuse an allowance above +r too   [status: in progress]
+### T-0137 Profile On: refuse an allowance above +r too   [status: done (2026-11-04, #54)]
 Phase: 1   Module: core/toolpath   Depends on: T-0129   ADR: 0016 §4
 Goal: Owner decision 2026-11-02 (raised by the T-0129 verifier): for profiles On the vector an allowance above +r moves the tool entirely off the vector just as one below −r does; On profiles refuse |allowance| > r symmetrically (Inside/Outside keep only the −r limit: a large positive allowance there is a normal oversize cut).
 Acceptance criteria:
@@ -557,14 +557,14 @@ Goal: Owner decision 2026-11-03: corner sharpening is split out of T-0153. Behav
 Acceptance criteria:
   1. To be finalised with the owner; at least: the cone never crosses a boundary (the same exact oracle as T-0153); corners sharpened within chordal; goldens; post safety.
 
-### T-0161 Drag-pause M5 lines and T-0154 leftovers   [status: in progress]
+### T-0161 Drag-pause M5 lines and T-0154 leftovers   [status: done (2026-11-04, #52)]
 Phase: 1   Module: core/post   Depends on: T-0154   ADR: 0020
 Goal: Found by the T-0154 verifiers (harness t0154v7/postatk8.cpp G1–G3). On Grbl, a line that errors is dropped whole, so a pause block's M5 line that also carries other words can be lost: more than 79 characters (LINE_BUFFER_SIZE 80, error:overflow), 'M5 M6' (unsupported), 'M5 G0 G1' (modal-group violation). That needs a custom post; shipped posts are fine. Also: stale comments in interpreter.cpp (allowlistProblem "spaces or tabs", nonAsciiProblem "or tab", unreachable tab handling); the tab shows as a space in refusal messages; Grbl refuses N > 9,999,999 (MAX_LINE_NUMBER) while the allowlist allows 9 digits.
 Acceptance criteria:
   1. In drag pause blocks the M5 line is bare like M0 (optional N + M5 + optional comment), and drag-section lines are at most 79 characters; shipped goldens unchanged.
   2. Comments corrected and the tab shown visibly in messages; N limited to ≤ 9,999,999 on Grbl-dialect posts, or documented.
 
-### T-0162 Drag pause order and long name comments (T-0161 verifier)   [status: ready]
+### T-0162 Drag pause order and long name comments (T-0161 verifier)   [status: in progress]
 Phase: 1   Module: core/post   Depends on: T-0161   ADR: 0020
 Goal: Found by the T-0161 verifier (harness t0161v1/atk9.cpp B2, README). (a) A pause block written "M0" then "M5" is accepted: the operator pause comes before the spindle stop (M5 still runs before the drag cuts). Enforce M5 before M0 in SPINDLE_OFF_PAUSE (and decide for SPINDLE_UNLOCK_PAUSE). (b) LinuxCNC counts the whole raw line, comments included, against LINELEN (254, NCE_COMMAND_TOO_LONG); shipped posts write "(Spindle stays off for diamond drag tool N: <name>)", so a ~300-character tool name aborts the program (pre-existing on main, every toolpath comment with names). Cap rendered names in comments (e.g. truncate to keep every written line ≤ 254 characters, or a lower documented limit). grblHAL may buffer comment characters (LINE_BUFFER_SIZE 257): check.
 Acceptance criteria:
