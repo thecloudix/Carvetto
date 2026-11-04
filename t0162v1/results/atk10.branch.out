@@ -1,0 +1,1107 @@
+===== P: pause order (paren post), SPINDLE_OFF_PAUSE then SPINDLE_UNLOCK_PAUSE =====
+[()-P off 'M0' 'M5' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock 'M0' 'M5' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end 'M0' 'M5' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off 'M00' 'M05' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock 'M00' 'M05' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end 'M00' 'M05' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off 'M000' 'M5' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock 'M000' 'M5' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end 'M000' 'M5' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off 'M1' 'M5' 'M0' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock 'M1' 'M5' 'M0' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end 'M1' 'M5' 'M0' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off 'M01' 'M5' 'M0' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock 'M01' 'M5' 'M0' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end 'M01' 'M5' 'M0' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off 'M0.0' 'M5' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock 'M0.0' 'M5' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end 'M0.0' 'M5' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off 'M1.' 'M5' 'M0' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock 'M1.' 'M5' 'M0' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end 'M1.' 'M5' 'M0' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off 'N10 M0' 'N20 M5' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock 'N10 M0' 'N20 M5' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end 'N10 M0' 'N20 M5' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off 'N0010 M0' 'M5' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock 'N0010 M0' 'M5' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end 'N0010 M0' 'M5' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off 'm0' 'M5' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock 'm0' 'M5' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end 'm0' 'M5' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off 'M0' 'm5' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock 'M0' 'm5' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end 'M0' 'm5' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off '/M5' 'M0' 'M5' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock '/M5' 'M0' 'M5' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end '/M5' 'M0' 'M5' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off '(M5)' 'M0' 'M5' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock '(M5)' 'M0' 'M5' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end '(M5)' 'M0' 'M5' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off 'M5 ; c' 'M0' ] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the character ';' (only upper-case words are allowed here) (line 'M5 ; c')
+[()-P unlock 'M5 ; c' 'M0' ] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the character ';' (only upper-case words are allowed here) (line 'M5 ; c')
+[()-P unlock-end 'M5 ; c' 'M0' ] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the character ';' (only upper-case words are allowed here) (line 'M5 ; c')
+[()-P off 'M0 M5' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock 'M0 M5' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end 'M0 M5' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off 'M5 M0' ] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on a line with M0 or M1 (an M0/M1 line holds only [N] M0) (line 'M5 M0')
+[()-P unlock 'M5 M0' ] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on a line with M0 or M1 (an M0/M1 line holds only [N] M0) (line 'M5 M0')
+[()-P unlock-end 'M5 M0' ] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on a line with M0 or M1 (an M0/M1 line holds only [N] M0) (line 'M5 M0')
+[()-P off 'M0' 'M5' 'M0' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock 'M0' 'M5' 'M0' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end 'M0' 'M5' 'M0' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off 'M60' 'M5' 'M0' ] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the code M60 (not on the drag-section allowlist) (line 'M60')
+[()-P unlock 'M60' 'M5' 'M0' ] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the code M60 (not on the drag-section allowlist) (line 'M60')
+[()-P unlock-end 'M60' 'M5' 'M0' ] REFUSED: cannot write G-code in SPINDLE_UNLOCK_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the code M60 (not on the drag-section allowlist) (line 'M60')
+[()-P off 'M0 (pause)' 'M5' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock 'M0 (pause)' 'M5' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end 'M0 (pause)' 'M5' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off '(x) M0' 'M5' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock '(x) M0' 'M5' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end '(x) M0' 'M5' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off 'M0;' 'M5' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock 'M0;' 'M5' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end 'M0;' 'M5' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off 'M 0' 'M5' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock 'M 0' 'M5' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end 'M 0' 'M5' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off 'M+0' 'M5' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock 'M+0' 'M5' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end 'M+0' 'M5' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off 'M-0' 'M5' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock 'M-0' 'M5' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end 'M-0' 'M5' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off 'M0' '/M5' 'M5' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock 'M0' '/M5' 'M5' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end 'M0' '/M5' 'M5' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off 'G4 P1' 'M0' 'M5' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P unlock 'G4 P1' 'M0' 'M5' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[()-P unlock-end 'G4 P1' 'M0' 'M5' ] REFUSED: cannot write G-code: the job ends with the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before the program ends
+[()-P off 'M5' 'M0' ] ACCEPTED
+[()-P unlock 'M5' 'M0' ] ACCEPTED
+[()-P unlock-end 'M5' 'M0' ] ACCEPTED
+[()-P off 'M5' 'M1' 'M0' ] ACCEPTED
+[()-P unlock 'M5' 'M1' 'M0' ] ACCEPTED
+[()-P unlock-end 'M5' 'M1' 'M0' ] ACCEPTED
+[()-P off 'N10 M5' 'N20 M0' ] ACCEPTED
+[()-P unlock 'N10 M5' 'N20 M0' ] ACCEPTED
+[()-P unlock-end 'N10 M5' 'N20 M0' ] ACCEPTED
+[()-P off 'M05' 'M00' ] ACCEPTED
+[()-P unlock 'M05' 'M00' ] ACCEPTED
+[()-P unlock-end 'M05' 'M00' ] ACCEPTED
+[()-P off 'M5' 'M0' 'M5' 'M0' ] ACCEPTED
+[()-P unlock 'M5' 'M0' 'M5' 'M0' ] ACCEPTED
+[()-P unlock-end 'M5' 'M0' 'M5' 'M0' ] ACCEPTED
+===== P: LINE_ENDING variants =====
+[()-P LE [13][10] M0,M5] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P LE [13][10] M5,M0] ACCEPTED
+[()-P LE [13] M0,M5] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P LE [13] M5,M0] ACCEPTED
+[()-P LE [10] M0,M5] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[()-P LE [10] M5,M0] ACCEPTED
+===== P: ';' posts =====
+[;-P off 'M0' 'M5' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[;-P unlock 'M0' 'M5' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[;-P off 'M1' 'M5' 'M0' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[;-P unlock 'M1' 'M5' 'M0' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[;-P off 'M5' 'M0' ] ACCEPTED
+[;-P unlock 'M5' 'M0' ] ACCEPTED
+[;-P off '; M5' 'M0' 'M5' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[;-P unlock '; M5' 'M0' 'M5' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[;-P off 'M0 ; then M5' 'M5' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[;-P unlock 'M0 ; then M5' 'M5' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[;-P off 'M0' 'M5 ; x' ] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to stop the spindle and pause for the operator before it
+[;-P unlock 'M0' 'M5 ; x' ] REFUSED: cannot write G-code: toolpath 'A' starts the spindle after the spindle-off toolpath 'D', but the post's SPINDLE_UNLOCK_PAUSE block pauses (M0 or M1) before it stops the spindle (M5); write the M5 first to pause for the operator to unlock the spindle before it
+[;-P off 'M5' 'M0 ; y' ] ACCEPTED
+[;-P unlock 'M5' 'M0 ; y' ] ACCEPTED
+===== P: values that write M words (template sees a tag as a space) =====
+[()-P VAR T prefix M -> written M3? (tool 3)] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes the code M3 (not on the drag-section allowlist) (line 'M3')
+[()-P VAR T prefix M -> written M1 (tool 1)] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block wrote M0 or M1 before M5; the spindle must be stopped before the pause
+[()-P VAR T prefix M -> written M0 (tool 0)] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block wrote M0 or M1 before M5; the spindle must be stopped before the pause
+[()-P N prefix ' M' (line number 1)] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block wrote M0 or M1 before M5; the spindle must be stopped before the pause
+===== L: shipped posts, every text tag, lengths 0..6000, hostile content =====
+  !! marlin_mm pat=19 n=100 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=100 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P
+  !! marlin_mm pat=19 n=100 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=100 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=100 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=100 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=100 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=100 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=100 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=100 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=100 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=100 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=100 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=100 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=100 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=100 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=100 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=100 bad=17
+  marlin_mm pat=19 n=100 maxLine=145 bad=0
+  !! marlin_mm pat=19 n=200 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=200 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=200 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=200 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=200 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=200 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=200 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=200 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=200 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=200 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=200 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=200 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=200 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=200 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=200 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=200 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=200 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=200 bad=17
+  marlin_mm pat=19 n=200 maxLine=245 bad=0
+  !! marlin_mm pat=19 n=230 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=230 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=230 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=230 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=230 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=230 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=230 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=230 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=230 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=230 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=230 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=230 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=230 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=230 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=230 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=230 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=230 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=230 bad=17
+  marlin_mm pat=19 n=230 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=233 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=233 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=233 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=233 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=233 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=233 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=233 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=233 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=233 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=233 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=233 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=233 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=233 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=233 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=233 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=233 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=233 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=233 bad=17
+  marlin_mm pat=19 n=233 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=234 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=234 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=234 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=234 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=234 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=234 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=234 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=234 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=234 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=234 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=234 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=234 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=234 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=234 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=234 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=234 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=234 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=234 bad=17
+  marlin_mm pat=19 n=234 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=235 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=235 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=235 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=235 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=235 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=235 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=235 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=235 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=235 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=235 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=235 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=235 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=235 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=235 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=235 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=235 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=235 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=235 bad=17
+  marlin_mm pat=19 n=235 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=236 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=236 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=236 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=236 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=236 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=236 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=236 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=236 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=236 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=236 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=236 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=236 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=236 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=236 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=236 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=236 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=236 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=236 bad=17
+  marlin_mm pat=19 n=236 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=237 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=237 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=237 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=237 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=237 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=237 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=237 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=237 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=237 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=237 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=237 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=237 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=237 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=237 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=237 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=237 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=237 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=237 bad=17
+  marlin_mm pat=19 n=237 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=238 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=238 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=238 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=238 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=238 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=238 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=238 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=238 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=238 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=238 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=238 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=238 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=238 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=238 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=238 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=238 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=238 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=238 bad=17
+  marlin_mm pat=19 n=238 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=240 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=240 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=240 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=240 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=240 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=240 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=240 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=240 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=240 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=240 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=240 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=240 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=240 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=240 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=240 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=240 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=240 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=240 bad=17
+  marlin_mm pat=19 n=240 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=245 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=245 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=245 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=245 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=245 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=245 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=245 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=245 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=245 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=245 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=245 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=245 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=245 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=245 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=245 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=245 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=245 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=245 bad=17
+  marlin_mm pat=19 n=245 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=246 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=246 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=246 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=246 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=246 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=246 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=246 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=246 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=246 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=246 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=246 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=246 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=246 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=246 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=246 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=246 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=246 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=246 bad=17
+  marlin_mm pat=19 n=246 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=247 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=247 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=247 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=247 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=247 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=247 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=247 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=247 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=247 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=247 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=247 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=247 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=247 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=247 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=247 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=247 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=247 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=247 bad=17
+  marlin_mm pat=19 n=247 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=248 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=248 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=248 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=248 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=248 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=248 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=248 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=248 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=248 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=248 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=248 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=248 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=248 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=248 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=248 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=248 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=248 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=248 bad=17
+  marlin_mm pat=19 n=248 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=249 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=249 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=249 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=249 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=249 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=249 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=249 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=249 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=249 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=249 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=249 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=249 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=249 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=249 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=249 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=249 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=249 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=249 bad=17
+  marlin_mm pat=19 n=249 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=250 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=250 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=250 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=250 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=250 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=250 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=250 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=250 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=250 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=250 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=250 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=250 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=250 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=250 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=250 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=250 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=250 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=250 bad=17
+  marlin_mm pat=19 n=250 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=251 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=251 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=251 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=251 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=251 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=251 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=251 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=251 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=251 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=251 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=251 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=251 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=251 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=251 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=251 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=251 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=251 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=251 bad=17
+  marlin_mm pat=19 n=251 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=252 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=252 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=252 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=252 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=252 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=252 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=252 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=252 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=252 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=252 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=252 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=252 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=252 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=252 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=252 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=252 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=252 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=252 bad=17
+  marlin_mm pat=19 n=252 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=253 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=253 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=253 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=253 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=253 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=253 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=253 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=253 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=253 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=253 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=253 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=253 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=253 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=253 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=253 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=253 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=253 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=253 bad=17
+  marlin_mm pat=19 n=253 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=254 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=254 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=254 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=254 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=254 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=254 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=254 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=254 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=254 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=254 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=254 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=254 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=254 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=254 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=254 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=254 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=254 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=254 bad=17
+  marlin_mm pat=19 n=254 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=255 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=255 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=255 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=255 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=255 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=255 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=255 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=255 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=255 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=255 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=255 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=255 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=255 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=255 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=255 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=255 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=255 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=255 bad=17
+  marlin_mm pat=19 n=255 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=256 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=256 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=256 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=256 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=256 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=256 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=256 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=256 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=256 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=256 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=256 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=256 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=256 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=256 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=256 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=256 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=256 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=256 bad=17
+  marlin_mm pat=19 n=256 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=257 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=257 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=257 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=257 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=257 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=257 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=257 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=257 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=257 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=257 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=257 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=257 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=257 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=257 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=257 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=257 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=257 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=257 bad=17
+  marlin_mm pat=19 n=257 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=300 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=300 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=300 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=300 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=300 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=300 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=300 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=300 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=300 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=300 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=300 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=300 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=300 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=300 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=300 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=300 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=300 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=300 bad=17
+  marlin_mm pat=19 n=300 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=511 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=511 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=511 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=511 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=511 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=511 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=511 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=511 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=511 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=511 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=511 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=511 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=511 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=511 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=511 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=511 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=511 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=511 bad=17
+  marlin_mm pat=19 n=511 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=512 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=512 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=512 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=512 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=512 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=512 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=512 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=512 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=512 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=512 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=512 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=512 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=512 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=512 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=512 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=512 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=512 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=512 bad=17
+  marlin_mm pat=19 n=512 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=1000 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=1000 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=1000 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=1000 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=1000 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=1000 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=1000 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=1000 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=1000 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=1000 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=1000 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=1000 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=1000 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=1000 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=1000 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=1000 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=1000 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=1000 bad=17
+  marlin_mm pat=19 n=1000 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=4095 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=4095 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=4095 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=4095 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=4095 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=4095 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=4095 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=4095 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=4095 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=4095 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=4095 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=4095 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=4095 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=4095 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=4095 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=4095 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=4095 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=4095 bad=17
+  marlin_mm pat=19 n=4095 maxLine=250 bad=0
+  !! marlin_mm pat=19 n=6000 active (MSG,: ; (MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(MSG,hi)f(
+  !! marlin_mm pat=19 n=6000 active (MSG,: ; Generated by P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,hi)P(MSG,
+  !! marlin_mm pat=19 n=6000 active (MSG,: ; Tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(M
+  !! marlin_mm pat=19 n=6000 active (MSG,: ; 0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0(MSG,hi)0
+  !! marlin_mm pat=19 n=6000 active (MSG,: ; 1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1(MSG,hi)1
+  !! marlin_mm pat=19 n=6000 active (MSG,: ; Change to tool 2: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=6000 active (MSG,: ; 2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2(MSG,hi)2
+  !! marlin_mm pat=19 n=6000 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=6000 active (MSG,: ; 3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3(MSG,hi)3
+  !! marlin_mm pat=19 n=6000 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=6000 active (MSG,: ; 4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4(MSG,hi)4
+  !! marlin_mm pat=19 n=6000 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=6000 active (MSG,: ; Change to tool 1: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=6000 active (MSG,: ; 5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5(MSG,hi)5
+  !! marlin_mm pat=19 n=6000 active (MSG,: ; Change to tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(
+  !! marlin_mm pat=19 n=6000 active (MSG,: ; 6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6(MSG,hi)6
+  !! marlin_mm pat=19 n=6000 active (MSG,: ; Spindle stays off for diamond drag tool 3: (MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MSG,hi)T(MS
+  !! marlin_mm pat=19 n=6000 bad=17
+  marlin_mm pat=19 n=6000 maxLine=250 bad=0
+L summary: runs=6336 refused=0 badLines=493
+--- sample grbl_inch pat=5 n=1000 (lines with '...'):
+250|([]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]...)
+250|(Generated by P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P...)
+250|(Tool 1: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[...)
+250|(1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[...)
+250|(Change to tool 2: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]...)
+250|(2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[...)
+250|(Change to tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]...)
+250|(3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[...)
+250|(Spindle stays off for diamond drag tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[...)
+250|(4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[...)
+250|(Spindle stays off for diamond drag tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[...)
+250|(Change to tool 1: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]...)
+250|(5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[...)
+250|(Change to tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]...)
+250|(6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[...)
+250|(Spindle stays off for diamond drag tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[...)
+--- sample grbl_inch pat=9 n=1000 (lines with '...'):
+250|(LOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOG...)
+250|(Generated by PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f P...)
+250|(Tool 1: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LO...)
+250|(1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LO...)
+250|(Change to tool 2: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN...)
+250|(2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LO...)
+250|(Change to tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN...)
+250|(3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LO...)
+250|(Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...)
+250|(4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LO...)
+250|(Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...)
+250|(Change to tool 1: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN...)
+250|(5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LO...)
+250|(Change to tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN...)
+250|(6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LO...)
+250|(Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...)
+--- sample grbl_mm pat=5 n=1000 (lines with '...'):
+250|([]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]...)
+250|(Generated by P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P...)
+250|(Tool 1: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[...)
+250|(1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[...)
+250|(Change to tool 2: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]...)
+250|(2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[...)
+250|(Change to tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]...)
+250|(3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[...)
+250|(Spindle stays off for diamond drag tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[...)
+250|(4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[...)
+250|(Spindle stays off for diamond drag tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[...)
+250|(Change to tool 1: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]...)
+250|(5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[...)
+250|(Change to tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]...)
+250|(6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[...)
+250|(Spindle stays off for diamond drag tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[...)
+--- sample grbl_mm pat=9 n=1000 (lines with '...'):
+250|(LOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOG...)
+250|(Generated by PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f P...)
+250|(Tool 1: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LO...)
+250|(1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LO...)
+250|(Change to tool 2: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN...)
+250|(2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LO...)
+250|(Change to tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN...)
+250|(3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LO...)
+250|(Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...)
+250|(4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LO...)
+250|(Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...)
+250|(Change to tool 1: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN...)
+250|(5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LO...)
+250|(Change to tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN...)
+250|(6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LO...)
+250|(Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...)
+--- sample linuxcnc_inch pat=5 n=1000 (lines with '...'):
+250|([]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]...)
+250|(Generated by P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P...)
+250|(Tool 1: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[...)
+250|(1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[...)
+250|(Tool 2: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[...)
+250|(Tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[...)
+250|(Spindle stays off for diamond drag tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[...)
+250|(4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[...)
+250|(Spindle stays off for diamond drag tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[...)
+250|(Tool 1: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[...)
+250|(Tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[...)
+250|(Spindle stays off for diamond drag tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[...)
+--- sample linuxcnc_inch pat=9 n=1000 (lines with '...'):
+250|(LOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOG...)
+250|(Generated by PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f P...)
+250|(Tool 1: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LO...)
+250|(1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LO...)
+250|(Tool 2: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LO...)
+250|(Tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LO...)
+250|(Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...)
+250|(4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LO...)
+250|(Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...)
+250|(Tool 1: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LO...)
+250|(Tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LO...)
+250|(Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...)
+--- sample linuxcnc_mm pat=5 n=1000 (lines with '...'):
+250|([]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]...)
+250|(Generated by P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P...)
+250|(Tool 1: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[...)
+250|(1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[...)
+250|(Tool 2: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[...)
+250|(Tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[...)
+250|(Spindle stays off for diamond drag tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[...)
+250|(4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[...)
+250|(Spindle stays off for diamond drag tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[...)
+250|(Tool 1: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[...)
+250|(Tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[...)
+250|(Spindle stays off for diamond drag tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[...)
+--- sample linuxcnc_mm pat=9 n=1000 (lines with '...'):
+250|(LOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOG...)
+250|(Generated by PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f P...)
+250|(Tool 1: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LO...)
+250|(1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LO...)
+250|(Tool 2: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LO...)
+250|(Tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LO...)
+250|(Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...)
+250|(4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LO...)
+250|(Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...)
+250|(Tool 1: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LO...)
+250|(Tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LO...)
+250|(Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...)
+--- sample mach3_inch pat=5 n=1000 (lines with '...'):
+250|([]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]...)
+250|(Generated by P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P...)
+250|(Tool 1: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[...)
+250|(1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[...)
+250|(Tool 2: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[...)
+250|(Tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[...)
+250|(Spindle stays off for diamond drag tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[...)
+250|(4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[...)
+250|(Spindle stays off for diamond drag tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[...)
+250|(Tool 1: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[...)
+250|(Tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[...)
+250|(Spindle stays off for diamond drag tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[...)
+--- sample mach3_inch pat=9 n=1000 (lines with '...'):
+250|(LOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOG...)
+250|(Generated by PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f P...)
+250|(Tool 1: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LO...)
+250|(1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LO...)
+250|(Tool 2: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LO...)
+250|(Tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LO...)
+250|(Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...)
+250|(4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LO...)
+250|(Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...)
+250|(Tool 1: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LO...)
+250|(Tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LO...)
+250|(Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...)
+--- sample mach3_mm pat=5 n=1000 (lines with '...'):
+250|([]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]...)
+250|(Generated by P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P...)
+250|(Tool 1: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[...)
+250|(1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[...)
+250|(Tool 2: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[...)
+250|(Tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[...)
+250|(Spindle stays off for diamond drag tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[...)
+250|(4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[...)
+250|(Spindle stays off for diamond drag tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[...)
+250|(Tool 1: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[...)
+250|(Tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[...)
+250|(Spindle stays off for diamond drag tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[...)
+--- sample mach3_mm pat=9 n=1000 (lines with '...'):
+250|(LOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOG...)
+250|(Generated by PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f P...)
+250|(Tool 1: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LO...)
+250|(1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LO...)
+250|(Tool 2: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LO...)
+250|(Tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LO...)
+250|(Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...)
+250|(4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LO...)
+250|(Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...)
+250|(Tool 1: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LO...)
+250|(Tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LO...)
+250|(Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...)
+--- sample mach4_mm pat=5 n=1000 (lines with '...'):
+250|([]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]f[]...)
+250|(Generated by P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P[]P...)
+250|(Tool 1: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[]0[...)
+250|(1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[]1[...)
+250|(Tool 2: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[]2[...)
+250|(Tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[]3[...)
+250|(Spindle stays off for diamond drag tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[...)
+250|(4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[]4[...)
+250|(Spindle stays off for diamond drag tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[...)
+250|(Tool 1: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[]5[...)
+250|(Tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T...)
+250|(6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[]6[...)
+250|(Spindle stays off for diamond drag tool 3: []T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[]T[...)
+--- sample mach4_mm pat=9 n=1000 (lines with '...'):
+250|(LOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOG...)
+250|(Generated by PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f P...)
+250|(Tool 1: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LO...)
+250|(1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LO...)
+250|(Tool 2: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LO...)
+250|(Tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LO...)
+250|(Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...)
+250|(4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LO...)
+250|(Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...)
+250|(Tool 1: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LO...)
+250|(Tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...)
+250|(6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LO...)
+250|(Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...)
+--- sample marlin_mm pat=5 n=1000 (lines with '...'):
+250|; ()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()f()...
+250|; Generated by P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P()P...
+250|; Tool 1: ()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T...
+250|; 0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0()0(...
+250|; 1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1()1(...
+250|; Change to tool 2: ()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()...
+250|; 2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2()2(...
+250|; Change to tool 3: ()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()...
+250|; 3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3()3(...
+250|; Spindle stays off for diamond drag tool 3: ()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T(...
+250|; 4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4()4(...
+250|; Spindle stays off for diamond drag tool 3: ()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T(...
+250|; Change to tool 1: ()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()...
+250|; 5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5()5(...
+250|; Change to tool 3: ()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()...
+250|; 6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6()6(...
+250|; Spindle stays off for diamond drag tool 3: ()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T()T(...
+--- sample marlin_mm pat=9 n=1000 (lines with '...'):
+250|; LOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOGOPEN_f fLOG...
+250|; Generated by PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f PLOGOPEN_f P...
+250|; Tool 1: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPE...
+250|; 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LOGOPEN_f 0LO...
+250|; 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LOGOPEN_f 1LO...
+250|; Change to tool 2: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN...
+250|; 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LOGOPEN_f 2LO...
+250|; Change to tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN...
+250|; 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LOGOPEN_f 3LO...
+250|; Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...
+250|; 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LOGOPEN_f 4LO...
+250|; Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...
+250|; Change to tool 1: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN...
+250|; 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LOGOPEN_f 5LO...
+250|; Change to tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN...
+250|; 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LOGOPEN_f 6LO...
+250|; Spindle stays off for diamond drag tool 3: LOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGOPEN,f TLOGO...
+===== N/modal: Mach3 numbered lines with long names; compare against short-name run =====
+  mach3_mm lines=120 codeDiffs=0 warnings 0 vs 0
+  mach3_inch lines=120 codeDiffs=0 warnings 0 vs 0
+  mach4_mm lines=120 codeDiffs=0 warnings 0 vs 0
+  linuxcnc_mm lines=125 codeDiffs=0 warnings 0 vs 0
+===== C: custom templates =====
+[C1 Changed text var twice] PARSE ERROR line 1: variable specification needs 4 or 5 fields [tag|mode|prefix|format|multiplier]
+[C2 numbered + modal X on comment line] ACCEPTED:
+N999990 G0 X0.000 (nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn...)
+N999995 G0 (x)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+----
+[C3 live text 260] REFUSED: cannot write G-code in HEADER of toolpath 'x': the line 'M117 ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt...' would be 269 characters long; lines are limited to 250 (LinuxCNC and grblHAL refuse longer lines)
+[C3b live text 100 + comment long] ACCEPTED:
+M117 tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt (ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp...)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+----
+[C4 unclosed comment] ACCEPTED:
+(T tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt...
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+----
+[C5 comment then live] ACCEPTED:
+(T ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt...) G0 X1
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+----
+[C6 (LOG[TOOLNAME])] ACCEPTED:
+(LOGOPEN_/tmp/xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+----
+[C6b (PROBE[TOOLNAME])] ACCEPTED:
+(PROBE_OPEN /tmp/xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+----
+[C6c ([TOOLNAME][TOOLPATH_NAME]) LOGOPEN + ,file] ACCEPTED:
+(LOGOPEN_/tmp/faaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+----
+[C6d ([TOOLNAME][TOOLPATH_NAME]) MSG + ,] ACCEPTED:
+(M S G_mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm...)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+----
+[C6e ([TOOLNAME] [TOOLPATH_NAME]) PROBE + OPEN] ACCEPTED:
+(PROBE _OPEN fmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm...)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+----
+[C6f long PROBE.. + OPEN] ACCEPTED:
+(PROBEzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz...OPEN fmmmmmmmmmm)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+----
+[C7 SUBSTITUTE] ACCEPTED
+[C8 template 250 CRLF] ACCEPTED
+[C8b template 251] REFUSED: cannot write G-code in HEADER of toolpath 'a': the line '(xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...' would be 251 characters long; lines are limited to 250 (LinuxCNC and grblHAL refuse longer lines)
+[C8c 250 with leading spaces] ACCEPTED
+[C8d trailing spaces trimmed] ACCEPTED
+[C9 TOOLS_USED 60 tools] ACCEPTED
+  first: 250|(Tools: Tool number 1; Tool number 2; Tool number 3; Tool number 4; Tool number 5; Tool number 6; Tool number 7; Tool number 8; Tool number 9; Tool number 10; Tool number 11; Tool number 12; Tool number 13; Tool number 14; Tool number 15; Tool nu...)
+[C10 drag comment cut] ACCEPTED:
+(h A)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+M0
+M5
+(Drag 3: ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd...)
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[C10b drag ';' cut] ACCEPTED:
+; h A
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+M0
+M5
+; Drag 3: ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd...
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+; unlock
+M0
+M5
+----
+[C11 M0 (name) drag] ACCEPTED:
+(h A)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+M0
+M5
+M0 (dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd...)
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----

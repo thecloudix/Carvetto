@@ -1,0 +1,163 @@
+[;-W1 VT before M0] PARSE ERROR line 21: control character 0x0B in line (only tab is allowed)
+[;-W2 FF before M0] PARSE ERROR line 21: control character 0x0C in line (only tab is allowed)
+[;-W3 NUL before M0] PARSE ERROR line 21: control character 0x00 in line (only tab is allowed)
+[;-W4 CR mid-line 'M5<CR>M0'] PARSE ERROR line 20: control character 0x0D in line (only tab is allowed)
+[;-W5 CR between N and M0] PARSE ERROR line 21: control character 0x0D in line (only tab is allowed)
+[;-W6 NBSP before M0] PARSE ERROR line 21: byte 0xC2 in output line (output text must be printable ASCII)
+[;-W7 Latin-1 NBSP before M5] PARSE ERROR line 20: byte 0xA0 in output line (output text must be printable ASCII)
+[;-W8 leading spaces '   M5' '   M0'] ACCEPTED:
+; h
+   M5
+   M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+; unlock
+M0
+M5
+----
+[;-W9 trailing spaces 'M5   ' 'M0   '] ACCEPTED:
+; h
+M5
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+; unlock
+M0
+M5
+----
+[;-W10 VT inside word 'M\x0b5'] PARSE ERROR line 20: control character 0x0B in line (only tab is allowed)
+[;-W11 backspace 'G0\x08M5' (Marlin erases)] PARSE ERROR line 21: control character 0x08 in line (only tab is allowed)
+[;-W12 DEL 0x7F] PARSE ERROR line 20: control character 0x7F in line (only tab is allowed)
+[;-W13 tab in TOOLCHANGE (drag) on this post] ACCEPTED:
+; h
+M5
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+; unlock
+M0
+M5
+----
+[()-W1 VT before M0] PARSE ERROR line 21: control character 0x0B in line (only tab is allowed)
+[()-W2 FF before M0] PARSE ERROR line 21: control character 0x0C in line (only tab is allowed)
+[()-W3 NUL before M0] PARSE ERROR line 21: control character 0x00 in line (only tab is allowed)
+[()-W4 CR mid-line 'M5<CR>M0'] PARSE ERROR line 20: control character 0x0D in line (only tab is allowed)
+[()-W5 CR between N and M0] PARSE ERROR line 21: control character 0x0D in line (only tab is allowed)
+[()-W6 NBSP before M0] PARSE ERROR line 21: byte 0xC2 in output line (output text must be printable ASCII)
+[()-W7 Latin-1 NBSP before M5] PARSE ERROR line 20: byte 0xA0 in output line (output text must be printable ASCII)
+[()-W8 leading spaces '   M5' '   M0'] ACCEPTED:
+(h)
+   M5
+   M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[()-W9 trailing spaces 'M5   ' 'M0   '] ACCEPTED:
+(h)
+M5
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[()-W10 VT inside word 'M\x0b5'] PARSE ERROR line 20: control character 0x0B in line (only tab is allowed)
+[()-W11 backspace 'G0\x08M5' (Marlin erases)] PARSE ERROR line 21: control character 0x08 in line (only tab is allowed)
+[()-W12 DEL 0x7F] PARSE ERROR line 20: control character 0x7F in line (only tab is allowed)
+[()-W13 tab in TOOLCHANGE (drag) on this post] ACCEPTED:
+(h)
+M5
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[;-V1 tool name with TAB/VT/FF in comment before M0] ACCEPTED:
+; h
+M5
+; a b c d
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+; unlock
+M0
+M5
+----
+[()-V2 tool name with TAB/VT/FF in comment] ACCEPTED:
+(h)
+M5
+(a b c d)
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+(unlock)
+M0
+M5
+----
+[()-V3 VAR X prefix with TAB on drag moves] REFUSED: cannot write G-code in RAPID_MOVE of toolpath 'D', move 1: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes a tab (separate words with spaces) (line 'G0<TAB>X1.000 Y1.000 Z5.000')
+[()-W13b tab in TOOLCHANGE into drag (spin then drag)] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'M5<TAB>' of the post holds a tab (separate words with spaces)
+[;-W13b tab in TOOLCHANGE into drag (spin then drag)] REFUSED: cannot write G-code in TOOLCHANGE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'M5<TAB>' of the post holds a tab (separate words with spaces)
+[;-W14 tab in drag move template] REFUSED: cannot write G-code in FEED_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'G1<TAB>[X][Y][Z][F]' of the post holds a tab (separate words with spaces)
+[()-W14 tab in drag move template] REFUSED: cannot write G-code in FEED_MOVE of toolpath 'D', move 2: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the line 'G1<TAB>[X][Y][Z][F]' of the post holds a tab (separate words with spaces)
+[;-W15 leading spaces before N-less M5 with ; comment] ACCEPTED:
+; h
+ M5 ; x
+  M0  ; y
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+; unlock
+M0
+M5
+----
+[;-V4 VAR LINE_NUMBER on moves only (drag moves numbered)] REFUSED: cannot write G-code in RAPID_MOVE of toolpath 'D', move 1: the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes an N word (line numbers are not allowed in a drag section on ';'-comment posts) (line 'N0 G0 X1.000 Y1.000 Z5.000')
+[;-V5 'N' in ; comment only] ACCEPTED:
+; h
+M5
+; N1 note
+M0
+G0 X1.000 Y1.000 Z5.000
+G1 Z-0.100 F200
+G1 X2.000 F600
+G1 Z5.000 F200
+M5
+; unlock
+M0
+M5
+----
+[()-G1 Grbl LINE_BUFFER_SIZE 80 overflow drops the M5 line] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes 89 characters of G-code outside comments (Grbl's line buffer holds 79; a longer line is dropped) (line 'M5 G17 G21 G90 G94 G0 X12345678.123456 Y12345678.123456 Z1234567...')
+[()-G2 Grbl 'M5 M6' (M6 unsupported -> error, M5 dropped)] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on the M5 line of a pause block (it holds only [N] M5) (line 'M5 M6')
+[()-G3 Grbl 'M5 G0 G1' (modal group violation -> M5 dropped)] REFUSED: cannot write G-code in SPINDLE_OFF_PAUSE of toolpath 'D': the toolpath runs with the spindle off (tool 'Drag' must not turn), but the post writes other words on the M5 line of a pause block (it holds only [N] M5) (line 'M5 G0 G1')
+[;-G4 Marlin 'G0 Z5 M5' (first word only)] REFUSED: cannot write G-code: toolpath 'D' runs with the spindle off (tool 'Drag' must not turn), but the post's SPINDLE_OFF_PAUSE block writes no M5 (spindle stop) to stop the spindle and pause for the operator before it

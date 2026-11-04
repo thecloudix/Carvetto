@@ -1,0 +1,23 @@
+T-0162 verifier round 1 (branch task/T-0162-pause-order @ 4c998f4; baseline origin/main @ 2790fa9, built from git archive in wt-T0162/build-verify1/main-src). VERDICT PASS.
+build.sh <worktree> <builddir-name> src out (same as t0161v1). bin/ and out/ are not committed (rebuild with build.sh).
+atk10.cpp - new:
+  P: pause-order bypass attempts in SPINDLE_OFF_PAUSE / SPINDLE_UNLOCK_PAUSE (spinning->drag, drag->spinning, drag at end):
+     M0/M00/M000/M0.0/M+0/M-0/'M 0'/m0, M1/M01/M1., N words, leading zeros, '/' block delete, (M5) and '; M5' comments,
+     'M0 M5' one line, M60, G4, LINE_ENDING LF/CRLF/CR, ';'-style posts, VAR prefixes writing M0/M1 from [T]/[N] values.
+     Branch: every M0/M1-before-M5 layout refused (template or written-line stage); all 22 M5-first layouts accepted.
+     Main accepted 74 (incl. the B2 'M0','M5' case).
+  L: all 8 shipped posts x 24 hostile patterns (UTF-8 1-4 bytes, truncated UTF-8, (), ',', MSG,/LOGOPEN,/PROBEOPEN/DEBUG,
+     CR LF, ';', ~!?, tab, \, %, [ ]) x 33 lengths (0..6000, around 233..257) in every text tag (tool, toolpath, file,
+     product, notes, path, dir, date, time) on the fixture + drag toolpaths: 6336 runs, 0 refused, 0 lines > 250,
+     0 non-ASCII/control, 0 paren imbalance. The 493 "!!" lines are a harness false positive ("(MSG," inside a Marlin ';'
+     comment), identical on main. Main: 57636 lines > 250.
+  N/modal: mach3/mach4/linuxcnc with 3000-char names vs 5-char names: identical code outside comments, same line count.
+  C: custom templates (numbered + modal X on a cut comment line, live text refused, keyword completion LOG+OPEN, PROBE+OPEN,
+     LOGOPEN+',file', SUBSTITUTE, 250/251 template, CRLF, leading/trailing spaces, TOOLS_USED of 60 tools, drag comment cut).
+legit/legit2/longn/longn2/longn3/postatk4-8 (copies from t0161v1): output identical branch vs main; legit 72 .nc and
+  longn3 110000-move .nc x8 byte-identical. atk9: only expected diffs (B2 now refused, 280-char template lines refused,
+  long-name comment lines 345 -> 250).
+Sources checked: LinuxCNC src/emc/linuxcnc.h LINELEN 255, interp_read.cc read_text fgets(raw_line, LINELEN) +
+  strlen==LINELEN-1 -> NCE_COMMAND_TOO_LONG (so text + LF <= 253); grblHAL core protocol.h LINE_BUFFER_SIZE 257
+  ("256 characters plus terminator"), protocol.c keeps comment chars, overflow -> Status_Overflow; Marlin queue.cpp
+  skips ';' and '(' comment chars.
