@@ -1,0 +1,2 @@
+g2 kinds: 430 366 423 234 439 425 406
+SUMMARY g2 discontinuous-skipped 0 strict(line/arc sub-tol) 2671 inputs 2723 (R 903 Sh 954 Sq 866 | L 1358 R 1365 | closed 501 bez 302 arcs 1011 | empty 74) | vchk: dist 0 round 0 cov 0 tie 39 (under 1.2e-05 over 4.87e-07) | xk: dist 0 round 0 cov 0 tie 70 thin(exempt) 0 COVVIOL(non-thin,stretch>tol) 0 unres 0 (under 1.2e-05 over 4.51e-07 miss 0 misslen 0 tielen 0.000938) | cpu 28.0

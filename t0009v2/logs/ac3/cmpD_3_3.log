@@ -1,0 +1,13 @@
+DIFF fam3 seed=0x53011ab n=37 closed=0 d=0.242462 Round side=0 | br: x[dv0 u1.83e-13 rv0 o5.69e-15 cm0 m0 ml0 tie0 tl0] v[ oth0] | main: x[dv0 u1.83e-13 rv0 o5.69e-15 cm0 m0 ml0 tie0 tl0] v[ oth0]
+DIFF fam3 seed=0x5301248 n=17 closed=0 d=1.83554 Round side=1 | br: x[dv0 u1.43e-11 rv0 o4.22e-15 cm0 m0 ml0 tie0 tl0] v[ oth0] | main: x[dv0 u1.43e-11 rv0 o4.22e-15 cm0 m0 ml0 tie0 tl0] v[ oth0]
+DIFF fam3 seed=0x53012d8 n=33 closed=0 d=0.0975618 Round side=0 | br: x[dv0 u5.5e-10 rv0 o5.2e-15 cm0 m0 ml0 tie0 tl0] v[ oth0] | main: x[dv0 u5.5e-10 rv0 o5.2e-15 cm0 m0 ml0 tie0 tl0] v[ oth0]
+DIFF fam3 seed=0x530131d n=37 closed=0 d=0.158612 Sharp side=0 | br: x[dv0 u4.48e-09 rv0 o0 cm0 m0 ml0 tie0 tl0] v[ oth0] | main: x[dv0 u4.48e-09 rv0 o0 cm0 m0 ml0 tie0 tl0] v[ oth0]
+DIFF fam3 seed=0x5301358 n=9 closed=0 d=2.36877 Square side=0 | br: x[dv0 u2.37e-09 rv0 o0 cm0 m0 ml0 tie0 tl0] v[ oth0] | main: x[dv0 u4.83e-13 rv0 o0 cm0 m0 ml0 tie0 tl0] v[ oth0]
+DIFF fam3 seed=0x53013ca n=41 closed=0 d=0.0831915 Sharp side=0 | br: x[dv0 u1.19e-09 rv0 o0 cm0 m0 ml0 tie0 tl0] v[reversal ch 11 j 2 dot -0.999953 oth0] | main: x[dv0 u1.19e-09 rv0 o0 cm0 m0 ml0 tie0 tl0] v[reversal ch 11 j 2 dot -0.999953 oth0]
+DIFF fam3 seed=0x53014bd n=33 closed=0 d=0.775819 Square side=1 | br: x[dv0 u4.66e-11 rv0 o0 cm0 m0 ml0 tie0 tl0] v[ oth0] | main: x[dv0 u4.66e-11 rv0 o0 cm0 m0 ml0 tie0 tl0] v[ oth0]
+DIFF fam3 seed=0x5301605 n=21 closed=0 d=2.60786 Sharp side=0 | br: x[dv0 u1.97e-12 rv0 o0 cm0 m0 ml0 tie0 tl0] v[ oth0] | main: x[dv0 u1.97e-12 rv0 o0 cm0 m0 ml0 tie0 tl0] v[ oth0]
+DIFF fam3 seed=0x530162a n=25 closed=0 d=1.252 Sharp side=0 | br: x[dv0 u8.59e-13 rv0 o0 cm0 m0 ml0 tie0 tl0] v[ oth0] | main: x[dv0 u2.6e-13 rv0 o0 cm0 m0 ml0 tie0 tl0] v[ oth0]
+DIFF fam3 seed=0x5301634 n=192 closed=0 d=0.0968746 Square side=0 | br: x[dv0 u1.83e-12 rv0 o0 cm0 m0 ml0 tie0 tl0] v[ oth0] | main: x[dv0 u1.83e-12 rv0 o0 cm0 m0 ml0 tie0 tl0] v[ oth0]
+DIFF fam3 seed=0x530166f n=29 closed=0 d=0.149269 Square side=0 | br: x[dv0 u9.99e-10 rv0 o0 cm0 m0 ml0 tie0 tl0] v[ oth0] | main: x[dv0 u1.45e-12 rv0 o0 cm0 m0 ml0 tie0 tl0] v[ oth0]
+DIFF fam3 seed=0x53016d4 n=17 closed=0 d=0.20889 Sharp side=1 | br: x[dv0 u1e-09 rv0 o0 cm0 m0 ml0 tie0 tl0] v[ oth0] | main: x[dv0 u7.7e-10 rv0 o0 cm0 m0 ml0 tie0 tl0] v[ oth0]
+SUMMARY cmp fam3 N=1500 s0=0x5301194 inputs 1499 identical 1487 differ 12 worse 0 better 0 bothflagged 0 | cpu branch 1.42 main 1.25
