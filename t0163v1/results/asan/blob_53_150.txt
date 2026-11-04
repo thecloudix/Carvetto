@@ -1,0 +1,46 @@
+e53:0 S 0.01 side 2 sep 0 tabs 1 lead 2 lo 0 st 1 V 1 to 14 TIMEOUT
+e53:1 S 1 side 0 sep 1 tabs 1 lead 0 lo 1 st 1 V 0 rc 0 moves 200 diags 26 finite 1 hash c24d8a85a46e04ac
+e53:2 S 0.001 side 1 sep 1 tabs 0 lead 1 lo 0 st 2 V 0 rc 0 moves 0 diags 1 finite 1 hash a3bf9bcaa2bef16a
+e53:3 S 0.01 side 2 sep 1 tabs 0 lead 1 lo 1 st 2 V 1 rc 0 moves 94 diags 2 finite 1 hash 00ddc061cdcf7c55
+e53:4 S 0.0001 side 2 sep 0 tabs 1 lead 2 lo 1 st 1 V 0 rc 0 moves 69 diags 7 finite 1 hash 8c9eb97157c444d3
+e53:5 S 0.1 side 2 sep 0 tabs 1 lead 1 lo 0 st 1 V 0 rc 0 moves 20 diags 3 finite 1 hash e192eeadadd0d0de
+e53:6 S 0.0001 side 2 sep 1 tabs 1 lead 1 lo 1 st 0 V 1 rc 0 moves 110 diags 6 finite 1 hash 79491addedf36071
+e53:7 S 0.01 side 1 sep 1 tabs 0 lead 1 lo 1 st 0 V 1 rc 0 moves 43 diags 9 finite 1 hash 08127749608b6304
+e53:8 S 0.0001 side 1 sep 1 tabs 0 lead 1 lo 0 st 1 V 1 to 14 TIMEOUT
+e53:9 S 0.1 side 2 sep 0 tabs 1 lead 0 lo 1 st 1 V 0 rc 0 moves 53 diags 5 finite 1 hash ddeaa41bf5eef419
+e53:10 S 0.001 side 2 sep 1 tabs 1 lead 1 lo 1 st 1 V 0 rc 0 moves 102 diags 5 finite 1 hash 8e902ccd93043c20
+e53:11 S 0.001 side 2 sep 0 tabs 0 lead 1 lo 0 st 1 V 1 rc 0 moves 369 diags 2 finite 1 hash 403f7d7c455881fe
+e53:12 S 0.001 side 0 sep 1 tabs 1 lead 2 lo 1 st 2 V 0 rc 0 moves 147 diags 28 finite 1 hash 76740561c2e79e1e
+e53:13 S 0.001 side 1 sep 1 tabs 1 lead 1 lo 0 st 1 V 0 rc 0 moves 0 diags 5 finite 1 hash f9533a389590fa86
+e53:14 S 0.001 side 2 sep 1 tabs 0 lead 0 lo 1 st 1 V 1 to 14 TIMEOUT
+e53:15 S 1 side 0 sep 1 tabs 0 lead 0 lo 1 st 0 V 1 rc 0 moves 172 diags 4 finite 1 hash 66260226903a5ab3
+e53:16 S 0.0001 side 2 sep 1 tabs 1 lead 1 lo 1 st 1 V 0 rc 0 moves 22 diags 1 finite 1 hash c1295606919be814
+e53:17 S 1 side 2 sep 1 tabs 0 lead 2 lo 0 st 1 V 0 to 14 TIMEOUT
+e53:18 S 0.0001 side 1 sep 1 tabs 0 lead 1 lo 0 st 1 V 1 to 14 TIMEOUT
+e53:19 S 0.01 side 2 sep 0 tabs 0 lead 0 lo 1 st 1 V 1 to 14 TIMEOUT
+e53:20 S 0.0001 side 2 sep 1 tabs 0 lead 0 lo 1 st 1 V 1 rc 0 moves 98 diags 4 finite 1 hash ea27e556140f1499
+e53:21 S 0.0001 side 2 sep 0 tabs 1 lead 2 lo 1 st 1 V 0 rc 0 moves 34 diags 3 finite 1 hash 05b45bf7186873ed
+e53:22 S 0.001 side 1 sep 0 tabs 0 lead 0 lo 1 st 1 V 0 to 14 TIMEOUT
+e53:23 S 1 side 2 sep 1 tabs 0 lead 0 lo 1 st 1 V 0 rc 0 moves 147 diags 1 finite 1 hash 8e837368021c986b
+e53:24 S 0.01 side 0 sep 0 tabs 0 lead 1 lo 1 st 1 V 0 rc 0 moves 20 diags 6 finite 1 hash 5bbff7036fbbcf8b
+e53:25 S 0.1 side 2 sep 1 tabs 1 lead 0 lo 1 st 1 V 0 rc 0 moves 180 diags 12 finite 1 hash e3e85dbdc6134476
+e53:26 S 0.0001 side 2 sep 0 tabs 0 lead 2 lo 1 st 1 V 1 rc 0 moves 70 diags 2 finite 1 hash a0ff7c2b3866d3c2
+e53:27 S 0.001 side 1 sep 1 tabs 1 lead 1 lo 1 st 1 V 1 to 14 TIMEOUT
+e53:28 S 0.1 side 2 sep 0 tabs 1 lead 0 lo 1 st 1 V 1 rc 0 moves 12 diags 2 finite 1 hash ed81e860eac79bc4
+e53:29 S 0.0001 side 2 sep 0 tabs 0 lead 2 lo 1 st 1 V 1 rc 0 moves 158 diags 0 finite 1 hash 4491978f8eec16a7
+e53:30 S 0.01 side 2 sep 1 tabs 0 lead 1 lo 1 st 1 V 0 rc 0 moves 133 diags 0 finite 1 hash 9e46e71c7a14043b
+e53:31 S 0.1 side 1 sep 1 tabs 1 lead 1 lo 0 st 1 V 0 rc 0 moves 30 diags 11 finite 1 hash 1b94d090b272f9b0
+e53:32 S 0.1 side 0 sep 1 tabs 0 lead 0 lo 1 st 1 V 1 to 14 TIMEOUT
+e53:33 S 1 side 1 sep 0 tabs 1 lead 1 lo 1 st 2 V 0 rc 0 moves 0 diags 9 finite 1 hash 0d823e02bad81bc2
+e53:34 S 0.1 side 0 sep 1 tabs 0 lead 1 lo 1 st 1 V 1 rc 0 moves 153 diags 5 finite 1 hash f19f705ee520c68f
+e53:35 S 1 side 2 sep 1 tabs 0 lead 0 lo 0 st 1 V 0 to 14 TIMEOUT
+e53:36 S 0.1 side 1 sep 1 tabs 1 lead 0 lo 0 st 1 V 1 to 14 TIMEOUT
+e53:37 S 0.1 side 2 sep 1 tabs 1 lead 0 lo 0 st 1 V 1 to 14 TIMEOUT
+e53:38 S 0.1 side 2 sep 1 tabs 0 lead 0 lo 1 st 1 V 1 rc 0 moves 275 diags 0 finite 1 hash 85be4e750d7a66f7
+e53:39 S 0.01 side 2 sep 0 tabs 0 lead 1 lo 0 st 1 V 1 rc 0 moves 10 diags 0 finite 1 hash ae80979b83f5dd2e
+e53:40 S 0.1 side 2 sep 1 tabs 1 lead 2 lo 1 st 1 V 1 rc 0 moves 143 diags 23 finite 1 hash 2d6c0eebbedbc0b5
+e53:41 S 0.01 side 1 sep 1 tabs 0 lead 2 lo 0 st 1 V 1 to 14 TIMEOUT
+e53:42 S 1 side 2 sep 0 tabs 1 lead 0 lo 1 st 1 V 1 rc 0 moves 114 diags 7 finite 1 hash 07cf077b6d9c44bd
+e53:43 S 0.01 side 0 sep 0 tabs 1 lead 0 lo 0 st 1 V 0 rc 0 moves 53 diags 21 finite 1 hash 8b66d80741dad02e
+e53:44 S 0.0001 side 2 sep 1 tabs 1 lead 2 lo 1 st 1 V 0 rc 0 moves 78 diags 7 finite 1 hash 77ea4e0a15562b2b
+e53:45 S 0.0001 side 1 sep 0 tabs 0 lead 1 lo 1 st 1 V 0 rc 0 moves 0 diags 12 finite 1 hash 13103d6285052f82

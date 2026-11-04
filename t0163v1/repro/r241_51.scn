@@ -1,0 +1,119 @@
+C 1
+B -0x1.f3ff500d46216p+8 -0x1.5dff9e16d74bdp+8 -0x1.f3ff4fe80f55cp+8 -0x1.5dff7e2a4bd13p+8 -0x1.f3ff59904e1fp+8 -0x1.5dff48dab8edbp+8 -0x1.f3ff7486aaf8ep+8 -0x1.5dff3dee7e417p+8
+B -0x1.f3ff7486aaf8ep+8 -0x1.5dff3dee7e417p+8 -0x1.f3ff8f7d07d2cp+8 -0x1.5dff330243953p+8 -0x1.f3ffdfe7681c2p+8 -0x1.5dff433a28eaap+8 -0x1.f3fff1d3733cbp+8 -0x1.5dff5c8d77424p+8
+B -0x1.f3fff1d3733cbp+8 -0x1.5dff5c8d77424p+8 -0x1.f40003bf7e5d4p+8 -0x1.5dff75e0c599ep+8 -0x1.f3fff4cbd8514p+8 -0x1.5dffbb1047aa1p+8 -0x1.f3ffe00eedbc5p+8 -0x1.5dffd5e2544f4p+8
+B -0x1.f3ffe00eedbc5p+8 -0x1.5dffd5e2544f4p+8 -0x1.f3ffcb5203275p+8 -0x1.5dfff0b460f46p+8 -0x1.f3ff8d663a58cp+8 -0x1.5e0006c657f72p+8 -0x1.f3ff7565f3befp+8 -0x1.5dfffd79c3213p+8
+B -0x1.f3ff7565f3befp+8 -0x1.5dfffd79c3213p+8 -0x1.f3ff5d65ad252p+8 -0x1.5dfff42d2e4b5p+8 -0x1.f3ff50327ced1p+8 -0x1.5dffbe0362c67p+8 -0x1.f3ff500d46216p+8 -0x1.5dff9e16d74bdp+8
+C 0
+L -0x1.f3fe2e4b0b5e5p+8 -0x1.5dff6df716fb3p+8 -0x1.f3fbe009dea89p+8 -0x1.5dff6df716fb3p+8
+L -0x1.f3fbe009dea89p+8 -0x1.5dff6df716fb3p+8 -0x1.f3fbe009dea89p+8 -0x1.5dfbef1f2de07p+8
+L -0x1.f3fbe009dea89p+8 -0x1.5dfbef1f2de07p+8 -0x1.f3f8a53108b23p+8 -0x1.5dfbef1f2de07p+8
+L -0x1.f3f8a53108b23p+8 -0x1.5dfbef1f2de07p+8 -0x1.f3f8a53108b23p+8 -0x1.5dff1f3df8ca9p+8
+L -0x1.f3f8a53108b23p+8 -0x1.5dff1f3df8ca9p+8 -0x1.f3f665b6f6d03p+8 -0x1.5dff1f3df8ca9p+8
+L -0x1.f3f665b6f6d03p+8 -0x1.5dff1f3df8ca9p+8 -0x1.f3f665b6f6d03p+8 -0x1.5dfcebb5dfa0bp+8
+L -0x1.f3f665b6f6d03p+8 -0x1.5dfcebb5dfa0bp+8 -0x1.f3f456ae76a2bp+8 -0x1.5dfcebb5dfa0bp+8
+L -0x1.f3f456ae76a2bp+8 -0x1.5dfcebb5dfa0bp+8 -0x1.f3f456ae76a2bp+8 -0x1.5dffb11f68c3cp+8
+C 1
+L -0x1.f3fd24663b259p+8 -0x1.5dffe9dec708cp+8 -0x1.f3fcfbc41f278p+8 -0x1.5dffe9dec708cp+8
+L -0x1.f3fcfbc41f278p+8 -0x1.5dffe9dec708cp+8 -0x1.f3fcfbc41f278p+8 -0x1.5dff9dd8c8361p+8
+L -0x1.f3fcfbc41f278p+8 -0x1.5dff9dd8c8361p+8 -0x1.f3fc8c5a3d803p+8 -0x1.5dff9dd8c8361p+8
+L -0x1.f3fc8c5a3d803p+8 -0x1.5dff9dd8c8361p+8 -0x1.f3fc8c5a3d803p+8 -0x1.5dffe9dec708cp+8
+L -0x1.f3fc8c5a3d803p+8 -0x1.5dffe9dec708cp+8 -0x1.f3fc63b821821p+8 -0x1.5dffe9dec708cp+8
+L -0x1.f3fc63b821821p+8 -0x1.5dffe9dec708cp+8 -0x1.f3fc63b821821p+8 -0x1.5dff2930ad655p+8
+L -0x1.f3fc63b821821p+8 -0x1.5dff2930ad655p+8 -0x1.f3fc8c5a3d803p+8 -0x1.5dff2930ad655p+8
+L -0x1.f3fc8c5a3d803p+8 -0x1.5dff2930ad655p+8 -0x1.f3fc8c5a3d803p+8 -0x1.5dff7536ac38p+8
+L -0x1.f3fc8c5a3d803p+8 -0x1.5dff7536ac38p+8 -0x1.f3fcfbc41f278p+8 -0x1.5dff7536ac38p+8
+L -0x1.f3fcfbc41f278p+8 -0x1.5dff7536ac38p+8 -0x1.f3fcfbc41f278p+8 -0x1.5dff2930ad655p+8
+L -0x1.f3fcfbc41f278p+8 -0x1.5dff2930ad655p+8 -0x1.f3fd24663b259p+8 -0x1.5dff2930ad655p+8
+L -0x1.f3fd24663b259p+8 -0x1.5dff2930ad655p+8 -0x1.f3fd24663b259p+8 -0x1.5dffe9dec708cp+8
+C 1
+B -0x1.f3fa9c80922afp+8 -0x1.5dff79878513cp+8 -0x1.f3fa9d7679b6fp+8 -0x1.5dff56577f47cp+8 -0x1.f3fae9e3bf6dcp+8 -0x1.5dff1fd58028cp+8 -0x1.f3fb08e967b63p+8 -0x1.5dff20063b286p+8
+B -0x1.f3fb08e967b63p+8 -0x1.5dff20063b286p+8 -0x1.f3fb27ef0ffeap+8 -0x1.5dff2036f6281p+8 -0x1.f3fb57986b69ap+8 -0x1.5dff577be145cp+8 -0x1.f3fb56a283ddap+8 -0x1.5dff7aabe711cp+8
+B -0x1.f3fb56a283ddap+8 -0x1.5dff7aabe711cp+8 -0x1.f3fb55ac9c51ap+8 -0x1.5dff9ddbecddcp+8 -0x1.f3fb222ba2b6ap+8 -0x1.5dfff35718f02p+8 -0x1.f3fb0325fa6e3p+8 -0x1.5dfff3265df08p+8
+B -0x1.f3fb0325fa6e3p+8 -0x1.5dfff3265df08p+8 -0x1.f3fae4205225bp+8 -0x1.5dfff2f5a2f0dp+8 -0x1.f3fa9b8aaa9efp+8 -0x1.5dff9cb78adfdp+8 -0x1.f3fa9c80922afp+8 -0x1.5dff79878513cp+8
+C 1
+L -0x1.f3fa271c8ff76p+8 -0x1.5e001065a7d79p+8 -0x1.f3f95f749b7e3p+8 -0x1.5e001065a7d79p+8
+L -0x1.f3f95f749b7e3p+8 -0x1.5e001065a7d79p+8 -0x1.f3f95f749b7e3p+8 -0x1.5dff48bdb35e7p+8
+L -0x1.f3f95f749b7e3p+8 -0x1.5dff48bdb35e7p+8 -0x1.f3fa271c8ff76p+8 -0x1.5dff48bdb35e7p+8
+L -0x1.f3fa271c8ff76p+8 -0x1.5dff48bdb35e7p+8 -0x1.f3fa271c8ff76p+8 -0x1.5e001065a7d79p+8
+C 1
+A -0x1.f3ff7a473f0dap+8 -0x1.5dfe1a1cd7676p+8 0x1.f24303d6f5bdbp-10 0x0p+0 0x0p+0 0
+C 1
+L -0x1.f3fe71ce9540dp+8 -0x1.5dfea4deba289p+8 -0x1.f3fd5633ce4dp+8 -0x1.5dfea4deba289p+8
+L -0x1.f3fd5633ce4dp+8 -0x1.5dfea4deba289p+8 -0x1.f3fd5633ce4dp+8 -0x1.5dfd8943f334cp+8
+L -0x1.f3fd5633ce4dp+8 -0x1.5dfd8943f334cp+8 -0x1.f3fe71ce9540dp+8 -0x1.5dfd8943f334cp+8
+L -0x1.f3fe71ce9540dp+8 -0x1.5dfd8943f334cp+8 -0x1.f3fe71ce9540dp+8 -0x1.5dfea4deba289p+8
+C 1
+A -0x1.f3fde40131c6ep+8 -0x1.5dfe171156aebp+8 0x1.c5c471861a735p-11 0x0p+0 0x0p+0 0
+C 1
+L -0x1.f3fd2aa797bbp+8 -0x1.5dfe949de87f8p+8 -0x1.f3fc656a0eef8p+8 -0x1.5dfe949de87f8p+8
+L -0x1.f3fc656a0eef8p+8 -0x1.5dfe949de87f8p+8 -0x1.f3fc656a0eef8p+8 -0x1.5dfe6121c902dp+8
+L -0x1.f3fc656a0eef8p+8 -0x1.5dfe6121c902dp+8 -0x1.f3fcf72b783e5p+8 -0x1.5dfe6121c902dp+8
+L -0x1.f3fcf72b783e5p+8 -0x1.5dfe6121c902dp+8 -0x1.f3fcf72b783e5p+8 -0x1.5dfd807af5c9p+8
+L -0x1.f3fcf72b783e5p+8 -0x1.5dfd807af5c9p+8 -0x1.f3fd2aa797bbp+8 -0x1.5dfd807af5c9p+8
+L -0x1.f3fd2aa797bbp+8 -0x1.5dfd807af5c9p+8 -0x1.f3fd2aa797bbp+8 -0x1.5dfe949de87f8p+8
+C 1
+L -0x1.f3fba23404b0dp+8 -0x1.5dfe990257ep+8 -0x1.f3fab2ef1acdcp+8 -0x1.5dfe990257ep+8
+L -0x1.f3fab2ef1acdcp+8 -0x1.5dfe990257ep+8 -0x1.f3fab2ef1acdcp+8 -0x1.5dfda9bd6dfcfp+8
+L -0x1.f3fab2ef1acdcp+8 -0x1.5dfda9bd6dfcfp+8 -0x1.f3fba23404b0dp+8 -0x1.5dfda9bd6dfcfp+8
+L -0x1.f3fba23404b0dp+8 -0x1.5dfda9bd6dfcfp+8 -0x1.f3fba23404b0dp+8 -0x1.5dfe990257ep+8
+C 1
+A -0x1.f3fb2a918fbf5p+8 -0x1.5dfe215fe2ee8p+8 0x1.7ed4a96b49cp-11 0x0p+0 0x0p+0 0
+C 1
+L -0x1.f3fa2d2c04c97p+8 -0x1.5dfe78d075828p+8 -0x1.f3f985c0a3874p+8 -0x1.5dfe78d075828p+8
+L -0x1.f3f985c0a3874p+8 -0x1.5dfe78d075828p+8 -0x1.f3f985c0a3874p+8 -0x1.5dfdd16514406p+8
+L -0x1.f3f985c0a3874p+8 -0x1.5dfdd16514406p+8 -0x1.f3fa2d2c04c97p+8 -0x1.5dfdd16514406p+8
+L -0x1.f3fa2d2c04c97p+8 -0x1.5dfdd16514406p+8 -0x1.f3fa2d2c04c97p+8 -0x1.5dfe78d075828p+8
+C 1
+A -0x1.f3ffbae677aa3p+8 -0x1.5dfca61b29e91p+8 0x1.92b6cbbd5f7a5p-10 0x0p+0 0x0p+0 0
+C 1
+L -0x1.f3fe7ae9084a2p+8 -0x1.5dfd11f6b0b25p+8 -0x1.f3fd777bb9cddp+8 -0x1.5dfd11f6b0b25p+8
+L -0x1.f3fd777bb9cddp+8 -0x1.5dfd11f6b0b25p+8 -0x1.f3fd777bb9cddp+8 -0x1.5dfc0e896236p+8
+L -0x1.f3fd777bb9cddp+8 -0x1.5dfc0e896236p+8 -0x1.f3fe7ae9084a2p+8 -0x1.5dfc0e896236p+8
+L -0x1.f3fe7ae9084a2p+8 -0x1.5dfc0e896236p+8 -0x1.f3fe7ae9084a2p+8 -0x1.5dfd11f6b0b25p+8
+C 1
+L -0x1.f3fc800dcc4cfp+8 -0x1.5dfce11385838p+8 -0x1.f3fcbc58d41cdp+8 -0x1.5dfcd64d01328p+8
+L -0x1.f3fcbc58d41cdp+8 -0x1.5dfcd64d01328p+8 -0x1.f3fcb538e10c9p+8 -0x1.5dfc9e1d10ff3p+8
+L -0x1.f3fcb538e10c9p+8 -0x1.5dfc9e1d10ff3p+8 -0x1.f3fcd29928838p+8 -0x1.5dfcc8f203fcbp+8
+L -0x1.f3fcd29928838p+8 -0x1.5dfcc8f203fcbp+8 -0x1.f3fd06ee1cd36p+8 -0x1.5dfcb5850bea6p+8
+L -0x1.f3fd06ee1cd36p+8 -0x1.5dfcb5850bea6p+8 -0x1.f3fce12e1e1eap+8 -0x1.5dfcdff8013a2p+8
+L -0x1.f3fce12e1e1eap+8 -0x1.5dfcdff8013a2p+8 -0x1.f3fd0c7880b88p+8 -0x1.5dfd10a884708p+8
+L -0x1.f3fd0c7880b88p+8 -0x1.5dfd10a884708p+8 -0x1.f3fcd29aea439p+8 -0x1.5dfcfbfd3bd05p+8
+L -0x1.f3fcd29aea439p+8 -0x1.5dfcfbfd3bd05p+8 -0x1.f3fcb563e59e4p+8 -0x1.5dfd238594d4p+8
+L -0x1.f3fcb563e59e4p+8 -0x1.5dfd238594d4p+8 -0x1.f3fcb3e25233bp+8 -0x1.5dfcf1abdda7p+8
+L -0x1.f3fcb3e25233bp+8 -0x1.5dfcf1abdda7p+8 -0x1.f3fc800dcc4cfp+8 -0x1.5dfce11385838p+8
+C 1
+A -0x1.f3fb57e3e047bp+8 -0x1.5dfcbf3bfd3fep+8 0x1.9d58e7b2b59e8p-10 0x0p+0 0x0p+0 0
+C 1
+L -0x1.f3f98af31ad6ap+8 -0x1.5dfcdc7e87062p+8 -0x1.f3f9c1a6d5b85p+8 -0x1.5dfcd3481bb85p+8
+L -0x1.f3f9c1a6d5b85p+8 -0x1.5dfcd3481bb85p+8 -0x1.f3f9b74050f7p+8 -0x1.5dfc91828ceefp+8
+L -0x1.f3f9b74050f7p+8 -0x1.5dfc91828ceefp+8 -0x1.f3f9d8c68be88p+8 -0x1.5dfcc44dfec0cp+8
+L -0x1.f3f9d8c68be88p+8 -0x1.5dfcc44dfec0cp+8 -0x1.f3fa0dcf7d5ccp+8 -0x1.5dfcaf4e8041cp+8
+L -0x1.f3fa0dcf7d5ccp+8 -0x1.5dfcaf4e8041cp+8 -0x1.f3f9e3ec2d9bdp+8 -0x1.5dfcdc51e9accp+8
+L -0x1.f3f9e3ec2d9bdp+8 -0x1.5dfcdc51e9accp+8 -0x1.f3fa08aee2333p+8 -0x1.5dfd05f4e3c46p+8
+L -0x1.f3fa08aee2333p+8 -0x1.5dfd05f4e3c46p+8 -0x1.f3f9d40c86d3dp+8 -0x1.5dfcebfe9abafp+8
+L -0x1.f3f9d40c86d3dp+8 -0x1.5dfcebfe9abafp+8 -0x1.f3f9b83903849p+8 -0x1.5dfd247d179cdp+8
+L -0x1.f3f9b83903849p+8 -0x1.5dfd247d179cdp+8 -0x1.f3f9bc0f803edp+8 -0x1.5dfce98ed9c65p+8
+L -0x1.f3f9bc0f803edp+8 -0x1.5dfce98ed9c65p+8 -0x1.f3f98af31ad6ap+8 -0x1.5dfcdc7e87062p+8
+C 0
+A -0x1.f3ff7b6f9df18p+8 -0x1.5dfb1ec1f27d5p+8 0x1.619a1d2d68d79p-9 0x1.921fb54442d18p+1 0x0p+0 1
+A -0x1.f3fe19d580c41p+8 -0x1.5dfb1ec1f27d5p+8 0x1.619a1d2d68d79p-9 0x1.921fb54442d18p+1 0x1.921fb54442d18p+2 0
+L -0x1.f3fd6908722d6p+8 -0x1.5dfb1ec1f27d5p+8 -0x1.f3fb1b6382de9p+8 -0x1.5dfb094ffc3f8p+8
+C 0
+L -0x1.f3fe063b6df1cp+8 -0x1.5dfb39818dda4p+8 -0x1.f3fd8143fd248p+8 -0x1.5dfb39818dda4p+8
+A -0x1.f3fd8143fd248p+8 -0x1.5df9585ca2f4ep+8 0x1.e124eae563d57p-8 -0x1.921fb54442d18p+0 0x1.da97775c8cfd9p-1 0
+C 1
+L -0x1.f3fc6322dc29fp+8 -0x1.5dfb2e69c8f85p+8 -0x1.f3fcaa9fb3d92p+8 -0x1.5dfb1f1141937p+8
+L -0x1.f3fcaa9fb3d92p+8 -0x1.5dfb1f1141937p+8 -0x1.f3fc99d75092dp+8 -0x1.5dfae1dfc44b3p+8
+L -0x1.f3fc99d75092dp+8 -0x1.5dfae1dfc44b3p+8 -0x1.f3fcc6530ad0cp+8 -0x1.5dfb135263b0ep+8
+L -0x1.f3fcc6530ad0cp+8 -0x1.5dfb135263b0ep+8 -0x1.f3fcf7e18d8a4p+8 -0x1.5dfad811ffeabp+8
+L -0x1.f3fcf7e18d8a4p+8 -0x1.5dfad811ffeabp+8 -0x1.f3fce388c68bap+8 -0x1.5dfb1caa429cp+8
+L -0x1.f3fce388c68bap+8 -0x1.5dfb1caa429cp+8 -0x1.f3fd2a596086fp+8 -0x1.5dfb2e69c8f85p+8
+L -0x1.f3fd2a596086fp+8 -0x1.5dfb2e69c8f85p+8 -0x1.f3fcd91b25facp+8 -0x1.5dfb391baba2p+8
+L -0x1.f3fcd91b25facp+8 -0x1.5dfb391baba2p+8 -0x1.f3fcf7d6d9f94p+8 -0x1.5dfb84af08f47p+8
+L -0x1.f3fcf7d6d9f94p+8 -0x1.5dfb84af08f47p+8 -0x1.f3fcc527dc12cp+8 -0x1.5dfb4e5e88d6fp+8
+L -0x1.f3fcc527dc12cp+8 -0x1.5dfb4e5e88d6fp+8 -0x1.f3fc94e8a559ep+8 -0x1.5dfb837ecf54ap+8
+L -0x1.f3fc94e8a559ep+8 -0x1.5dfb837ecf54ap+8 -0x1.f3fcb0af4a38bp+8 -0x1.5dfb3b48ba599p+8
+L -0x1.f3fcb0af4a38bp+8 -0x1.5dfb3b48ba599p+8 -0x1.f3fc6322dc29fp+8 -0x1.5dfb2e69c8f85p+8
+P 0x1.0624dd2f1a9fcp-10 90 0x0p+0 2 1 0x0p+0 0x1.ac925bf1f9e29p-9 0x1.8813e82026f7fp-10 0x0p+0 0x1.4p+2 1 0x1.3481a58bb2597p-13 1 0 0x1.eb786b5b5c10cp-10 0x1.abe119d506971p-10 0 9 0x1.daced952c30b5p-5 0x0p+0 1 1 0x0p+0 3 0x1.93c4ded06ae57p-10 0 1 0x1.01994379f6004p-5 0x1.7e1d4456795d6p-10 0x1.7e82f781e9f9ap+0 0x1.2d0954efc03e4p-10 2 0x1.0b7724a61ab3cp-1 0 0 0x0p+0 0x0p+0 1 3 0 0 0 0 -0x1.f408415018749p+8 -0x1.5e01079eaca0bp+8 0x1p+1
+K 0 0

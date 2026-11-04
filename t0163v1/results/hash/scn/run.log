@@ -1,0 +1,3 @@
+main: line 1: 1973243 Segmentation fault         env $E timeout 900 $D/${HSB}_$0 scn $2 > $D/scn/$1/$0_$n.txt 2>&1
+rc=139 main all /home/chris/harness/t0137v1/repro/seg_241_31.scn
+ALLDONE

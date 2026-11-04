@@ -1,0 +1,1 @@
+repro/seg_241_31.scn st0 L0 an0 sep0 tabs0 rc=0 moves 662 retracts 88 finite 1 badRapid 

@@ -1,0 +1,7 @@
+side0 st0 L0 an0 sep0 tabs0 oc0 rc=0 moves 5 retracts 1 finite 1 ba 
+side0 st0 L0 an0 sep0 tabs0 oc0.0005 rc=0 moves 7 retracts 1 finite 1 ba 
+side0 st0 L0 an0 sep0 tabs1 oc0 rc=0 moves 5 retracts 1 finite 1 ba   diag 10 c0: vector 0: 1 of 1 tab(s) left out (1 with no room (they would overlap, run past an open end, cover where the tool plunges or leave no stretch cut to full depth))
+side0 st0 L0 an0 sep0 tabs1 oc0.0005 rc=0 moves 7 retracts 1 finite 1 ba   diag 10 c0: vector 0: 1 of 1 tab(s) left out (1 with no room (they would overlap, run past an open end, cover where the tool plunges or leave no stretch cut to full depth))
+side0 st0 L0 an0 sep1 tabs0 oc0 rc=0 moves 10 retracts 2 finite 1 b 
+side0 st0 L0 an0 sep1 tabs0 oc0.0005 rc=0 moves 13 retracts 2 finite 1 b 
+side0 st0 L0 an0 sep1 tabs1 oc0 rc=143  

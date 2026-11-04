@@ -1,0 +1,60 @@
+r242:0:m0:V0 expect onabove side 2 sep 1 tabs 0 a 0x1.2bfffffffffffp+5 lpa 0x1.522abaa190c0bp+4 r 0x1.2cp+5 moves 114 diags 0 hash d7c38f56288dcf2e | 
+r242:1:m1:V0 expect onabove side 2 sep 1 tabs 1 a 0x1.2bfffa4954c35p+5 lpa 0x1.292cf987041ep+1 r 0x1.2cp+5 moves 109264 diags 63 hash 8d6f8bd6d65f3111 | vector 1: loose piece 1 of 1: a piece of material inside the cut (about 5219.19 square mm) is not held by any kept tab and comes free
+r242:2:m2:V0 expect onabove side 2 sep 1 tabs 1 a 0x1.2cp+3 lpa 0x1.bbfc334e9b645p+1 r 0x1.2cp+3 moves 186269 diags 167 hash 2e970dd0b0151fef | vector 77: no room for the tool (offset by 12.843634 mm vanishes)
+r242:3:m3:V1 expect same side 2 sep 1 tabs 0 a 0x1.594ea104a6869p-2 lpa 0x1.1aab47c4bdbb8p+3 r 0x1.2cp+4 moves 89648 diags 0 hash b84e9353fc7589ba | 
+r242:4:m0:V0 expect onabove side 2 sep 1 tabs 0 a 0x1.2ce6e878dee7fp+5 lpa 0x1.5eb22f0e42304p+4 r 0x1.dc4p+5 moves 101 diags 0 hash 234f6893fa950052 | 
+r242:5:m1:V0 expect same side 1 sep 0 tabs 0 a 0x1.c1fffe0c4bd8ep+7 lpa 0x0p+0 r 0x1.c2p+7 moves 0 diags 4 hash 7e36b6c45e5fc5a3 | 
+r242:6:m2:V1 expect onabove side 2 sep 0 tabs 0 a 0x1.dc40000000001p+6 lpa 0x1.86282e3749257p+2 r 0x1.dc4p+6 moves 279861 diags 22 hash df048383cc44492a | vector 1: no room for the tool (offset by 119.062500 mm vanishes)
+r242:7:m3:V0 expect same side 0 sep 1 tabs 0 a 0x1.a958ca7836808p+3 lpa 0x1.5d4e6b0f92ff1p+2 r 0x1.2cp+4 moves 92371 diags 462 hash 7db9fd3e4c87a716 | 
+r242:8:m0:V1 expect onabove side 2 sep 1 tabs 1 a 0x1.2c000000112e1p+6 lpa 0x1.3a3b29f82f2d7p+2 r 0x1.2cp+6 moves 172 diags 4 hash 7a00292217f54c17 | vector 1: 8 of 9 tab(s) left out (4 with no room (they would overlap, run past an open end, cover where the tool plunges or leave no stretch cut to full depth); 4 could not be matched on the roughing cut)
+r242:9:m0:V0 expect onabove side 2 sep 1 tabs 1 a 0x1.c2p+7 lpa 0x1.5bd89f3f56f44p+2 r 0x1.c2p+7 moves 35 diags 2 hash f1a85c75b6de96fb | vector 0: 2 of 3 tab(s) left out (2 would hold nothing (the cut removes all the material on one side of them))
+r242:10:m2:V0 expect onabove side 2 sep 0 tabs 1 a 0x1.2c00000000001p+4 lpa 0x1.196f4b0fcae94p+4 r 0x1.2cp+4 moves 28885 diags 56 hash 99ac694681640304 | sharp corner options need a V-bit; ignored
+r242:11:m3:V0 expect same side 2 sep 1 tabs 0 a -0x1.cba50366f3bap+3 lpa 0x1.67ecca20317a7p+1 r 0x1.2cp+4 moves 132046 diags 5 hash d1c26e09916b2ab2 | 
+r242:12:m0:V1 expect same side 1 sep 1 tabs 0 a 0x1.2bffed3ba2396p+6 lpa 0x0p+0 r 0x1.2cp+6 moves 42 diags 6 hash ca9e6294dbfbcb38 | 
+r242:13:m1:V0 expect same side 2 sep 0 tabs 0 a 0x1.2cp+5 lpa 0x1.587298f3ccc34p+3 r 0x1.2cp+5 moves 159819 diags 0 hash 1b6ac1d135202613 | 
+r242:14:m0:V0 expect onabove side 2 sep 1 tabs 1 a 0x1.dc4p+5 lpa 0x1.cb09839125dc4p+4 r 0x1.dc4p+5 moves 35 diags 1 hash 421a65ff6dd6200c | vector 0: 9 of 9 tab(s) left out (8 with no room (they would overlap, run past an open end, cover where the tool plunges or leave no stretch cut to full depth); 1 could not be matched on the roughing cut)
+r242:15:m3:V1 expect onabove side 2 sep 1 tabs 1 a 0x1.90b222513a182p+5 lpa 0x1.af9d142c0a177p+3 r 0x1.90b222515c743p+5 moves 6850 diags 55 hash bac5902d96c61582 | vector 8: no room for the tool (offset by 63.574904 mm vanishes)
+r242:16:m0:V0 expect same side 0 sep 1 tabs 1 a 0x1.c1fffffffffffp+6 lpa 0x1.887ca1b82ea61p+4 r 0x1.c2p+6 moves 95 diags 1 hash 2012570a2bde3015 | 
+r242:17:m1:V0 expect same side 2 sep 0 tabs 0 a 0x0p+0 lpa 0x1.849072b9dd81cp+4 r 0x1.c2p+6 moves 59740 diags 0 hash 53ab25b1f9f24e55 | 
+r242:18:m2:V0 expect onabove side 2 sep 0 tabs 1 a 0x1.7dac8f59cfc6cp+6 lpa 0x1.0ccfaadebff4ep+3 r 0x1.dc4p+5 moves 85745 diags 132 hash b27cfb2874f07ea2 | vector 34: no room for the tool (offset by 95.418516 mm vanishes)
+r242:19:m0:V0 expect same side 1 sep 1 tabs 0 a 0x1.9fa2d2e49d19ap+6 lpa 0x1.831ac20a604f6p+4 r 0x1.2cp+5 moves 505 diags 2 hash 7c6b05ce30e1c035 | 
+r242:20:m0:V1 expect onabove side 2 sep 1 tabs 0 a 0x1.a8bd5066d8c0bp+6 lpa 0x1.cb19d78ad01ecp+3 r 0x1.e2208b5832c47p+6 moves 34 diags 0 hash b7569e4c2bfc0f59 | 
+r242:21:m1:V1 expect onabove side 2 sep 1 tabs 1 a 0x1.c1d5e7ee9d697p+7 lpa 0x1.50c08b14b4de9p-4 r 0x1.c2p+7 moves 1095 diags 12 hash 0e00c8ecc6e2d998 | vector 1: loose piece 1 of 1: a piece of material inside the cut (about 59837.86 square mm) is not held by any kept tab and comes free
+r242:22:m2:V0 expect same side 2 sep 0 tabs 1 a 0x1.2bfffffffffffp+3 lpa 0x1.0fe95fa99e484p+2 r 0x1.2cp+3 moves 187186 diags 402 hash 13193d424b28bcd2 | 
+r242:23:m3:V1 expect same side 0 sep 1 tabs 1 a 0x1.2c00000000001p+6 lpa 0x1.f37b1042b0412p+2 r 0x1.2cp+6 moves 44116 diags 78 hash 200f9d7f74e3911c | 
+r242:24:m0:V1 expect same side 0 sep 1 tabs 1 a 0x1.88d7c46c0a8cp+5 lpa 0x1.16700533467f8p+1 r 0x1.88d7c46c0a8cp+5 moves 96 diags 0 hash b13dc1fdb968c029 | 
+r242:25:m1:V0 expect onabove side 2 sep 0 tabs 0 a 0x1.c20000000897p+7 lpa 0x1.8cca42718994ep+4 r 0x1.c2p+7 moves 426874 diags 7 hash 3db1dfb2db86885a | vector 3: no room for the tool (offset by 225.000000 mm vanishes)
+r242:26:m2:V0 expect same side 2 sep 1 tabs 0 a 0x1.c68b0e061b947p-1 lpa 0x1.3bd72412bc469p+0 r 0x1.dc4p+5 moves 156124 diags 0 hash ecb40704763dd6d7 | 
+r242:27:m3:V1 expect same side 2 sep 1 tabs 0 a 0x1.1058fc16e2ee4p+6 lpa 0x1.ba703e91d11bfp+2 r 0x1.2cp+6 moves 40328 diags 12 hash a155149f4608cb31 | 
+r242:28:m0:V0 expect same side 0 sep 1 tabs 0 a 0x1.c2p+6 lpa 0x1.17bfd69a34d22p+5 r 0x1.c2p+6 moves 146561 diags 3 hash 0e13549ad0b4b05a | 
+r242:29:m0:V0 expect same side 1 sep 1 tabs 0 a 0x0p+0 lpa 0x1.fea4dd5c82739p+4 r 0x1.2cp+5 moves 11172 diags 0 hash 708c1385b7f438c4 | 
+r242:30:m2:V0 expect same side 2 sep 0 tabs 1 a 0x1.2bfffffffffffp+5 lpa 0x1.09b4771d266c4p+4 r 0x1.2cp+5 moves 71454 diags 33 hash f1be84a2a74843d3 | 
+r242:31:m3:V1 expect same side 0 sep 1 tabs 0 a 0x1.ef10c27461057p-1 lpa 0x1.f8a05e9009fcep+2 r 0x1.2cp+6 moves 452066 diags 275 hash d237d75a6e3f8a95 | 
+r242:32:m0:V0 expect same side 0 sep 1 tabs 1 a 0x1.b478eccd0a16bp-3 lpa 0x1.7c07450985de5p+2 r 0x1.2cp+5 moves 44220 diags 3 hash 41eed0b431344db3 | 
+r242:33:m1:V0 expect same side 1 sep 0 tabs 1 a 0x1.8c0a6f31487f7p-1 lpa 0x1.15114bc59e3e8p+5 r 0x1.dc4p+5 moves 118516 diags 92 hash d82aadea384d4e38 | 
+r242:34:m0:V1 expect onabove side 2 sep 0 tabs 1 a 0x1.10f15e97c112p+7 lpa 0x0p+0 r 0x1.e1994d1b4e381p+5 moves 8884 diags 1 hash 5bddb9063f1b7b71 | vector 0: 8 tab(s) left on a corner or curve (no straight stretch long enough)
+r242:35:m3:V0 expect same side 1 sep 1 tabs 1 a 0x1.9ced2113ee4p-1 lpa 0x1.98a5ef76fa183p+3 r 0x1.2cp+3 moves 105331 diags 217 hash 6ee4e6d42c2cbd63 | 
+r242:36:m0:V0 expect onabove side 2 sep 0 tabs 0 a 0x1.c2000000112e1p+6 lpa 0x1.6325c73b90de7p-2 r 0x1.c2p+6 moves 99 diags 0 hash 13cd5baeb6f023bb | 
+r242:37:m1:V0 expect same side 2 sep 1 tabs 0 a 0x1.a086299c1a5f5p+3 lpa 0x1.87bceb31f2d06p+4 r 0x1.2cp+5 moves 91266 diags 2 hash 8b5edcefb2f45144 | 
+r242:38:m2:V0 expect onabove side 2 sep 1 tabs 1 a 0x1.2c00000000001p+5 lpa 0x1.771fab28be04ap+3 r 0x1.2cp+5 moves 383237 diags 303 hash 6558a0da403f1298 | vector 10: no room for the tool (offset by 49.222616 mm vanishes)
+r242:39:m0:V0 expect same side 1 sep 1 tabs 0 a 0x1.2bfff4d24ec13p+5 lpa 0x1.a37d840f0c008p+2 r 0x1.2cp+5 moves 48 diags 0 hash b62cb202e00d9e8f | 
+r242:40:m0:V1 expect same side 0 sep 1 tabs 0 a -0x0p+0 lpa 0x1.29b56a3c0364ep+5 r 0x1.271fb69c3b436p+7 moves 48 diags 0 hash eba07620b007141e | 
+r242:41:m1:V0 expect same side 0 sep 1 tabs 1 a 0x1.866b97eb17be8p+6 lpa 0x1.dca340a7420cap+3 r 0x1.c2p+6 moves 96771 diags 7 hash 8c4eb2d6366766e9 | 
+r242:42:m2:V0 expect same side 0 sep 1 tabs 1 a 0x1.2bffffffbb47dp+4 lpa 0x1.273f675866dccp+5 r 0x1.2cp+4 moves 145332 diags 360 hash e53bb197c6019e51 | 
+r242:43:m3:V1 expect same side 0 sep 1 tabs 0 a 0x1.2cp+4 lpa 0x1.2373fe3ad88d2p+3 r 0x1.2cp+4 moves 36666 diags 114 hash 854d32d27b1aa6b2 | 
+r242:44:m0:V0 expect onabove side 2 sep 1 tabs 0 a 0x1.c1fff063d0837p+7 lpa 0x1.23e6d49c6a22ap+4 r 0x1.c2p+7 moves 20 diags 0 hash b851d20075f55221 | 
+r242:45:m1:V0 expect same side 1 sep 0 tabs 0 a 0x1.c20000000897p+7 lpa 0x1.7deb202ddd74ap-1 r 0x1.c2p+7 moves 29 diags 40 hash 1004096c3065f3cd | 
+r242:46:m2:V0 expect same side 2 sep 1 tabs 1 a -0x1.b74d9565ade87p+5 lpa 0x1.7b80439346ec9p+2 r 0x1.dc4p+5 moves 49614 diags 149 hash 2629567f708a1d14 | 
+r242:47:m3:V0 expect same side 2 sep 1 tabs 1 a -0x0p+0 lpa 0x1.cfa72abd4e9f4p+3 r 0x1.2cp+5 moves 166167 diags 147 hash 5986e8cc102b56bc | 
+r242:48:m0:V0 expect onabove side 2 sep 1 tabs 0 a 0x1.dc3fffffdda3fp+5 lpa 0x1.b66ab1914c084p+2 r 0x1.dc4p+5 moves 68 diags 0 hash 43c2a95b525d55f3 | 
+r242:49:m0:V0 expect same side 2 sep 1 tabs 0 a -0x1.52a7829856823p+4 lpa 0x1.439a2f4556f19p+2 r 0x1.2cp+5 moves 21 diags 0 hash f6860dc07932c704 | 
+r242:50:m2:V1 expect onabove side 2 sep 1 tabs 1 a 0x1.1c89980079291p+5 lpa 0x1.46eda59f99e3cp+4 r 0x1.c0006ad0461aep+5 moves 117433 diags 206 hash af49f5357f1ea735 | vector 9: no room for the tool (offset by 56.000204 mm vanishes)
+r242:51:m3:V0 expect same side 0 sep 0 tabs 1 a 0x1.2bfffffffffffp+5 lpa 0x1.398c6db42e0d7p+3 r 0x1.2cp+5 moves 206150 diags 348 hash 07d2d05b0215f690 | 
+r242:52:m0:V0 expect same side 0 sep 1 tabs 0 a -0x1.b943dd023bd7fp+5 lpa 0x1.7027ee44593ccp-2 r 0x1.dc4p+5 moves 40 diags 2 hash 79799cdc3d23f81a | 
+r242:53:m1:V0 expect same side 2 sep 0 tabs 1 a -0x0p+0 lpa 0x1.35e1650536dcfp+4 r 0x1.2cp+7 moves 104667 diags 18 hash 7c3983840a3549d8 | 
+r242:54:m0:V0 expect same side 1 sep 0 tabs 1 a 0x1.c1ffffffeed1fp+6 lpa 0x1.4e0191d0f1e56p+3 r 0x1.c2p+6 moves 17054 diags 3 hash 8d2a167d1ad6333d | 
+r242:55:m3:V0 expect same side 0 sep 0 tabs 0 a 0x1.2cp+3 lpa 0x1.12411204d11fap+3 r 0x1.2cp+3 moves 35532 diags 52 hash 1a945b1b681838f8 | 
+r242:56:m0:V0 expect same side 1 sep 1 tabs 0 a 0x1.bea97adc83971p+2 lpa 0x1.e855a148df1a4p+4 r 0x1.2cp+5 moves 144 diags 0 hash 32c5f7b305034149 | 
+r242:57:m1:V0 expect onabove side 2 sep 1 tabs 0 a 0x1.2c0000000897p+7 lpa 0x1.d786dc7224961p+4 r 0x1.2cp+7 moves 100 diags 1 hash 9ff721e2b8de9a29 | vector 1: no room for the tool (offset by 179.470425 mm vanishes)
+r242:58:m2:V0 expect onabove side 2 sep 1 tabs 1 a 0x1.dc4p+5 lpa 0x1.f94ac438e39e9p+1 r 0x1.dc4p+5 moves 157791 diags 179 hash 142688c9340206d4 | vector 22: no room for the tool (offset by 63.478844 mm vanishes)
+r242:59:m0:V1 expect same side 0 sep 0 tabs 1 a 0x1.ed2402ff3e1ddp+6 lpa 0x0p+0 r 0x1.ed2402ff3e1dep+6 moves 0 diags 1 hash 59ff2e4e4879f4bc | 

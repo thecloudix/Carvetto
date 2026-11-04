@@ -1,0 +1,13 @@
+r241_35 leads=0 main: [moves 2649 retracts 125 finite 1 badRapi] br: [moves 2649 retracts 125 finite 1 badRapi]
+r241_35 leads=x main: [] br: [moves 2007 retracts 125 finite 1 badRapi]
+r241_51 leads=0 main: [moves 519 retracts 38 finite 1 badRapid ] br: [moves 519 retracts 38 finite 1 badRapid ]
+r241_51 leads=x main: [] br: [moves 551 retracts 38 finite 1 badRapid ]
+r244_31 leads=0 main: [moves 2599 retracts 214 finite 1 badRapi] br: [moves 2599 retracts 214 finite 1 badRapi]
+r244_31 leads=x main: [] br: [moves 2599 retracts 214 finite 1 badRapi]
+r246_51 leads=0 main: [moves 5757 retracts 344 finite 1 badRapi] br: [moves 5757 retracts 344 finite 1 badRapi]
+r246_51 leads=x main: [] br: [moves 5757 retracts 344 finite 1 badRapi]
+r244_7 leads=0 main: [moves 1960 retracts 101 finite 1 badRapi] br: [moves 1960 retracts 101 finite 1 badRapi]
+r244_7 leads=x main: [] br: [moves 2162 retracts 101 finite 1 badRapi]
+r246_31 leads=0 main: [moves 1836 retracts 159 finite 1 badRapi] br: [moves 1836 retracts 159 finite 1 badRapi]
+r246_31 leads=x main: [] br: [moves 2154 retracts 159 finite 1 badRapi]
+DONE

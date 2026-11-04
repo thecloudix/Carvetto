@@ -1,0 +1,9 @@
+br_only(main crashed/killed) 7
+match 3193
+('br_only', 'r241:31:m3:V1 expect same side 2 sep 1 tabs 0 a -0x1.12483ab69d02p-16 lpa 0x1.8c21f2e6585ep-12 r 0x1.1848dba6e1d64p-11 moves 2357 diags 2 hash a7aa43102b4a7fd7 |')
+('br_only', 'r241:35:m3:V0 expect same side 2 sep 0 tabs 1 a -0x1.03e9cf10167a9p-10 lpa 0x0p+0 r 0x1.0624dd2f1a9fcp-10 moves 2007 diags 130 hash 9782766748771b69 |')
+('br_only', 'r241:51:m3:V1 expect same side 2 sep 1 tabs 0 a 0x0p+0 lpa 0x1.3481a58bb2597p-13 r 0x1.0624dd2f1a9fcp-11 moves 551 diags 4 hash f3b2e0eec605d481 |')
+('br_only', 'r244:7:m3:V0 expect same side 2 sep 0 tabs 0 a -0x1.5a98270261feap-13 lpa 0x1.2032bc963c055p-14 r 0x1.0624dd2f1a9fcp-12 moves 2162 diags 3 hash 8e1185c85bc4cae5 |')
+('br_only', 'r244:31:m3:V0 expect same side 0 sep 1 tabs 0 a 0x1.771ee9a3a78c3p-12 lpa 0x1.3e02f97f5026dp-12 r 0x1.0624dd2f1a9fcp-12 moves 2599 diags 127 hash 8377a51538b95ad2 |')
+('br_only', 'r246:31:m3:V0 expect onabove side 2 sep 1 tabs 0 a 0x1.0624cc010eb7ap-10 lpa 0x1.a0731ce959f3bp-12 r 0x1.0624dd2f1a9fcp-10 moves 2154 diags 24 hash c6c80cdb8c2508ba | vector 10: no room for the tool (offset by 0.001397 mm vanishes)')
+('br_only', 'r246:51:m3:V0 expect same side 0 sep 1 tabs 0 a -0x1.99a4d51f43f78p-12 lpa 0x1.6c36603b95091p-12 r 0x1.0624dd2f1a9fcp-11 moves 5757 diags 307 hash eec69e5c5dd04660 |')

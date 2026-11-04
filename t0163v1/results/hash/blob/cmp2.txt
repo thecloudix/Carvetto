@@ -1,0 +1,23 @@
+main_crash_br_ok 20
+match 991
+timeout 189
+('main_crash', 'e31:21 S 0.001 side 2 sep 0 tabs 1 lead 2 lo 0 st 1 V 0 rc 0 moves 13 diags 1 finite 1 hash 987714ca30d43689')
+('main_crash', 'e31:67 S 0.001 side 0 sep 1 tabs 1 lead 2 lo 0 st 1 V 1 rc 0 moves 0 diags 2 finite 1 hash 8811da1f9b79c27c')
+('main_crash', 'e31:170 S 0.0001 side 2 sep 0 tabs 1 lead 2 lo 1 st 1 V 1 rc 0 moves 42 diags 13 finite 1 hash 164ad877e04e5193')
+('main_crash', 'e32:38 S 0.001 side 2 sep 0 tabs 1 lead 2 lo 1 st 1 V 1 rc 0 moves 80 diags 7 finite 1 hash f0eee42e580a8d98')
+('main_crash', 'e32:47 S 0.01 side 2 sep 0 tabs 0 lead 2 lo 0 st 1 V 1 rc 0 moves 98 diags 1 finite 1 hash 00ceded85878e587')
+('main_crash', 'e32:86 S 0.01 side 1 sep 0 tabs 0 lead 1 lo 1 st 1 V 1 rc 0 moves 102 diags 11 finite 1 hash a3f7c2c7dd7a1344')
+('main_crash', 'e32:123 S 0.0001 side 2 sep 1 tabs 1 lead 1 lo 1 st 1 V 0 rc 0 moves 52 diags 2 finite 1 hash abd7988f00d4af67')
+('main_crash', 'e33:5 S 0.0001 side 2 sep 1 tabs 1 lead 1 lo 1 st 1 V 1 rc 0 moves 139 diags 7 finite 1 hash a4f92b1e3630ad8b')
+('main_crash', 'e33:65 S 0.01 side 2 sep 1 tabs 0 lead 1 lo 1 st 1 V 1 rc 0 moves 325 diags 1 finite 1 hash 24b4347008e8bea4')
+('main_crash', 'e33:96 S 0.1 side 2 sep 0 tabs 1 lead 2 lo 1 st 1 V 1 rc 0 moves 79 diags 10 finite 1 hash a95634d5372c958f')
+('main_crash', 'e33:134 S 1 side 2 sep 1 tabs 0 lead 2 lo 1 st 1 V 1 rc 0 moves 186 diags 1 finite 1 hash 7085aa3a0897c1b0')
+('main_crash', 'e33:135 S 0.0001 side 2 sep 1 tabs 1 lead 2 lo 1 st 1 V 1 rc 0 moves 112 diags 17 finite 1 hash 830529e24f8c360c')
+('main_crash', 'e34:8 S 0.001 side 1 sep 0 tabs 0 lead 2 lo 1 st 1 V 1 rc 0 moves 112 diags 14 finite 1 hash 808e089b60c4cf05')
+('main_crash', 'e35:11 S 1 side 2 sep 1 tabs 1 lead 1 lo 1 st 1 V 1 rc 0 moves 40 diags 2 finite 1 hash c3215d76fcd4836d')
+('main_crash', 'e35:56 S 0.0001 side 2 sep 1 tabs 1 lead 2 lo 0 st 1 V 1 rc 0 moves 197 diags 9 finite 1 hash 569148015c5a42c5')
+('main_crash', 'e35:139 S 0.01 side 2 sep 1 tabs 1 lead 1 lo 1 st 1 V 0 rc 0 moves 293 diags 10 finite 1 hash 381c219f7765b841')
+('main_crash', 'e36:79 S 0.001 side 1 sep 0 tabs 0 lead 2 lo 1 st 1 V 1 rc 0 moves 164 diags 10 finite 1 hash 8650e766da6521f9')
+('main_crash', 'e36:99 S 0.01 side 2 sep 0 tabs 0 lead 1 lo 1 st 1 V 0 rc 0 moves 57 diags 1 finite 1 hash c64e42b8b9b14f2c')
+('main_crash', 'e36:179 S 0.01 side 2 sep 0 tabs 1 lead 1 lo 1 st 1 V 1 rc 0 moves 49 diags 8 finite 1 hash 30b7256c77453b48')
+('main_crash', 'e36:186 S 0.01 side 2 sep 1 tabs 1 lead 1 lo 0 st 1 V 1 rc 0 moves 146 diags 10 finite 1 hash 67b296c6d2b2e352')

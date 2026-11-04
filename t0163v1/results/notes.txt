@@ -1,0 +1,44 @@
+T-0163 round 1 verifier results (branch task/T-0163-empty-walk 51a70f5 vs origin/main 5588374; main code == branch base 031b4da)
+
+Root cause (own analysis, probe = instrumented copy of profile.cpp under build-verify1-rel/probe, not committed):
+  A tiny closed vector (1-4 um, about the 0.001 mm distance tolerance) offsets to a "closed" cut of ONE
+  line span A->B whose ends are ~1.03 um apart (> tol, so chooseStarts' sliver filter keeps it).
+  closeExactly() snaps the last line's end to its start -> a zero-length line (walk length 0, 1 span).
+  With StartAt::Optimise, applyOptimisedStarts() then extracts u..u+0 -> no spans -> empty walk ->
+  planLeadIns: std::stable_sort(spans.begin() + 1, spans.end()) on an empty vector = UB (segfault).
+  Only Optimise reaches the empty walk: VectorStart / bbox anchors extract BEFORE closeExactly and get
+  a 2-span loop P->B, A->P (cut, with an internal jump B->A along the same line) or, when the start
+  projects exactly onto A (anchor BottomLeft/TopRight on v21), a 1-span zero-length walk that emits a
+  plunge-only point and a misleading "lead-in left out (it would gouge a vector)" diagnostic. All
+  pre-existing, identical on main. Leads off: main == branch (emit already skipped empty walks).
+
+AC1:
+  repro/seg_241_31.scn: main segfault (rc 139); branch 2357 moves, 2 diags, finite, rapids at safe Z,
+    moves within the input box; ASan/UBSan (RelWithDebInfo) clean; hash a7aa43102b4a7fd7 in Release and ASan.
+  Vector 21 of that scene (repro/v21.scn) alone: branch 0 moves, "no vector produced a cut"; in the
+    90-vector scene vector 21 gets no cut and NO per-vector diagnostic (same as main with leads off).
+  New main crash scenes (all page-mode, S=0.001, Optimise, leads on), branch fine and ASan-clean:
+    r244_7 (On, no separate last pass: vector 43 silently not cut), r246_31, r241_35, r241_51,
+    r244_31 (Outside), r246_51 (Outside); leads off main == branch on every one (results/main_crash_scenes.txt).
+  ASan+UBSan:
+    full ctest (Debug ASan, -Wno-error=unused-function for a pre-existing unused helper): 924/929;
+      5 failures are CPU/wall-time bounds (medial axis, document) under -O0 ASan at load ~40; 0 sanitizer reports.
+    grid.cpp option grid (sides x starts x anchors x leads x lead-out x overcut x sep x tabs 2D/3D x ramps x EM/V-bit):
+      blob alone: 10368 runs clean, all finite (probe: ~290 roughing + ~140 finishing empty walks per 1000 runs);
+      blob + 2 neighbours (rect, circle): 3808 of 5184 runs clean (all end-mill configs, 1216 V-bit; stopped for time).
+    hs random (t0137v1 generator, V-bits/leads/tabs/both sides/On): S=0.01 seed 221 (80), S=0.001 seeds 243 (60)
+      and 241 (scenes 0-42, incl. main-crash scenes 31 and 35), S=0.0001 seed 251 (60), plus 244:7 and 246:31 alone: clean.
+    edge.cpp seeds 52/54 (degenerate tiny shapes, scales 1..1e-4): 500 scenes clean (2 hit the 150 s cap);
+      BLOB seeds 51/53 (um Bezier blobs, mostly Optimise): 180 scenes clean (41 hit the cap; stopped for time).
+AC2 (Release, byte hash of every move + diagnostics, branch vs main):
+  stored harness scenes (2183 originals + 37 variants on every 18th): 6659 match, 1 main crash (seg_241_31).
+  random hs sweep (sweep.sh, 33 seed/scale sets incl. S=0.01/0.001/0.0001, -500 and -3.3e6 offsets): 3193 match,
+    7 main-crash scenes (branch ok; main resumed past each crash with resume.sh), 0 differences.
+  edge.cpp 1..8 x 400: 3199 match, 1 main crash (branch ok).
+  BLOB 31..36 x 200: 991 match, 20 main crashes (branch ok), 189 timeouts at 40 s (symmetric; the two
+    asymmetric ones re-run uncapped: identical).
+Other: Debug -Werror build ok, ctest 929/929; changelog check ok; merge-tree vs origin/main clean;
+  vs origin/task/T-0137-on-allowance: one trivial conflict in core/tests/CMakeLists.txt (both append a test
+  to the same line); profile.cpp and ADR-0016 auto-merge, merged profile.cpp compiles with -Werror.
+Pre-existing, not T-0163 (same on main): repro/v21.scn (one 1.7 um blob at -500/-350) takes ~5 s CPU in
+  Release; repro/e31_9.scn (11 um-scale closed vectors) > 100 s; ~16% of BLOB scenes exceed 40 s on both.
