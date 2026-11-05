@@ -509,11 +509,21 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     loses its filler ends, a loop of fillers alone goes): where the path comes back past the cluster
     (0x3140019e, a later span through the same point), a cluster vertex can stick out into that
     span's offset, which then runs on round it. Open ends get no fillers (the rest is the end cap).
+    The other vertices of runs of sub-tolerance spans within a box of diagonal 4 tol get fillers
+    too (the rest of their circle beyond their own join arc), as do their lines (their other offset,
+    run backwards); along longer runs (a random walk of 0.5 µm steps) the circles reached past the
+    domination cells and the cost grew with the square (8000 steps: 5.4 s). Links involving fillers
+    are made after all others: taken first, a filler cut 1e-3 mm gaps into the offset of dense
+    sub-tolerance runs (g2 0x325000f2, 0x327003b7). A vertex of a
+    sub-tolerance kink 1.8e-5 mm below the closing edge of a closed path cut that edge's offset over
+    6.4e-3 mm and opened the loop main keeps closed (0x35000345, every join).
     The quarter turn reaches the path's own line: with A or B short (a cluster inside a longer run)
     the path can go on turning past them (0x3100004c lost 0.01 mm of offset with a range of
     acos(1 - extent / d) instead). A closed path is rotated to start at a span longer than the
     tolerance, so no cluster wraps round its start. Larger clusters stay corner by corner, with the
-    near-reversal corners Round (m). Clusters are found in O(n log n): windows are grown by binary
+    near-reversal corners Round (m), and where such a cluster reverses as a whole (A to B turning by
+    more than 135 degrees) its corners with A and B are Round too (a chamfer at the end of a
+    4e-3 mm cluster pointed 0.014 mm beyond d outside any corner region, g2 0x32300326 Square). Clusters are found in O(n log n): windows are grown by binary
     search over a segment tree of span boxes, so an 8000-span micro-cluster does not grow 8000
     windows of 8000 spans.
     (m) *Sharp/Square at sub-tolerance spans.* The offset of a line shorter than the tolerance has
@@ -537,47 +547,59 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     (n) crowded vertices; (d), (e), (f), (i), (j) and (k) change results only where main dropped a stretch
     longer than the tolerance at a chain's end, wrapped an arc, merged pieces across a gap longer
     than the tolerance or far from d, dropped a chain longer than the tolerance, or met a collapsed arc.
-  - *Results (AC2, AC3).* Release, T-0009 round-2 build. AC2: (1) the T-0009 verifier's v9
-    injector (sub-tolerance spans and Beziers injected into the T-0017 families; its vchk checker
-    on the polygonised input), 24,000 seeds, 21,140 inputs holding sub-tolerance spans: 0
-    distance, 0 Round-over-d, 0 coverage violations; 220 inputs with coverage points left
-    uncovered within d + tol/2 of another span (the classification below); 2 arc-to-arc gaps of
-    1.5e-10 and 2.4e-11 of the scale, both on noisy input with gaps of its own (documented).
-    (2) The T-0009 generator (jogs, collinear splits, tiny arcs of up to ±3 rad, runs of tiny
-    lines, pieces cut off arcs; lengths 1e-15 mm to the tolerance), 24,000 seeds, 20,853
-    qualifying inputs (all joins, both sides, 28 % closed): 0 / 0 / 0, 208 in the tie class.
-    (3) Rounding-radius arcs (1e-16 to 1e-8 mm, any sweep) between nearly collinear lines,
-    7,000 inputs, 42,000 offsets (all joins and sides, half translated up to 1e3 mm): no point
-    inside d beyond the allowance, largest arc sweep 0.0011 rad. AC3, inputs without
-    sub-tolerance spans compared with main: fuzz4 families 2–5, 24,000 offsets, 0 regressions
-    except 5 flagged "sub-tolerance span at a chain end" (fam4 1, fam5 4), the trade of (i):
-    the branch keeps a 3–9e-4 mm end span where main dropped more than the tolerance of offset
-    (main misses 1.4–1.6e-3 mm of coverage in 4 of them); legacy family 8,000 offsets, 0 issues, 0
-    regressions; bit-identical to main in 29,359 of 29,717 such offsets (legacy 5,986/5,986;
-    the others at crowded vertices, wrapped arcs, re-merges or chains of tiny pieces). Speed:
-    T-0006 criteria hold (tests pass in Release); fuzz family CPU 7–20 % above main (the
-    crowded-vertex work).
+  - *Results (AC2, AC3), round 4.* Release build, judged with the T-0009 round-3 verifier's exact
+    checker (xk: analytic distance, rigorous Round maximum, coverage of every span and convex-corner
+    locus, Sharp/Square points beyond d only inside corner regions, its decision-(c) exemptions
+    unchanged) and its generators, every offset compared with origin/main on the same polygonised
+    input. AC2: v9 injector 8 × 3,000 seeds (20,798 qualifying offsets), g2 generator 8 × 1,200
+    (8,672), every join and side of 2 × 250 v9 and 2 × 250 g2 seeds (5,208 offsets); 30,338
+    inputs, 34,678 offsets: 0 crashes, 0 distance, 0 Round-over-d violations. 92 offsets are
+    flagged otherwise: 83 Sharp/Square offsets with points beyond d outside the checker's corner
+    regions where main's output has the same excess within 0.031 mm (a mitre or chamfer at a
+    sub-tolerance cluster, whose B line lies up to the cluster's size beyond the corner vertex the
+    checker anchors its region at); 2 more of that kind without an excess in main (1.97e-3 mm,
+    0.018 mm from main's output; 4.6e-3 mm, 1.4e-5 mm outside the region of a collapsed corner);
+    4 (c)-side misses where main's output covers the point, all on strips of zero width between
+    two input lines exactly 2d apart (the documented strips narrower than the tolerance, whose two
+    opposite copies are dropped; main keeps one); and coverage misses where main covers, 1.07e-3,
+    1.09e-3 and 1.14e-3 mm (5 offsets of 3 inputs; two of the inputs were flagged with the round-2
+    build too, 0x330000c7 is Sharp next to a collapsed corner; two of its offsets are also in the
+    83).
+    Closed loops (the verifier's check, closed inputs of both generators, every join and side,
+    10,494 offsets): 2 offsets have fewer closed chains than main, v9 0x35000722 Square and
+    0x35000c36 Sharp, where main's extra loops are pockets lying wholly inside the branch's mitre
+    or chamfer regions (round 3: 49; round 2 opened loops such as 0xe0000119). AC3, inputs without
+    sub-tolerance spans against main (fuzz4 families 0, 2, 3, 4, 5, 7; 37,436 offsets): legacy
+    family 15,942 of 15,942 identical; 512 differ in the others, none worse except 5 flagged
+    "sub-tolerance span at a chain end", the accepted trade of decision (b). Speed: the T-0006
+    timing tests pass in Release; the dense inputs below cost the same as with the round-2 build on
+    the same machine.
   - *Remaining.* (1) Coverage next to strips and loops narrower than the tolerance, as
-    documented since T-0017 (the misses classified below). (2) Not part of AC2: the other T-0017
-    checks (overlaps, backward steps, self-crossings at needle tips) flag inputs in the adversarial
-    tie families at the same rate as with spans just longer than the tolerance (T-0009 generator: overlaps 59, backward steps 29, self-crossings 15 of 20,853 inputs; v9: 63 / 19 / 16 of 21,140; with spans just longer than the tolerance, where branch and main agree: 21 / 2 / 3 of 6,000), i.e.
-    the residuals of A1. (3) Cost: dense sub-tolerance input is about linear (Release, d = 1,
-    worst join and side, 2000 / 4000 / 8000 spans: micro-cluster of 1e-7 mm steps before a 5 mm
-    line 0.05 / 0.11 / 0.31 s; zig-zag 2e-4 × 3e-4 mm 0.04 / 0.07 / 0.13 s; random walk of 0.5 µm
-    steps 0.04 / 0.10 / 0.26 s; closed polyline of 0.4 µm spans 0.32 / 0.81 / 1.96 s). Main
-    returned nothing for most of these inputs.
+    documented since T-0017. (2) The checker's region of a collapsed corner is anchored at A's end;
+    B's offset line lies up to the cluster's size (4 tol) beyond it, so mitre and chamfer points
+    there read as outside it (also with main's output). (3) Not part of AC2: the other T-0017
+    checks (overlaps, backward steps, self-crossings at needle tips), the residuals of A1. (4)
+    Cost: dense sub-tolerance input is about linear (Release, d = 1, worst join and side, 4000 /
+    8000 spans, loaded machine: micro-cluster of 1e-7 mm steps before a 5 mm line 0.19 / 0.32 s;
+    zig-zag 2e-4 × 3e-4 mm 0.10 / 0.20 s; random walk of 0.5 µm steps 0.15 / 0.39 s; closed polyline
+    of 0.4 µm spans 1.07 / 2.70 s; the round-2 build 0.17 / 0.31, 0.09 / 0.20, 0.17 / 0.41,
+    1.10 / 3.01 s).
   - *Coverage-miss classification.* Coverage points within d + tol/2 of another input span may
     be left uncovered where the offset runs along a strip or loop narrower than the tolerance
     (documented since T-0017, unchanged by T-0009); the fuzz counts such misses apart, as a
     classification of these pre-existing tie misses, not as a checker correction. The verifier
     found no new loss among them.
-  - *Checker notes.* The AC2/AC3 runs used the T-0017 verifier's vdrv4 checker (and the T-0009
+  - *Checker notes (round 2).* The round-2 AC2/AC3 runs used the T-0017 verifier's vdrv4 checker (and the T-0009
     verifier's v9 injector with its vchk checker) with three corrections: corners are taken
     across zero-length spans (else a 1-ulp spur's corner wedge was missed), an exact reversal's
     Sharp/Square cap lies ahead of the travel (the checker took either half), and circle
     crossings in the self-crossing test use the cancellation-free form (internally tangent arcs
     at a junction read as crossing).
-  - *Tests.* `core/tests/geometry/offset_subtol_test.cpp`: the card's seed 0x60660ace (main
+  - *Tests.* `core/tests/geometry/offset_subtol_cases_test.cpp` (round 4): every verifier seed of rounds 2 and
+    3 (0xf0003fad, 0xe0000119, 0x30000054, 0x312003dd, 0x33000048, 0x35000108, g2 0x32000123, 0x313007af,
+    0xb0300988, 0xb0001625, 0x31600b4f) for every join and side, judged by an independent check with only
+    the exemptions of decisions (a) and (c), plus the repro points, closedness and a synthetic hook whose
+    turns add up to 185 degrees (input data in `offset_subtol_cases.hpp`). `core/tests/geometry/offset_subtol_test.cpp`: the card's seed 0x60660ace (main
     lost ~1 mm of Round offset), a Round and a Square case where main was 9.4e-4 and 9.2e-4 mm
     short of d, the 2e-10 mm vertex cluster of (a) for all joins, the tiny arcs of (b) and (c),
     a sub-tolerance Bezier (zero distance returns a continuous polygon; offsets checked against

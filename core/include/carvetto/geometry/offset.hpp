@@ -116,9 +116,14 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// Round exactly |distance|) and a closed loop stays closed. The cluster's own requested-side
 /// offset is not wrapped round it to the other side of A and B; the pieces of its boundary facing
 /// that side are kept only where they join two pieces of other offset (a path coming back past
-/// the cluster). A Sharp/Square corner at a collapsed cluster mitres the offsets of A and B, whose
-/// lines lie up to the cluster's size from that vertex. Junction repairs (below) of a Sharp/Square
-/// chain that would put a point beyond |distance| outside every corner region are refused.
+/// the cluster), and so are the rest of the circle about any other vertex of a run of
+/// sub-tolerance spans within a box of diagonal 4 x tol.distance and the other offset of such a
+/// line (such a vertex can stick into the offset of a span passing close by). A Sharp/Square corner at a collapsed cluster mitres the offsets of A and B, whose
+/// lines lie up to the cluster's size from that vertex; a larger cluster is offset corner by
+/// corner, and where it reverses as a whole (A to B turning by more than 135 degrees) its corners
+/// with A and B are Round. Junction repairs (below) of a Sharp/Square chain that would put a
+/// point beyond |distance| outside every corner region are refused within |distance| + 2 x
+/// tol.distance of a sub-tolerance span's vertex.
 /// One special case, Round only: an arc
 /// whose radius is at most min(5e-7 x max(1, |distance|), 0.1 tol.distance^2 / |distance|) and
 /// whose offset towards its centre would collapse is offset like a vertex at which the path
@@ -158,9 +163,9 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// Input made largely of spans shorter than the tolerance is offset in about linear time too: next
 /// to such spans, stretches of raw elements within the pruning margin of an input vertex are left
 /// out before splitting, and distances are found through a hierarchy of convex hulls (Release,
-/// |distance| 1, worst join and side, 8000 spans: a micro-cluster of 1e-7 mm steps before a line
-/// 0.3 s, a 2e-4 x 3e-4 mm zig-zag 0.13 s, random walks of 0.5 um steps 0.26 s, a closed polyline of
-/// 0.4 um spans 2 s, each about 2-2.5x per doubling).
+/// |distance| 1, worst join and side, 8000 spans, on a loaded dev machine: a micro-cluster of
+/// 1e-7 mm steps before a line 0.32 s, a 2e-4 x 3e-4 mm zig-zag 0.20 s, a random walk of 0.5 um
+/// steps 0.39 s, a closed polyline of 0.4 um spans 2.7 s, each about 2-2.7x per doubling).
 /// See ADR-0012.
 ///
 /// Several chains: when distant parts of the path come within 2 x |distance| of each other the

@@ -2781,8 +2781,9 @@ struct RawChain {
     std::vector<Span> spans;
     std::vector<double> posA;
     std::vector<double> posB;
-    // Boundary pieces of a collapsed cluster's own points facing away from the requested side (see
-    // buildRaw): kept only where they continue other offset on both sides.
+    // Boundary pieces of a collapsed cluster's own points facing away from the requested side, and
+    // the rest of the circles about other vertices of sub-tolerance spans (see buildRaw): kept only
+    // where they continue other offset on both sides.
     std::vector<char> filler;
 };
 
@@ -2802,6 +2803,7 @@ struct Cluster {
     bool hasA = false;
     bool hasB = false;
     double extent = 0.0;  // largest distance of a cluster point from its first or last vertex
+    bool collapse = true;  // small enough to be offset as one corner (see collapsibleClusters)
 };
 
 std::vector<Cluster> collapsibleClusters(const std::vector<Span>& input, bool closed, const Tolerance& tol,
@@ -2993,9 +2995,7 @@ std::vector<Cluster> collapsibleClusters(const std::vector<Span>& input, bool cl
         for (std::size_t k = c.first; k < c.end; ++k) {
             box.expand(tree[size + k]);
         }
-        if (!std::isfinite(c.extent) || c.extent > d || !(geometry::distance(box.min, box.max) <= 2.0 * lim)) {
-            continue;
-        }
+        c.collapse = std::isfinite(c.extent) && c.extent <= d && geometry::distance(box.min, box.max) <= 2.0 * lim;
         out.push_back(c);
     }
     return out;
@@ -3218,12 +3218,26 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
     std::vector<std::size_t> clusterOf(n, kNoCluster);
     std::vector<std::size_t> clusterBefore(n, kNoCluster);
     std::vector<bool> active(clusters.size(), false);
+    // Corners touching a cluster too large to collapse that reverses as a whole (A to B turning by
+    // more than 135 degrees) are Round: a mitre or chamfer there would point the way a
+    // sub-tolerance step happens to face, like one at a near-reversal itself.
+    std::vector<char> roundAt(n + 1, 0);
     for (std::size_t ci = 0; ci < clusters.size(); ++ci) {
-        for (std::size_t k = clusters[ci].first; k < clusters[ci].end; ++k) {
+        const Cluster& c = clusters[ci];
+        if (!c.collapse) {
+            if (c.hasA && c.hasB &&
+                tangentAt(input[(c.first + n - 1) % n], 1.0).dot(tangentAt(input[c.end % n], 0.0)) <
+                    -0.70710678118654752) {
+                roundAt[c.first] = 1;
+                roundAt[c.end % n] = 1;
+            }
+            continue;
+        }
+        for (std::size_t k = c.first; k < c.end; ++k) {
             clusterOf[k] = ci;
         }
-        if (clusters[ci].hasB) {
-            clusterBefore[clusters[ci].end % n] = ci;
+        if (c.hasB) {
+            clusterBefore[c.end % n] = ci;
         }
     }
     auto indexA = [&](const Cluster& c) { return (c.first + n - 1) % n; };
@@ -3328,7 +3342,8 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
             appendClusterBoundary(raw, input, c, d, sign, rhoAngle(nB), w, 0, c.end - c.first, 0.0, w);
             record(at, at);
         } else if (!raw.empty()) {
-            const JoinType j = collapsed || roundAfter ? JoinType::Round : cornerJoin(input[i - 1], input[i]);
+            const JoinType j =
+                collapsed || roundAfter || roundAt[i] ? JoinType::Round : cornerJoin(input[i - 1], input[i]);
             connect(raw, *next, startPoint(input[i]), endPoint(input[i - 1]), tangentAt(input[i - 1], 1.0),
                     tangentAt(input[i], 0.0), d, sign, j, mitreLimit, tol, wedges);
             record(at, at);  // joins and connectors sit at the vertex
@@ -3345,12 +3360,82 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
         } else {
             connect(raw, first, startPoint(input.front()), endPoint(input.back()), tangentAt(input.back(), 1.0),
                     tangentAt(input.front(), 0.0), d, sign,
-                    roundAfter ? JoinType::Round : cornerJoin(input.back(), input.front()), mitreLimit, tol, wedges);
+                    roundAfter || roundAt[0] ? JoinType::Round : cornerJoin(input.back(), input.front()), mitreLimit,
+                    tol, wedges);
         }
         raw.front() = first;
         const double at = static_cast<double>(input.size());
         record(at, at);
     }
+    // Fillers about the other vertices of sub-tolerance spans too (see addFiller): such a vertex can
+    // stick out, on the side its own turn does not make outer, into the offset of a span passing
+    // close by (the closing edge of a closed path running under a sub-tolerance kink at a vertex 1.8e-5
+    // mm below it: main kept the loop closed, the kink cut it open). The rest of its circle, beyond
+    // its own join arc, and the other offset of a sub-tolerance line (run backwards) go in as fillers.
+    std::vector<bool> inCluster(n + 1, false);
+    for (std::size_t ci = 0; ci < clusters.size(); ++ci) {
+        if (active[ci]) {
+            for (std::size_t k = clusters[ci].first; k <= clusters[ci].end; ++k) {
+                inCluster[k % n] = true;
+            }
+        }
+    }
+    auto tinySpan = [&](std::size_t k) { return length(input[k]) <= tol.distance; };
+    // Only for runs of sub-tolerance spans within a box of diagonal 4 x tol.distance (a kink, a
+    // micro-cluster): along a longer run (a random walk of 0.5 um steps) every vertex's circle
+    // reached past the cells the domination test looks at, and the cost grew with the square.
+    std::vector<char> smallRun(n, 0);
+    for (std::size_t i = 0; i < n;) {
+        if (!tinySpan(i)) {
+            ++i;
+            continue;
+        }
+        std::size_t j = i;
+        Box2 box;
+        while (j < n && tinySpan(j)) {
+            box.expand(bounds(input[j]));
+            ++j;
+        }
+        if (geometry::distance(box.min, box.max) <= 4.0 * tol.distance) {
+            for (std::size_t k = i; k < j; ++k) {
+                smallRun[k] = 1;
+            }
+        }
+        i = j;
+    }
+    const ArcDirection rhoDir = rho > 0.0 ? ArcDirection::CCW : ArcDirection::CW;
+    filling = true;
+    for (std::size_t k = closed ? 0 : 1; k < n; ++k) {
+        const std::size_t p = k == 0 ? n - 1 : k - 1;
+        if (inCluster[k] || !((tinySpan(p) && smallRun[p]) || (tinySpan(k) && smallRun[k]))) {
+            continue;
+        }
+        const Vec2 tin = tangentAt(input[p], 1.0);
+        const Vec2 tout = tangentAt(input[k], 0.0);
+        const double turn = rho * std::atan2(tin.cross(tout), tin.dot(tout));
+        const double from = rhoAngle(tin.perp() * sign) + std::max(turn, 0.0);
+        const double span = kTwoPi - std::max(turn, 0.0);
+        const Vec2 v = startPoint(input[k]);
+        if (span >= kTwoPi - 1e-9) {
+            raw.emplace_back(ArcSpan{v, d, rho * from, rho * (from + kPi), rhoDir});
+            raw.emplace_back(ArcSpan{v, d, rho * (from + kPi), rho * (from + kTwoPi), rhoDir});
+        } else if (span > 1e-9) {
+            raw.emplace_back(ArcSpan{v, d, rho * from, rho * (from + span), rhoDir});
+        }
+        record(static_cast<double>(k), static_cast<double>(k));
+    }
+    for (std::size_t k = 0; k < n; ++k) {
+        const auto* line = std::get_if<LineSpan>(&input[k]);
+        if (!line || !tinySpan(k) || !smallRun[k] || (inCluster[k] && inCluster[(k + 1) % n])) {
+            continue;
+        }
+        const Vec2 u = (line->end - line->start).normalized().perp() * (-sign);
+        if (!(line->start + u * d == line->end + u * d)) {
+            raw.emplace_back(LineSpan{line->end + u * d, line->start + u * d});
+            record(static_cast<double>(k), static_cast<double>(k + 1));
+        }
+    }
+    filling = false;
     return rc;
 }
 
@@ -4334,7 +4419,9 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     //    near starts the raw successor wins, then the nearest piece after it in raw order. The
     //    links are chosen for all pieces at once: chosen walk by walk, a stray sub-rounding piece
     //    walked first took over the start that another piece ended exactly at, cutting a chain in
-    //    two where nothing crosses (T-0017, 0xe2000124). Components start from pieces nothing
+    //    two where nothing crosses (T-0017, 0xe2000124). Links involving filler pieces (see RawChain)
+    //    come after all others, so a filler never takes a start or end another piece needs (it cut
+    //    1e-3 mm gaps into the offset of dense sub-tolerance runs). Components start from pieces nothing
     //    leads into, in raw order; pieces left over form cycles.
     auto pieceStart = [&](const Piece& p) { return pointAt(raw[p.element], p.t0); };
     auto pieceEnd = [&](const Piece& p) { return pointAt(raw[p.element], p.t1); };
@@ -4345,6 +4432,7 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     }
     struct Link {
         double gap;  // 0 when the start is at the end to rounding
+        int filler;  // 1 when either piece is a filler (see RawChain): linked after all others
         std::size_t rank;
         std::size_t from;
         std::size_t to;
@@ -4359,11 +4447,12 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
             }
             const double gap = geometry::distance(pieceStart(kept[j]), end);
             const std::size_t rank = j == (k + 1) % nk ? 0 : (j + nk - k) % nk;
-            links.push_back(Link{gap <= same ? 0.0 : gap, rank, k, j});
+            const int filler = rc.filler[kept[k].element] != 0 || rc.filler[kept[j].element] != 0 ? 1 : 0;
+            links.push_back(Link{gap <= same ? 0.0 : gap, filler, rank, k, j});
         });
     }
     std::sort(links.begin(), links.end(), [](const Link& a, const Link& b) {
-        return std::tie(a.gap, a.rank, a.from, a.to) < std::tie(b.gap, b.rank, b.from, b.to);
+        return std::tie(a.filler, a.gap, a.rank, a.from, a.to) < std::tie(b.filler, b.gap, b.rank, b.from, b.to);
     });
     constexpr std::size_t kNone = std::numeric_limits<std::size_t>::max();
     std::vector<std::size_t> nextOf(nk, kNone);
