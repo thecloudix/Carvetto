@@ -22,6 +22,7 @@
 #include "carvetto/toolpath/pass_plan.hpp"
 #include "carvetto/toolpath/ramp_entry.hpp"
 #include "pocket_guard.hpp"
+#include "pocket_order.hpp"
 
 // Pocket toolpath (T-0121, ADR-0017; T-0123, ADR-0018).
 //
@@ -1216,9 +1217,10 @@ void rasterPattern(const Group& g, const PatternContext& ctx, std::size_t cluste
     const auto n = static_cast<std::size_t>(std::max(1.0, std::ceil(span / ctx.stepover - 1e-9)));
     const double pitch = span / static_cast<double>(n);
     // Lines are clipped in batches (open paths do not interact, so the pieces are the same as in
-    // one call), and the pieces counted against the budget after each batch.
+    // one call), and the pieces counted against the budget after each batch. A big clip is cut
+    // down to each batch's strip across it (T-0142, ADR-0006 §10).
     constexpr std::size_t kBatch = 256;
-    const std::vector<Contour> clip = contoursOf(g);
+    const geometry::OpenPathClipper clipper(contoursOf(g), v, tol, FillRule::EvenOdd);
     std::vector<std::vector<RasterPiece>> rows(n);
     std::size_t pieces = 0;
     for (std::size_t k0 = 0; k0 < n; k0 += kBatch) {
@@ -1229,9 +1231,7 @@ void rasterPattern(const Group& g, const PatternContext& ctx, std::size_t cluste
             c.append(geometry::LineSpan{u * (umin - 1.0) + v * vk, u * (umax + 1.0) + v * vk});
             lines.push_back(std::move(c));
         }
-        const geometry::BooleanResult clipped =
-            geometry::booleanOp(BooleanOp::Intersection, lines, clip, tol, FillRule::EvenOdd);
-        for (const Contour& c : clipped.open) {
+        for (const Contour& c : clipper.clip(BooleanOp::Intersection, lines)) {
             if (c.isEmpty()) {
                 continue;
             }
@@ -1364,77 +1364,13 @@ void rasterPattern(const Group& g, const PatternContext& ctx, std::size_t cluste
     pattern.trees[cluster].parent = {kNoNode};
 }
 
-/// An order for `parts`: grouped by `partOf` (ascending), and within a group greedy nearest
-/// neighbour between bounding-box centres, starting at the lowest (then leftmost) centre. Ties
-/// go to the lower index. The nearest unused part is found with a growing square search over a
-/// `BoxIndex` of the centres, so thousands of parts stay cheap.
+/// An order for `parts` by their bounding-box centres (`detail::nearestFirstOrder`).
 std::vector<std::size_t> nearestFirst(const std::vector<Group>& parts, const std::vector<std::size_t>& partOf) {
-    const std::size_t n = parts.size();
-    std::vector<Vec2> centres(n);
-    Box2 all;
-    for (std::size_t i = 0; i < n; ++i) {
+    std::vector<Vec2> centres(parts.size());
+    for (std::size_t i = 0; i < parts.size(); ++i) {
         centres[i] = ringBox(parts[i].outer).centre();
-        all.expand(centres[i]);
     }
-    const double extent = std::max({all.width(), all.height(), 1e-9});
-    std::vector<char> used(n, 0);
-    std::vector<std::size_t> out;
-    // Members of each group, ascending (T-0131: one index per group, so a search for the group's
-    // next part never returns the other groups' parts, and a group is left as soon as all its
-    // parts are used, instead of growing the square over the whole page to find nothing). The
-    // squares, the candidates and their order are those of one index over all parts filtered by
-    // group, so the order is the same.
-    std::vector<std::pair<std::size_t, std::size_t>> byGroup(n);  // (group, part)
-    for (std::size_t i = 0; i < n; ++i) {
-        byGroup[i] = {partOf[i], i};
-    }
-    std::sort(byGroup.begin(), byGroup.end());
-    for (std::size_t g0 = 0; g0 < n;) {
-        const std::size_t gid = byGroup[g0].first;
-        std::size_t g1 = g0;
-        std::vector<std::size_t> members;
-        std::vector<Box2> points;
-        for (; g1 < n && byGroup[g1].first == gid; ++g1) {
-            members.push_back(byGroup[g1].second);
-            points.push_back(Box2{centres[members.back()], centres[members.back()]});
-        }
-        g0 = g1;
-        const BoxIndex index(std::move(points));
-        std::optional<std::size_t> cur;
-        for (const std::size_t i : members) {
-            if (!cur || centres[i].y < centres[*cur].y ||
-                (centres[i].y == centres[*cur].y && centres[i].x < centres[*cur].x)) {
-                cur = i;
-            }
-        }
-        std::size_t left = members.size();
-        while (cur) {
-            used[*cur] = 1;
-            --left;
-            out.push_back(*cur);
-            const Vec2 at = centres[*cur];
-            cur.reset();
-            if (left == 0) {
-                break;
-            }
-            double best = std::numeric_limits<double>::infinity();
-            for (double h = extent / std::sqrt(static_cast<double>(n)) + 1e-9;; h *= 2.0) {
-                for (const std::size_t k : index.query(Box2{at - Vec2{h, h}, at + Vec2{h, h}})) {
-                    const std::size_t j = members[k];
-                    const double dd = geometry::distance(at, centres[j]);
-                    if (used[j] == 0 && dd < best) {
-                        best = dd;
-                        cur = j;
-                    }
-                }
-                // Anything outside the square is farther than h; done once the square covers all.
-                if (best <= h || h > 2.0 * extent) {
-                    break;
-                }
-            }
-        }
-    }
-    return out;
+    return detail::nearestFirstOrder(centres, partOf);
 }
 
 /// The full pattern of one tool over every connected part of its centre region.
@@ -2045,6 +1981,7 @@ Tolerance regionTolerance(const Tolerance& user) {
 // Work caps (ADR-0017 §12): anything beyond them is refused with a message before any
 // expensive work is done.
 constexpr double kMinChordal = 1e-4;       // mm
+constexpr double kMinDistance = 1e-6;      // mm, one unit of the offset grid (T-0142, as Profile)
 constexpr double kMaxLevels = 10000.0;     // depth passes per tool
 constexpr double kMaxPasses = 20000.0;     // rings or raster lines per cluster
 constexpr double kMaxVertices = 200000.0;  // vertices of the polygonised pocket region
@@ -2100,9 +2037,9 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
         return result;
     }
     if (!finite(userTol.chordal) || userTol.chordal < kMinChordal || userTol.chordal > 1.0 ||
-        !finite(userTol.distance) || !(userTol.distance > 0.0) || userTol.distance > userTol.chordal) {
+        !finite(userTol.distance) || !(userTol.distance >= kMinDistance) || userTol.distance > userTol.chordal) {
         say(ToolpathIssue::InvalidParameters,
-            "invalid tolerance: chordal must be between 0.0001 and 1 mm, distance > 0 and <= chordal");
+            "invalid tolerance: chordal must be between 0.0001 and 1 mm, distance between 0.000001 mm and chordal");
         return result;
     }
     if (params.safeZ <= -params.startDepth) {
@@ -2391,7 +2328,7 @@ std::vector<Contour> pocketCentreRegion(const std::vector<Contour>& contours, do
     };
     if (!finite(toolDiameter) || !(toolDiameter > 0.0) || !finite(params.allowance) ||
         params.allowance < 0.0 || !finite(userTol.chordal) || userTol.chordal < kMinChordal ||
-        userTol.chordal > 1.0 || !finite(userTol.distance) || !(userTol.distance > 0.0) ||
+        userTol.chordal > 1.0 || !finite(userTol.distance) || !(userTol.distance >= kMinDistance) ||
         userTol.distance > userTol.chordal) {
         say(ToolpathIssue::InvalidParameters, "invalid tool diameter, allowance or tolerance");
         return {};
@@ -2430,6 +2367,73 @@ std::vector<Contour> pocketCentreRegion(const std::vector<Contour>& contours, do
 }
 
 namespace detail {
+
+std::vector<std::size_t> nearestFirstOrder(const std::vector<Vec2>& centres, const std::vector<std::size_t>& partOf) {
+    const std::size_t n = centres.size();
+    Box2 all;
+    for (std::size_t i = 0; i < n; ++i) {
+        all.expand(centres[i]);
+    }
+    const double extent = std::max({all.width(), all.height(), 1e-9});
+    std::vector<char> used(n, 0);
+    std::vector<std::size_t> out;
+    // Members of each group, ascending (T-0131: one index per group, so a search for the group's
+    // next part never returns the other groups' parts, and a group is left as soon as all its
+    // parts are used, instead of growing the square over the whole page to find nothing). The
+    // squares, the candidates and their order are those of one index over all parts filtered by
+    // group, so the order is the same.
+    std::vector<std::pair<std::size_t, std::size_t>> byGroup(n);  // (group, part)
+    for (std::size_t i = 0; i < n; ++i) {
+        byGroup[i] = {partOf[i], i};
+    }
+    std::sort(byGroup.begin(), byGroup.end());
+    for (std::size_t g0 = 0; g0 < n;) {
+        const std::size_t gid = byGroup[g0].first;
+        std::size_t g1 = g0;
+        std::vector<std::size_t> members;
+        std::vector<Box2> points;
+        for (; g1 < n && byGroup[g1].first == gid; ++g1) {
+            members.push_back(byGroup[g1].second);
+            points.push_back(Box2{centres[members.back()], centres[members.back()]});
+        }
+        g0 = g1;
+        const BoxIndex index(std::move(points));
+        std::optional<std::size_t> cur;
+        for (const std::size_t i : members) {
+            if (!cur || centres[i].y < centres[*cur].y ||
+                (centres[i].y == centres[*cur].y && centres[i].x < centres[*cur].x)) {
+                cur = i;
+            }
+        }
+        std::size_t left = members.size();
+        while (cur) {
+            used[*cur] = 1;
+            --left;
+            out.push_back(*cur);
+            const Vec2 at = centres[*cur];
+            cur.reset();
+            if (left == 0) {
+                break;
+            }
+            double best = std::numeric_limits<double>::infinity();
+            for (double h = extent / std::sqrt(static_cast<double>(n)) + 1e-9;; h *= 2.0) {
+                for (const std::size_t k : index.query(Box2{at - Vec2{h, h}, at + Vec2{h, h}})) {
+                    const std::size_t j = members[k];
+                    const double dd = geometry::distance(at, centres[j]);
+                    if (used[j] == 0 && dd < best) {
+                        best = dd;
+                        cur = j;
+                    }
+                }
+                // Anything outside the square is farther than h; done once the square covers all.
+                if (best <= h || h > 2.0 * extent) {
+                    break;
+                }
+            }
+        }
+    }
+    return out;
+}
 
 std::vector<Contour> strictInset(const std::vector<Contour>& source, const std::vector<Contour>& raw,
                                  double d, const Tolerance& tol, InsetReport* report) {

@@ -52,7 +52,9 @@ stepover and pass depth replaced as below) and `PocketParams` mapped from the en
 start depth 0, cut depth = depth, pass depth = depth / passes with `maintainExactStep`, the
 chosen pattern (`PocketStrategy::Offset` or `Raster`, with `rasterAngle`), climb, the boundary
 pass **last** (clean edges of the marking; for Raster it also removes the wall scallops), no
-allowance, no ramp, the same tolerance and safe Z. Pocket's moves become the engraving's moves
+allowance, no ramp, the same tolerance and safe Z (so Quick Engrave accepts Pocket's tolerance
+bounds, 0.0001 <= chordal <= 1 mm and, since T-0142, 0.000001 mm <= distance <= chordal, and refuses
+others with its own message before Fill or Outline run). Pocket's moves become the engraving's moves
 unchanged and its diagnostics are passed on, their `tool` index cleared (there is one tool) and
 their wording made the engraving's: "tool 1 (name)" becomes "tool 'name'" and the pocket the fill
 area ("too large for the fill area", "filling needs closed vectors", "at the engrave depth"). Only
