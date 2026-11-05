@@ -1,6 +1,6 @@
 # ADR-0016: 2D Profile toolpath
 
-Date: 2026-10-26 · Status: accepted 2026-11-01 (T-0120; amended in place by T-0124, 2026-10-30/11-01)
+Date: 2026-10-26 · Status: accepted 2026-11-01 (T-0120; amended in place by T-0124, 2026-10-30/11-01, T-0127, T-0129 and T-0141)
 
 ## Context
 T-0120 asks for `profileToolpath(contours, Tool, ProfileParams)` with the options of
@@ -34,7 +34,53 @@ choices. Behaviour descriptions come from `docs/reference/` only.
    number of others is a hole). They are oriented region-on-the-left (outer CCW, hole CW, island
    CCW). Outside keeps the region: the tool runs outside outer boundaries and inside holes;
    Inside runs inside the region. Open vectors: Outside = right of travel, Inside = left (the
-   enum has `Right`/`Left` aliases). On runs on the vector (offset by the allowance only).
+   enum has `Right`/`Left` aliases). On runs on the vector (offset by the allowance only). An
+   allowance of exactly −r also puts the cut on the vector; the profile side still decides the
+   direction of cut and which side is the part (T-0127; before, Inside turned into Outside there).
+   **Allowance limit (T-0129, owner decision 2026-11-01).** An allowance below −r (r as in 2:
+   half the cutting width at start + cut depth, a V-bit's cone radius there) would put the tool
+   centre across the vector, so Outside would cut like Inside (and the reverse) and On, Left and
+   Right would swap sides. `profileToolpath` refuses it: no moves, and one `InvalidParameters`
+   diagnostic (no vector) naming the allowance and the limit, e.g. "allowance -4 mm is below
+   minus the tool radius (-3 mm at the cut depth): the tool would cross the vector to its other
+   side; nothing is cut". Numbers print in the shortest form that reads back exactly, so an
+   allowance one ulp below the limit never prints as the limit. The rule applies to each pass's
+   distance: the allowance (finishing, or the only pass) and, with a separate last pass, the
+   allowance + last-pass allowance (roughing). Since a negative last-pass allowance is already
+   refused and rounded addition is monotone, the roughing distance is never below the finishing
+   one, so only the allowance decides in practice; the message says which passes cross. When only
+   the finishing pass crosses (allowance < −r ≤ allowance + last-pass allowance) the whole
+   operation is refused, roughing included: emitting the roughing alone would leave a part that
+   looks machined but is a last-pass allowance oversize, with nothing in the toolpath list to
+   show the finishing is missing (conservative; the user fixes the allowance). **Tolerance:**
+   none. The test is `allowance < −r` in doubles; in IEEE arithmetic r + a == 0 exactly when
+   a == −r and r + a < 0 exactly when a < −r, so the boundary is the same one `buildCuts` keys
+   the side on (s == 0 keeps the profile side, T-0127), and a roughing sum (r + a) + lpa with
+   r + a ≥ 0, lpa ≥ 0 can never round below zero. Exactly −r stays valid; one ulp below is
+   refused. A tolerance band would either accept allowances whose offset lands (by a sub-ulp
+   amount) on the wrong side, or need snapping values just below −r to −r, which buys nothing
+   for typed values (−D/2 is exact for any D, since halving is exact) and for computed V-bit
+   radii only shifts the edge. Output for every allowance ≥ −r is unchanged.
+   **Upper limit On the vector (T-0137, owner decision 2026-11-02).** On the vector the allowance
+   alone is the tool centre's distance from it (r is not added), so an allowance above +r runs the
+   tool entirely off the vector, just as one below −r does. On refuses it the same way: no moves,
+   one `InvalidParameters` diagnostic (no vector), e.g. "allowance 4 mm is above the tool radius
+   (3 mm at the cut depth): the tool would run entirely off the vector; nothing is cut". Again each
+   pass's distance counts. On, the roughing distance allowance + last-pass allowance is the larger
+   one and can be the only one above +r (allowance ≤ r < allowance + last-pass allowance): then the
+   message names the roughing, and the whole operation is refused, as above: the toolpath is
+   either every pass as set or nothing, never a silently partial one (the finishing pass alone
+   would cut the full depth at once where the user asked for roughing first). The −r check runs first, so a setting that breaks
+   both limits (allowance < −r, allowance + last-pass allowance > +r) gets the −r message. The test
+   is `allowance > r` (and `allowance + lastPassAllowance > r`) in doubles, the same doubles
+   `buildCuts` offsets by, with no tolerance: exactly +r (the tool's edge on the vector) stays
+   valid, one ulp above is refused. **Left/Right (decision of the T-0137 coder, AC1).** Open-vector
+   Left/Right are the Inside/Outside enum values and offset by r + allowance to their side, like
+   closed Inside/Outside: a positive allowance keeps the tool on the profile side and only moves it
+   further from the vector, an oversize cut (e.g. leaving stock along an edge), never a side swap.
+   So they keep only the −r limit, as Inside/Outside do; the +r limit is for On alone, where the
+   vector is the cut's centre line. Output for every |allowance| ≤ r (and every Inside/Outside/
+   Left/Right allowance ≥ −r) is unchanged.
 5. **Exact offsets first.** Each vector is offset by r + allowance with
    `geometry::offsetOpenContour` (the public API as on main; closed contours are accepted), so
    lines and arcs stay exact: an inside profile of an r = 10 circle with a 6 mm tool is one
@@ -112,7 +158,18 @@ choices. Behaviour descriptions come from `docs/reference/` only.
       start); on an open cut a tab past an end is dropped;
     - moves footprints off `keepClear` points (to the nearer side), dropping them when there is
       no room. With a separate last pass these are the other pass's cut starts projected onto
-      the cut (within a tool radius + allowance), so neither pass plunges into the other's tab;
+      the cut (within a tool radius + allowance), so neither pass plunges into the other's tab.
+      A moved tab keeps two tolerances + 0.01 mm more from the point (room for its roughing
+      cover, which is its projected ends widened by the tolerance; that is enough on straight
+      stretches, but where the cover is extended round a corner, or the other pass's start lies
+      across the mapped stretch, the tab can still be refused, see below), and
+      a footprint within 1e-9 mm of the gap counts as clear, so a moved tab is never dropped by
+      rounding; it is dropped when the move lands within the gap of another keep-clear point or
+      outside the allowed range, and the tabs are then fitted in order along the path as before
+      (T-0135;
+      before, the tab went to exactly the gap and the re-check decided by rounding, about half the
+      time either way, and a kept one could never be matched past the roughing start; that
+      placement is still computed as one candidate, see the separate last pass below);
     - drops a tab whose footprint would come closer than a tool radius to the previous one, or
       to the first across the start, so neighbouring tabs never merge and every pass still
       reaches its level between them;
@@ -138,8 +195,37 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     refused when the projections are ambiguous (mapped length off by more than 2·(allowance +
     radius), or a point along the tab projecting outside the mapped stretch: a nearby lobe), when
     the cut passes the tab only in part, or when the mapped stretch would cover a roughing start,
-    a finishing start projected onto it, or another roughing tab. A refused match drops the
-    finishing tab too, so both passes always agree. Finally every tab group (a tab and its
+    a finishing start projected onto it, or another roughing tab. With a negative allowance
+    Inside/Outside the cross-sections cross the vector with the kerf (below), and round a concave
+    corner of the part the roughing cut on the other leg reaches their far ends, so the cover grows
+    into a start or another tab; a tab refused that way is tried once more with the cover placed by
+    sections from the vector out (as for allowance >= 0), and the exact sided check below keeps it
+    only if it holds (T-0135; T-0127 left such tabs out as "could not be matched on the roughing
+    cut"). A refused match drops the finishing tab too, so both passes always agree; and because a
+    refused tab may have kept out a neighbour when the tabs were fitted (they overlapped), the
+    finishing tabs dropped by fitting are then added back where they clear every tab still kept (the
+    kept ones stay where they are), and when one comes back that cut is matched again (T-0135,
+    "add-back"). None of these changes is better in every case: a tab added back can fail the tab
+    check where the plain result would have held; a tab moved with the margin can fail matching
+    where T-0127, which put it at exactly the gap and let rounding decide whether it clashed,
+    matched it; and a tab matched only by the second try (cover from the vector out) can take room
+    another tab's cover needed and still be cut through. So with a separate last pass three results
+    are computed, each placed, matched and checked: exactly T-0127's matching (tabs placed as T-0127
+    placed them, no slack or margin, no second try, no add-back); placed with slack and margin and
+    matched with the second try, without add-back; and the same with add-back. The one ending with
+    the most kept tabs is used, a tie going to T-0127's, then to the one without add-back. A scene
+    thus never keeps fewer tabs than T-0127's matching (the tab check only adds to it: a tab judged
+    again on a wider window), nor than the new placement without add-back; where they tie the
+    output is T-0127's (the slack decides only when it gains a tab). T-0127's placement let rounding
+    decide whether a tab moved to exactly the gap clashed with the point it was moved off, and that
+    rounding changes with the compiler's floating-point contraction (GCC 15 at x86-64-v3 contracts
+    a·b − c into one fma, T-0159), which lost a tab against the GCC 13/MSVC result. So T-0127's
+    candidate is placed both ways, deterministically: such a tab refused (within 1e-9 mm beyond the
+    gap) and accepted (within 1e-9 mm short of it); each is matched and checked, a tie going to the
+    accepted one. The scene thus never keeps fewer tabs than T-0127 did when every moved tab rounds the same way (all refused or all accepted); a scene where rounding would mix the two is not covered, and other knife-edge rounding (start points, fitting) can still change counts between compilers (T-0159 verifier: 82 of 10,000 scenes differ between plain and x86-64-v3 builds, against 97 before). The
+    extra runs happen only when they would differ: T-0127's when some cut's tabs are placed
+    differently or a run used the second try (the refused variant only when it places the tabs
+    differently from the accepted one), the one without add-back when add-back changed something. Finally every tab group (a tab and its
     roughing cover) is checked against all cuts of both passes (and without a separate last pass
     the only pass against itself): if any cut position outside the kept raised stretches comes
     closer than a tool radius (less 1 µm) to the tab's cross-sections — the opposite wall of a
@@ -159,18 +245,110 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     it counts too), on the waste side every cell; every open tool position cuts the cells within
     its radius plus 1.5 cells; the tab holds when uncut cells join the material next to the vector
     to the waste beyond the kerf (or when there is no such waste near it at all: a hole smaller
-    than the kerf). On the vector (side On, decided by the profile side: `Cut::distance` is
-    |allowance| there) the left of travel plays the vector side and must itself reach the waste
-    beyond the kerf. **On guard (conservative, pending card T-0127):** On the vector a tab is
-    kept only if, in addition, on every pass the tool positions within two tool radii (plus the 3D
-    ramp) outside the two ends of each of its raised stretches stay at least
-    2r + 2·|allowance| + max(0.25 mm, 0.05·D) apart; otherwise it is dropped and reported as cut
-    through. So On tabs on sharp turns of the cut are conservatively dropped; T-0127 is to judge
-    them properly. So a short tab centred on a sharp turn of the cut — a
-    convex corner or spike tip, an inside corner (Inside of a square), a gear root, the tip of a
-    narrow arm — where the tool at the two ends of the raised stretch seals the tab's material off
-    from the waste, is dropped and reported; so
-    is one left hanging on the part by a sliver (verify rounds 2 and 3). The check runs as a
+    than the kerf). This distance rule serves Inside/Outside with allowance ≥ 0, where the kerf
+    lies wholly on the waste side of the vector. **Sided tabs (T-0127).** On the vector, and for Inside/Outside with a negative
+    allowance (the kerf then crosses the vector, so the distance to the vectors no longer tells
+    the part from the waste), a tab is judged by the pieces of material the cut leaves, decided by
+    the profile side and the allowance (never by `Cut::distance`), with no cross-section shortcut:
+    the layer just below the tab top, where every tool position cuts a disc of the tab-layer
+    radius (a V-bit's cone there: tab thickness × tan(half angle), at most the radius at the
+    bottom). On a raster (0.05 mm cells) round the tab's raised stretches (both passes) out to two
+    radii + 0.6 mm: the pieces are the cells no tool position cuts with every tab lowered, this one
+    too; the tab's own material is the cells only its own lowered stretches would cut; a component
+    of its material joins the pieces it touches. A piece counts when it covers 0.01 mm² and is
+    thicker than 0.05 mm somewhere; the tab holds when it joins every counting piece within the
+    radius + 0.3 mm (+ 2 cells) of its raised stretches (their exact ends included) into one, and there are at least two. (The
+    cross-sections, which place the roughing cover, run across the whole kerf here: a tool radius
+    to each side of the cut, plus the last-pass allowance on the side where the roughing cut runs:
+    away from the vector, but towards it On with a negative allowance.) When the tab fails on that
+    raster but two groups of the near pieces it leaves unjoined reach the raster's frame (they may
+    be one piece joined beyond it), it is judged again on rasters reaching twice and four times as
+    far, with the tools there (T-0135: a tab between two vectors was dropped as cut through although
+    the flood shows it holds, and its part came free). The
+    other live tabs count as cut, so a tab holds on its own and never borrows another tab's bridge.
+    This is judged with the tools exactly as wide (+ 0.01 mm, which closes hairline gaps between
+    cell centres) and again widened by 0.055 mm (on 0.05 mm cells, and where that fails on 0.025 mm
+    cells), where the tab must not leave a near
+    piece unjoined: every kept tab joins the material on both sides through a neck of about 0.1 mm
+    or more, and leaves no counting piece near it loose. With fewer than two counting pieces the
+    tab would hold nothing (a loop or arm narrower than the kerf, the tip of an arm the kerf
+    consumes): it is dropped and reported as such ("would hold nothing"); a tab that leaves a near
+    piece unjoined is dropped as cut through. Tool positions every k-th sample along the cuts (at
+    most sqrt(0.04·r) apart), their discs grown by the sagitta of the gap (≤ 5 µm), stand for the
+    sweep. Two exact quick answers skip the raster: when every tool position within 2r + 0.7 mm
+    (plus the sample gap) of the raised stretches lies on one of the tab's own cuts close to the
+    stretch along it (within 2.5 times that distance), and the cut there either bends gently (no
+    corner: between samples 0.25 mm apart at most 2° or the turn of an arc of radius 2r + 1 mm), or
+    turns at most 120° over any 2r + 1 mm and a run of at least three cross-sections of the tab's
+    material, with their middle one carried 0.4 mm past both walls, stays clear of every tool by the
+    widened radius + 0.06 mm; in the first, the core of every raised stretch of the tab (less
+    r + 0.17 mm and the sample gap at each end) is clear of every tool by r + 0.12 mm and the gap
+    (a roughing cover shorter than its finishing stretch leaves roughing tools there). Then no other cut
+    reaches the material within r + 0.3 mm of the
+    stretch, the cut leaves exactly its two sides as counting pieces there, and the tab's material
+    joins them. **Loose pieces.** A kept tab holds the material next to it, but a piece elsewhere
+    (the kerf consuming a neck of the part, a remnant between the finishing and roughing kerfs at a
+    corner) may have no tab: after the tab check of sided tabs (On the vector, or Inside/Outside
+    with a negative allowance; not for Inside/Outside with allowance >= 0, a known gap), whenever
+    tabs are on (also when every tab was left out), pieces of material inside a closed primary cut, or inside a cluster of open primary cuts (a
+    loop trimmed into pieces near another vector; boxes within two tab-layer radii + 0.5 mm of each
+    other, searched as one region, T-0135), that join the outside through no kept tab
+    are looked for and reported (known gaps below). Exact construction (T-0135; T-0127 used a
+    raster of sampled tool positions and skipped it when one hole had a kept tab beside it, which
+    missed real loose pieces): near the region are the cuts of both passes whose boxes reach within
+    the tab-layer radius + 0.1 mm of the region's box (grown by the radius + 0.5 mm). The material
+    the cuts leave at the tab layer is what the bands of their open stretches leave (each cut path
+    less its raised stretches, the exact stretch ends kept, grown on both sides by the tab-layer
+    radius + 2 µm + at most 5 µm); a loose piece is a hole of that union (bounded component of its
+    complement) lying inside the box. Soundness: the bands are exactly what those tools cut at that
+    layer (the disc model of the tab check); a hole of the union is bounded by cut all round, so its
+    material joins nothing outside it, and the kept tabs' material, uncut, is part of the holes it
+    lies in, so a piece a kept tab joins to the outside is no hole. Cuts that are not near cannot
+    reach into the box, so a hole inside it is a hole of the whole scene's union too (other cuts
+    could only cut it further, never join it to anything): every reported piece is loose, and every
+    loose piece inside some region's box is found. When even with every tab lowered (full paths) the
+    union has no hole inside the box, nothing is enclosed there and the open union is not built. A
+    piece's area is the hole's less the islands inside it (the band of a hole in the part, with
+    that hole's slug, itself a hole of the union, inside it), and it counts when it is 0.04 mm² or
+    more and thicker than 0.05 mm somewhere (a hole of the union with the bands 0.025 mm wider lies
+    inside it and none of its islands). A loose piece of 0.04 mm² or more, thicker
+    than 0.05 mm somewhere (a hairline sliver between two kerfs does not count), is reported
+    against the vector of the innermost closed primary cut that contains it, or else of the nearest
+    cut ("a piece of material inside the cut (about A square mm) is not held by any kept tab and comes free"), one
+    message per piece, numbered per vector, largest first ("vector 3: loose piece 2 of 4: ...", at
+    most 50 per vector, then one "and N more loose pieces (about A square mm in all)"), so
+    the de-duplication in run() never merges two pieces (T-0135; before, equal rounded areas were
+    merged and only five were listed). A piece is seen from every loop whose box holds it; it is
+    the same piece as one already found when it holds that piece's inner point (one at least
+    0.025 mm clear of the tools, so every view of the same piece holds it: inside the hole and none
+    of its islands), so a piece in
+    another's concave notch, whose box overlaps, is still reported. Known gaps: leads are not part of this
+    check (a lead crossing the part is a separate issue); pieces between neighbouring vectors that
+    reach out of the region's box are not seen (also pieces enclosed by open cuts that are not one
+    cluster: a5_770001_273, a5_770001_60, missed by T-0127 too); the cut paths stand for the tool's
+    moves, so links, plunges and ramps that cut more than the paths are not part of it, and a piece
+    they cut away or split may be reported (m1_881008_35, 713003_20, also in T-0127); the bands carry
+    T-0127's allowance of up to 7 µm over the tab-layer radius, so a piece within about that much of
+    the 0.05 mm thickness threshold can be left out (713004_23: a 0.052 mm² piece); a tab whose two "pieces" in its window
+    are one piece joined beyond the window (overlapping vectors, scene 401007_36) is kept although
+    it holds nothing new (redundant, never severed); and a tab judged on a wider window (above) may join the main pieces beside it yet leave a sliver
+    unjoined, which is then reported loose (a2_610000_162: 0.33 mm², 0.072 mm thick). Not a gap but the rule: a tab that leaves a
+    piece near it loose is dropped even when a neighbouring tab holds that piece (each tab holds on
+    its own; V-bit scene m2_403000_48, flat or 3D alike: a 59 mm² piece beside two tabs, which a
+    keep-all comparison counted as one tab group). Cost: within a few per cent of T-0127 and main
+    on the pages measured (500 close rectangles with a separate last pass and allowance −1; On the
+    vector, 500 small shapes; pages of 500–2,000 open polylines). So a short tab centred on a sharp
+    turn of the cut — a convex corner or spike tip, an inside corner (Inside of a square), a gear
+    root, the tip of a narrow arm — where the tool at the two ends of the raised stretch seals the
+    tab's material off from the waste, is dropped and reported (On a 30 × 30 square with a 6 mm
+    tool the tools at the two ends of a corner tab's raised stretch stand (L/2 + r)·√2 apart and
+    overlap for L < 2.49 mm; the tab is kept once the neck between them survives the widened
+    check: from L = 2.8 mm at allowance 0 and −0.3, 2.6 mm at +0.3, where the corner of the cut is
+    rounded), and so is one left hanging on the part by a sliver (verify rounds 2 and 3);
+    tabs that hold — short tabs on straight edges, longer tabs on corners — are kept, for every
+    allowance ≥ −r. (T-0124 merged with a conservative On guard that dropped every On tab whose
+    raised-stretch ends came within 2r + 2|allowance| + max(0.25, 0.05·D) of each other; T-0127
+    replaced it with this rule.) The check runs as a
     worklist: when a tab is dropped, only the tabs whose material lies within reach of the cut it
     protected are checked again (a separate last pass with tabs on 500 close vectors costs about
     1.3 × the time without tabs). Together: no pass cuts below the tab top into any cross-section
@@ -180,7 +358,7 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     pass, otherwise the only cuts), so per vector when its offset is one loop, and per loop when
     the offset splits into several (each loop gets the requested tabs; the diagnostic sums them); one `TabsNotPlaced` diagnostic per
     vector says "N of M tab(s) left out" with the count for each reason (no room, could not be
-    matched on the roughing cut, would be cut through); another reports tabs that could not avoid
+    matched on the roughing cut, would be cut through, would hold nothing); another reports tabs that could not avoid
     a corner. Where a V-bit corner climb is inserted at the start of a raised stretch, the tool
     goes back up to the tab top vertically after the climb (inserts end at the leg's height there;
     path breaks closer than the tiny length merge into the last of them), so a tab is always cut
@@ -201,7 +379,9 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     closed cut moves to the middle of its start span, then of the other spans from the longest
     (`StartMoved`; owner decision 2026-10-26: keep this). Only when nothing fits is the lead left
     out (`LeadDropped`). Lead-outs try the same variants and sizes at the end point and leave at
-    the height the cut ended at (the tab top when the overcut ends in a tab).
+    the height the cut ended at (the tab top when the overcut ends in a tab). A closed cut that
+    collapsed to a point when its start was chosen (no spans left; it emits nothing) gets no
+    lead and no diagnostic (T-0163).
 16. **V-bit corners.** Sharp external = Sharp joins (5). Sharp internal, on the final level, at
     an inside-corner kink Q of an exact offset where the path turns by more than 5° (merged
     polygonal regions, On profiles and the sub-degree kinks of polygonised curves get none):
@@ -223,6 +403,14 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     `CornerNeedsVBit` for other tools.
 17. **Bezier input.** Beziers are polygonised before offsetting; when present the offset chordal
     tolerance is tightened to tol.distance/2 so the cut stays within tolerance of r.
+18. **Tolerance bounds (T-0141).** `ProfileParams::tolerance` must satisfy the same bounds as
+    Pocket's (ADR-0017): 1e-4 mm <= chordal <= 1 mm and 0 < distance <= chordal, all finite.
+    Otherwise nothing is cut and the result carries one `InvalidParameters` diagnostic, "invalid
+    tolerance: chordal must be between 0.0001 and 1 mm, distance > 0 and <= chordal" (the CLI
+    prints it after "no profile toolpath was produced:"). Before T-0141 any tolerance was
+    accepted, so a near-zero chordal tolerance multiplied the polygon vertex count without bound,
+    and the offset dust filter's width budget (ADR-0006 §8) stays inside the offset slack
+    only for chordal tolerances well above 1e-5 mm. Valid tolerances give byte-identical output.
 
 ### Golden hand-check (AC1 / AC6)
 `core/tests/golden/toolpath/profile_rect_tabs.moves` and `profile_rect_tabs_grbl.nc` were

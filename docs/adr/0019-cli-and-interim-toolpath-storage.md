@@ -1,7 +1,15 @@
 # ADR-0019: carvetto-cli and interim toolpath storage in `.carv`
 
-Date: 2026-11-01 · Status: proposed (T-0122) · Storage, ordering and params.json schema decided by
-the project owner (2026-11-01, recorded under the T-0122 card)
+Date: 2026-11-01 · Status: superseded in part by ADR-0021 (T-0132): the interim toolpath storage
+(§1) and the reload check of `toolpath` (§3) are replaced by native toolpath records; §2
+(params.json) and the rest of the CLI stay in force · Storage, ordering and params.json schema
+decided by the project owner (2026-11-01, recorded under the T-0122 card)
+
+> **Superseded storage (T-0132).** Toolpaths are now `ToolpathRecord`s in the document, saved in
+> `job.json` with their moves in binary caches `toolpaths/NNNN.bin` under the loader's own move
+> budget (ADR-0021). `toolpaths/NNNN.json` members described below are converted to records when a
+> file is loaded and are no longer written; the CLI no longer reloads a file before writing it.
+> The text below is kept as the record of the T-0122 decision.
 
 ## Context
 T-0122 adds a headless console program, `carvetto-cli`, with the commands
@@ -54,6 +62,7 @@ definitions in `job.json` with an optional `toolpaths/*.bin` cache, and no card 
   - Without them the tool's default cutting data is used.
 - `"layers": [names]` restricts the vectors. The default is every vector object, in creation order.
 - Unknown keys are errors that name the key and list the keys known at that level.
+- Duplicate keys are errors that name the key path, and objects/arrays nested more than 32 levels deep are refused (T-0134); JSON parsers would otherwise keep the last duplicate silently, and the schema needs three levels.
 
 Implementation choices made here:
 - **Relative paths.** A relative `tool.database` is resolved against the params file's directory.

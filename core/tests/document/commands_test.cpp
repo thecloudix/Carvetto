@@ -4,14 +4,14 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <cstddef>
-#include <ctime>
-#include <limits>
 #include <memory>
 #include <set>
 #include <vector>
 
 #include "carvetto/document/document.hpp"
 #include "carvetto/geometry/contour.hpp"
+// Last: on Windows it includes <windows.h> (macros such as near/far).
+#include "../geometry/cpu_scaling.hpp"
 
 using namespace carvetto::document;
 using carvetto::geometry::Box2;
@@ -151,22 +151,25 @@ TEST_CASE("AC3: deleting a layer moves its objects to the default layer unless d
 
 // Timing method (T-0014). The original wall-clock bound failed under parallel `ctest -j8` on a
 // loaded machine, where this process may only get a fraction of a core. So:
-//  - Time is process CPU time from `std::clock()`. On POSIX that excludes time spent waiting for
-//    the CPU while other tests run; this test is single-threaded, so process CPU time is the test's
-//    own work. (MSVC's `std::clock()` is wall time since process start; Windows CI runs ctest
-//    serially, so the bound is still meaningful there.)
+//  - Time is process CPU time (`processCpuSeconds`, cpu_time.hpp; GetProcessTimes on Windows).
+//    That excludes time spent waiting for the CPU while other tests run; this test is
+//    single-threaded, so process CPU time is the test's own work.
 //  - The one-second bound (the T-0010 criterion) applies to the best of three 10 000-op runs, which
 //    filters out one-off stalls (page faults, a descheduled timer tick).
 //  - An O(n^2) regression is caught independently of machine speed by a scaling check measured the
-//    same way: best(20 000) < 3 x best(10 000). Linear or n log n work gives a ratio of about 2;
-//    quadratic work gives about 4. Runs of both sizes are interleaved so a slow phase of the machine
-//    affects both.
+//    same way: best(40 000) < 9 x best(10 000). Runs of both sizes are interleaved
+//    (`interleavedCpuSeconds`, cpu_scaling.hpp, T-0145) so a slow phase of the machine affects both.
+//    T-0159: the check was best(20 000) < 3 x best(10 000), and failed on GitHub runners (GCC 13
+//    and 15, ratios ~3.2 in every pair): there 10k takes ~6 ms and the larger run falls off a cache
+//    level (the document and undo stack are node-based maps), a one-off constant factor that a
+//    doubling's headroom (3 / 2.1) does not absorb. Quadrupling guards the same exponent (n^1.585:
+//    9 = 4^1.585, 3 = 2^1.585) with twice the headroom for such a step: n log n gives ~4.4,
+//    quadratic work 16.
 namespace {
 
-/// Inserts `count` objects, undoes all and redoes all; returns the process CPU seconds it took.
-double insertUndoRedoSeconds(int count) {
+/// Inserts `count` objects, undoes all and redoes all.
+void insertUndoRedo(int count) {
     Document doc;
-    const std::clock_t start = std::clock();
     for (int i = 0; i < count; ++i) {
         const double x = static_cast<double>(i % 100) * 12.0;
         const double y = static_cast<double>(i / 100) * 12.0;
@@ -180,8 +183,6 @@ double insertUndoRedoSeconds(int count) {
     }
     REQUIRE(doc.objectCount() == static_cast<std::size_t>(count));
     REQUIRE(doc.undoStack().count() == static_cast<std::size_t>(count));
-    const std::clock_t stop = std::clock();
-    return static_cast<double>(stop - start) / static_cast<double>(CLOCKS_PER_SEC);
 }
 
 }  // namespace
@@ -189,20 +190,15 @@ double insertUndoRedoSeconds(int count) {
 TEST_CASE("AC4: 10 000 inserts, undo all and redo all complete under one second",
           "[document][commands][perf]") {
     constexpr int kCount = 10000;
-    constexpr int kRuns = 3;
-    double best10k = std::numeric_limits<double>::infinity();
-    double best20k = std::numeric_limits<double>::infinity();
-    for (int run = 0; run < kRuns; ++run) {
-        best10k = std::min(best10k, insertUndoRedoSeconds(kCount));
-        best20k = std::min(best20k, insertUndoRedoSeconds(2 * kCount));
-    }
-    INFO("best CPU seconds: 10k = " << best10k << ", 20k = " << best20k);
-    CHECK(best10k < 1.0);
-    // Optimised builds finish 10k in a few tens of ms; `std::clock()` ticks can be ~16 ms on
-    // Windows, so the ratio uses a 50 ms floor. That keeps the check robust there; the unoptimised
-    // Linux CI build (10k ~ 0.2 s) is where a quadratic regression shows up.
-    const double floor10k = std::max(best10k, 0.05);
-    CHECK(best20k < 3.0 * floor10k);
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+        5, [&] { insertUndoRedo(kCount); }, [&] { insertUndoRedo(4 * kCount); });
+    INFO("best CPU seconds: 10k = " << t.smallSeconds << ", 40k = " << t.largeSeconds << ", ratio "
+                                     << t.ratio());
+    CHECK(t.smallSeconds < 1.0);
+    // Optimised builds finish 10k in a few tens of ms; process-time ticks are ~16 ms on Windows,
+    // so the ratio floors the 10k time at kCpuTimeFloor (50 ms). That keeps the check robust
+    // there; the unoptimised Linux CI build (10k ~ 0.2 s) is where a quadratic regression shows up.
+    CHECK(t.ratio() < 9.0);
 }
 
 TEST_CASE("AC5: object ids are unique across undo/redo and paste assigns new ids", "[document][commands]") {

@@ -66,7 +66,11 @@ struct ProfileParams {
     std::string name{"Profile"};
     ProfileSide side{ProfileSide::Outside};
     CutDirection direction{CutDirection::Climb};
-    /// Extra distance between the tool and the vector (negative cuts into it).
+    /// Extra distance between the tool and the vector (negative cuts into it). Must be at least
+    /// minus `profileToolRadius` (also with `lastPassAllowance` added); below that the toolpath is
+    /// refused with `InvalidParameters` (T-0129). On the vector it must also be at most
+    /// `profileToolRadius` (also with `lastPassAllowance` added), or the tool would run entirely
+    /// off the vector (T-0137); Inside/Outside (and open Left/Right) have no upper limit.
     double allowance{0.0};
     /// Depths. A non-positive `passDepth` takes the cutting data's pass depth.
     PassPlan passes;
@@ -93,7 +97,10 @@ struct ProfileParams {
     /// Feeds, speeds, tool number and default pass depth; empty = the tool's default data
     /// (`effectiveCuttingData`). Look up machine/material data with `Tool::cuttingDataFor`.
     std::optional<tooling::CuttingData> cuttingData;
+    /// As Pocket: 1e-4 <= chordal <= 1 mm and 0 < distance <= chordal, else InvalidParameters.
     geometry::Tolerance tolerance{geometry::Tolerance::defaults()};
+
+    bool operator==(const ProfileParams&) const = default;
 };
 
 /// Profile diagnostics use the shared operation types (T-0123, operation.hpp); the profile's

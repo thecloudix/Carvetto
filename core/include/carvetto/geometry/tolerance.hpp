@@ -19,6 +19,8 @@ struct Tolerance {
     /// Default tolerance set.
     static constexpr Tolerance defaults() { return {}; }
 
+    constexpr bool operator==(const Tolerance&) const = default;
+
     /// constexpr absolute value (std::fabs is not constexpr on MSVC).
     static constexpr double absValue(double v) { return v < 0.0 ? -v : v; }
 

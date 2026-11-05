@@ -29,6 +29,25 @@ set(CLIPPER2_EXAMPLES OFF CACHE BOOL   "" FORCE)
 set(CLIPPER2_TESTS    OFF CACHE BOOL   "" FORCE)
 set(CLIPPER2_USINGZ   OFF CACHE STRING "" FORCE)
 FetchContent_MakeAvailable(Clipper2)
+# Backport of the upstream fix for over-shrunk offsets (Clipper2 issues #873/#916, fixed after
+# 1.4.0): ClipperOffset inserts the original vertex at every concave join, not only at joins
+# sharper than ~8 degrees. Without it, a polygonised curve inset past its inradius comes back
+# point-reflected with its own orientation (a 17 mm circle inset by 19.2 mm as a 2.2 mm circle)
+# and survives the final union (T-0018, ADR-0006 §6). Applied at configure time, idempotently.
+set(_clipper2_offset_cpp "${clipper2_SOURCE_DIR}/CPP/Clipper2Lib/src/clipper.offset.cpp")
+file(READ "${_clipper2_offset_cpp}" _clipper2_offset_src)
+set(_clipper2_offset_old "if (cos_a < 0.99) path_out.push_back(path[j]); // (#405)")
+set(_clipper2_offset_new "path_out.push_back(path[j]); // (#405, #873, #916; Carvetto T-0018 backport)")
+string(FIND "${_clipper2_offset_src}" "${_clipper2_offset_new}" _clipper2_offset_patched)
+if(_clipper2_offset_patched EQUAL -1)
+  string(FIND "${_clipper2_offset_src}" "${_clipper2_offset_old}" _clipper2_offset_at)
+  if(_clipper2_offset_at EQUAL -1)
+    message(FATAL_ERROR "Clipper2: cannot apply the T-0018 over-shrink fix to ${_clipper2_offset_cpp} "
+                        "(source differs from 1.4.0); see ADR-0006 §6")
+  endif()
+  string(REPLACE "${_clipper2_offset_old}" "${_clipper2_offset_new}" _clipper2_offset_src "${_clipper2_offset_src}")
+  file(WRITE "${_clipper2_offset_cpp}" "${_clipper2_offset_src}")
+endif()
 set_target_properties(Clipper2 PROPERTIES
   INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${clipper2_SOURCE_DIR}/CPP/Clipper2Lib/include>")
 # Clipper2 builds itself with -Werror (/WX on MSVC). Strip that so warnings a future compiler
@@ -73,6 +92,9 @@ add_library(carvetto_core STATIC
   src/geometry/contour.cpp
   src/geometry/contour_ops.cpp
   src/geometry/intersect.cpp
+  src/geometry/robust_predicates.cpp
+  src/geometry/delaunay.cpp
+  src/geometry/medial_axis.cpp
   src/toolpath/move.cpp
   src/toolpath/toolpath.cpp
   src/toolpath/pass_plan.cpp
@@ -93,11 +115,13 @@ add_library(carvetto_core STATIC
   src/document/undo_stack.cpp
   src/document/document.cpp
   src/document/commands.cpp
+  src/document/toolpath_record.cpp
   src/geometry/clipper_interop.cpp
   src/geometry/offset.cpp
   src/geometry/boolean.cpp
   src/document/carv_zip.cpp
   src/document/carv_json_reader.cpp
+  src/document/carv_moves.cpp
   src/document/carv_io.cpp
   src/io/dxf_pairs.cpp
   src/io/dxf_text.cpp
@@ -106,6 +130,8 @@ add_library(carvetto_core STATIC
   src/io/dxf_import.cpp
   src/io/dxf_export.cpp
   src/toolpath/pocket.cpp
+  src/toolpath/drill.cpp
+  src/toolpath/engrave.cpp
 )
 target_include_directories(carvetto_core PUBLIC include)
 target_link_libraries(carvetto_core

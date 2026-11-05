@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <functional>
 #include <initializer_list>
+#include <iterator>
 #include <limits>
 #include <map>
 #include <optional>
@@ -16,6 +17,8 @@
 #include <vector>
 
 #include "clipper_interop.hpp"
+#include "offset_batch.hpp"
+#include "offset_dust.hpp"
 #include "offset_junction.hpp"
 
 namespace carvetto::geometry {
@@ -38,16 +41,405 @@ Clipper2Lib::JoinType toClipperJoin(JoinType join) {
     return Clipper2Lib::JoinType::Round;
 }
 
+// Grid-level dust (T-0138). Within a few nanometres of collapse Clipper2 can return rings no
+// wider than a few grid units: genuine regions shrunk to the rounding level, and debris wound
+// against its nesting (ADR-0006 §8). A ring is dust when no disk of radius kDustRadiusUnits
+// (scaled up for coordinates where double rounding exceeds the grid) fits inside it, as judged
+// by Clipper2's erosion, which is not exact on acute rings (removed rings have an inradius of up
+// to about 5.6 units, kept ones down to about 3.6).
+constexpr double kDustRadiusUnits = 4.0;
+
+double dustRadiusUnits(const Clipper2Lib::Paths64& paths) {
+    double maxAbs = 0.0;
+    for (const auto& path : paths) {
+        for (const auto& p : path) {
+            const double ax = std::abs(static_cast<double>(p.x));
+            const double ay = std::abs(static_cast<double>(p.y));
+            maxAbs = std::max({maxAbs, ax, ay});
+        }
+    }
+    // Clipper2 computes offset and intersection points in double from the int64 grid: a few
+    // ulps of the coordinates, which exceed one unit only beyond ~2.8e14 units (2.8e8 mm).
+    const double rounding = 16.0 * std::numeric_limits<double>::epsilon() * maxAbs;
+    return kDustRadiusUnits * std::max(1.0, rounding);
+}
+
+double perimeterUnits(const Clipper2Lib::Path64& path) {
+    double len = 0.0;
+    for (std::size_t i = 0, n = path.size(); i < n; ++i) {
+        const auto& a = path[i];
+        const auto& b = path[(i + 1) % n];
+        len += std::hypot(static_cast<double>(b.x - a.x), static_cast<double>(b.y - a.y));
+    }
+    return len;
+}
+
+// True when no disk of radius `radius` (grid units) fits inside the ring. A ring of inradius r
+// satisfies |area| <= r x perimeter (every point lies within r of the boundary), so rings with
+// |area| / perimeter >= radius are kept without the erosion test.
+bool isDustRing(const Clipper2Lib::Path64& path, double radius) {
+    if (path.size() < 3) {
+        return true;
+    }
+    const double perimeter = perimeterUnits(path);
+    if (!(perimeter > 0.0)) {
+        return true;
+    }
+    if (std::abs(Clipper2Lib::Area(path)) >= radius * perimeter) {
+        return false;
+    }
+    // A lone ring shrinks whichever way it is wound (Clipper2 takes the orientation of the
+    // outermost path of a group as "outwards").
+    const Clipper2Lib::Paths64 eroded = Clipper2Lib::InflatePaths(
+        Clipper2Lib::Paths64{path}, -radius, Clipper2Lib::JoinType::Round, Clipper2Lib::EndType::Polygon);
+    return eroded.empty();
+}
+
+// Removes dust rings (see isDustRing) and any ring nested inside a removed one.
+void dropDustRings(Clipper2Lib::Paths64& paths) {
+    if (paths.empty()) {
+        return;
+    }
+    const double radius = dustRadiusUnits(paths);
+    std::vector<bool> dust(paths.size(), false);
+    bool any = false;
+    for (std::size_t i = 0; i < paths.size(); ++i) {
+        dust[i] = isDustRing(paths[i], radius);
+        any = any || dust[i];
+    }
+    if (!any) {
+        return;
+    }
+    // A ring inside a dust ring is normally narrower still, so the erosion test drops it too,
+    // but that test is not exact (ADR-0006 §8); drop such rings explicitly so that no hole
+    // outlives its outer.
+    std::vector<detail::GridBox> boxes(paths.size());
+    std::vector<bool> usable(paths.size());
+    for (std::size_t i = 0; i < paths.size(); ++i) {
+        const Clipper2Lib::Rect64 b = Clipper2Lib::GetBounds(paths[i]);
+        boxes[i] = {b.left, b.top, b.right, b.bottom};
+        // Outers need 3 points; inner rings any point (an empty path is never tested).
+        usable[i] = !paths[i].empty();
+    }
+    detail::markNestedInDust(boxes, usable, dust, [&paths](std::size_t outer, std::size_t inner) {
+        if (paths[outer].size() < 3) {
+            return false;
+        }
+        bool inside = false;
+        for (const auto& p : paths[inner]) {
+            const auto where = Clipper2Lib::PointInPolygon(p, paths[outer]);
+            if (where == Clipper2Lib::PointInPolygonResult::IsOutside) {
+                return false;
+            }
+            inside = inside || where == Clipper2Lib::PointInPolygonResult::IsInside;
+        }
+        return inside;
+    });
+    std::size_t kept = 0;
+    for (std::size_t i = 0; i < paths.size(); ++i) {
+        if (!dust[i]) {
+            if (kept != i) {
+                paths[kept] = std::move(paths[i]);
+            }
+            ++kept;
+        }
+    }
+    paths.resize(kept);
+}
+
 }  // namespace
 
-std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double distance, JoinType join,
-                                    const Tolerance& tol, double mitreLimit) {
-    // Clipper2 approximates round joins with chords; its arc tolerance is in grid units.
-    Clipper2Lib::ClipperOffset offsetter(std::max(mitreLimit, 1.0), detail::toClipperDistance(tol.chordal));
+namespace detail {
+
+void markNestedInDust(const std::vector<GridBox>& boxes, const std::vector<bool>& usable,
+                      std::vector<bool>& dust,
+                      const std::function<bool(std::size_t outer, std::size_t inner)>& nested) {
+    std::vector<std::size_t> byLeft;
+    std::vector<std::size_t> work;
+    for (std::size_t i = 0; i < boxes.size(); ++i) {
+        if (!usable[i]) {
+            continue;
+        }
+        if (dust[i]) {
+            work.push_back(i);
+        } else {
+            byLeft.push_back(i);
+        }
+    }
+    if (work.empty()) {
+        return;
+    }
+    std::vector<std::size_t> byTop = byLeft;
+    std::sort(byLeft.begin(), byLeft.end(), [&boxes](std::size_t a, std::size_t b) {
+        return boxes[a].left < boxes[b].left || (boxes[a].left == boxes[b].left && a < b);
+    });
+    std::sort(byTop.begin(), byTop.end(), [&boxes](std::size_t a, std::size_t b) {
+        return boxes[a].top < boxes[b].top || (boxes[a].top == boxes[b].top && a < b);
+    });
+    // The rings whose left (top) edge lies within [lo, hi]: a range of byLeft (byTop).
+    auto range = [&boxes](const std::vector<std::size_t>& sorted, bool alongY, std::int64_t lo, std::int64_t hi) {
+        auto key = [&boxes, alongY](std::size_t a) { return alongY ? boxes[a].top : boxes[a].left; };
+        const auto first = std::lower_bound(sorted.begin(), sorted.end(), lo,
+                                            [&key](std::size_t a, std::int64_t v) { return key(a) < v; });
+        const auto last = std::upper_bound(first, sorted.end(), hi,
+                                           [&key](std::int64_t v, std::size_t a) { return v < key(a); });
+        return std::make_pair(first, last);
+    };
+    while (!work.empty()) {
+        const std::size_t i = work.back();
+        work.pop_back();
+        const GridBox& box = boxes[i];
+        // Scan whichever axis holds fewer candidates (a column of rings shares its x-range).
+        const auto inX = range(byLeft, false, box.left, box.right);
+        const auto inY = range(byTop, true, box.top, box.bottom);
+        const bool scanY = inY.second - inY.first < inX.second - inX.first;
+        const auto first = scanY ? inY.first : inX.first;
+        const auto last = scanY ? inY.second : inX.second;
+        for (auto it = first; it != last; ++it) {
+            const std::size_t j = *it;
+            const GridBox& bj = boxes[j];
+            if (dust[j] || bj.left < box.left || bj.right > box.right || bj.top < box.top || bj.bottom > box.bottom) {
+                continue;
+            }
+            if (nested(i, j)) {
+                dust[j] = true;
+                work.push_back(j);
+            }
+        }
+    }
+}
+
+}  // namespace detail
+
+namespace {
+
+// Lowest point of a path by Clipper2's rule for the "lowest closed path" of an offset group
+// (largest y, then smallest x; the first of equal points wins).
+struct LowestPoint {
+    std::int64_t x{0};
+    std::int64_t y{0};
+};
+
+LowestPoint lowestPointOf(const Clipper2Lib::Path64& path) {
+    LowestPoint best{std::numeric_limits<std::int64_t>::max(), std::numeric_limits<std::int64_t>::min()};
+    for (const auto& p : path) {
+        if (p.y < best.y || (p.y == best.y && p.x >= best.x)) {
+            continue;
+        }
+        best = {p.x, p.y};
+    }
+    return best;
+}
+
+// True when `a` is strictly lower than `b` by that rule (so the earlier path wins ties).
+bool lowerThan(const LowestPoint& a, const LowestPoint& b) {
+    return a.y > b.y || (a.y == b.y && a.x < b.x);
+}
+
+// One Clipper2 offset of closed paths, all in one group (the lowest path decides orientation).
+Clipper2Lib::Paths64 offsetClosedGroup(const Clipper2Lib::Paths64& paths, double delta, Clipper2Lib::JoinType join,
+                                       double mitreLimit, double arcTolerance) {
+    Clipper2Lib::ClipperOffset offsetter(std::max(mitreLimit, 1.0), arcTolerance);
     offsetter.PreserveCollinear(false);
+    offsetter.AddPaths(paths, join, Clipper2Lib::EndType::Polygon);
+    Clipper2Lib::Paths64 out;
+    offsetter.Execute(delta, out);
+    return out;
+}
+
+// The batches closed paths are offset in (T-0141, ADR-0006 §9), or nothing when one Clipper2
+// call over all of them is cheap enough (fewer than `minDepth` batches side by side) or the
+// input does not split.
+//
+// Every point Clipper2 emits for a path offset by delta lies within reach x |delta| of a path
+// vertex or edge, plus half a unit of rounding: reach is 1 for round joins (offset edges and
+// arcs at |delta|; the original vertex of a concave join lies on the path), sqrt 2 for square
+// corners, max(sqrt 2, mitreLimit) for mitres (square beyond the limit). Boxes grown by that
+// and separated by a gap keep their raw offsets apart, so each batch's union is the global
+// union restricted to it.
+// Clipper2 offsets a whole group the way its lowest path is wound (ADR-0006 §4); a batch whose
+// own lowest path is wound the other way would flip, so it joins the batch holding the global
+// lowest path, which then decides for it as in one call.
+std::optional<std::vector<std::vector<std::size_t>>> planBatches(const Clipper2Lib::Paths64& paths, double delta,
+                                                                 JoinType join, double mitreLimit,
+                                                                 std::size_t minDepth) {
+    if (paths.size() < 2 || paths.size() < minDepth) {
+        return std::nullopt;
+    }
+    constexpr double kSqrt2 = 1.4142135623730951;
+    const double reach = join == JoinType::Round ? 1.0 : (join == JoinType::Square ? kSqrt2 : std::max(kSqrt2, mitreLimit));
+    // Per axis: at most reach x |delta| (with a relative margin for the double arithmetic) plus
+    // half a unit of rounding to the grid.
+    const double margin = std::ceil(std::abs(delta) * reach * (1.0 + 1e-9)) + 1.0;
+    // Keep grown boxes far inside int64 (Clipper2's own range is +-2.3e18 units).
+    constexpr double kLimit = 4.0e18;
+    if (!(margin < kLimit)) {
+        return std::nullopt;
+    }
+    const auto grow = static_cast<std::int64_t>(margin);
+    std::vector<detail::GridBox> boxes(paths.size());
+    for (std::size_t i = 0; i < paths.size(); ++i) {
+        const Clipper2Lib::Rect64 b = Clipper2Lib::GetBounds(paths[i]);
+        const double lo = std::min(static_cast<double>(b.left), static_cast<double>(b.top));
+        const double hi = std::max(static_cast<double>(b.right), static_cast<double>(b.bottom));
+        if (!(lo - margin > -kLimit && hi + margin < kLimit)) {
+            return std::nullopt;
+        }
+        boxes[i] = {b.left - grow, b.top - grow, b.right + grow, b.bottom + grow};
+    }
+    std::vector<std::vector<std::size_t>> batches = detail::separableBatches(boxes);
+    if (batches.size() < 2 || batches.size() < minDepth) {
+        return std::nullopt;
+    }
+    std::vector<LowestPoint> lowest(paths.size());
+    std::size_t globalLowest = 0;
+    for (std::size_t i = 0; i < paths.size(); ++i) {
+        lowest[i] = lowestPointOf(paths[i]);
+        if (lowerThan(lowest[i], lowest[globalLowest])) {
+            globalLowest = i;
+        }
+    }
+    const bool reversed = Clipper2Lib::Area(paths[globalLowest]) < 0.0;
+    std::size_t home = 0;
+    std::vector<bool> flips(batches.size(), false);
+    for (std::size_t b = 0; b < batches.size(); ++b) {
+        std::size_t low = batches[b].front();
+        for (const std::size_t i : batches[b]) {
+            if (lowerThan(lowest[i], lowest[low])) {
+                low = i;
+            }
+            if (i == globalLowest) {
+                home = b;
+            }
+        }
+        flips[b] = (Clipper2Lib::Area(paths[low]) < 0.0) != reversed;
+    }
+    std::vector<std::vector<std::size_t>> kept;
+    kept.reserve(batches.size());
+    std::vector<std::size_t> merged;
+    for (std::size_t b = 0; b < batches.size(); ++b) {
+        if (b == home || flips[b]) {
+            merged.insert(merged.end(), batches[b].begin(), batches[b].end());
+        }
+    }
+    std::sort(merged.begin(), merged.end());
+    for (std::size_t b = 0; b < batches.size(); ++b) {
+        if (b != home && !flips[b]) {
+            kept.push_back(std::move(batches[b]));
+        }
+    }
+    kept.push_back(std::move(merged));
+    std::sort(kept.begin(), kept.end(), [](const auto& a, const auto& b) { return a.front() < b.front(); });
+    if (kept.size() < 2 || detail::batchDepth(boxes, kept) < minDepth) {
+        return std::nullopt;
+    }
+    return kept;
+}
+
+}  // namespace
+
+namespace detail {
+
+std::vector<std::vector<std::size_t>> separableBatches(const std::vector<GridBox>& boxes) {
+    struct Job {
+        std::vector<std::size_t> items;
+        bool alongY{false};
+        bool otherAxisFailed{false};
+    };
+    std::vector<std::vector<std::size_t>> batches;
+    if (boxes.empty()) {
+        return batches;
+    }
+    std::vector<Job> stack;
+    {
+        Job all;
+        all.items.resize(boxes.size());
+        for (std::size_t i = 0; i < boxes.size(); ++i) {
+            all.items[i] = i;
+        }
+        stack.push_back(std::move(all));
+    }
+    while (!stack.empty()) {
+        Job job = std::move(stack.back());
+        stack.pop_back();
+        const bool y = job.alongY;
+        auto lo = [&boxes, y](std::size_t i) { return y ? boxes[i].top : boxes[i].left; };
+        auto hi = [&boxes, y](std::size_t i) { return y ? boxes[i].bottom : boxes[i].right; };
+        std::sort(job.items.begin(), job.items.end(), [&lo](std::size_t a, std::size_t b) {
+            return lo(a) < lo(b) || (lo(a) == lo(b) && a < b);
+        });
+        std::vector<std::vector<std::size_t>> parts;
+        std::int64_t reach = 0;
+        for (const std::size_t i : job.items) {
+            if (parts.empty() || lo(i) > reach) {
+                parts.emplace_back();
+                reach = hi(i);
+            } else {
+                reach = std::max(reach, hi(i));
+            }
+            parts.back().push_back(i);
+        }
+        if (parts.size() == 1) {
+            if (job.otherAxisFailed) {
+                batches.push_back(std::move(parts.front()));
+            } else {
+                stack.push_back(Job{std::move(parts.front()), !y, true});
+            }
+            continue;
+        }
+        for (auto& part : parts) {
+            if (part.size() == 1) {
+                batches.push_back(std::move(part));
+            } else {
+                stack.push_back(Job{std::move(part), !y, false});
+            }
+        }
+    }
+    for (auto& batch : batches) {
+        std::sort(batch.begin(), batch.end());
+    }
+    std::sort(batches.begin(), batches.end(), [](const auto& a, const auto& b) { return a.front() < b.front(); });
+    return batches;
+}
+
+std::size_t batchDepth(const std::vector<GridBox>& boxes, const std::vector<std::vector<std::size_t>>& batches) {
+    // +1 at a batch's top, -1 just after its bottom; opening events sort first at equal y.
+    std::vector<std::pair<std::int64_t, int>> events;
+    events.reserve(2 * batches.size());
+    for (const auto& batch : batches) {
+        if (batch.empty()) {
+            continue;
+        }
+        std::int64_t top = boxes[batch.front()].top;
+        std::int64_t bottom = boxes[batch.front()].bottom;
+        for (const std::size_t i : batch) {
+            top = std::min(top, boxes[i].top);
+            bottom = std::max(bottom, boxes[i].bottom);
+        }
+        events.emplace_back(top, -1);
+        events.emplace_back(bottom, 1);
+    }
+    std::sort(events.begin(), events.end());
+    std::size_t depth = 0;
+    std::size_t best = 0;
+    for (const auto& [at, kind] : events) {
+        (void)at;
+        if (kind < 0) {
+            best = std::max(best, ++depth);
+        } else {
+            --depth;
+        }
+    }
+    return best;
+}
+
+std::vector<Contour> offsetContoursBatched(const std::vector<Contour>& contours, double distance, JoinType join,
+                                           const Tolerance& tol, double mitreLimit, std::size_t minBatchDepth) {
     if (!std::isfinite(distance)) {
         return {};
     }
+    // Clipper2 approximates round joins with chords; its arc tolerance is in grid units.
+    const double arcTolerance = detail::toClipperDistance(tol.chordal);
     const bool zeroDistance = tol.isZero(distance);
     // All closed contours go into ONE Clipper2 group so that the outermost one decides the
     // orientation convention and opposite-oriented contours are treated as holes.
@@ -66,16 +458,46 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
     if (closedPaths.empty() && openPaths.empty()) {
         return {};
     }
-    if (!closedPaths.empty()) {
-        offsetter.AddPaths(closedPaths, toClipperJoin(join), Clipper2Lib::EndType::Polygon);
-    }
-    if (!openPaths.empty()) {
-        const auto end = join == JoinType::Round ? Clipper2Lib::EndType::Round : Clipper2Lib::EndType::Square;
-        offsetter.AddPaths(openPaths, toClipperJoin(join), end);
-    }
+    const double delta = detail::toClipperDistance(distance);
+    const Clipper2Lib::JoinType clipperJoin = toClipperJoin(join);
     Clipper2Lib::Paths64 out;
-    offsetter.Execute(detail::toClipperDistance(distance), out);
+    std::optional<std::vector<std::vector<std::size_t>>> batches;
+    if (openPaths.empty()) {
+        batches = planBatches(closedPaths, delta, join, mitreLimit, minBatchDepth);
+    }
+    if (batches) {
+        // Batches in the order of their first input contour, each in Clipper2's own order.
+        Clipper2Lib::Paths64 part;
+        for (const auto& batch : *batches) {
+            part.clear();
+            part.reserve(batch.size());
+            for (const std::size_t i : batch) {
+                part.push_back(std::move(closedPaths[i]));
+            }
+            Clipper2Lib::Paths64 res = offsetClosedGroup(part, delta, clipperJoin, mitreLimit, arcTolerance);
+            out.insert(out.end(), std::make_move_iterator(res.begin()), std::make_move_iterator(res.end()));
+        }
+    } else {
+        Clipper2Lib::ClipperOffset offsetter(std::max(mitreLimit, 1.0), arcTolerance);
+        offsetter.PreserveCollinear(false);
+        if (!closedPaths.empty()) {
+            offsetter.AddPaths(closedPaths, clipperJoin, Clipper2Lib::EndType::Polygon);
+        }
+        if (!openPaths.empty()) {
+            const auto end = join == JoinType::Round ? Clipper2Lib::EndType::Round : Clipper2Lib::EndType::Square;
+            offsetter.AddPaths(openPaths, clipperJoin, end);
+        }
+        offsetter.Execute(delta, out);
+    }
+    dropDustRings(out);
     return detail::contoursFromClipper(out, true);
+}
+
+}  // namespace detail
+
+std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double distance, JoinType join,
+                                    const Tolerance& tol, double mitreLimit) {
+    return detail::offsetContoursBatched(contours, distance, join, tol, mitreLimit, detail::kOffsetBatchMinDepth);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -192,6 +614,21 @@ std::vector<Vec2> carrierIntersections(const Span& a, const Span& b) {
         const double qb = 2.0 * w.dot(u);
         const double qc = w.lengthSquared() - arc.radius * arc.radius;
         double disc = qb * qb - 4.0 * qa * qc;
+        // A line at distance r from the centre to rounding (an offset line touching the circle
+        // of radius d about its own input vertex, where two collinear input lines meet) is one
+        // tangent contact. The discriminant's cancellation leaves noise of either sign there:
+        // positive noise gave two crossings ~1e-7 mm apart, and the sliver between them, dropped
+        // by the pruning, left a gap the junction snap closed or bridged depending on its last
+        // bits (with FMA contraction, GCC 15 at x86-64-v3, an extra span, T-0159). The distance
+        // from the centre to the line is accurate to a few ulps of the coordinates, so within
+        // that band the contact is tangent whatever the noise.
+        const double h = std::fabs(w.cross(u)) / std::sqrt(qa);
+        const double scale = std::max({1.0, arc.radius, std::fabs(line.start.x), std::fabs(line.start.y),
+                                       std::fabs(line.end.x), std::fabs(line.end.y), std::fabs(arc.centre.x),
+                                       std::fabs(arc.centre.y)});
+        if (std::fabs(h - arc.radius) <= 64.0 * std::numeric_limits<double>::epsilon() * scale) {
+            disc = 0.0;
+        }
         if (disc < 0.0) {
             if (disc < -1e-9 * qa * arc.radius * arc.radius) {
                 return out;

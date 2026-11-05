@@ -14,31 +14,44 @@ namespace carvetto::geometry {
 
 namespace {
 
-// Contribution of one span to the Green's theorem integral 1/2 * integral(x dy - y dx).
-double spanAreaContribution(const Span& s) {
+// Contribution of one span to the Green's theorem integral 1/2 * integral(x dy - y dx), taken
+// about the local origin `o` (T-0147): coordinates are made relative to `o` before any product, so
+// a small contour far from the global origin does not cancel to rounding noise.
+double spanAreaContribution(const Span& s, Vec2 o) {
     return std::visit(
-        [](const auto& v) -> double {
+        [o](const auto& v) -> double {
             using T = std::decay_t<decltype(v)>;
             if constexpr (std::is_same_v<T, LineSpan>) {
-                return 0.5 * v.start.cross(v.end);
+                return 0.5 * (v.start - o).cross(v.end - o);
             } else if constexpr (std::is_same_v<T, ArcSpan>) {
                 // x = cx + r cos(a), y = cy + r sin(a):  x y' - y x' = r^2 + r (cx cos a + cy sin a).
                 const double sweep = v.sweepAngle();
                 const double a0 = v.startAngle;
                 const double a1 = a0 + sweep;
                 const double r = v.radius;
-                const double integral = r * r * sweep + r * (v.centre.x * (std::sin(a1) - std::sin(a0)) -
-                                                             v.centre.y * (std::cos(a1) - std::cos(a0)));
-                return 0.5 * integral;
+                const Vec2 c = v.centre - o;
+                const double s0 = std::sin(a0);
+                const double c0 = std::cos(a0);
+                const double s1 = std::sin(a1);
+                const double c1 = std::cos(a1);
+                const double integral = r * r * sweep + r * (c.x * (s1 - s0) - c.y * (c1 - c0));
+                // The arc's computed end points (absolute centre + r (cos, sin), rounded at the
+                // contour's magnitude) are what the neighbouring spans join; straight jumps link
+                // them to the exact ends, so the region is closed however far out it lies.
+                const Vec2 exactStart = c + Vec2{r * c0, r * s0};
+                const Vec2 exactEnd = c + Vec2{r * c1, r * s1};
+                const double jumps = (v.startPoint() - o).cross(exactStart) + exactEnd.cross(v.endPoint() - o);
+                return 0.5 * (integral + jumps);
             } else {
                 // x(t) y'(t) - y(t) x'(t) is a degree-5 polynomial: 3-point Gauss-Legendre is exact.
+                const BezierSpan b{v.p0 - o, v.p1 - o, v.p2 - o, v.p3 - o};
                 constexpr double h = 0.3872983346207417;  // sqrt(15)/10
                 constexpr std::array<double, 3> nodes{0.5 - h, 0.5, 0.5 + h};
                 constexpr std::array<double, 3> weights{5.0 / 18.0, 8.0 / 18.0, 5.0 / 18.0};
                 double sum = 0.0;
                 for (std::size_t i = 0; i < 3; ++i) {
-                    const Vec2 p = v.pointAt(nodes[i]);
-                    const Vec2 d = v.derivativeAt(nodes[i]);
+                    const Vec2 p = b.pointAt(nodes[i]);
+                    const Vec2 d = b.derivativeAt(nodes[i]);
                     sum += weights[i] * p.cross(d);
                 }
                 return 0.5 * sum;
@@ -53,14 +66,25 @@ double signedArea(const Contour& c) {
     if (!c.closed || c.spans.empty()) {
         return 0.0;
     }
+    // Local origin: the contour's start point. The integral is translation invariant for a closed
+    // curve, and differences of nearby coordinates are exact, so the result is accurate to
+    // rounding relative to the contour's own size wherever it lies (T-0147).
+    const Vec2 o = c.startPoint();
     double total = 0.0;
+    Vec2 prevEnd = o;
     for (const Span& s : c.spans) {
-        total += spanAreaContribution(s);
+        // Where a span does not start exactly where the previous one ended (span junctions within
+        // tolerance, arc end points evaluated by trigonometry), the two are joined by a straight
+        // gap, as in point-in-contour (T-0143).
+        const Vec2 start = startPoint(s);
+        if (start.x != prevEnd.x || start.y != prevEnd.y) {
+            total += 0.5 * (prevEnd - o).cross(start - o);
+        }
+        total += spanAreaContribution(s, o);
+        prevEnd = endPoint(s);
     }
-    // A contour whose last span does not land exactly on the start is closed by a straight gap.
-    const Vec2 e = c.endPoint();
-    const Vec2 s0 = c.startPoint();
-    total += 0.5 * e.cross(s0);
+    // The straight closing gap from the last end point back to the start ends at the local
+    // origin, so its contribution is zero.
     return total;
 }
 
@@ -93,20 +117,28 @@ void setOrientation(Contour& c, Orientation want, const Tolerance& tol) {
 
 namespace {
 
+// Ray casting towards +X with the half-open rule y >= p.y. Every piece starts with `moveTo`,
+// which joins it to the previous piece's computed end point when the two differ (span junctions
+// within tolerance, arc end points evaluated by trigonometry against exact line end points). The
+// pieces therefore form one exactly closed chain, so each vertex is classified above or below the
+// ray once and only once and the crossings always balance (T-0143).
 struct RayCaster {
     Vec2 p;
     int winding{0};
+    bool started{false};
+    Vec2 first{};
+    Vec2 last{};
 
     bool above(Vec2 q) const { return q.y >= p.y; }
 
-    // A y-monotone piece from a to b crossing the horizontal through p at x.
+    // A y-monotone piece crossing the horizontal through p at x.
     void countCrossing(double x, bool upward) {
         if (x > p.x) {
             winding += upward ? 1 : -1;
         }
     }
 
-    void addSegment(Vec2 a, Vec2 b) {
+    void rawSegment(Vec2 a, Vec2 b) {
         const bool aAbove = above(a);
         const bool bAbove = above(b);
         if (aAbove == bAbove) {
@@ -114,6 +146,23 @@ struct RayCaster {
         }
         const double x = a.x + (b.x - a.x) * (p.y - a.y) / (b.y - a.y);
         countCrossing(x, bAbove);
+    }
+
+    // Starts a piece at a: links it to the chain's current end point first.
+    void moveTo(Vec2 a) {
+        if (!started) {
+            started = true;
+            first = a;
+        } else if (a.x != last.x || a.y != last.y) {
+            rawSegment(last, a);
+        }
+        last = a;
+    }
+
+    void addSegment(Vec2 a, Vec2 b) {
+        moveTo(a);
+        rawSegment(a, b);
+        last = b;
     }
 
     void addArc(const ArcSpan& arc) {
@@ -133,9 +182,11 @@ struct RayCaster {
         std::sort(params.begin(), params.end());
         const double dy = p.y - arc.centre.y;
         const double half = std::sqrt(std::max(0.0, arc.radius * arc.radius - dy * dy));
+        moveTo(arc.pointAt(params[0]));
         for (std::size_t i = 1; i < params.size(); ++i) {
-            const Vec2 a = arc.pointAt(params[i - 1]);
+            const Vec2 a = last;
             const Vec2 b = arc.pointAt(params[i]);
+            last = b;
             const bool aAbove = above(a);
             const bool bAbove = above(b);
             if (aAbove == bAbove) {
@@ -165,6 +216,14 @@ struct RayCaster {
             },
             s);
     }
+
+    // Closes the chain back to its first point (explicitly for open contours, across any small
+    // gap for closed ones).
+    void close() {
+        if (started) {
+            moveTo(first);
+        }
+    }
 };
 
 }  // namespace
@@ -177,8 +236,7 @@ int windingNumber(const Contour& c, Vec2 p, const Tolerance& tol) {
     for (const Span& s : c.spans) {
         caster.addSpan(s, tol);
     }
-    // Close the loop (explicitly when open, and across any small gap when closed).
-    caster.addSegment(c.endPoint(), c.startPoint());
+    caster.close();
     return caster.winding;
 }
 

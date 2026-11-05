@@ -20,7 +20,7 @@ Work is organised as tasks in `docs/BACKLOG.md`, executed by coder agents and ch
 
 1. The code and its unit tests (Catch2) in the same change.
 2. A passing serial `ctest` run on Linux (core), and `ctest -j8` passing repeatedly (CI repeats it 5×; run `ctest -j8 --repeat until-fail:10` locally for timing-sensitive changes) — Windows app build is checked by CI.
-3. A short entry in `CHANGELOG.md` under *Unreleased*.
+3. A changelog fragment: one file `changelog.d/T-XXXX.md` per task (`T-XXXX-YYYY.md` for one entry covering several cards) holding exactly one bullet line in the style of `CHANGELOG.md` (`- T-XXXX: ...`). **Never edit `CHANGELOG.md`** — the fragments are assembled into its *Unreleased* section at release time (`tools/changelog.py assemble`). Rules in `changelog.d/README.md`; `python3 tools/changelog.py check` validates them (ctest and CI run it). CI fails a PR that changes `CHANGELOG.md` in any way other than the two documented shapes, the director's `assemble` PR and a release PR (see `changelog.d/README.md`).
 4. A `docs/adr/NNNN-*.md` file when the change makes an architectural decision.
 5. A row in `THIRD_PARTY_NOTICES.md` when the change adds a third-party dependency.
 

@@ -8,6 +8,7 @@
 #include <memory>
 #include <span>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace carvetto::document::detail {
@@ -37,6 +38,7 @@ struct ZipLimits {
     /// size: JSON compresses well (a real 100k-object job.json ~19:1, all-identical objects
     /// 124:1); binary members (zstd heightfields, PNGs) barely compress. The binary ratio also
     /// applies to all binary members together (once their total exceeds `ratioFromBytes`).
+    /// Toolpath move caches are exempt (their decoded size is bounded by the move budget).
     std::uint64_t maxJsonRatio{200};
     std::uint64_t maxBinaryRatio{20};
     std::uint64_t ratioFromBytes{std::uint64_t{1} << 20};
@@ -55,7 +57,16 @@ struct ZipEntry {
     std::uint64_t dataOffset{0};
     std::uint64_t dataEnd{0};
     bool stored{false};  // method 0: data is the uncompressed bytes
+    /// A toolpath move cache (`toolpaths/NNNN.bin`, ADR-0021): exempt from the binary ratio
+    /// checks, bounded instead by the loader's move budget.
+    bool toolpathCache{false};
 };
+
+/// True for "toolpaths/NNNN.bin" (four digits): the move cache of a toolpath record (ADR-0021).
+bool isToolpathCacheName(std::string_view name);
+/// True for "toolpaths/NNNN.json" (four digits): a T-0122 interim toolpath member (ADR-0019),
+/// migrated to a toolpath record on load.
+bool isInterimToolpathName(std::string_view name);
 
 /// An open archive. `open` validates the central directory against the limits, reads every local
 /// header and rejects entries whose data ranges overlap. Members are then inflated by our own

@@ -149,3 +149,10 @@ untracked claim on an id value.
 ### A4 — Sheet deletion (owner decision, 2026-10-24)
 Deleting a sheet deletes the objects on it (undoable), as implemented in `DeleteSheetCommand`. The project owner confirmed this behaviour; the alternative (moving the objects to another sheet) was rejected. The "pending owner decision" notes in T-0010/T-0012 are closed.
 
+### A5 — Toolpath records are a fourth id kind (T-0132, 2026-11-01)
+`ToolpathId` values come from the same `IdGenerator` as sheets, layers and objects, so every rule
+above applies to them: one value names at most one sheet, layer, object or toolpath (`DuplicateId`
+counts toolpaths), toolpath ids are range-checked (`IdOutOfRange` / `IdNotBelowNext`), and preset
+ids for `AddToolpathCommand` must be fresh (A2). Toolpath vector selections may name deleted
+objects or layers but never unallocated ids or items of another kind (`BadToolpathSelection`).
+Details in ADR-0021.

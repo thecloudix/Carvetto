@@ -40,7 +40,7 @@ struct Polyline {
     /// Removes consecutive duplicate vertices (within `tol`), and the trailing vertex of a
     /// closed polyline when it duplicates the first.
     void removeDuplicates(double tol);
-    /// Signed area by the shoelace formula (positive for counter-clockwise); 0 when open.
+    /// Signed area by the shoelace formula about the first vertex (positive for counter-clockwise); 0 when open.
     double signedArea() const;
 };
 

@@ -128,6 +128,8 @@ class PostProcessor {
 
     /// True when a block name belongs to the `.pp` grammar Carvetto recognises.
     static bool isKnownBlock(std::string_view name);
+    /// Every block name the `.pp` grammar Carvetto recognises.
+    static std::vector<std::string_view> knownBlockNames();
 
    private:
     PostSettings settings_;

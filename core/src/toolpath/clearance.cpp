@@ -6,6 +6,7 @@
 #include <limits>
 #include <memory>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "carvetto/geometry/contour_ops.hpp"
@@ -14,13 +15,26 @@ namespace carvetto::toolpath {
 
 namespace {
 
-double boxDistance(const geometry::Box2& b, geometry::Vec2 p) {
+/// True when the distance from `p` to box `b` (infinite for an empty box), hypot(dx, dy) of the
+/// gaps per axis, is >= `limit`. Without the hypot where one axis decides it (T-0131: hypot was
+/// much of the time of the tab check's distance queries), with the same answer in every case:
+/// hypot(dx, dy) >= max(dx, dy), and hypot(d, 0) == d exactly.
+bool boxAtLeast(const geometry::Box2& b, geometry::Vec2 p, double limit) {
     if (b.isEmpty()) {
-        return std::numeric_limits<double>::infinity();
+        return std::numeric_limits<double>::infinity() >= limit;
     }
     const double dx = std::max({b.min.x - p.x, 0.0, p.x - b.max.x});
     const double dy = std::max({b.min.y - p.y, 0.0, p.y - b.max.y});
-    return std::hypot(dx, dy);
+    if (std::isnan(dx) || std::isnan(dy)) {
+        return std::hypot(dx, dy) >= limit;
+    }
+    if (dx >= limit || dy >= limit) {
+        return true;
+    }
+    if (dx == 0.0 || dy == 0.0) {
+        return std::max(dx, dy) >= limit;  // false here; hypot(d, 0) == d
+    }
+    return std::hypot(dx, dy) >= limit;
 }
 
 struct Sample {
@@ -59,7 +73,74 @@ ClearanceField::ClearanceField(std::vector<geometry::Contour> obstacles) {
         boxes.push_back(c.bounds());
     }
     data->index = BoxIndex(std::move(boxes));
+    // A box round every span, containing every point closestPoint can return on it (a line's
+    // ends; an arc's whole circle; a Bezier's control points), up to rounding.
+    double scale = 0.0;
+    data->spanStart.reserve(data->obstacles.size() + 1);
+    for (const geometry::Contour& c : data->obstacles) {
+        data->spanStart.push_back(data->spanBoxes.size());
+        for (const geometry::Span& sp : c.spans) {
+            geometry::Box2 b;
+            if (const auto* line = std::get_if<geometry::LineSpan>(&sp)) {
+                b = geometry::Box2{line->start, line->end};
+            } else if (const auto* arc = std::get_if<geometry::ArcSpan>(&sp)) {
+                const double r = std::fabs(arc->radius);
+                b = geometry::Box2{arc->centre - Vec2{r, r}, arc->centre + Vec2{r, r}};
+            } else {
+                const auto& bz = std::get<geometry::BezierSpan>(sp);
+                b = geometry::Box2{bz.p0, bz.p1};
+                b.expand(bz.p2);
+                b.expand(bz.p3);
+            }
+            data->spanBoxes.push_back(b);
+            scale = std::max(
+                {scale, std::fabs(b.min.x), std::fabs(b.min.y), std::fabs(b.max.x), std::fabs(b.max.y)});
+        }
+    }
+    data->spanStart.push_back(data->spanBoxes.size());
+    data->margin = 1e-9 * (1.0 + scale);
     data_ = std::move(data);
+}
+
+// min(best, distanceTo(obstacle i, p)) (T-0131). The span whose box lies nearest along x or y is
+// measured first, then every other span whose box lies more than the best distance so far (plus
+// a rounding margin) away along x or y is skipped: its distance is above that best, so it could
+// not lower the minimum. The others are measured exactly as distanceTo measures them, and the
+// minimum of the same values does not depend on the order they are taken in.
+double ClearanceField::obstacleDistance(std::size_t i, geometry::Vec2 p, double best) const {
+    const geometry::Contour& c = data_->obstacles[i];
+    const std::size_t n = c.spans.size();
+    const geometry::Box2* boxes = data_->spanBoxes.data() + data_->spanStart[i];
+    auto gap = [&](const geometry::Box2& b) {
+        return std::max({b.min.x - p.x, p.x - b.max.x, b.min.y - p.y, p.y - b.max.y});
+    };
+    std::size_t first = 0;
+    double firstGap = std::numeric_limits<double>::infinity();
+    for (std::size_t k = 0; k < n; ++k) {
+        const double g = gap(boxes[k]);
+        if (g < firstGap) {
+            firstGap = g;
+            first = k;
+        }
+    }
+    double d = std::numeric_limits<double>::infinity();
+    if (n > 0) {
+        d = geometry::closestPoint(c.spans[first], p).distance;
+        if (!(d < std::numeric_limits<double>::infinity())) {
+            d = std::numeric_limits<double>::infinity();  // NaN counts as no value, as in distanceTo
+        }
+    }
+    const double slack = data_->margin + 1e-9 * (std::fabs(p.x) + std::fabs(p.y));
+    for (std::size_t k = 0; k < n; ++k) {
+        if (k == first || gap(boxes[k]) > std::min(best, d) + slack) {
+            continue;
+        }
+        const double dk = geometry::closestPoint(c.spans[k], p).distance;
+        if (dk < d) {
+            d = dk;
+        }
+    }
+    return std::min(best, d);
 }
 
 std::size_t ClearanceField::size() const {
@@ -109,10 +190,10 @@ double ClearanceField::distance(geometry::Vec2 p) const {
         const std::vector<std::size_t> hits =
             last ? std::vector<std::size_t>{} : index.query(geometry::Box2{p - Vec2{r, r}, p + Vec2{r, r}});
         auto visit = [&](std::size_t i) {
-            if (skipped(i) || boxDistance(index.box(i), p) >= best) {
+            if (skipped(i) || boxAtLeast(index.box(i), p, best)) {
                 return;  // excluded, or cannot be nearer (a repeat visit from a smaller square)
             }
-            best = std::min(best, geometry::distanceTo(data_->obstacles[i], p));
+            best = obstacleDistance(i, p, best);
         };
         if (last) {
             for (std::size_t i = 0; i < index.size(); ++i) {
