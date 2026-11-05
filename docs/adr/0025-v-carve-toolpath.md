@@ -92,7 +92,17 @@ bound on text-heavy jobs (≥ 5,000 glyph-like regions). The geometry comes from
   flat area are out of reach of any pointed tool at the flat depth (the wall ring at the corner
   slopes the floor up into it), and reporting that for every letter would be noise. This was chosen
   over a warning: the floor gets cleared, with the same machinery, and the moves come first in
-  that region's part of the carving toolpath.
+  that region's part of the carving toolpath. **Ridges (T-0164 d).** Like any V-bit floor, the
+  rest passes leave ridges of stepover/(2·tan(θ/2)) (ball nose: R − sqrt(R² − (stepover/2)²)),
+  at most the depth limit. A stepover wider than the width the tool cuts there is limited to that
+  width, where neighbouring passes only touch at the floor and the ridges reach the full depth
+  limit (verifier round 3: 0.5–0.84 × the flat depth on narrow arms and on a square the end mill
+  was too large for). When that happens (the stepover beyond the width by more than the distance
+  tolerance: 2·footprint can come out one ulp short of a stepover equal to it) and the carving
+  tool has rest material to clear,
+  `StepoverLimited` says so once: "tool '<name>': stepover <s> mm is wider than it cuts at the
+  flat bottom (<w> mm); its rest clearing of the flat areas uses <w> mm and can leave ridges up
+  to <limit> mm high". A stepover within the width is the user's choice and not reported.
 - **Without clearance tools** the carving tool clears the flat areas itself with `pocketToolpath`
   (its cutting data's stepover and pass depth; the boundary pass is the same walls), prepended to
   its carve. A V-bit floor has ridges of stepover/(2·tan(θ/2)); clearance tools avoid them.
@@ -119,6 +129,13 @@ bound on text-heavy jobs (≥ 5,000 glyph-like regions). The geometry comes from
   cut through). Every resolved polygon is therefore checked against the vectors outside its
   cluster (`geometry::intersect`, pairs pruned by their boxes); a vector it crosses or touches
   joins the cluster, which is resolved again, until no polygon touches an outside vector. A
+  cluster found touching nothing outside is remembered with its members and not resolved or
+  checked again until they change, and the clusters are worked through in the old order (always
+  the lowest cluster not known to be stable) with member lists kept per cluster and rebuilt only
+  for the clusters an absorption involves (T-0164: every absorption restarted the resolution of
+  all clusters and rebuilt every member list, ~3.5× per doubling with many absorbing clusters;
+  now ~2.1× up to 6,400 pairs, same result, since a cluster's union and checks depend only on its
+  members). A
   union polygon that touches itself at a vertex (two pieces meeting at a point, e.g. a letter
   tangent to a frame edge) is cut into loops there (parities add up), since the medial axis needs
   simple contours; the nesting probes skip points on the candidate's boundary: 32 points by arc
@@ -161,13 +178,29 @@ isolated node) whose radius r is above twice the internal tolerance plus the dis
 + d) must lie inside the whole even-odd region (not just its part: a hole taken for an outer is a
 part of its own) and have no wall closer than r − (2c + d), i.e. the inscribed disc must agree with
 the true walls. Smaller discs are not checked: a wrong skeleton that thin can cut at most 2c + d
-outside the region, about 0.67 mm at the largest chordal tolerance, 1 mm (0.034 mm at 0.05). The
+outside the region, about 0.67 mm at the largest chordal tolerance, 1 mm (0.034 mm at 0.05).
+The same slack applies to every checked disc, not only to small ones: a wrong skeleton whose
+discs all reach less than 2c + d past a true wall is accepted, whatever their radius (T-0164 j;
+net verifier: a hole filled almost entirely by an island, read on the wrong side, carved up to
+0.24 mm outside the region at chordal 1.0 and 0.007 mm at 0.05, within the bound). The
 rings are the boundaries polygonised at the internal tolerance, indexed by box; each point queries
-the index for its disc's box, and only the rings of other parts are measured (the medial radius is
-already the exact distance to the part's own boundaries, whose rings lie within c of them).
+the index for its disc's box (and, within a ring, boxes of 16-segment runs). Until T-0164 only the
+rings of other parts were measured, on the grounds that the medial radius is already the exact
+distance to the part's own boundaries, whose rings lie within c of them. That holds only while the
+medial axis uses every own boundary; one dropped without being counted as ignored was measured
+nowhere (net verifier: a hole on a square's diagonal, skeleton of the square alone, passed). T-0164
+(g) measures the own rings too, at every checked point, so a silently dropped boundary is caught
+wherever a disc reaches more than 2c + d past it, exactly as a foreign ring would be (round 1
+measured them only at nodes and ray-count seeds, and holes away from every node, e.g. in the middle
+of a long strip, still carved 4.9 mm deep under fault injection). Own rings without area are never
+measured: the medial axis ignores them (they bound nothing). A correct radius never fails this
+(the rings lie within c of the boundaries, the slack is 2c + d).
 Membership is carried along the skeleton: walking from a point whose disc passed, no ring is within
 r − (2c + d) of it, so a next point nearer than that is on the same side of every ring; the exact
-ray count runs only where that does not hold and once per connected piece. If any check fails,
+ray count runs only where that does not hold and once per connected piece. Membership is handed
+over at a node only when the node point lies inside the disc that proved it, and taken up by the
+next branch only when that branch's first point does (T-0164 h): the medial axis ends every
+branch at its node's point, but the check does not rely on it. If any check fails,
 nothing is carved. Round 4 checked only that each branch's deepest point was inside, and round 5's
 first fix sampled 8 points per branch (plus the deepest and the last): wrong skeletons whose
 checked points all fell inside islands passed (verifier fault injection, −0.47 to −5.3 mm). Cost,
@@ -184,9 +217,16 @@ carved: their depth is below ~chordal/tan(θ/2)); obtuse convex corners lose bra
 remaining inscribed circles reach the vertex within ~0.5·chordal, so the carve stays within the
 tolerance (within the coverage bound of §1).
 
-Known limit (to be carded): a hole thinner than the distance tolerance touches its own sides
-within that tolerance, is resolved as crossing input and vanishes from the even-odd region, so it
-is cut through; it is reported only as `CrossingVectorsResolved`.
+Known limit (T-0164 a, documented): a hole or sliver thinner than the distance tolerance is not
+kept. Its sides touch within that tolerance, so it is resolved as crossing input and vanishes from
+the even-odd region (only `CrossingVectorsResolved` is reported), or, between nested vectors
+closer than the tolerance, the flat-area walls computed at the internal tolerance do not keep it
+(verifier: a 0.8 µm strip between nested squares, cone 0.058 mm past it at chordal 0.005; a
+0.63 µm sliver, 0.014 mm at chordal 0.1). The material lost is the sliver itself, thinner than
+what the tolerance tells apart from touching, plus the cone's reach beyond it. No diagnostic of
+its own: telling such a sliver from a touch would need the very distinction the tolerance gives
+up, and a warning on every touching or crossing pair (letters overlapping a frame) would be noise.
+To keep a gap that thin, use a smaller distance tolerance.
 
 ### 6. Corner sharpening is out of scope (follow-up card T-0160, owner decision 2026-11-03)
 The inventory names "Corner Sharpen" without describing it. Corners of the region are already
@@ -217,7 +257,9 @@ used: farther than chordal from them (exact closest points on their spans) the r
 right; closer, but not closer than chordal/64, their winding is counted from their curves
 polygonised at an eighth of that distance. Only when even that fails (coincident contours) do the old offsets at ±2·chordal
 decide; round 3 showed those offsets cross a hole thinner than that and read the wrong side (the
-D-hole was carved ~1 mm deep).
+D-hole was carved ~1 mm deep). The round-3 D-hole 0.0025 mm from its circle that was refused
+whole at chordal 0.01–0.1 (the hole ignored) is classified by this too and carved (T-0164 b,
+regression test in `v_carve_test.cpp`).
 
 (c) Gabriel test hidden by an exempt sample: a sub-edge counted as encroached only when one of the
 two opposite vertices of its Delaunay triangles lies in its diametral circle and is not exempt
@@ -239,13 +281,25 @@ Bezier figures-of-eight and bow ties, one-arc holes nearly touching a wall, fram
 letters; V-bits 30–150°, ball noses; flat depths with and without one or two clearance tools;
 start depths; chordal 0.01–0.05) runs 120 cases in Debug and 800 in Release in ctest and asserts
 the cone check, the end mills' allowance, the lateral accuracy at cut points and the coverage
-bound of §1 (≤ chordal). The oracle counts every span as a wall, so the sweep avoids edges that
+bound of §1 (≤ chordal). The lateral check also runs with flat areas (T-0164 e): there the
+carving tool's Pocket passes, at one Z per level with vertical lifts between them, are told apart
+from the skeleton cuts by being level or vertical, so its inclined feed moves are checked. The oracle counts every span as a wall, so the sweep avoids edges that
 coincide exactly (they cancel under even-odd). The verifier's independent harness
 (`/home/chris/harness/t0153v2`, vc2 over its 16 families) after round 2: no real cone violation;
 lateral shortfall ≤ 0.5·chordal on non-crossing input and ≤ 0.55·chordal on resolved crossing
 input, except family 15 (exactly coincident edges), whose coverage numbers the verifier marks as
 artefacts of the cancelled edges. Every shipped post's output passes the safety rules (inclined
 G1 cuts allowed).
+Known numerical excursion (T-0164 f, documented, not fixed here): verifier round 3 found the
+carving tool 9.5 nm (the oracle's figure; 45 nm by the exact distance at the corner) inside a
+wall at chordal 0.001 (repro2/nest_frame.txt, 60° V-bit, flat depth 0.3, no clearance tools).
+The move is Pocket's, in the flat area of an "A": an edge of Pocket's tool-centre region that
+joins a round join round the reflex corner under the crossbar to the straight offset of the
+crossbar dips below the tool radius. Pocket keeps its centre region radius + allowance + chordal
+from the walls and its own chords "about d less one join tolerance" (ADR-0017 §3–4); this edge
+does not quite keep that. 45 nm is 4.5 % of the chordal tolerance there and far below machine
+resolution. Fixing it belongs to Pocket's centre region (it would change Pocket's output), not to
+V-Carve; reported to the director for a Pocket card.
 
 ### 9. Time bound (AC2)
 Release, the T-0153 machine (shared, under load from other agents): 5,000 glyph-like regions
@@ -271,7 +325,7 @@ tolerance) and thin the moves, which is the next lever if the bound or the G-cod
   clearanceTools, const VCarvingParams&) → VCarvingResult{clearance (one Toolpath per clearance
   tool), toolpath (the carving tool), diagnostics, regions}`; `toolpaths()` lists those with moves
   in machining order. New `ToolpathIssue` values appended: `CarveDepthLimited`,
-  `MedialAxisCapped`, `CrossingVectorsResolved`.
+  `MedialAxisCapped`, `CrossingVectorsResolved` (T-0164: `StepoverLimited`, §3).
 - `ToolpathParams` gains `VCarvingParams` as its fifth alternative (`"operation": "v_carve"`);
   each toolpath of a V-carve is its own record with the same params and its own tool snapshot
   and tool source. job.json params (all optional, unknown keys dropped, numbers finite): `name`,

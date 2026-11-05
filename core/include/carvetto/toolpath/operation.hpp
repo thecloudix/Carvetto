@@ -54,6 +54,7 @@ enum class ToolpathIssue {
     CarveDepthLimited,    ///< The carve depth was limited to the tool's full-width depth (V-Carve).
     MedialAxisCapped,     ///< The medial axis hit its budget or missed a boundary; nothing produced (V-Carve).
     CrossingVectorsResolved,  ///< Crossing or touching vectors were resolved into their even-odd region (V-Carve).
+    StepoverLimited,      ///< A stepover wider than the tool cuts was limited; ridges may be left (V-Carve).
 };
 
 /// One diagnostic of a toolpath operation.
