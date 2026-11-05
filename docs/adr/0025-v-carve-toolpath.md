@@ -89,7 +89,8 @@ bound on text-heavy jobs (≥ 5,000 glyph-like regions). The geometry comes from
   (`RestUnreachable`) and "too large" (`ToolTooLarge`: a flat area narrower than its rest pass,
   covered by its walls and skeleton) are not reported for it: the end mills' leftovers in the inside corners of a
   flat area are out of reach of any pointed tool at the flat depth (the wall ring at the corner
-  slopes the floor up into it), and reporting that for every letter would be noise. This was chosen
+  slopes the floor up into it; corner sharpening, §6, clears the convex ones with passes of
+its own), and reporting that for every letter would be noise. This was chosen
   over a warning: the floor gets cleared, with the same machinery, and the moves come first in
   that region's part of the carving toolpath. **Ridges (T-0164 d).** Like any V-bit floor, the
   rest passes leave ridges of stepover/(2·tan(θ/2)) (ball nose: R − sqrt(R² − (stepover/2)²)),
@@ -227,13 +228,92 @@ its own: telling such a sliver from a touch would need the very distinction the 
 up, and a warning on every touching or crossing pair (letters overlapping a frame) would be noise.
 To keep a gap that thin, use a smaller distance tolerance.
 
-### 6. Corner sharpening is out of scope (follow-up card T-0160, owner decision 2026-11-03)
-The inventory names "Corner Sharpen" without describing it. Corners of the region are already
-carved by the skeleton to within the tolerance (§5), so the option is not needed for accuracy;
-defining what it does beyond that (e.g. lifting along corner bisectors in flat-area corners the
-clearance tool cannot reach) is product behaviour to be specified first. Whatever it becomes, it
-must find corners from the boundary, not from skeleton branch ends (ADR-0023: obtuse corners may
-have no branch). Moved to its own card, T-0160 (owner decision).
+### 6. Corner sharpening (T-0160, owner decisions 2026-11-05)
+The inventory names "Corner Sharpen" without describing it. Corners of the region are carved by
+the skeleton to within the tolerance (§5) everywhere except one place: with a flat depth **and**
+clearance end mills, each convex corner of a flat area keeps a sloped floor "tent" between the
+wall ring's corner W (where the carving tool runs at the flat depth F, its centre ρ + Pocket's
+chordal c from both walls, ρ its footprint at F) and the fillet of radius R the end mill leaves
+(its centre stops at the corner of its centre region, inset by R + ρ + c). The carving tool as
+Pocket's rest tool keeps 2ρ + c off the walls and never gets in (§3). Without clearance tools
+Pocket's insets keep the convex corners sharp (the carving tool's own boundary pass is the wall
+ring), so nothing is left.
+
+**Owner decisions.** (1) Clean flat-floor corners only: plain V-carve corner tips are unchanged,
+and there is no effect without a flat depth plus clearance tools. (2) Match the floor finish: a
+tip groove along each corner's bisector at the flat depth, plus passes either side at the carving
+tool's stepover, so the corner is no rougher than the rest of the floor. (3) On by default:
+`VCarvingParams::cornerSharpen`, job.json and params.json `corner_sharpen` (a missing key reads
+as true, so older files get the default; the format stays 1.1, §10), UI label "Corner Sharpen"
+(no V-Carve form in the app yet). (4) The threshold is automatic: a
+corner is sharpened exactly when its predicted leftover is taller than the chordal tolerance;
+there is no angle setting.
+
+**Detection (from the boundary).** For each part with a flat area (code: `v_carve_corners.cpp`),
+every junction of two non-degenerate spans of its boundaries (spans longer than the distance
+tolerance; Beziers measured by their control polygon) whose direction turns towards the inside
+(left of an outer running counter-clockwise, left of a hole running clockwise) is a convex corner
+with interior angle α = π − turn and bisector u = normalise(b − a) (a, b the tangents in and out),
+as `ArcLengthPath::kinks` finds junctions. Skeleton branch ends are not used (ADR-0023: obtuse
+corners may have no branch). A corner is sharpened when all of these hold:
+- it is a flat-area corner: the point just inside the wall ring's corner,
+  V + u·((ρ + c)/sin(α/2) + chordal), lies inside the wall rings;
+- an end mill reaches into it: some clearance tool's centre at the corner of its centre region,
+  V + u·(R + ρ + c)/sin(α/2), has no wall closer than R + ρ + c/2 (exact distance to the spans,
+  indexed by box). The smallest such tool bounds the leftover (Pocket's later tools are rest
+  tools and follow the larger ones into the corner; a larger tool gets no further than a smaller
+  one). When no end mill reaches, the floor there is the carving tool's own rest clearing, not a
+  clean flat floor, and the corner is left alone;
+- the predicted leftover exceeds the chordal tolerance: min(F, h(R·(1 − sin(α/2)))), h the
+  carving tool's height above its tip at that distance from its axis (V-bit d/tan(θ/2), ball nose
+  R_b − sqrt(R_b² − d²)). R·(1 − sin(α/2)) is the distance from the wall ring's edges of the
+  fillet's point on the bisector; the prediction is an upper bound of the real leftover (the
+  skeleton cut along the bisector, when the medial axis has one, lowers the real peak: 0.88 mm
+  predicted, ~0.50 mm measured for a 90° corner, a 6 mm end mill and a 90° V-bit at F = 1 mm), so a
+  corner left alone never keeps more than the chordal tolerance. It grows with R, so corners below
+  the threshold for the largest end mill cost nothing more.
+
+**Moves.** In a frame with x along u from W and y across it, the wall ring's edges leave W at
+±α/2, the fillet's centre is C = (R/sin(α/2), 0), and the end mill sweeps everything within R of
+its centre path (the rays from C parallel to the edges; the fillet touches the edges at
+|y| = R·cos(α/2)). Passes run at y = k·s for every integer k with |k|·s ≤ R·cos(α/2) (k = 0 is the
+bisector groove), s the carving tool's stepover clamped as for its rest clearing (§3:
+min(stepover, 2ρ), or ρ when it has none). Each pass starts on the wall ring's edge
+(x = |y|/tan(α/2), extended outwards by (3c + d)/sin(α/2) and clipped back to the rings) and ends
+where it is min(chordal, R/2) inside the end mill's swept area (the first x within R − overlap
+of its centre path). Every pass is clipped to the even-odd region of the wall rings as the
+carving tool cuts them (polygons of their vertices), so the centres stay within the wall ring,
+≥ ρ + c from the walls (the margin of §1 is c/2), and the cone at F never crosses a wall; points
+computed on a ring count as inside within 10⁻⁹ of the part's coordinate scale. Consecutive passes
+run in alternate directions (zig-zag) and are joined at depth when the straight link lies inside
+the rings (two ends in the swept area, or two ends on one ring edge); otherwise the cut ends with
+a retract and the next starts with a rapid at safe Z and a plunge (§4). The corner cuts come after
+that part's other cuts, nearest first from where the tool is, so every other move keeps its place
+(only the added corner moves differ); safe links and post safety are unchanged.
+
+**Result.** Between two passes the floor keeps the ridge of any carving-tool floor at stepover s,
+h(s/2) (V-bit s/(2·tan(θ/2))); between the outermost pass and a ring edge, at most that (the edge
+is a cut line too, closer than s); every band is closed by passes that both reach into the swept
+area. Measured with the exact oracle (`v_carve_leftover.hpp`: the deepest tool surface over each
+point, in closed form for level moves, by golden-section search over a concave function for
+inclined ones), on a 0.025 mm grid over the floor round each corner (`v_carve_corner_test.cpp`
+asserts it on a 0.04 mm grid), highest leftover without → with sharpening against the ridge h(s/2):
+square, 90° V-bit, 6 mm end mill, F 1 mm: 0.492 → 0.124 mm (ridge 0.125); the same corners round an
+L-shaped hole and with Raster clearance: the same; triangle, 60° V-bit, 4 mm and 1 mm end mills,
+F 1.5 mm: 0.221 → 0.214 mm (ridge 0.217); 30° wedge's base corners, 6 mm ball nose, 3 mm end mill:
+0.0185 → 0.0026 mm (ridge 0.0026). The cone check of §8 passes on all of them and over the AC1
+sweep (sharpening is on by default there). Corners below the threshold, jobs without a flat depth
+and jobs without clearance tools are byte-identical to the output before T-0160 (a hash sweep of
+900 generated jobs against the parent commit: everything identical with sharpening off; with it
+on, identical without a flat depth or clearance tools, clearance toolpaths and diagnostics always
+identical, 109 carving toolpaths with corner cuts added and nothing else changed), on GCC 15 with
+and without `-march=x86-64-v3` (§11). Cost: 5,000 glyph regions with a 0.5 mm flat depth and a
+0.2 mm end mill, Release: 30.5 / 30.6 s CPU with sharpening, 32.2 / 32.7 s without (load noise),
+80,000 moves more (16 per letter); AC2's cases have no clearance tools and do not run it.
+
+**Limits.** Rounded convex corners (an arc, no junction) are not corners and are not sharpened.
+At a junction of curved spans the passes follow the tangent wedge; clipping to the rings keeps
+them safe, but the leftover bound above is shown for straight edges only.
 
 ### 7. Medial axis fixes (T-0152 code)
 (a) Symmetric input could leave the skeleton empty: splitting the base of an isosceles triangle with
@@ -329,8 +409,8 @@ tolerance) and thin the moves, which is the next lever if the bound or the G-cod
   each toolpath of a V-carve is its own record with the same params and its own tool snapshot
   and tool source. job.json params (all optional, unknown keys dropped, numbers finite): `name`,
   `start_depth`, `flat_depth`, `safe_z`, `clearance_strategy`, `clearance_direction`,
-  `clearance_raster_angle_rad`, `ramp_plunge`, `ramp_distance`, `order`, `start_position`,
-  `tolerance`; params.json (`carvetto-cli toolpath v_carve`) uses `clearance_raster_angle` in
+  `clearance_raster_angle_rad`, `ramp_plunge`, `ramp_distance`, `corner_sharpen` (T-0160, §6; a
+  missing key reads as true), `order`, `start_position`, `tolerance`; params.json (`carvetto-cli toolpath v_carve`) uses `clearance_raster_angle` in
   degrees and adds `tool`, `clearance_tools` (an array of tool objects) and `layers`.
   `nonFiniteParam` names the keys the same way. The format stays 1.1 (a new optional variant
   alternative, ADR-0021).

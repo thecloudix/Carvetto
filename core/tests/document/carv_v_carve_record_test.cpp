@@ -100,6 +100,7 @@ toolpath::VCarvingParams fullVCarving() {
     p.clearanceRasterAngle = 0.7853981633974483;
     p.rampPlunge = true;
     p.rampDistance = 4.5;
+    p.cornerSharpen = false;
     p.order.leftToRight = true;
     p.order.grid = true;
     p.startPosition = {-10.5, -0.0};
@@ -173,7 +174,8 @@ TEST_CASE("T-0153: V-carve records save and load exactly; save -> load -> save i
     CHECK(contains(job, "\"operation\": \"v_carve\""));
     for (const char* line : {
              "\"clearance_direction\": \"conventional\",", "\"clearance_raster_angle_rad\": 0.7853981633974483,",
-             "\"clearance_strategy\": \"raster\",", "\"flat_depth\": 1.2000000000000002,",
+             "\"clearance_strategy\": \"raster\",", "\"corner_sharpen\": false,",
+             "\"flat_depth\": 1.2000000000000002,",
              "\"name\": \"Sign \\\"V\\\" \xC3\xA9\",",
              "\"order\": {\"bottom_to_top\": false, \"grid\": true, \"left_to_right\": true, \"selection_order\": false},",
              "\"ramp_distance\": 4.5,", "\"ramp_plunge\": true,", "\"safe_z\": 12.000000000000002,",
@@ -188,6 +190,15 @@ TEST_CASE("T-0153: V-carve records save and load exactly; save -> load -> save i
     CHECK(std::get<toolpath::VCarvingParams>(back.document.toolpaths()[1].params) == fullVCarving());
     CHECK(back.document.checkIntegrity().empty());
     CHECK(save(back.document, back.extras) == once);
+
+    // T-0160: a record written before corner sharpening (no "corner_sharpen" key; removed here from
+    // the first record only) gets the default, on.
+    const LoadedCarv old = load(withJob(once, replaced(job, "\"corner_sharpen\": false,", "")));
+    REQUIRE(old.document.toolpaths().size() == 2);
+    toolpath::VCarvingParams expected = fullVCarving();
+    expected.cornerSharpen = true;
+    CHECK(std::get<toolpath::VCarvingParams>(old.document.toolpaths()[0].params) == expected);
+    CHECK(std::get<toolpath::VCarvingParams>(old.document.toolpaths()[1].params) == fullVCarving());
 }
 
 TEST_CASE("T-0153: every V-carve option round-trips with the defaults", "[document][toolpath][carv][v_carve]") {
@@ -247,6 +258,7 @@ TEST_CASE("T-0153: V-carve params keys are optional; unknown keys dropped; bad v
         {"\"clearance_direction\": \"climb\"", "\"clearance_direction\": \"up\"",
          "job.json.toolpaths[0].params.clearance_direction"},
         {"\"ramp_plunge\": false", "\"ramp_plunge\": 0", "job.json.toolpaths[0].params.ramp_plunge"},
+        {"\"corner_sharpen\": true", "\"corner_sharpen\": \"yes\"", "job.json.toolpaths[0].params.corner_sharpen"},
         {"\"flat_depth\": 1.0", "\"flat_depth\": \"NaN\"", "job.json.toolpaths[0].params.flat_depth: must be finite"},
         {"\"start_depth\": 0.0", "\"start_depth\": \"-Infinity\"",
          "job.json.toolpaths[0].params.start_depth: must be finite"},

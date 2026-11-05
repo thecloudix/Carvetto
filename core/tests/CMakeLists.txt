@@ -89,6 +89,7 @@ add_executable(carvetto_tests
   toolpath/engrave_post_test.cpp
   toolpath/v_carve_test.cpp
   toolpath/v_carve_post_test.cpp
+  toolpath/v_carve_corner_test.cpp
 )
 # carv_io_test uses the internal zip helper (core/src/document/carv_zip.hpp) to craft archives.
 target_include_directories(carvetto_tests PRIVATE ${PROJECT_SOURCE_DIR}/core/src/document)

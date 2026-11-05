@@ -734,6 +734,7 @@ json encodeVCarvingParams(const toolpath::VCarvingParams& p) {
     j["clearance_raster_angle_rad"] = p.clearanceRasterAngle;
     j["ramp_plunge"] = p.rampPlunge;
     j["ramp_distance"] = p.rampDistance;
+    j["corner_sharpen"] = p.cornerSharpen;
     j["order"] = encodeOrder(p.order);
     j["start_position"] = encodePoint(p.startPosition);
     j["tolerance"] = encodeTolerance(p.tolerance);
@@ -1708,10 +1709,10 @@ constexpr std::array<std::string_view, 12> kEngraveKeysParams{
 
 // V-carve records exist only in job.json (no interim T-0122 members); "tool" and "layers" close
 // the list so `keysFor` drops them.
-constexpr std::array<std::string_view, 14> kVCarvingKeys{
+constexpr std::array<std::string_view, 15> kVCarvingKeys{
     "name",          "start_depth", "flat_depth",     "safe_z",    "clearance_strategy", "clearance_direction",
-    "clearance_raster_angle_rad", "ramp_plunge", "ramp_distance", "order", "start_position", "tolerance",
-    "tool",          "layers"};
+    "clearance_raster_angle_rad", "ramp_plunge", "ramp_distance", "corner_sharpen", "order", "start_position",
+    "tolerance",     "tool",        "layers"};
 
 template <std::size_t N>
 std::span<const std::string_view> keysFor(const std::array<std::string_view, N>& keys, ParamsDialect d) {
@@ -2017,6 +2018,8 @@ toolpath::VCarvingParams decodeVCarvingParams(JsonReader& r, const Path& p, Para
             out.rampPlunge = rec.boolean();
         } else if (k == "ramp_distance") {
             out.rampDistance = rec.number();
+        } else if (k == "corner_sharpen") {
+            out.cornerSharpen = rec.boolean();
         } else if (k == "order") {
             out.order = decodeOrder(r, rec.field(), d);
         } else if (k == "start_position") {
