@@ -644,7 +644,7 @@ Acceptance criteria:
   2. Robust on degenerate input (collinear, near-touching, tiny features, large coordinates), no crashes or hangs (fuzz); ≤ 2.5× per doubling in CPU time up to 50k boundary segments (text-heavy jobs).
   3. ADR records the algorithm (e.g. segment Voronoi via a library already allowed by the dependency policy, or an own implementation) and the dependency/licence decision; any new dependency goes to the owner first.
 
-### T-0153 V-Carve toolpath   [status: in-progress — round 3 FAIL; owner granted a final round 4 (B1 hole misclassified by medialAxis → carving inside a hole; B2 chordal 0.0003 refuses flat areas)]
+### T-0153 V-Carve toolpath   [status: in-progress — round 4 FAIL on N1 only (safety net bypassable by an island at the checked point, fault injection only); owner: tiny fix + focused check, then merge]
 Owner decision 2026-11-03: corner sharpening split out to T-0160.
 Owner decision 2026-11-03: identifiers `v_carve` (code, CLI command, job.json "operation"), UI label "V-Carve"; "vcarve" matches the VCarve trademark (CONTRIBUTING).
 Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0152, T-0123, T-0132   ADR: new
