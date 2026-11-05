@@ -1,0 +1,29 @@
+br round1 load=32.12 pairs 200 contours=600 ch=0.5 cpu=0.19s ok=1 moves=27260 regions=600 hash=5a620fe816f9aaff [28 200 group(s) of crossing or touching vectors were resolved i] [17 vector 0: nothing to carve (too narrow 
+main round1 load=32.12 pairs 200 contours=600 ch=0.5 cpu=0.51s ok=1 moves=27260 regions=600 hash=5a620fe816f9aaff [28 200 group(s) of crossing or touching vectors were resolved i] [17 vector 0: nothing to carve (too narrow 
+br round1 load=32.12 pairs 400 contours=1200 ch=0.5 cpu=0.39s ok=1 moves=54658 regions=1200 hash=5aef5f5a48ac0785 [28 400 group(s) of crossing or touching vectors were resolved i] [17 vector 0: nothing to carve (too narro
+main round1 load=31.71 pairs 400 contours=1200 ch=0.5 cpu=1.77s ok=1 moves=54658 regions=1200 hash=5aef5f5a48ac0785 [28 400 group(s) of crossing or touching vectors were resolved i] [17 vector 0: nothing to carve (too narro
+br round1 load=31.71 pairs 800 contours=2400 ch=0.5 cpu=0.82s ok=1 moves=109433 regions=2400 hash=7f24cc6ed29f7eae [28 800 group(s) of crossing or touching vectors were resolved i] [17 vector 0: nothing to carve (too narr
+main round1 load=31.71 pairs 800 contours=2400 ch=0.5 cpu=6.53s ok=1 moves=109433 regions=2400 hash=7f24cc6ed29f7eae [28 800 group(s) of crossing or touching vectors were resolved i] [17 vector 0: nothing to carve (too narr
+br round1 load=31.07 pairs 1600 contours=4800 ch=0.5 cpu=1.90s ok=1 moves=218756 regions=4800 hash=03ab971766d89126 [28 1600 group(s) of crossing or touching vectors were resolved ] [17 vector 0: nothing to carve (too nar
+main round1 load=31.70 pairs 1600 contours=4800 ch=0.5 cpu=25.43s ok=1 moves=218756 regions=4800 hash=03ab971766d89126 [28 1600 group(s) of crossing or touching vectors were resolved ] [17 vector 0: nothing to carve (too na
+br round2 load=32.88 pairs 200 contours=600 ch=0.5 cpu=0.18s ok=1 moves=27260 regions=600 hash=5a620fe816f9aaff [28 200 group(s) of crossing or touching vectors were resolved i] [17 vector 0: nothing to carve (too narrow 
+main round2 load=32.88 pairs 200 contours=600 ch=0.5 cpu=0.50s ok=1 moves=27260 regions=600 hash=5a620fe816f9aaff [28 200 group(s) of crossing or touching vectors were resolved i] [17 vector 0: nothing to carve (too narrow 
+br round2 load=32.65 pairs 400 contours=1200 ch=0.5 cpu=0.39s ok=1 moves=54658 regions=1200 hash=5aef5f5a48ac0785 [28 400 group(s) of crossing or touching vectors were resolved i] [17 vector 0: nothing to carve (too narro
+main round2 load=32.65 pairs 400 contours=1200 ch=0.5 cpu=1.76s ok=1 moves=54658 regions=1200 hash=5aef5f5a48ac0785 [28 400 group(s) of crossing or touching vectors were resolved i] [17 vector 0: nothing to carve (too narro
+br round2 load=32.65 pairs 800 contours=2400 ch=0.5 cpu=0.83s ok=1 moves=109433 regions=2400 hash=7f24cc6ed29f7eae [28 800 group(s) of crossing or touching vectors were resolved i] [17 vector 0: nothing to carve (too narr
+main round2 load=32.65 pairs 800 contours=2400 ch=0.5 cpu=6.26s ok=1 moves=109433 regions=2400 hash=7f24cc6ed29f7eae [28 800 group(s) of crossing or touching vectors were resolved i] [17 vector 0: nothing to carve (too narr
+br round2 load=32.08 pairs 1600 contours=4800 ch=0.5 cpu=1.91s ok=1 moves=218756 regions=4800 hash=03ab971766d89126 [28 1600 group(s) of crossing or touching vectors were resolved ] [17 vector 0: nothing to carve (too nar
+main round2 load=31.83 pairs 1600 contours=4800 ch=0.5 cpu=24.77s ok=1 moves=218756 regions=4800 hash=03ab971766d89126 [28 1600 group(s) of crossing or touching vectors were resolved ] [17 vector 0: nothing to carve (too na
+br round1 load=30.73 chain 1000 contours=1000 ch=0.05 cpu=0.16s ok=1 moves=3151 regions=1000 hash=354c6f14fd3fb72a [28 1 group(s) of crossing or touching vectors were resolved int]
+main round1 load=30.73 chain 1000 contours=1000 ch=0.05 cpu=0.15s ok=1 moves=3151 regions=1000 hash=354c6f14fd3fb72a [28 1 group(s) of crossing or touching vectors were resolved int]
+br round1 load=30.73 chain 2000 contours=2000 ch=0.05 cpu=0.34s ok=1 moves=6151 regions=2000 hash=1ee8eefaa507cdc4 [28 1 group(s) of crossing or touching vectors were resolved int]
+main round1 load=30.73 chain 2000 contours=2000 ch=0.05 cpu=0.32s ok=1 moves=6151 regions=2000 hash=1ee8eefaa507cdc4 [28 1 group(s) of crossing or touching vectors were resolved int]
+br round1 load=30.73 chain 4000 contours=4000 ch=0.05 cpu=1.01s ok=1 moves=12151 regions=4000 hash=1dec33af84761f74 [28 1 group(s) of crossing or touching vectors were resolved int]
+main round1 load=30.51 chain 4000 contours=4000 ch=0.05 cpu=0.91s ok=1 moves=12151 regions=4000 hash=1dec33af84761f74 [28 1 group(s) of crossing or touching vectors were resolved int]
+br round2 load=30.51 chain 1000 contours=1000 ch=0.05 cpu=0.15s ok=1 moves=3151 regions=1000 hash=354c6f14fd3fb72a [28 1 group(s) of crossing or touching vectors were resolved int]
+main round2 load=30.51 chain 1000 contours=1000 ch=0.05 cpu=0.14s ok=1 moves=3151 regions=1000 hash=354c6f14fd3fb72a [28 1 group(s) of crossing or touching vectors were resolved int]
+br round2 load=30.51 chain 2000 contours=2000 ch=0.05 cpu=0.37s ok=1 moves=6151 regions=2000 hash=1ee8eefaa507cdc4 [28 1 group(s) of crossing or touching vectors were resolved int]
+main round2 load=30.51 chain 2000 contours=2000 ch=0.05 cpu=0.31s ok=1 moves=6151 regions=2000 hash=1ee8eefaa507cdc4 [28 1 group(s) of crossing or touching vectors were resolved int]
+br round2 load=30.51 chain 4000 contours=4000 ch=0.05 cpu=1.05s ok=1 moves=12151 regions=4000 hash=1dec33af84761f74 [28 1 group(s) of crossing or touching vectors were resolved int]
+main round2 load=30.47 chain 4000 contours=4000 ch=0.05 cpu=0.89s ok=1 moves=12151 regions=4000 hash=1dec33af84761f74 [28 1 group(s) of crossing or touching vectors were resolved int]
+done

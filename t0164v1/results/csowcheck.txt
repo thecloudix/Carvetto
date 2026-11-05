@@ -1,0 +1,26 @@
+OK  fam_0.txt 1 lib:L chord 0.05 so 3.7377128837805729 width 1.2710443178217901 rest_work False diag False
+OK  fam_0.txt 11 lib:slot_arcs chord 0.001 so 0.4364389890494299 width 0.26144432550766106 rest_work False diag False
+OK  fam_1.txt 3 star chord 0.1 so 6.2321673370380202 width 3.8497756932103653 rest_work False diag False
+OK  fam_1.txt 12 star chord 0.05 so 9.6315139137994112 width 9.1528746159658017 rest_work False diag False
+OK  fam_11.txt 6 frametext chord 0.005 so 7.7015828891347171 width 2.995268610963755 rest_work False diag False
+BAD fam_12.txt 11 holesinholes chord 0.001 so 2.2599076099175783 width 1.4608080060887638 rest_work False diag True
+OK  fam_14.txt 5 cluster+near-inside g=0.001250 chord 0.01 so 9.7275971459804342 width 9.6910177216310149 rest_work False diag False
+OK  fam_15.txt 6 sharededge chord 0.02 so 5.0260609790945932 width 1.3070359524016326 rest_work False diag False
+OK  fam_18.txt 6 nestedtight-sq chord 0.01 so 6.0494050113990774 width 3.7003422701868103 rest_work False diag False
+OK  fam_18.txt 14 nestedtight-circ chord 0.05 so 1.3726474998231306 width 1.0840319273790133 rest_work False diag False
+OK  fam_19.txt 3 chain g=0.062500ch-circles chord 0.1 so 9.5430280254066542 width 2.4693957783871094 rest_work False diag False
+OK  fam_2.txt 5 holedstar chord 0.01 so 7.5587807758118748 width 5.4593496977994702 rest_work False diag False
+OK  fam_2.txt 10 holedstar chord 0.02 so 3.4135320426316271 width 2.8417375352855734 rest_work False diag False
+OK  fam_2.txt 12 holedstar chord 0.005 so 6.0452004974285423 width 5.8040682132953725 rest_work False diag False
+OK  fam_21.txt 2 flatcorner n=168-bentband chord 0.02 so 0.68159308910814065 width 0.22619872603088914 rest_work True diag True
+BAD fam_21.txt 13 flatcorner n=39-denseband chord 0.005 so 0.62589420790589012 width 0.59079291917383348 rest_work False diag True
+OK  fam_3.txt 2 thinstrip chord 0.005 so 0.98110633140135384 width 0.39335627988899746 rest_work False diag False
+OK  fam_7.txt 3 overpoly chord 0.001 so 9.9307612280240036 width 8.6877978317116202 rest_work False diag False
+OK  fam_7.txt 6 overpoly chord 0.01 so 7.5145354812890233 width 5.8852295385457367 rest_work False diag False
+OK  fam_8.txt 7 overcircles chord 0.1 so 6.830373095538647 width 3.7009702796440593 rest_work False diag False
+OK  mix_501.txt 2 selftouch-corners+cross chord 0.01 so 6.2321673370380202 width 3.8497756932103653 rest_work False diag False
+OK  mix_501.txt 8 overpoly chord 0.01 so 9.9414538329971105 width 6.7524196175038149 rest_work False diag False
+OK  mix_502.txt 2 nestonboundary-holevertexatcorner+cross chord 0.01 so 4.3924878636331295 width 2.2885768896129441 rest_work False diag False
+OK  mix_502.txt 6 touch1-tangentcircle chord 0.001 so 3.4135320426316271 width 2.8417375352855734 rest_work False diag False
+OK  mix_502.txt 9 lib:sliver5deg chord 0.1 so 0.61603970508906203 width 0.57320961749938193 rest_work False diag False
+agree 23 disagree 2

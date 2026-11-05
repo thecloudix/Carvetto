@@ -1,0 +1,6 @@
+test cases:      1 |      0 passed |      1 failed
+exit 42
+distinct failing flat cases: 408
+All tests passed (503727 assertions in 1 test case)
+
+exit 0

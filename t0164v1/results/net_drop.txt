@@ -1,0 +1,16 @@
+sq_hole_diag.txt c=0.05 br: outside=8 disc=72  consistent=0  main: consistent=1
+sq_hole_diag.txt c=1.0 br: outside=2 disc=22  consistent=0  main: consistent=1
+drop_rect_big.txt c=0.05 br: outside=28 disc=72  consistent=1  main: consistent=1
+drop_rect_big.txt c=1.0 br: outside=4 disc=12  consistent=1  main: consistent=1
+drop_rect_centre.txt c=0.05 br: outside=4 disc=50  consistent=1  main: consistent=1
+drop_rect_centre.txt c=1.0 br: outside=0 disc=8  consistent=1  main: consistent=1
+drop_rect_offc.txt c=0.05 br: outside=0 disc=50  consistent=1  main: consistent=1
+drop_rect_offc.txt c=1.0 br: outside=0 disc=8  consistent=1  main: consistent=1
+drop_rect_q.txt c=0.05 br: outside=14 disc=59  consistent=1  main: consistent=1
+drop_rect_q.txt c=1.0 br: outside=2 disc=10  consistent=1  main: consistent=1
+drop_sq_corner.txt c=0.05 br: outside=4 disc=51  consistent=1  main: consistent=1
+drop_sq_corner.txt c=1.0 br: outside=1 disc=10  consistent=1  main: consistent=1
+drop_sq_diag.txt c=0.05 br: outside=8 disc=72  consistent=0  main: consistent=1
+drop_sq_diag.txt c=1.0 br: outside=2 disc=22  consistent=0  main: consistent=1
+drop_sq_edge.txt c=0.05 br: outside=0 disc=67  consistent=0  main: consistent=1
+drop_sq_edge.txt c=1.0 br: outside=0 disc=19  consistent=0  main: consistent=1

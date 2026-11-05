@@ -1,0 +1,6 @@
+br r1 pairs 1600 contours=4800 ch=0.5 cpu=1.97s ok=1 moves=218756 regions=4800 hash=03ab971766d89126 [28 1600 group(
+br r1 pairs 3200 contours=9600 ch=0.5 cpu=5.27s ok=1 moves=437267 regions=9600 hash=9d0629b81c1eb72d [28 3200 group(
+br r1 pairs 6400 contours=19200 ch=0.5 cpu=18.39s ok=1 moves=872902 regions=19200 hash=74b54c2022322e9a [28 6400 gro
+br r2 pairs 1600 contours=4800 ch=0.5 cpu=1.99s ok=1 moves=218756 regions=4800 hash=03ab971766d89126 [28 1600 group(
+br r2 pairs 3200 contours=9600 ch=0.5 cpu=5.08s ok=1 moves=437267 regions=9600 hash=9d0629b81c1eb72d [28 3200 group(
+br r2 pairs 6400 contours=19200 ch=0.5 cpu=17.12s ok=1 moves=872902 regions=19200 hash=74b54c2022322e9a [28 6400 gro

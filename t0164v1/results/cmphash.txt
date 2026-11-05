@@ -1,0 +1,1 @@
+{'n': 400, 'same': 397, 'mhdiff': 0, 'so_only': 3, 'so_bad': 0, 'other': 0, 'so_cases': 0, 'clamp_nodiag': 22, 'refused_br': 2, 'refused_main': 2}

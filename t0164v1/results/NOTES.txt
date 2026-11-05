@@ -1,0 +1,34 @@
+T-0164 round 1 (ff45327) verifier results.  VERDICT FAIL.
+BUILD Debug -Werror ok, ctest 990/990; Release -march=x86-64-v3 ctest 990/990; changelog check ok; merge-tree vs origin/main 6de8648 clean.
+REGRESSIONS (moves hash mh separate from diagnostics):
+ - families 0..23 x 15 + 2 mixes x 20 (400): moves identical 400/400; diagnostics differ in 3, each only +StepoverLimited with
+   clearance tools and stepover > 2*footprint(limit); refusals 2 = 2 (cmphash.txt).
+ - adv 4320 / adv2 540 (no flat): identical incl. diagnostics; refusals 585 = 585, 28 = 28 (cmpadv.txt).
+ - grow pairs/chain: hashes identical br vs main at every size.
+(c) growth (grow.txt, grow_big.txt), CPU s, pairs chordal 0.5:
+   br  200 0.19/0.18, 400 0.39/0.39, 800 0.82/0.83, 1600 1.90/1.91 (r1/r2) -> 2.05, 2.1, 2.3 per doubling
+   br 1600 1.97/1.99, 3200 5.27/5.08, 6400 18.39/17.12  -> 2.6, 3.4 per doubling (still quadratic: absorption part
+      1.0 -> 3.2 -> 13.3 s vs GROW_A=0 0.98/1.96/4.47 s). main 200..1600: 0.51, 1.77, 6.5, 25 s (3.5-3.9x).
+   Cause: after each absorption the scan restarts and rebuilds members(n) (n heap vectors) and walks all clusters:
+   O(absorptions x n). perf: libc malloc/free dominate at 6400.
+(g) silent own-boundary drop (net_drop.txt, sab5.txt): sq_hole_diag, drop_sq_diag, drop_sq_edge now refused (main carved
+   -5.6 mm). NOT caught: hole away from every node: drop_rect_centre/offc/big/q (100x10 strip), drop_sq_corner: branch
+   carves into the dropped hole exactly as main (-4.9 mm V90 c0.05; -2.9 mm ball). fuzz6 DROP: 3156 -> 134 bypasses
+   (worst disc 19.5 mm). ADR-0025 sec 5 claim "a dropped boundary changes the skeleton's topology, and the discs at its
+   junctions reach past it" is false for these.
+(h) fuzz6 BADSTART 9 -> 0 bypasses, BADEND_R 0/0, BADEND (stale radius) 41 -> 7 (remaining are disc-only: radius contract
+   broken at the moved point). sabend.txt: SABEND2 (start+end moved) branch refuses all 8 cases main carved; SABEND (end
+   only, stale radius) 12 cases carve outside on both (up to -1.99 mm): own rings not measured at the moved end.
+   SAB=2/3/4 (+SABEND): 0 violations on branch.
+(d) StepoverLimited: sq10/arm_W* fire with stepover 4.8 (width 2); also fires at stepover == width (2 mm, V90 depth 1:
+   width computes 1.9999999999999998) with "stepover 2 mm is wider than it cuts at the flat bottom (2 mm)".
+   csowcheck: 23/25 clamped cases agree (diag <=> moves change at 0.5 x width); 2 fire although passes are identical
+   between 0.5 x width and width (fam_12 c11, fam_21 c13: rest work only changes below 0.25 x width).
+(e) ac1_mutation.patch: scaling carve depths x0.9 only in flat / CarveDepthLimited cases -> AC1 sweep fails in 408 cases
+   (main's test skipped all of them); unmutated passes (Release, 800 cases).
+(b) dhole_refused carved on main and branch at c 0.1-0.01, d 1e-3/1e-5, V90/ball/V30: 0 violations (already fixed by
+   T-0153 round 4; branch adds regression test).
+New tests vs main lib: own-boundary test and node hand-over test fail on main; growth test fails on main (ratio 3.34).
+AC2 (perf.txt) Release, load 20-31, interleaved: plain main 27.6/28.3 br 27.9/28.9; frame 42.4/43.5 vs 42.0/43.4;
+   flat 33.9/36.9 vs 34.2/37.0 s CPU.
+GOLDENS regenerated in a scratch copy of ff45327 (Release): 'No golden or starter-database changes.'
