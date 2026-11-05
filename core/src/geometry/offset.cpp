@@ -335,6 +335,81 @@ std::optional<std::vector<std::vector<std::size_t>>> planBatches(const Clipper2L
     return kept;
 }
 
+// Rings wound against the group's lowest path that are not nested in a ring wound like it
+// (T-0142, ADR-0006 §10). On an outset (holes shrink) Clipper2 joins every corner of such a ring
+// through the original vertex (the T-0018 backport, §6), which leaves a loop of positive winding
+// at each corner; inside an enclosing ring those loops merge into its region, but with nothing
+// around them they survive the final union as leftover rings (a lone 1 mm circle: 71 rings at
+// +0.3 mm), and an over-shrunk one leaves a whole phantom region. Such input describes no region
+// there (its winding is not positive), so the closed paths are first resolved into the region
+// they describe (Clipper2's union with the group's fill rule: Positive, or Negative for a group
+// whose lowest path is clockwise, keeping that orientation), which has only nested holes.
+//
+// A ring counts as nested when a ring wound like the lowest path has a bounding box containing
+// its own and holds its first vertex strictly inside. Rings that cross each other are not
+// detected. Returns true when the paths were resolved.
+bool resolveUnnestedHoles(Clipper2Lib::Paths64& paths, double delta) {
+    if (paths.size() < 2 || !(delta >= 0.5)) {
+        return false;  // insets and zero offsets (below half a unit Clipper2 copies the input)
+    }
+    std::size_t lowestIdx = 0;
+    LowestPoint lowest = lowestPointOf(paths[0]);
+    for (std::size_t i = 1; i < paths.size(); ++i) {
+        const LowestPoint l = lowestPointOf(paths[i]);
+        if (lowerThan(l, lowest)) {
+            lowest = l;
+            lowestIdx = i;
+        }
+    }
+    const bool reversed = Clipper2Lib::Area(paths[lowestIdx]) < 0.0;
+    std::vector<std::size_t> with;
+    std::vector<std::size_t> against;
+    for (std::size_t i = 0; i < paths.size(); ++i) {
+        const double a = Clipper2Lib::Area(paths[i]);
+        if (a == 0.0) {
+            continue;
+        }
+        ((a < 0.0) == reversed ? with : against).push_back(i);
+    }
+    if (against.empty()) {
+        return false;
+    }
+    std::vector<Clipper2Lib::Rect64> boxes(paths.size());
+    for (const std::size_t i : with) {
+        boxes[i] = Clipper2Lib::GetBounds(paths[i]);
+    }
+    std::sort(with.begin(), with.end(), [&boxes](std::size_t a, std::size_t b) {
+        return boxes[a].left < boxes[b].left || (boxes[a].left == boxes[b].left && a < b);
+    });
+    bool allNested = true;
+    for (const std::size_t h : against) {
+        const Clipper2Lib::Rect64 hb = Clipper2Lib::GetBounds(paths[h]);
+        // Candidates: rings wound like the lowest whose left edge is at or left of the hole's.
+        const auto last = std::upper_bound(with.begin(), with.end(), hb.left,
+                                           [&boxes](std::int64_t v, std::size_t w) { return v < boxes[w].left; });
+        bool nested = false;
+        for (auto it = with.begin(); it != last && !nested; ++it) {
+            const Clipper2Lib::Rect64& wb = boxes[*it];
+            if (wb.right < hb.right || wb.top > hb.top || wb.bottom < hb.bottom) {
+                continue;
+            }
+            nested = Clipper2Lib::PointInPolygon(paths[h].front(), paths[*it]) ==
+                     Clipper2Lib::PointInPolygonResult::IsInside;
+        }
+        if (!nested) {
+            allNested = false;
+            break;
+        }
+    }
+    if (allNested) {
+        return false;
+    }
+    paths = detail::clipClosedPaths(Clipper2Lib::ClipType::Union,
+                                    reversed ? Clipper2Lib::FillRule::Negative : Clipper2Lib::FillRule::Positive,
+                                    reversed, std::move(paths), {});
+    return true;
+}
+
 }  // namespace
 
 namespace detail {
@@ -459,6 +534,10 @@ std::vector<Contour> offsetContoursBatched(const std::vector<Contour>& contours,
     }
     const double delta = detail::toClipperDistance(distance);
     const Clipper2Lib::JoinType clipperJoin = toClipperJoin(join);
+    resolveUnnestedHoles(closedPaths, delta);
+    if (closedPaths.empty() && openPaths.empty()) {
+        return {};
+    }
     Clipper2Lib::Paths64 out;
     std::optional<std::vector<std::vector<std::size_t>>> batches;
     if (openPaths.empty()) {
