@@ -535,8 +535,8 @@ Goal: Found by the T-0147 verifier (harness t0147v1/far.cpp): with signedArea fi
 Acceptance criteria:
   1. Small Profile parts (circles, rectangles, holes; 0.5–10 mm) at 1e6–1e9 mm give the same toolpath as at the origin (up to translation, within tolerance) in ≥ 19/20 placements, or a documented limit with a diagnostic; normal-scale output unchanged (hashes).
 
-### T-0158 Profile: platform-stable cut start at convex tips   [status: in progress]
-Owner decision 2026-11-03: adopt the fixed tie-break rule (start at the beginning of the corner arc centred on the tip), accepting that cut starts move in ~10% of such scenes.
+### T-0158 Profile: platform-stable cut start at convex tips   [status: in progress — round 1 FAIL (mitre tips unstable); round 2]
+Owner decision 2026-11-03: adopt the fixed tie-break rule (start at the beginning of the corner arc centred on the tip), accepting that cut starts move in ~10% of such scenes. Owner decision 2026-11-05: mitred (sharp) convex tips start exactly at the mitre corner point.
 Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §11
 Goal: Found while merging T-0135 (MSVC CI): with "start at the vector's start point" on a convex tip, the Outside cut's round join is an arc centred on that tip, so every point of the arc is equally near the start; ArcLengthPath::project → closestPoint(ArcSpan) takes the direction of a ~1e-15 vector, which depends on rounding/libm, so GCC and MSVC choose different cut starts — tab layouts then differ (both safe; scene m1_402002_27, also m2_800016_13). Pre-existing on main/T-0127. A tie-break ("target within tolerance of an arc centre at the nearest distance → start at that arc's start", searching all arcs) was prototyped by the T-0135 coder (harness wt-T0135/build-drv pert.cpp, hsw/): stable under 1e-9 perturbations but changes start points in ~10% of scenes (owner-visible output change).
 Acceptance criteria:
@@ -626,6 +626,12 @@ Phase: 1   Module: core/toolpath   Depends on: T-0158   ADR: 0016 §11
 Goal: Found by the T-0158 coder. After T-0158, GCC 13 and GCC 15 still choose different cut starts in 9 of 2,183 stored harness scenes (31 on main) and different tab-left counts in 6 (main 8). These are not arc-centre ties: with the bounding-box Centre anchor on symmetric shapes (rectangles, point-symmetric m2_1330009_35), two spans are equally near up to rounding, and "ties go to the lowest span" only works when the distances are bit-equal. A tolerance tie-break (lowest span within tol of the nearest distance) would change more outputs, so it needs the owner's approval first.
 Acceptance criteria:
   1. Cut start and tab layout identical on GCC 13/15 (and MSVC CI) over the stored harness scenes; the rule documented in ADR-0016 §11; tab safety unchanged (flood oracle); output change rate reported to the owner.
+
+### T-0167 Profile tabs: pre-existing weaknesses exposed by moved starts (T-0158 verifier)   [status: ready]
+Phase: 1   Module: core/toolpath   Depends on: T-0158   ADR: 0016
+Goal: Found by the T-0158 verifier (harness t0158v1, wsf.cpp flood oracle, worse.py). At starts moved by the T-0158 rule the unchanged tab code produces results main never does: m0_291002_11 (VectorStart/Outside) an unreported 0.41 mm² free piece; m0_271016_20 a severed tab (part still held); a4_770001_217 (box centre) a partial tab; random page r101_1_0_42 23 more free pieces. Overall unreported free pieces 720 → 733 across the changed runs.
+Acceptance criteria:
+  1. Each repro has no severed/partial tab and every free piece is reported or held; flood-oracle sweep over the harness shows no scene worse than main; regression tests.
 
 ### T-0150 Drilling toolpath   [status: done (2026-11-03, #36)]
 Phase: 1 (Batch C, owner decision 2026-11-03: Batch C toolpaths first)   Module: core/toolpath   Depends on: T-0123, T-0132   ADR: new
