@@ -350,6 +350,45 @@ TEST_CASE("V-carve flat depth with clearance tools: Pocket with the V-bit's widt
     }
 }
 
+TEST_CASE("V-carve says when the carving tool's rest stepover is limited to its width",
+          "[toolpath][v_carve][flat]") {
+    // T-0164 (d; T-0153 round-3 repro sq10): with clearance tools the carving tool clears what
+    // they leave as Pocket's last rest tool, its stepover limited to the width it cuts at the
+    // flat bottom. A wider stepover was cut down silently, and its passes then only touch at
+    // the floor: ridges as high as the flat depth (0.84 x measured with a 20 mm end mill too
+    // large for a 10 mm square, so the V-bit cleared the whole floor).
+    const std::vector<Contour> square{Contour::rectangle(Box2{Vec2{0, 0}, Vec2{10, 10}})};
+    const std::vector<PocketTool> tooLarge{{endMill(20.0, "EM 20", 4), std::nullopt}};
+    VCarvingParams p;
+    p.flatDepth = 1.0;
+    p.tolerance.chordal = 0.05;
+    tooling::Tool tool = vBit(90.0, 12.0, "V 90");
+    tool.defaultCuttingData.stepover = 4.8;
+    const VCarvingResult wide = vCarvingToolpath(square, tool, std::nullopt, tooLarge, p);
+    REQUIRE(wide.ok());
+    REQUIRE(wide.has(ToolpathIssue::StepoverLimited));
+    for (const ToolpathDiagnostic& d : wide.diagnostics) {
+        if (d.issue == ToolpathIssue::StepoverLimited) {
+            CHECK(d.contour == std::optional<std::size_t>{0});
+            CHECK(d.message ==
+                  "tool 'V 90': stepover 4.8 mm is wider than it cuts at the flat bottom (2 mm); its rest "
+                  "clearing of the flat areas uses 2 mm and can leave ridges up to 1 mm high");
+        }
+    }
+    // Within its width: nothing to say. Without clearance tools a stepover wider than the tool
+    // cuts is refused by Pocket instead (ADR-0025 §3), so the notice is only for rest clearing.
+    tool.defaultCuttingData.stepover = 1.0;
+    const VCarvingResult within = vCarvingToolpath(square, tool, std::nullopt, tooLarge, p);
+    REQUIRE(within.ok());
+    CHECK_FALSE(within.has(ToolpathIssue::StepoverLimited));
+    // A small end mill clears all the floor the carving tool could reach: no rest work, nothing to say.
+    tool.defaultCuttingData.stepover = 4.8;
+    const std::vector<PocketTool> fineMill{{endMill(1.0, "EM 1", 4), std::nullopt}};
+    const VCarvingResult cleared = vCarvingToolpath(square, tool, std::nullopt, fineMill, p);
+    REQUIRE(cleared.ok());
+    CHECK_FALSE(cleared.has(ToolpathIssue::StepoverLimited));
+}
+
 TEST_CASE("V-carve limits the depth to the tool's full width and reports it", "[toolpath][v_carve][flat]") {
     const std::vector<Contour> wide{Contour::rectangle(Box2{Vec2{0, 0}, Vec2{30, 20}})};
     const tooling::Tool small = vBit(90.0, 6.0, "Small V");
@@ -569,6 +608,79 @@ TEST_CASE("V-carve never carves inside a D-shaped hole hugging the outer wall", 
     }
 }
 
+TEST_CASE("V-carve carves a circle with a small D-shaped hole 0.0025 mm from its wall",
+          "[toolpath][v_carve][holes]") {
+    // T-0164 (b; T-0153 round-3 repro dhole_refused): a 75-degree D-shaped hole whose 138-segment
+    // arc runs 0.0025 mm inside a circle of radius 12.8 was refused whole (its medial axis
+    // ignored the hole) at chordal 0.01 to 0.1. The classification of ADR-0025 §7 (b) reads it
+    // since T-0153 round 4; it is carved round the hole, never into it.
+    const Vec2 c{4.1177999988393399, 4.3468655946302697};
+    const double radius = 12.801440273946316;
+    const double a0 = 0.41894636111939315;
+    const double step = (1.7265641963984069 - a0) / 138.0;
+    std::vector<Vec2> arc;
+    for (int k = 0; k <= 138; ++k) {
+        const double a = a0 + step * k;
+        arc.push_back({c.x + (radius - 0.0025) * std::cos(a), c.y + (radius - 0.0025) * std::sin(a)});
+    }
+    std::vector<Vec2> pts(arc.begin() + 36, arc.end());  // listed from the middle of the arc
+    pts.insert(pts.end(), arc.begin(), arc.begin() + 36);
+    const std::vector<Contour> region{Contour::circle(c, radius), polygon(pts)};
+    const tooling::Tool tool = vBit(90.0, 12.0);
+    std::vector<double> chordals{0.1, 0.02};
+    if (kRelease) {
+        chordals.push_back(0.01);
+    }
+    for (const double chordal : chordals) {
+        INFO("chordal " << chordal);
+        VCarvingParams p;
+        p.tolerance.chordal = chordal;
+        const VCarvingResult r = vCarvingToolpath(region, tool, std::nullopt, {}, p);
+        REQUIRE(r.ok());
+        CHECK_FALSE(r.has(ToolpathIssue::MedialAxisCapped));
+        const orc::ConeReport cone = orc::coneCheck(r.toolpath, region, tool, 0.0, kSafeZ, 1e-5);
+        CHECK(cone.minClearance >= 0.0);
+        CHECK(cone.allInside);
+    }
+}
+
+TEST_CASE("V-carve resolves crossing clusters that absorb nearby vectors in linear time",
+          "[toolpath][v_carve][crossing][perf]") {
+    // T-0164 (c; T-0153 round-3 grow.cpp): pairs of crossing circles, each with a hole 0.003 mm
+    // inside one circle that the pair's polygon (at chordal/8) cuts, so every cluster absorbs
+    // its hole. Every absorption restarted the resolution over all clusters (~3.2x per
+    // doubling); clusters that touched nothing outside are no longer resolved again.
+    auto pageOf = [](int pairs) {
+        std::vector<Contour> page;
+        const int side = static_cast<int>(std::ceil(std::sqrt(static_cast<double>(pairs))));
+        for (int i = 0; i < pairs; ++i) {
+            const Vec2 o{(i % side) * 30.0, (i / side) * 20.0};
+            page.push_back(Contour::circle(o, 6.0));
+            page.push_back(Contour::circle(o + Vec2{8.0, 0.0}, 4.0));
+            page.push_back(Contour::circle(o + Vec2{0.0, 4.997}, 1.0, geometry::ArcDirection::CW));
+        }
+        return page;
+    };
+    const int half = kRelease ? 200 : 40;
+    const std::vector<Contour> smallPage = pageOf(half);
+    const std::vector<Contour> largePage = pageOf(2 * half);
+    const tooling::Tool tool = vBit(90.0, 12.0);
+    VCarvingParams p;
+    p.tolerance.chordal = 0.5;  // a coarse skeleton: the cost is the crossing resolution
+    VCarvingResult smallResult;
+    VCarvingResult largeResult;
+    const test::ScalingTimes times = test::interleavedCpuSeconds(
+        3, [&] { smallResult = vCarvingToolpath(smallPage, tool, std::nullopt, {}, p); },
+        [&] { largeResult = vCarvingToolpath(largePage, tool, std::nullopt, {}, p); });
+    INFO(half << " pairs: " << times.smallSeconds << " s CPU, " << 2 * half << " pairs: " << times.largeSeconds
+              << " s CPU, ratio " << times.ratio());
+    REQUIRE(smallResult.ok());
+    REQUIRE(largeResult.ok());
+    CHECK(largeResult.regions == 2 * smallResult.regions);
+    CHECK(largeResult.has(ToolpathIssue::CrossingVectorsResolved));
+    CHECK(times.ratio() <= 2.5);
+}
+
 TEST_CASE("V-carve nests a D-shaped hole resolved against the circle it touches", "[toolpath][v_carve][holes]") {
     // Gap below the distance tolerance: the pair is resolved as touching input, and the hole's
     // polygon lies on the outer one along its whole arc. Nesting probes on the arc are on the
@@ -689,6 +801,101 @@ TEST_CASE("V-carve safety net checks every skeleton point, not a sample", "[tool
     CHECK(wrong.branches.front().points.size() > 8);
     CHECK_FALSE(check.consistent(wrong));
     CHECK(check.consistent(geometry::medialAxis(region, inner)));
+}
+
+TEST_CASE("V-carve safety net with the part's own boundaries: a silently dropped hole is caught",
+          "[toolpath][v_carve][holes]") {
+    // T-0164 (g, i; net verifier repro6/sq_hole_diag): v_carve passes the part's boundaries as
+    // `own`, whose distance is the medial radius itself and is not measured along the skeleton.
+    // A medial axis that dropped an own hole without counting it as ignored would pass that
+    // check; the own rings are measured at the nodes and the ray-count seeds as a backstop.
+    const geometry::Tolerance inner{0.001, 1e-9, 0.05 / 3.0};
+    const Contour square = Contour::rectangle(Box2{Vec2{0, 0}, Vec2{20, 20}});
+    const Contour hole = Contour::circle({5, 5}, 1.0, geometry::ArcDirection::CW);
+    const std::vector<Contour> region{square, hole};
+    const toolpath::detail::SkeletonCheck check(region, inner);
+    const geometry::MedialAxis dropped = geometry::medialAxis({square}, inner);
+    REQUIRE(dropped.ignoredContours == 0);
+    CHECK_FALSE(check.consistent(dropped, {0, 1}));  // the hole claimed as own: the backstop
+    CHECK_FALSE(check.consistent(dropped, {0}));     // the hole foreign: measured everywhere
+    CHECK_FALSE(check.consistent(dropped));
+    const geometry::MedialAxis right = geometry::medialAxis(region, inner);
+    CHECK(check.consistent(right, {0, 1}));
+    CHECK(check.consistent(right));
+
+    // The jobs of the wrong-region test, with `own` as v_carve passes it (the part's indices).
+    const Contour outerCircle = Contour::circle({0, 0}, 8.0);
+    const Contour holeCircle = Contour::circle({0, 0}, 7.99, geometry::ArcDirection::CW);
+    const Contour islandCircle = Contour::circle({0.3, 0.1}, 3.0);
+    const std::vector<Contour> annulus{outerCircle, holeCircle, islandCircle};
+    const toolpath::detail::SkeletonCheck annulusCheck(annulus, inner);
+    CHECK(annulusCheck.consistent(geometry::medialAxis({outerCircle, holeCircle}, inner), {0, 1}));
+    CHECK(annulusCheck.consistent(geometry::medialAxis({islandCircle}, inner), {2}));
+    CHECK_FALSE(annulusCheck.consistent(geometry::medialAxis({outerCircle}, inner), {0}));
+    CHECK_FALSE(annulusCheck.consistent(geometry::medialAxis({outerCircle}, inner), {0, 1}));
+    CHECK_FALSE(annulusCheck.consistent(geometry::medialAxis({holeCircle}, inner), {1}));
+
+    // An own boundary without area is no wall (the medial axis ignores it): never measured.
+    Contour flat;
+    flat.closed = true;
+    flat.append(geometry::LineSpan{{12, 12}, {16, 12}});
+    flat.append(geometry::LineSpan{{16, 12}, {12, 12}});
+    const std::vector<Contour> withFlat{square, flat};
+    const toolpath::detail::SkeletonCheck flatCheck(withFlat, inner);
+    const geometry::MedialAxis ax = geometry::medialAxis(withFlat, inner);
+    CHECK(ax.ignoredContours == 1);
+    CHECK(flatCheck.consistent(ax, {0, 1}));
+
+    // End to end: a hole on the diagonal of a square is carved round, never through.
+    const tooling::Tool tool = vBit(90.0, 30.0);
+    VCarvingParams p;
+    p.tolerance.chordal = 0.05;
+    const VCarvingResult r = vCarvingToolpath(region, tool, std::nullopt, {}, p);
+    REQUIRE(r.ok());
+    const orc::ConeReport cone = orc::coneCheck(r.toolpath, region, tool, 0.0, kSafeZ, 1e-5);
+    CHECK(cone.minClearance >= 0.0);
+    CHECK(cone.allInside);
+}
+
+TEST_CASE("V-carve safety net does not hand membership over to a node away from the branch end",
+          "[toolpath][v_carve][holes]") {
+    // T-0164 (h): membership found along a branch is carried to the next branch through their
+    // node. That is sound only when the node point lies within the disc that proved it, which
+    // the medial axis guarantees (a branch ends at its node's point) but the check no longer
+    // assumes: synthetic skeletons break the contract, and the branch whose points lie inside
+    // a hole must be counted exactly and rejected.
+    const geometry::Tolerance inner{0.001, 1e-9, 0.01};
+    const std::vector<Contour> region{Contour::rectangle(Box2{Vec2{0, 0}, Vec2{10, 10}}),
+                                      Contour::rectangle(Box2{Vec2{4, 4}, Vec2{6, 6}}).reversed()};
+    const toolpath::detail::SkeletonCheck check(region, inner);
+    using Points = std::vector<geometry::MedialPoint>;
+    auto skeleton = [](Vec2 node1, Points first, Points second) {
+        geometry::MedialAxis ax;
+        ax.nodes.push_back(geometry::MedialNode{first.front().point, first.front().radius, {0}});
+        ax.nodes.push_back(geometry::MedialNode{node1, 1.0, {0, 1}});
+        ax.nodes.push_back(geometry::MedialNode{second.back().point, second.back().radius, {1}});
+        geometry::MedialBranch a;
+        a.startNode = 0;
+        a.endNode = 1;
+        a.points = std::move(first);
+        geometry::MedialBranch b;
+        b.startNode = 1;
+        b.endNode = 2;
+        b.points = std::move(second);
+        ax.branches = {a, b};
+        return ax;
+    };
+    // Branch 0 inside the region (radius = distance to the walls), branch 1 inside the hole
+    // (radii small enough that no wall is within its discs).
+    const std::vector<geometry::MedialPoint> inRegion{{{1, 5}, 1.0}, {{2, 5}, 2.0}};
+    const std::vector<geometry::MedialPoint> inHole{{{5, 5}, 0.5}, {{5.2, 5}, 0.5}};
+    // Branch 0 ends away from its node, which is where branch 1 starts (inside the hole; the
+    // last disc of branch 0, radius 2 at (2, 5), does not reach it).
+    CHECK_FALSE(check.consistent(skeleton({5, 5}, inRegion, inHole)));
+    // Branch 1 starts away from its node, which is where branch 0 ends.
+    CHECK_FALSE(check.consistent(skeleton({2, 5}, inRegion, inHole)));
+    // A consistent synthetic skeleton passes: both branches in the region, joined at the node.
+    CHECK(check.consistent(skeleton({2, 5}, inRegion, {{{2, 5}, 2.0}, {{2, 3}, 2.0}})));
 }
 
 TEST_CASE("V-carve at the smallest chordal tolerance clears flat areas", "[toolpath][v_carve][flat]") {
@@ -853,6 +1060,7 @@ TEST_CASE("AC1: generative sweep - the carving tool never crosses a wall and the
     double worstLateral = 0.0;
     double worstCoverage = 0.0;
     std::size_t carved = 0;
+    std::size_t lateralFlatCases = 0;  // cases with flat areas whose skeleton cuts were checked
     for (std::uint64_t k = 0; k < cases; ++k) {
         const orc::SweepCase sc = orc::sweepCase(k);
         INFO("case " << k << ": " << sc.what);
@@ -891,22 +1099,31 @@ TEST_CASE("AC1: generative sweep - the carving tool never crosses a wall and the
         }
 
         // Depth = radius / tan(angle / 2) within the tolerance: at every cut point above the limit
-        // the footprint is within the chordal tolerance of the boundary distance (skipped where
-        // the carving tool clears flat areas itself: its pocket passes are not skeleton cuts).
-        // With flat areas the carving tool also clears (alone, or as the end mills' rest tool):
-        // those pocket passes are not skeleton cuts.
+        // the footprint is within the chordal tolerance of the boundary distance. With flat areas
+        // the carving tool also runs Pocket's passes (alone, or as the end mills' rest tool),
+        // which are not skeleton cuts: they keep one Z per level (the sweep has no ramps) and
+        // move between levels vertically, so there only the inclined feed moves are checked
+        // (T-0164: the check was skipped there, where the depth limit's kink matters most).
         const bool selfClear = p.flatDepth > 0.0 || r.has(ToolpathIssue::CarveDepthLimited);
-        if (!selfClear) {
-            for (const Move& m : r.toolpath.moves) {
-                const double depth = -p.startDepth - m.to.z;
-                if (m.kind != MoveKind::Feed || depth >= limit - 1e-9) {
-                    continue;
-                }
-                const double lateral =
-                    orc::boundaryDistance(sc.region, {m.to.x, m.to.y}) - orc::footprintAt(sc.tool, depth);
-                CHECK(lateral <= chordal);
-                worstLateral = std::max(worstLateral, lateral / chordal);
+        std::size_t lateralChecked = 0;
+        for (std::size_t i = 0; i < r.toolpath.moves.size(); ++i) {
+            const Move& m = r.toolpath.moves[i];
+            const double depth = -p.startDepth - m.to.z;
+            if (m.kind != MoveKind::Feed || depth >= limit - 1e-9) {
+                continue;
             }
+            const auto from = r.toolpath.startOf(i);
+            if (selfClear && (from.z == m.to.z || (from.x == m.to.x && from.y == m.to.y))) {
+                continue;  // level, or vertical (Pocket lifts to the start plane between passes)
+            }
+            const double lateral =
+                orc::boundaryDistance(sc.region, {m.to.x, m.to.y}) - orc::footprintAt(sc.tool, depth);
+            CHECK(lateral <= chordal);
+            worstLateral = std::max(worstLateral, lateral / chordal);
+            ++lateralChecked;
+        }
+        if (selfClear && lateralChecked > 0) {
+            ++lateralFlatCases;
         }
         // Coverage (every third case): every inside point whose depth is above the limit is carved
         // to its depth within the chordal tolerance as a footprint radius (ADR-0025 §1). Points
@@ -939,8 +1156,10 @@ TEST_CASE("AC1: generative sweep - the carving tool never crosses a wall and the
         }
     }
     INFO("carved " << carved << " of " << cases << "; worst clearance " << worstCone << " mm, worst lateral "
-                   << worstLateral << " x chordal, worst coverage shortfall " << worstCoverage << " x chordal");
+                   << worstLateral << " x chordal, worst coverage shortfall " << worstCoverage
+                   << " x chordal; laterals checked in " << lateralFlatCases << " cases with flat areas");
     CHECK(carved >= cases * 9 / 10);
+    CHECK(lateralFlatCases >= cases / 4);
     CHECK(worstCone >= 0.0);
 }
 

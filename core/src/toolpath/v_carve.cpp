@@ -227,7 +227,12 @@ std::vector<Boundary> resolveCrossings(const std::vector<Contour>& contours, con
     // it can cut a vector that is closer than that without touching the curves (a hole 0.003 mm
     // from a circle of a crossing pair). Such vectors join the cluster, until no polygon crosses
     // or touches a vector outside its cluster.
+    // A cluster whose polygons touched no outside vector is remembered with its members: until its
+    // membership changes it is neither resolved nor checked again (the union and the checks would
+    // give the same result), so each absorption costs the clusters it changes, not all of them
+    // (T-0164: restarting over every cluster made the growth quadratic in absorbing clusters).
     std::vector<std::vector<Contour>> resolved(n);
+    std::vector<std::vector<std::size_t>> stableMembers(n);
     for (bool changed = true; changed;) {
         changed = false;
         std::vector<std::vector<std::size_t>> members(n);
@@ -241,7 +246,11 @@ std::vector<Boundary> resolveCrossings(const std::vector<Contour>& contours, con
             }
             if (members[k].empty() || !cross) {
                 resolved[k].clear();
+                stableMembers[k].clear();
                 continue;
+            }
+            if (members[k] == stableMembers[k]) {
+                continue;  // resolved before with these members and touched nothing outside
             }
             std::vector<Contour> cluster;
             for (const std::size_t m : members[k]) {
@@ -260,6 +269,9 @@ std::vector<Boundary> resolveCrossings(const std::vector<Contour>& contours, con
                         changed = true;
                     }
                 }
+            }
+            if (!changed) {
+                stableMembers[k] = members[k];
             }
         }
     }
@@ -1035,10 +1047,13 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
     // flat areas narrower than the smallest end mill), with its stepover limited to the width it
     // cuts at the flat depth so Pocket accepts it (ADR-0025 §3).
     std::vector<PocketTool> pocketTools;
+    bool stepoverLimited = false;  // the carving tool's rest stepover was cut down to its width
+    std::optional<std::size_t> firstRidged;  // first region it cleared rest material in, if so
     if (multi) {
         pocketTools = clearanceTools;
         tooling::CuttingData rest = data;
         const double width = 2.0 * limitRadius;
+        stepoverLimited = rest.stepover > width;
         rest.stepover = rest.stepover > 0.0 ? std::min(rest.stepover, width) : 0.5 * width;
         rest.passDepth = rest.passDepth > 0.0 ? rest.passDepth : limit;
         pocketTools.push_back(PocketTool{tool, rest});
@@ -1096,6 +1111,9 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
             return result;
         }
         if (carverIndex < pr.toolpaths.size()) {
+            if (multi && stepoverLimited && !firstRidged && !pr.toolpaths[carverIndex].moves.empty()) {
+                firstRidged = groups[g].sources.front();
+            }
             selfClear[g] = std::move(pr.toolpaths[carverIndex].moves);
             shiftZ(selfClear[g], params.startDepth);
             estimate += static_cast<double>(selfClear[g].size());
@@ -1131,6 +1149,15 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
         }
     }
     merged.flushInto(result.diagnostics);
+    if (firstRidged) {
+        // Its passes then only touch at the floor, leaving ridges as high as the depth limit
+        // where the end mills could not reach (T-0164).
+        say(ToolpathIssue::StepoverLimited, firstRidged,
+            "tool '" + tool.name + "': stepover " + num(data.stepover) +
+                " mm is wider than it cuts at the flat bottom (" + num(2.0 * limitRadius) +
+                " mm); its rest clearing of the flat areas uses " + num(2.0 * limitRadius) +
+                " mm and can leave ridges up to " + num(limit) + " mm high");
+    }
 
     // Work cap before the carve moves are made.
     for (const GroupResult& gr : carved) {
@@ -1187,6 +1214,11 @@ SkeletonCheck::SkeletonCheck(const std::vector<Contour>& boundaries, const geome
             box.expand(v);
         }
         ringBoxes_.push_back(box);
+        // The medial axis' own test (about the contour's box centre): a boundary without area is
+        // ignored by it, so the medial radius does not measure it.
+        const double area =
+            geometry::signedArea(c.transformed(geometry::Transform2::translation(-c.bounds().centre())));
+        noArea_.push_back(static_cast<char>(!(area != 0.0) || !std::isfinite(area) ? 1 : 0));
     }
     ringIndex_ = BoxIndex(ringBoxes_);
 }
@@ -1231,12 +1263,20 @@ bool SkeletonCheck::consistent(const MedialAxis& ax, const std::vector<std::size
     //  - Distance: the medial axis measured r against the part's own boundaries exactly, and
     //    their rings lie within tol.chordal of them, so only the other rings ("foreign") can be
     //    closer than r - clear; each point queries the ring index for its disc's box.
+    //  - Backstop (T-0164): that holds only if the medial axis used every own boundary. One it
+    //    dropped silently (not counted as ignored) would not be measured anywhere, so the own
+    //    rings that enclose area are measured too at every node and at every point where
+    //    membership is counted exactly (a dropped boundary changes the skeleton's topology, so
+    //    its discs reach past it at the nodes).
     //  - Membership: walking a branch from a point p whose disc check passed, no ring is within
     //    r_p - clear of p, so the next point, nearer than that, is on the same side of every ring.
     //    The exact ray count is needed only where that does not hold, and once per connected
-    //    piece of skeleton (membership is carried through the nodes).
+    //    piece of skeleton (membership is carried through the nodes). It is handed over at a node
+    //    only when the node point itself lies inside the disc that proved it (a branch's end is
+    //    its node's point; T-0164 does not rely on that).
     const double clear = 2.0 * tol_.chordal + tol_.distance;
     std::vector<char> skip;
+    std::vector<char> skipButOwn;  // backstop: skips every ring but the own rings that enclose area
     if (!own.empty()) {
         skip.assign(rings_.size(), 0);
         for (const std::size_t k : own) {
@@ -1244,41 +1284,80 @@ bool SkeletonCheck::consistent(const MedialAxis& ax, const std::vector<std::size
                 skip[k] = 1;
             }
         }
+        skipButOwn.assign(rings_.size(), 1);
+        bool any = false;
+        for (std::size_t k = 0; k < rings_.size(); ++k) {
+            if (skip[k] != 0 && noArea_[k] == 0) {
+                skipButOwn[k] = 0;
+                any = true;
+            }
+        }
+        if (!any) {
+            skipButOwn.clear();
+        }
     }
+    // True when an own ring that encloses area is closer to p than r - clear.
+    auto ownTooClose = [&](Vec2 p, double r) {
+        return !skipButOwn.empty() && r > clear && closer(p, r - clear, skipButOwn);
+    };
     const std::size_t nn = ax.nodes.size();
+    for (const geometry::MedialNode& nd : ax.nodes) {
+        if (ownTooClose(nd.point, nd.radius)) {
+            return false;
+        }
+    }
     std::vector<signed char> nodeIn(nn, -1);  // -1 unknown, 0 outside, 1 inside
+    std::vector<Vec2> nodeProofAt(nn);        // the disc that proved nodeIn: centre ...
+    std::vector<double> nodeProofReach(nn, 0.0);  // ... and radius (no ring within it)
     std::vector<char> branchDone(ax.branches.size(), 0);
     auto discOk = [&](Vec2 p, double r) { return !(r > clear) || !closer(p, r - clear, skip); };
-    // Walks branch `b` from node `from`; `in` is the membership at its first point (-1 unknown).
+    // Walks branch `b` from node `from`, starting with the membership known at that node.
     auto walk = [&](std::size_t b, std::size_t from) -> bool {
         const geometry::MedialBranch& br = ax.branches[b];
         const std::size_t n = br.points.size();
         const bool forward = br.startNode == from;
         signed char in = nodeIn[from];
+        Vec2 proofAt = nodeProofAt[from];  // `in` holds within this disc
+        double proofReach = nodeProofReach[from];
         Vec2 prev{};
         double reach = 0.0;  // no ring within this distance of prev (0: unknown)
         for (std::size_t i = 0; i < n; ++i) {
             const geometry::MedialPoint& m = br.points[forward ? i : n - 1 - i];
-            if (i > 0 && !(geometry::distance(prev, m.point) < reach)) {
+            if (i == 0) {
+                if (!(geometry::distance(proofAt, m.point) < proofReach)) {
+                    in = -1;  // the branch does not start inside the node's proof
+                }
+            } else if (!(geometry::distance(prev, m.point) < reach)) {
                 in = -1;  // a ring may lie in between: membership is no longer known
+            } else {
+                proofAt = prev;
+                proofReach = reach;
             }
             const bool checked = m.radius > clear;
             if (checked) {
                 if (in < 0) {
                     in = inside(m.point) ? 1 : 0;
+                    if (ownTooClose(m.point, m.radius)) {
+                        return false;
+                    }
                 }
                 if (in == 0 || !discOk(m.point, m.radius)) {
                     return false;
                 }
                 reach = m.radius - clear;
+                proofAt = m.point;
+                proofReach = reach;
             } else {
                 reach = 0.0;
             }
             prev = m.point;
         }
         const std::size_t to = forward ? br.endNode : br.startNode;
-        if (to < nn && nodeIn[to] < 0 && in >= 0) {
+        if (to < nn && nodeIn[to] < 0 && in >= 0 &&
+            geometry::distance(proofAt, ax.nodes[to].point) < proofReach) {
             nodeIn[to] = in;
+            nodeProofAt[to] = proofAt;
+            nodeProofReach[to] = proofReach;
         }
         return true;
     };

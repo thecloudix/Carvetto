@@ -24,11 +24,16 @@ namespace carvetto::toolpath::detail {
 /// the skeleton ignored or read on the wrong side. Each point's disc box is queried against the
 /// ring index; membership is carried along the skeleton while consecutive points are nearer to
 /// each other than the clearance already proven, and counted exactly where it is not.
+/// The slack applies to every disc, not only small ones: a wrong skeleton whose discs all reach
+/// less than 2c + d past a true wall passes (ADR-0025 §5).
 class SkeletonCheck {
    public:
     SkeletonCheck(const std::vector<geometry::Contour>& boundaries, const geometry::Tolerance& tol);
     /// `own`: indices (into the boundaries) of the part the medial axis was computed for: their
     /// distance is the medial radius itself, so only the other rings are measured; empty = all.
+    /// As a backstop against a medial axis that silently dropped an own boundary, the own rings
+    /// (those enclosing area) are measured too at every node and wherever membership is counted
+    /// exactly (T-0164).
     bool consistent(const geometry::MedialAxis& ax, const std::vector<std::size_t>& own = {}) const;
 
    private:
@@ -39,6 +44,8 @@ class SkeletonCheck {
     geometry::Tolerance tol_;
     std::vector<std::vector<geometry::Vec2>> rings_;
     std::vector<geometry::Box2> ringBoxes_;
+    /// Per ring: 1 when its boundary encloses no area (the medial axis ignores it: no wall).
+    std::vector<char> noArea_;
     BoxIndex ringIndex_;
 };
 
