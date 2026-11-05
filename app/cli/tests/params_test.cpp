@@ -485,3 +485,99 @@ TEST_CASE("engrave params: unknown keys and bad values are errors naming the key
     CHECK_THAT(engraveErrorOf(R"({"tool": {"id": "t"}, "depth": 1, "depth": 2})"),
                ContainsSubstring("duplicate key 'depth'"));
 }
+
+// ----------------------------------------------------------------------------- T-0153 v_carve
+
+namespace {
+
+/// Every V-carve key with a non-default value.
+const char* kFullVCarving = R"({
+  "name": "Sign", "start_depth": 1.5, "flat_depth": 2, "safe_z": 8,
+  "clearance_tools": [{"id": "end-mill-6mm"}, {"database": "db.json", "id": "end-mill-3mm", "machine": "m", "material": "w"}],
+  "clearance_strategy": "raster", "clearance_direction": "conventional", "clearance_raster_angle": 30,
+  "ramp_plunge": true, "ramp_distance": 4,
+  "order": {"selection_order": true, "left_to_right": true, "bottom_to_top": true, "grid": true},
+  "start_position": [10, -20],
+  "tolerance": {"distance": 0.002, "angle": 0.001, "chordal": 0.02},
+  "tool": {"database": "db.json", "id": "v-bit-60", "machine": "m", "material": "w"},
+  "layers": ["Text"]
+})";
+
+std::string vCarvingErrorOf(const std::string& text) {
+    try {
+        parseVCarvingParams(text);
+    } catch (const CliError& e) {
+        return e.what();
+    }
+    return "";
+}
+
+}  // namespace
+
+TEST_CASE("v_carve params: every key maps to VCarvingParams and the clearance tools", "[cli][params][v_carve]") {
+    const VCarvingJob job = parseVCarvingParams(kFullVCarving);
+    const toolpath::VCarvingParams& p = job.params;
+    CHECK(p.name == "Sign");
+    CHECK(p.startDepth == 1.5);
+    CHECK(p.flatDepth == 2.0);
+    CHECK(p.safeZ == 8.0);
+    CHECK(p.clearanceStrategy == toolpath::PocketStrategy::Raster);
+    CHECK(p.clearanceDirection == toolpath::CutDirection::Conventional);
+    CHECK(p.clearanceRasterAngle == Approx(30 * kDeg));
+    CHECK(p.rampPlunge);
+    CHECK(p.rampDistance == 4.0);
+    CHECK(p.order.selectionOrder);
+    CHECK(p.order.leftToRight);
+    CHECK(p.order.bottomToTop);
+    CHECK(p.order.grid);
+    CHECK(p.startPosition == geometry::Vec2{10, -20});
+    CHECK(p.tolerance.distance == 0.002);
+    CHECK(p.tolerance.angle == Approx(0.001 * kDeg));
+    CHECK(p.tolerance.chordal == 0.02);
+    CHECK(job.common.tool.id == "v-bit-60");
+    CHECK(job.common.layers == std::vector<std::string>{"Text"});
+    REQUIRE(job.clearanceTools.size() == 2);
+    CHECK(job.clearanceTools[0].id == "end-mill-6mm");
+    CHECK(job.clearanceTools[0].database.empty());
+    CHECK(job.clearanceTools[1].database == "db.json");
+    CHECK(job.clearanceTools[1].id == "end-mill-3mm");
+    CHECK(job.clearanceTools[1].machine == "m");
+    CHECK(job.clearanceTools[1].material == "w");
+
+    const VCarvingJob defaults = parseVCarvingParams(R"({"tool": {"id": "t"}})");
+    CHECK(defaults.params == toolpath::VCarvingParams{});
+    CHECK(defaults.clearanceTools.empty());
+}
+
+TEST_CASE("v_carve params: every key is documented in the toolpath help", "[cli][params][v_carve][help]") {
+    const std::string help = paramsHelp();
+    std::vector<std::string> keys;
+    keyPaths(nlohmann::json::parse(kFullVCarving), "", keys);
+    for (const std::string& key : keys) {
+        INFO(key);
+        CHECK_THAT(help, ContainsSubstring("\"" + key + "\""));
+    }
+    CHECK_THAT(help, ContainsSubstring("v_carve (V-carving of closed vectors"));
+}
+
+TEST_CASE("v_carve params: unknown keys and bad values are errors naming the key", "[cli][params][v_carve][errors]") {
+    CHECK_THAT(vCarvingErrorOf(R"({"tool": {"id": "t"}, "cut_depth": 1})"), ContainsSubstring("unknown key 'cut_depth'"));
+    CHECK_THAT(vCarvingErrorOf(R"({"tool": {"id": "t"}, "clearance_strategy": "spiral"})"),
+               ContainsSubstring("'clearance_strategy' must be one of: offset, raster (got 'spiral')"));
+    CHECK_THAT(vCarvingErrorOf(R"({"tool": {"id": "t"}, "clearance_direction": "up"})"),
+               ContainsSubstring("'clearance_direction' must be one of: climb, conventional"));
+    CHECK_THAT(vCarvingErrorOf(R"({"tool": {"id": "t"}, "flat_depth": "1"})"), ContainsSubstring("'flat_depth' must be a number"));
+    CHECK_THAT(vCarvingErrorOf(R"({"tool": {"id": "t"}, "clearance_tools": {"id": "x"}})"),
+               ContainsSubstring("'clearance_tools' must be an array of tool objects"));
+    CHECK_THAT(vCarvingErrorOf(R"({"tool": {"id": "t"}, "clearance_tools": ["x"]})"),
+               ContainsSubstring("'clearance_tools[0]' must be a JSON object"));
+    CHECK_THAT(vCarvingErrorOf(R"({"tool": {"id": "t"}, "clearance_tools": [{"id": "a"}, {"database": "d"}]})"),
+               ContainsSubstring("missing key 'clearance_tools[1].id'"));
+    CHECK_THAT(vCarvingErrorOf(R"({"tool": {"id": "t"}, "clearance_tools": [{"id": "a", "machine": "m"}]})"),
+               ContainsSubstring("'clearance_tools[0].machine' and 'clearance_tools[0].material' must be given together"));
+    CHECK_THAT(vCarvingErrorOf(R"({"tool": {"id": "t"}, "clearance_tools": [{"id": "a", "speed": 1}]})"),
+               ContainsSubstring("unknown key 'clearance_tools[0].speed'"));
+    CHECK_THAT(vCarvingErrorOf(R"({"flat_depth": 1})"), ContainsSubstring("missing key 'tool'"));
+    CHECK_THAT(vCarvingErrorOf(R"({"tool": {"id": "t"}, "order": {"nearest": true}})"),
+               ContainsSubstring("unknown key 'order.nearest'"));
+}

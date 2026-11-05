@@ -147,3 +147,15 @@ by at most 2.5× per doubling of boundary segments up to 50,000 (text-heavy jobs
 - T-0153 walks branches from node to node, reads depth from `MedialPoint::radius`, and can use
   `MedialBranch::sides` to tell which boundary spans a stretch carves against (e.g. to recognise
   branches that run into a corner for corner sharpening).
+- **Amended by T-0153 (ADR-0025 §7):** refinement also runs where a circumcentre lies exactly on
+  the boundary (within the merge distance) with a circumradius above chordal/2. Symmetric input
+  (an isosceles triangle with an obtuse apex, nested squares) put circumcentres there, neither
+  inside nor outside, and the skeleton came out empty or without the frame's corner junctions.
+- **Amended by T-0153 round 2 (ADR-0025 §7 b, c):** contours are classified from up to 16 probes
+  spread over the contour (a one-arc hole next to a wall was ignored), and a Delaunay sub-edge
+  whose opposite vertex is an exempt sample is checked against every sample in its diametral
+  disc (a thin band with flat corners had an empty skeleton).
+- **Amended by T-0153 round 4 (ADR-0025 §7 b):** 32 probes by arc length; when none is clear, the
+  probe farthest from the other contours decides with their exact winding at a fine tolerance
+  (the ±2·chordal offsets, now the last resort for coincident contours, read a thin D-shaped hole
+  on the wrong side).

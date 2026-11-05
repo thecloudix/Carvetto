@@ -97,6 +97,27 @@ jobs:
             echo "::error title=CLI end-to-end (quick engrave)::G-code checksum differs from core/tests/golden/cli/part_engrave_grbl.nc"
             exit 1
           fi
+      # T-0153: V-carving (V-bit letters, then a flat-bottomed panel: end mill clearance, V-bit walls).
+      - name: CLI end-to-end (DXF to Grbl G-code, V-carve)
+        run: |
+          set -euo pipefail
+          cli=build/app/cli/carvetto-cli
+          d=app/cli/tests/data
+          w=build/cli-e2e-v-carve
+          rm -rf "$w" && mkdir -p "$w"
+          "$cli" import "$d/sign.dxf" "$w/sign.carv"
+          "$cli" toolpath v_carve "$d/v_carve_letters.json" "$w/sign.carv" "$w/sign.carv"
+          "$cli" toolpath v_carve "$d/v_carve_flat.json" "$w/sign.carv" "$w/sign.carv"
+          "$cli" info "$w/sign.carv"
+          "$cli" post posts/grbl_mm.pp "$w/sign.carv" "$w/sign.nc"
+          want=$(sha256sum core/tests/golden/cli/sign_v_carve_grbl.nc | cut -d' ' -f1)
+          got=$(sha256sum "$w/sign.nc" | cut -d' ' -f1)
+          echo "golden sha256 $want, output sha256 $got"
+          if [ "$want" != "$got" ]; then
+            diff core/tests/golden/cli/sign_v_carve_grbl.nc "$w/sign.nc" | head -40 || true
+            echo "::error title=CLI end-to-end (V-carve)::G-code checksum differs from core/tests/golden/cli/sign_v_carve_grbl.nc"
+            exit 1
+          fi
       # T-0014: timing-sensitive tests must hold under parallel load. Runs the suite with 8 jobs;
       # each test is repeated up to 3 times and the step fails as soon as any repetition fails.
       - name: Test (parallel stress, -j8)
@@ -265,6 +286,34 @@ jobs:
           if ($want -ne $got) {
             $diff = Compare-Object (Get-Content core/tests/golden/cli/part_engrave_grbl.nc) (Get-Content "$w/part.nc") | Select-Object -First 20 | ForEach-Object { "$($_.SideIndicator) $($_.InputObject)" }
             Write-Host "::error title=CLI end-to-end (quick engrave)::G-code checksum differs from the golden%0A$($diff -join '%0A')"
+            exit 1
+          }
+      # T-0153: the V-carve pipeline (MSVC build), checksum vs the same golden as Linux.
+      - name: CLI end-to-end (DXF to Grbl G-code, V-carve)
+        shell: pwsh
+        run: |
+          $cli = "build/app/cli/carvetto-cli.exe"
+          $d = "app/cli/tests/data"
+          $w = "build/cli-e2e-v-carve"
+          if (Test-Path $w) { Remove-Item -Recurse -Force $w }
+          New-Item -ItemType Directory -Path $w | Out-Null
+          $steps = @(
+            @("import", "$d/sign.dxf", "$w/sign.carv"),
+            @("toolpath", "v_carve", "$d/v_carve_letters.json", "$w/sign.carv", "$w/sign.carv"),
+            @("toolpath", "v_carve", "$d/v_carve_flat.json", "$w/sign.carv", "$w/sign.carv"),
+            @("info", "$w/sign.carv"),
+            @("post", "posts/grbl_mm.pp", "$w/sign.carv", "$w/sign.nc")
+          )
+          foreach ($a in $steps) {
+            & $cli @a
+            if ($LASTEXITCODE -ne 0) { Write-Host "::error title=CLI end-to-end (V-carve)::carvetto-cli $($a -join ' ') failed (exit $LASTEXITCODE)"; exit 1 }
+          }
+          $want = (Get-FileHash -Algorithm SHA256 core/tests/golden/cli/sign_v_carve_grbl.nc).Hash
+          $got = (Get-FileHash -Algorithm SHA256 "$w/sign.nc").Hash
+          Write-Host "golden sha256 $want, output sha256 $got"
+          if ($want -ne $got) {
+            $diff = Compare-Object (Get-Content core/tests/golden/cli/sign_v_carve_grbl.nc) (Get-Content "$w/sign.nc") | Select-Object -First 20 | ForEach-Object { "$($_.SideIndicator) $($_.InputObject)" }
+            Write-Host "::error title=CLI end-to-end (V-carve)::G-code checksum differs from the golden%0A$($diff -join '%0A')"
             exit 1
           }
       - name: App self-test (headless)
