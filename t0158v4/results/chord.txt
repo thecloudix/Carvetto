@@ -1,0 +1,14 @@
+chord f 0.5 theta 0.0001667 dir 0 | |S-A|-d 1.04e-08 S-Fin 0.00025 S-Fout 0.00025 maxMove 3e-09
+chord f 0.5 theta 0.0001667 dir 1 | |S-A|-d 1.04e-08 S-Fin 0.00025 S-Fout 0.00025 maxMove 3e-09
+chord f 0.9 theta 0.0003 dir 0 | |S-A|-d 0 S-Fin 0.0009 S-Fout 0 maxMove 3e-09
+chord f 0.9 theta 0.0003 dir 1 | |S-A|-d 0 S-Fin 0 S-Fout 0.0009 maxMove 3e-09
+chord f 0.999 theta 0.000333 dir 0 | |S-A|-d 4.44e-16 S-Fin 0.000999 S-Fout 4.441e-16 maxMove 3e-09
+chord f 0.999 theta 0.000333 dir 1 | |S-A|-d 0 S-Fin 0 S-Fout 0.000999 maxMove 3e-09
+chord f 1 theta 0.0003333 dir 0 | |S-A|-d -4.44e-16 S-Fin 0.001 S-Fout 0 maxMove 3e-09
+chord f 1 theta 0.0003333 dir 1 | |S-A|-d 0 S-Fin 0 S-Fout 0.001 maxMove 3e-09
+chord f 1.001 theta 0.0003337 dir 0 | |S-A|-d 4.44e-16 S-Fin 0.001001 S-Fout 4.441e-16 maxMove 3e-09
+chord f 1.001 theta 0.0003337 dir 1 | |S-A|-d 0 S-Fin 0 S-Fout 0.001001 maxMove 3e-09
+chord f 1.1 theta 0.0003667 dir 0 | |S-A|-d 0 S-Fin 0.0011 S-Fout 4.441e-16 maxMove 3e-09
+chord f 1.1 theta 0.0003667 dir 1 | |S-A|-d 0 S-Fin 0 S-Fout 0.0011 maxMove 3e-09
+chord f 2 theta 0.0006667 dir 0 | |S-A|-d 0 S-Fin 0.002 S-Fout 4.441e-16 maxMove 3e-09
+chord f 2 theta 0.0006667 dir 1 | |S-A|-d 0 S-Fin 0 S-Fout 0.002 maxMove 3e-09

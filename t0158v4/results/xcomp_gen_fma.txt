@@ -1,0 +1,126 @@
+gen1:bez           hashdiff 59 runs 60
+gen1:circ          hashdiff 7 runs 60
+gen1:dup           hashdiff 56 runs 60
+gen1:flat          hashdiff 51 runs 60
+gen1:gap           hashdiff 52 runs 60
+gen1:inref         hashdiff 60 runs 60
+gen1:mitre         hashdiff 60 runs 60
+gen1:poly          hashdiff 60 runs 60
+gen1:star          hashdiff 59 runs 60
+gen2:marc          hashdiff 78 runs 80
+gen2:mflat         hashdiff 65 runs 80
+gen2:min           hashdiff 80 runs 80
+gen2:mloop         hashdiff 61 runs 80
+gen2:mmrg          hashdiff 49 runs 80
+gen2:mon           hashdiff 69 runs 80
+gen2:mopen         hashdiff 68 runs 80
+gen2:mref          hashdiff 79 runs 80
+gen2:mshort        hashdiff 68 runs 80
+gen2:mt            hashdiff 80 runs 80
+gen2:mtc           hashdiff 79 runs 80
+gen2:mtri          hashdiff 79 runs 80
+gen2:rmrg          hashdiff 62 runs 80
+gen3:fpoly         hashdiff 60 runs 60 startdiff 2
+     e.g. ('build-verify3-rel_gen3_fpoly_048.scn.txt', 'fpoly_048.scn:orig', [2, 2])
+     e.g. ('build-verify3-rel_gen3_fpoly_054.scn.txt', 'fpoly_054.scn:orig', [2, 2])
+gen3:rmrg2         hashdiff 25 runs 60
+gen3:sharpnb       hashdiff 60 runs 60
+gen3:split         hashdiff 60 runs 60
+gen3:vmrg2         hashdiff 28 runs 60
+== main
+gen1:bez           hashdiff 59 runs 60 startdiff 7
+     e.g. ('8_build-verify3-rel_gen1_bez_010.scn.txt', 'bez_010.scn:orig', [1, 1])
+     e.g. ('8_build-verify3-rel_gen1_bez_013.scn.txt', 'bez_013.scn:orig', [1])
+     e.g. ('8_build-verify3-rel_gen1_bez_022.scn.txt', 'bez_022.scn:orig', [1, 1])
+     e.g. ('8_build-verify3-rel_gen1_bez_025.scn.txt', 'bez_025.scn:orig', [1, 1])
+gen1:circ          hashdiff 7 runs 60
+gen1:dup           hashdiff 55 leftdiff 1 runs 60 startdiff 8
+     e.g. ('8_build-verify3-rel_gen1_dup_013.scn.txt', 'dup_013.scn:orig', [1, 1])
+     e.g. ('8_build-verify3-rel_gen1_dup_015.scn.txt', 'dup_015.scn:orig', [1, 1])
+     e.g. ('8_build-verify3-rel_gen1_dup_025.scn.txt', 'dup_025.scn:orig', [1, 1])
+     e.g. ('8_build-verify3-rel_gen1_dup_033.scn.txt', 'dup_033.scn:orig', [1, 1])
+gen1:flat          hashdiff 51 runs 60
+gen1:gap           hashdiff 51 runs 60 startdiff 2
+     e.g. ('8_build-verify3-rel_gen1_gap_017.scn.txt', 'gap_017.scn:orig', [1])
+     e.g. ('8_build-verify3-rel_gen1_gap_059.scn.txt', 'gap_059.scn:orig', [1, 1])
+gen1:inref         hashdiff 60 runs 60 startdiff 4
+     e.g. ('build-verify3-rel_gen1_inref_008.scn.txt', 'inref_008.scn:orig', [1])
+     e.g. ('build-verify3-rel_gen1_inref_024.scn.txt', 'inref_024.scn:orig', [1])
+     e.g. ('build-verify3-rel_gen1_inref_029.scn.txt', 'inref_029.scn:orig', [1])
+     e.g. ('build-verify3-rel_gen1_inref_030.scn.txt', 'inref_030.scn:orig', [1])
+gen1:mitre         hashdiff 60 leftdiff 3 runs 60 startdiff 23
+     e.g. ('build-verify3-rel_gen1_mitre_000.scn.txt', 'mitre_000.scn:orig', [2])
+     e.g. ('build-verify3-rel_gen1_mitre_004.scn.txt', 'mitre_004.scn:orig', [2, 2])
+     e.g. ('build-verify3-rel_gen1_mitre_005.scn.txt', 'mitre_005.scn:orig', [2])
+     e.g. ('build-verify3-rel_gen1_mitre_006.scn.txt', 'mitre_006.scn:orig', [2])
+gen1:poly          hashdiff 59 runs 60 startdiff 3
+     e.g. ('_build-verify3-rel_gen1_poly_021.scn.txt', 'poly_021.scn:orig', [1])
+     e.g. ('_build-verify3-rel_gen1_poly_044.scn.txt', 'poly_044.scn:orig', [1, 1])
+     e.g. ('_build-verify3-rel_gen1_poly_051.scn.txt', 'poly_051.scn:orig', [1, 1])
+gen1:star          hashdiff 59 leftdiff 1 runs 60 startdiff 15
+     e.g. ('_build-verify3-rel_gen1_star_000.scn.txt', 'star_000.scn:orig', [1, 1])
+     e.g. ('_build-verify3-rel_gen1_star_003.scn.txt', 'star_003.scn:orig', [1])
+     e.g. ('_build-verify3-rel_gen1_star_006.scn.txt', 'star_006.scn:orig', [1, 1])
+     e.g. ('_build-verify3-rel_gen1_star_007.scn.txt', 'star_007.scn:orig', [1, 1])
+gen2:marc          hashdiff 78 leftdiff 1 runs 80 startdiff 13
+     e.g. ('_build-verify3-rel_gen2_marc_001.scn.txt', 'marc_001.scn:orig', [2])
+     e.g. ('_build-verify3-rel_gen2_marc_005.scn.txt', 'marc_005.scn:orig', [2])
+     e.g. ('_build-verify3-rel_gen2_marc_006.scn.txt', 'marc_006.scn:orig', [2])
+     e.g. ('_build-verify3-rel_gen2_marc_011.scn.txt', 'marc_011.scn:orig', [1])
+gen2:mflat         hashdiff 65 runs 80
+gen2:min           hashdiff 80 runs 80
+gen2:mloop         hashdiff 62 leftdiff 1 runs 80 startdiff 10
+     e.g. ('build-verify3-rel_gen2_mloop_003.scn.txt', 'mloop_003.scn:orig', [2])
+     e.g. ('build-verify3-rel_gen2_mloop_006.scn.txt', 'mloop_006.scn:orig', [3, 3])
+     e.g. ('build-verify3-rel_gen2_mloop_009.scn.txt', 'mloop_009.scn:orig', [3, 3])
+     e.g. ('build-verify3-rel_gen2_mloop_020.scn.txt', 'mloop_020.scn:orig', [2])
+gen2:mmrg          hashdiff 53 runs 80
+gen2:mon           hashdiff 69 runs 80 startdiff 12
+     e.g. ('8_build-verify3-rel_gen2_mon_022.scn.txt', 'mon_022.scn:orig', [2, 2])
+     e.g. ('8_build-verify3-rel_gen2_mon_031.scn.txt', 'mon_031.scn:orig', [2, 2])
+     e.g. ('8_build-verify3-rel_gen2_mon_033.scn.txt', 'mon_033.scn:orig', [2, 2])
+     e.g. ('8_build-verify3-rel_gen2_mon_035.scn.txt', 'mon_035.scn:orig', [2, 2])
+gen2:mopen         hashdiff 68 runs 80
+gen2:mref          hashdiff 79 runs 80 startdiff 5
+     e.g. ('_build-verify3-rel_gen2_mref_025.scn.txt', 'mref_025.scn:orig', [2, 2])
+     e.g. ('_build-verify3-rel_gen2_mref_027.scn.txt', 'mref_027.scn:orig', [2])
+     e.g. ('_build-verify3-rel_gen2_mref_030.scn.txt', 'mref_030.scn:orig', [2, 2])
+     e.g. ('_build-verify3-rel_gen2_mref_034.scn.txt', 'mref_034.scn:orig', [2, 2])
+gen2:mshort        hashdiff 70 leftdiff 2 runs 80 startdiff 13
+     e.g. ('uild-verify3-rel_gen2_mshort_005.scn.txt', 'mshort_005.scn:orig', [2])
+     e.g. ('uild-verify3-rel_gen2_mshort_009.scn.txt', 'mshort_009.scn:orig', [2])
+     e.g. ('uild-verify3-rel_gen2_mshort_010.scn.txt', 'mshort_010.scn:orig', [2])
+     e.g. ('uild-verify3-rel_gen2_mshort_015.scn.txt', 'mshort_015.scn:orig', [2, 2])
+gen2:mt            hashdiff 80 runs 80 startdiff 15
+     e.g. ('58_build-verify3-rel_gen2_mt_005.scn.txt', 'mt_005.scn:orig', [2])
+     e.g. ('58_build-verify3-rel_gen2_mt_008.scn.txt', 'mt_008.scn:orig', [2, 2])
+     e.g. ('58_build-verify3-rel_gen2_mt_010.scn.txt', 'mt_010.scn:orig', [2, 2])
+     e.g. ('58_build-verify3-rel_gen2_mt_011.scn.txt', 'mt_011.scn:orig', [2])
+gen2:mtc           hashdiff 79 runs 80 startdiff 19
+     e.g. ('8_build-verify3-rel_gen2_mtc_005.scn.txt', 'mtc_005.scn:orig', [2, 2])
+     e.g. ('8_build-verify3-rel_gen2_mtc_011.scn.txt', 'mtc_011.scn:orig', [2, 2])
+     e.g. ('8_build-verify3-rel_gen2_mtc_014.scn.txt', 'mtc_014.scn:orig', [2, 2])
+     e.g. ('8_build-verify3-rel_gen2_mtc_015.scn.txt', 'mtc_015.scn:orig', [2, 2])
+gen2:mtri          hashdiff 80 leftdiff 1 runs 80 startdiff 21
+     e.g. ('_build-verify3-rel_gen2_mtri_001.scn.txt', 'mtri_001.scn:orig', [2, 2])
+     e.g. ('_build-verify3-rel_gen2_mtri_002.scn.txt', 'mtri_002.scn:orig', [2])
+     e.g. ('_build-verify3-rel_gen2_mtri_004.scn.txt', 'mtri_004.scn:orig', [2, 2])
+     e.g. ('_build-verify3-rel_gen2_mtri_013.scn.txt', 'mtri_013.scn:orig', [2])
+gen2:rmrg          hashdiff 60 runs 80
+gen3:fpoly         hashdiff 60 runs 60 startdiff 21
+     e.g. ('build-verify3-rel_gen3_fpoly_001.scn.txt', 'fpoly_001.scn:orig', [2])
+     e.g. ('build-verify3-rel_gen3_fpoly_002.scn.txt', 'fpoly_002.scn:orig', [2, 2])
+     e.g. ('build-verify3-rel_gen3_fpoly_009.scn.txt', 'fpoly_009.scn:orig', [2])
+     e.g. ('build-verify3-rel_gen3_fpoly_012.scn.txt', 'fpoly_012.scn:orig', [2])
+gen3:rmrg2         hashdiff 24 runs 60
+gen3:sharpnb       hashdiff 60 runs 60 startdiff 17
+     e.g. ('ild-verify3-rel_gen3_sharpnb_000.scn.txt', 'sharpnb_000.scn:orig', [2, 2])
+     e.g. ('ild-verify3-rel_gen3_sharpnb_004.scn.txt', 'sharpnb_004.scn:orig', [2])
+     e.g. ('ild-verify3-rel_gen3_sharpnb_006.scn.txt', 'sharpnb_006.scn:orig', [2, 2])
+     e.g. ('ild-verify3-rel_gen3_sharpnb_014.scn.txt', 'sharpnb_014.scn:orig', [2, 2])
+gen3:split         hashdiff 60 leftdiff 4 runs 60 startdiff 17
+     e.g. ('build-verify3-rel_gen3_split_001.scn.txt', 'split_001.scn:orig', [2])
+     e.g. ('build-verify3-rel_gen3_split_004.scn.txt', 'split_004.scn:orig', [2, 2])
+     e.g. ('build-verify3-rel_gen3_split_010.scn.txt', 'split_010.scn:orig', [2])
+     e.g. ('build-verify3-rel_gen3_split_015.scn.txt', 'split_015.scn:orig', [2, 2])
+gen3:vmrg2         hashdiff 35 runs 60

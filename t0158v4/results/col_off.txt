@@ -1,0 +1,14 @@
+OFF 3000 col tA 1.2 L 0.002 tB 0.001 order 0 dir 1 | S-mitreA 2.056 S-cornerB 4.547e-13 maxMove -1
+OFF 3000 col tA 1.2 L 0.002 tB 0.001 order 1 dir 0 | S-mitreA 2.056 S-cornerB 0 maxMove -1
+OFF 10000 col tA 1.2 L 0.002 tB 0.001 order 0 dir 1 | S-mitreA 2.056 S-cornerB 0 maxMove -1
+OFF 10000 col tA 1.2 L 0.002 tB 0.001 order 1 dir 0 | S-mitreA 2.056 S-cornerB 0 maxMove -1
+OFF 10000 col tA 1.2 L 0.005 tB 0.001 order 0 dir 1 | S-mitreA 2.059 S-cornerB 0 maxMove -1
+OFF 10000 col tA 1.2 L 0.005 tB 0.001 order 1 dir 0 | S-mitreA 2.059 S-cornerB 0 maxMove -1
+OFF 30000 col tA 1.2 L 0.002 tB 0.001 order 0 dir 1 | S-mitreA 2.056 S-cornerB 0 maxMove -1
+OFF 30000 col tA 1.2 L 0.002 tB 0.001 order 1 dir 0 | S-mitreA 2.056 S-cornerB 0 maxMove -1
+OFF 30000 col tA 1.2 L 0.005 tB 0.001 order 0 dir 1 | S-mitreA 2.059 S-cornerB 0 maxMove -1
+OFF 30000 col tA 1.2 L 0.005 tB 0.001 order 1 dir 0 | S-mitreA 2.059 S-cornerB 0 maxMove -1
+OFF 30000 col tA 1.2 L 0.02 tB 0.001 order 0 dir 1 | S-mitreA 2.074 S-cornerB 0 maxMove -1
+OFF 30000 col tA 1.2 L 0.02 tB 0.001 order 1 dir 0 | S-mitreA 2.074 S-cornerB 0 maxMove -1
+OFF 30000 col tA 1.2 L 0.002 tB 0.02 order 0 dir 1 | S-mitreA 2.084 S-cornerB 0 maxMove -1
+OFF 30000 col tA 1.2 L 0.002 tB 0.02 order 1 dir 0 | S-mitreA 2.084 S-cornerB 0 maxMove -1

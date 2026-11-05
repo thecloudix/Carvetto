@@ -1,0 +1,48 @@
+T-0158 round-4 verifier (branch 999a90e; origin/main c2aa6f4; round 3 = 520ca28; GCC 15.2). Verdict FAIL (see README for tools).
+Build/test: Debug -Werror build ok (0 warnings), ctest 1005/1005 (rc 0, logs build-verify4-logs/); changelog check ok (one
+fragment, one bullet); merge-tree vs origin/main clean (85a8b2b); no goldens changed. Instrumented lib == br / main (hash) checked.
+
+A (squared-off mitre between curved edges, first corner in travel): FIXED. repro3/dchamfer_last_corner_climb and t0127v1 m2_273007_12
+vsout (both directions): chamferFirst (chk4: the first move runs along the chamfer). probe3 dch: all squared-off combos start at the
+first corner. gen2 marc/mt/mtc (480 runs, both directions, one pass): chamferLast 0 (main: all at a foot) - chk4_gen2_*.txt.
+B (short neighbour knife-edges): the four round-3 repros are stable (21 transforms, max move < 1e-6; plain == FMA within 1e-14).
+BUT the same mechanism remains for near-collinear neighbours: a neighbour junction within sqrt(2 d tol) (77 um at d 3) BEFORE the tip
+in travel counts as an equidistant junction when L sin(tB) <= 4 x rounding x (1 + d/L) (~1.6e-8 mm at 11 mm coordinates), and the
+walk back to "the first equidistant junction in travel" then takes the start off the mitre:
+  - exactly collinear (redundant) vertex: deterministic, start 0.5-3.07 mm off the mitre. repro4/rect_collinear_L0.050000_dir1.scn:
+    20 x 10 rectangle, vertex (0, 0.05) on the closing edge, V-bit 90 depth 3, Conventional: start (-3, 0.05), mitre (-3,-3)
+    (rect4.txt; L 0.01..0.07 all off, L >= 0.08 at the mitre; Climb fine). collinear_tA1.2_L20um_tB0.scn: 2.07 mm.
+  - knife-edge at the tolerance (thr.txt): tip 1.2 rad, neighbour 5/20/50 um before it turning 3.19e-6 / 7.95e-7 / 3.16e-7 rad:
+    start flips 2.06-2.10 mm under +-1 ulp scaling, 1e-9 scaling and translations; repro4/nearcollinear_thr_L20um.scn (u+1 flips),
+    nearcollinear_thr_L5um_after.scn (plain vs logfma differ by 2.06 mm).
+  - large coordinates widen it (rounding x scale): at 3 m coordinates a 2 um edge turning 1e-3 rad takes the start (2.06 mm off;
+    repro4/bigc_*_o0_d1, o1_d0; col_off.txt).
+  ADR-0016 §11 lists this as a limit ("a neighbour whose edge length x sin(turn) is within the rounding ... takes the start"), but it
+  contradicts the owner decision "exactly the mitre corner point" and the ADR's own claim "however sharp, short or many the
+  neighbouring edges are". Frequency: no call within a factor 2 of the equidistance tolerance in 28,868 stored/generated calls;
+  29 of 5,622 rule calls on random pages (none moved under scaling in the targeted pert runs, nearpert/).
+New owner decisions: fine convex outlines start at the exact mitre: probe3 ngon (N 100..5000) |S - mitre| < 4e-12, stable. gen3
+  fpoly (120 runs): 94 exact, 26 at 0.9-3.1 um from the mitre (a collinear split point of the walk next to the mitre is taken as the
+  first equidistant junction; 1 um moves under 1e-12 scaling, plain vs FMA 1 um in 2 runs) - chk4_fpoly.txt, repro4/fpoly_057_split.
+  Merged polygonal round join starts at the first chord point: probe3 join 24/24 at the travel-first normal, stable; mrg probe:
+  region vertex x before the tip moves the start back by x for x <= 4 um (ADR bound sqrt(2 x 3.01 x 3e-6) = 4.25 um), none at 4.5 um.
+  Gap: two-vertex corners (region vertices 1.2-4.6 um apart, both turning >= 0.3 rad) give two near runs -> projection, 0.49 mm
+  under 1e-9 (repro4/mrg_twovertex_x3um_tB0.3.scn, mrg_twovertex.txt); main is the projection there too.
+Scope (exact-offset round joins, first point on the circle): 358 such calls in stored+generated, max start move vs projection 0.47 um;
+  chord probe: join arc length 0.5..2 x tol starts at the travel-first foot, seamless with rule 1 at the arc/chord switch.
+Stability sweeps (pmove_all.txt): gen1/gen2/gen3 scale: only dup / mshort (edges = tol exactly, dropped by the offset: ADR limit,
+  same as round 3) and fpoly 1 um; frame moves are rule-0 (T-0166) or call-order changes under quarter turns. Stored pert: vsout one
+  1 um move (fpoly class), rest rule 0. margins_stored_gen.txt: no call within 2x of the join-circle or equidistance tolerances.
+Cross-compiler (logfma): generated 1880 runs: 2 start diffs (1 um, fpoly) vs main 225; stored 8732 runs: orig 8 / bbc 166 / opt 1
+  all rule 0 (T-0166, same as main), vsout 0 (main 147); random (11 seeds so far): 6 rule-0 (main 41).
+Change rate (plain, vs main): stored orig 9.0%, vsout 46.5%, bbc 2.4%, opt 0.2%, all 14.6% (scn_change_rate.txt); random see
+  rnd_change_rate.txt. r4 vs r3: 90 of 8732 stored runs, 242 of 1880 generated (r3delta.lst).
+Flood: generated 620 scenes br vs main: 1 worse (mmrg_001, known T-0167), 2 better; br vs r3: 0 worse. Stored r4-vs-r3 delta (90 runs):
+  0 worse vs r3 and vs main by the verdict; nohold 7 vs 0 in m1_272009_9 vsout (known, T-0167 card). Stored changed sample (150):
+  see flood_chg_br_main.txt; m0_271003_32 bbc worse = known (round 2, main reaches it under ulp).
+AC2: m1_402002_27 3 tabs left in all 21 transforms, plain and FMA (main 2 or 3); m2_800016_13 6 everywhere (main 6/7/8).
+Tests: mutants.txt: full revert fails 11/12 [start] + T-0135; no walk-back, no round branch, no short-chord back-up, exact
+  equidistance, no merged slack, no sharp rule each fail >= 1 case; M6 (pick the first equidistant junction, ignore "most even
+  feet") survives every test. No test covers a collinear/near-collinear neighbour.
+ADR §11: rounding for exact-offset lines is 1e-10 x coordinates x (1 + d / span length) (code), the ADR omits the (1 + d/L) factor
+  for exact offsets; "0.5 um ... below the distance tolerance" holds only below ~400 mm coordinates (1.5 um at 1 m, 2.7 um at 3 m).

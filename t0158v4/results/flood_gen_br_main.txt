@@ -1,0 +1,6 @@
+{'scenes': 620, 'identical verdict': 570, 'br sev total': 0, 'main sev total': 0, 'br part total': 0, 'main part total': 0, 'br free05 total': 461, 'main free05 total': 462, 'br unrepN total': 457, 'main unrepN total': 459, 'br nohold total': 2, 'main nohold total': 2}
+WORSE on branch: 1
+   ('wt-T0158_build-verify3-rel_gen2_mmrg_001.scn_orig.txt', {'G': 0, 'hold': 0, 'nohold': 0, 'sev': 0, 'part': 0, 'left': 3, 'free': 1, 'free05': 1, 'unrep': False, 'unrepN': 0}, {'G': 1, 'hold': 1, 'nohold': 0, 'sev': 0, 'part': 0, 'left': 2, 'free': 0, 'free05': 0, 'unrep': False, 'unrepN': 0})
+better on branch: 2
+   ('wt-T0158_build-verify3-rel_gen3_sharpnb_052.scn_orig.txt', {'G': 1, 'hold': 1, 'nohold': 0, 'sev': 0, 'part': 0, 'left': 1, 'free': 0, 'free05': 0, 'unrep': False, 'unrepN': 0}, {'G': 0, 'hold': 0, 'nohold': 0, 'sev': 0, 'part': 0, 'left': 2, 'free': 1, 'free05': 1, 'unrep': True, 'unrepN': 1})
+   ('wt-T0158_build-verify3-rel_gen3_vmrg2_007.scn_orig.txt', {'G': 1, 'hold': 1, 'nohold': 0, 'sev': 0, 'part': 0, 'left': 3, 'free': 1, 'free05': 1, 'unrep': True, 'unrepN': 1}, {'G': 0, 'hold': 0, 'nohold': 0, 'sev': 0, 'part': 0, 'left': 4, 'free': 2, 'free05': 2, 'unrep': True, 'unrepN': 2})

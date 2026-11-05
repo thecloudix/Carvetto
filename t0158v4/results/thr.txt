@@ -1,0 +1,12 @@
+thr tA 1.2 L 0.005 order 0 dir 0 | no flip in [0,1e-3] (atMitre 1)
+thr tA 1.2 L 0.005 order 0 dir 1 | flip at tB 3.1895568595303043e-06 (L sin 1.59e-08) | at lo: S-mitreA 2.057 S-cornerB 3.58e-15 maxMove 2.057 | at hi: S-mitreA 4.441e-16 maxMove 2.057
+thr tA 1.2 L 0.005 order 1 dir 0 | flip at tB 3.1895568828893969e-06 (L sin 1.59e-08) | at lo: S-mitreA 2.057 S-cornerB 1.831e-15 maxMove 2.057 | at hi: S-mitreA 2.22e-16 maxMove 2.057
+thr tA 1.2 L 0.005 order 1 dir 1 | no flip in [0,1e-3] (atMitre 1)
+thr tA 1.2 L 0.02 order 0 dir 0 | no flip in [0,1e-3] (atMitre 1)
+thr tA 1.2 L 0.02 order 0 dir 1 | flip at tB 7.9501466089638568e-07 (L sin 1.59e-08) | at lo: S-mitreA 2.072 S-cornerB 5.586e-10 maxMove 2.072 | at hi: S-mitreA 4.441e-16 maxMove 2.072
+thr tA 1.2 L 0.02 order 1 dir 0 | flip at tB 7.950146701038353e-07 (L sin 1.59e-08) | at lo: S-mitreA 2.072 S-cornerB 4.441e-16 maxMove 2.072 | at hi: S-mitreA 1.79e-15 maxMove 2.072
+thr tA 1.2 L 0.02 order 1 dir 1 | no flip in [0,1e-3] (atMitre 1)
+thr tA 1.2 L 0.05 order 0 dir 0 | no flip in [0,1e-3] (atMitre 1)
+thr tA 1.2 L 0.05 order 0 dir 1 | flip at tB 3.1614647777456453e-07 (L sin 1.58e-08) | at lo: S-mitreA 2.102 S-cornerB 1.405e-09 maxMove 2.102 | at hi: S-mitreA 4.441e-16 maxMove 2.102
+thr tA 1.2 L 0.05 order 1 dir 0 | flip at tB 3.1614647835188043e-07 (L sin 1.58e-08) | at lo: S-mitreA 2.102 S-cornerB 1.405e-09 maxMove 2.102 | at hi: S-mitreA 2.22e-16 maxMove 2.102
+thr tA 1.2 L 0.05 order 1 dir 1 | no flip in [0,1e-3] (atMitre 1)

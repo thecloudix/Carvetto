@@ -1,0 +1,20 @@
+L 0.01 dir 0 start (-3.000000000, -3.000000000) |start - mitre(-3,-3)| 6.28037e-16
+L 0.01 dir 1 start (-3.000000000, 0.010000000) |start - mitre(-3,-3)| 3.01
+main: L 0.01 dir 0 start (-3.000000000, -0.000000000) |start - mitre(-3,-3)| 3
+main: L 0.01 dir 1 start (0.000000000, -3.000000000) |start - mitre(-3,-3)| 3
+L 0.05 dir 0 start (-3.000000000, -3.000000000) |start - mitre(-3,-3)| 6.28037e-16
+L 0.05 dir 1 start (-3.000000000, 0.050000000) |start - mitre(-3,-3)| 3.05
+main: L 0.05 dir 0 start (-3.000000000, -0.000000000) |start - mitre(-3,-3)| 3
+main: L 0.05 dir 1 start (0.000000000, -3.000000000) |start - mitre(-3,-3)| 3
+L 0.07 dir 0 start (-3.000000000, -3.000000000) |start - mitre(-3,-3)| 6.28037e-16
+L 0.07 dir 1 start (-3.000000000, 0.070000000) |start - mitre(-3,-3)| 3.07
+main: L 0.07 dir 0 start (-3.000000000, 0.000000000) |start - mitre(-3,-3)| 3
+main: L 0.07 dir 1 start (0.000000000, -3.000000000) |start - mitre(-3,-3)| 3
+L 0.08 dir 0 start (-3.000000000, -3.000000000) |start - mitre(-3,-3)| 6.28037e-16
+L 0.08 dir 1 start (-3.000000000, -3.000000000) |start - mitre(-3,-3)| 6.28037e-16
+main: L 0.08 dir 0 start (-3.000000000, -0.000000000) |start - mitre(-3,-3)| 3
+main: L 0.08 dir 1 start (0.000000000, -3.000000000) |start - mitre(-3,-3)| 3
+L 0.1 dir 0 start (-3.000000000, -3.000000000) |start - mitre(-3,-3)| 6.28037e-16
+L 0.1 dir 1 start (-3.000000000, -3.000000000) |start - mitre(-3,-3)| 6.28037e-16
+main: L 0.1 dir 0 start (-3.000000000, 0.000000000) |start - mitre(-3,-3)| 3
+main: L 0.1 dir 1 start (0.000000000, -3.000000000) |start - mitre(-3,-3)| 3

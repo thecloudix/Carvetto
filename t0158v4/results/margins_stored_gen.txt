@@ -1,0 +1,15 @@
+calls 28868
+mLop<1e-6 401
+rule0 19363
+rule1 6815
+rule2 2622
+rule2 kind1 997
+rule2 kind2 1599
+rule2 kind3 26
+rule3 68
+rule3 kind1 6
+rule3 kind2 62
+  mLop<1e-6 ('rness_t0127v2_d_wsf7_m0_291014_6.scn.txt', 'm0_291014_6.scn:vsout', 'rule', 2, 'kind', 2, 'du', '4.69034')
+  mLop<1e-6 ('rness_t0127v2_d_wsf7_m0_291014_6.scn.txt', 'm0_291014_6.scn:vsout', 'rule', 2, 'kind', 2, 'du', '4.23102')
+  mLop<1e-6 ('rness_t0127v1_d4old_m1_272000_15.scn.txt', 'm1_272000_15.scn:vsout', 'rule', 2, 'kind', 2, 'du', '0.112999')
+  mLop<1e-6 ('arness_t0135v3_scn_m2_1330000_28.scn.txt', 'm2_1330000_28.scn:vsout', 'rule', 2, 'kind', 2, 'du', '11.8964')

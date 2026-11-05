@@ -1,0 +1,8 @@
+M0: [start] rc=42 (test cases:   12 |    1 passed |   11 failed) | T-0135 rc=42 (test cases:  2 |  1 passed | 1 failed) | failing: ;        by perturbations;        corner in travel;        in travel;        its own mitre, on both sides of length x sin(turn) = tol;        mitre;        parts still hold (flood);        start vertex's mitre;
+M1: [start] rc=42 (test cases:    12 |    10 passed |  2 failed) | T-0135 rc=0 () | failing: ;        corner in travel;tip's mitre corner, unmoved by ulp and 1e-9 perturbations;
+M2: [start] rc=42 (test cases:    12 |    10 passed |  2 failed) | T-0135 rc=0 () | failing: ;        in travel;        join's first point in travel, unmoved by scaling and translation;
+M3: [start] rc=42 (test cases:    12 |    11 passed | 1 failed) | T-0135 rc=0 () | failing: ;        in travel;
+M4: [start] rc=42 (test cases:    12 |    10 passed |  2 failed) | T-0135 rc=0 () | failing: ;        corner in travel;tip's mitre corner, unmoved by ulp and 1e-9 perturbations;
+M5: [start] rc=42 (test cases:    12 |    10 passed |  2 failed) | T-0135 rc=0 () | failing: ;        by perturbations;        in travel;
+M6: [start] rc=0 () | T-0135 rc=0 () | failing: 
+M7: [start] rc=42 (test cases:    12 |     4 passed |    8 failed) | T-0135 rc=0 () | failing: ;        by perturbations;        corner in travel;        in travel;        its own mitre, on both sides of length x sin(turn) = tol;        mitre;        start vertex's mitre;        the tip's own mitre;

@@ -1,0 +1,13 @@
+mrg x 0.0012 tB 0.3 order 0 dir 0 | |S-A|-R -0.01 S-Fin 1.217 S-Fout 1.465 maxMove 0.489
+mrg x 0.0015 tB 0.3 order 0 dir 0 | |S-A|-R -0.01 S-Fin 1.217 S-Fout 1.465 maxMove 0.489
+mrg x 0.00187 tB 0.3 order 0 dir 0 | |S-A|-R -0.01 S-Fin 1.217 S-Fout 1.465 maxMove 0.489
+mrg x 0.00234 tB 0.3 order 0 dir 0 | |S-A|-R -0.01 S-Fin 1.217 S-Fout 1.465 maxMove 0.489
+mrg x 0.00293 tB 0.3 order 0 dir 0 | |S-A|-R -0.01 S-Fin 1.217 S-Fout 1.465 maxMove 0.489
+mrg x 0.00366 tB 0.3 order 0 dir 0 | |S-A|-R -0.01 S-Fin 1.217 S-Fout 1.465 maxMove 0.489
+mrg x 0.00458 tB 0.3 order 0 dir 0 | |S-A|-R -0.01 S-Fin 1.217 S-Fout 1.465 maxMove 0.489
+mrg x 0.0012 tB 0.8 order 0 dir 0 | |S-A|-R -0.01 S-Fin 1.217 S-Fout 1.465 maxMove 0.489
+mrg x 0.0015 tB 0.8 order 0 dir 0 | |S-A|-R -0.01 S-Fin 1.217 S-Fout 1.465 maxMove 0.489
+mrg x 0.00187 tB 0.8 order 0 dir 0 | |S-A|-R -0.01 S-Fin 1.217 S-Fout 1.465 maxMove 0.489
+mrg x 0.00234 tB 0.8 order 0 dir 0 | |S-A|-R -0.01 S-Fin 1.217 S-Fout 1.465 maxMove 0.489
+mrg x 0.00293 tB 0.8 order 0 dir 0 | |S-A|-R -0.01 S-Fin 1.217 S-Fout 1.465 maxMove 0.489
+mrg x 0.00366 tB 0.8 order 0 dir 0 | |S-A|-R -0.01 S-Fin 1.217 S-Fout 1.465 maxMove 0.489
