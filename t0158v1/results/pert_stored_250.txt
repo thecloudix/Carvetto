@@ -1,0 +1,34 @@
+== log
+  stored:bbc     scenes 250 id_fired_calls 121 runs 5000 moved_at_tie 0 moved_other 1311 fired_flip 0 left_changed 239 moves_changed 633
+       e.g. ('harness_t0124v4_repro_s81660_22.scn.txt', 's81660_22.scn:bbc', 'u+1', 0, 0, 0, 85.617733)
+       e.g. ('harness_t0124v4_repro_s81660_22.scn.txt', 's81660_22.scn:bbc', 'u-1', 0, 0, 0, 85.617733)
+       e.g. ('harness_t0124v4_repro_s81660_22.scn.txt', 's81660_22.scn:bbc', 'u+2', 0, 0, 0, 85.617733)
+  stored:opt     scenes 250 id_fired_calls 3 runs 5000 moved_at_tie 0 moved_other 82 fired_flip 0 left_changed 45 moves_changed 114
+       e.g. ('harness_t0124v5_repro_sev_G_81712_9.scn.txt', 'sev_G_81712_9.scn:opt', 'q1', 0, 0, 0, 11.980739)
+       e.g. ('harness_t0124v5_repro_sev_G_81712_9.scn.txt', 'sev_G_81712_9.scn:opt', 'q2', 0, 0, 0, 11.980739)
+       e.g. ('harness_t0124v5_repro_sev_G_81712_9.scn.txt', 'sev_G_81712_9.scn:opt', 'q3', 0, 0, 0, 23.737019)
+  stored:orig    scenes 250 id_fired_calls 149 runs 5000 moved_at_tie 0 moved_other 99 fired_flip 0 left_changed 46 moves_changed 132
+       e.g. ('harness_t0124v5_repro_sev_G_81712_9.scn.txt', 'sev_G_81712_9.scn:orig', 'q1', 0, 0, 0, 11.980739)
+       e.g. ('harness_t0124v5_repro_sev_G_81712_9.scn.txt', 'sev_G_81712_9.scn:orig', 'q2', 0, 0, 0, 11.980739)
+       e.g. ('harness_t0124v5_repro_sev_G_81712_9.scn.txt', 'sev_G_81712_9.scn:orig', 'q3', 0, 0, 0, 23.737019)
+  stored:vsout   scenes 250 id_fired_calls 510 runs 5000 moved_at_tie 0 moved_other 55 fired_flip 0 left_changed 11 moves_changed 48
+       e.g. ('harness_t0124v4_repro_s81660_22.scn.txt', 's81660_22.scn:vsout', 'q1', 2, 0, 0, 11.28697)
+       e.g. ('harness_t0124v4_repro_s81660_22.scn.txt', 's81660_22.scn:vsout', 'q2', 2, 0, 0, 11.286971)
+       e.g. ('harness_t0124v5_repro_s81660_22.scn.txt', 's81660_22.scn:vsout', 'q1', 2, 0, 0, 11.28697)
+== logoff
+  stored:bbc     scenes 250 id_fired_calls 121 runs 5000 moved_at_tie 221 moved_other 1276 fired_flip 0 left_changed 292 moves_changed 701
+       e.g. ('harness_t0124v4_repro_s81660_22.scn.txt', 's81660_22.scn:bbc', 'u+1', 0, 0, 0, 85.617733)
+       e.g. ('harness_t0124v4_repro_s81660_22.scn.txt', 's81660_22.scn:bbc', 'u-1', 0, 0, 0, 85.617733)
+       e.g. ('harness_t0124v4_repro_s81660_22.scn.txt', 's81660_22.scn:bbc', 'u+2', 0, 0, 0, 85.617733)
+  stored:opt     scenes 250 id_fired_calls 3 runs 5000 moved_at_tie 2 moved_other 82 fired_flip 0 left_changed 45 moves_changed 115
+       e.g. ('harness_t0124v5_repro_sev_G_81712_9.scn.txt', 'sev_G_81712_9.scn:opt', 'q1', 0, 0, 0, 11.980739)
+       e.g. ('harness_t0124v5_repro_sev_G_81712_9.scn.txt', 'sev_G_81712_9.scn:opt', 'q2', 0, 0, 0, 11.980739)
+       e.g. ('harness_t0124v5_repro_sev_G_81712_9.scn.txt', 'sev_G_81712_9.scn:opt', 'q3', 0, 0, 0, 23.737019)
+  stored:orig    scenes 250 id_fired_calls 149 runs 5000 moved_at_tie 193 moved_other 95 fired_flip 0 left_changed 62 moves_changed 211
+       e.g. ('harness_t0124v4_repro_sev_D_81682_34.scn.txt', 'sev_D_81682_34.scn:orig', 't3', 0, 1, 1, 0.05004)
+       e.g. ('harness_t0124v5_repro_sev_G_81712_9.scn.txt', 'sev_G_81712_9.scn:orig', 'q1', 0, 0, 0, 11.980739)
+       e.g. ('harness_t0124v5_repro_sev_G_81712_9.scn.txt', 'sev_G_81712_9.scn:orig', 'q2', 0, 0, 0, 11.980739)
+  stored:vsout   scenes 250 id_fired_calls 510 runs 5000 moved_at_tie 947 moved_other 55 fired_flip 0 left_changed 139 moves_changed 637
+       e.g. ('harness_t0124v2_s9303_84.scn.txt', 's9303_84.scn:vsout', 'u+3', 0, 1, 1, 1.938047)
+       e.g. ('harness_t0124v2_s9303_84.scn.txt', 's9303_84.scn:vsout', 'u+4', 0, 1, 1, 1.938047)
+       e.g. ('harness_t0124v2_s9303_84.scn.txt', 's9303_84.scn:vsout', 'u-4', 0, 1, 1, 1.938047)

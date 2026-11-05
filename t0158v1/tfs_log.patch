@@ -1,0 +1,49 @@
+--- /home/chris/wt-T0158/core/src/toolpath/profile.cpp	2026-11-04 19:19:28.427153083 -0600
++++ /home/chris/wt-T0158/build-verify1-rel/logsrc/core/src/toolpath/profile.cpp	2026-11-04 20:13:15.675074488 -0600
+@@ -6,6 +6,7 @@
+ #include <cmath>
+ #include <cstddef>
+ #include <cstdio>
++#include <cstdlib>
+ #include <functional>
+ #include <limits>
+ #include <map>
+@@ -138,14 +139,35 @@
+         return 0.0;
+     }
+     const double nearest = geometry::closestPoint(c, target).distance;
++    // VERIFIER INSTRUMENTATION (T-0158 v1): log every call; TFS_OFF=1 disables the rule (= main).
++    static const bool logOn = std::getenv("TFS_LOG") != nullptr;
++    static const bool off = std::getenv("TFS_OFF") != nullptr;
++    const double up = walk.project(target);
++    long first = -1; int nq = 0; bool hasLast = false; double nearC = 1e300, nearR = 1e300; long nearCi = -1;
+     for (std::size_t i = 0; i < c.spans.size(); ++i) {
+         if (const auto* a = std::get_if<geometry::ArcSpan>(&c.spans[i])) {
+-            if (geometry::distance(a->centre, target) <= eps && a->radius <= nearest + eps) {
+-                return walk.spanStart(i);
++            const double dc = geometry::distance(a->centre, target);
++            if (dc <= eps && a->radius <= nearest + eps) {
++                if (first < 0) first = (long)i;
++                ++nq; if (i + 1 == c.spans.size()) hasLast = true;
++            } else {
++                // near misses: centre within [eps/4, 4 eps] with radius near nearest, or centre close but radius just above nearest+eps
++                const double rr = a->radius - nearest;
++                if (dc > eps && dc < 4 * eps && rr < 4 * eps && dc < nearC) { nearC = dc; nearCi = (long)i; }
++                if (dc <= eps && rr > eps && rr < 4 * eps && rr < nearR) { nearR = rr; }
+             }
+         }
+     }
+-    return walk.project(target);
++    if (logOn) {
++        double ur = first >= 0 ? walk.spanStart((std::size_t)first) : up;
++        double du = std::fabs(ur - up); du = std::min(du, walk.length() - du);
++        geometry::Vec2 pr = walk.pointAt(ur), pp = walk.pointAt(up);
++        std::fprintf(stderr, "TFS fired %d nq %d first %ld n %zu wrap %d du %.17g dpt %.17g len %.17g nearest %.17g tgt %.17g %.17g ruleXY %.17g %.17g projXY %.17g %.17g nearMissC %.17g nearMissCi %ld nearMissR %.17g eps %.17g\n",
++                     first >= 0, nq, first, c.spans.size(), (first == 0 && hasLast) ? 1 : 0, du, geometry::distance(pr, pp), walk.length(), nearest,
++                     target.x, target.y, pr.x, pr.y, pp.x, pp.y, nearC, nearCi, nearR, eps);
++    }
++    if (first >= 0 && !off) return walk.spanStart((std::size_t)first);
++    return up;
+ }
+ 
+ // A cross-section of a tab's material: the segment across the kerf at one station of the tab.

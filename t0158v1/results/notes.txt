@@ -1,0 +1,16 @@
+T-0158 round-1 verifier (branch 18f0d20, origin/main 69cc49b), GCC 15.2 local; "plain" = default x86-64, "v3" = -march=x86-64-v3
+(FMA contraction, the CI ubuntu-26.04 proxy). log/logv3 = branch + tfs_log.patch (TFS_LOG logs every tieFreeStart call; TFS_OFF=1
+disables the rule = main; checked hash-identical to br/main on m1_402002_27 etc).
+- Debug -Werror build + ctest 948/948; Release v3 carvetto_tests 869/869 test cases; tip-start test fails 3/3 test cases against main lib.
+- Stored scenes (2183 x orig/vsout/bbc/opt = 8732 runs): changed br vs main 12.0% (orig 164/2183 = 7.5%, vsout 826, bbc 52, opt 4);
+  every change has a fired rule call with a moved start (TOL 1e-13); plain vs v3 start differences at arc-centre ties: branch 0, main 130;
+  remaining branch plain/v3 start diffs 215: bbox Centre on symmetric shapes (T-0166) and V-bit sharpExternal (mitre) convex tips.
+- Random (19 seeds, 2000 scenes): changed 11.2%; branch tie diffs 0 (main 89); 2 fired calls at scale 0.01 with rule start 1.15e-3 > nearest.
+- Perturbation (21 transforms): stored 250 scenes x 4 variants: branch start moved at a tie 0 / 20000 runs (main 1363);
+  synthetic families star/bez/inref/circ/poly/gap/flat 0 (main hundreds); dup at tiny edge = 1e-3 exactly: 7 flips, coincide with the
+  pre-existing tolerance topology change (moves 337 -> 86 on main too); mitre: 252/800 moved on branch and main alike.
+- eps.cpp: Optimise from within 1e-3 of a circle's centre -> arc start; >= 1e-3 -> towards target: new knife-edge at |target-centre| = tol.
+- Flood (whole-scene, wsf8w copy): stored changed 1046 runs: worse 10 (7 unique), better 19; sev 1 vs 0, free05 2387 vs 2398, unrep 185 vs 190.
+  random changed 76: worse 13, better 9; unrep 548 vs 530 (r101_1_0_42 alone +18). Deterministic (ulp-stable) per-scene regressions:
+  m0_291002_11 vsout (0.41 mm2 unreported piece), m0_271016_20 vsout (1 severed, held), a4_770001_217 bbc (1 partial), r101_1_0_42.
+  3 of 7 stored worse cases are reached by main itself under ulp perturbation / v3 (worse_attribution.txt).

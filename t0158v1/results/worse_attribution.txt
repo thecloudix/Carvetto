@@ -1,0 +1,10 @@
+m0_271003_32.scn bbc branch left 9 free 1 | main reaches it under: ['main:u-1', 'main:u-3', 'main:r-1e-12', 'main:r+1e-10', 'main:r-1e-10', 'main:t1000', 'mainv3:u-1', 'mainv3:u-3']
+m0_271013_1.scn vsout branch left 1 free 0 | main reaches it under: ['main:u+1', 'main:u-4', 'main:t3', 'main:q1', 'main:q2', 'main:q3', 'mainv3:r-1e-10', 'mainv3:t3']
+m0_271016_20.scn orig branch left 8 free 4 | main reaches it under: NONE
+m0_271016_20.scn vsout branch left 2 free 0 | main reaches it under: NONE
+m0_271000_0.scn vsout branch left 1 free 0 | main reaches it under: ['main:t1000', 'mainv3:t1000']
+Traceback (most recent call last):
+  File "/home/chris/harness/t0158v1/worse.py", line 21, in <module>
+    br = run('log', 'scn', f, var, False); k = next(iter(br)); b = br[k]
+                                               ~~~~^^^^^^^^^^
+StopIteration

@@ -1,0 +1,70 @@
+== log
+  bez            scenes 40 id_fired_calls 48 runs 800 moved_at_tie 0 moved_other 1 fired_flip 0 left_changed 0 moves_changed 2
+       e.g. ('wt-T0158_build-verify1-rel_gen_bez_005.scn.txt', 'bez_005.scn:orig', 'r-1e-09', 0, 0, 0, 3.8739)
+  circ           scenes 40 id_fired_calls 63 runs 800 moved_at_tie 0 moved_other 0 fired_flip 0 left_changed 0 moves_changed 0
+  dup            scenes 40 id_fired_calls 37 runs 800 moved_at_tie 7 moved_other 2 fired_flip 7 left_changed 0 moves_changed 11
+       e.g. ('wt-T0158_build-verify1-rel_gen_dup_010.scn.txt', 'dup_010.scn:orig', 'r+1e-09', 0, 0, 0, 1.728722)
+       e.g. ('wt-T0158_build-verify1-rel_gen_dup_013.scn.txt', 'dup_013.scn:orig', 'r+1e-12', 0, 0, 1, 2.424566)
+       e.g. ('wt-T0158_build-verify1-rel_gen_dup_013.scn.txt', 'dup_013.scn:orig', 'r+1e-10', 0, 0, 1, 2.424566)
+  flat           scenes 40 id_fired_calls 11 runs 800 moved_at_tie 0 moved_other 0 fired_flip 0 left_changed 0 moves_changed 2
+  gap            scenes 40 id_fired_calls 16 runs 800 moved_at_tie 0 moved_other 1 fired_flip 0 left_changed 0 moves_changed 1
+       e.g. ('wt-T0158_build-verify1-rel_gen_gap_031.scn.txt', 'gap_031.scn:orig', 'r-1e-09', 0, 0, 0, 0.467737)
+  inref          scenes 40 id_fired_calls 45 runs 800 moved_at_tie 0 moved_other 0 fired_flip 0 left_changed 0 moves_changed 0
+  mitre          scenes 40 id_fired_calls 0 runs 800 moved_at_tie 0 moved_other 252 fired_flip 0 left_changed 5 moves_changed 52
+       e.g. ('wt-T0158_build-verify1-rel_gen_mitre_001.scn.txt', 'mitre_001.scn:orig', 'u+1', 0, 0, 0, 10.253094)
+       e.g. ('wt-T0158_build-verify1-rel_gen_mitre_001.scn.txt', 'mitre_001.scn:orig', 'u-1', 0, 0, 0, 10.253094)
+       e.g. ('wt-T0158_build-verify1-rel_gen_mitre_001.scn.txt', 'mitre_001.scn:orig', 'u+4', 0, 0, 0, 10.253094)
+  poly           scenes 40 id_fired_calls 30 runs 800 moved_at_tie 0 moved_other 0 fired_flip 0 left_changed 0 moves_changed 0
+  star           scenes 40 id_fired_calls 53 runs 800 moved_at_tie 0 moved_other 0 fired_flip 0 left_changed 0 moves_changed 0
+== logoff
+  bez            scenes 40 id_fired_calls 48 runs 800 moved_at_tie 256 moved_other 1 fired_flip 0 left_changed 12 moves_changed 131
+       e.g. ('wt-T0158_build-verify1-rel_gen_bez_000.scn.txt', 'bez_000.scn:orig', 't1000', 0, 1, 1, 7.305993)
+       e.g. ('wt-T0158_build-verify1-rel_gen_bez_001.scn.txt', 'bez_001.scn:orig', 'u+1', 0, 1, 1, 6.647243)
+       e.g. ('wt-T0158_build-verify1-rel_gen_bez_001.scn.txt', 'bez_001.scn:orig', 'u-1', 0, 1, 1, 6.647243)
+  circ           scenes 40 id_fired_calls 63 runs 800 moved_at_tie 108 moved_other 0 fired_flip 0 left_changed 9 moves_changed 16
+       e.g. ('wt-T0158_build-verify1-rel_gen_circ_000.scn.txt', 'circ_000.scn:orig', 'u-1', 1, 1, 1, 32.124566)
+       e.g. ('wt-T0158_build-verify1-rel_gen_circ_000.scn.txt', 'circ_000.scn:orig', 'u+3', 0, 1, 1, 31.786)
+       e.g. ('wt-T0158_build-verify1-rel_gen_circ_000.scn.txt', 'circ_000.scn:orig', 'u-3', 1, 1, 1, 32.124566)
+  dup            scenes 40 id_fired_calls 37 runs 800 moved_at_tie 148 moved_other 2 fired_flip 7 left_changed 18 moves_changed 76
+       e.g. ('wt-T0158_build-verify1-rel_gen_dup_002.scn.txt', 'dup_002.scn:orig', 'u+3', 0, 1, 1, 4.472018)
+       e.g. ('wt-T0158_build-verify1-rel_gen_dup_002.scn.txt', 'dup_002.scn:orig', 'u-3', 0, 1, 1, 4.472018)
+       e.g. ('wt-T0158_build-verify1-rel_gen_dup_002.scn.txt', 'dup_002.scn:orig', 'r-1e-12', 0, 1, 1, 4.472018)
+  flat           scenes 40 id_fired_calls 11 runs 800 moved_at_tie 0 moved_other 0 fired_flip 0 left_changed 0 moves_changed 2
+  gap            scenes 40 id_fired_calls 16 runs 800 moved_at_tie 68 moved_other 1 fired_flip 0 left_changed 18 moves_changed 33
+       e.g. ('wt-T0158_build-verify1-rel_gen_gap_000.scn.txt', 'gap_000.scn:orig', 'u+1', 0, 1, 1, 5.697484)
+       e.g. ('wt-T0158_build-verify1-rel_gen_gap_000.scn.txt', 'gap_000.scn:orig', 'u-1', 0, 1, 1, 5.697484)
+       e.g. ('wt-T0158_build-verify1-rel_gen_gap_000.scn.txt', 'gap_000.scn:orig', 'u+2', 1, 1, 1, 5.451177)
+  inref          scenes 40 id_fired_calls 45 runs 800 moved_at_tie 113 moved_other 0 fired_flip 0 left_changed 0 moves_changed 48
+       e.g. ('wt-T0158_build-verify1-rel_gen_inref_000.scn.txt', 'inref_000.scn:orig', 't1000', 0, 1, 1, 1.169989)
+       e.g. ('wt-T0158_build-verify1-rel_gen_inref_001.scn.txt', 'inref_001.scn:orig', 't1000', 0, 1, 1, 0.987818)
+       e.g. ('wt-T0158_build-verify1-rel_gen_inref_002.scn.txt', 'inref_002.scn:orig', 'u+1', 0, 1, 1, 1.921558)
+  mitre          scenes 40 id_fired_calls 0 runs 800 moved_at_tie 0 moved_other 252 fired_flip 0 left_changed 5 moves_changed 52
+       e.g. ('wt-T0158_build-verify1-rel_gen_mitre_001.scn.txt', 'mitre_001.scn:orig', 'u+1', 0, 0, 0, 10.253094)
+       e.g. ('wt-T0158_build-verify1-rel_gen_mitre_001.scn.txt', 'mitre_001.scn:orig', 'u-1', 0, 0, 0, 10.253094)
+       e.g. ('wt-T0158_build-verify1-rel_gen_mitre_001.scn.txt', 'mitre_001.scn:orig', 'u+4', 0, 0, 0, 10.253094)
+  poly           scenes 40 id_fired_calls 30 runs 800 moved_at_tie 135 moved_other 0 fired_flip 0 left_changed 5 moves_changed 66
+       e.g. ('wt-T0158_build-verify1-rel_gen_poly_000.scn.txt', 'poly_000.scn:orig', 'u+1', 0, 1, 1, 2.111415)
+       e.g. ('wt-T0158_build-verify1-rel_gen_poly_000.scn.txt', 'poly_000.scn:orig', 'u-1', 0, 1, 1, 2.111415)
+       e.g. ('wt-T0158_build-verify1-rel_gen_poly_000.scn.txt', 'poly_000.scn:orig', 'u+2', 0, 1, 1, 2.111415)
+  star           scenes 40 id_fired_calls 53 runs 800 moved_at_tie 211 moved_other 0 fired_flip 0 left_changed 14 moves_changed 41
+       e.g. ('wt-T0158_build-verify1-rel_gen_star_000.scn.txt', 'star_000.scn:orig', 'u-1', 0, 1, 1, 10.312568)
+       e.g. ('wt-T0158_build-verify1-rel_gen_star_000.scn.txt', 'star_000.scn:orig', 'u-4', 0, 1, 1, 10.312568)
+       e.g. ('wt-T0158_build-verify1-rel_gen_star_000.scn.txt', 'star_000.scn:orig', 'r+1e-12', 0, 1, 1, 10.312568)
+== logv3
+  bez            scenes 40 id_fired_calls 48 runs 800 moved_at_tie 0 moved_other 1 fired_flip 0 left_changed 0 moves_changed 2
+       e.g. ('wt-T0158_build-verify1-rel_gen_bez_005.scn.txt', 'bez_005.scn:orig', 'r-1e-09', 0, 0, 0, 3.8739)
+  circ           scenes 40 id_fired_calls 63 runs 800 moved_at_tie 0 moved_other 0 fired_flip 0 left_changed 0 moves_changed 0
+  dup            scenes 40 id_fired_calls 37 runs 800 moved_at_tie 7 moved_other 2 fired_flip 7 left_changed 0 moves_changed 11
+       e.g. ('wt-T0158_build-verify1-rel_gen_dup_010.scn.txt', 'dup_010.scn:orig', 'r+1e-09', 0, 0, 0, 1.728722)
+       e.g. ('wt-T0158_build-verify1-rel_gen_dup_013.scn.txt', 'dup_013.scn:orig', 'r+1e-12', 0, 0, 1, 2.424566)
+       e.g. ('wt-T0158_build-verify1-rel_gen_dup_013.scn.txt', 'dup_013.scn:orig', 'r+1e-10', 0, 0, 1, 2.424566)
+  flat           scenes 40 id_fired_calls 11 runs 800 moved_at_tie 0 moved_other 0 fired_flip 0 left_changed 0 moves_changed 2
+  gap            scenes 40 id_fired_calls 16 runs 800 moved_at_tie 0 moved_other 1 fired_flip 0 left_changed 0 moves_changed 1
+       e.g. ('wt-T0158_build-verify1-rel_gen_gap_031.scn.txt', 'gap_031.scn:orig', 'r-1e-09', 0, 0, 0, 0.467737)
+  inref          scenes 40 id_fired_calls 45 runs 800 moved_at_tie 0 moved_other 0 fired_flip 0 left_changed 0 moves_changed 0
+  mitre          scenes 40 id_fired_calls 0 runs 800 moved_at_tie 0 moved_other 254 fired_flip 0 left_changed 9 moves_changed 52
+       e.g. ('wt-T0158_build-verify1-rel_gen_mitre_001.scn.txt', 'mitre_001.scn:orig', 'u+1', 0, 0, 0, 10.253094)
+       e.g. ('wt-T0158_build-verify1-rel_gen_mitre_001.scn.txt', 'mitre_001.scn:orig', 'u-1', 0, 0, 0, 10.253094)
+       e.g. ('wt-T0158_build-verify1-rel_gen_mitre_001.scn.txt', 'mitre_001.scn:orig', 'u-2', 0, 0, 0, 10.253094)
+  poly           scenes 40 id_fired_calls 30 runs 800 moved_at_tie 0 moved_other 0 fired_flip 0 left_changed 0 moves_changed 0
+  star           scenes 40 id_fired_calls 53 runs 800 moved_at_tie 0 moved_other 0 fired_flip 0 left_changed 0 moves_changed 0
