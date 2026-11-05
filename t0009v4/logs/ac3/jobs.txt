@@ -1,0 +1,12 @@
+timeout 5000 nice ./x2 cmp 16000 0x37000000 0 > /home/chris/harness/t0009v4/logs/ac3/cmp_0_0x37000000.log 2>&1
+timeout 5000 nice ./x2 cmp 5000 0x37200000 2 > /home/chris/harness/t0009v4/logs/ac3/cmp_2_0x37200000.log 2>&1
+timeout 5000 nice ./x2 cmp 5000 0x37300000 3 > /home/chris/harness/t0009v4/logs/ac3/cmp_3_0x37300000.log 2>&1
+timeout 5000 nice ./x2 cmp 5000 0x37400000 4 > /home/chris/harness/t0009v4/logs/ac3/cmp_4_0x37400000.log 2>&1
+timeout 5000 nice ./x2 cmp 5000 0x37500000 5 > /home/chris/harness/t0009v4/logs/ac3/cmp_5_0x37500000.log 2>&1
+timeout 5000 nice ./x2 cmp 5000 0x37700000 7 > /home/chris/harness/t0009v4/logs/ac3/cmp_7_0x37700000.log 2>&1
+timeout 5000 nice ./x2 cmp 16000 0x47000000 0 > /home/chris/harness/t0009v4/logs/ac3/cmp_0_0x47000000.log 2>&1
+timeout 5000 nice ./x2 cmp 5000 0x47200000 2 > /home/chris/harness/t0009v4/logs/ac3/cmp_2_0x47200000.log 2>&1
+timeout 5000 nice ./x2 cmp 5000 0x47300000 3 > /home/chris/harness/t0009v4/logs/ac3/cmp_3_0x47300000.log 2>&1
+timeout 5000 nice ./x2 cmp 5000 0x47400000 4 > /home/chris/harness/t0009v4/logs/ac3/cmp_4_0x47400000.log 2>&1
+timeout 5000 nice ./x2 cmp 5000 0x47500000 5 > /home/chris/harness/t0009v4/logs/ac3/cmp_5_0x47500000.log 2>&1
+timeout 5000 nice ./x2 cmp 5000 0x47700000 7 > /home/chris/harness/t0009v4/logs/ac3/cmp_7_0x47700000.log 2>&1

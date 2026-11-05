@@ -1,0 +1,20 @@
+timeout 7000 nice ./x2 st 1500 1090519040 > /home/chris/harness/t0009v4/logs/fresh/v9_0.log 2>&1
+timeout 7000 nice ./x2 st 1500 1091567616 > /home/chris/harness/t0009v4/logs/fresh/v9_1.log 2>&1
+timeout 7000 nice ./x2 st 1500 1092616192 > /home/chris/harness/t0009v4/logs/fresh/v9_2.log 2>&1
+timeout 7000 nice ./x2 st 1500 1093664768 > /home/chris/harness/t0009v4/logs/fresh/v9_3.log 2>&1
+timeout 7000 nice ./x2 st 1500 1094713344 > /home/chris/harness/t0009v4/logs/fresh/v9_4.log 2>&1
+timeout 7000 nice ./x2 st 1500 1095761920 > /home/chris/harness/t0009v4/logs/fresh/v9_5.log 2>&1
+timeout 7000 nice ./x2 st 1500 1096810496 > /home/chris/harness/t0009v4/logs/fresh/v9_6.log 2>&1
+timeout 7000 nice ./x2 st 1500 1097859072 > /home/chris/harness/t0009v4/logs/fresh/v9_7.log 2>&1
+timeout 7000 nice ./x2 g2 600 1107296256 > /home/chris/harness/t0009v4/logs/fresh/g2_0.log 2>&1
+timeout 7000 nice ./x2 g2 600 1108344832 > /home/chris/harness/t0009v4/logs/fresh/g2_1.log 2>&1
+timeout 7000 nice ./x2 g2 600 1109393408 > /home/chris/harness/t0009v4/logs/fresh/g2_2.log 2>&1
+timeout 7000 nice ./x2 g2 600 1110441984 > /home/chris/harness/t0009v4/logs/fresh/g2_3.log 2>&1
+timeout 7000 nice ./x2 g2 600 1111490560 > /home/chris/harness/t0009v4/logs/fresh/g2_4.log 2>&1
+timeout 7000 nice ./x2 g2 600 1112539136 > /home/chris/harness/t0009v4/logs/fresh/g2_5.log 2>&1
+timeout 7000 nice ./x2 g2 600 1113587712 > /home/chris/harness/t0009v4/logs/fresh/g2_6.log 2>&1
+timeout 7000 nice ./x2 g2 600 1114636288 > /home/chris/harness/t0009v4/logs/fresh/g2_7.log 2>&1
+timeout 7000 nice ./x2 allj 125 1124073472 1 > /home/chris/harness/t0009v4/logs/fresh/allj_v9_0.log 2>&1
+timeout 7000 nice ./x2 allj 125 1140850688 0 > /home/chris/harness/t0009v4/logs/fresh/allj_g2_0.log 2>&1
+timeout 7000 nice ./x2 allj 125 1125122048 1 > /home/chris/harness/t0009v4/logs/fresh/allj_v9_1.log 2>&1
+timeout 7000 nice ./x2 allj 125 1141899264 0 > /home/chris/harness/t0009v4/logs/fresh/allj_g2_1.log 2>&1

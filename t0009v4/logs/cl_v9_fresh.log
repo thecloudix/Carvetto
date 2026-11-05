@@ -1,0 +1,2 @@
+FEWER-CLOSED v9 0x45000866 Round side=0 d=0.00602072 branch closed 1 open 8 | main closed 2 open 7
+SUMMARY cl src 1 offsets 6768 branch-fewer-closed 1 branch-more-closed 1170 branch-only-open-where-main-closed 0

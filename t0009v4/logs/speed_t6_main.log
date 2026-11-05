@@ -1,0 +1,10 @@
+walk 2000 x 0.5mm d=1              n= 2000 spans  2000 d=1 worst 0.023s (Round side 0, 44 chains)  main worst 0.008s
+walk 2000 x 0.5mm d=2              n= 2000 spans  2000 d=2 worst 0.006s (Square side 0, 23 chains)  main worst 0.005s
+walk 2000 x 0.5mm d=1              n= 2000 spans  2000 d=1 worst 0.008s (Square side 0, 48 chains)  main worst 0.006s
+walk 2000 x 0.5mm d=2              n= 2000 spans  2000 d=2 worst 0.006s (Square side 0, 14 chains)  main worst 0.004s
+walk 2000 x 0.5mm d=1              n= 2000 spans  2000 d=1 worst 0.011s (Square side 1, 44 chains)  main worst 0.010s
+walk 2000 x 0.5mm d=2              n= 2000 spans  2000 d=2 worst 0.007s (Square side 1, 19 chains)  main worst 0.006s
+walk 2000 x 0.5mm d=1              n= 2000 spans  2000 d=1 worst 0.012s (Square side 0, 43 chains)  main worst 0.010s
+walk 2000 x 0.5mm d=2              n= 2000 spans  2000 d=2 worst 0.008s (Square side 1, 22 chains)  main worst 0.007s
+hypotrochoid 8000 d=2              n= 8000 spans  8000 d=2 worst 0.392s (Round side 0, 1 chains)  main worst 0.294s
+text-like loops 8000 d=2           n= 8000 spans  7999 d=2 worst 0.317s (Round side 1, 33 chains)  main worst 0.266s

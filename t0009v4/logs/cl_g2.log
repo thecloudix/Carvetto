@@ -1,0 +1,2 @@
+FEWER-CLOSED g2 0x3500080e Sharp side=0 d=0.443921 branch closed 0 open 0 | main closed 1 open 0
+SUMMARY cl src 0 offsets 4104 branch-fewer-closed 1 branch-more-closed 2012 branch-only-open-where-main-closed 0

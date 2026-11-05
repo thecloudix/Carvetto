@@ -1,0 +1,3 @@
+FEWER-CLOSED v9 0x35000722 Square side=0 d=0.395169 branch closed 6 open 1 | main closed 8 open 1
+FEWER-CLOSED v9 0x35000c36 Sharp side=0 d=0.512071 branch closed 0 open 1 | main closed 1 open 2
+SUMMARY cl src 1 offsets 6588 branch-fewer-closed 2 branch-more-closed 1119 branch-only-open-where-main-closed 1

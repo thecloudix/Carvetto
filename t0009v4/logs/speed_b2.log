@@ -1,0 +1,16 @@
+micro-cluster 1e-7 + line          n= 2000 spans  2001 d=1 worst 0.041s (Round side 0, 1 chains)
+micro-cluster 1e-7 + line          n= 4000 spans  4001 d=1 worst 0.105s (Square side 0, 1 chains)
+micro-cluster 1e-7 + line          n= 8000 spans  8001 d=1 worst 0.237s (Round side 1, 1 chains)
+  ratios 4000/2000 2.56  8000/4000 2.26
+zig-zag 2e-4 x 3e-4                n= 2000 spans  2000 d=1 worst 0.026s (Sharp side 1, 1 chains)
+zig-zag 2e-4 x 3e-4                n= 4000 spans  4000 d=1 worst 0.054s (Round side 1, 1 chains)
+zig-zag 2e-4 x 3e-4                n= 8000 spans  8000 d=1 worst 0.117s (Square side 0, 1 chains)
+  ratios 4000/2000 2.11  8000/4000 2.14
+random walk 0.5um                  n= 2000 spans  2000 d=1 worst 0.034s (Sharp side 1, 2 chains)
+random walk 0.5um                  n= 4000 spans  4000 d=1 worst 0.082s (Square side 1, 1 chains)
+random walk 0.5um                  n= 8000 spans  8000 d=1 worst 0.208s (Sharp side 0, 1 chains)
+  ratios 4000/2000 2.38  8000/4000 2.54
+closed polyline 0.4um              n= 2000 spans  2000 d=1 worst 0.242s (Square side 1, 1 chains)
+closed polyline 0.4um              n= 4000 spans  4000 d=1 worst 0.602s (Square side 1, 1 chains)
+closed polyline 0.4um              n= 8000 spans  8000 d=1 worst 1.587s (Square side 1, 1 chains)
+  ratios 4000/2000 2.49  8000/4000 2.64
