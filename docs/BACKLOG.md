@@ -621,6 +621,12 @@ Acceptance criteria:
   2. An ASan/UBSan build of the tests compiles with -Werror and passes.
   3. Output otherwise byte-identical to main (hash sweep).
 
+### T-0166 Profile: platform-stable start for near-equal spans (symmetric shapes)   [status: needs owner decision]
+Phase: 1   Module: core/toolpath   Depends on: T-0158   ADR: 0016 §11
+Goal: Found by the T-0158 coder. After T-0158, GCC 13 and GCC 15 still choose different cut starts in 9 of 2,183 stored harness scenes (31 on main) and different tab-left counts in 6 (main 8). These are not arc-centre ties: with the bounding-box Centre anchor on symmetric shapes (rectangles, point-symmetric m2_1330009_35), two spans are equally near up to rounding, and "ties go to the lowest span" only works when the distances are bit-equal. A tolerance tie-break (lowest span within tol of the nearest distance) would change more outputs, so it needs the owner's approval first.
+Acceptance criteria:
+  1. Cut start and tab layout identical on GCC 13/15 (and MSVC CI) over the stored harness scenes; the rule documented in ADR-0016 §11; tab safety unchanged (flood oracle); output change rate reported to the owner.
+
 ### T-0150 Drilling toolpath   [status: done (2026-11-03, #36)]
 Phase: 1 (Batch C, owner decision 2026-11-03: Batch C toolpaths first)   Module: core/toolpath   Depends on: T-0123, T-0132   ADR: new
 Goal: Drill the centres of selected closed vectors (behaviour per docs/reference/feature-inventory.md "Drilling Toolpath"): drill or end-mill tool, start depth, cut depth, optional peck drilling (pass depth from the tool; retract above the cutting start by a retract gap, or above the previous pass), optional dwell at the bottom of each pass, ordering of holes, safe-Z links. Output through the existing post with plunge/retract moves (no canned cycles required); stored as a native toolpath record; CLI `toolpath drill`.
