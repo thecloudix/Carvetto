@@ -417,8 +417,10 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     Bezier shape at distance 1e-8 mm fell back to a polygonal region with a trimmed cut, 8–12 s
     on the branch, minutes before, where Bezier input was polygonised at distance / 2); at 1e-6
     mm the same shape runs cleanly. The accepted range narrows from 0 < distance to 1e-6 <=
-    distance; output for accepted tolerances is unchanged. Drill, Engrave and V-Carve keep their
-    own messages.
+    distance; output for accepted tolerances is unchanged. Engrave (Outline and Fill) and V-Carve,
+    which run Pocket for Fill and flat areas, refuse a distance below 1e-6 mm too, each with its
+    own message ("... distance between 0.000001 mm and chordal", ADR-0024, ADR-0025); Drill keeps
+    its own bounds.
 
 ### Golden hand-check (AC1 / AC6)
 `core/tests/golden/toolpath/profile_rect_tabs.moves` and `profile_rect_tabs_grbl.nc` were

@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "clipper_interop.hpp"
+#include "hole_nesting.hpp"
 #include "offset_batch.hpp"
 #include "offset_dust.hpp"
 #include "offset_junction.hpp"
@@ -362,73 +363,24 @@ bool resolveUnnestedHoles(Clipper2Lib::Paths64& paths, double delta) {
         }
     }
     const bool reversed = Clipper2Lib::Area(paths[lowestIdx]) < 0.0;
-    std::vector<std::size_t> with;
-    std::vector<std::size_t> against;
+    std::vector<int> kind(paths.size(), 0);  // 1 wound like the lowest, 2 against it, 0 neither
+    bool anyAgainst = false;
     for (std::size_t i = 0; i < paths.size(); ++i) {
         const double a = Clipper2Lib::Area(paths[i]);
         if (a == 0.0) {
             continue;
         }
-        ((a < 0.0) == reversed ? with : against).push_back(i);
+        kind[i] = (a < 0.0) == reversed ? 1 : 2;
+        anyAgainst = anyAgainst || kind[i] == 2;
     }
-    if (against.empty()) {
+    if (!anyAgainst) {
         return false;
     }
-    // A ring nesting a hole has a box holding the hole's box, so both are in one batch of
-    // detail::separableBatches (boxes in different batches neither overlap nor touch): the scan
-    // runs per batch, near-linear for many shapes each with its holes (T-0142 round 2; one scan
-    // over all rings was quadratic for a row or grid of holed shapes).
-    std::vector<Clipper2Lib::Rect64> boxes(paths.size());
-    std::vector<detail::GridBox> grid(paths.size());
-    std::vector<int> kind(paths.size(), 0);  // 1 with, 2 against, 0 neither
-    for (const std::size_t i : with) {
-        kind[i] = 1;
-    }
-    for (const std::size_t i : against) {
-        kind[i] = 2;
-    }
-    for (std::size_t i = 0; i < paths.size(); ++i) {
-        boxes[i] = Clipper2Lib::GetBounds(paths[i]);
-        grid[i] = {boxes[i].left, boxes[i].top, boxes[i].right, boxes[i].bottom};
-    }
-    bool allNested = true;
-    std::vector<std::size_t> batchWith;
-    for (const std::vector<std::size_t>& batch : detail::separableBatches(grid)) {
-        batchWith.clear();
-        for (const std::size_t i : batch) {
-            if (kind[i] == 1) {
-                batchWith.push_back(i);
-            }
-        }
-        std::sort(batchWith.begin(), batchWith.end(), [&boxes](std::size_t a, std::size_t b) {
-            return boxes[a].left < boxes[b].left || (boxes[a].left == boxes[b].left && a < b);
-        });
-        for (const std::size_t h : batch) {
-            if (kind[h] != 2) {
-                continue;
-            }
-            const Clipper2Lib::Rect64& hb = boxes[h];
-            // Candidates: rings wound like the lowest whose left edge is at or left of the hole's.
-            const auto last = std::upper_bound(batchWith.begin(), batchWith.end(), hb.left,
-                                               [&boxes](std::int64_t v, std::size_t w) { return v < boxes[w].left; });
-            bool nested = false;
-            for (auto it = batchWith.begin(); it != last && !nested; ++it) {
-                const Clipper2Lib::Rect64& wb = boxes[*it];
-                if (wb.right < hb.right || wb.top > hb.top || wb.bottom < hb.bottom) {
-                    continue;
-                }
-                nested = Clipper2Lib::PointInPolygon(paths[h].front(), paths[*it]) ==
-                         Clipper2Lib::PointInPolygonResult::IsInside;
-            }
-            if (!nested) {
-                allNested = false;
-                break;
-            }
-        }
-        if (!allNested) {
-            break;
-        }
-    }
+    // Candidates from a box hierarchy, smallest box first, and indexed point-in-ring tests on big
+    // rings (hole_nesting.hpp): near-linear for many shapes with their holes, whether their boxes
+    // are apart, touch or overlap (T-0142 round 3; a scan over the rings left of each hole was
+    // quadratic for a column of touching shapes, and each hole in a comb's notches walked the comb).
+    const bool allNested = detail::everyHoleNested(paths, kind);
     if (allNested) {
         return false;
     }

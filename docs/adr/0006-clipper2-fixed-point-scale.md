@@ -250,8 +250,10 @@ decision added by T-0141, 2026-11-02; §10 added by T-0142, 2026-11-05)
      at a near-parallel angle can move by tens of grid units, and there the whole-clip call is the
      less accurate one (round-1 verifier: a cropped end 0.7 units from the exact intersection,
      the whole-clip end 64 units off); a stretch lying exactly along a clip edge is decided as in
-     §7. Every well-conditioned end agreed within 2 units over ~2,500 verifier calls, and comb
-     pocket hashes at 0/30/45/90 degrees and 5–2,000 teeth equal those before. A 90-degree raster on a comb of n teeth swept the whole comb for every batch:
+     §7. Over ~2,500 round-1 verifier calls the well-conditioned ends agreed within 2 units; the
+     round-2 verifier saw ends 3 units apart where the subject crosses a clip edge at a sine of
+     0.048, and there the cropped end was the accurate one (0.77 units from the exact
+     intersection, the whole-clip end 3.77). Comb pocket hashes at 0/30/45/90 degrees and 5–2,000 teeth equal those before. A 90-degree raster on a comb of n teeth swept the whole comb for every batch:
      Pocket 0.78 → 0.23 s at 1,000 teeth, 5.99 → 0.73 s at 2,000.
    - Before an outset (delta ≥ 0.5 grid units), if some ring wound against the lowest path is not
      nested in a ring wound like it (a ring whose box holds its box and whose inside holds its
@@ -264,10 +266,31 @@ decision added by T-0141, 2026-11-02; §10 added by T-0142, 2026-11-05)
      0.0001), and an
      over-shrunk one left a whole phantom region (+1.5 mm: a 1.57 mm² ring). Such a ring describes
      no region (its winding is not positive), so the union, which has only nested holes, describes
-     the same region. The nesting test runs per `separableBatches` batch of the rings' boxes (a
-     nesting ring's box holds the hole's, so both share a batch): near-linear for many shapes
-     with their holes (round 1 scanned all rings per hole: 80,000 holed rectangles 9.9 s vs 0.8 s
-     before T-0142). Rings that cross each other are not detected by the nesting test. Pinned by
+     the same region. The nesting test (`hole_nesting.hpp`) first tries the last ring wound like
+     the lowest before the hole (input usually lists a shape's holes right after it), and
+     otherwise takes candidate rings from a bounding-volume hierarchy over the boxes of the rings
+     wound like the lowest, smallest box first. A ring of 48 or more vertices that is tested more
+     than once gets an index of its edges by y extent; a test then visits only the edges reaching
+     the vertex's y, in the order Clipper2's `PointInPolygon` walks them and with its arithmetic,
+     so the result is Clipper2's own (`hole_nesting_test.cpp`: generative checks against
+     `PointInPolygon`, with points on edges and vertices, vertices and horizontal edges on the
+     test line and coordinates where the cross product rounds, and against the scan over all
+     pairs). The decision is exactly that of the scan over all pairs. The cost is near-linear in
+     the number of rings whatever the layout of their boxes (apart, touching or overlapping):
+     O(log n) per hole for the hierarchy, plus one test per candidate tried, each costing the
+     edges its test line crosses. Outsets of 40,000 → 80,000 holed squares (Release, CPU, harness
+     t0142v2/po2.cpp, 3 interleaved runs) take 0.26 → 0.57 s in a column of touching squares
+     (main 0.24 → 0.57), 0.64 → 1.30 s in the notches of a comb ring (main 0.68 → 1.38), 0.29 →
+     0.68 s with a hole in each tooth of a comb (main 0.37 → 0.75), and the same as main within
+     measurement noise (under 7 %) for rows, grids, jittered grids, nests 8 deep, a touching
+     grid and a hex packing, with byte-identical output in every layout. Round 1 scanned all
+     rings per hole (80,000 holed rectangles 9.9 s vs 0.8 s on main), round 2 the rings left of
+     each hole within a `separableBatches` batch (the column 2.7 → 21.7 s, the comb 17.4 → 88.1
+     s). Pinned by "T-0142 round 3: outsets of touching shapes ..." (column, comb notches, comb
+     teeth; ≤ 2.5× per doubling). Input built to defeat it still costs more than linear: a hole
+     inside many nested rings wound like the lowest whose boxes hold it but whose insides do not
+     (each is tried), or a big ring whose edges a horizontal line crosses many times (holes in
+     the teeth of a comb whose teeth run along y: each test crosses every tooth). Rings that cross each other are not detected by the nesting test. Pinned by
      the repro and a generative oracle (`offset_unnested_hole_test.cpp`: nested and lone rings of
      both orientations, all joins; points within d of the region are in the result, points
      farther than reach·d are not, every outer result ring lies within reach·d), which reports
@@ -283,7 +306,10 @@ decision added by T-0141, 2026-11-02; §10 added by T-0142, 2026-11-05)
      itself: its inset ~4.4× per doubling, 0.04 s at 1,000 teeth). Curing the first and the spiral
      would need edge-level components with a base winding each and a forced orientation per call;
      the merged row and the comb produce one region whose boundary has n edges side by side, which
-     any single Clipper2 sweep pays for. Not done: no Carvetto caller meets these at a size where
+     any single Clipper2 sweep pays for. Shapes whose outsets touch or overlap in two directions
+     (a touching grid or a hex packing of holed squares) are one region with about √n edges on
+     every sweep line: ~2.9–3.0× per doubling on main and after T-0142 alike (40,000 → 80,000:
+     touching grid 1.26 → 3.81 s, hex packing 1.08 → 3.32 s on main, the same after T-0142). Not done: no Carvetto caller meets these at a size where
      they matter (rows of more than ~10,000 side by side), and Pocket's work cap on the polygonised
      region (200,000 vertices) bounds the cost there.
 

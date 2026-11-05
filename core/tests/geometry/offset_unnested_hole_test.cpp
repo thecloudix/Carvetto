@@ -324,3 +324,78 @@ TEST_CASE("T-0142 b: outsets of many shapes with nested holes stay near-linear",
         CHECK(t.ratio() <= 2.5);
     }
 }
+
+TEST_CASE("T-0142 round 3: outsets of touching shapes with holes and of holes in a comb stay near-linear",
+          "[geometry][offset][T-0142][perf]") {
+    // Touching or overlapping boxes put every shape in one batch; round 2 then tested each hole
+    // against every ring whose box starts left of it (a column: all of them; 40,000 -> 80,000
+    // touching holed squares 2.7 -> 21.7 s, main 0.47 -> 1.00 s), and every hole in a comb's
+    // notches or teeth walked the whole comb (17.4 -> 88.1 s). Candidates now come from a box
+    // hierarchy and big rings are tested through an edge index (hole_nesting.hpp).
+#ifdef NDEBUG
+    const int nSmall = 20000;
+    // Absolute Release bound on the larger run (Linux: 0.26 / 0.58 / 0.31 s for the three layouts
+    // at 40,000 shapes); Windows CI (MSVC) runs such scenes 2.5-3x slower, as
+    // toolpath_residual_scale_test.cpp. The ratio is the criterion; this catches a constant blow-up.
+#ifdef _WIN32
+    const double absBound = 3.0 * 3.0;
+#else
+    const double absBound = 3.0;
+#endif
+#else
+    const int nSmall = 8000;
+    const double absBound = std::numeric_limits<double>::infinity();
+#endif
+    auto rect = [](double x0, double y0, double x1, double y1) { return Contour::rectangle(Box2{{x0, y0}, {x1, y1}}); };
+    // 0: column of touching holed unit squares; 1: holed squares in the notches of a comb ring;
+    // 2: a comb ring with a hole in every tooth (the comb is each hole's only container).
+    auto scene = [&rect](int n, int layout) {
+        std::vector<Contour> cs;
+        if (layout == 0) {
+            for (int i = 0; i < n; ++i) {
+                cs.push_back(rect(0.0, i, 1.0, i + 1.0));
+                cs.push_back(rect(0.3, i + 0.3, 0.7, i + 0.7).reversed());
+            }
+            return cs;
+        }
+        // Comb: spine 0 <= x <= 1, teeth to x = 3 at 2i <= y <= 2i + 1.
+        Ring comb{{0.0, 0.0}};
+        for (int i = 0; i < n; ++i) {
+            comb.push_back({3.0, 2.0 * i});
+            comb.push_back({3.0, 2.0 * i + 1.0});
+            comb.push_back({1.0, 2.0 * i + 1.0});
+            comb.push_back({1.0, 2.0 * i + 2.0});
+        }
+        comb.push_back({3.0, 2.0 * n});
+        comb.push_back({3.0, 2.0 * n + 1.0});
+        comb.push_back({0.0, 2.0 * n + 1.0});
+        cs.push_back(polygon(comb));
+        for (int i = 0; i < n; ++i) {
+            if (layout == 1) {
+                const double y = 2.0 * i + 1.2;
+                cs.push_back(rect(1.5, y, 2.1, y + 0.6));
+                cs.push_back(rect(1.68, y + 0.18, 1.92, y + 0.42).reversed());
+            } else {
+                cs.push_back(rect(1.5, 2.0 * i + 0.3, 2.5, 2.0 * i + 0.7).reversed());
+            }
+        }
+        return cs;
+    };
+    const Tolerance tol{0.001, 1e-9, 0.001};
+    for (const int layout : {0, 1, 2}) {
+        const std::vector<Contour> a = scene(nSmall, layout);
+        const std::vector<Contour> b = scene(2 * nSmall, layout);
+        std::size_t ra = 0;
+        std::size_t rb = 0;
+        const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+            3, [&] { ra = offsetContours(a, 0.05, JoinType::Round, tol).size(); },
+            [&] { rb = offsetContours(b, 0.05, JoinType::Round, tol).size(); });
+        INFO("layout " << layout << " CPU seconds: " << nSmall << " shapes " << t.smallSeconds << ", " << 2 * nSmall
+                       << " shapes " << t.largeSeconds << ", ratio " << t.ratio());
+        // The column merges into one ring with its holes; in the comb every shape and hole stays.
+        CHECK(ra == (layout == 0 ? static_cast<std::size_t>(nSmall) + 1 : a.size()));
+        CHECK(rb == (layout == 0 ? static_cast<std::size_t>(2 * nSmall) + 1 : b.size()));
+        CHECK(t.ratio() <= 2.5);
+        CHECK(t.largeSeconds <= absBound);
+    }
+}

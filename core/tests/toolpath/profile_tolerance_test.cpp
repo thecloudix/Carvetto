@@ -151,6 +151,10 @@ TEST_CASE("T-0142 (d): Engrave and V-Carve refuse a distance below 1e-6 mm with 
         ep.fillPattern = PocketStrategy::Raster;
         const EngraveResult er = engraveToolpath(shapes, test::v_carve::endMill(2.0), std::nullopt, ep);
         CHECK(er.ok() == valid);
+        // Outline does not run Pocket: only Engrave's own check refuses it.
+        ep.strategy = EngraveStrategy::Outline;
+        const EngraveResult eo = engraveToolpath(shapes, test::v_carve::endMill(2.0), std::nullopt, ep);
+        CHECK(eo.ok() == valid);
         VCarvingParams vp;
         vp.flatDepth = 1.0;
         vp.tolerance = tol;
@@ -160,11 +164,13 @@ TEST_CASE("T-0142 (d): Engrave and V-Carve refuse a distance below 1e-6 mm with 
         CHECK(vc.ok() == valid);
         CHECK(vf.ok() == valid);
         if (!valid) {
-            REQUIRE(er.diagnostics.size() == 1);
-            CHECK(er.diagnostics.front().issue == ToolpathIssue::InvalidParameters);
-            CHECK_THAT(er.diagnostics.front().message,
-                       ContainsSubstring("invalid tolerance: chordal must be between 0.0001 and 1 mm, distance "
-                                         "between 0.000001 mm and chordal"));
+            for (const EngraveResult* e : {&er, &eo}) {
+                REQUIRE(e->diagnostics.size() == 1);
+                CHECK(e->diagnostics.front().issue == ToolpathIssue::InvalidParameters);
+                CHECK_THAT(e->diagnostics.front().message,
+                           ContainsSubstring("invalid tolerance: chordal must be between 0.0001 and 1 mm, distance "
+                                             "between 0.000001 mm and chordal"));
+            }
             for (const VCarvingResult* v : {&vc, &vf}) {
                 REQUIRE(v->diagnostics.size() == 1);
                 CHECK(v->diagnostics.front().issue == ToolpathIssue::InvalidParameters);
@@ -175,6 +181,7 @@ TEST_CASE("T-0142 (d): Engrave and V-Carve refuse a distance below 1e-6 mm with 
             }
         } else {
             CHECK_FALSE(er.has(ToolpathIssue::InvalidParameters));
+            CHECK_FALSE(eo.has(ToolpathIssue::InvalidParameters));
             CHECK_FALSE(vc.has(ToolpathIssue::InvalidParameters));
             CHECK_FALSE(vf.has(ToolpathIssue::InvalidParameters));
             REQUIRE_FALSE(vc.clearance.empty());

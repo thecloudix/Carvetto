@@ -64,6 +64,7 @@ add_executable(carvetto_tests
   geometry/boolean_test.cpp
   geometry/boolean_batch_test.cpp
   geometry/offset_unnested_hole_test.cpp
+  geometry/hole_nesting_test.cpp
   document/carv_io_test.cpp
   document/carv_extras_member_test.cpp
   document/carv_toolpath_test.cpp
