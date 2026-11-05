@@ -278,6 +278,7 @@ class ProfileBuilder {
     }
     bool validate();
     bool allowanceWithinLimit();
+    bool allowanceOnWithinLimit(double roughAllowance);
     void prepareInputs();
     std::vector<Cut> buildCuts(double extra, bool finishing);
     void orient(Cut& c, bool finishing) const;
@@ -475,7 +476,7 @@ bool ProfileBuilder::allowanceWithinLimit() {
     // the roughing allowance is never below the finishing one: only the allowance itself decides.
     const double roughAllowance = p_.separateLastPass ? p_.allowance + p_.lastPassAllowance : p_.allowance;
     if (!(p_.allowance < limit) && !(roughAllowance < limit)) {
-        return true;
+        return allowanceOnWithinLimit(roughAllowance);
     }
     const std::string limitText = "minus the tool radius (" + mmText(limit) + " at the cut depth)";
     std::string msg;
@@ -490,6 +491,40 @@ bool ProfileBuilder::allowanceWithinLimit() {
               ": the last pass would cross the vector to its other side; nothing is cut (the roughing at allowance"
               " + last pass allowance " +
               mmText(roughAllowance) + " is not cut on its own)";
+    }
+    diag(ProfileIssue::InvalidParameters, std::nullopt, std::move(msg));
+    return false;
+}
+
+// T-0137 (owner decision 2026-11-02): On the vector the allowance alone is the tool centre's
+// distance from it, so above +r the tool runs entirely off the vector just as below -r. Each
+// pass's distance (allowance; allowance + last-pass allowance for the roughing, which can be the
+// only one above the limit) must be at most +r, compared exactly: buildCuts offsets by that same
+// double, so exactly +r (the tool's edge on the vector) stays valid and one ulp above is refused.
+// Inside/Outside, and open Left/Right (their aliases), keep only the -r limit: a large positive
+// allowance there is a normal oversize cut on the profile side (ADR-0016 §4).
+bool ProfileBuilder::allowanceOnWithinLimit(double roughAllowance) {
+    if (p_.side != ProfileSide::On) {
+        return true;
+    }
+    const double limit = radius_;
+    const bool finishAbove = p_.allowance > limit;
+    const bool roughAbove = roughAllowance > limit;
+    if (!finishAbove && !roughAbove) {
+        return true;
+    }
+    const std::string limitText = "the tool radius (" + mmText(limit) + " at the cut depth)";
+    std::string msg;
+    if (!p_.separateLastPass) {
+        msg = "allowance " + mmText(p_.allowance) + " is above " + limitText +
+              ": the tool would run entirely off the vector; nothing is cut";
+    } else if (finishAbove) {
+        msg = "allowance " + mmText(p_.allowance) + " and allowance + last pass allowance " + mmText(roughAllowance) +
+              " are above " + limitText + ": the tool would run entirely off the vector; nothing is cut";
+    } else {
+        msg = "allowance + last pass allowance " + mmText(roughAllowance) + " is above " + limitText +
+              ": the roughing would run entirely off the vector; nothing is cut (the last pass at allowance " +
+              mmText(p_.allowance) + " is not cut on its own)";
     }
     diag(ProfileIssue::InvalidParameters, std::nullopt, std::move(msg));
     return false;
@@ -2463,6 +2498,12 @@ void ProfileBuilder::planLeadIns(std::vector<Cut>& cuts) {
         return;
     }
     for (Cut& c : cuts) {
+        // A closed cut that collapsed to a point when its start was chosen (an offset of a tiny
+        // vector that closes within the tolerance) has no spans; it emits nothing, so it needs no
+        // lead (T-0163).
+        if (c.walk.isEmpty()) {
+            continue;
+        }
         const std::size_t src = c.sources.front();
         const bool wasteLeft = !c.contourOnLeft;
         std::vector<double> starts{0.0};

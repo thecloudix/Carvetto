@@ -491,6 +491,11 @@ TEST_CASE("AC2: failing commands exit with 1 and a clear message", "[cli][errors
                   "allowance": 30})");
     writeFile(dir + "/negallow.json",
               R"({"tool": {"id": "end-mill-6mm"}, "side": "outside", "passes": {"cut_depth": 1}, "allowance": -4})");
+    writeFile(dir + "/onallow.json",
+              R"({"tool": {"id": "end-mill-6mm"}, "side": "on", "passes": {"cut_depth": 1}, "allowance": 4})");
+    writeFile(dir + "/onrough.json",
+              R"({"tool": {"id": "end-mill-6mm"}, "side": "on", "passes": {"cut_depth": 1}, "allowance": 3,
+                  "separate_last_pass": true, "last_pass_allowance": 0.5})");
     writeFile(dir + "/emptypocket.json", R"({"tool": {"id": "end-mill-6mm"}, "layers": ["Pockets"]})");
     writeFile(dir + "/bad.pp", "begin HEADER\n\"[NO_SUCH_TAG]\"\nend\n");
     writeFile(dir + "/dup.json", R"({"tool": {"id": "end-mill-6mm"}, "safe_z": 5, "safe_z": 50})");
@@ -520,6 +525,12 @@ TEST_CASE("AC2: failing commands exit with 1 and a clear message", "[cli][errors
         {{"toolpath", "profile", dir + "/huge.json", carv, carv}, "no profile toolpath was produced: "},
         {{"toolpath", "profile", dir + "/negallow.json", carv, carv},
          "no profile toolpath was produced: allowance -4 mm is below minus the tool radius (-3 mm at the cut depth)"},
+        {{"toolpath", "profile", dir + "/onallow.json", carv, carv},
+         "no profile toolpath was produced: allowance 4 mm is above the tool radius (3 mm at the cut depth): the tool "
+         "would run entirely off the vector; nothing is cut"},
+        {{"toolpath", "profile", dir + "/onrough.json", carv, carv},
+         "no profile toolpath was produced: allowance + last pass allowance 3.5 mm is above the tool radius (3 mm at "
+         "the cut depth): the roughing would run entirely off the vector"},
         {{"toolpath", "pocket", dir + "/emptypocket.json", carv, carv}, "no pocket toolpath was produced: "},
         {{"post", kGrbl, carv, dir + "/x.nc"}, "holds no toolpaths"},
         {{"post", missing + ".pp", carv, dir + "/x.nc"}, "cannot read post-processor"},
