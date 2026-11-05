@@ -448,8 +448,8 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     mitreLimit·d in the direction of a sub-tolerance step, a spike far larger than the step, and
     thousands of overlapping spikes made the cost grow with the cube of their number (1000-span
     zig-zag of 2e-4 × 3e-4 mm, Square: 90 s). The corners of such a run with longer spans keep the
-    requested join, so a sub-tolerance jog at a sharp corner still gives mitres. This is a choice
-    about output geometry, reported to the director for confirmation.
+    requested join, so a sub-tolerance jog at a sharp corner still gives mitres. (Confirmed by the
+    owner, decision (a) of 2026-11-04; round 4 adds near-reversals, see (m).)
     (h) *Domination and a distance hierarchy near crowded vertices.* Every raw and boundary element
     stretch strictly within keepAbove of an input vertex is pruned anyway; near a run of
     sub-tolerance spans that is nearly all of every join arc (only the sliver where its vertex
@@ -478,8 +478,63 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     previous span's offset to the following one about the far end with an arc of radius 0.614 for
     d = 0.603 (v9 0xd93009e2, 3.7e-3 mm beyond d). It now gets the connector between its end
     normals with Round corners on both sides.
+    *Round 4 (verification round 3 of T-0009; owner decisions of 2026-11-04: (a) corners between
+    two sub-tolerance spans are Round, (b) tiny end spans are trimmed only up to the tolerance from
+    an open chain's end, (c) a sub-tolerance near-reversal never flips the offset to the other
+    side, closed loops stay closed as on main, at the cost of at most a tolerance-sized deviation
+    near the cluster).*
+    (l) *Clusters at near-reversals (decision (c)).* Offset corner by corner, a near-reversal made
+    of kept sub-tolerance spans gives each corner's join arc to the side its own turn makes outer.
+    Where the cluster's turns add up to more than half a turn (0x35000108: +185 degrees over six
+    corners, none beyond 135, while A to B is a right turn of 175), or where a vertex of a
+    near-reversal sticks out at the tip (0xe0000119), the requested side's cap went round to the
+    other side: a closed loop came back open (10.6 mm and 0.67 mm gaps) and the other side got a
+    stray cap. Now a *cluster* is formed around every near-reversal (a corner turning by more than
+    135 degrees where one of its spans is no longer than the tolerance, or a sub-tolerance arc
+    sweeping more than that): the sub-tolerance spans grown alternately backwards and forwards from
+    it while their bounding box keeps a diagonal of 2 tol, windows sharing or touching spans joined
+    (the T-0009 verifier's runs), plus every run of sub-tolerance spans between two longer spans,
+    in such a box, whose turns add up to more than half a turn. A cluster whose box diagonal is at
+    most 4 tol and whose points lie within d of its first and last vertices is offset as one corner
+    at its first vertex V, from the span A before it to the span B after it (either may be short;
+    at an open end only A or B), turning the short way. Its raw elements are: the requested join
+    between the offsets of A and B (Round when A and B are short too, decision (a)); the boundary
+    pieces of the cluster's own points (arcs of radius d about its vertices, both offsets of its
+    spans, inverted offsets of its arcs) whose outward normal faces the requested side, i.e. from
+    a quarter turn behind A's normal to a quarter turn past B's (at an inside corner of more than a
+    quarter turn, from B's normal to A's), each oriented as an offset on that side runs; and the
+    remaining boundary pieces as *fillers*. Pruning against the input as given keeps the pieces on
+    the neighbourhood boundary, so the corner is exact (no point nearer than d, Round no farther),
+    and stitching keeps a filler only between two kept pieces of other offset (an open component
+    loses its filler ends, a loop of fillers alone goes): where the path comes back past the cluster
+    (0x3140019e, a later span through the same point), a cluster vertex can stick out into that
+    span's offset, which then runs on round it. Open ends get no fillers (the rest is the end cap).
+    The quarter turn reaches the path's own line: with A or B short (a cluster inside a longer run)
+    the path can go on turning past them (0x3100004c lost 0.01 mm of offset with a range of
+    acos(1 - extent / d) instead). A closed path is rotated to start at a span longer than the
+    tolerance, so no cluster wraps round its start. Larger clusters stay corner by corner, with the
+    near-reversal corners Round (m). Clusters are found in O(n log n): windows are grown by binary
+    search over a segment tree of span boxes, so an 8000-span micro-cluster does not grow 8000
+    windows of 8000 spans.
+    (m) *Sharp/Square at sub-tolerance spans.* The offset of a line shorter than the tolerance has
+    its end points d from it, where rounding can swamp its direction (a 4.5e-15 mm line offset by
+    24 mm came out horizontal instead of at 35 degrees); its mitre then reached 3.8 mm that way and
+    swallowed 0.11 mm of a neighbour's offset (0x313007af), and a chamfer at a 2e-15 mm end span
+    turning by 143 degrees pruned 2.3 mm of an arc's inner offset (0xf0003fad Square). Mitres and
+    chamfers now extend such a line along the input's own tangent, and a corner turning by more than
+    135 degrees at a sub-tolerance span is Round (it keeps no corner region, as the verifier's
+    checker reads (c)), as is a collapsed corner between two short spans.
+    (n) *Junction repairs next to sub-tolerance spans (Sharp/Square).* Within d + 2 tol of a crowded
+    vertex, an extension, bend or bridge that would put a point beyond d outside every corner region
+    is refused (a bend at a sub-tolerance jog came 7.6e-5 mm beyond d past a mitre, 0xf0003fad Sharp;
+    bends next to the Round corners of a noisy run 3e-6 mm, g2 0x32000123). Elsewhere repairs are as
+    before (T-0006's bend at a 0.02 mm step: refusing it there kept a sub-tolerance step).
+    (o) *Non-finite lengths.* Sample counts of the junction checks come from one helper that maps a
+    non-finite length to the minimum count, and a non-finite stretch is never clear: round 3 threw
+    std::length_error on g2 0x32000123 (a NaN length cast to int).
     (c) only concerns arcs shorter than the tolerance; (a), (b) and (h) crowded vertices; (g) runs
-    of sub-tolerance spans; (d), (e), (f), (i), (j) and (k) change results only where main dropped a stretch
+    of sub-tolerance spans; (l), (m) clusters, near-reversals and lines shorter than the tolerance;
+    (n) crowded vertices; (d), (e), (f), (i), (j) and (k) change results only where main dropped a stretch
     longer than the tolerance at a chain's end, wrapped an arc, merged pieces across a gap longer
     than the tolerance or far from d, dropped a chain longer than the tolerance, or met a collapsed arc.
   - *Results (AC2, AC3).* Release, T-0009 round-2 build. AC2: (1) the T-0009 verifier's v9

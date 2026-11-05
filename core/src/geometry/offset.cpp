@@ -840,15 +840,24 @@ void appendCarrierPiece(Wedge& w, const Span& carrier, Vec2 from, Vec2 to) {
 // Joins `prev` (the last raw element) to `next` around an outside corner at `vertex`. Sharp and
 // Square modify the two elements in place (extension) and record the region they add in
 // `wedges`; any join element is appended to `raw`.
-void outsideCorner(std::vector<Span>& raw, Span& next, Vec2 vertex, Vec2 prevEnd, Vec2 tangentIn, double d,
-                   double sign, JoinType join, double mitreLimit, const Tolerance& tol,
+void outsideCorner(std::vector<Span>& raw, Span& next, Vec2 vertex, Vec2 prevEnd, Vec2 tangentIn, Vec2 tangentOut,
+                   double d, double sign, JoinType join, double mitreLimit, const Tolerance& tol,
                    std::vector<Wedge>& wedges) {
     Span& prev = raw.back();
     const Vec2 e = endPoint(prev);
     const Vec2 s = startPoint(next);
     const double arcReach = std::max(mitreLimit, 1.0) * d;
+    // The carriers the mitre or chamfer extends. The offset of a line no longer than the tolerance
+    // has end points |distance| from the input, where rounding can swamp its direction (a 4.5e-15 mm
+    // span offset by 24 mm came out horizontal instead of at 35 degrees, and its "mitre" reached
+    // 3.8 mm in that direction, T-0009): such a line is extended along the input's tangent instead.
+    const double carrierLength = std::max(1.0, d);
+    const bool proxyPrev = std::holds_alternative<LineSpan>(prev) && length(prev) <= tol.distance;
+    const bool proxyNext = std::holds_alternative<LineSpan>(next) && length(next) <= tol.distance;
+    const Span carrierPrev = proxyPrev ? Span{LineSpan{e - tangentIn * carrierLength, e}} : prev;
+    const Span carrierNext = proxyNext ? Span{LineSpan{s, s + tangentOut * carrierLength}} : next;
     auto mitre = [&](double reach) {
-        const auto m = extensionMeet(prev, next, vertex, reach, arcReach);
+        const auto m = extensionMeet(carrierPrev, carrierNext, vertex, reach, arcReach);
         if (!m) {
             return false;
         }
@@ -866,9 +875,15 @@ void outsideCorner(std::vector<Span>& raw, Span& next, Vec2 vertex, Vec2 prevEnd
     }
     // Sharp beyond the mitre limit (or where the carriers never meet) squares off the corner.
     if (join != JoinType::Round) {
-        Span a = prev;
-        Span b = next;
+        Span a = carrierPrev;
+        Span b = carrierNext;
         if (const auto chamfer = squareJoin(a, b, vertex, tangentIn, d, arcReach)) {
+            if (proxyPrev) {
+                a = withEnd(prev, chamfer->start);
+            }
+            if (proxyNext) {
+                b = withStart(next, chamfer->end);
+            }
             // A chamfer shorter than the tolerance (a nearly tangent corner) would be dropped
             // and leave a gap; meeting the extended neighbours there is the same corner.
             if (tol.equalPoints(chamfer->start, chamfer->end) && mitre(1.5 * d)) {
@@ -933,7 +948,7 @@ void connect(std::vector<Span>& raw, Span& next, Vec2 vertex, Vec2 prevEnd, Vec2
         return;
     }
     if (classifyCorner(tangentIn, tangentOut, sign) == CornerKind::Outside) {
-        outsideCorner(raw, next, vertex, prevEnd, tangentIn, d, sign, join, mitreLimit, tol, wedges);
+        outsideCorner(raw, next, vertex, prevEnd, tangentIn, tangentOut, d, sign, join, mitreLimit, tol, wedges);
     } else {
         // Inside corner (or a gap left by an inverted arc): a straight connector. It lies within
         // d of the vertex, so it is always discarded by the pruning step.
@@ -1579,6 +1594,14 @@ double beyond(const SnapContext& ctx, Vec2 p) {
     return ctx.round ? std::max(0.0, ctx.distance(p) - ctx.d) : 0.0;
 }
 
+// Number of samples for a stretch of length `len` at most `step` apart, within [lo, hi]. A
+// non-finite length (a degenerate meeting point) gives `lo`: converting NaN to int is undefined
+// and made a sample buffer request absurd sizes (T-0009: std::length_error).
+int sampleCount(double len, double step, double lo, double hi) {
+    const double n = std::ceil(len / step);
+    return static_cast<int>(std::isfinite(n) ? std::clamp(n, lo, hi) : lo);
+}
+
 // True when every point of the curve point(t), t in [0, 1], passes `accept`: checked at n + 1
 // samples (t = k / n, the first one only if `withStart`), and at each interior local maximum and
 // minimum of the distance to the input found by golden-section search between the samples next
@@ -1652,7 +1675,12 @@ bool profileOk(PointAt point, int n, bool withStart, const SnapContext& ctx, Acc
 // distance to the input is not monotone along the stretch (T-0017, gen3 0x9300156).
 bool stretchClear(const Span* carrier, Vec2 from, Vec2 to, const SnapContext& ctx, double farSlack = -1.0) {
     const double len = geometry::distance(from, to);
-    const int n = static_cast<int>(std::clamp(std::ceil(len / (0.125 * ctx.tol.distance)), 2.0, 512.0));
+    // A non-finite stretch (NaN or infinite end points from a degenerate meeting point) is never
+    // clear; converting its sample count to int was undefined (T-0009: std::length_error).
+    if (!std::isfinite(len)) {
+        return false;
+    }
+    const int n = sampleCount(len, 0.125 * ctx.tol.distance, 2.0, 512.0);
     const auto* arc = carrier ? std::get_if<ArcSpan>(carrier) : nullptr;
     auto point = [&](double t) {
         Vec2 q = lerp(from, to, t);
@@ -1792,7 +1820,7 @@ bool snapJunction(Span& a, Span& b, const SnapContext& ctx) {
     // fuzz families 4x slower.
     auto lineOk = [&](Vec2 from, Vec2 to) {
         const double len = geometry::distance(from, to);
-        const int n = static_cast<int>(std::clamp(std::ceil(len / (0.125 * ctx.tol.distance)), 4.0, 24.0));
+        const int n = sampleCount(len, 0.125 * ctx.tol.distance, 4.0, 24.0);
         return profileOk(
             [&](double t) {
                 const double u = 1.0 - t;
@@ -2159,13 +2187,14 @@ std::optional<Span> gapBridge(Span& a, Span& b, const SnapContext& ctx) {
         const double tol = ctx.tol.distance;
         const double inside = std::max(ctx.allowance, tol * tol / (8.0 * ctx.d));
         const double len = geometry::distance(e, s);
-        const int n = static_cast<int>(std::clamp(std::ceil(len / (0.125 * tol)), 2.0, 512.0));
+        const int n = sampleCount(len, 0.125 * tol, 2.0, 512.0);
         const bool ok = profileOk(
             [&](double t) { return lerp(e, s, t); }, n, false, ctx,
             [&](Vec2 q) {
                 const double slack = 1e-12 * std::max({1.0, ctx.d, std::fabs(q.x), std::fabs(q.y)});
                 const double dq = ctx.distance(q);
-                return dq >= ctx.d - inside - slack && (!ctx.round || dq <= ctx.d + ctx.allowance + slack);
+                return dq >= ctx.d - inside - slack &&
+                       (ctx.round ? dq <= ctx.d + ctx.allowance + slack : ctx.notFar(q));
             });
         if (ok) {
             return Span{line};
@@ -2177,8 +2206,7 @@ std::optional<Span> gapBridge(Span& a, Span& b, const SnapContext& ctx) {
         if (std::fabs(arc.sweepAngle()) > kPi / 2.0 || isDegenerate(Span{arc}, ctx.tol)) {
             return false;
         }
-        const int n =
-            static_cast<int>(std::clamp(std::ceil(arc.length() / (0.125 * ctx.tol.distance)), 4.0, 512.0));
+        const int n = sampleCount(arc.length(), 0.125 * ctx.tol.distance, 4.0, 512.0);
         return profileOk([&](double t) { return arc.pointAt(t); }, n, false, ctx,
                          [&](Vec2 q) { return ctx.clear(q) && ctx.notFar(q); });
     };
@@ -2753,7 +2781,356 @@ struct RawChain {
     std::vector<Span> spans;
     std::vector<double> posA;
     std::vector<double> posB;
+    // Boundary pieces of a collapsed cluster's own points facing away from the requested side (see
+    // buildRaw): kept only where they continue other offset on both sides.
+    std::vector<char> filler;
 };
+
+// A cluster of sub-tolerance spans (T-0009, owner decision (c)): consecutive spans no longer than
+// the tolerance around a near-reversal, offset as one corner at its first vertex (see buildRaw).
+// A near-reversal is a corner turning by more than 135 degrees where one of its two spans is no
+// longer than the tolerance, or such a span that is an arc sweeping more than 135 degrees itself.
+// Its cluster is grown over the neighbouring sub-tolerance spans (alternately backwards and
+// forwards) while their bounding box keeps a diagonal of at most 2 x tol.distance; clusters that
+// share or touch spans are one. A maximal run of sub-tolerance spans between two longer spans, in
+// such a box, whose turns add up to more than half a turn either way is a cluster too (on its own
+// it would wrap the offset round to the other side). A and B are the spans just before and after
+// (either may be missing at an open path's end, and may be short themselves).
+struct Cluster {
+    std::size_t first = 0;  // first sub-tolerance span
+    std::size_t end = 0;    // one past the last (may equal input.size(): B is input[0] or missing)
+    bool hasA = false;
+    bool hasB = false;
+    double extent = 0.0;  // largest distance of a cluster point from its first or last vertex
+};
+
+std::vector<Cluster> collapsibleClusters(const std::vector<Span>& input, bool closed, const Tolerance& tol,
+                                         double d) {
+    std::vector<Cluster> out;
+    const std::size_t n = input.size();
+    if (n < 2 || !(tol.distance > 0.0)) {
+        return out;
+    }
+    std::vector<char> tinyOf(n);
+    for (std::size_t i = 0; i < n; ++i) {
+        tinyOf[i] = length(input[i]) <= tol.distance ? char{1} : char{0};
+    }
+    auto tiny = [&](std::size_t i) { return tinyOf[i] != 0; };
+    const double lim = 2.0 * tol.distance * (1.0 + 1e-9);
+    // Maximal runs of sub-tolerance spans in index order: [runStart[i], runEnd[i]) holds i. (A
+    // closed path starts at a longer span where it has one, see offsetOpenContour, so no run that
+    // matters wraps round its start.)
+    std::vector<std::size_t> runStart(n);
+    std::vector<std::size_t> runEnd(n);
+    for (std::size_t i = 0; i < n;) {
+        std::size_t j = i + 1;
+        if (tiny(i)) {
+            while (j < n && tiny(j)) {
+                ++j;
+            }
+        }
+        for (std::size_t k = i; k < j; ++k) {
+            runStart[k] = i;
+            runEnd[k] = j;
+        }
+        i = j;
+    }
+    // Bounding boxes of index ranges (segment tree), so a window is grown in logarithmic time: in a
+    // micro-cluster of thousands of spans every window holds all of them.
+    std::size_t size = 1;
+    while (size < n) {
+        size *= 2;
+    }
+    std::vector<Box2> tree(2 * size);
+    for (std::size_t i = 0; i < n; ++i) {
+        tree[size + i] = bounds(input[i]);
+    }
+    for (std::size_t i = size - 1; i > 0; --i) {
+        tree[i] = tree[2 * i];
+        tree[i].expand(tree[2 * i + 1]);
+    }
+    auto fits = [&](std::size_t lo, std::size_t hi) {  // box of [lo, hi] within the diagonal
+        Box2 b;
+        for (std::size_t l = lo + size, r = hi + size + 1; l < r; l /= 2, r /= 2) {
+            if (l & 1) {
+                b.expand(tree[l++]);
+            }
+            if (r & 1) {
+                b.expand(tree[--r]);
+            }
+        }
+        return geometry::distance(b.min, b.max) <= lim;
+    };
+    // Largest k in [0, limit] with pred(k) (pred monotone, pred(0) true).
+    auto largest = [](std::size_t limit, const auto& pred) {
+        std::size_t lo = 0;
+        std::size_t hi = limit;
+        while (lo < hi) {
+            const std::size_t mid = lo + (hi - lo + 1) / 2;
+            if (pred(mid)) {
+                lo = mid;
+            } else {
+                hi = mid - 1;
+            }
+        }
+        return lo;
+    };
+    std::vector<std::pair<std::size_t, std::size_t>> windows;  // [lo, hi], inclusive
+    for (std::size_t k = 0; k < n; ++k) {
+        const std::size_t nx = k + 1 < n ? k + 1 : (closed ? 0 : n);
+        const auto* arc = std::get_if<ArcSpan>(&input[k]);
+        const bool arcSeed = arc && tiny(k) && std::fabs(arc->sweepAngle()) > 0.75 * kPi;
+        const bool cornerSeed = nx < n && (tiny(k) || tiny(nx)) &&
+                                tangentAt(input[k], 1.0).dot(tangentAt(input[nx], 0.0)) < -0.70710678118654752;
+        if (!arcSeed && !cornerSeed) {
+            continue;
+        }
+        // The window: the seed's sub-tolerance span(s), then grown alternately backwards and
+        // forwards over sub-tolerance spans while the box keeps its diagonal. A side that cannot
+        // grow never can again (the box only grows).
+        std::size_t lo = n;
+        std::size_t hi = n;
+        if (tiny(k) && fits(k, k)) {
+            lo = hi = k;
+        }
+        if (cornerSeed && tiny(nx) && nx == k + 1 && (lo == n ? fits(nx, nx) : fits(lo, nx))) {
+            if (lo == n) {
+                lo = nx;
+            }
+            hi = nx;
+        } else if (cornerSeed && tiny(nx) && lo == n && fits(nx, nx)) {
+            lo = hi = nx;  // the closing corner of a closed path
+        }
+        if (lo == n) {
+            continue;
+        }
+        const std::size_t backRoom = lo - runStart[lo];
+        const std::size_t frontRoom = runEnd[hi] - 1 - hi;
+        // Both sides together for t steps.
+        const std::size_t t = largest(std::min(backRoom, frontRoom), [&](std::size_t q) { return fits(lo - q, hi + q); });
+        lo -= t;
+        hi += t;
+        bool back = t < backRoom && fits(lo - 1, hi);
+        if (back) {
+            --lo;
+        }
+        const bool front = t < frontRoom && fits(lo, hi + 1);
+        if (front) {
+            ++hi;
+            // The back side is blocked from here on (or failed first): the front grows alone.
+            if (!back) {
+                hi += largest(runEnd[hi] - 1 - hi, [&](std::size_t q) { return fits(lo, hi + q); });
+            }
+        }
+        if (back && !front) {
+            lo -= largest(lo - runStart[lo], [&](std::size_t q) { return fits(lo - q, hi); });
+        }
+        windows.emplace_back(lo, hi);
+    }
+    // Maximal runs between longer spans whose turns wrap round.
+    for (std::size_t i = 0; i < n; ++i) {
+        if (!tiny(i) || runStart[i] != i) {
+            continue;
+        }
+        const std::size_t j = runEnd[i];
+        if ((i == 0 && !closed) || (j == n && !(closed && !tiny(0))) || !fits(i, j - 1)) {
+            continue;
+        }
+        double turn = 0.0;
+        for (std::size_t k = i; k < j; ++k) {
+            if (const auto* arc = std::get_if<ArcSpan>(&input[k])) {
+                turn += arc->sweepAngle();
+            }
+            const Vec2 tin = tangentAt(input[(k + n - 1) % n], 1.0);
+            const Vec2 tout = tangentAt(input[k], 0.0);
+            turn += std::atan2(tin.cross(tout), tin.dot(tout));
+        }
+        const Vec2 tin = tangentAt(input[j - 1], 1.0);
+        const Vec2 tout = tangentAt(input[j % n], 0.0);
+        turn += std::atan2(tin.cross(tout), tin.dot(tout));
+        if (std::fabs(turn) > kPi + 1e-9) {
+            windows.emplace_back(i, j - 1);
+        }
+    }
+    // Windows sharing or touching spans are one cluster.
+    std::sort(windows.begin(), windows.end());
+    std::vector<std::pair<std::size_t, std::size_t>> runs;
+    for (const auto& w : windows) {
+        if (!runs.empty() && w.first <= runs.back().second + 1) {
+            runs.back().second = std::max(runs.back().second, w.second);
+        } else {
+            runs.push_back(w);
+        }
+    }
+    for (const auto& [rlo, rhi] : runs) {
+        if (rhi - rlo + 1 >= n) {
+            continue;
+        }
+        Cluster c;
+        c.first = rlo;
+        c.end = rhi + 1;
+        c.hasA = c.first > 0 || closed;
+        c.hasB = c.end < n || closed;
+        if ((!c.hasA && !c.hasB) || (c.hasA && c.hasB && (c.first + n - 1) % n == c.end % n)) {
+            continue;
+        }
+        const Vec2 v0 = startPoint(input[c.first]);
+        const Vec2 vk = endPoint(input[c.end - 1]);
+        double ext = geometry::distance(vk, v0);
+        double arcExtra = 0.0;
+        for (std::size_t k = c.first; k < c.end; ++k) {
+            const Vec2 v = startPoint(input[k]);
+            ext = std::max({ext, geometry::distance(v, v0), geometry::distance(v, vk)});
+            if (const auto* arc = std::get_if<ArcSpan>(&input[k])) {
+                arcExtra = std::max(arcExtra, arc->length());
+            }
+        }
+        c.extent = ext + arcExtra;
+        // Collapsed only where the cluster is small against the distance (so the offset of its
+        // first vertex stands for it to within its size) and fits twice the box above (windows
+        // joined together).
+        Box2 box;
+        for (std::size_t k = c.first; k < c.end; ++k) {
+            box.expand(tree[size + k]);
+        }
+        if (!std::isfinite(c.extent) || c.extent > d || !(geometry::distance(box.min, box.max) <= 2.0 * lim)) {
+            continue;
+        }
+        out.push_back(c);
+    }
+    return out;
+}
+
+// Circular intervals in "rho-angles" (angle x rho, so that rho-wise rotation increases them):
+// the parts of [s1, s1 + l1] that lie in [s2, s2 + l2], as (start, length) pairs.
+std::vector<std::pair<double, double>> intersectArcs(double s1, double l1, double s2, double l2) {
+    std::vector<std::pair<double, double>> out;
+    if (l1 >= kTwoPi) {
+        out.emplace_back(s2, std::min(l2, kTwoPi));
+        return out;
+    }
+    if (l2 >= kTwoPi) {
+        out.emplace_back(s1, l1);
+        return out;
+    }
+    // Relative to s2: [a, a + l1] against [0, l2], with a in [0, 2 pi).
+    double a = std::fmod(s1 - s2, kTwoPi);
+    if (a < 0.0) {
+        a += kTwoPi;
+    }
+    auto clip = [&](double lo, double hi) {
+        const double from = std::max(lo, 0.0);
+        const double to = std::min(hi, l2);
+        if (to > from) {
+            out.emplace_back(s2 + from, to - from);
+        }
+    };
+    clip(a, a + l1);
+    clip(a - kTwoPi, a + l1 - kTwoPi);
+    return out;
+}
+
+// The pieces of the d-neighbourhood boundary of a collapsed cluster's own points whose outward
+// normal lies in the range [sigma0, sigma0 + sweep] (rho-angles, rho = -sign: clockwise on the
+// left): arcs about its vertices and the offsets of its spans, each oriented so that the
+// neighbourhood lies on the side of travel an offset on `sign`'s side has it (convex pieces turn
+// rho-wise, concave ones against). `vertexFrom`/`vertexTo` select the vertices that get arcs
+// (index k = start of input[k], k = end = the last span's end).
+void appendClusterBoundary(std::vector<Span>& raw, const std::vector<Span>& input, const Cluster& c, double d,
+                           double sign, double sigma0, double sweep, std::size_t vertexFrom, std::size_t vertexTo,
+                           double firstTrim, double lastTrim) {
+    const double rho = -sign;
+    const ArcDirection rhoDir = rho > 0.0 ? ArcDirection::CCW : ArcDirection::CW;
+    const ArcDirection antiDir = rho > 0.0 ? ArcDirection::CW : ArcDirection::CCW;
+    const double minSweep = 1e-12;
+    // Convex piece of the circle about `centre` (radius r, point = centre + r x normal) over the
+    // rho-interval [s, s + l].
+    auto convex = [&](Vec2 centre, double r, double s, double l) {
+        if (!(r > 0.0) || !(l > minSweep)) {
+            return;
+        }
+        if (l >= kTwoPi - 1e-9) {
+            // Two halves: an arc with equal end angles would be a full circle with no clear start.
+            raw.emplace_back(ArcSpan{centre, r, rho * s, rho * (s + kPi), rhoDir});
+            raw.emplace_back(ArcSpan{centre, r, rho * (s + kPi), rho * (s + kTwoPi), rhoDir});
+            return;
+        }
+        raw.emplace_back(ArcSpan{centre, r, rho * s, rho * (s + l), rhoDir});
+    };
+    const std::size_t n = input.size();
+    const std::size_t count = c.end - c.first;  // spans; vertices 0..count
+    for (std::size_t k = vertexFrom; k <= vertexTo && k <= count; ++k) {
+        const Vec2 v = k < count ? startPoint(input[c.first + k]) : endPoint(input[(c.end - 1) % n]);
+        double s = sigma0;
+        double l = sweep;
+        if (k == 0) {
+            s += firstTrim;
+            l -= firstTrim;
+        }
+        if (k == count) {
+            l -= lastTrim;
+        }
+        convex(v, d, s, l);
+    }
+    auto rhoAngle = [&](Vec2 u) { return rho * u.angle(); };
+    for (std::size_t k = c.first; k < c.end; ++k) {
+        const Span& sp = input[k];
+        if (const auto* line = std::get_if<LineSpan>(&sp)) {
+            const Vec2 t = (line->end - line->start).normalized();
+            for (const double side : {1.0, -1.0}) {
+                const Vec2 u = t.perp() * side;
+                // A single direction: in range when its rho-angle lies in [sigma0, sigma0 + sweep].
+                double a = std::fmod(rhoAngle(u) - sigma0, kTwoPi);
+                if (a < 0.0) {
+                    a += kTwoPi;
+                }
+                if (a > sweep && sweep < kTwoPi) {
+                    continue;
+                }
+                const Vec2 p = line->start + u * d;
+                const Vec2 q = line->end + u * d;
+                const Vec2 travel = sign > 0.0 ? Vec2{u.y, -u.x} : Vec2{-u.y, u.x};
+                if ((q - p).dot(travel) >= 0.0) {
+                    raw.emplace_back(LineSpan{p, q});
+                } else {
+                    raw.emplace_back(LineSpan{q, p});
+                }
+            }
+            continue;
+        }
+        const auto& arc = std::get<ArcSpan>(sp);
+        const double sw = arc.sweepAngle();
+        // Radial directions of the arc as a rho-interval.
+        const double from = rho * sw >= 0.0 ? rho * arc.startAngle : rho * (arc.startAngle + sw);
+        const double len = std::fabs(sw);
+        for (const auto& [is, il] : intersectArcs(from, len, sigma0, sweep)) {
+            convex(arc.centre, arc.radius + d, is, il);  // normal = radial direction
+        }
+        // Concave side: points centre + (r - d) x radial, normal = -radial.
+        const double rr = arc.radius - d;
+        if (std::fabs(rr) <= 1e-12 * std::max(1.0, d)) {
+            continue;
+        }
+        for (const auto& [is, il] : intersectArcs(from + kPi, len, sigma0, sweep)) {
+            if (!(il > minSweep)) {
+                continue;
+            }
+            if (rr < 0.0) {
+                convex(arc.centre, -rr, is, il);  // c + (d - r) x normal: turns rho-wise
+            } else {
+                // c - (r - d) x normal: the point turns rho-wise with the normal, travel runs back.
+                const double a0 = rho * (is + kPi);
+                const double a1 = rho * (is + il + kPi);
+                if (il >= kTwoPi - 1e-9) {
+                    raw.emplace_back(ArcSpan{arc.centre, rr, a1, a1 - rho * kPi, antiDir});
+                    raw.emplace_back(ArcSpan{arc.centre, rr, a1 - rho * kPi, a0, antiDir});
+                } else {
+                    raw.emplace_back(ArcSpan{arc.centre, rr, a1, a0, antiDir});
+                }
+            }
+        }
+    }
+}
 
 // Raw offset of one side, in input order: every element offset on its own, chained with joins
 // (outside corners) and straight connectors (inside corners). An arc whose offset radius would
@@ -2763,10 +3140,12 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
                   const Tolerance& tol, bool closed, std::vector<Wedge>& wedges) {
     RawChain rc;
     std::vector<Span>& raw = rc.spans;
+    bool filling = false;
     auto record = [&](double a, double b) {
         while (rc.posA.size() < raw.size()) {
             rc.posA.push_back(a);
             rc.posB.push_back(b);
+            rc.filler.push_back(filling ? char{1} : char{0});
         }
     };
     // A Round offset of an arc whose radius is within the snapping allowance of zero (a corner
@@ -2783,10 +3162,14 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
     // direction of a sub-tolerance step, a spike far larger than the step itself, and thousands of
     // overlapping spikes made the cost grow with the cube of their number. The corners of such a
     // run with its longer neighbours keep the requested join.
+    // A near-reversal at a sub-tolerance span (turning by more than 135 degrees) that is not part of
+    // a collapsed cluster (see Cluster) is Round too (owner decision (c): no mitre or chamfer pointing
+    // the way a sub-tolerance step happens to face).
     auto cornerJoin = [&](const Span& a, const Span& b) {
-        return join != JoinType::Round && length(a) <= tol.distance && length(b) <= tol.distance
-                   ? JoinType::Round
-                   : join;
+        const bool shortA = length(a) <= tol.distance;
+        const bool shortB = length(b) <= tol.distance;
+        const bool reversal = (shortA || shortB) && tangentAt(a, 1.0).dot(tangentAt(b, 0.0)) < -0.70710678118654752;
+        return join != JoinType::Round && ((shortA && shortB) || reversal) ? JoinType::Round : join;
     };
     // An arc whose offset towards its centre collapses to (nearly) its centre point (radius d to
     // rounding, a needle tip) adds nothing of its own, but the joins about its end points still
@@ -2794,10 +3177,11 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
     // straight to the following one about the far end, an arc of radius 0.614 for d = 0.603
     // (T-0009, verifier 0xd93009e2). It gets the connector between its end normals too, with Round
     // corners on both sides (the centre point is a round tip).
-    bool roundAfter = false;
-    for (std::size_t i = 0; i < input.size(); ++i) {
+    // The raw offset of input[i] on its own (nothing when it vanishes); `collapsed` for an arc
+    // whose offset collapsed to its centre (replaced by the connector between its end normals).
+    auto rawOffset = [&](std::size_t i, bool& collapsed) -> std::optional<Span> {
         std::optional<Span> next = offsetSpan(input[i], d, sign);
-        bool collapsed = false;
+        collapsed = false;
         if (!next) {
             const auto* arc = std::get_if<ArcSpan>(&input[i]);
             if (arc && join == JoinType::Round && arc->radius <= tinyArc) {
@@ -2810,16 +3194,140 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
                 const Vec2 a = startPoint(input[i]) + tangentAt(input[i], 0.0).perp() * (d * sign);
                 const Vec2 b = endPoint(input[i]) + tangentAt(input[i], 1.0).perp() * (d * sign);
                 if (a == b) {
-                    continue;
+                    return std::nullopt;
                 }
                 next = LineSpan{a, b};
             }
-            if (!next) {
+        }
+        return next;
+    };
+    // Collapsed clusters of sub-tolerance spans (owner decision (c), see Cluster): such a cluster is
+    // offset like one corner at its first vertex between A and B, turning the short way from A's
+    // end tangent to B's start tangent, so a near-reversal inside it never wraps the offset round
+    // to the other side. The requested join (Round between two short spans, decision (a)) joins A's
+    // offset to B's, and the boundary pieces of the cluster's own points (arcs about its vertices,
+    // offsets of its spans) whose outward normal faces the requested side of that corner are added
+    // as ordinary raw elements; pruning keeps those on the neighbourhood boundary, so the corner is
+    // exact against the input as given (a Round corner is the boundary of the cluster's points
+    // itself). Its other pieces are added as fillers (see addFiller). At an open end the offset
+    // ends with A's (or starts with B's), plus the pieces of points sticking out beyond it.
+    const double rho = -sign;
+    const std::vector<Cluster> clusters = collapsibleClusters(input, closed, tol, d);
+    const std::size_t n = input.size();
+    constexpr std::size_t kNoCluster = std::numeric_limits<std::size_t>::max();
+    std::vector<std::size_t> clusterOf(n, kNoCluster);
+    std::vector<std::size_t> clusterBefore(n, kNoCluster);
+    std::vector<bool> active(clusters.size(), false);
+    for (std::size_t ci = 0; ci < clusters.size(); ++ci) {
+        for (std::size_t k = clusters[ci].first; k < clusters[ci].end; ++k) {
+            clusterOf[k] = ci;
+        }
+        if (clusters[ci].hasB) {
+            clusterBefore[clusters[ci].end % n] = ci;
+        }
+    }
+    auto indexA = [&](const Cluster& c) { return (c.first + n - 1) % n; };
+    // The normal range is widened by a quarter turn either way: a cluster point can stick out beyond
+    // A's or B's offset, and where A or B is short itself (inside a longer run of sub-tolerance
+    // spans) the path may go on turning past it; a quarter turn reaches round to the path's own
+    // line, beyond which a point's normal faces the other side.
+    auto widen = [&](const Cluster&) { return 0.5 * kPi; };
+    auto rhoAngle = [&](Vec2 u) { return rho * u.angle(); };
+    // The rest of the boundary of the cluster's own points (normals outside the requested range):
+    // it faces the other side of A and B, but where the path comes back past the cluster (a later
+    // span through the same point) a cluster point can stick out into that span's offset, which
+    // then needs this piece of the cluster's boundary to stay continuous. Such pieces are kept only
+    // between two kept pieces of other offset (see `filler` and step 4), never as a stray of their own.
+    // Not at an open end: there the rest is the end's cap, which no one-sided offset includes.
+    auto addFiller = [&](const Cluster& cl, double sigmaFrom, double span, double at) {
+        if (!(span > 1e-9)) {
+            return;
+        }
+        record(at, at);
+        filling = true;
+        appendClusterBoundary(raw, input, cl, d, sign, sigmaFrom, span, 0, cl.end - cl.first, 0.0, 0.0);
+        record(at, at);
+        filling = false;
+    };
+    // Joins raw.back() (A's offset) to `next` (B's) across collapsed cluster c.
+    auto collapsedJoin = [&](const Cluster& c, Span& next, bool round) {
+        const Span& a = input[indexA(c)];
+        const Span& b = input[c.end % n];
+        const Vec2 tA = tangentAt(a, 1.0);
+        const Vec2 tB = tangentAt(b, 0.0);
+        const double cross = tA.cross(tB);
+        const double dot = tA.dot(tB);
+        // Rho-wise turn of the offset normal from A to B: positive at an outside corner. An exact
+        // reversal is capped, as classifyCorner does.
+        const double alpha = std::fabs(cross) <= 1e-9 && dot < 0.0 ? kPi : rho * std::atan2(cross, dot);
+        // The requested range of normals: from a quarter turn behind A's normal to a quarter turn
+        // past B's (where the corner is outside, everything between them; at an inside corner of
+        // more than a quarter turn, from B's normal to A's, so that a point sticking out at the
+        // end of A's or B's offset is still covered when A or B is short).
+        const double w = widen(c);
+        const double sigmaA = rhoAngle(tA.perp() * sign);
+        const double sigma0 = sigmaA + std::min(-w, alpha);
+        const double sweep = alpha >= -w ? alpha + 2.0 * w : -alpha;
+        const std::size_t count = c.end - c.first;
+        // Owner decision (a): a corner between two sub-tolerance spans is Round, also where the
+        // collapsed corner's A and B are short themselves (a cluster inside a longer run of them).
+        const bool shortAB = length(a) <= tol.distance && length(b) <= tol.distance;
+        const JoinType j = round || shortAB ? JoinType::Round : join;
+        if (j != JoinType::Round || !(alpha > 0.0)) {
+            connect(raw, next, startPoint(input[c.first]), endPoint(a), tA, tB, d, sign, j, mitreLimit, tol,
+                    wedges);
+        }
+        // v0's circle starts at A's normal and vk's ends at B's: behind them lies the inside of A's
+        // or B's own neighbourhood.
+        const double firstTrim = std::max(0.0, sigmaA - sigma0);
+        const double lastTrim = std::max(0.0, sigma0 + sweep - (sigmaA + alpha));
+        appendClusterBoundary(raw, input, c, d, sign, sigma0, sweep, 0, count, firstTrim, lastTrim);
+        addFiller(c, sigma0 + sweep, kTwoPi - sweep, static_cast<double>(c.first));
+    };
+    bool roundAfter = false;
+    for (std::size_t i = 0; i < input.size(); ++i) {
+        if (clusterOf[i] != kNoCluster) {
+            const std::size_t ci = clusterOf[i];
+            const Cluster& c = clusters[ci];
+            if (i == c.first) {
+                // Collapsed where B's offset exists (A's may have vanished, an arc whose offset
+                // collapsed to a point: the join then starts from the raw chain's end, as usual).
+                bool okB = true;
+                if (c.hasB) {
+                    bool bCollapsed = false;
+                    okB = rawOffset(c.end % n, bCollapsed).has_value() && !bCollapsed;
+                }
+                active[ci] = okB && (c.hasA ? !raw.empty() : raw.empty());
+                if (active[ci] && !c.hasB) {
+                    // Open end: A's offset ends the chain, plus the points sticking out beyond it.
+                    const Vec2 nA = tangentAt(input[indexA(c)], 1.0).perp() * sign;
+                    const double w = widen(c);
+                    appendClusterBoundary(raw, input, c, d, sign, rhoAngle(nA) - w, w, 0, c.end - c.first, w, 0.0);
+                    record(static_cast<double>(i), static_cast<double>(i));
+                }
+            }
+            if (active[ci]) {
                 continue;
             }
         }
+        bool collapsed = false;
+        std::optional<Span> next = rawOffset(i, collapsed);
+        if (!next) {
+            continue;
+        }
         const double at = static_cast<double>(i);
-        if (!raw.empty()) {
+        const std::size_t before = clusterBefore[i];
+        if (before != kNoCluster && active[before] && clusters[before].hasA) {
+            collapsedJoin(clusters[before], *next, roundAfter);
+            record(at, at);
+        } else if (before != kNoCluster && active[before]) {
+            // Open start: B's offset starts the chain, plus the points sticking out beyond it.
+            const Cluster& c = clusters[before];
+            const Vec2 nB = tangentAt(input[i], 0.0).perp() * sign;
+            const double w = widen(c);
+            appendClusterBoundary(raw, input, c, d, sign, rhoAngle(nB), w, 0, c.end - c.first, 0.0, w);
+            record(at, at);
+        } else if (!raw.empty()) {
             const JoinType j = collapsed || roundAfter ? JoinType::Round : cornerJoin(input[i - 1], input[i]);
             connect(raw, *next, startPoint(input[i]), endPoint(input[i - 1]), tangentAt(input[i - 1], 1.0),
                     tangentAt(input[i], 0.0), d, sign, j, mitreLimit, tol, wedges);
@@ -2831,9 +3339,14 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
     }
     if (closed && raw.size() > 1) {
         Span first = raw.front();
-        connect(raw, first, startPoint(input.front()), endPoint(input.back()), tangentAt(input.back(), 1.0),
-                tangentAt(input.front(), 0.0), d, sign,
-                roundAfter ? JoinType::Round : cornerJoin(input.back(), input.front()), mitreLimit, tol, wedges);
+        const std::size_t before = clusterBefore[0];
+        if (before != kNoCluster && active[before]) {
+            collapsedJoin(clusters[before], first, roundAfter);
+        } else {
+            connect(raw, first, startPoint(input.front()), endPoint(input.back()), tangentAt(input.back(), 1.0),
+                    tangentAt(input.front(), 0.0), d, sign,
+                    roundAfter ? JoinType::Round : cornerJoin(input.back(), input.front()), mitreLimit, tol, wedges);
+        }
         raw.front() = first;
         const double at = static_cast<double>(input.size());
         record(at, at);
@@ -3239,9 +3752,18 @@ std::vector<Piece> mergeOnCarriers(const std::vector<Span>& raw, const std::vect
 std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, OffsetSide side,
                                        JoinType join, const Tolerance& tol, double mitreLimit) {
     std::vector<Contour> result;
-    const std::vector<Span> input = flattenForOffset(contour, tol);
+    std::vector<Span> input = flattenForOffset(contour, tol);
     if (input.empty() || !std::isfinite(distance)) {
         return result;
+    }
+    // A closed path starts at a span longer than the tolerance where it has one, so that no run of
+    // sub-tolerance spans wraps round its start (see collapsibleClusters).
+    if (contour.closed && length(input.front()) <= tol.distance) {
+        const auto firstLong = std::find_if(input.begin(), input.end(),
+                                            [&](const Span& sp) { return length(sp) > tol.distance; });
+        if (firstLong != input.end()) {
+            std::rotate(input.begin(), firstLong, input.end());
+        }
     }
     double sign = side == OffsetSide::Left ? 1.0 : -1.0;
     if (distance < 0.0) {
@@ -3625,6 +4147,29 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
         });
         return hit;
     };
+    // Inside a corner region or within the snapping allowance of its edge (the extensions
+    // themselves lie on it).
+    auto nearWedge = [&](Vec2 p) {
+        const double eps = std::max({d - keepAbove, std::min(5e-7 * std::max(1.0, d), 0.1 * tol.distance * tol.distance / d),
+                                     1e-9 * std::max({1.0, d, std::fabs(p.x), std::fabs(p.y)})});
+        bool hit = false;
+        wedgeGrid.query(Box2{p - Vec2{eps, eps}, p + Vec2{eps, eps}}, [&](std::size_t w) {
+            if (hit) {
+                return;
+            }
+            if (insideRegion(p, wedges[w])) {
+                hit = true;
+                return;
+            }
+            for (const Span& sp : wedges[w]) {
+                if (distanceToSpan(p, sp) <= eps) {
+                    hit = true;
+                    return;
+                }
+            }
+        });
+        return hit;
+    };
     std::vector<Piece> kept;
     std::size_t witness = input.size();
     // Next to a sub-tolerance span the circles about its end points (and about the ends of a
@@ -3873,10 +4418,38 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
             walk(k);
         }
     }
+    const std::size_t openComponents = components.size();
     for (std::size_t k = 0; k < nk; ++k) {
         if (!used[k]) {
             walk(k);
         }
+    }
+    // Filler pieces of collapsed clusters (see RawChain) stay only between other kept pieces: an
+    // open component loses them at its ends, and a loop made of them alone goes.
+    {
+        auto isFiller = [&](const Piece& p) { return rc.filler[p.element] != 0; };
+        std::vector<std::vector<Piece>> kepts;
+        for (std::size_t ci = 0; ci < components.size(); ++ci) {
+            std::vector<Piece>& comp = components[ci];
+            if (ci < openComponents) {
+                std::size_t lo = 0;
+                std::size_t hi = comp.size();
+                while (lo < hi && isFiller(comp[lo])) {
+                    ++lo;
+                }
+                while (hi > lo && isFiller(comp[hi - 1])) {
+                    --hi;
+                }
+                comp = std::vector<Piece>(comp.begin() + static_cast<std::ptrdiff_t>(lo),
+                                          comp.begin() + static_cast<std::ptrdiff_t>(hi));
+            } else if (std::all_of(comp.begin(), comp.end(), isFiller)) {
+                comp.clear();
+            }
+            if (!comp.empty()) {
+                kepts.push_back(std::move(comp));
+            }
+        }
+        components = std::move(kepts);
     }
 
     // 5. Order: a component that closes on itself starts at its piece earliest along the input,
@@ -3953,7 +4526,15 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
         tol,
         [&](Vec2 p) { return !closer(p, snapAbove, snapWitness) && !inWedge(p); },
         [&](Vec2 p) {
-            return join != JoinType::Round || closer(p, snapBelow, farWitness);
+            // Round: at most d from the input. Sharp/Square: anywhere, except next to a crowded
+            // vertex (a sub-tolerance span), where a point beyond d must lie inside (or on the edge
+            // of) the region a corner's mitre or chamfer adds: there a snapped extension, bend or
+            // bridge beyond d poked out of the offset (T-0009: 3e-6..8e-5 mm next to the Round
+            // corners between sub-tolerance spans, and past a mitre at a sub-tolerance jog).
+            if (closer(p, snapBelow, farWitness)) {
+                return true;
+            }
+            return join != JoinType::Round && (clusterCells.empty() || !nearCluster(p) || nearWedge(p));
         },
         [&](Vec2 p) {
             // Only distances near d matter to the checks (beyond d + 2 tol a Round point already

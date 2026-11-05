@@ -100,8 +100,26 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// neighbours). A Bezier span is polygonised within tol.chordal, every segment of positive
 /// length kept, and the properties hold for that polygon. A corner between two spans no longer
 /// than the tolerance is Round whatever the join (inside a run of such spans a mitre or chamfer
-/// would reach out up to mitreLimit x |distance| in the direction of a sub-tolerance step); the
-/// corners of such a run with longer spans keep the requested join. One special case, Round only: an arc
+/// would reach out up to mitreLimit x |distance| in the direction of a sub-tolerance step), and so
+/// is a corner turning by more than 135 degrees at such a span (a near-reversal); the other
+/// corners of such a run with longer spans keep the requested join, a mitre or chamfer extending
+/// a sub-tolerance line along the input's own direction (its offset's end points cannot carry
+/// that direction at |distance| from it). Near-reversals never flip the offset to the other side
+/// (owner decision (c)): the sub-tolerance spans around one (grown either way while their
+/// bounding box keeps a diagonal of 2 x tol.distance, joined where they touch), or a run of them
+/// between longer spans whose turns add up to more than half a turn, form a cluster, and a cluster
+/// whose box diagonal is at most 4 x tol.distance and whose points lie within |distance| of its
+/// first and last vertices is offset like one corner at its first vertex, turning the short way
+/// from the span A before it to the span B after it: the requested join there (Round if A and B
+/// are no longer than the tolerance either), and on the outside of that turn the boundary of the
+/// cluster's own points, so every point stays at least |distance| from the input as given (for
+/// Round exactly |distance|) and a closed loop stays closed. The cluster's own requested-side
+/// offset is not wrapped round it to the other side of A and B; the pieces of its boundary facing
+/// that side are kept only where they join two pieces of other offset (a path coming back past
+/// the cluster). A Sharp/Square corner at a collapsed cluster mitres the offsets of A and B, whose
+/// lines lie up to the cluster's size from that vertex. Junction repairs (below) of a Sharp/Square
+/// chain that would put a point beyond |distance| outside every corner region are refused.
+/// One special case, Round only: an arc
 /// whose radius is at most min(5e-7 x max(1, |distance|), 0.1 tol.distance^2 / |distance|) and
 /// whose offset towards its centre would collapse is offset like a vertex at which the path
 /// turns: its two end tangents get their Round joins and the turn between them an inside-corner
