@@ -141,6 +141,16 @@ target_link_libraries(carvetto_core
   PRIVATE Clipper2
   PRIVATE carvetto_miniz
 )
+# Identical floating-point arithmetic on every compiler (T-0153, ADR-0025 §11): GCC and Clang may
+# fuse a * b + c into one fma (GCC 15 at -march=x86-64-v3 does, Clang does by default), which rounds
+# differently from MSVC (/fp:precise never contracts) and from builds without FMA. Outputs that
+# depend on the last bit (the point-sample medial axis behind V-Carve: sample positions, Delaunay
+# predicates and refinement thresholds) then differ byte for byte. Contraction is off for the core
+# and Clipper2 (its offsets use doubles); explicit std::fma (exact predicates) is unaffected.
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+  target_compile_options(carvetto_core PRIVATE -ffp-contract=off)
+  target_compile_options(Clipper2 PRIVATE -ffp-contract=off)
+endif()
 # Written into manifest.json as the app version.
 target_compile_definitions(carvetto_core PRIVATE CARVETTO_VERSION_STRING="${PROJECT_VERSION}")
 add_library(carvetto::core ALIAS carvetto_core)

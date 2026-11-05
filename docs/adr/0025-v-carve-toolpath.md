@@ -281,6 +281,21 @@ tolerance) and thin the moves, which is the next lever if the bound or the G-cod
   `nonFiniteParam` names the keys the same way. The format stays 1.1 (a new optional variant
   alternative, ADR-0021).
 
+### 11. Identical floating-point arithmetic on every compiler
+The V-Carve goldens failed on the ubuntu-26.04 runner (GCC 15.2, Release), while GCC 13 and MSVC
+matched them. GCC 15 there targets x86-64-v3 and contracts a * b + c into one fma; with
+`-march=x86-64-v3` the failure reproduces exactly, and `-ffp-contract=off` on `medial_axis.cpp`
+plus `span.cpp` alone removes it (`LineSpan::pointAt`, a + (b − a)·t, places boundary samples one
+ulp apart). This is not a knife edge that a tie-break can fix: the point-sample medial axis
+(ADR-0023) feeds sample coordinates to exact Delaunay predicates and compares hundreds of computed
+distances with refinement thresholds, so one ulp in one sample changes which samples are added and
+the skeleton's points everywhere after. Byte-identical output needs identical arithmetic, so the
+core and Clipper2 are compiled with `-ffp-contract=off` on GCC and Clang (core/CMakeLists.txt);
+MSVC's default `/fp:precise` never contracts, and builds without FMA cannot. Explicit `std::fma`
+(the exact predicates' TwoProduct) is unaffected. Outputs of GCC 13 and MSVC builds are unchanged
+(no golden changes); a GCC 15 FMA build now produces the same bytes. Tests stay free to be
+compiled either way (T-0159's contraction-independent tests keep guarding the code itself).
+
 ## Alternatives
 - **Depth exactly r/tan(θ/2) with no margin:** relies on the medial axis' interpolation
   guarantee being exact between points; a margin of chordal/2 keeps AC1 by construction.
