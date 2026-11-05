@@ -1,0 +1,3 @@
+FRAMEEM main n=100 load=11.51 100 regions 775 spans: 111.98 s CPU, carve 80331 moves, 353842 moves, ok=1 diags=1, peak RSS 90 MB    diag 4 flat area clearance: tool 1 (EM): too large for the pocket, nothing to cut (and in 24 more region(s)) 
+FRAMEEM br n=100 load=7.42 100 regions 775 spans: 109.13 s CPU, carve 80547 moves, 354058 moves, ok=1 diags=1, peak RSS 90 MB    diag 4 flat area clearance: tool 1 (EM): too large for the pocket, nothing to cut (and in 24 more region(s)) 
+FRAMEEM br_off n=100 load=6.24 100 regions 775 spans: 143.83 s CPU, carve 80331 moves, 353842 moves, ok=1 diags=1, peak RSS 90 MB    diag 4 flat area clearance: tool 1 (EM): too large for the pocket, nothing to cut (and in 24 more region(s)) 

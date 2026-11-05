@@ -1,0 +1,87 @@
+bigtri_ch0.050_apex12              ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=+1.52e-04 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    => ok corners=3 worstCornerOn=0.2500
+bigtri_ch0.050_apex12_V60s03       ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=-1.41e-16 ridge=0.2598 lim=1.000 rho=0.5774 s=0.3000
+    => ok corners=3 worstCornerOn=0.2598
+bigtri_ch0.050_apex20              ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=+5.26e-16 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    => ok corners=3 worstCornerOn=0.2500
+bigtri_ch0.050_apex20_V60s03       ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=+2.21e-04 ridge=0.2598 lim=1.000 rho=0.5774 s=0.3000
+    => ok corners=3 worstCornerOn=0.2598
+bigtri_ch0.050_apex30              ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=+1.31e-04 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (90.0000,24.1154) ang 75.00 deg: off 0.5000 -> on 0.250944 at (86.663209,21.818637) pts 8767 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 30.00 deg: off 0.5000 -> on 0.274557 at (13.507391,2.225442) pts 54446 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2746
+bigtri_ch0.050_apex30_V60s03       ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=+1.39e-04 ridge=0.2598 lim=1.000 rho=0.5774 s=0.3000
+    corner (0.0000,0.0000) ang 30.00 deg: off 0.5000 -> on 0.276707 at (11.890892,-2.240243) pts 54464 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2767
+bigtri_ch0.050_apex45              ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=+2.59e-04 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (0.0000,0.0000) ang 45.00 deg: off 0.5000 -> on 0.259303 at (8.052333,-1.740697) pts 27744 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2593
+bigtri_ch0.050_apex45_V60s03       ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=+1.64e-04 ridge=0.2598 lim=1.000 rho=0.5774 s=0.3000
+    corner (0.0000,0.0000) ang 45.00 deg: off 0.5000 -> on 0.276106 at (7.394922,-2.240590) pts 27789 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2761
+bigtri_ch0.010_apex12              ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+1.67e-03 ringClr-c/2=+1.04e-03 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    => ok corners=3 worstCornerOn=0.2500
+bigtri_ch0.010_apex12_V60s03       ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+1.67e-03 ringClr-c/2=-5.17e-16 ridge=0.2598 lim=1.000 rho=0.5774 s=0.3000
+    corner (90.0000,-9.4594) ang 84.00 deg: off 0.5000 -> on 0.268702 at (87.215247,-8.376469) pts 6058 ABOVE-RIDGE 
+    corner (90.0000,9.4594) ang 84.00 deg: off 0.5000 -> on 0.269134 at (89.213030,6.575865) pts 6058 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2691
+bigtri_ch0.010_apex20              ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+1.67e-03 ringClr-c/2=+1.67e-03 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (90.0000,-15.8694) ang 80.00 deg: off 0.5000 -> on 0.257598 at (88.703628,-12.391639) pts 7118 ABOVE-RIDGE 
+    corner (90.0000,15.8694) ang 80.00 deg: off 0.5000 -> on 0.257583 at (86.800203,13.988916) pts 7118 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2576
+bigtri_ch0.010_apex20_V60s03       ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+1.67e-03 ringClr-c/2=-4.62e-15 ridge=0.2598 lim=1.000 rho=0.5774 s=0.3000
+    corner (90.0000,-15.8694) ang 80.00 deg: off 0.5000 -> on 0.269042 at (87.113244,-14.521060) pts 7107 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2690
+bigtri_ch0.010_apex30              ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+1.67e-03 ringClr-c/2=+1.67e-03 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (90.0000,24.1154) ang 75.00 deg: off 0.5000 -> on 0.254581 at (86.682785,21.838174) pts 8639 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 30.00 deg: off 0.5000 -> on 0.287592 at (13.441551,2.212408) pts 54478 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2876
+bigtri_ch0.010_apex30_V60s03       ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+1.67e-03 ringClr-c/2=+3.55e-06 ridge=0.2598 lim=1.000 rho=0.5774 s=0.3000
+    corner (90.0000,-24.1154) ang 75.00 deg: off 0.5000 -> on 0.276001 at (89.249913,-20.442831) pts 8624 ABOVE-RIDGE 
+    corner (90.0000,24.1154) ang 75.00 deg: off 0.5000 -> on 0.269133 at (89.118643,20.758047) pts 8624 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 30.00 deg: off 0.5000 -> on 0.300041 at (11.824352,-2.226771) pts 54458 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.3000
+bigtri_ch0.010_apex45              ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+1.67e-03 ringClr-c/2=+1.67e-03 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (90.0000,-37.2792) ang 67.50 deg: off 0.5000 -> on 0.257598 at (88.546753,-32.868019) pts 11503 ABOVE-RIDGE 
+    corner (90.0000,37.2792) ang 67.50 deg: off 0.5000 -> on 0.257450 at (86.481066,34.249294) pts 11503 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 45.00 deg: off 0.5000 -> on 0.268642 at (8.011227,-1.731358) pts 27717 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2686
+bigtri_ch0.010_apex45_V60s03       ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+1.67e-03 ringClr-c/2=+3.55e-05 ridge=0.2598 lim=1.000 rho=0.5774 s=0.3000
+    corner (90.0000,-37.2792) ang 67.50 deg: off 0.5000 -> on 0.275998 at (86.450552,-34.920193) pts 11480 ABOVE-RIDGE 
+    corner (90.0000,37.2792) ang 67.50 deg: off 0.5000 -> on 0.276001 at (89.178852,33.097193) pts 11480 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 45.00 deg: off 0.5000 -> on 0.285799 at (7.064178,1.934994) pts 27708 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2858
+bigtri_ch0.002_apex12              ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+3.33e-04 ringClr-c/2=-3.03e-15 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    => ok corners=3 worstCornerOn=0.2500
+bigtri_ch0.002_apex12_V60s03       ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+3.33e-04 ringClr-c/2=+2.58e-05 ridge=0.2598 lim=1.000 rho=0.5774 s=0.3000
+    corner (90.0000,-9.4594) ang 84.00 deg: off 0.5000 -> on 0.271912 at (87.218947,-8.377808) pts 6205 ABOVE-RIDGE 
+    corner (90.0000,9.4594) ang 84.00 deg: off 0.5000 -> on 0.271916 at (89.215041,6.580500) pts 6205 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2719
+bigtri_ch0.002_apex20              ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+3.33e-04 ringClr-c/2=+2.02e-05 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (90.0000,-15.8694) ang 80.00 deg: off 0.5000 -> on 0.259026 at (88.705618,-12.396232) pts 7103 ABOVE-RIDGE 
+    corner (90.0000,15.8694) ang 80.00 deg: off 0.5000 -> on 0.252562 at (88.439457,12.846839) pts 7103 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2590
+bigtri_ch0.002_apex20_V60s03       ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+3.33e-04 ringClr-c/2=+5.34e-07 ridge=0.2598 lim=1.000 rho=0.5774 s=0.3000
+    corner (90.0000,-15.8694) ang 80.00 deg: off 0.5000 -> on 0.271717 at (87.117775,-14.524056) pts 7256 ABOVE-RIDGE 
+    corner (90.0000,15.8694) ang 80.00 deg: off 0.5000 -> on 0.262305 at (87.438029,14.447457) pts 7256 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2717
+bigtri_ch0.002_apex30              ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+3.34e-04 ringClr-c/2=+1.63e-15 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (90.0000,24.1154) ang 75.00 deg: off 0.5000 -> on 0.255521 at (86.687333,21.842555) pts 8614 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 30.00 deg: off 0.5000 -> on 0.291293 at (13.427212,2.208707) pts 54467 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2913
+bigtri_ch0.002_apex30_V60s03       ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+3.33e-04 ringClr-c/2=+3.64e-06 ridge=0.2598 lim=1.000 rho=0.5774 s=0.3000
+    corner (90.0000,-24.1154) ang 75.00 deg: off 0.5000 -> on 0.279592 at (89.251759,-20.448642) pts 8788 ABOVE-RIDGE 
+    corner (90.0000,24.1154) ang 75.00 deg: off 0.5000 -> on 0.279592 at (86.651817,22.443648) pts 8788 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 30.00 deg: off 0.5000 -> on 0.305492 at (11.810569,-2.223624) pts 54488 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.3055
+bigtri_ch0.002_apex45              ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+3.33e-04 ringClr-c/2=+1.60e-05 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (90.0000,-37.2792) ang 67.50 deg: off 0.5000 -> on 0.259026 at (88.548593,-32.873343) pts 11488 ABOVE-RIDGE 
+    corner (90.0000,37.2792) ang 67.50 deg: off 0.5000 -> on 0.258824 at (86.485356,34.253243) pts 11488 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 45.00 deg: off 0.5000 -> on 0.261506 at (7.965747,-1.738494) pts 27802 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2615
+bigtri_ch0.002_apex45_V60s03       ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+3.33e-04 ringClr-c/2=+2.07e-06 ridge=0.2598 lim=1.000 rho=0.5774 s=0.3000
+    corner (90.0000,-37.2792) ang 67.50 deg: off 0.5000 -> on 0.279592 at (86.455693,-34.924150) pts 11673 ABOVE-RIDGE 
+    corner (90.0000,37.2792) ang 67.50 deg: off 0.5000 -> on 0.279593 at (89.180546,33.103461) pts 11673 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 45.00 deg: off 0.5000 -> on 0.303685 at (7.335208,-2.222923) pts 27811 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.3037
+SUMMARY run=24 fail=18

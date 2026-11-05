@@ -1,0 +1,112 @@
+roundarc_r0.000500                 ins=1 cuts=4 cl=1 dg=1 minClr-c/2=+8.36e-03 ringClr-c/2=+6.54e-03 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    => ok corners=4 worstCornerOn=0.2500
+roundarc_r0.010000                 ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=-3.63e-16 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (1.516667,2.243647) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (18.483333,2.241919) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (17.663333,18.483333) pts 4888 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (2.243333,18.483333) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    => FAIL corners=4 worstCornerOn=0.5000
+roundarc_r0.100000                 ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=+9.14e-04 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (1.516667,2.243647) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (18.483333,2.241919) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (17.663333,18.483333) pts 4888 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (2.243333,18.483333) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    => FAIL corners=4 worstCornerOn=0.5000
+roundarc_r0.500000                 ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=+1.71e-04 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (1.516667,2.243647) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (18.483333,2.241919) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (17.663333,18.483333) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (2.243333,18.483333) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    => FAIL corners=4 worstCornerOn=0.5000
+roundarc_r1.000000                 ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=-3.63e-16 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (1.516667,2.243647) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (18.483333,2.241919) pts 4927 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (17.663333,18.483333) pts 4919 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (2.243333,18.483333) pts 4928 ABOVE-RIDGE UNSHARPENED>chordal
+    => FAIL corners=4 worstCornerOn=0.5000
+roundarc_r1.600000                 ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=+8.33e-03 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (1.516667,2.243647) pts 4730 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (18.483333,2.241919) pts 4729 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (17.663333,18.483333) pts 4720 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (2.243333,18.483333) pts 4730 ABOVE-RIDGE UNSHARPENED>chordal
+    => FAIL corners=4 worstCornerOn=0.5000
+roundpoly_r0.050000_s4             ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=+4.19e-04 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (1.516667,2.243647) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (18.483333,2.241919) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (17.663333,18.483333) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (2.243333,18.483333) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    => FAIL corners=4 worstCornerOn=0.5000
+roundpoly_r0.050000_s12            ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=+4.19e-04 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (1.516667,2.243647) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (18.483333,2.241919) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (17.663333,18.483333) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (2.243333,18.483333) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    => FAIL corners=4 worstCornerOn=0.5000
+roundpoly_r0.500000_s4             ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=+1.71e-04 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (1.516667,2.243647) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (18.483333,2.241919) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (17.663333,18.483333) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (2.243333,18.483333) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    => FAIL corners=4 worstCornerOn=0.5000
+roundpoly_r0.500000_s12            ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=+1.71e-04 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (1.516667,2.243647) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (18.483333,2.241919) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (17.663333,18.483333) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (2.243333,18.483333) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    => FAIL corners=4 worstCornerOn=0.5000
+roundpoly_r1.500000_s4             ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=+8.15e-17 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (1.516667,2.243647) pts 4705 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (18.483333,2.241919) pts 4705 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (17.663333,18.483333) pts 4705 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (2.223333,18.483333) pts 4705 ABOVE-RIDGE UNSHARPENED>chordal
+    => FAIL corners=4 worstCornerOn=0.5000
+roundpoly_r1.500000_s12            ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=+8.33e-03 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (1.516667,2.243647) pts 4775 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (18.483333,2.241919) pts 4775 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (17.663333,18.483333) pts 4776 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (2.223333,18.483333) pts 4776 ABOVE-RIDGE UNSHARPENED>chordal
+    => FAIL corners=4 worstCornerOn=0.5000
+chamfer0.000500                    ins=1 cuts=4 cl=1 dg=1 minClr-c/2=+8.35e-03 ringClr-c/2=+6.53e-03 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    => ok corners=4 worstCornerOn=0.2500
+chamfer0.001500                    ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=-3.63e-16 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (1.516667,2.243647) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (18.483333,2.241919) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (17.663333,18.483333) pts 4888 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (2.243333,18.483333) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    => FAIL corners=4 worstCornerOn=0.5000
+chamfer0.010000                    ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=-3.63e-16 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (1.516667,2.243647) pts 4924 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (18.483333,2.241919) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (17.663333,18.483333) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (2.243333,18.483333) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    => FAIL corners=4 worstCornerOn=0.5000
+chamfer0.200000                    ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=+2.98e-04 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (1.516667,2.223647) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (18.483333,2.221919) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (17.663333,18.483333) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (2.243333,18.483333) pts 4932 ABOVE-RIDGE UNSHARPENED>chordal
+    => FAIL corners=4 worstCornerOn=0.5000
+chamfer0.000500_m1                 ins=1 cuts=4 cl=1 dg=1 minClr-c/2=+8.35e-03 ringClr-c/2=+6.53e-03 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.0891 -> on 0.089101 at (1.105789,1.232110) pts 151 UNSHARPENED>chordal
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.0887 -> on 0.088728 at (18.767349,1.105416) pts 151 UNSHARPENED>chordal
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.0884 -> on 0.088443 at (18.894867,18.766937) pts 151 UNSHARPENED>chordal
+    => ok corners=4 worstCornerOn=0.0891
+chamfer0.001500_m1                 ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=-3.63e-16 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.0839 -> on 0.083892 at (1.100559,1.239441) pts 150 UNSHARPENED>chordal
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.0839 -> on 0.083892 at (18.760559,1.100559) pts 150 UNSHARPENED>chordal
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.0839 -> on 0.083892 at (18.760559,18.899441) pts 142 UNSHARPENED>chordal
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.0839 -> on 0.083892 at (1.100559,18.760559) pts 150 UNSHARPENED>chordal
+    => ok corners=4 worstCornerOn=0.0839
+chamfer0.010000_m1                 ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=-3.63e-16 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.0887 -> on 0.088720 at (1.105388,1.232326) pts 150 UNSHARPENED>chordal
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.0839 -> on 0.083892 at (18.760559,1.100559) pts 150 UNSHARPENED>chordal
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.0839 -> on 0.083892 at (18.760559,18.899441) pts 150 UNSHARPENED>chordal
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.0839 -> on 0.083892 at (1.100559,18.760559) pts 150 UNSHARPENED>chordal
+    => ok corners=4 worstCornerOn=0.0887
+chamfer0.200000_m1                 ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=+2.98e-04 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.0890 -> on 0.089036 at (1.105703,1.231871) pts 150 UNSHARPENED>chordal
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.0839 -> on 0.083892 at (18.760559,1.100559) pts 150 UNSHARPENED>chordal
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.0839 -> on 0.083892 at (18.760559,18.899441) pts 150 UNSHARPENED>chordal
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.0839 -> on 0.083892 at (1.100559,18.760559) pts 150 UNSHARPENED>chordal
+    => ok corners=4 worstCornerOn=0.0890
+SUMMARY run=20 fail=14

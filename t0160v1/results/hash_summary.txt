@@ -1,0 +1,6 @@
+n=1040 same=1040 bad=0 ncl>0: same=362 differ=0 exits=['exit 0']
+n=1040 same=1004 bad=0 ncl>0: same=326 differ=36 exits=['exit 0']
+n=1040 same=1040 bad=0 ncl>0: same=362 differ=0 exits=['exit 0']
+INS case 29 nestedtight-sq ncl 2 flat 1.03 ok 1 okEq 1 ins 0 cuts 4 feeds 4 clEq 1 diagEq 1 BAD
+INS case 33 nestedtight-sq ncl 1 flat 3.454 ok 1 okEq 1 ins 0 cuts 4 feeds 4 clEq 1 diagEq 1 BAD
+INS case 22 overpoly ncl 1 flat 0.2529 ok 1 okEq 1 ins 0 cuts 2 feeds 9 clEq 1 diagEq 1 BAD

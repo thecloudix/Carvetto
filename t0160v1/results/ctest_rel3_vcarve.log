@@ -1,0 +1,135 @@
+Test project /home/chris/wt-T0160/build-verify1-rel3
+      Start 313: AC1: profile move list matches the hand-checked golden
+      Start 314: AC6: profile G-code through the Grbl post matches the golden
+ 1/65 Test #313: AC1: profile move list matches the hand-checked golden .......................................................   Passed    0.01 sec
+      Start 395: AC1: Grbl post + square profile matches golden grbl_square.nc exactly
+ 2/65 Test #314: AC6: profile G-code through the Grbl post matches the golden .................................................   Passed    0.01 sec
+      Start 398: AC1: every shipped post reproduces its golden output for the shared fixture
+ 3/65 Test #395: AC1: Grbl post + square profile matches golden grbl_square.nc exactly ........................................   Passed    0.00 sec
+      Start 399: AC2: every golden program passes the machine-safety checklist
+ 4/65 Test #398: AC1: every shipped post reproduces its golden output for the shared fixture ..................................   Passed    0.01 sec
+      Start 401: T-0154: every shipped post reproduces its golden output for the drag fixture
+ 5/65 Test #399: AC2: every golden program passes the machine-safety checklist ................................................   Passed    0.00 sec
+      Start 402: T-0154: every drag golden passes the checklist and the drag rule
+ 6/65 Test #401: T-0154: every shipped post reproduces its golden output for the drag fixture .................................   Passed    0.01 sec
+      Start 744: T-0153: V-carve records save and load exactly; save -> load -> save is byte-identical
+ 7/65 Test #402: T-0154: every drag golden passes the checklist and the drag rule .............................................   Passed    0.01 sec
+      Start 745: T-0153: every V-carve option round-trips with the defaults
+ 8/65 Test #744: T-0153: V-carve records save and load exactly; save -> load -> save is byte-identical ........................   Passed    0.01 sec
+      Start 746: T-0153: V-carve params keys are optional; unknown keys dropped; bad values refused
+ 9/65 Test #746: T-0153: V-carve params keys are optional; unknown keys dropped; bad values refused ...........................   Passed    0.02 sec
+      Start 747: T-0153: V-carve records go through the toolpath commands with undo
+10/65 Test #745: T-0153: every V-carve option round-trips with the defaults ...................................................   Passed    0.03 sec
+      Start 795: AC6: AC1 pocket through the Grbl post matches the golden
+11/65 Test #795: AC6: AC1 pocket through the Grbl post matches the golden .....................................................   Passed    0.00 sec
+      Start 850: AC2: the drilling fixture through the Grbl post matches the golden
+12/65 Test #747: T-0153: V-carve records go through the toolpath commands with undo ...........................................   Passed    0.01 sec
+      Start 851: AC2: the drilling golden reads as the fixture says
+13/65 Test #850: AC2: the drilling fixture through the Grbl post matches the golden ...........................................   Passed    0.01 sec
+      Start 875: AC1: the quick engrave fixture through the Grbl post matches the golden
+14/65 Test #851: AC2: the drilling golden reads as the fixture says ...........................................................   Passed    0.00 sec
+      Start 876: AC1: the quick engrave golden reads as the fixture says
+15/65 Test #876: AC1: the quick engrave golden reads as the fixture says ......................................................   Passed    0.00 sec
+      Start 877: V-carve depth rule: radius / tan(half angle) for V-bits and the ball chord for ball noses
+16/65 Test #875: AC1: the quick engrave fixture through the Grbl post matches the golden ......................................   Passed    0.01 sec
+      Start 878: V-carve of a rectangle follows its skeleton at radius / tan(half angle)
+17/65 Test #877: V-carve depth rule: radius / tan(half angle) for V-bits and the ball chord for ball noses ....................   Passed    0.00 sec
+      Start 879: V-carve of a circle is one plunge at its centre
+18/65 Test #879: V-carve of a circle is one plunge at its centre ..............................................................   Passed    0.00 sec
+      Start 880: V-carve with a ball nose: depth from the ball's chord
+19/65 Test #878: V-carve of a rectangle follows its skeleton at radius / tan(half angle) ......................................   Passed    0.01 sec
+      Start 881: V-carve start depth moves the whole carve down
+20/65 Test #880: V-carve with a ball nose: depth from the ball's chord ........................................................   Passed    0.01 sec
+      Start 882: V-carve flat depth without clearance tools: the V-bit clears the flat area with Pocket
+21/65 Test #881: V-carve start depth moves the whole carve down ...............................................................   Passed    0.01 sec
+      Start 883: V-carve flat depth with clearance tools: Pocket with the V-bit's width as allowance
+22/65 Test #882: V-carve flat depth without clearance tools: the V-bit clears the flat area with Pocket .......................   Passed    0.01 sec
+      Start 884: V-carve says when the carving tool's rest stepover is limited to its width
+23/65 Test #884: V-carve says when the carving tool's rest stepover is limited to its width ...................................   Passed    0.01 sec
+      Start 885: V-carve limits the depth to the tool's full width and reports it
+24/65 Test #885: V-carve limits the depth to the tool's full width and reports it .............................................   Passed    0.02 sec
+      Start 886: V-carve groups regions and orders them and reports skipped vectors
+25/65 Test #883: V-carve flat depth with clearance tools: Pocket with the V-bit's width as allowance ..........................   Passed    0.10 sec
+      Start 887: V-carve resolves crossing vectors into their even-odd region
+26/65 Test #886: V-carve groups regions and orders them and reports skipped vectors ...........................................   Passed    0.06 sec
+      Start 888: V-carve splits nested vectors into parts: a frame round letters is a part of its own
+27/65 Test #887: V-carve resolves crossing vectors into their even-odd region .................................................   Passed    0.03 sec
+      Start 889: V-carve never cuts through a hole nearly touching a wall or a crossing cluster
+28/65 Test #888: V-carve splits nested vectors into parts: a frame round letters is a part of its own .........................   Passed    0.04 sec
+      Start 890: V-carve never carves inside a D-shaped hole hugging the outer wall
+29/65 Test #889: V-carve never cuts through a hole nearly touching a wall or a crossing cluster ...............................   Passed    0.03 sec
+      Start 891: V-carve carves a circle with a small D-shaped hole 0.0025 mm from its wall
+30/65 Test #890: V-carve never carves inside a D-shaped hole hugging the outer wall ...........................................   Passed    0.26 sec
+      Start 892: V-carve resolves crossing clusters that absorb nearby vectors in linear time
+31/65 Test #891: V-carve carves a circle with a small D-shaped hole 0.0025 mm from its wall ...................................   Passed    0.61 sec
+      Start 893: V-carve nests a D-shaped hole resolved against the circle it touches
+32/65 Test #893: V-carve nests a D-shaped hole resolved against the circle it touches .........................................   Passed    0.06 sec
+      Start 894: V-carve safety net rejects a skeleton computed for the wrong region
+33/65 Test #894: V-carve safety net rejects a skeleton computed for the wrong region ..........................................   Passed    0.09 sec
+      Start 895: V-carve safety net checks every skeleton point, not a sample
+34/65 Test #895: V-carve safety net checks every skeleton point, not a sample .................................................   Passed    0.10 sec
+      Start 896: V-carve safety net with the part's own boundaries: a silently dropped hole is caught
+35/65 Test #896: V-carve safety net with the part's own boundaries: a silently dropped hole is caught .........................   Passed    0.02 sec
+      Start 897: V-carve safety net does not hand membership over to a node away from the branch end
+36/65 Test #897: V-carve safety net does not hand membership over to a node away from the branch end ..........................   Passed    0.00 sec
+      Start 898: V-carve at the smallest chordal tolerance clears flat areas
+37/65 Test #898: V-carve at the smallest chordal tolerance clears flat areas ..................................................   Passed    0.02 sec
+      Start 899: V-carve carves a frame crossed by letters completely
+38/65 Test #899: V-carve carves a frame crossed by letters completely .........................................................   Passed    6.59 sec
+      Start 900: V-carve refuses bad tools and parameters
+39/65 Test #900: V-carve refuses bad tools and parameters .....................................................................   Passed    0.01 sec
+      Start 901: V-carve refuses to carve when the medial axis is not accurate
+40/65 Test #901: V-carve refuses to carve when the medial axis is not accurate ................................................   Passed    0.01 sec
+      Start 907: AC1: the V-carve fixture through the Grbl post matches the golden
+41/65 Test #907: AC1: the V-carve fixture through the Grbl post matches the golden ............................................   Passed    0.01 sec
+      Start 908: AC1: the V-carve golden reads as the fixture says
+42/65 Test #908: AC1: the V-carve golden reads as the fixture says ............................................................   Passed    0.01 sec
+      Start 909: T-0160: predicted corner leftover, min(F, h(R (1 - sin(a/2))))
+43/65 Test #909: T-0160: predicted corner leftover, min(F, h(R (1 - sin(a/2)))) ...............................................   Passed    0.01 sec
+      Start 910: T-0160: corners are found from the boundary: convex flat-area corners an end mill reaches
+44/65 Test #910: T-0160: corners are found from the boundary: convex flat-area corners an end mill reaches ....................   Passed    0.04 sec
+      Start 911: T-0160: sharpened corners keep no more than the floor's ridge height (exact oracle); the cone stays inside
+45/65 Test #892: V-carve resolves crossing clusters that absorb nearby vectors in linear time .................................   Passed   13.58 sec
+      Start 912: T-0160: corner sharpening only adds corner cuts; without a flat depth or clearance tools nothing changes
+46/65 Test #912: T-0160: corner sharpening only adds corner cuts; without a flat depth or clearance tools nothing changes .....   Passed    0.65 sec
+      Start 913: T-0160: corner sharpening is on by default
+47/65 Test #913: T-0160: corner sharpening is on by default ...................................................................   Passed    0.02 sec
+      Start 944: AC1: DXF -> pocket + profile with tabs -> Grbl matches the golden
+48/65 Test #944: AC1: DXF -> pocket + profile with tabs -> Grbl matches the golden ............................................   Passed    0.02 sec
+      Start 945: the golden program is sane: two tools, tabs, safe start and end
+49/65 Test #945: the golden program is sane: two tools, tabs, safe start and end ..............................................   Passed    0.00 sec
+      Start 947: T-0150: DXF -> drill + profile -> Grbl matches the drilling golden
+50/65 Test #947: T-0150: DXF -> drill + profile -> Grbl matches the drilling golden ...........................................   Passed    0.02 sec
+      Start 948: T-0150: the drilling golden is sane: drill then end mill, pecks, dwells, no canned cycles
+51/65 Test #948: T-0150: the drilling golden is sane: drill then end mill, pecks, dwells, no canned cycles ....................   Passed    0.00 sec
+      Start 951: T-0151: DXF -> engrave fill + outline -> Grbl matches the engraving golden
+52/65 Test #951: T-0151: DXF -> engrave fill + outline -> Grbl matches the engraving golden ...................................   Passed    0.02 sec
+      Start 952: T-0151: the engraving golden is sane: one V-bit, two fill passes, outline at depth
+53/65 Test #952: T-0151: the engraving golden is sane: one V-bit, two fill passes, outline at depth ...........................   Passed    0.00 sec
+      Start 973: T-0153: DXF -> V-carve letters + flat panel -> Grbl matches the V-carve golden
+54/65 Test #973: T-0153: DXF -> V-carve letters + flat panel -> Grbl matches the V-carve golden ...............................   Passed    0.05 sec
+      Start 974: T-0153: the V-carve golden is sane: V-bit letters then end mill clearance then V-bit walls
+55/65 Test #974: T-0153: the V-carve golden is sane: V-bit letters then end mill clearance then V-bit walls ...................   Passed    0.00 sec
+      Start 975: T-0153: toolpath v_carve stores one record per tool; info names them
+56/65 Test #975: T-0153: toolpath v_carve stores one record per tool; info names them .........................................   Passed    0.01 sec
+      Start 976: T-0153: toolpath v_carve reports diagnostics and refuses unusable tools
+57/65 Test #976: T-0153: toolpath v_carve reports diagnostics and refuses unusable tools ......................................   Passed    0.01 sec
+      Start 992: v_carve params: every key maps to VCarvingParams and the clearance tools
+58/65 Test #992: v_carve params: every key maps to VCarvingParams and the clearance tools .....................................   Passed    0.00 sec
+      Start 993: v_carve params: every key is documented in the toolpath help
+59/65 Test #993: v_carve params: every key is documented in the toolpath help .................................................   Passed    0.00 sec
+      Start 994: v_carve params: unknown keys and bad values are errors naming the key
+60/65 Test #994: v_carve params: unknown keys and bad values are errors naming the key ........................................   Passed    0.00 sec
+      Start 995: cli.end_to_end_grbl
+61/65 Test #995: cli.end_to_end_grbl ..........................................................................................   Passed    0.05 sec
+      Start 996: cli.end_to_end_drill_grbl
+62/65 Test #996: cli.end_to_end_drill_grbl ....................................................................................   Passed    0.04 sec
+      Start 997: cli.end_to_end_engrave_grbl
+63/65 Test #997: cli.end_to_end_engrave_grbl ..................................................................................   Passed    0.03 sec
+      Start 998: cli.end_to_end_v_carve_grbl
+64/65 Test #998: cli.end_to_end_v_carve_grbl ..................................................................................   Passed    0.05 sec
+65/65 Test #911: T-0160: sharpened corners keep no more than the floor's ridge height (exact oracle); the cone stays inside ...   Passed    7.77 sec
+
+100% tests passed, 0 tests failed out of 65
+
+Total Test time (real) =  15.62 sec

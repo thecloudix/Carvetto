@@ -1,0 +1,2 @@
+Ddeep_g0.001.txt fix=[0 12 90 0.05 1.0 0] em=2 :: INS case 0 /home/chris/harness/t0153v4/adv/Ddeep_g0.001.txt ncl 1 flat 1 ok 1 okEq 1 ins 0 cuts 4 feeds 4 clEq 1 diagEq 1 BAD
+Ddeep_g0.02.txt fix=[0 12 90 0.05 1.0 0] em=2 :: INS case 0 /home/chris/harness/t0153v4/adv/Ddeep_g0.02.txt ncl 1 flat 1 ok 1 okEq 1 ins 0 cuts 5 feeds 31 clEq 1 diagEq 1 BAD

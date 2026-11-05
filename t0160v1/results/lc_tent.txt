@@ -1,0 +1,43 @@
+tenthole_x1.9_s0.05                ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+3.33e-03 ringClr-c/2=-4.94e-07 ridge=0.1500 lim=1.000 rho=1.0000 s=0.3000
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.150246 at (17.518614,1.421074) pts 4774 ABOVE-RIDGE 
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.150305 at (18.577913,17.517683) pts 4780 ABOVE-RIDGE 
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.150333 at (2.482740,18.577448) pts 4780 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.3948 -> on 0.394757 at (1.401424,3.497326) pts 4174 ABOVE-RIDGE UNSHARPENED>chordal
+    => FAIL corners=4 worstCornerOn=0.3948
+tenthole_x1.9_s0.30                ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+3.33e-03 ringClr-c/2=-4.94e-07 ridge=0.1500 lim=1.000 rho=1.0000 s=0.3000
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.150246 at (17.518614,1.421074) pts 4774 ABOVE-RIDGE 
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.150305 at (18.577913,17.517683) pts 4780 ABOVE-RIDGE 
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.150333 at (2.482740,18.577448) pts 4780 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.4271 -> on 0.427076 at (1.433743,3.830581) pts 4902 ABOVE-RIDGE UNSHARPENED>chordal
+    => FAIL corners=4 worstCornerOn=0.4271
+tenthole_x2.2_s0.05                ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+3.33e-03 ringClr-c/2=-7.53e-07 ridge=0.1500 lim=1.000 rho=1.0000 s=0.3000
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.150246 at (17.518614,1.421074) pts 4774 ABOVE-RIDGE 
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.150305 at (18.577913,17.517683) pts 4780 ABOVE-RIDGE 
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.150333 at (2.482740,18.577448) pts 4780 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.4432 -> on 0.443236 at (1.449904,3.878016) pts 6485 ABOVE-RIDGE UNSHARPENED>chordal
+    => FAIL corners=4 worstCornerOn=0.4432
+tenthole_x2.2_s0.30                ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+3.33e-03 ringClr-c/2=-7.53e-07 ridge=0.1500 lim=1.000 rho=1.0000 s=0.3000
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.150246 at (17.518614,1.421074) pts 4774 ABOVE-RIDGE 
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.150305 at (18.577913,17.517683) pts 4780 ABOVE-RIDGE 
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.150333 at (2.482740,18.577448) pts 4780 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.4685 -> on 0.468514 at (1.475182,4.199904) pts 7013 ABOVE-RIDGE UNSHARPENED>chordal
+    => FAIL corners=4 worstCornerOn=0.4685
+tenthole_x2.6_s0.05                ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+3.33e-03 ringClr-c/2=-4.94e-07 ridge=0.1500 lim=1.000 rho=1.0000 s=0.3000
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.150246 at (17.518614,1.421074) pts 4774 ABOVE-RIDGE 
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.150305 at (18.577913,17.517683) pts 4780 ABOVE-RIDGE 
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.150333 at (2.482740,18.577448) pts 4780 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (1.506667,4.327623) pts 10988 ABOVE-RIDGE UNSHARPENED>chordal
+    => FAIL corners=4 worstCornerOn=0.5000
+tenthole_x2.6_s0.30                ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+3.33e-03 ringClr-c/2=-4.94e-07 ridge=0.1500 lim=1.000 rho=1.0000 s=0.3000
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.150246 at (17.518614,1.421074) pts 4780 ABOVE-RIDGE 
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.150305 at (18.577913,17.517683) pts 4736 ABOVE-RIDGE 
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.150333 at (2.482740,18.577448) pts 4780 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.500000 at (1.506667,4.590482) pts 10992 ABOVE-RIDGE UNSHARPENED>chordal
+    => FAIL corners=4 worstCornerOn=0.5000
+tentslit                           ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+3.33e-03 ringClr-c/2=-4.94e-07 ridge=0.1500 lim=1.000 rho=1.0000 s=0.3000
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.5000 -> on 0.150246 at (17.518614,1.421074) pts 4780 ABOVE-RIDGE 
+    corner (20.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.150305 at (18.577913,17.517683) pts 4736 ABOVE-RIDGE 
+    corner (0.0000,20.0000) ang 90.00 deg: off 0.5000 -> on 0.150333 at (2.482740,18.577448) pts 4780 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.4779 -> on 0.477883 at (3.824550,2.159914) pts 7465 ABOVE-RIDGE UNSHARPENED>chordal
+    => FAIL corners=4 worstCornerOn=0.4779
+SUMMARY run=7 fail=7

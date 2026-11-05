@@ -1,0 +1,21 @@
+off: rc=42 test cases:   9 |   4 passed |  5 failed failing: v_carve_corner_test.cpp:271 v_carve_corner_test.cpp:352 v_carve_corner_test.cpp:393 v_carve_corner_test.cpp:401 v_carve_post_test.cpp:282 
+groove_only: BUILD FAILED
+no_overlap: rc=42 test cases:   9 |   8 passed | 1 failed failing: v_carve_post_test.cpp:282 
+neg_overlap: rc=42 test cases:   9 |   7 passed | 2 failed failing: v_carve_corner_test.cpp:352 v_carve_post_test.cpp:282 
+no_clip: rc=42 test cases:   9 |   7 passed | 2 failed failing: v_carve_corner_test.cpp:343 v_carve_post_test.cpp:282 
+always_join: rc=0 All tests passed (340 assertions in 9 test cases) failing: 
+never_join: rc=42 test cases:   9 |   8 passed | 1 failed failing: v_carve_post_test.cpp:282 
+no_reach: rc=42 test cases:   9 |   7 passed | 2 failed failing: v_carve_corner_test.cpp:283 v_carve_corner_test.cpp:284 v_carve_corner_test.cpp:386 
+largest_mill: rc=42 test cases:   9 |   8 passed | 1 failed failing: v_carve_corner_test.cpp:278 
+thr_zero: rc=0 All tests passed (340 assertions in 9 test cases) failing: 
+thr_2x: rc=42 test cases:   9 |   8 passed | 1 failed failing: v_carve_corner_test.cpp:266 v_carve_corner_test.cpp:271 
+no_flatcheck: rc=0 All tests passed (340 assertions in 9 test cases) failing: 
+hole_side: rc=42 test cases:   9 |   7 passed | 2 failed failing: v_carve_corner_test.cpp:249 v_carve_corner_test.cpp:352 
+stepover_x2: rc=42 test cases:   9 |   7 passed |  2 failed failing: v_carve_corner_test.cpp:352 v_carve_post_test.cpp:282 
+no_ext: rc=0 All tests passed (340 assertions in 9 test cases) failing: 
+big_ext: rc=0 All tests passed (340 assertions in 9 test cases) failing: 
+eps_big: BUILD FAILED
+pos_reset: rc=0 All tests passed (340 assertions in 9 test cases) failing: 
+first_corner_only: rc=42 test cases:   9 |   6 passed |  3 failed failing: v_carve_corner_test.cpp:223 v_carve_corner_test.cpp:235 v_carve_corner_test.cpp:238 v_carve_corner_test.cpp:249 v_carve_corner_test.cpp:266 v_carve_corner_test.cpp:277 v_carve_corner_test.cpp:352 v_carve_post_test.cpp:282 
+no_degenerate_skip: BUILD FAILED
+restored

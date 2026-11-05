@@ -1,0 +1,37 @@
+wedgehole_x6_y0.00                 ins=1 cuts=5 cl=1 dg=1 minClr-c/2=+4.82e-05 ringClr-c/2=-8.08e-07 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (60.0000,16.0770) ang 75.00 deg: off 0.5000 -> on 0.250944 at (56.663209,13.780161) pts 8767 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 30.00 deg: off 0.5000 -> on 0.274557 at (13.507390,2.225443) pts 48835 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2746
+wedgehole_x6_y0.15                 ins=1 cuts=5 cl=1 dg=1 minClr-c/2=+7.41e-05 ringClr-c/2=-3.06e-07 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (60.0000,16.0770) ang 75.00 deg: off 0.5000 -> on 0.250944 at (56.663209,13.780161) pts 8767 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 30.00 deg: off 0.5000 -> on 0.274557 at (13.507390,2.225443) pts 48966 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2746
+wedgehole_x6_y0.60                 ins=1 cuts=5 cl=1 dg=1 minClr-c/2=+5.37e-06 ringClr-c/2=-3.06e-07 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (60.0000,16.0770) ang 75.00 deg: off 0.5000 -> on 0.250944 at (56.663209,13.780161) pts 8767 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 30.00 deg: off 0.5000 -> on 0.274557 at (13.507390,2.225443) pts 50358 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2746
+wedgehole_x8_y0.00                 ins=1 cuts=7 cl=1 dg=1 minClr-c/2=+3.31e-07 ringClr-c/2=-4.17e-07 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (60.0000,16.0770) ang 75.00 deg: off 0.5000 -> on 0.250944 at (56.663209,13.780161) pts 8767 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 30.00 deg: off 0.5022 -> on 0.274557 at (13.507390,2.225443) pts 45316 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2746
+wedgehole_x8_y0.15                 ins=1 cuts=6 cl=1 dg=1 minClr-c/2=+7.41e-05 ringClr-c/2=-6.32e-07 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (60.0000,16.0770) ang 75.00 deg: off 0.5000 -> on 0.250944 at (56.663209,13.780161) pts 8767 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 30.00 deg: off 0.5000 -> on 0.274557 at (13.507390,2.225443) pts 45676 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2746
+wedgehole_x8_y0.60                 ins=1 cuts=5 cl=1 dg=1 minClr-c/2=+5.37e-06 ringClr-c/2=-1.00e-06 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (60.0000,16.0770) ang 75.00 deg: off 0.5000 -> on 0.250944 at (56.663209,13.780161) pts 8767 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 30.00 deg: off 0.5017 -> on 0.274557 at (13.507390,2.225443) pts 47638 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2746
+wedgehole_x10_y0.00                ins=1 cuts=8 cl=1 dg=1 minClr-c/2=+3.31e-07 ringClr-c/2=-3.06e-07 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (60.0000,16.0770) ang 75.00 deg: off 0.5000 -> on 0.250944 at (56.663209,13.780161) pts 8767 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 30.00 deg: off 0.5021 -> on 0.274557 at (13.507390,2.225443) pts 45371 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2746
+wedgehole_x10_y0.15                ins=1 cuts=7 cl=1 dg=1 minClr-c/2=+7.41e-05 ringClr-c/2=-3.06e-07 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (60.0000,16.0770) ang 75.00 deg: off 0.5000 -> on 0.250944 at (56.663209,13.780161) pts 8767 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 30.00 deg: off 0.5021 -> on 0.274557 at (13.507390,2.225443) pts 45353 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2746
+wedgehole_x10_y0.60                ins=1 cuts=7 cl=1 dg=1 minClr-c/2=+5.37e-06 ringClr-c/2=-3.06e-07 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (60.0000,16.0770) ang 75.00 deg: off 0.5000 -> on 0.250944 at (56.663209,13.780161) pts 8767 ABOVE-RIDGE 
+    corner (0.0000,0.0000) ang 30.00 deg: off 0.5017 -> on 0.274557 at (13.507390,2.225443) pts 45570 ABOVE-RIDGE 
+    => FAIL corners=3 worstCornerOn=0.2746
+SUMMARY run=9 fail=9

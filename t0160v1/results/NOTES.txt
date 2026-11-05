@@ -1,0 +1,66 @@
+T-0160 round 1 (3fcccae vs origin/main f7151a3). See ../README.txt for the tools.
+
+Build/tests: Debug -Werror build rc 0; ctest 998/998 passed rc 0 (debug_build.log, ctest.log). Release x86-64-v3 V-carve/golden
+subset 65/65 (ctest_rel3_vcarve.log). changelog check ok; merge-tree clean.
+
+Hash sweeps (vc3 HASH, 26 groups x 40 = 1040 cases, mixed fm 0/1/2):
+  main vs branch VC_CS=0: 1040/1040 identical.  main vs branch default (on): every case without clearance tools identical
+  (678); 362 with clearance tools: 326 identical, 36 differ (all have corner cuts).  branch plain vs x86-64-v3: 1040/1040.
+  INS (on vs off in the branch): 1040 cases, 36 with corner cuts, 33 "off + complete inserted cuts", 3 BAD:
+  fam 7 seed 607 case 22 (overpoly), fam 18 seed 6018 cases 29 and 33 (nestedtight-sq): the cuts of a LATER region come in a
+  different order (multiset of moves identical, no move changed): v_carve.cpp keeps pos = end of the last corner cut, and the
+  next region orders its cuts nearest-first from pos. repro/order_run.cpp + repro/order_fam7_607_22.txt. Contradicts AC5
+  ("otherwise only the added corner moves differ") and ADR-0025 §6 ("every other move keeps its place").
+
+Leftover (lo.hpp + lc.cpp; floor = dist >= rho + c; tent disc per convex corner):
+  * AC3 exceedances in sharpened corners: 109 corners > ridge + 1e-4; worst 1.176 x ridge (bigtri_ch0.002_apex30_V60s03:
+    0.3055 vs h(s/2) 0.2598), 1.165 x (V90 30-degree, chordal 0.002: 0.2913 vs 0.25), 1.098 x at the default-ish chordal
+    0.05 (30-degree corner, 6 mm end mill: 0.2746 vs 0.25), 1.08 x at 45/60-degree corners chordal 0.005. 90-degree corners:
+    up to 0.2523 at chordal 0.005, 0.250007 at 0.05 (polygonised end-mill path, negligible).
+    Mechanism (LC_PT): the point is on the end mill's fillet circle between passes k and k+1, beyond the end of pass k
+    (it ends only min(chordal, R/2) inside the circle, but the circle runs on outward by ~(s/2)*cot of its slope between
+    the passes), so its distance to the nearest cut exceeds s/2. The overlap would have to grow with the circle's slope
+    (steep for the outer passes and acute corners); the branch's own test (ridge + 1e-9) only checks 90/60-degree corners
+    at chordal 0.02-0.05 where it happens to pass; mutant no_overlap (ov = 0) passes the corner tests.
+  * Curved-edge junctions: Dshape (line + convex arc, 90 degrees, mill reaches the corner region) not sharpened at all: the
+    reach test puts the end mill's centre on the straight tangent wedge (V + u (R+rho+c)/sin), which is 2.79 mm from the arc
+    (needs 4.008): leftover 0.5 (2 x ridge). bez_blade (63-degree Bezier corners): not sharpened, 0.317. concave_tri
+    (13-degree cusps between concave arcs): sharpened but 0.499 left (walls curve away from the tangent wedge, the band
+    between the real and the tangent wall ring is not covered).
+  * Rounded / polygonised / chamfered corners (probe at the square's corners): fillet 0.01..1.6 mm (arc), polyline roundings
+    (4/12 pieces, r 0.05..1.5), chamfers 0.0015..0.2 mm: no corner cuts, leftover 0.5 = unsharpened sharp corner (2 x
+    ridge). Fillet 0.0005 and chamfer 0.0005 (< distance tolerance) are sharpened. Chamfer 0.0015: both 135-degree junctions
+    predict 0.228 > chordal but fail the reach test.
+  * Corners no end mill reaches (rect w4-w7, tri_apex30, islands/diamond holes/tiny holes near the corner): not sharpened,
+    0.36-0.5 left; the floor there is the carving tool's own rest clearing (ridges up to 0.5 beside the wall ring anyway).
+  * Multiple clearance tools (6+1, 1+6, 6+3+1, raster): sharpened with the smallest reaching mill; worst 0.089 < ridge.
+  * Threshold (hexagon, R* = chordal/(1 - sin 60)): 0.98/0.999/0.99999 R* -> no cuts and identical output, leftover 0.0346
+    (< chordal: the prediction is an upper bound); 1.00001/1.001/1.02 R* -> 6 corners sharpened.
+Safety: every inserted feed (links included) >= rho + c/2 by exact distance on all lc cases (min +3.3e-7 above c/2 at a tiny
+  hole's ring chords in wedgehole_*, equal to the ring cuts' own margin) EXCEPT far offsets: repro/far.cpp, chordal 0.001 at
+  1e6 mm and chordal 0.0003 at 3e5 mm: corner moves at rho - 1.67e-3 / rho - 5e-4 (cone crosses the wall); off: exact.
+  Cause: RingRegion eps = 1e-9 * coordinate scale >= half the outward extension (3c+d), so the extension piece is kept.
+  vc3 cone oracle with clearance tools forced (families 0-23 x 30): 0 real violations (cone/), adv sets: advhash.
+Oracle sanity: always_join mutant (no link check) -> lc reports links through the hole in wedgehole_* (-0.75..-1e9);
+  the branch's tests pass with it.
+  adv/adv2 x 5 configs (advhash.sh, 1620 runs): main vs branch identical in every run without clearance tools; 42 differ
+  with clearance tools; INS: 40 insertion-only, 2 BAD (Ddeep_g0.001/g0.02 + 2 mm end mill: later cuts reordered, same
+  cause as above).
+vc3 cone sweep with clearance tools forced (conesweep.sh, families 0-23 x 30, sharpening on): 0 real violations in the
+  families finished (see cone/ summaries; fam 15 coincident-edge false alarms as in earlier rounds).
+
+Mutants (mutants.sh, corner + post tests; results/mutants*.txt): caught: off, groove_only, neg_overlap, no_clip (cone check
+  line 343), no_reach, largest_mill, thr_2x, hole_side, stepover_x2, first_corner_only, never_join (golden only).
+  NOT caught by the branch's tests: no_overlap (ov = 0: only the golden fails), always_join (links at depth never checked
+  against the rings), thr_zero, no_flatcheck, no_ext/big_ext, eps_big (1e-2 mm eps), no_degenerate_skip, pos_reset.
+
+Perf (perfrun.sh, Release plain, CPU s, interleaved, load 13-23 from other agents; results/perf.txt):
+  AC2 plain 5000: main 31.3/27.4, branch 30.9/27.7; frame: 48.8/42.6 vs 50.9/43.0; flat 0.5: 40.1/39.3 vs 34.7/39.5 -> the
+  60 s bound holds, no change (no clearance tools: sharpening does not run). Sharpening cost, flat 0.5 + 0.2 mm end mill:
+  main 40.3/47.4, branch on 37.4/44.9, branch off 43.4/45.2 (noise), +30,000 carve moves (6 per letter). 1 mm end mill:
+  does not fit the 6 mm letters (diag), no corner cuts. Frame + flat + 0.5 mm end mill at 5000: refused on main and branch
+  alike (Pocket per-part cap); at n=100 see perf2.txt (Pocket on one part with many holes is slow on main already).
+  Frame + flat 0.5 + 0.5 mm end mill, n = 100 (one part, 100 letter holes; perf2.txt): main 112.0 s, branch on 109.1 s
+  (+216 carve moves), branch off 143.8 s (load noise); n = 500 took > 4 min on main and was stopped (Pocket, pre-existing).
+GCC: only GCC 15.2 installed (no GCC 13, no MSVC here). Plain vs -march=x86-64-v3: 1040/1040 hashes identical, goldens pass
+  in both (ctest Debug plain; Release v3 subset).
