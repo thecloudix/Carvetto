@@ -135,18 +135,23 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     on an Inside cut, a circle from its bounding-box centre or Optimise from its centre. The cut
     starts at the beginning of the first such arc (lowest span index), so it runs the corner arc
     first; the arc start must itself be within the tolerance of the nearest distance.
-    (b) *Sharp corner*: the target lies on the vector (its nearest distance is the cut's offset
-    distance) and the spans at the nearest distance form one run of two or more consecutive spans.
-    On a V-bit cut with sharp external corners a convex tip has no join span: the offset lines
-    meet at the mitre, and the tip's feet on both are equally near. The cut starts at the end of
-    the run's first span: exactly the mitre's corner point; where the mitre is squared off beyond
-    the mitre limit (a chamfer at the cut distance from the tip, so both lines and the chamfer are
-    equally near), the chamfer's first corner in the direction of travel; at a tip whose round
-    join a merged-region cut carries as a polygon, the polygon's first vertex. When every span of
-    the cut is near (a loop of two or three spans, such as an arc closed by a line), the loop is
-    broken where consecutive feet lie farthest apart (if clearly the widest gap), so the start is
-    the mitre at the target. A target nearest one
-    junction (both spans' nearest point is the junction) starts there, as before.
+    (b) *Sharp corner*: the target lies on the vector (its nearest distance is the distance the
+    cut was actually offset by: the cut distance, or for a merged region — vectors offset together,
+    or a vector whose exact offset did not close — the cut distance plus the chordal tolerance, or
+    up to the chordal tolerance less where a region's polygonal round join cuts inside) and
+    the spans at the nearest distance form one run of two or more consecutive spans. On a V-bit cut
+    with sharp external corners a convex tip has no join span: the offset lines meet at the mitre,
+    and the tip's feet on both are equally near. Squared off beyond the mitre limit, the chamfer
+    lies at the offset distance from the tip, so both lines and the chamfer are equally near; a
+    merged region's round join is a polygon whose chords are all equally near. When every span of
+    the cut is near (a loop of two or three spans, such as an arc closed by a line) the loop is
+    broken where consecutive feet lie farthest apart (if clearly the widest gap). The cut starts at
+    the run's sharpest junction (largest turn of direction), the first in travel among junctions
+    within 1e-3 rad of it: exactly the mitre's corner point, whatever the cut direction and even
+    when a short neighbour edge that turns only slightly (length × sin(turn) below the tolerance)
+    is near too; the chamfer's first corner in the direction of travel; on a polygonal join, whose
+    vertices turn equally, the first vertex in travel inside the run. A target nearest one
+    junction starts there, as before.
     Near spans in two or more separate places (a box-centre anchor on a symmetric shape) are not
     broken by rule and still follow rounding (T-0166). The rules apply to all three start modes.
     They are stable under ulp and 1e-9 relative perturbations, and GCC 13 and GCC 15

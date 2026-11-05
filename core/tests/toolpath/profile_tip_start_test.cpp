@@ -372,6 +372,12 @@ TEST_CASE("T-0158 AC1 generative: a V-bit cut with sharp external corners starts
             CHECK(std::fabs((s0.at - tip).dot(out) - dist) < 1e-6);
             CHECK(std::min(offLine(s0.at, u1), offLine(s0.at, u2)) < 1e-6);
             CHECK(geometry::distance(s0.at, tip) > dist + 1e-3);
+            // The first corner in travel: the cut runs along the chamfer to its other corner first.
+            const Vec2 to = s0.first.to.xy();
+            CHECK(s0.first.kind == MoveKind::Feed);
+            CHECK(std::fabs((to - tip).dot(out) - dist) < 1e-6);
+            const bool startOn1 = offLine(s0.at, u1) < offLine(s0.at, u2);
+            CHECK((startOn1 ? offLine(to, u2) : offLine(to, u1)) < 1e-6);
         }
         for (double k : scales) {
             INFO("scale 1 " << (k >= 1.0 ? "+ " : "- ") << std::fabs(k - 1.0));
@@ -427,6 +433,172 @@ TEST_CASE("T-0158: a mitred loop of two spans (an arc closed by a line) starts a
             INFO("scale 1 " << (k >= 1.0 ? "+ " : "- ") << std::fabs(k - 1.0));
             const Vec2 s = startOf(profileToolpath({scaled(d, k)}, v, p).toolpath).at;
             CHECK(geometry::distance(s, s0 * k) < 1e-5);
+        }
+    }
+}
+
+namespace {
+
+// Corner of the outward offsets (by `dist`) of the edges into and out of `tip` of a
+// counter-clockwise contour: the mitre at the tip.
+Vec2 mitreAt(Vec2 tip, Vec2 uIn, Vec2 uOut, double dist) {
+    const Vec2 nIn{uIn.y, -uIn.x};
+    const Vec2 nOut{uOut.y, -uOut.x};
+    const Vec2 p = tip + nIn * dist;
+    const Vec2 q = tip + nOut * dist;
+    const double s = (q - p).cross(uOut) / uIn.cross(uOut);
+    return p + uIn * s;
+}
+
+Contour polygon(const std::vector<Vec2>& v) {
+    Contour c;
+    c.closed = true;
+    for (std::size_t i = 0; i < v.size(); ++i) {
+        c.spans.push_back(LineSpan{v[i], v[(i + 1) % v.size()]});
+    }
+    return c;
+}
+
+tooling::Tool vBit90() {
+    tooling::Tool v = test::endMill(20.0);
+    v.type = tooling::ToolType::VBit;
+    v.includedAngle = geometry::kPi / 2.0;
+    return v;
+}
+
+}  // namespace
+
+TEST_CASE("T-0158: a mitred tip with a short, slightly turning neighbour edge starts at the tip's own mitre",
+          "[toolpath][profile][start][vbit]") {
+    // T-0158 round-2 verifier (harness t0158v2 edge.cpp, shortpost_L0.01_turn2): an edge of length L
+    // after (or before) the tip that turns by a small angle t keeps its offset within the tolerance
+    // of the tip when L sin t < tol, so it joined the near run and, in one cut direction, its
+    // shallow mitre took the start. The start is the run's sharpest junction, the tip's mitre,
+    // in both directions and on both sides of L sin t = tol.
+    test::SplitMix rng{0x7158'0006ULL};
+    const std::vector<double> scales = perturbations();
+    for (int scene = 0; scene < 24; ++scene) {
+        const Vec2 tip{rng.uniform(-30.0, 30.0), rng.uniform(-30.0, 30.0)};
+        const double half = rng.uniform(25.0, 50.0) * geometry::kPi / 180.0;
+        const double turn = rng.uniform(1.0, 5.0) * geometry::kPi / 180.0;
+        const double length = rng.logUniform(0.003, 0.3);
+        const bool after = scene % 2 == 0;
+        const Vec2 a = tip + Vec2::fromAngle(geometry::kPi - half, 30.0);
+        const Vec2 b = tip + Vec2::fromAngle(geometry::kPi + half, 30.0);
+        const Vec2 c = tip + Vec2{-45.0, 0.0};
+        std::vector<Vec2> v;
+        Vec2 uIn;
+        Vec2 uOut;
+        if (after) {
+            const Vec2 q = tip + Vec2::fromAngle(geometry::kPi - half - turn, length);
+            v = {tip, q, a, c, b};
+            uIn = (tip - b) * (1.0 / (tip - b).length());
+            uOut = (q - tip) * (1.0 / (q - tip).length());
+        } else {
+            const Vec2 q = tip + Vec2::fromAngle(geometry::kPi + half + turn, length);
+            v = {tip, a, c, b, q};
+            uIn = (tip - q) * (1.0 / (tip - q).length());
+            uOut = (a - tip) * (1.0 / (a - tip).length());
+        }
+        const Contour poly = polygon(v);
+        for (CutDirection dir : {CutDirection::Climb, CutDirection::Conventional}) {
+            ProfileParams p;
+            p.side = ProfileSide::Outside;
+            p.direction = dir;
+            p.startAt = StartAt::VectorStart;
+            p.passes.cutDepth = 3.0;
+            p.passes.passDepth = 3.0;
+            p.corners.sharpExternal = true;
+            p.corners.mitreLimit = 50.0;
+            const double dist = profileToolRadius(vBit90(), p.passes);
+            INFO("scene " << scene << (after ? " after" : " before") << " L " << length << " L sin t "
+                          << length * std::sin(turn) << " climb " << (dir == CutDirection::Climb));
+            const Vec2 s0 = startOf(profileToolpath({poly}, vBit90(), p).toolpath).at;
+            CHECK(geometry::distance(s0, mitreAt(tip, uIn, uOut, dist)) < 1e-6);
+            for (double k : scales) {
+                INFO("scale 1 " << (k >= 1.0 ? "+ " : "- ") << std::fabs(k - 1.0));
+                const Vec2 s = startOf(profileToolpath({scaled(poly, k)}, vBit90(), p).toolpath).at;
+                CHECK(geometry::distance(s, s0 * k) < 1e-5);
+            }
+        }
+    }
+}
+
+TEST_CASE("T-0158: mitred tips of merged-region cuts start at the region's mitre, unmoved by perturbations",
+          "[toolpath][profile][start][vbit]") {
+    // T-0158 round-2 verifier (harness t0158v2 mmrg_*, gapmitre_1e-4): a vector merged with a
+    // neighbour, or with a closing gap within the tolerance, is offset as a region by the cut
+    // distance plus the chordal tolerance; the sharp-corner rule compares against that distance.
+    // With an end mill the region's round join at the tip is a polygon whose chords are all
+    // equally near (inside the circle by up to the chordal tolerance): it starts at a vertex of
+    // that polygon, again unmoved (harness t0158v2 gen2 rmrg).
+    test::SplitMix rng{0x7158'0007ULL};
+    const std::vector<double> scales = perturbations();
+    for (int scene = 0; scene < 24; ++scene) {
+        const bool round = scene >= 16;
+        const Star star = curvedStar(rng, true, false);
+        std::vector<Contour> cs{star.contour};
+        const bool gap = scene % 2 == 1;
+        if (gap) {
+            // Close the star a little off its start: the closing edge ends 1e-4 inside the tip.
+            auto& last = std::get<LineSpan>(cs[0].spans.back());
+            last.end = star.start + (star.centre - star.start) * (1e-4 / (star.centre - star.start).length());
+        } else {
+            // A copy of the star shifted away from its start tip, overlapping its body: the two
+            // cuts merge, and the start tip stays a tip of the region.
+            const Vec2 shift = (star.centre - star.start) * 0.7;
+            Contour other = star.contour;
+            for (geometry::Span& sp : other.spans) {
+                auto& l = std::get<LineSpan>(sp);
+                l.start = l.start + shift;
+                l.end = l.end + shift;
+            }
+            cs.push_back(other);
+        }
+        ProfileParams p = params(rng, ProfileSide::Outside);
+        p.passes.cutDepth = 3.0;
+        p.passes.passDepth = 3.0;
+        p.corners.sharpExternal = !round;
+        p.corners.mitreLimit = 50.0;
+        const tooling::Tool tool = round ? test::endMill(6.0) : vBit90();
+        INFO("scene " << scene << (gap ? " gap" : " neighbour") << (round ? " end mill" : " V-bit"));
+        const ProfileResult base = profileToolpath(cs, tool, p);
+        REQUIRE(base.ok());
+        REQUIRE(base.has(ProfileIssue::MergedWithNeighbour));
+        // The cut of the star's own start: the cut start nearest the star's tip.
+        auto tipStart = [&](const Toolpath& tp, double k) {
+            Vec2 best;
+            double bestD = std::numeric_limits<double>::infinity();
+            for (const Move& m : tp.moves) {
+                if (m.kind == MoveKind::Rapid && m.to.z == p.safeZ &&
+                    geometry::distance(m.to.xy(), star.start * k) < bestD) {
+                    bestD = geometry::distance(m.to.xy(), star.start * k);
+                    best = m.to.xy();
+                }
+            }
+            return best;
+        };
+        const Vec2 s0 = tipStart(base.toolpath, 1.0);
+        // At the region's mitre: on the tip's bisector, (cut distance + chordal) / sin(half) out.
+        const Vec2 along = geometry::endPoint(cs[0].spans.front()) - star.start;
+        const Vec2 back = geometry::startPoint(cs[0].spans.back()) - star.start;
+        const Vec2 u1 = along * (1.0 / along.length());
+        const Vec2 u2 = back * (1.0 / back.length());
+        const double sinHalf = std::sqrt(0.5 * (1.0 - u1.dot(u2)));
+        const double offset = profileToolRadius(tool, p.passes) + p.tolerance.chordal;
+        const Vec2 out = (u1 + u2) * (-1.0 / (u1 + u2).length());
+        if (round) {
+            CHECK(std::fabs(geometry::distance(s0, star.start) - offset) < 1e-6);  // a polygon vertex
+        } else {
+            CHECK(geometry::distance(s0, star.start + out * (offset / sinHalf)) < 1e-4);
+        }
+        for (double k : scales) {
+            INFO("scale 1 " << (k >= 1.0 ? "+ " : "- ") << std::fabs(k - 1.0));
+            std::vector<Contour> scs;
+            for (const Contour& c : cs) scs.push_back(scaled(c, k));
+            const ProfileResult r = profileToolpath(scs, tool, p);
+            REQUIRE(r.ok());
+            CHECK(geometry::distance(tipStart(r.toolpath, k), s0 * k) < 1e-5);
         }
     }
 }
