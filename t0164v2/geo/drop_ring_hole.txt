@@ -1,0 +1,6 @@
+contour 0 closed=1
+    A 0 0 r 30 0 6.2831853071795862 dir 0
+contour 0 closed=1
+    A 0 0 r 20 0 -6.2831853071795862 dir 1
+contour 0 closed=1
+    A 25 0 r 1.5 0 -6.2831853071795862 dir 1

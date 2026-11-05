@@ -1,0 +1,12 @@
+main plain round1 load=34.80 5000 regions 38750 spans: 28.30 s CPU, 2680243 moves, ok=1 diags=0, peak RSS 407 MB
+br plain round1 load=34.71 5000 regions 38750 spans: 27.95 s CPU, 2680243 moves, ok=1 diags=0, peak RSS 410 MB
+main frame round1 load=34.96 5000 regions 38750 spans: 40.65 s CPU, 1651346 moves, ok=1 diags=0, peak RSS 1536 MB
+br frame round1 load=34.09 5000 regions 38750 spans: 42.65 s CPU, 1651346 moves, ok=1 diags=0, peak RSS 1538 MB
+main flat round1 load=33.60 5000 regions 38750 spans: 35.45 s CPU, 3938993 moves, ok=1 diags=0, peak RSS 756 MB
+br flat round1 load=33.55 5000 regions 38750 spans: 36.86 s CPU, 3938993 moves, ok=1 diags=0, peak RSS 758 MB
+main plain round2 load=33.91 5000 regions 38750 spans: 26.89 s CPU, 2680243 moves, ok=1 diags=0, peak RSS 407 MB
+br plain round2 load=34.01 5000 regions 38750 spans: 28.01 s CPU, 2680243 moves, ok=1 diags=0, peak RSS 410 MB
+main frame round2 load=34.03 5000 regions 38750 spans: 40.94 s CPU, 1651346 moves, ok=1 diags=0, peak RSS 1536 MB
+br frame round2 load=34.03 5000 regions 38750 spans: 43.10 s CPU, 1651346 moves, ok=1 diags=0, peak RSS 1538 MB
+main flat round2 load=32.28 5000 regions 38750 spans: 35.39 s CPU, 3938993 moves, ok=1 diags=0, peak RSS 756 MB
+br flat round2 load=31.46 5000 regions 38750 spans: 38.90 s CPU, 3938993 moves, ok=1 diags=0, peak RSS 758 MB

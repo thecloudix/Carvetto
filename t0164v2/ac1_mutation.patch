@@ -1,0 +1,20 @@
+--- /home/chris/wt-T0164/core/tests/toolpath/v_carve_test.cpp	2026-11-05 08:21:28.669909405 -0600
++++ /home/chris/scratch-t0164v1/muttest/v_carve_test_mut.cpp	2026-11-05 09:24:18.570988137 -0600
+@@ -1,3 +1,4 @@
++#include <cstdlib>
+ // T-0153: V-carve toolpath (ADR-0025). AC1: every move of the carving tool stays inside the
+ // region - its cross-section at the start plane never crosses a wall (exact cone/wall check of
+ // v_carve_oracle.hpp over a generative sweep) -, the depth follows radius / tan(angle / 2) within
+@@ -1065,7 +1066,11 @@
+         const orc::SweepCase sc = orc::sweepCase(k);
+         INFO("case " << k << ": " << sc.what);
+         const VCarvingParams& p = sc.params;
+-        const VCarvingResult r = vCarvingToolpath(sc.region, sc.tool, std::nullopt, sc.clearance, p);
++        VCarvingResult r = vCarvingToolpath(sc.region, sc.tool, std::nullopt, sc.clearance, p);
++        if (std::getenv("VMUT") && (p.flatDepth > 0.0 || r.has(ToolpathIssue::CarveDepthLimited))) {  // VERIFIER MUTATION
++            const double f = std::atof(std::getenv("VMUT"));
++            for (Move& m : r.toolpath.moves) { if (m.to.z < -p.startDepth) m.to.z = -p.startDepth + (m.to.z + p.startDepth) * f; }
++        }
+         if (!r.ok()) {
+             // Only regions too narrow to carve at the tolerance may come out empty.
+             REQUIRE_FALSE(r.diagnostics.empty());

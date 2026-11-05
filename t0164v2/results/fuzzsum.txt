@@ -1,0 +1,10 @@
+('br', 'BADEND=1') accepted=7322 bypass=0 worstDisc=0.0000
+('br', 'BADEND=1 BADEND_R=1') accepted=6462 bypass=0 worstDisc=0.0000
+('br', 'BADSTART=1') accepted=6863 bypass=0 worstDisc=0.0000
+('br', 'DROP=1') accepted=7760 bypass=0 worstDisc=0.0000
+('br', 'normal') accepted=30116 bypass=0 worstDisc=0.0000
+('main', 'BADEND=1') accepted=7451 bypass=43 worstDisc=1.0776
+('main', 'BADEND=1 BADEND_R=1') accepted=6413 bypass=0 worstDisc=0.0000
+('main', 'BADSTART=1') accepted=6819 bypass=9 worstDisc=0.0000
+('main', 'DROP=1') accepted=11049 bypass=3156 worstDisc=39.9973
+('main', 'normal') accepted=30116 bypass=0 worstDisc=0.0000

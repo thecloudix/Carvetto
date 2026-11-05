@@ -1,0 +1,2 @@
+runs=4320 identical=4320 movesDiffer=0 diagsDiffer=0 odd=0 refused br=585 main=585
+runs=540 identical=540 movesDiffer=0 diagsDiffer=0 odd=0 refused br=28 main=28

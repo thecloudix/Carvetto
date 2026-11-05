@@ -1,0 +1,86 @@
+br pairsmix load=37.01 pairsmix 200 seed=1 contours=692 ch=0.5 cpu=0.22s ok=1 moves=30795 regions=600 hash=429be24083fe4781 [28 200 group(s) of crossing or touching vectors 
+main pairsmix load=37.01 pairsmix 200 seed=1 contours=692 ch=0.5 cpu=0.59s ok=1 moves=30795 regions=600 hash=429be24083fe4781 [28 200 group(s) of crossing or touching vectors 
+br pairsmix load=37.01 pairsmix 400 seed=1 contours=1384 ch=0.5 cpu=0.41s ok=1 moves=61671 regions=1200 hash=3c76f3d15104086a [28 400 group(s) of crossing or touching vector
+main pairsmix load=37.01 pairsmix 400 seed=1 contours=1384 ch=0.5 cpu=1.87s ok=1 moves=61671 regions=1200 hash=3c76f3d15104086a [28 400 group(s) of crossing or touching vector
+br pairsmix load=36.93 pairsmix 800 seed=1 contours=2778 ch=0.5 cpu=0.86s ok=1 moves=123815 regions=2400 hash=fdc59a66fbd9b009 [28 800 group(s) of crossing or touching vecto
+main pairsmix load=36.93 pairsmix 800 seed=1 contours=2778 ch=0.5 cpu=7.06s ok=1 moves=123815 regions=2400 hash=fdc59a66fbd9b009 [28 800 group(s) of crossing or touching vecto
+br pairsmix load=36.79 pairsmix 1600 seed=1 contours=5560 ch=0.5 cpu=1.86s ok=1 moves=247603 regions=4800 hash=9abe03cf9ac9d613 [28 1600 group(s) of crossing or touching vec
+main pairsmix load=36.64 pairsmix 1600 seed=1 contours=5560 ch=0.5 cpu=26.99s ok=1 moves=247603 regions=4800 hash=9abe03cf9ac9d613 [28 1600 group(s) of crossing or touching ve
+br pairsmix load=36.29 pairsmix 3200 seed=1 contours=11165 ch=0.5 cpu=3.74s ok=1 moves=496890 regions=9600 hash=1c772231ccd4c843 [28 3200 group(s) of crossing or touching ve
+br pairsmix load=36.08 pairsmix 6400 seed=1 contours=22407 ch=0.5 cpu=7.67s ok=1 moves=995530 regions=19200 hash=bbf27f5b73c456ee [28 6400 group(s) of crossing or touching v
+br dense load=35.83 dense 200 seed=1 contours=1290 ch=0.05 cpu=1.14s ok=1 moves=122225 regions=1119 hash=6d16531820736118 [28 166 group(s) of crossing or touching vectors
+main dense load=35.83 dense 200 seed=1 contours=1290 ch=0.05 cpu=4.40s ok=1 moves=122225 regions=1119 hash=6d16531820736118 [28 166 group(s) of crossing or touching vectors
+br dense load=35.39 dense 400 seed=1 contours=2573 ch=0.05 cpu=2.36s ok=1 moves=246464 regions=2344 hash=470eba8ee1b462fe [28 325 group(s) of crossing or touching vectors
+main dense load=35.39 dense 400 seed=1 contours=2573 ch=0.05 cpu=14.96s ok=1 moves=246464 regions=2344 hash=470eba8ee1b462fe [28 325 group(s) of crossing or touching vector
+br dense load=34.92 dense 800 seed=1 contours=5130 ch=0.05 cpu=4.75s ok=1 moves=492093 regions=4830 hash=b2ecbdbe361c3813 [28 639 group(s) of crossing or touching vectors
+main dense load=34.78 dense 800 seed=1 contours=5130 ch=0.05 cpu=50.70s ok=1 moves=492093 regions=4830 hash=b2ecbdbe361c3813 [28 639 group(s) of crossing or touching vector
+br dense load=31.84 dense 1600 seed=1 contours=10391 ch=0.05 cpu=9.73s ok=1 moves=980711 regions=9441 hash=ea9647c0878f28a5 [28 1290 group(s) of crossing or touching vect
+br dense load=31.26 dense 3200 seed=1 contours=20789 ch=0.05 cpu=20.14s ok=1 moves=1978144 regions=19043 hash=fe6bcdd3b494c560 [28 2558 group(s) of crossing or touching v
+br star load=29.88 star 1000 seed=1 contours=1002 ch=0.05 cpu=3.19s ok=1 moves=225437 regions=441 hash=da122ae3359b0888 [28 1 group(s) of crossing or touching vectors we
+main star load=29.49 star 1000 seed=1 contours=1002 ch=0.05 cpu=3.26s ok=1 moves=225437 regions=441 hash=da122ae3359b0888 [28 1 group(s) of crossing or touching vectors we
+br star load=29.05 star 2000 seed=1 contours=2002 ch=0.05 cpu=12.17s ok=1 moves=344398 regions=879 hash=f6300c316288d74b [28 1 group(s) of crossing or touching vectors w
+main star load=28.12 star 2000 seed=1 contours=2002 ch=0.05 cpu=12.02s ok=1 moves=344398 regions=879 hash=f6300c316288d74b [28 1 group(s) of crossing or touching vectors w
+br star load=26.99 star 4000 seed=1 contours=4002 ch=0.05 cpu=71.28s ok=1 moves=663625 regions=1749 hash=b017b52f6f1087a1 [28 1 group(s) of crossing or touching vectors 
+main star load=31.17 star 4000 seed=1 contours=4002 ch=0.05 cpu=69.24s ok=1 moves=663625 regions=1749 hash=b017b52f6f1087a1 [28 1 group(s) of crossing or touching vectors 
+br star load=33.24 star 8000 seed=1 contours=8002 ch=0.05 cpu=250.54s ok=1 moves=969402 regions=3957 hash=9211c44132cd38ba [28 1 group(s) of crossing or touching vectors
+main star load=35.32 star 8000 seed=1 contours=8002 ch=0.05 cpu=256.79s ok=1 moves=969402 regions=3957 hash=9211c44132cd38ba [28 1 group(s) of crossing or touching vectors
+br rand load=35.69 rand 400 seed=1 contours=1011 ch=0.05 cpu=0.40s ok=1 moves=39237 regions=838 hash=c6428f09634ab6d3 [28 138 group(s) of crossing or touching vectors we
+main rand load=35.69 rand 400 seed=1 contours=1011 ch=0.05 cpu=0.53s ok=1 moves=39237 regions=838 hash=c6428f09634ab6d3 [28 138 group(s) of crossing or touching vectors we
+br rand load=35.69 rand 800 seed=1 contours=2002 ch=0.05 cpu=0.80s ok=1 moves=79160 regions=1670 hash=fc4d1f2af917bd62 [28 286 group(s) of crossing or touching vectors w
+main rand load=35.69 rand 800 seed=1 contours=2002 ch=0.05 cpu=1.35s ok=1 moves=79160 regions=1670 hash=fc4d1f2af917bd62 [28 286 group(s) of crossing or touching vectors w
+br rand load=35.69 rand 1600 seed=1 contours=4004 ch=0.05 cpu=1.60s ok=1 moves=155167 regions=3332 hash=9d394bd0f872e0a5 [28 553 group(s) of crossing or touching vectors
+main rand load=35.80 rand 1600 seed=1 contours=4004 ch=0.05 cpu=3.59s ok=1 moves=155167 regions=3332 hash=9d394bd0f872e0a5 [28 553 group(s) of crossing or touching vectors
+br rand load=35.89 rand 3200 seed=1 contours=7993 ch=0.05 cpu=3.25s ok=1 moves=317922 regions=6702 hash=417fa1dd58456f3b [28 1139 group(s) of crossing or touching vector
+br rand load=35.89 rand 6400 seed=1 contours=16017 ch=0.05 cpu=6.75s ok=1 moves=647157 regions=13382 hash=901bd03c79865e04 [28 2302 group(s) of crossing or touching vect
+br nest load=35.60 nest 25 seed=1 contours=27 ch=0.5 cpu=0.01s ok=1 moves=549 regions=257 hash=1873073a7e3c4bf4 [28 1 group(s) of crossing or touching vectors were re] [
+main nest load=35.60 nest 25 seed=1 contours=27 ch=0.5 cpu=0.00s ok=1 moves=549 regions=257 hash=1873073a7e3c4bf4 [28 1 group(s) of crossing or touching vectors were re] [
+br nest load=35.60 nest 50 seed=1 contours=52 ch=0.5 cpu=0.02s ok=1 moves=555 regions=540 hash=4b08dcca89baabc2 [28 1 group(s) of crossing or touching vectors were re] [
+main nest load=35.60 nest 50 seed=1 contours=52 ch=0.5 cpu=0.02s ok=1 moves=555 regions=540 hash=4b08dcca89baabc2 [28 1 group(s) of crossing or touching vectors were re] [
+br nest load=35.60 nest 100 seed=1 contours=102 ch=0.5 cpu=0.06s ok=1 moves=552 regions=727 hash=19be6c8ce29ff38a [28 1 group(s) of crossing or touching vectors were re]
+main nest load=35.60 nest 100 seed=1 contours=102 ch=0.5 cpu=0.06s ok=1 moves=552 regions=727 hash=19be6c8ce29ff38a [28 1 group(s) of crossing or touching vectors were re]
+br nest load=35.60 nest 200 seed=1 contours=202 ch=0.5 cpu=0.22s ok=1 moves=550 regions=1261 hash=503230262b2eae25 [28 1 group(s) of crossing or touching vectors were re
+main nest load=35.60 nest 200 seed=1 contours=202 ch=0.5 cpu=0.23s ok=1 moves=550 regions=1261 hash=503230262b2eae25 [28 1 group(s) of crossing or touching vectors were re
+br pairsmix load=35.60 pairsmix 200 seed=1 contours=692 ch=0.5 cpu=0.22s ok=1 moves=30795 regions=600 hash=429be24083fe4781 [28 200 group(s) of crossing or touching vectors 
+main pairsmix load=35.60 pairsmix 200 seed=1 contours=692 ch=0.5 cpu=0.52s ok=1 moves=30795 regions=600 hash=429be24083fe4781 [28 200 group(s) of crossing or touching vectors 
+br pairsmix load=35.39 pairsmix 400 seed=1 contours=1384 ch=0.5 cpu=0.44s ok=1 moves=61671 regions=1200 hash=3c76f3d15104086a [28 400 group(s) of crossing or touching vector
+main pairsmix load=35.39 pairsmix 400 seed=1 contours=1384 ch=0.5 cpu=1.94s ok=1 moves=61671 regions=1200 hash=3c76f3d15104086a [28 400 group(s) of crossing or touching vector
+br pairsmix load=35.39 pairsmix 800 seed=1 contours=2778 ch=0.5 cpu=0.84s ok=1 moves=123815 regions=2400 hash=fdc59a66fbd9b009 [28 800 group(s) of crossing or touching vecto
+main pairsmix load=35.39 pairsmix 800 seed=1 contours=2778 ch=0.5 cpu=7.01s ok=1 moves=123815 regions=2400 hash=fdc59a66fbd9b009 [28 800 group(s) of crossing or touching vecto
+br pairsmix load=35.03 pairsmix 1600 seed=1 contours=5560 ch=0.5 cpu=1.88s ok=1 moves=247603 regions=4800 hash=9abe03cf9ac9d613 [28 1600 group(s) of crossing or touching vec
+main pairsmix load=35.11 pairsmix 1600 seed=1 contours=5560 ch=0.5 cpu=26.89s ok=1 moves=247603 regions=4800 hash=9abe03cf9ac9d613 [28 1600 group(s) of crossing or touching ve
+br pairsmix load=34.95 pairsmix 3200 seed=1 contours=11165 ch=0.5 cpu=3.80s ok=1 moves=496890 regions=9600 hash=1c772231ccd4c843 [28 3200 group(s) of crossing or touching ve
+br pairsmix load=34.95 pairsmix 6400 seed=1 contours=22407 ch=0.5 cpu=7.96s ok=1 moves=995530 regions=19200 hash=bbf27f5b73c456ee [28 6400 group(s) of crossing or touching v
+br dense load=34.80 dense 200 seed=1 contours=1290 ch=0.05 cpu=1.19s ok=1 moves=122225 regions=1119 hash=6d16531820736118 [28 166 group(s) of crossing or touching vectors
+main dense load=34.80 dense 200 seed=1 contours=1290 ch=0.05 cpu=4.42s ok=1 moves=122225 regions=1119 hash=6d16531820736118 [28 166 group(s) of crossing or touching vectors
+br dense load=34.76 dense 400 seed=1 contours=2573 ch=0.05 cpu=2.40s ok=1 moves=246464 regions=2344 hash=470eba8ee1b462fe [28 325 group(s) of crossing or touching vectors
+main dense load=34.76 dense 400 seed=1 contours=2573 ch=0.05 cpu=14.76s ok=1 moves=246464 regions=2344 hash=470eba8ee1b462fe [28 325 group(s) of crossing or touching vector
+br dense load=34.68 dense 800 seed=1 contours=5130 ch=0.05 cpu=4.78s ok=1 moves=492093 regions=4830 hash=b2ecbdbe361c3813 [28 639 group(s) of crossing or touching vectors
+main dense load=34.71 dense 800 seed=1 contours=5130 ch=0.05 cpu=51.22s ok=1 moves=492093 regions=4830 hash=b2ecbdbe361c3813 [28 639 group(s) of crossing or touching vector
+br dense load=34.46 dense 1600 seed=1 contours=10391 ch=0.05 cpu=9.54s ok=1 moves=980711 regions=9441 hash=ea9647c0878f28a5 [28 1290 group(s) of crossing or touching vect
+br dense load=34.31 dense 3200 seed=1 contours=20789 ch=0.05 cpu=19.80s ok=1 moves=1978144 regions=19043 hash=fe6bcdd3b494c560 [28 2558 group(s) of crossing or touching v
+br star load=34.09 star 1000 seed=1 contours=1002 ch=0.05 cpu=3.32s ok=1 moves=225437 regions=441 hash=da122ae3359b0888 [28 1 group(s) of crossing or touching vectors we
+main star load=34.08 star 1000 seed=1 contours=1002 ch=0.05 cpu=3.30s ok=1 moves=225437 regions=441 hash=da122ae3359b0888 [28 1 group(s) of crossing or touching vectors we
+br star load=33.99 star 2000 seed=1 contours=2002 ch=0.05 cpu=12.42s ok=1 moves=344398 regions=879 hash=f6300c316288d74b [28 1 group(s) of crossing or touching vectors w
+main star load=33.84 star 2000 seed=1 contours=2002 ch=0.05 cpu=12.50s ok=1 moves=344398 regions=879 hash=f6300c316288d74b [28 1 group(s) of crossing or touching vectors w
+br star load=33.65 star 4000 seed=1 contours=4002 ch=0.05 cpu=71.26s ok=1 moves=663625 regions=1749 hash=b017b52f6f1087a1 [28 1 group(s) of crossing or touching vectors 
+main star load=33.91 star 4000 seed=1 contours=4002 ch=0.05 cpu=66.87s ok=1 moves=663625 regions=1749 hash=b017b52f6f1087a1 [28 1 group(s) of crossing or touching vectors 
+br star load=33.95 star 8000 seed=1 contours=8002 ch=0.05 cpu=249.47s ok=1 moves=969402 regions=3957 hash=9211c44132cd38ba [28 1 group(s) of crossing or touching vectors
+main star load=31.00 star 8000 seed=1 contours=8002 ch=0.05 cpu=239.76s ok=1 moves=969402 regions=3957 hash=9211c44132cd38ba [28 1 group(s) of crossing or touching vectors
+br rand load=31.64 rand 400 seed=1 contours=1011 ch=0.05 cpu=0.38s ok=1 moves=39237 regions=838 hash=c6428f09634ab6d3 [28 138 group(s) of crossing or touching vectors we
+main rand load=31.64 rand 400 seed=1 contours=1011 ch=0.05 cpu=0.52s ok=1 moves=39237 regions=838 hash=c6428f09634ab6d3 [28 138 group(s) of crossing or touching vectors we
+br rand load=31.64 rand 800 seed=1 contours=2002 ch=0.05 cpu=0.81s ok=1 moves=79160 regions=1670 hash=fc4d1f2af917bd62 [28 286 group(s) of crossing or touching vectors w
+main rand load=31.64 rand 800 seed=1 contours=2002 ch=0.05 cpu=1.25s ok=1 moves=79160 regions=1670 hash=fc4d1f2af917bd62 [28 286 group(s) of crossing or touching vectors w
+br rand load=31.64 rand 1600 seed=1 contours=4004 ch=0.05 cpu=1.52s ok=1 moves=155167 regions=3332 hash=9d394bd0f872e0a5 [28 553 group(s) of crossing or touching vectors
+main rand load=31.66 rand 1600 seed=1 contours=4004 ch=0.05 cpu=3.45s ok=1 moves=155167 regions=3332 hash=9d394bd0f872e0a5 [28 553 group(s) of crossing or touching vectors
+br rand load=31.77 rand 3200 seed=1 contours=7993 ch=0.05 cpu=3.10s ok=1 moves=317922 regions=6702 hash=417fa1dd58456f3b [28 1139 group(s) of crossing or touching vector
+br rand load=31.79 rand 6400 seed=1 contours=16017 ch=0.05 cpu=6.37s ok=1 moves=647157 regions=13382 hash=901bd03c79865e04 [28 2302 group(s) of crossing or touching vect
+br nest load=31.81 nest 25 seed=1 contours=27 ch=0.5 cpu=0.01s ok=1 moves=549 regions=257 hash=1873073a7e3c4bf4 [28 1 group(s) of crossing or touching vectors were re] [
+main nest load=31.81 nest 25 seed=1 contours=27 ch=0.5 cpu=0.01s ok=1 moves=549 regions=257 hash=1873073a7e3c4bf4 [28 1 group(s) of crossing or touching vectors were re] [
+br nest load=31.81 nest 50 seed=1 contours=52 ch=0.5 cpu=0.03s ok=1 moves=555 regions=540 hash=4b08dcca89baabc2 [28 1 group(s) of crossing or touching vectors were re] [
+main nest load=31.81 nest 50 seed=1 contours=52 ch=0.5 cpu=0.02s ok=1 moves=555 regions=540 hash=4b08dcca89baabc2 [28 1 group(s) of crossing or touching vectors were re] [
+br nest load=31.81 nest 100 seed=1 contours=102 ch=0.5 cpu=0.06s ok=1 moves=552 regions=727 hash=19be6c8ce29ff38a [28 1 group(s) of crossing or touching vectors were re]
+main nest load=31.81 nest 100 seed=1 contours=102 ch=0.5 cpu=0.06s ok=1 moves=552 regions=727 hash=19be6c8ce29ff38a [28 1 group(s) of crossing or touching vectors were re]
+br nest load=31.81 nest 200 seed=1 contours=202 ch=0.5 cpu=0.23s ok=1 moves=550 regions=1261 hash=503230262b2eae25 [28 1 group(s) of crossing or touching vectors were re
+main nest load=31.82 nest 200 seed=1 contours=202 ch=0.5 cpu=0.22s ok=1 moves=550 regions=1261 hash=503230262b2eae25 [28 1 group(s) of crossing or touching vectors were re
+br pairs load=31.82 pairs 12800 seed=1 contours=38400 ch=0.5 cpu=11.99s ok=1 moves=1740687 regions=38400 hash=f0843cfe86eb407a [28 12800 group(s) of crossing or touching 
+done

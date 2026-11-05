@@ -1,0 +1,36 @@
+T-0164 round 2 (cce938c) verifier results.  VERDICT PASS.
+BUILD Debug -Werror ok (0 warnings), ctest 990/990 (ctest_debug.log); Release -march=x86-64-v3 ctest 990/990 (ctest_release_v3.log);
+changelog check ok (1 fragment, one line); merge-tree vs origin/main 6e537a1 clean; worktree clean; goldens regenerated in a scratch copy
+of cce938c: "No golden or starter-database changes."
+B1 (c) cluster growth, Release v3, CPU s, interleaved br/main (grow_pairs.txt, grow_other.txt):
+  pairs c0.5  br 0.19/0.18 0.38/0.37 0.77/0.79 1.63/1.61 3.10/3.25 6.61/6.33, 12800: 11.99  -> 1.8-2.1x per doubling
+              main 0.54 1.84 6.57 25.2 99.7 (6400 once: 389 s), hashes identical at every size incl. 6400.
+  pairsmix (absorbed vectors below the root, shuffled) br 0.22..7.67 (200..6400) 1.9-2.2x; main 0.59..27 (3.2-4x); identical.
+  dense (shuffled cascades hole->island, union-find parent overwrites) br 1.14..20.1 (200..3200) 2.0-2.1x; main 4.4/15/51; identical.
+  rand br 0.40..6.75 (400..6400) 2.0-2.1x; identical. nest (deep cascade) and star (one cluster absorbing N holes): same cost
+  as main (star ~4-6x per doubling on BOTH: single part with thousands of holes; not the absorbing-cluster loop; pre-existing).
+  Identity: ident.txt 186/186 (11 patterns x sizes x chordal x seeds), densefuzz.txt 2400/2400 identical.
+  ufsim.txt: main's restart loop vs branch worklist copied verbatim with an order-dependent oracle: 900k cases (686k non-trivial,
+  ~198k union-find parent overwrites, i.e. the pre-existing parent[k]=... while k is no longer a root): 0 differences.
+B2 (g) own rings at every checked point:
+  net_drop.txt: every geo/drop_* (7 old + 7 new) and sq_hole_diag at c 0.01/0.05/1.0 with the hole dropped and claimed own:
+    branch consistent=0 in all 45 (main 1 in 42); net_right.txt: right skeleton accepted 45/45 on both.
+  sab5.txt (end to end through patched builds, 3 tools): SAB=5 189/189 and SAB=6 135/135 refused on the branch, 0 violations;
+    patched main carves 267 of them with violations (e.g. drop_rect_centre V90 c0.05: -4.9 mm). SAB=0 control: 0 refused both.
+  fuzzsum.txt (fuzz6, 7 files x 4 chordals): normal accepted 30116 = 30116 (no false refusals); DROP bypass 0 (main 3156, worst
+    disc 40 mm); BADEND 0 (main 43); BADSTART 0 (main 9); BADEND_R 0. fuzzdrop: drop_rect_centre DROP/BADEND 0 bypass, normal = main.
+  sabend.txt: SABEND / SABEND2 with SAB=0/2/3/4: branch 0 violations in all 256 (main 26 cases with violations).
+  chunk.txt: closer() with run boxes vs brute force 761k queries: 5 mismatches, all 1-ulp: p at exactly `limit` past a segment end;
+    the run box (exact) says not closer, the old per-segment formula a + (b - a)*t overshoots b by an ulp and says closer. Exact
+    distance > limit in all 5 (chunk_mismatch_debug.txt). Box test is conservative in exact arithmetic; not a safety issue.
+  ownring_cost.txt: big single parts (gear 250..2000 teeth, gear+hole, polyline disc with 200..800 holes): br within 0..13% of main.
+  Docs: ADR-0025 sec 5 / v_carve_check.hpp / v_carve.cpp comment match (own rings measured at every checked point, except
+    no-area own rings; caught wherever a disc reaches > 2c+d past). Changelog's "(a silently dropped boundary is caught)" omits
+    that qualifier (nit).
+B3 (d) b3.txt: 4 tools x distance 0.001/1e-6/0.01: no notice at w, w(1-2ulp), nextafter(w), w(1+1e-12), w+0.5d, w+0.99d;
+  notice at w+1.01d, w+2d, w+0.1, 2.4w. (w+0.01 with d=0.01 is the boundary.) Family sweep: 3 StepoverLimited cases, all clearly
+  beyond (2.26 vs 1.46, 0.68 vs 0.23, 0.626 vs 0.591).
+REGRESSION: families 400: moves identical 400/400, diag diffs only +StepoverLimited (3, justified), refusals 2 = 2 (cmphash.txt);
+  adv 4320 / adv2 540 identical incl. diagnostics, refusals 585 = 585, 28 = 28 (cmpadv.txt).
+AC2 (perf.txt) Release v3, load 31-35, interleaved: plain main 28.3/26.9 br 28.0/28.0; frame 40.7/40.9 vs 42.7/43.1;
+  flat 35.5/35.4 vs 36.9/38.9 s CPU. All < 60 s (frame ~17 s margin; +5% from own rings).

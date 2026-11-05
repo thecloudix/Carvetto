@@ -1,0 +1,145 @@
+V90 l1 d=0.001 w-1e-3       s=1.9989999999999999 w=1.9999999999999998 ok=1 notice=0  
+V90 l1 d=0.001 w(1-2ulp)    s=1.9999999999999989 w=1.9999999999999998 ok=1 notice=0  
+V90 l1 d=0.001 w            s=1.9999999999999998 w=1.9999999999999998 ok=1 notice=0  
+V90 l1 d=0.001 nextafter(w) s=2 w=1.9999999999999998 ok=1 notice=0  
+V90 l1 d=0.001 w(1+1e-12)   s=2.0000000000019997 w=1.9999999999999998 ok=1 notice=0  
+V90 l1 d=0.001 w+0.5d       s=2.0004999999999997 w=1.9999999999999998 ok=1 notice=0  
+V90 l1 d=0.001 w+0.99d      s=2.0009899999999998 w=1.9999999999999998 ok=1 notice=0  
+V90 l1 d=0.001 w+1.01d      s=2.00101 w=1.9999999999999998 ok=1 notice=1  tool 'V': stepover 2.00101 mm is wider than it cuts at the flat bottom (2 mm); its rest clearing of the flat areas uses 2 mm and can leave ridges up to 1 mm high
+V90 l1 d=0.001 w+2d         s=2.0019999999999998 w=1.9999999999999998 ok=1 notice=1  tool 'V': stepover 2.002 mm is wider than it cuts at the flat bottom (2 mm); its rest clearing of the flat areas uses 2 mm and can leave ridges up to 1 mm high
+V90 l1 d=0.001 w+0.01       s=2.0099999999999998 w=1.9999999999999998 ok=1 notice=1  tool 'V': stepover 2.01 mm is wider than it cuts at the flat bottom (2 mm); its rest clearing of the flat areas uses 2 mm and can leave ridges up to 1 mm high
+V90 l1 d=0.001 w+0.1        s=2.0999999999999996 w=1.9999999999999998 ok=1 notice=1  tool 'V': stepover 2.1 mm is wider than it cuts at the flat bottom (2 mm); its rest clearing of the flat areas uses 2 mm and can leave ridges up to 1 mm high
+V90 l1 d=0.001 2.4w         s=4.7999999999999989 w=1.9999999999999998 ok=1 notice=1  tool 'V': stepover 4.8 mm is wider than it cuts at the flat bottom (2 mm); its rest clearing of the flat areas uses 2 mm and can leave ridges up to 1 mm high
+V60 l1.3 d=0.001 w-1e-3       s=1.5001106998930271 w=1.501110699893027 ok=1 notice=0  
+V60 l1.3 d=0.001 w(1-2ulp)    s=1.5011106998930264 w=1.501110699893027 ok=1 notice=0  
+V60 l1.3 d=0.001 w            s=1.501110699893027 w=1.501110699893027 ok=1 notice=0  
+V60 l1.3 d=0.001 nextafter(w) s=1.5011106998930273 w=1.501110699893027 ok=1 notice=0  
+V60 l1.3 d=0.001 w(1+1e-12)   s=1.5011106998945283 w=1.501110699893027 ok=1 notice=0  
+V60 l1.3 d=0.001 w+0.5d       s=1.501610699893027 w=1.501110699893027 ok=1 notice=0  
+V60 l1.3 d=0.001 w+0.99d      s=1.5021006998930271 w=1.501110699893027 ok=1 notice=0  
+V60 l1.3 d=0.001 w+1.01d      s=1.502120699893027 w=1.501110699893027 ok=1 notice=1  tool 'V': stepover 1.50212 mm is wider than it cuts at the flat bottom (1.50111 mm); its rest clearing of the flat areas uses 1.50111 mm and can leave ridges up to 1.3 mm high
+V60 l1.3 d=0.001 w+2d         s=1.503110699893027 w=1.501110699893027 ok=1 notice=1  tool 'V': stepover 1.50311 mm is wider than it cuts at the flat bottom (1.50111 mm); its rest clearing of the flat areas uses 1.50111 mm and can leave ridges up to 1.3 mm high
+V60 l1.3 d=0.001 w+0.01       s=1.511110699893027 w=1.501110699893027 ok=1 notice=1  tool 'V': stepover 1.51111 mm is wider than it cuts at the flat bottom (1.50111 mm); its rest clearing of the flat areas uses 1.50111 mm and can leave ridges up to 1.3 mm high
+V60 l1.3 d=0.001 w+0.1        s=1.6011106998930271 w=1.501110699893027 ok=1 notice=1  tool 'V': stepover 1.60111 mm is wider than it cuts at the flat bottom (1.50111 mm); its rest clearing of the flat areas uses 1.50111 mm and can leave ridges up to 1.3 mm high
+V60 l1.3 d=0.001 2.4w         s=3.6026656797432648 w=1.501110699893027 ok=1 notice=1  tool 'V': stepover 3.60267 mm is wider than it cuts at the flat bottom (1.50111 mm); its rest clearing of the flat areas uses 1.50111 mm and can leave ridges up to 1.3 mm high
+V30 l0.77 d=0.001 w-1e-3       s=0.41164175634392897 w=0.41264175634392897 ok=1 notice=0  
+V30 l0.77 d=0.001 w(1-2ulp)    s=0.4126417563439288 w=0.41264175634392897 ok=1 notice=0  
+V30 l0.77 d=0.001 w            s=0.41264175634392897 w=0.41264175634392897 ok=1 notice=0  
+V30 l0.77 d=0.001 nextafter(w) s=0.41264175634392902 w=0.41264175634392897 ok=1 notice=0  
+V30 l0.77 d=0.001 w(1+1e-12)   s=0.41264175634434164 w=0.41264175634392897 ok=1 notice=0  
+V30 l0.77 d=0.001 w+0.5d       s=0.41314175634392897 w=0.41264175634392897 ok=1 notice=0  
+V30 l0.77 d=0.001 w+0.99d      s=0.41363175634392896 w=0.41264175634392897 ok=1 notice=0  
+V30 l0.77 d=0.001 w+1.01d      s=0.41365175634392898 w=0.41264175634392897 ok=1 notice=1  tool 'V': stepover 0.413652 mm is wider than it cuts at the flat bottom (0.412642 mm); its rest clearing of the flat areas uses 0.412642 mm and can leave ridges up to 0.77 mm high
+V30 l0.77 d=0.001 w+2d         s=0.41464175634392897 w=0.41264175634392897 ok=1 notice=1  tool 'V': stepover 0.414642 mm is wider than it cuts at the flat bottom (0.412642 mm); its rest clearing of the flat areas uses 0.412642 mm and can leave ridges up to 0.77 mm high
+V30 l0.77 d=0.001 w+0.01       s=0.42264175634392898 w=0.41264175634392897 ok=1 notice=1  tool 'V': stepover 0.422642 mm is wider than it cuts at the flat bottom (0.412642 mm); its rest clearing of the flat areas uses 0.412642 mm and can leave ridges up to 0.77 mm high
+V30 l0.77 d=0.001 w+0.1        s=0.51264175634392894 w=0.41264175634392897 ok=1 notice=1  tool 'V': stepover 0.512642 mm is wider than it cuts at the flat bottom (0.412642 mm); its rest clearing of the flat areas uses 0.412642 mm and can leave ridges up to 0.77 mm high
+V30 l0.77 d=0.001 2.4w         s=0.99034021522542948 w=0.41264175634392897 ok=1 notice=1  tool 'V': stepover 0.99034 mm is wider than it cuts at the flat bottom (0.412642 mm); its rest clearing of the flat areas uses 0.412642 mm and can leave ridges up to 0.77 mm high
+ball6 l0.7 d=0.001 w-1e-3       s=3.851272056851645 w=3.8522720568516449 ok=1 notice=0  
+ball6 l0.7 d=0.001 w(1-2ulp)    s=3.8522720568516431 w=3.8522720568516449 ok=1 notice=0  
+ball6 l0.7 d=0.001 w            s=3.8522720568516449 w=3.8522720568516449 ok=1 notice=0  
+ball6 l0.7 d=0.001 nextafter(w) s=3.8522720568516453 w=3.8522720568516449 ok=1 notice=0  
+ball6 l0.7 d=0.001 w(1+1e-12)   s=3.8522720568554973 w=3.8522720568516449 ok=1 notice=0  
+ball6 l0.7 d=0.001 w+0.5d       s=3.852772056851645 w=3.8522720568516449 ok=1 notice=0  
+ball6 l0.7 d=0.001 w+0.99d      s=3.8532620568516447 w=3.8522720568516449 ok=1 notice=0  
+ball6 l0.7 d=0.001 w+1.01d      s=3.8532820568516448 w=3.8522720568516449 ok=1 notice=1  tool 'B': stepover 3.85328 mm is wider than it cuts at the flat bottom (3.85227 mm); its rest clearing of the flat areas uses 3.85227 mm and can leave ridges up to 0.7 mm high
+ball6 l0.7 d=0.001 w+2d         s=3.8542720568516446 w=3.8522720568516449 ok=1 notice=1  tool 'B': stepover 3.85427 mm is wider than it cuts at the flat bottom (3.85227 mm); its rest clearing of the flat areas uses 3.85227 mm and can leave ridges up to 0.7 mm high
+ball6 l0.7 d=0.001 w+0.01       s=3.8622720568516447 w=3.8522720568516449 ok=1 notice=1  tool 'B': stepover 3.86227 mm is wider than it cuts at the flat bottom (3.85227 mm); its rest clearing of the flat areas uses 3.85227 mm and can leave ridges up to 0.7 mm high
+ball6 l0.7 d=0.001 w+0.1        s=3.952272056851645 w=3.8522720568516449 ok=1 notice=1  tool 'B': stepover 3.95227 mm is wider than it cuts at the flat bottom (3.85227 mm); its rest clearing of the flat areas uses 3.85227 mm and can leave ridges up to 0.7 mm high
+ball6 l0.7 d=0.001 2.4w         s=9.2454529364439466 w=3.8522720568516449 ok=1 notice=1  tool 'B': stepover 9.24545 mm is wider than it cuts at the flat bottom (3.85227 mm); its rest clearing of the flat areas uses 3.85227 mm and can leave ridges up to 0.7 mm high
+V90 l1 d=1e-06 w-1e-3       s=1.9989999999999999 w=1.9999999999999998 ok=1 notice=0  
+V90 l1 d=1e-06 w(1-2ulp)    s=1.9999999999999989 w=1.9999999999999998 ok=1 notice=0  
+V90 l1 d=1e-06 w            s=1.9999999999999998 w=1.9999999999999998 ok=1 notice=0  
+V90 l1 d=1e-06 nextafter(w) s=2 w=1.9999999999999998 ok=1 notice=0  
+V90 l1 d=1e-06 w(1+1e-12)   s=2.0000000000019997 w=1.9999999999999998 ok=1 notice=0  
+V90 l1 d=1e-06 w+0.5d       s=2.0000004999999996 w=1.9999999999999998 ok=1 notice=0  
+V90 l1 d=1e-06 w+0.99d      s=2.0000009899999998 w=1.9999999999999998 ok=1 notice=0  
+V90 l1 d=1e-06 w+1.01d      s=2.0000010099999996 w=1.9999999999999998 ok=1 notice=1  tool 'V': stepover 2 mm is wider than it cuts at the flat bottom (2 mm); its rest clearing of the flat areas uses 2 mm and can leave ridges up to 1 mm high
+V90 l1 d=1e-06 w+2d         s=2.0000019999999998 w=1.9999999999999998 ok=1 notice=1  tool 'V': stepover 2 mm is wider than it cuts at the flat bottom (2 mm); its rest clearing of the flat areas uses 2 mm and can leave ridges up to 1 mm high
+V90 l1 d=1e-06 w+0.01       s=2.0099999999999998 w=1.9999999999999998 ok=1 notice=1  tool 'V': stepover 2.01 mm is wider than it cuts at the flat bottom (2 mm); its rest clearing of the flat areas uses 2 mm and can leave ridges up to 1 mm high
+V90 l1 d=1e-06 w+0.1        s=2.0999999999999996 w=1.9999999999999998 ok=1 notice=1  tool 'V': stepover 2.1 mm is wider than it cuts at the flat bottom (2 mm); its rest clearing of the flat areas uses 2 mm and can leave ridges up to 1 mm high
+V90 l1 d=1e-06 2.4w         s=4.7999999999999989 w=1.9999999999999998 ok=1 notice=1  tool 'V': stepover 4.8 mm is wider than it cuts at the flat bottom (2 mm); its rest clearing of the flat areas uses 2 mm and can leave ridges up to 1 mm high
+V60 l1.3 d=1e-06 w-1e-3       s=1.5001106998930271 w=1.501110699893027 ok=1 notice=0  
+V60 l1.3 d=1e-06 w(1-2ulp)    s=1.5011106998930264 w=1.501110699893027 ok=1 notice=0  
+V60 l1.3 d=1e-06 w            s=1.501110699893027 w=1.501110699893027 ok=1 notice=0  
+V60 l1.3 d=1e-06 nextafter(w) s=1.5011106998930273 w=1.501110699893027 ok=1 notice=0  
+V60 l1.3 d=1e-06 w(1+1e-12)   s=1.5011106998945283 w=1.501110699893027 ok=1 notice=0  
+V60 l1.3 d=1e-06 w+0.5d       s=1.5011111998930271 w=1.501110699893027 ok=1 notice=0  
+V60 l1.3 d=1e-06 w+0.99d      s=1.501111689893027 w=1.501110699893027 ok=1 notice=0  
+V60 l1.3 d=1e-06 w+1.01d      s=1.5011117098930271 w=1.501110699893027 ok=1 notice=1  tool 'V': stepover 1.50111 mm is wider than it cuts at the flat bottom (1.50111 mm); its rest clearing of the flat areas uses 1.50111 mm and can leave ridges up to 1.3 mm high
+V60 l1.3 d=1e-06 w+2d         s=1.5011126998930271 w=1.501110699893027 ok=1 notice=1  tool 'V': stepover 1.50111 mm is wider than it cuts at the flat bottom (1.50111 mm); its rest clearing of the flat areas uses 1.50111 mm and can leave ridges up to 1.3 mm high
+V60 l1.3 d=1e-06 w+0.01       s=1.511110699893027 w=1.501110699893027 ok=1 notice=1  tool 'V': stepover 1.51111 mm is wider than it cuts at the flat bottom (1.50111 mm); its rest clearing of the flat areas uses 1.50111 mm and can leave ridges up to 1.3 mm high
+V60 l1.3 d=1e-06 w+0.1        s=1.6011106998930271 w=1.501110699893027 ok=1 notice=1  tool 'V': stepover 1.60111 mm is wider than it cuts at the flat bottom (1.50111 mm); its rest clearing of the flat areas uses 1.50111 mm and can leave ridges up to 1.3 mm high
+V60 l1.3 d=1e-06 2.4w         s=3.6026656797432648 w=1.501110699893027 ok=1 notice=1  tool 'V': stepover 3.60267 mm is wider than it cuts at the flat bottom (1.50111 mm); its rest clearing of the flat areas uses 1.50111 mm and can leave ridges up to 1.3 mm high
+V30 l0.77 d=1e-06 w-1e-3       s=0.41164175634392897 w=0.41264175634392897 ok=1 notice=0  
+V30 l0.77 d=1e-06 w(1-2ulp)    s=0.4126417563439288 w=0.41264175634392897 ok=1 notice=0  
+V30 l0.77 d=1e-06 w            s=0.41264175634392897 w=0.41264175634392897 ok=1 notice=0  
+V30 l0.77 d=1e-06 nextafter(w) s=0.41264175634392902 w=0.41264175634392897 ok=1 notice=0  
+V30 l0.77 d=1e-06 w(1+1e-12)   s=0.41264175634434164 w=0.41264175634392897 ok=1 notice=0  
+V30 l0.77 d=1e-06 w+0.5d       s=0.41264225634392898 w=0.41264175634392897 ok=1 notice=0  
+V30 l0.77 d=1e-06 w+0.99d      s=0.41264274634392895 w=0.41264175634392897 ok=1 notice=0  
+V30 l0.77 d=1e-06 w+1.01d      s=0.41264276634392899 w=0.41264175634392897 ok=1 notice=1  tool 'V': stepover 0.412643 mm is wider than it cuts at the flat bottom (0.412642 mm); its rest clearing of the flat areas uses 0.412642 mm and can leave ridges up to 0.77 mm high
+V30 l0.77 d=1e-06 w+2d         s=0.41264375634392897 w=0.41264175634392897 ok=1 notice=1  tool 'V': stepover 0.412644 mm is wider than it cuts at the flat bottom (0.412642 mm); its rest clearing of the flat areas uses 0.412642 mm and can leave ridges up to 0.77 mm high
+V30 l0.77 d=1e-06 w+0.01       s=0.42264175634392898 w=0.41264175634392897 ok=1 notice=1  tool 'V': stepover 0.422642 mm is wider than it cuts at the flat bottom (0.412642 mm); its rest clearing of the flat areas uses 0.412642 mm and can leave ridges up to 0.77 mm high
+V30 l0.77 d=1e-06 w+0.1        s=0.51264175634392894 w=0.41264175634392897 ok=1 notice=1  tool 'V': stepover 0.512642 mm is wider than it cuts at the flat bottom (0.412642 mm); its rest clearing of the flat areas uses 0.412642 mm and can leave ridges up to 0.77 mm high
+V30 l0.77 d=1e-06 2.4w         s=0.99034021522542948 w=0.41264175634392897 ok=1 notice=1  tool 'V': stepover 0.99034 mm is wider than it cuts at the flat bottom (0.412642 mm); its rest clearing of the flat areas uses 0.412642 mm and can leave ridges up to 0.77 mm high
+ball6 l0.7 d=1e-06 w-1e-3       s=3.851272056851645 w=3.8522720568516449 ok=1 notice=0  
+ball6 l0.7 d=1e-06 w(1-2ulp)    s=3.8522720568516431 w=3.8522720568516449 ok=1 notice=0  
+ball6 l0.7 d=1e-06 w            s=3.8522720568516449 w=3.8522720568516449 ok=1 notice=0  
+ball6 l0.7 d=1e-06 nextafter(w) s=3.8522720568516453 w=3.8522720568516449 ok=1 notice=0  
+ball6 l0.7 d=1e-06 w(1+1e-12)   s=3.8522720568554973 w=3.8522720568516449 ok=1 notice=0  
+ball6 l0.7 d=1e-06 w+0.5d       s=3.8522725568516449 w=3.8522720568516449 ok=1 notice=0  
+ball6 l0.7 d=1e-06 w+0.99d      s=3.8522730468516451 w=3.8522720568516449 ok=1 notice=0  
+ball6 l0.7 d=1e-06 w+1.01d      s=3.8522730668516449 w=3.8522720568516449 ok=1 notice=1  tool 'B': stepover 3.85227 mm is wider than it cuts at the flat bottom (3.85227 mm); its rest clearing of the flat areas uses 3.85227 mm and can leave ridges up to 0.7 mm high
+ball6 l0.7 d=1e-06 w+2d         s=3.8522740568516447 w=3.8522720568516449 ok=1 notice=1  tool 'B': stepover 3.85227 mm is wider than it cuts at the flat bottom (3.85227 mm); its rest clearing of the flat areas uses 3.85227 mm and can leave ridges up to 0.7 mm high
+ball6 l0.7 d=1e-06 w+0.01       s=3.8622720568516447 w=3.8522720568516449 ok=1 notice=1  tool 'B': stepover 3.86227 mm is wider than it cuts at the flat bottom (3.85227 mm); its rest clearing of the flat areas uses 3.85227 mm and can leave ridges up to 0.7 mm high
+ball6 l0.7 d=1e-06 w+0.1        s=3.952272056851645 w=3.8522720568516449 ok=1 notice=1  tool 'B': stepover 3.95227 mm is wider than it cuts at the flat bottom (3.85227 mm); its rest clearing of the flat areas uses 3.85227 mm and can leave ridges up to 0.7 mm high
+ball6 l0.7 d=1e-06 2.4w         s=9.2454529364439466 w=3.8522720568516449 ok=1 notice=1  tool 'B': stepover 9.24545 mm is wider than it cuts at the flat bottom (3.85227 mm); its rest clearing of the flat areas uses 3.85227 mm and can leave ridges up to 0.7 mm high
+V90 l1 d=0.01 w-1e-3       s=1.9989999999999999 w=1.9999999999999998 ok=1 notice=0  
+V90 l1 d=0.01 w(1-2ulp)    s=1.9999999999999989 w=1.9999999999999998 ok=1 notice=0  
+V90 l1 d=0.01 w            s=1.9999999999999998 w=1.9999999999999998 ok=1 notice=0  
+V90 l1 d=0.01 nextafter(w) s=2 w=1.9999999999999998 ok=1 notice=0  
+V90 l1 d=0.01 w(1+1e-12)   s=2.0000000000019997 w=1.9999999999999998 ok=1 notice=0  
+V90 l1 d=0.01 w+0.5d       s=2.0049999999999999 w=1.9999999999999998 ok=1 notice=0  
+V90 l1 d=0.01 w+0.99d      s=2.0098999999999996 w=1.9999999999999998 ok=1 notice=0  
+V90 l1 d=0.01 w+1.01d      s=2.0101 w=1.9999999999999998 ok=1 notice=1  tool 'V': stepover 2.0101 mm is wider than it cuts at the flat bottom (2 mm); its rest clearing of the flat areas uses 2 mm and can leave ridges up to 1 mm high
+V90 l1 d=0.01 w+2d         s=2.0199999999999996 w=1.9999999999999998 ok=1 notice=1  tool 'V': stepover 2.02 mm is wider than it cuts at the flat bottom (2 mm); its rest clearing of the flat areas uses 2 mm and can leave ridges up to 1 mm high
+V90 l1 d=0.01 w+0.01       s=2.0099999999999998 w=1.9999999999999998 ok=1 notice=1  tool 'V': stepover 2.01 mm is wider than it cuts at the flat bottom (2 mm); its rest clearing of the flat areas uses 2 mm and can leave ridges up to 1 mm high
+V90 l1 d=0.01 w+0.1        s=2.0999999999999996 w=1.9999999999999998 ok=1 notice=1  tool 'V': stepover 2.1 mm is wider than it cuts at the flat bottom (2 mm); its rest clearing of the flat areas uses 2 mm and can leave ridges up to 1 mm high
+V90 l1 d=0.01 2.4w         s=4.7999999999999989 w=1.9999999999999998 ok=1 notice=1  tool 'V': stepover 4.8 mm is wider than it cuts at the flat bottom (2 mm); its rest clearing of the flat areas uses 2 mm and can leave ridges up to 1 mm high
+V60 l1.3 d=0.01 w-1e-3       s=1.5001106998930271 w=1.501110699893027 ok=1 notice=0  
+V60 l1.3 d=0.01 w(1-2ulp)    s=1.5011106998930264 w=1.501110699893027 ok=1 notice=0  
+V60 l1.3 d=0.01 w            s=1.501110699893027 w=1.501110699893027 ok=1 notice=0  
+V60 l1.3 d=0.01 nextafter(w) s=1.5011106998930273 w=1.501110699893027 ok=1 notice=0  
+V60 l1.3 d=0.01 w(1+1e-12)   s=1.5011106998945283 w=1.501110699893027 ok=1 notice=0  
+V60 l1.3 d=0.01 w+0.5d       s=1.5061106998930269 w=1.501110699893027 ok=1 notice=0  
+V60 l1.3 d=0.01 w+0.99d      s=1.5110106998930271 w=1.501110699893027 ok=1 notice=0  
+V60 l1.3 d=0.01 w+1.01d      s=1.511210699893027 w=1.501110699893027 ok=1 notice=1  tool 'V': stepover 1.51121 mm is wider than it cuts at the flat bottom (1.50111 mm); its rest clearing of the flat areas uses 1.50111 mm and can leave ridges up to 1.3 mm high
+V60 l1.3 d=0.01 w+2d         s=1.5211106998930271 w=1.501110699893027 ok=1 notice=1  tool 'V': stepover 1.52111 mm is wider than it cuts at the flat bottom (1.50111 mm); its rest clearing of the flat areas uses 1.50111 mm and can leave ridges up to 1.3 mm high
+V60 l1.3 d=0.01 w+0.01       s=1.511110699893027 w=1.501110699893027 ok=1 notice=1  tool 'V': stepover 1.51111 mm is wider than it cuts at the flat bottom (1.50111 mm); its rest clearing of the flat areas uses 1.50111 mm and can leave ridges up to 1.3 mm high
+V60 l1.3 d=0.01 w+0.1        s=1.6011106998930271 w=1.501110699893027 ok=1 notice=1  tool 'V': stepover 1.60111 mm is wider than it cuts at the flat bottom (1.50111 mm); its rest clearing of the flat areas uses 1.50111 mm and can leave ridges up to 1.3 mm high
+V60 l1.3 d=0.01 2.4w         s=3.6026656797432648 w=1.501110699893027 ok=1 notice=1  tool 'V': stepover 3.60267 mm is wider than it cuts at the flat bottom (1.50111 mm); its rest clearing of the flat areas uses 1.50111 mm and can leave ridges up to 1.3 mm high
+V30 l0.77 d=0.01 w-1e-3       s=0.41164175634392897 w=0.41264175634392897 ok=1 notice=0  
+V30 l0.77 d=0.01 w(1-2ulp)    s=0.4126417563439288 w=0.41264175634392897 ok=1 notice=0  
+V30 l0.77 d=0.01 w            s=0.41264175634392897 w=0.41264175634392897 ok=1 notice=0  
+V30 l0.77 d=0.01 nextafter(w) s=0.41264175634392902 w=0.41264175634392897 ok=1 notice=0  
+V30 l0.77 d=0.01 w(1+1e-12)   s=0.41264175634434164 w=0.41264175634392897 ok=1 notice=0  
+V30 l0.77 d=0.01 w+0.5d       s=0.41764175634392897 w=0.41264175634392897 ok=1 notice=0  
+V30 l0.77 d=0.01 w+0.99d      s=0.42254175634392899 w=0.41264175634392897 ok=1 notice=0  
+V30 l0.77 d=0.01 w+1.01d      s=0.42274175634392896 w=0.41264175634392897 ok=1 notice=1  tool 'V': stepover 0.422742 mm is wider than it cuts at the flat bottom (0.412642 mm); its rest clearing of the flat areas uses 0.412642 mm and can leave ridges up to 0.77 mm high
+V30 l0.77 d=0.01 w+2d         s=0.43264175634392898 w=0.41264175634392897 ok=1 notice=1  tool 'V': stepover 0.432642 mm is wider than it cuts at the flat bottom (0.412642 mm); its rest clearing of the flat areas uses 0.412642 mm and can leave ridges up to 0.77 mm high
+V30 l0.77 d=0.01 w+0.01       s=0.42264175634392898 w=0.41264175634392897 ok=1 notice=1  tool 'V': stepover 0.422642 mm is wider than it cuts at the flat bottom (0.412642 mm); its rest clearing of the flat areas uses 0.412642 mm and can leave ridges up to 0.77 mm high
+V30 l0.77 d=0.01 w+0.1        s=0.51264175634392894 w=0.41264175634392897 ok=1 notice=1  tool 'V': stepover 0.512642 mm is wider than it cuts at the flat bottom (0.412642 mm); its rest clearing of the flat areas uses 0.412642 mm and can leave ridges up to 0.77 mm high
+V30 l0.77 d=0.01 2.4w         s=0.99034021522542948 w=0.41264175634392897 ok=1 notice=1  tool 'V': stepover 0.99034 mm is wider than it cuts at the flat bottom (0.412642 mm); its rest clearing of the flat areas uses 0.412642 mm and can leave ridges up to 0.77 mm high
+ball6 l0.7 d=0.01 w-1e-3       s=3.851272056851645 w=3.8522720568516449 ok=1 notice=0  
+ball6 l0.7 d=0.01 w(1-2ulp)    s=3.8522720568516431 w=3.8522720568516449 ok=1 notice=0  
+ball6 l0.7 d=0.01 w            s=3.8522720568516449 w=3.8522720568516449 ok=1 notice=0  
+ball6 l0.7 d=0.01 nextafter(w) s=3.8522720568516453 w=3.8522720568516449 ok=1 notice=0  
+ball6 l0.7 d=0.01 w(1+1e-12)   s=3.8522720568554973 w=3.8522720568516449 ok=1 notice=0  
+ball6 l0.7 d=0.01 w+0.5d       s=3.8572720568516448 w=3.8522720568516449 ok=1 notice=0  
+ball6 l0.7 d=0.01 w+0.99d      s=3.8621720568516449 w=3.8522720568516449 ok=1 notice=0  
+ball6 l0.7 d=0.01 w+1.01d      s=3.8623720568516449 w=3.8522720568516449 ok=1 notice=1  tool 'B': stepover 3.86237 mm is wider than it cuts at the flat bottom (3.85227 mm); its rest clearing of the flat areas uses 3.85227 mm and can leave ridges up to 0.7 mm high
+ball6 l0.7 d=0.01 w+2d         s=3.8722720568516449 w=3.8522720568516449 ok=1 notice=1  tool 'B': stepover 3.87227 mm is wider than it cuts at the flat bottom (3.85227 mm); its rest clearing of the flat areas uses 3.85227 mm and can leave ridges up to 0.7 mm high
+ball6 l0.7 d=0.01 w+0.01       s=3.8622720568516447 w=3.8522720568516449 ok=1 notice=1  tool 'B': stepover 3.86227 mm is wider than it cuts at the flat bottom (3.85227 mm); its rest clearing of the flat areas uses 3.85227 mm and can leave ridges up to 0.7 mm high
+ball6 l0.7 d=0.01 w+0.1        s=3.952272056851645 w=3.8522720568516449 ok=1 notice=1  tool 'B': stepover 3.95227 mm is wider than it cuts at the flat bottom (3.85227 mm); its rest clearing of the flat areas uses 3.85227 mm and can leave ridges up to 0.7 mm high
+ball6 l0.7 d=0.01 2.4w         s=9.2454529364439466 w=3.8522720568516449 ok=1 notice=1  tool 'B': stepover 9.24545 mm is wider than it cuts at the flat bottom (3.85227 mm); its rest clearing of the flat areas uses 3.85227 mm and can leave ridges up to 0.7 mm high
+b3 unexpected=0

@@ -1,0 +1,285 @@
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.01 iters=5000 accepted=22 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.01 iters=5000 accepted=20 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.01 iters=5000 accepted=23 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.01 iters=5000 accepted=24 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.01 iters=5000 accepted=23 BYPASS=3 worstOutside=0.0000 worstDisc=1.0776
+br [] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.01 iters=20000 accepted=83 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.01 iters=5000 accepted=22 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.01 iters=5000 accepted=23 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.01 iters=5000 accepted=154 BYPASS=130 worstOutside=0.9478 worstDisc=19.7055
+main [] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.01 iters=20000 accepted=83 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.05 iters=5000 accepted=26 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.05 iters=5000 accepted=27 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.05 iters=5000 accepted=28 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.05 iters=5000 accepted=35 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.05 iters=5000 accepted=28 BYPASS=2 worstOutside=0.0000 worstDisc=1.0509
+br [] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.05 iters=20000 accepted=111 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.05 iters=5000 accepted=27 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.05 iters=5000 accepted=28 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.05 iters=5000 accepted=165 BYPASS=130 worstOutside=0.9712 worstDisc=19.6789
+main [] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.05 iters=20000 accepted=111 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.3 iters=5000 accepted=51 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.3 iters=5000 accepted=51 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.3 iters=5000 accepted=51 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.3 iters=5000 accepted=69 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.3 iters=20000 accepted=238 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.3 iters=5000 accepted=52 BYPASS=1 worstOutside=0.0000 worstDisc=0.8842
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.3 iters=5000 accepted=51 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.3 iters=5000 accepted=51 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.3 iters=5000 accepted=205 BYPASS=136 worstOutside=1.0190 worstDisc=19.5122
+br [BADEND=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=1 iters=5000 accepted=785 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=0.3 iters=20000 accepted=238 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=1 iters=5000 accepted=684 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=1 iters=5000 accepted=743 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=1 iters=5000 accepted=786 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=1 iters=20000 accepted=3134 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=1 iters=5000 accepted=797 BYPASS=2 worstOutside=0.0000 worstDisc=0.4176
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=1 iters=5000 accepted=684 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=1 iters=5000 accepted=743 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=1 iters=5000 accepted=1113 BYPASS=309 worstOutside=1.5140 worstDisc=19.0455
+br [BADEND=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.01 iters=5000 accepted=30 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [] /home/chris/harness/t0153v6/fuzzgeo/nest.txt c=1 iters=20000 accepted=3134 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.01 iters=5000 accepted=32 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.01 iters=5000 accepted=31 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.01 iters=5000 accepted=43 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.01 iters=20000 accepted=145 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.01 iters=5000 accepted=31 BYPASS=1 worstOutside=0.0000 worstDisc=0.0542
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.01 iters=5000 accepted=31 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.01 iters=5000 accepted=33 BYPASS=1 worstOutside=0.0770 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.01 iters=5000 accepted=153 BYPASS=110 worstOutside=0.7071 worstDisc=18.3267
+main [] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.01 iters=20000 accepted=145 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.05 iters=5000 accepted=48 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.05 iters=5000 accepted=49 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.05 iters=5000 accepted=49 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.05 iters=5000 accepted=56 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.05 iters=20000 accepted=207 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.05 iters=5000 accepted=51 BYPASS=3 worstOutside=0.0000 worstDisc=0.1655
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.05 iters=5000 accepted=49 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.05 iters=5000 accepted=50 BYPASS=1 worstOutside=0.0770 worstDisc=0.0000
+main [] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.05 iters=20000 accepted=207 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.05 iters=5000 accepted=176 BYPASS=120 worstOutside=0.7071 worstDisc=18.3001
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.3 iters=5000 accepted=187 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.3 iters=5000 accepted=172 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.3 iters=5000 accepted=222 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.3 iters=5000 accepted=189 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.3 iters=20000 accepted=789 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.3 iters=5000 accepted=181 BYPASS=3 worstOutside=0.0000 worstDisc=0.3562
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.3 iters=5000 accepted=187 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.3 iters=5000 accepted=189 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.3 iters=5000 accepted=379 BYPASS=129 worstOutside=0.7071 worstDisc=18.1338
+br [BADEND=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=1 iters=5000 accepted=1301 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=0.3 iters=20000 accepted=789 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=1 iters=5000 accepted=1155 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=1 iters=5000 accepted=1198 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=1 iters=5000 accepted=1340 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=1 iters=20000 accepted=5304 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=1 iters=5000 accepted=1302 BYPASS=1 worstOutside=0.7071 worstDisc=0.0000
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=1 iters=5000 accepted=1155 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=1 iters=5000 accepted=1198 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=1 iters=5000 accepted=1663 BYPASS=279 worstOutside=0.7071 worstDisc=17.6682
+br [BADEND=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.01 iters=5000 accepted=13 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [] /home/chris/harness/t0153v6/fuzzgeo/thinwalls.txt c=1 iters=20000 accepted=5304 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.01 iters=5000 accepted=11 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.01 iters=5000 accepted=14 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.01 iters=20000 accepted=91 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.01 iters=5000 accepted=24 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.01 iters=5000 accepted=14 BYPASS=1 worstOutside=0.0000 worstDisc=0.6552
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.01 iters=5000 accepted=11 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.01 iters=5000 accepted=15 BYPASS=1 worstOutside=0.7393 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.01 iters=5000 accepted=36 BYPASS=12 worstOutside=0.8942 worstDisc=2.8208
+main [] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.01 iters=20000 accepted=91 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.05 iters=5000 accepted=16 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.05 iters=5000 accepted=13 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.05 iters=5000 accepted=17 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.05 iters=5000 accepted=27 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.05 iters=5000 accepted=17 BYPASS=1 worstOutside=0.0000 worstDisc=0.6285
+br [] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.05 iters=20000 accepted=106 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.05 iters=5000 accepted=13 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.05 iters=5000 accepted=18 BYPASS=1 worstOutside=0.7133 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.05 iters=5000 accepted=41 BYPASS=13 worstOutside=0.8742 worstDisc=2.7941
+main [] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.05 iters=20000 accepted=106 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.3 iters=5000 accepted=32 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.3 iters=5000 accepted=28 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.3 iters=5000 accepted=32 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.3 iters=5000 accepted=56 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.3 iters=20000 accepted=215 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.3 iters=5000 accepted=34 BYPASS=2 worstOutside=0.0000 worstDisc=0.4618
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.3 iters=5000 accepted=28 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.3 iters=5000 accepted=33 BYPASS=1 worstOutside=0.5508 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.3 iters=5000 accepted=72 BYPASS=16 worstOutside=0.7826 worstDisc=2.6274
+main [] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.3 iters=20000 accepted=215 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=1 iters=5000 accepted=368 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=1 iters=5000 accepted=327 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=1 iters=5000 accepted=345 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=1 iters=5000 accepted=426 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=1 iters=20000 accepted=1599 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=1 iters=5000 accepted=376 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=1 iters=5000 accepted=327 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=1 iters=5000 accepted=345 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=1 iters=5000 accepted=628 BYPASS=202 worstOutside=1.0991 worstDisc=2.1608
+main [] /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=1 iters=20000 accepted=1599 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.01 iters=5000 accepted=8 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.01 iters=5000 accepted=9 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.01 iters=5000 accepted=10 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.01 iters=5000 accepted=11 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.01 iters=5000 accepted=9 BYPASS=1 worstOutside=0.0000 worstDisc=0.3638
+br [] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.01 iters=20000 accepted=51 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.01 iters=5000 accepted=9 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.01 iters=5000 accepted=12 BYPASS=1 worstOutside=0.1010 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.01 iters=5000 accepted=12 BYPASS=2 worstOutside=2.4023 worstDisc=5.1552
+main [] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.01 iters=20000 accepted=51 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.05 iters=5000 accepted=7 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.05 iters=5000 accepted=7 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.05 iters=5000 accepted=5 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.05 iters=5000 accepted=11 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.05 iters=20000 accepted=62 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.05 iters=5000 accepted=9 BYPASS=2 worstOutside=0.0000 worstDisc=0.4612
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.05 iters=5000 accepted=7 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.05 iters=5000 accepted=5 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.05 iters=5000 accepted=14 BYPASS=3 worstOutside=2.4127 worstDisc=5.1289
+main [] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.05 iters=20000 accepted=62 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.3 iters=5000 accepted=27 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.3 iters=5000 accepted=28 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.3 iters=5000 accepted=27 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.3 iters=5000 accepted=19 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.3 iters=20000 accepted=95 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.3 iters=5000 accepted=27 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.3 iters=5000 accepted=28 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.3 iters=5000 accepted=27 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.3 iters=5000 accepted=26 BYPASS=7 worstOutside=2.5007 worstDisc=5.0730
+br [BADEND=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=1 iters=5000 accepted=60 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.3 iters=20000 accepted=95 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=1 iters=5000 accepted=59 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=1 iters=5000 accepted=61 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=1 iters=20000 accepted=222 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=1 iters=5000 accepted=64 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=1 iters=5000 accepted=61 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=1 iters=5000 accepted=59 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=1 iters=5000 accepted=61 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=1 iters=5000 accepted=79 BYPASS=15 worstOutside=2.5313 worstDisc=4.6471
+main [] /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=1 iters=20000 accepted=222 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.01 iters=5000 accepted=16 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.01 iters=5000 accepted=16 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.01 iters=5000 accepted=18 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.01 iters=5000 accepted=16 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.01 iters=5000 accepted=17 BYPASS=1 worstOutside=0.0000 worstDisc=0.0167
+br [] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.01 iters=20000 accepted=55 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.01 iters=5000 accepted=16 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.01 iters=5000 accepted=19 BYPASS=1 worstOutside=0.2213 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.01 iters=5000 accepted=62 BYPASS=46 worstOutside=1.1255 worstDisc=39.9973
+main [] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.01 iters=20000 accepted=55 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.05 iters=5000 accepted=24 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.05 iters=5000 accepted=24 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.05 iters=5000 accepted=25 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.05 iters=5000 accepted=30 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.05 iters=20000 accepted=82 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.05 iters=5000 accepted=24 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.05 iters=5000 accepted=24 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.05 iters=5000 accepted=26 BYPASS=1 worstOutside=0.1950 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.05 iters=5000 accepted=70 BYPASS=40 worstOutside=1.1146 worstDisc=39.9720
+main [] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.05 iters=20000 accepted=82 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.3 iters=5000 accepted=39 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.3 iters=5000 accepted=37 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.3 iters=5000 accepted=39 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.3 iters=5000 accepted=43 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.3 iters=20000 accepted=147 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.3 iters=5000 accepted=39 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.3 iters=5000 accepted=37 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.3 iters=5000 accepted=40 BYPASS=1 worstOutside=0.3355 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.3 iters=5000 accepted=90 BYPASS=43 worstOutside=1.1255 worstDisc=39.8046
+main [] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.3 iters=20000 accepted=147 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=1 iters=5000 accepted=1007 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=1 iters=5000 accepted=824 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=1 iters=5000 accepted=887 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=1 iters=5000 accepted=1051 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=1 iters=20000 accepted=4149 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=1 iters=5000 accepted=1008 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=1 iters=5000 accepted=824 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=1 iters=5000 accepted=887 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=1 iters=5000 accepted=1143 BYPASS=57 worstOutside=1.1255 worstDisc=39.3392
+br [] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.01 iters=20000 accepted=120 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.01 iters=5000 accepted=28 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.01 iters=5000 accepted=30 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.01 iters=5000 accepted=31 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.01 iters=5000 accepted=31 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.01 iters=5000 accepted=30 BYPASS=2 worstOutside=0.0000 worstDisc=0.7447
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.01 iters=5000 accepted=30 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.01 iters=20000 accepted=120 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [] /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=1 iters=20000 accepted=4149 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.01 iters=5000 accepted=31 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.01 iters=5000 accepted=50 BYPASS=19 worstOutside=1.4527 worstDisc=0.5923
+br [BADEND=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.05 iters=5000 accepted=42 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.05 iters=5000 accepted=43 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.05 iters=5000 accepted=46 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.05 iters=5000 accepted=41 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.05 iters=5000 accepted=45 BYPASS=3 worstOutside=0.0000 worstDisc=0.7180
+br [] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.05 iters=20000 accepted=154 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.05 iters=5000 accepted=43 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.05 iters=5000 accepted=46 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.05 iters=5000 accepted=62 BYPASS=21 worstOutside=1.4527 worstDisc=0.5657
+main [] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.05 iters=20000 accepted=154 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.3 iters=5000 accepted=76 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.3 iters=5000 accepted=79 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.3 iters=5000 accepted=77 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.3 iters=5000 accepted=67 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.3 iters=5000 accepted=78 BYPASS=1 worstOutside=0.0000 worstDisc=0.1694
+br [] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.3 iters=20000 accepted=263 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.3 iters=5000 accepted=79 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.3 iters=5000 accepted=77 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.3 iters=5000 accepted=94 BYPASS=12 worstOutside=0.5000 worstDisc=0.3990
+main [] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.3 iters=20000 accepted=263 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=1 iters=5000 accepted=1216 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=1 iters=5000 accepted=1431 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=1 iters=5000 accepted=1309 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=1 iters=5000 accepted=1459 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=1 iters=20000 accepted=5711 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=1 iters=5000 accepted=1437 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=1 iters=5000 accepted=1216 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=1 iters=5000 accepted=1309 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=1 iters=5000 accepted=1480 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [] /home/chris/harness/t0153v6/repro6/fullisl_c1.0_g0.3_d0.3.txt c=1 iters=20000 accepted=5711 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.01 iters=5000 accepted=46 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.01 iters=5000 accepted=46 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.01 iters=5000 accepted=48 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.01 iters=5000 accepted=66 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.01 iters=20000 accepted=207 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.01 iters=5000 accepted=49 BYPASS=3 worstOutside=0.0000 worstDisc=0.7893
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.01 iters=5000 accepted=46 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.01 iters=5000 accepted=48 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.01 iters=5000 accepted=250 BYPASS=184 worstOutside=0.7071 worstDisc=20.2055
+main [] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.01 iters=20000 accepted=207 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.05 iters=5000 accepted=54 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.05 iters=5000 accepted=56 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.05 iters=5000 accepted=56 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.05 iters=5000 accepted=77 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.05 iters=20000 accepted=239 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.05 iters=5000 accepted=58 BYPASS=4 worstOutside=0.0000 worstDisc=0.7626
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.05 iters=5000 accepted=56 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.05 iters=5000 accepted=56 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.05 iters=5000 accepted=266 BYPASS=188 worstOutside=0.7071 worstDisc=20.1789
+br [BADEND=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.3 iters=5000 accepted=86 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.05 iters=20000 accepted=239 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.3 iters=5000 accepted=87 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.3 iters=5000 accepted=88 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.3 iters=5000 accepted=101 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.3 iters=20000 accepted=345 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.3 iters=5000 accepted=90 BYPASS=3 worstOutside=0.0000 worstDisc=0.5959
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.3 iters=5000 accepted=87 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADSTART=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.3 iters=5000 accepted=88 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.3 iters=5000 accepted=292 BYPASS=191 worstOutside=0.7071 worstDisc=20.0122
+main [] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=0.3 iters=20000 accepted=345 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=1 iters=5000 accepted=1461 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=1 iters=5000 accepted=1267 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=1 iters=5000 accepted=1361 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=1 iters=5000 accepted=1517 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=1 iters=20000 accepted=6192 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=1 iters=5000 accepted=1514 BYPASS=1 worstOutside=0.0000 worstDisc=0.6148
+main [BADSTART=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=1 iters=5000 accepted=1361 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1 BADEND_R=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=1 iters=5000 accepted=1267 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=1 iters=5000 accepted=2274 BYPASS=742 worstOutside=0.7705 worstDisc=19.5455
+main [] /home/chris/harness/t0153v6/repro6/sq_hole_diag.txt c=1 iters=20000 accepted=6192 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.01 iters=5000 accepted=48 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1 BADEND_R=1] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.01 iters=5000 accepted=49 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADSTART=1] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.01 iters=5000 accepted=53 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.01 iters=5000 accepted=49 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.01 iters=5000 accepted=50 BYPASS=2 worstOutside=0.0000 worstDisc=0.4552

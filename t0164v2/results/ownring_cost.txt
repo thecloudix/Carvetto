@@ -1,0 +1,12 @@
+br gear 2000 seed=1 contours=1 ch=0.05 cpu=27.32s ok=1 moves=870125 regions=1 hash=54c5b3a2b0e6d432 [26 1 region(
+main gear 2000 seed=1 contours=1 ch=0.05 cpu=26.52s ok=1 moves=870125 regions=1 hash=54c5b3a2b0e6d432 [26 1 region(
+br gearh 1000 seed=1 contours=2 ch=0.05 cpu=1.26s ok=1 moves=268057 regions=1 hash=fbde5b642e53762e [26 1 region(
+main gearh 1000 seed=1 contours=2 ch=0.05 cpu=1.27s ok=1 moves=268057 regions=1 hash=fbde5b642e53762e [26 1 region(
+br gearh 2000 seed=1 contours=2 ch=0.05 cpu=5.29s ok=1 moves=560435 regions=1 hash=e5e9b9a86f92b678 [26 1 region(
+main gearh 2000 seed=1 contours=2 ch=0.05 cpu=5.15s ok=1 moves=560435 regions=1 hash=e5e9b9a86f92b678 [26 1 region(
+br dpoly 200 seed=1 contours=201 ch=0.05 cpu=1.13s ok=1 moves=251846 regions=1 hash=9f908607ecfcfc96 [26 1 region
+main dpoly 200 seed=1 contours=201 ch=0.05 cpu=1.08s ok=1 moves=251846 regions=1 hash=9f908607ecfcfc96 [26 1 region
+br dpoly 400 seed=1 contours=401 ch=0.05 cpu=7.70s ok=1 moves=467203 regions=1 hash=e173481c6350f34d [28 1 group(
+main dpoly 400 seed=1 contours=401 ch=0.05 cpu=7.11s ok=1 moves=467203 regions=1 hash=e173481c6350f34d [28 1 group(
+br dpoly 800 seed=1 contours=801 ch=0.05 cpu=60.94s ok=1 moves=916236 regions=1 hash=32156e65a5c083b9 [28 1 group
+main dpoly 800 seed=1 contours=801 ch=0.05 cpu=62.16s ok=1 moves=916236 regions=1 hash=32156e65a5c083b9 [28 1 group

@@ -1,0 +1,24 @@
+br round1 load=43.21 pairs 200 seed=1 contours=600 ch=0.5 cpu=0.19s ok=1 moves=27260 regions=600 hash=5a620fe816f9aaff [28 200 group(s) of crossing or touching vectors were ] [17 vector 0: no
+main round1 load=43.21 pairs 200 seed=1 contours=600 ch=0.5 cpu=0.54s ok=1 moves=27260 regions=600 hash=5a620fe816f9aaff [28 200 group(s) of crossing or touching vectors were ] [17 vector 0: no
+br round1 load=43.21 pairs 400 seed=1 contours=1200 ch=0.5 cpu=0.38s ok=1 moves=54658 regions=1200 hash=5aef5f5a48ac0785 [28 400 group(s) of crossing or touching vectors were ] [17 vector 0: 
+main round1 load=43.21 pairs 400 seed=1 contours=1200 ch=0.5 cpu=1.84s ok=1 moves=54658 regions=1200 hash=5aef5f5a48ac0785 [28 400 group(s) of crossing or touching vectors were ] [17 vector 0: 
+br round1 load=43.60 pairs 800 seed=1 contours=2400 ch=0.5 cpu=0.77s ok=1 moves=109433 regions=2400 hash=7f24cc6ed29f7eae [28 800 group(s) of crossing or touching vectors were ] [17 vector 0:
+main round1 load=43.87 pairs 800 seed=1 contours=2400 ch=0.5 cpu=6.57s ok=1 moves=109433 regions=2400 hash=7f24cc6ed29f7eae [28 800 group(s) of crossing or touching vectors were ] [17 vector 0:
+br round1 load=44.94 pairs 1600 seed=1 contours=4800 ch=0.5 cpu=1.63s ok=1 moves=218756 regions=4800 hash=03ab971766d89126 [28 1600 group(s) of crossing or touching vectors were] [17 vector 0
+main round1 load=44.94 pairs 1600 seed=1 contours=4800 ch=0.5 cpu=25.24s ok=1 moves=218756 regions=4800 hash=03ab971766d89126 [28 1600 group(s) of crossing or touching vectors were] [17 vector 
+br round1 load=45.85 pairs 3200 seed=1 contours=9600 ch=0.5 cpu=3.10s ok=1 moves=437267 regions=9600 hash=9d0629b81c1eb72d [28 3200 group(s) of crossing or touching vectors were] [17 vector 0
+main round1 load=45.94 pairs 3200 seed=1 contours=9600 ch=0.5 cpu=99.73s ok=1 moves=437267 regions=9600 hash=9d0629b81c1eb72d [28 3200 group(s) of crossing or touching vectors were] [17 vector 
+br round1 load=40.91 pairs 6400 seed=1 contours=19200 ch=0.5 cpu=6.61s ok=1 moves=872902 regions=19200 hash=74b54c2022322e9a [28 6400 group(s) of crossing or touching vectors were] [17 vector
+br round2 load=40.48 pairs 200 seed=1 contours=600 ch=0.5 cpu=0.18s ok=1 moves=27260 regions=600 hash=5a620fe816f9aaff [28 200 group(s) of crossing or touching vectors were ] [17 vector 0: no
+main round2 load=40.68 pairs 200 seed=1 contours=600 ch=0.5 cpu=0.54s ok=1 moves=27260 regions=600 hash=5a620fe816f9aaff [28 200 group(s) of crossing or touching vectors were ] [17 vector 0: no
+br round2 load=40.68 pairs 400 seed=1 contours=1200 ch=0.5 cpu=0.37s ok=1 moves=54658 regions=1200 hash=5aef5f5a48ac0785 [28 400 group(s) of crossing or touching vectors were ] [17 vector 0: 
+main round2 load=40.68 pairs 400 seed=1 contours=1200 ch=0.5 cpu=1.82s ok=1 moves=54658 regions=1200 hash=5aef5f5a48ac0785 [28 400 group(s) of crossing or touching vectors were ] [17 vector 0: 
+br round2 load=40.55 pairs 800 seed=1 contours=2400 ch=0.5 cpu=0.79s ok=1 moves=109433 regions=2400 hash=7f24cc6ed29f7eae [28 800 group(s) of crossing or touching vectors were ] [17 vector 0:
+main round2 load=40.55 pairs 800 seed=1 contours=2400 ch=0.5 cpu=6.67s ok=1 moves=109433 regions=2400 hash=7f24cc6ed29f7eae [28 800 group(s) of crossing or touching vectors were ] [17 vector 0:
+br round2 load=40.69 pairs 1600 seed=1 contours=4800 ch=0.5 cpu=1.61s ok=1 moves=218756 regions=4800 hash=03ab971766d89126 [28 1600 group(s) of crossing or touching vectors were] [17 vector 0
+main round2 load=40.87 pairs 1600 seed=1 contours=4800 ch=0.5 cpu=26.56s ok=1 moves=218756 regions=4800 hash=03ab971766d89126 [28 1600 group(s) of crossing or touching vectors were] [17 vector 
+br round2 load=43.59 pairs 3200 seed=1 contours=9600 ch=0.5 cpu=3.25s ok=1 moves=437267 regions=9600 hash=9d0629b81c1eb72d [28 3200 group(s) of crossing or touching vectors were] [17 vector 0
+main round2 load=43.46 pairs 3200 seed=1 contours=9600 ch=0.5 cpu=100.15s ok=1 moves=437267 regions=9600 hash=9d0629b81c1eb72d [28 3200 group(s) of crossing or touching vectors were] [17 vector
+br round2 load=39.64 pairs 6400 seed=1 contours=19200 ch=0.5 cpu=6.33s ok=1 moves=872902 regions=19200 hash=74b54c2022322e9a [28 6400 group(s) of crossing or touching vectors were] [17 vector
+main once load=39.31 pairs 6400 seed=1 contours=19200 ch=0.5 cpu=389.17s ok=1 moves=872902 regions=19200 hash=74b54c2022322e9a [28 6400 group(s) of crossing or touching vectors were] [17 vect
+done

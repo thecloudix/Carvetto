@@ -1,0 +1,15 @@
+contour 0 closed=1
+    L 0 0 200 0
+    L 200 0 200 10
+    L 200 10 0 10
+    L 0 10 0 0
+contour 0 closed=1
+    A 20 5 r 0.4 0 -6.2831853071795862 dir 1
+contour 0 closed=1
+    A 60 5 r 0.5 0 -6.2831853071795862 dir 1
+contour 0 closed=1
+    A 100 5 r 0.6000000000000001 0 -6.2831853071795862 dir 1
+contour 0 closed=1
+    A 140 5 r 0.7000000000000001 0 -6.2831853071795862 dir 1
+contour 0 closed=1
+    A 180 5 r 0.8 0 -6.2831853071795862 dir 1

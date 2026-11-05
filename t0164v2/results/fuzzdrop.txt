@@ -1,0 +1,27 @@
+br [] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.01 iters=1500 accepted=13 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.01 iters=1500 accepted=13 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.01 iters=1500 accepted=14 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.01 iters=1500 accepted=14 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.01 iters=1500 accepted=13 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.01 iters=1500 accepted=54 BYPASS=41 worstOutside=0.7071 worstDisc=49.7414
+br [BADEND=1] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.05 iters=1500 accepted=15 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.05 iters=1500 accepted=16 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.05 iters=1500 accepted=16 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.05 iters=1500 accepted=16 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [BADEND=1] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.05 iters=1500 accepted=16 BYPASS=1 worstOutside=0.0000 worstDisc=0.8522
+main [DROP=1] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.05 iters=1500 accepted=59 BYPASS=43 worstOutside=0.7071 worstDisc=49.7147
+br [DROP=1] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.3 iters=1500 accepted=20 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [BADEND=1] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.3 iters=1500 accepted=16 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.3 iters=1500 accepted=20 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.3 iters=1500 accepted=20 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.3 iters=1500 accepted=63 BYPASS=43 worstOutside=0.7071 worstDisc=49.5481
+main [BADEND=1] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=0.3 iters=1500 accepted=17 BYPASS=1 worstOutside=0.0000 worstDisc=0.5562
+br [BADEND=1] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=1 iters=1500 accepted=447 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=1 iters=1500 accepted=457 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=1 iters=1500 accepted=457 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=1 iters=1500 accepted=457 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+main [DROP=1] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=1 iters=1500 accepted=551 BYPASS=91 worstOutside=0.7071 worstDisc=49.0815
+main [BADEND=1] /home/chris/harness/t0164v2/geo/drop_rect_centre.txt c=1 iters=1500 accepted=459 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+br [DROP=1] 
+br [BADEND=1] 
+br [] 

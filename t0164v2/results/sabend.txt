@@ -1,0 +1,257 @@
+annulus_isl_g0.01.txt SAB=0 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=0 realViolations=0 worstCone=3.000e+00  | sabmain: refused=0 realViolations=0 worstCone=3.000e+00 
+annulus_isl_g0.01.txt SAB=0 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=0 realViolations=0 worstCone=3.000e+00  | sabmain: refused=0 realViolations=0 worstCone=3.000e+00 
+annulus_isl_g0.01.txt SAB=0 [SABEND=0.3] [0 12 90] | sab: refused=0 realViolations=0 worstCone=3.000e+00  | sabmain: refused=0 realViolations=0 worstCone=3.000e+00 
+annulus_isl_g0.01.txt SAB=0 [SABEND=0.3] [1 6 0] | sab: refused=0 realViolations=0 worstCone=3.000e+00  | sabmain: refused=0 realViolations=0 worstCone=3.000e+00 
+annulus_isl_g0.01.txt SAB=0 [SABEND=2] [0 12 90] | sab: refused=0 realViolations=0 worstCone=3.000e+00  | sabmain: refused=0 realViolations=0 worstCone=3.000e+00 
+annulus_isl_g0.01.txt SAB=0 [SABEND=2] [1 6 0] | sab: refused=0 realViolations=0 worstCone=3.000e+00  | sabmain: refused=0 realViolations=0 worstCone=3.000e+00 
+annulus_isl_g0.01.txt SAB=0 [] [0 12 90] | sab: refused=0 realViolations=0 worstCone=3.000e+00  | sabmain: refused=0 realViolations=0 worstCone=3.000e+00 
+annulus_isl_g0.01.txt SAB=0 [] [1 6 0] | sab: refused=0 realViolations=0 worstCone=3.000e+00  | sabmain: refused=0 realViolations=0 worstCone=3.000e+00 
+annulus_isl_g0.01.txt SAB=2 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=2 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=2 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=2 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=2 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=2 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=2 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=2 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=3 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=3 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=3 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=3 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=3 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=3 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=3 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=3 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=4 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=4 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=4 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=4 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=4 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=4 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=4 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+annulus_isl_g0.01.txt SAB=4 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=0 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=14 worstCone=-2.917e-01 
+drop_rect_centre.txt SAB=0 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=12 worstCone=-2.565e-02 
+drop_rect_centre.txt SAB=0 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=12 worstCone=-2.917e-01 
+drop_rect_centre.txt SAB=0 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=12 worstCone=-2.565e-02 
+drop_rect_centre.txt SAB=0 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=12 worstCone=-1.992e+00 
+drop_rect_centre.txt SAB=0 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=12 worstCone=-2.300e-02 
+drop_rect_centre.txt SAB=0 [] [0 12 90] | sab: refused=0 realViolations=0 worstCone=7.147e-03  | sabmain: refused=0 realViolations=0 worstCone=7.147e-03 
+drop_rect_centre.txt SAB=0 [] [1 6 0] | sab: refused=0 realViolations=0 worstCone=5.826e-03  | sabmain: refused=0 realViolations=0 worstCone=5.826e-03 
+drop_rect_centre.txt SAB=2 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=2 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=2 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=2 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=2 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=2 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=2 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=2 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=3 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=3 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=3 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=3 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=3 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=3 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=3 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=3 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=4 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=4 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=4 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=4 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=4 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=4 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=4 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_centre.txt SAB=4 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=0 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=18 worstCone=-2.916e-01 
+drop_rect_q.txt SAB=0 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=8 worstCone=-2.927e-02 
+drop_rect_q.txt SAB=0 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=12 worstCone=-1.417e-01 
+drop_rect_q.txt SAB=0 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=8 worstCone=-2.927e-02 
+drop_rect_q.txt SAB=0 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=14 worstCone=-1.992e+00 
+drop_rect_q.txt SAB=0 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=16 worstCone=-1.644e-02 
+drop_rect_q.txt SAB=0 [] [0 12 90] | sab: refused=0 realViolations=0 worstCone=6.947e-03  | sabmain: refused=0 realViolations=0 worstCone=6.947e-03 
+drop_rect_q.txt SAB=0 [] [1 6 0] | sab: refused=0 realViolations=0 worstCone=6.336e-03  | sabmain: refused=0 realViolations=0 worstCone=6.336e-03 
+drop_rect_q.txt SAB=2 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=2 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=2 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=2 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=2 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=2 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=2 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=2 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=3 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=3 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=3 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=3 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=3 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=3 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=3 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=3 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=4 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=4 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=4 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=4 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=4 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=4 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=4 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+drop_rect_q.txt SAB=4 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=0 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=41 worstCone=-2.865e-01 
+framehole_isl_g0.05.txt SAB=0 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=57 worstCone=-2.865e-01 
+framehole_isl_g0.05.txt SAB=0 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=32 worstCone=-1.409e-01 
+framehole_isl_g0.05.txt SAB=0 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=43 worstCone=-2.825e-01 
+framehole_isl_g0.05.txt SAB=0 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=0 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=0 [] [0 12 90] | sab: refused=0 realViolations=0 worstCone=8.104e-03  | sabmain: refused=0 realViolations=0 worstCone=8.104e-03 
+framehole_isl_g0.05.txt SAB=0 [] [1 6 0] | sab: refused=0 realViolations=0 worstCone=6.544e-03  | sabmain: refused=0 realViolations=0 worstCone=6.544e-03 
+framehole_isl_g0.05.txt SAB=2 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=2 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=2 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=2 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=2 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=2 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=2 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=2 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=3 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=3 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=3 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=3 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=3 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=3 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=3 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=3 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=4 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=4 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=4 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=4 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=4 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=4 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=4 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+framehole_isl_g0.05.txt SAB=4 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=0 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=64 worstCone=-2.917e-01 
+nest.txt SAB=0 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=174 worstCone=-2.917e-01 
+nest.txt SAB=0 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=36 worstCone=-2.917e-01 
+nest.txt SAB=0 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=104 worstCone=-2.917e-01 
+nest.txt SAB=0 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=0 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=0 [] [0 12 90] | sab: refused=0 realViolations=0 worstCone=5.316e-03  | sabmain: refused=0 realViolations=0 worstCone=5.316e-03 
+nest.txt SAB=0 [] [1 6 0] | sab: refused=0 realViolations=0 worstCone=4.638e-03  | sabmain: refused=0 realViolations=0 worstCone=4.638e-03 
+nest.txt SAB=2 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=2 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=2 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=2 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=2 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=2 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=2 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=2 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=3 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=3 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=3 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=3 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=3 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=3 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=3 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=3 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=4 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=4 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=4 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=4 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=4 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=4 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=4 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+nest.txt SAB=4 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=0 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=12 worstCone=-2.917e-01 
+sq_hole_diag.txt SAB=0 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=17 worstCone=-2.917e-01 
+sq_hole_diag.txt SAB=0 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=6 worstCone=-1.635e-02 
+sq_hole_diag.txt SAB=0 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=9 worstCone=-1.684e-02 
+sq_hole_diag.txt SAB=0 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=14 worstCone=-8.589e-01 
+sq_hole_diag.txt SAB=0 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=0 realViolations=9 worstCone=-2.295e-02 
+sq_hole_diag.txt SAB=0 [] [0 12 90] | sab: refused=0 realViolations=0 worstCone=5.668e-03  | sabmain: refused=0 realViolations=0 worstCone=5.668e-03 
+sq_hole_diag.txt SAB=0 [] [1 6 0] | sab: refused=0 realViolations=0 worstCone=6.781e-03  | sabmain: refused=0 realViolations=0 worstCone=6.781e-03 
+sq_hole_diag.txt SAB=2 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=2 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=2 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=2 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=2 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=2 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=2 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=2 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=3 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=3 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=3 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=3 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=3 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=3 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=3 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=3 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=4 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=4 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=4 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=4 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=4 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=4 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=4 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+sq_hole_diag.txt SAB=4 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=0 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=0 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=0 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=0 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=0 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=0 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=0 [] [0 12 90] | sab: refused=0 realViolations=0 worstCone=8.333e-03  | sabmain: refused=0 realViolations=0 worstCone=8.333e-03 
+stad_isl_sab2_c0.05.txt SAB=0 [] [1 6 0] | sab: refused=0 realViolations=0 worstCone=6.675e-03  | sabmain: refused=0 realViolations=0 worstCone=6.675e-03 
+stad_isl_sab2_c0.05.txt SAB=2 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=2 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=2 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=2 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=2 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=2 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=2 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=2 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=3 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=3 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=3 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=3 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=3 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=3 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=3 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=3 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=4 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=4 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=4 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=4 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=4 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=4 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=4 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab2_c0.05.txt SAB=4 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=0 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=0 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=0 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=0 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=0 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=0 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=0 [] [0 12 90] | sab: refused=0 realViolations=0 worstCone=8.333e-03  | sabmain: refused=0 realViolations=0 worstCone=8.333e-03 
+stad_isl_sab4_c0.05.txt SAB=0 [] [1 6 0] | sab: refused=0 realViolations=0 worstCone=6.595e-03  | sabmain: refused=0 realViolations=0 worstCone=6.595e-03 
+stad_isl_sab4_c0.05.txt SAB=2 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=2 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=2 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=2 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=2 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=2 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=2 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=2 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=3 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=3 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=3 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=3 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=3 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=3 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=3 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=3 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=4 [SABEND=0.3 SABEND2=1] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=4 [SABEND=0.3 SABEND2=1] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=4 [SABEND=0.3] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=4 [SABEND=0.3] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=4 [SABEND=2] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=4 [SABEND=2] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=4 [] [0 12 90] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+stad_isl_sab4_c0.05.txt SAB=4 [] [1 6 0] | sab: refused=1 realViolations=0 worstCone=1.000e+300  | sabmain: refused=1 realViolations=0 worstCone=1.000e+300 
+done

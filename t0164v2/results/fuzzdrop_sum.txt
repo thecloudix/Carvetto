@@ -1,0 +1,6 @@
+('br', 'BADEND=1') accepted=492 bypass=0 worstDisc=0.0000
+('br', 'DROP=1') accepted=506 bypass=0 worstDisc=0.0000
+('br', 'normal') accepted=506 bypass=0 worstDisc=0.0000
+('main', 'BADEND=1') accepted=506 bypass=2 worstDisc=0.8522
+('main', 'DROP=1') accepted=727 bypass=218 worstDisc=49.7414
+('main', 'normal') accepted=506 bypass=0 worstDisc=0.0000
