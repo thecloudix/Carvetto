@@ -99,7 +99,9 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     others only if that copy is pruned. A direction therefore has a kept copy over a stretch
     exactly when it had one before and merge keeps the same copy up to rounding-level ties, so the
     output is unchanged except which of several coincident copies owns a stretch (coordinates
-    move by rounding; collinear spans may be split at other points). (b) snapJunction moves the
+    move by rounding; collinear spans may be split at other points). Such rounding-level shifts
+    can flip a tolerance-level repair downstream: the T-0016 verifier saw outputs move by up to
+    3.9e-4 mm (below tol) with identical checker metrics. (b) snapJunction moves the
     end of one of two lines on the same carrier whose ends differ by rounding only (≤ 16 ulp of
     the coordinates) without profiling the move, as it already did for rounding-level extensions.
     Release, CPU time per offset, both sides, measured in one process against main (53ae278) on a
@@ -109,8 +111,10 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     8.0 s; pitch 0.05, amplitude 0.2, d = 5, 4000 spans: Sharp 1.10–1.12 s (main 11.7–12.6 s),
     Square 1.05–1.08 s (main 11.8–12.5 s), Round 1.15–1.19 s (main 1.00–1.02 s); 8000 spans:
     Sharp 2.12–2.13 s (1.9× per doubling), Round 1.96–2.02 s. Round costs the same algorithm as before
-    (the new step takes ~3 ms there); the 5–20 % seen is within the run-to-run and code-layout
-    noise of these measurements. Not addressed (separate cards): input whose whole length lies
+    (the new step takes ~3 ms there), but on large inputs Round, and other inputs with nothing to
+    prune, run 13–15 % slower than main even with every new path disabled, which points to code
+    generation in buildRaw / mergeOnCarriers / offsetOpenContour (T-0016 verifier, A/A-controlled;
+    follow-up T-0170). Small inputs are not slower. Not addressed (separate cards): input whose whole length lies
     within d of itself, e.g. a walk of 2000/4000 steps of 1.5 µm offset by 1, costs super-linearly
     for every join (Round 4 s / 40 s, Sharp 12 s / 120 s, main and T-0016 alike), because each
     piece beyond d scans every input span and every vertex circle splits every raw element.
