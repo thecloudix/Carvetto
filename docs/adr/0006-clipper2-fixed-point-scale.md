@@ -245,10 +245,13 @@ decision added by T-0141, 2026-11-02; §10 added by T-0142, 2026-11-05)
      spans (`detail::StripIndex`, a segment tree over the edges' extents); every run of other
      edges lies wholly on one side of the strip and is replaced by the straight segment between
      its ends, which stays on that side (a half-plane is convex). Winding numbers inside the strip
-     are therefore unchanged and the pieces are the same; only a clamped intersection can move an
-     end by a grid unit, and a stretch lying exactly along a clip edge is decided as in §7 (no
-     difference seen: comb pocket hashes at 0/30/45/90 degrees and 62–1,000 teeth equal those
-     before). A 90-degree raster on a comb of n teeth swept the whole comb for every batch:
+     are therefore unchanged and the pieces are the same. Their ends are computed by Clipper2 from
+     the same edges but in different scanbeams, so an end where the subject crosses a clip edge
+     at a near-parallel angle can move by tens of grid units, and there the whole-clip call is the
+     less accurate one (round-1 verifier: a cropped end 0.7 units from the exact intersection,
+     the whole-clip end 64 units off); a stretch lying exactly along a clip edge is decided as in
+     §7. Every well-conditioned end agreed within 2 units over ~2,500 verifier calls, and comb
+     pocket hashes at 0/30/45/90 degrees and 5–2,000 teeth equal those before. A 90-degree raster on a comb of n teeth swept the whole comb for every batch:
      Pocket 0.78 → 0.23 s at 1,000 teeth, 5.99 → 0.73 s at 2,000.
    - Before an outset (delta ≥ 0.5 grid units), if some ring wound against the lowest path is not
      nested in a ring wound like it (a ring whose box holds its box and whose inside holds its
@@ -257,10 +260,14 @@ decision added by T-0141, 2026-11-02; §10 added by T-0142, 2026-11-05)
      at concave joins leaves a loop of positive winding at every corner of a shrinking hole;
      inside an enclosing ring the loops merge into its region, with nothing around them they
      survived the final union (a lone clockwise 1 mm circle under a counter-clockwise lowest
-     contour: 72 leftover rings at +0.3 mm, chordal 0.001; 224 at chordal 0.0001), and an
+     contour: 71 leftover rings besides the genuine one at +0.3 mm, chordal 0.001; 223 at chordal
+     0.0001), and an
      over-shrunk one left a whole phantom region (+1.5 mm: a 1.57 mm² ring). Such a ring describes
      no region (its winding is not positive), so the union, which has only nested holes, describes
-     the same region. Rings that cross each other are not detected by the nesting test. Pinned by
+     the same region. The nesting test runs per `separableBatches` batch of the rings' boxes (a
+     nesting ring's box holds the hole's, so both share a batch): near-linear for many shapes
+     with their holes (round 1 scanned all rings per hole: 80,000 holed rectangles 9.9 s vs 0.8 s
+     before T-0142). Rings that cross each other are not detected by the nesting test. Pinned by
      the repro and a generative oracle (`offset_unnested_hole_test.cpp`: nested and lone rings of
      both orientations, all joins; points within d of the region are in the result, points
      farther than reach·d are not, every outer result ring lies within reach·d), which reports

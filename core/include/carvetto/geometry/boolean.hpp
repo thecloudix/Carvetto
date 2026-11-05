@@ -57,10 +57,11 @@ std::vector<Contour> unionContours(const std::vector<Contour>& contours,
 /// `across` (from its least to its greatest extent, plus a few grid units), the rest of each
 /// ring replaced by straight segments outside the strip, so a call costs about the clip edges
 /// in its strip instead of the whole clip (a 90-degree raster on a comb of n teeth was O(n²)).
-/// Winding numbers inside the strip are unchanged, so the pieces are the same; their ends can
-/// differ from the whole-clip call by a grid unit where Clipper2 clamps an intersection to a
-/// scanbeam, and a stretch lying exactly along a clip edge may be decided the other way
-/// (ADR-0006 §7). Below the threshold every call is `booleanOp` itself.
+/// Winding numbers inside the strip are unchanged, so the pieces are the same. Their ends come
+/// from the same edges in other scanbeams: where a subject crosses a clip edge at a near-parallel
+/// angle an end can move by tens of grid units (the whole-clip call is then the less accurate
+/// one), and a stretch lying exactly along a clip edge may be decided the other way (ADR-0006
+/// §7). Below the threshold every call is `booleanOp` itself.
 class OpenPathClipper {
 public:
     /// Clips with this many edges or more are cropped to each call's strip.

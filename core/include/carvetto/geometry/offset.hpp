@@ -45,8 +45,8 @@ enum class OffsetSide { Left, Right };
 /// outer and its hole (a frame) is kept. The width does not depend on `tol`: a removed contour
 /// is narrower than about 1.13e-5 mm, about 8.9x below the smallest chordal tolerance Pocket
 /// accepts (1e-4 mm), as Profile since T-0141; Profile offsets at min(tol.chordal, 0.5 x
-/// tol.distance) with Bezier input, so only a distance tolerance below about 1.1e-5 mm brings
-/// this width up to its 2 x tol.chordal allowance.
+/// tol.distance) with Bezier input (tol.distance >= 1e-6 mm since T-0142), so only a distance
+/// tolerance below about 1.1e-5 mm brings this width up to its 2 x tol.chordal allowance.
 ///
 /// Many closed contours side by side (T-0141, ADR-0006 §9): when at least 32 groups of closed
 /// contours whose offsets cannot meet overlap one horizontal line, each group is offset on its
@@ -55,6 +55,15 @@ enum class OffsetSide { Left, Right };
 /// once by a few grid units (Clipper2 rounds intersections within scanbeams that other shapes
 /// subdivide); ring counts and orientation rules are the same. Fewer groups side by side, or
 /// any open contour in the list: one Clipper2 call, as before.
+///
+/// Holes with nothing around them (T-0142, ADR-0006 §10): on an outset (distance > 0 relative to
+/// the outermost contour), if a closed contour wound against the outermost one is not nested in
+/// a contour wound like it (its box inside that contour's box and its first vertex strictly
+/// inside), the closed contours are first replaced by the region they describe (Clipper2's union
+/// with the group's fill rule) and that region is offset. Such a contour describes no region, and
+/// offset directly it left Clipper2's corner loops behind as leftover rings (or, over-shrunk, a
+/// phantom region). Contours that cross each other are not detected. Other input is offset as
+/// before.
 ///
 /// Approach: polygonise at `tol.chordal`, scale by `kFixedPointScale`, run Clipper2's offset
 /// engine (round joins are approximated within `tol.chordal`), convert back to polygonal

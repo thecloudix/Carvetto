@@ -13,10 +13,13 @@
 #include "carvetto/geometry/box2.hpp"
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/geometry/tolerance.hpp"
+#include "carvetto/toolpath/engrave.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/profile.hpp"
+#include "carvetto/toolpath/v_carve.hpp"
 #include "pocket_test_util.hpp"
 #include "profile_test_util.hpp"
+#include "v_carve_test_util.hpp"
 
 using namespace carvetto;
 using namespace carvetto::toolpath;
@@ -126,6 +129,56 @@ TEST_CASE("T-0142 (d): Profile and Pocket refuse a distance tolerance below 1e-6
             CHECK_THAT(pr.diagnostics.front().message, ContainsSubstring(reason));
             REQUIRE(kr.diagnostics.size() == 1);
             CHECK_THAT(kr.diagnostics.front().message, ContainsSubstring(reason));
+        }
+    }
+}
+
+TEST_CASE("T-0142 (d): Engrave and V-Carve refuse a distance below 1e-6 mm with their own message",
+          "[toolpath][engrave][v_carve][tolerance]") {
+    // Engrave Fill and V-Carve's flat areas run Pocket with the user's distance tolerance; each
+    // operation refuses a distance below Pocket's floor itself (round 1 leaked Pocket's message).
+    const std::vector<Contour> shapes{Contour::rectangle(Box2{{0, 0}, {30, 12}}),
+                                      Contour::circle({15, 6}, 3, geometry::ArcDirection::CW)};
+    for (const double distance : {1e-9, 5e-7, std::nextafter(1e-6, 0.0), 1e-6}) {
+        CAPTURE(distance);
+        const Tolerance tol{distance, 1e-9, 1e-3};
+        const bool valid = distance >= 1e-6;
+        EngraveParams ep;
+        ep.depth = 0.5;
+        ep.safeZ = 5.0;
+        ep.tolerance = tol;
+        ep.strategy = EngraveStrategy::Fill;
+        ep.fillPattern = PocketStrategy::Raster;
+        const EngraveResult er = engraveToolpath(shapes, test::v_carve::endMill(2.0), std::nullopt, ep);
+        CHECK(er.ok() == valid);
+        VCarvingParams vp;
+        vp.flatDepth = 1.0;
+        vp.tolerance = tol;
+        const VCarvingResult vc = vCarvingToolpath(shapes, test::v_carve::vBit(90, 12.7), std::nullopt,
+                                                   {test::pocket::endMill("EM 3", 3, 3.0, 1.2, 1.0)}, vp);
+        const VCarvingResult vf = vCarvingToolpath(shapes, test::v_carve::vBit(90, 12.7), std::nullopt, {}, vp);
+        CHECK(vc.ok() == valid);
+        CHECK(vf.ok() == valid);
+        if (!valid) {
+            REQUIRE(er.diagnostics.size() == 1);
+            CHECK(er.diagnostics.front().issue == ToolpathIssue::InvalidParameters);
+            CHECK_THAT(er.diagnostics.front().message,
+                       ContainsSubstring("invalid tolerance: chordal must be between 0.0001 and 1 mm, distance "
+                                         "between 0.000001 mm and chordal"));
+            for (const VCarvingResult* v : {&vc, &vf}) {
+                REQUIRE(v->diagnostics.size() == 1);
+                CHECK(v->diagnostics.front().issue == ToolpathIssue::InvalidParameters);
+                CHECK_THAT(v->diagnostics.front().message,
+                           ContainsSubstring("invalid tolerance: chordal must be between 0.0003 and 1 mm, distance "
+                                             "between 0.000001 mm and chordal"));
+                CHECK((v->clearance.empty() || v->clearance.front().isEmpty()));
+            }
+        } else {
+            CHECK_FALSE(er.has(ToolpathIssue::InvalidParameters));
+            CHECK_FALSE(vc.has(ToolpathIssue::InvalidParameters));
+            CHECK_FALSE(vf.has(ToolpathIssue::InvalidParameters));
+            REQUIRE_FALSE(vc.clearance.empty());
+            CHECK_FALSE(vc.clearance.front().isEmpty());
         }
     }
 }

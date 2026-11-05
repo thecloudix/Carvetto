@@ -17,6 +17,8 @@
 #include "carvetto/geometry/contour_ops.hpp"
 #include "carvetto/geometry/offset.hpp"
 #include "test_rng.hpp"
+// Last: on Windows it includes <windows.h>.
+#include "cpu_scaling.hpp"
 
 using namespace carvetto::geometry;
 using Catch::Approx;
@@ -285,4 +287,40 @@ TEST_CASE("T-0142 b: outsets of rings with lone and nested holes keep exactly th
         }
     }
     CHECK(loneHoles > scenes / 4);
+}
+
+TEST_CASE("T-0142 b: outsets of many shapes with nested holes stay near-linear", "[geometry][offset][T-0142][perf]") {
+    // Round 1 tested each hole against every ring wound like the lowest (row of 40,000 -> 80,000
+    // holed rectangles 2.0 -> 9.9 s, main 0.39 -> 0.78 s); the scan now runs per batch of boxes.
+#ifdef NDEBUG
+    const int nSmall = 20000;
+#else
+    const int nSmall = 3000;
+#endif
+    auto scene = [](int n, bool grid) {
+        std::vector<Contour> cs;
+        const int k = static_cast<int>(std::sqrt(static_cast<double>(n)));
+        for (int i = 0; i < n; ++i) {
+            const double x = 2.0 * (grid ? i % k : i);
+            const double y = grid ? 2.0 * (i / k) : 0.0;
+            cs.push_back(Contour::rectangle(Box2{{x, y}, {x + 1.0, y + 1.0}}));
+            cs.push_back(Contour::rectangle(Box2{{x + 0.3, y + 0.3}, {x + 0.7, y + 0.7}}).reversed());
+        }
+        return cs;
+    };
+    const Tolerance tol{0.001, 1e-9, 0.001};
+    for (const bool grid : {false, true}) {
+        const std::vector<Contour> a = scene(nSmall, grid);
+        const std::vector<Contour> b = scene(2 * nSmall, grid);
+        std::size_t ra = 0;
+        std::size_t rb = 0;
+        const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+            3, [&] { ra = offsetContours(a, 0.05, JoinType::Round, tol).size(); },
+            [&] { rb = offsetContours(b, 0.05, JoinType::Round, tol).size(); });
+        INFO((grid ? "grid" : "row") << " CPU seconds: " << nSmall << " shapes " << t.smallSeconds << ", "
+                                     << 2 * nSmall << " shapes " << t.largeSeconds << ", ratio " << t.ratio());
+        CHECK(ra == a.size());  // every shape and its (shrunk) hole
+        CHECK(rb == b.size());
+        CHECK(t.ratio() <= 2.5);
+    }
 }

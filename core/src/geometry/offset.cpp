@@ -339,8 +339,8 @@ std::optional<std::vector<std::vector<std::size_t>>> planBatches(const Clipper2L
 // (T-0142, ADR-0006 §10). On an outset (holes shrink) Clipper2 joins every corner of such a ring
 // through the original vertex (the T-0018 backport, §6), which leaves a loop of positive winding
 // at each corner; inside an enclosing ring those loops merge into its region, but with nothing
-// around them they survive the final union as leftover rings (a lone 1 mm circle: 71 rings at
-// +0.3 mm), and an over-shrunk one leaves a whole phantom region. Such input describes no region
+// around them they survive the final union as leftover rings (a lone 1 mm circle: 71 leftover
+// rings at +0.3 mm, chordal 0.001), and an over-shrunk one leaves a whole phantom region. Such input describes no region
 // there (its winding is not positive), so the closed paths are first resolved into the region
 // they describe (Clipper2's union with the group's fill rule: Positive, or Negative for a group
 // whose lowest path is clockwise, keeping that orientation), which has only nested holes.
@@ -374,30 +374,58 @@ bool resolveUnnestedHoles(Clipper2Lib::Paths64& paths, double delta) {
     if (against.empty()) {
         return false;
     }
+    // A ring nesting a hole has a box holding the hole's box, so both are in one batch of
+    // detail::separableBatches (boxes in different batches neither overlap nor touch): the scan
+    // runs per batch, near-linear for many shapes each with its holes (T-0142 round 2; one scan
+    // over all rings was quadratic for a row or grid of holed shapes).
     std::vector<Clipper2Lib::Rect64> boxes(paths.size());
+    std::vector<detail::GridBox> grid(paths.size());
+    std::vector<int> kind(paths.size(), 0);  // 1 with, 2 against, 0 neither
     for (const std::size_t i : with) {
-        boxes[i] = Clipper2Lib::GetBounds(paths[i]);
+        kind[i] = 1;
     }
-    std::sort(with.begin(), with.end(), [&boxes](std::size_t a, std::size_t b) {
-        return boxes[a].left < boxes[b].left || (boxes[a].left == boxes[b].left && a < b);
-    });
+    for (const std::size_t i : against) {
+        kind[i] = 2;
+    }
+    for (std::size_t i = 0; i < paths.size(); ++i) {
+        boxes[i] = Clipper2Lib::GetBounds(paths[i]);
+        grid[i] = {boxes[i].left, boxes[i].top, boxes[i].right, boxes[i].bottom};
+    }
     bool allNested = true;
-    for (const std::size_t h : against) {
-        const Clipper2Lib::Rect64 hb = Clipper2Lib::GetBounds(paths[h]);
-        // Candidates: rings wound like the lowest whose left edge is at or left of the hole's.
-        const auto last = std::upper_bound(with.begin(), with.end(), hb.left,
-                                           [&boxes](std::int64_t v, std::size_t w) { return v < boxes[w].left; });
-        bool nested = false;
-        for (auto it = with.begin(); it != last && !nested; ++it) {
-            const Clipper2Lib::Rect64& wb = boxes[*it];
-            if (wb.right < hb.right || wb.top > hb.top || wb.bottom < hb.bottom) {
+    std::vector<std::size_t> batchWith;
+    for (const std::vector<std::size_t>& batch : detail::separableBatches(grid)) {
+        batchWith.clear();
+        for (const std::size_t i : batch) {
+            if (kind[i] == 1) {
+                batchWith.push_back(i);
+            }
+        }
+        std::sort(batchWith.begin(), batchWith.end(), [&boxes](std::size_t a, std::size_t b) {
+            return boxes[a].left < boxes[b].left || (boxes[a].left == boxes[b].left && a < b);
+        });
+        for (const std::size_t h : batch) {
+            if (kind[h] != 2) {
                 continue;
             }
-            nested = Clipper2Lib::PointInPolygon(paths[h].front(), paths[*it]) ==
-                     Clipper2Lib::PointInPolygonResult::IsInside;
+            const Clipper2Lib::Rect64& hb = boxes[h];
+            // Candidates: rings wound like the lowest whose left edge is at or left of the hole's.
+            const auto last = std::upper_bound(batchWith.begin(), batchWith.end(), hb.left,
+                                               [&boxes](std::int64_t v, std::size_t w) { return v < boxes[w].left; });
+            bool nested = false;
+            for (auto it = batchWith.begin(); it != last && !nested; ++it) {
+                const Clipper2Lib::Rect64& wb = boxes[*it];
+                if (wb.right < hb.right || wb.top > hb.top || wb.bottom < hb.bottom) {
+                    continue;
+                }
+                nested = Clipper2Lib::PointInPolygon(paths[h].front(), paths[*it]) ==
+                         Clipper2Lib::PointInPolygonResult::IsInside;
+            }
+            if (!nested) {
+                allNested = false;
+                break;
+            }
         }
-        if (!nested) {
-            allNested = false;
+        if (!allNested) {
             break;
         }
     }
