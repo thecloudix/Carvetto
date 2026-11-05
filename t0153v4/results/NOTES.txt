@@ -33,7 +33,10 @@ FAMILY 18 (open class): sweep fam18_ch01 case 2 seed 4818 (chordal 0.1): 3 V-bit
 SWEEP (sweep4.sh): fam 0..23 x 25, fam18 x 40 + chordal 0.1 x 30 + 40, mix x 2 x 40, far 2e4, scale 0.05: 0 real violations
    except fam18_ch01 (above) and fam16_s316 case 3 (-1.3e-4 mm, gap 3.1e-5 mm, resolved: sub-distance). fam 15/20/23 and
    mix_402 c28 coverage/over fails are coincident-edge artefacts (VC_F15=1 and VC_F23=1 clean). lat <= 0.565 x chordal.
-   scale20 killed (exit 137, memory) - not analysed.
+   scale20 killed (exit 137, memory) - not analysed. fam_20 and ch3e4_fam16 hit the 5400 s cap (exit 124); printed no
+   failure except fam_20 case 0 (squares sharing edges: coincident-edge 'over' artefact, as in round 3).
+   Round-3 seed-316 case 28 (resolved D-hole, chordal 0.001; regenerated with the r3 library -> repro4/s316_c28.txt):
+   r4 with V 11.521/100.4, flat 1.942, start 1.274, end mill 4.792: 0 violations, worst cone +2.9e-4, lat 0.50.
 MEDIAL AXIS vs main: ac1 0.01/0.05 21/21 OK both, far BAD 84 (br) vs 104 (main), cap identical, gab identical, fuzz 2 x 640
    no crash/hang/bad (main 1 x 640 same), scale holes identical samples, scale text (crossing page: 108 touching pairs) fewer
    samples (39 vs 44 per span) and more skeleton outside the even-odd region than main (18,874 vs 9,536 points; outside the
