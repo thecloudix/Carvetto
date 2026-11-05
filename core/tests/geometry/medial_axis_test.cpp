@@ -356,10 +356,17 @@ TEST_CASE("medial axis: non-zero fill rule", "[geometry][medial][ac1]") {
     CHECK(nz.ignoredContours == 1);
     const MedialAxis eo = medialAxis(cs, kTol);
     CHECK(eo.ignoredContours == 0);
-    // Even-odd: a frame, whose axis is a loop at radius 2.5 plus corner branches.
+    // Even-odd: a frame, whose axis is a loop at radius 2.5 along the sides; at each corner the
+    // parabolic arcs round the inner corner meet the outer corner's bisector at radius
+    // 10 - 5 sqrt 2 (equidistant from both outer walls and the inner corner). T-0153: before the
+    // on-boundary circumcentre fix those corner junctions were missed and every radius was <= 2.5.
+    const double junction = 10.0 - 5.0 * std::sqrt(2.0);
+    double rMax = 0.0;
     for (const MedialPoint& p : orc::allPoints(eo)) {
-        CHECK(p.radius <= 2.5 + 1e-9);
+        CHECK(p.radius <= junction + 1e-9);
+        rMax = std::max(rMax, p.radius);
     }
+    CHECK(rMax >= junction - kTol.chordal);
 }
 
 TEST_CASE("medial axis: output is deterministic", "[geometry][medial][ac1]") {
@@ -389,4 +396,34 @@ TEST_CASE("medial axis oracle: off-axis points are rejected", "[geometry][medial
     const orc::DenseBoundary dc = orc::sampleBoundary(circle, kTol.chordal);
     CHECK(orc::isMedial(dc, {0, 0}, 5.0, kTol.chordal));
     CHECK_FALSE(orc::isMedial(dc, {0.5, 0}, 4.5, kTol.chordal));
+}
+
+TEST_CASE("medial axis: a thin band with flat corners and a hole near a wall (T-0153)", "[geometry][medial]") {
+    // A band whose long edges end in near-flat corners: the exempt neighbour sample of a corner
+    // hid the samples inside the long edge's diametral circle, and no refinement happened.
+    std::vector<Vec2> pts{{3.7559, 7.8087}, {3.7665, 7.8044}, {3.9014, 7.7416}, {4.0980, 7.6312},
+                          {4.2870, 7.5020}, {4.4680, 7.3549}, {4.6402, 7.1908}, {4.8031, 7.0104},
+                          {4.9561, 6.8146}, {5.0047, 6.7461}, {5.0162, 6.7292}, {9.1284, 6.7292},
+                          {9.1398, 6.7461}, {9.1885, 6.8146}, {9.3415, 7.0104}, {9.5044, 7.1908},
+                          {9.6766, 7.3549}, {9.8575, 7.5020}, {10.0466, 7.6312}, {10.2432, 7.7416},
+                          {10.3781, 7.8044}, {10.3887, 7.8087}};
+    const std::vector<Contour> band{Contour::fromPolyline(carvetto::geometry::Polyline{pts, true})};
+    const MedialAxis ax = medialAxis(band, kTol);
+    CHECK_FALSE(ax.accuracyCapped);
+    CHECK_FALSE(ax.branches.empty());
+    double rMax = 0.0;
+    for (const MedialPoint& p : orc::allPoints(ax)) {
+        rMax = std::max(rMax, p.radius);
+    }
+    CHECK(rMax > 0.5);
+
+    // A one-arc hole 0.005 mm from the outer wall is a boundary (it was ignored: its only probe,
+    // the arc's middle, was within the tolerance of the wall).
+    const std::vector<Contour> holed{Contour::rectangle(Box2{{0, 0}, {10, 10}}),
+                                     Contour::circle({7, 5}, 2.995, ArcDirection::CW)};
+    const MedialAxis h = medialAxis(holed, kTol);
+    CHECK(h.ignoredContours == 0);
+    for (const MedialPoint& p : orc::allPoints(h)) {
+        CHECK(carvetto::geometry::distance(p.point, Vec2{7, 5}) >= 2.995);
+    }
 }

@@ -1008,46 +1008,114 @@ void Solver::classifyContours(std::vector<int>& leftInside) {
         const bool ccw = area > 0.0;
         // Probe a point on the contour that is clear of every other contour: the winding number
         // of the others there, plus this contour's own side, gives the region on each side.
+        // T-0153: 32 probes spread over the contour by arc length (a one-arc hole had one probe
+        // per span; a D-shaped hole whose arc hugs a wall had all its span-indexed probes on the
+        // arc, none on the chord that is clear of the wall). A probe within chordal + distance of
+        // another contour's ring does not count, since the ring's winding may be wrong there.
         const std::size_t spans = c.spans.size();
-        const std::size_t probes = std::min<std::size_t>(spans, 8);
+        std::vector<double> cum(spans + 1, 0.0);
+        for (std::size_t k = 0; k < spans; ++k) {
+            // Approximate lengths suffice to spread probes: a Bezier's control polygon (its exact
+            // length() subdivides exponentially at cusps, which fuzzed outlines have).
+            double w = 0.0;
+            if (!zeroSpan(c.spans[k])) {
+                if (const auto* bz = std::get_if<BezierSpan>(&c.spans[k])) {
+                    w = distance(bz->p0, bz->p1) + distance(bz->p1, bz->p2) + distance(bz->p2, bz->p3);
+                } else {
+                    w = length(c.spans[k]);
+                }
+            }
+            cum[k + 1] = cum[k] + w;
+        }
+        constexpr std::size_t kProbes = 32;
         bool found = false;
         int wl = 0;
         int wr = 0;
-        const Span* firstProbe = nullptr;
-        for (std::size_t k = 0; k < probes && !found; ++k) {
-            const Span& sp = c.spans[(k * spans) / probes];
-            if (zeroSpan(sp)) {
+        const Span* bestSpan = nullptr;  // fallback: the probe farthest from the other rings
+        double bestT = 0.5;
+        double bestClear = -1.0;
+        std::size_t at = 0;
+        for (std::size_t k = 0; k < kProbes && !found && cum[spans] > 0.0; ++k) {
+            const double sTarget = cum[spans] * (static_cast<double>(k) + 0.5) / static_cast<double>(kProbes);
+            while (at + 1 < spans && cum[at + 1] <= sTarget) {
+                ++at;
+            }
+            const Span& sp = c.spans[at];
+            const double len = cum[at + 1] - cum[at];
+            if (!(len > 0.0)) {
                 continue;
             }
-            if (firstProbe == nullptr) {
-                firstProbe = &sp;
-            }
-            const Vec2 p = pointAt(sp, 0.5);
-            bool clear = true;
+            const double tProbe = std::clamp((sTarget - cum[at]) / len, 0.0, 1.0);
+            const Vec2 p = pointAt(sp, tProbe);
+            double nearest = std::numeric_limits<double>::infinity();
             int w = 0;
             tree.stab(p, [&](std::size_t j) {
                 if (j == i || usable[j] == 0) {
                     return;
                 }
-                if (ringDistance(rings_[j], p) <= tol_.distance + chordal_) {
-                    clear = false;
-                }
+                nearest = std::min(nearest, ringDistance(rings_[j], p));
                 w += ringWinding(rings_[j], p);
             });
-            if (clear) {
+            if (nearest > tol_.distance + chordal_) {
+                found = true;
+                wl = w + (ccw ? 1 : 0);
+                wr = w + (ccw ? 0 : -1);
+            } else if (nearest > bestClear) {
+                bestClear = nearest;
+                bestSpan = &sp;
+                bestT = tProbe;
+            }
+        }
+        if (!found && bestSpan != nullptr) {
+            const Vec2 p = pointAt(*bestSpan, bestT);
+            // T-0153: no probe is clear by the ring test, but the best one may still be clear of
+            // the true curves (exact distance to their spans). Farther than the rings' error
+            // (chordal) the rings' winding is right; closer, but not much closer, the others'
+            // winding is counted from their curves polygonised at an eighth of that distance.
+            // (The ±2·chordal offsets below, the last resort for coincident contours, cross a
+            // hole thinner than that and read the wrong side.)
+            double exact = std::numeric_limits<double>::infinity();
+            tree.stab(p, [&](std::size_t j) {
+                if (j != i && usable[j] != 0) {
+                    for (const Span& other : contours_[j].spans) {
+                        exact = std::min(exact, closestPoint(other, p).distance);
+                    }
+                }
+            });
+            const double floorDist = 1e-9 * (std::fabs(p.x) + std::fabs(p.y) + 1.0);
+            if (exact > chordal_ + tol_.distance) {
+                int w = 0;
+                tree.stab(p, [&](std::size_t j) {
+                    if (j != i && usable[j] != 0) {
+                        w += ringWinding(rings_[j], p);
+                    }
+                });
+                found = true;
+                wl = w + (ccw ? 1 : 0);
+                wr = w + (ccw ? 0 : -1);
+            } else if (exact > std::max({chordal_ / 64.0, 2.0 * tol_.distance, floorDist})) {
+                Tolerance fine = tol_;
+                fine.chordal = exact / 8.0;
+                fine.distance = std::min(tol_.distance, fine.chordal);
+                int w = 0;
+                tree.stab(p, [&](std::size_t j) {
+                    if (j != i && usable[j] != 0) {
+                        w += windingNumber(contours_[j], p, fine);
+                    }
+                });
                 found = true;
                 wl = w + (ccw ? 1 : 0);
                 wr = w + (ccw ? 0 : -1);
             }
         }
         if (!found) {
-            if (firstProbe == nullptr) {
+            if (bestSpan == nullptr) {
                 continue;
             }
             // Every probe lies on another contour (duplicated or coincident contours): count all
-            // contours, this one included, just off both sides of the first probe.
-            const Vec2 p = pointAt(*firstProbe, 0.5);
-            const Vec2 nrm = tangentAt(*firstProbe, 0.5).perp();
+            // contours, this one included, just off both sides of the best probe.
+            const Vec2 p = pointAt(*bestSpan, bestT);
+            const Vec2 nrm = tangentAt(*bestSpan, bestT).perp();
             const double delta = 2.0 * chordal_ + 1e-9 * (std::fabs(p.x) + std::fabs(p.y));
             wl = windingAt(p + nrm * delta);
             wr = windingAt(p - nrm * delta);
@@ -1419,15 +1487,59 @@ bool Solver::encroached(int a, int b, int hint) const {
     if (t2 < 0) {
         return true;
     }
+    auto inDisc = [&](int v) {
+        const Vec2 pf = dt_->point(v);
+        return (pa - pf).dot(pb - pf) < 0.0;
+    };
+    bool hidden = false;  // an exempt sample inside the diametral circle may hide others
     for (int t : {t1, t2}) {
         for (int v : dt_->triangle(t).v) {
-            if (!counts(v)) {
+            if (v == a || v == b || Delaunay::isSuper(v) || !inDisc(v)) {
                 continue;
             }
-            const Vec2 pf = dt_->point(v);
-            if ((pa - pf).dot(pb - pf) < 0.0) {
+            if (counts(v)) {
                 return true;
             }
+            hidden = true;
+        }
+    }
+    if (!hidden) {
+        return false;
+    }
+    // T-0153: the opposite vertex lies in the circle but is exempt (within gapTol_ of the
+    // sub-edge, e.g. the neighbour sample of a flat corner), so it says nothing about the other
+    // samples in the circle: a thin band with such corners at both ends of its long edge had no
+    // refinement and an empty skeleton. Look at every triangle reaching into the diametral disc
+    // (bounded; when the bound is hit, count the sub-edge as encroached).
+    const Vec2 centre = (pa + pb) * 0.5;
+    const double radius = 0.5 * distance(pa, pb);
+    std::vector<int> stack{t1, t2};
+    std::vector<int> seen{t1, t2};
+    constexpr std::size_t kMaxVisit = 512;
+    while (!stack.empty()) {
+        const int t = stack.back();
+        stack.pop_back();
+        const auto& tr = dt_->triangle(t);
+        for (int k = 0; k < 3; ++k) {
+            const int v = tr.v[idx(k)];
+            if (v != a && v != b && !Delaunay::isSuper(v) && inDisc(v) && counts(v)) {
+                return true;
+            }
+            const int nb = tr.n[idx(k)];
+            if (nb < 0 || std::find(seen.begin(), seen.end(), nb) != seen.end()) {
+                continue;
+            }
+            // Cross the edge opposite v[k] only when it reaches into the disc.
+            const Vec2 e0 = dt_->point(tr.v[idx((k + 1) % 3)]);
+            const Vec2 e1 = dt_->point(tr.v[idx((k + 2) % 3)]);
+            if (segmentDistance(e0, e1, centre) >= radius) {
+                continue;
+            }
+            if (seen.size() >= kMaxVisit) {
+                return true;
+            }
+            seen.push_back(nb);
+            stack.push_back(nb);
         }
     }
     return false;
@@ -1655,6 +1767,13 @@ void Solver::evaluateCreated(std::vector<SplitRequest>* requests) {
         d.interior = insideAt(nr, d.cc);
         if (d.interior && requests != nullptr && rr - nr.dist > emax_) {
             requests->push_back({nr.piece, nr.u, t, spacingFor(nr.dist)});
+            d.requested = true;
+        } else if (!d.interior && requests != nullptr && nr.piece >= 0 && nr.dist <= mergeTol_ && rr > emax_) {
+            // T-0153: a circumcentre exactly on the boundary (symmetric input: the base of an
+            // isosceles triangle split at its middle under an obtuse apex puts both circumcentres
+            // on the legs) is neither inside nor outside, so no interior triangle would ever ask
+            // for refinement and the skeleton stayed empty. Sample the boundary there.
+            requests->push_back({nr.piece, nr.u, t, spacingFor(rr)});
             d.requested = true;
         }
     }

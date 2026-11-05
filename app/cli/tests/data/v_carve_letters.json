@@ -1,0 +1,11 @@
+{
+  "name": "Letters",
+  "layers": ["Letters"],
+  "safe_z": 5,
+  "order": {"left_to_right": true},
+  "tolerance": {"chordal": 0.05},
+  "tool": {
+    "database": "tools.json",
+    "id": "v-bit-90"
+  }
+}
