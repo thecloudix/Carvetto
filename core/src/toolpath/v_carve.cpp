@@ -10,6 +10,7 @@
 #include <map>
 #include <numeric>
 #include <optional>
+#include <set>
 #include <string>
 #include <utility>
 #include <variant>
@@ -227,57 +228,76 @@ std::vector<Boundary> resolveCrossings(const std::vector<Contour>& contours, con
     // it can cut a vector that is closer than that without touching the curves (a hole 0.003 mm
     // from a circle of a crossing pair). Such vectors join the cluster, until no polygon crosses
     // or touches a vector outside its cluster.
-    // A cluster whose polygons touched no outside vector is remembered with its members: until its
-    // membership changes it is neither resolved nor checked again (the union and the checks would
-    // give the same result), so each absorption costs the clusters it changes, not all of them
-    // (T-0164: restarting over every cluster made the growth quadratic in absorbing clusters).
+    // The clusters are worked through as the original fixed-point loop did (always the lowest
+    // cluster root that has not been found stable: resolve it, join every outside vector its
+    // polygons touch, and start again), but only what changes is redone (T-0164: restarting over
+    // every cluster, rebuilding every member list, made the growth quadratic in absorbing
+    // clusters). A cluster whose polygons touched nothing outside is remembered with its members
+    // and not resolved again until they change (the union and the checks would give the same
+    // result). Member lists are kept per root, ascending; an absorption only moves vectors of the
+    // clusters it involves (union-find trees change only there), so only their lists are rebuilt.
     std::vector<std::vector<Contour>> resolved(n);
     std::vector<std::vector<std::size_t>> stableMembers(n);
-    for (bool changed = true; changed;) {
-        changed = false;
-        std::vector<std::vector<std::size_t>> members(n);
-        for (std::size_t k = 0; k < n; ++k) {
-            members[findRoot(parent, k)].push_back(k);
-        }
-        for (std::size_t k = 0; k < n && !changed; ++k) {
-            bool cross = false;
-            for (const std::size_t m : members[k]) {
-                cross = cross || crossing[m];
-            }
-            if (members[k].empty() || !cross) {
-                resolved[k].clear();
-                stableMembers[k].clear();
-                continue;
-            }
-            if (members[k] == stableMembers[k]) {
-                continue;  // resolved before with these members and touched nothing outside
-            }
-            std::vector<Contour> cluster;
-            for (const std::size_t m : members[k]) {
-                cluster.push_back(contours[usable[m]]);
-            }
-            resolved[k] = geometry::unionContours(cluster, fine, geometry::FillRule::EvenOdd);
-            for (const Contour& poly : resolved[k]) {
-                for (const std::size_t j : index.query(poly.bounds().inflated(fine.chordal + tol.distance))) {
-                    if (findRoot(parent, j) == k) {
-                        continue;
-                    }
-                    if (!geometry::intersect(poly, contours[usable[j]], tol).isEmpty()) {
-                        crossing[j] = true;
-                        const std::size_t rj = findRoot(parent, j);
-                        parent[std::max(k, rj)] = std::min(k, rj);
-                        changed = true;
-                    }
-                }
-            }
-            if (!changed) {
-                stableMembers[k] = members[k];
-            }
-        }
-    }
     std::vector<std::vector<std::size_t>> members(n);
     for (std::size_t k = 0; k < n; ++k) {
         members[findRoot(parent, k)].push_back(k);
+    }
+    auto anyCrossing = [&](const std::vector<std::size_t>& ms) {
+        return std::any_of(ms.begin(), ms.end(), [&](std::size_t m) { return crossing[m]; });
+    };
+    std::set<std::size_t> pending;  // cluster roots with crossing members not known to be stable
+    for (std::size_t k = 0; k < n; ++k) {
+        if (!members[k].empty() && anyCrossing(members[k])) {
+            pending.insert(k);
+        }
+    }
+    while (!pending.empty()) {
+        const std::size_t k = *pending.begin();
+        pending.erase(pending.begin());
+        if (members[k].empty() || members[k] == stableMembers[k]) {
+            continue;  // absorbed meanwhile, or resolved with these members and touched nothing outside
+        }
+        stableMembers[k].clear();  // resolved[k] is about to change
+        std::vector<Contour> cluster;
+        for (const std::size_t m : members[k]) {
+            cluster.push_back(contours[usable[m]]);
+        }
+        resolved[k] = geometry::unionContours(cluster, fine, geometry::FillRule::EvenOdd);
+        std::vector<std::size_t> involved{k};  // roots whose clusters the absorptions touch
+        for (const Contour& poly : resolved[k]) {
+            for (const std::size_t j : index.query(poly.bounds().inflated(fine.chordal + tol.distance))) {
+                if (findRoot(parent, j) == k) {
+                    continue;
+                }
+                if (!geometry::intersect(poly, contours[usable[j]], tol).isEmpty()) {
+                    crossing[j] = true;
+                    const std::size_t rj = findRoot(parent, j);
+                    involved.push_back(rj);
+                    parent[std::max(k, rj)] = std::min(k, rj);
+                }
+            }
+        }
+        if (involved.size() == 1) {
+            stableMembers[k] = members[k];
+            continue;
+        }
+        // Every vector whose root may have changed lies in one of the involved clusters.
+        std::vector<std::size_t> moved;
+        for (const std::size_t r : involved) {
+            moved.insert(moved.end(), members[r].begin(), members[r].end());
+            members[r].clear();
+        }
+        std::sort(moved.begin(), moved.end());
+        moved.erase(std::unique(moved.begin(), moved.end()), moved.end());
+        for (const std::size_t v : moved) {
+            members[findRoot(parent, v)].push_back(v);
+        }
+        for (const std::size_t v : moved) {
+            const std::size_t r = findRoot(parent, v);
+            if (members[r].front() == v && anyCrossing(members[r])) {
+                pending.insert(r);
+            }
+        }
     }
     std::vector<Boundary> out;
     clusters = 0;
@@ -1053,7 +1073,9 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
         pocketTools = clearanceTools;
         tooling::CuttingData rest = data;
         const double width = 2.0 * limitRadius;
-        stepoverLimited = rest.stepover > width;
+        // Not for a stepover equal to the width up to rounding (2·footprint may come out one ulp
+        // short): beyond it by more than the distance tolerance.
+        stepoverLimited = rest.stepover - width > tol.distance;
         rest.stepover = rest.stepover > 0.0 ? std::min(rest.stepover, width) : 0.5 * width;
         rest.passDepth = rest.passDepth > 0.0 ? rest.passDepth : limit;
         pocketTools.push_back(PocketTool{tool, rest});
@@ -1214,6 +1236,16 @@ SkeletonCheck::SkeletonCheck(const std::vector<Contour>& boundaries, const geome
             box.expand(v);
         }
         ringBoxes_.push_back(box);
+        const std::vector<Vec2>& r = rings_.back();
+        std::vector<Box2> chunks;
+        for (std::size_t i = 0; i < r.size(); ++i) {
+            if (i % kRingChunk == 0) {
+                chunks.emplace_back();
+            }
+            chunks.back().expand(r[i]);
+            chunks.back().expand(r[(i + 1) % r.size()]);
+        }
+        chunkBoxes_.push_back(std::move(chunks));
         // The medial axis' own test (about the contour's box centre): a boundary without area is
         // ignored by it, so the medial radius does not measure it.
         const double area =
@@ -1244,13 +1276,20 @@ bool SkeletonCheck::closer(Vec2 p, double limit, const std::vector<char>& skip) 
             continue;
         }
         const std::vector<Vec2>& r = rings_[k];
-        for (std::size_t i = 0, n = r.size(); i < n; ++i) {
-            const Vec2 a = r[i];
-            const Vec2 ab = r[(i + 1) % n] - a;
-            const double len2 = ab.lengthSquared();
-            const double t = len2 > 0.0 ? std::clamp((p - a).dot(ab) / len2, 0.0, 1.0) : 0.0;
-            if ((p - (a + ab * t)).lengthSquared() < l2) {
-                return true;
+        const std::vector<Box2>& chunks = chunkBoxes_[k];
+        const std::size_t n = r.size();
+        for (std::size_t c = 0; c < chunks.size(); ++c) {
+            if (!chunks[c].intersects(near)) {
+                continue;  // no segment of this chunk comes within `limit` of p
+            }
+            for (std::size_t i = c * kRingChunk, end = std::min(n, i + kRingChunk); i < end; ++i) {
+                const Vec2 a = r[i];
+                const Vec2 ab = r[(i + 1) % n] - a;
+                const double len2 = ab.lengthSquared();
+                const double t = len2 > 0.0 ? std::clamp((p - a).dot(ab) / len2, 0.0, 1.0) : 0.0;
+                if ((p - (a + ab * t)).lengthSquared() < l2) {
+                    return true;
+                }
             }
         }
     }
@@ -1260,14 +1299,11 @@ bool SkeletonCheck::closer(Vec2 p, double limit, const std::vector<char>& skip) 
 bool SkeletonCheck::consistent(const MedialAxis& ax, const std::vector<std::size_t>& own) const {
     // Every skeleton point whose radius r exceeds `clear` is checked: inside the even-odd region,
     // and no wall strictly closer than r - clear (the inscribed disc agrees with the walls).
-    //  - Distance: the medial axis measured r against the part's own boundaries exactly, and
-    //    their rings lie within tol.chordal of them, so only the other rings ("foreign") can be
-    //    closer than r - clear; each point queries the ring index for its disc's box.
-    //  - Backstop (T-0164): that holds only if the medial axis used every own boundary. One it
-    //    dropped silently (not counted as ignored) would not be measured anywhere, so the own
-    //    rings that enclose area are measured too at every node and at every point where
-    //    membership is counted exactly (a dropped boundary changes the skeleton's topology, so
-    //    its discs reach past it at the nodes).
+    //  - Distance: each point queries the ring index for its disc's box and measures every ring
+    //    there, the part's own included (T-0164: skipping them assumed the medial axis used every
+    //    own boundary; one it dropped silently would have been measured nowhere). A correct
+    //    radius passes: it is the exact distance to the own boundaries, whose rings lie within
+    //    tol.chordal of them. Own rings without area are skipped (the medial axis ignores them).
     //  - Membership: walking a branch from a point p whose disc check passed, no ring is within
     //    r_p - clear of p, so the next point, nearer than that, is on the same side of every ring.
     //    The exact ray count is needed only where that does not hold, and once per connected
@@ -1275,37 +1311,15 @@ bool SkeletonCheck::consistent(const MedialAxis& ax, const std::vector<std::size
     //    only when the node point itself lies inside the disc that proved it (a branch's end is
     //    its node's point; T-0164 does not rely on that).
     const double clear = 2.0 * tol_.chordal + tol_.distance;
+    // Rings not measured: the own boundaries without area (the medial axis ignores them).
     std::vector<char> skip;
-    std::vector<char> skipButOwn;  // backstop: skips every ring but the own rings that enclose area
-    if (!own.empty()) {
-        skip.assign(rings_.size(), 0);
-        for (const std::size_t k : own) {
-            if (k < skip.size()) {
-                skip[k] = 1;
-            }
-        }
-        skipButOwn.assign(rings_.size(), 1);
-        bool any = false;
-        for (std::size_t k = 0; k < rings_.size(); ++k) {
-            if (skip[k] != 0 && noArea_[k] == 0) {
-                skipButOwn[k] = 0;
-                any = true;
-            }
-        }
-        if (!any) {
-            skipButOwn.clear();
+    for (const std::size_t k : own) {
+        if (k < rings_.size() && noArea_[k] != 0) {
+            skip.resize(rings_.size(), 0);
+            skip[k] = 1;
         }
     }
-    // True when an own ring that encloses area is closer to p than r - clear.
-    auto ownTooClose = [&](Vec2 p, double r) {
-        return !skipButOwn.empty() && r > clear && closer(p, r - clear, skipButOwn);
-    };
     const std::size_t nn = ax.nodes.size();
-    for (const geometry::MedialNode& nd : ax.nodes) {
-        if (ownTooClose(nd.point, nd.radius)) {
-            return false;
-        }
-    }
     std::vector<signed char> nodeIn(nn, -1);  // -1 unknown, 0 outside, 1 inside
     std::vector<Vec2> nodeProofAt(nn);        // the disc that proved nodeIn: centre ...
     std::vector<double> nodeProofReach(nn, 0.0);  // ... and radius (no ring within it)
@@ -1337,9 +1351,6 @@ bool SkeletonCheck::consistent(const MedialAxis& ax, const std::vector<std::size
             if (checked) {
                 if (in < 0) {
                     in = inside(m.point) ? 1 : 0;
-                    if (ownTooClose(m.point, m.radius)) {
-                        return false;
-                    }
                 }
                 if (in == 0 || !discOk(m.point, m.radius)) {
                     return false;

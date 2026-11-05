@@ -96,7 +96,9 @@ bound on text-heavy jobs (≥ 5,000 glyph-like regions). The geometry comes from
   at most the depth limit. A stepover wider than the width the tool cuts there is limited to that
   width, where neighbouring passes only touch at the floor and the ridges reach the full depth
   limit (verifier round 3: 0.5–0.84 × the flat depth on narrow arms and on a square the end mill
-  was too large for). When that happens and the carving tool has rest material to clear,
+  was too large for). When that happens (the stepover beyond the width by more than the distance
+  tolerance: 2·footprint can come out one ulp short of a stepover equal to it) and the carving
+  tool has rest material to clear,
   `StepoverLimited` says so once: "tool '<name>': stepover <s> mm is wider than it cuts at the
   flat bottom (<w> mm); its rest clearing of the flat areas uses <w> mm and can leave ridges up
   to <limit> mm high". A stepover within the width is the user's choice and not reported.
@@ -127,9 +129,12 @@ bound on text-heavy jobs (≥ 5,000 glyph-like regions). The geometry comes from
   cluster (`geometry::intersect`, pairs pruned by their boxes); a vector it crosses or touches
   joins the cluster, which is resolved again, until no polygon touches an outside vector. A
   cluster found touching nothing outside is remembered with its members and not resolved or
-  checked again until they change (T-0164: every absorption restarted the resolution of all
-  clusters, ~3.2× per doubling with many absorbing clusters; now ~2.0×, same result, since a
-  cluster's union and checks depend only on its members). A
+  checked again until they change, and the clusters are worked through in the old order (always
+  the lowest cluster not known to be stable) with member lists kept per cluster and rebuilt only
+  for the clusters an absorption involves (T-0164: every absorption restarted the resolution of
+  all clusters and rebuilt every member list, ~3.5× per doubling with many absorbing clusters;
+  now ~2.1× up to 6,400 pairs, same result, since a cluster's union and checks depend only on its
+  members). A
   union polygon that touches itself at a vertex (two pieces meeting at a point, e.g. a letter
   tangent to a frame edge) is cut into loops there (parities add up), since the medial axis needs
   simple contours; the nesting probes skip points on the candidate's boundary: 32 points by arc
@@ -178,15 +183,17 @@ discs all reach less than 2c + d past a true wall is accepted, whatever their ra
 net verifier: a hole filled almost entirely by an island, read on the wrong side, carved up to
 0.24 mm outside the region at chordal 1.0 and 0.007 mm at 0.05, within the bound). The
 rings are the boundaries polygonised at the internal tolerance, indexed by box; each point queries
-the index for its disc's box, and only the rings of other parts are measured (the medial radius is
-already the exact distance to the part's own boundaries, whose rings lie within c of them).
-That holds only while the medial axis uses every own boundary; one dropped without being counted
-as ignored would be measured nowhere (net verifier: a hole on a square's diagonal, skeleton of the
-square alone, passed). As a backstop (T-0164 g) the own rings that enclose area are measured too
-at every node and wherever membership is counted exactly: a dropped boundary changes the
-skeleton's topology, and the discs at its junctions reach past it (the square's centre node,
-radius 10, reaches 6 mm past the hole). Own rings without area are never measured: the medial axis
-ignores them (they bound nothing).
+the index for its disc's box (and, within a ring, boxes of 16-segment runs). Until T-0164 only the
+rings of other parts were measured, on the grounds that the medial radius is already the exact
+distance to the part's own boundaries, whose rings lie within c of them. That holds only while the
+medial axis uses every own boundary; one dropped without being counted as ignored was measured
+nowhere (net verifier: a hole on a square's diagonal, skeleton of the square alone, passed). T-0164
+(g) measures the own rings too, at every checked point, so a silently dropped boundary is caught
+wherever a disc reaches more than 2c + d past it, exactly as a foreign ring would be (round 1
+measured them only at nodes and ray-count seeds, and holes away from every node, e.g. in the middle
+of a long strip, still carved 4.9 mm deep under fault injection). Own rings without area are never
+measured: the medial axis ignores them (they bound nothing). A correct radius never fails this
+(the rings lie within c of the boundaries, the slack is 2c + d).
 Membership is carried along the skeleton: walking from a point whose disc passed, no ring is within
 r − (2c + d) of it, so a next point nearer than that is on the same side of every ring; the exact
 ray count runs only where that does not hold and once per connected piece. Membership is handed

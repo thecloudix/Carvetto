@@ -375,6 +375,11 @@ TEST_CASE("V-carve says when the carving tool's rest stepover is limited to its 
                   "clearing of the flat areas uses 2 mm and can leave ridges up to 1 mm high");
         }
     }
+    // Exactly its width (2 mm: 2·footprint computes as 1.9999999999999998): nothing to say.
+    tool.defaultCuttingData.stepover = 2.0;
+    const VCarvingResult equal = vCarvingToolpath(square, tool, std::nullopt, tooLarge, p);
+    REQUIRE(equal.ok());
+    CHECK_FALSE(equal.has(ToolpathIssue::StepoverLimited));
     // Within its width: nothing to say. Without clearance tools a stepover wider than the tool
     // cuts is refused by Pocket instead (ADR-0025 §3), so the notice is only for rest clearing.
     tool.defaultCuttingData.stepover = 1.0;
@@ -648,8 +653,10 @@ TEST_CASE("V-carve resolves crossing clusters that absorb nearby vectors in line
           "[toolpath][v_carve][crossing][perf]") {
     // T-0164 (c; T-0153 round-3 grow.cpp): pairs of crossing circles, each with a hole 0.003 mm
     // inside one circle that the pair's polygon (at chordal/8) cuts, so every cluster absorbs
-    // its hole. Every absorption restarted the resolution over all clusters (~3.2x per
-    // doubling); clusters that touched nothing outside are no longer resolved again.
+    // its hole. Every absorption restarted the resolution over all clusters (main: ~3.5x per
+    // doubling from 200 pairs), and T-0164 round 1 still rebuilt every member list per
+    // absorption (2.6x at 1,600 -> 3,200 pairs, 3.4x beyond). Now only the clusters an absorption
+    // changes are redone. Debug 200 -> 400 pairs, Release 1,600 -> 3,200.
     auto pageOf = [](int pairs) {
         std::vector<Contour> page;
         const int side = static_cast<int>(std::ceil(std::sqrt(static_cast<double>(pairs))));
@@ -661,7 +668,7 @@ TEST_CASE("V-carve resolves crossing clusters that absorb nearby vectors in line
         }
         return page;
     };
-    const int half = kRelease ? 200 : 40;
+    const int half = kRelease ? 1600 : 200;
     const std::vector<Contour> smallPage = pageOf(half);
     const std::vector<Contour> largePage = pageOf(2 * half);
     const tooling::Tool tool = vBit(90.0, 12.0);
@@ -806,9 +813,9 @@ TEST_CASE("V-carve safety net checks every skeleton point, not a sample", "[tool
 TEST_CASE("V-carve safety net with the part's own boundaries: a silently dropped hole is caught",
           "[toolpath][v_carve][holes]") {
     // T-0164 (g, i; net verifier repro6/sq_hole_diag): v_carve passes the part's boundaries as
-    // `own`, whose distance is the medial radius itself and is not measured along the skeleton.
+    // `own`, whose distance is the medial radius itself and was not measured along the skeleton.
     // A medial axis that dropped an own hole without counting it as ignored would pass that
-    // check; the own rings are measured at the nodes and the ray-count seeds as a backstop.
+    // check; the own rings are measured at every checked point now, like foreign ones.
     const geometry::Tolerance inner{0.001, 1e-9, 0.05 / 3.0};
     const Contour square = Contour::rectangle(Box2{Vec2{0, 0}, Vec2{20, 20}});
     const Contour hole = Contour::circle({5, 5}, 1.0, geometry::ArcDirection::CW);
@@ -816,12 +823,20 @@ TEST_CASE("V-carve safety net with the part's own boundaries: a silently dropped
     const toolpath::detail::SkeletonCheck check(region, inner);
     const geometry::MedialAxis dropped = geometry::medialAxis({square}, inner);
     REQUIRE(dropped.ignoredContours == 0);
-    CHECK_FALSE(check.consistent(dropped, {0, 1}));  // the hole claimed as own: the backstop
+    CHECK_FALSE(check.consistent(dropped, {0, 1}));  // the hole claimed as own
     CHECK_FALSE(check.consistent(dropped, {0}));     // the hole foreign: measured everywhere
     CHECK_FALSE(check.consistent(dropped));
     const geometry::MedialAxis right = geometry::medialAxis(region, inner);
     CHECK(check.consistent(right, {0, 1}));
     CHECK(check.consistent(right));
+
+    // A hole away from every node (round 1 measured own rings only at nodes and ray-count
+    // seeds; verifier geo/drop_rect_centre): the middle of a 100 x 10 strip.
+    const Contour strip = Contour::rectangle(Box2{Vec2{0, 0}, Vec2{100, 10}});
+    const Contour midHole = Contour::circle({50, 5}, 0.5, geometry::ArcDirection::CW);
+    const toolpath::detail::SkeletonCheck stripCheck({strip, midHole}, inner);
+    CHECK_FALSE(stripCheck.consistent(geometry::medialAxis({strip}, inner), {0, 1}));
+    CHECK(stripCheck.consistent(geometry::medialAxis({strip, midHole}, inner), {0, 1}));
 
     // The jobs of the wrong-region test, with `own` as v_carve passes it (the part's indices).
     const Contour outerCircle = Contour::circle({0, 0}, 8.0);

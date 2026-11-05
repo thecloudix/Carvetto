@@ -29,11 +29,10 @@ namespace carvetto::toolpath::detail {
 class SkeletonCheck {
    public:
     SkeletonCheck(const std::vector<geometry::Contour>& boundaries, const geometry::Tolerance& tol);
-    /// `own`: indices (into the boundaries) of the part the medial axis was computed for: their
-    /// distance is the medial radius itself, so only the other rings are measured; empty = all.
-    /// As a backstop against a medial axis that silently dropped an own boundary, the own rings
-    /// (those enclosing area) are measured too at every node and wherever membership is counted
-    /// exactly (T-0164).
+    /// `own`: indices (into the boundaries) of the part the medial axis was computed for. Every
+    /// ring is measured at every checked point, own rings included (T-0164: a medial axis that
+    /// silently dropped an own boundary is caught like a foreign one), except own rings without
+    /// area, which the medial axis ignores. Empty = every ring is measured.
     bool consistent(const geometry::MedialAxis& ax, const std::vector<std::size_t>& own = {}) const;
 
    private:
@@ -44,6 +43,9 @@ class SkeletonCheck {
     geometry::Tolerance tol_;
     std::vector<std::vector<geometry::Vec2>> rings_;
     std::vector<geometry::Box2> ringBoxes_;
+    /// Per ring: boxes of consecutive runs of `kRingChunk` segments (segment i: point i to i + 1).
+    std::vector<std::vector<geometry::Box2>> chunkBoxes_;
+    static constexpr std::size_t kRingChunk = 16;
     /// Per ring: 1 when its boundary encloses no area (the medial axis ignores it: no wall).
     std::vector<char> noArea_;
     BoxIndex ringIndex_;
