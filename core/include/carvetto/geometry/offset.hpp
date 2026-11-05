@@ -113,7 +113,8 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// or on nearly the same one, overlap, their surviving pieces are merged along the carrier: each
 /// stretch is kept once, on the copy outermost along the whole of it (handing over where two
 /// copies cross; that copy is at least |distance| from every copy's input), or dropped where
-/// copies run both ways (they enclose nothing, whatever their numbers). "Nearly the same" (e.g.
+/// copies run both ways (they enclose nothing, whatever their numbers; such a stretch is still a
+/// path, see "Narrow loops and needles" below). "Nearly the same" (e.g.
 /// the chamfers of neighbouring peaks of a steep zig-zag whose vertices carry 1e-9..1e-4 mm of
 /// noise) means: pieces that share a stretch of positive length, of elements at most 1e-3 rad
 /// apart that drift apart by no more than tol.distance / 2 over their length, and within
@@ -206,12 +207,29 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// also on one circle to that bound) is a needle tip of rounding width: it is removed and the
 /// neighbour cut back to match. The bound does not depend on where the input lies, so a wider
 /// needle (e.g. 3.6e-6 mm at 1e4 mm) is kept wherever it lies. Consecutive arcs on one circle to rounding
-/// (1e-12 x the coordinates) running the same way are one arc. A closed chain narrower than the tolerance
-/// encloses nothing a tool could follow and is dropped: two spans that never part by more than tol.distance /
-/// 2, or any loop whose mean width (2 x area / perimeter) is below tol.distance / 8 and whose every point
-/// lies within tol.distance / 8 of another of its spans (e.g. the lens between two nearly co-circular arcs
-/// running opposite ways). So a stretch of valid offset no longer than the tolerance, or such a needle tip or
-/// loop, may be missing or straightened.
+/// (1e-12 x the coordinates) running the same way are one arc. So a stretch of valid offset no longer than
+/// the tolerance may be missing or straightened.
+///
+/// Narrow loops and needles (T-0128): a closed chain too thin to enclose anything, two spans that never
+/// part by more than tol.distance / 2, or any loop whose mean width (2 x area / perimeter) is below
+/// tol.distance / 8 and whose every point lies within tol.distance / 8 of another of its spans (e.g. an
+/// out-and-back needle whose ends meet within the tolerance, or the lens between two nearly co-circular
+/// arcs running opposite ways), is not returned as a loop. If its whole extent is within the tolerance it
+/// is dropped; otherwise one of its two strands (the longer, between the two points of the loop farthest
+/// apart, taken from the unsnapped offset pieces) is returned as an open chain, which passes within the
+/// loop's width of every point of it, wherever it lies within 5e-7 x max(1, |distance|) beyond
+/// |distance| or on a Sharp/Square corner region. Where copies of a stretch run both ways (a slot exactly
+/// 2 x |distance| wide, give or take the snapping allowance), the chains are joined across it as above,
+/// and one copy that lies exactly |distance| from the input there (an offset span within its own extent,
+/// or a Round join arc; not a mitre extension or chamfer over a slot narrower than 2 x |distance|) is
+/// returned as an open chain of its own. Either is returned only where no other chain passes within
+/// tol.distance / 2 of it (sampled every tol.distance / 4) and only in stretches longer than the
+/// tolerance, so a channel 2 x |distance| + w wide keeps its path for every w >= 0. Such chains are placed
+/// in the order by where they start along the input and may touch the chains next to them. At a reversal
+/// cusp (consecutive spans turning back by more than a right angle) whose two spans cross again within the
+/// tolerance of their junction (Round arcs about vertices a hair less than 2 x |distance| apart overlap in
+/// a lens), both spans are cut back to that crossing, so the chain does not cross itself there; crossings
+/// whose place is rounding noise (two circles that only touch, to rounding) are left as they are.
 ///
 /// An empty or degenerate contour, or a non-finite `distance`, yields no chains; a zero
 /// `distance` yields the (flattened) input as one chain. A closed contour is accepted too: the

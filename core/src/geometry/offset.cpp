@@ -2440,6 +2440,237 @@ bool isSliverLoop(const Contour& c, const Tolerance& tol) {
     return true;
 }
 
+// Spans no longer than the tolerance at either end of an open strand go (ADR-0012 section 7).
+void dropTinyEnds(std::vector<Span>& spans, const Tolerance& tol) {
+    while (!spans.empty() && isDegenerate(spans.front(), tol)) {
+        spans.erase(spans.begin());
+    }
+    while (!spans.empty() && isDegenerate(spans.back(), tol)) {
+        spans.pop_back();
+    }
+}
+
+// The part of a chain between positions u0 < u1, where position i + f is fraction f along span
+// i; on a closed chain u1 may run past the end (up to u0 + n) and wraps round.
+std::vector<Span> chainPart(const std::vector<Span>& spans, double u0, double u1) {
+    std::vector<Span> out;
+    const std::size_t n = spans.size();
+    if (n == 0 || !(u1 > u0)) {
+        return out;
+    }
+    const auto first = static_cast<std::size_t>(std::floor(u0));
+    for (std::size_t g = first; static_cast<double>(g) < u1 && g < first + 2 * n; ++g) {
+        const double t0 = std::max(0.0, u0 - static_cast<double>(g));
+        const double t1 = std::min(1.0, u1 - static_cast<double>(g));
+        if (t1 > t0) {
+            // Only the ends that move are recomputed, so the junctions inside stay exact.
+            Span part = spans[g % n];
+            if (t1 < 1.0) {
+                part = withEnd(part, pointAt(spans[g % n], t1));
+            }
+            if (t0 > 0.0) {
+                part = withStart(part, pointAt(spans[g % n], t0));
+            }
+            out.push_back(part);
+        }
+    }
+    return out;
+}
+
+// True when two spans of the chain that are not neighbours cross or touch.
+bool partCrossesItself(const std::vector<Span>& spans) {
+    for (std::size_t i = 0; i < spans.size(); ++i) {
+        for (std::size_t j = i + 2; j < spans.size(); ++j) {
+            for (const Vec2 p : carrierIntersections(spans[i], spans[j])) {
+                if (inUnit(carrierParam(spans[i], p)) && inUnit(carrierParam(spans[j], p))) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+// A strand pieced together from raw pieces whose ends meet only to rounding: it is split where
+// consecutive pieces are farther apart than rounding (64 ulps of the coordinates; closing a wider
+// gap by moving an end would tilt a line unchecked: 1e-9 x the coordinates let a strand at 1e5 mm
+// dip 1.56e-6 mm inside d, fam5 0x2d5004b2) or the strand would turn back, the junctions of each
+// part are made exact
+// (exactJunctions), and a part is split again wherever that cannot be done (two arcs whose ends
+// differ by more than exactJunction closes).
+constexpr double kRoundingUnits = 64.0;
+constexpr double kEps = std::numeric_limits<double>::epsilon();
+
+std::vector<std::vector<Span>> exactParts(const std::vector<Span>& spans) {
+    auto joins = [](const Span& a, const Span& b, bool exactly) {
+        const Vec2 e = endPoint(a);
+        const Vec2 s = startPoint(b);
+        const double scale = std::max({1.0, std::fabs(e.x), std::fabs(e.y)});
+        const bool arcs = std::holds_alternative<ArcSpan>(a) && std::holds_alternative<ArcSpan>(b);
+        const bool met = exactly ? e == s || (arcs && geometry::distance(e, s) <= 1e-12 * scale)
+                                 : geometry::distance(e, s) <= kRoundingUnits * kEps * scale;
+        return met && tangentAt(a, 1.0).dot(tangentAt(b, 0.0)) > 0.0;
+    };
+    auto split = [&](const std::vector<Span>& sp, bool exactly, std::vector<std::vector<Span>>& out) {
+        std::size_t from = 0;
+        for (std::size_t i = 1; i <= sp.size(); ++i) {
+            if (i < sp.size() && joins(sp[i - 1], sp[i], exactly)) {
+                continue;
+            }
+            const auto begin = sp.begin();
+            out.emplace_back(begin + static_cast<std::ptrdiff_t>(from), begin + static_cast<std::ptrdiff_t>(i));
+            from = i;
+        }
+    };
+    std::vector<std::vector<Span>> rough;
+    split(spans, false, rough);
+    std::vector<std::vector<Span>> parts;
+    for (std::vector<Span>& part : rough) {
+        exactJunctions(part, false);
+        split(part, true, parts);
+    }
+    return parts;
+}
+
+// One strand of a closed chain too thin to enclose anything (isSliverLoop), given as the raw
+// pieces it was stitched from (not the snapped spans: far from the origin, closing the tip of a
+// needle narrower than 1e-9 x the coordinates moves a line end across the needle and tilts the
+// whole strand by its width, T-0128 channel sweep at 1.2e4 mm). The loop is cut at the two points
+// farthest apart (two farthest-point sweeps over samples of its pieces) into two strands that run
+// side by side, and the longer is returned, open, with spans no longer than the tolerance dropped
+// at its ends; its junctions are left to the caller (exactParts). Empty when the loop's whole
+// extent is within the tolerance.
+// A tool centre following the strand passes within the loop's width (below tol / 8) of every
+// point of the loop (T-0128: such a needle, 3.6 mm long and 5e-6 mm wide, was dropped).
+std::vector<Span> sliverStrand(const std::vector<Span>& loop, const Tolerance& tol) {
+    constexpr int kSamples = 8;
+    const std::size_t n = loop.size();
+    std::vector<std::pair<double, Vec2>> samples;
+    for (std::size_t i = 0; i < n; ++i) {
+        for (int k = 0; k < kSamples; ++k) {
+            const double f = static_cast<double>(k) / kSamples;
+            samples.emplace_back(static_cast<double>(i) + f, pointAt(loop[i], f));
+        }
+    }
+    auto farthest = [&](Vec2 from) {
+        std::size_t best = 0;
+        double farDist = -1.0;
+        for (std::size_t k = 0; k < samples.size(); ++k) {
+            const double dk = geometry::distance(samples[k].second, from);
+            if (dk > farDist) {
+                farDist = dk;
+                best = k;
+            }
+        }
+        return std::pair{best, farDist};
+    };
+    if (samples.empty()) {
+        return {};
+    }
+    const std::size_t p = farthest(samples.front().second).first;
+    const auto [q, extent] = farthest(samples[p].second);
+    if (extent <= tol.distance) {
+        return {};
+    }
+    const double lo = std::min(samples[p].first, samples[q].first);
+    const double hi = std::max(samples[p].first, samples[q].first);
+    std::vector<Span> one = chainPart(loop, lo, hi);
+    std::vector<Span> other = chainPart(loop, hi, lo + static_cast<double>(n));
+    auto total = [](const std::vector<Span>& sp) {
+        double len = 0.0;
+        for (const Span& s : sp) {
+            len += length(s);
+        }
+        return len;
+    };
+    std::vector<Span> strand = total(other) > total(one) ? std::move(other) : std::move(one);
+    dropTinyEnds(strand, tol);
+    if (strand.size() > 512 || partCrossesItself(strand)) {
+        // Not a plain needle: fall back to the loop's longest span, which never crosses itself.
+        const auto longest = std::max_element(loop.begin(), loop.end(), [](const Span& a, const Span& b) {
+            return length(a) < length(b);
+        });
+        strand.assign(1, *longest);
+        dropTinyEnds(strand, tol);
+    }
+    return strand;
+}
+
+// A reversal cusp of a chain (consecutive spans turning back by more than a right angle) where
+// the two spans cross again within the tolerance of their junction: the chain runs round a
+// sub-tolerance loop there, e.g. the lens between two Round arcs about vertices a hair less than
+// 2d apart (T-0017 round 3: 2.1e-4 x 1.9e-9 mm, 0xc500076c), and so crosses itself. Both spans
+// are cut back to the crossing farthest from the junction, which drops the loop; what remains
+// is unchanged geometry, so the distance bounds still hold.
+void removeCuspLoops(std::vector<Span>& spans, bool closed, const Tolerance& tol) {
+    const std::size_t n = spans.size();
+    if (n < 2) {
+        return;
+    }
+    bool changed = false;
+    for (std::size_t k = closed ? 0 : 1; k < n; ++k) {
+        Span& a = spans[(k + n - 1) % n];
+        Span& b = spans[k];
+        if (n == 2 && closed && k == 0) {
+            continue;  // a two-span loop: the same pair as k = 1
+        }
+        if (tangentAt(a, 1.0).dot(tangentAt(b, 0.0)) >= 0.0) {
+            continue;
+        }
+        const Vec2 j = startPoint(b);
+        const double la = length(a);
+        const double lb = length(b);
+        const double same = 1e-9 * std::max({1.0, std::fabs(j.x), std::fabs(j.y)});
+        std::optional<std::pair<double, double>> cut;
+        double reach = 0.0;
+        for (const Vec2 x : carrierIntersections(a, b)) {
+            const double ta = carrierParam(a, x);
+            const double tb = carrierParam(b, x);
+            if (!(ta > 0.0 && ta < 1.0 && tb > 0.0 && tb < 1.0)) {
+                continue;
+            }
+            const double back = (1.0 - ta) * la;
+            const double ahead = tb * lb;
+            if (geometry::distance(x, j) <= same || back > tol.distance || ahead > tol.distance) {
+                continue;
+            }
+            // A real crossing, not rounding: two circles that only touch (to rounding) give two
+            // crossings ~1e-8 mm apart whose places are noise (fam5 0x28500192); the crossing must
+            // stand off the junction by much more than its own uncertainty, rounding / sin(angle).
+            const double sine = std::fabs(tangentAt(a, ta).cross(tangentAt(b, tb)));
+            const double unit = std::numeric_limits<double>::epsilon() *
+                                std::max({1.0, std::fabs(x.x), std::fabs(x.y), length(a), length(b)});
+            if (geometry::distance(x, j) * sine <= 100.0 * unit) {
+                continue;
+            }
+            if (back + ahead > reach) {
+                reach = back + ahead;
+                cut = std::pair{ta, tb};
+            }
+        }
+        if (!cut) {
+            continue;
+        }
+        const Span cutA = withEnd(a, pointAt(a, cut->first));
+        const Span cutB = withStart(b, pointAt(b, cut->second));
+        // The two cut spans may meet only at their new junction.
+        const Vec2 nj = startPoint(cutB);
+        bool clear = true;
+        for (const Vec2 x : carrierIntersections(cutA, cutB)) {
+            clear = clear && !(inUnit(carrierParam(cutA, x)) && inUnit(carrierParam(cutB, x)) &&
+                               geometry::distance(x, nj) > same);
+        }
+        if (clear) {
+            a = cutA;
+            b = cutB;
+            changed = true;
+        }
+    }
+    if (changed) {
+        exactJunctions(spans, closed);
+    }
+}
+
 // The raw offset chain of one side, with each element's position along the input path (span
 // index + fraction at its start and end) for ordering the output chains.
 struct RawChain {
@@ -2447,6 +2678,10 @@ struct RawChain {
     std::vector<double> posA;
     std::vector<double> posB;
     std::vector<bool> connector;  // a straight connector across an inside corner (always pruned)
+    // Parameter range of each element that lies exactly d from the input: an offset span's own
+    // extent before any corner extended or trimmed it, a whole Round join arc; empty (lo > hi) for
+    // chamfers, connectors and inverted arcs (T-0128: where dropped opposite copies are a path).
+    std::vector<std::pair<double, double>> exact;
 };
 
 // Raw offset of one side, in input order: every element offset on its own, chained with joins
@@ -2466,8 +2701,10 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
         }
         inside = false;
     };
+    std::vector<std::optional<Span>> unextended;  // per element: the offset span as first computed
     for (std::size_t i = 0; i < input.size(); ++i) {
         std::optional<Span> next = offsetSpan(input[i], d, sign);
+        const std::optional<Span> own = next;
         if (!next) {
             next = invertedOffset(input[i], d, sign);
             if (!next) {
@@ -2484,6 +2721,8 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
         }
         raw.push_back(*next);
         record(at, at + 1.0);
+        unextended.resize(raw.size());
+        unextended.back() = own;
     }
     if (closed && raw.size() > 1) {
         Span first = raw.front();
@@ -2494,6 +2733,18 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
         raw.front() = first;
         const double at = static_cast<double>(input.size());
         record(at, at);
+    }
+    unextended.resize(raw.size());
+    rc.exact.assign(raw.size(), {1.0, 0.0});
+    for (std::size_t i = 0; i < raw.size(); ++i) {
+        if (unextended[i]) {
+            rc.exact[i] = {std::clamp(carrierParam(raw[i], startPoint(*unextended[i])), 0.0, 1.0),
+                           std::clamp(carrierParam(raw[i], endPoint(*unextended[i])), 0.0, 1.0)};
+        } else if (join == JoinType::Round && !rc.connector[i] && std::holds_alternative<ArcSpan>(raw[i]) &&
+                   std::fabs(std::get<ArcSpan>(raw[i]).radius - d) <=
+                       std::min(5e-7 * std::max(1.0, d), 0.1 * tol.distance * tol.distance / d)) {
+            rc.exact[i] = {0.0, 1.0};  // a Round join: an arc of radius d about an input point
+        }
     }
     return rc;
 }
@@ -2748,7 +2999,9 @@ void pruneLineCopies(const std::vector<Span>& raw, const std::vector<bool>& conn
 // every group are untouched. The result is ordered by element and parameter, like the input.
 std::vector<Piece> mergeOnCarriers(const std::vector<Span>& raw, const std::vector<Piece>& kept,
                                    const std::vector<std::pair<std::size_t, std::size_t>>& overlapping,
-                                   double d, double sign, double lateral, double opposite) {
+                                   double d, double sign, double lateral, double opposite,
+                                   const std::vector<std::pair<double, double>>& exact,
+                                   std::vector<Piece>& dropped) {
     const std::size_t m = raw.size();
     std::vector<std::size_t> parent(m);
     for (std::size_t i = 0; i < m; ++i) {
@@ -3046,6 +3299,37 @@ std::vector<Piece> mergeOnCarriers(const std::vector<Span>& raw, const std::vect
             if (forward.empty() == backward.empty()) {
                 // Nothing, or copies running both ways: they bound a region of zero width
                 // whatever their numbers (two the same way are one boundary), T-0017 0xe20006d8.
+                // The stretch is still a path a tool centre can follow (the middle of a slot one
+                // tool width wide): one copy is handed back (the first, forward copies before
+                // backward ones, that lies exactly d from the input there, see RawChain::exact),
+                // and put back where the chains leave it uncovered (T-0128, offsetOpenContour
+                // step 7).
+                auto exactOver = [&](const Piece& p) {
+                    return exact[p.element].first <= p.t0 + kParamEps &&
+                           p.t1 <= exact[p.element].second + kParamEps;
+                };
+                std::optional<Piece> back;
+                std::optional<Piece> fallback;
+                for (const bool fw : {true, false}) {
+                    for (const Copy& copy : fw ? forward : backward) {
+                        const Stretch& st = stretches[copy.second];
+                        const Piece p{st.piece.element, paramAt(st, fw ? nodes[k] : nodes[k + 1]),
+                                      paramAt(st, fw ? nodes[k + 1] : nodes[k])};
+                        if (p.t1 > p.t0 && !back) {
+                            if (exactOver(p)) {
+                                back = p;
+                            } else if (!fallback) {
+                                fallback = p;
+                            }
+                        }
+                    }
+                }
+                if (!back) {
+                    back = fallback;
+                }
+                if (back) {
+                    dropped.push_back(*back);
+                }
                 previous.reset();
                 continue;
             }
@@ -3375,9 +3659,11 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     // points lie much further apart.
     auto coincide = [&](Vec2 p) { return 1e-9 * std::max({1.0, d, std::fabs(p.x), std::fabs(p.y)}); };
     // Overlapping elements on one carrier (see mergeOnCarriers): one boundary piece per stretch.
+    std::vector<Piece> droppedOpposite;  // one copy of each stretch copies cover both ways
     kept = mergeOnCarriers(raw, kept, overlapping, d, sign, 0.5 * tol.distance,
-                           std::min(5e-7 * std::max(1.0, d), 0.1 * tol.distance * tol.distance / d));
-    if (kept.empty()) {
+                           std::min(5e-7 * std::max(1.0, d), 0.1 * tol.distance * tol.distance / d), rc.exact,
+                           droppedOpposite);
+    if (kept.empty() && droppedOpposite.empty()) {
         return result;
     }
 
@@ -3600,6 +3886,17 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
         d - snapAbove,
         join == JoinType::Round,
         occupied};
+    // Output keys (where each chain's component starts along the input) and the strays: thin
+    // loops reduced to one strand and dropped opposite copies, put back at the end where nothing
+    // else covers them (T-0128).
+    std::vector<double> resultKeys;
+    struct Stray {
+        double key;
+        std::vector<Span> spans;
+        bool checkDistance = false;  // a thin loop's strand: see step 7
+    };
+    std::vector<Stray> strays;
+    double componentKey = 0.0;
     auto emit = [&](std::vector<Piece>::const_iterator b, std::vector<Piece>::const_iterator e, bool loop) {
         emitting.clear();
         for (auto it = b; it != e; ++it) {
@@ -3659,6 +3956,7 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
                 removeBackSteps(piece.spans, piece.closed, snap);
                 removeRetraces(piece.spans, piece.closed, snap, d);
                 mergeCoCircularArcs(piece.spans, piece.closed);
+                removeCuspLoops(piece.spans, piece.closed, tol);
                 // An open chain neither starts nor ends with a span no longer than the
                 // tolerance (ADR-0012 section 7): where a cut or a node left one there (fam5
                 // 0xf50009c9: 7.8e-4 mm), it goes, as the leading and trailing tiny pieces do.
@@ -3675,6 +3973,13 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
                 }
                 if (!isSliverLoop(piece, tol)) {
                     result.push_back(std::move(piece));
+                    resultKeys.push_back(componentKey);
+                } else {
+                    // Too thin to enclose anything, but a tool centre would still run along it. A
+                    // closed piece is the whole loop, so its raw pieces are `spans`.
+                    for (std::vector<Span>& part : exactParts(sliverStrand(spans, tol))) {
+                        strays.push_back(Stray{componentKey, std::move(part), true});
+                    }
                 }
             }
         }
@@ -3686,6 +3991,7 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     //    from the node, so each emitted chain visits every node once and is simple.
     PointIndex index(tol.distance);
     for (const std::vector<Piece>& comp : components) {
+        componentKey = pathPos(comp.front());
         std::vector<Vec2> nodes{pieceStart(comp.front())};
         index.clear();
         index.add(nodes.front(), 0);
@@ -3716,6 +4022,231 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
         }
         if (chainBegin != comp.end()) {
             emit(chainBegin, comp.end(), false);
+        }
+    }
+    // 7. Strays (T-0128): a tool centre would still follow a stretch where opposite copies were
+    //    dropped (the middle of a slot one tool width wide, give or take rounding) or a loop too
+    //    thin to enclose anything (reduced to one strand above), so they are put back as open
+    //    chains wherever no emitted chain passes within half the tolerance. The pieces of dropped
+    //    stretches are first joined: those of one element that continue each other, then pieces
+    //    whose ends coincide to rounding (exactParts splits where a junction cannot be made exact
+    //    or turns back). Each strand is sampled every tol / 4 (stretches the Lipschitz bound
+    //    vouches for skipped); each run of uncovered samples, widened by one sample either way so
+    //    it meets the chains that cover its neighbours, is emitted when longer than the tolerance.
+    //    Strands put back count as cover for later ones. A loop's strand is put back only where it
+    //    stays at d (see `acceptable`); the opposite copies are cut to RawChain::exact first.
+    if (!droppedOpposite.empty()) {
+        // Only the parts exactly d from the input are a path that touches it: opposite copies of
+        // mitre extensions or chamfers over a slot narrower than 2d lie farther out, inside the
+        // corner regions of the offset shape (fam5 0x285001c5: 8.4e-6 mm beyond d).
+        std::vector<Piece> runs;
+        for (const Piece& p : droppedOpposite) {
+            const auto [lo, hi] = rc.exact[p.element];
+            if (std::min(p.t1, hi) > std::max(p.t0, lo)) {
+                runs.push_back(Piece{p.element, std::max(p.t0, lo), std::min(p.t1, hi)});
+            }
+        }
+        std::sort(runs.begin(), runs.end(), [](const Piece& a, const Piece& b) {
+            return a.element != b.element ? a.element < b.element : a.t0 < b.t0;
+        });
+        std::vector<Piece> joined;
+        for (const Piece& r : runs) {
+            if (!joined.empty() && joined.back().element == r.element &&
+                r.t0 <= joined.back().t1 + kParamEps) {
+                joined.back().t1 = std::max(joined.back().t1, r.t1);
+            } else {
+                joined.push_back(r);
+            }
+        }
+        const std::size_t nr = joined.size();
+        PointIndex heads(tol.distance);
+        for (std::size_t k = 0; k < nr; ++k) {
+            heads.add(pieceStart(joined[k]), k);
+        }
+        std::vector<std::size_t> succ(nr, kNone);
+        std::vector<std::size_t> pred(nr, kNone);
+        for (std::size_t k = 0; k < nr; ++k) {
+            const Vec2 end = pieceEnd(joined[k]);
+            double bestGap = kRoundingUnits * kEps * std::max({1.0, std::fabs(end.x), std::fabs(end.y)});
+            std::size_t best = kNone;
+            heads.forEachNear(end, [&](std::size_t j) {
+                const double gap = geometry::distance(pieceStart(joined[j]), end);
+                if (j != k && pred[j] == kNone && (gap < bestGap || (gap == bestGap && j < best))) {
+                    bestGap = gap;
+                    best = j;
+                }
+            });
+            if (best != kNone) {
+                succ[k] = best;
+                pred[best] = k;
+            }
+        }
+        std::vector<bool> done(nr, false);
+        auto walkRuns = [&](std::size_t k) {
+            Stray st{pathPos(joined[k]), {}};
+            while (k != kNone && !done[k]) {
+                done[k] = true;
+                st.spans.push_back(subSpan(raw[joined[k].element], joined[k].t0, joined[k].t1));
+                k = succ[k];
+            }
+            for (std::vector<Span>& part : exactParts(st.spans)) {
+                strays.push_back(Stray{st.key, std::move(part)});
+            }
+        };
+        for (std::size_t k = 0; k < nr; ++k) {
+            if (!done[k] && pred[k] == kNone) {
+                walkRuns(k);
+            }
+        }
+        for (std::size_t k = 0; k < nr; ++k) {
+            if (!done[k]) {
+                walkRuns(k);
+            }
+        }
+    }
+    if (!strays.empty()) {
+        std::vector<const Span*> outSpans;
+        std::vector<Box2> outBoxes;
+        for (const Contour& c : result) {
+            for (const Span& sp : c.spans) {
+                outSpans.push_back(&sp);
+                outBoxes.push_back(bounds(sp));
+            }
+        }
+        BoxGrid outGrid(outBoxes);
+        const double reach = 0.5 * tol.distance;
+        std::vector<Stray> added;
+        std::vector<Span> addedSpans;
+        std::vector<Box2> addedBoxes;
+        auto add = [&](double key, std::vector<Span>&& part) {
+            for (const Span& sp : part) {
+                addedSpans.push_back(sp);
+                addedBoxes.push_back(bounds(sp));
+            }
+            added.push_back(Stray{key, std::move(part)});
+        };
+        // Distance from q to the emitted chains and the strays put back, exact up to `cap`.
+        auto coverGap = [&](Vec2 q, double cap) {
+            double best = cap;
+            outGrid.query(Box2{q - Vec2{cap, cap}, q + Vec2{cap, cap}},
+                          [&](std::size_t i) { best = std::min(best, distanceToSpan(q, *outSpans[i])); });
+            for (std::size_t i = 0; i < addedSpans.size(); ++i) {
+                if (addedBoxes[i].contains(q, cap)) {
+                    best = std::min(best, distanceToSpan(q, addedSpans[i]));
+                }
+            }
+            return best;
+        };
+        // A thin loop's strand is put back only where it lies within 5e-7 x max(1, d) beyond d or
+        // on a Sharp/Square corner region (a mitre or chamfer): the loop's own pieces may lie
+        // farther out by the merging of nearly collinear copies (up to tol / 2, A1), which T-0017
+        // accepted inside chains but never emitted for these loops (fam5 0x2a500001: 1.03e-6 mm).
+        const double farthest = d + 5e-7 * std::max(1.0, d);
+        std::size_t nearWitness = input.size();  // the input span that last answered, tried first
+        auto acceptable = [&](Vec2 q) {
+            if (nearWitness < input.size() && distanceToSpan(q, input[nearWitness]) <= farthest) {
+                return true;
+            }
+            const Box2 box{q - Vec2{farthest, farthest}, q + Vec2{farthest, farthest}};
+            auto within = [&](std::size_t i) {
+                if (distanceToSpan(q, input[i]) > farthest) {
+                    return false;
+                }
+                nearWitness = i;
+                return true;
+            };
+            if (inputGrid.queryUntil(box, within)) {
+                return true;
+            }
+            bool corner = false;
+            wedgeGrid.query(Box2{q, q}.inflated(onBoundary), [&](std::size_t w) {
+                if (corner) {
+                    return;
+                }
+                corner = insideRegion(q, wedges[w]);
+                for (const Span& e : wedges[w]) {
+                    corner = corner || distanceToSpan(q, e) <= onBoundary;
+                }
+            });
+            return corner;
+        };
+        // Samples every tol / 4 along each strand. The distance g to the chains is 1-Lipschitz along
+        // it, so a sample vouches for the next |g - tol / 2| (all covered or all uncovered), which
+        // is skipped, up to 16 tol at a time (on a thin loop's strand, whose acceptance is sampled,
+        // uncovered stretches up to tol at a time).
+        const double step = 0.25 * tol.distance;
+        const double skipCap = reach + 16.0 * tol.distance;
+        struct Sample {
+            double u;  // span index + fraction
+            bool wanted;  // uncovered and acceptable
+            bool covered;
+        };
+        for (const Stray& st : strays) {
+            std::vector<Sample> samples;
+            for (std::size_t i = 0; i < st.spans.size(); ++i) {
+                const double len = length(st.spans[i]);
+                const bool lastSpan = i + 1 == st.spans.size();
+                for (double s = 0.0;;) {
+                    const double f = len > 0.0 ? std::min(s / len, 1.0) : 1.0;
+                    if (f >= 1.0 && !lastSpan) {
+                        break;  // the next span starts here
+                    }
+                    const Vec2 q = pointAt(st.spans[i], f);
+                    const double g = coverGap(q, skipCap);
+                    const bool wanted = g > reach && (!st.checkDistance || acceptable(q));
+                    samples.push_back(Sample{static_cast<double>(i) + f, wanted, g <= reach});
+                    const double advance =
+                        g <= reach || !st.checkDistance
+                            ? std::max(step, std::fabs(g - reach))
+                            : std::clamp(g - reach, step, tol.distance);
+                    if (f >= 1.0) {
+                        break;
+                    }
+                    s += advance;
+                }
+            }
+            for (std::size_t k = 0; k < samples.size();) {
+                if (!samples[k].wanted) {
+                    ++k;
+                    continue;
+                }
+                std::size_t e = k;
+                while (e + 1 < samples.size() && samples[e + 1].wanted) {
+                    ++e;
+                }
+                // Widened into the covered neighbours.
+                const std::size_t from = k > 0 && samples[k - 1].covered ? k - 1 : k;
+                const std::size_t to = e + 1 < samples.size() && samples[e + 1].covered ? e + 1 : e;
+                std::vector<Span> part = chainPart(st.spans, samples[from].u, samples[to].u);
+                dropTinyEnds(part, tol);
+                double len = 0.0;
+                for (const Span& sp : part) {
+                    len += length(sp);
+                }
+                if (len > tol.distance) {
+                    exactJunctions(part, false);
+                    if (part.size() > 512 || partCrossesItself(part)) {
+                        // Never seen: rather than return a chain that crosses itself, each span
+                        // longer than the tolerance becomes a chain of its own.
+                        for (Span& sp : part) {
+                            if (!isDegenerate(sp, tol)) {
+                                add(st.key, std::vector<Span>{sp});
+                            }
+                        }
+                    } else {
+                        add(st.key, std::move(part));
+                    }
+                }
+                k = e + 1;
+            }
+        }
+        for (Stray& a : added) {
+            const auto pos = std::upper_bound(resultKeys.begin(), resultKeys.end(), a.key);
+            const auto at = pos - resultKeys.begin();
+            resultKeys.insert(pos, a.key);
+            Contour c;
+            c.spans = std::move(a.spans);
+            result.insert(result.begin() + at, std::move(c));
         }
     }
     return result;
