@@ -1,0 +1,15 @@
+prof 0 mode 0 K 1 side 1 sep 0 tabs 0 V 0 moves 63 diags 0 hash 43c74bc2be09a71f
+prof 1 mode 1 K 18 side 0 sep 0 tabs 0 V 0 moves 5552 diags 16 hash d4d6b94ed5b50144
+prof 2 mode 2 K 264 side 1 sep 1 tabs 0 V 0 moves 482110 diags 499 hash 147f3ab7d402f986
+prof 3 mode 3 K 70 side 1 sep 1 tabs 0 V 0 moves 19123 diags 153 hash 8574604cb33a2583
+prof 4 mode 0 K 1 side 0 sep 0 tabs 1 V 0 moves 398 diags 1 hash eb59f8d520707ccc
+prof 5 mode 1 K 16 side 0 sep 1 tabs 0 V 0 moves 3689 diags 28 hash 52603f10fbdf0358
+prof 6 mode 2 K 184 side 2 sep 0 tabs 1 V 0 moves 38940 diags 338 hash 6e2279a60cd816c5
+prof 7 mode 3 K 170 side 1 sep 0 tabs 1 V 0 moves 7330 diags 340 hash 4d964e139e377ac9
+prof 8 mode 0 K 1 side 0 sep 1 tabs 0 V 0 moves 10 diags 0 hash 8c63457ab568a5c7
+prof 9 mode 1 K 23 side 1 sep 1 tabs 1 V 0 moves 15087 diags 70 hash 0a13da7737511a29
+prof 10 mode 2 K 290 side 0 sep 1 tabs 1 V 0 moves 1474652 diags 956 hash 7f711e4e25e2da3a
+prof 11 mode 3 K 72 side 1 sep 0 tabs 0 V 0 moves 9779 diags 118 hash b912f951e13d00d0
+prof 12 mode 0 K 1 side 1 sep 1 tabs 1 V 0 moves 40 diags 2 hash 740c05a94aa75c29
+prof 13 mode 1 K 20 side 2 sep 1 tabs 1 V 0 moves 3364 diags 31 hash d50758b1253098d7
+prof 14 mode 2 K 119 side 0 sep 0 tabs 1 V 0 moves 56134 diags 306 hash 66ebd067512e9578

@@ -1,0 +1,4 @@
+run 1 | T-0131 e:* | rc=0 | load=12.75 | CPU seconds: 1250 vectors 1.07396, 5000 vectors 4.57557, ratio 3.76229
+run 2 | T-0131 e:* | rc=0 | load=13.46 | CPU seconds: 1250 vectors 1.11138, 5000 vectors 4.85541, ratio 4.02321
+run 3 | T-0131 e:* | rc=0 | load=13.75 | CPU seconds: 1250 vectors 1.10106, 5000 vectors 4.726, ratio 3.80568
+run 4 | T-0131 e:* | rc=0 | load=13.89 | CPU seconds: 1250 vectors 1.08975, 5000 vectors 4.82333, ratio 4.02204

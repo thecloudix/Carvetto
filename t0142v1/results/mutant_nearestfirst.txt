@@ -1,0 +1,8 @@
+  CPU seconds: 10000 groups 14.6433, 20000 groups 68.6781, ratio 4.65217
+  CPU seconds: 10000 groups 14.6433, 20000 groups 68.6781, ratio 4.65217
+  CPU seconds: 10000 groups 14.6433, 20000 groups 68.6781, ratio 4.65217
+  CPU seconds: 10000 groups 14.6433, 20000 groups 68.6781, ratio 4.65217
+
+[exited with code 144]
+test cases: 1 | 1 failed
+assertions: 5 | 4 passed | 1 failed

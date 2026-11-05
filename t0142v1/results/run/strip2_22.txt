@@ -1,0 +1,13 @@
+scene 0 fam 0 deg 45.00 edges 1658 bad 0
+scene 1 fam 5 deg 0.00 edges 1600 bad 0
+scene 2 fam 3 deg 90.00 edges 2200 bad 0
+scene 3 fam 3 deg 90.00 edges 2160 bad 0
+scene 4 fam 3 deg 0.00 edges 2436 bad 0
+scene 5 fam 1 deg 125.10 edges 1264 bad 0
+scene 6 fam 0 deg 30.00 edges 2074 bad 0
+scene 7 fam 1 deg 0.00 edges 1362 bad 0
+scene 8 fam 1 deg 30.00 edges 1496 bad 0
+scene 9 fam 4 deg 90.00 edges 1170 bad 0
+scene 10 fam 2 deg 90.00 edges 3122 bad 0
+scene 11 fam 5 deg 90.00 edges 1600 bad 0
+seed 22 calls 304 mismatches 0 (count 0) worstEnd 0 mm worstLenDiff 1.09e-11; fam scenes/bad: 2/0 3/0 1/0 3/0 1/0 2/0 ; unmatched ends: ill-conditioned 0 REAL 0

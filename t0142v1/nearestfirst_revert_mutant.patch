@@ -1,0 +1,79 @@
+--- core/src/toolpath/pocket.cpp	2026-11-05 08:06:40.017107259 -0600
++++ build-verify1-mutsrc/core/src/toolpath/pocket.cpp	2026-11-05 09:55:36.032322828 -0600
+@@ -2369,63 +2369,43 @@
+ namespace detail {
+ 
+ std::vector<std::size_t> nearestFirstOrder(const std::vector<Vec2>& centres, const std::vector<std::size_t>& partOf) {
++    // VERIFIER MUTANT: T-0131 fix reverted (one index over all parts, filtered by group).
+     const std::size_t n = centres.size();
++    std::vector<Box2> points(n);
+     Box2 all;
+     for (std::size_t i = 0; i < n; ++i) {
++        points[i] = Box2{centres[i], centres[i]};
+         all.expand(centres[i]);
+     }
++    const BoxIndex index(points);
+     const double extent = std::max({all.width(), all.height(), 1e-9});
+     std::vector<char> used(n, 0);
+     std::vector<std::size_t> out;
+-    // Members of each group, ascending (T-0131: one index per group, so a search for the group's
+-    // next part never returns the other groups' parts, and a group is left as soon as all its
+-    // parts are used, instead of growing the square over the whole page to find nothing). The
+-    // squares, the candidates and their order are those of one index over all parts filtered by
+-    // group, so the order is the same.
+-    std::vector<std::pair<std::size_t, std::size_t>> byGroup(n);  // (group, part)
+-    for (std::size_t i = 0; i < n; ++i) {
+-        byGroup[i] = {partOf[i], i};
+-    }
+-    std::sort(byGroup.begin(), byGroup.end());
+-    for (std::size_t g0 = 0; g0 < n;) {
+-        const std::size_t gid = byGroup[g0].first;
+-        std::size_t g1 = g0;
+-        std::vector<std::size_t> members;
+-        std::vector<Box2> points;
+-        for (; g1 < n && byGroup[g1].first == gid; ++g1) {
+-            members.push_back(byGroup[g1].second);
+-            points.push_back(Box2{centres[members.back()], centres[members.back()]});
+-        }
+-        g0 = g1;
+-        const BoxIndex index(std::move(points));
++    std::vector<std::size_t> groupIds(partOf);
++    std::sort(groupIds.begin(), groupIds.end());
++    groupIds.erase(std::unique(groupIds.begin(), groupIds.end()), groupIds.end());
++    for (const std::size_t gid : groupIds) {
+         std::optional<std::size_t> cur;
+-        for (const std::size_t i : members) {
+-            if (!cur || centres[i].y < centres[*cur].y ||
+-                (centres[i].y == centres[*cur].y && centres[i].x < centres[*cur].x)) {
++        for (std::size_t i = 0; i < n; ++i) {
++            if (partOf[i] == gid && (!cur || centres[i].y < centres[*cur].y ||
++                                     (centres[i].y == centres[*cur].y && centres[i].x < centres[*cur].x))) {
+                 cur = i;
+             }
+         }
+-        std::size_t left = members.size();
+         while (cur) {
+             used[*cur] = 1;
+-            --left;
+             out.push_back(*cur);
+             const Vec2 at = centres[*cur];
+             cur.reset();
+-            if (left == 0) {
+-                break;
+-            }
+             double best = std::numeric_limits<double>::infinity();
+             for (double h = extent / std::sqrt(static_cast<double>(n)) + 1e-9;; h *= 2.0) {
+-                for (const std::size_t k : index.query(Box2{at - Vec2{h, h}, at + Vec2{h, h}})) {
+-                    const std::size_t j = members[k];
++                for (const std::size_t j : index.query(Box2{at - Vec2{h, h}, at + Vec2{h, h}})) {
+                     const double dd = geometry::distance(at, centres[j]);
+-                    if (used[j] == 0 && dd < best) {
++                    if (used[j] == 0 && partOf[j] == gid && dd < best) {
+                         best = dd;
+                         cur = j;
+                     }
+                 }
+-                // Anything outside the square is farther than h; done once the square covers all.
+                 if (best <= h || h > 2.0 * extent) {
+                     break;
+                 }

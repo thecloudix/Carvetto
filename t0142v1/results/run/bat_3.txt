@@ -1,0 +1,1 @@
+seed 3 scenes 320 batched 280 samples 959984 opensamples 833188 worst xor/perimeter 0 mm bad 0

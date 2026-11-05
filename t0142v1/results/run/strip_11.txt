@@ -1,0 +1,24 @@
+scene 0 fam 3 deg 90.00 edges 3132 bad 0
+scene 1 fam 3 deg 90.00 edges 1656 bad 0
+scene 2 fam 5 deg 0.00 edges 1600 bad 0
+scene 3 fam 0 deg 65.69 edges 2226 bad 0
+scene 4 fam 1 deg 126.03 edges 1422 bad 0
+scene 5 fam 0 deg 45.00 edges 2798 bad 0
+MISMATCH seed 11 sc 6 fam 2 deg 45.000 fill 0 op 0 kind 3 edges 2574 got 2 want 2 matched 1 len 90.808570563 vs 90.093938676
+MISMATCH seed 11 sc 6 fam 2 deg 45.000 fill 0 op 1 kind 3 edges 2574 got 2 want 2 matched 1 len 90.808570563 vs 90.093938676
+MISMATCH seed 11 sc 6 fam 2 deg 45.000 fill 0 op 2 kind 3 edges 2574 got 1 want 1 matched 0 len 3.112624448 vs 3.827256335
+MISMATCH seed 11 sc 6 fam 2 deg 45.000 fill 0 op 3 kind 3 edges 2574 got 2 want 2 matched 1 len 90.808570563 vs 90.093938676
+scene 6 fam 2 deg 45.00 edges 2574 bad 1
+scene 7 fam 1 deg 45.00 edges 1348 bad 0
+scene 8 fam 1 deg 30.00 edges 1370 bad 0
+scene 9 fam 0 deg 90.00 edges 2166 bad 0
+MISMATCH seed 11 sc 10 fam 2 deg 30.000 fill 1 op 0 kind 3 edges 2174 got 28 want 29 matched 28 len 57.995369834 vs 59.362382025
+MISMATCH seed 11 sc 10 fam 2 deg 30.000 fill 1 op 1 kind 3 edges 2174 got 28 want 29 matched 28 len 57.995369834 vs 59.362382025
+MISMATCH seed 11 sc 10 fam 2 deg 30.000 fill 1 op 2 kind 3 edges 2174 got 27 want 28 matched 26 len 36.173496444 vs 34.806484253
+MISMATCH seed 11 sc 10 fam 2 deg 30.000 fill 1 op 3 kind 3 edges 2174 got 28 want 29 matched 28 len 57.995369834 vs 59.362382025
+scene 10 fam 2 deg 30.00 edges 2174 bad 1
+scene 11 fam 4 deg 90.00 edges 1106 bad 0
+scene 12 fam 0 deg 90.00 edges 2682 bad 0
+scene 13 fam 2 deg 0.00 edges 1290 bad 0
+scene 14 fam 1 deg 90.00 edges 1340 bad 0
+seed 11 calls 360 mismatches 8 (count 4) worstEnd 0 mm worstLenDiff 1.37; fam scenes/bad: 4/0 4/0 3/2 2/0 1/0 1/0

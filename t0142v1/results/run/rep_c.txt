@@ -1,0 +1,8 @@
+run 1 | T-0131 c:* | rc=0 | load=11.69 | CPU seconds: 250 teeth 0.0634015, 1000 teeth 0.353535, ratio 5.06304
+run 2 | T-0131 c:* | rc=0 | load=11.72 | CPU seconds: 250 teeth 0.066048, 1000 teeth 0.359883, ratio 5.06258
+run 3 | T-0131 c:* | rc=0 | load=11.74 | CPU seconds: 250 teeth 0.0624833, 1000 teeth 0.355075, ratio 5.27635
+run 4 | T-0131 c:* | rc=0 | load=11.74 | CPU seconds: 250 teeth 0.0635115, 1000 teeth 0.339317, ratio 5.05627
+run 5 | T-0131 c:* | rc=0 | load=11.76 | CPU seconds: 250 teeth 0.053463, 1000 teeth 0.352293, ratio 5.16407
+run 6 | T-0131 c:* | rc=0 | load=11.86 | CPU seconds: 250 teeth 0.063949, 1000 teeth 0.367605, ratio 5.51897
+run 7 | T-0131 c:* | rc=0 | load=11.86 | CPU seconds: 250 teeth 0.0647685, 1000 teeth 0.366097, ratio 5.12515
+run 8 | T-0131 c:* | rc=0 | load=12.03 | CPU seconds: 250 teeth 0.06703, 1000 teeth 0.374318, ratio 5.56787

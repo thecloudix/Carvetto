@@ -1,0 +1,36 @@
+scene 0 fam 0 deg 90.00 edges 2386 bad 0
+scene 1 fam 0 deg 0.00 edges 1574 bad 0
+scene 2 fam 0 deg 45.00 edges 1246 bad 0
+MISMATCH seed 13 sc 3 fam 4 deg 30.000 fill 1 op 0 kind 3 edges 1248 got 4 want 4 matched 3 len 53.999730496 vs 54.379468012
+MISMATCH seed 13 sc 3 fam 4 deg 30.000 fill 1 op 1 kind 3 edges 1248 got 4 want 4 matched 3 len 53.999730496 vs 54.379468012
+MISMATCH seed 13 sc 3 fam 4 deg 30.000 fill 1 op 2 kind 3 edges 1248 got 2 want 2 matched 1 len 41.000390035 vs 40.620652519
+MISMATCH seed 13 sc 3 fam 4 deg 30.000 fill 1 op 3 kind 3 edges 1248 got 4 want 4 matched 3 len 53.999730496 vs 54.379468012
+MISMATCH seed 13 sc 3 fam 4 deg 30.000 fill 1 op 0 kind 3 edges 1248 got 4 want 5 matched 3 len 84.000150471 vs 69.277607632
+MISMATCH seed 13 sc 3 fam 4 deg 30.000 fill 1 op 1 kind 3 edges 1248 got 4 want 5 matched 3 len 84.000150471 vs 69.277607632
+MISMATCH seed 13 sc 3 fam 4 deg 30.000 fill 1 op 2 kind 3 edges 1248 got 2 want 3 matched 2 len 10.999970060 vs 25.722512899
+MISMATCH seed 13 sc 3 fam 4 deg 30.000 fill 1 op 3 kind 3 edges 1248 got 4 want 5 matched 3 len 84.000150471 vs 69.277607632
+scene 3 fam 4 deg 30.00 edges 1248 bad 1
+scene 4 fam 4 deg 0.00 edges 1622 bad 0
+MISMATCH seed 13 sc 5 fam 4 deg 45.000 fill 0 op 0 kind 0 edges 1362 got 363 want 363 matched 362 len 7035.037733131 vs 7035.037797478
+MISMATCH seed 13 sc 5 fam 4 deg 45.000 fill 0 op 1 kind 0 edges 1362 got 363 want 363 matched 362 len 7035.037733131 vs 7035.037797478
+MISMATCH seed 13 sc 5 fam 4 deg 45.000 fill 0 op 2 kind 0 edges 1362 got 107 want 107 matched 106 len 1924.962267673 vs 1924.962203327
+MISMATCH seed 13 sc 5 fam 4 deg 45.000 fill 0 op 3 kind 0 edges 1362 got 363 want 363 matched 362 len 7035.037733131 vs 7035.037797478
+scene 5 fam 4 deg 45.00 edges 1362 bad 1
+scene 6 fam 4 deg 30.00 edges 1288 bad 0
+scene 7 fam 5 deg 0.00 edges 1600 bad 0
+scene 8 fam 3 deg 90.00 edges 1920 bad 0
+scene 9 fam 2 deg 30.00 edges 1842 bad 0
+scene 10 fam 0 deg 30.00 edges 2774 bad 0
+MISMATCH seed 13 sc 11 fam 3 deg 30.000 fill 1 op 2 kind 3 edges 1596 got 18 want 20 matched 17 len 15.250009390 vs 15.250009390
+MISMATCH seed 13 sc 11 fam 3 deg 30.000 fill 1 op 0 kind 0 edges 1596 got 632 want 641 matched 591 len 10750.426181912 vs 10737.427731566
+MISMATCH seed 13 sc 11 fam 3 deg 30.000 fill 1 op 1 kind 0 edges 1596 got 632 want 641 matched 591 len 10750.426181912 vs 10737.427731566
+MISMATCH seed 13 sc 11 fam 3 deg 30.000 fill 1 op 2 kind 0 edges 1596 got 310 want 318 matched 276 len 385.573835225 vs 398.572285571
+MISMATCH seed 13 sc 11 fam 3 deg 30.000 fill 1 op 3 kind 0 edges 1596 got 632 want 641 matched 591 len 10750.426181912 vs 10737.427731566
+MISMATCH seed 13 sc 11 fam 3 deg 30.000 fill 1 op 0 kind 1 edges 1596 got 16 want 21 matched 10 len 157.403266237 vs 151.797189303
+MISMATCH seed 13 sc 11 fam 3 deg 30.000 fill 1 op 1 kind 1 edges 1596 got 16 want 21 matched 10 len 157.403266237 vs 151.797189303
+MISMATCH seed 13 sc 11 fam 3 deg 30.000 fill 1 op 2 kind 1 edges 1596 got 12 want 17 matched 9 len 16.596733539 vs 22.202810473
+scene 11 fam 3 deg 30.00 edges 1596 bad 1
+scene 12 fam 3 deg 45.00 edges 2112 bad 1
+scene 13 fam 4 deg 0.00 edges 1638 bad 0
+scene 14 fam 2 deg 0.00 edges 2048 bad 0
+seed 13 calls 332 mismatches 35 (count 17) worstEnd 1e-06 mm worstLenDiff 14.7; fam scenes/bad: 4/0 0/0 2/0 3/2 5/2 1/0

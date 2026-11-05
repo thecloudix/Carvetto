@@ -1,0 +1,145 @@
+scene 0 fam 0 deg 178.06 edges 1854 bad 0
+  DIAG unmatched got 1 want 2; disagreeing length ~2.66832 mm, max dist of such points to a clip edge 0.569 mm, first 41.5894230 32.0160260
+    got  41.5894230 32.0160260 -> 41.5784580 30.4512770
+      end 41.5894230 32.0160260: near edges 1 minSin 3.46e-07 maxSin 3.46e-07 err vs best-conditioned edge 121457.60 units ILL
+      end 41.5784580 30.4512770: near edges 0 minSin 1e+09 maxSin -1 err vs best-conditioned edge -1.00 units ILL
+      end 41.5926550 32.4772430: near edges 1 minSin 3.46e-07 maxSin 3.46e-07 err vs best-conditioned edge 582685.93 units ILL
+      end 41.5878810 31.7959400: near edges 1 minSin 3.46e-07 maxSin 3.46e-07 err vs best-conditioned edge 98633.80 units ILL
+      end 41.5834800 31.1678670: near edges 2 minSin 3.46e-07 maxSin 0.417 err vs best-conditioned edge 0.60 units ILL
+      end 41.5784580 30.4512770: near edges 0 minSin 1e+09 maxSin -1 err vs best-conditioned edge -1.00 units ILL
+    want 41.5926550 32.4772430 -> 41.5878810 31.7959400
+    want 41.5834800 31.1678670 -> 41.5784580 30.4512770
+MISMATCH seed 23 sc 1 fam 2 deg 45.000 fill 0 op 0 kind 3 edges 3006 got 17 want 18 matched 16 len 67.390064786 vs 67.223204691
+  DIAG unmatched got 1 want 2; disagreeing length ~2.66832 mm, max dist of such points to a clip edge 0.569 mm, first 41.5894230 32.0160260
+    got  41.5894230 32.0160260 -> 41.5784580 30.4512770
+      end 41.5894230 32.0160260: near edges 1 minSin 3.46e-07 maxSin 3.46e-07 err vs best-conditioned edge 121457.60 units ILL
+      end 41.5784580 30.4512770: near edges 0 minSin 1e+09 maxSin -1 err vs best-conditioned edge -1.00 units ILL
+      end 41.5926550 32.4772430: near edges 1 minSin 3.46e-07 maxSin 3.46e-07 err vs best-conditioned edge 582685.93 units ILL
+      end 41.5878810 31.7959400: near edges 1 minSin 3.46e-07 maxSin 3.46e-07 err vs best-conditioned edge 98633.80 units ILL
+      end 41.5834800 31.1678670: near edges 2 minSin 3.46e-07 maxSin 0.417 err vs best-conditioned edge 0.60 units ILL
+      end 41.5784580 30.4512770: near edges 0 minSin 1e+09 maxSin -1 err vs best-conditioned edge -1.00 units ILL
+    want 41.5926550 32.4772430 -> 41.5878810 31.7959400
+    want 41.5834800 31.1678670 -> 41.5784580 30.4512770
+MISMATCH seed 23 sc 1 fam 2 deg 45.000 fill 0 op 1 kind 3 edges 3006 got 17 want 18 matched 16 len 67.390064786 vs 67.223204691
+  DIAG unmatched got 1 want 2; disagreeing length ~2.23975 mm, max dist of such points to a clip edge 0.451 mm, first 41.5966814 33.0517173
+    got  41.5985450 33.3176380 -> 41.5894230 32.0160260
+      end 41.5985450 33.3176380: near edges 0 minSin 1e+09 maxSin -1 err vs best-conditioned edge -1.00 units ILL
+      end 41.5894230 32.0160260: near edges 1 minSin 3.46e-07 maxSin 3.46e-07 err vs best-conditioned edge 121457.60 units ILL
+      end 41.5985450 33.3176380: near edges 0 minSin 1e+09 maxSin -1 err vs best-conditioned edge -1.00 units ILL
+      end 41.5926550 32.4772430: near edges 1 minSin 3.46e-07 maxSin 3.46e-07 err vs best-conditioned edge 582685.93 units ILL
+      end 41.5878810 31.7959400: near edges 1 minSin 3.46e-07 maxSin 3.46e-07 err vs best-conditioned edge 98633.80 units ILL
+      end 41.5834800 31.1678670: near edges 2 minSin 3.46e-07 maxSin 0.417 err vs best-conditioned edge 0.60 units ILL
+    want 41.5985450 33.3176380 -> 41.5926550 32.4772430
+    want 41.5878810 31.7959400 -> 41.5834800 31.1678670
+MISMATCH seed 23 sc 1 fam 2 deg 45.000 fill 0 op 2 kind 3 edges 3006 got 16 want 17 matched 15 len 28.519726172 vs 28.686586267
+  DIAG unmatched got 1 want 2; disagreeing length ~2.66832 mm, max dist of such points to a clip edge 0.569 mm, first 41.5894230 32.0160260
+    got  41.5894230 32.0160260 -> 41.5784580 30.4512770
+      end 41.5894230 32.0160260: near edges 1 minSin 3.46e-07 maxSin 3.46e-07 err vs best-conditioned edge 121457.60 units ILL
+      end 41.5784580 30.4512770: near edges 0 minSin 1e+09 maxSin -1 err vs best-conditioned edge -1.00 units ILL
+      end 41.5926550 32.4772430: near edges 1 minSin 3.46e-07 maxSin 3.46e-07 err vs best-conditioned edge 582685.93 units ILL
+      end 41.5878810 31.7959400: near edges 1 minSin 3.46e-07 maxSin 3.46e-07 err vs best-conditioned edge 98633.80 units ILL
+      end 41.5834800 31.1678670: near edges 2 minSin 3.46e-07 maxSin 0.417 err vs best-conditioned edge 0.60 units ILL
+      end 41.5784580 30.4512770: near edges 0 minSin 1e+09 maxSin -1 err vs best-conditioned edge -1.00 units ILL
+    want 41.5926550 32.4772430 -> 41.5878810 31.7959400
+    want 41.5834800 31.1678670 -> 41.5784580 30.4512770
+MISMATCH seed 23 sc 1 fam 2 deg 45.000 fill 0 op 3 kind 3 edges 3006 got 17 want 18 matched 16 len 67.390064786 vs 67.223204691
+scene 1 fam 2 deg 45.00 edges 3006 bad 1
+scene 2 fam 0 deg 72.75 edges 2186 bad 0
+scene 3 fam 5 deg 0.00 edges 1600 bad 0
+scene 4 fam 5 deg 90.00 edges 1600 bad 0
+scene 5 fam 5 deg 90.00 edges 1600 bad 0
+scene 6 fam 3 deg 0.00 edges 1920 bad 0
+  DIAG unmatched got 1 want 1; disagreeing length ~12.16097 mm, max dist of such points to a clip edge 1.44e-07 mm, first 13.4626060 -33.4501700
+    got  13.4626060 -33.4501700 -> -13.0671070 -48.7671070
+      end 13.4626060 -33.4501700: near edges 1 minSin 3.43e-09 maxSin 3.43e-09 err vs best-conditioned edge 5766125.92 units ILL
+      end -13.0671070 -48.7671070: near edges 2 minSin 3.43e-09 maxSin 1 err vs best-conditioned edge 0.13 units ILL
+      end 13.4323780 -33.4676220: near edges 1 minSin 3.43e-09 maxSin 3.43e-09 err vs best-conditioned edge 5801030.13 units ILL
+      end -13.0671070 -48.7671070: near edges 2 minSin 3.43e-09 maxSin 1 err vs best-conditioned edge 0.13 units ILL
+    want 13.4323780 -33.4676220 -> -13.0671070 -48.7671070
+MISMATCH seed 23 sc 7 fam 1 deg 30.000 fill 0 op 0 kind 3 edges 1458 got 369 want 369 matched 368 len 287.433857752 vs 287.398953536
+  DIAG unmatched got 1 want 1; disagreeing length ~12.16097 mm, max dist of such points to a clip edge 1.44e-07 mm, first 13.4626060 -33.4501700
+    got  13.4626060 -33.4501700 -> -13.0671070 -48.7671070
+      end 13.4626060 -33.4501700: near edges 1 minSin 3.43e-09 maxSin 3.43e-09 err vs best-conditioned edge 5766125.92 units ILL
+      end -13.0671070 -48.7671070: near edges 2 minSin 3.43e-09 maxSin 1 err vs best-conditioned edge 0.13 units ILL
+      end 13.4323780 -33.4676220: near edges 1 minSin 3.43e-09 maxSin 3.43e-09 err vs best-conditioned edge 5801030.13 units ILL
+      end -13.0671070 -48.7671070: near edges 2 minSin 3.43e-09 maxSin 1 err vs best-conditioned edge 0.13 units ILL
+    want 13.4323780 -33.4676220 -> -13.0671070 -48.7671070
+MISMATCH seed 23 sc 7 fam 1 deg 30.000 fill 0 op 1 kind 3 edges 1458 got 369 want 369 matched 368 len 287.433857752 vs 287.398953536
+  DIAG unmatched got 1 want 1; disagreeing length ~17.07583 mm, max dist of such points to a clip edge 3.64e-07 mm, first 20.8410764 -29.1902079
+    got  49.7197340 -12.5171060 -> 13.4626060 -33.4501700
+      end 49.7197340 -12.5171060: near edges 2 minSin 3.43e-09 maxSin 1 err vs best-conditioned edge 1.19 units ILL
+      end 13.4626060 -33.4501700: near edges 1 minSin 3.43e-09 maxSin 3.43e-09 err vs best-conditioned edge 5766125.92 units ILL
+      end 49.7197340 -12.5171060: near edges 2 minSin 3.43e-09 maxSin 1 err vs best-conditioned edge 1.19 units ILL
+      end 13.4323780 -33.4676220: near edges 1 minSin 3.43e-09 maxSin 3.43e-09 err vs best-conditioned edge 5801030.13 units ILL
+    want 49.7197340 -12.5171060 -> 13.4323780 -33.4676220
+MISMATCH seed 23 sc 7 fam 1 deg 30.000 fill 0 op 2 kind 3 edges 1458 got 367 want 367 matched 366 len 151.666142420 vs 151.701046636
+  DIAG unmatched got 1 want 1; disagreeing length ~12.16097 mm, max dist of such points to a clip edge 1.44e-07 mm, first 13.4626060 -33.4501700
+    got  13.4626060 -33.4501700 -> -13.0671070 -48.7671070
+      end 13.4626060 -33.4501700: near edges 1 minSin 3.43e-09 maxSin 3.43e-09 err vs best-conditioned edge 5766125.92 units ILL
+      end -13.0671070 -48.7671070: near edges 2 minSin 3.43e-09 maxSin 1 err vs best-conditioned edge 0.13 units ILL
+      end 13.4323780 -33.4676220: near edges 1 minSin 3.43e-09 maxSin 3.43e-09 err vs best-conditioned edge 5801030.13 units ILL
+      end -13.0671070 -48.7671070: near edges 2 minSin 3.43e-09 maxSin 1 err vs best-conditioned edge 0.13 units ILL
+    want 13.4323780 -33.4676220 -> -13.0671070 -48.7671070
+MISMATCH seed 23 sc 7 fam 1 deg 30.000 fill 0 op 3 kind 3 edges 1458 got 369 want 369 matched 368 len 287.433857752 vs 287.398953536
+scene 7 fam 1 deg 30.00 edges 1458 bad 1
+scene 8 fam 0 deg 90.00 edges 1498 bad 0
+  DIAG unmatched got 2 want 2; disagreeing length ~0.25148 mm, max dist of such points to a clip edge 1.5e-07 mm, first -0.2400790 21.1208000
+    got  -0.1526840 21.2081950 -> 2.0474820 23.4083610
+      end -0.1526840 21.2081950: near edges 2 minSin 4.89e-07 maxSin 4.89e-07 err vs best-conditioned edge 7847.21 units ILL
+      end 2.0474820 23.4083610: near edges 2 minSin 4.89e-07 maxSin 1 err vs best-conditioned edge 0.78 units ILL
+    got  -10.0521780 11.3087010 -> -0.7809440 20.5799340
+      end -10.0521780 11.3087010: near edges 1 minSin 4.89e-07 maxSin 4.89e-07 err vs best-conditioned edge 520041.08 units ILL
+      end -0.7809440 20.5799340: near edges 4 minSin 4.89e-07 maxSin 1 err vs best-conditioned edge 0.44 units ILL
+      end -0.2400790 21.1208000: near edges 2 minSin 4.89e-07 maxSin 4.89e-07 err vs best-conditioned edge 131442.41 units ILL
+      end 2.0474820 23.4083610: near edges 2 minSin 4.89e-07 maxSin 1 err vs best-conditioned edge 0.78 units ILL
+      end -10.1420780 11.2188010: near edges 1 minSin 4.89e-07 maxSin 4.89e-07 err vs best-conditioned edge 647178.88 units ILL
+      end -0.7809440 20.5799340: near edges 4 minSin 4.89e-07 maxSin 1 err vs best-conditioned edge 0.44 units ILL
+    want -0.2400790 21.1208000 -> 2.0474820 23.4083610
+    want -10.1420780 11.2188010 -> -0.7809440 20.5799340
+MISMATCH seed 23 sc 9 fam 3 deg 45.000 fill 0 op 0 kind 1 edges 1672 got 44 want 44 matched 42 len 268.407665645 vs 268.658398638
+  DIAG unmatched got 2 want 2; disagreeing length ~0.25148 mm, max dist of such points to a clip edge 1.5e-07 mm, first -0.2400790 21.1208000
+    got  -0.1526840 21.2081950 -> 2.0474820 23.4083610
+      end -0.1526840 21.2081950: near edges 2 minSin 4.89e-07 maxSin 4.89e-07 err vs best-conditioned edge 7847.21 units ILL
+      end 2.0474820 23.4083610: near edges 2 minSin 4.89e-07 maxSin 1 err vs best-conditioned edge 0.78 units ILL
+    got  -10.0521780 11.3087010 -> -0.7809440 20.5799340
+      end -10.0521780 11.3087010: near edges 1 minSin 4.89e-07 maxSin 4.89e-07 err vs best-conditioned edge 520041.08 units ILL
+      end -0.7809440 20.5799340: near edges 4 minSin 4.89e-07 maxSin 1 err vs best-conditioned edge 0.44 units ILL
+      end -0.2400790 21.1208000: near edges 2 minSin 4.89e-07 maxSin 4.89e-07 err vs best-conditioned edge 131442.41 units ILL
+      end 2.0474820 23.4083610: near edges 2 minSin 4.89e-07 maxSin 1 err vs best-conditioned edge 0.78 units ILL
+      end -10.1420780 11.2188010: near edges 1 minSin 4.89e-07 maxSin 4.89e-07 err vs best-conditioned edge 647178.88 units ILL
+      end -0.7809440 20.5799340: near edges 4 minSin 4.89e-07 maxSin 1 err vs best-conditioned edge 0.44 units ILL
+    want -0.2400790 21.1208000 -> 2.0474820 23.4083610
+    want -10.1420780 11.2188010 -> -0.7809440 20.5799340
+MISMATCH seed 23 sc 9 fam 3 deg 45.000 fill 0 op 1 kind 1 edges 1672 got 44 want 44 matched 42 len 268.407665645 vs 268.658398638
+  DIAG unmatched got 2 want 2; disagreeing length ~0.26950 mm, max dist of such points to a clip edge 1.5e-07 mm, first -0.2400111 21.1208678
+    got  -0.7809440 20.5799340 -> -0.1526840 21.2081950
+      end -0.7809440 20.5799340: near edges 4 minSin 4.89e-07 maxSin 1 err vs best-conditioned edge 0.44 units ILL
+      end -0.1526840 21.2081950: near edges 2 minSin 4.89e-07 maxSin 4.89e-07 err vs best-conditioned edge 7847.21 units ILL
+    got  -10.6804390 10.6804390 -> -10.0521780 11.3087010
+      end -10.6804390 10.6804390: near edges 2 minSin 4.89e-07 maxSin 1 err vs best-conditioned edge 0.69 units ILL
+      end -10.0521780 11.3087010: near edges 1 minSin 4.89e-07 maxSin 4.89e-07 err vs best-conditioned edge 520041.08 units ILL
+      end -0.7809440 20.5799340: near edges 4 minSin 4.89e-07 maxSin 1 err vs best-conditioned edge 0.44 units ILL
+      end -0.2400790 21.1208000: near edges 2 minSin 4.89e-07 maxSin 4.89e-07 err vs best-conditioned edge 131442.41 units ILL
+      end -10.6804390 10.6804390: near edges 2 minSin 4.89e-07 maxSin 1 err vs best-conditioned edge 0.69 units ILL
+      end -10.1420780 11.2188010: near edges 1 minSin 4.89e-07 maxSin 4.89e-07 err vs best-conditioned edge 647178.88 units ILL
+    want -0.7809440 20.5799340 -> -0.2400790 21.1208000
+    want -10.6804390 10.6804390 -> -10.1420780 11.2188010
+MISMATCH seed 23 sc 9 fam 3 deg 45.000 fill 0 op 2 kind 1 edges 1672 got 34 want 34 matched 32 len 47.592333853 vs 47.341600860
+  DIAG unmatched got 2 want 2; disagreeing length ~0.25148 mm, max dist of such points to a clip edge 1.5e-07 mm, first -0.2400790 21.1208000
+    got  -0.1526840 21.2081950 -> 2.0474820 23.4083610
+      end -0.1526840 21.2081950: near edges 2 minSin 4.89e-07 maxSin 4.89e-07 err vs best-conditioned edge 7847.21 units ILL
+      end 2.0474820 23.4083610: near edges 2 minSin 4.89e-07 maxSin 1 err vs best-conditioned edge 0.78 units ILL
+    got  -10.0521780 11.3087010 -> -0.7809440 20.5799340
+      end -10.0521780 11.3087010: near edges 1 minSin 4.89e-07 maxSin 4.89e-07 err vs best-conditioned edge 520041.08 units ILL
+      end -0.7809440 20.5799340: near edges 4 minSin 4.89e-07 maxSin 1 err vs best-conditioned edge 0.44 units ILL
+      end -0.2400790 21.1208000: near edges 2 minSin 4.89e-07 maxSin 4.89e-07 err vs best-conditioned edge 131442.41 units ILL
+      end 2.0474820 23.4083610: near edges 2 minSin 4.89e-07 maxSin 1 err vs best-conditioned edge 0.78 units ILL
+      end -10.1420780 11.2188010: near edges 1 minSin 4.89e-07 maxSin 4.89e-07 err vs best-conditioned edge 647178.88 units ILL
+      end -0.7809440 20.5799340: near edges 4 minSin 4.89e-07 maxSin 1 err vs best-conditioned edge 0.44 units ILL
+    want -0.2400790 21.1208000 -> 2.0474820 23.4083610
+    want -10.1420780 11.2188010 -> -0.7809440 20.5799340
+MISMATCH seed 23 sc 9 fam 3 deg 45.000 fill 0 op 3 kind 1 edges 1672 got 44 want 44 matched 42 len 268.407665645 vs 268.658398638
+scene 9 fam 3 deg 45.00 edges 1672 bad 1
+scene 10 fam 5 deg 90.00 edges 1600 bad 0
+scene 11 fam 4 deg 0.00 edges 1088 bad 0
+seed 23 calls 260 mismatches 12 (count 4) worstEnd 0 mm worstLenDiff 0.251; fam scenes/bad: 3/0 1/1 1/1 2/1 1/0 4/0 ; unmatched ends: ill-conditioned 72 REAL 0

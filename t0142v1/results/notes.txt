@@ -1,0 +1,39 @@
+T-0142 verifier round 1 (35b8ca9). Machine 16 threads shared, load 12-45 during runs.
+Build: Debug -Werror ok (285/285). Debug ctest 995/995 (-j4), Debug -j6 --repeat until-fail:3 995/995,
+Release -march=x86-64-v3 -j6 --repeat until-fail:3 995/995. changelog check ok.
+merge-tree: origin/main clean; local task/T-0016-sharp-cost (698f86f, not on origin) clean, merged offset.cpp/boolean.cpp
+compile -fsyntax-only -Werror.
+
+(a) bat.cpp seeds 1-4 x 40 scenes x 8 op/fill = 1280 combos (1144 batched): 0 bad; 3.84 M oracle points, 3.45 M open-path
+    samples; XOR area / perimeter <= 4.3e-11 mm. hb.cpp: G<32: 880 booleans + 110 unions byte-identical to main.
+    pb.cpp (Release, interleaved CPU, min of 3): every row/jit/holed/nest/grid x op at 10k->20k between 1.87 and 2.32
+    (one 2.74 grid unionc outlier re-ran 1.87-2.18). main row union 10k->20k: 1.51 -> 10.0 s (x6.6); branch 0.017 -> 0.036 s.
+(b) lo.cpp branch: fam 0-5 seed 11 x30 each + seeds 21-24 x80 mixed: lost 0, far 0, leftover 0 (2.2 M points).
+    main same seeds: fam0 529 leftover rings, fam3 614, fam5 3770 (oracle has teeth). fam 6 (undetected crossing,
+    documented gap): branch == main, 79 leftover rings / 30 scenes, lost 0.
+    hn.cpp: 720 outsets of properly nested input byte-identical to main.
+    REGRESSION po.cpp (outset +0.05 of n rects each with a nested hole):
+      row  10k->20k shapes: br 0.176->0.539 s (x3.07)  main 0.098->0.195 (x1.99)
+      row  20k->40k:        br 0.554->1.981 (x3.57)    main 0.187->0.378 (x2.03)
+      row  40k->80k:        br 1.967->9.860 (x5.01)    main 0.388->0.784 (x2.02)
+      grid 20k->40k:        br 0.676->2.722 (x4.03)    main 0.188->0.393 (x2.09)
+      grid 40k->80k:        br 2.726->19.31 (x7.08)    main 0.397->0.803 (x2.03)
+    cause: resolveUnnestedHoles scans every "with" ring whose left <= the hole's left from the start of the sorted list.
+(c) perf.cpp (1 rep): plate 0.39/1.57/12.0 s (main 0.39/1.48/12.3), touch 0.42/1.62/8.2 (main 0.43/1.59/8.3),
+    spiral 0.69/3.05/13.6 (main 0.74/3.06/13.7) at 5k/10k/20k: unchanged, documented limit (ADR-0006 §10).
+    c90.cpp comb inset x3.9-4.4 per doubling (documented); raster clip 1k->8k teeth x1.97-2.10 at 90/45/30/73 deg, 0 deg x2.4-2.7.
+(d) dfl.cpp: Profile/Pocket refuse < 1e-6 (nextafter(1e-6,0) refused, 1e-6 accepted), message as documented;
+    pocketCentreRegion refuses with its own generic message. Outputs for accepted tolerances identical to main.
+    LEAK: Engrave Fill and V-Carve flat-area clearing (with and without a clearance end mill) now refuse distance
+    tolerances in (0, 1e-6) with Pocket's message; on main they produced toolpaths. Their own validators still accept
+    distance > 0. bez.cpp: 1e-8 refused 0.00 s, 1e-6 ok 1.12 s.
+(e) strip.cpp seeds 11-14 x15 + 21-24 x12 with DIAG: 2.5k calls; every unmatched piece end is ILL (lies on a clip edge at
+    sine <= 4.7e-7 to the subject, i.e. a subject collinear with a clip edge within rounding: ADR-0006 §7 caveat) or
+    a near-parallel intersection where the WHOLE-clip call is off (seed 13 sc 5: cropped end 0.7 units from exact,
+    booleanOp end 64 units off). REAL (well-conditioned end > 2 units off): 0.
+    pc.cpp comb Pocket hashes main == branch at 5..250 teeth x 0/30/45/90/17 deg and at 500/1000/2000 x 0/30/45/90;
+    Pocket 90 deg 0.063/0.197/0.605 s at 500/1000/2000 (main 0.124/0.651/4.00).
+    T-0131 c on branch Release x8: 5.06-5.57 (2.5^2 = 6.25; bound kept at 9.0); T-0131 e x4: 3.76-4.02 (bound 6.25).
+    nearest-first guard vs revert mutant: ratio 4.65 (10k 14.6 s, 20k 68.7 s) -> test fails as intended.
+    hs.cpp 8 seeds x 15 Pocket + 15 Profile: identical to main. pcw.cpp KIND 8/9 NTOOLS 3 x20: 37/40 hashes differ,
+    safety verdicts identical (GOUGE/OUTSIDE/OVERLOAD/MISS/RAPID 0 both).

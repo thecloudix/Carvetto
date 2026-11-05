@@ -1,0 +1,1 @@
+seed 22 fam -1 scenes 80 bad 0 lost 0 far 0 leftover 0 points 320000

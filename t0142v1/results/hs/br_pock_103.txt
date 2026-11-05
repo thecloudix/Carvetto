@@ -1,0 +1,15 @@
+pock 0 fam 3 K 1 strat 0 ang 0.524 pp 0 tools 3 moves 12049 diags 0 hash 21f75d31fb21521e
+pock 1 fam 4 K 1 strat 0 ang -0.013 pp 0 tools 2 moves 1084 diags 0 hash d980152585a276c4
+pock 2 fam 5 K 39 strat 0 ang 0.000 pp 2 tools 2 moves 26869 diags 0 hash 35c914f0052eda12
+pock 3 fam 3 K 1 strat 0 ang 1.571 pp 0 tools 1 moves 14759 diags 0 hash 27a5434c88853d05
+pock 4 fam 0 K 2 strat 1 ang 0.524 pp 2 tools 3 moves 1138 diags 0 hash dae6d703014e18cb
+pock 5 fam 5 K 103 strat 0 ang -0.300 pp 0 tools 1 moves 5420 diags 0 hash 933e3e82b02c663e
+pock 6 fam 5 K 99 strat 0 ang -0.300 pp 2 tools 2 moves 66907 diags 0 hash ed65463add67893d
+pock 7 fam 5 K 92 strat 1 ang 1.571 pp 0 tools 1 moves 1720 diags 0 hash d79aebaf406e75d5
+pock 8 fam 4 K 3 strat 0 ang 0.524 pp 2 tools 2 moves 2443 diags 0 hash a2f7f878520fc12a
+pock 9 fam 2 K 192 strat 1 ang -2.219 pp 0 tools 3 moves 73160 diags 1 hash f079c7331f6b7cb6
+pock 10 fam 0 K 4 strat 0 ang 1.216 pp 1 tools 1 moves 1550 diags 0 hash ed9fb07bfc11a17b
+pock 11 fam 1 K 1 strat 1 ang -0.300 pp 1 tools 1 moves 101 diags 0 hash 72c8d0d02f439b1f
+pock 12 fam 4 K 3 strat 1 ang 0.524 pp 2 tools 3 moves 3899 diags 0 hash 0385c8425965f092
+pock 13 fam 1 K 7 strat 1 ang -1.799 pp 0 tools 3 moves 2232 diags 0 hash b95c5cc79c4c0dac
+pock 14 fam 1 K 3 strat 1 ang 2.513 pp 0 tools 1 moves 74 diags 0 hash c314bad0637ad458
