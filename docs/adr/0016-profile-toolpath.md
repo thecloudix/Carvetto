@@ -125,7 +125,18 @@ choices. Behaviour descriptions come from `docs/reference/` only.
 11. **Start points.** `StartAt::VectorStart` (= "Use Vector Start Point"): the cut point nearest
     the vector's start; `Optimise`: nearest the previous cut's start; `ClosestOnBoundingBox`:
     nearest one of nine anchors of the cut's bounding box. Ties follow `closestPoint` (lowest
-    span). The closed cut is rotated to start there.
+    span). The closed cut is rotated to start there. One tie is broken by rule (T-0158, owner
+    decision 2026-11-03): when the target point lies within the distance tolerance of the centre
+    of an arc of the cut and that arc is at the nearest distance (radius ≤ nearest + tolerance),
+    every point of the arc is equally near — a convex tip with VectorStart on an Outside cut
+    (its round join is centred on the tip), a reflex vertex on an Inside cut, a circle from its
+    bounding-box centre or Optimise from its centre. The cut then starts at the beginning of the
+    first such arc (lowest span index), so it runs the corner arc first. Only distances are
+    compared; the direction of the rounding-sized vector from the arc centre to the target
+    (which made GCC and MSVC choose different starts and tab layouts) is never used. The rule is
+    stable under ulp and 1e-9 relative perturbations. It moved the start in about 7% of the
+    stored harness scenes and 15% of random multi-vector pages, exactly those whose start that
+    rounding had decided.
 12. **Height profiles.** A pass is a list of legs (`PathLeg`: walk the path from u0 to u1, either
     way, with a piecewise-linear Z over travelled distance). Lines become feeds, arcs (helical
     where Z changes, exact because Z is linear in arc length between knots), profile jumps

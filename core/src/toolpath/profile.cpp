@@ -124,6 +124,30 @@ void closeExactly(Contour& c) {
     }
 }
 
+// Arc length on the closed walk at which a cut asked to start nearest `target` starts (ADR-0016
+// §11, T-0158). Where `target` lies within `eps` of the centre of an arc of the walk and that arc
+// is at the nearest distance (radius within `eps` of it), every point of the arc is equally near:
+// a convex tip's round join on an Outside cut, a circle round its bounding-box centre. The plain
+// projection would then follow the direction of a rounding-sized vector (target minus centre),
+// which differs between compilers and libm. Such a tie starts at the beginning of the first such
+// arc (lowest span index) instead; only distances are compared, never a near-zero direction.
+// Otherwise the nearest point (`ArcLengthPath::project`).
+double tieFreeStart(const ArcLengthPath& walk, Vec2 target, double eps) {
+    const Contour& c = walk.contour();
+    if (c.spans.empty()) {
+        return 0.0;
+    }
+    const double nearest = geometry::closestPoint(c, target).distance;
+    for (std::size_t i = 0; i < c.spans.size(); ++i) {
+        if (const auto* a = std::get_if<geometry::ArcSpan>(&c.spans[i])) {
+            if (geometry::distance(a->centre, target) <= eps && a->radius <= nearest + eps) {
+                return walk.spanStart(i);
+            }
+        }
+    }
+    return walk.project(target);
+}
+
 // A cross-section of a tab's material: the segment across the kerf at one station of the tab.
 struct TabSection {
     Vec2 p0;
@@ -845,7 +869,7 @@ void ProfileBuilder::chooseStarts(std::vector<Cut>& cuts) {
             } else {
                 target = anchorOf(c.path.bounds(), p_.startAnchor);
             }
-            const double u = walk.project(target);
+            const double u = tieFreeStart(walk, target, tol_.distance);
             c.path.spans = walk.extract(u, u + walk.length());
         }
         closeExactly(c.path);
@@ -2832,7 +2856,7 @@ ProfileResult ProfileBuilder::run() {
         for (std::size_t i : ord) {
             Cut& c = cuts[i];
             if (c.walk.closed()) {
-                const double u = c.walk.project(prev);
+                const double u = tieFreeStart(c.walk, prev, tol_.distance);
                 c.path.spans = c.walk.extract(u, u + c.walk.length());
                 closeExactly(c.path);
                 c.walk = ArcLengthPath(c.path, offTol_);
