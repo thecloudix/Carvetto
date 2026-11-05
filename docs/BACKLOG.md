@@ -464,7 +464,7 @@ Goal: Pre-existing findings from the T-0138 verifier (harness t0138v1/, wt-T0138
 Acceptance criteria:
   1. (a) ≤ 2.5× per doubling up to 20k rings, or documented limit with a clear diagnostic; (b) Profile refuses invalid tolerances with tests, valid output byte-identical; (c) decision recorded in ADR-0006.
 
-### T-0142 Boolean sweep cost and outward-offset leftovers (T-0141 coder)   [status: in progress (round 3, last; B2 touching/overlapping layouts quadratic)]
+### T-0142 Boolean sweep cost and outward-offset leftovers (T-0141 coder)   [status: in review (PR #59, verifier PASS)]
 Phase: 1   Module: core/geometry   Depends on: T-0141   ADR: 0006
 Goal: Found by the T-0141 coder. (a) booleanOp/unionContours has the same O(n²) Clipper2 sweep as offsets had (a 10k row ~1.3 s); Pocket calls it on all of its input — apply the T-0141 batching (or equivalent) where results cannot interact. (b) A lone CW ring offset outward under a CCW lowest contour leaves hundreds of tiny leftover rings from Clipper2's corner joins (a 1 mm circle → ~920 at +0.3 mm; same on main) — find the cause and remove them without losing genuine regions.
 Acceptance criteria:
@@ -676,6 +676,12 @@ Phase: 1   Module: core/geometry   Depends on: T-0016   ADR: 0012
 Goal: (a) After T-0016, Round offsets and inputs with nothing to prune are 13–15% slower than before on large inputs (zig-zag Round 1.118→1.261 s; filleted-arc zig-zag 2000 spans 8.67→9.81 s), even with every new path disabled (A/A-controlled), pointing to code generation in buildRaw / mergeOnCarriers / offsetOpenContour. Recover it (profile with symbols; e.g. keep pruneLineCopies out of line). (b) Saw / hatch / filleted-arc open offsets grow 2.6–4× per doubling for every join, Round included, on main as well (harness t0016v1 perf3.sh); the card case's first doubling is 2.7–2.8× for Round. Find the cause and bring it to ≤ 2.5× per doubling, or document it (may overlap T-0168).
 Acceptance criteria:
   1. (a) Round on the t0016v1 perf inputs is within 3% of pre-T-0016 main (interleaved CPU, A/A control); (b) fixed to ≤ 2.5× per doubling or documented in ADR-0012 with measurements; outputs byte-identical; full ctest.
+
+### T-0171 Hole nesting: guard the box hierarchy; ADR-0006 §10 wording (T-0142 round-3 verifier)   [status: ready]
+Phase: 1   Module: core/geometry   Depends on: T-0142   ADR: 0006
+Goal: The T-0142 timing test lists each hole right after its outer, so the "last outer" shortcut always succeeds and nothing guards the box hierarchy: with it replaced by a linear scan (mutant C, harness t0142v3 results/mutC_po3.txt) every test passes while holes listed far from their outers (tcolrev, tcolshuf) grow 3.7–3.8× per doubling. Add a reversed/shuffled layout to the test. Also ADR-0006 §10 says "near-linear in the number of rings whatever the layout" just before listing the inputs that defeat it — reword.
+Acceptance criteria:
+  1. A timing test with holes listed far from their outers fails under mutant C and passes on the fix; ADR wording consistent; full ctest.
 
 ### T-0150 Drilling toolpath   [status: done (2026-11-03, #36)]
 Phase: 1 (Batch C, owner decision 2026-11-03: Batch C toolpaths first)   Module: core/toolpath   Depends on: T-0123, T-0132   ADR: new
