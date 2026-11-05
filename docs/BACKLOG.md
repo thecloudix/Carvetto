@@ -657,6 +657,20 @@ Goal: Found by the T-0158 verifier (harness t0158v1, wsf.cpp flood oracle, worse
 Acceptance criteria:
   1. Each repro has no severed/partial tab and every free piece is reported or held; flood-oracle sweep over the harness shows no scene worse than main; regression tests.
 
+### T-0168 Offsets: near-tolerance walks cost and inner-offset loss (T-0016 coder)   [status: ready]
+Phase: 1   Module: core/geometry   Depends on: T-0016   ADR: 0012
+Goal: Found by the T-0016 coder on main.
+(a) Walks of 1.5 µm steps (just above tol) are super-linear for every join. Round: 4–7 s at 2000 steps, 17–43 s at 4000. Sharp: 12–13 s at 2000, 60–131 s at 4000. The whole walk lies within d of itself: pruning scans every input span per sample (closerThan) and boundary splitting is O(n²). Ideas exist on the shelved T-0009 branches (convex-hull distance hierarchy, domination trimming).
+(b) An 8000 × 1.5 µm closed polygon circle (R 1.9 mm, d=1) loses its whole inner offset (0 chains): every inner piece is shorter than tol, so emit drops them all. 3 µm spans, or d=0.1, work.
+Acceptance criteria:
+  1. (a) ≤ 2.5× per doubling to 8000 steps, all joins; (b) the inner offset is present within tolerance; outputs elsewhere identical or judged no worse (T-0006 fuzz set, exact checker).
+
+### T-0169 Pocket: tool-centre region dips below the tool radius at a curve/line junction (T-0164 coder)   [status: ready]
+Phase: 1   Module: core/toolpath   Depends on: —   ADR: 0017
+Goal: Found by the T-0164 coder (harness t0153v3 repro2/nest_frame.txt, VC_FIX "0 6 60 0.001 0.3 0"). An edge of Pocket's tool-centre region dips below the tool radius where the curved part round the inner corner under an "A"'s crossbar joins the straight part along the crossbar. By exact distance this is 45 nm, 4.5% of a 0.001 chordal tolerance.
+Acceptance criteria:
+  1. Tool centres never come closer to the boundary than the tool radius + allowance − (documented numeric slack); regression test; Pocket output otherwise identical or explained.
+
 ### T-0150 Drilling toolpath   [status: done (2026-11-03, #36)]
 Phase: 1 (Batch C, owner decision 2026-11-03: Batch C toolpaths first)   Module: core/toolpath   Depends on: T-0123, T-0132   ADR: new
 Goal: Drill the centres of selected closed vectors (behaviour per docs/reference/feature-inventory.md "Drilling Toolpath"): drill or end-mill tool, start depth, cut depth, optional peck drilling (pass depth from the tool; retract above the cutting start by a retract gap, or above the previous pass), optional dwell at the bottom of each pass, ordering of holes, safe-Z links. Output through the existing post with plunge/retract moves (no canned cycles required); stored as a native toolpath record; CLI `toolpath drill`.
