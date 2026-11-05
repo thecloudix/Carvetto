@@ -1,0 +1,17 @@
+other:bbc          hashdiff 1903 leftdiff 29 runs 2183 startdiff 166
+     e.g. ('ness_t0127c_scn_rc_g1_K_87750_12.scn.txt', 'rc_g1_K_87750_12.scn:bbc', [0])
+     e.g. ('ness_t0127c_scn_rc_g1_K_87751_28.scn.txt', 'rc_g1_K_87751_28.scn:bbc', [0])
+     e.g. ('ness_t0127c_scn_rc_g2_K_88751_26.scn.txt', 'rc_g2_K_88751_26.scn:bbc', [0, 0])
+     e.g. ('rness_t0127v1_d4new_m0_271005_21.scn.txt', 'm0_271005_21.scn:bbc', [0])
+other:opt          hashdiff 1981 leftdiff 4 runs 2183 startdiff 1
+     e.g. ('harness_t0127v1_ncd_nc_128_x.scn.txt', 'nc_128_x.scn:opt', [0, 0])
+other:orig         hashdiff 1916 leftdiff 8 runs 2183 startdiff 31
+     e.g. ('ness_t0127c_scn_rc_g2_K_88751_26.scn.txt', 'rc_g2_K_88751_26.scn:orig', [0, 0])
+     e.g. ('rness_t0127v1_d4new_m0_271012_32.scn.txt', 'm0_271012_32.scn:orig', [1])
+     e.g. ('arness_t0127v1_d4new_m0_271014_5.scn.txt', 'm0_271014_5.scn:orig', [1, 1])
+     e.g. ('rness_t0127v1_d4new_m0_271019_27.scn.txt', 'm0_271019_27.scn:orig', [0, 0])
+other:vsout        hashdiff 1919 leftdiff 24 runs 2183 startdiff 147
+     e.g. ('harness_t0124v2_b260.scn.txt', 'b260.scn:vsout', [2, 2])
+     e.g. ('harness_t0124v2_s90.scn.txt', 's90.scn:vsout', [3])
+     e.g. ('harness_t0124v2_s9303_84.scn.txt', 's9303_84.scn:vsout', [1, 1])
+     e.g. ('harness_t0124v4_repro_b260.scn.txt', 'b260.scn:vsout', [2, 2])

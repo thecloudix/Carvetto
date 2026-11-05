@@ -1,0 +1,7 @@
+gen3:fpoly       >1e-3 2 callcount_changed 0 scenes 60
+     e.g. (0.001, 'd-verify3-rel_gen3_fpoly_054.scn.txt', 'fpoly_054.scn:orig', ('r-1e-12', 1, 2, 2))
+     e.g. (0.001, 'd-verify3-rel_gen3_fpoly_000.scn.txt', 'fpoly_000.scn:orig', ('r+1e-09', 0, 2, 2))
+gen3:rmrg2       >1e-6 7 callcount_changed 0 scenes 60
+gen3:sharpnb     callcount_changed 0 scenes 60
+gen3:split       callcount_changed 0 scenes 60
+gen3:vmrg2       >1e-6 12 callcount_changed 0 scenes 60

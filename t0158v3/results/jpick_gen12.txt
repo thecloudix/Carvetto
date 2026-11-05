@@ -1,0 +1,43 @@
+gen1:bez         extra>1e-6 1 pickNotNearest 1 rule23 2 runLen>=3 2
+     e.g. 8_build-verify3-rel_gen1_bez_029.scn.txt bez_029.scn:orig:id call 0 runLen 74 pick 2 jmin 72 extra 1.145e-06
+gen1:dup         extra>1e-6 6 pickNotNearest 6 rule23 21 runLen>=3 21
+     e.g. 8_build-verify3-rel_gen1_dup_003.scn.txt dup_003.scn:orig:id call 1 runLen 14 pick 0 jmin 12 extra 1.211e-06
+     e.g. 8_build-verify3-rel_gen1_dup_018.scn.txt dup_018.scn:orig:id call 0 runLen 13 pick 0 jmin 9 extra 1.238e-06
+     e.g. 8_build-verify3-rel_gen1_dup_020.scn.txt dup_020.scn:orig:id call 1 runLen 15 pick 0 jmin 9 extra 1.176e-06
+     e.g. 8_build-verify3-rel_gen1_dup_037.scn.txt dup_037.scn:orig:id call 0 runLen 12 pick 0 jmin 7 extra 1.332e-06
+gen1:flat        rule23 56 runLen>=3 2
+gen1:gap         extra>1e-6 2 pickNotNearest 2 rule23 20 runLen>=3 20
+     e.g. 8_build-verify3-rel_gen1_gap_036.scn.txt gap_036.scn:orig:id call 0 runLen 13 pick 0 jmin 9 extra 1.277e-06
+     e.g. 8_build-verify3-rel_gen1_gap_054.scn.txt gap_054.scn:orig:id call 0 runLen 18 pick 0 jmin 14 extra 1.158e-06
+gen1:inref       rule23 4
+gen1:mitre       rule23 77 runLen>=3 10
+gen2:marc        extra>0.01mm 22 extra>0.1mm 2 extra>1e-3 11 extra>1e-6 4 pickNotNearest 39 rule23 90 runLen>=3 54
+     e.g. _build-verify3-rel_gen2_marc_000.scn.txt marc_000.scn:orig:id call 0 runLen 3 pick 1 jmin 0 extra 0.01167
+     e.g. _build-verify3-rel_gen2_marc_004.scn.txt marc_004.scn:orig:id call 0 runLen 3 pick 1 jmin 0 extra 0.001497
+     e.g. _build-verify3-rel_gen2_marc_008.scn.txt marc_008.scn:orig:id call 0 runLen 3 pick 1 jmin 0 extra 0.003434
+     e.g. _build-verify3-rel_gen2_marc_008.scn.txt marc_008.scn:orig:id call 1 runLen 3 pick 1 jmin 0 extra 0.003103
+gen2:mflat       rule23 86 runLen>=3 20
+gen2:mloop       extra>0.01mm 3 extra>1e-3 8 extra>1e-6 1 pickNotNearest 12 rule23 65 runLen>=3 12
+     e.g. build-verify3-rel_gen2_mloop_001.scn.txt mloop_001.scn:orig:id call 0 runLen 3 pick 0 jmin 1 extra 0.002035
+     e.g. build-verify3-rel_gen2_mloop_003.scn.txt mloop_003.scn:orig:id call 0 runLen 3 pick 0 jmin 1 extra 0.002352
+     e.g. build-verify3-rel_gen2_mloop_020.scn.txt mloop_020.scn:orig:id call 0 runLen 3 pick 0 jmin 1 extra 0.002556
+     e.g. build-verify3-rel_gen2_mloop_023.scn.txt mloop_023.scn:orig:id call 0 runLen 3 pick 0 jmin 1 extra 0.009855
+gen2:mmrg        extra>0.1mm 1 extra>1e-6 2 pickNotNearest 3 rule23 81 runLen>=3 52
+     e.g. _build-verify3-rel_gen2_mmrg_021.scn.txt mmrg_021.scn:orig:id call 0 runLen 3 pick 0 jmin 1 extra 1.015e-06
+     e.g. _build-verify3-rel_gen2_mmrg_028.scn.txt mmrg_028.scn:orig:id call 0 runLen 3 pick 1 jmin 0 extra 0.2038
+     e.g. _build-verify3-rel_gen2_mmrg_068.scn.txt mmrg_068.scn:orig:id call 0 runLen 3 pick 0 jmin 1 extra 1.02e-06
+gen2:mon         rule23 95 runLen>=3 40
+gen2:mref        rule23 24 runLen>=3 3
+gen2:mshort      extra>0.01mm 2 extra>0.1mm 11 extra>1e-6 4 extra>1mm 10 pickNotNearest 27 rule23 106 runLen>=3 66
+     e.g. uild-verify3-rel_gen2_mshort_006.scn.txt mshort_006.scn:orig:id call 0 runLen 5 pick 2 jmin 1 extra 0.3431
+     e.g. uild-verify3-rel_gen2_mshort_008.scn.txt mshort_008.scn:orig:id call 0 runLen 3 pick 0 jmin 1 extra 2.315
+     e.g. uild-verify3-rel_gen2_mshort_008.scn.txt mshort_008.scn:orig:id call 1 runLen 3 pick 0 jmin 1 extra 2.027
+     e.g. uild-verify3-rel_gen2_mshort_009.scn.txt mshort_009.scn:orig:id call 0 runLen 3 pick 0 jmin 1 extra 1.957e-05
+gen2:mt          rule23 109 runLen>=3 69
+gen2:mtc         rule23 111 runLen>=3 18
+gen2:mtri        rule23 68 runLen>=3 38
+gen2:rmrg        extra>1e-6 7 pickNotNearest 7 rule23 88 runLen>=3 88
+     e.g. _build-verify3-rel_gen2_rmrg_017.scn.txt rmrg_017.scn:orig:id call 0 runLen 19 pick 0 jmin 14 extra 1.173e-06
+     e.g. _build-verify3-rel_gen2_rmrg_037.scn.txt rmrg_037.scn:orig:id call 0 runLen 12 pick 0 jmin 5 extra 1.393e-06
+     e.g. _build-verify3-rel_gen2_rmrg_045.scn.txt rmrg_045.scn:orig:id call 0 runLen 7 pick 0 jmin 5 extra 1.433e-06
+     e.g. _build-verify3-rel_gen2_rmrg_051.scn.txt rmrg_051.scn:orig:id call 0 runLen 15 pick 0 jmin 10 extra 1.341e-06

@@ -1,0 +1,79 @@
+gen1:bez         >1e-2 48 callcount_changed 0 scenes 60
+     e.g. (10.824141, 'ild-verify3-rel_gen1_bez_059.scn.txt', 'bez_059.scn:orig', ('r-1e-10', 0, 1, 1))
+     e.g. (9.156032, 'ild-verify3-rel_gen1_bez_043.scn.txt', 'bez_043.scn:orig', ('r-1e-09', 0, 1, 1))
+     e.g. (8.854206, 'ild-verify3-rel_gen1_bez_011.scn.txt', 'bez_011.scn:orig', ('r-1e-09', 1, 1, 1))
+gen1:circ        >1e-2 22 callcount_changed 0 scenes 60
+     e.g. (62.683312, 'ld-verify3-rel_gen1_circ_014.scn.txt', 'circ_014.scn:orig', ('r-1e-12', 0, 1, 1))
+     e.g. (55.888632, 'ld-verify3-rel_gen1_circ_057.scn.txt', 'circ_057.scn:orig', ('u-2', 0, 1, 1))
+     e.g. (53.973249, 'ld-verify3-rel_gen1_circ_020.scn.txt', 'circ_020.scn:orig', ('r+1e-09', 0, 1, 1))
+gen1:dup         >1e-2 50 >1e-6 1 callcount_changed 0 scenes 60
+     e.g. (8.680589, 'ild-verify3-rel_gen1_dup_020.scn.txt', 'dup_020.scn:orig', ('r-1e-09', 0, 2, 2))
+     e.g. (8.15841, 'ild-verify3-rel_gen1_dup_042.scn.txt', 'dup_042.scn:orig', ('r-1e-09', 0, 1, 1))
+     e.g. (7.775656, 'ild-verify3-rel_gen1_dup_052.scn.txt', 'dup_052.scn:orig', ('r-1e-09', 0, 1, 1))
+gen1:flat        >1e-2 1 callcount_changed 0 scenes 60
+     e.g. (0.019029, 'ld-verify3-rel_gen1_flat_028.scn.txt', 'flat_028.scn:orig', ('r-1e-10', 0, 1, 1))
+gen1:gap         >1e-2 19 callcount_changed 0 scenes 60
+     e.g. (8.008848, 'ild-verify3-rel_gen1_gap_059.scn.txt', 'gap_059.scn:orig', ('r-1e-12', 1, 1, 1))
+     e.g. (7.920545, 'ild-verify3-rel_gen1_gap_035.scn.txt', 'gap_035.scn:orig', ('r-1e-10', 1, 1, 1))
+     e.g. (5.779085, 'ild-verify3-rel_gen1_gap_058.scn.txt', 'gap_058.scn:orig', ('r+1e-09', 0, 1, 1))
+gen1:inref       >1e-2 17 >1e-4 1 callcount_changed 0 scenes 60
+     e.g. (2.206864, 'd-verify3-rel_gen1_inref_030.scn.txt', 'inref_030.scn:orig', ('r-1e-10', 0, 1, 1))
+     e.g. (2.060419, 'd-verify3-rel_gen1_inref_058.scn.txt', 'inref_058.scn:orig', ('r-1e-09', 0, 1, 1))
+     e.g. (2.001546, 'd-verify3-rel_gen1_inref_054.scn.txt', 'inref_054.scn:orig', ('r-1e-09', 0, 1, 1))
+gen1:mitre       >1e-2 53 callcount_changed 0 scenes 60
+     e.g. (19.997109, 'd-verify3-rel_gen1_mitre_038.scn.txt', 'mitre_038.scn:orig', ('u+2', 0, 2, 2))
+     e.g. (17.442091, 'd-verify3-rel_gen1_mitre_055.scn.txt', 'mitre_055.scn:orig', ('r-1e-12', 0, 2, 2))
+     e.g. (15.820553, 'd-verify3-rel_gen1_mitre_039.scn.txt', 'mitre_039.scn:orig', ('r-1e-09', 0, 2, 2))
+gen1:poly        >1e-2 17 callcount_changed 0 scenes 60
+     e.g. (5.169727, 'ld-verify3-rel_gen1_poly_048.scn.txt', 'poly_048.scn:orig', ('r-1e-09', 0, 1, 1))
+     e.g. (4.730871, 'ld-verify3-rel_gen1_poly_051.scn.txt', 'poly_051.scn:orig', ('r-1e-09', 0, 1, 1))
+     e.g. (4.2823, 'ld-verify3-rel_gen1_poly_024.scn.txt', 'poly_024.scn:orig', ('r-1e-09', 0, 1, 1))
+gen1:star        >1e-2 40 callcount_changed 0 scenes 60
+     e.g. (9.840048, 'ld-verify3-rel_gen1_star_026.scn.txt', 'star_026.scn:orig', ('u+2', 0, 1, 1))
+     e.g. (9.698884, 'ld-verify3-rel_gen1_star_042.scn.txt', 'star_042.scn:orig', ('r-1e-10', 0, 1, 1))
+     e.g. (8.654268, 'ld-verify3-rel_gen1_star_017.scn.txt', 'star_017.scn:orig', ('r-1e-09', 1, 1, 1))
+gen2:marc        >1e-2 76 callcount_changed 0 scenes 80
+     e.g. (11.738349, 'ld-verify3-rel_gen2_marc_044.scn.txt', 'marc_044.scn:orig', ('r-1e-12', 0, 2, 2))
+     e.g. (10.949548, 'ld-verify3-rel_gen2_marc_064.scn.txt', 'marc_064.scn:orig', ('r-1e-10', 0, 2, 2))
+     e.g. (10.250595, 'ld-verify3-rel_gen2_marc_056.scn.txt', 'marc_056.scn:orig', ('u+1', 0, 1, 1))
+gen2:mflat       >1e-2 2 callcount_changed 0 scenes 80
+     e.g. (0.074012, 'd-verify3-rel_gen2_mflat_054.scn.txt', 'mflat_054.scn:orig', ('r+1e-12', 1, 2, 2))
+     e.g. (0.010022, 'd-verify3-rel_gen2_mflat_061.scn.txt', 'mflat_061.scn:orig', ('r-1e-10', 0, 2, 2))
+gen2:min         callcount_changed 0 scenes 80
+gen2:mloop       >1e-2 61 callcount_changed 0 scenes 80
+     e.g. (9.800488, 'd-verify3-rel_gen2_mloop_012.scn.txt', 'mloop_012.scn:orig', ('r-1e-10', 0, 3, 3))
+     e.g. (8.612703, 'd-verify3-rel_gen2_mloop_006.scn.txt', 'mloop_006.scn:orig', ('r-1e-10', 0, 3, 3))
+     e.g. (8.262305, 'd-verify3-rel_gen2_mloop_011.scn.txt', 'mloop_011.scn:orig', ('r-1e-10', 0, 1, 1))
+gen2:mmrg        >1e-2 9 >1e-6 9 callcount_changed 0 scenes 80
+     e.g. (11.121361, 'ld-verify3-rel_gen2_mmrg_060.scn.txt', 'mmrg_060.scn:orig', ('r-1e-09', 0, 2, 2))
+     e.g. (6.744355, 'ld-verify3-rel_gen2_mmrg_017.scn.txt', 'mmrg_017.scn:orig', ('r+1e-09', 0, 2, 2))
+     e.g. (4.229927, 'ld-verify3-rel_gen2_mmrg_050.scn.txt', 'mmrg_050.scn:orig', ('r+1e-09', 0, 2, 2))
+gen2:mon         >1e-2 30 callcount_changed 0 scenes 80
+     e.g. (1.763851, 'ild-verify3-rel_gen2_mon_056.scn.txt', 'mon_056.scn:orig', ('u+2', 0, 2, 2))
+     e.g. (1.43196, 'ild-verify3-rel_gen2_mon_043.scn.txt', 'mon_043.scn:orig', ('u-4', 0, 2, 2))
+     e.g. (1.008535, 'ild-verify3-rel_gen2_mon_073.scn.txt', 'mon_073.scn:orig', ('r-1e-09', 1, 2, 2))
+gen2:mopen       callcount_changed 0 scenes 80
+gen2:mref        >1e-2 11 callcount_changed 0 scenes 80
+     e.g. (1.831619, 'ld-verify3-rel_gen2_mref_034.scn.txt', 'mref_034.scn:orig', ('r-1e-10', 0, 2, 2))
+     e.g. (1.468316, 'ld-verify3-rel_gen2_mref_030.scn.txt', 'mref_030.scn:orig', ('r-1e-09', 0, 2, 2))
+     e.g. (1.339111, 'ld-verify3-rel_gen2_mref_071.scn.txt', 'mref_071.scn:orig', ('r-1e-09', 0, 2, 2))
+gen2:mshort      >1e-2 47 >1e-3 1 callcount_changed 0 scenes 80
+     e.g. (11.586589, '-verify3-rel_gen2_mshort_043.scn.txt', 'mshort_043.scn:orig', ('r-1e-12', 0, 2, 2))
+     e.g. (8.876295, '-verify3-rel_gen2_mshort_031.scn.txt', 'mshort_031.scn:orig', ('r-1e-10', 0, 2, 2))
+     e.g. (7.817456, '-verify3-rel_gen2_mshort_024.scn.txt', 'mshort_024.scn:orig', ('r-1e-09', 0, 2, 2))
+gen2:mt          >1e-2 68 callcount_changed 0 scenes 80
+     e.g. (12.631931, 'uild-verify3-rel_gen2_mt_079.scn.txt', 'mt_079.scn:orig', ('u-4', 0, 2, 2))
+     e.g. (9.460939, 'uild-verify3-rel_gen2_mt_074.scn.txt', 'mt_074.scn:orig', ('r-1e-12', 0, 2, 2))
+     e.g. (9.291409, 'uild-verify3-rel_gen2_mt_041.scn.txt', 'mt_041.scn:orig', ('r-1e-09', 0, 2, 2))
+gen2:mtc         >1e-2 60 callcount_changed 0 scenes 80
+     e.g. (11.692997, 'ild-verify3-rel_gen2_mtc_050.scn.txt', 'mtc_050.scn:orig', ('r-1e-09', 0, 2, 2))
+     e.g. (10.988273, 'ild-verify3-rel_gen2_mtc_076.scn.txt', 'mtc_076.scn:orig', ('r-1e-10', 0, 2, 2))
+     e.g. (10.935027, 'ild-verify3-rel_gen2_mtc_005.scn.txt', 'mtc_005.scn:orig', ('r-1e-10', 0, 2, 2))
+gen2:mtri        >1e-2 49 callcount_changed 0 scenes 80
+     e.g. (10.135783, 'ld-verify3-rel_gen2_mtri_020.scn.txt', 'mtri_020.scn:orig', ('u+1', 0, 2, 2))
+     e.g. (9.375637, 'ld-verify3-rel_gen2_mtri_074.scn.txt', 'mtri_074.scn:orig', ('r-1e-12', 0, 2, 2))
+     e.g. (9.024278, 'ld-verify3-rel_gen2_mtri_057.scn.txt', 'mtri_057.scn:orig', ('u-1', 0, 2, 2))
+gen2:rmrg        >1e-2 19 >1e-6 11 callcount_changed 0 scenes 80
+     e.g. (5.31935, 'ld-verify3-rel_gen2_rmrg_017.scn.txt', 'rmrg_017.scn:orig', ('r-1e-09', 0, 2, 2))
+     e.g. (5.137012, 'ld-verify3-rel_gen2_rmrg_060.scn.txt', 'rmrg_060.scn:orig', ('r-1e-09', 1, 2, 2))
+     e.g. (4.900519, 'ld-verify3-rel_gen2_rmrg_077.scn.txt', 'rmrg_077.scn:orig', ('r+1e-09', 0, 2, 2))

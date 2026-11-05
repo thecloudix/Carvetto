@@ -1,0 +1,16 @@
+stored:bbc       >1e-2 199 >1e-6 1 callcount_changed 0 scenes 387
+     e.g. (83.667203, 'harness_t0124v5_repro_e19.scn.txt', 'e19.scn:bbc', ('t1000', 0, 0, 0))
+     e.g. (78.859102, 't0124v5_repro_sev_G_81711_17.scn.txt', 'sev_G_81711_17.scn:bbc', ('t1000', 0, 0, 0))
+     e.g. (75.434736, 't0124v4_repro_sev_G_81710_21.scn.txt', 'sev_G_81710_21.scn:bbc', ('t0.1', 0, 0, 0))
+stored:opt       >1e-2 60 callcount_changed 0 scenes 387
+     e.g. (84.879135, '_t0127v2_d_wsf7_m1_292003_18.scn.txt', 'm1_292003_18.scn:opt', ('q1', 0, 0, 0))
+     e.g. (62.47879, 's_t0127v1_d4new_m2_273001_28.scn.txt', 'm2_273001_28.scn:opt', ('q2', 0, 0, 0))
+     e.g. (55.936476, 's_t0127v1_d4new_m0_271001_44.scn.txt', 'm0_271001_44.scn:opt', ('q2', 0, 0, 0))
+stored:orig      >1e-2 46 callcount_changed 0 scenes 387
+     e.g. (84.879135, '_t0127v2_d_wsf7_m1_292003_18.scn.txt', 'm1_292003_18.scn:orig', ('q1', 0, 0, 0))
+     e.g. (68.844859, 'arness_t0124v5_scn_G84710_44.scn.txt', 'G84710_44.scn:orig', ('t0.1', 0, 0, 0))
+     e.g. (63.433598, '_t0127v2_d_wsf7_m1_292010_44.scn.txt', 'm1_292010_44.scn:orig', ('t0.1', 4, 0, 0))
+stored:vsout     >1e-2 25 >1e-3 1 >1e-4 1 >1e-6 6 callcount_changed 0 scenes 387
+     e.g. (21.939515, 'ss_t0127v1_d4new_m0_271031_9.scn.txt', 'm0_271031_9.scn:vsout', ('q1', 1, 0, 0))
+     e.g. (20.239343, 'ss_t0135v1_scn_a4_610000_325.scn.txt', 'a4_610000_325.scn:vsout', ('q2', 2, 0, 0))
+     e.g. (20.111095, 't0127v1_dumpnew_m1_272001_34.scn.txt', 'm1_272001_34.scn:vsout', ('q1', 1, 0, 0))

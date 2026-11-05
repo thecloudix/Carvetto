@@ -1,0 +1,14 @@
+stored:bbc       >1e-2 187 >1e-6 1 callcount_changed 0 scenes 387
+     e.g. (71.869975, 'ss_t0127v1_d4old_m0_271008_5.scn.txt', 'm0_271008_5.scn:bbc', ('r-1e-09', 0, 0, 0))
+     e.g. (71.869975, 'ss_t0127v1_d4new_m0_271008_5.scn.txt', 'm0_271008_5.scn:bbc', ('r-1e-09', 0, 0, 0))
+     e.g. (70.420232, '_t0127v2_d_wsf7_m0_291015_33.scn.txt', 'm0_291015_33.scn:bbc', ('r+1e-10', 3, 0, 0))
+stored:opt       >1e-2 1 >1e-6 1 callcount_changed 0 scenes 387
+     e.g. (13.40526, 'harness_t0135v3_scn_c12_many.scn.txt', 'c12_many.scn:opt', ('u+3', 1, 0, 0))
+stored:orig      >1e-2 16 >1e-3 1 >1e-6 1 callcount_changed 0 scenes 387
+     e.g. (64.8022, '_t0127v2_d_wsf7_m1_292010_44.scn.txt', 'm1_292010_44.scn:orig', ('u+3', 0, 0, 0))
+     e.g. (61.328354, 't0127v1_dumpnew_m1_272001_19.scn.txt', 'm1_272001_19.scn:orig', ('r+1e-09', 0, 0, 0))
+     e.g. (33.122878, 's_t0127v1_d4old_m0_271003_23.scn.txt', 'm0_271003_23.scn:orig', ('u+2', 0, 0, 0))
+stored:vsout     >1e-3 4 >1e-6 5 callcount_changed 0 scenes 387
+     e.g. (0.001, 'ss_t0135v3_scn_m2_1330000_23.scn.txt', 'm2_1330000_23.scn:vsout', ('u-4', 1, 2, 2))
+     e.g. (0.001, 's_t0127v1_d4old_m0_271009_27.scn.txt', 'm0_271009_27.scn:vsout', ('r-1e-10', 1, 2, 2))
+     e.g. (0.001, 's_t0127c_scn_rc_g1_A_87651_1.scn.txt', 'rc_g1_A_87651_1.scn:vsout', ('r+1e-12', 0, 2, 2))

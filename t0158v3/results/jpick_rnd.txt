@@ -1,0 +1,5 @@
+stored:rnd       extra>0.01mm 4 extra>1e-3 54 extra>1e-6 262 pickNotNearest 320 rule23 6709 runLen>=3 1084
+     e.g. 101_1_0.txt r101:42:m2:V1 call 42 runLen 4 pick 0 jmin 1 extra 0.0006171
+     e.g. 101_1_0.txt r101:51:m3:V0 call 129 runLen 4 pick 0 jmin 1 extra 0.0005799
+     e.g. 101_1_0.txt r101:51:m3:V0 call 137 runLen 4 pick 2 jmin 1 extra 0.00064
+     e.g. 101_1_0.txt r101:51:m3:V0 call 147 runLen 6 pick 4 jmin 2 extra 0.0006535

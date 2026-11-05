@@ -1,0 +1,5 @@
+orig {'runs': 2183, 'changed': 199, 'leftchanged': 8} 9.1%
+vsout {'runs': 2183, 'changed': 1015, 'leftchanged': 114} 46.5%
+bbc {'runs': 2183, 'changed': 53, 'leftchanged': 7} 2.4%
+opt {'runs': 2183, 'changed': 5} 0.2%
+all {'runs': 8732, 'changed': 1272, 'leftchanged': 129} 14.6%

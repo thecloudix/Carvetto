@@ -1,0 +1,36 @@
+T-0158 round-3 verifier (branch 5649b2b; origin/main 2df9aba; GCC 15.2). Verdict FAIL (see README for tools).
+Build/test: Debug -Werror build ok (0 warnings), ctest 992/992 (rc 0); changelog check ok; merge-tree vs origin/main clean
+(14df528); no goldens changed. Instrumented lib == branch (hash) on all repros.
+
+B1 (merged-region tips at d + chordal): FIXED. repro/gapmitre_1e-4, mmrg_014/022/023: max start move under 21 transforms
+<= 8.4e-8 mm (main 2-4.9 mm). gen2 mmrg/rmrg and gen3 rmrg2/vmrg2 (merged region, V-bit and end mill): no scale move > 1e-4
+(pert_gen12_scale.txt, pert_gen3_scale.txt); frame (quarter-turn) moves only for rule-0 calls, identical on main.
+B2 (short neighbour edge): FIXED for the reported class (neighbour turning less than the tip by > 1e-3 rad: repro
+shortpost_L0.01_turn2 max move 5e-9). NOT fixed for neighbours turning at least sharpest - 1e-3 rad: the near-run membership
+still flips at L sin(tB) = tol and the start jumps to the other corner (repro3/sharpnb_tA0.1_tB0.2_L5um 0.456 mm under 1e-10,
+equalnb_tA0.1_tB0.1_L10um 0.310 mm under 1e-9, sharpnb_tA0.3_tB1.0_L1.19um 2.09 mm); and the kTipTurnTie threshold itself is a
+knife-edge (repro3/tietA0.3_d0: neighbour 1.7 um before the start vertex turning exactly 1e-3 rad less: 0.907 mm under +-1 ulp).
+Owner decision "squared-off mitre starts at the chamfer's first corner in travel": VIOLATED where the chamfer's corners turn
+differently (curved edges): the rule takes the sharper corner even when it is the chamfer's LAST corner in travel.
+repro3/dchamfer_last_corner_climb.scn (semicircle R 20 closed by a line, V-bit 90 deg depth 3, limit 1.1, Climb, VectorStart):
+start (24.984, 2.009) on the line's offset; the cut runs the line first and the chamfer last (probe_dch.txt: 2 of 4
+direction/order combos for every sweep). Stored scene t0127v1/d4new/m2_273007_12 vsout: same (turns 1.296 / 1.521, pick 1).
+gen2 marc: 27 of 54 chamfer runs start at the chamfer's second corner (line-edged mt/mtc: 0).
+Owner questions (not judged): fine polylines (segments < sqrt(2 d tol)) start at the first junction of the near run in travel,
+one segment (0.06-0.08 mm) from the start vertex's mitre (probe_ngon.txt N 2000/5000); merged-region polygonal round joins
+start at the join's vertex 1 (one chord into the join), not at its beginning as for true round joins (probe3 join).
+Stability/cross-compiler: GCC15 plain == -march=x86-64-v3 bit-identical everywhere (core is -ffp-contract=off, so this is
+weak); FMA variant (logfma: core + Clipper2 without -ffp-contract=off, -ffp-contract=fast): generated families 1880 runs: 1
+start difference (1 um, tolerance span) vs main 266; stored 8732 runs: vsout 1 (1 um) vs main 147; orig 8 / bbc 166 / opt 1
+are rule-0 box-anchor/Optimise (T-0166), same as main.
+Change rate (stored, plain): orig 9.1%, vsout 46.5%, bbc 2.4%, opt 0.2%, all 14.6% (scn_change_rate.txt); r3 vs r2 branch
+differs in 26 of 8731 stored runs.
+Flood: 26 r2->r3 delta runs: 0 worse, 1 better; round-2 worse list (9 runs, T-0167) unchanged; partial full re-flood of 294
+changed runs: only the known T-0167 ones worse.
+Tests: mutants.txt: full revert fails all 7 [start] cases + T-0135; round-2 merged behaviour, round-2 pick, kTipTurnTie=0, slack=0
+each fail >= 1 case.
+Random (28 seeds done, 2872 scenes; seed 242 at 3.3e6 offset killed, as in round 2): changed m0 5.0%, m1 13.6%, m2 24.2%,
+m3 pages 23.1%, all 14.2% (rnd_change_rate.txt; owner accepted ~21% pages).
+Generated-family flood (480 scenes: split/sharpnb/vmrg2/rmrg2/mmrg/rmrg/mshort, flood_gen_r3.txt): 1 worse, 2 better. Worse:
+gen2 mmrg_001 (repro3/mmrg_001_tabs_all_out.scn, V-bit merged region, start now at the region mitre): all 3 tabs left out,
+1372 mm2 piece comes free (reported), main keeps 1 holding tab; main never reaches it under perturbation (T-0167 class).

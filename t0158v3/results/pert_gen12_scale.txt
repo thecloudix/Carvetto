@@ -1,0 +1,28 @@
+gen1:bez         callcount_changed 0 scenes 60
+gen1:circ        callcount_changed 0 scenes 60
+gen1:dup         >1e-2 5 >1e-6 3 callcount_changed 0 scenes 60
+     e.g. (2.198836, 'ild-verify3-rel_gen1_dup_031.scn.txt', 'dup_031.scn:orig', ('r-1e-09', 0, 1, 1))
+     e.g. (1.061561, 'ild-verify3-rel_gen1_dup_040.scn.txt', 'dup_040.scn:orig', ('r+1e-10', 0, 1, 1))
+     e.g. (1.026122, 'ild-verify3-rel_gen1_dup_004.scn.txt', 'dup_004.scn:orig', ('r-1e-09', 0, 1, 2))
+gen1:flat        callcount_changed 0 scenes 60
+gen1:gap         callcount_changed 0 scenes 60
+gen1:inref       callcount_changed 0 scenes 60
+gen1:mitre       callcount_changed 0 scenes 60
+gen1:poly        callcount_changed 0 scenes 60
+gen1:star        callcount_changed 0 scenes 60
+gen2:marc        >1e-6 1 callcount_changed 0 scenes 80
+gen2:mflat       callcount_changed 0 scenes 80
+gen2:min         callcount_changed 0 scenes 80
+gen2:mloop       callcount_changed 0 scenes 80
+gen2:mmrg        >1e-6 17 callcount_changed 0 scenes 80
+gen2:mon         callcount_changed 0 scenes 80
+gen2:mopen       callcount_changed 0 scenes 80
+gen2:mref        callcount_changed 0 scenes 80
+gen2:mshort      >1e-2 9 >1e-6 2 callcount_changed 0 scenes 80
+     e.g. (3.808871, '-verify3-rel_gen2_mshort_049.scn.txt', 'mshort_049.scn:orig', ('r-1e-09', 0, 0, 2))
+     e.g. (2.607999, '-verify3-rel_gen2_mshort_004.scn.txt', 'mshort_004.scn:orig', ('r-1e-12', 0, 2, 2))
+     e.g. (2.589126, '-verify3-rel_gen2_mshort_058.scn.txt', 'mshort_058.scn:orig', ('r-1e-10', 0, 2, 2))
+gen2:mt          callcount_changed 0 scenes 80
+gen2:mtc         callcount_changed 0 scenes 80
+gen2:mtri        callcount_changed 0 scenes 80
+gen2:rmrg        >1e-6 12 callcount_changed 0 scenes 80

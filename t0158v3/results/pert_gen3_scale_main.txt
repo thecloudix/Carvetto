@@ -1,0 +1,20 @@
+gen3:fpoly       >1e-2 14 >1e-3 44 >1e-4 1 callcount_changed 0 scenes 60
+     e.g. (0.079535, 'd-verify3-rel_gen3_fpoly_055.scn.txt', 'fpoly_055.scn:orig', ('r-1e-10', 0, 2, 2))
+     e.g. (0.038105, 'd-verify3-rel_gen3_fpoly_059.scn.txt', 'fpoly_059.scn:orig', ('r-1e-09', 0, 2, 2))
+     e.g. (0.01845, 'd-verify3-rel_gen3_fpoly_001.scn.txt', 'fpoly_001.scn:orig', ('r-1e-10', 0, 2, 2))
+gen3:rmrg2       >1e-2 13 >1e-6 7 callcount_changed 0 scenes 60
+     e.g. (3.505787, 'd-verify3-rel_gen3_rmrg2_018.scn.txt', 'rmrg2_018.scn:orig', ('r+1e-09', 0, 2, 2))
+     e.g. (3.190679, 'd-verify3-rel_gen3_rmrg2_053.scn.txt', 'rmrg2_053.scn:orig', ('r+1e-09', 0, 2, 2))
+     e.g. (3.173184, 'd-verify3-rel_gen3_rmrg2_058.scn.txt', 'rmrg2_058.scn:orig', ('r-1e-09', 0, 2, 2))
+gen3:sharpnb     >1e-2 58 callcount_changed 0 scenes 60
+     e.g. (1.757564, 'verify3-rel_gen3_sharpnb_052.scn.txt', 'sharpnb_052.scn:orig', ('r-1e-10', 0, 2, 2))
+     e.g. (1.713644, 'verify3-rel_gen3_sharpnb_022.scn.txt', 'sharpnb_022.scn:orig', ('u+3', 0, 2, 2))
+     e.g. (1.483466, 'verify3-rel_gen3_sharpnb_003.scn.txt', 'sharpnb_003.scn:orig', ('u+3', 0, 2, 2))
+gen3:split       >1e-2 57 callcount_changed 0 scenes 60
+     e.g. (7.912834, 'd-verify3-rel_gen3_split_005.scn.txt', 'split_005.scn:orig', ('r-1e-09', 0, 2, 2))
+     e.g. (6.259833, 'd-verify3-rel_gen3_split_021.scn.txt', 'split_021.scn:orig', ('u+1', 0, 2, 2))
+     e.g. (5.784894, 'd-verify3-rel_gen3_split_040.scn.txt', 'split_040.scn:orig', ('r-1e-10', 0, 2, 2))
+gen3:vmrg2       >1e-2 12 >1e-6 4 callcount_changed 0 scenes 60
+     e.g. (6.958292, 'd-verify3-rel_gen3_vmrg2_049.scn.txt', 'vmrg2_049.scn:orig', ('r-1e-09', 2, 2, 2))
+     e.g. (6.45942, 'd-verify3-rel_gen3_vmrg2_053.scn.txt', 'vmrg2_053.scn:orig', ('r+1e-09', 0, 2, 2))
+     e.g. (6.253756, 'd-verify3-rel_gen3_vmrg2_008.scn.txt', 'vmrg2_008.scn:orig', ('r-1e-09', 0, 2, 2))

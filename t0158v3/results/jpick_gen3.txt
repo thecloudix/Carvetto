@@ -1,0 +1,22 @@
+gen3:fpoly       extra>1e-6 11 pickNotNearest 11 rule23 79 runLen>=3 32
+     e.g. build-verify3-rel_gen3_fpoly_002.scn.txt fpoly_002.scn:orig:id call 0 runLen 4 pick 0 jmin 1 extra 0.0004496
+     e.g. build-verify3-rel_gen3_fpoly_002.scn.txt fpoly_002.scn:orig:id call 1 runLen 4 pick 0 jmin 1 extra 0.0004581
+     e.g. build-verify3-rel_gen3_fpoly_010.scn.txt fpoly_010.scn:orig:id call 0 runLen 4 pick 0 jmin 1 extra 0.0006303
+     e.g. build-verify3-rel_gen3_fpoly_019.scn.txt fpoly_019.scn:orig:id call 0 runLen 4 pick 0 jmin 1 extra 0.0005874
+gen3:rmrg2       extra>1e-6 8 pickNotNearest 8 rule23 75 runLen>=3 75
+     e.g. build-verify3-rel_gen3_rmrg2_004.scn.txt rmrg2_004.scn:orig:id call 0 runLen 15 pick 0 jmin 13 extra 1.289e-06
+     e.g. build-verify3-rel_gen3_rmrg2_010.scn.txt rmrg2_010.scn:orig:id call 0 runLen 12 pick 0 jmin 9 extra 1.149e-06
+     e.g. build-verify3-rel_gen3_rmrg2_019.scn.txt rmrg2_019.scn:orig:id call 0 runLen 19 pick 0 jmin 8 extra 1.16e-06
+     e.g. build-verify3-rel_gen3_rmrg2_037.scn.txt rmrg2_037.scn:orig:id call 0 runLen 16 pick 0 jmin 11 extra 1.3e-06
+gen3:sharpnb     extra>0.01mm 6 extra>0.1mm 2 extra>1e-3 25 extra>1e-6 22 pickNotNearest 55 rule23 81 runLen>=3 55
+     e.g. ild-verify3-rel_gen3_sharpnb_001.scn.txt sharpnb_001.scn:orig:id call 0 runLen 3 pick 1 jmin 0 extra 0.0008351
+     e.g. ild-verify3-rel_gen3_sharpnb_002.scn.txt sharpnb_002.scn:orig:id call 0 runLen 3 pick 0 jmin 1 extra 0.005905
+     e.g. ild-verify3-rel_gen3_sharpnb_002.scn.txt sharpnb_002.scn:orig:id call 1 runLen 3 pick 0 jmin 1 extra 0.00536
+     e.g. ild-verify3-rel_gen3_sharpnb_003.scn.txt sharpnb_003.scn:orig:id call 0 runLen 3 pick 1 jmin 0 extra 0.4058
+gen3:split       extra>0.01mm 2 extra>0.1mm 1 pickNotNearest 3 rule23 79 runLen>=3 22
+     e.g. build-verify3-rel_gen3_split_015.scn.txt split_015.scn:orig:id call 0 runLen 3 pick 0 jmin 1 extra 0.01159
+     e.g. build-verify3-rel_gen3_split_015.scn.txt split_015.scn:orig:id call 1 runLen 3 pick 0 jmin 1 extra 0.01017
+     e.g. build-verify3-rel_gen3_split_024.scn.txt split_024.scn:orig:id call 0 runLen 3 pick 1 jmin 0 extra 0.4024
+gen3:vmrg2       extra>1e-6 2 pickNotNearest 2 rule23 83 runLen>=3 46
+     e.g. build-verify3-rel_gen3_vmrg2_018.scn.txt vmrg2_018.scn:orig:id call 0 runLen 3 pick 0 jmin 1 extra 1.112e-06
+     e.g. build-verify3-rel_gen3_vmrg2_034.scn.txt vmrg2_034.scn:orig:id call 2 runLen 3 pick 0 jmin 1 extra 1.167e-06

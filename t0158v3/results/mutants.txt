@@ -1,0 +1,8 @@
+RC=0
+base start rc=0 
+base t0135 rc=0 
+M0: [start] rc=42 (test cases:    7 |    0 passed |   7 failed) | T-0135 rc=42 (test cases:  2 |  1 passed | 1 failed) | failing: ;        by perturbations;        parts still hold (flood);        start vertex's mitre;        the rounding of the centre;        the tip's own mitre;the tip's corner arc, unmoved by ulp and 1e-9 perturbations;tip's mitre corner, unmoved by ulp and 1e-9 perturbations;
+M1: [start] rc=42 (test cases:     7 |     6 passed |  1 failed) | T-0135 rc=0 () | failing: ;        by perturbations;
+M2: [start] rc=42 (test cases:     7 |     6 passed |  1 failed) | T-0135 rc=0 () | failing: ;        the tip's own mitre;
+M3: [start] rc=42 (test cases:     7 |     5 passed |  2 failed) | T-0135 rc=0 () | failing: ;        by perturbations;tip's mitre corner, unmoved by ulp and 1e-9 perturbations;
+M4: [start] rc=42 (test cases:     7 |     6 passed |  1 failed) | T-0135 rc=0 () | failing: ;        by perturbations;

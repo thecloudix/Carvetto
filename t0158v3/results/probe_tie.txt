@@ -1,0 +1,20 @@
+LFAC 0.9999999999 TB 0.2 tie tA 0.1 order 0 delta 0 dir 0 L 0.005033 | start-MA 0.4562 start-MB 5.403e-15 |MA-MB| 0.4562 maxMovePert 0.456
+LFAC 0.9999999999 TB 0.2 tie tA 0.1 order 0 delta 0 dir 1 L 0.005033 | start-MA 0.4562 start-MB 5.403e-15 |MA-MB| 0.4562 maxMovePert 0.456
+LFAC 0.9999999999 TB 0.2 tie tA 0.1 order 1 delta 0 dir 0 L 0.005033 | start-MA 0.4562 start-MB 1.831e-15 |MA-MB| 0.4562 maxMovePert 0.456
+LFAC 0.9999999999 TB 0.2 tie tA 0.1 order 1 delta 0 dir 1 L 0.005033 | start-MA 0.4562 start-MB 1.831e-15 |MA-MB| 0.4562 maxMovePert 0.456
+LFAC 1.0000000001 TB 0.2 tie tA 0.1 order 0 delta 0 dir 0 L 0.005033 | start-MA 7.109e-15 start-MB 0.4562 |MA-MB| 0.4562 maxMovePert 0.456
+LFAC 1.0000000001 TB 0.2 tie tA 0.1 order 0 delta 0 dir 1 L 0.005033 | start-MA 7.109e-15 start-MB 0.4562 |MA-MB| 0.4562 maxMovePert 0.456
+LFAC 1.0000000001 TB 0.2 tie tA 0.1 order 1 delta 0 dir 0 L 0.005033 | start-MA 0 start-MB 0.4562 |MA-MB| 0.4562 maxMovePert 0.456
+LFAC 1.0000000001 TB 0.2 tie tA 0.1 order 1 delta 0 dir 1 L 0.005033 | start-MA 0 start-MB 0.4562 |MA-MB| 0.4562 maxMovePert 0.456
+tie tA 0.3 order 0 delta -1e-13 dir 0 L 0.001697 | start-MA 9.273e-15 start-MB 0.907 |MA-MB| 0.907 maxMovePert 3.03e-09
+tie tA 0.3 order 0 delta -1e-13 dir 1 L 0.001697 | start-MA 9.273e-15 start-MB 0.907 |MA-MB| 0.907 maxMovePert 3.03e-09
+tie tA 0.3 order 0 delta 0 dir 0 L 0.001697 | start-MA 1.986e-15 start-MB 0.907 |MA-MB| 0.907 maxMovePert 3.03e-09
+tie tA 0.3 order 0 delta 0 dir 1 L 0.001697 | start-MA 0.907 start-MB 5.329e-15 |MA-MB| 0.907 maxMovePert 0.907
+tie tA 0.3 order 0 delta 1e-13 dir 0 L 0.001697 | start-MA 1.986e-15 start-MB 0.907 |MA-MB| 0.907 maxMovePert 3.03e-09
+tie tA 0.3 order 0 delta 1e-13 dir 1 L 0.001697 | start-MA 0.907 start-MB 0 |MA-MB| 0.907 maxMovePert 3.03e-09
+tie tA 0.3 order 1 delta -1e-13 dir 0 L 0.001697 | start-MA 7.324e-15 start-MB 0.907 |MA-MB| 0.907 maxMovePert 3.03e-09
+tie tA 0.3 order 1 delta -1e-13 dir 1 L 0.001697 | start-MA 7.324e-15 start-MB 0.907 |MA-MB| 0.907 maxMovePert 3.03e-09
+tie tA 0.3 order 1 delta 0 dir 0 L 0.001697 | start-MA 7.324e-15 start-MB 0.907 |MA-MB| 0.907 maxMovePert 0.907
+tie tA 0.3 order 1 delta 0 dir 1 L 0.001697 | start-MA 7.324e-15 start-MB 0.907 |MA-MB| 0.907 maxMovePert 3.03e-09
+tie tA 0.3 order 1 delta 1e-13 dir 0 L 0.001697 | start-MA 0.907 start-MB 1.831e-15 |MA-MB| 0.907 maxMovePert 3.03e-09
+tie tA 0.3 order 1 delta 1e-13 dir 1 L 0.001697 | start-MA 0 start-MB 0.907 |MA-MB| 0.907 maxMovePert 3.03e-09

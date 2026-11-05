@@ -1,0 +1,12 @@
+gen3:fpoly       >1e-3 2 callcount_changed 0 scenes 60
+     e.g. (0.001, 'd-verify3-rel_gen3_fpoly_054.scn.txt', 'fpoly_054.scn:orig', ('t1000', 1, 2, 2))
+     e.g. (0.001, 'd-verify3-rel_gen3_fpoly_000.scn.txt', 'fpoly_000.scn:orig', ('t3', 0, 2, 2))
+gen3:rmrg2       >1e-2 3 >1e-6 24 callcount_changed 0 scenes 60
+     e.g. (10.368044, 'd-verify3-rel_gen3_rmrg2_015.scn.txt', 'rmrg2_015.scn:orig', ('q2', 1, 0, 0))
+     e.g. (9.209099, 'd-verify3-rel_gen3_rmrg2_019.scn.txt', 'rmrg2_019.scn:orig', ('q1', 2, 0, 0))
+     e.g. (8.84392, 'd-verify3-rel_gen3_rmrg2_041.scn.txt', 'rmrg2_041.scn:orig', ('q2', 1, 0, 0))
+gen3:sharpnb     callcount_changed 0 scenes 60
+gen3:split       callcount_changed 0 scenes 60
+gen3:vmrg2       >1e-2 2 >1e-6 25 callcount_changed 0 scenes 60
+     e.g. (14.750327, 'd-verify3-rel_gen3_vmrg2_008.scn.txt', 'vmrg2_008.scn:orig', ('q1', 1, 0, 0))
+     e.g. (9.127039, 'd-verify3-rel_gen3_vmrg2_041.scn.txt', 'vmrg2_041.scn:orig', ('q2', 1, 0, 0))

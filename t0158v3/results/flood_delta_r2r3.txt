@@ -1,0 +1,4 @@
+{'scenes': 26, 'identical verdict': 23, 'br sev total': 0, 'main sev total': 0, 'br part total': 0, 'main part total': 0, 'br free05 total': 20, 'main free05 total': 22, 'br unrepN total': 10, 'main unrepN total': 12, 'br nohold total': 0, 'main nohold total': 0}
+WORSE on branch: 0
+better on branch: 1
+   ('harness_t0127v1_d4new_m0_271022_35.scn_vsout.txt', {'G': 8, 'hold': 8, 'nohold': 0, 'sev': 0, 'part': 0, 'left': 0, 'free': 18, 'free05': 6, 'unrep': True, 'unrepN': 6}, {'G': 7, 'hold': 7, 'nohold': 0, 'sev': 0, 'part': 0, 'left': 1, 'free': 21, 'free05': 8, 'unrep': True, 'unrepN': 8})

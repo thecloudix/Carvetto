@@ -1,0 +1,28 @@
+gen1:bez           hashdiff 59 runs 60
+gen1:circ          hashdiff 7 runs 60
+gen1:dup           hashdiff 56 runs 60
+gen1:flat          hashdiff 51 runs 60
+gen1:gap           hashdiff 52 runs 60
+gen1:inref         hashdiff 60 runs 60
+gen1:mitre         hashdiff 60 runs 60
+gen1:poly          hashdiff 60 runs 60
+gen1:star          hashdiff 59 runs 60
+gen2:marc          hashdiff 78 runs 80
+gen2:mflat         hashdiff 65 runs 80
+gen2:min           hashdiff 80 runs 80
+gen2:mloop         hashdiff 61 runs 80
+gen2:mmrg          hashdiff 49 runs 80
+gen2:mon           hashdiff 69 runs 80
+gen2:mopen         hashdiff 68 runs 80
+gen2:mref          hashdiff 79 runs 80
+gen2:mshort        hashdiff 68 runs 80
+gen2:mt            hashdiff 80 runs 80
+gen2:mtc           hashdiff 79 runs 80
+gen2:mtri          hashdiff 79 runs 80
+gen2:rmrg          hashdiff 61 runs 80
+gen3:fpoly         hashdiff 60 runs 60 startdiff 1
+     e.g. ('build-verify3-rel_gen3_fpoly_054.scn.txt', 'fpoly_054.scn:orig', [2, 2])
+gen3:rmrg2         hashdiff 24 runs 60
+gen3:sharpnb       hashdiff 60 runs 60
+gen3:split         hashdiff 60 runs 60
+gen3:vmrg2         hashdiff 28 runs 60

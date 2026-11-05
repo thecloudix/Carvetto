@@ -1,0 +1,15 @@
+stored:bbc       extra>1e-6 2 pickNotNearest 2 rule23 2 runLen>=3 2
+     e.g. harness_t0137v1_repro_seg_241_31.scn.txt seg_241_31.scn:bbc call 33 runLen 3 pick 0 jmin 1 extra 0.0006176
+     e.g. harness_t0137v1_repro_seg_241_31.scn.txt seg_241_31.scn:bbc call 108 runLen 3 pick 0 jmin 1 extra 0.0006176
+stored:opt       extra>1e-6 1 pickNotNearest 1 rule23 128 runLen>=3 6
+     e.g. harness_t0137v1_repro_seg_241_31.scn.txt seg_241_31.scn:opt call 31 runLen 3 pick 0 jmin 1 extra 0.0001874
+stored:orig      extra>1e-6 5 pickNotNearest 5 rule23 406 runLen>=3 36
+     e.g. arness_t0135v3_scn_m2_1330010_49.scn.txt m2_1330010_49.scn:orig call 0 runLen 6 pick 0 jmin 2 extra 0.0007652
+     e.g. arness_t0135v3_scn_m2_1330010_49.scn.txt m2_1330010_49.scn:orig call 1 runLen 4 pick 0 jmin 1 extra 0.0002763
+     e.g. arness_t0135v3_scn_m2_1330013_10.scn.txt m2_1330013_10.scn:orig call 0 runLen 4 pick 0 jmin 1 extra 0.0003917
+     e.g. arness_t0135v3_scn_m2_1330013_10.scn.txt m2_1330013_10.scn:orig call 1 runLen 4 pick 0 jmin 1 extra 0.0005509
+stored:vsout     extra>0.1mm 1 extra>1e-3 2 extra>1e-6 2 pickNotNearest 5 rule23 654 runLen>=3 165
+     e.g. rness_t0127v1_d4new_m2_273007_12.scn.txt m2_273007_12.scn:vsout call 0 runLen 3 pick 1 jmin 0 extra 0.415
+     e.g. ness_t0127v2_d_wsf7_m0_291003_15.scn.txt m0_291003_15.scn:vsout call 2 runLen 9 pick 0 jmin 5 extra 1.082e-06
+     e.g. ness_t0127v2_d_wsf7_m1_292004_46.scn.txt m1_292004_46.scn:vsout call 1 runLen 3 pick 0 jmin 1 extra 1.623e-06
+     e.g. harness_t0137v1_repro_seg_241_31.scn.txt seg_241_31.scn:vsout call 25 runLen 4 pick 1 jmin 2 extra 0.002558
