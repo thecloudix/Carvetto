@@ -58,6 +58,7 @@ add_executable(carvetto_tests
   geometry/offset_test.cpp
   geometry/open_offset_chains_test.cpp
   geometry/offset_quality_test.cpp
+  geometry/offset_hatch_cost_test.cpp
   geometry/offset_inradius_test.cpp
   geometry/offset_dust_test.cpp
   geometry/offset_batch_test.cpp
