@@ -1,0 +1,9 @@
+zz n=1000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 1.234 (502 sp) main 1.043 (502) |
+zz n=2000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 3.392 (1002 sp) main 2.841 (1002) |
+zz n=4000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 7.618 (2002 sp) main 6.578 (2002) |
+hatch n=2000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 2.452 (1499 sp) main 2.109 (1499) |
+hatch n=4000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 6.889 (2999 sp) main 6.396 (2999) |
+arc n=2000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 11.938 (1002 sp) main 8.563 (1002) |
+hatch n=4000 p=0.02 a=1 d=7 side=0 mitre=2 | Sharp br 2.525 (1001 sp) main 47.893 (1001) |
+hatch n=8000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 12.340 (5999 sp) | Sharp br 5.787 (2001 sp) |
+done

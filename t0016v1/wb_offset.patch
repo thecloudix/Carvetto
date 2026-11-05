@@ -1,0 +1,146 @@
+diff --git a/core/src/geometry/offset.cpp b/build-verify1-wbsrc/core/src/geometry/offset.cpp
+index ec2716c..dd1336c 100644
+--- a/core/src/geometry/offset.cpp
++++ b/build-verify1-wbsrc/core/src/geometry/offset.cpp
+@@ -2,6 +2,8 @@
+ 
+ #include <algorithm>
+ #include <cmath>
++#include <cstdio>
++#include <cstdlib>
+ #include <cstddef>
+ #include <cstdint>
+ #include <functional>
+@@ -1491,7 +1493,8 @@ bool snapJunction(Span& a, Span& b, const SnapContext& ctx) {
+     // mergeOnCarriers) whose ends differ in the last bits only: moving either end that far is a
+     // rounding-level change, unchecked as above. Checking it cost two profiles of the distance to
+     // the input per junction, which dominated Sharp/Square offsets of dense zig-zags (T-0016).
+-    const bool unchecked = lineA && lineB && gap <= rounding && sameCarrier(a, b);
++    static const bool noSnap = std::getenv("T16NOSNAP") != nullptr;
++    const bool unchecked = !noSnap && lineA && lineB && gap <= rounding && sameCarrier(a, b);
+     const bool moveB = lineB && (unchecked || lineOk(endPoint(b), e));
+     // (moveA only matters when b may not move, or moves inwards.)
+     const bool moveA = !(moveB && bOutwards) && lineA && (unchecked || lineOk(startPoint(a), s));
+@@ -2524,6 +2527,7 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
+ // keep the full test. Inside-corner connectors (`connector`) are left out too: they lie within d
+ // of their vertex and are always pruned, cheaply, so grouping them only cost time (Round offsets
+ // of dense zig-zags pile hundreds of them on one line).
++long g_t16Fallback = 0, g_t16Overtake = 0;
+ void pruneLineCopies(const std::vector<Span>& raw, const std::vector<bool>& connector,
+                      const std::vector<Piece>& pieces,
+                      const std::vector<std::pair<std::size_t, std::size_t>>& overlapping, double d, double sign,
+@@ -2703,10 +2707,12 @@ void pruneLineCopies(const std::vector<Span>& raw, const std::vector<bool>& conn
+                         if (key.second != *best && state[copies[key.second].index] < 0 &&
+                             outwardAt(copies[key.second], c1) > end + level) {
+                             test(copies[key.second].index);
++                            ++g_t16Overtake;
+                         }
+                     }
+                     continue;
+                 }
++                ++g_t16Fallback;
+                 // Pruned: then every copy is tested, as before T-0016, and merge chooses among
+                 // the kept ones.
+                 for (const Key& key : covering) {
+@@ -3328,8 +3334,31 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance,
+         });
+         return hit;
+     };
++    static const bool inlineMode = std::getenv("T16INLINE") != nullptr;
++    std::vector<Piece> keptInline;
++    if (inlineMode) {
++        std::size_t witness0 = input.size();
++        for (std::size_t i = 0; i < m; ++i) {
++            if (dead[i]) continue;
++            std::vector<double>& ts = splits[i];
++            ts.push_back(0.0); ts.push_back(1.0);
++            for (double& t : ts) t = std::clamp(t, 0.0, 1.0);
++            std::sort(ts.begin(), ts.end());
++            const double len = length(raw[i]);
++            for (std::size_t k = 0; k + 1 < ts.size(); ++k) {
++                if ((ts[k + 1] - ts[k]) * len <= 1e-9) continue;
++                const Piece piece{i, ts[k], ts[k + 1]};
++                bool ok = true;
++                for (const double f : {0.25, 0.5, 0.75}) {
++                    const Vec2 q = pointAt(raw[i], piece.t0 + (piece.t1 - piece.t0) * f);
++                    if (closerThan(q, keepAbove, input, inputGrid, witness0) || inWedge(q)) { ok = false; break; }
++                }
++                if (ok) keptInline.push_back(piece);
++            }
++        }
++    }
+     std::vector<Piece> candidates;
+-    for (std::size_t i = 0; i < m; ++i) {
++    for (std::size_t i = 0; i < m && !inlineMode; ++i) {
+         if (dead[i]) {
+             continue;
+         }
+@@ -3360,7 +3389,10 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance,
+     // Copies on one line: only the ones that can matter to mergeOnCarriers are tested.
+     std::vector<signed char> state(candidates.size(), -1);
+     std::vector<bool> handled(candidates.size(), false);
++    static const bool noPrune = std::getenv("T16NOPRUNE") != nullptr;
++    if (!noPrune) {
+     pruneLineCopies(raw, rc.connector, candidates, overlapping, d, sign, state, handled, keep);
++    }
+     std::vector<Piece> kept;
+     for (std::size_t k = 0; k < candidates.size(); ++k) {
+         if (!handled[k] && state[k] < 0) {
+@@ -3370,11 +3402,57 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance,
+             kept.push_back(candidates[k]);
+         }
+     }
++    if (inlineMode) kept = keptInline;
+     // Two points computed separately at the same place on the offset (a piece's end and its
+     // continuation's start) agree to rounding: much closer than this, while distinct split
+     // points lie much further apart.
+     auto coincide = [&](Vec2 p) { return 1e-9 * std::max({1.0, d, std::fabs(p.x), std::fabs(p.y)}); };
+     // Overlapping elements on one carrier (see mergeOnCarriers): one boundary piece per stretch.
++    if (std::getenv("T16WB")) {  // verifier white-box oracle: full pruning vs pruneLineCopies, after the merge
++        std::vector<Piece> all;
++        long inconsistent = 0;
++        for (std::size_t k = 0; k < candidates.size(); ++k) {
++            const bool full = keep(candidates[k]);
++            if (full) all.push_back(candidates[k]);
++            if (state[k] >= 0 && (state[k] == 1) != full) ++inconsistent;
++        }
++        const double lat = 0.5 * tol.distance, opp = std::min(5e-7 * std::max(1.0, d), 0.1 * tol.distance * tol.distance / d);
++        const std::vector<Piece> mA = mergeOnCarriers(raw, all, overlapping, d, sign, lat, opp);
++        const std::vector<Piece> mB = mergeOnCarriers(raw, kept, overlapping, d, sign, lat, opp);
++        double scale = std::max(1.0, d);
++        for (const Span& s0 : input) { const Vec2 q = startPoint(s0); scale = std::max({scale, std::fabs(q.x), std::fabs(q.y)}); }
++        auto uncovered = [&](const std::vector<Piece>& A, const std::vector<Piece>& B, double& worst) {
++            long n = 0;
++            std::vector<Span> bs; for (const Piece& b : B) bs.push_back(subSpan(raw[b.element], b.t0, b.t1));
++            for (const Piece& a : A) {
++                const Span sa = subSpan(raw[a.element], a.t0, a.t1);
++                if (length(sa) <= 1e-8 * scale) continue;
++                for (const double f : {0.1, 0.3, 0.5, 0.7, 0.9}) {
++                    const Vec2 q = pointAt(sa, f); const Vec2 tq = tangentAt(sa, f);
++                    double best = kInf;
++                    for (const Span& sb : bs) { const double dd = distanceToSpan(q, sb); if (dd < best && (dd > 1e-9 * scale || tangentAt(sb, std::clamp(carrierParam(sb, q), 0.0, 1.0)).dot(tq) > 0.0)) best = dd; }
++                    if (best > 1e-9 * scale) { ++n; worst = std::max(worst, best); }
++                }
++            }
++            return n;
++        };
++        double wA = 0, wB = 0;
++        const long uA = uncovered(mA, mB, wA), uB = uncovered(mB, mA, wB);
++        long tested = 0; for (const signed char st : state) tested += st >= 0;
++        if (std::getenv("T16WBDUMP")) {
++            for (int w = 0; w < 2; ++w) {
++                const std::vector<Piece>& M = w ? mB : mA;
++                for (const Piece& pc : M) {
++                    const Vec2 ps = pointAt(raw[pc.element], pc.t0), pe = pointAt(raw[pc.element], pc.t1);
++                    std::fprintf(stderr, "T16P %s e%zu %s conn%d t[%.17g,%.17g] (%.17g,%.17g)->(%.17g,%.17g)\n", w ? "PRUNED" : "FULL", pc.element,
++                                 std::holds_alternative<LineSpan>(raw[pc.element]) ? "L" : "A", (int)rc.connector[pc.element], pc.t0, pc.t1, ps.x, ps.y, pe.x, pe.y);
++                }
++            }
++        }
++        std::fprintf(stderr, "T16FB fallback %ld overtake %ld\n", g_t16Fallback, g_t16Overtake);
++        std::fprintf(stderr, "T16WB cand %zu tested %ld keptFull %zu keptPruned %zu inconsistent %ld mergedFull %zu mergedPruned %zu fullNotInPruned %ld (%.3g) prunedNotInFull %ld (%.3g)\n",
++                     candidates.size(), tested, all.size(), kept.size(), inconsistent, mA.size(), mB.size(), uA, wA, uB, wB);
++    }
+     kept = mergeOnCarriers(raw, kept, overlapping, d, sign, 0.5 * tol.distance,
+                            std::min(5e-7 * std::max(1.0, d), 0.1 * tol.distance * tol.distance / d));
+     if (kept.empty()) {

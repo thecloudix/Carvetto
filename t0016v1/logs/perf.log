@@ -1,0 +1,50 @@
+== card case, with main
+zz n=1000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 1.261 (502 sp) main 1.118 (502) | Sharp br 0.917 (502 sp) main 27.105 (502) | Square br 0.876 (502 sp) main 27.008 (502) | ratio Sh/R 0.73 Sq/R 0.69
+zz n=1000 p=0.02 a=1 d=7 side=1 mitre=2 | Round br 1.302 (499 sp) main 1.149 (499) | Sharp br 0.942 (501 sp) main 29.391 (501) | Square br 0.931 (501 sp) main 29.387 (501) | ratio Sh/R 0.72 Sq/R 0.71
+== scaling (branch only)
+zz n=1000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 1.291 (502 sp) | Sharp br 0.933 (502 sp) | Square br 0.909 (502 sp) | ratio Sh/R 0.72 Sq/R 0.70
+zz n=1000 p=0.02 a=1 d=7 side=1 mitre=2 | Round br 1.304 (499 sp) | Sharp br 0.935 (501 sp) | Square br 0.951 (501 sp) | ratio Sh/R 0.72 Sq/R 0.73
+zz n=2000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 3.452 (1002 sp) | Sharp br 2.183 (1002 sp) | Square br 2.147 (1002 sp) | ratio Sh/R 0.63 Sq/R 0.62
+zz n=2000 p=0.02 a=1 d=7 side=1 mitre=2 | Round br 3.412 (999 sp) | Sharp br 2.209 (1001 sp) | Square br 2.207 (1001 sp) | ratio Sh/R 0.65 Sq/R 0.65
+zz n=4000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 8.042 (2002 sp) | Sharp br 4.269 (2002 sp) | Square br 4.301 (2002 sp) | ratio Sh/R 0.53 Sq/R 0.53
+zz n=4000 p=0.02 a=1 d=7 side=1 mitre=2 | Round br 8.444 (1999 sp) | Sharp br 4.852 (2001 sp) | Square br 4.803 (2001 sp) | ratio Sh/R 0.57 Sq/R 0.57
+zz n=8000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 19.509 (4002 sp) | Sharp br 8.840 (4002 sp) | Square br 9.167 (4002 sp) | ratio Sh/R 0.45 Sq/R 0.47
+zz n=8000 p=0.02 a=1 d=7 side=1 mitre=2 | Round br 19.773 (3999 sp) | Sharp br 10.011 (4001 sp) | Square br 10.088 (4001 sp) | ratio Sh/R 0.51 Sq/R 0.51
+== other dense hatch-like inputs
+zz n=4000 p=0.05 a=0.2 d=5 side=0 mitre=2 | Round br 1.073 (2002 sp) main 0.948 (2002) | Sharp br 1.092 (2002 sp) main 11.690 (2002) | Square br 1.055 (2002 sp) main 11.617 (2002) | ratio Sh/R 1.02 Sq/R 0.98
+zz n=1000 p=0.01 a=1 d=7 side=0 mitre=2 | Round br 2.110 (502 sp) main 1.852 (502) | Sharp br 1.112 (502 sp) main 43.066 (502) | Square br 1.138 (502 sp) main 43.197 (502) | ratio Sh/R 0.53 Sq/R 0.54
+zz n=1000 p=0.02 a=5 d=3 side=1 mitre=2 | Round br 0.351 (499 sp) main 0.304 (499) | Sharp br 0.568 (501 sp) main 8.490 (501) | Square br 0.559 (501 sp) main 8.507 (501) | ratio Sh/R 1.62 Sq/R 1.59
+zz n=1000 p=0.02 a=0.2 d=10 side=0 mitre=2 | Round br 2.006 (502 sp) main 1.786 (502) | Sharp br 0.971 (502 sp) main 36.903 (502) | Square br 0.942 (502 sp) main 37.785 (502) | ratio Sh/R 0.48 Sq/R 0.47
+zz n=2000 p=0.1 a=1 d=20 side=1 mitre=2 | Round br 1.533 (999 sp) main 1.291 (999) | Sharp br 1.054 (1001 sp) main 25.251 (1001) | Square br 1.043 (1001 sp) main 25.177 (1001) | ratio Sh/R 0.69 Sq/R 0.68
+saw n=1000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 2.081 (502 sp) main 1.791 (502) | Sharp br 1.733 (1001 sp) main 1.695 (1001) | Square br 1.756 (1001 sp) main 1.670 (1001) | ratio Sh/R 0.83 Sq/R 0.84
+saw n=1000 p=0.02 a=1 d=7 side=1 mitre=2 | Round br 2.113 (499 sp) main 1.874 (499) | Sharp br 2.937 (1000 sp) main 2.826 (1000) | Square br 2.918 (1000 sp) main 2.832 (1000) | ratio Sh/R 1.39 Sq/R 1.38
+hatch n=1000 p=0.02 a=3 d=7 side=0 mitre=2 | Round br 0.584 (749 sp) main 0.491 (749) | Sharp br 0.203 (251 sp) main 7.813 (251) | Square br 0.327 (255 sp) main 6.119 (255) | ratio Sh/R 0.35 Sq/R 0.56
+hatch n=1000 p=0.02 a=3 d=7 side=1 mitre=2 | Round br 0.523 (752 sp) main 0.457 (752) | Sharp br 0.179 (252 sp) main 3.653 (252) | Square br 0.311 (254 sp) main 3.550 (254) | ratio Sh/R 0.34 Sq/R 0.59
+zc n=1000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 0.853 (509 sp) main 0.751 (509) | Sharp br 0.768 (505 sp) main 26.703 (505) | Square br 0.792 (509 sp) main 27.320 (509) | ratio Sh/R 0.90 Sq/R 0.93
+zc n=1000 p=0.02 a=1 d=7 side=1 mitre=2 | Round br 0.093 (0 sp) main 0.073 (0) | Sharp br 0.046 (84 sp) main 0.148 (84) | Square br 0.041 (84 sp) main 0.143 (84) | ratio Sh/R 0.49 Sq/R 0.45
+arc n=1000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 4.619 (502 sp) main 3.915 (502) | Sharp br 4.535 (502 sp) main 3.998 (502) | Square br 4.478 (502 sp) main 3.916 (502) | ratio Sh/R 0.98 Sq/R 0.97
+arc n=1000 p=0.02 a=1 d=7 side=1 mitre=2 | Round br 4.203 (409 sp) main 3.660 (409) | Sharp br 4.110 (409 sp) main 3.557 (409) | Square br 4.074 (409 sp) main 3.519 (409) | ratio Sh/R 0.98 Sq/R 0.97
+bez n=500 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 0.351 (252 sp) | Sharp br 0.286 (252 sp) | Square br 0.283 (252 sp) | ratio Sh/R 0.82 Sq/R 0.80
+bez n=500 p=0.02 a=1 d=7 side=1 mitre=2 | Round br 0.345 (249 sp) | Sharp br 0.301 (251 sp) | Square br 0.292 (251 sp) | ratio Sh/R 0.87 Sq/R 0.85
+zz n=1000 p=0.02 a=1 d=7 side=0 mitre=1 | Round br 1.224 (502 sp) main 1.042 (502) | Sharp br 0.876 (502 sp) main 26.334 (502) | Square br 0.908 (502 sp) main 26.174 (502) | ratio Sh/R 0.72 Sq/R 0.74
+zz n=1000 p=0.02 a=1 d=7 side=0 mitre=1.5 | Round br 1.205 (502 sp) main 1.048 (502) | Sharp br 0.907 (502 sp) main 26.576 (502) | Square br 0.896 (502 sp) main 26.223 (502) | ratio Sh/R 0.75 Sq/R 0.74
+zz n=1000 p=0.02 a=1 d=7 side=0 mitre=4 | Round br 1.217 (502 sp) main 1.068 (502) | Sharp br 0.926 (502 sp) main 26.947 (502) | Square br 0.916 (502 sp) main 26.976 (502) | ratio Sh/R 0.76 Sq/R 0.75
+zz n=1000 p=0.02 a=1 d=7 side=0 mitre=10 | Round br 1.223 (502 sp) main 1.085 (502) | Sharp br 0.899 (502 sp) main 26.915 (502) | Square br 0.921 (502 sp) main 26.947 (502) | ratio Sh/R 0.74 Sq/R 0.75
+zz n=1000 p=0.02 a=1 d=7 side=0 mitre=100 | Round br 1.245 (502 sp) main 1.097 (502) | Sharp br 1.504 (1000 sp) main 1.451 (1000) | Square br 0.918 (502 sp) main 27.196 (502) | ratio Sh/R 1.21 Sq/R 0.74
+== scaling of other shapes (branch only)
+hatch n=1000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 0.614 (749 sp) | Sharp br 0.207 (251 sp) | Square br 0.376 (255 sp) | ratio Sh/R 0.34 Sq/R 0.61
+hatch n=2000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 2.586 (1499 sp) | Sharp br 1.111 (501 sp) | Square br 1.745 (505 sp) | ratio Sh/R 0.43 Sq/R 0.67
+hatch n=4000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 7.099 (2999 sp) | Sharp br 3.214 (1001 sp) | Square br 4.632 (1005 sp) | ratio Sh/R 0.45 Sq/R 0.65
+arc n=1000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 4.561 (502 sp) | Sharp br 4.531 (502 sp) | Square br 4.532 (502 sp) | ratio Sh/R 0.99 Sq/R 0.99
+arc n=2000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 12.901 (1002 sp) | Sharp br 12.819 (1002 sp) | Square br 13.526 (1002 sp) | ratio Sh/R 0.99 Sq/R 1.05
+arc n=4000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 29.870 (2002 sp) | Sharp br 30.271 (2002 sp) | Square br 29.625 (2002 sp) | ratio Sh/R 1.01 Sq/R 0.99
+zc n=1000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 0.832 (509 sp) | Sharp br 0.753 (505 sp) | Square br 0.754 (509 sp) | ratio Sh/R 0.90 Sq/R 0.91
+zc n=2000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 2.170 (1009 sp) | Sharp br 1.864 (1005 sp) | Square br 1.887 (1009 sp) | ratio Sh/R 0.86 Sq/R 0.87
+zc n=4000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 5.097 (2009 sp) | Sharp br 4.081 (2005 sp) | Square br 4.022 (2009 sp) | ratio Sh/R 0.80 Sq/R 0.79
+saw n=1000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 2.109 (502 sp) | Sharp br 1.835 (1001 sp) | Square br 1.836 (1001 sp) | ratio Sh/R 0.87 Sq/R 0.87
+saw n=2000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 8.998 (1002 sp) | Sharp br 6.780 (2001 sp) | Square br 6.500 (2001 sp) | ratio Sh/R 0.75 Sq/R 0.72
+saw n=4000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 23.809 (2002 sp) | Sharp br 16.658 (4001 sp) | Square br 16.574 (4001 sp) | ratio Sh/R 0.70 Sq/R 0.70
+bez n=500 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 0.375 (252 sp) | Sharp br 0.290 (252 sp) | Square br 0.288 (252 sp) | ratio Sh/R 0.77 Sq/R 0.77
+bez n=1000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 1.278 (502 sp) | Sharp br 0.983 (502 sp) | Square br 0.960 (502 sp) | ratio Sh/R 0.77 Sq/R 0.75
+bez n=2000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 3.420 (1002 sp) | Sharp br 2.274 (1002 sp) | Square br 2.264 (1002 sp) | ratio Sh/R 0.66 Sq/R 0.66
+done

@@ -1,0 +1,13 @@
+ 12:07:51 up 4 days,  1:15,  1 user,  load average: 10.47, 16.97, 25.61
+zz n=1000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 0.814 (502 sp) main 0.731 (502) | Sharp br 0.642 (502 sp) main 18.856 (502) | Square br 0.680 (502 sp) main 19.097 (502) | ratio Sh/R 0.79 Sq/R 0.83
+zz n=1000 p=0.02 a=1 d=7 side=1 mitre=2 | Round br 0.782 (499 sp) main 0.721 (499) | Sharp br 0.570 (501 sp) main 18.904 (501) | Square br 0.593 (501 sp) main 19.163 (501) | ratio Sh/R 0.73 Sq/R 0.76
+zz n=1000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 0.713 (502 sp) | Sharp br 0.557 (502 sp) | Square br 0.536 (502 sp) | ratio Sh/R 0.78 Sq/R 0.75
+zz n=1000 p=0.02 a=1 d=7 side=1 mitre=2 | Round br 0.723 (499 sp) | Sharp br 0.560 (501 sp) | Square br 0.557 (501 sp) | ratio Sh/R 0.77 Sq/R 0.77
+zz n=2000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 2.026 (1002 sp) | Sharp br 1.303 (1002 sp) | Square br 1.349 (1002 sp) | ratio Sh/R 0.64 Sq/R 0.67
+zz n=2000 p=0.02 a=1 d=7 side=1 mitre=2 | Round br 1.932 (999 sp) | Sharp br 1.356 (1001 sp) | Square br 1.421 (1001 sp) | ratio Sh/R 0.70 Sq/R 0.74
+zz n=4000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 4.674 (2002 sp) | Sharp br 2.757 (2002 sp) | Square br 2.711 (2002 sp) | ratio Sh/R 0.59 Sq/R 0.58
+zz n=4000 p=0.02 a=1 d=7 side=1 mitre=2 | Round br 4.842 (1999 sp) | Sharp br 2.987 (2001 sp) | Square br 2.915 (2001 sp) | ratio Sh/R 0.62 Sq/R 0.60
+zz n=8000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 10.068 (4002 sp) | Sharp br 5.423 (4002 sp) | Square br 5.435 (4002 sp) | ratio Sh/R 0.54 Sq/R 0.54
+zz n=8000 p=0.02 a=1 d=7 side=1 mitre=2 | Round br 9.822 (3999 sp) | Sharp br 5.838 (4001 sp) | Square br 5.845 (4001 sp) | ratio Sh/R 0.59 Sq/R 0.60
+ 12:16:00 up 4 days,  1:24,  1 user,  load average: 4.42, 7.62, 17.48
+done
