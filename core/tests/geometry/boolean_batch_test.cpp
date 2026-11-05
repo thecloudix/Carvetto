@@ -73,7 +73,7 @@ Contour comb(int teeth) {
     }
     pts.push_back({double(teeth), -5});
     pts.push_back({0, -5});
-    return Contour::fromPolyline(Polyline{pts, true});
+    return Contour::fromPolyline(carvetto::geometry::Polyline{pts, true});
 }
 
 using Ring = std::vector<Vec2>;
