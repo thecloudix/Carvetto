@@ -551,11 +551,35 @@ Acceptance criteria:
   1. Each failure reproduced with GCC 15.2 Release (same flags as CI) and root-caused: a real product bug is fixed; a test that depends on compiler floating-point behaviour (contraction/FMA, excess precision, libm) is made robust without weakening what it guards.
   2. CI runs both ubuntu-24.04 and ubuntu-26.04 (or GCC 13 and 15) for the Release app job, both green; then unpin.
 
-### T-0160 V-Carve corner sharpening   [status: needs owner decision (behaviour)]
-Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0153   ADR: 0025 amendment
-Goal: Owner decision 2026-11-03: corner sharpening is split out of T-0153. Behaviour per feature-inventory "V-Carve Toolpath": at sharp convex corners of the boundary, the V-bit lifts along the corner bisector so the carved corner comes to a sharp point instead of the rounding left by the inscribed circle. Corners are found from the boundary, not the skeleton. The exact behaviour (corner angle threshold, which corners, interaction with flat depth and clearance) is written into this card with the owner before dispatch.
+### T-0160 V-Carve corner sharpening   [status: blocked (T-0164: both edit v_carve.cpp)]
+Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0153, T-0164   ADR: 0025 §6 rewrite
+Goal: Owner decisions 2026-11-05.
+Code survey: corners are already sharp to tolerance everywhere except one place. With a flat depth AND clearance end mills, each convex corner of a flat area keeps a sloped floor "tent" between the wall-ring corner W and the end mill's fillet. Its peak is ≈ min(F, Rₑ(1−sin(α/2))/tan(θ/2)), about 0.88 mm for a 90° corner, a 6 mm end mill and a 90° V-bit. It is silent today (ADR-0025 §3).
+Decisions:
+  (1) Purpose: clean flat-floor corners only. Plain V-carve corner tips are unchanged; there is no effect without a flat depth plus clearance tools.
+  (2) Thoroughness: match the floor finish. A V-bit tip groove along each corner bisector at the flat depth, plus passes either side at the carving tool's stepover, so the corner is no rougher than the rest of the floor.
+  (3) Default on: a checkbox, job.json `corner_sharpen`, C++ `cornerSharpen`, UI "Corner Sharpen".
+  (4) Threshold automatic: sharpen any corner whose leftover would be taller than chordal. There is no angle setting.
 Acceptance criteria:
-  1. To be finalised with the owner; at least: the cone never crosses a boundary (the same exact oracle as T-0153); corners sharpened within chordal; goldens; post safety.
+  1. Detection: convex corners of each flat area's region are found from the boundary (ArcLengthPath::kinks style), not from skeleton branch ends. A corner is sharpened exactly when its predicted leftover peak exceeds chordal.
+  2. Moves:
+     - The carving tool's tip runs at the flat depth along the bisector, from the wall-ring corner W into the clearance tools' swept area (overlap ≥ chordal).
+     - Parallel passes run either side at the carving tool's stepover (clamped as for its rest clearing), within the tent.
+     - Centres stay within the wall ring (≥ ρ+margin from the boundary), so the cone at F never crosses a wall.
+     - The moves sit in that region's part of the carving toolpath, with safe links and post safety unchanged.
+  3. Result:
+     - The material left in each sharpened corner, measured with the exact oracle (t0153 vc3/acc.hpp style), is no higher than the floor ridge height elsewhere for the same stepover.
+     - The cone never crosses a boundary.
+     - Corners below the threshold are unchanged.
+  4. Option: `VCarvingParams::cornerSharpen` (default true).
+     - job.json `corner_sharpen` is encoded and decoded and added to kVCarvingKeys. A missing key decodes to true, so old files get the default.
+     - The CLI param and its help text.
+     - Format stays 1.1 unless ADR-0025 §10 requires otherwise.
+  5. Output:
+     - Without a flat depth, or without clearance tools, output is byte-identical to main.
+     - Otherwise only the added corner moves differ.
+     - Goldens are regenerated with hand-checked diffs and are identical on GCC 13, GCC 15 (FMA) and MSVC.
+  6. ADR-0025 §6 is rewritten to this rule. The AC2 time bound holds. Tests ship with the code, plus a changelog fragment.
 
 ### T-0161 Drag-pause M5 lines and T-0154 leftovers   [status: done (2026-11-04, #52)]
 Phase: 1   Module: core/post   Depends on: T-0154   ADR: 0020
