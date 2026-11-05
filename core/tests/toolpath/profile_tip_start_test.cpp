@@ -3,8 +3,11 @@
 // round its bounding-box centre) has every point of that arc equally near. The start used to follow
 // the direction of a rounding-sized vector (target minus arc centre), so GCC and MSVC chose
 // different starts and tab layouts (harness m1_402002_27, m2_800016_13). Such a tie now starts at
-// the beginning of the arc (ADR-0016 §11), whatever the rounding. These tests perturb scenes by a
-// few ulps and by up to 1e-9 relative and check that the start does not move.
+// the beginning of the arc (ADR-0016 §11), whatever the rounding; a sharp (mitred) convex tip of a
+// V-bit cut with sharp external corners, whose two offset lines are equally near, starts at the
+// mitre's corner point (or, squared off beyond the mitre limit, at the chamfer's start). These
+// tests perturb scenes by a few ulps and by up to 1e-9 relative and check that the start does not
+// move.
 
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
@@ -90,8 +93,8 @@ struct Star {
 
 // A counter-clockwise star of `n` points, edges lines or gently curved arcs, starting at a tip
 // (`atTip`) or at the reflex vertex after it. The last line edge may end a few ulps off the start
-// (it still closes within the tolerance).
-Star curvedStar(test::SplitMix& rng, bool atTip) {
+// (it still closes within the tolerance). `curves` false: line edges only.
+Star curvedStar(test::SplitMix& rng, bool atTip, bool curves = true) {
     const int n = 4 + static_cast<int>(rng.next() % 4);
     const double rOut = rng.uniform(15.0, 40.0);
     const double rIn = rOut * rng.uniform(0.5, 0.7);
@@ -109,7 +112,7 @@ Star curvedStar(test::SplitMix& rng, bool atTip) {
     for (std::size_t k = 0; k < v.size(); ++k) {
         const Vec2 a = v[(first + k) % v.size()];
         Vec2 b = v[(first + k + 1) % v.size()];
-        const bool curved = rng.next() % 2 == 0;
+        const bool curved = rng.next() % 2 == 0 && curves;
         const double sag = curved ? rng.uniform(-0.04, 0.04) : 0.0;
         if (k + 1 == v.size() && sag == 0.0) {
             const int ulps = static_cast<int>(rng.next() % 7) - 3;
@@ -312,6 +315,118 @@ TEST_CASE("T-0158: tab layouts at tip starts are unmoved by ulp perturbations an
             CHECK(tabsLeftOut(r) == tabsLeftOut(base));
             CHECK(r.toolpath.moves.size() == base.toolpath.moves.size());
             CHECK(geometry::distance(startOf(r.toolpath).at, startOf(base.toolpath).at * k) < 1e-5);
+        }
+    }
+}
+
+TEST_CASE("T-0158 AC1 generative: a V-bit cut with sharp external corners starts at the tip's mitre corner, "
+          "unmoved by ulp and 1e-9 perturbations",
+          "[toolpath][profile][start][vbit]") {
+    // The mitre adds no span: the offset lines meet at the corner, and the feet of the tip on both
+    // lines are equally near it, so the plain projection followed rounding (harness t0158v1,
+    // mitre_001). Beyond the mitre limit the corner is squared off by a chamfer at the cut distance
+    // from the tip; the start is then the chamfer's first corner.
+    test::SplitMix rng{0x7158'0004ULL};
+    const std::vector<double> scales = perturbations();
+    std::size_t mitres = 0;
+    std::size_t chamfers = 0;
+    for (int scene = 0; scene < 40; ++scene) {
+        const Star star = curvedStar(rng, true, false);
+        ProfileParams p = params(rng, ProfileSide::Outside);
+        tooling::Tool v = test::endMill(rng.uniform(12.0, 25.0));
+        v.type = tooling::ToolType::VBit;
+        v.includedAngle = rng.uniform(60.0, 120.0) * geometry::kPi / 180.0;
+        p.passes.cutDepth = rng.uniform(1.0, 4.0);
+        p.passes.passDepth = p.passes.cutDepth;
+        p.corners.sharpExternal = true;
+        p.corners.mitreLimit = rng.uniform(1.2, 4.0);
+        p.allowance = rng.uniform(-0.3, 1.0);
+        const double dist = profileToolRadius(v, p.passes) + p.allowance;
+        // Tip geometry: unit directions from the tip along both edges, and the outward bisector.
+        const Vec2 tip = star.start;
+        const Vec2 along = geometry::endPoint(star.contour.spans.front()) - tip;
+        const Vec2 back = geometry::startPoint(star.contour.spans.back()) - tip;
+        const Vec2 u1 = along * (1.0 / along.length());
+        const Vec2 u2 = back * (1.0 / back.length());
+        const Vec2 out = (u1 + u2) * (-1.0 / (u1 + u2).length());
+        const double sinHalf = std::sqrt(0.5 * (1.0 - u1.dot(u2)));
+        const double mitreLength = dist / sinHalf;
+        const bool mitred = mitreLength <= p.corners.mitreLimit * dist;
+        INFO("scene " << scene << " dist " << dist << " mitre " << mitreLength / dist << " limit "
+                      << p.corners.mitreLimit);
+
+        const ProfileResult base = profileToolpath({star.contour}, v, p);
+        REQUIRE(base.ok());
+        const Start s0 = startOf(base.toolpath);
+        REQUIRE(s0.found);
+        CHECK_FALSE(isArc(s0.first.kind));
+        // Distance from a point to the offset carrier of each edge at the tip.
+        auto offLine = [&](Vec2 q, Vec2 u) { return std::fabs(std::fabs((q - tip).cross(u)) - dist); };
+        if (mitred) {
+            ++mitres;
+            CHECK(geometry::distance(s0.at, tip + out * mitreLength) < 1e-6);
+        } else {
+            ++chamfers;
+            // On the chamfer line (at `dist` from the tip across the bisector) and on one of the
+            // offset lines: a corner of the chamfer, not its middle.
+            CHECK(std::fabs((s0.at - tip).dot(out) - dist) < 1e-6);
+            CHECK(std::min(offLine(s0.at, u1), offLine(s0.at, u2)) < 1e-6);
+            CHECK(geometry::distance(s0.at, tip) > dist + 1e-3);
+        }
+        for (double k : scales) {
+            INFO("scale 1 " << (k >= 1.0 ? "+ " : "- ") << std::fabs(k - 1.0));
+            const ProfileResult r = profileToolpath({scaled(star.contour, k)}, v, p);
+            REQUIRE(r.ok());
+            const Start s = startOf(r.toolpath);
+            REQUIRE(s.found);
+            CHECK(geometry::distance(s.at, s0.at * k) < 1e-5);
+            CHECK(r.toolpath.moves.size() == base.toolpath.moves.size());
+        }
+    }
+    // Both kinds of sharp corner are exercised.
+    CHECK(mitres >= 8);
+    CHECK(chamfers >= 8);
+}
+
+TEST_CASE("T-0158: a mitred loop of two spans (an arc closed by a line) starts at the start vertex's mitre",
+          "[toolpath][profile][start][vbit]") {
+    // Every span of the cut is equally near the start vertex (harness t0124v2/s90): the loop is
+    // broken where the feet lie farthest apart, so the start is the mitre at the start vertex,
+    // on both the offset line and the offset circle.
+    test::SplitMix rng{0x7158'0005ULL};
+    const std::vector<double> scales = perturbations();
+    for (int scene = 0; scene < 16; ++scene) {
+        const Vec2 c{rng.uniform(-40.0, 40.0), rng.uniform(-40.0, 40.0)};
+        const double radius = rng.uniform(15.0, 40.0);
+        const double a0 = rng.uniform(0.0, 2.0 * geometry::kPi);
+        const double sweep = rng.uniform(0.9, 1.6) * geometry::kPi;
+        ArcSpan arc{c, radius, a0, a0 + sweep, ArcDirection::CCW};
+        Contour d;
+        d.closed = true;
+        d.spans.push_back(arc);
+        d.spans.push_back(LineSpan{arc.endPoint(), arc.startPoint()});
+        ProfileParams p = params(rng, ProfileSide::Outside);
+        tooling::Tool v = test::endMill(25.0);
+        v.type = tooling::ToolType::VBit;
+        v.includedAngle = 2.0 * geometry::kPi / 3.0;
+        p.passes.cutDepth = rng.uniform(1.0, 3.0);
+        p.passes.passDepth = p.passes.cutDepth;
+        p.corners.sharpExternal = true;
+        p.corners.mitreLimit = 50.0;
+        const double dist = profileToolRadius(v, p.passes);
+        INFO("scene " << scene << " radius " << radius << " sweep " << sweep << " dist " << dist);
+        const Vec2 s0 = startOf(profileToolpath({d}, v, p).toolpath).at;
+        // On the offset circle and on the offset of the closing line (outside: away from the arc).
+        CHECK(std::fabs(geometry::distance(s0, c) - (radius + dist)) < 1e-6);
+        const Vec2 ls = arc.endPoint();
+        const Vec2 le = arc.startPoint();
+        const Vec2 u = (le - ls) * (1.0 / (le - ls).length());
+        CHECK(std::fabs(std::fabs((s0 - ls).cross(u)) - dist) < 1e-6);
+        CHECK(geometry::distance(s0, le) < geometry::distance(s0, ls));  // at the start vertex
+        for (double k : scales) {
+            INFO("scale 1 " << (k >= 1.0 ? "+ " : "- ") << std::fabs(k - 1.0));
+            const Vec2 s = startOf(profileToolpath({scaled(d, k)}, v, p).toolpath).at;
+            CHECK(geometry::distance(s, s0 * k) < 1e-5);
         }
     }
 }

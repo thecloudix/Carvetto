@@ -125,24 +125,92 @@ void closeExactly(Contour& c) {
 }
 
 // Arc length on the closed walk at which a cut asked to start nearest `target` starts (ADR-0016
-// §11, T-0158). Where `target` lies within `eps` of the centre of an arc of the walk and that arc
-// is at the nearest distance (radius within `eps` of it), every point of the arc is equally near:
-// a convex tip's round join on an Outside cut, a circle round its bounding-box centre. The plain
-// projection would then follow the direction of a rounding-sized vector (target minus centre),
-// which differs between compilers and libm. Such a tie starts at the beginning of the first such
-// arc (lowest span index) instead; only distances are compared, never a near-zero direction.
+// §11, T-0158). Some targets have several equally near points, and the plain projection then
+// follows rounding (the direction of a near-zero vector, or which of two equal distances comes
+// out smaller), which differs between compilers, FMA contraction and libm. Two such ties are
+// broken by rule, comparing only distances, each within `eps`:
+//  1. Round corner: `target` lies at the centre of an arc of the walk that is at the nearest
+//     distance (a convex tip's round join on an Outside cut, a circle round its bounding-box
+//     centre): start at the beginning of the first such arc (lowest span index), if that point is
+//     itself at the nearest distance.
+//  2. Sharp corner: `target` lies on the vector (the nearest distance is the cut's offset
+//     distance `cutDistance`) and the spans at the nearest distance form one run of two or more
+//     consecutive spans: a V-bit mitre at a convex tip (the tip's feet on both offset lines are
+//     equally near), or a mitre squared off (both lines and the chamfer). Start at the end of the
+//     run's first span: the mitre's corner point, or the chamfer's first corner. When every span
+//     is near (a loop of two or three spans), the loop is broken at the widest gap between
+//     consecutive feet. A target nearest one junction (both spans' nearest point is the junction)
+//     starts there, as before. Near spans in separate places (a box anchor on a symmetric shape)
+//     stay with the projection.
 // Otherwise the nearest point (`ArcLengthPath::project`).
-double tieFreeStart(const ArcLengthPath& walk, Vec2 target, double eps) {
+double tieFreeStart(const ArcLengthPath& walk, Vec2 target, double eps, double cutDistance) {
     const Contour& c = walk.contour();
-    if (c.spans.empty()) {
+    const std::size_t n = c.spans.size();
+    if (n == 0) {
         return 0.0;
     }
-    const double nearest = geometry::closestPoint(c, target).distance;
-    for (std::size_t i = 0; i < c.spans.size(); ++i) {
+    std::vector<double> dist(n);
+    std::vector<double> param(n);
+    double nearest = std::numeric_limits<double>::infinity();
+    for (std::size_t i = 0; i < n; ++i) {
+        const geometry::ClosestPoint cp = geometry::closestPoint(c.spans[i], target);
+        dist[i] = cp.distance;
+        param[i] = cp.t;
+        nearest = std::min(nearest, dist[i]);
+    }
+    for (std::size_t i = 0; i < n; ++i) {
         if (const auto* a = std::get_if<geometry::ArcSpan>(&c.spans[i])) {
-            if (geometry::distance(a->centre, target) <= eps && a->radius <= nearest + eps) {
+            if (geometry::distance(a->centre, target) <= eps && a->radius <= nearest + eps &&
+                geometry::distance(a->startPoint(), target) <= nearest + eps) {
                 return walk.spanStart(i);
             }
+        }
+    }
+    if (walk.closed() && n >= 2 && std::fabs(nearest - cutDistance) <= eps) {
+        auto isNear = [&](std::size_t i) { return dist[i] <= nearest + eps; };
+        std::size_t nearCount = 0;
+        std::size_t runs = 0;
+        std::size_t first = n;
+        bool longRun = false;
+        for (std::size_t i = 0; i < n; ++i) {
+            if (isNear(i)) {
+                ++nearCount;
+            }
+            if (isNear(i) && !isNear((i + n - 1) % n)) {
+                ++runs;
+                first = i;
+                longRun = isNear((i + 1) % n);
+            }
+        }
+        bool found = runs == 1 && longRun;
+        if (nearCount == n) {
+            // Every span is near (a loop of few spans, e.g. an arc closed by one line, mitred at
+            // both ends): the run is the whole loop, broken where consecutive feet lie farthest
+            // apart along it; it must be clearly the largest gap.
+            const double len = walk.length();
+            auto foot = [&](std::size_t i) { return walk.spanStart(i) + param[i] * walk.spanLength(i); };
+            std::size_t widest = 0;
+            double gap1 = -1.0;
+            double gap2 = -1.0;
+            for (std::size_t i = 0; i < n; ++i) {
+                const double g = i + 1 < n ? foot(i + 1) - foot(i) : foot(0) + len - foot(i);
+                if (g > gap1) {
+                    gap2 = gap1;
+                    gap1 = g;
+                    widest = i;
+                } else if (g > gap2) {
+                    gap2 = g;
+                }
+            }
+            first = (widest + 1) % n;
+            found = gap1 - gap2 > eps;
+        }
+        if (found) {
+            // Where the projection already lands exactly on that junction, keep its arc length
+            // (the same point, and the same output as before this rule).
+            const double junction = walk.spanStart((first + 1) % n);
+            const double projected = walk.project(target);
+            return walk.pointAt(projected) == walk.pointAt(junction) ? projected : junction;
         }
     }
     return walk.project(target);
@@ -869,7 +937,7 @@ void ProfileBuilder::chooseStarts(std::vector<Cut>& cuts) {
             } else {
                 target = anchorOf(c.path.bounds(), p_.startAnchor);
             }
-            const double u = tieFreeStart(walk, target, tol_.distance);
+            const double u = tieFreeStart(walk, target, tol_.distance, c.distance);
             c.path.spans = walk.extract(u, u + walk.length());
         }
         closeExactly(c.path);
@@ -2856,7 +2924,7 @@ ProfileResult ProfileBuilder::run() {
         for (std::size_t i : ord) {
             Cut& c = cuts[i];
             if (c.walk.closed()) {
-                const double u = tieFreeStart(c.walk, prev, tol_.distance);
+                const double u = tieFreeStart(c.walk, prev, tol_.distance, c.distance);
                 c.path.spans = c.walk.extract(u, u + c.walk.length());
                 closeExactly(c.path);
                 c.walk = ArcLengthPath(c.path, offTol_);

@@ -125,18 +125,35 @@ choices. Behaviour descriptions come from `docs/reference/` only.
 11. **Start points.** `StartAt::VectorStart` (= "Use Vector Start Point"): the cut point nearest
     the vector's start; `Optimise`: nearest the previous cut's start; `ClosestOnBoundingBox`:
     nearest one of nine anchors of the cut's bounding box. Ties follow `closestPoint` (lowest
-    span). The closed cut is rotated to start there. One tie is broken by rule (T-0158, owner
-    decision 2026-11-03): when the target point lies within the distance tolerance of the centre
-    of an arc of the cut and that arc is at the nearest distance (radius ≤ nearest + tolerance),
-    every point of the arc is equally near — a convex tip with VectorStart on an Outside cut
-    (its round join is centred on the tip), a reflex vertex on an Inside cut, a circle from its
-    bounding-box centre or Optimise from its centre. The cut then starts at the beginning of the
-    first such arc (lowest span index), so it runs the corner arc first. Only distances are
-    compared; the direction of the rounding-sized vector from the arc centre to the target
-    (which made GCC and MSVC choose different starts and tab layouts) is never used. The rule is
-    stable under ulp and 1e-9 relative perturbations. It moved the start in about 7% of the
-    stored harness scenes and 15% of random multi-vector pages, exactly those whose start that
-    rounding had decided.
+    span). The closed cut is rotated to start there. Where the target has several equally near
+    points, the plain nearest point follows rounding (the direction of a near-zero vector, or which
+    of two equal distances comes out smaller), which differs between compilers, FMA contraction
+    and libm. Two such ties are broken by rule (T-0158, owner decisions 2026-11-03 and
+    2026-11-05), comparing only distances, each within the distance tolerance:
+    (a) *Round corner*: the target lies at the centre of an arc of the cut that is at the nearest
+    distance — a convex tip's round join on an Outside cut (VectorStart), a reflex vertex's join
+    on an Inside cut, a circle from its bounding-box centre or Optimise from its centre. The cut
+    starts at the beginning of the first such arc (lowest span index), so it runs the corner arc
+    first; the arc start must itself be within the tolerance of the nearest distance.
+    (b) *Sharp corner*: the target lies on the vector (its nearest distance is the cut's offset
+    distance) and the spans at the nearest distance form one run of two or more consecutive spans.
+    On a V-bit cut with sharp external corners a convex tip has no join span: the offset lines
+    meet at the mitre, and the tip's feet on both are equally near. The cut starts at the end of
+    the run's first span: exactly the mitre's corner point; where the mitre is squared off beyond
+    the mitre limit (a chamfer at the cut distance from the tip, so both lines and the chamfer are
+    equally near), the chamfer's first corner in the direction of travel; at a tip whose round
+    join a merged-region cut carries as a polygon, the polygon's first vertex. When every span of
+    the cut is near (a loop of two or three spans, such as an arc closed by a line), the loop is
+    broken where consecutive feet lie farthest apart (if clearly the widest gap), so the start is
+    the mitre at the target. A target nearest one
+    junction (both spans' nearest point is the junction) starts there, as before.
+    Near spans in two or more separate places (a box-centre anchor on a symmetric shape) are not
+    broken by rule and still follow rounding (T-0166). The rules apply to all three start modes.
+    They are stable under ulp and 1e-9 relative perturbations, and GCC 13 and GCC 15
+    (-march=x86-64-v3) agree on them, except where a span shorter than the tolerance sits at the
+    tip (the start may then differ by that span). They moved the start in about 9% of the stored
+    harness scenes and 21% of random multi-vector pages, those whose start that rounding had
+    decided.
 12. **Height profiles.** A pass is a list of legs (`PathLeg`: walk the path from u0 to u1, either
     way, with a piecewise-linear Z over travelled distance). Lines become feeds, arcs (helical
     where Z changes, exact because Z is linear in arc length between knots), profile jumps
