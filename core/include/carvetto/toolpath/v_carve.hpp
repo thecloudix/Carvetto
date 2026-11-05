@@ -100,7 +100,8 @@ double vCarvingDepthForRadius(const tooling::Tool& tool, double r);
 /// Regions: the even-odd region of the closed `contours` (nested vectors are islands). Vectors
 /// that cross, touch or overlap (each other or themselves) are first resolved into their
 /// even-odd region with `geometry::unionContours`, polygonised within chordal/8, as Pocket does
-/// (`CrossingVectorsResolved`; the carve margin of those parts grows by chordal/8). The region
+/// (`CrossingVectorsResolved`; the carve margin of those parts grows by chordal/8; a hole or
+/// sliver thinner than the distance tolerance does not survive this and is cut through). The region
 /// is then split into parts, an outer boundary with the boundaries directly inside it (a letter
 /// and its counters; a frame round text is a part of its own), each carved on its own. Open
 /// vectors are ignored (`OpenContourIgnored`); vectors without spans, with gaps or without area
@@ -124,7 +125,9 @@ double vCarvingDepthForRadius(const tooling::Tool& tool, double r);
 /// ones as rest tools; allowance = the carving tool's footprint radius at the flat depth, so
 /// the end mills keep off the carved walls) and the carving tool cuts the walls of the flat
 /// areas along `pocketCentreRegion` at the flat depth; the carving tool also follows the end
-/// mills as Pocket's last rest tool, clearing what they could not reach. Pocket runs region by
+/// mills as Pocket's last rest tool, clearing what they could not reach, its stepover limited
+/// to the width it cuts at the flat bottom (`StepoverLimited` when that cut a wider stepover
+/// down and it had rest material: ridges up to the depth limit). Pocket runs region by
 /// region. Without
 /// clearance tools the carving tool
 /// clears the flat areas itself with `pocketToolpath` (its cutting data's stepover and pass
