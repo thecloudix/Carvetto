@@ -464,7 +464,7 @@ Goal: Pre-existing findings from the T-0138 verifier (harness t0138v1/, wt-T0138
 Acceptance criteria:
   1. (a) ≤ 2.5× per doubling up to 20k rings, or documented limit with a clear diagnostic; (b) Profile refuses invalid tolerances with tests, valid output byte-identical; (c) decision recorded in ADR-0006.
 
-### T-0142 Boolean sweep cost and outward-offset leftovers (T-0141 coder)   [status: in review (PR #59, verifier PASS)]
+### T-0142 Boolean sweep cost and outward-offset leftovers (T-0141 coder)   [status: done (#59)]
 Phase: 1   Module: core/geometry   Depends on: T-0141   ADR: 0006
 Goal: Found by the T-0141 coder. (a) booleanOp/unionContours has the same O(n²) Clipper2 sweep as offsets had (a 10k row ~1.3 s); Pocket calls it on all of its input — apply the T-0141 batching (or equivalent) where results cannot interact. (b) A lone CW ring offset outward under a CCW lowest contour leaves hundreds of tiny leftover rings from Clipper2's corner joins (a 1 mm circle → ~920 at +0.3 mm; same on main) — find the cause and remove them without losing genuine regions.
 Acceptance criteria:
