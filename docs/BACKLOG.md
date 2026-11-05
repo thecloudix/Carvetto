@@ -535,8 +535,8 @@ Goal: Found by the T-0147 verifier (harness t0147v1/far.cpp): with signedArea fi
 Acceptance criteria:
   1. Small Profile parts (circles, rectangles, holes; 0.5–10 mm) at 1e6–1e9 mm give the same toolpath as at the origin (up to translation, within tolerance) in ≥ 19/20 placements, or a documented limit with a diagnostic; normal-scale output unchanged (hashes).
 
-### T-0158 Profile: platform-stable cut start at convex tips   [status: in progress — round 1 FAIL (mitre tips unstable); round 2]
-Owner decision 2026-11-03: adopt the fixed tie-break rule (start at the beginning of the corner arc centred on the tip), accepting that cut starts move in ~10% of such scenes. Owner decision 2026-11-05: mitred (sharp) convex tips start exactly at the mitre corner point.
+### T-0158 Profile: platform-stable cut start at convex tips   [status: in progress — round 2 READY (5e7ce1d), verifying]
+Owner decision 2026-11-03: adopt the fixed tie-break rule (start at the beginning of the corner arc centred on the tip), accepting that cut starts move in ~10% of such scenes. Owner decision 2026-11-05: mitred (sharp) convex tips start exactly at the mitre corner point. Owner 2026-11-05: a mitre squared off at the limit starts at the chamfer\'s first corner in the direction of travel; change rate ~9% stored / ~21% random pages accepted.
 Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §11
 Goal: Found while merging T-0135 (MSVC CI): with "start at the vector's start point" on a convex tip, the Outside cut's round join is an arc centred on that tip, so every point of the arc is equally near the start; ArcLengthPath::project → closestPoint(ArcSpan) takes the direction of a ~1e-15 vector, which depends on rounding/libm, so GCC and MSVC choose different cut starts — tab layouts then differ (both safe; scene m1_402002_27, also m2_800016_13). Pre-existing on main/T-0127. A tie-break ("target within tolerance of an arc centre at the nearest distance → start at that arc's start", searching all arcs) was prototyped by the T-0135 coder (harness wt-T0135/build-drv pert.cpp, hsw/): stable under 1e-9 perturbations but changes start points in ~10% of scenes (owner-visible output change).
 Acceptance criteria:
@@ -551,7 +551,7 @@ Acceptance criteria:
   1. Each failure reproduced with GCC 15.2 Release (same flags as CI) and root-caused: a real product bug is fixed; a test that depends on compiler floating-point behaviour (contraction/FMA, excess precision, libm) is made robust without weakening what it guards.
   2. CI runs both ubuntu-24.04 and ubuntu-26.04 (or GCC 13 and 15) for the Release app job, both green; then unpin.
 
-### T-0160 V-Carve corner sharpening   [status: blocked (T-0153)]
+### T-0160 V-Carve corner sharpening   [status: needs owner decision (behaviour)]
 Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0153   ADR: 0025 amendment
 Goal: Owner decision 2026-11-03: corner sharpening is split out of T-0153. Behaviour per feature-inventory "V-Carve Toolpath": at sharp convex corners of the boundary, the V-bit lifts along the corner bisector so the carved corner comes to a sharp point instead of the rounding left by the inscribed circle. Corners are found from the boundary, not the skeleton. The exact behaviour (corner angle threshold, which corners, interaction with flat depth and clearance) is written into this card with the owner before dispatch.
 Acceptance criteria:
@@ -607,7 +607,7 @@ Acceptance criteria:
 Owner decisions 2026-11-01 (from the coder's BLOCKED report): (1) toolpaths are stored in the .carv as interim archive members `toolpaths/NNNN.json` (name, tool snapshot, moves, the params they came from) via two small public accessors in `carv_io.hpp` (read a preserved member; copy with a member added); an ADR marks this interim until a card implements ADR-0003's job.json toolpath records. (2) T-0123 merges first; the CLI is written against its API. (3) params.json: snake_case keys mirroring ProfileParams/PocketParams; lengths in mm, angles in degrees (converted at the CLI edge); tool = {"tool": {"database": <path, default data/tools/starter_tools.json>, "id": …}} plus optional material/machine for cutting data; optional "layers": [names] (default all vectors); unknown keys rejected with an error naming the key. nlohmann/json (already used) — no new dependency.
 Owner decision 2026-11-01 (coder's open point): the interim JSON storage is capped by the loader's 2M-value budget for unknown content (ADR-0013 §9), ~300k–400k moves per file; accepted for now — the CLI reloads before writing and refuses with a clear error. The real fix is T-0132.
 
-### T-0164 V-Carve follow-ups (T-0153 round-3 verifier, non-blocking)   [status: blocked (T-0153)]
+### T-0164 V-Carve follow-ups (T-0153 round-3 verifier, non-blocking)   [status: ready]
 Phase: 1   Module: core/toolpath   Depends on: T-0153   ADR: 0025
 Goal: Non-blocking findings from harness t0153v3: (a) holes/slivers thinner than the distance tolerance are cut through, reported only as "crossing resolved"; (b) a D-hole with gap 0.0025 refuses the whole job (repro3/dhole_refused.txt); (c) cluster growth is quadratic in absorbing clusters (grow.cpp, ~3.2× per doubling); (d) the rest-tool stepover clamp to 2·limR leaves ridges up to 0.5–0.84 × the flat depth with no notice (repro3/arm_W*.txt, sq10.txt); (e) the AC1 sweep test skips the lateral cut-point check when flat depth > 0; (f) 9.5 nm cone violation at chordal 0.001 (repro2/nest_frame.txt). Safety-net hardening (T-0153 net verifier, harness t0153v6): (g) own rings are skipped on the assumption that the medial axis never silently drops an own boundary — measure own rings at branch points / ray-count seeds as a backstop (repro6/sq_hole_diag.txt); (h) membership hand-over at nodes assumes branch end == node point — add a distance check; (i) no unit test passes the `own` argument; (j) ADR-0025 §5 should say the 2c+d slack applies to every disc (full-island case carves up to 0.24 mm at chordal 1.0, within the bound).
 Acceptance criteria:
@@ -656,7 +656,7 @@ Acceptance criteria:
   2. Robust on degenerate input (collinear, near-touching, tiny features, large coordinates), no crashes or hangs (fuzz); ≤ 2.5× per doubling in CPU time up to 50k boundary segments (text-heavy jobs).
   3. ADR records the algorithm (e.g. segment Voronoi via a library already allowed by the dependency policy, or an own implementation) and the dependency/licence decision; any new dependency goes to the owner first.
 
-### T-0153 V-Carve toolpath   [status: in-progress — round 4 FAIL on N1 only (safety net bypassable by an island at the checked point, fault injection only); owner: tiny fix + focused check, then merge]
+### T-0153 V-Carve toolpath   [status: done (2026-11-05, #51; core built with -ffp-contract=off on GCC/Clang)]
 Owner decision 2026-11-03: corner sharpening split out to T-0160.
 Owner decision 2026-11-03: identifiers `v_carve` (code, CLI command, job.json "operation"), UI label "V-Carve"; "vcarve" matches the VCarve trademark (CONTRIBUTING).
 Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0152, T-0123, T-0132   ADR: new
