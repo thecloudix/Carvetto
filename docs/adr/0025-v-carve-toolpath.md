@@ -31,7 +31,8 @@ bound on text-heavy jobs (≥ 5,000 glyph-like regions). The geometry comes from
   of corner tips, ADR-0023): about chordal/2 in total, plus chordal/8 in resolved crossing parts
   (§4). Pocket (flat areas, wall rings) runs at the same internal tolerance, since its safety
   margin (its chordal) is the gap between the wall rings and the flat area's edge. The chordal
-  tolerance must be at least 0.0003 mm; the internal tolerance is floored at Pocket's minimum
+  tolerance must be at least 0.0003 mm and the distance tolerance at least 0.000001 mm (T-0142, the
+  same floor as Pocket, which the flat areas call; refused with V-Carve's own message); the internal tolerance is floored at Pocket's minimum
   0.0001 mm (0.0003 / 3 evaluates to 9.999999999999999e-05, which Pocket refused: every flat area
   at the documented minimum failed in round 3). The first version ran the medial axis at the user's tolerance with a margin of chordal/2
   and measured up to 1.5·chordal (2.3× at a Bezier cusp, more in crossing slivers). Measured now:

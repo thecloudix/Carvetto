@@ -406,11 +406,21 @@ choices. Behaviour descriptions come from `docs/reference/` only.
 18. **Tolerance bounds (T-0141).** `ProfileParams::tolerance` must satisfy the same bounds as
     Pocket's (ADR-0017): 1e-4 mm <= chordal <= 1 mm and 0 < distance <= chordal, all finite.
     Otherwise nothing is cut and the result carries one `InvalidParameters` diagnostic, "invalid
-    tolerance: chordal must be between 0.0001 and 1 mm, distance > 0 and <= chordal" (the CLI
+    tolerance: chordal must be between 0.0001 and 1 mm, distance > 0 and <= chordal" (since T-0142
+    "... distance between 0.000001 mm and chordal", see below; the CLI
     prints it after "no profile toolpath was produced:"). Before T-0141 any tolerance was
     accepted, so a near-zero chordal tolerance multiplied the polygon vertex count without bound,
     and the offset dust filter's width budget (ADR-0006 §8) stays inside the offset slack
     only for chordal tolerances well above 1e-5 mm. Valid tolerances give byte-identical output.
+    **T-0142:** distance must also be at least 1e-6 mm, one unit of the offset grid (ADR-0006 §2),
+    in Profile and Pocket alike. Below it the exact offsets cannot close their junctions (a
+    Bezier shape at distance 1e-8 mm fell back to a polygonal region with a trimmed cut, 8–12 s
+    on the branch, minutes before, where Bezier input was polygonised at distance / 2); at 1e-6
+    mm the same shape runs cleanly. The accepted range narrows from 0 < distance to 1e-6 <=
+    distance; output for accepted tolerances is unchanged. Engrave (Outline and Fill) and V-Carve,
+    which run Pocket for Fill and flat areas, refuse a distance below 1e-6 mm too, each with its
+    own message ("... distance between 0.000001 mm and chordal", ADR-0024, ADR-0025); Drill keeps
+    its own bounds.
 
 ### Golden hand-check (AC1 / AC6)
 `core/tests/golden/toolpath/profile_rect_tabs.moves` and `profile_rect_tabs_grbl.nc` were

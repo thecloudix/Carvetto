@@ -558,7 +558,8 @@ TEST_CASE("T-0141: an invalid tolerance is refused with the reason, profile and 
                                          "tolerance": {"distance": 0.00001, "chordal": 0.00001}})");
     writeFile(dir + "/pocket.json", R"({"tool": {"id": "end-mill-6mm"}, "layers": ["Pockets"], "cut_depth": 1,
                                         "tolerance": {"distance": 0.00001, "chordal": 0.00001}})");
-    const std::string reason = "invalid tolerance: chordal must be between 0.0001 and 1 mm, distance > 0 and <= chordal";
+    const std::string reason =
+        "invalid tolerance: chordal must be between 0.0001 and 1 mm, distance between 0.000001 mm and chordal";
     for (const std::string op : {"profile", "pocket"}) {
         const Outcome r = runCli({"toolpath", op, dir + "/" + op + ".json", carv, dir + "/out.carv"});
         INFO(r.err);

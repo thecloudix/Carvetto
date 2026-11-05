@@ -237,7 +237,7 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
     deterministic (no unordered containers, ties broken geometrically).
 12. **Work caps.** These are checked before any geometry work, in this order. Any value outside
     them gives a message and an empty toolpath, never an exception or an unbounded run:
-    - chordal tolerance in [1e-4, 1] mm, and 0 < distance ≤ chordal;
+    - chordal tolerance in [1e-4, 1] mm, and 1e-6 mm ≤ distance ≤ chordal (the lower bound since T-0142, as Profile, ADR-0016 §18);
     - at most 2·10⁵ vertices for the polygonised input (estimated from span types);
     - stepover ≥ 10·distance;
     - at most 10⁴ depth passes, estimated as ⌈cutDepth / passDepth⌉ + 2, before `PassPlan` runs;
