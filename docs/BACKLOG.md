@@ -119,7 +119,7 @@ Acceptance criteria:
   6. Ends inside near-coincident (hugging) stretches — e.g. a Bezier lying within tol of an arc that extends past it — are reported: an end of either span within tol of the other's interior gives one tangent hit even when the curves run within tol of each other along that stretch. Today ~38–45% are missed (main and T-0007 alike; T-0007 round-3 verifier measured 44.5% and 44.8% on two seeds). Generator: Beziers within tol of an arc extending ≤ 0.3 rad past them, ≥ 6,000 pairs, vs brute force → 0 misses of ends whose foot is ≥ 0.01 mm from the other span's end.
   5. Root-cause fix found in T-0007: `closestPoint(ArcSpan)` (contour_ops.cpp) returns the start point but parameter 1 when the query's angle lies a rounding error before the arc's start. Fix it at the source (parameter 0), add a fine-angle regression around both ends of CW/CCW partial arcs, and remove T-0007's wrapper in intersect.cpp. Check every other caller (contour closestPoint/distanceTo, offset pruning) is unaffected or improved.
 
-### T-0009 Offsets of inputs with sub-tolerance spans   [status: in-progress — round 2 FAIL (coverage loss seed 0xf0003fad; changelog fragment); round 3]
+### T-0009 Offsets of inputs with sub-tolerance spans   [status: in-progress — round 3 FAIL (regressions vs main from the near-reversal logic, opened closed loops, crash); owner: fresh coder, one round from the round-2 code]
 Phase: 1 (before Profile/Pocket ship)   Module: core/geometry   Depends on: T-0017
 Goal: `flattenForOffset` drops spans ≤ `tol.distance`, so the distance/coverage guarantees of `offsetOpenContour` hold only for the flattened input. Next to a dropped span an offset point can be short of d by up to ~tol (9e-4 mm seen), a Round arc about the neighbouring vertex can be up to ~tol over d (8e-4 mm seen), and up to ~1 mm of valid offset can be missing (seed 0x60660ace). About 1 in 1000 such inputs; already in main before T-0006. Found by the T-0006 verifier and coder.
 Acceptance criteria:
@@ -571,7 +571,7 @@ Acceptance criteria:
   1. (a) M0 before M5 in a pause block is refused, with tests; shipped goldens unchanged.
   2. (b) No written line exceeds the documented limit for any tool or toolpath name length; truncation visible and tested on all 8 posts; goldens unchanged for normal names.
 
-### T-0163 Profile crash: lead-in planning on a closed walk with no spans   [status: in progress — READY (51a70f5), verifying]
+### T-0163 Profile crash: lead-in planning on a closed walk with no spans   [status: done (2026-11-04, #56)]
 Phase: 1   Module: core/toolpath   Depends on: —   ADR: 0016
 Goal: Found by the T-0137 verifier (harness t0137v1/repro/seg_241_31.scn; tiny-scale page S=0.001, V-bit 30°, D=0.004): profileToolpath segfaults on main in planLeadIns — profile.cpp ~2507 runs `std::stable_sort(spans.begin() + 1, spans.end(), …)` when a closed walk has 0 spans (UB; ASan null read in the comparator). Fix the crash and audit the other walk/span loops for the empty case.
 Acceptance criteria:
