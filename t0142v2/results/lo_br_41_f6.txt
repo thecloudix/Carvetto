@@ -1,0 +1,45 @@
+LEFT seed 41 sc 0 fam 6 d 0.6985 join 2 ring of 4 pts area 0.0222 at 4.89194 8.61890
+LEFT seed 41 sc 0 fam 6 d 0.6985 join 2 ring of 4 pts area 0.0222 at 5.10806 8.61890
+FAR seed 41 sc 3 fam 6 d 0.5322 join 1 p 6.089739 3.538729
+LEFT seed 41 sc 3 fam 6 d 0.5322 join 1 ring of 4 pts area 0.0146 at 4.84700 5.87796
+LEFT seed 41 sc 3 fam 6 d 0.5322 join 1 ring of 4 pts area 0.0146 at 5.15300 5.87796
+FAR seed 41 sc 4 fam 6 d 0.2588 join 1 p 6.362371 4.638877
+LEFT seed 41 sc 4 fam 6 d 0.2588 join 1 ring of 4 pts area 0.00729 at 4.75245 7.16914
+LEFT seed 41 sc 4 fam 6 d 0.2588 join 1 ring of 4 pts area 0.00729 at 5.24755 7.16914
+LEFT seed 41 sc 5 fam 6 d 0.2050 join 2 ring of 4 pts area 0.00181 at 4.94680 3.27413
+LEFT seed 41 sc 5 fam 6 d 0.2050 join 2 ring of 4 pts area 0.00181 at 5.05320 3.27413
+FAR seed 41 sc 6 fam 6 d 0.4158 join 0 p 3.592231 2.644309
+LEFT seed 41 sc 6 fam 6 d 0.4158 join 0 ring of 4 pts area 0.00288 at 4.97126 4.32210
+LEFT seed 41 sc 6 fam 6 d 0.4158 join 0 ring of 4 pts area 0.00288 at 5.02874 4.32210
+FAR seed 41 sc 8 fam 6 d 1.2113 join 0 p 4.041968 5.459067
+FAR seed 41 sc 8 fam 6 d 1.2113 join 0 p 5.103386 6.198347
+FAR seed 41 sc 11 fam 6 d 0.5560 join 0 p 6.370105 7.403593
+FAR seed 41 sc 11 fam 6 d 0.5560 join 0 p 6.946822 5.972999
+LEFT seed 41 sc 11 fam 6 d 0.5560 join 0 ring of 4 pts area 0.0174 at 5.01549 8.09356
+LEFT seed 41 sc 11 fam 6 d 0.5560 join 0 ring of 4 pts area 0.0174 at 4.71847 8.07688
+LEFT seed 41 sc 14 fam 6 d 0.1487 join 2 ring of 4 pts area 0.00079 at 5.00255 4.07694
+LEFT seed 41 sc 14 fam 6 d 0.1487 join 2 ring of 4 pts area 0.00079 at 4.86181 4.07191
+FAR seed 41 sc 16 fam 6 d 0.7419 join 0 p 5.352739 5.736961
+FAR seed 41 sc 16 fam 6 d 0.7419 join 0 p 6.345283 3.066535
+LEFT seed 41 sc 16 fam 6 d 0.7419 join 0 ring of 4 pts area 0.0118 at 5.00788 5.83676
+LEFT seed 41 sc 16 fam 6 d 0.7419 join 0 ring of 4 pts area 0.0118 at 4.90153 5.83447
+FAR seed 41 sc 17 fam 6 d 1.4102 join 0 p 5.051957 6.100739
+FAR seed 41 sc 19 fam 6 d 0.7630 join 1 p 3.554128 5.821041
+LEFT seed 41 sc 19 fam 6 d 0.7630 join 1 ring of 4 pts area 0.068 at 4.75524 7.66495
+LEFT seed 41 sc 19 fam 6 d 0.7630 join 1 ring of 4 pts area 0.068 at 5.24476 7.66495
+FAR seed 41 sc 20 fam 6 d 0.1321 join 2 p 6.594604 3.610797
+LEFT seed 41 sc 20 fam 6 d 0.1321 join 2 ring of 4 pts area 0.000844 at 4.86172 5.85902
+LEFT seed 41 sc 20 fam 6 d 0.1321 join 2 ring of 4 pts area 0.000844 at 5.13828 5.85902
+LEFT seed 41 sc 23 fam 6 d 0.2541 join 1 ring of 4 pts area 0.00164 at 5.00312 6.95731
+LEFT seed 41 sc 23 fam 6 d 0.2541 join 1 ring of 4 pts area 0.00164 at 4.89477 6.95472
+FAR seed 41 sc 24 fam 6 d 0.7873 join 0 p 4.670412 3.790083
+FAR seed 41 sc 24 fam 6 d 0.7873 join 0 p 5.872466 3.754704
+LEFT seed 41 sc 24 fam 6 d 0.7873 join 0 ring of 4 pts area 0.011 at 4.96427 5.39540
+LEFT seed 41 sc 24 fam 6 d 0.7873 join 0 ring of 4 pts area 0.011 at 5.03573 5.39540
+FAR seed 41 sc 26 fam 6 d 1.8231 join 1 p 5.071794 2.965995
+FAR seed 41 sc 27 fam 6 d 0.3810 join 2 p 6.734437 2.605416
+LEFT seed 41 sc 27 fam 6 d 0.3810 join 2 ring of 4 pts area 0.0047 at 4.91205 5.44599
+LEFT seed 41 sc 27 fam 6 d 0.3810 join 2 ring of 4 pts area 0.0047 at 5.08795 5.44599
+LEFT seed 41 sc 28 fam 6 d 0.4757 join 2 ring of 4 pts area 0.0183 at 4.80357 9.00132
+LEFT seed 41 sc 28 fam 6 d 0.4757 join 2 ring of 4 pts area 0.0183 at 5.19643 9.00132
+seed 41 fam 6 scenes 30 bad 17 lost 0 far 32 leftover 268 points 120000

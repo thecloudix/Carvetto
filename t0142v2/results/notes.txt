@@ -1,0 +1,40 @@
+T-0142 verifier round 2 (15848d4; base origin/main 6e537a1, core identical to 53ae278). Machine 16 threads shared, load 30-45.
+VERDICT: FAIL (B2 only partly fixed: outsets of nested holes still quadratic when the shapes' boxes touch or overlap).
+
+Build: Release -march=x86-64-v3 ok; Debug -Werror ok, 0 warnings (285/285).
+ctest Debug -j6: 997/997. Release x86-64-v3 -j6 --repeat until-fail:3: 997/997 (1227 s). Debug -j6 --repeat until-fail:3: 997/997 (1327 s).
+changelog check --base origin/main ok. merge-tree origin/main clean; origin/task/T-0016-sharp-cost (698f86f) clean
+(both edit offset.cpp); merged offset.cpp/boolean.cpp -fsyntax-only -Werror ok.
+
+B1 (distance floor) PASS. dfl2.cpp at 1e-9, 5e-7, nextafter(1e-6,0): Profile, Pocket, Engrave Fill, Engrave Outline,
+  V-Carve (flat+clearance, flat, plain) each refuse with exactly one diagnostic, their own validator's message
+  (V-Carve says 0.0003; Engrave's text equals Pocket's, as on main); pocketCentreRegion its own generic message.
+  1e-6, 2e-6, 1e-5, 1e-4: every op's output hash identical to main. dfl3.cpp: distance 1e-6 with chordal 1e-4/3e-4/1e-3/1
+  never yields an InvalidParameters from a nested Pocket call (V-Carve's internal distance = min(distance, >=1e-4 chordal)).
+  Drill: no offsets/booleans in drill.cpp; 2001 holes + Bezier at 1e-9..1e-4 identical hashes and 6-7 ms CPU, main == branch.
+  Engrave Outline refusal: shared validator (Outline already obeyed Pocket's chordal >= 1e-4), documented in ADR-0024; consistent.
+B2 nesting decisions: nd.cpp seeds 1-4 x 20,000 adversarial scenes: old (round-1 global scan) == new (per batch) in all 79,826;
+  0 hole/with-ring pairs with containing boxes in different batches (containment => no gap cut separates them; touching boxes
+  stay together since a cut needs lo > reach).
+B2 cost (po2.cpp, outset +0.05, interleaved CPU, 1 rep, 40k -> 80k shapes; hashes main == branch in every layout and size):
+  layout  branch               main
+  row     0.450 -> 0.840 x1.87  0.398 -> 0.818 x2.06   (round 1: 1.97 -> 9.86)
+  grid    0.426 -> 0.856 x2.01  0.413 -> 0.812 x1.97
+  rand    0.433 -> 0.927 x2.14  0.419 -> 0.826 x1.97
+  tcol    2.729 -> 21.70 x7.95  0.470 -> 0.999 x2.12   vertical column of touching holed squares
+  hex     3.466 -> 27.85 x8.03  1.581 -> 4.482 x2.84   hex-packed holed squares (boxes overlap across rows)
+  tgrid   3.918 -> 17.99 x4.59  1.811 -> 5.576 x3.08   touching grid
+  comb    17.41 -> 88.11 x5.06  1.019 -> 1.913 x1.88   column in a comb ring's notches
+  10k->20k: tcol 0.238->0.784 (main 0.121->0.249), hex 0.326->1.114 (main 0.235->0.608), comb 0.672->2.895 (main 0.262->0.574).
+  Cause: one separableBatches batch holds every shape; per hole the scan walks all with-rings whose left <= hole.left
+  (tcol: all have the same left) and for comb runs PointInPolygon on the n-tooth comb ring per hole.
+  Pocket Offset on hex 5k->10k (pkh.cpp): unaffected (4.74->10.27 vs main 4.83->10.06, same hash).
+(a) bat seeds 5,6 x40: 640 scenes, bad 0. pb (Release interleaved, 10k->20k): row/grid/holed/nest x union/diff/inter 1.93-2.36.
+(b) lo seeds 31-34 x80 mixed: lost 0, leftover 0; far 50 (seed 32 sc 71) and 1 (seed 34 sc 64) in fam 4 (mixed, includes
+  crossing rings) -- identical on the round-1 build; main far 5325/3803, leftover 1630/2502. lo seed 41 x30 fam 0-5:
+  all 0; fam 6 (documented undetected crossing) 268 leftover, same as round 1 build. hn seeds 5-7 x40 (1440 outsets)
+  byte-identical to main.
+(e) strip seeds 31 (3 scenes) / 32 (5 scenes) under load before timeout: every cropped end ILL or within 0.77 units of
+  exact; 4 "REAL" flags are booleanOp's whole-clip ends (3.77 units off at sine 0.048) where the cropped end is 0.77 off:
+  ADR-0006 "within 2 units" is 3 units here (non-blocking wording). boolean.cpp/pocket.cpp unchanged since round 1.
+  T-0131 bounds: c stays 3.0 per doubling (9.0), e tightened to 2.5*2.5 -- matches the director's ruling.

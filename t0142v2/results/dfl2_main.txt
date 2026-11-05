@@ -1,0 +1,63 @@
+dist 1.0000000000000001e-09 profile skipped
+dist 1.0000000000000001e-09 pocket ok 1 hash c83b55176a456ac8 diags 
+dist 1.0000000000000001e-09 centreRegion rings 2 diags 
+dist 1.0000000000000001e-09 engraveFill moves 1601 hash e9a2a74d709f7a7b diags 
+dist 1.0000000000000001e-09 engraveOutline moves 11 hash 9b8a3d59e2373354 diags 
+dist 1.0000000000000001e-09 vcarveClear ok 1 moves 3909 clear 670 hash 738c7fa73112cf3c diags 
+dist 1.0000000000000001e-09 vcarveFlat ok 1 moves 11351 hash 825d771233590d03 diags 
+dist 1.0000000000000001e-09 drill ok 1 holes 2001 moves 6003 hash c3a1ee840918b9e8 cpu 0.006 diags [vector 1: the 3 mm hole is wider than the vector round its centre (1 mm from the centre to the vector); drilled anyway][vector 2: the 3 mm hole is wider than the vector round its centre (1.00000010000
+dist 1.0000000000000001e-09 vcarvePlain ok 1 moves 2776 hash 7d40d3ca1dde4493 diags 
+dist 4.9999999999999998e-07 profile skipped
+dist 4.9999999999999998e-07 pocket ok 1 hash c83b55176a456ac8 diags 
+dist 4.9999999999999998e-07 centreRegion rings 2 diags 
+dist 4.9999999999999998e-07 engraveFill moves 1587 hash b3ac0935090bc665 diags 
+dist 4.9999999999999998e-07 engraveOutline moves 11 hash 9b8a3d59e2373354 diags 
+dist 4.9999999999999998e-07 vcarveClear ok 1 moves 3909 clear 670 hash 67cd87ee649b2343 diags 
+dist 4.9999999999999998e-07 vcarveFlat ok 1 moves 11348 hash c9b5b2aaa59400d2 diags 
+dist 4.9999999999999998e-07 drill ok 1 holes 2001 moves 6003 hash c3a1ee840918b9e8 cpu 0.006 diags [vector 1: the 3 mm hole is wider than the vector round its centre (1 mm from the centre to the vector); drilled anyway][vector 2: the 3 mm hole is wider than the vector round its centre (1.00000010000
+dist 4.9999999999999998e-07 vcarvePlain ok 1 moves 2776 hash 7d40d3ca1dde4493 diags 
+dist 9.9999999999999974e-07 profile skipped
+dist 9.9999999999999974e-07 pocket ok 1 hash c83b55176a456ac8 diags 
+dist 9.9999999999999974e-07 centreRegion rings 2 diags 
+dist 9.9999999999999974e-07 engraveFill moves 1587 hash b3ac0935090bc665 diags 
+dist 9.9999999999999974e-07 engraveOutline moves 11 hash 9b8a3d59e2373354 diags 
+dist 9.9999999999999974e-07 vcarveClear ok 1 moves 3909 clear 670 hash 7fc4f9b9e68e6f9d diags 
+dist 9.9999999999999974e-07 vcarveFlat ok 1 moves 11348 hash c9b5b2aaa59400d2 diags 
+dist 9.9999999999999974e-07 drill ok 1 holes 2001 moves 6003 hash c3a1ee840918b9e8 cpu 0.006 diags [vector 1: the 3 mm hole is wider than the vector round its centre (1 mm from the centre to the vector); drilled anyway][vector 2: the 3 mm hole is wider than the vector round its centre (1.00000010000
+dist 9.9999999999999974e-07 vcarvePlain ok 1 moves 2776 hash 7d40d3ca1dde4493 diags 
+dist 9.9999999999999995e-07 profile ok 1 moves 33420 hash a1988c3c1912beb6 diags 
+dist 9.9999999999999995e-07 pocket ok 1 hash c83b55176a456ac8 diags 
+dist 9.9999999999999995e-07 centreRegion rings 2 diags 
+dist 9.9999999999999995e-07 engraveFill moves 1587 hash b3ac0935090bc665 diags 
+dist 9.9999999999999995e-07 engraveOutline moves 11 hash 9b8a3d59e2373354 diags 
+dist 9.9999999999999995e-07 vcarveClear ok 1 moves 3909 clear 670 hash 7fc4f9b9e68e6f9d diags 
+dist 9.9999999999999995e-07 vcarveFlat ok 1 moves 11348 hash c9b5b2aaa59400d2 diags 
+dist 9.9999999999999995e-07 drill ok 1 holes 2001 moves 6003 hash c3a1ee840918b9e8 cpu 0.006 diags [vector 1: the 3 mm hole is wider than the vector round its centre (1 mm from the centre to the vector); drilled anyway][vector 2: the 3 mm hole is wider than the vector round its centre (1.00000010000
+dist 9.9999999999999995e-07 vcarvePlain ok 1 moves 2776 hash 7d40d3ca1dde4493 diags 
+dist 1.9999999999999999e-06 profile ok 1 moves 20604 hash c16585b9a1a254be diags 
+dist 1.9999999999999999e-06 pocket ok 1 hash c83b55176a456ac8 diags 
+dist 1.9999999999999999e-06 centreRegion rings 2 diags 
+dist 1.9999999999999999e-06 engraveFill moves 1587 hash b3ac0935090bc665 diags 
+dist 1.9999999999999999e-06 engraveOutline moves 11 hash 9b8a3d59e2373354 diags 
+dist 1.9999999999999999e-06 vcarveClear ok 1 moves 3909 clear 670 hash c03ff14779419117 diags 
+dist 1.9999999999999999e-06 vcarveFlat ok 1 moves 11348 hash c9b5b2aaa59400d2 diags 
+dist 1.9999999999999999e-06 drill ok 1 holes 2001 moves 6003 hash c3a1ee840918b9e8 cpu 0.006 diags [vector 1: the 3 mm hole is wider than the vector round its centre (1 mm from the centre to the vector); drilled anyway][vector 2: the 3 mm hole is wider than the vector round its centre (1.00000010000
+dist 1.9999999999999999e-06 vcarvePlain ok 1 moves 2776 hash 7d40d3ca1dde4493 diags 
+dist 1.0000000000000001e-05 profile ok 1 moves 9816 hash 7e1f359f81af506a diags 
+dist 1.0000000000000001e-05 pocket ok 1 hash c83b55176a456ac8 diags 
+dist 1.0000000000000001e-05 centreRegion rings 2 diags 
+dist 1.0000000000000001e-05 engraveFill moves 1587 hash b3ac0935090bc665 diags 
+dist 1.0000000000000001e-05 engraveOutline moves 11 hash 9b8a3d59e2373354 diags 
+dist 1.0000000000000001e-05 vcarveClear ok 1 moves 3909 clear 670 hash 7421af9b11b20b0d diags 
+dist 1.0000000000000001e-05 vcarveFlat ok 1 moves 11348 hash c9b5b2aaa59400d2 diags 
+dist 1.0000000000000001e-05 drill ok 1 holes 2001 moves 6003 hash c3a1ee840918b9e8 cpu 0.006 diags [vector 1: the 3 mm hole is wider than the vector round its centre (1 mm from the centre to the vector); drilled anyway][vector 2: the 3 mm hole is wider than the vector round its centre (1.00000010000
+dist 1.0000000000000001e-05 vcarvePlain ok 1 moves 2776 hash 7d40d3ca1dde4493 diags 
+dist 0.0001 profile ok 1 moves 2868 hash 4df0c5240330c5ba diags 
+dist 0.0001 pocket ok 1 hash c83b55176a456ac8 diags 
+dist 0.0001 centreRegion rings 2 diags 
+dist 0.0001 engraveFill moves 1585 hash 9c0d6e58b40b46b7 diags 
+dist 0.0001 engraveOutline moves 11 hash 9b8a3d59e2373354 diags 
+dist 0.0001 vcarveClear ok 1 moves 3893 clear 670 hash 317d67f6b69194f0 diags 
+dist 0.0001 vcarveFlat ok 1 moves 11348 hash c9b5b2aaa59400d2 diags 
+dist 0.0001 drill ok 1 holes 2001 moves 6003 hash c3a1ee840918b9e8 cpu 0.006 diags [vector 1: the 3 mm hole is wider than the vector round its centre (1 mm from the centre to the vector); drilled anyway][vector 2: the 3 mm hole is wider than the vector round its centre (1.0000001000000012 mm from th
+dist 0.0001 vcarvePlain ok 1 moves 2776 hash 7d40d3ca1dde4493 diags 

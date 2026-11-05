@@ -1,0 +1,4 @@
+nd seed 1: agree 19954 differ 0 (resolved 17452, allNested 2502) claim violations 0
+nd seed 2: agree 19956 differ 0 (resolved 17595, allNested 2361) claim violations 0
+nd seed 3: agree 19956 differ 0 (resolved 17554, allNested 2402) claim violations 0
+nd seed 4: agree 19960 differ 0 (resolved 17489, allNested 2471) claim violations 0

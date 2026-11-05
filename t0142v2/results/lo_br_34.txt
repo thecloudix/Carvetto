@@ -1,0 +1,2 @@
+FAR seed 34 sc 64 fam 4 d 0.9555 join 0 p 7.977530 32.812024
+seed 34 fam -1 scenes 80 bad 1 lost 0 far 1 leftover 0 points 320000
