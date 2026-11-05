@@ -14,6 +14,10 @@ echo "== R5 Sharp/Square spikes beyond d outside every corner region, main none:
 ./x2 mainone 0x312005e4 1 1 0 | cut -c1-200; ./x2 mainone 0x316001a6 1 2 0 | cut -c1-200; ./x2 mainone 0x31700456 1 1 0 | cut -c1-200
 echo "== R6 g2 0x3500080e Sharp Left d=0.444: branch empty, main (and branch Round/Square) a 0.46 mm inner loop; loop and interior inside mitre regions of sub-tol jog corners (decision (a))"
 ./loopchk g2 0x3500080e 1 0; ./loopchk g2 0x3500080e 0 0 | head -1
+echo "== R7 adversarial 0x504000d5 Round Right d=72.69: collapsed cluster (box 3.9 tol) at a +93.7 deg turn, 28.6 mm of the corner arc missing (branch 14.3 mm away), output in three chains; main continuous (survives the variants)"
+XK_NETTURN=1 XK_ARCSEED=1 ./x2 advone 0x504000d5 0 1 2>/dev/null | grep -E "^(OK|FLAG)" | cut -c1-300
+echo "== R8 adversarial 0x50300183 Round Left d=0.0394 closed: net-turn loop cluster (+377 deg, box ~4.1 tol > the 2 tol net-turn limit): branch open, gap 0.0233 mm; main closed (main ~3e-3 inside d there)"
+OUTS=1 ./x2 advone 0x50300183 0 0 2>/dev/null | grep -E "^(OK|FLAG)" | cut -c1-300
 echo "== E1 exemption question (net-turn cluster): v9 0x31600a3d Round Left: reference checker REG 7.7e-3 (branch 8.7e-3 away); with XK_NETTURN=1 it is exempt"
 echo 'v9 0x31600a3d 0 0' | ./x2 re | grep RV4 | cut -c1-200; echo 'v9 0x31600a3d 0 0' | XK_NETTURN=1 ./x2 re | grep RV4 | cut -c1-200
 echo "== E2 (c)-side misses main covers, in strips < 1.1e-4 mm wide: v9 0x312009ad Square Left"
