@@ -1,0 +1,400 @@
+HASH case 0 bezblob chord 0.05 ok 1 moves 348 diags 1 h 9e9a0992e3b93c8b
+HASH case 0 bowtie chord 0.005 ok 1 moves 1765 diags 2 h d4dd35c35e9a084a
+HASH case 0 chain g=0.250000ch-squares chord 0.01 ok 1 moves 1476 diags 3 h 5c8e07a9ee4b0afa
+HASH case 0 chain g=0.250000ch-squares chord 0.1 ok 1 moves 753 diags 2 h 52fef56036e3ff22
+HASH case 0 cluster+near-outside g=0.001200 chord 0.05 ok 1 moves 634 diags 1 h c0c34387e6c45812
+HASH case 0 flatcorner n=94-denseband chord 0.01 ok 1 moves 737 diags 0 h 72d486a048a9e05d
+HASH case 0 frametext chord 0.05 ok 1 moves 1136 diags 0 h 16b77024755e3c5b
+HASH case 0 holedstar chord 0.1 ok 1 moves 259 diags 0 h 5378cb3733043a15
+HASH case 0 holesinholes-sq chord 0.05 ok 1 moves 1596 diags 0 h de4a80aee49182f9
+HASH case 0 lib:square_cw chord 0.001 ok 1 moves 33982 diags 1 h 1e6b2f7a7e176806
+HASH case 0 nearsq g=0.000100 chord 0.005 ok 1 moves 671 diags 1 h aeddf56339f5b231
+HASH case 0 nestedtight-sq chord 0.1 ok 1 moves 403 diags 0 h 82323b2fa432d2f4
+HASH case 0 nestonboundary-holeedgeonwall chord 0.001 ok 1 moves 1115 diags 1 h c43bec350e3c18e3
+HASH case 0 nestonboundary-holeedgeonwall chord 0.02 ok 1 moves 466 diags 1 h c1aef52e2feb9a19
+HASH case 0 overcircles-exttangent chord 0.01 ok 1 moves 3462 diags 1 h 13da42933176091d
+HASH case 0 overpoly chord 0.05 ok 1 moves 499 diags 1 h dee4136a92452525
+HASH case 0 page-alltouch-glyphs chord 0.02 ok 1 moves 26114 diags 10 h 452035131df76e93
+HASH case 0 partialoverlapedge chord 0.02 ok 1 moves 477 diags 1 h a1fc96ad809b7bd7
+HASH case 0 ringneigh-apart chord 0.005 ok 1 moves 5871 diags 0 h adcef275cbcae05c
+HASH case 0 selftouch-corners+cross chord 0.1 ok 1 moves 193 diags 1 h f490b8b38beb6090
+HASH case 0 slivercircles chord 0.02 ok 1 moves 2696 diags 1 h 747f3ad8f0a8b00d
+HASH case 0 star chord 0.05 ok 1 moves 517 diags 0 h bc3b5742f78923e9
+HASH case 0 text-apart chord 0.001 ok 1 moves 4356 diags 0 h d01a4dbfd1305e60
+HASH case 0 thinstrip chord 0.001 ok 1 moves 1512 diags 1 h 4e93b862634c82fb
+HASH case 0 tinyspans g=1.000000ch n=136-Dhole chord 0.01 ok 1 moves 1791 diags 0 h 521e90e03f50bec6
+HASH case 0 touch1-squarecorneroncircle chord 0.05 ok 1 moves 203 diags 2 h 9650457ca1b2cdee
+HASH case 1 bezblob chord 0.02 ok 1 moves 613 diags 0 h 22a110a5d58fe958
+HASH case 1 chain g=1.200000ch-circles chord 0.001 ok 1 moves 7190 diags 1 h 78f838a6be376c21
+HASH case 1 cluster+near-outside g=0.012500 chord 0.05 ok 1 moves 925 diags 1 h bf4f218df8b54a53
+HASH case 1 flatcorner n=265-bentband chord 0.02 ok 1 moves 543 diags 0 h 19c391e67e0480c7
+HASH case 1 frametext-outerring chord 0.1 ok 1 moves 922 diags 0 h f8fc6842bd303726
+HASH case 1 holedstar chord 0.005 ok 1 moves 139831 diags 0 h e27282f4dda2b77e
+HASH case 1 holesinholes chord 0.005 ok 1 moves 2528 diags 0 h f6d0c2d6a69ace3b
+HASH case 1 lib:L chord 0.05 ok 1 moves 238 diags 2 h e7fc98f53d69d383
+HASH case 1 nearint g=0.001000 chord 0.05 ok 1 moves 310 diags 2 h ad0013cd36a42efe
+HASH case 1 nestedtight-sq chord 0.005 ok 1 moves 35695 diags 3 h 36a914d2e8630e36
+HASH case 1 nestonboundary-holevertexatcorner+cross chord 0.001 ok 1 moves 5299 diags 3 h 494c0645ec380eaf
+HASH case 1 overcircles-inttangent-inttangent chord 0.05 ok 1 moves 1452 diags 2 h f8e37c3741ed762f
+HASH case 1 overpoly chord 0.005 ok 1 moves 2447 diags 1 h f921abd6b8d78e5f
+HASH case 1 page-alltouch-circles chord 0.005 ok 1 moves 7209 diags 1 h 7bf4a9bd902699b3
+HASH case 1 page-alltouch-circles chord 0.1 ok 1 moves 2380 diags 1 h d97efa01c18a3195
+HASH case 1 pentagram chord 0.01 ok 1 moves 435 diags 1 h 3081d2e1690ffe40
+HASH case 1 ringneigh-cross chord 0.1 ok 1 moves 260 diags 1 h 26d4aadd48d195b3
+HASH case 1 selftouch-frame+diamondtangent+crossing chord 0.1 ok 1 moves 822 diags 1 h e35759d3f9e438d2
+HASH case 1 sharededge chord 0.005 ok 1 moves 1083 diags 1 h ebb8b77c25f1dc14
+HASH case 1 sliverrects chord 0.005 ok 1 moves 4935 diags 1 h ad6c4c8e126b2e69
+HASH case 1 star chord 0.01 ok 1 moves 800 diags 1 h 60395dc84defd85d
+HASH case 1 text-overlap chord 0.02 ok 1 moves 728 diags 1 h fe9b69c36f23e04d
+HASH case 1 thinstrip chord 0.02 ok 1 moves 1741 diags 0 h 08902f00eee1606a
+HASH case 1 tinyspans g=0.031250ch n=361-island chord 0.02 ok 1 moves 7697 diags 2 h b51e3dbc7f5a972c
+HASH case 1 touch1-diamondvertex chord 0.05 ok 1 moves 302 diags 1 h 46ef5f4158095fce
+HASH case 1 touch1-squarecorneroncircle chord 0.005 ok 1 moves 813 diags 2 h 0e67d99fc7887613
+HASH case 10 bezblob chord 0.001 ok 1 moves 1649 diags 2 h 245f1a79a02ee7cb
+HASH case 10 chain g=0.060000ch-circles chord 0.02 ok 1 moves 703 diags 1 h c0cec090bf787d08
+HASH case 10 cluster+near-inside g=0.006250 chord 0.05 ok 1 moves 669 diags 1 h 069cae321de1addd
+HASH case 10 fig8 chord 0.001 ok 1 moves 1342 diags 1 h cc91dbda48be2165
+HASH case 10 flatcorner n=132-denseband chord 0.05 ok 1 moves 145 diags 0 h bf9b64644ce04615
+HASH case 10 flatcorner n=157-denseband chord 0.02 ok 1 moves 1503 diags 0 h 5f03b75f037269b7
+HASH case 10 frametext-crossing chord 0.001 ok 1 moves 14229 diags 1 h 17ff31e221f1abc9
+HASH case 10 holedstar chord 0.02 ok 1 moves 1377 diags 0 h 16cab1f98bf4f614
+HASH case 10 holesinholes-sq chord 0.001 ok 1 moves 36642 diags 2 h a154a8bf741bafeb
+HASH case 10 lib:circle chord 0.005 ok 1 moves 3 diags 0 h d68b4ed2e8fd9b16
+HASH case 10 nearext g=0.025000 chord 0.1 ok 1 moves 689 diags 1 h dbf32712650a2688
+HASH case 10 nearint g=0.006250 chord 0.05 ok 1 moves 236 diags 0 h 169214d1d575cf49
+HASH case 10 nestedtight-circ chord 0.1 ok 1 moves 1694 diags 32 h 6084e7f10b546858
+HASH case 10 nestonboundary-holevertexatcorner+cross chord 0.05 ok 1 moves 524 diags 1 h 4174e2137139fc9e
+HASH case 10 overcircles-exttangent chord 0.005 ok 1 moves 1709 diags 3 h 730612aadecd27ba
+HASH case 10 overpoly chord 0.1 ok 1 moves 587 diags 1 h 45bc95e6a8485521
+HASH case 10 page-alltouch-squaressharededges chord 0.005 ok 1 moves 2769 diags 1 h c165456033e44a69
+HASH case 10 ringneigh-cross chord 0.02 ok 1 moves 973 diags 2 h ebad9efd4534b319
+HASH case 10 selftouch-frame+diamondtangent+crossing chord 0.01 ok 1 moves 2581 diags 2 h a794820781e3830c
+HASH case 10 sharededge chord 0.01 ok 1 moves 1280 diags 3 h 59bb082485974035
+HASH case 10 sliverrects chord 0.01 ok 1 moves 3313 diags 2 h b164f3fbc1507872
+HASH case 10 star chord 0.02 ok 1 moves 942 diags 0 h 1acfe5a04bd60d89
+HASH case 10 text-touchbox chord 0.1 ok 1 moves 995 diags 1 h 17e7d2c672b569be
+HASH case 10 thinstrip chord 0.01 ok 1 moves 716 diags 0 h 521321dd802bcbd8
+HASH case 10 tinyspans g=0.250000ch n=220-Dhole chord 0.02 ok 1 moves 961 diags 0 h fd964075b5fc7eba
+HASH case 10 touch1-tangentcircle chord 0.02 ok 1 moves 891 diags 1 h 8064116acf60f3b0
+HASH case 11 bezblob chord 0.1 ok 1 moves 443 diags 0 h a0525cf6637dec7e
+HASH case 11 bowtie chord 0.005 ok 1 moves 1186 diags 1 h 8dcd5c773905a948
+HASH case 11 chain g=0.062500ch-squares chord 0.02 ok 1 moves 2086 diags 1 h 7d2fb7344dacd50a
+HASH case 11 cluster+near-outside g=0.003125 chord 0.1 ok 1 moves 890 diags 1 h a66916ffae37a9b7
+HASH case 11 duplicate+other chord 0.005 ok 1 moves 3 diags 1 h 5fb298848ba66e89
+HASH case 11 flatcorner n=241-bentband chord 0.005 ok 1 moves 727 diags 0 h 4a53201c915e1e39
+HASH case 11 frametext chord 0.01 ok 1 moves 4524 diags 0 h 90a03a2b2187320a
+HASH case 11 holedstar chord 0.005 ok 1 moves 8334 diags 0 h fbadc5a4983cfce9
+HASH case 11 holesinholes chord 0.001 ok 1 moves 13970 diags 1 h ee07a3d924fbdfcd
+HASH case 11 lib:slot_arcs chord 0.001 ok 1 moves 1683 diags 0 h f94afd36c69d0fd3
+HASH case 11 nearint g=0.010000 chord 0.02 ok 1 moves 2674 diags 0 h 2dbfc04ef461f852
+HASH case 11 nestedtight-sq chord 0.05 ok 1 moves 4048 diags 1 h 18b7b7f2650f767d
+HASH case 11 nestonboundary-holeedgeonwall chord 0.1 ok 1 moves 176 diags 1 h c5fcadd9ee98ad2b
+HASH case 11 overcircles-exttangent-inttangent chord 0.005 ok 1 moves 7894 diags 14 h 1099ca7ba92d96c3
+HASH case 11 overpoly chord 0.1 ok 1 moves 409 diags 2 h c3e1ba62537eec8a
+HASH case 11 page-alltouch-circles chord 0.005 ok 1 moves 19494 diags 1 h 9a26917e5051ede0
+HASH case 11 ringneigh-touch chord 0.01 ok 1 moves 3134 diags 1 h 9053e65bbe7d38ab
+HASH case 11 ringneigh-touch chord 0.01 ok 1 moves 758 diags 2 h 6efa73b47b617fe1
+HASH case 11 selftouch-bowtie+tangentcircle chord 0.02 ok 1 moves 567 diags 1 h 59c37bc92252835d
+HASH case 11 slivercircles chord 0.05 ok 1 moves 3487 diags 2 h dd030ba300d943a1
+HASH case 11 star chord 0.05 ok 1 moves 900 diags 0 h 59f37dce6dada9a0
+HASH case 11 text-apart chord 0.05 ok 1 moves 606 diags 1 h 667bea109e398043
+HASH case 11 thinstrip chord 0.001 ok 1 moves 2122 diags 0 h 69c9c779d81ebeb0
+HASH case 11 tinyspans g=0.062500ch n=188-island chord 0.001 ok 0 moves 0 diags 2 h 7e0a85060bca7fba
+HASH case 11 touch1-diamondvertex chord 0.1 ok 1 moves 330 diags 1 h 454ecd646fc77aae
+HASH case 11 touch1-squarecorneroncircle chord 0.1 ok 1 moves 132 diags 2 h 1bf428561370bcbe
+HASH case 12 bezblob chord 0.005 ok 1 moves 1177 diags 0 h d7b483c9b010e64c
+HASH case 12 chain g=1.200000ch-squares chord 0.001 ok 1 moves 8350 diags 1 h 846b2b36580f192c
+HASH case 12 cluster+near-outside g=0.001200 chord 0.001 ok 1 moves 4719 diags 2 h 00a4ebb05333235a
+HASH case 12 fig8 chord 0.01 ok 1 moves 440 diags 1 h ffd892a374b54da3
+HASH case 12 flatcorner n=191-bentband chord 0.05 ok 1 moves 383 diags 0 h 107238e19a5999a4
+HASH case 12 frametext chord 0.01 ok 1 moves 2476 diags 0 h db041d5a78fc526c
+HASH case 12 holedstar chord 0.005 ok 1 moves 2899 diags 0 h 0b5983a6e36c547f
+HASH case 12 holesinholes chord 0.05 ok 1 moves 1576 diags 0 h 0acb85a3d3ab60bf
+HASH case 12 holesinholes-sq chord 0.1 ok 1 moves 3302 diags 0 h 95f465d3c05b3e07
+HASH case 12 lib:star12_sharp chord 0.02 ok 1 moves 1536 diags 0 h 260407cf9ac8d48f
+HASH case 12 nearext g=0.000100 chord 0.1 ok 1 moves 717 diags 2 h 29ebe30b47dcdc46
+HASH case 12 nestedtight-circ chord 0.1 ok 1 moves 2463 diags 1 h ca79ed64081d75dc
+HASH case 12 nestedtight-sq chord 0.005 ok 1 moves 18718 diags 1 h 66fd1b776463a020
+HASH case 12 nestonboundary-holeedgeonwall chord 0.001 ok 1 moves 73247 diags 2 h c7829d4f7bf26a64
+HASH case 12 overcircles-inttangent chord 0.005 ok 1 moves 3089 diags 2 h fe89d0b8646fee68
+HASH case 12 overpoly chord 0.05 ok 1 moves 708 diags 2 h 6ac298fca89616d8
+HASH case 12 page-alltouch-squaressharededges chord 0.1 ok 1 moves 874 diags 2 h 5391ee943f766f1b
+HASH case 12 partialoverlapedge chord 0.1 ok 1 moves 149 diags 1 h e6f3d6f2767c1300
+HASH case 12 ringneigh-touch chord 0.05 ok 1 moves 368 diags 2 h 6dad5dca60d1355c
+HASH case 12 selftouch-bowtie+tangentcircle chord 0.1 ok 1 moves 1556 diags 1 h 6e6c3842ea39d694
+HASH case 12 sliverrects chord 0.02 ok 1 moves 2245 diags 3 h 2ad47140da639c71
+HASH case 12 star chord 0.05 ok 1 moves 882 diags 0 h cc6b151d8e344aaf
+HASH case 12 text-touchbox chord 0.001 ok 1 moves 3028 diags 2 h d732e71d5f6e38f4
+HASH case 12 thinstrip chord 0.1 ok 1 moves 289 diags 0 h ce315a23b0ae0499
+HASH case 12 tinyspans g=0.125000ch n=172-island chord 0.02 ok 1 moves 864 diags 0 h 23498c5bb8bb3810
+HASH case 12 touch1-twoholes-vertexwall-vertexvertex chord 0.02 ok 1 moves 643 diags 1 h 0b0f46c188335909
+HASH case 13 bezblob chord 0.001 ok 1 moves 304513 diags 0 h 87a354ef94b8b945
+HASH case 13 bezblob chord 0.1 ok 1 moves 3929 diags 1 h 1ae2cf538fcb6b99
+HASH case 13 bowtie chord 0.001 ok 1 moves 2477 diags 1 h 9e684c957b76c428
+HASH case 13 chain g=0.125000ch-circles chord 0.05 ok 1 moves 417 diags 1 h 182ceb93756d934c
+HASH case 13 cluster+near-outside g=0.006250 chord 0.05 ok 1 moves 17037 diags 1 h c69f1d609926bf85
+HASH case 13 flatcorner n=39-denseband chord 0.005 ok 1 moves 1180 diags 1 h bd7dfdc5e0340ad6
+HASH case 13 frametext chord 0.01 ok 1 moves 2290 diags 0 h a5e32f17b9fa9483
+HASH case 13 frametext-crossing chord 0.02 ok 1 moves 1981 diags 1 h 1bad977ed5e71e02
+HASH case 13 holedstar chord 0.01 ok 1 moves 51293 diags 1 h a4b655a470200d15
+HASH case 13 holesinholes-sq chord 0.005 ok 1 moves 5969 diags 0 h f2effa383ac2f2fb
+HASH case 13 lib:ellipse_bez chord 0.1 ok 1 moves 43 diags 0 h c7113333fea82e0d
+HASH case 13 nearsq g=0.002500 chord 0.01 ok 1 moves 673 diags 0 h de8301e0f3837190
+HASH case 13 nestedtight-sq chord 0.05 ok 1 moves 3194 diags 0 h 823278f35767614b
+HASH case 13 nestonboundary-holevertexatcorner+cross chord 0.02 ok 1 moves 577 diags 1 h 952591998e1ff3a7
+HASH case 13 overcircles-inttangent chord 0.02 ok 1 moves 1373 diags 2 h 17e3cf0b695e9c33
+HASH case 13 overpoly chord 0.005 ok 1 moves 3841 diags 1 h a4e2672de1d805cb
+HASH case 13 page-alltouch-squaressharededges chord 0.05 ok 1 moves 1361 diags 1 h 22eb2a06e8d6a523
+HASH case 13 ringneigh-cross chord 0.001 ok 1 moves 4671 diags 2 h 2eb88186f373626a
+HASH case 13 selftouch-corners+cross chord 0.02 ok 1 moves 1360 diags 2 h 157edb00e9fc3e54
+HASH case 13 sharededge chord 0.001 ok 1 moves 663 diags 1 h 24b3ef781aa149ea
+HASH case 13 sliverrects chord 0.005 ok 1 moves 4268 diags 2 h a20b84806b3c1ee0
+HASH case 13 star chord 0.1 ok 1 moves 794 diags 1 h e40b5ab28abf7e2d
+HASH case 13 text-apart chord 0.1 ok 1 moves 390 diags 0 h 137f1d51b8c5f115
+HASH case 13 thinstrip chord 0.05 ok 1 moves 269 diags 0 h 02fab612877ab4e7
+HASH case 13 tinyspans g=0.125000ch n=80-island chord 0.001 ok 1 moves 6362 diags 1 h ed37e66c1775727b
+HASH case 13 touch1-squarecorneroncircle chord 0.01 ok 1 moves 490 diags 2 h 4071e53d3706e720
+HASH case 14 bezblob chord 0.1 ok 1 moves 414 diags 1 h 2bc7e27d88d0a925
+HASH case 14 bowtie chord 0.05 ok 1 moves 1331 diags 2 h c1342148383954b6
+HASH case 14 chain g=0.250000ch-circles chord 0.05 ok 1 moves 595 diags 1 h 6277da2382aaff3f
+HASH case 14 cluster+near-outside g=0.001200 chord 0.001 ok 1 moves 1067437 diags 1 h e79f9045b0a58aa7
+HASH case 14 flatcorner n=132-bentband chord 0.1 ok 1 moves 217 diags 0 h 54fc18c45e2cff5b
+HASH case 14 frametext chord 0.001 ok 1 moves 13294 diags 0 h f2614477f3cfb7ed
+HASH case 14 holedstar chord 0.005 ok 1 moves 2047 diags 1 h f095a979d19c861b
+HASH case 14 holedstar chord 0.01 ok 1 moves 1374 diags 1 h 38c5997ca63e4d1b
+HASH case 14 holesinholes chord 0.02 ok 1 moves 2696 diags 0 h c196248fd8591453
+HASH case 14 lib:L chord 0.01 ok 1 moves 479 diags 0 h 4e5741bbf18f282d
+HASH case 14 nearint g=0.006250 chord 0.05 ok 1 moves 558 diags 0 h b01bdaed26e3110e
+HASH case 14 nestedtight-circ chord 0.05 ok 1 moves 7690 diags 0 h 9ee03d04dbe3cab0
+HASH case 14 nestonboundary-islandsharingholecorner+cross chord 0.001 ok 1 moves 3196 diags 2 h 7f4907add40e8a26
+HASH case 14 overcircles chord 0.1 ok 1 moves 886 diags 2 h 89064f72fe88ed56
+HASH case 14 overpoly chord 0.01 ok 1 moves 1245 diags 1 h fa7c74b78bc88a48
+HASH case 14 overpoly chord 0.1 ok 1 moves 546 diags 1 h a17027919793bd87
+HASH case 14 page-alltouch-squaressharededges chord 0.05 ok 1 moves 13410 diags 2 h f7c1f592f7b01ffb
+HASH case 14 partialoverlapedge chord 0.005 ok 1 moves 485 diags 2 h 17cf50e0e38e588c
+HASH case 14 ringneigh-touch chord 0.01 ok 1 moves 1140 diags 2 h c82ceb993570a73e
+HASH case 14 selftouch-corners+cross chord 0.01 ok 1 moves 1361 diags 1 h 15b7507727743ab9
+HASH case 14 sliverrects chord 0.001 ok 1 moves 20589 diags 1 h b928555b1052f70c
+HASH case 14 star chord 0.001 ok 1 moves 6418 diags 0 h 0708ab4e1c5c6350
+HASH case 14 text-apart chord 0.1 ok 1 moves 582 diags 0 h 7a2a71d80a107f28
+HASH case 14 thinstrip chord 0.1 ok 1 moves 34 diags 0 h 7addfaffa7a98af8
+HASH case 14 tinyspans g=0.250000ch n=267-island chord 0.1 ok 1 moves 3300 diags 0 h a590d934f8797971
+HASH case 14 touch1-tangentcircle chord 0.1 ok 1 moves 336 diags 1 h 1b0fd61e3ca41ca5
+HASH case 15 cluster+near-outside g=0.005000 chord 0.02 ok 1 moves 742 diags 1 h a987f66655aa58cd
+HASH case 15 sharededge chord 0.001 ok 1 moves 963 diags 1 h 4bf2ca3f998bed86
+HASH case 16 bezblob chord 0.1 ok 1 moves 429 diags 0 h 3fa357feed984b1a
+HASH case 16 overpoly chord 0.005 ok 1 moves 5248 diags 1 h ab579a9a7542b590
+HASH case 17 frametext-outerring chord 0.02 ok 1 moves 2141 diags 0 h 5a21ada969786056
+HASH case 17 tinyspans g=0.250000ch n=357-island chord 0.005 ok 1 moves 2871 diags 0 h 414d90f9587b64da
+HASH case 18 text-touchbox chord 0.005 ok 1 moves 49763 diags 2 h 0212231ed890e5f9
+HASH case 18 touch1-squarecorneroncircle chord 0.005 ok 1 moves 975 diags 3 h b9ee4a5d6815e663
+HASH case 19 chain g=0.250000ch-squares chord 0.005 ok 1 moves 1029 diags 1 h 0c516c783f6f8ecd
+HASH case 19 slivercircles chord 0.02 ok 1 moves 5767 diags 0 h 33fd15d123c63b10
+HASH case 2 bezblob chord 0.1 ok 1 moves 253 diags 0 h 83c2bc3ad8f860b4
+HASH case 2 bowtie chord 0.1 ok 1 moves 272 diags 1 h da893cd31bbadf90
+HASH case 2 chain g=0.031250ch-squares chord 0.05 ok 1 moves 934 diags 2 h dd9902a1712204d0
+HASH case 2 cluster+near-inside g=0.001200 chord 0.1 ok 1 moves 472 diags 2 h b6776957662d4711
+HASH case 2 flatcorner n=168-bentband chord 0.02 ok 1 moves 1379 diags 1 h 0067d98f3bb9be40
+HASH case 2 frametext-outerring chord 0.01 ok 1 moves 2535 diags 0 h 281a301f973aa24b
+HASH case 2 holedstar chord 0.01 ok 1 moves 12963 diags 1 h d16eb4a6b829aac2
+HASH case 2 holesinholes chord 0.005 ok 1 moves 2756 diags 0 h a8c47adaa82c0567
+HASH case 2 lib:rect40x20 chord 0.01 ok 1 moves 776 diags 0 h 324a62325305fcbd
+HASH case 2 nearext g=0.003125 chord 0.05 ok 1 moves 171 diags 0 h e30d17278641ac93
+HASH case 2 nestedtight-circ chord 0.1 ok 1 moves 1458 diags 1 h d98f83f63a6b376e
+HASH case 2 nestonboundary-holevertexatcorner+cross chord 0.01 ok 1 moves 1037 diags 2 h ce2ce8affc777da9
+HASH case 2 nestonboundary-islandsharingholecorner+cross chord 0.05 ok 1 moves 517 diags 1 h 970c0190e4bf10b3
+HASH case 2 overcircles-exttangent-inttangent chord 0.1 ok 1 moves 879 diags 8 h 4082e78782e0d2cf
+HASH case 2 overpoly chord 0.01 ok 1 moves 9076 diags 2 h e905a4c83ec395c1
+HASH case 2 page-alltouch-glyphs chord 0.001 ok 1 moves 72823 diags 2 h 7fe4024202e747d2
+HASH case 2 ringneigh-cross chord 0.001 ok 1 moves 8166 diags 1 h 52f72b793b259def
+HASH case 2 selftouch-corners+cross chord 0.01 ok 1 moves 617 diags 1 h 4c6c2fea950c4c9f
+HASH case 2 selftouch-corners+cross chord 0.05 ok 1 moves 479 diags 1 h 4712104c897ef6c2
+HASH case 2 sharededge chord 0.1 ok 1 moves 160 diags 1 h 20ba1db2c9c6239d
+HASH case 2 sliverrects chord 0.01 ok 1 moves 2189 diags 1 h ccb04b5a078667a1
+HASH case 2 star chord 0.05 ok 1 moves 198 diags 0 h d86590bd0ac82153
+HASH case 2 text-overlap chord 0.01 ok 1 moves 2795 diags 1 h 900dca23ee602b63
+HASH case 2 thinstrip chord 0.005 ok 1 moves 1504 diags 1 h 4cb679db81f353f2
+HASH case 2 tinyspans g=0.010000ch n=269-arcwall chord 0.01 ok 1 moves 1315 diags 2 h ed30d07032d56df2
+HASH case 2 touch1-squarecorneroncircle chord 0.001 ok 1 moves 2578 diags 2 h 89c0d9d04b3549c6
+HASH case 3 bezblob chord 0.05 ok 1 moves 4851 diags 0 h 5d1f715796e90c26
+HASH case 3 bowtie chord 0.001 ok 1 moves 2604 diags 1 h 36a4e632017d54c5
+HASH case 3 chain g=0.062500ch-circles chord 0.1 ok 1 moves 343 diags 1 h 8a57f2a15668a293
+HASH case 3 cluster+near-outside g=0.003125 chord 0.05 ok 1 moves 2962 diags 1 h 06712ad875526225
+HASH case 3 flatcorner n=21-denseband chord 0.005 ok 1 moves 1380 diags 0 h e96d58086399f93f
+HASH case 3 frametext-outerring chord 0.01 ok 1 moves 2639 diags 0 h cb7c6105c4985fa9
+HASH case 3 holedstar chord 0.005 ok 1 moves 1091 diags 0 h fe6fdd393c20a013
+HASH case 3 holesinholes-sq chord 0.01 ok 1 moves 1867 diags 0 h 2f4aa4000567fc30
+HASH case 3 lib:dumbbell_neck05 chord 0.01 ok 1 moves 11536 diags 1 h d6f2746f3a890832
+HASH case 3 lib:sliver5deg chord 0.005 ok 1 moves 1515 diags 0 h 26e1cfbbfbeb4a12
+HASH case 3 lib:star12_sharp chord 0.02 ok 1 moves 1536 diags 0 h b4554e7dc2bb7911
+HASH case 3 nearsq g=0.000100 chord 0.1 ok 1 moves 236 diags 1 h c2d3cb40fa99c004
+HASH case 3 nestedtight-circ chord 0.005 ok 1 moves 22164 diags 1 h 0d2692ad696fdfe3
+HASH case 3 nestonboundary-holevertexatcorner+cross chord 0.02 ok 1 moves 1652 diags 1 h c22a2064029960bd
+HASH case 3 overcircles chord 0.02 ok 1 moves 26374 diags 2 h 241bb15b2cfd4433
+HASH case 3 overpoly chord 0.001 ok 1 moves 3254 diags 3 h 2aa2519274f2c6ee
+HASH case 3 page-alltouch-circles chord 0.005 ok 1 moves 16603 diags 2 h 2ac10b70aee36186
+HASH case 3 partialoverlapedge chord 0.001 ok 1 moves 1139 diags 1 h 516fd598c2a10ba5
+HASH case 3 ringneigh-touch chord 0.01 ok 1 moves 745 diags 1 h b9047ed65315feaa
+HASH case 3 selftouch-frame+diamondtangent+crossing chord 0.01 ok 1 moves 2424 diags 1 h bd2c497fcf227f56
+HASH case 3 slivercircles chord 0.02 ok 1 moves 2114 diags 1 h 0c669395088a9057
+HASH case 3 star chord 0.1 ok 1 moves 166 diags 1 h 9ae66b323c1375da
+HASH case 3 text-apart chord 0.02 ok 1 moves 1875 diags 1 h 9a80adddad940b3d
+HASH case 3 thinstrip chord 0.02 ok 1 moves 1576 diags 0 h 30506a9545879b04
+HASH case 3 tinyspans g=0.062500ch n=132-island chord 0.05 ok 1 moves 773 diags 0 h 2b1dbc56186d7cc7
+HASH case 3 touch1-squarecorneroncircle chord 0.005 ok 1 moves 746 diags 2 h 833f9e758ab0e07e
+HASH case 4 bezblob chord 0.005 ok 1 moves 33094 diags 0 h 04f72b00ec9bed99
+HASH case 4 chain g=0.062500ch-circles chord 0.1 ok 1 moves 732 diags 1 h 5d3ac7a046761584
+HASH case 4 cluster+near-inside g=0.001200 chord 0.001 ok 1 moves 8950 diags 1 h e2ecaa80e761e4cb
+HASH case 4 fig8 chord 0.02 ok 1 moves 340 diags 1 h 6bc3c2746e97e278
+HASH case 4 fig8 chord 0.1 ok 1 moves 116 diags 1 h cff6e05e4c7f864c
+HASH case 4 flatcorner n=130-bentband chord 0.05 ok 1 moves 408 diags 0 h b9dd835badb1475b
+HASH case 4 frametext chord 0.005 ok 1 moves 7791 diags 0 h 0f5eec185f0e304d
+HASH case 4 holedstar chord 0.01 ok 1 moves 2039 diags 0 h fa1eae224d3df16d
+HASH case 4 holedstar chord 0.1 ok 1 moves 743 diags 0 h 27c1ec7441611647
+HASH case 4 holesinholes chord 0.005 ok 1 moves 2687 diags 0 h a38d87f0945a07db
+HASH case 4 lib:T chord 0.02 ok 1 moves 638 diags 0 h 3c7699e868125872
+HASH case 4 nearint g=0.010000 chord 0.02 ok 1 moves 2725 diags 0 h bc79714c0672e418
+HASH case 4 nestedtight-sq chord 0.005 ok 1 moves 28071 diags 0 h 585e554bdd311231
+HASH case 4 nestonboundary-holevertexatcorner+cross chord 0.005 ok 1 moves 2772 diags 1 h f68efad5bb244270
+HASH case 4 overcircles chord 0.02 ok 1 moves 551 diags 1 h 62a4235a809a86a0
+HASH case 4 overpoly chord 0.02 ok 1 moves 376 diags 0 h 1855132fa73699ec
+HASH case 4 page-alltouch-glyphs chord 0.005 ok 1 moves 11977 diags 2 h b01f3403bf14759e
+HASH case 4 ringneigh-cross chord 0.1 ok 1 moves 357 diags 1 h 55963aaba3385d96
+HASH case 4 selftouch-corners+cross chord 0.02 ok 1 moves 632 diags 2 h 59034305882cced0
+HASH case 4 sharededge chord 0.005 ok 1 moves 734 diags 2 h 9f382ed528725e39
+HASH case 4 slivercircles chord 0.005 ok 1 moves 7563 diags 1 h 359d37021b8d93e1
+HASH case 4 star chord 0.001 ok 1 moves 5357 diags 0 h 9e7c977c34a75486
+HASH case 4 text-touchbox chord 0.001 ok 1 moves 10409 diags 0 h c486b3ee53dc806f
+HASH case 4 thinstrip chord 0.02 ok 1 moves 967 diags 0 h b1988ab16e937bd3
+HASH case 4 tinyspans g=1.000000ch n=310-arcwall chord 0.02 ok 1 moves 16099 diags 0 h 5e0263b3fc073e3d
+HASH case 4 touch1-squarecorneroncircle chord 0.01 ok 1 moves 6636 diags 3 h 233e3b8aaf6dfe6d
+HASH case 5 bezblob chord 0.005 ok 1 moves 1068 diags 0 h 40ff19d0d762feb7
+HASH case 5 chain g=0.120000ch-squares chord 0.01 ok 1 moves 1129 diags 1 h 9116dcec7714d69c
+HASH case 5 cluster+near-inside g=0.001250 chord 0.01 ok 1 moves 1501 diags 1 h d0f1eab5ff8da9d3
+HASH case 5 fig8 chord 0.05 ok 1 moves 128 diags 1 h 8edded78f6cd8d8a
+HASH case 5 flatcorner n=81-bentband chord 0.05 ok 1 moves 397 diags 0 h 08fbffad25e1510c
+HASH case 5 frametext-crossing chord 0.005 ok 1 moves 7751 diags 1 h 617245c60f942aa3
+HASH case 5 holedstar chord 0.01 ok 1 moves 1499 diags 1 h 46d3d226b2feaeba
+HASH case 5 holedstar chord 0.05 ok 1 moves 1257 diags 0 h 62738dc08496e361
+HASH case 5 holesinholes chord 0.005 ok 1 moves 3589 diags 0 h dda32a5cd20fd0c0
+HASH case 5 lib:neck_0.03 chord 0.001 ok 1 moves 1061 diags 0 h 0e7b48ca0d31e0f2
+HASH case 5 nearext g=0.012500 chord 0.05 ok 1 moves 171 diags 0 h 36b9e0169cee8b0e
+HASH case 5 nestedtight-sq chord 0.005 ok 1 moves 12420 diags 0 h 36280299c829a2df
+HASH case 5 nestonboundary-holeedgeonwall chord 0.05 ok 1 moves 159 diags 1 h 9fb70511753d0293
+HASH case 5 overcircles-exttangent-inttangent chord 0.01 ok 1 moves 2180 diags 7 h 331cc3d4ee942b81
+HASH case 5 overpoly chord 0.01 ok 1 moves 1448 diags 1 h 0b3bcfb8390b60e3
+HASH case 5 page-alltouch-circles chord 0.005 ok 1 moves 16583 diags 3 h 46b63897e40397e1
+HASH case 5 page-alltouch-circles chord 0.1 ok 1 moves 856 diags 1 h 456aefba83368217
+HASH case 5 partialoverlapedge chord 0.1 ok 1 moves 155 diags 1 h 88003fe2c87c07a5
+HASH case 5 ringneigh-cross chord 0.001 ok 1 moves 5664 diags 1 h 98a92cbe838f3374
+HASH case 5 selftouch-frame+diamondtangent+crossing chord 0.001 ok 1 moves 7511 diags 2 h ce08fb608450d3ee
+HASH case 5 slivercircles chord 0.1 ok 1 moves 1276 diags 3 h a8459495027561d3
+HASH case 5 star chord 0.01 ok 1 moves 1722 diags 0 h b95858f954b33b8b
+HASH case 5 text-apart chord 0.02 ok 1 moves 971 diags 0 h 5df2e6795a111145
+HASH case 5 thinstrip chord 0.001 ok 1 moves 3395 diags 0 h 1b1c5776a168fa65
+HASH case 5 tinyspans g=1.000000ch n=251-arcwall chord 0.005 ok 1 moves 788 diags 0 h 1af8456b785dd8bc
+HASH case 5 touch1-squarecorneroncircle chord 0.05 ok 1 moves 2086 diags 4 h 5c839047ea7c1aed
+HASH case 6 bezblob chord 0.005 ok 1 moves 1107 diags 1 h 3c07755ddaac612b
+HASH case 6 chain g=0.031250ch-circles chord 0.05 ok 1 moves 469 diags 1 h 4643a0b54b44e6ad
+HASH case 6 cluster+near-outside g=0.006250 chord 0.1 ok 1 moves 265 diags 1 h ac8a5e3f04cb2885
+HASH case 6 fig8 chord 0.02 ok 1 moves 1897 diags 1 h e0e3f20066c89be4
+HASH case 6 flatcorner n=77-bentband chord 0.005 ok 1 moves 1297 diags 0 h 710394dc67a3d8dd
+HASH case 6 frametext chord 0.005 ok 1 moves 4468 diags 0 h b303ae9ac4cd5315
+HASH case 6 holedstar chord 0.02 ok 1 moves 948 diags 0 h 35d75193b50ce9c4
+HASH case 6 holesinholes-sq chord 0.01 ok 1 moves 5137 diags 0 h ccacaeb2e46873c2
+HASH case 6 lib:A_glyph chord 0.005 ok 1 moves 5454 diags 3 h b51587eb652c8a19
+HASH case 6 nearint g=0.000100 chord 0.1 ok 1 moves 1005 diags 3 h 3cadaa6859ade98e
+HASH case 6 nestedtight-circ chord 0.02 ok 1 moves 4541 diags 0 h ec0c9af3540f3d30
+HASH case 6 nestedtight-sq chord 0.01 ok 1 moves 40079 diags 0 h 42954ca32fda815d
+HASH case 6 nestonboundary-holevertexatcorner+cross chord 0.005 ok 1 moves 3685 diags 1 h 44ed4e029a99fc3a
+HASH case 6 overcircles-exttangent-inttangent chord 0.01 ok 1 moves 2177 diags 5 h 911482073e161842
+HASH case 6 overpoly chord 0.01 ok 1 moves 2017 diags 1 h 60e774d36b202018
+HASH case 6 page-alltouch-circles chord 0.05 ok 1 moves 11162 diags 2 h b7e81518db415c8a
+HASH case 6 ringneigh-cross chord 0.005 ok 1 moves 1806 diags 1 h 7d26c5076ab02ff2
+HASH case 6 selftouch-bowtie+tangentcircle chord 0.005 ok 1 moves 1038 diags 1 h 4cc75b2b22f42bf6
+HASH case 6 sharededge chord 0.02 ok 1 moves 210 diags 3 h b945a41f6ff516bc
+HASH case 6 sliverrects chord 0.1 ok 1 moves 1003 diags 1 h 3264dfbd29af7f2e
+HASH case 6 star chord 0.001 ok 1 moves 8608 diags 0 h bde6368163d7b275
+HASH case 6 text-apart chord 0.05 ok 1 moves 5248 diags 0 h a9dddcc9107a231d
+HASH case 6 thinstrip chord 0.001 ok 1 moves 2664 diags 0 h d3ec73a66cf24561
+HASH case 6 tinyspans g=0.250000ch n=140-arcwall chord 0.005 ok 1 moves 4812 diags 0 h a82dd47311765b26
+HASH case 6 touch1-diamondvertex chord 0.1 ok 1 moves 180 diags 1 h 8e45974c8d22499d
+HASH case 6 touch1-tangentcircle chord 0.001 ok 1 moves 3160 diags 2 h 177380c5da882464
+HASH case 7 bezblob chord 0.001 ok 1 moves 2379 diags 0 h 9b4747a19a16976f
+HASH case 7 chain g=0.031250ch-circles chord 0.1 ok 1 moves 635 diags 1 h 98668036f22a1b65
+HASH case 7 cluster+near-outside g=0.005000 chord 0.02 ok 1 moves 1932 diags 2 h d143bedd3f22a228
+HASH case 7 flatcorner n=300-bentband chord 0.005 ok 1 moves 1238 diags 1 h 5d2dcfca305a4339
+HASH case 7 frametext-crossing chord 0.02 ok 1 moves 3961 diags 1 h 516b29647fbb3494
+HASH case 7 holedstar chord 0.1 ok 1 moves 290 diags 0 h 1174b01719f4768c
+HASH case 7 holesinholes chord 0.02 ok 1 moves 3297 diags 0 h 0ac827e270a75e56
+HASH case 7 holesinholes-sq chord 0.1 ok 1 moves 1465 diags 0 h 7f269676c6e430ae
+HASH case 7 lib:T chord 0.1 ok 1 moves 187 diags 0 h 977abb605e6c3203
+HASH case 7 nearext g=0.012500 chord 0.05 ok 1 moves 324 diags 0 h a6f09a671251b7ab
+HASH case 7 nestedtight-sq chord 0.1 ok 1 moves 956 diags 3 h 3a775deee61863c9
+HASH case 7 nestonboundary-holevertexatcorner+cross chord 0.1 ok 1 moves 242 diags 2 h d4cccd2e11e58d9a
+HASH case 7 overcircles chord 0.1 ok 1 moves 780 diags 1 h e2c3f911bc6602e6
+HASH case 7 overpoly chord 0.1 ok 1 moves 906 diags 2 h c2ce89188a46cd7f
+HASH case 7 page-alltouch-squaressharededges chord 0.05 ok 1 moves 1732 diags 1 h 35d941048063c9bc
+HASH case 7 pentagram chord 0.02 ok 1 moves 872 diags 1 h cda8c199aff8519b
+HASH case 7 ringneigh-cross chord 0.05 ok 1 moves 5261 diags 2 h 4fb3606c2f9802e2
+HASH case 7 ringneigh-touch chord 0.1 ok 1 moves 295 diags 1 h 058e47f090a4d760
+HASH case 7 selftouch-frame+diamondtangent+crossing chord 0.001 ok 1 moves 9048 diags 1 h effdb76f614b84b6
+HASH case 7 sharededge chord 0.02 ok 1 moves 361 diags 1 h 74f5c86166e5a7e4
+HASH case 7 slivercircles chord 0.005 ok 1 moves 9342 diags 0 h c84d1f186c681dfc
+HASH case 7 star chord 0.01 ok 1 moves 1371 diags 0 h 58e9346f81a68902
+HASH case 7 text-overlap chord 0.05 ok 1 moves 623 diags 1 h 27411965d4dc3d64
+HASH case 7 thinstrip chord 0.005 ok 1 moves 1063 diags 0 h 0634f845556bd65e
+HASH case 7 tinyspans g=0.031250ch n=106-Dhole chord 0.01 ok 1 moves 58970 diags 98 h 99697df5b205d56e
+HASH case 7 touch1-tangentcircle chord 0.001 ok 1 moves 10644 diags 1 h 18e33584d2dcc6b6
+HASH case 8 bezblob chord 0.02 ok 1 moves 487 diags 1 h 6995fef02ba95c67
+HASH case 8 bowtie chord 0.02 ok 1 moves 679 diags 1 h 516cab3a3af93d30
+HASH case 8 chain g=0.125000ch-squares chord 0.1 ok 1 moves 301 diags 1 h eeb0649b1e815363
+HASH case 8 chain g=0.250000ch-circles chord 0.01 ok 1 moves 4990 diags 2 h ddf4b38b163153a4
+HASH case 8 cluster+near-outside g=0.002000 chord 0.02 ok 1 moves 947 diags 2 h 5318dcee6332d97d
+HASH case 8 flatcorner n=285-bentband chord 0.1 ok 1 moves 197 diags 0 h 6cf31426a31c4033
+HASH case 8 frametext-crossing chord 0.001 ok 1 moves 11486 diags 1 h cb2a2242623b8691
+HASH case 8 holedstar chord 0.02 ok 1 moves 921 diags 0 h 683c85b106cc01ad
+HASH case 8 holesinholes-sq chord 0.05 ok 1 moves 1973 diags 0 h 396554f145d6963d
+HASH case 8 lib:star12_sharp chord 0.1 ok 1 moves 660 diags 0 h 3642fb90b7682792
+HASH case 8 nearsq g=0.020000 chord 0.02 ok 1 moves 808 diags 0 h 838d15a2ae19c846
+HASH case 8 nestedtight-sq chord 0.005 ok 1 moves 35796 diags 0 h 44149e25de689ea5
+HASH case 8 nestonboundary-holeedgeonwall chord 0.01 ok 1 moves 479 diags 1 h f79b9b5666a5ce38
+HASH case 8 overcircles chord 0.001 ok 1 moves 3127 diags 1 h 1950b2cc0cd396a4
+HASH case 8 overpoly chord 0.001 ok 1 moves 4396 diags 1 h ed1cbcdd68ad7378
+HASH case 8 overpoly chord 0.01 ok 1 moves 1299 diags 1 h 56145d4a571f87f6
+HASH case 8 page-alltouch-squaressharededges chord 0.05 ok 1 moves 9410 diags 2 h c12ab9f08295d7cc
+HASH case 8 ringneigh-touch chord 0.05 ok 1 moves 330 diags 1 h 633e5cc41486036a
+HASH case 8 selftouch-corners+cross chord 0.01 ok 1 moves 825 diags 1 h e88b8806ba155304
+HASH case 8 sharededge chord 0.1 ok 1 moves 106 diags 1 h 71b9f3f6ffbd16f4
+HASH case 8 sliverrects chord 0.001 ok 1 moves 6599 diags 1 h d6a18e7f1df6ac7d
+HASH case 8 star chord 0.05 ok 1 moves 2746 diags 0 h 3cc6008dcc084d2e
+HASH case 8 text-touchbox chord 0.001 ok 1 moves 6501 diags 0 h d7c77121f0363547
+HASH case 8 thinstrip chord 0.1 ok 1 moves 464 diags 0 h e9169972dedf6ee5
+HASH case 8 tinyspans g=0.250000ch n=144-Dhole chord 0.1 ok 1 moves 586 diags 0 h 21cfe5534632ff91
+HASH case 8 touch1-tangentcircle chord 0.02 ok 1 moves 786 diags 3 h b5782d679000fd6d
+HASH case 9 bezblob chord 0.005 ok 1 moves 1735 diags 1 h 2fcd817c892d858a
+HASH case 9 chain g=0.240000ch-circles chord 0.005 ok 1 moves 8808 diags 2 h e37f252ab28519ef
+HASH case 9 cluster+near-outside g=0.001200 chord 0.01 ok 1 moves 992 diags 1 h aab5345979d1def6
+HASH case 9 flatcorner n=270-denseband chord 0.005 ok 1 moves 443 diags 0 h e817e07e6b495db9
+HASH case 9 frametext-crossing chord 0.001 ok 1 moves 15687 diags 1 h 92db42a1c187a1e9
+HASH case 9 holedstar chord 0.02 ok 1 moves 1171 diags 0 h 5a0d6f92fba4a695
+HASH case 9 holesinholes chord 0.001 ok 1 moves 5855 diags 0 h 91b91a40fcc6c3d5
+HASH case 9 lib:O_glyph_bez chord 0.02 ok 1 moves 717 diags 0 h dc72d8b1ac76dfe7
+HASH case 9 lib:sliver5deg chord 0.1 ok 1 moves 160 diags 0 h 526faecbcc659b97
+HASH case 9 nearint g=0.020000 chord 0.02 ok 1 moves 4937 diags 1 h 9989ecabf58da798
+HASH case 9 nestedtight-circ chord 0.02 ok 1 moves 4971 diags 17 h 0ad2e12e0acc6302
+HASH case 9 nestonboundary-islandsharingholecorner+cross chord 0.02 ok 1 moves 461 diags 1 h 8233902fb5624c7a
+HASH case 9 overcircles-inttangent-inttangent chord 0.005 ok 1 moves 2170 diags 3 h 8e23f35ff9475069
+HASH case 9 overpoly chord 0.01 ok 1 moves 2994 diags 2 h db5c01944621aae8
+HASH case 9 overpoly chord 0.05 ok 1 moves 1354 diags 1 h 5a33c8fe23d565f9
+HASH case 9 page-alltouch-glyphs chord 0.1 ok 1 moves 2905 diags 10 h 2448ccd87d1bd67a
+HASH case 9 partialoverlapedge chord 0.1 ok 1 moves 155 diags 1 h e5fcd5e8e9d4f27d
+HASH case 9 pentagram chord 0.05 ok 0 moves 0 diags 2 h 662e2d8a64cc0eb7
+HASH case 9 ringneigh-apart chord 0.05 ok 1 moves 358 diags 0 h acc693586d1434d8
+HASH case 9 selftouch-corners+cross chord 0.02 ok 1 moves 831 diags 2 h 86441791baa850a6
+HASH case 9 sliverrects chord 0.1 ok 1 moves 1000 diags 1 h 870e7375a77656b4
+HASH case 9 star chord 0.02 ok 1 moves 2238 diags 0 h 7a9b45d1acd3b5c1
+HASH case 9 text-apart chord 0.05 ok 1 moves 1525 diags 0 h 6f3f70b217c9f76d
+HASH case 9 thinstrip chord 0.05 ok 1 moves 207 diags 0 h d8dd565ad1f73d02
+HASH case 9 tinyspans g=0.250000ch n=27-island chord 0.02 ok 1 moves 1167 diags 0 h ecd718e473b3c0ad
+HASH case 9 touch1-diamondvertex chord 0.01 ok 1 moves 802 diags 1 h cbe2a43336c595b4

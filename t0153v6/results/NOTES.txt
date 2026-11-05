@@ -1,0 +1,26 @@
+T-0153 round 6 (bdc932c) verifier results.  VERDICT PASS (N1 closed for the wrong-side / wrong-nesting class).
+N1
+ - repro4 (annulus_isl_g0.01, framehole_isl_g0.05), repro5 stad_isl_* (4) and scratch auto_* (5) x SAB 0/2/3/4 x 5 tools:
+   SAB=2/3/4 165/165 refused with 0 moves; SAB=0 55/55 carved, 0 violations (repros_sab.txt).
+ - net (own = part, as v_carve): consistent=0 on every stad_isl wrong skeleton (SAB=4 {0},{1}; SAB=2 {0,1}) (net_repros.txt).
+ - fuzz6 synthetic skeletons, 1.44 M over 6 geometries x c 0.01..1: 69,317 accepted, 0 bypasses. Sanity modes find
+   bypasses (DROP, BADEND), so the oracle has teeth.
+ - autoattack6: 132 geometries x SAB 0/2/3/4 x 2 tools: FLAGS=0; slivers/stepgap all refused; only "full island" with
+   g, d within 2c+d carves outside, max 0.36 x (2c+d); identical on 144e957 (disc criterion r - (2c+d)).
+ - MA structure contract (branch ends == node points, branches listed at their nodes): 0 violations over 2,094 MAs.
+NON-BLOCKING
+ - own-ring skip assumes medial radius = exact distance to the part's own boundaries. True for side errors (a flipped
+   contour stays a site: buildPieces drops only leftInside<0 and counts it). A silently dropped own boundary (count not
+   incremented) is no longer caught: repro6/sq_hole_diag.txt  net 0.05 0 with OWNLIST=01 -> consistent=1 (8 pts in the
+   hole, 72 discs through it); OWN=0 (144e957 semantics) -> 0.
+ - membership carried through nodes without a distance check: relies on branch end == node point (holds; BADEND fuzz
+   shows bypass if the contract broke).
+ - No unit test passes `own` (new test uses own={}); production path covered only end to end.
+ - 2c+d slack applies to every disc (not just r <= 2c+d skeletons): full-island SAB=4 c0.05 -0.007 mm, c1.0 -0.24 mm.
+REGRESSIONS: hash 400 identical to 144e957 and 209499a; adv 4320 identical except 7 framehole(_isl)_g0.0005 refusals
+ now 1 diagnostic instead of 2 (dedup of identical MedialAxisCapped message, 0 moves both); refusals 585 = 585.
+ SAB matrix adv/adv2/repro4 (999) identical to r5. Goldens regenerated in scratch: no changes.
+ New test: fails on 144e957 (1 assertion, other 281,077 pass), passes on bdc932c.
+PERF Release, load 16-24, interleaved: plain 209499a 27.6/27.3 vs bdc 27.2/29.1 s; frame 43.6/43.3 vs 41.3/43.6 s;
+ flat 35.5/34.5 vs 35.3/36.0 s.
+BUILD Debug -Werror ok, ctest 985/985; changelog check ok; merge-tree vs origin/main 292fdcb clean.

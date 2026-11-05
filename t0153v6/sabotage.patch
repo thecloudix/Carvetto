@@ -1,0 +1,35 @@
+--- a/core/src/geometry/medial_axis.cpp	2026-11-04 11:33:53.000000000 -0600
++++ b/core/src/geometry/medial_axis.cpp	2026-11-04 16:20:57.135098761 -0600
+@@ -1,3 +1,4 @@
++#include <cstdlib>
+ #include "carvetto/geometry/medial_axis.hpp"
+ 
+ #include <algorithm>
+@@ -1124,6 +1125,11 @@
+             continue;
+         }
+         leftInside[i] = inRegion(wl) ? 1 : 0;
++        {   // VERIFIER SABOTAGE (never committed): SAB=2 flips contour SABI (default 1), SAB=3 flips every contour but 0
++            const char* sb = std::getenv("SAB"); const int sab = sb ? std::atoi(sb) : 0;
++            const char* si = std::getenv("SABI"); const std::size_t sabi = si ? static_cast<std::size_t>(std::atoi(si)) : 1u;
++            if ((sab == 2 && i == sabi) || (sab == 3 && i > 0)) { leftInside[i] = 1 - leftInside[i]; }
++        }
+     }
+ }
+ 
+--- a/core/src/toolpath/v_carve.cpp	2026-11-04 11:33:53.000000000 -0600
++++ b/core/src/toolpath/v_carve.cpp	2026-11-04 16:20:57.137669960 -0600
+@@ -1,3 +1,4 @@
++#include <cstdlib>
+ #include "carvetto/toolpath/v_carve.hpp"
+ 
+ #include <algorithm>
+@@ -358,7 +359,7 @@
+             for (std::size_t k = 0; k < probes.size() && loc == geometry::PointLocation::OnBoundary; ++k) {
+                 loc = geometry::locatePoint(bs[j].contour, probes[k], geometry::FillRule::EvenOdd, tol);
+             }
+-            if (loc == geometry::PointLocation::Inside) {
++            if (loc == geometry::PointLocation::Inside && !(std::getenv("SAB") && std::atoi(std::getenv("SAB")) == 4)) {
+                 parent[i] = j;
+                 best = bs[j].area;
+             }

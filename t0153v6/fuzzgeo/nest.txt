@@ -1,0 +1,30 @@
+contour 0 closed=1
+    L 0 0 20 0
+    L 20 0 20 20
+    L 20 20 0 20
+    L 0 20 0 0
+contour 0 closed=1
+    A 5 5 r 3 0 -6.283185307179586 dir 1
+contour 0 closed=1
+    A 5 5 r 1.5 0 6.283185307179586 dir 0
+contour 0 closed=1
+    L 11 9 18 9
+    L 18 9 18 2
+    L 18 2 11 2
+    L 11 2 11 9
+contour 0 closed=1
+    L 12 3 17 3
+    L 17 3 17 8
+    L 17 8 12 8
+    L 12 8 12 3
+contour 0 closed=1
+    L 13 7 16 7
+    L 16 7 16 4
+    L 16 4 13 4
+    L 13 4 13 7
+contour 0 closed=1
+    A 10 15 r 4 0 -6.283185307179586 dir 1
+contour 0 closed=1
+    A 8.5 15 r 1 0 6.283185307179586 dir 0
+contour 0 closed=1
+    A 11.5 15 r 1 0 6.283185307179586 dir 0

@@ -1,0 +1,221 @@
+fuzzgeo/nest.txt c=0.01 iters=20000 accepted=83 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=244 own=0,1,2,3,4,5,6,7,8, outside_by=0.0000 disc_past=0.3552 at (3.51205,0.47770) branches=1 nodes=2
+BADEND BYPASS it=4707 own=0,1,2,3,4,5,6,7,8, outside_by=0.0000 disc_past=0.0167 at (18.06151,5.24127) branches=1 nodes=2
+BADEND BYPASS it=4793 own=0,1,2,3,4,5,6,7,8, outside_by=0.0000 disc_past=1.0776 at (4.31909,13.92557) branches=1 nodes=4
+BADEND fuzzgeo/nest.txt c=0.01 iters=5000 accepted=23 BYPASS=3 worstOutside=0.0000 worstDisc=1.0776
+fuzzgeo/nest.txt c=0.01 iters=20000 accepted=105 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=107 own=0,1,3,6,8, outside_by=0.0000 disc_past=0.9158 at (1.09513,14.09362) branches=1 nodes=2
+BADEND BYPASS it=3016 own=0,1,3,4,5,6, outside_by=0.0000 disc_past=0.1785 at (11.82034,9.22686) branches=1 nodes=2
+BADEND fuzzgeo/nest.txt c=0.01 iters=5000 accepted=37 BYPASS=2 worstOutside=0.0000 worstDisc=0.9158
+fuzzgeo/nest.txt c=0.01 iters=20000 accepted=130 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=19 own=2,4,6,7, outside_by=0.0000 disc_past=0.3314 at (4.69288,4.16039) branches=1 nodes=1
+BADEND BYPASS it=1684 own=0,1,2,3,4,5,6,7,8, outside_by=0.0000 disc_past=0.1018 at (6.33586,7.83830) branches=1 nodes=4
+BADEND BYPASS it=3579 own=0,1,2,3,4,5,6,7,8, outside_by=0.0000 disc_past=0.7349 at (5.27123,11.69545) branches=1 nodes=1
+BADEND fuzzgeo/nest.txt c=0.01 iters=5000 accepted=30 BYPASS=3 worstOutside=0.0000 worstDisc=0.7349
+fuzzgeo/nest.txt c=0.05 iters=20000 accepted=111 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=244 own=0,1,2,3,4,5,6,7,8, outside_by=0.0000 disc_past=0.3285 at (3.60626,0.62760) branches=1 nodes=2
+BADEND BYPASS it=4793 own=0,1,2,3,4,5,6,7,8, outside_by=0.0000 disc_past=1.0509 at (4.31909,13.92557) branches=1 nodes=4
+BADEND fuzzgeo/nest.txt c=0.05 iters=5000 accepted=28 BYPASS=2 worstOutside=0.0000 worstDisc=1.0509
+fuzzgeo/nest.txt c=0.05 iters=20000 accepted=126 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=107 own=0,1,3,6,8, outside_by=0.0000 disc_past=0.8891 at (1.09513,14.09362) branches=1 nodes=2
+BADEND BYPASS it=3016 own=0,1,3,4,5,6, outside_by=0.0000 disc_past=0.1518 at (11.82034,9.22686) branches=1 nodes=2
+BADEND fuzzgeo/nest.txt c=0.05 iters=5000 accepted=44 BYPASS=2 worstOutside=0.0000 worstDisc=0.8891
+fuzzgeo/nest.txt c=0.05 iters=20000 accepted=148 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=19 own=2,4,6,7, outside_by=0.0000 disc_past=0.3047 at (4.69288,4.16039) branches=1 nodes=1
+BADEND BYPASS it=1684 own=0,1,2,3,4,5,6,7,8, outside_by=0.0000 disc_past=0.0775 at (6.36134,7.96096) branches=1 nodes=4
+BADEND BYPASS it=3377 own=0,1,2,3,4,5,6,7,8, outside_by=0.0000 disc_past=0.2321 at (14.58278,1.35522) branches=1 nodes=3
+BADEND fuzzgeo/nest.txt c=0.05 iters=5000 accepted=41 BYPASS=4 worstOutside=0.0000 worstDisc=0.7082
+fuzzgeo/nest.txt c=0.3 iters=20000 accepted=238 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=4793 own=0,1,2,3,4,5,6,7,8, outside_by=0.0000 disc_past=0.8842 at (4.31909,13.92557) branches=1 nodes=4
+BADEND fuzzgeo/nest.txt c=0.3 iters=5000 accepted=52 BYPASS=1 worstOutside=0.0000 worstDisc=0.8842
+fuzzgeo/nest.txt c=0.3 iters=20000 accepted=241 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=107 own=0,1,3,6,8, outside_by=0.0000 disc_past=0.7225 at (1.09513,14.09362) branches=1 nodes=2
+BADEND BYPASS it=3303 own=0,1,2,3,4,5,6,7,8, outside_by=0.0000 disc_past=0.2798 at (6.28779,9.59679) branches=1 nodes=2
+BADEND fuzzgeo/nest.txt c=0.3 iters=5000 accepted=72 BYPASS=2 worstOutside=0.0000 worstDisc=0.7225
+fuzzgeo/nest.txt c=0.3 iters=20000 accepted=254 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=19 own=2,4,6,7, outside_by=0.0000 disc_past=0.1380 at (4.69288,4.16039) branches=1 nodes=1
+BADEND BYPASS it=3579 own=0,1,2,3,4,5,6,7,8, outside_by=0.0000 disc_past=0.5415 at (5.27123,11.69545) branches=1 nodes=1
+BADEND fuzzgeo/nest.txt c=0.3 iters=5000 accepted=69 BYPASS=2 worstOutside=0.0000 worstDisc=0.5415
+fuzzgeo/nest.txt c=1 iters=20000 accepted=3134 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=2291 own=0,1,2,3,4,5,6,7,8, outside_by=0.0000 disc_past=0.4060 at (2.37862,6.96908) branches=4 nodes=5
+BADEND BYPASS it=4793 own=0,1,2,3,4,5,6,7,8, outside_by=0.0000 disc_past=0.4176 at (4.31909,13.92557) branches=1 nodes=4
+BADEND fuzzgeo/nest.txt c=1 iters=5000 accepted=797 BYPASS=2 worstOutside=0.0000 worstDisc=0.4176
+fuzzgeo/nest.txt c=1 iters=20000 accepted=3092 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=1251 own=0,1,2,3,4,5,6,7,8, outside_by=0.0000 disc_past=0.3365 at (15.72391,14.40036) branches=4 nodes=3
+BADEND fuzzgeo/nest.txt c=1 iters=5000 accepted=775 BYPASS=1 worstOutside=0.0000 worstDisc=0.3365
+fuzzgeo/nest.txt c=1 iters=20000 accepted=3095 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND fuzzgeo/nest.txt c=1 iters=5000 accepted=756 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+fuzzgeo/thinwalls.txt c=0.01 iters=20000 accepted=145 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=4087 own=2,3,5,6,7,8,9,12, outside_by=0.0000 disc_past=0.0542 at (17.15291,9.32600) branches=1 nodes=1
+BADEND fuzzgeo/thinwalls.txt c=0.01 iters=5000 accepted=31 BYPASS=1 worstOutside=0.0000 worstDisc=0.0542
+fuzzgeo/thinwalls.txt c=0.01 iters=20000 accepted=149 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=389 own=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18, outside_by=0.0000 disc_past=0.3969 at (11.32265,8.18814) branches=2 nodes=4
+BADEND fuzzgeo/thinwalls.txt c=0.01 iters=5000 accepted=29 BYPASS=1 worstOutside=0.0000 worstDisc=0.3969
+fuzzgeo/thinwalls.txt c=0.01 iters=20000 accepted=150 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=3488 own=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18, outside_by=0.0000 disc_past=0.0043 at (19.47452,2.01654) branches=1 nodes=2
+BADEND BYPASS it=4045 own=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18, outside_by=0.0000 disc_past=0.1016 at (6.00626,7.97104) branches=1 nodes=3
+BADEND fuzzgeo/thinwalls.txt c=0.01 iters=5000 accepted=34 BYPASS=2 worstOutside=0.0000 worstDisc=0.1016
+fuzzgeo/thinwalls.txt c=0.05 iters=20000 accepted=207 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=2210 own=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18, outside_by=0.0000 disc_past=0.1655 at (6.96441,8.21665) branches=2 nodes=3
+BADEND BYPASS it=4087 own=2,3,5,6,7,8,9,12, outside_by=0.0000 disc_past=0.0275 at (17.15291,9.32600) branches=1 nodes=1
+BADEND BYPASS it=4695 own=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18, outside_by=0.0000 disc_past=0.0341 at (6.65433,7.88158) branches=3 nodes=3
+BADEND fuzzgeo/thinwalls.txt c=0.05 iters=5000 accepted=51 BYPASS=3 worstOutside=0.0000 worstDisc=0.1655
+fuzzgeo/thinwalls.txt c=0.05 iters=20000 accepted=201 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND fuzzgeo/thinwalls.txt c=0.05 iters=5000 accepted=49 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+fuzzgeo/thinwalls.txt c=0.05 iters=20000 accepted=222 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=685 own=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18, outside_by=0.0000 disc_past=0.0790 at (5.39536,3.79584) branches=1 nodes=2
+BADEND BYPASS it=1847 own=0,1,2,4,7,8,9,10,11,13,15,16,17,18, outside_by=0.0000 disc_past=0.0811 at (14.88085,6.29422) branches=1 nodes=2
+BADEND BYPASS it=4045 own=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18, outside_by=0.0000 disc_past=0.0749 at (6.00626,7.97104) branches=1 nodes=3
+BADEND fuzzgeo/thinwalls.txt c=0.05 iters=5000 accepted=53 BYPASS=3 worstOutside=0.0000 worstDisc=0.0811
+fuzzgeo/thinwalls.txt c=0.3 iters=20000 accepted=789 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=67 own=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18, outside_by=0.0000 disc_past=0.1479 at (3.55029,4.71227) branches=2 nodes=2
+BADEND BYPASS it=946 own=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18, outside_by=0.0000 disc_past=0.1199 at (10.08572,3.25069) branches=1 nodes=3
+BADEND BYPASS it=1784 own=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18, outside_by=0.0000 disc_past=0.3562 at (17.67376,7.55824) branches=2 nodes=4
+BADEND fuzzgeo/thinwalls.txt c=0.3 iters=5000 accepted=181 BYPASS=3 worstOutside=0.0000 worstDisc=0.3562
+fuzzgeo/thinwalls.txt c=0.3 iters=20000 accepted=771 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=2373 own=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18, outside_by=0.0000 disc_past=0.1119 at (8.03481,4.78411) branches=1 nodes=3
+BADEND BYPASS it=4693 own=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18, outside_by=0.0000 disc_past=0.1578 at (12.08002,6.53124) branches=2 nodes=3
+BADEND BYPASS it=4764 own=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18, outside_by=0.0000 disc_past=0.2357 at (10.02984,3.46818) branches=2 nodes=2
+BADEND fuzzgeo/thinwalls.txt c=0.3 iters=5000 accepted=185 BYPASS=3 worstOutside=0.0000 worstDisc=0.2357
+fuzzgeo/thinwalls.txt c=0.3 iters=20000 accepted=814 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=3842 own=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18, outside_by=0.0000 disc_past=0.2599 at (16.00470,4.65269) branches=3 nodes=5
+BADEND fuzzgeo/thinwalls.txt c=0.3 iters=5000 accepted=195 BYPASS=1 worstOutside=0.0000 worstDisc=0.2599
+fuzzgeo/thinwalls.txt c=1 iters=20000 accepted=5304 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=4616 own=0,2,6,7,11,13,15,17, outside_by=0.7071 disc_past=0.0000 at (-0.50000,-0.50000) branches=6 nodes=6
+BADEND fuzzgeo/thinwalls.txt c=1 iters=5000 accepted=1302 BYPASS=1 worstOutside=0.7071 worstDisc=0.0000
+fuzzgeo/thinwalls.txt c=1 iters=20000 accepted=5257 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND fuzzgeo/thinwalls.txt c=1 iters=5000 accepted=1332 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+fuzzgeo/thinwalls.txt c=1 iters=20000 accepted=5293 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND fuzzgeo/thinwalls.txt c=1 iters=5000 accepted=1355 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+/home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.01 iters=20000 accepted=91 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=421 own=0,1,2, outside_by=0.0000 disc_past=0.6552 at (3.86960,6.98108) branches=1 nodes=1
+BADEND /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.01 iters=5000 accepted=14 BYPASS=1 worstOutside=0.0000 worstDisc=0.6552
+/home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.01 iters=20000 accepted=67 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=4438 own=0,1,2, outside_by=0.0000 disc_past=0.4942 at (2.27350,3.74893) branches=1 nodes=3
+BADEND /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.01 iters=5000 accepted=23 BYPASS=1 worstOutside=0.0000 worstDisc=0.4942
+/home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.01 iters=20000 accepted=67 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.01 iters=5000 accepted=15 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+/home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.05 iters=20000 accepted=106 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=421 own=0,1,2, outside_by=0.0000 disc_past=0.6285 at (3.86960,6.98108) branches=1 nodes=1
+BADEND /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.05 iters=5000 accepted=17 BYPASS=1 worstOutside=0.0000 worstDisc=0.6285
+/home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.05 iters=20000 accepted=87 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=1153 own=0,1,2, outside_by=0.0000 disc_past=0.0727 at (2.37269,2.44705) branches=1 nodes=1
+BADEND BYPASS it=4438 own=0,1,2, outside_by=0.0000 disc_past=0.4600 at (2.30264,3.77053) branches=1 nodes=3
+BADEND /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.05 iters=5000 accepted=30 BYPASS=2 worstOutside=0.0000 worstDisc=0.4600
+/home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.05 iters=20000 accepted=86 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.05 iters=5000 accepted=19 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+/home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.3 iters=20000 accepted=215 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=421 own=0,1,2, outside_by=0.0000 disc_past=0.4618 at (3.86960,6.98108) branches=1 nodes=1
+BADEND BYPASS it=685 own=0,1,2, outside_by=0.0000 disc_past=0.2306 at (4.33413,7.75498) branches=2 nodes=4
+BADEND /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.3 iters=5000 accepted=34 BYPASS=2 worstOutside=0.0000 worstDisc=0.4618
+/home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.3 iters=20000 accepted=192 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=4438 own=0,1,2, outside_by=0.0000 disc_past=0.2463 at (2.48474,3.90555) branches=1 nodes=3
+BADEND /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.3 iters=5000 accepted=54 BYPASS=1 worstOutside=0.0000 worstDisc=0.2463
+/home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.3 iters=20000 accepted=200 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=832 own=1,2, outside_by=0.0000 disc_past=0.3006 at (6.83944,2.22132) branches=1 nodes=1
+BADEND BYPASS it=4913 own=2, outside_by=0.0000 disc_past=0.7982 at (2.50110,4.68033) branches=2 nodes=4
+BADEND /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=0.3 iters=5000 accepted=42 BYPASS=2 worstOutside=0.0000 worstDisc=0.7982
+/home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=1 iters=20000 accepted=1599 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=1 iters=5000 accepted=376 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+/home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=1 iters=20000 accepted=1593 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=1 iters=5000 accepted=389 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+/home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=1 iters=20000 accepted=1535 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND /home/chris/harness/t0153v4/repro4/framehole_isl_g0.05.txt c=1 iters=5000 accepted=414 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+/home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.01 iters=20000 accepted=51 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=322 own=0,1,2, outside_by=0.0000 disc_past=0.3638 at (3.09313,-0.87604) branches=1 nodes=2
+BADEND /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.01 iters=5000 accepted=9 BYPASS=1 worstOutside=0.0000 worstDisc=0.3638
+/home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.01 iters=20000 accepted=53 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=4082 own=1,2, outside_by=0.0000 disc_past=0.5331 at (-0.99459,1.01646) branches=2 nodes=2
+BADEND /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.01 iters=5000 accepted=9 BYPASS=1 worstOutside=0.0000 worstDisc=0.5331
+/home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.01 iters=20000 accepted=63 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.01 iters=5000 accepted=9 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+/home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.05 iters=20000 accepted=62 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=2611 own=0,1,2, outside_by=0.0000 disc_past=0.4612 at (0.52330,-2.57662) branches=2 nodes=3
+BADEND BYPASS it=3517 own=2, outside_by=0.0000 disc_past=0.0562 at (0.90149,-1.63191) branches=1 nodes=1
+BADEND /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.05 iters=5000 accepted=9 BYPASS=2 worstOutside=0.0000 worstDisc=0.4612
+/home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.05 iters=20000 accepted=56 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.05 iters=5000 accepted=14 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+/home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.05 iters=20000 accepted=57 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=471 own=0,1,2, outside_by=0.0000 disc_past=0.3574 at (2.49688,1.68936) branches=2 nodes=3
+BADEND BYPASS it=4395 own=0,1,2, outside_by=0.0000 disc_past=0.6438 at (-2.04863,-0.80194) branches=2 nodes=3
+BADEND /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.05 iters=5000 accepted=10 BYPASS=2 worstOutside=0.0000 worstDisc=0.6438
+/home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.3 iters=20000 accepted=95 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.3 iters=5000 accepted=27 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+/home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.3 iters=20000 accepted=90 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=450 own=0,1,2, outside_by=0.0000 disc_past=0.3120 at (1.14436,-1.92152) branches=1 nodes=1
+BADEND /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.3 iters=5000 accepted=25 BYPASS=1 worstOutside=0.0000 worstDisc=0.3120
+/home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.3 iters=20000 accepted=83 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=2726 own=0,2, outside_by=0.0000 disc_past=0.9326 at (1.67205,1.73993) branches=1 nodes=2
+BADEND /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=0.3 iters=5000 accepted=23 BYPASS=1 worstOutside=0.0000 worstDisc=0.9326
+/home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=1 iters=20000 accepted=222 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=1 iters=5000 accepted=61 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+/home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=1 iters=20000 accepted=220 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=1 iters=5000 accepted=52 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+/home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=1 iters=20000 accepted=233 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND /home/chris/harness/t0153v4/repro4/annulus_isl_g0.01.txt c=1 iters=5000 accepted=52 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+/home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.01 iters=20000 accepted=55 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=4710 own=0,1,2,3,4,5,6,7,8,9,10, outside_by=0.0000 disc_past=0.0167 at (19.06072,0.39501) branches=1 nodes=2
+BADEND /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.01 iters=5000 accepted=17 BYPASS=1 worstOutside=0.0000 worstDisc=0.0167
+/home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.01 iters=20000 accepted=74 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.01 iters=5000 accepted=9 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+/home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.01 iters=20000 accepted=51 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.01 iters=5000 accepted=16 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+/home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.05 iters=20000 accepted=82 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.05 iters=5000 accepted=24 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+/home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.05 iters=20000 accepted=93 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=3107 own=0,1,2,3,4,5,6,7,8,9,10, outside_by=0.0000 disc_past=0.2098 at (-9.25435,-0.53231) branches=2 nodes=2
+BADEND /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.05 iters=5000 accepted=15 BYPASS=1 worstOutside=0.0000 worstDisc=0.2098
+/home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.05 iters=20000 accepted=72 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.05 iters=5000 accepted=18 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+/home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.3 iters=20000 accepted=147 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.3 iters=5000 accepted=39 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+/home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.3 iters=20000 accepted=158 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.3 iters=5000 accepted=28 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+/home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.3 iters=20000 accepted=142 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=0.3 iters=5000 accepted=37 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+/home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=1 iters=20000 accepted=4149 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=1 iters=5000 accepted=1008 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+/home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=1 iters=20000 accepted=4164 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=1 iters=5000 accepted=993 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+/home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=1 iters=20000 accepted=4109 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND /home/chris/harness/t0153v5/repro5/stad_isl_sab4_c0.05.txt c=1 iters=5000 accepted=1078 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.01 iters=20000 accepted=120 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=66 own=0,1,2, outside_by=0.0000 disc_past=0.0981 at (-14.04065,-1.57574) branches=1 nodes=2
+BADEND BYPASS it=914 own=0,1,2, outside_by=0.0000 disc_past=0.7447 at (0.05085,-0.95837) branches=1 nodes=1
+BADEND repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.01 iters=5000 accepted=30 BYPASS=2 worstOutside=0.0000 worstDisc=0.7447
+repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.01 iters=20000 accepted=115 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=408 own=0,1,2, outside_by=0.0000 disc_past=0.0104 at (-10.93839,0.79111) branches=1 nodes=3
+BADEND repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.01 iters=5000 accepted=36 BYPASS=1 worstOutside=0.0000 worstDisc=0.0104
+repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.01 iters=20000 accepted=111 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=1548 own=0,1,2, outside_by=0.0000 disc_past=0.7657 at (-7.01874,-1.08543) branches=1 nodes=3
+BADEND BYPASS it=1959 own=0,1,2, outside_by=0.0000 disc_past=0.0200 at (-18.64648,1.09100) branches=1 nodes=4
+BADEND repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.01 iters=5000 accepted=32 BYPASS=2 worstOutside=0.0000 worstDisc=0.7657
+repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.05 iters=20000 accepted=154 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=66 own=0,1,2, outside_by=0.0000 disc_past=0.0893 at (-14.05055,-1.56681) branches=1 nodes=2
+BADEND BYPASS it=914 own=0,1,2, outside_by=0.0000 disc_past=0.7180 at (0.05085,-0.95837) branches=1 nodes=1
+BADEND BYPASS it=2586 own=2, outside_by=0.0000 disc_past=0.0811 at (20.96423,0.29092) branches=1 nodes=4
+BADEND repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.05 iters=5000 accepted=45 BYPASS=3 worstOutside=0.0000 worstDisc=0.7180
+repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.05 iters=20000 accepted=137 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=1214 own=0,1,2, outside_by=0.0000 disc_past=0.0990 at (-11.44348,0.37561) branches=1 nodes=1
+BADEND repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.05 iters=5000 accepted=45 BYPASS=1 worstOutside=0.0000 worstDisc=0.0990
+repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.05 iters=20000 accepted=135 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=1548 own=0,1,2, outside_by=0.0000 disc_past=0.7390 at (-7.08487,-1.07137) branches=1 nodes=3
+BADEND BYPASS it=3484 own=0,1,2, outside_by=0.0000 disc_past=0.5247 at (19.87736,-1.56908) branches=1 nodes=4
+BADEND repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.05 iters=5000 accepted=44 BYPASS=2 worstOutside=0.0000 worstDisc=0.7390
+repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.3 iters=20000 accepted=263 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=73 own=0,1,2, outside_by=0.0000 disc_past=0.1694 at (-2.51572,-1.76883) branches=1 nodes=4
+BADEND repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.3 iters=5000 accepted=78 BYPASS=1 worstOutside=0.0000 worstDisc=0.1694
+repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.3 iters=20000 accepted=273 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=37 own=1,2, outside_by=0.0000 disc_past=0.2000 at (5.88157,-0.80850) branches=1 nodes=3
+BADEND repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.3 iters=5000 accepted=69 BYPASS=1 worstOutside=0.0000 worstDisc=0.2000
+repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.3 iters=20000 accepted=286 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND BYPASS it=306 own=0,1,2, outside_by=0.0000 disc_past=0.1873 at (3.29760,-0.39129) branches=1 nodes=4
+BADEND BYPASS it=3528 own=0,1,2, outside_by=0.0000 disc_past=0.3324 at (19.79340,-1.56908) branches=1 nodes=4
+BADEND BYPASS it=4544 own=1,2, outside_by=0.0000 disc_past=0.2826 at (8.39557,-0.50405) branches=2 nodes=3
+BADEND repro6/fullisl_c1.0_g0.3_d0.3.txt c=0.3 iters=5000 accepted=72 BYPASS=3 worstOutside=0.0000 worstDisc=0.3324
+repro6/fullisl_c1.0_g0.3_d0.3.txt c=1 iters=20000 accepted=5711 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND repro6/fullisl_c1.0_g0.3_d0.3.txt c=1 iters=5000 accepted=1437 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+repro6/fullisl_c1.0_g0.3_d0.3.txt c=1 iters=20000 accepted=5755 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND repro6/fullisl_c1.0_g0.3_d0.3.txt c=1 iters=5000 accepted=1408 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+repro6/fullisl_c1.0_g0.3_d0.3.txt c=1 iters=20000 accepted=5779 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
+BADEND repro6/fullisl_c1.0_g0.3_d0.3.txt c=1 iters=5000 accepted=1435 BYPASS=0 worstOutside=0.0000 worstDisc=0.0000
