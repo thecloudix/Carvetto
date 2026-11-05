@@ -1,4 +1,5 @@
 #include "carvetto/toolpath/v_carve.hpp"
+#include "v_carve_check.hpp"
 
 #include <algorithm>
 #include <array>
@@ -421,64 +422,6 @@ bool insideRing(const std::vector<Vec2>& r, Vec2 p) {
         }
     }
     return in;
-}
-
-/// Every boundary of the whole job polygonised at the internal tolerance, with a box index, for
-/// the even-odd test of skeleton points against the whole region (not just their part: a hole
-/// mistaken for an outer is a part of its own and contains its own skeleton).
-struct RegionRings {
-    std::vector<std::vector<Vec2>> rings;
-    BoxIndex index;
-    RegionRings(const std::vector<Boundary>& bs, const geometry::Tolerance& tol) {
-        std::vector<Box2> boxes;
-        for (const Boundary& b : bs) {
-            rings.push_back(b.contour.polygonise(tol).points);
-            Box2 box;
-            for (const Vec2 v : rings.back()) {
-                box.expand(v);
-            }
-            boxes.push_back(box);
-        }
-        index = BoxIndex(std::move(boxes));
-    }
-    bool inside(Vec2 p) const {
-        if (index.bounds().isEmpty() || !(index.bounds().max.x > p.x)) {
-            return false;
-        }
-        bool in = false;
-        const Box2 ray{p, Vec2{index.bounds().max.x + 1.0, p.y}};
-        for (const std::size_t k : index.query(ray)) {
-            in = in != insideRing(rings[k], p);
-        }
-        return in;
-    }
-};
-
-/// True when the skeleton lies in the even-odd region: for every branch its deepest point
-/// (largest inscribed radius), and every isolated node, is inside the region. Points whose
-/// radius exceeds the rings' polygonisation error by a clear margin are decided exactly by the
-/// rings. A skeleton on the wrong side of a boundary (a hole read as region) fails this and the
-/// carve is refused (ADR-0025 §5).
-bool skeletonInside(const MedialAxis& ax, const RegionRings& region, const geometry::Tolerance& tol) {
-    const double clear = 2.0 * tol.chordal + tol.distance;
-    auto ok = [&](Vec2 p, double r) { return !(r > clear) || region.inside(p); };
-    for (const geometry::MedialBranch& br : ax.branches) {
-        const geometry::MedialPoint* deepest = nullptr;
-        for (const geometry::MedialPoint& m : br.points) {
-            if (deepest == nullptr || m.radius > deepest->radius) {
-                deepest = &m;
-            }
-        }
-        if (deepest != nullptr && !ok(deepest->point, deepest->radius)) {
-            return false;
-        }
-    }
-    for (const geometry::MedialNode& nd : ax.nodes) {
-        if (nd.branches.empty() && !ok(nd.point, nd.radius)) {
-            return false;
-        }
-    }
-    return true;
 }
 
 struct SkelPoint {
@@ -928,7 +871,12 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
     inner.chordal = std::max(tol.chordal / kInnerDivisor, kPocketMinChordal);
     inner.distance = std::min(tol.distance, inner.chordal);
 
-    const RegionRings regionRings(boundaries, inner);
+    std::vector<Contour> allBoundaries;
+    allBoundaries.reserve(boundaries.size());
+    for (const Boundary& b : boundaries) {
+        allBoundaries.push_back(b.contour);
+    }
+    const detail::SkeletonCheck skeletonCheck(allBoundaries, inner);
 
     // Medial axis and skeleton cuts per region.
     std::vector<GroupResult> carved(groups.size());
@@ -948,7 +896,8 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
                 ++zeroArea;
             }
         }
-        if (ax.ignoredContours > zeroArea || (!ax.accuracyCapped && !skeletonInside(ax, regionRings, inner))) {
+        if (ax.ignoredContours > zeroArea ||
+            (!ax.accuracyCapped && !skeletonCheck.consistent(ax))) {
             // Every boundary of a part encloses area and separates inside from outside (they
             // do not cross and are nested by containment): the medial axis must use them all,
             // or a hole would be carved through. Never carve on a skeleton that dropped one.
@@ -1219,4 +1168,114 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
     return result;
 }
 
+
+namespace detail {
+
+SkeletonCheck::SkeletonCheck(const std::vector<Contour>& boundaries, const geometry::Tolerance& tol) : tol_(tol) {
+    for (const Contour& c : boundaries) {
+        rings_.push_back(c.polygonise(tol).points);
+        Box2 box;
+        for (const Vec2 v : rings_.back()) {
+            box.expand(v);
+        }
+        ringBoxes_.push_back(box);
+    }
+    ringIndex_ = BoxIndex(ringBoxes_);
+}
+
+bool SkeletonCheck::inside(Vec2 p, const std::vector<std::size_t>& candidates) const {
+    // Rings that do not meet the box of the checked discs cannot contain p (it lies in that box),
+    // so a ray leaving p crosses each of them an even number of times: only candidates count.
+    bool in = false;
+    for (const std::size_t k : candidates) {
+        const Box2& b = ringBoxes_[k];
+        if (b.min.y <= p.y && p.y <= b.max.y && b.max.x > p.x) {
+            in = in != insideRing(rings_[k], p);
+        }
+    }
+    return in;
+}
+
+bool SkeletonCheck::closer(Vec2 p, double limit, const std::vector<std::size_t>& candidates) const {
+    const Vec2 h{limit, limit};
+    const Box2 near{p - h, p + h};
+    const double l2 = limit * limit;
+    for (const std::size_t k : candidates) {
+        if (!ringBoxes_[k].intersects(near)) {
+            continue;
+        }
+        const std::vector<Vec2>& r = rings_[k];
+        for (std::size_t i = 0, n = r.size(); i < n; ++i) {
+            const Vec2 a = r[i];
+            const Vec2 ab = r[(i + 1) % n] - a;
+            const double len2 = ab.lengthSquared();
+            const double t = len2 > 0.0 ? std::clamp((p - a).dot(ab) / len2, 0.0, 1.0) : 0.0;
+            if ((p - (a + ab * t)).lengthSquared() < l2) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool SkeletonCheck::pointOk(Vec2 p, double r, const std::vector<std::size_t>& candidates) const {
+    const double clear = 2.0 * tol_.chordal + tol_.distance;
+    if (!(r > clear)) {
+        return true;  // too close to a wall for the rings to decide; such discs are tiny
+    }
+    // Inside the region, and no wall strictly closer than r - clear: the disc agrees with it.
+    return inside(p, candidates) && !closer(p, r - clear, candidates);
+}
+
+bool SkeletonCheck::consistent(const MedialAxis& ax) const {
+    constexpr std::size_t kSamples = 8;
+    // The rings meeting the box of every inscribed disc of the skeleton: the only ones that can
+    // contain a skeleton point or come within its radius.
+    Box2 discs;
+    for (const geometry::MedialBranch& br : ax.branches) {
+        for (const geometry::MedialPoint& m : br.points) {
+            discs.expand(Box2{m.point, m.point}.inflated(m.radius));
+        }
+    }
+    for (const geometry::MedialNode& nd : ax.nodes) {
+        discs.expand(Box2{nd.point, nd.point}.inflated(nd.radius));
+    }
+    if (discs.isEmpty()) {
+        return true;
+    }
+    const std::vector<std::size_t> candidates = ringIndex_.query(discs);
+    for (const geometry::MedialBranch& br : ax.branches) {
+        const std::size_t n = br.points.size();
+        if (n == 0) {
+            continue;
+        }
+        std::size_t deepest = 0;
+        for (std::size_t k = 1; k < n; ++k) {
+            if (br.points[k].radius > br.points[deepest].radius) {
+                deepest = k;
+            }
+        }
+        const std::size_t stride = n <= kSamples ? 1 : (n + kSamples - 1) / kSamples;
+        for (std::size_t k = 0; k < n; k += stride) {
+            if (!pointOk(br.points[k].point, br.points[k].radius, candidates)) {
+                return false;
+            }
+        }
+        for (const std::size_t k : {deepest, n - 1}) {
+            if (!pointOk(br.points[k].point, br.points[k].radius, candidates)) {
+                return false;
+            }
+        }
+    }
+    for (const geometry::MedialNode& nd : ax.nodes) {
+        if (nd.branches.empty() && !pointOk(nd.point, nd.radius, candidates)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+}  // namespace detail
+
 }  // namespace carvetto::toolpath
+

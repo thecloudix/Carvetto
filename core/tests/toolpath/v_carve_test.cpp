@@ -24,6 +24,7 @@
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/v_carve.hpp"
 #include "pocket_oracle.hpp"
+#include "v_carve_check.hpp"
 #include "v_carve_oracle.hpp"
 #include "v_carve_test_util.hpp"
 // Last: on Windows it includes <windows.h> (macros such as near/far).
@@ -587,6 +588,50 @@ TEST_CASE("V-carve nests a D-shaped hole resolved against the circle it touches"
                     CHECK(orc::insideRegion(region, Vec2{m.to.x, m.to.y}));
                 }
             }
+        }
+    }
+}
+
+TEST_CASE("V-carve safety net rejects a skeleton computed for the wrong region", "[toolpath][v_carve][holes]") {
+    // Fault injection (T-0153 round 5): skeletons of the region with a boundary dropped or read
+    // on the wrong side are checked against the true even-odd region. The net must reject every
+    // one of them, also when the wrong skeleton's deepest points lie inside an island (there
+    // only the inscribed disc's size, larger than the distance to the true walls, betrays it),
+    // and accept the true skeleton.
+    const geometry::Tolerance inner{0.001, 1e-9, 0.05 / 3.0};
+    const Contour outerCircle = Contour::circle({0, 0}, 8.0);
+    const Contour holeCircle = Contour::circle({0, 0}, 7.99, geometry::ArcDirection::CW);
+    const Contour islandCircle = Contour::circle({0.3, 0.1}, 3.0);
+    const Contour outerSquare = Contour::rectangle(Box2{Vec2{0, 0}, Vec2{10, 10}});
+    const Contour holeSquare = Contour::rectangle(Box2{Vec2{0.05, 0.05}, Vec2{9.95, 9.95}}).reversed();
+    const Contour islandSquare = Contour::rectangle(Box2{Vec2{2, 2}, Vec2{8, 8}});
+    struct Job {
+        const char* what;
+        std::vector<Contour> region;
+        std::vector<std::vector<Contour>> wrong;
+    };
+    const std::vector<Job> jobs{
+        {"annulus with an island",
+         {outerCircle, holeCircle, islandCircle},
+         {{outerCircle}, {outerCircle, islandCircle}, {holeCircle, islandCircle}}},
+        {"annulus", {outerCircle, holeCircle}, {{outerCircle}, {holeCircle}}},
+        {"frame with an island",
+         {outerSquare, holeSquare, islandSquare},
+         {{outerSquare}, {outerSquare, islandSquare}, {holeSquare, islandSquare}}},
+        {"frame", {outerSquare, holeSquare}, {{outerSquare}, {holeSquare}}},
+    };
+    for (const Job& j : jobs) {
+        INFO(j.what);
+        const toolpath::detail::SkeletonCheck check(j.region, inner);
+        CHECK(check.consistent(geometry::medialAxis(j.region, inner)));
+        if (j.region.size() == 3) {
+            // The island dropped: the skeleton of the thin band alone is safe (it carves only
+            // inside the region; the island is left uncarved), so it is accepted.
+            CHECK(check.consistent(geometry::medialAxis({j.region[0], j.region[1]}, inner)));
+        }
+        for (std::size_t w = 0; w < j.wrong.size(); ++w) {
+            INFO("wrong region " << w);
+            CHECK_FALSE(check.consistent(geometry::medialAxis(j.wrong[w], inner)));
         }
     }
 }

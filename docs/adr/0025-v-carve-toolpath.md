@@ -150,17 +150,23 @@ bound on text-heavy jobs (≥ 5,000 glyph-like regions). The geometry comes from
   not offered.
 
 ### 5. The medial axis must be accurate
-When `medialAxis` reports `accuracyCapped` (sample or work budget, or coordinates beyond its
-limit) for any region, nothing is produced; the same when it ignores a boundary that encloses
-area (every boundary of a part separates inside from outside by construction, so an ignored
-one is a medial axis failure and carving on would cut through a hole: round 2 found such cases,
-fixed in §7, and this guard keeps any future one from reaching the machine). A boundary read on
-the wrong side, or a hole nested as an outer, is caught too: for every skeleton branch its
-deepest point (and every isolated node) must lie inside the whole even-odd region (not just its
-part, which would contain its own skeleton), by an even-odd ray count over the part's boundaries polygonised
-at the internal tolerance (decided only for radii above twice that tolerance, where the polygon
-cannot be wrong); otherwise nothing is carved and `MedialAxisCapped` says why and `MedialAxisCapped` names each capped region's
-vectors, with the advice to use a coarser chordal tolerance or simplify. A partial or degraded
+When `medialAxis` reports `accuracyCapped` (sample or work budget, or coordinates beyond its limit)
+for any region, nothing is produced; the same when it ignores a boundary that encloses area (every
+boundary of a part separates inside from outside by construction, so an ignored one is a medial
+axis failure and carving on would cut through a hole: round 2 found such cases, fixed in §7, and
+this guard keeps any future one from reaching the machine). A boundary read on the wrong side, or a
+hole nested as an outer, is caught too (`detail::SkeletonCheck`): at sampled skeleton points (every
+point of a branch with at most 8, otherwise 8 evenly spaced ones plus its deepest and its last;
+every isolated node) whose radius r is above twice the internal tolerance plus the distance
+tolerance, the point must lie inside the whole even-odd region (not just its part: a hole taken for
+an outer is a part of its own) and its distance to the walls must be at least r minus that margin,
+i.e. the inscribed disc must agree with the true walls. Both use the boundaries polygonised at the
+internal tolerance, restricted to the rings that meet the box of the skeleton's inscribed discs (no
+other ring can contain a checked point or come within its radius), so the cost stays per part (AC2
+unchanged within measurement noise). Round 4's version checked only that the deepest point of each
+branch was inside, which a wrong-side hole whose skeleton's deepest points fall inside an island
+passed (verifier fault injection: −3.3 to −5.3 mm). Otherwise nothing is carved. In every case
+`MedialAxisCapped` names the region's vectors, with the advice to use a coarser chordal tolerance or simplify. A partial or degraded
 carve is never returned silently, and a capped skeleton has no accuracy guarantee to make AC1
 hold. Known non-capped limits (ADR-0023): gaps narrower than ~2·chordal have no skeleton (not
 carved: their depth is below ~chordal/tan(θ/2)); obtuse convex corners lose branch length, but the
