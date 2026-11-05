@@ -82,15 +82,43 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     offset, worst over all joins and sides, re-measured for T-0017: 2000-step walk d = 1 ≤ 0.02 s,
     d = 2 ≤ 0.04 s (four seeds); 8000-span hypotrochoid d = 2 0.23 s; 8000-span text-like loops
     d = 2 0.10 s (round 3: 0.04 / 0.21 / 0.09 s on the same machine; the AC1 bounds are 0.5 s and
-    1 s). Caveat (the cost of T-0016): the cost stays close to linear in the span count, but the
-    constant is not uniform. On a dense zig-zag with d many times its pitch, Sharp and Square run
-    10–30× slower than Round, because every corner's mitre or chamfer reaches out ~d and overlaps
-    hundreds of its neighbours' on the same line, which multiplies the pieces to split and prune.
-    Release, CPU time, T-0017 build (round 3 in brackets): pitch 0.02, amplitude 1, d = 7, 1000
-    spans: Sharp 20.7 s (21.8), Square 20.8 s (22.0), Round 0.73 s (0.76); pitch 0.05, amplitude
-    0.2, d = 5, 4000 spans: Sharp 8.7 s (8.7), Square 8.7 s (8.5), Round 0.75 s (0.67). Hatch- or
-    fill-like vectors offset at a large d with Sharp/Square (T-0120/T-0121) will feel this; it is
-    T-0016's to fix. T-0017 fix round 2 (more thorough repair checks), measured in one process
+    1 s). Dense hatch-like input (T-0016): on a dense zig-zag with d many times its pitch every
+    corner's mitre or chamfer reaches out ~d and lies on one line with those of hundreds of
+    neighbouring peaks (k copies; likewise every inside-corner connector). Each copy is split at
+    all its partners' ends (~k² pieces), and every copy of the shared chamfer line was tested
+    against the input and the ~k corner regions over it, then the junctions between the copies the
+    carrier merge hands a stretch over between (end points equal but for the last bits) were each
+    checked with two distance profiles: Sharp and Square ran 10–30× slower than Round (T-0017
+    build: pitch 0.02, amplitude 1, d = 7, 1000 spans, Sharp 20.7 s, Square 20.8 s, Round
+    0.73 s; pitch 0.05, amplitude 0.2, d = 5, 4000 spans, Sharp/Square 8.7 s, Round 0.75 s).
+    Now (a) the pieces of a group of overlapping raw lines on one carrier (pairs from the
+    splitting step, joined transitively; inside-corner connectors, always pruned, left out) are
+    tested per stretch and direction: in element order until one is kept (all of them where all
+    are pruned, as before), then the copy mergeOnCarriers would keep (its own rule over the copies
+    not known to be pruned) plus any copy that overtakes it before the stretch ends, and all the
+    others only if that copy is pruned. A direction therefore has a kept copy over a stretch
+    exactly when it had one before and merge keeps the same copy up to rounding-level ties, so the
+    output is unchanged except which of several coincident copies owns a stretch (coordinates
+    move by rounding; collinear spans may be split at other points). Such rounding-level shifts
+    can flip a tolerance-level repair downstream: the T-0016 verifier saw outputs move by up to
+    3.9e-4 mm (below tol) with identical checker metrics. (b) snapJunction moves the
+    end of one of two lines on the same carrier whose ends differ by rounding only (≤ 16 ulp of
+    the coordinates) without profiling the move, as it already did for rounding-level extensions.
+    Release, CPU time per offset, both sides, measured in one process against main (53ae278) on a
+    shared, loaded 16-thread machine: pitch 0.02, amplitude 1, d = 7, 1000 spans: Sharp
+    0.75–1.03 s (main 23.5–31.4 s), Square 0.99–1.01 s (main 28.9–30.8 s), Round 0.92–1.00 s
+    (main 0.79–0.84 s); 2000 / 4000 spans: Sharp 2.2 / 4.7 s (2.1× per doubling), Round 3.4 /
+    8.0 s; pitch 0.05, amplitude 0.2, d = 5, 4000 spans: Sharp 1.10–1.12 s (main 11.7–12.6 s),
+    Square 1.05–1.08 s (main 11.8–12.5 s), Round 1.15–1.19 s (main 1.00–1.02 s); 8000 spans:
+    Sharp 2.12–2.13 s (1.9× per doubling), Round 1.96–2.02 s. Round costs the same algorithm as before
+    (the new step takes ~3 ms there), but on large inputs Round, and other inputs with nothing to
+    prune, run 13–15 % slower than main even with every new path disabled, which points to code
+    generation in buildRaw / mergeOnCarriers / offsetOpenContour (T-0016 verifier, A/A-controlled;
+    follow-up T-0170). Small inputs are not slower. Not addressed (separate cards): input whose whole length lies
+    within d of itself, e.g. a walk of 2000/4000 steps of 1.5 µm offset by 1, costs super-linearly
+    for every join (Round 4 s / 40 s, Sharp 12 s / 120 s, main and T-0016 alike), because each
+    piece beyond d scans every input span and every vertex circle splits every raw element.
+    T-0017 fix round 2 (more thorough repair checks), measured in one process
     against the round-1 build on a shared, heavily loaded 2-core container, so only the ratios
     count: walk d = 1 / 2 worst 0.024 / 0.047 s (round 1: 0.020 / 0.048), hypotrochoid 0.22–0.35 s
     (0.21–0.31), text loops 0.08–0.12 s (0.08–0.13), zig-zag pitch 0.02 Round 1.15 s (1.16),

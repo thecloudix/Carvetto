@@ -1487,8 +1487,14 @@ bool snapJunction(Span& a, Span& b, const SnapContext& ctx) {
             },
             n, false, ctx, [&](Vec2 q) { return ctx.clear(q) && ctx.notFar(q); });
     };
-    const bool moveB = lineB && lineOk(endPoint(b), e);
-    const bool moveA = lineA && lineOk(startPoint(a), s);
+    // Two copies of one line (a stretch of a group on one carrier handed over between elements,
+    // mergeOnCarriers) whose ends differ in the last bits only: moving either end that far is a
+    // rounding-level change, unchecked as above. Checking it cost two profiles of the distance to
+    // the input per junction, which dominated Sharp/Square offsets of dense zig-zags (T-0016).
+    const bool unchecked = lineA && lineB && gap <= rounding && sameCarrier(a, b);
+    const bool moveB = lineB && (unchecked || lineOk(endPoint(b), e));
+    // (moveA only matters when b may not move, or moves inwards.)
+    const bool moveA = !(moveB && bOutwards) && lineA && (unchecked || lineOk(startPoint(a), s));
     if (moveB && (bOutwards || !moveA)) {
         std::get<LineSpan>(b).start = e;
     } else if (moveA) {
@@ -2440,6 +2446,7 @@ struct RawChain {
     std::vector<Span> spans;
     std::vector<double> posA;
     std::vector<double> posB;
+    std::vector<bool> connector;  // a straight connector across an inside corner (always pruned)
 };
 
 // Raw offset of one side, in input order: every element offset on its own, chained with joins
@@ -2450,11 +2457,14 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
                   const Tolerance& tol, bool closed, std::vector<Wedge>& wedges) {
     RawChain rc;
     std::vector<Span>& raw = rc.spans;
+    bool inside = false;  // the elements being recorded are an inside corner's connector
     auto record = [&](double a, double b) {
         while (rc.posA.size() < raw.size()) {
             rc.posA.push_back(a);
             rc.posB.push_back(b);
+            rc.connector.push_back(inside);
         }
+        inside = false;
     };
     for (std::size_t i = 0; i < input.size(); ++i) {
         std::optional<Span> next = offsetSpan(input[i], d, sign);
@@ -2466,6 +2476,8 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
         }
         const double at = static_cast<double>(i);
         if (!raw.empty()) {
+            inside = classifyCorner(tangentAt(input[i - 1], 1.0), tangentAt(input[i], 0.0), sign) !=
+                     CornerKind::Outside;
             connect(raw, *next, startPoint(input[i]), endPoint(input[i - 1]), tangentAt(input[i - 1], 1.0),
                     tangentAt(input[i], 0.0), d, sign, join, mitreLimit, tol, wedges);
             record(at, at);  // joins and connectors sit at the vertex
@@ -2475,6 +2487,8 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
     }
     if (closed && raw.size() > 1) {
         Span first = raw.front();
+        inside = classifyCorner(tangentAt(input.back(), 1.0), tangentAt(input.front(), 0.0), sign) !=
+                 CornerKind::Outside;
         connect(raw, first, startPoint(input.front()), endPoint(input.back()), tangentAt(input.back(), 1.0),
                 tangentAt(input.front(), 0.0), d, sign, join, mitreLimit, tol, wedges);
         raw.front() = first;
@@ -2482,6 +2496,234 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
         record(at, at);
     }
     return rc;
+}
+
+// Pruning of the pieces of overlapping raw lines (T-0016). On a dense zig-zag offset by many
+// times its pitch, every Sharp or Square corner's mitre or chamfer, and every inside-corner
+// connector, lies on one line with hundreds of its neighbours' and overlaps them. Each copy is
+// split at all its partners' end points, so a group of k copies has ~k^2 pieces, and every one of
+// them was tested against the input and against the ~k corner regions over it: the boundary
+// pieces (all the copies of the shared chamfer line) made Sharp and Square 10-30x as slow as
+// Round. mergeOnCarriers keeps each stretch of such a group at most once, on the outermost kept
+// copy covering it, and only if the kept copies covering it all run one way; whether the other
+// copies would have passed does not matter to it. So per stretch and direction the copies are
+// tested in element order only until one is kept (all of them where all are pruned, as on the
+// inside connectors, where each test is cheap); then the copy merge would start the stretch on is
+// tested (by merge's own rule over the copies not known to be pruned: outermost at the stretch's
+// start, the previous stretch's element among equals, then outermost at its end, then the lowest
+// element), plus any copy that overtakes it before the stretch ends (merge hands over to it; exact
+// copies agree to rounding and never do). Only when that copy is pruned are all the others
+// tested, as before. A direction therefore has a kept copy
+// over a stretch exactly when it had one before, the copy merge keeps is the same one up to
+// rounding-level ties, and the boundary is tested about once per stretch instead of k times.
+// Stretches come from all the group's piece ends, merged to rounding as in mergeOnCarriers
+// (which rebuilds its own from the kept pieces). `state[k]` is -1 for an untested candidate, else
+// whether it is kept; `keep(piece)` is the pruning test. Candidates of a group that cover no
+// stretch (no longer than the merging distance) and those of other elements are left to the
+// caller (`handled` false). Lines only: Sharp and Square add line segments; arcs on one circle
+// keep the full test. Inside-corner connectors (`connector`) are left out too: they lie within d
+// of their vertex and are always pruned, cheaply, so grouping them only cost time (Round offsets
+// of dense zig-zags pile hundreds of them on one line).
+void pruneLineCopies(const std::vector<Span>& raw, const std::vector<bool>& connector,
+                     const std::vector<Piece>& pieces,
+                     const std::vector<std::pair<std::size_t, std::size_t>>& overlapping, double d, double sign,
+                     std::vector<signed char>& state, std::vector<bool>& handled,
+                     const std::function<bool(const Piece&)>& keep) {
+    const std::size_t m = raw.size();
+    std::vector<std::size_t> parent(m);
+    for (std::size_t i = 0; i < m; ++i) {
+        parent[i] = i;
+    }
+    auto find = [&](std::size_t i) {
+        while (parent[i] != i) {
+            parent[i] = parent[parent[i]];
+            i = parent[i];
+        }
+        return i;
+    };
+    std::vector<bool> shared(m, false);
+    for (const auto& [i, j] : overlapping) {
+        if (!std::holds_alternative<LineSpan>(raw[i]) || !std::holds_alternative<LineSpan>(raw[j]) ||
+            connector[i] || connector[j]) {
+            continue;
+        }
+        shared[i] = true;
+        shared[j] = true;
+        const std::size_t a = find(i);
+        const std::size_t b = find(j);
+        if (a != b) {
+            parent[std::max(a, b)] = std::min(a, b);  // the root is the group's lowest element
+        }
+    }
+    std::map<std::size_t, std::vector<std::size_t>> groups;  // root -> candidate indices
+    for (std::size_t k = 0; k < pieces.size(); ++k) {
+        if (shared[pieces[k].element]) {
+            groups[find(pieces[k].element)].push_back(k);
+        }
+    }
+    auto test = [&](std::size_t k) {
+        if (state[k] < 0) {
+            state[k] = keep(pieces[k]) ? 1 : 0;
+        }
+        return state[k] == 1;
+    };
+    struct Copy {
+        double lo;
+        double hi;
+        bool forward;
+        std::size_t index;  // into pieces
+    };
+    using Key = std::pair<std::size_t, std::size_t>;  // (element, copy), ordered as in mergeOnCarriers
+    for (const auto& [root, members] : groups) {
+        const auto& ref = std::get<LineSpan>(raw[root]);
+        const Vec2 origin = ref.start;
+        const Vec2 axis = (ref.end - ref.start).normalized();
+        double scale = std::max(1.0, d);
+        std::vector<Copy> copies;
+        copies.reserve(members.size());
+        for (const std::size_t k : members) {
+            const Piece& p = pieces[k];
+            const Vec2 a = pointAt(raw[p.element], p.t0);
+            const Vec2 b = pointAt(raw[p.element], p.t1);
+            scale = std::max({scale, std::fabs(a.x), std::fabs(a.y), std::fabs(b.x), std::fabs(b.y)});
+            const double ca = (a - origin).dot(axis);
+            const double cb = (b - origin).dot(axis);
+            copies.push_back({std::min(ca, cb), std::max(ca, cb), cb > ca, k});
+        }
+        const double eps = 1e-9 * scale;
+        std::vector<double> ends;
+        ends.reserve(2 * copies.size());
+        for (const Copy& c : copies) {
+            ends.push_back(c.lo);
+            ends.push_back(c.hi);
+        }
+        std::sort(ends.begin(), ends.end());
+        std::vector<double> nodes;
+        for (const double c : ends) {
+            if (nodes.empty() || c > nodes.back() + eps) {
+                nodes.push_back(c);
+            }
+        }
+        auto nodeOf = [&](double c) {
+            const auto it = std::upper_bound(nodes.begin(), nodes.end(), c);
+            return static_cast<std::size_t>(it - nodes.begin()) - 1;
+        };
+        std::vector<std::vector<std::pair<bool, Key>>> enter(nodes.size());
+        std::vector<std::vector<std::pair<bool, Key>>> leave(nodes.size());
+        for (std::size_t c = 0; c < copies.size(); ++c) {
+            const std::size_t a = nodeOf(copies[c].lo);
+            const std::size_t b = nodeOf(copies[c].hi);
+            if (a < b) {
+                handled[copies[c].index] = true;
+                const Key key{pieces[copies[c].index].element, c};
+                enter[a].emplace_back(copies[c].forward, key);
+                leave[b].emplace_back(copies[c].forward, key);
+            }
+        }
+        // How far the copy lies towards the offset side of the reference at coordinate c (as in
+        // mergeOnCarriers).
+        auto outwardAt = [&](const Copy& cp, double c) {
+            const Piece& p = pieces[cp.index];
+            const auto& line = std::get<LineSpan>(raw[p.element]);
+            const double along = (line.end - line.start).dot(axis);
+            const double t =
+                std::clamp(along != 0.0 ? (c - (line.start - origin).dot(axis)) / along : p.t0, 0.0, 1.0);
+            const Span& s = raw[p.element];
+            return (pointAt(s, t) - (origin + axis * c)).dot(tangentAt(s, t).perp() * sign);
+        };
+        const double level = 1e-12 * scale;
+        std::set<Key> active[2];
+        // Direction and element of the copy kept over the previous stretch (mergeOnCarriers'
+        // preference among equals).
+        std::optional<std::pair<int, std::size_t>> previous;
+        // The copy mergeOnCarriers would start the stretch [c0, c1] on, among the covering copies
+        // not known to be pruned (only kept ones with `keptOnly`); none when there is no such copy.
+        auto choose = [&](const std::set<Key>& covering, int dir, double c0, double c1, bool keptOnly,
+                          double& bestEnd) {
+            std::optional<std::size_t> best;
+            double best0 = -kInf;
+            double best1 = -kInf;
+            bool bestSticky = false;
+            for (const Key& key : covering) {
+                const signed char s = state[copies[key.second].index];
+                if (s == 0 || (keptOnly && s != 1)) {
+                    continue;
+                }
+                const double v0 = outwardAt(copies[key.second], c0);
+                const double v1 = outwardAt(copies[key.second], c1);
+                const bool sticky = previous && previous->first == dir && previous->second == key.first;
+                const bool better = !best || v0 > best0 + level ||
+                                    (v0 >= best0 - level &&
+                                     ((sticky && !bestSticky) || (sticky == bestSticky && v1 > best1 + level)));
+                if (better) {
+                    best0 = std::max(best0, v0);
+                    best1 = v1;
+                    bestSticky = sticky;
+                    best = key.second;
+                }
+            }
+            bestEnd = best1;
+            return best;
+        };
+        for (std::size_t k = 0; k + 1 < nodes.size(); ++k) {
+            for (const auto& [fw, key] : leave[k]) {
+                active[fw ? 1 : 0].erase(key);
+            }
+            for (const auto& [fw, key] : enter[k]) {
+                active[fw ? 1 : 0].insert(key);
+            }
+            const double c0 = nodes[k];
+            const double c1 = nodes[k + 1];
+            std::optional<std::size_t> keptBy[2];
+            for (int dir = 0; dir < 2; ++dir) {
+                const std::set<Key>& covering = active[dir];
+                if (covering.empty()) {
+                    continue;
+                }
+                // First whether any copy is kept at all: where every copy is pruned (the inside
+                // connectors of a dense zig-zag, deep in the neighbourhood) that is all the work,
+                // each test cheap, and nothing needs choosing.
+                bool anyKept = false;
+                for (const Key& key : covering) {
+                    if (test(copies[key.second].index)) {
+                        anyKept = true;
+                        break;
+                    }
+                }
+                if (!anyKept) {
+                    continue;
+                }
+                double end = 0.0;
+                const std::optional<std::size_t> best = choose(covering, dir, c0, c1, false, end);
+                if (best && test(copies[*best].index)) {
+                    keptBy[dir] = pieces[copies[*best].index].element;
+                    // Copies that overtake it before c1 (mergeOnCarriers hands the stretch over to
+                    // them): tested too. Exact copies agree to rounding and never do.
+                    for (const Key& key : covering) {
+                        if (key.second != *best && state[copies[key.second].index] < 0 &&
+                            outwardAt(copies[key.second], c1) > end + level) {
+                            test(copies[key.second].index);
+                        }
+                    }
+                    continue;
+                }
+                // Pruned: then every copy is tested, as before T-0016, and merge chooses among
+                // the kept ones.
+                for (const Key& key : covering) {
+                    test(copies[key.second].index);
+                }
+                if (const auto kept = choose(covering, dir, c0, c1, true, end)) {
+                    keptBy[dir] = pieces[copies[*kept].index].element;
+                }
+            }
+            if (keptBy[0].has_value() == keptBy[1].has_value()) {
+                previous.reset();  // nothing kept, or copies both ways: merge drops the stretch
+            } else {
+                const int dir = keptBy[1] ? 1 : 0;
+                previous = std::pair{dir, *keptBy[dir]};
+            }
+        }
+    }
 }
 
 // Kept pieces of raw elements that lie on one line or circle, merged into one boundary piece per
@@ -3086,8 +3328,7 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
         });
         return hit;
     };
-    std::vector<Piece> kept;
-    std::size_t witness = input.size();
+    std::vector<Piece> candidates;
     for (std::size_t i = 0; i < m; ++i) {
         if (dead[i]) {
             continue;
@@ -3101,21 +3342,32 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
         std::sort(ts.begin(), ts.end());
         const double len = length(raw[i]);
         for (std::size_t k = 0; k + 1 < ts.size(); ++k) {
-            if ((ts[k + 1] - ts[k]) * len <= 1e-9) {
-                continue;
+            if ((ts[k + 1] - ts[k]) * len > 1e-9) {
+                candidates.push_back(Piece{i, ts[k], ts[k + 1]});
             }
-            const Piece piece{i, ts[k], ts[k + 1]};
-            bool ok = true;
-            for (const double f : {0.25, 0.5, 0.75}) {
-                const Vec2 q = pointAt(raw[i], piece.t0 + (piece.t1 - piece.t0) * f);
-                if (closerThan(q, keepAbove, input, inputGrid, witness) || inWedge(q)) {
-                    ok = false;
-                    break;
-                }
+        }
+    }
+    std::size_t witness = input.size();
+    auto keep = [&](const Piece& piece) {
+        for (const double f : {0.25, 0.5, 0.75}) {
+            const Vec2 q = pointAt(raw[piece.element], piece.t0 + (piece.t1 - piece.t0) * f);
+            if (closerThan(q, keepAbove, input, inputGrid, witness) || inWedge(q)) {
+                return false;
             }
-            if (ok) {
-                kept.push_back(piece);
-            }
+        }
+        return true;
+    };
+    // Copies on one line: only the ones that can matter to mergeOnCarriers are tested.
+    std::vector<signed char> state(candidates.size(), -1);
+    std::vector<bool> handled(candidates.size(), false);
+    pruneLineCopies(raw, rc.connector, candidates, overlapping, d, sign, state, handled, keep);
+    std::vector<Piece> kept;
+    for (std::size_t k = 0; k < candidates.size(); ++k) {
+        if (!handled[k] && state[k] < 0) {
+            state[k] = keep(candidates[k]) ? 1 : 0;
+        }
+        if (state[k] == 1) {
+            kept.push_back(candidates[k]);
         }
     }
     // Two points computed separately at the same place on the offset (a piece's end and its
