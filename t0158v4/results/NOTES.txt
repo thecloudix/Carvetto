@@ -20,7 +20,8 @@ walk back to "the first equidistant junction in travel" then takes the start off
   ADR-0016 §11 lists this as a limit ("a neighbour whose edge length x sin(turn) is within the rounding ... takes the start"), but it
   contradicts the owner decision "exactly the mitre corner point" and the ADR's own claim "however sharp, short or many the
   neighbouring edges are". Frequency: no call within a factor 2 of the equidistance tolerance in 28,868 stored/generated calls;
-  29 of 5,622 rule calls on random pages (none moved under scaling in the targeted pert runs, nearpert/).
+  29 of 5,622 rule calls on random pages; targeted 21-transform runs of the 41 random scenes with a call near any round-4
+  tolerance (nearpert_scale.txt): scale moves <= 2e-5 mm at scale 1, up to 1.9 um only in the 1/1000-scale seeds 243/244.
 New owner decisions: fine convex outlines start at the exact mitre: probe3 ngon (N 100..5000) |S - mitre| < 4e-12, stable. gen3
   fpoly (120 runs): 94 exact, 26 at 0.9-3.1 um from the mitre (a collinear split point of the walk next to the mitre is taken as the
   first equidistant junction; 1 um moves under 1e-12 scaling, plain vs FMA 1 um in 2 runs) - chk4_fpoly.txt, repro4/fpoly_057_split.
@@ -34,9 +35,10 @@ Stability sweeps (pmove_all.txt): gen1/gen2/gen3 scale: only dup / mshort (edges
   same as round 3) and fpoly 1 um; frame moves are rule-0 (T-0166) or call-order changes under quarter turns. Stored pert: vsout one
   1 um move (fpoly class), rest rule 0. margins_stored_gen.txt: no call within 2x of the join-circle or equidistance tolerances.
 Cross-compiler (logfma): generated 1880 runs: 2 start diffs (1 um, fpoly) vs main 225; stored 8732 runs: orig 8 / bbc 166 / opt 1
-  all rule 0 (T-0166, same as main), vsout 0 (main 147); random (11 seeds so far): 6 rule-0 (main 41).
-Change rate (plain, vs main): stored orig 9.0%, vsout 46.5%, bbc 2.4%, opt 0.2%, all 14.6% (scn_change_rate.txt); random see
-  rnd_change_rate.txt. r4 vs r3: 90 of 8732 stored runs, 242 of 1880 generated (r3delta.lst).
+  all rule 0 (T-0166, same as main), vsout 0 (main 147); random 2720 scenes: 8 start diffs, all rule 0 (main 61).
+Change rate (plain, vs main): stored orig 9.0%, vsout 46.5%, bbc 2.4%, opt 0.2%, all 14.6% (scn_change_rate.txt); random 26 seeds
+  (2720 scenes; seed 242 at 3.3e6 offset not finished, as in round 3): m0 4.6%, m1 14.2%, m2 24.4%, m3 pages 20.0%, all 13.6%
+  (rnd_change_rate.txt). Owner accepted ~9% stored / ~21% pages. r4 vs r3: 90 of 8732 stored runs, 242 of 1880 generated (r3delta.lst).
 Flood: generated 620 scenes br vs main: 1 worse (mmrg_001, known T-0167), 2 better; br vs r3: 0 worse. Stored r4-vs-r3 delta (90 runs):
   0 worse vs r3 and vs main by the verdict; nohold 7 vs 0 in m1_272009_9 vsout (known, T-0167 card). Stored changed sample (150):
   see flood_chg_br_main.txt; m0_271003_32 bbc worse = known (round 2, main reaches it under ulp).

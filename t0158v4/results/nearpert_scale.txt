@@ -1,0 +1,5 @@
+stored:V0        >1e-3 3 >1e-4 2 >1e-6 8 callcount_changed 0 scenes 33
+     e.g. (0.001925, 'r244_51.txt', 'r244:51:m3:V0', ('u-1', 94, 2, 2))
+     e.g. (0.001469, 'r243_26.txt', 'r243:26:m2:V0', ('u-1', 53, 2, 2))
+     e.g. (0.001171, 'r243_46.txt', 'r243:46:m2:V0', ('r+1e-12', 2, 2, 2))
+stored:V1        >1e-6 1 callcount_changed 0 scenes 8

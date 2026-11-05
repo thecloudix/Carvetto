@@ -1,0 +1,15 @@
+m0 {'scenes': 1088, 'changed': 50, 'leftchanged': 1} 4.6%
+m1 {'scenes': 544, 'changed': 77, 'leftchanged': 4} 14.2%
+m2 {'scenes': 544, 'changed': 133, 'leftchanged': 12} 24.4%
+m3 {'scenes': 544, 'changed': 109, 'leftchanged': 20} 20.0%
+all {'scenes': 2720, 'changed': 369, 'leftchanged': 37} 13.6%
+== fma branch
+other:rnd          hashdiff 1784 leftdiff 4 runs 2720 startdiff 8
+     e.g. ('103_1_0.txt', 'r103:51:m3:V0', [0, 0, 1, 0])
+     e.g. ('106_1_0.txt', 'r106:58:m2:V0', [1, 0, 0, 0])
+     e.g. ('108_1_0.txt', 'r108:1:m1:V0', [0, 0, 0, 0])
+     e.g. ('108_1_0.txt', 'r108:54:m0:V1', [0, 0, 0, 0])
+== fma main
+other:rnd          hashdiff 1784 leftdiff 7 runs 2720 startdiff 61
+branch plain vs fma random: {}
+branch plain vs fma random (first differing call, rule plain/fma): {('first differing call rules', 0, 0): 8}
