@@ -1,0 +1,8 @@
+144e957 frame 5000 regions 38750 spans: 58.68 s CPU, 1651346 moves, ok=1 d
+144e957 plain 5000 regions 38750 spans: 31.99 s CPU, 2680243 moves, ok=1 d
+saball2 frame 5000 regions 38750 spans: 53.33 s CPU, 1651346 moves, ok=1 d
+saball2 plain 5000 regions 38750 spans: 37.65 s CPU, 2680243 moves, ok=1 d
+144e957 frame 5000 regions 38750 spans: 58.98 s CPU, 1651346 moves, ok=1 d
+144e957 plain 5000 regions 38750 spans: 29.11 s CPU, 2680243 moves, ok=1 d
+saball2 frame 5000 regions 38750 spans: 50.98 s CPU, 1651346 moves, ok=1 d
+saball2 plain 5000 regions 38750 spans: 38.06 s CPU, 2680243 moves, ok=1 d

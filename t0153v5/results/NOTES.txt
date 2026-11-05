@@ -1,0 +1,35 @@
+T-0153 round 5 (144e957, N1 fix: detail::SkeletonCheck) verifier results.
+BLOCKING
+ N1 (not closed in general). SkeletonCheck checks 8 evenly spaced points of a branch + deepest + last. A wrong skeleton
+   (same fault injection as round 4: sabotage.patch SAB=4 no nesting / SAB=2 hole read on the wrong side) whose sampled
+   points all lie inside islands, with the islands' walls within 2c+d of the disc, passes; the points between the samples
+   are outside the region and are carved. Islands placed by autoattack.py over the sampled points of a stadium frame:
+     repro5/stad_isl_sab4_c0.05.txt  SAB=4 V90 D12 chordal 0.05: not refused, cone -0.732 mm, full-length cut x=-20..20 at
+                                     Z -1.0 through the gaps between islands (also ball D6 and V30 D6: -0.732; flat 0.5: -0.495)
+     repro5/stad_isl_sab2_c0.05.txt  SAB=2: -0.471 mm (ball, V30 too)
+     repro5/stad_isl_sab4_c0.1.txt   SAB=4 chordal 0.1: -0.986 mm;  auto_L40 c0.1 SAB=2: -0.981 mm
+     repro5/stad_isl_sab2_c0.05_rot30.txt  rotated 30 deg, R1.5: -1.023 mm
+   Direct injection (net.cpp, no patch needed): net repro5/stad_isl_sab4_c0.05.txt 0.05 0 -> consistent=1 although 109/194
+   points are outside the region and 142/194 discs reach past a wall. Without sabotage every repro carves cleanly (0 viol.).
+   The ring pre-filter (rings meeting the box of all discs) is exact: a ring disjoint from that box contains no point of it
+   and comes within no disc radius. The hole is the sampling only: checking every point (allpoints.patch) refuses all
+   repros; with per-point BoxIndex queries (allpoints_query.patch) also refused, SAB=0 still carves.
+ROUND-4 REPROS: annulus_isl_g0.01 and framehole_isl_g0.05: SAB=2/3/4 all refused (27), no moves.
+NON-BLOCKING
+ - Threshold class unchanged from r4: wrong skeletons with r <= 2c+d (c = chordal/3) are not checked; fault injection on
+   adv Lhole_th0.05 / lune_t0.05 (SAB=2/3) carves outside to ~0.02 mm; sandwich_g0.01 SAB=4 -0.0127 mm; stad_thin_R0.6 at
+   chordal 1.0 SAB=2: 0.43 mm deep outside (bounded by 2c+d = 0.668 mm there). Identical with the r4 binary.
+ - adv/ x SAB 2/3/4 at V90 c0.05 (333 files each): only the above sub-threshold cases are not refused.
+ - Frame case (one part, 5000 holes) slower: see perf. framehole_isl_g0.0005 (refused in both) now has 2 refusal
+   diagnostics instead of 1 (both "vector 0").
+ - New test fails without the disc check (mut_disc_off.patch MUT=1: 1 assertion, annulus with an island, wrong {outer});
+   it is the only v_carve assertion that does (281,073 others pass); it has no branch longer than 8 points.
+REGRESSIONS vs 209499a: hashsweep 400 cases (fam 0..23 x 15 + mixes) byte-identical moves+diagnostics (2 refused in both);
+ adv/ 4320 runs hash-identical except the framehole_isl_g0.0005 diagnostic count; refusals 585 both (= r4 454+131).
+ Goldens regenerated in a scratch copy: no changes. Debug -Werror build ok, ctest 984/984; changelog check ok;
+ merge-tree vs origin/main 1d593b5 clean.
+PERF (Release perf.cpp, 5000 regions, load 13-19, interleaved; results/perf*.txt):
+ plain: 209499a 31.1/20.7 s, 144e957 24.3/21.7 s (later, heavier load 32.0/29.1); flat: 22.9/22.3 vs 20.6/18.9 s.
+ frame (one part, 5000 holes): 209499a 36.7/38.0 s, 144e957 51.8/46.2 s (later 58.7/59.0) -> ~+30% (candidates = every
+ ring, scanned linearly per sampled point). allpoints.patch: frame 99.6/107.4 s (too slow); allpoints_query.patch (every
+ point, BoxIndex query per disc): plain 37.7/38.1 s, frame 53.3/51.0 s vs 144e957 32.0/29.1 and 58.7/59.0 in the same batch.

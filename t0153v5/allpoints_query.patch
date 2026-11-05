@@ -1,0 +1,60 @@
+--- src-sab/core/src/toolpath/v_carve.cpp	2026-11-04 19:47:12.939658479 -0600
++++ src-saball2/core/src/toolpath/v_carve.cpp	2026-11-04 20:18:30.312826699 -0600
+@@ -1229,49 +1229,19 @@
+ }
+ 
+ bool SkeletonCheck::consistent(const MedialAxis& ax) const {
+-    constexpr std::size_t kSamples = 8;
+-    // The rings meeting the box of every inscribed disc of the skeleton: the only ones that can
+-    // contain a skeleton point or come within its radius.
+-    Box2 discs;
++    // VERIFIER VARIANT: every point, rings queried per point by the box of its disc.
++    auto ok = [&](Vec2 p, double r) {
++        if (!(r > 2.0 * tol_.chordal + tol_.distance)) { return true; }
++        const std::vector<std::size_t> c = ringIndex_.query(Box2{p, p}.inflated(r));
++        return pointOk(p, r, c);
++    };
+     for (const geometry::MedialBranch& br : ax.branches) {
+         for (const geometry::MedialPoint& m : br.points) {
+-            discs.expand(Box2{m.point, m.point}.inflated(m.radius));
++            if (!ok(m.point, m.radius)) { return false; }
+         }
+     }
+     for (const geometry::MedialNode& nd : ax.nodes) {
+-        discs.expand(Box2{nd.point, nd.point}.inflated(nd.radius));
+-    }
+-    if (discs.isEmpty()) {
+-        return true;
+-    }
+-    const std::vector<std::size_t> candidates = ringIndex_.query(discs);
+-    for (const geometry::MedialBranch& br : ax.branches) {
+-        const std::size_t n = br.points.size();
+-        if (n == 0) {
+-            continue;
+-        }
+-        std::size_t deepest = 0;
+-        for (std::size_t k = 1; k < n; ++k) {
+-            if (br.points[k].radius > br.points[deepest].radius) {
+-                deepest = k;
+-            }
+-        }
+-        const std::size_t stride = n <= kSamples ? 1 : (n + kSamples - 1) / kSamples;
+-        for (std::size_t k = 0; k < n; k += stride) {
+-            if (!pointOk(br.points[k].point, br.points[k].radius, candidates)) {
+-                return false;
+-            }
+-        }
+-        for (const std::size_t k : {deepest, n - 1}) {
+-            if (!pointOk(br.points[k].point, br.points[k].radius, candidates)) {
+-                return false;
+-            }
+-        }
+-    }
+-    for (const geometry::MedialNode& nd : ax.nodes) {
+-        if (nd.branches.empty() && !pointOk(nd.point, nd.radius, candidates)) {
+-            return false;
+-        }
++        if (nd.branches.empty() && !ok(nd.point, nd.radius)) { return false; }
+     }
+     return true;
+ }

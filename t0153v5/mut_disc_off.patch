@@ -1,0 +1,15 @@
+--- src-144e957/core/src/toolpath/v_carve.cpp	2026-11-04 19:45:31.000000000 -0600
++++ src-mut/core/src/toolpath/v_carve.cpp	2026-11-04 19:52:24.760376767 -0600
+@@ -1,3 +1,4 @@
++#include <cstdlib>
+ #include "carvetto/toolpath/v_carve.hpp"
+ #include "v_carve_check.hpp"
+ 
+@@ -1224,6 +1225,7 @@
+         return true;  // too close to a wall for the rings to decide; such discs are tiny
+     }
+     // Inside the region, and no wall strictly closer than r - clear: the disc agrees with it.
++    if (std::getenv("MUT") && std::atoi(std::getenv("MUT")) == 1) { return inside(p, candidates); }
+     return inside(p, candidates) && !closer(p, r - clear, candidates);
+ }
+ 

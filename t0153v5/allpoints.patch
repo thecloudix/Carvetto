@@ -1,0 +1,11 @@
+--- src-sab/core/src/toolpath/v_carve.cpp	2026-11-04 19:47:12.939658479 -0600
++++ src-saball/core/src/toolpath/v_carve.cpp	2026-11-04 19:52:07.595092977 -0600
+@@ -1229,7 +1229,7 @@
+ }
+ 
+ bool SkeletonCheck::consistent(const MedialAxis& ax) const {
+-    constexpr std::size_t kSamples = 8;
++    constexpr std::size_t kSamples = static_cast<std::size_t>(-1) / 2;
+     // The rings meeting the box of every inscribed disc of the skeleton: the only ones that can
+     // contain a skeleton point or come within its radius.
+     Box2 discs;

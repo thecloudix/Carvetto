@@ -1,0 +1,25 @@
+209499a 5000 regions 38750 spans: 31.06 s CPU, 2680243 moves, ok=1 diags=0, peak RSS 404 MB 
+209499a flat 5000 regions 38750 spans: 22.94 s CPU, 2740243 moves, ok=1 diags=0, peak RSS 446 MB 
+209499a frame 5000 regions 38750 spans: 36.65 s CPU, 1651346 moves, ok=1 diags=0, peak RSS 1533 MB 
+144e957 5000 regions 38750 spans: 24.31 s CPU, 2680243 moves, ok=1 diags=0, peak RSS 408 MB 
+144e957 flat 5000 regions 38750 spans: 20.62 s CPU, 2740243 moves, ok=1 diags=0, peak RSS 449 MB 
+144e957 frame 5000 regions 38750 spans: 51.75 s CPU, 1651346 moves, ok=1 diags=0, peak RSS 1535 MB 
+sab 5000 regions 38750 spans: 17.15 s CPU, 2680243 moves, ok=1 diags=0, peak RSS 408 MB 
+sab flat 5000 regions 38750 spans: 20.86 s CPU, 2740243 moves, ok=1 diags=0, peak RSS 449 MB 
+sab frame 5000 regions 38750 spans: 44.44 s CPU, 1651346 moves, ok=1 diags=0, peak RSS 1536 MB 
+saball 5000 regions 38750 spans: 26.60 s CPU, 2680243 moves, ok=1 diags=0, peak RSS 408 MB 
+saball flat 5000 regions 38750 spans: 29.72 s CPU, 2740243 moves, ok=1 diags=0, peak RSS 449 MB 
+saball frame 5000 regions 38750 spans: 99.63 s CPU, 1651346 moves, ok=1 diags=0, peak RSS 1535 MB 
+209499a 5000 regions 38750 spans: 20.69 s CPU, 2680243 moves, ok=1 diags=0, peak RSS 405 MB 
+209499a flat 5000 regions 38750 spans: 22.30 s CPU, 2740243 moves, ok=1 diags=0, peak RSS 446 MB 
+209499a frame 5000 regions 38750 spans: 37.97 s CPU, 1651346 moves, ok=1 diags=0, peak RSS 1533 MB 
+144e957 5000 regions 38750 spans: 21.68 s CPU, 2680243 moves, ok=1 diags=0, peak RSS 408 MB 
+144e957 flat 5000 regions 38750 spans: 18.87 s CPU, 2740243 moves, ok=1 diags=0, peak RSS 449 MB 
+144e957 frame 5000 regions 38750 spans: 46.17 s CPU, 1651346 moves, ok=1 diags=0, peak RSS 1536 MB 
+sab 5000 regions 38750 spans: 20.13 s CPU, 2680243 moves, ok=1 diags=0, peak RSS 408 MB 
+sab flat 5000 regions 38750 spans: 17.92 s CPU, 2740243 moves, ok=1 diags=0, peak RSS 449 MB 
+sab frame 5000 regions 38750 spans: 41.88 s CPU, 1651346 moves, ok=1 diags=0, peak RSS 1536 MB 
+saball 5000 regions 38750 spans: 28.85 s CPU, 2680243 moves, ok=1 diags=0, peak RSS 408 MB 
+saball flat 5000 regions 38750 spans: 32.48 s CPU, 2740243 moves, ok=1 diags=0, peak RSS 449 MB 
+saball frame 5000 regions 38750 spans: 107.44 s CPU, 1651346 moves, ok=1 diags=0, peak RSS 1536 MB 
+done
