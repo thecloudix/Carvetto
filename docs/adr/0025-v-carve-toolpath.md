@@ -155,18 +155,28 @@ for any region, nothing is produced; the same when it ignores a boundary that en
 boundary of a part separates inside from outside by construction, so an ignored one is a medial
 axis failure and carving on would cut through a hole: round 2 found such cases, fixed in §7, and
 this guard keeps any future one from reaching the machine). A boundary read on the wrong side, or a
-hole nested as an outer, is caught too (`detail::SkeletonCheck`): at sampled skeleton points (every
-point of a branch with at most 8, otherwise 8 evenly spaced ones plus its deepest and its last;
-every isolated node) whose radius r is above twice the internal tolerance plus the distance
-tolerance, the point must lie inside the whole even-odd region (not just its part: a hole taken for
-an outer is a part of its own) and its distance to the walls must be at least r minus that margin,
-i.e. the inscribed disc must agree with the true walls. Both use the boundaries polygonised at the
-internal tolerance, restricted to the rings that meet the box of the skeleton's inscribed discs (no
-other ring can contain a checked point or come within its radius), so the cost stays per part (AC2
-unchanged within measurement noise). Round 4's version checked only that the deepest point of each
-branch was inside, which a wrong-side hole whose skeleton's deepest points fall inside an island
-passed (verifier fault injection: −3.3 to −5.3 mm). Otherwise nothing is carved. In every case
-`MedialAxisCapped` names the region's vectors, with the advice to use a coarser chordal tolerance or simplify. A partial or degraded
+hole nested as an outer, is caught too (`detail::SkeletonCheck`): every skeleton point (and every
+isolated node) whose radius r is above twice the internal tolerance plus the distance tolerance (2c
++ d) must lie inside the whole even-odd region (not just its part: a hole taken for an outer is a
+part of its own) and have no wall closer than r − (2c + d), i.e. the inscribed disc must agree with
+the true walls. Smaller discs are not checked: a wrong skeleton that thin can cut at most 2c + d
+outside the region, about 0.67 mm at the largest chordal tolerance, 1 mm (0.034 mm at 0.05). The
+rings are the boundaries polygonised at the internal tolerance, indexed by box; each point queries
+the index for its disc's box, and only the rings of other parts are measured (the medial radius is
+already the exact distance to the part's own boundaries, whose rings lie within c of them).
+Membership is carried along the skeleton: walking from a point whose disc passed, no ring is within
+r − (2c + d) of it, so a next point nearer than that is on the same side of every ring; the exact
+ray count runs only where that does not hold and once per connected piece. If any check fails,
+nothing is carved. Round 4 checked only that each branch's deepest point was inside, and round 5's
+first fix sampled 8 points per branch (plus the deepest and the last): wrong skeletons whose
+checked points all fell inside islands passed (verifier fault injection, −0.47 to −5.3 mm). Cost,
+Release, 5,000 glyph regions on the shared machine under load (load average ~20, two rounds
+interleaved with the earlier versions): plain page 25.4 / 28.1 s CPU (round 4: 27.8 / 26.5 s, the
+8-sample version: 25.4 / 28.0 s); one part with 5,000 letter holes (a frame round the page) 35.7 /
+41.6 s (round 4: 40.5 / 42.2 s, the 8-sample version: 45.5 / 54.6 s), so AC2's 60 s bound keeps its
+margin. In every case `MedialAxisCapped` names the region's vectors, with the advice to use a
+coarser chordal tolerance or simplify.
+A partial or degraded
 carve is never returned silently, and a capped skeleton has no accuracy guarantee to make AC1
 hold. Known non-capped limits (ADR-0023): gaps narrower than ~2·chordal have no skeleton (not
 carved: their depth is below ~chordal/tan(θ/2)); obtuse convex corners lose branch length, but the

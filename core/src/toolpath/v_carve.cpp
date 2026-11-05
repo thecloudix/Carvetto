@@ -897,15 +897,23 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
             }
         }
         if (ax.ignoredContours > zeroArea ||
-            (!ax.accuracyCapped && !skeletonCheck.consistent(ax))) {
+            (!ax.accuracyCapped && !skeletonCheck.consistent(ax, groups[g].boundaries))) {
             // Every boundary of a part encloses area and separates inside from outside (they
             // do not cross and are nested by containment): the medial axis must use them all,
             // or a hole would be carved through. Never carve on a skeleton that dropped one.
             anyCapped = true;
-            say(ToolpathIssue::MedialAxisCapped, groups[g].sources.front(),
+            const std::string message =
                 "the medial axis of " + vecName(groups[g].sources.front()) +
-                    " did not separate inside from outside correctly (a boundary ignored or read on the wrong "
-                    "side: a hole would be cut through); nothing is carved");
+                " did not separate inside from outside correctly (a boundary ignored or read on the wrong "
+                "side: a hole would be cut through); nothing is carved";
+            // Parts resolved from one crossing cluster share its first vector: say it once.
+            const bool repeated = std::any_of(result.diagnostics.begin(), result.diagnostics.end(),
+                                              [&](const ToolpathDiagnostic& d) {
+                                                  return d.issue == ToolpathIssue::MedialAxisCapped && d.message == message;
+                                              });
+            if (!repeated) {
+                say(ToolpathIssue::MedialAxisCapped, groups[g].sources.front(), message);
+            }
             continue;
         }
         if (ax.ignoredContours > 0) {
@@ -1183,25 +1191,24 @@ SkeletonCheck::SkeletonCheck(const std::vector<Contour>& boundaries, const geome
     ringIndex_ = BoxIndex(ringBoxes_);
 }
 
-bool SkeletonCheck::inside(Vec2 p, const std::vector<std::size_t>& candidates) const {
-    // Rings that do not meet the box of the checked discs cannot contain p (it lies in that box),
-    // so a ray leaving p crosses each of them an even number of times: only candidates count.
+bool SkeletonCheck::inside(Vec2 p) const {
+    const Box2& all = ringIndex_.bounds();
+    if (all.isEmpty() || !(all.max.x > p.x)) {
+        return false;
+    }
     bool in = false;
-    for (const std::size_t k : candidates) {
-        const Box2& b = ringBoxes_[k];
-        if (b.min.y <= p.y && p.y <= b.max.y && b.max.x > p.x) {
-            in = in != insideRing(rings_[k], p);
-        }
+    for (const std::size_t k : ringIndex_.query(Box2{p, Vec2{all.max.x + 1.0, p.y}})) {
+        in = in != insideRing(rings_[k], p);
     }
     return in;
 }
 
-bool SkeletonCheck::closer(Vec2 p, double limit, const std::vector<std::size_t>& candidates) const {
+bool SkeletonCheck::closer(Vec2 p, double limit, const std::vector<char>& skip) const {
     const Vec2 h{limit, limit};
     const Box2 near{p - h, p + h};
     const double l2 = limit * limit;
-    for (const std::size_t k : candidates) {
-        if (!ringBoxes_[k].intersects(near)) {
+    for (const std::size_t k : ringIndex_.query(near)) {
+        if (!skip.empty() && skip[k] != 0) {
             continue;
         }
         const std::vector<Vec2>& r = rings_[k];
@@ -1218,58 +1225,90 @@ bool SkeletonCheck::closer(Vec2 p, double limit, const std::vector<std::size_t>&
     return false;
 }
 
-bool SkeletonCheck::pointOk(Vec2 p, double r, const std::vector<std::size_t>& candidates) const {
+bool SkeletonCheck::consistent(const MedialAxis& ax, const std::vector<std::size_t>& own) const {
+    // Every skeleton point whose radius r exceeds `clear` is checked: inside the even-odd region,
+    // and no wall strictly closer than r - clear (the inscribed disc agrees with the walls).
+    //  - Distance: the medial axis measured r against the part's own boundaries exactly, and
+    //    their rings lie within tol.chordal of them, so only the other rings ("foreign") can be
+    //    closer than r - clear; each point queries the ring index for its disc's box.
+    //  - Membership: walking a branch from a point p whose disc check passed, no ring is within
+    //    r_p - clear of p, so the next point, nearer than that, is on the same side of every ring.
+    //    The exact ray count is needed only where that does not hold, and once per connected
+    //    piece of skeleton (membership is carried through the nodes).
     const double clear = 2.0 * tol_.chordal + tol_.distance;
-    if (!(r > clear)) {
-        return true;  // too close to a wall for the rings to decide; such discs are tiny
-    }
-    // Inside the region, and no wall strictly closer than r - clear: the disc agrees with it.
-    return inside(p, candidates) && !closer(p, r - clear, candidates);
-}
-
-bool SkeletonCheck::consistent(const MedialAxis& ax) const {
-    constexpr std::size_t kSamples = 8;
-    // The rings meeting the box of every inscribed disc of the skeleton: the only ones that can
-    // contain a skeleton point or come within its radius.
-    Box2 discs;
-    for (const geometry::MedialBranch& br : ax.branches) {
-        for (const geometry::MedialPoint& m : br.points) {
-            discs.expand(Box2{m.point, m.point}.inflated(m.radius));
+    std::vector<char> skip;
+    if (!own.empty()) {
+        skip.assign(rings_.size(), 0);
+        for (const std::size_t k : own) {
+            if (k < skip.size()) {
+                skip[k] = 1;
+            }
         }
     }
-    for (const geometry::MedialNode& nd : ax.nodes) {
-        discs.expand(Box2{nd.point, nd.point}.inflated(nd.radius));
-    }
-    if (discs.isEmpty()) {
-        return true;
-    }
-    const std::vector<std::size_t> candidates = ringIndex_.query(discs);
-    for (const geometry::MedialBranch& br : ax.branches) {
+    const std::size_t nn = ax.nodes.size();
+    std::vector<signed char> nodeIn(nn, -1);  // -1 unknown, 0 outside, 1 inside
+    std::vector<char> branchDone(ax.branches.size(), 0);
+    auto discOk = [&](Vec2 p, double r) { return !(r > clear) || !closer(p, r - clear, skip); };
+    // Walks branch `b` from node `from`; `in` is the membership at its first point (-1 unknown).
+    auto walk = [&](std::size_t b, std::size_t from) -> bool {
+        const geometry::MedialBranch& br = ax.branches[b];
         const std::size_t n = br.points.size();
-        if (n == 0) {
+        const bool forward = br.startNode == from;
+        signed char in = nodeIn[from];
+        Vec2 prev{};
+        double reach = 0.0;  // no ring within this distance of prev (0: unknown)
+        for (std::size_t i = 0; i < n; ++i) {
+            const geometry::MedialPoint& m = br.points[forward ? i : n - 1 - i];
+            if (i > 0 && !(geometry::distance(prev, m.point) < reach)) {
+                in = -1;  // a ring may lie in between: membership is no longer known
+            }
+            const bool checked = m.radius > clear;
+            if (checked) {
+                if (in < 0) {
+                    in = inside(m.point) ? 1 : 0;
+                }
+                if (in == 0 || !discOk(m.point, m.radius)) {
+                    return false;
+                }
+                reach = m.radius - clear;
+            } else {
+                reach = 0.0;
+            }
+            prev = m.point;
+        }
+        const std::size_t to = forward ? br.endNode : br.startNode;
+        if (to < nn && nodeIn[to] < 0 && in >= 0) {
+            nodeIn[to] = in;
+        }
+        return true;
+    };
+    for (std::size_t seed = 0; seed < nn; ++seed) {
+        if (ax.nodes[seed].branches.empty()) {
+            const geometry::MedialNode& nd = ax.nodes[seed];
+            if (nd.radius > clear && (!inside(nd.point) || !discOk(nd.point, nd.radius))) {
+                return false;
+            }
             continue;
         }
-        std::size_t deepest = 0;
-        for (std::size_t k = 1; k < n; ++k) {
-            if (br.points[k].radius > br.points[deepest].radius) {
-                deepest = k;
+        // Breadth-first over the branches reachable from `seed`, so that membership found at one
+        // end of a branch carries to the next.
+        std::vector<std::size_t> queue{seed};
+        for (std::size_t q = 0; q < queue.size(); ++q) {
+            const std::size_t node = queue[q];
+            for (const std::size_t b : ax.nodes[node].branches) {
+                if (branchDone[b] != 0) {
+                    continue;
+                }
+                branchDone[b] = 1;
+                if (!walk(b, node)) {
+                    return false;
+                }
+                const geometry::MedialBranch& br = ax.branches[b];
+                const std::size_t other = br.startNode == node ? br.endNode : br.startNode;
+                if (other < nn) {
+                    queue.push_back(other);
+                }
             }
-        }
-        const std::size_t stride = n <= kSamples ? 1 : (n + kSamples - 1) / kSamples;
-        for (std::size_t k = 0; k < n; k += stride) {
-            if (!pointOk(br.points[k].point, br.points[k].radius, candidates)) {
-                return false;
-            }
-        }
-        for (const std::size_t k : {deepest, n - 1}) {
-            if (!pointOk(br.points[k].point, br.points[k].radius, candidates)) {
-                return false;
-            }
-        }
-    }
-    for (const geometry::MedialNode& nd : ax.nodes) {
-        if (nd.branches.empty() && !pointOk(nd.point, nd.radius, candidates)) {
-            return false;
         }
     }
     return true;

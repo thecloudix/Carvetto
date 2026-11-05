@@ -636,6 +636,61 @@ TEST_CASE("V-carve safety net rejects a skeleton computed for the wrong region",
     }
 }
 
+namespace {
+
+/// Stadium (caps centred at x = ±20) of radius r, counter-clockwise or clockwise.
+Contour stadium(double r, bool clockwise) {
+    const double pi = geometry::kPi;
+    Contour c;
+    c.closed = true;
+    c.append(geometry::LineSpan{{-20, -r}, {20, -r}});
+    c.append(geometry::ArcSpan{{20, 0}, r, -pi / 2, pi / 2, geometry::ArcDirection::CCW});
+    c.append(geometry::LineSpan{{20, r}, {-20, r}});
+    c.append(geometry::ArcSpan{{-20, 0}, r, pi / 2, 1.5 * pi, geometry::ArcDirection::CCW});
+    if (clockwise) {
+        c.reverse();
+    }
+    return c;
+}
+
+}  // namespace
+
+TEST_CASE("V-carve safety net checks every skeleton point, not a sample", "[toolpath][v_carve][holes]") {
+    // T-0153 round 6 (verifier repro stad_isl_sab4_c0.05): a stadium frame 0.01 mm wide whose
+    // hole holds islands placed over the points a sampled check (8 per branch, the deepest and
+    // the last) would test. The skeleton of the outer stadium alone (the hole dropped) is one
+    // branch of ~200 points along the middle; between the islands it runs through the hole,
+    // outside the region. Every point is checked now, so it is rejected.
+    std::vector<Contour> region{stadium(1.01, false), stadium(1.0, true)};
+    const double y = 0.995;
+    Contour leftCap;
+    leftCap.closed = true;
+    leftCap.append(geometry::LineSpan{{-20, -y}, {-18.25, -y}});
+    leftCap.append(geometry::LineSpan{{-18.25, -y}, {-18.25, y}});
+    leftCap.append(geometry::LineSpan{{-18.25, y}, {-20, y}});
+    leftCap.append(geometry::ArcSpan{{-20, 0}, y, geometry::kPi / 2, 1.5 * geometry::kPi, geometry::ArcDirection::CCW});
+    region.push_back(leftCap);
+    for (const auto& [a, b] : std::vector<std::pair<double, double>>{
+             {-15.9, -13.9}, {-10.7, -8.7}, {-5.5, -3.5}, {-0.27, 3.19}, {4.94, 6.94}, {10.15, 12.15}, {15.35, 17.35}}) {
+        region.push_back(Contour::rectangle(Box2{Vec2{a, -y}, Vec2{b, y}}));
+    }
+    Contour rightCap;
+    rightCap.closed = true;
+    rightCap.append(geometry::LineSpan{{19, -y}, {20, -y}});
+    rightCap.append(geometry::ArcSpan{{20, 0}, y, -geometry::kPi / 2, geometry::kPi / 2, geometry::ArcDirection::CCW});
+    rightCap.append(geometry::LineSpan{{20, y}, {19, y}});
+    rightCap.append(geometry::LineSpan{{19, y}, {19, -y}});
+    region.push_back(rightCap);
+
+    const geometry::Tolerance inner{0.001, 1e-9, 0.05 / 3.0};
+    const toolpath::detail::SkeletonCheck check(region, inner);
+    const geometry::MedialAxis wrong = geometry::medialAxis({region[0]}, inner);
+    REQUIRE(wrong.branches.size() == 1);
+    CHECK(wrong.branches.front().points.size() > 8);
+    CHECK_FALSE(check.consistent(wrong));
+    CHECK(check.consistent(geometry::medialAxis(region, inner)));
+}
+
 TEST_CASE("V-carve at the smallest chordal tolerance clears flat areas", "[toolpath][v_carve][flat]") {
     // 0.0003 mm / 3 is 9.999999999999999e-05, below Pocket's 0.0001: the internal tolerance is
     // floored at Pocket's minimum, so a flat area is cleared, not refused.
