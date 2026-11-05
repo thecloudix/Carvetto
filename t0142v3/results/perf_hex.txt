@@ -1,0 +1,1 @@
+perf record po3_br hex 40000 1 (40k+80k outsets, 5305 samples): Clipper2Lib symbols 91.6%, everyHoleNested+RingLocator::locate ~0.1% (6 samples), other 7%. Top: IsValidAelOrder 21.6%, GetMaximaPair 21.3+6.4%, InsertLeftEdge 4.2%, AddLocalMinPoly 3.2%, BuildIntersectList 2.9%.

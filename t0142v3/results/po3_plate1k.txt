@@ -1,0 +1,6 @@
+br po3 plate d 0.050 1000->2000: 0.3972 5.9767 s ratio 15.046 rings 3001 6001 hash 97eb3e70b335807f c2f69d26b67febcf
+main po3 plate d 0.050 1000->2000: 0.7164 8.6249 s ratio 12.040 rings 3001 6001 hash 97eb3e70b335807f c2f69d26b67febcf
+br po3 plate d 0.050 1000->2000: 0.5075 6.8037 s ratio 13.405 rings 3001 6001 hash 97eb3e70b335807f c2f69d26b67febcf
+main po3 plate d 0.050 1000->2000: 0.6593 7.2471 s ratio 10.993 rings 3001 6001 hash 97eb3e70b335807f c2f69d26b67febcf
+br po3 plate d 0.050 1000->2000: 0.5301 5.3154 s ratio 10.027 rings 3001 6001 hash 97eb3e70b335807f c2f69d26b67febcf
+main po3 plate d 0.050 1000->2000: 0.4692 2.6379 s ratio 5.622 rings 3001 6001 hash 97eb3e70b335807f c2f69d26b67febcf

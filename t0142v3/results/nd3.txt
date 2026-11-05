@@ -1,0 +1,6 @@
+nd3 seed 1: agree 19902 differ 0 (resolved 15881, allNested 4021) per-hole 382284 differ 0
+nd3 seed 2: agree 19915 differ 0 (resolved 15938, allNested 3977) per-hole 382900 differ 0
+nd3 seed 3: agree 19916 differ 0 (resolved 16010, allNested 3906) per-hole 388026 differ 0
+nd3 seed 4: agree 19937 differ 0 (resolved 16006, allNested 3931) per-hole 384934 differ 0
+nd3 seed 5: agree 19937 differ 0 (resolved 16041, allNested 3896) per-hole 385801 differ 0
+nd3 seed 6: agree 19909 differ 0 (resolved 15962, allNested 3947) per-hole 383899 differ 0

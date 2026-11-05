@@ -1,0 +1,10 @@
+== mutA
+  layout 0 CPU seconds: 20000 shapes 0.75131, 40000 shapes 3.9959, ratio 5.
+  layout 1 CPU seconds: 20000 shapes 2.20087, 40000 shapes 18.9287, ratio 8.
+  layout 2 CPU seconds: 20000 shapes 0.861548, 40000 shapes 3.10821, ratio 3.
+assertions: 12 | 6 passed | 6 failed
+test cases:  1 | 1 failed
+== mutB
+  layout 2 CPU seconds: 20000 shapes 1.27204, 40000 shapes 4.65189, ratio 3.
+assertions: 12 | 10 passed | 2 failed
+test cases:  1 |  0 passed | 1 failed

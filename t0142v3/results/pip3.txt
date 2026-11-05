@@ -1,0 +1,4 @@
+pip3 seed 1 rings 3000 indexed 2264 out 138830 in 32140 on 186987 MISMATCHES 0
+pip3 seed 2 rings 3000 indexed 2250 out 142375 in 34411 on 189202 MISMATCHES 0
+pip3 seed 3 rings 3000 indexed 2292 out 137735 in 32946 on 186927 MISMATCHES 0
+pip3 seed 4 rings 3000 indexed 2279 out 138541 in 33391 on 186554 MISMATCHES 0

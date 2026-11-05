@@ -1,0 +1,18 @@
+T-0142 verifier round 3 (fb08fc9; base origin/main 2df9aba, core == 53ae278). Machine 16 threads shared, load 10-28.
+VERDICT: PASS.
+Build: Release x86-64-v3 ok; Debug -Werror ok (0 warnings). ctest Debug -j6: 1001/1001 rc=0 (ctest_debug.txt).
+changelog check --base origin/main ok. merge-tree origin/main clean; vs origin/task/T-0016-sharp-cost (4a6b67a) clean;
+merged tree Debug -Werror 288/288 built, 67 offset/boolean/T-0141/T-0142/T-0016 ctests pass.
+pip3 seeds 1-4 x 3000 rings (~9000 indexed, ~1.43M queries, ~750k On): 0 mismatches vs PointInPolygon.
+nd3 seeds 1-6 x 20000 scenes: 0 scene diffs, 0 of ~2.3M per-hole diffs vs all-pairs scan.
+Cost 40k->80k (po3_40k*.txt, po3_cmp40k.txt; hashes br == main in every layout/size):
+  tcol br .69/.72 main .73/.66; comb br 1.46/1.69 main 1.35/2.64; row/grid/rand/deep/tcolrev/tcolshuf/xcombrev all ~2x, br ~= main
+  tgrid/hex/hexrev: main itself 2.6-3.1x per doubling; br/main at 80k 0.81-1.11 (median ~1.0). perf hex: Clipper2 91.6%,
+  nesting check ~0.1%. nest-only 80k: <= 0.1 s in every layout (nest_40k.txt).
+  plate (outer + row of holes with islands; T-0141 (c) documented limit): main 5.6-12x per doubling 1k->2k, br same range, nest 1 ms.
+Adversarial (po3_adv3k.txt): ycomb, cring quadratic on main (Clipper2) and on br; nesting check itself quadratic (ycomb 0.64->2.61 s,
+  cring 0.17->0.69 s at 3k->6k) = ~5-25% over main; documented in ADR-0006 §10.
+Timing test: Release 15/15 and Debug 8/8 pass under load 28; mutant A (round-2 offset.cpp) fails all 3 layouts (ratios 5.3/8.6/3.6);
+  mutant B (no edge index) fails layout 2 (3.66); mutant C (box hierarchy -> linear scan) PASSES all T-0142 tests but is 3.7-3.8x per
+  doubling on tcolrev/tcolshuf 20k->40k (mutC_po3.txt): the BVH is not guarded (non-blocking).
+(b) hn seeds 5-8 byte-identical br vs main; lo seeds 31-34: lost 0, leftover 0, far 50/1 in fam 4 (crossing rings), as round 2.

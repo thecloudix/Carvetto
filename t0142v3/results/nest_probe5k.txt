@@ -1,0 +1,6 @@
+nest cring 5000->10000: 0.3015 1.2532 s ratio 4.157 allNested 1 1
+nest ycomb 5000->10000: 1.1472 4.7547 s ratio 4.145 allNested 1 1
+nest xcombrev 5000->10000: 0.0018 0.0039 s ratio 2.160 allNested 1 1
+nest tcolrev 5000->10000: 0.0017 0.0037 s ratio 2.185 allNested 1 1
+nest tcolshuf 5000->10000: 0.0027 0.0061 s ratio 2.287 allNested 1 1
+nest hexrev 5000->10000: 0.0024 0.0051 s ratio 2.149 allNested 1 1

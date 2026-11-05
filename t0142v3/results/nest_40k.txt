@@ -1,0 +1,9 @@
+nest tcol 40000->80000: 0.0024 0.0045 s ratio 1.878 allNested 1 1
+nest tgrid 40000->80000: 0.0031 0.0066 s ratio 2.162 allNested 1 1
+nest hex 40000->80000: 0.0030 0.0059 s ratio 1.964 allNested 1 1
+nest comb 40000->80000: 0.0032 0.0059 s ratio 1.867 allNested 1 1
+nest tcolrev 40000->80000: 0.0208 0.0452 s ratio 2.172 allNested 1 1
+nest tcolshuf 40000->80000: 0.0412 0.1045 s ratio 2.537 allNested 1 1
+nest hexrev 40000->80000: 0.0271 0.0592 s ratio 2.183 allNested 1 1
+nest xcombrev 40000->80000: 0.0208 0.0438 s ratio 2.105 allNested 1 1
+nest row 40000->80000: 0.0032 0.0058 s ratio 1.810 allNested 1 1
