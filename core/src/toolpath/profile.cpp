@@ -20,6 +20,7 @@
 
 #include "carvetto/geometry/boolean.hpp"
 #include "carvetto/geometry/contour_ops.hpp"
+#include "carvetto/geometry/fixed_point.hpp"
 #include "carvetto/geometry/fill_rule.hpp"
 #include "carvetto/geometry/offset.hpp"
 #include "carvetto/toolpath/box_index.hpp"
@@ -130,7 +131,7 @@ void closeExactly(Contour& c) {
 // §11, T-0158). Some targets have several equally near points, and the plain projection then
 // follows rounding (the direction of a near-zero vector, or which of two equal distances comes
 // out smaller), which differs between compilers, FMA contraction and libm. Two such ties are
-// broken by rule, comparing only distances, each within `eps`:
+// broken by rule, comparing distances within `eps`:
 //  1. Round corner: `target` lies at the centre of an arc of the walk that is at the nearest
 //     distance (a convex tip's round join on an Outside cut, a circle round its bounding-box
 //     centre): start at the beginning of the first such arc (lowest span index), if that point is
@@ -142,16 +143,22 @@ void closeExactly(Contour& c) {
 //     V-bit mitre at a convex tip (the tip's feet on both offset lines are equally near), a mitre
 //     squared off (both lines and the chamfer), a merged region's polygonal round join. When
 //     every span is near (a loop of two or three spans), the loop is broken at the clearly widest
-//     gap between consecutive feet. Start at the run's sharpest junction (largest turn), the
-//     first in travel among those within kTipTurnTie of it: the mitre corner whatever the cut
-//     direction, even when a short neighbour edge that turns only slightly is near too; the
-//     chamfer's first corner in travel. Near spans in separate places (a box anchor on a
-//     symmetric shape) stay with the projection.
+//     gap between consecutive feet. The start is the corner built about `target` itself:
+//     - with round joins (`roundJoins`): the first point of the run in travel on the circle of
+//       radius `cutDistance` about `target`: the first chord point of a merged region's polygonal
+//       join, or of the chord the exact offset puts in place of a join arc shorter than the
+//       tolerance (as a round join starts at its arc's beginning);
+//     - otherwise the run's junctions at which `target` is equidistant from the two spans' carrier
+//       lines or circles, to rounding (`noise`): the mitre at the tip, both corners of its
+//       chamfer, every vertex of a polygonal join. A neighbour's junction is equidistant only if
+//       its edge has length x sin(turn) within that rounding. Of those, the one whose feet of
+//       `target` lie most evenly either side of it, and then the first in travel of the
+//       consecutive ones around it: the mitre itself, or the chamfer's first corner. No turn
+//       angles are compared, so no threshold on them moves the start.
+//     Near spans in separate places (a box anchor on a symmetric shape) stay with the projection.
 // Otherwise the nearest point (`ArcLengthPath::project`).
-// Turns (radians) closer than this to the sharpest junction of a run count as equally sharp.
-constexpr double kTipTurnTie = 1e-3;
-
-double tieFreeStart(const ArcLengthPath& walk, Vec2 target, double eps, double cutDistance, double slack) {
+double tieFreeStart(const ArcLengthPath& walk, Vec2 target, double eps, double cutDistance, double slack,
+                    bool roundJoins) {
     const Contour& c = walk.contour();
     const std::size_t n = c.spans.size();
     if (n == 0) {
@@ -214,11 +221,6 @@ double tieFreeStart(const ArcLengthPath& walk, Vec2 target, double eps, double c
             found = gap1 - gap2 > eps;
         }
         if (found) {
-            // The run's junctions in travel order; the start is the sharpest (largest turn), the
-            // first in travel among those within kTipTurnTie of it. So a near neighbour of the tip
-            // that only turns slightly (a short edge whose offset stays within `eps`) never takes
-            // the start, whichever way the cut runs; the two equal corners of a chamfer give the
-            // first in travel.
             std::size_t runLength = 0;
             while (runLength < n && isNear((first + runLength) % n)) {
                 ++runLength;
@@ -226,23 +228,83 @@ double tieFreeStart(const ArcLengthPath& walk, Vec2 target, double eps, double c
             if (nearCount == n) {
                 runLength = n;
             }
-            std::vector<double> turns;
-            double sharpest = 0.0;
-            for (std::size_t k = 0; k + 1 < runLength; ++k) {
-                const Vec2 a = geometry::tangentAt(c.spans[(first + k) % n], 1.0);
-                const Vec2 b = geometry::tangentAt(c.spans[(first + k + 1) % n], 0.0);
-                turns.push_back(std::fabs(std::atan2(a.cross(b), a.dot(b))));
-                sharpest = std::max(sharpest, turns.back());
-            }
-            std::size_t pick = 0;
-            while (pick + 1 < turns.size() && turns[pick] < sharpest - kTipTurnTie) {
-                ++pick;
-            }
-            // Where the projection already lands exactly on that junction, keep its arc length
+            // Junction k of the run joins its spans k and k + 1 (span indices first + k ...).
+            auto spanOf = [&](std::size_t k) { return (first + k) % n; };
+            const std::size_t junctions = runLength - 1;
+            // Where the projection already lands exactly on the chosen point, keep its arc length
             // (the same point, and the same output as before this rule).
-            const double junction = walk.spanStart((first + pick + 1) % n);
-            const double projected = walk.project(target);
-            return walk.pointAt(projected) == walk.pointAt(junction) ? projected : junction;
+            auto startAt = [&](double u) {
+                const double projected = walk.project(target);
+                return walk.pointAt(projected) == walk.pointAt(u) ? projected : u;
+            };
+            const double scale = std::max({1.0, std::fabs(target.x), std::fabs(target.y), cutDistance});
+            if (roundJoins) {
+                // A region's round join is a polygon whose vertices Clipper2 puts on the circle of
+                // radius cutDistance about the (grid-rounded) tip, starting with the foot on the
+                // incoming offset edge; each is off by up to half a grid unit per axis, as is the
+                // tip itself. An exact offset's chord across a sub-tolerance join arc ends on that
+                // circle to rounding (and the offset's closing of residuals, 1e-10 x the scale).
+                const double onCircle = slack > 0.0 ? 3.0 / geometry::kFixedPointScale : 4e-10 * scale;
+                auto onJoin = [&](std::size_t i) {
+                    return std::fabs(geometry::distance(geometry::startPoint(c.spans[i]), target) - cutDistance) <=
+                           onCircle;
+                };
+                for (std::size_t k = 0; k <= junctions; ++k) {
+                    std::size_t i = spanOf(k);
+                    if (onJoin(i)) {
+                        // The join's last chord is shorter than the others, so less near: where the
+                        // cut runs the join that way, it is not part of the run. Back up over it.
+                        for (std::size_t back = 0; back + 1 < n && onJoin((i + n - 1) % n); ++back) {
+                            i = (i + n - 1) % n;
+                        }
+                        return startAt(walk.spanStart(i));
+                    }
+                }
+            }
+            // Coordinates of a merged region lie on Clipper2's grid; exact offsets carry rounding
+            // and the offset's own closing of junction residuals (up to 1e-10 x the scale).
+            const double coord = slack > 0.0 ? 1.0 / geometry::kFixedPointScale : 1e-10 * scale;
+            // Distance from `target` to a span's carrier (its line or circle), and how far that may
+            // be off: a line's direction comes from its end points, so a short line is less exact.
+            auto carrier = [&](std::size_t i, double& noise) {
+                const Span& sp = c.spans[i];
+                if (const auto* a = std::get_if<geometry::ArcSpan>(&sp)) {
+                    noise = coord;
+                    return std::fabs(geometry::distance(a->centre, target) - a->radius);
+                }
+                const Vec2 p0 = geometry::startPoint(sp);
+                const Vec2 d = geometry::endPoint(sp) - p0;
+                const double len = d.length();
+                noise = coord * (1.0 + (len > 0.0 ? cutDistance / len : scale));
+                return len > 0.0 ? std::fabs((target - p0).cross(d)) / len : geometry::distance(target, p0);
+            };
+            std::vector<char> equi(junctions, 0);
+            std::vector<double> lopsided(junctions, 0.0);
+            bool anyEqui = false;
+            for (std::size_t k = 0; k < junctions; ++k) {
+                const std::size_t a = spanOf(k);
+                const std::size_t b = spanOf(k + 1);
+                double na = 0.0;
+                double nb = 0.0;
+                const double ga = carrier(a, na);
+                const double gb = carrier(b, nb);
+                equi[k] = std::fabs(ga - gb) <= 4.0 * (na + nb) ? 1 : 0;
+                anyEqui = anyEqui || equi[k] != 0;
+                // Feet of `target` on the two spans either side of the junction.
+                lopsided[k] = std::fabs((1.0 - param[a]) * walk.spanLength(a) - param[b] * walk.spanLength(b));
+            }
+            std::size_t pick = junctions;
+            for (std::size_t k = 0; k < junctions; ++k) {
+                if ((equi[k] != 0 || !anyEqui) && (pick == junctions || lopsided[k] < lopsided[pick])) {
+                    pick = k;
+                }
+            }
+            if (pick < junctions) {
+                while (equi[pick] != 0 && pick > 0 && equi[pick - 1] != 0) {
+                    --pick;
+                }
+                return startAt(walk.spanStart(spanOf(pick + 1)));
+            }
         }
     }
     return walk.project(target);
@@ -974,7 +1036,7 @@ void ProfileBuilder::chooseStarts(std::vector<Cut>& cuts) {
             } else {
                 target = anchorOf(c.path.bounds(), p_.startAnchor);
             }
-            const double u = tieFreeStart(walk, target, tol_.distance, c.offsetBy, c.offsetSlack);
+            const double u = tieFreeStart(walk, target, tol_.distance, c.offsetBy, c.offsetSlack, !sharpExternal_);
             c.path.spans = walk.extract(u, u + walk.length());
         }
         closeExactly(c.path);
@@ -2961,7 +3023,7 @@ ProfileResult ProfileBuilder::run() {
         for (std::size_t i : ord) {
             Cut& c = cuts[i];
             if (c.walk.closed()) {
-                const double u = tieFreeStart(c.walk, prev, tol_.distance, c.offsetBy, c.offsetSlack);
+                const double u = tieFreeStart(c.walk, prev, tol_.distance, c.offsetBy, c.offsetSlack, !sharpExternal_);
                 c.path.spans = c.walk.extract(u, u + c.walk.length());
                 closeExactly(c.path);
                 c.walk = ArcLengthPath(c.path, offTol_);

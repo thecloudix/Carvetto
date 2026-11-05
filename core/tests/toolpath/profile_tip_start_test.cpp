@@ -602,3 +602,354 @@ TEST_CASE("T-0158: mitred tips of merged-region cuts start at the region's mitre
         }
     }
 }
+
+namespace {
+
+// Outward normal (right of travel on a counter-clockwise contour) of a unit direction.
+Vec2 rightOf(Vec2 u) { return Vec2{u.y, -u.x}; }
+
+ProfileParams vbitParams(CutDirection dir, double limit) {
+    ProfileParams p;
+    p.side = ProfileSide::Outside;
+    p.direction = dir;
+    p.startAt = StartAt::VectorStart;
+    p.passes.cutDepth = 3.0;
+    p.passes.passDepth = 3.0;
+    p.corners.sharpExternal = true;
+    p.corners.mitreLimit = limit;
+    return p;
+}
+
+// The perturbations the knife-edge sweeps check: one and four ulps either way and 1e-9 relative.
+std::vector<double> fewPerturbations() {
+    const double inf = std::numeric_limits<double>::infinity();
+    double up4 = 1.0;
+    double down4 = 1.0;
+    for (int k = 0; k < 4; ++k) {
+        up4 = std::nextafter(up4, inf);
+        down4 = std::nextafter(down4, 0.0);
+    }
+    return {std::nextafter(1.0, inf), std::nextafter(1.0, 0.0), up4, down4, 1.0 + 1e-9, 1.0 - 1e-9};
+}
+
+}  // namespace
+
+TEST_CASE("T-0158: a squared-off tip between curved edges starts at the chamfer's first corner in travel",
+          "[toolpath][profile][start][vbit]") {
+    // T-0158 round-3 verifier (harness t0158v3 repro3/dchamfer_last_corner_climb, t0127v1 m2_273007_12,
+    // gen2 marc): where an arc meets the chamfer the two chamfer corners turn by different amounts,
+    // and the round-3 rule (the sharpest junction) took the chamfer's LAST corner in travel in two of
+    // the four direction/order combinations. Owner 2026-11-05: the first corner in travel. A D shape
+    // (an arc closed by a line) starting at either end of the arc, both cut directions, and curved
+    // stars; the cut must start on the chamfer and run along it first.
+    test::SplitMix rng{0x7158'0008ULL};
+    const std::vector<double> scales = fewPerturbations();
+    std::size_t chamfers = 0;
+    for (int scene = 0; scene < 48; ++scene) {
+        Contour shape;
+        shape.closed = true;
+        if (scene < 32) {
+            const Vec2 c{rng.uniform(-40.0, 40.0), rng.uniform(-40.0, 40.0)};
+            const double radius = rng.uniform(12.0, 40.0);
+            const double a0 = rng.uniform(0.0, 2.0 * geometry::kPi);
+            const double sweep = rng.uniform(1.0, 1.4) * geometry::kPi;
+            const ArcSpan arc{c, radius, a0, a0 + sweep, ArcDirection::CCW};
+            const LineSpan line{arc.endPoint(), arc.startPoint()};
+            if (scene % 2 == 0) {
+                shape.spans = {arc, line};  // starts at the arc's start
+            } else {
+                shape.spans = {line, arc};  // starts at the arc's end
+            }
+        } else {
+            test::SplitMix starRng{rng.next()};
+            shape = curvedStar(starRng, true).contour;
+        }
+        const CutDirection dir = (scene / 2) % 2 == 0 ? CutDirection::Climb : CutDirection::Conventional;
+        const ProfileParams p = vbitParams(dir, scene < 32 ? 1.1 : 1.02);
+        const double dist = profileToolRadius(vBit90(), p.passes);
+        const Vec2 tip = geometry::startPoint(shape.spans.front());
+        // squareJoin's chamfer: perpendicular to the sum of the offset normals at the tip, `dist` out.
+        const Vec2 nIn = rightOf(geometry::tangentAt(shape.spans.back(), 1.0));
+        const Vec2 nOut = rightOf(geometry::tangentAt(shape.spans.front(), 0.0));
+        const Vec2 bis = (nIn + nOut) * (1.0 / (nIn + nOut).length());
+        const ProfileResult base = profileToolpath({shape}, vBit90(), p);
+        REQUIRE(base.ok());
+        const Start s0 = startOf(base.toolpath);
+        REQUIRE(s0.found);
+        INFO("scene " << scene << (dir == CutDirection::Climb ? " climb" : " conventional") << " start "
+                      << s0.at.x << "," << s0.at.y);
+        if (std::fabs((s0.at - tip).dot(bis) - dist) > 1e-6) {
+            continue;  // not squared off here (a mitre within the limit, or a round fallback)
+        }
+        ++chamfers;
+        // On the chamfer line, off its middle (a corner), and the first move runs along it.
+        CHECK(geometry::distance(s0.at, tip) > dist + 1e-3);
+        CHECK(s0.first.kind == MoveKind::Feed);
+        CHECK(std::fabs((s0.first.to.xy() - tip).dot(bis) - dist) < 1e-6);
+        CHECK(geometry::distance(s0.first.to.xy(), s0.at) > 1e-3);
+        for (double k : scales) {
+            INFO("scale 1 " << (k >= 1.0 ? "+ " : "- ") << std::fabs(k - 1.0));
+            const Vec2 s = startOf(profileToolpath({scaled(shape, k)}, vBit90(), p).toolpath).at;
+            CHECK(geometry::distance(s, s0.at * k) < 1e-5);
+        }
+    }
+    INFO("chamfers " << chamfers);
+    CHECK(chamfers >= 30);
+}
+
+TEST_CASE("T-0158: a mitred tip next to a short edge that turns as much or more starts at its own mitre, "
+          "on both sides of length x sin(turn) = tol",
+          "[toolpath][profile][start][vbit]") {
+    // T-0158 round-3 verifier (harness t0158v3 repro3/sharpnb_*, equalnb_*, tietA0.3_d0, probe3 tie):
+    // an edge of length L next to the start vertex A, ending at a vertex B that turns by tB, keeps
+    // B's offset edges within the tolerance of A when L sin(tB) < tol. When B turned at least as
+    // much as A (less 1e-3 rad), the round-3 rule let B's mitre take the start, so it jumped between
+    // the two mitres as L sin(tB) crossed the tolerance, and as tB crossed tA - 1e-3. The start is
+    // A's own mitre throughout: neighbour before and after A, both cut directions, sharper, equal
+    // and just-less-sharp neighbours.
+    const std::vector<double> scales = fewPerturbations();
+    const double tol = ProfileParams{}.tolerance.distance;
+    std::size_t runs = 0;
+    for (double tA : {0.1, 0.3}) {
+        for (double tB : {tA - 1e-3, std::nextafter(tA - 1e-3, 0.0), tA - 1e-3 + 1e-12, tA, 2.0 * tA, 1.0}) {
+            for (double f : {0.5, 1.0 - 1e-9, 1.0, 1.0 + 1e-9, 2.0}) {
+                const double length = f * tol / std::sin(tB);
+                if (length < 1.1 * tol) {
+                    // An edge shorter than the distance tolerance is dropped by the offset, which
+                    // then makes one corner of its two vertices.
+                    continue;
+                }
+                const Vec2 a{11.25, 3.5};
+                const Vec2 ein{1.0, 0.0};
+                const Vec2 eout = Vec2::fromAngle(tA, 1.0);
+                const Vec2 eP = Vec2::fromAngle(-tB, 1.0);
+                const Vec2 b = a - ein * length;
+                const Vec2 pp = b - eP * 30.0;
+                const Vec2 q = a + eout * 30.0;
+                const Vec2 top = (pp + q) * 0.5 + Vec2{0.0, 25.0};
+                for (int order = 0; order < 2; ++order) {
+                    std::vector<Vec2> v;
+                    if (order == 0) {
+                        v = {a, q, top, pp, b};  // B before A
+                    } else {
+                        // Mirrored about x = A.x (reversed, still counter-clockwise): B after A.
+                        auto m = [&](Vec2 w) { return Vec2{2.0 * a.x - w.x, w.y}; };
+                        v = {a, m(b), m(pp), m(top), m(q)};
+                    }
+                    const Contour poly = polygon(v);
+                    const Vec2 uIn = (a - v.back()) * (1.0 / (a - v.back()).length());
+                    const Vec2 uOut = (v[1] - a) * (1.0 / (v[1] - a).length());
+                    for (CutDirection dir : {CutDirection::Climb, CutDirection::Conventional}) {
+                        const ProfileParams p = vbitParams(dir, 50.0);
+                        const double dist = profileToolRadius(vBit90(), p.passes);
+                        const Vec2 mitre = mitreAt(a, uIn, uOut, dist);
+                        INFO("tA " << tA << " tB " << tB << " L sin(tB) / tol " << f << " order " << order
+                                   << (dir == CutDirection::Climb ? " climb" : " conventional"));
+                        const Vec2 s0 = startOf(profileToolpath({poly}, vBit90(), p).toolpath).at;
+                        CHECK(geometry::distance(s0, mitre) < 1e-9);
+                        for (double k : scales) {
+                            INFO("scale 1 " << (k >= 1.0 ? "+ " : "- ") << std::fabs(k - 1.0));
+                            const Vec2 s = startOf(profileToolpath({scaled(poly, k)}, vBit90(), p).toolpath).at;
+                            CHECK(geometry::distance(s, mitre * k) < 1e-8);
+                        }
+                        ++runs;
+                    }
+                }
+            }
+        }
+    }
+    CHECK(runs >= 2 * 6 * 4 * 2 * 2);
+}
+
+TEST_CASE("T-0158: a finely segmented convex outline starts at the start vertex's own mitre",
+          "[toolpath][profile][start][vbit]") {
+    // Owner decision 2026-11-05 (after round 3; harness t0158v3 probe3 ngon): where the segments are
+    // shorter than about sqrt(2 d tol), many offset edges are within the tolerance of the start
+    // vertex; the cut starts at that vertex's exact mitre, not one segment off, either way round.
+    const std::vector<double> scales = fewPerturbations();
+    for (int segments : {300, 2000, 5000}) {
+        for (double radius : {20.0, 60.0}) {
+            const Vec2 c{7.3, -4.1};
+            const double rot = 0.3;
+            std::vector<Vec2> v;
+            for (int j = 0; j < segments; ++j) {
+                v.push_back(c + Vec2::fromAngle(rot + 2.0 * geometry::kPi * j / segments, radius));
+            }
+            const Contour poly = polygon(v);
+            const Vec2 uIn = (v[0] - v.back()) * (1.0 / (v[0] - v.back()).length());
+            const Vec2 uOut = (v[1] - v[0]) * (1.0 / (v[1] - v[0]).length());
+            for (CutDirection dir : {CutDirection::Climb, CutDirection::Conventional}) {
+                const ProfileParams p = vbitParams(dir, 50.0);
+                const Vec2 mitre = mitreAt(v[0], uIn, uOut, profileToolRadius(vBit90(), p.passes));
+                INFO("segments " << segments << " radius " << radius
+                                 << (dir == CutDirection::Climb ? " climb" : " conventional"));
+                const Vec2 s0 = startOf(profileToolpath({poly}, vBit90(), p).toolpath).at;
+                CHECK(geometry::distance(s0, mitre) < 1e-9);
+                for (double k : {scales.front(), scales.back()}) {
+                    INFO("scale 1 " << (k >= 1.0 ? "+ " : "- ") << std::fabs(k - 1.0));
+                    const Vec2 s = startOf(profileToolpath({scaled(poly, k)}, vBit90(), p).toolpath).at;
+                    CHECK(geometry::distance(s, mitre * k) < 1e-8);
+                }
+            }
+        }
+    }
+}
+
+TEST_CASE("T-0158: a merged region's polygonal round join starts at its first chord point in travel",
+          "[toolpath][profile][start]") {
+    // Owner decision 2026-11-05 (after round 3; harness t0158v3 probe3 join): an end-mill cut of a
+    // merged region rounds a convex tip with a polygon of chords on the circle about the tip. Like a
+    // true round join, which starts at its arc's beginning, the cut starts at the polygon's first
+    // point in travel: the foot of the tip on the incoming offset edge, so the cut arrives at its
+    // start along that edge, square to the radius. Round 3 started one chord in. Both directions,
+    // neighbour-merged and gap-merged stars.
+    test::SplitMix rng{0x7158'0009ULL};
+    const std::vector<double> scales = fewPerturbations();
+    for (int scene = 0; scene < 16; ++scene) {
+        const Star star = curvedStar(rng, true, false);
+        std::vector<Contour> cs{star.contour};
+        if (scene % 2 == 1) {
+            auto& last = std::get<LineSpan>(cs[0].spans.back());
+            last.end = star.start + (star.centre - star.start) * (1e-4 / (star.centre - star.start).length());
+        } else {
+            const Vec2 shift = (star.centre - star.start) * 0.7;
+            Contour other = star.contour;
+            for (geometry::Span& sp : other.spans) {
+                auto& l = std::get<LineSpan>(sp);
+                l.start = l.start + shift;
+                l.end = l.end + shift;
+            }
+            cs.push_back(other);
+        }
+        ProfileParams p;
+        p.side = ProfileSide::Outside;
+        p.direction = (scene / 2) % 2 == 0 ? CutDirection::Climb : CutDirection::Conventional;
+        p.startAt = StartAt::VectorStart;
+        p.passes.cutDepth = 3.0;
+        p.passes.passDepth = 3.0;
+        const double d = rng.uniform(3.0, 8.0);
+        const tooling::Tool tool = test::endMill(d);
+        const double offset = 0.5 * d + p.tolerance.chordal;
+        INFO("scene " << scene << (scene % 2 == 1 ? " gap" : " neighbour") << " d " << d
+                      << (p.direction == CutDirection::Climb ? " climb" : " conventional"));
+        // The cut start nearest the tip, and the point the cut comes from when it closes there.
+        auto tipStart = [&](const Toolpath& tp, double k, Vec2& from) {
+            std::size_t best = tp.moves.size();
+            for (std::size_t i = 0; i < tp.moves.size(); ++i) {
+                const Move& m = tp.moves[i];
+                if (m.kind == MoveKind::Rapid && m.to.z == p.safeZ &&
+                    (best == tp.moves.size() ||
+                     geometry::distance(m.to.xy(), star.start * k) <
+                         geometry::distance(tp.moves[best].to.xy(), star.start * k))) {
+                    best = i;
+                }
+            }
+            REQUIRE(best < tp.moves.size());
+            const Vec2 at = tp.moves[best].to.xy();
+            for (std::size_t i = best + 2; i < tp.moves.size() && tp.moves[i].kind != MoveKind::Rapid; ++i) {
+                if (tp.moves[i].kind == MoveKind::Feed && geometry::distance(tp.moves[i].to.xy(), at) < 1e-9 &&
+                    geometry::distance(tp.moves[i - 1].to.xy(), at) > 1e-6) {
+                    from = tp.moves[i - 1].to.xy();
+                }
+            }
+            return at;
+        };
+        const ProfileResult base = profileToolpath(cs, tool, p);
+        REQUIRE(base.ok());
+        REQUIRE(base.has(ProfileIssue::MergedWithNeighbour));
+        Vec2 from;
+        const Vec2 s0 = tipStart(base.toolpath, 1.0, from);
+        CHECK(std::fabs(geometry::distance(s0, star.start) - offset) < 1e-5);  // on the join's circle
+        const Vec2 in = (s0 - from) * (1.0 / (s0 - from).length());
+        CHECK(std::fabs((s0 - star.start).dot(in)) < 1e-4);  // the foot on the incoming edge
+        for (double k : scales) {
+            INFO("scale 1 " << (k >= 1.0 ? "+ " : "- ") << std::fabs(k - 1.0));
+            std::vector<Contour> scs;
+            for (const Contour& c : cs) scs.push_back(scaled(c, k));
+            const ProfileResult r = profileToolpath(scs, tool, p);
+            Vec2 f;
+            CHECK(geometry::distance(tipStart(r.toolpath, k, f), s0 * k) < 1e-5);
+        }
+    }
+}
+
+TEST_CASE("T-0158: a tip whose round join is shorter than the tolerance starts at the join's first point in "
+          "travel, unmoved by scaling and translation",
+          "[toolpath][profile][start]") {
+    // Found in round 4 (harness t0127c rc_g1_J_87741_47): a Bezier blob is polygonised finely, and
+    // at its start vertex, which turns so little that the round join of the 0.115 mm offset would
+    // be shorter than the tolerance, the exact offset bridges the two offset edges with a straight
+    // chord. Both ends of the chord are the vertex's feet on the edges, equally near, so the start
+    // followed rounding (12.7 µm apart under a translation). Like a round join, the cut starts at
+    // the chord's first point in travel and arrives there along the incoming offset edge, square to
+    // the radius.
+    Contour blob;
+    blob.closed = true;
+    const std::vector<std::vector<double>> beziers{
+        {0x1.d15a4e0425dbap+3, -0x1.5b7c6ccdf8dd9p-2, 0x1.d08c86f70d162p+3, 0x1.d93133277b26fp+1,
+         0x1.8cd8ca214992ep+3, 0x1.3daeaf4c3eb9p+3, 0x1.2e97c99c03a4fp+3, 0x1.91bf884a428a8p+3},
+        {0x1.2e97c99c03a4fp+3, 0x1.91bf884a428a8p+3, 0x1.a0ad922d7b6ep+2, 0x1.e5d06148465cp+3,
+         0x1.1e75ed5ab5552p+0, 0x1.04fe5be621ca9p+4, -0x1.90aed46df6e03p+1, 0x1.ed89328da7221p+3},
+        {-0x1.90aed46df6e03p+1, 0x1.ed89328da7221p+3, -0x1.d84c4fc4a4358p+2, 0x1.d115ad4f0aafp+3,
+         -0x1.c8de30ebafd66p+3, 0x1.5de15ac9a6bb8p+3, -0x1.00a373867b55ap+4, 0x1.ce14d1a52fb02p+2},
+        {-0x1.00a373867b55ap+4, 0x1.ce14d1a52fb02p+2, -0x1.1cd7ce971ec01p+4, 0x1.c0cddb6e23d27p+1,
+         -0x1.fe922929c03bcp+3, -0x1.dccc83263e7fp+1, -0x1.b69ff9e326b53p+3, -0x1.b700f27964654p+2},
+        {-0x1.b69ff9e326b53p+3, -0x1.b700f27964654p+2, -0x1.6eadca9c8d2eap+3, -0x1.3fcdd1afd4c58p+3,
+         -0x1.9be1bb64a55b4p+2, -0x1.5928249bbc7d5p+3, -0x1.46672d95760f2p+1, -0x1.72c5a9e037992p+3},
+        {-0x1.46672d95760f2p+1, -0x1.72c5a9e037992p+3, 0x1.55ea373cbd306p+0, -0x1.8c632f24b2b4fp+3,
+         0x1.b0838a075a166p+2, -0x1.b12de4968b7cap+3, 0x1.336a73ea9845cp+3, -0x1.753198d794d99p+3},
+        {0x1.336a73ea9845cp+3, -0x1.753198d794d99p+3, 0x1.8e9322d183805p+3, -0x1.39354d189e368p+3,
+         0x1.d22815113ea12p+3, -0x1.1808272d7caf3p+2, 0x1.d15a4e0425dbap+3, -0x1.5b7c6ccdf8dd9p-2}};
+    for (const auto& b : beziers) {
+        blob.spans.push_back(geometry::BezierSpan{{b[0], b[1]}, {b[2], b[3]}, {b[4], b[5]}, {b[6], b[7]}});
+    }
+    auto moved = [&](double k, Vec2 o) {
+        Contour c = blob;
+        for (geometry::Span& sp : c.spans) {
+            auto& z = std::get<geometry::BezierSpan>(sp);
+            for (Vec2* q : {&z.p0, &z.p1, &z.p2, &z.p3}) {
+                *q = *q * k + o;
+            }
+        }
+        return c;
+    };
+    const Vec2 tip = geometry::startPoint(blob.spans.front());
+    // The cut's start, and the point it comes from when it closes there.
+    auto startAndFrom = [&](const Toolpath& tp, Vec2& from) {
+        const Vec2 at = tp.moves.front().to.xy();
+        for (std::size_t i = 2; i < tp.moves.size() && tp.moves[i].kind != MoveKind::Rapid; ++i) {
+            if (tp.moves[i].kind == MoveKind::Feed && geometry::distance(tp.moves[i].to.xy(), at) < 1e-9 &&
+                geometry::distance(tp.moves[i - 1].to.xy(), at) > 1e-6) {
+                from = tp.moves[i - 1].to.xy();
+            }
+        }
+        return at;
+    };
+    for (CutDirection dir : {CutDirection::Climb, CutDirection::Conventional}) {
+        ProfileParams p;
+        p.side = ProfileSide::On;
+        p.allowance = 0x1.d5ab6304087fp-4;
+        p.direction = dir;
+        p.startAt = StartAt::VectorStart;
+        p.passes.cutDepth = 3.0;
+        p.passes.passDepth = 3.0;
+        INFO((dir == CutDirection::Climb ? "climb" : "conventional"));
+        Vec2 from;
+        const Vec2 s0 = startAndFrom(profileToolpath({blob}, test::endMill(6.0), p).toolpath, from);
+        CHECK(std::fabs(geometry::distance(s0, tip) - p.allowance) < 1e-6);
+        const Vec2 in = (s0 - from) * (1.0 / (s0 - from).length());
+        CHECK(std::fabs((s0 - tip).dot(in)) < 1e-6);
+        for (double k : fewPerturbations()) {
+            INFO("scale 1 " << (k >= 1.0 ? "+ " : "- ") << std::fabs(k - 1.0));
+            Vec2 f;
+            const Vec2 s = startAndFrom(profileToolpath({moved(k, Vec2{})}, test::endMill(6.0), p).toolpath, f);
+            CHECK(geometry::distance(s, s0 * k) < 1e-7);
+        }
+        for (Vec2 o : {Vec2{3.0, -7.0}, Vec2{0.1, 0.3}, Vec2{1000.25, -999.75}}) {
+            INFO("shift " << o.x << "," << o.y);
+            Vec2 f;
+            const Vec2 s = startAndFrom(profileToolpath({moved(1.0, o)}, test::endMill(6.0), p).toolpath, f);
+            CHECK(geometry::distance(s - o, s0) < 1e-7);
+        }
+    }
+}
