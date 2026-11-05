@@ -1,0 +1,1 @@
+SUMMARY L=3.6 offsets 7380 (no-centre-line rects 1845) | lost w>=0: branch 0 main 4950 | lost w<0 branch 0 | worstCov(w>=0) 5e-06 | worse 0 | chains br 5535 main 585 (offsets with more chains 0) | sx 0/0 ov 375/375 back 0/0 dv 0/0 rv 0/0 excess 0/0 | br worst under 1.57e-11 over 2.14e-11 | worst dup br 0 main 0
