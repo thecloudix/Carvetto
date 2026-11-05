@@ -64,3 +64,4 @@ Perf (perfrun.sh, Release plain, CPU s, interleaved, load 13-23 from other agent
   (+216 carve moves), branch off 143.8 s (load noise); n = 500 took > 4 min on main and was stopped (Pocket, pre-existing).
 GCC: only GCC 15.2 installed (no GCC 13, no MSVC here). Plain vs -march=x86-64-v3: 1040/1040 hashes identical, goldens pass
   in both (ctest Debug plain; Release v3 subset).
+  Cone sweep final: 23/24 families x 30 cases, 0 real violations; family 20 hit the 3000 s timeout (stdout buffered, inconclusive).
