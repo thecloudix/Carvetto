@@ -129,7 +129,7 @@ Acceptance criteria:
   4. The limitation note in offset.hpp and ADR-0012 A1 is removed or narrowed to what remains.
 Owner decisions 2026-11-04: (a) corners between two sub-tolerance spans are Round whatever the requested join (corners touching a longer span keep the requested join); (b) tiny end spans are trimmed only up to tol from each open-chain end (a chain made only of tiny pieces is offset, not dropped), accepted although 5/24k AC3 offsets differ from main (4 of them main was worse). (c) a sub-tolerance near-reversal never flips the offset to the other side: the offset stays on the requested side and closed loops stay closed (as on main), at the cost of at most a tolerance-sized deviation near the cluster.
 
-### T-0016 Sharp/Square offset cost on dense hatch-like vectors   [status: in progress]
+### T-0016 Sharp/Square offset cost on dense hatch-like vectors   [status: done (#58)]
 Phase: 1 (alongside T-0120/T-0121)   Module: core/geometry   Depends on: T-0017
 Goal: Scaling is linear, but on dense zig-zags with d ≫ pitch Sharp/Square joins are 10–20× slower than Round (1000-span zig-zag, pitch 0.02, amplitude 1, d=7: ~14 s Release vs 0.7 s Round). Hatch- and fill-like vectors will hit this in Profile/Pocket.
 Also (found by the T-0009 coder, 2026-11-02): input made largely of sub-tolerance spans is now offset (main returned nothing) but slowly — a closed circle of 8,000 spans of 0.4 µm ~6 s Release at d=1; random walks of 0.5 µm steps 0.44 / 1.55 / 3.4 s at 2,000 / 4,000 / 8,000 steps (super-linear). Bring it to the same scaling bound as the hatch cases.
