@@ -1,0 +1,35 @@
+runs with all configs ['log', 'logoff', 'logv3', 'logv3off', 'mlogv3']: 2900 log 2900 logoff 2900 logv3 2900 logv3off 2900 mlogv3 2900
+(A plain) changed br vs main 422/2900 = 14.6%; runs with a fired call that moved the start 421; of those, output identical 0
+   per variant: rnd 422/2900 (14.6%)
+   first moved call by rule: {1: 268, 2: 134, 3: 7}; tabs-left br vs main (+1 = br leaves more): {0: 384, 1: 26, -1: 12}; comes-free diags: {0: 397, 1: 17, -1: 8}
+   UNEXPLAINED changes: 13 [('103_1_0.txt|r103:52:m0:V1', None, False), ('104_1_0.txt|r104:21:m1:V0', None, False), ('111_1_0.txt|r111:86:m2:V0', None, False), ('202_1_100000.txt|r202:27:m3:V0', None, False), ('202_1_100000.txt|r202:30:m2:V1', None, False), ('202_1_100000.txt|r202:35:m3:V0', None, False), ('202_1_100000.txt|r202:43:m3:V0', None, False), ('202_1_100000.txt|r202:75:m3:V1', None, False), ('203_1_100000.txt|r203:13:m1:V0', None, False), ('203_1_100000.txt|r203:43:m3:V1', None, False)]
+(A v3) changed br vs main 420/2900 = 14.5%; runs with a fired call that moved the start 419; of those, output identical 0
+   per variant: rnd 420/2900 (14.5%)
+   first moved call by rule: {1: 267, 2: 133, 3: 7}; tabs-left br vs main (+1 = br leaves more): {0: 382, 1: 27, -1: 11}; comes-free diags: {0: 395, 1: 17, -1: 8}
+   UNEXPLAINED changes: 13 [('103_1_0.txt|r103:52:m0:V1', None, False), ('104_1_0.txt|r104:21:m1:V0', None, False), ('111_1_0.txt|r111:86:m2:V0', None, False), ('202_1_100000.txt|r202:27:m3:V0', None, False), ('202_1_100000.txt|r202:30:m2:V1', None, False), ('202_1_100000.txt|r202:35:m3:V0', None, False), ('202_1_100000.txt|r202:43:m3:V0', None, False), ('202_1_100000.txt|r202:75:m3:V1', None, False), ('203_1_100000.txt|r203:13:m1:V0', None, False), ('203_1_100000.txt|r203:43:m3:V1', None, False)]
+(B branch) runs with differing cut start 8; hash differs 1889; tab-left differs 4; rule flag differs 0
+    rule0/0 nc-1 runs-1: 8 [('103_1_0.txt|r103:51:m3:V0', (65, 1.504368867672508), 0, 0), ('106_1_0.txt|r106:58:m2:V0', (82, 0.627915365404784), 210, 210), ('108_1_0.txt|r108:1:m1:V0', (10, 24.806396194586572), 119, 119), ('108_1_0.txt|r108:54:m0:V1', (1, 16.37397009741289), 0, 0)]
+    left ('112_1_0.txt|r112:118:m2:V0', 811, 812)
+    left ('302_1_0.txt|r302:91:m3:V1', 135, 136)
+    left ('304_1_0.txt|r304:3:m3:V1', 38, 37)
+    left ('304_1_0.txt|r304:67:m3:V0', 745, 746)
+(B main) runs with differing cut start 66; hash differs 1889; tab-left differs 7; rule flag differs 0
+    rule1/1 nc-1 runs-1: 56 [('101_1_0.txt|r101:42:m2:V1', (126, 0.6375651702844297), 558, 558), ('101_1_0.txt|r101:66:m2:V0', (46, 0.030440087238583335), 64, 64), ('101_1_0.txt|r101:109:m0:V1', (0, 0.17971527656738287), 0, 0), ('102_1_0.txt|r102:15:m3:V0', (0, 0.6776718201900986), 0, 0)]
+    rule0/0 nc-1 runs-1: 8 [('103_1_0.txt|r103:51:m3:V0', (65, 1.504368867672508), 0, 0), ('106_1_0.txt|r106:58:m2:V0', (82, 0.627915365404784), 210, 210), ('108_1_0.txt|r108:1:m1:V0', (10, 24.806396194586572), 119, 119), ('108_1_0.txt|r108:54:m0:V1', (1, 16.37397009741289), 0, 0)]
+    rule2/2 nc2 runs1: 2 [('104_1_0.txt|r104:33:m1:V1', (4, 4.366135140892875), 0, 0), ('221_0.01_0.txt|r221:9:m0:V1', (0, 0.16227654098573643), 0, 0)]
+    left ('102_1_0.txt|r102:43:m3:V0', 35, 36)
+    left ('103_1_0.txt|r103:27:m3:V1', 747, 746)
+    left ('109_1_0.txt|r109:33:m1:V0', 9, 8)
+    left ('112_1_0.txt|r112:118:m2:V0', 812, 813)
+    left ('302_1_0.txt|r302:91:m3:V1', 135, 136)
+    left ('304_1_0.txt|r304:3:m3:V1', 38, 37)
+    left ('304_1_0.txt|r304:67:m3:V0', 745, 746)
+(B branch-plain vs merged-v3) runs with differing cut start 0; hash differs 0; tab-left differs 0; rule flag differs 0
+(K) calls with a threshold margin < 1e-06: {'mNear': 5, 'mCut': 179, 'mGap': 1}; near-zero-direction arcs in sharp rule: 0 []
+    mNear [('103_1_0.txt|r103:91:m3:V0', 96, 2, 3.311e-07), ('103_1_0.txt|r103:91:m3:V0', 105, 2, 3.849e-07), ('109_1_0.txt|r109:98:m2:V0', 64, 2, 1.005e-06), ('110_1_0.txt|r110:22:m2:V1', 125, 2, 5.876e-07), ('301_1_0.txt|r301:90:m2:V0', 83, 2, 7.122e-07)]
+    mCut [('243_0.001_0.txt|r243:18:m2:V0', 0, 2, 3.238e-10), ('243_0.001_0.txt|r243:18:m2:V0', 1, 2, 3.238e-10), ('243_0.001_0.txt|r243:18:m2:V0', 2, 2, 3.238e-10), ('243_0.001_0.txt|r243:18:m2:V0', 3, 2, 3.238e-10), ('243_0.001_0.txt|r243:18:m2:V0', 4, 3, 3.238e-10)]
+    mGap [('244_0.001_0.txt|r244:11:m3:V1', 3, 3, 9.633e-07)]
+m0 57 1160 4.9%
+m1 77 580 13.3%
+m2 143 580 24.7%
+m3 145 580 25.0%

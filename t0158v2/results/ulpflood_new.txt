@@ -1,0 +1,74 @@
+== /home/chris/harness/t0135v3/scn/m1_1310133_29.scn vsout
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 5 nohold 0 severed 0 partial 1 thin 2 | freeScenes 1 | left 0 req 0
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 5 nohold 0 severed 0 partial 1 thin 2 | freeScenes 1 | left 0 req 0
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 5 nohold 0 severed 0 partial 1 thin 2 | freeScenes 1 | left 0 req 0
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 5 nohold 0 severed 0 partial 1 thin 2 | freeScenes 1 | left 0 req 0
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 5 nohold 0 severed 0 partial 1 thin 2 | freeScenes 1 | left 0 req 0
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 5 nohold 0 severed 0 partial 1 thin 2 | freeScenes 1 | left 0 req 0
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 5 nohold 0 severed 0 partial 1 thin 2 | freeScenes 1 | left 0 req 0
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 5 nohold 0 severed 0 partial 1 thin 2 | freeScenes 1 | left 0 req 0
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 5 nohold 0 severed 0 partial 1 thin 2 | freeScenes 1 | left 0 req 0
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 6 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 0 req 0
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 6 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 0 req 0
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 6 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 0 req 0
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 6 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 0 req 0
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 6 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 0 req 0
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 6 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 0 req 0
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 6 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 0 req 0
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 6 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 0 req 0
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 6 hold 6 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 0 req 0
+br ulps -4 G 6 hold 5 nohold 0 sev 0 part 1 thin 2 | left 0 req 0 | cell 0.024 4.3s [PARTIAL g1 (8.846,8.600) len 7.14] [THIN g3 (80.477,-1.276) len 7.14] [THIN 
+br ulps -3 G 6 hold 5 nohold 0 sev 0 part 1 thin 2 | left 0 req 0 | cell 0.024 5.5s [PARTIAL g1 (8.846,8.600) len 7.14] [THIN g3 (80.477,-1.276) len 7.14] [THIN 
+br ulps -2 G 6 hold 5 nohold 0 sev 0 part 1 thin 2 | left 0 req 0 | cell 0.024 5.0s [PARTIAL g1 (8.846,8.600) len 7.14] [THIN g3 (80.477,-1.276) len 7.14] [THIN 
+br ulps -1 G 6 hold 5 nohold 0 sev 0 part 1 thin 2 | left 0 req 0 | cell 0.024 4.5s [PARTIAL g1 (8.846,8.600) len 7.14] [THIN g3 (80.477,-1.276) len 7.14] [THIN 
+br ulps 0 G 6 hold 5 nohold 0 sev 0 part 1 thin 2 | left 0 req 0 | cell 0.024 4.8s [PARTIAL g1 (8.846,8.600) len 7.14] [THIN g3 (80.477,-1.276) len 7.14] [THIN 
+br ulps 1 G 6 hold 5 nohold 0 sev 0 part 1 thin 2 | left 0 req 0 | cell 0.024 5.5s [PARTIAL g1 (8.846,8.600) len 7.14] [THIN g3 (80.477,-1.276) len 7.14] [THIN 
+br ulps 2 G 6 hold 5 nohold 0 sev 0 part 1 thin 2 | left 0 req 0 | cell 0.024 3.5s [PARTIAL g1 (8.846,8.600) len 7.14] [THIN g3 (80.477,-1.276) len 7.14] [THIN 
+br ulps 3 G 6 hold 5 nohold 0 sev 0 part 1 thin 2 | left 0 req 0 | cell 0.024 4.0s [PARTIAL g1 (8.846,8.600) len 7.14] [THIN g3 (80.477,-1.276) len 7.14] [THIN 
+br ulps 4 G 6 hold 5 nohold 0 sev 0 part 1 thin 2 | left 0 req 0 | cell 0.024 4.0s [PARTIAL g1 (8.846,8.600) len 7.14] [THIN g3 (80.477,-1.276) len 7.14] [THIN 
+main ulps -4 G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.024 5.0s [FREE 2 ge05 2 biggest 0.948 mm2 at (66.99,11.71) allLost 0] [FREEL 0.408@(6.
+main ulps -3 G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.024 5.2s [FREE 2 ge05 2 biggest 0.948 mm2 at (66.99,11.71) allLost 0] [FREEL 0.408@(6.
+main ulps -2 G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.024 4.2s [FREE 2 ge05 2 biggest 0.948 mm2 at (66.99,11.71) allLost 0] [FREEL 0.408@(6.
+main ulps -1 G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.024 4.8s [FREE 2 ge05 2 biggest 0.948 mm2 at (66.99,11.71) allLost 0] [FREEL 0.408@(6.
+main ulps 0 G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.024 5.0s [FREE 2 ge05 2 biggest 0.948 mm2 at (66.99,11.71) allLost 0] [FREEL 0.408@(6.
+main ulps 1 G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.024 3.7s [FREE 2 ge05 2 biggest 0.948 mm2 at (66.99,11.71) allLost 0] [FREEL 0.408@(6.
+main ulps 2 G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.024 4.3s [FREE 2 ge05 2 biggest 0.948 mm2 at (66.99,11.71) allLost 0] [FREEL 0.408@(6.
+main ulps 3 G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.024 4.5s [FREE 2 ge05 2 biggest 0.948 mm2 at (66.99,11.71) allLost 0] [FREEL 0.408@(6.
+main ulps 4 G 6 hold 6 nohold 0 sev 0 part 0 thin 0 | left 0 req 0 | cell 0.024 3.3s [FREE 2 ge05 2 biggest 0.948 mm2 at (66.99,11.71) allLost 0] [FREEL 0.408@(6.
+== /home/chris/harness/t0135v3/scn/m2_1330000_9.scn vsout
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 0 hold 0 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 2 req 2
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 0 hold 0 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 2 req 2
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 0 hold 0 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 2 req 2
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 0 hold 0 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 2 req 2
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 0 hold 0 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 2 req 2
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 0 hold 0 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 2 req 2
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 0 hold 0 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 2 req 2
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 0 hold 0 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 2 req 2
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 0 hold 0 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 2 req 2
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 1 hold 1 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 1 req 1
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 1 hold 1 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 1 req 1
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 1 hold 1 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 1 req 1
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 1 hold 1 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 1 req 1
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 1 hold 1 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 1 req 1
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 1 hold 1 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 1 req 1
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 1 hold 1 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 1 req 1
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 1 hold 1 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 1 req 1
+SUMMARY seed 0 mode 99 scenes 1 empty 0 | tabs 1 hold 1 nohold 0 severed 0 partial 0 thin 0 | freeScenes 1 | left 1 req 1
+br ulps -4 G 0 hold 0 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.039 4.9s [FREE 2 ge05 2 biggest 1704.441 mm2 at (87.91,4.74) allLost 2] [FREEL 641.795
+br ulps -3 G 0 hold 0 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.039 4.7s [FREE 2 ge05 2 biggest 1704.441 mm2 at (87.91,4.74) allLost 2] [FREEL 641.795
+br ulps -2 G 0 hold 0 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.039 4.4s [FREE 2 ge05 2 biggest 1704.441 mm2 at (87.91,4.74) allLost 2] [FREEL 641.795
+br ulps -1 G 0 hold 0 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.039 3.7s [FREE 2 ge05 2 biggest 1704.441 mm2 at (87.91,4.74) allLost 2] [FREEL 641.795
+br ulps 0 G 0 hold 0 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.039 4.7s [FREE 2 ge05 2 biggest 1704.441 mm2 at (87.91,4.74) allLost 2] [FREEL 641.795
+br ulps 1 G 0 hold 0 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.039 4.7s [FREE 2 ge05 2 biggest 1704.441 mm2 at (87.91,4.74) allLost 2] [FREEL 641.795
+br ulps 2 G 0 hold 0 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.039 3.9s [FREE 2 ge05 2 biggest 1704.441 mm2 at (87.91,4.74) allLost 2] [FREEL 641.795
+br ulps 3 G 0 hold 0 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.039 3.4s [FREE 2 ge05 2 biggest 1704.441 mm2 at (87.91,4.74) allLost 2] [FREEL 641.795
+br ulps 4 G 0 hold 0 nohold 0 sev 0 part 0 thin 0 | left 2 req 2 | cell 0.039 3.0s [FREE 2 ge05 2 biggest 1704.441 mm2 at (87.91,4.74) allLost 2] [FREEL 641.795
+main ulps -4 G 1 hold 1 nohold 0 sev 0 part 0 thin 0 | left 1 req 1 | cell 0.039 5.3s [FREE 1 ge05 1 biggest 641.795 mm2 at (0.43,-0.40) allLost 1] [FREEL 641.795@
+main ulps -3 G 1 hold 1 nohold 0 sev 0 part 0 thin 0 | left 1 req 1 | cell 0.039 4.7s [FREE 1 ge05 1 biggest 641.795 mm2 at (0.43,-0.40) allLost 1] [FREEL 641.795@
+main ulps -2 G 1 hold 1 nohold 0 sev 0 part 0 thin 0 | left 1 req 1 | cell 0.039 2.7s [FREE 1 ge05 1 biggest 641.795 mm2 at (0.43,-0.40) allLost 1] [FREEL 641.795@
+main ulps -1 G 1 hold 1 nohold 0 sev 0 part 0 thin 0 | left 1 req 1 | cell 0.039 5.2s [FREE 1 ge05 1 biggest 641.795 mm2 at (0.43,-0.40) allLost 1] [FREEL 641.795@
+main ulps 0 G 1 hold 1 nohold 0 sev 0 part 0 thin 0 | left 1 req 1 | cell 0.039 4.8s [FREE 1 ge05 1 biggest 641.795 mm2 at (0.43,-0.40) allLost 1] [FREEL 641.795@
+main ulps 1 G 1 hold 1 nohold 0 sev 0 part 0 thin 0 | left 1 req 1 | cell 0.039 4.4s [FREE 1 ge05 1 biggest 641.795 mm2 at (0.43,-0.40) allLost 1] [FREEL 641.795@
+main ulps 2 G 1 hold 1 nohold 0 sev 0 part 0 thin 0 | left 1 req 1 | cell 0.039 4.1s [FREE 1 ge05 1 biggest 641.795 mm2 at (0.43,-0.40) allLost 1] [FREEL 641.795@
+main ulps 3 G 1 hold 1 nohold 0 sev 0 part 0 thin 0 | left 1 req 1 | cell 0.039 4.2s [FREE 1 ge05 1 biggest 641.795 mm2 at (0.43,-0.40) allLost 1] [FREEL 641.795@
+main ulps 4 G 1 hold 1 nohold 0 sev 0 part 0 thin 0 | left 1 req 1 | cell 0.039 3.8s [FREE 1 ge05 1 biggest 641.795 mm2 at (0.43,-0.40) allLost 1] [FREEL 641.795@

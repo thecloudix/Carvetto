@@ -1,0 +1,147 @@
+== log
+  gen1:bez         frame_left_changed 2 frame_runs 600 scale_left_changed 0 scale_runs 1400 scenes 100
+  gen1:circ        frame_left_changed 0 frame_runs 600 scale_left_changed 0 scale_runs 1400 scenes 100
+  gen1:dup         frame_left_changed 0 frame_moved_rule1_tip 8 frame_moved_rule2_tip 1 frame_runs 600 scale_left_changed 0 scale_moved_rule1_tip 15 scale_moved_rule2_tip 2 scale_runs 1400 scenes 100
+       e.g. scale_moved_rule1_tip ('wt-T0158_build-verify2-rel_gen1_dup_004.scn.txt', 'orig', 'r-1e-10', 0, 1, 1, 2.956508)
+       e.g. scale_moved_rule1_tip ('wt-T0158_build-verify2-rel_gen1_dup_004.scn.txt', 'orig', 'r-1e-09', 0, 1, 1, 2.956508)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen1_dup_022.scn.txt', 'orig', 'r+1e-10', 0, 2, 1, 0.701935)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen1_dup_022.scn.txt', 'orig', 'r+1e-09', 0, 2, 1, 0.701935)
+  gen1:flat        frame_left_changed 0 frame_runs 600 scale_left_changed 0 scale_runs 1400 scenes 100
+  gen1:gap         frame_left_changed 1 frame_runs 600 scale_left_changed 0 scale_runs 1400 scenes 100
+  gen1:inref       frame_left_changed 0 frame_runs 600 scale_left_changed 0 scale_runs 1400 scenes 100
+  gen1:mitre       frame_left_changed 0 frame_runs 600 scale_left_changed 0 scale_runs 1400 scenes 100
+  gen1:poly        frame_left_changed 0 frame_runs 600 scale_left_changed 0 scale_runs 1400 scenes 100
+  gen1:star        frame_left_changed 0 frame_runs 600 scale_left_changed 0 scale_runs 1400 scenes 100
+  gen2:marc        frame_left_changed 0 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:mflat       frame_left_changed 0 frame_moved_rule2_tip 3 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:min         frame_left_changed 0 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:mloop       frame_left_changed 0 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:mmrg        frame_left_changed 4 frame_moved_rule0 34 frame_runs 480 scale_left_changed 2 scale_moved_rule0 12 scale_runs 1120 scenes 80
+       e.g. scale_moved_rule0 ('wt-T0158_build-verify2-rel_gen2_mmrg_011.scn.txt', 'orig', 'r+1e-09', 3, 0, 0, 1.515716)
+       e.g. scale_moved_rule0 ('wt-T0158_build-verify2-rel_gen2_mmrg_013.scn.txt', 'orig', 'r-1e-09', 3, 0, 0, 3.40432)
+  gen2:mon         frame_left_changed 0 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:mopen       frame_left_changed 0 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:mref        frame_left_changed 0 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:mshort      frame_left_changed 0 frame_moved_rule0 4 frame_moved_rule0_tip 1 frame_moved_rule2_tip 3 frame_runs 480 scale_left_changed 3 scale_moved_rule0 11 scale_moved_rule0_tip 3 scale_moved_rule2_tip 14 scale_runs 1120 scenes 80
+       e.g. scale_moved_rule0 ('wt-T0158_build-verify2-rel_gen2_mshort_001.scn.txt', 'orig', 'r+1e-09', 0, 0, 0, 2.849948)
+       e.g. scale_moved_rule0 ('wt-T0158_build-verify2-rel_gen2_mshort_004.scn.txt', 'orig', 'r+1e-12', 0, 0, 2, 0.663608)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_mshort_013.scn.txt', 'orig', 'r+1e-10', 0, 2, 2, 0.645288)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_mshort_013.scn.txt', 'orig', 'r+1e-09', 0, 2, 2, 0.645288)
+       e.g. scale_moved_rule0_tip ('wt-T0158_build-verify2-rel_gen2_mshort_022.scn.txt', 'orig', 'r+1e-10', 0, 0, 2, 12.554307)
+       e.g. scale_moved_rule0_tip ('wt-T0158_build-verify2-rel_gen2_mshort_022.scn.txt', 'orig', 'r+1e-09', 0, 0, 2, 12.554307)
+  gen2:mt          frame_left_changed 2 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:mtc         frame_left_changed 0 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:mtri        frame_left_changed 2 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:rmrg        frame_left_changed 2 frame_moved_rule0 25 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+== logoff
+  gen1:bez         frame_left_changed 5 frame_moved_rule1_tip 124 frame_runs 600 scale_left_changed 16 scale_moved_rule1_tip 495 scale_moved_rule2_tip 4 scale_runs 1400 scenes 100
+       e.g. scale_moved_rule1_tip ('wt-T0158_build-verify2-rel_gen1_bez_000.scn.txt', 'orig', 'u-4', 0, 1, 1, 3.161739)
+       e.g. scale_moved_rule1_tip ('wt-T0158_build-verify2-rel_gen1_bez_001.scn.txt', 'orig', 'r+1e-12', 0, 1, 1, 4.469739)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen1_bez_015.scn.txt', 'orig', 'r+1e-09', 0, 2, 2, 6.298547)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen1_bez_032.scn.txt', 'orig', 'r-1e-09', 0, 2, 2, 1.799049)
+  gen1:circ        frame_left_changed 0 frame_moved_rule1 39 frame_runs 600 scale_left_changed 12 scale_moved_rule1 273 scale_runs 1400 scenes 100
+       e.g. scale_moved_rule1 ('wt-T0158_build-verify2-rel_gen1_circ_000.scn.txt', 'orig', 'u+1', 0, 1, 1, 24.597905)
+       e.g. scale_moved_rule1 ('wt-T0158_build-verify2-rel_gen1_circ_000.scn.txt', 'orig', 'u-1', 0, 1, 1, 24.597905)
+  gen1:dup         frame_left_changed 2 frame_moved_rule1_tip 95 frame_moved_rule2_tip 1 frame_runs 600 scale_left_changed 13 scale_moved_rule1_tip 359 scale_moved_rule2_tip 11 scale_runs 1400 scenes 100
+       e.g. scale_moved_rule1_tip ('wt-T0158_build-verify2-rel_gen1_dup_000.scn.txt', 'orig', 'r+1e-10', 0, 1, 1, 1.414618)
+       e.g. scale_moved_rule1_tip ('wt-T0158_build-verify2-rel_gen1_dup_000.scn.txt', 'orig', 'r-1e-10', 0, 1, 1, 1.414618)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen1_dup_003.scn.txt', 'orig', 'r-1e-10', 1, 2, 2, 1.687129)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen1_dup_003.scn.txt', 'orig', 'r-1e-09', 0, 2, 2, 3.587375)
+  gen1:flat        frame_left_changed 0 frame_runs 600 scale_left_changed 0 scale_runs 1400 scenes 100
+  gen1:gap         frame_left_changed 1 frame_moved_rule1_tip 47 frame_runs 600 scale_left_changed 3 scale_moved_rule1_tip 146 scale_moved_rule2_tip 11 scale_runs 1400 scenes 100
+       e.g. scale_moved_rule1_tip ('wt-T0158_build-verify2-rel_gen1_gap_002.scn.txt', 'orig', 'u-1', 0, 1, 1, 1.076768)
+       e.g. scale_moved_rule1_tip ('wt-T0158_build-verify2-rel_gen1_gap_002.scn.txt', 'orig', 'u+2', 0, 1, 1, 1.076768)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen1_gap_003.scn.txt', 'orig', 'r-1e-09', 1, 2, 2, 2.230035)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen1_gap_008.scn.txt', 'orig', 'r+1e-09', 0, 2, 2, 2.534364)
+  gen1:inref       frame_left_changed 0 frame_moved_rule1_tip 80 frame_runs 600 scale_left_changed 0 scale_moved_rule1_tip 140 scale_runs 1400 scenes 100
+       e.g. scale_moved_rule1_tip ('wt-T0158_build-verify2-rel_gen1_inref_002.scn.txt', 'orig', 'r+1e-12', 1, 1, 1, 1.142132)
+       e.g. scale_moved_rule1_tip ('wt-T0158_build-verify2-rel_gen1_inref_002.scn.txt', 'orig', 'r-1e-12', 1, 1, 1, 1.142132)
+  gen1:mitre       frame_left_changed 11 frame_moved_rule2_tip 120 frame_runs 600 scale_left_changed 30 scale_moved_rule2_tip 545 scale_runs 1400 scenes 100
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen1_mitre_000.scn.txt', 'orig', 'u+1', 0, 2, 2, 4.38114)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen1_mitre_000.scn.txt', 'orig', 'u-2', 0, 2, 2, 4.38114)
+  gen1:poly        frame_left_changed 0 frame_moved_rule1_tip 50 frame_runs 600 scale_left_changed 0 scale_moved_rule1_tip 199 scale_runs 1400 scenes 100
+       e.g. scale_moved_rule1_tip ('wt-T0158_build-verify2-rel_gen1_poly_000.scn.txt', 'orig', 'u+3', 0, 1, 1, 3.870481)
+       e.g. scale_moved_rule1_tip ('wt-T0158_build-verify2-rel_gen1_poly_000.scn.txt', 'orig', 'u+4', 0, 1, 1, 3.870481)
+  gen1:star        frame_left_changed 7 frame_moved_rule1_tip 147 frame_runs 600 scale_left_changed 11 scale_moved_rule1_tip 381 scale_runs 1400 scenes 100
+       e.g. scale_moved_rule1_tip ('wt-T0158_build-verify2-rel_gen1_star_000.scn.txt', 'orig', 'u+2', 0, 1, 1, 4.399745)
+       e.g. scale_moved_rule1_tip ('wt-T0158_build-verify2-rel_gen1_star_000.scn.txt', 'orig', 'u-2', 0, 1, 1, 4.399745)
+  gen2:marc        frame_left_changed 14 frame_moved_rule1_tip 33 frame_moved_rule2_tip 158 frame_runs 480 scale_left_changed 38 scale_moved_rule1_tip 120 scale_moved_rule2_tip 478 scale_runs 1120 scenes 80
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_marc_000.scn.txt', 'orig', 'u+1', 0, 2, 2, 2.327834)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_marc_000.scn.txt', 'orig', 'u-1', 0, 2, 2, 2.327834)
+       e.g. scale_moved_rule1_tip ('wt-T0158_build-verify2-rel_gen2_marc_010.scn.txt', 'orig', 'u+1', 0, 1, 1, 3.405375)
+       e.g. scale_moved_rule1_tip ('wt-T0158_build-verify2-rel_gen2_marc_010.scn.txt', 'orig', 'u-2', 0, 1, 1, 3.405375)
+  gen2:mflat       frame_left_changed 0 frame_moved_rule2_tip 9 frame_runs 480 scale_left_changed 0 scale_moved_rule2_tip 27 scale_runs 1120 scenes 80
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_mflat_000.scn.txt', 'orig', 'u+1', 0, 2, 2, 0.03358)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_mflat_000.scn.txt', 'orig', 'u+2', 0, 2, 2, 0.03358)
+  gen2:min         frame_left_changed 0 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:mloop       frame_left_changed 0 frame_moved_rule1_tip 39 frame_moved_rule2_tip 50 frame_moved_rule3_tip 65 frame_runs 480 scale_left_changed 3 scale_moved_rule1_tip 114 scale_moved_rule2_tip 119 scale_moved_rule3_tip 157 scale_runs 1120 scenes 80
+       e.g. scale_moved_rule1_tip ('wt-T0158_build-verify2-rel_gen2_mloop_000.scn.txt', 'orig', 'u+1', 1, 1, 1, 4.01803)
+       e.g. scale_moved_rule1_tip ('wt-T0158_build-verify2-rel_gen2_mloop_000.scn.txt', 'orig', 'u-1', 0, 1, 1, 4.619195)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_mloop_001.scn.txt', 'orig', 'u+1', 0, 2, 2, 1.763927)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_mloop_001.scn.txt', 'orig', 'u-1', 0, 2, 2, 1.763927)
+       e.g. scale_moved_rule3_tip ('wt-T0158_build-verify2-rel_gen2_mloop_002.scn.txt', 'orig', 'u+1', 0, 3, 3, 3.8255)
+       e.g. scale_moved_rule3_tip ('wt-T0158_build-verify2-rel_gen2_mloop_002.scn.txt', 'orig', 'u-1', 0, 3, 3, 3.8255)
+  gen2:mmrg        frame_left_changed 4 frame_moved_rule0 34 frame_runs 480 scale_left_changed 2 scale_moved_rule0 12 scale_runs 1120 scenes 80
+       e.g. scale_moved_rule0 ('wt-T0158_build-verify2-rel_gen2_mmrg_011.scn.txt', 'orig', 'r+1e-09', 3, 0, 0, 1.515716)
+       e.g. scale_moved_rule0 ('wt-T0158_build-verify2-rel_gen2_mmrg_013.scn.txt', 'orig', 'r-1e-09', 3, 0, 0, 3.40432)
+  gen2:mon         frame_left_changed 0 frame_moved_rule2_tip 47 frame_runs 480 scale_left_changed 0 scale_moved_rule2_tip 141 scale_runs 1120 scenes 80
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_mon_001.scn.txt', 'orig', 'u+1', 0, 2, 2, 1.111734)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_mon_001.scn.txt', 'orig', 'u-1', 0, 2, 2, 1.111734)
+  gen2:mopen       frame_left_changed 0 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:mref        frame_left_changed 0 frame_moved_rule2_tip 9 frame_runs 480 scale_left_changed 0 scale_moved_rule2_tip 21 scale_runs 1120 scenes 80
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_mref_003.scn.txt', 'orig', 'u+1', 0, 2, 2, 0.704007)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_mref_003.scn.txt', 'orig', 'u-1', 0, 2, 2, 0.704007)
+  gen2:mshort      frame_left_changed 8 frame_moved_rule0 4 frame_moved_rule0_tip 1 frame_moved_rule2_tip 44 frame_runs 480 scale_left_changed 33 scale_moved_rule0 11 scale_moved_rule0_tip 3 scale_moved_rule2_tip 192 scale_runs 1120 scenes 80
+       e.g. scale_moved_rule0 ('wt-T0158_build-verify2-rel_gen2_mshort_001.scn.txt', 'orig', 'r+1e-09', 0, 0, 0, 2.849948)
+       e.g. scale_moved_rule0 ('wt-T0158_build-verify2-rel_gen2_mshort_004.scn.txt', 'orig', 'r+1e-12', 0, 0, 2, 0.009999)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_mshort_005.scn.txt', 'orig', 'u-2', 0, 2, 2, 3.050918)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_mshort_005.scn.txt', 'orig', 'u-3', 0, 2, 2, 3.050918)
+       e.g. scale_moved_rule0_tip ('wt-T0158_build-verify2-rel_gen2_mshort_022.scn.txt', 'orig', 'r+1e-10', 0, 0, 2, 0.009999)
+       e.g. scale_moved_rule0_tip ('wt-T0158_build-verify2-rel_gen2_mshort_022.scn.txt', 'orig', 'r+1e-09', 0, 0, 2, 0.009999)
+  gen2:mt          frame_left_changed 9 frame_moved_rule2_tip 103 frame_runs 480 scale_left_changed 42 scale_moved_rule2_tip 401 scale_runs 1120 scenes 80
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_mt_000.scn.txt', 'orig', 'u-1', 0, 2, 2, 2.198436)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_mt_000.scn.txt', 'orig', 'u+2', 0, 2, 2, 2.198436)
+  gen2:mtc         frame_left_changed 6 frame_moved_rule2_tip 106 frame_runs 480 scale_left_changed 48 scale_moved_rule2_tip 430 scale_runs 1120 scenes 80
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_mtc_000.scn.txt', 'orig', 'u+2', 1, 2, 2, 3.193506)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_mtc_000.scn.txt', 'orig', 'u-2', 1, 2, 2, 3.193506)
+  gen2:mtri        frame_left_changed 4 frame_moved_rule2_tip 58 frame_runs 480 scale_left_changed 20 scale_moved_rule2_tip 311 scale_runs 1120 scenes 80
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_mtri_001.scn.txt', 'orig', 'u+3', 0, 2, 2, 0.704166)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_mtri_001.scn.txt', 'orig', 'r+1e-10', 0, 2, 2, 0.704166)
+  gen2:rmrg        frame_left_changed 2 frame_moved_rule0 25 frame_moved_rule2_tip 5 frame_runs 480 scale_left_changed 0 scale_moved_rule2_tip 15 scale_runs 1120 scenes 80
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_rmrg_011.scn.txt', 'orig', 'r-1e-09', 0, 2, 2, 1.697819)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_rmrg_013.scn.txt', 'orig', 'r-1e-09', 0, 2, 2, 8.153588)
+== logv3
+  gen1:bez         frame_left_changed 2 frame_runs 600 scale_left_changed 0 scale_runs 1400 scenes 100
+  gen1:circ        frame_left_changed 0 frame_runs 600 scale_left_changed 0 scale_runs 1400 scenes 100
+  gen1:dup         frame_left_changed 0 frame_moved_rule1_tip 8 frame_moved_rule2_tip 1 frame_runs 600 scale_left_changed 0 scale_moved_rule1_tip 19 scale_moved_rule2_tip 2 scale_runs 1400 scenes 100
+       e.g. scale_moved_rule1_tip ('wt-T0158_build-verify2-rel_gen1_dup_004.scn.txt', 'orig', 'r-1e-10', 0, 1, 1, 2.956508)
+       e.g. scale_moved_rule1_tip ('wt-T0158_build-verify2-rel_gen1_dup_004.scn.txt', 'orig', 'r-1e-09', 0, 1, 1, 2.956508)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen1_dup_022.scn.txt', 'orig', 'r+1e-10', 0, 2, 1, 0.701935)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen1_dup_022.scn.txt', 'orig', 'r+1e-09', 0, 2, 1, 0.701935)
+  gen1:flat        frame_left_changed 0 frame_runs 600 scale_left_changed 0 scale_runs 1400 scenes 100
+  gen1:gap         frame_left_changed 1 frame_runs 600 scale_left_changed 0 scale_runs 1400 scenes 100
+  gen1:inref       frame_left_changed 0 frame_runs 600 scale_left_changed 0 scale_runs 1400 scenes 100
+  gen1:mitre       frame_left_changed 0 frame_runs 600 scale_left_changed 0 scale_runs 1400 scenes 100
+  gen1:poly        frame_left_changed 0 frame_runs 600 scale_left_changed 0 scale_runs 1400 scenes 100
+  gen1:star        frame_left_changed 0 frame_runs 600 scale_left_changed 0 scale_runs 1400 scenes 100
+  gen2:marc        frame_left_changed 0 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:mflat       frame_left_changed 0 frame_moved_rule2_tip 3 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:min         frame_left_changed 0 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:mloop       frame_left_changed 0 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:mmrg        frame_left_changed 4 frame_moved_rule0 34 frame_runs 480 scale_left_changed 2 scale_moved_rule0 12 scale_runs 1120 scenes 80
+       e.g. scale_moved_rule0 ('wt-T0158_build-verify2-rel_gen2_mmrg_011.scn.txt', 'orig', 'r+1e-09', 3, 0, 0, 1.515716)
+       e.g. scale_moved_rule0 ('wt-T0158_build-verify2-rel_gen2_mmrg_013.scn.txt', 'orig', 'r-1e-09', 3, 0, 0, 3.40432)
+  gen2:mon         frame_left_changed 0 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:mopen       frame_left_changed 0 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:mref        frame_left_changed 0 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:mshort      frame_left_changed 0 frame_moved_rule0 4 frame_moved_rule0_tip 1 frame_moved_rule2_tip 3 frame_runs 480 scale_left_changed 3 scale_moved_rule0 11 scale_moved_rule0_tip 3 scale_moved_rule2_tip 14 scale_runs 1120 scenes 80
+       e.g. scale_moved_rule0 ('wt-T0158_build-verify2-rel_gen2_mshort_001.scn.txt', 'orig', 'r+1e-09', 0, 0, 0, 2.849948)
+       e.g. scale_moved_rule0 ('wt-T0158_build-verify2-rel_gen2_mshort_004.scn.txt', 'orig', 'r+1e-12', 0, 0, 2, 0.663608)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_mshort_013.scn.txt', 'orig', 'r+1e-10', 0, 2, 2, 0.645288)
+       e.g. scale_moved_rule2_tip ('wt-T0158_build-verify2-rel_gen2_mshort_013.scn.txt', 'orig', 'r+1e-09', 0, 2, 2, 0.645288)
+       e.g. scale_moved_rule0_tip ('wt-T0158_build-verify2-rel_gen2_mshort_022.scn.txt', 'orig', 'r+1e-10', 0, 0, 2, 12.554307)
+       e.g. scale_moved_rule0_tip ('wt-T0158_build-verify2-rel_gen2_mshort_022.scn.txt', 'orig', 'r+1e-09', 0, 0, 2, 12.554307)
+  gen2:mt          frame_left_changed 2 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:mtc         frame_left_changed 0 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:mtri        frame_left_changed 2 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80
+  gen2:rmrg        frame_left_changed 2 frame_moved_rule0 25 frame_runs 480 scale_left_changed 0 scale_runs 1120 scenes 80

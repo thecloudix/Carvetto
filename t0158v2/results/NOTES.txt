@@ -1,0 +1,32 @@
+T-0158 round-2 verifier (branch 5e7ce1d; origin/main 41649cb; merged tree 306e4c3). GCC 15.2; "plain" = x86-64, "v3" = -march=x86-64-v3.
+Build/test: Debug -Werror build ok; ctest 950/950 passed; Release brv3 carvetto_tests "[start]" 5 cases / 9045 assertions pass, the
+m1_402002_27 (exact 3) and m2_800016_13 (6) tests pass; changelog check ok; merge-tree vs 41649cb clean; no golden files changed.
+Instrumentation: log == br and logoff == main hash-identical on the repro scenes; merged plain == merged v3 bit-identical (contract off).
+
+Stored scenes (2183 x orig/vsout/bbc/opt = 8732 runs, scn_cmp.txt):
+- changed br vs main 1257 (14.4%): orig 195/2183 = 8.9%, vsout 1004 (46%), bbc 53, opt 5. Every change has a fired rule call that moved
+  the start (11 "unexplained" have moves of 1e-8..5e-6 mm, below the comparison tolerance). First moved call: rule1 1037, rule2 205, loop 4.
+- branch plain vs v3: 176 runs with a different start: 166 bbc (T-0166), 9 orig = box-Centre / Optimise targets (|nearest-cutd| >> tol,
+  T-0166 class), 1 vsout = 1e-3 (span shorter than tol at the tip, documented exception). main: 345 (130 round ties, 39 sharp).
+- merged-tree v3 vs branch plain: 0 differences (hash-identical on all 8732 runs).
+Random (28 seeds, 2900 scenes, rnd_cmp.txt): changed 14.6%: m0 4.9%, m1 13.3%, m2 24.7%, m3 (pages) 25.0%. Branch plain vs v3: 8 start
+  differences, all non-tip (box/Optimise). Merged v3 vs branch plain 0.
+Perturbation (21 transforms; pert_stored.txt: 137 V-bit-sharp + 250 random stored scenes x 4 variants; pert_synthetic.txt: gen1 900 +
+  gen2 1040): branch tip starts never move under scale perturbations except (a) 1e-3 moves (tolerance-length span at the tip),
+  (b) dup/mshort with an edge of exactly 1e-3 at the tip (tolerance topology, also main), (c) MERGED-REGION V-bit sharp tips:
+  mmrg 11/80 scenes and mshort 5/80 (edges 1e-4..9e-4 at the tip -> selfBad -> region offset) move 1.5-6.8 mm under 1+-1e-9
+  scaling, identical on main: the region cut lies at d + chordal (0.01) so |nearest - cutDistance| <= tol fails and rule (b) never
+  fires. gapmitre_1e-4 (closing gap 1e-4) also differs GCC plain vs v3 on the branch.
+- edge.cpp: chamfer start is the corner that comes first in travel, both directions (18/18). Short neighbour edge: tip T followed (or
+  preceded) by an edge of length L turning by t deg: for L*sin(t) < tol the neighbour span is "near", the run grows to 3 spans, and in
+  one cut direction the start is the neighbour's shallow mitre (|start-T| = d + 6e-4) instead of T's mitre corner 4.2 mm away;
+  knife-edge at L*sin(t) = tol (L = 0.0286264 for t = 2 deg): start jumps 4.2 mm under 1e-10 relative changes.
+Flood (whole-scene wsf oracle; branch vs main on every changed run with tabs):
+- stored 1253 runs (flood_stored_changed.txt): sev 1 vs 0, partial 5 vs 3, free05 2463 vs 2482, unreported 217 vs 230; worse 12 runs
+  (9 unique), better 27. Known (T-0167): m0_291002_11 vsout, m0_271016_20 vsout, a4_770001_217 bbc. New: m1_1310133_29 vsout
+  (PARTIAL tab g1 at (8.85,8.60), stable over ULPS -4..4, main never: ulpflood_new.txt), m2_1330000_9 vsout (V-bit sharp, start at
+  the mitre: both vectors' single tab left out (diagnosed), 1704 mm2 piece free with no "comes free" message, main keeps one; stable
+  over ULPS, main never), m0_271013_1 vsout and m0_271000_0 vsout (unreported free piece; main reaches it under ulp / translation),
+  m0_271003_32 bbc (reported free piece; main reaches it under ulp), m0_271016_20 orig (reported free +1; main never). worse_attribution.txt.
+- random 213 changed pages with tabs (seed 242 skipped; flood_random_changed.txt): sev 13 vs 12, partial 31 vs 29, unreported 1018 vs
+  1010, worse 26 / better 18 (r101_1_0_42 +17 unreported is the T-0167 repro).

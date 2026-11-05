@@ -1,0 +1,55 @@
+== log
+  stored:bbc       frame_left_changed 57 frame_moved_rule0 406 frame_runs 2322 scale_left_changed 230 scale_moved_rule0 1358 scale_runs 5418 scenes 387
+       e.g. scale_moved_rule0 ('harness_t0124v2_s90.scn.txt', 'bbc', 'u-1', 0, 0, 0, 44.491232)
+       e.g. scale_moved_rule0 ('harness_t0124v2_s90.scn.txt', 'bbc', 'u+2', 0, 0, 0, 44.491232)
+  stored:opt       frame_left_changed 42 frame_moved_rule0 117 frame_runs 2322 scale_left_changed 31 scale_moved_rule0 14 scale_runs 5418 scenes 387
+       e.g. scale_moved_rule0 ('harness_t0135v3_scn_c12_many.scn.txt', 'opt', 'u+1', 1, 0, 0, 13.40526)
+       e.g. scale_moved_rule0 ('harness_t0135v3_scn_c12_many.scn.txt', 'opt', 'u-1', 2, 0, 0, 13.346882)
+  stored:orig      frame_left_changed 28 frame_moved_rule0 95 frame_runs 2322 scale_left_changed 62 scale_moved_rule0 101 scale_moved_rule2_tip 10 scale_runs 5418 scenes 387
+       e.g. scale_moved_rule0 ('harness_t0124v5_scn_G84710_44.scn.txt', 'orig', 'u+1', 3, 0, 0, 18.294351)
+       e.g. scale_moved_rule0 ('harness_t0124v5_scn_G84710_44.scn.txt', 'orig', 'u-1', 1, 0, 0, 8.447182)
+       e.g. scale_moved_rule2_tip ('harness_t0127v1_d4old_m0_271009_27.scn.txt', 'orig', 'u-1', 1, 2, 2, 0.001)
+       e.g. scale_moved_rule2_tip ('harness_t0127v1_d4old_m0_271009_27.scn.txt', 'orig', 'u-2', 1, 2, 2, 0.001)
+  stored:vsout     frame_left_changed 18 frame_moved_rule0 53 frame_moved_rule2_tip 3 frame_runs 2322 scale_left_changed 36 scale_moved_rule2_tip 10 scale_runs 5418 scenes 387
+       e.g. scale_moved_rule2_tip ('harness_t0127c_scn_rc_g1_A_87651_1.scn.txt', 'vsout', 'u-1', 0, 2, 2, 0.001)
+       e.g. scale_moved_rule2_tip ('harness_t0127c_scn_rc_g1_A_87651_1.scn.txt', 'vsout', 'u-2', 0, 2, 2, 0.001)
+== logoff
+  stored:bbc       frame_left_changed 66 frame_moved_rule0 402 frame_moved_rule1 33 frame_runs 2322 scale_left_changed 307 scale_moved_rule0 1337 scale_moved_rule1 157 scale_runs 5418 scenes 387
+       e.g. scale_moved_rule0 ('harness_t0124v2_s90.scn.txt', 'bbc', 'u-1', 0, 0, 0, 44.491232)
+       e.g. scale_moved_rule0 ('harness_t0124v2_s90.scn.txt', 'bbc', 'u+2', 0, 0, 0, 44.491232)
+       e.g. scale_moved_rule1 ('harness_t0124v4_repro_sev_G_81710_21.scn.txt', 'bbc', 'u+2', 1, 1, 1, 13.38985)
+       e.g. scale_moved_rule1 ('harness_t0124v4_repro_sev_G_81710_21.scn.txt', 'bbc', 'u-3', 3, 1, 1, 11.276947)
+  stored:opt       frame_left_changed 42 frame_moved_rule0 117 frame_moved_rule1_tip 2 frame_runs 2322 scale_left_changed 31 scale_moved_rule0 14 scale_runs 5418 scenes 387
+       e.g. scale_moved_rule0 ('harness_t0135v3_scn_c12_many.scn.txt', 'opt', 'u+1', 1, 0, 0, 13.40526)
+       e.g. scale_moved_rule0 ('harness_t0135v3_scn_c12_many.scn.txt', 'opt', 'u-1', 2, 0, 0, 13.346882)
+  stored:orig      frame_left_changed 42 frame_moved_rule0 95 frame_moved_rule1_tip 33 frame_moved_rule2_tip 23 frame_runs 2322 scale_left_changed 85 scale_moved_rule0 97 scale_moved_rule1 6 scale_moved_rule1_tip 70 scale_moved_rule2_tip 123 scale_runs 5418 scenes 387
+       e.g. scale_moved_rule2_tip ('harness_t0124v4_repro_sev_H_81721_38.scn.txt', 'orig', 'u+1', 0, 2, 2, 1.424778)
+       e.g. scale_moved_rule2_tip ('harness_t0124v4_repro_sev_H_81721_38.scn.txt', 'orig', 'u-1', 0, 2, 2, 1.424778)
+       e.g. scale_moved_rule0 ('harness_t0124v5_scn_G84710_44.scn.txt', 'orig', 'u+1', 3, 0, 0, 18.294351)
+       e.g. scale_moved_rule0 ('harness_t0124v5_scn_G84710_44.scn.txt', 'orig', 'u-1', 1, 0, 0, 8.447182)
+       e.g. scale_moved_rule1_tip ('harness_t0127c_scn_rc_n3_J_85741_29.scn.txt', 'orig', 'r+1e-10', 0, 1, 1, 0.004081)
+       e.g. scale_moved_rule1_tip ('harness_t0127c_scn_rc_n3_J_85741_29.scn.txt', 'orig', 'r+1e-09', 0, 1, 1, 0.004081)
+       e.g. scale_moved_rule1 ('harness_t0127v1_d4new_m0_271030_45.scn.txt', 'orig', 'u+2', 2, 1, 1, 10.25739)
+       e.g. scale_moved_rule1 ('harness_t0127v1_d4new_m0_271030_45.scn.txt', 'orig', 'u+3', 2, 1, 1, 10.25739)
+  stored:vsout     frame_left_changed 62 frame_moved_rule0 53 frame_moved_rule1_tip 213 frame_moved_rule2_tip 153 frame_moved_rule3_tip 7 frame_runs 2322 scale_left_changed 168 scale_moved_rule1_tip 489 scale_moved_rule2_tip 605 scale_moved_rule3_tip 22 scale_runs 5418 scenes 387
+       e.g. scale_moved_rule2_tip ('harness_t0124v2_b260.scn.txt', 'vsout', 'u+1', 1, 2, 2, 15.39141)
+       e.g. scale_moved_rule2_tip ('harness_t0124v2_b260.scn.txt', 'vsout', 'u+2', 1, 2, 2, 15.39141)
+       e.g. scale_moved_rule3_tip ('harness_t0124v2_s90.scn.txt', 'vsout', 'u-2', 0, 3, 3, 4.697116)
+       e.g. scale_moved_rule3_tip ('harness_t0124v2_s90.scn.txt', 'vsout', 'u+4', 0, 3, 3, 4.697116)
+       e.g. scale_moved_rule1_tip ('harness_t0124v4_repro_s81663_5.scn.txt', 'vsout', 'u-1', 0, 1, 1, 2.25853)
+       e.g. scale_moved_rule1_tip ('harness_t0124v4_repro_s81663_5.scn.txt', 'vsout', 'u-3', 0, 1, 1, 2.25853)
+== logv3
+  stored:bbc       frame_left_changed 63 frame_moved_rule0 451 frame_runs 2322 scale_left_changed 219 scale_moved_rule0 1359 scale_runs 5418 scenes 387
+       e.g. scale_moved_rule0 ('harness_t0124v2_s90.scn.txt', 'bbc', 'u+2', 0, 0, 0, 44.491232)
+       e.g. scale_moved_rule0 ('harness_t0124v2_s90.scn.txt', 'bbc', 'u+4', 0, 0, 0, 44.491232)
+  stored:opt       frame_left_changed 44 frame_moved_rule0 117 frame_runs 2322 scale_left_changed 17 scale_moved_rule0 14 scale_runs 5418 scenes 387
+       e.g. scale_moved_rule0 ('harness_t0135v3_scn_c12_many.scn.txt', 'opt', 'u+1', 1, 0, 0, 13.40526)
+       e.g. scale_moved_rule0 ('harness_t0135v3_scn_c12_many.scn.txt', 'opt', 'u-1', 2, 0, 0, 13.346882)
+  stored:orig      frame_left_changed 32 frame_moved_rule0 102 frame_runs 2322 scale_left_changed 56 scale_moved_rule0 110 scale_moved_rule2_tip 10 scale_runs 5418 scenes 387
+       e.g. scale_moved_rule0 ('harness_t0124v5_scn_G84710_44.scn.txt', 'orig', 'u+1', 3, 0, 0, 18.294351)
+       e.g. scale_moved_rule0 ('harness_t0124v5_scn_G84710_44.scn.txt', 'orig', 'u-1', 1, 0, 0, 8.447182)
+       e.g. scale_moved_rule2_tip ('harness_t0127v1_d4old_m0_271009_27.scn.txt', 'orig', 'u-1', 1, 2, 2, 0.001)
+       e.g. scale_moved_rule2_tip ('harness_t0127v1_d4old_m0_271009_27.scn.txt', 'orig', 'u-2', 1, 2, 2, 0.001)
+  stored:vsout     frame_left_changed 16 frame_moved_rule0 53 frame_moved_rule2_tip 3 frame_runs 2322 scale_left_changed 29 scale_moved_rule2_tip 12 scale_runs 5418 scenes 387
+       e.g. scale_moved_rule2_tip ('harness_t0127c_scn_rc_g1_A_87651_1.scn.txt', 'vsout', 'u+1', 0, 2, 2, 0.001)
+       e.g. scale_moved_rule2_tip ('harness_t0127c_scn_rc_g1_A_87651_1.scn.txt', 'vsout', 'u-1', 0, 2, 2, 0.001)

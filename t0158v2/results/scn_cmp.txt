@@ -1,0 +1,42 @@
+runs with all configs ['log', 'logoff', 'logv3', 'logv3off', 'mlogv3']: 8732 log 8732 logoff 8732 logv3 8732 logv3off 8732 mlogv3 8732
+(A plain) changed br vs main 1257/8732 = 14.4%; runs with a fired call that moved the start 1257; of those, output identical 0
+   per variant: bbc 53/2183 (2.4%), opt 5/2183 (0.2%), orig 195/2183 (8.9%), vsout 1004/2183 (46.0%)
+   first moved call by rule: {2: 205, 1: 1037, 3: 4}; tabs-left br vs main (+1 = br leaves more): {-1: 70, 0: 1130, 1: 57}; comes-free diags: {0: 1243, 1: 4, -1: 10}
+   UNEXPLAINED changes: 11 [('harness_t0127v1_d4new_m1_272006_11.scn.txt|m1_272006_11.scn:orig', None, False), ('harness_t0127v1_d4new_m1_272006_11.scn.txt|m1_272006_11.scn:vsout', None, False), ('harness_t0127v1_d4new_m1_272013_27.scn.txt|m1_272013_27.scn:orig', None, False), ('harness_t0127v1_d4old_m0_271002_1.scn.txt|m0_271002_1.scn:vsout', None, False), ('harness_t0127v1_d4old_m0_271006_27.scn.txt|m0_271006_27.scn:vsout', None, False), ('harness_t0127v1_d4old_m0_271011_21.scn.txt|m0_271011_21.scn:vsout', None, False), ('harness_t0127v2_d_wsf7_m0_291004_10.scn.txt|m0_291004_10.scn:vsout', None, False), ('harness_t0127v2_d_wsf7_m0_291004_25.scn.txt|m0_291004_25.scn:vsout', None, False), ('harness_t0127v2_d_wsf7_m0_291004_40.scn.txt|m0_291004_40.scn:vsout', None, False), ('harness_t0127v2_d_wsf7_old_m0_291000_34.scn.txt|m0_291000_34.scn:vsout', None, False)]
+(A v3) changed br vs main 1249/8732 = 14.3%; runs with a fired call that moved the start 1249; of those, output identical 0
+   per variant: bbc 53/2183 (2.4%), opt 5/2183 (0.2%), orig 190/2183 (8.7%), vsout 1001/2183 (45.9%)
+   first moved call by rule: {2: 207, 1: 1031, 3: 4}; tabs-left br vs main (+1 = br leaves more): {-1: 69, 0: 1123, 1: 57}; comes-free diags: {0: 1236, 1: 4, -1: 9}
+   UNEXPLAINED changes: 7 [('harness_t0127v1_d4new_m1_272006_11.scn.txt|m1_272006_11.scn:orig', None, False), ('harness_t0127v1_d4new_m1_272006_11.scn.txt|m1_272006_11.scn:vsout', None, False), ('harness_t0127v1_d4old_m0_271002_1.scn.txt|m0_271002_1.scn:vsout', None, False), ('harness_t0127v1_d4old_m0_271011_21.scn.txt|m0_271011_21.scn:vsout', None, False), ('harness_t0127v2_d_wsf7_m0_291004_25.scn.txt|m0_291004_25.scn:vsout', None, False), ('harness_t0127v2_d_wsf7_m0_291004_40.scn.txt|m0_291004_40.scn:vsout', None, False), ('harness_t0127v2_d_wsf7_old_m0_291000_49.scn.txt|m0_291000_49.scn:vsout', None, False)]
+(B branch) runs with differing cut start 176; hash differs 7720; tab-left differs 42; rule flag differs 0
+    rule0/0 nc-1 runs-1: 175 [('harness_t0127c_scn_rc_g1_K_87750_12.scn.txt|rc_g1_K_87750_12.scn:bbc', (0, 0.029228838662660753), 4, 4), ('harness_t0127c_scn_rc_g1_K_87751_28.scn.txt|rc_g1_K_87751_28.scn:bbc', (0, 0.036571504453706966), 0, 0), ('harness_t0127c_scn_rc_g2_K_88751_26.scn.txt|rc_g2_K_88751_26.scn:orig', (1, 0.010835711198448485), 2, 2), ('harness_t0127c_scn_rc_g2_K_88751_26.scn.txt|rc_g2_K_88751_26.scn:bbc', (1, 0.010835711198448485), 2, 2)]
+    rule2/2 nc3 runs1: 1 [('harness_t0127v1_d4old_m0_271004_42.scn.txt|m0_271004_42.scn:vsout', (0, 0.0010000000000007713), 0, 0)]
+    left ('harness_t0127v1_d4new_m0_271006_11.scn.txt|m0_271006_11.scn:vsout', 7, 6)
+    left ('harness_t0127v1_d4new_m0_271011_45.scn.txt|m0_271011_45.scn:bbc', 16, 17)
+    left ('harness_t0127v1_d4new_m0_271021_9.scn.txt|m0_271021_9.scn:bbc', 1, 0)
+    left ('harness_t0127v1_d4new_m0_271024_48.scn.txt|m0_271024_48.scn:bbc', 2, 1)
+    left ('harness_t0127v1_d4new_m0_271028_26.scn.txt|m0_271028_26.scn:bbc', 0, 1)
+    left ('harness_t0127v1_d4new_m0_271030_30.scn.txt|m0_271030_30.scn:bbc', 0, 1)
+    left ('harness_t0127v1_d4new_m1_272012_11.scn.txt|m1_272012_11.scn:bbc', 5, 6)
+    left ('harness_t0127v1_d4new_m1_272013_27.scn.txt|m1_272013_27.scn:bbc', 0, 1)
+    left ('harness_t0127v1_d4new_m2_273003_15.scn.txt|m2_273003_15.scn:bbc', 0, 1)
+    left ('harness_t0127v1_d4new_m2_273005_27.scn.txt|m2_273005_27.scn:bbc', 2, 1)
+(B main) runs with differing cut start 345; hash differs 7719; tab-left differs 65; rule flag differs 0
+    rule0/0 nc-1 runs-1: 175 [('harness_t0127c_scn_rc_g1_K_87750_12.scn.txt|rc_g1_K_87750_12.scn:bbc', (0, 0.029228838662660753), 4, 4), ('harness_t0127c_scn_rc_g1_K_87751_28.scn.txt|rc_g1_K_87751_28.scn:bbc', (0, 0.036571504453706966), 0, 0), ('harness_t0127c_scn_rc_g2_K_88751_26.scn.txt|rc_g2_K_88751_26.scn:orig', (1, 0.010835711198448485), 2, 2), ('harness_t0127c_scn_rc_g2_K_88751_26.scn.txt|rc_g2_K_88751_26.scn:bbc', (1, 0.010835711198448485), 2, 2)]
+    rule1/1 nc-1 runs-1: 130 [('harness_t0124v2_s9303_84.scn.txt|s9303_84.scn:vsout', (0, 1.9380472092793963), 3, 4), ('harness_t0124v4_repro_c_81690_40.scn.txt|c_81690_40.scn:vsout', (0, 2.800882817091614), 0, 0), ('harness_t0124v4_repro_c_81690_40_k00.scn.txt|c_81690_40_k00.scn:vsout', (0, 2.800882817091614), 0, 0), ('harness_t0124v4_repro_sev_J_81740_33.scn.txt|sev_J_81740_33.scn:vsout', (1, 0.09331752932654622), 9, 9)]
+    rule2/2 nc2 runs1: 23 [('harness_t0127v1_d4new_m0_271000_32.scn.txt|m0_271000_32.scn:vsout', (0, 5.844947946625785), 1, 1), ('harness_t0127v1_d4new_m0_271002_35.scn.txt|m0_271002_35.scn:vsout', (2, 5.6814356761048135), 4, 4), ('harness_t0127v1_d4new_m0_271008_5.scn.txt|m0_271008_5.scn:vsout', (1, 7.490908706118174), 0, 1), ('harness_t0127v1_d4new_m0_271022_35.scn.txt|m0_271022_35.scn:vsout', (1, 1.2395222887501696), 1, 1)]
+    rule2/2 nc3 runs1: 16 [('harness_t0124v2_b260.scn.txt|b260.scn:vsout', (1, 15.391410375344625), 8, 8), ('harness_t0124v4_repro_b260.scn.txt|b260.scn:vsout', (1, 15.391410375344625), 8, 8), ('harness_t0124v4_repro_b260_nosep.scn.txt|b260_nosep.scn:vsout', (0, 15.39141037534463), 8, 8), ('harness_t0124v4_repro_c_81691_2.scn.txt|c_81691_2.scn:vsout', (0, 15.629298603922194), 7, 4)]
+    rule3/3 nc2 runs0: 1 [('harness_t0124v2_s90.scn.txt|s90.scn:vsout', (0, 4.697115685357674), 4, 4)]
+    left ('harness_t0124v2_s9303_84.scn.txt|s9303_84.scn:vsout', 3, 4)
+    left ('harness_t0124v4_repro_c_81691_2.scn.txt|c_81691_2.scn:vsout', 7, 4)
+    left ('harness_t0124v5_repro_c_81691_2.scn.txt|c_81691_2.scn:vsout', 7, 4)
+    left ('harness_t0127c_scn_fw_n4_B_86660_6.scn.txt|fw_n4_B_86660_6.scn:vsout', 1, 0)
+    left ('harness_t0127v1_d4new_m0_271008_47.scn.txt|m0_271008_47.scn:vsout', 5, 3)
+    left ('harness_t0127v1_d4new_m0_271008_5.scn.txt|m0_271008_5.scn:vsout', 0, 1)
+    left ('harness_t0127v1_d4new_m0_271011_45.scn.txt|m0_271011_45.scn:bbc', 16, 17)
+    left ('harness_t0127v1_d4new_m0_271013_12.scn.txt|m0_271013_12.scn:vsout', 3, 4)
+    left ('harness_t0127v1_d4new_m0_271020_3.scn.txt|m0_271020_3.scn:vsout', 0, 1)
+    left ('harness_t0127v1_d4new_m0_271021_9.scn.txt|m0_271021_9.scn:bbc', 1, 0)
+(B branch-plain vs merged-v3) runs with differing cut start 0; hash differs 0; tab-left differs 0; rule flag differs 0
+(K) calls with a threshold margin < 1e-06: {'mNear': 1, 'mCut': 2}; near-zero-direction arcs in sharp rule: 0 []
+    mNear [('harness_t0135v2_scn_m2_902023_44.scn.txt|m2_902023_44.scn:vsout', 3, 2, 5.009e-07)]
+    mCut [('harness_t0137v1_repro_seg_241_31.scn.txt|seg_241_31.scn:orig', 87, 0, 4.894e-07), ('harness_t0137v1_repro_seg_241_31.scn.txt|seg_241_31.scn:opt', 87, 0, 4.894e-07)]
