@@ -567,10 +567,10 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     T-0016 zig-zags at large d, which put back no strays).
     Cost (Release, CPU time, call order alternating, min of reps, shared 16-thread machine; "main" =
     origin/main b637c16, "pre" = 8cd3568 before T-0128). `perf2 lhatch` (hatch of N lines 10 mm long at pitch
-    2d plus a U channel at (1e5, 1e5)): d = 0.002, N = 1 000: 0.21 s (main 2.5 s; 1.2x pre, was 11.9x),
-    N = 2 000: 0.87 s (main 10.0 s; 1.03x pre); d = 0.05, N = 1 000 / 4 000: 0.22 / 3.4 s (main 0.39 /
-    6.5 s; 0.98x pre, was 1.7-2.0x); the same hatch with a background serpentine (fhatch, d = 0.002): 0.23 s
-    (main 0.43 s; 1.04x pre). Step 7 is near-linear there; the whole offset stays quadratic like pre (its other
+    2d plus a U channel at (1e5, 1e5)): d = 0.002, N = 1 000: 0.21 s (main 2.4-2.5 s; 1.2-1.3x pre, was
+    11.9x), N = 2 000: 0.73-0.87 s (main 9.6-10.0 s; 1.03-1.08x pre); d = 0.05, N = 1 000 / 4 000: 0.18-0.22 /
+    3.4 s (main 0.31-0.39 / 6.5 s; 0.98-1.01x pre, was 1.7-2.0x); the same hatch with a background serpentine
+    (fhatch, d = 0.002): 0.20-0.23 s (main 0.43 s; 1.04-1.09x pre). Step 7 is near-linear there; the whole offset stays quadratic like pre (its other
     grids: pre 0.32 / 1.30 s at 1 000 / 2 000 lines). Elsewhere (hatch, comb, rectangles, ring at pitch or
     width 2d, the T-0016 zig-zags, long channels), against a control build of origin/main's offset.cpp with
     the same flags, CPU cycles 0.94-1.04x, except the 3 000-line hatch at 2d, Round (1.09-1.11x; 3% more
