@@ -495,7 +495,7 @@ const char* kFullVCarving = R"({
   "name": "Sign", "start_depth": 1.5, "flat_depth": 2, "safe_z": 8,
   "clearance_tools": [{"id": "end-mill-6mm"}, {"database": "db.json", "id": "end-mill-3mm", "machine": "m", "material": "w"}],
   "clearance_strategy": "raster", "clearance_direction": "conventional", "clearance_raster_angle": 30,
-  "ramp_plunge": true, "ramp_distance": 4,
+  "ramp_plunge": true, "ramp_distance": 4, "corner_sharpen": false,
   "order": {"selection_order": true, "left_to_right": true, "bottom_to_top": true, "grid": true},
   "start_position": [10, -20],
   "tolerance": {"distance": 0.002, "angle": 0.001, "chordal": 0.02},
@@ -526,6 +526,7 @@ TEST_CASE("v_carve params: every key maps to VCarvingParams and the clearance to
     CHECK(p.clearanceRasterAngle == Approx(30 * kDeg));
     CHECK(p.rampPlunge);
     CHECK(p.rampDistance == 4.0);
+    CHECK_FALSE(p.cornerSharpen);
     CHECK(p.order.selectionOrder);
     CHECK(p.order.leftToRight);
     CHECK(p.order.bottomToTop);
@@ -546,6 +547,7 @@ TEST_CASE("v_carve params: every key maps to VCarvingParams and the clearance to
 
     const VCarvingJob defaults = parseVCarvingParams(R"({"tool": {"id": "t"}})");
     CHECK(defaults.params == toolpath::VCarvingParams{});
+    CHECK(defaults.params.cornerSharpen);  // T-0160: on unless switched off
     CHECK(defaults.clearanceTools.empty());
 }
 
@@ -567,6 +569,8 @@ TEST_CASE("v_carve params: unknown keys and bad values are errors naming the key
     CHECK_THAT(vCarvingErrorOf(R"({"tool": {"id": "t"}, "clearance_direction": "up"})"),
                ContainsSubstring("'clearance_direction' must be one of: climb, conventional"));
     CHECK_THAT(vCarvingErrorOf(R"({"tool": {"id": "t"}, "flat_depth": "1"})"), ContainsSubstring("'flat_depth' must be a number"));
+    CHECK_THAT(vCarvingErrorOf(R"({"tool": {"id": "t"}, "corner_sharpen": 1})"),
+               ContainsSubstring("'corner_sharpen' must be true or false"));
     CHECK_THAT(vCarvingErrorOf(R"({"tool": {"id": "t"}, "clearance_tools": {"id": "x"}})"),
                ContainsSubstring("'clearance_tools' must be an array of tool objects"));
     CHECK_THAT(vCarvingErrorOf(R"({"tool": {"id": "t"}, "clearance_tools": ["x"]})"),

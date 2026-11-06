@@ -492,6 +492,7 @@ VCarvingJob parseVCarvingParams(std::string_view text) {
     f.angle("clearance_raster_angle", p.clearanceRasterAngle);
     f.boolean("ramp_plunge", p.rampPlunge);
     f.number("ramp_distance", p.rampDistance);
+    f.boolean("corner_sharpen", p.cornerSharpen);
     readOrder(f, p.order);
     readStartPosition(f, p.startPosition);
     readTolerance(f, p.tolerance);
@@ -646,6 +647,10 @@ medial axis, so the tool touches both walls):
   "clearance_direction": "climb" climb | conventional
   "clearance_raster_angle": 0
   "ramp_plunge": false, "ramp_distance": 10   (clearance)
+  "corner_sharpen": true         with a flat depth and clearance tools: the carving tool also
+                                 clears the sloped floor the end mills leave in the convex
+                                 corners of the flat areas (a groove along each corner's
+                                 bisector and passes either side at its stepover)
   "order": {"selection_order": false, "left_to_right": false,
             "bottom_to_top": false, "grid": false}   order of the regions (letters with
                                  their counters); none: nearest region first
