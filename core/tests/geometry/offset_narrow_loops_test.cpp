@@ -959,6 +959,88 @@ TEST_CASE("T-0128: strays are put back only where no chain covers them (fam4 0x2
     }
 }
 
+TEST_CASE("T-0172 (b): strays crowded next to a far feature are put back exactly where they are uncovered",
+          "[geometry][offset][open][t0172]") {
+    // One far feature stretches step 7's grids so that everything else crowds one cell: the boxes
+    // beyond kMaxPerCell go to the BoxIndex's tree, so the tree must answer for both the chains
+    // (mutant: chains in the tree not queried) and the strays put back (mutant: strays in the tree
+    // not queried).
+    {
+        // A hatch at pitch 2d (100 lines 10 mm long) and a U channel 2d wide at (1e5, 1e5), Left:
+        // every middle above a line run left to right is put back from tol / 2 past the U turn's
+        // arc to where the next U turn covers it, as without the far channel (where all boxes are
+        // in the grid); not over the arcs (5e-4 mm longer).
+        const double d = 0.05;
+        std::vector<Vec2> pts;
+        for (int i = 0; i < 100; ++i) {
+            const double y = 2.0 * d * i;
+            pts.push_back(i % 2 == 0 ? Vec2{0, y} : Vec2{10, y});
+            pts.push_back(i % 2 == 0 ? Vec2{10, y} : Vec2{0, y});
+        }
+        auto middles = [&](const std::vector<Vec2>& in) {
+            std::vector<LineSpan> found;
+            const Contour path = polyline(in, false);
+            for (const Contour& c : offsetOpenContour(path, d, OffsetSide::Left, JoinType::Round, kTol)) {
+                const auto* line = c.spans.size() == 1 ? std::get_if<LineSpan>(&c.spans[0]) : nullptr;
+                if (line != nullptr && line->start.y == line->end.y && line->start.x < 100.0) {
+                    found.push_back(*line);
+                }
+            }
+            return found;
+        };
+        const std::vector<LineSpan> alone = middles(pts);
+        const double w = 2 * d;
+        for (const Vec2 p : {Vec2{1e5, 1e5}, Vec2{1e5 + 5, 1e5}, Vec2{1e5 + 5, 1e5 + w},
+                             Vec2{1e5, 1e5 + w}}) {
+            pts.push_back(p);
+        }
+        const std::vector<LineSpan> crowded = middles(pts);
+        CHECK(alone.size() == 50);
+        REQUIRE(crowded.size() == alone.size());
+        // The last one meets the far channel's connector, which changes it (by 7e-9 mm with
+        // glibc's sin/cos, up to tol / 2 with others).
+        for (std::size_t i = 0; i + 1 < alone.size(); ++i) {
+            CAPTURE(alone[i].start.y);
+            CHECK(distance(crowded[i].start, alone[i].start) < 1e-6);
+            CHECK(distance(crowded[i].end, alone[i].end) < 1e-6);
+        }
+    }
+    {
+        // Six copies of fam4 0x2a0006b4's slot 50 mm apart and a U channel at (1e6, 1e6): the
+        // floors' strays are put back one by one, each only where those before it leave it
+        // uncovered, so neighbours meet but never run along each other.
+        const SeedCase c = fam4_2a0006b4();
+        Contour in;
+        for (int k = 0; k < 6; ++k) {
+            const Vec2 shift{0.0, 50.0 * k};
+            for (const Span& s : c.in.spans) {
+                const auto& l = std::get<LineSpan>(s);
+                if (!in.spans.empty() && endPoint(in.spans.back()) != l.start + shift) {
+                    in.spans.emplace_back(LineSpan{endPoint(in.spans.back()), l.start + shift});
+                }
+                in.spans.emplace_back(LineSpan{l.start + shift, l.end + shift});
+            }
+        }
+        const double w = 2 * c.d;
+        Vec2 at = endPoint(in.spans.back());
+        for (const Vec2 p : {Vec2{1e6, 1e6}, Vec2{1e6 + 5, 1e6}, Vec2{1e6 + 5, 1e6 + w},
+                             Vec2{1e6, 1e6 + w}}) {
+            in.spans.emplace_back(LineSpan{at, p});
+            at = p;
+        }
+        for (const JoinType join : kJoins) {
+            CAPTURE(static_cast<int>(join));
+            const std::vector<Contour> chains =
+                offsetOpenContour(in, c.d, OffsetSide::Left, join, kTol, c.mitre);
+            CHECK(countOverlaps(chains, 1e-6) == 0);
+            for (int k = 0; k < 6; ++k) {
+                const double y = 10000.0 + c.d + 50.0 * k;
+                CHECK(uncovered(chains, {-10001.5, y}, {-9999.0, y}) == 0);
+            }
+        }
+    }
+}
+
 TEST_CASE("T-0128: ADR-0012 A3 regression seeds keep the toolpath rules (fam5)",
           "[geometry][offset][open][t0128]") {
     // Found on intermediate versions of T-0128 (ADR-0012 A3): 0x2a500001 and 0x2a5000a6 (a loop's
@@ -1343,6 +1425,30 @@ TEST_CASE("T-0172 (a): near-tangent spans meet in the self-crossing cuts exactly
                        << noisy);
     CHECK(positives > 10000);
     CHECK(nearMisses > 100);
+    // A long line with a tiny arc by its end, up to 3e-8 x the line's length beyond it: the
+    // discriminant's rounding lets spansMeet accept gaps up to ~2e-8 x the length (163 nm by a
+    // 17.6 km line), more than the arc's own growth covers, so they meet only through the line's
+    // 1e-7 x length (the T-0172 round-2 verifier's mutant XL, which dropped it, missed such pairs).
+    int needLineGrowth = 0;
+    for (int k = 0; k < 20000; ++k) {
+        auto logu = [&](double lo, double hi) { return std::exp(rng.uniform(std::log(lo), std::log(hi))); };
+        const double len = logu(10.0, 1e5);
+        const double r = logu(1e-12, 1e-3);
+        const Vec2 dir = Vec2::fromAngle(rng.uniform(0, 2 * pi), 1.0);
+        const Vec2 start{rng.uniform(-1, 1) * 1e3, rng.uniform(-1, 1) * 1e3};
+        const Vec2 end = start + dir * len;
+        const Vec2 c = end + dir.perp() * (r + rng.uniform(0, 1) * 3e-8 * len);
+        const double at = (end - c).angle();
+        const Span line = LineSpan{start, end};
+        const Span arc = ArcSpan{c, r, at - 0.5, at + 0.5, ArcDirection::CCW};
+        CAPTURE(k, len, r);
+        if (probe(line, arc)) {
+            const Box2 lineBox = bounds(line).inflated(detail::meetReach(line) - 1e-7 * len);
+            needLineGrowth += !lineBox.intersects(reachBox(arc));
+        }
+    }
+    INFO("met only through the line's growth: " << needLineGrowth);
+    CHECK(needLineGrowth > 50);
 }
 
 TEST_CASE("T-0172 (a): self-crossing cuts cost near-linear time on long and collinear strands",
@@ -1462,6 +1568,48 @@ TEST_CASE("T-0172 (b): spiral slots and spirals are put back without a blow-up i
         CHECK(seconds < (kRelease ? 0.5 * kAbsSlack : 10.0));
         // The far channel's middle is covered (Left: its walls' offsets meet there).
         CHECK(uncovered(chains, {1e3 + 0.5, 1e3 + d}, {1e3 + 4.5, 1e3 + d}) == 0);
+    }
+}
+
+TEST_CASE("T-0172 (b): strays of a hatch with varied line ends cost what those of an even hatch do",
+          "[geometry][offset][open][t0172][perf]") {
+    // The T-0172 round-2 verifier's perf2 rhatch: a hatch at pitch exactly 2d whose lines start in
+    // [0, 4] and end in [6, 10] at random, against the same hatch with every line over [0, 10].
+    // Their strays (the middles between lines) are equally many and dense, but the varied ends
+    // give boxes that overlap along x and differ only in y, a k-d tree's weak case: round 2, whose
+    // step 7 queried only a BoxTree, cost ~3.4 sqrt(n) per sample there and took 1.40 / 1.56 x
+    // the even hatch at 4 000 / 16 000 lines (Release; origin/main 1.17, now 1.13-1.19 / 1.15).
+    const double d = 0.05;
+    const int n = kRelease ? 16000 : 3000;
+    auto build = [&](bool varied) {
+        Lcg rng{0x7A7Cu};
+        std::vector<Vec2> pts;
+        for (int i = 0; i < n; ++i) {
+            const double y = 2.0 * d * i;
+            const double a = varied ? rng.uniform(0, 4) : 0.0;
+            const double b = varied ? rng.uniform(6, 10) : 10.0;
+            pts.push_back(i % 2 == 0 ? Vec2{a, y} : Vec2{b, y});
+            pts.push_back(i % 2 == 0 ? Vec2{b, y} : Vec2{a, y});
+        }
+        return polyline(pts, false);
+    };
+    const Contour even = build(false);
+    const Contour varied = build(true);
+    std::vector<Contour> re;
+    std::vector<Contour> rv;
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+        3, [&] { re = offsetOpenContour(even, d, OffsetSide::Left, JoinType::Round, kTol); },
+        [&] { rv = offsetOpenContour(varied, d, OffsetSide::Left, JoinType::Round, kTol); });
+    INFO("CPU seconds: even " << t.smallSeconds << ", varied " << t.largeSeconds << ", ratio " << t.ratio());
+    // The middle between two lines, where both reach, is put back and covered.
+    for (const int i : {0, n / 2, n - 2}) {
+        const double y = d * (2 * i + 1);
+        CHECK(uncovered(rv, {4.5, y}, {5.5, y}) == 0);
+        CHECK(uncovered(re, {1.0, y}, {9.0, y}) == 0);
+    }
+    CHECK(t.ratio() < 1.35);
+    if constexpr (kRelease) {
+        CHECK(t.largeSeconds < 0.6 * kAbsSlack);
     }
 }
 

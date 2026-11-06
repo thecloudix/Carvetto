@@ -1,7 +1,8 @@
 #pragma once
 
 // Internal to core (offset.cpp) and its tests: a set of boxes that grows one box at a time and
-// reports, for a query box, every held box that meets it (T-0172, offsetOpenContour step 7).
+// reports, for a query box, every held box that meets it (T-0172: the self-crossing cuts of a
+// strand, and the boxes that BoxIndex's grid does not take in offsetOpenContour step 7).
 //
 // Unlike a uniform grid (offset.cpp BoxGrid), its memory and query cost do not depend on how the
 // boxes are spread: clustered next to one far-away box, nested (the boxes of a spiral's arcs),
@@ -16,7 +17,9 @@
 // which is the node's bounding box in 4-D, so a query descends only into nodes whose bounds meet
 // it; as for any k-d tree, a query visits O(n^(3/4)) nodes plus those of the boxes it reports,
 // whatever the boxes: splitting on the corners rather than the centres also separates nested
-// boxes (same centre, different sizes) and big boxes from small ones.
+// boxes (same centre, different sizes) and big boxes from small ones. Its weak case is boxes that
+// overlap along one axis and differ only along the other (a hatch whose lines start and end
+// anywhere: ~3.4 sqrt(n) per small query), where a uniform grid does O(1) (box_index.hpp).
 //
 // A query reports each item whose box intersects the query box (Box2::intersects) exactly once,
 // optionally only those with ids in a given range (every node also keeps the range of its ids, so

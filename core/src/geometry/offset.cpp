@@ -15,6 +15,7 @@
 #include <utility>
 #include <vector>
 
+#include "box_index.hpp"
 #include "box_tree.hpp"
 #include "clipper_interop.hpp"
 #include "hole_nesting.hpp"
@@ -1656,8 +1657,10 @@ bool stepJunction(Span& a, Span& b, const SnapContext& ctx, std::optional<Span>&
 // computed from centre, radius and angles (ADR-0005), b's centre is moved by the residual (at
 // most 1e-10 x max(1, |x|, |y|, r)) and then nudged by a few ulps until
 // its computed start equals a's computed end; that can fail where the centre's coordinates are
-// much larger than the point's, leaving a rounding-level residual (within 1e-12 x the scale)
-// that never puts b's start behind a's end along a's direction of travel.
+// much larger than the point's. Then b is kept if it starts level with or ahead of a's end along
+// a's direction of travel within 1e-12 x the scale, else it takes the nearest nudged candidate
+// that does; where none does either, b is left as it was, so it may then start behind a's end
+// (or up to the 1e-10 x the scale residual away from it).
 void exactJunction(Span& a, Span& b) {
     if (auto* line = std::get_if<LineSpan>(&a)) {
         line->end = startPoint(b);
@@ -3590,21 +3593,28 @@ void putBackStrays(std::vector<Contour>& result, const std::vector<double>& resu
     }
     const double reach = 0.5 * tol.distance;
     std::vector<Stray> added;
-    // The emitted chains and the strays put back, in one BoxTree (T-0172: with a uniform grid,
-    // one far feature put a whole hatch at pitch 2d into one cell; a grid that subdivided crowded
-    // cells blew up on nested boxes, a spiral slot's arcs): the chains are items
-    // 0..outSpans.size() - 1, the strays put back follow as they are added (a linear scan over
-    // those made the recovery quadratic in their number: a hatch at pitch exactly 2d, T-0128
-    // round 1).
+    // The emitted chains and the strays put back as they are added (a linear scan over those made
+    // the recovery quadratic in their number: a hatch at pitch exactly 2d, T-0128 round 1), each
+    // in a BoxIndex laid out over the chains or over the strays (every piece put back lies on
+    // one): a grid for the boxes that spread evenly, a tree for those that crowd a cell or cover
+    // many (T-0172: main's uniform grids put a whole hatch at pitch 2d next to one far feature
+    // into one cell; a grid that subdivided crowded cells blew up on a spiral slot's nested arcs;
+    // a k-d tree alone cost ~3.4 sqrt(n) per query on a hatch with varied line ends).
+    detail::BoxIndex outCover(outBoxes);
     std::vector<Span> addedSpans;
-    detail::BoxTree coverGrid(outBoxes);
-    const std::size_t nOut = outSpans.size();
-    Box2 window;  // see coverGap
+    Box2 strayExtent;
+    std::size_t straySpans = 0;
+    for (const Stray& st : strays) {
+        for (const Span& sp : st.spans) {
+            strayExtent.expand(bounds(sp));
+        }
+        straySpans += st.spans.size();
+    }
+    detail::BoxIndex addedCover(strayExtent, straySpans);
     auto add = [&](double key, std::vector<Span>&& part) {
-        window = Box2{};
         for (const Span& sp : part) {
             addedSpans.push_back(sp);
-            coverGrid.add(bounds(sp));
+            addedCover.add(bounds(sp));
         }
         added.push_back(Stray{key, std::move(part)});
     };
@@ -3617,40 +3627,14 @@ void putBackStrays(std::vector<Contour>& result, const std::vector<double>& resu
     // round 1: a hatch at pitch exactly 2d spent most of its time sampling such strands).
     const double skipCap = reach + 16.0 * tol.distance;
     const double maxCap = reach + 1024.0 * tol.distance;
-    // Candidates for coverGap at the first reach: the items whose boxes meet a window reaching
-    // kWindow tolerances ahead along the strand (plus twice the reach: the next sample is at most
-    // that far ahead, and its own query square reaches as far again), fetched from the tree once
-    // per window (consecutive samples among dense strays query nearly the same place, T-0172);
-    // each sample still takes exactly the items whose boxes meet its own query square, as a query
-    // of its own would, and does so directly at a wider reach (sparse surroundings, few samples).
-    // Refetched once strays are added.
-    constexpr double kWindow = 64.0;
-    std::vector<std::size_t> nearby;
-    // Distance from q (fraction f along `span`, of length len) to the emitted chains and the
-    // strays put back, exact up to `cap`.
-    auto coverGap = [&](Vec2 q, double cap, const Span& span, double f, double len) {
+    // Distance from q to the emitted chains and the strays put back, exact up to `cap`.
+    auto coverGap = [&](Vec2 q, double cap) {
         const Box2 around{q - Vec2{cap, cap}, q + Vec2{cap, cap}};
-        auto item = [&](std::size_t i) -> const Span& {
-            return i < nOut ? *outSpans[i] : addedSpans[i - nOut];
-        };
         double best = cap;
-        if (cap > skipCap) {
-            coverGrid.query(around,
-                            [&](std::size_t i) { best = std::min(best, distanceToSpan(q, item(i))); });
-            return best;
-        }
-        if (!window.contains(around)) {
-            const double reachAhead = kWindow * tol.distance + 2.0 * cap;
-            const double ahead = len > 0.0 ? std::min(1.0, f + reachAhead / len) : 1.0;
-            window = bounds(subSpan(span, f, ahead)).inflated(cap).united(around);
-            nearby.clear();
-            coverGrid.query(window, [&](std::size_t i) { nearby.push_back(i); });
-        }
-        for (const std::size_t i : nearby) {
-            if (coverGrid.box(i).intersects(around)) {
-                best = std::min(best, distanceToSpan(q, item(i)));
-            }
-        }
+        outCover.query(around,
+                       [&](std::size_t i) { best = std::min(best, distanceToSpan(q, *outSpans[i])); });
+        addedCover.query(around,
+                         [&](std::size_t i) { best = std::min(best, distanceToSpan(q, addedSpans[i])); });
         return best;
     };
     struct Sample {
@@ -3669,7 +3653,7 @@ void putBackStrays(std::vector<Contour>& result, const std::vector<double>& resu
                     break;  // the next span starts here
                 }
                 const Vec2 q = pointAt(st.spans[i], f);
-                const double g = coverGap(q, cap, st.spans[i], f, len);
+                const double g = coverGap(q, cap);
                 cap = g >= cap ? std::min(2.0 * cap, maxCap) : skipCap;
                 samples.push_back(Sample{static_cast<double>(i) + f, g <= reach});
                 const double advance = std::max(step, std::fabs(g - reach));
