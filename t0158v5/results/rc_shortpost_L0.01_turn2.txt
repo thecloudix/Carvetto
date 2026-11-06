@@ -1,0 +1,6 @@
+br5 shortpost_L0.01_turn2.scn id: start 45.403127500682 10.610924578138 moves 8 | max move 5.1047748855238705e-09 (S=1.000000001)
+  chk4 br5 shortpost_L0.01_turn2.scn flip 0 dir 0 cls mitre |S-T|-d 2.1 S 45.403127500681677 10.610924578138217 |S-mitre| 4.337e-14
+br5fma shortpost_L0.01_turn2.scn id: start 45.403127500682 10.610924578138 moves 8 | max move 5.1047748855238705e-09 (S=1.000000001)
+  chk4 br5fma shortpost_L0.01_turn2.scn flip 0 dir 0 cls mitre |S-T|-d 2.1 S 45.403127500681677 10.610924578138215 |S-mitre| 4.441e-14
+main shortpost_L0.01_turn2.scn id: start 42.105445069457 13.095906530142 moves 9 | max move 4.854101966492809 (S=0.9999999999)
+  chk4 main shortpost_L0.01_turn2.scn flip 0 dir 0 cls foot |S-T|-d 8.88e-16 S 42.105445069456529 13.095906530141587 |S-mitre| 4.129

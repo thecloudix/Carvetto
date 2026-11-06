@@ -1,0 +1,6 @@
+br5 bigc_tA1.2_L0.002_tB0.001_o0_d1.scn id: start 3013.302410425025 2100.500000000000 moves 8 | max move 3.6352957746829073e-09 (S=0.999999999)
+  chk4 br5 bigc_tA1.2_L0.002_tB0.001_o0_d1.scn flip 0 dir 1 cls mitre |S-T|-d 0.635 S 3013.3024104250248 2100.5 |S-mitre| 0
+br5fma bigc_tA1.2_L0.002_tB0.001_o0_d1.scn id: start 3013.302410425025 2100.500000000000 moves 8 | max move 3.6352957746829073e-09 (S=0.999999999)
+  chk4 br5fma bigc_tA1.2_L0.002_tB0.001_o0_d1.scn flip 0 dir 1 cls mitre |S-T|-d 0.635 S 3013.3024104250248 2100.5 |S-mitre| 0
+main bigc_tA1.2_L0.002_tB0.001_o0_d1.scn id: start 3014.046117257902 2102.412926736570 moves 9 | max move 3.387854840370665 (OX=3000 OY=2100)
+  chk4 main bigc_tA1.2_L0.002_tB0.001_o0_d1.scn flip 0 dir 1 cls foot |S-T|-d -1.03e-13 S 3014.0461172579016 2102.4129267365702 |S-mitre| 2.052

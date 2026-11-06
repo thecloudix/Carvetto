@@ -1,0 +1,6 @@
+br5 equalnb_tA0.1_tB0.1_L10um.scn id: start 11.400125125127 0.500000000000 moves 8 | max move 3.0037977494208727e-09 (S=1.000000001)
+  chk4 br5 equalnb_tA0.1_tB0.1_L10um.scn flip 0 dir 1 cls mitre |S-T|-d 0.00375 S 11.400125125126619 0.50000000000000089 |S-mitre| 0
+br5fma equalnb_tA0.1_tB0.1_L10um.scn id: start 11.400125125127 0.500000000000 moves 8 | max move 3.0037977494208727e-09 (S=1.000000001)
+  chk4 br5fma equalnb_tA0.1_tB0.1_L10um.scn flip 0 dir 1 cls mitre |S-T|-d 0.00375 S 11.40012512512661 0.5 |S-mitre| 8.926e-15
+main equalnb_tA0.1_tB0.1_L10um.scn id: start 11.549500249940 0.514987504166 moves 9 | max move 0.299875015773527 (S=0.999999999)
+  chk4 main equalnb_tA0.1_tB0.1_L10um.scn flip 0 dir 1 cls foot |S-T|-d 0 S 11.549500249940484 0.51498750416592332 |S-mitre| 0.1501

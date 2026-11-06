@@ -1,0 +1,12 @@
+== /home/chris/wt-T0158/build-verify5-rel/out/scn/log: 26200 calls
+  kind,rule: {('0', '0'): 18630, ('1', '0'): 4702, ('1', '1'): 1657, ('2', '0'): 610, ('2', '1'): 403, ('3', '0'): 4, ('3', '1'): 17, ('4', '0'): 158, ('4', '1'): 19}
+  corner-path count,met: {('1', '2'): 648, ('1', '1'): 365, ('-1', '0'): 178, ('-1', '-2'): 16, ('0', '1'): 3, ('0', '2'): 3}
+  mEqui: n 1129 buckets {'<1e-3': 2, '<0.1': 83, '<0.5': 41, '>=0.5': 1003}; closest [(0.0007245, 'harness_t0127v1_d4new_m1_272010_1.scn.txt', 'm1_272010_1.scn:vsout'), (0.000745, 'harness_t0135v2_scn_m1_801019_13.scn.txt', 'm1_801019_13.scn:vsout'), (0.003283, 'harness_t0127v2_d_wsf7_m2_293000_14.scn.txt', 'm2_293000_14.scn:vsout')]
+  mOnC: n 6 buckets {'>=0.5': 6}; closest [(1.0, 'harness_t0124v2_p3_427.scn.txt', 'p3_427.scn:orig'), (1.0, 'harness_t0124v2_p3_427.scn.txt', 'p3_427.scn:vsout'), (1.0, 'harness_t0127v1_d4new_m0_271013_5.scn.txt', 'm0_271013_5.scn:vsout')]
+  mLop: n 1019 buckets {'>=0.5': 1019}; closest [(0.9929, 'harness_t0127v1_d4new_m2_273003_30.scn.txt', 'm2_273003_30.scn:vsout'), (0.9989, 'harness_t0127v2_d_wsf7_m0_291016_28.scn.txt', 'm0_291016_28.scn:vsout'), (0.9991, 'harness_t0127v1_d4old_m0_271002_9.scn.txt', 'm0_271002_9.scn:vsout')]
+== /home/chris/wt-T0158/build-verify5-rel/out/scn/logfma: 26200 calls
+  kind,rule: {('0', '0'): 18630, ('1', '0'): 4724, ('1', '1'): 1635, ('2', '0'): 610, ('2', '1'): 403, ('3', '0'): 4, ('3', '1'): 17, ('4', '0'): 158, ('4', '1'): 19}
+  corner-path count,met: {('1', '2'): 648, ('1', '1'): 365, ('-1', '0'): 178, ('-1', '-2'): 16, ('0', '1'): 3, ('0', '2'): 3}
+  mEqui: n 1129 buckets {'<1e-3': 2, '<0.1': 83, '<0.5': 44, '>=0.5': 1000}; closest [(0.0007245, 'harness_t0127v1_d4new_m1_272010_1.scn.txt', 'm1_272010_1.scn:vsout'), (0.000745, 'harness_t0135v2_scn_m1_801019_13.scn.txt', 'm1_801019_13.scn:vsout'), (0.003283, 'harness_t0127v2_d_wsf7_m2_293000_14.scn.txt', 'm2_293000_14.scn:vsout')]
+  mOnC: n 4 buckets {'>=0.5': 4}; closest [(1.0, 'harness_t0124v2_p3_427.scn.txt', 'p3_427.scn:orig'), (1.0, 'harness_t0124v2_p3_427.scn.txt', 'p3_427.scn:vsout'), (1.0, 'harness_t0127v1_d4new_m0_271013_5.scn.txt', 'm0_271013_5.scn:vsout')]
+  mLop: n 1019 buckets {'>=0.5': 1019}; closest [(0.9929, 'harness_t0127v1_d4new_m2_273003_30.scn.txt', 'm2_273003_30.scn:vsout'), (0.9989, 'harness_t0127v2_d_wsf7_m0_291016_28.scn.txt', 'm0_291016_28.scn:vsout'), (0.9991, 'harness_t0127v1_d4old_m0_271002_9.scn.txt', 'm0_271002_9.scn:vsout')]

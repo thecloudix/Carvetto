@@ -1,0 +1,114 @@
+br5 bigc_tA1.2_L0.002_tB0.001_o0_d1.scn id: start 3013.302410425025 2100.500000000000 moves 8 | max move 3.6352957746829073e-09 (S=0.999999999)
+  chk4 br5 bigc_tA1.2_L0.002_tB0.001_o0_d1.scn flip 0 dir 1 cls mitre |S-T|-d 0.635 S 3013.3024104250248 2100.5 |S-mitre| 0
+br5fma bigc_tA1.2_L0.002_tB0.001_o0_d1.scn id: start 3013.302410425025 2100.500000000000 moves 8 | max move 3.6352957746829073e-09 (S=0.999999999)
+  chk4 br5fma bigc_tA1.2_L0.002_tB0.001_o0_d1.scn flip 0 dir 1 cls mitre |S-T|-d 0.635 S 3013.3024104250248 2100.5 |S-mitre| 0
+main bigc_tA1.2_L0.002_tB0.001_o0_d1.scn id: start 3014.046117257902 2102.412926736570 moves 9 | max move 3.387854840370665 (OX=3000 OY=2100)
+  chk4 main bigc_tA1.2_L0.002_tB0.001_o0_d1.scn flip 0 dir 1 cls foot |S-T|-d -1.03e-13 S 3014.0461172579016 2102.4129267365702 |S-mitre| 2.052
+br5 bigc_tA1.2_L0.002_tB0.001_o1_d0.scn id: start 3009.197589574975 2100.500000000000 moves 8 | max move 3.634782177262117e-09 (S=0.999999999)
+  chk4 br5 bigc_tA1.2_L0.002_tB0.001_o1_d0.scn flip 0 dir 0 cls mitre |S-T|-d 0.635 S 3009.1975895749752 2100.5 |S-mitre| 0
+br5fma bigc_tA1.2_L0.002_tB0.001_o1_d0.scn id: start 3009.197589574975 2100.500000000000 moves 8 | max move 3.634782177262117e-09 (S=0.999999999)
+  chk4 br5fma bigc_tA1.2_L0.002_tB0.001_o1_d0.scn flip 0 dir 0 cls mitre |S-T|-d 0.635 S 3009.1975895749752 2100.5 |S-mitre| 0
+main bigc_tA1.2_L0.002_tB0.001_o1_d0.scn id: start 3008.453882742098 2102.412926736570 moves 9 | max move 3.387854840370665 (OX=3000 OY=2100)
+  chk4 main bigc_tA1.2_L0.002_tB0.001_o1_d0.scn flip 0 dir 0 cls foot |S-T|-d -1.03e-13 S 3008.4538827420984 2102.4129267365702 |S-mitre| 2.052
+br5 collinear_tA1.2_L20um_tB0.scn id: start 13.302410425025 0.500000000000 moves 8 | max move 3.6346529322319588e-09 (S=1.000000001)
+  chk4 br5 collinear_tA1.2_L20um_tB0.scn flip 0 dir 1 cls chamferLast |S-T|-d 0.635 S 13.302410425025075 0.50000000000000044 |S-mitre| 1.776e-15
+br5fma collinear_tA1.2_L20um_tB0.scn id: start 13.302410425025 0.500000000000 moves 8 | max move 3.6346529322319588e-09 (S=1.000000001)
+  chk4 br5fma collinear_tA1.2_L20um_tB0.scn flip 0 dir 1 cls chamferLast |S-T|-d 0.635 S 13.302410425025078 0.50000000000000044 |S-mitre| 1.776e-15
+main collinear_tA1.2_L20um_tB0.scn id: start 14.046117257902 2.412926736570 moves 9 | max move 3.387854842064417 (S=0.999999999)
+  chk4 main collinear_tA1.2_L20um_tB0.scn flip 0 dir 1 cls foot |S-T|-d -8.88e-16 S 14.046117257901678 2.4129267365699789 |S-mitre| 2.052
+br5 dchamfer_last_corner_climb.scn id: start 25.899413287641 4.265494465964 moves 7 | max move 3.211677680983018e-09 (S=1.000000001)
+  chk4 br5 dchamfer_last_corner_climb.scn flip 0 dir 0 cls chamferFirst |S-T|-d 0.228 S 25.899413287640723 4.2654944659644984 |S-mitre| -1
+br5fma dchamfer_last_corner_climb.scn id: start 25.899413287641 4.265494465964 moves 7 | max move 3.211677680983018e-09 (S=1.000000001)
+  chk4 br5fma dchamfer_last_corner_climb.scn flip 0 dir 0 cls chamferFirst |S-T|-d 0.228 S 25.899413287640723 4.2654944659644984 |S-mitre| -1
+main dchamfer_last_corner_climb.scn id: start 23.839474906984 1.525183864164 moves 8 | max move 4.242640687331934 (S=0.9999999999)
+  chk4 main dchamfer_last_corner_climb.scn flip 0 dir 0 cls foot |S-T|-d -8.88e-16 S 23.839474906983654 1.5251838641643567 |S-mitre| -1
+br5 equalnb_tA0.1_tB0.1_L10um.scn id: start 11.400125125127 0.500000000000 moves 8 | max move 3.0037977494208727e-09 (S=1.000000001)
+  chk4 br5 equalnb_tA0.1_tB0.1_L10um.scn flip 0 dir 1 cls mitre |S-T|-d 0.00375 S 11.400125125126619 0.50000000000000089 |S-mitre| 0
+br5fma equalnb_tA0.1_tB0.1_L10um.scn id: start 11.400125125127 0.500000000000 moves 8 | max move 3.0037977494208727e-09 (S=1.000000001)
+  chk4 br5fma equalnb_tA0.1_tB0.1_L10um.scn flip 0 dir 1 cls mitre |S-T|-d 0.00375 S 11.40012512512661 0.5 |S-mitre| 8.926e-15
+main equalnb_tA0.1_tB0.1_L10um.scn id: start 11.549500249940 0.514987504166 moves 9 | max move 0.299875015773527 (S=0.999999999)
+  chk4 main equalnb_tA0.1_tB0.1_L10um.scn flip 0 dir 1 cls foot |S-T|-d 0 S 11.549500249940484 0.51498750416592332 |S-mitre| 0.1501
+br5 fpoly_057_split.scn id: start 22.973494495770 154.637011215026 moves 10782 | max move 0.0015579021917113784 (OX=3000 OY=2100)
+  chk4 br5 fpoly_057_split.scn flip 0 dir 1 cls foot |S-T|-d 1.63e-07 S 22.973494495769998 154.63701121502569 |S-mitre| 4.55e-14
+br5fma fpoly_057_split.scn id: start 22.973494495770 154.637011215026 moves 10782 | max move 0.0015579021917113784 (OX=3000 OY=2100)
+  chk4 br5fma fpoly_057_split.scn flip 0 dir 1 cls foot |S-T|-d 1.63e-07 S 22.973494495770005 154.63701121502569 |S-mitre| 4.019e-14
+main fpoly_057_split.scn id: start 22.974012191226 154.637219172411 moves 10784 | max move 0.0011158041887698285 (OX=3000 OY=2100)
+  chk4 main fpoly_057_split.scn flip 0 dir 1 cls foot |S-T|-d 6.77e-15 S 22.974012191225974 154.63721917241105 |S-mitre| 0.0005579
+br5 gapmitre_1e-4.scn id: start 45.547775000000 10.700000000000 moves 7 | max move 4.678792841669945e-08 (S=0.999999999)
+  chk4 br5 gapmitre_1e-4.scn flip 0 dir 0 cls beyond |S-T|-d 2.25 S 45.547775000000001 10.699999999999999 |S-mitre| 0.01744
+br5fma gapmitre_1e-4.scn id: start 45.547775000000 10.700000000000 moves 7 | max move 4.678792841669945e-08 (S=0.999999999)
+  chk4 br5fma gapmitre_1e-4.scn flip 0 dir 0 cls beyond |S-T|-d 2.25 S 45.547775000000001 10.699999999999999 |S-mitre| 0.01744
+main gapmitre_1e-4.scn id: start 42.026465075117 13.165647704757 moves 8 | max move 4.9312954237349995 (S=0.999999999)
+  chk4 main gapmitre_1e-4.scn flip 0 dir 0 cls beyond |S-T|-d 0.01 S 42.026465075117443 13.165647704757159 |S-mitre| 4.284
+br5 mmrg_001_tabs_all_out.scn id: start -86.660293000000 -97.192748000000 moves 29 | max move 9.069566904940985e-07 (S=1.000000001)
+  chk4 br5 mmrg_001_tabs_all_out.scn flip 0 dir 1 cls beyond |S-T|-d 3.05 S -86.660292999999996 -97.192747999999995 |S-mitre| 0.01696
+br5fma mmrg_001_tabs_all_out.scn id: start -86.660293000000 -97.192748000000 moves 29 | max move 9.069566904940985e-07 (S=1.000000001)
+  chk4 br5fma mmrg_001_tabs_all_out.scn flip 0 dir 1 cls beyond |S-T|-d 3.05 S -86.660292999999996 -97.192747999999995 |S-mitre| 0.01696
+main mmrg_001_tabs_all_out.scn id: start -89.070596134233 -91.718476710690 moves 39 | max move 2.0811592380629404e-07 (S=1.000000001)
+  chk4 main mmrg_001_tabs_all_out.scn flip 0 dir 1 cls beyond |S-T|-d 0.01 S -89.070596134233256 -91.718476710689501 |S-mitre| 5.968
+br5 mmrg_014.scn id: start 25.855994000000 -56.003744000000 moves 85 | max move 1.00000000458067e-06 (OX=3000 OY=2100)
+  chk4 br5 mmrg_014.scn flip 0 dir 1 cls other |S-T|-d 18.6 S 25.794529000000001 -56.578507999999999 |S-mitre| 22.36
+br5fma mmrg_014.scn id: start 25.855994000000 -56.003744000000 moves 85 | max move 1.00000000458067e-06 (OX=3000 OY=2100)
+  chk4 br5fma mmrg_014.scn flip 0 dir 1 cls other |S-T|-d 18.6 S 25.794529000000001 -56.578507999999999 |S-mitre| 22.36
+main mmrg_014.scn id: start 25.855994000000 -56.003744000000 moves 88 | max move 1.00000000458067e-06 (OX=3000 OY=2100)
+  chk4 main mmrg_014.scn flip 0 dir 1 cls other |S-T|-d 18.6 S 25.794529000000001 -56.578507999999999 |S-mitre| 22.36
+br5 mmrg_022.scn id: start 76.081908000000 -43.370219000000 moves 210 | max move 1.00000000458067e-06 (OX=3000 OY=2100)
+  chk4 br5 mmrg_022.scn flip 0 dir 0 cls other |S-T|-d 45.6 S 76.160193000000007 -44.106118000000002 |S-mitre| 51.98
+br5fma mmrg_022.scn id: start 76.081908000000 -43.370219000000 moves 210 | max move 1.00000000458067e-06 (OX=3000 OY=2100)
+  chk4 br5fma mmrg_022.scn flip 0 dir 0 cls other |S-T|-d 45.6 S 76.160193000000007 -44.106118000000002 |S-mitre| 51.98
+main mmrg_022.scn id: start 76.081908000000 -43.370219000000 moves 231 | max move 1.00000000458067e-06 (OX=3000 OY=2100)
+  chk4 main mmrg_022.scn flip 0 dir 0 cls other |S-T|-d 45.6 S 76.160193000000007 -44.106118000000002 |S-mitre| 51.98
+br5 mmrg_023.scn id: start 21.894093309226 16.428434029382 moves 47 | max move 2.7372801802605764e-08 (S=1.000000001)
+  chk4 br5 mmrg_023.scn flip 0 dir 1 cls beyond |S-T|-d 0.421 S 20.411111999999999 15.231062 |S-mitre| 4.046
+br5fma mmrg_023.scn id: start 21.894093309226 16.428434029382 moves 47 | max move 2.7372801802605764e-08 (S=1.000000001)
+  chk4 br5fma mmrg_023.scn flip 0 dir 1 cls beyond |S-T|-d 0.421 S 20.411111999999999 15.231062 |S-mitre| 4.046
+main mmrg_023.scn id: start 16.690484416788 16.124675799364 moves 48 | max move 3.9660005168250003 (OX=1000.25 OY=-999.75)
+  chk4 main mmrg_023.scn flip 0 dir 1 cls beyond |S-T|-d 0.01 S 17.366731990679401 14.34264814551981 |S-mitre| 5.315
+br5 mrg_twovertex_x3um_tB0.3.scn id: start 8.669127000000 14.338180000000 moves 81 | max move 1.0000000010279564e-06 (OX=1000.25 OY=-999.75)
+  chk4 br5 mrg_twovertex_x3um_tB0.3.scn flip 0 dir 0 cls beyond |S-T|-d 8.14 S 8.6691269999999996 14.338179999999999 |S-mitre| 14.41
+br5fma mrg_twovertex_x3um_tB0.3.scn id: start 8.669127000000 14.338180000000 moves 81 | max move 1.0000000010279564e-06 (OX=1000.25 OY=-999.75)
+  chk4 br5fma mrg_twovertex_x3um_tB0.3.scn flip 0 dir 0 cls beyond |S-T|-d 8.14 S 8.6691269999999996 14.338179999999999 |S-mitre| 14.41
+main mrg_twovertex_x3um_tB0.3.scn id: start 8.669127000000 14.338180000000 moves 82 | max move 1.0000000010279564e-06 (OX=1000.25 OY=-999.75)
+  chk4 main mrg_twovertex_x3um_tB0.3.scn flip 0 dir 0 cls beyond |S-T|-d 8.14 S 8.6691269999999996 14.338179999999999 |S-mitre| 14.41
+br5 nearcollinear_thr_L20um.scn id: start 13.302410425025 0.500000000000 moves 8 | max move 3.6346529322319588e-09 (S=1.000000001)
+  chk4 br5 nearcollinear_thr_L20um.scn flip 0 dir 1 cls chamferLast |S-T|-d 0.635 S 13.302410425025077 0.50000000000000044 |S-mitre| 0
+br5fma nearcollinear_thr_L20um.scn id: start 13.302410425025 0.500000000000 moves 8 | max move 3.6346529322319588e-09 (S=1.000000001)
+  chk4 br5fma nearcollinear_thr_L20um.scn flip 0 dir 1 cls chamferLast |S-T|-d 0.635 S 13.302410425025077 0.50000000000000044 |S-mitre| 0
+main nearcollinear_thr_L20um.scn id: start 11.250000000000 0.500000000000 moves 9 | max move 3.387854840370489 (UP=4)
+  chk4 main nearcollinear_thr_L20um.scn flip 0 dir 1 cls foot |S-T|-d 0 S 11.249999999999989 0.50000000000000044 |S-mitre| 2.052
+br5 nearcollinear_thr_L5um_after.scn id: start 9.197589574975 0.500000000000 moves 8 | max move 3.6346529322319588e-09 (S=1.000000001)
+  chk4 br5 nearcollinear_thr_L5um_after.scn flip 0 dir 0 cls chamferLast |S-T|-d 0.635 S 9.1975895749749235 0.5 |S-mitre| 1.897e-15
+br5fma nearcollinear_thr_L5um_after.scn id: start 9.197589574975 0.500000000000 moves 8 | max move 3.6346529322319588e-09 (S=1.000000001)
+  chk4 br5fma nearcollinear_thr_L5um_after.scn flip 0 dir 0 cls chamferLast |S-T|-d 0.635 S 9.1975895749749252 0.49999999999999561 |S-mitre| 5.052e-15
+main nearcollinear_thr_L5um_after.scn id: start 11.250000000000 0.500000000000 moves 9 | max move 3.3878548420643613 (S=0.999999999)
+  chk4 main nearcollinear_thr_L5um_after.scn flip 0 dir 0 cls foot |S-T|-d 0 S 11.249999999999996 0.50000000000000044 |S-mitre| 2.052
+br5 rect_collinear_L0.050000_dir1.scn id: start -3.000000000000 -3.000000000000 moves 8 | max move 4.2426404101199665e-09 (S=1.000000001)
+  chk4 br5 rect_collinear_L0.050000_dir1.scn flip 0 dir 1 cls chamferLast |S-T|-d 1.24 S -2.9999999999999996 -2.9999999999999996 |S-mitre| 0
+br5fma rect_collinear_L0.050000_dir1.scn id: start -3.000000000000 -3.000000000000 moves 8 | max move 4.2426404101199665e-09 (S=1.000000001)
+  chk4 br5fma rect_collinear_L0.050000_dir1.scn flip 0 dir 1 cls chamferLast |S-T|-d 1.24 S -2.9999999999999996 -2.9999999999999996 |S-mitre| 0
+main rect_collinear_L0.050000_dir1.scn id: start 0.000000000000 -3.000000000000 moves 9 | max move 4.242640689240606 (S=0.999999999)
+  chk4 main rect_collinear_L0.050000_dir1.scn flip 0 dir 1 cls foot |S-T|-d 0 S 0 -2.9999999999999996 |S-mitre| 3
+br5 sharpnb_tA0.1_tB0.2_L5um.scn id: start 11.400125125127 0.500000000000 moves 8 | max move 3.0037977494208727e-09 (S=1.000000001)
+  chk4 br5 sharpnb_tA0.1_tB0.2_L5um.scn flip 0 dir 0 cls mitre |S-T|-d 0.00375 S 11.400125125126621 0.50000000000000111 |S-mitre| 7.137e-15
+br5fma sharpnb_tA0.1_tB0.2_L5um.scn id: start 11.400125125127 0.500000000000 moves 8 | max move 3.0037977494208727e-09 (S=1.000000001)
+  chk4 br5fma sharpnb_tA0.1_tB0.2_L5um.scn flip 0 dir 0 cls mitre |S-T|-d 0.00375 S 11.400125125126616 0.50000000000000044 |S-mitre| 1.776e-15
+main sharpnb_tA0.1_tB0.2_L5um.scn id: start 11.250000000000 0.500000000000 moves 9 | max move 0.2998750156245883 (DN=2)
+  chk4 main sharpnb_tA0.1_tB0.2_L5um.scn flip 0 dir 0 cls foot |S-T|-d 0 S 11.250000000000012 0.50000000000000044 |S-mitre| 0.1501
+br5 sharpnb_tA0.3_tB1.0_L1.19um.scn id: start 11.703405654175 0.500000000000 moves 8 | max move 3.034158420422593e-09 (S=1.000000001)
+  chk4 br5 sharpnb_tA0.3_tB1.0_L1.19um.scn flip 0 dir 0 cls mitre |S-T|-d 0.0341 S 11.70340565417489 0.50000000000000155 |S-mitre| 3.722e-15
+br5fma sharpnb_tA0.3_tB1.0_L1.19um.scn id: start 11.703405654175 0.500000000000 moves 8 | max move 3.034158420422593e-09 (S=1.000000001)
+  chk4 br5fma sharpnb_tA0.3_tB1.0_L1.19um.scn flip 0 dir 0 cls mitre |S-T|-d 0.0341 S 11.70340565417489 0.50000000000000178 |S-mitre| 3.794e-15
+main sharpnb_tA0.3_tB1.0_L1.19um.scn id: start 11.250000000000 0.500000000000 moves 9 | max move 0.8966287952903 (S=0.999999999)
+  chk4 main sharpnb_tA0.3_tB1.0_L1.19um.scn flip 0 dir 0 cls foot |S-T|-d 0 S 11.250000000000007 0.50000000000000044 |S-mitre| 0.4534
+br5 shortpost_L0.01_turn2.scn id: start 45.403127500682 10.610924578138 moves 8 | max move 5.1047748855238705e-09 (S=1.000000001)
+  chk4 br5 shortpost_L0.01_turn2.scn flip 0 dir 0 cls mitre |S-T|-d 2.1 S 45.403127500681677 10.610924578138217 |S-mitre| 4.337e-14
+br5fma shortpost_L0.01_turn2.scn id: start 45.403127500682 10.610924578138 moves 8 | max move 5.1047748855238705e-09 (S=1.000000001)
+  chk4 br5fma shortpost_L0.01_turn2.scn flip 0 dir 0 cls mitre |S-T|-d 2.1 S 45.403127500681677 10.610924578138215 |S-mitre| 4.441e-14
+main shortpost_L0.01_turn2.scn id: start 42.105445069457 13.095906530142 moves 9 | max move 4.854101966492809 (S=0.9999999999)
+  chk4 main shortpost_L0.01_turn2.scn flip 0 dir 0 cls foot |S-T|-d 8.88e-16 S 42.105445069456529 13.095906530141587 |S-mitre| 4.129
+br5 tietA0.3_d0.scn id: start 11.703405654175 0.500000000000 moves 8 | max move 3.034158420422593e-09 (S=1.000000001)
+  chk4 br5 tietA0.3_d0.scn flip 0 dir 1 cls mitre |S-T|-d 0.0341 S 11.703405654174887 0.50000000000000089 |S-mitre| 4.441e-16
+br5fma tietA0.3_d0.scn id: start 11.703405654175 0.500000000000 moves 8 | max move 3.034158420422593e-09 (S=1.000000001)
+  chk4 br5fma tietA0.3_d0.scn flip 0 dir 1 cls mitre |S-T|-d 0.0341 S 11.703405654174892 0.50000000000000244 |S-mitre| 5.691e-15
+main tietA0.3_d0.scn id: start 12.136560619984 0.633990532623 moves 9 | max move 0.8966287952898635 (S=0.999999999)
+  chk4 main tietA0.3_d0.scn flip 0 dir 1 cls foot |S-T|-d 0 S 12.136560619984019 0.63399053262318239 |S-mitre| 0.4534

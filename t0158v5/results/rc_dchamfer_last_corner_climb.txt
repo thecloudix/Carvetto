@@ -1,0 +1,6 @@
+br5 dchamfer_last_corner_climb.scn id: start 25.899413287641 4.265494465964 moves 7 | max move 3.211677680983018e-09 (S=1.000000001)
+  chk4 br5 dchamfer_last_corner_climb.scn flip 0 dir 0 cls chamferFirst |S-T|-d 0.228 S 25.899413287640723 4.2654944659644984 |S-mitre| -1
+br5fma dchamfer_last_corner_climb.scn id: start 25.899413287641 4.265494465964 moves 7 | max move 3.211677680983018e-09 (S=1.000000001)
+  chk4 br5fma dchamfer_last_corner_climb.scn flip 0 dir 0 cls chamferFirst |S-T|-d 0.228 S 25.899413287640723 4.2654944659644984 |S-mitre| -1
+main dchamfer_last_corner_climb.scn id: start 23.839474906984 1.525183864164 moves 8 | max move 4.242640687331934 (S=0.9999999999)
+  chk4 main dchamfer_last_corner_climb.scn flip 0 dir 0 cls foot |S-T|-d -8.88e-16 S 23.839474906983654 1.5251838641643567 |S-mitre| -1

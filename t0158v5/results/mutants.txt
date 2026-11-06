@@ -1,0 +1,18 @@
+base rc=0
+N0: [start] rc=42 (test cases:   17 |    2 passed |   15 failed) | T-0135 rc=42 (test cases:  2 |  1 passed | 1 failed) | failing: ;        by perturbations;        coordinates;        corner in travel;        in travel;        its own mitre, on both sides of length x sin(turn) = tol;        mitre;        parts still hold (flood);
+N1: [start] rc=0 () | T-0135 rc=0 () | failing: 
+N2: [start] rc=0 () | T-0135 rc=0 () | failing: 
+N3: [start] rc=0 () | T-0135 rc=0 () | failing: 
+N4: [start] rc=42 (test cases:    17 |    16 passed | 1 failed) | T-0135 rc=0 () | failing: ;        the join's first point in travel, also translated far;
+N5: [start] rc=42 (test cases:    17 |     5 passed |   12 failed) | T-0135 rc=42 (test cases:  2 |  1 passed | 1 failed) | failing: ;        by perturbations;        coordinates;        corner in travel;        its own mitre, on both sides of length x sin(turn) = tol;        join's first point in travel, unmoved by scaling and translation;        mitre;        start vertex's mitre;
+N6: [start] rc=42 (test cases:    17 |    16 passed |  1 failed) | T-0135 rc=0 () | failing: ;        starts at the tip's first join point, unmoved by perturbations;
+N7: [start] rc=42 (test cases:    17 |    15 passed |  2 failed) | T-0135 rc=0 () | failing: ;        in travel;        starts at the tip's first join point, unmoved by perturbations;
+N8: [start] rc=0 () | T-0135 rc=0 () | failing: 
+N9: build failed
+N10: [start] rc=42 (test cases:    17 |    16 passed |  1 failed) | T-0135 rc=0 () | failing: ;        corner in travel;
+N11: [start] rc=0 () | T-0135 rc=0 () | failing: 
+N12: [start] rc=42 (test cases:    17 |    16 passed | 1 failed) | T-0135 rc=0 () | failing: ;        the join's first point in travel, also translated far;
+N13: [start] rc=42 (test cases:    17 |    15 passed |  2 failed) | T-0135 rc=0 () | failing: ;        by perturbations;        in travel;
+MUTDONE
+N9: [start] rc=42 (test cases:    17 |    14 passed |  3 failed) | T-0135 rc=0 () | failing: ;        corner in travel;        starts at the tip's first join point, unmoved by perturbations;tip's mitre corner, unmoved by ulp and 1e-9 perturbations;
+MUTDONE

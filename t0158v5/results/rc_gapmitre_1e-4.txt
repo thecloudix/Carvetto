@@ -1,0 +1,6 @@
+br5 gapmitre_1e-4.scn id: start 45.547775000000 10.700000000000 moves 7 | max move 4.678792841669945e-08 (S=0.999999999)
+  chk4 br5 gapmitre_1e-4.scn flip 0 dir 0 cls beyond |S-T|-d 2.25 S 45.547775000000001 10.699999999999999 |S-mitre| 0.01744
+br5fma gapmitre_1e-4.scn id: start 45.547775000000 10.700000000000 moves 7 | max move 4.678792841669945e-08 (S=0.999999999)
+  chk4 br5fma gapmitre_1e-4.scn flip 0 dir 0 cls beyond |S-T|-d 2.25 S 45.547775000000001 10.699999999999999 |S-mitre| 0.01744
+main gapmitre_1e-4.scn id: start 42.026465075117 13.165647704757 moves 8 | max move 4.9312954237349995 (S=0.999999999)
+  chk4 main gapmitre_1e-4.scn flip 0 dir 0 cls beyond |S-T|-d 0.01 S 42.026465075117443 13.165647704757159 |S-mitre| 4.284

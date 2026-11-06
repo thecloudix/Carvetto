@@ -1,0 +1,6 @@
+br5 fpoly_057_split.scn id: start 22.973494495770 154.637011215026 moves 10782 | max move 0.0015579021917113784 (OX=3000 OY=2100)
+  chk4 br5 fpoly_057_split.scn flip 0 dir 1 cls foot |S-T|-d 1.63e-07 S 22.973494495769998 154.63701121502569 |S-mitre| 4.55e-14
+br5fma fpoly_057_split.scn id: start 22.973494495770 154.637011215026 moves 10782 | max move 0.0015579021917113784 (OX=3000 OY=2100)
+  chk4 br5fma fpoly_057_split.scn flip 0 dir 1 cls foot |S-T|-d 1.63e-07 S 22.973494495770005 154.63701121502569 |S-mitre| 4.019e-14
+main fpoly_057_split.scn id: start 22.974012191226 154.637219172411 moves 10784 | max move 0.0011158041887698285 (OX=3000 OY=2100)
+  chk4 main fpoly_057_split.scn flip 0 dir 1 cls foot |S-T|-d 6.77e-15 S 22.974012191225974 154.63721917241105 |S-mitre| 0.0005579

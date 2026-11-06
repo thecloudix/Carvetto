@@ -1,0 +1,6 @@
+br5 mrg_twovertex_x3um_tB0.3.scn id: start 8.669127000000 14.338180000000 moves 81 | max move 1.0000000010279564e-06 (OX=1000.25 OY=-999.75)
+  chk4 br5 mrg_twovertex_x3um_tB0.3.scn flip 0 dir 0 cls beyond |S-T|-d 8.14 S 8.6691269999999996 14.338179999999999 |S-mitre| 14.41
+br5fma mrg_twovertex_x3um_tB0.3.scn id: start 8.669127000000 14.338180000000 moves 81 | max move 1.0000000010279564e-06 (OX=1000.25 OY=-999.75)
+  chk4 br5fma mrg_twovertex_x3um_tB0.3.scn flip 0 dir 0 cls beyond |S-T|-d 8.14 S 8.6691269999999996 14.338179999999999 |S-mitre| 14.41
+main mrg_twovertex_x3um_tB0.3.scn id: start 8.669127000000 14.338180000000 moves 82 | max move 1.0000000010279564e-06 (OX=1000.25 OY=-999.75)
+  chk4 main mrg_twovertex_x3um_tB0.3.scn flip 0 dir 0 cls beyond |S-T|-d 8.14 S 8.6691269999999996 14.338179999999999 |S-mitre| 14.41

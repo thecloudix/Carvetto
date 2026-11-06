@@ -1,0 +1,8 @@
+thr tA 0.3 L 0.02 order 0 dir 0 | no flip in [0,1e-3] (atMitre 1)
+thr tA 0.3 L 0.02 order 0 dir 1 | no flip in [0,1e-3] (atMitre 1)
+thr tA 0.3 L 0.02 order 1 dir 0 | no flip in [0,1e-3] (atMitre 1)
+thr tA 0.3 L 0.02 order 1 dir 1 | no flip in [0,1e-3] (atMitre 1)
+thr tA 1.2 L 0.02 order 0 dir 0 | no flip in [0,1e-3] (atMitre 1)
+thr tA 1.2 L 0.02 order 0 dir 1 | no flip in [0,1e-3] (atMitre 1)
+thr tA 1.2 L 0.02 order 1 dir 0 | no flip in [0,1e-3] (atMitre 1)
+thr tA 1.2 L 0.02 order 1 dir 1 | no flip in [0,1e-3] (atMitre 1)

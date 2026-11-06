@@ -1,0 +1,31 @@
+== gen3 branch scale
+gen3:fpoly       callcount_changed 0 scenes 60
+gen3:rmrg2       >1e-6 11 callcount_changed 0 scenes 60
+gen3:sharpnb     callcount_changed 0 scenes 60
+gen3:split       callcount_changed 0 scenes 60
+gen3:vmrg2       >1e-6 12 callcount_changed 0 scenes 60
+== gen3 main scale
+gen3:fpoly       >1e-2 14 >1e-3 44 >1e-4 1 callcount_changed 0 scenes 60
+gen3:rmrg2       >1e-2 13 >1e-6 7 callcount_changed 0 scenes 60
+gen3:sharpnb     >1e-2 58 callcount_changed 0 scenes 60
+gen3:split       >1e-2 57 callcount_changed 0 scenes 60
+gen3:vmrg2       >1e-2 12 >1e-6 4 callcount_changed 0 scenes 60
+== gen3 branch frame
+gen3:fpoly       >1e-4 2 callcount_changed 0 scenes 60
+     e.g. (0.000636, 'd-verify3-rel_gen3_fpoly_054.scn.txt', 'fpoly_054.scn:orig', ('t1000', 1, 1, 1))
+     e.g. (0.000558, 'd-verify3-rel_gen3_fpoly_057.scn.txt', 'fpoly_057.scn:orig', ('t1000', 0, 1, 1))
+gen3:rmrg2       >1e-2 3 >1e-6 24 callcount_changed 0 scenes 60
+     e.g. (10.368044, 'd-verify3-rel_gen3_rmrg2_015.scn.txt', 'rmrg2_015.scn:orig', ('q2', 1, 0, 0))
+     e.g. (9.209099, 'd-verify3-rel_gen3_rmrg2_019.scn.txt', 'rmrg2_019.scn:orig', ('q1', 2, 0, 0))
+     e.g. (8.84392, 'd-verify3-rel_gen3_rmrg2_041.scn.txt', 'rmrg2_041.scn:orig', ('q2', 1, 0, 0))
+gen3:sharpnb     callcount_changed 0 scenes 60
+gen3:split       callcount_changed 0 scenes 60
+gen3:vmrg2       >1e-2 2 >1e-6 25 callcount_changed 0 scenes 60
+     e.g. (14.750327, 'd-verify3-rel_gen3_vmrg2_008.scn.txt', 'vmrg2_008.scn:orig', ('q1', 1, 0, 0))
+     e.g. (9.127039, 'd-verify3-rel_gen3_vmrg2_041.scn.txt', 'vmrg2_041.scn:orig', ('q2', 1, 0, 0))
+== gen3 main frame
+gen3:fpoly       >1e-2 11 >1e-3 36 >1e-4 1 callcount_changed 0 scenes 60
+gen3:rmrg2       >1e-2 3 >1e-6 24 callcount_changed 0 scenes 60
+gen3:sharpnb     >1e-2 45 callcount_changed 0 scenes 60
+gen3:split       >1e-2 42 callcount_changed 0 scenes 60
+gen3:vmrg2       >1e-2 6 >1e-6 25 callcount_changed 0 scenes 60

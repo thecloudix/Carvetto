@@ -1,0 +1,6 @@
+br5 mmrg_001_tabs_all_out.scn id: start -86.660293000000 -97.192748000000 moves 29 | max move 9.069566904940985e-07 (S=1.000000001)
+  chk4 br5 mmrg_001_tabs_all_out.scn flip 0 dir 1 cls beyond |S-T|-d 3.05 S -86.660292999999996 -97.192747999999995 |S-mitre| 0.01696
+br5fma mmrg_001_tabs_all_out.scn id: start -86.660293000000 -97.192748000000 moves 29 | max move 9.069566904940985e-07 (S=1.000000001)
+  chk4 br5fma mmrg_001_tabs_all_out.scn flip 0 dir 1 cls beyond |S-T|-d 3.05 S -86.660292999999996 -97.192747999999995 |S-mitre| 0.01696
+main mmrg_001_tabs_all_out.scn id: start -89.070596134233 -91.718476710690 moves 39 | max move 2.0811592380629404e-07 (S=1.000000001)
+  chk4 main mmrg_001_tabs_all_out.scn flip 0 dir 1 cls beyond |S-T|-d 0.01 S -89.070596134233256 -91.718476710689501 |S-mitre| 5.968

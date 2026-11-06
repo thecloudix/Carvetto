@@ -1,0 +1,6 @@
+br5 sharpnb_tA0.3_tB1.0_L1.19um.scn id: start 11.703405654175 0.500000000000 moves 8 | max move 3.034158420422593e-09 (S=1.000000001)
+  chk4 br5 sharpnb_tA0.3_tB1.0_L1.19um.scn flip 0 dir 0 cls mitre |S-T|-d 0.0341 S 11.70340565417489 0.50000000000000155 |S-mitre| 3.722e-15
+br5fma sharpnb_tA0.3_tB1.0_L1.19um.scn id: start 11.703405654175 0.500000000000 moves 8 | max move 3.034158420422593e-09 (S=1.000000001)
+  chk4 br5fma sharpnb_tA0.3_tB1.0_L1.19um.scn flip 0 dir 0 cls mitre |S-T|-d 0.0341 S 11.70340565417489 0.50000000000000178 |S-mitre| 3.794e-15
+main sharpnb_tA0.3_tB1.0_L1.19um.scn id: start 11.250000000000 0.500000000000 moves 9 | max move 0.8966287952903 (S=0.999999999)
+  chk4 main sharpnb_tA0.3_tB1.0_L1.19um.scn flip 0 dir 0 cls foot |S-T|-d 0 S 11.250000000000007 0.50000000000000044 |S-mitre| 0.4534

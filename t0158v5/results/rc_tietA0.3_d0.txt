@@ -1,0 +1,6 @@
+br5 tietA0.3_d0.scn id: start 11.703405654175 0.500000000000 moves 8 | max move 3.034158420422593e-09 (S=1.000000001)
+  chk4 br5 tietA0.3_d0.scn flip 0 dir 1 cls mitre |S-T|-d 0.0341 S 11.703405654174887 0.50000000000000089 |S-mitre| 4.441e-16
+br5fma tietA0.3_d0.scn id: start 11.703405654175 0.500000000000 moves 8 | max move 3.034158420422593e-09 (S=1.000000001)
+  chk4 br5fma tietA0.3_d0.scn flip 0 dir 1 cls mitre |S-T|-d 0.0341 S 11.703405654174892 0.50000000000000244 |S-mitre| 5.691e-15
+main tietA0.3_d0.scn id: start 12.136560619984 0.633990532623 moves 9 | max move 0.8966287952898635 (S=0.999999999)
+  chk4 main tietA0.3_d0.scn flip 0 dir 1 cls foot |S-T|-d 0 S 12.136560619984019 0.63399053262318239 |S-mitre| 0.4534

@@ -1,0 +1,6 @@
+br5 nearcollinear_thr_L20um.scn id: start 13.302410425025 0.500000000000 moves 8 | max move 3.6346529322319588e-09 (S=1.000000001)
+  chk4 br5 nearcollinear_thr_L20um.scn flip 0 dir 1 cls chamferLast |S-T|-d 0.635 S 13.302410425025077 0.50000000000000044 |S-mitre| 0
+br5fma nearcollinear_thr_L20um.scn id: start 13.302410425025 0.500000000000 moves 8 | max move 3.6346529322319588e-09 (S=1.000000001)
+  chk4 br5fma nearcollinear_thr_L20um.scn flip 0 dir 1 cls chamferLast |S-T|-d 0.635 S 13.302410425025077 0.50000000000000044 |S-mitre| 0
+main nearcollinear_thr_L20um.scn id: start 11.250000000000 0.500000000000 moves 9 | max move 3.387854840370489 (UP=4)
+  chk4 main nearcollinear_thr_L20um.scn flip 0 dir 1 cls foot |S-T|-d 0 S 11.249999999999989 0.50000000000000044 |S-mitre| 2.052

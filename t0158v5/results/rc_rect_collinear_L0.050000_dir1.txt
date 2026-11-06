@@ -1,0 +1,6 @@
+br5 rect_collinear_L0.050000_dir1.scn id: start -3.000000000000 -3.000000000000 moves 8 | max move 4.2426404101199665e-09 (S=1.000000001)
+  chk4 br5 rect_collinear_L0.050000_dir1.scn flip 0 dir 1 cls chamferLast |S-T|-d 1.24 S -2.9999999999999996 -2.9999999999999996 |S-mitre| 0
+br5fma rect_collinear_L0.050000_dir1.scn id: start -3.000000000000 -3.000000000000 moves 8 | max move 4.2426404101199665e-09 (S=1.000000001)
+  chk4 br5fma rect_collinear_L0.050000_dir1.scn flip 0 dir 1 cls chamferLast |S-T|-d 1.24 S -2.9999999999999996 -2.9999999999999996 |S-mitre| 0
+main rect_collinear_L0.050000_dir1.scn id: start 0.000000000000 -3.000000000000 moves 9 | max move 4.242640689240606 (S=0.999999999)
+  chk4 main rect_collinear_L0.050000_dir1.scn flip 0 dir 1 cls foot |S-T|-d 0 S 0 -2.9999999999999996 |S-mitre| 3

@@ -1,0 +1,6 @@
+== /home/chris/wt-T0158/build-verify5-rel/out/genscn/log: 2668 calls
+  kind,rule: {('0', '0'): 705, ('1', '0'): 251, ('1', '1'): 205, ('2', '0'): 65, ('2', '1'): 1342, ('3', '1'): 47, ('4', '0'): 4, ('4', '1'): 49}
+  corner-path count,met: {('1', '1'): 714, ('1', '2'): 693, ('0', '1'): 55, ('0', '2'): 35, ('-1', '0'): 13}
+  mEqui: n 1510 buckets {'<0.1': 21, '<0.5': 30, '>=0.5': 1459}; closest [(0.009417, 'wt-T0158_build-verify3-rel_gen1_flat_011.scn.txt', 'flat_011.scn:orig'), (0.009417, 'wt-T0158_build-verify3-rel_gen1_flat_011.scn.txt', 'flat_011.scn:orig'), (0.01058, 'wt-T0158_build-verify3-rel_gen1_dup_003.scn.txt', 'dup_003.scn:orig')]
+  mOnC: n 13 buckets {'>=0.5': 13}; closest [(0.9705, 'wt-T0158_build-verify3-rel_gen2_mflat_015.scn.txt', 'mflat_015.scn:orig'), (0.9977, 'wt-T0158_build-verify3-rel_gen2_mflat_040.scn.txt', 'mflat_040.scn:orig'), (0.9989, 'wt-T0158_build-verify3-rel_gen2_mflat_052.scn.txt', 'mflat_052.scn:orig')]
+  mLop: n 1497 buckets {'>=0.5': 1497}; closest [(0.9957, 'wt-T0158_build-verify3-rel_gen2_marc_063.scn.txt', 'marc_063.scn:orig'), (1.0, 't-T0158_build-verify3-rel_gen3_sharpnb_000.scn.txt', 'sharpnb_000.scn:orig'), (1.0, 't-T0158_build-verify3-rel_gen3_sharpnb_000.scn.txt', 'sharpnb_000.scn:orig')]

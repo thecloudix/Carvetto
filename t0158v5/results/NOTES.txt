@@ -1,0 +1,65 @@
+T-0158 round-5 verifier (branch 1156cad; origin/main 34db4d0; round 4 = 999a90e; GCC 15.2). Verdict FAIL (see README for tools).
+Build/test: Debug -Werror build ok (0 warnings), ctest 1026/1026 (rc 0; logs /home/chris/wt-T0158/build-verify5-logs/); changelog
+check ok; merge-tree vs origin/main clean (87ef1b9); scope = profile.cpp, tests, ADR-0016, fragment; no goldens changed.
+Instrumented lib (tfs_instr5.py) == br5 and TFS_OFF == main (hash-checked on 5 stored scenes x 4 variants).
+
+Round-4 blocker (collinear / near-collinear neighbour): FIXED. repro4 rect_collinear (start at (-3,-3)), collinear_*, nearcollinear_thr_*,
+bigc_*: start exactly at the mitre, max move over 18 transforms (ulp, 1e-12..1e-9, translations to 3000 mm) <= 4.3e-9 mm, plain ==
+FMA (repro_check.txt). probe4 col (tB 0..0.05, L 2 um..0.1 mm, also at 3000 mm): every start at the mitre; thr: no flip in [0, 1e-3];
+rect4 L 0.001..0.5: all at (-3,-3). repro3 / repro2 all stable (<= 1e-6 mm, translation grid on merged regions only).
+fpoly_057_split: now at the mitre and scale-stable; translation moves it 0.56 um (1000 mm) and 1.56 um (3000 mm) = coder limit 1.
+mrg_twovertex_x3um: stable (1 um grid under translation, as main).
+
+BLOCKING: squared-off tip + degenerate / sub-um edge at the start vertex -> fallback -> exact "most even feet" tie between the
+two chamfer corners -> start follows rounding (repro5/sq_tiny_*; probe5 tiny, p5_tiny_vb1*.txt):
+  V-bit 90, d 3, default mitre limit 2, tip turn 2.5 rad, VectorStart Outside. e0 = duplicate start vertex (zero-length span):
+  start (13.414, 0.500) vs (14.779, 4.608) under 1 ulp / 1e-10 / 1e-12 scaling: 4.33 mm (= the chamfer). e1e-09 closing edge
+  (o1_d1): same flip under 1e-12. Instrumented: kind 4 (fallback), corner places 0 (the zero-length edge is the "own" edge: no
+  spans labelled on it). Round 4 (999a90e) stable at the chamfer's first corner for e0 (walk-back); main flips too (projection).
+  Mitre limit 1, tip 0.3/1.2/2 rad: 0.45 / 1.86 / 3.28 mm flips. 62 of 420 tiny-probe runs move > 0.1 um on the branch vs 7 on r4.
+  With a sub-tol collinear edge after the vertex (e 1e-7..1e-5, o0) both directions start at the same chamfer corner (the last
+  corner in travel for one of them), deterministic.
+
+Other new-design knife-edges (non-blocking; constructed):
+  - mrgarc_* (merged region, arc in-edge at the tip): R bisected (probe5 scan, MRG=1) onto the labelling band of a region arc
+    (noise = 8 grid + 4e-12 R + chordal slack; Clipper2's arc chords sag by up to ~chordal, so chord points sit near the band edge):
+    the last arc chord before the corner flips between "on the arc's offset" and "part of the corner": V-bit start (13.6007, 1.5901)
+    (mitre) vs (12.4112, 0.4204) under 1e-12 scaling = 1.67 mm (r4 stable at the mitre; main flips 0.67 mm); end mill
+    0.36 mm under 1 ulp between two join/chord points on the circle (r4 / main stable, projection). Not hit by any sweep: closest
+    labelling margin in 26,200 stored / 2,668 generated calls 7e-4 / 9e-3 of the band, near-band stored scenes stable (< 1e-4 mm).
+    (p5_scan_*.txt: jump list valid; their maxMove column predates the arc fix of xf() and is wrong - use mvnear on the repros.)
+  - selfx_spike_* (self-intersecting polygon, merged-region cut): start flips 2.05 mm between the corner path (met 2, A's mitre) and
+    the fallback (met 1, foot) under a (3,-7) / (1000,-1000) translation (grid snap); scale-stable; main and r4 stable.
+  - split probe (exactly collinear vertex s before/after the tip, V-bit, 0 / 1000 / 3000 mm): every start at the mitre, moves
+    <= 3e-9 (slivers >= tol; sub-tol slivers are dropped by the offset). Short-neighbour probe (incl. reflex = consumed offsets):
+    non-tie or geometry-change cases only (edge = tol: ADR limit). Spikes up to combined turn 3.13 rad: clean. Bezier tips (mitre
+    limit 50 / 2): kind 2, stable. probe3 ngon / join / dch: as round 4 (dch limit 1.0 'OTHER' = probe model, same as round 4).
+  - tA = 1e-3 end mill with a 0.1 um edge at the tip: 1.4 um (1000 mm) / 5.3 um (3000 mm) translation moves from the offset's own
+    geometry change (n 10 vs 11 spans), arc rule; sub-tol edge limit.
+Coder's limits: (1) fpoly_054/057 0.64 / 0.56 um at 1000 mm (gen3 pert) - confirmed, 1.56 um at 3000 mm (> tol; ADR says sub-um).
+  (2) merged regions with vertex spacing <= 1 um: not reproduced by probe4 mrg (x 0.2..6 um, tB 0.02 / 0.3: br5 <= 2 um; main
+  2.38 mm). (3) 18 fpoly runs 1.2-3.1 um from the mitre: DECODED - those scenes have mitre limit 1.0 (every corner squared off,
+  1/cos(turn/2) > 1); start = chamfer corner within 5e-9 mm, the corner changes with direction, first move runs along the chamfer
+  (mv4 fpoly_014 / 047) = owner decision "chamfer's first corner in travel" (fpoly_mitre_decode.txt).
+Stability sweeps (21 transforms): gen3 scale: mrg grid only; frame: fpoly_054/057 sub-um at t1000, mrg quarter turns rule 0 (call
+  order). gen1/gen2: dup / mshort (edges ~ tol: ADR limit; dup_031 2.2 mm arc rule, same class as rounds 3-4), mflat 1 um at t1000,
+  merged grid; frame moves rule 0 or call order. Stored pert (387 x 4): rule-involved moves 1 um (rc_g1_A_87651_1, m1_292004_28
+  vsout) + quarter-turn call-order permutations (same starts). Main moves mm in most families.
+Cross-compiler (logfma vs log): stored 8732 runs start diffs orig 8 / bbc 166 / opt 1, all rule 0 (T-0166) (main 31/166/1 + vsout
+  147); generated 1880 runs: 0 start diffs (main 225).
+Change rate vs main (plain): stored orig 9.0%, vsout 47.1%, bbc 2.4%, opt 0.2%, all 14.7% (scn_change_rate.txt). Round 5 vs
+  round 4: 22 of 8732 stored runs differ (all vsout).
+Flood (whole scene): r5-vs-r4 delta 22: vs r4 0 worse / 1 better, vs main 1 worse = m2_1330000_9 vsout (T-0167 card). Generated
+  620: vs main 1 worse (mmrg_001, T-0167) / 2 better; vs r4 0 / 0. Stored changed sample 150: vs main 1 worse (m0_271013_1 vsout,
+  T-0167 card) / 3 better.
+AC2: m1_402002_27 3 tabs left in all 21 transforms plain and FMA (main 2/3); m2_800016_13 6 everywhere (main 6/7/8).
+Tests: mutants (mutants.out copy below): N0 revert, N4, N5, N6, N7, N9, N10, N12, N13 killed; SURVIVE: N1 (both-offset pieces count
+  as neither), N2 (no nearest-span check) - both reported by the coder - and N3 (count >= 1: last place wins), N8 (Bezier edges
+  not replaced by their chord), N11 (no chordal slack on region arcs). No test with a degenerate / duplicate start vertex.
+ADR-0016 §11: accurate for the corner path; inaccurate in: "stable under ulp and 1e-9 ... except as just listed" (fallback chamfer
+  tie and the region-arc band are not listed); "sub-um" for slivers holds only below ~2000 mm coordinates; the label-3 'from'
+  rule (only after a span on the first edge's offset) is not described.
+Random pages (st hs generator, 25 seeds, 2886 scenes; seed 242 at 3.3e6 offset stopped as in round 4): change vs main m0 4.8%,
+  m1 13.5%, m2 24.1%, m3 pages 19.1%, all 13.2% (rnd_change_rate.txt; owner accepted ~21% pages). Plain vs FMA start diffs:
+  branch 8, all rule 0 (T-0166); main 65. Margins (margins_rnd.txt): labelling band closest 8e-4 (seed 242), travel sign test
+  closest |along.edgeDir| 0.064.

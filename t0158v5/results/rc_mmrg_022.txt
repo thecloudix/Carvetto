@@ -1,0 +1,6 @@
+br5 mmrg_022.scn id: start 76.081908000000 -43.370219000000 moves 210 | max move 1.00000000458067e-06 (OX=3000 OY=2100)
+  chk4 br5 mmrg_022.scn flip 0 dir 0 cls other |S-T|-d 45.6 S 76.160193000000007 -44.106118000000002 |S-mitre| 51.98
+br5fma mmrg_022.scn id: start 76.081908000000 -43.370219000000 moves 210 | max move 1.00000000458067e-06 (OX=3000 OY=2100)
+  chk4 br5fma mmrg_022.scn flip 0 dir 0 cls other |S-T|-d 45.6 S 76.160193000000007 -44.106118000000002 |S-mitre| 51.98
+main mmrg_022.scn id: start 76.081908000000 -43.370219000000 moves 231 | max move 1.00000000458067e-06 (OX=3000 OY=2100)
+  chk4 main mmrg_022.scn flip 0 dir 0 cls other |S-T|-d 45.6 S 76.160193000000007 -44.106118000000002 |S-mitre| 51.98

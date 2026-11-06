@@ -1,0 +1,7 @@
+{'scenes': 150, 'identical verdict': 137, 'br sev total': 0, 'main sev total': 0, 'br part total': 0, 'main part total': 0, 'br free05 total': 961, 'main free05 total': 963, 'br unrepN total': 40, 'main unrepN total': 41, 'br nohold total': 2, 'main nohold total': 2}
+WORSE on branch: 1
+   ('harness_t0127v1_d4old_m0_271013_1.scn_vsout.txt', {'G': 0, 'hold': 0, 'nohold': 0, 'sev': 0, 'part': 0, 'left': 1, 'free': 1, 'free05': 1, 'unrep': True, 'unrepN': 1}, {'G': 1, 'hold': 1, 'nohold': 0, 'sev': 0, 'part': 0, 'left': 0, 'free': 0, 'free05': 0, 'unrep': False, 'unrepN': 0})
+better on branch: 3
+   ('harness_t0124v4_repro_b260_nosep.scn_vsout.txt', {'G': 4, 'hold': 4, 'nohold': 0, 'sev': 0, 'part': 0, 'left': 4, 'free': 0, 'free05': 0, 'unrep': False, 'unrepN': 0}, {'G': 0, 'hold': 0, 'nohold': 0, 'sev': 0, 'part': 0, 'left': 8, 'free': 1, 'free05': 1, 'unrep': True, 'unrepN': 1})
+   ('harness_t0127v1_d4new_m0_271012_1.scn_vsout.txt', {'G': 2, 'hold': 2, 'nohold': 0, 'sev': 0, 'part': 0, 'left': 0, 'free': 0, 'free05': 0, 'unrep': False, 'unrepN': 0}, {'G': 0, 'hold': 0, 'nohold': 0, 'sev': 0, 'part': 0, 'left': 2, 'free': 1, 'free05': 1, 'unrep': True, 'unrepN': 1})
+   ('harness_t0127v1_d4new_m1_272007_6.scn_bbc.txt', {'G': 2, 'hold': 2, 'nohold': 0, 'sev': 0, 'part': 0, 'left': 1, 'free': 2, 'free05': 2, 'unrep': False, 'unrepN': 0}, {'G': 1, 'hold': 1, 'nohold': 0, 'sev': 0, 'part': 0, 'left': 2, 'free': 3, 'free05': 3, 'unrep': False, 'unrepN': 0})

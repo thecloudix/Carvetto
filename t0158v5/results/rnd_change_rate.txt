@@ -1,0 +1,5 @@
+m0 {'scenes': 1154, 'changed': 55, 'leftchanged': 1} 4.8%
+m1 {'scenes': 578, 'changed': 78, 'leftchanged': 4} 13.5%
+m2 {'scenes': 577, 'changed': 139, 'leftchanged': 12} 24.1%
+m3 {'scenes': 577, 'changed': 110, 'leftchanged': 21} 19.1%
+all {'scenes': 2886, 'changed': 382, 'leftchanged': 38} 13.2%

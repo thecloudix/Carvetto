@@ -1,0 +1,6 @@
+br5 collinear_tA1.2_L20um_tB0.scn id: start 13.302410425025 0.500000000000 moves 8 | max move 3.6346529322319588e-09 (S=1.000000001)
+  chk4 br5 collinear_tA1.2_L20um_tB0.scn flip 0 dir 1 cls chamferLast |S-T|-d 0.635 S 13.302410425025075 0.50000000000000044 |S-mitre| 1.776e-15
+br5fma collinear_tA1.2_L20um_tB0.scn id: start 13.302410425025 0.500000000000 moves 8 | max move 3.6346529322319588e-09 (S=1.000000001)
+  chk4 br5fma collinear_tA1.2_L20um_tB0.scn flip 0 dir 1 cls chamferLast |S-T|-d 0.635 S 13.302410425025078 0.50000000000000044 |S-mitre| 1.776e-15
+main collinear_tA1.2_L20um_tB0.scn id: start 14.046117257902 2.412926736570 moves 9 | max move 3.387854842064417 (S=0.999999999)
+  chk4 main collinear_tA1.2_L20um_tB0.scn flip 0 dir 1 cls foot |S-T|-d -8.88e-16 S 14.046117257901678 2.4129267365699789 |S-mitre| 2.052
