@@ -1,0 +1,10 @@
+--- /home/chris/wt-T0172/core/src/geometry/offset.cpp	2026-11-06 02:55:52.805960268 -0600
++++ offset_BS.cpp	2026-11-06 03:30:18.558928548 -0600
+@@ -4129,6 +4129,7 @@
+         const bool wholeCarrier = arc && arc->isFullCircle();
+         boundaryHits.clear();
+         rawGrid.query(bounds(b).inflated(1e-9), [&](std::size_t i) { boundaryHits.push_back(i); });
++        std::reverse(boundaryHits.begin(), boundaryHits.end());
+         for (const std::size_t i : boundaryHits) {
+             for (const Vec2 p : carrierIntersections(raw[i], b)) {
+                 const double t = carrierParam(raw[i], p);

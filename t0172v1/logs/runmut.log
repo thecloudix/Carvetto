@@ -1,0 +1,20 @@
+W2 t0172 rc=42 t0128 rc=42 offset rc=42 | test cases:     7 |     5 passed |  2 failed;test cases:     17 |     15 passed |  2 failed;test cases:    129 |    127 passed |  2 failed;
+M3 t0172 rc=42 t0128 rc=42 offset rc=42 | test cases:     7 |     6 passed |  1 failed;test cases:     17 |     16 passed |  1 failed;test cases:    129 |    128 passed |  1 failed;
+S t0172 rc=42 t0128 rc=42 offset rc=42 | test cases:     7 |     6 passed | 1 failed;test cases:     17 |     16 passed | 1 failed;test cases:    129 |    128 passed | 1 failed;
+S4 t0172 rc=42 t0128 rc=42 offset rc=42 | test cases:     7 |     6 passed | 1 failed;test cases:     17 |     16 passed | 1 failed;test cases:    129 |    128 passed | 1 failed;
+SL t0172 rc=0 t0128 rc=0 offset rc=0 | 
+P t0172 rc=42 t0128 rc=42 offset rc=42 | test cases:     7 |     6 passed |   1 failed;test cases:     17 |     16 passed |   1 failed;test cases:    129 |    128 passed |   1 failed;
+O t0172 rc=42 t0128 rc=42 offset rc=42 | test cases:     7 |     6 passed | 1 failed;test cases:     17 |     16 passed | 1 failed;test cases:    129 |    128 passed | 1 failed;
+O2 t0172 rc=42 t0128 rc=42 offset rc=42 | test cases:     7 |     6 passed | 1 failed;test cases:     17 |     16 passed | 1 failed;test cases:    129 |    128 passed | 1 failed;
+E2 t0172 rc=42 t0128 rc=42 offset rc=42 | test cases:     7 |     6 passed | 1 failed;test cases:     17 |     16 passed | 1 failed;test cases:    129 |    128 passed | 1 failed;
+EJ t0172 rc=42 t0128 rc=42 offset rc=42 | test cases:     7 |     6 passed |   1 failed;test cases:     17 |     16 passed |   1 failed;test cases:    129 |    128 passed |   1 failed;
+XI t0172 rc=0 t0128 rc=0 offset rc=0 | 
+XF t0172 rc=42 t0128 rc=0 offset rc=42 | test cases:     7 |     6 passed |  1 failed;test cases:    129 |    128 passed |  1 failed;
+WK t0172 rc=0 t0128 rc=0 offset rc=0 | 
+XC t0172 rc=0 t0128 rc=0 offset rc=0 | 
+WR t0172 rc=0 t0128 rc=42 offset rc=42 | test cases:     17 |     16 passed | 1 failed;test cases:    129 |    128 passed | 1 failed;
+WA t0172 rc=0 t0128 rc=0 offset rc=0 | 
+CG t0172 rc=0 t0128 rc=0 offset rc=0 | 
+BS t0172 rc=0 t0128 rc=0 offset rc=0 | 
+CQ t0172 rc=0 t0128 rc=0 offset rc=0 | 
+done

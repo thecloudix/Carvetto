@@ -1,0 +1,13 @@
+--- /home/chris/wt-T0172/core/src/geometry/offset.cpp	2026-11-06 02:55:52.805960268 -0600
++++ offset_W2.cpp	2026-11-06 03:30:18.549844943 -0600
+@@ -3891,8 +3891,8 @@
+                 ++e;
+             }
+             // Widened into the covered neighbours.
+-            const std::size_t from = k > 0 ? k - 1 : k;
+-            const std::size_t to = e + 1 < samples.size() ? e + 1 : e;
++            const std::size_t from = k;
++            const std::size_t to = e;
+             std::vector<Span> part = chainPart(st.spans, samples[from].u, samples[to].u);
+             dropTinyEnds(part, tol);
+             double len = 0.0;

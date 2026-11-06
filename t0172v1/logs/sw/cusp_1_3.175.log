@@ -1,0 +1,1 @@
+cusp which=1 d=3.175 nG=30 gmax=1e-06 log=1 neg=1: cases 732 flagged 0 | branch gaps 0 sx 0 coderBack 0 dv 0 (worstUnder 2.32e-12) rv 0 (worstOver 6.33e-10) ov 0 rev 346 bridges<1e-6 4 (max len 1e-09) | main gaps 0 sx 0 coderBack 0 dv 0 (2.32e-12) rv 0 (6.33e-10) ov 0 rev 346 | allowance 3.94e-08

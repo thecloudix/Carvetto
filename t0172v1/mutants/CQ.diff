@@ -1,0 +1,11 @@
+--- /home/chris/wt-T0172/core/src/geometry/offset.cpp	2026-11-06 02:55:52.805960268 -0600
++++ offset_CQ.cpp	2026-11-06 03:30:18.558389547 -0600
+@@ -1375,7 +1375,7 @@
+                     }
+                 }
+                 const std::size_t child = childOf(l, c);
+-                if (child != kNoChild && visit(child, query, f)) {
++                if (child != kNoChild && x == x0 && visit(child, query, f)) {
+                     return true;
+                 }
+             }

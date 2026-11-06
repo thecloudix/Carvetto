@@ -1,0 +1,12 @@
+--- /home/chris/wt-T0172/core/src/geometry/offset.cpp	2026-11-06 02:55:52.805960268 -0600
++++ offset_S4.cpp	2026-11-06 03:30:18.551118644 -0600
+@@ -3906,7 +3906,8 @@
+             const bool isolated = from == k && to == e;
+             if (len > (isolated ? kStrayMinimum : 1.0) * tol.distance) {
+                 exactJunctions(part, false);
+-                const std::vector<std::size_t> cuts = selfCrossingCuts(part);
++                std::vector<std::size_t> cuts = selfCrossingCuts(part);
++                if (part.size() > 4 && cuts.empty()) { for (std::size_t q = 1; q < part.size(); ++q) cuts.push_back(q); }
+                 if (cuts.empty()) {
+                     add(st.key, std::move(part));
+                 } else {

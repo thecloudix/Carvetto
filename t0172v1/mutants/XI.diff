@@ -1,0 +1,11 @@
+--- /home/chris/wt-T0172/core/src/geometry/offset.cpp	2026-11-06 02:55:52.805960268 -0600
++++ offset_XI.cpp	2026-11-06 03:30:18.554732046 -0600
+@@ -2814,7 +2814,7 @@
+         const Box2 b = bounds(s);
+         const double scale =
+             std::max({1.0, std::fabs(b.min.x), std::fabs(b.min.y), std::fabs(b.max.x), std::fabs(b.max.y)});
+-        boxes.push_back(b.inflated(4.0 * kParamEps * length(s) + 1e-12 * scale));
++        boxes.push_back(b); (void)scale;
+     }
+     ClusterGrid grid(boxes, false);
+     std::size_t from = 0;  // first span of the current part

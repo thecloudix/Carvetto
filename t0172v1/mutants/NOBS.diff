@@ -1,0 +1,21 @@
+--- /home/chris/wt-T0172/core/src/geometry/offset.cpp	2026-11-06 02:55:52.805960268 -0600
++++ offset_NOBS.cpp	2026-11-06 03:44:18.214893259 -0600
+@@ -4127,16 +4127,14 @@
+     for (const Span& b : boundary) {
+         const auto* arc = std::get_if<ArcSpan>(&b);
+         const bool wholeCarrier = arc && arc->isFullCircle();
+-        boundaryHits.clear();
+-        rawGrid.query(bounds(b).inflated(1e-9), [&](std::size_t i) { boundaryHits.push_back(i); });
+-        for (const std::size_t i : boundaryHits) {
++        rawGrid.query(bounds(b).inflated(1e-9), [&](std::size_t i) {
+             for (const Vec2 p : carrierIntersections(raw[i], b)) {
+                 const double t = carrierParam(raw[i], p);
+                 if (inUnit(t) && (wholeCarrier || inUnit(carrierParam(b, p)))) {
+                     splits[i].push_back(t);
+                 }
+             }
+-        }
++        });
+     }
+ 
+     // 3. Keep the pieces that stay at least d from the input and outside every Sharp/Square

@@ -1,0 +1,42 @@
+spiral N=100 d=0.5 w=0 Round side=0 far=100000 spans_in=108 | branch 0.0020 s (chains 3 spans 111) | main 0.0021 s (chains 3 spans 111) | ratio 0.985
+  0.10 s 7792 KB
+spiral N=200 d=0.5 w=0 Round side=0 far=100000 spans_in=208 | branch 0.0079 s (chains 3 spans 211) | main 0.0063 s (chains 3 spans 211) | ratio 1.267
+  0.10 s 7820 KB
+spiral N=400 d=0.5 w=0 Round side=0 far=100000 spans_in=408 | branch 0.0621 s (chains 3 spans 411) | main 0.0265 s (chains 3 spans 411) | ratio 2.340
+  0.40 s 33748 KB
+spiral N=400 d=0.5 w=0 Round side=0 far=1000 spans_in=408 | branch 5.6771 s (chains 3 spans 410) | main 0.0323 s (chains 3 spans 410) | ratio 175.550
+  17.63 s 1494760 KB
+terminate called after throwing an instance of 'std::bad_alloc'
+  what():  std::bad_alloc
+Command terminated by signal 6
+  20.23 s 5996028 KB
+spiral N=400 d=0.5 w=0 Square side=0 far=100000 spans_in=408 | branch 0.0625 s (chains 3 spans 415) | main 0.0297 s (chains 3 spans 415) | ratio 2.104
+  0.30 s 33592 KB
+spiral N=400 d=0.5 w=0 Round side=0 far=0 spans_in=404 | branch 0.0431 s (chains 1 spans 407) | main 0.0483 s (chains 1 spans 407) | ratio 0.892
+  0.30 s 8216 KB
+spiral N=700 d=0.5 w=0 Round side=0 far=0 spans_in=704 | branch 0.1841 s (chains 1 spans 707) | main 0.1524 s (chains 1 spans 707) | ratio 1.208
+  1.10 s 10896 KB
+spiral N=400 d=0.5 w=0 Round side=0 far=50 spans_in=408 | branch 10.5618 s (chains 171 spans 740) | main 0.0488 s (chains 171 spans 740) | ratio 216.554
+  33.95 s 3648616 KB
+spiral N=400 d=0.5 w=0 Round side=0 far=600 spans_in=408 | branch 5.8548 s (chains 3 spans 410) | main 0.0408 s (chains 3 spans 410) | ratio 143.490
+  18.42 s 2054304 KB
+spiral N=400 d=0.5 w=0 Round side=0 far=3000 spans_in=408 | branch 1.6838 s (chains 3 spans 411) | main 0.0258 s (chains 3 spans 411) | ratio 65.384
+  5.41 s 639504 KB
+spiral N=300 d=0.5 w=0 Round side=0 far=1000 spans_in=308 | branch 1.2415 s (chains 3 spans 310) | main 0.0169 s (chains 3 spans 310) | ratio 73.480
+  4.00 s 485500 KB
+spiral N=400 d=0.5 w=0 Round side=0 far=600 spans_in=408 | branch 6.2917 s (chains 3 spans 410) | main 0.1237 s (chains 2 spans 409) | ratio 50.858
+TIMEPB strays 1 (spans 1) chain spans 409: 6.2133 s
+spiral N=400 d=0.5 w=0 Round side=0 far=50 spans_in=408 | branch 10.1331 s (chains 171 spans 740) | main 0.2221 s (chains 169 spans 738) | ratio 45.615
+TIMEPB strays 2 (spans 2) chain spans 738: 10.3068 s
+CMP sslot: IDENTICAL (chains 3 / 3, first differing chain 0)
+sslot N=50 d=0.5 w=0 Round side=0 far=0 spans_in=101 | branch 0.0216 s (chains 3 spans 50) | main 0.0037 s (chains 3 spans 50) | ratio 5.828
+  0.10 s 9712 KB
+TIMEPB strays 3 (spans 50) chain spans 0: 0.0218 s
+CMP sslot: IDENTICAL (chains 43 / 43, first differing chain 0)
+sslot N=200 d=0.5 w=0 Round side=0 far=0 spans_in=401 | branch 1.2548 s (chains 43 spans 200) | main 0.0818 s (chains 43 spans 200) | ratio 15.338
+  2.60 s 268860 KB
+TIMEPB strays 43 (spans 200) chain spans 0: 1.2057 s
+CMP sslot: IDENTICAL (chains 102 / 102, first differing chain 0)
+sslot N=400 d=0.5 w=0 Round side=0 far=0 spans_in=801 | branch 12.6243 s (chains 102 spans 400) | main 0.4662 s (chains 102 spans 400) | ratio 27.078
+  25.53 s 2538740 KB
+TIMEPB strays 102 (spans 400) chain spans 0: 19.1697 s

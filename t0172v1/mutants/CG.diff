@@ -1,0 +1,11 @@
+--- /home/chris/wt-T0172/core/src/geometry/offset.cpp	2026-11-06 02:55:52.805960268 -0600
++++ offset_CG.cpp	2026-11-06 03:30:18.557920847 -0600
+@@ -1350,7 +1350,7 @@
+             for (std::size_t x = x0; x <= x1; ++x) {
+                 const std::size_t c = y * levels_[li].nx + x;
+                 const std::size_t child = childOf(levels_[li], c);
+-                if (child != kNoChild && !b.contains(cellBox(levels_[li], x, y))) {
++                if (child != kNoChild) {
+                     insert(child, id);
+                 } else {
+                     levels_[li].cells[c].push_back(id);

@@ -1,0 +1,10 @@
+--- /home/chris/wt-T0172/core/src/geometry/offset.cpp	2026-11-06 02:55:52.805960268 -0600
++++ offset_WR.cpp	2026-11-06 03:30:18.556383946 -0600
+@@ -3803,7 +3803,6 @@
+     const std::size_t nOut = outSpans.size();
+     Box2 window;  // see coverGap
+     auto add = [&](double key, std::vector<Span>&& part) {
+-        window = Box2{};
+         for (const Span& sp : part) {
+             addedSpans.push_back(sp);
+             coverGrid.add(bounds(sp));

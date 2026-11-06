@@ -1,0 +1,10 @@
+--- /home/chris/wt-T0172/core/src/geometry/offset.cpp	2026-11-06 02:55:52.805960268 -0600
++++ offset_XF.cpp	2026-11-06 03:30:18.555196146 -0600
+@@ -2835,7 +2835,6 @@
+             if (firstOnly) {
+                 return cuts;
+             }
+-            from = i;
+         }
+         grid.add(boxes[i]);
+     }

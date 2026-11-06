@@ -1,0 +1,11 @@
+--- /home/chris/wt-T0172/core/src/geometry/offset.cpp	2026-11-06 02:55:52.805960268 -0600
++++ offset_EJ.cpp	2026-11-06 03:30:18.554289145 -0600
+@@ -1984,7 +1984,7 @@
+     // vertices 2d + 3.2e-11 apart kept a 3.2e-11 mm gap when sin/cos were 1 ulp off glibc's.)
+     const Vec2 ta = tangentAt(a, 1.0);
+     auto ahead = [&](const ArcSpan& c) { return (c.startPoint() - j).dot(ta) >= 0.0; };
+-    if (ahead(arc) && geometry::distance(arc.startPoint(), j) <= 1e-12 * scale) {
++    if (ahead(arc)) {
+         return;
+     }
+     double bestGap = 1e-12 * scale;

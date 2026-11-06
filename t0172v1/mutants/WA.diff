@@ -1,0 +1,11 @@
+--- /home/chris/wt-T0172/core/src/geometry/offset.cpp	2026-11-06 02:55:52.805960268 -0600
++++ offset_WA.cpp	2026-11-06 03:30:18.557415547 -0600
+@@ -3842,7 +3842,7 @@
+             return best;
+         }
+         if (!window.contains(around)) {
+-            const double reachAhead = kWindow * tol.distance + 2.0 * cap;
++            const double reachAhead = kWindow * tol.distance;
+             const double ahead = len > 0.0 ? std::min(1.0, f + reachAhead / len) : 1.0;
+             window = bounds(subSpan(span, f, ahead)).inflated(cap).united(around);
+             nearby.clear();

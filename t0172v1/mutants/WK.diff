@@ -1,0 +1,11 @@
+--- /home/chris/wt-T0172/core/src/geometry/offset.cpp	2026-11-06 02:55:52.805960268 -0600
++++ offset_WK.cpp	2026-11-06 03:30:18.556926347 -0600
+@@ -3849,7 +3849,7 @@
+             coverGrid.query(window, [&](std::size_t i) { nearby.push_back(i); });
+         }
+         for (const std::size_t i : nearby) {
+-            if (coverGrid.box(i).intersects(around)) {
++            if (true) {
+                 best = std::min(best, distanceToSpan(q, item(i)));
+             }
+         }

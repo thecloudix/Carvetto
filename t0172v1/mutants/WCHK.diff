@@ -1,0 +1,54 @@
+--- /home/chris/wt-T0172/core/src/geometry/offset.cpp	2026-11-06 02:55:52.805960268 -0600
++++ offset_WCHK.cpp	2026-11-06 03:53:36.064355277 -0600
+@@ -14,6 +14,8 @@
+ #include <tuple>
+ #include <utility>
+ #include <vector>
++#include <cstdio>
++#include <cstdlib>
+ 
+ #include "clipper_interop.hpp"
+ #include "hole_nesting.hpp"
+@@ -3837,8 +3839,13 @@
+         };
+         double best = cap;
+         if (cap > skipCap) {
++            std::vector<std::size_t> got2;
+             coverGrid.query(around,
+-                            [&](std::size_t i) { best = std::min(best, distanceToSpan(q, item(i))); });
++                            [&](std::size_t i) { best = std::min(best, distanceToSpan(q, item(i))); got2.push_back(i); });
++            std::vector<std::size_t> want2;
++            for (std::size_t i = 0; i < nOut + addedSpans.size(); ++i) if (bounds(item(i)).intersects(around)) want2.push_back(i);
++            std::sort(got2.begin(), got2.end());
++            if (got2 != want2) std::fprintf(stderr, "WCHK wide mismatch got %zu want %zu\n", got2.size(), want2.size());
+             return best;
+         }
+         if (!window.contains(around)) {
+@@ -3848,11 +3855,27 @@
+             nearby.clear();
+             coverGrid.query(window, [&](std::size_t i) { nearby.push_back(i); });
+         }
++        std::vector<std::size_t> got;
+         for (const std::size_t i : nearby) {
+             if (coverGrid.box(i).intersects(around)) {
+                 best = std::min(best, distanceToSpan(q, item(i)));
++                got.push_back(i);
+             }
+         }
++        {   // T-0172 verifier probe: the shared-window set equals brute force over all items
++            std::vector<std::size_t> want;
++            const std::size_t total = nOut + addedSpans.size();
++            for (std::size_t i = 0; i < total; ++i) {
++                if (bounds(item(i)).intersects(around)) want.push_back(i);
++            }
++            std::sort(got.begin(), got.end());
++            static long probes = 0, wrong = 0;
++            ++probes;
++            if (got != want) { ++wrong; std::fprintf(stderr, "WCHK mismatch got %zu want %zu\n", got.size(), want.size()); }
++            if (std::getenv("WCHK_REPORT") && probes % 100000 == 0) std::fprintf(stderr, "WCHK probes %ld wrong %ld\n", probes, wrong);
++            struct R { ~R() { std::fprintf(stderr, "WCHK final probes %ld wrong %ld\n", probes, wrong); } };
++            static R r;
++        }
+         return best;
+     };
+     struct Sample {

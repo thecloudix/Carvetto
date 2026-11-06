@@ -1,0 +1,14 @@
+--- /home/chris/wt-T0172/core/src/geometry/offset.cpp	2026-11-06 02:55:52.805960268 -0600
++++ offset_XC.cpp	2026-11-06 03:30:18.555854246 -0600
+@@ -3916,10 +3916,9 @@
+                     std::size_t first = 0;
+                     for (std::size_t c = 0; c <= cuts.size(); ++c) {
+                         const std::size_t last = c < cuts.size() ? cuts[c] : part.size();
+-                        const auto begin = part.begin();
++                        const auto begin = part.begin(); if (c == 0) { first = 0; }
+                         std::vector<Span> run(begin + static_cast<std::ptrdiff_t>(first),
+                                               begin + static_cast<std::ptrdiff_t>(last));
+-                        dropTinyEnds(run, tol);
+                         if (!run.empty()) {
+                             add(st.key, std::move(run));
+                         }

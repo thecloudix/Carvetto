@@ -1,0 +1,23 @@
+--- /home/chris/wt-T0172/core/src/geometry/offset.cpp	2026-11-06 02:55:52.805960268 -0600
++++ offset_TIMEPB.cpp	2026-11-06 04:02:39.652120851 -0600
+@@ -14,6 +14,8 @@
+ #include <tuple>
+ #include <utility>
+ #include <vector>
++#include <chrono>
++#include <cstdio>
+ 
+ #include "clipper_interop.hpp"
+ #include "hole_nesting.hpp"
+@@ -4658,7 +4660,11 @@
+         }
+     }
+     if (!strays.empty()) {
++        const auto tpb0 = std::chrono::steady_clock::now();
++        std::size_t nsp = 0; for (const Stray& st : strays) nsp += st.spans.size();
++        std::size_t nout = 0; for (const Contour& c : result) nout += c.spans.size();
+         putBackStrays(result, resultKeys, strays, tol);
++        std::fprintf(stderr, "TIMEPB strays %zu (spans %zu) chain spans %zu: %.4f s\n", strays.size(), nsp, nout, std::chrono::duration<double>(std::chrono::steady_clock::now() - tpb0).count());
+     }
+     return result;
+ }

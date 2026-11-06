@@ -1,0 +1,11 @@
+--- /home/chris/wt-T0172/core/src/geometry/offset.cpp	2026-11-06 02:55:52.805960268 -0600
++++ offset_O2.cpp	2026-11-06 03:30:18.553101645 -0600
+@@ -3933,7 +3933,7 @@
+     // Each goes after the chains (and earlier strays) whose keys are not greater: a stable
+     // merge, linear (inserting one at a time was quadratic too).
+     std::stable_sort(added.begin(), added.end(),
+-                     [](const Stray& a, const Stray& b) { return a.key < b.key; });
++                     [](const Stray& a, const Stray& b) { return a.key > b.key; });
+     std::vector<Contour> merged;
+     merged.reserve(result.size() + added.size());
+     std::size_t r = 0;
