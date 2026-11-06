@@ -38,7 +38,10 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
    1e-6 mm grid, and a straight move is accepted inside the centre region within 4 grid units
    (8a), so it may leave the region by about 8e-6 mm. The documented bound is therefore: **tool
    centres keep at least radius + allowance − 1e-5 mm from the true walls**, measured by exact
-   distance to the original lines, arcs and Beziers (`pocket_curve_oracle.hpp`). In the T-0169
+   distance to the original lines, arcs and Beziers (`pocket_curve_oracle.hpp`). Caveat (pre-existing,
+   follow-up T-0175): an island whose arcs flatten to a zero-area polygon (sagitta below chordal/2,
+   e.g. a thin lens) is dropped by the boolean union and the tool cuts straight through it; the
+   bound holds only for islands that survive polygonisation. In the T-0169
    generative test (`pocket_junction_test.cpp`: polygons and stars whose edges are lines, arcs
    and Beziers bulging either way, D-shaped islands, chordal 0.001–0.1, distance up to chordal, at
    the origin and 1e4 mm away) and in 600 scratch cases (666 toolpaths) the smallest clearance less
@@ -202,7 +205,8 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
      of the margin left. The T-0153 round-3 verifier found a raster link under an "A"'s crossbar
      (V-Carve flat area, distance = chordal/3 = 3.3e-4) 45 nm inside the tool radius; with
      distance up to chordal the T-0169 generator found links and travel up to 0.0293 mm inside
-     it, in 29 of 333 toolpaths. Every inside test that decides a move (zig-zag raster
+     it, in 29 of 333 toolpaths, and the T-0169 verifier up to 0.0636 mm (dumbbell, chordal =
+     distance = 0.1; 0.0965 mm at scale 100; 0.0108 mm in line-only pockets) in 801 of 6,875 cases. Every inside test that decides a move (zig-zag raster
      links, links at depth, travel, ring bridges and string pulling, `MoveCheck` in
      `pocket.cpp`) now accepts a segment when it is inside C within `kMoveSlack` = 4e-6 mm
      (ends off an edge they follow, crossings near an end, the midpoint outside), the vertex
@@ -230,8 +234,10 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
      Cost (Release, CPU, interleaved with main): unchanged within noise on the T-0131 comb,
      rest and page jobs and on the V-Carve AC2 page (plain, flat 0.5, flat 0.5 + 0.5 mm end
      mill). A large curved pocket with distance = chordal (radius up to 1.5 m, chordal 0.002,
-     raster with a rest tool) costs up to about 1.8× (0.3 → 0.6 s): its travel routes along
-     concave walls are pulled with more, shorter shortcuts, each also checked against the walls.
+     raster with a rest tool) measured up to about 1.5× on the coder's machine (0.3 → 0.45–0.6 s): its
+     travel routes along concave walls are pulled with more, shorter shortcuts, each also checked
+     against the walls; the verifier, interleaved over 40 seeds, measured 1.002× in total (worst
+     1.10×).
    - **8b, ring-tree routes.** From each end, climb to the parent level by a straight segment to
      the parent boundary's nearest point. The open disc around a point of a region, out to its
      nearest boundary point, lies inside the region, so each such segment is inside. At the
