@@ -668,7 +668,7 @@ Goal: Found by the T-0016 coder on main.
 Acceptance criteria:
   1. (a) ≤ 2.5× per doubling to 8000 steps, all joins; (b) the inner offset is present within tolerance; outputs elsewhere identical or judged no worse (T-0006 fuzz set, exact checker).
 
-### T-0169 Pocket: tool-centre region dips below the tool radius at a curve/line junction (T-0164 coder)   [status: in review (PR #64, verifier PASS)]
+### T-0169 Pocket: tool-centre region dips below the tool radius at a curve/line junction (T-0164 coder)   [status: done (#64)]
 Phase: 1   Module: core/toolpath   Depends on: —   ADR: 0017
 Goal: Found by the T-0164 coder (harness t0153v3 repro2/nest_frame.txt, VC_FIX "0 6 60 0.001 0.3 0"). An edge of Pocket's tool-centre region dips below the tool radius where the curved part round the inner corner under an "A"'s crossbar joins the straight part along the crossbar. By exact distance this is 45 nm, 4.5% of a 0.001 chordal tolerance.
 Acceptance criteria:
@@ -705,7 +705,7 @@ Goal: Known limits accepted at the T-0158 merge (harness t0158v5). (a) A squared
 Acceptance criteria:
   1. (a) and (b) starts stable under ±ulp, 1e-12–1e-9 scaling and translations, chamfer starts at the first corner in travel in both directions; a test with a duplicate/degenerate start vertex; (c) mutants killed; no change elsewhere beyond the repros (change rate vs T-0158 reported); flood oracle no worse; full ctest.
 
-### T-0175 Pocket: thin islands that flatten to zero area are cut through; T-0169 test gaps (T-0169 verifier)   [status: ready]
+### T-0175 Pocket: thin islands that flatten to zero area are cut through; T-0169 test gaps (T-0169 verifier)   [status: in progress]
 Phase: 1   Module: core/toolpath   Depends on: T-0169   ADR: 0017
 Goal: Found by the T-0169 verifier (harness t0169v1). (a) Safety: an island whose arcs flatten to a zero-area polygon (sagitta < chordal/2, e.g. a thin lens) is dropped by the boolean union and the tool cuts straight through it — repro/lens.cpp `lens 0.04 0.1` (20 mm square, lens island on a 4 mm chord, 1 mm raster): tool centre on the island, clearance − radius = −0.5; `lens 0.004 0.01` −0.306; also repro/tinyisland.cpp (6 scale-0.01 cases). Pre-existing on main. Keep such islands (polygonise them so they keep area, or refuse with a diagnostic) — never cut through a boundary. (b) Test gaps from T-0169: mutants surviving — chordal/2 wall margin set to 0 or halved, strict-only, route-point merge distance, raster link, ring bridges, kMoveSlack ×10. (c) `distSegments` returns 0 for nearly collinear non-touching segments (repro/gridmiss.cpp; conservative inside anyCloser). (d) The 4e-6 route-point merge adds many waypoints in some line-only raster jobs (+435 moves, ~6%, pk fam 9 seed 1021) — merge collinear waypoints.
 Acceptance criteria:
