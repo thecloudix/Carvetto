@@ -553,7 +553,7 @@ Acceptance criteria:
   1. Each failure reproduced with GCC 15.2 Release (same flags as CI) and root-caused: a real product bug is fixed; a test that depends on compiler floating-point behaviour (contraction/FMA, excess precision, libm) is made robust without weakening what it guards.
   2. CI runs both ubuntu-24.04 and ubuntu-26.04 (or GCC 13 and 15) for the Release app job, both green; then unpin.
 
-### T-0160 V-Carve corner sharpening   [status: in progress — round 2 verifying]
+### T-0160 V-Carve corner sharpening   [status: done (#62)]
 Owner decision 2026-11-05 (after round 1): slightly rounded corners count — any convex stretch the end mill cannot reach into (small fillets, short chamfers, few-segment polyline roundings, curved-edge junctions) is sharpened whenever its predicted leftover exceeds chordal, not only sharp junctions.
 Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0153, T-0164   ADR: 0025 §6 rewrite
 Goal: Owner decisions 2026-11-05.
@@ -668,7 +668,7 @@ Goal: Found by the T-0016 coder on main.
 Acceptance criteria:
   1. (a) ≤ 2.5× per doubling to 8000 steps, all joins; (b) the inner offset is present within tolerance; outputs elsewhere identical or judged no worse (T-0006 fuzz set, exact checker).
 
-### T-0169 Pocket: tool-centre region dips below the tool radius at a curve/line junction (T-0164 coder)   [status: ready]
+### T-0169 Pocket: tool-centre region dips below the tool radius at a curve/line junction (T-0164 coder)   [status: in progress]
 Phase: 1   Module: core/toolpath   Depends on: —   ADR: 0017
 Goal: Found by the T-0164 coder (harness t0153v3 repro2/nest_frame.txt, VC_FIX "0 6 60 0.001 0.3 0"). An edge of Pocket's tool-centre region dips below the tool radius where the curved part round the inner corner under an "A"'s crossbar joins the straight part along the crossbar. By exact distance this is 45 nm, 4.5% of a 0.001 chordal tolerance.
 Acceptance criteria:
