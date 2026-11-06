@@ -691,6 +691,13 @@ Goal: Non-blocking findings from harness t0128v2. (a) A recovered stray with mor
 Acceptance criteria:
   1. (a) a long stray comes back as ≤ ceil(n/512) chains with no spans dropped; (b) near-linear and ≤ 1.5× main on the clustered repros, or documented with measurements; (c) tests kill M3, W2, S, P, O (E2 if not redundant); outputs otherwise unchanged; full ctest.
 
+### T-0173 V-Carve corner sharpening follow-ups (T-0160 round-2 verifier)   [status: ready]
+Phase: 1   Module: core/toolpath   Depends on: T-0160   ADR: 0025
+Goal: Non-blocking findings from harness t0160v2. (a) Super-linear: one region made of a horizontal chain of n squares joined by pinched necks — sharpening adds 0.27/0.83/2.6/11.8 s at n = 100/200/400/800 (×4.5 at the last doubling, +168% of the job); rotated 90° it is linear. The swept-area offset/difference runs over the whole part in one Clipper2 call (scanbeam); batch it per region/locality (repro perf2 chain 100 200 400 800). (b) Test gaps: mutants caught only by the golden (half-strip 0.3·s leaves 0.2683 > ridge 0.2598 in bigtri_ch0.002_apex30_V60s03; never_join; no back extension; no zig-zag) and not caught at all (ramps counted as swept; pieces < 50·distance dropped). (c) CLI help text still says "convex corners … each corner's bisector"; round 2 also cuts rounded corners, necks and spikes. (d) Pieces shorter than the distance tolerance are dropped — mention in ADR-0025 §6.
+Note (owner question, pre-existing): flat areas no end mill enters keep F/2 ridges along every wall from the carving tool's rest clearing; ask the owner whether to address it.
+Acceptance criteria:
+  1. (a) ≤ 2.5× per doubling on the chain repro, output byte-identical; (b) the listed mutants are killed by corner tests; (c), (d) docs fixed; full ctest.
+
 ### T-0150 Drilling toolpath   [status: done (2026-11-03, #36)]
 Phase: 1 (Batch C, owner decision 2026-11-03: Batch C toolpaths first)   Module: core/toolpath   Depends on: T-0123, T-0132   ADR: new
 Goal: Drill the centres of selected closed vectors (behaviour per docs/reference/feature-inventory.md "Drilling Toolpath"): drill or end-mill tool, start depth, cut depth, optional peck drilling (pass depth from the tool; retract above the cutting start by a retract gap, or above the previous pass), optional dwell at the bottom of each pass, ordering of holes, safe-Z links. Output through the existing post with plunge/retract moves (no canned cycles required); stored as a native toolpath record; CLI `toolpath drill`.
