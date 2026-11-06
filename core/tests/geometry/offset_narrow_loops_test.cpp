@@ -1357,8 +1357,8 @@ TEST_CASE("T-0172 (a): near-tangent spans meet in the self-crossing cuts exactly
     int noisy = 0;
     for (int k = 0; k < 48000; ++k) {
         auto logu = [&](double lo, double hi) { return std::exp(rng.uniform(std::log(lo), std::log(hi))); };
-        const double far = k % 3 == 0 ? 0.0 : (k % 3 == 1 ? 1e3 : 2e5);
-        const Vec2 c1{rng.uniform(-1, 1) * far, rng.uniform(-1, 1) * far};
+        const double farAway = k % 3 == 0 ? 0.0 : (k % 3 == 1 ? 1e3 : 2e5);
+        const Vec2 c1{rng.uniform(-1, 1) * farAway, rng.uniform(-1, 1) * farAway};
         const double r1 = logu(1e-3, 1e4);
         const double angle = rng.uniform(0, 2 * pi);
         const Vec2 u = Vec2::fromAngle(angle, 1.0);
