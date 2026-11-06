@@ -1,0 +1,49 @@
+T-0169 round 1 verifier (task/T-0169-centre-dip 274b43f; base e9bf85e; origin/main 8cd3568). See ../README.txt for the files.
+
+Build/tests: Debug -Werror build rc 0, 0 warnings (wt-T0169/build-verify1-debug.log); ctest 1021/1021 rc 0 (build-verify1-ctest.log).
+changelog.py check --base origin/main ok (17 fragments, CHANGELOG.md untouched); git merge-tree origin/main HEAD clean (tree 4367265).
+Branch tests on main: pocket_junction_test.cpp built into main's tests (e9bf85e): all 3 T-0169 tests fail (A link -4.5879e-05,
+-4.5510e-05 at 1e4 mm; V-Carve flat moves -4.5879e-05; property test).
+
+Original repro (t0153v3 repro2/nest_frame.txt, VC_FIX "0 6 60 0.001 0.3 0", vc3 t0160v2): main CONE VIOLATION -9.45e-06 (sampled),
+branch worstCone +1.654e-04, 0 violations. vcx (own oracle, exact): main -4.5879e-05 (45.9 nm, raster 0.66490), -4.5510e-05 at 1e4;
+branch +1.6620e-04 in all four runs (raster, offset, 1e4, + 0.5 mm end mill); offset strategy +1.662e-04 on both.
+
+Own oracle (oc2.hpp) cross-checked against the branch's pocket_curve_oracle.hpp (pk -DPK_XO): identical minima on every case tried.
+Sweep (sweep.sh, results/sw1, cmp.py -> sw1_cmp.txt): 6,875 cases (families 0-9 x base / dfr1 / far 1e4 / far 1e6 / scale 0.01 /
+scale 100 / rest; sc100 f3 75 cases and f8 none: per-run timeout, the oracle is slow at scale 100):
+  main: 801 cases below -1e-5 (806 below 0), worst -6.36e-2 at scale 1 (dumbbell, chordal = distance = 0.1, a link), -9.65e-2 at
+        scale 100 (line-only); line-only family alone 0.0108 mm inside.
+  branch: 6 cases below 0, all scale 0.01 with an island whose arc sagitta is below chordal/2 (see pre-existing below): main identical.
+        Everywhere else the smallest clearance - allowance is +2.0e-5 mm (positive: the 1e-5 slack is never used).
+  changed: 1,583 of 6,875; 800 of them had a main violation. The 783 others: 764 same retracts/plunges (travel/route waypoints
+        kept by the 4e-6 merge, string pulling), 11 with more retracts (+20 retracts, +46 plunges), all in curved families, all
+        where main's link came within radius + allowance + chordal/2 of the walls (e.g. base_f4 1042: main 8.6e-3 < c/2 = 0.01).
+        Line-only family: changes without a main violation never change retracts/plunges (merge distance only: e.g. dfr1_f9 1021
+        keeps points along y = -0.04198 that main merged; +435 moves, -0.3 % cut length).
+        Totals: +200 retracts on 148,530, +416 plunges on 213,064.
+wb (white box, results/wb*): 0 mismatches between the free and the indexed segmentInside (both verdicts) over ~40k accepted
+  segments; strict-accepted segments with ends within 1e-6 of the region: max excursion 4.56e-6 (far 1e5, dist 3e-6), 3.9e-6 at
+  1e6; beyond the ends' own depth: <= 4.46e-6 (claimed ~8e-6). Lenient-only acceptances leave by up to 0.125 (2.5 x distance 0.05)
+  as documented for the old test. EdgeGrid::anyCloser vs exact brute force: 0 misses (wb2 seeds 31/32). One alarm in wb seed 21
+  was the brute force's use of the pre-existing distSegments: returns 0 for near-collinear disjoint segments (repro/gridmiss.cpp:
+  edge (0,-0.4426)-(0.4426,0), segment on its line extension 0.0099 away -> 0); conservative inside anyCloser (rejects only).
+Mutants (results/mutants.txt; carvetto_tests [pocket],[t0169], Release): caught: all_old (3 T-0169 tests), walls_always (3),
+  pull_old, linkdepth_old, travel_old, grid_nowiden, grid_rowband (property test). Survive: sag0 (wall margin without chordal/2),
+  sag_half, strict_only, merge_old, raster_old, bridge_old, slack10 (kMoveSlack 4e-5). pk sweeps of the survivors (results/mutpk,
+  1,800 cases each): no violation for any of them -> no observed safety gap behind those test gaps.
+V-Carve (results/vc): hash sweeps main vs branch: default 4/1040 changed, VC_FM=2 15/1040 changed, diagnostics counts identical
+  (matches the ADR). Cone/end-mill oracle on the branch, VC_FM=2, 12/family: 0 real violations in 23 families (fam 15 coincident
+  and fam 23 coverage false alarms as in t0160v2); fam 20 timed out (as in t0160v2). lc2 (corner sharpening, branch, results/lc2,
+  2 shards stopped after 65 min in the slow glyph/rstar tails): 249 cases, every lcsum line identical to t0160v2's (T-0160 state),
+  only flag tentslit (pre-existing -1.49e-8, as in t0160v2).
+Perf (perfi.sh, 3 rounds interleaved, perf1_sum.txt): T-0131 comb/rest/page 0.97-1.08 (min ratios), V-Carve AC2 plain/flat/
+  flat+EM 1.02/0.99/1.00, big circle 1.5 m (offset 46 s) 1.05, concave walls 200-3000 mm 0.85-1.14 (0.04-0.24 s), gears 100-800
+  teeth 0.99-1.10 (growth identical to main), wavy Beziers 50-400 0.99-1.15, islands, reflex stars 0.92-1.03, scale-100 line-only
+  0.90-1.04, 7/1095 1.16 (2 s). Coder case (curved pocket radius ~1.5 m, chordal 0.002 = distance, rest tool, raster:
+  coderprobe_f0 40 seeds interleaved: total 1.002, worst 1.10; gears coderprobe_f7 20 seeds: total 0.995, worst 1.05). The ADR's "up to about 1.8x"
+  (task text 1.43-1.56x) was not reproduced; bigsweep (non-interleaved, 240 cases at 1.5 m) total 1.04.
+Pre-existing (main identical, not T-0169): an island whose arcs polygonise to a zero-area polygon (sagitta < chordal/2) is dropped
+  by the boolean union and the tool cuts straight through it: repro/lens.cpp (20 mm square, lens island chord 4 mm, sagitta 0.04,
+  chordal 0.1, 1 mm raster: centre on the island, clearance - radius -0.5; sagitta 0.004 at chordal 0.01: -0.306). The ADR's new
+  bound "tool centres keep radius + allowance - 1e-5 from the true walls" does not hold there.

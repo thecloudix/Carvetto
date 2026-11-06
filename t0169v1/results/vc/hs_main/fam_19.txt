@@ -1,0 +1,43 @@
+HASH case 0 chain g=1.200000ch-circles chord 0.001 ok 1 moves 1871 diags 1 h 7c153b16aea63314 mh 56224b2ae3801208 dl 28, so 3.0023403456936153 width 7.5058508642340369 ncl 0
+HASH case 1 chain g=0.031250ch-circles chord 0.05 ok 1 moves 207 diags 2 h fd8049f02e8e04e3 mh cfcf056921e400f1 dl 26,28, so 6.2109652002630273 width 15.527413000657567 ncl 2
+HASH case 2 chain g=0.250000ch-circles chord 0.005 ok 1 moves 1258 diags 1 h 9cf9a55e5b6b18ea mh 529f85c8be7613e8 dl 28, so 5.2900337607240706 width 13.225084401810175 ncl 0
+HASH case 3 chain g=0.062500ch-squares chord 0.05 ok 1 moves 877 diags 1 h 36b3b94d850ded99 mh 1ad3e4d47b97d5f6 dl 28, so 6.1387122414976592 width 9.1250781352094847 ncl 1
+HASH case 4 chain g=0.120000ch-circles chord 0.01 ok 1 moves 613 diags 1 h a4ab63a36e61f4f4 mh 349a3bf6f0811a91 dl 28, so 2.7957613709090965 width 4.0279989808934005 ncl 0
+HASH case 5 chain g=0.125000ch-squares chord 0.02 ok 1 moves 905 diags 1 h 286a62fbdeee137c mh 2418ae6fde468608 dl 28, so 9.6630561446961636 width 8.9441209809033726 ncl 2
+HASH case 6 chain g=0.062500ch-circles chord 0.02 ok 1 moves 652 diags 1 h 3c851ad801c751d5 mh 7e74fa97ee40daae dl 28, so 1.6259291458308072 width 4.0648228645770175 ncl 0
+HASH case 7 chain g=0.240000ch-squares chord 0.005 ok 1 moves 4325 diags 1 h 77e97af5f4995ca9 mh 690c8ccb29427635 dl 28, so 9.6289059070808012 width 13.231314730850414 ncl 2
+HASH case 8 chain g=1.200000ch-squares chord 0.001 ok 1 moves 2331 diags 1 h a272d283c85be33c mh 6f559b921a8bcde3 dl 28, so 9.7068799518190598 width 4.6177535614399439 ncl 1
+HASH case 9 chain g=0.250000ch-circles chord 0.02 ok 1 moves 495 diags 1 h fea6b3b217b7cae8 mh 47cd6d5b775b523f dl 28, so 4.0071545768226802 width 10.0178864420567 ncl 0
+HASH case 10 chain g=0.031250ch-circles chord 0.1 ok 1 moves 489 diags 1 h 2c1d0f907a5a9a6b mh 106c4881aaad6244 dl 28, so 7.5359272894860254 width 15.982786440041609 ncl 2
+HASH case 11 chain g=0.062500ch-circles chord 0.1 ok 1 moves 236 diags 1 h a8c00c67fdea5fbf mh 5e6ef7427f3805d2 dl 28, so 1.5678342822746996 width 2.8541645403106584 ncl 0
+HASH case 12 chain g=0.120000ch-squares chord 0.01 ok 1 moves 1473 diags 2 h a47f91475d0e2d39 mh f3cca39bd5080e7b dl 26,28, so 8.0369376213850838 width 9.5739931941050713 ncl 0
+HASH case 13 chain g=0.062500ch-circles chord 0.1 ok 1 moves 605 diags 1 h 8737f168285bee6e mh f2166a389a4f56bb dl 28, so 2.8291841482251288 width 7.0729603705628215 ncl 0
+HASH case 14 chain g=1.200000ch-circles chord 0.001 ok 1 moves 1696 diags 1 h 62e783c00a8247d6 mh b1da15df1d60c889 dl 28, so 0.81228972525055532 width 3.0342624465211299 ncl 0
+HASH case 15 chain g=0.240000ch-circles chord 0.005 ok 1 moves 1764 diags 1 h 7e7c77137352920c mh 3dfcae675c593c51 dl 28, so 1.6973019277989452 width 4.2269948049161421 ncl 2
+HASH case 16 chain g=1.200000ch-circles chord 0.001 ok 1 moves 1524 diags 1 h b337c6f649a69148 mh 09f3598f44187124 dl 28, so 7.4512345630150563 width 3.7798335089211901 ncl 1
+HASH case 17 chain g=0.031250ch-squares chord 0.05 ok 1 moves 449 diags 2 h ee7098be0d761b9a mh 37b0f2d24f51ba8a dl 26,28, so 9.7755737735732371 width 24.438934433933092 ncl 2
+HASH case 18 chain g=0.240000ch-squares chord 0.005 ok 1 moves 3375 diags 1 h 38f17b2337b4ae45 mh 045fb3106a87da70 dl 28, so 5.9928158519578041 width 11.434615974627809 ncl 2
+HASH case 19 chain g=1.200000ch-circles chord 0.001 ok 1 moves 2807 diags 3 h c6f2b7258ed33d38 mh c363f3562c3a1b9a dl 28,4,4, so 3.8273433635245895 width 3.1537512544553961 ncl 2
+HASH case 20 chain g=0.250000ch-squares chord 0.05 ok 1 moves 5656 diags 3 h 1a7d9984439031e7 mh 09c360d8f8298cc3 dl 28,4,4, so 1.5195086887496474 width 1.803303960221567 ncl 2
+HASH case 21 chain g=0.250000ch-squares chord 0.005 ok 1 moves 2229 diags 2 h 73d7fd3de0fa6b2e mh 5658329ff91fe42f dl 26,28, so 2.0250783034622182 width 5.0436827150494752 ncl 0
+HASH case 22 chain g=0.240000ch-squares chord 0.005 ok 1 moves 2213 diags 1 h fcf46aef005d4ce1 mh 1f171e91a0037cdc dl 28, so 2.0890852876411112 width 5.2227132191027774 ncl 0
+HASH case 23 chain g=0.250000ch-squares chord 0.01 ok 1 moves 1384 diags 1 h dec0ba79a1ee1a8a mh 5166f6e88a3ac75f dl 28, so 2.3454068263881758 width 5.8635170659704396 ncl 0
+HASH case 24 chain g=1.200000ch-circles chord 0.001 ok 1 moves 6441 diags 1 h ef0181fc425f708f mh c47ac1fe34565a33 dl 28, so 3.3076622696916362 width 5.2131518702667705 ncl 2
+HASH case 25 chain g=0.250000ch-squares chord 0.02 ok 1 moves 1908 diags 1 h 345018e70f451ccd mh d5e7689696502e26 dl 28, so 4.3768246177999401 width 7.5948453638493811 ncl 1
+HASH case 26 chain g=0.062500ch-squares chord 0.02 ok 1 moves 807 diags 1 h 6ab8f6f371a47244 mh d11fa4cb3c125e50 dl 28, so 1.2721456760325791 width 3.1803641900814474 ncl 0
+HASH case 27 chain g=0.125000ch-squares chord 0.05 ok 1 moves 4912 diags 2 h e66bbcdf6f3c66cb mh 3c309bc8e44f05a8 dl 28,26, so 0.95558626468403496 width 2.3889656617100874 ncl 0
+HASH case 28 chain g=0.062500ch-squares chord 0.05 ok 1 moves 1478 diags 1 h dbc06c4612bee166 mh df1555d773b2439f dl 28, so 6.0145051113519887 width 12.307672375681445 ncl 2
+HASH case 29 chain g=0.120000ch-squares chord 0.01 ok 1 moves 1427 diags 1 h 4f680b841b61d526 mh 7a40ca5264dc7388 dl 28, so 2.1453467438118374 width 5.3633668595295934 ncl 0
+HASH case 30 chain g=1.200000ch-squares chord 0.001 ok 1 moves 9480 diags 1 h 90b519fb07e2c842 mh 5b630805be556c5e dl 28, so 3.4097284422954597 width 8.4636263875818862 ncl 1
+HASH case 31 chain g=0.250000ch-circles chord 0.05 ok 1 moves 875 diags 1 h c7eb4e8659b61f82 mh 7c179bad30216f82 dl 28, so 0.98920029236245988 width 2.9343853665419739 ncl 0
+HASH case 32 chain g=0.062500ch-circles chord 0.1 ok 1 moves 631 diags 2 h 8cf83bd13378e273 mh 4e0560b9497e5628 dl 28,26, so 0.20188240648604705 width 0.50470601621511757 ncl 0
+HASH case 33 chain g=1.200000ch-squares chord 0.001 ok 1 moves 3146 diags 1 h 92f912f11d715bb3 mh f7bd828aef071e9f dl 28, so 0.42638239824927104 width 0.50030105622276366 ncl 0
+HASH case 34 chain g=1.200000ch-squares chord 0.001 ok 1 moves 5409 diags 1 h 5c27823fe539a57d mh 6fcf6e4f32cc6de8 dl 28, so 3.8293413979640194 width 5.0734853879499413 ncl 1
+HASH case 35 chain g=0.125000ch-squares chord 0.02 ok 1 moves 1307 diags 1 h ed4f680f8719b124 mh aa7e520eda88c9e3 dl 28, so 1.2854279813393477 width 3.2135699533483688 ncl 0
+HASH case 36 chain g=0.060000ch-circles chord 0.02 ok 1 moves 979 diags 3 h 575d2d90f99e8dd3 mh 4ff3662a04a46e88 dl 28,4,29, so 3.5778862075459656 width 1.0395287834345783 ncl 1
+HASH case 37 chain g=0.250000ch-squares chord 0.02 ok 1 moves 2656 diags 1 h 75e3608ec19b0b4c mh f262a6a106ffed2d dl 28, so 6.7487555175485063 width 9.0883378739774709 ncl 0
+HASH case 38 chain g=0.125000ch-squares chord 0.02 ok 1 moves 1652 diags 2 h 0397b79a85a8601b mh eab73f0f4abd5f7d dl 26,28, so 8.6763892860499165 width 9.8162416854963883 ncl 0
+HASH case 39 chain g=0.125000ch-circles chord 0.02 ok 1 moves 681 diags 1 h 397256ac4a3fec7a mh a62c816fa0b6c681 dl 28, so 3.3657391830699335 width 8.414347957674833 ncl 0
+SUMMARY seed=6019 fam=19 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

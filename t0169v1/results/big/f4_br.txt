@@ -1,0 +1,32 @@
+case 1 fam 4 islands ch 0.002 dist 0.002 D 133.008 al 0 strat 1 pass 0 tools 2 ramp 0 hash 06f45fcadae054df moves 2888 rapid 572 plunge 572 retract 572 cut 91340.512166 cpu 26.4442 worst 1.0000e+300 
+case 2 fam 4 islands ch 0.002 dist 0.002 D 324.928 al 8.72418 strat 1 pass 2 tools 2 ramp 0 hash 6fda49daa1ff1711 moves 41321 rapid 12 plunge 94 retract 12 cut 112207.869179 cpu 1.6632 worst 1.0000e+300 
+case 3 fam 4 islands ch 0.002 dist 0.002 D 117.411 al 2.76271 strat 0 pass 2 tools 3 ramp 1 hash 0096fe11d355ccfb moves 54030 rapid 34 plunge 34 retract 34 cut 58340.763454 cpu 5.4534 worst 1.0000e+300 
+case 4 fam 4 islands ch 0.002 dist 0.002 D 332.608 al 77.0417 strat 1 pass 2 tools 3 ramp 0 hash b4a4bdf2cd800cff moves 47603 rapid 18 plunge 78 retract 18 cut 110618.603587 cpu 2.9509 worst 1.0000e+300 
+case 5 fam 4 islands ch 0.002 dist 0.002 D 366.962 al 0 strat 1 pass 0 tools 3 ramp 0 hash dee3aa26d78f295d moves 2824 rapid 578 plunge 578 retract 578 cut 95064.780028 cpu 122.7705 worst 1.0000e+300 
+case 6 fam 4 islands ch 0.002 dist 0.002 D 192.026 al 6.52619 strat 1 pass 2 tools 2 ramp 0 hash 78bb62bca6f8543b moves 46744 rapid 15 plunge 43 retract 15 cut 101686.149972 cpu 6.0334 worst 1.0000e+300 
+case 7 fam 4 islands ch 0.002 dist 0.002 D 314.074 al 0 strat 0 pass 2 tools 3 ramp 0 hash 4a32948a02340ae0 moves 14063 rapid 18 plunge 18 retract 18 cut 15170.678078 cpu 3.6880 worst 1.0000e+300 
+case 8 fam 4 islands ch 0.002 dist 0.002 D 103.725 al 0 strat 1 pass 0 tools 2 ramp 0 hash 12b388bdc1690383 moves 10240 rapid 1680 plunge 1680 retract 1680 cut 382637.872483 cpu 19.5448 worst 1.0000e+300 
+case 9 fam 4 islands ch 0.002 dist 0.002 D 209.293 al 47.4502 strat 0 pass 1 tools 3 ramp 1 hash de98796dbd0e43dd moves 34522 rapid 27 plunge 27 retract 27 cut 30383.591850 cpu 1.1721 worst 1.0000e+300 
+case 10 fam 4 islands ch 0.002 dist 0.002 D 83.8714 al 3.77308 strat 0 pass 1 tools 2 ramp 0 hash aadeab714abac98b moves 26625 rapid 20 plunge 24 retract 20 cut 19632.568315 cpu 3.3284 worst 1.0000e+300 
+case 11 fam 4 islands ch 0.002 dist 0.002 D 307.816 al 10.3994 strat 0 pass 2 tools 2 ramp 0 hash 3d165333a41e7118 moves 58693 rapid 5 plunge 10 retract 5 cut 76726.281920 cpu 16.6303 worst 1.0000e+300 
+case 12 fam 4 islands ch 0.002 dist 0.002 D 198.466 al 6.71102 strat 1 pass 1 tools 2 ramp 0 hash 88da25cbbcd4444c moves 59444 rapid 11 plunge 120 retract 11 cut 221250.526064 cpu 2.2412 worst 1.0000e+300 
+case 13 fam 4 islands ch 0.002 dist 0.002 D 202.896 al 7.11027 strat 0 pass 1 tools 2 ramp 1 hash f46910cfaf2f86e3 moves 55616 rapid 14 plunge 14 retract 14 cut 67145.262871 cpu 4.0812 worst 1.0000e+300 
+case 14 fam 4 islands ch 0.002 dist 0.002 D 137.05 al 33.5365 strat 0 pass 0 tools 2 ramp 0 hash f81d21056b5a2d66 moves 156853 rapid 15 plunge 38 retract 15 cut 154161.559307 cpu 11.5159 worst 1.0000e+300 
+case 15 fam 4 islands ch 0.002 dist 0.002 D 280.057 al 0 strat 0 pass 0 tools 2 ramp 0 hash 14fd68574198a161 moves 9049 rapid 15 plunge 15 retract 15 cut 9446.344831 cpu 5.5473 worst 1.0000e+300 
+case 16 fam 4 islands ch 0.002 dist 0.002 D 224.763 al 0 strat 1 pass 0 tools 2 ramp 0 hash cbe92ae994a4a48b moves 1220 rapid 216 plunge 216 retract 216 cut 29467.251947 cpu 4.6981 worst 1.0000e+300 
+case 17 fam 4 islands ch 0.002 dist 0.002 D 309.896 al 76.0407 strat 0 pass 1 tools 2 ramp 0 hash a5688a5050e1b39c moves 7550 rapid 2 plunge 6 retract 2 cut 12321.824734 cpu 2.1762 worst 1.0000e+300 
+case 18 fam 4 islands ch 0.002 dist 0.002 D 118.509 al 0.786455 strat 1 pass 0 tools 2 ramp 1 hash d59967fced7df625 moves 1720 rapid 275 plunge 275 retract 275 cut 312081.162617 cpu 11.3442 worst 1.0000e+300 
+case 19 fam 4 islands ch 0.002 dist 0.002 D 281.265 al 4.66292 strat 1 pass 0 tools 2 ramp 1 hash 5c7482f94addffaf moves 4204 rapid 540 plunge 540 retract 540 cut 230343.455871 cpu 62.1755 worst 1.0000e+300 
+case 20 fam 4 islands ch 0.002 dist 0.002 D 294.656 al 7.21897 strat 1 pass 1 tools 2 ramp 0 hash 755295e04b257ec5 moves 20932 rapid 13 plunge 34 retract 13 cut 47642.434521 cpu 11.3784 worst 1.0000e+300 
+case 21 fam 4 islands ch 0.002 dist 0.002 D 363.412 al 34.633 strat 0 pass 1 tools 2 ramp 0 hash b0fe5cf1d3ab64c2 moves 8787 rapid 13 plunge 13 retract 13 cut 12041.982646 cpu 16.1441 worst 1.0000e+300 
+case 22 fam 4 islands ch 0.002 dist 0.002 D 72.7235 al 0.113181 strat 1 pass 2 tools 2 ramp 0 hash a0ebb5171a43d5d8 moves 59571 rapid 10 plunge 76 retract 10 cut 98186.501865 cpu 0.6015 worst 1.0000e+300 
+case 23 fam 4 islands ch 0.002 dist 0.002 D 321.471 al 46.2891 strat 1 pass 1 tools 2 ramp 0 hash f2f7c9254c75b666 moves 110517 rapid 10 plunge 128 retract 10 cut 255178.133889 cpu 4.1240 worst 1.0000e+300 
+case 24 fam 4 islands ch 0.002 dist 0.002 D 159.484 al 0 strat 0 pass 1 tools 2 ramp 1 hash 97ebfdb5b69c58a8 moves 41900 rapid 19 plunge 19 retract 19 cut 64586.721414 cpu 2.4666 worst 1.0000e+300 
+case 25 fam 4 islands ch 0.002 dist 0.002 D 149.836 al 0 strat 0 pass 2 tools 2 ramp 0 hash 8f7b8755da6c77eb moves 87773 rapid 18 plunge 26 retract 18 cut 104734.489146 cpu 8.9709 worst 1.0000e+300 
+case 26 fam 4 islands ch 0.002 dist 0.002 D 299.208 al 7.2816 strat 1 pass 1 tools 2 ramp 0 hash 249585304478b85d moves 13005 rapid 5 plunge 22 retract 5 cut 69326.247286 cpu 1.0252 worst 1.0000e+300 
+case 27 fam 4 islands ch 0.002 dist 0.002 D 364.962 al 6.68639 strat 0 pass 2 tools 2 ramp 1 hash 4e3d16990050bfae moves 2787 rapid 5 plunge 5 retract 5 cut 3535.384797 cpu 1.8377 worst 1.0000e+300 
+case 28 fam 4 islands ch 0.002 dist 0.002 D 130.358 al 1.41688 strat 1 pass 2 tools 3 ramp 1 hash a3a4500c0a888dc6 moves 62862 rapid 56 plunge 56 retract 56 cut 377125.152132 cpu 3.1227 worst 1.0000e+300 
+case 29 fam 4 islands ch 0.002 dist 0.002 D 192.32 al 3.40343 strat 1 pass 1 tools 3 ramp 0 hash 43c670774d4c4110 moves 218185 rapid 60 plunge 404 retract 60 cut 389815.770401 cpu 5.6700 worst 1.0000e+300 
+case 30 fam 4 islands ch 0.002 dist 0.002 D 48.5912 al 2.02992 strat 0 pass 1 tools 2 ramp 0 hash 545c8d516ee5a320 moves 531643 rapid 37 plunge 110 retract 37 cut 716186.924187 cpu 13.6749 worst 1.0000e+300 
+SUMMARY fam 4 cases 30 worst 1.0000e+300 neg 0 viol 0
+exit 0

@@ -1,0 +1,43 @@
+HASH case 0 selftouch-frame+diamondtangent+crossing chord 0.02 ok 1 moves 2100 diags 3 h cebc4bd9596a8874 mh 3a8240a588f81874 dl 28,4,4, so 0.65844482422736172 width 1.5084390058536195 ncl 2
+HASH case 1 selftouch-bowtie+tangentcircle chord 0.05 ok 1 moves 2420 diags 2 h fcff3c5dbbbabdcb mh 8f79cc4d806900ff dl 28,21, so 0.80289161231005368 width 2.0011357059299222 ncl 2
+HASH case 2 selftouch-corners+cross chord 0.005 ok 1 moves 1275 diags 1 h 335f8c676ef436ee mh 1bdac7e4d10da7dc dl 28, so 4.1686955462162958 width 10.421738865540739 ncl 0
+HASH case 3 selftouch-frame+diamondtangent+crossing chord 0.01 ok 1 moves 2867 diags 1 h 58543b0a504083c0 mh 3e82239023acc1dd dl 28, so 7.2077314221698776 width 10.090660505575297 ncl 1
+HASH case 4 selftouch-corners+cross chord 0.02 ok 1 moves 749 diags 1 h d8720e9ecc742919 mh 3a403f5fb2a4c659 dl 28, so 0.55364245448520244 width 1.0352531662573197 ncl 0
+HASH case 5 selftouch-frame+diamondtangent+crossing chord 0.1 ok 1 moves 936 diags 1 h a7a3f5c693617ed7 mh 2078146ec8e12ec8 dl 28, so 0.1401598316540163 width 0.4595954971149771 ncl 0
+HASH case 6 selftouch-corners+cross chord 0.1 ok 1 moves 545 diags 1 h 284944400041d553 mh 357fd5d9c1450d4c dl 28, so 2.8255788808552573 width 3.5008659972630869 ncl 0
+HASH case 7 selftouch-frame+diamondtangent+crossing chord 0.02 ok 1 moves 2133 diags 1 h 0c63790e4f7f5755 mh a7caff1d46d4e7dd dl 28, so 4.3393240718006831 width 16.700655155057145 ncl 0
+HASH case 8 selftouch-frame+diamondtangent+crossing chord 0.02 ok 1 moves 1542 diags 1 h 44220cee19c0be0d mh 0dc3ae6566300a15 dl 28, so 0.90513544100445054 width 2.2628386025111262 ncl 0
+HASH case 9 selftouch-bowtie+tangentcircle chord 0.05 ok 1 moves 384 diags 2 h 1f9987b7690f6c6d mh 81ae27bc70e4d65d dl 26,28, so 9.9156990559482097 width 24.789247639870524 ncl 1
+HASH case 10 selftouch-corners+cross chord 0.005 ok 1 moves 1278 diags 1 h 69002b3b5723b9f7 mh 3d1df78208d4df35 dl 28, so 2.343125329961059 width 5.8578133249026472 ncl 0
+HASH case 11 selftouch-corners+cross chord 0.05 ok 1 moves 516 diags 1 h ff7385c1023199d3 mh 0f34ead69de41b83 dl 28, so 2.8504336788760849 width 7.1260841971902122 ncl 0
+HASH case 12 selftouch-frame+diamondtangent+crossing chord 0.05 ok 1 moves 1690 diags 1 h cc1016e426cba2f8 mh 2299145c6f8041ea dl 28, so 6.1258303292261189 width 15.314575823065297 ncl 0
+HASH case 13 selftouch-corners+cross chord 0.001 ok 1 moves 1679 diags 1 h a4777b8fb4c58e66 mh 53aff6ce8b9282d9 dl 28, so 3.6983582400441444 width 9.2458956001103605 ncl 0
+HASH case 14 selftouch-frame+diamondtangent+crossing chord 0.001 ok 1 moves 10164 diags 1 h f42c6c030b22a4e2 mh 22713aed9b8c556d dl 28, so 2.5060381399930751 width 6.0744085877437586 ncl 0
+HASH case 15 selftouch-frame+diamondtangent+crossing chord 0.001 ok 1 moves 10391 diags 1 h 6dc57099bcca26e8 mh 699334560e6ef6b7 dl 28, so 5.2256252874161966 width 8.5543845736126585 ncl 1
+HASH case 16 selftouch-corners+cross chord 0.1 ok 1 moves 1276 diags 2 h 1266c6fdb9e668e9 mh cf2f8b3ce617d6d2 dl 28,4, so 1.3803158440617296 width 2.6952136494215515 ncl 1
+HASH case 17 selftouch-bowtie+tangentcircle chord 0.01 ok 1 moves 480 diags 1 h b97fa5da09cf48db mh 348a97cd056421ec dl 28, so 6.4198731759368401 width 16.0496829398421 ncl 0
+HASH case 18 selftouch-corners+cross chord 0.005 ok 1 moves 1092 diags 1 h a001a36781a2d07a mh 084d4edd7dce0f78 dl 28, so 8.5214250047805518 width 5.2367457350440141 ncl 2
+HASH case 19 selftouch-bowtie+tangentcircle chord 0.02 ok 1 moves 588 diags 1 h 9966d1192f07daad mh 40bd0c7a2e3c2835 dl 28, so 11.592139858058546 width 19.745405877887379 ncl 0
+HASH case 20 selftouch-frame+diamondtangent+crossing chord 0.02 ok 1 moves 1428 diags 1 h 04be5dd9a3191aa6 mh 506453bb88b6e6a6 dl 28, so 5.745608384873174 width 14.364020962182934 ncl 0
+HASH case 21 selftouch-bowtie+tangentcircle chord 0.02 ok 1 moves 537 diags 1 h fd9d03814f52654e mh daefb3bfc32b00ae dl 28, so 3.0207499864372211 width 8.2776522577183655 ncl 0
+HASH case 22 selftouch-frame+diamondtangent+crossing chord 0.02 ok 1 moves 2743 diags 1 h 6e7138508ee2540f mh dae77e5abd3fe2e3 dl 28, so 6.7329313314708008 width 5.5865828356605887 ncl 2
+HASH case 23 selftouch-bowtie+tangentcircle chord 0.02 ok 1 moves 581 diags 1 h 1652be7fd146fb7e mh 47a443ff87995ede dl 28, so 8.6803340891401675 width 11.001025220235098 ncl 0
+HASH case 24 selftouch-frame+diamondtangent+crossing chord 0.05 ok 1 moves 673 diags 1 h 603a37f6eac78005 mh 7538aa3e01a9ae69 dl 28, so 2.0817612573833162 width 5.2044031434582898 ncl 0
+HASH case 25 selftouch-bowtie+tangentcircle chord 0.1 ok 1 moves 226 diags 3 h 6eb0af5d77d9a371 mh 8a50ed792bc17434 dl 28,4,4, so 1.2599820000249995 width 2.6170027828547533 ncl 2
+HASH case 26 selftouch-frame+diamondtangent+crossing chord 0.001 ok 1 moves 5394 diags 2 h 1f15170adaff9113 mh 63132db849cb7a34 dl 26,28, so 1.6143561103500492 width 4.0358902758751229 ncl 1
+HASH case 27 selftouch-bowtie+tangentcircle chord 0.005 ok 1 moves 1216 diags 1 h 3a4cb6080783a065 mh 8ddafa76a43f8843 dl 28, so 5.6111616883911557 width 8.6917228350622029 ncl 2
+HASH case 28 selftouch-corners+cross chord 0.005 ok 1 moves 1018 diags 3 h 2faa74544e5b265b mh 6734cd7c200c4f35 dl 28,4,4, so 1.6425537200186486 width 1.9998976499015468 ncl 2
+HASH case 29 selftouch-bowtie+tangentcircle chord 0.005 ok 1 moves 1164 diags 1 h 466b8674e1c0f764 mh e46bf0ef98df321a dl 28, so 1.2960204317068262 width 1.6720298215722871 ncl 0
+HASH case 30 selftouch-corners+cross chord 0.1 ok 1 moves 396 diags 1 h e7b9c30f9307e4ca mh 29a683a35e8a5b2d dl 28, so 2.1254048931558756 width 5.3135122328896891 ncl 0
+HASH case 31 selftouch-corners+cross chord 0.1 ok 1 moves 342 diags 4 h 8f40d1cfaad1f012 mh 8dae0d16a906a191 dl 28,4,4,29, so 1.8826717239298192 width 0.73034899732063874 ncl 2
+HASH case 32 selftouch-bowtie+tangentcircle chord 0.001 ok 1 moves 2433 diags 1 h 791e17b991d350f5 mh 5539dc2b29b632c2 dl 28, so 4.9721615619877202 width 12.4304039049693 ncl 0
+HASH case 33 selftouch-bowtie+tangentcircle chord 0.01 ok 1 moves 801 diags 1 h 39d8b7f331483f5a mh 50a94ec87753a46f dl 28, so 3.5418544928794704 width 8.8546362321986756 ncl 0
+HASH case 34 selftouch-corners+cross chord 0.02 ok 1 moves 510 diags 1 h b8501b77b10212a7 mh 2517b2d629eba75b dl 28, so 1.6040643618797319 width 3.9675725868792027 ncl 0
+HASH case 35 selftouch-bowtie+tangentcircle chord 0.01 ok 1 moves 748 diags 1 h a22ec36b7033d871 mh 52384a8546871452 dl 28, so 2.7773064218379049 width 6.4166460952627995 ncl 2
+HASH case 36 selftouch-bowtie+tangentcircle chord 0.005 ok 1 moves 1205 diags 1 h 595795c53f1e7b1e mh 06232bbb3e0835cc dl 28, so 2.9073766091875859 width 7.2684415229689643 ncl 0
+HASH case 37 selftouch-bowtie+tangentcircle chord 0.005 ok 1 moves 1343 diags 2 h 95e6460194cfd535 mh 0609d47976777602 dl 28,4, so 5.5498447267131104 width 4.476796136931454 ncl 1
+HASH case 38 selftouch-bowtie+tangentcircle chord 0.05 ok 1 moves 367 diags 1 h 463ae1fe174392ce mh 14f2d130669c88c4 dl 28, so 3.2038495029531973 width 8.0096237573829931 ncl 0
+HASH case 39 selftouch-bowtie+tangentcircle chord 0.005 ok 1 moves 1604 diags 1 h 085ba634fcd9d2cf mh 0e52adb213b94c0d dl 28, so 2.343021835661014 width 3.2882314861226858 ncl 0
+SUMMARY seed=6022 fam=22 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

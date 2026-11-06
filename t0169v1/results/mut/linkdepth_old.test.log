@@ -1,0 +1,88 @@
+Filters: [pocket],[t0169]
+Randomness seeded to: 2737558920
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+carvetto_tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0169 property: tool centres keep radius + allowance from curve/line junctions
+-------------------------------------------------------------------------------
+/home/chris/wt-T0169/build-verify1-mutsrc/core/tests/toolpath/pocket_junction_test.cpp:245
+...............................................................................
+
+/home/chris/wt-T0169/build-verify1-mutsrc/core/tests/toolpath/pocket_junction_test.cpp:272: FAILED:
+  CHECK( rep.certified )
+with expansion:
+  false
+with message:
+  case 10 far 0 star4 tool 0 d 1.67385 chordal 0.005 distance 0.005 strategy 1
+  pass 0 allowance 0: clearance - allowance -0.00120336 at move 15
+
+/home/chris/wt-T0169/build-verify1-mutsrc/core/tests/toolpath/pocket_junction_test.cpp:272: FAILED:
+  CHECK( rep.certified )
+with expansion:
+  false
+with message:
+  case 19 far 0 star7 tool 0 d 1.8283 chordal 0.002 distance 0.002 strategy 1
+  pass 2 allowance 0.203324: clearance - allowance -8.47752e-05 at move 57
+
+/home/chris/wt-T0169/build-verify1-mutsrc/core/tests/toolpath/pocket_junction_test.cpp:272: FAILED:
+  CHECK( rep.certified )
+with expansion:
+  false
+with message:
+  case 124 far 0 star7 tool 0 d 1.7057 chordal 0.02 distance 0.02 strategy 1
+  pass 1 allowance 0: clearance - allowance -0.0102668 at move 242
+
+/home/chris/wt-T0169/build-verify1-mutsrc/core/tests/toolpath/pocket_junction_test.cpp:272: FAILED:
+  CHECK( rep.certified )
+with expansion:
+  false
+with message:
+  case 204 far 0 star7 tool 0 d 0.62542 chordal 0.02 distance 0.02 strategy 1
+  pass 2 allowance 0: clearance - allowance -0.00980364 at move 180
+
+/home/chris/wt-T0169/build-verify1-mutsrc/core/tests/toolpath/pocket_junction_test.cpp:272: FAILED:
+  CHECK( rep.certified )
+with expansion:
+  false
+with message:
+  case 10 far 10000 star4 tool 0 d 1.67385 chordal 0.005 distance 0.005
+  strategy 1 pass 0 allowance 0: clearance - allowance -0.00120388 at move 15
+
+/home/chris/wt-T0169/build-verify1-mutsrc/core/tests/toolpath/pocket_junction_test.cpp:272: FAILED:
+  CHECK( rep.certified )
+with expansion:
+  false
+with message:
+  case 19 far 10000 star7 tool 0 d 1.8283 chordal 0.002 distance 0.002 strategy
+  1 pass 2 allowance 0.203324: clearance - allowance -8.43389e-05 at move 57
+
+/home/chris/wt-T0169/build-verify1-mutsrc/core/tests/toolpath/pocket_junction_test.cpp:272: FAILED:
+  CHECK( rep.certified )
+with expansion:
+  false
+with message:
+  case 124 far 10000 star7 tool 0 d 1.7057 chordal 0.02 distance 0.02 strategy
+  1 pass 1 allowance 0: clearance - allowance -0.0102687 at move 242
+
+/home/chris/wt-T0169/build-verify1-mutsrc/core/tests/toolpath/pocket_junction_test.cpp:272: FAILED:
+  CHECK( rep.certified )
+with expansion:
+  false
+with message:
+  case 204 far 10000 star7 tool 0 d 0.62542 chordal 0.02 distance 0.02 strategy
+  1 pass 2 allowance 0: clearance - allowance -0.0098038 at move 180
+
+/home/chris/wt-T0169/build-verify1-mutsrc/core/tests/toolpath/pocket_junction_test.cpp:282: FAILED:
+  CHECK( worst >= -kSlack )
+with expansion:
+  -0.01026870145847503 >= -0.00001
+with message:
+  worst clearance - allowance -0.0102687
+
+===============================================================================
+test cases:     46 |     45 passed | 1 failed
+assertions: 271983 | 271974 passed | 9 failed
+

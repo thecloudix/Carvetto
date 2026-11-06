@@ -1,0 +1,5 @@
+DIFF fam_10.txt ('33', 'nearsq g=0.050000', '0.05', '1', '664', '1') 0 ('33', 'nearsq g=0.050000', '0.05', '1', '684', '1')
+DIFF fam_15.txt ('10', 'partialoverlapedge', '0.005', '1', '869', '1') 0 ('10', 'partialoverlapedge', '0.005', '1', '871', '1')
+DIFF fam_16.txt ('38', 'tinyspans g=0.031250ch n=121-arcwall', '0.005', '1', '489917', '1') 2 ('38', 'tinyspans g=0.031250ch n=121-arcwall', '0.005', '1', '489949', '1')
+DIFF fam_2.txt ('30', 'holedstar', '0.005', '1', '159313', '0') 1 ('30', 'holedstar', '0.005', '1', '159314', '0')
+n=1040 same=1036 bad=4 ncl>0: same=360 differ=0 exits=['exit 0']

@@ -1,0 +1,43 @@
+HASH case 0 holesinholes-sq chord 0.001 ok 1 moves 8726 diags 1 h 222a6f1a81fbee6a mh 0c6f74dfb1d888b2 dl 26, so 4.2520703644042026 width 10.630175911010506 ncl 1
+HASH case 1 holesinholes chord 0.001 ok 1 moves 9555 diags 0 h 015aa9ce2a69c556 mh 015aa9ce2a69c556 dl  so 4.0009774702935674 width 7.0933319361939988 ncl 1
+HASH case 2 holesinholes chord 0.1 ok 1 moves 2832 diags 2 h 84263175fbc0f828 mh 3d2ba62e9f2d56d1 dl 4,29, so 0.56341856873954277 width 0.22685942095654507 ncl 1
+HASH case 3 holesinholes chord 0.005 ok 1 moves 1212 diags 0 h 3da8c1b437744095 mh 3da8c1b437744095 dl  so 4.0733711235987764 width 10.077862289102898 ncl 2
+HASH case 4 holesinholes-sq chord 0.1 ok 1 moves 1578 diags 2 h e12cb3ee6dc8a65e mh 88c3a9ad7bc7195d dl 4,29, so 0.52230230119182031 width 0.33232287866570054 ncl 1
+HASH case 5 holesinholes-sq chord 0.02 ok 1 moves 2256 diags 0 h 575bfa56ba2ac625 mh 575bfa56ba2ac625 dl  so 6.0280171421155799 width 8.5724887454301388 ncl 2
+HASH case 6 holesinholes-sq chord 0.001 ok 1 moves 13536 diags 1 h 3a4394778db31f83 mh 79d6966a3e2fcb51 dl 26, so 7.8261356118625844 width 19.56533902965646 ncl 2
+HASH case 7 holesinholes-sq chord 0.005 ok 1 moves 7775 diags 3 h a8e538a9ad886d66 mh 098907baeb349913 dl 4,4,29, so 0.70399229115571971 width 0.1937376427572127 ncl 2
+HASH case 8 holesinholes-sq chord 0.1 ok 1 moves 779 diags 1 h 8a4c26f9d8efbfc4 mh d13d53e3b9ae0c58 dl 26, so 7.9012672881170802 width 19.7531682202927 ncl 2
+HASH case 9 holesinholes-sq chord 0.05 ok 1 moves 15814 diags 1 h 12831bc5ea84fcc6 mh 209e747f51d7c1db dl 26, so 0.83840999594859122 width 2.096024989871478 ncl 2
+HASH case 10 holesinholes-sq chord 0.005 ok 1 moves 3191 diags 0 h 8d53012d4212d971 mh 8d53012d4212d971 dl  so 2.7006946974632342 width 6.6585502955666884 ncl 2
+HASH case 11 holesinholes chord 0.01 ok 1 moves 2151 diags 1 h a0ed0d207b382dee mh 770e194c72db3f07 dl 26, so 4.609502870199214 width 11.523757175498034 ncl 2
+HASH case 12 holesinholes chord 0.02 ok 1 moves 651 diags 0 h d361d6b7bb83d8f1 mh d361d6b7bb83d8f1 dl  so 8.7193231127697537 width 12.961643474782663 ncl 1
+HASH case 13 holesinholes-sq chord 0.02 ok 1 moves 3696 diags 0 h db5bfbc320e752f9 mh db5bfbc320e752f9 dl  so 8.5530244183564026 width 16.461052431313117 ncl 1
+HASH case 14 holesinholes chord 0.01 ok 1 moves 3397 diags 0 h 7ae6a7381e31e83e mh 7ae6a7381e31e83e dl  so 6.0006300716319236 width 13.450957207691021 ncl 2
+HASH case 15 holesinholes chord 0.05 ok 1 moves 865 diags 0 h f94a05b0ad7915f6 mh f94a05b0ad7915f6 dl  so 3.8399264078898896 width 6.058583016217491 ncl 2
+HASH case 16 holesinholes chord 0.1 ok 1 moves 754 diags 1 h a449aa9c929622e9 mh 4818af20106d3da3 dl 26, so 2.4333884248417603 width 6.0834710621044001 ncl 2
+HASH case 17 holesinholes-sq chord 0.005 ok 1 moves 63338 diags 1 h 6d00c6c5ee999fb2 mh 0522cc3f007200b4 dl 4, so 1.222802478505477 width 3.0564282926637567 ncl 1
+HASH case 18 holesinholes chord 0.1 ok 1 moves 842 diags 1 h a6254b149527a55e mh 6d7360863af9e3bf dl 4, so 3.1433059645845742 width 2.7186488162790092 ncl 1
+HASH case 19 holesinholes chord 0.05 ok 1 moves 364 diags 0 h b71832bf181e9174 mh b71832bf181e9174 dl  so 5.5644724999663868 width 10.176715181876693 ncl 1
+HASH case 20 holesinholes-sq chord 0.1 ok 1 moves 1337 diags 2 h 156833c48a593b58 mh a18e7c22d407cae1 dl 4,29, so 1.2607591852650402 width 1.0666911540168098 ncl 1
+HASH case 21 holesinholes chord 0.02 ok 1 moves 2671 diags 3 h a393c59be6ab68b3 mh 46d6a73df08fb8d1 dl 4,21,29, so 2.7223670388084873 width 1.343867572627264 ncl 2
+HASH case 22 holesinholes chord 0.005 ok 1 moves 3414 diags 0 h a8111c1a2799d197 mh a8111c1a2799d197 dl  so 3.0300448200824661 width 6.5841752795636221 ncl 2
+HASH case 23 holesinholes-sq chord 0.005 ok 1 moves 4075 diags 0 h 7082cfee7292c3c6 mh 7082cfee7292c3c6 dl  so 4.7896182618070586 width 8.2406850914005165 ncl 1
+HASH case 24 holesinholes-sq chord 0.05 ok 1 moves 1727 diags 0 h c120e6a1e896cccf mh c120e6a1e896cccf dl  so 4.8431923090090194 width 11.749165056002536 ncl 2
+HASH case 25 holesinholes-sq chord 0.01 ok 1 moves 2779 diags 0 h bd3269335e8fce29 mh bd3269335e8fce29 dl  so 1.4916685315574822 width 3.6512345762382052 ncl 1
+HASH case 26 holesinholes chord 0.005 ok 1 moves 3952 diags 0 h 43acf655cd68f7e1 mh 43acf655cd68f7e1 dl  so 4.1638949770389582 width 7.9428569500002064 ncl 2
+HASH case 27 holesinholes-sq chord 0.001 ok 1 moves 13864 diags 1 h 2fc4bdbcf9f13149 mh e14fe690035f49ca dl 26, so 5.6320650377712624 width 14.080162594428154 ncl 1
+HASH case 28 holesinholes-sq chord 0.05 ok 1 moves 1371 diags 0 h 389d4945d54145d9 mh 389d4945d54145d9 dl  so 4.5540087058555576 width 10.769652709960205 ncl 2
+HASH case 29 holesinholes chord 0.005 ok 1 moves 5576 diags 1 h 3194a949919db369 mh 492086d18b4e4a72 dl 21, so 2.5229388301816162 width 1.602954943801403 ncl 2
+HASH case 30 holesinholes-sq chord 0.001 ok 1 moves 13777 diags 1 h 95c82c851fff56a2 mh 3e5f4bf4b027373b dl 29, so 0.48630928048603245 width 0.17592349797328846 ncl 1
+HASH case 31 holesinholes chord 0.1 ok 1 moves 624 diags 1 h 2f6a6d94e1a7c8e1 mh 8508c67d294bf2d0 dl 4, so 7.2727388227780025 width 2.6697057113783083 ncl 2
+HASH case 32 holesinholes-sq chord 0.001 ok 1 moves 5056 diags 1 h 86525334a84e005c mh f636c527f2fb11b9 dl 29, so 3.0517203970073186 width 0.91048912247437908 ncl 1
+HASH case 33 holesinholes-sq chord 0.01 ok 1 moves 50765 diags 1 h c81fb8b58e458484 mh 3963f1330fbc30b1 dl 26, so 0.26623775827873108 width 0.66559439569682766 ncl 1
+HASH case 34 holesinholes-sq chord 0.05 ok 1 moves 2438 diags 1 h 865b968946d01932 mh bf057c342c62b91b dl 4, so 2.3006149931815489 width 3.7432978731574273 ncl 1
+HASH case 35 holesinholes-sq chord 0.001 ok 1 moves 11751 diags 0 h 2936999757b7c0a7 mh 2936999757b7c0a7 dl  so 7.1140097093264663 width 17.353570416079148 ncl 1
+HASH case 36 holesinholes-sq chord 0.1 ok 1 moves 1643 diags 1 h 89405b04560f4e8a mh 7f43684564ea825c dl 29, so 2.039331386484208 width 0.66203319100804836 ncl 2
+HASH case 37 holesinholes-sq chord 0.01 ok 1 moves 3505 diags 2 h 441a9f51a86baa8e mh a0786348d6782ddc dl 4,29, so 2.9625712337087502 width 1.5494160407447046 ncl 1
+HASH case 38 holesinholes chord 0.02 ok 1 moves 2114 diags 1 h 40b9a51ec54b7cbe mh 2454f35e7a40c87e dl 21, so 5.5295826047826369 width 6.4077427147770303 ncl 2
+HASH case 39 holesinholes-sq chord 0.001 ok 1 moves 7345 diags 0 h 91d71b3ead459793 mh 91d71b3ead459793 dl  so 4.6099480072098444 width 10.982676369786525 ncl 2
+SUMMARY seed=6012 fam=12 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

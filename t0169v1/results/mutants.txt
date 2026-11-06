@@ -1,0 +1,31 @@
+none rc=0 
+all_old rc=42 test cases:     46 |     43 passed |  3 failed
+                       flat depth
+    --
+    T-0169 property: tool centres keep radius + allowance from curve/line junctions
+    T-0169 regression: V-Carve's flat-area moves in the A keep the footprint at the
+    T-0169 regression: the raster link under an A's crossbar keeps the tool radius
+sag0 BUILDFAIL
+sag_half rc=0 
+strict_only rc=0 
+walls_always rc=42 test cases:     46 |     43 passed |  3 failed
+                       flat depth
+    --
+    T-0169 property: tool centres keep radius + allowance from curve/line junctions
+    T-0169 regression: V-Carve's flat-area moves in the A keep the footprint at the
+    T-0169 regression: the raster link under an A's crossbar keeps the tool radius
+merge_old rc=0 
+raster_old rc=0 
+bridge_old rc=0 
+pull_old rc=42 test cases:     46 |     45 passed |  1 failed
+    T-0169 property: tool centres keep radius + allowance from curve/line junctions
+linkdepth_old rc=42 test cases:     46 |     45 passed | 1 failed
+    T-0169 property: tool centres keep radius + allowance from curve/line junctions
+travel_old rc=42 test cases:     46 |     45 passed | 1 failed
+    T-0169 property: tool centres keep radius + allowance from curve/line junctions
+slack10 rc=0 
+grid_nowiden rc=42 test cases:     46 |     45 passed | 1 failed
+    T-0169 property: tool centres keep radius + allowance from curve/line junctions
+grid_rowband rc=42 test cases:     46 |     45 passed | 1 failed
+    T-0169 property: tool centres keep radius + allowance from curve/line junctions
+sag0 rc=0 

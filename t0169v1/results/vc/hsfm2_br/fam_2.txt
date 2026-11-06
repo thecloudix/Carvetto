@@ -1,0 +1,43 @@
+HASH case 0 holedstar chord 0.005 ok 1 moves 2984 diags 0 h 40dd964fdc212f44 mh 40dd964fdc212f44 dl  so 4.7604567820292019 width 11.85604627700399 ncl 1
+HASH case 1 holedstar chord 0.1 ok 1 moves 682 diags 0 h e77bb689fdf91fba mh e77bb689fdf91fba dl  so 6.585320792967237 width 14.542320834252152 ncl 1
+HASH case 2 holedstar chord 0.005 ok 1 moves 1285 diags 0 h b1f7762166bab5fc mh b1f7762166bab5fc dl  so 9.0030808065116705 width 16.102630075280583 ncl 1
+HASH case 3 holedstar chord 0.01 ok 1 moves 138692 diags 1 h 44ce9cdc7f920a75 mh 6508d77171057cac dl 26, so 0.59482192863596506 width 1.4870548215899126 ncl 1
+HASH case 4 holedstar chord 0.005 ok 1 moves 1355 diags 1 h 23cc9eaf709ae784 mh 1b344f2882533a9d dl 26, so 5.507858270867322 width 13.769645677168304 ncl 1
+HASH case 5 holedstar chord 0.1 ok 1 moves 5446 diags 0 h 159a9ad722fbed38 mh 159a9ad722fbed38 dl  so 3.4769886470120377 width 4.4390204155950146 ncl 2
+HASH case 6 holedstar chord 0.001 ok 1 moves 3705 diags 1 h 7ce58b793073fb12 mh e5d6540a9085107d dl 4, so 5.0040251387353827 width 4.0046154697128182 ncl 1
+HASH case 7 holedstar chord 0.02 ok 1 moves 1041 diags 0 h 69996a8d42887f13 mh 69996a8d42887f13 dl  so 5.4316599006745925 width 5.9325131922998038 ncl 2
+HASH case 8 holedstar chord 0.02 ok 1 moves 1156 diags 0 h 67274452a9b7a3b1 mh 67274452a9b7a3b1 dl  so 1.9740285175915873 width 4.0822458718760606 ncl 1
+HASH case 9 holedstar chord 0.001 ok 1 moves 507113 diags 2 h bc0af479b21af681 mh 1d9444d434b4422b dl 4,4, so 4.4233038817177466 width 6.4152180116022972 ncl 2
+HASH case 10 holedstar chord 0.001 ok 1 moves 4417 diags 0 h 932319e47f71c35b mh 932319e47f71c35b dl  so 2.5039423773100036 width 6.1973210350628216 ncl 2
+HASH case 11 holedstar chord 0.05 ok 1 moves 392 diags 2 h cb855d23c02c3d4c mh 6057c3874a84014a dl 4,4, so 1.5480419767661173 width 3.1901533440443859 ncl 2
+HASH case 12 holedstar chord 0.001 ok 1 moves 5698 diags 1 h 739f9f4b6be86870 mh 44196fc10caa8f47 dl 29, so 1.0860722861843584 width 0.71948932736290971 ncl 2
+HASH case 13 holedstar chord 0.1 ok 1 moves 285 diags 1 h 010be0b4325fb0cc mh edcf94d6b4e262e9 dl 26, so 9.1109490893783569 width 22.777372723445893 ncl 2
+HASH case 14 holedstar chord 0.005 ok 1 moves 7986 diags 0 h d4c62ebad4f53f7d mh d4c62ebad4f53f7d dl  so 2.543618551954161 width 4.2011029592283302 ncl 2
+HASH case 15 holedstar chord 0.02 ok 1 moves 915 diags 2 h 0724273159cc03e2 mh 1ac5b02be19df5bc dl 4,4, so 7.2279311143396132 width 8.6117111555418653 ncl 2
+HASH case 16 holedstar chord 0.005 ok 1 moves 1959 diags 1 h 811d11cab58cde2c mh 6462d6a1e1e0a16b dl 4, so 7.0998373547918092 width 10.636664086276939 ncl 1
+HASH case 17 holedstar chord 0.01 ok 1 moves 1445 diags 1 h 975f20bf45ac8f99 mh 944070b273ef5728 dl 4, so 2.4652787062384607 width 5.6998589134403854 ncl 2
+HASH case 18 holedstar chord 0.01 ok 1 moves 1408 diags 0 h a1717a4b81cd2e2f mh a1717a4b81cd2e2f dl  so 3.7792227875751117 width 8.6061239468527262 ncl 2
+HASH case 19 holedstar chord 0.001 ok 1 moves 2542 diags 1 h 5a160b81d4f9d5da mh a1bd9e727800b65d dl 26, so 6.4431289186094602 width 16.107822296523651 ncl 2
+HASH case 20 holedstar chord 0.001 ok 1 moves 2297 diags 0 h 52bd1037cdfbd853 mh 52bd1037cdfbd853 dl  so 3.7466440910296819 width 8.7748821416820224 ncl 2
+HASH case 21 holedstar chord 0.1 ok 1 moves 487 diags 2 h f43b201c07798c18 mh 3c774bd681282a19 dl 4,29, so 3.8488404078623675 width 2.7241248924741543 ncl 1
+HASH case 22 holedstar chord 0.01 ok 1 moves 1757 diags 0 h 2746fc274868f7bc mh 2746fc274868f7bc dl  so 2.6631232166826222 width 6.4794827789337228 ncl 1
+HASH case 23 holedstar chord 0.1 ok 1 moves 909 diags 2 h 769c1d9610e83e25 mh 927dca3b3c5a4609 dl 4,29, so 7.5884148847400157 width 2.1533373666274827 ncl 1
+HASH case 24 holedstar chord 0.02 ok 1 moves 22280 diags 2 h 2448b76270af7100 mh f7815ebbdd714cfe dl 4,4, so 1.8936898469061578 width 4.2151364318566289 ncl 2
+HASH case 25 holedstar chord 0.01 ok 1 moves 51528 diags 0 h dc32e4d35e233837 mh dc32e4d35e233837 dl  so 2.8805341278989776 width 6.866270365921828 ncl 1
+HASH case 26 holedstar chord 0.05 ok 1 moves 1162 diags 1 h 02baa7db9515208b mh fd7dd95808bdbe0e dl 4, so 2.3900359540568279 width 4.053162854722431 ncl 1
+HASH case 27 holedstar chord 0.001 ok 1 moves 4921 diags 0 h c07fac00a12f5403 mh c07fac00a12f5403 dl  so 0.83753337306940012 width 1.0126132379469741 ncl 1
+HASH case 28 holedstar chord 0.1 ok 1 moves 506 diags 1 h 2e4f01e1f4715f32 mh 233802cece490006 dl 26, so 5.8945129367431512 width 14.736282341857876 ncl 2
+HASH case 29 holedstar chord 0.01 ok 1 moves 1916 diags 0 h bb4b1cf825f03833 mh bb4b1cf825f03833 dl  so 5.767221301187516 width 13.852608523753394 ncl 1
+HASH case 30 holedstar chord 0.005 ok 1 moves 2163 diags 1 h 83706e649c3d59f5 mh e11ba8c2686e8a2c dl 4, so 2.6859957365836618 width 2.1208056920795211 ncl 1
+HASH case 31 holedstar chord 0.005 ok 1 moves 1152 diags 2 h 3c2c58a46a1007c8 mh 76ed87fe48decf66 dl 4,4, so 4.8787259837590558 width 6.7167491739771075 ncl 2
+HASH case 32 holedstar chord 0.05 ok 1 moves 1180 diags 0 h 1238e897f0738596 mh 1238e897f0738596 dl  so 6.0736480256960554 width 12.993000200171506 ncl 2
+HASH case 33 holedstar chord 0.1 ok 1 moves 309 diags 0 h 56d3fc9ba7b1ea92 mh 56d3fc9ba7b1ea92 dl  so 7.6592041393936956 width 17.768083134357898 ncl 2
+HASH case 34 holedstar chord 0.02 ok 1 moves 635 diags 0 h 14ca21d58ba6a027 mh 14ca21d58ba6a027 dl  so 4.6912033095518053 width 11.043092519917463 ncl 2
+HASH case 35 holedstar chord 0.01 ok 1 moves 662 diags 0 h 63ca4de222f5fd9c mh 63ca4de222f5fd9c dl  so 9.834829796798612 width 18.348478277894785 ncl 1
+HASH case 36 holedstar chord 0.001 ok 1 moves 4945 diags 0 h b15a1bda9a2cebc7 mh b15a1bda9a2cebc7 dl  so 8.8350159514748334 width 15.890427560543325 ncl 2
+HASH case 37 holedstar chord 0.02 ok 1 moves 651 diags 1 h 4573e9424766b652 mh 9041194d5ef155bb dl 26, so 2.5619356568775342 width 6.4048391421938353 ncl 2
+HASH case 38 holedstar chord 0.1 ok 1 moves 306 diags 0 h 591adc7ab0c586b8 mh 591adc7ab0c586b8 dl  so 7.2640607233980097 width 14.54630451121727 ncl 2
+HASH case 39 holedstar chord 0.001 ok 1 moves 372282 diags 0 h 6d05d2d31d6c2c27 mh 6d05d2d31d6c2c27 dl  so 0.76047942561311455 width 1.7493958366533646 ncl 2
+SUMMARY seed=602 fam=2 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

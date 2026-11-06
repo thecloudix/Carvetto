@@ -1,0 +1,3 @@
+STRICT ends<=1e-6 outside: worst 3.9000e-06 [dist 0.00033333 scale 18.2262 a (1.818479050,0.000003377) b (0.057329924,-1.016801028) len 2.03]
+STRICT worst beyond the ends' own depth: 3.9000e-06 [dist 0.00033333 scale 18.2262 a (1.818479050,0.000003377) b (0.057329924,-1.016801028) len 2.03 ends 0]
+SUMMARY seed 31 n 3000 far 0 accS 6753 accL 7419 mism 0 gridBad 0 worstStrict 1.0000e-05 (x slack 2.500) [dist 0.001 scale 0.676706 a (-0.339172952,-0.031917976) b (-0.339159119,-0.031916619) len 1.39e-05] worstLenientOnly 1.1311e-01 [dist 0.05 a (-0.018612958,-0.105676004) b (0.021393385,-0.234829785)]

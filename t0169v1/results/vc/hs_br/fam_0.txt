@@ -1,0 +1,43 @@
+HASH case 0 lib:ellipse_bez chord 0.05 ok 1 moves 279 diags 0 h 5587b60ff70aaef0 mh 5587b60ff70aaef0 dl  so 6.2374976967555451 width 9.0958678787170975 ncl 0
+HASH case 1 lib:circle chord 0.001 ok 1 moves 3 diags 0 h 1c04527d6618935a mh 1c04527d6618935a dl  so 4.762513553721532 width 11.90628388430383 ncl 0
+HASH case 2 lib:L chord 0.001 ok 1 moves 1528 diags 0 h 575691930bd20f8c mh 575691930bd20f8c dl  so 9.4942601197899137 width 23.735650299474784 ncl 0
+HASH case 3 lib:star5 chord 0.01 ok 1 moves 643 diags 1 h 79952dfcb18062c1 mh a2a16dc1b161234c dl 26, so 3.5836753069924492 width 8.9591882674811227 ncl 1
+HASH case 4 lib:annulus chord 0.001 ok 1 moves 2115 diags 0 h de8c61181bd57bab mh de8c61181bd57bab dl  so 8.9744627502993506 width 10.353135102451375 ncl 0
+HASH case 5 lib:star5 chord 0.005 ok 1 moves 736 diags 0 h 516464fc07b3c748 mh 516464fc07b3c748 dl  so 7.0120182267524518 width 15.780531179010598 ncl 2
+HASH case 6 lib:O_glyph_bez chord 0.02 ok 1 moves 2480 diags 1 h fe6ea0e0239bcbb4 mh 49d9fa8f3307ffdd dl 26, so 0.39341231233186158 width 0.98353078082965384 ncl 0
+HASH case 7 lib:rect40x20 chord 0.005 ok 1 moves 5804 diags 1 h a820fb9c6e89b2c0 mh 18ae21411e8a4c2c dl 26, so 9.0818072654275905 width 10.751878695227042 ncl 0
+HASH case 8 lib:sliver5deg chord 0.001 ok 1 moves 2635 diags 0 h 48e4075889d2461d mh 48e4075889d2461d dl  so 6.8020321196631901 width 17.005080299157974 ncl 0
+HASH case 9 lib:circle chord 0.1 ok 1 moves 3 diags 0 h 94686d61e35fa21c mh 94686d61e35fa21c dl  so 7.3757883459882709 width 18.439470864970676 ncl 0
+HASH case 10 lib:slot_arcs chord 0.005 ok 1 moves 452 diags 0 h 5a1110f7c15a4ec6 mh 5a1110f7c15a4ec6 dl  so 15.627599605178537 width 19.867864768498464 ncl 0
+HASH case 11 lib:annulus chord 0.1 ok 1 moves 123 diags 0 h 63e5b51379fc0313 mh 63e5b51379fc0313 dl  so 9.8045890111535225 width 11.915297204786855 ncl 0
+HASH case 12 lib:star12_sharp chord 0.005 ok 1 moves 3080 diags 0 h 068be3ce05c9f8c9 mh 068be3ce05c9f8c9 dl  so 0.8685881505028864 width 1.8112195513029641 ncl 2
+HASH case 13 lib:star5 chord 0.1 ok 1 moves 658 diags 0 h 769a57dc7b20d08d mh 769a57dc7b20d08d dl  so 0.57241458521464139 width 1.9465286264834629 ncl 0
+HASH case 14 lib:square_cw chord 0.005 ok 1 moves 322 diags 0 h c26a9743c5e8ae0f mh c26a9743c5e8ae0f dl  so 1.8416082329577799 width 4.6040205823944493 ncl 0
+HASH case 15 lib:O_glyph_bez chord 0.001 ok 1 moves 27384 diags 0 h 1f993b296cfd295b mh 1f993b296cfd295b dl  so 0.64234689305739745 width 1.0882293435753225 ncl 0
+HASH case 16 lib:square_cw chord 0.001 ok 1 moves 341 diags 0 h f99915d94694467a mh f99915d94694467a dl  so 8.276049302712325 width 20.690123256780812 ncl 0
+HASH case 17 lib:slot_arcs chord 0.1 ok 1 moves 85 diags 0 h ae683ea9e0d0df5c mh ae683ea9e0d0df5c dl  so 4.7006670729686739 width 7.8593195599785641 ncl 2
+HASH case 18 lib:concave_arc_notch chord 0.1 ok 1 moves 281 diags 1 h a31ff897297b3eb8 mh 50fe40f8b5c43112 dl 26, so 10.656853749931027 width 19.50143092997882 ncl 0
+HASH case 19 lib:A_glyph chord 0.005 ok 1 moves 1135 diags 0 h c470259e4a54c034 mh c470259e4a54c034 dl  so 2.7509846367440902 width 6.8774615918602251 ncl 0
+HASH case 20 lib:circle chord 0.01 ok 1 moves 545 diags 0 h 201a5063ec3e25ce mh 201a5063ec3e25ce dl  so 2.1667428606883763 width 9.2954351845400218 ncl 0
+HASH case 21 lib:ellipse_bez chord 0.05 ok 1 moves 1178 diags 0 h 2df5730073128b16 mh 2df5730073128b16 dl  so 0.72297274982088877 width 2.6322486363774091 ncl 0
+HASH case 22 lib:S_glyph_bez chord 0.005 ok 1 moves 1452 diags 0 h 6a441c9d4dc87446 mh 6a441c9d4dc87446 dl  so 7.4748061730390916 width 18.687015432597729 ncl 0
+HASH case 23 lib:thin_rect_0.1 chord 0.01 ok 1 moves 1182 diags 0 h eeceb973ab2f86f5 mh eeceb973ab2f86f5 dl  so 0.72158437750912907 width 1.8616566569445594 ncl 0
+HASH case 24 lib:sq_holes chord 0.02 ok 1 moves 2458 diags 1 h f7574422d3063ef4 mh 5f677a235a934bcb dl 26, so 5.4223901453913141 width 13.555975363478284 ncl 2
+HASH case 25 lib:neck_0.021 chord 0.05 ok 1 moves 173 diags 0 h 3f69f492b540b058 mh 3f69f492b540b058 dl  so 6.6117674678894423 width 16.529418669723604 ncl 0
+HASH case 26 lib:S_glyph_bez chord 0.05 ok 1 moves 596 diags 0 h 2a722d524b9e9ab6 mh 2a722d524b9e9ab6 dl  so 7.1673411868014156 width 12.48466015345595 ncl 1
+HASH case 27 lib:ellipse_bez chord 0.01 ok 1 moves 899 diags 0 h baba34fc77536e59 mh baba34fc77536e59 dl  so 6.307812443614738 width 1.7967072985485915 ncl 2
+HASH case 28 lib:L chord 0.02 ok 1 moves 430 diags 0 h 260a2f6ed64dd40f mh 260a2f6ed64dd40f dl  so 0.43977120158914934 width 1.277641922430877 ncl 0
+HASH case 29 lib:neck_0.021 chord 0.005 ok 1 moves 781 diags 0 h 9bf8de19e97dac45 mh 9bf8de19e97dac45 dl  so 5.057639860685768 width 12.64409965171442 ncl 0
+HASH case 30 lib:O_glyph_bez chord 0.001 ok 1 moves 2925 diags 0 h d08e4aa88bc467fe mh d08e4aa88bc467fe dl  so 3.202959984827817 width 4.6589746506078473 ncl 1
+HASH case 31 lib:S_glyph_bez chord 0.005 ok 1 moves 1153 diags 0 h b0aa489d1452385d mh b0aa489d1452385d dl  so 1.6947046804609964 width 6.5166938372572512 ncl 0
+HASH case 32 lib:C_glyph_arcs chord 0.02 ok 1 moves 256 diags 0 h e5f06b75e97c69e2 mh e5f06b75e97c69e2 dl  so 0.31225706340727583 width 1.178540321443496 ncl 0
+HASH case 33 lib:circle chord 0.02 ok 1 moves 364 diags 0 h b002f9e73ea51296 mh b002f9e73ea51296 dl  so 1.7885105802337935 width 5.7594642273976158 ncl 0
+HASH case 34 lib:circle chord 0.1 ok 1 moves 327 diags 0 h 39cb6b9999fef9fd mh 39cb6b9999fef9fd dl  so 5.3010102676664577 width 7.9093301129174138 ncl 0
+HASH case 35 lib:O_glyph_bez chord 0.02 ok 1 moves 575 diags 1 h c211c2c31f3ae7f9 mh fdd7fff299f240d1 dl 26, so 0.5058430443036348 width 1.2646076107590869 ncl 0
+HASH case 36 lib:ellipse_bez chord 0.1 ok 1 moves 383 diags 1 h 694881fa69058677 mh 31e1c8e63a0cfd56 dl 26, so 3.5016797507816366 width 8.7541993769540909 ncl 0
+HASH case 37 lib:neck_0.03 chord 0.1 ok 1 moves 186 diags 0 h b8eef29c2808857d mh b8eef29c2808857d dl  so 6.0516531465998797 width 9.7660060925919243 ncl 1
+HASH case 38 lib:sliver5deg chord 0.05 ok 1 moves 295 diags 0 h 694dbcd510565bf0 mh 694dbcd510565bf0 dl  so 3.5278510279434419 width 17.07616697696448 ncl 0
+HASH case 39 lib:neck_0.021 chord 0.02 ok 1 moves 986 diags 0 h 84342f90477f1a39 mh 84342f90477f1a39 dl  so 3.1521978646554003 width 7.8804946616385001 ncl 0
+SUMMARY seed=600 fam=0 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

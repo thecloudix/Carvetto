@@ -1,0 +1,32 @@
+case 1 fam 9 lines1 ch 0.002 dist 0.002 D 18.6178 al 0.522643 strat 1 pass 1 tools 3 ramp 0 hash 13e0d4fee73b6ef7 moves 2507 rapid 13 plunge 68 retract 13 cut 49162.648880 cpu 0.0272 worst 1.0000e+300 
+case 2 fam 9 lines0 ch 0.002 dist 0.002 D 105.251 al 8.91723 strat 1 pass 2 tools 2 ramp 0 hash bf64d5db550ce9f6 moves 17954 rapid 12 plunge 110 retract 12 cut 143337.290282 cpu 0.2930 worst 1.0000e+300 
+case 3 fam 9 lines2 ch 0.002 dist 0.002 D 181.736 al 0 strat 0 pass 0 tools 2 ramp 0 hash 1e0bb51b5348bcfc moves 47526 rapid 34 plunge 68 retract 34 cut 92058.010609 cpu 41.1847 worst 1.0000e+300 
+case 4 fam 9 lines1 ch 0.002 dist 0.002 D 120.995 al 0 strat 0 pass 0 tools 2 ramp 1 hash 375fd375a457a9e6 moves 8832 rapid 9 plunge 9 retract 9 cut 47232.483472 cpu 0.3838 worst 1.0000e+300 
+case 5 fam 9 lines2 ch 0.002 dist 0.002 D 36.4199 al 0 strat 0 pass 2 tools 2 ramp 0 hash 36c8862682ca79ab moves 44012 rapid 33 plunge 40 retract 33 cut 79679.068056 cpu 7.8635 worst 1.0000e+300 
+case 6 fam 9 lines1 ch 0.002 dist 0.002 D 50.0062 al 12.6521 strat 0 pass 1 tools 2 ramp 0 hash 495452734ce01acc moves 1631 rapid 7 plunge 8 retract 7 cut 9975.920249 cpu 0.0559 worst 1.0000e+300 
+case 7 fam 9 lines1 ch 0.002 dist 0.002 D 19.4452 al 0 strat 0 pass 1 tools 2 ramp 0 hash f1005281eb4d8991 moves 7815 rapid 7 plunge 16 retract 7 cut 68709.161013 cpu 0.0424 worst 1.0000e+300 
+case 8 fam 9 lines2 ch 0.002 dist 0.002 D 89.9707 al 0 strat 1 pass 2 tools 2 ramp 0 hash c873f6ec1cd81312 moves 16678 rapid 25 plunge 66 retract 25 cut 55268.477199 cpu 11.4175 worst 1.0000e+300 
+case 9 fam 9 lines1 ch 0.002 dist 0.002 D 32.4946 al 0 strat 0 pass 2 tools 2 ramp 1 hash 3484a69c470d984a moves 11608 rapid 7 plunge 7 retract 7 cut 32009.442448 cpu 0.0828 worst 1.0000e+300 
+case 10 fam 9 lines0 ch 0.002 dist 0.002 D 36.177 al 0 strat 1 pass 1 tools 2 ramp 0 hash 72b60856f46f56e9 moves 4503 rapid 7 plunge 74 retract 7 cut 196007.190266 cpu 0.0952 worst 1.0000e+300 
+case 11 fam 9 lines1 ch 0.002 dist 0.002 D 111.184 al 22.4764 strat 1 pass 2 tools 3 ramp 0 hash 935c1eb58f6299ca moves 2197 rapid 13 plunge 19 retract 13 cut 44871.514011 cpu 0.1737 worst 1.0000e+300 
+case 12 fam 9 lines0 ch 0.002 dist 0.002 D 163.065 al 0 strat 1 pass 0 tools 2 ramp 1 hash ff0306131dc63a50 moves 2016 rapid 238 plunge 238 retract 238 cut 107192.254858 cpu 1.2879 worst 1.0000e+300 
+case 13 fam 9 lines2 ch 0.002 dist 0.002 D 137.593 al 16.2069 strat 1 pass 2 tools 2 ramp 0 hash 1ee57df1c05d1542 moves 26832 rapid 24 plunge 116 retract 24 cut 132908.252085 cpu 14.8314 worst 1.0000e+300 
+case 14 fam 9 lines1 ch 0.002 dist 0.002 D 61.2812 al 1.58701 strat 1 pass 1 tools 2 ramp 1 hash c23a295721d983cd moves 9475 rapid 9 plunge 9 retract 9 cut 113665.469515 cpu 0.1559 worst 1.0000e+300 
+case 15 fam 9 lines2 ch 0.002 dist 0.002 D 105.523 al 20.4516 strat 1 pass 0 tools 2 ramp 1 hash 368d5f0267d81d8f moves 1318 rapid 173 plunge 173 retract 173 cut 77058.612086 cpu 289.1128 worst 1.0000e+300 
+case 16 fam 9 lines2 ch 0.002 dist 0.002 D 90.3098 al 6.95184 strat 1 pass 2 tools 3 ramp 1 hash 47ffb830cb0518c2 moves 21127 rapid 67 plunge 67 retract 67 cut 104152.546952 cpu 22.5050 worst 1.0000e+300 
+case 17 fam 9 lines2 ch 0.002 dist 0.002 D 130.889 al 2.14175 strat 1 pass 2 tools 3 ramp 0 hash cbe7f95f86202784 moves 8836 rapid 21 plunge 64 retract 21 cut 118602.666787 cpu 0.5312 worst 1.0000e+300 
+case 18 fam 9 lines2 ch 0.002 dist 0.002 D 371.651 al 4.25666 strat 1 pass 0 tools 3 ramp 0 hash 5cb95788471fc096 moves 1740 rapid 388 plunge 388 retract 388 cut 47358.482345 cpu 229.5857 worst 1.0000e+300 
+case 19 fam 9 lines2 ch 0.002 dist 0.002 D 440.394 al 4.58377 strat 0 pass 1 tools 2 ramp 0 hash df613b9daf5f8689 moves 10527 rapid 16 plunge 32 retract 16 cut 56478.981379 cpu 1.9360 worst 1.0000e+300 
+case 20 fam 9 lines0 ch 0.002 dist 0.002 D 112.782 al 5.67201 strat 0 pass 2 tools 2 ramp 0 hash 8a7bb9f6b347ea90 moves 11453 rapid 5 plunge 10 retract 5 cut 177334.338184 cpu 0.0619 worst 1.0000e+300 
+case 21 fam 9 lines2 ch 0.002 dist 0.002 D 80.3178 al 3.04737 strat 1 pass 1 tools 2 ramp 0 hash 364dbdbb2af57613 moves 20434 rapid 22 plunge 102 retract 22 cut 328116.483612 cpu 2.2448 worst 1.0000e+300 
+case 22 fam 9 lines0 ch 0.002 dist 0.002 D 29.4045 al 0 strat 1 pass 2 tools 2 ramp 0 hash 755efb20aea570bf moves 3057 rapid 13 plunge 50 retract 13 cut 778573.405843 cpu 0.0402 worst 1.0000e+300 
+case 23 fam 9 lines1 ch 0.002 dist 0.002 D 57.7296 al 0.900756 strat 1 pass 2 tools 2 ramp 1 hash e981338c16ad1f33 moves 1043 rapid 6 plunge 6 retract 6 cut 27053.983114 cpu 0.0375 worst 1.0000e+300 
+case 24 fam 9 lines2 ch 0.002 dist 0.002 D 99.8684 al 1.34003 strat 1 pass 1 tools 2 ramp 1 hash 991a469b8a5aae8d moves 23844 rapid 36 plunge 36 retract 36 cut 177145.708826 cpu 3.2680 worst 1.0000e+300 
+case 25 fam 9 lines1 ch 0.002 dist 0.002 D 46.9915 al 0 strat 0 pass 2 tools 2 ramp 0 hash 910333f0724c9f5c moves 11189 rapid 9 plunge 20 retract 9 cut 44965.328346 cpu 0.0559 worst 1.0000e+300 
+case 26 fam 9 lines2 ch 0.002 dist 0.002 D 411.808 al 7.19243 strat 1 pass 0 tools 2 ramp 1 hash 7f6c797c6ed2f10c moves 1028 rapid 154 plunge 154 retract 154 cut 83880.222053 cpu 52.5258 worst 1.0000e+300 
+case 27 fam 9 lines1 ch 0.002 dist 0.002 D 52.8755 al 0 strat 0 pass 2 tools 2 ramp 0 hash fd4c13cb6fa0b92e moves 1830 rapid 7 plunge 7 retract 7 cut 8440.810535 cpu 0.0353 worst 1.0000e+300 
+case 28 fam 9 lines0 ch 0.002 dist 0.002 D 140.004 al 28.3191 strat 1 pass 2 tools 2 ramp 0 hash 54d52321e08e92e3 moves 10920 rapid 9 plunge 42 retract 9 cut 92319.064262 cpu 0.3297 worst 1.0000e+300 
+case 29 fam 9 lines1 ch 0.002 dist 0.002 D 49.5509 al 2.88921 strat 0 pass 2 tools 2 ramp 0 hash 2682072d73a51e83 moves 22351 rapid 7 plunge 26 retract 7 cut 113740.161977 cpu 0.2244 worst 1.0000e+300 
+case 30 fam 9 lines2 ch 0.002 dist 0.002 D 476.138 al 9.64448 strat 1 pass 1 tools 2 ramp 0 hash c2885ef1a5f396e3 moves 10357 rapid 12 plunge 44 retract 12 cut 38200.694810 cpu 5.7609 worst 1.0000e+300 
+SUMMARY fam 9 cases 30 worst 1.0000e+300 neg 0 viol 0
+exit 0

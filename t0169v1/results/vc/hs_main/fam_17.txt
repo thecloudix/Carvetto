@@ -1,0 +1,43 @@
+HASH case 0 touch1-diamondvertex chord 0.1 ok 1 moves 247 diags 1 h a920f3ab5ed86831 mh 58914500ff2e6bc6 dl 28, so 8.605476614877368 width 21.51369153719342 ncl 0
+HASH case 1 touch1-tangentcircle chord 0.1 ok 1 moves 251 diags 1 h ce889921704d7773 mh cbfe18d14392536c dl 28, so 4.4544756816048041 width 8.0043010469790463 ncl 0
+HASH case 2 touch1-diamondvertex chord 0.1 ok 1 moves 265 diags 1 h 33867fb579ff56ab mh 36200fcb3c52f984 dl 28, so 5.4174695559314623 width 13.238662615726016 ncl 0
+HASH case 3 touch1-squarecorneroncircle chord 0.01 ok 1 moves 593 diags 2 h ff05bee0129da133 mh 660f2dba89e8e2d3 dl 28,17, so 2.562673768104196 width 6.4066844202604898 ncl 0
+HASH case 4 touch1-squarecorneroncircle chord 0.01 ok 1 moves 333 diags 2 h 00f51bb1bc6a05d8 mh 10823563e1ce4c02 dl 28,17, so 9.5060862554371308 width 23.765215638592824 ncl 0
+HASH case 5 touch1-twoholes-vertexwall-vertexvertex chord 0.005 ok 1 moves 961 diags 3 h 332ed9be83abc390 mh a6630d02d60d15fc dl 28,4,4, so 4.6031004296340949 width 1.315524726665211 ncl 2
+HASH case 6 touch1-squarecorneroncircle chord 0.01 ok 1 moves 625 diags 2 h b9270add8c0a696e mh 0bbc7ef6fa7779f4 dl 28,17, so 0.18070434221083909 width 0.44563124152431266 ncl 0
+HASH case 7 touch1-squarecorneroncircle chord 0.001 ok 1 moves 2114 diags 2 h 1a1960e2d0bd3750 mh e1ea41eb25b5c9ee dl 28,17, so 3.892289956056334 width 9.7307248901408343 ncl 0
+HASH case 8 touch1-tangentcircle chord 0.001 ok 1 moves 4089 diags 2 h b3db79c6a22fd502 mh 1ce7fd4948a4bed2 dl 26,28, so 5.1788281388860895 width 12.947070347215222 ncl 1
+HASH case 9 touch1-diamondvertex chord 0.02 ok 1 moves 644 diags 1 h f1a6bf3595401ce6 mh 07c841f6eced8ce6 dl 28, so 5.7986191956115976 width 14.496547989028993 ncl 0
+HASH case 10 touch1-diamondvertex chord 0.001 ok 1 moves 1535 diags 1 h d42e1fdb81ad788b mh 2dc2f338dc9ab6e4 dl 28, so 2.9323122349802868 width 3.5000053668249422 ncl 0
+HASH case 11 touch1-diamondvertex chord 0.05 ok 1 moves 238 diags 1 h 49da1b14b54dfd3a mh 80751454c88df908 dl 28, so 3.3786202415168889 width 3.8998632311139607 ncl 0
+HASH case 12 touch1-squarecorneroncircle chord 0.005 ok 1 moves 795 diags 2 h c6df7042bd70cf61 mh 7b8cd0c94e2224f6 dl 28,17, so 1.22381871196801 width 4.6113391222478315 ncl 0
+HASH case 13 touch1-diamondvertex chord 0.01 ok 1 moves 634 diags 1 h 959bd7957b38d8df mh d1272b13252b5830 dl 28, so 1.7673694836507114 width 4.4184237091267784 ncl 0
+HASH case 14 touch1-tangentcircle chord 0.1 ok 1 moves 309 diags 1 h a906cc4a4d726e75 mh e0c97a821d17a732 dl 28, so 8.3162118273353798 width 20.790529568338449 ncl 0
+HASH case 15 touch1-squarecorneroncircle chord 0.01 ok 1 moves 830 diags 2 h 079e4cff8d9d3ed2 mh 7698cdd898f100e8 dl 28,17, so 8.5688211539045049 width 21.422052884761261 ncl 0
+HASH case 16 touch1-twoholes-vertexwall-vertexvertex chord 0.05 ok 1 moves 520 diags 2 h cf9e5f9f26a36fa3 mh 5f1a925bf3063398 dl 26,28, so 3.8965413131823214 width 9.7413532829558029 ncl 2
+HASH case 17 touch1-squarecorneroncircle chord 0.01 ok 1 moves 528 diags 2 h 94faca512ae9e268 mh 30f702069576a332 dl 28,17, so 2.4813606415829592 width 6.2034016039573974 ncl 0
+HASH case 18 touch1-diamondvertex chord 0.02 ok 1 moves 609 diags 1 h 8c3cf58a7f2aa802 mh 4535961a7b673cba dl 28, so 3.3798859619419468 width 5.7087333363658281 ncl 2
+HASH case 19 touch1-twoholes-vertexwall-vertexvertex chord 0.005 ok 1 moves 1129 diags 1 h ac8c195e896a8497 mh 28ee241dd90ee955 dl 28, so 7.46391522014562 width 9.8241618018721066 ncl 2
+HASH case 20 touch1-twoholes-vertexwall-vertexvertex chord 0.05 ok 1 moves 262 diags 1 h 6c16969b8c3db0e1 mh cef77c11e732705d dl 28, so 2.9487166026037155 width 7.3717915065092887 ncl 0
+HASH case 21 touch1-diamondvertex chord 0.001 ok 1 moves 1619 diags 1 h d706a40bd3ed36f2 mh 9b190167f515abbd dl 28, so 3.4074046695998623 width 8.806056119463916 ncl 0
+HASH case 22 touch1-diamondvertex chord 0.005 ok 1 moves 1035 diags 1 h 81a96a7ac6171748 mh 874f0fa53d4ff5ce dl 28, so 2.034723474668275 width 2.3219009018375436 ncl 0
+HASH case 23 touch1-diamondvertex chord 0.1 ok 1 moves 386 diags 1 h 9c345e5e801ed7f4 mh 6f74863f22ee9623 dl 28, so 2.3992403632329329 width 3.6668032853680566 ncl 0
+HASH case 24 touch1-tangentcircle chord 0.005 ok 1 moves 1160 diags 1 h a8c910cf521e0df9 mh f8f271443bbc5027 dl 28, so 4.9336782552150797 width 4.9747585154949743 ncl 2
+HASH case 25 touch1-diamondvertex chord 0.001 ok 1 moves 2135 diags 2 h f77e13d790bdbaf2 mh 3ed845bbdea3da6c dl 26,28, so 3.0727340094247051 width 7.6818350235617618 ncl 2
+HASH case 26 touch1-twoholes-vertexwall-vertexvertex chord 0.05 ok 1 moves 571 diags 1 h f4585fb103a20dfd mh 6641d10fb26fa9f1 dl 28, so 2.8038319198583679 width 4.2609948181480428 ncl 2
+HASH case 27 touch1-twoholes-vertexwall-vertexvertex chord 0.1 ok 1 moves 331 diags 1 h ece4036b8e5a2043 mh 7f36c683a370fcbc dl 28, so 5.5709829558889998 width 13.927457389722496 ncl 0
+HASH case 28 touch1-diamondvertex chord 0.05 ok 1 moves 201 diags 1 h 3e0de4fab4a5e06b mh 4a96881b3981d44b dl 28, so 6.4274337155497712 width 16.068584288874426 ncl 0
+HASH case 29 touch1-diamondvertex chord 0.01 ok 1 moves 786 diags 1 h 0bc68fb0739ad090 mh 95dda827918cda6d dl 28, so 1.1936146340731975 width 2.9840365851829933 ncl 0
+HASH case 30 touch1-twoholes-vertexwall-vertexvertex chord 0.01 ok 1 moves 876 diags 1 h 3703ff15a63a0d0b mh 181842eca800085c dl 28, so 3.9476034094922072 width 7.4912469201334204 ncl 1
+HASH case 31 touch1-diamondvertex chord 0.01 ok 1 moves 525 diags 2 h 4f82ad1110ee7e3b mh 0549f88c9e3e88fb dl 26,28, so 2.3001587628894096 width 5.7503969072235241 ncl 2
+HASH case 32 touch1-squarecorneroncircle chord 0.05 ok 1 moves 294 diags 2 h ead41fe5141fb22b mh 51905b2d91ad717c dl 28,17, so 0.17932257837896648 width 0.36243849554019725 ncl 0
+HASH case 33 touch1-diamondvertex chord 0.005 ok 1 moves 1191 diags 1 h ecf06b63cd62ff34 mh 14d48fda3516abaa dl 28, so 3.6096306584355546 width 9.0240766460888864 ncl 0
+HASH case 34 touch1-twoholes-vertexwall-vertexvertex chord 0.001 ok 1 moves 44576 diags 3 h 75cf27e2c178815e mh 13ef2b9577946b87 dl 28,4,4, so 2.232838153850762 width 3.3880893426227647 ncl 2
+HASH case 35 touch1-tangentcircle chord 0.001 ok 1 moves 4100 diags 1 h 7641659e90b48b82 mh 3f06ee9f85c43f0d dl 28, so 2.9304589966975256 width 5.4081555093175107 ncl 0
+HASH case 36 touch1-tangentcircle chord 0.005 ok 1 moves 1817 diags 1 h a713550c1253bc12 mh 6340eecb51b58b50 dl 28, so 6.3073121604897553 width 15.768280401224388 ncl 0
+HASH case 37 touch1-tangentcircle chord 0.05 ok 1 moves 364 diags 2 h 9799589d47e2f4de mh ad970ec90c88b3e4 dl 26,28, so 6.6259511790134127 width 16.564877947533532 ncl 1
+HASH case 38 touch1-tangentcircle chord 0.02 ok 1 moves 708 diags 1 h 4e60096f1df648b8 mh 67c42cbffea114dc dl 28, so 4.6448669565502527 width 11.612167391375632 ncl 0
+HASH case 39 touch1-diamondvertex chord 0.005 ok 1 moves 1040 diags 1 h 88adb6887156db74 mh bf7991f926bcf1ea dl 28, so 4.1861891732217584 width 7.2067687236992368 ncl 2
+SUMMARY seed=6017 fam=17 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

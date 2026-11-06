@@ -1,0 +1,43 @@
+HASH case 0 flatcorner n=71-bentband chord 0.01 ok 1 moves 1177 diags 0 h 0a71f7152970e7cd mh 0a71f7152970e7cd dl  so 8.2188955022339822 width 13.309675331706989 ncl 2
+HASH case 1 flatcorner n=179-denseband chord 0.01 ok 1 moves 475 diags 0 h 5442678d8a200dc1 mh 5442678d8a200dc1 dl  so 4.0301014041165599 width 13.271780732426192 ncl 0
+HASH case 2 flatcorner n=149-denseband chord 0.001 ok 1 moves 4729 diags 2 h 94e237ed8958f2fb mh 7ea7474ef6aa4cad dl 4,29, so 0.62344933343048037 width 0.1608110974493808 ncl 1
+HASH case 3 flatcorner n=176-denseband chord 0.05 ok 1 moves 118 diags 0 h b7021adcc7acb40d mh b7021adcc7acb40d dl  so 4.0335019261549778 width 10.083754815387444 ncl 0
+HASH case 4 flatcorner n=62-bentband chord 0.02 ok 1 moves 576 diags 0 h 2bbcc003a210e235 mh 2bbcc003a210e235 dl  so 6.2555456162610215 width 9.9355329973909985 ncl 0
+HASH case 5 flatcorner n=20-denseband chord 0.01 ok 1 moves 1157 diags 0 h 250ce8c4dcc1ce6b mh 250ce8c4dcc1ce6b dl  so 4.3819300339702627 width 3.0408180248599059 ncl 1
+HASH case 6 flatcorner n=284-denseband chord 0.005 ok 1 moves 2610 diags 0 h e0338748f3e97c83 mh e0338748f3e97c83 dl  so 5.0454705250140126 width 15.007794328116674 ncl 0
+HASH case 7 flatcorner n=193-bentband chord 0.1 ok 1 moves 198 diags 0 h cf3fe5de1ab50205 mh cf3fe5de1ab50205 dl  so 2.5561690715649554 width 6.3904226789123886 ncl 0
+HASH case 8 flatcorner n=250-bentband chord 0.005 ok 1 moves 1558 diags 0 h 3a2c41798d1f1187 mh 3a2c41798d1f1187 dl  so 3.9977588269151676 width 7.7568861767914754 ncl 0
+HASH case 9 flatcorner n=236-denseband chord 0.01 ok 1 moves 677 diags 0 h fc078f839bce1578 mh fc078f839bce1578 dl  so 1.4807067296446248 width 3.7017668241115618 ncl 0
+HASH case 10 flatcorner n=139-denseband chord 0.1 ok 1 moves 703 diags 0 h 5e0ea6a0a7056718 mh 5e0ea6a0a7056718 dl  so 0.19373582873153655 width 0.43989586284908355 ncl 0
+HASH case 11 flatcorner n=281-bentband chord 0.1 ok 1 moves 130 diags 0 h 661c708a3d9c3c05 mh 661c708a3d9c3c05 dl  so 3.6605128912978118 width 4.3017262649192975 ncl 0
+HASH case 12 flatcorner n=196-bentband chord 0.01 ok 1 moves 807 diags 0 h 83ef468760c30690 mh 83ef468760c30690 dl  so 3.6267823084591222 width 6.3062448407207485 ncl 2
+HASH case 13 flatcorner n=284-denseband chord 0.02 ok 1 moves 1055 diags 0 h f874df32b859ee1f mh f874df32b859ee1f dl  so 2.7928206981225192 width 3.5638603561194429 ncl 0
+HASH case 14 flatcorner n=93-bentband chord 0.005 ok 1 moves 1289 diags 0 h fa9f12fd1b9d86fe mh fa9f12fd1b9d86fe dl  so 3.940033691821732 width 9.8500842295543301 ncl 0
+HASH case 15 flatcorner n=207-bentband chord 0.1 ok 1 moves 307 diags 0 h 6cf9ecfeff35f3bf mh 6cf9ecfeff35f3bf dl  so 0.72894071859565812 width 1.8223517964891451 ncl 0
+HASH case 16 flatcorner n=298-denseband chord 0.001 ok 1 moves 2634 diags 0 h 49e5ba2cc1bdfdc2 mh 49e5ba2cc1bdfdc2 dl  so 2.9698474269055417 width 7.0590759110027577 ncl 2
+HASH case 17 flatcorner n=60-bentband chord 0.1 ok 1 moves 729 diags 0 h 09a7cdf7bf61c392 mh 09a7cdf7bf61c392 dl  so 2.4600307884995298 width 6.1500769712488239 ncl 0
+HASH case 18 flatcorner n=81-denseband chord 0.01 ok 1 moves 1257 diags 1 h 968bf423996f6e54 mh 99d0799ce9906adc dl 26, so 5.6583711761892612 width 14.145927940473152 ncl 1
+HASH case 19 flatcorner n=144-bentband chord 0.001 ok 1 moves 2117 diags 0 h 428c5061157e3ee6 mh 428c5061157e3ee6 dl  so 7.6830904772784967 width 19.20772619319624 ncl 0
+HASH case 20 flatcorner n=292-bentband chord 0.05 ok 1 moves 392 diags 0 h 08d5a6a1cfb8ce2f mh 08d5a6a1cfb8ce2f dl  so 3.071170834033996 width 8.9639470239868526 ncl 0
+HASH case 21 flatcorner n=194-bentband chord 0.05 ok 1 moves 657 diags 0 h c3648f55c5084c69 mh c3648f55c5084c69 dl  so 4.3484830779744241 width 10.871207694936061 ncl 0
+HASH case 22 flatcorner n=244-denseband chord 0.05 ok 1 moves 61 diags 0 h f4e0eec2a1639cda mh f4e0eec2a1639cda dl  so 1.931830990419632 width 4.8295774760490797 ncl 0
+HASH case 23 flatcorner n=35-bentband chord 0.1 ok 1 moves 480 diags 0 h 786eb20b334fd5f8 mh 786eb20b334fd5f8 dl  so 5.2747030583873018 width 13.186757645968253 ncl 0
+HASH case 24 flatcorner n=31-denseband chord 0.005 ok 1 moves 601 diags 0 h af1ff2e72a7344b5 mh af1ff2e72a7344b5 dl  so 8.0219157963665904 width 20.054789490916473 ncl 0
+HASH case 25 flatcorner n=203-denseband chord 0.05 ok 1 moves 128 diags 0 h e900835ad5fd1625 mh e900835ad5fd1625 dl  so 12.463130569482148 width 14.432886722026543 ncl 0
+HASH case 26 flatcorner n=180-bentband chord 0.005 ok 1 moves 1893 diags 0 h 5aff590fb1501fb0 mh 5aff590fb1501fb0 dl  so 0.66770622930378021 width 1.0542718251634311 ncl 1
+HASH case 27 flatcorner n=27-denseband chord 0.1 ok 1 moves 76 diags 0 h 5a0b6cbee412c364 mh 5a0b6cbee412c364 dl  so 7.0048240684244449 width 14.759073501977664 ncl 0
+HASH case 28 flatcorner n=51-bentband chord 0.1 ok 1 moves 652 diags 0 h acff2e5956de83d1 mh acff2e5956de83d1 dl  so 2.7453321010634717 width 1.3481702716517316 ncl 2
+HASH case 29 flatcorner n=79-bentband chord 0.1 ok 1 moves 544 diags 0 h e8e65edb73fa4b79 mh e8e65edb73fa4b79 dl  so 0.43390292440781952 width 0.67620246268867146 ncl 1
+HASH case 30 flatcorner n=178-denseband chord 0.01 ok 1 moves 423 diags 0 h f1a556bfda34afc3 mh f1a556bfda34afc3 dl  so 4.8906565087945078 width 4.1808327716294453 ncl 2
+HASH case 31 flatcorner n=172-denseband chord 0.001 ok 1 moves 3152 diags 1 h 887e240cd22e8cdf mh 8bc13a1ad25e202b dl 26, so 10.831004845838201 width 17.295331469362825 ncl 0
+HASH case 32 flatcorner n=254-denseband chord 0.001 ok 1 moves 2341 diags 1 h 0784e8af53e50b36 mh e96f62db8ef490ec dl 26, so 3.8513760533555388 width 9.6284401333888461 ncl 1
+HASH case 33 flatcorner n=34-bentband chord 0.001 ok 1 moves 2037 diags 3 h e43d2f2934b8934c mh 03f7794e929450ad dl 4,4,29, so 0.80831231579538354 width 0.4824764197096541 ncl 2
+HASH case 34 flatcorner n=293-denseband chord 0.01 ok 1 moves 1753 diags 0 h c306d8d7f7577afb mh c306d8d7f7577afb dl  so 1.1698572479878746 width 3.0588916657043521 ncl 0
+HASH case 35 flatcorner n=232-bentband chord 0.005 ok 1 moves 1089 diags 0 h 6d94b091569f0f2d mh 6d94b091569f0f2d dl  so 0.64664397556758535 width 1.4337272455064269 ncl 0
+HASH case 36 flatcorner n=126-denseband chord 0.02 ok 1 moves 417 diags 0 h d175a63acbf161a2 mh d175a63acbf161a2 dl  so 3.9712860500010549 width 9.9282151250026374 ncl 0
+HASH case 37 flatcorner n=133-denseband chord 0.1 ok 1 moves 176 diags 0 h 1cf192c83c612826 mh 1cf192c83c612826 dl  so 7.5800573819778556 width 18.950143454944637 ncl 0
+HASH case 38 flatcorner n=113-bentband chord 0.01 ok 1 moves 747 diags 0 h 45cebf344b7c26d7 mh 45cebf344b7c26d7 dl  so 1.9225255679348152 width 5.9322680838131818 ncl 0
+HASH case 39 flatcorner n=213-denseband chord 0.1 ok 1 moves 60 diags 0 h 78eb485922f74204 mh 78eb485922f74204 dl  so 0.70672611234350202 width 1.7668152808587549 ncl 0
+SUMMARY seed=6021 fam=21 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

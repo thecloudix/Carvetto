@@ -1,0 +1,1 @@
+SUMMARY seed 11 n 3000 far 0 accS 6771 accL 7731 mism 0 gridBad 0 worstStrict 9.9978e-06 (x slack 2.499) [dist 0.01 scale 14.6609 a (2.317604869,8.561946999) b (2.317605068,8.561935001) len 1.2e-05] worstLenientOnly 9.8027e-02 [dist 0.05 a (0.026545950,-0.102006734) b (0.093847532,-0.206872461)]

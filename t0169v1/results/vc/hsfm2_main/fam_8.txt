@@ -1,0 +1,43 @@
+HASH case 0 overcircles chord 0.05 ok 1 moves 900 diags 1 h 6803501e3b9eb1ec mh c99f55192ff0f776 dl 28, so 8.0358373493591539 width 12.901373167200443 ncl 2
+HASH case 1 overcircles-inttangent chord 0.02 ok 1 moves 1986 diags 6 h dac948446b7783f6 mh a514bf1ad84bce37 dl 28,17,17,17,17,17, so 5.1745609146532772 width 10.161830452648935 ncl 2
+HASH case 2 overcircles-exttangent-inttangent chord 0.1 ok 1 moves 480 diags 4 h 23f4c42d26f933e8 mh 2c6ffd811fd45c14 dl 28,17,4,4, so 4.1139216260546529 width 6.0818486782809273 ncl 2
+HASH case 3 overcircles-exttangent chord 0.1 ok 1 moves 380 diags 5 h e90e8f305f4dfc25 mh c69add075cd9703b dl 26,28,4,4,21, so 1.198419377393712 width 2.99604844348428 ncl 2
+HASH case 4 overcircles-exttangent-exttangent chord 0.1 ok 1 moves 352 diags 3 h 6983f507be092d00 mh 17be8d6d8b83070f dl 26,28,21, so 1.5077517705705656 width 3.769379426426414 ncl 2
+HASH case 5 overcircles-exttangent-exttangent chord 0.005 ok 1 moves 3544 diags 2 h 6423c100c3040f67 mh ccb9c944d5a1aa60 dl 26,28, so 5.282904042069771 width 13.207260105174427 ncl 2
+HASH case 6 overcircles-exttangent chord 0.02 ok 1 moves 931 diags 3 h 081a71ce29f4bb67 mh 24412eb015a80442 dl 28,21,4, so 2.2387146517605561 width 5.3908862490295437 ncl 2
+HASH case 7 overcircles-inttangent chord 0.1 ok 1 moves 569 diags 4 h b66ace4fc4ab702a mh cea86596881064e0 dl 28,17,17,17, so 5.3075656449725619 width 13.02081771960464 ncl 1
+HASH case 8 overcircles-exttangent-inttangent-inttangent chord 0.05 ok 1 moves 1908 diags 9 h b4b9c68b42fe7e2b mh e91d3ed608145b91 dl 28,17,17,17,17,17,17,17,21, so 7.895344786573709 width 5.7701531125463523 ncl 2
+HASH case 9 overcircles-inttangent chord 0.005 ok 1 moves 4512 diags 5 h 075ba60bd9f4f13e mh 35e910a909d38dd7 dl 28,17,17,17,4, so 0.43957648363884316 width 1.0769520170461757 ncl 1
+HASH case 10 overcircles-exttangent-inttangent chord 0.005 ok 1 moves 291406 diags 6 h 2aba081ea134c31e mh ef712509c077f9e1 dl 28,17,17,17,4,4, so 1.0743334445189845 width 2.3137517522647002 ncl 2
+HASH case 11 overcircles-exttangent chord 0.05 ok 1 moves 904 diags 1 h 6ae7047463a25a83 mh 9af273c8f9befbf3 dl 28, so 3.298842570595693 width 6.0110386522163317 ncl 1
+HASH case 12 overcircles-exttangent chord 0.02 ok 1 moves 2024 diags 3 h 755c61848f8e55f2 mh 6cd0596c22bfa72d dl 28,4,21, so 2.443721556334534 width 5.0040657272458757 ncl 2
+HASH case 13 overcircles-exttangent chord 0.001 ok 1 moves 302990 diags 4 h 46fd7d532d6a1154 mh 091e2fd8c56115ef dl 26,28,4,4, so 0.89052992963984168 width 2.2263248240996041 ncl 2
+HASH case 14 overcircles-inttangent chord 0.05 ok 1 moves 1242 diags 5 h 8bdf9af68aa4f18a mh 2c69a570fc738eca dl 26,28,17,17,4, so 1.1766576256567509 width 2.9416440641418773 ncl 1
+HASH case 15 overcircles-exttangent-exttangent chord 0.05 ok 1 moves 884 diags 1 h 96a8a3c40989009b mh 2750cbbbf22747bb dl 28, so 4.2035923824780808 width 10.173129921641209 ncl 2
+HASH case 16 overcircles-exttangent chord 0.001 ok 1 moves 3133064 diags 2 h f08c7af19589bafd mh e0ac15423daba67b dl 28,4, so 2.3702835268355189 width 5.5217359120211453 ncl 1
+HASH case 17 overcircles chord 0.01 ok 1 moves 983 diags 2 h d19f0388e164d780 mh 054979ea8f56cd94 dl 26,28, so 8.8547720788292761 width 22.136930197073191 ncl 2
+HASH case 18 overcircles-exttangent chord 0.001 ok 1 moves 2467 diags 1 h d670bfd53f7d0a1c mh 4e9dc2f4959b1c43 dl 28, so 1.0877074955820978 width 0.57786458229244542 ncl 1
+HASH case 19 overcircles-exttangent chord 0.01 ok 1 moves 272 diags 1 h 4e5ac266ae3807b0 mh f07dbe4fe0f41f8d dl 28, so 5.5944881323589799 width 11.138900348220773 ncl 1
+HASH case 20 overcircles-exttangent chord 0.001 ok 1 moves 9218 diags 3 h 9fee1a88add3dcc9 mh 47e586fef5ea1d96 dl 28,4,4, so 4.4135948593910896 width 7.5080744269949502 ncl 2
+HASH case 21 overcircles-inttangent chord 0.001 ok 1 moves 8198 diags 3 h a6cc6a32133edc98 mh 45b51554da1f9f75 dl 28,17,4, so 9.8076214898450171 width 6.1488070247273532 ncl 1
+HASH case 22 overcircles-inttangent chord 0.001 ok 1 moves 7342 diags 8 h d544482d161697d4 mh dea7ae6f2a93db82 dl 28,17,17,17,17,17,17,17, so 5.3260995259864998 width 2.1823879119378309 ncl 1
+HASH case 23 overcircles-exttangent chord 0.02 ok 1 moves 1616 diags 1 h ebf5557b18eab9ae mh 1d854be2cab51e8e dl 28, so 3.806405331138734 width 9.4777812690438132 ncl 2
+HASH case 24 overcircles-inttangent chord 0.02 ok 1 moves 2477 diags 5 h a0ad1f0182b1588f mh 442ba3b3c77c09e3 dl 28,17,17,17,17, so 6.0060159548484595 width 12.996931777131831 ncl 1
+HASH case 25 overcircles-inttangent chord 0.02 ok 1 moves 1116 diags 2 h 6d3d7516cb6eb681 mh fa1410ba4380cb94 dl 28,17, so 6.4533724819413383 width 9.9773533669539738 ncl 2
+HASH case 26 overcircles chord 0.05 ok 1 moves 1418 diags 3 h a4c6cc269442b001 mh 844dd6510b0b18f9 dl 26,28,4, so 1.3268816253721307 width 3.3172040634303266 ncl 2
+HASH case 27 overcircles-inttangent-exttangent chord 0.001 ok 1 moves 1569534 diags 4 h 88d083724f97d604 mh 11e4788fd227c358 dl 28,17,4,4, so 1.352694919365991 width 2.3982327420957876 ncl 2
+HASH case 28 overcircles-exttangent chord 0.01 ok 1 moves 43156 diags 3 h 550622f1779a2e28 mh 6cc1e951264cb1b0 dl 28,4,4, so 2.6462522288396446 width 5.1678410912149184 ncl 2
+HASH case 29 overcircles-inttangent-exttangent chord 0.05 ok 1 moves 1520 diags 4 h 0d4bf63e25308506 mh 05ab25c782ed35cc dl 26,28,17,4, so 0.79499743182539506 width 1.9874935795634876 ncl 1
+HASH case 30 overcircles chord 0.005 ok 1 moves 2135 diags 3 h c09e9e510ad8505e mh 2aceca5336c3defe dl 28,4,4, so 3.0564726257368986 width 6.1289438126195321 ncl 2
+HASH case 31 overcircles chord 0.1 ok 1 moves 267 diags 1 h 66230a8a55d20c3f mh c758e205da152d70 dl 28, so 7.3231147656408968 width 9.3265678562047256 ncl 2
+HASH case 32 overcircles-inttangent-exttangent-inttangent chord 0.05 ok 1 moves 4445 diags 7 h 36ce3ffe3164e193 mh 9bb8d3a3a0c18bc8 dl 28,17,17,17,17,17,21, so 0.67412344481452613 width 1.6852370018345981 ncl 2
+HASH case 33 overcircles chord 0.001 ok 1 moves 1486782 diags 3 h 3455262c489941d9 mh 7601b7ab1362f1dc dl 28,4,4, so 0.7629312159998769 width 1.614195970778622 ncl 2
+HASH case 34 overcircles-inttangent chord 0.005 ok 1 moves 1161 diags 3 h c5621fb85fe8e6b7 mh df1efb199a06d088 dl 26,28,17, so 1.7892077765589247 width 4.4730194413973114 ncl 1
+HASH case 35 overcircles-exttangent chord 0.1 ok 1 moves 512 diags 1 h 4637e9dd8863e46f mh 58c4de3a002cfb60 dl 28, so 6.6813251596089849 width 15.827958719973703 ncl 2
+HASH case 36 overcircles-exttangent-exttangent chord 0.001 ok 1 moves 9738 diags 3 h b8e702e170249c8b mh a2544c7fc170b4bb dl 28,4,29, so 7.7755945566982234 width 2.1801291085658265 ncl 1
+HASH case 37 overcircles-exttangent chord 0.005 ok 1 moves 2275 diags 3 h 9fb95f7d6b080a15 mh 44eea12db0eddf11 dl 26,28,4, so 3.0296104917805531 width 7.5740262294513823 ncl 1
+HASH case 38 overcircles-exttangent chord 0.05 ok 1 moves 810 diags 2 h 74f4cee3578e14db mh 44b734bcb94a3533 dl 26,28, so 6.038785817964814 width 15.096964544912034 ncl 1
+HASH case 39 overcircles-exttangent chord 0.01 ok 1 moves 852 diags 2 h a60089946910e2c6 mh 0ab592e017c1c9e0 dl 26,28, so 8.7853636841894307 width 21.963409210473575 ncl 2
+SUMMARY seed=608 fam=8 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

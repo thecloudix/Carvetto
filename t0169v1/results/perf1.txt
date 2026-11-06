@@ -1,0 +1,223 @@
+r1 main | pf ANG=30 comb 1000 | comb n=1000 var=0 cpu 0.343 moves 326778 diags 0 retr 1 hash c1e4d77b3796df06 | load 3.27
+r1 br | pf ANG=30 comb 1000 | comb n=1000 var=0 cpu 0.347 moves 326778 diags 0 retr 1 hash c1e4d77b3796df06 | load 3.27
+r1 main | pf ANG=0 comb 1000 | comb n=1000 var=0 cpu 0.261 moves 365072 diags 0 retr 1 hash c3e20b50616de539 | load 3.27
+r1 br | pf ANG=0 comb 1000 | comb n=1000 var=0 cpu 0.281 moves 365072 diags 0 retr 1 hash c3e20b50616de539 | load 3.27
+r1 main | pf OFFSET=1 comb 1000 | comb n=1000 var=0 cpu 0.828 moves 156704 diags 0 retr 1 hash 93e435b17e5236a8 | load 3.27
+r1 br | pf OFFSET=1 comb 1000 | comb n=1000 var=0 cpu 0.823 moves 156704 diags 0 retr 1 hash 93e435b17e5236a8 | load 3.27
+r1 main | pf RD=0.1 TOOL=1 comb 1000 | comb n=1000 var=0 cpu 0.170 moves 6019 diags 1 retr 1 hash 0715c0abcbc9d91e | load 3.27
+r1 br | pf RD=0.1 TOOL=1 comb 1000 | comb n=1000 var=0 cpu 0.165 moves 6019 diags 1 retr 1 hash 0715c0abcbc9d91e | load 3.27
+r1 main | pf X=1 rest 5000 0 | rest n=5000 var=0 cpu 2.956 moves 355863 diags 1 retr 15293 hash 5db424dae562d22a | load 3.17
+r1 br | pf X=1 rest 5000 0 | rest n=5000 var=0 cpu 3.111 moves 355863 diags 1 retr 15293 hash 5db424dae562d22a | load 3.15
+r1 main | pf RASTER=1 ANG=30 rest 5000 0 | rest n=5000 var=0 cpu 2.961 moves 455677 diags 1 retr 15293 hash c641717ce055822b | load 3.15
+r1 br | pf RASTER=1 ANG=30 rest 5000 0 | rest n=5000 var=0 cpu 2.944 moves 455850 diags 1 retr 15293 hash bf11cb4851ee7a1b | load 3.14
+r1 main | pf RD=0.5 rest 5000 2 | rest n=5000 var=2 cpu 2.519 moves 289389 diags 1 retr 8035 hash e636d0d87bebd3bc | load 3.14
+r1 br | pf RD=0.5 rest 5000 2 | rest n=5000 var=2 cpu 2.481 moves 289389 diags 1 retr 8035 hash e636d0d87bebd3bc | load 3.13
+r1 main | pf X=1 pockpage 5000 2 | pockpage n=5000 var=2 cpu 0.634 moves 173800 diags 1 retr 2466 hash 62bdd3879c94f348 | load 3.13
+r1 br | pf X=1 pockpage 5000 2 | pockpage n=5000 var=2 cpu 0.670 moves 173800 diags 1 retr 2466 hash 62bdd3879c94f348 | load 3.13
+r1 main | pp X=1 bigcirc 500 | bigcirc n=500 cpu 0.013 moves 2673 retracts 1 diags 1 hash df2b218e9a96d605 | load 3.13
+r1 br | pp X=1 bigcirc 500 | bigcirc n=500 cpu 0.013 moves 2673 retracts 1 diags 1 hash df2b218e9a96d605 | load 3.13
+r1 main | pp X=1 bigcirc 1000 | bigcirc n=1000 cpu 0.015 moves 3498 retracts 1 diags 1 hash 303a80000ef9ba89 | load 3.13
+r1 br | pp X=1 bigcirc 1000 | bigcirc n=1000 cpu 0.016 moves 3498 retracts 1 diags 1 hash 303a80000ef9ba89 | load 3.13
+r1 main | pp X=1 bigcirc 1500 | bigcirc n=1500 cpu 0.021 moves 3874 retracts 1 diags 1 hash d483b5820dfd456a | load 3.13
+r1 br | pp X=1 bigcirc 1500 | bigcirc n=1500 cpu 0.021 moves 3874 retracts 1 diags 1 hash d483b5820dfd456a | load 3.13
+r1 main | pp X=1 bigcircoff 1500 | bigcircoff n=1500 cpu 46.088 moves 541878 retracts 1 diags 1 hash 4d2875e64e0a1865 | load 3.21
+r1 br | pp X=1 bigcircoff 1500 | bigcircoff n=1500 cpu 48.201 moves 541878 retracts 1 diags 1 hash 4d2875e64e0a1865 | load 3.94
+r1 main | pp PP_DFR=0.1 bigcirc 1500 | bigcirc n=1500 cpu 0.021 moves 3560 retracts 1 diags 1 hash 55d103ed8f64efc0 | load 3.94
+r1 br | pp PP_DFR=0.1 bigcirc 1500 | bigcirc n=1500 cpu 0.024 moves 3560 retracts 1 diags 1 hash 55d103ed8f64efc0 | load 3.94
+r1 main | pp X=1 concave 200 | concave n=200 cpu 0.044 moves 6757 retracts 33 diags 0 hash 50ab34a59555b531 | load 3.94
+r1 br | pp X=1 concave 200 | concave n=200 cpu 0.041 moves 6761 retracts 33 diags 0 hash ef348c2a1d13d0e9 | load 3.94
+r1 main | pp X=1 concave 400 | concave n=400 cpu 0.055 moves 11445 retracts 33 diags 0 hash 341d2298055cee1c | load 3.94
+r1 br | pp X=1 concave 400 | concave n=400 cpu 0.046 moves 11445 retracts 33 diags 0 hash 341d2298055cee1c | load 3.94
+r1 main | pp X=1 concave 800 | concave n=800 cpu 0.071 moves 13861 retracts 33 diags 0 hash 5dac26ad047dce95 | load 3.94
+r1 br | pp X=1 concave 800 | concave n=800 cpu 0.068 moves 13861 retracts 33 diags 0 hash 5dac26ad047dce95 | load 3.94
+r1 main | pp X=1 concave 1600 | concave n=1600 cpu 0.113 moves 18849 retracts 33 diags 0 hash 97f25eccf99eb2c7 | load 3.94
+r1 br | pp X=1 concave 1600 | concave n=1600 cpu 0.129 moves 18861 retracts 33 diags 0 hash df9182417b6e903d | load 3.94
+r1 main | pp X=1 concave 3000 | concave n=3000 cpu 0.241 moves 24628 retracts 33 diags 0 hash d1c21af03cb55750 | load 3.94
+r1 br | pp X=1 concave 3000 | concave n=3000 cpu 0.236 moves 24628 retracts 33 diags 0 hash d1c21af03cb55750 | load 3.94
+r1 main | pp X=1 gear 100 | gear n=100 cpu 0.384 moves 71977 retracts 101 diags 0 hash eb9db258cd733800 | load 3.94
+r1 br | pp X=1 gear 100 | gear n=100 cpu 0.417 moves 72008 retracts 101 diags 0 hash 23d04dd0e216dabb | load 3.94
+r1 main | pp X=1 gear 200 | gear n=200 cpu 1.159 moves 192911 retracts 201 diags 0 hash 9fa09cc63b11944f | load 3.94
+r1 br | pp X=1 gear 200 | gear n=200 cpu 1.143 moves 188976 retracts 201 diags 0 hash d538695e1b94ddda | load 3.94
+r1 main | pp X=1 gear 400 | gear n=400 cpu 1.839 moves 121395 retracts 401 diags 0 hash b47a1b461100af08 | load 3.95
+r1 br | pp X=1 gear 400 | gear n=400 cpu 1.846 moves 121644 retracts 401 diags 0 hash 23d122492ebac29e | load 3.95
+r1 main | pp X=1 gear 800 | gear n=800 cpu 4.082 moves 92577 retracts 801 diags 0 hash 12dec1f9569e5f9f | load 4.03
+r1 br | pp X=1 gear 800 | gear n=800 cpu 4.124 moves 93610 retracts 801 diags 0 hash ef8ce54ed0349afa | load 4.11
+r1 main | pp X=1 wavy 50 | wavy n=50 cpu 0.277 moves 93853 retracts 29 diags 0 hash 7aa3ea248173404e | load 4.11
+r1 br | pp X=1 wavy 50 | wavy n=50 cpu 0.283 moves 94097 retracts 29 diags 0 hash 01d350810ce6d20e | load 4.11
+r1 main | pp X=1 wavy 100 | wavy n=100 cpu 0.700 moves 184410 retracts 58 diags 0 hash 8eac333c6c3d31de | load 4.11
+r1 br | pp X=1 wavy 100 | wavy n=100 cpu 0.675 moves 184833 retracts 58 diags 0 hash 57a229c35aac1030 | load 4.11
+r1 main | pp X=1 wavy 200 | wavy n=200 cpu 1.472 moves 198086 retracts 161 diags 0 hash 5a7f799f427e67f9 | load 4.11
+r1 br | pp X=1 wavy 200 | wavy n=200 cpu 1.594 moves 198997 retracts 161 diags 0 hash 0a042153e8699788 | load 4.18
+r1 main | pp X=1 wavy 400 | wavy n=400 cpu 3.999 moves 184394 retracts 353 diags 0 hash 386a3a7f9ed40f0a | load 4.25
+r1 br | pp X=1 wavy 400 | wavy n=400 cpu 3.938 moves 186946 retracts 353 diags 0 hash 2240eeabadcfdd37 | load 4.25
+r1 main | pp X=1 islands 5 | islands n=5 cpu 3.232 moves 70165 retracts 5 diags 0 hash 5dbf4fe92160bee3 | load 4.23
+r1 br | pp X=1 islands 5 | islands n=5 cpu 3.333 moves 70165 retracts 5 diags 0 hash 5dbf4fe92160bee3 | load 4.37
+r1 main | pp X=1 islands 10 | islands n=10 cpu 45.931 moves 285677 retracts 5 diags 0 hash fdf563f26f4e0cde | load 4.33
+r1 br | pp X=1 islands 10 | islands n=10 cpu 46.146 moves 285677 retracts 5 diags 0 hash fdf563f26f4e0cde | load 4.80
+r1 main | pp X=1 reflex 12 | reflex n=12 cpu 1.407 moves 39649 retracts 13 diags 0 hash 4a60ec38445ed341 | load 4.98
+r1 br | pp X=1 reflex 12 | reflex n=12 cpu 1.397 moves 39649 retracts 13 diags 0 hash 4a60ec38445ed341 | load 4.98
+r1 main | pp X=1 reflex 25 | reflex n=25 cpu 6.840 moves 51108 retracts 26 diags 0 hash 413a33e8c388cf56 | load 5.14
+r1 br | pp X=1 reflex 25 | reflex n=25 cpu 6.309 moves 51108 retracts 26 diags 0 hash 413a33e8c388cf56 | load 5.29
+r1 main | pk PK_SCALE=100 PK_NOCHECK=1 9 1095 1 | case 1095 fam 9 lines2 ch 0.0001 dist 1e-06 D 17.9182 al 0 strat 0 pass 1 tools 2 ramp 0 hash d4ce442b764ccc6f moves 196493 rapid 43 plunge 45 retract 43 cut 67098.780046 cpu 27.6927 worst 1.0000e+300  | load 6.05
+r1 br | pk PK_SCALE=100 PK_NOCHECK=1 9 1095 1 | case 1095 fam 9 lines2 ch 0.0001 dist 1e-06 D 17.9182 al 0 strat 0 pass 1 tools 2 ramp 0 hash d4ce442b764ccc6f moves 196493 rapid 43 plunge 45 retract 43 cut 67098.780046 cpu 28.7956 worst 1.0000e+300  | load 6.96
+r1 main | pk PK_SCALE=100 PK_NOCHECK=1 9 1004 1 | case 1004 fam 9 lines2 ch 0.001 dist 1e-06 D 115.666 al 0 strat 1 pass 2 tools 2 ramp 0 hash 212965d3c3ed7239 moves 65057 rapid 34 plunge 250 retract 34 cut 221703.436280 cpu 47.1114 worst 1.0000e+300  | load 7.49
+r1 br | pk PK_SCALE=100 PK_NOCHECK=1 9 1004 1 | case 1004 fam 9 lines2 ch 0.001 dist 1e-06 D 115.666 al 0 strat 1 pass 2 tools 2 ramp 0 hash 212965d3c3ed7239 moves 65057 rapid 34 plunge 250 retract 34 cut 221703.436280 cpu 45.8721 worst 1.0000e+300  | load 7.91
+r1 main | pk PK_SCALE=100 PK_NOCHECK=1 9 1056 1 | case 1056 fam 9 lines2 ch 0.0001 dist 3.33333e-05 D 37.6887 al 1.31873 strat 0 pass 2 tools 2 ramp 0 hash c6203e0aa566dfc5 moves 440788 rapid 28 plunge 56 retract 28 cut 146665.376584 cpu 54.6723 worst 1.0000e+300  | load 8.01
+r1 br | pk PK_SCALE=100 PK_NOCHECK=1 9 1056 1 | case 1056 fam 9 lines2 ch 0.0001 dist 3.33333e-05 D 37.6887 al 1.31873 strat 0 pass 2 tools 2 ramp 0 hash c6203e0aa566dfc5 moves 440788 rapid 28 plunge 56 retract 28 cut 146665.376584 cpu 49.4223 worst 1.0000e+300  | load 7.57
+r1 main | pk PK_SCALE=100 PK_NOCHECK=1 7 1095 1 | case 1095 fam 7 gear ch 0.002 dist 2e-06 D 72.9724 al 3.11292 strat 0 pass 1 tools 1 ramp 1 hash 9bde92e7ca113564 moves 16673 rapid 1 plunge 1 retract 1 cut 11552.706038 cpu 1.9792 worst 1.0000e+300  | load 7.52
+r1 br | pk PK_SCALE=100 PK_NOCHECK=1 7 1095 1 | case 1095 fam 7 gear ch 0.002 dist 2e-06 D 72.9724 al 3.11292 strat 0 pass 1 tools 1 ramp 1 hash 9bde92e7ca113564 moves 16673 rapid 1 plunge 1 retract 1 cut 11552.706038 cpu 2.3035 worst 1.0000e+300  | load 7.52
+r1 main | vperf X=1 5000 | 5000 regions 38750 spans: 21.11 s CPU, carve 2680243 moves, 2680243 moves, ok=1 diags=0, peak RSS 410 MB | load 7.61
+r1 br | vperf X=1 5000 | 5000 regions 38750 spans: 21.53 s CPU, carve 2680243 moves, 2680243 moves, ok=1 diags=0, peak RSS 410 MB | load 7.80
+r1 main | vperf VPERF_FLAT=0.5 5000 | 5000 regions 38750 spans: 27.17 s CPU, carve 3938993 moves, 3938993 moves, ok=1 diags=0, peak RSS 758 MB | load 7.81
+r1 br | vperf VPERF_FLAT=0.5 5000 | 5000 regions 38750 spans: 27.01 s CPU, carve 3938993 moves, 3938993 moves, ok=1 diags=0, peak RSS 758 MB | load 7.97
+r1 main | vperf VPERF_FLAT=0.5 VPERF_EM=0.5 5000 | 5000 regions 38750 spans: 41.77 s CPU, carve 3943993 moves, 4015243 moves, ok=1 diags=1, peak RSS 451 MB | load 9.41
+r1 br | vperf VPERF_FLAT=0.5 VPERF_EM=0.5 5000 | 5000 regions 38750 spans: 41.78 s CPU, carve 3943993 moves, 4015243 moves, ok=1 diags=1, peak RSS 451 MB | load 10.33
+r2 br | pf ANG=30 comb 1000 | comb n=1000 var=0 cpu 0.435 moves 326778 diags 0 retr 1 hash c1e4d77b3796df06 | load 10.33
+r2 main | pf ANG=30 comb 1000 | comb n=1000 var=0 cpu 0.446 moves 326778 diags 0 retr 1 hash c1e4d77b3796df06 | load 10.33
+r2 br | pf ANG=0 comb 1000 | comb n=1000 var=0 cpu 0.418 moves 365072 diags 0 retr 1 hash c3e20b50616de539 | load 10.38
+r2 main | pf ANG=0 comb 1000 | comb n=1000 var=0 cpu 0.407 moves 365072 diags 0 retr 1 hash c3e20b50616de539 | load 10.38
+r2 br | pf OFFSET=1 comb 1000 | comb n=1000 var=0 cpu 1.009 moves 156704 diags 0 retr 1 hash 93e435b17e5236a8 | load 10.38
+r2 main | pf OFFSET=1 comb 1000 | comb n=1000 var=0 cpu 1.024 moves 156704 diags 0 retr 1 hash 93e435b17e5236a8 | load 10.38
+r2 br | pf RD=0.1 TOOL=1 comb 1000 | comb n=1000 var=0 cpu 0.189 moves 6019 diags 1 retr 1 hash 0715c0abcbc9d91e | load 10.38
+r2 main | pf RD=0.1 TOOL=1 comb 1000 | comb n=1000 var=0 cpu 0.199 moves 6019 diags 1 retr 1 hash 0715c0abcbc9d91e | load 10.38
+r2 br | pf X=1 rest 5000 0 | rest n=5000 var=0 cpu 4.042 moves 355863 diags 1 retr 15293 hash 5db424dae562d22a | load 10.43
+r2 main | pf X=1 rest 5000 0 | rest n=5000 var=0 cpu 3.995 moves 355863 diags 1 retr 15293 hash 5db424dae562d22a | load 10.48
+r2 br | pf RASTER=1 ANG=30 rest 5000 0 | rest n=5000 var=0 cpu 4.008 moves 455850 diags 1 retr 15293 hash bf11cb4851ee7a1b | load 10.60
+r2 main | pf RASTER=1 ANG=30 rest 5000 0 | rest n=5000 var=0 cpu 4.136 moves 455677 diags 1 retr 15293 hash c641717ce055822b | load 10.71
+r2 br | pf RD=0.5 rest 5000 2 | rest n=5000 var=2 cpu 3.525 moves 289389 diags 1 retr 8035 hash e636d0d87bebd3bc | load 10.71
+r2 main | pf RD=0.5 rest 5000 2 | rest n=5000 var=2 cpu 3.503 moves 289389 diags 1 retr 8035 hash e636d0d87bebd3bc | load 10.81
+r2 br | pf X=1 pockpage 5000 2 | pockpage n=5000 var=2 cpu 0.992 moves 173800 diags 1 retr 2466 hash 62bdd3879c94f348 | load 10.81
+r2 main | pf X=1 pockpage 5000 2 | pockpage n=5000 var=2 cpu 0.993 moves 173800 diags 1 retr 2466 hash 62bdd3879c94f348 | load 10.81
+r2 br | pp X=1 bigcirc 500 | bigcirc n=500 cpu 0.022 moves 2673 retracts 1 diags 1 hash df2b218e9a96d605 | load 10.81
+r2 main | pp X=1 bigcirc 500 | bigcirc n=500 cpu 0.022 moves 2673 retracts 1 diags 1 hash df2b218e9a96d605 | load 10.81
+r2 br | pp X=1 bigcirc 1000 | bigcirc n=1000 cpu 0.027 moves 3498 retracts 1 diags 1 hash 303a80000ef9ba89 | load 10.81
+r2 main | pp X=1 bigcirc 1000 | bigcirc n=1000 cpu 0.028 moves 3498 retracts 1 diags 1 hash 303a80000ef9ba89 | load 10.81
+r2 br | pp X=1 bigcirc 1500 | bigcirc n=1500 cpu 0.037 moves 3874 retracts 1 diags 1 hash d483b5820dfd456a | load 10.83
+r2 main | pp X=1 bigcirc 1500 | bigcirc n=1500 cpu 0.040 moves 3874 retracts 1 diags 1 hash d483b5820dfd456a | load 10.83
+r2 br | pp X=1 bigcircoff 1500 | bigcircoff n=1500 cpu 56.908 moves 541878 retracts 1 diags 1 hash 4d2875e64e0a1865 | load 10.99
+r2 main | pp X=1 bigcircoff 1500 | bigcircoff n=1500 cpu 54.830 moves 541878 retracts 1 diags 1 hash 4d2875e64e0a1865 | load 11.18
+r2 br | pp PP_DFR=0.1 bigcirc 1500 | bigcirc n=1500 cpu 0.032 moves 3560 retracts 1 diags 1 hash 55d103ed8f64efc0 | load 11.18
+r2 main | pp PP_DFR=0.1 bigcirc 1500 | bigcirc n=1500 cpu 0.032 moves 3560 retracts 1 diags 1 hash 55d103ed8f64efc0 | load 11.18
+r2 br | pp X=1 concave 200 | concave n=200 cpu 0.052 moves 6761 retracts 33 diags 0 hash ef348c2a1d13d0e9 | load 11.18
+r2 main | pp X=1 concave 200 | concave n=200 cpu 0.052 moves 6757 retracts 33 diags 0 hash 50ab34a59555b531 | load 11.18
+r2 br | pp X=1 concave 400 | concave n=400 cpu 0.065 moves 11445 retracts 33 diags 0 hash 341d2298055cee1c | load 11.18
+r2 main | pp X=1 concave 400 | concave n=400 cpu 0.055 moves 11445 retracts 33 diags 0 hash 341d2298055cee1c | load 11.18
+r2 br | pp X=1 concave 800 | concave n=800 cpu 0.089 moves 13861 retracts 33 diags 0 hash 5dac26ad047dce95 | load 11.18
+r2 main | pp X=1 concave 800 | concave n=800 cpu 0.079 moves 13861 retracts 33 diags 0 hash 5dac26ad047dce95 | load 11.18
+r2 br | pp X=1 concave 1600 | concave n=1600 cpu 0.171 moves 18861 retracts 33 diags 0 hash df9182417b6e903d | load 11.18
+r2 main | pp X=1 concave 1600 | concave n=1600 cpu 0.144 moves 18849 retracts 33 diags 0 hash 97f25eccf99eb2c7 | load 11.18
+r2 br | pp X=1 concave 3000 | concave n=3000 cpu 0.263 moves 24628 retracts 33 diags 0 hash d1c21af03cb55750 | load 11.18
+r2 main | pp X=1 concave 3000 | concave n=3000 cpu 0.268 moves 24628 retracts 33 diags 0 hash d1c21af03cb55750 | load 11.18
+r2 br | pp X=1 gear 100 | gear n=100 cpu 0.523 moves 72008 retracts 101 diags 0 hash 23d04dd0e216dabb | load 11.18
+r2 main | pp X=1 gear 100 | gear n=100 cpu 0.523 moves 71977 retracts 101 diags 0 hash eb9db258cd733800 | load 11.17
+r2 br | pp X=1 gear 200 | gear n=200 cpu 1.547 moves 188976 retracts 201 diags 0 hash d538695e1b94ddda | load 11.17
+r2 main | pp X=1 gear 200 | gear n=200 cpu 1.546 moves 192911 retracts 201 diags 0 hash 9fa09cc63b11944f | load 11.17
+r2 br | pp X=1 gear 400 | gear n=400 cpu 2.446 moves 121644 retracts 401 diags 0 hash 23d122492ebac29e | load 11.15
+r2 main | pp X=1 gear 400 | gear n=400 cpu 2.241 moves 121395 retracts 401 diags 0 hash b47a1b461100af08 | load 11.15
+r2 br | pp X=1 gear 800 | gear n=800 cpu 4.921 moves 93610 retracts 801 diags 0 hash ef8ce54ed0349afa | load 11.14
+r2 main | pp X=1 gear 800 | gear n=800 cpu 5.020 moves 92577 retracts 801 diags 0 hash 12dec1f9569e5f9f | load 11.13
+r2 br | pp X=1 wavy 50 | wavy n=50 cpu 0.351 moves 94097 retracts 29 diags 0 hash 01d350810ce6d20e | load 11.13
+r2 main | pp X=1 wavy 50 | wavy n=50 cpu 0.331 moves 93853 retracts 29 diags 0 hash 7aa3ea248173404e | load 11.13
+r2 br | pp X=1 wavy 100 | wavy n=100 cpu 0.871 moves 184833 retracts 58 diags 0 hash 57a229c35aac1030 | load 11.12
+r2 main | pp X=1 wavy 100 | wavy n=100 cpu 0.859 moves 184410 retracts 58 diags 0 hash 8eac333c6c3d31de | load 11.12
+r2 br | pp X=1 wavy 200 | wavy n=200 cpu 1.766 moves 198997 retracts 161 diags 0 hash 0a042153e8699788 | load 11.12
+r2 main | pp X=1 wavy 200 | wavy n=200 cpu 1.703 moves 198086 retracts 161 diags 0 hash 5a7f799f427e67f9 | load 11.12
+r2 br | pp X=1 wavy 400 | wavy n=400 cpu 4.891 moves 186946 retracts 353 diags 0 hash 2240eeabadcfdd37 | load 11.11
+r2 main | pp X=1 wavy 400 | wavy n=400 cpu 4.916 moves 184394 retracts 353 diags 0 hash 386a3a7f9ed40f0a | load 11.18
+r2 br | pp X=1 islands 5 | islands n=5 cpu 4.193 moves 70165 retracts 5 diags 0 hash 5dbf4fe92160bee3 | load 11.17
+r2 main | pp X=1 islands 5 | islands n=5 cpu 4.224 moves 70165 retracts 5 diags 0 hash 5dbf4fe92160bee3 | load 11.23
+r2 br | pp X=1 islands 10 | islands n=10 cpu 57.207 moves 285677 retracts 5 diags 0 hash fdf563f26f4e0cde | load 11.46
+r2 main | pp X=1 islands 10 | islands n=10 cpu 56.520 moves 285677 retracts 5 diags 0 hash fdf563f26f4e0cde | load 11.35
+r2 br | pp X=1 reflex 12 | reflex n=12 cpu 1.510 moves 39649 retracts 13 diags 0 hash 4a60ec38445ed341 | load 11.35
+r2 main | pp X=1 reflex 12 | reflex n=12 cpu 1.481 moves 39649 retracts 13 diags 0 hash 4a60ec38445ed341 | load 11.35
+r2 br | pp X=1 reflex 25 | reflex n=25 cpu 8.404 moves 51108 retracts 26 diags 0 hash 413a33e8c388cf56 | load 11.14
+r2 main | pp X=1 reflex 25 | reflex n=25 cpu 7.797 moves 51108 retracts 26 diags 0 hash 413a33e8c388cf56 | load 11.12
+r2 br | pk PK_SCALE=100 PK_NOCHECK=1 9 1095 1 | case 1095 fam 9 lines2 ch 0.0001 dist 1e-06 D 17.9182 al 0 strat 0 pass 1 tools 2 ramp 0 hash d4ce442b764ccc6f moves 196493 rapid 43 plunge 45 retract 43 cut 67098.780046 cpu 32.5773 worst 1.0000e+300  | load 10.59
+r2 main | pk PK_SCALE=100 PK_NOCHECK=1 9 1095 1 | case 1095 fam 9 lines2 ch 0.0001 dist 1e-06 D 17.9182 al 0 strat 0 pass 1 tools 2 ramp 0 hash d4ce442b764ccc6f moves 196493 rapid 43 plunge 45 retract 43 cut 67098.780046 cpu 34.9528 worst 1.0000e+300  | load 9.89
+r2 br | pk PK_SCALE=100 PK_NOCHECK=1 9 1004 1 | case 1004 fam 9 lines2 ch 0.001 dist 1e-06 D 115.666 al 0 strat 1 pass 2 tools 2 ramp 0 hash 212965d3c3ed7239 moves 65057 rapid 34 plunge 250 retract 34 cut 221703.436280 cpu 49.2378 worst 1.0000e+300  | load 9.27
+r2 main | pk PK_SCALE=100 PK_NOCHECK=1 9 1004 1 | case 1004 fam 9 lines2 ch 0.001 dist 1e-06 D 115.666 al 0 strat 1 pass 2 tools 2 ramp 0 hash 212965d3c3ed7239 moves 65057 rapid 34 plunge 250 retract 34 cut 221703.436280 cpu 53.8440 worst 1.0000e+300  | load 10.72
+r2 br | pk PK_SCALE=100 PK_NOCHECK=1 9 1056 1 | case 1056 fam 9 lines2 ch 0.0001 dist 3.33333e-05 D 37.6887 al 1.31873 strat 0 pass 2 tools 2 ramp 0 hash c6203e0aa566dfc5 moves 440788 rapid 28 plunge 56 retract 28 cut 146665.376584 cpu 52.8083 worst 1.0000e+300  | load 9.69
+r2 main | pk PK_SCALE=100 PK_NOCHECK=1 9 1056 1 | case 1056 fam 9 lines2 ch 0.0001 dist 3.33333e-05 D 37.6887 al 1.31873 strat 0 pass 2 tools 2 ramp 0 hash c6203e0aa566dfc5 moves 440788 rapid 28 plunge 56 retract 28 cut 146665.376584 cpu 54.7734 worst 1.0000e+300  | load 10.97
+r2 br | pk PK_SCALE=100 PK_NOCHECK=1 7 1095 1 | case 1095 fam 7 gear ch 0.002 dist 2e-06 D 72.9724 al 3.11292 strat 0 pass 1 tools 1 ramp 1 hash 9bde92e7ca113564 moves 16673 rapid 1 plunge 1 retract 1 cut 11552.706038 cpu 2.4323 worst 1.0000e+300  | load 10.97
+r2 main | pk PK_SCALE=100 PK_NOCHECK=1 7 1095 1 | case 1095 fam 7 gear ch 0.002 dist 2e-06 D 72.9724 al 3.11292 strat 0 pass 1 tools 1 ramp 1 hash 9bde92e7ca113564 moves 16673 rapid 1 plunge 1 retract 1 cut 11552.706038 cpu 2.3941 worst 1.0000e+300  | load 10.97
+r2 br | vperf X=1 5000 | 5000 regions 38750 spans: 23.87 s CPU, carve 2680243 moves, 2680243 moves, ok=1 diags=0, peak RSS 410 MB | load 11.32
+r2 main | vperf X=1 5000 | 5000 regions 38750 spans: 23.16 s CPU, carve 2680243 moves, 2680243 moves, ok=1 diags=0, peak RSS 410 MB | load 11.21
+r2 br | vperf VPERF_FLAT=0.5 5000 | 5000 regions 38750 spans: 30.16 s CPU, carve 3938993 moves, 3938993 moves, ok=1 diags=0, peak RSS 758 MB | load 11.12
+r2 main | vperf VPERF_FLAT=0.5 5000 | 5000 regions 38750 spans: 30.20 s CPU, carve 3938993 moves, 3938993 moves, ok=1 diags=0, peak RSS 758 MB | load 11.15
+r2 br | vperf VPERF_FLAT=0.5 VPERF_EM=0.5 5000 | 5000 regions 38750 spans: 41.93 s CPU, carve 3943993 moves, 4015243 moves, ok=1 diags=1, peak RSS 451 MB | load 11.16
+r2 main | vperf VPERF_FLAT=0.5 VPERF_EM=0.5 5000 | 5000 regions 38750 spans: 42.75 s CPU, carve 3943993 moves, 4015243 moves, ok=1 diags=1, peak RSS 451 MB | load 11.39
+r3 main | pf ANG=30 comb 1000 | comb n=1000 var=0 cpu 0.433 moves 326778 diags 0 retr 1 hash c1e4d77b3796df06 | load 11.39
+r3 br | pf ANG=30 comb 1000 | comb n=1000 var=0 cpu 0.452 moves 326778 diags 0 retr 1 hash c1e4d77b3796df06 | load 11.39
+r3 main | pf ANG=0 comb 1000 | comb n=1000 var=0 cpu 0.373 moves 365072 diags 0 retr 1 hash c3e20b50616de539 | load 11.39
+r3 br | pf ANG=0 comb 1000 | comb n=1000 var=0 cpu 0.407 moves 365072 diags 0 retr 1 hash c3e20b50616de539 | load 11.39
+r3 main | pf OFFSET=1 comb 1000 | comb n=1000 var=0 cpu 0.983 moves 156704 diags 0 retr 1 hash 93e435b17e5236a8 | load 11.39
+r3 br | pf OFFSET=1 comb 1000 | comb n=1000 var=0 cpu 1.003 moves 156704 diags 0 retr 1 hash 93e435b17e5236a8 | load 11.36
+r3 main | pf RD=0.1 TOOL=1 comb 1000 | comb n=1000 var=0 cpu 0.197 moves 6019 diags 1 retr 1 hash 0715c0abcbc9d91e | load 11.36
+r3 br | pf RD=0.1 TOOL=1 comb 1000 | comb n=1000 var=0 cpu 0.189 moves 6019 diags 1 retr 1 hash 0715c0abcbc9d91e | load 11.36
+r3 main | pf X=1 rest 5000 0 | rest n=5000 var=0 cpu 4.125 moves 355863 diags 1 retr 15293 hash 5db424dae562d22a | load 11.33
+r3 br | pf X=1 rest 5000 0 | rest n=5000 var=0 cpu 4.383 moves 355863 diags 1 retr 15293 hash 5db424dae562d22a | load 11.30
+r3 main | pf RASTER=1 ANG=30 rest 5000 0 | rest n=5000 var=0 cpu 3.963 moves 455677 diags 1 retr 15293 hash c641717ce055822b | load 11.30
+r3 br | pf RASTER=1 ANG=30 rest 5000 0 | rest n=5000 var=0 cpu 3.838 moves 455850 diags 1 retr 15293 hash bf11cb4851ee7a1b | load 11.28
+r3 main | pf RD=0.5 rest 5000 2 | rest n=5000 var=2 cpu 3.259 moves 289389 diags 1 retr 8035 hash e636d0d87bebd3bc | load 11.26
+r3 br | pf RD=0.5 rest 5000 2 | rest n=5000 var=2 cpu 3.394 moves 289389 diags 1 retr 8035 hash e636d0d87bebd3bc | load 11.24
+r3 main | pf X=1 pockpage 5000 2 | pockpage n=5000 var=2 cpu 0.900 moves 173800 diags 1 retr 2466 hash 62bdd3879c94f348 | load 11.24
+r3 br | pf X=1 pockpage 5000 2 | pockpage n=5000 var=2 cpu 0.952 moves 173800 diags 1 retr 2466 hash 62bdd3879c94f348 | load 11.24
+r3 main | pp X=1 bigcirc 500 | bigcirc n=500 cpu 0.014 moves 2673 retracts 1 diags 1 hash df2b218e9a96d605 | load 11.24
+r3 br | pp X=1 bigcirc 500 | bigcirc n=500 cpu 0.018 moves 2673 retracts 1 diags 1 hash df2b218e9a96d605 | load 11.24
+r3 main | pp X=1 bigcirc 1000 | bigcirc n=1000 cpu 0.026 moves 3498 retracts 1 diags 1 hash 303a80000ef9ba89 | load 11.24
+r3 br | pp X=1 bigcirc 1000 | bigcirc n=1000 cpu 0.019 moves 3498 retracts 1 diags 1 hash 303a80000ef9ba89 | load 11.24
+r3 main | pp X=1 bigcirc 1500 | bigcirc n=1500 cpu 0.025 moves 3874 retracts 1 diags 1 hash d483b5820dfd456a | load 11.24
+r3 br | pp X=1 bigcirc 1500 | bigcirc n=1500 cpu 0.031 moves 3874 retracts 1 diags 1 hash d483b5820dfd456a | load 11.24
+r3 main | pp X=1 bigcircoff 1500 | bigcircoff n=1500 cpu 53.406 moves 541878 retracts 1 diags 1 hash 4d2875e64e0a1865 | load 10.09
+r3 br | pp X=1 bigcircoff 1500 | bigcircoff n=1500 cpu 51.259 moves 541878 retracts 1 diags 1 hash 4d2875e64e0a1865 | load 7.71
+r3 main | pp PP_DFR=0.1 bigcirc 1500 | bigcirc n=1500 cpu 0.021 moves 3560 retracts 1 diags 1 hash 55d103ed8f64efc0 | load 7.71
+r3 br | pp PP_DFR=0.1 bigcirc 1500 | bigcirc n=1500 cpu 0.029 moves 3560 retracts 1 diags 1 hash 55d103ed8f64efc0 | load 7.71
+r3 main | pp X=1 concave 200 | concave n=200 cpu 0.044 moves 6757 retracts 33 diags 0 hash 50ab34a59555b531 | load 7.71
+r3 br | pp X=1 concave 200 | concave n=200 cpu 0.048 moves 6761 retracts 33 diags 0 hash ef348c2a1d13d0e9 | load 7.71
+r3 main | pp X=1 concave 400 | concave n=400 cpu 0.054 moves 11445 retracts 33 diags 0 hash 341d2298055cee1c | load 7.71
+r3 br | pp X=1 concave 400 | concave n=400 cpu 0.052 moves 11445 retracts 33 diags 0 hash 341d2298055cee1c | load 7.71
+r3 main | pp X=1 concave 800 | concave n=800 cpu 0.070 moves 13861 retracts 33 diags 0 hash 5dac26ad047dce95 | load 7.71
+r3 br | pp X=1 concave 800 | concave n=800 cpu 0.080 moves 13861 retracts 33 diags 0 hash 5dac26ad047dce95 | load 7.71
+r3 main | pp X=1 concave 1600 | concave n=1600 cpu 0.147 moves 18849 retracts 33 diags 0 hash 97f25eccf99eb2c7 | load 7.71
+r3 br | pp X=1 concave 1600 | concave n=1600 cpu 0.131 moves 18861 retracts 33 diags 0 hash df9182417b6e903d | load 7.71
+r3 main | pp X=1 concave 3000 | concave n=3000 cpu 0.232 moves 24628 retracts 33 diags 0 hash d1c21af03cb55750 | load 7.71
+r3 br | pp X=1 concave 3000 | concave n=3000 cpu 0.229 moves 24628 retracts 33 diags 0 hash d1c21af03cb55750 | load 7.71
+r3 main | pp X=1 gear 100 | gear n=100 cpu 0.380 moves 71977 retracts 101 diags 0 hash eb9db258cd733800 | load 7.71
+r3 br | pp X=1 gear 100 | gear n=100 cpu 0.466 moves 72008 retracts 101 diags 0 hash 23d04dd0e216dabb | load 7.57
+r3 main | pp X=1 gear 200 | gear n=200 cpu 1.228 moves 192911 retracts 201 diags 0 hash 9fa09cc63b11944f | load 7.57
+r3 br | pp X=1 gear 200 | gear n=200 cpu 1.234 moves 188976 retracts 201 diags 0 hash d538695e1b94ddda | load 7.57
+r3 main | pp X=1 gear 400 | gear n=400 cpu 2.008 moves 121395 retracts 401 diags 0 hash b47a1b461100af08 | load 7.36
+r3 br | pp X=1 gear 400 | gear n=400 cpu 1.900 moves 121644 retracts 401 diags 0 hash 23d122492ebac29e | load 7.36
+r3 main | pp X=1 gear 800 | gear n=800 cpu 4.167 moves 92577 retracts 801 diags 0 hash 12dec1f9569e5f9f | load 7.25
+r3 br | pp X=1 gear 800 | gear n=800 cpu 4.403 moves 93610 retracts 801 diags 0 hash ef8ce54ed0349afa | load 7.15
+r3 main | pp X=1 wavy 50 | wavy n=50 cpu 0.246 moves 93853 retracts 29 diags 0 hash 7aa3ea248173404e | load 7.15
+r3 br | pp X=1 wavy 50 | wavy n=50 cpu 0.299 moves 94097 retracts 29 diags 0 hash 01d350810ce6d20e | load 7.15
+r3 main | pp X=1 wavy 100 | wavy n=100 cpu 0.660 moves 184410 retracts 58 diags 0 hash 8eac333c6c3d31de | load 7.15
+r3 br | pp X=1 wavy 100 | wavy n=100 cpu 0.707 moves 184833 retracts 58 diags 0 hash 57a229c35aac1030 | load 7.15
+r3 main | pp X=1 wavy 200 | wavy n=200 cpu 1.436 moves 198086 retracts 161 diags 0 hash 5a7f799f427e67f9 | load 7.15
+r3 br | pp X=1 wavy 200 | wavy n=200 cpu 1.499 moves 198997 retracts 161 diags 0 hash 0a042153e8699788 | load 7.06
+r3 main | pp X=1 wavy 400 | wavy n=400 cpu 4.233 moves 184394 retracts 353 diags 0 hash 386a3a7f9ed40f0a | load 6.98
+r3 br | pp X=1 wavy 400 | wavy n=400 cpu 4.160 moves 186946 retracts 353 diags 0 hash 2240eeabadcfdd37 | load 6.98
+r3 main | pp X=1 islands 5 | islands n=5 cpu 3.426 moves 70165 retracts 5 diags 0 hash 5dbf4fe92160bee3 | load 6.90
+r3 br | pp X=1 islands 5 | islands n=5 cpu 3.364 moves 70165 retracts 5 diags 0 hash 5dbf4fe92160bee3 | load 6.75
+r3 main | pp X=1 islands 10 | islands n=10 cpu 46.815 moves 285677 retracts 5 diags 0 hash fdf563f26f4e0cde | load 6.09
+r3 br | pp X=1 islands 10 | islands n=10 cpu 46.437 moves 285677 retracts 5 diags 0 hash fdf563f26f4e0cde | load 5.81
+r3 main | pp X=1 reflex 12 | reflex n=12 cpu 1.284 moves 39649 retracts 13 diags 0 hash 4a60ec38445ed341 | load 5.75
+r3 br | pp X=1 reflex 12 | reflex n=12 cpu 1.319 moves 39649 retracts 13 diags 0 hash 4a60ec38445ed341 | load 5.75
+r3 main | pp X=1 reflex 25 | reflex n=25 cpu 7.236 moves 51108 retracts 26 diags 0 hash 413a33e8c388cf56 | load 5.69
+r3 br | pp X=1 reflex 25 | reflex n=25 cpu 6.857 moves 51108 retracts 26 diags 0 hash 413a33e8c388cf56 | load 5.66
+r3 main | pk PK_SCALE=100 PK_NOCHECK=1 9 1095 1 | case 1095 fam 9 lines2 ch 0.0001 dist 1e-06 D 17.9182 al 0 strat 0 pass 1 tools 2 ramp 0 hash d4ce442b764ccc6f moves 196493 rapid 43 plunge 45 retract 43 cut 67098.780046 cpu 28.2675 worst 1.0000e+300  | load 5.87
+r3 br | pk PK_SCALE=100 PK_NOCHECK=1 9 1095 1 | case 1095 fam 9 lines2 ch 0.0001 dist 1e-06 D 17.9182 al 0 strat 0 pass 1 tools 2 ramp 0 hash d4ce442b764ccc6f moves 196493 rapid 43 plunge 45 retract 43 cut 67098.780046 cpu 65.4925 worst 1.0000e+300  | load 13.04
+r3 main | pk PK_SCALE=100 PK_NOCHECK=1 9 1004 1 | case 1004 fam 9 lines2 ch 0.001 dist 1e-06 D 115.666 al 0 strat 1 pass 2 tools 2 ramp 0 hash 212965d3c3ed7239 moves 65057 rapid 34 plunge 250 retract 34 cut 221703.436280 cpu 85.9838 worst 1.0000e+300  | load 14.26
+r3 br | pk PK_SCALE=100 PK_NOCHECK=1 9 1004 1 | case 1004 fam 9 lines2 ch 0.001 dist 1e-06 D 115.666 al 0 strat 1 pass 2 tools 2 ramp 0 hash 212965d3c3ed7239 moves 65057 rapid 34 plunge 250 retract 34 cut 221703.436280 cpu 97.3753 worst 1.0000e+300  | load 17.64
+r3 main | pk PK_SCALE=100 PK_NOCHECK=1 9 1056 1 | case 1056 fam 9 lines2 ch 0.0001 dist 3.33333e-05 D 37.6887 al 1.31873 strat 0 pass 2 tools 2 ramp 0 hash c6203e0aa566dfc5 moves 440788 rapid 28 plunge 56 retract 28 cut 146665.376584 cpu 93.1525 worst 1.0000e+300  | load 18.05
+r3 br | pk PK_SCALE=100 PK_NOCHECK=1 9 1056 1 | case 1056 fam 9 lines2 ch 0.0001 dist 3.33333e-05 D 37.6887 al 1.31873 strat 0 pass 2 tools 2 ramp 0 hash c6203e0aa566dfc5 moves 440788 rapid 28 plunge 56 retract 28 cut 146665.376584 cpu 90.8243 worst 1.0000e+300  | load 18.69
+r3 main | pk PK_SCALE=100 PK_NOCHECK=1 7 1095 1 | case 1095 fam 7 gear ch 0.002 dist 2e-06 D 72.9724 al 3.11292 strat 0 pass 1 tools 1 ramp 1 hash 9bde92e7ca113564 moves 16673 rapid 1 plunge 1 retract 1 cut 11552.706038 cpu 3.0849 worst 1.0000e+300  | load 18.69
+r3 br | pk PK_SCALE=100 PK_NOCHECK=1 7 1095 1 | case 1095 fam 7 gear ch 0.002 dist 2e-06 D 72.9724 al 3.11292 strat 0 pass 1 tools 1 ramp 1 hash 9bde92e7ca113564 moves 16673 rapid 1 plunge 1 retract 1 cut 11552.706038 cpu 3.0238 worst 1.0000e+300  | load 18.56
+r3 main | vperf X=1 5000 | 5000 regions 38750 spans: 32.67 s CPU, carve 2680243 moves, 2680243 moves, ok=1 diags=0, peak RSS 409 MB | load 17.77
+r3 br | vperf X=1 5000 | 5000 regions 38750 spans: 31.81 s CPU, carve 2680243 moves, 2680243 moves, ok=1 diags=0, peak RSS 410 MB | load 16.45
+r3 main | vperf VPERF_FLAT=0.5 5000 | 5000 regions 38750 spans: 34.68 s CPU, carve 3938993 moves, 3938993 moves, ok=1 diags=0, peak RSS 758 MB | load 14.76
+r3 br | vperf VPERF_FLAT=0.5 5000 | 5000 regions 38750 spans: 34.78 s CPU, carve 3938993 moves, 3938993 moves, ok=1 diags=0, peak RSS 758 MB | load 13.75
+r3 main | vperf VPERF_FLAT=0.5 VPERF_EM=0.5 5000 | 5000 regions 38750 spans: 49.40 s CPU, carve 3943993 moves, 4015243 moves, ok=1 diags=1, peak RSS 451 MB | load 14.11
+r3 br | vperf VPERF_FLAT=0.5 VPERF_EM=0.5 5000 | 5000 regions 38750 spans: 44.17 s CPU, carve 3943993 moves, 4015243 moves, ok=1 diags=1, peak RSS 451 MB | load 13.12
+DONE

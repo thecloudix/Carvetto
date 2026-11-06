@@ -1,0 +1,102 @@
+case 1000 fam 0 poly ch 0.01 dist 0.00333333 D 0.0290126 al 0.000279676 strat 0 pass 1 tools 2 ramp 0 hash 0308ff0a161da5eb moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1001 fam 0 star ch 0.005 dist 0.005 D 0.0098387 al 0.00258443 strat 0 pass 0 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1002 fam 0 star ch 0.05 dist 0.05 D 0.0128434 al 0.000204885 strat 0 pass 0 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1003 fam 0 poly ch 0.01 dist 0.01 D 0.0137075 al 0.000203542 strat 1 pass 0 tools 1 ramp 1 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1004 fam 0 poly ch 0.005 dist 0.0005 D 0.00535718 al 0.000170052 strat 1 pass 2 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1005 fam 0 star ch 0.05 dist 0.05 D 0.0111368 al 0 strat 1 pass 0 tools 3 ramp 0 hash ea7d4a78e5c19913 moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1006 fam 0 poly ch 0.002 dist 0.002 D 0.0110677 al 0.000190818 strat 1 pass 2 tools 2 ramp 0 hash 0308ff0a161da5eb moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1007 fam 0 star ch 0.02 dist 0.02 D 0.0171922 al 0 strat 0 pass 1 tools 3 ramp 1 hash ea7d4a78e5c19913 moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1008 fam 0 poly ch 0.02 dist 0.02 D 0.014974 al 0.00152676 strat 0 pass 0 tools 3 ramp 0 hash ea7d4a78e5c19913 moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1009 fam 0 star ch 0.005 dist 0.005 D 0.0163975 al 0.000216317 strat 0 pass 2 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1010 fam 0 star ch 0.05 dist 5e-05 D 0.0155768 al 0.00378929 strat 0 pass 2 tools 1 ramp 0 hash ca064a99eac128ec moves 16 rapid 1 plunge 2 retract 1 cut 0.060042 cpu 0.0001 worst -1.1578e-02 VIOL tool 0 move 3 kind 1 (-0.000645000,0.004962000)->(0.003974000,0.003039000)
+case 1011 fam 0 poly ch 0.05 dist 0.05 D 0.0295798 al 0.00675706 strat 0 pass 0 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1012 fam 0 star ch 0.001 dist 1e-06 D 0.0113203 al 0.000553485 strat 0 pass 0 tools 2 ramp 0 hash 1edfd7a33084b798 moves 1903 rapid 6 plunge 12 retract 6 cut 14.835975 cpu 0.0017 worst 6.7790e-04 
+case 1013 fam 0 star ch 0.001 dist 0.001 D 0.0146202 al 0.000330966 strat 1 pass 2 tools 2 ramp 0 hash 0308ff0a161da5eb moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1014 fam 0 star ch 0.0003 dist 3e-05 D 0.0118304 al 0 strat 0 pass 2 tools 1 ramp 0 hash 1d355b8e73540737 moves 1797 rapid 1 plunge 2 retract 1 cut 7.765104 cpu 0.0018 worst 1.4943e-04 
+case 1015 fam 0 poly ch 0.05 dist 5e-05 D 0.0186511 al 0.0007424 strat 0 pass 2 tools 2 ramp 1 hash fbd03281d7bb698a moves 29 rapid 1 plunge 1 retract 1 cut 0.404796 cpu 0.0009 worst -1.0068e-02 VIOL tool 0 move 4 kind 1 (0.005672000,0.009828000)->(0.011348000,0.000001000)
+case 1016 fam 0 star ch 0.001 dist 0.001 D 0.0196594 al 0 strat 0 pass 0 tools 2 ramp 0 hash 5e52714edd8aa331 moves 206 rapid 1 plunge 5 retract 1 cut 2.061567 cpu 0.0009 worst 4.9923e-04 
+case 1017 fam 0 poly ch 0.0003 dist 0.0003 D 0.0240718 al 0.000359041 strat 0 pass 1 tools 1 ramp 1 hash a88a4ff984c76a15 moves 391 rapid 1 plunge 1 retract 1 cut 2.012643 cpu 0.0016 worst 1.4950e-04 
+case 1018 fam 0 star ch 0.05 dist 0.005 D 0.00941943 al 0.000315081 strat 0 pass 2 tools 1 ramp 1 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1019 fam 0 star ch 0.1 dist 0.0001 D 0.0125188 al 0.00158612 strat 1 pass 1 tools 1 ramp 0 hash d84bb09b87e49b47 moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1020 fam 0 star ch 0.002 dist 0.0002 D 0.00512016 al 1.0185e-05 strat 0 pass 2 tools 2 ramp 1 hash 0308ff0a161da5eb moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1021 fam 0 star ch 0.005 dist 0.005 D 0.0210554 al 0.00416268 strat 0 pass 0 tools 1 ramp 1 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1022 fam 0 star ch 0.0001 dist 1e-06 D 0.0190609 al 0.00346374 strat 0 pass 1 tools 1 ramp 0 hash d218f248055d1e9a moves 534 rapid 1 plunge 2 retract 1 cut 1.779146 cpu 0.0014 worst 5.0285e-05 
+case 1023 fam 0 star ch 0.002 dist 0.002 D 0.0163364 al 0 strat 1 pass 2 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1024 fam 0 poly ch 0.1 dist 0.0001 D 0.00973241 al 0.000624463 strat 0 pass 1 tools 1 ramp 1 hash d84bb09b87e49b47 moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1025 fam 0 star ch 0.0003 dist 0.0003 D 0.00720008 al 0.000238278 strat 0 pass 0 tools 3 ramp 0 hash 4ecb444a7a2b7494 moves 1002 rapid 1 plunge 1 retract 1 cut 5.402332 cpu 0.0051 worst 1.4918e-04 
+case 1026 fam 0 star ch 0.02 dist 0.02 D 0.00448491 al 2.25337e-05 strat 1 pass 0 tools 1 ramp 1 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1027 fam 0 star ch 0.001 dist 0.001 D 0.0135898 al 0 strat 0 pass 1 tools 1 ramp 0 hash c1f337695e3284b5 moves 754 rapid 1 plunge 10 retract 1 cut 5.705467 cpu 0.0022 worst 4.9973e-04 
+case 1028 fam 0 poly ch 0.1 dist 0.1 D 0.0108206 al 0 strat 0 pass 1 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1029 fam 0 poly ch 0.005 dist 5e-06 D 0.0151735 al 0.00033582 strat 0 pass 0 tools 1 ramp 0 hash 5f93890c4aa97352 moves 769 rapid 1 plunge 2 retract 1 cut 9.345526 cpu 0.0007 worst 3.2053e-03 
+case 1030 fam 0 star ch 0.01 dist 0.001 D 0.0109342 al 0 strat 0 pass 1 tools 2 ramp 0 hash 0308ff0a161da5eb moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1031 fam 0 star ch 0.01 dist 0.001 D 0.0162355 al 0.00177905 strat 1 pass 1 tools 1 ramp 1 hash 85a63999e508c560 moves 57 rapid 1 plunge 1 retract 1 cut 2.177282 cpu 0.0001 worst 6.4803e-03 
+case 1032 fam 0 poly ch 0.02 dist 0.00666667 D 0.0153356 al 0.000197928 strat 1 pass 2 tools 3 ramp 1 hash ea7d4a78e5c19913 moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1033 fam 0 poly ch 0.0003 dist 3e-05 D 0.0226274 al 0.000904922 strat 0 pass 1 tools 2 ramp 0 hash e82fb2583bf8b47b moves 435 rapid 8 plunge 9 retract 8 cut 1.745173 cpu 0.0037 worst 1.5003e-04 
+case 1034 fam 0 star ch 0.0003 dist 0.0001 D 0.0181997 al 0.000518497 strat 1 pass 1 tools 1 ramp 1 hash bde362eda19a4544 moves 690 rapid 1 plunge 1 retract 1 cut 10.382941 cpu 0.0010 worst 6.9987e-05 
+case 1035 fam 0 star ch 0.01 dist 0.00333333 D 0.021171 al 0.0053522 strat 1 pass 1 tools 1 ramp 1 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1036 fam 0 poly ch 0.001 dist 1e-06 D 0.024983 al 0.00722546 strat 1 pass 0 tools 1 ramp 0 hash cfc660826d5b08a2 moves 42 rapid 6 plunge 6 retract 6 cut 1.145282 cpu 0.0001 worst 5.3687e-04 
+case 1037 fam 0 poly ch 0.01 dist 1e-05 D 0.00908824 al 0.000539264 strat 0 pass 0 tools 2 ramp 0 hash dfd684c080a34655 moves 140 rapid 1 plunge 6 retract 1 cut 2.779209 cpu 0.0010 worst 4.9996e-03 
+case 1038 fam 0 poly ch 0.01 dist 0.01 D 0.0213429 al 0.00444151 strat 1 pass 2 tools 3 ramp 0 hash ea7d4a78e5c19913 moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1039 fam 0 star ch 0.002 dist 0.0002 D 0.00854596 al 0 strat 1 pass 1 tools 1 ramp 0 hash ba95e151f69357a8 moves 299 rapid 1 plunge 14 retract 1 cut 12.601945 cpu 0.0002 worst 1.4735e-03 
+case 1040 fam 0 poly ch 0.0003 dist 0.0001 D 0.0280755 al 0 strat 0 pass 2 tools 1 ramp 1 hash 45d5057a2e57a299 moves 281 rapid 1 plunge 1 retract 1 cut 1.400788 cpu 0.0007 worst 1.4941e-04 
+case 1041 fam 0 star ch 0.0003 dist 0.0001 D 0.00330778 al 0.00078187 strat 1 pass 0 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1042 fam 0 poly ch 0.05 dist 0.005 D 0.0143989 al 0.0036588 strat 0 pass 0 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1043 fam 0 poly ch 0.0003 dist 0.0003 D 0.00547879 al 0 strat 0 pass 2 tools 2 ramp 0 hash 9558dfd00bb04017 moves 595 rapid 1 plunge 2 retract 1 cut 13.576207 cpu 0.0008 worst 2.2635e-04 
+case 1044 fam 0 star ch 0.001 dist 0.0001 D 0.013602 al 0.00171379 strat 1 pass 2 tools 1 ramp 0 hash a2a47e98f4a3c2b6 moves 153 rapid 1 plunge 10 retract 1 cut 2.409122 cpu 0.0003 worst 4.9924e-04 
+case 1045 fam 0 star ch 0.0001 dist 0.0001 D 0.00986399 al 0 strat 0 pass 2 tools 2 ramp 0 hash e33e85cd1df72dda moves 1169 rapid 6 plunge 13 retract 6 cut 3.275108 cpu 0.0043 worst 4.9323e-05 
+case 1046 fam 0 poly ch 0.05 dist 0.005 D 0.0111053 al 0.000486314 strat 1 pass 1 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1047 fam 0 poly ch 0.001 dist 0.001 D 0.0104186 al 0.00204071 strat 1 pass 2 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1048 fam 0 star ch 0.002 dist 0.002 D 0.0084572 al 0.000153006 strat 1 pass 2 tools 2 ramp 0 hash 0308ff0a161da5eb moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1049 fam 0 poly ch 0.02 dist 0.02 D 0.0201558 al 0.000673758 strat 0 pass 1 tools 3 ramp 0 hash ea7d4a78e5c19913 moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1050 fam 0 poly ch 0.001 dist 0.0001 D 0.0113415 al 0.00334625 strat 1 pass 2 tools 1 ramp 0 hash 49f88ed688bea873 moves 159 rapid 1 plunge 4 retract 1 cut 7.914181 cpu 0.0001 worst 9.9968e-04 
+case 1051 fam 0 poly ch 0.0001 dist 0.0001 D 0.0253394 al 0 strat 0 pass 2 tools 1 ramp 1 hash fb88742e9fdfe368 moves 426 rapid 1 plunge 1 retract 1 cut 1.716402 cpu 0.0013 worst 6.2730e-05 
+case 1052 fam 0 star ch 0.0001 dist 1e-06 D 0.0140387 al 0.00208492 strat 0 pass 0 tools 1 ramp 0 hash ba8ecf6c37d71ab9 moves 1273 rapid 1 plunge 2 retract 1 cut 3.889988 cpu 0.0026 worst 4.9195e-05 
+case 1053 fam 0 star ch 0.001 dist 0.001 D 0.0154052 al 0 strat 1 pass 2 tools 3 ramp 1 hash ea7d4a78e5c19913 moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1054 fam 0 poly ch 0.002 dist 2e-06 D 0.0047722 al 0.000154225 strat 1 pass 1 tools 2 ramp 0 hash 2a62944654bcb591 moves 363 rapid 1 plunge 22 retract 1 cut 13.515807 cpu 0.0007 worst 9.9970e-04 
+case 1055 fam 0 poly ch 0.01 dist 0.01 D 0.0140976 al 0.000455664 strat 0 pass 0 tools 1 ramp 1 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1056 fam 0 star ch 0.05 dist 5e-05 D 0.00729039 al 2.40705e-05 strat 0 pass 2 tools 1 ramp 0 hash 4c4129b70e4d5f40 moves 37 rapid 1 plunge 1 retract 1 cut 0.249188 cpu 0.0020 worst -3.6693e-03 VIOL tool 0 move 10 kind 1 (-0.005001450,-0.003046459)->(-0.006448000,-0.000804000)
+case 1057 fam 0 poly ch 0.1 dist 0.0333333 D 0.0167759 al 0.000334554 strat 0 pass 2 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1058 fam 0 poly ch 0.002 dist 0.002 D 0.02403 al 0.00548074 strat 0 pass 1 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1059 fam 0 star ch 0.02 dist 0.00666667 D 0.00482283 al 0.000532372 strat 0 pass 0 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1060 fam 0 poly ch 0.0001 dist 1e-05 D 0.0171321 al 8.11517e-05 strat 1 pass 1 tools 2 ramp 0 hash 568965a5f8d3d0ee moves 616 rapid 5 plunge 30 retract 5 cut 4.654293 cpu 0.0021 worst 4.9075e-05 
+case 1061 fam 0 poly ch 0.02 dist 0.002 D 0.0069421 al 0 strat 1 pass 0 tools 1 ramp 1 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1062 fam 0 poly ch 0.1 dist 0.1 D 0.017355 al 0.000595707 strat 0 pass 0 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1063 fam 0 poly ch 0.01 dist 1e-05 D 0.00476109 al 0.000354812 strat 0 pass 2 tools 1 ramp 0 hash cbeae15c315e1896 moves 175 rapid 1 plunge 1 retract 1 cut 6.917284 cpu 0.0013 worst 6.4043e-03 
+case 1064 fam 0 poly ch 0.0001 dist 0.0001 D 0.0142127 al 0 strat 0 pass 1 tools 1 ramp 0 hash 07a606d7a64558ec moves 1516 rapid 1 plunge 7 retract 1 cut 4.808261 cpu 0.0027 worst 4.9407e-05 
+case 1065 fam 0 star ch 0.0003 dist 0.0001 D 0.00514284 al 1.52894e-05 strat 0 pass 1 tools 1 ramp 1 hash 8d9fe7a34f767f15 moves 4620 rapid 1 plunge 1 retract 1 cut 17.428742 cpu 0.0030 worst 1.4962e-04 
+case 1066 fam 0 star ch 0.02 dist 0.002 D 0.0125418 al 0.00116783 strat 1 pass 1 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1067 fam 0 star ch 0.05 dist 5e-05 D 0.0208762 al 0 strat 1 pass 2 tools 1 ramp 0 hash 8f69c1b09599c919 moves 31 rapid 1 plunge 2 retract 1 cut 0.407569 cpu 0.0001 worst 4.7647e-02 
+case 1068 fam 0 poly ch 0.001 dist 1e-06 D 0.0157329 al 0 strat 0 pass 2 tools 2 ramp 0 hash facd2a8472be3697 moves 257 rapid 1 plunge 1 retract 1 cut 3.437406 cpu 0.0014 worst 9.9993e-04 
+case 1069 fam 0 star ch 0.01 dist 0.01 D 0.00461932 al 0.000704427 strat 1 pass 1 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1070 fam 0 star ch 0.05 dist 0.0166667 D 0.00871687 al 0 strat 1 pass 0 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1071 fam 0 star ch 0.05 dist 0.005 D 0.0163517 al 0.000633136 strat 1 pass 2 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1072 fam 0 star ch 0.02 dist 0.02 D 0.0185219 al 0 strat 1 pass 1 tools 1 ramp 1 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1073 fam 0 poly ch 0.0003 dist 0.0003 D 0.0180949 al 0 strat 0 pass 0 tools 1 ramp 0 hash 8da1a8f898e7feac moves 700 rapid 1 plunge 8 retract 1 cut 4.243481 cpu 0.0015 worst 1.3151e-04 
+case 1074 fam 0 star ch 0.1 dist 0.0333333 D 0.00305543 al 0 strat 1 pass 0 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1075 fam 0 star ch 0.0001 dist 0.0001 D 0.0156185 al 0 strat 1 pass 1 tools 3 ramp 1 hash 2a5c58ef3fb58197 moves 1385 rapid 13 plunge 17 retract 13 cut 8.394369 cpu 0.0031 worst -9.0969e-05 VIOL tool 0 move 415 kind 1 (-0.043068000,-0.027583000)->(-0.084227000,-0.007550000)
+case 1076 fam 0 star ch 0.05 dist 5e-05 D 0.017547 al 0 strat 1 pass 2 tools 1 ramp 0 hash 3ea26c1f08a285d6 moves 12 rapid 1 plunge 1 retract 1 cut 0.054643 cpu 0.0001 worst -8.7735e-03 VIOL tool 0 move 10 kind 1 (-0.004112000,-0.004787000)->(-0.004458821,-0.000214612)
+case 1077 fam 0 poly ch 0.02 dist 0.00666667 D 0.025923 al 0.000970805 strat 1 pass 0 tools 1 ramp 1 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1078 fam 0 poly ch 0.05 dist 0.0166667 D 0.0276265 al 0.00740789 strat 0 pass 0 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1079 fam 0 star ch 0.02 dist 0.02 D 0.00921076 al 4.20727e-05 strat 1 pass 1 tools 3 ramp 0 hash ea7d4a78e5c19913 moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1080 fam 0 star ch 0.02 dist 0.002 D 0.00988429 al 0.000172389 strat 1 pass 1 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1081 fam 0 poly ch 0.05 dist 0.05 D 0.0296506 al 0.00457082 strat 1 pass 1 tools 2 ramp 0 hash 0308ff0a161da5eb moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1082 fam 0 poly ch 0.1 dist 0.1 D 0.0116062 al 0.000218603 strat 0 pass 0 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1083 fam 0 star ch 0.005 dist 0.005 D 0.00294357 al 0 strat 1 pass 1 tools 2 ramp 0 hash 0308ff0a161da5eb moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1084 fam 0 poly ch 0.005 dist 0.005 D 0.0116748 al 0 strat 0 pass 0 tools 3 ramp 0 hash ea7d4a78e5c19913 moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1085 fam 0 star ch 0.002 dist 0.002 D 0.0147036 al 0.00397408 strat 1 pass 1 tools 2 ramp 1 hash 0308ff0a161da5eb moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1086 fam 0 star ch 0.002 dist 2e-06 D 0.00405067 al 6.58202e-05 strat 1 pass 0 tools 2 ramp 0 hash 6cab715fd1b99ca9 moves 1004 rapid 18 plunge 18 retract 18 cut 34.670121 cpu 0.0051 worst 1.3431e-03 
+case 1087 fam 0 star ch 0.05 dist 0.05 D 0.0154747 al 0.000577517 strat 0 pass 1 tools 3 ramp 0 hash ea7d4a78e5c19913 moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1088 fam 0 star ch 0.01 dist 0.01 D 0.00508675 al 0.00140678 strat 1 pass 1 tools 1 ramp 1 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1089 fam 0 poly ch 0.0001 dist 0.0001 D 0.0153425 al 0.000636323 strat 0 pass 1 tools 2 ramp 0 hash 99ac1eaf0a9344ce moves 463 rapid 2 plunge 6 retract 2 cut 4.670191 cpu 0.0021 worst 9.9794e-05 
+case 1090 fam 0 poly ch 0.0003 dist 1e-06 D 0.0137783 al 0 strat 1 pass 0 tools 1 ramp 0 hash 39f029f897d09aa7 moves 70 rapid 10 plunge 10 retract 10 cut 1.952009 cpu 0.0003 worst 1.4951e-04 
+case 1091 fam 0 star ch 0.0003 dist 0.0003 D 0.00667961 al 0.000309233 strat 0 pass 1 tools 3 ramp 0 hash 9374ae60c26ce4b5 moves 1921 rapid 1 plunge 26 retract 1 cut 12.255316 cpu 0.0034 worst -1.6592e-04 VIOL tool 0 move 1031 kind 1 (-0.001248000,0.006349000)->(0.005868000,0.011406000)
+case 1092 fam 0 poly ch 0.02 dist 2e-05 D 0.0074175 al 0.000291598 strat 1 pass 1 tools 2 ramp 0 hash be754d382b71e8f3 moves 267 rapid 1 plunge 8 retract 1 cut 5.234327 cpu 0.0005 worst 1.0000e-02 
+case 1093 fam 0 poly ch 0.005 dist 0.0005 D 0.0156859 al 0.000698689 strat 1 pass 0 tools 2 ramp 0 hash c4d459566619c814 moves 62 rapid 8 plunge 8 retract 8 cut 1.613737 cpu 0.0009 worst 3.1693e-03 
+case 1094 fam 0 star ch 0.002 dist 0.002 D 0.0188095 al 0 strat 0 pass 2 tools 1 ramp 1 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1095 fam 0 poly ch 0.1 dist 0.0333333 D 0.0154287 al 0 strat 1 pass 1 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1096 fam 0 star ch 0.005 dist 0.005 D 0.00396601 al 0.000388831 strat 1 pass 1 tools 1 ramp 0 hash f40c4f802f59fe8b moves 0 rapid 0 plunge 0 retract 0 cut 0.000000 cpu 0.0000 worst 1.0000e+300 
+case 1097 fam 0 star ch 0.0003 dist 0.0001 D 0.0132397 al 9.73238e-05 strat 1 pass 2 tools 1 ramp 0 hash a9562805f97bd6d2 moves 226 rapid 1 plunge 10 retract 1 cut 3.322284 cpu 0.0005 worst 1.4998e-04 
+case 1098 fam 0 poly ch 0.0001 dist 0.0001 D 0.0140401 al 0.000478608 strat 1 pass 0 tools 2 ramp 0 hash 861edd7cf17eeeef moves 424 rapid 68 plunge 68 retract 68 cut 7.950510 cpu 0.0042 worst 5.5834e-05 
+case 1099 fam 0 poly ch 0.01 dist 1e-05 D 0.022431 al 0 strat 0 pass 0 tools 1 ramp 1 hash ad5d6f2c9e9b0fe1 moves 35 rapid 1 plunge 1 retract 1 cut 0.924355 cpu 0.0002 worst -1.1215e-02 VIOL tool 0 move 12 kind 1 (-0.022316000,0.017856000)->(0.016703000,0.013014000)
+SUMMARY fam 0 cases 100 worst -1.1578e-02 neg 7 viol 7
+exit 0

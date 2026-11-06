@@ -1,0 +1,57 @@
+Filters: [pocket],[t0169]
+Randomness seeded to: 200200133
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+carvetto_tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0169 property: tool centres keep radius + allowance from curve/line junctions
+-------------------------------------------------------------------------------
+/home/chris/wt-T0169/build-verify1-mutsrc/core/tests/toolpath/pocket_junction_test.cpp:245
+...............................................................................
+
+/home/chris/wt-T0169/build-verify1-mutsrc/core/tests/toolpath/pocket_junction_test.cpp:272: FAILED:
+  CHECK( rep.certified )
+with expansion:
+  false
+with message:
+  case 57 far 0 star5 tool 0 d 0.691821 chordal 0.001 distance 0.001 strategy 1
+  pass 1 allowance 0.206102: clearance - allowance -0.000641954 at move 2754
+
+/home/chris/wt-T0169/build-verify1-mutsrc/core/tests/toolpath/pocket_junction_test.cpp:272: FAILED:
+  CHECK( rep.certified )
+with expansion:
+  false
+with message:
+  case 190 far 0 star5 tool 0 d 1.45019 chordal 0.01 distance 0.01 strategy 1
+  pass 1 allowance 0.146247: clearance - allowance -0.00438544 at move 187
+
+/home/chris/wt-T0169/build-verify1-mutsrc/core/tests/toolpath/pocket_junction_test.cpp:272: FAILED:
+  CHECK( rep.certified )
+with expansion:
+  false
+with message:
+  case 57 far 10000 star5 tool 0 d 0.691821 chordal 0.001 distance 0.001
+  strategy 1 pass 1 allowance 0.206102: clearance - allowance -0.000641954 at
+  move 2754
+
+/home/chris/wt-T0169/build-verify1-mutsrc/core/tests/toolpath/pocket_junction_test.cpp:272: FAILED:
+  CHECK( rep.certified )
+with expansion:
+  false
+with message:
+  case 190 far 10000 star5 tool 0 d 1.45019 chordal 0.01 distance 0.01 strategy
+  1 pass 1 allowance 0.146247: clearance - allowance -0.00438544 at move 187
+
+/home/chris/wt-T0169/build-verify1-mutsrc/core/tests/toolpath/pocket_junction_test.cpp:282: FAILED:
+  CHECK( worst >= -kSlack )
+with expansion:
+  -0.00438543772985261 >= -0.00001
+with message:
+  worst clearance - allowance -0.00438544
+
+===============================================================================
+test cases:     46 |     45 passed | 1 failed
+assertions: 271983 | 271978 passed | 5 failed
+

@@ -1,0 +1,36 @@
+{'n': 783, 'sameRP': 764, 'dRet': 20, 'dPl': 46, 'moreRet': 11, 'fewerRet': 0, 'absCutMax': 568.1805199999981, 'relCutMax': 0.10297299566587396}
+dCut 568.180520 dRet 0 dPl 0 sc100_f1 case 1031 ch 0.1 dist 0.1 strat 1 tools 1 dMoves 3
+dCut 360.796710 dRet 0 dPl 0 sc100_f7 case 1077 ch 0.005 dist 0.005 strat 1 tools 1 dMoves -751
+dCut 328.967938 dRet 0 dPl 0 sc100_f4 case 1012 ch 0.0003 dist 0.0003 strat 1 tools 1 dMoves -2336
+dCut 117.477080 dRet 0 dPl 0 sc100_f7 case 1072 ch 0.05 dist 0.05 strat 1 tools 1 dMoves -62
+dCut 102.631808 dRet 0 dPl 0 sc100_f7 case 1042 ch 0.05 dist 0.05 strat 1 tools 1 dMoves -32
+dCut 93.108706 dRet 0 dPl 0 sc100_f4 case 1053 ch 0.0003 dist 0.0003 strat 0 tools 1 dMoves -331
+dCut 71.402213 dRet 0 dPl 0 sc100_f9 case 1021 ch 0.002 dist 0.002 strat 1 tools 1 dMoves 260
+dCut 69.315278 dRet 0 dPl 0 sc100_f7 case 1005 ch 0.005 dist 0.005 strat 1 tools 1 dMoves -312
+dCut 16.808925 dRet 0 dPl 0 sc100_f3 case 1061 ch 0.1 dist 0.1 strat 1 tools 3 dMoves 3
+dCut 12.150868 dRet 0 dPl 0 sc100_f3 case 1074 ch 0.1 dist 0.1 strat 0 tools 2 dMoves 2
+dCut 11.348277 dRet 0 dPl 0 rest_f8 case 1072 ch 0.1 dist 0.1 strat 1 tools 2 dMoves -15
+dCut 11.087571 dRet 0 dPl 0 rest_f8 case 1019 ch 0.0001 dist 0.0001 strat 0 tools 3 dMoves -55
+dCut 8.609942 dRet 0 dPl 0 dfr1_f9 case 1021 ch 0.002 dist 0.002 strat 1 tools 1 dMoves 435
+dCut 8.609942 dRet 0 dPl 0 base_f9 case 1021 ch 0.002 dist 0.002 strat 1 tools 1 dMoves 435
+dCut 8.609938 dRet 0 dPl 0 far6_f9 case 1021 ch 0.002 dist 0.002 strat 1 tools 1 dMoves 435
+with retract/plunge change:
+  dCut 3.486917 dRet 2 dPl 2 far4_f1 case 1019 ch 0.01 dist 0.00333333 strat 1 tools 2 dMoves 8
+  dCut 3.486912 dRet 2 dPl 2 base_f1 case 1019 ch 0.01 dist 0.00333333 strat 1 tools 2 dMoves 8
+  dCut 0.285634 dRet 0 dPl 2 sc001_f4 case 1054 ch 0.001 dist 0.0001 strat 1 tools 1 dMoves 70
+  dCut 0.268656 dRet 2 dPl 2 far4_f4 case 1042 ch 0.02 dist 0.002 strat 1 tools 3 dMoves 4
+  dCut 0.268656 dRet 2 dPl 2 base_f4 case 1042 ch 0.02 dist 0.002 strat 1 tools 3 dMoves 4
+  dCut 0.241732 dRet 1 dPl 1 base_f6 case 1034 ch 0.05 dist 0.005 strat 1 tools 1 dMoves 2
+  dCut 0.204780 dRet 2 dPl 2 far4_f0 case 1041 ch 0.0003 dist 0.0001 strat 1 tools 1 dMoves 4
+  dCut 0.177354 dRet 2 dPl 2 far4_f6 case 1002 ch 0.02 dist 0.00666667 strat 1 tools 1 dMoves 4
+  dCut 0.177354 dRet 2 dPl 2 base_f6 case 1002 ch 0.02 dist 0.00666667 strat 1 tools 1 dMoves 4
+  dCut 0.133704 dRet 0 dPl 1 far4_f7 case 1067 ch 0.01 dist 0.01 strat 1 tools 2 dMoves 7
+  dCut 0.133703 dRet 0 dPl 1 far6_f7 case 1067 ch 0.01 dist 0.01 strat 1 tools 2 dMoves 7
+  dCut 0.073827 dRet 0 dPl 15 sc001_f8 case 1071 ch 0.0003 dist 0.0001 strat 1 tools 1 dMoves 29
+  dCut 0.070085 dRet 0 dPl 4 sc001_f7 case 1011 ch 0.002 dist 0.0002 strat 1 tools 2 dMoves 28
+  dCut 0.038073 dRet 0 dPl 1 sc001_f6 case 1082 ch 0.002 dist 0.0002 strat 1 tools 1 dMoves 7
+  dCut 0.017394 dRet 2 dPl 2 sc001_f7 case 1033 ch 0.002 dist 0.000666667 strat 1 tools 1 dMoves 4
+  dCut 0.014047 dRet 1 dPl 1 sc001_f8 case 1099 ch 0.001 dist 0.0001 strat 1 tools 1 dMoves 2
+  dCut 0.009397 dRet 2 dPl 2 sc001_f3 case 1047 ch 0.001 dist 0.000333333 strat 1 tools 2 dMoves 4
+  dCut 0.000671 dRet 0 dPl 1 base_f8 case 1051 ch 0.1 dist 0.01 strat 1 tools 2 dMoves 4
+  dCut 0.000670 dRet 0 dPl 1 far4_f8 case 1051 ch 0.1 dist 0.01 strat 1 tools 2 dMoves 4
