@@ -27,6 +27,7 @@
 #include "carvetto/toolpath/box_index.hpp"
 #include "carvetto/toolpath/clearance.hpp"
 #include "carvetto/toolpath/path_walk.hpp"
+#include "enclosed_pieces.hpp"
 
 namespace carvetto::toolpath {
 
@@ -2447,8 +2448,14 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
 // offset puts such a spike at every vertex of the polygonised path, which costs about the
 // square of the vertices on each arc; here arcs stay arcs until the offsets are polygonised
 // (chords at most `chordal` inside them, as Clipper2's round joins), and a gentle inner corner
-// between two lines needs no spike (see below). Empty when the path holds a Bezier span.
-std::optional<Contour> bandOutline(const Contour& path, double w, double chordal) {
+// between two lines needs no spike (see below). A closed path (`closedPath`, ending where it
+// starts) has no end discs: its last corner is one like the others (always through the vertex on
+// its inner side), and each chain is closed on itself instead, two rings whose winding numbers
+// add up to the same sum (the edges that would join them lie along the normal at the start, the
+// chains' ends on it, and cancel; as one ring they would leave Clipper2 a zero-width slit, which
+// it can keep in its output as a ring touching itself instead of an outer and a hole). As rings
+// of points; empty when the path holds a Bezier span.
+std::vector<std::vector<Vec2>> bandOutline(const Contour& path, double w, double chordal, bool closedPath) {
     struct Piece {
         Vec2 a, b;        // start and end points
         Vec2 ta, tb;      // unit tangents there
@@ -2487,10 +2494,10 @@ std::optional<Contour> bandOutline(const Contour& path, double w, double chordal
             q.sweep = sweep;
             ps.push_back(q);
         } else {
-            return std::nullopt;
+            return {};
         }
     }
-    if (ps.empty()) return std::nullopt;
+    if (ps.empty()) return {};
     std::vector<Vec2> pts;
     // Points of the arc about q of radius r from angle t0 through the signed sweep (both ends).
     auto arcPoints = [&](Vec2 q, double r, double t0, double sweep) {
@@ -2500,9 +2507,17 @@ std::optional<Contour> bandOutline(const Contour& path, double w, double chordal
             n = static_cast<std::size_t>(std::ceil(std::fabs(sweep) / step));
             n = std::clamp(n, std::size_t{1}, std::size_t{100000});
         }
-        for (std::size_t k = 0; k <= n; ++k) {
-            pts.push_back(q + Vec2::fromAngle(t0 + sweep * static_cast<double>(k) / static_cast<double>(n), r));
+        // The ends exactly, the points between by repeated rotation (one sine and cosine per arc).
+        pts.push_back(q + Vec2::fromAngle(t0, r));
+        const double da = sweep / static_cast<double>(n);
+        const double c = std::cos(da);
+        const double sn = std::sin(da);
+        Vec2 v = Vec2::fromAngle(t0, r);
+        for (std::size_t k = 1; k < n; ++k) {
+            v = Vec2{v.x * c - v.y * sn, v.x * sn + v.y * c};
+            pts.push_back(q + v);
         }
+        pts.push_back(q + Vec2::fromAngle(t0 + sweep, r));
     };
     auto angleOf = [](Vec2 v) { return std::atan2(v.y, v.x); };
     // One side of the path, forward: side = -1 the right, +1 the left.
@@ -2524,19 +2539,21 @@ std::optional<Contour> bandOutline(const Contour& path, double w, double chordal
                     pts.push_back(q.c + Vec2::fromAngle(q.a0 + q.sweep, r));
                 }
             }
-            if (i + 1 == ps.size()) break;
+            const bool closing = i + 1 == ps.size();
+            if (closing && !closedPath) break;
             // The corner to the next piece: a wedge on its outer side, the vertex on the inner.
+            const Piece& next = ps[closing ? 0 : i + 1];
             const Vec2 tin = q.tb;
-            const Vec2 tout = ps[i + 1].ta;
+            const Vec2 tout = next.ta;
             const double turn = std::atan2(tin.cross(tout), tin.dot(tout));
             if (std::fabs(turn) <= 1e-12) continue;
             if ((turn > 0.0) == (side > 0.0)) {
                 // Leaving the vertex out takes the triangle it spans with the two offset ends off
                 // the winding; where both neighbours are lines whose pieces cover that triangle
                 // (they reach w sin(turn) back from the vertex) it stays covered by the other, so
-                // a polygonised curve needs no spike at each vertex.
-                const Piece& next = ps[i + 1];
-                const bool covered = !q.arc && !next.arc && std::fabs(turn) < 0.5 * std::numbers::pi &&
+                // a polygonised curve needs no spike at each vertex. (Not at the start of a closed
+                // path, where the chains are joined through it.)
+                const bool covered = !closing && !q.arc && !next.arc && std::fabs(turn) < 0.5 * std::numbers::pi &&
                                      std::min(q.len, next.len) >= w * std::sin(std::fabs(turn));
                 if (!covered) pts.push_back(q.b);
             } else {
@@ -2544,7 +2561,26 @@ std::optional<Contour> bandOutline(const Contour& path, double w, double chordal
             }
         }
     };
+    // The ring of `pts` from `from` on, without repeated points; nothing when degenerate.
+    std::vector<std::vector<Vec2>> rings;
+    auto ring = [&](std::size_t from) {
+        std::vector<Vec2> out;
+        out.reserve(pts.size() - from);
+        for (std::size_t k = from; k < pts.size(); ++k) {
+            if (out.empty() || out.back() != pts[k]) out.push_back(pts[k]);
+        }
+        while (out.size() > 1 && out.front() == out.back()) out.pop_back();
+        if (out.size() >= 3) rings.push_back(std::move(out));
+    };
     chain(-1.0);
+    if (closedPath) {
+        ring(0);
+        pts.clear();
+        chain(1.0);
+        std::reverse(pts.begin(), pts.end());
+        ring(0);
+        return rings;
+    }
     const Piece& last = ps.back();
     arcPoints(last.b, w, angleOf(-last.tb.perp()), std::numbers::pi);
     const std::size_t leftFrom = pts.size();
@@ -2552,21 +2588,14 @@ std::optional<Contour> bandOutline(const Contour& path, double w, double chordal
     std::reverse(pts.begin() + static_cast<std::ptrdiff_t>(leftFrom), pts.end());
     const Piece& first = ps.front();
     arcPoints(first.a, w, angleOf(first.ta.perp()), std::numbers::pi);
-    Contour out;
-    out.closed = true;
-    for (std::size_t k = 0; k < pts.size(); ++k) {
-        const Vec2 u = pts[k];
-        const Vec2 v = pts[(k + 1) % pts.size()];
-        if (u != v) out.spans.push_back(geometry::LineSpan{u, v});
-    }
-    if (out.spans.size() < 3) return std::nullopt;
-    return out;
+    ring(0);
+    return rings;
 }
 
 // Loose pieces (whenever tabs are on, also when every tab was left out): with the kept tabs, every
 // piece of material the tools leave must still join what lies outside it, through some kept tab.
-// Inside/Outside with allowance >= 0 (not sidedTabs_, T-0140): the holes of the union of every
-// stretch's band in the whole scene (see there). Sided tabs, where the kerf can consume the part:
+// Inside/Outside with allowance >= 0 (not sidedTabs_, T-0140): the pieces every stretch's band
+// encloses in the whole scene (see there). Sided tabs, where the kerf can consume the part:
 // the pieces inside a closed cut, as follows. For each closed primary cut a raster over its
 // box (0.05 mm cells, coarser only beyond 4 million of them) marks the cells within the tab-layer
 // radius + 2 µm of an open tool position (every 0.05 mm along every cut of both passes, outside the
@@ -2693,11 +2722,12 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
     // Inside/Outside with allowance >= 0 (T-0140): the whole scene at once. The kerf lies on the
     // waste side of the vector, so the material each closed cut encloses is never cut by that cut
     // and its region would always hold a piece with every tab lowered; searching region by region
-    // would build the union of the bands of every neighbour once per region. Instead the bands of
-    // every cut (both passes, less the kept raised stretches) are united once, and every hole of
-    // that union is a piece no kept tab joins to the outside: it is bounded by cut all round in
-    // the whole scene. Each counts as above (area less its islands, 0.04 mm² or more, thicker than
-    // 0.05 mm somewhere: what is left of it eroded by 0.025 mm) and is attributed as above.
+    // would build the union of the bands of every neighbour once per region. Instead the pieces
+    // that the bands of every cut (both passes, less the kept raised stretches) enclose in the
+    // whole scene are found at once, leaf by leaf (enclosed_pieces.hpp): each is bounded by cut
+    // all round, so no kept tab joins it to the outside. Each counts as above (area less its
+    // islands, 0.04 mm² or more, thicker than 0.05 mm somewhere: what is left of it eroded by
+    // 0.025 mm) and is attributed as above.
     if (!sidedTabs_) {
         std::vector<const Cut*> cuts;  // the primary cuts first, then the others
         std::size_t primaryCuts = 0;
@@ -2709,75 +2739,48 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
         }
         std::vector<geometry::Box2> cutBox;
         for (const Cut* o : cuts) cutBox.push_back(o->walk.contour().bounds());
-        // The bands of every stretch (bandOutline; Clipper2's offset for a Bezier span), united.
-        // They are exact, so they reach the tab-layer radius + 2 um only (closing hairline gaps
-        // where two bands just touch), without the sagitta of T-0127's sampled positions.
+        // The bands of every stretch (bandOutline; Clipper2's offset for a Bezier span). They are
+        // exact, so they reach the tab-layer radius + 2 um only (closing hairline gaps where two
+        // bands just touch), without the sagitta of T-0127's sampled positions.
         const double reach = rt + 2e-3;
-        Boundaries all;
-        {
-            std::vector<Contour> bands;
-            for (const Cut* o : cuts) {
-                for (Contour& path : stretches(*o, true)) {
-                    if (std::optional<Contour> band = bandOutline(path, reach, offTol_.chordal)) {
-                        bands.push_back(std::move(*band));
-                    } else {
-                        for (Contour& b : geometry::offsetContours({path}, reach, geometry::JoinType::Round, offTol_,
-                                                                   p_.corners.mitreLimit)) {
-                            bands.push_back(std::move(b));
-                        }
+        std::vector<detail::PointRing> bands;
+        for (const Cut* o : cuts) {
+            const bool whole = o->walk.closed() && o->tabs.empty();
+            for (Contour& path : stretches(*o, true)) {
+                std::vector<std::vector<Vec2>> band = bandOutline(path, reach, offTol_.chordal, whole);
+                if (!band.empty()) {
+                    for (std::vector<Vec2>& r : band) bands.push_back(std::move(r));
+                } else {
+                    for (const Contour& b : geometry::offsetContours({path}, reach, geometry::JoinType::Round, offTol_,
+                                                                     p_.corners.mitreLimit)) {
+                        bands.push_back(b.polygonise(offTol_).points);
                     }
                 }
             }
-            all.c = geometry::unionContours(bands, offTol_, geometry::FillRule::NonZero);
-            for (const Contour& b : all.c) {
-                all.box.push_back(b.bounds());
-                all.signedArea.push_back(geometry::signedArea(b));
-                all.area.push_back(std::fabs(all.signedArea.back()));
-            }
         }
-        const BoxIndex boundaryIndex(all.box);
-        // The contour of `all` that most closely encloses q (all.c.size() when none does).
-        auto enclosing = [&](Vec2 q, std::size_t skip) {
-            std::size_t best = all.c.size();
-            double bestArea = std::numeric_limits<double>::infinity();
-            for (std::size_t k : boundaryIndex.containing(q)) {
-                if (k == skip || all.area[k] >= bestArea) continue;
-                if (geometry::locatePoint(all.c[k], q, geometry::FillRule::NonZero, Tolerance{}) ==
-                    geometry::PointLocation::Inside) {
-                    best = k;
-                    bestArea = all.area[k];
-                }
-            }
-            return best;
-        };
+        // The pieces they enclose, leaf by leaf (enclosed_pieces.hpp: one union over the whole
+        // scene is a single sweep over every band side by side, quadratic in a row or grid of
+        // shapes whose kerfs overlap).
+        detail::EnclosedOptions opt;
+        opt.minArea = 0.04;
+        opt.clearance = 0.025;
+        opt.tol = offTol_;
+        opt.mitreLimit = p_.corners.mitreLimit;
+        const std::vector<detail::EnclosedPiece> pieces = detail::enclosedPieces(std::move(bands), opt);
         const BoxIndex cutIndex(cutBox);
-        for (std::size_t self = 0; self < all.c.size(); ++self) {
-            if (all.signedArea[self] >= 0.0) continue;
-            // The piece: the hole less its islands (bands with their own holes inside it).
-            double pieceArea = all.area[self];
-            std::vector<Contour> region{all.c[self]};
-            geometry::setOrientation(region.front(), Orientation::CCW, tol_);
-            for (std::size_t k : boundaryIndex.query(all.box[self])) {
-                if (k == self || all.signedArea[k] <= 0.0 || !all.box[self].contains(all.box[k])) continue;
-                if (enclosing(geometry::startPoint(all.c[k].spans.front()), k) == self) {
-                    pieceArea -= all.area[k];
-                    region.push_back(all.c[k]);
-                    geometry::setOrientation(region.back(), Orientation::CW, tol_);
-                }
-            }
-            if (pieceArea < 0.04) continue;
-            const std::vector<Contour> thick =
-                geometry::offsetContours(region, -0.025, geometry::JoinType::Round, offTol_, p_.corners.mitreLimit);
-            if (thick.empty()) continue;
+        std::vector<double> cutArea(cuts.size(), -1.0);  // of the closed primary cuts, when needed
+        for (const detail::EnclosedPiece& e : pieces) {
+            if (!e.inner) continue;  // not thicker than 0.05 mm anywhere
             // Attributed to the innermost closed primary cut that contains it, or else to the
             // nearest cut.
-            const Vec2 probe = geometry::startPoint(all.c[self].spans.front());
-            std::size_t src = cuts.empty() ? 0 : cuts.front()->sources.front();
+            const Vec2 probe = *e.inner;
+            std::size_t src = cuts.front()->sources.front();
             double loopArea = std::numeric_limits<double>::infinity();
             for (std::size_t k : cutIndex.containing(probe)) {
                 const Cut* o = cuts[k];
                 if (k >= primaryCuts || !o->walk.closed()) continue;
-                const double a = geometry::area(o->walk.contour());
+                if (cutArea[k] < 0.0) cutArea[k] = geometry::area(o->walk.contour());
+                const double a = cutArea[k];
                 if (a < loopArea && geometry::locatePoint(o->walk.contour(), probe, geometry::FillRule::EvenOdd, tol_) ==
                                         geometry::PointLocation::Inside) {
                     loopArea = a;
@@ -2804,10 +2807,10 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
                 }
             }
             Piece piece;
-            piece.bounds = all.box[self];
-            piece.area = pieceArea;
+            piece.bounds = e.bounds;
+            piece.area = e.area;
             piece.source = src;
-            piece.inner = geometry::startPoint(thick.front().spans.front());
+            piece.inner = probe;
             found.push_back(piece);
         }
     }

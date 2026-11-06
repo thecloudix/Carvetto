@@ -3721,6 +3721,73 @@ TEST_CASE("Generative (T-0140): Inside/Outside with allowance >= 0, every free p
     CHECK(withFree >= 4);  // the scenes do exercise the report
 }
 
+TEST_CASE("Loose pieces (T-0140): a piece counts when it is thicker than 0.05 mm somewhere",
+          "[toolpath][profile][tabs]") {
+    // A part (radius 20 with a hole of radius 12) and a round part of radius 8 - t in its hole,
+    // Outside, 2 mm end mill, every tab left out: the waste between the hole's kerf and the round
+    // part's kerf is a ring about t - 4 um wide (each band reaches 2 um past the tool), of a few
+    // square millimetres. Below about 0.055 mm it is not reported (it holds no 0.05 mm disc);
+    // above, it is. The two parts come free too.
+    const double reach = 1.002;
+    for (const double t : {0.03, 0.045, 0.08, 0.2}) {
+        INFO("t " << t);
+        const std::vector<Contour> cs{Contour::circle({0, 0}, 20.0), Contour::circle({0, 0}, 12.0),
+                                      Contour::circle({0, 0}, 12.0 - 4.0 - t)};
+        ProfileParams p = looseParams(ProfileSide::Outside, 0.0);
+        p.tabs.length = 200.0;
+        const ProfileResult r = profileToolpath(cs, test::endMill(2.0), p);
+        REQUIRE(r.ok());
+        std::vector<double> got;
+        for (const auto& g : loosePieces(r)) got.push_back(g.second);
+        std::sort(got.begin(), got.end());
+        std::vector<double> want;
+        const double inner = 12.0 - 1.0 - reach;      // the hole's kerf reaches in to here
+        const double outer = 8.0 - t + 1.0 + reach;  // the round part's kerf reaches out to here
+        if (t > 0.06) want.push_back(geometry::kPi * (inner * inner - outer * outer));
+        const double disc = 12.0 - 4.0 - t - (reach - 1.0);
+        want.push_back(geometry::kPi * disc * disc);
+        const double a = 20.0 - (reach - 1.0);
+        const double b = 12.0 + (reach - 1.0);
+        want.push_back(geometry::kPi * (a * a - b * b));
+        REQUIRE(got.size() == want.size());
+        for (std::size_t k = 0; k < want.size(); ++k) CHECK(std::fabs(got[k] - want[k]) <= 0.005 * want[k] + 0.01);
+    }
+}
+
+TEST_CASE("Loose pieces (T-0140): each piece is reported against its own vector, with its exact area",
+          "[toolpath][profile][tabs]") {
+    // A 24 x 20 plate with a 12 x 8 hole, Outside (the tool runs outside the outline and inside
+    // the hole), 2 mm end mill, every tab left out: the plate (vector 0) and the hole's slug
+    // (vector 1) come free, each reported against its own vector. The plate's area: the outline
+    // less 2 um (each band reaches 2 um past the tool) less what the hole's cut takes, the hole
+    // grown by 2 um with its corners rounded at the band's 1.002 mm. Those corners are the wedges
+    // of the band at the sharp corners of the hole's path: without them each corner would keep a
+    // quarter disc of material, 3.15 mm2 in all.
+    const double w = 1.002;
+    const double e = w - 1.0;
+    const std::vector<Contour> cs{Contour::rectangle(Box2{{0, 0}, {24, 20}}), Contour::rectangle(Box2{{6, 6}, {18, 14}})};
+    for (const bool sep : {false, true}) {
+        INFO("separate last pass " << sep);
+        ProfileParams p = looseParams(ProfileSide::Outside, 0.0);
+        p.tabs.length = 200.0;
+        p.separateLastPass = sep;
+        p.lastPassAllowance = 0.3;
+        const ProfileResult r = profileToolpath(cs, test::endMill(2.0), p);
+        REQUIRE(r.ok());
+        const auto got = loosePieces(r);
+        REQUIRE(got.size() == 2);
+        CHECK(got[0].first == 0);
+        CHECK(got[1].first == 1);
+        const double plate =
+            (24.0 - 2.0 * e) * (20.0 - 2.0 * e) - ((12.0 + 2.0 * e) * (8.0 + 2.0 * e) - (4.0 - geometry::kPi) * w * w);
+        CHECK(std::fabs(got[0].second - plate) <= 0.1);  // chords of the corners' arcs
+        // The slug: the hole less the path's 1 mm and the band's 1.002 mm (sharp corners), and
+        // less the roughing cut's 0.3 mm with a separate last pass.
+        const double in = 1.0 + w + (sep ? 0.3 : 0.0);
+        CHECK(std::fabs(got[1].second - (12.0 - 2.0 * in) * (8.0 - 2.0 * in)) <= 0.02);
+    }
+}
+
 TEST_CASE("Loose pieces (T-0140): sweep scenes, Inside/Outside with allowance >= 0", "[toolpath][profile][tabs]") {
     // T-0140 sweep (whole-scene flood of the moves, as T-0127's wsf, leads off): each reports
     // exactly the flood's free pieces (before T-0140, none of them).
