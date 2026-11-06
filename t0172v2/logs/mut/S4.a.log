@@ -1,0 +1,90 @@
+Filters: [t0172],[t0128]
+Randomness seeded to: 3602125752
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0172 (a): a stray of more than 512 spans comes back whole, no span dropped
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1038
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1082: FAILED:
+  CHECK( along <= static_cast<std::size_t>((M + 511) / 512) )
+with expansion:
+  599 (0x257) <= 2
+with messages:
+  closed := false
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1082: FAILED:
+  CHECK( along <= static_cast<std::size_t>((M + 511) / 512) )
+with expansion:
+  599 (0x257) <= 2
+with messages:
+  closed := false
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1082: FAILED:
+  CHECK( along <= static_cast<std::size_t>((M + 511) / 512) )
+with expansion:
+  599 (0x257) <= 2
+with messages:
+  closed := false
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1082: FAILED:
+  CHECK( along <= static_cast<std::size_t>((M + 511) / 512) )
+with expansion:
+  602 (0x25a) <= 2
+with messages:
+  closed := true
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1082: FAILED:
+  CHECK( along <= static_cast<std::size_t>((M + 511) / 512) )
+with expansion:
+  602 (0x25a) <= 2
+with messages:
+  closed := true
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1082: FAILED:
+  CHECK( along <= static_cast<std::size_t>((M + 511) / 512) )
+with expansion:
+  602 (0x25a) <= 2
+with messages:
+  closed := true
+  static_cast<int>(join) := 2
+
+-------------------------------------------------------------------------------
+T-0172 (c): a thin loop's strand of many spans comes back whole
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1553
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1579: FAILED:
+  REQUIRE( chains.size() == 1 )
+with expansion:
+  88 == 1
+with message:
+  R := 5.0
+
+-------------------------------------------------------------------------------
+T-0172 (a): a stray that would cross itself is cut into consecutive runs
+            without tiny ends
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1598
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1655: FAILED:
+  REQUIRE( one.size() == 1 )
+with expansion:
+  50 == 1
+
+===============================================================================
+test cases:     25 |     22 passed | 3 failed
+assertions: 918432 | 918424 passed | 8 failed
+

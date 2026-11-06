@@ -1,0 +1,11 @@
+--- offset.cpp
++++ offset.cpp
+@@ -1740,7 +1740,7 @@
+     // vertices 2d + 3.2e-11 apart kept a 3.2e-11 mm gap when sin/cos were 1 ulp off glibc's.)
+     const Vec2 ta = tangentAt(a, 1.0);
+     auto ahead = [&](const ArcSpan& c) { return (c.startPoint() - j).dot(ta) >= 0.0; };
+-    if (ahead(arc) && geometry::distance(arc.startPoint(), j) <= 1e-12 * scale) {
++    if (ahead(arc)) {
+         return;
+     }
+     double bestGap = 1e-12 * scale;

@@ -1,0 +1,12 @@
+BS KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 22 passed | 3 failed; 1 T-0172: BoxTree memory and query work stay near-linear on nested, collinear and; 1 T-0172 (a): self-crossing cuts cost near-linear time on long and collinear; 1 T-0128: putting strays back is near-linear in their number (hatch at pitch 2d);
+XI KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 24 passed | 1 failed; 1 T-0172 (a): near-tangent spans meet in the self-crossing cuts exactly as in the;
+X7 KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 24 passed | 1 failed; 1 T-0172 (a): near-tangent spans meet in the self-crossing cuts exactly as in the;
+X9 KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 24 passed | 1 failed; 1 T-0172 (a): near-tangent spans meet in the self-crossing cuts exactly as in the;
+XL SURVIVES ([t0172] [t0128] [offset])
+XN KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 21 passed | 4 failed; 1 T-0172 (c): a thin loop's strand of many spans comes back whole; 1 T-0172 (a): self-crossing cuts cost near-linear time on long and collinear; 1 T-0172 (a): a stray that would cross itself is cut into consecutive runs;
+XF KILLED by [t0172],[t0128] rc 15:  1 test cases: 13 | 12 passed | 1 failed; 1 T-0172 (a): a strand is cut where it would cross itself, as by the pairwise;
+XC KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 24 passed | 1 failed; 1 T-0172 (a): a stray that would cross itself is cut into consecutive runs;
+SL KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 24 passed | 1 failed; 1 T-0172 (c): a thin loop's strand of many spans comes back whole;
+S5 KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 23 passed | 2 failed; 1 T-0172 (c): a thin loop's strand of many spans comes back whole; 1 T-0172 (a): a stray of more than 512 spans comes back whole, no span dropped;
+WR KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 24 passed | 1 failed; 1 T-0128: strays are put back only where no chain covers them (fam4 0x2a0006b4);
+WB SURVIVES ([t0172] [t0128] [offset])

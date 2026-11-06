@@ -1,0 +1,8 @@
+BP KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 23 passed | 2 failed; 1 T-0172: BoxTree reports exactly the boxes that meet the query, once each; 1 T-0128: strays are put back only where no chain covers them (fam4 0x2a0006b4);
+BR KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 23 passed | 2 failed; 1 T-0172: BoxTree reports exactly the boxes that meet the query, once each; 1 T-0172 (a): a strand is cut where it would cross itself, as by the pairwise;
+BL KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 20 passed | 5 failed; 1 T-0172: BoxTree reports exactly the boxes that meet the query, once each; 1 T-0172 (c): a thin loop's strand of many spans comes back whole; 1 T-0172 (a): self-crossing cuts cost near-linear time on long and collinear;
+BC KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 21 passed | 4 failed; 1 T-0172: BoxTree reports exactly the boxes that meet the query, once each; 1 T-0172 (a): a stray that would cross itself is cut into consecutive runs; 1 T-0172 (a): a strand is cut where it would cross itself, as by the pairwise;
+BA SURVIVES ([t0172] [t0128] [offset])
+BM KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 24 passed | 1 failed; 1 T-0172: BoxTree memory and query work stay near-linear on nested, collinear and;
+BN KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 24 passed | 1 failed; 1 T-0172: BoxTree reports exactly the boxes that meet the query, once each;
+BU KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 21 passed | 4 failed; 1 T-0172: BoxTree reports exactly the boxes that meet the query, once each; 1 T-0172 (a): near-tangent spans meet in the self-crossing cuts exactly as in the; 1 T-0172 (a): a stray that would cross itself is cut into consecutive runs;

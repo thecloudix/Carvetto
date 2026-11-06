@@ -1,0 +1,11 @@
+--- offset.cpp
++++ offset.cpp
+@@ -3719,7 +3719,7 @@
+     merged.reserve(result.size() + added.size());
+     std::size_t r = 0;
+     for (Stray& a : added) {
+-        while (r < result.size() && !(a.key < resultKeys[r])) {
++        while (r < result.size()) {
+             merged.push_back(std::move(result[r++]));
+         }
+         Contour c;

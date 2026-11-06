@@ -1,0 +1,72 @@
+Filters: [t0172],[t0128]
+Randomness seeded to: 697335585
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0172 (a): near-tangent spans meet in the self-crossing cuts exactly as in the
+            pairwise test
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1218
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000005
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1233: FAILED:
+  CHECK( reachBox(a).intersects(reachBox(b)) )
+with expansion:
+  false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000005
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000009
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1233: FAILED:
+  CHECK( reachBox(a).intersects(reachBox(b)) )
+with expansion:
+  false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000009
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000009
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1233: FAILED:
+  CHECK( reachBox(a).intersects(reachBox(b)) )
+with expansion:
+  false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000009
+  r := 0.001
+
+===============================================================================
+test cases:     25 |     24 passed | 1 failed
+assertions: 948275 | 948269 passed | 6 failed
+

@@ -1,0 +1,11 @@
+--- offset.cpp
++++ offset.cpp
+@@ -3604,7 +3604,7 @@
+         window = Box2{};
+         for (const Span& sp : part) {
+             addedSpans.push_back(sp);
+-            coverGrid.add(bounds(sp));
++            coverGrid.add(Box2{});
+         }
+         added.push_back(Stray{key, std::move(part)});
+     };

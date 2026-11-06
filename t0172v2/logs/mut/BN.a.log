@@ -1,0 +1,407 @@
+Filters: [t0172],[t0128]
+Randomness seeded to: 3406872658
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0172: BoxTree reports exactly the boxes that meet the query, once each
+-------------------------------------------------------------------------------
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:123
+...............................................................................
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  18 == 17
+with messages:
+  trial := 0
+  kind := 0
+  n := 16
+  bulk := 0
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  39 == 38
+with messages:
+  trial := 1
+  kind := 1
+  n := 37
+  bulk := 21
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  7 == 6
+with messages:
+  trial := 2
+  kind := 2
+  n := 5
+  bulk := 1
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  22 == 21
+with messages:
+  trial := 3
+  kind := 3
+  n := 20
+  bulk := 0
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  18 == 17
+with messages:
+  trial := 4
+  kind := 4
+  n := 16
+  bulk := 15
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  34 == 33
+with messages:
+  trial := 5
+  kind := 5
+  n := 32
+  bulk := 29
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  34 == 33
+with messages:
+  trial := 6
+  kind := 6
+  n := 32
+  bulk := 0
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  35 == 34
+with messages:
+  trial := 7
+  kind := 7
+  n := 32
+  bulk := 7
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  39 == 38
+with messages:
+  trial := 8
+  kind := 8
+  n := 37
+  bulk := 36
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  15 == 14
+with messages:
+  trial := 9
+  kind := 9
+  n := 13
+  bulk := 0
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  15 == 14
+with messages:
+  trial := 10
+  kind := 10
+  n := 12
+  bulk := 13
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  27 == 26
+with messages:
+  trial := 11
+  kind := 11
+  n := 25
+  bulk := 14
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  32 == 31
+with messages:
+  trial := 12
+  kind := 12
+  n := 30
+  bulk := 0
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  1153 (0x481) == 1152 (0x480)
+with messages:
+  trial := 13
+  kind := 0
+  n := 1151 (0x47f)
+  bulk := 276 (0x114)
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  929 (0x3a1) == 928 (0x3a0)
+with messages:
+  trial := 14
+  kind := 1
+  n := 927 (0x39f)
+  bulk := 775 (0x307)
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  395 (0x18b) == 394 (0x18a)
+with messages:
+  trial := 15
+  kind := 2
+  n := 393 (0x189)
+  bulk := 0
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  1445 (0x5a5) == 1444 (0x5a4)
+with messages:
+  trial := 16
+  kind := 3
+  n := 1443 (0x5a3)
+  bulk := 564 (0x234)
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  1441 (0x5a1) == 1440 (0x5a0)
+with messages:
+  trial := 17
+  kind := 4
+  n := 1439 (0x59f)
+  bulk := 320 (0x140)
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  82 == 81
+with messages:
+  trial := 18
+  kind := 5
+  n := 80
+  bulk := 0
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  865 (0x361) == 864 (0x360)
+with messages:
+  trial := 19
+  kind := 6
+  n := 863 (0x35f)
+  bulk := 786 (0x312)
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  724 (0x2d4) == 723 (0x2d3)
+with messages:
+  trial := 20
+  kind := 7
+  n := 721 (0x2d1)
+  bulk := 543 (0x21f)
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  332 (0x14c) == 331 (0x14b)
+with messages:
+  trial := 21
+  kind := 8
+  n := 330 (0x14a)
+  bulk := 0
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  199 == 198
+with messages:
+  trial := 22
+  kind := 9
+  n := 197
+  bulk := 9
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  921 (0x399) == 920 (0x398)
+with messages:
+  trial := 23
+  kind := 10
+  n := 918 (0x396)
+  bulk := 714 (0x2ca)
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  592 (0x250) == 591 (0x24f)
+with messages:
+  trial := 24
+  kind := 11
+  n := 590 (0x24e)
+  bulk := 0
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  328 (0x148) == 327 (0x147)
+with messages:
+  trial := 25
+  kind := 12
+  n := 326 (0x146)
+  bulk := 231
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  272 (0x110) == 271 (0x10f)
+with messages:
+  trial := 26
+  kind := 0
+  n := 270 (0x10e)
+  bulk := 230
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  1332 (0x534) == 1331 (0x533)
+with messages:
+  trial := 27
+  kind := 1
+  n := 1330 (0x532)
+  bulk := 0
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  182 == 181
+with messages:
+  trial := 28
+  kind := 2
+  n := 180
+  bulk := 5
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  1407 (0x57f) == 1406 (0x57e)
+with messages:
+  trial := 29
+  kind := 3
+  n := 1405 (0x57d)
+  bulk := 436 (0x1b4)
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  812 (0x32c) == 811 (0x32b)
+with messages:
+  trial := 30
+  kind := 4
+  n := 810 (0x32a)
+  bulk := 0
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  862 (0x35e) == 861 (0x35d)
+with messages:
+  trial := 31
+  kind := 5
+  n := 860 (0x35c)
+  bulk := 800 (0x320)
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  1388 (0x56c) == 1387 (0x56b)
+with messages:
+  trial := 32
+  kind := 6
+  n := 1386 (0x56a)
+  bulk := 805 (0x325)
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  742 (0x2e6) == 741 (0x2e5)
+with messages:
+  trial := 33
+  kind := 7
+  n := 739 (0x2e3)
+  bulk := 0
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  1469 (0x5bd) == 1468 (0x5bc)
+with messages:
+  trial := 34
+  kind := 8
+  n := 1467 (0x5bb)
+  bulk := 470 (0x1d6)
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  303 (0x12f) == 302 (0x12e)
+with messages:
+  trial := 35
+  kind := 9
+  n := 301 (0x12d)
+  bulk := 87
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  516 (0x204) == 515 (0x203)
+with messages:
+  trial := 36
+  kind := 10
+  n := 513 (0x201)
+  bulk := 0
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  646 (0x286) == 645 (0x285)
+with messages:
+  trial := 37
+  kind := 11
+  n := 644 (0x284)
+  bulk := 107
+
+/home/chris/harness/t0172v2/mutants/BN/box_tree_test.cpp:204: FAILED:
+  CHECK( tree.heldCount() == items.size() - 2 )
+with expansion:
+  734 (0x2de) == 733 (0x2dd)
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+===============================================================================
+test cases:     25 |     24 passed |  1 failed
+assertions: 948275 | 948236 passed | 39 failed
+

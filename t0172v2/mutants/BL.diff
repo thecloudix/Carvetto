@@ -1,0 +1,11 @@
+--- box_tree.hpp
++++ box_tree.hpp
+@@ -119,7 +119,7 @@
+                     for (std::size_t k = node.begin; k < node.end; ++k) {
+                         ++work_;
+                         const std::size_t id = t.ids[k];
+-                        if (id >= lo && id <= hi && t.boxes[k].intersects(query) && f(id)) {
++                        if (t.boxes[k].intersects(query) && f(id)) {
+                             return true;
+                         }
+                     }

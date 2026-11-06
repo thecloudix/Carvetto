@@ -1,0 +1,11 @@
+WA SURVIVES ([t0172] [t0128] [offset])
+WN KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 24 passed | 1 failed; 1 T-0128: strays are put back only where no chain covers them (fam4 0x2a0006b4);
+OM KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 24 passed | 1 failed; 1 T-0172 (c): strays put back are ordered by where they start along the input;
+M3 KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 24 passed | 1 failed; 1 T-0172 (c): a stray between tol and 10 x tol that meets a chain is returned and;
+W2 KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 23 passed | 2 failed; 1 T-0172 (c): dropped opposite copies hand back the copy exactly d from the input; 1 T-0172 (c): a stray between tol and 10 x tol that meets a chain is returned and;
+S KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 23 passed | 2 failed; 1 T-0172 (c): a thin loop's strand of many spans comes back whole; 1 T-0172 (a): a stray of more than 512 spans comes back whole, no span dropped;
+S4 KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 22 passed | 3 failed; 1 T-0172 (c): a thin loop's strand of many spans comes back whole; 1 T-0172 (a): a stray that would cross itself is cut into consecutive runs; 1 T-0172 (a): a stray of more than 512 spans comes back whole, no span dropped;
+P KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 24 passed | 1 failed; 1 T-0172 (c): a thin loop gives back its longer strand;
+O KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 24 passed | 1 failed; 1 T-0172 (c): strays put back are ordered by where they start along the input;
+E2 KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 24 passed | 1 failed; 1 T-0172 (c): dropped opposite copies hand back the copy exactly d from the input;
+EJ KILLED by [t0172],[t0128] rc 42:  1 test cases: 25 | 24 passed | 1 failed; 1 T-0172 (e): an arc start ahead by more than 1e-12 x the scale is moved onto the;

@@ -1,0 +1,11 @@
+--- box_tree.hpp
++++ box_tree.hpp
+@@ -175,7 +175,7 @@
+ 
+     // Boxes that no query can meet are not held: empty ones, and those with a NaN coordinate
+     // (every comparison in Box2::intersects is false for them).
+-    static bool holdable(const Box2& b) { return b.min.x <= b.max.x && b.min.y <= b.max.y; }
++    static bool holdable(const Box2& b) { return !b.isEmpty(); }
+ 
+     static double coord(const Box2& b, int axis) {
+         switch (axis) {

@@ -1,0 +1,13 @@
+== main
+zz n=1000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 1.001 (502 sp) main 0.942 (502) | Sharp br 0.805 (502 sp) main 0.802 (502) | Square br 0.788 (502 sp) main 0.800 (502) | ratio Sh/R 0.80 Sq/R 0.79
+zz n=1000 p=0.02 a=1 d=7 side=1 mitre=2 | Round br 0.889 (499 sp) main 0.818 (499) | Sharp br 0.754 (501 sp) main 0.716 (501) | Square br 0.774 (501 sp) main 0.754 (501) | ratio Sh/R 0.85 Sq/R 0.87
+zz n=4000 p=0.05 a=0.2 d=5 side=0 mitre=2 | Round br 0.765 (2002 sp) main 0.795 (2002) | Sharp br 0.834 (2002 sp) main 0.864 (2002) | Square br 0.807 (2002 sp) main 0.815 (2002) | ratio Sh/R 1.09 Sq/R 1.05
+hatch n=1000 p=0.02 a=3 d=7 side=0 mitre=2 | Round br 0.364 (749 sp) main 0.394 (749) | Sharp br 0.143 (251 sp) main 0.133 (251) | Square br 0.234 (255 sp) main 0.219 (255) | ratio Sh/R 0.39 Sq/R 0.64
+arc n=1000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 3.122 (502 sp) main 3.010 (502) | Sharp br 3.121 (502 sp) main 2.974 (502) | Square br 3.019 (502 sp) main 2.901 (502) | ratio Sh/R 1.00 Sq/R 0.97
+== brns
+zz n=1000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 0.745 (502 sp) main 0.737 (502) | Sharp br 0.616 (502 sp) main 0.624 (502) | Square br 0.623 (502 sp) main 0.636 (502) | ratio Sh/R 0.83 Sq/R 0.84
+zz n=1000 p=0.02 a=1 d=7 side=1 mitre=2 | Round br 0.734 (499 sp) main 0.686 (499) | Sharp br 0.636 (501 sp) main 0.642 (501) | Square br 0.655 (501 sp) main 0.652 (501) | ratio Sh/R 0.87 Sq/R 0.89
+zz n=4000 p=0.05 a=0.2 d=5 side=0 mitre=2 | Round br 0.666 (2002 sp) main 0.660 (2002) | Sharp br 0.709 (2002 sp) main 0.725 (2002) | Square br 0.738 (2002 sp) main 0.745 (2002) | ratio Sh/R 1.06 Sq/R 1.11
+hatch n=1000 p=0.02 a=3 d=7 side=0 mitre=2 | Round br 0.337 (749 sp) main 0.333 (749) | Sharp br 0.133 (251 sp) main 0.143 (251) | Square br 0.231 (255 sp) main 0.212 (255) | ratio Sh/R 0.40 Sq/R 0.68
+arc n=1000 p=0.02 a=1 d=7 side=0 mitre=2 | Round br 2.902 (502 sp) main 2.944 (502) | Sharp br 2.725 (502 sp) main 2.802 (502) | Square br 2.748 (502 sp) main 2.740 (502) | ratio Sh/R 0.94 Sq/R 0.95
+done

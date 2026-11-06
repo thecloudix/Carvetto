@@ -1,0 +1,1025 @@
+Filters: [t0172],[t0128]
+Randomness seeded to: 2553801978
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0172 (c): a thin loop gives back its longer strand
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1519
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00000749999999972
+with messages:
+  R := 5.0
+  w := 0.00001
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  6.0 >= 6.00003750000000036
+with messages:
+  R := 5.0
+  w := 0.00005
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  20.99999999999999645
+  >=
+  21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.00000000000000355
+  >=
+  21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  20.99999999999999645
+  >=
+  21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  20.99999999999999645
+  >=
+  21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.00000000000000355
+  >=
+  21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  20.99999999999999645
+  >=
+  21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  20.99999999999999645
+  >=
+  21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.00000000000000355
+  >=
+  21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  20.99999999999999645
+  >=
+  21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00000749999999883
+with messages:
+  R := 20.0
+  w := 0.00001
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  20.99999999999999645
+  >=
+  21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.00000000000000355
+  >=
+  21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  20.99999999999999645
+  >=
+  21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  20.99999999999999645
+  >=
+  21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.00000000000000355
+  >=
+  21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  20.99999999999999645
+  >=
+  21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  20.99999999999999645
+  >=
+  21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.00000000000000355
+  >=
+  21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  20.99999999999999645
+  >=
+  21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1544: FAILED:
+  CHECK( pointAt(s, k / 8.0).length() >= R + d + 0.75 * w )
+with expansion:
+  21.0 >= 21.00003750000000124
+with messages:
+  R := 20.0
+  w := 0.00005
+  static_cast<int>(join) := 2
+
+===============================================================================
+test cases:     25 |     24 passed |   1 failed
+assertions: 970506 | 970398 passed | 108 failed
+

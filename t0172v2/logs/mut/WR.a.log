@@ -1,0 +1,38 @@
+Filters: [t0172],[t0128]
+Randomness seeded to: 3036108113
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0128: strays are put back only where no chain covers them (fam4 0x2a0006b4)
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:945
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:954: FAILED:
+  CHECK( countOverlaps(chains, 1e-6) == 0 )
+with expansion:
+  1 == 0
+with message:
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:954: FAILED:
+  CHECK( countOverlaps(chains, 1e-6) == 0 )
+with expansion:
+  1 == 0
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:954: FAILED:
+  CHECK( countOverlaps(chains, 1e-6) == 0 )
+with expansion:
+  1 == 0
+with message:
+  static_cast<int>(join) := 2
+
+===============================================================================
+test cases:     25 |     24 passed | 1 failed
+assertions: 948275 | 948272 passed | 3 failed
+

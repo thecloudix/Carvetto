@@ -1,0 +1,11 @@
+--- box_tree.hpp
++++ box_tree.hpp
+@@ -235,7 +235,7 @@
+         // one leaf (a query meets all of them or none).
+         int axis = -1;
+         for (int k = 1; k <= 4 && axis < 0; ++k) {
+-            const auto a = static_cast<std::size_t>((parentAxis + k) % 4);
++            const auto a = static_cast<std::size_t>((0 + k - 1) % 4);
+             if (most[a] > least[a]) {
+                 axis = static_cast<int>(a);
+             }

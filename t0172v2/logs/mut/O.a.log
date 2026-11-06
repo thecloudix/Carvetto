@@ -1,0 +1,24 @@
+Filters: [t0172],[t0128]
+Randomness seeded to: 1408295107
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0172 (c): strays put back are ordered by where they start along the input
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1659
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1672: FAILED:
+  REQUIRE( chains[static_cast<std::size_t>(k)].spans.size() == 1 )
+with expansion:
+  6 == 1
+with message:
+  k := 0
+
+===============================================================================
+test cases:     25 |     24 passed | 1 failed
+assertions: 948266 | 948265 passed | 1 failed
+

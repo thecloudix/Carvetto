@@ -1,0 +1,826 @@
+Filters: [t0172],[t0128]
+Randomness seeded to: 1267290024
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0172 (a): a strand is cut where it would cross itself, as by the pairwise
+            test
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1161
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2 } == {  }
+with message:
+  trial := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2 } == {  }
+with message:
+  trial := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4 } == {  }
+with message:
+  trial := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4 } == { 5 }
+with message:
+  trial := 3
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 3, 5 } == { 4 }
+with message:
+  trial := 4
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6 } == { 2, 4, 7 }
+with message:
+  trial := 5
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8 } == { 3, 7 }
+with message:
+  trial := 6
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8 } == { 6 }
+with message:
+  trial := 7
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10 } == { 4, 9 }
+with message:
+  trial := 8
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10 } == { 6, 11 }
+with message:
+  trial := 9
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12 } == { 3, 5, 11 }
+with message:
+  trial := 10
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12 } == { 6, 9, 11, 13 }
+with message:
+  trial := 11
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14 }
+  ==
+  { 4, 7, 9, 13 }
+with message:
+  trial := 12
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14 }
+  ==
+  { 4, 6, 12, 14 }
+with message:
+  trial := 13
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16 }
+  ==
+  { 6, 8, 11, 14, 16 }
+with message:
+  trial := 14
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16 }
+  ==
+  { 2, 6, 8, 13, 17 }
+with message:
+  trial := 15
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 3, 5, 7, 9, 12, 14, 16, 18 }
+  ==
+  { 3, 5, 7, 12, 16 }
+with message:
+  trial := 16
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18 }
+  ==
+  { 3, 6, 10, 12, 16 }
+with message:
+  trial := 17
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20 }
+  ==
+  { 3, 6, 13, 16, 20 }
+with message:
+  trial := 18
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20 }
+  ==
+  { 2, 7, 9, 12, 15, 20 }
+with message:
+  trial := 19
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22 }
+  ==
+  { 3, 7, 9, 11, 13, 17, 20, 22 }
+with message:
+  trial := 20
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22 }
+  ==
+  { 6, 12, 17, 20 }
+with message:
+  trial := 21
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24 }
+  ==
+  { 6, 10, 20, 22 }
+with message:
+  trial := 22
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24 }
+  ==
+  { 8, 11, 13, 17, 22, 25 }
+with message:
+  trial := 23
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26 }
+  ==
+  { 7, 10, 13, 17, 19, 23, 26 }
+with message:
+  trial := 24
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26 }
+  ==
+  { 6, 8, 12, 15, 19, 21, 23 }
+with message:
+  trial := 25
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28 }
+  ==
+  { 7, 12, 14, 17, 23, 27 }
+with message:
+  trial := 26
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28 }
+  ==
+  { 2, 6, 8, 10, 14, 17, 20, 24, 27 }
+with message:
+  trial := 27
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28 }
+  ==
+  { 2, 6, 9, 13, 17, 19, 22, 25, 27, 30 }
+with message:
+  trial := 28
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30 }
+  ==
+  { 3, 6, 14, 18, 23, 27, 29, 31 }
+with message:
+  trial := 29
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32 }
+  ==
+  { 3, 7, 10, 12, 15, 18, 22, 25, 29 }
+with message:
+  trial := 30
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32 }
+  ==
+  { 4, 8, 10, 15, 17, 21, 23, 26, 28, 30, 32 }
+with message:
+  trial := 31
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34 }
+  ==
+  { 3, 6, 11, 14, 18, 21, 24, 27, 29, 31, 33 }
+with message:
+  trial := 32
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34 }
+  ==
+  { 5, 7, 12, 14, 17, 24, 27, 29, 31 }
+with message:
+  trial := 33
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36 }
+  ==
+  { 3, 6, 9, 11, 14, 17, 19, 25, 29, 35 }
+with message:
+  trial := 34
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36 }
+  ==
+  { 5, 11, 13, 15, 19, 22, 28, 31, 34, 37 }
+with message:
+  trial := 35
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38 }
+  ==
+  { 4, 8, 11, 15, 19, 24, 30, 32, 34, 38 }
+with message:
+  trial := 36
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38 }
+  ==
+  { 9, 15, 17, 19, 21, 25, 28, 30, 32, 37 }
+with message:
+  trial := 37
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40
+  }
+  ==
+  { 2, 5, 8, 10, 12, 14, 16, 20, 22, 26, 34, 36, 39 }
+with message:
+  trial := 38
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40
+  }
+  ==
+  { 2, 6, 10, 14, 16, 19, 21, 25, 29, 31, 33, 35, 38 }
+with message:
+  trial := 39
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 5, 7, 9, 11, 13, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 37, 39, 41 }
+  ==
+  { 5, 8, 11, 15, 18, 21, 26, 29, 33, 35, 37, 39, 41 }
+with message:
+  trial := 40
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42 }
+  ==
+  { 2, 4, 6, 9, 12, 14, 16, 19, 23, 25, 31, 37, 39, 42 }
+with message:
+  trial := 41
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42, 44 }
+  ==
+  { 2, 9, 12, 15, 19, 24, 27, 31, 34, 37, 42 }
+with message:
+  trial := 42
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42, 44 }
+  ==
+  { 5, 9, 11, 13, 17, 22, 24, 31, 35, 37, 39, 43, 45 }
+with message:
+  trial := 43
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42, 44, 46 }
+  ==
+  { 3, 7, 12, 15, 20, 23, 26, 29, 33, 37, 41, 45 }
+with message:
+  trial := 44
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42, 44, 46 }
+  ==
+  { 6, 8, 12, 15, 17, 20, 24, 27, 29, 34, 40, 43, 45 }
+with message:
+  trial := 45
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42, 44, 46, 48 }
+  ==
+  { 3, 7, 10, 16, 20, 23, 25, 29, 31, 33, 36, 41, 46 }
+with message:
+  trial := 46
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42, 44, 46, 48 }
+  ==
+  { 2, 5, 7, 11, 21, 24, 27, 29, 35, 38, 44, 46 }
+with message:
+  trial := 47
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42, 44, 46, 48, 50 }
+  ==
+  { 3, 10, 13, 17, 21, 25, 28, 31, 35, 37, 39, 41, 44, 48 }
+with message:
+  trial := 48
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42, 44, 46, 48, 50 }
+  ==
+  { 2, 8, 11, 13, 16, 22, 26, 29, 32, 34, 36, 39, 41, 43, 45, 48, 50 }
+with message:
+  trial := 49
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42, 44, 46, 48, 50, 52 }
+  ==
+  { 4, 8, 10, 15, 18, 20, 22, 26, 32, 37, 39, 43, 46, 50 }
+with message:
+  trial := 50
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42, 44, 46, 48, 50, 52 }
+  ==
+  { 2, 4, 6, 9, 11, 18, 21, 23, 27, 31, 33, 35, 43, 45, 47, 50, 53 }
+with message:
+  trial := 51
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 32, 35, 37, 39, 41, 43,
+  45, 47, 49, 51, 53 }
+  ==
+  { 4, 10, 12, 15, 20, 24, 26, 30, 33, 36, 43, 45, 49, 51 }
+with message:
+  trial := 52
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42, 44, 46, 48, 50, 52, 54 }
+  ==
+  { 7, 12, 16, 21, 24, 26, 28, 30, 33, 38, 40, 44, 47, 55 }
+with message:
+  trial := 53
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42, 44, 46, 48, 50, 52, 54, 56 }
+  ==
+  { 2, 4, 8, 11, 13, 19, 21, 25, 28, 30, 34, 40, 43, 49, 51, 53, 55 }
+with message:
+  trial := 54
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42, 44, 46, 48, 50, 52, 54, 56 }
+  ==
+  { 7, 10, 12, 15, 19, 21, 26, 29, 32, 34, 36, 39, 46, 50, 52, 57 }
+with message:
+  trial := 55
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42, 44, 46, 48, 50, 52, 54, 56, 58 }
+  ==
+  { 2, 5, 12, 16, 23, 28, 32, 34, 40, 44, 49, 52, 56 }
+with message:
+  trial := 56
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42, 44, 46, 48, 50, 52, 54, 56, 58 }
+  ==
+  { 3, 8, 12, 16, 18, 22, 25, 28, 31, 33, 36, 39, 43, 45, 49, 53, 56, 58 }
+with message:
+  trial := 57
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42, 44, 46, 48, 50, 52, 54, 56, 58, 60 }
+  ==
+  { 3, 7, 11, 13, 16, 19, 24, 26, 28, 31, 35, 40, 45, 51, 54, 57 }
+with message:
+  trial := 58
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42, 44, 46, 48, 50, 52, 54, 56, 58, 60 }
+  ==
+  { 3, 6, 10, 14, 20, 24, 26, 32, 37, 44, 48, 50, 54, 57, 61 }
+with message:
+  trial := 59
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1204: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == expected )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42 }
+  ==
+  { 41 }
+with message:
+  turns := 40
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1204: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == expected )
+with expansion:
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78,
+  80, 82, 84, 86, 88, 90, 92, 94, 96, 98, 100, 102, 104, 106, 108, 110, 112,
+  114, 116, 118, 120, 122, 124, 126, 128, 130, 132, 134, 136, 138, 140, 142,
+  144, 146, 148, 150, 152, 154, 156, 158, 160, 162, 164, 166, 168, 170, 172,
+  174, 176, 178, 180, 182, 184, 186, 188, 190, 192, 194, 196, 198, 200, 202,
+  204, 206, 208, 210, 212, 214, 216, 218, 220, 222, 224, 226, 228, 230, 232,
+  234, 236, 238, 240, 242, 244, 246, 248, 250, 252, 254, 256 (0x100), 258
+  (0x102), 260 (0x104), 262 (0x106), 264 (0x108), 266 (0x10a), 268 (0x10c), 270
+  (0x10e), 272 (0x110), 274 (0x112), 276 (0x114), 278 (0x116), 280 (0x118), 282
+  (0x11a), 284 (0x11c), 286 (0x11e), 288 (0x120), 290 (0x122), 292 (0x124), 294
+  (0x126), 296 (0x128), 298 (0x12a), 300 (0x12c), 302 (0x12e) }
+  ==
+  { 300 (0x12c) }
+with message:
+  turns := 300 (0x12c)
+
+-------------------------------------------------------------------------------
+T-0172 (a): self-crossing cuts cost near-linear time on long and collinear
+            strands
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1348
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1364: FAILED:
+  CHECK( cs.empty() )
+with expansion:
+  false
+with message:
+  CPU seconds: 1000 spans 0.0030754, 16000 spans 0.064245, ratio 12.849
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1365: FAILED:
+  CHECK( cl.empty() )
+with expansion:
+  false
+with message:
+  CPU seconds: 1000 spans 0.0030754, 16000 spans 0.064245, ratio 12.849
+
+-------------------------------------------------------------------------------
+T-0172 (c): a thin loop's strand of many spans comes back whole
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1553
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1580: FAILED:
+  CHECK( chains[0].spans.size() > minSpans )
+with expansion:
+  1 > 50
+with message:
+  R := 5.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1582: FAILED:
+  CHECK( chainLength(chains[0]) > 0.99 * (1.2 * (R + d) - 2 * d) )
+with expansion:
+  0.06000012499760773 > 5.14799999999999969
+with message:
+  R := 5.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  1.19800474408305813 <= 0.001
+with message:
+  R := 5.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  0.59975190662983824 <= 0.001
+with message:
+  R := 5.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  0.53981945667637066 <= 0.001
+with message:
+  R := 5.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  1.13828958135820701 <= 0.001
+with message:
+  R := 5.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  1.73391457537056715 <= 0.001
+with message:
+  R := 5.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  2.32520568605983824 <= 0.001
+with message:
+  R := 5.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  2.91068499352072241 <= 0.001
+with message:
+  R := 5.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  3.48888910437463995 <= 0.001
+with message:
+  R := 5.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1580: FAILED:
+  CHECK( chains[0].spans.size() > minSpans )
+with expansion:
+  1 > 50
+with message:
+  R := 20.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1582: FAILED:
+  CHECK( chainLength(chains[0]) > 0.99 * (1.2 * (R + d) - 2 * d) )
+with expansion:
+  0.20999949999882059 > 22.96799999999999997
+with message:
+  R := 20.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  1.25981213388946722 <= 0.001
+with message:
+  R := 20.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  0.62997693885831152 <= 0.001
+with message:
+  R := 20.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  2.72808046709273988 <= 0.001
+with message:
+  R := 20.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  4.81936521566345544 <= 0.001
+with message:
+  R := 20.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  6.89860406114012914 <= 0.001
+with message:
+  R := 20.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  8.9605999892082675 <= 0.001
+with message:
+  R := 20.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  11.00019908390274814 <= 0.001
+with message:
+  R := 20.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  13.01230340968523791 <= 0.001
+with message:
+  R := 20.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  14.99188375362300896 <= 0.001
+with message:
+  R := 20.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1580: FAILED:
+  CHECK( chains[0].spans.size() > minSpans )
+with expansion:
+  1 > 512 (0x200)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1582: FAILED:
+  CHECK( chainLength(chains[0]) > 0.99 * (1.2 * (R + d) - 2 * d) )
+with expansion:
+  0.04200009200254996 > 22.96799999999999997
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  0.12599996922171733 <= 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  1.93132099691217718 <= 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  4.02581444618282092 <= 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  6.11024545616861925 <= 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  8.17940403472190702 <= 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  10.2281183629607586 <= 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  12.25126772200379932 <= 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  14.24379529208476391 <= 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  16.20072079196451398 <= 0.001
+
+-------------------------------------------------------------------------------
+T-0172 (a): a stray that would cross itself is cut into consecutive runs
+            without tiny ends
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1598
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1655: FAILED:
+  REQUIRE( one.size() == 1 )
+with expansion:
+  25 == 1
+
+===============================================================================
+test cases:     25 |     21 passed |  4 failed
+assertions: 920078 | 919981 passed | 97 failed
+

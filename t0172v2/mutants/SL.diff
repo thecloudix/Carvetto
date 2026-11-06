@@ -1,0 +1,11 @@
+--- offset.cpp
++++ offset.cpp
+@@ -2751,7 +2751,7 @@
+     };
+     std::vector<Span> strand = total(other) > total(one) ? std::move(other) : std::move(one);
+     dropTinyEnds(strand, tol);
+-    if (partCrossesItself(strand)) {
++    if (strand.size() > 512 || partCrossesItself(strand)) {
+         // Not a plain needle: fall back to the loop's longest span, which never crosses itself.
+         const auto longest = std::max_element(loop.begin(), loop.end(), [](const Span& a, const Span& b) {
+             return length(a) < length(b);

@@ -1,0 +1,10 @@
+--- offset.cpp
++++ offset.cpp
+@@ -2645,7 +2645,6 @@
+         const auto begin = part.begin();
+         std::vector<Span> run(begin + static_cast<std::ptrdiff_t>(first),
+                               begin + static_cast<std::ptrdiff_t>(last));
+-        dropTinyEnds(run, tol);
+         if (!run.empty()) {
+             runs.push_back(std::move(run));
+         }

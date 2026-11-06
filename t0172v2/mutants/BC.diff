@@ -1,0 +1,10 @@
+--- box_tree.hpp
++++ box_tree.hpp
+@@ -124,7 +124,6 @@
+                         }
+                     }
+                 } else {
+-                    stack[top++] = node.left + 1;
+                     stack[top++] = node.left;
+                 }
+             }

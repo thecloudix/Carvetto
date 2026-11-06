@@ -1,0 +1,5281 @@
+Filters: [t0172],[t0128]
+Randomness seeded to: 3188660144
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0172 (a): a strand is cut where it would cross itself, as by the pairwise
+            test
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1161
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 5 }
+with message:
+  trial := 3
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 4 }
+with message:
+  trial := 4
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 2, 4, 7 }
+with message:
+  trial := 5
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 3, 7 }
+with message:
+  trial := 6
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 6 }
+with message:
+  trial := 7
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 4, 9 }
+with message:
+  trial := 8
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 6, 11 }
+with message:
+  trial := 9
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 3, 5, 11 }
+with message:
+  trial := 10
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 6, 9, 11, 13 }
+with message:
+  trial := 11
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 4, 7, 9, 13 }
+with message:
+  trial := 12
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 4, 6, 12, 14 }
+with message:
+  trial := 13
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 6, 8, 11, 14, 16 }
+with message:
+  trial := 14
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 2, 6, 8, 13, 17 }
+with message:
+  trial := 15
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 3, 5, 7, 12, 16 }
+with message:
+  trial := 16
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 3, 6, 10, 12, 16 }
+with message:
+  trial := 17
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 3, 6, 13, 16, 20 }
+with message:
+  trial := 18
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 2, 7, 9, 12, 15, 20 }
+with message:
+  trial := 19
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 3, 7, 9, 11, 13, 17, 20, 22 }
+with message:
+  trial := 20
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 6, 12, 17, 20 }
+with message:
+  trial := 21
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 6, 10, 20, 22 }
+with message:
+  trial := 22
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 8, 11, 13, 17, 22, 25 }
+with message:
+  trial := 23
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 7, 10, 13, 17, 19, 23, 26 }
+with message:
+  trial := 24
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 6, 8, 12, 15, 19, 21, 23 }
+with message:
+  trial := 25
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 7, 12, 14, 17, 23, 27 }
+with message:
+  trial := 26
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 2, 6, 8, 10, 14, 17, 20, 24, 27 }
+with message:
+  trial := 27
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 2, 6, 9, 13, 17, 19, 22, 25, 27, 30 }
+with message:
+  trial := 28
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  } == { 3, 6, 14, 18, 23, 27, 29, 31 }
+with message:
+  trial := 29
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 3, 7, 10, 12, 15, 18, 22, 25, 29 }
+with message:
+  trial := 30
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 4, 8, 10, 15, 17, 21, 23, 26, 28, 30, 32 }
+with message:
+  trial := 31
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 3, 6, 11, 14, 18, 21, 24, 27, 29, 31, 33 }
+with message:
+  trial := 32
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 5, 7, 12, 14, 17, 24, 27, 29, 31 }
+with message:
+  trial := 33
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 3, 6, 9, 11, 14, 17, 19, 25, 29, 35 }
+with message:
+  trial := 34
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 5, 11, 13, 15, 19, 22, 28, 31, 34, 37 }
+with message:
+  trial := 35
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 4, 8, 11, 15, 19, 24, 30, 32, 34, 38 }
+with message:
+  trial := 36
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 9, 15, 17, 19, 21, 25, 28, 30, 32, 37 }
+with message:
+  trial := 37
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 2, 5, 8, 10, 12, 14, 16, 20, 22, 26, 34, 36, 39 }
+with message:
+  trial := 38
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 2, 6, 10, 14, 16, 19, 21, 25, 29, 31, 33, 35, 38 }
+with message:
+  trial := 39
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 5, 8, 11, 15, 18, 21, 26, 29, 33, 35, 37, 39, 41 }
+with message:
+  trial := 40
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 2, 4, 6, 9, 12, 14, 16, 19, 23, 25, 31, 37, 39, 42 }
+with message:
+  trial := 41
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 2, 9, 12, 15, 19, 24, 27, 31, 34, 37, 42 }
+with message:
+  trial := 42
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 5, 9, 11, 13, 17, 22, 24, 31, 35, 37, 39, 43, 45 }
+with message:
+  trial := 43
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 3, 7, 12, 15, 20, 23, 26, 29, 33, 37, 41, 45 }
+with message:
+  trial := 44
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 6, 8, 12, 15, 17, 20, 24, 27, 29, 34, 40, 43, 45 }
+with message:
+  trial := 45
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 3, 7, 10, 16, 20, 23, 25, 29, 31, 33, 36, 41, 46 }
+with message:
+  trial := 46
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 2, 5, 7, 11, 21, 24, 27, 29, 35, 38, 44, 46 }
+with message:
+  trial := 47
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 3, 10, 13, 17, 21, 25, 28, 31, 35, 37, 39, 41, 44, 48 }
+with message:
+  trial := 48
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 2, 8, 11, 13, 16, 22, 26, 29, 32, 34, 36, 39, 41, 43, 45, 48, 50 }
+with message:
+  trial := 49
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 4, 8, 10, 15, 18, 20, 22, 26, 32, 37, 39, 43, 46, 50 }
+with message:
+  trial := 50
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 2, 4, 6, 9, 11, 18, 21, 23, 27, 31, 33, 35, 43, 45, 47, 50, 53 }
+with message:
+  trial := 51
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 4, 10, 12, 15, 20, 24, 26, 30, 33, 36, 43, 45, 49, 51 }
+with message:
+  trial := 52
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 7, 12, 16, 21, 24, 26, 28, 30, 33, 38, 40, 44, 47, 55 }
+with message:
+  trial := 53
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 2, 4, 8, 11, 13, 19, 21, 25, 28, 30, 34, 40, 43, 49, 51, 53, 55 }
+with message:
+  trial := 54
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 7, 10, 12, 15, 19, 21, 26, 29, 32, 34, 36, 39, 46, 50, 52, 57 }
+with message:
+  trial := 55
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 2, 5, 12, 16, 23, 28, 32, 34, 40, 44, 49, 52, 56 }
+with message:
+  trial := 56
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 3, 8, 12, 16, 18, 22, 25, 28, 31, 33, 36, 39, 43, 45, 49, 53, 56, 58 }
+with message:
+  trial := 57
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 3, 7, 11, 13, 16, 19, 24, 26, 28, 31, 35, 40, 45, 51, 54, 57 }
+with message:
+  trial := 58
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1191: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == greedyCuts(spans) )
+with expansion:
+  {  }
+  ==
+  { 3, 6, 10, 14, 20, 24, 26, 32, 37, 44, 48, 50, 54, 57, 61 }
+with message:
+  trial := 59
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1204: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == expected )
+with expansion:
+  {  } == { 41 }
+with message:
+  turns := 40
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1204: FAILED:
+  CHECK( detail::selfCrossingCuts(spans) == expected )
+with expansion:
+  {  } == { 300 (0x12c) }
+with message:
+  turns := 300 (0x12c)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1215: FAILED:
+  CHECK( detail::selfCrossingCuts(zig) == zigCuts )
+with expansion:
+  {  }
+  ==
+  { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78,
+  80, 82, 84, 86, 88, 90, 92, 94, 96, 98, 100, 102, 104, 106, 108, 110, 112,
+  114, 116, 118, 120, 122, 124, 126, 128, 130, 132, 134, 136, 138, 140, 142,
+  144, 146, 148, 150, 152, 154, 156, 158, 160, 162, 164, 166, 168, 170, 172,
+  174, 176, 178, 180, 182, 184, 186, 188, 190, 192, 194, 196, 198, 200, 202,
+  204, 206, 208, 210, 212, 214, 216, 218, 220, 222, 224, 226, 228, 230, 232,
+  234, 236, 238, 240, 242, 244, 246, 248, 250, 252, 254, 256 (0x100), 258
+  (0x102), 260 (0x104), 262 (0x106), 264 (0x108), 266 (0x10a), 268 (0x10c), 270
+  (0x10e), 272 (0x110), 274 (0x112), 276 (0x114), 278 (0x116), 280 (0x118), 282
+  (0x11a), 284 (0x11c), 286 (0x11e), 288 (0x120), 290 (0x122), 292 (0x124), 294
+  (0x126), 296 (0x128), 298 (0x12a), 300 (0x12c), 302 (0x12e), 304 (0x130), 306
+  (0x132), 308 (0x134), 310 (0x136), 312 (0x138), 314 (0x13a), 316 (0x13c), 318
+  (0x13e), 320 (0x140), 322 (0x142), 324 (0x144), 326 (0x146), 328 (0x148), 330
+  (0x14a), 332 (0x14c), 334 (0x14e), 336 (0x150), 338 (0x152), 340 (0x154), 342
+  (0x156), 344 (0x158), 346 (0x15a), 348 (0x15c), 350 (0x15e), 352 (0x160), 354
+  (0x162), 356 (0x164), 358 (0x166), 360 (0x168), 362 (0x16a), 364 (0x16c), 366
+  (0x16e), 368 (0x170), 370 (0x172), 372 (0x174), 374 (0x176), 376 (0x178), 378
+  (0x17a), 380 (0x17c), 382 (0x17e), 384 (0x180), 386 (0x182), 388 (0x184), 390
+  (0x186), 392 (0x188), 394 (0x18a), 396 (0x18c), 398 (0x18e) }
+
+-------------------------------------------------------------------------------
+T-0172 (a): near-tangent spans meet in the self-crossing cuts exactly as in the
+            pairwise test
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1218
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.00000000001
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.00000000001
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.00000000001
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.00000000001
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.00000000001
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.00000000001
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000001
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000001
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000001
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000001
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000001
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000001
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000005
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000005
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000005
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000005
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000005
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000005
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000009
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000009
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000009
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000009
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000009
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000009
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000012
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000012
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.00000000001
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.00000000001
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.00000000001
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.00000000001
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.00000000001
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.00000000001
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000001
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000001
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000001
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000001
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000001
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000001
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000005
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000005
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000005
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000005
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000005
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000005
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000009
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000009
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000009
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000009
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000009
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000009
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000012
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000012
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.00000000001
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.00000000001
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.00000000001
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.00000000001
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.00000000001
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.00000000001
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000001
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000001
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000001
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000001
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000001
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000001
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000005
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000005
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000005
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000005
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000005
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000005
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000009
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000009
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000009
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000009
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000009
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000009
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000012
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000012
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.000000003
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 6
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 7
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 8
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 9
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 11
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 13
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 14
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 20
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 21
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 22
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 24
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 25
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 26
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 27
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 29
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 31
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 32
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 33
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 37
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 38
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 39
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 41
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 43
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 45
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 46
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 47
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 48
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 49
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 50
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 51
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 52
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 53
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 54
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 55
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 56
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 57
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 59
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 60
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 61
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 62
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 66
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 67
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 68
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 69
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 71
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 72
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 73
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 74
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 75
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 76
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 77
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 79
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 80
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 81
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 83
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 84
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 85
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 86
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 87
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 88
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 89
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 90
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 91
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 92
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 96
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 97
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 98
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 100
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 101
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 103
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 108
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 109
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 110
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 113
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 114
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 115
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 116
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 117
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 119
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 120
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 121
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 122
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 123
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 125
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 126
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 127
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 128
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 129
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 130
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 131
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 132
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 133
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 134
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 137
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 139
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 140
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 141
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 142
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 143
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 145
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 146
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 147
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 149
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 150
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 151
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 152
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 153
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 156
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 157
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 159
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 161
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 162
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 163
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 164
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 167
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 168
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 169
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 170
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 171
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 172
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 173
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 175
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 176
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 177
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 179
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 180
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 181
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 182
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 183
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 184
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 185
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 186
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 187
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 189
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 192
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 193
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 194
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 195
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 197
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 198
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 199
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 200
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 201
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 203
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 204
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 205
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 206
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 207
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 209
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 210
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 211
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 212
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 213
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 215
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 216
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 217
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 218
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 219
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 220
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 221
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 222
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 223
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 224
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 225
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 228
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 229
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 230
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 231
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 233
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 234
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 235
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 236
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 237
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 239
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 240
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 241
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 242
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 243
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 245
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 246
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 247
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 248
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 249
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 251
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 252
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 253
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 254
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 256 (0x100)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 257 (0x101)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 258 (0x102)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 259 (0x103)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 260 (0x104)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 261 (0x105)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 262 (0x106)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 265 (0x109)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 267 (0x10b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 269 (0x10d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 270 (0x10e)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 272 (0x110)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 273 (0x111)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 275 (0x113)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 276 (0x114)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 277 (0x115)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 278 (0x116)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 279 (0x117)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 280 (0x118)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 281 (0x119)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 282 (0x11a)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 283 (0x11b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 284 (0x11c)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 285 (0x11d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 289 (0x121)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 292 (0x124)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 293 (0x125)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 294 (0x126)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 295 (0x127)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 297 (0x129)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 298 (0x12a)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 300 (0x12c)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 301 (0x12d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 302 (0x12e)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 303 (0x12f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 305 (0x131)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 306 (0x132)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 307 (0x133)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 308 (0x134)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 309 (0x135)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 311 (0x137)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 312 (0x138)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 313 (0x139)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 314 (0x13a)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 315 (0x13b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 317 (0x13d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 318 (0x13e)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 319 (0x13f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 320 (0x140)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 321 (0x141)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 323 (0x143)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 324 (0x144)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 325 (0x145)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 326 (0x146)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 327 (0x147)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 329 (0x149)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 330 (0x14a)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 331 (0x14b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 332 (0x14c)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 333 (0x14d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 335 (0x14f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 337 (0x151)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 338 (0x152)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 339 (0x153)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 340 (0x154)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 341 (0x155)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 342 (0x156)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 343 (0x157)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 344 (0x158)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 345 (0x159)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 346 (0x15a)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 347 (0x15b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 348 (0x15c)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 349 (0x15d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 350 (0x15e)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 351 (0x15f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 354 (0x162)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 355 (0x163)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 356 (0x164)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 357 (0x165)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 360 (0x168)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 362 (0x16a)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 365 (0x16d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 366 (0x16e)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 368 (0x170)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 369 (0x171)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 371 (0x173)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 372 (0x174)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 375 (0x177)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 377 (0x179)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 378 (0x17a)
+
+/home/c
+... [truncated by verifier: 20133090 bytes] ...
+
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:169: FAILED:
+  CHECK( tree.queryUntil(query, [](std::size_t) { return true; }) == !want.empty() )
+with expansion:
+  false == true
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+/home/chris/harness/t0172v2/mutants/BU/box_tree_test.cpp:174: FAILED:
+  CHECK( tree.queryUntil(query, [&](std::size_t j) { ++calls; return j == target; }) )
+with expansion:
+  false
+with messages:
+  trial := 38
+  kind := 12
+  n := 732 (0x2dc)
+  bulk := 645 (0x285)
+
+===============================================================================
+test cases:     25 |     21 passed |     4 failed
+assertions: 948266 | 864550 passed | 83716 failed
+

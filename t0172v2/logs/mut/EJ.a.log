@@ -1,0 +1,1579 @@
+Filters: [t0172],[t0128]
+Randomness seeded to: 1252055090
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0172 (e): an arc start ahead by more than 1e-12 x the scale is moved onto the
+            junction
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1708
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000088824314451 <= 0.00000003760304887
+with message:
+  n := 0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000006674445236 <= 0.00000001685254089
+with message:
+  n := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000110531987432 <= 0.0000000187758954
+with message:
+  n := 3
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000187907837757 <= 0.00000002436120907
+with message:
+  n := 6
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000186877826252 <= 0.0000000213270074
+with message:
+  n := 8
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.000001446512228 <= 0.00000001901548936
+with message:
+  n := 9
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000034822226192 <= 0.00000001791519457
+with message:
+  n := 10
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000060481501295 <= 0.00000004903606383
+with message:
+  n := 11
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000269560851811 <= 0.00000004454662375
+with message:
+  n := 12
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000144986750374 <= 0.00000005529150314
+with message:
+  n := 13
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000045552653574 <= 0.00000001700597836
+with message:
+  n := 14
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000244185845712 <= 0.00000005181885206
+with message:
+  n := 16
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000360867626841 <= 0.0000000438763232
+with message:
+  n := 17
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.0000018740964819 <= 0.00000005165855524
+with message:
+  n := 18
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000154644803145 <= 0.00000003823187647
+with message:
+  n := 20
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000156702453787 <= 0.00000002468983577
+with message:
+  n := 21
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000034651325448 <= 0.00000001297077456
+with message:
+  n := 22
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000088174683254 <= 0.00000002379353633
+with message:
+  n := 25
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000157583317784 <= 0.00000005393838191
+with message:
+  n := 26
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000084954338871 <= 0.00000001026933479
+with message:
+  n := 28
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000108185423501 <= 0.00000005176696122
+with message:
+  n := 29
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000405958001251 <= 0.00000004415860811
+with message:
+  n := 30
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000300255428476 <= 0.00000003226459464
+with message:
+  n := 31
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000285130835951 <= 0.00000005287524723
+with message:
+  n := 32
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000267921416935 <= 0.00000003504858013
+with message:
+  n := 33
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000546958544558 <= 0.00000005973758039
+with message:
+  n := 34
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000096560906008 <= 0.00000005461735569
+with message:
+  n := 36
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000112389156557 <= 0.00000005075273938
+with message:
+  n := 37
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000123638638185 <= 0.00000001807568807
+with message:
+  n := 38
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000005632102146 <= 0.00000002054745491
+with message:
+  n := 40
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000167113863347 <= 0.00000002291918469
+with message:
+  n := 41
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000061521271564 <= 0.00000001923518319
+with message:
+  n := 42
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000083476048782 <= 0.00000001064018857
+with message:
+  n := 43
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000264700044669 <= 0.00000005460172902
+with message:
+  n := 44
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000394458756915 <= 0.00000004381903003
+with message:
+  n := 45
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000052752531421 <= 0.00000005616729128
+with message:
+  n := 46
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000044136546703 <= 0.00000001224009391
+with message:
+  n := 47
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000078036926869 <= 0.00000005203115204
+with message:
+  n := 48
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000258134117606 <= 0.00000003013153612
+with message:
+  n := 49
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000299959301006 <= 0.00000005144010842
+with message:
+  n := 50
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000326720426586 <= 0.00000004809683928
+with message:
+  n := 51
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.000003326328314 <= 0.00000005277102907
+with message:
+  n := 52
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000177401556629 <= 0.0000000548963318
+with message:
+  n := 53
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000036051819015 <= 0.00000003519510056
+with message:
+  n := 54
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000080501970787 <= 0.00000003599532013
+with message:
+  n := 57
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000292242477611 <= 0.00000003625507193
+with message:
+  n := 58
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000076197364427 <= 0.00000003603830482
+with message:
+  n := 59
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000047313607799 <= 0.00000002106949967
+with message:
+  n := 61
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000175931224517 <= 0.00000002058937061
+with message:
+  n := 62
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000034070412958 <= 0.00000000829332762
+with message:
+  n := 63
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000414053678708 <= 0.00000005435258841
+with message:
+  n := 64
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000013962894873 <= 0.00000004625282361
+with message:
+  n := 67
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000034120560777 <= 0.00000001738458834
+with message:
+  n := 71
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000401485375088 <= 0.00000004940998554
+with message:
+  n := 74
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000189843740237 <= 0.00000003215076173
+with message:
+  n := 75
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000220820088023 <= 0.00000002897683416
+with message:
+  n := 76
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000022590348025 <= 0.00000005029239159
+with message:
+  n := 77
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000005466074444 <= 0.00000003285010817
+with message:
+  n := 78
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000043271919973 <= 0.00000000972646742
+with message:
+  n := 79
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000293129260799 <= 0.00000005376266229
+with message:
+  n := 81
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000075687519823 <= 0.00000005178129853
+with message:
+  n := 82
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000080070459166 <= 0.00000002090236281
+with message:
+  n := 83
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000248826142407 <= 0.00000003777763921
+with message:
+  n := 85
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000104891917778 <= 0.00000001535440986
+with message:
+  n := 86
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000113891029395 <= 0.00000004030953731
+with message:
+  n := 87
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000149686487615 <= 0.00000001803350504
+with message:
+  n := 88
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000347426398733 <= 0.00000004657829465
+with message:
+  n := 90
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000151909641533 <= 0.00000005641109355
+with message:
+  n := 91
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.0000006860702089 <= 0.00000002921819038
+with message:
+  n := 92
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000194037761567 <= 0.00000004570605528
+with message:
+  n := 94
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000091159713612 <= 0.00000001661472756
+with message:
+  n := 96
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000018978565651 <= 0.00000003916950629
+with message:
+  n := 97
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000096639829572 <= 0.0000000331942411
+with message:
+  n := 98
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000192458588728 <= 0.0000000320364309
+with message:
+  n := 99
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000257692577869 <= 0.00000005783520385
+with message:
+  n := 100
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000277901277269 <= 0.00000005587834366
+with message:
+  n := 101
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000142037498342 <= 0.00000003932670075
+with message:
+  n := 105
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000192301481559 <= 0.00000002892890067
+with message:
+  n := 107
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000304204881834 <= 0.00000003706672171
+with message:
+  n := 109
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.0000004423980777 <= 0.00000005237056172
+with message:
+  n := 112
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000398000140161 <= 0.00000004571127495
+with message:
+  n := 113
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000086469758164 <= 0.00000004445418678
+with message:
+  n := 114
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000513826034364 <= 0.00000005423444136
+with message:
+  n := 115
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000532596986288 <= 0.00000005971797186
+with message:
+  n := 116
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000031970503976 <= 0.00000000915612054
+with message:
+  n := 117
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000158452776468 <= 0.00000004763608714
+with message:
+  n := 118
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000407765636061 <= 0.00000004896273479
+with message:
+  n := 120
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000341291067161 <= 0.00000004424333426
+with message:
+  n := 121
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000069450746816 <= 0.00000001500503648
+with message:
+  n := 122
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000102937300491 <= 0.00000001102143013
+with message:
+  n := 123
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000270318402239 <= 0.000000055929376
+with message:
+  n := 124
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000492105195509 <= 0.00000005564490933
+with message:
+  n := 127
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000107453678431 <= 0.00000002503286469
+with message:
+  n := 128
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000292143660614 <= 0.00000003655616415
+with message:
+  n := 130
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000132567830011 <= 0.00000001865458709
+with message:
+  n := 131
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000078568320039 <= 0.00000005955227467
+with message:
+  n := 133
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000478126984467 <= 0.00000005209470878
+with message:
+  n := 134
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.0000026921197528 <= 0.00000004343605565
+with message:
+  n := 135
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000236595843958 <= 0.00000003066750159
+with message:
+  n := 136
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000049577901876 <= 0.00000002814981861
+with message:
+  n := 137
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000123970641126 <= 0.00000004488664239
+with message:
+  n := 138
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000093376665327 <= 0.00000003023337833
+with message:
+  n := 139
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000158380646277 <= 0.0000000448097907
+with message:
+  n := 140
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000276375795118 <= 0.00000005285870852
+with message:
+  n := 141
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000121915351651 <= 0.00000005663566671
+with message:
+  n := 142
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000525323801522 <= 0.00000005891844845
+with message:
+  n := 144
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000212577166165 <= 0.00000003921322335
+with message:
+  n := 145
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000127554515473 <= 0.0000000184031489
+with message:
+  n := 146
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.0000045794000177 <= 0.00000005195864808
+with message:
+  n := 149
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000055424957961 <= 0.00000005840942831
+with message:
+  n := 150
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.0000012377667462 <= 0.00000005155507306
+with message:
+  n := 151
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000005969421473 <= 0.00000000567681174
+with message:
+  n := 152
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000005238846541 <= 0.00000000826512793
+with message:
+  n := 154
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000191919570957 <= 0.00000003695619262
+with message:
+  n := 157
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.0000027276852561 <= 0.00000004222512374
+with message:
+  n := 159
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000102325409793 <= 0.00000001923602743
+with message:
+  n := 160
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000042840026747 <= 0.00000003935123926
+with message:
+  n := 161
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000390240767415 <= 0.00000004541826936
+with message:
+  n := 162
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000105826693749 <= 0.00000003458626477
+with message:
+  n := 163
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000339981192524 <= 0.0000000381925542
+with message:
+  n := 164
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000295730013782 <= 0.00000003884152503
+with message:
+  n := 166
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000072097305062 <= 0.00000003244767848
+with message:
+  n := 167
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000479071365603 <= 0.00000005334811164
+with message:
+  n := 168
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000212842796307 <= 0.00000002780213924
+with message:
+  n := 169
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000023177638672 <= 0.00000002576318447
+with message:
+  n := 170
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000116328001135 <= 0.00000002438490945
+with message:
+  n := 171
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000011674404118 <= 0.0000000098744188
+with message:
+  n := 172
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000046131348512 <= 0.00000001212343442
+with message:
+  n := 173
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000033429324032 <= 0.00000001360145398
+with message:
+  n := 174
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000043636437909 <= 0.00000004656838403
+with message:
+  n := 177
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000233594454516 <= 0.00000005141957831
+with message:
+  n := 178
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000102165481019 <= 0.00000003465923588
+with message:
+  n := 179
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000023344181277 <= 0.00000005469814498
+with message:
+  n := 180
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000181690434961 <= 0.00000001921422041
+with message:
+  n := 181
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000392676886129 <= 0.00000004421807355
+with message:
+  n := 182
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000309589701676 <= 0.00000003828902587
+with message:
+  n := 184
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000218635330091 <= 0.00000002595027971
+with message:
+  n := 186
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.0000035573730637 <= 0.00000004551550142
+with message:
+  n := 187
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000223858503736 <= 0.00000004722506334
+with message:
+  n := 189
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000001824083649 <= 0.00000000815634934
+with message:
+  n := 190
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000147738404378 <= 0.00000004140126124
+with message:
+  n := 192
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000093891988806 <= 0.00000005149128803
+with message:
+  n := 193
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000008839056842 <= 0.0000000357378993
+with message:
+  n := 194
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000176944155576 <= 0.0000000205775057
+with message:
+  n := 196
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000093273485011 <= 0.00000001118907686
+with message:
+  n := 197
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000246192224971 <= 0.00000002929985961
+with message:
+  n := 198
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000184752517324 <= 0.00000004540515201
+with message:
+  n := 200
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000066103494094 <= 0.00000003058981668
+with message:
+  n := 202
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000314885418686 <= 0.00000003467924413
+with message:
+  n := 203
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.0000000682827784 <= 0.00000002850811491
+with message:
+  n := 204
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000442255058971 <= 0.00000005309751938
+with message:
+  n := 206
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000382629971882 <= 0.00000004080019029
+with message:
+  n := 207
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000157649835706 <= 0.00000005714664556
+with message:
+  n := 208
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000027806229412 <= 0.00000004961673951
+with message:
+  n := 209
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000230988063544 <= 0.00000003638816188
+with message:
+  n := 210
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000251241154897 <= 0.000000036601048
+with message:
+  n := 211
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000004276647907 <= 0.00000002089455378
+with message:
+  n := 213
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000097609230744 <= 0.00000004253667917
+with message:
+  n := 215
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000034248310422 <= 0.00000002503685425
+with message:
+  n := 216
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000018782319665 <= 0.00000002986278424
+with message:
+  n := 219
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000110211317043 <= 0.00000004152661771
+with message:
+  n := 220
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000025348466309 <= 0.0000000085479872
+with message:
+  n := 221
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000128069164162 <= 0.0000000498885553
+with message:
+  n := 222
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000046535299221 <= 0.00000005809065573
+with message:
+  n := 223
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000511567169257 <= 0.00000005914832093
+with message:
+  n := 225
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000410849117514 <= 0.00000005700168538
+with message:
+  n := 226
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.0000026993939695 <= 0.00000004569967597
+with message:
+  n := 227
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000551955763796 <= 0.00000005836728195
+with message:
+  n := 228
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000135079027488 <= 0.00000004473528155
+with message:
+  n := 230
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000123308709338 <= 0.00000005350337292
+with message:
+  n := 232
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000458314280436 <= 0.0000000533169268
+with message:
+  n := 234
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.0000011961189761 <= 0.00000002600798452
+with message:
+  n := 235
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000335307828496 <= 0.00000005113151636
+with message:
+  n := 237
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.0000050997586385 <= 0.00000005502416655
+with message:
+  n := 239
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000104502403841 <= 0.00000003812780792
+with message:
+  n := 241
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000123317638987 <= 0.0000000438069709
+with message:
+  n := 244
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000418102619767 <= 0.00000004663194544
+with message:
+  n := 245
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000078868532801 <= 0.00000001236476895
+with message:
+  n := 246
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.0000010315835032 <= 0.00000005343328246
+with message:
+  n := 247
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000318659773869 <= 0.00000003553822441
+with message:
+  n := 250
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000237450973109 <= 0.00000003175426675
+with message:
+  n := 251
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000081567850911 <= 0.00000003784762001
+with message:
+  n := 252
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000059286520361 <= 0.00000003513875111
+with message:
+  n := 253
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000299376595826 <= 0.0000000439560328
+with message:
+  n := 254
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000161419648698 <= 0.00000001809446032
+with message:
+  n := 255
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000378570555487 <= 0.00000005022967618
+with message:
+  n := 256 (0x100)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000092290394942 <= 0.00000003480665693
+with message:
+  n := 257 (0x101)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000519650776804 <= 0.00000005531617898
+with message:
+  n := 258 (0x102)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000233543278857 <= 0.00000003624258787
+with message:
+  n := 259 (0x103)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000209278863573 <= 0.00000004168059119
+with message:
+  n := 260 (0x104)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000361055151772 <= 0.00000004890194836
+with message:
+  n := 261 (0x105)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000082977991135 <= 0.00000002821655362
+with message:
+  n := 262 (0x106)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000154949535023 <= 0.00000002170893828
+with message:
+  n := 263 (0x107)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000132886619547 <= 0.00000002090456224
+with message:
+  n := 264 (0x108)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000041929681252 <= 0.00000000737607618
+with message:
+  n := 265 (0x109)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000126491221929 <= 0.00000001408095491
+with message:
+  n := 266 (0x10a)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000294187041767 <= 0.00000003616850124
+with message:
+  n := 267 (0x10b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000351895114974 <= 0.00000004260375169
+with message:
+  n := 268 (0x10c)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000047040708854 <= 0.00000004457891229
+with message:
+  n := 269 (0x10d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000188945349727 <= 0.00000002477840562
+with message:
+  n := 270 (0x10e)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000109738000636 <= 0.00000005706495359
+with message:
+  n := 271 (0x10f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000278437919008 <= 0.00000003132176031
+with message:
+  n := 272 (0x110)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000156378486367 <= 0.0000000218407207
+with message:
+  n := 273 (0x111)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000283123440781 <= 0.00000003993032867
+with message:
+  n := 275 (0x113)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.0000025440457914 <= 0.0000000496441707
+with message:
+  n := 276 (0x114)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000260231816505 <= 0.00000003765670894
+with message:
+  n := 277 (0x115)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.0000010855139205 <= 0.0000000284956752
+with message:
+  n := 278 (0x116)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000042358476933 <= 0.00000001546767607
+with message:
+  n := 279 (0x117)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000161819145226 <= 0.0000000320653573
+with message:
+  n := 280 (0x118)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000391150233896 <= 0.00000004885530696
+with message:
+  n := 281 (0x119)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000217171921388 <= 0.00000004342720539
+with message:
+  n := 282 (0x11a)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000021085340266 <= 0.0000000107137296
+with message:
+  n := 283 (0x11b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000050537901704 <= 0.00000002306271924
+with message:
+  n := 285 (0x11d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.0000020670580217 <= 0.00000003577922231
+with message:
+  n := 286 (0x11e)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000224989871934 <= 0.00000003445239065
+with message:
+  n := 287 (0x11f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000168702650882 <= 0.00000003611483797
+with message:
+  n := 289 (0x121)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.0000021578545063 <= 0.00000002570712404
+with message:
+  n := 291 (0x123)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000133272841485 <= 0.00000002029820343
+with message:
+  n := 292 (0x124)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000410954046617 <= 0.0000000574870302
+with message:
+  n := 293 (0x125)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000017166998949 <= 0.00000001763357164
+with message:
+  n := 295 (0x127)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000184363728406 <= 0.00000002828850816
+with message:
+  n := 297 (0x129)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000058446797564 <= 0.00000002954545764
+with message:
+  n := 298 (0x12a)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1745: FAILED:
+  CHECK( distance(b.startPoint(), j) <= 1e-12 * scale )
+with expansion:
+  0.00000106866773952 <= 0.00000004574178708
+with message:
+  n := 299 (0x12b)
+
+===============================================================================
+test cases:     25 |     24 passed |   1 failed
+assertions: 948275 | 948052 passed | 223 failed
+

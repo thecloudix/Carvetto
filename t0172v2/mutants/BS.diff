@@ -1,0 +1,11 @@
+--- box_tree.hpp
++++ box_tree.hpp
+@@ -243,7 +243,7 @@
+         if (axis < 0) {
+             return;
+         }
+-        const std::size_t mid = lo + (hi - lo) / 2;
++        const std::size_t mid = lo + 1;
+         const auto first = t.ids.begin();
+         std::nth_element(first + static_cast<std::ptrdiff_t>(lo), first + static_cast<std::ptrdiff_t>(mid),
+                          first + static_cast<std::ptrdiff_t>(hi), [&](std::size_t i, std::size_t j) {

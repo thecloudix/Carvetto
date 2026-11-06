@@ -1,0 +1,11 @@
+--- offset.cpp
++++ offset.cpp
+@@ -2609,7 +2609,7 @@
+     std::size_t from = 0;  // first span of the current part
+     for (std::size_t i = from + 2; i < n; ++i) {
+         // The earlier spans of the part other than the neighbour: ids from..i - 2.
+-        const bool meets = tree.queryUntil(boxes[i], from, i - 2,
++        const bool meets = tree.queryUntil(boxes[i], from, i - 1,
+                                            [&](std::size_t j) { return spansMeet(spans[j], spans[i]); });
+         if (meets) {
+             cuts.push_back(i);

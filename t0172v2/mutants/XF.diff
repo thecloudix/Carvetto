@@ -1,0 +1,10 @@
+--- offset.cpp
++++ offset.cpp
+@@ -2616,7 +2616,6 @@
+             if (firstOnly) {
+                 return cuts;
+             }
+-            from = i;
+             i = from + 1;  // the loop goes on at from + 2
+         }
+     }

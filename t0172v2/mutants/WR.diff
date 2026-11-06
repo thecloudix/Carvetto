@@ -1,0 +1,10 @@
+--- offset.cpp
++++ offset.cpp
+@@ -3601,7 +3601,6 @@
+     const std::size_t nOut = outSpans.size();
+     Box2 window;  // see coverGap
+     auto add = [&](double key, std::vector<Span>&& part) {
+-        window = Box2{};
+         for (const Span& sp : part) {
+             addedSpans.push_back(sp);
+             coverGrid.add(bounds(sp));

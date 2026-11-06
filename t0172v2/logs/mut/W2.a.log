@@ -1,0 +1,248 @@
+Filters: [t0172],[t0128]
+Randomness seeded to: 878668832
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0172 (c): a stray between tol and 10 x tol that meets a chain is returned and
+            reaches it
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1468
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1486: FAILED:
+  CHECK( uncovered(chains, mid + Vec2{0, d + 1e-4}, mid + Vec2{0, D - 1e-4}) == 0 )
+with expansion:
+  136 == 0
+with messages:
+  d := 1.0
+  e := 0.003
+  shift.x := 0.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1512: FAILED:
+  CHECK( strays == 1 )
+with expansion:
+  0 == 1
+with messages:
+  d := 1.0
+  e := 0.003
+  shift.x := 0.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1486: FAILED:
+  CHECK( uncovered(chains, mid + Vec2{0, d + 1e-4}, mid + Vec2{0, D - 1e-4}) == 0 )
+with expansion:
+  136 == 0
+with messages:
+  d := 1.0
+  e := 0.003
+  shift.x := 12000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1512: FAILED:
+  CHECK( strays == 1 )
+with expansion:
+  0 == 1
+with messages:
+  d := 1.0
+  e := 0.003
+  shift.x := 12000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1486: FAILED:
+  CHECK( uncovered(chains, mid + Vec2{0, d + 1e-4}, mid + Vec2{0, D - 1e-4}) == 0 )
+with expansion:
+  169 == 0
+with messages:
+  d := 1.0
+  e := 0.006
+  shift.x := 0.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1512: FAILED:
+  CHECK( strays == 1 )
+with expansion:
+  0 == 1
+with messages:
+  d := 1.0
+  e := 0.006
+  shift.x := 0.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1486: FAILED:
+  CHECK( uncovered(chains, mid + Vec2{0, d + 1e-4}, mid + Vec2{0, D - 1e-4}) == 0 )
+with expansion:
+  169 == 0
+with messages:
+  d := 1.0
+  e := 0.006
+  shift.x := 12000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1512: FAILED:
+  CHECK( strays == 1 )
+with expansion:
+  0 == 1
+with messages:
+  d := 1.0
+  e := 0.006
+  shift.x := 12000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1486: FAILED:
+  CHECK( uncovered(chains, mid + Vec2{0, d + 1e-4}, mid + Vec2{0, D - 1e-4}) == 0 )
+with expansion:
+  180 == 0
+with messages:
+  d := 1.0
+  e := 0.009
+  shift.x := 0.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1512: FAILED:
+  CHECK( strays == 1 )
+with expansion:
+  0 == 1
+with messages:
+  d := 1.0
+  e := 0.009
+  shift.x := 0.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1486: FAILED:
+  CHECK( uncovered(chains, mid + Vec2{0, d + 1e-4}, mid + Vec2{0, D - 1e-4}) == 0 )
+with expansion:
+  180 == 0
+with messages:
+  d := 1.0
+  e := 0.009
+  shift.x := 12000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1512: FAILED:
+  CHECK( strays == 1 )
+with expansion:
+  0 == 1
+with messages:
+  d := 1.0
+  e := 0.009
+  shift.x := 12000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1486: FAILED:
+  CHECK( uncovered(chains, mid + Vec2{0, d + 1e-4}, mid + Vec2{0, D - 1e-4}) == 0 )
+with expansion:
+  136 == 0
+with messages:
+  d := 0.5
+  e := 0.003
+  shift.x := 0.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1512: FAILED:
+  CHECK( strays == 1 )
+with expansion:
+  0 == 1
+with messages:
+  d := 0.5
+  e := 0.003
+  shift.x := 0.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1486: FAILED:
+  CHECK( uncovered(chains, mid + Vec2{0, d + 1e-4}, mid + Vec2{0, D - 1e-4}) == 0 )
+with expansion:
+  136 == 0
+with messages:
+  d := 0.5
+  e := 0.003
+  shift.x := 12000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1512: FAILED:
+  CHECK( strays == 1 )
+with expansion:
+  0 == 1
+with messages:
+  d := 0.5
+  e := 0.003
+  shift.x := 12000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1486: FAILED:
+  CHECK( uncovered(chains, mid + Vec2{0, d + 1e-4}, mid + Vec2{0, D - 1e-4}) == 0 )
+with expansion:
+  169 == 0
+with messages:
+  d := 0.5
+  e := 0.006
+  shift.x := 0.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1512: FAILED:
+  CHECK( strays == 1 )
+with expansion:
+  0 == 1
+with messages:
+  d := 0.5
+  e := 0.006
+  shift.x := 0.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1486: FAILED:
+  CHECK( uncovered(chains, mid + Vec2{0, d + 1e-4}, mid + Vec2{0, D - 1e-4}) == 0 )
+with expansion:
+  169 == 0
+with messages:
+  d := 0.5
+  e := 0.006
+  shift.x := 12000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1512: FAILED:
+  CHECK( strays == 1 )
+with expansion:
+  0 == 1
+with messages:
+  d := 0.5
+  e := 0.006
+  shift.x := 12000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1486: FAILED:
+  CHECK( uncovered(chains, mid + Vec2{0, d + 1e-4}, mid + Vec2{0, D - 1e-4}) == 0 )
+with expansion:
+  180 == 0
+with messages:
+  d := 0.5
+  e := 0.009
+  shift.x := 0.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1512: FAILED:
+  CHECK( strays == 1 )
+with expansion:
+  0 == 1
+with messages:
+  d := 0.5
+  e := 0.009
+  shift.x := 0.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1486: FAILED:
+  CHECK( uncovered(chains, mid + Vec2{0, d + 1e-4}, mid + Vec2{0, D - 1e-4}) == 0 )
+with expansion:
+  180 == 0
+with messages:
+  d := 0.5
+  e := 0.009
+  shift.x := 12000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1512: FAILED:
+  CHECK( strays == 1 )
+with expansion:
+  0 == 1
+with messages:
+  d := 0.5
+  e := 0.009
+  shift.x := 12000.0
+
+-------------------------------------------------------------------------------
+T-0172 (c): dropped opposite copies hand back the copy exactly d from the input
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1683
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1702: FAILED:
+  CHECK( uncovered(chains, {1 + d, d + 0.05}, {1 + d, 10.0 + d - 0.05}) == 0 )
+with expansion:
+  9 == 0
+with messages:
+  mirrored := false
+  static_cast<int>(join) := 1
+
+===============================================================================
+test cases:     25 |     23 passed |  2 failed
+assertions: 946619 | 946594 passed | 25 failed
+

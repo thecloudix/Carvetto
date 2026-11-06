@@ -1,0 +1,11 @@
+--- offset.cpp
++++ offset.cpp
+@@ -2579,7 +2579,7 @@
+         scale = std::max(scale, arc->radius);
+         reach += 1e-9 + 1e-7 * arc->radius;
+     } else {
+-        reach += 1e-7 * len;
++        reach += 0.0 * len;
+     }
+     return reach + 1e-12 * scale;
+ }

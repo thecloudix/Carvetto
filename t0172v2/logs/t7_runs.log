@@ -1,0 +1,9 @@
+step7 main total 0.1299 s step7 branch total 0.4039 s rhatch N=4000 d=0.05 w=0 Round side=0 far=0 branch 0.1391 s (chains 2001 spans 9997) | main 0.1065 s (chains 2001 spans 9997) | ratio 1.307 
+step7 main total 0.0654 s step7 branch total 0.0994 s rhatch N=1000 d=0.2 w=0 Round side=0 far=0 branch 0.0229 s (chains 501 spans 2497) | main 0.0215 s (chains 501 spans 2497) | ratio 1.065 
+step7 main total 0.0350 s step7 branch total 0.0869 s rhatch N=1000 d=1 w=0 Round side=0 far=0 branch 0.0207 s (chains 501 spans 2497) | main 0.0186 s (chains 501 spans 2497) | ratio 1.113 
+step7 main total 0.1287 s step7 branch total 0.2540 s rhatch N=1000 d=0.01 w=0 Round side=0 far=0 branch 0.0428 s (chains 501 spans 2212) | main 0.0361 s (chains 501 spans 2212) | ratio 1.185 
+step7 main total 0.0736 s step7 branch total 0.1312 s vhatch N=1000 d=0.05 w=0 Round side=0 far=0 branch 0.0250 s (chains 501 spans 2497) | main 0.0230 s (chains 501 spans 2497) | ratio 1.087 
+step7 main total 0.0030 s step7 branch total 0.0001 s rrect N=1000 d=0.05 w=0 Round side=0 far=0 branch 10.6805 s (chains 1 spans 1) | main 10.8731 s (chains 1 spans 1) | ratio 0.982 
+step7 main total 0.0431 s step7 branch total 0.1037 s rhatch N=1000 d=0.05 w=1e-07 Square side=0 far=0 branch 0.0271 s (chains 637 spans 2564) | main 0.0228 s (chains 637 spans 2564) | ratio 1.192 
+
+[exited with code 0]

@@ -1,0 +1,11 @@
+--- offset.cpp
++++ offset.cpp
+@@ -2603,7 +2603,7 @@
+     boxes.reserve(n);
+     for (const Span& s : spans) {
+         const Box2 b = bounds(s);
+-        boxes.push_back(b.inflated(meetReach(s, b)));
++        boxes.push_back(b);
+     }
+     detail::BoxTree tree(boxes);
+     std::size_t from = 0;  // first span of the current part

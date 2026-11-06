@@ -1,0 +1,24 @@
+Filters: [t0172],[t0128]
+Randomness seeded to: 3247910968
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0172 (a): a strand is cut where it would cross itself, as by the pairwise
+            test
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1161
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1161: FAILED:
+  {Unknown expression after the reported line}
+due to a fatal error condition:
+  trial := 3
+  SIGTERM - Termination request signal
+
+===============================================================================
+test cases:     13 |     12 passed | 1 failed
+assertions: 565601 | 565600 passed | 1 failed
+

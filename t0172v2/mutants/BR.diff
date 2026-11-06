@@ -1,0 +1,11 @@
+--- box_tree.hpp
++++ box_tree.hpp
+@@ -112,7 +112,7 @@
+             while (top > 0) {
+                 const Node& node = t.nodes[stack[--top]];
+                 ++work_;
+-                if (node.maxId < lo || node.minId > hi || !node.bounds.intersects(query)) {
++                if (node.maxId <= lo || node.minId > hi || !node.bounds.intersects(query)) {
+                     continue;
+                 }
+                 if (node.left == kLeafNode) {

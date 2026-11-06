@@ -1,0 +1,11 @@
+--- offset.cpp
++++ offset.cpp
+@@ -3640,7 +3640,7 @@
+             return best;
+         }
+         if (!window.contains(around)) {
+-            const double reachAhead = kWindow * tol.distance + 2.0 * cap;
++            const double reachAhead = 0.0;
+             const double ahead = len > 0.0 ? std::min(1.0, f + reachAhead / len) : 1.0;
+             window = bounds(subSpan(span, f, ahead)).inflated(cap).united(around);
+             nearby.clear();

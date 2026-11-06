@@ -1,0 +1,11 @@
+--- offset.cpp
++++ offset.cpp
+@@ -3647,7 +3647,7 @@
+             coverGrid.query(window, [&](std::size_t i) { nearby.push_back(i); });
+         }
+         for (const std::size_t i : nearby) {
+-            if (coverGrid.box(i).intersects(around)) {
++            if (true) {
+                 best = std::min(best, distanceToSpan(q, item(i)));
+             }
+         }

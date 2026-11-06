@@ -1,0 +1,11 @@
+--- offset.cpp
++++ offset.cpp
+@@ -3701,7 +3701,7 @@
+             // isolated piece is put back only from kStrayMinimum x the tolerance (owner decision
+             // 2026-11-05: an isolated 0.005 mm stray, fam0 0x71280859, is noise to the user; a
+             // needle or slot that matters is mm long).
+-            const bool isolated = from == k && to == e;
++            const bool isolated = true;
+             if (len > (isolated ? kStrayMinimum : 1.0) * tol.distance) {
+                 exactJunctions(part, false);
+                 for (std::vector<Span>& run : nonCrossingRuns(std::move(part), tol)) {

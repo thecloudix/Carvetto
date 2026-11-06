@@ -1,0 +1,11 @@
+--- box_tree.hpp
++++ box_tree.hpp
+@@ -65,7 +65,7 @@
+         }
+         std::vector<std::size_t> ids = std::move(pending_);
+         pending_.clear();
+-        while (!trees_.empty() && trees_.back().ids.size() <= ids.size()) {
++        while (!trees_.empty() && trees_.back().ids.size() < ids.size()) {
+             const std::vector<std::size_t>& more = trees_.back().ids;
+             ids.insert(ids.end(), more.begin(), more.end());
+             trees_.pop_back();

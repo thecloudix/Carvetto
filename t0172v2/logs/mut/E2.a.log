@@ -1,0 +1,33 @@
+Filters: [t0172],[t0128]
+Randomness seeded to: 1903557734
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0172 (c): dropped opposite copies hand back the copy exactly d from the input
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1683
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1702: FAILED:
+  CHECK( uncovered(chains, {1 + d, d + 0.05}, {1 + d, 10.0 + d - 0.05}) == 0 )
+with expansion:
+  20 == 0
+with messages:
+  mirrored := false
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1702: FAILED:
+  CHECK( uncovered(chains, {1 + d, d + 0.05}, {1 + d, 10.0 + d - 0.05}) == 0 )
+with expansion:
+  9 == 0
+with messages:
+  mirrored := false
+  static_cast<int>(join) := 2
+
+===============================================================================
+test cases:     25 |     24 passed | 1 failed
+assertions: 948135 | 948133 passed | 2 failed
+

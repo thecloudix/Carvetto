@@ -1,0 +1,11 @@
+--- offset.cpp
++++ offset.cpp
+@@ -3482,7 +3482,7 @@
+                         const Piece p{st.piece.element, paramAt(st, fw ? nodes[k] : nodes[k + 1]),
+                                       paramAt(st, fw ? nodes[k + 1] : nodes[k])};
+                         if (p.t1 > p.t0 && !back) {
+-                            if (exactOver(p)) {
++                            if (true || exactOver(p)) {
+                                 back = p;
+                             } else if (!fallback) {
+                                 fallback = p;

@@ -1,0 +1,50 @@
+fam  0 n    16000 trees  6 nodes     3994 avgwork    14870.1 avgrep    11896.0 max(work-rep)     4001 maxworkEmpty        6 (n^.75=1423) empties 236
+fam  0 n    64000 trees  6 nodes    15994 avgwork    59055.7 avgrep    47244.0 max(work-rep)    16001 maxworkEmpty        6 (n^.75=4024) empties 262
+fam  0 n   256000 trees  6 nodes    63994 avgwork   235259.6 avgrep   188206.5 max(work-rep)    63997 maxworkEmpty        6 (n^.75=11381) empties 237
+fam  1 n    16000 trees  6 nodes     3994 avgwork    12883.6 avgrep    10301.0 max(work-rep)     4008 maxworkEmpty        6 (n^.75=1423) empties 236
+fam  1 n    64000 trees  6 nodes    15994 avgwork    51910.9 avgrep    41522.7 max(work-rep)    16000 maxworkEmpty        6 (n^.75=4024) empties 262
+fam  1 n   256000 trees  6 nodes    63994 avgwork   206604.2 avgrep   165276.1 max(work-rep)    63994 maxworkEmpty        6 (n^.75=11381) empties 237
+fam  2 n    16000 trees  6 nodes     3994 avgwork    13720.6 avgrep    10971.7 max(work-rep)     4012 maxworkEmpty        6 (n^.75=1423) empties 510
+fam  2 n    64000 trees  6 nodes    15994 avgwork    54709.7 avgrep    43761.9 max(work-rep)    15994 maxworkEmpty        6 (n^.75=4024) empties 506
+fam  2 n   256000 trees  6 nodes    63994 avgwork   216629.6 avgrep   173296.5 max(work-rep)    63994 maxworkEmpty        6 (n^.75=11381) empties 517
+fam  3 n    16000 trees  6 nodes        6 avgwork    12030.0 avgrep    12024.0 max(work-rep)        6 maxworkEmpty        6 (n^.75=1423) empties 497
+fam  3 n    64000 trees  6 nodes        6 avgwork    48486.0 avgrep    48480.0 max(work-rep)        6 maxworkEmpty        6 (n^.75=4024) empties 485
+fam  3 n   256000 trees  6 nodes        6 avgwork   198022.0 avgrep   198016.0 max(work-rep)        6 maxworkEmpty        6 (n^.75=11381) empties 453
+fam  4 n    16000 trees  6 nodes     3994 avgwork    13535.2 avgrep    10712.6 max(work-rep)     4519 maxworkEmpty        6 (n^.75=1423) empties 257
+fam  4 n    64000 trees  6 nodes    15994 avgwork    55219.0 avgrep    43958.7 max(work-rep)    16759 maxworkEmpty        6 (n^.75=4024) empties 258
+fam  4 n   256000 trees  6 nodes    63994 avgwork   220147.8 avgrep   175689.7 max(work-rep)    64992 maxworkEmpty        6 (n^.75=11381) empties 255
+fam  6 n    16000 trees  6 nodes     3994 avgwork     4203.5 avgrep     2728.7 max(work-rep)     4261 maxworkEmpty        6 (n^.75=1423) empties 253
+fam  6 n    64000 trees  6 nodes    15994 avgwork    15706.5 avgrep    10932.8 max(work-rep)    16627 maxworkEmpty        6 (n^.75=4024) empties 240
+fam  6 n   256000 trees  6 nodes    63994 avgwork    55913.2 avgrep    40315.9 max(work-rep)    63994 maxworkEmpty        6 (n^.75=11381) empties 255
+fam 10 n    16000 trees  6 nodes     3994 avgwork     2643.8 avgrep     2097.8 max(work-rep)     3994 maxworkEmpty       34 (n^.75=1423) empties 517
+fam 10 n    64000 trees  6 nodes    15994 avgwork    10324.1 avgrep     8240.0 max(work-rep)    15994 maxworkEmpty       38 (n^.75=4024) empties 499
+fam 10 n   256000 trees  6 nodes    63994 avgwork    40589.7 avgrep    32449.7 max(work-rep)    63994 maxworkEmpty       42 (n^.75=11381) empties 471
+fam 11 n    16000 trees  6 nodes     3994 avgwork    12009.6 avgrep     9597.1 max(work-rep)     4008 maxworkEmpty        6 (n^.75=1423) empties 499
+fam 11 n    64000 trees  6 nodes    12682 avgwork    46837.6 avgrep    38996.5 max(work-rep)    12688 maxworkEmpty        6 (n^.75=4024) empties 484
+fam 11 n   256000 trees  6 nodes    28700 avgwork   173657.7 avgrep   156160.5 max(work-rep)    28708 maxworkEmpty        6 (n^.75=11381) empties 458
+fam 12 n    16000 trees  6 nodes     3994 avgwork     6095.9 avgrep     4798.5 max(work-rep)     3994 maxworkEmpty      266 (n^.75=1423) empties 510
+fam 12 n    64000 trees  6 nodes    15994 avgwork    24498.5 avgrep    19508.0 max(work-rep)    15994 maxworkEmpty      314 (n^.75=4024) empties 506
+fam 12 n   256000 trees  6 nodes    63994 avgwork    98848.9 avgrep    78976.6 max(work-rep)    63994 maxworkEmpty      362 (n^.75=11381) empties 517
+fam 13 n    16000 trees  6 nodes     3994 avgwork     2746.0 avgrep     2119.5 max(work-rep)     3994 maxworkEmpty       48 (n^.75=1423) empties 491
+fam 13 n    64000 trees  6 nodes    15994 avgwork     9808.4 avgrep     7733.3 max(work-rep)    15994 maxworkEmpty       50 (n^.75=4024) empties 464
+fam 13 n   256000 trees  6 nodes    63994 avgwork    46364.8 avgrep    36913.8 max(work-rep)    63994 maxworkEmpty       58 (n^.75=11381) empties 495
+fam 15 n    16000 trees  6 nodes     3994 avgwork     2644.0 avgrep     2097.8 max(work-rep)     3994 maxworkEmpty       34 (n^.75=1423) empties 517
+fam 15 n    64000 trees  6 nodes    15994 avgwork    10324.4 avgrep     8240.0 max(work-rep)    15994 maxworkEmpty       38 (n^.75=4024) empties 499
+fam 15 n   256000 trees  6 nodes    63994 avgwork    40589.9 avgrep    32449.7 max(work-rep)    63994 maxworkEmpty       42 (n^.75=11381) empties 471
+fam 17 n    16000 trees  6 nodes     3994 avgwork    12217.8 avgrep     9770.2 max(work-rep)     3998 maxworkEmpty        6 (n^.75=1423) empties 368
+fam 17 n    64000 trees  6 nodes    15994 avgwork    49420.6 avgrep    39532.2 max(work-rep)    15994 maxworkEmpty        6 (n^.75=4024) empties 376
+fam 17 n   256000 trees  6 nodes    63994 avgwork   199831.4 avgrep   159860.0 max(work-rep)    63994 maxworkEmpty        6 (n^.75=11381) empties 356
+fam 21 n    16000 trees  6 nodes     3994 avgwork     3622.1 avgrep     2354.6 max(work-rep)     5364 maxworkEmpty        6 (n^.75=1423) empties 507
+fam 21 n    64000 trees  6 nodes    15994 avgwork    13184.3 avgrep     9269.1 max(work-rep)    15994 maxworkEmpty        6 (n^.75=4024) empties 494
+fam 21 n   256000 trees  6 nodes    63994 avgwork    46007.8 avgrep    33748.9 max(work-rep)    63994 maxworkEmpty        6 (n^.75=11381) empties 502
+big fam 0 N 1000000: 2.033 s, peak 90 MB, trees 7 nodes 249993 work 5440745 (/N 5.4) rep 1000000
+big fam 1 N 1000000: 2.275 s, peak 90 MB, trees 7 nodes 249993 work 5126316 (/N 5.1) rep 1000000
+big fam 2 N 1000000: 2.906 s, peak 90 MB, trees 7 nodes 249993 work 2993946 (/N 3.0) rep 1000000
+big fam 3 N 1000000: 0.310 s, peak 90 MB, trees 7 nodes 7 work 1125000 (/N 1.1) rep 1000000
+big fam 10 N 1000000: 2.364 s, peak 90 MB, trees 7 nodes 249993 work 5368954 (/N 5.4) rep 1000000
+big fam 11 N 1000000: 1.873 s, peak 90 MB, trees 7 nodes 45257 work 2551308 (/N 2.6) rep 1000000
+big fam 12 N 1000000: 3.601 s, peak 90 MB, trees 7 nodes 249993 work 28043196 (/N 28.0) rep 1000000
+big fam 17 N 1000000: 2.162 s, peak 90 MB, trees 7 nodes 249993 work 2993946 (/N 3.0) rep 1000000
+big fam 21 N 1000000: 3.981 s, peak 90 MB, trees 7 nodes 249993 work 7368917 (/N 7.4) rep 1000000
+big fam 7 N 1000000: 4.637 s, peak 90 MB, trees 7 nodes 249993 work 28203437 (/N 28.2) rep 1000000
+big fam 9 N 1000000: 2.902 s, peak 90 MB, trees 7 nodes 5885 work 6687099 (/N 6.7) rep 1000000

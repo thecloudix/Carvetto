@@ -1,0 +1,11 @@
+--- offset.cpp
++++ offset.cpp
+@@ -3714,7 +3714,7 @@
+     // Each goes after the chains (and earlier strays) whose keys are not greater: a stable
+     // merge, linear (inserting one at a time was quadratic too).
+     std::stable_sort(added.begin(), added.end(),
+-                     [](const Stray& a, const Stray& b) { return a.key < b.key; });
++                     [](const Stray& a, const Stray& b) { return a.key > b.key; });
+     std::vector<Contour> merged;
+     merged.reserve(result.size() + added.size());
+     std::size_t r = 0;

@@ -1,0 +1,72 @@
+Filters: [t0172],[t0128]
+Randomness seeded to: 3271582163
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0172 (c): a thin loop's strand of many spans comes back whole
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1553
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1580: FAILED:
+  CHECK( chains[0].spans.size() > minSpans )
+with expansion:
+  1 > 512 (0x200)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1582: FAILED:
+  CHECK( chainLength(chains[0]) > 0.99 * (1.2 * (R + d) - 2 * d) )
+with expansion:
+  0.04200009200254996 > 22.96799999999999997
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  0.12599996922171733 <= 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  1.93132099691217718 <= 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  4.02581444618282092 <= 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  6.11024545616861925 <= 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  8.17940403472190702 <= 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  10.2281183629607586 <= 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  12.25126772200379932 <= 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  14.24379529208476391 <= 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1585: FAILED:
+  CHECK( distanceToChains(middle, chains) <= 1e-3 )
+with expansion:
+  16.20072079196451398 <= 0.001
+
+===============================================================================
+test cases:     25 |     24 passed |  1 failed
+assertions: 948275 | 948264 passed | 11 failed
+

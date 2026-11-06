@@ -1,0 +1,33 @@
+Filters: [t0172],[t0128]
+Randomness seeded to: 1447232231
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0172 (a): a stray that would cross itself is cut into consecutive runs
+            without tiny ends
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1598
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1610: FAILED:
+  CHECK( length(run.back()) > kTol.distance )
+with expansion:
+  0.00050000000000239 > 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1610: FAILED:
+  CHECK( length(run.back()) > kTol.distance )
+with expansion:
+  0.0002 > 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1610: FAILED:
+  CHECK( length(run.back()) > kTol.distance )
+with expansion:
+  0.00040000000000001 > 0.001
+
+===============================================================================
+test cases:     25 |     24 passed | 1 failed
+assertions: 948278 | 948275 passed | 3 failed
+

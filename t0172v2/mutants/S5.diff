@@ -1,0 +1,10 @@
+--- offset.cpp
++++ offset.cpp
+@@ -3704,6 +3704,7 @@
+             const bool isolated = from == k && to == e;
+             if (len > (isolated ? kStrayMinimum : 1.0) * tol.distance) {
+                 exactJunctions(part, false);
++                if (part.size() > 512) { for (Span& sp : part) { if (!isDegenerate(sp, tol)) { add(st.key, std::vector<Span>{sp}); } } } else
+                 for (std::vector<Span>& run : nonCrossingRuns(std::move(part), tol)) {
+                     add(st.key, std::move(run));
+                 }

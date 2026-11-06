@@ -1,0 +1,12 @@
+--- offset.cpp
++++ offset.cpp
+@@ -2634,7 +2634,8 @@
+ // open chain); parts left empty go.
+ std::vector<std::vector<Span>> nonCrossingRuns(std::vector<Span> part, const Tolerance& tol) {
+     std::vector<std::vector<Span>> runs;
+-    const std::vector<std::size_t> cuts = selfCrossingCuts(part);
++    std::vector<std::size_t> cuts = selfCrossingCuts(part);
++    if (part.size() > 512 && cuts.empty()) { for (std::size_t q = 1; q < part.size(); ++q) cuts.push_back(q); }
+     if (cuts.empty()) {
+         runs.push_back(std::move(part));
+         return runs;

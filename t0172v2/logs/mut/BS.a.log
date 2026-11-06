@@ -1,0 +1,322 @@
+Filters: [t0172],[t0128]
+Randomness seeded to: 956492334
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0128: putting strays back is near-linear in their number (hatch at pitch 2d)
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:985
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1009: FAILED:
+  CHECK( t.ratio() < 8.0 )
+with expansion:
+  8.81250385281407844 < 8.0
+with message:
+  CPU seconds: 250 lines 0.0319374, 1000 lines 0.306089, ratio 8.8125
+
+-------------------------------------------------------------------------------
+T-0172 (a): self-crossing cuts cost near-linear time on long and collinear
+            strands
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1348
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1366: FAILED:
+  CHECK( t.ratio() < 64.0 )
+with expansion:
+  219.71735028053183214 < 64.0
+with message:
+  CPU seconds: 1000 spans 0.091333, 16000 spans 25.8024, ratio 219.717
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1378: FAILED:
+  CHECK( seconds < (kRelease ? 0.5 * kAbsSlack : 10.0) )
+with expansion:
+  31.37404500000000951 < 10.0
+with messages:
+  CPU seconds: 1000 spans 0.091333, 16000 spans 25.8024, ratio 219.717
+  back and forth, 16000 spans: 31.374 s
+
+-------------------------------------------------------------------------------
+T-0172: BoxTree memory and query work stay near-linear on nested, collinear and
+        clustered boxes
+-------------------------------------------------------------------------------
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:209
+...............................................................................
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:235: FAILED:
+  CHECK( tree.nodeCount() < boxes.size() / 2 )
+with expansion:
+  5895 (0x1707) < 1500 (0x5dc)
+with messages:
+  kind := 0
+  pairs := 9000000 (0x895440)
+  tree.work() := 28795060 (0x1b760b4)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:235: FAILED:
+  CHECK( tree.nodeCount() < boxes.size() / 2 )
+with expansion:
+  5895 (0x1707) < 1500 (0x5dc)
+with messages:
+  kind := 1
+  pairs := 7875750 (0x782ca6)
+  tree.work() := 26698007 (0x1976117)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:235: FAILED:
+  CHECK( tree.nodeCount() < boxes.size() / 2 )
+with expansion:
+  5895 (0x1707) < 1500 (0x5dc)
+with messages:
+  kind := 2
+  pairs := 3000 (0xbb8)
+  tree.work() := 16434686 (0xfac5fe)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:237: FAILED:
+  CHECK( static_cast<double>(tree.work()) <= budget )
+with expansion:
+  16434686.0 <= 3765224.03561497246846557
+with messages:
+  kind := 2
+  pairs := 3000 (0xbb8)
+  tree.work() := 16434686 (0xfac5fe)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:240: FAILED:
+  CHECK( static_cast<double>(tree.work()) < 0.25 * m * m )
+with expansion:
+  16434686.0 < 2250000.0
+with messages:
+  kind := 2
+  pairs := 3000 (0xbb8)
+  tree.work() := 16434686 (0xfac5fe)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:235: FAILED:
+  CHECK( tree.nodeCount() < boxes.size() / 2 )
+with expansion:
+  5895 (0x1707) < 1500 (0x5dc)
+with messages:
+  kind := 3
+  pairs := 380041 (0x5cc89)
+  tree.work() := 15957619 (0xf37e73)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:235: FAILED:
+  CHECK( tree.nodeCount() < boxes.size() / 2 )
+with expansion:
+  5895 (0x1707) < 1500 (0x5dc)
+with messages:
+  kind := 4
+  pairs := 6760643 (0x6728c3)
+  tree.work() := 24523609 (0x1763359)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:235: FAILED:
+  CHECK( tree.nodeCount() < boxes.size() / 2 )
+with expansion:
+  5895 (0x1707) < 1500 (0x5dc)
+with messages:
+  kind := 5
+  pairs := 3000 (0xbb8)
+  tree.work() := 13460566 (0xcd6456)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:237: FAILED:
+  CHECK( static_cast<double>(tree.work()) <= budget )
+with expansion:
+  13460566.0 <= 3765224.03561497246846557
+with messages:
+  kind := 5
+  pairs := 3000 (0xbb8)
+  tree.work() := 13460566 (0xcd6456)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:240: FAILED:
+  CHECK( static_cast<double>(tree.work()) < 0.25 * m * m )
+with expansion:
+  13460566.0 < 2250000.0
+with messages:
+  kind := 5
+  pairs := 3000 (0xbb8)
+  tree.work() := 13460566 (0xcd6456)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:235: FAILED:
+  CHECK( tree.nodeCount() < boxes.size() / 2 )
+with expansion:
+  5895 (0x1707) < 1500 (0x5dc)
+with messages:
+  kind := 6
+  pairs := 750767 (0xb74af)
+  tree.work() := 16557662 (0xfca65e)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:235: FAILED:
+  CHECK( tree.nodeCount() < boxes.size() / 2 )
+with expansion:
+  5895 (0x1707) < 1500 (0x5dc)
+with messages:
+  kind := 7
+  pairs := 3001 (0xbb9)
+  tree.work() := 4592443 (0x46133b)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:237: FAILED:
+  CHECK( static_cast<double>(tree.work()) <= budget )
+with expansion:
+  4592443.0 <= 3766623.40383984614163637
+with messages:
+  kind := 7
+  pairs := 3001 (0xbb9)
+  tree.work() := 4592443 (0x46133b)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:240: FAILED:
+  CHECK( static_cast<double>(tree.work()) < 0.25 * m * m )
+with expansion:
+  4592443.0 < 2251500.25
+with messages:
+  kind := 7
+  pairs := 3001 (0xbb9)
+  tree.work() := 4592443 (0x46133b)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:235: FAILED:
+  CHECK( tree.nodeCount() < boxes.size() / 2 )
+with expansion:
+  5895 (0x1707) < 1500 (0x5dc)
+with messages:
+  kind := 8
+  pairs := 213439 (0x341bf)
+  tree.work() := 12283070 (0xbb6cbe)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:235: FAILED:
+  CHECK( tree.nodeCount() < boxes.size() / 2 )
+with expansion:
+  5895 (0x1707) < 1500 (0x5dc)
+with messages:
+  kind := 9
+  pairs := 3000 (0xbb8)
+  tree.work() := 13422510 (0xcccfae)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:237: FAILED:
+  CHECK( static_cast<double>(tree.work()) <= budget )
+with expansion:
+  13422510.0 <= 3765224.03561497246846557
+with messages:
+  kind := 9
+  pairs := 3000 (0xbb8)
+  tree.work() := 13422510 (0xcccfae)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:240: FAILED:
+  CHECK( static_cast<double>(tree.work()) < 0.25 * m * m )
+with expansion:
+  13422510.0 < 2250000.0
+with messages:
+  kind := 9
+  pairs := 3000 (0xbb8)
+  tree.work() := 13422510 (0xcccfae)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:235: FAILED:
+  CHECK( tree.nodeCount() < boxes.size() / 2 )
+with expansion:
+  5895 (0x1707) < 1500 (0x5dc)
+with messages:
+  kind := 11
+  pairs := 3000 (0xbb8)
+  tree.work() := 13449216 (0xcd3800)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:237: FAILED:
+  CHECK( static_cast<double>(tree.work()) <= budget )
+with expansion:
+  13449216.0 <= 3765224.03561497246846557
+with messages:
+  kind := 11
+  pairs := 3000 (0xbb8)
+  tree.work() := 13449216 (0xcd3800)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:240: FAILED:
+  CHECK( static_cast<double>(tree.work()) < 0.25 * m * m )
+with expansion:
+  13449216.0 < 2250000.0
+with messages:
+  kind := 11
+  pairs := 3000 (0xbb8)
+  tree.work() := 13449216 (0xcd3800)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:235: FAILED:
+  CHECK( tree.nodeCount() < boxes.size() / 2 )
+with expansion:
+  5895 (0x1707) < 1500 (0x5dc)
+with messages:
+  kind := 12
+  pairs := 4014 (0xfae)
+  tree.work() := 13539611 (0xce991b)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:237: FAILED:
+  CHECK( static_cast<double>(tree.work()) <= budget )
+with expansion:
+  13539611.0 <= 3866624.03561497246846557
+with messages:
+  kind := 12
+  pairs := 4014 (0xfae)
+  tree.work() := 13539611 (0xce991b)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:240: FAILED:
+  CHECK( static_cast<double>(tree.work()) < 0.25 * m * m )
+with expansion:
+  13539611.0 < 2250000.0
+with messages:
+  kind := 12
+  pairs := 4014 (0xfae)
+  tree.work() := 13539611 (0xce991b)
+  tree.nodeCount() := 5895 (0x1707)
+  tree.treeCount() := 7
+
+/home/chris/harness/t0172v2/mutants/BS/box_tree_test.cpp:248: FAILED:
+  CHECK( bulk.nodeCount() < nested.size() / 2 )
+with expansion:
+  39985 (0x9c31) < 10000 (0x2710)
+
+===============================================================================
+test cases:     25 |     22 passed |  3 failed
+assertions: 948275 | 948247 passed | 28 failed
+

@@ -1,0 +1,4948 @@
+Filters: [t0172],[t0128]
+Randomness seeded to: 810717913
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0172 (a): near-tangent spans meet in the self-crossing cuts exactly as in the
+            pairwise test
+-------------------------------------------------------------------------------
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1218
+...............................................................................
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.00000000001
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.00000000001
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.00000000001
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.00000000001
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000001
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000001
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000001
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000001
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000005
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000005
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000005
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000005
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000005
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000009
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000009
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000009
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000009
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000009
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000012
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 0.0
+  gap := 0.0000000012
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.00000000001
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.00000000001
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.00000000001
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.00000000001
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000001
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000001
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000001
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000001
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000005
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000005
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000005
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000005
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000005
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000009
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000009
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000009
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000009
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000009
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000012
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := 12000.0
+  gap := 0.0000000012
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.00000000001
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.00000000001
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000001
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000001
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000001
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000001
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000005
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000005
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000005
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000005
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000009
+  r := 1.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000009
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000009
+  r := 0.001
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000009
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000009
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000012
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.0000000012
+  R := 1000.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with messages:
+  o.x := -300000.0
+  gap := 0.000000003
+  R := 10.0
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 41
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 113
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 143
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 173
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 251
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 269 (0x10d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 323 (0x143)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 329 (0x149)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 407 (0x197)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 431 (0x1af)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 449 (0x1c1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 455 (0x1c7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 479 (0x1df)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 539 (0x21b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 695 (0x2b7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 707 (0x2c3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 725 (0x2d5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 755 (0x2f3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 971 (0x3cb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 1019 (0x3fb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 1199 (0x4af)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 1223 (0x4c7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 1289 (0x509)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 1313 (0x521)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 1349 (0x545)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 1385 (0x569)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 1409 (0x581)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 1475 (0x5c3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 1487 (0x5cf)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 1607 (0x647)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 1643 (0x66b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 1823 (0x71f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 1895 (0x767)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 1907 (0x773)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 1967 (0x7af)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2093 (0x82d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2117 (0x845)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2129 (0x851)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2153 (0x869)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2177 (0x881)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2195 (0x893)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2219 (0x8ab)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2261 (0x8d5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2297 (0x8f9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2309 (0x905)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2315 (0x90b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2405 (0x965)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2417 (0x971)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2459 (0x99b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2615 (0xa37)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2651 (0xa5b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2777 (0xad9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2795 (0xaeb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2819 (0xb03)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2873 (0xb39)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2969 (0xb99)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2981 (0xba5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 2993 (0xbb1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3035 (0xbdb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3053 (0xbed)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3059 (0xbf3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3131 (0xc3b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3137 (0xc41)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3149 (0xc4d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3311 (0xcef)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3419 (0xd5b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3461 (0xd85)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3491 (0xda3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3527 (0xdc7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3557 (0xde5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3767 (0xeb7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3785 (0xec9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3803 (0xedb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3833 (0xef9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3917 (0xf4d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3929 (0xf59)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3941 (0xf65)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3947 (0xf6b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3977 (0xf89)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 3995 (0xf9b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4067 (0xfe3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4139 (0x102b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4205 (0x106d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4253 (0x109d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4271 (0x10af)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4283 (0x10bb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4355 (0x1103)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4409 (0x1139)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4481 (0x1181)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4523 (0x11ab)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4547 (0x11c3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4559 (0x11cf)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4613 (0x1205)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4625 (0x1211)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4667 (0x123b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4697 (0x1259)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4733 (0x127d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4757 (0x1295)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4787 (0x12b3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4847 (0x12ef)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 4961 (0x1361)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5045 (0x13b5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5129 (0x1409)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5141 (0x1415)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5159 (0x1427)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5231 (0x146f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5249 (0x1481)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5321 (0x14c9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5327 (0x14cf)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5399 (0x1517)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5435 (0x153b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5513 (0x1589)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5525 (0x1595)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5555 (0x15b3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5687 (0x1637)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5807 (0x16af)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5843 (0x16d3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5849 (0x16d9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5873 (0x16f1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5885 (0x16fd)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5897 (0x1709)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5915 (0x171b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 5993 (0x1769)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 6029 (0x178d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 6197 (0x1835)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 6305 (0x18a1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 6311 (0x18a7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 6437 (0x1925)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 6443 (0x192b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 6563 (0x19a3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 6575 (0x19af)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 6665 (0x1a09)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 6725 (0x1a45)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 6803 (0x1a93)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 6977 (0x1b41)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 6995 (0x1b53)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 7001 (0x1b59)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 7055 (0x1b8f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 7133 (0x1bdd)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 7247 (0x1c4f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 7307 (0x1c8b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 7355 (0x1cbb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 7541 (0x1d75)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 7571 (0x1d93)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 7607 (0x1db7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 7649 (0x1de1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 7709 (0x1e1d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 7739 (0x1e3b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 7835 (0x1e9b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 7847 (0x1ea7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 7937 (0x1f01)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 7949 (0x1f0d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 7961 (0x1f19)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 8051 (0x1f73)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 8063 (0x1f7f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 8093 (0x1f9d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 8171 (0x1feb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 8201 (0x2009)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 8273 (0x2051)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 8285 (0x205d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 8381 (0x20bd)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 8441 (0x20f9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 8453 (0x2105)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 8465 (0x2111)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 8471 (0x2117)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 8663 (0x21d7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 8705 (0x2201)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 8723 (0x2213)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 8765 (0x223d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 8807 (0x2267)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 8843 (0x228b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 8963 (0x2303)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 8981 (0x2315)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 9035 (0x234b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 9053 (0x235d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 9077 (0x2375)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 9167 (0x23cf)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 9179 (0x23db)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 9269 (0x2435)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 9323 (0x246b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 9449 (0x24e9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 9533 (0x253d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 9575 (0x2567)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 9623 (0x2597)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 9677 (0x25cd)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 9689 (0x25d9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 9791 (0x263f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 9803 (0x264b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 9815 (0x2657)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 9827 (0x2663)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 9875 (0x2693)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 9971 (0x26f3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10061 (0x274d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10091 (0x276b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10115 (0x2783)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10127 (0x278f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10157 (0x27ad)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10181 (0x27c5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10229 (0x27f5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10379 (0x288b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10439 (0x28c7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10475 (0x28eb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10505 (0x2909)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10523 (0x291b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10541 (0x292d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10595 (0x2963)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10607 (0x296f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10769 (0x2a11)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10787 (0x2a23)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10793 (0x2a29)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10799 (0x2a2f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10805 (0x2a35)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10823 (0x2a47)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10865 (0x2a71)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10871 (0x2a77)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 10883 (0x2a83)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 11069 (0x2b3d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 11111 (0x2b67)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 11141 (0x2b85)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 11279 (0x2c0f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 11291 (0x2c1b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 11309 (0x2c2d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 11315 (0x2c33)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 11447 (0x2cb7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 11519 (0x2cff)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 11555 (0x2d23)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 11627 (0x2d6b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 11741 (0x2ddd)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 11795 (0x2e13)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 11819 (0x2e2b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 11837 (0x2e3d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 11843 (0x2e43)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 11957 (0x2eb5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 11969 (0x2ec1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 11975 (0x2ec7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 11993 (0x2ed9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 12089 (0x2f39)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 12131 (0x2f63)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 12203 (0x2fab)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 12209 (0x2fb1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 12299 (0x300b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 12305 (0x3011)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 12335 (0x302f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 12347 (0x303b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 12401 (0x3071)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 12419 (0x3083)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 12425 (0x3089)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 12533 (0x30f5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 12779 (0x31eb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 12815 (0x320f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 12839 (0x3227)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 12925 (0x327d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 12989 (0x32bd)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 13127 (0x3347)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 13181 (0x337d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 13289 (0x33e9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 13295 (0x33ef)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 13415 (0x3467)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 13421 (0x346d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 13469 (0x349d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 13541 (0x34e5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 13553 (0x34f1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 13559 (0x34f7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 13709 (0x358d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 13799 (0x35e7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 13817 (0x35f9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 13847 (0x3617)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 13865 (0x3629)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 13871 (0x362f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 13919 (0x365f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 13949 (0x367d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 14027 (0x36cb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 14099 (0x3713)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 14111 (0x371f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 14123 (0x372b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 14147 (0x3743)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 14267 (0x37bb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 14357 (0x3815)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 14387 (0x3833)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 14603 (0x390b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 14771 (0x39b3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 14861 (0x3a0d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 14879 (0x3a1f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 14975 (0x3a7f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 15059 (0x3ad3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 15065 (0x3ad9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 15107 (0x3b03)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 15227 (0x3b7b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 15257 (0x3b99)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 15359 (0x3bff)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 15533 (0x3cad)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 15587 (0x3ce3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 15605 (0x3cf5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 15635 (0x3d13)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 15695 (0x3d4f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 15821 (0x3dcd)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 15965 (0x3e5d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 16085 (0x3ed5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 16091 (0x3edb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 16097 (0x3ee1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 16109 (0x3eed)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 16343 (0x3fd7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 16379 (0x3ffb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 16391 (0x4007)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 16439 (0x4037)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 16445 (0x403d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 16535 (0x4097)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 16601 (0x40d9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 16691 (0x4133)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 16709 (0x4145)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 16793 (0x4199)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 16889 (0x41f9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 16907 (0x420b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 16979 (0x4253)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 16997 (0x4265)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17027 (0x4283)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17039 (0x428f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17111 (0x42d7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17135 (0x42ef)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17183 (0x431f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17219 (0x4343)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17225 (0x4349)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17357 (0x43cd)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17375 (0x43df)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17411 (0x4403)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17417 (0x4409)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17447 (0x4427)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17471 (0x443f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17513 (0x4469)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17591 (0x44b7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17603 (0x44c3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17639 (0x44e7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17831 (0x45a7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17873 (0x45d1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17933 (0x460d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 17939 (0x4613)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18029 (0x466d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18041 (0x4679)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18101 (0x46b5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18107 (0x46bb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18143 (0x46df)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18155 (0x46eb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18209 (0x4721)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18215 (0x4727)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18239 (0x473f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18287 (0x476f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18305 (0x4781)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18329 (0x4799)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18353 (0x47b1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18365 (0x47bd)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18377 (0x47c9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18413 (0x47ed)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18485 (0x4835)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18497 (0x4841)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18539 (0x486b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18647 (0x48d7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18689 (0x4901)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 18935 (0x49f7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19013 (0x4a45)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19049 (0x4a69)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19157 (0x4ad5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19169 (0x4ae1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19241 (0x4b29)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19247 (0x4b2f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19295 (0x4b5f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19337 (0x4b89)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19361 (0x4ba1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19409 (0x4bd1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19427 (0x4be3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19475 (0x4c13)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19649 (0x4cc1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19703 (0x4cf7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19733 (0x4d15)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19745 (0x4d21)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19781 (0x4d45)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19811 (0x4d63)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19817 (0x4d69)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19865 (0x4d99)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19925 (0x4dd5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 19961 (0x4df9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 20201 (0x4ee9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 20225 (0x4f01)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 20249 (0x4f19)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 20297 (0x4f49)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 20339 (0x4f73)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 20363 (0x4f8b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 20375 (0x4f97)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 20393 (0x4fa9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 20417 (0x4fc1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 20477 (0x4ffd)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 20597 (0x5075)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 20621 (0x508d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 20645 (0x50a5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 20759 (0x5117)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 20789 (0x5135)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).e
+... [truncated by verifier: 209055 bytes] ...
+ops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35003 (0x88bb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35027 (0x88d3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35105 (0x8921)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35165 (0x895d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35195 (0x897b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35279 (0x89cf)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35291 (0x89db)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35351 (0x8a17)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35369 (0x8a29)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35375 (0x8a2f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35429 (0x8a65)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35471 (0x8a8f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35489 (0x8aa1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35519 (0x8abf)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35591 (0x8b07)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35699 (0x8b73)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35729 (0x8b91)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35765 (0x8bb5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35783 (0x8bc7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35795 (0x8bd3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35885 (0x8c2d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 35891 (0x8c33)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36107 (0x8d0b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36245 (0x8d95)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36275 (0x8db3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36281 (0x8db9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36347 (0x8dfb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36359 (0x8e07)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36461 (0x8e6d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36467 (0x8e73)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36491 (0x8e8b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36503 (0x8e97)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36563 (0x8ed3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36575 (0x8edf)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36581 (0x8ee5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36587 (0x8eeb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36599 (0x8ef7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36605 (0x8efd)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36623 (0x8f0f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36641 (0x8f21)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36677 (0x8f45)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36787 (0x8fb3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36815 (0x8fcf)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36845 (0x8fed)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36929 (0x9041)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36947 (0x9053)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36953 (0x9059)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 36971 (0x906b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 37127 (0x9107)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 37139 (0x9113)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 37145 (0x9119)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 37223 (0x9167)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 37229 (0x916d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 37265 (0x9191)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 37343 (0x91df)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 37391 (0x920f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 37535 (0x929f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 37565 (0x92bd)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 37643 (0x930b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 37673 (0x9329)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 37715 (0x9353)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 37829 (0x93c5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 37895 (0x9407)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 37943 (0x9437)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 37949 (0x943d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 37967 (0x944f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 38027 (0x948b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 38075 (0x94bb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 38219 (0x954b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 38249 (0x9569)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 38339 (0x95c3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 38603 (0x96cb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 38693 (0x9725)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 38711 (0x9737)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 38723 (0x9743)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 38735 (0x974f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 38843 (0x97bb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 38855 (0x97c7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 39065 (0x9899)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 39119 (0x98cf)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 39161 (0x98f9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 39197 (0x991d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 39227 (0x993b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 39371 (0x99cb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 39455 (0x9a1f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 39479 (0x9a37)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 39527 (0x9a67)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 39581 (0x9a9d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 39605 (0x9ab5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 39611 (0x9abb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 39659 (0x9aeb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 39665 (0x9af1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 39683 (0x9b03)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 39755 (0x9b4b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 39869 (0x9bbd)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 40079 (0x9c8f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 40091 (0x9c9b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 40127 (0x9cbf)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 40283 (0x9d5b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 40313 (0x9d79)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 40379 (0x9dbb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 40511 (0x9e3f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 40583 (0x9e87)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 40595 (0x9e93)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 40661 (0x9ed5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 40697 (0x9ef9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 40703 (0x9eff)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 40769 (0x9f41)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 40835 (0x9f83)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 40949 (0x9ff5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 40961 (0xa001)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 41003 (0xa02b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 41009 (0xa031)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 41063 (0xa067)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 41117 (0xa09d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 41123 (0xa0a3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 41141 (0xa0b5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 41165 (0xa0cd)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 41183 (0xa0df)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 41309 (0xa15d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 41327 (0xa16f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 41333 (0xa175)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 41375 (0xa19f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 41531 (0xa23b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 41573 (0xa265)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 41585 (0xa271)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 41627 (0xa29b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 41813 (0xa355)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 41843 (0xa373)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 41963 (0xa3eb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 42005 (0xa415)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 42041 (0xa439)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 42083 (0xa463)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 42149 (0xa4a5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 42161 (0xa4b1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 42185 (0xa4c9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 42383 (0xa58f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 42425 (0xa5b9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 42431 (0xa5bf)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 42461 (0xa5dd)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 42467 (0xa5e3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 42491 (0xa5fb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 42509 (0xa60d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 42641 (0xa691)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 42647 (0xa697)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 42707 (0xa6d3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 42749 (0xa6fd)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 42839 (0xa757)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 42851 (0xa763)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 42959 (0xa7cf)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 42971 (0xa7db)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 43145 (0xa889)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 43187 (0xa8b3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 43229 (0xa8dd)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 43253 (0xa8f5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 43373 (0xa96d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 43445 (0xa9b5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 43469 (0xa9cd)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 43535 (0xaa0f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 43595 (0xaa4b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 43601 (0xaa51)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 43631 (0xaa6f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 43685 (0xaaa5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 43697 (0xaab1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 43883 (0xab6b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 43907 (0xab83)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 43937 (0xaba1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 44063 (0xac1f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 44147 (0xac73)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 44165 (0xac85)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 44171 (0xac8b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 44177 (0xac91)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 44267 (0xaceb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 44285 (0xacfd)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 44321 (0xad21)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 44369 (0xad51)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 44537 (0xadf9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 44591 (0xae2f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 44705 (0xaea1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 44813 (0xaf0d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 44897 (0xaf61)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 45017 (0xafd9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 45023 (0xafdf)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 45113 (0xb039)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 45143 (0xb057)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 45173 (0xb075)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 45197 (0xb08d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 45269 (0xb0d5)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 45353 (0xb129)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 45437 (0xb17d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 45527 (0xb1d7)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 45653 (0xb255)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 45659 (0xb25b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 45707 (0xb28b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 45713 (0xb291)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 45725 (0xb29d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 45779 (0xb2d3)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 45851 (0xb31b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 45863 (0xb327)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 45875 (0xb333)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 45983 (0xb39f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 46085 (0xb405)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 46091 (0xb40b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 46151 (0xb447)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 46205 (0xb47d)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 46241 (0xb4a1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 46421 (0xb555)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 46439 (0xb567)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 46463 (0xb57f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 46553 (0xb5d9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 46571 (0xb5eb)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 46589 (0xb5fd)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 46721 (0xb681)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 46769 (0xb6b1)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 46955 (0xb76b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 46961 (0xb771)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 47123 (0xb813)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 47201 (0xb861)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 47249 (0xb891)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 47321 (0xb8d9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 47357 (0xb8fd)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 47447 (0xb957)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 47489 (0xb981)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 47561 (0xb9c9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 47579 (0xb9db)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 47609 (0xb9f9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 47627 (0xba0b)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 47663 (0xba2f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 47681 (0xba41)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 47759 (0xba8f)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 47801 (0xbab9)
+
+/home/chris/wt-T0172/core/tests/geometry/offset_narrow_loops_test.cpp:1231: FAILED:
+  CHECK( detail::selfCrossingCuts(strand).empty() == !meets )
+with expansion:
+  true == false
+with message:
+  k := 47993 (0xbb79)
+
+===============================================================================
+test cases:     25 |     24 passed |   1 failed
+assertions: 948275 | 947313 passed | 962 failed
+
