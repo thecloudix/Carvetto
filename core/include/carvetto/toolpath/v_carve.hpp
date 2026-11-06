@@ -47,10 +47,11 @@ struct VCarvingParams {
     /// Ramp length (one leg of the zig-zag), mm.
     double rampDistance{10.0};
     /// Corner Sharpen (T-0160, ADR-0025 §6): with a flat depth and clearance tools, the carving
-    /// tool also clears the convex corners of the flat areas that the end mills' fillets leave
-    /// (a groove along each corner's bisector at the flat depth and passes either side at its
-    /// stepover), wherever the predicted leftover is taller than the chordal tolerance. No effect
-    /// without a flat depth or without clearance tools.
+    /// tool also clears the floor the end mills cannot reach into at the convex stretches of the
+    /// flat areas' walls (sharp corners, small fillets and chamfers, curved junctions: a groove
+    /// along each stretch's bisector at the flat depth and passes either side at its stepover),
+    /// wherever the leftover would be taller than the chordal tolerance. No effect without a flat
+    /// depth or without clearance tools.
     bool cornerSharpen{true};
 
     /// Order of the regions (connected parts of the region: an outer vector with its holes,
@@ -135,8 +136,8 @@ double vCarvingDepthForRadius(const tooling::Tool& tool, double r);
 /// to the width it cuts at the flat bottom (`StepoverLimited` when that cut a wider stepover
 /// down and it had rest material: ridges up to the depth limit). Pocket runs region by
 /// region. With a flat depth, clearance tools and `cornerSharpen`, the carving tool also clears
-/// the convex corners of the flat areas that the end mills' fillets leave sloped, where the
-/// predicted leftover exceeds the chordal tolerance (ADR-0025 §6). Without
+/// the floor the end mills leave sloped at the convex stretches of the flat areas' walls, where
+/// the leftover would exceed the chordal tolerance (ADR-0025 §6). Without
 /// clearance tools the carving tool
 /// clears the flat areas itself with `pocketToolpath` (its cutting data's stepover and pass
 /// depth), the boundary pass being the same walls. Pocket's diagnostics are passed on; when it

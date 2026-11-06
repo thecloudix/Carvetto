@@ -4,14 +4,17 @@
 #include <cmath>
 #include <cstddef>
 #include <limits>
+#include <map>
 #include <optional>
 #include <utility>
-#include <variant>
 #include <vector>
 
-#include "carvetto/geometry/contour_ops.hpp"
+#include "carvetto/geometry/boolean.hpp"
+#include "carvetto/geometry/contour.hpp"
+#include "carvetto/geometry/offset.hpp"
+#include "carvetto/geometry/polyline.hpp"
 #include "carvetto/geometry/span.hpp"
-#include "carvetto/geometry/transform2.hpp"
+#include "carvetto/geometry/tolerance.hpp"
 #include "carvetto/toolpath/v_carve.hpp"
 
 namespace carvetto::toolpath::detail {
@@ -22,9 +25,24 @@ using geometry::Box2;
 using geometry::Contour;
 using geometry::Vec2;
 
-/// Most passes either side of a corner's bisector (a stepover tiny against the end mill would
-/// otherwise make the work explode; Pocket refuses such stepovers before this is reached).
-constexpr long kMaxPassesPerSide = 100000;
+/// Most passes per stretch (a stepover tiny against the stretch would otherwise make the work
+/// explode; Pocket refuses such stepovers for the carving tool's rest clearing before this).
+constexpr double kMaxPasses = 200000.0;
+
+/// Margin for Clipper2's integer grid (1e-6 mm, ADR-0006): the offsets below are taken this much
+/// smaller, so their rounding never makes an inset larger or a swept area wider than it is.
+constexpr double kGridMargin = 4e-6;
+
+/// The end mills' swept area is polygonised at the chordal tolerance divided by this, never finer
+/// than kFinestChordal.
+constexpr double kFineDivisor = 64.0;
+constexpr double kFinestChordal = 2e-6;
+
+/// A vertex of a part cut out of a patch by Clipper2 lies within this of the patch (its grid).
+constexpr double kOnPatch = 1e-5;
+
+/// Golden-section steps when locating the farthest point of a patch edge from the wall rings.
+constexpr int kGoldenSteps = 30;
 
 double distToSegment(Vec2 p, Vec2 a, Vec2 b) {
     const Vec2 ab = b - a;
@@ -40,42 +58,108 @@ Box2 segmentBox(Vec2 a, Vec2 b) {
     return box;
 }
 
-/// Length used to skip degenerate spans: lines and arcs exactly, Beziers by their control
-/// polygon (an upper bound of their length; the exact length subdivides at cusps).
-double spanSize(const geometry::Span& s) {
-    if (const auto* bz = std::get_if<geometry::BezierSpan>(&s)) {
-        return geometry::distance(bz->p0, bz->p1) + geometry::distance(bz->p1, bz->p2) +
-               geometry::distance(bz->p2, bz->p3);
+std::vector<Vec2> verticesOf(const Contour& c) {
+    std::vector<Vec2> out;
+    out.reserve(c.spans.size());
+    for (const geometry::Span& s : c.spans) {
+        out.push_back(geometry::startPoint(s));
     }
-    return geometry::length(s);
+    return out;
 }
 
-/// Exact distance test against the boundary spans of a region, indexed by box.
-class SpanIndex {
+/// Twice the signed area of a polygon, taken about its first vertex (exact enough far from the origin).
+double doubleArea(const std::vector<Vec2>& p) {
+    double a = 0.0;
+    for (std::size_t i = 1; i + 1 < p.size(); ++i) {
+        a += (p[i] - p[0]).cross(p[i + 1] - p[0]);
+    }
+    return a;
+}
+
+/// Crossing-number membership of p in a closed polygon.
+bool insideRing(const std::vector<Vec2>& ring, Vec2 p) {
+    bool in = false;
+    for (std::size_t i = 0, n = ring.size(); i < n; ++i) {
+        const Vec2 a = ring[i];
+        const Vec2 b = ring[(i + 1) % n];
+        if ((a.y > p.y) != (b.y > p.y)) {
+            const double x = a.x + (p.y - a.y) * (b.x - a.x) / (b.y - a.y);
+            if (x > p.x) {
+                in = !in;
+            }
+        }
+    }
+    return in;
+}
+
+/// True when p lies inside the closed polygon or within `eps` of its edges.
+bool insideOrOn(const std::vector<Vec2>& ring, Vec2 p, double eps) {
+    for (std::size_t i = 0, n = ring.size(); i < n; ++i) {
+        if (distToSegment(p, ring[i], ring[(i + 1) % n]) <= eps) {
+            return true;
+        }
+    }
+    return insideRing(ring, p);
+}
+
+/// The polygon's centroid (area-weighted), or its first vertex when it has no area.
+Vec2 centroidOf(const std::vector<Vec2>& p) {
+    double a = 0.0;
+    Vec2 c{0.0, 0.0};
+    for (std::size_t i = 1; i + 1 < p.size(); ++i) {
+        const Vec2 u = p[i] - p[0];
+        const Vec2 v = p[i + 1] - p[0];
+        const double w = u.cross(v);
+        a += w;
+        c = c + (u + v) * (w / 3.0);
+    }
+    return a != 0.0 ? p[0] + c / a : p[0];
+}
+
+/// The edges of polygons, indexed by box, for distances to their union's boundary.
+class EdgeIndex {
    public:
-    explicit SpanIndex(const std::vector<Contour>& boundaries) {
+    explicit EdgeIndex(const std::vector<std::vector<Vec2>>& polygons) {
         std::vector<Box2> boxes;
-        for (const Contour& c : boundaries) {
-            for (const geometry::Span& s : c.spans) {
-                spans_.push_back(&s);
-                boxes.push_back(geometry::bounds(s));
+        for (const std::vector<Vec2>& p : polygons) {
+            for (std::size_t i = 0, n = p.size(); i < n; ++i) {
+                const Vec2 a = p[i];
+                const Vec2 b = p[(i + 1) % n];
+                if (a == b) {
+                    continue;
+                }
+                edges_.emplace_back(a, b);
+                boxes.push_back(segmentBox(a, b));
             }
         }
         index_ = BoxIndex(std::move(boxes));
     }
-    /// True when some span is strictly closer to p than `limit`.
-    bool closer(Vec2 p, double limit) const {
-        const Vec2 h{limit, limit};
+    /// Distance from p to the nearest edge, or `cap` when none is closer.
+    double distance(Vec2 p, double cap) const {
+        double best = cap;
+        const Vec2 h{cap, cap};
         for (const std::size_t i : index_.query(Box2{p - h, p + h})) {
-            if (geometry::closestPoint(*spans_[i], p).distance < limit) {
-                return true;
+            best = std::min(best, distToSegment(p, edges_[i].first, edges_[i].second));
+        }
+        return best;
+    }
+    /// Distance from p to the nearest edge (searching from `start` outwards); infinity without edges.
+    double nearest(Vec2 p, double start) const {
+        if (edges_.empty()) {
+            return std::numeric_limits<double>::infinity();
+        }
+        const Box2& all = index_.bounds();
+        const double span = geometry::distance(all.min, all.max) + geometry::distance(p, all.centre());
+        for (double cap = std::max(start, 1e-9);; cap *= 2.0) {
+            const double d = distance(p, cap);
+            if (d < cap || cap > span) {
+                return d;
             }
         }
-        return false;
     }
 
    private:
-    std::vector<const geometry::Span*> spans_;
+    std::vector<std::pair<Vec2, Vec2>> edges_;
     BoxIndex index_;
 };
 
@@ -83,9 +167,9 @@ class SpanIndex {
 
 // ----------------------------------------------------------------------------- RingRegion
 
-RingRegion::RingRegion(std::vector<std::vector<Vec2>> rings, double eps) : eps_(eps) {
+RingRegion::RingRegion(std::vector<std::vector<Vec2>> rings, double eps) : rings_(std::move(rings)), eps_(eps) {
     std::vector<Box2> boxes;
-    for (const std::vector<Vec2>& r : rings) {
+    for (const std::vector<Vec2>& r : rings_) {
         for (std::size_t i = 0, n = r.size(); i < n; ++i) {
             const Vec2 a = r[i];
             const Vec2 b = r[(i + 1) % n];
@@ -125,6 +209,15 @@ bool RingRegion::inside(Vec2 p) const {
         }
     }
     return in;
+}
+
+double RingRegion::distance(Vec2 p, double cap) const {
+    double best = cap;
+    const Vec2 h{cap, cap};
+    for (const std::size_t i : index_.query(Box2{p - h, p + h})) {
+        best = std::min(best, distToSegment(p, edges_[i].a, edges_[i].b));
+    }
+    return best;
 }
 
 std::vector<std::pair<double, double>> RingRegion::clip(Vec2 a, Vec2 b) const {
@@ -179,145 +272,314 @@ bool RingRegion::segmentInside(Vec2 a, Vec2 b) const {
     return in.size() == 1 && in.front().first == 0.0 && in.front().second == 1.0;
 }
 
-// ----------------------------------------------------------------------------- corners
+// ----------------------------------------------------------------------------- stretches
 
-double predictedCornerLeftover(const CornerSpec& spec, double angle, double millRadius) {
-    const double reach = millRadius * (1.0 - std::sin(0.5 * angle));
-    return std::min(spec.limit, vCarvingDepthForRadius(*spec.tool, reach));
-}
-
-std::vector<SharpCorner> sharpCorners(const std::vector<Contour>& boundaries, const RingRegion& walls,
-                                      const CornerSpec& spec) {
-    std::vector<SharpCorner> out;
-    if (walls.isEmpty() || spec.millRadii.empty()) {
+std::vector<SharpStretch> sharpStretches(const RingRegion& walls, const std::vector<SweptPath>& swept,
+                                         const CornerSpec& spec) {
+    std::vector<SharpStretch> out;
+    if (walls.isEmpty() || swept.empty() || spec.tool == nullptr || !(spec.stepover > 0.0) ||
+        !(spec.chordal > 0.0) || !(spec.limit > spec.chordal)) {
+        return out;  // min(F, h) never exceeds the chordal tolerance when F does not
+    }
+    // δ: points nearer the wall ring keep at most h(δ) ≤ min(chordal, h(s/2)) next to it.
+    const double rc = 0.5 * tooling::cuttingWidthAtDepth(*spec.tool, spec.chordal);
+    const double delta = std::min(rc, 0.5 * spec.stepover);
+    if (!(delta > 0.0) || !std::isfinite(delta)) {
         return out;
     }
-    std::vector<double> radii = spec.millRadii;
-    std::sort(radii.begin(), radii.end());
-    std::optional<SpanIndex> spans;  // built when a corner needs the reach test
-    for (std::size_t k = 0; k < boundaries.size(); ++k) {
-        const Contour& c = boundaries[k];
-        if (!c.closed) {
+    const double margin = std::min(kGridMargin, 0.25 * delta);
+    geometry::Tolerance tol;
+    tol.chordal = 0.25 * spec.pocketChordal;
+    tol.distance = std::min(spec.distance, tol.chordal);
+
+    // The floor farther than δ from the wall rings (a superset: the round joins' chords at the
+    // rings' reflex vertices lie inside the circles of radius δ, and the inset is a grid margin
+    // short).
+    std::vector<Contour> rings;
+    for (const std::vector<Vec2>& r : walls.rings()) {
+        if (r.size() >= 3) {
+            rings.push_back(Contour::fromPolyline(geometry::Polyline{r, true}));
+        }
+    }
+    std::vector<Contour> patches = geometry::offsetContours(rings, -(delta - margin), geometry::JoinType::Round, tol);
+    if (patches.empty()) {
+        return out;
+    }
+    // Less what the end mills swept at the flat depth (a subset: the round joins' and caps'
+    // vertices lie on the circles of each end mill's radius, a grid margin short).
+    std::map<double, std::vector<Contour>> paths;  // by end-mill radius
+    for (const SweptPath& p : swept) {
+        if (p.points.size() >= 2 && p.radius > margin) {
+            paths[p.radius].push_back(Contour::fromPolyline(geometry::Polyline{p.points, false}));
+        }
+    }
+    // Finer round joins here: their chords decide how closely the patches, and so the threshold,
+    // follow the end mills' fillets.
+    geometry::Tolerance fine = tol;
+    fine.chordal = std::max(spec.chordal / kFineDivisor, kFinestChordal);
+    fine.distance = std::min(spec.distance, fine.chordal);
+    std::vector<std::vector<Vec2>> sweptPolygons;
+    for (const auto& [radius, open] : paths) {
+        const std::vector<Contour> area =
+            geometry::offsetContours(open, radius - margin, geometry::JoinType::Round, fine);
+        for (const Contour& c : area) {
+            sweptPolygons.push_back(verticesOf(c));
+        }
+        if (!area.empty()) {
+            patches = geometry::booleanOp(geometry::BooleanOp::Difference, patches, area, tol,
+                                          geometry::FillRule::NonZero)
+                          .closed;
+        }
+        if (patches.empty()) {
+            return out;
+        }
+    }
+    if (sweptPolygons.empty()) {
+        return out;
+    }
+    const EdgeIndex sweptEdges(sweptPolygons);
+    // The flat areas: each outer wall ring (counter-clockwise) with the rings inside it. A point
+    // belongs to the smallest outer ring round it.
+    const std::vector<std::vector<Vec2>>& wallRings = walls.rings();
+    std::vector<std::size_t> outers;
+    std::vector<double> outerArea;
+    for (std::size_t i = 0; i < wallRings.size(); ++i) {
+        const double a = doubleArea(wallRings[i]);
+        if (wallRings[i].size() >= 3 && a > 0.0) {
+            outers.push_back(i);
+            outerArea.push_back(a);
+        }
+    }
+    auto flatAreaOf = [&](Vec2 p) -> std::optional<std::size_t> {
+        std::optional<std::size_t> best;
+        for (std::size_t k = 0; k < outers.size(); ++k) {
+            if ((!best || outerArea[k] < outerArea[*best]) && insideRing(wallRings[outers[k]], p)) {
+                best = k;
+            }
+        }
+        return best;
+    };
+    std::vector<char> sweptArea(outers.size(), 0);
+    std::size_t marked = 0;
+    for (const SweptPath& p : swept) {
+        if (marked == outers.size()) {
+            break;
+        }
+        if (p.points.empty()) {
             continue;
         }
-        // The region lies left of the outer when it runs counter-clockwise and left of a hole when
-        // the hole runs clockwise.
-        const double area =
-            geometry::signedArea(c.transformed(geometry::Transform2::translation(-c.bounds().centre())));
-        if (!(area != 0.0) || !std::isfinite(area)) {
-            continue;
+        if (const std::optional<std::size_t> k = flatAreaOf(p.points.front()); k && !sweptArea[*k]) {
+            sweptArea[*k] = 1;
+            ++marked;
         }
-        const bool insideLeft = (area > 0.0) == (k == 0);
-        std::vector<std::size_t> live;
-        for (std::size_t i = 0; i < c.spans.size(); ++i) {
-            if (spanSize(c.spans[i]) > spec.distance) {
-                live.push_back(i);
-            }
-        }
-        for (std::size_t j = 0; j < live.size() && live.size() >= 2; ++j) {
-            const geometry::Span& in = c.spans[live[j]];
-            const geometry::Span& next = c.spans[live[(j + 1) % live.size()]];
-            const Vec2 a = geometry::tangentAt(in, 1.0);
-            const Vec2 b = geometry::tangentAt(next, 0.0);
-            const double turn = std::atan2(a.cross(b), a.dot(b));
-            const double towardsInside = insideLeft ? turn : -turn;
-            if (!(towardsInside > 0.0)) {
-                continue;  // straight on, or a reflex corner
-            }
-            const double angle = geometry::kPi - towardsInside;
-            const double half = 0.5 * angle;
-            const double sh = std::sin(half);
-            const Vec2 bis = b - a;
-            const double bl = bis.length();
-            if (!(angle > 1e-9) || !(sh > 0.0) || !(bl > 0.0)) {
-                continue;  // a spike back on itself: no corner to speak of
-            }
-            // The leftover only grows with the end mill's radius: below the threshold even for
-            // the largest one, the corner is left alone without further work.
-            if (!(predictedCornerLeftover(spec, angle, radii.back()) > spec.chordal)) {
-                continue;
-            }
-            const Vec2 u = bis / bl;
-            const Vec2 v = geometry::startPoint(next);
-            // A flat-area corner: just inside the wall ring's corner lies inside the wall rings.
-            if (!walls.inside(v + u * (spec.ringInset / sh + spec.chordal))) {
-                continue;
-            }
-            // The smallest end mill that reaches into the corner: its centre at the corner of its
-            // centre region (inset by R + ρ + Pocket's chordal) is clear of every wall.
-            if (!spans) {
-                spans.emplace(boundaries);
-            }
-            double mill = 0.0;
-            for (const double r : radii) {
-                const double inset = r + spec.limitRadius + spec.pocketChordal;
-                if (!spans->closer(v + u * (inset / sh), inset - 0.5 * spec.pocketChordal)) {
-                    mill = r;
-                    break;
+    }
+
+    // The threshold: a patch is sharpened when part of it lies farther than r(chordal) from the
+    // wall rings (a grid margin farther, so that part really does).
+    // When r(chordal) ≤ s/2, δ is r(chordal) and every patch reaches it (less the grid margin).
+    const bool allDeep = !(delta < rc);
+    std::vector<std::vector<Vec2>> deepParts;
+    if (!allDeep) {
+        const std::vector<Contour> deep =
+            geometry::offsetContours(rings, -(rc + margin), geometry::JoinType::Round, tol);
+        if (!deep.empty()) {
+            for (const Contour& c : geometry::booleanOp(geometry::BooleanOp::Intersection, patches, deep, tol,
+                                                        geometry::FillRule::NonZero)
+                                        .closed) {
+                std::vector<Vec2> v = verticesOf(c);
+                if (v.size() >= 3 && doubleArea(v) > 0.0) {
+                    deepParts.push_back(std::move(v));
                 }
             }
-            if (!(mill > 0.0)) {
-                continue;  // no end mill reaches: not a clean flat floor there
+        }
+    }
+    if (!allDeep && deepParts.empty()) {
+        return out;
+    }
+
+    for (const Contour& patch : patches) {
+        std::vector<Vec2> poly = verticesOf(patch);
+        if (poly.size() < 3 || !(doubleArea(poly) > 0.0)) {
+            continue;  // a hole of the patches (an island the end mills swept inside one)
+        }
+        Box2 box;
+        for (const Vec2 v : poly) {
+            box.expand(v);
+        }
+        const double diag = geometry::distance(box.min, box.max);
+        // Only in a flat area the end mills sweep: one they never enter is the carving tool's own
+        // rest clearing, not a stretch the end mills could not reach into.
+        const std::optional<std::size_t> area = flatAreaOf(poly.front());
+        if (!area || !sweptArea[*area]) {
+            continue;
+        }
+        bool deep = allDeep;
+        for (std::size_t k = 0; !deep && k < deepParts.size(); ++k) {
+            deep = insideOrOn(poly, deepParts[k].front(), kOnPatch);
+        }
+        if (!deep) {
+            continue;  // below the threshold: left alone
+        }
+        // The outline's greatest distance from the wall rings: at its vertices, and between them
+        // where the distance along an edge peaks (golden section; only on edges that can beat the
+        // vertices, the distance being 1-Lipschitz). The search box grows from a little beyond δ.
+        const double cap = diag + rc + spec.stepover + spec.limitRadius;
+        auto f = [&](Vec2 p) {
+            for (double r = 2.0 * delta;; r *= 2.0) {
+                const double d = walls.distance(p, std::min(r, cap));
+                if (d < r || !(r < cap)) {
+                    return d;
+                }
             }
-            const double predicted = predictedCornerLeftover(spec, angle, mill);
-            if (!(predicted > spec.chordal)) {
+        };
+        const std::size_t n = poly.size();
+        std::vector<double> fv(n);
+        double farthest = 0.0;
+        for (std::size_t i = 0; i < n; ++i) {
+            fv[i] = f(poly[i]);
+            farthest = std::max(farthest, fv[i]);
+        }
+        for (std::size_t i = 0; i < n; ++i) {
+            const Vec2 a = poly[i];
+            const Vec2 b = poly[(i + 1) % n];
+            if (!(std::max(fv[i], fv[(i + 1) % n]) + 0.5 * geometry::distance(a, b) > farthest)) {
                 continue;
             }
-            out.push_back(SharpCorner{v, u, angle, mill, predicted});
+            double lo = 0.0;
+            double hi = 1.0;
+            constexpr double g = 0.381966011250105;
+            double m1 = lo + g * (hi - lo);
+            double m2 = hi - g * (hi - lo);
+            double f1 = f(a + (b - a) * m1);
+            double f2 = f(a + (b - a) * m2);
+            for (int it = 0; it < kGoldenSteps; ++it) {
+                if (f1 < f2) {
+                    lo = m1;
+                    m1 = m2;
+                    f1 = f2;
+                    m2 = hi - g * (hi - lo);
+                    f2 = f(a + (b - a) * m2);
+                } else {
+                    hi = m2;
+                    m2 = m1;
+                    f2 = f1;
+                    m1 = lo + g * (hi - lo);
+                    f1 = f(a + (b - a) * m1);
+                }
+            }
+            farthest = std::max({farthest, f1, f2});
         }
+        const double predicted = std::min(spec.limit, vCarvingDepthForRadius(*spec.tool, farthest));
+        // The root: the vertex farthest from the swept area (the wall ring's corner side), among
+        // those on the inset rings (the others lie on the swept area's edge).
+        Vec2 root = poly.front();
+        double deepest = -1.0;
+        for (const bool any : {false, true}) {
+            for (std::size_t i = 0; i < n; ++i) {
+                if (!any && !(fv[i] <= delta + kOnPatch)) {
+                    continue;
+                }
+                const double d = sweptEdges.nearest(poly[i], delta);
+                if (d > deepest) {
+                    deepest = d;
+                    root = poly[i];
+                }
+            }
+            if (deepest >= 0.0) {
+                break;
+            }
+        }
+        Vec2 dir = centroidOf(poly) - root;
+        const double dl = dir.length();
+        dir = dl > 0.0 && std::isfinite(dl) ? dir / dl : Vec2{1.0, 0.0};
+        out.push_back(SharpStretch{std::move(poly), root, dir, farthest, predicted});
     }
     return out;
 }
 
-std::vector<std::vector<Vec2>> cornerPasses(const SharpCorner& corner, const RingRegion& walls, const CornerSpec& spec) {
+std::vector<std::vector<Vec2>> stretchPasses(const SharpStretch& stretch, const RingRegion& walls,
+                                             const CornerSpec& spec, double backReach) {
     std::vector<std::vector<Vec2>> cuts;
-    const double half = 0.5 * corner.angle;
-    const double sh = std::sin(half);
-    const double ch = std::cos(half);
-    const double th = sh / ch;
-    const Vec2 u = corner.bisector;
-    const Vec2 n{-u.y, u.x};
-    // Frame: x along the bisector from the wall ring's corner W, y across it. The ring's edges
-    // leave W at ±α/2; the end mill's centre stops at C = (R / sin(α/2), 0) and moves away along
-    // the rays from C parallel to the edges, so its swept area is the band within R of them.
-    const Vec2 w = corner.vertex + u * (spec.ringInset / sh);
-    const double r = corner.millRadius;
-    const double l = r / sh;
-    const double ov = std::min(spec.chordal, 0.5 * r);
-    const double re = r - ov;  // overlap: the passes end this far inside the swept area
-    const double yMax = r * ch;  // the fillet touches the ring's edges at |y| = R cos(α/2)
     const double s = spec.stepover;
-    if (!(s > 0.0)) {
+    if (!(s > 0.0) || stretch.outline.size() < 3) {
         return cuts;
     }
-    const auto sides = static_cast<long>(std::min(std::floor(yMax / s), static_cast<double>(kMaxPassesPerSide)));
-    // Each pass starts a little outside the wall ring's edge (clipped back to the ring itself).
-    const double ext = (3.0 * spec.pocketChordal + spec.distance) / sh;
+    const Vec2 u = stretch.direction;
+    const Vec2 n{-u.y, u.x};
+    const Vec2 o = stretch.root;
+    // The patch in the frame of its root: x along the direction, y across it.
+    std::vector<Vec2> local;
+    local.reserve(stretch.outline.size());
+    double ymin = std::numeric_limits<double>::infinity();
+    double ymax = -ymin;
+    for (const Vec2 v : stretch.outline) {
+        const Vec2 d = v - o;
+        local.push_back(Vec2{d.dot(u), d.dot(n)});
+        ymin = std::min(ymin, local.back().y);
+        ymax = std::max(ymax, local.back().y);
+    }
+    const double half = 0.5 * s;
+    const double kLo = std::ceil((ymin - half) / s);
+    const double kHi = std::floor((ymax + half) / s);
+    if (!(kHi >= kLo) || !(kHi - kLo < kMaxPasses)) {
+        return cuts;
+    }
     struct Piece {
         Vec2 from;
         Vec2 to;
     };
     std::vector<std::vector<Piece>> passes;
-    for (long k = -sides; k <= sides; ++k) {
-        const double y = static_cast<double>(k) * s;
-        const double ay = std::fabs(y);
-        const double x0 = ay / th;
-        // First x at which the line is within re of the end mill's centre path.
-        double entry = std::numeric_limits<double>::infinity();
-        if (ay < re) {
-            entry = l - std::sqrt((re - ay) * (re + ay));
+    for (double k = kLo; k <= kHi; k += 1.0) {
+        const double y = k * s;
+        const double lo = y - half;
+        const double hi = y + half;
+        // The extent along x of the patch within half a stepover of the line.
+        double x0 = std::numeric_limits<double>::infinity();
+        double x1 = -x0;
+        for (std::size_t i = 0, m = local.size(); i < m; ++i) {
+            const Vec2 a = local[i];
+            const Vec2 b = local[(i + 1) % m];
+            double t0 = 0.0;
+            double t1 = 1.0;
+            const double dy = b.y - a.y;
+            if (dy == 0.0) {
+                if (a.y < lo || a.y > hi) {
+                    continue;
+                }
+            } else {
+                double ta = (lo - a.y) / dy;
+                double tb = (hi - a.y) / dy;
+                if (ta > tb) {
+                    std::swap(ta, tb);
+                }
+                t0 = std::max(t0, ta);
+                t1 = std::min(t1, tb);
+                if (t0 > t1) {
+                    continue;
+                }
+            }
+            for (const double t : {t0, t1}) {
+                const double x = a.x + (b.x - a.x) * t;
+                x0 = std::min(x0, x);
+                x1 = std::max(x1, x);
+            }
         }
-        const double xr = l + (ay * ch - re) / sh;
-        if ((xr - l) * ch + ay * sh >= 0.0) {
-            entry = std::min(entry, xr);
+        if (!(x1 >= x0)) {
+            continue;
         }
-        if (!(entry > x0 + spec.distance) || !std::isfinite(entry)) {
-            continue;  // already inside the swept area at the ring
-        }
-        const Vec2 p0 = w + u * (x0 - ext) + n * y;
-        const Vec2 p1 = w + u * entry + n * y;
+        // From the wall ring (at most backReach back) to the chordal tolerance into the swept area.
+        const double xs = x0 - backReach;
+        const double xe = x1 + spec.chordal;
+        const Vec2 p0 = o + u * xs + n * y;
+        const Vec2 p1 = o + u * xe + n * y;
+        const double len = xe - xs;
+        const double needFrom = (x0 - xs) / len;
+        const double needTo = (x1 - xs) / len;
         std::vector<Piece> pieces;
         for (const auto& [t0, t1] : walls.clip(p0, p1)) {
+            if (t1 < needFrom || t0 > needTo) {
+                continue;  // beyond the patch's extent: back extension past a wall, or not needed
+            }
             const Vec2 a = p0 + (p1 - p0) * t0;
             const Vec2 b = p0 + (p1 - p0) * t1;
             if (geometry::distance(a, b) > spec.distance) {
@@ -329,7 +591,7 @@ std::vector<std::vector<Vec2>> cornerPasses(const SharpCorner& corner, const Rin
         }
     }
     // Zig-zag: every other pass runs backwards, so consecutive passes end near each other (both in
-    // the swept area, or both on the ring's edge) and join at depth when the link stays inside.
+    // the swept area, or both on the ring) and join at depth when the link stays inside.
     std::vector<Vec2> cur;
     for (std::size_t i = 0; i < passes.size(); ++i) {
         std::vector<Piece> pieces = passes[i];

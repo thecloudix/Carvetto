@@ -231,13 +231,15 @@ To keep a gap that thin, use a smaller distance tolerance.
 ### 6. Corner sharpening (T-0160, owner decisions 2026-11-05)
 The inventory names "Corner Sharpen" without describing it. Corners of the region are carved by
 the skeleton to within the tolerance (§5) everywhere except one place: with a flat depth **and**
-clearance end mills, each convex corner of a flat area keeps a sloped floor "tent" between the
-wall ring's corner W (where the carving tool runs at the flat depth F, its centre ρ + Pocket's
-chordal c from both walls, ρ its footprint at F) and the fillet of radius R the end mill leaves
-(its centre stops at the corner of its centre region, inset by R + ρ + c). The carving tool as
-Pocket's rest tool keeps 2ρ + c off the walls and never gets in (§3). Without clearance tools
-Pocket's insets keep the convex corners sharp (the carving tool's own boundary pass is the wall
-ring), so nothing is left.
+clearance end mills, the floor of a flat area is cut by the carving tool along the wall ring
+(its centre ρ + Pocket's chordal c from the walls at the flat depth F, ρ its footprint at F) and
+swept flat by the end mills (their centres inset by R + ρ + c, so a disc of radius R round each
+centre). Wherever the walls are convex in a way the end mill cannot follow (a sharp corner, a
+fillet or chamfer smaller than the end mill, a few-segment polyline rounding, a junction of curved
+walls), a sloped "tent" of floor is left between the wall ring and the end mill's swept area. The
+carving tool as Pocket's rest tool keeps 2ρ + c off the walls and never gets in (§3). Without
+clearance tools Pocket's insets keep the convex corners sharp (the carving tool's own boundary
+pass is the wall ring), so nothing is left.
 
 **Owner decisions.** (1) Clean flat-floor corners only: plain V-carve corner tips are unchanged,
 and there is no effect without a flat depth plus clearance tools. (2) Match the floor finish: a
@@ -245,75 +247,127 @@ tip groove along each corner's bisector at the flat depth, plus passes either si
 tool's stepover, so the corner is no rougher than the rest of the floor. (3) On by default:
 `VCarvingParams::cornerSharpen`, job.json and params.json `corner_sharpen` (a missing key reads
 as true, so older files get the default; the format stays 1.1, §10), UI label "Corner Sharpen"
-(no V-Carve form in the app yet). (4) The threshold is automatic: a
-corner is sharpened exactly when its predicted leftover is taller than the chordal tolerance;
-there is no angle setting.
+(no V-Carve form in the app yet). (4) The threshold is automatic: a corner is sharpened exactly
+when its predicted leftover is taller than the chordal tolerance; there is no angle setting.
+(5) 2026-11-05, after round 1: slightly rounded corners count. Any convex stretch the end mill
+cannot reach into (small fillets, short chamfers, few-segment polyline roundings, curved-edge
+junctions) is sharpened whenever its predicted leftover exceeds the chordal tolerance, not only
+sharp junctions. So detection and passes work from the actual walls and the actual swept area,
+not from boundary junctions and tangent wedges (round 1 did that: it missed curved junctions and
+rounded corners, and its pass ends did not close the bands between passes on steep fillets).
 
-**Detection (from the boundary).** For each part with a flat area (code: `v_carve_corners.cpp`),
-every junction of two non-degenerate spans of its boundaries (spans longer than the distance
-tolerance; Beziers measured by their control polygon) whose direction turns towards the inside
-(left of an outer running counter-clockwise, left of a hole running clockwise) is a convex corner
-with interior angle α = π − turn and bisector u = normalise(b − a) (a, b the tangents in and out),
-as `ArcLengthPath::kinks` finds junctions. Skeleton branch ends are not used (ADR-0023: obtuse
-corners may have no branch). A corner is sharpened when all of these hold:
-- it is a flat-area corner: the point just inside the wall ring's corner,
-  V + u·((ρ + c)/sin(α/2) + chordal), lies inside the wall rings;
-- an end mill reaches into it: some clearance tool's centre at the corner of its centre region,
-  V + u·(R + ρ + c)/sin(α/2), has no wall closer than R + ρ + c/2 (exact distance to the spans,
-  indexed by box). The smallest such tool bounds the leftover (Pocket's later tools are rest
-  tools and follow the larger ones into the corner; a larger tool gets no further than a smaller
-  one). When no end mill reaches, the floor there is the carving tool's own rest clearing, not a
-  clean flat floor, and the corner is left alone;
-- the predicted leftover exceeds the chordal tolerance: min(F, h(R·(1 − sin(α/2)))), h the
-  carving tool's height above its tip at that distance from its axis (V-bit d/tan(θ/2), ball nose
-  R_b − sqrt(R_b² − d²)). R·(1 − sin(α/2)) is the distance from the wall ring's edges of the
-  fillet's point on the bisector; the prediction is an upper bound of the real leftover (the
-  skeleton cut along the bisector, when the medial axis has one, lowers the real peak: 0.88 mm
-  predicted, ~0.50 mm measured for a 90° corner, a 6 mm end mill and a 90° V-bit at F = 1 mm), so a
-  corner left alone never keeps more than the chordal tolerance. It grows with R, so corners below
-  the threshold for the largest end mill cost nothing more.
+**Notation.** W: the even-odd region of the wall rings as the carving tool cuts them (polygons of
+their vertices; code: `RingRegion`), f(p) the distance from p to its edges. E: the end mills'
+swept area at the flat depth, the union over every clearance toolpath of the discs of the end
+mill's radius R round its level moves at F (consecutive level feeds chained into polylines;
+plunges, ramps and rapids sweep less and are left out). h(d): the carving tool's height above its
+tip at distance d from its axis (V-bit d/tan(θ/2), ball nose R_b − sqrt(R_b² − d²)), r(z) its
+inverse, the footprint radius at depth z. s: the carving tool's stepover clamped as for its rest
+clearing (§3: min(stepover, 2ρ), or ρ when it has none). δ = min(r(chordal), s/2). A point p of the
+floor (in W) that no move sweeps keeps at most h of its distance to the nearest carving-tool cut at
+F (the ring edges and the corner passes are such cuts; the skeleton and rest passes only lower it).
 
-**Moves.** In a frame with x along u from W and y across it, the wall ring's edges leave W at
-±α/2, the fillet's centre is C = (R/sin(α/2), 0), and the end mill sweeps everything within R of
-its centre path (the rays from C parallel to the edges; the fillet touches the edges at
-|y| = R·cos(α/2)). Passes run at y = k·s for every integer k with |k|·s ≤ R·cos(α/2) (k = 0 is the
-bisector groove), s the carving tool's stepover clamped as for its rest clearing (§3:
-min(stepover, 2ρ), or ρ when it has none). Each pass starts on the wall ring's edge
-(x = |y|/tan(α/2), extended outwards by (3c + d)/sin(α/2) and clipped back to the rings) and ends
-where it is min(chordal, R/2) inside the end mill's swept area (the first x within R − overlap
-of its centre path). Every pass is clipped to the even-odd region of the wall rings as the
-carving tool cuts them (polygons of their vertices), so the centres stay within the wall ring,
-≥ ρ + c from the walls (the margin of §1 is c/2), and the cone at F never crosses a wall; points
-computed on a ring count as inside within 10⁻⁹ of the part's coordinate scale. Consecutive passes
-run in alternate directions (zig-zag) and are joined at depth when the straight link lies inside
-the rings (two ends in the swept area, or two ends on one ring edge); otherwise the cut ends with
-a retract and the next starts with a rapid at safe Z and a plunge (§4). The corner cuts come after
-that part's other cuts, nearest first from where the tool is, so every other move keeps its place
-(only the added corner moves differ); safe links and post safety are unchanged.
+**Detection (code: `sharpStretches` in `v_carve_corners.cpp`).** The patches are the connected
+parts of P = (W ⊖ δ) ∖ E, computed with Clipper2 (ADR-0006): the rings inset by δ less a grid
+margin of 4·10⁻⁶ mm (round joins; their vertices lie on the circles, so the polygon contains
+every point at least δ from the rings), minus each end mill's polylines offset by R less that
+margin (round joins and caps at chordal/64, never below 2·10⁻⁶ mm; vertices on the circles, so the
+polygon lies inside E). A patch is a sharpened stretch when
+- its flat area is one the end mills sweep: the smallest outer wall ring round it (with the rings
+  inside it) contains the start of some swept polyline. A flat area no end mill enters (narrower
+  than the end mill throughout) is the carving tool's own rest clearing, whose floor keeps that
+  clearing's ridges (up to the depth limit, T-0164 d), not a clean flat floor; its corners are
+  left alone (decision 1; as in round 1, where the verifier listed them as non-blocking). A part of a swept flat area cut off from the
+  swept area (a hole's wall ring closing a corner's tent) is sharpened;
+- part of it lies farther than r(chordal) from the rings, i.e. its leftover would exceed the
+  chordal tolerance (decision 4): it meets (W ⊖ (r(chordal) + margin)) ∖ E. When
+  r(chordal) ≤ s/2 every patch qualifies; otherwise a patch whose points all lie within r(chordal)
+  of the rings is left alone, so a stretch left alone keeps at most the chordal tolerance.
+Nothing here looks at the boundary's spans or junctions, or at skeleton branch ends (ADR-0023:
+obtuse corners may have no branch); a corner, a fillet, a chamfer, a curved junction, a narrow
+neck between two swept areas and the spike two close reflex corners make in the wall ring are all
+just patches. For a straight-edged corner of angle α and an end mill of radius R the patch reaches
+R·(1 − sin(α/2)) from the ring edges at the fillet's point on the bisector, so the threshold for
+it is h(R·(1 − sin(α/2))) > chordal, as round 1 predicted; the polygon of E decides it within its
+chords (chordal/64).
 
-**Result.** Between two passes the floor keeps the ridge of any carving-tool floor at stepover s,
-h(s/2) (V-bit s/(2·tan(θ/2))); between the outermost pass and a ring edge, at most that (the edge
-is a cut line too, closer than s); every band is closed by passes that both reach into the swept
-area. Measured with the exact oracle (`v_carve_leftover.hpp`: the deepest tool surface over each
-point, in closed form for level moves, by golden-section search over a concave function for
-inclined ones), on a 0.025 mm grid over the floor round each corner (`v_carve_corner_test.cpp`
-asserts it on a 0.04 mm grid), highest leftover without → with sharpening against the ridge h(s/2):
-square, 90° V-bit, 6 mm end mill, F 1 mm: 0.492 → 0.124 mm (ridge 0.125); the same corners round an
-L-shaped hole and with Raster clearance: the same; triangle, 60° V-bit, 4 mm and 1 mm end mills,
-F 1.5 mm: 0.221 → 0.214 mm (ridge 0.217); 30° wedge's base corners, 6 mm ball nose, 3 mm end mill:
-0.0185 → 0.0026 mm (ridge 0.0026). The cone check of §8 passes on all of them and over the AC1
-sweep (sharpening is on by default there). Corners below the threshold, jobs without a flat depth
-and jobs without clearance tools are byte-identical to the output before T-0160 (a hash sweep of
-900 generated jobs against the parent commit: everything identical with sharpening off; with it
-on, identical without a flat depth or clearance tools, clearance toolpaths and diagnostics always
-identical, 109 carving toolpaths with corner cuts added and nothing else changed), on GCC 15 with
-and without `-march=x86-64-v3` (§11). Cost: 5,000 glyph regions with a 0.5 mm flat depth and a
-0.2 mm end mill, Release: 30.5 / 30.6 s CPU with sharpening, 32.2 / 32.7 s without (load noise),
-80,000 moves more (16 per letter); AC2's cases have no clearance tools and do not run it.
+**Moves (code: `stretchPasses`).** Each patch gets a frame: its root is its vertex farthest from E
+(for a sharp corner, the wall ring's corner moved δ off both edges, on the bisector), its
+direction u the unit vector from the root to the patch's centroid (for a corner symmetric about
+its bisector, the bisector), x along u, y across it. Passes run along the lines y = k·s for every
+integer k whose strip |y − k·s| ≤ s/2 meets the patch (k = 0 is the groove along the bisector).
+The pass on line k covers [x₀ − b, x₁ + chordal], [x₀, x₁] the extent in x of the patch within
+the strip, b = 2(R_max + ρ + c) back towards the wall ring, R_max the largest end mill's radius,
+and the chordal tolerance on into the swept area; it is clipped to W (polygon clipping against
+the rings' edges; points within 10⁻¹² of the part's coordinate scale of an edge, never more than
+c/16, count as on it), and the pieces that meet [x₀, x₁] are kept, so the back extension stops
+at the first ring edge and the centres stay within the wall ring, ≥ ρ + c from the walls (the
+cone margin of §1 is c/2), and the cone at F never crosses a wall. Consecutive passes run in
+alternate directions (zig-zag) and are joined at depth when the straight link lies inside W;
+otherwise the cut ends with a retract and the next starts with a rapid at safe Z and a plunge
+(§4). The corner cuts come after that part's other cuts, nearest first from where its last cut
+left the tool; the next part orders its cuts from that same point, as without sharpening, so
+every other move keeps its place (only the added corner moves differ); safe links and post
+safety are unchanged.
 
-**Limits.** Rounded convex corners (an arc, no junction) are not corners and are not sharpened.
-At a junction of curved spans the passes follow the tangent wedge; clipping to the rings keeps
-them safe, but the leftover bound above is shown for straight edges only.
+**Why the leftover in a sharpened stretch is at most the floor's ridge h(s/2).** Let p be a floor
+point of a sharpened stretch's flat area. (i) If p ∈ E, it is swept flat. (ii) If p ∉ E and
+f(p) ≤ δ, a ring edge is within δ ≤ s/2. (iii) Otherwise p lies in a patch (the inset polygon
+contains every point at least δ from the rings, and the swept polygon lies inside E); for a
+sharpened patch, let k be the line nearest to p, so |y_p − k·s| ≤ s/2, and q = (x_p, k·s). p lies in
+the patch and in strip k, so x₀ ≤ x_p ≤ x₁. If q ∈ W, the interval of the clipped line round q is
+inside W and meets [x₀, x₁] (it contains q), so it is part of the pass: a cut at F within
+|pq| ≤ s/2 of p. If q ∉ W, the segment pq leaves W and crosses a ring edge, a cut at F within
+|pq| ≤ s/2. In every case the nearest cut at F is at most s/2 away, so the leftover is at most
+h(s/2), the ridge between two passes of the carving tool's own rest clearing at stepover s.
+Round 1 ended each pass a fixed overlap inside the swept area, which does not close the band
+between passes k and k+1 where the end mill's fillet runs steeply outwards between them (acute
+corners, outer passes): points there were up to 1.18 × h(s/2) from every cut. Taking each pass's
+extent from the whole strip it serves, not from its own line, closes that band by construction;
+the chordal tolerance beyond is the overlap the card asks for (decision 2), a margin on top.
+
+**Measured.** `v_carve_corner_test.cpp` asserts the bound with the exact oracle
+(`v_carve_leftover.hpp`: the deepest tool surface over each point, in closed form for level
+moves, by golden-section search for inclined ones) on a 0.04 mm grid over the floor round each
+corner, and that the same floor keeps more than the ridge without sharpening: a square (90° V-bit,
+stepover 0.25, 6 mm end mill, F 1 mm; ridge 0.125); a triangle (60° V-bit, 4 and 1 mm end mills);
+a 30° wedge with a ball nose; a rotated square with an L-shaped hole and Raster clearance; 30° and
+45° corners at chordal 0.002 (60° V-bit, stepover 0.3, 6 mm end mill: ridge 0.2598); a D (a line
+meeting a convex arc); a triangle of concave arcs (13° cusps); 0.5 mm fillets; 0.2 mm chamfers.
+The round 1 verifier's independent oracle (harness t0160v1 `lc`, about 150 cases, highest
+leftover without → with sharpening in each corner's tent against h(s/2)): square, 90° V-bit,
+stepover 0.5, 6 mm end mill: 0.500 → 0.2500 (ridge 0.2500); 60° V-bit: 0.500 → 0.3464 (0.3464);
+6 mm ball nose: 0.048 → 0.0268 (0.0268); 30° corner, 60° V-bit, stepover 0.3, chordal 0.002:
+0.500 → 0.2598 (0.2598; round 1: 0.3055); 120°-apex triangle's 30° corners: 0.500 → 0.2500
+(round 1: 0.2746); Bezier blade (63° corners): 0.317 → 0.2500; concave-arc cusps: 0.499 → 0.2500;
+arc fillets 0.0005–1.6 mm, 4- and 12-piece polyline roundings, chamfers 0.0005–0.2 mm: 0.500 →
+0.2500; a 30° corner with a 0.1 mm hole in its tent: 0.502 → 0.2500. Every case with a sharpened
+stretch is at or below its ridge; the exceptions are the flat areas no end mill enters (rectangles
+4–7 mm wide and narrow triangles with a 6 mm end mill, a corner closed off by a diamond hole):
+left alone, as above, unchanged from before T-0160. Every inserted feed, links included, keeps
+ρ + c/2 from the walls except where it touches a ring edge that does not (Limits). The cone check
+of §8 passes on all of them and over the AC1 sweep (sharpening is on by default there). Jobs
+without a flat depth or without clearance tools are byte-identical to the output before T-0160 by
+construction (sharpening does not run); with it on, the round 1 verifier's insertion check (the
+output with sharpening is the output without plus complete inserted cuts at the flat depth;
+clearance toolpaths and diagnostics identical) holds on 780 generated jobs with a flat depth and
+clearance tools forced (126 with corner cuts), and 520 such jobs hash identically with and
+without `-march=x86-64-v3` on GCC 15 (§11). Cost (Release, CPU, interleaved): 5,000 glyph
+regions with a 0.5 mm flat depth and a 0.2 mm end mill, 38.4 / 41.6 s with sharpening against
+32.8 / 35.6 s without (32.2 / 32.2 s before T-0160), 130,000 moves more (26 per letter): about
+a fifth more, mostly Clipper2 offsetting the end mills' level moves (an end-mill swept area per
+part) and the patch bookkeeping. AC2's cases (§9) have no clearance tools and do not run it
+(the frame page: 37.4 s, 37.3 s before T-0160).
+
+**Limits.** The stretch's direction comes from its root and centroid; for an asymmetric stretch
+(a junction of a line and an arc, a neck) it is not a bisector in any exact sense, which the bound
+above does not need. Patches in flat areas no end mill enters are left alone (decision 1 above).
+A patch narrower than the grid (about 10⁻⁵ mm) is dropped by Clipper2 with its dust (ADR-0006
+§8); such a patch keeps at most h(δ + 10⁻⁵). A pass that ends on a ring edge, or a link along one,
+has that edge's clearance: where Pocket's polygon of the wall ring dips below the margin c/2 (by up
+to about 5·10⁻⁷ mm at chords of its round joins, before T-0160 too), the corner cuts touching it
+do as well, never by more than the ring cut itself (round 1 verifier's tentslit case: 1.5·10⁻⁸ mm,
+the ring edge there 1.7·10⁻⁸ mm).
 
 ### 7. Medial axis fixes (T-0152 code)
 (a) Symmetric input could leave the skeleton empty: splitting the base of an isosceles triangle with

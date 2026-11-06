@@ -144,6 +144,9 @@ constexpr double kResolveFraction = 0.125;
 constexpr double kInnerDivisor = 3.0;
 /// Pocket's smallest chordal tolerance (pocket.cpp); the internal tolerance never goes below it.
 constexpr double kPocketMinChordal = 1e-4;
+/// Corner sharpening: points within this fraction of the part's coordinate scale of a wall ring
+/// count as on it (a few thousand units in the last place; T-0160).
+constexpr double kRingEps = 1e-12;
 
 std::size_t findRoot(std::vector<std::size_t>& parent, std::size_t i) {
     while (parent[i] != i) {
@@ -762,6 +765,40 @@ void shiftZ(std::vector<Move>& moves, double dz) {
     }
 }
 
+/// Appends to `out` the polylines of `moves` that run level at `floorZ` (each feed whose start
+/// and end are at that height, consecutive ones chained): where an end mill of `radius` swept
+/// the floor flat. Ramps, plunges and rapids are left out (they sweep less, so leaving them out
+/// only makes the swept area smaller than it is).
+void appendSweptPaths(const std::vector<Move>& moves, double floorZ, double radius,
+                      std::vector<detail::SweptPath>& out) {
+    const double tolZ = 1e-9 * std::max(1.0, std::fabs(floorZ));
+    auto atFloor = [&](double z) { return std::fabs(z - floorZ) <= tolZ; };
+    detail::SweptPath cur;
+    cur.radius = radius;
+    auto flush = [&]() {
+        if (cur.points.size() >= 2) {
+            out.push_back(std::move(cur));
+        }
+        cur = detail::SweptPath{};
+        cur.radius = radius;
+    };
+    for (std::size_t i = 1; i < moves.size(); ++i) {
+        const Vec3 a = moves[i - 1].to;
+        const Vec3 b = moves[i].to;
+        const bool level = (moves[i].kind == MoveKind::Feed || moves[i].kind == MoveKind::Plunge) && atFloor(a.z) &&
+                           atFloor(b.z) && !(a.x == b.x && a.y == b.y);
+        if (!level) {
+            flush();
+            continue;
+        }
+        if (cur.points.empty()) {
+            cur.points.push_back(Vec2{a.x, a.y});
+        }
+        cur.points.push_back(Vec2{b.x, b.y});
+    }
+    flush();
+}
+
 bool refusal(ToolpathIssue i) {
     return i == ToolpathIssue::InvalidTool || i == ToolpathIssue::InvalidParameters ||
            i == ToolpathIssue::WorkLimitExceeded || i == ToolpathIssue::NoTool;
@@ -1093,10 +1130,6 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
         corners.limit = limit;
         corners.limitRadius = limitRadius;
         corners.pocketChordal = inner.chordal;
-        corners.ringInset = limitRadius + inner.chordal;
-        for (const PocketTool& ct : clearanceTools) {
-            corners.millRadii.push_back(0.5 * ct.tool.diameter);
-        }
         corners.stepover = pocketTools.back().cuttingData->stepover;
         corners.chordal = tol.chordal;
         corners.distance = tol.distance;
@@ -1159,8 +1192,16 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
             estimate += static_cast<double>(selfClear[g].size());
         }
         if (multi) {
+            // Where each end mill's flat bottom ran at the flat depth (corner sharpening).
+            std::vector<detail::SweptPath> swept;
+            double backReach = 0.0;
             for (std::size_t t = 0; t < clearanceTools.size() && t < pr.toolpaths.size(); ++t) {
                 std::vector<Move>& moves = pr.toolpaths[t].moves;
+                if (sharpen) {
+                    const double radius = 0.5 * clearanceTools[t].tool.diameter;
+                    backReach = std::max(backReach, 2.0 * (radius + limitRadius + inner.chordal));
+                    appendSweptPaths(moves, -limit, radius, swept);
+                }
                 shiftZ(moves, params.startDepth);
                 estimate += static_cast<double>(moves.size());
                 result.clearance[t].moves.insert(result.clearance[t].moves.end(), moves.begin(), moves.end());
@@ -1190,15 +1231,17 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
                     gr.cuts.push_back(std::move(cut));
                 }
             }
-            if (sharpen && !ringPoints.empty()) {
+            if (sharpen && !ringPoints.empty() && !swept.empty()) {
                 // The wall rings, as the carving tool cuts them, bound where its centre may go at
-                // the flat depth; points computed on them count as inside within a rounding error.
+                // the flat depth; points computed on them count as inside within a rounding error
+                // (far below Pocket's margin, which the cone keeps from the walls).
                 const Box2& box = groups[g].box;
                 const double scale = std::max({std::fabs(box.min.x), std::fabs(box.min.y), std::fabs(box.max.x),
                                                std::fabs(box.max.y), 1.0});
-                const detail::RingRegion wallRegion(std::move(ringPoints), 1e-9 * scale);
-                for (const detail::SharpCorner& corner : detail::sharpCorners(gr.local, wallRegion, corners)) {
-                    for (const std::vector<Vec2>& pass : detail::cornerPasses(corner, wallRegion, corners)) {
+                const detail::RingRegion wallRegion(std::move(ringPoints),
+                                                    std::min(kRingEps * scale, inner.chordal / 16.0));
+                for (const detail::SharpStretch& st : detail::sharpStretches(wallRegion, swept, corners)) {
+                    for (const std::vector<Vec2>& pass : detail::stretchPasses(st, wallRegion, corners, backReach)) {
                         Cut cut;
                         for (const Vec2 q : pass) {
                             cut.points.push_back(CarvePoint{q, limit});
@@ -1269,9 +1312,10 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
             cornerItems[c].end = gr.cornerCuts[c].points.back().p;
         }
         if (!cornerItems.empty()) {
+            // The next region orders its cuts from where the tool would have been without them, so
+            // every other move keeps its place (only the corner cuts are added).
             for (const std::size_t c : orderCuts(cornerItems, OrderOptions{}, pos, tol)) {
                 emitCut(gr.cornerCuts[c], params.startDepth, params.safeZ, result.toolpath.moves);
-                pos = cornerItems[c].end;
             }
         }
     }
