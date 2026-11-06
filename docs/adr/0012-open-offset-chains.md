@@ -442,7 +442,8 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     1.03e-6 mm beyond d, fam5 0x2a500001, 0x2a5000a6. With the strand cut from the raw pieces that test
     rejected no sample in 480 000 fuzz offsets of families 2-5 with 5 398 loop strands, and no input
     could be found that a mutant without it gets wrong; round 2 removed it.) A strand that would cross
-    itself (or has more than 512 spans) falls back to the loop's longest span. (b) mergeOnCarriers hands back one copy of every stretch it drops because
+    itself falls back to the loop's longest span (so did one of more than 512 spans until T-0172, see the
+    follow-ups below). (b) mergeOnCarriers hands back one copy of every stretch it drops because
     copies run both ways: the first forward, then backward, copy that lies exactly d from the input there.
     `RawChain::exact` records, per raw element, the parameter range at exactly d: an offset span's own
     extent before corners extended or trimmed it, or a whole Round join arc (radius d to the snapping
@@ -465,7 +466,8 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     (all covered or all uncovered), which is skipped; g is found exactly up to a query reach that starts at
     16.5 tol and doubles, up to 1024.5 tol, while nothing lies within it. The chains and the strands put back
     are both in grids (the strands in one laid out over all strays, filled as they are put back: a
-    `BoxGrid` that can grow), and the new chains are merged into the output in one pass. The new chains
+    `BoxGrid` that can grow; since T-0172 one grid for both that subdivides where they cluster, see the
+    follow-ups below), and the new chains are merged into the output in one pass. The new chains
     go by where their component (or piece) starts along the input; with nothing put back the output is
     unchanged. They may
     touch the chains next to them ("different chains may touch or cross"). (e) At a junction turning back
@@ -538,3 +540,57 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     verifier's per-family figures (1.06-1.15x main) came from the exact checker's driver, which times the
     branch first after the checker has run and main right after it; with the calls swapped, the same
     driver gives family 3 0.97x and family 5 0.83x, so that excess was cache warm-up, not the branch.
+  - *Follow-ups (T-0172, 2026-11-06; findings of the T-0128 round-2 and round-3 verifiers).* Status unchanged.
+    (a) *Long strays.* Step 7 returned a stray of more than 512 spans, or one that would cross itself, as one
+    chain per span and dropped its spans no longer than the tolerance (Profile cut each span separately: a
+    plunge per segment of a finely segmented slot wall), and a loop's strand of more than 512 spans fell back
+    to the loop's longest span. The limit only kept the pairwise self-crossing test (~3 ms per 500 spans)
+    affordable. That test is now one greedy pass (`selfCrossingCuts`: each span against the earlier spans of
+    its part whose boxes, grown by inUnit's slack, meet its own, through a grid), near-linear, and the limit is
+    gone: a stray is one chain however many spans it has (a channel exactly 2d wide whose walls are 514 /
+    2 000 unit segments: 1 chain, origin/main 513 / 1 999; the closed slot of 600 segments: 1, origin/main
+    602). One that would still cross itself (never seen) is cut greedily into consecutive parts that do not,
+    each without sub-tolerance end spans.
+    (b) *Clustered strays.* Step 7's two grids were uniform over the extent of all chains and strays, so one
+    far feature (a U channel 1e5 mm from a hatch at pitch 2d) put the whole hatch into one cell and every
+    sample scanned all of it. They are now one grid (`ClusterGrid`: the chains, then the strays as they are
+    put back), laid out like `BoxGrid` except that a cell crowded with more than 16 items smaller than itself
+    gets a grid of its own over them (up to three levels below the top; items covering the whole cell stay
+    in it). At the first query reach, consecutive samples of a strand share one grid query per window of
+    64 tol (plus twice the reach) ahead; each sample still takes exactly the items whose boxes meet its own
+    query square, so the distances, and with them the samples, cuts and outputs, are unchanged. Only step 7's
+    grids changed: other users of `BoxGrid` act on the order in which items are reported (e.g. the
+    union-find of mergeOnCarriers' groups), so another layout could change their output, and their cost on
+    clustered input stays as it was before T-0128 (quadratic on this repro). Step 2's boundary split now lists
+    its candidates before splitting them, in the same order: with the splitting inside the query callback GCC
+    kept that scan's loop variable in memory once code was added elsewhere in the function (~12% on the
+    T-0016 zig-zags at large d, which put back no strays).
+    Cost (Release, CPU time, call order alternating, min of reps, shared 16-thread machine; "main" =
+    origin/main b637c16, "pre" = 8cd3568 before T-0128). `perf2 lhatch` (hatch of N lines 10 mm long at pitch
+    2d plus a U channel at (1e5, 1e5)): d = 0.002, N = 1 000: 0.21 s (main 2.5 s; 1.2x pre, was 11.9x),
+    N = 2 000: 0.87 s (main 10.0 s; 1.03x pre); d = 0.05, N = 1 000 / 4 000: 0.22 / 3.4 s (main 0.39 /
+    6.5 s; 0.98x pre, was 1.7-2.0x); the same hatch with a background serpentine (fhatch, d = 0.002): 0.23 s
+    (main 0.43 s; 1.04x pre). Step 7 is near-linear there; the whole offset stays quadratic like pre (its other
+    grids: pre 0.32 / 1.30 s at 1 000 / 2 000 lines). Elsewhere (hatch, comb, rectangles, ring at pitch or
+    width 2d, the T-0016 zig-zags, long channels), against a control build of origin/main's offset.cpp with
+    the same flags, CPU cycles 0.94-1.04x, except the 3 000-line hatch at 2d, Round (1.09-1.11x; 3% more
+    instructions, outside step 7, which takes ~2% of that offset) and a 10 m channel (1.04x, 0.5 ms).
+    (c, e) *Tests and libm.* Tests now pin a stray between tol and 10 tol that meets a chain (returned, and
+    reaching that chain), the longer of a thin loop's strands, the order of strays among the chains, the
+    exact-copy hand-back of mergeOnCarriers (a slot 2d wide with walls of unequal height: the copy over the
+    lower wall's mitre extension is not d from the input), a long stray in one piece, the self-crossing cuts
+    against the pairwise test, and exactJunction's fallback on its own (`detail::closeJunction`: arcs whose
+    start is 1.5-95 x 1e-12 x the scale ahead, ~3 in 4 of them closed by the nearest candidate that does not
+    start behind). The tests' crossing filter now applies only where removeCuspLoops looks (reversal
+    junctions, within the tolerance along both spans). Three pre-existing checks were stricter than what
+    offset.hpp documents and failed with sin/cos 1-4 ulps off glibc's (as MSVC's may be; round-3 verifier:
+    14 of 24 perturbed `[offset]` runs): the T-0006 AC3 gap count used an absolute 1e-12 mm, not the
+    documented 1e-12 x max(1, |x|, |y|, radius) between arcs (gaps of 2.3e-12 to 1.4e-11 mm seen), and the
+    T-0017 repro loops REQUIREd their literal arcs to be bit-continuous, which they are only with glibc's
+    sin/cos (they are now made continuous with the platform's, a no-op on glibc). The closed loops that kept
+    9.05e-12 / 9.64e-11 mm gaps under perturbation (fam4 0x7c2340188 K2 seed 3, 0x7c434015c K4 seed 3) are
+    junctions next to arcs of radius 2.4e4 / 6.8e4 mm, within the documented bound (2.4e-8 / 6.8e-8 mm): the
+    round-3 checker left the radius out of the scale. No product change there. With the libm wrapper
+    (K = 1..4), `[offset]~[perf]` passes 24 of 24 runs and `[t0128]~[perf]` 200 of 200.
+    Outputs: bit-identical to origin/main except the long strays above (cmp6, call order alternating, fresh
+    seeds: 2 x 64 800 offsets of families 0, 2-5, 21-23, 25, none differ; CPU 0.99-1.01x per family).

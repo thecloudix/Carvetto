@@ -237,8 +237,11 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// chain (an isolated piece) only when longer than 10 x tol.distance (owner decision 2026-11-05: shorter
 /// isolated pieces are noise; a needle or slot that matters is millimetres long). So a channel
 /// 2 x |distance| + w wide keeps its path for every w >= 0, while a thin loop shorter than
-/// 10 x tol.distance, touching no other chain, vanishes. Such chains are placed in the order by where they start along the input and may touch the
-/// chains next to them. At a reversal cusp (consecutive spans turning back by more than a right angle)
+/// 10 x tol.distance, touching no other chain, vanishes. A stray put back is one chain however many spans it
+/// has (T-0172; a finely segmented slot wall gives one span per segment); only one that would cross itself,
+/// never seen, is cut into consecutive parts that do not. Such chains are placed in the order by where they
+/// start along the input and may touch the chains next to them. At a reversal cusp (consecutive spans
+/// turning back by more than a right angle)
 /// whose two spans cross again within the tolerance of their junction (Round arcs about vertices a hair
 /// less than 2 x |distance| apart overlap in a lens), both spans are cut back to that crossing, so the
 /// chain does not cross itself there; crossings whose place is rounding noise (two circles that only
