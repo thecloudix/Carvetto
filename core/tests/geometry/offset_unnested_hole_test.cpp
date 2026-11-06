@@ -11,7 +11,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <limits>
+#include <utility>
 #include <vector>
 
 #include "carvetto/geometry/contour_ops.hpp"
@@ -395,6 +397,75 @@ TEST_CASE("T-0142 round 3: outsets of touching shapes with holes and of holes in
         // The column merges into one ring with its holes; in the comb every shape and hole stays.
         CHECK(ra == (layout == 0 ? static_cast<std::size_t>(nSmall) + 1 : a.size()));
         CHECK(rb == (layout == 0 ? static_cast<std::size_t>(2 * nSmall) + 1 : b.size()));
+        CHECK(t.ratio() <= 2.5);
+        CHECK(t.largeSeconds <= absBound);
+    }
+}
+
+TEST_CASE("T-0171: outsets of a column whose holes are listed far from their outers stay near-linear",
+          "[geometry][offset][T-0142][T-0171][perf]") {
+    // In the layouts above every hole comes right after its outer, so the "last outer" shortcut of
+    // the nesting check (hole_nesting.hpp) always succeeds and the box hierarchy is never used. Here
+    // the shortcut misses: the outers of a column of touching holed squares come first and the holes
+    // follow in reverse order (the last outer only holds the first hole), or every ring is shuffled.
+    // With a linear scan over the outers in place of the hierarchy each hole walks on average half
+    // the column (T-0142 round-3 verifier, Release: 20,000 -> 40,000 shapes 0.49 -> 1.83 s and
+    // 1.12 -> 4.30 s, ratios 3.7 and 3.8).
+#ifdef NDEBUG
+    // Half the size of the test above: at 20,000 -> 40,000 the shuffled column already costs 2.1-2.4x
+    // per doubling on the real code (scattered memory access), too close to the bound; at 10,000 ->
+    // 20,000 it is 2.1x and the linear scan still 3.x.
+    const int nSmall = 10000;
+    // Absolute Release bound on the larger run (Linux ~0.19 / ~0.23 s at 20,000 shapes); Windows CI
+    // (MSVC) runs such scenes 2.5-3x slower, as in the test above.
+#ifdef _WIN32
+    const double absBound = 3.0 * 3.0;
+#else
+    const double absBound = 3.0;
+#endif
+#else
+    const int nSmall = 8000;
+    const double absBound = std::numeric_limits<double>::infinity();
+#endif
+    auto rect = [](double x0, double y0, double x1, double y1) { return Contour::rectangle(Box2{{x0, y0}, {x1, y1}}); };
+    // 0: all outers bottom to top, then the holes top to bottom; 1: outers and holes shuffled.
+    auto scene = [&rect](int n, int layout) {
+        std::vector<Contour> cs;
+        if (layout == 0) {
+            for (int i = 0; i < n; ++i) {
+                cs.push_back(rect(0.0, i, 1.0, i + 1.0));
+            }
+            for (int i = n; i-- > 0;) {
+                cs.push_back(rect(0.3, i + 0.3, 0.7, i + 0.7).reversed());
+            }
+            return cs;
+        }
+        for (int i = 0; i < n; ++i) {
+            cs.push_back(rect(0.0, i, 1.0, i + 1.0));
+            cs.push_back(rect(0.3, i + 0.3, 0.7, i + 0.7).reversed());
+        }
+        // Fisher-Yates with the portable generator (std::shuffle differs between standard libraries).
+        carvetto::test::SplitMix rng{0x0171u + static_cast<std::uint64_t>(n)};
+        for (std::size_t i = cs.size() - 1; i > 0; --i) {
+            std::swap(cs[i], cs[static_cast<std::size_t>(rng.next() % (i + 1))]);
+        }
+        return cs;
+    };
+    const Tolerance tol{0.001, 1e-9, 0.001};
+    for (const int layout : {0, 1}) {
+        const std::vector<Contour> a = scene(nSmall, layout);
+        const std::vector<Contour> b = scene(2 * nSmall, layout);
+        std::size_t ra = 0;
+        std::size_t rb = 0;
+        const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+            3, [&] { ra = offsetContours(a, 0.05, JoinType::Round, tol).size(); },
+            [&] { rb = offsetContours(b, 0.05, JoinType::Round, tol).size(); });
+        INFO((layout == 0 ? "reversed" : "shuffled") << " CPU seconds: " << nSmall << " shapes " << t.smallSeconds
+                                                     << ", " << 2 * nSmall << " shapes " << t.largeSeconds
+                                                     << ", ratio " << t.ratio());
+        // The column merges into one ring with its holes, whatever the order.
+        CHECK(ra == static_cast<std::size_t>(nSmall) + 1);
+        CHECK(rb == static_cast<std::size_t>(2 * nSmall) + 1);
         CHECK(t.ratio() <= 2.5);
         CHECK(t.largeSeconds <= absBound);
     }
