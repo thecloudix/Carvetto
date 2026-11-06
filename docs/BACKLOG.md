@@ -536,8 +536,9 @@ Goal: Found by the T-0147 verifier (harness t0147v1/far.cpp): with signedArea fi
 Acceptance criteria:
   1. Small Profile parts (circles, rectangles, holes; 0.5–10 mm) at 1e6–1e9 mm give the same toolpath as at the origin (up to translation, within tolerance) in ≥ 19/20 placements, or a documented limit with a diagnostic; normal-scale output unchanged (hashes).
 
-### T-0158 Profile: platform-stable cut start at convex tips   [status: in progress — round 5 verifying]
+### T-0158 Profile: platform-stable cut start at convex tips   [status: in review — round 5 FAIL on degenerate start edge; owner: merge with documented limits, follow-up T-0174]
 Owner decision 2026-11-03: adopt the fixed tie-break rule (start at the beginning of the corner arc centred on the tip), accepting that cut starts move in ~10% of such scenes. Owner decision 2026-11-05: mitred (sharp) convex tips start exactly at the mitre corner point. Owner 2026-11-05: a mitre squared off at the limit starts at the chamfer\'s first corner in the direction of travel; change rate ~9% stored / ~21% random pages accepted. Owner decisions 2026-11-05 (after round 3): one more round; on finely segmented convex outlines the cut starts at the tip's exact corner (mitre), not one segment off; on a merged region's polygonal round join (end mill) the cut starts at the first chord point, matching true round joins.
+Owner decisions 2026-11-05 (after round 5): merge round 5 with the remaining cases documented as known limits in ADR-0016 §11 and fixed later in T-0174; self-intersecting outlines are best effort (documented, not guaranteed stable).
 Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §11
 Goal: Found while merging T-0135 (MSVC CI): with "start at the vector's start point" on a convex tip, the Outside cut's round join is an arc centred on that tip, so every point of the arc is equally near the start; ArcLengthPath::project → closestPoint(ArcSpan) takes the direction of a ~1e-15 vector, which depends on rounding/libm, so GCC and MSVC choose different cut starts — tab layouts then differ (both safe; scene m1_402002_27, also m2_800016_13). Pre-existing on main/T-0127. A tie-break ("target within tolerance of an arc centre at the nearest distance → start at that arc's start", searching all arcs) was prototyped by the T-0135 coder (harness wt-T0135/build-drv pert.cpp, hsw/): stable under 1e-9 perturbations but changes start points in ~10% of scenes (owner-visible output change).
 Acceptance criteria:
@@ -697,6 +698,12 @@ Goal: Non-blocking findings from harness t0160v2. (a) Super-linear: one region m
 Note (owner question, pre-existing): flat areas no end mill enters keep F/2 ridges along every wall from the carving tool's rest clearing; ask the owner whether to address it.
 Acceptance criteria:
   1. (a) ≤ 2.5× per doubling on the chain repro, output byte-identical; (b) the listed mutants are killed by corner tests; (c), (d) docs fixed; full ctest.
+
+### T-0174 Profile start: degenerate start edge and region-arc band (T-0158 round-5 verifier)   [status: ready]
+Phase: 1   Module: core/toolpath   Depends on: T-0158   ADR: 0016 §11
+Goal: Known limits accepted at the T-0158 merge (harness t0158v5). (a) A squared-off tip whose start vertex has a duplicate or sub-µm edge next to it labels no span on that edge; the fallback's "most even feet" ties exactly between the chamfer's two corners and rounding picks one — the start jumps up to 4.3 mm under ulp/1e-9 (repro5/sq_tiny_tA2.5_e0_phi0_o0_d0_lim2.scn, sq_tiny_tA2.5_e1e-09_*; mitre limit 1: 0.45/1.86/3.28 mm at turns 0.3/1.2/2), and with a collinear 1e-7–1e-5 mm edge both directions start at the same chamfer corner (last in travel for one). Skip degenerate edges when finding the start vertex's own edges, and break any chamfer tie by first in travel. (b) Merged-region arc labelling band: arc chord sag on the chordal-slack band flips the start by one chord (repro5/mrgarc_vb_R20.771966844133722_d1.scn 1.67 mm, mrgarc_em_R18.966862802842932_d1.scn 0.36 mm). (c) Surviving mutants N1, N2, N3, N8, N11 — add tests. (d) ADR §11: describe the label-3 "from" rule. Self-intersecting outlines stay best effort (owner).
+Acceptance criteria:
+  1. (a) and (b) starts stable under ±ulp, 1e-12–1e-9 scaling and translations, chamfer starts at the first corner in travel in both directions; a test with a duplicate/degenerate start vertex; (c) mutants killed; no change elsewhere beyond the repros (change rate vs T-0158 reported); flood oracle no worse; full ctest.
 
 ### T-0150 Drilling toolpath   [status: done (2026-11-03, #36)]
 Phase: 1 (Batch C, owner decision 2026-11-03: Batch C toolpaths first)   Module: core/toolpath   Depends on: T-0123, T-0132   ADR: new
