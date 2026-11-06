@@ -1,0 +1,1 @@
+1 rc 42 test cases: 110 | 108 passed | 2 failed FAILS: ;  junction defect;  st.maxGap := 0.00000000000456601;

@@ -1,0 +1,4 @@
+/home/chris/wt-T0128/build-verify3-ulp/mB/offset_B.cpp: In function ‘std::vector<carvetto::geometry::{anonymous}::Piece> carvetto::geometry::{anonymous}::mergeOnCarriers(const std::vector<std::variant<carvetto::geometry::LineSpan, carvetto::geometry::ArcSpan, carvetto::geometry::BezierSpan> >&, const std::vector<Piece>&, const std::vector<std::pair<long unsigned int, long unsigned int> >&, double, double, double, double, const std::vector<std::pair<double, double> >&, std::vector<Piece>&)’:
+/home/chris/wt-T0128/build-verify3-ulp/mB/offset_B.cpp:3101:56: warning: unused parameter ‘dropped’ [-Wunused-parameter]
+ 3101 |                                    std::vector<Piece>& dropped) {
+      |                                    ~~~~~~~~~~~~~~~~~~~~^~~~~~~

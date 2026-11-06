@@ -1,0 +1,11 @@
+--- /home/chris/wt-T0128/core/src/geometry/offset.cpp	2026-11-05 19:03:27.733153491 -0600
++++ offset_L.cpp	2026-11-05 19:38:32.395020408 -0600
+@@ -4271,7 +4271,7 @@
+                     const double g = coverGap(q, cap);
+                     cap = g >= cap ? std::min(2.0 * cap, maxCap) : skipCap;
+                     samples.push_back(Sample{static_cast<double>(i) + f, g <= reach});
+-                    const double advance = std::max(step, std::fabs(g - reach));
++                    const double advance = std::max(step, 2.0 * std::fabs(g - reach));
+                     if (f >= 1.0) {
+                         break;
+                     }

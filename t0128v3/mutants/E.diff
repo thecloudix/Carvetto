@@ -1,0 +1,13 @@
+--- /home/chris/wt-T0128/core/src/geometry/offset.cpp	2026-11-05 19:03:27.733153491 -0600
++++ offset_E.cpp	2026-11-05 19:38:32.391657408 -0600
+@@ -4139,8 +4139,8 @@
+         std::vector<Piece> runs;
+         for (const Piece& p : droppedOpposite) {
+             const auto [lo, hi] = rc.exact[p.element];
+-            if (std::min(p.t1, hi) > std::max(p.t0, lo)) {
+-                runs.push_back(Piece{p.element, std::max(p.t0, lo), std::min(p.t1, hi)});
++            if (true) { (void)lo; (void)hi;
++                runs.push_back(p);
+             }
+         }
+         std::sort(runs.begin(), runs.end(), [](const Piece& a, const Piece& b) {

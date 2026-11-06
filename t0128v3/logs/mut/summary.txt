@@ -1,0 +1,9 @@
+A t0128 rc 42 offset rc skip
+B t0128 rc 42 offset rc skip
+C t0128 rc 42 offset rc skip
+E t0128 rc 42 offset rc skip
+F t0128 rc 0 offset rc 0
+G t0128 rc 42 offset rc skip
+L t0128 rc 42 offset rc skip
+M t0128 rc 42 offset rc skip
+M2 t0128 rc 42 offset rc skip

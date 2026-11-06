@@ -1,0 +1,3 @@
+/home/chris/wt-T0128/build-verify3-ulp/mA/offset_A.cpp:2642:19: warning: ‘std::vector<std::variant<carvetto::geometry::LineSpan, carvetto::geometry::ArcSpan, carvetto::geometry::BezierSpan> > carvetto::geometry::{anonymous}::sliverStrand(const std::vector<std::variant<carvetto::geometry::LineSpan, carvetto::geometry::ArcSpan, carvetto::geometry::BezierSpan> >&, const carvetto::geometry::Tolerance&)’ defined but not used [-Wunused-function]
+ 2642 | std::vector<Span> sliverStrand(const std::vector<Span>& loop, const Tolerance& tol) {
+      |                   ^~~~~~~~~~~~

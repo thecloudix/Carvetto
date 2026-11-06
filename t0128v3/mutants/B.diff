@@ -1,0 +1,13 @@
+--- /home/chris/wt-T0128/core/src/geometry/offset.cpp	2026-11-05 19:03:27.733153491 -0600
++++ offset_B.cpp	2026-11-05 19:38:32.390861608 -0600
+@@ -3422,9 +3422,7 @@
+                 if (!back) {
+                     back = fallback;
+                 }
+-                if (back) {
+-                    dropped.push_back(*back);
+-                }
++                (void)back;
+                 previous.reset();
+                 continue;
+             }

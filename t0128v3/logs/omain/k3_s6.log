@@ -1,0 +1,9 @@
+k3 s6 | T-0006 AC3 generative: no gap above 1e-12 and no backward step over 20k offsets
+k3 s6 | T-0006 AC3 generative: no gap above 1e-12 and no backward step over 20k offsets
+k3 s6 | T-0006 AC3 generative: no gap above 1e-12 and no backward step over 20k offsets
+k3 s6 | T-0006 AC3 generative: no gap above 1e-12 and no backward step over 20k offsets
+k3 s6 | T-0006 AC3 generative: no gap above 1e-12 and no backward step over 20k offsets
+k3 s6 | T-0006 AC3 generative: no gap above 1e-12 and no backward step over 20k offsets
+k3 s6 | T-0006 AC3 generative: no gap above 1e-12 and no backward step over 20k offsets
+k3 s6 | T-0017: closed loops of arcs only never step back far from the origin under ulp
+k3 s6 END test cases:    100 |     98 passed | 2 failed

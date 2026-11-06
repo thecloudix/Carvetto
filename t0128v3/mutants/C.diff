@@ -1,0 +1,11 @@
+--- /home/chris/wt-T0128/core/src/geometry/offset.cpp	2026-11-05 19:03:27.733153491 -0600
++++ offset_C.cpp	2026-11-05 19:38:32.391253508 -0600
+@@ -4050,7 +4050,7 @@
+                 removeBackSteps(piece.spans, piece.closed, snap);
+                 removeRetraces(piece.spans, piece.closed, snap, d);
+                 mergeCoCircularArcs(piece.spans, piece.closed);
+-                removeCuspLoops(piece.spans, piece.closed, tol);
++
+                 // An open chain neither starts nor ends with a span no longer than the
+                 // tolerance (ADR-0012 section 7): where a cut or a node left one there (fam5
+                 // 0xf50009c9: 7.8e-4 mm), it goes, as the leading and trailing tiny pieces do.

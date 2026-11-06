@@ -1,0 +1,13 @@
+--- /home/chris/wt-T0128/core/src/geometry/offset.cpp	2026-11-05 19:03:27.733153491 -0600
++++ offset_A.cpp	2026-11-05 19:38:32.390403008 -0600
+@@ -4071,9 +4071,7 @@
+                 } else {
+                     // Too thin to enclose anything, but a tool centre would still run along it. A
+                     // closed piece is the whole loop, so its raw pieces are `spans`.
+-                    for (std::vector<Span>& part : exactParts(sliverStrand(spans, tol))) {
+-                        strays.push_back(Stray{componentKey, std::move(part)});
+-                    }
++                    (void)spans;
+                 }
+             }
+         }

@@ -1,0 +1,1 @@
+/home/chris/wt-T0128/build-verify3-drv/ulpwrap.o -Wl,--wrap=sin,--wrap=cos,--wrap=atan2,--wrap=hypot,--wrap=acos,--wrap=asin,--wrap=tan,--wrap=sincos,--wrap=atan

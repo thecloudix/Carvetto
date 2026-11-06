@@ -1,0 +1,2525 @@
+Filters: [t0128] ~[perf]
+Randomness seeded to: 3571777429
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0128 AC1: a channel one tool width wide plus w keeps its path for every w >=
+            0
+-------------------------------------------------------------------------------
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:188
+...............................................................................
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 0
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 0
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 0
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 0
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 0
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 0
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 0
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 0
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 0
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 0
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 0
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 0
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 0
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 0
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 1
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 1
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 1
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 1
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 1
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 1
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 1
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 1
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 1
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 1
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 1
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 1
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 1
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 1
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 2
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 2
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 2
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 2
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 2
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 2
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 2
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 2
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 2
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 2
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 2
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 2
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 2
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 2
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 3
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 3
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 3
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 3
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 3
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 3
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 3
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 3
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 3
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 3
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 3
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 3
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 3
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 3
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 3
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 3
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 3
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 0.13170000000000001
+  shape := 3
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 0
+  w := 0.0000003
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 0
+  w := 0.0000003
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 0
+  w := 0.0000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 0
+  w := 0.0000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 0
+  w := 0.0000004
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 0
+  w := 0.0000004
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 0
+  w := 0.0000004
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 0
+  w := 0.0000004
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 0
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 0
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 0
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 0
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 0
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 0
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 0
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 0
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 0
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 0
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 0
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 0
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 1
+  w := 0.0000003
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 1
+  w := 0.0000003
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 1
+  w := 0.0000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 1
+  w := 0.0000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 1
+  w := 0.0000004
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 1
+  w := 0.0000004
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 1
+  w := 0.0000004
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 1
+  w := 0.0000004
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 1
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 1
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 1
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 1
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 1
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 1
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 1
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 1
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 1
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 1
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 1
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 1
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 2
+  w := 0.0000003
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 2
+  w := 0.0000003
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 2
+  w := 0.0000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 2
+  w := 0.0000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 2
+  w := 0.0000004
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 2
+  w := 0.0000004
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 2
+  w := 0.0000004
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 2
+  w := 0.0000004
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 2
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 2
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 2
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 2
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 2
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 2
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 2
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 2
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 2
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 2
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 2
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 2
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.0000003
+  shift.x := 0.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.0000003
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.0000003
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.0000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.0000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.0000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.0000004
+  shift.x := 0.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.0000004
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.0000004
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.0000004
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.0000004
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.0000004
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 1.0
+  shape := 3
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.0000001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.0000001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.0000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.0000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.0000003
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.0000003
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.0000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.0000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.0000004
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.0000004
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.0000004
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.0000004
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 0
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.0000001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.0000001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.0000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.0000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.0000003
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.0000003
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.0000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.0000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.0000004
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.0000004
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.0000004
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.0000004
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 1
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.0000001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.0000001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.0000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.0000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.0000003
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.0000003
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.0000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.0000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.0000004
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.0000004
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.0000004
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.0000004
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.000001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.000001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.000003
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.000003
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.00001
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:227: FAILED:
+  CHECK( uncovered(chains, a + shift, b + shift) == 0 )
+with expansion:
+  201 == 0
+with messages:
+  d := 3.17499999999999982
+  shape := 2
+  w := 0.00001
+  shift.x := 12345.67799999999988358
+  static_cast<int>(join) := 2
+
+-------------------------------------------------------------------------------
+T-0128 AC1: a 3.6 mm needle 5e-6 mm wide with coincident ends is kept (fam5
+            0xc5000544)
+-------------------------------------------------------------------------------
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:250
+...............................................................................
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:311: FAILED:
+  CHECK( uncovered(chains, {6.6, y}, {10.0, y}) == 0 )
+with expansion:
+  201 == 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:312: FAILED:
+  CHECK( uncovered(chains, {2.4, y}, {3.1, y}) == 0 )
+with expansion:
+  201 == 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:313: FAILED:
+  CHECK( uncovered(chains, {3.5, y}, {4.3, y}) == 0 )
+with expansion:
+  201 == 0
+
+-------------------------------------------------------------------------------
+T-0128: a thin loop is returned as one strand only from 10 x tol long
+-------------------------------------------------------------------------------
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:855
+...............................................................................
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:873: FAILED:
+  REQUIRE( chains.size() == 1 )
+with expansion:
+  0 == 1
+with messages:
+  w := 0.000001
+  e := 0.012
+  shift.x := 0.0
+  static_cast<int>(join) := 0
+
+-------------------------------------------------------------------------------
+T-0128: strays are put back only where no chain covers them (fam4 0x2a0006b4)
+-------------------------------------------------------------------------------
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:934
+...............................................................................
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:947: FAILED:
+  CHECK( uncovered(chains, {-10001.5, y}, {-9999.0, y}) == 0 )
+with expansion:
+  201 == 0
+with message:
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:947: FAILED:
+  CHECK( uncovered(chains, {-10001.5, y}, {-9999.0, y}) == 0 )
+with expansion:
+  201 == 0
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:947: FAILED:
+  CHECK( uncovered(chains, {-10001.5, y}, {-9999.0, y}) == 0 )
+with expansion:
+  201 == 0
+with message:
+  static_cast<int>(join) := 2
+
+===============================================================================
+test cases:     10 |      6 passed |   4 failed
+assertions: 537655 | 537426 passed | 229 failed
+

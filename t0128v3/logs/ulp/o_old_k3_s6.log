@@ -1,0 +1,1 @@
+6 rc 42 test cases: 110 | 107 passed | 3 failed FAILS: ;  junction defect;  shift.y := 0.0;  st.maxGap := 0.00000000000230878;  st.maxGap := 0.000000000014444;  static_cast<int>(side) := 0;

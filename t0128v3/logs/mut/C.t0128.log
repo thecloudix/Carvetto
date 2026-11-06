@@ -1,0 +1,120 @@
+Filters: [t0128] ~[perf]
+Randomness seeded to: 3086846111
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0128 AC2: no self-crossing at a cusp between nearly touching Round arcs (fam5
+            0xc500076c)
+-------------------------------------------------------------------------------
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:317
+...............................................................................
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:183: FAILED:
+  CHECK( countSelfCrossings(chains) == 0 )
+with expansion:
+  1 == 0
+
+-------------------------------------------------------------------------------
+T-0128 AC2: Round cusps between arcs about vertices 2d + g apart neither cross
+            nor open
+-------------------------------------------------------------------------------
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:345
+...............................................................................
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:183: FAILED:
+  CHECK( countSelfCrossings(chains) == 0 )
+with expansion:
+  1 == 0
+with messages:
+  g := -0.0000000316227766
+  shift.x := -10000.0
+  shift.y := 10000.0
+  static_cast<int>(side) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:183: FAILED:
+  CHECK( countSelfCrossings(chains) == 0 )
+with expansion:
+  1 == 0
+with messages:
+  g := -0.0000000316227766
+  shift.x := 10000.0
+  shift.y := 10000.0
+  static_cast<int>(side) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:183: FAILED:
+  CHECK( countSelfCrossings(chains) == 0 )
+with expansion:
+  1 == 0
+with messages:
+  g := -0.0000000316227766
+  shift.x := 12345.67799999999988358
+  shift.y := -9876.54320999999981723
+  static_cast<int>(side) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:183: FAILED:
+  CHECK( countSelfCrossings(chains) == 0 )
+with expansion:
+  1 == 0
+with messages:
+  g := -0.00000001
+  shift.x := -10000.0
+  shift.y := 10000.0
+  static_cast<int>(side) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:183: FAILED:
+  CHECK( countSelfCrossings(chains) == 0 )
+with expansion:
+  1 == 0
+with messages:
+  g := -0.00000001
+  shift.x := 10000.0
+  shift.y := 10000.0
+  static_cast<int>(side) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:183: FAILED:
+  CHECK( countSelfCrossings(chains) == 0 )
+with expansion:
+  1 == 0
+with messages:
+  g := -0.00000001
+  shift.x := 12345.67799999999988358
+  shift.y := -9876.54320999999981723
+  static_cast<int>(side) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:183: FAILED:
+  CHECK( countSelfCrossings(chains) == 0 )
+with expansion:
+  1 == 0
+with messages:
+  g := -0.00000000316227766
+  shift.x := -10000.0
+  shift.y := 10000.0
+  static_cast<int>(side) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:183: FAILED:
+  CHECK( countSelfCrossings(chains) == 0 )
+with expansion:
+  1 == 0
+with messages:
+  g := -0.00000000316227766
+  shift.x := 10000.0
+  shift.y := 10000.0
+  static_cast<int>(side) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:183: FAILED:
+  CHECK( countSelfCrossings(chains) == 0 )
+with expansion:
+  1 == 0
+with messages:
+  g := -0.00000000316227766
+  shift.x := 12345.67799999999988358
+  shift.y := -9876.54320999999981723
+  static_cast<int>(side) := 0
+
+===============================================================================
+test cases:     10 |      8 passed |  2 failed
+assertions: 561971 | 561961 passed | 10 failed
+

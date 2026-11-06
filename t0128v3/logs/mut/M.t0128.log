@@ -1,0 +1,473 @@
+Filters: [t0128] ~[perf]
+Randomness seeded to: 3659949423
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0128: an isolated stray shorter than 10 x tol is not returned (owner
+        decision, fam0 0x71280859)
+-------------------------------------------------------------------------------
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:839
+...............................................................................
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:848: FAILED:
+  CHECK( isolatedShortChains(chains, 10.0 * kTol.distance) == 0 )
+with expansion:
+  1 == 0
+with messages:
+  static_cast<int>(join) := 0
+  static_cast<int>(side) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:848: FAILED:
+  CHECK( isolatedShortChains(chains, 10.0 * kTol.distance) == 0 )
+with expansion:
+  1 == 0
+with messages:
+  static_cast<int>(join) := 1
+  static_cast<int>(side) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:848: FAILED:
+  CHECK( isolatedShortChains(chains, 10.0 * kTol.distance) == 0 )
+with expansion:
+  1 == 0
+with messages:
+  static_cast<int>(join) := 2
+  static_cast<int>(side) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:852: FAILED:
+  CHECK( offsetOpenContour(c.in, c.d, OffsetSide::Left, JoinType::Round, kTol, c.mitre).size() == 3 )
+with expansion:
+  4 == 3
+
+-------------------------------------------------------------------------------
+T-0128: a thin loop is returned as one strand only from 10 x tol long
+-------------------------------------------------------------------------------
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:855
+...............................................................................
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0
+  e := 0.0015
+  shift.x := 0.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0
+  e := 0.0015
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0
+  e := 0.0015
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0
+  e := 0.0015
+  shift.x := 12000.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0
+  e := 0.0015
+  shift.x := 12000.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0
+  e := 0.0015
+  shift.x := 12000.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0
+  e := 0.005
+  shift.x := 0.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0
+  e := 0.005
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0
+  e := 0.005
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0
+  e := 0.005
+  shift.x := 12000.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0
+  e := 0.005
+  shift.x := 12000.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0
+  e := 0.005
+  shift.x := 12000.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0
+  e := 0.0099
+  shift.x := 0.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0
+  e := 0.0099
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0
+  e := 0.0099
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0
+  e := 0.0099
+  shift.x := 12000.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0
+  e := 0.0099
+  shift.x := 12000.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0
+  e := 0.0099
+  shift.x := 12000.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.000001
+  e := 0.005
+  shift.x := 0.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.000001
+  e := 0.005
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.000001
+  e := 0.005
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.000001
+  e := 0.005
+  shift.x := 12000.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.000001
+  e := 0.005
+  shift.x := 12000.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.000001
+  e := 0.005
+  shift.x := 12000.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.000001
+  e := 0.0099
+  shift.x := 0.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.000001
+  e := 0.0099
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.000001
+  e := 0.0099
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.000001
+  e := 0.0099
+  shift.x := 12000.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.000001
+  e := 0.0099
+  shift.x := 12000.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.000001
+  e := 0.0099
+  shift.x := 12000.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0001
+  e := 0.005
+  shift.x := 0.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0001
+  e := 0.005
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0001
+  e := 0.005
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0001
+  e := 0.005
+  shift.x := 12000.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0001
+  e := 0.005
+  shift.x := 12000.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0001
+  e := 0.005
+  shift.x := 12000.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0001
+  e := 0.0099
+  shift.x := 0.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0001
+  e := 0.0099
+  shift.x := 0.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0001
+  e := 0.0099
+  shift.x := 0.0
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0001
+  e := 0.0099
+  shift.x := 12000.0
+  static_cast<int>(join) := 0
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0001
+  e := 0.0099
+  shift.x := 12000.0
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:870: FAILED:
+  CHECK( chains.empty() )
+with expansion:
+  false
+with messages:
+  w := 0.0001
+  e := 0.0099
+  shift.x := 12000.0
+  static_cast<int>(join) := 2
+
+===============================================================================
+test cases:     10 |      8 passed |  2 failed
+assertions: 562246 | 562200 passed | 46 failed
+

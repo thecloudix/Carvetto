@@ -1,0 +1,1 @@
+arcloops N=3000 offsets 81000 closedArcLoops 49556 | gaps>1e-12*scale 0 (max rel 8.1e-14) notIdentical 0 backward 0

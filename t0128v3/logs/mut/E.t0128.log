@@ -1,0 +1,456 @@
+Filters: [t0128] ~[perf]
+Randomness seeded to: 3183111162
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0128: only the part of dropped opposite copies exactly d from the input is
+        put back
+-------------------------------------------------------------------------------
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:887
+...............................................................................
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  11.0 <= 10.00000000100000008
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.41421356237309515 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.84375 <= 10.00000000100000008
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.30840133846614504 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.6875 <= 10.00000000100000008
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.21353048993422497 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.53125 <= 10.00000000100000008
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.13235443324958984 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.375 <= 10.00000000100000008
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.0680004681646913 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.21875 <= 10.00000000100000008
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.0236462096349499 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.0625 <= 10.00000000100000008
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.00195122136758741 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  11.0 <= 10.00000000100000008
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.41421356237309515 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.84375 <= 10.00000000100000008
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.30840133846614504 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.6875 <= 10.00000000100000008
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.21353048993422497 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.53125 <= 10.00000000100000008
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.13235443324958984 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.375 <= 10.00000000100000008
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.0680004681646913 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.21875 <= 10.00000000100000008
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.0236462096349499 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.0625 <= 10.00000000100000008
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.00195122136758741 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  11.0 <= 10.00000000100000008
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.41421356237309515 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.84375 <= 10.00000000100000008
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.30840133846614504 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.6875 <= 10.00000000100000008
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.21353048993422497 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.53125 <= 10.00000000100000008
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.13235443324958984 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.375 <= 10.00000000100000008
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.0680004681646913 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.21875 <= 10.00000000100000008
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.0236462096349499 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.0625 <= 10.00000000100000008
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.00195122136758741 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 1
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.41421356237309404
+  <=
+  10.00000000100000008
+with message:
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.08239220029239358 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.26711647546101425
+  <=
+  10.00000000100000008
+with message:
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.03506096992530572 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.12001938854893446
+  <=
+  10.00000000100000008
+with message:
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.00717657519804349 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.41421356237309581
+  <=
+  10.00000000100000008
+with message:
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.08239220029239425 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.26711647546101602
+  <=
+  10.00000000100000008
+with message:
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.03506096992530616 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.12001938854893623
+  <=
+  10.00000000100000008
+with message:
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.00717657519804371 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.41421356237309581
+  <=
+  10.00000000100000008
+with message:
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.08239220029239425 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.26711647546101602
+  <=
+  10.00000000100000008
+with message:
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.03506096992530616 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:924: FAILED:
+  CHECK( p.y <= 10.0 + 1e-9 )
+with expansion:
+  10.12001938854893623
+  <=
+  10.00000000100000008
+with message:
+  static_cast<int>(join) := 2
+
+/home/chris/wt-T0128/core/tests/geometry/offset_narrow_loops_test.cpp:925: FAILED:
+  CHECK( distanceToInput(p, in) <= d + allowance )
+with expansion:
+  1.00717657519804371 <= 1.00000010000000006
+with message:
+  static_cast<int>(join) := 2
+
+===============================================================================
+test cases:     10 |      9 passed |  1 failed
+assertions: 561971 | 561911 passed | 60 failed
+

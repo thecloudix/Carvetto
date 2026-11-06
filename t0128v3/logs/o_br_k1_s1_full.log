@@ -1,0 +1,24 @@
+Filters: [offset] ~[perf]
+Randomness seeded to: 2448557370
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+carvetto_tests_ulp is a Catch2 v3.7.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+T-0017: closed loops of arcs only never step back far from the origin under ulp
+        noise
+  verifier repro: 3 arcs at (1e4, -8e3)
+-------------------------------------------------------------------------------
+/home/chris/wt-T0128/core/tests/geometry/offset_quality_test.cpp:2893
+...............................................................................
+
+/home/chris/wt-T0128/core/tests/geometry/offset_quality_test.cpp:2903: FAILED:
+  REQUIRE( endPoint(in.spans[i]) == startPoint(in.spans[(i + 1) % 3]) )
+with expansion:
+  {?} == {?}
+
+===============================================================================
+test cases:    110 |    109 passed | 1 failed
+assertions: 980521 | 980520 passed | 1 failed
+

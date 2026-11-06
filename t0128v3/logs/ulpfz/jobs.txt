@@ -1,0 +1,108 @@
+ULP_K=1 ULP_SEED=1 timeout 1800 ./sxIu sxfz 2 400 0x7c1120000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s1_f2.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s1_f2.err
+ULP_K=1 ULP_SEED=1 timeout 1800 ./sxu_main sxfz 2 400 0x7c1120000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k1_s1_f2.log 2>&1
+ULP_K=1 ULP_SEED=1 timeout 1800 ./sxIu sxfz 3 400 0x7c1130000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s1_f3.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s1_f3.err
+ULP_K=1 ULP_SEED=1 timeout 1800 ./sxu_main sxfz 3 400 0x7c1130000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k1_s1_f3.log 2>&1
+ULP_K=1 ULP_SEED=1 timeout 1800 ./sxIu sxfz 4 400 0x7c1140000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s1_f4.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s1_f4.err
+ULP_K=1 ULP_SEED=1 timeout 1800 ./sxu_main sxfz 4 400 0x7c1140000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k1_s1_f4.log 2>&1
+ULP_K=1 ULP_SEED=1 timeout 1800 ./sxIu sxfz 5 400 0x7c1150000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s1_f5.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s1_f5.err
+ULP_K=1 ULP_SEED=1 timeout 1800 ./sxu_main sxfz 5 400 0x7c1150000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k1_s1_f5.log 2>&1
+ULP_K=1 ULP_SEED=2 timeout 1800 ./sxIu sxfz 2 400 0x7c1220000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s2_f2.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s2_f2.err
+ULP_K=1 ULP_SEED=2 timeout 1800 ./sxu_main sxfz 2 400 0x7c1220000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k1_s2_f2.log 2>&1
+ULP_K=1 ULP_SEED=2 timeout 1800 ./sxIu sxfz 3 400 0x7c1230000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s2_f3.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s2_f3.err
+ULP_K=1 ULP_SEED=2 timeout 1800 ./sxu_main sxfz 3 400 0x7c1230000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k1_s2_f3.log 2>&1
+ULP_K=1 ULP_SEED=2 timeout 1800 ./sxIu sxfz 4 400 0x7c1240000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s2_f4.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s2_f4.err
+ULP_K=1 ULP_SEED=2 timeout 1800 ./sxu_main sxfz 4 400 0x7c1240000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k1_s2_f4.log 2>&1
+ULP_K=1 ULP_SEED=2 timeout 1800 ./sxIu sxfz 5 400 0x7c1250000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s2_f5.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s2_f5.err
+ULP_K=1 ULP_SEED=2 timeout 1800 ./sxu_main sxfz 5 400 0x7c1250000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k1_s2_f5.log 2>&1
+ULP_K=1 ULP_SEED=3 timeout 1800 ./sxIu sxfz 2 400 0x7c1320000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s3_f2.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s3_f2.err
+ULP_K=1 ULP_SEED=3 timeout 1800 ./sxu_main sxfz 2 400 0x7c1320000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k1_s3_f2.log 2>&1
+ULP_K=1 ULP_SEED=3 timeout 1800 ./sxIu sxfz 3 400 0x7c1330000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s3_f3.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s3_f3.err
+ULP_K=1 ULP_SEED=3 timeout 1800 ./sxu_main sxfz 3 400 0x7c1330000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k1_s3_f3.log 2>&1
+ULP_K=1 ULP_SEED=3 timeout 1800 ./sxIu sxfz 4 400 0x7c1340000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s3_f4.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s3_f4.err
+ULP_K=1 ULP_SEED=3 timeout 1800 ./sxu_main sxfz 4 400 0x7c1340000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k1_s3_f4.log 2>&1
+ULP_K=1 ULP_SEED=3 timeout 1800 ./sxIu sxfz 5 400 0x7c1350000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s3_f5.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k1_s3_f5.err
+ULP_K=1 ULP_SEED=3 timeout 1800 ./sxu_main sxfz 5 400 0x7c1350000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k1_s3_f5.log 2>&1
+ULP_K=2 ULP_SEED=1 timeout 1800 ./sxIu sxfz 2 400 0x7c2120000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s1_f2.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s1_f2.err
+ULP_K=2 ULP_SEED=1 timeout 1800 ./sxu_main sxfz 2 400 0x7c2120000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k2_s1_f2.log 2>&1
+ULP_K=2 ULP_SEED=1 timeout 1800 ./sxIu sxfz 3 400 0x7c2130000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s1_f3.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s1_f3.err
+ULP_K=2 ULP_SEED=1 timeout 1800 ./sxu_main sxfz 3 400 0x7c2130000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k2_s1_f3.log 2>&1
+ULP_K=2 ULP_SEED=1 timeout 1800 ./sxIu sxfz 4 400 0x7c2140000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s1_f4.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s1_f4.err
+ULP_K=2 ULP_SEED=1 timeout 1800 ./sxu_main sxfz 4 400 0x7c2140000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k2_s1_f4.log 2>&1
+ULP_K=2 ULP_SEED=1 timeout 1800 ./sxIu sxfz 5 400 0x7c2150000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s1_f5.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s1_f5.err
+ULP_K=2 ULP_SEED=1 timeout 1800 ./sxu_main sxfz 5 400 0x7c2150000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k2_s1_f5.log 2>&1
+ULP_K=2 ULP_SEED=2 timeout 1800 ./sxIu sxfz 2 400 0x7c2220000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s2_f2.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s2_f2.err
+ULP_K=2 ULP_SEED=2 timeout 1800 ./sxu_main sxfz 2 400 0x7c2220000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k2_s2_f2.log 2>&1
+ULP_K=2 ULP_SEED=2 timeout 1800 ./sxIu sxfz 3 400 0x7c2230000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s2_f3.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s2_f3.err
+ULP_K=2 ULP_SEED=2 timeout 1800 ./sxu_main sxfz 3 400 0x7c2230000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k2_s2_f3.log 2>&1
+ULP_K=2 ULP_SEED=2 timeout 1800 ./sxIu sxfz 4 400 0x7c2240000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s2_f4.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s2_f4.err
+ULP_K=2 ULP_SEED=2 timeout 1800 ./sxu_main sxfz 4 400 0x7c2240000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k2_s2_f4.log 2>&1
+ULP_K=2 ULP_SEED=2 timeout 1800 ./sxIu sxfz 5 400 0x7c2250000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s2_f5.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s2_f5.err
+ULP_K=2 ULP_SEED=2 timeout 1800 ./sxu_main sxfz 5 400 0x7c2250000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k2_s2_f5.log 2>&1
+ULP_K=2 ULP_SEED=3 timeout 1800 ./sxIu sxfz 2 400 0x7c2320000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s3_f2.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s3_f2.err
+ULP_K=2 ULP_SEED=3 timeout 1800 ./sxu_main sxfz 2 400 0x7c2320000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k2_s3_f2.log 2>&1
+ULP_K=2 ULP_SEED=3 timeout 1800 ./sxIu sxfz 3 400 0x7c2330000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s3_f3.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s3_f3.err
+ULP_K=2 ULP_SEED=3 timeout 1800 ./sxu_main sxfz 3 400 0x7c2330000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k2_s3_f3.log 2>&1
+ULP_K=2 ULP_SEED=3 timeout 1800 ./sxIu sxfz 4 400 0x7c2340000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s3_f4.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s3_f4.err
+ULP_K=2 ULP_SEED=3 timeout 1800 ./sxu_main sxfz 4 400 0x7c2340000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k2_s3_f4.log 2>&1
+ULP_K=2 ULP_SEED=3 timeout 1800 ./sxIu sxfz 5 400 0x7c2350000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s3_f5.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k2_s3_f5.err
+ULP_K=2 ULP_SEED=3 timeout 1800 ./sxu_main sxfz 5 400 0x7c2350000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k2_s3_f5.log 2>&1
+ULP_K=3 ULP_SEED=1 timeout 1800 ./sxIu sxfz 2 400 0x7c3120000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s1_f2.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s1_f2.err
+ULP_K=3 ULP_SEED=1 timeout 1800 ./sxu_main sxfz 2 400 0x7c3120000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k3_s1_f2.log 2>&1
+ULP_K=3 ULP_SEED=1 timeout 1800 ./sxIu sxfz 3 400 0x7c3130000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s1_f3.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s1_f3.err
+ULP_K=3 ULP_SEED=1 timeout 1800 ./sxu_main sxfz 3 400 0x7c3130000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k3_s1_f3.log 2>&1
+ULP_K=3 ULP_SEED=1 timeout 1800 ./sxIu sxfz 4 400 0x7c3140000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s1_f4.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s1_f4.err
+ULP_K=3 ULP_SEED=1 timeout 1800 ./sxu_main sxfz 4 400 0x7c3140000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k3_s1_f4.log 2>&1
+ULP_K=3 ULP_SEED=1 timeout 1800 ./sxIu sxfz 5 400 0x7c3150000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s1_f5.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s1_f5.err
+ULP_K=3 ULP_SEED=1 timeout 1800 ./sxu_main sxfz 5 400 0x7c3150000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k3_s1_f5.log 2>&1
+ULP_K=3 ULP_SEED=2 timeout 1800 ./sxIu sxfz 2 400 0x7c3220000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s2_f2.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s2_f2.err
+ULP_K=3 ULP_SEED=2 timeout 1800 ./sxu_main sxfz 2 400 0x7c3220000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k3_s2_f2.log 2>&1
+ULP_K=3 ULP_SEED=2 timeout 1800 ./sxIu sxfz 3 400 0x7c3230000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s2_f3.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s2_f3.err
+ULP_K=3 ULP_SEED=2 timeout 1800 ./sxu_main sxfz 3 400 0x7c3230000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k3_s2_f3.log 2>&1
+ULP_K=3 ULP_SEED=2 timeout 1800 ./sxIu sxfz 4 400 0x7c3240000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s2_f4.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s2_f4.err
+ULP_K=3 ULP_SEED=2 timeout 1800 ./sxu_main sxfz 4 400 0x7c3240000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k3_s2_f4.log 2>&1
+ULP_K=3 ULP_SEED=2 timeout 1800 ./sxIu sxfz 5 400 0x7c3250000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s2_f5.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s2_f5.err
+ULP_K=3 ULP_SEED=2 timeout 1800 ./sxu_main sxfz 5 400 0x7c3250000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k3_s2_f5.log 2>&1
+ULP_K=3 ULP_SEED=3 timeout 1800 ./sxIu sxfz 2 400 0x7c3320000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s3_f2.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s3_f2.err
+ULP_K=3 ULP_SEED=3 timeout 1800 ./sxu_main sxfz 2 400 0x7c3320000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k3_s3_f2.log 2>&1
+ULP_K=3 ULP_SEED=3 timeout 1800 ./sxIu sxfz 3 400 0x7c3330000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s3_f3.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s3_f3.err
+ULP_K=3 ULP_SEED=3 timeout 1800 ./sxu_main sxfz 3 400 0x7c3330000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k3_s3_f3.log 2>&1
+ULP_K=3 ULP_SEED=3 timeout 1800 ./sxIu sxfz 4 400 0x7c3340000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s3_f4.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s3_f4.err
+ULP_K=3 ULP_SEED=3 timeout 1800 ./sxu_main sxfz 4 400 0x7c3340000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k3_s3_f4.log 2>&1
+ULP_K=3 ULP_SEED=3 timeout 1800 ./sxIu sxfz 5 400 0x7c3350000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s3_f5.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k3_s3_f5.err
+ULP_K=3 ULP_SEED=3 timeout 1800 ./sxu_main sxfz 5 400 0x7c3350000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k3_s3_f5.log 2>&1
+ULP_K=4 ULP_SEED=1 timeout 1800 ./sxIu sxfz 2 400 0x7c4120000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s1_f2.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s1_f2.err
+ULP_K=4 ULP_SEED=1 timeout 1800 ./sxu_main sxfz 2 400 0x7c4120000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k4_s1_f2.log 2>&1
+ULP_K=4 ULP_SEED=1 timeout 1800 ./sxIu sxfz 3 400 0x7c4130000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s1_f3.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s1_f3.err
+ULP_K=4 ULP_SEED=1 timeout 1800 ./sxu_main sxfz 3 400 0x7c4130000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k4_s1_f3.log 2>&1
+ULP_K=4 ULP_SEED=1 timeout 1800 ./sxIu sxfz 4 400 0x7c4140000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s1_f4.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s1_f4.err
+ULP_K=4 ULP_SEED=1 timeout 1800 ./sxu_main sxfz 4 400 0x7c4140000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k4_s1_f4.log 2>&1
+ULP_K=4 ULP_SEED=1 timeout 1800 ./sxIu sxfz 5 400 0x7c4150000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s1_f5.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s1_f5.err
+ULP_K=4 ULP_SEED=1 timeout 1800 ./sxu_main sxfz 5 400 0x7c4150000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k4_s1_f5.log 2>&1
+ULP_K=4 ULP_SEED=2 timeout 1800 ./sxIu sxfz 2 400 0x7c4220000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s2_f2.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s2_f2.err
+ULP_K=4 ULP_SEED=2 timeout 1800 ./sxu_main sxfz 2 400 0x7c4220000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k4_s2_f2.log 2>&1
+ULP_K=4 ULP_SEED=2 timeout 1800 ./sxIu sxfz 3 400 0x7c4230000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s2_f3.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s2_f3.err
+ULP_K=4 ULP_SEED=2 timeout 1800 ./sxu_main sxfz 3 400 0x7c4230000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k4_s2_f3.log 2>&1
+ULP_K=4 ULP_SEED=2 timeout 1800 ./sxIu sxfz 4 400 0x7c4240000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s2_f4.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s2_f4.err
+ULP_K=4 ULP_SEED=2 timeout 1800 ./sxu_main sxfz 4 400 0x7c4240000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k4_s2_f4.log 2>&1
+ULP_K=4 ULP_SEED=2 timeout 1800 ./sxIu sxfz 5 400 0x7c4250000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s2_f5.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s2_f5.err
+ULP_K=4 ULP_SEED=2 timeout 1800 ./sxu_main sxfz 5 400 0x7c4250000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k4_s2_f5.log 2>&1
+ULP_K=4 ULP_SEED=3 timeout 1800 ./sxIu sxfz 2 400 0x7c4320000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s3_f2.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s3_f2.err
+ULP_K=4 ULP_SEED=3 timeout 1800 ./sxu_main sxfz 2 400 0x7c4320000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k4_s3_f2.log 2>&1
+ULP_K=4 ULP_SEED=3 timeout 1800 ./sxIu sxfz 3 400 0x7c4330000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s3_f3.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s3_f3.err
+ULP_K=4 ULP_SEED=3 timeout 1800 ./sxu_main sxfz 3 400 0x7c4330000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k4_s3_f3.log 2>&1
+ULP_K=4 ULP_SEED=3 timeout 1800 ./sxIu sxfz 4 400 0x7c4340000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s3_f4.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s3_f4.err
+ULP_K=4 ULP_SEED=3 timeout 1800 ./sxu_main sxfz 4 400 0x7c4340000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k4_s3_f4.log 2>&1
+ULP_K=4 ULP_SEED=3 timeout 1800 ./sxIu sxfz 5 400 0x7c4350000 > /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s3_f5.log 2> /home/chris/harness/t0128v3/logs/ulpfz/I_k4_s3_f5.err
+ULP_K=4 ULP_SEED=3 timeout 1800 ./sxu_main sxfz 5 400 0x7c4350000 > /home/chris/harness/t0128v3/logs/ulpfz/M_k4_s3_f5.log 2>&1
+timeout 1800 ./sx_F_vs_br sxfz 2 3000 0x7d200000 > /home/chris/harness/t0128v3/logs/ulpfz/F_f2_0.log 2>&1
+timeout 1800 ./sx_F_vs_br sxfz 2 3000 0x7d210000 > /home/chris/harness/t0128v3/logs/ulpfz/F_f2_1.log 2>&1
+timeout 1800 ./sx_F_vs_br sxfz 2 3000 0x7d220000 > /home/chris/harness/t0128v3/logs/ulpfz/F_f2_2.log 2>&1
+timeout 1800 ./sx_F_vs_br sxfz 3 3000 0x7d300000 > /home/chris/harness/t0128v3/logs/ulpfz/F_f3_0.log 2>&1
+timeout 1800 ./sx_F_vs_br sxfz 3 3000 0x7d310000 > /home/chris/harness/t0128v3/logs/ulpfz/F_f3_1.log 2>&1
+timeout 1800 ./sx_F_vs_br sxfz 3 3000 0x7d320000 > /home/chris/harness/t0128v3/logs/ulpfz/F_f3_2.log 2>&1
+timeout 1800 ./sx_F_vs_br sxfz 4 3000 0x7d400000 > /home/chris/harness/t0128v3/logs/ulpfz/F_f4_0.log 2>&1
+timeout 1800 ./sx_F_vs_br sxfz 4 3000 0x7d410000 > /home/chris/harness/t0128v3/logs/ulpfz/F_f4_1.log 2>&1
+timeout 1800 ./sx_F_vs_br sxfz 4 3000 0x7d420000 > /home/chris/harness/t0128v3/logs/ulpfz/F_f4_2.log 2>&1
+timeout 1800 ./sx_F_vs_br sxfz 5 3000 0x7d500000 > /home/chris/harness/t0128v3/logs/ulpfz/F_f5_0.log 2>&1
+timeout 1800 ./sx_F_vs_br sxfz 5 3000 0x7d510000 > /home/chris/harness/t0128v3/logs/ulpfz/F_f5_1.log 2>&1
+timeout 1800 ./sx_F_vs_br sxfz 5 3000 0x7d520000 > /home/chris/harness/t0128v3/logs/ulpfz/F_f5_2.log 2>&1
