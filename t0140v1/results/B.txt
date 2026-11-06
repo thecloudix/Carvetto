@@ -1,0 +1,36 @@
+base | arc 1000 |  | P arc 1000 cpu 21.9640 moves 21426 loose 0 hash 9b9faa1ce54fcb0d
+br | arc 1000 |  | P arc 1000 cpu 22.4384 moves 21426 loose 176 hash 9b9faa1ce54fcb0d
+base | arc 1000 |  | P arc 1000 cpu 21.4041 moves 21426 loose 0 hash 9b9faa1ce54fcb0d
+br | arc 1000 |  | P arc 1000 cpu 22.9316 moves 21426 loose 176 hash 9b9faa1ce54fcb0d
+base | arc 1000 |  | P arc 1000 cpu 22.5819 moves 21426 loose 0 hash 9b9faa1ce54fcb0d
+br | arc 1000 |  | P arc 1000 cpu 21.7697 moves 21426 loose 176 hash 9b9faa1ce54fcb0d
+base | arc 1000 | TL=200 | P arc 1000 cpu 0.2250 moves 15094 loose 0 hash 22c4f4c11c8b492c
+br | arc 1000 | TL=200 | P arc 1000 cpu 0.5337 moves 15094 loose 1189 hash 22c4f4c11c8b492c
+base | arc 1000 | TL=200 | P arc 1000 cpu 0.2331 moves 15094 loose 0 hash 22c4f4c11c8b492c
+br | arc 1000 | TL=200 | P arc 1000 cpu 0.5579 moves 15094 loose 1189 hash 22c4f4c11c8b492c
+base | arc 1000 | TL=200 | P arc 1000 cpu 0.2587 moves 15094 loose 0 hash 22c4f4c11c8b492c
+br | arc 1000 | TL=200 | P arc 1000 cpu 0.5460 moves 15094 loose 1189 hash 22c4f4c11c8b492c
+base | bez 500 |  | P bez 500 cpu 47.6892 moves 538602 loose 0 hash d1c4722c1044259f
+br | bez 500 |  | P bez 500 cpu 53.7740 moves 538602 loose 319 hash d1c4722c1044259f
+base | bez 500 |  | P bez 500 cpu 59.3694 moves 538602 loose 0 hash d1c4722c1044259f
+br | bez 500 |  | P bez 500 cpu 57.2814 moves 538602 loose 319 hash d1c4722c1044259f
+base | bez 500 |  | P bez 500 cpu 54.2833 moves 538602 loose 0 hash d1c4722c1044259f
+br | bez 500 |  | P bez 500 cpu 55.2521 moves 538602 loose 319 hash d1c4722c1044259f
+base | bez 500 | TL=200 SEP=1 | P bez 500 cpu 26.7637 moves 804851 loose 0 hash 601c068a15ff5aab
+br | bez 500 | TL=200 SEP=1 | P bez 500 cpu 30.6027 moves 804851 loose 930 hash 601c068a15ff5aab
+base | bez 500 | TL=200 SEP=1 | P bez 500 cpu 25.1320 moves 804851 loose 0 hash 601c068a15ff5aab
+br | bez 500 | TL=200 SEP=1 | P bez 500 cpu 26.6537 moves 804851 loose 930 hash 601c068a15ff5aab
+base | bez 500 | TL=200 SEP=1 | P bez 500 cpu 25.3845 moves 804851 loose 0 hash 601c068a15ff5aab
+br | bez 500 | TL=200 SEP=1 | P bez 500 cpu 31.4255 moves 804851 loose 930 hash 601c068a15ff5aab
+base | plate 500 | SIDE=1 TL=200 | P plate 500 cpu 3.5051 moves 6502 loose 0 hash a82bbe715e201eef
+br | plate 500 | SIDE=1 TL=200 | P plate 500 cpu 3.6050 moves 6502 loose 536 hash a82bbe715e201eef
+base | plate 500 | SIDE=1 TL=200 | P plate 500 cpu 3.6068 moves 6502 loose 0 hash a82bbe715e201eef
+br | plate 500 | SIDE=1 TL=200 | P plate 500 cpu 3.5482 moves 6502 loose 536 hash a82bbe715e201eef
+base | plate 500 | SIDE=1 TL=200 | P plate 500 cpu 3.5053 moves 6502 loose 0 hash a82bbe715e201eef
+br | plate 500 | SIDE=1 TL=200 | P plate 500 cpu 3.4666 moves 6502 loose 536 hash a82bbe715e201eef
+base | letters 300 | TL=200 V=90 D=6 | P letters 300 cpu 1.8248 moves 9334 loose 0 hash 1febfb8a6dcaaf7c
+br | letters 300 | TL=200 V=90 D=6 | P letters 300 cpu 1.9535 moves 9334 loose 558 hash 1febfb8a6dcaaf7c
+base | letters 300 | TL=200 V=90 D=6 | P letters 300 cpu 1.8171 moves 9334 loose 0 hash 1febfb8a6dcaaf7c
+br | letters 300 | TL=200 V=90 D=6 | P letters 300 cpu 1.9281 moves 9334 loose 558 hash 1febfb8a6dcaaf7c
+base | letters 300 | TL=200 V=90 D=6 | P letters 300 cpu 1.8577 moves 9334 loose 0 hash 1febfb8a6dcaaf7c
+br | letters 300 | TL=200 V=90 D=6 | P letters 300 cpu 1.8566 moves 9334 loose 558 hash 1febfb8a6dcaaf7c

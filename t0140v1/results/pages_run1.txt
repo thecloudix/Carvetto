@@ -1,0 +1,15 @@
+base | rect 2000 | A=0 SEP=0 | P rect 2000 cpu 69.5122 moves 45656 loose 0 hash c861e68bba7b94a3
+br | rect 2000 | A=0 SEP=0 | P rect 2000 cpu 72.7572 moves 45656 loose 1785 hash c861e68bba7b94a3
+base | rect 2000 | A=0 SEP=0 | P rect 2000 cpu 70.6533 moves 45656 loose 0 hash c861e68bba7b94a3
+br | rect 2000 | A=0 SEP=0 | P rect 2000 cpu 73.4916 moves 45656 loose 1785 hash c861e68bba7b94a3
+base | rect 2000 | A=0 SEP=0 | P rect 2000 cpu 71.3577 moves 45656 loose 0 hash c861e68bba7b94a3
+br | rect 2000 | A=0 SEP=0 | P rect 2000 cpu 71.9018 moves 45656 loose 1785 hash c861e68bba7b94a3
+base | rect 2000 | A=0.3 SEP=1 | P rect 2000 cpu 15.1523 moves 116362 loose 0 hash b5f4703b44c654c7
+br | rect 2000 | A=0.3 SEP=1 | P rect 2000 cpu 16.2970 moves 116362 loose 2707 hash b5f4703b44c654c7
+base | rect 2000 | A=0.3 SEP=1 | P rect 2000 cpu 14.3142 moves 116362 loose 0 hash b5f4703b44c654c7
+br | rect 2000 | A=0.3 SEP=1 | P rect 2000 cpu 16.4480 moves 116362 loose 2707 hash b5f4703b44c654c7
+base | rect 2000 | A=0.3 SEP=1 | P rect 2000 cpu 14.9708 moves 116362 loose 0 hash b5f4703b44c654c7
+br | rect 2000 | A=0.3 SEP=1 | P rect 2000 cpu 16.2637 moves 116362 loose 2707 hash b5f4703b44c654c7
+base | rect 2000 | A=0 SEP=0 SIDE=1 | P rect 2000 cpu 44.9411 moves 25260 loose 0 hash 191974995518b404
+br | rect 2000 | A=0 SEP=0 SIDE=1 | P rect 2000 cpu 44.5425 moves 25260 loose 177 hash 191974995518b404
+base | rect 2000 | A=0 SEP=0 SIDE=1 | P rect 2000 cpu 45.3214 moves 25260 loose 0 hash 191974995518b404

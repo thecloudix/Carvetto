@@ -1,0 +1,15 @@
+base | mix 1000 | TL=200 A=0.3 SEP=1 | P mix 1000 cpu 13.6879 moves 139874 loose 0 hash 5d9dff01191ae906
+br | mix 1000 | TL=200 A=0.3 SEP=1 | P mix 1000 cpu 18.1213 moves 139874 loose 1656 hash 5d9dff01191ae906
+base | mix 1000 | TL=200 A=0.3 SEP=1 | P mix 1000 cpu 13.4156 moves 139874 loose 0 hash 5d9dff01191ae906
+br | mix 1000 | TL=200 A=0.3 SEP=1 | P mix 1000 cpu 17.3852 moves 139874 loose 1656 hash 5d9dff01191ae906
+base | mix 1000 | TL=200 A=0.3 SEP=1 | P mix 1000 cpu 13.7903 moves 139874 loose 0 hash 5d9dff01191ae906
+br | mix 1000 | TL=200 A=0.3 SEP=1 | P mix 1000 cpu 18.0982 moves 139874 loose 1656 hash 5d9dff01191ae906
+base | mix 1000 | TL=200 A=0.3 SEP=1 | P mix 1000 cpu 13.7417 moves 139874 loose 0 hash 5d9dff01191ae906
+br | mix 1000 | TL=200 A=0.3 SEP=1 | P mix 1000 cpu 19.7018 moves 139874 loose 1656 hash 5d9dff01191ae906
+base | mix 1000 | A=0.3 SEP=1 | P mix 1000 cpu 47.8857 moves 141922 loose 0 hash 768ac20bf91d8f4c
+br | mix 1000 | A=0.3 SEP=1 | P mix 1000 cpu 56.4961 moves 141922 loose 1408 hash 768ac20bf91d8f4c
+base | mix 1000 | A=0.3 SEP=1 | P mix 1000 cpu 49.2810 moves 141922 loose 0 hash 768ac20bf91d8f4c
+br | mix 1000 | A=0.3 SEP=1 | P mix 1000 cpu 51.4446 moves 141922 loose 1408 hash 768ac20bf91d8f4c
+base | mix 1000 | A=0.3 SEP=1 | P mix 1000 cpu 46.3207 moves 141922 loose 0 hash 768ac20bf91d8f4c
+br | mix 1000 | A=0.3 SEP=1 | P mix 1000 cpu 52.1356 moves 141922 loose 1408 hash 768ac20bf91d8f4c
+ALLDONE

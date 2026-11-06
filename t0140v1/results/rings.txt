@@ -1,0 +1,7 @@
+base P rings 200 cpu 57.3396 moves 1212 loose 0 hash 44fc77c430dd014e
+br P rings 200 cpu 67.3738 moves 1212 loose 100 hash 44fc77c430dd014e
+base P rings 200 cpu 56.2433 moves 1212 loose 0 hash 44fc77c430dd014e
+br P rings 200 cpu 66.5858 moves 1212 loose 100 hash 44fc77c430dd014e
+base P rings 300 cpu 154.0943 moves 1812 loose 0 hash c6ddc80802511464
+br P rings 300 cpu 184.6174 moves 1812 loose 150 hash c6ddc80802511464
+DONE

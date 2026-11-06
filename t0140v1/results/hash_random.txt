@@ -1,0 +1,39 @@
+== hr (br vs base)
+('IOm0', 'NOLEAD', 'gained loose') 6
+('IOm0', 'NOLEAD', 'n') 36
+('IOm0', 'plain', 'gained loose') 7
+('IOm0', 'plain', 'n') 36
+('IOneg', 'NOLEAD', 'n') 193
+('IOneg', 'plain', 'n') 193
+('IOpos', 'NOLEAD', 'gained loose') 40
+('IOpos', 'NOLEAD', 'n') 207
+('IOpos', 'plain', 'gained loose') 41
+('IOpos', 'plain', 'n') 207
+('On', 'NOLEAD', 'n') 164
+('On', 'plain', 'n') 164
+== hr2 (br vs base)
+('IOm0', 'NOLEAD', 'gained loose') 24
+('IOm0', 'NOLEAD', 'n') 120
+('IOm0', 'plain', 'gained loose') 24
+('IOm0', 'plain', 'n') 120
+('IOneg', 'NOLEAD', 'n') 748
+('IOneg', 'plain', 'n') 748
+('IOpos', 'NOLEAD', 'gained loose') 141
+('IOpos', 'NOLEAD', 'n') 826
+('IOpos', 'plain', 'gained loose') 141
+('IOpos', 'plain', 'n') 826
+('On', 'NOLEAD', 'n') 706
+('On', 'plain', 'n') 706
+== hrm (merged vs main)
+('IOm0', 'NOLEAD', 'gained loose') 4
+('IOm0', 'NOLEAD', 'n') 18
+('IOm0', 'plain', 'gained loose') 4
+('IOm0', 'plain', 'n') 18
+('IOneg', 'NOLEAD', 'n') 191
+('IOneg', 'plain', 'n') 191
+('IOpos', 'NOLEAD', 'gained loose') 35
+('IOpos', 'NOLEAD', 'n') 219
+('IOpos', 'plain', 'gained loose') 34
+('IOpos', 'plain', 'n') 219
+('On', 'NOLEAD', 'n') 172
+('On', 'plain', 'n') 172

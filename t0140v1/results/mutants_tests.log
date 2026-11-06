@@ -1,0 +1,13 @@
+M1_gate rc=42 test cases: 5 | 0 passed | 5 failed
+M2_clipperonly rc=42 test cases: 5 | 4 passed | 1 failed
+M3_arcinner rc=42 test cases: 5 | 0 passed | 5 failed
+M4_covered rc=0 
+M5_nothick rc=0 
+M6_attrib rc=0 
+M7_islands rc=42 test cases: 5 | 4 passed | 1 failed
+M8_lowered rc=42 test cases: 5 | 1 passed | 4 failed
+M9_nowedge rc=0 
+M10_nocap rc=42 test cases: 5 | 4 passed | 1 failed
+M11_reach rc=42 test cases: 5 | 3 passed | 2 failed
+M12_area rc=42 test cases: 5 | 4 passed | 1 failed
+ALLDONE

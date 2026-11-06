@@ -1,0 +1,5 @@
+Lowering default frequency rate from 4000 to 2000.
+Please consider tweaking /proc/sys/kernel/perf_event_max_sample_rate.
+P rings 100 cpu 19.6300 moves 612 loose 50 hash 959ac6c59208eae6
+[ perf record: Woken up 13 times to write data ]
+[ perf record: Captured and wrote 3.127 MB rings100.data (38807 samples) ]

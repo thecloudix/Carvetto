@@ -1,0 +1,29 @@
+base | flower1 2000 | TL=200 | P flower1 2000 cpu 0.0524 moves 4058 loose 0 hash c1af836fc04386d3
+br | flower1 2000 | TL=200 | P flower1 2000 cpu 0.0703 moves 4058 loose 0 hash c1af836fc04386d3
+base | flower1 2000 | TL=200 | P flower1 2000 cpu 0.0610 moves 4058 loose 0 hash c1af836fc04386d3
+br | flower1 2000 | TL=200 | P flower1 2000 cpu 0.0624 moves 4058 loose 0 hash c1af836fc04386d3
+base | flower1 2000 | TL=200 | P flower1 2000 cpu 0.0528 moves 4058 loose 0 hash c1af836fc04386d3
+br | flower1 2000 | TL=200 | P flower1 2000 cpu 0.0828 moves 4058 loose 0 hash c1af836fc04386d3
+base | gear1 4000 |  | P gear1 4000 cpu 5.2383 moves 24016 loose 0 hash 788e36f977827b33
+br | gear1 4000 |  | P gear1 4000 cpu 5.1928 moves 24016 loose 0 hash 788e36f977827b33
+base | gear1 4000 |  | P gear1 4000 cpu 5.5497 moves 24016 loose 0 hash 788e36f977827b33
+br | gear1 4000 |  | P gear1 4000 cpu 5.5320 moves 24016 loose 0 hash 788e36f977827b33
+base | gear1 4000 |  | P gear1 4000 cpu 5.3817 moves 24016 loose 0 hash 788e36f977827b33
+br | gear1 4000 |  | P gear1 4000 cpu 5.3842 moves 24016 loose 0 hash 788e36f977827b33
+base | row 2000 | TL=200 | P row 2000 cpu 0.2692 moves 40000 loose 0 hash 26900b28b6168c75
+br | row 2000 | TL=200 | P row 2000 cpu 1.0431 moves 40000 loose 2000 hash 26900b28b6168c75
+base | row 2000 | TL=200 | P row 2000 cpu 0.2880 moves 40000 loose 0 hash 26900b28b6168c75
+br | row 2000 | TL=200 | P row 2000 cpu 1.1402 moves 40000 loose 2000 hash 26900b28b6168c75
+base | row 2000 | TL=200 | P row 2000 cpu 0.3194 moves 40000 loose 0 hash 26900b28b6168c75
+br | row 2000 | TL=200 | P row 2000 cpu 1.0464 moves 40000 loose 2000 hash 26900b28b6168c75
+base | row 4000 | TL=200 | P row 4000 cpu 0.7775 moves 80000 loose 0 hash be161bfcb71f7e15
+br | row 4000 | TL=200 | P row 4000 cpu 3.9313 moves 80000 loose 4000 hash be161bfcb71f7e15
+base | row 4000 | TL=200 | P row 4000 cpu 0.7326 moves 80000 loose 0 hash be161bfcb71f7e15
+br | row 4000 | TL=200 | P row 4000 cpu 3.9151 moves 80000 loose 4000 hash be161bfcb71f7e15
+base | row 4000 | TL=200 | P row 4000 cpu 0.7188 moves 80000 loose 0 hash be161bfcb71f7e15
+br | row 4000 | TL=200 | P row 4000 cpu 4.0957 moves 80000 loose 4000 hash be161bfcb71f7e15
+base | diag 1000 | TL=200 | P diag 1000 cpu 9.9702 moves 20000 loose 0 hash f57f5a03336eafeb
+br | diag 1000 | TL=200 | P diag 1000 cpu 10.8128 moves 20000 loose 1000 hash f57f5a03336eafeb
+base | diag 1000 | TL=200 | P diag 1000 cpu 10.3971 moves 20000 loose 0 hash f57f5a03336eafeb
+br | diag 1000 | TL=200 | P diag 1000 cpu 10.7467 moves 20000 loose 1000 hash f57f5a03336eafeb
+ALLDONE

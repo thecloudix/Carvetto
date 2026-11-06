@@ -1,0 +1,12 @@
+arc 1000||3
+arc 1000|TL=200|3
+bez 500||3
+bez 500|TL=200 SEP=1|3
+plate 500|SIDE=1 TL=200|3
+letters 300|TL=200 V=90 D=6|3
+bezwave 300||3
+flower1 2000|TL=200|3
+gear1 4000||3
+row 2000|TL=200|3
+row 4000|TL=200|3
+diag 1000|TL=200|3

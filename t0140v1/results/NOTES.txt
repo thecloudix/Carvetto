@@ -1,0 +1,35 @@
+T-0140 round-1 verifier (task/T-0140-loose-pieces 334a87d; base = merge base 51c2dd6; origin/main b637c16; merge-tree 113b836 clean).
+Builds: build-verify1 (Debug -Werror, ctest 1040/1040 rc 0), build-verify1-rel/{br,base,main,merged,t135,mut} Release core libs (mkall.sh there).
+
+AC1 flood (t40.cpp, leads off, 15 um cells, exact capsules of the moves at zTab - 1e-4; free = uncut 4-component off the frame, area >= 0.04
+  and max clearance > 0.025):
+  mode 4 (wsf families, In/Out a >= 0) seeds 1400001-1400030 x 50 = 1500 scenes: 224 free, 221 reported, 3 missed (one scene), 0 false.
+  mode 5 (stress: grids/waste, nested, tight arcs, V-bit sharp, Bezier, text, open vectors, concentric) 1410001-1410030 x 50 = 1500:
+    750 free, 750 reported, 0 missed, 0 false.
+  The 3 misses: m4_1400024_26 (repro/m4_1400024_26_vbit_sharpint.scn): V-bit 60, sharpInternal on, separate last pass, three 0.41 mm2
+    remnants 0.115 thick; with K 0 0 (no sharp corners) the flood has no free piece -> V-bit corner moves not in the band model (T-0156 (a)).
+  THIN (area >= 0.04, thickness <= 0.05, excluded by the ADR rule): 10 slivers in 2 V-bit scenes, 0.38-1.55 mm2, 0.016-0.034 thick.
+  Fine-cell cross-check (CELLMIN 0.006, seed 1410001 mode 5): same pieces as 15 um.
+  Leads ON sample (floodlead.sh, 200 scenes mode 4): 31 free, 9 missed / 6 false; all but one vanish with NOLEAD (lead cuts); the other
+    (repro/m4_1430001_4_8um_neck_leadson.scn) is an 8 um neck between two kerfs: flood (15 um cells) closed, product (2 um grow) open.
+  probe/ (mkprobe.cpp): thickness threshold on a free ring: t 0.052/0.054 missed, 0.056+ reported (effective threshold ~0.055 = 0.05 +
+    2 x 2 um grow + chord); 0.03/0.045 rings and strips free but unreported by rule; tiny_circ: pieces of merged cuts attributed to the
+    first source vector (as main's convention).
+  band.cpp: bandOutline (copied) vs exact distance band, 6000 random paths: never negative winding, under-coverage <= 2.0 x chordal, over
+    <= 0.9 x chordal (Clipper2 offset of the same path: same bound, but loses whole tiny spans).
+AC2 hashes: stored scenes (1734 x plain / NOLEAD+FORCEIO) and 6000 random scene-runs (modes 0-5, leads random and off): moves and
+  non-loose diagnostics identical br vs base; loose messages unchanged for On / negative allowance; merged vs main (1200): identical.
+Perf (perf.cpp, perfrun2.sh; interleaved base/br, CPU of profileToolpath): see A.txt/B.txt/pages_run1.txt. Over 10 %:
+  mix 1000 TL=200 A=0.3 SEP=1 15.3-16.8 -> 19.7-20.9 s (+24..34 %); bez 500 TL=200 SEP=1 +6..24 %; rect 2000 A=0.3 SEP=1 +10.7 % mean
+  of 6 pairs; arc 1000 TL=200 0.23 -> 0.55 s; rings 200 TL=200 57 -> 67 s (+17 %), rings 300 154 -> 185 s (+20 %).
+  timerpatch.py phase timers: the scene-wide unionContours dominates and is quadratic when the kerfs of neighbours overlap and the pieces
+  are free (one union polygon with thousands of holes): mix TL=200 250/500/1000/2000/4000: union 0.40/1.23/4.15/14.6/48.6 s; row of
+  500..4000 free squares: 0.05/0.19/0.75/2.9 s (row 4000: br 4.7 s vs base 1.8 s). Islands loop (enclosing) cubic on nested rings
+  (0.05/0.63/7.2 s at 50/100/200). With kept tabs (row GAP 2.5) the union is cheap (0.08 s).
+Mutants (runmut.sh, T-0140 tests): gate revert, arc inner radius, islands, lowered tabs, end caps, reach, area threshold caught;
+  survivors: M5 thickness filter removed, M6 attribution to the first cut, M9 corner wedges removed (the flood catches M9: 4 mismatches in
+  100 scenes), M4 inner-vertex skip always (benign in 100 flood scenes).
+Perf, quieter re-runs (C.txt, D.txt): mix 1000 TL=200 A=0.3 SEP=1 13.4-13.8 -> 17.4-19.7 s (+30..43 %, 4 pairs); mix 1000 A=0.3 SEP=1
+  (default 3 x 3 mm tabs, 46-49 s) +18/+4/+13 %; row 2000 TL=200 0.27-0.32 -> 1.04-1.14 s, row 4000 0.72-0.78 -> 3.9-4.1 s (br x3.8 per
+  doubling); diag 1000 TL=200 +3..8 %; gear1 4000, flower1 2000 within noise; rect 2000 GAP=3 (tabs kept) +1..7 %. bezwave 300 dropped
+  (base > 30 min per run).
