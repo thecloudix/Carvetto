@@ -36,7 +36,8 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
 5. **Overlaps.** Raw elements on one carrier (e.g. both mitre extensions over a slot narrower
    than 2d) are split at each other's end points; of two coinciding kept pieces (> 2·tol long),
    a same-direction copy is dropped and an opposite-direction pair (a zero-width sliver inside
-   the shape) is dropped entirely.
+   the shape) is dropped entirely. (Since A3 such a stretch is put back as an open chain of its own where it lies
+   exactly d from the input and no chain covers it.)
 6. **Pruning margin.** A piece is kept when its samples are ≥ d − ε with
    ε = min(1e-9·max(1,d), 0.1·tol²/d). ε only absorbs rounding; staying below tol²/(8d) — the depth
    of the shallowest connector or overshoot longer than the tolerance at a nearly straight inside
@@ -300,7 +301,8 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     near the origin and removed at 1e4 mm, losing real path there (0xd4001274, 0xe400062f,
     0xe4001140, 0xd4001d85, 0xd4000e09); per the director's decision (fix round 2) the bound no
     longer depends on translation and a wider needle is kept wherever it lies (0x840117a: the 2.9e-3
-    mm needle 3.6e-6 mm wide at ~1e4 mm is now kept, as at the origin). (g, T-0017) A closed chain narrower than the
+    mm needle 3.6e-6 mm wide at ~1e4 mm is now kept, as at the origin). (g, T-0017; changed by A3: the loop is
+    reduced to one open strand unless its whole extent is within the tolerance) A closed chain narrower than the
     tolerance is dropped like the two-line sliver above: two spans that never part by more than
     tol/2 (0x82004c8: a lens of two arcs on nearly one circle running opposite ways, 0.018 mm long,
     ~2.4e-5 mm wide; main identical), or any loop whose mean width 2·area/perimeter is below tol/8
@@ -407,3 +409,132 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     allowance, much narrower than the tolerance) as a retrace, where main has 3 and 2 such steps
     for the same inputs (gen3 0x9300ba3, 0x9300c6a; known residual). Noise sweep (300 zig-zags per
     level, 1e-13…1e-4, at 0 and 1e4): clean. R4/R5/R6 as required.
+- **A3 (2026-11-05, T-0128): narrow loops and needles keep their path; no crossing at reversal cusps.**
+  Status unchanged. (A2 is taken by T-0009, in progress.)
+  - *Context.* T-0017 removed three things a tool centre still follows. (1) A closed chain too thin to
+    enclose anything (A1 (g): two spans never more than tol/2 apart, or mean width below tol/8 with
+    every point within tol/8 of another span) was dropped, including an out-and-back needle whose two
+    ends the node walk (step 6) joins because they lie within the tolerance: fam5 0xc5000544, a needle
+    3.6 mm long and 5e-6 mm wide (main before T-0017 kept it). (2) Opposite copies merged within the
+    snapping allowance, and (3) any stretch copies cover both ways (§5), were dropped, so a slot exactly
+    one tool width wide, give or take coordinate noise, lost its path. In the T-0128 channel sweep (a
+    channel 3.6 mm long and 2d + w wide as an open U, the U reversed, a U with a semicircular end and a
+    closed rectangle; w in [0, 1e-5]; d = 0.1317, 1, 3.175; all joins; at the origin and far from it)
+    11 136 of 12 420 inside offsets lost the channel: Round kept it only above the allowance (and only
+    as an open U, where the Round-only "not beyond d" check happened to refuse the closing bridge);
+    Sharp, Square and the rectangle lost it for every w up to 1e-5. Separately, at a reversal cusp
+    between Round arcs about vertices a hair less than 2d apart, the lens between the arcs survives the
+    pruning (inside d only by rounding) and a closed chain ran down one side of it and up the other,
+    crossing itself (0xc500076c: lens 2.1e-4 x 1.9e-9 mm; the round-3 verifier's cusp sweep which = 1,
+    21 of 732 offsets at ~1e4 mm; main before T-0017 left arc-arc junction gaps there instead).
+  - *Decision.* (a) A thin closed chain whose whole extent is within the tolerance is still dropped;
+    otherwise it is cut at its two points farthest apart (two farthest-point sweeps over eight samples
+    per span) and the longer of the two strands is put back as an open chain (end spans no longer than
+    the tolerance dropped). It passes within the loop's width of every point of it. Both strands are not
+    returned: where they coincide (w = 0) that is a retrace. The strand is taken from the raw pieces the
+    loop was stitched from, not from its snapped spans: far from the origin, closing the tip of a needle
+    narrower than the 1e-9 x |coordinates| rounding gap moves a line end across the needle and tilts the
+    whole strand by its width (Sharp, 1.2e4 mm, w = 3e-6: 3e-6 mm beyond d). Its pieces are therefore pieces
+    of raw elements (offset spans, Round arcs and inverted arcs, each exactly d from its own input
+    element, or Sharp/Square corner elements on their corner regions), so it lies at d or on a corner
+    region by construction. (Round 1 also sampled each strand against d + 5e-7 x max(1, d) or a corner
+    region, after an intermediate version built the strand from the snapped spans and put back pieces
+    1.03e-6 mm beyond d, fam5 0x2a500001, 0x2a5000a6. With the strand cut from the raw pieces that test
+    rejected no sample in 480 000 fuzz offsets of families 2-5 with 5 398 loop strands, and no input
+    could be found that a mutant without it gets wrong; round 2 removed it.) A strand that would cross
+    itself (or has more than 512 spans) falls back to the loop's longest span. (b) mergeOnCarriers hands back one copy of every stretch it drops because
+    copies run both ways: the first forward, then backward, copy that lies exactly d from the input there.
+    `RawChain::exact` records, per raw element, the parameter range at exactly d: an offset span's own
+    extent before corners extended or trimmed it, or a whole Round join arc (radius d to the snapping
+    allowance); chamfers, connectors and inverted arcs have none, and only those ranges are put back:
+    opposite copies of mitre extensions or chamfers over a slot narrower than 2d lie farther out, inside
+    the corner regions (fam5 0x285001c5: put back by a first version, 8.4e-6 mm beyond d, the exact
+    checker's excess). Pieces of one element that continue each other are joined, then pieces whose ends
+    coincide to rounding. (c) Strands of both kinds are split where consecutive pieces lie farther apart
+    than rounding (1e-9 x the coordinates) or the strand would turn back, their junctions are made exact
+    (exactJunctions), and they are split again where that fails (arcs at ~1e4 mm, 7.7e-7 mm apart: fam5
+    0x2850005d). (d) Step 7 puts them back as open chains wherever no emitted chain, nor a strand already
+    put back, passes within tol/2: each strand is sampled every tol/4, each uncovered run is widened by one
+    sample into its covered neighbours (so it reaches at most tol/2 into them) and kept when longer than
+    the tolerance. A run widened at neither end is a whole strand none of which is covered (an isolated
+    piece); it is kept only when longer than 10 tol (`kStrayMinimum`; owner decision 2026-11-05: fam0
+    0x71280859 gained an isolated 0.00513 mm chain, noise to the user, while the needles and slots this
+    card is about are millimetres long). So a thin loop of extent between tol and 10 tol touching no other
+    chain is not returned (round 1 also dropped those of extent up to 2 tol, against its own header). The
+    distance g to the chains is 1-Lipschitz along a strand, so a sample vouches for the next |g - tol/2|
+    (all covered or all uncovered), which is skipped; g is found exactly up to a query reach that starts at
+    16.5 tol and doubles, up to 1024.5 tol, while nothing lies within it. The chains and the strands put back
+    are both in grids (the strands in one laid out over all strays, filled as they are put back: a
+    `BoxGrid` that can grow), and the new chains are merged into the output in one pass. The new chains
+    go by where their component (or piece) starts along the input; with nothing put back the output is
+    unchanged. They may
+    touch the chains next to them ("different chains may touch or cross"). (e) At a junction turning back
+    by more than a right angle, where the two spans cross again within the tolerance of it, both are cut
+    back to the crossing farthest from the junction (removeCuspLoops, after the other chain repairs). The
+    crossing must stand off the junction by more than 100 rounding units over the sine of the crossing
+    angle (two circles touching to rounding cross twice ~1e-8 mm apart at places that are noise: fam5
+    0x28500192, where cutting there made a self-crossing), and the cut spans must meet only at their new
+    junction. The remaining geometry is unchanged, so no distance bound moves. A crossing below that
+    bound is not a self-crossing in the sense of the header (amended at the PR #61 MSVC failure): the
+    two circles touch to rounding, the spans stay within rounding of each other up to it, and where it
+    falls (up to 1.4e-7 mm from the junction) moves with the last bit of a radius or of sin/cos. MSVC's
+    sin/cos put one at 1.1e-8 mm from the cusp of the T-0128 synthetic cusp test at g = 0, which glibc
+    happens to put on the junction itself; the tests' self-crossing count applies the same bound to
+    adjacent spans. (f, same PR) exactJunction kept an arc where it started whenever its start lay ahead
+    of the previous end and no centre/radius search hit the end point exactly, leaving residuals up to
+    its 1e-10 x scale snapping limit open (the closing junction of the cusp test's loop at g = 3.2e-11
+    stayed 3.2e-11 mm open with sin/cos 1 ulp off glibc's); it now keeps the arc only within the
+    documented 1e-12 x scale and otherwise takes the nearest searched candidate that does not start
+    behind. Evidence: libm calls (sin, cos, atan2, hypot, acos, asin, tan) wrapped at link time to
+    return results moved by a deterministic pseudo-random -k..k ulps per argument, k = 1..4: the T-0128
+    tests pass for 50 seeds at each k; the cusp sweeps (which = 0..3, d = 0.13 / 1.03 / 3.175, 150
+    perturbed sweeps of 732 offsets) show no self-crossing above the bound and no junction gap, the
+    largest noise crossing at 19.4 of the 100 units (a real cusp lens, 0xc500076c at about 1e4 mm, measures ~6,300 units — about 63× the bound; the same lens beyond about 6e5 mm would fall under it in both the product and the test), while a
+    count with the 1e-9 slack alone finds up to 16 noise crossings per sweep (the round-1 verifier's
+    checker: branch 1-5, main 16-24, and main also opens junction gaps).
+  - *Consequences.* A channel 2d + w wide keeps its path for every w >= 0 (sweep: every inside offset
+    covers the channel's centre line within the tolerance, except the closed rectangles at d = 3.175,
+    which are shorter than the tool). Outputs differ from T-0017 only where it dropped such a path or
+    at a cusp lens; chain counts can grow by the strands put back (the T-0017 chain-split regressions
+    count chains on the middle circle of a ring channel exactly 2d wide apart).
+  - *Results.* Exact checker (the T-0016 verifier's cmp6: xk + vchk metrics, every join and side, branch
+    against origin/main in one process; harness `verifier-harness` t0016v1 with the t0009v3 generators),
+    fresh seeds, final code: legacy family 0 (4000 inputs, 24 000 offsets), family 4 (2500), S-hatch 23,
+    jittered zig-zag 22 and tall-teeth 25 (1500 each), families 2, 3 and 5 as far as the 50-minute job
+    limit reached (1330, 2213 and 2052 inputs); earlier rounds on the intermediate versions found the
+    defects quoted above. No offset is worse than main; the differences are coverage gains (the checker's
+    thin misses drop in 815 offsets and its tie misses in 495, none rise) and shortfalls below d that stay
+    within the allowance (at most ~5e-9 mm, d ~ 1.6, against 7.6e-8). Cusp sweeps (round-3 verifier's
+    cusp.inc, 732 offsets each, Round): which = 1 at d = 1.03 / 0.13 / 3.175: self-crossings 0 (main 21 /
+    0 / 15), junction gaps 0; which = 2: 1 (main 22); which = 0 and 3 as main (1 and 0). The one left in
+    which = 0 and 2 each is a rounding-noise crossing of two circles that touch to rounding (g = 0 and
+    6.3e-11), identical to main. The T-0017 centre-shift sweep (cs, 7776 offsets): clean. Channel sweep
+    (12 420 inside offsets): every one covers the channel's centre line except the 828 closed rectangles
+    at d = 3.175, shorter than the tool (main lost 11 136); the 508 flagged by vchk's overlap check are
+    Round U needles above the allowance, out-and-back chains T-0017 already returned, identical to main.
+    Round 2 (owner minimum, near-linear recovery; same checkers, fresh seeds 0x7228xxxx): legacy family 0
+    (2000 inputs), families 2, 3, 5 (800 each, family 5 twice), 4 (1000), S-hatch 23, zig-zags 21, 22, 25
+    (600 each): no offset worse than main; fam0 0x71280859 is identical to main again (its isolated 0.00513
+    mm chain is gone), while 0x722804d7 keeps an isolated 0.054 mm arc (above 10 tol; it clears two of the
+    checker's thin misses main has). Channel sweep at d = 0.1317, 1, 3.175 (L 3.6) and d = 3.175 (L 20): a
+    path for every w >= 0 (main lost 7110 / 6900 / 4950 / 6795), worse 0. Cusp sweeps as above (which = 1:
+    0 self-crossings at d = 1.03, 3.175, 0.13; main 21, 15, 0). The ADR's regression seeds above are tests
+    (offset_narrow_loops_test.cpp), with cases that fail when the exact-range cut of (b), the stand-off
+    test of (e), the cover test of (d) or the minimum of (d) is removed.
+  - *Cost.* Release, CPU time, interleaved with main in one process on a shared 16-thread machine, min of
+    3 runs. Without strays the work is main's plus a pass over the junctions (reversal cusps) and the
+    exact ranges of (b): the T-0016 card case (zig-zag of 1000 spans, pitch 0.02, amplitude 1, d = 7) Round
+    0.85 s (main 0.94), Sharp 0.68 s (0.68), Square 0.71 s (0.70); pitch 0.05, amplitude 0.2, d = 5, 4000
+    spans: 0.75 / 0.84 / 0.81 s (main 0.81 / 0.82 / 0.79). Fuzz sets, summed per offset (1000 inputs each,
+    6000 offsets): family 0 1.006x main, 2 1.011x, 3 0.995x, 4 1.007x, 5 1.012x. With strays the work grows
+    linearly with their number and length: a boustrophedon hatch at pitch exactly 2d (a stray between every
+    pair of lines), a comb whose slots are 2d (+ 1e-7) wide, closed rectangles 3.6 x 2d traced in one open
+    path, and a serpentine of half-ring channels 2d wide, 300 / 1000 / 3000 of each, every join, cost at
+    most 1.41x main (hatch, 3000 lines, Round: 0.031 s, main 0.022 s), e.g. hatch Round 0.0030 / 0.0134 /
+    0.0312 s, comb Round 0.0068 / 0.0257 / 0.0717 s, rectangles Square 0.0108 / 0.0306 / 0.134 s.
+    Round 1 compared each sample with every stray already put back, which made these quadratic (hatch at
+    3000 lines 2.94 s, rectangles 25.3 s, serpentine 16.2 s) and sampled uncovered strands every 16 tol (or
+    every tol on a loop's strand, 4.6 million samples for the Square hatch at 2d + 1e-7). The round-1
+    verifier's per-family figures (1.06-1.15x main) came from the exact checker's driver, which times the
+    branch first after the checker has run and main right after it; with the calls swapped, the same
+    driver gives family 3 0.97x and family 5 0.83x, so that excess was cache warm-up, not the branch.

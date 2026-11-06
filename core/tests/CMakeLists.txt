@@ -32,7 +32,7 @@ add_executable(carvetto_tests
   toolpath/pass_plan_test.cpp
   toolpath/linking_test.cpp
   toolpath/time_test.cpp
-  toolpath/path_walk_test.cpp toolpath/profile_test.cpp toolpath/profile_allowance_limit_test.cpp toolpath/profile_on_allowance_limit_test.cpp toolpath/profile_tolerance_test.cpp toolpath/profile_golden_test.cpp toolpath/profile_property_test.cpp toolpath/profile_empty_walk_test.cpp
+  toolpath/path_walk_test.cpp toolpath/profile_test.cpp toolpath/profile_allowance_limit_test.cpp toolpath/profile_on_allowance_limit_test.cpp toolpath/profile_tolerance_test.cpp toolpath/profile_golden_test.cpp toolpath/profile_property_test.cpp toolpath/profile_empty_walk_test.cpp toolpath/profile_tip_start_test.cpp
   tooling/tool_test.cpp
   tooling/tool_database_test.cpp
   tooling/json_io_test.cpp
@@ -58,6 +58,7 @@ add_executable(carvetto_tests
   geometry/offset_test.cpp
   geometry/open_offset_chains_test.cpp
   geometry/offset_quality_test.cpp
+  geometry/offset_narrow_loops_test.cpp
   geometry/offset_hatch_cost_test.cpp
   geometry/offset_inradius_test.cpp
   geometry/offset_dust_test.cpp

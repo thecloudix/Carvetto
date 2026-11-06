@@ -2856,19 +2856,23 @@ TEST_CASE("Separate last pass, negative allowance: tabs that hold are matched on
             }
             CHECK(g.message.find("comes free") == std::string::npos);
         }
-        if (std::string(k.name) != "m1_402002_27" && tabsLeftOut(r) == k.left) {
+        if (std::string(k.name) == "m1_402002_27") {
+            // m1_402002_27 starts at the star's convex start vertex, the centre of the cut's round
+            // join there: every point of that arc is equally near. The cut start followed the
+            // rounding of a ~1e-15 radial vector, which differed between GCC and MSVC (3 vs 2 tabs
+            // left out). Since T-0158 such a tie starts at the beginning of the corner arc on every
+            // platform (ADR-0016 §11), so the count is exact again; the parts still hold (flood).
+            CHECK(tabsLeftOut(r) == k.left);
+            checkPartsHeld(r, cs, p, d);
             continue;
         }
-        // m1_402002_27 starts at the star's convex start vertex, the centre of the cut's round join
-        // there: every point of that arc is equally near, and the cut start (so the tab layout)
-        // follows the rounding of a ~1e-15 radial vector, which differs between GCC and MSVC (3 vs
-        // 2 tabs left out; a scale of 1 +- 1e-15 flips it on Linux; both layouts hold in the flood,
-        // 15 and 16 tabs). That tie predates T-0135 (main and T-0127 share it), so this test asserts
-        // what holds on every platform: no more tabs left out than here (T-0127 left out 6), and
-        // each vector's part stays joined to the waste through the kept tabs (raster flood).
-        // T-0159: the other scenes' counts are knife-edge in the same way (rounding of the cut's start
-        // and the tab fitting): GCC 15 with FMA contraction keeps one more tab in m1_502006_8. Where a
-        // platform's count differs from the reference, the same platform-independent check applies.
+        if (tabsLeftOut(r) == k.left) {
+            continue;
+        }
+        // T-0159: the other scenes' counts are knife-edge (rounding of the tab fitting): GCC 15 with
+        // FMA contraction keeps one more tab in m1_502006_8. Where a platform's count differs from
+        // the reference, a platform-independent check applies: no more tabs left out than the
+        // reference, and each vector's part stays joined to the waste through the kept tabs (flood).
         CHECK(tabsLeftOut(r) <= k.left);
         checkPartsHeld(r, cs, p, d);
     }
@@ -3100,7 +3104,10 @@ TEST_CASE("T-0135 round 2: exact loose pieces; add-back and fitting never cost a
         // separate last pass. The move margin put a tab T-0127 matched where it could not be
         // matched; T-0127's placement is now evaluated too and kept on a tie.)
         // (Outside, allowance -1.77, separate last pass: a tab matched only by the second try took
-        // room another tab's cover needed and was cut through; T-0127's matching is a candidate.)
+        // room another tab's cover needed and was cut through; T-0127's matching is a candidate.
+        // T-0158: the cut starts at its convex start vertex, a tie on the round join there that
+        // GCC 13 and GCC 15 (FMA) broke differently (7 and 6 left out). The tie-break rule gives 6
+        // on both; the 3 kept tabs all hold (whole-scene flood).)
         {"m2_800016_13",
          "C 1\n"
          "L 0x1.1007a8608f3f4p+4 0x0p+0 0x1.f29ac1fcec938p+1 0x1.1119ba9978168p+1\n"
@@ -3117,7 +3124,7 @@ TEST_CASE("T-0135 round 2: exact loose pieces; add-back and fitting never cost a
          "L 0x1.84aee0c879f23p+2 -0x1.d554bd94a409bp+1 0x1.1007a8608f3f4p+4 0x0p+0\n"
          "P 0x1.8p+2 0 -0x1.c487ca151f37dp+0 0 0 0x0p+0 0x1.6a7ef6d1bfe66p+1 0x1.c2374880d2c0bp+1 0x0p+0 0x1.4p+2 1 0x1.b21e41f883243p-1 1 1 0x1.64499ce45e4b2p+1 0x1.465e33a88f7aap+0 0 9 0x1.eb604e132f394p+5 0x0p+0 0 1 0x0p+0 1 0x1.5df11dab4989cp+4 1 0 0x1.851a0e357e8e4p-4 0x1.1e496f0aac5edp+3 0x1.2d7e68160f324p+0 0x1.6e4bfc830cff8p+2 0 0x1.c7b304fb8e75p-1 0 0 0x0p+0 0x0p+0 0 8 0 0 0 0 -0x1.13eb499fc42e4p+5 0x1.813a4983a2c08p+2 0x1p+1\n"
          "K 0 0\n"
-         , 7, {}},
+         , 6, {}},
         {"m3_901032_23",
          "C 1\n"
          "L -0x1.059e88f2228c2p+3 -0x1.537988c8ff595p+2 0x1.059e88f2228c2p+3 -0x1.537988c8ff595p+2\n"
@@ -3384,12 +3391,12 @@ TEST_CASE("T-0135 round 2: exact loose pieces; add-back and fitting never cost a
             if (g.message.find("comes free") == std::string::npos) continue;
             areas.push_back(std::stod(g.message.substr(g.message.find("(about ") + 7)));
         }
-        // The counts were taken with GCC 13 and MSVC, and some scenes are knife-edge: the cut's start
-        // and the tab fitting follow the last bits of the offset, and GCC 15 with FMA contraction
-        // (x86-64-v3) keeps one more tab in m2_800016_13 (T-0159). Where a platform's count differs,
-        // what the scenes guard is checked instead: no tab lost against the reference, and every
-        // part still held through the kept tabs (raster flood). Scenes with loose pieces keep the
-        // exact count.
+        // The counts were taken with GCC 13 and MSVC, and some scenes are knife-edge: the tab fitting
+        // follows the last bits of the offset (GCC 15 with FMA contraction kept one more tab in
+        // m2_800016_13, T-0159; that one was the start-point tie fixed by T-0158). Where a
+        // platform's count differs, what the scenes guard is checked instead: no tab lost against
+        // the reference, and every part still held through the kept tabs (raster flood). Scenes
+        // with loose pieces keep the exact count.
         if (tabsLeftOut(r) != k.left && k.areas.empty()) {
             CHECK(tabsLeftOut(r) < k.left);
             checkPartsHeld(r, cs, p, d);

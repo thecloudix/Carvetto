@@ -20,6 +20,7 @@
 
 #include "carvetto/geometry/boolean.hpp"
 #include "carvetto/geometry/contour_ops.hpp"
+#include "carvetto/geometry/fixed_point.hpp"
 #include "carvetto/geometry/fill_rule.hpp"
 #include "carvetto/geometry/offset.hpp"
 #include "carvetto/toolpath/box_index.hpp"
@@ -48,6 +49,8 @@ struct Cut {
     bool fromClosed{true};
     bool exact{true};      // exact offset of its source (trusted against it); false = merged region
     double distance{0.0};  // |offset| from the vectors
+    double offsetBy{0.0};  // distance the path was offset by (a merged region: + the chordal tolerance)
+    double offsetSlack{0.0};  // how much nearer a polygonal (region) path may come: its chords' sagitta
     ArcLengthPath walk;
     std::vector<TabSpan> tabs;  // raised stretches (arc length on `walk`)
     // How the tabs were placed (placeTabsOn), so matchRoughingTabs can place them again without
@@ -122,6 +125,313 @@ void closeExactly(Contour& c) {
     } else if (auto* head = std::get_if<geometry::LineSpan>(&c.spans.front())) {
         head->start = geometry::endPoint(c.spans.back());
     }
+}
+
+// The input edges that meet at the vertex a cut is asked to start at, in the vector's own order.
+struct TipEdges {
+    Span in;   // ends at the vertex
+    Span out;  // starts there
+};
+
+// Arc length on the closed walk at which a cut asked to start nearest `target` starts (ADR-0016
+// §11, T-0158). Some targets have several equally near points, and the plain projection then
+// follows rounding (the direction of a near-zero vector, or which of two equal distances comes
+// out smaller), which differs between compilers, FMA contraction and libm. Two such ties are
+// broken by rule, comparing distances within `eps`:
+//  1. Round corner: `target` lies at the centre of an arc of the walk that is at the nearest
+//     distance (a convex tip's round join on an Outside cut, a circle round its bounding-box
+//     centre): start at the beginning of the first such arc (lowest span index), if that point is
+//     itself at the nearest distance.
+//  2. Sharp corner: `target` lies on the vector (the nearest distance is `cutDistance`, the
+//     distance the cut was offset by — a merged region is offset by the chordal tolerance more —
+//     or up to `slack` less, where a region's polygonal round join cuts inside by its sagitta).
+//     When `target` is a vertex of the cut's vectors (`tipEdges`: the input edges into and out of
+//     it), the start is the corner the offset built there, found from those two edges alone: the
+//     spans on each edge's offset (its line or circle at `cutDistance`, to rounding) bound it, and
+//     what lies between, in travel, from the last span on the first edge's offset to the next on
+//     the other's, is the corner: the mitre, a chamfer, a join arc or a region's join chords. The
+//     cut starts at its first junction: exactly the mitre, the chamfer's first corner, the join's
+//     first point (`target`'s foot on the first edge's offset). Spans within rounding of both
+//     offsets (a sliver of the first edge's offset at the mitre, a join chord too short to tell)
+//     put the start at the first of their junctions on the circle of `cutDistance` about `target`,
+//     else after them. Neighbouring vertices, collinear or not, and split points of the offset
+//     lines never bound the corner, so they cannot take the start; no turn or length is compared.
+//     Otherwise (no vertex, or no such corner with a nearest span, e.g. where an edge's offset is
+//     consumed) the spans at the nearest distance must form one run of two or more consecutive
+//     spans; when every span is near (a loop of two or three spans) the loop is broken at the
+//     clearly widest gap between consecutive feet. Then:
+//     - with round joins (`roundJoins`): the first point of the run in travel on that circle;
+//     - otherwise, of the run's junctions at which `target` is equidistant from the two spans'
+//       carrier lines or circles to rounding, the one whose feet of `target` lie most evenly
+//       either side of it (with none equidistant, of all junctions).
+//     Near spans in separate places (a box anchor on a symmetric shape) stay with the projection.
+// Otherwise the nearest point (`ArcLengthPath::project`).
+double tieFreeStart(const ArcLengthPath& walk, Vec2 target, double eps, double cutDistance, double slack,
+                    bool roundJoins, const std::function<std::optional<TipEdges>()>& tipEdges) {
+    const Contour& c = walk.contour();
+    const std::size_t n = c.spans.size();
+    if (n == 0) {
+        return 0.0;
+    }
+    std::vector<double> dist(n);
+    std::vector<double> param(n);
+    double nearest = std::numeric_limits<double>::infinity();
+    for (std::size_t i = 0; i < n; ++i) {
+        const geometry::ClosestPoint cp = geometry::closestPoint(c.spans[i], target);
+        dist[i] = cp.distance;
+        param[i] = cp.t;
+        nearest = std::min(nearest, dist[i]);
+    }
+    for (std::size_t i = 0; i < n; ++i) {
+        if (const auto* a = std::get_if<geometry::ArcSpan>(&c.spans[i])) {
+            if (geometry::distance(a->centre, target) <= eps && a->radius <= nearest + eps &&
+                geometry::distance(a->startPoint(), target) <= nearest + eps) {
+                return walk.spanStart(i);
+            }
+        }
+    }
+    if (walk.closed() && n >= 2 && nearest <= cutDistance + eps && nearest >= cutDistance - slack - eps) {
+        auto isNear = [&](std::size_t i) { return dist[i] <= nearest + eps; };
+        // Where the projection already lands exactly on the chosen point, keep its arc length (the
+        // same point, and the same output as before this rule).
+        auto startAt = [&](double u) {
+            const double projected = walk.project(target);
+            return walk.pointAt(projected) == walk.pointAt(u) ? projected : u;
+        };
+        const double scale = std::max({1.0, std::fabs(target.x), std::fabs(target.y), cutDistance});
+        // Coordinates of a merged region lie on Clipper2's grid; exact offsets carry rounding and
+        // the offset's own closing of junction residuals (up to 1e-10 x the scale).
+        const double coord = slack > 0.0 ? 1.0 / geometry::kFixedPointScale : 1e-10 * scale;
+        // A region's round join is a polygon whose vertices Clipper2 puts on the circle of radius
+        // cutDistance about the (grid-rounded) tip, starting with the foot on the incoming offset
+        // edge; each is off by up to half a grid unit per axis, as is the tip itself. An exact
+        // offset's chord across a sub-tolerance join arc ends on that circle to rounding (and the
+        // offset's closing of residuals, 1e-10 x the scale).
+        const double onCircle = slack > 0.0 ? 3.0 / geometry::kFixedPointScale : 4e-10 * scale;
+        if (const std::optional<TipEdges> tip = tipEdges()) {
+            // Which spans lie on the offset of the input edge entering the target vertex (1) or
+            // leaving it (2): start, middle and end at the cut distance from that edge's line or
+            // circle, to rounding (a line's direction comes from its end points, so a point
+            // farther along than the edge is long is less exact) and, on a region, to its chords'
+            // sagitta. The spans the offset builds at the corner itself (mitre, chamfer, join arc
+            // or chords) lie off both by far more: they turn against both edges.
+            auto onOffsetOf = [&](const Span& s, const Span& edge) {
+                const std::array<Vec2, 3> pts{geometry::startPoint(s), geometry::pointAt(s, 0.5), geometry::endPoint(s)};
+                if (const auto* l = std::get_if<geometry::LineSpan>(&edge)) {
+                    const Vec2 d = l->end - l->start;
+                    const double len = d.length();
+                    if (!(len > 0.0)) {
+                        return false;
+                    }
+                    for (const Vec2 p : pts) {
+                        const double g = std::fabs((p - l->start).cross(d)) / len;
+                        const double t = (p - l->start).dot(d) / len;
+                        const double beyond = std::max({0.0, -t, t - len});
+                        const double noise = 4.0 * coord * (2.0 + 2.0 * beyond / len);
+                        if (std::fabs(g - cutDistance) > noise) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+                if (const auto* a = std::get_if<geometry::ArcSpan>(&edge)) {
+                    const double noise = 8.0 * coord + 4e-12 * a->radius + slack;
+                    for (const Vec2 p : pts) {
+                        const double rho = geometry::distance(p, a->centre);
+                        if (std::min(std::fabs(rho - (a->radius + cutDistance)),
+                                     std::fabs(rho - std::fabs(a->radius - cutDistance))) > noise) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+                return false;
+            };
+            // A span within rounding of both (a sliver at the mitre; every span when the vertex
+            // is no corner) counts as on either.
+            std::vector<int> label(n, 0);
+            for (std::size_t i = 0; i < n; ++i) {
+                label[i] = (onOffsetOf(c.spans[i], tip->in) ? 1 : 0) + (onOffsetOf(c.spans[i], tip->out) ? 2 : 0);
+            }
+            // Does the cut run the vector's way (entering edge first) or against it? Asked of the
+            // nearest spans on one edge's offset, which must agree.
+            double nearestOn = std::numeric_limits<double>::infinity();
+            for (std::size_t i = 0; i < n; ++i) {
+                if (label[i] == 1 || label[i] == 2) {
+                    nearestOn = std::min(nearestOn, dist[i]);
+                }
+            }
+            int met = 0;  // the edge whose offset comes first in travel (1 entering, 2 leaving)
+            for (std::size_t i = 0; i < n; ++i) {
+                if ((label[i] == 1 || label[i] == 2) && dist[i] <= nearestOn + eps) {
+                    const Vec2 along = geometry::tangentAt(c.spans[i], param[i]);
+                    const Vec2 edgeDir =
+                        label[i] == 1 ? geometry::tangentAt(tip->in, 1.0) : geometry::tangentAt(tip->out, 0.0);
+                    const int m = along.dot(edgeDir) > 0.0 ? 1 : 2;
+                    met = met == 0 || met == m ? m : -1;
+                }
+            }
+            if (met > 0) {
+                // The corner construction lies between a span on the offset of the edge met first
+                // and the next labelled span, on the other edge's: the mitre between them, or the
+                // chamfer, join arc or chords. It is the one with a nearest span; start at its
+                // first junction, which is the mitre, the chamfer's first corner or the join's
+                // first point in travel.
+                std::size_t pick = n;
+                std::size_t count = 0;
+                for (std::size_t i = 0; i < n; ++i) {
+                    if ((label[i] & met) == 0) {
+                        continue;
+                    }
+                    std::size_t j = (i + 1) % n;
+                    bool near = isNear(i);
+                    while (j != i && label[j] == 0) {
+                        near = near || isNear(j);
+                        j = (j + 1) % n;
+                    }
+                    if (j == i || label[j] != 3 - met) {
+                        continue;
+                    }
+                    // Spans within rounding of both edges' offsets just before (the end of the first
+                    // edge's offset, or a join chord too short to tell) leave the first junction
+                    // within their length: the first of them on the circle of the cut distance about
+                    // the target (where a join starts), else the last.
+                    std::size_t from = (i + 1) % n;
+                    if (label[i] == 3) {
+                        std::size_t k0 = i;
+                        while (label[(k0 + n - 1) % n] == 3 && (k0 + n - 1) % n != i) {
+                            k0 = (k0 + n - 1) % n;
+                        }
+                        from = (label[(k0 + n - 1) % n] & met) != 0 ? k0 : (k0 + 1) % n;
+                        for (std::size_t k = k0; k != (i + 1) % n; k = (k + 1) % n) {
+                            near = near || isNear(k);
+                        }
+                    }
+                    if (!near && !isNear(j)) {
+                        continue;
+                    }
+                    std::size_t at = (i + 1) % n;
+                    for (std::size_t k = from; k != (i + 1) % n; k = (k + 1) % n) {
+                        if (std::fabs(geometry::distance(geometry::startPoint(c.spans[k]), target) - cutDistance) <=
+                            onCircle) {
+                            at = k;
+                            break;
+                        }
+                    }
+                    pick = at;
+                    ++count;
+                }
+                if (count == 1) {
+                    return startAt(walk.spanStart(pick));
+                }
+            }
+        }
+        std::size_t nearCount = 0;
+        std::size_t runs = 0;
+        std::size_t first = n;
+        bool longRun = false;
+        for (std::size_t i = 0; i < n; ++i) {
+            if (isNear(i)) {
+                ++nearCount;
+            }
+            if (isNear(i) && !isNear((i + n - 1) % n)) {
+                ++runs;
+                first = i;
+                longRun = isNear((i + 1) % n);
+            }
+        }
+        bool found = runs == 1 && longRun;
+        if (nearCount == n) {
+            // Every span is near (a loop of few spans, e.g. an arc closed by one line, mitred at
+            // both ends): the run is the whole loop, broken where consecutive feet lie farthest
+            // apart along it; it must be clearly the largest gap.
+            const double len = walk.length();
+            auto foot = [&](std::size_t i) { return walk.spanStart(i) + param[i] * walk.spanLength(i); };
+            std::size_t widest = 0;
+            double gap1 = -1.0;
+            double gap2 = -1.0;
+            for (std::size_t i = 0; i < n; ++i) {
+                const double g = i + 1 < n ? foot(i + 1) - foot(i) : foot(0) + len - foot(i);
+                if (g > gap1) {
+                    gap2 = gap1;
+                    gap1 = g;
+                    widest = i;
+                } else if (g > gap2) {
+                    gap2 = g;
+                }
+            }
+            first = (widest + 1) % n;
+            found = gap1 - gap2 > eps;
+        }
+        if (found) {
+            std::size_t runLength = 0;
+            while (runLength < n && isNear((first + runLength) % n)) {
+                ++runLength;
+            }
+            if (nearCount == n) {
+                runLength = n;
+            }
+            // Junction k of the run joins its spans k and k + 1 (span indices first + k ...).
+            auto spanOf = [&](std::size_t k) { return (first + k) % n; };
+            const std::size_t junctions = runLength - 1;
+            if (roundJoins) {
+                auto onJoin = [&](std::size_t i) {
+                    return std::fabs(geometry::distance(geometry::startPoint(c.spans[i]), target) - cutDistance) <=
+                           onCircle;
+                };
+                for (std::size_t k = 0; k <= junctions; ++k) {
+                    std::size_t i = spanOf(k);
+                    if (onJoin(i)) {
+                        // The join's last chord is shorter than the others, so less near: where the
+                        // cut runs the join that way, it is not part of the run. Back up over it.
+                        for (std::size_t back = 0; back + 1 < n && onJoin((i + n - 1) % n); ++back) {
+                            i = (i + n - 1) % n;
+                        }
+                        return startAt(walk.spanStart(i));
+                    }
+                }
+            }
+            // Distance from `target` to a span's carrier (its line or circle), and how far that may
+            // be off: a line's direction comes from its end points, so a short line is less exact.
+            auto carrier = [&](std::size_t i, double& noise) {
+                const Span& sp = c.spans[i];
+                if (const auto* a = std::get_if<geometry::ArcSpan>(&sp)) {
+                    noise = coord;
+                    return std::fabs(geometry::distance(a->centre, target) - a->radius);
+                }
+                const Vec2 p0 = geometry::startPoint(sp);
+                const Vec2 d = geometry::endPoint(sp) - p0;
+                const double len = d.length();
+                noise = coord * (1.0 + (len > 0.0 ? cutDistance / len : scale));
+                return len > 0.0 ? std::fabs((target - p0).cross(d)) / len : geometry::distance(target, p0);
+            };
+            std::vector<char> equi(junctions, 0);
+            std::vector<double> lopsided(junctions, 0.0);
+            bool anyEqui = false;
+            for (std::size_t k = 0; k < junctions; ++k) {
+                const std::size_t a = spanOf(k);
+                const std::size_t b = spanOf(k + 1);
+                double na = 0.0;
+                double nb = 0.0;
+                const double ga = carrier(a, na);
+                const double gb = carrier(b, nb);
+                equi[k] = std::fabs(ga - gb) <= 4.0 * (na + nb) ? 1 : 0;
+                anyEqui = anyEqui || equi[k] != 0;
+                // Feet of `target` on the two spans either side of the junction.
+                lopsided[k] = std::fabs((1.0 - param[a]) * walk.spanLength(a) - param[b] * walk.spanLength(b));
+            }
+            std::size_t pick = junctions;
+            for (std::size_t k = 0; k < junctions; ++k) {
+                if ((equi[k] != 0 || !anyEqui) && (pick == junctions || lopsided[k] < lopsided[pick])) {
+                    pick = k;
+                }
+            }
+            if (pick < junctions) {
+                return startAt(walk.spanStart(spanOf(pick + 1)));
+            }
+        }
+    }
+    return walk.project(target);
 }
 
 // A cross-section of a tab's material: the segment across the kerf at one station of the tab.
@@ -284,6 +594,8 @@ class ProfileBuilder {
     void orient(Cut& c, bool finishing) const;
     std::vector<Cut> trim(std::vector<Cut> cuts);
     void chooseStarts(std::vector<Cut>& cuts);
+    std::optional<TipEdges> tipEdges(const Cut& c, Vec2 target) const;
+    double startOn(const Cut& c, const ArcLengthPath& walk, Vec2 target) const;
     std::vector<std::size_t> order(const std::vector<Cut>& cuts) const;
     void placeTabsOn(std::vector<Cut>& primary, const std::vector<Cut>& otherPass, bool asT0127 = false,
                      bool refuseAtGap = false);
@@ -678,6 +990,7 @@ std::vector<Cut> ProfileBuilder::buildCuts(double extra, bool finishing) {
             cut.contourOnLeft = vectorLeft;
             cut.fromClosed = in_.contours[i].closed;
             cut.distance = d;
+            cut.offsetBy = d;
             cuts.push_back(std::move(cut));
         }
     }
@@ -737,6 +1050,8 @@ std::vector<Cut> ProfileBuilder::buildCuts(double extra, bool finishing) {
             cut.fromClosed = true;
             cut.exact = false;
             cut.distance = d;
+            cut.offsetBy = std::fabs(dd);
+            cut.offsetSlack = offTol_.chordal;
             cuts.push_back(std::move(cut));
         }
         for (std::size_t i : group) {
@@ -826,12 +1141,59 @@ std::vector<Cut> ProfileBuilder::trim(std::vector<Cut> cuts) {
             piece.fromClosed = cut.fromClosed;
             piece.exact = cut.exact;
             piece.distance = cut.distance;
+            piece.offsetBy = cut.offsetBy;
+            piece.offsetSlack = cut.offsetSlack;
             if (!piece.path.isEmpty()) {
                 out.push_back(std::move(piece));
             }
         }
     }
     return out;
+}
+
+// The input edges meeting at `target` when it is a vertex of one of the cut's vectors (to rounding;
+// the first such vertex in the order of the cut's sources), for the cut start (T-0158).
+std::optional<TipEdges> ProfileBuilder::tipEdges(const Cut& c, Vec2 target) const {
+    const double near = 4e-10 * std::max({1.0, std::fabs(target.x), std::fabs(target.y)});
+    for (std::size_t src : c.sources) {
+        const Contour& v = raw_[src];
+        const std::size_t n = v.spans.size();
+        for (std::size_t i = 0; i < n; ++i) {
+            if (geometry::distance(geometry::startPoint(v.spans[i]), target) > near || (i == 0 && !v.closed)) {
+                continue;
+            }
+            // A Bezier is offset as its polygon (at offTol_): its chord at the vertex.
+            auto chordAt = [&](const Span& sp, bool last) -> std::optional<Span> {
+                if (!std::holds_alternative<geometry::BezierSpan>(sp)) {
+                    return sp;
+                }
+                std::vector<Vec2> pts{geometry::startPoint(sp)};
+                geometry::polygoniseInto(sp, offTol_, pts);
+                std::optional<Span> chord;
+                for (std::size_t k = 1; k < pts.size(); ++k) {
+                    if (!offTol_.equalPoints(pts[k - 1], pts[k])) {
+                        chord = geometry::LineSpan{pts[k - 1], pts[k]};
+                        if (!last) {
+                            break;
+                        }
+                    }
+                }
+                return chord;
+            };
+            const std::optional<Span> in = chordAt(v.spans[i == 0 ? n - 1 : i - 1], true);
+            const std::optional<Span> out = chordAt(v.spans[i], false);
+            if (!in || !out) {
+                return std::nullopt;
+            }
+            return TipEdges{*in, *out};
+        }
+    }
+    return std::nullopt;
+}
+
+double ProfileBuilder::startOn(const Cut& c, const ArcLengthPath& walk, Vec2 target) const {
+    return tieFreeStart(walk, target, tol_.distance, c.offsetBy, c.offsetSlack, !sharpExternal_,
+                        [&] { return tipEdges(c, target); });
 }
 
 void ProfileBuilder::chooseStarts(std::vector<Cut>& cuts) {
@@ -848,7 +1210,7 @@ void ProfileBuilder::chooseStarts(std::vector<Cut>& cuts) {
             } else {
                 target = anchorOf(c.path.bounds(), p_.startAnchor);
             }
-            const double u = walk.project(target);
+            const double u = startOn(c, walk, target);
             c.path.spans = walk.extract(u, u + walk.length());
         }
         closeExactly(c.path);
@@ -2835,7 +3197,7 @@ ProfileResult ProfileBuilder::run() {
         for (std::size_t i : ord) {
             Cut& c = cuts[i];
             if (c.walk.closed()) {
-                const double u = c.walk.project(prev);
+                const double u = startOn(c, c.walk, prev);
                 c.path.spans = c.walk.extract(u, u + c.walk.length());
                 closeExactly(c.path);
                 c.walk = ArcLengthPath(c.path, offTol_);
