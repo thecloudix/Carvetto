@@ -44,7 +44,8 @@ Hashes (results/hs, vc3 26 groups x 40): base vs branch VC_CS=0 1040/1040 and FM
  adv sets (t0153v4 adv/adv2 x 5 configs, 1620): base vs branch identical in all 1400 runs without corner cuts; INS 1620/1620 good
  (220 with cuts); cone oracle on adv with 3 end-mill configs (advcone.txt, 972 runs): 0 violations, 0 fails.
 Cone sweep (vc3 VCVIOL, FM2, families 0-23 x 12): 0 real violations in 23 families (fam 15 coincident-edge false alarms as before);
- fam 20 x 12 hit the timeout as in round 1; fam_20_n4.txt (4 cases): see file.
+ fam 20 hit the timeout as in round 1 (12 cases, and a 4-case rerun stopped after 19 min with no case finished: the cone oracle is
+ slow on fam 20; its hash/INS runs finished in seconds): inconclusive, as in round 1.
 CLI: params.json corner_sharpen false/true -> job.json "corner_sharpen": false/true; sign pipeline with true == golden (bar the
  file-name comment), with false == base output; help text present (still says "convex corners ... bisector", nit).
 Golden hand check (plate, V90 F 1.5, c = 0.01667, end mill 1 mm): corner (10,0): groove (11.517,1.517) -> (11.710,1.710) = wall-ring
