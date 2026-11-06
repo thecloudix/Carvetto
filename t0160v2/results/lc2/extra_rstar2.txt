@@ -1,0 +1,14 @@
+rstar20                            ins=1 cuts=4 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=-9.33e-08 ridge=0.3381 lim=1.000 rho=0.5774 s=0.3904
+    GSCAN gs=0.050 tentPts=1754 above=0 onWorst=0.338096 at (11.29073,1.00991) offWorst=0.5000 ridge=0.3381 | oraclePred=1.00000 (at 1.3398,-9.8401) cuts=4
+    => ok corners=5 worstCornerOn=0.3381
+rstar21                            ins=1 cuts=8 cl=1 dg=1 minClr-c/2=+1.67e-03 ringClr-c/2=-8.62e-07 ridge=0.0746 lim=1.000 rho=1.0000 s=0.1492
+    GSCAN gs=0.037 tentPts=7681 above=0 onWorst=0.074600 at (-6.03660,-7.29564) offWorst=0.4146 ridge=0.0746 | oraclePred=0.80661 (at 0.2670,7.5124) cuts=8
+    => ok corners=8 worstCornerOn=0.0746
+rstar22                            ins=1 cuts=12 cl=1 dg=1 minClr-c/2=+2.05e-04 ringClr-c/2=-9.63e-07 ridge=0.3771 lim=1.000 rho=0.5774 s=0.4354
+    GSCAN gs=0.050 tentPts=4480 above=0 onWorst=0.377067 at (-3.14754,-3.72082) offWorst=0.6467 ridge=0.3771 | oraclePred=1.00000 (at -1.9974,-4.3207) cuts=12
+    => ok corners=8 worstCornerOn=0.3771
+rstar23                            ins=1 cuts=4 cl=1 dg=1 minClr-c/2=+1.67e-03 ringClr-c/2=+1.58e-03 ridge=0.2924 lim=1.000 rho=1.0000 s=0.5848
+    corner (-7.5410,-13.6928) ang 55.55 deg: off 0.1469 -> on 0.146873 at (-6.599550,-11.106754) pts 509 UNSHARPENED>chordal
+    GSCAN gs=0.050 tentPts=0 above=0 onWorst=0.000000 at (0.00000,0.00000) offWorst=0.1382 ridge=0.2924 | oraclePred=0.25004 (at -6.4553,-11.1928) cuts=4
+    => ok corners=5 worstCornerOn=0.1469
+SUMMARY run=4 fail=0

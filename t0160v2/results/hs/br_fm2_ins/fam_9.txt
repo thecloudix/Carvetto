@@ -1,0 +1,43 @@
+INS case 0 bowtie ncl 1 flat 33.88 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 1 pentagram ncl 1 flat 3.681 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 2 pentagram ncl 2 flat 2.048 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 3 fig8 ncl 2 flat 1.347 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 4 bowtie ncl 2 flat 8.168 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 5 pentagram ncl 1 flat 10.33 ok 0 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 6 bowtie ncl 1 flat 4.141 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 7 fig8 ncl 2 flat 6.34 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 8 bowtie ncl 1 flat 7.023 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 9 fig8 ncl 2 flat 1.909 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 10 fig8 ncl 2 flat 12.94 ok 1 okEq 1 ins 1 cuts 18 feeds 18 clEq 1 diagEq 1 good
+INS case 11 bowtie ncl 2 flat 11.17 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 12 bowtie ncl 1 flat 33.78 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 13 fig8 ncl 1 flat 0.4864 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 14 pentagram ncl 1 flat 0.9982 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 15 pentagram ncl 1 flat 0.6028 ok 1 okEq 1 ins 1 cuts 40 feeds 40 clEq 1 diagEq 1 good
+INS case 16 bowtie ncl 1 flat 13.3 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 17 pentagram ncl 2 flat 3.924 ok 1 okEq 1 ins 1 cuts 8 feeds 8 clEq 1 diagEq 1 good
+INS case 18 fig8 ncl 2 flat 4.179 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 19 bowtie ncl 1 flat 9.148 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 20 fig8 ncl 2 flat 3.57 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 21 bowtie ncl 1 flat 33.46 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 22 pentagram ncl 1 flat 0.9041 ok 0 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 23 fig8 ncl 2 flat 3.448 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 24 bowtie ncl 1 flat 1.186 ok 1 okEq 1 ins 1 cuts 6 feeds 46 clEq 1 diagEq 1 good
+INS case 25 bowtie ncl 2 flat 3.925 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 26 fig8 ncl 2 flat 4.467 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 27 fig8 ncl 2 flat 3.55 ok 1 okEq 1 ins 1 cuts 6 feeds 6 clEq 1 diagEq 1 good
+INS case 28 bowtie ncl 1 flat 1.926 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 29 bowtie ncl 2 flat 2.046 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 30 fig8 ncl 1 flat 2.15 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 31 bowtie ncl 1 flat 6.082 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 32 bowtie ncl 2 flat 3.819 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 33 fig8 ncl 2 flat 5.986 ok 1 okEq 1 ins 1 cuts 18 feeds 18 clEq 1 diagEq 1 good
+INS case 34 pentagram ncl 2 flat 0.904 ok 1 okEq 1 ins 1 cuts 7 feeds 7 clEq 1 diagEq 1 good
+INS case 35 pentagram ncl 2 flat 1.991 ok 1 okEq 1 ins 1 cuts 3 feeds 3 clEq 1 diagEq 1 good
+INS case 36 pentagram ncl 1 flat 1.976 ok 0 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 37 pentagram ncl 1 flat 1.863 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 38 pentagram ncl 2 flat 35.9 ok 0 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 39 pentagram ncl 1 flat 2.154 ok 0 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+SUMMARY seed=609 fam=9 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

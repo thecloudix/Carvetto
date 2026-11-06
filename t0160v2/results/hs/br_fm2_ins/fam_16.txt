@@ -1,0 +1,43 @@
+INS case 0 tinyspans g=0.125000ch n=98-Dhole ncl 1 flat 0.2159 ok 1 okEq 1 ins 1 cuts 2 feeds 2 clEq 1 diagEq 1 good
+INS case 1 tinyspans g=0.125000ch n=347-island ncl 2 flat 1.442 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 2 tinyspans g=0.250000ch n=397-island ncl 1 flat 6.518 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 3 tinyspans g=0.031250ch n=26-island ncl 2 flat 3.336 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 4 tinyspans g=0.250000ch n=109-Dhole ncl 1 flat 0.374 ok 1 okEq 1 ins 1 cuts 2 feeds 10 clEq 1 diagEq 1 good
+INS case 5 tinyspans g=0.001000ch n=51-arcwall ncl 1 flat 0.6563 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 6 tinyspans g=0.031250ch n=33-arcwall ncl 1 flat 3.214 ok 1 okEq 1 ins 1 cuts 3 feeds 3 clEq 1 diagEq 1 good
+INS case 7 tinyspans g=0.010000ch n=256-Dhole ncl 1 flat 3.24 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 8 tinyspans g=0.062500ch n=336-arcwall ncl 1 flat 10.11 ok 1 okEq 1 ins 1 cuts 3 feeds 3 clEq 1 diagEq 1 good
+INS case 9 tinyspans g=0.005000ch n=172-island ncl 2 flat 0.1083 ok 1 okEq 1 ins 1 cuts 83 feeds 357 clEq 1 diagEq 1 good
+INS case 10 tinyspans g=0.250000ch n=91-arcwall ncl 2 flat 1.213 ok 1 okEq 1 ins 1 cuts 2 feeds 2 clEq 1 diagEq 1 good
+INS case 11 tinyspans g=0.125000ch n=101-island ncl 2 flat 0.4361 ok 1 okEq 1 ins 1 cuts 66 feeds 246 clEq 1 diagEq 1 good
+INS case 12 tinyspans g=0.250000ch n=209-island ncl 1 flat 1.798 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 13 tinyspans g=0.062500ch n=156-Dhole ncl 2 flat 0.2147 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 14 tinyspans g=0.500000ch n=337-arcwall ncl 1 flat 0.09662 ok 1 okEq 1 ins 1 cuts 2 feeds 2 clEq 1 diagEq 1 good
+INS case 15 tinyspans g=0.250000ch n=339-Dhole ncl 2 flat 6.095 ok 1 okEq 1 ins 1 cuts 2 feeds 2 clEq 1 diagEq 1 good
+INS case 16 tinyspans g=0.031250ch n=32-Dhole ncl 1 flat 2.5 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 17 tinyspans g=0.500000ch n=304-island ncl 1 flat 3.667 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 18 tinyspans g=0.125000ch n=38-island ncl 2 flat 9.446 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 19 tinyspans g=0.001000ch n=34-arcwall ncl 2 flat 0.4815 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 20 tinyspans g=0.100000ch n=212-arcwall ncl 2 flat 16.53 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 21 tinyspans g=0.005000ch n=382-arcwall ncl 1 flat 1.286 ok 1 okEq 1 ins 1 cuts 2 feeds 2 clEq 1 diagEq 1 good
+INS case 22 tinyspans g=0.125000ch n=247-Dhole ncl 2 flat 1.024 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 23 tinyspans g=0.125000ch n=207-Dhole ncl 2 flat 7.194 ok 1 okEq 1 ins 1 cuts 2 feeds 2 clEq 1 diagEq 1 good
+INS case 24 tinyspans g=1.000000ch n=383-Dhole ncl 2 flat 0.63 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 25 tinyspans g=0.010000ch n=53-Dhole ncl 2 flat 3.3 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 26 tinyspans g=0.500000ch n=44-Dhole ncl 1 flat 0.2761 ok 1 okEq 1 ins 1 cuts 2 feeds 18 clEq 1 diagEq 1 good
+INS case 27 tinyspans g=0.062500ch n=293-Dhole ncl 1 flat 5.12 ok 1 okEq 1 ins 1 cuts 2 feeds 2 clEq 1 diagEq 1 good
+INS case 28 tinyspans g=0.500000ch n=43-island ncl 2 flat 2.739 ok 1 okEq 1 ins 1 cuts 12 feeds 12 clEq 1 diagEq 1 good
+INS case 29 tinyspans g=0.250000ch n=284-arcwall ncl 1 flat 0.4954 ok 1 okEq 1 ins 1 cuts 3 feeds 29 clEq 1 diagEq 1 good
+INS case 30 tinyspans g=0.500000ch n=263-Dhole ncl 1 flat 11.7 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 31 tinyspans g=1.000000ch n=42-island ncl 1 flat 6.409 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 32 tinyspans g=0.010000ch n=321-Dhole ncl 1 flat 0.3614 ok 1 okEq 1 ins 1 cuts 2 feeds 10 clEq 1 diagEq 1 good
+INS case 33 tinyspans g=0.031250ch n=386-arcwall ncl 1 flat 1.556 ok 1 okEq 1 ins 1 cuts 3 feeds 5 clEq 1 diagEq 1 good
+INS case 34 tinyspans g=0.500000ch n=153-arcwall ncl 2 flat 2.738 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 35 tinyspans g=0.020000ch n=199-arcwall ncl 2 flat 17.27 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 36 tinyspans g=0.250000ch n=397-island ncl 1 flat 12.74 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 37 tinyspans g=0.100000ch n=130-island ncl 2 flat 0.4233 ok 1 okEq 1 ins 1 cuts 12 feeds 12 clEq 1 diagEq 1 good
+INS case 38 tinyspans g=0.250000ch n=299-arcwall ncl 1 flat 1.068 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 39 tinyspans g=1.000000ch n=320-arcwall ncl 2 flat 9.402 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+SUMMARY seed=6016 fam=16 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

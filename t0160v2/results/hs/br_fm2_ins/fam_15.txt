@@ -1,0 +1,43 @@
+INS case 0 partialoverlapedge ncl 2 flat 3.246 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 1 sharededge ncl 2 flat 49.64 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 2 duplicate+other ncl 1 flat 3.853 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 3 sharededge ncl 2 flat 3.979 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 4 duplicate+other ncl 1 flat 4.854 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 5 partialoverlapedge ncl 2 flat 0.2564 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 6 sharededge ncl 2 flat 2.946 ok 1 okEq 1 ins 1 cuts 5 feeds 5 clEq 1 diagEq 1 good
+INS case 7 duplicate+other ncl 2 flat 2.359 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 8 partialoverlapedge ncl 2 flat 4.608 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 9 partialoverlapedge ncl 1 flat 0.6589 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 10 partialoverlapedge ncl 2 flat 9.574 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 11 duplicate+other ncl 1 flat 0.5611 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 12 sharededge ncl 1 flat 1.871 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 13 duplicate+other ncl 2 flat 29.24 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 14 partialoverlapedge ncl 1 flat 2.757 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 15 partialoverlapedge ncl 1 flat 2.069 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 16 duplicate+other ncl 2 flat 2.101 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 17 partialoverlapedge ncl 2 flat 0.9158 ok 1 okEq 1 ins 1 cuts 6 feeds 6 clEq 1 diagEq 1 good
+INS case 18 sharededge ncl 2 flat 2.006 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 19 sharededge ncl 1 flat 18.06 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 20 partialoverlapedge ncl 1 flat 3.086 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 21 duplicate+other ncl 2 flat 1.983 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 22 partialoverlapedge ncl 1 flat 0.2865 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 23 duplicate+other ncl 2 flat 2.246 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 24 sharededge ncl 2 flat 2.66 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 25 partialoverlapedge ncl 1 flat 4.273 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 26 partialoverlapedge ncl 1 flat 0.5727 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 27 sharededge ncl 2 flat 5.391 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 28 sharededge ncl 1 flat 7.184 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 29 sharededge ncl 1 flat 3.389 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 30 sharededge ncl 2 flat 0.8112 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 31 duplicate+other ncl 1 flat 0.6397 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 32 partialoverlapedge ncl 1 flat 1.661 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 33 sharededge ncl 1 flat 1.599 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 34 sharededge ncl 1 flat 2.365 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 35 sharededge ncl 2 flat 0.662 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 36 sharededge ncl 2 flat 27.63 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 37 sharededge ncl 1 flat 2.953 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 38 partialoverlapedge ncl 2 flat 0.977 ok 1 okEq 1 ins 1 cuts 5 feeds 5 clEq 1 diagEq 1 good
+INS case 39 sharededge ncl 1 flat 0.4322 ok 1 okEq 1 ins 1 cuts 4 feeds 42 clEq 1 diagEq 1 good
+SUMMARY seed=6015 fam=15 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

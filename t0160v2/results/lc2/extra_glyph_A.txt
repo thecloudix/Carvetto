@@ -1,0 +1,12 @@
+glyph_A_glyph                      ins=1 cuts=6 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=+1.00e+300 ridge=0.1250 lim=0.500 rho=0.5000 s=0.2500
+    corner (9.0000,0.0000) ang 104.04 deg: off 0.0675 -> on 0.067500 at (9.542905,0.584167) pts 80 UNSHARPENED>chordal
+    corner (12.0000,0.0000) ang 74.29 deg: off 0.1136 -> on 0.114648 at (10.976548,0.631315) pts 260 UNSHARPENED>chordal
+    corner (7.5000,16.0000) ang 105.71 deg: off 0.0647 -> on 0.064699 at (6.975820,15.418634) pts 75 UNSHARPENED>chordal
+    corner (4.5000,16.0000) ang 105.71 deg: off 0.0647 -> on 0.064743 at (5.024100,15.418590) pts 75 UNSHARPENED>chordal
+    corner (0.0000,0.0000) ang 74.29 deg: off 0.1136 -> on 0.113559 at (0.884141,0.815867) pts 260 UNSHARPENED>chordal
+    GSCAN gs=0.100 tentPts=0 above=0 onWorst=0.000000 at (0.00000,0.00000) offWorst=0.0833 ridge=0.1250 | oraclePred=0.16020 (at 0.9000,0.7000) cuts=6
+    => ok corners=6 worstCornerOn=0.1146
+glyph_A_glyph_m3                   ins=1 cuts=34 cl=1 dg=1 minClr-c/2=+9.52e-06 ringClr-c/2=+1.00e+300 ridge=0.1250 lim=0.500 rho=0.5000 s=0.2500
+    GSCAN gs=0.100 tentPts=1368 above=0 onWorst=0.125000 at (4.69973,5.79973) offWorst=0.2496 ridge=0.1250 | oraclePred=0.50000 (at 3.4000,5.6000) cuts=34
+    => ok corners=6 worstCornerOn=0.1250
+SUMMARY run=2 fail=0

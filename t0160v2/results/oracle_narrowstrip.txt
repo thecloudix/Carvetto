@@ -1,0 +1,6 @@
+    GSCAN gs=0.050 tentPts=2782 above=0 onWorst=0.259808 at (88.44980,22.83437) offWorst=0.5000 ridge=0.2598 | oraclePred=1.00000 (at 10.8000,-0.0154) cuts=3
+    => FAIL corners=3 worstCornerOn=0.2683
+    GSCAN gs=0.050 tentPts=5370 above=0 onWorst=0.250000 at (12.05000,17.86899) offWorst=0.5000 ridge=0.2500 | oraclePred=1.00000 (at 11.7500,13.9192) cuts=3
+    => ok corners=3 worstCornerOn=0.2500
+    GSCAN gs=0.050 tentPts=755 above=0 onWorst=0.250000 at (1.62022,1.26667) offWorst=0.4833 ridge=0.2500 | oraclePred=0.83333 (at 1.8500,1.8500) cuts=4
+    => ok corners=4 worstCornerOn=0.2500

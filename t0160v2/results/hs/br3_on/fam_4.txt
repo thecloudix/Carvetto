@@ -1,0 +1,43 @@
+HASH case 0 ringneigh-touch chord 0.1 ok 1 moves 330 diags 0 h 6225b44c5d7aa0e4 mh 6225b44c5d7aa0e4 dl  so 2.1839173110867605 width 4.5453138846131509 ncl 0
+HASH case 1 ringneigh-touch chord 0.005 ok 1 moves 1394 diags 0 h 7d5a34d27344ed11 mh 7d5a34d27344ed11 dl  so 8.373283759340433 width 11.002822345924516 ncl 0
+HASH case 2 ringneigh-touch chord 0.001 ok 1 moves 2234 diags 1 h ae6883159158c5a1 mh 913a198fd6b2f4c6 dl 28, so 9.9626975172916818 width 14.162470762274255 ncl 1
+HASH case 3 ringneigh-cross chord 0.01 ok 1 moves 4526 diags 2 h 3bb3861caed24d28 mh add9efcd9ccdf150 dl 28,4, so 2.8905948787702487 width 2.4638161650554857 ncl 2
+HASH case 4 ringneigh-apart chord 0.02 ok 1 moves 2055 diags 1 h b10aa3098678ecf0 mh c280ccb49e809f67 dl 26, so 0.83427610764692484 width 2.085690269117312 ncl 0
+HASH case 5 ringneigh-apart chord 0.05 ok 1 moves 525 diags 0 h 197b784e319c6912 mh 197b784e319c6912 dl  so 6.7312555243423411 width 16.828138810855851 ncl 0
+HASH case 6 ringneigh-apart chord 0.001 ok 1 moves 39874 diags 0 h 9a8f601eaaeb486b mh 9a8f601eaaeb486b dl  so 1.5758431973292506 width 2.1665878926311843 ncl 0
+HASH case 7 ringneigh-cross chord 0.02 ok 1 moves 1300 diags 2 h 114b1a65bc76a0cf mh ad7d677318334f22 dl 28,4, so 1.2259373471966506 width 2.9529262925310076 ncl 1
+HASH case 8 ringneigh-cross chord 0.1 ok 1 moves 325 diags 1 h c74ec4dbc0fd4e37 mh 2f142f494520fb28 dl 28, so 6.3962503135987498 width 8.9398751753719949 ncl 0
+HASH case 9 ringneigh-cross chord 0.02 ok 1 moves 739 diags 2 h 13e22019c8c09571 mh 4245830818552904 dl 28,4, so 4.044875564635011 width 4.7294412981473881 ncl 1
+HASH case 10 ringneigh-touch chord 0.005 ok 1 moves 1281 diags 1 h 336c8d72ed5703e8 mh e122b4a031e333f2 dl 26, so 1.8945165364878211 width 4.7362913412195526 ncl 0
+HASH case 11 ringneigh-touch chord 0.005 ok 1 moves 1255 diags 1 h 8d10dc4d1d661feb mh 0915fe95fcbbc9e9 dl 28, so 3.3507747613783696 width 8.3769369034459231 ncl 0
+HASH case 12 ringneigh-apart chord 0.005 ok 1 moves 2058 diags 0 h c07df6772ed6681a mh c07df6772ed6681a dl  so 2.144172398437231 width 4.7465241256290245 ncl 0
+HASH case 13 ringneigh-touch chord 0.001 ok 1 moves 1938 diags 1 h 863cb3426a2f5858 mh be75c239693f1867 dl 28, so 8.2051197425280638 width 7.5018626421669232 ncl 1
+HASH case 14 ringneigh-touch chord 0.05 ok 1 moves 477 diags 1 h 876b73795198373e mh b38e7c2aeea12b74 dl 28, so 7.563672970653724 width 18.90918242663431 ncl 0
+HASH case 15 ringneigh-cross chord 0.001 ok 1 moves 9975 diags 4 h f836efe5a8771b79 mh cecea61ed9c4b8ab dl 28,4,4,29, so 3.1228472370781812 width 1.2869634923746687 ncl 2
+HASH case 16 ringneigh-apart chord 0.01 ok 1 moves 560 diags 0 h 22a8b99d2e1fe711 mh 22a8b99d2e1fe711 dl  so 8.1031178783219406 width 17.579439610048876 ncl 0
+HASH case 17 ringneigh-touch chord 0.02 ok 1 moves 517 diags 1 h ebc0211dafdc0685 mh 23c16d3006fae84d dl 28, so 2.0503037273711482 width 8.0875163998318644 ncl 0
+HASH case 18 ringneigh-touch chord 0.005 ok 1 moves 1100 diags 2 h 64cba9fd9b1077da mh a73dfe75c07a90da dl 28,26, so 2.2764400696055485 width 5.6911001740138705 ncl 0
+HASH case 19 ringneigh-apart chord 0.05 ok 1 moves 436 diags 0 h fd86cf28b7618b25 mh fd86cf28b7618b25 dl  so 4.2187198335828837 width 8.9339484164792786 ncl 2
+HASH case 20 ringneigh-touch chord 0.1 ok 1 moves 210 diags 1 h f400b143e7654331 mh e9f804e03808dec6 dl 28, so 5.190783160680545 width 12.976957901701361 ncl 0
+HASH case 21 ringneigh-cross chord 0.001 ok 1 moves 162540 diags 2 h 71804999f685c1b1 mh 23935a2cfafb938a dl 28,4, so 0.97936206656258129 width 2.178993023169292 ncl 1
+HASH case 22 ringneigh-apart chord 0.005 ok 1 moves 1502 diags 0 h ffb6cde22bf0f487 mh ffb6cde22bf0f487 dl  so 6.1457207720420586 width 9.6076322106721914 ncl 0
+HASH case 23 ringneigh-apart chord 0.001 ok 1 moves 1926 diags 0 h c9091a1b65e35378 mh c9091a1b65e35378 dl  so 7.6240152835280783 width 12.071871897726488 ncl 1
+HASH case 24 ringneigh-touch chord 0.02 ok 1 moves 1483 diags 1 h a282acf8528854f5 mh 1ae02877590bcbfd dl 28, so 1.2433497511066487 width 5.4710927362093793 ncl 0
+HASH case 25 ringneigh-cross chord 0.02 ok 1 moves 648 diags 1 h 80b75ccb4865e071 mh 79018f49e2c4de11 dl 28, so 2.9579447585608083 width 7.3948618964020199 ncl 0
+HASH case 26 ringneigh-apart chord 0.02 ok 1 moves 792 diags 0 h 2041bf7b05374275 mh 2041bf7b05374275 dl  so 4.7970737986145213 width 5.553858662257074 ncl 0
+HASH case 27 ringneigh-cross chord 0.1 ok 1 moves 242 diags 1 h c7046621dade488e mh 80a6a107f1dff579 dl 28, so 4.7081664009448971 width 6.3906117030519312 ncl 2
+HASH case 28 ringneigh-cross chord 0.02 ok 1 moves 898 diags 1 h ba1b4c646a2b4155 mh 88595ef84a7aa1dd dl 28, so 2.9320634017418254 width 9.3930056311390082 ncl 0
+HASH case 29 ringneigh-apart chord 0.05 ok 1 moves 487 diags 0 h ddf810c9fbe58720 mh ddf810c9fbe58720 dl  so 0.71843679812855232 width 2.7665467061163973 ncl 0
+HASH case 30 ringneigh-cross chord 0.005 ok 1 moves 1333 diags 1 h 124623d07ed03c33 mh ca6af22598f84551 dl 28, so 2.079939705536145 width 3.493951932549388 ncl 0
+HASH case 31 ringneigh-touch chord 0.005 ok 1 moves 1318 diags 1 h 91f7c06d129102dd mh 34379480cf3e081b dl 28, so 1.9272065491687715 width 5.1827475989464551 ncl 0
+HASH case 32 ringneigh-apart chord 0.1 ok 1 moves 183 diags 0 h 6b24bf3b1d081c7e mh 6b24bf3b1d081c7e dl  so 6.3021327074852529 width 15.75533176871313 ncl 0
+HASH case 33 ringneigh-touch chord 0.005 ok 1 moves 2385 diags 1 h d685d97d12177e46 mh a57f6483742aba14 dl 28, so 2.0032296082276568 width 3.5876388202946305 ncl 0
+HASH case 34 ringneigh-cross chord 0.05 ok 1 moves 755 diags 1 h 03e3d63a257c2260 mh 6696a212333029e2 dl 28, so 2.7724798006636293 width 5.0504990864252264 ncl 0
+HASH case 35 ringneigh-touch chord 0.01 ok 1 moves 930 diags 1 h 43c4a486464a98d0 mh ec9048207e5dee2d dl 28, so 1.4856010574248502 width 6.7650411078227553 ncl 0
+HASH case 36 ringneigh-touch chord 0.05 ok 1 moves 3033 diags 1 h c9a21e59cdf05d6d mh 830c3561440a77e1 dl 28, so 4.0074849670562056 width 6.5295808677081082 ncl 0
+HASH case 37 ringneigh-apart chord 0.01 ok 1 moves 2975 diags 1 h e9e61354a53d1e8c mh 8501c3147b724961 dl 26, so 1.6881168060007903 width 4.2202920150019754 ncl 0
+HASH case 38 ringneigh-apart chord 0.05 ok 1 moves 232 diags 0 h 5c960bf1063de679 mh 5c960bf1063de679 dl  so 8.1164371689307693 width 20.291092922326921 ncl 0
+HASH case 39 ringneigh-touch chord 0.1 ok 1 moves 213 diags 1 h ca21f211ccb3eb89 mh 287a709d097984be dl 28, so 4.5233893385509933 width 8.0144460022464976 ncl 0
+SUMMARY seed=604 fam=4 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

@@ -1,0 +1,181 @@
+hex chordal 0.05 rot 0.3 f 0.9600 pred/chordal 0.96000 extra moves 0 
+hex chordal 0.05 rot 0.3 f 0.9620 pred/chordal 0.96200 extra moves 0 
+hex chordal 0.05 rot 0.3 f 0.9640 pred/chordal 0.96400 extra moves 0 
+hex chordal 0.05 rot 0.3 f 0.9660 pred/chordal 0.96600 extra moves 0 
+hex chordal 0.05 rot 0.3 f 0.9680 pred/chordal 0.96800 extra moves 0 
+hex chordal 0.05 rot 0.3 f 0.9700 pred/chordal 0.97000 extra moves 0 
+hex chordal 0.05 rot 0.3 f 0.9720 pred/chordal 0.97200 extra moves 0 
+hex chordal 0.05 rot 0.3 f 0.9740 pred/chordal 0.97400 extra moves 0 
+hex chordal 0.05 rot 0.3 f 0.9760 pred/chordal 0.97600 extra moves 0 
+hex chordal 0.05 rot 0.3 f 0.9780 pred/chordal 0.97800 extra moves 0 
+hex chordal 0.05 rot 0.3 f 0.9800 pred/chordal 0.98000 extra moves 0 
+hex chordal 0.05 rot 0.3 f 0.9820 pred/chordal 0.98200 extra moves 0 
+hex chordal 0.05 rot 0.3 f 0.9840 pred/chordal 0.98400 extra moves 0 
+hex chordal 0.05 rot 0.3 f 0.9860 pred/chordal 0.98600 extra moves 0 
+hex chordal 0.05 rot 0.3 f 0.9880 pred/chordal 0.98800 extra moves 0 
+hex chordal 0.05 rot 0.3 f 0.9900 pred/chordal 0.99000 extra moves 0 
+hex chordal 0.05 rot 0.3 f 0.9920 pred/chordal 0.99200 extra moves 0 
+hex chordal 0.05 rot 0.3 f 0.9940 pred/chordal 0.99400 extra moves 0 
+hex chordal 0.05 rot 0.3 f 0.9960 pred/chordal 0.99600 extra moves 0 
+hex chordal 0.05 rot 0.3 f 0.9980 pred/chordal 0.99800 extra moves 24 MISMATCH
+hex chordal 0.05 rot 0.3 f 1.0000 pred/chordal 1.00000 extra moves 24 MISMATCH
+hex chordal 0.05 rot 0.3 f 1.0020 pred/chordal 1.00200 extra moves 24 
+hex chordal 0.05 rot 0.3 f 1.0040 pred/chordal 1.00400 extra moves 24 
+hex chordal 0.05 rot 0.3 f 1.0060 pred/chordal 1.00600 extra moves 24 
+hex chordal 0.05 rot 0.3 f 1.0080 pred/chordal 1.00800 extra moves 24 
+hex chordal 0.05 rot 0.3 f 1.0100 pred/chordal 1.01000 extra moves 24 
+hex chordal 0.05 rot 0.3 f 1.0120 pred/chordal 1.01200 extra moves 24 
+hex chordal 0.05 rot 0.3 f 1.0140 pred/chordal 1.01400 extra moves 24 
+hex chordal 0.05 rot 0.3 f 1.0160 pred/chordal 1.01600 extra moves 24 
+hex chordal 0.05 rot 0.3 f 1.0180 pred/chordal 1.01800 extra moves 24 
+hex chordal 0.05 rot 0.3 f 1.0200 pred/chordal 1.02000 extra moves 24 
+hex chordal 0.05 rot 0.3 f 1.0220 pred/chordal 1.02200 extra moves 24 
+hex chordal 0.05 rot 0.3 f 1.0240 pred/chordal 1.02400 extra moves 24 
+hex chordal 0.05 rot 0.3 f 1.0260 pred/chordal 1.02600 extra moves 24 
+hex chordal 0.05 rot 0.3 f 1.0280 pred/chordal 1.02800 extra moves 24 
+hex chordal 0.05 rot 0.3 f 1.0300 pred/chordal 1.03000 extra moves 24 
+hex chordal 0.05 rot 0.3 f 1.0320 pred/chordal 1.03200 extra moves 24 
+hex chordal 0.05 rot 0.3 f 1.0340 pred/chordal 1.03400 extra moves 24 
+hex chordal 0.05 rot 0.3 f 1.0360 pred/chordal 1.03600 extra moves 24 
+hex chordal 0.05 rot 0.3 f 1.0380 pred/chordal 1.03800 extra moves 24 
+hex chordal 0.05 rot 0.3 f 1.0400 pred/chordal 1.04000 extra moves 24 
+hex chordal 0.05 rot 0.3 f 0.9990 pred/chordal 0.99900 extra moves 24 MISMATCH
+hex chordal 0.05 rot 0.3 f 0.9999 pred/chordal 0.99990 extra moves 24 MISMATCH
+hex chordal 0.05 rot 0.3 f 1.0001 pred/chordal 1.00010 extra moves 24 
+hex chordal 0.05 rot 0.3 f 1.0010 pred/chordal 1.00100 extra moves 24 
+hex chordal 0.01 rot 0.3 f 0.9600 pred/chordal 0.96000 extra moves 0 
+hex chordal 0.01 rot 0.3 f 0.9620 pred/chordal 0.96200 extra moves 0 
+hex chordal 0.01 rot 0.3 f 0.9640 pred/chordal 0.96400 extra moves 0 
+hex chordal 0.01 rot 0.3 f 0.9660 pred/chordal 0.96600 extra moves 0 
+hex chordal 0.01 rot 0.3 f 0.9680 pred/chordal 0.96800 extra moves 0 
+hex chordal 0.01 rot 0.3 f 0.9700 pred/chordal 0.97000 extra moves 0 
+hex chordal 0.01 rot 0.3 f 0.9720 pred/chordal 0.97200 extra moves 0 
+hex chordal 0.01 rot 0.3 f 0.9740 pred/chordal 0.97400 extra moves 0 
+hex chordal 0.01 rot 0.3 f 0.9760 pred/chordal 0.97600 extra moves 0 
+hex chordal 0.01 rot 0.3 f 0.9780 pred/chordal 0.97800 extra moves 0 
+hex chordal 0.01 rot 0.3 f 0.9800 pred/chordal 0.98000 extra moves 0 
+hex chordal 0.01 rot 0.3 f 0.9820 pred/chordal 0.98200 extra moves 0 
+hex chordal 0.01 rot 0.3 f 0.9840 pred/chordal 0.98400 extra moves 0 
+hex chordal 0.01 rot 0.3 f 0.9860 pred/chordal 0.98600 extra moves 0 
+hex chordal 0.01 rot 0.3 f 0.9880 pred/chordal 0.98800 extra moves 0 
+hex chordal 0.01 rot 0.3 f 0.9900 pred/chordal 0.99000 extra moves 0 
+hex chordal 0.01 rot 0.3 f 0.9920 pred/chordal 0.99200 extra moves 0 
+hex chordal 0.01 rot 0.3 f 0.9940 pred/chordal 0.99400 extra moves 0 
+hex chordal 0.01 rot 0.3 f 0.9960 pred/chordal 0.99600 extra moves 0 
+hex chordal 0.01 rot 0.3 f 0.9980 pred/chordal 0.99800 extra moves 24 MISMATCH
+hex chordal 0.01 rot 0.3 f 1.0000 pred/chordal 1.00000 extra moves 24 
+hex chordal 0.01 rot 0.3 f 1.0020 pred/chordal 1.00200 extra moves 24 
+hex chordal 0.01 rot 0.3 f 1.0040 pred/chordal 1.00400 extra moves 24 
+hex chordal 0.01 rot 0.3 f 1.0060 pred/chordal 1.00600 extra moves 24 
+hex chordal 0.01 rot 0.3 f 1.0080 pred/chordal 1.00800 extra moves 24 
+hex chordal 0.01 rot 0.3 f 1.0100 pred/chordal 1.01000 extra moves 24 
+hex chordal 0.01 rot 0.3 f 1.0120 pred/chordal 1.01200 extra moves 24 
+hex chordal 0.01 rot 0.3 f 1.0140 pred/chordal 1.01400 extra moves 24 
+hex chordal 0.01 rot 0.3 f 1.0160 pred/chordal 1.01600 extra moves 24 
+hex chordal 0.01 rot 0.3 f 1.0180 pred/chordal 1.01800 extra moves 24 
+hex chordal 0.01 rot 0.3 f 1.0200 pred/chordal 1.02000 extra moves 24 
+hex chordal 0.01 rot 0.3 f 1.0220 pred/chordal 1.02200 extra moves 24 
+hex chordal 0.01 rot 0.3 f 1.0240 pred/chordal 1.02400 extra moves 24 
+hex chordal 0.01 rot 0.3 f 1.0260 pred/chordal 1.02600 extra moves 24 
+hex chordal 0.01 rot 0.3 f 1.0280 pred/chordal 1.02800 extra moves 24 
+hex chordal 0.01 rot 0.3 f 1.0300 pred/chordal 1.03000 extra moves 24 
+hex chordal 0.01 rot 0.3 f 1.0320 pred/chordal 1.03200 extra moves 24 
+hex chordal 0.01 rot 0.3 f 1.0340 pred/chordal 1.03400 extra moves 24 
+hex chordal 0.01 rot 0.3 f 1.0360 pred/chordal 1.03600 extra moves 24 
+hex chordal 0.01 rot 0.3 f 1.0380 pred/chordal 1.03800 extra moves 24 
+hex chordal 0.01 rot 0.3 f 1.0400 pred/chordal 1.04000 extra moves 24 
+hex chordal 0.01 rot 0.3 f 0.9990 pred/chordal 0.99900 extra moves 24 MISMATCH
+hex chordal 0.01 rot 0.3 f 0.9999 pred/chordal 0.99990 extra moves 24 MISMATCH
+hex chordal 0.01 rot 0.3 f 1.0001 pred/chordal 1.00010 extra moves 24 
+hex chordal 0.01 rot 0.3 f 1.0010 pred/chordal 1.00100 extra moves 24 
+fil chordal 0.05 rot 0.3 f 0.9600 pred/chordal 0.96000 extra moves 0 
+fil chordal 0.05 rot 0.3 f 0.9620 pred/chordal 0.96200 extra moves 0 
+fil chordal 0.05 rot 0.3 f 0.9640 pred/chordal 0.96400 extra moves 0 
+fil chordal 0.05 rot 0.3 f 0.9660 pred/chordal 0.96600 extra moves 0 
+fil chordal 0.05 rot 0.3 f 0.9680 pred/chordal 0.96800 extra moves 0 
+fil chordal 0.05 rot 0.3 f 0.9700 pred/chordal 0.97000 extra moves 0 
+fil chordal 0.05 rot 0.3 f 0.9720 pred/chordal 0.97200 extra moves 0 
+fil chordal 0.05 rot 0.3 f 0.9740 pred/chordal 0.97400 extra moves 0 
+fil chordal 0.05 rot 0.3 f 0.9760 pred/chordal 0.97600 extra moves 0 
+fil chordal 0.05 rot 0.3 f 0.9780 pred/chordal 0.97800 extra moves 0 
+fil chordal 0.05 rot 0.3 f 0.9800 pred/chordal 0.98000 extra moves 0 
+fil chordal 0.05 rot 0.3 f 0.9820 pred/chordal 0.98200 extra moves 0 
+fil chordal 0.05 rot 0.3 f 0.9840 pred/chordal 0.98400 extra moves 0 
+fil chordal 0.05 rot 0.3 f 0.9860 pred/chordal 0.98600 extra moves 0 
+fil chordal 0.05 rot 0.3 f 0.9880 pred/chordal 0.98800 extra moves 0 
+fil chordal 0.05 rot 0.3 f 0.9900 pred/chordal 0.99000 extra moves 0 
+fil chordal 0.05 rot 0.3 f 0.9920 pred/chordal 0.99200 extra moves 0 
+fil chordal 0.05 rot 0.3 f 0.9940 pred/chordal 0.99400 extra moves 0 
+fil chordal 0.05 rot 0.3 f 0.9960 pred/chordal 0.99600 extra moves 0 
+fil chordal 0.05 rot 0.3 f 0.9980 pred/chordal 0.99800 extra moves 0 
+fil chordal 0.05 rot 0.3 f 1.0000 pred/chordal 1.00000 extra moves 0 MISMATCH
+fil chordal 0.05 rot 0.3 f 1.0020 pred/chordal 1.00200 extra moves 0 MISMATCH
+fil chordal 0.05 rot 0.3 f 1.0040 pred/chordal 1.00400 extra moves 0 MISMATCH
+fil chordal 0.05 rot 0.3 f 1.0060 pred/chordal 1.00600 extra moves 0 MISMATCH
+fil chordal 0.05 rot 0.3 f 1.0080 pred/chordal 1.00800 extra moves 0 MISMATCH
+fil chordal 0.05 rot 0.3 f 1.0100 pred/chordal 1.01000 extra moves 0 MISMATCH
+fil chordal 0.05 rot 0.3 f 1.0120 pred/chordal 1.01200 extra moves 0 MISMATCH
+fil chordal 0.05 rot 0.3 f 1.0140 pred/chordal 1.01400 extra moves 0 MISMATCH
+fil chordal 0.05 rot 0.3 f 1.0160 pred/chordal 1.01600 extra moves 0 MISMATCH
+fil chordal 0.05 rot 0.3 f 1.0180 pred/chordal 1.01800 extra moves 0 MISMATCH
+fil chordal 0.05 rot 0.3 f 1.0200 pred/chordal 1.02000 extra moves 0 MISMATCH
+fil chordal 0.05 rot 0.3 f 1.0220 pred/chordal 1.02200 extra moves 0 MISMATCH
+fil chordal 0.05 rot 0.3 f 1.0240 pred/chordal 1.02400 extra moves 0 MISMATCH
+fil chordal 0.05 rot 0.3 f 1.0260 pred/chordal 1.02600 extra moves 0 MISMATCH
+fil chordal 0.05 rot 0.3 f 1.0280 pred/chordal 1.02800 extra moves 0 MISMATCH
+fil chordal 0.05 rot 0.3 f 1.0300 pred/chordal 1.03000 extra moves 16 
+fil chordal 0.05 rot 0.3 f 1.0320 pred/chordal 1.03200 extra moves 16 
+fil chordal 0.05 rot 0.3 f 1.0340 pred/chordal 1.03400 extra moves 16 
+fil chordal 0.05 rot 0.3 f 1.0360 pred/chordal 1.03600 extra moves 16 
+fil chordal 0.05 rot 0.3 f 1.0380 pred/chordal 1.03800 extra moves 16 
+fil chordal 0.05 rot 0.3 f 1.0400 pred/chordal 1.04000 extra moves 16 
+fil chordal 0.05 rot 0.3 f 0.9990 pred/chordal 0.99900 extra moves 0 
+fil chordal 0.05 rot 0.3 f 0.9999 pred/chordal 0.99990 extra moves 0 
+fil chordal 0.05 rot 0.3 f 1.0001 pred/chordal 1.00010 extra moves 0 MISMATCH
+fil chordal 0.05 rot 0.3 f 1.0010 pred/chordal 1.00100 extra moves 0 MISMATCH
+fil chordal 0.01 rot 0.3 f 0.9600 pred/chordal 0.96000 extra moves 112 MISMATCH
+fil chordal 0.01 rot 0.3 f 0.9620 pred/chordal 0.96200 extra moves 112 MISMATCH
+fil chordal 0.01 rot 0.3 f 0.9640 pred/chordal 0.96400 extra moves 112 MISMATCH
+fil chordal 0.01 rot 0.3 f 0.9660 pred/chordal 0.96600 extra moves 112 MISMATCH
+fil chordal 0.01 rot 0.3 f 0.9680 pred/chordal 0.96800 extra moves 112 MISMATCH
+fil chordal 0.01 rot 0.3 f 0.9700 pred/chordal 0.97000 extra moves 112 MISMATCH
+fil chordal 0.01 rot 0.3 f 0.9720 pred/chordal 0.97200 extra moves 112 MISMATCH
+fil chordal 0.01 rot 0.3 f 0.9740 pred/chordal 0.97400 extra moves 112 MISMATCH
+fil chordal 0.01 rot 0.3 f 0.9760 pred/chordal 0.97600 extra moves 112 MISMATCH
+fil chordal 0.01 rot 0.3 f 0.9780 pred/chordal 0.97800 extra moves 112 MISMATCH
+fil chordal 0.01 rot 0.3 f 0.9800 pred/chordal 0.98000 extra moves 112 MISMATCH
+fil chordal 0.01 rot 0.3 f 0.9820 pred/chordal 0.98200 extra moves 112 MISMATCH
+fil chordal 0.01 rot 0.3 f 0.9840 pred/chordal 0.98400 extra moves 112 MISMATCH
+fil chordal 0.01 rot 0.3 f 0.9860 pred/chordal 0.98600 extra moves 112 MISMATCH
+fil chordal 0.01 rot 0.3 f 0.9880 pred/chordal 0.98800 extra moves 112 MISMATCH
+fil chordal 0.01 rot 0.3 f 0.9900 pred/chordal 0.99000 extra moves 112 MISMATCH
+fil chordal 0.01 rot 0.3 f 0.9920 pred/chordal 0.99200 extra moves 128 MISMATCH
+fil chordal 0.01 rot 0.3 f 0.9940 pred/chordal 0.99400 extra moves 128 MISMATCH
+fil chordal 0.01 rot 0.3 f 0.9960 pred/chordal 0.99600 extra moves 128 MISMATCH
+fil chordal 0.01 rot 0.3 f 0.9980 pred/chordal 0.99800 extra moves 128 MISMATCH
+fil chordal 0.01 rot 0.3 f 1.0000 pred/chordal 1.00000 extra moves 128 MISMATCH
+fil chordal 0.01 rot 0.3 f 1.0020 pred/chordal 1.00200 extra moves 144 
+fil chordal 0.01 rot 0.3 f 1.0040 pred/chordal 1.00400 extra moves 144 
+fil chordal 0.01 rot 0.3 f 1.0060 pred/chordal 1.00600 extra moves 144 
+fil chordal 0.01 rot 0.3 f 1.0080 pred/chordal 1.00800 extra moves 144 
+fil chordal 0.01 rot 0.3 f 1.0100 pred/chordal 1.01000 extra moves 144 
+fil chordal 0.01 rot 0.3 f 1.0120 pred/chordal 1.01200 extra moves 144 
+fil chordal 0.01 rot 0.3 f 1.0140 pred/chordal 1.01400 extra moves 144 
+fil chordal 0.01 rot 0.3 f 1.0160 pred/chordal 1.01600 extra moves 144 
+fil chordal 0.01 rot 0.3 f 1.0180 pred/chordal 1.01800 extra moves 144 
+fil chordal 0.01 rot 0.3 f 1.0200 pred/chordal 1.02000 extra moves 144 
+fil chordal 0.01 rot 0.3 f 1.0220 pred/chordal 1.02200 extra moves 128 
+fil chordal 0.01 rot 0.3 f 1.0240 pred/chordal 1.02400 extra moves 128 
+fil chordal 0.01 rot 0.3 f 1.0260 pred/chordal 1.02600 extra moves 128 
+fil chordal 0.01 rot 0.3 f 1.0280 pred/chordal 1.02800 extra moves 128 
+fil chordal 0.01 rot 0.3 f 1.0300 pred/chordal 1.03000 extra moves 128 
+fil chordal 0.01 rot 0.3 f 1.0320 pred/chordal 1.03200 extra moves 116 
+fil chordal 0.01 rot 0.3 f 1.0340 pred/chordal 1.03400 extra moves 112 
+fil chordal 0.01 rot 0.3 f 1.0360 pred/chordal 1.03600 extra moves 112 
+fil chordal 0.01 rot 0.3 f 1.0380 pred/chordal 1.03800 extra moves 112 
+fil chordal 0.01 rot 0.3 f 1.0400 pred/chordal 1.04000 extra moves 112 
+fil chordal 0.01 rot 0.3 f 0.9990 pred/chordal 0.99900 extra moves 128 MISMATCH
+fil chordal 0.01 rot 0.3 f 0.9999 pred/chordal 0.99990 extra moves 128 MISMATCH
+fil chordal 0.01 rot 0.3 f 1.0001 pred/chordal 1.00010 extra moves 128 
+fil chordal 0.01 rot 0.3 f 1.0010 pred/chordal 1.00100 extra moves 128 
+done

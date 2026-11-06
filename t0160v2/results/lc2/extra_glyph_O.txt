@@ -1,0 +1,8 @@
+glyph_O_glyph_bez                  ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=+1.00e+300 ridge=0.1250 lim=0.500 rho=0.5000 s=0.2500
+    GSCAN gs=0.100 tentPts=0 above=0 onWorst=0.000000 at (0.00000,0.00000) offWorst=0.0017 ridge=0.1250 | oraclePred=0.00212 (at -2.0000,-10.1000) cuts=0
+    => ok corners=0 worstCornerOn=0.0000
+glyph_O_glyph_bez_m3               ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=+1.00e+300 ridge=0.1250 lim=0.500 rho=0.5000 s=0.2500
+    GSCAN gs=0.100 tentPts=2536 above=2536 onWorst=0.250000 at (5.90001,-5.89997) offWorst=0.2500 ridge=0.1250 | oraclePred=0.50000 (at -6.5000,0.0000) cuts=0 GABOVE-RIDGE (some unchanged by sharpening) PRED>CH-NOCUTS
+    GSCAN unchanged above-ridge point 0.25000 at (5.90000,-5.90000)
+    => FAIL corners=0 worstCornerOn=0.0000
+SUMMARY run=2 fail=1

@@ -1,0 +1,43 @@
+INS case 0 touch1-diamondvertex ncl 2 flat 8.914 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 1 touch1-squarecorneroncircle ncl 2 flat 1.457 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 2 touch1-squarecorneroncircle ncl 2 flat 7.664 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 3 touch1-squarecorneroncircle ncl 2 flat 4.183 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 4 touch1-diamondvertex ncl 1 flat 0.721 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 5 touch1-tangentcircle ncl 2 flat 17.57 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 6 touch1-twoholes-vertexwall-vertexvertex ncl 1 flat 0.9662 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 7 touch1-squarecorneroncircle ncl 1 flat 6.515 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 8 touch1-squarecorneroncircle ncl 2 flat 0.9456 ok 1 okEq 1 ins 1 cuts 2 feeds 2 clEq 1 diagEq 1 good
+INS case 9 touch1-squarecorneroncircle ncl 1 flat 2.329 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 10 touch1-tangentcircle ncl 1 flat 12.55 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 11 touch1-tangentcircle ncl 2 flat 3.256 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 12 touch1-twoholes-vertexwall-vertexvertex ncl 2 flat 3.092 ok 1 okEq 1 ins 1 cuts 8 feeds 12 clEq 1 diagEq 1 good
+INS case 13 touch1-diamondvertex ncl 1 flat 0.6803 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 14 touch1-squarecorneroncircle ncl 1 flat 2.173 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 15 touch1-tangentcircle ncl 2 flat 36.18 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 16 touch1-diamondvertex ncl 2 flat 2.13 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 17 touch1-twoholes-vertexwall-vertexvertex ncl 1 flat 2.565 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 18 touch1-tangentcircle ncl 1 flat 1.648 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 19 touch1-twoholes-vertexwall-vertexvertex ncl 2 flat 7.476 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 20 touch1-twoholes-vertexwall-vertexvertex ncl 1 flat 0.1802 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 21 touch1-diamondvertex ncl 1 flat 0.2715 ok 1 okEq 1 ins 1 cuts 9 feeds 11 clEq 1 diagEq 1 good
+INS case 22 touch1-squarecorneroncircle ncl 2 flat 0.6235 ok 1 okEq 1 ins 1 cuts 4 feeds 8 clEq 1 diagEq 1 good
+INS case 23 touch1-tangentcircle ncl 2 flat 0.1658 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 24 touch1-tangentcircle ncl 2 flat 2.469 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 25 touch1-diamondvertex ncl 2 flat 0.5851 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 26 touch1-twoholes-vertexwall-vertexvertex ncl 2 flat 3.587 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 27 touch1-twoholes-vertexwall-vertexvertex ncl 1 flat 2.193 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 28 touch1-twoholes-vertexwall-vertexvertex ncl 2 flat 2.765 ok 1 okEq 1 ins 1 cuts 8 feeds 8 clEq 1 diagEq 1 good
+INS case 29 touch1-diamondvertex ncl 2 flat 0.5468 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 30 touch1-diamondvertex ncl 1 flat 3.554 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 31 touch1-diamondvertex ncl 2 flat 6.679 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 32 touch1-diamondvertex ncl 2 flat 14.38 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 33 touch1-tangentcircle ncl 2 flat 0.9807 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 34 touch1-diamondvertex ncl 1 flat 2.103 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 35 touch1-tangentcircle ncl 2 flat 3.463 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 36 touch1-diamondvertex ncl 2 flat 2.348 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 37 touch1-diamondvertex ncl 2 flat 15.38 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 38 touch1-diamondvertex ncl 1 flat 7.645 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 39 touch1-squarecorneroncircle ncl 1 flat 3.439 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+SUMMARY seed=6017 fam=17 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

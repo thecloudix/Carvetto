@@ -1,0 +1,43 @@
+INS case 0 nearsq g=0.000100 ncl 2 flat 2.192 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 1 nearext g=0.000100 ncl 1 flat 40.54 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 2 nearext g=0.000000 ncl 1 flat 1.698 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 3 nearint g=0.000000 ncl 1 flat 2.076 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 4 nearext g=0.000100 ncl 2 flat 9.187 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 5 nearsq g=0.000250 ncl 2 flat 15.26 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 6 nearsq g=0.000000 ncl 1 flat 0.3568 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 7 nearext g=0.100000 ncl 2 flat 24.07 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 8 nearext g=0.000100 ncl 2 flat 2.169 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 9 nearsq g=0.002500 ncl 1 flat 1.002 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 10 nearsq g=0.001000 ncl 2 flat 0.5549 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 11 nearint g=0.000313 ncl 2 flat 0.2856 ok 1 okEq 1 ins 1 cuts 6 feeds 22 clEq 1 diagEq 1 good
+INS case 12 nearint g=0.000250 ncl 1 flat 1.207 ok 1 okEq 1 ins 1 cuts 2 feeds 2 clEq 1 diagEq 1 good
+INS case 13 nearsq g=0.001000 ncl 1 flat 0.1573 ok 1 okEq 1 ins 1 cuts 9 feeds 33 clEq 1 diagEq 1 good
+INS case 14 nearsq g=0.001000 ncl 1 flat 2.861 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 15 nearint g=0.000625 ncl 1 flat 7.193 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 16 nearint g=0.001000 ncl 1 flat 0.3229 ok 1 okEq 1 ins 1 cuts 8 feeds 28 clEq 1 diagEq 1 good
+INS case 17 nearint g=0.050000 ncl 2 flat 7.27 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 18 nearsq g=0.025000 ncl 1 flat 0.8301 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 19 nearsq g=0.000500 ncl 1 flat 0.2878 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 20 nearint g=0.000063 ncl 2 flat 3.498 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 21 nearext g=0.000313 ncl 2 flat 4.048 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 22 nearext g=0.005000 ncl 2 flat 14.38 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 23 nearext g=0.000313 ncl 2 flat 0.7942 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 24 nearext g=0.000100 ncl 2 flat 34.55 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 25 nearint g=0.000250 ncl 2 flat 0.4802 ok 1 okEq 1 ins 1 cuts 2 feeds 2 clEq 1 diagEq 1 good
+INS case 26 nearint g=0.012500 ncl 1 flat 0.2162 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 27 nearext g=0.001250 ncl 1 flat 7.586 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 28 nearext g=0.002500 ncl 1 flat 1.136 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 29 nearint g=0.000000 ncl 2 flat 1.444 ok 1 okEq 1 ins 1 cuts 2 feeds 2 clEq 1 diagEq 1 good
+INS case 30 nearint g=0.000100 ncl 2 flat 2.214 ok 1 okEq 1 ins 1 cuts 2 feeds 2 clEq 1 diagEq 1 good
+INS case 31 nearint g=0.010000 ncl 1 flat 3.285 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 32 nearint g=0.025000 ncl 1 flat 0.7771 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 33 nearext g=0.001000 ncl 2 flat 19.51 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 34 nearsq g=0.003125 ncl 1 flat 4.624 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 35 nearsq g=0.001000 ncl 2 flat 2.717 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 36 nearext g=0.001000 ncl 2 flat 3.66 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 37 nearint g=0.001000 ncl 2 flat 4.293 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 38 nearext g=0.001250 ncl 2 flat 0.254 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 39 nearext g=0.006250 ncl 2 flat 2.719 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+SUMMARY seed=6010 fam=10 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

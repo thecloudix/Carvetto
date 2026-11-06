@@ -1,0 +1,6 @@
+SUMMARY seed=615 fam=5 far=0 scale=1 cases=12 ok=12 refused=0 resolved=2 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=9.826e-05 worstEMallow=1.000e+300 latNonRes=0.4978 latRes=0.4488 kinkNonRes=0.4568 kinkRes=-1e+300 worstOver=-3.94e-04 worstFlatShortEndMills=0.54 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+  issue 26: 4
+  issue 28: 2
+  issue 4: 1
+exit 0

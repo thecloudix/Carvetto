@@ -1,0 +1,17 @@
+glyph_sliver5deg                   ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=+3.22e-04 ridge=0.1250 lim=0.500 rho=0.5000 s=0.2500
+    GSCAN gs=0.100 tentPts=119 above=0 onWorst=0.125000 at (21.18872,0.80000) offWorst=0.2259 ridge=0.1250 | oraclePred=0.46557 (at 22.7000,1.0000) cuts=3
+    => ok corners=3 worstCornerOn=0.0931
+glyph_sliver5deg_m3                ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=+3.22e-04 ridge=0.1250 lim=0.500 rho=0.5000 s=0.2500
+    corner (30.0000,0.0000) ang 87.50 deg: off 0.2500 -> on 0.250000 at (29.180000,1.204801) pts 3492 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (29.8858,2.6147) ang 87.50 deg: off 0.2500 -> on 0.250000 at (28.166717,1.694672) pts 3459 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (0.0000,0.0000) ang 5.00 deg: off 0.0678 -> on 0.067821 at (14.935884,0.720000) pts 1141 UNSHARPENED>chordal
+    GSCAN gs=0.100 tentPts=411 above=411 onWorst=0.250000 at (24.79859,1.40000) offWorst=0.2499 ridge=0.1250 | oraclePred=0.50000 (at 28.7000,1.3000) cuts=0 GABOVE-RIDGE (some unchanged by sharpening) PRED>CH-NOCUTS
+    GSCAN unchanged above-ridge point 0.24988 at (24.80000,1.40000)
+    => FAIL corners=3 worstCornerOn=0.2500
+glyph_thin_rect_0.1                ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=+1.00e+300 ridge=0.1250 lim=0.500 rho=0.5000 s=0.2500
+    GSCAN gs=0.100 tentPts=0 above=0 onWorst=0.000000 at (0.00000,0.00000) offWorst=0.0000 ridge=0.1250 | oraclePred=0.00000 (at 0.0000,0.0000) cuts=0
+    => ok corners=4 worstCornerOn=0.0000
+glyph_thin_rect_0.1_m3             ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=+1.00e+300 ridge=0.1250 lim=0.500 rho=0.5000 s=0.2500
+    GSCAN gs=0.100 tentPts=0 above=0 onWorst=0.000000 at (0.00000,0.00000) offWorst=0.0000 ridge=0.1250 | oraclePred=0.00000 (at 0.0000,0.0000) cuts=0
+    => ok corners=4 worstCornerOn=0.0000
+SUMMARY run=4 fail=1

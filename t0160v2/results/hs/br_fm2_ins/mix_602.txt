@@ -1,0 +1,43 @@
+INS case 0 ringneigh-touch ncl 1 flat 5.433 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 1 selftouch-bowtie+tangentcircle ncl 2 flat 12.94 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 2 text-apart ncl 2 flat 2.975 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 3 holedstar ncl 1 flat 13.32 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 4 touch1-twoholes-vertexwall-vertexvertex ncl 1 flat 1.584 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 5 chain g=0.240000ch-circles ncl 1 flat 1.261 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 6 nestedtight-sq ncl 2 flat 0.4409 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 7 star ncl 2 flat 0.7098 ok 1 okEq 1 ins 1 cuts 6 feeds 6 clEq 1 diagEq 1 good
+INS case 8 text-touchbox ncl 1 flat 2.747 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 9 holedstar ncl 2 flat 2.462 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 10 duplicate+other ncl 2 flat 10.96 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 11 selftouch-corners+cross ncl 2 flat 0.8293 ok 1 okEq 1 ins 1 cuts 10 feeds 10 clEq 1 diagEq 1 good
+INS case 12 nestonboundary-holevertexatcorner+cross ncl 2 flat 0.5222 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 13 holedstar ncl 1 flat 2.677 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 14 ringneigh-apart ncl 1 flat 0.3384 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 15 nearsq g=0.001000 ncl 1 flat 15.4 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 16 page-alltouch-squaressharededges ncl 2 flat 5.083 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 17 tinyspans g=0.062500ch n=213-arcwall ncl 2 flat 2.68 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 18 holedstar ncl 2 flat 2.305 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 19 lib:S_glyph_bez ncl 2 flat 2.624 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 20 nestedtight-circ ncl 2 flat 0.2007 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 21 cluster+near-inside g=0.001200 ncl 1 flat 8.15 ok 1 okEq 1 ins 1 cuts 8 feeds 22 clEq 1 diagEq 1 good
+INS case 22 overcircles-exttangent ncl 2 flat 4.797 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 23 star ncl 2 flat 1.21 ok 1 okEq 1 ins 1 cuts 6 feeds 6 clEq 1 diagEq 1 good
+INS case 24 page-alltouch-circles ncl 2 flat 0.3881 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 25 cluster+near-outside g=0.001200 ncl 2 flat 0.8731 ok 1 okEq 1 ins 1 cuts 2 feeds 2 clEq 1 diagEq 1 good
+INS case 26 fig8 ncl 2 flat 6.28 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 27 ringneigh-cross ncl 1 flat 0.212 ok 1 okEq 1 ins 1 cuts 10 feeds 24 clEq 1 diagEq 1 good
+INS case 28 bezblob ncl 1 flat 5.634 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 29 nestonboundary-holeedgeonwall ncl 2 flat 1.604 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 30 holedstar ncl 2 flat 6.573 ok 1 okEq 1 ins 1 cuts 24 feeds 24 clEq 1 diagEq 1 good
+INS case 31 sliverrects ncl 1 flat 1.225 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 32 sharededge ncl 1 flat 1.733 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 33 cluster+near-inside g=0.001200 ncl 2 flat 0.2008 ok 1 okEq 1 ins 1 cuts 7 feeds 7 clEq 1 diagEq 1 good
+INS case 34 text-touchbox ncl 2 flat 1.937 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 35 nearint g=0.000100 ncl 2 flat 9.192 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 36 star ncl 2 flat 20.78 ok 1 okEq 1 ins 1 cuts 12 feeds 12 clEq 1 diagEq 1 good
+INS case 37 fig8 ncl 2 flat 0.2379 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 38 lib:thin_rect_0.1 ncl 1 flat 6.648 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 39 frametext-crossing ncl 1 flat 4.265 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+SUMMARY seed=602 fam=-1 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

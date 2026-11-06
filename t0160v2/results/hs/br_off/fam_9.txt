@@ -1,0 +1,43 @@
+HASH case 0 bowtie chord 0.1 ok 1 moves 360 diags 2 h d0586fd0534fc312 mh 3d7c79237154efcc dl 26,28, so 8.8780610083035931 width 22.195152520758981 ncl 1
+HASH case 1 pentagram chord 0.01 ok 1 moves 2093 diags 1 h 2735c635b3b99d9c mh 4bbca21470eb1449 dl 28, so 4.8563279067917238 width 9.5624122825682409 ncl 0
+HASH case 2 bowtie chord 0.05 ok 1 moves 379 diags 3 h 5fa44fafdfe027f4 mh 2d69718979be8b64 dl 26,28,4, so 0.77542851333452278 width 1.9385712833363069 ncl 2
+HASH case 3 fig8 chord 0.01 ok 1 moves 248 diags 1 h cba8e7c39945b764 mh 78907a4b35b93301 dl 28, so 9.9161846282519406 width 5.7343011756366566 ncl 1
+HASH case 4 bowtie chord 0.001 ok 1 moves 4287 diags 2 h 46bbeafa698b53e1 mh 77e0a87963ddff8e dl 28,26, so 1.9422016262884172 width 4.8555040657210427 ncl 0
+HASH case 5 fig8 chord 0.05 ok 1 moves 267 diags 1 h c8ea22a0e2b8e8d3 mh f5657dadbd9ef883 dl 28, so 4.4634606542933239 width 9.7647830339835373 ncl 1
+HASH case 6 bowtie chord 0.005 ok 1 moves 17063 diags 2 h 9a120bd1404f6da9 mh 0af7eb18211933c1 dl 28,26, so 0.82747796566774001 width 2.0686949141693498 ncl 0
+HASH case 7 pentagram chord 0.1 ok 1 moves 1567 diags 1 h 5aed07515025b43d mh 4a2020d197c78fda dl 28, so 9.7863321212529861 width 17.584524500313972 ncl 0
+HASH case 8 bowtie chord 0.005 ok 1 moves 1618 diags 2 h 87c7f59165d89ff9 mh b49f626f028167ed dl 26,28, so 2.5258508686801151 width 10.655098872739135 ncl 0
+HASH case 9 bowtie chord 0.02 ok 1 moves 739 diags 1 h afd82079331a36fc mh 43386ad65494a588 dl 28, so 3.4852895273796558 width 8.2675298819142196 ncl 0
+HASH case 10 fig8 chord 0.05 ok 1 moves 174 diags 1 h 26020814202c1127 mh 15c550d0969dc6cf dl 28, so 1.0767854147904512 width 4.2402959248442667 ncl 0
+HASH case 11 pentagram chord 0.005 ok 1 moves 1695 diags 1 h ed6ce4fd2bcf6950 mh 1fac43c2db4b1d96 dl 28, so 4.2216104968222687 width 10.554026242055672 ncl 0
+HASH case 12 fig8 chord 0.005 ok 1 moves 6394 diags 2 h cb258f9f6b6ce179 mh 746ed4a746647386 dl 28,26, so 4.7037352686691891 width 11.759338171672972 ncl 0
+HASH case 13 fig8 chord 0.05 ok 1 moves 4029 diags 2 h 464e4c5a954f877f mh b8f0dc6ffe65d641 dl 26,28, so 1.6030576549185724 width 4.0076441372964311 ncl 2
+HASH case 14 fig8 chord 0.02 ok 1 moves 413 diags 2 h 50606283ccf4499d mh 1a069058ce21d6df dl 26,28, so 15.9052096160212 width 18.779548732222501 ncl 0
+HASH case 15 pentagram chord 0.1 ok 1 moves 1360 diags 2 h a08bfb6ee8f18e11 mh f8a3556cca0d5693 dl 28,4, so 1.0627593526868251 width 2.4307115822966558 ncl 1
+HASH case 16 bowtie chord 0.02 ok 1 moves 1173 diags 1 h cca67b2af6b2cec1 mh 4e0c53238c0855a1 dl 28, so 0.57812349218917702 width 0.91545610410348999 ncl 0
+HASH case 17 bowtie chord 0.1 ok 1 moves 443 diags 2 h 72777107995d7396 mh dd67300326cbac20 dl 28,26, so 1.5891364299052855 width 3.9728410747632132 ncl 0
+HASH case 18 bowtie chord 0.05 ok 1 moves 301 diags 1 h b83698c98e0654f4 mh f1d1efa894a39b8e dl 28, so 6.0445826682474353 width 15.111456670618587 ncl 0
+HASH case 19 bowtie chord 0.1 ok 1 moves 316 diags 1 h 6d19d8fb5411c01a mh 1c0d57d845fa4e7d dl 28, so 4.3947068978689741 width 10.151270796741802 ncl 1
+HASH case 20 fig8 chord 0.001 ok 1 moves 952 diags 1 h 07f1a935175ca9f5 mh 4b116feaebb2abc2 dl 28, so 9.099214824864168 width 22.748037062160417 ncl 0
+HASH case 21 fig8 chord 0.05 ok 1 moves 141 diags 1 h 134a8fc12830df9b mh f30dbf168b4cd4bb dl 28, so 5.1090512881561194 width 5.8384153378497992 ncl 0
+HASH case 22 fig8 chord 0.1 ok 1 moves 442 diags 3 h 24d6460dbeefef04 mh cd6efd2637fc5e17 dl 28,4,4, so 1.3161393918902935 width 2.9909594553237917 ncl 2
+HASH case 23 pentagram chord 0.1 ok 1 moves 1023 diags 1 h d641a71400638eb6 mh 23c2169204c72d81 dl 28, so 4.187483702264176 width 6.8492707379621471 ncl 0
+HASH case 24 fig8 chord 0.02 ok 1 moves 277 diags 1 h c281396200c4e0f4 mh 45e70353e961ddc0 dl 28, so 4.4273097861896282 width 8.3687128160047877 ncl 2
+HASH case 25 fig8 chord 0.1 ok 1 moves 201 diags 1 h 657ae7a0d359e049 mh dc44789bc370e77e dl 28, so 6.7819891301731197 width 11.41583550992031 ncl 1
+HASH case 26 pentagram chord 0.05 ok 1 moves 574 diags 1 h 603b5f27dc751e5d mh a49a37ce3a9f8a51 dl 28, so 4.382314369989218 width 10.955785924973044 ncl 0
+HASH case 27 pentagram chord 0.005 ok 0 moves 0 diags 2 h eda6049ff69bd64d mh e943185762eeb5b1 dl 28,17, so 4.3807078855069541 width 10.951769713767385 ncl 0
+HASH case 28 bowtie chord 0.1 ok 1 moves 391 diags 2 h 91c4dad76c84e8b6 mh e737ad592cfca0d1 dl 28,26, so 1.8322113629239827 width 4.5805284073099566 ncl 0
+HASH case 29 fig8 chord 0.005 ok 1 moves 520 diags 2 h b7fa6ea0f24885d2 mh 660a6344ced176aa dl 26,28, so 8.5104266145118377 width 21.276066536279593 ncl 2
+HASH case 30 pentagram chord 0.02 ok 0 moves 0 diags 2 h c2ca813fb29f5d83 mh e943185762eeb5b1 dl 28,17, so 1.1377742990738551 width 3.2841157335325826 ncl 0
+HASH case 31 bowtie chord 0.05 ok 1 moves 395 diags 1 h 35d21d0eb2641f29 mh d1807515dc15e875 dl 28, so 3.2359149958204827 width 5.6547706219471472 ncl 1
+HASH case 32 fig8 chord 0.01 ok 1 moves 360 diags 1 h aba6572700383464 mh ce930fa6d7c87a01 dl 28, so 7.4933798962551919 width 16.664476164182201 ncl 1
+HASH case 33 pentagram chord 0.01 ok 0 moves 0 diags 2 h ee37fe17300f801c mh e943185762eeb5b1 dl 28,17, so 9.6889941836672193 width 24.222485459168048 ncl 0
+HASH case 34 pentagram chord 0.001 ok 1 moves 7364 diags 2 h d1d3dc3bad5b7b6f mh ff6c06a315e6e5bf dl 28,26, so 0.63162811389034046 width 1.5790702847258511 ncl 0
+HASH case 35 pentagram chord 0.01 ok 0 moves 0 diags 3 h 4403e7b0d623ea83 mh e943185762eeb5b1 dl 26,28,17, so 1.684356205223704 width 4.21089051305926 ncl 1
+HASH case 36 bowtie chord 0.05 ok 1 moves 270 diags 1 h 644f5b689bc093fd mh 6c19c94598939bf1 dl 28, so 3.7507370574621461 width 9.3768426436553654 ncl 0
+HASH case 37 bowtie chord 0.02 ok 1 moves 1129 diags 1 h 46fe130ebc755157 mh 223f58f34cceeb4b dl 28, so 3.4042296465033814 width 4.4876984648763063 ncl 0
+HASH case 38 fig8 chord 0.01 ok 1 moves 288 diags 1 h 4faece217ac285d8 mh 85d54fadb3a3ff05 dl 28, so 9.7629134439622671 width 9.8442852525964373 ncl 2
+HASH case 39 pentagram chord 0.05 ok 1 moves 752 diags 1 h cf46ded05a350fed mh 976b98cc1c6bb761 dl 28, so 3.3632716037504298 width 8.2833109267839227 ncl 2
+SUMMARY seed=609 fam=9 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

@@ -1,0 +1,43 @@
+INS case 0 tinyspans g=0.125000ch n=271-Dhole ncl 1 flat 2.713 ok 1 okEq 1 ins 1 cuts 2 feeds 2 clEq 1 diagEq 1 good
+INS case 1 nearext g=0.000000 ncl 1 flat 2.026 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 2 selftouch-corners+cross ncl 1 flat 1.788 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 3 chain g=1.200000ch-squares ncl 1 flat 0.113 ok 1 okEq 1 ins 1 cuts 24 feeds 24 clEq 1 diagEq 1 good
+INS case 4 fig8 ncl 2 flat 0.4402 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 5 tinyspans g=0.062500ch n=229-arcwall ncl 2 flat 25.05 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 6 sliverrects ncl 2 flat 2.67 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 7 holedstar ncl 1 flat 1.387 ok 1 okEq 1 ins 1 cuts 20 feeds 20 clEq 1 diagEq 1 good
+INS case 8 tinyspans g=0.062500ch n=181-arcwall ncl 1 flat 0.9601 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 9 ringneigh-touch ncl 1 flat 0.804 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 10 tinyspans g=0.002000ch n=385-arcwall ncl 2 flat 21.85 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 11 star ncl 2 flat 15.58 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 12 ringneigh-touch ncl 2 flat 1.378 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 13 chain g=1.200000ch-squares ncl 1 flat 2.583 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 14 thinstrip ncl 2 flat 2.344 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 15 cluster+near-outside g=0.001200 ncl 1 flat 6.264 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 16 bezblob ncl 1 flat 16.53 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 17 page-alltouch-squaressharededges ncl 2 flat 3.07 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 18 star ncl 1 flat 1.792 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 19 overpoly ncl 1 flat 3.12 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 20 star ncl 1 flat 1.327 ok 1 okEq 1 ins 1 cuts 7 feeds 7 clEq 1 diagEq 1 good
+INS case 21 sliverrects ncl 1 flat 6.221 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 22 cluster+near-inside g=0.001200 ncl 2 flat 0.6832 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 23 selftouch-bowtie+tangentcircle ncl 2 flat 1.341 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 24 lib:thin_rect_0.1 ncl 2 flat 3.965 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 25 nearint g=0.000500 ncl 2 flat 0.1314 ok 1 okEq 1 ins 1 cuts 2 feeds 2 clEq 1 diagEq 1 good
+INS case 26 chain g=0.031250ch-squares ncl 1 flat 2.821 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 27 selftouch-corners+cross ncl 2 flat 0.8936 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 28 holesinholes-sq ncl 2 flat 5.587 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 29 sliverrects ncl 2 flat 5.301 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 30 holesinholes ncl 2 flat 6.755 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 31 tinyspans g=0.500000ch n=63-arcwall ncl 2 flat 1.192 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 32 page-alltouch-circles ncl 1 flat 7.639 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 33 thinstrip ncl 1 flat 2.037 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 34 touch1-twoholes-vertexwall-vertexvertex ncl 2 flat 2.136 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 35 overpoly ncl 2 flat 8.984 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 36 touch1-tangentcircle ncl 1 flat 5.048 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 37 selftouch-bowtie+tangentcircle ncl 1 flat 1.103 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 38 overcircles-exttangent ncl 1 flat 0.3299 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 39 page-alltouch-squaressharededges ncl 2 flat 3.461 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+SUMMARY seed=601 fam=-1 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

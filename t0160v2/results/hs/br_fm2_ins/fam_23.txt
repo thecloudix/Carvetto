@@ -1,0 +1,43 @@
+INS case 0 nestonboundary-holevertexatcorner+cross ncl 2 flat 4.499 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 1 nestonboundary-holevertexatcorner+cross ncl 2 flat 17.5 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 2 nestonboundary-holeedgeonwall ncl 1 flat 0.3612 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 3 nestonboundary-holeedgeonwall ncl 1 flat 7.343 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 4 nestonboundary-holeedgeonwall ncl 1 flat 0.3731 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 5 nestonboundary-holeedgeonwall ncl 2 flat 8.759 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 6 nestonboundary-holeedgeonwall ncl 2 flat 5.803 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 7 nestonboundary-holeedgeonwall ncl 2 flat 20.74 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 8 nestonboundary-holevertexatcorner+cross ncl 2 flat 1.683 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 9 nestonboundary-islandsharingholecorner+cross ncl 2 flat 0.6546 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 10 nestonboundary-holevertexatcorner+cross ncl 2 flat 2.726 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 11 nestonboundary-holeedgeonwall ncl 2 flat 0.6764 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 12 nestonboundary-holeedgeonwall ncl 2 flat 7.276 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 13 nestonboundary-islandsharingholecorner+cross ncl 1 flat 3.732 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 14 nestonboundary-islandsharingholecorner+cross ncl 2 flat 0.99 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 15 nestonboundary-islandsharingholecorner+cross ncl 2 flat 8.331 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 16 nestonboundary-islandsharingholecorner+cross ncl 2 flat 6.624 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 17 nestonboundary-holeedgeonwall ncl 2 flat 10.35 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 18 nestonboundary-holevertexatcorner+cross ncl 1 flat 0.1264 ok 1 okEq 1 ins 1 cuts 10 feeds 92 clEq 1 diagEq 1 good
+INS case 19 nestonboundary-holeedgeonwall ncl 1 flat 2.994 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 20 nestonboundary-holevertexatcorner+cross ncl 1 flat 3.57 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 21 nestonboundary-holevertexatcorner+cross ncl 2 flat 0.8288 ok 1 okEq 1 ins 1 cuts 4 feeds 12 clEq 1 diagEq 1 good
+INS case 22 nestonboundary-holevertexatcorner+cross ncl 1 flat 2.28 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 23 nestonboundary-islandsharingholecorner+cross ncl 1 flat 0.2994 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 24 nestonboundary-islandsharingholecorner+cross ncl 2 flat 4.072 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 25 nestonboundary-islandsharingholecorner+cross ncl 2 flat 6.656 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 26 nestonboundary-holevertexatcorner+cross ncl 2 flat 8.878 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 27 nestonboundary-holevertexatcorner+cross ncl 1 flat 0.9789 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 28 nestonboundary-holeedgeonwall ncl 2 flat 0.21 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 29 nestonboundary-islandsharingholecorner+cross ncl 2 flat 0.4571 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 30 nestonboundary-holevertexatcorner+cross ncl 1 flat 1.913 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 31 nestonboundary-holeedgeonwall ncl 1 flat 1.221 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 32 nestonboundary-islandsharingholecorner+cross ncl 1 flat 0.7493 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 33 nestonboundary-holeedgeonwall ncl 1 flat 1.442 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 34 nestonboundary-holevertexatcorner+cross ncl 1 flat 1.57 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 35 nestonboundary-islandsharingholecorner+cross ncl 2 flat 3.338 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 36 nestonboundary-holevertexatcorner+cross ncl 2 flat 3.067 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 37 nestonboundary-islandsharingholecorner+cross ncl 1 flat 3.727 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 38 nestonboundary-islandsharingholecorner+cross ncl 1 flat 1.017 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 39 nestonboundary-holevertexatcorner+cross ncl 1 flat 1.014 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+SUMMARY seed=6023 fam=23 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

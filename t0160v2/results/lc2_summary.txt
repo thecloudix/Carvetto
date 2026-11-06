@@ -1,0 +1,304 @@
+Dshape                                   cuts=2    clr-c/2=+8.33e-03 ring-c/2=+5.07e-04 ridge=0.2500 gOn=0.25000 gOff=0.4995 cornerOn=0.2500 pred=1.0000  
+L                                        cuts=5    clr-c/2=+8.33e-03 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+Lhole                                    cuts=5    clr-c/2=+8.33e-03 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+Lhole_m6_1                               cuts=5    clr-c/2=+8.33e-03 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.00000 gOff=0.0729 cornerOn=0.0890 pred=0.1333  
+ball12_f0.3                              cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.15e-16 ridge=0.2764 gOn=0.00000 gOff=0.0217 cornerOn=0.0239 pred=0.0619  
+ball12_f0.3_tri30                        cuts=3    clr-c/2=+8.33e-03 ring-c/2=+2.76e-03 ridge=0.2764 gOn=0.00000 gOff=0.0735 cornerOn=0.0736 pred=0.3000  
+ball12_f1.0                              cuts=4    clr-c/2=+8.33e-03 ring-c/2=-2.25e-15 ridge=0.2764 gOn=0.00000 gOff=0.0223 cornerOn=0.0239 pred=0.0629  
+ball12_f1.0_tri30                        cuts=3    clr-c/2=+8.33e-03 ring-c/2=+3.29e-05 ridge=0.2764 gOn=0.00000 gOff=0.1122 cornerOn=0.0388 pred=0.4183  
+ball12_f1.5                              cuts=4    clr-c/2=+8.33e-03 ring-c/2=-2.95e-17 ridge=0.2764 gOn=0.00000 gOff=0.0221 cornerOn=0.0239 pred=0.0626  
+ball12_f1.5_tri30                        cuts=3    clr-c/2=+8.33e-03 ring-c/2=-2.95e-17 ridge=0.2764 gOn=0.00000 gOff=0.1112 cornerOn=0.0388 pred=0.4163  
+ball3_f0.3                               cuts=4    clr-c/2=+8.33e-03 ring-c/2=+1.37e-04 ridge=0.0691 gOn=0.00000 gOff=0.0640 cornerOn=0.0691 pred=0.2528  
+ball3_f0.3_tri30                         cuts=3    clr-c/2=+8.33e-03 ring-c/2=+5.11e-05 ridge=0.0691 gOn=0.02197 gOff=0.0746 cornerOn=0.0690 pred=0.3000  
+ball3_f1.0                               cuts=4    clr-c/2=+8.33e-03 ring-c/2=+1.93e-16 ridge=0.0691 gOn=0.06850 gOff=0.0927 cornerOn=0.0691 pred=0.2774  
+ball3_f1.0_tri30                         cuts=3    clr-c/2=+8.33e-03 ring-c/2=+7.97e-05 ridge=0.0691 gOn=0.06909 gOff=0.1771 cornerOn=0.0691 pred=1.0000  
+ball3_f1.5                               cuts=4    clr-c/2=+8.33e-03 ring-c/2=+5.85e-04 ridge=0.0691 gOn=0.06909 gOff=0.0978 cornerOn=0.0691 pred=0.2528  
+ball3_f1.5_tri30                         cuts=3    clr-c/2=+8.33e-03 ring-c/2=+7.12e-04 ridge=0.0691 gOn=0.06909 gOff=0.2009 cornerOn=0.0691 pred=1.5000  
+ball6_f0.3                               cuts=4    clr-c/2=+8.33e-03 ring-c/2=-1.36e-15 ridge=0.1382 gOn=0.00000 gOff=0.0464 cornerOn=0.0480 pred=0.1306  
+ball6_f0.3_tri30                         cuts=3    clr-c/2=+8.33e-03 ring-c/2=+3.46e-03 ridge=0.1382 gOn=0.00000 gOff=0.0721 cornerOn=0.0721 pred=0.3000  
+ball6_f1.0                               cuts=4    clr-c/2=+8.33e-03 ring-c/2=+2.84e-06 ridge=0.1382 gOn=0.00000 gOff=0.0415 cornerOn=0.0480 pred=0.1221  
+ball6_f1.0_tri30                         cuts=3    clr-c/2=+8.33e-03 ring-c/2=+1.85e-04 ridge=0.1382 gOn=0.13809 gOff=0.2160 cornerOn=0.1203 pred=0.9545  
+ball6_f1.5                               cuts=4    clr-c/2=+8.33e-03 ring-c/2=-2.95e-17 ridge=0.1382 gOn=0.00000 gOff=0.0473 cornerOn=0.0480 pred=0.1186  
+ball6_f1.5_tri30                         cuts=3    clr-c/2=+8.33e-03 ring-c/2=+3.55e-05 ridge=0.1382 gOn=0.13809 gOff=0.2287 cornerOn=0.0783 pred=0.9549  
+bez_blade                                cuts=2    clr-c/2=+9.12e-03 ring-c/2=+1.86e-03 ridge=0.2500 gOn=0.25000 gOff=0.3083 cornerOn=0.2500 pred=0.5525  
+bigtri_ch0.002_apex12                    cuts=3    clr-c/2=+3.33e-04 ring-c/2=-3.03e-15 ridge=0.2500 gOn=0.25000 gOff=0.5000 cornerOn=0.2500 pred=1.0000  
+bigtri_ch0.002_apex12_V60s03             cuts=3    clr-c/2=+3.33e-04 ring-c/2=+2.58e-05 ridge=0.2598 gOn=0.25981 gOff=0.4999 cornerOn=0.2598 pred=1.0000  
+bigtri_ch0.002_apex20                    cuts=3    clr-c/2=+3.33e-04 ring-c/2=+2.02e-05 ridge=0.2500 gOn=0.25000 gOff=0.4999 cornerOn=0.2500 pred=1.0000  
+bigtri_ch0.002_apex20_V60s03             cuts=3    clr-c/2=+3.33e-04 ring-c/2=+5.34e-07 ridge=0.2598 gOn=0.25981 gOff=0.5000 cornerOn=0.2598 pred=1.0000  
+bigtri_ch0.002_apex30                    cuts=3    clr-c/2=+3.34e-04 ring-c/2=+1.63e-15 ridge=0.2500 gOn=0.24999 gOff=0.4999 cornerOn=0.2500 pred=1.0000  
+bigtri_ch0.002_apex30_V60s03             cuts=3    clr-c/2=+3.33e-04 ring-c/2=+3.64e-06 ridge=0.2598 gOn=0.25981 gOff=0.5000 cornerOn=0.2598 pred=1.0000  
+bigtri_ch0.002_apex45                    cuts=3    clr-c/2=+3.33e-04 ring-c/2=+1.60e-05 ridge=0.2500 gOn=0.25000 gOff=0.4999 cornerOn=0.2500 pred=1.0000  
+bigtri_ch0.002_apex45_V60s03             cuts=3    clr-c/2=+3.33e-04 ring-c/2=+2.07e-06 ridge=0.2598 gOn=0.25981 gOff=0.4999 cornerOn=0.2598 pred=1.0000  
+bigtri_ch0.010_apex12                    cuts=3    clr-c/2=+1.67e-03 ring-c/2=+1.04e-03 ridge=0.2500 gOn=0.25000 gOff=0.5000 cornerOn=0.2500 pred=1.0000  
+bigtri_ch0.010_apex12_V60s03             cuts=3    clr-c/2=+1.67e-03 ring-c/2=-5.17e-16 ridge=0.2598 gOn=0.25981 gOff=0.4999 cornerOn=0.2598 pred=1.0000  
+bigtri_ch0.010_apex20                    cuts=3    clr-c/2=+1.67e-03 ring-c/2=+1.67e-03 ridge=0.2500 gOn=0.24988 gOff=0.5000 cornerOn=0.2500 pred=1.0000  
+bigtri_ch0.010_apex20_V60s03             cuts=3    clr-c/2=+1.67e-03 ring-c/2=-4.62e-15 ridge=0.2598 gOn=0.25981 gOff=0.4999 cornerOn=0.2598 pred=1.0000  
+bigtri_ch0.010_apex30                    cuts=3    clr-c/2=+1.67e-03 ring-c/2=+1.67e-03 ridge=0.2500 gOn=0.25000 gOff=0.5000 cornerOn=0.2500 pred=1.0000  
+bigtri_ch0.010_apex30_V60s03             cuts=3    clr-c/2=+1.67e-03 ring-c/2=+3.55e-06 ridge=0.2598 gOn=0.25981 gOff=0.4998 cornerOn=0.2598 pred=1.0000  
+bigtri_ch0.010_apex45                    cuts=3    clr-c/2=+1.67e-03 ring-c/2=+1.67e-03 ridge=0.2500 gOn=0.25000 gOff=0.5000 cornerOn=0.2500 pred=1.0000  
+bigtri_ch0.010_apex45_V60s03             cuts=3    clr-c/2=+1.67e-03 ring-c/2=+3.55e-05 ridge=0.2598 gOn=0.25981 gOff=0.5000 cornerOn=0.2598 pred=1.0000  
+bigtri_ch0.050_apex12                    cuts=3    clr-c/2=+8.33e-03 ring-c/2=+1.52e-04 ridge=0.2500 gOn=0.25000 gOff=0.5000 cornerOn=0.2500 pred=1.0000  
+bigtri_ch0.050_apex12_V60s03             cuts=3    clr-c/2=+8.33e-03 ring-c/2=-1.41e-16 ridge=0.2598 gOn=0.25981 gOff=0.5000 cornerOn=0.2598 pred=1.0000  
+bigtri_ch0.050_apex20                    cuts=3    clr-c/2=+8.33e-03 ring-c/2=+5.26e-16 ridge=0.2500 gOn=0.25000 gOff=0.5000 cornerOn=0.2500 pred=1.0000  
+bigtri_ch0.050_apex20_V60s03             cuts=3    clr-c/2=+8.33e-03 ring-c/2=+2.21e-04 ridge=0.2598 gOn=0.25981 gOff=0.5000 cornerOn=0.2598 pred=1.0000  
+bigtri_ch0.050_apex30                    cuts=3    clr-c/2=+8.33e-03 ring-c/2=+1.31e-04 ridge=0.2500 gOn=0.25000 gOff=0.4999 cornerOn=0.2500 pred=1.0000  
+bigtri_ch0.050_apex30_V60s03             cuts=3    clr-c/2=+8.33e-03 ring-c/2=+1.39e-04 ridge=0.2598 gOn=0.25981 gOff=0.5000 cornerOn=0.2598 pred=1.0000  
+bigtri_ch0.050_apex45                    cuts=3    clr-c/2=+8.33e-03 ring-c/2=+2.59e-04 ridge=0.2500 gOn=0.24964 gOff=0.5000 cornerOn=0.2500 pred=1.0000  
+bigtri_ch0.050_apex45_V60s03             cuts=3    clr-c/2=+8.33e-03 ring-c/2=+1.64e-04 ridge=0.2598 gOn=0.25981 gOff=0.4999 cornerOn=0.2598 pred=1.0000  
+chamfer0.000500                          cuts=4    clr-c/2=+8.35e-03 ring-c/2=+6.53e-03 ridge=0.2500 gOn=0.24944 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+chamfer0.000500_m1                       cuts=4    clr-c/2=+8.36e-03 ring-c/2=+6.53e-03 ridge=0.2500 gOn=0.00000 gOff=0.0721 cornerOn=0.0891 pred=0.1333  
+chamfer0.001500                          cuts=4    clr-c/2=+8.33e-03 ring-c/2=-3.63e-16 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+chamfer0.001500_m1                       cuts=4    clr-c/2=+8.33e-03 ring-c/2=-3.63e-16 ridge=0.2500 gOn=0.00000 gOff=0.0719 cornerOn=0.0839 pred=0.1333  
+chamfer0.010000                          cuts=4    clr-c/2=+8.33e-03 ring-c/2=-3.63e-16 ridge=0.2500 gOn=0.24870 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+chamfer0.010000_m1                       cuts=4    clr-c/2=+8.33e-03 ring-c/2=-3.63e-16 ridge=0.2500 gOn=0.00000 gOff=0.0716 cornerOn=0.0887 pred=0.1333  
+chamfer0.200000                          cuts=4    clr-c/2=+8.33e-03 ring-c/2=+2.98e-04 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+chamfer0.200000_m1                       cuts=4    clr-c/2=+8.33e-03 ring-c/2=+2.98e-04 ridge=0.2500 gOn=0.00000 gOff=0.0717 cornerOn=0.0890 pred=0.1333  
+channel_w2.30                            cuts=6    clr-c/2=+2.26e-04 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.24988 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+channel_w2.60                            cuts=7    clr-c/2=+2.69e-04 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.24981 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+channel_w3.00                            cuts=6    clr-c/2=+2.50e-03 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.24984 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+channel_w4.00                            cuts=5    clr-c/2=+6.95e-03 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.4992 cornerOn=0.2500 pred=1.0000  
+channel_w5.00                            cuts=6    clr-c/2=+4.69e-03 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.4992 cornerOn=0.2500 pred=1.0000  
+channel_w7.00                            cuts=5    clr-c/2=+8.33e-03 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=1.0000  
+concave_tri                              cuts=9    clr-c/2=+6.77e-04 ring-c/2=+5.10e-04 ridge=0.2500 gOn=0.25000 gOff=0.4937 cornerOn=0.2500 pred=0.8973  
+concave_tri_m3_1                         cuts=3    clr-c/2=+6.77e-04 ring-c/2=+5.10e-04 ridge=0.2500 gOn=0.00000 gOff=0.1769 cornerOn=0.1813 pred=0.3314  
+convex_arc_tri                           cuts=3    clr-c/2=+1.25e-02 ring-c/2=+1.92e-05 ridge=0.2500 gOn=0.00000 gOff=0.2303 cornerOn=0.2392 pred=0.3693  
+diamondhole_near_corner_g2.0             cuts=6    clr-c/2=+8.33e-03 ring-c/2=-1.27e-07 ridge=0.2500 gOn=0.35365 gOff=0.4833 cornerOn=0.3565 pred=0.8833 CORNER-ABOVE GABOVE-RIDGE unchanged 
+diamondhole_near_corner_g3.0             cuts=7    clr-c/2=+2.21e-04 ring-c/2=-1.27e-07 ridge=0.2500 gOn=0.25000 gOff=0.4964 cornerOn=0.2500 pred=1.0000  
+diamondhole_near_corner_g4.0             cuts=10   clr-c/2=+7.70e-03 ring-c/2=-1.27e-07 ridge=0.2500 gOn=0.25000 gOff=0.4972 cornerOn=0.2500 pred=1.0000  
+dumbbell_w2.40                           cuts=11   clr-c/2=+5.68e-03 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+dumbbell_w2.80                           cuts=11   clr-c/2=+1.16e-03 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+dumbbell_w3.50                           cuts=13   clr-c/2=+2.15e-05 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+dumbbell_w5.00                           cuts=12   clr-c/2=+3.03e-04 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.4992 cornerOn=0.2500 pred=1.0000  
+dumbbell_w8.50                           cuts=8    clr-c/2=+3.40e-05 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+filthr_r1.20                             cuts=4    clr-c/2=+8.33e-03 ring-c/2=+8.33e-03 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+filthr_r1.40                             cuts=4    clr-c/2=+8.33e-03 ring-c/2=+8.33e-03 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+filthr_r1.50                             cuts=4    clr-c/2=+8.33e-03 ring-c/2=+8.33e-03 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+filthr_r1.55                             cuts=4    clr-c/2=+8.33e-03 ring-c/2=+8.33e-03 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+filthr_r1.60                             cuts=4    clr-c/2=+8.33e-03 ring-c/2=+8.33e-03 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+filthr_r1.65                             cuts=4    clr-c/2=+8.33e-03 ring-c/2=+8.33e-03 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+filthr_r1.70                             cuts=4    clr-c/2=+8.33e-03 ring-c/2=+8.33e-03 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+filthr_r1.80                             cuts=4    clr-c/2=+8.33e-03 ring-c/2=+8.33e-03 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+filthr_r2.00                             cuts=4    clr-c/2=+8.33e-03 ring-c/2=+8.33e-03 ridge=0.2500 gOn=0.25000 gOff=0.4834 cornerOn=0.2500 pred=0.8031  
+glyph_A_glyph                            cuts=6    clr-c/2=+8.33e-03 ring-c/2=+1.00e+300 ridge=0.1250 gOn=0.00000 gOff=0.0833 cornerOn=0.1146 pred=0.1602  
+glyph_A_glyph_m3                         cuts=34   clr-c/2=+9.52e-06 ring-c/2=+1.00e+300 ridge=0.1250 gOn=0.12500 gOff=0.2496 cornerOn=0.1250 pred=0.5000  
+glyph_C_glyph_arcs                       cuts=0    clr-c/2=+0.00e+00 ring-c/2=+2.41e-04 ridge=0.1250 gOn=0.00000 gOff=0.0080 cornerOn=0.0000 pred=0.0078  
+glyph_C_glyph_arcs_m3                    cuts=0    clr-c/2=+0.00e+00 ring-c/2=+2.41e-04 ridge=0.1250 gOn=0.25000 gOff=0.2500 cornerOn=0.0000 pred=0.5000 GABOVE-RIDGE PRED>CH-NOCUTS unchanged 
+glyph_L                                  cuts=5    clr-c/2=+8.33e-03 ring-c/2=-1.79e-07 ridge=0.1250 gOn=0.00000 gOff=0.0721 cornerOn=0.0890 pred=0.1333  
+glyph_L_m3                               cuts=5    clr-c/2=+8.33e-03 ring-c/2=-1.79e-07 ridge=0.1250 gOn=0.12500 gOff=0.2333 cornerOn=0.1250 pred=0.4333  
+glyph_O_glyph_bez                        cuts=0    clr-c/2=+0.00e+00 ring-c/2=+1.00e+300 ridge=0.1250 gOn=0.00000 gOff=0.0017 cornerOn=0.0000 pred=0.0021  
+glyph_O_glyph_bez_m3                     cuts=0    clr-c/2=+0.00e+00 ring-c/2=+1.00e+300 ridge=0.1250 gOn=0.25000 gOff=0.2500 cornerOn=0.0000 pred=0.5000 GABOVE-RIDGE PRED>CH-NOCUTS unchanged 
+glyph_S_glyph_bez                        cuts=14   clr-c/2=+3.07e-03 ring-c/2=+1.00e+300 ridge=0.1250 gOn=0.12500 gOff=0.2205 cornerOn=0.1223 pred=0.4393  
+glyph_S_glyph_bez_m3                     cuts=0    clr-c/2=+0.00e+00 ring-c/2=+1.00e+300 ridge=0.1250 gOn=0.25000 gOff=0.2500 cornerOn=0.2500 pred=0.5000 CORNER-ABOVE GABOVE-RIDGE PRED>CH-NOCUTS unchanged 
+glyph_T                                  cuts=6    clr-c/2=+8.33e-03 ring-c/2=-1.79e-07 ridge=0.1250 gOn=0.00000 gOff=0.0728 cornerOn=0.0887 pred=0.1333  
+glyph_T_m3                               cuts=0    clr-c/2=+0.00e+00 ring-c/2=-1.79e-07 ridge=0.1250 gOn=0.25012 gOff=0.2494 cornerOn=0.2500 pred=0.5000 CORNER-ABOVE GABOVE-RIDGE PRED>CH-NOCUTS unchanged 
+glyph_annulus                            cuts=0    clr-c/2=+0.00e+00 ring-c/2=+1.10e-04 ridge=0.1250 gOn=0.00000 gOff=0.0081 cornerOn=0.0000 pred=0.0078  
+glyph_annulus_m3                         cuts=0    clr-c/2=+0.00e+00 ring-c/2=+1.10e-04 ridge=0.1250 gOn=0.25000 gOff=0.2500 cornerOn=0.0000 pred=0.5000 GABOVE-RIDGE PRED>CH-NOCUTS unchanged 
+glyph_circle                             cuts=0    clr-c/2=+0.00e+00 ring-c/2=+8.94e-03 ridge=0.1250 gOn=0.00000 gOff=0.0075 cornerOn=0.0000 pred=0.0072  
+glyph_circle_m3                          cuts=0    clr-c/2=+0.00e+00 ring-c/2=+8.94e-03 ridge=0.1250 gOn=0.00000 gOff=0.0075 cornerOn=0.0000 pred=0.0072  
+glyph_concave_arc_notch                  cuts=6    clr-c/2=+7.57e-03 ring-c/2=+1.00e+300 ridge=0.1250 gOn=0.00000 gOff=0.0719 cornerOn=0.0891 pred=0.0833  
+glyph_concave_arc_notch_m3               cuts=8    clr-c/2=+4.96e-04 ring-c/2=+1.00e+300 ridge=0.1250 gOn=0.12500 gOff=0.2141 cornerOn=0.1250 pred=0.3833  
+glyph_dumbbell_neck05                    cuts=8    clr-c/2=+8.33e-03 ring-c/2=-8.89e-04 ridge=0.1250 gOn=0.00000 gOff=0.0714 cornerOn=0.0891 pred=0.1333  
+glyph_dumbbell_neck05_m3                 cuts=8    clr-c/2=+8.33e-03 ring-c/2=-8.89e-04 ridge=0.1250 gOn=0.12500 gOff=0.2333 cornerOn=0.1250 pred=0.4333  
+glyph_ellipse_bez                        cuts=0    clr-c/2=+0.00e+00 ring-c/2=+8.36e-03 ridge=0.1250 gOn=0.00000 gOff=0.0053 cornerOn=0.0000 pred=0.0027  
+glyph_ellipse_bez_m3                     cuts=0    clr-c/2=+0.00e+00 ring-c/2=+8.36e-03 ridge=0.1250 gOn=0.00000 gOff=0.0053 cornerOn=0.0000 pred=0.0027  
+glyph_neck_0.021                         cuts=8    clr-c/2=+8.33e-03 ring-c/2=-2.20e-04 ridge=0.1250 gOn=0.00000 gOff=0.0712 cornerOn=0.0891 pred=0.1333  
+glyph_neck_0.021_m3                      cuts=8    clr-c/2=+8.33e-03 ring-c/2=-2.20e-04 ridge=0.1250 gOn=0.12500 gOff=0.2333 cornerOn=0.1250 pred=0.4333  
+glyph_neck_0.03                          cuts=8    clr-c/2=+8.33e-03 ring-c/2=-4.55e-04 ridge=0.1250 gOn=0.00000 gOff=0.0712 cornerOn=0.0891 pred=0.1333  
+glyph_neck_0.03_m3                       cuts=8    clr-c/2=+8.33e-03 ring-c/2=-4.55e-04 ridge=0.1250 gOn=0.12500 gOff=0.2333 cornerOn=0.1250 pred=0.4333  
+glyph_rect40x20                          cuts=4    clr-c/2=+8.33e-03 ring-c/2=+1.42e-04 ridge=0.1250 gOn=0.00000 gOff=0.0730 cornerOn=0.0891 pred=0.1333  
+glyph_rect40x20_m3                       cuts=4    clr-c/2=+8.33e-03 ring-c/2=+1.42e-04 ridge=0.1250 gOn=0.12500 gOff=0.2333 cornerOn=0.1250 pred=0.4333  
+glyph_sliver5deg                         cuts=3    clr-c/2=+8.33e-03 ring-c/2=+3.22e-04 ridge=0.1250 gOn=0.12500 gOff=0.2259 cornerOn=0.0931 pred=0.4656  
+glyph_sliver5deg_m3                      cuts=0    clr-c/2=+0.00e+00 ring-c/2=+3.22e-04 ridge=0.1250 gOn=0.25000 gOff=0.2499 cornerOn=0.2500 pred=0.5000 CORNER-ABOVE GABOVE-RIDGE PRED>CH-NOCUTS unchanged 
+glyph_slot_arcs                          cuts=0    clr-c/2=+0.00e+00 ring-c/2=+8.33e-03 ridge=0.1250 gOn=0.00000 gOff=0.0063 cornerOn=0.0000 pred=0.0009  
+glyph_slot_arcs_m3                       cuts=0    clr-c/2=+0.00e+00 ring-c/2=+8.33e-03 ridge=0.1250 gOn=0.00000 gOff=0.0063 cornerOn=0.0000 pred=0.0044  
+glyph_sq_holes                           cuts=4    clr-c/2=+8.33e-03 ring-c/2=-1.79e-07 ridge=0.1250 gOn=0.00000 gOff=0.0733 cornerOn=0.0891 pred=0.1333  
+glyph_sq_holes_m3                        cuts=4    clr-c/2=+8.33e-03 ring-c/2=-1.79e-07 ridge=0.1250 gOn=0.12500 gOff=0.2333 cornerOn=0.1250 pred=0.4333  
+glyph_square_cw                          cuts=4    clr-c/2=+8.33e-03 ring-c/2=+2.66e-04 ridge=0.1250 gOn=0.00000 gOff=0.0732 cornerOn=0.0891 pred=0.1333  
+glyph_square_cw_m3                       cuts=4    clr-c/2=+8.33e-03 ring-c/2=+2.66e-04 ridge=0.1250 gOn=0.12500 gOff=0.2333 cornerOn=0.1250 pred=0.4333  
+glyph_star12_sharp                       cuts=12   clr-c/2=+8.33e-03 ring-c/2=-2.74e-07 ridge=0.1250 gOn=0.12500 gOff=0.1336 cornerOn=0.1250 pred=0.2427  
+glyph_star12_sharp_m3                    cuts=12   clr-c/2=+8.33e-03 ring-c/2=-2.74e-07 ridge=0.1250 gOn=0.12500 gOff=0.2499 cornerOn=0.1250 pred=0.5000  
+glyph_star5                              cuts=5    clr-c/2=+8.33e-03 ring-c/2=-4.56e-07 ridge=0.1250 gOn=0.12500 gOff=0.1727 cornerOn=0.1250 pred=0.3275  
+glyph_star5_m3                           cuts=5    clr-c/2=+8.33e-03 ring-c/2=-4.56e-07 ridge=0.1250 gOn=0.12500 gOff=0.2499 cornerOn=0.1250 pred=0.5000  
+glyph_thin_rect_0.1                      cuts=0    clr-c/2=+0.00e+00 ring-c/2=+1.00e+300 ridge=0.1250 gOn=0.00000 gOff=0.0000 cornerOn=0.0000 pred=0.0000  
+glyph_thin_rect_0.1_m3                   cuts=0    clr-c/2=+0.00e+00 ring-c/2=+1.00e+300 ridge=0.1250 gOn=0.00000 gOff=0.0000 cornerOn=0.0000 pred=0.0000  
+hexthr_0.980000                          cuts=0    clr-c/2=+0.00e+00 ring-c/2=-5.85e-16 ridge=0.1500 gOn=0.00000 gOff=0.0168 cornerOn=0.0339 pred=0.0382  
+hexthr_0.999000                          cuts=6    clr-c/2=+8.33e-03 ring-c/2=-5.85e-16 ridge=0.1500 gOn=0.00000 gOff=0.0168 cornerOn=0.0341 pred=0.0382 PRED<CH-CUTS 
+hexthr_0.999990                          cuts=6    clr-c/2=+8.33e-03 ring-c/2=-5.85e-16 ridge=0.1500 gOn=0.00000 gOff=0.0168 cornerOn=0.0342 pred=0.0382 PRED<CH-CUTS 
+hexthr_1.000010                          cuts=6    clr-c/2=+8.33e-03 ring-c/2=-5.85e-16 ridge=0.1500 gOn=0.00000 gOff=0.0168 cornerOn=0.0342 pred=0.0382 PRED<CH-CUTS 
+hexthr_1.001000                          cuts=6    clr-c/2=+8.33e-03 ring-c/2=-5.85e-16 ridge=0.1500 gOn=0.00000 gOff=0.0168 cornerOn=0.0342 pred=0.0382 PRED<CH-CUTS 
+hexthr_1.020000                          cuts=6    clr-c/2=+8.33e-03 ring-c/2=-5.85e-16 ridge=0.1500 gOn=0.00000 gOff=0.0333 cornerOn=0.0349 pred=0.0382 PRED<CH-CUTS 
+inlet2boss_g2.20                         cuts=0    clr-c/2=+0.00e+00 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.50207 gOff=0.4992 cornerOn=0.5000 pred=1.0000 CORNER-ABOVE GABOVE-RIDGE PRED>CH-NOCUTS unchanged 
+inlet2boss_g2.60                         cuts=0    clr-c/2=+0.00e+00 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.50207 gOff=0.4992 cornerOn=0.5000 pred=1.0000 CORNER-ABOVE GABOVE-RIDGE PRED>CH-NOCUTS unchanged 
+inlet2boss_g3.20                         cuts=0    clr-c/2=+0.00e+00 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.50207 gOff=0.4992 cornerOn=0.5000 pred=1.0000 CORNER-ABOVE GABOVE-RIDGE PRED>CH-NOCUTS unchanged 
+isle_near_corner_g1.6                    cuts=6    clr-c/2=+8.33e-03 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+isle_near_corner_g2.5                    cuts=11   clr-c/2=+5.27e-03 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.4992 cornerOn=0.2500 pred=0.8833  
+isle_near_corner_g3.5                    cuts=9    clr-c/2=+5.28e-03 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.4979 cornerOn=0.2500 pred=1.0000  
+isle_near_corner_g5.0                    cuts=8    clr-c/2=+5.76e-03 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.4992 cornerOn=0.2500 pred=1.0000  
+REFUSED lens                               REFUSED on=0 off=0 [3 vector 0 has gaps between spans; skipped] [17 no closed region to carve]
+line_concave_arc                         cuts=5    clr-c/2=+1.51e-03 ring-c/2=+2.91e-04 ridge=0.2500 gOn=0.25000 gOff=0.4994 cornerOn=0.2500 pred=1.0000  
+neck_w3.0                                cuts=11   clr-c/2=+2.47e-03 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.24810 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+neck_w4.2                                cuts=13   clr-c/2=+3.98e-03 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.4992 cornerOn=0.2500 pred=1.0000  
+neck_w6.0                                cuts=13   clr-c/2=+7.51e-05 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.4859 cornerOn=0.2500 pred=1.0000  
+neck_w7.2                                cuts=11   clr-c/2=+2.16e-03 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=1.0000  
+nested_areas                             cuts=10   clr-c/2=+8.33e-03 ring-c/2=-5.05e-07 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=1.0000  
+ngon12                                   cuts=12   clr-c/2=+8.33e-03 ring-c/2=-4.14e-15 ridge=0.2500 gOn=0.00000 gOff=0.0739 cornerOn=0.0820 pred=0.0941  
+ngon5                                    cuts=5    clr-c/2=+8.33e-03 ring-c/2=+2.59e-04 ridge=0.2500 gOn=0.25000 gOff=0.3705 cornerOn=0.2500 pred=0.5601  
+ngon6                                    cuts=6    clr-c/2=+8.33e-03 ring-c/2=-3.63e-16 ridge=0.2500 gOn=0.24878 gOff=0.2679 cornerOn=0.2500 pred=0.3833  
+ngon8                                    cuts=8    clr-c/2=+8.33e-03 ring-c/2=+5.26e-16 ridge=0.2500 gOn=0.00000 gOff=0.1540 cornerOn=0.1683 pred=0.2053  
+rect_w3.00                               cuts=0    clr-c/2=+0.00e+00 ring-c/2=+3.11e-04 ridge=0.2500 gOn=0.00000 gOff=0.2333 cornerOn=0.2430 pred=0.4833 PRED>CH-NOCUTS 
+rect_w4.00                               cuts=0    clr-c/2=+0.00e+00 ring-c/2=+1.35e-04 ridge=0.2500 gOn=0.49106 gOff=0.4833 cornerOn=0.4927 pred=0.9833 CORNER-ABOVE GABOVE-RIDGE PRED>CH-NOCUTS unchanged 
+rect_w5.00                               cuts=0    clr-c/2=+0.00e+00 ring-c/2=+4.18e-04 ridge=0.2500 gOn=0.50000 gOff=0.4833 cornerOn=0.5000 pred=1.0000 CORNER-ABOVE GABOVE-RIDGE PRED>CH-NOCUTS unchanged 
+rect_w6.20                               cuts=0    clr-c/2=+0.00e+00 ring-c/2=+2.17e-04 ridge=0.2500 gOn=0.50000 gOff=0.4833 cornerOn=0.5000 pred=1.0000 CORNER-ABOVE GABOVE-RIDGE PRED>CH-NOCUTS unchanged 
+rect_w6.20_m6_1                          cuts=4    clr-c/2=+8.33e-03 ring-c/2=+2.17e-04 ridge=0.2500 gOn=0.00000 gOff=0.0721 cornerOn=0.0889 pred=0.1333  
+rect_w7.00                               cuts=0    clr-c/2=+0.00e+00 ring-c/2=+2.73e-05 ridge=0.2500 gOn=0.50000 gOff=0.4833 cornerOn=0.5000 pred=1.0000 CORNER-ABOVE GABOVE-RIDGE PRED>CH-NOCUTS unchanged 
+rect_w8.20                               cuts=4    clr-c/2=+8.33e-03 ring-c/2=+2.30e-04 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+rect_w9.00                               cuts=4    clr-c/2=+8.33e-03 ring-c/2=+1.80e-05 ridge=0.2500 gOn=0.24992 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+rect_w9.00_m6_1                          cuts=4    clr-c/2=+8.33e-03 ring-c/2=+1.80e-05 ridge=0.2500 gOn=0.00000 gOff=0.0724 cornerOn=0.0890 pred=0.1333  
+rot_Lhole                                cuts=5    clr-c/2=+8.33e-03 ring-c/2=-5.86e-07 ridge=0.2500 gOn=0.00000 gOff=0.0872 cornerOn=0.0891 pred=0.1235  
+rot_tri30                                cuts=3    clr-c/2=+8.33e-03 ring-c/2=+8.15e-17 ridge=0.2500 gOn=0.25000 gOff=0.4999 cornerOn=0.2500 pred=1.0000  
+roundarc_r0.000500                       cuts=4    clr-c/2=+8.36e-03 ring-c/2=+6.54e-03 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+roundarc_r0.010000                       cuts=4    clr-c/2=+8.33e-03 ring-c/2=-3.63e-16 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+roundarc_r0.100000                       cuts=4    clr-c/2=+8.33e-03 ring-c/2=+9.14e-04 ridge=0.2500 gOn=0.24975 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+roundarc_r0.500000                       cuts=4    clr-c/2=+8.33e-03 ring-c/2=+1.71e-04 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+roundarc_r1.000000                       cuts=4    clr-c/2=+8.33e-03 ring-c/2=-3.63e-16 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+roundarc_r1.600000                       cuts=4    clr-c/2=+8.33e-03 ring-c/2=+8.33e-03 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+roundpoly_r0.050000_s12                  cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.19e-04 ridge=0.2500 gOn=0.24941 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+roundpoly_r0.050000_s4                   cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.19e-04 ridge=0.2500 gOn=0.24941 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+roundpoly_r0.500000_s12                  cuts=4    clr-c/2=+8.33e-03 ring-c/2=+1.71e-04 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+roundpoly_r0.500000_s4                   cuts=4    clr-c/2=+8.33e-03 ring-c/2=+1.71e-04 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+roundpoly_r1.500000_s12                  cuts=4    clr-c/2=+8.33e-03 ring-c/2=+8.33e-03 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+roundpoly_r1.500000_s4                   cuts=4    clr-c/2=+8.33e-03 ring-c/2=+8.15e-17 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+rstar0                                   cuts=6    clr-c/2=+8.33e-03 ring-c/2=-2.79e-07 ridge=0.2048 gOn=0.20480 gOff=0.4963 cornerOn=0.2048 pred=0.9690  
+rstar1                                   cuts=3    clr-c/2=+1.67e-03 ring-c/2=+5.47e-07 ridge=0.1896 gOn=0.00000 gOff=0.1871 cornerOn=0.1895 pred=0.3545  
+rstar10                                  cuts=19   clr-c/2=+4.75e-06 ring-c/2=-8.86e-07 ridge=0.1274 gOn=0.12740 gOff=0.5000 cornerOn=0.1274 pred=1.0000  
+rstar11                                  cuts=52   clr-c/2=-4.99e-07 ring-c/2=-7.41e-07 ridge=0.0299 gOn=0.02991 gOff=0.3787 cornerOn=0.0299 pred=0.7615  CLEARANCE<c/2
+rstar12                                  cuts=3    clr-c/2=+8.33e-03 ring-c/2=+3.95e-07 ridge=0.0471 gOn=0.04705 gOff=0.2733 cornerOn=0.0471 pred=0.5097  
+rstar13                                  cuts=11   clr-c/2=+9.36e-05 ring-c/2=-4.01e-04 ridge=0.0994 gOn=0.00000 gOff=0.0893 cornerOn=0.0895 pred=0.1824  
+rstar14                                  cuts=14   clr-c/2=+3.64e-06 ring-c/2=+1.00e+300 ridge=0.1053 gOn=0.10525 gOff=0.3404 cornerOn=0.1053 pred=0.6960  
+rstar15                                  cuts=6    clr-c/2=+1.67e-03 ring-c/2=+1.00e+300 ridge=0.0659 gOn=0.06590 gOff=0.4985 cornerOn=0.0659 pred=0.9345  
+rstar16                                  cuts=7    clr-c/2=+1.67e-03 ring-c/2=+1.00e+300 ridge=0.2807 gOn=0.00000 gOff=0.1935 cornerOn=0.1986 pred=0.3805  
+rstar17                                  cuts=6    clr-c/2=+3.69e-05 ring-c/2=+1.00e+300 ridge=0.1084 gOn=0.10837 gOff=0.4995 cornerOn=0.1084 pred=0.9404  
+rstar18                                  cuts=11   clr-c/2=+2.57e-04 ring-c/2=+1.00e+300 ridge=0.1136 gOn=0.11360 gOff=0.2154 cornerOn=0.1136 pred=0.4126  
+rstar19                                  cuts=10   clr-c/2=+5.78e-04 ring-c/2=+1.00e+300 ridge=0.2543 gOn=0.25430 gOff=0.5001 cornerOn=0.2543 pred=1.0000  
+rstar2                                   cuts=14   clr-c/2=+7.37e-06 ring-c/2=-6.78e-07 ridge=0.2565 gOn=0.25652 gOff=0.5000 cornerOn=0.2565 pred=1.0000  
+rstar20                                  cuts=4    clr-c/2=+8.33e-03 ring-c/2=-9.33e-08 ridge=0.3381 gOn=0.33810 gOff=0.5000 cornerOn=0.3381 pred=1.0000  
+rstar21                                  cuts=8    clr-c/2=+1.67e-03 ring-c/2=-8.62e-07 ridge=0.0746 gOn=0.07460 gOff=0.4146 cornerOn=0.0746 pred=0.8066  
+rstar22                                  cuts=12   clr-c/2=+2.05e-04 ring-c/2=-9.63e-07 ridge=0.3771 gOn=0.37707 gOff=0.6467 cornerOn=0.3771 pred=1.0000  
+rstar23                                  cuts=4    clr-c/2=+1.67e-03 ring-c/2=+1.58e-03 ridge=0.2924 gOn=0.00000 gOff=0.1382 cornerOn=0.1469 pred=0.2500  
+rstar3                                   cuts=6    clr-c/2=+1.67e-03 ring-c/2=-1.07e-06 ridge=0.2016 gOn=0.20147 gOff=0.2294 cornerOn=0.2016 pred=0.4336  
+rstar4                                   cuts=6    clr-c/2=+8.06e-04 ring-c/2=-7.48e-07 ridge=0.2000 gOn=0.19999 gOff=0.4999 cornerOn=0.2000 pred=1.0000  
+rstar5                                   cuts=7    clr-c/2=+1.67e-03 ring-c/2=-6.19e-07 ridge=0.1446 gOn=0.00000 gOff=0.1057 cornerOn=0.1129 pred=0.2104  
+rstar6                                   cuts=3    clr-c/2=+8.33e-03 ring-c/2=-9.99e-10 ridge=0.3227 gOn=0.32268 gOff=0.4895 cornerOn=0.3227 pred=0.9442  
+rstar7                                   cuts=7    clr-c/2=+1.67e-03 ring-c/2=-6.71e-07 ridge=0.1373 gOn=0.13726 gOff=0.1683 cornerOn=0.1373 pred=0.3083  
+rstar8                                   cuts=3    clr-c/2=+8.33e-03 ring-c/2=-1.34e-08 ridge=0.3184 gOn=0.31835 gOff=0.4998 cornerOn=0.3184 pred=1.0000  
+rstar9                                   cuts=9    clr-c/2=+1.67e-03 ring-c/2=-7.36e-07 ridge=0.4706 gOn=0.00000 gOff=0.3615 cornerOn=0.3669 pred=0.7056  
+smallch0.001_apex20_m2                   cuts=5    clr-c/2=+1.66e-04 ring-c/2=+2.15e-06 ridge=0.2500 gOn=0.25000 gOff=0.4229 cornerOn=0.2500 pred=0.7994  
+smallch0.001_apex20_m6                   cuts=0    clr-c/2=+0.00e+00 ring-c/2=+2.15e-06 ridge=0.2500 gOn=0.50000 gOff=0.4998 cornerOn=0.5000 pred=1.0000 CORNER-ABOVE GABOVE-RIDGE PRED>CH-NOCUTS unchanged 
+smallch0.001_apex30_m2                   cuts=5    clr-c/2=+1.66e-04 ring-c/2=+1.68e-06 ridge=0.2500 gOn=0.25000 gOff=0.3769 cornerOn=0.2500 pred=0.7115  
+smallch0.001_apex30_m6                   cuts=5    clr-c/2=+1.66e-04 ring-c/2=+1.68e-06 ridge=0.2500 gOn=0.25000 gOff=0.5000 cornerOn=0.2500 pred=1.0000  
+smallch0.001_apex45_m2                   cuts=5    clr-c/2=+1.66e-04 ring-c/2=+2.71e-06 ridge=0.2500 gOn=0.24996 gOff=0.3081 cornerOn=0.2500 pred=0.6015  
+smallch0.001_apex45_m6                   cuts=5    clr-c/2=+1.66e-04 ring-c/2=+2.71e-06 ridge=0.2500 gOn=0.25000 gOff=0.5000 cornerOn=0.2500 pred=1.0000  
+smallch0.001_apex60_m2                   cuts=5    clr-c/2=+1.66e-04 ring-c/2=+1.05e-06 ridge=0.2500 gOn=0.25000 gOff=0.2577 cornerOn=0.2500 pred=0.4930  
+smallch0.001_apex60_m6                   cuts=5    clr-c/2=+1.66e-04 ring-c/2=+1.05e-06 ridge=0.2500 gOn=0.25000 gOff=0.4999 cornerOn=0.2500 pred=1.0000  
+smallch0.001_apex90_m2                   cuts=5    clr-c/2=+1.66e-04 ring-c/2=+1.58e-05 ridge=0.2500 gOn=0.00000 gOff=0.1500 cornerOn=0.1781 pred=0.2725  
+smallch0.001_apex90_m6                   cuts=5    clr-c/2=+1.66e-04 ring-c/2=+1.58e-05 ridge=0.2500 gOn=0.25000 gOff=0.4997 cornerOn=0.2500 pred=0.8735  
+smallch0.005_apex20_m2                   cuts=3    clr-c/2=+8.33e-04 ring-c/2=+2.41e-16 ridge=0.2500 gOn=0.25000 gOff=0.4216 cornerOn=0.2459 pred=0.7981  
+smallch0.005_apex20_m6                   cuts=0    clr-c/2=+0.00e+00 ring-c/2=+2.41e-16 ridge=0.2500 gOn=0.50000 gOff=0.5000 cornerOn=0.5000 pred=1.0000 CORNER-ABOVE GABOVE-RIDGE PRED>CH-NOCUTS unchanged 
+smallch0.005_apex30_m2                   cuts=5    clr-c/2=+8.33e-04 ring-c/2=+1.35e-05 ridge=0.2500 gOn=0.25000 gOff=0.3770 cornerOn=0.2500 pred=0.7101  
+smallch0.005_apex30_m6                   cuts=5    clr-c/2=+8.33e-04 ring-c/2=+1.35e-05 ridge=0.2500 gOn=0.24999 gOff=0.4999 cornerOn=0.2500 pred=1.0000  
+smallch0.005_apex45_m2                   cuts=5    clr-c/2=+8.33e-04 ring-c/2=+2.41e-16 ridge=0.2500 gOn=0.24996 gOff=0.3068 cornerOn=0.2500 pred=0.6002  
+smallch0.005_apex45_m6                   cuts=5    clr-c/2=+8.33e-04 ring-c/2=+2.41e-16 ridge=0.2500 gOn=0.25000 gOff=0.5000 cornerOn=0.2500 pred=1.0000  
+smallch0.005_apex60_m2                   cuts=5    clr-c/2=+8.33e-04 ring-c/2=+1.99e-05 ridge=0.2500 gOn=0.25000 gOff=0.2577 cornerOn=0.2500 pred=0.4917  
+smallch0.005_apex60_m6                   cuts=5    clr-c/2=+8.33e-04 ring-c/2=+1.99e-05 ridge=0.2500 gOn=0.25000 gOff=0.4994 cornerOn=0.2500 pred=1.0000  
+smallch0.005_apex90_m2                   cuts=5    clr-c/2=+8.33e-04 ring-c/2=-6.47e-16 ridge=0.2500 gOn=0.00000 gOff=0.1651 cornerOn=0.1782 pred=0.2711  
+smallch0.005_apex90_m6                   cuts=5    clr-c/2=+8.33e-04 ring-c/2=-6.47e-16 ridge=0.2500 gOn=0.25000 gOff=0.4983 cornerOn=0.2500 pred=0.8722  
+sq_ch0.2                                 cuts=4    clr-c/2=+3.33e-02 ring-c/2=-1.78e-15 ridge=0.2500 gOn=0.24802 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+sq_ch0.5                                 cuts=4    clr-c/2=+8.33e-02 ring-c/2=+4.16e-17 ridge=0.2500 gOn=0.00000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+sq_multipass                             cuts=4    clr-c/2=+8.33e-03 ring-c/2=-2.95e-17 ridge=0.2500 gOn=0.24837 gOff=0.5333 cornerOn=0.2500 pred=0.8333  
+sq_ramp                                  cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.58e-05 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+sq_so0.01                                cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.58e-05 ridge=0.0050 gOn=0.00500 gOff=0.4967 cornerOn=0.0050 pred=0.8733  
+sq_so0.05                                cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.58e-05 ridge=0.0250 gOn=0.02500 gOff=0.4958 cornerOn=0.0250 pred=0.8708  
+sq_so1.90                                cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.58e-05 ridge=0.9500 gOn=0.00000 gOff=0.4833 cornerOn=0.5000 pred=0.8333  
+sq_so2.00                                cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.58e-05 ridge=1.0000 gOn=0.00000 gOff=0.4833 cornerOn=0.5000 pred=0.8333  
+sq_so50.0                                cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.58e-05 ridge=1.0000 gOn=0.00000 gOff=0.4833 cornerOn=0.5000 pred=0.8333  
+sqmills_0.8                              cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.58e-05 ridge=0.2500 gOn=0.00000 gOff=0.0358 cornerOn=0.0711 pred=0.0833  
+sqmills_0.8_raster                       cuts=6    clr-c/2=+8.33e-03 ring-c/2=-3.91e-07 ridge=0.2500 gOn=0.00000 gOff=0.1300 cornerOn=0.1361 pred=0.2353  
+sqmills_0.8_star                         cuts=6    clr-c/2=+8.33e-03 ring-c/2=-3.91e-07 ridge=0.2500 gOn=0.00000 gOff=0.1300 cornerOn=0.1361 pred=0.2353  
+sqmills_10._6.0_3.0_1.0                  cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.58e-05 ridge=0.2500 gOn=0.00000 gOff=0.0719 cornerOn=0.0839 pred=0.1333  
+sqmills_10._6.0_3.0_1.0_raster           cuts=6    clr-c/2=+8.33e-03 ring-c/2=-3.91e-07 ridge=0.2500 gOn=0.00000 gOff=0.1588 cornerOn=0.1701 pred=0.3053  
+sqmills_10._6.0_3.0_1.0_star             cuts=6    clr-c/2=+8.33e-03 ring-c/2=-3.91e-07 ridge=0.2500 gOn=0.00000 gOff=0.1588 cornerOn=0.1701 pred=0.3053  
+sqmills_3.0_6.0                          cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.58e-05 ridge=0.2500 gOn=0.00000 gOff=0.2333 cornerOn=0.2500 pred=0.4333  
+sqmills_3.0_6.0_raster                   cuts=6    clr-c/2=+8.33e-03 ring-c/2=-3.91e-07 ridge=0.2500 gOn=0.25000 gOff=0.4961 cornerOn=0.2500 pred=0.9434  
+sqmills_3.0_6.0_star                     cuts=6    clr-c/2=+8.33e-03 ring-c/2=-3.91e-07 ridge=0.2500 gOn=0.25000 gOff=0.4961 cornerOn=0.2500 pred=0.9434  
+sqmills_6.0_2.0_0.8                      cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.58e-05 ridge=0.2500 gOn=0.00000 gOff=0.0358 cornerOn=0.0711 pred=0.0833  
+sqmills_6.0_2.0_0.8_raster               cuts=6    clr-c/2=+8.33e-03 ring-c/2=-3.91e-07 ridge=0.2500 gOn=0.00000 gOff=0.1300 cornerOn=0.1361 pred=0.2353  
+sqmills_6.0_2.0_0.8_star                 cuts=6    clr-c/2=+8.33e-03 ring-c/2=-3.91e-07 ridge=0.2500 gOn=0.00000 gOff=0.1300 cornerOn=0.1361 pred=0.2353  
+sqmills_6.0_3.0                          cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.58e-05 ridge=0.2500 gOn=0.00000 gOff=0.2333 cornerOn=0.2500 pred=0.4333  
+sqmills_6.0_3.0_raster                   cuts=6    clr-c/2=+8.33e-03 ring-c/2=-3.91e-07 ridge=0.2500 gOn=0.25000 gOff=0.4961 cornerOn=0.2500 pred=0.9434  
+sqmills_6.0_3.0_star                     cuts=6    clr-c/2=+8.33e-03 ring-c/2=-3.91e-07 ridge=0.2500 gOn=0.25000 gOff=0.4961 cornerOn=0.2500 pred=0.9434  
+square                                   cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.58e-05 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+square_V150                              cuts=4    clr-c/2=+8.33e-03 ring-c/2=-2.95e-17 ridge=0.2679 gOn=0.00000 gOff=0.1331 cornerOn=0.1432 pred=0.2262  
+square_V30                               cuts=4    clr-c/2=+8.33e-03 ring-c/2=+6.37e-16 ridge=0.3732 gOn=0.37321 gOff=0.9234 cornerOn=0.3732 pred=2.0000  
+square_V60                               cuts=4    clr-c/2=+8.33e-03 ring-c/2=-2.95e-17 ridge=0.3464 gOn=0.34641 gOff=0.4700 cornerOn=0.3464 pred=1.0000  
+square_ball6                             cuts=4    clr-c/2=+8.33e-03 ring-c/2=+2.84e-06 ridge=0.0268 gOn=0.00000 gOff=0.0415 cornerOn=0.0268 pred=0.1221  
+square_ch0.005                           cuts=4    clr-c/2=+8.34e-04 ring-c/2=-6.47e-16 ridge=0.2500 gOn=0.25000 gOff=0.4983 cornerOn=0.2500 pred=0.8483  
+square_far1e5                            cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.58e-05 ridge=0.2500 gOn=0.25000 gOff=0.4985 cornerOn=0.2500 pred=0.8733  
+square_far1e6_ch001                      cuts=4    clr-c/2=+1.65e-04 ring-c/2=+6.05e-12 ridge=0.2500 gOn=0.24998 gOff=0.4985 cornerOn=0.2500 pred=0.8784  
+square_mills1_6                          cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.58e-05 ridge=0.2500 gOn=0.00000 gOff=0.0719 cornerOn=0.0839 pred=0.1333  
+square_mills6_1                          cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.58e-05 ridge=0.2500 gOn=0.00000 gOff=0.0719 cornerOn=0.0839 pred=0.1333  
+square_mills6_3_1                        cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.58e-05 ridge=0.2500 gOn=0.00000 gOff=0.0719 cornerOn=0.0839 pred=0.1333  
+square_mills6_3_1_raster                 cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.58e-05 ridge=0.2500 gOn=0.00000 gOff=0.0719 cornerOn=0.0839 pred=0.1333  
+square_noflat                            cuts=0    clr-c/2=+0.00e+00 ring-c/2=+1.30e-15 ridge=0.2500 gOn=0.53506 gOff=0.5315 cornerOn=0.5351 pred=0.8333 CORNER-ABOVE GABOVE-RIDGE PRED>CH-NOCUTS unchanged 
+square_nomill                            cuts=0    clr-c/2=+0.00e+00 ring-c/2=+4.58e-05 ridge=0.2500 gOn=0.00000 gOff=0.2333 cornerOn=0.2500 pred=1.0000 PRED>CH-NOCUTS 
+square_raster                            cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.58e-05 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+square_so0                               cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.58e-05 ridge=0.5000 gOn=0.00000 gOff=0.4833 cornerOn=0.5000 pred=0.8333  
+square_so_big                            cuts=4    clr-c/2=+8.33e-03 ring-c/2=+4.58e-05 ridge=1.0000 gOn=0.00000 gOff=0.4833 cornerOn=0.5000 pred=0.8333  
+square_start                             cuts=4    clr-c/2=+8.33e-03 ring-c/2=-3.63e-16 ridge=0.2500 gOn=0.25000 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+star5                                    cuts=5    clr-c/2=+8.33e-03 ring-c/2=-6.43e-07 ridge=0.2500 gOn=0.25000 gOff=0.4988 cornerOn=0.2500 pred=0.9896  
+star5_m3_1                               cuts=5    clr-c/2=+8.33e-03 ring-c/2=-6.43e-07 ridge=0.2500 gOn=0.00000 gOff=0.1759 cornerOn=0.1782 pred=0.3271  
+star8_thin                               cuts=8    clr-c/2=+8.33e-03 ring-c/2=-3.76e-07 ridge=0.2500 gOn=0.25000 gOff=0.2847 cornerOn=0.2500 pred=0.5405  
+star_ramp_raster                         cuts=6    clr-c/2=+8.33e-03 ring-c/2=-3.91e-07 ridge=0.2500 gOn=0.25000 gOff=0.5000 cornerOn=0.2500 pred=1.0000  
+starhole                                 cuts=9    clr-c/2=+8.33e-03 ring-c/2=-4.36e-07 ridge=0.2500 gOn=0.00000 gOff=0.2333 cornerOn=0.2500 pred=0.4333  
+tenthole_x1.9_s0.05                      cuts=8    clr-c/2=+1.04e-04 ring-c/2=-4.94e-07 ridge=0.1500 gOn=0.15000 gOff=0.4933 cornerOn=0.1500 pred=0.8433  
+tenthole_x1.9_s0.30                      cuts=9    clr-c/2=+6.40e-05 ring-c/2=-4.94e-07 ridge=0.1500 gOn=0.15000 gOff=0.4933 cornerOn=0.1500 pred=0.8433  
+tenthole_x2.2_s0.05                      cuts=8    clr-c/2=+1.41e-03 ring-c/2=-7.53e-07 ridge=0.1500 gOn=0.15000 gOff=0.4933 cornerOn=0.1500 pred=0.8433  
+tenthole_x2.2_s0.30                      cuts=10   clr-c/2=+3.37e-07 ring-c/2=-7.53e-07 ridge=0.1500 gOn=0.15000 gOff=0.4933 cornerOn=0.1500 pred=0.8433  
+tenthole_x2.6_s0.05                      cuts=10   clr-c/2=+3.41e-06 ring-c/2=-4.94e-07 ridge=0.1500 gOn=0.15000 gOff=0.4933 cornerOn=0.1500 pred=0.8433  
+tenthole_x2.6_s0.30                      cuts=11   clr-c/2=+1.46e-03 ring-c/2=-4.94e-07 ridge=0.1500 gOn=0.15000 gOff=0.4933 cornerOn=0.1500 pred=0.8433  
+tentslit                                 cuts=9    clr-c/2=-1.49e-08 ring-c/2=-4.94e-07 ridge=0.1500 gOn=0.15000 gOff=0.4933 cornerOn=0.1500 pred=0.8433  CLEARANCE<c/2
+thinflat_w3.05                           cuts=4    clr-c/2=+8.33e-03 ring-c/2=+7.25e-06 ridge=0.2500 gOn=0.00000 gOff=0.0333 cornerOn=0.0446 pred=0.0333 PRED<CH-CUTS 
+thinflat_w3.20                           cuts=4    clr-c/2=+8.33e-03 ring-c/2=+8.15e-17 ridge=0.2500 gOn=0.00000 gOff=0.0333 cornerOn=0.0446 pred=0.0333 PRED<CH-CUTS 
+thinflat_w3.60                           cuts=4    clr-c/2=+8.33e-03 ring-c/2=+5.83e-06 ridge=0.2500 gOn=0.00000 gOff=0.0333 cornerOn=0.0446 pred=0.0333 PRED<CH-CUTS 
+thinwall_g0.05                           cuts=6    clr-c/2=+8.33e-03 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.24995 gOff=0.4917 cornerOn=0.2500 pred=0.8583  
+thinwall_g0.40                           cuts=7    clr-c/2=+8.33e-03 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.24935 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+thinwall_g1.00                           cuts=8    clr-c/2=+8.33e-03 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.24810 gOff=0.4833 cornerOn=0.2500 pred=0.8333  
+tri30_so0.01                             cuts=3    clr-c/2=+8.33e-03 ring-c/2=+3.04e-16 ridge=0.0050 gOn=0.00500 gOff=0.5000 cornerOn=0.0050 pred=1.0000  
+tri30_so0.05                             cuts=3    clr-c/2=+8.33e-03 ring-c/2=+3.04e-16 ridge=0.0250 gOn=0.02500 gOff=0.5000 cornerOn=0.0250 pred=1.0000  
+tri30_so1.90                             cuts=3    clr-c/2=+8.33e-03 ring-c/2=+3.04e-16 ridge=0.9500 gOn=0.00000 gOff=0.5027 cornerOn=0.5243 pred=1.0000  
+tri30_so2.00                             cuts=3    clr-c/2=+8.33e-03 ring-c/2=+3.04e-16 ridge=1.0000 gOn=0.00000 gOff=0.5027 cornerOn=0.5243 pred=1.0000  
+tri30_so50.0                             cuts=3    clr-c/2=+8.33e-03 ring-c/2=+3.04e-16 ridge=1.0000 gOn=0.00000 gOff=0.5027 cornerOn=0.5243 pred=1.0000  
+tri_apex10                               cuts=0    clr-c/2=+0.00e+00 ring-c/2=+6.48e-04 ridge=0.2500 gOn=0.00000 gOff=0.0880 cornerOn=0.0916 pred=0.1738 PRED>CH-NOCUTS 
+tri_apex10_m3_1                          cuts=0    clr-c/2=+0.00e+00 ring-c/2=+6.48e-04 ridge=0.2500 gOn=0.00000 gOff=0.0880 cornerOn=0.0916 pred=0.1738 PRED>CH-NOCUTS 
+tri_apex120                              cuts=3    clr-c/2=+8.33e-03 ring-c/2=+5.53e-04 ridge=0.2500 gOn=0.25000 gOff=0.5000 cornerOn=0.2500 pred=1.0000  
+tri_apex120_m3_1                         cuts=3    clr-c/2=+8.33e-03 ring-c/2=+5.53e-04 ridge=0.2500 gOn=0.00000 gOff=0.1833 cornerOn=0.1934 pred=0.3517  
+tri_apex150                              cuts=3    clr-c/2=+8.33e-03 ring-c/2=-3.63e-16 ridge=0.2500 gOn=0.25000 gOff=0.5000 cornerOn=0.2500 pred=1.0000  
+tri_apex150_m3_1                         cuts=2    clr-c/2=+8.33e-03 ring-c/2=-3.63e-16 ridge=0.2500 gOn=0.00000 gOff=0.2131 cornerOn=0.2217 pred=0.4327  
+tri_apex20                               cuts=0    clr-c/2=+0.00e+00 ring-c/2=+3.04e-16 ridge=0.2500 gOn=0.50000 gOff=0.4999 cornerOn=0.5000 pred=1.0000 CORNER-ABOVE GABOVE-RIDGE PRED>CH-NOCUTS unchanged 
+tri_apex20_m3_1                          cuts=3    clr-c/2=+8.33e-03 ring-c/2=+3.04e-16 ridge=0.2500 gOn=0.00000 gOff=0.2067 cornerOn=0.1723 pred=0.4022  
+tri_apex30                               cuts=0    clr-c/2=+0.00e+00 ring-c/2=+4.76e-04 ridge=0.2500 gOn=0.50000 gOff=0.4999 cornerOn=0.5000 pred=1.0000 CORNER-ABOVE GABOVE-RIDGE PRED>CH-NOCUTS unchanged 
+tri_apex30_m3_1                          cuts=3    clr-c/2=+8.33e-03 ring-c/2=+4.76e-04 ridge=0.2500 gOn=0.00000 gOff=0.1805 cornerOn=0.1936 pred=0.3494  
+tri_apex45                               cuts=3    clr-c/2=+8.33e-03 ring-c/2=+3.75e-04 ridge=0.2500 gOn=0.24912 gOff=0.5000 cornerOn=0.2500 pred=1.0000  
+tri_apex45_m3_1                          cuts=3    clr-c/2=+8.33e-03 ring-c/2=+3.75e-04 ridge=0.2500 gOn=0.00000 gOff=0.1528 cornerOn=0.1654 pred=0.2914  
+tri_apex60                               cuts=3    clr-c/2=+8.33e-03 ring-c/2=+6.68e-04 ridge=0.2500 gOn=0.25000 gOff=0.4999 cornerOn=0.2500 pred=1.0000  
+tri_apex60_m3_1                          cuts=3    clr-c/2=+8.33e-03 ring-c/2=+6.68e-04 ridge=0.2500 gOn=0.00000 gOff=0.1373 cornerOn=0.1393 pred=0.2333  
+tri_apex90                               cuts=3    clr-c/2=+8.33e-03 ring-c/2=+8.22e-04 ridge=0.2500 gOn=0.25000 gOff=0.4964 cornerOn=0.2500 pred=1.0000  
+tri_apex90_m3_1                          cuts=3    clr-c/2=+8.33e-03 ring-c/2=+8.22e-04 ridge=0.2500 gOn=0.00000 gOff=0.1501 cornerOn=0.1661 pred=0.2833  
+wedgehole_x10_y0.00                      cuts=8    clr-c/2=+3.33e-07 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.5000 cornerOn=0.2500 pred=1.0000  
+wedgehole_x10_y0.15                      cuts=7    clr-c/2=+7.42e-05 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.5000 cornerOn=0.2500 pred=1.0000  
+wedgehole_x10_y0.60                      cuts=7    clr-c/2=+2.19e-04 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.4999 cornerOn=0.2500 pred=1.0000  
+wedgehole_x6_y0.00                       cuts=4    clr-c/2=+1.16e-03 ring-c/2=-8.08e-07 ridge=0.2500 gOn=0.25000 gOff=0.4999 cornerOn=0.2500 pred=1.0000  
+wedgehole_x6_y0.15                       cuts=4    clr-c/2=+3.64e-04 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.4999 cornerOn=0.2500 pred=1.0000  
+wedgehole_x6_y0.60                       cuts=6    clr-c/2=+8.28e-04 ring-c/2=-3.06e-07 ridge=0.2500 gOn=0.25000 gOff=0.4999 cornerOn=0.2500 pred=1.0000  
+wedgehole_x8_y0.00                       cuts=8    clr-c/2=+1.75e-05 ring-c/2=-4.17e-07 ridge=0.2500 gOn=0.25000 gOff=0.5000 cornerOn=0.2500 pred=1.0000  
+wedgehole_x8_y0.15                       cuts=6    clr-c/2=+5.79e-08 ring-c/2=-6.32e-07 ridge=0.2500 gOn=0.25000 gOff=0.4999 cornerOn=0.2500 pred=1.0000  
+wedgehole_x8_y0.60                       cuts=5    clr-c/2=+8.31e-07 ring-c/2=-1.00e-06 ridge=0.2500 gOn=0.25000 gOff=0.4999 cornerOn=0.2500 pred=1.0000  

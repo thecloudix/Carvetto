@@ -1,0 +1,43 @@
+INS case 0 star ncl 1 flat 7.049 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 1 star ncl 2 flat 10.25 ok 1 okEq 1 ins 1 cuts 7 feeds 7 clEq 1 diagEq 1 good
+INS case 2 star ncl 2 flat 2.446 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 3 star ncl 1 flat 8.459 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 4 star ncl 1 flat 1.72 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 5 star ncl 2 flat 2.519 ok 1 okEq 1 ins 1 cuts 9 feeds 45 clEq 1 diagEq 1 good
+INS case 6 star ncl 2 flat 7.74 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 7 star ncl 1 flat 1.928 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 8 star ncl 1 flat 6.761 ok 1 okEq 1 ins 1 cuts 11 feeds 11 clEq 1 diagEq 1 good
+INS case 9 star ncl 2 flat 0.4504 ok 1 okEq 1 ins 1 cuts 7 feeds 35 clEq 1 diagEq 1 good
+INS case 10 star ncl 2 flat 0.7621 ok 1 okEq 1 ins 1 cuts 8 feeds 8 clEq 1 diagEq 1 good
+INS case 11 star ncl 2 flat 7.306 ok 1 okEq 1 ins 1 cuts 11 feeds 11 clEq 1 diagEq 1 good
+INS case 12 star ncl 1 flat 4.892 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 13 star ncl 1 flat 0.6816 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 14 star ncl 2 flat 0.2258 ok 1 okEq 1 ins 1 cuts 11 feeds 11 clEq 1 diagEq 1 good
+INS case 15 star ncl 1 flat 1.659 ok 1 okEq 1 ins 1 cuts 3 feeds 3 clEq 1 diagEq 1 good
+INS case 16 star ncl 1 flat 9.434 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 17 star ncl 2 flat 0.2624 ok 1 okEq 1 ins 1 cuts 5 feeds 5 clEq 1 diagEq 1 good
+INS case 18 star ncl 2 flat 10.6 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 19 star ncl 1 flat 6.266 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 20 star ncl 1 flat 1.129 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 21 star ncl 2 flat 1.398 ok 1 okEq 1 ins 1 cuts 8 feeds 8 clEq 1 diagEq 1 good
+INS case 22 star ncl 2 flat 2.616 ok 1 okEq 1 ins 1 cuts 11 feeds 11 clEq 1 diagEq 1 good
+INS case 23 star ncl 2 flat 0.5875 ok 1 okEq 1 ins 1 cuts 11 feeds 11 clEq 1 diagEq 1 good
+INS case 24 star ncl 1 flat 1.392 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 25 star ncl 2 flat 0.4216 ok 1 okEq 1 ins 1 cuts 3 feeds 3 clEq 1 diagEq 1 good
+INS case 26 star ncl 2 flat 5.105 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 27 star ncl 1 flat 2.581 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 28 star ncl 2 flat 8.848 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 29 star ncl 1 flat 10.89 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 30 star ncl 2 flat 0.1314 ok 1 okEq 1 ins 1 cuts 8 feeds 8 clEq 1 diagEq 1 good
+INS case 31 star ncl 2 flat 0.9007 ok 1 okEq 1 ins 1 cuts 11 feeds 11 clEq 1 diagEq 1 good
+INS case 32 star ncl 2 flat 0.6268 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 33 star ncl 2 flat 3.293 ok 1 okEq 1 ins 1 cuts 7 feeds 7 clEq 1 diagEq 1 good
+INS case 34 star ncl 2 flat 2.021 ok 1 okEq 1 ins 1 cuts 7 feeds 7 clEq 1 diagEq 1 good
+INS case 35 star ncl 2 flat 1.314 ok 1 okEq 1 ins 1 cuts 9 feeds 9 clEq 1 diagEq 1 good
+INS case 36 star ncl 2 flat 1.315 ok 1 okEq 1 ins 1 cuts 10 feeds 10 clEq 1 diagEq 1 good
+INS case 37 star ncl 2 flat 0.1708 ok 1 okEq 1 ins 1 cuts 9 feeds 9 clEq 1 diagEq 1 good
+INS case 38 star ncl 2 flat 0.6168 ok 1 okEq 1 ins 1 cuts 5 feeds 5 clEq 1 diagEq 1 good
+INS case 39 star ncl 2 flat 4.947 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+SUMMARY seed=601 fam=1 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

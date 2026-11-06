@@ -1,0 +1,4 @@
+rstar14                            ins=1 cuts=14 cl=1 dg=1 minClr-c/2=+3.64e-06 ringClr-c/2=+1.00e+300 ridge=0.1053 lim=1.000 rho=1.7321 s=0.3646
+    GSCAN gs=0.050 tentPts=4600 above=0 onWorst=0.105251 at (-8.61418,-2.99856) offWorst=0.3404 ridge=0.1053 | oraclePred=0.69605 (at 3.5859,-5.4986) cuts=14
+    => ok corners=9 worstCornerOn=0.1053
+SUMMARY run=1 fail=0

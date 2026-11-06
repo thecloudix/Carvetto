@@ -1,0 +1,11 @@
+case 1 seed 6115 fam 15 sharededge res=1 tool=0 D=14.397 ang=107.6 chord=0.100 flat=1.518 start=0.000 ncl=2 emD=4.792/3.510: ok lat=3.366*ch at (10.94352,6.49972) kink=3.366 over=-1.00e+300 flatShort=0.600 at (14.1235,6.0899) dist 2.9299 limR 2.0750
+case 2 seed 6115 fam 15 sharededge res=1 tool=0 D=6.262 ang=152.0 chord=0.010 flat=0.860 start=2.728 ncl=1 emD=7.000/0.000: ok lat=7.112*ch at (-5.76393,10.70398) kink=7.112 over=-1.00e+300 flatShort=0.022 at (-5.9936,10.9231) dist 3.2222 limR 3.1310
+SUMMARY seed=6115 fam=15 far=0 scale=1 cases=12 ok=12 refused=0 resolved=12 fails=2 realViolations=0 falseAlarms(coincident)=1613 worstCone=0.000e+00 worstEMallow=0.000e+00 latNonRes=-1e+300 latRes=7.112 kinkNonRes=-1e+300 kinkRes=7.112 worstOver=-1.00e+300 worstFlatShortEndMills=0.6 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+  fails 15:coverage: 2
+  fails falseAlarmFam15: 1613
+  issue 26: 1
+  issue 28: 12
+  issue 29: 1
+  issue 4: 3
+exit 0

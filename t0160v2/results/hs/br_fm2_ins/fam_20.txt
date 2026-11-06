@@ -1,0 +1,43 @@
+INS case 0 page-alltouch-circles ncl 2 flat 3.307 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 1 page-alltouch-circles ncl 2 flat 0.9566 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 2 page-alltouch-squaressharededges ncl 2 flat 7.176 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 3 page-alltouch-glyphs ncl 1 flat 0.8093 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 4 page-alltouch-glyphs ncl 2 flat 1.603 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 5 page-alltouch-glyphs ncl 2 flat 1.645 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 6 page-alltouch-glyphs ncl 1 flat 0.8285 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 7 page-alltouch-circles ncl 2 flat 14.73 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 8 page-alltouch-glyphs ncl 1 flat 5.124 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 9 page-alltouch-glyphs ncl 1 flat 2.336 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 10 page-alltouch-circles ncl 1 flat 1.916 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 11 page-alltouch-squaressharededges ncl 1 flat 1.607 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 12 page-alltouch-squaressharededges ncl 2 flat 6.442 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 13 page-alltouch-circles ncl 2 flat 0.992 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 14 page-alltouch-glyphs ncl 1 flat 7.911 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 15 page-alltouch-glyphs ncl 1 flat 24.2 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 16 page-alltouch-squaressharededges ncl 2 flat 1.371 ok 1 okEq 1 ins 1 cuts 8 feeds 8 clEq 1 diagEq 1 good
+INS case 17 page-alltouch-circles ncl 2 flat 3.942 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 18 page-alltouch-glyphs ncl 2 flat 0.6176 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 19 page-alltouch-squaressharededges ncl 2 flat 0.5567 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 20 page-alltouch-circles ncl 1 flat 0.9718 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 21 page-alltouch-squaressharededges ncl 1 flat 0.5534 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 22 page-alltouch-circles ncl 1 flat 0.7545 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 23 page-alltouch-glyphs ncl 2 flat 22.88 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 24 page-alltouch-squaressharededges ncl 1 flat 17.04 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 25 page-alltouch-squaressharededges ncl 2 flat 0.05952 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 26 page-alltouch-circles ncl 1 flat 4.337 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 27 page-alltouch-circles ncl 1 flat 2.181 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 28 page-alltouch-glyphs ncl 1 flat 0.9305 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 29 page-alltouch-glyphs ncl 2 flat 14.65 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 30 page-alltouch-circles ncl 1 flat 1.046 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 31 page-alltouch-glyphs ncl 1 flat 1.397 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 32 page-alltouch-glyphs ncl 2 flat 3.985 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 33 page-alltouch-squaressharededges ncl 2 flat 4.719 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 34 page-alltouch-glyphs ncl 2 flat 1.575 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 35 page-alltouch-circles ncl 2 flat 2.747 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 36 page-alltouch-circles ncl 2 flat 4.59 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 37 page-alltouch-circles ncl 2 flat 1.03 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 38 page-alltouch-circles ncl 1 flat 1.964 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 39 page-alltouch-circles ncl 2 flat 9.066 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+SUMMARY seed=6020 fam=20 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

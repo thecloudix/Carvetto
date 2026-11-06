@@ -1,0 +1,43 @@
+HASH case 0 thinstrip chord 0.01 ok 1 moves 1288 diags 0 h 3e4704bb8c9ba213 mh 3e4704bb8c9ba213 dl  so 0.41486575040657769 width 0.94494140154771866 ncl 1
+HASH case 1 thinstrip chord 0.02 ok 1 moves 951 diags 0 h 31c890ce48f521f0 mh 31c890ce48f521f0 dl  so 1.2252808368586905 width 1.3983605024855488 ncl 1
+HASH case 2 thinstrip chord 0.02 ok 1 moves 1742 diags 0 h 042f879b490138e6 mh 042f879b490138e6 dl  so 6.5624402771560941 width 13.440406480921931 ncl 2
+HASH case 3 thinstrip chord 0.01 ok 1 moves 1569 diags 0 h af5514abc80298ca mh af5514abc80298ca dl  so 5.639601191013174 width 14.099002977532933 ncl 0
+HASH case 4 thinstrip chord 0.01 ok 1 moves 768 diags 0 h 1204149b0d1b9f91 mh 1204149b0d1b9f91 dl  so 2.0941732798118795 width 5.2354331995296981 ncl 0
+HASH case 5 thinstrip chord 0.02 ok 1 moves 259 diags 0 h 6b99b009040b0c2d mh 6b99b009040b0c2d dl  so 9.4002486801017344 width 22.093479150216947 ncl 2
+HASH case 6 thinstrip chord 0.05 ok 1 moves 622 diags 0 h acee56b2ec1a7b6c mh acee56b2ec1a7b6c dl  so 0.36919921884919488 width 0.92299804712298716 ncl 0
+HASH case 7 thinstrip chord 0.1 ok 1 moves 470 diags 0 h d9c0b9bc181642e5 mh d9c0b9bc181642e5 dl  so 2.7310229392184997 width 6.8275573480462484 ncl 0
+HASH case 8 thinstrip chord 0.02 ok 1 moves 1017 diags 0 h 111acd1d95c097c2 mh 111acd1d95c097c2 dl  so 6.5699936708109963 width 16.42498417702749 ncl 0
+HASH case 9 thinstrip chord 0.1 ok 1 moves 284 diags 0 h 05134d51ded36f90 mh 05134d51ded36f90 dl  so 0.97538503843536184 width 1.4109823973310573 ncl 0
+HASH case 10 thinstrip chord 0.005 ok 1 moves 1635 diags 0 h 818f3206399c7e61 mh 818f3206399c7e61 dl  so 8.0672215761356245 width 4.1871278785112294 ncl 2
+HASH case 11 thinstrip chord 0.001 ok 1 moves 3491 diags 0 h fc52454767dc1c39 mh fc52454767dc1c39 dl  so 2.7105454616725737 width 6.7763636541814334 ncl 0
+HASH case 12 thinstrip chord 0.005 ok 1 moves 1063 diags 0 h e94f3bc13109112f mh e94f3bc13109112f dl  so 1.5000340065210336 width 5.4884606735370793 ncl 0
+HASH case 13 thinstrip chord 0.1 ok 1 moves 141 diags 0 h 1f5758820897e475 mh 1f5758820897e475 dl  so 3.0183311661658894 width 4.4423914039704817 ncl 0
+HASH case 14 thinstrip chord 0.01 ok 1 moves 895 diags 0 h a701c0d34185003c mh a701c0d34185003c dl  so 1.7485724971334926 width 2.711802392554171 ncl 1
+HASH case 15 thinstrip chord 0.001 ok 1 moves 14824 diags 1 h 473fa58715fe9abb mh c07ade15ffb556d1 dl 26, so 4.9159568135711078 width 12.289892033927769 ncl 2
+HASH case 16 thinstrip chord 0.005 ok 1 moves 1295 diags 0 h a05f7893c5312194 mh a05f7893c5312194 dl  so 5.2901222516957134 width 13.225305629239283 ncl 0
+HASH case 17 thinstrip chord 0.001 ok 1 moves 2323 diags 0 h bff83169af8ea4f1 mh bff83169af8ea4f1 dl  so 2.6176453097304209 width 5.0371794467359354 ncl 2
+HASH case 18 thinstrip chord 0.01 ok 1 moves 1752 diags 0 h 9313cc10dd95bb6f mh 9313cc10dd95bb6f dl  so 1.4208608053576668 width 3.5521520133941666 ncl 0
+HASH case 19 thinstrip chord 0.001 ok 1 moves 1697 diags 0 h 869ebe7c6723754e mh 869ebe7c6723754e dl  so 1.9734858910955304 width 4.9337147277388258 ncl 0
+HASH case 20 thinstrip chord 0.02 ok 1 moves 565 diags 2 h 656ceff8dd457014 mh 6a6c213500b16e32 dl 4,4, so 2.1759764753452311 width 0.58126022925405263 ncl 2
+HASH case 21 thinstrip chord 0.1 ok 1 moves 262 diags 0 h 80c28a909a544dcf mh 80c28a909a544dcf dl  so 1.14790855093892 width 2.5014006863591747 ncl 2
+HASH case 22 thinstrip chord 0.02 ok 1 moves 447 diags 0 h a62ffd0ec16ecd29 mh a62ffd0ec16ecd29 dl  so 2.353780383082499 width 5.8844509577062478 ncl 0
+HASH case 23 thinstrip chord 0.02 ok 1 moves 199 diags 0 h 25a6726c1a529a98 mh 25a6726c1a529a98 dl  so 4.6096135483415273 width 7.6414429177792673 ncl 1
+HASH case 24 thinstrip chord 0.001 ok 1 moves 2477 diags 0 h 6cf86821cda7f993 mh 6cf86821cda7f993 dl  so 1.7027239835515324 width 4.2168282636913945 ncl 0
+HASH case 25 thinstrip chord 0.05 ok 1 moves 710 diags 0 h 18868ba2bf67e528 mh 18868ba2bf67e528 dl  so 2.8040174371272579 width 4.5703423615864542 ncl 0
+HASH case 26 thinstrip chord 0.1 ok 1 moves 597 diags 0 h b4d5a05032ef2c0f mh b4d5a05032ef2c0f dl  so 1.3559591631357022 width 2.6989269480495821 ncl 1
+HASH case 27 thinstrip chord 0.1 ok 1 moves 105 diags 0 h 91863b6a74ac3aa4 mh 91863b6a74ac3aa4 dl  so 0.79876196591818216 width 1.2016431890596795 ncl 0
+HASH case 28 thinstrip chord 0.02 ok 1 moves 303 diags 0 h ce9a3b797f785f05 mh ce9a3b797f785f05 dl  so 6.594011916015643 width 6.1054573061011386 ncl 1
+HASH case 29 thinstrip chord 0.001 ok 1 moves 3195 diags 0 h 9f756be5e02da173 mh 9f756be5e02da173 dl  so 1.1582460972071587 width 2.8956152430178963 ncl 0
+HASH case 30 thinstrip chord 0.1 ok 1 moves 470 diags 0 h c500e87636efee8d mh c500e87636efee8d dl  so 3.3155285894800848 width 8.0788549487123706 ncl 2
+HASH case 31 thinstrip chord 0.05 ok 1 moves 435 diags 0 h 9eeb819fd482901b mh 9eeb819fd482901b dl  so 3.542360095757239 width 8.8559002393930975 ncl 0
+HASH case 32 thinstrip chord 0.05 ok 1 moves 566 diags 0 h 1f51cfebe313aa9d mh 1f51cfebe313aa9d dl  so 2.6475076715921375 width 3.5227713586773852 ncl 1
+HASH case 33 thinstrip chord 0.05 ok 1 moves 574 diags 0 h ab3e59a58ab7343b mh ab3e59a58ab7343b dl  so 2.3484389363976739 width 8.8263423146483113 ncl 0
+HASH case 34 thinstrip chord 0.005 ok 1 moves 482 diags 0 h 9360e010a4ca463f mh 9360e010a4ca463f dl  so 2.2719933939958388 width 2.9391022288499986 ncl 0
+HASH case 35 thinstrip chord 0.05 ok 1 moves 158 diags 0 h e4062cd8825a7b22 mh e4062cd8825a7b22 dl  so 7.8249147855583034 width 9.5132804573016596 ncl 0
+HASH case 36 thinstrip chord 0.01 ok 1 moves 1078 diags 0 h af7eca0fa60a8eb1 mh af7eca0fa60a8eb1 dl  so 2.1330231981452505 width 2.6596203093986759 ncl 0
+HASH case 37 thinstrip chord 0.005 ok 1 moves 429 diags 0 h d8a30dcb5240f03c mh d8a30dcb5240f03c dl  so 1.1715305584923381 width 2.928826396230845 ncl 0
+HASH case 38 thinstrip chord 0.001 ok 1 moves 3646 diags 0 h df73ad6e3019967b mh df73ad6e3019967b dl  so 0.53328730199277463 width 1.3332182549819365 ncl 0
+HASH case 39 thinstrip chord 0.05 ok 1 moves 1402 diags 0 h edc96dfe921ab723 mh edc96dfe921ab723 dl  so 5.8888564397509064 width 7.1968483332385098 ncl 0
+SUMMARY seed=603 fam=3 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

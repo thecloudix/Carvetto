@@ -1,0 +1,6 @@
+    GSCAN gs=0.050 tentPts=2782 above=2 onWorst=0.305867 at (11.81033,-2.22341) offWorst=0.5000 ridge=0.2598 | oraclePred=1.00000 (at 10.8000,-0.0154) cuts=3 GABOVE-RIDGE
+    => FAIL corners=3 worstCornerOn=0.3059
+    GSCAN gs=0.050 tentPts=5370 above=3 onWorst=0.278541 at (13.65093,12.36292) offWorst=0.5000 ridge=0.2500 | oraclePred=1.00000 (at 11.7500,13.9192) cuts=3 GABOVE-RIDGE
+    => FAIL corners=3 worstCornerOn=0.2785
+    GSCAN gs=0.050 tentPts=1873 above=0 onWorst=0.249894 at (28.74844,5.85058) offWorst=0.5000 ridge=0.2500 | oraclePred=1.00000 (at 7.4500,-0.0058) cuts=5
+    => FAIL corners=5 worstCornerOn=0.2695

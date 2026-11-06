@@ -1,0 +1,43 @@
+INS case 0 chain g=1.200000ch-circles ncl 1 flat 0.8708 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 1 chain g=0.250000ch-squares ncl 1 flat 2.053 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 2 chain g=0.120000ch-squares ncl 1 flat 8.977 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 3 chain g=0.240000ch-squares ncl 2 flat 11.26 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 4 chain g=0.125000ch-circles ncl 2 flat 0.1488 ok 1 okEq 1 ins 1 cuts 12 feeds 32 clEq 1 diagEq 1 good
+INS case 5 chain g=0.125000ch-circles ncl 1 flat 14.49 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 6 chain g=1.200000ch-circles ncl 2 flat 1.328 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 7 chain g=0.250000ch-squares ncl 2 flat 2.868 ok 1 okEq 1 ins 1 cuts 20 feeds 20 clEq 1 diagEq 1 good
+INS case 8 chain g=0.250000ch-squares ncl 1 flat 4.322 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 9 chain g=0.031250ch-squares ncl 1 flat 1.326 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 10 chain g=0.125000ch-squares ncl 1 flat 3.917 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 11 chain g=1.200000ch-squares ncl 2 flat 2.223 ok 1 okEq 1 ins 1 cuts 20 feeds 20 clEq 1 diagEq 1 good
+INS case 12 chain g=0.250000ch-circles ncl 2 flat 2.639 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 13 chain g=1.200000ch-circles ncl 1 flat 2.915 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 14 chain g=0.120000ch-squares ncl 1 flat 0.6893 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 15 chain g=0.240000ch-squares ncl 1 flat 5.181 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 16 chain g=0.062500ch-circles ncl 2 flat 3.794 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 17 chain g=1.200000ch-circles ncl 1 flat 4.196 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 18 chain g=1.200000ch-squares ncl 1 flat 0.9184 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 19 chain g=0.062500ch-circles ncl 1 flat 18.68 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 20 chain g=0.125000ch-squares ncl 2 flat 4.648 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 21 chain g=0.062500ch-circles ncl 2 flat 0.2013 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 22 chain g=1.200000ch-circles ncl 1 flat 6.686 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 23 chain g=0.240000ch-circles ncl 2 flat 1.182 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 24 chain g=0.062500ch-squares ncl 1 flat 2.324 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 25 chain g=0.125000ch-circles ncl 1 flat 38.34 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 26 chain g=0.031250ch-circles ncl 1 flat 1.424 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 27 chain g=1.200000ch-circles ncl 1 flat 9.869 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 28 chain g=0.240000ch-circles ncl 2 flat 4.666 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 29 chain g=0.031250ch-squares ncl 1 flat 4.295 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 30 chain g=0.240000ch-squares ncl 1 flat 0.5225 ok 1 okEq 1 ins 1 cuts 17 feeds 191 clEq 1 diagEq 1 good
+INS case 31 chain g=0.125000ch-circles ncl 2 flat 4.484 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 32 chain g=0.250000ch-squares ncl 1 flat 1.731 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 33 chain g=0.062500ch-squares ncl 1 flat 6.973 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 34 chain g=0.240000ch-squares ncl 2 flat 13.84 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 35 chain g=0.250000ch-circles ncl 1 flat 13.55 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 36 chain g=0.125000ch-circles ncl 2 flat 0.5191 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 37 chain g=0.125000ch-circles ncl 2 flat 6.182 ok 1 okEq 1 ins 1 cuts 2 feeds 2 clEq 1 diagEq 1 good
+INS case 38 chain g=0.125000ch-squares ncl 2 flat 8.213 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 39 chain g=0.250000ch-circles ncl 1 flat 6.023 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+SUMMARY seed=6019 fam=19 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

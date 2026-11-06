@@ -1,0 +1,43 @@
+INS case 0 bezblob ncl 2 flat 2.585 ok 1 okEq 1 ins 1 cuts 5 feeds 5 clEq 1 diagEq 1 good
+INS case 1 bezblob ncl 2 flat 2.657 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 2 bezblob ncl 1 flat 0.6107 ok 1 okEq 1 ins 1 cuts 6 feeds 6 clEq 1 diagEq 1 good
+INS case 3 bezblob ncl 1 flat 0.4597 ok 1 okEq 1 ins 1 cuts 5 feeds 13 clEq 1 diagEq 1 good
+INS case 4 bezblob ncl 1 flat 1.934 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 5 bezblob ncl 1 flat 22.2 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 6 bezblob ncl 1 flat 1.269 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 7 bezblob ncl 1 flat 0.3184 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 8 bezblob ncl 1 flat 2.118 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 9 bezblob ncl 1 flat 0.7872 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 10 bezblob ncl 1 flat 9.451 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 11 bezblob ncl 2 flat 1.046 ok 1 okEq 1 ins 1 cuts 2 feeds 2 clEq 1 diagEq 1 good
+INS case 12 bezblob ncl 1 flat 10.91 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 13 bezblob ncl 1 flat 4.595 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 14 bezblob ncl 1 flat 3.201 ok 1 okEq 1 ins 1 cuts 6 feeds 6 clEq 1 diagEq 1 good
+INS case 15 bezblob ncl 2 flat 0.8296 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 16 bezblob ncl 2 flat 2.4 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 17 bezblob ncl 2 flat 0.6068 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 18 bezblob ncl 2 flat 12.14 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 19 bezblob ncl 2 flat 1.678 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 20 bezblob ncl 2 flat 1.732 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 21 bezblob ncl 2 flat 12.15 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 22 bezblob ncl 2 flat 6.925 ok 1 okEq 1 ins 1 cuts 3 feeds 3 clEq 1 diagEq 1 good
+INS case 23 bezblob ncl 1 flat 7.686 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 24 bezblob ncl 1 flat 0.9906 ok 1 okEq 1 ins 1 cuts 8 feeds 20 clEq 1 diagEq 1 good
+INS case 25 bezblob ncl 1 flat 1.537 ok 1 okEq 1 ins 1 cuts 14 feeds 58 clEq 1 diagEq 1 good
+INS case 26 bezblob ncl 1 flat 6.018 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 27 bezblob ncl 1 flat 3.194 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 28 bezblob ncl 1 flat 3.506 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 29 bezblob ncl 1 flat 3.483 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 30 bezblob ncl 1 flat 4.77 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 31 bezblob ncl 1 flat 0.3639 ok 1 okEq 1 ins 1 cuts 6 feeds 14 clEq 1 diagEq 1 good
+INS case 32 bezblob ncl 1 flat 22.6 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 33 bezblob ncl 2 flat 0.1437 ok 1 okEq 1 ins 1 cuts 6 feeds 6 clEq 1 diagEq 1 good
+INS case 34 bezblob ncl 2 flat 5.819 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 35 bezblob ncl 1 flat 3.908 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 36 bezblob ncl 1 flat 4.183 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 37 bezblob ncl 2 flat 2.899 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 38 bezblob ncl 1 flat 1.272 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 39 bezblob ncl 2 flat 1.355 ok 1 okEq 1 ins 1 cuts 1 feeds 1 clEq 1 diagEq 1 good
+SUMMARY seed=606 fam=6 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

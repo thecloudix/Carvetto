@@ -1,0 +1,14 @@
+glyph_S_glyph_bez                  ins=1 cuts=14 cl=1 dg=1 minClr-c/2=+3.07e-03 ringClr-c/2=+1.00e+300 ridge=0.1250 lim=0.500 rho=0.5000 s=0.2500
+    corner (19.6000,19.0000) ang 98.73 deg: off 0.0872 -> on 0.087197 at (18.713453,18.858469) pts 135 UNSHARPENED>chordal
+    corner (18.0000,17.0000) ang 88.85 deg: off 0.0800 -> on 0.079952 at (17.806127,17.907071) pts 113 UNSHARPENED>chordal
+    GSCAN gs=0.100 tentPts=261 above=0 onWorst=0.125000 at (12.40365,8.66929) offWorst=0.2205 ridge=0.1250 | oraclePred=0.43934 (at 13.4000,8.0693) cuts=14
+    => ok corners=4 worstCornerOn=0.1223
+glyph_S_glyph_bez_m3               ins=1 cuts=0 cl=1 dg=1 minClr-c/2=+0.00e+00 ringClr-c/2=+1.00e+300 ridge=0.1250 lim=0.500 rho=0.5000 s=0.2500
+    corner (1.0000,2.4000) ang 82.28 deg: off 0.2500 -> on 0.250000 at (2.681988,1.838012) pts 1319 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (3.4000,3.6000) ang 104.35 deg: off 0.2500 -> on 0.250000 at (3.139564,1.560287) pts 4972 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (19.6000,19.0000) ang 98.73 deg: off 0.2500 -> on 0.250000 at (17.640944,19.599056) pts 3156 ABOVE-RIDGE UNSHARPENED>chordal
+    corner (18.0000,17.0000) ang 88.85 deg: off 0.2500 -> on 0.250000 at (17.360451,18.419549) pts 4010 ABOVE-RIDGE UNSHARPENED>chordal
+    GSCAN gs=0.100 tentPts=2698 above=2698 onWorst=0.250000 at (7.70048,21.46929) offWorst=0.2500 ridge=0.1250 | oraclePred=0.50000 (at 16.8000,4.3693) cuts=0 GABOVE-RIDGE (some unchanged by sharpening) PRED>CH-NOCUTS
+    GSCAN unchanged above-ridge point 0.24996 at (7.70000,21.46929)
+    => FAIL corners=4 worstCornerOn=0.2500
+SUMMARY run=2 fail=1

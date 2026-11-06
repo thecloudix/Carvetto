@@ -1,0 +1,43 @@
+INS case 0 nestedtight-sq ncl 2 flat 4.09 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 1 nestedtight-circ ncl 1 flat 0.2173 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 2 nestedtight-circ ncl 2 flat 3.693 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 3 nestedtight-circ ncl 2 flat 0.8952 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 4 nestedtight-circ ncl 2 flat 1.432 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 5 nestedtight-circ ncl 1 flat 2.52 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 6 nestedtight-circ ncl 1 flat 0.4187 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 7 nestedtight-sq ncl 1 flat 0.3934 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 8 nestedtight-sq ncl 2 flat 5.708 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 9 nestedtight-sq ncl 1 flat 3.868 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 10 nestedtight-sq ncl 2 flat 2.974 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 11 nestedtight-circ ncl 2 flat 0.8539 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 12 nestedtight-sq ncl 2 flat 6.371 ok 0 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 13 nestedtight-circ ncl 2 flat 6.336 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 14 nestedtight-circ ncl 2 flat 2.76 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 15 nestedtight-circ ncl 2 flat 1.373 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 16 nestedtight-sq ncl 2 flat 0.4563 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 17 nestedtight-circ ncl 1 flat 0.7102 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 18 nestedtight-circ ncl 1 flat 1.116 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 19 nestedtight-sq ncl 1 flat 1.296 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 20 nestedtight-circ ncl 2 flat 3.386 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 21 nestedtight-circ ncl 1 flat 0.3212 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 22 nestedtight-sq ncl 2 flat 2.356 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 23 nestedtight-sq ncl 1 flat 8.664 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 24 nestedtight-sq ncl 2 flat 0.6379 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 25 nestedtight-sq ncl 1 flat 1.116 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 26 nestedtight-circ ncl 1 flat 0.6265 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 27 nestedtight-sq ncl 1 flat 15.88 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 28 nestedtight-sq ncl 1 flat 1.763 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 29 nestedtight-circ ncl 1 flat 1.166 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 30 nestedtight-circ ncl 1 flat 3.875 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 31 nestedtight-circ ncl 2 flat 11.98 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 32 nestedtight-circ ncl 1 flat 1.806 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 33 nestedtight-sq ncl 1 flat 2.383 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 34 nestedtight-sq ncl 2 flat 1.498 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 35 nestedtight-circ ncl 1 flat 0.312 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 36 nestedtight-sq ncl 1 flat 1.272 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 37 nestedtight-circ ncl 2 flat 1.348 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 38 nestedtight-circ ncl 2 flat 1.98 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 39 nestedtight-circ ncl 1 flat 3.591 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+SUMMARY seed=6018 fam=18 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

@@ -1,0 +1,4 @@
+banner n=50: off 1.152 s (11871 carve moves, ok 1)  on 1.895 s (12087, ok 1)  extra 0.743 s (+64%)
+banner n=100: off 4.448 s (23392 carve moves, ok 1)  on 6.691 s (23808, ok 1)  extra 2.243 s (+50%)
+banner n=200: off 17.451 s (46477 carve moves, ok 1)  on 25.144 s (47293, ok 1)  extra 7.693 s (+44%)
+banner n=400: off 65.590 s (93116 carve moves, ok 1)  on 95.793 s (94732, ok 1)  extra 30.203 s (+46%)

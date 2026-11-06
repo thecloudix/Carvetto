@@ -1,0 +1,43 @@
+HASH case 0 ringneigh-touch chord 0.01 ok 1 moves 1191 diags 1 h 28d3640be514edd4 mh a17ea2ddaf7c83f1 dl 28, so 4.7604567820292019 width 11.85604627700399 ncl 1
+HASH case 1 selftouch-bowtie+tangentcircle chord 0.1 ok 1 moves 213 diags 2 h a4cbec9468a2a69a mh b1bb170f6cdc3ae7 dl 26,28, so 7.7244047138342182 width 19.311011784585546 ncl 2
+HASH case 2 text-apart chord 0.005 ok 1 moves 2831 diags 0 h 5bfe5d7c0722ef19 mh 5bfe5d7c0722ef19 dl  so 2.4884598681223729 width 6.2152583087297035 ncl 2
+HASH case 3 holedstar chord 0.1 ok 1 moves 391 diags 1 h a1f7af3afe995fb1 mh b0771b366c443d00 dl 4, so 8.1354074702850792 width 10.989884496698979 ncl 1
+HASH case 4 touch1-twoholes-vertexwall-vertexvertex chord 0.02 ok 1 moves 522 diags 1 h faecc757f6bbac31 mh b4ecd391b1a8ffd1 dl 28, so 3.4476373646793608 width 6.6770931647428542 ncl 1
+HASH case 5 chain g=0.240000ch-circles chord 0.005 ok 1 moves 1192 diags 1 h baf33c098d618ec2 mh 29bef5972b7cca40 dl 28, so 1.0792112129866291 width 2.6923392375286759 ncl 1
+HASH case 6 nestedtight-sq chord 0.1 ok 1 moves 3817 diags 0 h 895d368f17750d01 mh 895d368f17750d01 dl  so 0.65793112370017814 width 1.4571603583004278 ncl 2
+HASH case 7 star chord 0.02 ok 1 moves 45861 diags 0 h ac5b0b01dec3e69c mh ac5b0b01dec3e69c dl  so 2.3092861267969353 width 3.7916842906846968 ncl 2
+HASH case 8 text-touchbox chord 0.02 ok 1 moves 2475 diags 1 h 68dea51b24825556 mh f4d84655eb225296 dl 28, so 6.2465681382933855 width 10.886140019986973 ncl 1
+HASH case 9 holedstar chord 0.02 ok 1 moves 1165 diags 1 h 735400cecca25d1e mh 3d134ef5003765bf dl 26, so 3.675550726913595 width 9.1888768172839868 ncl 2
+HASH case 10 duplicate+other chord 0.01 ok 1 moves 3 diags 1 h d8fde67c1f9fe2d5 mh 3b55f356adc9cc16 dl 28, so 7.7360160623556204 width 6.571497409502653 ncl 2
+HASH case 11 selftouch-corners+cross chord 0.02 ok 1 moves 1870 diags 3 h 0dc36ac2ecf4a763 mh 126d1f0d20d618ff dl 28,4,29, so 1.0860722861843584 width 0.71948932736290971 ncl 2
+HASH case 12 nestonboundary-holevertexatcorner+cross chord 0.001 ok 1 moves 67797 diags 4 h 4ca7c213dbaf0125 mh f2a9615dbbb1be70 dl 26,28,4,4, so 0.41392734106547685 width 1.034818352663692 ncl 2
+HASH case 13 holedstar chord 0.1 ok 1 moves 628 diags 1 h 8fbd628e13af9db1 mh 90d44faa3b0f1700 dl 4, so 6.1701131317101687 width 5.1278218803535003 ncl 1
+HASH case 14 ringneigh-apart chord 0.001 ok 1 moves 5616 diags 1 h f37acd7c8514587b mh d2fa3b681f77b997 dl 4, so 1.6390499809621284 width 2.3584039434537587 ncl 1
+HASH case 15 nearsq g=0.001000 chord 0.1 ok 1 moves 178 diags 1 h 5388bca5ba00c394 mh 12e56d453c969d43 dl 28, so 9.0920911144477525 width 5.9470045855577895 ncl 1
+HASH case 16 page-alltouch-squaressharededges chord 0.01 ok 1 moves 939 diags 1 h 3f92427234efc81b mh 2a35f86b94b7a3ac dl 28, so 9.1141584414945083 width 7.6706242692153817 ncl 2
+HASH case 17 tinyspans g=0.062500ch n=213-arcwall chord 0.005 ok 1 moves 828 diags 1 h aa123f3a2fa33d24 mh f44718437f5606da dl 28, so 4.0179624054260286 width 9.1777921022459363 ncl 2
+HASH case 18 holedstar chord 0.001 ok 1 moves 2542 diags 1 h 5a160b81d4f9d5da mh a1bd9e727800b65d dl 26, so 6.4431289186094602 width 16.107822296523651 ncl 2
+HASH case 19 lib:S_glyph_bez chord 0.001 ok 1 moves 5291 diags 0 h db2af9c8dd674cd7 mh db2af9c8dd674cd7 dl  so 4.5364076590420268 width 9.5655795096758602 ncl 2
+HASH case 20 nestedtight-circ chord 0.001 ok 1 moves 16684 diags 2 h b2c76fac876c7464 mh f216dfb3ccf799c2 dl 4,4, so 2.8412127459730812 width 0.89700315423397048 ncl 2
+HASH case 21 cluster+near-inside g=0.001200 chord 0.005 ok 1 moves 5141 diags 2 h 08ef262e63401f72 mh 690747a4d6ebf72a dl 26,28, so 1.4153803853071867 width 3.5384509632679664 ncl 1
+HASH case 22 overcircles-exttangent chord 0.005 ok 1 moves 2846 diags 2 h 811aecc76d69d69f mh 5690e44db3b5aa0c dl 26,28, so 6.3667702882408195 width 15.916925720602048 ncl 2
+HASH case 23 star chord 0.1 ok 1 moves 417 diags 1 h af1fdb3c897c52e7 mh 3971ebb5d9e70d02 dl 4, so 5.6234287611426597 width 2.2390534821425137 ncl 2
+HASH case 24 page-alltouch-circles chord 0.005 ok 1 moves 18489 diags 3 h 5bc8acb0a0cc498a mh ce945aa7c9fcf048 dl 28,17,17, so 2.0028296871877957 width 3.5320659463888919 ncl 2
+HASH case 25 cluster+near-outside g=0.001200 chord 0.001 ok 1 moves 5318 diags 3 h 43ba17d0ce06fedc mh 82fac7dfc36e8a45 dl 28,4,4, so 4.7744408586565985 width 5.6766418160295578 ncl 2
+HASH case 26 fig8 chord 0.05 ok 1 moves 208 diags 1 h 8d5aa855a625c738 mh 045babf09e18e7aa dl 28, so 8.2192641556826516 width 19.482171833899788 ncl 2
+HASH case 27 ringneigh-cross chord 0.01 ok 1 moves 3810 diags 1 h d722dbc6d4a17365 mh d74d2fc2e57b0f26 dl 28, so 0.42990243496480512 width 0.50961911299674889 ncl 1
+HASH case 28 bezblob chord 0.02 ok 1 moves 3334 diags 2 h 775c508e62d55f94 mh 600cba58a8c09fe0 dl 26,4, so 4.0183613720179574 width 10.045903430044893 ncl 1
+HASH case 29 nestonboundary-holeedgeonwall chord 0.02 ok 1 moves 1521 diags 3 h 44030e3328542ada mh 885c358235c9fd60 dl 28,4,4, so 1.5210929490856984 width 3.755983103788564 ncl 2
+HASH case 30 holedstar chord 0.001 ok 1 moves 8163 diags 1 h b49a951bbac554d5 mh 91e3098c30a3670c dl 4, so 5.263853671869235 width 6.4938345225556811 ncl 2
+HASH case 31 sliverrects chord 0.05 ok 1 moves 924 diags 1 h b5ea2a380934d684 mh 80eb098d1a695b1e dl 28, so 3.1462333428007843 width 5.7041385080119733 ncl 1
+HASH case 32 sharededge chord 0.001 ok 1 moves 551 diags 1 h 32fb0ffa870bd6c8 mh 7858f16bcd4af417 dl 28, so 8.5045463099844092 width 6.4530633628628511 ncl 1
+HASH case 33 cluster+near-inside g=0.001200 chord 0.01 ok 1 moves 40347 diags 1 h d73afc3b143b10ae mh a57f6657349f3693 dl 28, so 0.99488433211934546 width 1.3552816523635791 ncl 2
+HASH case 34 text-touchbox chord 0.1 ok 1 moves 878 diags 1 h 0e0b57b5705cad90 mh 2f435031bd2bf4e7 dl 28, so 1.8719976254458768 width 4.6101243003168166 ncl 2
+HASH case 35 nearint g=0.000100 chord 0.005 ok 1 moves 1034 diags 3 h a660f365fb8e2639 mh 3b07f44b645857f0 dl 26,28,17, so 8.8183952159494279 width 22.045988039873571 ncl 2
+HASH case 36 star chord 0.005 ok 1 moves 5650 diags 0 h 5c49919f494c621f mh 5c49919f494c621f dl  so 8.8863375786560947 width 15.587310502418431 ncl 2
+HASH case 37 fig8 chord 0.1 ok 1 moves 283 diags 4 h 7dc06601470cf26b mh 8310570067d2ebc8 dl 28,4,4,29, so 3.2819718653547514 width 1.1011325385364048 ncl 2
+HASH case 38 lib:thin_rect_0.1 chord 0.001 ok 1 moves 6685 diags 1 h 1116a0d048d8afae mh 4ead16963614dc3c dl 26, so 2.4869605282963305 width 6.2174013207408256 ncl 1
+HASH case 39 frametext-crossing chord 0.1 ok 1 moves 1416 diags 2 h 1fbb477cf2d091c8 mh b418b74ed1a6d5b0 dl 26,28, so 8.0616091626603001 width 20.154022906650749 ncl 1
+SUMMARY seed=602 fam=-1 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

@@ -1,0 +1,43 @@
+HASH case 0 sliverrects chord 0.05 ok 1 moves 808 diags 1 h dff9ed0834a5dd80 mh 800ecc15755d7682 dl 28, so 4.0585139577019964 width 8.2559763426538737 ncl 1
+HASH case 1 slivercircles chord 0.1 ok 1 moves 951 diags 1 h 6593f5c04af36224 mh 3b1d73e47f2c2453 dl 28, so 4.7916907904926971 width 11.222150282030364 ncl 1
+HASH case 2 sliverrects chord 0.01 ok 1 moves 3037 diags 1 h d626a7b77734e5be mh 052d84fc972ec323 dl 28, so 6.9642801843296356 width 11.442725113766256 ncl 2
+HASH case 3 slivercircles chord 0.01 ok 1 moves 3662 diags 4 h 164a39842c5f8db6 mh 54a66ec18a87c748 dl 26,28,17,17, so 9.0352256366931023 width 22.58806409173275 ncl 2
+HASH case 4 slivercircles chord 0.05 ok 0 moves 0 diags 19 h c5d5e0bb9052cf45 mh e943185762eeb5b1 dl 28,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17, so 2.1257394163307097 width 5.2767259747287047 ncl 2
+HASH case 5 sliverrects chord 0.05 ok 1 moves 1097 diags 1 h 8a4317dee3a55dad mh b3d3547f5406bba1 dl 28, so 8.2303917702694491 width 18.124029285039711 ncl 1
+HASH case 6 slivercircles chord 0.01 ok 1 moves 7004 diags 2 h 902164bf01151754 mh c9ef157f340ba404 dl 26,28, so 4.5748973936450401 width 11.437243484112599 ncl 1
+HASH case 7 slivercircles chord 0.01 ok 1 moves 8181 diags 0 h 2524eeda3ecf1d32 mh 2524eeda3ecf1d32 dl  so 6.0189855184583934 width 10.486747638224447 ncl 1
+HASH case 8 sliverrects chord 0.1 ok 1 moves 963 diags 1 h 93d0ef96f4d781db mh cab2e5228772acf4 dl 28, so 5.4409511878034031 width 4.0386824817836322 ncl 1
+HASH case 9 slivercircles chord 0.02 ok 1 moves 1724 diags 1 h 3555df44f98af641 mh 2089549615a39921 dl 28, so 3.8747406039105901 width 4.7682335599062045 ncl 2
+HASH case 10 slivercircles chord 0.005 ok 1 moves 7969 diags 1 h f94193f73c5636c7 mh d0ac97518f3c82c5 dl 28, so 9.794222982873281 width 15.935090440232482 ncl 1
+HASH case 11 slivercircles chord 0.05 ok 1 moves 2473 diags 30 h 028e8b4a7c46c223 mh 93395e9cc2a062f4 dl 28,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17, so 3.6910423738238509 width 9.1702788159836928 ncl 2
+HASH case 12 sliverrects chord 0.001 ok 1 moves 4005 diags 1 h 1d8767d79d3f8723 mh 0379c7de71f54d9c dl 28, so 9.0300003655656713 width 4.0730293782284717 ncl 1
+HASH case 13 slivercircles chord 0.1 ok 1 moves 982 diags 2 h 56a35fc40b3d6c9b mh 76c0aaeed9343260 dl 26,28, so 2.7038483925948915 width 6.7596209814872283 ncl 2
+HASH case 14 slivercircles chord 0.001 ok 1 moves 9839 diags 1 h 23f024107f057da3 mh 8f138c1e096e141c dl 28, so 3.0742928815947748 width 7.6609868331361888 ncl 2
+HASH case 15 slivercircles chord 0.02 ok 1 moves 5637 diags 0 h 90eab2a5373180c0 mh 90eab2a5373180c0 dl  so 1.8160664684398236 width 2.5273690159088011 ncl 1
+HASH case 16 slivercircles chord 0.1 ok 1 moves 1252 diags 1 h fbba0362e853fbbb mh ac53b01fe08fc954 dl 28, so 5.8114811625880849 width 11.900870004839046 ncl 1
+HASH case 17 sliverrects chord 0.02 ok 1 moves 1320 diags 2 h 707693ebda83b862 mh c7420e919e3a5eab dl 28,17, so 3.9971318431944916 width 7.5981991965964468 ncl 2
+HASH case 18 sliverrects chord 0.005 ok 1 moves 2577 diags 1 h da9506090d803c0e mh 7fd7c31ad6f3d2fc dl 28, so 1.5277791144656085 width 2.3332476050982653 ncl 1
+HASH case 19 sliverrects chord 0.01 ok 1 moves 3759 diags 1 h 3b645c8fa19421dc mh 88569c7ad40fd209 dl 28, so 4.4856086898889744 width 10.399813324192085 ncl 2
+HASH case 20 slivercircles chord 0.02 ok 1 moves 6255 diags 1 h 4bdfeab31783271b mh c508dfb5c5e8b62e dl 26, so 8.4919473959521294 width 21.229868489880324 ncl 2
+HASH case 21 slivercircles chord 0.001 ok 1 moves 17934 diags 2 h c3e497375701305a mh 4bffaa4520180dba dl 26,28, so 7.5509607834365031 width 18.877401958591257 ncl 1
+HASH case 22 slivercircles chord 0.005 ok 1 moves 14220 diags 0 h 416e81785c2410e1 mh 416e81785c2410e1 dl  so 4.4144170209971563 width 9.5531326149281348 ncl 1
+HASH case 23 sliverrects chord 0.01 ok 1 moves 4440 diags 2 h 913d2844f82169c8 mh d0c9c90ba30e496f dl 26,28, so 2.4272467477444075 width 6.0681168693610186 ncl 2
+HASH case 24 slivercircles chord 0.1 ok 0 moves 0 diags 1 h 565e559dfbe15cc8 mh e943185762eeb5b1 dl 17, so 9.1513060911221924 width 15.835135697022896 ncl 1
+HASH case 25 sliverrects chord 0.001 ok 1 moves 13665 diags 1 h b514a1838451bdf9 mh 34b2cf184afb269e dl 28, so 0.93940506703545956 width 1.3548003857369126 ncl 2
+HASH case 26 slivercircles chord 0.1 ok 1 moves 1059 diags 1 h 0e291bb47a868a91 mh 1e7fa7ecbd366ea6 dl 28, so 9.480498834398448 width 17.322438545714903 ncl 2
+HASH case 27 slivercircles chord 0.02 ok 1 moves 2553 diags 1 h 9fa4ae29bbc2e371 mh bc6b40e13b7ab911 dl 28, so 5.5416412131504362 width 7.3626033655659402 ncl 1
+HASH case 28 sliverrects chord 0.05 ok 1 moves 1467 diags 2 h 9f2e5f2f214f8502 mh 67ab5a8c0750ca3e dl 26,28, so 9.969240865556122 width 24.923102163890299 ncl 2
+HASH case 29 sliverrects chord 0.001 ok 1 moves 13808 diags 1 h a1fade680caad8a5 mh b3ad31a881f80b32 dl 28, so 1.9905017466783086 width 2.4727850903691317 ncl 1
+HASH case 30 slivercircles chord 0.1 ok 0 moves 0 diags 27 h 3db7649f9e00af06 mh e943185762eeb5b1 dl 28,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17, so 8.4135920500127348 width 2.805016315365549 ncl 2
+HASH case 31 sliverrects chord 0.02 ok 1 moves 1986 diags 1 h b30e8dabf6db2f28 mh 57e92c568bfaff0c dl 28, so 4.103677970135311 width 6.5148140480878896 ncl 1
+HASH case 32 slivercircles chord 0.01 ok 1 moves 10202 diags 1 h b96b2451bd725ed8 mh d6c9b992d7ade87b dl 26, so 1.0570592118741666 width 2.6426480296854167 ncl 2
+HASH case 33 sliverrects chord 0.05 ok 1 moves 1261 diags 1 h 1413d8ec2d25f3b4 mh 83db35b9fe89c5ce dl 28, so 5.4820256252328878 width 9.2787852656015293 ncl 1
+HASH case 34 sliverrects chord 0.05 ok 1 moves 1012 diags 1 h 808b43a8d5bee650 mh cce76f85748d5d12 dl 28, so 3.9745659765795289 width 7.8359522132737638 ncl 2
+HASH case 35 slivercircles chord 0.01 ok 1 moves 4843 diags 1 h 22c22fcb9f085ded mh 6bb613ad43733b5e dl 28, so 8.3496462398477345 width 16.453873861005292 ncl 1
+HASH case 36 sliverrects chord 0.05 ok 1 moves 1110 diags 1 h ff38ea9bc4355546 mh 26fa3658bc652c0c dl 28, so 0.93340623382865207 width 0.83237390760503471 ncl 1
+HASH case 37 slivercircles chord 0.01 ok 1 moves 6894 diags 1 h f8c4abc672e83cd6 mh a6f86c46e18e4feb dl 28, so 4.7499140272473106 width 2.9010165350960402 ncl 2
+HASH case 38 sliverrects chord 0.1 ok 1 moves 1217 diags 1 h 6962ee76bc2e5a58 mh 61af5bf0613416af dl 28, so 8.8363342893696011 width 17.218819402347734 ncl 2
+HASH case 39 sliverrects chord 0.01 ok 1 moves 4918 diags 1 h c61bd553ac29166e mh dd4ee6dce221ecd3 dl 28, so 5.252801516118577 width 5.8868612004534775 ncl 2
+SUMMARY seed=6013 fam=13 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

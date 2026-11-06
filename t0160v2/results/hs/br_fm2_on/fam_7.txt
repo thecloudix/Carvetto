@@ -1,0 +1,43 @@
+HASH case 0 overpoly chord 0.005 ok 1 moves 2280 diags 2 h 6872bbfa0c65f22c mh efdbea163e38cdd2 dl 26,28, so 7.6792921222342363 width 19.198230305585589 ncl 2
+HASH case 1 overpoly chord 0.005 ok 1 moves 15133 diags 2 h d9ffc0f887f872f6 mh 1f82ab13b0b78a55 dl 28,4, so 1.561844319966033 width 2.9562442349762552 ncl 1
+HASH case 2 overpoly chord 0.01 ok 1 moves 2516 diags 1 h f7b7e09a36296b30 mh b39ad0f43176820d dl 28, so 0.43017697160856577 width 0.45619185111714139 ncl 2
+HASH case 3 overpoly chord 0.001 ok 1 moves 7001 diags 1 h ad196857d19aea74 mh 7a657c1f42802adb dl 28, so 6.6452792541475931 width 15.560431845618821 ncl 1
+HASH case 4 overpoly chord 0.1 ok 1 moves 350 diags 1 h c6e313158c2026ad mh 369a95b236ed8f8a dl 28, so 6.5238544991017555 width 9.6676999776745429 ncl 2
+HASH case 5 overpoly chord 0.05 ok 1 moves 1293 diags 1 h 12280e4ddcfd526c mh 74ff3134fd9ee0f6 dl 28, so 7.8523398354503975 width 13.546658768552746 ncl 2
+HASH case 6 overpoly chord 0.1 ok 1 moves 1025 diags 2 h 849231c9e4f8deb2 mh 9d0dd34ba084ff58 dl 28,17, so 9.3536026032167801 width 11.787545896301999 ncl 1
+HASH case 7 overpoly chord 0.02 ok 1 moves 2146 diags 3 h 6124d9acb4d74704 mh a681f676dbe33640 dl 26,28,4, so 1.6321581278065513 width 4.080395319516378 ncl 1
+HASH case 8 overpoly chord 0.05 ok 1 moves 4506 diags 3 h cfd830d57d9ae975 mh da56bb22e407ace5 dl 28,4,4, so 0.30308726192272567 width 0.6089533752892724 ncl 2
+HASH case 9 overpoly chord 0.02 ok 1 moves 2094 diags 3 h 409bf3f12de6059a mh 8d8c23e3244b3283 dl 28,4,29, so 2.5004545069098931 width 1.7126983665052078 ncl 1
+HASH case 10 overpoly chord 0.001 ok 1 moves 1791 diags 1 h 3537f887c5fee586 mh cd60d34964e6e2f9 dl 28, so 7.9640793605672373 width 13.39808135258836 ncl 2
+HASH case 11 overpoly chord 0.005 ok 1 moves 1459 diags 1 h 6fb2171fdfebb2da mh a57f7a74b25eb8d8 dl 28, so 5.1773192887691781 width 4.3027055433486217 ncl 1
+HASH case 12 overpoly chord 0.02 ok 1 moves 6256 diags 3 h 9acb44f8c443c3e0 mh 4366ac9f5004e94b dl 28,4,4, so 2.117599197261951 width 4.6593961605842837 ncl 2
+HASH case 13 overpoly chord 0.01 ok 1 moves 3243 diags 3 h 03318074f036c0ba mh 058f4d086fdbcc91 dl 28,4,4, so 4.1366047189677202 width 6.0029895911357221 ncl 2
+HASH case 14 overpoly chord 0.02 ok 1 moves 850 diags 2 h cd70b1f5a711198d mh 7de254dbcffec960 dl 26,28, so 9.4793908227859287 width 23.698477056964819 ncl 1
+HASH case 15 overpoly chord 0.02 ok 1 moves 2768 diags 2 h 6e0e0eaf0be544b7 mh 76efb84768257baa dl 28,4, so 2.413359316718354 width 1.4787297652186711 ncl 2
+HASH case 16 overpoly chord 0.02 ok 1 moves 680 diags 4 h d18cef9f646b5f65 mh b14565f57c5af51c dl 26,28,4,4, so 5.0905886106253746 width 12.726471526563436 ncl 2
+HASH case 17 overpoly chord 0.001 ok 1 moves 8512 diags 1 h aa92fe6a34f68376 mh b928cf2f871f2a29 dl 28, so 7.2679716028128416 width 13.683131711847796 ncl 2
+HASH case 18 overpoly chord 0.05 ok 1 moves 1619 diags 3 h 36056e978377b515 mh 279c0c887b742ae1 dl 28,4,4, so 3.1527777135371595 width 3.644594223928217 ncl 2
+HASH case 19 overpoly chord 0.001 ok 1 moves 63597 diags 2 h 072f4696539913e0 mh a66f3661d3f56d4d dl 28,4, so 2.5856290469896894 width 6.4388789621903477 ncl 1
+HASH case 20 overpoly chord 0.02 ok 1 moves 527 diags 1 h 3e6aae58e18669da mh 800c4ba5e5b29bf2 dl 28, so 5.7769090633229929 width 13.537039058021392 ncl 1
+HASH case 21 overpoly chord 0.05 ok 1 moves 478 diags 2 h d1595ffda4b99b7a mh 4b20335e42e7fe18 dl 26,28, so 6.6353798425616395 width 16.588449606404097 ncl 2
+HASH case 22 overpoly chord 0.1 ok 1 moves 2124 diags 1 h b393d58b7062729a mh 870ce93cc6a534fd dl 28, so 1.5249746091241052 width 3.777989645570198 ncl 1
+HASH case 23 overpoly chord 0.05 ok 1 moves 1261 diags 3 h befffbc8b74cc5df mh a384dcb1825c460b dl 28,4,29, so 2.0775063738440744 width 1.6003448386692043 ncl 1
+HASH case 24 overpoly chord 0.02 ok 1 moves 738 diags 3 h 2a6debe5657e0158 mh d771b082f2e1f7b6 dl 28,4,4, so 5.7184215462040449 width 6.6048963537877867 ncl 2
+HASH case 25 overpoly chord 0.1 ok 1 moves 451 diags 2 h bf1bad14ce47d78d mh 4a56556de3739ee5 dl 26,28, so 3.8825994571753619 width 9.7064986429384046 ncl 2
+HASH case 26 overpoly chord 0.01 ok 1 moves 2663 diags 4 h f9cfca40bffb77be mh 94ffbee33277d87d dl 28,4,4,29, so 1.8430481041393525 width 0.61939376785754507 ncl 2
+HASH case 27 overpoly chord 0.01 ok 1 moves 1879 diags 1 h f5626da7329e0767 mh 27d388dc929377c8 dl 28, so 1.2237062546623987 width 1.3126590832605736 ncl 2
+HASH case 28 overpoly chord 0.01 ok 1 moves 1370 diags 1 h 6b6d300a3ff070d9 mh eb73f0f56f39246a dl 28, so 8.3133872621804183 width 18.663352488142017 ncl 1
+HASH case 29 overpoly chord 0.02 ok 1 moves 2432 diags 1 h adcd8fbb2de0f502 mh 7f6235be5f3331ba dl 28, so 5.1089665125439447 width 10.28839728556367 ncl 1
+HASH case 30 overpoly chord 0.001 ok 1 moves 181468 diags 1 h 655d326beab5c2ac mh 721492da561a06eb dl 4, so 1.7171207102215562 width 4.2904410945139642 ncl 1
+HASH case 31 overpoly chord 0.1 ok 1 moves 1553 diags 3 h 2e7f1955297843b2 mh f0e140c093b8f2db dl 28,4,4, so 1.6516893059925413 width 4.0026111698996747 ncl 2
+HASH case 32 overpoly chord 0.05 ok 1 moves 1095 diags 3 h f62c8cfd3ad9c335 mh 972e0fb2640c7037 dl 28,4,4, so 2.9514032782181907 width 5.8699284390130186 ncl 2
+HASH case 33 overpoly chord 0.02 ok 1 moves 1000 diags 2 h a629e0f262c6583f mh e5a7376571638e92 dl 26,28, so 9.0287375138823442 width 22.571843784705859 ncl 2
+HASH case 34 overpoly chord 0.02 ok 1 moves 1515 diags 1 h 6716b0cf2e9e75f8 mh f262eaabee576c1c dl 28, so 8.9532695722594351 width 21.751884851011422 ncl 2
+HASH case 35 overpoly chord 0.01 ok 1 moves 1083 diags 1 h f3ba927d9c5704d6 mh 69a2aac3eb4727eb dl 28, so 4.6475336097503073 width 3.250557977380216 ncl 1
+HASH case 36 overpoly chord 0.05 ok 1 moves 1010 diags 3 h a94bc668ed2613a5 mh 705fb36a352d6624 dl 28,4,29, so 0.48515238089693846 width 0.21385562429161745 ncl 1
+HASH case 37 overpoly chord 0.01 ok 1 moves 2344 diags 3 h 84d400e03402aca2 mh 1f0bef2f7fa42aa9 dl 28,4,4, so 3.3908166701422333 width 8.3701898475810186 ncl 2
+HASH case 38 overpoly chord 0.1 ok 1 moves 325 diags 2 h 9863049b92592527 mh 3db1435ef62757e5 dl 28,4, so 8.7978860857626771 width 6.4870530164067768 ncl 1
+HASH case 39 overpoly chord 0.02 ok 1 moves 748 diags 3 h a125f858d5b0da6d mh 04f2a671c49de78b dl 28,4,4, so 7.9874006451900277 width 4.0900740340560606 ncl 2
+SUMMARY seed=607 fam=7 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

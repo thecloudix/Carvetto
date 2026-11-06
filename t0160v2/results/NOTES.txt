@@ -1,0 +1,78 @@
+T-0160 round 2 (task/T-0160-corner-sharpen 923d66c; base = merge base 681327a; origin/main 34db4d0 = base + T-0142 + backlog).
+Libraries: Release plain / -march=x86-64-v3 in /home/chris/wt-T0160/build-verify2-rel{,3} and /home/chris/wt-T0160v2-base/
+build-verify2-rel{,3}; Debug -Werror /home/chris/wt-T0160/build-verify2; merged tree (merge-tree of origin/main + branch, commit
+5581444, dangling) /home/chris/wt-T0160v2-merged/build-verify2-rel. Binaries /home/chris/scratch-t0160v2/bin (not committed).
+
+Build/tests: Debug -Werror build rc 0, 0 warnings (debug_build.log); ctest 1001/1001 rc 0 (ctest.log). Merged tree Release ctest
+1017/1017 rc 0 (ctest_merged_full.log). Release x86-64-v3 V-carve/golden/cli subset 68/68 (ctest_rel3_subset.log).
+changelog check ok (14 fragments, CHANGELOG.md untouched); git merge-tree origin/main HEAD clean (tree 95fe605).
+
+Round-1 blockers:
+ B1 acute corners: LC_EXACT lc2 bigtri_ch0.002_apex30_V60s03 0.259808 = ridge 0.2598 (round 1 0.3055); tri_apex120 0.2500 (0.2746);
+    smallch0.005/0.001 apex 20-90: all <= ridge. FIXED. Oracle sanity: the same lc2 against an own_line mutant library (extent from
+    the pass's own line, round-1 style) reports 0.3059 / 0.2785 again (oracle_sanity_ownline.txt).
+ B2 rounded/curved: roundarc 0.0005-1.6, roundpoly 4/12 pieces, chamfer 0.0005-0.2 (+ 1 mm mill), Dshape, bez_blade, concave_tri,
+    line_concave_arc, convex_arc_tri: all sharpened, <= ridge. FIXED.
+ B3 order: repro/order_run on order_fam7_607_22: "only insertions", multiset 0 missing. INS 1040/1040 (vc3 FM2) + 1620/1620 adv. FIXED.
+ far.cpp: chordal 0.001/0.0003/0.01 at 0..3e6 mm: on == off, >= c/2 margin everywhere (far.txt). FIXED.
+
+lc2 (304 cases, lc2_summary.txt; LC_GS default min(0.05, max(0.01, s/4)); glyph/rstar tails rerun with lc2b LC_NORING=1 = no
+ring-clearance context scan, which was the slow part):
+ * Insertion-only (on == off + complete cuts at the floor, clearance + diagnostics identical): every case.
+ * Sharpened stretches: global floor scan max leftover <= ridge h(s/2) + 1e-6 in every case with cuts (corners, rounded/chamfered,
+   curved, channels w 2.3-7 (spikes of the wall ring), thin walls, necks/dumbbells 2.4-8.5, islands/holes near corners, holes in
+   tents, nested areas, multi-tool swept areas 6+3 / 6+2+0.8 / 3+6 / 10+6+3+1 / 0.8 (offset and raster), ramps, flat 2.5,
+   stepover 0.01 / 0.05 / 1.9 / 2 / 50 (clamped), ball noses 3/6/12 at F 0.3/1/1.5, chordal 0.001-0.2, glyphs with 1 and 3 mm
+   mills, 24 random stars, rotated, 1e5/1e6 offsets).
+ * Above-ridge floor only where no cuts were added and the floor is identical with and without sharpening, all in flat areas no
+   end mill enters (deviation 1): rect_w4-7, tri_apex20/30, smallch*_apex20_m6, inlet2boss, glyph T/C/O/S/annulus/sliver with a
+   3 mm mill, and diamondhole_near_corner_g2.0 (the corner pocket closed off from the swept area by the hole's wall ring is its
+   own wall-ring component). There the floor keeps F/2 along EVERY wall, not only in corners (rect_w7 mid-wall point (15,1.5167):
+   0.49997 = the carving tool's rest clearing keeps 2 rho + c off the walls, ring at rho + c): pre-existing (main identical).
+ * Inserted feeds vs walls (exact distance - rho, links included): >= c/2 except two cases touching a ring edge that itself dips:
+   tentslit -1.49e-8 (ring cut -4.94e-7), rstar11 -4.99e-7 (ring cut -7.41e-7). Margin to the cone (c/2 = 3.3e-3 / 1.7e-3) intact:
+   within Pocket's own ring precision, not a cone violation.
+Threshold (thr.txt): hexagon R = f R* (V90, chordal 0.05 / 0.01): cuts from f = 0.998 (within chordal/64 resolution, errs towards
+ sharpening). Fillet probes (6 mm mill, rf near R + d - chordal/(sqrt2-1)): with THR_ORACLE the actual unsharpened maximum stays
+ < chordal (0.97 chordal at 0.05, 0.99 at 0.01 when the first cuts appear one step later); at chordal 0.01 cuts start where the
+ actual leftover is ~0.95 chordal (the prediction from the ring polygon is an upper bound). No stretch left above chordal.
+Hashes (results/hs, vc3 26 groups x 40): base vs branch VC_CS=0 1040/1040 and FM2 1040/1040 identical; base vs branch default:
+ identical in every case without clearance tools (982 of 1040 same; the 58 that differ all have a flat depth and clearance tools); FM2 871 same /
+ 169 differ (all with corner cuts); INS (FM2) 1040/1040 good (169 with cuts); plain vs x86-64-v3 (library v3, harness plain):
+ 1040/1040 default + 1040/1040 FM2 identical. hz.cpp (shapes x V-bit/ball x chordal x {no flat + end mill, flat no end mill, flat
+ + end mill sharpening off} x 2 mills, 504 jobs incl. clearance toolpaths + diagnostics): base == branch byte for byte.
+ adv sets (t0153v4 adv/adv2 x 5 configs, 1620): base vs branch identical in all 1400 runs without corner cuts; INS 1620/1620 good
+ (220 with cuts); cone oracle on adv with 3 end-mill configs (advcone.txt, 972 runs): 0 violations, 0 fails.
+Cone sweep (vc3 VCVIOL, FM2, families 0-23 x 12): 0 real violations in 23 families (fam 15 coincident-edge false alarms as before);
+ fam 20 x 12 hit the timeout as in round 1; fam_20_n4.txt (4 cases): see file.
+CLI: params.json corner_sharpen false/true -> job.json "corner_sharpen": false/true; sign pipeline with true == golden (bar the
+ file-name comment), with false == base output; help text present (still says "convex corners ... bisector", nit).
+Golden hand check (plate, V90 F 1.5, c = 0.01667, end mill 1 mm): corner (10,0): groove (11.517,1.517) -> (11.710,1.710) = wall-ring
+ corner along the bisector to 0.273 mm (patch end + chordal; s/2 = 0.125 strip meets the end mill circle centred 2.0167 from both
+ walls); spike cut (14.161,6.483) -> (13.890,6.405) -> (14.064,6.195) -> (15.061,6.483): in the pinched gap between the top wall
+ ring (y = 6.4833) and the island's apex ring (r 1.5167 round (15.5,5)); all points >= 1.5167 from the walls/island.
+
+Mutants (mutants.txt, mutants2.txt; corner + post tests, 27 mutants): caught by the corner tests: off, own_line, no_overlap,
+ no_clip, always_join, thr_none, thr_2x, no_area_check, swept_bigger, delta_half_s, delta_2x, stepover_x2, eps_big, pos_update,
+ maxpasses, first_patch_only, root_nearest, margin_neg, radius_first, coarse_E (20). Golden only: narrow_strip (half = 0.3 s:
+ lc2 bigtri_ch0.002_apex30_V60s03 0.2683 > ridge 0.2598, oracle_narrowstrip.txt), never_join, no_back, no_zigzag (4).
+ Not caught: thr_never_alldeep (near-equivalent), ramps_included (ramps counted as swept), dist_filter (pieces < 50 d dropped).
+
+Perf (perf.txt, Release plain, CPU s, interleaved, load 14-19): AC2 5000 plain main 27.7/26.1 br 27.9/27.1; frame 41.8/41.5 vs
+ 40.8/41.2; flat 0.5 33.2/33.4 vs 32.9/32.3 -> unchanged, bound holds. Cost flat 0.5 + 0.2 mm end mill: main 36.9/38.4, branch on
+ 45.7/53.7, branch off 42.8/43.3 (noise ~15 %): +20-40 %, +130,000 carve moves (26/letter). 0.5 mm: 52.0/50.1 vs 53.5/50.2
+ (+75,000 moves); 1 mm (does not fit): unchanged.
+Super-linear probes (perf2_*.txt): star / comb / big square / frame grid / vertical chain: linear, +16-55 %. banner (n L-holes in
+ one long frame, 1 mm mill): base Pocket itself ~x3.9 per doubling (65.6 s at n=400), sharpening adds a constant ~45 %.
+ Horizontal chain of n 10 mm squares joined by pinched necks in ONE region (3 mm mill): extra 0.27 / 0.83 / 2.6 / 11.8 s at n =
+ 100/200/400/800 (x3.1, x3.2, x4.5 per doubling; +168 % at 800) while the job without sharpening grows x2.2-2.8; the same chain
+ rotated 90 degrees: +16-20 %, linear. perf record (perf3.cpp, n=600): time in Clipper2's scanbeam (IsValidAelOrder,
+ BuildIntersectList, InsertLeftEdge): the swept-area offset/difference over the whole part in one Clipper call has O(n) active
+ edges per scanline on horizontally spread parts. Merged tree (T-0142): 0.76 / 2.25 / 8.5 s, same growth.
+
+GCC: only GCC 15.2 here (no GCC 13 / MSVC: CI). Process hygiene: every background job had a hard timeout; only own PIDs killed.
+Rulings on the coder's deviations: (1) unentered flat areas left alone: acceptable for this card (their floor keeps F/2 along every
+wall, a pre-existing rest-clearing property, not a corner tent) -> owner follow-up question; (2) groove with the high point by the
+ring kept within the ridge: acceptable (AC3 bound); (3) threshold on the polygonised swept area: acceptable (errs towards
+sharpening, flip within 0.2 % of chordal on the hexagon); (4) necks/spikes get cuts: acceptable under decision (5) (golden spike cut
+hand-checked).

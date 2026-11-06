@@ -1,0 +1,43 @@
+INS case 0 flatcorner n=71-bentband ncl 2 flat 13.89 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 1 flatcorner n=179-denseband ncl 1 flat 10.35 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 2 flatcorner n=218-denseband ncl 1 flat 0.2578 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 3 flatcorner n=209-bentband ncl 1 flat 2.11 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 4 flatcorner n=130-denseband ncl 1 flat 5.812 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 5 flatcorner n=50-bentband ncl 2 flat 1.698 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 6 flatcorner n=258-denseband ncl 1 flat 3.276 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 7 flatcorner n=27-bentband ncl 1 flat 4.716 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 8 flatcorner n=121-bentband ncl 1 flat 0.2716 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 9 flatcorner n=139-denseband ncl 1 flat 0.05954 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 10 flatcorner n=188-denseband ncl 2 flat 1.6 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 11 flatcorner n=227-bentband ncl 2 flat 0.9916 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 12 flatcorner n=275-denseband ncl 1 flat 2.04 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 13 flatcorner n=114-denseband ncl 2 flat 3.154 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 14 flatcorner n=14-bentband ncl 1 flat 0.8641 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 15 flatcorner n=177-denseband ncl 2 flat 35.08 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 16 flatcorner n=20-bentband ncl 2 flat 4.586 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 17 flatcorner n=144-bentband ncl 1 flat 0.5785 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 18 flatcorner n=24-denseband ncl 2 flat 2.753 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 19 flatcorner n=254-bentband ncl 1 flat 3.31 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 20 flatcorner n=107-bentband ncl 1 flat 1.659 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 21 flatcorner n=73-denseband ncl 1 flat 0.3891 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 22 flatcorner n=203-denseband ncl 2 flat 5.187 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 23 flatcorner n=16-denseband ncl 2 flat 7.666 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 24 flatcorner n=208-denseband ncl 2 flat 1.867 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 25 flatcorner n=272-bentband ncl 2 flat 2.666 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 26 flatcorner n=145-denseband ncl 2 flat 7.743 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 27 flatcorner n=257-bentband ncl 2 flat 1.179 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 28 flatcorner n=185-bentband ncl 2 flat 1.25 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 29 flatcorner n=191-denseband ncl 2 flat 5.726 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 30 flatcorner n=118-bentband ncl 1 flat 0.1007 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 31 flatcorner n=60-bentband ncl 2 flat 0.3221 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 32 flatcorner n=126-denseband ncl 1 flat 5.796 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 33 flatcorner n=261-bentband ncl 2 flat 2.131 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 34 flatcorner n=139-bentband ncl 1 flat 4.946 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 35 flatcorner n=281-bentband ncl 1 flat 0.2918 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 36 flatcorner n=186-denseband ncl 1 flat 1.808 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 37 flatcorner n=11-bentband ncl 1 flat 1.045 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 38 flatcorner n=177-denseband ncl 2 flat 8.372 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 39 flatcorner n=209-denseband ncl 2 flat 8.646 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+SUMMARY seed=6021 fam=21 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

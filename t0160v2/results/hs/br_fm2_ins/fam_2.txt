@@ -1,0 +1,43 @@
+INS case 0 holedstar ncl 1 flat 5.433 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 1 holedstar ncl 1 flat 2.034 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 2 holedstar ncl 1 flat 1.812 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 3 holedstar ncl 1 flat 0.7997 ok 1 okEq 1 ins 1 cuts 14 feeds 78 clEq 1 diagEq 1 good
+INS case 4 holedstar ncl 1 flat 3.829 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 5 holedstar ncl 2 flat 0.6095 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 6 holedstar ncl 1 flat 1.006 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 7 holedstar ncl 2 flat 4.25 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 8 holedstar ncl 1 flat 8.566 ok 1 okEq 1 ins 1 cuts 3 feeds 3 clEq 1 diagEq 1 good
+INS case 9 holedstar ncl 2 flat 1.026 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 10 holedstar ncl 2 flat 1.49 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 11 holedstar ncl 2 flat 1.901 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 12 holedstar ncl 2 flat 0.8293 ok 1 okEq 1 ins 1 cuts 45 feeds 45 clEq 1 diagEq 1 good
+INS case 13 holedstar ncl 2 flat 69.42 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 14 holedstar ncl 2 flat 4.099 ok 1 okEq 1 ins 1 cuts 42 feeds 42 clEq 1 diagEq 1 good
+INS case 15 holedstar ncl 2 flat 6.122 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 16 holedstar ncl 1 flat 3.833 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 17 holedstar ncl 2 flat 1.329 ok 1 okEq 1 ins 1 cuts 24 feeds 40 clEq 1 diagEq 1 good
+INS case 18 holedstar ncl 2 flat 13.94 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 19 holedstar ncl 2 flat 2.305 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 20 holedstar ncl 2 flat 12.14 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 21 holedstar ncl 1 flat 0.8357 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 22 holedstar ncl 1 flat 2.564 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 23 holedstar ncl 1 flat 1.108 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 24 holedstar ncl 2 flat 1.289 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 25 holedstar ncl 1 flat 2.515 ok 1 okEq 1 ins 1 cuts 10 feeds 20 clEq 1 diagEq 1 good
+INS case 26 holedstar ncl 1 flat 8.1 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 27 holedstar ncl 1 flat 0.2862 ok 1 okEq 1 ins 1 cuts 9 feeds 33 clEq 1 diagEq 1 good
+INS case 28 holedstar ncl 2 flat 16.19 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 29 holedstar ncl 1 flat 1.506 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 30 holedstar ncl 1 flat 1.32 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 31 holedstar ncl 2 flat 7.04 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 32 holedstar ncl 2 flat 3.161 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 33 holedstar ncl 2 flat 11.91 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 34 holedstar ncl 2 flat 3.889 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 35 holedstar ncl 1 flat 2.975 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 36 holedstar ncl 2 flat 1.915 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 37 holedstar ncl 2 flat 0.8673 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 38 holedstar ncl 2 flat 10.37 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 39 holedstar ncl 2 flat 0.5784 ok 1 okEq 1 ins 1 cuts 7 feeds 7 clEq 1 diagEq 1 good
+SUMMARY seed=602 fam=2 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

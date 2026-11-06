@@ -1,0 +1,43 @@
+HASH case 0 nearsq g=0.000100 chord 0.1 ok 1 moves 271 diags 1 h 783021d730c19382 mh 4621d36d7b52d225 dl 28, so 7.1107158467996019 width 2.9834751728762603 ncl 2
+HASH case 1 nearext g=0.000100 chord 0.02 ok 1 moves 422 diags 2 h 53d19283c865db83 mh 1f3eea18af5d3626 dl 28,4, so 8.4635409628967277 width 16.916203973791688 ncl 1
+HASH case 2 nearext g=0.000000 chord 0.01 ok 1 moves 473 diags 1 h a225b62df1a4465b mh 2ffef8a1e1eaf26c dl 28, so 2.7073873574813994 width 9.4010870598253202 ncl 0
+HASH case 3 nearint g=0.001000 chord 0.005 ok 1 moves 1060 diags 1 h 96b91be92a9dc3c6 mh d8248adad065af94 dl 28, so 0.62452003837688441 width 1.0407554418565359 ncl 0
+HASH case 4 nearsq g=0.000100 chord 0.1 ok 1 moves 435 diags 3 h 410a7f5e5d8ad544 mh a174c872c8adcb45 dl 28,4,4, so 1.6533006790626794 width 4.131321247298958 ncl 2
+HASH case 5 nearext g=0.000000 chord 0.02 ok 1 moves 786 diags 4 h 40c82083733b5984 mh 60660c6e6ffa0322 dl 28,21,4,4, so 6.8291332766224038 width 6.71188591444231 ncl 2
+HASH case 6 nearint g=0.012500 chord 0.1 ok 1 moves 352 diags 1 h e2acf3a5d3f020a0 mh 3671796e66704b4d dl 29, so 2.2818770664584003 width 1.9820013224887938 ncl 1
+HASH case 7 nearext g=0.025000 chord 0.05 ok 1 moves 312 diags 1 h 5be38ee439b6ea88 mh ecf8a7b5f92e87b0 dl 26, so 2.5063609060800172 width 6.265902265200042 ncl 0
+HASH case 8 nearint g=0.050000 chord 0.1 ok 1 moves 1844 diags 1 h 13e0fbb33f51ec47 mh f800233f9abe211c dl 26, so 1.0534612057579 width 2.6336530143947501 ncl 0
+HASH case 9 nearsq g=0.001000 chord 0.001 ok 1 moves 5277 diags 0 h 8951d380e7e8511c mh 8951d380e7e8511c dl  so 1.791356720112776 width 3.2819218620840256 ncl 0
+HASH case 10 nearext g=0.000625 chord 0.005 ok 1 moves 2190 diags 2 h ffb0dea23107d947 mh 6687103baff025e0 dl 28,4, so 1.7967076842919607 width 2.023679941349684 ncl 1
+HASH case 11 nearsq g=0.002500 chord 0.005 ok 1 moves 690 diags 0 h 02faf2b03fa18ff7 mh 02faf2b03fa18ff7 dl  so 3.6974802196183156 width 5.1912882184869096 ncl 0
+HASH case 12 nearint g=0.001250 chord 0.01 ok 1 moves 9270 diags 0 h db78e7ed74a67db3 mh db78e7ed74a67db3 dl  so 0.93696819266187181 width 3.9788409004955354 ncl 0
+HASH case 13 nearsq g=0.000100 chord 0.05 ok 1 moves 262 diags 1 h 83a994eedb3a30ef mh 683642cdb31b46a7 dl 28, so 7.7281047708310684 width 19.32026192707767 ncl 0
+HASH case 14 nearext g=0.000313 chord 0.005 ok 1 moves 392 diags 1 h f01d235ed8a22f0d mh 8eb448b28e9bf24b dl 28, so 2.9400774805336969 width 12.598394831270955 ncl 0
+HASH case 15 nearsq g=0.000100 chord 0.01 ok 1 moves 884 diags 1 h 4913b6c56c52d937 mh 4e5c31b97c21e9d8 dl 28, so 1.1640531717752816 width 2.3054740561531162 ncl 0
+HASH case 16 nearint g=0.050000 chord 0.1 ok 1 moves 1547 diags 0 h 7c054b409463e6e8 mh 7c054b409463e6e8 dl  so 0.37172553776846501 width 0.64402005371016691 ncl 0
+HASH case 17 nearint g=0.025000 chord 0.1 ok 1 moves 156 diags 1 h d2cf25d4abb846a9 mh 0a0f9e0a5d2a8766 dl 26, so 9.339205337902813 width 22.701409699367684 ncl 0
+HASH case 18 nearsq g=0.000500 chord 0.001 ok 1 moves 2980 diags 1 h a39481c1337be6db mh 2e3637a44d6c0374 dl 28, so 8.7845585086666613 width 21.961396271666651 ncl 0
+HASH case 19 nearsq g=0.001000 chord 0.1 ok 1 moves 1802 diags 2 h 1a5311461d61955e mh 0c05da8c81d6e8b9 dl 28,26, so 1.153663574794036 width 2.8841589369850897 ncl 0
+HASH case 20 nearsq g=0.005000 chord 0.01 ok 1 moves 1044 diags 0 h 54088e15faa82b08 mh 54088e15faa82b08 dl  so 4.7690470709051693 width 2.9418663993665151 ncl 2
+HASH case 21 nearsq g=0.001250 chord 0.005 ok 1 moves 932 diags 0 h 3d19bd6f3d9eddbb mh 3d19bd6f3d9eddbb dl  so 5.9370431701884643 width 14.84260792547116 ncl 0
+HASH case 22 nearext g=0.000100 chord 0.05 ok 1 moves 629 diags 1 h 3218816c54167288 mh 97ccb61a32e6b83a dl 28, so 1.0089316023035904 width 2.5934736933273608 ncl 0
+HASH case 23 nearext g=0.000313 chord 0.005 ok 1 moves 430 diags 1 h f320e3189fb5908b mh ca27422b56976909 dl 28, so 6.9323660777322376 width 17.330915194330593 ncl 0
+HASH case 24 nearsq g=0.012500 chord 0.1 ok 1 moves 147 diags 0 h c59fdaad7bda564d mh c59fdaad7bda564d dl  so 8.0378774907766211 width 20.094693726941554 ncl 0
+HASH case 25 nearint g=0.010000 chord 0.02 ok 1 moves 659 diags 0 h 7102212958f278d7 mh 7102212958f278d7 dl  so 6.5031742904036935 width 11.56171859147695 ncl 0
+HASH case 26 nearext g=0.000063 chord 0.001 ok 1 moves 2764 diags 1 h aac9b1775d7a1fd3 mh 9b32ab2dddbd004c dl 28, so 3.0499390946817622 width 4.4751230658452377 ncl 0
+HASH case 27 nearsq g=0.012500 chord 0.05 ok 1 moves 416 diags 0 h 90fbe3fefc082abf mh 90fbe3fefc082abf dl  so 1.6695324066476767 width 4.1738310166191912 ncl 0
+HASH case 28 nearext g=0.000000 chord 0.1 ok 1 moves 887 diags 2 h 70553838624b912e mh 8e4d6c7c06aa41bc dl 28,26, so 2.7144291297513399 width 6.7860728243783495 ncl 0
+HASH case 29 nearint g=0.010000 chord 0.02 ok 1 moves 2160 diags 0 h dc8a7c95ef9a6620 mh dc8a7c95ef9a6620 dl  so 1.3325250020788233 width 4.3053904910095735 ncl 0
+HASH case 30 nearsq g=0.000125 chord 0.001 ok 1 moves 1553 diags 1 h 05104260a2ef586f mh f24575a504c5a7a0 dl 28, so 6.0381164038279564 width 7.9255823964614178 ncl 2
+HASH case 31 nearint g=0.000063 chord 0.001 ok 1 moves 14527 diags 2 h 959bc5d5a8b2c9ca mh 4ffbd60ccf6e40b6 dl 28,26, so 2.1789124115701242 width 5.4472810289253104 ncl 0
+HASH case 32 nearext g=0.000100 chord 0.02 ok 1 moves 585 diags 1 h a3a39adaef7ffac6 mh 143ed643b1ac5ec6 dl 28, so 4.4475984526828611 width 2.5319368371398516 ncl 1
+HASH case 33 nearsq g=0.050000 chord 0.05 ok 1 moves 664 diags 1 h 577a02c54c2e3091 mh 3ca05195d851aa92 dl 26, so 0.82088058145397191 width 2.0522014536349298 ncl 0
+HASH case 34 nearint g=0.012500 chord 0.1 ok 1 moves 927 diags 2 h 525af8df938ca970 mh ea28ee57bb23b56e dl 4,4, so 4.1725433711396169 width 10.431286748397616 ncl 2
+HASH case 35 nearsq g=0.000250 chord 0.001 ok 1 moves 4441 diags 1 h fb013870a2a119e1 mh f65e370cbe636306 dl 28, so 3.0403563329907097 width 7.6008908324767734 ncl 0
+HASH case 36 nearsq g=0.000100 chord 0.02 ok 1 moves 308 diags 1 h d3b790c3449c0d55 mh cf55785aed64cddd dl 28, so 8.9924697146831214 width 22.481174286707802 ncl 0
+HASH case 37 nearext g=0.001250 chord 0.02 ok 1 moves 6 diags 0 h 87cf978796b55248 mh 87cf978796b55248 dl  so 9.6265509774265468 width 24.066377443566363 ncl 0
+HASH case 38 nearext g=0.000100 chord 0.005 ok 1 moves 2030 diags 2 h 0ea4db079dc64b72 mh 9a82507e48f4771b dl 28,4, so 8.8368537717236162 width 4.9383896564529834 ncl 2
+HASH case 39 nearsq g=0.000250 chord 0.001 ok 1 moves 3663 diags 1 h ab876ec623dec6fb mh 9f380305e4c1a114 dl 28, so 9.169358779355461 width 22.92339694838865 ncl 0
+SUMMARY seed=6010 fam=10 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

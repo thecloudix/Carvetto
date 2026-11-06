@@ -1,0 +1,43 @@
+HASH case 0 nestedtight-sq chord 0.1 ok 1 moves 1997 diags 1 h 48c6cc0a69f86905 mh 9fc0391a7bfcab82 dl 28, so 6.3164693444292821 width 4.9512005373637784 ncl 2
+HASH case 1 nestedtight-circ chord 0.02 ok 1 moves 21624 diags 1 h be0825c3fefdcb66 mh 0ec4b53bcd6c4f66 dl 28, so 0.55728047358533261 width 0.99128592402093696 ncl 1
+HASH case 2 nestedtight-circ chord 0.1 ok 1 moves 1118 diags 1 h 3b4a48db1078b45b mh b47d01d48722943c dl 17, so 4.6555575322188956 width 10.834064260387931 ncl 2
+HASH case 3 nestedtight-circ chord 0.001 ok 1 moves 89808 diags 1 h be0a38cba91b39a5 mh f4fe406f93fc8c32 dl 28, so 4.6747542664247446 width 6.2162827754336396 ncl 2
+HASH case 4 nestedtight-circ chord 0.01 ok 1 moves 26946 diags 0 h 734429b9cb25e988 mh 734429b9cb25e988 dl  so 8.4068811139382316 width 15.366036683240285 ncl 2
+HASH case 5 nestedtight-circ chord 0.01 ok 1 moves 5839 diags 0 h df257528a0174366 mh df257528a0174366 dl  so 8.5547112302121615 width 3.4254992362711358 ncl 1
+HASH case 6 nestedtight-circ chord 0.01 ok 1 moves 19711 diags 17 h 6effbed256d178a9 mh 967d466b7bf0d30a dl 28,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,4, so 0.58580350621355437 width 1.323448280629326 ncl 1
+HASH case 7 nestedtight-sq chord 0.005 ok 1 moves 29049 diags 0 h 7c6f3f745e1e6977 mh 7c6f3f745e1e6977 dl  so 1.0861632403522319 width 1.0327425408343105 ncl 1
+HASH case 8 nestedtight-sq chord 0.1 ok 1 moves 1272 diags 2 h fb193fddd7fe5a3c mh c8a13b8044bd6f6e dl 17,17, so 7.4147457967706378 width 10.468523401514954 ncl 2
+HASH case 9 nestedtight-sq chord 0.001 ok 1 moves 329106 diags 1 h 3ed98bc88bba5aed mh 6cce7440f84e11cb dl 26, so 2.8119372555261375 width 7.0298431388153437 ncl 1
+HASH case 10 nestedtight-sq chord 0.05 ok 1 moves 19459 diags 1 h f68efe1cfb4172ec mh e2a70f6c440648c6 dl 26, so 2.0336527774640345 width 5.0841319436600863 ncl 2
+HASH case 11 nestedtight-circ chord 0.05 ok 1 moves 9667 diags 28 h 3eba292e158c41e2 mh f4ab10573601dad3 dl 28,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17, so 5.4972729285344997 width 4.6871397443315432 ncl 2
+HASH case 12 nestedtight-sq chord 0.1 ok 0 moves 0 diags 2 h 84f3f33eed6fd897 mh e943185762eeb5b1 dl 17,17, so 8.976713332928453 width 9.0163520919043645 ncl 2
+HASH case 13 nestedtight-circ chord 0.02 ok 1 moves 2825 diags 0 h f57b9939507b67a0 mh f57b9939507b67a0 dl  so 9.0360256952048026 width 12.123262249208636 ncl 2
+HASH case 14 nestedtight-circ chord 0.01 ok 1 moves 14581 diags 11 h b8c9c40bcb29dd46 mh 45509004c3eebdfd dl 28,17,17,17,17,17,17,17,17,4,4, so 4.8066585915373778 width 11.302474047911613 ncl 2
+HASH case 15 nestedtight-circ chord 0.05 ok 1 moves 4832 diags 1 h 742f46015151bded mh f26059ad4ad204c5 dl 21, so 8.8065662311032948 width 10.336596393079645 ncl 2
+HASH case 16 nestedtight-sq chord 0.02 ok 1 moves 10289 diags 1 h bc301f56ee47a8a1 mh ff6c43903b5bbc90 dl 4, so 1.0031643890569766 width 1.9351101325425384 ncl 2
+HASH case 17 nestedtight-circ chord 0.01 ok 1 moves 16766 diags 1 h 525a1004f89e04b2 mh 690eddeb696e27f7 dl 28, so 4.3469186776217459 width 1.6621348824597171 ncl 1
+HASH case 18 nestedtight-circ chord 0.02 ok 1 moves 859 diags 0 h aeff1983ac4b2f78 mh aeff1983ac4b2f78 dl  so 6.8700683955708772 width 8.175227683580113 ncl 1
+HASH case 19 nestedtight-sq chord 0.01 ok 1 moves 25186 diags 0 h f2031808416f4754 mh f2031808416f4754 dl  so 3.8085655784161889 width 8.2449406422558571 ncl 1
+HASH case 20 nestedtight-circ chord 0.02 ok 1 moves 9833 diags 2 h 8a2ad73d840976f3 mh af89b528aef54c91 dl 4,4, so 4.4426308515182873 width 10.225727147774366 ncl 2
+HASH case 21 nestedtight-circ chord 0.02 ok 1 moves 26343 diags 0 h 3c4128c5ceac5701 mh 3c4128c5ceac5701 dl  so 1.1726545557249834 width 1.8312869633191173 ncl 1
+HASH case 22 nestedtight-sq chord 0.01 ok 1 moves 43197 diags 0 h ce6d2ebe54ab8aed mh ce6d2ebe54ab8aed dl  so 4.4758014881475887 width 9.1233957115967304 ncl 2
+HASH case 23 nestedtight-sq chord 0.02 ok 1 moves 11572 diags 0 h ac95b16542a7710f mh ac95b16542a7710f dl  so 8.3122673421539144 width 5.0800976452713176 ncl 1
+HASH case 24 nestedtight-sq chord 0.01 ok 1 moves 9170 diags 2 h a2454da96f4d854b mh 97a87511d3f138ab dl 28,17, so 3.4468430993785093 width 4.2920242202821077 ncl 2
+HASH case 25 nestedtight-sq chord 0.001 ok 1 moves 792690 diags 0 h 51a2fa2c3e859dd9 mh 51a2fa2c3e859dd9 dl  so 4.2910023003705362 width 6.5496825863993609 ncl 1
+HASH case 26 nestedtight-circ chord 0.05 ok 1 moves 7127 diags 2 h eb2ebdae062248c7 mh a33c045a985052b5 dl 26,4, so 1.111739259942409 width 2.7793481498560224 ncl 1
+HASH case 27 nestedtight-sq chord 0.02 ok 1 moves 11163 diags 0 h 783453d246d9361d mh 783453d246d9361d dl  so 7.6200222603607362 width 10.121026102496144 ncl 1
+HASH case 28 nestedtight-sq chord 0.01 ok 1 moves 22783 diags 1 h 09d59d41766bf26e mh 556b38f8af54fd33 dl 26, so 1.3490771435932638 width 3.3726928589831591 ncl 1
+HASH case 29 nestedtight-circ chord 0.02 ok 1 moves 33969 diags 1 h 7da96c1deef74e12 mh b2fc45057f4b66b9 dl 28, so 1.3582317023060193 width 2.3923612749119223 ncl 1
+HASH case 30 nestedtight-circ chord 0.05 ok 1 moves 6453 diags 0 h 34885113ab1dde8f mh 34885113ab1dde8f dl  so 6.7655613269837973 width 13.35451979593765 ncl 1
+HASH case 31 nestedtight-circ chord 0.02 ok 1 moves 11252 diags 2 h 13070df8d09e3990 mh 321a6fadaa3d8ec3 dl 26,21, so 4.1339478059321548 width 10.334869514830388 ncl 2
+HASH case 32 nestedtight-circ chord 0.1 ok 1 moves 462 diags 1 h 91d9c4290911acd2 mh bca1201dd1e79cf9 dl 17, so 6.2716293367476714 width 15.114917004609392 ncl 1
+HASH case 33 nestedtight-sq chord 0.05 ok 1 moves 8526 diags 1 h cfc4bbe1d10f596e mh c884d7f826addb64 dl 28, so 7.995997102584318 width 15.821315888732038 ncl 1
+HASH case 34 nestedtight-sq chord 0.005 ok 1 moves 20301 diags 0 h b11d2e55354eca65 mh b11d2e55354eca65 dl  so 1.727235216692111 width 4.1107420966625936 ncl 2
+HASH case 35 nestedtight-circ chord 0.1 ok 1 moves 2967 diags 0 h 70c137a34d1743f5 mh 70c137a34d1743f5 dl  so 1.1405883074127321 width 1.7803478217259032 ncl 1
+HASH case 36 nestedtight-sq chord 0.02 ok 1 moves 14229 diags 3 h 2cc78046823b0c83 mh 0e732f0ac987d495 dl 28,17,4, so 0.79418942359787259 width 1.7861110081194944 ncl 1
+HASH case 37 nestedtight-circ chord 0.02 ok 1 moves 5872 diags 1 h 2e6c80b01870da1b mh a9dd57e2058c4dbe dl 4, so 3.2672064376727832 width 6.8716124654357982 ncl 2
+HASH case 38 nestedtight-circ chord 0.05 ok 1 moves 1448 diags 1 h 36db44311d7e39c6 mh 23fc9d43e68c7646 dl 21, so 1.8022564962986189 width 4.4724110756242341 ncl 2
+HASH case 39 nestedtight-circ chord 0.1 ok 1 moves 3990 diags 1 h f5f5684ea53db29f mh 4338339531414dba dl 17, so 3.2773609846811489 width 8.1306148922257204 ncl 1
+SUMMARY seed=6018 fam=18 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

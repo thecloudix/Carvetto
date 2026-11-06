@@ -1,0 +1,43 @@
+INS case 0 lib:ellipse_bez ncl 2 flat 2.548 ok 1 okEq 1 ins 1 cuts 2 feeds 2 clEq 1 diagEq 1 good
+INS case 1 lib:slot_arcs ncl 1 flat 0.616 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 2 lib:square_cw ncl 1 flat 1.04 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 3 lib:rect40x20 ncl 1 flat 0.3464 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 4 lib:concave_arc_notch ncl 1 flat 37.12 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 5 lib:O_glyph_bez ncl 1 flat 1.564 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 6 lib:circle ncl 1 flat 3.167 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 7 lib:circle ncl 1 flat 2.922 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 8 lib:rect40x20 ncl 1 flat 7.941 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 9 lib:dumbbell_neck05 ncl 2 flat 0.8448 ok 1 okEq 1 ins 1 cuts 8 feeds 8 clEq 1 diagEq 1 good
+INS case 10 lib:annulus ncl 1 flat 9.499 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 11 lib:C_glyph_arcs ncl 2 flat 3.456 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 12 lib:C_glyph_arcs ncl 1 flat 4.165 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 13 lib:dumbbell_neck05 ncl 2 flat 1.164 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 14 lib:rect40x20 ncl 2 flat 16.39 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 15 lib:concave_arc_notch ncl 1 flat 9.678 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 16 lib:neck_0.03 ncl 1 flat 0.4556 ok 1 okEq 1 ins 1 cuts 8 feeds 168 clEq 1 diagEq 1 good
+INS case 17 lib:rect40x20 ncl 2 flat 2.316 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 18 lib:S_glyph_bez ncl 2 flat 2.948 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 19 lib:dumbbell_neck05 ncl 1 flat 14.41 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 20 lib:star5 ncl 2 flat 7.753 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 21 lib:C_glyph_arcs ncl 2 flat 0.6978 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 22 lib:star5 ncl 1 flat 9.211 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 23 lib:circle ncl 2 flat 1.509 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 24 lib:C_glyph_arcs ncl 2 flat 5.663 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 25 lib:L ncl 1 flat 0.7889 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 26 lib:L ncl 1 flat 0.3924 ok 1 okEq 1 ins 1 cuts 5 feeds 5 clEq 1 diagEq 1 good
+INS case 27 lib:star5 ncl 2 flat 3.18 ok 1 okEq 1 ins 1 cuts 5 feeds 5 clEq 1 diagEq 1 good
+INS case 28 lib:C_glyph_arcs ncl 1 flat 0.3551 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 29 lib:star12_sharp ncl 2 flat 0.8663 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 30 lib:neck_0.03 ncl 1 flat 5.403 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 31 lib:slot_arcs ncl 1 flat 0.5568 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 32 lib:neck_0.03 ncl 1 flat 0.9454 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 33 lib:sliver5deg ncl 1 flat 11.59 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 34 lib:T ncl 1 flat 1.908 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 35 lib:sq_holes ncl 2 flat 1.072 ok 1 okEq 1 ins 1 cuts 10 feeds 22 clEq 1 diagEq 1 good
+INS case 36 lib:annulus ncl 1 flat 2.775 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 37 lib:S_glyph_bez ncl 2 flat 0.3879 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 38 lib:circle ncl 1 flat 0.8762 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 39 lib:ellipse_bez ncl 2 flat 6.593 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+SUMMARY seed=600 fam=0 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

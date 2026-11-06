@@ -1,0 +1,12 @@
+glyph_concave_arc_notch            ins=1 cuts=6 cl=1 dg=1 minClr-c/2=+7.57e-03 ringClr-c/2=+1.00e+300 ridge=0.1250 lim=0.500 rho=0.5000 s=0.2500
+    corner (20.0000,0.0000) ang 90.00 deg: off 0.0839 -> on 0.083892 at (19.260559,0.600559) pts 150 UNSHARPENED>chordal
+    corner (20.0000,10.0000) ang 90.00 deg: off 0.0839 -> on 0.083892 at (19.260559,9.399441) pts 150 UNSHARPENED>chordal
+    corner (14.0000,10.0000) ang 90.00 deg: off 0.0713 -> on 0.071259 at (14.647895,9.412073) pts 88 UNSHARPENED>chordal
+    corner (6.0000,10.0000) ang 90.00 deg: off 0.0654 -> on 0.065387 at (5.342054,9.417946) pts 88 UNSHARPENED>chordal
+    corner (0.0000,10.0000) ang 90.00 deg: off 0.0839 -> on 0.083892 at (0.600559,9.260559) pts 150 UNSHARPENED>chordal
+    GSCAN gs=0.100 tentPts=0 above=0 onWorst=0.000000 at (0.00000,0.00000) offWorst=0.0719 ridge=0.1250 | oraclePred=0.08333 (at 0.6000,0.6000) cuts=6
+    => ok corners=6 worstCornerOn=0.0891
+glyph_concave_arc_notch_m3         ins=1 cuts=8 cl=1 dg=1 minClr-c/2=+4.96e-04 ringClr-c/2=+1.00e+300 ridge=0.1250 lim=0.500 rho=0.5000 s=0.2500
+    GSCAN gs=0.100 tentPts=52 above=0 onWorst=0.125000 at (19.17337,8.99659) offWorst=0.2141 ridge=0.1250 | oraclePred=0.38333 (at 1.0000,9.1000) cuts=8
+    => ok corners=6 worstCornerOn=0.1250
+SUMMARY run=2 fail=0

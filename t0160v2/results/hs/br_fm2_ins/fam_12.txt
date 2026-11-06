@@ -1,0 +1,43 @@
+INS case 0 holesinholes-sq ncl 1 flat 5.745 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 1 holesinholes ncl 1 flat 4.103 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 2 holesinholes ncl 1 flat 0.07391 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 3 holesinholes ncl 2 flat 4.36 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 4 holesinholes-sq ncl 1 flat 0.1059 ok 1 okEq 1 ins 1 cuts 4 feeds 84 clEq 1 diagEq 1 good
+INS case 5 holesinholes-sq ncl 2 flat 12.05 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 6 holesinholes-sq ncl 2 flat 2.795 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 7 holesinholes-sq ncl 2 flat 0.1763 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 8 holesinholes-sq ncl 2 flat 7.032 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 9 holesinholes-sq ncl 2 flat 1.15 ok 1 okEq 1 ins 1 cuts 10 feeds 134 clEq 1 diagEq 1 good
+INS case 10 holesinholes-sq ncl 2 flat 3.826 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 11 holesinholes ncl 2 flat 6.765 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 12 holesinholes ncl 1 flat 13.04 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 13 holesinholes-sq ncl 1 flat 17.47 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 14 holesinholes ncl 2 flat 9.496 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 15 holesinholes ncl 2 flat 0.6436 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 16 holesinholes ncl 2 flat 2.907 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 17 holesinholes-sq ncl 1 flat 1.499 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 18 holesinholes ncl 1 flat 0.4634 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 19 holesinholes ncl 1 flat 1.124 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 20 holesinholes-sq ncl 1 flat 1.739 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 21 holesinholes ncl 2 flat 1.003 ok 1 okEq 1 ins 1 cuts 12 feeds 40 clEq 1 diagEq 1 good
+INS case 22 holesinholes ncl 2 flat 1.915 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 23 holesinholes-sq ncl 1 flat 2.811 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 24 holesinholes-sq ncl 2 flat 5.608 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 25 holesinholes-sq ncl 1 flat 1.485 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 26 holesinholes ncl 2 flat 3.088 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 27 holesinholes-sq ncl 1 flat 18.65 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 28 holesinholes-sq ncl 2 flat 1.097 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 29 holesinholes ncl 2 flat 0.9541 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 30 holesinholes-sq ncl 1 flat 0.4624 ok 1 okEq 1 ins 1 cuts 19 feeds 327 clEq 1 diagEq 1 good
+INS case 31 holesinholes ncl 2 flat 0.33 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 32 holesinholes-sq ncl 1 flat 1.038 ok 1 okEq 1 ins 1 cuts 8 feeds 8 clEq 1 diagEq 1 good
+INS case 33 holesinholes-sq ncl 1 flat 0.3343 ok 1 okEq 1 ins 1 cuts 59 feeds 373 clEq 1 diagEq 1 good
+INS case 34 holesinholes-sq ncl 1 flat 0.7796 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 35 holesinholes-sq ncl 1 flat 2.051 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 36 holesinholes-sq ncl 2 flat 0.306 ok 1 okEq 1 ins 1 cuts 11 feeds 99 clEq 1 diagEq 1 good
+INS case 37 holesinholes-sq ncl 1 flat 0.6236 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 38 holesinholes ncl 2 flat 3.436 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 39 holesinholes-sq ncl 2 flat 4.016 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+SUMMARY seed=6012 fam=12 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

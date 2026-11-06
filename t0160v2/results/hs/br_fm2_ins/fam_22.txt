@@ -1,0 +1,43 @@
+INS case 0 selftouch-frame+diamondtangent+crossing ncl 2 flat 0.5427 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 1 selftouch-bowtie+tangentcircle ncl 2 flat 0.9255 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 2 selftouch-corners+cross ncl 2 flat 3.978 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 3 selftouch-bowtie+tangentcircle ncl 2 flat 1.306 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 4 selftouch-corners+cross ncl 2 flat 0.3809 ok 1 okEq 1 ins 1 cuts 8 feeds 8 clEq 1 diagEq 1 good
+INS case 5 selftouch-corners+cross ncl 1 flat 8.855 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 6 selftouch-frame+diamondtangent+crossing ncl 2 flat 10.91 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 7 selftouch-corners+cross ncl 2 flat 16.81 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 8 selftouch-corners+cross ncl 1 flat 1.321 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 9 selftouch-frame+diamondtangent+crossing ncl 1 flat 2.641 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 10 selftouch-corners+cross ncl 1 flat 5.03 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 11 selftouch-corners+cross ncl 1 flat 0.9928 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 12 selftouch-corners+cross ncl 2 flat 0.201 ok 1 okEq 1 ins 1 cuts 4 feeds 20 clEq 1 diagEq 1 good
+INS case 13 selftouch-frame+diamondtangent+crossing ncl 2 flat 2.981 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 14 selftouch-bowtie+tangentcircle ncl 2 flat 7.128 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 15 selftouch-frame+diamondtangent+crossing ncl 2 flat 11.56 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 16 selftouch-bowtie+tangentcircle ncl 2 flat 3.482 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 17 selftouch-corners+cross ncl 1 flat 28 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 18 selftouch-frame+diamondtangent+crossing ncl 2 flat 2.285 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 19 selftouch-corners+cross ncl 1 flat 0.5029 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 20 selftouch-frame+diamondtangent+crossing ncl 1 flat 4.953 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 21 selftouch-corners+cross ncl 1 flat 1.275 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 22 selftouch-corners+cross ncl 1 flat 0.4075 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 23 selftouch-corners+cross ncl 2 flat 12.97 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 24 selftouch-frame+diamondtangent+crossing ncl 1 flat 0.5383 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 25 selftouch-frame+diamondtangent+crossing ncl 1 flat 1.765 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 26 selftouch-frame+diamondtangent+crossing ncl 1 flat 0.4616 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 27 selftouch-frame+diamondtangent+crossing ncl 2 flat 0.7626 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 28 selftouch-bowtie+tangentcircle ncl 2 flat 2.429 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 29 selftouch-frame+diamondtangent+crossing ncl 2 flat 12.04 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 30 selftouch-frame+diamondtangent+crossing ncl 2 flat 0.3142 ok 1 okEq 1 ins 1 cuts 8 feeds 8 clEq 1 diagEq 1 good
+INS case 31 selftouch-bowtie+tangentcircle ncl 1 flat 14.26 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 32 selftouch-corners+cross ncl 2 flat 1.058 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 33 selftouch-corners+cross ncl 1 flat 0.8954 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 34 selftouch-frame+diamondtangent+crossing ncl 1 flat 3.949 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 35 selftouch-frame+diamondtangent+crossing ncl 1 flat 4.924 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 36 selftouch-corners+cross ncl 1 flat 2.229 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 37 selftouch-frame+diamondtangent+crossing ncl 2 flat 1.645 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 38 selftouch-frame+diamondtangent+crossing ncl 2 flat 2.301 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 39 selftouch-frame+diamondtangent+crossing ncl 1 flat 2.5 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+SUMMARY seed=6022 fam=22 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

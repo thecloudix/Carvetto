@@ -1,0 +1,43 @@
+INS case 0 overpoly ncl 2 flat 11.85 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 1 overpoly ncl 1 flat 0.6769 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 2 overpoly ncl 2 flat 0.3945 ok 1 okEq 1 ins 1 cuts 12 feeds 60 clEq 1 diagEq 1 good
+INS case 3 overpoly ncl 1 flat 11.18 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 4 overpoly ncl 2 flat 5.74 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 5 overpoly ncl 2 flat 3.479 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 6 overpoly ncl 1 flat 10.96 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 7 overpoly ncl 1 flat 3.433 ok 1 okEq 1 ins 1 cuts 6 feeds 6 clEq 1 diagEq 1 good
+INS case 8 overpoly ncl 2 flat 0.1534 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 9 overpoly ncl 1 flat 0.2543 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 10 overpoly ncl 2 flat 17.92 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 11 overpoly ncl 1 flat 3.025 ok 1 okEq 1 ins 1 cuts 5 feeds 5 clEq 1 diagEq 1 good
+INS case 12 overpoly ncl 2 flat 1.39 ok 1 okEq 1 ins 1 cuts 2 feeds 2 clEq 1 diagEq 1 good
+INS case 13 overpoly ncl 2 flat 9.098 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 14 overpoly ncl 1 flat 11.24 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 15 overpoly ncl 2 flat 1.994 ok 1 okEq 1 ins 1 cuts 20 feeds 20 clEq 1 diagEq 1 good
+INS case 16 overpoly ncl 2 flat 7.024 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 17 overpoly ncl 2 flat 3.43 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 18 overpoly ncl 2 flat 2.448 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 19 overpoly ncl 1 flat 2.947 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 20 overpoly ncl 1 flat 4.487 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 21 overpoly ncl 2 flat 6.59 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 22 overpoly ncl 1 flat 1.651 ok 1 okEq 1 ins 1 cuts 3 feeds 3 clEq 1 diagEq 1 good
+INS case 23 overpoly ncl 1 flat 0.4962 ok 1 okEq 1 ins 1 cuts 4 feeds 6 clEq 1 diagEq 1 good
+INS case 24 overpoly ncl 2 flat 1.79 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 25 overpoly ncl 2 flat 4.878 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 26 overpoly ncl 2 flat 1.575 ok 1 okEq 1 ins 1 cuts 22 feeds 22 clEq 1 diagEq 1 good
+INS case 27 overpoly ncl 2 flat 0.124 ok 1 okEq 1 ins 1 cuts 5 feeds 5 clEq 1 diagEq 1 good
+INS case 28 overpoly ncl 1 flat 19.92 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 29 overpoly ncl 1 flat 7.011 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 30 overpoly ncl 1 flat 2.075 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 31 overpoly ncl 2 flat 1.557 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 32 overpoly ncl 2 flat 14.54 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 33 overpoly ncl 2 flat 4.247 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 34 overpoly ncl 2 flat 4.648 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 35 overpoly ncl 1 flat 1.275 ok 1 okEq 1 ins 1 cuts 4 feeds 4 clEq 1 diagEq 1 good
+INS case 36 overpoly ncl 1 flat 0.08311 ok 1 okEq 1 ins 1 cuts 6 feeds 28 clEq 1 diagEq 1 good
+INS case 37 overpoly ncl 2 flat 3.568 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 38 overpoly ncl 1 flat 1.659 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+INS case 39 overpoly ncl 2 flat 1.981 ok 1 okEq 1 ins 1 cuts 0 feeds 0 clEq 1 diagEq 1 good
+SUMMARY seed=607 fam=7 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

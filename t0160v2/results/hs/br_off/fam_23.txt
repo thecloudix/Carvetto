@@ -1,0 +1,43 @@
+HASH case 0 nestonboundary-holevertexatcorner+cross chord 0.05 ok 1 moves 392 diags 1 h 9ac6b9ad20817254 mh e4acc41a19ba626e dl 28, so 4.5092112450766804 width 11.040943074234992 ncl 2
+HASH case 1 nestonboundary-holevertexatcorner+cross chord 0.001 ok 1 moves 2649 diags 1 h 5d0577bfb9caf150 mh a9cb3e8ef191d99f dl 28, so 9.4961688946711771 width 22.021820237767052 ncl 2
+HASH case 2 nestonboundary-holeedgeonwall chord 0.01 ok 1 moves 509 diags 2 h 41f0ba609a76b834 mh 6e354f99fa98e7b4 dl 28,4, so 1.7287243697813324 width 2.9138899965334577 ncl 1
+HASH case 3 nestonboundary-holeedgeonwall chord 0.01 ok 1 moves 533 diags 2 h ae132c8d29da7492 mh 7a34aad106169240 dl 26,28, so 4.8853557348523999 width 12.213389337130998 ncl 1
+HASH case 4 nestonboundary-holeedgeonwall chord 0.005 ok 1 moves 12129 diags 2 h 4babc3905b5f41d5 mh ea9a1b7060320ca2 dl 28,4, so 0.50557680453246889 width 1.1530243841581012 ncl 1
+HASH case 5 nestonboundary-holeedgeonwall chord 0.005 ok 1 moves 715 diags 1 h 5622ce2df22d4983 mh b1ec7092cdf9ab61 dl 28, so 12.856274555488982 width 17.978213048811494 ncl 0
+HASH case 6 nestonboundary-islandsharingholecorner+cross chord 0.01 ok 1 moves 2554 diags 3 h c975d8f1bb8e0b06 mh 98c894d12b018bee dl 28,4,4, so 0.49291223634772746 width 1.1272739645965064 ncl 2
+HASH case 7 nestonboundary-holeedgeonwall chord 0.005 ok 1 moves 426 diags 1 h d1a0a6c92527b2ac mh 7583958c686f4242 dl 28, so 2.0541898269701422 width 5.135474567425355 ncl 0
+HASH case 8 nestonboundary-holeedgeonwall chord 0.05 ok 1 moves 1021 diags 2 h 890b25c1c20bf101 mh 72850233ef0635c4 dl 26,28, so 0.2674745370102759 width 0.56901954872366789 ncl 0
+HASH case 9 nestonboundary-islandsharingholecorner+cross chord 0.001 ok 1 moves 2464 diags 2 h 2a24e5a5781d09aa mh d9c6a1fcb1697992 dl 26,28, so 7.6680649029150612 width 17.761187848529193 ncl 0
+HASH case 10 nestonboundary-islandsharingholecorner+cross chord 0.001 ok 1 moves 18224 diags 2 h 07e002980e3e1a55 mh 30431803025098e1 dl 28,26, so 0.74078200726592647 width 1.8519550181648161 ncl 0
+HASH case 11 nestonboundary-islandsharingholecorner+cross chord 0.02 ok 1 moves 858 diags 1 h eb6ef472956a159d mh d002bad0433f7db6 dl 28, so 3.125620192212379 width 5.7374463590732843 ncl 1
+HASH case 12 nestonboundary-holeedgeonwall chord 0.05 ok 1 moves 231 diags 2 h 77a0bf56c292ddc6 mh 0a10e189f79c0bc8 dl 26,28, so 0.7660215643080891 width 3.2500120034224018 ncl 0
+HASH case 13 nestonboundary-islandsharingholecorner+cross chord 0.005 ok 1 moves 1446 diags 2 h 2beb19652fcf12af mh c076a5d782dc4de9 dl 26,28, so 4.1081456702115853 width 10.452901671155685 ncl 0
+HASH case 14 nestonboundary-holevertexatcorner+cross chord 0.01 ok 1 moves 817 diags 1 h 8868c38680f93499 mh 1e55a25e1c7651aa dl 28, so 4.2081934430811856 width 10.520483607702964 ncl 0
+HASH case 15 nestonboundary-holevertexatcorner+cross chord 0.005 ok 1 moves 1389 diags 1 h 1a12c71c900bf812 mh 2356ffff96554750 dl 28, so 4.1134357902949672 width 10.283589475737418 ncl 0
+HASH case 16 nestonboundary-holevertexatcorner+cross chord 0.005 ok 1 moves 1526 diags 1 h 49101d59c8e2deeb mh e9d2bc38a94868e9 dl 28, so 1.5298679445031114 width 4.6381801355909458 ncl 0
+HASH case 17 nestonboundary-holevertexatcorner+cross chord 0.001 ok 1 moves 2345 diags 1 h 812b407bb99cfde5 mh 3b4a905074e99872 dl 28, so 8.7252303941742912 width 21.813075985435727 ncl 0
+HASH case 18 nestonboundary-holeedgeonwall chord 0.05 ok 1 moves 265 diags 1 h 8d85cdfec8dcd818 mh 1c866aa95e490c8a dl 28, so 8.355055346697462 width 10.067488931438834 ncl 2
+HASH case 19 nestonboundary-holeedgeonwall chord 0.001 ok 1 moves 1186 diags 1 h 8453a30dbed2259f mh ee20727f661e0790 dl 28, so 6.9586326900314992 width 17.396581725078747 ncl 0
+HASH case 20 nestonboundary-islandsharingholecorner+cross chord 0.02 ok 1 moves 616 diags 1 h 11a94b760f48a063 mh 8366222d08b625dc dl 28, so 7.516775115308457 width 15.99775704274473 ncl 2
+HASH case 21 nestonboundary-holevertexatcorner+cross chord 0.05 ok 1 moves 319 diags 1 h 9175438a8fb05199 mh f00da67c8a27bd65 dl 28, so 3.077668556705234 width 4.9354191088609802 ncl 0
+HASH case 22 nestonboundary-holeedgeonwall chord 0.005 ok 1 moves 457 diags 1 h 8c47ed81bf261217 mh 1786668ae76826d5 dl 28, so 7.2598828408409393 width 18.149707102102347 ncl 0
+HASH case 23 nestonboundary-islandsharingholecorner+cross chord 0.001 ok 1 moves 1995 diags 1 h 3a3b82e47018f04b mh fb3997de5c1ca017 dl 28, so 3.353465148159664 width 6.9944268321135796 ncl 1
+HASH case 24 nestonboundary-islandsharingholecorner+cross chord 0.02 ok 1 moves 603 diags 1 h d75373634399727e mh f702a9b538cfc94d dl 28, so 0.83429694470793725 width 3.3977910420452075 ncl 0
+HASH case 25 nestonboundary-holeedgeonwall chord 0.001 ok 1 moves 1523 diags 1 h 2805a3b2061d84c7 mh c3f3e0306c094a58 dl 28, so 5.2072745581748254 width 8.6092312519392546 ncl 2
+HASH case 26 nestonboundary-holeedgeonwall chord 0.01 ok 1 moves 363 diags 1 h e1eaad37a270afaa mh f84d51f6e2e9d8ff dl 28, so 2.7317845087992882 width 6.8294612719982197 ncl 0
+HASH case 27 nestonboundary-islandsharingholecorner+cross chord 0.1 ok 1 moves 194 diags 1 h 569b4075cc400dde mh 1c3fb180af103e5a dl 28, so 4.4279716315389663 width 10.396477619213645 ncl 1
+HASH case 28 nestonboundary-holevertexatcorner+cross chord 0.1 ok 1 moves 267 diags 1 h 11bef0313b7b22bd mh 86586f8da88c125a dl 28, so 2.6108234403201465 width 5.605215430880131 ncl 1
+HASH case 29 nestonboundary-holevertexatcorner+cross chord 0.01 ok 1 moves 9171 diags 1 h 9ac5c70510f46893 mh ba8bbf62d8ffe894 dl 28, so 0.30903376486491918 width 0.62300321915831602 ncl 0
+HASH case 30 nestonboundary-islandsharingholecorner+cross chord 0.005 ok 1 moves 1170 diags 1 h 9b231bd7d9aecaf7 mh b9d2f4cd58879486 dl 28, so 2.5682365017165112 width 5.1365251351565684 ncl 1
+HASH case 31 nestonboundary-islandsharingholecorner+cross chord 0.1 ok 1 moves 239 diags 1 h 43c1339e26959c03 mh 8ecb52937e3ea4af dl 28, so 9.3450600165002946 width 23.362650041250735 ncl 0
+HASH case 32 nestonboundary-holeedgeonwall chord 0.01 ok 1 moves 401 diags 1 h aca0eaee82d31e71 mh df6f22afc0394652 dl 28, so 1.5389813964287375 width 3.847453491071843 ncl 0
+HASH case 33 nestonboundary-holeedgeonwall chord 0.1 ok 1 moves 225 diags 1 h e5f575f46043229e mh ccd44a2f156ca989 dl 28, so 5.1400798252691153 width 12.850199563172787 ncl 0
+HASH case 34 nestonboundary-islandsharingholecorner+cross chord 0.001 ok 1 moves 1909 diags 1 h d8fc28fbab96b311 mh f0f0c70f741fb065 dl 28, so 4.1334962996045101 width 10.333740749011275 ncl 0
+HASH case 35 nestonboundary-holevertexatcorner+cross chord 0.005 ok 1 moves 1335 diags 3 h f2ad383093ba5ecb mh b82e86697b7219f3 dl 28,4,29, so 1.3341386153862798 width 0.81486564713141285 ncl 1
+HASH case 36 nestonboundary-islandsharingholecorner+cross chord 0.05 ok 1 moves 302 diags 1 h a3d42a1898ad1b9f mh f6711e012ff676a4 dl 28, so 3.1425685793819538 width 8.9302529146885661 ncl 0
+HASH case 37 nestonboundary-holeedgeonwall chord 0.01 ok 1 moves 522 diags 2 h df16a224a454e866 mh 88e9ab0005030c67 dl 26,28, so 1.652249520014802 width 2.1314982547022674 ncl 0
+HASH case 38 nestonboundary-holeedgeonwall chord 0.05 ok 1 moves 233 diags 1 h 7b43ec30b65c12e5 mh 90c21b193e902549 dl 28, so 6.3884779924155612 width 5.2740793023962036 ncl 2
+HASH case 39 nestonboundary-holevertexatcorner+cross chord 0.01 ok 1 moves 1128 diags 1 h f67c8581b89ca09a mh aa610d687b9a752f dl 28, so 3.6642834598615188 width 9.1607086496537971 ncl 0
+SUMMARY seed=6023 fam=23 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

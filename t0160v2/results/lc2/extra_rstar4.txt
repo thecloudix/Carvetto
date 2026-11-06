@@ -1,0 +1,7 @@
+rstar18                            ins=1 cuts=11 cl=1 dg=1 minClr-c/2=+2.57e-04 ringClr-c/2=+1.00e+300 ridge=0.1136 lim=1.000 rho=1.0000 s=0.2272
+    GSCAN gs=0.050 tentPts=616 above=0 onWorst=0.113600 at (-1.82605,10.48264) offWorst=0.2154 ridge=0.1136 | oraclePred=0.41259 (at -5.0761,-6.0177) cuts=11
+    => ok corners=11 worstCornerOn=0.1136
+rstar19                            ins=1 cuts=10 cl=1 dg=1 minClr-c/2=+5.78e-04 ringClr-c/2=+1.00e+300 ridge=0.2543 lim=1.000 rho=1.0000 s=0.5086
+    GSCAN gs=0.050 tentPts=5710 above=0 onWorst=0.254300 at (-8.16992,-3.25731) offWorst=0.5001 ridge=0.2543 | oraclePred=1.00000 (at 3.8800,2.2927) cuts=10
+    => ok corners=7 worstCornerOn=0.2543
+SUMMARY run=2 fail=0

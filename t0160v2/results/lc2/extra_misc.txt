@@ -1,0 +1,40 @@
+filthr_r1.20                       ins=1 cuts=4 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=+8.33e-03 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    GSCAN gs=0.050 tentPts=752 above=0 onWorst=0.250000 at (1.42821,17.52023) offWorst=0.4833 ridge=0.2500 | oraclePred=0.83333 (at 1.8500,1.8500) cuts=4
+    => ok corners=4 worstCornerOn=0.2500
+filthr_r1.40                       ins=1 cuts=4 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=+8.33e-03 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    GSCAN gs=0.050 tentPts=757 above=0 onWorst=0.250000 at (1.26667,18.37978) offWorst=0.4833 ridge=0.2500 | oraclePred=0.83333 (at 1.8500,1.8500) cuts=4
+    => ok corners=4 worstCornerOn=0.2500
+filthr_r1.50                       ins=1 cuts=4 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=+8.33e-03 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    GSCAN gs=0.050 tentPts=752 above=0 onWorst=0.250000 at (1.28647,17.65287) offWorst=0.4833 ridge=0.2500 | oraclePred=0.83333 (at 1.8500,1.8500) cuts=4
+    => ok corners=4 worstCornerOn=0.2500
+filthr_r1.55                       ins=1 cuts=4 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=+8.33e-03 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    GSCAN gs=0.050 tentPts=786 above=0 onWorst=0.250000 at (1.37280,18.27365) offWorst=0.4833 ridge=0.2500 | oraclePred=0.83333 (at 1.8500,1.8500) cuts=4
+    => ok corners=4 worstCornerOn=0.2500
+filthr_r1.60                       ins=1 cuts=4 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=+8.33e-03 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    GSCAN gs=0.050 tentPts=836 above=0 onWorst=0.250000 at (18.57743,1.77612) offWorst=0.4833 ridge=0.2500 | oraclePred=0.83333 (at 1.8500,1.8500) cuts=4
+    => ok corners=4 worstCornerOn=0.2500
+filthr_r1.65                       ins=1 cuts=4 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=+8.33e-03 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    GSCAN gs=0.050 tentPts=882 above=0 onWorst=0.250000 at (18.52745,1.82611) offWorst=0.4833 ridge=0.2500 | oraclePred=0.83333 (at 1.8500,1.8500) cuts=4
+    => ok corners=4 worstCornerOn=0.2500
+filthr_r1.70                       ins=1 cuts=4 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=+8.33e-03 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    GSCAN gs=0.050 tentPts=924 above=0 onWorst=0.250000 at (18.47746,1.87609) offWorst=0.4833 ridge=0.2500 | oraclePred=0.83333 (at 1.8500,1.8500) cuts=4
+    => ok corners=4 worstCornerOn=0.2500
+filthr_r1.80                       ins=1 cuts=4 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=+8.33e-03 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    GSCAN gs=0.050 tentPts=1016 above=0 onWorst=0.250000 at (18.69438,1.70562) offWorst=0.4833 ridge=0.2500 | oraclePred=0.83333 (at 1.8500,1.8500) cuts=4
+    => ok corners=4 worstCornerOn=0.2500
+filthr_r2.00                       ins=1 cuts=4 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=+8.33e-03 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    GSCAN gs=0.050 tentPts=1164 above=0 onWorst=0.250000 at (1.39253,18.20747) offWorst=0.4834 ridge=0.2500 | oraclePred=0.80306 (at 1.8500,1.9000) cuts=4
+    => ok corners=4 worstCornerOn=0.2500
+rot_tri30                          ins=1 cuts=3 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=+8.15e-17 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    GSCAN gs=0.050 tentPts=3655 above=0 onWorst=0.250000 at (5.40000,5.15005) offWorst=0.4999 ridge=0.2500 | oraclePred=1.00000 (at 7.1500,4.8000) cuts=3
+    => ok corners=3 worstCornerOn=0.2500
+rot_Lhole                          ins=1 cuts=5 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=-5.86e-07 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    corner (21.5373,20.8841) ang 90.00 deg: off 0.0891 -> on 0.089101 at (19.883251,20.820417) pts 132 UNSHARPENED>chordal
+    corner (0.6533,42.4214) ang 90.00 deg: off 0.0888 -> on 0.088811 at (0.717400,40.767210) pts 132 UNSHARPENED>chordal
+    corner (0.0000,0.0000) ang 90.00 deg: off 0.0891 -> on 0.089101 at (-0.063640,1.654068) pts 132 UNSHARPENED>chordal
+    GSCAN gs=0.050 tentPts=0 above=0 onWorst=0.000000 at (0.00000,0.00000) offWorst=0.0872 ridge=0.2500 | oraclePred=0.12348 (at 19.9159,20.9000) cuts=5
+    => ok corners=5 worstCornerOn=0.0891
+nested_areas                       ins=1 cuts=10 cl=1 dg=1 minClr-c/2=+8.33e-03 ringClr-c/2=-5.05e-07 ridge=0.2500 lim=1.000 rho=1.0000 s=0.5000
+    GSCAN gs=0.050 tentPts=1808 above=0 onWorst=0.250000 at (1.49772,-6.70233) offWorst=0.4833 ridge=0.2500 | oraclePred=1.00000 (at -1.9000,-5.5000) cuts=10
+    => ok corners=8 worstCornerOn=0.2500
+SUMMARY run=12 fail=0

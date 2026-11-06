@@ -1,0 +1,43 @@
+HASH case 0 page-alltouch-circles chord 0.01 ok 1 moves 12732 diags 2 h 97e9efac9900660f mh b8eab447bd9d6194 dl 26,28, so 9.2693116008979271 width 23.173279002244819 ncl 2
+HASH case 1 page-alltouch-circles chord 0.005 ok 1 moves 27017 diags 1 h a0449968eadc886e mh 8460a6fa834c295c dl 28, so 3.8101721774257635 width 5.7261172649802097 ncl 2
+HASH case 2 page-alltouch-squaressharededges chord 0.001 ok 1 moves 4828 diags 1 h 0c1b130eef558a3f mh 7b6f2ba461ca9cb0 dl 28, so 5.7161156640300028 width 7.9853135231294381 ncl 2
+HASH case 3 page-alltouch-glyphs chord 0.001 ok 1 moves 29671 diags 1 h 9ff20ade1e571216 mh ba1c0f7376c5ea5a dl 28, so 6.1459582028226736 width 8.5069036436645682 ncl 1
+HASH case 4 page-alltouch-glyphs chord 0.02 ok 1 moves 8758 diags 4 h c2244272265af2f3 mh 351e9fa53094f94e dl 28,17,17,17, so 9.6004544288580398 width 5.5296334445468265 ncl 2
+HASH case 5 page-alltouch-glyphs chord 0.02 ok 1 moves 32294 diags 8 h 7f217c8befbddee2 mh 0205ee859414b609 dl 28,17,17,17,17,17,17,17, so 4.6440798299815853 width 8.0974768528151984 ncl 2
+HASH case 6 page-alltouch-glyphs chord 0.001 ok 1 moves 48890 diags 2 h 1122a21a295fd7ed mh 2ba0d9409c38bbae dl 28,4, so 0.93943562924491308 width 0.74259310822250502 ncl 1
+HASH case 7 page-alltouch-circles chord 0.02 ok 1 moves 12504 diags 3 h 7f5b9d3b654fc8ca mh ada29f686b06c16b dl 26,28,17, so 7.2042681892801204 width 18.0106704732003 ncl 2
+HASH case 8 page-alltouch-glyphs chord 0.1 ok 1 moves 7886 diags 16 h 8a706bd115a5044e mh 60ab77709a4f64d8 dl 26,28,17,17,17,17,17,17,17,17,17,17,17,17,17,17, so 4.0115465321955517 width 10.028866330488878 ncl 1
+HASH case 9 page-alltouch-glyphs chord 0.01 ok 1 moves 17741 diags 4 h f367e50b468ef033 mh bf3c1340c76a6bce dl 28,17,17,17, so 1.4770738234813043 width 3.5563148521280907 ncl 1
+HASH case 10 page-alltouch-circles chord 0.001 ok 1 moves 23779 diags 1 h 54bfd87c3519970d mh 64873c7654c0159a dl 28, so 6.5137535517641361 width 3.7652283605353416 ncl 1
+HASH case 11 page-alltouch-squaressharededges chord 0.1 ok 1 moves 689 diags 1 h 35f81b104dc07df1 mh 5fc3a7c07eb4cc86 dl 28, so 8.2076837296118921 width 2.6107584766515335 ncl 1
+HASH case 12 page-alltouch-squaressharededges chord 0.01 ok 1 moves 3014 diags 1 h 2427f87fe11de7db mh ef554fe5aee9eeec dl 28, so 3.8341461828282712 width 8.1972043439389441 ncl 2
+HASH case 13 page-alltouch-circles chord 0.001 ok 1 moves 28223 diags 1 h a94cb208df56a155 mh 7e2ed0fd1c1e7222 dl 28, so 5.9319492191404173 width 3.9357228778386077 ncl 2
+HASH case 14 page-alltouch-glyphs chord 0.02 ok 1 moves 5628 diags 2 h 73fd0ae55699b714 mh aa7d65ab600da436 dl 28,17, so 6.3262123733614999 width 15.810141109611131 ncl 1
+HASH case 15 page-alltouch-glyphs chord 0.005 ok 1 moves 32471 diags 1 h b6fe2c9489f194c1 mh 773425fc01eeb43c dl 28, so 7.217065652101609 width 17.239621817644792 ncl 1
+HASH case 16 page-alltouch-squaressharededges chord 0.02 ok 1 moves 3071 diags 2 h 9bb629d49c1b6272 mh 0cd356bfb7b973dc dl 28,29, so 2.9427699686201456 width 1.2903463459904987 ncl 2
+HASH case 17 page-alltouch-circles chord 0.005 ok 1 moves 30916 diags 3 h dd094b95b0e4a538 mh 881d876d08953bf3 dl 26,28,17, so 3.0906023451433948 width 7.7265058628584864 ncl 2
+HASH case 18 page-alltouch-glyphs chord 0.05 ok 1 moves 14780 diags 26 h 536f6feee9634560 mh d26c6a8dfd284115 dl 28,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17, so 6.4493861785291147 width 2.5506194263128785 ncl 2
+HASH case 19 page-alltouch-squaressharededges chord 0.05 ok 1 moves 1886 diags 3 h 7184038235e09613 mh 646f861738dcc8ad dl 28,4,4, so 0.94721089532428315 width 1.9339847707991096 ncl 2
+HASH case 20 page-alltouch-circles chord 0.02 ok 1 moves 9108 diags 3 h c45337a9020f4408 mh 24ed14c374f05364 dl 28,17,17, so 5.6117432998345373 width 10.247975422165787 ncl 1
+HASH case 21 page-alltouch-squaressharededges chord 0.01 ok 1 moves 5080 diags 3 h bd867279623110bc mh 25d2a20b24e7c8dc dl 28,4,29, so 3.2578359747281596 width 0.85005786293357533 ncl 1
+HASH case 22 page-alltouch-circles chord 0.005 ok 1 moves 15418 diags 1 h 996cd591fb1426b8 mh f5a817c5542b8dbe dl 28, so 1.5477243973366988 width 3.0659645938723412 ncl 1
+HASH case 23 page-alltouch-glyphs chord 0.05 ok 1 moves 9641 diags 3 h 4de330eafa7027a4 mh e75bcafe6378d7c5 dl 28,17,17, so 9.425588911629637 width 11.540679065429321 ncl 2
+HASH case 24 page-alltouch-squaressharededges chord 0.05 ok 1 moves 673 diags 1 h f55027f6c18dfbea mh 3f4e17d6f25ac2f8 dl 28, so 5.9000855896601081 width 11.89588996322694 ncl 1
+HASH case 25 page-alltouch-squaressharededges chord 0.005 ok 1 moves 64087 diags 3 h 31a1e5346d3991e0 mh a4d7564d0970988c dl 28,4,4, so 0.3768083295194754 width 0.45837981280827789 ncl 2
+HASH case 26 page-alltouch-circles chord 0.02 ok 1 moves 9237 diags 1 h e60d99663b902b3b mh 7793aa839a5bfae7 dl 28, so 6.1451947271220293 width 8.6438471946677016 ncl 1
+HASH case 27 page-alltouch-circles chord 0.02 ok 1 moves 13147 diags 1 h 29433247baa63752 mh 7e3df581fd1caa4a dl 28, so 1.758854097957105 width 4.3969868676690549 ncl 1
+HASH case 28 page-alltouch-glyphs chord 0.001 ok 1 moves 44599 diags 1 h aced35930c60e207 mh acb7083388f289cb dl 28, so 1.6598878368697871 width 3.4614710269742273 ncl 1
+HASH case 29 page-alltouch-glyphs chord 0.01 ok 1 moves 39675 diags 12 h a530694a1a2a4990 mh 4bb2a4a39482bae5 dl 28,17,17,17,17,17,17,17,17,17,17,17, so 5.3961990603167038 width 10.292984687384218 ncl 2
+HASH case 30 page-alltouch-circles chord 0.02 ok 1 moves 6986 diags 2 h 7834cf44517b1127 mh c6e0c48c59f60a13 dl 28,4, so 2.0063258466977056 width 2.3198749674200396 ncl 1
+HASH case 31 page-alltouch-glyphs chord 0.01 ok 1 moves 8981 diags 3 h c8f304ffd9ff1777 mh 788344447e590a04 dl 26,28,17, so 0.67683360783761604 width 1.6920840195940401 ncl 1
+HASH case 32 page-alltouch-glyphs chord 0.01 ok 1 moves 23627 diags 11 h dc03ca65a36f2d00 mh a71b47da17fddbca dl 28,17,17,17,17,17,17,17,17,17,17, so 8.1895131714266451 width 15.669436017685259 ncl 2
+HASH case 33 page-alltouch-squaressharededges chord 0.02 ok 1 moves 1186 diags 2 h d163b549d114e0b0 mh 77299d8daa243b8f dl 26,28, so 2.9430909098537463 width 7.3577272746343656 ncl 2
+HASH case 34 page-alltouch-glyphs chord 0.005 ok 1 moves 16440 diags 6 h e36ca7b0ac7bcfee mh 361d889cec409aeb dl 28,17,17,17,17,17, so 1.8981788822679619 width 4.4690398735217762 ncl 2
+HASH case 35 page-alltouch-circles chord 0.05 ok 1 moves 8138 diags 3 h 5058aa248d086e13 mh 887e39806e7b1f83 dl 28,17,17, so 0.98741394664777438 width 1.8104362801669991 ncl 2
+HASH case 36 page-alltouch-circles chord 0.005 ok 1 moves 23975 diags 2 h 1431d327a32465a9 mh 1057f8718d781cf8 dl 26,28, so 9.3010227224718793 width 23.252556806179697 ncl 2
+HASH case 37 page-alltouch-circles chord 0.02 ok 1 moves 6887 diags 1 h 2b5ef4a8e456d36f mh 496b86bdfd4acf43 dl 28, so 2.8837144951068452 width 5.0459379736493588 ncl 2
+HASH case 38 page-alltouch-circles chord 0.02 ok 1 moves 19707 diags 3 h 36e15d9888b6b0cf mh 3a315e62b9f4c9e3 dl 28,17,17, so 6.2308942616040159 width 9.7857339718892415 ncl 1
+HASH case 39 page-alltouch-circles chord 0.001 ok 1 moves 42629 diags 1 h 1e2bb44c28edca18 mh a20bd4f9204ec027 dl 28, so 6.7039673212974806 width 8.3736494038725056 ncl 2
+SUMMARY seed=6020 fam=20 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0

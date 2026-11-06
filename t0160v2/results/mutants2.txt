@@ -1,0 +1,4 @@
+no_back: rc=42 test cases:    12 |    11 passed | 1 failed failing: v_carve_post_test.cpp:281 v_carve_post_test.cpp:282 
+no_area_check: rc=42 test cases:    12 |    11 passed | 1 failed failing: v_carve_corner_test.cpp:396 v_carve_corner_test.cpp:409 
+eps_big: rc=42 test cases:    12 |    11 passed |   1 failed failing: v_carve_corner_test.cpp:559 v_carve_corner_test.cpp:577 v_carve_corner_test.cpp:584 
+restored

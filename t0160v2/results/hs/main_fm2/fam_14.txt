@@ -1,0 +1,43 @@
+HASH case 0 cluster+near-outside g=0.001200 chord 0.02 ok 1 moves 545 diags 2 h 6494872afe689038 mh 212c301288137083 dl 28,4, so 5.0119562427330973 width 6.9046211313133057 ncl 1
+HASH case 1 cluster+near-outside g=0.001200 chord 0.02 ok 1 moves 747 diags 2 h 6a709e13bd356382 mh 33ea2d5412615d78 dl 26,28, so 8.4115808779084578 width 21.028952194771144 ncl 2
+HASH case 2 cluster+near-outside g=0.001200 chord 0.1 ok 1 moves 389 diags 1 h 05254a47fefd0b27 mh 2f0bb1a456eb8f98 dl 28, so 5.867668392214954 width 14.314525942099337 ncl 2
+HASH case 3 cluster+near-inside g=0.001200 chord 0.001 ok 1 moves 6245 diags 2 h 57c47b3f2466e52b mh bcf36fd4642ad738 dl 28,4, so 8.7058131923158015 width 7.8863719428909578 ncl 1
+HASH case 4 cluster+near-inside g=0.001200 chord 0.02 ok 1 moves 62194 diags 3 h 2c20f7beb945496c mh cff32e871529e457 dl 28,17,4, so 3.2173354950152291 width 7.9431926253529577 ncl 2
+HASH case 5 cluster+near-inside g=0.001200 chord 0.005 ok 1 moves 4446 diags 2 h 31ef1ae346195fa0 mh 005f51c0a9dd7ed1 dl 28,29, so 4.4109426015242068 width 4.0085089462293846 ncl 1
+HASH case 6 cluster+near-outside g=0.001200 chord 0.001 ok 1 moves 4378 diags 2 h f665ac2cba42dbdd mh 8b1c0371bf710f5b dl 28,4, so 9.5324828186429098 width 7.115078735534424 ncl 2
+HASH case 7 cluster+near-outside g=0.001200 chord 0.05 ok 1 moves 689 diags 2 h 505000f5df0d9e38 mh 245959f8672600a8 dl 28,4, so 1.584518530413594 width 2.654567924019489 ncl 1
+HASH case 8 cluster+near-outside g=0.001200 chord 0.02 ok 1 moves 716 diags 1 h ee9c2e54a89e11a4 mh ad0896d90b97c130 dl 28, so 6.092004821194517 width 11.070927556471618 ncl 2
+HASH case 9 cluster+near-outside g=0.001200 chord 0.02 ok 1 moves 2731 diags 2 h 4ebe89b9d4893280 mh c4b20e4ca8bf516b dl 28,4, so 4.1401671434908947 width 2.8021467428197431 ncl 2
+HASH case 10 cluster+near-outside g=0.002500 chord 0.02 ok 1 moves 71772 diags 2 h a8f4eb0533ec0eb3 mh 1d7843336c88d2d3 dl 28,21, so 0.94611463195755907 width 1.1367047803703698 ncl 2
+HASH case 11 cluster+near-inside g=0.001200 chord 0.005 ok 1 moves 3316 diags 3 h 4fdb1abb179989da mh 3189cca0f2aa4e48 dl 28,4,29, so 6.7062213881636241 width 3.4924892645304983 ncl 1
+HASH case 12 cluster+near-outside g=0.001200 chord 0.005 ok 1 moves 3603 diags 1 h 6c4651688b303178 mh b15481239469607e dl 28, so 4.1151400822894413 width 6.166737380560261 ncl 1
+HASH case 13 cluster+near-outside g=0.001200 chord 0.005 ok 1 moves 1702 diags 1 h 6caa1f1d2e93c48e mh 5596106974fc6b7c dl 28, so 8.9757234439265865 width 7.3538784168187856 ncl 2
+HASH case 14 cluster+near-outside g=0.001200 chord 0.001 ok 1 moves 2472 diags 2 h 77159d1f55a23090 mh 3f502dd54b9ca4c1 dl 26,28, so 9.0469458789464561 width 22.617364697366138 ncl 2
+HASH case 15 cluster+near-inside g=0.006250 chord 0.1 ok 1 moves 515 diags 3 h 11d5fbdc2ed7fcf2 mh 44f428cc09e35cbb dl 28,17,4, so 4.7351379154154492 width 5.2612185904597002 ncl 1
+HASH case 16 cluster+near-outside g=0.001200 chord 0.05 ok 1 moves 1261 diags 3 h b52b9d9bee4e86a0 mh 7aa3665d1ab5d09a dl 28,22,29, so 5.5953760059576743 width 3.8625336483444497 ncl 2
+HASH case 17 cluster+near-outside g=0.006250 chord 0.1 ok 1 moves 604 diags 2 h 090fda01ce3ff3f0 mh f179b7cfcee9f655 dl 28,4, so 7.6756999407039537 width 9.3275740679611427 ncl 1
+HASH case 18 cluster+near-outside g=0.003125 chord 0.05 ok 1 moves 1196 diags 2 h fcc5776e41b75efa mh 81a12cbfc4066309 dl 28,4, so 0.75337256800637231 width 0.89471107651638038 ncl 1
+HASH case 19 cluster+near-inside g=0.001200 chord 0.001 ok 1 moves 3223 diags 1 h 47f6fc59f3e19c70 mh 675035e549fc37bf dl 28, so 7.955430365597576 width 13.755131446017947 ncl 1
+HASH case 20 cluster+near-inside g=0.005000 chord 0.05 ok 1 moves 552 diags 1 h 7efb1d7a13fe45d6 mh 8b675456a583eb5c dl 28, so 4.528913156736051 width 6.701366102805661 ncl 2
+HASH case 21 cluster+near-outside g=0.001200 chord 0.05 ok 1 moves 484 diags 3 h 6706872f51dc51d7 mh 093689fa19d23553 dl 28,4,4, so 6.9772679790406791 width 5.144443141237212 ncl 2
+HASH case 22 cluster+near-outside g=0.006250 chord 0.1 ok 1 moves 1431 diags 3 h 95a77d4f5b4e0b11 mh 9c8f21e22ab28e31 dl 28,4,29, so 0.41985758617954749 width 0.18351817193577669 ncl 1
+HASH case 23 cluster+near-inside g=0.003125 chord 0.05 ok 1 moves 12979 diags 2 h 7f542c0427a935b0 mh c3cdff6ede0b5af5 dl 28,17, so 0.97995791863286952 width 2.2132961494459367 ncl 2
+HASH case 24 cluster+near-inside g=0.012500 chord 0.05 ok 1 moves 4555 diags 2 h 6368a99f4fc7f95a mh b592c165b991a369 dl 28,4, so 2.8047422025375486 width 6.9569109845692338 ncl 1
+HASH case 25 cluster+near-outside g=0.001200 chord 0.01 ok 1 moves 713 diags 1 h 497b08aed58aa981 mh b7b4f14fce1adce2 dl 28, so 4.2749877381377699 width 5.4419049000811031 ncl 2
+HASH case 26 cluster+near-outside g=0.001200 chord 0.001 ok 1 moves 7470 diags 1 h f23901a9d9cbe247 mh ec8462a9152f57d8 dl 28, so 4.9594513209866307 width 2.9841371000220573 ncl 1
+HASH case 27 cluster+near-outside g=0.001200 chord 0.001 ok 1 moves 4395 diags 1 h 90a15d102db4e49f mh dec79b5672d0a690 dl 28, so 4.7841249902178467 width 8.2277062252021871 ncl 1
+HASH case 28 cluster+near-inside g=0.001200 chord 0.001 ok 1 moves 4273 diags 1 h 8b8abc592d47c620 mh b3e8c2c3e73408ef dl 28, so 6.6988676156424738 width 14.306608206846489 ncl 2
+HASH case 29 cluster+near-inside g=0.012500 chord 0.05 ok 1 moves 475 diags 2 h a2f6a46ec41e0d63 mh fc35d2e1e0e9eb3a dl 26,28, so 5.1007986550723068 width 12.751996637680767 ncl 2
+HASH case 30 cluster+near-outside g=0.001200 chord 0.001 ok 1 moves 3210 diags 2 h a358392e163e9a74 mh 270355e2e110c191 dl 28,4, so 4.102899041140212 width 3.5290817063521254 ncl 1
+HASH case 31 cluster+near-inside g=0.001200 chord 0.01 ok 1 moves 1210 diags 1 h ec00f7ed65f20fc0 mh 2345f407df9a25dd dl 28, so 7.9978895920978914 width 5.7345123059048406 ncl 2
+HASH case 32 cluster+near-inside g=0.001200 chord 0.005 ok 1 moves 1887 diags 2 h e12c643583a24306 mh 69471d7745333105 dl 26,28, so 3.437013776633274 width 8.5925344415831848 ncl 1
+HASH case 33 cluster+near-outside g=0.001200 chord 0.01 ok 1 moves 2350 diags 3 h 5dd5126dfec516bb mh 549cc7f102f22a57 dl 28,4,29, so 2.6731814162923246 width 0.90198619959935378 ncl 1
+HASH case 34 cluster+near-outside g=0.001200 chord 0.005 ok 1 moves 4439 diags 3 h 6fb25affe978155b mh 9ceb618f81fc79f1 dl 26,28,4, so 1.7370499567964484 width 4.3426248919911208 ncl 2
+HASH case 35 cluster+near-outside g=0.001200 chord 0.01 ok 1 moves 1788 diags 2 h b6276c2fe86b2711 mh 5b481a88e6b806fd dl 28,4, so 3.6794140356021519 width 4.4320074050834126 ncl 1
+HASH case 36 cluster+near-inside g=0.012500 chord 0.1 ok 1 moves 572 diags 3 h 0be1480d8c81ca56 mh dde0ce47ccf1e4e6 dl 26,28,4, so 1.3341042975036475 width 3.3352607437591182 ncl 2
+HASH case 37 cluster+near-outside g=0.001250 chord 0.02 ok 1 moves 759 diags 1 h c51683e455ff4a94 mh f40a6e26c0b36f60 dl 28, so 8.0089581288878389 width 12.487611323096573 ncl 1
+HASH case 38 cluster+near-outside g=0.001200 chord 0.01 ok 1 moves 2313 diags 2 h 3a5f54c235bab65b mh 80437e063be43618 dl 28,4, so 3.7164201451869037 width 5.5955057402069457 ncl 1
+HASH case 39 cluster+near-inside g=0.001200 chord 0.02 ok 1 moves 1007 diags 3 h 181dc81962e9d22a mh 6bdeeb06fd005270 dl 26,28,4, so 1.9554783282403378 width 4.8886958206008444 ncl 1
+SUMMARY seed=6014 fam=14 far=0 scale=1 cases=40 ok=0 refused=0 resolved=0 fails=0 realViolations=0 falseAlarms(coincident)=0 worstCone=1.000e+300 worstEMallow=1.000e+300 latNonRes=-1e+300 latRes=-1e+300 kinkNonRes=-1e+300 kinkRes=-1e+300 worstOver=-1.00e+300 worstFlatShortEndMills=-1e+300 worstFlatShortSelf=-1e+300 startPlaneOutsideMoves=0
+FLOORSUM casesWithUncutFloor=0 worstFrac=0.0000 worstDepthIntoFlat/R=0.000
+exit 0
