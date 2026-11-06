@@ -1049,30 +1049,37 @@ class BoxGrid {
         for (const Box2& b : boxes_) {
             extent_.expand(b);
         }
+        filled_ = extent_;
         if (boxes_.empty() || extent_.isEmpty()) {
             return;
         }
-        const double w = extent_.width();
-        const double h = extent_.height();
-        const double n = static_cast<double>(boxes_.size());
-        double cell = std::sqrt(std::max(w * h, 1e-300) / n);
-        cell = std::max({cell, w / kMaxCells, h / kMaxCells, 1e-9});
-        nx_ = static_cast<std::size_t>(std::clamp(std::ceil(w / cell), 1.0, kMaxCells));
-        ny_ = static_cast<std::size_t>(std::clamp(std::ceil(h / cell), 1.0, kMaxCells));
-        cw_ = w > 0.0 ? w / static_cast<double>(nx_) : 1.0;
-        ch_ = h > 0.0 ? h / static_cast<double>(ny_) : 1.0;
-        cells_.resize(nx_ * ny_);
+        layOut(boxes_.size());
         for (std::size_t i = 0; i < boxes_.size(); ++i) {
-            if (boxes_[i].isEmpty()) {
-                continue;  // never reported
-            }
-            const auto [x0, x1, y0, y1] = cellRange(boxes_[i]);
-            for (std::size_t y = y0; y <= y1; ++y) {
-                for (std::size_t x = x0; x <= x1; ++x) {
-                    cells_[y * nx_ + x].push_back(i);
-                }
-            }
+            insert(i);
         }
+    }
+
+    // An empty grid laid out for about `count` boxes within `layout`, filled by add(): for a set
+    // that grows while it is queried (T-0128: the strays put back in offsetOpenContour step 7).
+    // A box added outside `layout` is still found (it is filed in the border cells), only more
+    // slowly.
+    BoxGrid(const Box2& layout, std::size_t count) : extent_(layout) {
+        if (extent_.isEmpty() || !std::isfinite(extent_.width()) || !std::isfinite(extent_.height())) {
+            extent_ = Box2{Vec2{}, Vec2{}};
+        }
+        layOut(std::max<std::size_t>(count, 1));
+    }
+
+    // Adds an item (its id is the number of items before it).
+    std::size_t add(const Box2& box) {
+        boxes_.push_back(box);
+        stamp_.push_back(0);
+        filled_.expand(box);
+        const std::size_t i = boxes_.size() - 1;
+        if (!cells_.empty()) {
+            insert(i);
+        }
+        return i;
     }
 
     // Calls f(i) once for every item whose box intersects `query`.
@@ -1087,7 +1094,7 @@ class BoxGrid {
     // Like query(), but stops as soon as f(i) returns true; returns whether it did.
     template <class F>
     bool queryUntil(const Box2& query, F&& f) {
-        if (cells_.empty() || !query.intersects(extent_)) {
+        if (cells_.empty() || !query.intersects(filled_)) {
             return false;
         }
         ++epoch_;
@@ -1110,6 +1117,31 @@ class BoxGrid {
    private:
     static constexpr double kMaxCells = 1024.0;
 
+    // Cells of about the size that gives as many cells as `n` boxes over extent_.
+    void layOut(std::size_t n) {
+        const double w = extent_.width();
+        const double h = extent_.height();
+        double cell = std::sqrt(std::max(w * h, 1e-300) / static_cast<double>(n));
+        cell = std::max({cell, w / kMaxCells, h / kMaxCells, 1e-9});
+        nx_ = static_cast<std::size_t>(std::clamp(std::ceil(w / cell), 1.0, kMaxCells));
+        ny_ = static_cast<std::size_t>(std::clamp(std::ceil(h / cell), 1.0, kMaxCells));
+        cw_ = w > 0.0 ? w / static_cast<double>(nx_) : 1.0;
+        ch_ = h > 0.0 ? h / static_cast<double>(ny_) : 1.0;
+        cells_.resize(nx_ * ny_);
+    }
+
+    void insert(std::size_t i) {
+        if (boxes_[i].isEmpty()) {
+            return;  // never reported
+        }
+        const auto [x0, x1, y0, y1] = cellRange(boxes_[i]);
+        for (std::size_t y = y0; y <= y1; ++y) {
+            for (std::size_t x = x0; x <= x1; ++x) {
+                cells_[y * nx_ + x].push_back(i);
+            }
+        }
+    }
+
     struct Range {
         std::size_t x0, x1, y0, y1;
     };
@@ -1125,7 +1157,8 @@ class BoxGrid {
     }
 
     std::vector<Box2> boxes_;
-    Box2 extent_;
+    Box2 extent_;  // the cell layout
+    Box2 filled_;  // the boxes held
     std::size_t nx_{0};
     std::size_t ny_{0};
     double cw_{1.0};
@@ -2558,6 +2591,9 @@ bool partCrossesItself(const std::vector<Span>& spans) {
 // (exactJunctions), and a part is split again wherever that cannot be done (two arcs whose ends
 // differ by more than exactJunction closes).
 constexpr double kRoundingUnits = 64.0;
+// Shortest stray (a thin loop's strand or a stretch of dropped opposite copies, put back by
+// offsetOpenContour step 7) returned when no other chain covers any of it, in tolerances.
+constexpr double kStrayMinimum = 10.0;
 constexpr double kEps = std::numeric_limits<double>::epsilon();
 
 std::vector<std::vector<Span>> exactParts(const std::vector<Span>& spans) {
@@ -3952,7 +3988,6 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     struct Stray {
         double key;
         std::vector<Span> spans;
-        bool checkDistance = false;  // a thin loop's strand: see step 7
     };
     std::vector<Stray> strays;
     double componentKey = 0.0;
@@ -4037,7 +4072,7 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
                     // Too thin to enclose anything, but a tool centre would still run along it. A
                     // closed piece is the whole loop, so its raw pieces are `spans`.
                     for (std::vector<Span>& part : exactParts(sliverStrand(spans, tol))) {
-                        strays.push_back(Stray{componentKey, std::move(part), true});
+                        strays.push_back(Stray{componentKey, std::move(part)});
                     }
                 }
             }
@@ -4091,9 +4126,12 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     //    whose ends coincide to rounding (exactParts splits where a junction cannot be made exact
     //    or turns back). Each strand is sampled every tol / 4 (stretches the Lipschitz bound
     //    vouches for skipped); each run of uncovered samples, widened by one sample either way so
-    //    it meets the chains that cover its neighbours, is emitted when longer than the tolerance.
-    //    Strands put back count as cover for later ones. A loop's strand is put back only where it
-    //    stays at d (see `acceptable`); the opposite copies are cut to RawChain::exact first.
+    //    it meets the chains that cover its neighbours, is emitted when longer than the tolerance,
+    //    or than kStrayMinimum x the tolerance if no chain covers any of it. Strands put back
+    //    count as cover for later ones. Every stray lies at d from the input or on a corner region
+    //    by construction: a loop's strand is cut from the raw pieces it was stitched from (offset
+    //    spans, Round arcs, inverted arcs, each exactly d from its own input element, and Sharp/Square
+    //    corner elements), and the opposite copies are cut to RawChain::exact first.
     if (!droppedOpposite.empty()) {
         // Only the parts exactly d from the input are a path that touches it: opposite copies of
         // mitre extensions or chamfers over a slot narrower than 2d lie farther out, inside the
@@ -4175,73 +4213,52 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
         BoxGrid outGrid(outBoxes);
         const double reach = 0.5 * tol.distance;
         std::vector<Stray> added;
+        // The strays put back, indexed as they are added (a linear scan over them made the
+        // recovery quadratic in their number: a hatch at pitch exactly 2d, T-0128 round 1). Every
+        // piece put back lies on a stray, so the grid is laid out over the strays.
         std::vector<Span> addedSpans;
-        std::vector<Box2> addedBoxes;
+        Box2 strayExtent;
+        std::size_t straySpans = 0;
+        for (const Stray& st : strays) {
+            for (const Span& sp : st.spans) {
+                strayExtent.expand(bounds(sp));
+            }
+            straySpans += st.spans.size();
+        }
+        BoxGrid addedGrid(strayExtent, straySpans);
         auto add = [&](double key, std::vector<Span>&& part) {
             for (const Span& sp : part) {
                 addedSpans.push_back(sp);
-                addedBoxes.push_back(bounds(sp));
+                addedGrid.add(bounds(sp));
             }
             added.push_back(Stray{key, std::move(part)});
         };
         // Distance from q to the emitted chains and the strays put back, exact up to `cap`.
         auto coverGap = [&](Vec2 q, double cap) {
             double best = cap;
-            outGrid.query(Box2{q - Vec2{cap, cap}, q + Vec2{cap, cap}},
+            const Box2 around{q - Vec2{cap, cap}, q + Vec2{cap, cap}};
+            outGrid.query(around,
                           [&](std::size_t i) { best = std::min(best, distanceToSpan(q, *outSpans[i])); });
-            for (std::size_t i = 0; i < addedSpans.size(); ++i) {
-                if (addedBoxes[i].contains(q, cap)) {
-                    best = std::min(best, distanceToSpan(q, addedSpans[i]));
-                }
-            }
+            addedGrid.query(around,
+                            [&](std::size_t i) { best = std::min(best, distanceToSpan(q, addedSpans[i])); });
             return best;
-        };
-        // A thin loop's strand is put back only where it lies within 5e-7 x max(1, d) beyond d or
-        // on a Sharp/Square corner region (a mitre or chamfer): the loop's own pieces may lie
-        // farther out by the merging of nearly collinear copies (up to tol / 2, A1), which T-0017
-        // accepted inside chains but never emitted for these loops (fam5 0x2a500001: 1.03e-6 mm).
-        const double farthest = d + 5e-7 * std::max(1.0, d);
-        std::size_t nearWitness = input.size();  // the input span that last answered, tried first
-        auto acceptable = [&](Vec2 q) {
-            if (nearWitness < input.size() && distanceToSpan(q, input[nearWitness]) <= farthest) {
-                return true;
-            }
-            const Box2 box{q - Vec2{farthest, farthest}, q + Vec2{farthest, farthest}};
-            auto within = [&](std::size_t i) {
-                if (distanceToSpan(q, input[i]) > farthest) {
-                    return false;
-                }
-                nearWitness = i;
-                return true;
-            };
-            if (inputGrid.queryUntil(box, within)) {
-                return true;
-            }
-            bool corner = false;
-            wedgeGrid.query(Box2{q, q}.inflated(onBoundary), [&](std::size_t w) {
-                if (corner) {
-                    return;
-                }
-                corner = insideRegion(q, wedges[w]);
-                for (const Span& e : wedges[w]) {
-                    corner = corner || distanceToSpan(q, e) <= onBoundary;
-                }
-            });
-            return corner;
         };
         // Samples every tol / 4 along each strand. The distance g to the chains is 1-Lipschitz along
         // it, so a sample vouches for the next |g - tol / 2| (all covered or all uncovered), which
-        // is skipped, up to 16 tol at a time (on a thin loop's strand, whose acceptance is sampled,
-        // uncovered stretches up to tol at a time).
+        // is skipped.
         const double step = 0.25 * tol.distance;
+        // The query reach starts at 16 tol and doubles, up to 1024 tol, while nothing lies within
+        // it, so a long uncovered strand costs a few samples per mm, not one per 16 tol (T-0128
+        // round 1: a hatch at pitch exactly 2d spent most of its time sampling such strands).
         const double skipCap = reach + 16.0 * tol.distance;
+        const double maxCap = reach + 1024.0 * tol.distance;
         struct Sample {
             double u;  // span index + fraction
-            bool wanted;  // uncovered and acceptable
             bool covered;
         };
         for (const Stray& st : strays) {
             std::vector<Sample> samples;
+            double cap = skipCap;
             for (std::size_t i = 0; i < st.spans.size(); ++i) {
                 const double len = length(st.spans[i]);
                 const bool lastSpan = i + 1 == st.spans.size();
@@ -4251,13 +4268,10 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
                         break;  // the next span starts here
                     }
                     const Vec2 q = pointAt(st.spans[i], f);
-                    const double g = coverGap(q, skipCap);
-                    const bool wanted = g > reach && (!st.checkDistance || acceptable(q));
-                    samples.push_back(Sample{static_cast<double>(i) + f, wanted, g <= reach});
-                    const double advance =
-                        g <= reach || !st.checkDistance
-                            ? std::max(step, std::fabs(g - reach))
-                            : std::clamp(g - reach, step, tol.distance);
+                    const double g = coverGap(q, cap);
+                    cap = g >= cap ? std::min(2.0 * cap, maxCap) : skipCap;
+                    samples.push_back(Sample{static_cast<double>(i) + f, g <= reach});
+                    const double advance = std::max(step, std::fabs(g - reach));
                     if (f >= 1.0) {
                         break;
                     }
@@ -4265,24 +4279,29 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
                 }
             }
             for (std::size_t k = 0; k < samples.size();) {
-                if (!samples[k].wanted) {
+                if (samples[k].covered) {
                     ++k;
                     continue;
                 }
                 std::size_t e = k;
-                while (e + 1 < samples.size() && samples[e + 1].wanted) {
+                while (e + 1 < samples.size() && !samples[e + 1].covered) {
                     ++e;
                 }
                 // Widened into the covered neighbours.
-                const std::size_t from = k > 0 && samples[k - 1].covered ? k - 1 : k;
-                const std::size_t to = e + 1 < samples.size() && samples[e + 1].covered ? e + 1 : e;
+                const std::size_t from = k > 0 ? k - 1 : k;
+                const std::size_t to = e + 1 < samples.size() ? e + 1 : e;
                 std::vector<Span> part = chainPart(st.spans, samples[from].u, samples[to].u);
                 dropTinyEnds(part, tol);
                 double len = 0.0;
                 for (const Span& sp : part) {
                     len += length(sp);
                 }
-                if (len > tol.distance) {
+                // A run widened at neither end is the whole strand, none of it covered: such an
+                // isolated piece is put back only from kStrayMinimum x the tolerance (owner decision
+                // 2026-11-05: an isolated 0.005 mm stray, fam0 0x71280859, is noise to the user; a
+                // needle or slot that matters is mm long).
+                const bool isolated = from == k && to == e;
+                if (len > (isolated ? kStrayMinimum : 1.0) * tol.distance) {
                     exactJunctions(part, false);
                     if (part.size() > 512 || partCrossesItself(part)) {
                         // Never seen: rather than return a chain that crosses itself, each span
@@ -4299,14 +4318,25 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
                 k = e + 1;
             }
         }
+        // Each goes after the chains (and earlier strays) whose keys are not greater: a stable
+        // merge, linear (inserting one at a time was quadratic too).
+        std::stable_sort(added.begin(), added.end(),
+                         [](const Stray& a, const Stray& b) { return a.key < b.key; });
+        std::vector<Contour> merged;
+        merged.reserve(result.size() + added.size());
+        std::size_t r = 0;
         for (Stray& a : added) {
-            const auto pos = std::upper_bound(resultKeys.begin(), resultKeys.end(), a.key);
-            const auto at = pos - resultKeys.begin();
-            resultKeys.insert(pos, a.key);
+            while (r < result.size() && !(a.key < resultKeys[r])) {
+                merged.push_back(std::move(result[r++]));
+            }
             Contour c;
             c.spans = std::move(a.spans);
-            result.insert(result.begin() + at, std::move(c));
+            merged.push_back(std::move(c));
         }
+        while (r < result.size()) {
+            merged.push_back(std::move(result[r++]));
+        }
+        result = std::move(merged);
     }
     return result;
 }

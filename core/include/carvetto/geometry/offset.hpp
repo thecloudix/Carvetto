@@ -223,22 +223,26 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// part by more than tol.distance / 2, or any loop whose mean width (2 x area / perimeter) is below
 /// tol.distance / 8 and whose every point lies within tol.distance / 8 of another of its spans (e.g. an
 /// out-and-back needle whose ends meet within the tolerance, or the lens between two nearly co-circular
-/// arcs running opposite ways), is not returned as a loop. If its whole extent is within the tolerance it
-/// is dropped; otherwise one of its two strands (the longer, between the two points of the loop farthest
-/// apart, taken from the unsnapped offset pieces) is returned as an open chain, which passes within the
-/// loop's width of every point of it, wherever it lies within 5e-7 x max(1, |distance|) beyond
-/// |distance| or on a Sharp/Square corner region. Where copies of a stretch run both ways (a slot exactly
-/// 2 x |distance| wide, give or take the snapping allowance), the chains are joined across it as above,
-/// and one copy that lies exactly |distance| from the input there (an offset span within its own extent,
-/// or a Round join arc; not a mitre extension or chamfer over a slot narrower than 2 x |distance|) is
-/// returned as an open chain of its own. Either is returned only where no other chain passes within
-/// tol.distance / 2 of it (sampled every tol.distance / 4) and only in stretches longer than the
-/// tolerance, so a channel 2 x |distance| + w wide keeps its path for every w >= 0. Such chains are placed
-/// in the order by where they start along the input and may touch the chains next to them. At a reversal
-/// cusp (consecutive spans turning back by more than a right angle) whose two spans cross again within the
-/// tolerance of their junction (Round arcs about vertices a hair less than 2 x |distance| apart overlap in
-/// a lens), both spans are cut back to that crossing, so the chain does not cross itself there; crossings
-/// whose place is rounding noise (two circles that only touch, to rounding) are left as they are.
+/// arcs running opposite ways), is not returned as a loop. If the two points of the loop farthest apart
+/// are no more than tol.distance apart it is dropped; otherwise the longer of its two strands between
+/// those points (taken from the unsnapped offset pieces, so |distance| from the input or on a Sharp/Square
+/// corner region like any chain) is a stray, which passes within the loop's width of every point of it.
+/// Where copies of a stretch run both ways (a slot exactly 2 x |distance| wide, give or take the snapping
+/// allowance), the chains are joined across it as above, and one copy that lies exactly |distance| from
+/// the input there (an offset span within its own extent, or a Round join arc; not a mitre extension or
+/// chamfer over a slot narrower than 2 x |distance|) is a stray too. A stray is returned as open chains
+/// where no other chain (nor a stray returned before it) passes within tol.distance / 2 of it, each
+/// uncovered stretch reaching into the covered ones next to it by at most tol.distance / 2, and only
+/// when longer than the tolerance; a stray no point of which comes within tol.distance / 2 of another
+/// chain (an isolated piece) only when longer than 10 x tol.distance (owner decision 2026-11-05: shorter
+/// isolated pieces are noise; a needle or slot that matters is millimetres long). So a channel
+/// 2 x |distance| + w wide keeps its path for every w >= 0, while a thin loop shorter than
+/// 10 x tol.distance, touching no other chain, vanishes. Such chains are placed in the order by where they start along the input and may touch the
+/// chains next to them. At a reversal cusp (consecutive spans turning back by more than a right angle)
+/// whose two spans cross again within the tolerance of their junction (Round arcs about vertices a hair
+/// less than 2 x |distance| apart overlap in a lens), both spans are cut back to that crossing, so the
+/// chain does not cross itself there; crossings whose place is rounding noise (two circles that only
+/// touch, to rounding) are left as they are.
 ///
 /// An empty or degenerate contour, or a non-finite `distance`, yields no chains; a zero
 /// `distance` yields the (flattened) input as one chain. A closed contour is accepted too: the

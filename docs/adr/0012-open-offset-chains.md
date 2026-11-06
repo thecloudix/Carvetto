@@ -434,12 +434,15 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     returned: where they coincide (w = 0) that is a retrace. The strand is taken from the raw pieces the
     loop was stitched from, not from its snapped spans: far from the origin, closing the tip of a needle
     narrower than the 1e-9 x |coordinates| rounding gap moves a line end across the needle and tilts the
-    whole strand by its width (Sharp, 1.2e4 mm, w = 3e-6: 3e-6 mm beyond d). It is put back only where it
-    lies within 5e-7 x max(1, d) beyond d or on a Sharp/Square corner region: the loop's own pieces may
-    lie farther out by the merging of nearly collinear copies (A1, up to tol/2), which T-0017 accepted
-    inside chains but never emitted for these loops (fam5 0x2a500001, 0x2a5000a6: 1.03e-6 mm, the exact
-    checker's excess). A strand that would cross itself (or has more than 512 spans) falls back to the
-    loop's longest span. (b) mergeOnCarriers hands back one copy of every stretch it drops because
+    whole strand by its width (Sharp, 1.2e4 mm, w = 3e-6: 3e-6 mm beyond d). Its pieces are therefore pieces
+    of raw elements (offset spans, Round arcs and inverted arcs, each exactly d from its own input
+    element, or Sharp/Square corner elements on their corner regions), so it lies at d or on a corner
+    region by construction. (Round 1 also sampled each strand against d + 5e-7 x max(1, d) or a corner
+    region, after an intermediate version built the strand from the snapped spans and put back pieces
+    1.03e-6 mm beyond d, fam5 0x2a500001, 0x2a5000a6. With the strand cut from the raw pieces that test
+    rejected no sample in 480 000 fuzz offsets of families 2-5 with 5 398 loop strands, and no input
+    could be found that a mutant without it gets wrong; round 2 removed it.) A strand that would cross
+    itself (or has more than 512 spans) falls back to the loop's longest span. (b) mergeOnCarriers hands back one copy of every stretch it drops because
     copies run both ways: the first forward, then backward, copy that lies exactly d from the input there.
     `RawChain::exact` records, per raw element, the parameter range at exactly d: an offset span's own
     extent before corners extended or trimmed it, or a whole Round join arc (radius d to the snapping
@@ -452,11 +455,19 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     (exactJunctions), and they are split again where that fails (arcs at ~1e4 mm, 7.7e-7 mm apart: fam5
     0x2850005d). (d) Step 7 puts them back as open chains wherever no emitted chain, nor a strand already
     put back, passes within tol/2: each strand is sampled every tol/4, each uncovered run is widened by one
-    sample into its covered neighbours and kept when longer than the tolerance. The distance g to the
-    chains is 1-Lipschitz along a strand, so a sample vouches for the next |g - tol/2| (all covered or all
-    uncovered), which is skipped, up to 16 tol at a time; on a loop's strand, whose acceptance (a) is
-    sampled, uncovered stretches only up to tol at a time. The new chains are inserted by where their
-    component (or piece) starts along the input; with nothing put back the output is unchanged. They may
+    sample into its covered neighbours (so it reaches at most tol/2 into them) and kept when longer than
+    the tolerance. A run widened at neither end is a whole strand none of which is covered (an isolated
+    piece); it is kept only when longer than 10 tol (`kStrayMinimum`; owner decision 2026-11-05: fam0
+    0x71280859 gained an isolated 0.00513 mm chain, noise to the user, while the needles and slots this
+    card is about are millimetres long). So a thin loop of extent between tol and 10 tol touching no other
+    chain is not returned (round 1 also dropped those of extent up to 2 tol, against its own header). The
+    distance g to the chains is 1-Lipschitz along a strand, so a sample vouches for the next |g - tol/2|
+    (all covered or all uncovered), which is skipped; g is found exactly up to a query reach that starts at
+    16.5 tol and doubles, up to 1024.5 tol, while nothing lies within it. The chains and the strands put back
+    are both in grids (the strands in one laid out over all strays, filled as they are put back: a
+    `BoxGrid` that can grow), and the new chains are merged into the output in one pass. The new chains
+    go by where their component (or piece) starts along the input; with nothing put back the output is
+    unchanged. They may
     touch the chains next to them ("different chains may touch or cross"). (e) At a junction turning back
     by more than a right angle, where the two spans cross again within the tolerance of it, both are cut
     back to the crossing farthest from the junction (removeCuspLoops, after the other chain repairs). The
@@ -484,10 +495,29 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     (12 420 inside offsets): every one covers the channel's centre line except the 828 closed rectangles
     at d = 3.175, shorter than the tool (main lost 11 136); the 508 flagged by vchk's overlap check are
     Round U needles above the allowance, out-and-back chains T-0017 already returned, identical to main.
-    Cost (Release, CPU time, interleaved with main in one process on a shared 16-thread machine, min of
-    3-5 runs): T-0016 card case (zig-zag 1000 spans, pitch 0.02, amplitude 1, d = 7) Round 1.06-1.31 s
-    (main 1.16-1.37), Sharp 0.79-0.96 s (0.81-0.98), Square 0.81-0.93 s (0.84-0.87); pitch 0.05,
-    amplitude 0.2, d = 5, 4000 spans: Round 0.93 / Sharp 1.09 / Square 1.07 s (main 1.11 / 1.10 / 1.11);
-    fuzz sets, summed per offset: family 0 1.000x main, 2 1.003x, 3 0.998x, 4 1.026x, 5 1.006x, S-hatch
-    0.991x. Work grows with the length put back: an offset that now returns a 2-3 mm strand costs about
-    0.3 ms more (fam4 0x2b400181: 0.37 ms, main 0.04 ms, which drops the strand).
+    Round 2 (owner minimum, near-linear recovery; same checkers, fresh seeds 0x7228xxxx): legacy family 0
+    (2000 inputs), families 2, 3, 5 (800 each, family 5 twice), 4 (1000), S-hatch 23, zig-zags 21, 22, 25
+    (600 each): no offset worse than main; fam0 0x71280859 is identical to main again (its isolated 0.00513
+    mm chain is gone), while 0x722804d7 keeps an isolated 0.054 mm arc (above 10 tol; it clears two of the
+    checker's thin misses main has). Channel sweep at d = 0.1317, 1, 3.175 (L 3.6) and d = 3.175 (L 20): a
+    path for every w >= 0 (main lost 7110 / 6900 / 4950 / 6795), worse 0. Cusp sweeps as above (which = 1:
+    0 self-crossings at d = 1.03, 3.175, 0.13; main 21, 15, 0). The ADR's regression seeds above are tests
+    (offset_narrow_loops_test.cpp), with cases that fail when the exact-range cut of (b), the stand-off
+    test of (e), the cover test of (d) or the minimum of (d) is removed.
+  - *Cost.* Release, CPU time, interleaved with main in one process on a shared 16-thread machine, min of
+    3 runs. Without strays the work is main's plus a pass over the junctions (reversal cusps) and the
+    exact ranges of (b): the T-0016 card case (zig-zag of 1000 spans, pitch 0.02, amplitude 1, d = 7) Round
+    0.85 s (main 0.94), Sharp 0.68 s (0.68), Square 0.71 s (0.70); pitch 0.05, amplitude 0.2, d = 5, 4000
+    spans: 0.75 / 0.84 / 0.81 s (main 0.81 / 0.82 / 0.79). Fuzz sets, summed per offset (1000 inputs each,
+    6000 offsets): family 0 1.006x main, 2 1.011x, 3 0.995x, 4 1.007x, 5 1.012x. With strays the work grows
+    linearly with their number and length: a boustrophedon hatch at pitch exactly 2d (a stray between every
+    pair of lines), a comb whose slots are 2d (+ 1e-7) wide, closed rectangles 3.6 x 2d traced in one open
+    path, and a serpentine of half-ring channels 2d wide, 300 / 1000 / 3000 of each, every join, cost at
+    most 1.41x main (hatch, 3000 lines, Round: 0.031 s, main 0.022 s), e.g. hatch Round 0.0030 / 0.0134 /
+    0.0312 s, comb Round 0.0068 / 0.0257 / 0.0717 s, rectangles Square 0.0108 / 0.0306 / 0.134 s.
+    Round 1 compared each sample with every stray already put back, which made these quadratic (hatch at
+    3000 lines 2.94 s, rectangles 25.3 s, serpentine 16.2 s) and sampled uncovered strands every 16 tol (or
+    every tol on a loop's strand, 4.6 million samples for the Square hatch at 2d + 1e-7). The round-1
+    verifier's per-family figures (1.06-1.15x main) came from the exact checker's driver, which times the
+    branch first after the checker has run and main right after it; with the calls swapped, the same
+    driver gives family 3 0.97x and family 5 0.83x, so that excess was cache warm-up, not the branch.

@@ -2153,10 +2153,10 @@ TEST_CASE("T-0017: stitching matches ends globally, so a closed zig-zag is not s
 
 namespace {
 
-// T-0128: chains that run along the circle midway between two concentric input arcs exactly 2d
-// apart (copies of the stretch run both ways there, so the stitched chains leave it out and it is
-// put back as a chain of its own, the middle of a ring channel one tool width wide). They are not
-// splits of the stitched chains, so the T-0017 chain counts below leave them out.
+// T-0128: open chains that run along the circle midway between two concentric input arcs exactly
+// 2d apart (the middle of a ring channel one tool width wide). Where copies of the stretch run both
+// ways the stitched chains leave it out and it is put back as a chain of its own, so the chain
+// counts below grow by those (main returns some such chains too: 0, 2 and 1 in the three cases).
 std::size_t medialRingChains(const std::vector<Contour>& chains, const Contour& in, double d) {
     double inner = 1e300;
     Vec2 centre;
@@ -2248,7 +2248,9 @@ TEST_CASE("T-0017: no spurious chain splits on co-circular ties (0xe20010e4)",
     const double d = 0.054574631434536308;
     const std::vector<Contour> chains =
         offsetOpenContour(in, d, OffsetSide::Right, JoinType::Square, kTol, 2);
-    CHECK(chains.size() - medialRingChains(chains, in, d) <= 30);
+    // T-0017: 28 chains (bound 30); T-0128 puts back 3 on the medial ring.
+    CHECK(chains.size() <= 31);
+    CHECK(medialRingChains(chains, in, d) == 3);
     JunctionStats js;
     checkJunctions(chains, js);
     CHECK(js.backward == 0);
@@ -2312,7 +2314,9 @@ TEST_CASE("T-0017: no spurious chain splits on co-circular ties (0xe20006d8)",
         ArcSpan{{0, 0}, 1.3105209732725309, -0.5718248168727591, -2.8994887782050154, ArcDirection::CW});
     const double d = 0.059274097082732395;
     const std::vector<Contour> chains = offsetOpenContour(in, d, OffsetSide::Right, JoinType::Sharp, kTol, 2);
-    CHECK(chains.size() - medialRingChains(chains, in, d) <= 21);
+    // T-0017: 19 chains (bound 21), 2 of them on the medial ring; T-0128 puts back 5 more there.
+    CHECK(chains.size() <= 24);
+    CHECK(medialRingChains(chains, in, d) == 7);
     JunctionStats js;
     checkJunctions(chains, js);
     CHECK(js.backward == 0);
@@ -2376,7 +2380,9 @@ TEST_CASE("T-0017: no spurious chain splits on co-circular ties (0xe3001ac2)",
     const double d = 0.076643362054408748;
     const std::vector<Contour> chains =
         offsetOpenContour(in, d, OffsetSide::Right, JoinType::Square, kTol, 3.310653624707161);
-    CHECK(chains.size() - medialRingChains(chains, in, d) <= 17);
+    // T-0017: 17 chains, 1 of them on the medial ring; T-0128 puts back 1 more there.
+    CHECK(chains.size() <= 18);
+    CHECK(medialRingChains(chains, in, d) == 2);
     JunctionStats js;
     checkJunctions(chains, js);
     CHECK(js.backward == 0);
