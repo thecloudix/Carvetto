@@ -452,7 +452,7 @@ Goal: Non-blocking findings (harness t0136v1/). (a) Names that grow when stored 
 Acceptance criteria:
   1. (a)–(d) fixed with tests where behaviour changes; save/load invariant preserved (fuzz3).
 
-### T-0140 Profile: loose-piece check for Inside/Outside with allowance ≥ 0   [status: in progress]
+### T-0140 Profile: loose-piece check for Inside/Outside with allowance ≥ 0   [status: in progress — round 1 FAIL (scene-wide union quadratic, nested islands cubic); round 2]
 Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §14
 Goal: Found by the T-0135 verifier (harness t0135v1/scn/m3_630018_3.scn): the loose-piece report runs only for sided cuts (On, allowance < 0), so with Inside/Outside and allowance ≥ 0 pieces that no kept tab holds come free unreported (15.1 mm² in that scene, leads off; same in T-0127). Extend the check to all tabbed profiles without changing toolpaths.
 Acceptance criteria:
@@ -668,7 +668,7 @@ Goal: Found by the T-0016 coder on main.
 Acceptance criteria:
   1. (a) ≤ 2.5× per doubling to 8000 steps, all joins; (b) the inner offset is present within tolerance; outputs elsewhere identical or judged no worse (T-0006 fuzz set, exact checker).
 
-### T-0169 Pocket: tool-centre region dips below the tool radius at a curve/line junction (T-0164 coder)   [status: in progress]
+### T-0169 Pocket: tool-centre region dips below the tool radius at a curve/line junction (T-0164 coder)   [status: done (#64)]
 Phase: 1   Module: core/toolpath   Depends on: —   ADR: 0017
 Goal: Found by the T-0164 coder (harness t0153v3 repro2/nest_frame.txt, VC_FIX "0 6 60 0.001 0.3 0"). An edge of Pocket's tool-centre region dips below the tool radius where the curved part round the inner corner under an "A"'s crossbar joins the straight part along the crossbar. By exact distance this is 45 nm, 4.5% of a 0.001 chordal tolerance.
 Acceptance criteria:
@@ -686,7 +686,7 @@ Goal: The T-0142 timing test lists each hole right after its outer, so the "last
 Acceptance criteria:
   1. A timing test with holes listed far from their outers fails under mutant C and passes on the fix; ADR wording consistent; full ctest.
 
-### T-0172 Open-offset stray recovery follow-ups (T-0128 round-2 verifier)   [status: in progress]
+### T-0172 Open-offset stray recovery follow-ups (T-0128 round-2 verifier)   [status: in progress — round 1 FAIL (ClusterGrid blow-up on nested boxes); round 2]
 Phase: 1   Module: core/geometry   Depends on: T-0128   ADR: 0012
 Goal: Non-blocking findings from harness t0128v2. (a) A recovered stray with more than 512 spans is returned as one chain per span (the step-7 `part.size() > 512` fallback, commented "Never seen"); Profile makes each a separate Cut, so one slot gets hundreds of plunges, and spans ≤ tol are dropped there so a finely segmented wall can lose the path (repro split.cpp `./split 514 1 0 0`, bigloop.cpp `./bigloop 600 1 0 0 1 1`; main returns nothing). Chunk into runs of ≤ 512 spans instead, or remove the limit. (b) Clustered strays: one far feature stretches the stray grid — hatch at pitch 2d plus a far U channel costs 1.7–2.0× main, and 11.9× (quadratic, main quadratic too) at d = 0.002, far = 1e5 (`perf2 lhatch 1000 0.002 0 0 3 0 1e5`); `partCrossesItself` is O(n²) per stray (~3 ms per 500 spans). (c) Untested: a stray between tol and 10 tol touching a chain is returned (mutants M3, W2), the fallback size (S), the longer loop strand (P), merge order (O), exactOver in mergeOnCarriers (E2). (d) ADR-0012 A3 should mention (a) and (b). (e) From the T-0128 MSVC-fix verifier (harness t0128v3): the exactJunction fallback fix has no deterministic glibc test (add a junction-level test with an arc start ahead by > 1e-12×scale); the test crossing filter could mirror removeCuspLoops exactly (reversal junctions within tol); pre-existing libm-sensitive checks that may trip MSVC CI later — T-0006 AC3 absolute 1e-12 gap check, T-0017 3-arc input REQUIRE, closed all-arc loops keeping 9e-12–9.6e-11 gaps under ±ulp libm (fam4 0x7c2340188 ULP_K=2 ULP_SEED=3).
 Acceptance criteria:
@@ -704,6 +704,12 @@ Phase: 1   Module: core/toolpath   Depends on: T-0158   ADR: 0016 §11
 Goal: Known limits accepted at the T-0158 merge (harness t0158v5). (a) A squared-off tip whose start vertex has a duplicate or sub-µm edge next to it labels no span on that edge; the fallback's "most even feet" ties exactly between the chamfer's two corners and rounding picks one — the start jumps up to 4.3 mm under ulp/1e-9 (repro5/sq_tiny_tA2.5_e0_phi0_o0_d0_lim2.scn, sq_tiny_tA2.5_e1e-09_*; mitre limit 1: 0.45/1.86/3.28 mm at turns 0.3/1.2/2), and with a collinear 1e-7–1e-5 mm edge both directions start at the same chamfer corner (last in travel for one). Skip degenerate edges when finding the start vertex's own edges, and break any chamfer tie by first in travel. (b) Merged-region arc labelling band: arc chord sag on the chordal-slack band flips the start by one chord (repro5/mrgarc_vb_R20.771966844133722_d1.scn 1.67 mm, mrgarc_em_R18.966862802842932_d1.scn 0.36 mm). (c) Surviving mutants N1, N2, N3, N8, N11 — add tests. (d) ADR §11: describe the label-3 "from" rule. Self-intersecting outlines stay best effort (owner).
 Acceptance criteria:
   1. (a) and (b) starts stable under ±ulp, 1e-12–1e-9 scaling and translations, chamfer starts at the first corner in travel in both directions; a test with a duplicate/degenerate start vertex; (c) mutants killed; no change elsewhere beyond the repros (change rate vs T-0158 reported); flood oracle no worse; full ctest.
+
+### T-0175 Pocket: thin islands that flatten to zero area are cut through; T-0169 test gaps (T-0169 verifier)   [status: in progress]
+Phase: 1   Module: core/toolpath   Depends on: T-0169   ADR: 0017
+Goal: Found by the T-0169 verifier (harness t0169v1). (a) Safety: an island whose arcs flatten to a zero-area polygon (sagitta < chordal/2, e.g. a thin lens) is dropped by the boolean union and the tool cuts straight through it — repro/lens.cpp `lens 0.04 0.1` (20 mm square, lens island on a 4 mm chord, 1 mm raster): tool centre on the island, clearance − radius = −0.5; `lens 0.004 0.01` −0.306; also repro/tinyisland.cpp (6 scale-0.01 cases). Pre-existing on main. Keep such islands (polygonise them so they keep area, or refuse with a diagnostic) — never cut through a boundary. (b) Test gaps from T-0169: mutants surviving — chordal/2 wall margin set to 0 or halved, strict-only, route-point merge distance, raster link, ring bridges, kMoveSlack ×10. (c) `distSegments` returns 0 for nearly collinear non-touching segments (repro/gridmiss.cpp; conservative inside anyCloser). (d) The 4e-6 route-point merge adds many waypoints in some line-only raster jobs (+435 moves, ~6%, pk fam 9 seed 1021) — merge collinear waypoints.
+Acceptance criteria:
+  1. (a) no tool centre within radius + allowance − 1e-5 of any input island boundary (exact oracle), including zero-area-after-polygonisation islands at every scale; or such input refused with a clear diagnostic (product decision if refusing); (b) mutants killed; (c) fixed; (d) waypoint count back near main without losing clearance; full ctest.
 
 ### T-0150 Drilling toolpath   [status: done (2026-11-03, #36)]
 Phase: 1 (Batch C, owner decision 2026-11-03: Batch C toolpaths first)   Module: core/toolpath   Depends on: T-0123, T-0132   ADR: new
