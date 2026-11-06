@@ -452,7 +452,7 @@ Goal: Non-blocking findings (harness t0136v1/). (a) Names that grow when stored 
 Acceptance criteria:
   1. (a)–(d) fixed with tests where behaviour changes; save/load invariant preserved (fuzz3).
 
-### T-0140 Profile: loose-piece check for Inside/Outside with allowance ≥ 0   [status: ready]
+### T-0140 Profile: loose-piece check for Inside/Outside with allowance ≥ 0   [status: in progress]
 Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §14
 Goal: Found by the T-0135 verifier (harness t0135v1/scn/m3_630018_3.scn): the loose-piece report runs only for sided cuts (On, allowance < 0), so with Inside/Outside and allowance ≥ 0 pieces that no kept tab holds come free unreported (15.1 mm² in that scene, leads off; same in T-0127). Extend the check to all tabbed profiles without changing toolpaths.
 Acceptance criteria:
@@ -536,7 +536,7 @@ Goal: Found by the T-0147 verifier (harness t0147v1/far.cpp): with signedArea fi
 Acceptance criteria:
   1. Small Profile parts (circles, rectangles, holes; 0.5–10 mm) at 1e6–1e9 mm give the same toolpath as at the origin (up to translation, within tolerance) in ≥ 19/20 placements, or a documented limit with a diagnostic; normal-scale output unchanged (hashes).
 
-### T-0158 Profile: platform-stable cut start at convex tips   [status: in review — round 5 FAIL on degenerate start edge; owner: merge with documented limits, follow-up T-0174]
+### T-0158 Profile: platform-stable cut start at convex tips   [status: done (#63; known limits → T-0174)]
 Owner decision 2026-11-03: adopt the fixed tie-break rule (start at the beginning of the corner arc centred on the tip), accepting that cut starts move in ~10% of such scenes. Owner decision 2026-11-05: mitred (sharp) convex tips start exactly at the mitre corner point. Owner 2026-11-05: a mitre squared off at the limit starts at the chamfer\'s first corner in the direction of travel; change rate ~9% stored / ~21% random pages accepted. Owner decisions 2026-11-05 (after round 3): one more round; on finely segmented convex outlines the cut starts at the tip's exact corner (mitre), not one segment off; on a merged region's polygonal round join (end mill) the cut starts at the first chord point, matching true round joins.
 Owner decisions 2026-11-05 (after round 5): merge round 5 with the remaining cases documented as known limits in ADR-0016 §11 and fixed later in T-0174; self-intersecting outlines are best effort (documented, not guaranteed stable).
 Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §11
