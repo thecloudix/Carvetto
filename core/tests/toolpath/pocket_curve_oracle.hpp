@@ -113,6 +113,36 @@ inline double segmentArc(Vec2 a, Vec2 b, const geometry::ArcSpan& arc) {
     return best;
 }
 
+/// Lower bound of the distance from segment ab to a Bezier piece: the distance to the convex hull
+/// of its control points (the union of the four triangles they form), which holds the piece; 0
+/// when the segment meets a triangle. Tight for long flat pieces, where the disc bound is not
+/// (T-0175: a raster line along a 400 mm flat Bezier needed millions of discs).
+inline double segmentHull(Vec2 a, Vec2 b, Vec2 p0, Vec2 p1, Vec2 p2, Vec2 p3) {
+    auto inTriangle = [](Vec2 x, Vec2 p, Vec2 q, Vec2 r) {
+        const double d1 = (q - p).cross(x - p);
+        const double d2 = (r - q).cross(x - q);
+        const double d3 = (p - r).cross(x - r);
+        return (d1 >= 0.0 && d2 >= 0.0 && d3 >= 0.0) || (d1 <= 0.0 && d2 <= 0.0 && d3 <= 0.0);
+    };
+    const Vec2 pts[4] = {p0, p1, p2, p3};
+    double best = std::numeric_limits<double>::infinity();
+    for (int skip = 0; skip < 4; ++skip) {
+        Vec2 t[3];
+        for (int i = 0, k = 0; i < 4; ++i) {
+            if (i != skip) {
+                t[k++] = pts[i];
+            }
+        }
+        if (inTriangle(a, t[0], t[1], t[2]) || inTriangle(b, t[0], t[1], t[2])) {
+            return 0.0;
+        }
+        for (int e = 0; e < 3; ++e) {
+            best = std::min(best, segmentSegment(a, b, t[e], t[(e + 1) % 3]));
+        }
+    }
+    return best;
+}
+
 /// Result of measuring one segment against one Bezier for a threshold.
 struct BezierVerdict {
     bool atLeast{true};  ///< certified: every point of the curve is at least `need` from the segment
@@ -120,7 +150,7 @@ struct BezierVerdict {
 };
 
 /// Certified "distance(segment ab, curve) >= need" by subdivision, plus the smallest distance seen.
-/// Pieces whose disc bound is at least `need` are dropped; a piece end closer than `need` is a
+/// Pieces whose disc or control-hull bound is at least `need` are dropped; a piece end closer than `need` is a
 /// counter-example. `resolution` stops refining a piece once its disc is that small (its bound is
 /// then accepted within `resolution`).
 inline BezierVerdict segmentBezier(Vec2 a, Vec2 b, const geometry::BezierSpan& bz, double need,
@@ -145,7 +175,7 @@ inline BezierVerdict segmentBezier(Vec2 a, Vec2 b, const geometry::BezierSpan& b
         const Vec2 m = (pc.p0 + pc.p1 + pc.p2 + pc.p3) * 0.25;
         const double rho = std::max({geometry::distance(m, pc.p0), geometry::distance(m, pc.p1),
                                      geometry::distance(m, pc.p2), geometry::distance(m, pc.p3)});
-        const double lower = pointSegment(m, a, b) - rho;
+        const double lower = std::max(pointSegment(m, a, b) - rho, segmentHull(a, b, pc.p0, pc.p1, pc.p2, pc.p3));
         if (lower >= need) {
             continue;
         }

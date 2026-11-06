@@ -2,7 +2,7 @@
 
 Date: 2026-10-24 · Status: accepted (director, 2026-10-24; residual open-offset defect tracked in T-0004;
 §6 and §7 added by T-0018, 2026-11-02; §8 added by T-0138, 2026-11-02; §9 and the §8 dust-test
-decision added by T-0141, 2026-11-02; §10 added by T-0142, 2026-11-05)
+decision added by T-0141, 2026-11-02; §10 added by T-0142, 2026-11-05; §11 added by T-0175, 2026-11-06)
 
 ## Decision
 1. Polygon offsetting (`geometry/offset.hpp`) and boolean operations (`geometry/boolean.hpp`) are
@@ -318,6 +318,35 @@ decision added by T-0141, 2026-11-02; §10 added by T-0142, 2026-11-05)
      touching grid 1.26 → 3.81 s, hex packing 1.08 → 3.32 s on main, the same after T-0142). Not done: no Carvetto caller meets these at a size where
      they matter (rows of more than ~10,000 side by side), and Pocket's work cap on the polygonised
      region (200,000 vertices) bounds the cost there.
+
+11. **Closed contours never polygonise a curve onto its bare chord (T-0175).** `Contour::polygonise`
+    of a closed contour (every boolean and offset input, §3; V-Carve's and the medial axis's rings)
+    uses `polygoniseRegionInto`: an arc that one chord would cover within the tolerance also gets
+    its midpoint (its farthest point from the chord), and a Bezier is split at least once, twice
+    when it is S-shaped (control points either side of the chord, so its halves can lie flat on
+    the chord's line). Before, such a curve became its chord, and a closed shape bounded by flat
+    curves (a thin lens: an arc of sagitta below the tolerance and the line back along its chord;
+    a crescent; a flat tab on a larger shape) became a polygon of zero area there, which Clipper2
+    drops: Pocket (at chordal / 2, ADR-0017 §3) and Quick Engrave's fill cut straight through such
+    islands (verifier T-0169: the tool centre on a lens island of sagitta 0.04 at chordal 0.1),
+    and `offsetContours` and `unionContours` of a lens returned nothing. The added vertices lie on
+    the curve, so the polygon stays within the tolerance of it; curves that need more than one
+    chord, lines and open contours polygonise as before (V-Carve: 0 of 960 hash-sweep cases
+    changed; Pocket: the cases with such curves, see ADR-0017 §3). Profile offsets arcs
+    analytically and V-Carve builds its own rings, so neither lost the lens.
+    Limits (not changed):
+    - **Below the grid.** Material thinner than about a grid unit (1e-6 mm) still vanishes when
+      rounded. Where two boundaries meet at a small angle θ (the crossing of an S-shaped flat curve
+      with its chord, internally tangent curves) the part thinner than that reaches about
+      1e-6/θ mm from the meeting point, and the tool may come up to about that length² / (8 ·
+      radius) closer to the true wall there (the T-0175 generative test keeps S-curves to angles
+      where that is below 5e-6 mm).
+    - **Distance tolerance.** `toClipperPath` merges consecutive polygon points closer than
+      `tol.distance`, so a closed contour smaller than the distance tolerance (an island circle of
+      radius below it) still collapses; with Pocket's distance up to chordal that is up to 1 mm.
+      Merging only grid duplicates fixed it in a T-0175 experiment but changed about half of the
+      Pocket sweep cases and 59 of 960 V-Carve ones, so it was not done (open question, T-0175
+      report).
 
 ## Rationale
 - Clipper2 is the de-facto robust polygon clipper for CAM; it is deterministic, header-light,

@@ -1,6 +1,6 @@
 # ADR-0017: Pocket toolpath
 
-Date: 2026-10-26 · Status: accepted (director, 2026-10-31; T-0121; revised in fix rounds 2 and 3, same day; amended by T-0125, 2026-10-30 and 31, T-0126, 2026-10-31, and T-0169, 2026-11-05)
+Date: 2026-10-26 · Status: accepted (director, 2026-10-31; T-0121; revised in fix rounds 2 and 3, same day; amended by T-0125, 2026-10-30 and 31, T-0126, 2026-10-31, T-0169, 2026-11-05, and T-0175, 2026-11-06)
 
 ## Context
 T-0121 adds `pocketToolpath(contours, tools, PocketParams)` (feature-inventory §5 "Pocketing
@@ -38,10 +38,23 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
    1e-6 mm grid, and a straight move is accepted inside the centre region within 4 grid units
    (8a), so it may leave the region by about 8e-6 mm. The documented bound is therefore: **tool
    centres keep at least radius + allowance − 1e-5 mm from the true walls**, measured by exact
-   distance to the original lines, arcs and Beziers (`pocket_curve_oracle.hpp`). Caveat (pre-existing,
-   follow-up T-0175): an island whose arcs flatten to a zero-area polygon (sagitta below chordal/2,
-   e.g. a thin lens) is dropped by the boolean union and the tool cuts straight through it; the
-   bound holds only for islands that survive polygonisation. In the T-0169
+   distance to the original lines, arcs and Beziers (`pocket_curve_oracle.hpp`). **Thin islands
+   (T-0175).** An island whose curves lie within the polygon tolerance (chordal / 2) of their
+   chords (a thin lens, a crescent, a flat tab) used to polygonise to zero area there; the union
+   dropped it and the tool cut straight through it (verifier T-0169: the tool centre on a lens
+   island, clearance − radius −0.5). Closed contours now keep a vertex off every curve's chord
+   (ADR-0006 §11), so such islands keep a polygon within the tolerance and the bound holds for
+   them: `pocket_thin_island_test.cpp` (lenses, crescents, tabs, C- and S-shaped Bezier lenses
+   whose curves lie 0.0002–0.5 × chordal from their chords, at least 1e-5 mm, at scale 0.01, 1 and
+   100, at the origin and 1e4 mm away) in Release, 744 toolpaths, smallest clearance less allowance +4.87e-5 mm (main, 20 cases per scale and offset: 80 of 88 toolpaths inside the radius, the tool on or through the island). It does not hold for material thinner than the
+   boolean grid, near grazing meetings of boundaries, or for an island smaller than the distance
+   tolerance (ADR-0006 §11, limits). Change against main (T-0175 hash
+   sweep, verifier families 0–9, 60 seeds each at the origin, distance = chordal, 1e4 and 1e6 mm
+   away, scale 0.01 and with rest tools: 3,600 cases): 709 changed; retracts 75,454 → 75,471,
+   plunges 106,412 → 106,436, moves −0.01 %. In the base configuration (111 of 600) 28 come from
+   the polygonisation (+122 moves, +3 retracts) and 88 from the surface travel of §8a (−419 moves,
+   same retracts). Main came inside the tool radius in 4 cases (thin islands at scale 0.01, down to
+   −0.0116 mm), none now (smallest clearance less allowance +2.4e-5 mm). In the T-0169
    generative test (`pocket_junction_test.cpp`: polygons and stars whose edges are lines, arcs
    and Beziers bulging either way, D-shaped islands, chordal 0.001–0.1, distance up to chordal, at
    the origin and 1e4 mm away) and in 600 scratch cases (666 toolpaths) the smallest clearance less
@@ -219,7 +232,8 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
      being the walls), so the true walls keep radius + allowance; this keeps the old links
      wherever they were safe. The wall index (an `EdgeGrid` over the region polygon, walked along
      the segment's corridor) is built on first use. Route points closer than 4e-6 mm are merged
-     (was: the distance tolerance; a merged point can move the way by that much).
+     (was: the distance tolerance; a merged point can move the way by that much; at the surface
+     the distance tolerance again since T-0175, below).
      Change against main (T-0169 hash sweep, same seeds, every toolpath of the result): the AC6
      star polygons 7 of 1,000 changed and the disc chains 11 of 300, with the same retracts,
      plunges and cut length: travel waypoints within 1 µm of main's (a route point within the
@@ -238,6 +252,31 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
      travel routes along concave walls are pulled with more, shorter shortcuts, each also checked
      against the walls; the verifier, interleaved over 40 seeds, measured 1.002× in total (worst
      1.10×).
+     **Amended by T-0175.** (1) *Travel at the surface* (the first level's travel, at
+     −startDepth) uses the old inside test alone (`MoveCheck::allowsInAir`) and merges its route
+     points at the distance tolerance, as before T-0169: the tool touches no material there, so
+     the walls need no clearance (the oracles check only moves below the surface). With the T-0169
+     check the first level's routes rounded the centre region's round joins instead of cutting
+     across them (by up to 0.26 µm in the verifier's case), which added up to 6.7 % moves to
+     line-only raster jobs (verifier: +435 moves, family 9, seed 1021, distance = chordal); that
+     job is now identical to pre-T-0169 main (6,503 moves). Travel below the surface keeps the
+     T-0169 check, and so do the ring bridges, which are cached per node for every level.
+     V-Carve's flat-area clearing (verifier families, 40 cases each): 4 of 1,040 toolpaths
+     changed, 15 of 1,040 with clearance end mills forced, diagnostics identical.
+     (2) *Wall distances.* The segment distance behind the wall index returned 0 for nearly
+     collinear segments that do not touch (rounded orientations of either sign were taken for a
+     crossing; e.g. a segment on an edge's line extension 0.0099 mm beyond its end). It now decides
+     crossings by exact orientation signs (`pocket_distance.hpp`); before, the walls check could
+     only refuse more. (3) *Tests* (`pocket_move_check_test.cpp`): sweep cases whose moves outside
+     the centre region keep the polygon tolerance from the polygonised walls (they come up to 0.25
+     × chordal closer with the margin set to 0 or halved, with route points merged at the
+     distance tolerance below the surface, or with a ten-times rounding slack); one whose links
+     are taken only through the walls check (one retract instead of three); the "A", whose raster
+     runs are joined by the same check as the links at depth (its move count is pinned); the
+     surface travel above; the distance function. Ring bridges checked with the old test alone
+     cannot be told apart from outside: a bridge joins the closest points of two rings, so it lies
+     inside the region up to rounding and the rounding test accepts every bridge the old one does
+     (no output changed in 9,000 sweep cases).
    - **8b, ring-tree routes.** From each end, climb to the parent level by a straight segment to
      the parent boundary's nearest point. The open disc around a point of a region, out to its
      nearest boundary point, lies inside the region, so each such segment is inside. At the
