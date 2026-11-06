@@ -275,10 +275,13 @@ decision added by T-0141, 2026-11-02; §10 added by T-0142, 2026-11-05)
      so the result is Clipper2's own (`hole_nesting_test.cpp`: generative checks against
      `PointInPolygon`, with points on edges and vertices, vertices and horizontal edges on the
      test line and coordinates where the cross product rounds, and against the scan over all
-     pairs). The decision is exactly that of the scan over all pairs. The cost is near-linear in
-     the number of rings whatever the layout of their boxes (apart, touching or overlapping):
-     O(log n) per hole for the hierarchy, plus one test per candidate tried, each costing the
-     edges its test line crosses. Outsets of 40,000 → 80,000 holed squares (Release, CPU, harness
+     pairs). The decision is exactly that of the scan over all pairs. The cost does not depend on
+     whether the boxes lie apart, touch or overlap, nor on the order in which holes and their
+     outers are listed: O(log n) per hole for the hierarchy, plus one test per candidate tried,
+     each costing the edges its test line crosses. It is near-linear in the number of rings when
+     few candidates are tried per hole and their test lines cross few edges, which holds for the
+     layouts measured here but not for the inputs built to defeat it listed below. Outsets of
+     40,000 → 80,000 holed squares (Release, CPU, harness
      t0142v2/po2.cpp, 3 interleaved runs) take 0.26 → 0.57 s in a column of touching squares
      (main 0.24 → 0.57), 0.64 → 1.30 s in the notches of a comb ring (main 0.68 → 1.38), 0.29 →
      0.68 s with a hole in each tooth of a comb (main 0.37 → 0.75), and the same as main within
@@ -287,9 +290,12 @@ decision added by T-0141, 2026-11-02; §10 added by T-0142, 2026-11-05)
      rings per hole (80,000 holed rectangles 9.9 s vs 0.8 s on main), round 2 the rings left of
      each hole within a `separableBatches` batch (the column 2.7 → 21.7 s, the comb 17.4 → 88.1
      s). Pinned by "T-0142 round 3: outsets of touching shapes ..." (column, comb notches, comb
-     teeth; ≤ 2.5× per doubling). Input built to defeat it still costs more than linear: a hole
-     inside many nested rings wound like the lowest whose boxes hold it but whose insides do not
-     (each is tried), or a big ring whose edges a horizontal line crosses many times (holes in
+     teeth; ≤ 2.5× per doubling) and, for the hierarchy itself, by "T-0171: outsets of a column
+     whose holes are listed far from their outers ..." (all outers first then the holes reversed,
+     and a shuffle, where the last-ring shortcut misses; a linear scan over the candidates in
+     their place goes 3.7–3.8× per doubling, T-0142 round-3 verifier). Input built to defeat it
+     costs more than linear: a hole inside many nested rings wound like the lowest whose boxes
+     hold it but whose insides do not (each is tried), or a big ring whose edges a horizontal line crosses many times (holes in
      the teeth of a comb whose teeth run along y: each test crosses every tooth). Rings that cross each other are not detected by the nesting test. Pinned by
      the repro and a generative oracle (`offset_unnested_hole_test.cpp`: nested and lone rings of
      both orientations, all joins; points within d of the region are in the result, points
