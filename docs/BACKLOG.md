@@ -452,7 +452,7 @@ Goal: Non-blocking findings (harness t0136v1/). (a) Names that grow when stored 
 Acceptance criteria:
   1. (a)–(d) fixed with tests where behaviour changes; save/load invariant preserved (fuzz3).
 
-### T-0140 Profile: loose-piece check for Inside/Outside with allowance ≥ 0   [status: in progress]
+### T-0140 Profile: loose-piece check for Inside/Outside with allowance ≥ 0   [status: in progress — round 1 FAIL (scene-wide union quadratic, nested islands cubic); round 2]
 Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §14
 Goal: Found by the T-0135 verifier (harness t0135v1/scn/m3_630018_3.scn): the loose-piece report runs only for sided cuts (On, allowance < 0), so with Inside/Outside and allowance ≥ 0 pieces that no kept tab holds come free unreported (15.1 mm² in that scene, leads off; same in T-0127). Extend the check to all tabbed profiles without changing toolpaths.
 Acceptance criteria:
@@ -668,7 +668,7 @@ Goal: Found by the T-0016 coder on main.
 Acceptance criteria:
   1. (a) ≤ 2.5× per doubling to 8000 steps, all joins; (b) the inner offset is present within tolerance; outputs elsewhere identical or judged no worse (T-0006 fuzz set, exact checker).
 
-### T-0169 Pocket: tool-centre region dips below the tool radius at a curve/line junction (T-0164 coder)   [status: in progress]
+### T-0169 Pocket: tool-centre region dips below the tool radius at a curve/line junction (T-0164 coder)   [status: in review (PR #64, verifier PASS)]
 Phase: 1   Module: core/toolpath   Depends on: —   ADR: 0017
 Goal: Found by the T-0164 coder (harness t0153v3 repro2/nest_frame.txt, VC_FIX "0 6 60 0.001 0.3 0"). An edge of Pocket's tool-centre region dips below the tool radius where the curved part round the inner corner under an "A"'s crossbar joins the straight part along the crossbar. By exact distance this is 45 nm, 4.5% of a 0.001 chordal tolerance.
 Acceptance criteria:
@@ -686,7 +686,7 @@ Goal: The T-0142 timing test lists each hole right after its outer, so the "last
 Acceptance criteria:
   1. A timing test with holes listed far from their outers fails under mutant C and passes on the fix; ADR wording consistent; full ctest.
 
-### T-0172 Open-offset stray recovery follow-ups (T-0128 round-2 verifier)   [status: in progress]
+### T-0172 Open-offset stray recovery follow-ups (T-0128 round-2 verifier)   [status: in progress (verifying)]
 Phase: 1   Module: core/geometry   Depends on: T-0128   ADR: 0012
 Goal: Non-blocking findings from harness t0128v2. (a) A recovered stray with more than 512 spans is returned as one chain per span (the step-7 `part.size() > 512` fallback, commented "Never seen"); Profile makes each a separate Cut, so one slot gets hundreds of plunges, and spans ≤ tol are dropped there so a finely segmented wall can lose the path (repro split.cpp `./split 514 1 0 0`, bigloop.cpp `./bigloop 600 1 0 0 1 1`; main returns nothing). Chunk into runs of ≤ 512 spans instead, or remove the limit. (b) Clustered strays: one far feature stretches the stray grid — hatch at pitch 2d plus a far U channel costs 1.7–2.0× main, and 11.9× (quadratic, main quadratic too) at d = 0.002, far = 1e5 (`perf2 lhatch 1000 0.002 0 0 3 0 1e5`); `partCrossesItself` is O(n²) per stray (~3 ms per 500 spans). (c) Untested: a stray between tol and 10 tol touching a chain is returned (mutants M3, W2), the fallback size (S), the longer loop strand (P), merge order (O), exactOver in mergeOnCarriers (E2). (d) ADR-0012 A3 should mention (a) and (b). (e) From the T-0128 MSVC-fix verifier (harness t0128v3): the exactJunction fallback fix has no deterministic glibc test (add a junction-level test with an arc start ahead by > 1e-12×scale); the test crossing filter could mirror removeCuspLoops exactly (reversal junctions within tol); pre-existing libm-sensitive checks that may trip MSVC CI later — T-0006 AC3 absolute 1e-12 gap check, T-0017 3-arc input REQUIRE, closed all-arc loops keeping 9e-12–9.6e-11 gaps under ±ulp libm (fam4 0x7c2340188 ULP_K=2 ULP_SEED=3).
 Acceptance criteria:
