@@ -377,9 +377,10 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     stretch, the cut leaves exactly its two sides as counting pieces there, and the tab's material
     joins them. **Loose pieces.** A kept tab holds the material next to it, but a piece elsewhere
     (the kerf consuming a neck of the part, a remnant between the finishing and roughing kerfs at a
-    corner) may have no tab: after the tab check of sided tabs (On the vector, or Inside/Outside
-    with a negative allowance; not for Inside/Outside with allowance >= 0, a known gap), whenever
-    tabs are on (also when every tab was left out), pieces of material inside a closed primary cut, or inside a cluster of open primary cuts (a
+    corner) may have no tab: after the tab check, whenever tabs are on (also when every tab was
+    left out), pieces no kept tab joins to the outside are looked for and reported. For sided tabs
+    (On the vector, or Inside/Outside with a negative allowance; Inside/Outside with allowance
+    >= 0 below) these are the pieces of material inside a closed primary cut, or inside a cluster of open primary cuts (a
     loop trimmed into pieces near another vector; boxes within two tab-layer radii + 0.5 mm of each
     other, searched as one region, T-0135), that join the outside through no kept tab
     are looked for and reported (known gaps below). Exact construction (T-0135; T-0127 used a
@@ -411,8 +412,47 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     the same piece as one already found when it holds that piece's inner point (one at least
     0.025 mm clear of the tools, so every view of the same piece holds it: inside the hole and none
     of its islands), so a piece in
-    another's concave notch, whose box overlaps, is still reported. Known gaps: leads are not part of this
-    check (a lead crossing the part is a separate issue); pieces between neighbouring vectors that
+    another's concave notch, whose box overlaps, is still reported. **Inside/Outside with allowance >= 0 (T-0140; before, not
+    checked at all, so a part or slug whose every tab was left out, or waste the kerfs close in
+    between vectors, came free unreported).** Here the kerf lies on the waste side of the vector,
+    so each closed cut always encloses its vector-side material with every tab lowered and the
+    region search would build the union of every neighbour's bands once per region. Instead the
+    whole scene is taken at once: the bands of every cut of both passes (less the kept raised
+    stretches, as above, but grown by the tab-layer radius + 2 µm only: they are exact, so T-0127's
+    sagitta allowance is left out, and the threshold gap below shrinks to about 2 µm) are united
+    once, and every hole of that union is a loose piece, wherever it lies (inside a vector or
+    between vectors, so the region-box gaps below do not apply here). It counts as above (area less its islands, 0.04 mm² or more, thicker than 0.05 mm
+    somewhere: what is left of it eroded by 0.025 mm is not empty) and is reported with the same
+    message, against the innermost closed primary cut that contains it or else the nearest cut.
+    Each stretch's band is one polygon whose winding number is positive exactly on the band: the
+    sum of the boundaries of positively wound pieces covering it (a line's rectangle along its
+    normals, an arc's annular sector between radii ρ − w and ρ + w or, with ρ ≤ w, its sector from
+    the centre out to ρ + w, a wedge of radius w on the outer side of each corner, a half disc at
+    each end), whose edges along the shared normals cancel; it runs along the outer offsets, back
+    along the inner ones, and through the vertex at an inner corner, or through the centre of an
+    arc tighter than w; arcs and wedges are polygonised with chords at most the chordal tolerance
+    inside them. Every point of the band lies on a normal of its nearest point of the path, or in
+    a wedge or end disc, so the pieces cover the band exactly. At an inner corner between two lines
+    long enough that both their pieces cover the triangle of the vertex and the two offset ends
+    (each at least w·sin(turn) long, turn below 90°), the vertex is left out (that triangle keeps
+    a winding of at least one), so a polygonised curve gets no spike per vertex. Clipper2's offset
+    (still used for a stretch with a Bezier span) puts such a spike back to the path at every
+    vertex, which costs about the square of the vertices along each arc: offsetting the stretches
+    took 10–19 % of the CPU time of 500 close tabbed shapes; the polygons take 1.5–7.5 % (timed
+    inside the run), and interleaved with main the Release CPU time of pages of 2,000 tabbed shapes
+    (Inside/Outside, allowance 0 and 0.3, with and without a separate last pass) is within 8 % on
+    every page, 0.1 % over all of them; on heavy pages (23–97 s) within 1 %. Counted
+    against Clipper2's offset bands on 900 random scenes, both report the same pieces (areas within
+    rounding). Moves are unchanged (the check only adds messages). Sided tabs keep the region
+    search above unchanged. Measured (T-0140, whole-scene flood of the moves as in T-0127, leads
+    off, 2,387 random Inside/Outside scenes with allowance >= 0 and tabs): 388 free pieces of
+    0.04 mm² or more, 387 reported, none reported that is not free; the one left out is a ring
+    0.061 mm wide between the finishing and roughing kerfs of a V-bit, within the chordal
+    tolerance of the 0.05 mm threshold. With leads on (480 scenes) leads cut or split some pieces
+    (8 of 89 left out, 6 reported that the leads cut away or split), the known gap below. A V-bit's
+    ramps and corner moves cut less than its full-depth disc at the tab layer, so a reported area
+    can be up to about 20 % smaller than the piece. Known gaps: leads are not part of this
+    check (a lead crossing the part is a separate issue); with sided tabs, pieces between neighbouring vectors that
     reach out of the region's box are not seen (also pieces enclosed by open cuts that are not one
     cluster: a5_770001_273, a5_770001_60, missed by T-0127 too); the cut paths stand for the tool's
     moves, so links, plunges and ramps that cut more than the paths are not part of it, and a piece

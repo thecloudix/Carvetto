@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdlib>
+#include <functional>
 #include <iterator>
 #include <sstream>
 #include <string>
@@ -3405,5 +3406,401 @@ TEST_CASE("T-0135 round 2: exact loose pieces; add-back and fitting never cost a
         }
         REQUIRE(areas.size() == k.areas.size());
         for (std::size_t i = 0; i < areas.size(); ++i) CHECK(std::fabs(areas[i] - k.areas[i]) < 0.02 * k.areas[i] + 0.1);
+    }
+}
+
+namespace {
+
+// The loose-piece messages of a result: (vector, area) pairs, sorted.
+std::vector<std::pair<std::size_t, double>> loosePieces(const ProfileResult& r) {
+    std::vector<std::pair<std::size_t, double>> out;
+    for (const ProfileDiagnostic& g : r.diagnostics) {
+        if (g.message.find("comes free") == std::string::npos) continue;
+        out.push_back({g.contour.value_or(9999), std::stod(g.message.substr(g.message.find("(about ") + 7))});
+    }
+    std::sort(out.begin(), out.end());
+    return out;
+}
+
+// Whole-scene raster flood at the tab-top layer, independent of the planner (T-0140): every
+// cutting sample of `tp` below `zTab` (every 0.05 mm) cuts the cells (of `res` mm) whose centres
+// lie within `r` of it; the areas of the uncut 4-connected components that do not reach the
+// frame (the cut's box grown by r + 1 mm) are the pieces that come free.
+std::vector<double> rasterFreePieces(const Toolpath& tp, double zTab, double r, double res) {
+    Box2 box;
+    test::sampleCuttingMoves3(
+        tp, 0.05, [&](Vec2 q, double z) { if (z < zTab - 1e-6) box.expand(q); }, zTab - 1e-6);
+    if (box.isEmpty()) return {};
+    box = box.inflated(r + 1.0);
+    const int nx = static_cast<int>(std::ceil(box.width() / res));
+    const int ny = static_cast<int>(std::ceil(box.height() / res));
+    auto at = [&](int i, int j) { return static_cast<std::size_t>(j) * static_cast<std::size_t>(nx) + static_cast<std::size_t>(i); };
+    std::vector<char> cut(static_cast<std::size_t>(nx) * static_cast<std::size_t>(ny), 0);
+    test::sampleCuttingMoves3(
+        tp, 0.05,
+        [&](Vec2 c, double z) {
+            if (z >= zTab - 1e-6) return;
+            const int j0 = std::max(0, static_cast<int>(std::floor((c.y - r - box.min.y) / res)));
+            const int j1 = std::min(ny - 1, static_cast<int>(std::ceil((c.y + r - box.min.y) / res)));
+            for (int j = j0; j <= j1; ++j) {
+                const double dy = box.min.y + (j + 0.5) * res - c.y;
+                const double w2 = r * r - dy * dy;
+                if (w2 <= 0.0) continue;
+                const double w = std::sqrt(w2);
+                const int i0 = std::max(0, static_cast<int>(std::ceil((c.x - w - box.min.x) / res - 0.5)));
+                const int i1 = std::min(nx - 1, static_cast<int>(std::floor((c.x + w - box.min.x) / res - 0.5)));
+                for (int i = i0; i <= i1; ++i) cut[at(i, j)] = 1;
+            }
+        },
+        zTab - 1e-6);
+    std::vector<double> out;
+    std::vector<char> seen(cut.size(), 0);
+    for (std::size_t s = 0; s < cut.size(); ++s) {
+        if (cut[s] || seen[s]) continue;
+        std::vector<std::size_t> st{s};
+        seen[s] = 1;
+        std::size_t cells = 0;
+        bool frame = false;
+        while (!st.empty()) {
+            const std::size_t k = st.back();
+            st.pop_back();
+            ++cells;
+            const int i = static_cast<int>(k % static_cast<std::size_t>(nx));
+            const int j = static_cast<int>(k / static_cast<std::size_t>(nx));
+            if (i == 0 || j == 0 || i == nx - 1 || j == ny - 1) frame = true;
+            const int di[4] = {1, -1, 0, 0};
+            const int dj[4] = {0, 0, 1, -1};
+            for (int e = 0; e < 4; ++e) {
+                const int ii = i + di[e];
+                const int jj = j + dj[e];
+                if (ii < 0 || jj < 0 || ii >= nx || jj >= ny) continue;
+                const std::size_t kk = at(ii, jj);
+                if (seen[kk] || cut[kk]) continue;
+                seen[kk] = 1;
+                st.push_back(kk);
+            }
+        }
+        if (!frame) out.push_back(static_cast<double>(cells) * res * res);
+    }
+    std::sort(out.begin(), out.end());
+    return out;
+}
+
+// A circle of `radius` about the origin drawn as cubic Beziers.
+Contour bezierCircle(double radius) {
+    Contour c;
+    c.closed = true;
+    for (const geometry::BezierSpan& b : ArcSpan::fullCircle({0, 0}, radius).toBeziers()) c.append(b);
+    return c;
+}
+
+ProfileParams looseParams(ProfileSide side, double allowance) {
+    ProfileParams p;
+    p.side = side;
+    p.allowance = allowance;
+    p.passes.cutDepth = 3.0;
+    p.passes.passDepth = 1.5;
+    p.tabs.enabled = true;
+    p.tabs.count = 2;
+    p.tabs.length = 30.0;  // fits no vector below: every tab is left out
+    p.tabs.thickness = 1.0;
+    p.leads.type = LeadType::None;
+    return p;
+}
+
+}  // namespace
+
+TEST_CASE("Loose pieces (T-0140): Inside/Outside with allowance >= 0 report what no kept tab holds",
+          "[toolpath][profile][tabs]") {
+    // Before T-0140 only sided cuts (On, or a negative allowance) were checked: these pieces came
+    // free unreported. A 2 mm end mill: the cut at the tab layer is 1 mm wide each side of the
+    // path, plus the 2 um the bands carry (reach 1.002 mm).
+    // With a separate last pass the roughing cut runs 0.3 mm further into the waste: inside a
+    // hole that takes 0.3 mm more off the slug; outside a part it does not touch the part.
+    struct Case {
+        const char* what;
+        Contour vector;
+        ProfileSide side;
+        double allowance;
+        std::function<double(double)> area;  // of the extra allowance; 0: nothing reported
+    };
+    const double reach = 1.002;
+    const double lpa = 0.3;
+    auto slug = [&](double radius, double allowance) {
+        return [=](double extra) {
+            const double s = radius - 1.0 - allowance - extra - reach;
+            const double a = s > 0.0 ? geometry::kPi * s * s : 0.0;
+            return a >= 0.04 ? a : 0.0;
+        };
+    };
+    const std::vector<Case> cases{
+        {"slug of a hole, allowance 0", Contour::circle({0, 0}, 4.0), ProfileSide::Inside, 0.0, slug(4.0, 0.0)},
+        {"slug of a hole, allowance 0.5", Contour::circle({0, 0}, 4.0), ProfileSide::Inside, 0.5, slug(4.0, 0.5)},
+        {"slug just over 0.04 mm2", Contour::circle({0, 0}, 2.15), ProfileSide::Inside, 0.0, slug(2.15, 0.0)},
+        {"slug under 0.04 mm2", Contour::circle({0, 0}, 2.1), ProfileSide::Inside, 0.0, slug(2.1, 0.0)},
+        {"rectangular slug (sharp inner corners)", Contour::rectangle(Box2{{0, 0}, {10, 8}}), ProfileSide::Inside, 0.0,
+         [=](double extra) { return (8.0 - 2.0 * (reach + extra)) * (6.0 - 2.0 * (reach + extra)); }},
+        {"small part, Outside (path arcs tighter than the band)", Contour::rectangle(Box2{{0, 0}, {6, 6}}),
+         ProfileSide::Outside, 0.0, [=](double) { return (6.0 - 2.0 * (reach - 1.0)) * (6.0 - 2.0 * (reach - 1.0)); }},
+        {"small round part, Outside, allowance -0.0", Contour::circle({0, 0}, 1.5), ProfileSide::Outside, -0.0,
+         [=](double) { return geometry::kPi * (1.5 + 1.0 - reach) * (1.5 + 1.0 - reach); }},
+        {"slug of a hole drawn with Beziers (densely polygonised cut)", bezierCircle(4.0), ProfileSide::Inside, 0.0,
+         slug(4.0, 0.0)},
+    };
+    for (const Case& k : cases) {
+        for (const bool sep : {false, true}) {
+            INFO(k.what << (sep ? ", separate last pass" : ""));
+            ProfileParams p = looseParams(k.side, k.allowance);
+            p.separateLastPass = sep;
+            p.lastPassAllowance = lpa;
+            const ProfileResult r = profileToolpath({k.vector}, test::endMill(2.0), p);
+            REQUIRE(r.ok());
+            const auto got = loosePieces(r);
+            const double area = k.area(sep ? lpa : 0.0);
+            if (area == 0.0) {
+                CHECK(got.empty());
+                continue;
+            }
+            REQUIRE(got.size() == 1);
+            CHECK(got.front().first == 0);
+            CHECK(std::fabs(got.front().second - area) <= 0.01 * area + 0.01);
+        }
+    }
+}
+
+TEST_CASE("Loose pieces (T-0140): held parts and slugs are not reported", "[toolpath][profile][tabs]") {
+    // A plate with a round and a square hole, Inside or Outside, allowance >= 0, end mill or
+    // V-bit, with or without a separate last pass: a part or slug comes free (and is reported)
+    // exactly when its vector keeps no tab (the V-bit's tabs in the square hole are cut through,
+    // inside it), and nothing is reported where a tab is kept.
+    const std::vector<Contour> cs{Contour::rectangle(Box2{{0, 0}, {60, 40}}), Contour::circle({18, 20}, 8.0),
+                                  Contour::rectangle(Box2{{36, 10}, {50, 30}})};
+    for (const ProfileSide side : {ProfileSide::Outside, ProfileSide::Inside}) {
+        for (const double allowance : {0.0, 0.4}) {
+            for (const bool sep : {false, true}) {
+                for (const bool vbit : {false, true}) {
+                    INFO("side " << static_cast<int>(side) << " allowance " << allowance << " sep " << sep << " vbit "
+                                 << vbit);
+                    ProfileParams p = looseParams(side, allowance);
+                    p.tabs.length = 3.0;
+                    p.tabs.count = 3;
+                    p.separateLastPass = sep;
+                    tooling::Tool tool = test::endMill(3.175);
+                    if (vbit) {
+                        tool.type = tooling::ToolType::VBit;
+                        tool.diameter = 6.0;
+                        tool.includedAngle = geometry::kPi / 2.0;
+                    }
+                    const ProfileResult r = profileToolpath(cs, tool, p);
+                    REQUIRE(r.ok());
+                    std::vector<std::size_t> lost;  // vectors that keep no tab
+                    for (const ProfileDiagnostic& g : r.diagnostics) {
+                        if (g.issue != ProfileIssue::TabsNotPlaced || !g.contour) continue;
+                        std::istringstream in(g.message.substr(g.message.find(": ") + 2));  // "N of M tab(s)"
+                        int left = -1;
+                        int of = -2;
+                        std::string word;
+                        in >> left >> word >> of;
+                        if (word == "of" && left == of) lost.push_back(*g.contour);
+                    }
+                    std::vector<std::size_t> loose;
+                    for (const auto& g : loosePieces(r)) loose.push_back(g.first);
+                    std::sort(lost.begin(), lost.end());
+                    CHECK(loose == lost);
+                    if (!vbit) CHECK(loose.empty());
+                }
+            }
+        }
+    }
+}
+
+TEST_CASE("Loose pieces (T-0140): waste the kerfs enclose between vectors is reported", "[toolpath][profile][tabs]") {
+    // A square frame cut as four bars, Outside, 4 mm apart (more than the tool, less than two
+    // kerfs): the tool runs through the gaps and the kerfs close round the waste in the middle.
+    // With 2 mm tabs some land on the inner edges and hold it: nothing comes free. With tabs that
+    // fit no bar, the bars and (where the kerfs close in the gaps) the waste in the middle (inside
+    // no vector, which before T-0140 nothing looked at, even for sided cuts) come free. Checked
+    // against a raster flood.
+    const std::vector<Contour> cs{Contour::rectangle(Box2{{0, 0}, {30, 5}}), Contour::rectangle(Box2{{0, 25}, {30, 30}}),
+                                  Contour::rectangle(Box2{{0, 9}, {5, 21}}), Contour::rectangle(Box2{{25, 9}, {30, 21}})};
+    int withMiddle = 0;  // the bars and the middle come free
+    for (const double tabLength : {2.0, 40.0}) {
+        for (const double allowance : {0.0, 0.3}) {
+            for (const bool sep : {false, true}) {
+                INFO("tab length " << tabLength << " allowance " << allowance << " sep " << sep);
+                ProfileParams p = looseParams(ProfileSide::Outside, allowance);
+                p.tabs.length = tabLength;
+                p.tabs.count = 2;
+                p.separateLastPass = sep;
+                const ProfileResult r = profileToolpath(cs, test::endMill(3.175), p);
+                REQUIRE(r.ok());
+                std::vector<double> got;
+                for (const auto& g : loosePieces(r)) got.push_back(g.second);
+                std::sort(got.begin(), got.end());
+                const std::vector<double> flood =
+                    rasterFreePieces(r.toolpath, p.passes.bottomZ() + p.tabs.thickness, 1.5875, 0.04);
+                std::vector<double> big;
+                for (double a : flood) {
+                    if (a >= 0.1) big.push_back(a);
+                }
+                CHECK((tabLength > 30.0 ? big.size() >= 4 : big.empty()));
+                if (big.size() == 5) ++withMiddle;
+                REQUIRE(got.size() == big.size());
+                for (std::size_t k = 0; k < big.size(); ++k) {
+                    CHECK(std::fabs(got[k] - big[k]) <= 0.02 * big[k] + 0.05);
+                }
+            }
+        }
+    }
+    CHECK(withMiddle >= 2);
+}
+
+TEST_CASE("Generative (T-0140): Inside/Outside with allowance >= 0, every free piece reported, nothing else",
+          "[toolpath][profile][tabs][property]") {
+    // Random small scenes (one or two vectors, some tabs too long to fit), checked against a
+    // whole-scene raster flood of the moves at the tab layer (0.04 mm cells): every free piece of
+    // 0.3 mm2 or more is reported with its area, and every reported piece is a free piece (pieces
+    // under 0.3 mm2 are left to the cell resolution). Leads off.
+    test::SplitMix rng{0x7140};
+    int withFree = 0;
+    for (int s = 0; s < 24; ++s) {
+        std::vector<Contour> cs;
+        const int kind = static_cast<int>(rng.uniform(0.0, 4.0));
+        const double w = rng.uniform(4.0, 20.0);
+        const double h = rng.uniform(4.0, 16.0);
+        if (kind == 0) {
+            cs.push_back(Contour::rectangle(Box2{{0, 0}, {w, h}}));
+        } else if (kind == 1) {
+            cs.push_back(Contour::circle({0, 0}, 0.5 * h));
+        } else if (kind == 2) {  // a plate with a hole
+            cs.push_back(Contour::rectangle(Box2{{0, 0}, {w + 8.0, h + 8.0}}));
+            cs.push_back(Contour::circle({0.5 * w + 4.0, 0.5 * h + 4.0}, rng.uniform(1.5, 0.5 * std::min(w, h))));
+        } else {  // two parts close together
+            cs.push_back(Contour::rectangle(Box2{{0, 0}, {w, h}}));
+            const double gap = rng.uniform(0.5, 6.0);
+            cs.push_back(Contour::circle({w + gap + 0.4 * h, 0.5 * h}, 0.4 * h));
+        }
+        ProfileParams p = looseParams(rng.uniform(0.0, 1.0) < 0.5 ? ProfileSide::Outside : ProfileSide::Inside,
+                                      rng.uniform(0.0, 1.0) < 0.4 ? 0.0 : rng.uniform(0.0, 1.0));
+        p.tabs.count = 1 + static_cast<int>(rng.uniform(0.0, 3.0));
+        p.tabs.length = rng.uniform(0.0, 1.0) < 0.3 ? 40.0 : rng.uniform(0.5, 4.0);
+        p.tabs.thickness = rng.uniform(0.5, 2.0);
+        p.separateLastPass = rng.uniform(0.0, 1.0) < 0.5;
+        p.lastPassAllowance = rng.uniform(0.05, 0.6);
+        const double d = rng.uniform(0.0, 1.0) < 0.5 ? 2.0 : 3.175;
+        INFO("scene " << s << " side " << static_cast<int>(p.side) << " allowance " << p.allowance << " sep "
+                      << p.separateLastPass << " tab length " << p.tabs.length << " d " << d);
+        const ProfileResult r = profileToolpath(cs, test::endMill(d), p);
+        REQUIRE(r.ok());
+        std::vector<double> got;
+        for (const auto& g : loosePieces(r)) got.push_back(g.second);
+        std::sort(got.begin(), got.end());
+        const std::vector<double> flood =
+            rasterFreePieces(r.toolpath, p.passes.bottomZ() + p.tabs.thickness, 0.5 * d, 0.04);
+        if (!flood.empty() && flood.back() >= 0.3) ++withFree;
+        std::vector<bool> used(got.size(), false);
+        for (double a : flood) {
+            if (a < 0.3) continue;
+            INFO("free piece " << a);
+            bool found = false;
+            for (std::size_t i = 0; i < got.size() && !found; ++i) {
+                if (!used[i] && std::fabs(got[i] - a) <= 0.03 * a + 0.1) used[i] = found = true;
+            }
+            CHECK(found);
+        }
+        for (std::size_t i = 0; i < got.size(); ++i) {
+            if (used[i]) continue;
+            INFO("reported piece " << got[i]);
+            const bool small = got[i] < 0.3 + 0.1;
+            const bool inFlood = std::any_of(flood.begin(), flood.end(), [&](double a) {
+                return std::fabs(got[i] - a) <= 0.03 * a + 0.1;
+            });
+            CHECK((small || inFlood));
+        }
+    }
+    CHECK(withFree >= 4);  // the scenes do exercise the report
+}
+
+TEST_CASE("Loose pieces (T-0140): sweep scenes, Inside/Outside with allowance >= 0", "[toolpath][profile][tabs]") {
+    // T-0140 sweep (whole-scene flood of the moves, as T-0127's wsf, leads off): each reports
+    // exactly the flood's free pieces (before T-0140, none of them).
+    struct Case {
+        const char* name;
+        const char* text;
+        std::vector<double> areas;  // the flood's free pieces
+    };
+    const std::vector<Case> cases{
+        // 1480018_45: End mill 6 mm, Inside, 3 of 6 tabs kept.
+        {"1480018_45",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.11dee7492925ep+6 0x0p+0\n"
+         "L 0x1.11dee7492925ep+6 0x0p+0 0x1.11dee7492925ep+6 0x1.9a55ef147285ap+5\n"
+         "L 0x1.11dee7492925ep+6 0x1.9a55ef147285ap+5 0x0p+0 0x1.9a55ef147285ap+5\n"
+         "L 0x0p+0 0x1.9a55ef147285ap+5 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "A 0x1.36d1f33058beap+3 0x1.0588c5c3c4e92p+4 0x1.86fb407958683p+1 0x0p+0 0x0p+0 0\n"
+         "C 1\n"
+         "L 0x1.a0291cd4cf192p+5 0x1.70e930c21b2bap+3 0x1.0504965061d6dp+6 0x1.70e930c21b2bap+3\n"
+         "L 0x1.0504965061d6dp+6 0x1.70e930c21b2bap+3 0x1.0504965061d6dp+6 0x1.4cae481830cc3p+4\n"
+         "L 0x1.0504965061d6dp+6 0x1.4cae481830cc3p+4 0x1.a0291cd4cf192p+5 0x1.4cae481830cc3p+4\n"
+         "L 0x1.a0291cd4cf192p+5 0x1.4cae481830cc3p+4 0x1.a0291cd4cf192p+5 0x1.70e930c21b2bap+3\n"
+         "C 1\n"
+         "A 0x1.066fce86129ecp+4 0x1.f62647890e1fap+3 0x1.57c098cf58252p+2 0x0p+0 0x0p+0 0\n"
+         "P 0x1.8p+2 0 -0x0p+0 1 1 0x1.80488ff57c4f3p-1 0x1.a2c598ad639dcp+3 0x1.ff14789ad15cap+1 0x0p+0 0x1.4p+2 0 0x1.b35090cb55462p-2 1 1 0x1.4babe86f79a44p+3 0x1.0aba2c5a7ce1fp+2 1 7 0x1.6ca0106feaeb5p+5 0x0p+0 1 0 0x0p+0 3 0x1.a294af2d8bc4bp+4 0 0 0x1.6036f0fd682b2p-3 0x1.3c237149c7994p+3 0x1.3833a72a02555p-2 0x1.4a6f8d576f31ap+3 0 0x1.1d518ffecc526p+0 0 0 0x0p+0 0x0p+0 1 6 0 0 0 0 0x1.824b6d493446cp+5 -0x1.79886279e068p-1 0x1p+1\n"
+         "K 0 0\n"
+         , {5.381, 115.729}},
+        // 1480030_22: V-bit 90 deg, Inside, separate last pass, 1 of 18 tabs kept.
+        {"1480030_22",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.5271f282072cap+5 0x0p+0\n"
+         "L 0x1.5271f282072cap+5 0x0p+0 0x1.5271f282072cap+5 0x1.f9ddffa56c388p+5\n"
+         "L 0x1.5271f282072cap+5 0x1.f9ddffa56c388p+5 0x0p+0 0x1.f9ddffa56c388p+5\n"
+         "L 0x0p+0 0x1.f9ddffa56c388p+5 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "A 0x1.69df856d7e314p+4 0x1.1c12aab9cbac5p+4 0x1.18e9658f99ed2p+3 0x0p+0 0x0p+0 0\n"
+         "C 1\n"
+         "A 0x1.8e0914a444915p+4 0x1.88983c56d3ca2p+4 0x1.629acd20900b5p+2 0x0p+0 0x0p+0 0\n"
+         "C 1\n"
+         "A 0x1.8438b336e3508p+4 0x1.13320b0e475e4p+5 0x1.1fbc8c47ef97ep+3 0x0p+0 0x0p+0 0\n"
+         "P 0x1.8p+3 90 0x1.ba8afe274656bp-7 1 0 0x0p+0 0x1.fbf4cac1dd3aep+1 0x1.4153f2f586151p+2 0x0p+0 0x1.4p+2 1 0x1.b95de59d82075p-1 1 1 0x1.46bc3c95c92c2p+2 0x1.cf785e546d5afp+0 0 9 0x1.f68b9a0f53044p+4 0x0p+0 1 0 0x0p+0 1 0x1.ccf5e91833176p+4 0 0 0x1.591cd880c2e17p-4 0x1.aeec7bde8f6fdp+2 0x1.1ec980e4c8f2fp-1 0x1.53bdd16ccc752p+3 0 0x1.5b2c2dab53651p-2 0 0 0x0p+0 0x0p+0 0 4 0 0 0 1 0x1.2624989f77a6cp+5 -0x1.91acc2c9cc09ap+4 0x1p+1\n"
+         "K 1 0\n"
+         , {2.979, 719.753}},
+        // 1480009_31: End mill 12 mm, Inside, separate last pass, every tab left out.
+        {"1480009_31",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.26ff204c96d2fp+6 0x0p+0\n"
+         "L 0x1.26ff204c96d2fp+6 0x0p+0 0x1.26ff204c96d2fp+6 0x1.a0ed9fb6bf71p+5\n"
+         "L 0x1.26ff204c96d2fp+6 0x1.a0ed9fb6bf71p+5 0x0p+0 0x1.a0ed9fb6bf71p+5\n"
+         "L 0x0p+0 0x1.a0ed9fb6bf71p+5 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "A 0x1.ceb6c36499b28p+4 0x1.cd0564f90d69ap+4 0x1.507bfaa436fcep+2 0x0p+0 0x0p+0 0\n"
+         "C 1\n"
+         "A 0x1.bb51d271b874ap+5 0x1.08954ddad4e5p+4 0x1.bb1ff62b5a692p+2 0x0p+0 0x0p+0 0\n"
+         "P 0x1.8p+3 0 -0x0p+0 1 0 0x1.dcc65ceb812f8p+0 0x1.57464770436f1p+2 0x1.810978af7ca54p+2 0x0p+0 0x1.4p+2 1 0x1.a3ad7fd907972p-4 1 1 0x1.984be1a7906cap-2 0x1.02a7acea4c8ebp+1 0 3 0x1.4d06f4fc2e0bp+3 0x0p+0 1 0 0x0p+0 2 0x1.19968e04519d9p+5 0 0 0x1.d46b3552b7149p-4 0x1.aa0845a448826p+3 0x1.d28b3aa50a5eap-3 0x1.afc09a0dd89a7p+2 0 0x1.9278979cc36cap-1 0 0 0x0p+0 0x0p+0 2 4 0 0 0 0 0x1.44eabb3f2cae4p+4 -0x1.1ac89f34e137p+1 0x1p+1\n"
+         "K 0 0\n"
+         , {47.734, 1.73, 86.838, 90.987, 9.901}},
+    };
+    for (const Case& k : cases) {
+        INFO(k.name);
+        std::vector<Contour> cs;
+        ProfileParams p;
+        int vbitDeg = 0;
+        const double d = readScene(k.text, cs, p, vbitDeg);
+        tooling::Tool tool = test::endMill(d);
+        if (vbitDeg > 0) {
+            tool.type = tooling::ToolType::VBit;
+            tool.includedAngle = vbitDeg * geometry::kPi / 180.0;
+        }
+        const ProfileResult r = profileToolpath(cs, tool, p);
+        REQUIRE(r.ok());
+        std::vector<double> got;
+        for (const auto& g : loosePieces(r)) got.push_back(g.second);
+        std::vector<double> want = k.areas;
+        std::sort(got.begin(), got.end());
+        std::sort(want.begin(), want.end());
+        REQUIRE(got.size() == want.size());
+        for (std::size_t i = 0; i < want.size(); ++i) {
+            CHECK(std::fabs(got[i] - want[i]) <= 0.03 * want[i] + 0.1);
+        }
     }
 }
