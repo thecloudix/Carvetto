@@ -21,8 +21,10 @@ double toClipperDistance(double mm) {
 }
 
 Clipper2Lib::Path64 toClipperPath(const Contour& c, const Tolerance& tol) {
-    Polyline pl = c.polygonise(tol);
-    pl.removeDuplicates(tol.distance);
+    // Only true grid duplicates are merged (below), not points closer than tol.distance: that
+    // merge collapsed a closed contour smaller than the distance tolerance (an island circle of
+    // radius below it), which the booleans then dropped (T-0175, owner decision; ADR-0006 §11).
+    const Polyline pl = c.polygonise(tol);
     Clipper2Lib::Path64 path;
     path.reserve(pl.points.size());
     for (const Vec2 p : pl.points) {

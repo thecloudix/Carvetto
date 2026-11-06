@@ -341,12 +341,20 @@ decision added by T-0141, 2026-11-02; §10 added by T-0142, 2026-11-05; §11 add
       1e-6/θ mm from the meeting point, and the tool may come up to about that length² / (8 ·
       radius) closer to the true wall there (the T-0175 generative test keeps S-curves to angles
       where that is below 5e-6 mm).
-    - **Distance tolerance.** `toClipperPath` merges consecutive polygon points closer than
-      `tol.distance`, so a closed contour smaller than the distance tolerance (an island circle of
-      radius below it) still collapses; with Pocket's distance up to chordal that is up to 1 mm.
-      Merging only grid duplicates fixed it in a T-0175 experiment but changed about half of the
-      Pocket sweep cases and 59 of 960 V-Carve ones, so it was not done (open question, T-0175
-      report).
+    - **Distance tolerance: fixed (owner decision, 2026-11-06).** `toClipperPath` merged
+      consecutive polygon points closer than `tol.distance`, so a closed contour smaller than the
+      distance tolerance (an island circle of radius below it, a small square, a strip narrower
+      than it) collapsed and was dropped; with Pocket's distance up to chordal that is up to 1 mm
+      (T-0175 probe: 43 of 100 tiny circle islands cut into). The owner decided such islands are
+      kept and cut around: `toClipperPath` now merges only points that round to the same grid
+      point. Nothing relied on the coarser merge for correctness (full ctest, the T-0141/T-0142 batching,
+      dust and offset-quality tests unchanged), but it had thinned intermediate polygons as a side
+      effect: Pocket's rest-machining bookkeeping (swept area, rest material) now thins itself
+      (ADR-0017 §10). Change against main of the whole of T-0175: Pocket 2,012 of 3,600 sweep
+      cases, V-Carve 67 of 1,040 (165 of 1,040 with clearance end mills forced); CPU unchanged
+      (ADR-0017 §3). The T-0175 probe and `pocket_thin_island_test.cpp` (circles, squares and
+      strips at 0.2–0.95 × the distance tolerance, distance up to chordal, scale 0.01–100) keep the
+      tool radius + allowance − 1e-5 mm away from such islands.
 
 ## Rationale
 - Clipper2 is the de-facto robust polygon clipper for CAM; it is deterministic, header-light,

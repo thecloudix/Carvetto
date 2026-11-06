@@ -47,14 +47,14 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
    them: `pocket_thin_island_test.cpp` (lenses, crescents, tabs, C- and S-shaped Bezier lenses
    whose curves lie 0.0002–0.5 × chordal from their chords, at least 1e-5 mm, at scale 0.01, 1 and
    100, at the origin and 1e4 mm away) in Release, 744 toolpaths, smallest clearance less allowance +4.87e-5 mm (main, 20 cases per scale and offset: 80 of 88 toolpaths inside the radius, the tool on or through the island). It does not hold for material thinner than the
-   boolean grid, near grazing meetings of boundaries, or for an island smaller than the distance
-   tolerance (ADR-0006 §11, limits). Change against main (T-0175 hash
+   boolean grid or near grazing meetings of boundaries (ADR-0006 §11, limits). Islands smaller
+   than the distance tolerance are kept since the owner's decision of 2026-11-06 (ADR-0006 §11). Change against main (T-0175 hash
    sweep, verifier families 0–9, 60 seeds each at the origin, distance = chordal, 1e4 and 1e6 mm
-   away, scale 0.01 and with rest tools: 3,600 cases): 709 changed; retracts 75,454 → 75,471,
-   plunges 106,412 → 106,436, moves −0.01 %. In the base configuration (111 of 600) 28 come from
-   the polygonisation (+122 moves, +3 retracts) and 88 from the surface travel of §8a (−419 moves,
-   same retracts). Main came inside the tool radius in 4 cases (thin islands at scale 0.01, down to
-   −0.0116 mm), none now (smallest clearance less allowance +2.4e-5 mm). In the T-0169
+   away, scale 0.01 and with rest tools: 3,600 cases): 2,012 changed, most of them because
+   polygon points closer than the distance tolerance are no longer merged (ADR-0006 §11); retracts
+   75,454 → 75,676 (+212 in rest-tool jobs, +10 with one tool), plunges 106,412 → 106,657, moves
+   +0.45 %, CPU 0.997× in total. Main came inside the tool radius in 4 cases (thin islands at
+   scale 0.01, down to −0.0116 mm), none now (smallest clearance less allowance +2.4e-5 mm). In the T-0169
    generative test (`pocket_junction_test.cpp`: polygons and stars whose edges are lines, arcs
    and Beziers bulging either way, D-shaped islands, chordal 0.001–0.1, distance up to chordal, at
    the origin and 1e4 mm away) and in 600 scratch cases (666 toolpaths) the smallest clearance less
@@ -326,6 +326,17 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
     reach, so the wall scallops become rest material for the next tool. Round 1
     opened the rest material by 5·chordal and so skipped real thin residue: a ~0.1 mm corner band
     at chordal 0.049 (verifier seed 31493).
+    **Amended by T-0175.** Each cut area added to `swept`, and the rest material itself, is thinned
+    (Douglas–Peucker) to a tenth of the sliver width, so they move by at most that either way; every
+    part of the rest material is at least two slivers wide (it is opened by the sliver), and the
+    rest tools still only move inside their own centre regions. Until T-0175 the booleans merged
+    polygon points closer than the distance tolerance, which thinned the 1e-4 mm round joins of the
+    swept area and the micro-edges where the target and swept boundaries meet as a side effect;
+    once they kept every vertex (ADR-0006 §11) the rest material carried them through every later
+    offset, and rest jobs became up to 2× slower (verifier families with rest tools, 30 cases
+    each: 56.3 s on main, 74.7 s without thinning, 55.2 s with it). Half a sliver was as fast but
+    gave more retracts (+1.3 % against +0.7 %): the thinned rings can touch themselves, and the
+    even-odd booleans then split a rest area.
 11. **Output.** Moves are straight lines only, because the geometry is polygonal. Rapids are at
     safe Z, every toolpath starts with a rapid and ends retracted, and the output is
     deterministic (no unordered containers, ties broken geometrically).

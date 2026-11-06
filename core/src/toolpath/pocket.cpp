@@ -2410,6 +2410,12 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
                 target = insetBy(region, params.allowance + margin, tol);
             }
             plan.restMaterial = opened(difference(*target, swept, tol), sliver, fine);
+            // Thinned like the swept area (T-0175): the boolean and the opening leave many
+            // micro-edges where the target and the swept boundaries meet; every part kept is at
+            // least two slivers wide, so moving its boundary by a tenth of a sliver keeps it.
+            for (Contour& c : plan.restMaterial) {
+                c = contourOf(simplified(ringOf(c), 0.1 * sliver));
+            }
             if (plan.restMaterial.empty()) {
                 say(ToolpathIssue::NoRestMaterial, label + ": no rest material left, nothing to cut", ti);
                 continue;
@@ -2500,6 +2506,14 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
         if (ti + 1 < tools.size()) {  // only later tools need the swept area
             if (cutArea.empty()) {
                 cutArea = scalloped ? sweptByPaths(plan.paths) : offsetBy(plan.centreRegion, r, fine);
+            }
+            // The swept area is bookkeeping for the rest tools, not a wall: its round joins (at
+            // 1e-4 mm) are thinned to a tenth of the sliver width, so it moves by at most that (material
+            // thinner than a sliver is noise, `opened` below). Since T-0175 the booleans keep
+            // every vertex (no merge at the distance tolerance), and without this the rest
+            // material carried them all through every later offset (up to 2× slower).
+            for (Contour& c : cutArea) {
+                c = contourOf(simplified(ringOf(c), 0.1 * sliver));
             }
             swept = swept.empty() ? cutArea : geometry::unionContours([&] {
                 std::vector<Contour> all = swept;

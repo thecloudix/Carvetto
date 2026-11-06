@@ -310,3 +310,78 @@ TEST_CASE("T-0175 property: thin islands keep the tool away at every scale and f
         CHECK(perKind[i] >= cases / 16);
     }
 }
+
+TEST_CASE("T-0175 property: islands smaller than the distance tolerance are kept and cut around",
+          "[toolpath][pocket][gouge][t0175]") {
+    // Owner decision (T-0175): an island smaller than the distance tolerance is not a point. The
+    // polygonisation used to merge consecutive vertices closer than the distance tolerance, so a
+    // circle of radius below it, a small square, or a strip narrower than it collapsed and the
+    // tool cut through it (43 of 100 tiny circles inside the tool radius in the T-0175 probe).
+    // Circles, squares and 4 mm strips at 0.2–0.95 × the distance tolerance (radius, half side,
+    // width), with distance = chordal, chordal / 2 or chordal / 10, at scale 0.01, 1 and 100, at
+    // the origin and 1e4 mm away; sizes of at least 1e-5 mm (ADR-0006 §11: thinner material is
+    // below the boolean grid).
+#ifdef NDEBUG
+    const std::uint64_t cases = 60;
+#else
+    const std::uint64_t cases = 12;
+#endif
+    std::size_t checked = 0;
+    double worst = 1e300;
+    for (const double scale : {0.01, 1.0, 100.0}) {
+        for (const double far : {0.0, 1e4}) {
+            for (std::uint64_t k = 1; k <= cases; ++k) {
+                SplitMix rng{0x7175'd000ULL + k + static_cast<std::uint64_t>(scale * 1000.0)};
+                const double chords[] = {1e-4, 3e-4, 0.001, 0.003, 0.01, 0.03, 0.1};
+                PocketParams p;
+                p.tolerance.chordal = chords[scale > 10.0 ? 2 + rng.next() % 5 : rng.next() % 7];
+                const double fractions[] = {1.0, 0.5, 0.1};
+                p.tolerance.distance = std::max(1e-6, p.tolerance.chordal * fractions[rng.next() % 3]);
+                const int kind = static_cast<int>(rng.next() % 3);
+                // Absolute size (after scaling): below the distance tolerance, at least 1e-5 mm.
+                const double size = std::max(rng.uniform(0.2, 0.95) * p.tolerance.distance, 1e-5);
+                const Vec2 centre{rng.uniform(-3.0, 3.0) * scale, rng.uniform(-3.0, 3.0) * scale};
+                Contour island;
+                if (kind == 0) {
+                    island = Contour::circle(centre, size);
+                } else if (kind == 1) {
+                    island = Contour::rectangle(Box2{centre - Vec2{size, size}, centre + Vec2{size, size}});
+                } else {
+                    island = Contour::rectangle(
+                        Box2{centre - Vec2{2.0 * scale, 0.5 * size}, centre + Vec2{2.0 * scale, 0.5 * size}});
+                }
+                std::vector<Contour> walls{Contour::rectangle(Box2{{-10 * scale, -10 * scale}, {10 * scale, 10 * scale}}),
+                                           island};
+                const Transform2 m = Transform2::translation({far, -0.7 * far});
+                for (Contour& w : walls) {
+                    w = w.transformed(m);
+                }
+                const double d = rng.uniform(0.2, 2.0) * scale;
+                p.strategy = rng.next() % 2 == 0 ? PocketStrategy::Raster : PocketStrategy::Offset;
+                p.rasterAngle = rng.uniform(0.0, 3.2);
+                p.allowance = rng.next() % 3 == 0 ? rng.uniform(0.0, 0.2) * d : 0.0;
+                p.cutDepth = scale;
+                p.safeZ = 5.0 * scale;
+                const PocketTool tool = carvetto::test::pocket::endMill("E", 1, d, rng.uniform(0.2, 0.9) * d, 3.0 * scale);
+                const PocketResult r = pocketToolpath(walls, {tool}, p);
+                REQUIRE(r.toolpaths.size() == 1);
+                if (r.toolpaths[0].isEmpty()) {
+                    continue;
+                }
+                const oc::ClearanceReport rep =
+                    oc::wallClearance(r.toolpaths[0], walls, 0.5 * d, p.allowance - kSlack, 0.0);
+                INFO("scale " << scale << " far " << far << " case " << k << " kind " << kind << " size " << size
+                              << " chordal " << p.tolerance.chordal << " distance " << p.tolerance.distance << " d "
+                              << d << ": clearance - allowance " << rep.minClearance - p.allowance << " at move "
+                              << rep.worstMove);
+                CHECK(rep.certified);
+                CHECK(rep.plungesInside);
+                worst = std::min(worst, rep.minClearance - p.allowance);
+                ++checked;
+            }
+        }
+    }
+    INFO("worst clearance - allowance " << worst);
+    CHECK(worst >= -kSlack);
+    CHECK(checked >= 4 * cases);
+}
