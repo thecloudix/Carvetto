@@ -1756,11 +1756,13 @@ void exactJunction(Span& a, Span& b) {
     // about a centre 3e4 mm away from a point at 8e3 mm): the residual is a few ulps whose
     // direction is rounding noise (it differed between platforms' sin/cos, 0xe400137f), so b
     // could start a hair behind a's end. Keep b where it is if it starts level with or ahead of
-    // a's end along a's direction of travel; otherwise take the nearest of the searched
-    // candidates that does, within the documented 1e-12 x the scale.
+    // a's end along a's direction of travel within the documented 1e-12 x the scale; otherwise
+    // take the nearest of the searched candidates that does. (b kept wherever it started ahead
+    // left the whole residual, up to 1e-10 x the scale, open: a cusp between Round arcs about
+    // vertices 2d + 3.2e-11 apart kept a 3.2e-11 mm gap when sin/cos were 1 ulp off glibc's.)
     const Vec2 ta = tangentAt(a, 1.0);
     auto ahead = [&](const ArcSpan& c) { return (c.startPoint() - j).dot(ta) >= 0.0; };
-    if (ahead(arc)) {
+    if (ahead(arc) && geometry::distance(arc.startPoint(), j) <= 1e-12 * scale) {
         return;
     }
     double bestGap = 1e-12 * scale;

@@ -242,7 +242,11 @@ std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double
 /// whose two spans cross again within the tolerance of their junction (Round arcs about vertices a hair
 /// less than 2 x |distance| apart overlap in a lens), both spans are cut back to that crossing, so the
 /// chain does not cross itself there; crossings whose place is rounding noise (two circles that only
-/// touch, to rounding) are left as they are.
+/// touch, to rounding: the crossing's distance from the junction times the sine of the crossing angle
+/// is within 100 rounding units of the coordinates and span lengths) are left as they are. Such a
+/// crossing is not counted as the chain crossing itself: where it falls moves by up to ~1e-7 mm with
+/// the last bit of a radius or an angle (it differs between platforms' sin/cos), while the two spans
+/// stay within rounding of each other between it and the junction.
 ///
 /// An empty or degenerate contour, or a non-finite `distance`, yields no chains; a zero
 /// `distance` yields the (flattened) input as one chain. A closed contour is accepted too: the

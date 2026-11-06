@@ -474,7 +474,24 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     crossing must stand off the junction by more than 100 rounding units over the sine of the crossing
     angle (two circles touching to rounding cross twice ~1e-8 mm apart at places that are noise: fam5
     0x28500192, where cutting there made a self-crossing), and the cut spans must meet only at their new
-    junction. The remaining geometry is unchanged, so no distance bound moves.
+    junction. The remaining geometry is unchanged, so no distance bound moves. A crossing below that
+    bound is not a self-crossing in the sense of the header (amended at the PR #61 MSVC failure): the
+    two circles touch to rounding, the spans stay within rounding of each other up to it, and where it
+    falls (up to 1.4e-7 mm from the junction) moves with the last bit of a radius or of sin/cos. MSVC's
+    sin/cos put one at 1.1e-8 mm from the cusp of the T-0128 synthetic cusp test at g = 0, which glibc
+    happens to put on the junction itself; the tests' self-crossing count applies the same bound to
+    adjacent spans. (f, same PR) exactJunction kept an arc where it started whenever its start lay ahead
+    of the previous end and no centre/radius search hit the end point exactly, leaving residuals up to
+    its 1e-10 x scale snapping limit open (the closing junction of the cusp test's loop at g = 3.2e-11
+    stayed 3.2e-11 mm open with sin/cos 1 ulp off glibc's); it now keeps the arc only within the
+    documented 1e-12 x scale and otherwise takes the nearest searched candidate that does not start
+    behind. Evidence: libm calls (sin, cos, atan2, hypot, acos, asin, tan) wrapped at link time to
+    return results moved by a deterministic pseudo-random -k..k ulps per argument, k = 1..4: the T-0128
+    tests pass for 50 seeds at each k; the cusp sweeps (which = 0..3, d = 0.13 / 1.03 / 3.175, 150
+    perturbed sweeps of 732 offsets) show no self-crossing above the bound and no junction gap, the
+    largest noise crossing at 19.4 of the 100 units (a real cusp lens, 0xc500076c, is ~1e8), while a
+    count with the 1e-9 slack alone finds up to 16 noise crossings per sweep (the round-1 verifier's
+    checker: branch 1-5, main 16-24, and main also opens junction gaps).
   - *Consequences.* A channel 2d + w wide keeps its path for every w >= 0 (sweep: every inside offset
     covers the channel's centre line within the tolerance, except the closed rectangles at d = 3.175,
     which are shorter than the tool). Outputs differ from T-0017 only where it dropped such a path or

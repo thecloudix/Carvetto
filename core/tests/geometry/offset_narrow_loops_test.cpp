@@ -7,6 +7,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
 #include <cstddef>
+#include <limits>
 #include <string>
 #include <variant>
 #include <vector>
@@ -85,8 +86,15 @@ int uncovered(const std::vector<Contour>& chains, Vec2 a, Vec2 b) {
 // No span of a chain crosses or touches another one, except adjacent spans at their junction and
 // spans at most three apart touching at a junction between them (the bridge of about g between two
 // Round arcs whose circles miss each other by g, ADR-0012 A1; as the T-0017 verifiers' checker).
+// A second crossing of two adjacent spans counts only when it stands off their junction by more
+// than rounding: distance x sine of the crossing angle above 100 rounding units of the coordinates
+// and lengths, the bound removeCuspLoops uses (offset.hpp, ADR-0012 A3 (e)). Below it the spans
+// are tangent at the junction to rounding (two circles that touch: their computed circles overlap
+// or miss by ~1e-16 mm, and where they "cross" moves by ~1e-8 mm with the last bit of a radius or
+// an angle, so it differs between platforms' libm, e.g. MSVC against glibc at g = 0 below).
 std::size_t countSelfCrossings(const std::vector<Contour>& chains) {
     const Tolerance exact{1e-9, 1e-9, 0.01};
+    const double eps = std::numeric_limits<double>::epsilon();
     std::size_t count = 0;
     for (const Contour& c : chains) {
         const std::size_t n = c.spans.size();
@@ -106,7 +114,24 @@ std::size_t countSelfCrossings(const std::vector<Contour>& chains) {
                             nearJunction = nearJunction || distance(x.point, startPoint(sp)) <= slack;
                         }
                     }
-                    if (!atJunction && !nearJunction) {
+                    bool noise = false;
+                    if (next || wrap) {
+                        const double sine =
+                            std::fabs(tangentAt(c.spans[i], x.tA).cross(tangentAt(c.spans[j], x.tB)));
+                        const double unit = eps * std::max({1.0, std::fabs(x.point.x), std::fabs(x.point.y),
+                                                             length(c.spans[i]), length(c.spans[j])});
+                        std::vector<Vec2> junctions;
+                        if (next) {
+                            junctions.push_back(endPoint(c.spans[i]));
+                        }
+                        if (wrap) {
+                            junctions.push_back(startPoint(c.spans[i]));
+                        }
+                        for (const Vec2 jn : junctions) {
+                            noise = noise || distance(x.point, jn) * sine <= 100.0 * unit;
+                        }
+                    }
+                    if (!atJunction && !nearJunction && !noise) {
                         ++count;
                     }
                 }
