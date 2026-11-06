@@ -121,14 +121,16 @@ double bezierLengthRecursive(const BezierSpan& b, double absTol, int depth) {
            bezierLengthRecursive(r, absTol * 0.5, depth + 1);
 }
 
-void bezierPolygoniseRecursive(const BezierSpan& b, double chordalTol, int depth, std::vector<Vec2>& out) {
-    if (b.flatness() <= chordalTol || depth >= 24) {
+// Pieces are split in halves until flat within `chordalTol`, and at least `minDepth` times.
+void bezierPolygoniseRecursive(const BezierSpan& b, double chordalTol, int depth, std::vector<Vec2>& out,
+                               int minDepth = 0) {
+    if ((depth >= minDepth && b.flatness() <= chordalTol) || depth >= 24) {
         out.push_back(b.p3);
         return;
     }
     const auto [l, r] = b.split(0.5);
-    bezierPolygoniseRecursive(l, chordalTol, depth + 1, out);
-    bezierPolygoniseRecursive(r, chordalTol, depth + 1, out);
+    bezierPolygoniseRecursive(l, chordalTol, depth + 1, out, minDepth);
+    bezierPolygoniseRecursive(r, chordalTol, depth + 1, out, minDepth);
 }
 
 // Distance from point p to the segment a-b (so control points overshooting the chord count too).
@@ -332,6 +334,30 @@ void polygoniseInto(const Span& s, const Tolerance& tol, std::vector<Vec2>& out)
             }
         },
         s);
+}
+
+void polygoniseRegionInto(const Span& s, const Tolerance& tol, std::vector<Vec2>& out) {
+    if (const auto* arc = std::get_if<ArcSpan>(&s)) {
+        // One chord would be the whole polygon: add the midpoint, where the arc is farthest from
+        // its chord (more chords already have vertices off it, an arc being convex).
+        if (arc->segmentCountFor(tol.chordal) == 1 && arc->radius > 0.0 && arc->sweepAngle() != 0.0) {
+            out.push_back(arc->pointAt(0.5));
+            out.push_back(arc->endPoint());
+            return;
+        }
+    } else if (const auto* bez = std::get_if<BezierSpan>(&s)) {
+        // A C-shaped curve is farthest from its chord near t = 1/2, so one split keeps a vertex
+        // off it. An S-shaped one (control points either side of the chord) crosses its chord
+        // near there, its halves can be flat on that same line, and it leaves it most near
+        // t = 0.21 and 0.79: two splits keep the quarter points.
+        const Vec2 chord = bez->p3 - bez->p0;
+        const double c1 = chord.cross(bez->p1 - bez->p0);
+        const double c2 = chord.cross(bez->p2 - bez->p0);
+        const int minDepth = (c1 < 0.0 && c2 > 0.0) || (c1 > 0.0 && c2 < 0.0) ? 2 : bez->flatness() > 0.0 ? 1 : 0;
+        bezierPolygoniseRecursive(*bez, tol.chordal, 0, out, minDepth);
+        return;
+    }
+    polygoniseInto(s, tol, out);
 }
 
 bool isDegenerate(const Span& s, const Tolerance& tol) {

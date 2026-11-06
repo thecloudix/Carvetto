@@ -14,6 +14,7 @@ add_executable(carvetto_tests
   geometry/span_test.cpp
   geometry/polyline_test.cpp
   geometry/contour_test.cpp
+  geometry/region_polygon_test.cpp
   geometry/contour_ops_test.cpp
   geometry/signed_area_far_test.cpp
   geometry/winding_degeneracy_test.cpp
@@ -85,6 +86,8 @@ add_executable(carvetto_tests
   toolpath/pocket_centre_test.cpp
   toolpath/pocket_guard_test.cpp
   toolpath/pocket_junction_test.cpp
+  toolpath/pocket_thin_island_test.cpp
+  toolpath/pocket_move_check_test.cpp
   toolpath/toolpath_api_test.cpp
   toolpath/toolpath_scale_test.cpp
   toolpath/toolpath_residual_scale_test.cpp

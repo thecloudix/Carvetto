@@ -130,6 +130,13 @@ std::vector<Span> transformed(const Span& s, const Transform2& m);
 /// Appends the polygonisation of `s` to `out`, excluding the start point and including the
 /// end point, so consecutive spans can be chained. Chordal deviation stays within `tol.chordal`.
 void polygoniseInto(const Span& s, const Tolerance& tol, std::vector<Vec2>& out);
+/// As `polygoniseInto`, for the boundary of a region (closed contours, T-0175): a curved span
+/// never becomes its bare chord. An arc that one chord would cover also gets its midpoint; a
+/// Bezier is split at least once, and at least twice when it is S-shaped (control points either
+/// side of the chord), so its polygon has vertices off the chord. A closed shape bounded by curves
+/// within the tolerance of their chords (a thin lens, a crescent, a flat tab) thus keeps a polygon
+/// of non-zero area instead of collapsing onto the chords, which booleans would drop.
+void polygoniseRegionInto(const Span& s, const Tolerance& tol, std::vector<Vec2>& out);
 /// True when the span has (near) zero length.
 bool isDegenerate(const Span& s, const Tolerance& tol);
 

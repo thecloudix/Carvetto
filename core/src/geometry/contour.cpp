@@ -127,7 +127,11 @@ Polyline Contour::polygonise(const Tolerance& tol) const {
     }
     pl.points.push_back(startPoint());
     for (const Span& s : spans) {
-        polygoniseInto(s, tol, pl.points);
+        if (closed) {
+            polygoniseRegionInto(s, tol, pl.points);
+        } else {
+            polygoniseInto(s, tol, pl.points);
+        }
     }
     if (closed && pl.points.size() > 1 && tol.equalPoints(pl.points.front(), pl.points.back())) {
         pl.points.pop_back();

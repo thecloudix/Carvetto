@@ -21,6 +21,8 @@
 #include "carvetto/toolpath/box_index.hpp"
 #include "carvetto/toolpath/pass_plan.hpp"
 #include "carvetto/toolpath/ramp_entry.hpp"
+#include "../geometry/robust_predicates.hpp"
+#include "pocket_distance.hpp"
 #include "pocket_guard.hpp"
 #include "pocket_order.hpp"
 
@@ -90,21 +92,9 @@ double distToSegment(Vec2 p, Vec2 a, Vec2 b) {
     return geometry::distance(p, a + ab * t);
 }
 
-/// Exact distance between segments ab and cd (0 when they cross or touch).
+/// Distance between segments ab and cd (`detail::segmentDistance`, below).
 double distSegments(Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
-    const Vec2 ab = b - a;
-    const Vec2 cd = d - c;
-    const double o1 = ab.cross(c - a);
-    const double o2 = ab.cross(d - a);
-    const double o3 = cd.cross(a - c);
-    const double o4 = cd.cross(b - c);
-    if (((o1 <= 0.0 && o2 >= 0.0) || (o1 >= 0.0 && o2 <= 0.0)) &&
-        ((o3 <= 0.0 && o4 >= 0.0) || (o3 >= 0.0 && o4 <= 0.0)) && ab.lengthSquared() > 0.0 &&
-        cd.lengthSquared() > 0.0 && !(o1 == 0.0 && o2 == 0.0)) {
-        return 0.0;
-    }
-    return std::min(std::min(distToSegment(a, c, d), distToSegment(b, c, d)),
-                    std::min(distToSegment(c, a, b), distToSegment(d, a, b)));
+    return detail::segmentDistance(a, b, c, d);
 }
 
 bool onRing(const Ring& r, Vec2 p, double tol) {
@@ -781,14 +771,21 @@ class MoveCheck {
         const RegionIndex::Verdicts v = region.segmentInside(a, b, strict_, lenient_);
         return v.strict || (v.lenient && clearOfWalls(a, b));
     }
+    /// For travel at the surface (the first level's travel, T-0175), where the tool touches no
+    /// material, so the walls need no clearance: the inside test with the distance tolerance
+    /// alone, as before T-0169 (it keeps the tool within about twice that tolerance of the region).
+    bool allowsInAir(const RegionIndex& region, Vec2 a, Vec2 b) const {
+        return region.segmentInside(a, b, strict_, lenient_).lenient;
+    }
     bool allows(const std::vector<Ring>& rings, Vec2 a, Vec2 b) const {
         if (segmentInside(a, b, rings, strict_)) {
             return true;
         }
         return segmentInside(a, b, rings, lenient_) && clearOfWalls(a, b);
     }
-    /// Points of a way closer than this are merged (a merged point moves the way by at most this).
-    double mergeDistance() const { return strict_.accept; }
+    /// Points of a way closer than this are merged (a merged point moves the way by at most this):
+    /// rounding below the surface, the distance tolerance at the surface (`allowsInAir`).
+    double mergeDistance(bool inAir) const { return inAir ? lenient_.accept : strict_.accept; }
 
    private:
     bool clearOfWalls(Vec2 a, Vec2 b) const {
@@ -1079,6 +1076,49 @@ Ring simplified(const Ring& r, double eps) {
         }
         if (worst > eps) {
             keep[at % n] = 1;
+            stack.emplace_back(a, at);
+            stack.emplace_back(at, b);
+        }
+    }
+    Ring out;
+    for (std::size_t i = 0; i < n; ++i) {
+        if (keep[i] != 0) {
+            out.push_back(r[i]);
+        }
+    }
+    return out.size() >= 3 ? out : r;
+}
+
+/// `simplified` (Douglas-Peucker within `eps`) run on pieces of at most 256 vertices, whose ends
+/// are kept, so its cost stays linear in the ring size: on long serial rings (a 1,000-tooth comb's
+/// swept area) Douglas-Peucker over the whole ring is quadratic (T-0175). Every dropped vertex is
+/// within `eps` of the result; a ring that would keep fewer than three vertices is kept as it is.
+Ring thinned(const Ring& r, double eps) {
+    const std::size_t n = r.size();
+    if (n <= 4) {
+        return r;
+    }
+    constexpr std::size_t kPiece = 256;
+    std::vector<char> keep(n, 0);
+    std::vector<std::pair<std::size_t, std::size_t>> stack;
+    for (std::size_t a = 0; a < n; a += kPiece) {
+        keep[a] = 1;
+        stack.emplace_back(a, std::min(a + kPiece, n));  // b == n is vertex 0 again
+    }
+    while (!stack.empty()) {
+        const auto [a, b] = stack.back();
+        stack.pop_back();
+        double worst = 0.0;
+        std::size_t at = a;
+        for (std::size_t i = a + 1; i < b; ++i) {
+            const double dd = distToSegment(r[i], r[a], r[b % n]);
+            if (dd > worst) {
+                worst = dd;
+                at = i;
+            }
+        }
+        if (worst > eps) {
+            keep[at] = 1;
             stack.emplace_back(a, at);
             stack.emplace_back(at, b);
         }
@@ -1893,9 +1933,10 @@ std::vector<Vec2> acrossRings(const std::vector<Ring>& rings, const std::vector<
 /// common ancestor, where the way follows its rings and the bridges between them
 /// (`ringBridges`, `acrossRings`); only if those do not connect does it climb further. The result
 /// is shortened greedily (a later point replaces the ones in between when the straight segment
-/// to it stays inside `region`).
+/// to it stays inside `region`). `inAir`: the way is at the surface (`MoveCheck::allowsInAir` for
+/// the shortening; the bridges, cached per node for every level, always use `allows`).
 std::vector<Vec2> route(const RingTree& tree, std::size_t na, Vec2 P, std::size_t nb, Vec2 Q,
-                        const RegionIndex& region, const MoveCheck& moves) {
+                        const RegionIndex& region, const MoveCheck& moves, bool inAir) {
     auto ancestors = [&](std::size_t n) {
         std::vector<std::size_t> out;
         for (std::size_t x = n; x != kNoNode; x = tree.parent[x]) {
@@ -1962,7 +2003,7 @@ std::vector<Vec2> route(const RingTree& tree, std::size_t na, Vec2 P, std::size_
     // Drop repeated points, then pull the string.
     std::vector<Vec2> clean;
     for (const Vec2 q : way) {
-        if (clean.empty() || geometry::distance(clean.back(), q) > moves.mergeDistance()) {
+        if (clean.empty() || geometry::distance(clean.back(), q) > moves.mergeDistance(inAir)) {
             clean.push_back(q);
         }
     }
@@ -1972,7 +2013,8 @@ std::vector<Vec2> route(const RingTree& tree, std::size_t na, Vec2 P, std::size_
     std::vector<Vec2> pulled{clean.front()};
     for (std::size_t i = 0; i + 1 < clean.size();) {
         std::size_t j = i + 1;
-        while (j + 1 < clean.size() && moves.allows(region, clean[i], clean[j + 1])) {
+        while (j + 1 < clean.size() &&
+               (inAir ? moves.allowsInAir(region, clean[i], clean[j + 1]) : moves.allows(region, clean[i], clean[j + 1]))) {
             ++j;
         }
         pulled.push_back(clean[j]);
@@ -2038,11 +2080,13 @@ class Emitter {
    private:
     /// Lifts to `zTravel` and feeds to `s` inside the centre region; false when there is no way.
     bool travel(Vec2 s, double zTravel, std::size_t node, const RegionIndex& region, const RingTree* tree) {
+        // At the surface (the first level) the tool touches no material (T-0175, ADR-0017 §8a).
+        const bool inAir = zTravel >= -p_.startDepth;
         std::vector<Vec2> way;
-        if (moves_.allows(region, pos_, s)) {
+        if (inAir ? moves_.allowsInAir(region, pos_, s) : moves_.allows(region, pos_, s)) {
             way = {pos_, s};
         } else if (tree != nullptr && !tree->rings.empty() && node != kNoNode && node_ != kNoNode) {
-            way = route(*tree, node_, pos_, node, s, region, moves_);
+            way = route(*tree, node_, pos_, node, s, region, moves_, inAir);
         }
         if (way.size() < 2) {
             return false;
@@ -2409,6 +2453,12 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
                 target = insetBy(region, params.allowance + margin, tol);
             }
             plan.restMaterial = opened(difference(*target, swept, tol), sliver, fine);
+            // Thinned like the swept area (T-0175): the boolean and the opening leave many
+            // micro-edges where the target and the swept boundaries meet; every part kept is at
+            // least two slivers wide, so moving its boundary by a tenth of a sliver keeps it.
+            for (Contour& c : plan.restMaterial) {
+                c = contourOf(thinned(ringOf(c), 0.1 * sliver));
+            }
             if (plan.restMaterial.empty()) {
                 say(ToolpathIssue::NoRestMaterial, label + ": no rest material left, nothing to cut", ti);
                 continue;
@@ -2500,6 +2550,14 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
             if (cutArea.empty()) {
                 cutArea = scalloped ? sweptByPaths(plan.paths) : offsetBy(plan.centreRegion, r, fine);
             }
+            // The swept area is bookkeeping for the rest tools, not a wall: its round joins (at
+            // 1e-4 mm) are thinned to a tenth of the sliver width, so it moves by at most that (material
+            // thinner than a sliver is noise, `opened` below). Since T-0175 the booleans keep
+            // every vertex (no merge at the distance tolerance), and without this the rest
+            // material carried them all through every later offset (up to 2× slower).
+            for (Contour& c : cutArea) {
+                c = contourOf(thinned(ringOf(c), 0.1 * sliver));
+            }
             swept = swept.empty() ? cutArea : geometry::unionContours([&] {
                 std::vector<Contour> all = swept;
                 all.insert(all.end(), cutArea.begin(), cutArea.end());
@@ -2579,6 +2637,21 @@ std::vector<Contour> pocketCentreRegion(const std::vector<Contour>& contours, do
 }
 
 namespace detail {
+
+double segmentDistance(Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
+    using geometry::detail::orient2dSign;
+    const int o1 = orient2dSign(a, b, c);
+    const int o2 = orient2dSign(a, b, d);
+    if (o1 * o2 < 0) {
+        const int o3 = orient2dSign(c, d, a);
+        const int o4 = orient2dSign(c, d, b);
+        if (o3 * o4 < 0) {
+            return 0.0;
+        }
+    }
+    return std::min(std::min(distToSegment(a, c, d), distToSegment(b, c, d)),
+                    std::min(distToSegment(c, a, b), distToSegment(d, a, b)));
+}
 
 std::vector<std::size_t> nearestFirstOrder(const std::vector<Vec2>& centres, const std::vector<std::size_t>& partOf) {
     const std::size_t n = centres.size();
