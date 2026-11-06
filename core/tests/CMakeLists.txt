@@ -84,6 +84,7 @@ add_executable(carvetto_tests
   toolpath/pocket_golden_test.cpp
   toolpath/pocket_centre_test.cpp
   toolpath/pocket_guard_test.cpp
+  toolpath/pocket_junction_test.cpp
   toolpath/toolpath_api_test.cpp
   toolpath/toolpath_scale_test.cpp
   toolpath/enclosed_pieces_test.cpp

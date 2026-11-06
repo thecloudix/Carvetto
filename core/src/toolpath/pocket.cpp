@@ -144,27 +144,46 @@ bool insideRegion(const std::vector<Ring>& rings, Vec2 p, double tol) {
     return inside;
 }
 
+/// The tolerances of `segmentInside` (T-0169, ADR-0017 §8a).
+struct MoveTolerance {
+    /// What a segment is allowed to get away with: ends this far off an edge it follows,
+    /// crossings this close to an end, a midpoint this far outside. Every point of an accepted
+    /// segment is within about twice this of the region.
+    double accept{0.0};
+    /// A boundary vertex this close to the segment's interior rejects it (conservative only).
+    double reject{0.0};
+};
+
+/// Clipper2 rounds every vertex to its 1e-6 mm grid (≤ 0.71e-6 mm in the plane, ADR-0006), and the
+/// raster ends are moved back onto their exact line from there: four grid units hold both.
+constexpr double kMoveSlack = 4e-6;
+
 /// True when the straight segment a→b stays inside the region of `rings` (boundary included,
-/// within `tol`): no edge is crossed away from the end points and the midpoint is inside. An
-/// edge the whole segment lies along (both ends within `tol` of the edge segment, hence every
-/// point of a→b too) is not a crossing, so links that follow the boundary are accepted even when
-/// their ends sit a rounding error off it; the edge's infinite line is not enough (a nearly
-/// parallel edge far away would hide a real exit). Conservative: a boundary vertex within `tol`
-/// of the segment's interior rejects it (rounding could hide a crossing through that vertex).
-bool segmentInside(Vec2 a, Vec2 b, const std::vector<Ring>& rings, double tol) {
+/// within `tol.accept`): no edge is crossed away from the end points and the midpoint is inside.
+/// An edge the whole segment lies along (both ends within `tol.accept` of the edge segment, hence
+/// every point of a→b too) is not a crossing, so links that follow the boundary are accepted even
+/// when their ends sit a rounding error off it; the edge's infinite line is not enough (a nearly
+/// parallel edge far away would hide a real exit). Conservative: a boundary vertex within
+/// `tol.reject` of the segment's interior (and not within `tol.accept` of an end) rejects it
+/// (rounding could hide a crossing through that vertex). Every point of an accepted segment is
+/// within about 2·`tol.accept` of the region (ADR-0017 §8a).
+bool segmentInside(Vec2 a, Vec2 b, const std::vector<Ring>& rings, MoveTolerance tol) {
     const Vec2 d = b - a;
-    auto nearEnd = [&](Vec2 x) { return geometry::distance(x, a) <= tol || geometry::distance(x, b) <= tol; };
+    auto nearEnd = [&](Vec2 x) {
+        return geometry::distance(x, a) <= tol.accept || geometry::distance(x, b) <= tol.accept;
+    };
     for (const Ring& r : rings) {
         for (std::size_t i = 0, n = r.size(); i < n; ++i) {
             const Vec2 c = r[i];
             const Vec2 c2 = r[(i + 1) % n];
             const Vec2 e = c2 - c;
-            if (e.lengthSquared() > 0.0 && distToSegment(a, c, c2) <= tol && distToSegment(b, c, c2) <= tol) {
+            if (e.lengthSquared() > 0.0 && distToSegment(a, c, c2) <= tol.accept &&
+                distToSegment(b, c, c2) <= tol.accept) {
                 continue;  // within tol of this edge all along: following the boundary
             }
             // A boundary vertex within tol of the segment's interior: a touch (or a crossing
             // through the vertex that rounding could hide).
-            if (distToSegment(c, a, b) <= tol && !nearEnd(c)) {
+            if (distToSegment(c, a, b) <= tol.reject && !nearEnd(c)) {
                 return false;
             }
             // A proper crossing away from the end points.
@@ -181,7 +200,7 @@ bool segmentInside(Vec2 a, Vec2 b, const std::vector<Ring>& rings, double tol) {
             }
         }
     }
-    return insideRegion(rings, (a + b) * 0.5, tol);
+    return insideRegion(rings, (a + b) * 0.5, tol.accept);
 }
 
 std::vector<Ring> ringsOf(const Group& g) {
@@ -364,6 +383,49 @@ class EdgeGrid {
         return best;
     }
 
+    /// True when some edge lies closer than `d` to the segment ab (stops at the first one). Only
+    /// the cells of each row that the segment, widened by `d`, can reach are visited, so a long
+    /// diagonal segment costs its length in cells, not its bounding box.
+    bool anyCloser(Vec2 a, Vec2 b, double d) const {
+        if (edges_.empty()) {
+            return false;
+        }
+        const std::size_t j0 = row(std::min(a.y, b.y) - d), j1 = row(std::max(a.y, b.y) + d);
+        for (std::size_t j = j0; j <= j1; ++j) {
+            // The part of the segment within d of this row's band [y0, y1], widened by d in x
+            // (whole rows at the clamped ends of the grid).
+            const double y0 = j == 0 ? -std::numeric_limits<double>::infinity()
+                                     : box_.min.y + static_cast<double>(j) * cell_ - d;
+            const double y1 = j + 1 == ny_ ? std::numeric_limits<double>::infinity()
+                                           : box_.min.y + static_cast<double>(j + 1) * cell_ + d;
+            double t0 = 0.0;
+            double t1 = 1.0;
+            const double dy = b.y - a.y;
+            if (dy != 0.0) {
+                const double ta = (y0 - a.y) / dy;
+                const double tb = (y1 - a.y) / dy;
+                t0 = std::max(t0, std::min(ta, tb));
+                t1 = std::min(t1, std::max(ta, tb));
+            }
+            if (!(t0 <= t1)) {
+                continue;  // (a row the widened bounding box reaches but the segment does not)
+            }
+            const double xa = a.x + (b.x - a.x) * t0;
+            const double xb = a.x + (b.x - a.x) * t1;
+            const std::size_t i0 = col(std::min(xa, xb) - d), i1 = col(std::max(xa, xb) + d);
+            for (std::size_t i = i0; i <= i1; ++i) {
+                const std::size_t c = j * nx_ + i;
+                for (std::size_t k = start_[c]; k < start_[c + 1]; ++k) {
+                    const auto [p, q] = edges_[items_[k]];
+                    if (!apart(a, b, p, q, d) && distSegments(a, b, p, q) < d) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     /// True when some edge lies closer than `d` to `p`.
     bool anyCloser(Vec2 p, double d) const {
         if (edges_.empty()) {
@@ -475,6 +537,24 @@ class RegionIndex {
         if (onBoundary) {
             return true;
         }
+        return parity(p, tol);
+    }
+
+    /// `inside(p, small)` and `inside(p, large)` (small <= large) with one boundary scan and at
+    /// most one parity ray.
+    std::pair<bool, bool> inside(Vec2 p, double small, double large) const {
+        double nearest = std::numeric_limits<double>::infinity();
+        forEdges(p.x - large, p.y - large, p.x + large, p.y + large,
+                 [&](Vec2 a, Vec2 b) { nearest = std::min(nearest, distToSegment(p, a, b)); });
+        if (nearest <= small) {
+            return {true, true};
+        }
+        const bool in = parity(p, small);
+        return {in, in || nearest <= large};
+    }
+
+    /// Even-odd membership of `p`, every edge being more than `tol` from it.
+    bool parity(Vec2 p, double tol) const {
         // Here every edge is more than `tol` from p. The crossing of a ray from p with an edge is
         // then more than `tol` from p, and its computed position is off by a few ulps of the
         // coordinates, so the side it is counted on is exact whenever `tol` is well above those
@@ -528,38 +608,80 @@ class RegionIndex {
         return in;
     }
 
-    /// As the free `segmentInside`.
-    bool segmentInside(Vec2 a, Vec2 b, double tol) const {
+    /// The free `segmentInside` with two tolerances at once (`strict` no looser than `lenient` in
+    /// every respect, as `MoveCheck` builds them), in one pass over the nearby edges. A segment
+    /// passing the strict test passes the lenient one too.
+    struct Verdicts {
+        bool lenient{false};
+        bool strict{false};
+    };
+    Verdicts segmentInside(Vec2 a, Vec2 b, MoveTolerance strict, MoveTolerance lenient) const {
         const Vec2 d = b - a;
-        auto nearEnd = [&](Vec2 x) {
+        auto nearEnd = [&](Vec2 x, double tol) {
             return geometry::distance(x, a) <= tol || geometry::distance(x, b) <= tol;
         };
-        bool ok = true;
-        forEdges(std::min(a.x, b.x) - tol, std::min(a.y, b.y) - tol, std::max(a.x, b.x) + tol,
-                 std::max(a.y, b.y) + tol, [&](Vec2 c, Vec2 c2) {
-                     if (!ok) {
-                         return;
+        bool okL = true;
+        bool okS = true;
+        const double reach = std::max(lenient.accept, lenient.reject);
+        forEdges(std::min(a.x, b.x) - reach, std::min(a.y, b.y) - reach, std::max(a.x, b.x) + reach,
+                 std::max(a.y, b.y) + reach, [&](Vec2 c, Vec2 c2) {
+                     if (!okL) {
+                         return;  // (the strict test fails on every edge where the lenient one does)
                      }
                      const Vec2 e = c2 - c;
-                     if (e.lengthSquared() > 0.0 && distToSegment(a, c, c2) <= tol &&
-                         distToSegment(b, c, c2) <= tol) {
+                     bool followL = false;
+                     bool followS = false;
+                     if (e.lengthSquared() > 0.0) {
+                         const double da = distToSegment(a, c, c2);
+                         if (da <= lenient.accept) {
+                             const double db = distToSegment(b, c, c2);
+                             followL = db <= lenient.accept;
+                             followS = followL && da <= strict.accept && db <= strict.accept;
+                         }
+                     }
+                     if (followS || (followL && !okS)) {
                          return;  // following the boundary
                      }
-                     if (distToSegment(c, a, b) <= tol && !nearEnd(c)) {
-                         ok = false;
+                     // A boundary vertex within tol of the segment's interior, or a proper crossing
+                     // away from the end points (as the free `segmentInside`).
+                     const double dc = distToSegment(c, a, b);
+                     bool crossChecked = false;
+                     bool crosses = false;
+                     Vec2 x;
+                     auto fails = [&](const MoveTolerance& tol) {
+                         if (dc <= tol.reject && !nearEnd(c, tol.accept)) {
+                             return true;
+                         }
+                         if (!crossChecked) {
+                             crossChecked = true;
+                             const double o1 = d.cross(c - a);
+                             const double o2 = d.cross(c2 - a);
+                             const double o3 = e.cross(a - c);
+                             const double o4 = e.cross(b - c);
+                             crosses = ((o1 < 0.0 && o2 > 0.0) || (o1 > 0.0 && o2 < 0.0)) &&
+                                       ((o3 < 0.0 && o4 > 0.0) || (o3 > 0.0 && o4 < 0.0));
+                             if (crosses) {
+                                 x = a + d * (o3 / (o3 - o4));
+                             }
+                         }
+                         return crosses && !nearEnd(x, tol.accept);
+                     };
+                     if (!followL && fails(lenient)) {
+                         okL = false;
+                         okS = false;
                          return;
                      }
-                     const double o1 = d.cross(c - a);
-                     const double o2 = d.cross(c2 - a);
-                     const double o3 = e.cross(a - c);
-                     const double o4 = e.cross(b - c);
-                     if (((o1 < 0.0 && o2 > 0.0) || (o1 > 0.0 && o2 < 0.0)) &&
-                         ((o3 < 0.0 && o4 > 0.0) || (o3 > 0.0 && o4 < 0.0)) &&
-                         !nearEnd(a + d * (o3 / (o3 - o4)))) {
-                         ok = false;
+                     if (okS && fails(strict)) {
+                         okS = false;
                      }
                  });
-        return ok && inside((a + b) * 0.5, tol);
+        Verdicts v;
+        if (okL) {
+            const auto [inStrict, inLenient] = inside((a + b) * 0.5, strict.accept, lenient.accept);
+            v.strict = okS && inStrict;
+            v.lenient = inLenient;
+        }
+        return v;
     }
 
    private:
@@ -601,6 +723,82 @@ class RegionIndex {
     std::vector<std::size_t> items_;
     mutable std::vector<std::uint64_t> stamp_;
     mutable std::uint64_t tick_{0};
+};
+
+/// The pocket region's polygon as an `EdgeGrid`, built on first use (most jobs never need it).
+class WallIndex {
+   public:
+    explicit WallIndex(const std::vector<Contour>& region) : region_(region) {}
+    const EdgeGrid& grid() const {
+        if (!grid_) {
+            std::vector<Ring> rings;
+            Box2 box;
+            std::size_t edges = 0;
+            for (const Contour& c : region_) {
+                rings.push_back(ringOf(c));
+                for (const Vec2 q : rings.back()) {
+                    box.expand(q);
+                }
+                edges += rings.back().size();
+            }
+            // About one edge per cell (the grid caps it at 256 cells per axis).
+            const double cell =
+                edges > 0 ? std::sqrt(box.width() * box.height() / static_cast<double>(edges)) : 0.0;
+            grid_.emplace(rings, cell);
+        }
+        return *grid_;
+    }
+
+   private:
+    const std::vector<Contour>& region_;
+    mutable std::optional<EdgeGrid> grid_;
+};
+
+/// Decides whether the tool may move straight from a to b inside a centre region: raster links,
+/// links at depth, travel, ring bridges and route shortcuts (ADR-0017 §8a, T-0169).
+///
+/// The inside test with the user's distance tolerance (as before T-0169) lets a segment cut a
+/// reflex corner of the region by up to about twice that tolerance: where a round join meets a
+/// straight edge of the centre region (under the crossbar of an "A", verifier T-0153 round 3) a
+/// raster link came 45 nm inside the tool radius at distance = chordal/3, and with
+/// distance up to chordal up to 0.029 mm. The safety margin (§3) has no room for it.
+/// A move is therefore allowed when it stays inside the region within rounding (`kMoveSlack`),
+/// or when it passes the old test and its exact distance to the polygonised walls is at least
+/// radius + allowance + the polygon tolerance (0 when every input span is a line), so the true
+/// walls keep radius + allowance. The second case keeps the old links wherever they were safe
+/// (no change of output there).
+class MoveCheck {
+   public:
+    /// `walls`: the pocket region's polygon (null: strict test only); `need`: radius + allowance +
+    /// the polygon tolerance (none for line-only input); `distance`: the user's distance tolerance.
+    MoveCheck(const WallIndex* walls, double need, double distance)
+        : walls_(walls),
+          need_(need),
+          strict_{std::min(distance, kMoveSlack), distance},
+          lenient_{distance, distance} {}
+
+    bool allows(const RegionIndex& region, Vec2 a, Vec2 b) const {
+        const RegionIndex::Verdicts v = region.segmentInside(a, b, strict_, lenient_);
+        return v.strict || (v.lenient && clearOfWalls(a, b));
+    }
+    bool allows(const std::vector<Ring>& rings, Vec2 a, Vec2 b) const {
+        if (segmentInside(a, b, rings, strict_)) {
+            return true;
+        }
+        return segmentInside(a, b, rings, lenient_) && clearOfWalls(a, b);
+    }
+    /// Points of a way closer than this are merged (a merged point moves the way by at most this).
+    double mergeDistance() const { return strict_.accept; }
+
+   private:
+    bool clearOfWalls(Vec2 a, Vec2 b) const {
+        return walls_ != nullptr && !walls_->grid().anyCloser(a, b, need_);
+    }
+
+    const WallIndex* walls_;
+    double need_;
+    MoveTolerance strict_;
+    MoveTolerance lenient_;
 };
 
 /// How `insetBy` tells a genuine inset region from an inside-out phantom, and what it does with
@@ -1068,6 +1266,8 @@ struct PatternContext {
     Tolerance fine;
     /// Residual material narrower than 2·sliver is ignored (ADR-0017 §5, §10).
     double sliver;
+    /// Where the tool may move straight inside the centre region (raster links; T-0169).
+    const MoveCheck& moves;
     /// Raster pieces the toolpath may hold within the move cap (ADR-0017 §12, T-0123): the raster
     /// pattern is clipped in batches of lines and stops, setting `overBudget`, as soon as it
     /// holds more, so its memory stays bounded however many pieces the lines would split into.
@@ -1344,7 +1544,7 @@ void rasterPattern(const Group& g, const PatternContext& ctx, std::size_t cluste
                     break;
                 }
                 const Vec2 s = bestFromA ? rows[k][*best].a : rows[k][*best].b;
-                if (bestD > linkLimit || !region.segmentInside(*cursor, s, tol.distance)) {
+                if (bestD > linkLimit || !ctx.moves.allows(region, *cursor, s)) {
                     break;
                 }
                 emit(k, *best, bestFromA);
@@ -1591,7 +1791,7 @@ std::pair<Vec2, Vec2> closestPair(const Ring& ra, const Ring& rb) {
 /// ring: that ring would be closer to one end and would already have been joined to it. Each
 /// bridge is still checked with `segmentInside` (rounding); a rejected one is skipped, so the
 /// set may stay disconnected, and `acrossRings` then fails and the route climbs a level.
-std::vector<RingBridge> ringBridges(const std::vector<Ring>& rings, double tol) {
+std::vector<RingBridge> ringBridges(const std::vector<Ring>& rings, const MoveCheck& moves) {
     struct Candidate {
         double length;
         std::size_t i;
@@ -1623,7 +1823,7 @@ std::vector<RingBridge> ringBridges(const std::vector<Ring>& rings, double tol) 
     for (const Candidate& c : cands) {
         const std::size_t ri = find(c.i);
         const std::size_t rj = find(c.j);
-        if (ri == rj || !segmentInside(c.a, c.b, rings, tol)) {
+        if (ri == rj || !moves.allows(rings, c.a, c.b)) {
             continue;
         }
         root[ri] = rj;
@@ -1695,7 +1895,7 @@ std::vector<Vec2> acrossRings(const std::vector<Ring>& rings, const std::vector<
 /// is shortened greedily (a later point replaces the ones in between when the straight segment
 /// to it stays inside `region`).
 std::vector<Vec2> route(const RingTree& tree, std::size_t na, Vec2 P, std::size_t nb, Vec2 Q,
-                        const RegionIndex& region, double tol) {
+                        const RegionIndex& region, const MoveCheck& moves) {
     auto ancestors = [&](std::size_t n) {
         std::vector<std::size_t> out;
         for (std::size_t x = n; x != kNoNode; x = tree.parent[x]) {
@@ -1740,7 +1940,7 @@ std::vector<Vec2> route(const RingTree& tree, std::size_t na, Vec2 P, std::size_
     for (std::size_t node = lca;;) {
         const std::vector<Ring>& rings = tree.rings[node];
         if (!tree.bridges[node]) {
-            tree.bridges[node] = ringBridges(rings, tol);
+            tree.bridges[node] = ringBridges(rings, moves);
         }
         const RingNearest& edges = nearestIn(node);
         const RingPoint a = edges.nearest(rings, up.back());
@@ -1762,7 +1962,7 @@ std::vector<Vec2> route(const RingTree& tree, std::size_t na, Vec2 P, std::size_
     // Drop repeated points, then pull the string.
     std::vector<Vec2> clean;
     for (const Vec2 q : way) {
-        if (clean.empty() || geometry::distance(clean.back(), q) > tol) {
+        if (clean.empty() || geometry::distance(clean.back(), q) > moves.mergeDistance()) {
             clean.push_back(q);
         }
     }
@@ -1772,7 +1972,7 @@ std::vector<Vec2> route(const RingTree& tree, std::size_t na, Vec2 P, std::size_
     std::vector<Vec2> pulled{clean.front()};
     for (std::size_t i = 0; i + 1 < clean.size();) {
         std::size_t j = i + 1;
-        while (j + 1 < clean.size() && region.segmentInside(clean[i], clean[j + 1], tol)) {
+        while (j + 1 < clean.size() && moves.allows(region, clean[i], clean[j + 1])) {
             ++j;
         }
         pulled.push_back(clean[j]);
@@ -1788,9 +1988,10 @@ class Emitter {
    public:
     /// `allowTravel` false: every way that is not a short link at depth retracts (used when the
     /// floor of the previous level is not known to be clear, ADR-0017 §8).
-    Emitter(Toolpath& tp, const PocketParams& p, double linkLimit, bool allowTravel)
+    Emitter(Toolpath& tp, const PocketParams& p, double linkLimit, bool allowTravel, const MoveCheck& moves)
         : tp_(tp),
           p_(p),
+          moves_(moves),
           linkLimit_(linkLimit),
           minRamp_(10.0 * p.tolerance.distance),
           allowTravel_(allowTravel) {}
@@ -1803,7 +2004,6 @@ class Emitter {
     /// separate rest areas: owner decision 2026-11-01) the tool always retracts.
     void cluster(const std::vector<const PocketPath*>& paths, const std::vector<std::size_t>& nodes,
                  const std::vector<double>& levels, const RegionIndex& region, const RingTree* tree) {
-        const double tol = p_.tolerance.distance;
         for (std::size_t k = 0; k < levels.size(); ++k) {
             const double z = levels[k];
             const double zTop = k == 0 ? -p_.startDepth : levels[k - 1];
@@ -1815,7 +2015,7 @@ class Emitter {
                     rapidTo(s);
                     enter(path, zTop, z);
                 } else if (!atSafe_ && z_ == z && geometry::distance(pos_, s) <= linkLimit_ &&
-                           region.segmentInside(pos_, s, tol)) {
+                           moves_.allows(region, pos_, s)) {
                     feedTo(s, z);
                 } else if (allowTravel_ && !atSafe_ && inCluster_ && z_ <= zTop &&
                            travel(s, zTop, node, region, tree)) {
@@ -1838,12 +2038,11 @@ class Emitter {
    private:
     /// Lifts to `zTravel` and feeds to `s` inside the centre region; false when there is no way.
     bool travel(Vec2 s, double zTravel, std::size_t node, const RegionIndex& region, const RingTree* tree) {
-        const double tol = p_.tolerance.distance;
         std::vector<Vec2> way;
-        if (region.segmentInside(pos_, s, tol)) {
+        if (moves_.allows(region, pos_, s)) {
             way = {pos_, s};
         } else if (tree != nullptr && !tree->rings.empty() && node != kNoNode && node_ != kNoNode) {
-            way = route(*tree, node_, pos_, node, s, region, tol);
+            way = route(*tree, node_, pos_, node, s, region, moves_);
         }
         if (way.size() < 2) {
             return false;
@@ -1900,6 +2099,7 @@ class Emitter {
 
     Toolpath& tp_;
     const PocketParams& p_;
+    const MoveCheck& moves_;
     double linkLimit_;
     double minRamp_;
     bool allowTravel_;
@@ -2073,6 +2273,15 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
         say(ToolpathIssue::NoRegion, "no closed region to pocket");
         return result;
     }
+    // The polygonised walls, for the moves that leave a centre region by more than rounding
+    // (MoveCheck, ADR-0017 §8a), and how far the true walls may lie from them: the polygon
+    // tolerance, or nothing when every input span is a line (the polygon is then the walls).
+    const bool curvedWalls = std::any_of(closedInput.begin(), closedInput.end(), [](const Contour& c) {
+        return std::any_of(c.spans.begin(), c.spans.end(),
+                           [](const geometry::Span& sp) { return !std::holds_alternative<geometry::LineSpan>(sp); });
+    });
+    const double wallSag = curvedWalls ? tol.chordal : 0.0;
+    const WallIndex walls(region);
     std::optional<std::vector<Contour>> target;  // pocket less allowance; only rest tools need it
     std::vector<Box2> regionBoxes;
     double regionVertices = 0.0;
@@ -2167,7 +2376,10 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
         bool overBudget = false;
         const auto pieceBudget = static_cast<std::size_t>(
             kMaxMoves / (6.0 * static_cast<double>(std::max<std::size_t>(plan.levels.size(), 1))));
-        const PatternContext ctx{params, pt.stepover, d, tol, fine, sliver, pieceBudget, &piecesUsed, &overBudget};
+        // The tool's straight moves inside its centre region (ADR-0017 §8a): within rounding of
+        // the region, or clear of the polygonised walls by radius + allowance + their tolerance.
+        const MoveCheck moves(&walls, r + params.allowance + wallSag, userTol.distance);
+        const PatternContext ctx{params, pt.stepover, d, tol, fine, sliver, moves, pieceBudget, &piecesUsed, &overBudget};
         const bool isRest = ti > 0 && !swept.empty();
         // Raster without a boundary pass leaves scallops along the walls: its swept area is the
         // tool disc along the actual paths, not the whole reach, and the floor of a level is not
@@ -2296,7 +2508,7 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
         }
 
         Toolpath& tp = result.toolpaths[ti];
-        Emitter emitter(tp, params, 2.0 * d, !scalloped);
+        Emitter emitter(tp, params, 2.0 * d, !scalloped, moves);
         for (std::size_t start = 0; start < plan.paths.size();) {
             const std::size_t cl = plan.paths[start].cluster;
             std::vector<const PocketPath*> members;
