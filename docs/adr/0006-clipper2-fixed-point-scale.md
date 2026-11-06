@@ -2,7 +2,7 @@
 
 Date: 2026-10-24 · Status: accepted (director, 2026-10-24; residual open-offset defect tracked in T-0004;
 §6 and §7 added by T-0018, 2026-11-02; §8 added by T-0138, 2026-11-02; §9 and the §8 dust-test
-decision added by T-0141, 2026-11-02)
+decision added by T-0141, 2026-11-02; §10 added by T-0142, 2026-11-05)
 
 ## Decision
 1. Polygon offsetting (`geometry/offset.hpp`) and boolean operations (`geometry/boolean.hpp`) are
@@ -111,9 +111,9 @@ decision added by T-0141, 2026-11-02)
      removed inradius): about 8.9× below the smallest chordal tolerance Pocket accepts (1e-4
      mm), and so inside the contract's own slack there (result points may lie 2·chordal short
      of |distance|). Profile enforces the same tolerance bounds since T-0141 (ADR-0016 §18), but
-     with Bezier input it offsets at min(tol.chordal, 0.5·tol.distance), and tol.distance has
-     no lower bound, so only a distance tolerance below about 1.1e-5 mm brings the removed width
-     up to that slack. No claim is made against tol.distance itself. Every point of a removed region lies within about
+     with Bezier input it offsets at min(tol.chordal, 0.5·tol.distance), and tol.distance is only
+     bounded below by 1e-6 mm (T-0142), so a distance tolerance between 1e-6 and about 1.1e-5 mm
+     brings the removed width up to that slack. No claim is made against tol.distance itself. Every point of a removed region lies within about
      5.6 nm of its boundary, i.e. of where the offset collapses, which no toolpath resolves;
      the threshold does not depend on `tol` so that a coarse
      tolerance never drops genuine thin regions (an area threshold such as tol.distance² would
@@ -212,7 +212,7 @@ decision added by T-0141, 2026-11-02)
      merging, with its own output to filter); merging has one adversarial cost: thousands of
      lone holes side by side (wound against the lowest contour, which no Carvetto caller
      produces) stay in one call and stay quadratic. `booleanOp` (`unionContours`) has the same
-     sweep cost (a 10,000-rectangle row: ~1.3 s) and is not batched here (follow-up).
+     sweep cost (a 10,000-rectangle row: ~1.3 s); it is batched the same way since T-0142 (§10).
    - **Remaining quadratic cases (T-0142).** Batching only helps when the shapes side by side
      are in different batches. One batch holding many edges side by side is still one sweep,
      ~4.4× per doubling and unchanged from before T-0141: an outer containing a row of n holes
@@ -220,6 +220,104 @@ decision added by T-0141, 2026-11-02)
      (1.44 s / 5.99 s). Nested arrangements such as a spiral of nested corners stay ~4.5× per
      doubling because `separableBatches` peels off one box per cut level (still about 5×
      faster than before T-0141).
+
+10. **Booleans are batched like offsets, raster clips are cropped to their strip, and holes with
+   nothing around them are resolved before an outset (T-0142).**
+   - `booleanOp` partitions all its paths (closed subjects, open subjects and clips together) with
+     `separableBatches` on their bounding boxes and, when at least `kOffsetBatchMinDepth` = 32
+     batches overlap one horizontal line, clips each batch in its own Clipper2 call, results
+     concatenated batch by batch (a batch of clips alone only for Union and Xor). Boxes of
+     different batches neither overlap nor touch, so no edges meet and every winding number comes
+     from one batch: the regions are the same for every operation and fill rule (no grown boxes
+     and no orientation rule are needed, unlike §9). Vertices can differ from one call by a few
+     grid units, as in §9 (random rows of 32–62 shapes, all operations, both fill rules: ring and
+     piece counts and areas equal, Hausdorff ≤ 2e-5 mm by test), and the order differs. Below the
+     threshold the result is that of one call, byte for byte. Measured (Release, CPU): Pocket with
+     a rest tool on the T-0131 text page 1.47 / 2.89 / 5.73 / 11.7 s at 1,250 / 2,500 / 5,000 /
+     10,000 vectors (~2.0× per doubling; before: 1.85 / 4.07 / 10.1 / 25.8 s; the whole-page
+     union, rest-material difference and intersection were single sweeps). Pocket output on such
+     pages changes at the grid level (move hashes differ, retract counts by a few); the T-0142
+     safety harness (wall clearance of every cutting move, unswept reachable cells on a 0.05 mm
+     grid) gave identical numbers to before on every changed scene.
+   - `OpenPathClipper` clips batches of open paths (Pocket's raster lines, 256 per call) against
+     one clip polygonised once. When the clip has at least 1,024 edges, each call keeps only the
+     clip edges whose extent across the raster comes within 2 grid units of the strip the batch
+     spans (`detail::StripIndex`, a segment tree over the edges' extents); every run of other
+     edges lies wholly on one side of the strip and is replaced by the straight segment between
+     its ends, which stays on that side (a half-plane is convex). Winding numbers inside the strip
+     are therefore unchanged and the pieces are the same. Their ends are computed by Clipper2 from
+     the same edges but in different scanbeams, so an end where the subject crosses a clip edge
+     at a near-parallel angle can move by tens of grid units, and there the whole-clip call is the
+     less accurate one (round-1 verifier: a cropped end 0.7 units from the exact intersection,
+     the whole-clip end 64 units off); a stretch lying exactly along a clip edge is decided as in
+     §7. Over ~2,500 round-1 verifier calls the well-conditioned ends agreed within 2 units; the
+     round-2 verifier saw ends 3 units apart where the subject crosses a clip edge at a sine of
+     0.048, and there the cropped end was the accurate one (0.77 units from the exact
+     intersection, the whole-clip end 3.77). Comb pocket hashes at 0/30/45/90 degrees and 5–2,000 teeth equal those before. A 90-degree raster on a comb of n teeth swept the whole comb for every batch:
+     Pocket 0.78 → 0.23 s at 1,000 teeth, 5.99 → 0.73 s at 2,000.
+   - Before an outset (delta ≥ 0.5 grid units), if some ring wound against the lowest path is not
+     nested in a ring wound like it (a ring whose box holds its box and whose inside holds its
+     first vertex), the closed paths are first replaced by their Clipper2 union with the group's
+     fill rule (Positive, or Negative when the lowest path is clockwise). Cause: §6's extra vertex
+     at concave joins leaves a loop of positive winding at every corner of a shrinking hole;
+     inside an enclosing ring the loops merge into its region, with nothing around them they
+     survived the final union (a lone clockwise 1 mm circle under a counter-clockwise lowest
+     contour: 71 leftover rings besides the genuine one at +0.3 mm, chordal 0.001; 223 at chordal
+     0.0001), and an
+     over-shrunk one left a whole phantom region (+1.5 mm: a 1.57 mm² ring). Such a ring describes
+     no region (its winding is not positive), so the union, which has only nested holes, describes
+     the same region. The nesting test (`hole_nesting.hpp`) first tries the last ring wound like
+     the lowest before the hole (input usually lists a shape's holes right after it), and
+     otherwise takes candidate rings from a bounding-volume hierarchy over the boxes of the rings
+     wound like the lowest, smallest box first. A ring of 48 or more vertices that is tested more
+     than once gets an index of its edges by y extent; a test then visits only the edges reaching
+     the vertex's y, in the order Clipper2's `PointInPolygon` walks them and with its arithmetic,
+     so the result is Clipper2's own (`hole_nesting_test.cpp`: generative checks against
+     `PointInPolygon`, with points on edges and vertices, vertices and horizontal edges on the
+     test line and coordinates where the cross product rounds, and against the scan over all
+     pairs). The decision is exactly that of the scan over all pairs. The cost does not depend on
+     whether the boxes lie apart, touch or overlap, nor on the order in which holes and their
+     outers are listed: O(log n) per hole for the hierarchy, plus one test per candidate tried,
+     each costing the edges its test line crosses. It is near-linear in the number of rings when
+     few candidates are tried per hole and their test lines cross few edges, which holds for the
+     layouts measured here but not for the inputs built to defeat it listed below. Outsets of
+     40,000 → 80,000 holed squares (Release, CPU, harness
+     t0142v2/po2.cpp, 3 interleaved runs) take 0.26 → 0.57 s in a column of touching squares
+     (main 0.24 → 0.57), 0.64 → 1.30 s in the notches of a comb ring (main 0.68 → 1.38), 0.29 →
+     0.68 s with a hole in each tooth of a comb (main 0.37 → 0.75), and the same as main within
+     measurement noise (under 7 %) for rows, grids, jittered grids, nests 8 deep, a touching
+     grid and a hex packing, with byte-identical output in every layout. Round 1 scanned all
+     rings per hole (80,000 holed rectangles 9.9 s vs 0.8 s on main), round 2 the rings left of
+     each hole within a `separableBatches` batch (the column 2.7 → 21.7 s, the comb 17.4 → 88.1
+     s). Pinned by "T-0142 round 3: outsets of touching shapes ..." (column, comb notches, comb
+     teeth; ≤ 2.5× per doubling) and, for the hierarchy itself, by "T-0171: outsets of a column
+     whose holes are listed far from their outers ..." (all outers first then the holes reversed,
+     and a shuffle, where the last-ring shortcut misses; a linear scan over the candidates in
+     their place goes 3.7–3.8× per doubling, T-0142 round-3 verifier). Input built to defeat it
+     costs more than linear: a hole inside many nested rings wound like the lowest whose boxes
+     hold it but whose insides do not (each is tried), or a big ring whose edges a horizontal line crosses many times (holes in
+     the teeth of a comb whose teeth run along y: each test crosses every tooth). Rings that cross each other are not detected by the nesting test. Pinned by
+     the repro and a generative oracle (`offset_unnested_hole_test.cpp`: nested and lone rings of
+     both orientations, all joins; points within d of the region are in the result, points
+     farther than reach·d are not, every outer result ring lies within reach·d), which reports
+     1,764 violations before T-0142 and none after. Input without such rings is offset as before.
+   - **Remaining quadratic cases, documented (director, 2026-11-05).** Batching only separates
+     shapes whose bounding boxes are apart; one group whose own edges sit side by side is one
+     Clipper2 sweep (`InsertLeftEdge` scans the active edge list from its head, `GetMaximaPair`
+     walks it to the end at every horizontal maximum). Measured before and after T-0142 alike
+     (Release, `offsetContours`, harness t0141v1/perf.cpp, 5,000 / 10,000 / 20,000 shapes): an outer
+     containing a row of holes 0.33 / 1.28 / 6.1 s, a row whose outsets merge into one region
+     0.36 / 1.39 / 6.05 s, the nested-corner spiral 0.49 / 2.23 / 9.75 s (`separableBatches` peels
+     one bar per cut level). The same holds for one ring with thousands of teeth (the comb outline
+     itself: its inset ~4.4× per doubling, 0.04 s at 1,000 teeth). Curing the first and the spiral
+     would need edge-level components with a base winding each and a forced orientation per call;
+     the merged row and the comb produce one region whose boundary has n edges side by side, which
+     any single Clipper2 sweep pays for. Shapes whose outsets touch or overlap in two directions
+     (a touching grid or a hex packing of holed squares) are one region with about √n edges on
+     every sweep line: ~2.9–3.0× per doubling on main and after T-0142 alike (40,000 → 80,000:
+     touching grid 1.26 → 3.81 s, hex packing 1.08 → 3.32 s on main, the same after T-0142). Not done: no Carvetto caller meets these at a size where
+     they matter (rows of more than ~10,000 side by side), and Pocket's work cap on the polygonised
+     region (200,000 vertices) bounds the cost there.
 
 ## Rationale
 - Clipper2 is the de-facto robust polygon clipper for CAM; it is deterministic, header-light,

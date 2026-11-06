@@ -12,9 +12,9 @@
 // Release bounds on the least large-run time, checked only under NDEBUG; the ratio is checked in
 // every build, at smaller sizes in Debug: time for 2n over time for n at most 2.5, or time for
 // 4n over time for n at most 2.5² (2.5 per doubling over two doublings) where Clipper2's own
-// sweep (T-0142) keeps the curve slightly superlinear and one doubling sits close to 2.5, or the
-// run would be long. The comb (c) and rest-tool (e) cases sit at that limit and use 3.0 per
-// doubling until T-0142 item 3. Reference numbers (Release, the
+// sweep keeps the curve slightly superlinear and one doubling sits close to 2.5, or the run
+// would be long. The comb (c) keeps 3.0 per doubling: the comb outline's own inset and union stay
+// one Clipper2 sweep over every tooth (ADR-0006 §10, a documented limit). Reference numbers (Release, the
 // T-0131 machine, CPU seconds) are in each test case; the numbers before T-0131 are from the same
 // machine at the T-0123 merge.
 
@@ -33,6 +33,7 @@
 #include "carvetto/toolpath/box_index.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/profile.hpp"
+#include "pocket_order.hpp"
 #include "pocket_test_util.hpp"
 // Last: on Windows it includes <windows.h> (macros such as near/far/small, and a GDI `Polyline`).
 #include "../geometry/cpu_scaling.hpp"
@@ -169,6 +170,54 @@ carvetto::tooling::Tool profileTool() {
 }
 
 
+/// Nearest-first order by brute force: per group (ascending), start at the lowest (then
+/// leftmost) point, then repeatedly the nearest unused point of the group (lower index on ties).
+std::vector<std::size_t> bruteNearestFirst(const std::vector<Vec2>& centres, const std::vector<std::size_t>& partOf) {
+    const std::size_t n = centres.size();
+    std::vector<std::size_t> groups(partOf);
+    std::sort(groups.begin(), groups.end());
+    groups.erase(std::unique(groups.begin(), groups.end()), groups.end());
+    std::vector<char> used(n, 0);
+    std::vector<std::size_t> out;
+    for (const std::size_t g : groups) {
+        std::size_t cur = n;
+        for (std::size_t i = 0; i < n; ++i) {
+            if (partOf[i] == g && (cur == n || centres[i].y < centres[cur].y ||
+                                   (centres[i].y == centres[cur].y && centres[i].x < centres[cur].x))) {
+                cur = i;
+            }
+        }
+        while (cur != n) {
+            used[cur] = 1;
+            out.push_back(cur);
+            const Vec2 at = centres[cur];
+            cur = n;
+            double best = std::numeric_limits<double>::infinity();
+            for (std::size_t j = 0; j < n; ++j) {
+                if (used[j] == 0 && partOf[j] == g && carvetto::geometry::distance(at, centres[j]) < best) {
+                    best = carvetto::geometry::distance(at, centres[j]);
+                    cur = j;
+                }
+            }
+        }
+    }
+    return out;
+}
+
+/// `n` jittered points on a page (like the rest areas of a text page) and their group: one part
+/// per group when `perGroup` is 1.
+void restParts(std::size_t n, std::size_t perGroup, std::vector<Vec2>& centres, std::vector<std::size_t>& partOf) {
+    Lcg rng{142};
+    const auto cols = static_cast<std::size_t>(std::ceil(std::sqrt(static_cast<double>(n))));
+    centres.clear();
+    partOf.clear();
+    for (std::size_t k = 0; k < n; ++k) {
+        centres.push_back({static_cast<double>(k % cols) * 6.0 + rng.in(-2.0, 2.0),
+                           static_cast<double>(k / cols) * 6.0 + rng.in(-2.0, 2.0)});
+        partOf.push_back((k * 7919) % ((n + perGroup - 1) / perGroup));
+    }
+}
+
 }  // namespace
 
 TEST_CASE("T-0131 a: BoxIndex of only non-finite boxes answers like brute force",
@@ -242,8 +291,9 @@ TEST_CASE("T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear"
     CHECK(rl.diagnostics.empty());
     // Every gap gets its own runs of raster lines.
     CHECK(rl.plans[0].paths.size() >= static_cast<std::size_t>(nLarge));
-    // Measured 4.9-6.0 under load, close to 2.5 * 2.5: the remaining growth is Clipper2's (T-0142
-    // item 3), so the bound has headroom like (e); T-0142 should tighten it to 2.5 * 2.5.
+    // Measured 4.9-6.0 under load (T-0142 branch, load ~14: 5.03-5.26), too close to 2.5 * 2.5:
+    // the remaining growth is Clipper2's sweep over the comb outline itself (its inset and union),
+    // a documented limit (ADR-0006 §10), so the bound keeps its headroom.
     CHECK(t.ratio() <= 3.0 * 3.0);
     if constexpr (kRelease) {
         CHECK(t.largeSeconds < 3.0 * kAbsSlack);  // T-0123 merge: 5.65 s
@@ -319,10 +369,9 @@ TEST_CASE("T-0131 e: Pocket with a rest tool on a page of vectors is near-linear
     // 2,500 / 5,000 vectors: 0.84 / 2.0 / 4.9 s idle, up to 6.7 s at 5,000 under load (main:
     // 1.1 / 3.2 / 9.0 s; the verifier's page at the T-0123 merge: 2.3 / 7.5 / 22 s).
     //
-    // Accepted at this limit until T-0142 (director, 2026-11-03): what remains superlinear is
-    // Clipper2's boolean sweep over the whole page (BuildIntersectList; rest material and rest
-    // areas), ~2.4-2.6x per doubling. So the bound is 3.0 per doubling (9.0 over the two), the
-    // ratio taken over three interleaved pairs; T-0142 item 3 should tighten it to 2.5.
+    // The whole-page booleans (rest material, rest areas) were one Clipper2 sweep each, ~2.4-2.6x
+    // per doubling; T-0142 batches them (ADR-0006 §10): Release, -march=x86-64-v3, load ~14,
+    // 1,250 -> 5,000 vectors 0.88-0.97 -> 3.5-4.0 s, ratio 3.83-3.95 over the two doublings.
     //
     // No absolute bound: on this page the branch is under 2x faster than main at 5,000 vectors
     // (4.9 vs 9.0 s idle, the branch up to 6.7 s under load), so no bound sits safely between
@@ -346,7 +395,7 @@ TEST_CASE("T-0131 e: Pocket with a rest tool on a page of vectors is near-linear
     // The rest tool works in the corners of most shapes: one retract per rest area.
     CHECK(rl.toolpaths[1].count(MoveKind::Retract) >= nLarge);
     CHECK(rl.toolpaths[1].count(MoveKind::Retract) == rl.plans[1].paths.back().cluster + 1);
-    CHECK(t.ratio() <= 3.0 * 3.0);  // T-0142 item 3: tighten to 2.5 * 2.5
+    CHECK(t.ratio() <= 2.5 * 2.5);
 }
 
 TEST_CASE("T-0131 f: Profile tabs on a page of vectors stay linear",
@@ -378,4 +427,40 @@ TEST_CASE("T-0131 f: Profile tabs on a page of vectors stay linear",
     if constexpr (kRelease) {
         CHECK(t.largeSeconds < 30.0 * kAbsSlack);  // a loose guard: the criterion here is linearity (the ratio)
     }
+}
+
+TEST_CASE("T-0142 e: nearest-first order of thousands of single-part groups is linear and exact",
+          "[toolpath][pocket][rest][perf][T-0142]") {
+    // T-0131 made Pocket's rest-area order search one index per group, so a group is left as soon
+    // as its parts are used; before, the search square grew over the whole page after every part
+    // of a group with one part (quadratic). Test (e) above does not catch a revert (the page has
+    // few such groups), this does. Release: 10,000 -> 20,000 single-part groups ~2x.
+    std::vector<Vec2> centres;
+    std::vector<std::size_t> partOf;
+    // The order is the brute-force nearest-first order, for single and multi-part groups.
+    for (const std::size_t perGroup : {std::size_t{1}, std::size_t{3}, std::size_t{40}, std::size_t{2000}}) {
+        restParts(2000, perGroup, centres, partOf);
+        CAPTURE(perGroup);
+        CHECK(detail::nearestFirstOrder(centres, partOf) == bruteNearestFirst(centres, partOf));
+    }
+    const std::size_t nSmall = kRelease ? 10000 : 2500;
+    const std::size_t nLarge = 2 * nSmall;
+    std::vector<Vec2> cs;
+    std::vector<std::size_t> ps;
+    std::vector<Vec2> cl;
+    std::vector<std::size_t> pl;
+    restParts(nSmall, 1, cs, ps);
+    restParts(nLarge, 1, cl, pl);
+    std::vector<std::size_t> os;
+    std::vector<std::size_t> ol;
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+        3, [&] { os = detail::nearestFirstOrder(cs, ps); }, [&] { ol = detail::nearestFirstOrder(cl, pl); });
+    INFO("CPU seconds: " << nSmall << " groups " << t.smallSeconds << ", " << nLarge << " groups " << t.largeSeconds
+                         << ", ratio " << t.ratio());
+    REQUIRE(ol.size() == nLarge);
+    // One part per group: the groups in ascending order.
+    for (std::size_t k = 1; k < ol.size(); ++k) {
+        CHECK(pl[ol[k - 1]] < pl[ol[k]]);
+    }
+    CHECK(t.ratio() <= 2.5);
 }

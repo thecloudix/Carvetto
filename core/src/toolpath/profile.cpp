@@ -413,12 +413,14 @@ bool ProfileBuilder::validate() {
         }
     }
     // T-0141: the same tolerance bounds as Pocket (ADR-0016 §18). The offsets and the dust
-    // filter's width budget (ADR-0006 §8) assume chordal >= 1e-4 mm.
+    // filter's width budget (ADR-0006 §8) assume chordal >= 1e-4 mm. T-0142: distance >= 1e-6 mm,
+    // one unit of the offset grid (ADR-0006 §2): below it the exact offsets cannot close their
+    // junctions, and Bezier input was polygonised at distance / 2 (minutes at 1e-8 mm).
     const Tolerance& t = p_.tolerance;
     if (!std::isfinite(t.chordal) || t.chordal < 1e-4 || t.chordal > 1.0 || !std::isfinite(t.distance) ||
-        !(t.distance > 0.0) || t.distance > t.chordal) {
+        !(t.distance >= 1e-6) || t.distance > t.chordal) {
         diag(ProfileIssue::InvalidParameters, std::nullopt,
-             "invalid tolerance: chordal must be between 0.0001 and 1 mm, distance > 0 and <= chordal");
+             "invalid tolerance: chordal must be between 0.0001 and 1 mm, distance between 0.000001 mm and chordal");
         return false;
     }
     if (!(radius_ > 0.0)) {
@@ -562,7 +564,8 @@ void ProfileBuilder::prepareInputs() {
     offTol_ = tol_;
     if (hasBezier(raw_)) {
         // Bezier spans are polygonised before offsetting; keep the chords within half the
-        // distance tolerance of the curve so the offset stays within tolerance of r.
+        // distance tolerance of the curve so the offset stays within tolerance of r (at least
+        // 5e-7 mm: tol.distance >= 1e-6 mm since T-0142).
         offTol_.chordal = std::min(tol_.chordal, 0.5 * tol_.distance);
     }
     // Every valid vector, indexed as the input (invalid ones excluded), and their boxes.

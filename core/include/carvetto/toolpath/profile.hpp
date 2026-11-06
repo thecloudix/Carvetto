@@ -97,7 +97,8 @@ struct ProfileParams {
     /// Feeds, speeds, tool number and default pass depth; empty = the tool's default data
     /// (`effectiveCuttingData`). Look up machine/material data with `Tool::cuttingDataFor`.
     std::optional<tooling::CuttingData> cuttingData;
-    /// As Pocket: 1e-4 <= chordal <= 1 mm and 0 < distance <= chordal, else InvalidParameters.
+    /// As Pocket: 1e-4 <= chordal <= 1 mm and 1e-6 <= distance <= chordal (one offset grid unit,
+    /// T-0142), else InvalidParameters.
     geometry::Tolerance tolerance{geometry::Tolerance::defaults()};
 
     bool operator==(const ProfileParams&) const = default;

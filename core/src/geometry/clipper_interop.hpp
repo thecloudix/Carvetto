@@ -32,4 +32,10 @@ Contour openContourFromClipper(const Clipper2Lib::Path64& path);
 /// Converts every path of `paths` with `closed`, skipping degenerate ones.
 std::vector<Contour> contoursFromClipper(const Clipper2Lib::Paths64& paths, bool closed);
 
+/// One Clipper2 boolean of closed paths (defined in boolean.cpp), batched like `booleanOp` when
+/// many far-apart groups sit side by side (T-0142, ADR-0006 §10); `reverse` sets Clipper2's
+/// ReverseSolution (outers wound clockwise).
+Clipper2Lib::Paths64 clipClosedPaths(Clipper2Lib::ClipType op, Clipper2Lib::FillRule fill, bool reverse,
+                                     Clipper2Lib::Paths64 subjects, Clipper2Lib::Paths64 clips);
+
 }  // namespace carvetto::geometry::detail

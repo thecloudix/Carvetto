@@ -78,8 +78,10 @@ std::string paramProblem(const VCarvingParams& p) {
         return "ramp distance must be greater than zero";
     }
     const geometry::Tolerance& t = p.tolerance;
-    if (t.chordal < kMinChordal || t.chordal > 1.0 || !(t.distance > 0.0) || t.distance > t.chordal) {
-        return "invalid tolerance: chordal must be between 0.0003 and 1 mm, distance > 0 and <= chordal";
+    // T-0142: distance >= 1e-6 mm (one offset grid unit) as Pocket, which this operation calls,
+    // so a finer distance is refused here with this operation's own message.
+    if (t.chordal < kMinChordal || t.chordal > 1.0 || !(t.distance >= 1e-6) || t.distance > t.chordal) {
+        return "invalid tolerance: chordal must be between 0.0003 and 1 mm, distance between 0.000001 mm and chordal";
     }
     return {};
 }

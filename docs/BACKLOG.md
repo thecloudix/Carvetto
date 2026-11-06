@@ -337,7 +337,8 @@ Acceptance criteria:
   2. Two crossings merged by the threshold rule are always flagged tangent; regression at 2h − tol ≈ ±1e-15.
   3. No result worse than main on the T-0007/T-0008/T-0021 families.
 
-### T-0128 Open offsets: narrow loops and needles must not lose cut coverage   [status: ready]
+### T-0128 Open offsets: narrow loops and needles must not lose cut coverage   [status: in progress — round 2 verifying]
+Owner decision 2026-11-05 (after round 1): isolated recovered stray pieces shorter than a small minimum (about 10× the tolerance, ~0.01 mm by default) are not returned; needles and slots that matter (mm long) are always kept.
 Phase: 1   Module: core/geometry   Depends on: T-0017
 Goal: Found by the T-0017 round-3 verifier (2026-11-01, non-blocking under "no worse than main"). T-0017 drops sub-tolerance lens loops and closed out-and-back needles as "narrow loops", and merges opposite copies within the snapping allowance. That follows the T-0017 header and AC3, but in rare cases it removes a toolpath that main keeps. (a) Seed 0xc5000544 (fam5, tieGap): an out-and-back needle 3.6 mm long and 5e-6 mm wide (x 6.43..10.08, y ≈ −5014.0939) has coincident ends, so it is closed and dropped; main keeps it. (b) Slot-width band: for a channel 2d + w wide, main keeps the needle for w ≥ ~3e-9, but T-0017 only keeps it above the snapping allowance (drops w up to 4e-7 at d = 0.1317, 1e-7 at d = 1, 3e-8 at d = 3.175). A DXF slot exactly one tool width wide plus coordinate noise can lose its path. Repro: a straight channel of width 2d + w and length 3.6, offset by d both sides (the verifier's vdrv6 `chan` driver was not preserved; seeds use the fuzz4 generators of `verifier-harness` t0017v2/gen5.inc). Also in scope: the reversal-cusp self-crossings (≤ 2.4e-8 mm; outlier 0xc500076c, a lens 2.1e-4 × 1.9e-9 mm) that contradict the header's "no returned chain intersects or touches itself".
 Acceptance criteria:
@@ -464,7 +465,7 @@ Goal: Pre-existing findings from the T-0138 verifier (harness t0138v1/, wt-T0138
 Acceptance criteria:
   1. (a) ≤ 2.5× per doubling up to 20k rings, or documented limit with a clear diagnostic; (b) Profile refuses invalid tolerances with tests, valid output byte-identical; (c) decision recorded in ADR-0006.
 
-### T-0142 Boolean sweep cost and outward-offset leftovers (T-0141 coder)   [status: in review (PR #59, verifier PASS)]
+### T-0142 Boolean sweep cost and outward-offset leftovers (T-0141 coder)   [status: done (#59)]
 Phase: 1   Module: core/geometry   Depends on: T-0141   ADR: 0006
 Goal: Found by the T-0141 coder. (a) booleanOp/unionContours has the same O(n²) Clipper2 sweep as offsets had (a 10k row ~1.3 s); Pocket calls it on all of its input — apply the T-0141 batching (or equivalent) where results cannot interact. (b) A lone CW ring offset outward under a CCW lowest contour leaves hundreds of tiny leftover rings from Clipper2's corner joins (a 1 mm circle → ~920 at +0.3 mm; same on main) — find the cause and remove them without losing genuine regions.
 Acceptance criteria:
@@ -535,7 +536,7 @@ Goal: Found by the T-0147 verifier (harness t0147v1/far.cpp): with signedArea fi
 Acceptance criteria:
   1. Small Profile parts (circles, rectangles, holes; 0.5–10 mm) at 1e6–1e9 mm give the same toolpath as at the origin (up to translation, within tolerance) in ≥ 19/20 placements, or a documented limit with a diagnostic; normal-scale output unchanged (hashes).
 
-### T-0158 Profile: platform-stable cut start at convex tips   [status: in progress — round 4 verifying]
+### T-0158 Profile: platform-stable cut start at convex tips   [status: in progress — round 5 verifying]
 Owner decision 2026-11-03: adopt the fixed tie-break rule (start at the beginning of the corner arc centred on the tip), accepting that cut starts move in ~10% of such scenes. Owner decision 2026-11-05: mitred (sharp) convex tips start exactly at the mitre corner point. Owner 2026-11-05: a mitre squared off at the limit starts at the chamfer\'s first corner in the direction of travel; change rate ~9% stored / ~21% random pages accepted. Owner decisions 2026-11-05 (after round 3): one more round; on finely segmented convex outlines the cut starts at the tip's exact corner (mitre), not one segment off; on a merged region's polygonal round join (end mill) the cut starts at the first chord point, matching true round joins.
 Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §11
 Goal: Found while merging T-0135 (MSVC CI): with "start at the vector's start point" on a convex tip, the Outside cut's round join is an arc centred on that tip, so every point of the arc is equally near the start; ArcLengthPath::project → closestPoint(ArcSpan) takes the direction of a ~1e-15 vector, which depends on rounding/libm, so GCC and MSVC choose different cut starts — tab layouts then differ (both safe; scene m1_402002_27, also m2_800016_13). Pre-existing on main/T-0127. A tie-break ("target within tolerance of an arc centre at the nearest distance → start at that arc's start", searching all arcs) was prototyped by the T-0135 coder (harness wt-T0135/build-drv pert.cpp, hsw/): stable under 1e-9 perturbations but changes start points in ~10% of scenes (owner-visible output change).
@@ -551,7 +552,7 @@ Acceptance criteria:
   1. Each failure reproduced with GCC 15.2 Release (same flags as CI) and root-caused: a real product bug is fixed; a test that depends on compiler floating-point behaviour (contraction/FMA, excess precision, libm) is made robust without weakening what it guards.
   2. CI runs both ubuntu-24.04 and ubuntu-26.04 (or GCC 13 and 15) for the Release app job, both green; then unpin.
 
-### T-0160 V-Carve corner sharpening   [status: in progress — round 1 FAIL (acute-corner leftover, curved edges, reorder); round 2]
+### T-0160 V-Carve corner sharpening   [status: in progress — round 2 verifying]
 Owner decision 2026-11-05 (after round 1): slightly rounded corners count — any convex stretch the end mill cannot reach into (small fillets, short chamfers, few-segment polyline roundings, curved-edge junctions) is sharpened whenever its predicted leftover exceeds chordal, not only sharp junctions.
 Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0153, T-0164   ADR: 0025 §6 rewrite
 Goal: Owner decisions 2026-11-05.
@@ -678,11 +679,17 @@ Goal: (a) After T-0016, Round offsets and inputs with nothing to prune are 13–
 Acceptance criteria:
   1. (a) Round on the t0016v1 perf inputs is within 3% of pre-T-0016 main (interleaved CPU, A/A control); (b) fixed to ≤ 2.5× per doubling or documented in ADR-0012 with measurements; outputs byte-identical; full ctest.
 
-### T-0171 Hole nesting: guard the box hierarchy; ADR-0006 §10 wording (T-0142 round-3 verifier)   [status: ready]
+### T-0171 Hole nesting: guard the box hierarchy; ADR-0006 §10 wording (T-0142 round-3 verifier)   [status: done (#60)]
 Phase: 1   Module: core/geometry   Depends on: T-0142   ADR: 0006
 Goal: The T-0142 timing test lists each hole right after its outer, so the "last outer" shortcut always succeeds and nothing guards the box hierarchy: with it replaced by a linear scan (mutant C, harness t0142v3 results/mutC_po3.txt) every test passes while holes listed far from their outers (tcolrev, tcolshuf) grow 3.7–3.8× per doubling. Add a reversed/shuffled layout to the test. Also ADR-0006 §10 says "near-linear in the number of rings whatever the layout" just before listing the inputs that defeat it — reword.
 Acceptance criteria:
   1. A timing test with holes listed far from their outers fails under mutant C and passes on the fix; ADR wording consistent; full ctest.
+
+### T-0172 Open-offset stray recovery follow-ups (T-0128 round-2 verifier)   [status: ready]
+Phase: 1   Module: core/geometry   Depends on: T-0128   ADR: 0012
+Goal: Non-blocking findings from harness t0128v2. (a) A recovered stray with more than 512 spans is returned as one chain per span (the step-7 `part.size() > 512` fallback, commented "Never seen"); Profile makes each a separate Cut, so one slot gets hundreds of plunges, and spans ≤ tol are dropped there so a finely segmented wall can lose the path (repro split.cpp `./split 514 1 0 0`, bigloop.cpp `./bigloop 600 1 0 0 1 1`; main returns nothing). Chunk into runs of ≤ 512 spans instead, or remove the limit. (b) Clustered strays: one far feature stretches the stray grid — hatch at pitch 2d plus a far U channel costs 1.7–2.0× main, and 11.9× (quadratic, main quadratic too) at d = 0.002, far = 1e5 (`perf2 lhatch 1000 0.002 0 0 3 0 1e5`); `partCrossesItself` is O(n²) per stray (~3 ms per 500 spans). (c) Untested: a stray between tol and 10 tol touching a chain is returned (mutants M3, W2), the fallback size (S), the longer loop strand (P), merge order (O), exactOver in mergeOnCarriers (E2). (d) ADR-0012 A3 should mention (a) and (b).
+Acceptance criteria:
+  1. (a) a long stray comes back as ≤ ceil(n/512) chains with no spans dropped; (b) near-linear and ≤ 1.5× main on the clustered repros, or documented with measurements; (c) tests kill M3, W2, S, P, O (E2 if not redundant); outputs otherwise unchanged; full ctest.
 
 ### T-0150 Drilling toolpath   [status: done (2026-11-03, #36)]
 Phase: 1 (Batch C, owner decision 2026-11-03: Batch C toolpaths first)   Module: core/toolpath   Depends on: T-0123, T-0132   ADR: new
