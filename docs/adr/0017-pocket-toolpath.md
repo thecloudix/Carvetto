@@ -52,8 +52,8 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
    sweep, verifier families 0–9, 60 seeds each at the origin, distance = chordal, 1e4 and 1e6 mm
    away, scale 0.01 and with rest tools: 3,600 cases): 2,012 changed, most of them because
    polygon points closer than the distance tolerance are no longer merged (ADR-0006 §11); retracts
-   75,454 → 75,676 (+212 in rest-tool jobs, +10 with one tool), plunges 106,412 → 106,657, moves
-   +0.45 %, CPU 0.997× in total. Main came inside the tool radius in 4 cases (thin islands at
+   75,454 → 75,823 (+359 in rest-tool jobs, +10 with one tool), plunges 106,412 → 106,796, moves
+   +0.45 %, CPU 1.004× in total. Main came inside the tool radius in 4 cases (thin islands at
    scale 0.01, down to −0.0116 mm), none now (smallest clearance less allowance +2.4e-5 mm). In the T-0169
    generative test (`pocket_junction_test.cpp`: polygons and stars whose edges are lines, arcs
    and Beziers bulging either way, D-shaped islands, chordal 0.001–0.1, distance up to chordal, at
@@ -327,7 +327,8 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
     opened the rest material by 5·chordal and so skipped real thin residue: a ~0.1 mm corner band
     at chordal 0.049 (verifier seed 31493).
     **Amended by T-0175.** Each cut area added to `swept`, and the rest material itself, is thinned
-    (Douglas–Peucker) to a tenth of the sliver width, so they move by at most that either way; every
+    to a tenth of the sliver width (Douglas–Peucker on pieces of at most 256 vertices: over a whole
+    ring it was quadratic, 4× slower on the T-0131 1,000-tooth comb with a rest tool), so they move by at most that either way; every
     part of the rest material is at least two slivers wide (it is opened by the sliver), and the
     rest tools still only move inside their own centre regions. Until T-0175 the booleans merged
     polygon points closer than the distance tolerance, which thinned the 1e-4 mm round joins of the

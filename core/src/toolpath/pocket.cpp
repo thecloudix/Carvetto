@@ -1089,6 +1089,49 @@ Ring simplified(const Ring& r, double eps) {
     return out.size() >= 3 ? out : r;
 }
 
+/// `simplified` (Douglas-Peucker within `eps`) run on pieces of at most 256 vertices, whose ends
+/// are kept, so its cost stays linear in the ring size: on long serial rings (a 1,000-tooth comb's
+/// swept area) Douglas-Peucker over the whole ring is quadratic (T-0175). Every dropped vertex is
+/// within `eps` of the result; a ring that would keep fewer than three vertices is kept as it is.
+Ring thinned(const Ring& r, double eps) {
+    const std::size_t n = r.size();
+    if (n <= 4) {
+        return r;
+    }
+    constexpr std::size_t kPiece = 256;
+    std::vector<char> keep(n, 0);
+    std::vector<std::pair<std::size_t, std::size_t>> stack;
+    for (std::size_t a = 0; a < n; a += kPiece) {
+        keep[a] = 1;
+        stack.emplace_back(a, std::min(a + kPiece, n));  // b == n is vertex 0 again
+    }
+    while (!stack.empty()) {
+        const auto [a, b] = stack.back();
+        stack.pop_back();
+        double worst = 0.0;
+        std::size_t at = a;
+        for (std::size_t i = a + 1; i < b; ++i) {
+            const double dd = distToSegment(r[i], r[a], r[b % n]);
+            if (dd > worst) {
+                worst = dd;
+                at = i;
+            }
+        }
+        if (worst > eps) {
+            keep[at] = 1;
+            stack.emplace_back(a, at);
+            stack.emplace_back(at, b);
+        }
+    }
+    Ring out;
+    for (std::size_t i = 0; i < n; ++i) {
+        if (keep[i] != 0) {
+            out.push_back(r[i]);
+        }
+    }
+    return out.size() >= 3 ? out : r;
+}
+
 /// Morphological opening: removes slivers narrower than 2·eps (numeric residue of booleans).
 std::vector<Contour> opened(const std::vector<Contour>& cs, double eps, const Tolerance& tol) {
     return offsetBy(insetBy(cs, eps, tol), eps, tol);
@@ -2414,7 +2457,7 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
             // micro-edges where the target and the swept boundaries meet; every part kept is at
             // least two slivers wide, so moving its boundary by a tenth of a sliver keeps it.
             for (Contour& c : plan.restMaterial) {
-                c = contourOf(simplified(ringOf(c), 0.1 * sliver));
+                c = contourOf(thinned(ringOf(c), 0.1 * sliver));
             }
             if (plan.restMaterial.empty()) {
                 say(ToolpathIssue::NoRestMaterial, label + ": no rest material left, nothing to cut", ti);
@@ -2513,7 +2556,7 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
             // every vertex (no merge at the distance tolerance), and without this the rest
             // material carried them all through every later offset (up to 2× slower).
             for (Contour& c : cutArea) {
-                c = contourOf(simplified(ringOf(c), 0.1 * sliver));
+                c = contourOf(thinned(ringOf(c), 0.1 * sliver));
             }
             swept = swept.empty() ? cutArea : geometry::unionContours([&] {
                 std::vector<Contour> all = swept;
