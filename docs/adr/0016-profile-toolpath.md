@@ -422,77 +422,110 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     sagitta allowance is left out) enclose the loose pieces, wherever they lie (inside a vector
     or between vectors, so the region-box gaps below do not apply here). A piece counts as above
     (area less its islands, 0.04 mm² or more, thicker than 0.05 mm somewhere: what is left of it
-    eroded by 0.025 mm is not empty) and is reported with the same message, against the innermost
-    closed primary cut that contains it (a point of it at least 0.025 mm inside) or else the
-    nearest cut. The bands reach 2 µm past the cut on each side and their arcs are polygonised
-    with chords up to the chordal tolerance inside them, so the effective thickness threshold is
-    about 0.055 mm (a free ring 0.052–0.054 mm wide between two kerfs is not reported, 0.056 mm and
-    more is; T-0140 verifier, 2 mm end mill, default tolerance), and a piece joined to the
-    outside only through a neck narrower than about 4 µm counts as loose.
-    Each stretch's band is one polygon whose winding number is positive exactly on the band: the
-    sum of the boundaries of positively wound pieces covering it (a line's rectangle along its
-    normals, an arc's annular sector between radii ρ − w and ρ + w or, with ρ ≤ w, its sector from
-    the centre out to ρ + w, a wedge of radius w on the outer side of each corner, a half disc at
-    each end), whose edges along the shared normals cancel; it runs along the outer offsets, back
-    along the inner ones, and through the vertex at an inner corner, or through the centre of an
-    arc tighter than w; arcs and wedges are polygonised with chords at most the chordal tolerance
-    inside them. Every point of the band lies on a normal of its nearest point of the path, or in
-    a wedge or end disc, so the pieces cover the band exactly. At an inner corner between two lines
-    long enough that both their pieces cover the triangle of the vertex and the two offset ends
-    (each at least w·sin(turn) long, turn below 90°), the vertex is left out (that triangle keeps
-    a winding of at least one), so a polygonised curve gets no spike per vertex. A whole closed cut
-    (no kept tab) has no end discs: its last corner is one like the others and each side's chain
-    is closed on itself, two rings whose winding numbers add up to the same (as one ring joined
-    along the normal at the start, the zero-width slit there could stay in Clipper2's output as a
-    ring touching itself, hiding the piece inside: round 2). Clipper2's offset (still used for a
-    stretch with a Bezier span) puts a spike back to the path at every vertex, which costs about
-    the square of the vertices along each arc. **Leaf by leaf (round 2).** One Clipper2 union of
-    all the bands is a single sweep whose active edge list holds every band side by side, so where
-    neighbouring kerfs overlap and the pieces are free it grew about 3.5× per doubling of the
-    shapes (a grid of 4,000 shapes: 49 s in the union; a row of 4,000 squares: 2.9 s, 5.3× the
-    whole run of main), and finding each hole's islands was cubic in nested free rings. Now
-    (`toolpath/enclosed_pieces.hpp`) the plane is cut into leaves: a k-d subdivision at median
-    vertex coordinates on the nanometre grid, moved off every vertex, until a leaf holds at most
-    512 vertices (or a cut would leave more than 4/5 of them on one side, e.g. long edges crossing
-    the leaf, or a side narrower than 10 µm, where the booleans' removal of vertices closer than
-    the distance tolerance would collapse the leaf's rectangle; then the other axis, or the leaf
-    stays as it is), each ring reaching within 1 µm of a cut clipped to both sides 1 µm beyond it (Sutherland–Hodgman, which keeps the winding number of every point on
-    that side). A ring, or what is left of it, that surrounds a leaf without an edge in it adds a
-    constant winding number there and is taken out on the way down (the two rings of a band round
-    the leaf cancel; otherwise the leaf's rectangle, grown 1 µm, stands for them). Each leaf's
-    material is its rectangle less the union of its rings (one small Clipper2 call), its parts and
-    their islands (the smallest part around each); parts that meet along a shared leaf side over
-    at least 10 nm are one piece (union-find over the intervals on each cut line; both leaves
-    compute where the bands cross their side, within a few grid units), and a piece on the outer
-    frame (1 mm round everything) is the outside. A piece's area is the sum of its parts'; it is
-    thick when one part alone is (a point of it, the centre of its box or its centroid, at least
-    0.025 mm from every edge, or else what is left of it eroded by 0.025 mm; its cut edges only make
-    that smaller) or else the union of its parts is. Against one union over everything (the bands of
-    800 random Inside/Outside scenes, 311 pieces, and of 8 perf pages, 1,984 pieces, at 512 and
-    at 6 vertices per leaf; random ring sets at 4 to 512 in the tests): the same pieces, areas
-    within grid rounding (slivers a few µm wide between edges nudged by micrometres may go either
-    way). **Cost (round 2, Release CPU, interleaved with main, T-0140 verifier pages):**
-    within 10 % of main (most within noise) on every page where main itself spends more than a
-    few hundred microseconds per vector, e.g. 2,000 close tabbed rectangles (with and without a
-    separate last pass and allowance), 1,000 letters, plates with 1,000 holes, a 4,000-tooth gear,
-    1,000 diagonal bars, nested free rings (200 and 300), Bezier pages, mixed pages of 1,000 with
-    overlapping kerfs and every tab left out (+2–5 %, was +30–43 %), a row of 4,000 squares with
-    tabs (+2–6 %). **Known limit:** where every tab is left out on a page of cheap vectors the
-    check costs about 30–55 µs per free piece, more than 10 % of main there: 2,000 rectangles
-    +57–71 % (0.10 → 0.16 s), 1,000–2,000 circles, slots and flowers +26–43 % (0.21 → 0.27 s),
-    mixed pages +12–23 %, a row of 2,000–4,000 squares +8–12 % (was 3.6–5.3×), one flower of
-    2,000 arcs +23 % (0.053 → 0.065 s; also in round 1). Clipper2's own work on the band polygons
-    (about 0.16 µs per vertex even for rings that touch nothing) is already about 8–18 % of those
-    runs, so no check that runs Clipper2 over the bands meets 10 % there. Moves are unchanged (the check only adds
-    messages). Sided tabs keep the region search above unchanged. Measured (T-0140 round 1,
-    whole-scene flood of the moves as in T-0127, leads off, 3,000 random Inside/Outside scenes
-    with allowance >= 0 and tabs, verifier): 974 free pieces of 0.04 mm² or more, 971 reported, none
-    reported that is not free; the three left out are remnants 0.115 mm thick at the sharp corners
-    of a V-bit (sharp internal corners, separate last pass). A V-bit's corner moves, ramps and
-    plunges are not in the band model (the cut paths stand for the moves): they cut less than its
-    full-depth disc at the tab layer, so a reported area can be up to about 20 % smaller than the
-    piece, and they can leave whole pieces unreported, as those three (T-0156 (a)). With leads on,
-    leads cut or split some pieces (the known gap below). Known gaps: leads are not part of this
+    eroded by 0.025 mm is not empty, the erosion's round joins chords at most 0.005 mm inside
+    their arcs) and is reported with the same message, against the innermost closed primary cut
+    that contains it (any point of the piece gives the same answer) or else the cut nearest the
+    piece's anchor, its lowest vertex of least x, the same at every leaf size (it lies on the bands
+    of the cuts round it, so cuts within 0.01 mm of the nearest count as tied and the first is
+    taken; round 3: before, the probe was a point of the first part found thick, which depended on
+    the leaves).
+    **Band polygons.** Each stretch's band is one polygon whose winding number is positive exactly
+    on the band: the sum of the boundaries of positively wound pieces covering it (a line's
+    rectangle along its normals, an arc's annular sector between radii ρ − w and ρ + w or, with
+    ρ ≤ w, its sector from the centre out to ρ + w, a wedge of radius w on the outer side of each
+    corner, a half disc at each end), whose edges along the shared normals cancel; it runs along
+    the outer offsets, back along the inner ones, and through the vertex at an inner corner, or
+    through the centre of an arc tighter than w. Every point of the band lies on a normal of its
+    nearest point of the path, or in a wedge or end disc, so the pieces cover the band exactly. At
+    an inner corner between two lines long enough that both their pieces cover the triangle of the
+    vertex and the two offset ends (each at least w·sin(turn) long, turn below 90°), the vertex is
+    left out (that triangle keeps a winding of at least one), so a polygonised curve gets no spike
+    per vertex. A whole closed cut (no kept tab) has no end discs: its last corner is one like the
+    others and each side's chain is closed on itself, two rings whose winding numbers add up to the
+    same (as one ring joined along the normal at the start it would leave a zero-width slit; since
+    round 2 the material is each leaf less the bands, so the slit could no longer hide a piece, and
+    the end discs it would add reach up to the polygons' 0.005 mm into the band's inside, ≤ 0.006 mm²
+    over 4,800 comparisons). The polygons cover the true band and reach at most 0.005 mm (or the
+    chordal tolerance, when smaller) beyond it (round 3): along its convex arcs (outer offsets,
+    wedges, end discs) they run on tangents outside the arc, along its concave ones (inner offsets)
+    on chords inside it. Round 2's chords inside every arc could leave a channel between two bands
+    whose tools cut through (1510007_2: a thick 0.46 mm² piece missed). So a piece joined to the
+    outside only through a neck narrower than 4 µm (2 µm per band), or up to about 14 µm between
+    two convex band arcs, counts as loose, and a strip between two kerfs is reported from about
+    0.055 mm wide (a free ring between two circular kerfs, 2 mm end mill, default tolerance:
+    0.054 mm not, 0.055 mm reported; straight strips the same, the bands' straight edges being
+    exact; the V-bit slivers 0.043–0.050 mm thick of 1510007_13 that round 2 reported are not).
+    Clipper2's offset (still used for a stretch with a Bezier span) puts a spike back to the path
+    at every vertex, which costs about the square of the vertices along each arc.
+    **Nothing loose, proved first (round 3).** In most jobs nothing comes free (parts held by their
+    tabs, away from other cuts), yet building and searching every band cost them 10–34 % (round 2
+    verifier: 2,000 to 8,000 separated rectangles with tabs, one flower of 2,000–8,000 arcs with
+    three 200 mm tabs). So before any band is built, `detail::pathsToSearch` proves for as many
+    stretches as it can that their bands enclose nothing. Each band (to its reach + the polygons'
+    0.005 mm) is covered by convex pieces, the convex hull of each line (long lines in pieces about
+    four reaches long) and of each stretch of an arc whose sagitta is at most 0.012 mm (a quarter
+    turn at most), grown by that reach, and the pieces are added in order along the path. By the
+    Mayer–Vietoris sequence a union without holes stays without holes when the new (convex) piece
+    meets it in one connected set, which holds when every earlier piece it meets either holds the
+    path point a reach back from its start (every piece at most two reaches back along the path
+    does) or meets it at a point that one of those also holds; where the path first comes back near
+    an earlier part of itself no such point exists, so a loop is never closed unseen. Pieces of
+    different stretches must not meet at all. Distances are bounded from the safe side: two pieces
+    are apart only when their chords are farther apart than the reaches and sagittas, or the arcs'
+    tangent triangles (outside them) are, refined to 8 and 64 sub-stretches near two reaches; a
+    common point is taken on chords (inside the hulls). A stretch that fails, a whole closed cut
+    and a stretch with a Bezier span are searched as below, and with them every stretch whose band
+    reaches into the box of their cluster (a hole lies inside the box of the cluster round it). The
+    pieces reach up to 0.017 mm beyond the bands, so a hole the proof could hide is at most
+    0.034 mm across, where the thickness test needs more than 0.04 mm. Pairs are found on a hashed
+    grid of cells two reaches wide (one cell for groups of up to 64 pieces), skipping the runs of
+    pieces of one path within two reaches along it. Checked against searching every band:
+    7,200 random path sets (crowded and spread, near-closing loops, gaps about two reaches, shifted
+    to 1e9 mm; 20,314 thick pieces, 9,135 stretches cleared) find the same pieces, and
+    [[HASH]] whole Profile scenes give the same messages.
+    **Leaf by leaf (round 2).** One Clipper2 union of all the bands is a single sweep whose active
+    edge list holds every band side by side, so where neighbouring kerfs overlap and the pieces are
+    free it grew about 3.5× per doubling of the shapes (a grid of 4,000 shapes: 49 s in the union;
+    a row of 4,000 squares: 2.9 s, 5.3× the whole run of main), and finding each hole's islands was
+    cubic in nested free rings. Now (`toolpath/enclosed_pieces.hpp`) the plane is cut into leaves:
+    a k-d subdivision at median vertex coordinates on the nanometre grid, at least two grid units
+    off every vertex, until a leaf holds at most 512 vertices (or a cut would leave more than 4/5 of
+    them on one side, e.g. long edges crossing the leaf, or a side narrower than 10 µm, a guard on
+    depth and cost; then the other axis, or the leaf stays as it is), each ring reaching within
+    1 µm of a cut clipped to both sides 1 µm beyond it (Sutherland–Hodgman, which keeps the winding
+    number of every point on that side). A ring, or what is left of it, that surrounds a leaf
+    without an edge in it adds a constant winding number there and is taken out on the way down
+    (the two rings of a band round the leaf cancel; otherwise the leaf's rectangle, grown 1 µm,
+    stands for them). Each leaf's material is its rectangle less the union of its rings (one small
+    Clipper2 call that drops exact duplicate vertices only: round 2 dropped those within the
+    distance tolerance, which shifted edges next to the cuts by up to 0.5 µm and areas by up to
+    0.0025 mm²), its parts and their islands (the smallest part around each); parts that meet along
+    a shared leaf side over at least 10 nm are one piece (union-find over the intervals on each cut
+    line), and a piece on the outer frame (1 mm round everything) is the outside. Clipper2
+    truncates (does not round) where a band crosses a leaf side, so a part's edge along the side
+    could end a grid unit off it and the join was lost (round 2: one free 187.8 mm² slug reported
+    as two of 93.9 mm², 1600019_46; held regions reported as pieces): output vertices within a
+    unit of a side are now moved onto it, which never moves a ring's vertex (they lie at least two
+    units off). A piece's area is the sum of its parts'; it is thick when one part alone is (a
+    point of it, the centre of its box or its centroid, at least 0.025 mm from every edge, or else
+    what is left of it eroded by 0.025 mm; its cut edges only make that smaller) or else all its
+    parts together are, grown by twice the distance tolerance first and eroded that much more
+    (converting them for Clipper2 drops vertices closer than that tolerance, which could open a
+    crack along a leaf side: a 0.0553 mm² piece judged thin, verifier family 8). Against one leaf
+    over everything (the verifier's ep.cpp, families 0–11, 4,680 scenes, 55,401 pieces, at 4 to
+    512 vertices per leaf, also shifted to 1e5, 1e7 and 1e9 mm): the same pieces, areas within
+    1e-4 mm², in every family but the three built to be degenerate — rectangles on whole
+    millimetres touching exactly at corners and edges (2), edges nanometres apart about a cut (3)
+    and necks from 1 nm (5) — where a piece joined to another only through a neck under 10 nm
+    at a leaf side is split, by design, and a zero-width touch may join or not.
+    **Cost (round 3, Release CPU, interleaved with main, alternating order, the T-0140 verifier's
+    pages):** [[PERF]] Moves are unchanged (the check only adds messages). Sided tabs keep the
+    region search above unchanged. Measured (T-0140 round 3, whole-scene flood of the moves as in
+    T-0127, leads off, [[FLOOD]]). A V-bit's corner moves, ramps and plunges are not in the band
+    model (the cut paths stand for the moves): they cut less than its full-depth disc at the tab
+    layer, so a reported area can be up to about 20 % smaller than the piece, and they can leave
+    whole pieces unreported (T-0156 (a)). With leads on, leads cut or split some pieces (the known
+    gap below). Known gaps: leads are not part of this
     check (a lead crossing the part is a separate issue); with sided tabs, pieces between neighbouring vectors that
     reach out of the region's box are not seen (also pieces enclosed by open cuts that are not one
     cluster: a5_770001_273, a5_770001_60, missed by T-0127 too); the cut paths stand for the tool's

@@ -3750,7 +3750,16 @@ TEST_CASE("Loose pieces (T-0140): a piece counts when it is thicker than 0.05 mm
         const double b = 12.0 + (reach - 1.0);
         want.push_back(geometry::kPi * (a * a - b * b));
         REQUIRE(got.size() == want.size());
-        for (std::size_t k = 0; k < want.size(); ++k) CHECK(std::fabs(got[k] - want[k]) <= 0.005 * want[k] + 0.01);
+        // The band polygons run outside the arcs, up to 0.005 mm (on average about two thirds of
+        // that) beyond them: each piece is up to that much smaller along its curved edges.
+        const double perimeter[3] = {2.0 * geometry::kPi * (inner + outer), 2.0 * geometry::kPi * disc,
+                                     2.0 * geometry::kPi * (a + b)};
+        for (std::size_t k = 0; k < want.size(); ++k) {
+            const double edges = perimeter[want.size() == 3 ? k : k + 1];
+            INFO("piece " << k << ": " << got[k] << " mm2, exact " << want[k]);
+            CHECK(got[k] <= want[k] + 0.01);
+            CHECK(got[k] >= want[k] - 0.005 * edges - 0.01);
+        }
     }
 }
 
@@ -3786,6 +3795,32 @@ TEST_CASE("Loose pieces (T-0140): each piece is reported against its own vector,
         const double in = 1.0 + w + (sep ? 0.3 : 0.0);
         CHECK(std::fabs(got[1].second - (12.0 - 2.0 * in) * (8.0 - 2.0 * in)) <= 0.02);
     }
+}
+
+TEST_CASE("Loose pieces (T-0140): a piece is reported against the innermost closed cut round it",
+          "[toolpath][profile][tabs]") {
+    // A 40 x 30 plate with a 1 x 26 slot near its left side, Inside (the tool runs inside the
+    // outline and outside the slot), 2 mm end mill, every tab left out: the slot's kerf reaches
+    // the outline's from top to bottom and cuts the plate in two. Both parts lie inside the
+    // outline's cut, so both are reported against vector 0, though the larger lies nearer the
+    // slot's cut (its left edge is the slot's kerf); the slot's slug comes free against vector 1.
+    // Areas: what the bands leave (2 um past the tool), the parts' within 1 % (the slot's kerf
+    // ends round where it meets the outline's).
+    const std::vector<Contour> cs{Contour::rectangle(Box2{{0, 0}, {40, 30}}), Contour::rectangle(Box2{{8, 2}, {9, 28}})};
+    ProfileParams p = looseParams(ProfileSide::Inside, 0.0);
+    p.tabs.length = 200.0;
+    const ProfileResult r = profileToolpath(cs, test::endMill(2.0), p);
+    REQUIRE(r.ok());
+    auto got = loosePieces(r);
+    std::sort(got.begin(), got.end(), [](const auto& a, const auto& b) { return a.second < b.second; });
+    REQUIRE(got.size() == 3);
+    const double e = 0.002;
+    CHECK(got[0].first == 1);
+    CHECK(std::fabs(got[0].second - (1.0 - 2.0 * e) * (26.0 - 2.0 * e)) <= 0.01);
+    CHECK(got[1].first == 0);
+    CHECK(std::fabs(got[1].second - (4.0 - 2.0 * e) * (26.0 - 2.0 * e)) <= 0.01 * got[1].second);
+    CHECK(got[2].first == 0);
+    CHECK(std::fabs(got[2].second - (27.0 - 2.0 * e) * (26.0 - 2.0 * e)) <= 0.01 * got[2].second);
 }
 
 TEST_CASE("Loose pieces (T-0140): sweep scenes, Inside/Outside with allowance >= 0", "[toolpath][profile][tabs]") {
@@ -3846,6 +3881,66 @@ TEST_CASE("Loose pieces (T-0140): sweep scenes, Inside/Outside with allowance >=
          "P 0x1.8p+3 0 -0x0p+0 1 0 0x1.dcc65ceb812f8p+0 0x1.57464770436f1p+2 0x1.810978af7ca54p+2 0x0p+0 0x1.4p+2 1 0x1.a3ad7fd907972p-4 1 1 0x1.984be1a7906cap-2 0x1.02a7acea4c8ebp+1 0 3 0x1.4d06f4fc2e0bp+3 0x0p+0 1 0 0x0p+0 2 0x1.19968e04519d9p+5 0 0 0x1.d46b3552b7149p-4 0x1.aa0845a448826p+3 0x1.d28b3aa50a5eap-3 0x1.afc09a0dd89a7p+2 0 0x1.9278979cc36cap-1 0 0 0x0p+0 0x0p+0 2 4 0 0 0 0 0x1.44eabb3f2cae4p+4 -0x1.1ac89f34e137p+1 0x1p+1\n"
          "K 0 0\n"
          , {47.734, 1.73, 86.838, 90.987, 9.901}},
+        // Round 3 (T-0140 round-2 verifier). 1600019_46: End mill 12 mm, Inside, separate last
+        // pass, every tab left out: one 187.8 mm2 slug about the origin, which leaf by leaf was
+        // reported as two of 93.9 mm2 (Clipper2 truncated the crossings at the leaf side x = 0).
+        {"1600019_46",
+         "C 1\n"
+         "L 0x1.3c46a9e6fb9p+4 0x0p+0 0x1.88c0e58753ca1p+4 0x1.f1a5fa36d211bp+1\n"
+         "L 0x1.88c0e58753ca1p+4 0x1.f1a5fa36d211bp+1 0x1.6f614652cf2bbp+4 0x1.3058f860ab96bp+3\n"
+         "L 0x1.6f614652cf2bbp+4 0x1.3058f860ab96bp+3 0x1.0dab6deefdd1ep+4 0x1.4a81ee5e4756p+3\n"
+         "L 0x1.0dab6deefdd1ep+4 0x1.4a81ee5e4756p+3 0x1.bf482764830cbp+3 0x1.bf482764830cap+3\n"
+         "L 0x1.bf482764830cbp+3 0x1.bf482764830cap+3 0x1.d376f684a7968p+3 0x1.41b47993e4372p+4\n"
+         "L 0x1.d376f684a7968p+3 0x1.41b47993e4372p+4 0x1.3058f860ab96bp+3 0x1.6f614652cf2bbp+4\n"
+         "L 0x1.3058f860ab96bp+3 0x1.6f614652cf2bbp+4 0x1.27552b470853dp+2 0x1.33898c5e93bb5p+4\n"
+         "L 0x1.27552b470853dp+2 0x1.33898c5e93bb5p+4 0x1.5cdf64c1aef09p-50 0x1.3c46a9e6fb9p+4\n"
+         "L 0x1.5cdf64c1aef09p-50 0x1.3c46a9e6fb9p+4 -0x1.f1a5fa36d2118p+1 0x1.88c0e58753ca1p+4\n"
+         "L -0x1.f1a5fa36d2118p+1 0x1.88c0e58753ca1p+4 -0x1.3058f860ab96ap+3 0x1.6f614652cf2bbp+4\n"
+         "L -0x1.3058f860ab96ap+3 0x1.6f614652cf2bbp+4 -0x1.4a81ee5e4756p+3 0x1.0dab6deefdd1fp+4\n"
+         "L -0x1.4a81ee5e4756p+3 0x1.0dab6deefdd1fp+4 -0x1.bf482764830cap+3 0x1.bf482764830cbp+3\n"
+         "L -0x1.bf482764830cap+3 0x1.bf482764830cbp+3 -0x1.41b47993e4371p+4 0x1.d376f684a796ap+3\n"
+         "L -0x1.41b47993e4371p+4 0x1.d376f684a796ap+3 -0x1.6f614652cf2bbp+4 0x1.3058f860ab96cp+3\n"
+         "L -0x1.6f614652cf2bbp+4 0x1.3058f860ab96cp+3 -0x1.33898c5e93bb5p+4 0x1.27552b470853ep+2\n"
+         "L -0x1.33898c5e93bb5p+4 0x1.27552b470853ep+2 -0x1.3c46a9e6fb9p+4 0x1.5cdf64c1aef09p-49\n"
+         "L -0x1.3c46a9e6fb9p+4 0x1.5cdf64c1aef09p-49 -0x1.88c0e58753ca1p+4 -0x1.f1a5fa36d2114p+1\n"
+         "L -0x1.88c0e58753ca1p+4 -0x1.f1a5fa36d2114p+1 -0x1.6f614652cf2bcp+4 -0x1.3058f860ab969p+3\n"
+         "L -0x1.6f614652cf2bcp+4 -0x1.3058f860ab969p+3 -0x1.0dab6deefdd1fp+4 -0x1.4a81ee5e4755ep+3\n"
+         "L -0x1.0dab6deefdd1fp+4 -0x1.4a81ee5e4755ep+3 -0x1.bf482764830ccp+3 -0x1.bf482764830cap+3\n"
+         "L -0x1.bf482764830ccp+3 -0x1.bf482764830cap+3 -0x1.d376f684a796ap+3 -0x1.41b47993e4371p+4\n"
+         "L -0x1.d376f684a796ap+3 -0x1.41b47993e4371p+4 -0x1.3058f860ab972p+3 -0x1.6f614652cf2b9p+4\n"
+         "L -0x1.3058f860ab972p+3 -0x1.6f614652cf2b9p+4 -0x1.27552b4708536p+2 -0x1.33898c5e93bb6p+4\n"
+         "L -0x1.27552b4708536p+2 -0x1.33898c5e93bb6p+4 -0x1.05a78b9143346p-48 -0x1.3c46a9e6fb9p+4\n"
+         "L -0x1.05a78b9143346p-48 -0x1.3c46a9e6fb9p+4 0x1.f1a5fa36d211p+1 -0x1.88c0e58753ca1p+4\n"
+         "L 0x1.f1a5fa36d211p+1 -0x1.88c0e58753ca1p+4 0x1.3058f860ab96ep+3 -0x1.6f614652cf2bap+4\n"
+         "L 0x1.3058f860ab96ep+3 -0x1.6f614652cf2bap+4 0x1.4a81ee5e4755bp+3 -0x1.0dab6deefdd2p+4\n"
+         "L 0x1.4a81ee5e4755bp+3 -0x1.0dab6deefdd2p+4 0x1.bf482764830c9p+3 -0x1.bf482764830ccp+3\n"
+         "L 0x1.bf482764830c9p+3 -0x1.bf482764830ccp+3 0x1.41b47993e4371p+4 -0x1.d376f684a796bp+3\n"
+         "L 0x1.41b47993e4371p+4 -0x1.d376f684a796bp+3 0x1.6f614652cf2b9p+4 -0x1.3058f860ab973p+3\n"
+         "L 0x1.6f614652cf2b9p+4 -0x1.3058f860ab973p+3 0x1.33898c5e93bb6p+4 -0x1.27552b4708537p+2\n"
+         "L 0x1.33898c5e93bb6p+4 -0x1.27552b4708537p+2 0x1.3c46a9e6fb9p+4 0x0p+0\n"
+         "P 0x1.8p+3 0 0x0p+0 1 0 0x1.6d6af6acacabdp+0 0x1.d12ff60c786bep+2 0x1.3640fe9e96358p-1 0x1.ee9416e0bdac6p-1 0x1.4p+2 1 0x1.aa0c068266688p-4 0 1 0x1.5dc2f5105e997p-1 0x1.56ebf6bdd7657p+0 1 4 0x1.0c80006e24b14p+5 0x0p+0 1 0 0x0p+0 2 0x1.939a7dc0cd1d4p+0 1 0 0x1.c789c16dea568p-3 0x1.3b8dbb61aa981p+1 0x1.001e1ead90ac2p+0 0x1.3cfc31460d16cp+3 0 0x1.0c59b55030b1ap-2 0 0 0x0p+0 0x0p+0 2 8 0 0 0 0 0x1.76a5bc2bfae14p+3 -0x1.67d6546797b24p+5 0x1p+1\n"
+         "K 0 0\n"
+         , {187.815}},
+        // 1510007_2: End mill 3.175 mm, Inside, separate last pass: a thick 0.46 mm2 piece that
+        // the bands' chords (inside their arcs) left a channel out of; the band polygons now
+        // run outside the arcs.
+        {"1510007_2",
+         "C 1\n"
+         "L 0x1.a788e5da275dcp+4 0x0p+0 0x1.263c9a2ad5a6cp+2 0x1.2c70b697e4093p+2\n"
+         "L 0x1.263c9a2ad5a6cp+2 0x1.2c70b697e4093p+2 0x1.ea87c5811dbcdp-50 0x1.bcb2b6459260bp+4\n"
+         "L 0x1.ea87c5811dbcdp-50 0x1.bcb2b6459260bp+4 -0x1.0d0d5cb556e17p+2 0x1.159bdcfc4171ap+2\n"
+         "L -0x1.0d0d5cb556e17p+2 0x1.159bdcfc4171ap+2 -0x1.acafbe57e4a68p+4 0x1.d8de590e2892p-49\n"
+         "L -0x1.acafbe57e4a68p+4 0x1.d8de590e2892p-49 -0x1.1d695cbe18942p+2 -0x1.141aed2083757p+2\n"
+         "L -0x1.1d695cbe18942p+2 -0x1.141aed2083757p+2 -0x1.2c27061171414p-48 -0x1.6acf849ab361p+4\n"
+         "L -0x1.2c27061171414p-48 -0x1.6acf849ab361p+4 0x1.86c514434a77ap+2 -0x1.ae20209e8b857p+2\n"
+         "L 0x1.86c514434a77ap+2 -0x1.ae20209e8b857p+2 0x1.a788e5da275dcp+4 0x0p+0\n"
+         "C 0\n"
+         "A -0x1.873fdb8a55328p+2 -0x1.e97603ef43bd8p+2 0x1.268f05fd11957p+2 0x1.921fb54442d18p+1 0x0p+0 1\n"
+         "A 0x1.8bbc60df9bf0cp+1 -0x1.e97603ef43bd8p+2 0x1.268f05fd11957p+2 0x1.921fb54442d18p+1 0x1.921fb54442d18p+2 0\n"
+         "L 0x1.ec6d366cdf8ddp+2 -0x1.e97603ef43bd9p+2 0x1.803347f2b7b1ap+3 -0x1.d7a63750c43c8p-1\n"
+         "P 0x1.9666666666666p+1 0 0x0p+0 1 1 0x0p+0 0x1.d8b0fbe697c9dp+3 0x1.50713984a16bcp+2 0x0p+0 0x1.4p+2 1 0x1.a9c167b35c11ep-1 1 1 0x1.b5c5b7983cef7p+1 0x1.4e79c0960fb86p+2 0 5 0x1.26320116ae0cdp+6 0x0p+0 1 0 0x0p+0 2 0x1.512b03305f45ep+4 1 0 0x1.633ff25ad215ep-2 0x1.8b6f1873e7a18p+1 0x1.a1c9a7b7e86c2p-5 0x1.567cad99adbd2p+2 0 0x1.29528ad81da29p+0 0 0 0x0p+0 0x0p+0 0 2 0 0 0 1 0x1.21b31fb511f5p+2 -0x1.ebf5cd3fd257p+2 0x1p+1\n"
+         "K 0 0\n"
+         , {0.869, 0.46}},
     };
     for (const Case& k : cases) {
         INFO(k.name);
