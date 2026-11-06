@@ -489,7 +489,7 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     return results moved by a deterministic pseudo-random -k..k ulps per argument, k = 1..4: the T-0128
     tests pass for 50 seeds at each k; the cusp sweeps (which = 0..3, d = 0.13 / 1.03 / 3.175, 150
     perturbed sweeps of 732 offsets) show no self-crossing above the bound and no junction gap, the
-    largest noise crossing at 19.4 of the 100 units (a real cusp lens, 0xc500076c, is ~1e8), while a
+    largest noise crossing at 19.4 of the 100 units (a real cusp lens, 0xc500076c at about 1e4 mm, measures ~6,300 units — about 63× the bound; the same lens beyond about 6e5 mm would fall under it in both the product and the test), while a
     count with the 1e-9 slack alone finds up to 16 noise crossings per sweep (the round-1 verifier's
     checker: branch 1-5, main 16-24, and main also opens junction gaps).
   - *Consequences.* A channel 2d + w wide keeps its path for every w >= 0 (sweep: every inside offset
