@@ -138,55 +138,70 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     (b) *Sharp corner*: the target lies on the vector (its nearest distance is the distance the
     cut was actually offset by: the cut distance, or for a merged region — vectors offset together,
     or a vector whose exact offset did not close — the cut distance plus the chordal tolerance, or
-    up to the chordal tolerance less where a region's polygonal round join cuts inside) and
-    the spans at the nearest distance form one run of two or more consecutive spans. On a V-bit cut
-    with sharp external corners a convex tip has no join span: the offset lines meet at the mitre,
-    and the tip's feet on both are equally near. Squared off beyond the mitre limit, the chamfer
-    lies at the offset distance from the tip, so both edges and the chamfer are equally near; a
-    merged region's round join is a polygon whose chords are all equally near. Short neighbour
-    edges and finely segmented outlines put more junctions in the run. When every span of the cut
-    is near (a loop of two or three spans, such as an arc closed by a line) the loop is broken where
-    consecutive feet lie farthest apart (if clearly the widest gap). The cut starts at the corner
-    built about the target vertex itself (owner decisions 2026-11-05), found without comparing
-    turn angles:
-    - On a cut with round joins (end mill, or a V-bit without sharp corners), at the first point
-      of the run in travel that lies on the circle of the offset distance about the target (within
-      3 Clipper2 grid units, 3e-6 mm, on a merged region; 4e-10 × the coordinates on an exact
-      offset), backing up over the join's last, shorter chord where the cut runs the join that way
-      (it is less near and not in the run): a merged region's polygonal join starts at its first
-      chord point, and so does the straight chord an exact offset puts in place of a join arc
-      shorter than the tolerance — the foot of the target on the incoming offset edge, as a true
-      round join starts at its arc's beginning.
-    - Otherwise, among the run's junctions at which the target is equidistant from the carriers
-      (lines, or circles for arcs) of the two spans that meet there, to within 4 times their
-      rounding: that is every corner of the target's own construction — the mitre, both corners of
-      a chamfer (also between curved edges: the arcs' circles and the chamfer are all at the offset
-      distance), every vertex of a polygonal join — and a neighbour's junction only when its edge
-      length × sin(its turn) is within that rounding (about 1e-10 × the coordinates for exact
-      offsets, 1e-6 mm × (1 + offset / span length) on Clipper2's grid for merged regions). Of
-      these the one whose feet of the target on its two spans lie most evenly either side of it,
-      and then the first in travel of the consecutive ones around it: exactly the mitre's corner
-      point, whichever way the cut runs and however sharp, short or many the neighbouring edges
-      are (a finely segmented outline starts at the start vertex's mitre, not one segment off);
-      the chamfer's first corner in the direction of travel. With no equidistant junction, the
-      one whose feet lie most evenly.
+    up to the chordal tolerance less where a region's polygonal round join cuts inside). On a V-bit
+    cut with sharp external corners a convex tip has no join span: the offset lines meet at the
+    mitre, and the tip's feet on both are equally near. Squared off beyond the mitre limit, the
+    chamfer lies at the offset distance from the tip, so both edges and the chamfer are equally
+    near; a merged region's round join is a polygon whose chords are all equally near. The cut
+    starts at the corner built about the target vertex itself (owner decisions 2026-11-05), found
+    from the target's own two input edges (the edges into and out of the vertex; a Bezier edge by
+    its chord at the vertex, as the offset polygonises it), without comparing turn angles or edge
+    lengths (T-0158 round 5):
+    - The spans of the cut on each edge's offset — every span whose start, middle and end lie at
+      the offset distance from that edge's line or circle, to rounding (4 × 1e-10 × the coordinates
+      on an exact offset, 4 × 1e-6 mm on Clipper2's grid for a region, each × (2 + 2 × how far
+      beyond the edge the point lies / the edge's length), since a line's direction comes from its
+      end points; against a circle 8 × that rounding and 4e-12 × its radius, plus the chordal tolerance on a region) — bound the corner. In
+      travel, from the last span on the offset of the edge met first to the next span on the other
+      edge's offset, what lies between is the corner: nothing (the mitre), the chamfer, the join
+      arc, the chord an exact offset puts in place of a join arc shorter than the tolerance, or a
+      merged region's join chords. Of such places the one holding a span at the nearest distance
+      (there must be exactly one); the cut starts at its first junction: exactly the mitre's corner point whichever way the cut
+      runs, the chamfer's first corner in the direction of travel (also between curved edges), and
+      the join's first point in travel (the target's foot on the first edge's offset), as a true
+      round join starts at its arc's beginning. A span within that rounding of both offsets (a
+      sliver of the first edge's offset split off next to the mitre, or a join chord too short to
+      tell) counts as on either; then the start is the first junction among such spans that lies on
+      the circle of the offset distance about the target (within 3 grid units on a region, 4e-10 ×
+      the coordinates on an exact offset), else the one after them.
+    - Every other junction is bounded by a span that is not on the target's own two offsets:
+      neighbouring vertices — collinear (redundant), nearly collinear, short or sharp — and split
+      points of the offset lines never take the start, however near they are; a finely segmented
+      outline starts at the start vertex's exact mitre, and a region vertex a few µm from the target
+      no longer moves its join's start.
+    - Where no such corner is found (the target is no vertex; an edge's offset is consumed next to
+      the corner; the two edges are collinear, so the vertex has no corner) the earlier rules
+      apply, provided the spans at the nearest distance form one run of two or more consecutive
+      spans (when every span of the cut is near, a loop of two or three spans, the loop is broken
+      where consecutive feet lie farthest apart, if clearly the widest gap): with round joins, the
+      first point of the run in travel on the circle above, backing up over the join's last,
+      shorter chord where the cut runs the join that way; otherwise, of the run's junctions at which
+      the target is equidistant from the carriers (lines, or circles for arcs) of the two spans
+      that meet there, to within 4 times their rounding (1e-10 × the coordinates × (1 + offset /
+      span length) on an exact offset, 1e-6 mm × (1 + offset / span length) on a region), the one
+      whose feet of the target on its two spans lie most evenly either side of it (with none
+      equidistant, of all junctions). A target at a redundant vertex thus starts at its own foot.
     A target nearest one junction starts there, as before. Limits: an input edge shorter than the
     distance tolerance is dropped by the offset (ADR-0006), so at that length the two corners at its
-    ends become one corner and the start moves with the geometry; on a merged region with round
-    joins, a region vertex within about sqrt(2 × offset × 3e-6 mm) before the target (5 µm at a
-    3 mm offset; region vertices are at least the distance tolerance apart) can put its join's last
-    point on that circle, moving the start back by at most that vertex's distance (on an exact
-    offset the same bound with 4e-10 × the coordinates, 0.5 µm at a 3 mm offset and 100 mm
-    coordinates, below the distance tolerance that input edges are at least long); a neighbour
-    whose edge length × sin(turn) is within the rounding above joins the target's corner and, when
-    it comes first in travel, takes the start.
+    ends become one corner and the start moves with the geometry; likewise a merged region whose
+    vertices are about the tolerance apart can change shape (which spans Clipper2 keeps) under
+    1e-9 perturbations. A sliver or chord within the rounding of both offsets moves the start by at
+    most its own length (its length × sin(turn) is within that rounding: sub-µm). In the fallback
+    cases above the earlier limits remain: with round joins, a vertex within about sqrt(2 × offset
+    × 3e-6 mm) before the target (5 µm at a 3 mm offset) on a region, or sqrt(2 × offset × 4e-10 ×
+    the coordinates) on an exact offset (0.5 µm at a 3 mm offset and 100 mm coordinates, 1.5 µm at
+    1 m: below the distance tolerance only up to about 400 mm), can put its join's last point on
+    that circle and move the start back by at most that vertex's distance; without, a neighbour's
+    junction whose edge length × sin(turn) is within the rounding counts as equidistant and takes
+    the start where its feet lie more evenly.
     Near spans in two or more separate places (a box-centre anchor on a symmetric shape) are not
     broken by rule and still follow rounding (T-0166). The rules apply to all three start modes.
     They are stable under ulp and 1e-9 relative perturbations and translations, and they compare
     distances only against bounds well above rounding, so builds that round differently (FMA
     contraction, another compiler or libm) choose the same start, except as just listed. They
-    moved the start in about 9% of the stored harness scenes and 21% of random multi-vector pages,
-    those whose start that rounding had decided.
+    moved the start in about 9% of the stored harness scenes as stored (15% with their VectorStart
+    / Outside, box-centre and Optimise variants) and 13% of random scenes (19% of random
+    multi-vector pages), those whose start that rounding had decided.
 12. **Height profiles.** A pass is a list of legs (`PathLeg`: walk the path from u0 to u1, either
     way, with a piecewise-linear Z over travelled distance). Lines become feeds, arcs (helical
     where Z changes, exact because Z is linear in arc length between knots), profile jumps
