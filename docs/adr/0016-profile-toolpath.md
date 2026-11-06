@@ -194,11 +194,24 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     that circle and move the start back by at most that vertex's distance; without, a neighbour's
     junction whose edge length × sin(turn) is within the rounding counts as equidistant and takes
     the start where its feet lie more evenly.
+    Known limits accepted by the owner at merge (2026-11-05; follow-up T-0174): (a) a squared-off
+    tip whose start vertex has a duplicate or sub-µm edge next to it labels no span on that edge, so
+    the corner is not found and the fallback's "most even feet" ties exactly between the chamfer's
+    two corners; rounding picks one, so the start can jump to the other corner (up to 4.3 mm at a 3 mm
+    offset) under ulp or 1e-9 perturbations, and with a collinear edge of 1e-7–1e-5 mm both
+    directions can start at the same corner (the last in travel for one of them). The DXF importer
+    drops exact duplicate points; near-duplicates and API input reach this case (T-0158 round-5
+    harness t0158v5 repro5/sq_tiny_*). (b) On a merged region an arc whose chord sag lies exactly on
+    the labelling band (chordal slack) can flip the start by one chord (up to 1.7 mm; repro5/mrgarc_*);
+    no stored, generated or random scene came within 7e-4 of the band. (c) Self-intersecting
+    outlines (malformed input, cut as a region) are best effort: the start may switch between the
+    corner rule and the fallback under translation (about 2 mm, repro5/selfx_*). The sliver bound
+    above is sub-µm only up to about 2000 mm coordinates (1.56 µm at 3 m).
     Near spans in two or more separate places (a box-centre anchor on a symmetric shape) are not
     broken by rule and still follow rounding (T-0166). The rules apply to all three start modes.
     They are stable under ulp and 1e-9 relative perturbations and translations, and they compare
     distances only against bounds well above rounding, so builds that round differently (FMA
-    contraction, another compiler or libm) choose the same start, except as just listed. They
+    contraction, another compiler or libm) choose the same start, except as listed above. They
     moved the start in about 9% of the stored harness scenes as stored (15% with their VectorStart
     / Outside, box-centre and Optimise variants) and 13% of random scenes (19% of random
     multi-vector pages), those whose start that rounding had decided.
