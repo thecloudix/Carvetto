@@ -1,0 +1,16 @@
+/home/chris/harness/t0128v2/wrun.sh 90 2500 0x9b000000 w90_0
+/home/chris/harness/t0128v2/wrun.sh 90 2500 0x9b010000 w90_1
+/home/chris/harness/t0128v2/wrun.sh 90 2500 0x9b020000 w90_2
+/home/chris/harness/t0128v2/wrun.sh 90 2500 0x9b030000 w90_3
+/home/chris/harness/t0128v2/wrun.sh 90 2500 0x9b040000 w90_4
+/home/chris/harness/t0128v2/wrun.sh 90 2500 0x9b050000 w90_5
+/home/chris/harness/t0128v2/wrun.sh 90 2500 0x9b060000 w90_6
+/home/chris/harness/t0128v2/wrun.sh 90 2500 0x9b070000 w90_7
+/home/chris/harness/t0128v2/wrun.sh 5 400 0x9c500000 w5_0
+/home/chris/harness/t0128v2/wrun.sh 5 400 0x9c510000 w5_1
+/home/chris/harness/t0128v2/wrun.sh 2 400 0x9c200000 w2_0
+/home/chris/harness/t0128v2/wrun.sh 2 400 0x9c210000 w2_1
+/home/chris/harness/t0128v2/wrun.sh 3 400 0x9c300000 w3_0
+/home/chris/harness/t0128v2/wrun.sh 3 400 0x9c310000 w3_1
+/home/chris/harness/t0128v2/wrun.sh 4 400 0x9c400000 w4_0
+/home/chris/harness/t0128v2/wrun.sh 4 400 0x9c410000 w4_1

@@ -1,0 +1,6 @@
+hatch N=3000 d=1 w=0 Round side=0 far=10000 spans_in=5999 | branch 0.0459 s (chains 1501 spans 5997) | main 0.0370 s (chains 1 spans 4497) | ratio 1.240
+hatch N=3000 d=1 w=1e-07 Square side=0 far=10000 spans_in=5999 | branch 0.0721 s (chains 2004 spans 7005) | main 0.0684 s (chains 504 spans 5505) | ratio 1.055
+comb N=3000 d=1 w=0 Round side=0 far=10000 spans_in=12001 | branch 0.0980 s (chains 3001 spans 12001) | main 0.0786 s (chains 1 spans 9001) | ratio 1.247
+comb N=3000 d=1 w=1e-07 Sharp side=0 far=10000 spans_in=12001 | branch 0.1396 s (chains 3714 spans 7443) | main 0.1332 s (chains 714 spans 4443) | ratio 1.048
+rects N=3000 d=1 w=0 Square side=0 far=10000 spans_in=21000 | branch 0.1486 s (chains 6000 spans 12000) | main 0.1467 s (chains 3000 spans 9000) | ratio 1.013
+ring N=3000 d=1 w=0 Round side=0 far=10000 spans_in=18000 | branch 0.1251 s (chains 3001 spans 15000) | main 0.1231 s (chains 3001 spans 15000) | ratio 1.016

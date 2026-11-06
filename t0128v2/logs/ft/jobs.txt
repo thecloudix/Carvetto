@@ -1,0 +1,9 @@
+timeout 2400 ./ftime 0 300 0x7b200000 5 > /home/chris/harness/t0128v2/logs/ft/ft0.log 2>&1
+timeout 2400 ./ftime 2 300 0x7b220000 5 > /home/chris/harness/t0128v2/logs/ft/ft2.log 2>&1
+timeout 2400 ./ftime 3 300 0x7b230000 5 > /home/chris/harness/t0128v2/logs/ft/ft3.log 2>&1
+timeout 2400 ./ftime 4 300 0x7b240000 5 > /home/chris/harness/t0128v2/logs/ft/ft4.log 2>&1
+timeout 2400 ./ftime 5 300 0x7b250000 5 > /home/chris/harness/t0128v2/logs/ft/ft5.log 2>&1
+timeout 2400 ./ftime 21 100 0x7b2150000 5 > /home/chris/harness/t0128v2/logs/ft/ft21.log 2>&1
+timeout 2400 ./ftime 22 100 0x7b2160000 5 > /home/chris/harness/t0128v2/logs/ft/ft22.log 2>&1
+timeout 2400 ./ftime 23 100 0x7b2170000 5 > /home/chris/harness/t0128v2/logs/ft/ft23.log 2>&1
+timeout 2400 ./ftime 25 100 0x7b2190000 5 > /home/chris/harness/t0128v2/logs/ft/ft25.log 2>&1

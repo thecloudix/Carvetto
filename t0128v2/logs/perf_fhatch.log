@@ -1,0 +1,12 @@
+fhatch N=1000 d=0.01 w=0 Round side=0 far=1000 spans_in=4003 | branch 0.2649 s (chains 551 spans 5046) | main 0.2126 s (chains 2 spans 4497) | ratio 1.246
+fhatch N=4000 d=0.01 w=0 Round side=0 far=1000 spans_in=16003 | branch 0.9353 s (chains 2196 spans 20190) | main 0.8049 s (chains 4 spans 17998) | ratio 1.162
+fhatch N=1000 d=0.002 w=0 Round side=0 far=100000 spans_in=4003 | branch 0.5877 s (chains 551 spans 5046) | main 0.3069 s (chains 2 spans 4497) | ratio 1.915
+fhatch N=4000 d=0.002 w=0 Round side=0 far=100000 spans_in=16003 | branch 9.7226 s (chains 2199 spans 20194) | main 4.7360 s (chains 2 spans 17997) | ratio 2.053
+lhatch N=250 d=0.002 w=0 Round side=0 far=100000 spans_in=503 | branch 0.2462 s (chains 127 spans 501) | main 0.0215 s (chains 1 spans 375) | ratio 11.460
+lhatch N=1000 d=0.002 w=0 Round side=0 far=100000 spans_in=2003 | branch 3.7881 s (chains 502 spans 2001) | main 0.3190 s (chains 1 spans 1500) | ratio 11.875
+lhatch N=1000 d=0.05 w=0 Round side=0 far=1000 spans_in=2003 | branch 0.1439 s (chains 502 spans 2001) | main 0.0711 s (chains 1 spans 1500) | ratio 2.024
+lhatch N=1000 d=0.05 w=0 Round side=0 far=10000 spans_in=2003 | branch 0.5762 s (chains 502 spans 2001) | main 0.3424 s (chains 1 spans 1500) | ratio 1.683
+lhatch N=4000 d=0.05 w=0 Round side=0 far=10000 spans_in=8003 | branch 2.4969 s (chains 2002 spans 8001) | main 1.2289 s (chains 1 spans 6000) | ratio 2.032
+lhatch N=1000 d=0.05 w=0 Round side=0 far=100000 spans_in=2003 | branch 0.5751 s (chains 502 spans 2001) | main 0.3291 s (chains 1 spans 1500) | ratio 1.748
+lhatch N=1000 d=0.002 w=0 Round side=0 far=50 spans_in=2003 | branch 0.5790 s (chains 502 spans 2001) | main 0.1055 s (chains 1 spans 1500) | ratio 5.490
+lhatch N=1000 d=0.05 w=1e-07 Square side=0 far=10000 spans_in=2003 | branch 0.8153 s (chains 502 spans 2004) | main 0.6560 s (chains 1 spans 1503) | ratio 1.243

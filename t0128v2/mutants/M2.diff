@@ -1,0 +1,11 @@
+--- /home/chris/wt-T0128/core/src/geometry/offset.cpp	2026-11-05 19:03:27.733153491 -0600
++++ offset_M2.cpp	2026-11-05 19:38:32.393817108 -0600
+@@ -4300,7 +4300,7 @@
+                 // isolated piece is put back only from kStrayMinimum x the tolerance (owner decision
+                 // 2026-11-05: an isolated 0.005 mm stray, fam0 0x71280859, is noise to the user; a
+                 // needle or slot that matters is mm long).
+-                const bool isolated = from == k && to == e;
++                const bool isolated = false;
+                 if (len > (isolated ? kStrayMinimum : 1.0) * tol.distance) {
+                     exactJunctions(part, false);
+                     if (part.size() > 512 || partCrossesItself(part)) {

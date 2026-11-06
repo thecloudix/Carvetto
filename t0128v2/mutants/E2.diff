@@ -1,0 +1,11 @@
+--- /home/chris/wt-T0128/core/src/geometry/offset.cpp	2026-11-05 19:03:27.733153491 -0600
++++ offset_E2.cpp	2026-11-05 19:38:32.392102908 -0600
+@@ -3411,7 +3411,7 @@
+                         const Piece p{st.piece.element, paramAt(st, fw ? nodes[k] : nodes[k + 1]),
+                                       paramAt(st, fw ? nodes[k + 1] : nodes[k])};
+                         if (p.t1 > p.t0 && !back) {
+-                            if (exactOver(p)) {
++                            if (true || exactOver(p)) {
+                                 back = p;
+                             } else if (!fallback) {
+                                 fallback = p;

@@ -1,0 +1,11 @@
+--- /home/chris/wt-T0128/core/src/geometry/offset.cpp	2026-11-05 19:03:27.733153491 -0600
++++ offset_O.cpp	2026-11-05 19:38:32.396230008 -0600
+@@ -4326,7 +4326,7 @@
+         merged.reserve(result.size() + added.size());
+         std::size_t r = 0;
+         for (Stray& a : added) {
+-            while (r < result.size() && !(a.key < resultKeys[r])) {
++            while (r < result.size()) {
+                 merged.push_back(std::move(result[r++]));
+             }
+             Contour c;

@@ -1,0 +1,1 @@
+FTIME fam21 N=100 s0=0x7b2150000 offsets 600 reps 5 | cpu branch 1.3383 main 1.3703 ratio 0.9766

@@ -1,0 +1,5 @@
+longz N=100 d=1 w=0 Round side=0 far=10000 spans_in=201 | branch 0.0011 s (chains 1 spans 99) | main 0.0008 s (chains 0 spans 0) | ratio 1.293
+longz N=500 d=1 w=0 Round side=0 far=10000 spans_in=1001 | branch 0.0062 s (chains 1 spans 499) | main 0.0033 s (chains 0 spans 0) | ratio 1.889
+longz N=511 d=1 w=0 Round side=0 far=10000 spans_in=1023 | branch 0.0064 s (chains 1 spans 510) | main 0.0035 s (chains 0 spans 0) | ratio 1.815
+longz N=513 d=1 w=0 Round side=0 far=10000 spans_in=1027 | branch 0.0067 s (chains 1 spans 512) | main 0.0037 s (chains 0 spans 0) | ratio 1.815
+longz N=2000 d=1 w=0 Round side=0 far=10000 spans_in=4001 | branch 0.0170 s (chains 1999 spans 1999) | main 0.0154 s (chains 0 spans 0) | ratio 1.103

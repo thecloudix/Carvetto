@@ -1,0 +1,6 @@
+chatch N=1000 d=0.01 w=0 Round side=0 far=0 spans_in=2003 | branch 0.0146 s (chains 1000 spans 1000) | main 0.0123 s (chains 499 spans 499) | ratio 1.179
+chatch N=1000 d=0.01 w=0 Round side=0 far=10000 spans_in=2003 | branch 0.4338 s (chains 502 spans 2001) | main 0.3495 s (chains 1 spans 1500) | ratio 1.241
+chatch N=1000 d=0.01 w=0 Round side=0 far=100000 spans_in=2003 | branch 0.4097 s (chains 502 spans 2001) | main 0.3331 s (chains 1 spans 1500) | ratio 1.230
+chatch N=4000 d=0.01 w=0 Round side=0 far=0 spans_in=8003 | branch 0.0497 s (chains 4000 spans 4000) | main 0.0439 s (chains 1999 spans 1999) | ratio 1.131
+chatch N=4000 d=0.01 w=0 Round side=0 far=10000 spans_in=8003 | branch 6.1822 s (chains 2002 spans 8001) | main 5.0180 s (chains 1 spans 6000) | ratio 1.232
+chatch N=4000 d=0.01 w=0 Round side=0 far=100000 spans_in=8003 | branch 6.1909 s (chains 2002 spans 8001) | main 5.0952 s (chains 1 spans 6000) | ratio 1.215

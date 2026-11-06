@@ -1,0 +1,1 @@
+FTIME fam3 N=300 s0=0x7b230000 offsets 1800 reps 5 | cpu branch 1.1344 main 1.1410 ratio 0.9941

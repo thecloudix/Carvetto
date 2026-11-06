@@ -1,0 +1,1 @@
+FTIME fam22 N=100 s0=0x7b2160000 offsets 600 reps 5 | cpu branch 0.6643 main 0.6739 ratio 0.9857

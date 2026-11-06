@@ -1,0 +1,11 @@
+--- /home/chris/wt-T0128/core/src/geometry/offset.cpp	2026-11-05 19:03:27.733153491 -0600
++++ offset_M.cpp	2026-11-05 19:38:32.393370908 -0600
+@@ -2593,7 +2593,7 @@
+ constexpr double kRoundingUnits = 64.0;
+ // Shortest stray (a thin loop's strand or a stretch of dropped opposite copies, put back by
+ // offsetOpenContour step 7) returned when no other chain covers any of it, in tolerances.
+-constexpr double kStrayMinimum = 10.0;
++constexpr double kStrayMinimum = 1.0;
+ constexpr double kEps = std::numeric_limits<double>::epsilon();
+ 
+ std::vector<std::vector<Span>> exactParts(const std::vector<Span>& spans) {

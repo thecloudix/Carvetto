@@ -1,0 +1,16 @@
+--- /home/chris/wt-T0128/core/src/geometry/offset.cpp	2026-11-05 19:03:27.733153491 -0600
++++ offset_H.cpp	2026-11-05 19:38:32.394636908 -0600
+@@ -4239,8 +4239,11 @@
+             const Box2 around{q - Vec2{cap, cap}, q + Vec2{cap, cap}};
+             outGrid.query(around,
+                           [&](std::size_t i) { best = std::min(best, distanceToSpan(q, *outSpans[i])); });
+-            addedGrid.query(around,
+-                            [&](std::size_t i) { best = std::min(best, distanceToSpan(q, addedSpans[i])); });
++            for (std::size_t i = 0; i < addedSpans.size(); ++i) {
++                if (bounds(addedSpans[i]).intersects(around)) {
++                    best = std::min(best, distanceToSpan(q, addedSpans[i]));
++                }
++            }
+             return best;
+         };
+         // Samples every tol / 4 along each strand. The distance g to the chains is 1-Lipschitz along

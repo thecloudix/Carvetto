@@ -1,0 +1,79 @@
+--- /home/chris/wt-T0128/core/src/geometry/offset.cpp	2026-11-05 19:03:27.733153491 -0600
++++ t0128v2/offset_W3.cpp	2026-11-05 19:59:27.888308624 -0600
+@@ -1,5 +1,6 @@
+ #include "carvetto/geometry/offset.hpp"
+ 
++#include <cstdio>
+ #include <algorithm>
+ #include <cmath>
+ #include <cstddef>
+@@ -3988,6 +3989,7 @@
+     struct Stray {
+         double key;
+         std::vector<Span> spans;
++        int kind = 0;  // W: 1 loop strand, 2 opposite copy
+     };
+     std::vector<Stray> strays;
+     double componentKey = 0.0;
+@@ -4072,7 +4074,7 @@
+                     // Too thin to enclose anything, but a tool centre would still run along it. A
+                     // closed piece is the whole loop, so its raw pieces are `spans`.
+                     for (std::vector<Span>& part : exactParts(sliverStrand(spans, tol))) {
+-                        strays.push_back(Stray{componentKey, std::move(part)});
++                        strays.push_back(Stray{componentKey, std::move(part), 1});
+                     }
+                 }
+             }
+@@ -4187,7 +4189,7 @@
+                 k = succ[k];
+             }
+             for (std::vector<Span>& part : exactParts(st.spans)) {
+-                strays.push_back(Stray{st.key, std::move(part)});
++                strays.push_back(Stray{st.key, std::move(part), 2});
+             }
+         };
+         for (std::size_t k = 0; k < nr; ++k) {
+@@ -4226,7 +4228,35 @@
+             straySpans += st.spans.size();
+         }
+         BoxGrid addedGrid(strayExtent, straySpans);
++        const double wFar = d + std::max(tol.distance * tol.distance / (8.0 * d), std::min(5e-7 * std::max(1.0, d), 0.1 * tol.distance * tol.distance / d)) + 1e-12 * std::max(1.0, d);
++        auto wAcceptable = [&](Vec2 q) {
++            bool ok = false;
++            inputGrid.query(Box2{q - Vec2{wFar, wFar}, q + Vec2{wFar, wFar}}, [&](std::size_t i) {
++                ok = ok || distanceToSpan(q, input[i]) <= wFar;
++            });
++            if (ok) return true;
++            bool corner = false;
++            wedgeGrid.query(Box2{q, q}.inflated(onBoundary), [&](std::size_t w) {
++                if (corner) return;
++                corner = insideRegion(q, wedges[w]);
++                for (const Span& e : wedges[w]) corner = corner || distanceToSpan(q, e) <= onBoundary;
++            });
++            return corner;
++        };
++        int wKind = 0;
+         auto add = [&](double key, std::vector<Span>&& part) {
++            {
++                double worst = 0.0; int bad = 0; Vec2 wq{};
++                for (const Span& sp : part) for (int kk = 0; kk <= 64; ++kk) {
++                    const Vec2 q = pointAt(sp, kk / 64.0);
++                    if (!wAcceptable(q)) {
++                        double m = 1e300; for (const Span& in : input) m = std::min(m, distanceToSpan(q, in));
++                        if (m - d > worst) { worst = m - d; wq = q; } ++bad;
++                    }
++                }
++                if (bad) std::fprintf(stderr, "WVIOL kind %d join %d d %.17g bad %d excess %.3g at %.17g %.17g\n", wKind, static_cast<int>(join), d, bad, worst, wq.x, wq.y);
++                std::fprintf(stderr, "WADD kind %d\n", wKind);
++            }
+             for (const Span& sp : part) {
+                 addedSpans.push_back(sp);
+                 addedGrid.add(bounds(sp));
+@@ -4257,6 +4287,7 @@
+             bool covered;
+         };
+         for (const Stray& st : strays) {
++            wKind = st.kind;
+             std::vector<Sample> samples;
+             double cap = skipCap;
+             for (std::size_t i = 0; i < st.spans.size(); ++i) {

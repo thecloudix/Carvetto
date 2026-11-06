@@ -1,0 +1,11 @@
+--- /home/chris/wt-T0128/core/src/geometry/offset.cpp	2026-11-05 19:03:27.733153491 -0600
++++ offset_P.cpp	2026-11-05 19:38:32.395394208 -0600
+@@ -2678,7 +2678,7 @@
+         }
+         return len;
+     };
+-    std::vector<Span> strand = total(other) > total(one) ? std::move(other) : std::move(one);
++    std::vector<Span> strand = total(other) > total(one) ? std::move(one) : std::move(other);
+     dropTinyEnds(strand, tol);
+     if (strand.size() > 512 || partCrossesItself(strand)) {
+         // Not a plain needle: fall back to the loop's longest span, which never crosses itself.

@@ -1,0 +1,11 @@
+--- /home/chris/wt-T0128/core/src/geometry/offset.cpp	2026-11-05 19:03:27.733153491 -0600
++++ offset_S.cpp	2026-11-05 19:38:32.395827108 -0600
+@@ -4303,7 +4303,7 @@
+                 const bool isolated = from == k && to == e;
+                 if (len > (isolated ? kStrayMinimum : 1.0) * tol.distance) {
+                     exactJunctions(part, false);
+-                    if (part.size() > 512 || partCrossesItself(part)) {
++                    if (part.size() > 4 || partCrossesItself(part)) {
+                         // Never seen: rather than return a chain that crosses itself, each span
+                         // longer than the tolerance becomes a chain of its own.
+                         for (Span& sp : part) {
