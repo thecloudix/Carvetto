@@ -1,0 +1,20 @@
+--- /dev/fd/63	2026-11-05 17:51:25.254985514 -0600
++++ build-verify1-src-mutC/core/src/geometry/hole_nesting.cpp	2026-11-05 17:51:25.254314714 -0600
+@@ -416,10 +416,14 @@
+         if (lastWith != std::numeric_limits<std::size_t>::max() && boxes[lastWith].holds(boxes[h]) && holds(lastWith)) {
+             continue;
+         }
+-        if (!tree) {
+-            tree.emplace(boxes, with);
++        bool found = false;  // MUTANT C: linear scan instead of the box hierarchy
++        for (const std::size_t w : with) {
++            if (boxes[w].holds(boxes[h]) && holds(w)) {
++                found = true;
++                break;
++            }
+         }
+-        if (!tree->anyHolding(boxes[h], holds)) {
++        if (!found) {
+             return false;
+         }
+     }

@@ -1,0 +1,10 @@
+T-0171 round-1 verifier, b634c14 vs origin/main. Mutant C = mutC.patch (box hierarchy -> linear scan over `with` in input order, last-outer shortcut kept).
+Ratios (rev, shuf) of the T-0171 test, 10k->20k Release / 8k->16k Debug, bound 2.5:
+  Release real, normal load (n=15): rev 1.73-2.40, shuf 1.70-2.41, 0 fails
+  Release real, 3 copies in parallel + machine load ~6-8 (n=111): rev max 2.36, shuf med 2.14 max 2.69, 2 FAILS (shuf 2.69, 2.63)
+  Release T-0142 round-3 test, same stress (n=45): all layouts max 2.43, 0 fails
+  Release mutC (n=9): rev 2.15-3.70 (2 runs <= 2.5), shuf 3.30-3.78; test FAILS 9/9 (via shuf)
+  Debug real (n=9 + 32 under 4 parallel): rev max 2.23, shuf max 2.38, 0 fails; test wall ~8 s (ctest 7.85 s)
+  Debug mutC (n=9): rev 2.85-3.47, shuf 2.96-3.24; FAILS 9/9
+ctest --repeat until-fail: Release 20/20, Debug 5/5, T-0142 r3 Release 10/10 pass. Full Debug -Werror ctest 1010/1010 rc=0.
+Shuffle: shuf_ref.py (pure Python 64-bit) == shuf.cpp (g++) == shuf32.cpp (32-bit index) permutation hashes for n=8k/16k/10k/20k.

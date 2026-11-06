@@ -1,0 +1,36 @@
+== g++ -std=c++20
+shuf.cpp: In function ‘int main()’:
+shuf.cpp:22:83: warning: conversion from ‘long int’ to ‘double’ may change value [-Wconversion]
+   22 |         for (int i = 0; i < n; ++i) { long d = pos[2*i+1] - pos[2*i]; md += d < 0 ? -d : d; holeBeforeOuter += d < 0; }
+n=8000 size_t=8 hash=88b1a393cce672f9 first=4251,2535,13280 meanDist=5310 holeBeforeOuter=3999
+n=16000 size_t=8 hash=73e72801b71d3013 first=10619,11636,25543 meanDist=10603 holeBeforeOuter=8091
+n=10000 size_t=8 hash=f5b3e93ce1b5c6e1 first=12559,14829,19727 meanDist=6687 holeBeforeOuter=5056
+n=20000 size_t=8 hash=ee74a6799b18a571 first=6324,25648,25223 meanDist=13263 holeBeforeOuter=9938
+== g++ -std=c++20 -m32
+In file included from shuf.cpp:2:
+/usr/include/c++/15/cstdint:40:10: fatal error: bits/c++config.h: No such file or directory
+   40 | #include <bits/c++config.h>
+n=8000 size_t=8 hash=88b1a393cce672f9 first=4251,2535,13280 meanDist=5310 holeBeforeOuter=3999
+n=16000 size_t=8 hash=73e72801b71d3013 first=10619,11636,25543 meanDist=10603 holeBeforeOuter=8091
+n=10000 size_t=8 hash=f5b3e93ce1b5c6e1 first=12559,14829,19727 meanDist=6687 holeBeforeOuter=5056
+n=20000 size_t=8 hash=ee74a6799b18a571 first=6324,25648,25223 meanDist=13263 holeBeforeOuter=9938
+== clang++ -std=c++20
+/bin/bash: line 30: clang++: command not found
+n=8000 size_t=8 hash=88b1a393cce672f9 first=4251,2535,13280 meanDist=5310 holeBeforeOuter=3999
+n=16000 size_t=8 hash=73e72801b71d3013 first=10619,11636,25543 meanDist=10603 holeBeforeOuter=8091
+n=10000 size_t=8 hash=f5b3e93ce1b5c6e1 first=12559,14829,19727 meanDist=6687 holeBeforeOuter=5056
+n=20000 size_t=8 hash=ee74a6799b18a571 first=6324,25648,25223 meanDist=13263 holeBeforeOuter=9938
+== clang++ -std=c++20 -stdlib=libc++
+/bin/bash: line 30: clang++: command not found
+n=8000 size_t=8 hash=88b1a393cce672f9 first=4251,2535,13280 meanDist=5310 holeBeforeOuter=3999
+n=16000 size_t=8 hash=73e72801b71d3013 first=10619,11636,25543 meanDist=10603 holeBeforeOuter=8091
+n=10000 size_t=8 hash=f5b3e93ce1b5c6e1 first=12559,14829,19727 meanDist=6687 holeBeforeOuter=5056
+n=20000 size_t=8 hash=ee74a6799b18a571 first=6324,25648,25223 meanDist=13263 holeBeforeOuter=9938
+n=8000 hash=88b1a393cce672f9 first=4251,2535,13280
+n=16000 hash=73e72801b71d3013 first=10619,11636,25543
+n=10000 hash=f5b3e93ce1b5c6e1 first=12559,14829,19727
+n=20000 hash=ee74a6799b18a571 first=6324,25648,25223
+u32idx n=8000 size_t=8 hash=88b1a393cce672f9 first=4251,2535,13280 meanDist=5310 holeBeforeOuter=3999
+u32idx n=16000 size_t=8 hash=73e72801b71d3013 first=10619,11636,25543 meanDist=10603 holeBeforeOuter=8091
+u32idx n=10000 size_t=8 hash=f5b3e93ce1b5c6e1 first=12559,14829,19727 meanDist=6687 holeBeforeOuter=5056
+u32idx n=20000 size_t=8 hash=ee74a6799b18a571 first=6324,25648,25223 meanDist=13263 holeBeforeOuter=9938

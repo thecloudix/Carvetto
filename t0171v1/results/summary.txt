@@ -1,0 +1,5 @@
+rel_real.txt           n=15 fails=0 rev[min 1.73 med 1.99 max 2.40] shuf[min 1.70 med 2.12 max 2.41] rev<=2.5:15 shuf<=2.5:15
+rel_real_stress3.txt   n=36 fails=1 rev[min 1.57 med 2.00 max 2.36] shuf[min 1.73 med 2.13 max 2.69] rev<=2.5:36 shuf<=2.5:35
+rel_mutC.txt           n=9 fails=9 rev[min 2.15 med 3.16 max 3.70] shuf[min 3.30 med 3.44 max 3.78] rev<=2.5:2 shuf<=2.5:0
+debug_real.txt         n=9 fails=0 rev[min 1.84 med 1.94 max 2.18] shuf[min 1.99 med 2.12 max 2.29] rev<=2.5:9 shuf<=2.5:9
+debug_mutC.txt         n=9 fails=9 rev[min 2.85 med 3.06 max 3.47] shuf[min 2.96 med 3.08 max 3.24] rev<=2.5:0 shuf<=2.5:0

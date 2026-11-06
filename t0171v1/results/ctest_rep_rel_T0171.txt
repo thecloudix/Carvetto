@@ -1,0 +1,46 @@
+Test project /home/chris/wt-T0171/build-verify1-rel
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    3.84 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    3.94 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    3.79 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    3.05 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    2.68 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    3.74 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    4.71 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    3.89 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    4.96 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    4.10 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    4.02 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    2.68 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    3.66 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    4.68 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    3.94 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    4.07 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    2.89 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    3.58 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    4.70 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+1/1 Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    4.08 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =  77.02 sec
+rc=0

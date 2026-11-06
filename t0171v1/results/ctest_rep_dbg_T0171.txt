@@ -1,0 +1,16 @@
+Test project /home/chris/wt-T0171/build-verify1
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    9.17 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    8.80 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    8.91 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+    Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    9.00 sec
+    Start 675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear
+1/1 Test #675: T-0171: outsets of a column whose holes are listed far from their outers stay near-linear ...   Passed    9.05 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =  44.94 sec
+rc=0

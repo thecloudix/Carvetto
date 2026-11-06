@@ -1,0 +1,26 @@
+Test project /home/chris/wt-T0171/build-verify1-rel
+    Start 674: T-0142 round 3: outsets of touching shapes with holes and of holes in a comb stay near-linear
+    Test #674: T-0142 round 3: outsets of touching shapes with holes and of holes in a comb stay near-linear ...   Passed    7.77 sec
+    Start 674: T-0142 round 3: outsets of touching shapes with holes and of holes in a comb stay near-linear
+    Test #674: T-0142 round 3: outsets of touching shapes with holes and of holes in a comb stay near-linear ...   Passed    7.77 sec
+    Start 674: T-0142 round 3: outsets of touching shapes with holes and of holes in a comb stay near-linear
+    Test #674: T-0142 round 3: outsets of touching shapes with holes and of holes in a comb stay near-linear ...   Passed    7.12 sec
+    Start 674: T-0142 round 3: outsets of touching shapes with holes and of holes in a comb stay near-linear
+    Test #674: T-0142 round 3: outsets of touching shapes with holes and of holes in a comb stay near-linear ...   Passed    7.35 sec
+    Start 674: T-0142 round 3: outsets of touching shapes with holes and of holes in a comb stay near-linear
+    Test #674: T-0142 round 3: outsets of touching shapes with holes and of holes in a comb stay near-linear ...   Passed    7.53 sec
+    Start 674: T-0142 round 3: outsets of touching shapes with holes and of holes in a comb stay near-linear
+    Test #674: T-0142 round 3: outsets of touching shapes with holes and of holes in a comb stay near-linear ...   Passed    7.21 sec
+    Start 674: T-0142 round 3: outsets of touching shapes with holes and of holes in a comb stay near-linear
+    Test #674: T-0142 round 3: outsets of touching shapes with holes and of holes in a comb stay near-linear ...   Passed    6.74 sec
+    Start 674: T-0142 round 3: outsets of touching shapes with holes and of holes in a comb stay near-linear
+    Test #674: T-0142 round 3: outsets of touching shapes with holes and of holes in a comb stay near-linear ...   Passed    7.27 sec
+    Start 674: T-0142 round 3: outsets of touching shapes with holes and of holes in a comb stay near-linear
+    Test #674: T-0142 round 3: outsets of touching shapes with holes and of holes in a comb stay near-linear ...   Passed    7.38 sec
+    Start 674: T-0142 round 3: outsets of touching shapes with holes and of holes in a comb stay near-linear
+1/1 Test #674: T-0142 round 3: outsets of touching shapes with holes and of holes in a comb stay near-linear ...   Passed    7.39 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =  73.55 sec
+rc=0

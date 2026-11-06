@@ -1,0 +1,75 @@
+== mutC-Release
+with expansion:
+  10001 (0x2711) == 10001 (0x2711)
+  reversed CPU seconds: 10000 shapes 0.109669, 20000 shapes 0.382537, ratio 3.
+  11112
+with expansion:
+  20001 (0x4e21) == 20001 (0x4e21)
+  reversed CPU seconds: 10000 shapes 0.109669, 20000 shapes 0.382537, ratio 3.
+  11112
+/home/chris/wt-T0171/build-verify1-src-mutC/core/tests/geometry/offset_unnested_hole_test.cpp:469: FAILED:
+  CHECK( t.ratio() <= 2.5 )
+with expansion:
+  3.11111924396948147 <= 2.5
+  reversed CPU seconds: 10000 shapes 0.109669, 20000 shapes 0.382537, ratio 3.
+  11112
+with expansion:
+  0.3825369999999999 <= 3.0
+  reversed CPU seconds: 10000 shapes 0.109669, 20000 shapes 0.382537, ratio 3.
+  11112
+with expansion:
+  10001 (0x2711) == 10001 (0x2711)
+  shuffled CPU seconds: 10000 shapes 0.23927, 20000 shapes 0.900634, ratio 3.
+  33777
+with expansion:
+  20001 (0x4e21) == 20001 (0x4e21)
+  shuffled CPU seconds: 10000 shapes 0.23927, 20000 shapes 0.900634, ratio 3.
+  33777
+/home/chris/wt-T0171/build-verify1-src-mutC/core/tests/geometry/offset_unnested_hole_test.cpp:469: FAILED:
+  CHECK( t.ratio() <= 2.5 )
+with expansion:
+  3.33776525928186585 <= 2.5
+  shuffled CPU seconds: 10000 shapes 0.23927, 20000 shapes 0.900634, ratio 3.
+  33777
+with expansion:
+  0.90063400000000016 <= 3.0
+  shuffled CPU seconds: 10000 shapes 0.23927, 20000 shapes 0.900634, ratio 3.
+  33777
+test cases: 1 | 1 failed
+assertions: 8 | 6 passed | 2 failed
+
+== rel
+with expansion:
+  10001 (0x2711) == 10001 (0x2711)
+  reversed CPU seconds: 10000 shapes 0.05807, 20000 shapes 0.133086, ratio 2.
+  20753
+with expansion:
+  20001 (0x4e21) == 20001 (0x4e21)
+  reversed CPU seconds: 10000 shapes 0.05807, 20000 shapes 0.133086, ratio 2.
+  20753
+with expansion:
+  2.20753354918302325 <= 2.5
+  reversed CPU seconds: 10000 shapes 0.05807, 20000 shapes 0.133086, ratio 2.
+  20753
+with expansion:
+  0.13308633333333331 <= 3.0
+  reversed CPU seconds: 10000 shapes 0.05807, 20000 shapes 0.133086, ratio 2.
+  20753
+with expansion:
+  10001 (0x2711) == 10001 (0x2711)
+  shuffled CPU seconds: 10000 shapes 0.066497, 20000 shapes 0.183483, ratio 2.
+  06062
+with expansion:
+  20001 (0x4e21) == 20001 (0x4e21)
+  shuffled CPU seconds: 10000 shapes 0.066497, 20000 shapes 0.183483, ratio 2.
+  06062
+with expansion:
+  2.06061678065653631 <= 2.5
+  shuffled CPU seconds: 10000 shapes 0.066497, 20000 shapes 0.183483, ratio 2.
+  06062
+with expansion:
+  0.18348349999999991 <= 3.0
+  shuffled CPU seconds: 10000 shapes 0.066497, 20000 shapes 0.183483, ratio 2.
+  06062
+All tests passed (8 assertions in 1 test case)
+
