@@ -466,8 +466,8 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     (all covered or all uncovered), which is skipped; g is found exactly up to a query reach that starts at
     16.5 tol and doubles, up to 1024.5 tol, while nothing lies within it. The chains and the strands put back
     are both in grids (the strands in one laid out over all strays, filled as they are put back: a
-    `BoxGrid` that can grow; since T-0172 one grid for both that subdivides where they cluster, see the
-    follow-ups below), and the new chains are merged into the output in one pass. The new chains
+    `BoxGrid` that can grow; since T-0172 one `BoxTree` for both, see the follow-ups below), and the new
+    chains are merged into the output in one pass. The new chains
     go by where their component (or piece) starts along the input; with nothing put back the output is
     unchanged. They may
     touch the chains next to them ("different chains may touch or cross"). (e) At a junction turning back
@@ -546,17 +546,43 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     plunge per segment of a finely segmented slot wall), and a loop's strand of more than 512 spans fell back
     to the loop's longest span. The limit only kept the pairwise self-crossing test (~3 ms per 500 spans)
     affordable. That test is now one greedy pass (`selfCrossingCuts`: each span against the earlier spans of
-    its part whose boxes, grown by inUnit's slack, meet its own, through a grid), near-linear, and the limit is
-    gone: a stray is one chain however many spans it has (a channel exactly 2d wide whose walls are 514 /
-    2 000 unit segments: 1 chain, origin/main 513 / 1 999; the closed slot of 600 segments: 1, origin/main
-    602). One that would still cross itself (never seen) is cut greedily into consecutive parts that do not,
-    each without sub-tolerance end spans.
+    its part whose boxes meet its own, each box grown by `meetReach`, found through a `BoxTree`), and the
+    limit is gone: a stray is one chain however many spans it has (a channel exactly 2d wide whose walls are
+    514 / 2 000 unit segments: 1 chain, origin/main 513 / 1 999; the closed slot of 600 segments: 1,
+    origin/main 602). One that would still cross itself (never seen) is cut greedily into consecutive parts
+    that do not, each without sub-tolerance end spans (`nonCrossingRuns`). The growth makes the pass give the
+    pairwise test's answer (`spansMeet`: carrierIntersections + inUnit) for every pair, near-tangent ones
+    included: a meeting point lies within inUnit's slack (4 x 1e-9 of the length, for carrierParam's
+    rounding) of each span's ends and within carrierIntersections' contact tolerances of each carrier, so
+    an arc's box grows by a further 1e-9 mm (circles up to 1e-9 mm apart, outside or inside, touch; the arc
+    points at the meeting angles are then at most that gap apart) plus 1e-7 x r, a line's by 1e-7 x its
+    length (a line touches a circle up to 1.25e-10 x r beyond it, and the rounding of the discriminant's
+    cancellation, at most ~10 eps |w|^2 with |w| <= len + r from the centre to the line's start, widens
+    that by up to sqrt(10 eps) (len + r) < 5e-8 (len + r)), and both by 1e-12 x max(1, |x|, |y|, r) for
+    the remaining rounding. (Round 1 grew the boxes by inUnit's slack only and missed near-tangent pairs
+    between that and the contact tolerances: an arc 5e-10 mm from another, 1 in 300 000 random probes.)
+    Its cost is O(n log n) to build the tree plus the pairs of spans whose grown boxes meet: linear on an
+    offset's strays, whose spans meet only their neighbours' boxes, and output-bound where boxes overlap
+    a lot (a strand going back and forth along one line, span lengths over seven decades: 17 box pairs per
+    span at 1 000 spans, 36 at 16 000; 16 000 spans in 0.05 s).
     (b) *Clustered strays.* Step 7's two grids were uniform over the extent of all chains and strays, so one
     far feature (a U channel 1e5 mm from a hatch at pitch 2d) put the whole hatch into one cell and every
-    sample scanned all of it. They are now one grid (`ClusterGrid`: the chains, then the strays as they are
-    put back), laid out like `BoxGrid` except that a cell crowded with more than 16 items smaller than itself
-    gets a grid of its own over them (up to three levels below the top; items covering the whole cell stay
-    in it). At the first query reach, consecutive samples of a strand share one grid query per window of
+    sample scanned all of it. They are now one `BoxTree` (box_tree.hpp: the chains, then the strays as they
+    are put back). Round 1 used a grid that gave a crowded cell a grid of its own, recursively, and filed every
+    box that overlapped a cell without covering it into the finer grids again: nested or overlapping boxes
+    (a spiral slot's arcs, a back-and-forth strand) blew it up, super-linearly and at times exponentially in
+    time and memory (round-1 verifier: a spiral slot of 400 semicircles 12.6 s and 2.5 GB, origin/main 0.47 s;
+    4 000 spiral semicircle boxes 107 M entries; 120 nested collinear boxes over 8 GB). A `BoxTree` holds
+    each box exactly once: in static k-d trees of the boxes as 4-D points (min x, min y, max x, max y),
+    median splits along the four coordinates in turn, leaves of at most 8 boxes, each node keeping the
+    bounds and the id range of its boxes; boxes added later go to new trees that are rebuilt together when
+    they reach the size of the last (the logarithmic method: at most log2 n + 1 trees, O(n log^2 n) to build
+    in all, O(n) memory). A query reports exactly the boxes that meet it (optionally only those with ids in a
+    range), visiting O(n^(3/4)) nodes plus those of the boxes it reports whatever the boxes (any k-d tree;
+    with an id range, also those of boxes outside it that meet the query):
+    nested, concentric, collinear, all huge, all tiny or mixed (tested: every box held once, fewer than n / 2
+    nodes, query work within 100 x (n log2 n + pairs reported) on 13 such families). At the first query
+    reach, consecutive samples of a strand share one query per window of
     64 tol (plus twice the reach) ahead; each sample still takes exactly the items whose boxes meet its own
     query square, so the distances, and with them the samples, cuts and outputs, are unchanged. Only step 7's
     grids changed: other users of `BoxGrid` act on the order in which items are reported (e.g. the
@@ -575,17 +601,32 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     width 2d, the T-0016 zig-zags, long channels), against a control build of origin/main's offset.cpp with
     the same flags, CPU cycles 0.94-1.04x, except the 3 000-line hatch at 2d, Round (1.09-1.11x; 3% more
     instructions, outside step 7, which takes ~2% of that offset) and a 10 m channel (1.04x, 0.5 ms).
+    Round 2 (`BoxTree` instead of round 1's clustering grid; same machine and method, alternating with
+    origin/main, min of 3-9 reps): the spiral slot of 200 / 400 semicircles 0.047 / 0.34 s (main 0.046 /
+    0.30 s; round 1 1.25 / 6.4-12.6 s and 2.5 GB), the spiral of 400 semicircles with a far channel at 600 /
+    50 mm 0.031 / 0.043 s (main 0.030 / 0.045 s; round 1 5.9 / 10.6 s), of 700 with one at 1e3 mm 0.11 s and
+    10 MB (main 0.14 s; round 1 bad_alloc at 6 GB); `lhatch` d = 0.002, N = 1 000 / 2 000: 0.21 / 0.83 s
+    (main 2.1 / 9.2 s, pre 0.19 / 0.80 s); hatch, comb, rectangles and ring at pitch or width 2d: 0.99-1.08x
+    main and 0.99-1.05x round 1 (the query stack is not zeroed: zeroing it per query cost ~15% of the
+    4 000-line hatch at d = 0.05). The self-crossing cuts of the back-and-forth strand: 400 spans in under
+    1 ms, 40 000 in 0.1 s (round 1: 9.9 s and 2.8 GB at 400). Both spirals stay super-linear as on main
+    (~7x per doubling of the semicircles, outside step 7: the nested arcs' boxes share the input grids'
+    cells).
     (c, e) *Tests and libm.* Tests now pin a stray between tol and 10 tol that meets a chain (returned, and
     reaching that chain), the longer of a thin loop's strands, the order of strays among the chains, the
     exact-copy hand-back of mergeOnCarriers (a slot 2d wide with walls of unequal height: the copy over the
-    lower wall's mitre extension is not d from the input), a long stray in one piece, the self-crossing cuts
-    against the pairwise test, and exactJunction's fallback on its own (`detail::closeJunction`: arcs whose
-    start is 1.5-95 x 1e-12 x the scale ahead, ~3 in 4 of them closed by the nearest candidate that does not
+    lower wall's mitre extension is not d from the input), a long stray in one piece, a thin loop's strand of
+    many spans in one piece, the self-crossing cuts against the pairwise test (near-tangent pairs included:
+    every pair it accepts has grown boxes that meet), the cut fallback (`nonCrossingRuns`: consecutive
+    runs, no tiny ends), `BoxTree` queries against brute force with its memory and work bounded, timing
+    for spiral slots, spirals and long or collinear strands, and exactJunction's fallback on its own
+    (`detail::closeJunction`: arcs whose start is 1.5-95 x 1e-12 x the scale ahead, ~3 in 4 of them closed by the nearest candidate that does not
     start behind). The tests' crossing filter now applies only where removeCuspLoops looks (reversal
     junctions, within the tolerance along both spans). Three pre-existing checks were stricter than what
     offset.hpp documents and failed with sin/cos 1-4 ulps off glibc's (as MSVC's may be; round-3 verifier:
     14 of 24 perturbed `[offset]` runs): the T-0006 AC3 gap count used an absolute 1e-12 mm, not the
-    documented 1e-12 x max(1, |x|, |y|, radius) between arcs (gaps of 2.3e-12 to 1.4e-11 mm seen), and the
+    documented 1e-12 x max(1, |x|, |y|, radius) between arcs (gaps of 2.3e-12 to 1.4e-11 mm seen; a junction
+    with a line still counts as a gap unless bit-identical, as documented), and the
     T-0017 repro loops REQUIREd their literal arcs to be bit-continuous, which they are only with glibc's
     sin/cos (they are now made continuous with the platform's, a no-op on glibc). The closed loops that kept
     9.05e-12 / 9.64e-11 mm gaps under perturbation (fam4 0x7c2340188 K2 seed 3, 0x7c434015c K4 seed 3) are

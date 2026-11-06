@@ -77,37 +77,38 @@ double cpuSeconds(double since) {
 
 struct JunctionStats {
     std::size_t junctions{0};
-    std::size_t gaps{0};          // end/start further apart than 1e-12 x the scale (see checkJunction)
+    std::size_t gaps{0};          // see checkJunction
     std::size_t notIdentical{0};  // a junction with a line on either side that is not bit-identical
     std::size_t backward{0};      // next span starts behind the previous end, or retraces it
     double maxGap{0.0};
 };
 
-// One junction a -> b: gap and bit-identity. A gap is a junction further apart than the
-// documented arc-arc bound, 1e-12 x max(1, |x|, |y|, radius) mm (offset.hpp "Junctions"; T-0172:
-// an absolute 1e-12 tripped under sin/cos 1-4 ulps off glibc's, e.g. 1.4e-11 mm between arcs of
-// radius ~50, as MSVC's may be). Junctions with a line must be bit-identical (notIdentical).
-// Backward steps are counted per chain by countBackwardSteps (offset_chain_checks.hpp): starting
-// behind the previous end, retracing it (a near-reversal passes only as a needle tip whose sides
-// diverge), and short spans that run against both neighbours.
+// One junction a -> b: gap and bit-identity. A gap is a junction with a line on either side that
+// is not bit-identical, or an arc-arc junction further apart than the documented bound,
+// 1e-12 x max(1, |x|, |y|, radius) mm (offset.hpp "Junctions"; T-0172: an absolute 1e-12
+// tripped under sin/cos 1-4 ulps off glibc's, e.g. 1.4e-11 mm between arcs of radius ~50, as
+// MSVC's may be). notIdentical counts the junctions with a line that are not bit-identical
+// on their own. Backward steps are counted per chain by countBackwardSteps
+// (offset_chain_checks.hpp): starting behind the previous end, retracing it (a near-reversal
+// passes only as a needle tip whose sides diverge), and short spans that run against both
+// neighbours.
 void checkJunction(const Span& a, const Span& b, JunctionStats& st) {
     ++st.junctions;
     const Vec2 e = endPoint(a);
     const Vec2 s = startPoint(b);
     const double gap = distance(e, s);
     st.maxGap = std::max(st.maxGap, gap);
-    double scale = std::max({1.0, std::fabs(e.x), std::fabs(e.y)});
-    for (const Span* sp : {&a, &b}) {
-        if (const auto* arc = std::get_if<ArcSpan>(sp)) {
-            scale = std::max(scale, arc->radius);
-        }
-    }
-    if (gap > 1e-12 * scale) {
-        ++st.gaps;
-    }
     const bool lineSide = std::holds_alternative<LineSpan>(a) || std::holds_alternative<LineSpan>(b);
-    if (lineSide && !(e == s)) {
-        ++st.notIdentical;
+    if (lineSide) {
+        if (!(e == s)) {
+            ++st.gaps;
+            ++st.notIdentical;
+        }
+        return;
+    }
+    const double r = std::max(std::get<ArcSpan>(a).radius, std::get<ArcSpan>(b).radius);
+    if (gap > 1e-12 * std::max({1.0, std::fabs(e.x), std::fabs(e.y), r})) {
+        ++st.gaps;
     }
 }
 
@@ -756,7 +757,8 @@ TEST_CASE("T-0006 AC3: junctions are shared exactly in typical toolpath shapes",
     }
 }
 
-TEST_CASE("T-0006 AC3 generative: no gap above 1e-12 and no backward step over 20k offsets",
+TEST_CASE("T-0006 AC3 generative: no junction gap beyond the documented bounds and no backward step over 20k "
+          "offsets",
           "[geometry][offset][open][t0006][generative]") {
     JunctionStats st;
     std::size_t offsets = 0;

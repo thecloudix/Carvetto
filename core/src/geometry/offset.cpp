@@ -15,6 +15,7 @@
 #include <utility>
 #include <vector>
 
+#include "box_tree.hpp"
 #include "clipper_interop.hpp"
 #include "hole_nesting.hpp"
 #include "offset_batch.hpp"
@@ -1141,251 +1142,6 @@ class BoxGrid {
     double cw_{1.0};
     double ch_{1.0};
     std::vector<std::vector<std::size_t>> cells_;
-    std::vector<std::uint64_t> stamp_;
-    std::uint64_t epoch_{0};
-};
-
-// A grid like BoxGrid for item sets that may be clustered (T-0172): a cell crowded with items
-// smaller than itself gets a grid of its own laid out over those items, recursively (up to
-// kMaxDepth levels below the top), so a dense cluster next to one far-away item no longer shares
-// one or a few cells (offsetOpenContour step 7: a hatch at pitch 2d plus one feature 1e5 mm away
-// made the stray recovery quadratic, ~2 s for 1000 lines). Items whose box covers a whole crowded
-// cell stay in that cell. The layout is fixed at construction from a set of boxes; add() files
-// items into it (outside it, in the border cells, as BoxGrid). A query reports each item whose box
-// meets it once, in no particular order, so it is only used where the order of the reports cannot
-// matter (minima and yes/no answers).
-class ClusterGrid {
-   public:
-    // Laid out for `layout`; holds those boxes (ids = positions) when `fill`, else nothing yet.
-    ClusterGrid(const std::vector<Box2>& layout, bool fill) {
-        Box2 extent;
-        std::vector<std::size_t> ids;
-        for (std::size_t i = 0; i < layout.size(); ++i) {
-            if (!layout[i].isEmpty()) {
-                extent.expand(layout[i]);
-                ids.push_back(i);
-            }
-        }
-        if (extent.isEmpty() || !std::isfinite(extent.width()) || !std::isfinite(extent.height())) {
-            extent = Box2{Vec2{}, Vec2{}};
-            ids.clear();
-        }
-        build(extent, layout, ids, 0);
-        if (fill) {
-            boxes_.reserve(layout.size());
-            stamp_.reserve(layout.size());
-            for (const Box2& b : layout) {
-                add(b);
-            }
-        }
-    }
-
-    // Adds an item (its id is the number of items before it).
-    std::size_t add(const Box2& box) {
-        boxes_.push_back(box);
-        stamp_.push_back(0);
-        filled_.expand(box);
-        const std::size_t i = boxes_.size() - 1;
-        if (!box.isEmpty()) {
-            insert(0, i);
-        }
-        return i;
-    }
-
-    const Box2& box(std::size_t i) const { return boxes_[i]; }
-
-    // Calls f(i) once for every item whose box intersects `query`.
-    template <class F>
-    void query(const Box2& query, F&& f) {
-        queryUntil(query, [&](std::size_t i) {
-            f(i);
-            return false;
-        });
-    }
-
-    // Like query(), but stops as soon as f(i) returns true; returns whether it did.
-    template <class F>
-    bool queryUntil(const Box2& query, F&& f) {
-        if (!query.intersects(filled_)) {
-            return false;
-        }
-        ++epoch_;
-        return visit(0, query, f);
-    }
-
-   private:
-    static constexpr double kMaxCells = 1024.0;   // per axis, per level
-    static constexpr std::size_t kCrowded = 16;   // items smaller than a cell that make it crowded
-    static constexpr int kMaxDepth = 3;
-    static constexpr std::size_t kNoChild = std::numeric_limits<std::size_t>::max();
-
-    struct Level {
-        Box2 extent;
-        double cell = 1.0;  // nominal cell size of the layout
-        std::size_t nx = 1;
-        std::size_t ny = 1;
-        double cw = 1.0;
-        double ch = 1.0;
-        std::vector<std::vector<std::size_t>> cells;
-        std::vector<std::size_t> child;  // per cell, the level of its own grid; empty when none has one
-    };
-
-    static std::size_t childOf(const Level& l, std::size_t c) {
-        return l.child.empty() ? kNoChild : l.child[c];
-    }
-    struct Range {
-        std::size_t x0, x1, y0, y1;
-    };
-
-    // Cell size that gives about as many cells as `n` boxes over `extent` (as BoxGrid).
-    static double cellSize(const Box2& extent, std::size_t n) {
-        const double w = extent.width();
-        const double h = extent.height();
-        const double cell =
-            std::sqrt(std::max(w * h, 1e-300) / static_cast<double>(std::max<std::size_t>(n, 1)));
-        return std::max({cell, w / kMaxCells, h / kMaxCells, 1e-9});
-    }
-
-    static void layOut(Level& level, std::size_t n) {
-        const double w = level.extent.width();
-        const double h = level.extent.height();
-        level.cell = cellSize(level.extent, n);
-        level.nx = static_cast<std::size_t>(std::clamp(std::ceil(w / level.cell), 1.0, kMaxCells));
-        level.ny = static_cast<std::size_t>(std::clamp(std::ceil(h / level.cell), 1.0, kMaxCells));
-        level.cw = w > 0.0 ? w / static_cast<double>(level.nx) : 1.0;
-        level.ch = h > 0.0 ? h / static_cast<double>(level.ny) : 1.0;
-        level.cells.resize(level.nx * level.ny);
-    }
-
-    static std::size_t index(double v, double origin, double size, std::size_t count) {
-        const double k = std::floor((v - origin) / size);
-        return static_cast<std::size_t>(std::clamp(k, 0.0, static_cast<double>(count - 1)));
-    }
-
-    static Range cellRange(const Level& l, const Box2& b) {
-        return {index(b.min.x, l.extent.min.x, l.cw, l.nx), index(b.max.x, l.extent.min.x, l.cw, l.nx),
-                index(b.min.y, l.extent.min.y, l.ch, l.ny), index(b.max.y, l.extent.min.y, l.ch, l.ny)};
-    }
-
-    static Box2 cellBox(const Level& l, std::size_t x, std::size_t y) {
-        const Vec2 lo{l.extent.min.x + static_cast<double>(x) * l.cw,
-                      l.extent.min.y + static_cast<double>(y) * l.ch};
-        return Box2{lo, lo + Vec2{l.cw, l.ch}};
-    }
-
-    // Lays out a level over `extent` for the layout boxes `ids`, and grids of their own for its
-    // crowded cells; returns the level's index.
-    std::size_t build(const Box2& extent, const std::vector<Box2>& layout,
-                      const std::vector<std::size_t>& ids, int depth) {
-        const std::size_t li = levels_.size();
-        levels_.emplace_back();
-        levels_[li].extent = extent;
-        layOut(levels_[li], ids.size());
-        if (depth >= kMaxDepth || ids.size() <= kCrowded) {
-            return li;
-        }
-        const std::size_t nx = levels_[li].nx;
-        // Layout boxes that overlap a cell without covering it, counted per cell first (most
-        // layouts have no crowded cell, and then nothing more is done), then listed for the
-        // crowded cells only.
-        auto forEachSmaller = [&](auto&& f) {
-            const Level& l = levels_[li];
-            for (const std::size_t id : ids) {
-                const auto [x0, x1, y0, y1] = cellRange(l, layout[id]);
-                for (std::size_t y = y0; y <= y1; ++y) {
-                    for (std::size_t x = x0; x <= x1; ++x) {
-                        if (!layout[id].contains(cellBox(l, x, y))) {
-                            f(y * nx + x, id);
-                        }
-                    }
-                }
-            }
-        };
-        std::vector<std::uint32_t> count(levels_[li].cells.size(), 0);
-        forEachSmaller([&](std::size_t c, std::size_t) { ++count[c]; });
-        if (std::none_of(count.begin(), count.end(), [](std::uint32_t k) { return k > kCrowded; })) {
-            return li;
-        }
-        std::vector<std::size_t> slot(count.size(), kNoChild);
-        std::vector<std::vector<std::size_t>> smaller;
-        for (std::size_t c = 0; c < count.size(); ++c) {
-            if (count[c] > kCrowded) {
-                slot[c] = smaller.size();
-                smaller.emplace_back();
-                smaller.back().reserve(count[c]);
-            }
-        }
-        forEachSmaller([&](std::size_t c, std::size_t id) {
-            if (slot[c] != kNoChild) {
-                smaller[slot[c]].push_back(id);
-            }
-        });
-        for (std::size_t c = 0; c < count.size(); ++c) {
-            if (slot[c] == kNoChild) {
-                continue;
-            }
-            const std::vector<std::size_t>& items = smaller[slot[c]];
-            Box2 sub;
-            for (const std::size_t id : items) {
-                sub.expand(layout[id]);
-            }
-            sub = sub.intersected(cellBox(levels_[li], c % nx, c / nx));
-            // Only where the items are clustered within the cell: a finer layout.
-            if (sub.isEmpty() || cellSize(sub, items.size()) > 0.5 * levels_[li].cell) {
-                continue;
-            }
-            const std::size_t child = build(sub, layout, items, depth + 1);
-            if (levels_[li].child.empty()) {
-                levels_[li].child.assign(count.size(), kNoChild);
-            }
-            levels_[li].child[c] = child;
-        }
-        return li;
-    }
-
-    void insert(std::size_t li, std::size_t id) {
-        const Box2 b = boxes_[id];
-        const auto [x0, x1, y0, y1] = cellRange(levels_[li], b);
-        for (std::size_t y = y0; y <= y1; ++y) {
-            for (std::size_t x = x0; x <= x1; ++x) {
-                const std::size_t c = y * levels_[li].nx + x;
-                const std::size_t child = childOf(levels_[li], c);
-                if (child != kNoChild && !b.contains(cellBox(levels_[li], x, y))) {
-                    insert(child, id);
-                } else {
-                    levels_[li].cells[c].push_back(id);
-                }
-            }
-        }
-    }
-
-    template <class F>
-    bool visit(std::size_t li, const Box2& query, F& f) {
-        const Level& l = levels_[li];
-        const auto [x0, x1, y0, y1] = cellRange(l, query);
-        for (std::size_t y = y0; y <= y1; ++y) {
-            for (std::size_t x = x0; x <= x1; ++x) {
-                const std::size_t c = y * l.nx + x;
-                for (const std::size_t i : l.cells[c]) {
-                    if (stamp_[i] != epoch_ && boxes_[i].intersects(query)) {
-                        stamp_[i] = epoch_;
-                        if (f(i)) {
-                            return true;
-                        }
-                    }
-                }
-                const std::size_t child = childOf(l, c);
-                if (child != kNoChild && visit(child, query, f)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    std::vector<Level> levels_;
-    std::vector<Box2> boxes_;
-    Box2 filled_;
     std::vector<std::uint64_t> stamp_;
     std::uint64_t epoch_{0};
 };
@@ -2793,51 +2549,76 @@ std::vector<Span> chainPart(const std::vector<Span>& spans, double u0, double u1
     return out;
 }
 
+// True when two line-or-arc spans cross or touch: a point where their carriers meet lies on both,
+// to within kParamEps of their lengths beyond their ends (the pairwise test of T-0128).
+bool spansMeet(const Span& a, const Span& b) {
+    for (const Vec2 p : carrierIntersections(a, b)) {
+        if (inUnit(carrierParam(a, p)) && inUnit(carrierParam(b, p))) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// How far beyond its box a point can lie at which spansMeet finds `s` meeting another span, so
+// that two spans whose boxes, each grown by this much, are apart never meet. A meeting point is
+// within inUnit's slack (kParamEps of the length, here 4x for carrierParam's rounding) of each
+// span's ends, and within carrierIntersections' contact tolerances of each carrier: circles whose
+// centres are up to 1e-9 mm farther apart than tangency (or nearer, inside) touch, and then
+// points of the two arcs at the meeting angles are at most that gap apart; a line touches a circle
+// up to 1.25e-10 x r beyond it (disc >= -1e-9 qa r^2), or within 64 ulps of the coordinates, and
+// the rounding of the discriminant's cancellation, at most ~10 eps |w|^2 / qa with w from the
+// centre to the line's start, |w| <= len + r, adds up to sqrt(10 eps) (len + r) < 5e-8 (len + r)
+// to that gap (1e-7 here); every other rounding is below 1e-12 x max(1, |x|, |y|, r).
+double meetReach(const Span& s, const Box2& b) {
+    double scale =
+        std::max({1.0, std::fabs(b.min.x), std::fabs(b.min.y), std::fabs(b.max.x), std::fabs(b.max.y)});
+    const double len = length(s);
+    double reach = 4.0 * kParamEps * len;
+    if (const auto* arc = std::get_if<ArcSpan>(&s)) {
+        scale = std::max(scale, arc->radius);
+        reach += 1e-9 + 1e-7 * arc->radius;
+    } else {
+        reach += 1e-7 * len;
+    }
+    return reach + 1e-12 * scale;
+}
+
 // Where a chain has to be cut so that no part of it crosses or touches itself (two spans of a
-// part that are not neighbours meet): the index of the first span of every part after the first,
-// empty when the chain does not cross itself (`firstOnly`: stop at the first cut). Greedy, in one
-// pass: each span is tested only against the earlier spans of its part whose boxes meet its own,
-// found through a grid, so the cost is near-linear in the span count (T-0172: the pairwise test
-// it replaces was quadratic, ~3 ms per 500 spans, and so was limited to strays of 512 spans, longer
-// ones being split into one chain per span).
+// part that are not neighbours meet, spansMeet): the index of the first span of every part after
+// the first, empty when the chain does not cross itself (`firstOnly`: stop at the first cut).
+// Greedy, in one pass: each span is tested only against the earlier spans of its part whose boxes,
+// grown by meetReach, meet its own, so the answer is that of testing every pair. They are found
+// through a BoxTree of all the spans, queried for the ids of the part's earlier spans, so the
+// cost is O(n log n) plus the pairs whose grown boxes meet (T-0172: the pairwise test it
+// replaces was quadratic, ~3 ms per 500 spans, and so was limited to strays of 512 spans, longer
+// ones being split into one chain per span; round 1's clustering grid blew up on nested boxes).
 std::vector<std::size_t> selfCrossingCuts(const std::vector<Span>& spans, bool firstOnly = false) {
     std::vector<std::size_t> cuts;
     const std::size_t n = spans.size();
     if (n < 3) {
         return cuts;
     }
-    // A meeting point lies on both spans to within inUnit's parameter slack (kParamEps of a span's
-    // length beyond its end) and rounding, so the boxes are grown by that much.
     std::vector<Box2> boxes;
     boxes.reserve(n);
     for (const Span& s : spans) {
         const Box2 b = bounds(s);
-        const double scale =
-            std::max({1.0, std::fabs(b.min.x), std::fabs(b.min.y), std::fabs(b.max.x), std::fabs(b.max.y)});
-        boxes.push_back(b.inflated(4.0 * kParamEps * length(s) + 1e-12 * scale));
+        boxes.push_back(b.inflated(meetReach(s, b)));
     }
-    ClusterGrid grid(boxes, false);
+    detail::BoxTree tree(boxes);
     std::size_t from = 0;  // first span of the current part
-    for (std::size_t i = 0; i < n; ++i) {
-        const bool meets = grid.queryUntil(boxes[i], [&](std::size_t j) {
-            if (j < from || j + 2 > i) {
-                return false;
-            }
-            for (const Vec2 p : carrierIntersections(spans[j], spans[i])) {
-                if (inUnit(carrierParam(spans[j], p)) && inUnit(carrierParam(spans[i], p))) {
-                    return true;
-                }
-            }
-            return false;
-        });
+    for (std::size_t i = from + 2; i < n; ++i) {
+        // The earlier spans of the part other than the neighbour: ids from..i - 2.
+        const bool meets = tree.queryUntil(boxes[i], from, i - 2,
+                                           [&](std::size_t j) { return spansMeet(spans[j], spans[i]); });
         if (meets) {
             cuts.push_back(i);
             if (firstOnly) {
                 return cuts;
             }
             from = i;
+            i = from + 1;  // the loop goes on at from + 2
         }
-        grid.add(boxes[i]);
     }
     return cuts;
 }
@@ -2845,6 +2626,32 @@ std::vector<std::size_t> selfCrossingCuts(const std::vector<Span>& spans, bool f
 // True when two spans of the chain that are not neighbours cross or touch.
 bool partCrossesItself(const std::vector<Span>& spans) {
     return !selfCrossingCuts(spans, true).empty();
+}
+
+// A strand put back by offsetOpenContour step 7, as chains that do not cross themselves: the
+// strand itself, or where it would cross itself (never seen from an offset), its consecutive parts
+// between selfCrossingCuts, each without spans no longer than the tolerance at its ends (like any
+// open chain); parts left empty go.
+std::vector<std::vector<Span>> nonCrossingRuns(std::vector<Span> part, const Tolerance& tol) {
+    std::vector<std::vector<Span>> runs;
+    const std::vector<std::size_t> cuts = selfCrossingCuts(part);
+    if (cuts.empty()) {
+        runs.push_back(std::move(part));
+        return runs;
+    }
+    std::size_t first = 0;
+    for (std::size_t c = 0; c <= cuts.size(); ++c) {
+        const std::size_t last = c < cuts.size() ? cuts[c] : part.size();
+        const auto begin = part.begin();
+        std::vector<Span> run(begin + static_cast<std::ptrdiff_t>(first),
+                              begin + static_cast<std::ptrdiff_t>(last));
+        dropTinyEnds(run, tol);
+        if (!run.empty()) {
+            runs.push_back(std::move(run));
+        }
+        first = last;
+    }
+    return runs;
 }
 
 // A strand pieced together from raw pieces whose ends meet only to rounding: it is split where
@@ -3783,23 +3590,14 @@ void putBackStrays(std::vector<Contour>& result, const std::vector<double>& resu
     }
     const double reach = 0.5 * tol.distance;
     std::vector<Stray> added;
-    // The emitted chains and the strays put back, in one grid that subdivides where they
-    // cluster (T-0172: with a uniform grid, one far feature put a whole hatch at pitch 2d into
-    // one cell): the chains are items 0..outSpans.size() - 1, the strays put back follow as
-    // they are added (a linear scan over those made the recovery quadratic in their number: a
-    // hatch at pitch exactly 2d, T-0128 round 1). Every piece put back lies on a stray, so the
-    // grid is laid out over the chains and the strays.
+    // The emitted chains and the strays put back, in one BoxTree (T-0172: with a uniform grid,
+    // one far feature put a whole hatch at pitch 2d into one cell; a grid that subdivided crowded
+    // cells blew up on nested boxes, a spiral slot's arcs): the chains are items
+    // 0..outSpans.size() - 1, the strays put back follow as they are added (a linear scan over
+    // those made the recovery quadratic in their number: a hatch at pitch exactly 2d, T-0128
+    // round 1).
     std::vector<Span> addedSpans;
-    std::vector<Box2> layout = outBoxes;
-    for (const Stray& st : strays) {
-        for (const Span& sp : st.spans) {
-            layout.push_back(bounds(sp));
-        }
-    }
-    ClusterGrid coverGrid(layout, false);
-    for (const Box2& b : outBoxes) {
-        coverGrid.add(b);
-    }
+    detail::BoxTree coverGrid(outBoxes);
     const std::size_t nOut = outSpans.size();
     Box2 window;  // see coverGap
     auto add = [&](double key, std::vector<Span>&& part) {
@@ -3821,7 +3619,7 @@ void putBackStrays(std::vector<Contour>& result, const std::vector<double>& resu
     const double maxCap = reach + 1024.0 * tol.distance;
     // Candidates for coverGap at the first reach: the items whose boxes meet a window reaching
     // kWindow tolerances ahead along the strand (plus twice the reach: the next sample is at most
-    // that far ahead, and its own query square reaches as far again), fetched from the grid once
+    // that far ahead, and its own query square reaches as far again), fetched from the tree once
     // per window (consecutive samples among dense strays query nearly the same place, T-0172);
     // each sample still takes exactly the items whose boxes meet its own query square, as a query
     // of its own would, and does so directly at a wider reach (sparse surroundings, few samples).
@@ -3906,25 +3704,8 @@ void putBackStrays(std::vector<Contour>& result, const std::vector<double>& resu
             const bool isolated = from == k && to == e;
             if (len > (isolated ? kStrayMinimum : 1.0) * tol.distance) {
                 exactJunctions(part, false);
-                const std::vector<std::size_t> cuts = selfCrossingCuts(part);
-                if (cuts.empty()) {
-                    add(st.key, std::move(part));
-                } else {
-                    // Never seen: rather than return a chain that crosses itself, it is cut
-                    // into consecutive parts that do not (each without spans no longer than the
-                    // tolerance at its ends, like any open chain).
-                    std::size_t first = 0;
-                    for (std::size_t c = 0; c <= cuts.size(); ++c) {
-                        const std::size_t last = c < cuts.size() ? cuts[c] : part.size();
-                        const auto begin = part.begin();
-                        std::vector<Span> run(begin + static_cast<std::ptrdiff_t>(first),
-                                              begin + static_cast<std::ptrdiff_t>(last));
-                        dropTinyEnds(run, tol);
-                        if (!run.empty()) {
-                            add(st.key, std::move(run));
-                        }
-                        first = last;
-                    }
+                for (std::vector<Span>& run : nonCrossingRuns(std::move(part), tol)) {
+                    add(st.key, std::move(run));
                 }
             }
             k = e + 1;
@@ -4675,6 +4456,18 @@ void closeJunction(Span& a, Span& b) {
 
 std::vector<std::size_t> selfCrossingCuts(const std::vector<Span>& spans) {
     return geometry::selfCrossingCuts(spans);
+}
+
+bool spansMeet(const Span& a, const Span& b) {
+    return geometry::spansMeet(a, b);
+}
+
+double meetReach(const Span& s) {
+    return geometry::meetReach(s, bounds(s));
+}
+
+std::vector<std::vector<Span>> nonCrossingRuns(const std::vector<Span>& strand, const Tolerance& tol) {
+    return geometry::nonCrossingRuns(strand, tol);
 }
 
 }  // namespace detail
