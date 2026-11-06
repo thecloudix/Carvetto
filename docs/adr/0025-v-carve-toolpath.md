@@ -433,7 +433,14 @@ crossbar dips below the tool radius. Pocket keeps its centre region radius + all
 from the walls and its own chords "about d less one join tolerance" (ADR-0017 §3–4); this edge
 does not quite keep that. 45 nm is 4.5 % of the chordal tolerance there and far below machine
 resolution. Fixing it belongs to Pocket's centre region (it would change Pocket's output), not to
-V-Carve; reported to the director for a Pocket card.
+V-Carve; reported to the director for a Pocket card. **Resolved by T-0169** (ADR-0017 §8a): the
+region edge itself kept its margin; the move was a raster link from the round join to the
+crossbar's offset that cut the corner between them, which Pocket's inside test accepted within
+the distance tolerance. Pocket's moves now leave the centre region only by rounding (or where they
+keep radius + allowance + chordal/2 from the polygonised walls); the case now keeps 1.66e-4 mm
+(regression test in `pocket_junction_test.cpp`). V-Carve output changed in 15 of 1,040 cases of
+the verifier's families with clearance end mills (flat depth forced) and 4 of 1,040 with the
+families' own mix, diagnostics unchanged everywhere (T-0169 hash sweep).
 
 ### 9. Time bound (AC2)
 Release, the T-0153 machine (shared, under load from other agents): 5,000 glyph-like regions

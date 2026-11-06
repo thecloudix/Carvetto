@@ -1,6 +1,6 @@
 # ADR-0017: Pocket toolpath
 
-Date: 2026-10-26 · Status: accepted (director, 2026-10-31; T-0121; revised in fix rounds 2 and 3, same day; amended by T-0125, 2026-10-30 and 31, and T-0126, 2026-10-31)
+Date: 2026-10-26 · Status: accepted (director, 2026-10-31; T-0121; revised in fix rounds 2 and 3, same day; amended by T-0125, 2026-10-30 and 31, T-0126, 2026-10-31, and T-0169, 2026-11-05)
 
 ## Context
 T-0121 adds `pocketToolpath(contours, tools, PocketParams)` (feature-inventory §5 "Pocketing
@@ -34,6 +34,15 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
    plus join chords (≤ c/2) can therefore never bring the cutter closer than radius + allowance to
    the true walls or islands (AC2 and AC6 hold strictly). The price is a wall skin of at most
    1.5·chordal (0.015 mm by default) left on top of the allowance.
+   **Numeric slack (T-0169).** "Strictly" holds up to rounding: Clipper2 puts every vertex on its
+   1e-6 mm grid, and a straight move is accepted inside the centre region within 4 grid units
+   (8a), so it may leave the region by about 8e-6 mm. The documented bound is therefore: **tool
+   centres keep at least radius + allowance − 1e-5 mm from the true walls**, measured by exact
+   distance to the original lines, arcs and Beziers (`pocket_curve_oracle.hpp`). In the T-0169
+   generative test (`pocket_junction_test.cpp`: polygons and stars whose edges are lines, arcs
+   and Beziers bulging either way, D-shaped islands, chordal 0.001–0.1, distance up to chordal, at
+   the origin and 1e4 mm away) and in 600 scratch cases (666 toolpaths) the smallest clearance less
+   the allowance was +4.39e-4 mm, i.e. the slack was never used.
 4. **Centre region and inset guard.** `C = inset(R, radius + allowance + margin)`. Every inward
    offset goes through `insetBy`. Clipper2 1.4.0 turned a polygon inset past its inradius inside
    out: a 17 mm circle inset by 19.2 came back as a 2.2 mm circle, by 30 as a 13 mm one. Without
@@ -168,7 +177,8 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
      first level, then feeds along a way inside the cluster's centre region and descends (8a).
      Above that floor the whole cut area of the cluster is already clear, so travel engages no
      material, apart from material the strategy leaves anyway (raster without a boundary pass).
-     Because the way is inside C, it keeps radius + allowance + margin from every wall.
+     Because the way is inside C (within rounding, 8a), it keeps radius + allowance from every
+     wall.
    - **Retract:** only when there is no such way does the tool retract to safe Z, rapid and
      descend.
    The way is the straight segment when that is inside C. Otherwise, for Offset clusters, it is
@@ -183,6 +193,45 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
      ends sit a rounding error off it. That is what made raster at 45° retract on every line in
      round 1. The infinite line of the edge is not enough: a nearly parallel edge far away would
      hide an exit, and the round-2 gouge sweep found one.
+     **Amended by T-0169 (moves leave C only by rounding).** With the user's distance tolerance
+     for acceptance, a segment could leave C by up to about twice that tolerance: its ends on
+     two edges either side of a reflex vertex of C pass the crossing test (crossings within
+     tolerance of an end) and the midpoint test (within tolerance of the boundary) while the
+     segment runs outside the vertex. Reflex vertices of C are the round joins round the walls'
+     reflex corners and the chords along concave walls, exactly where C has only the join part
+     of the margin left. The T-0153 round-3 verifier found a raster link under an "A"'s crossbar
+     (V-Carve flat area, distance = chordal/3 = 3.3e-4) 45 nm inside the tool radius; with
+     distance up to chordal the T-0169 generator found links and travel up to 0.0293 mm inside
+     it, in 29 of 333 toolpaths. Every inside test that decides a move (zig-zag raster
+     links, links at depth, travel, ring bridges and string pulling, `MoveCheck` in
+     `pocket.cpp`) now accepts a segment when it is inside C within `kMoveSlack` = 4e-6 mm
+     (ends off an edge they follow, crossings near an end, the midpoint outside), the vertex
+     rejection keeping the distance tolerance. Every point of such a segment lies within about
+     2·4e-6 mm of C: outside C the segment's middle part touches no edge and no vertex, so it lies
+     in one convex pocket between the segment and C's boundary, whose depth is at most twice the
+     midpoint's distance. A segment that fails this is still accepted when it passes the old test
+     **and** its exact distance to the polygonised walls is at least radius + allowance + the
+     polygon tolerance (chordal/2; nothing when every input span is a line, the polygon then
+     being the walls), so the true walls keep radius + allowance; this keeps the old links
+     wherever they were safe. The wall index (an `EdgeGrid` over the region polygon, walked along
+     the segment's corridor) is built on first use. Route points closer than 4e-6 mm are merged
+     (was: the distance tolerance; a merged point can move the way by that much).
+     Change against main (T-0169 hash sweep, same seeds, every toolpath of the result): the AC6
+     star polygons 7 of 1,000 changed and the disc chains 11 of 300, with the same retracts,
+     plunges and cut length: travel waypoints within 1 µm of main's (a route point within the
+     old merge distance is kept, which can also change the string pulling of that route); the
+     curve/line junction family (`pocket_junction_test.cpp`'s generator) 141 of 600 (+24 retracts
+     in 5,389, +78 plunges in 11,946; 85 of the 141 have distance = chordal), where main's links
+     and travel came inside the tool radius in 29 of 333 toolpaths (by up to 0.0293 mm, exact
+     oracle) and the new ones in none (smallest clearance less allowance +4.99e-4 mm at the
+     origin, +4.39e-4 mm 1e4 mm away). V-Carve (verifier families, 40 cases each): 15 of 1,040
+     changed with clearance end mills forced, 4 of 1,040 with the families' own mix, diagnostics
+     identical.
+     Cost (Release, CPU, interleaved with main): unchanged within noise on the T-0131 comb,
+     rest and page jobs and on the V-Carve AC2 page (plain, flat 0.5, flat 0.5 + 0.5 mm end
+     mill). A large curved pocket with distance = chordal (radius up to 1.5 m, chordal 0.002,
+     raster with a rest tool) costs up to about 1.8× (0.3 → 0.6 s): its travel routes along
+     concave walls are pulled with more, shorter shortcuts, each also checked against the walls.
    - **8b, ring-tree routes.** From each end, climb to the parent level by a straight segment to
      the parent boundary's nearest point. The open disc around a point of a region, out to its
      nearest boundary point, lies inside the region, so each such segment is inside. At the
