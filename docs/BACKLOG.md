@@ -452,7 +452,7 @@ Goal: Non-blocking findings (harness t0136v1/). (a) Names that grow when stored 
 Acceptance criteria:
   1. (a)–(d) fixed with tests where behaviour changes; save/load invariant preserved (fuzz3).
 
-### T-0140 Profile: loose-piece check for Inside/Outside with allowance ≥ 0   [status: in progress — round 2 verifying]
+### T-0140 Profile: loose-piece check for Inside/Outside with allowance ≥ 0   [status: in progress — round 2 FAIL (contact loss at leaf sides; normal jobs >10%); round 3 (last)]
 Owner decision 2026-11-06 (after round 2): the 10% performance target holds for normal jobs; pages where every tab is left out on many cheap vectors (every part comes loose) may cost more (measured +12–71%, a fraction of a second), documented in ADR-0016 §14.
 Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §14
 Goal: Found by the T-0135 verifier (harness t0135v1/scn/m3_630018_3.scn): the loose-piece report runs only for sided cuts (On, allowance < 0), so with Inside/Outside and allowance ≥ 0 pieces that no kept tab holds come free unreported (15.1 mm² in that scene, leads off; same in T-0127). Extend the check to all tabbed profiles without changing toolpaths.
