@@ -1,0 +1,241 @@
+  f2 s103_1 single EXTRA piece area 49.000000 box 12.0000,14.0000-20.0000,28.0000 inner 1
+  f2 s103_1 single EXTRA piece area 11.000000 box 2.0000,24.0000-8.0000,27.0000 inner 1
+  f2 s103_1 single EXTRA piece area 2.000000 box 32.0000,26.0000-34.0000,27.0000 inner 1
+  f2 s103_1 single EXTRA piece area 10.000000 box 26.0000,21.0000-28.0000,27.0000 inner 1
+  f2 s103_1 single EXTRA piece area 3.000000 box 31.0000,23.0000-32.0000,26.0000 inner 1
+  f2 s103_1 single EXTRA piece area 2.000000 box 5.0000,24.0000-7.0000,25.0000 inner 1
+  f2 s103_1 single EXTRA piece area 1.000000 box 4.0000,23.0000-5.0000,24.0000 inner 1
+  f2 s103_1 single EXTRA piece area 4.000000 box 32.0000,21.0000-34.0000,23.0000 inner 1
+  f2 s103_1 single EXTRA piece area 1.000000 box 3.0000,22.0000-4.0000,23.0000 inner 1
+  f2 s103_1 single EXTRA piece area 4.000000 box 24.0000,21.0000-26.0000,23.0000 inner 1
+  f2 s103_1 single EXTRA piece area 18.000000 box 5.0000,17.0000-8.0000,23.0000 inner 1
+  f2 s103_1 single EXTRA piece area 2.000000 box 28.0000,20.0000-30.0000,21.0000 inner 1
+  f2 s103_1 single EXTRA piece area 2.000000 box 25.0000,19.0000-27.0000,20.0000 inner 1
+  f2 s103_1 single EXTRA piece area 2.000000 box 24.0000,17.0000-25.0000,19.0000 inner 1
+  f2 s103_1 single EXTRA piece area 2.000000 box 25.0000,16.0000-27.0000,17.0000 inner 1
+  f2 s103_1 single EXTRA piece area 10.000000 box 9.0000,11.0000-13.0000,16.0000 inner 1
+  f2 s103_1 single EXTRA piece area 5.000000 box 13.0000,10.0000-15.0000,14.0000 inner 1
+  f2 s103_1 single EXTRA piece area 3.000000 box 6.0000,12.0000-9.0000,13.0000 inner 1
+  f2 s103_1 single EXTRA piece area 1.000000 box 9.0000,11.0000-10.0000,12.0000 inner 1
+  f2 s103_1 single EXTRA piece area 1.000000 box 25.0000,6.0000-26.0000,7.0000 inner 1
+  f2 s103_1 single EXTRA piece area 5.000000 box 26.0000,4.0000-29.0000,6.0000 inner 1
+  f2 s103_1 single EXTRA piece area 1.000000 box 11.0000,1.0000-12.0000,2.0000 inner 1
+  f2 s103_1 single MISSING piece area 68.000000 box 6.0000,10.0000-20.0000,28.0000 thick 1
+  f2 s103_1 single MISSING piece area 6.000000 box 24.0000,16.0000-27.0000,20.0000 thick 1
+  f2 s103_1 single MISSING piece area 6.000000 box 25.0000,4.0000-29.0000,7.0000 thick 1
+  f2 s103_2 single EXTRA piece area 4.000000 box 25.0000,5.0000-27.0000,7.0000 inner 1
+  f2 s103_2 single EXTRA piece area 3.000000 box 27.0000,2.0000-28.0000,5.0000 inner 1
+  f2 s103_2 single EXTRA piece area 1.000000 box 25.0000,2.0000-26.0000,3.0000 inner 1
+  f2 s103_3 single EXTRA piece area 1.000000 box 21.0000,28.0000-22.0000,29.0000 inner 1
+  f2 s103_3 single EXTRA piece area 1.000000 box 20.0000,27.0000-21.0000,28.0000 inner 1
+  f2 s103_3 single EXTRA piece area 3.000000 box 28.0000,23.0000-30.0000,25.0000 inner 1
+  f2 s103_3 single EXTRA piece area 4.000000 box 30.0000,22.0000-32.0000,24.0000 inner 1
+  f2 s103_3 single EXTRA piece area 6.000000 box 28.0000,19.0000-30.0000,22.0000 inner 1
+  f2 s103_3 single MISSING piece area 2.000000 box 20.0000,27.0000-22.0000,29.0000 thick 1
+  f2 s103_3 single MISSING piece area 13.000000 box 28.0000,19.0000-32.0000,25.0000 thick 1
+  f2 s103_4 single EXTRA piece area 3.000000 box 10.0000,9.0000-13.0000,10.0000 inner 1
+  f2 s103_6 single EXTRA piece area 96.000000 box 12.0000,8.0000-27.0000,22.0000 inner 1
+  f2 s103_6 single EXTRA piece area 12.000000 box 9.0000,10.0000-12.0000,15.0000 inner 1
+  f2 s103_6 single MISSING piece area 108.000000 box 9.0000,8.0000-27.0000,22.0000 thick 1
+  f2 s103_7 single EXTRA piece area 6.000000 box 8.0000,28.0000-10.0000,31.0000 inner 1
+  f2 s103_7 single EXTRA piece area 17.000000 box 10.0000,18.0000-15.0000,22.0000 inner 1
+  f2 s103_7 single EXTRA piece area 3.000000 box 23.0000,13.0000-24.0000,16.0000 inner 1
+  f2 s103_9 single EXTRA piece area 11.000000 box 11.0000,15.0000-15.0000,18.0000 inner 1
+  f2 s103_9 single EXTRA piece area 2.000000 box 11.0000,10.0000-13.0000,11.0000 inner 1
+  f2 s103_11 single EXTRA piece area 2.000000 box 4.0000,31.0000-5.0000,33.0000 inner 1
+  f2 s103_11 single EXTRA piece area 3.000000 box 19.0000,12.0000-22.0000,13.0000 inner 1
+  f2 s103_11 single EXTRA piece area 10.000000 box 17.0000,7.0000-22.0000,12.0000 inner 1
+  f2 s103_11 single EXTRA piece area 2.000000 box 22.0000,8.0000-23.0000,10.0000 inner 1
+  f2 s103_11 single EXTRA piece area 10.000000 box 22.0000,3.0000-25.0000,7.0000 inner 1
+  f2 s103_11 single EXTRA piece area 5.000000 box 18.0000,5.0000-21.0000,7.0000 inner 1
+  f2 s103_11 single EXTRA piece area 1.000000 box 21.0000,4.0000-22.0000,5.0000 inner 1
+  f2 s103_11 single MISSING piece area 31.000000 box 17.0000,3.0000-25.0000,13.0000 thick 1
+  f2 s103_13 single EXTRA piece area 38.000000 box 18.0000,21.0000-28.0000,28.0000 inner 1
+  f2 s103_13 single EXTRA piece area 3.000000 box 22.0000,27.0000-25.0000,28.0000 inner 1
+  f2 s103_13 single EXTRA piece area 18.000000 box 11.0000,18.0000-15.0000,23.0000 inner 1
+  f2 s103_13 single EXTRA piece area 4.000000 box 9.0000,20.0000-11.0000,22.0000 inner 1
+  f2 s103_13 single EXTRA piece area 2.000000 box 4.0000,20.0000-5.0000,22.0000 inner 1
+  f2 s103_13 single EXTRA piece area 1.000000 box 5.0000,20.0000-6.0000,21.0000 inner 1
+  f2 s103_13 single MISSING piece area 41.000000 box 18.0000,21.0000-28.0000,28.0000 thick 1
+  f2 s103_16 single EXTRA piece area 6.000000 box 30.0000,26.0000-32.0000,30.0000 inner 1
+  f2 s103_16 single EXTRA piece area 2.000000 box 19.0000,27.0000-20.0000,29.0000 inner 1
+  f2 s103_16 single EXTRA piece area 1.000000 box 29.0000,27.0000-30.0000,28.0000 inner 1
+  f2 s103_16 single EXTRA piece area 3.000000 box 26.0000,26.0000-29.0000,27.0000 inner 1
+  f2 s103_16 single EXTRA piece area 1.000000 box 20.0000,26.0000-21.0000,27.0000 inner 1
+  f2 s103_16 single EXTRA piece area 2.000000 box 18.0000,25.0000-19.0000,27.0000 inner 1
+  f2 s103_16 L4 EXTRA-vs-single area 7.000000 box 29.0000,26.0000-32.0000,30.0000 inner 1
+  f2 s103_16 L4 MISSING-vs-single area 6.000000 box 30.0000,26.0000-32.0000,30.0000 inner 1
+  f2 s103_16 L4 MISSING-vs-single area 1.000000 box 29.0000,27.0000-30.0000,28.0000 inner 1
+  f2 s103_16 L5 EXTRA-vs-single area 7.000000 box 29.0000,26.0000-32.0000,30.0000 inner 1
+  f2 s103_16 L5 MISSING-vs-single area 6.000000 box 30.0000,26.0000-32.0000,30.0000 inner 1
+  f2 s103_16 L5 MISSING-vs-single area 1.000000 box 29.0000,27.0000-30.0000,28.0000 inner 1
+  f2 s103_16 L6 EXTRA-vs-single area 7.000000 box 29.0000,26.0000-32.0000,30.0000 inner 1
+  f2 s103_16 L6 MISSING-vs-single area 6.000000 box 30.0000,26.0000-32.0000,30.0000 inner 1
+  f2 s103_16 L6 MISSING-vs-single area 1.000000 box 29.0000,27.0000-30.0000,28.0000 inner 1
+  f2 s103_16 L8 EXTRA-vs-single area 7.000000 box 29.0000,26.0000-32.0000,30.0000 inner 1
+  f2 s103_16 L8 MISSING-vs-single area 6.000000 box 30.0000,26.0000-32.0000,30.0000 inner 1
+  f2 s103_16 L8 MISSING-vs-single area 1.000000 box 29.0000,27.0000-30.0000,28.0000 inner 1
+  f2 s103_16 L13 EXTRA-vs-single area 7.000000 box 29.0000,26.0000-32.0000,30.0000 inner 1
+  f2 s103_16 L13 MISSING-vs-single area 6.000000 box 30.0000,26.0000-32.0000,30.0000 inner 1
+  f2 s103_16 L13 MISSING-vs-single area 1.000000 box 29.0000,27.0000-30.0000,28.0000 inner 1
+  f2 s103_16 L24 EXTRA-vs-single area 7.000000 box 29.0000,26.0000-32.0000,30.0000 inner 1
+  f2 s103_16 L24 MISSING-vs-single area 6.000000 box 30.0000,26.0000-32.0000,30.0000 inner 1
+  f2 s103_16 L24 MISSING-vs-single area 1.000000 box 29.0000,27.0000-30.0000,28.0000 inner 1
+BAD f2 seed 103 s 16 rings 46 oracle pieces 5 single 11
+  f2 s103_17 single EXTRA piece area 2.000000 box 33.0000,24.0000-35.0000,25.0000 inner 1
+  f2 s103_17 single EXTRA piece area 4.000000 box 30.0000,18.0000-31.0000,22.0000 inner 1
+  f2 s103_18 single EXTRA piece area 22.000000 box 31.0000,7.0000-35.0000,13.0000 inner 1
+  f2 s103_18 single EXTRA piece area 1.000000 box 24.0000,7.0000-25.0000,8.0000 inner 1
+  f2 s103_18 single EXTRA piece area 2.000000 box 32.0000,6.0000-34.0000,7.0000 inner 1
+  f2 s103_18 single EXTRA piece area 1.000000 box 23.0000,6.0000-24.0000,7.0000 inner 1
+  f2 s103_18 single EXTRA piece area 3.000000 box 24.0000,3.0000-25.0000,6.0000 inner 1
+  f2 s103_20 single EXTRA piece area 2.000000 box 6.0000,31.0000-7.0000,33.0000 inner 1
+  f2 s103_20 single EXTRA piece area 5.000000 box 8.0000,26.0000-11.0000,28.0000 inner 1
+  f2 s103_20 single EXTRA piece area 2.000000 box 6.0000,25.0000-8.0000,26.0000 inner 1
+  f2 s103_20 single EXTRA piece area 9.000000 box 30.0000,13.0000-34.0000,16.0000 inner 1
+  f2 s103_20 single EXTRA piece area 1.000000 box 29.0000,13.0000-30.0000,14.0000 inner 1
+  f2 s103_20 single EXTRA piece area 10.000000 box 20.0000,3.0000-25.0000,5.0000 inner 1
+  f2 s103_20 single MISSING piece area 7.000000 box 6.0000,25.0000-11.0000,28.0000 thick 1
+  f2 s103_21 single EXTRA piece area 6.000000 box 28.0000,20.0000-30.0000,23.0000 inner 1
+  f2 s103_21 single EXTRA piece area 2.000000 box 20.0000,20.0000-22.0000,21.0000 inner 1
+  f2 s103_21 single EXTRA piece area 4.000000 box 5.0000,3.0000-6.0000,7.0000 inner 1
+  f2 s103_22 single EXTRA piece area 4.000000 box 8.0000,16.0000-9.0000,20.0000 inner 1
+  f2 s103_23 single EXTRA piece area 4.000000 box 26.0000,31.0000-27.0000,35.0000 inner 1
+  f2 s103_23 single EXTRA piece area 1.000000 box 25.0000,30.0000-26.0000,31.0000 inner 1
+  f2 s103_23 single EXTRA piece area 1.000000 box 26.0000,29.0000-27.0000,30.0000 inner 1
+  f2 s103_23 single EXTRA piece area 13.000000 box 8.0000,19.0000-14.0000,23.0000 inner 1
+  f2 s103_23 single EXTRA piece area 1.000000 box 2.0000,19.0000-3.0000,20.0000 inner 1
+  f2 s103_23 single EXTRA piece area 12.000000 box 4.0000,17.0000-10.0000,20.0000 inner 1
+  f2 s103_23 single EXTRA piece area 2.000000 box 29.0000,17.0000-31.0000,18.0000 inner 1
+  f2 s103_23 single EXTRA piece area 2.000000 box 23.0000,17.0000-25.0000,18.0000 inner 1
+  f2 s103_23 single EXTRA piece area 3.000000 box 26.0000,16.0000-29.0000,17.0000 inner 1
+  f2 s103_23 single EXTRA piece area 30.000000 box 22.0000,7.0000-32.0000,15.0000 inner 1
+  f2 s103_23 single EXTRA piece area 4.000000 box 18.0000,12.0000-21.0000,14.0000 inner 1
+  f2 s103_23 single EXTRA piece area 1.000000 box 19.0000,11.0000-20.0000,12.0000 inner 1
+  f2 s103_23 single EXTRA piece area 1.000000 box 18.0000,10.0000-19.0000,11.0000 inner 1
+  f2 s103_23 single MISSING piece area 6.000000 box 25.0000,29.0000-27.0000,35.0000 thick 1
+  f2 s103_23 single MISSING piece area 25.000000 box 4.0000,17.0000-14.0000,23.0000 thick 1
+  f2 s103_23 single MISSING piece area 6.000000 box 18.0000,10.0000-21.0000,14.0000 thick 1
+  f2 s103_25 single EXTRA piece area 10.000000 box 4.0000,31.0000-10.0000,35.0000 inner 1
+  f2 s103_25 single EXTRA piece area 5.000000 box 3.0000,31.0000-6.0000,34.0000 inner 1
+  f2 s103_25 single EXTRA piece area 2.000000 box 2.0000,27.0000-3.0000,29.0000 inner 1
+  f2 s103_25 single EXTRA piece area 2.000000 box 3.0000,25.0000-4.0000,27.0000 inner 1
+  f2 s103_26 single EXTRA piece area 10.000000 box 29.0000,28.0000-31.0000,34.0000 inner 1
+  f2 s103_27 single EXTRA piece area 2.000000 box 28.0000,12.0000-29.0000,14.0000 inner 1
+  f2 s103_27 single EXTRA piece area 6.000000 box 29.0000,7.0000-31.0000,12.0000 inner 1
+  f2 s103_27 single EXTRA piece area 2.000000 box 26.0000,8.0000-28.0000,9.0000 inner 1
+  f2 s103_28 single EXTRA piece area 8.000000 box 12.0000,16.0000-15.0000,21.0000 inner 1
+  f2 s103_28 single EXTRA piece area 19.000000 box 14.0000,12.0000-19.0000,19.0000 inner 1
+  f2 s103_28 single EXTRA piece area 2.000000 box 12.0000,16.0000-13.0000,18.0000 inner 1
+  f2 s103_28 single EXTRA piece area 1.000000 box 13.0000,15.0000-14.0000,16.0000 inner 1
+  f2 s103_28 single EXTRA piece area 5.000000 box 10.0000,12.0000-13.0000,14.0000 inner 1
+  f2 s103_28 single EXTRA piece area 11.000000 box 13.0000,8.0000-17.0000,12.0000 inner 1
+  f2 s103_28 single EXTRA piece area 6.000000 box 19.0000,6.0000-23.0000,8.0000 inner 1
+  f2 s103_28 single EXTRA piece area 2.000000 box 24.0000,5.0000-26.0000,6.0000 inner 1
+  f2 s103_28 single EXTRA piece area 2.000000 box 19.0000,5.0000-21.0000,6.0000 inner 1
+  f2 s103_28 single EXTRA piece area 1.000000 box 26.0000,4.0000-27.0000,5.0000 inner 1
+  f2 s103_28 single MISSING piece area 11.000000 box 12.0000,15.0000-15.0000,21.0000 thick 1
+  f2 s103_28 single MISSING piece area 35.000000 box 10.0000,8.0000-19.0000,19.0000 thick 1
+  f2 s103_28 single MISSING piece area 8.000000 box 19.0000,5.0000-23.0000,8.0000 thick 1
+  f2 s103_28 single MISSING piece area 3.000000 box 24.0000,4.0000-27.0000,6.0000 thick 1
+  f2 s103_29 single EXTRA piece area 6.000000 box 31.0000,32.0000-33.0000,37.0000 inner 1
+  f2 s103_29 single EXTRA piece area 20.000000 box 15.0000,26.0000-19.0000,35.0000 inner 1
+  f2 s103_29 single EXTRA piece area 2.000000 box 31.0000,30.0000-32.0000,32.0000 inner 1
+  f2 s103_29 single EXTRA piece area 1.000000 box 32.0000,29.0000-33.0000,30.0000 inner 1
+  f2 s103_29 L4 EXTRA-vs-single area 17.000000 box 22.0000,7.0000-27.0000,14.0000 inner 1
+  f2 s103_29 L4 MISSING-vs-single area 3.000000 box 22.0000,11.0000-23.0000,14.0000 inner 1
+  f2 s103_29 L4 MISSING-vs-single area 14.000000 box 23.0000,7.0000-27.0000,12.0000 inner 1
+  f2 s103_29 L5 EXTRA-vs-single area 17.000000 box 22.0000,7.0000-27.0000,14.0000 inner 1
+  f2 s103_29 L5 MISSING-vs-single area 3.000000 box 22.0000,11.0000-23.0000,14.0000 inner 1
+  f2 s103_29 L5 MISSING-vs-single area 14.000000 box 23.0000,7.0000-27.0000,12.0000 inner 1
+  f2 s103_29 L6 EXTRA-vs-single area 17.000000 box 22.0000,7.0000-27.0000,14.0000 inner 1
+  f2 s103_29 L6 MISSING-vs-single area 3.000000 box 22.0000,11.0000-23.0000,14.0000 inner 1
+  f2 s103_29 L6 MISSING-vs-single area 14.000000 box 23.0000,7.0000-27.0000,12.0000 inner 1
+  f2 s103_29 L8 EXTRA-vs-single area 17.000000 box 22.0000,7.0000-27.0000,14.0000 inner 1
+  f2 s103_29 L8 MISSING-vs-single area 3.000000 box 22.0000,11.0000-23.0000,14.0000 inner 1
+  f2 s103_29 L8 MISSING-vs-single area 14.000000 box 23.0000,7.0000-27.0000,12.0000 inner 1
+  f2 s103_29 L13 EXTRA-vs-single area 17.000000 box 22.0000,7.0000-27.0000,14.0000 inner 1
+  f2 s103_29 L13 MISSING-vs-single area 3.000000 box 22.0000,11.0000-23.0000,14.0000 inner 1
+  f2 s103_29 L13 MISSING-vs-single area 14.000000 box 23.0000,7.0000-27.0000,12.0000 inner 1
+  f2 s103_29 L24 EXTRA-vs-single area 17.000000 box 22.0000,7.0000-27.0000,14.0000 inner 1
+  f2 s103_29 L24 MISSING-vs-single area 3.000000 box 22.0000,11.0000-23.0000,14.0000 inner 1
+  f2 s103_29 L24 MISSING-vs-single area 14.000000 box 23.0000,7.0000-27.0000,12.0000 inner 1
+  f2 s103_29 L64 EXTRA-vs-single area 17.000000 box 22.0000,7.0000-27.0000,14.0000 inner 1
+  f2 s103_29 L64 MISSING-vs-single area 3.000000 box 22.0000,11.0000-23.0000,14.0000 inner 1
+  f2 s103_29 L64 MISSING-vs-single area 14.000000 box 23.0000,7.0000-27.0000,12.0000 inner 1
+  f2 s103_29 L100 EXTRA-vs-single area 17.000000 box 22.0000,7.0000-27.0000,14.0000 inner 1
+  f2 s103_29 L100 MISSING-vs-single area 3.000000 box 22.0000,11.0000-23.0000,14.0000 inner 1
+  f2 s103_29 L100 MISSING-vs-single area 14.000000 box 23.0000,7.0000-27.0000,12.0000 inner 1
+BAD f2 seed 103 s 29 rings 88 oracle pieces 17 single 21
+  f2 s103_31 single EXTRA piece area 1.000000 box 13.0000,27.0000-14.0000,28.0000 inner 1
+  f2 s103_31 single EXTRA piece area 1.000000 box 12.0000,26.0000-13.0000,27.0000 inner 1
+  f2 s103_31 single EXTRA piece area 2.000000 box 14.0000,25.0000-15.0000,27.0000 inner 1
+  f2 s103_31 single EXTRA piece area 16.000000 box 28.0000,23.0000-36.0000,26.0000 inner 1
+  f2 s103_31 single MISSING piece area 4.000000 box 12.0000,25.0000-15.0000,28.0000 thick 1
+  f2 s103_32 single EXTRA piece area 7.000000 box 27.0000,11.0000-34.0000,12.0000 inner 1
+  f2 s103_33 single EXTRA piece area 3.000000 box 7.0000,20.0000-10.0000,21.0000 inner 1
+  f2 s103_33 single EXTRA piece area 2.000000 box 13.0000,19.0000-15.0000,20.0000 inner 1
+  f2 s103_33 single EXTRA piece area 2.000000 box 5.0000,19.0000-7.0000,20.0000 inner 1
+  f2 s103_33 single EXTRA piece area 4.000000 box 12.0000,15.0000-13.0000,19.0000 inner 1
+  f2 s103_33 single EXTRA piece area 1.000000 box 7.0000,18.0000-8.0000,19.0000 inner 1
+  f2 s103_33 single EXTRA piece area 4.000000 box 10.0000,15.0000-11.0000,19.0000 inner 1
+  f2 s103_33 single EXTRA piece area 2.000000 box 7.0000,15.0000-8.0000,17.0000 inner 1
+  f2 s103_33 single EXTRA piece area 23.000000 box 8.0000,7.0000-14.0000,15.0000 inner 1
+  f2 s103_33 single EXTRA piece area 2.000000 box 8.0000,14.0000-10.0000,15.0000 inner 1
+  f2 s103_33 single EXTRA piece area 1.000000 box 27.0000,11.0000-28.0000,12.0000 inner 1
+  f2 s103_33 single EXTRA piece area 2.000000 box 11.0000,6.0000-13.0000,7.0000 inner 1
+  f2 s103_33 single EXTRA piece area 4.000000 box 6.0000,5.0000-8.0000,7.0000 inner 1
+  f2 s103_33 single EXTRA piece area 2.000000 box 3.0000,4.0000-5.0000,5.0000 inner 1
+  f2 s103_33 single MISSING piece area 6.000000 box 5.0000,18.0000-10.0000,21.0000 thick 1
+  f2 s103_33 single MISSING piece area 43.000000 box 6.0000,5.0000-15.0000,20.0000 thick 1
+  f2 s103_34 single EXTRA piece area 13.000000 box 27.0000,23.0000-29.0000,30.0000 inner 1
+  f2 s103_34 single EXTRA piece area 17.000000 box 29.0000,30.0000-34.0000,35.0000 inner 1
+  f2 s103_34 single EXTRA piece area 1.000000 box 34.0000,31.0000-35.0000,32.0000 inner 1
+  f2 s103_34 single EXTRA piece area 3.000000 box 25.0000,30.0000-27.0000,32.0000 inner 1
+  f2 s103_34 single EXTRA piece area 1.000000 box 34.0000,29.0000-35.0000,30.0000 inner 1
+  f2 s103_34 single EXTRA piece area 3.000000 box 31.0000,30.0000-34.0000,31.0000 inner 1
+  f2 s103_34 single EXTRA piece area 1.000000 box 34.0000,10.0000-35.0000,11.0000 inner 1
+  f2 s103_34 single EXTRA piece area 4.000000 box 33.0000,6.0000-34.0000,10.0000 inner 1
+  f2 s103_36 single EXTRA piece area 9.000000 box 25.0000,15.0000-28.0000,18.0000 inner 1
+  f2 s103_36 single EXTRA piece area 1.000000 box 28.0000,14.0000-29.0000,15.0000 inner 1
+  f2 s103_37 single EXTRA piece area 5.000000 box 30.0000,32.0000-31.0000,37.0000 inner 1
+  f2 s103_37 single EXTRA piece area 4.000000 box 31.0000,30.0000-33.0000,32.0000 inner 1
+  f2 s103_37 single EXTRA piece area 12.000000 box 17.0000,26.0000-24.0000,31.0000 inner 1
+  f2 s103_37 single EXTRA piece area 26.000000 box 20.0000,20.0000-29.0000,25.0000 inner 1
+  f2 s103_37 single EXTRA piece area 1.000000 box 19.0000,20.0000-20.0000,21.0000 inner 1
+  f2 s103_37 single EXTRA piece area 15.000000 box 24.0000,15.0000-27.0000,20.0000 inner 1
+  f2 s103_37 single EXTRA piece area 2.000000 box 28.0000,18.0000-29.0000,20.0000 inner 1
+  f2 s103_37 single EXTRA piece area 14.000000 box 32.0000,9.0000-34.0000,16.0000 inner 1
+  f2 s103_37 single EXTRA piece area 3.000000 box 29.0000,8.0000-32.0000,9.0000 inner 1
+  f2 s103_37 single MISSING piece area 1.000000 box 17.0000,26.0000-18.0000,27.0000 thick 1
+  f2 s103_37 L4 EXTRA-vs-single area 1.000000 box 17.0000,26.0000-18.0000,27.0000 inner 1
+  f2 s103_37 L4 EXTRA-vs-single area 11.000000 box 19.0000,26.0000-24.0000,31.0000 inner 1
+  f2 s103_37 L4 MISSING-vs-single area 12.000000 box 17.0000,26.0000-24.0000,31.0000 inner 1
+  f2 s103_37 L5 EXTRA-vs-single area 1.000000 box 17.0000,26.0000-18.0000,27.0000 inner 1
+  f2 s103_37 L5 EXTRA-vs-single area 11.000000 box 19.0000,26.0000-24.0000,31.0000 inner 1
+  f2 s103_37 L5 MISSING-vs-single area 12.000000 box 17.0000,26.0000-24.0000,31.0000 inner 1
+  f2 s103_37 L6 EXTRA-vs-single area 1.000000 box 17.0000,26.0000-18.0000,27.0000 inner 1
+  f2 s103_37 L6 EXTRA-vs-single area 11.000000 box 19.0000,26.0000-24.0000,31.0000 inner 1
+  f2 s103_37 L6 MISSING-vs-single area 12.000000 box 17.0000,26.0000-24.0000,31.0000 inner 1
+  f2 s103_37 L8 EXTRA-vs-single area 1.000000 box 17.0000,26.0000-18.0000,27.0000 inner 1
+  f2 s103_37 L8 EXTRA-vs-single area 11.000000 box 19.0000,26.0000-24.0000,31.0000 inner 1
+  f2 s103_37 L8 MISSING-vs-single area 12.000000 box 17.0000,26.0000-24.0000,31.0000 inner 1
+  f2 s103_37 L13 EXTRA-vs-single area 1.000000 box 17.0000,26.0000-18.0000,27.0000 inner 1
+  f2 s103_37 L13 EXTRA-vs-single area 11.000000 box 19.0000,26.0000-24.0000,31.0000 inner 1
+  f2 s103_37 L13 MISSING-vs-single area 12.000000 box 17.0000,26.0000-24.0000,31.0000 inner 1
+  f2 s103_37 L24 EXTRA-vs-single area 1.000000 box 17.0000,26.0000-18.0000,27.0000 inner 1
+  f2 s103_37 L24 EXTRA-vs-single area 11.000000 box 19.0000,26.0000-24.0000,31.0000 inner 1
+  f2 s103_37 L24 MISSING-vs-single area 12.000000 box 17.0000,26.0000-24.0000,31.0000 inner 1
+  f2 s103_37 L64 EXTRA-vs-single area 1.000000 box 17.0000,26.0000-18.0000,27.0000 inner 1
+  f2 s103_37 L64 EXTRA-vs-single area 11.000000 box 19.0000,26.0000-24.0000,31.0000 inner 1
+  f2 s103_37 L64 MISSING-vs-single area 12.000000 box 17.0000,26.0000-24.0000,31.0000 inner 1
+  f2 s103_37 L100 EXTRA-vs-single area 1.000000 box 17.0000,26.0000-18.0000,27.0000 inner 1
+  f2 s103_37 L100 EXTRA-vs-single area 11.000000 box 19.0000,26.0000-24.0000,31.0000 inner 1
+  f2 s103_37 L100 MISSING-vs-single area 12.000000 box 17.0000,26.0000-24.0000,31.0000 inner 1
+BAD f2 seed 103 s 37 rings 85 oracle pieces 19 single 27
+  f2 s103_38 single EXTRA piece area 20.000000 box 29.0000,5.0000-33.0000,10.0000 inner 1
+  f2 s103_39 single EXTRA piece area 27.000000 box 9.0000,11.0000-16.0000,16.0000 inner 1
+  f2 s103_39 single EXTRA piece area 1.000000 box 16.0000,11.0000-17.0000,12.0000 inner 1
+  f2 s103_39 single EXTRA piece area 1.000000 box 17.0000,10.0000-18.0000,11.0000 inner 1
+  f2 s103_39 single EXTRA piece area 10.000000 box 16.0000,2.0000-19.0000,8.0000 inner 1
+SUMMARY fam 2 seed 103 scenes 40 oraclePieces 443 badScenes 3 problems 66 singleVsUnionDiffScenes 29

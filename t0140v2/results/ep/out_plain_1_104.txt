@@ -1,0 +1,38 @@
+  f1 s104_24 L4 EXTRA-vs-single area 2.188276 box 20.3777,3.3628-24.1187,5.3745 inner 1
+  f1 s104_24 L4 MISSING-vs-single area 2.188508 box 20.3777,3.3628-24.1187,5.3745 inner 1
+  f1 s104_24 L5 EXTRA-vs-single area 2.188276 box 20.3777,3.3628-24.1187,5.3745 inner 1
+  f1 s104_24 L5 MISSING-vs-single area 2.188508 box 20.3777,3.3628-24.1187,5.3745 inner 1
+  f1 s104_24 L6 EXTRA-vs-single area 2.188276 box 20.3777,3.3628-24.1187,5.3745 inner 1
+  f1 s104_24 L6 MISSING-vs-single area 2.188508 box 20.3777,3.3628-24.1187,5.3745 inner 1
+  f1 s104_24 L8 EXTRA-vs-single area 2.188276 box 20.3777,3.3628-24.1187,5.3745 inner 1
+  f1 s104_24 L8 MISSING-vs-single area 2.188508 box 20.3777,3.3628-24.1187,5.3745 inner 1
+  f1 s104_24 L13 EXTRA-vs-single area 2.188276 box 20.3777,3.3628-24.1187,5.3745 inner 1
+  f1 s104_24 L13 MISSING-vs-single area 2.188508 box 20.3777,3.3628-24.1187,5.3745 inner 1
+  f1 s104_24 L24 EXTRA-vs-single area 2.188275 box 20.3777,3.3628-24.1187,5.3745 inner 1
+  f1 s104_24 L24 MISSING-vs-single area 2.188508 box 20.3777,3.3628-24.1187,5.3745 inner 1
+  f1 s104_24 L64 EXTRA-vs-single area 2.188276 box 20.3777,3.3628-24.1187,5.3745 inner 1
+  f1 s104_24 L64 MISSING-vs-single area 2.188508 box 20.3777,3.3628-24.1187,5.3745 inner 1
+  f1 s104_24 L100 EXTRA-vs-single area 2.188275 box 20.3777,3.3628-24.1187,5.3745 inner 1
+  f1 s104_24 L100 MISSING-vs-single area 2.188508 box 20.3777,3.3628-24.1187,5.3745 inner 1
+  f1 s104_24 L256 EXTRA-vs-single area 2.188275 box 20.3777,3.3628-24.1187,5.3745 inner 1
+  f1 s104_24 L256 MISSING-vs-single area 2.188508 box 20.3777,3.3628-24.1187,5.3745 inner 1
+  f1 s104_24 L512 EXTRA-vs-single area 2.188275 box 20.3777,3.3628-24.1187,5.3745 inner 1
+  f1 s104_24 L512 MISSING-vs-single area 2.188508 box 20.3777,3.3628-24.1187,5.3745 inner 1
+BAD f1 seed 104 s 24 rings 5 oracle pieces 5 single 5
+  f1 s104_32 L4 EXTRA-vs-single area 3.181184 box 94.7502,18.8133-95.9466,23.7817 inner 1
+  f1 s104_32 L4 MISSING-vs-single area 3.181032 box 94.7502,18.8134-95.9466,23.7817 inner 1
+  f1 s104_32 L5 EXTRA-vs-single area 3.181184 box 94.7502,18.8133-95.9466,23.7817 inner 1
+  f1 s104_32 L5 MISSING-vs-single area 3.181032 box 94.7502,18.8134-95.9466,23.7817 inner 1
+  f1 s104_32 L6 EXTRA-vs-single area 3.181184 box 94.7502,18.8133-95.9466,23.7817 inner 1
+  f1 s104_32 L6 MISSING-vs-single area 3.181032 box 94.7502,18.8134-95.9466,23.7817 inner 1
+  f1 s104_32 L8 EXTRA-vs-single area 3.181184 box 94.7502,18.8133-95.9466,23.7817 inner 1
+  f1 s104_32 L8 MISSING-vs-single area 3.181032 box 94.7502,18.8134-95.9466,23.7817 inner 1
+  f1 s104_32 L13 EXTRA-vs-single area 3.181185 box 94.7502,18.8133-95.9466,23.7817 inner 1
+  f1 s104_32 L13 MISSING-vs-single area 3.181032 box 94.7502,18.8134-95.9466,23.7817 inner 1
+  f1 s104_32 L24 EXTRA-vs-single area 3.181185 box 94.7502,18.8133-95.9466,23.7817 inner 1
+  f1 s104_32 L24 MISSING-vs-single area 3.181032 box 94.7502,18.8134-95.9466,23.7817 inner 1
+BAD f1 seed 104 s 32 rings 11 oracle pieces 116 single 116
+  f1 s104_38 L13 EXTRA-vs-single area 8.658219 box 6.6740,15.9835-11.1512,22.3983 inner 1
+  f1 s104_38 L13 MISSING-vs-single area 8.658888 box 6.6740,15.9835-11.1512,22.3983 inner 1
+BAD f1 seed 104 s 38 rings 9 oracle pieces 37 single 37
+SUMMARY fam 1 seed 104 scenes 40 oraclePieces 1022 badScenes 3 problems 34 singleVsUnionDiffScenes 0

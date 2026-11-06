@@ -1,0 +1,253 @@
+base | rect 1000 | TL=200 | P rect 1000 cpu 0.0437 moves 20000 loose 0 hash b2d99a66ad2a930b
+br | rect 1000 | TL=200 | P rect 1000 cpu 0.0669 moves 20000 loose 1470 hash b2d99a66ad2a930b
+br | rect 1000 | TL=200 | P rect 1000 cpu 0.0659 moves 20000 loose 1470 hash b2d99a66ad2a930b
+base | rect 1000 | TL=200 | P rect 1000 cpu 0.0426 moves 20000 loose 0 hash b2d99a66ad2a930b
+base | rect 1000 | TL=200 | P rect 1000 cpu 0.0592 moves 20000 loose 0 hash b2d99a66ad2a930b
+br | rect 1000 | TL=200 | P rect 1000 cpu 0.0658 moves 20000 loose 1470 hash b2d99a66ad2a930b
+br | rect 1000 | TL=200 | P rect 1000 cpu 0.0670 moves 20000 loose 1470 hash b2d99a66ad2a930b
+base | rect 1000 | TL=200 | P rect 1000 cpu 0.0446 moves 20000 loose 0 hash b2d99a66ad2a930b
+base | rect 1000 | TL=200 | P rect 1000 cpu 0.0429 moves 20000 loose 0 hash b2d99a66ad2a930b
+br | rect 1000 | TL=200 | P rect 1000 cpu 0.0858 moves 20000 loose 1470 hash b2d99a66ad2a930b
+br | rect 1000 | TL=200 | P rect 1000 cpu 0.0665 moves 20000 loose 1470 hash b2d99a66ad2a930b
+base | rect 1000 | TL=200 | P rect 1000 cpu 0.0425 moves 20000 loose 0 hash b2d99a66ad2a930b
+base | rect 1000 | TL=200 | P rect 1000 cpu 0.0424 moves 20000 loose 0 hash b2d99a66ad2a930b
+br | rect 1000 | TL=200 | P rect 1000 cpu 0.0836 moves 20000 loose 1470 hash b2d99a66ad2a930b
+br | rect 1000 | TL=200 | P rect 1000 cpu 0.0663 moves 20000 loose 1470 hash b2d99a66ad2a930b
+base | rect 1000 | TL=200 | P rect 1000 cpu 0.0435 moves 20000 loose 0 hash b2d99a66ad2a930b
+base | rect 2000 | TL=200 | P rect 2000 cpu 0.0869 moves 40000 loose 0 hash 32396d92e9245d25
+br | rect 2000 | TL=200 | P rect 2000 cpu 0.1351 moves 40000 loose 3006 hash 32396d92e9245d25
+br | rect 2000 | TL=200 | P rect 2000 cpu 0.1329 moves 40000 loose 3006 hash 32396d92e9245d25
+base | rect 2000 | TL=200 | P rect 2000 cpu 0.0865 moves 40000 loose 0 hash 32396d92e9245d25
+base | rect 2000 | TL=200 | P rect 2000 cpu 0.0871 moves 40000 loose 0 hash 32396d92e9245d25
+br | rect 2000 | TL=200 | P rect 2000 cpu 0.1344 moves 40000 loose 3006 hash 32396d92e9245d25
+br | rect 2000 | TL=200 | P rect 2000 cpu 0.1349 moves 40000 loose 3006 hash 32396d92e9245d25
+base | rect 2000 | TL=200 | P rect 2000 cpu 0.0878 moves 40000 loose 0 hash 32396d92e9245d25
+base | rect 2000 | TL=200 | P rect 2000 cpu 0.0972 moves 40000 loose 0 hash 32396d92e9245d25
+br | rect 2000 | TL=200 | P rect 2000 cpu 0.1392 moves 40000 loose 3006 hash 32396d92e9245d25
+br | rect 2000 | TL=200 | P rect 2000 cpu 0.1367 moves 40000 loose 3006 hash 32396d92e9245d25
+base | rect 2000 | TL=200 | P rect 2000 cpu 0.1027 moves 40000 loose 0 hash 32396d92e9245d25
+base | rect 2000 | TL=200 | P rect 2000 cpu 0.0943 moves 40000 loose 0 hash 32396d92e9245d25
+br | rect 2000 | TL=200 | P rect 2000 cpu 0.1424 moves 40000 loose 3006 hash 32396d92e9245d25
+br | rect 2000 | TL=200 | P rect 2000 cpu 0.1441 moves 40000 loose 3006 hash 32396d92e9245d25
+base | rect 2000 | TL=200 | P rect 2000 cpu 0.0894 moves 40000 loose 0 hash 32396d92e9245d25
+base | rect 4000 | TL=200 | P rect 4000 cpu 0.2137 moves 80000 loose 0 hash 6c0a4c5f1f12188d
+br | rect 4000 | TL=200 | P rect 4000 cpu 0.3044 moves 80000 loose 6089 hash 6c0a4c5f1f12188d
+br | rect 4000 | TL=200 | P rect 4000 cpu 0.3220 moves 80000 loose 6089 hash 6c0a4c5f1f12188d
+base | rect 4000 | TL=200 | P rect 4000 cpu 0.1971 moves 80000 loose 0 hash 6c0a4c5f1f12188d
+base | rect 4000 | TL=200 | P rect 4000 cpu 0.1963 moves 80000 loose 0 hash 6c0a4c5f1f12188d
+br | rect 4000 | TL=200 | P rect 4000 cpu 0.3103 moves 80000 loose 6089 hash 6c0a4c5f1f12188d
+br | rect 4000 | TL=200 | P rect 4000 cpu 0.3314 moves 80000 loose 6089 hash 6c0a4c5f1f12188d
+base | rect 4000 | TL=200 | P rect 4000 cpu 0.2059 moves 80000 loose 0 hash 6c0a4c5f1f12188d
+base | rect 4000 | TL=200 | P rect 4000 cpu 0.1996 moves 80000 loose 0 hash 6c0a4c5f1f12188d
+br | rect 4000 | TL=200 | P rect 4000 cpu 0.3391 moves 80000 loose 6089 hash 6c0a4c5f1f12188d
+br | rect 4000 | TL=200 | P rect 4000 cpu 0.3350 moves 80000 loose 6089 hash 6c0a4c5f1f12188d
+base | rect 4000 | TL=200 | P rect 4000 cpu 0.2276 moves 80000 loose 0 hash 6c0a4c5f1f12188d
+base | rect 4000 | TL=200 | P rect 4000 cpu 0.2104 moves 80000 loose 0 hash 6c0a4c5f1f12188d
+br | rect 4000 | TL=200 | P rect 4000 cpu 0.2955 moves 80000 loose 6089 hash 6c0a4c5f1f12188d
+br | rect 4000 | TL=200 | P rect 4000 cpu 0.3385 moves 80000 loose 6089 hash 6c0a4c5f1f12188d
+base | rect 4000 | TL=200 | P rect 4000 cpu 0.2123 moves 80000 loose 0 hash 6c0a4c5f1f12188d
+base | rect 8000 | TL=200 | P rect 8000 cpu 0.4202 moves 160000 loose 0 hash cb4fbf8890d326bb
+br | rect 8000 | TL=200 | P rect 8000 cpu 0.6158 moves 160000 loose 12196 hash cb4fbf8890d326bb
+br | rect 8000 | TL=200 | P rect 8000 cpu 0.6964 moves 160000 loose 12196 hash cb4fbf8890d326bb
+base | rect 8000 | TL=200 | P rect 8000 cpu 0.4623 moves 160000 loose 0 hash cb4fbf8890d326bb
+base | rect 8000 | TL=200 | P rect 8000 cpu 0.4316 moves 160000 loose 0 hash cb4fbf8890d326bb
+br | rect 8000 | TL=200 | P rect 8000 cpu 0.7319 moves 160000 loose 12196 hash cb4fbf8890d326bb
+br | rect 8000 | TL=200 | P rect 8000 cpu 0.6819 moves 160000 loose 12196 hash cb4fbf8890d326bb
+base | rect 8000 | TL=200 | P rect 8000 cpu 0.4780 moves 160000 loose 0 hash cb4fbf8890d326bb
+base | rect 8000 | TL=200 | P rect 8000 cpu 0.4301 moves 160000 loose 0 hash cb4fbf8890d326bb
+br | rect 8000 | TL=200 | P rect 8000 cpu 0.6680 moves 160000 loose 12196 hash cb4fbf8890d326bb
+br | rect 8000 | TL=200 | P rect 8000 cpu 0.7022 moves 160000 loose 12196 hash cb4fbf8890d326bb
+base | rect 8000 | TL=200 | P rect 8000 cpu 0.4128 moves 160000 loose 0 hash cb4fbf8890d326bb
+base | arc 1000 | TL=200 | P arc 1000 cpu 0.2603 moves 15094 loose 0 hash 22c4f4c11c8b492c
+br | arc 1000 | TL=200 | P arc 1000 cpu 0.2911 moves 15094 loose 1189 hash 22c4f4c11c8b492c
+br | arc 1000 | TL=200 | P arc 1000 cpu 0.2769 moves 15094 loose 1189 hash 22c4f4c11c8b492c
+base | arc 1000 | TL=200 | P arc 1000 cpu 0.2578 moves 15094 loose 0 hash 22c4f4c11c8b492c
+base | arc 1000 | TL=200 | P arc 1000 cpu 0.2154 moves 15094 loose 0 hash 22c4f4c11c8b492c
+br | arc 1000 | TL=200 | P arc 1000 cpu 0.3289 moves 15094 loose 1189 hash 22c4f4c11c8b492c
+br | arc 1000 | TL=200 | P arc 1000 cpu 0.2940 moves 15094 loose 1189 hash 22c4f4c11c8b492c
+base | arc 1000 | TL=200 | P arc 1000 cpu 0.2293 moves 15094 loose 0 hash 22c4f4c11c8b492c
+base | arc 1000 | TL=200 | P arc 1000 cpu 0.2325 moves 15094 loose 0 hash 22c4f4c11c8b492c
+br | arc 1000 | TL=200 | P arc 1000 cpu 0.3170 moves 15094 loose 1189 hash 22c4f4c11c8b492c
+br | arc 1000 | TL=200 | P arc 1000 cpu 0.3005 moves 15094 loose 1189 hash 22c4f4c11c8b492c
+base | arc 1000 | TL=200 | P arc 1000 cpu 0.2550 moves 15094 loose 0 hash 22c4f4c11c8b492c
+base | arc 1000 | TL=200 | P arc 1000 cpu 0.2428 moves 15094 loose 0 hash 22c4f4c11c8b492c
+br | arc 1000 | TL=200 | P arc 1000 cpu 0.2748 moves 15094 loose 1189 hash 22c4f4c11c8b492c
+br | arc 1000 | TL=200 | P arc 1000 cpu 0.2804 moves 15094 loose 1189 hash 22c4f4c11c8b492c
+base | arc 1000 | TL=200 | P arc 1000 cpu 0.2246 moves 15094 loose 0 hash 22c4f4c11c8b492c
+base | arc 2000 | TL=200 | P arc 2000 cpu 0.3075 moves 27514 loose 0 hash 1c40582f248d71a4
+br | arc 2000 | TL=200 | P arc 2000 cpu 0.4286 moves 27514 loose 2363 hash 1c40582f248d71a4
+br | arc 2000 | TL=200 | P arc 2000 cpu 0.4265 moves 27514 loose 2363 hash 1c40582f248d71a4
+base | arc 2000 | TL=200 | P arc 2000 cpu 0.3273 moves 27514 loose 0 hash 1c40582f248d71a4
+base | arc 2000 | TL=200 | P arc 2000 cpu 0.3090 moves 27514 loose 0 hash 1c40582f248d71a4
+br | arc 2000 | TL=200 | P arc 2000 cpu 0.4360 moves 27514 loose 2363 hash 1c40582f248d71a4
+br | arc 2000 | TL=200 | P arc 2000 cpu 0.4205 moves 27514 loose 2363 hash 1c40582f248d71a4
+base | arc 2000 | TL=200 | P arc 2000 cpu 0.3213 moves 27514 loose 0 hash 1c40582f248d71a4
+base | arc 2000 | TL=200 | P arc 2000 cpu 0.3020 moves 27514 loose 0 hash 1c40582f248d71a4
+br | arc 2000 | TL=200 | P arc 2000 cpu 0.4498 moves 27514 loose 2363 hash 1c40582f248d71a4
+br | arc 2000 | TL=200 | P arc 2000 cpu 0.4137 moves 27514 loose 2363 hash 1c40582f248d71a4
+base | arc 2000 | TL=200 | P arc 2000 cpu 0.3137 moves 27514 loose 0 hash 1c40582f248d71a4
+base | arc 2000 | TL=200 | P arc 2000 cpu 0.3095 moves 27514 loose 0 hash 1c40582f248d71a4
+br | arc 2000 | TL=200 | P arc 2000 cpu 0.4298 moves 27514 loose 2363 hash 1c40582f248d71a4
+br | arc 2000 | TL=200 | P arc 2000 cpu 0.4217 moves 27514 loose 2363 hash 1c40582f248d71a4
+base | arc 2000 | TL=200 | P arc 2000 cpu 0.2913 moves 27514 loose 0 hash 1c40582f248d71a4
+base | arc 4000 | TL=200 | P arc 4000 cpu 0.7495 moves 57426 loose 0 hash 91e6725005577520
+br | arc 4000 | TL=200 | P arc 4000 cpu 1.0055 moves 57426 loose 4747 hash 91e6725005577520
+br | arc 4000 | TL=200 | P arc 4000 cpu 0.9759 moves 57426 loose 4747 hash 91e6725005577520
+base | arc 4000 | TL=200 | P arc 4000 cpu 0.7188 moves 57426 loose 0 hash 91e6725005577520
+base | arc 4000 | TL=200 | P arc 4000 cpu 0.7245 moves 57426 loose 0 hash 91e6725005577520
+br | arc 4000 | TL=200 | P arc 4000 cpu 1.0532 moves 57426 loose 4747 hash 91e6725005577520
+br | arc 4000 | TL=200 | P arc 4000 cpu 1.0119 moves 57426 loose 4747 hash 91e6725005577520
+base | arc 4000 | TL=200 | P arc 4000 cpu 0.7097 moves 57426 loose 0 hash 91e6725005577520
+base | arc 4000 | TL=200 | P arc 4000 cpu 0.7485 moves 57426 loose 0 hash 91e6725005577520
+br | arc 4000 | TL=200 | P arc 4000 cpu 0.9560 moves 57426 loose 4747 hash 91e6725005577520
+br | arc 4000 | TL=200 | P arc 4000 cpu 0.9622 moves 57426 loose 4747 hash 91e6725005577520
+base | arc 4000 | TL=200 | P arc 4000 cpu 0.7411 moves 57426 loose 0 hash 91e6725005577520
+base | row 2000 | TL=200 | P row 2000 cpu 0.2782 moves 40000 loose 0 hash 26900b28b6168c75
+br | row 2000 | TL=200 | P row 2000 cpu 0.3402 moves 40000 loose 2000 hash 26900b28b6168c75
+br | row 2000 | TL=200 | P row 2000 cpu 0.3110 moves 40000 loose 2000 hash 26900b28b6168c75
+base | row 2000 | TL=200 | P row 2000 cpu 0.2912 moves 40000 loose 0 hash 26900b28b6168c75
+base | row 2000 | TL=200 | P row 2000 cpu 0.2905 moves 40000 loose 0 hash 26900b28b6168c75
+br | row 2000 | TL=200 | P row 2000 cpu 0.3799 moves 40000 loose 2000 hash 26900b28b6168c75
+br | row 2000 | TL=200 | P row 2000 cpu 0.3321 moves 40000 loose 2000 hash 26900b28b6168c75
+base | row 2000 | TL=200 | P row 2000 cpu 0.2897 moves 40000 loose 0 hash 26900b28b6168c75
+base | row 2000 | TL=200 | P row 2000 cpu 0.2993 moves 40000 loose 0 hash 26900b28b6168c75
+br | row 2000 | TL=200 | P row 2000 cpu 0.3243 moves 40000 loose 2000 hash 26900b28b6168c75
+br | row 2000 | TL=200 | P row 2000 cpu 0.3316 moves 40000 loose 2000 hash 26900b28b6168c75
+base | row 2000 | TL=200 | P row 2000 cpu 0.2975 moves 40000 loose 0 hash 26900b28b6168c75
+base | row 2000 | TL=200 | P row 2000 cpu 0.2951 moves 40000 loose 0 hash 26900b28b6168c75
+br | row 2000 | TL=200 | P row 2000 cpu 0.2943 moves 40000 loose 2000 hash 26900b28b6168c75
+br | row 2000 | TL=200 | P row 2000 cpu 0.3340 moves 40000 loose 2000 hash 26900b28b6168c75
+base | row 2000 | TL=200 | P row 2000 cpu 0.2874 moves 40000 loose 0 hash 26900b28b6168c75
+base | row 4000 | TL=200 | P row 4000 cpu 0.8231 moves 80000 loose 0 hash be161bfcb71f7e15
+br | row 4000 | TL=200 | P row 4000 cpu 0.8482 moves 80000 loose 4000 hash be161bfcb71f7e15
+br | row 4000 | TL=200 | P row 4000 cpu 0.8702 moves 80000 loose 4000 hash be161bfcb71f7e15
+base | row 4000 | TL=200 | P row 4000 cpu 0.7584 moves 80000 loose 0 hash be161bfcb71f7e15
+base | row 4000 | TL=200 | P row 4000 cpu 0.7523 moves 80000 loose 0 hash be161bfcb71f7e15
+br | row 4000 | TL=200 | P row 4000 cpu 0.8366 moves 80000 loose 4000 hash be161bfcb71f7e15
+br | row 4000 | TL=200 | P row 4000 cpu 0.7645 moves 80000 loose 4000 hash be161bfcb71f7e15
+base | row 4000 | TL=200 | P row 4000 cpu 0.7517 moves 80000 loose 0 hash be161bfcb71f7e15
+base | row 4000 | TL=200 | P row 4000 cpu 0.7126 moves 80000 loose 0 hash be161bfcb71f7e15
+br | row 4000 | TL=200 | P row 4000 cpu 0.8488 moves 80000 loose 4000 hash be161bfcb71f7e15
+br | row 4000 | TL=200 | P row 4000 cpu 0.7983 moves 80000 loose 4000 hash be161bfcb71f7e15
+base | row 4000 | TL=200 | P row 4000 cpu 0.7503 moves 80000 loose 0 hash be161bfcb71f7e15
+base | row 4000 | TL=200 | P row 4000 cpu 0.7121 moves 80000 loose 0 hash be161bfcb71f7e15
+br | row 4000 | TL=200 | P row 4000 cpu 0.7550 moves 80000 loose 4000 hash be161bfcb71f7e15
+br | row 4000 | TL=200 | P row 4000 cpu 0.9013 moves 80000 loose 4000 hash be161bfcb71f7e15
+base | row 4000 | TL=200 | P row 4000 cpu 0.7491 moves 80000 loose 0 hash be161bfcb71f7e15
+base | row 8000 | TL=200 | P row 8000 cpu 1.8701 moves 160000 loose 0 hash a5fdf8c8f7a50c6f
+br | row 8000 | TL=200 | P row 8000 cpu 2.1328 moves 160000 loose 8000 hash a5fdf8c8f7a50c6f
+br | row 8000 | TL=200 | P row 8000 cpu 2.1957 moves 160000 loose 8000 hash a5fdf8c8f7a50c6f
+base | row 8000 | TL=200 | P row 8000 cpu 2.0157 moves 160000 loose 0 hash a5fdf8c8f7a50c6f
+base | row 8000 | TL=200 | P row 8000 cpu 2.1075 moves 160000 loose 0 hash a5fdf8c8f7a50c6f
+br | row 8000 | TL=200 | P row 8000 cpu 2.2937 moves 160000 loose 8000 hash a5fdf8c8f7a50c6f
+br | row 8000 | TL=200 | P row 8000 cpu 2.1707 moves 160000 loose 8000 hash a5fdf8c8f7a50c6f
+base | row 8000 | TL=200 | P row 8000 cpu 1.8472 moves 160000 loose 0 hash a5fdf8c8f7a50c6f
+base | row 8000 | TL=200 | P row 8000 cpu 1.8976 moves 160000 loose 0 hash a5fdf8c8f7a50c6f
+br | row 8000 | TL=200 | P row 8000 cpu 2.0979 moves 160000 loose 8000 hash a5fdf8c8f7a50c6f
+br | row 8000 | TL=200 | P row 8000 cpu 2.0376 moves 160000 loose 8000 hash a5fdf8c8f7a50c6f
+base | row 8000 | TL=200 | P row 8000 cpu 1.8989 moves 160000 loose 0 hash a5fdf8c8f7a50c6f
+base | row 16000 | TL=200 | P row 16000 cpu 5.0981 moves 320000 loose 0 hash 7895ae617dd78a25
+br | row 16000 | TL=200 | P row 16000 cpu 5.5044 moves 320000 loose 16000 hash 7895ae617dd78a25
+br | row 16000 | TL=200 | P row 16000 cpu 6.9296 moves 320000 loose 16000 hash 7895ae617dd78a25
+base | row 16000 | TL=200 | P row 16000 cpu 7.6190 moves 320000 loose 0 hash 7895ae617dd78a25
+base | row 16000 | TL=200 | P row 16000 cpu 6.7532 moves 320000 loose 0 hash 7895ae617dd78a25
+br | row 16000 | TL=200 | P row 16000 cpu 6.1278 moves 320000 loose 16000 hash 7895ae617dd78a25
+br | row 16000 | TL=200 | P row 16000 cpu 5.8954 moves 320000 loose 16000 hash 7895ae617dd78a25
+base | row 16000 | TL=200 | P row 16000 cpu 5.3979 moves 320000 loose 0 hash 7895ae617dd78a25
+base | mix 1000 | TL=200 | P mix 1000 cpu 1.0320 moves 39004 loose 0 hash 14194e76541cb091
+br | mix 1000 | TL=200 | P mix 1000 cpu 1.1497 moves 39004 loose 1553 hash 14194e76541cb091
+br | mix 1000 | TL=200 | P mix 1000 cpu 1.0288 moves 39004 loose 1553 hash 14194e76541cb091
+base | mix 1000 | TL=200 | P mix 1000 cpu 0.9910 moves 39004 loose 0 hash 14194e76541cb091
+base | mix 1000 | TL=200 | P mix 1000 cpu 1.0260 moves 39004 loose 0 hash 14194e76541cb091
+br | mix 1000 | TL=200 | P mix 1000 cpu 1.0934 moves 39004 loose 1553 hash 14194e76541cb091
+br | mix 1000 | TL=200 | P mix 1000 cpu 1.1468 moves 39004 loose 1553 hash 14194e76541cb091
+base | mix 1000 | TL=200 | P mix 1000 cpu 1.1085 moves 39004 loose 0 hash 14194e76541cb091
+base | mix 1000 | TL=200 | P mix 1000 cpu 1.0416 moves 39004 loose 0 hash 14194e76541cb091
+br | mix 1000 | TL=200 | P mix 1000 cpu 1.1193 moves 39004 loose 1553 hash 14194e76541cb091
+br | mix 1000 | TL=200 | P mix 1000 cpu 1.0911 moves 39004 loose 1553 hash 14194e76541cb091
+base | mix 1000 | TL=200 | P mix 1000 cpu 1.0254 moves 39004 loose 0 hash 14194e76541cb091
+base | mix 2000 | TL=200 | P mix 2000 cpu 2.5408 moves 84386 loose 0 hash 011ea85d7dba3850
+br | mix 2000 | TL=200 | P mix 2000 cpu 2.6133 moves 84386 loose 3147 hash 011ea85d7dba3850
+br | mix 2000 | TL=200 | P mix 2000 cpu 2.5076 moves 84386 loose 3147 hash 011ea85d7dba3850
+base | mix 2000 | TL=200 | P mix 2000 cpu 2.3485 moves 84386 loose 0 hash 011ea85d7dba3850
+base | mix 2000 | TL=200 | P mix 2000 cpu 2.4732 moves 84386 loose 0 hash 011ea85d7dba3850
+br | mix 2000 | TL=200 | P mix 2000 cpu 2.4774 moves 84386 loose 3147 hash 011ea85d7dba3850
+br | mix 2000 | TL=200 | P mix 2000 cpu 2.5419 moves 84386 loose 3147 hash 011ea85d7dba3850
+base | mix 2000 | TL=200 | P mix 2000 cpu 2.3379 moves 84386 loose 0 hash 011ea85d7dba3850
+base | mix 2000 | TL=200 | P mix 2000 cpu 2.3486 moves 84386 loose 0 hash 011ea85d7dba3850
+br | mix 2000 | TL=200 | P mix 2000 cpu 2.4762 moves 84386 loose 3147 hash 011ea85d7dba3850
+br | mix 2000 | TL=200 | P mix 2000 cpu 2.6226 moves 84386 loose 3147 hash 011ea85d7dba3850
+base | mix 2000 | TL=200 | P mix 2000 cpu 2.4834 moves 84386 loose 0 hash 011ea85d7dba3850
+base | flower1 2000 | TL=200 | P flower1 2000 cpu 0.0571 moves 4058 loose 0 hash c1af836fc04386d3
+br | flower1 2000 | TL=200 | P flower1 2000 cpu 0.0750 moves 4058 loose 0 hash c1af836fc04386d3
+br | flower1 2000 | TL=200 | P flower1 2000 cpu 0.0664 moves 4058 loose 0 hash c1af836fc04386d3
+base | flower1 2000 | TL=200 | P flower1 2000 cpu 0.0729 moves 4058 loose 0 hash c1af836fc04386d3
+base | flower1 2000 | TL=200 | P flower1 2000 cpu 0.0646 moves 4058 loose 0 hash c1af836fc04386d3
+br | flower1 2000 | TL=200 | P flower1 2000 cpu 0.1023 moves 4058 loose 0 hash c1af836fc04386d3
+br | flower1 2000 | TL=200 | P flower1 2000 cpu 0.0959 moves 4058 loose 0 hash c1af836fc04386d3
+base | flower1 2000 | TL=200 | P flower1 2000 cpu 0.0544 moves 4058 loose 0 hash c1af836fc04386d3
+base | flower1 2000 | TL=200 | P flower1 2000 cpu 0.0706 moves 4058 loose 0 hash c1af836fc04386d3
+br | flower1 2000 | TL=200 | P flower1 2000 cpu 0.0693 moves 4058 loose 0 hash c1af836fc04386d3
+br | flower1 2000 | TL=200 | P flower1 2000 cpu 0.0758 moves 4058 loose 0 hash c1af836fc04386d3
+base | flower1 2000 | TL=200 | P flower1 2000 cpu 0.0656 moves 4058 loose 0 hash c1af836fc04386d3
+base | flower1 2000 | TL=200 | P flower1 2000 cpu 0.0662 moves 4058 loose 0 hash c1af836fc04386d3
+br | flower1 2000 | TL=200 | P flower1 2000 cpu 0.0823 moves 4058 loose 0 hash c1af836fc04386d3
+br | flower1 2000 | TL=200 | P flower1 2000 cpu 0.0887 moves 4058 loose 0 hash c1af836fc04386d3
+base | flower1 2000 | TL=200 | P flower1 2000 cpu 0.0748 moves 4058 loose 0 hash c1af836fc04386d3
+base | flower1 4000 | TL=200 | P flower1 4000 cpu 0.1249 moves 8126 loose 0 hash 9423cc52aa482892
+br | flower1 4000 | TL=200 | P flower1 4000 cpu 0.1502 moves 8126 loose 0 hash 9423cc52aa482892
+br | flower1 4000 | TL=200 | P flower1 4000 cpu 0.1347 moves 8126 loose 0 hash 9423cc52aa482892
+base | flower1 4000 | TL=200 | P flower1 4000 cpu 0.1153 moves 8126 loose 0 hash 9423cc52aa482892
+base | flower1 4000 | TL=200 | P flower1 4000 cpu 0.1125 moves 8126 loose 0 hash 9423cc52aa482892
+br | flower1 4000 | TL=200 | P flower1 4000 cpu 0.1510 moves 8126 loose 0 hash 9423cc52aa482892
+br | flower1 4000 | TL=200 | P flower1 4000 cpu 0.1516 moves 8126 loose 0 hash 9423cc52aa482892
+base | flower1 4000 | TL=200 | P flower1 4000 cpu 0.1245 moves 8126 loose 0 hash 9423cc52aa482892
+base | flower1 4000 | TL=200 | P flower1 4000 cpu 0.1355 moves 8126 loose 0 hash 9423cc52aa482892
+br | flower1 4000 | TL=200 | P flower1 4000 cpu 0.1487 moves 8126 loose 0 hash 9423cc52aa482892
+br | flower1 4000 | TL=200 | P flower1 4000 cpu 0.1551 moves 8126 loose 0 hash 9423cc52aa482892
+base | flower1 4000 | TL=200 | P flower1 4000 cpu 0.1191 moves 8126 loose 0 hash 9423cc52aa482892
+base | flower1 4000 | TL=200 | P flower1 4000 cpu 0.1323 moves 8126 loose 0 hash 9423cc52aa482892
+br | flower1 4000 | TL=200 | P flower1 4000 cpu 0.1594 moves 8126 loose 0 hash 9423cc52aa482892
+br | flower1 4000 | TL=200 | P flower1 4000 cpu 0.1605 moves 8126 loose 0 hash 9423cc52aa482892
+base | flower1 4000 | TL=200 | P flower1 4000 cpu 0.1185 moves 8126 loose 0 hash 9423cc52aa482892
+base | flower1 8000 | TL=200 | P flower1 8000 cpu 0.2450 moves 16208 loose 0 hash 41b8449fcd6eed76
+br | flower1 8000 | TL=200 | P flower1 8000 cpu 0.3094 moves 16208 loose 0 hash 41b8449fcd6eed76
+br | flower1 8000 | TL=200 | P flower1 8000 cpu 0.2999 moves 16208 loose 0 hash 41b8449fcd6eed76
+base | flower1 8000 | TL=200 | P flower1 8000 cpu 0.2143 moves 16208 loose 0 hash 41b8449fcd6eed76
+base | flower1 8000 | TL=200 | P flower1 8000 cpu 0.2109 moves 16208 loose 0 hash 41b8449fcd6eed76
+br | flower1 8000 | TL=200 | P flower1 8000 cpu 0.2613 moves 16208 loose 0 hash 41b8449fcd6eed76
+br | flower1 8000 | TL=200 | P flower1 8000 cpu 0.2936 moves 16208 loose 0 hash 41b8449fcd6eed76
+base | flower1 8000 | TL=200 | P flower1 8000 cpu 0.2415 moves 16208 loose 0 hash 41b8449fcd6eed76
+base | flower1 8000 | TL=200 | P flower1 8000 cpu 0.1959 moves 16208 loose 0 hash 41b8449fcd6eed76
+br | flower1 8000 | TL=200 | P flower1 8000 cpu 0.2782 moves 16208 loose 0 hash 41b8449fcd6eed76
+br | flower1 8000 | TL=200 | P flower1 8000 cpu 0.3154 moves 16208 loose 0 hash 41b8449fcd6eed76
+base | flower1 8000 | TL=200 | P flower1 8000 cpu 0.2326 moves 16208 loose 0 hash 41b8449fcd6eed76
+base | rect 2000 | TL=200 GAP=3 | P rect 2000 cpu 0.1745 moves 40000 loose 0 hash ff0fe63cac86b4e1
+br | rect 2000 | TL=200 GAP=3 | P rect 2000 cpu 0.2188 moves 40000 loose 2000 hash ff0fe63cac86b4e1
+br | rect 2000 | TL=200 GAP=3 | P rect 2000 cpu 0.2395 moves 40000 loose 2000 hash ff0fe63cac86b4e1
+base | rect 2000 | TL=200 GAP=3 | P rect 2000 cpu 0.1750 moves 40000 loose 0 hash ff0fe63cac86b4e1
+base | rect 2000 | TL=200 GAP=3 | P rect 2000 cpu 0.1784 moves 40000 loose 0 hash ff0fe63cac86b4e1
+br | rect 2000 | TL=200 GAP=3 | P rect 2000 cpu 0.2130 moves 40000 loose 2000 hash ff0fe63cac86b4e1
+br | rect 2000 | TL=200 GAP=3 | P rect 2000 cpu 0.2395 moves 40000 loose 2000 hash ff0fe63cac86b4e1
+base | rect 2000 | TL=200 GAP=3 | P rect 2000 cpu 0.1479 moves 40000 loose 0 hash ff0fe63cac86b4e1
+base | rect 2000 | TL=200 GAP=3 | P rect 2000 cpu 0.1861 moves 40000 loose 0 hash ff0fe63cac86b4e1
+br | rect 2000 | TL=200 GAP=3 | P rect 2000 cpu 0.2146 moves 40000 loose 2000 hash ff0fe63cac86b4e1
+br | rect 2000 | TL=200 GAP=3 | P rect 2000 cpu 0.2368 moves 40000 loose 2000 hash ff0fe63cac86b4e1
+base | rect 2000 | TL=200 GAP=3 | P rect 2000 cpu 0.1543 moves 40000 loose 0 hash ff0fe63cac86b4e1
+base | rect 2000 | TL=200 GAP=3 | P rect 2000 cpu 0.1552 moves 40000 loose 0 hash ff0fe63cac86b4e1
+br | rect 2000 | TL=200 GAP=3 | P rect 2000 cpu 0.2117 moves 40000 loose 2000 hash ff0fe63cac86b4e1
+br | rect 2000 | TL=200 GAP=3 | P rect 2000 cpu 0.2195 moves 40000 loose 2000 hash ff0fe63cac86b4e1
+base | rect 2000 | TL=200 GAP=3 | P rect 2000 cpu 0.1695 moves 40000 loose 0 hash ff0fe63cac86b4e1
+base | rect 8000 | TL=200 GAP=3 | P rect 8000 cpu 0.7637 moves 160000 loose 0 hash 2a05716958934a35
+br | rect 8000 | TL=200 GAP=3 | P rect 8000 cpu 0.9716 moves 160000 loose 8000 hash 2a05716958934a35
+br | rect 8000 | TL=200 GAP=3 | P rect 8000 cpu 0.9958 moves 160000 loose 8000 hash 2a05716958934a35
+base | rect 8000 | TL=200 GAP=3 | P rect 8000 cpu 0.7233 moves 160000 loose 0 hash 2a05716958934a35
+base | rect 8000 | TL=200 GAP=3 | P rect 8000 cpu 0.7787 moves 160000 loose 0 hash 2a05716958934a35
+br | rect 8000 | TL=200 GAP=3 | P rect 8000 cpu 0.9816 moves 160000 loose 8000 hash 2a05716958934a35
+br | rect 8000 | TL=200 GAP=3 | P rect 8000 cpu 0.9481 moves 160000 loose 8000 hash 2a05716958934a35
+base | rect 8000 | TL=200 GAP=3 | P rect 8000 cpu 0.7066 moves 160000 loose 0 hash 2a05716958934a35
+base | rect 8000 | TL=200 GAP=3 | P rect 8000 cpu 0.7058 moves 160000 loose 0 hash 2a05716958934a35
+br | rect 8000 | TL=200 GAP=3 | P rect 8000 cpu 0.9122 moves 160000 loose 8000 hash 2a05716958934a35
+br | rect 8000 | TL=200 GAP=3 | P rect 8000 cpu 0.9749 moves 160000 loose 8000 hash 2a05716958934a35
+base | rect 8000 | TL=200 GAP=3 | P rect 8000 cpu 0.7814 moves 160000 loose 0 hash 2a05716958934a35
+ALLDONE

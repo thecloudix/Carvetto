@@ -1,0 +1,6 @@
+  f8 s104_39 L4 THICK-vs-single area 0.055287 got 0 single 1
+  f8 s104_39 L5 THICK-vs-single area 0.055287 got 0 single 1
+  f8 s104_39 L6 THICK-vs-single area 0.055287 got 0 single 1
+  f8 s104_39 L8 THICK-vs-single area 0.055287 got 0 single 1
+BAD f8 seed 104 s 39 rings 178 oracle pieces 78 single 78
+SUMMARY fam 8 seed 104 scenes 40 oraclePieces 2476 badScenes 1 problems 4 singleVsUnionDiffScenes 0

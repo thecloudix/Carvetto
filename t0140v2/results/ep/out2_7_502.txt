@@ -1,0 +1,8 @@
+  f7 s502_143 L512 EXTRA-vs-single area 73.188887 box -18.1639,-13.2442-17.8831,22.7837 inner 1
+  f7 s502_143 L512 EXTRA-vs-single area 17.968750 box -16.9497,10.7124-0.0001,22.8028 inner 1
+  f7 s502_143 L512 MISSING-vs-single area 91.157639 box -18.1639,-13.2442-17.8831,22.8028 inner 1
+BAD f7 seed 502 s 143 rings 54 oracle pieces 22 single 22
+  f7 s502_278 L512 EXTRA-vs-single area 19.754286 box -30.4856,-27.4096-0.4565,19.4693 inner 1
+  f7 s502_278 L512 MISSING-vs-single area 19.755064 box -30.4856,-27.4096-0.4565,19.4693 inner 1
+BAD f7 seed 502 s 278 rings 63 oracle pieces 61 single 61
+SUMMARY fam 7 seed 502 scenes 300 oraclePieces 6870 badScenes 2 problems 5 singleVsUnionDiffScenes 0

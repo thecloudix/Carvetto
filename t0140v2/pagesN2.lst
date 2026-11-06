@@ -1,0 +1,13 @@
+rect 1000|GAP=3|10
+rect 2000|GAP=3|10
+rect 4000|GAP=3|8
+rect 8000|GAP=3|6
+rect 2000|GAP=3 TC=1|10
+rect 2000|GAP=3 SIDE=1|8
+rect 2000|GAP=3 A=0.3 SEP=1|6
+rect 2000|GAP=3 V=90 D=6|6
+flower1 2000|TL=200|10
+flower1 8000|TL=200|8
+flower1 2000||6
+flower1 8000|TL=20|6
+gear1 4000||4

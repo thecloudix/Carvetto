@@ -1,0 +1,39 @@
+T-0140 round-2 verifier (task/T-0140-loose-pieces 40ccd46; base = merge base fa856ec, Profile identical to origin/main 4bb7542; merge-tree clean).
+Builds (wt-T0140): build-verify2 Debug -Werror (build rc 0, ctest 1056/1056 rc 0); build-verify2-rel/{br,base,dbg,mut} Release (dbg = br + T40DBG piece
+print, T40GROW extra band grow, T40LEAF leaf size; mut = mutants2.py).
+
+enclosedPieces vs one union (ep.cpp; families 0-11, leaf sizes 4..512 and one leaf; SHIFT 1e5/1e7/1e9 identical to unshifted): 15,300 scenes,
+225k oracle pieces. Same pieces except: (a) necks < 10 nm split (by design), 10-15 nm sometimes (3/30), >= 20 nm always joined; (b) area
+differences up to ~5e-4 mm2 (0.5 um edge shifts near cuts, removeDuplicates(1 um) of crop vertices), not "grid rounding";
+(c) DEFECT contact loss: Clipper2's GetSegmentIntersectPt truncates (non-HI_PRECISION), so where a band edge crosses a leaf side the output
+vertex can be one grid unit off the side; processLeaf only records a contact when both ends are exactly on x0/x1/y0/y1, so the join is lost.
+  f7 seed 502 scene 143 (L512): 91.16 mm2 piece -> 73.19 + 17.97.  f11 (nested C-bands, every region joined to the outside):
+  4 scenes of 2,400 at L512 report held regions as pieces (e.g. MULT=4 ONLY=17 ep_br 11 401 18 512: 6.04 + 2.32 mm2; one union: none);
+  at L16/64 5 of 2,000. Hot spot: cuts near x = 0 (scenes centred on the origin).
+  Product: repro/m4_1600019_46_split_at_x0.scn (Inside, D12, sep 1, NOLEAD): one free 187.8 mm2 slug reported as two loose pieces of 93.9
+  (T40LEAF=1e9: one piece 187.8; flood: one 187.8).
+(d) thickness fallback (union of a piece's parts) uses toClipperPath's removeDuplicates(1 um), which can open a crack along a leaf side
+  (f8 seed 104 scene 39, L4-8: 0.0553 mm2 piece thick by erosion 0.028, judged thin); not seen at L512; untested (mutants E7/E8 survive).
+
+AC1 flood (t40, leads off, 15 um cells): fl4 1600001-20 x50 (mode 4), fl5 1610001-20 x50 (mode 5), fl4b 1600021-30 x50 (mode 4) = 2,500 scenes:
+  772 free, 771 count-matched; mismatches in 3 scenes: 1600019_46 (split, (c)); 1610005_22 (V-bit sharp corners: all match with K 0 0 =
+  T-0156 a); 1610008_47 (V-bit 60 D25, free 0.042 mm2 at 6 um cells, product below 0.04: V-bit area under-estimate). No held piece reported.
+  flL16 (dbg, T40LEAF=16, 180 scenes): only the V-bit class (1620002_29, same at every leaf size).
+  Coder's m5_1510007_13: the 4 "false" 0.10 mm2 reports are flood-free slivers 0.043-0.050 thick (THIN), i.e. loose, not held.
+  Coder's m5_1510007_2 (end mill 3.175, default tol): a thick 0.46 mm2 free piece missed; found with T40GROW=0.002; flood at 3.2 um cells
+  still enclosed -> band chords (up to chordal - 2 um inside the arcs) leave a fake channel. Not documented (ADR claims necks < ~4 um count
+  as loose and an effective threshold ~0.055, but under-coverage also reports free slivers down to ~0.043).
+Moves/diagnostics (hstored.sh 1,769 stored scenes x plain/FORCEIO; hrand.sh seeds 1650001-5 modes 0-5 x50, leads random and off = 3,000):
+  moves identical, non-loose diagnostics identical, On / negative-allowance loose messages identical; only IOpos / IOm0 gain loose
+  messages. (Two br FIO1 entries with no hash were runs killed by timeout while the sweep was paused for perf; re-run fine.)
+Perf (perfrun.sh, Release CPU of profileToolpath, interleaved pairs, alternating order; perf_*.sum):
+  normal (tabs kept, no free pieces): rect 1000/2000/4000/8000 GAP=3 +10/+16/+12/+15 % median (min +4/+9/+10/+10 %), rect 2000 GAP=3 TC=1
+  +13 %, flower1 2000/8000 TL=200 (three 200 mm tabs kept, loose 0) +32/+34 %; within 10 %: arc 2000 GAP=3 TC=1, row 4000 (+/- GAP=3),
+  letters, plate, gear1, rect 2000 A=0.3 SEP=1, rect/arc TL=10 (some tabs kept), rect TC=1 TL=1, rect GAP=3 SIDE=1 / V=90 / A=0.3 SEP=1,
+  flower1 2000 (TL=3), flower1 8000 TL=20.
+  every tab left out: rect 1000-8000 +53..59 %, arc 1000-4000 +21..39 %, row 2000-8000 +9..13 % (16000 +0 %), mix 1000/2000 +5..7 %,
+  rect GAP=3 TL=200 +28..33 %. Growth per doubling of br tracks base everywhere (no super-linear term of its own).
+Mutants (mutants2.py, runmut.sh, "*T-0140*" tests): caught E1 E3 E4 E5 E6 E9 E12 E13 E14 E16 P1 P3 P5 P6 P8 P9; survive E2 (join on
+  touching contacts), E7 (no multi-part thickness fallback), E8 (first part only), E10 (no 4/5 rule; perf only), E11 (minSide 1e-6),
+  E15 (no centre/centroid shortcut), P2 (whole closed cut as an open path with end discs: round-2 slit fix untested), P4 (attribution
+  always nearest), P7 (inner vertex always skipped).

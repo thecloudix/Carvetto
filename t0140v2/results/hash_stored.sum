@@ -1,0 +1,14 @@
+('FIO0', 'IOm0', 'gained loose') 5
+('FIO0', 'IOm0', 'n') 9
+('FIO0', 'IOpos', 'gained loose') 224
+('FIO0', 'IOpos', 'n') 875
+('FIO1', 'IOm0', 'gained loose') 16
+('FIO1', 'IOm0', 'n') 19
+('FIO1', 'IOpos', 'gained loose') 311
+('FIO1', 'IOpos', 'n') 864
+('plain', 'IOm0', 'gained loose') 26
+('plain', 'IOm0', 'n') 28
+('plain', 'IOneg', 'n') 513
+('plain', 'IOpos', 'gained loose') 127
+('plain', 'IOpos', 'n') 247
+('plain', 'On', 'n') 981

@@ -1,0 +1,18 @@
+rect 1000      TL=200                       n=8 base    0.0432 br    0.0667 ratio med 1.539 min 1.111 max 2.000 loose 1470 hash same
+rect 2000      TL=200                       n=8 base    0.0886 br    0.1359 ratio med 1.536 min 1.331 max 1.612 loose 3006 hash same
+rect 4000      TL=200                       n=8 base    0.2082 br    0.3267 ratio med 1.588 min 1.404 max 1.699 loose 6089 hash same
+rect 8000      TL=200                       n=6 base    0.4308 br    0.6891 ratio med 1.530 min 1.427 max 1.701 loose 12196 hash same
+arc 1000       TL=200                       n=8 base    0.2377 br    0.2925 ratio med 1.213 min 1.074 max 1.527 loose 1189 hash same
+arc 2000       TL=200                       n=8 base    0.3093 br    0.4275 ratio med 1.391 min 1.303 max 1.489 loose 2363 hash same
+arc 4000       TL=200                       n=6 base    0.7328 br    0.9907 ratio med 1.350 min 1.277 max 1.454 loose 4747 hash same
+row 2000       TL=200                       n=8 base    0.2908 br    0.3318 ratio med 1.130 min 0.997 max 1.308 loose 2000 hash same
+row 4000       TL=200                       n=8 base    0.7510 br    0.8424 ratio med 1.088 min 1.017 max 1.203 loose 4000 hash same
+row 8000       TL=200                       n=6 base    1.8982 br    2.1517 ratio med 1.097 min 1.073 max 1.175 loose 8000 hash same
+row 16000      TL=200                       n=4 base    6.0755 br    6.0116 ratio med 0.995 min 0.907 max 1.092 loose 16000 hash same
+mix 1000       TL=200                       n=6 base    1.0290 br    1.1063 ratio med 1.065 min 1.035 max 1.114 loose 1553 hash same
+mix 2000       TL=200                       n=6 base    2.4109 br    2.5248 ratio med 1.055 min 1.002 max 1.087 loose 3147 hash same
+flower1 2000   TL=200                       n=8 base    0.0659 br    0.0791 ratio med 1.215 min 0.911 max 1.763 loose 0 hash same
+flower1 4000   TL=200                       n=8 base    0.1218 br    0.1513 ratio med 1.211 min 1.097 max 1.354 loose 0 hash same
+flower1 8000   TL=200                       n=6 base    0.2234 br    0.2968 ratio med 1.309 min 1.216 max 1.420 loose 0 hash same
+rect 2000      TL=200 GAP=3                 n=8 base    0.1720 br    0.2192 ratio med 1.330 min 1.153 max 1.619 loose 2000 hash same
+rect 8000      TL=200 GAP=3                 n=6 base    0.7435 br    0.9732 ratio med 1.282 min 1.248 max 1.377 loose 8000 hash same

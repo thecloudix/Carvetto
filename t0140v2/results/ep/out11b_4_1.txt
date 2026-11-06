@@ -1,0 +1,6 @@
+  f11 s401_17 L512 EXTRA-vs-single area 6.042799 box -2.3085,-6.0067-1.1377,2.0324 inner 1
+  f11 s401_17 L512 EXTRA-vs-single area 2.315210 box -1.2739,-4.7804-1.2781,1.0153 inner 1
+BAD f11 seed 401 s 17 rings 5 oracle pieces 0 single 0
+  f11 s401_68 L512 EXTRA-vs-single area 13.220736 box 0.0004,-8.2337-10.2221,-2.4904 inner 1
+BAD f11 seed 401 s 68 rings 24 oracle pieces 0 single 0
+SUMMARY fam 11 seed 401 scenes 300 oraclePieces 0 badScenes 2 problems 3 singleVsUnionDiffScenes 0

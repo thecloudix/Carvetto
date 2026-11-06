@@ -1,0 +1,3 @@
+  f11 s102_134 L16 EXTRA-vs-single area 23.072543 box -20.9805,3.5246-0.0010,22.0597 inner 1
+BAD f11 seed 102 s 134 rings 19 oracle pieces 0 single 0
+SUMMARY fam 11 seed 102 scenes 250 oraclePieces 12 badScenes 1 problems 1 singleVsUnionDiffScenes 0

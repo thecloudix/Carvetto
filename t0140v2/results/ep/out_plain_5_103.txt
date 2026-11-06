@@ -1,0 +1,42 @@
+  f5 s103_2 L4 EXTRA-vs-single area 4.023409 box 39.4440,27.8271-41.7034,30.1009 inner 1
+  f5 s103_2 L5 EXTRA-vs-single area 4.023409 box 39.4440,27.8271-41.7034,30.1009 inner 1
+  f5 s103_2 L6 EXTRA-vs-single area 4.023409 box 39.4440,27.8271-41.7034,30.1009 inner 1
+  f5 s103_2 L8 EXTRA-vs-single area 4.023409 box 39.4440,27.8271-41.7034,30.1009 inner 1
+  f5 s103_2 L13 EXTRA-vs-single area 4.023409 box 39.4440,27.8271-41.7034,30.1009 inner 1
+  f5 s103_2 L24 EXTRA-vs-single area 4.023409 box 39.4440,27.8271-41.7034,30.1009 inner 1
+BAD f5 seed 103 s 2 rings 29 oracle pieces 3 single 3
+  f5 s103_5 L4 EXTRA-vs-single area 1.803868 box 31.5113,27.2947-32.8544,29.0440 inner 1
+  f5 s103_5 L4 EXTRA-vs-single area 4.472634 box 4.5687,32.5418-6.6835,34.8609 inner 1
+  f5 s103_5 L5 EXTRA-vs-single area 1.803868 box 31.5113,27.2947-32.8544,29.0440 inner 1
+  f5 s103_5 L5 EXTRA-vs-single area 4.472634 box 4.5687,32.5418-6.6835,34.8609 inner 1
+  f5 s103_5 L6 EXTRA-vs-single area 1.803868 box 31.5113,27.2947-32.8544,29.0440 inner 1
+  f5 s103_5 L6 EXTRA-vs-single area 4.472634 box 4.5687,32.5418-6.6835,34.8609 inner 1
+  f5 s103_5 L8 EXTRA-vs-single area 1.803868 box 31.5113,27.2947-32.8544,29.0440 inner 1
+  f5 s103_5 L8 EXTRA-vs-single area 4.472634 box 4.5687,32.5418-6.6835,34.8609 inner 1
+  f5 s103_5 L13 EXTRA-vs-single area 1.803868 box 31.5113,27.2947-32.8544,29.0440 inner 1
+  f5 s103_5 L13 EXTRA-vs-single area 4.472634 box 4.5687,32.5418-6.6835,34.8609 inner 1
+  f5 s103_5 L24 EXTRA-vs-single area 1.803868 box 31.5113,27.2947-32.8544,29.0440 inner 1
+  f5 s103_5 L24 EXTRA-vs-single area 4.472634 box 4.5687,32.5418-6.6835,34.8609 inner 1
+BAD f5 seed 103 s 5 rings 39 oracle pieces 0 single 0
+  f5 s103_10 L4 EXTRA-vs-single area 46.536447 box 7.1470,12.2759-14.6875,20.3118 inner 1
+  f5 s103_10 L5 EXTRA-vs-single area 46.536447 box 7.1470,12.2759-14.6875,20.3118 inner 1
+  f5 s103_10 L6 EXTRA-vs-single area 46.536447 box 7.1470,12.2759-14.6875,20.3118 inner 1
+  f5 s103_10 L8 EXTRA-vs-single area 46.536447 box 7.1470,12.2759-14.6875,20.3118 inner 1
+  f5 s103_10 L13 EXTRA-vs-single area 46.536447 box 7.1470,12.2759-14.6875,20.3118 inner 1
+  f5 s103_10 L24 EXTRA-vs-single area 46.536447 box 7.1470,12.2759-14.6875,20.3118 inner 1
+  f5 s103_10 L64 EXTRA-vs-single area 46.536447 box 7.1470,12.2759-14.6875,20.3118 inner 1
+BAD f5 seed 103 s 10 rings 16 oracle pieces 0 single 0
+  f5 s103_21 L4 EXTRA-vs-single area 3.265838 box 17.6079,31.6347-19.4150,33.8058 inner 1
+  f5 s103_21 L5 EXTRA-vs-single area 3.265838 box 17.6079,31.6347-19.4150,33.8058 inner 1
+  f5 s103_21 L6 EXTRA-vs-single area 3.265838 box 17.6079,31.6347-19.4150,33.8058 inner 1
+  f5 s103_21 L8 EXTRA-vs-single area 3.265838 box 17.6079,31.6347-19.4150,33.8058 inner 1
+  f5 s103_21 L13 EXTRA-vs-single area 3.265838 box 17.6079,31.6347-19.4150,33.8058 inner 1
+  f5 s103_21 L24 EXTRA-vs-single area 3.265838 box 17.6079,31.6347-19.4150,33.8058 inner 1
+BAD f5 seed 103 s 21 rings 17 oracle pieces 0 single 0
+  f5 s103_32 L4 EXTRA-vs-single area 67.942203 box 8.6559,10.4491-16.8986,18.9899 inner 1
+  f5 s103_32 L5 EXTRA-vs-single area 67.942203 box 8.6559,10.4491-16.8986,18.9899 inner 1
+  f5 s103_32 L6 EXTRA-vs-single area 67.942203 box 8.6559,10.4491-16.8986,18.9899 inner 1
+  f5 s103_32 L8 EXTRA-vs-single area 67.942203 box 8.6559,10.4491-16.8986,18.9899 inner 1
+  f5 s103_32 L13 EXTRA-vs-single area 67.942203 box 8.6559,10.4491-16.8986,18.9899 inner 1
+BAD f5 seed 103 s 32 rings 22 oracle pieces 0 single 0
+SUMMARY fam 5 seed 103 scenes 40 oraclePieces 9 badScenes 5 problems 36 singleVsUnionDiffScenes 0

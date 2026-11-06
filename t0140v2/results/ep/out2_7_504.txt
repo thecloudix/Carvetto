@@ -1,0 +1,4 @@
+  f7 s504_265 L512 EXTRA-vs-single area 9.263873 box -9.5687,-12.7555-12.4407,9.2761 inner 1
+  f7 s504_265 L512 MISSING-vs-single area 9.264198 box -9.5687,-12.7555-12.4407,9.2761 inner 1
+BAD f7 seed 504 s 265 rings 48 oracle pieces 44 single 44
+SUMMARY fam 7 seed 504 scenes 300 oraclePieces 6476 badScenes 1 problems 2 singleVsUnionDiffScenes 0

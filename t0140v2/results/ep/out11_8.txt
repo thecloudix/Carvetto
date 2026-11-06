@@ -1,0 +1,1 @@
+SUMMARY fam 11 seed 108 scenes 250 oraclePieces 68 badScenes 0 problems 0 singleVsUnionDiffScenes 0

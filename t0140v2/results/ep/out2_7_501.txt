@@ -1,0 +1,3 @@
+  f7 s501_67 single EXTRA piece area 0.069701 box -1.8995,-3.9282-1.3190,-0.7096 inner 0
+  f7 s501_67 single MISSING piece area 8.135873 box -1.8995,-3.9282-1.3190,-0.7096 thick 1
+SUMMARY fam 7 seed 501 scenes 300 oraclePieces 6991 badScenes 0 problems 0 singleVsUnionDiffScenes 1

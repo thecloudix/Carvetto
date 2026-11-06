@@ -1,0 +1,51 @@
+S 1610001 0 m5 side 0 D 6 V 0 a 1.4956 sep 0 lpa 0.969 nv 3 tabs 1 len 0.445 th 3.038 | free 3 rep 3 miss 0 false 0 loose 0 | rep: 44.950 52.230 55.320 | flood: 55.426/100.000 52.281/100.000 45.003/100.000 | cell 0.0150 plan 0.46s 28.2s
+S 1610001 1 m5 side 1 D 25 V 60 a 0.0000 sep 1 lpa 0.461 nv 4 tabs 4 len 2.461 th 1.140 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0150 plan 0.00s 0.9s
+S 1610001 2 m5 side 1 D 3.175 V 0 a 0.3213 sep 1 lpa 0.921 nv 1 tabs 3 len 1.398 th 2.925 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0150 plan 0.00s 0.1s
+S 1610001 3 m5 side 0 D 25 V 60 a 0.0000 sep 1 lpa 0.918 nv 9 tabs 5 len 3.555 th 1.186 | free 1 rep 1 miss 0 false 0 loose 0 | rep: 5.050 | flood: 5.104/100.000 | cell 0.0228 plan 0.08s 1.3s
+S 1610001 4 m5 side 1 D 6 V 60 a 0.4501 sep 0 lpa 0.553 nv 3 tabs 3 len 3.963 th 0.540 | free 3 rep 3 miss 0 false 0 loose 0 | rep: 152.850 672.770 0.080 | flood: 673.536/100.000 153.325/100.000 0.085/100.000 | cell 0.0150 plan 0.03s 0.4s
+S 1610001 5 m5 side 0 D 8 V 0 a 0.0249 sep 0 lpa 0.351 nv 2 tabs 5 len 2.721 th 2.934 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0153 plan 0.03s 3.3s
+S 1610001 6 m5 side 0 D 8 V 0 a -0.0000 sep 1 lpa 0.312 nv 2 tabs 9 len 0.760 th 3.942 | free 2 rep 2 miss 0 false 0 loose 0 | rep: 7.800 11.900 | flood: 11.922/100.000 7.823/100.000 | cell 0.0150 plan 0.71s 17.2s
+S 1610001 7 empty
+S 1610001 8 m5 side 0 D 6 V 120 a 0.4668 sep 1 lpa 0.332 nv 1 tabs 5 len 3.394 th 1.557 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0150 plan 0.07s 0.6s
+S 1610001 9 m5 side 1 D 25 V 60 a 0.0363 sep 1 lpa 0.218 nv 2 tabs 7 len 3.842 th 0.909 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0150 plan 0.14s 1.6s
+S 1610001 10 empty
+S 1610001 11 m5 side 0 D 12 V 90 a -0.0000 sep 0 lpa 0.065 nv 6 tabs 2 len 9.913 th 3.932 | free 2 rep 2 miss 0 false 0 loose 0 | rep: 4.430 7.000 | flood: 7.078/100.000 4.481/100.000 | cell 0.0150 plan 0.01s 117.1s
+S 1610001 12 m5 side 0 D 6 V 120 a 1.5243 sep 0 lpa 0.729 nv 2 tabs 5 len 0.590 th 4.234 | free 1 rep 1 miss 0 false 0 loose 0 | rep: 121.140 | flood: 121.178/100.000 | cell 0.0150 plan 0.02s 0.4s
+S 1610001 13 empty
+S 1610001 14 m5 side 1 D 6 V 0 a 0.7032 sep 0 lpa 0.036 nv 2 tabs 6 len 0.244 th 4.867 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0150 plan 0.24s 3.2s
+S 1610001 15 empty
+S 1610001 16 m5 side 0 D 6 V 60 a 0.4405 sep 0 lpa 0.022 nv 2 tabs 5 len 1.077 th 3.137 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0150 plan 0.04s 3.4s
+S 1610001 17 m5 side 0 D 2 V 0 a 0.2509 sep 1 lpa 0.862 nv 3 tabs 9 len 1.442 th 5.184 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0150 plan 0.83s 3.0s
+S 1610001 18 m5 side 0 D 2 V 0 a 0.0000 sep 0 lpa 0.662 nv 3 tabs 3 len 2.219 th 3.181 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0150 plan 0.10s 3.9s
+S 1610001 19 m5 side 0 D 3.175 V 0 a 2.7401 sep 0 lpa 0.069 nv 2 tabs 6 len 0.945 th 2.668 | free 1 rep 1 miss 0 false 0 loose 0 | rep: 170.080 | flood: 170.120/100.000 | cell 0.0150 plan 0.03s 0.7s
+S 1610001 20 m5 side 0 D 6 V 120 a 1.7829 sep 1 lpa 0.673 nv 2 tabs 4 len 2.448 th 1.006 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0150 plan 0.00s 0.4s
+S 1610001 21 m5 side 1 D 6 V 0 a -0.0000 sep 0 lpa 0.556 nv 2 tabs 3 len 0.952 th 1.831 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0150 plan 0.06s 7.6s
+S 1610001 22 m5 side 1 D 6 V 0 a 0.7991 sep 0 lpa 0.115 nv 2 tabs 3 len 0.388 th 1.293 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0150 plan 0.28s 2.8s
+S 1610001 23 empty
+S 1610001 24 m5 side 1 D 2 V 0 a 0.0000 sep 0 lpa 0.528 nv 8 tabs 7 len 0.789 th 0.290 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0150 plan 0.08s 0.4s
+S 1610001 25 m5 side 0 D 12 V 0 a -0.0000 sep 1 lpa 0.826 nv 3 tabs 8 len 0.984 th 2.527 | free 3 rep 3 miss 0 false 0 loose 0 | rep: 5.270 7.230 11.600 | flood: 11.624/100.000 7.248/100.000 5.290/100.000 | cell 0.0150 plan 4.65s 47.8s
+S 1610001 26 m5 side 1 D 12 V 120 a 0.5471 sep 0 lpa 0.110 nv 3 tabs 8 len 0.570 th 3.075 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0150 plan 0.16s 16.5s
+S 1610001 27 m5 side 0 D 25 V 120 a 0.0000 sep 1 lpa 0.098 nv 5 tabs 6 len 2.583 th 0.261 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0219 plan 0.18s 1.1s
+S 1610001 28 m5 side 0 D 6 V 60 a 2.7375 sep 0 lpa 0.782 nv 4 tabs 5 len 3.151 th 0.854 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0150 plan 0.51s 0.9s
+S 1610001 29 m5 side 0 D 2 V 0 a 0.5814 sep 1 lpa 0.176 nv 1 tabs 8 len 1.297 th 4.946 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0150 plan 0.00s 1.8s
+S 1610001 30 m5 side 1 D 6 V 90 a 2.8523 sep 0 lpa 0.024 nv 1 tabs 9 len 1.120 th 4.431 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0150 plan 0.04s 5.3s
+S 1610001 31 m5 side 1 D 2 V 0 a 0.0000 sep 1 lpa 0.924 nv 3 tabs 4 len 1.198 th 3.332 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0150 plan 0.00s 1.8s
+S 1610001 32 m5 side 1 D 6 V 60 a 0.7696 sep 1 lpa 0.885 nv 3 tabs 8 len 0.179 th 1.749 | free 3 rep 3 miss 0 false 0 loose 0 | rep: 375.290 52.170 121.510 | flood: 375.459/100.000 121.601/100.000 52.233/100.000 | cell 0.0150 plan 10.10s 11.4s
+S 1610001 33 empty
+S 1610001 34 empty
+S 1610001 35 m5 side 0 D 12 V 0 a 0.7455 sep 1 lpa 0.062 nv 3 tabs 8 len 2.816 th 3.412 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0168 plan 0.03s 8.5s
+S 1610001 36 m5 side 0 D 25 V 60 a 0.2999 sep 0 lpa 0.248 nv 2 tabs 7 len 5.924 th 1.547 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0217 plan 0.07s 1.6s
+S 1610001 37 m5 side 1 D 6 V 0 a 0.0473 sep 0 lpa 0.615 nv 3 tabs 5 len 0.257 th 2.588 | free 1 rep 1 miss 0 false 0 loose 0 | rep: 265.790 | flood: 265.922/100.000 | cell 0.0150 plan 2.26s 16.7s
+S 1610001 38 m5 side 1 D 25 V 90 a 0.0000 sep 1 lpa 0.360 nv 2 tabs 8 len 3.220 th 1.875 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0151 plan 0.00s 1.3s
+S 1610001 39 empty
+S 1610001 40 m5 side 0 D 6 V 0 a -0.0000 sep 1 lpa 0.538 nv 2 tabs 8 len 0.274 th 3.760 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0150 plan 0.52s 2.5s
+S 1610001 41 m5 side 0 D 6 V 60 a 1.2628 sep 0 lpa 0.696 nv 12 tabs 5 len 8.646 th 3.744 | free 3 rep 3 miss 0 false 0 loose 0 | rep: 6.510 5.170 105.800 | flood: 105.870/100.000 6.540/100.000 5.193/100.000 | cell 0.0150 plan 2.43s 4.2s
+S 1610001 42 m5 side 0 D 6 V 0 a 0.7631 sep 0 lpa 0.502 nv 4 tabs 6 len 2.180 th 2.647 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0150 plan 1.14s 36.6s
+S 1610001 43 empty
+S 1610001 44 m5 side 0 D 2 V 0 a 0.0000 sep 1 lpa 0.694 nv 5 tabs 4 len 3.939 th 2.196 | free 4 rep 4 miss 0 false 0 loose 0 | rep: 0.160 0.970 0.100 3.250 | flood: 3.292/100.000 0.969/100.000 0.173/100.000 0.100/100.000 | cell 0.0150 plan 0.04s 0.4s
+S 1610001 45 m5 side 1 D 8 V 0 a 2.9704 sep 1 lpa 0.661 nv 3 tabs 2 len 3.047 th 2.856 | free 1 rep 1 miss 0 false 0 loose 0 | rep: 2.450 | flood: 2.462/100.000 | cell 0.0150 plan 0.09s 6.7s
+S 1610001 46 m5 side 0 D 25 V 60 a -0.0000 sep 1 lpa 0.583 nv 2 tabs 1 len 1.355 th 0.762 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0170 plan 0.00s 1.3s
+S 1610001 47 m5 side 0 D 2 V 0 a 0.2242 sep 1 lpa 0.418 nv 2 tabs 7 len 4.626 th 2.841 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0150 plan 0.13s 4.6s
+S 1610001 48 m5 side 1 D 3.175 V 0 a 1.3659 sep 1 lpa 0.051 nv 4 tabs 9 len 4.056 th 1.364 | free 0 rep 0 miss 0 false 0 loose 0 | rep: | flood: | cell 0.0150 plan 0.06s 3.0s
+S 1610001 49 m5 side 0 D 6 V 120 a 0.4570 sep 1 lpa 0.609 nv 2 tabs 6 len 0.166 th 2.345 | free 2 rep 2 miss 0 false 0 loose 0 | rep: 250.160 177.430 | flood: 250.226/100.000 177.720/100.000 | cell 0.0150 plan 0.40s 2.1s
+SUMMARY seed 1610001 mode 5 scenes 50 free 30 rep 30 miss 0 false 0 loose 0 thin 0

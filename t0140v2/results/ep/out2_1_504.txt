@@ -1,0 +1,28 @@
+  f1 s504_107 L512 EXTRA-vs-single area 0.349547 box 8.3835,16.1206-8.9631,17.4596 inner 1
+  f1 s504_107 L512 EXTRA-vs-single area 0.054543 box 9.6275,16.1206-9.8533,16.7025 inner 1
+  f1 s504_107 L512 EXTRA-vs-single area 0.116919 box 13.9079,16.1206-14.2681,17.0430 inner 1
+  f1 s504_107 L512 EXTRA-vs-single area 0.247305 box 14.7491,16.1206-15.2764,17.4596 inner 1
+  f1 s504_107 L512 EXTRA-vs-single area 0.361532 box 20.2445,16.1206-20.8241,17.4596 inner 1
+  f1 s504_107 L512 EXTRA-vs-single area 0.107474 box 21.3703,16.1206-21.7143,16.9158 inner 1
+  f1 s504_107 L512 EXTRA-vs-single area 0.158304 box 25.7301,16.1206-26.1474,17.0852 inner 1
+  f1 s504_107 L512 EXTRA-vs-single area 0.246538 box 26.7491,16.1206-27.1997,17.2156 inner 1
+  f1 s504_107 L512 EXTRA-vs-single area 0.096322 box 33.2496,16.1206-33.5753,16.8736 inner 1
+  f1 s504_107 L512 EXTRA-vs-single area 0.305876 box 6.1170,16.6540-6.7155,17.6764 inner 1
+  f1 s504_107 L512 EXTRA-vs-single area 0.321266 box 2.8930,16.2974-3.4777,17.4596 inner 1
+  f1 s504_107 L512 EXTRA-vs-single area 0.434679 box 35.3099,16.3632-35.8995,17.6764 inner 1
+  f1 s504_107 L512 EXTRA-vs-single area 0.068429 box 23.5098,16.3358-23.8374,16.9854 inner 1
+  f1 s504_107 L512 MISSING-vs-single area 0.306070 box 6.1170,16.6537-6.7155,17.6764 inner 1
+  f1 s504_107 L512 MISSING-vs-single area 0.435053 box 35.3098,16.3628-35.8995,17.6764 inner 1
+  f1 s504_107 L512 MISSING-vs-single area 0.321581 box 2.8930,16.2974-3.4777,17.4596 inner 1
+  f1 s504_107 L512 MISSING-vs-single area 0.350091 box 8.3833,16.1206-8.9631,17.4596 inner 1
+  f1 s504_107 L512 MISSING-vs-single area 0.247886 box 14.7491,16.1206-15.2764,17.4596 inner 1
+  f1 s504_107 L512 MISSING-vs-single area 0.362083 box 20.2443,16.1206-20.8241,17.4596 inner 1
+  f1 s504_107 L512 MISSING-vs-single area 0.247059 box 26.7489,16.1206-27.1997,17.2156 inner 1
+  f1 s504_107 L512 MISSING-vs-single area 0.158737 box 25.7297,16.1206-26.1474,17.0852 inner 1
+  f1 s504_107 L512 MISSING-vs-single area 0.117260 box 13.9075,16.1206-14.2681,17.0430 inner 1
+  f1 s504_107 L512 MISSING-vs-single area 0.068773 box 23.5093,16.3353-23.8374,16.9861 inner 1
+  f1 s504_107 L512 MISSING-vs-single area 0.107975 box 21.3698,16.1206-21.7143,16.9162 inner 1
+  f1 s504_107 L512 MISSING-vs-single area 0.096808 box 33.2491,16.1206-33.5753,16.8739 inner 1
+  f1 s504_107 L512 MISSING-vs-single area 0.054798 box 9.6270,16.1206-9.8533,16.7025 inner 1
+BAD f1 seed 504 s 107 rings 11 oracle pieces 100 single 100
+SUMMARY fam 1 seed 504 scenes 300 oraclePieces 5200 badScenes 1 problems 26 singleVsUnionDiffScenes 0

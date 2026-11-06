@@ -1,0 +1,14 @@
+rect 2000      GAP=3                        n=8 base    0.7194 br    0.8590 ratio med 1.180 min 1.111 max 1.235 loose 0 hash same
+rect 4000      GAP=3                        n=6 base    1.5917 br    1.8346 ratio med 1.153 min 1.083 max 1.186 loose 0 hash same
+rect 2000      GAP=3 TC=1                   n=8 base    0.5726 br    0.6247 ratio med 1.079 min 1.022 max 1.168 loose 0 hash same
+rect 4000      GAP=3 TC=1                   n=6 base    1.1481 br    1.2700 ratio med 1.125 min 1.064 max 1.152 loose 0 hash same
+arc 2000       GAP=3 TC=1                   n=4 base    4.0401 br    4.0782 ratio med 1.009 min 1.004 max 1.022 loose 0 hash same
+row 4000       GAP=3                        n=6 base    1.9062 br    2.0966 ratio med 1.089 min 1.077 max 1.129 loose 0 hash same
+row 4000                                    n=6 base    1.8048 br    1.8590 ratio med 1.046 min 0.896 max 1.108 loose 3998 hash same
+letters 1000   GAP=3 TC=1                   n=4 base    1.4853 br    1.5562 ratio med 1.048 min 0.956 max 1.100 loose 187 hash same
+plate 1000     SIDE=1                       n=3 base   14.7796 br   14.7741 ratio med 1.007 min 0.961 max 1.014 loose 27 hash same
+gear1 4000                                  n=4 base    4.6973 br    4.8622 ratio med 1.042 min 0.967 max 1.064 loose 0 hash same
+rect 2000      A=0.3 SEP=1                  n=3 base   13.0909 br   13.4857 ratio med 1.038 min 0.977 max 1.044 loose 2707 hash same
+arc 1000       TL=10                        n=3 base    6.3242 br    6.2558 ratio med 0.989 min 0.980 max 1.011 loose 831 hash same
+rect 1000      TL=10                        n=3 base    4.7953 br    4.7855 ratio med 0.991 min 0.976 max 1.049 loose 1405 hash same
+rect 1000      TC=1 TL=1                    n=3 base    4.7556 br    4.8903 ratio med 1.010 min 0.987 max 1.028 loose 1211 hash same

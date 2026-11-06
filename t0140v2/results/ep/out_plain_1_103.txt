@@ -1,0 +1,14 @@
+  f1 s103_13 L4 EXTRA-vs-single area 0.143314 box 93.9060,16.6048-94.3173,17.3932 inner 1
+  f1 s103_13 L4 MISSING-vs-single area 0.143181 box 93.9060,16.6048-94.3169,17.3930 inner 1
+  f1 s103_13 L5 EXTRA-vs-single area 0.143314 box 93.9060,16.6048-94.3173,17.3932 inner 1
+  f1 s103_13 L5 MISSING-vs-single area 0.143181 box 93.9060,16.6048-94.3169,17.3930 inner 1
+  f1 s103_13 L6 EXTRA-vs-single area 0.143314 box 93.9060,16.6048-94.3173,17.3932 inner 1
+  f1 s103_13 L6 MISSING-vs-single area 0.143181 box 93.9060,16.6048-94.3169,17.3930 inner 1
+  f1 s103_13 L8 EXTRA-vs-single area 0.143314 box 93.9060,16.6048-94.3173,17.3932 inner 1
+  f1 s103_13 L8 MISSING-vs-single area 0.143181 box 93.9060,16.6048-94.3169,17.3930 inner 1
+  f1 s103_13 L13 EXTRA-vs-single area 0.143314 box 93.9060,16.6048-94.3173,17.3932 inner 1
+  f1 s103_13 L13 MISSING-vs-single area 0.143181 box 93.9060,16.6048-94.3169,17.3930 inner 1
+  f1 s103_13 L24 EXTRA-vs-single area 0.143314 box 93.9060,16.6048-94.3173,17.3932 inner 1
+  f1 s103_13 L24 MISSING-vs-single area 0.143181 box 93.9060,16.6048-94.3169,17.3930 inner 1
+BAD f1 seed 103 s 13 rings 8 oracle pieces 93 single 93
+SUMMARY fam 1 seed 103 scenes 40 oraclePieces 763 badScenes 1 problems 12 singleVsUnionDiffScenes 0

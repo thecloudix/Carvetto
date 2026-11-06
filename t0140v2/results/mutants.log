@@ -1,0 +1,36 @@
+base rc=0 
+E1_nojoin rc=42 test cases: 10 | 2 passed | 8 failed
+E2_touchjoin rc=0 
+E3_nowinding BUILDFAIL
+E4_nocrop rc=42 test cases: 10 | 7 passed | 3 failed
+E5_noislands rc=42 test cases: 10 | 5 passed | 5 failed
+E6_noframe rc=42 test cases: 10 | 0 passed | 10 failed
+E7_nofallback rc=0 
+E8_firstpart rc=0 
+E9_largest rc=42 test cases: 10 | 5 passed | 5 failed
+E10_no45rule rc=0 
+E11_minside0 rc=0 
+E12_walkflip rc=42 test cases: 10 | 2 passed | 8 failed
+E13_windsign rc=42 test cases: 10 | 7 passed | 3 failed
+E14_enters0 rc=42 test cases: 10 | 7 passed | 3 failed
+E15_nocentre BUILDFAIL
+E16_sideonly1 BUILDFAIL
+P1_gate rc=42 test cases: 10 | 3 passed | 7 failed
+P2_closedopen rc=0 
+P3_nothick rc=42 test cases: 10 | 9 passed | 1 failed
+P4_attrib BUILDFAIL
+P5_area rc=42 test cases: 10 | 9 passed | 1 failed
+P6_reach rc=42 test cases: 10 | 8 passed | 2 failed
+P7_covered rc=0 
+P8_nowedge rc=42 test cases: 10 | 8 passed | 2 failed
+P9_closing rc=42 test cases: 10 | 9 passed | 1 failed
+ALLDONE
+base rc=0 
+E3_nowinding rc=42 test cases: 10 | 7 passed | 3 failed
+E15_nocentre rc=0 
+E16_sideonly1 BUILDFAIL
+P4_attrib rc=0 
+ALLDONE
+base rc=0 
+E16_sideonly1 rc=42 test cases: 10 | 5 passed | 5 failed
+ALLDONE

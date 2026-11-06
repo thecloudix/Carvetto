@@ -1,0 +1,32 @@
+  f7 s101_20 L100 EXTRA-vs-single area 0.160895 box 5.4933,-9.6595-7.9913,-7.5131 inner 1
+  f7 s101_20 L100 MISSING-vs-single area 0.161158 box 5.4922,-9.6603-7.9913,-7.5131 inner 1
+  f7 s101_20 L256 EXTRA-vs-single area 0.160895 box 5.4933,-9.6595-7.9913,-7.5131 inner 1
+  f7 s101_20 L256 MISSING-vs-single area 0.161158 box 5.4922,-9.6603-7.9913,-7.5131 inner 1
+BAD f7 seed 101 s 20 rings 61 oracle pieces 43 single 43
+  f7 s101_24 L4 EXTRA-vs-single area 17.084759 box -16.8256,-13.7020-11.2133,14.3368 inner 1
+  f7 s101_24 L4 MISSING-vs-single area 17.084202 box -16.8256,-13.7020-11.2133,14.3368 inner 1
+  f7 s101_24 L5 EXTRA-vs-single area 17.084759 box -16.8256,-13.7020-11.2133,14.3368 inner 1
+  f7 s101_24 L5 MISSING-vs-single area 17.084202 box -16.8256,-13.7020-11.2133,14.3368 inner 1
+  f7 s101_24 L6 EXTRA-vs-single area 17.084759 box -16.8256,-13.7020-11.2133,14.3368 inner 1
+  f7 s101_24 L6 MISSING-vs-single area 17.084202 box -16.8256,-13.7020-11.2133,14.3368 inner 1
+  f7 s101_24 L8 EXTRA-vs-single area 17.084759 box -16.8256,-13.7020-11.2133,14.3368 inner 1
+  f7 s101_24 L8 MISSING-vs-single area 17.084202 box -16.8256,-13.7020-11.2133,14.3368 inner 1
+  f7 s101_24 L13 EXTRA-vs-single area 17.084759 box -16.8256,-13.7020-11.2133,14.3368 inner 1
+  f7 s101_24 L13 MISSING-vs-single area 17.084202 box -16.8256,-13.7020-11.2133,14.3368 inner 1
+  f7 s101_24 L24 EXTRA-vs-single area 17.084760 box -16.8256,-13.7020-11.2133,14.3368 inner 1
+  f7 s101_24 L24 MISSING-vs-single area 17.084202 box -16.8256,-13.7020-11.2133,14.3368 inner 1
+BAD f7 seed 101 s 24 rings 64 oracle pieces 45 single 45
+  f7 s101_37 L4 EXTRA-vs-single area 2.572145 box -26.5134,-25.1016-22.9475,24.3602 inner 0
+  f7 s101_37 L4 MISSING-vs-single area 2.571892 box -26.5134,-25.1016-22.9475,24.3602 inner 0
+  f7 s101_37 L5 EXTRA-vs-single area 2.572145 box -26.5134,-25.1016-22.9475,24.3602 inner 0
+  f7 s101_37 L5 MISSING-vs-single area 2.571892 box -26.5134,-25.1016-22.9475,24.3602 inner 0
+  f7 s101_37 L6 EXTRA-vs-single area 2.572145 box -26.5134,-25.1016-22.9475,24.3602 inner 0
+  f7 s101_37 L6 MISSING-vs-single area 2.571892 box -26.5134,-25.1016-22.9475,24.3602 inner 0
+  f7 s101_37 L8 EXTRA-vs-single area 2.572145 box -26.5134,-25.1016-22.9475,24.3602 inner 0
+  f7 s101_37 L8 MISSING-vs-single area 2.571892 box -26.5134,-25.1016-22.9475,24.3602 inner 0
+  f7 s101_37 L13 EXTRA-vs-single area 2.572145 box -26.5134,-25.1016-22.9475,24.3602 inner 0
+  f7 s101_37 L13 MISSING-vs-single area 2.571892 box -26.5134,-25.1016-22.9475,24.3602 inner 0
+  f7 s101_37 L24 EXTRA-vs-single area 2.572145 box -26.5134,-25.1016-22.9475,24.3602 inner 0
+  f7 s101_37 L24 MISSING-vs-single area 2.571892 box -26.5134,-25.1016-22.9475,24.3602 inner 0
+BAD f7 seed 101 s 37 rings 69 oracle pieces 30 single 30
+SUMMARY fam 7 seed 101 scenes 40 oraclePieces 885 badScenes 3 problems 28 singleVsUnionDiffScenes 0

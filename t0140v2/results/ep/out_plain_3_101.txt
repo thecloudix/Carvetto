@@ -1,0 +1,26 @@
+  f3 s101_35 L4 EXTRA-vs-single area 1.451556 box 0.0000,-3.9783-5.3951,-3.5447 inner 1
+  f3 s101_35 L4 EXTRA-vs-single area 3.727207 box -0.0000,-3.5447-5.3951,-0.0812 inner 1
+  f3 s101_35 L4 MISSING-vs-single area 5.178763 box -0.0000,-3.9783-5.3951,-0.0812 inner 1
+  f3 s101_35 L5 EXTRA-vs-single area 1.451556 box 0.0000,-3.9783-5.3951,-3.5447 inner 1
+  f3 s101_35 L5 EXTRA-vs-single area 3.727207 box -0.0000,-3.5447-5.3951,-0.0812 inner 1
+  f3 s101_35 L5 MISSING-vs-single area 5.178763 box -0.0000,-3.9783-5.3951,-0.0812 inner 1
+  f3 s101_35 L6 EXTRA-vs-single area 1.451556 box 0.0000,-3.9783-5.3951,-3.5447 inner 1
+  f3 s101_35 L6 EXTRA-vs-single area 3.727207 box -0.0000,-3.5447-5.3951,-0.0812 inner 1
+  f3 s101_35 L6 MISSING-vs-single area 5.178763 box -0.0000,-3.9783-5.3951,-0.0812 inner 1
+  f3 s101_35 L8 EXTRA-vs-single area 1.451556 box 0.0000,-3.9783-5.3951,-3.5447 inner 1
+  f3 s101_35 L8 EXTRA-vs-single area 3.727207 box -0.0000,-3.5447-5.3951,-0.0812 inner 1
+  f3 s101_35 L8 MISSING-vs-single area 5.178763 box -0.0000,-3.9783-5.3951,-0.0812 inner 1
+  f3 s101_35 L13 EXTRA-vs-single area 1.451556 box 0.0000,-3.9783-5.3951,-3.5447 inner 1
+  f3 s101_35 L13 EXTRA-vs-single area 3.727207 box -0.0000,-3.5447-5.3951,-0.0812 inner 1
+  f3 s101_35 L13 MISSING-vs-single area 5.178763 box -0.0000,-3.9783-5.3951,-0.0812 inner 1
+  f3 s101_35 L24 EXTRA-vs-single area 1.451556 box 0.0000,-3.9783-5.3951,-3.5447 inner 1
+  f3 s101_35 L24 EXTRA-vs-single area 3.727207 box -0.0000,-3.5447-5.3951,-0.0812 inner 1
+  f3 s101_35 L24 MISSING-vs-single area 5.178763 box -0.0000,-3.9783-5.3951,-0.0812 inner 1
+  f3 s101_35 L64 EXTRA-vs-single area 1.451556 box 0.0000,-3.9783-5.3951,-3.5447 inner 1
+  f3 s101_35 L64 EXTRA-vs-single area 3.727207 box -0.0000,-3.5447-5.3951,-0.0812 inner 1
+  f3 s101_35 L64 MISSING-vs-single area 5.178763 box -0.0000,-3.9783-5.3951,-0.0812 inner 1
+  f3 s101_35 L100 EXTRA-vs-single area 1.451556 box 0.0000,-3.9783-5.3951,-3.5447 inner 1
+  f3 s101_35 L100 EXTRA-vs-single area 3.727207 box -0.0000,-3.5447-5.3951,-0.0812 inner 1
+  f3 s101_35 L100 MISSING-vs-single area 5.178763 box -0.0000,-3.9783-5.3951,-0.0812 inner 1
+BAD f3 seed 101 s 35 rings 88 oracle pieces 12 single 12
+SUMMARY fam 3 seed 101 scenes 40 oraclePieces 140 badScenes 1 problems 24 singleVsUnionDiffScenes 0
