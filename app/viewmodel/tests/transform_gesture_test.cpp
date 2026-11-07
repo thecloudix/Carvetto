@@ -434,3 +434,159 @@ TEST_CASE("a frozen drag snap index is not used after an outside edit (also run 
     CHECK_FALSE(nearPt(w.tool.pointMm(), {400, 300}));
     w.release({401, 301});
 }
+
+// --- Frozen drag index and outside edits (T-0181 hotfix) ----------------------------------------------
+
+namespace {
+
+// A world with a selected rectangle A and a later object C whose endpoint (400,300) snaps. The drag
+// starts on A's bottom-edge midpoint (150,100) and moves a little: the pointer stays snapped to
+// that midpoint, so the gesture has begun but the delta is the identity and nothing was pushed.
+struct UafWorld : World {
+    ObjectId c;
+    UafWorld() {
+        Contour line;
+        line.append(geometry::LineSpan{{400, 300}, {450, 300}});
+        line.append(geometry::LineSpan{{450, 300}, {450, 350}});
+        auto cmd = std::make_unique<document::AddObjectCommand>(
+            Object::vector(line, doc.activeLayer(), doc.activeSheet()));
+        const document::AddObjectCommand* raw = cmd.get();
+        REQUIRE(doc.execute(std::move(cmd)));
+        c = raw->id();
+        doc.selection().assign({rect});
+    }
+    void startIdleDrag(Modifiers m = {}) {
+        move({150.05, 100.2}, m);
+        press({150.05, 100.2}, m);
+        move({152.5, 100.4}, m);  // beyond the drag threshold, still snapped to the midpoint
+        REQUIRE(tool.transforming());
+        REQUIRE(doc.undoStack().index() == 1);  // nothing of the drag pushed
+    }
+    // After the outside edit: the gesture is over and the deleted geometry never snaps.
+    void checkAfterEdit(bool expectSnapToDeleted = false) {
+        move({40, 40});
+        move({400.3, 300.2});
+        CHECK_FALSE(tool.transforming());
+        if (!expectSnapToDeleted && tool.snap().has_value()) {
+            for (ObjectId id : tool.snap()->objects) {
+                CHECK(id != c);
+            }
+        }
+        move({401, 301});
+        release({401, 301});
+    }
+};
+
+}  // namespace
+
+TEST_CASE("undo between drag start and the first push ends the gesture (uaf5)", "[transform][tool][uaf]") {
+    UafWorld w;
+    w.startIdleDrag();
+    REQUIRE(w.doc.undo());  // frees C while the button is down
+    w.checkAfterEdit();
+    CHECK(w.doc.undoStack().index() == 0);
+    CHECK_FALSE((w.tool.snap().has_value() && w.tool.snap()->pointMm.x == 400.0));
+}
+
+TEST_CASE("redo, deletions, lock changes and sheet switches end or bypass the frozen index", "[transform][tool][uaf]") {
+    {  // undo then redo: a different generation than at the start
+        UafWorld w;
+        w.startIdleDrag();
+        REQUIRE(w.doc.undo());
+        REQUIRE(w.doc.redo());
+        w.checkAfterEdit(true);
+    }
+    {  // another object deleted by a command
+        UafWorld w;
+        w.startIdleDrag();
+        REQUIRE(w.doc.execute(std::make_unique<document::RemoveObjectsCommand>(std::vector<ObjectId>{w.c})));
+        w.checkAfterEdit();
+    }
+    {  // the dragged object itself deleted
+        UafWorld w;
+        w.startIdleDrag();
+        REQUIRE(w.doc.execute(std::make_unique<document::RemoveObjectsCommand>(std::vector<ObjectId>{w.rect})));
+        w.move({40, 40});
+        CHECK_FALSE(w.tool.transforming());
+        w.move({400.3, 300.2});
+        w.release({400.3, 300.2});
+        CHECK(w.doc.objectCount() == 1);
+    }
+    {  // a layer lock change through a command
+        UafWorld w;
+        w.startIdleDrag();
+        document::Layer locked = *w.doc.findLayer(w.doc.activeLayer());
+        locked.locked = true;
+        REQUIRE(w.doc.execute(std::make_unique<document::SetLayerPropertiesCommand>(locked)));
+        w.move({40, 40});
+        CHECK_FALSE(w.tool.transforming());
+        w.move({400.3, 300.2});
+        if (w.tool.snap().has_value()) {
+            CHECK(w.tool.snap()->objects.empty());  // locked geometry no longer snaps
+        }
+        w.release({400.3, 300.2});
+    }
+    {  // a sheet switch does not change the undo generation: the frozen index must not be used
+        UafWorld w;
+        w.startIdleDrag();
+        const document::SheetId second = w.doc.insertSheet(document::Sheet::fromJob(w.doc.job(), "Second"));
+        REQUIRE(w.doc.setActiveSheet(second));
+        w.move({40, 40});
+        w.move({400.3, 300.2});
+        CHECK_FALSE(w.tool.snap().has_value());  // nothing on the new sheet to snap to
+        w.release({400.3, 300.2});
+    }
+}
+
+TEST_CASE("document swap and modifiers during a stale drag are safe", "[transform][tool][uaf]") {
+    {
+        UafWorld w;
+        Document other{document::Job::singleSided(500.0, 500.0, 18.0, document::Units::Millimetres)};
+        w.startIdleDrag();
+        w.tool.setDocument(&other);
+        w.move({400.3, 300.2});
+        w.release({400.3, 300.2});
+        CHECK_FALSE(w.tool.transforming());
+    }
+    for (int which = 0; which < 3; ++which) {
+        UafWorld w;
+        Modifiers m;
+        m.shift = which == 0;
+        m.alt = which == 1;
+        m.ctrl = which == 2;
+        // Shift on the press would not snap; start the drag without it and add the modifier after.
+        w.startIdleDrag();
+        REQUIRE(w.doc.undo());
+        w.move({40, 40}, m);
+        w.move({400.3, 300.2}, m);
+        CHECK_FALSE(w.tool.transforming());
+        w.release({400.3, 300.2}, m);
+    }
+}
+
+TEST_CASE("two consecutive drags each get a fresh frozen index; own pushes keep it valid", "[transform][tool][uaf]") {
+    World w;
+    Contour line;
+    line.append(geometry::LineSpan{{400, 300}, {450, 300}});
+    w.doc.insertObject(Object::vector(line, w.doc.activeLayer(), w.doc.activeSheet()));
+    w.press({120, 110});
+    w.move({125, 112});  // the drag has begun and the frozen index is built
+    const std::size_t builds = w.tool.snapIndexBuilds();
+    for (int i = 0; i < 30; ++i) {
+        w.move({125.0 + 2.0 * i, 112.0 + i});
+    }
+    CHECK(w.doc.undoStack().index() == 1);
+    CHECK(w.tool.snapIndexBuilds() == builds);  // 30 own pushes, no rebuild
+    w.release({185, 141});
+    CHECK(w.doc.undoStack().index() == 1);
+
+    const std::size_t afterFirst = w.tool.snapIndexBuilds();
+    const Vec2 centre = boundsOf(w.doc, w.rect).centre();
+    w.press(centre + Vec2{-20, -10});  // on the fill, away from the middle handle
+    w.move(centre + Vec2{-10, 0});
+    w.move({401, 301});
+    CHECK(w.tool.snapIndexBuilds() > afterFirst);  // a new gesture builds its own index
+    REQUIRE(w.tool.snap().has_value());
+    w.release({401, 301});
+    CHECK(w.doc.undoStack().index() == 2);
+}
