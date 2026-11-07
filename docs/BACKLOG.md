@@ -751,7 +751,7 @@ Acceptance criteria:
 ### Batch B — drawing & editing (viewmodel + Qt)
 Owner decision 2026-11-06: start Batch B now. Director carded wave 1 below; wave 2 is listed as stubs and gets cards when its dependencies are done. Rule for every Batch B card (ADR-0014): the logic lives in `core/` or `app/viewmodel/` and is unit-tested headless; `app/src` only paints and forwards events. Windows macro names (far, near, min, max, small, interface, IN, OUT) are not identifiers.
 
-### T-0200 Shape builders: rectangle, circle, ellipse, polygon, star, arc → contours   [status: in progress]
+### T-0200 Shape builders: rectangle, circle, ellipse, polygon, star, arc → contours   [status: verifying]
 Phase: 1 (Batch B)   Module: core/geometry (+ core/document glue)   Depends on: T-0001, T-0010   ADR: 0026 (new, only if a choice is made)
 Goal: Pure functions that turn the existing parametric object params (`RectangleParams`, `CircleParams`, `EllipseParams`, `PolygonParams`, `StarParams` in document/object.hpp) into exact span contours, plus an arc builder (three-point, centre-start-end, start-end-radius). Rectangle supports the corner types the params already record (square, round, chamfer, cove/ogee only if the params have them). Circles and ellipses are exact (arcs / Beziers within tolerance, stated). Behaviour per docs/reference/feature-inventory.md drawing sections; clean-room.
 Interfaces: owns new `carvetto/geometry/shapes.hpp`; reads document params; if a param struct lacks a field the feature needs, add it additively and keep the .carv schema backward compatible (ADR-0003/0013 rules, version bump if needed).
@@ -770,7 +770,7 @@ Acceptance criteria:
   3. Selection state changes go through the core `Selection`; no Qt includes (the `viewmodel.qt_free` ctest passes); full ctest.
 Out of scope: dragging/transform tools, node editing, Qt event wiring beyond a click-to-select hook in CanvasWidget with self-test coverage.
 
-### T-0202 File session: open, save, save as, import/export DXF in the app   [status: ready]
+### T-0202 File session: open, save, save as, import/export DXF in the app   [status: in progress]
 Phase: 1 (Batch B)   Module: app/viewmodel + app/src   Depends on: T-0012, T-0100, T-0060   ADR: 0014
 Goal: The app can open and save `.carv` files, import DXF into the current job (layers kept, units per $INSUNITS with an override), export the selection or whole sheet as DXF, track the dirty state (title bar asterisk, prompt on close/new/open), keep a recent-files list, and report load errors and import warnings in a dialog instead of crashing. Logic in a Qt-free `FileSession` (path, dirty tracking against the undo stack, recent list, title string, error text); Qt layer is menu actions and QFileDialog.
 Acceptance criteria:
@@ -789,6 +789,7 @@ Acceptance criteria:
 Out of scope: drawing the snap glyphs (wave 2 canvas overlay), guides UI.
 
 #### Wave 2 stubs (to be carded when wave 1 is done)
+- T-0200 follow-ups (director decisions 2026-11-06, from the coder's report): (1) internally radiused (cove) rectangle corners need a new `CornerStyle` value and a geometry spec from the feature inventory — card after wave 1 if the inventory defines it, else ask the owner; (2) the arc "Exact Size" Height variant (start, end, height) is a small addition to `buildArcStartEndRadius` — card with the arc tool (T-0204).
 - T-0204 Drawing tool framework + shape tools in the canvas (rectangle, circle, ellipse, polygon, star, arc, polyline/Bezier) — needs T-0200, T-0201, T-0203.
 - T-0205 Transforms: move/scale/rotate/mirror with handles, numeric entry; align and distribute — needs T-0201.
 - T-0206 Node editing (select/move/add/delete nodes, convert line↔curve, smooth/corner) — needs T-0201, T-0203.
