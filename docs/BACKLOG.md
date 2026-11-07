@@ -642,7 +642,7 @@ Goal: Non-blocking findings from harness t0153v3: (a) holes/slivers thinner than
 Acceptance criteria:
   1. (a) and (d) are reported to the user (diagnostic) or documented in ADR-0025; (c) ≤ 2.5× per doubling; (e) the test checks laterals with a flat depth too; (b) and (f) fixed or documented with reasons.
 
-### T-0165 Profile: collapsed cuts vanish silently; empty walks ordered at the origin (T-0163 coder)   [status: verifying]
+### T-0165 Profile: collapsed cuts vanish silently; empty walks ordered at the origin (T-0163 coder)   [status: verifying — PASS, PR #70 awaiting CI]
 Phase: 1   Module: core/toolpath   Depends on: T-0163   ADR: 0016
 Goal: Found by the T-0163 coder. (1) At tiny scale with chordal larger than the vector, a closed roughing offset collapses to one line, then to a point, and the cut disappears with no diagnostic (seg_241_31). (2) A cut whose walk is empty when order() runs (StartAt VectorStart / ClosestOnBoundingBox) enters ordering at (0,0) via pointAt on an empty walk, and adds a (0,0) keep-clear point to other cuts' tab placement. (3) The ASan test build fails under -Werror: carv_storage_residuals_test.cpp:232 peakGrowth unused.
 Acceptance criteria:
