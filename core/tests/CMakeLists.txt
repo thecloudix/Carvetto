@@ -14,6 +14,7 @@ add_executable(carvetto_tests
   geometry/span_test.cpp
   geometry/polyline_test.cpp
   geometry/contour_test.cpp
+  geometry/shapes_test.cpp
   geometry/region_polygon_test.cpp
   geometry/contour_ops_test.cpp
   geometry/signed_area_far_test.cpp
