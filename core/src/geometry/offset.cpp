@@ -22,6 +22,7 @@
 #include "offset_batch.hpp"
 #include "offset_dust.hpp"
 #include "offset_junction.hpp"
+#include "offset_shortcuts.hpp"
 
 namespace carvetto::geometry {
 
@@ -652,8 +653,9 @@ std::vector<Vec2> carrierIntersections(const Span& a, const Span& b) {
         const Vec2 u = la->end - la->start;
         const Vec2 v = lb->end - lb->start;
         const double den = u.cross(v);
-        if (std::fabs(den) <= 1e-12 * u.length() * v.length()) {
-            return out;  // parallel
+        const bool parallel = detail::directionsParallel(u, v);  // T-0170: no hypot unless close
+        if (parallel) {
+            return out;
         }
         out.push_back(la->start + u * ((lb->start - la->start).cross(v) / den));
         return out;
@@ -1009,6 +1011,30 @@ double distanceToSpan(Vec2 p, const Span& s) {
     return std::min(geometry::distance(p, arc.startPoint()), geometry::distance(p, arc.endPoint()));
 }
 
+// Exactly `distanceToSpan(p, s) < limit`. For a line the squared distance decides everything
+// except within a relative 1e-12 of the limit (std::hypot, which distanceToSpan uses, and a plain
+// square sum differ by an ulp or two); only there is the exact distance computed. hypot was a
+// quarter of the time of an offset with nothing to prune (T-0170).
+bool nearerThan(Vec2 p, const Span& s, double limit) {
+    if (const auto* line = std::get_if<LineSpan>(&s)) {
+        const double l2 = limit * limit;
+        if (l2 > 1e-280 && l2 < 1e280) {
+            const Vec2 ab = line->end - line->start;
+            const double len2 = ab.lengthSquared();
+            const double t = len2 > 0.0 ? std::clamp((p - line->start).dot(ab) / len2, 0.0, 1.0) : 0.0;
+            const Vec2 r = p - (line->start + ab * t);
+            const double d2 = r.lengthSquared();
+            if (d2 < l2 * (1.0 - 1e-12)) {
+                return true;
+            }
+            if (d2 > l2 * (1.0 + 1e-12)) {
+                return false;
+            }
+        }
+    }
+    return distanceToSpan(p, s) < limit;
+}
+
 // Sub-span of a line or arc between parameters t0 < t1 (arc-length linear).
 Span subSpan(const Span& s, double t0, double t1) {
     if (t0 <= 0.0 && t1 >= 1.0) {
@@ -1025,10 +1051,23 @@ bool sameCarrier(const Span& a, const Span& b) {
     const auto* lb = std::get_if<LineSpan>(&b);
     if (la && lb) {
         const Vec2 u = la->end - la->start;
+        const double c0 = std::fabs(u.cross(lb->start - la->start));
+        const double c1 = std::fabs(u.cross(lb->end - la->start));
+        // Same test as with len = u.length() below, decided with sqrt unless a cross product is
+        // within 1e-9 of the bound (hypot was a visible share of the time, T-0170).
+        const double approx = std::sqrt(u.lengthSquared());
+        const double bound = 1e-9 * std::max(1.0, approx) * approx;
+        if (bound > 1e-140 && bound < 1e140) {
+            if (c0 < bound * (1.0 - 1e-9) && c1 < bound * (1.0 - 1e-9)) {
+                return true;
+            }
+            if (c0 > bound * (1.0 + 1e-9) || c1 > bound * (1.0 + 1e-9)) {
+                return false;
+            }
+        }
         const double len = u.length();
         const double scale = 1e-9 * std::max(1.0, len);
-        return std::fabs(u.cross(lb->start - la->start)) <= scale * len &&
-               std::fabs(u.cross(lb->end - la->start)) <= scale * len;
+        return c0 <= scale * len && c1 <= scale * len;
     }
     const auto* ca = std::get_if<ArcSpan>(&a);
     const auto* cb = std::get_if<ArcSpan>(&b);
@@ -1177,11 +1216,11 @@ class BoxGrid {
 // span within `limit`, which dominated the cost at large d (T-0006). Only spans whose boxes meet
 // the query square can be closer than `limit`, so the answer is exactly that of a full scan.
 bool closerThan(Vec2 p, double limit, const std::vector<Span>& input, BoxGrid& grid, std::size_t& witness) {
-    if (witness < input.size() && distanceToSpan(p, input[witness]) < limit) {
+    if (witness < input.size() && nearerThan(p, input[witness], limit)) {
         return true;
     }
     return grid.queryUntil(Box2{p - Vec2{limit, limit}, p + Vec2{limit, limit}}, [&](std::size_t i) {
-        if (i != witness && distanceToSpan(p, input[i]) < limit) {
+        if (i != witness && nearerThan(p, input[i], limit)) {
             witness = i;
             return true;
         }
@@ -2334,6 +2373,23 @@ bool closeSmallGap(Span& a, Span& b, const SnapContext& ctx, std::optional<Span>
     return true;
 }
 
+// Which side of `level` (in [-1, 1]) the cosine `tangentAt(a, 1.0).dot(tangentAt(b, 0.0))` of the
+// turn from `a` to `b` lies: -1 below, +1 above, 0 when that is not clear. Two lines are decided
+// on the raw direction vectors unless the cosine is within 1e-9 of `level` (normalising costs a
+// hypot each, which showed in profiles of offsets with nothing to prune, T-0170); callers compute
+// the exact expression for 0.
+int cosineSide(const Span& a, const Span& b, double level) {
+    const auto* la = std::get_if<LineSpan>(&a);
+    const auto* lb = std::get_if<LineSpan>(&b);
+    return la && lb ? detail::cosineSideOf(la->end - la->start, lb->end - lb->start, level) : 0;
+}
+
+// Exactly `tangentAt(a, 1.0).dot(tangentAt(b, 0.0)) < 0.0`.
+bool endsReverse(const Span& a, const Span& b) {
+    const int side = cosineSide(a, b, 0.0);
+    return side != 0 ? side < 0 : tangentAt(a, 1.0).dot(tangentAt(b, 0.0)) < 0.0;
+}
+
 // A span that sets off straight back along its predecessor (or that its successor sets off back
 // along) and lies wholly within a rounding unit of the coordinates (2e-9 x max(1, d, |x|, |y|))
 // of it (two arcs also on one circle to that unit): a needle tip so thin that, at those
@@ -2353,7 +2409,8 @@ void removeRetraces(std::vector<Span>& spans, bool closed, const SnapContext& ct
             const std::size_t ib = k;
             const Span& a = spans[ia];
             const Span& b = spans[ib];
-            if (tangentAt(a, 1.0).dot(tangentAt(b, 0.0)) > -0.99) {
+            const int side = cosineSide(a, b, -0.99);
+            if (side > 0 || (side == 0 && tangentAt(a, 1.0).dot(tangentAt(b, 0.0)) > -0.99)) {
                 continue;
             }
             const Vec2 j = startPoint(b);
@@ -2806,7 +2863,7 @@ void removeCuspLoops(std::vector<Span>& spans, bool closed, const Tolerance& tol
         if (n == 2 && closed && k == 0) {
             continue;  // a two-span loop: the same pair as k = 1
         }
-        if (tangentAt(a, 1.0).dot(tangentAt(b, 0.0)) >= 0.0) {
+        if (!endsReverse(a, b)) {
             continue;
         }
         const Vec2 j = startPoint(b);
@@ -4123,7 +4180,7 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
                     return false;
                 }
                 return std::all_of(hull.begin(), hull.end(),
-                                   [&](Vec2 p) { return distanceToSpan(p, input[j]) < keepAbove; });
+                                   [&](Vec2 p) { return nearerThan(p, input[j], keepAbove); });
             });
         if (gaveUp) {
             dead[i] = false;

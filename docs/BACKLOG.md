@@ -525,7 +525,7 @@ Acceptance criteria:
   1. signedArea (and any orientation/area helper with the same pattern) computed relative to a local origin or compensated, exact to rounding for small contours up to 1e9 mm; generative test vs an exact oracle.
   2. Outputs of Pocket/Profile/Drill/offsets unchanged for normal inputs (hash comparison vs main), changes only where the old area was wrong (explained).
 
-### T-0156 Profile loose pieces: V-bit corner moves, vanished finishing cuts, out-of-box pieces (T-0135 verifier)   [status: in progress — round 1 FAIL (tab dropped that holds: tabdrop_9001_11; untested corner-move code); round 2]
+### T-0156 Profile loose pieces: V-bit corner moves, vanished finishing cuts, out-of-box pieces (T-0135 verifier)   [status: verifying — round 2 FAIL on two single scenes (of 123k), accepted as residual by director; docs-only commit then merge]
 Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §14
 Goal: Pre-existing gaps found by the T-0135 round-3 verifier (harness t0135v3/, vfree.cpp exact oracle): (a) V-bit sharp-corner moves are not in the band model of the loose-piece search or the tab check — m2_1310149_15 leaves a 134 mm² part free with no message and a flood-PARTIAL kept tab (identical on T-0127/main); (b) when a finishing cut vanishes, its roughing loop is never searched (m0_1310036_24, 2.1 mm² slug); (c) pieces lying wholly outside every region box are not found ("#" of four bars, three circles with overlapping kerfs); (d) ADR §14 wording: band sampling allowance is up to ~11 µm for tab-layer radius < 0.0625 mm (not "at most 5 µm"), and bands are 2–7 µm wider than the cut (not "exactly"); (e) second-try tabs can have necks ≈ 0.086 mm (m1_1320038_46) — judge them with margin or document.
 Acceptance criteria:
@@ -677,13 +677,13 @@ Goal: Found by the T-0164 coder (harness t0153v3 repro2/nest_frame.txt, VC_FIX "
 Acceptance criteria:
   1. Tool centres never come closer to the boundary than the tool radius + allowance − (documented numeric slack); regression test; Pocket output otherwise identical or explained.
 
-### T-0170 Offset: Round/no-prune 13–15% slower after T-0016; super-linear growth on saw/hatch/arc inputs (T-0016 verifier)   [status: verifying — PASS, wording and denormal-guard fixes back to coder; arcs → T-0176]
+### T-0170 Offset: Round/no-prune 13–15% slower after T-0016; super-linear growth on saw/hatch/arc inputs (T-0016 verifier)   [status: done (#75; arcs → T-0176)]
 Phase: 1   Module: core/geometry   Depends on: T-0016   ADR: 0012
 Goal: (a) After T-0016, Round offsets and inputs with nothing to prune are 13–15% slower than before on large inputs (zig-zag Round 1.118→1.261 s; filleted-arc zig-zag 2000 spans 8.67→9.81 s), even with every new path disabled (A/A-controlled), pointing to code generation in buildRaw / mergeOnCarriers / offsetOpenContour. Recover it (profile with symbols; e.g. keep pruneLineCopies out of line). (b) Saw / hatch / filleted-arc open offsets grow 2.6–4× per doubling for every join, Round included, on main as well (harness t0016v1 perf3.sh); the card case's first doubling is 2.7–2.8× for Round. Find the cause and bring it to ≤ 2.5× per doubling, or document it (may overlap T-0168).
 Acceptance criteria:
   1. (a) Round on the t0016v1 perf inputs is within 3% of pre-T-0016 main (interleaved CPU, A/A control); (b) fixed to ≤ 2.5× per doubling or documented in ADR-0012 with measurements; outputs byte-identical; full ctest.
 
-### T-0176 Offset: filleted-arc inputs still ~8% slower than pre-T-0016; 300k-span lines +3..13% (T-0170 verifier)   [status: ready]
+### T-0176 Offset: filleted-arc inputs still ~8% slower than pre-T-0016; 300k-span lines +3..13% (T-0170 verifier)   [status: in progress]
 Phase: 1   Module: core/geometry   Depends on: T-0170   ADR: 0012
 Goal: T-0170 recovered the Round/no-prune slowdown for line inputs (std::hypot replaced by squared comparisons at five sites) but the verifier (harness t0170v1) measured, A/A-controlled against pre-T-0016 (993d0f9): filleted-arc zig-zag Round with nothing to prune (arc 50000, 100k spans, d=0.004) +8% (1.06..1.10; main is +8.3% too, so nothing recovered), and a 300k-span line zig-zag +3% to +13% (A/A 0.97..1.0, so not noise). Arcs still go through hypot, atan2 and fabs. Find and remove the cost on the arc paths the same way, and check the 300k-span line case.
 Acceptance criteria:
@@ -691,7 +691,7 @@ Acceptance criteria:
 
 ### T-0177 Profile loose pieces: residual false reports and misses with V-bit corners (T-0156 verifier)   [status: ready]
 Phase: 1   Module: core/toolpath   Depends on: T-0156   ADR: 0016 §14
-Goal: Defects found by the T-0156 verifier (harness t0156v1, exact-flood oracle drv/o.cpp, repro scenes in repro/), all identical on main and accepted by the director as residual at the T-0156 merge. (a) A held part is reported as loose: repro/false939_7101_876.scn (Outside, V-bit 120°, D6, allowance 0.0022, 2 tabs requested; with 1 tab kept the flood finds nothing free but the product reports '939.84 mm² comes free'; with tab count 1 the message disappears and the moves are unchanged, so it is a defect in the search), repro/false939_7102_671.scn (7.6 mm²). (b) Free pieces unreported with leads off and V-bit corners: repro/miss6_7104_351.scn (six free pieces of 0.216 mm², none reported). (c) Reported areas far from the flood's (29.77 vs 6.4+11.6; 61.5 and 149.7 vs 6.6 and 19.7). (d) Hairline cases within a few µm of the 0.04 / 0.05 thresholds stay documented knife-edge cases. (e) Ramps and plunges are still not in the band model.
+Goal: Defects found by the T-0156 verifier (harness t0156v1, exact-flood oracle drv/o.cpp, repro scenes in repro/), all identical on main and accepted by the director as residual at the T-0156 merge. (a) A held part is reported as loose: repro/false939_7101_876.scn (Outside, V-bit 120°, D6, allowance 0.0022, 2 tabs requested; with 1 tab kept the flood finds nothing free but the product reports '939.84 mm² comes free'; with tab count 1 the message disappears and the moves are unchanged, so it is a defect in the search), repro/false939_7102_671.scn (7.6 mm²). (b) Free pieces unreported with leads off and V-bit corners: repro/miss6_7104_351.scn (six free pieces of 0.216 mm², none reported). (c) Reported areas far from the flood's (29.77 vs 6.4+11.6; 61.5 and 149.7 vs 6.6 and 19.7). (d) Hairline cases within a few µm of the 0.04 / 0.05 thresholds stay documented knife-edge cases. (e) Ramps and plunges are still not in the band model. (f) Found by the T-0156 round-2 verifier (harness t0156v2, scenes in dump/): seed 9302 scene 2199 (m1_9302_2199.scn) the corner-move tab check leaves 1 of 3 tabs out although the exact oracle finds all 3 holding (main keeps all 3); seed 9301 scene 2132 (m1_9301_2132.scn) the branch reports 3 pieces of about 0.04 mm² where main reports 0 and the oracle finds none (threshold knife-edge). Both accepted by the director as residual at the T-0156 merge.
 Acceptance criteria:
   1. (a)-(c) fixed on the repro scenes and in a >= 10k-scene V-bit-forced screen, leads off: no held piece reported, no free piece >= 0.04 mm² unreported, reported areas within 5% or 0.05 mm² of the flood (or documented why not); never worse than T-0156 head; ADR §14 updated; mutants killed; full ctest.
 
@@ -773,7 +773,7 @@ Acceptance criteria:
   3. Contour winding and start point are documented and stable; property tests over random parameters; full ctest incl. MSVC CI.
 Out of scope: UI, freehand/polyline/Bezier drawing, text.
 
-### T-0201 Selection and hit testing (viewmodel)   [status: verifying]
+### T-0201 Selection and hit testing (viewmodel)   [status: done (#71)]
 Phase: 1 (Batch B)   Module: app/viewmodel   Depends on: T-0010, T-0060   ADR: 0014
 Goal: Qt-free picking: `hitTest(document, view, screenPoint, tolerancePx)` returning the topmost object under the cursor (stroke hit within tolerance for open and closed vectors, fill hit optional by mode, groups resolve to the group), window select (fully inside) and crossing select (touching), additive/toggle/subtract modes, select-all/invert/by-layer, and a selection bounding box with handle positions for later transform tools. Works in screen space through the view transform; accounts for object transforms and hidden/locked layers.
 Acceptance criteria:
@@ -791,7 +791,7 @@ Acceptance criteria:
   3. `carvetto --self-test` exercises open → modify → save → reopen headless; CI Linux + Windows green.
 Out of scope: SVG/EPS/PDF (wave 2), autosave/crash recovery, native file dialogs beyond QFileDialog.
 
-### T-0203 Snapping maths (viewmodel)   [status: verifying — PASS, nits back to coder]
+### T-0203 Snapping maths (viewmodel)   [status: done (#73)]
 Phase: 1 (Batch B)   Module: app/viewmodel (+ core/geometry helpers if missing)   Depends on: T-0001, T-0002, T-0010   ADR: 0014
 Goal: Qt-free snapping: given a cursor position, the visible objects and settings, return the best snap (kind, world point, source object ids) among endpoint, midpoint, centre, quadrant, intersection (line/arc/Bezier pairs via the core intersection routines), nearest-on-curve, perpendicular, tangent (from a pending start point), grid and user guides, with per-kind enable flags and a pixel tolerance through the view transform. Priority order documented; deterministic on ties. Only candidates near the cursor are examined (spatial index) so large drawings stay interactive.
 Acceptance criteria:
@@ -799,6 +799,36 @@ Acceptance criteria:
   2. Priority and tie-breaking tests; ≥ 10k objects within a documented time bound per query.
   3. Pure viewmodel API (no Qt); full ctest.
 Out of scope: drawing the snap glyphs (wave 2 canvas overlay), guides UI.
+
+### T-0204 Drawing tool framework and shape tools (viewmodel + canvas)   [status: in progress]
+Phase: 1 (Batch B, wave 2)   Module: app/viewmodel + app/src   Depends on: T-0200, T-0201, T-0203   ADR: 0014 (+ ADR 0026 for the tool interface if a choice is made)
+Goal: A Qt-free `ToolController` state machine: the canvas forwards pointer events in screen px (move/press/release/double-click, modifiers, Escape/Enter) and the active tool turns them into previews and, on completion, one undoable `AddObjectCommand` (parametric creation params kept so the object stays re-editable, ARCHITECTURE "parametric objects"). Snapping (T-0203) is applied to every pointer position before the tool sees it, and the snapped point and kind are exposed for the overlay. Tools: Select (click/marquee via T-0201), Rectangle (corner types square/rounded/chamfer), Circle, Ellipse, Polygon, Star, Arc (three-point, centre-start-end, start-end-radius, and the "Exact Size" start/end/height variant deferred from T-0200), Polyline/Line. Numeric entry of the defining values while drawing is a viewmodel contract (field list + parse/validate), UI for it can be a simple dock. Qt layer: a tool palette (toolbar), event forwarding in CanvasWidget (keep it thin), preview and snap-glyph overlay painted from `buildCanvasScene`-style data.
+Interfaces: owns `carvetto/viewmodel/tools.hpp` (+ tool implementations); may edit CanvasWidget event routing (T-0201's click-to-select hook moves behind the Select tool). T-0202 owns main_window file actions: do not touch them; add only the toolbar.
+Acceptance criteria:
+  1. Per tool, scripted pointer-event sequences produce the exact contours of the T-0200 builders (compare against `buildContours`) and exactly one undo step; Escape cancels with no document change; undo/redo round trips; a created object re-opened from `.carv` rebuilds identically.
+  2. Snapping integration: the point the tool receives equals the T-0203 best snap (or the raw point when none), modifiers (Shift constrain/ortho, Ctrl centre-out) tested; numeric entry validated (units via the display unit, bad input rejected without side effects).
+  3. Dense-drawing guard (T-0203 follow-up): per-pointer-move snapping work is bounded — a 10k-object scene with hundreds of spans inside the tolerance window of the cursor answers within a documented time (cap the candidates per kind before the pairwise intersect/perpendicular/tangent search, or cache per cursor cell; document any silent-loss case).
+  4. Headless tests for the controller; `carvetto --self-test` drives a tool through the real window; CI Linux + Windows; sources added to the CMake lists in alphabetical positions and main merged before READY.
+Out of scope: freehand, Bezier node drawing, text, dimensions, transform handles, node editing.
+
+### T-0207 Boolean and offset operations on the selection (viewmodel)   [status: in progress]
+Phase: 1 (Batch B, wave 2)   Module: app/viewmodel (+ core/document glue)   Depends on: T-0201, T-0003, T-0004, T-0005   ADR: 0014
+Goal: Qt-free operations over the current selection, each one undoable command: Weld (union), Subtract (first minus the rest, or selected-from-picked order per the feature inventory), Intersect, Exclude, and Offset (distance, side, join type; open and closed vectors; Delete original on/off) built on the existing core boolean/offset routines with their documented tolerances. Results become plain vector objects on the source layer (creation parameters of the sources are not kept), keeping holes (hole nesting from core) and winding conventions. Errors (no closed vectors selected, nothing left after the operation, input too large) come back as messages for a dialog, never partial results. Menu enabling rules (`canWeld(selection)` etc.) are in the viewmodel; Qt layer adds Edit/Vectors menu entries and a small offset dialog.
+Acceptance criteria:
+  1. Results match the core boolean/offset functions called directly on the same contours (area oracle, count of contours, hole nesting) over generated scenes with holes, arcs and Beziers; one undo step restores the document exactly (byte-identical `.carv` save).
+  2. Selection after the command is the new objects; locked/hidden layers' objects are never touched; groups are handled per documented rule (operate on leaves).
+  3. Robustness: degenerate, tiny and huge inputs (the T-0138/T-0141 families) neither crash nor hang; a 2k-object weld is within a documented time bound.
+  4. Headless tests; self-test step; CI Linux + Windows; CMake additions in alphabetical positions.
+Out of scope: trim/extend/fillet, join/close, curve fit (T-0208), boundary-from-selection UI.
+
+### T-0212 SVG import and export (core/io)   [status: in progress]
+Phase: 1 (Batch B, wave 2)   Module: core/io   Depends on: T-0001, T-0100   ADR: 0026 (new if a choice is made; own XML subset parser — no new dependency without owner approval)
+Goal: `importSvg(bytes, options) → {layers, contours, warnings}` and `exportSvg(layers, contours, options) → bytes` mirroring the DXF API (geometry-level, ADR-0015). Import: path data (M L H V C S Q T A Z, absolute and relative; arcs to exact circular arcs when rx = ry, otherwise Beziers within tolerance), rect (with rx/ry), circle, ellipse, line, polyline, polygon; nested transforms (matrix, translate, scale, rotate, skewX/Y); `<g>` ids and Inkscape layer labels become layers; viewBox and width/height units (px at 96 dpi, mm, cm, in, pt, pc) scaled to mm, Y flipped to Y-up; `<use>` of defs. Fill/stroke are ignored except hidden/`display:none`. Text, images, gradients, clip paths and filters are skipped with a warning each. Export: closed/open contours as `<path>`s in mm with a viewBox, one `<g>` per layer. Clean-room; SVG 1.1 spec is public.
+Acceptance criteria:
+  1. Per-element golden tests including every path command in absolute/relative form, arc flags edge cases, nested transforms, viewBox/unit scaling; export → import round trip equals the input geometry within tolerance; a fixture set under core/tests/fixtures/svg authored for the project (no third-party assets).
+  2. Security/robustness: a bounded XML subset parser — DOCTYPE/entities rejected (no entity expansion, no external references, no network or file access), element depth, attribute length, path-data length and total output spans capped with clear errors; fuzz (random/mutated inputs) neither crashes nor hangs nor allocates unboundedly (run under ASan/UBSan in verification); numbers like 1e999, NaN, huge arc radii handled.
+  3. Determinism (same input, same output); warnings reported per skipped element type; CLI hook optional (`carvetto-cli import-svg` if DXF has an equivalent), MSVC CI green.
+Out of scope: text-to-path, CSS stylesheets beyond inline `style="display:none"`, EPS/PDF.
 
 #### Wave 2 stubs (to be carded when wave 1 is done)
 - T-0200 follow-ups (director decisions 2026-11-06, from the coder's report): (1) internally radiused (cove) rectangle corners need a new `CornerStyle` value and a geometry spec from the feature inventory — card after wave 1 if the inventory defines it, else ask the owner; (2) the arc "Exact Size" Height variant (start, end, height) is a small addition to `buildArcStartEndRadius` — card with the arc tool (T-0204).

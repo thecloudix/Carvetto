@@ -181,3 +181,45 @@ TEST_CASE("T-0016 AC1: dense zig-zag, Sharp and Square cost about linear in the 
         CHECK(perOffsetRatio < 2.5);
     }
 }
+
+TEST_CASE("T-0170: dense amplitude-1 zig-zag, Sharp, Square and Round: at most 2.5x per doubling",
+          "[geometry][offset][open][t0170][perf]") {
+    // The fixed-ratio check against Round above (30x since T-0168 sped Round up) cannot see a
+    // join whose cost grows faster than the input while the ratio stays under its bound, so this
+    // one compares each join with itself at twice the length, on the card's family (pitch 0.02,
+    // amplitude 1: every corner's chamfer or mitre overlaps hundreds of its neighbours'). The
+    // zig-zag is several d long even when short, so the cheaper ends do not skew the ratio; the
+    // measured ratio is ~2.0 in Release (2.3 while the whole path is within 2d of itself).
+    // Each small run offsets the short zig-zag twice, each large run the longer one once.
+#ifdef NDEBUG
+    const int lines = 800;
+    const double d = 3.0;
+#else
+    const int lines = 200;
+    const double d = 1.0;
+#endif
+    const Contour shortZig = zigZag(lines, 0.02, 1.0);
+    const Contour longZig = zigZag(2 * lines, 0.02, 1.0);
+    for (const JoinType join : {JoinType::Sharp, JoinType::Square, JoinType::Round}) {
+        CAPTURE(static_cast<int>(join));
+        std::size_t spans = 0;
+        const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+            3,
+            [&] {
+                for (int r = 0; r < 2; ++r) {
+                    for (const Contour& c : offsetOpenContour(shortZig, d, OffsetSide::Left, join, kTol)) {
+                        spans += c.spans.size();
+                    }
+                }
+            },
+            [&] {
+                for (const Contour& c : offsetOpenContour(longZig, d, OffsetSide::Left, join, kTol)) {
+                    spans += c.spans.size();
+                }
+            });
+        CHECK(spans > 0);
+        const double perOffsetRatio = t.ratio() * 2.0;
+        CAPTURE(t.smallSeconds, t.largeSeconds, perOffsetRatio);
+        CHECK(perOffsetRatio < 2.5);
+    }
+}
