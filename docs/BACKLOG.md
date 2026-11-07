@@ -683,7 +683,7 @@ Goal: (a) After T-0016, Round offsets and inputs with nothing to prune are 13–
 Acceptance criteria:
   1. (a) Round on the t0016v1 perf inputs is within 3% of pre-T-0016 main (interleaved CPU, A/A control); (b) fixed to ≤ 2.5× per doubling or documented in ADR-0012 with measurements; outputs byte-identical; full ctest.
 
-### T-0176 Offset: filleted-arc inputs still ~8% slower than pre-T-0016; 300k-span lines +3..13% (T-0170 verifier)   [status: in progress]
+### T-0176 Offset: filleted-arc inputs still ~8% slower than pre-T-0016; 300k-span lines +3..13% (T-0170 verifier)   [status: verifying]
 Phase: 1   Module: core/geometry   Depends on: T-0170   ADR: 0012
 Goal: T-0170 recovered the Round/no-prune slowdown for line inputs (std::hypot replaced by squared comparisons at five sites) but the verifier (harness t0170v1) measured, A/A-controlled against pre-T-0016 (993d0f9): filleted-arc zig-zag Round with nothing to prune (arc 50000, 100k spans, d=0.004) +8% (1.06..1.10; main is +8.3% too, so nothing recovered), and a 300k-span line zig-zag +3% to +13% (A/A 0.97..1.0, so not noise). Arcs still go through hypot, atan2 and fabs. Find and remove the cost on the arc paths the same way, and check the 300k-span line case.
 Acceptance criteria:
