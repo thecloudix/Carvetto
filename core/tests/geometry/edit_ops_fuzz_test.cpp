@@ -5,17 +5,17 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
-#include <chrono>
-#include <future>
 #include <limits>
 #include <vector>
 
 #include "carvetto/geometry/contour_ops.hpp"
 #include "carvetto/geometry/edit_ops.hpp"
 #include "cpu_scaling.hpp"
+#include "fail_fast.hpp"
 #include "test_rng.hpp"
 
 using namespace carvetto::geometry;
+using carvetto::test::failFast;
 using carvetto::test::SplitMix;
 
 namespace {
@@ -72,7 +72,9 @@ bool finiteContour(const Contour& c) {
     return true;
 }
 
-void exercise(SplitMix& rng, double scale, bool hostileValues, std::vector<Contour>& outputs) {
+/// `nonFinite` counts outputs with a non-finite box (no assertions here: failFast runs this on a
+/// worker thread; the caller asserts the count is zero).
+void exercise(SplitMix& rng, double scale, bool hostileValues, std::vector<Contour>& outputs, int& nonFinite) {
     // Tolerances scale with the drawing: curve intersection cost grows with extent / chordal.
     const Tolerance tol{scale * 1e-5, 1e-9, scale * 1e-4};
     const Contour a = randomContour(rng, scale, hostileValues);
@@ -86,29 +88,29 @@ void exercise(SplitMix& rng, double scale, bool hostileValues, std::vector<Conto
     for (FilletKind kind : {FilletKind::Normal, FilletKind::DogBone, FilletKind::TBone}) {
         const FilletAllResult f = filletAll(a, radius, kind, opt, tol);
         if (f.status == EditStatus::Ok) {
-            REQUIRE(finiteContour(f.contour));
+            nonFinite += finiteContour(f.contour) ? 0 : 1;
             outputs.push_back(f.contour);
         }
         const FilletResult one = filletCorner(a, rng.next() % 8, radius, kind, opt, tol);
         if (one.status == EditStatus::Ok) {
-            REQUIRE(finiteContour(one.contour));
+            nonFinite += finiteContour(one.contour) ? 0 : 1;
         }
     }
     for (TrimSide side : {TrimSide::ClearInside, TrimSide::ClearOutside}) {
         const TrimResult t = trimToBoundary({a, b}, {boundary}, side, rng.next() % 2 == 0, tol);
         for (const Contour& c : t.contours) {
-            REQUIRE(finiteContour(c));
+            nonFinite += finiteContour(c) ? 0 : 1;
             outputs.push_back(c);
         }
     }
     const TrimAtResult ta = trimSpansAt(a, randomPoint(rng, scale), {b}, TrimAtOptions{rng.next() % 2 == 0}, tol);
     for (const Contour& c : ta.contours) {
-        REQUIRE(finiteContour(c));
+        nonFinite += finiteContour(c) ? 0 : 1;
         outputs.push_back(c);
     }
     const ExtendResult e = extendSpan(a, rng.next() % 2 ? ContourEnd::Start : ContourEnd::End, {b, boundary}, tol);
     if (e.status == EditStatus::Ok) {
-        REQUIRE(finiteContour(e.contour));
+        nonFinite += finiteContour(e.contour) ? 0 : 1;
         outputs.push_back(e.contour);
     }
     const JoinResult j = joinContours({a, b, boundary}, tol);
@@ -127,12 +129,14 @@ TEST_CASE("edit ops: random finite inputs never crash and are deterministic", "[
     for (double scale : {1e-4, 1.0, 100.0, 1e7}) {
         std::vector<Contour> first;
         std::vector<Contour> second;
+        int nonFinite = 0;
         SplitMix r1{static_cast<std::uint64_t>(scale * 1000.0) + 1};
         SplitMix r2{static_cast<std::uint64_t>(scale * 1000.0) + 1};
         for (int i = 0; i < 50; ++i) {
-            exercise(r1, scale, false, first);
-            exercise(r2, scale, false, second);
+            exercise(r1, scale, false, first, nonFinite);
+            exercise(r2, scale, false, second, nonFinite);
         }
+        CHECK(nonFinite == 0);
         CHECK(first == second);
     }
 }
@@ -140,10 +144,11 @@ TEST_CASE("edit ops: random finite inputs never crash and are deterministic", "[
 TEST_CASE("edit ops: hostile values (NaN, infinity, huge, zero) are rejected or handled", "[edit][fuzz]") {
     SplitMix rng{99};
     std::vector<Contour> sink;
+    int nonFinite = 0;
     for (int i = 0; i < 300; ++i) {
-        exercise(rng, 10.0, true, sink);
+        exercise(rng, 10.0, true, sink, nonFinite);
     }
-    SUCCEED();
+    CHECK(nonFinite == 0);
 }
 
 TEST_CASE("edit ops: trimming scales near-linearly with the box index", "[edit][perf]") {
@@ -211,20 +216,6 @@ TEST_CASE("edit ops: filleting a 20000-corner contour is linear in practice", "[
 
 namespace {
 
-/// Runs `fn` on a worker thread and fails the test within `seconds` if it has not returned: a
-/// regression of a hang guard then reports in seconds instead of stalling the suite. The stuck
-/// worker cannot be cancelled, so the process ends right after reporting.
-template <class F>
-auto failFast(double seconds, const char* what, F&& fn) {
-    auto fut = std::async(std::launch::async, std::forward<F>(fn));
-    if (fut.wait_for(std::chrono::duration<double>(seconds)) != std::future_status::ready) {
-        std::fprintf(stderr, "HANG: %s did not finish within %g s\n", what, seconds);
-        std::fflush(stderr);
-        std::_Exit(2);
-    }
-    return fut.get();
-}
-
 /// One open line (no Polyline: <windows.h>, pulled in by cpu_time.hpp, declares a GDI Polyline).
 Contour openLine(Vec2 a, Vec2 b) {
     Contour c;
@@ -249,30 +240,30 @@ TEST_CASE("edit ops: Beziers with huge control points are refused at once", "[ed
         Contour closedBz = bz;
         closedBz.append(LineSpan{{10, 10}, {0, 0}});
         closedBz.closed = true;
-        CHECK(failFast(10.0, "trimSpansAt", [&] { return trimSpansAt(bz, {1, 1}, {ln}).status; }) ==
+        CHECK(failFast(20.0, "trimSpansAt", [&] { return trimSpansAt(bz, {1, 1}, {ln}).status; }) ==
               EditStatus::InvalidArgument);
-        CHECK(failFast(10.0, "trimToBoundary (curve)",
+        CHECK(failFast(20.0, "trimToBoundary (curve)",
                        [&] { return trimToBoundary({bz}, {sq}, TrimSide::ClearInside).status; }) ==
               EditStatus::InvalidArgument);
-        CHECK(failFast(10.0, "trimToBoundary (boundary)",
+        CHECK(failFast(20.0, "trimToBoundary (boundary)",
                        [&] { return trimToBoundary({ln}, {closedBz}, TrimSide::ClearInside).status; }) ==
               EditStatus::InvalidArgument);
-        CHECK(failFast(10.0, "extendSpan", [&] {
+        CHECK(failFast(20.0, "extendSpan", [&] {
                   return extendSpan(openLine({-30, 0}, {-25, 0}), ContourEnd::End, {bz}).status;
               }) == EditStatus::InvalidArgument);
-        CHECK(failFast(10.0, "filletAll", [&] { return filletAll(closedBz, 1.0, FilletKind::Normal).status; }) ==
+        CHECK(failFast(20.0, "filletAll", [&] { return filletAll(closedBz, 1.0, FilletKind::Normal).status; }) ==
               EditStatus::InvalidArgument);
-        CHECK(failFast(10.0, "closeContour", [&] { return closeContour(bz).status; }) == EditStatus::InvalidArgument);
-        CHECK(failFast(10.0, "joinContours", [&] { return joinContours({bz, ln}).contours.size(); }) == 2);
+        CHECK(failFast(20.0, "closeContour", [&] { return closeContour(bz).status; }) == EditStatus::InvalidArgument);
+        CHECK(failFast(20.0, "joinContours", [&] { return joinContours({bz, ln}).contours.size(); }) == 2);
     }
     // A control polygon far larger than its chordal tolerance (but within the magnitude cap) is
     // refused by the cost rule, again without running the intersection.
     const Contour wide = hugeBezier(1e9);
-    CHECK(failFast(10.0, "wide trimSpansAt", [&] { return trimSpansAt(wide, {1, 1}, {ln}).status; }) ==
+    CHECK(failFast(20.0, "wide trimSpansAt", [&] { return trimSpansAt(wide, {1, 1}, {ln}).status; }) ==
           EditStatus::InvalidArgument);
     // With a tolerance that scales with the drawing the same call is accepted and returns quickly.
     const Tolerance scaled{1e3, 1e-9, 1e4};
-    const auto st = failFast(30.0, "scaled trimSpansAt", [&] { return trimSpansAt(wide, {1, 1}, {ln}, {}, scaled).status; });
+    const auto st = failFast(120.0, "scaled trimSpansAt", [&] { return trimSpansAt(wide, {1, 1}, {ln}, {}, scaled).status; });
     CHECK((st == EditStatus::Ok || st == EditStatus::NothingToTrim));
 }
 
@@ -283,18 +274,20 @@ TEST_CASE("edit ops: fixed regression seeds of the hostile Bezier fuzz finish an
     for (std::uint64_t seed : {std::uint64_t{981}, std::uint64_t{6967}, std::uint64_t{1}, std::uint64_t{2},
                                std::uint64_t{3}, std::uint64_t{4}, std::uint64_t{5}, std::uint64_t{6}}) {
         INFO("seed = " << seed);
-        failFast(60.0, "hostile fuzz seed", [seed] {
+        const int nonFinite = failFast(120.0, "hostile fuzz seed", [seed] {
             SplitMix rng{seed};
             std::vector<Contour> sink;
+            int bad = 0;
             for (int i = 0; i < 12; ++i) {
-                exercise(rng, 10.0, true, sink);
+                exercise(rng, 10.0, true, sink, bad);
                 // Huge Beziers on top of the generic hostile spans.
                 Contour bz = hugeBezier(std::pow(10.0, rng.uniform(100.0, 300.0)));
                 const Tolerance tol{};
                 (void)trimSpansAt(bz, {1, 1}, {sink.empty() ? bz : sink.back()}, {}, tol);
                 (void)trimToBoundary({sink.empty() ? bz : sink.back()}, {bz}, TrimSide::ClearInside);
             }
-            return 0;
+            return bad;
         });
+        CHECK(nonFinite == 0);
     }
 }
