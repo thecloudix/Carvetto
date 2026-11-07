@@ -73,6 +73,14 @@ bool contourFinite(const Contour& c) {
 /// larger than its chordal tolerance is refused instead of grinding (ADR-0028).
 constexpr double kMaxCurveCostRatio = 1e6;
 
+/// Smallest accepted tol.chordal when a Bezier is involved, in units of epsilon x the largest
+/// coordinate magnitude (so between 4 and 8 ulps of the coordinates).
+constexpr double kMinChordalUlps = 4.0;
+
+/// extendSpan cuts the probe along a circle to `reach` once the rest of the circle is more than
+/// this many times longer than `reach` (see there).
+constexpr double kProbeCutRatio = 1000.0;
+
 bool tooCostly(const std::vector<const std::vector<Contour>*>& sets, const Contour* extra, const Tolerance& tol) {
     Box2 box;
     bool bezier = false;
@@ -99,7 +107,16 @@ bool tooCostly(const std::vector<const std::vector<Contour>*>& sets, const Conto
             scan(c);
         }
     }
-    return bezier && !box.isEmpty() && distance(box.min, box.max) / tol.chordal > kMaxCurveCostRatio;
+    if (!bezier || box.isEmpty()) {
+        return false;
+    }
+    if (distance(box.min, box.max) / tol.chordal > kMaxCurveCostRatio) {
+        return true;
+    }
+    // A chordal tolerance within a few ulps of the coordinates cannot be reached by subdividing:
+    // the flattening never converges (seconds to minutes at ~1 ulp, measured in T-0179).
+    const double largest = std::max({std::fabs(box.min.x), std::fabs(box.min.y), std::fabs(box.max.x), std::fabs(box.max.y)});
+    return tol.chordal < kMinChordalUlps * std::numeric_limits<double>::epsilon() * largest;
 }
 
 Span degenerateAt(Vec2 p) {
@@ -1190,8 +1207,22 @@ ExtendResult extendSpan(const Contour& contour, ContourEnd end, const std::vecto
         ArcSpan rest = *arc;
         rest.startAngle = arc->endAngle;
         rest.endAngle = arc->startAngle;
-        probe = rest;
         probeLen = rest.length();
+        // Contract: when the rest of the circle is longer than kProbeCutRatio x `reach` (so R is
+        // at least ~300 D), the probe is limited to the first `reach` of arc; a hit that would
+        // need travelling farther (e.g. a wrap-around hit on the far side of a huge circle, or a
+        // target behind the tip reached by going almost all the way round) is reported as
+        // NoIntersection. Every target lies within D of the tip, so a first-pass hit is within
+        // an arc length of (pi/2) D < reach: nothing nearer is lost. Within the probe the
+        // arc-length parameterisation differs from the unbounded probe, so `distance` and the
+        // point may differ in the last digits. Without the limit R of 1e9 mm and up cost seconds
+        // against Beziers. R >= D is implied by the length condition (R > 318 D).
+        if (probeLen > kProbeCutRatio * reach) {
+            const double cut = reach / arc->radius;
+            rest.endAngle = rest.startAngle + (rest.direction == ArcDirection::CCW ? cut : -cut);
+            probeLen = rest.length();
+        }
+        probe = rest;
     } else {
         probe = LineSpan{tip, tip + dir * reach};
     }
