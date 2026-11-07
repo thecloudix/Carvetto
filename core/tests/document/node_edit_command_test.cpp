@@ -116,7 +116,7 @@ TEST_CASE("SetObjectContoursCommand coalesces a drag into one step", "[document]
     CHECK(doc.undoStack().count() == steps + 1 + 1 + 2);
 }
 
-TEST_CASE("UndoStack::cancelLast reverts and forgets the latest step", "[document][undo]") {
+TEST_CASE("UndoStack::undoAndDiscard reverts and forgets the latest step", "[document][undo]") {
     Document doc;
     const ObjectId id = addRect(doc);
     doc.undoStack().setClean();
@@ -124,7 +124,7 @@ TEST_CASE("UndoStack::cancelLast reverts and forgets the latest step", "[documen
 
     REQUIRE(doc.execute(std::make_unique<SetObjectContoursCommand>(
         std::vector<ContourReplacement>{{id, {triangle(7)}}})));
-    REQUIRE(doc.undoStack().cancelLast(doc));
+    REQUIRE(doc.undoStack().undoAndDiscard(doc));
     CHECK(*doc.findObject(id) == before);
     CHECK_FALSE(doc.undoStack().canRedo());
     CHECK(doc.undoStack().isClean());
@@ -133,20 +133,20 @@ TEST_CASE("UndoStack::cancelLast reverts and forgets the latest step", "[documen
     REQUIRE(doc.execute(std::make_unique<SetObjectContoursCommand>(
         std::vector<ContourReplacement>{{id, {triangle(7)}}})));
     REQUIRE(doc.undoStack().undo(doc));
-    CHECK_FALSE(doc.undoStack().cancelLast(doc));
+    CHECK_FALSE(doc.undoStack().undoAndDiscard(doc));
     CHECK(doc.undoStack().canRedo());
 
     Document empty;
-    CHECK_FALSE(empty.undoStack().cancelLast(empty));
+    CHECK_FALSE(empty.undoStack().undoAndDiscard(empty));
 }
 
-TEST_CASE("UndoStack::cancelLast clears the clean point of a dropped step", "[document][undo]") {
+TEST_CASE("UndoStack::undoAndDiscard clears the clean point of a dropped step", "[document][undo]") {
     Document doc;
     const ObjectId id = addRect(doc);
     REQUIRE(doc.execute(std::make_unique<SetObjectContoursCommand>(
         std::vector<ContourReplacement>{{id, {triangle(7)}}})));
     doc.undoStack().setClean();
-    REQUIRE(doc.undoStack().cancelLast(doc));
+    REQUIRE(doc.undoStack().undoAndDiscard(doc));
     CHECK_FALSE(doc.undoStack().isClean());
 }
 
@@ -157,7 +157,7 @@ bool pushEdit(Document& doc, ObjectId id, double apex) {
 }
 }  // namespace
 
-TEST_CASE("cancelLast bumps the generation, which stays unique", "[document][undo]") {
+TEST_CASE("undoAndDiscard bumps the generation, which stays unique", "[document][undo]") {
     Document doc;
     const ObjectId id = addRect(doc);
     std::set<std::uint64_t> seen{doc.undoStack().generation()};
@@ -171,21 +171,21 @@ TEST_CASE("cancelLast bumps the generation, which stays unique", "[document][und
     REQUIRE(pushEdit(doc, id, 9));
     CHECK(fresh());  // pushes inside a macro too
     doc.undoStack().endMacro();
-    REQUIRE(doc.undoStack().cancelLast(doc));
+    REQUIRE(doc.undoStack().undoAndDiscard(doc));
     CHECK(fresh());
 }
 
-TEST_CASE("cancelLast: clean point, refusals, no coalescing into a cancelled step", "[document][undo]") {
+TEST_CASE("undoAndDiscard: clean point, refusals, no coalescing into a cancelled step", "[document][undo]") {
     Document doc;
     const ObjectId id = addRect(doc);
     doc.undoStack().setClean();
     REQUIRE(pushEdit(doc, id, 7));
-    REQUIRE(doc.undoStack().cancelLast(doc));
+    REQUIRE(doc.undoStack().undoAndDiscard(doc));
     CHECK(doc.undoStack().isClean());
     // A different step pushed afterwards is not clean.
     REQUIRE(pushEdit(doc, id, 9));
     CHECK_FALSE(doc.undoStack().isClean());
-    REQUIRE(doc.undoStack().cancelLast(doc));
+    REQUIRE(doc.undoStack().undoAndDiscard(doc));
     CHECK(doc.undoStack().isClean());
 
     // The step after a cancel starts a new run: it does not merge into whatever came before.
@@ -193,15 +193,15 @@ TEST_CASE("cancelLast: clean point, refusals, no coalescing into a cancelled ste
     doc.undoStack().breakCoalescing();
     REQUIRE(pushEdit(doc, id, 6));
     const std::size_t count = doc.undoStack().count();
-    REQUIRE(doc.undoStack().cancelLast(doc));
+    REQUIRE(doc.undoStack().undoAndDiscard(doc));
     CHECK(doc.undoStack().count() == count - 1);
     REQUIRE(pushEdit(doc, id, 11));
     CHECK(doc.undoStack().count() == count);  // not merged into the step before the cancelled one
 
     // Refusals: inside a macro, with a redo tail.
     doc.undoStack().beginMacro("m");
-    CHECK_FALSE(doc.undoStack().cancelLast(doc));
+    CHECK_FALSE(doc.undoStack().undoAndDiscard(doc));
     doc.undoStack().endMacro();
     REQUIRE(doc.undoStack().undo(doc));
-    CHECK_FALSE(doc.undoStack().cancelLast(doc));
+    CHECK_FALSE(doc.undoStack().undoAndDiscard(doc));
 }

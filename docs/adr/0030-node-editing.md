@@ -17,7 +17,7 @@ the choices. The logic is Qt-free (ADR-0014) and lives behind the tool controlle
   operations on the document. `ToolController` owns one, routes the pointer events of
   `ToolKind::NodeEdit` to it and supplies the snapped point.
 - Core: `document::SetObjectContoursCommand` (new file `node_edit_command.hpp`) replaces the
-  contours of vector objects and resets their parameters to `NoParams`; `UndoStack::cancelLast`.
+  contours of vector objects and resets their parameters to `NoParams`; `UndoStack::undoAndDiscard`.
 
 ### 2. Nodes, handles, hit order
 - A closed contour of n spans has n nodes (node i starts span i); an open one n + 1. A full-circle
@@ -99,7 +99,7 @@ J) do not fire in node editing.
 - A step equal to the drag-start state is not pushed before something was pushed (a click does not
   touch the object or its parameters); after the first push every step is pushed, so dragging back
   to the start still replaces the earlier result.
-- Escape (or a tool switch) during a drag calls `UndoStack::cancelLast`: the latest step is reverted
+- Escape (or a tool switch) during a drag calls `UndoStack::undoAndDiscard`: the latest step is reverted
   and dropped, so no redo entry remains. If anything else edited the document during the drag
   (undo, another command, a replaced document) the editor notices that the undo stack's
   `generation()` changed, ends the drag without reverting anything and ignores the snapshots.
@@ -112,17 +112,24 @@ keeps the parameters.
 
 ### 8. Snapping during a drag
 Every pointer position goes through the snapper (Shift disables it) with the objects being edited
-in `SnapQuery::exclude`. A drag changes the document on every step, which would invalidate the
-generation-keyed `SnapIndex` (ADR-0027) 60 times a second; but the only objects that change are the
-excluded ones, and the index never dereferences an excluded entry. So while a node-edit drag is
-active the controller keeps the index built at the drag's start (key: the generation of that
-moment); `NodeEditor::validateGesture` ends the drag if the generation moves for any other reason,
-and the index is rebuilt by the normal key check at the next event after the drag.
-The index is refreshed (normal generation key) on every pointer event while no drag is active,
-also when Shift skips snapping, and the drag may keep it only if it was current at the moment the
-drag began (`dragIndexValid_`); otherwise the normal key check applies on every event. (A first
-version skipped the refresh with Shift held and kept a stale index: use-after-free, found by the
-verifier.)
+excluded. A drag changes the document on every step, which would invalidate the generation-keyed
+`SnapIndex` (ADR-0027) per step; only the objects being edited change, though. So the node-edit drag
+uses the same mechanism as the transform drag of ADR-0029: when the drag begins, the controller
+builds one index of everything but the edited objects (`SnapIndex` with its skip list, kept in
+`gestureSnapIndex_`) and uses it only while the undo generation equals the one the gesture itself
+produced last (`NodeEditor::expectedGeneration`, `TransformGesture::expectedGeneration`). Anything
+else that edits the document ends the drag (`NodeEditor::validateGesture`) and discards the
+frozen index; the normal generation-keyed cache then applies again. The frozen index is built from
+the document as it is when the drag begins, whatever the modifiers (a first version reused an older
+cache when the drag began with Shift held and read freed memory: found by the verifier).
+`ToolController::snapIndexBuilds()` is a test hook that pins this (no rebuild per drag step).
+
+### 8b. Keys against the Transform shortcuts (ADR-0029)
+While the NodeEdit tool is active the canvas claims plain letter keys (with or without Shift)
+through `ShortcutOverride`, so H/V toggle the node-edit mirror mode (and J, M, T, R reach the node
+editor, where unbound letters do nothing) instead of the Transform menu actions. Ctrl+H/Ctrl+V and
+the function keys are not claimed and stay Transform shortcuts. In Select mode nothing is claimed.
+Typing into a tool-panel field never reaches either (the line edit consumes the key).
 
 ### 9. Known limits
 - Dragging after an undo discards the redo entry for good (a drag is a new edit); Escape reverts

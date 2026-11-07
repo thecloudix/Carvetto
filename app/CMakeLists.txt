@@ -20,6 +20,8 @@ qt_add_executable(carvetto
   src/tool_panel.hpp
   src/self_test.cpp
   src/self_test.hpp
+  src/transform_menu.cpp
+  src/transform_menu.hpp
   src/vector_ops_menu.cpp
   src/vector_ops_menu.hpp
 )

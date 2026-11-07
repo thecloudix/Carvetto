@@ -3,12 +3,15 @@
 #include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
+#include <cmath>
 #include <cstddef>
 #include <memory>
 #include <set>
+#include <variant>
 #include <vector>
 
 #include "carvetto/document/document.hpp"
+#include "carvetto/document/shape_params.hpp"
 #include "carvetto/geometry/contour.hpp"
 // Last: on Windows it includes <windows.h> (macros such as near/far).
 #include "../geometry/cpu_scaling.hpp"
@@ -527,4 +530,221 @@ TEST_CASE("macro on the document groups several commands", "[document][commands]
     CHECK(doc.findLayer(layer) == nullptr);
     REQUIRE(doc.redo());
     CHECK(doc.findObject(id)->layer == layer);
+}
+
+namespace {
+
+constexpr double kQuarter = 1.5707963267948966;
+
+ObjectId addParametric(Document& doc, const CreationParams& params) {
+    auto built = buildContours(params);
+    REQUIRE(built.ok());
+    return doc.insertObject(Object::vector(built.value(), doc.activeLayer(), doc.activeSheet(), params));
+}
+
+// Applies `m` through the command and returns the object afterwards.
+Object transformed(Document& doc, ObjectId id, const Transform2& m) {
+    doc.undoStack().breakCoalescing();
+    REQUIRE(doc.execute(std::make_unique<TransformObjectsCommand>(std::vector<ObjectId>{id}, m)));
+    return *doc.findObject(id);
+}
+
+bool keepsParams(const Object& o) { return !std::holds_alternative<NoParams>(o.asVector()->params); }
+
+// Stored params rebuild the stored contours span by span.
+void requireReproduced(const Object& o, double tol = 1e-9) {
+    const VectorObject* v = o.asVector();
+    auto rebuilt = buildContours(v->params);
+    REQUIRE(rebuilt.ok());
+    REQUIRE(rebuilt.value().size() == v->contours.size());
+    for (std::size_t i = 0; i < v->contours.size(); ++i) {
+        const Contour& a = rebuilt.value()[i];
+        const Contour& b = v->contours[i];
+        REQUIRE(a.spans.size() == b.spans.size());
+        for (std::size_t k = 0; k < a.spans.size(); ++k) {
+            REQUIRE(a.spans[k].index() == b.spans[k].index());
+            const Vec2 pa = carvetto::geometry::startPoint(a.spans[k]);
+            const Vec2 pb = carvetto::geometry::startPoint(b.spans[k]);
+            const double reach = 1e-14 * (std::abs(pa.x) + std::abs(pa.y));
+            REQUIRE(std::abs(pa.x - pb.x) <= tol + reach);
+            REQUIRE(std::abs(pa.y - pb.y) <= tol + reach);
+        }
+    }
+}
+
+std::vector<CreationParams> allShapes() {
+    std::vector<CreationParams> list;
+    RectangleParams r;
+    r.centreMm = {10, 20};
+    r.widthMm = 40;
+    r.heightMm = 14;
+    list.push_back(r);
+    r.corners = RectangleParams::CornerStyle::Rounded;
+    r.cornerRadiusMm = 3;
+    list.push_back(r);
+    r.corners = RectangleParams::CornerStyle::Chamfered;
+    list.push_back(r);
+    list.push_back(CircleParams{{5, 6}, 9});
+    list.push_back(EllipseParams{{5, 6}, 30, 12, 0.3});
+    list.push_back(EllipseParams{{5, 6}, 20, 20, 0.0});
+    for (int sides : {3, 5, 6}) {
+        list.push_back(PolygonParams{{1, 2}, sides, 15, 0.4});
+    }
+    for (int pts : {4, 5}) {
+        list.push_back(StarParams{{1, 2}, pts, 20, 8, 0.2});
+    }
+    return list;
+}
+
+}  // namespace
+
+TEST_CASE("transform: translations keep parameters and rebuild identically", "[document][commands]") {
+    for (const CreationParams& params : allShapes()) {
+        Document doc;
+        const ObjectId id = addParametric(doc, params);
+        for (Vec2 d : {Vec2{5, -3}, Vec2{1e8, -1e8}, Vec2{-0.125, 0.0}}) {
+            const Object o = transformed(doc, id, Transform2::translation(d));
+            REQUIRE(keepsParams(o));
+            requireReproduced(o);
+        }
+    }
+}
+
+TEST_CASE("transform: every kept parameter set reproduces the stored contours", "[document][commands]") {
+    // All eight axis-aligned rigid maps (and the rest of the mirror/scale family): whatever keeps
+    // its parameters must rebuild span by span; the others become plain vectors.
+    const Transform2 maps[] = {Transform2::identity(),
+                               Transform2::rotation(kQuarter, {3, 4}),
+                               Transform2::rotation(2 * kQuarter, {3, 4}),
+                               Transform2::rotation(3 * kQuarter, {3, 4}),
+                               Transform2::mirrorX(2.0),
+                               Transform2::mirrorY(2.0),
+                               Transform2::mirror({0, 0}, {1, 1})};
+    std::size_t kept = 0;
+    for (const CreationParams& params : allShapes()) {
+        for (const Transform2& m : maps) {
+            Document doc;
+            const ObjectId id = addParametric(doc, params);
+            const Object o = transformed(doc, id, m);
+            if (keepsParams(o)) {
+                ++kept;
+                requireReproduced(o);
+            }
+        }
+    }
+    CHECK(kept > 11);  // at least the identities
+}
+
+TEST_CASE("transform: polygon, star and ellipse quarter turns update the angle", "[document][commands]") {
+    Document doc;
+    const ObjectId poly = addParametric(doc, PolygonParams{{1, 2}, 6, 15, 0.4});
+    const Object o = transformed(doc, poly, Transform2::rotation(2 * kQuarter, {0, 0}));
+    REQUIRE(keepsParams(o));
+    const auto* p = std::get_if<PolygonParams>(&o.asVector()->params);
+    REQUIRE(p != nullptr);
+    CHECK_THAT(p->angle, WithinAbs(0.4 + 2 * kQuarter, 1e-12));
+    CHECK_THAT(p->centreMm.x, WithinAbs(-1.0, 1e-12));
+    requireReproduced(o);
+
+    const ObjectId star = addParametric(doc, StarParams{{1, 2}, 5, 20, 8, 0.2});
+    const Object s = transformed(doc, star, Transform2::rotation(kQuarter, {0, 0}));
+    REQUIRE(keepsParams(s));
+    CHECK_THAT(std::get<StarParams>(s.asVector()->params).angle, WithinAbs(0.2 + kQuarter, 1e-12));
+    requireReproduced(s);
+}
+
+TEST_CASE("transform: near-miss rotations and scales drop the parameters", "[document][commands]") {
+    const double deg = 3.14159265358979323846 / 180.0;
+    RectangleParams r;
+    r.centreMm = {0, 0};
+    r.widthMm = 1000;
+    r.heightMm = 400;
+    for (double degrees : {0.0001, 0.0005, 0.001, 0.002, 0.0025, 0.003}) {
+        Document doc;
+        const ObjectId id = addParametric(doc, r);
+        CHECK_FALSE(keepsParams(transformed(doc, id, Transform2::rotation(degrees * deg, {0, 0}))));
+    }
+    for (double base : {0.0, kQuarter, 2 * kQuarter, 3 * kQuarter}) {
+        for (double eps : {1e-7, 1e-6, -1e-7, -1e-6}) {
+            Document doc;
+            RectangleParams small;
+            small.widthMm = 30;
+            small.heightMm = 20;
+            const ObjectId id = addParametric(doc, small);
+            CHECK_FALSE(keepsParams(transformed(doc, id, Transform2::rotation(base + eps, {0, 0}))));
+        }
+    }
+    {
+        // So small that the rebuild guard alone would accept it: the matrix test must refuse it.
+        Document tiny;
+        PolygonParams hex;
+        hex.sides = 6;
+        hex.radiusMm = 1.0;
+        const ObjectId pid = addParametric(tiny, hex);
+        CHECK_FALSE(keepsParams(transformed(tiny, pid, Transform2::rotation(1e-10, {0, 0}))));
+        const ObjectId pid2 = addParametric(tiny, hex);
+        CHECK_FALSE(keepsParams(transformed(tiny, pid2, Transform2::rotation(kQuarter + 1e-10, {0, 0}))));
+    }
+    Document doc;
+    const ObjectId id = addParametric(doc, r);
+    CHECK_FALSE(keepsParams(transformed(doc, id, Transform2::scaling(1.0, 1.0 + 5e-10))));
+    const ObjectId id2 = addParametric(doc, r);
+    CHECK_FALSE(keepsParams(transformed(doc, id2, Transform2::scaling(2.0))));
+    const ObjectId id3 = addParametric(doc, r);
+    CHECK_FALSE(keepsParams(transformed(doc, id3, Transform2::mirrorX(0.0))));
+}
+
+TEST_CASE("transform: a quarter turn drops parameters whose rebuild would start elsewhere", "[document][commands]") {
+    Document doc;
+    RectangleParams r;
+    r.widthMm = 40;
+    r.heightMm = 14;
+    const ObjectId id = addParametric(doc, r);
+    const Object before = *doc.findObject(id);
+    const Object o = transformed(doc, id, Transform2::rotation(kQuarter, {0, 0}));
+    CHECK_FALSE(keepsParams(o));  // the rebuilt rectangle starts at another corner
+    REQUIRE(doc.undo());
+    CHECK(*doc.findObject(id) == before);  // undo restores the parameters too
+}
+
+TEST_CASE("transform: parameters must reproduce the contours within the guard tolerance", "[document][commands]") {
+    const auto drifted = [](double drift) {
+        Document doc;
+        RectangleParams r;
+        r.widthMm = 40;
+        r.heightMm = 14;
+        auto built = buildContours(r);
+        REQUIRE(built.ok());
+        std::vector<Contour> contours = built.value();
+        // Nudge one corner of the stored contour away from what the parameters build.
+        auto* first = std::get_if<carvetto::geometry::LineSpan>(&contours.front().spans.front());
+        REQUIRE(first != nullptr);
+        first->end.x += drift;
+        auto* second = std::get_if<carvetto::geometry::LineSpan>(&contours.front().spans[1]);
+        REQUIRE(second != nullptr);
+        second->start.x += drift;
+        const ObjectId id = doc.insertObject(Object::vector(contours, doc.activeLayer(), doc.activeSheet(), r));
+        return keepsParams(transformed(doc, id, Transform2::translation({3, 4})));
+    };
+    CHECK(drifted(1e-11));          // below the guard: still reproduced
+    CHECK_FALSE(drifted(1e-7));     // above it: the parameters no longer describe the shape
+    CHECK_FALSE(drifted(1e-5));
+    CHECK_FALSE(drifted(1e-4));
+}
+
+TEST_CASE("transform: same point set but another start drops the parameters", "[document][commands]") {
+    // A rectangle turned a half circle covers the same points, but its rebuild starts at the
+    // opposite corner: only a start-aware comparison notices.
+    Document doc;
+    RectangleParams r;
+    r.widthMm = 40;
+    r.heightMm = 14;
+    const ObjectId id = addParametric(doc, r);
+    const Object o = transformed(doc, id, Transform2::rotation(2 * kQuarter, {0, 0}));
+    CHECK_FALSE(keepsParams(o));
+    auto rebuilt = buildContours(r);
+    REQUIRE(rebuilt.ok());
+    CHECK_THAT(carvetto::geometry::startPoint(o.asVector()->contours.front().spans.front()).x +
+                   carvetto::geometry::startPoint(rebuilt.value().front().spans.front()).x,
+               WithinAbs(0.0, 1e-9));
 }

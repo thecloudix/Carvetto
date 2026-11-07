@@ -29,6 +29,7 @@ class RulerWidget;
 class CopiesMenu;
 class NodeEditMenu;
 class ToolPanel;
+class TransformMenu;
 class VectorOpsMenu;
 
 /// Main window: 2D/3D view tabs with rulers around the 2D canvas, sheet and layer selectors,
@@ -59,6 +60,7 @@ class MainWindow : public QMainWindow {
     VectorOpsMenu* vectorOps() const { return vectorOps_.get(); }
     /// The node-editing menus and Properties dialog of the NodeEdit tool.
     NodeEditMenu* nodeEdit() const { return nodeEdit_.get(); }
+    TransformMenu* transformMenu() const { return transformMenu_.get(); }
     QDockWidget* toolpathsDock() const { return toolpathsDock_; }
     QDockWidget* layersDock() const { return layersDock_; }
     ToolPanel* toolPanel() const { return toolPanel_; }
@@ -119,6 +121,7 @@ class MainWindow : public QMainWindow {
     std::unique_ptr<CopiesMenu> copies_;
     std::unique_ptr<VectorOpsMenu> vectorOps_;
     std::unique_ptr<NodeEditMenu> nodeEdit_;
+    std::unique_ptr<TransformMenu> transformMenu_;
 
     QTabWidget* views_{nullptr};
     CanvasWidget* canvas_{nullptr};

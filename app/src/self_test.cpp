@@ -42,6 +42,7 @@
 #include "main_window.hpp"
 #include "node_edit_menu.hpp"
 #include "tool_panel.hpp"
+#include "transform_menu.hpp"
 #include "vector_ops_menu.hpp"
 
 namespace carvetto::app {
@@ -521,6 +522,58 @@ int runSelfTest() {
     QCoreApplication::processEvents();
     if (window.dockWidgetArea(toolpaths) != Qt::RightDockWidgetArea) {
         return fail("the restored layout did not put the toolpaths panel back on the right");
+    }
+
+    // 4e. H / V collision (T-0206 / T-0205): in NodeEdit the plain letters win over the window
+    // shortcuts (ShortcutOverride) and H toggles the mirror mode without a Mirror undo step; in
+    // Select mode the same key is left to the Transform shortcut, which mirrors the selection.
+    {
+        CanvasWidget* canvas = window.canvas();
+        const geometry::Box2 box{{material.min.x + 5.0, material.min.y + 5.0}, {material.min.x + 25.0, material.min.y + 15.0}};
+        if (!doc.execute(std::make_unique<document::AddObjectCommand>(document::Object::vector(
+                geometry::Contour::rectangle(box), doc.activeLayer(), doc.activeSheet())))) {
+            return fail("could not add a rectangle for the H/V test");
+        }
+        doc.selection().assign({doc.objectIds().back()});
+        window.documentChanged();
+        const std::size_t steps = doc.undoStack().count();
+        auto overrideAccepted = [&](Qt::Key key) {
+            QKeyEvent ev(QEvent::ShortcutOverride, key, Qt::NoModifier, QString(QChar('a' + (key - Qt::Key_A))));
+            QCoreApplication::sendEvent(canvas, &ev);
+            return ev.isAccepted();
+        };
+        window.selectTool(viewmodel::ToolKind::NodeEdit);
+        if (!overrideAccepted(Qt::Key_H) || !overrideAccepted(Qt::Key_V)) {
+            return fail("NodeEdit does not claim the H / V keys from the window shortcuts");
+        }
+        sendKey(canvas, Qt::Key_H);
+        if (canvas->tools().nodeEditor().options().mirror != viewmodel::MirrorMode::Horizontal ||
+            doc.undoStack().count() != steps) {
+            return fail("H in NodeEdit did not toggle the mirror mode without an undo step");
+        }
+        sendKey(canvas, Qt::Key_H);
+        window.selectTool(viewmodel::ToolKind::Select);
+        if (overrideAccepted(Qt::Key_H)) {
+            return fail("Select mode claims H although it belongs to the Transform shortcut");
+        }
+        QAction* flip = window.transformMenu()->mirrorAction(viewmodel::MirrorAxis::Horizontal, false, false);
+        if (flip == nullptr || flip->shortcut() != QKeySequence(QStringLiteral("H")) || !flip->isEnabled()) {
+            return fail("the Transform menu has no enabled H mirror action");
+        }
+        flip->trigger();
+        if (doc.undoStack().count() != steps + 1) {
+            return fail("H in Select mode did not mirror the selection in one undo step");
+        }
+        if (!window.undo() || !window.undo() || doc.objectCount() != 0) {
+            return fail("undoing the H/V test objects failed");
+        }
+        doc.selection().clear();
+        window.documentChanged();
+    }
+
+    // 5b. Transforms through the real window: handle drag, numeric move, align, undo (T-0205).
+    if (const std::string why = transformSelfTest(window); !why.empty()) {
+        return fail(why);
     }
 
     // 6. File session: open -> modify -> save -> reopen, all headless (no dialogs).

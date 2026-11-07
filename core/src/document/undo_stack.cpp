@@ -89,18 +89,17 @@ bool UndoStack::redo(Document& doc) {
     return true;
 }
 
-bool UndoStack::cancelLast(Document& doc) {
+bool UndoStack::undoAndDiscard(Document& doc) {
     if (!canUndo() || index_ != commands_.size()) {
         return false;
     }
-    commands_.back()->revert(doc);
+    commands_[--index_]->revert(doc);
     commands_.pop_back();
-    --index_;
-    if (cleanIndex_ > static_cast<long long>(index_)) {
-        cleanIndex_ = -1;  // the clean state was the dropped step
-    }
     generation_ = nextGeneration();
     coalesceOpen_ = false;
+    if (cleanIndex_ > static_cast<long long>(index_)) {
+        cleanIndex_ = -1;
+    }
     return true;
 }
 

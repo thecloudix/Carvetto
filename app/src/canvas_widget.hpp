@@ -8,6 +8,7 @@
 #include <QWidget>
 #include <functional>
 #include <string>
+#include <optional>
 
 #include "carvetto/document/document.hpp"
 #include "carvetto/geometry/vec2.hpp"
@@ -97,6 +98,8 @@ class CanvasWidget : public QWidget {
     void paintOverlay(QPainter& painter) const;
     void paintNodes(QPainter& painter) const;
     void updateNodeCursor(QPointF pos);
+    void paintSelectionBox(QPainter& painter) const;
+    void updateCursorHint();
     void afterToolEvent(const viewmodel::ToolResult& result);
     static viewmodel::Modifiers toolModifiers(Qt::KeyboardModifiers mods);
 

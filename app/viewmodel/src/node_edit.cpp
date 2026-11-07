@@ -626,7 +626,7 @@ bool NodeEditor::escape(NodeEditResult* result) {
     }
     NodeEditResult r = success();
     if (gesture_ != Gesture::None && pushed_ && doc_ != nullptr && doc_->undoStack().generation() == generation_) {
-        r.changed = doc_->undoStack().cancelLast(*doc_);
+        r.changed = doc_->undoStack().undoAndDiscard(*doc_);
     }
     gesture_ = Gesture::None;
     pressed_ = false;

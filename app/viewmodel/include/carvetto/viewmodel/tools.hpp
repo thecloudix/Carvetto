@@ -19,6 +19,7 @@
 #include "carvetto/viewmodel/node_edit.hpp"
 #include "carvetto/viewmodel/selection_tools.hpp"
 #include "carvetto/viewmodel/snapping.hpp"
+#include "carvetto/viewmodel/transform_gesture.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
 
 // Qt-free drawing tools (T-0204, ADR-0014, ADR-0027). The canvas forwards pointer events in screen
@@ -37,9 +38,15 @@
 //     at least three points, and removes its last point with Backspace.
 //   * Select: click selects (Shift adds, Ctrl toggles), a drag draws a marquee (left to right:
 //     Window, right to left: Crossing) that combines with the selection by the same modifiers.
-//   * Escape cancels whatever is in progress without touching the document.
+//   * Select also grows the transform gestures of T-0205 (ADR-0029): with a selection, a press on a
+//     handle of its box scales (Scale mode) or rotates (Rotate mode), a press on a selected object
+//     moves it, and the middle handle moves (Scale mode) or drags the rotation pivot (Rotate
+//     mode). A click on a selected object or on the middle handle switches Scale <-> Rotate. The
+//     pointer is snapped (Shift disables snapping) and the whole drag is ONE undo step.
 //   * NodeEdit: pointer events go to the `NodeEditor` (node_edit.hpp); every drag step is snapped
-//     with the dragged objects excluded, on the snap index of the drag's start.
+//     with the dragged objects excluded (ADR-0030).
+//   * Escape cancels whatever is in progress without touching the document (an interactive
+//     transform is reverted).
 //
 // Modifiers
 //   * Shift disables snapping for that event; in the Polyline tool it also constrains the segment
@@ -53,6 +60,21 @@
 // replacing the pointer-derived ones.
 
 namespace carvetto::viewmodel {
+
+/// Handles of the selection box act as `Scale` handles or `Rotate` handles.
+enum class TransformMode { Scale, Rotate };
+
+/// What the pointer would do at its position over the selection box (for the mouse cursor).
+enum class CursorHint {
+    Default,
+    Move,
+    ScaleHorizontal,
+    ScaleVertical,
+    ScaleDiagonalUp,    ///< bottom-left to top-right on screen
+    ScaleDiagonalDown,  ///< top-left to bottom-right on screen
+    Rotate,
+    Pivot
+};
 
 enum class ToolKind { Select, Rectangle, Circle, Ellipse, Polygon, Star, Arc, Polyline, NodeEdit };
 
@@ -129,6 +151,7 @@ ParsedNumber parseNumber(std::string_view text, FieldKind kind, document::Units 
 struct ToolResult {
     bool committed{false};          ///< an object was added to the document (one undo step)
     bool selectionChanged{false};
+    bool transformed{false};        ///< an interactive transform step changed the document
     bool previewChanged{true};      ///< overlay must be redrawn
     std::string message;            ///< human-readable reason when the input was refused
 };
@@ -200,6 +223,22 @@ class ToolController {
     /// The node editor behind `ToolKind::NodeEdit`: handles for painting, operations, keys.
     NodeEditor& nodeEditor() { return nodeEditor_; }
     const NodeEditor& nodeEditor() const { return nodeEditor_; }
+    // --- Selection box and transform gestures (Select tool) ------------------------------------
+    /// Handles of the selection box when the Select tool is active and something can be
+    /// transformed; nullopt otherwise.
+    std::optional<SelectionBox> selectionHandles() const;
+    TransformMode transformMode() const { return xfMode_; }
+    void setTransformMode(TransformMode mode) { xfMode_ = mode; }
+    /// Rotation pivot: the custom point, else the centre of the selection bounds.
+    std::optional<geometry::Vec2> pivotMm() const;
+    /// Sets a custom pivot (nullopt: back to the centre).
+    void setPivot(std::optional<geometry::Vec2> pivot) { pivot_ = pivot; }
+    /// Pivot on a corner / edge / centre of the selection bounds.
+    void setPivotAnchor(HandleKind anchor);
+    /// True while an interactive transform is being dragged.
+    bool transforming() const { return gesture_.active(); }
+    /// Mouse cursor hint for the last pointer position.
+    CursorHint cursorHint() const;
 
     // --- Numeric entry ----------------------------------------------------------------------
     /// Fields of the active tool (and arc mode), in display order. Empty for tools with none.
@@ -254,10 +293,9 @@ class ToolController {
     SnapSettings snapSettings_;
     std::optional<SnapIndex> snapIndex_;
     std::array<std::uint64_t, 2> snapSignature_{};
-    // NodeEdit drag: the index was current when the drag began and may be kept (ADR-0030).
-    bool dragIndexValid_{false};
     std::size_t snapIndexBuilds_{0};
-    std::array<std::uint64_t, 2> preSig_{};
+    /// Index frozen for the duration of a transform drag (dragged objects left out of it).
+    std::optional<SnapIndex> gestureSnapIndex_;
 
     std::optional<Snap> snap_;
     geometry::Vec2 cursorMm_{};
@@ -276,6 +314,22 @@ class ToolController {
     geometry::Vec2 selStartPx_{};
     geometry::Vec2 selCurPx_{};
     bool selDragging_{false};
+
+    // Interactive transforms (Select tool)
+    enum class XfPress { None, Move, Scale, Rotate, Pivot };
+    XfPress xfPress_{XfPress::None};
+    HandleKind xfHandle_{HandleKind::Centre};
+    bool xfToggleOnClick_{false};
+    bool xfDragging_{false};
+    geometry::Vec2 xfStartMm_{};
+    geometry::Vec2 xfStartPx_{};
+    TransformMode xfMode_{TransformMode::Scale};
+    std::optional<geometry::Vec2> pivot_;
+    TransformGesture gesture_;
+    ToolResult xfPressBegin(geometry::Vec2 px, bool handlesOnly);
+    ToolResult xfMove(geometry::Vec2 px);
+    ToolResult xfRelease();
+    void xfReset();
 };
 
 /// Display name of a tool ("Rectangle", ...).

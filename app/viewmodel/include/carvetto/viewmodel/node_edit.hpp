@@ -194,6 +194,8 @@ class NodeEditor {
     bool gestureActive() const { return gesture_ != Gesture::None; }
     /// A button is down (press seen, release not yet).
     bool pressed() const { return pressed_; }
+    /// The undo generation the drag itself produced last (valid while a drag is active).
+    std::uint64_t expectedGeneration() const { return generation_; }
     /// Leaf objects the current drag edits (to exclude them from snapping).
     const std::vector<document::ObjectId>& gestureObjects() const { return gestureObjects_; }
     std::optional<geometry::Box2> marqueePx() const;

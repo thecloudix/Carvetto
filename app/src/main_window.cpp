@@ -41,6 +41,7 @@
 #include "node_edit_menu.hpp"
 #include "ruler_widget.hpp"
 #include "tool_panel.hpp"
+#include "transform_menu.hpp"
 #include "vector_ops_menu.hpp"
 
 namespace carvetto::app {
@@ -202,6 +203,7 @@ void MainWindow::buildMenus() {
     edit->addSeparator();
     vectorOps_ = std::make_unique<VectorOpsMenu>(*this, edit);
     copies_ = std::make_unique<CopiesMenu>(*this, edit);
+    transformMenu_ = std::make_unique<TransformMenu>(*this);
 
     QMenu* view = menuBar()->addMenu(QStringLiteral("&View"));
     QAction* fit = view->addAction(QStringLiteral("Zoom to &Material"));
@@ -286,6 +288,12 @@ void MainWindow::buildToolPalette() {
         toolPanel_->refreshValues();
     };
     canvas_->onToolStateChanged = [this]() { toolPanel_->refreshValues(); };
+    canvas_->onSelectionChanged = [this]() {
+        if (transformMenu_) {
+            transformMenu_->refresh();  // keeps the shortcut actions (M, T, R, H, V, F9) usable
+        }
+    };
+
 
     nodeEdit_ = std::make_unique<NodeEditMenu>(*this);
     canvas_->onNodeContextMenu = [this](const QPoint& globalPos, geometry::Vec2 px) {
@@ -323,6 +331,9 @@ void MainWindow::setDocument(std::unique_ptr<document::Document> doc) {
 }
 
 void MainWindow::documentChanged() {
+    if (transformMenu_) {
+        transformMenu_->refresh();
+    }
     setWindowTitle(qs(session_.title("Carvetto")));
     refreshSelectors();
     refreshStatus();

@@ -11,6 +11,7 @@
 #include "carvetto/document/commands.hpp"
 #include "carvetto/document/shape_params.hpp"
 #include "carvetto/geometry/shapes.hpp"
+#include "carvetto/viewmodel/transform_ops.hpp"
 #include "carvetto/viewmodel/units_format.hpp"
 
 namespace carvetto::viewmodel {
@@ -159,11 +160,12 @@ ToolController::ToolController(document::Document* doc) : doc_(doc), nodeEditor_
 }
 
 void ToolController::setDocument(document::Document* doc) {
+    gesture_ = TransformGesture{};  // the old document may already be gone: no revert
+    xfReset();
     cancel();
     doc_ = doc;
     nodeEditor_.setDocument(doc);
     snapIndex_.reset();
-    dragIndexValid_ = false;
     snap_.reset();
 }
 
@@ -193,7 +195,10 @@ void ToolController::cancel() {
     selPressed_ = false;
     selDragging_ = false;
     nodeEditor_.escape();
-    dragIndexValid_ = false;
+    if (gesture_.active() && doc_ != nullptr) {
+        gesture_.cancel(*doc_);
+    }
+    xfReset();
 }
 
 ToolResult ToolController::refuse(std::string message) const {
@@ -206,7 +211,7 @@ bool ToolController::wantsKeys() const {
     if (tool_ == ToolKind::NodeEdit) {
         return nodeEditor_.pressed() || nodeEditor_.gestureActive();
     }
-    return tool_ != ToolKind::Select && (active() || !typed_.empty());
+    return gesture_.active() || (tool_ != ToolKind::Select && (active() || !typed_.empty()));
 }
 
 bool ToolController::layerWritable(std::string* why) const {
@@ -227,14 +232,6 @@ bool ToolController::layerWritable(std::string* why) const {
 }
 
 const SnapIndex& ToolController::snapIndex() {
-    // A node-edit drag changes the document on every pointer step, but only the objects it edits,
-    // and those are excluded from the query. The index built when the drag began (its key is the
-    // generation of that moment) therefore stays usable until the drag ends (ADR-0030).
-    // `dragIndexValid_` is only set when the index was current (checked against the generation) at
-    // the moment the drag began, whatever the modifiers were.
-    if (tool_ == ToolKind::NodeEdit && nodeEditor_.gestureActive() && dragIndexValid_ && snapIndex_.has_value()) {
-        return *snapIndex_;
-    }
     // The undo stack's generation is process-wide unique per edit state, so it cannot repeat for
     // different content (undo/redo/new command/other document).
     const std::array<std::uint64_t, 2> sig{doc_->undoStack().generation(), doc_->activeSheet().value};
@@ -252,16 +249,13 @@ void ToolController::updatePointer(Vec2 px, Modifiers mods) {
     hasCursor_ = true;
     if (tool_ == ToolKind::NodeEdit) {
         nodeEditor_.validateGesture();
-        if (!nodeEditor_.gestureActive() && doc_ != nullptr) {
-            // Refresh the index before any drag can begin, also when Shift skips snapping below.
-            snapIndex();
-            dragIndexValid_ = false;
-            preSig_ = snapSignature_;
+        if (!nodeEditor_.gestureActive()) {
+            gestureSnapIndex_.reset();  // a drag ended behind our back: its index is stale
         }
     }
     snap_.reset();
     Vec2 raw = view_.screenToWorld(px);
-    if (tool_ == ToolKind::Select || doc_ == nullptr) {
+    if (doc_ == nullptr || (tool_ == ToolKind::Select && xfPress_ == XfPress::None)) {
         cursorMm_ = raw;
         return;
     }
@@ -279,7 +273,19 @@ void ToolController::updatePointer(Vec2 px, Modifiers mods) {
     if (!pts_.empty()) {
         query.pendingStartMm = pts_.back();
     }
-    snap_ = snapIndex().best(view_, px, snapSettings_, query);
+    if (tool_ == ToolKind::Select) {
+        query.exclude = gesture_.targets();  // the objects being dragged never snap to themselves
+    }
+    // During a transform drag the index of the other objects is built once (the dragged objects are
+    // left out, and nothing else changes), not once per pointer step.
+    // One rule for both gestures: the frozen index is usable only while the undo generation is the
+    // one the gesture itself produced (anything else ended or invalidated the drag).
+    const std::uint64_t generation = doc_->undoStack().generation();
+    const bool frozen = gestureSnapIndex_.has_value() &&
+                        ((gesture_.active() && generation == gesture_.expectedGeneration()) ||
+                         (tool_ == ToolKind::NodeEdit && nodeEditor_.gestureActive() &&
+                          generation == nodeEditor_.expectedGeneration()));
+    snap_ = (frozen ? *gestureSnapIndex_ : snapIndex()).best(view_, px, snapSettings_, query);
     cursorMm_ = snap_.has_value() ? snap_->pointMm : raw;
 }
 
@@ -685,11 +691,11 @@ ToolResult fromNodeEdit(const NodeEditResult& r) {
 
 ToolResult ToolController::afterNodeEdit(const NodeEditResult& r) {
     if (!nodeEditor_.gestureActive()) {
-        dragIndexValid_ = false;
-    } else if (!dragIndexValid_) {
-        // The drag began during this event; the index is reusable if it was current just before.
-        dragIndexValid_ = snapIndex_.has_value() && snapSignature_ == preSig_ && doc_ != nullptr &&
-                          preSig_[1] == doc_->activeSheet().value;
+        gestureSnapIndex_.reset();
+    } else if (!gestureSnapIndex_.has_value() && doc_ != nullptr) {
+        // The drag began in this event: index everything but the objects it edits, once.
+        gestureSnapIndex_.emplace(*doc_, false, nodeEditor_.gestureObjects());
+        ++snapIndexBuilds_;
     }
     return fromNodeEdit(r);
 }
@@ -705,10 +711,20 @@ ToolResult ToolController::pointerMove(Vec2 px, Modifiers mods) {
             selDragging_ = true;
         }
     }
+    if (tool_ == ToolKind::Select && xfPress_ != XfPress::None) {
+        return xfMove(px);
+    }
     return {};
 }
 
 ToolResult ToolController::selectPress(Vec2 px, Modifiers mods) {
+    if (doc_ != nullptr) {
+        // Shift/Ctrl on a handle are transform modifiers; on the object body they extend the selection.
+        xfPressBegin(px, mods.shift || mods.ctrl);
+        if (xfPress_ != XfPress::None) {
+            return {};
+        }
+    }
     selPressed_ = true;
     selDragging_ = false;
     selStartPx_ = px;
@@ -718,6 +734,9 @@ ToolResult ToolController::selectPress(Vec2 px, Modifiers mods) {
 }
 
 ToolResult ToolController::selectRelease(Vec2 px, Modifiers mods) {
+    if (xfPress_ != XfPress::None) {
+        return xfRelease();
+    }
     if (!selPressed_) {
         return {};
     }
@@ -736,6 +755,7 @@ ToolResult ToolController::selectRelease(Vec2 px, Modifiers mods) {
         clickSelect(*doc_, view_, px, selMode_);
     }
     r.selectionChanged = true;
+    pivot_.reset();
     return r;
 }
 
@@ -835,7 +855,8 @@ ToolResult ToolController::doubleClick(Vec2 px, Modifiers mods) {
 
 ToolResult ToolController::key(ToolKey k) {
     switch (k) {
-        case ToolKey::Escape:
+        case ToolKey::Escape: {
+            const bool wasTransforming = gesture_.active();
             if (tool_ == ToolKind::NodeEdit) {
                 NodeEditResult r;
                 nodeEditor_.escape(&r);
@@ -843,7 +864,10 @@ ToolResult ToolController::key(ToolKey k) {
                 return fromNodeEdit(r);
             }
             cancel();
-            return {};
+            ToolResult r;
+            r.transformed = wasTransforming;
+            return r;
+        }
         case ToolKey::Enter:
             return commitNumeric();
         case ToolKey::Backspace:
@@ -1023,6 +1047,195 @@ ToolResult ToolController::commitNumeric() {
         }
     }
     return {};
+}
+
+// --- Selection box and transform gestures --------------------------------------------------------
+
+namespace {
+
+bool isCornerHandle(HandleKind h) {
+    return h == HandleKind::TopLeft || h == HandleKind::TopRight || h == HandleKind::BottomLeft ||
+           h == HandleKind::BottomRight;
+}
+
+constexpr double kHandleHitPx = 7.0;
+
+CursorHint scaleHint(HandleKind h) {
+    switch (h) {
+        case HandleKind::Left:
+        case HandleKind::Right:
+            return CursorHint::ScaleHorizontal;
+        case HandleKind::Top:
+        case HandleKind::Bottom:
+            return CursorHint::ScaleVertical;
+        case HandleKind::TopLeft:
+        case HandleKind::BottomRight:
+            return CursorHint::ScaleDiagonalDown;
+        case HandleKind::TopRight:
+        case HandleKind::BottomLeft:
+            return CursorHint::ScaleDiagonalUp;
+        case HandleKind::Centre:
+            break;
+    }
+    return CursorHint::Move;
+}
+
+}  // namespace
+
+std::optional<SelectionBox> ToolController::selectionHandles() const {
+    if (tool_ != ToolKind::Select || doc_ == nullptr) {
+        return std::nullopt;
+    }
+    const std::optional<geometry::Box2> bounds = transformBounds(*doc_);
+    if (!bounds.has_value()) {
+        return std::nullopt;
+    }
+    return selectionBox(*bounds, view_);
+}
+
+std::optional<Vec2> ToolController::pivotMm() const {
+    if (doc_ == nullptr) {
+        return std::nullopt;
+    }
+    const std::optional<geometry::Box2> bounds = transformBounds(*doc_);
+    if (!bounds.has_value()) {
+        return std::nullopt;
+    }
+    return pivot_.value_or(bounds->centre());
+}
+
+void ToolController::setPivotAnchor(HandleKind anchor) {
+    if (doc_ == nullptr) {
+        return;
+    }
+    if (const std::optional<geometry::Box2> bounds = transformBounds(*doc_)) {
+        pivot_ = anchorPoint(*bounds, anchor);
+    }
+}
+
+CursorHint ToolController::cursorHint() const {
+    if (gesture_.active()) {
+        switch (gesture_.kind()) {
+            case GestureKind::Move: return CursorHint::Move;
+            case GestureKind::Rotate: return CursorHint::Rotate;
+            case GestureKind::Scale: return scaleHint(xfHandle_);
+            case GestureKind::None: break;
+        }
+    }
+    if (xfPress_ == XfPress::Pivot) {
+        return CursorHint::Pivot;
+    }
+    if (tool_ != ToolKind::Select || !hasCursor_) {
+        return CursorHint::Default;
+    }
+    const std::optional<SelectionBox> box = selectionHandles();
+    if (!box.has_value()) {
+        return CursorHint::Default;
+    }
+    const std::optional<HandleKind> h = hitHandle(*box, cursorPx_, kHandleHitPx);
+    if (!h.has_value()) {
+        return CursorHint::Default;
+    }
+    if (xfMode_ == TransformMode::Scale) {
+        return scaleHint(*h);
+    }
+    if (*h == HandleKind::Centre) {
+        return CursorHint::Pivot;
+    }
+    return isCornerHandle(*h) ? CursorHint::Rotate : CursorHint::Default;
+}
+
+void ToolController::xfReset() {
+    gestureSnapIndex_.reset();
+    xfPress_ = XfPress::None;
+    xfDragging_ = false;
+    xfToggleOnClick_ = false;
+}
+
+ToolResult ToolController::xfPressBegin(Vec2 px, bool handlesOnly) {
+    xfReset();
+    const std::optional<geometry::Box2> bounds = transformBounds(*doc_);
+    if (!bounds.has_value()) {
+        return {};
+    }
+    const SelectionBox box = selectionBox(*bounds, view_);
+    const std::optional<HandleKind> h = hitHandle(box, px, kHandleHitPx);
+    XfPress kind = XfPress::None;
+    bool toggle = false;
+    if (h.has_value()) {
+        if (*h == HandleKind::Centre) {
+            kind = xfMode_ == TransformMode::Scale ? XfPress::Move : XfPress::Pivot;
+            toggle = true;
+        } else if (xfMode_ == TransformMode::Scale) {
+            kind = XfPress::Scale;
+        } else if (isCornerHandle(*h)) {
+            kind = XfPress::Rotate;
+        }
+    }
+    if (kind == XfPress::None && !handlesOnly) {
+        HitOptions options;
+        options.fill = FillHit::StrokeAndFill;
+        const std::optional<Hit> hit = hitTest(*doc_, view_, px, options);
+        if (hit.has_value() && doc_->selection().contains(hit->object)) {
+            kind = XfPress::Move;
+            toggle = true;
+        }
+    }
+    if (kind == XfPress::None) {
+        return {};
+    }
+    xfPress_ = kind;
+    xfHandle_ = h.value_or(HandleKind::Centre);
+    xfToggleOnClick_ = toggle;
+    xfStartPx_ = px;
+    updatePointer(px, mods_);  // from now on the pointer snaps
+    xfStartMm_ = cursorMm_;
+    return {};
+}
+
+ToolResult ToolController::xfMove(Vec2 px) {
+    ToolResult r;
+    if (!xfDragging_) {
+        if (geometry::distance(px, xfStartPx_) < kDragThresholdPx) {
+            return r;
+        }
+        xfDragging_ = true;
+        if (xfPress_ == XfPress::Move) {
+            gesture_.begin(*doc_, GestureKind::Move, xfHandle_, xfStartMm_, xfStartMm_);
+        } else if (xfPress_ == XfPress::Scale) {
+            gesture_.begin(*doc_, GestureKind::Scale, xfHandle_, xfStartMm_, xfStartMm_);
+        } else if (xfPress_ == XfPress::Rotate) {
+            const std::optional<Vec2> pivot = pivotMm();
+            if (pivot.has_value()) {
+                gesture_.begin(*doc_, GestureKind::Rotate, xfHandle_, xfStartMm_, *pivot);
+            }
+        }
+    }
+    if (xfPress_ == XfPress::Pivot) {
+        pivot_ = cursorMm_;
+        return r;
+    }
+    if (gesture_.active() && !gestureSnapIndex_.has_value()) {
+        gestureSnapIndex_.emplace(*doc_, false, gesture_.targets());
+    }
+    if (gesture_.active()) {
+        r.transformed = gesture_.update(*doc_, cursorMm_, mods_.shift, mods_.ctrl, mods_.alt);
+    }
+    return r;
+}
+
+ToolResult ToolController::xfRelease() {
+    ToolResult r;
+    if (xfDragging_) {
+        r = xfMove(cursorPx_);
+    }
+    if (gesture_.active()) {
+        gesture_.end(*doc_);
+    } else if (!xfDragging_ && xfToggleOnClick_) {
+        xfMode_ = xfMode_ == TransformMode::Scale ? TransformMode::Rotate : TransformMode::Scale;
+    }
+    xfReset();
+    return r;
 }
 
 }  // namespace carvetto::viewmodel
