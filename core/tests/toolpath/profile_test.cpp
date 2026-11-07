@@ -3426,7 +3426,8 @@ std::vector<std::pair<std::size_t, double>> loosePieces(const ProfileResult& r) 
 // cutting sample of `tp` below `zTab` (every 0.05 mm) cuts the cells (of `res` mm) whose centres
 // lie within `r` of it; the areas of the uncut 4-connected components that do not reach the
 // frame (the cut's box grown by r + 1 mm) are the pieces that come free.
-std::vector<double> rasterFreePieces(const Toolpath& tp, double zTab, double r, double res) {
+std::vector<double> floodPieces(const Toolpath& tp, double zTab, double r, double res,
+                                const std::function<double(double)>& radiusAt) {
     Box2 box;
     test::sampleCuttingMoves3(
         tp, 0.05, [&](Vec2 q, double z) { if (z < zTab - 1e-6) box.expand(q); }, zTab - 1e-6);
@@ -3440,11 +3441,13 @@ std::vector<double> rasterFreePieces(const Toolpath& tp, double zTab, double r, 
         tp, 0.05,
         [&](Vec2 c, double z) {
             if (z >= zTab - 1e-6) return;
-            const int j0 = std::max(0, static_cast<int>(std::floor((c.y - r - box.min.y) / res)));
-            const int j1 = std::min(ny - 1, static_cast<int>(std::ceil((c.y + r - box.min.y) / res)));
+            const double rz = radiusAt(z);  // the disc the tool cuts at the layer there
+            if (!(rz > 0.0)) return;
+            const int j0 = std::max(0, static_cast<int>(std::floor((c.y - rz - box.min.y) / res)));
+            const int j1 = std::min(ny - 1, static_cast<int>(std::ceil((c.y + rz - box.min.y) / res)));
             for (int j = j0; j <= j1; ++j) {
                 const double dy = box.min.y + (j + 0.5) * res - c.y;
-                const double w2 = r * r - dy * dy;
+                const double w2 = rz * rz - dy * dy;
                 if (w2 <= 0.0) continue;
                 const double w = std::sqrt(w2);
                 const int i0 = std::max(0, static_cast<int>(std::ceil((c.x - w - box.min.x) / res - 0.5)));
@@ -3484,6 +3487,17 @@ std::vector<double> rasterFreePieces(const Toolpath& tp, double zTab, double r, 
     }
     std::sort(out.begin(), out.end());
     return out;
+}
+
+std::vector<double> rasterFreePieces(const Toolpath& tp, double zTab, double r, double res) {
+    return floodPieces(tp, zTab, r, res, [r](double) { return r; });
+}
+
+// The same for a V-bit: the disc at the layer is the cone's, (zTab - tip height) * tan(half angle)
+// at most `rMax`.
+std::vector<double> coneFreePieces(const Toolpath& tp, double zTab, double tanHalf, double rMax, double res) {
+    return floodPieces(tp, zTab, rMax, res,
+                       [=](double z) { return std::min(rMax, (zTab - z) * tanHalf); });
 }
 
 // A circle of `radius` about the origin drawn as cubic Beziers.
@@ -3964,5 +3978,341 @@ TEST_CASE("Loose pieces (T-0140): sweep scenes, Inside/Outside with allowance >=
         for (std::size_t i = 0; i < want.size(); ++i) {
             CHECK(std::fabs(got[i] - want[i]) <= 0.03 * want[i] + 0.1);
         }
+    }
+}
+
+// T-0156 (harness t0135v3 vfree, the exact flood of the moves at the tab layer, leads off).
+namespace {
+struct FloodScene {
+    std::vector<Contour> cs;
+    ProfileParams p;
+    tooling::Tool tool;
+    double d{0.0};
+    int vbitDeg{0};
+};
+
+FloodScene loadFloodScene(const std::string& text) {
+    FloodScene f;
+    f.d = readScene(text, f.cs, f.p, f.vbitDeg);
+    f.tool = test::endMill(f.d);
+    if (f.vbitDeg > 0) {
+        f.tool.type = tooling::ToolType::VBit;
+        f.tool.includedAngle = f.vbitDeg * geometry::kPi / 180.0;
+    }
+    f.p.leads.type = LeadType::None;
+    f.p.leads.overcut = 0.0;
+    f.p.leads.leadOut = false;
+    f.p.ramp.onLeadIn = false;
+    return f;
+}
+
+// The flood's free pieces of 0.1 mm2 or more at the tab layer.
+std::vector<double> floodOf(const FloodScene& f, const ProfileResult& r) {
+    const double zTab = f.p.passes.bottomZ() + f.p.tabs.thickness;
+    const std::vector<double> all =
+        f.vbitDeg > 0 ? coneFreePieces(r.toolpath, zTab, std::tan(0.5 * f.vbitDeg * geometry::kPi / 180.0),
+                                       0.5 * f.d, 0.04)
+                      : rasterFreePieces(r.toolpath, zTab, 0.5 * f.d, 0.04);
+    std::vector<double> big;
+    for (double a : all) {
+        if (a >= 0.1) big.push_back(a);
+    }
+    return big;
+}
+
+std::vector<double> reportedAreas(const ProfileResult& r) {
+    std::vector<double> got;
+    for (const auto& g : loosePieces(r)) got.push_back(g.second);
+    std::sort(got.begin(), got.end());
+    return got;
+}
+}  // namespace
+
+TEST_CASE("Loose pieces (T-0156 c): waste enclosed by several cuts, inside none of their boxes", "[toolpath][profile][tabs]") {
+    // Sided tabs searched the inside of each closed cut (and clusters of open ones) only, so a
+    // piece between vectors was never seen: the waste between the four bars of a "#" (On, 2 mm
+    // tool, kerfs overlapping at the crossings) and between three circles whose kerfs overlap.
+    struct Case {
+        const char* name;
+        const char* text;
+        double area;  // the flood's piece
+    };
+    const std::vector<Case> cases{
+        {"c8_hash2",
+         "C 1\n"
+         "L -0x1.4p+2 0x0p+0 0x1.68p+5 0x0p+0\n"
+         "L 0x1.68p+5 0x0p+0 0x1.68p+5 0x1p+1\n"
+         "L 0x1.68p+5 0x1p+1 -0x1.4p+2 0x1p+1\n"
+         "L -0x1.4p+2 0x1p+1 -0x1.4p+2 0x0p+0\n"
+         "C 1\n"
+         "L -0x1.4p+2 0x1.3p+5 0x1.68p+5 0x1.3p+5\n"
+         "L 0x1.68p+5 0x1.3p+5 0x1.68p+5 0x1.4p+5\n"
+         "L 0x1.68p+5 0x1.4p+5 -0x1.4p+2 0x1.4p+5\n"
+         "L -0x1.4p+2 0x1.4p+5 -0x1.4p+2 0x1.3p+5\n"
+         "C 1\n"
+         "L 0x0p+0 -0x1.4p+2 0x1p+1 -0x1.4p+2\n"
+         "L 0x1p+1 -0x1.4p+2 0x1p+1 0x1.68p+5\n"
+         "L 0x1p+1 0x1.68p+5 0x0p+0 0x1.68p+5\n"
+         "L 0x0p+0 0x1.68p+5 0x0p+0 -0x1.4p+2\n"
+         "C 1\n"
+         "L 0x1.3p+5 -0x1.4p+2 0x1.4p+5 -0x1.4p+2\n"
+         "L 0x1.4p+5 -0x1.4p+2 0x1.4p+5 0x1.68p+5\n"
+         "L 0x1.4p+5 0x1.68p+5 0x1.3p+5 0x1.68p+5\n"
+         "L 0x1.3p+5 0x1.68p+5 0x1.3p+5 -0x1.4p+2\n"
+         "P 0x1p+1 0 0x0p+0 2 0 0x0p+0 0x1.8p+1 0x1.8p+1 0x0p+0 0x1.4p+2 0 0x1.999999999999ap-3 0 1 0x1p+1 0x1p+0 0 4 0x1.9p+6 0x0p+0 0 0 0x0p+0 0 0x1.4p+3 0 0 0x1.657184ae74489p-4 0x1.4p+2 0x1.921fb54442d18p-1 0x1.4p+2 0 0x1.921fb54442d18p+0 0 0 0x0p+0 0x0p+0 0 0 0 0 0 0 0x0p+0 0x0p+0 0x1p+1\n"
+         "K 0 0\n"         , 1155.932},
+        {"c9_tri",
+         "C 1\n"
+         "A 0x0p+0 0x0p+0 0x1.4p+3 0x0p+0 0x0p+0 0\n"
+         "C 1\n"
+         "A 0x1.48p+4 0x0p+0 0x1.4p+3 0x0p+0 0x0p+0 0\n"
+         "C 1\n"
+         "A 0x1.48p+3 0x1.1c0e6bcd8911dp+4 0x1.4p+3 0x0p+0 0x0p+0 0\n"
+         "P 0x1p+1 0 0x0p+0 2 0 0x0p+0 0x1.8p+1 0x1.8p+1 0x0p+0 0x1.4p+2 0 0x1.999999999999ap-3 0 1 0x1p+0 0x1p+0 0 3 0x1.9p+6 0x0p+0 0 0 0x0p+0 0 0x1.4p+3 0 0 0x1.657184ae74489p-4 0x1.4p+2 0x1.921fb54442d18p-1 0x1.4p+2 0 0x1.921fb54442d18p+0 0 0 0x0p+0 0x0p+0 0 0 0 0 0 0 0x0p+0 0x0p+0 0x1p+1\n"
+         "K 0 0\n"         , 3.963},
+    };
+    for (const Case& k : cases) {
+        INFO(k.name);
+        const FloodScene f = loadFloodScene(k.text);
+        const ProfileResult r = profileToolpath(f.cs, f.tool, f.p);
+        REQUIRE(r.ok());
+        const std::vector<double> got = reportedAreas(r);
+        const std::vector<double> flood = floodOf(f, r);
+        REQUIRE(flood.size() == 1);
+        REQUIRE(got.size() == 1);
+        CHECK(std::fabs(flood[0] - k.area) <= 0.02 * k.area + 0.1);
+        CHECK(std::fabs(got[0] - flood[0]) <= 0.02 * flood[0] + 0.1);
+    }
+}
+
+TEST_CASE("Loose pieces (T-0156 b): a roughing loop whose finishing cut vanished is searched", "[toolpath][profile][tabs]") {
+    // m0_1310036_24: V-bit 60 deg, On, separate last pass, negative allowance: the finishing cut
+    // of a small circle vanishes, its roughing loop was never searched, and the 2.1 mm2 slug it
+    // encloses came free unreported.
+    const FloodScene f = loadFloodScene(
+         "C 1\n"
+         "A 0x0p+0 0x0p+0 0x1.c901c55efb26ep+4 -0x1.a20dffe67453bp+0 -0x1.82316aa2114f5p+0 0\n"
+         "L 0x1.c6bccbb533944p+0 -0x1.c81f4fe8fe3b7p+4 -0x1.c6bccbb533937p+0 -0x1.c81f4fe8fe3b7p+4\n"
+         "C 1\n"
+         "A 0x1.e9fe88f4c1164p+4 -0x1.8beb61939a208p-1 0x1.037699f2579cp+2 0x0p+0 0x0p+0 1\n"
+         "P 0x1.8p+3 60 -0x1.60f47b703f68p-4 2 1 0x0p+0 0x1.2ecc5831a5034p+2 0x1.6626a76f03b6ep+0 0x1.d73c24266808cp-3 0x1.4p+2 1 0x1.a1015f8d80095p-1 0 1 0x1.94db45ecd7725p+1 0x1.a92f8daaabafcp-1 0 1 0x1.790a4a7a416f8p+5 0x0p+0 0 0 0x0p+0 0 0x1.8a29a87cee017p+4 0 0 0x1.deba6c4ec550bp-2 0x1.67610ef31eac2p-1 0x1.11644e9eac71ap-2 0x1.8a8d3f43184d2p+2 0 0x1.f18e739e6c4e2p-4 0 0 0x0p+0 0x0p+0 2 7 0 0 0 1 0x1.b8011a1005d9cp+3 0x1.29070e915234p+3 0x1p+1\n"
+         "K 0 0\n"        );
+    const ProfileResult r = profileToolpath(f.cs, f.tool, f.p);
+    REQUIRE(r.ok());
+    const std::vector<double> flood = floodOf(f, r);
+    const std::vector<double> got = reportedAreas(r);
+    REQUIRE(flood.size() == 1);
+    REQUIRE(got.size() == 1);
+    CHECK(std::fabs(got[0] - flood[0]) <= 0.03 * flood[0] + 0.1);
+    CHECK(got[0] > 1.5);
+}
+
+TEST_CASE("V-bit corner moves (T-0156 a): a tab is not cut away along its stretch", "[toolpath][profile][tabs]") {
+    // m2_1310149_15: Inside, V-bit 120 deg, sharp internal corners, a tab whose raised stretch
+    // ends exactly at an inside corner. The stretch was walked down along a slope to the corner's
+    // excursion, cutting the tab away: a 134 mm2 part came free with no message.
+    FloodScene f = loadFloodScene(
+         "C 1\n"
+         "L -0x1.26f7786300082p+3 -0x1.05eb2f5031d1ap+2 0x1.0042cf8407cb2p+2 -0x1.05eb2f5031d1ap+2\n"
+         "L 0x1.0042cf8407cb2p+2 -0x1.05eb2f5031d1ap+2 0x1.0042cf8407cb2p+2 0x1.26f7786300082p+3\n"
+         "L 0x1.0042cf8407cb2p+2 0x1.26f7786300082p+3 -0x1.26f7786300082p+3 0x1.26f7786300082p+3\n"
+         "L -0x1.26f7786300082p+3 0x1.26f7786300082p+3 -0x1.26f7786300082p+3 -0x1.05eb2f5031d1ap+2\n"
+         "C 1\n"
+         "A 0x1.69a5e9b07f7bbp+5 -0x1.0f1908603f4fcp+1 0x1.dc5012ed50206p+4 -0x1.9fb4841cc329ep-1 -0x1.2a32943d12071p+1 0\n"
+         "L 0x1.8b8b2e0a3aa8bp+4 -0x1.7b8177ea3c68ap+4 0x1.06c31e2df0d18p+6 -0x1.7b8177ea3c68ap+4\n"
+         "P 0x1.8p+2 120 -0x1.7a8d406f423e5p+1 1 0 0x0p+0 0x1.092462a6d8d2ep+1 0x1.7e8e2181c4ee6p+1 0x0p+0 0x1.4p+2 1 0x1.6603ee050b0d6p-1 0 1 0x1.483dc8921eda6p+1 0x1.e1235a0569712p-3 0 1 0x1.0e29adaf2fa42p+5 0x0p+0 1 0 0x0p+0 3 0x1.3ff06f490c026p+5 1 0 0x1.c227d133a64dfp-3 0x1.1de6dab3d0b5ep+3 0x1.54210283d1f68p-3 0x1.297c825cc2327p+3 0 0x1.c000673c3b294p-3 0 0 0x0p+0 0x0p+0 0 4 0 0 0 0 0x1.c6c79d2ba938p+4 -0x1.4dfdf5bd5e2b9p+5 0x1p+1\n"
+         "K 1 1\n"        );
+    REQUIRE(f.p.corners.sharpInternal);
+    const ProfileResult r = profileToolpath(f.cs, f.tool, f.p);
+    REQUIRE(r.ok());
+    CHECK(floodOf(f, r).empty());
+    CHECK(reportedAreas(r).empty());
+}
+
+TEST_CASE("Loose pieces (T-0156): sweep scenes, sided tabs, whole scene", "[toolpath][profile][tabs]") {
+    // T-0156 screen (harness vfree, exact flood of the moves, leads off, V-bit corners on), scenes
+    // where the region search of sided tabs disagreed with the flood: a piece it did not see
+    // (m0_12_762, On, V-bit 90 deg, separate last pass: 5.0 mm2), nine false reports of 0.05 mm2
+    // (m0_14_434, its sampled allowance over the bands) and a second 0.07 mm2 piece (m0_13_269).
+    struct Case {
+        const char* name;
+        const char* text;
+        std::vector<double> want;
+    };
+    const std::vector<Case> cases{
+        {"m0_12_762",
+         "C 1\n"
+         "A 0x0p+0 0x0p+0 0x1.1150b51bef2f2p+3 -0x1.ce5273b1ee07dp+0 -0x1.55ecf6d6979b5p+0 0\n"
+         "L 0x1.fd6f0c6e4e5ddp+0 -0x1.09cb2374b3b41p+3 -0x1.fd6f0c6e4e5eap+0 -0x1.09cb2374b3b41p+3\n"
+         "P 0x1.9p+4 90 -0x1.60a167cd39c47p-3 2 1 0x0p+0 0x1.193bf54a9470cp+1 0x1.374fddc3177c4p+2 0x0p+0 0x1.4p+2 1 0x1.d5a8009e0f573p-1 1 1 0x1.948c74f5074cp+1 0x1.2a5c983a6d08bp-2 0 6 0x1.4df3dcb52e265p+5 0x0p+0 1 0 0x0p+0 0 0x1.ea98e6f3232ecp+3 0 0 0x1.68ccab3b6a17p-4 0x1.623528cc2adfbp+2 0x1.ff0ae9c08d542p-1 0x1.0539b8a15182cp+1 0 0x1.028cf4e64e1e3p-1 0 0 0x0p+0 0x0p+0 0 2 0 0 0 1 0x1.5076157013014p+4 -0x1.0e3b6746174f2p+5 0x1p+1\n"
+         "K 1 1\n"
+         , {5.026}},
+        {"m0_14_434",
+         "C 1\n"
+         "L -0x1.d434df2dcf0fap+3 -0x1.d434df2dcf0fap+3 -0x1.af7236e5f8779p+2 -0x1.d434df2dcf0fap+3\n"
+         "L -0x1.af7236e5f8779p+2 -0x1.d434df2dcf0fap+3 -0x1.af7236e5f8779p+2 -0x1.04cda9d533366p+0\n"
+         "L -0x1.af7236e5f8779p+2 -0x1.04cda9d533366p+0 0x1.930174b88242p+3 -0x1.04cda9d533366p+0\n"
+         "L 0x1.930174b88242p+3 -0x1.04cda9d533366p+0 0x1.930174b88242p+3 -0x1.d434df2dcf0fap+3\n"
+         "L 0x1.930174b88242p+3 -0x1.d434df2dcf0fap+3 0x1.47be9c39aa8afp+4 -0x1.d434df2dcf0fap+3\n"
+         "L 0x1.47be9c39aa8afp+4 -0x1.d434df2dcf0fap+3 0x1.47be9c39aa8afp+4 0x1.47be9c39aa8afp+4\n"
+         "L 0x1.47be9c39aa8afp+4 0x1.47be9c39aa8afp+4 0x1.930174b88242p+3 0x1.47be9c39aa8afp+4\n"
+         "L 0x1.930174b88242p+3 0x1.47be9c39aa8afp+4 0x1.930174b88242p+3 0x1.b7c41d0058da2p+2\n"
+         "L 0x1.930174b88242p+3 0x1.b7c41d0058da2p+2 -0x1.af7236e5f8779p+2 0x1.b7c41d0058da2p+2\n"
+         "L -0x1.af7236e5f8779p+2 0x1.b7c41d0058da2p+2 -0x1.af7236e5f8779p+2 0x1.47be9c39aa8afp+4\n"
+         "L -0x1.af7236e5f8779p+2 0x1.47be9c39aa8afp+4 -0x1.d434df2dcf0fap+3 0x1.47be9c39aa8afp+4\n"
+         "L -0x1.d434df2dcf0fap+3 0x1.47be9c39aa8afp+4 -0x1.d434df2dcf0fap+3 -0x1.d434df2dcf0fap+3\n"
+         "P 0x1.9p+4 90 -0x1.b32b37a48338p+0 2 1 0x0p+0 0x1.efa5c0a9f5f7p+0 0x1.7399e6b692b6ep+1 0x0p+0 0x1.4p+2 1 0x1.e51e83baec8c3p-1 1 1 0x1.c0e7af9a671f5p+1 0x1.deb8c7cecbf45p-2 0 9 0x1.2459efab33777p+6 0x0p+0 1 0 0x0p+0 0 0x1.10c2cb4a49611p+3 0 0 0x1.dbda8d25822dep-3 0x1.12f3395f6b8fcp+2 0x1.9606eaecd0fc4p-1 0x1.5b8c9aebfe8cfp+2 0 0x1.11feffb3fe8f5p-1 0 0 0x0p+0 0x0p+0 2 1 0 0 0 0 0x1.dd3fcd631e198p+4 0x1.4024d33443154p+5 0x1p+1\n"
+         "K 1 1\n"
+         , {}},
+        {"m0_13_269",
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.3ad3d1fecf5e5p+6 0x0p+0\n"
+         "L 0x1.3ad3d1fecf5e5p+6 0x0p+0 0x1.3ad3d1fecf5e5p+6 0x1.9ed923be885bep+5\n"
+         "L 0x1.3ad3d1fecf5e5p+6 0x1.9ed923be885bep+5 0x0p+0 0x1.9ed923be885bep+5\n"
+         "L 0x0p+0 0x1.9ed923be885bep+5 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "L 0x1.0d0dc474a4429p+6 0x1.1edb9cd63536ap+1 0x1.2658b583b64d3p+6 0x1.1edb9cd63536ap+1\n"
+         "L 0x1.2658b583b64d3p+6 0x1.1edb9cd63536ap+1 0x1.2658b583b64d3p+6 0x1.aab52713e4ac5p+2\n"
+         "L 0x1.2658b583b64d3p+6 0x1.aab52713e4ac5p+2 0x1.0d0dc474a4429p+6 0x1.aab52713e4ac5p+2\n"
+         "L 0x1.0d0dc474a4429p+6 0x1.aab52713e4ac5p+2 0x1.0d0dc474a4429p+6 0x1.1edb9cd63536ap+1\n"
+         "C 1\n"
+         "A 0x1.f87a7d33c4419p+4 0x1.ab078e1700a8fp+4 0x1.23da4c34a8f6ep+3 0x0p+0 0x0p+0 0\n"
+         "C 1\n"
+         "A 0x1.d400778d06edp+4 0x1.474ef767a5597p+5 0x1.32c4122ff5f5fp+3 0x0p+0 0x0p+0 0\n"
+         "P 0x1.8p+2 120 0x1.2b758fde1a7acp-2 2 1 0x0p+0 0x1.27c9bafa0a632p+1 0x1.1bfc614592edp+2 0x1.5ae23c54fa6d5p-1 0x1.4p+2 1 0x1.a4dcefc8a8aa5p-5 1 1 0x1.13e4c32fd9c8fp+0 0x1.0551e7a262d42p+0 0 7 0x1.a82c7d662d3dcp+4 0x0p+0 1 0 0x0p+0 1 0x1.1547cf757e267p+4 0 0 0x1.6c3a976efa766p-3 0x1.4ad066cdc3a75p+1 0x1.b77835d71834cp-3 0x1.2a4390125aa4p+1 0 0x1.629c7301cc5a6p+0 0 0 0x0p+0 0x0p+0 1 7 0 1 0 0 -0x1.63b3070ec1276p+5 0x1.133826212e25ep+5 0x1p+1\n"
+         "K 1 1\n"
+         , {0.424, 0.076}},
+    };
+    for (const Case& k : cases) {
+        INFO(k.name);
+        const FloodScene f = loadFloodScene(k.text);
+        const ProfileResult r = profileToolpath(f.cs, f.tool, f.p);
+        REQUIRE(r.ok());
+        const std::vector<double> got = reportedAreas(r);
+        REQUIRE(got.size() == k.want.size());
+        for (std::size_t i = 0; i < got.size(); ++i) {
+            CHECK(std::fabs(got[i] - k.want[k.want.size() - 1 - i]) <= 0.03 * k.want[0] + 0.1);
+        }
+    }
+}
+
+TEST_CASE("V-bit corner moves (T-0156 round 2): bands and tab check decide outcomes", "[toolpath][profile][tabs][vbit]") {
+    // Verifier scenes (harness t0156v1/repro). bandhull_7100_569: L-shape, Inside, V-bit 60 deg,
+    // allowance 0, every tab left out: the corner moves' tapered bands close six pieces round the
+    // part, which the cut paths alone close only two of. tabcheck_580009_6: a tab that holds,
+    // dropped without the corner moves' tool positions in the tab check (they make the exposed
+    // corner part of the tab's own material). tabdrop_9001_11 and tabdrop_570014_182: tabs that
+    // hold (even with the tools widened) and were dropped by a first version of the corner-move
+    // samples; they stay, as on main.
+    auto leftOut = [](const ProfileResult& r, const char* vec) {
+        std::size_t n = 0;
+        for (const ProfileDiagnostic& g : r.diagnostics) {
+            if (g.message.find(vec) == 0 && g.message.find("left out") != std::string::npos) ++n;
+        }
+        return n;
+    };
+    {
+        const FloodScene f = loadFloodScene(
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.4p+5 0x0p+0\n"
+         "L 0x1.4p+5 0x0p+0 0x1.4p+5 0x1.4p+3\n"
+         "L 0x1.4p+5 0x1.4p+3 0x1.4p+3 0x1.4p+3\n"
+         "L 0x1.4p+3 0x1.4p+3 0x1.4p+3 0x1.ep+4\n"
+         "L 0x1.4p+3 0x1.ep+4 0x0p+0 0x1.ep+4\n"
+         "L 0x0p+0 0x1.ep+4 0x0p+0 0x0p+0\n"
+         "P 0x1.8p+3 60 0x0p+0 1 0 0x0p+0 0x1.ce1bbed3a5b3fp+1 0x1.fb39036a2811p+0 0x0p+0 0x1.4p+2 1 0x1.b02e6d64af859p-1 0 1 0x1.5e289ae2ad04bp+2 0x1.3b3f74a9ec15bp-1 0 5 0x1.bc5c5878cae23p+4 0x0p+0 0 0 0x0p+0 2 0x1.0c6db42fdb06cp+3 0 0 0x1.e6a15aefae611p-3 0x1.75a5f42def378p+3 0x1.4c6ee4fc98ca1p-2 0x1.df102a4b4471fp+2 0 0x1.71737e6ebda8ep-1 0 0 0x0p+0 0x0p+0 0 0 0 0 0 1 0x1.ccb3df7b43ec8p+3 -0x1.1b4c0c1533557p+5 0x1p+1\n"
+         "K 1 1\n"        );
+        const ProfileResult r = profileToolpath(f.cs, f.tool, f.p);
+        REQUIRE(r.ok());
+        const std::vector<double> got = reportedAreas(r);
+        CHECK(got.size() == 6);
+        CHECK(floodOf(f, r).size() == 6);
+    }
+    {
+        const FloodScene f = loadFloodScene(
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.4d307451f47afp+3 0x0p+0\n"
+         "L 0x1.4d307451f47afp+3 0x0p+0 0x1.4d307451f47afp+3 0x1.6e711d2247c54p+3\n"
+         "L 0x1.4d307451f47afp+3 0x1.6e711d2247c54p+3 0x1.6e711d2247c54p+4 0x1.6e711d2247c54p+3\n"
+         "L 0x1.6e711d2247c54p+4 0x1.6e711d2247c54p+3 0x1.6e711d2247c54p+4 0x0p+0\n"
+         "L 0x1.6e711d2247c54p+4 0x0p+0 0x1.0a84aba5a1016p+5 0x0p+0\n"
+         "L 0x1.0a84aba5a1016p+5 0x0p+0 0x1.0a84aba5a1016p+5 0x1.0a84aba5a1016p+5\n"
+         "L 0x1.0a84aba5a1016p+5 0x1.0a84aba5a1016p+5 0x1.6e711d2247c54p+4 0x1.0a84aba5a1016p+5\n"
+         "L 0x1.6e711d2247c54p+4 0x1.0a84aba5a1016p+5 0x1.6e711d2247c54p+4 0x1.5dd0c8ba1e202p+4\n"
+         "L 0x1.6e711d2247c54p+4 0x1.5dd0c8ba1e202p+4 0x1.4d307451f47afp+3 0x1.5dd0c8ba1e202p+4\n"
+         "L 0x1.4d307451f47afp+3 0x1.5dd0c8ba1e202p+4 0x1.4d307451f47afp+3 0x1.0a84aba5a1016p+5\n"
+         "L 0x1.4d307451f47afp+3 0x1.0a84aba5a1016p+5 0x0p+0 0x1.0a84aba5a1016p+5\n"
+         "L 0x0p+0 0x1.0a84aba5a1016p+5 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "L 0x1.9p+5 0x0p+0 0x1.4128c0b3c8545p+6 0x0p+0\n"
+         "L 0x1.4128c0b3c8545p+6 0x0p+0 0x1.4128c0b3c8545p+6 0x1.e4a302cf21513p+4\n"
+         "L 0x1.4128c0b3c8545p+6 0x1.e4a302cf21513p+4 0x1.1f7bf6e4bcdecp+6 0x1.e4a302cf21513p+4\n"
+         "L 0x1.1f7bf6e4bcdecp+6 0x1.e4a302cf21513p+4 0x1.1f7bf6e4bcdecp+6 0x1.0d664e785bacap+3\n"
+         "L 0x1.1f7bf6e4bcdecp+6 0x1.0d664e785bacap+3 0x1.d359939e16eb2p+5 0x1.0d664e785bacap+3\n"
+         "L 0x1.d359939e16eb2p+5 0x1.0d664e785bacap+3 0x1.d359939e16eb2p+5 0x1.e4a302cf21513p+4\n"
+         "L 0x1.d359939e16eb2p+5 0x1.e4a302cf21513p+4 0x1.9p+5 0x1.e4a302cf21513p+4\n"
+         "L 0x1.9p+5 0x1.e4a302cf21513p+4 0x1.9p+5 0x0p+0\n"
+         "P 0x1.9p+4 60 -0x1.1cb6c21fed81p-6 0 0 0x0p+0 0x1.2ee58b4445d76p+1 0x1.a6e059d800ccp-1 0x0p+0 0x1.4p+2 1 0x1.c965ce0cc9445p-1 1 1 0x1.aa621b7197b37p+1 0x1.a09e7c7411d3ep-1 0 7 0x1.a622e4302aadep+5 0x0p+0 1 0 0x0p+0 0 0x1.ce94608ef08fep+4 1 1 0x1.b3cffa5ce1e6bp-2 0x1.cd8d18e775e8dp+1 0x1.93452c908fd9dp-1 0x1.1e0231e2f628cp+3 0 0x1.6ded7913916b9p+0 1 0 0x1.22dc77c14194dp+4 0x0p+0 2 6 0 0 0 0 -0x1.9a46b116ceafdp+4 -0x1.0c6379cb93d0fp+5 0x1p+1\n"
+         "K 1 1\n"        );
+        const ProfileResult r = profileToolpath(f.cs, f.tool, f.p);
+        REQUIRE(r.ok());
+        CHECK(leftOut(r, "vector 0") == 0);
+        CHECK(floodOf(f, r).empty());
+    }
+    {
+        const FloodScene f = loadFloodScene(
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.848035381fa5p+4 0x0p+0\n"
+         "L 0x1.848035381fa5p+4 0x0p+0 0x1.848035381fa5p+4 0x1.cd5b3e814d4bdp+2\n"
+         "L 0x1.848035381fa5p+4 0x1.cd5b3e814d4bdp+2 0x1.cd5b3e814d4bdp+2 0x1.cd5b3e814d4bdp+2\n"
+         "L 0x1.cd5b3e814d4bdp+2 0x1.cd5b3e814d4bdp+2 0x1.cd5b3e814d4bdp+2 0x1.0ff358741626bp+5\n"
+         "L 0x1.cd5b3e814d4bdp+2 0x1.0ff358741626bp+5 0x0p+0 0x1.0ff358741626bp+5\n"
+         "L 0x0p+0 0x1.0ff358741626bp+5 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "L 0x1.1449b1fe19d37p+5 0x1.ff3c65701e698p-1 0x1.a01b4959b7ebap+5 0x1.ff3c65701e698p-1\n"
+         "L 0x1.a01b4959b7ebap+5 0x1.ff3c65701e698p-1 0x1.a01b4959b7ebap+5 0x1.279d11e2bd23ap+4\n"
+         "L 0x1.a01b4959b7ebap+5 0x1.279d11e2bd23ap+4 0x1.73ec0d02d6666p+5 0x1.279d11e2bd23ap+4\n"
+         "L 0x1.73ec0d02d6666p+5 0x1.279d11e2bd23ap+4 0x1.73ec0d02d6666p+5 0x1.a1616f650ff71p+2\n"
+         "L 0x1.73ec0d02d6666p+5 0x1.a1616f650ff71p+2 0x1.4078ee54fb58bp+5 0x1.a1616f650ff71p+2\n"
+         "L 0x1.4078ee54fb58bp+5 0x1.a1616f650ff71p+2 0x1.4078ee54fb58bp+5 0x1.279d11e2bd23ap+4\n"
+         "L 0x1.4078ee54fb58bp+5 0x1.279d11e2bd23ap+4 0x1.1449b1fe19d37p+5 0x1.279d11e2bd23ap+4\n"
+         "L 0x1.1449b1fe19d37p+5 0x1.279d11e2bd23ap+4 0x1.1449b1fe19d37p+5 0x1.ff3c65701e698p-1\n"
+         "P 0x1.8p+2 60 -0x1.71e7fc117af62p-4 1 0 0x0p+0 0x1.22461f2caa1d2p+1 0x1.c5f546ba04691p+2 0x0p+0 0x1.4p+2 1 0x1.fd2deb71121d5p-1 0 1 0x1.5ece6c5e3a856p+1 0x1.6a11774c8e17ap-1 0 6 0x1.f6d934eaae276p+5 0x0p+0 0 0 0x0p+0 2 0x1.bd21dfd4656f2p+2 0 0 0x1.9382d0e27a694p-2 0x1.37b86b6a00a1fp+2 0x1.42a4dbd2f772dp+0 0x1.85c5749eea1f6p+1 2 0x1.fe9eb92ba9d66p-1 0 0 0x0p+0 0x0p+0 1 7 0 0 0 0 -0x1.04725a0b445aep+5 0x1.9fd95f7954d54p+4 0x1p+1\n"
+         "K 1 1\n"        );
+        const ProfileResult r = profileToolpath(f.cs, f.tool, f.p);
+        REQUIRE(r.ok());
+        CHECK(leftOut(r, "vector 0") == 0);
+        CHECK(reportedAreas(r).size() == floodOf(f, r).size());
+    }
+    {
+        const FloodScene f = loadFloodScene(
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.859a6c4f4c58fp+3 0x0p+0\n"
+         "L 0x1.859a6c4f4c58fp+3 0x0p+0 0x1.859a6c4f4c58fp+3 0x1.73f0dfd17bbaap+3\n"
+         "L 0x1.859a6c4f4c58fp+3 0x1.73f0dfd17bbaap+3 0x1.73f0dfd17bbaap+4 0x1.73f0dfd17bbaap+3\n"
+         "L 0x1.73f0dfd17bbaap+4 0x1.73f0dfd17bbaap+3 0x1.73f0dfd17bbaap+4 0x0p+0\n"
+         "L 0x1.73f0dfd17bbaap+4 0x0p+0 0x1.1b5f0afc90f39p+5 0x0p+0\n"
+         "L 0x1.1b5f0afc90f39p+5 0x0p+0 0x1.1b5f0afc90f39p+5 0x1.1b5f0afc90f39p+5\n"
+         "L 0x1.1b5f0afc90f39p+5 0x1.1b5f0afc90f39p+5 0x1.73f0dfd17bbaap+4 0x1.1b5f0afc90f39p+5\n"
+         "L 0x1.73f0dfd17bbaap+4 0x1.1b5f0afc90f39p+5 0x1.73f0dfd17bbaap+4 0x1.7cc5a6106409dp+4\n"
+         "L 0x1.73f0dfd17bbaap+4 0x1.7cc5a6106409dp+4 0x1.859a6c4f4c58fp+3 0x1.7cc5a6106409dp+4\n"
+         "L 0x1.859a6c4f4c58fp+3 0x1.7cc5a6106409dp+4 0x1.859a6c4f4c58fp+3 0x1.1b5f0afc90f39p+5\n"
+         "L 0x1.859a6c4f4c58fp+3 0x1.1b5f0afc90f39p+5 0x0p+0 0x1.1b5f0afc90f39p+5\n"
+         "L 0x0p+0 0x1.1b5f0afc90f39p+5 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "L 0x1.4344808245b48p+5 0x1.c951d8e902534p+0 0x1.c834b9584086cp+5 0x1.c951d8e902534p+0\n"
+         "L 0x1.c834b9584086cp+5 0x1.c951d8e902534p+0 0x1.c834b9584086cp+5 0x1.26758f3a85c9cp+4\n"
+         "L 0x1.c834b9584086cp+5 0x1.26758f3a85c9cp+4 0x1.a26abc7819ep+5 0x1.26758f3a85c9cp+4\n"
+         "L 0x1.a26abc7819ep+5 0x1.26758f3a85c9cp+4 0x1.a26abc7819ep+5 0x1.a0a45d3b75ca9p+2\n"
+         "L 0x1.a26abc7819ep+5 0x1.a0a45d3b75ca9p+2 0x1.690e7d626c5b4p+5 0x1.a0a45d3b75ca9p+2\n"
+         "L 0x1.690e7d626c5b4p+5 0x1.a0a45d3b75ca9p+2 0x1.690e7d626c5b4p+5 0x1.26758f3a85c9cp+4\n"
+         "L 0x1.690e7d626c5b4p+5 0x1.26758f3a85c9cp+4 0x1.4344808245b48p+5 0x1.26758f3a85c9cp+4\n"
+         "L 0x1.4344808245b48p+5 0x1.26758f3a85c9cp+4 0x1.4344808245b48p+5 0x1.c951d8e902534p+0\n"
+         "P 0x1.9p+4 90 -0x1.d72e7d0453c5ap-7 1 0 0x0p+0 0x1.28fe28d31c6f2p+2 0x1.a707b18611261p+0 0x1.df77762acb7ap-2 0x1.4p+2 0 0x1.15aa24c0b579cp-4 0 1 0x1.8d417a28341bp+0 0x1.67ce49d533255p+0 0 8 0x1.8e4cad575a5a7p+3 0x0p+0 0 0 0x0p+0 3 0x1.fedc533b70657p+4 1 0 0x1.b8ef2d04c6b5p-4 0x1.7d046ee6d601dp+3 0x1.91327c64e537fp-2 0x1.35dd7177d9d15p+3 2 0x1.1bc19756d2b52p-3 1 0 0x0p+0 0x0p+0 1 1 0 1 0 0 -0x1.5b79b2473848p+5 -0x1.2b7c22465ac12p+5 0x1p+1\n"
+         "K 1 1\n"        );
+        const ProfileResult r = profileToolpath(f.cs, f.tool, f.p);
+        REQUIRE(r.ok());
+        CHECK(leftOut(r, "vector 0") == 0);
+        CHECK(reportedAreas(r).size() == floodOf(f, r).size());
     }
 }
