@@ -24,6 +24,7 @@
 #include "carvetto/viewmodel/canvas_scene.hpp"
 #include "carvetto/viewmodel/new_job_form.hpp"
 #include "carvetto/viewmodel/pixel_probe.hpp"
+#include "carvetto/viewmodel/selection_tools.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
 #include "main_window.hpp"
 
@@ -109,6 +110,30 @@ int runSelfTest() {
     const std::size_t before = inkPixels(frame, region);
     if (before == 0) {
         return fail("no circle pixels were drawn inside the material rectangle");
+    }
+
+    // 3b. Click-to-select through the canvas: a click on the circle's outline selects it, a click
+    // on empty material clears the selection, Shift adds.
+    {
+        CanvasWidget* canvas = window.canvas();
+        const QPointF onCircle = QPointF(canvas->view().worldToScreen({centre.x + radius, centre.y}).x,
+                                         canvas->view().worldToScreen({centre.x + radius, centre.y}).y);
+        const QPointF onEmpty = QPointF(canvas->view().worldToScreen(centre).x,
+                                        canvas->view().worldToScreen(centre).y);
+        if (!canvas->selectAt(onCircle) || doc.selection().size() != 1) {
+            return fail("clicking the circle outline did not select it");
+        }
+        if (canvas->selectAt(onEmpty) || !doc.selection().empty()) {
+            return fail("clicking empty canvas did not clear the selection");
+        }
+        canvas->selectAt(onCircle, true);
+        if (doc.selection().size() != 1) {
+            return fail("shift-click did not add the circle");
+        }
+        canvas->selectAt(onCircle, false, true);
+        if (!doc.selection().empty()) {
+            return fail("ctrl-click did not toggle the circle off");
+        }
     }
 
     // 4. Undo the add, re-render, and check the circle is gone.

@@ -91,6 +91,8 @@ add_library(carvetto_core STATIC
   src/geometry/polyline.cpp
   src/geometry/contour.cpp
   src/geometry/contour_ops.cpp
+  src/geometry/shapes.cpp
+  src/document/shape_params.cpp
   src/geometry/intersect.cpp
   src/geometry/robust_predicates.cpp
   src/geometry/delaunay.cpp
