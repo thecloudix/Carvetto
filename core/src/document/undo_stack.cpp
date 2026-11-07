@@ -1,5 +1,6 @@
 #include "carvetto/document/undo_stack.hpp"
 
+#include <atomic>
 #include <utility>
 
 namespace carvetto::document {
@@ -21,10 +22,20 @@ void MacroCommand::revert(Document& doc) {
 
 // --- UndoStack ---------------------------------------------------------------------------------
 
+namespace {
+std::uint64_t nextGeneration() {
+    static std::atomic<std::uint64_t> counter{0};
+    return ++counter;
+}
+}  // namespace
+
+UndoStack::UndoStack(std::size_t limit) : limit_(limit), generation_(nextGeneration()) {}
+
 bool UndoStack::push(std::unique_ptr<Command> cmd, Document& doc) {
     if (!cmd || !cmd->apply(doc)) {
         return false;
     }
+    generation_ = nextGeneration();
     if (inMacro()) {
         macro_->add(std::move(cmd));
         return true;
@@ -63,6 +74,7 @@ bool UndoStack::undo(Document& doc) {
         return false;
     }
     commands_[--index_]->revert(doc);
+    generation_ = nextGeneration();
     coalesceOpen_ = false;
     return true;
 }
@@ -72,6 +84,7 @@ bool UndoStack::redo(Document& doc) {
         return false;
     }
     commands_[index_++]->apply(doc);
+    generation_ = nextGeneration();
     coalesceOpen_ = false;
     return true;
 }
@@ -106,6 +119,7 @@ void UndoStack::endMacro() {
 }
 
 void UndoStack::clear() {
+    generation_ = nextGeneration();
     commands_.clear();
     index_ = 0;
     coalesceOpen_ = false;

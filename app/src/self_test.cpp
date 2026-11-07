@@ -5,30 +5,37 @@
 #include <QDockWidget>
 #include <QFileInfo>
 #include <QImage>
+#include <QKeyEvent>
+#include <QMouseEvent>
 #include <QPixmap>
 #include <QPoint>
 #include <QSettings>
 #include <QSize>
 #include <QString>
 #include <QTemporaryDir>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <variant>
 
 #include "canvas_widget.hpp"
 #include "carvetto/document/commands.hpp"
 #include "carvetto/document/document.hpp"
+#include "carvetto/document/shape_params.hpp"
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/viewmodel/canvas_scene.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/new_job_form.hpp"
 #include "carvetto/viewmodel/pixel_probe.hpp"
 #include "carvetto/viewmodel/selection_tools.hpp"
+#include "carvetto/viewmodel/tools.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
 #include "main_window.hpp"
+#include "tool_panel.hpp"
 #include "vector_ops_menu.hpp"
 
 namespace carvetto::app {
@@ -47,6 +54,42 @@ std::size_t inkPixels(const QImage& image, const viewmodel::PixelRect& region) {
     const auto stride = static_cast<std::ptrdiff_t>(image.bytesPerLine() / 4);
     return viewmodel::countPixelsDiffering(pixels, image.width(), image.height(), stride, region,
                                            static_cast<std::uint32_t>(materialFill().rgb()));
+}
+
+void sendMouse(CanvasWidget* canvas, QEvent::Type type, QPointF pos, Qt::MouseButton button = Qt::LeftButton,
+               Qt::KeyboardModifiers mods = Qt::NoModifier) {
+    const Qt::MouseButtons buttons = type == QEvent::MouseButtonRelease ? Qt::NoButton : button;
+    QMouseEvent event(type, pos, canvas->mapToGlobal(pos), type == QEvent::MouseMove ? Qt::NoButton : button,
+                      buttons, mods);
+    QCoreApplication::sendEvent(canvas, &event);
+}
+
+void sendKey(CanvasWidget* canvas, Qt::Key key) {
+    QKeyEvent press(QEvent::KeyPress, key, Qt::NoModifier);
+    QCoreApplication::sendEvent(canvas, &press);
+}
+
+QPointF screenOf(const CanvasWidget* canvas, geometry::Vec2 mm) {
+    const geometry::Vec2 p = canvas->view().worldToScreen(mm);
+    return QPointF(p.x, p.y);
+}
+
+/// Drag with the left button through the real widget event path.
+void dragOnCanvas(CanvasWidget* canvas, geometry::Vec2 fromMm, geometry::Vec2 toMm) {
+    const QPointF a = screenOf(canvas, fromMm);
+    const QPointF b = screenOf(canvas, toMm);
+    sendMouse(canvas, QEvent::MouseMove, a, Qt::NoButton);
+    sendMouse(canvas, QEvent::MouseButtonPress, a);
+    sendMouse(canvas, QEvent::MouseMove, (a + b) * 0.5, Qt::LeftButton);
+    sendMouse(canvas, QEvent::MouseMove, b, Qt::LeftButton);
+    sendMouse(canvas, QEvent::MouseButtonRelease, b);
+}
+
+void clickOnCanvas(CanvasWidget* canvas, geometry::Vec2 mm) {
+    const QPointF p = screenOf(canvas, mm);
+    sendMouse(canvas, QEvent::MouseMove, p, Qt::NoButton);
+    sendMouse(canvas, QEvent::MouseButtonPress, p);
+    sendMouse(canvas, QEvent::MouseButtonRelease, p);
 }
 
 }  // namespace
@@ -189,6 +232,110 @@ int runSelfTest() {
     if (remaining != 0) {
         return fail("circle pixels remain after undo (" + std::to_string(remaining) + " of " +
                     std::to_string(before) + ")");
+    }
+
+    // 4b. Drawing tools through the real window: toolbar, mouse events, key events, numeric entry.
+    {
+        CanvasWidget* canvas = window.canvas();
+        const double w = material.width();
+        const geometry::Vec2 lo{material.min.x + w * 0.1, material.min.y + w * 0.1};
+        const geometry::Vec2 hi{material.min.x + w * 0.4, material.min.y + w * 0.3};
+
+        if (window.toolAction(viewmodel::ToolKind::Rectangle) == nullptr || window.toolPanel() == nullptr) {
+            return fail("the tool palette is missing");
+        }
+        window.selectTool(viewmodel::ToolKind::Rectangle);
+        if (canvas->tools().tool() != viewmodel::ToolKind::Rectangle ||
+            !window.toolAction(viewmodel::ToolKind::Rectangle)->isChecked()) {
+            return fail("choosing Rectangle in the toolbar did not activate the tool");
+        }
+        dragOnCanvas(canvas, lo, hi);
+        if (doc.objectCount() != 1 || doc.undoStack().count() != 1) {
+            return fail("dragging a rectangle did not add exactly one object / undo step");
+        }
+        const document::Object& rect = doc.objects().begin()->second;
+        const auto* rp = std::get_if<document::RectangleParams>(&rect.asVector()->params);
+        if (rp == nullptr || std::fabs(rp->widthMm - (hi.x - lo.x)) > 1e-6 ||
+            std::fabs(rp->heightMm - (hi.y - lo.y)) > 1e-6) {
+            return fail("the rectangle has the wrong parameters");
+        }
+        const auto rebuilt = document::buildContours(rect.asVector()->params);
+        if (!rebuilt.ok() || !(rebuilt.value() == rect.asVector()->contours)) {
+            return fail("the rectangle does not rebuild from its parameters");
+        }
+        if (!window.undo() || doc.objectCount() != 0 || !window.redo() || doc.objectCount() != 1) {
+            return fail("undo/redo of the drawn rectangle failed");
+        }
+
+        // A shape in progress is painted by the overlay and Escape cancels it without an edit.
+        window.selectTool(viewmodel::ToolKind::Circle);
+        const geometry::Vec2 centreMm{material.min.x + w * 0.7, material.min.y + w * 0.5};
+        const QImage idle = canvas->grab().toImage();
+        sendMouse(canvas, QEvent::MouseMove, screenOf(canvas, centreMm), Qt::NoButton);
+        sendMouse(canvas, QEvent::MouseButtonPress, screenOf(canvas, centreMm));
+        sendMouse(canvas, QEvent::MouseMove, screenOf(canvas, centreMm + geometry::Vec2{w * 0.1, 0.0}),
+                  Qt::LeftButton);
+        const QImage drawing = canvas->grab().toImage();
+        if (idle == drawing) {
+            return fail("the tool preview was not painted on the canvas");
+        }
+        sendKey(canvas, Qt::Key_Escape);
+        if (canvas->tools().active() || doc.objectCount() != 1 || doc.undoStack().count() != 1) {
+            return fail("Escape did not cancel the circle without changing the document");
+        }
+        sendMouse(canvas, QEvent::MouseButtonRelease, screenOf(canvas, centreMm));
+
+        // Numeric entry: a polygon whose sides and radius are typed (display units are inches).
+        window.selectTool(viewmodel::ToolKind::Polygon);
+        clickOnCanvas(canvas, centreMm);
+        if (!window.toolPanel()->typeInto("sides", "5") || !window.toolPanel()->typeInto("radius", "1")) {
+            return fail("valid numeric entries were rejected");
+        }
+        if (window.toolPanel()->typeInto("radius", "abc") || window.toolPanel()->typeInto("sides", "2")) {
+            return fail("invalid numeric entries were accepted");
+        }
+        window.toolPanel()->typeInto("radius", "1");
+        sendKey(canvas, Qt::Key_Return);
+        if (doc.objectCount() != 2) {
+            return fail("Enter did not complete the polygon from the typed values");
+        }
+        const auto* pp = std::get_if<document::PolygonParams>(&doc.objects().rbegin()->second.asVector()->params);
+        if (pp == nullptr || pp->sides != 5 || std::fabs(pp->radiusMm - 25.4) > 1e-9) {
+            return fail("the typed polygon parameters were not applied (sides 5, radius 1 in)");
+        }
+
+        // Polyline: two clicks and a double-click finish one open contour.
+        window.selectTool(viewmodel::ToolKind::Polyline);
+        const geometry::Vec2 q{material.min.x + w * 0.1, material.min.y + w * 0.7};
+        clickOnCanvas(canvas, q);
+        clickOnCanvas(canvas, q + geometry::Vec2{w * 0.1, 0.0});
+        {
+            const QPointF last = screenOf(canvas, q + geometry::Vec2{w * 0.1, w * 0.1});
+            sendMouse(canvas, QEvent::MouseMove, last, Qt::NoButton);
+            sendMouse(canvas, QEvent::MouseButtonDblClick, last);
+        }
+        if (doc.objectCount() != 3 ||
+            doc.objects().rbegin()->second.asVector()->contours.at(0).spans.size() != 2) {
+            return fail("the polyline tool did not create a two-span contour");
+        }
+
+        // The select tool picks the rectangle by its outline and clears on empty canvas.
+        window.selectTool(viewmodel::ToolKind::Select);
+        clickOnCanvas(canvas, geometry::Vec2{lo.x, (lo.y + hi.y) * 0.5});
+        if (doc.selection().size() != 1) {
+            return fail("the select tool did not pick the rectangle");
+        }
+        clickOnCanvas(canvas, geometry::Vec2{material.max.x - 1.0, material.max.y - 1.0});
+        if (!doc.selection().empty()) {
+            return fail("the select tool did not clear the selection on empty canvas");
+        }
+        while (doc.undoStack().canUndo()) {
+            window.undo();
+        }
+        if (doc.objectCount() != 0) {
+            return fail("undoing the drawn objects did not empty the document");
+        }
+        window.selectTool(viewmodel::ToolKind::Select);
     }
 
     // The live widget tree must also render headlessly.

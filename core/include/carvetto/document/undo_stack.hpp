@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -18,7 +19,7 @@ class Document;
 class UndoStack {
    public:
     /// `limit` = 0 means unbounded; otherwise the oldest steps are dropped beyond `limit`.
-    explicit UndoStack(std::size_t limit = 0) : limit_(limit) {}
+    explicit UndoStack(std::size_t limit = 0);
 
     /// Applies `cmd` to `doc` and records it. Returns false (discarding `cmd`) when `apply`
     /// reported a no-op. Inside a macro the command is collected instead of recorded.
@@ -44,6 +45,13 @@ class UndoStack {
     /// Ends the current coalescing run so the next push starts a new undo step.
     void breakCoalescing() { coalesceOpen_ = false; }
 
+    /// Edit generation: a process-wide unique value, replaced by a fresh one on every successful
+    /// push (also inside a macro and when a step coalesces), undo, redo and `clear()`. It never
+    /// repeats for different document content, even across documents, so caches of derived data
+    /// (snap indexes, ...) can key on it. It does not see edits made without a command (direct
+    /// `Document` mutators); callers of those must invalidate their caches themselves.
+    std::uint64_t generation() const { return generation_; }
+
     /// Number of recorded steps (undone ones included).
     std::size_t count() const { return commands_.size(); }
     /// Number of steps currently applied.
@@ -63,6 +71,7 @@ class UndoStack {
     std::vector<std::unique_ptr<Command>> commands_;
     std::size_t index_{0};
     std::size_t limit_;
+    std::uint64_t generation_;
     bool coalesceOpen_{false};
     std::unique_ptr<MacroCommand> macro_;
     int macroDepth_{0};
