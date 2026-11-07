@@ -9,6 +9,7 @@ add_library(carvetto_viewmodel STATIC
   src/new_job_form.cpp
   src/dxf_exchange.cpp
   src/file_session.cpp
+  src/selection_tools.cpp
 )
 target_include_directories(carvetto_viewmodel PUBLIC include)
 target_link_libraries(carvetto_viewmodel
