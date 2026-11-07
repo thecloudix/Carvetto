@@ -583,8 +583,10 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     (`StartMoved`; owner decision 2026-10-26: keep this). Only when nothing fits is the lead left
     out (`LeadDropped`). Lead-outs try the same variants and sizes at the end point and leave at
     the height the cut ended at (the tab top when the overcut ends in a tab). A closed cut that
-    collapsed to a point when its start was chosen (no spans left; it emits nothing) gets no
-    lead and no diagnostic (T-0163).
+    collapsed to a point when its start was chosen (no spans left; it emits nothing) is dropped
+    before ordering, tab keep-clear and lead planning (T-0163, T-0165); a vector left with no
+    cut in a pass this way (or as a sliver no longer than the tolerance) gets one `ToolTooLarge`
+    diagnostic ("its offset collapses in the roughing/finishing/cutting pass").
 16. **V-bit corners.** Sharp external = Sharp joins (5). Sharp internal, on the final level, at
     an inside-corner kink Q of an exact offset where the path turns by more than 5° (merged
     polygonal regions, On profiles and the sub-degree kinks of polygonised curves get none):
