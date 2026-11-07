@@ -5,7 +5,10 @@
 #include <QDockWidget>
 #include <QFileInfo>
 #include <QImage>
+#include <QAction>
 #include <QKeyEvent>
+#include <QKeySequence>
+#include <QMenu>
 #include <QMouseEvent>
 #include <QPixmap>
 #include <QPoint>
@@ -37,6 +40,7 @@
 #include "carvetto/viewmodel/tools.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
 #include "main_window.hpp"
+#include "node_edit_menu.hpp"
 #include "tool_panel.hpp"
 #include "vector_ops_menu.hpp"
 
@@ -371,6 +375,109 @@ int runSelfTest() {
         if (!window.undo() || doc.objectCount() != 0) {
             return fail("undoing the rectangle failed after the array copy");
         }
+    }
+
+    // 4d. Node editing through the real window: select, N, drag a node, convert a span, insert a
+    // point, Escape reverts a drag, undo everything (T-0206).
+    {
+        CanvasWidget* canvas = window.canvas();
+        NodeEditMenu* nodeMenu = window.nodeEdit();
+        QAction* nodeAction = window.toolAction(viewmodel::ToolKind::NodeEdit);
+        if (nodeMenu == nullptr || nodeAction == nullptr ||
+            nodeAction->shortcut() != QKeySequence(QStringLiteral("N"))) {
+            return fail("the Node Edit tool is missing or has no N shortcut");
+        }
+        const double w = material.width();
+        const geometry::Vec2 lo{material.min.x + w * 0.5, material.min.y + w * 0.5};
+        const geometry::Vec2 hi{lo.x + w * 0.2, lo.y + w * 0.1};
+        document::RectangleParams rp;
+        rp.centreMm = (lo + hi) * 0.5;
+        rp.widthMm = hi.x - lo.x;
+        rp.heightMm = hi.y - lo.y;
+        if (!doc.execute(std::make_unique<document::AddObjectCommand>(document::Object::vector(
+                geometry::Contour::rectangle(geometry::Box2{lo, hi}), doc.activeLayer(), doc.activeSheet(), rp)))) {
+            return fail("could not add a rectangle for node editing");
+        }
+        const document::ObjectId rectId = doc.objectIds().back();
+        const auto objectsBefore = doc.objects();
+        const std::size_t stepsBefore = doc.undoStack().count();
+        doc.selection().assign({rectId});
+        window.documentChanged();
+
+        window.selectTool(viewmodel::ToolKind::NodeEdit);
+        if (canvas->tools().tool() != viewmodel::ToolKind::NodeEdit || !nodeAction->isChecked()) {
+            return fail("choosing Node Edit did not activate the tool");
+        }
+        // Drag the top right node: one undo step, the parameters are gone, the node is where dropped.
+        const QImage idle = canvas->grab().toImage();
+        const geometry::Vec2 moved{hi.x + w * 0.05, hi.y + w * 0.05};
+        dragOnCanvas(canvas, hi, moved);
+        if (doc.undoStack().count() != stepsBefore + 1) {
+            return fail("dragging a node did not make exactly one undo step");
+        }
+        const auto* edited = doc.findObject(rectId)->asVector();
+        if (std::holds_alternative<document::RectangleParams>(edited->params) || edited->contours.at(0).spans.size() != 4 ||
+            geometry::distance(geometry::endPoint(edited->contours.at(0).spans[1]), moved) > 1e-6) {
+            return fail("the dragged node did not end where it was dropped");
+        }
+        if (canvas->grab().toImage() == idle) {
+            return fail("the node handles / edit were not painted");
+        }
+
+        // Escape reverts a drag in progress exactly and leaves nothing to redo.
+        const auto afterDrag = doc.objects();
+        sendMouse(canvas, QEvent::MouseMove, screenOf(canvas, lo), Qt::NoButton);
+        sendMouse(canvas, QEvent::MouseButtonPress, screenOf(canvas, lo));
+        sendMouse(canvas, QEvent::MouseMove, screenOf(canvas, lo - geometry::Vec2{w * 0.03, w * 0.03}),
+                  Qt::LeftButton);
+        sendKey(canvas, Qt::Key_Escape);
+        sendMouse(canvas, QEvent::MouseButtonRelease, screenOf(canvas, lo));
+        if (!(doc.objects() == afterDrag) || doc.undoStack().canRedo() || doc.undoStack().count() != stepsBefore + 1) {
+            return fail("Escape did not revert the node drag exactly");
+        }
+
+        // Select a span by clicking near the start of the bottom edge, convert it to an arc (menu glue
+        // and the viewmodel operation behind it), then insert a point with the I key.
+        clickOnCanvas(canvas, geometry::Vec2{lo.x + (hi.x - lo.x) * 0.2, lo.y});
+        QMenu* spanMenu = nodeMenu->buildMenu(viewmodel::HandleType::Span, lo);
+        bool arcEnabled = false;
+        for (QAction* a : spanMenu->actions()) {
+            if (a->text().contains(QStringLiteral("Convert to &Arc"))) {
+                arcEnabled = a->isEnabled();
+            }
+        }
+        delete spanMenu;
+        if (!arcEnabled) {
+            return fail("Convert to Arc is not enabled for a selected span");
+        }
+        viewmodel::NodeOpArgs through;
+        through.throughMm = geometry::Vec2{(lo.x + hi.x) * 0.5, lo.y - w * 0.03};
+        if (!nodeMenu->run(viewmodel::NodeOp::ConvertArc, through).ok ||
+            !std::holds_alternative<geometry::ArcSpan>(doc.findObject(rectId)->asVector()->contours.at(0).spans[0])) {
+            return fail("converting the span to an arc failed");
+        }
+        sendKey(canvas, Qt::Key_I);
+        if (doc.findObject(rectId)->asVector()->contours.at(0).spans.size() != 5) {
+            return fail("the I key did not insert a point");
+        }
+        if (doc.undoStack().count() != stepsBefore + 3) {
+            return fail("convert and insert were not one undo step each");
+        }
+        // Undo all three steps: the rectangle, parameters included, is back byte-identically.
+        for (int i = 0; i < 3; ++i) {
+            if (!window.undo()) {
+                return fail("undoing the node edits failed");
+            }
+        }
+        if (!(doc.objects() == objectsBefore)) {
+            return fail("undoing the node edits did not restore the rectangle exactly");
+        }
+        window.selectTool(viewmodel::ToolKind::Select);
+        doc.selection().clear();
+        if (!window.undo() || doc.objectCount() != 0) {
+            return fail("undoing the node-edit rectangle failed");
+        }
+        window.documentChanged();
     }
 
     // The live widget tree must also render headlessly.

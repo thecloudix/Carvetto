@@ -16,6 +16,7 @@
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/geometry/span.hpp"
 #include "carvetto/geometry/vec2.hpp"
+#include "carvetto/viewmodel/node_edit.hpp"
 #include "carvetto/viewmodel/selection_tools.hpp"
 #include "carvetto/viewmodel/snapping.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
@@ -37,6 +38,8 @@
 //   * Select: click selects (Shift adds, Ctrl toggles), a drag draws a marquee (left to right:
 //     Window, right to left: Crossing) that combines with the selection by the same modifiers.
 //   * Escape cancels whatever is in progress without touching the document.
+//   * NodeEdit: pointer events go to the `NodeEditor` (node_edit.hpp); every drag step is snapped
+//     with the dragged objects excluded, on the snap index of the drag's start.
 //
 // Modifiers
 //   * Shift disables snapping for that event; in the Polyline tool it also constrains the segment
@@ -51,7 +54,7 @@
 
 namespace carvetto::viewmodel {
 
-enum class ToolKind { Select, Rectangle, Circle, Ellipse, Polygon, Star, Arc, Polyline };
+enum class ToolKind { Select, Rectangle, Circle, Ellipse, Polygon, Star, Arc, Polyline, NodeEdit };
 
 /// How the Arc tool defines the arc.
 enum class ArcMode {
@@ -191,6 +194,11 @@ class ToolController {
     geometry::Vec2 pointMm() const { return cursorMm_; }
     ToolPreview preview() const;
 
+    // --- Node editing (T-0206, ADR-0030) ----------------------------------------------------
+    /// The node editor behind `ToolKind::NodeEdit`: handles for painting, operations, keys.
+    NodeEditor& nodeEditor() { return nodeEditor_; }
+    const NodeEditor& nodeEditor() const { return nodeEditor_; }
+
     // --- Numeric entry ----------------------------------------------------------------------
     /// Fields of the active tool (and arc mode), in display order. Empty for tools with none.
     std::vector<NumericField> fields() const;
@@ -236,6 +244,7 @@ class ToolController {
     bool layerWritable(std::string* why) const;
 
     document::Document* doc_{nullptr};
+    NodeEditor nodeEditor_;
     ViewTransform view_;
     ToolKind tool_{ToolKind::Select};
     ToolOptions options_;

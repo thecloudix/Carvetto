@@ -28,6 +28,10 @@ class UndoStack {
     bool undo(Document& doc);
     /// Re-applies the latest undone step. Returns false when there is nothing to redo.
     bool redo(Document& doc);
+    /// Reverts the latest applied step and forgets it, so it leaves no redoable entry (cancelling a
+    /// drag with Escape). Only possible when no undone step is waiting for redo and not inside a
+    /// macro; returns false (nothing done) otherwise.
+    bool cancelLast(Document& doc);
 
     bool canUndo() const { return index_ > 0 && !inMacro(); }
     bool canRedo() const { return index_ < commands_.size() && !inMacro(); }

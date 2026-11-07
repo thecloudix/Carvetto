@@ -53,6 +53,7 @@ add_executable(carvetto_tests
   post/line_length_test.cpp
   tooling/starter_tools_test.cpp
   document/job_test.cpp
+  document/node_edit_command_test.cpp
   document/variables_test.cpp
   document/selection_test.cpp
   document/undo_stack_test.cpp
