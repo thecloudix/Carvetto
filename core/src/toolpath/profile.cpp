@@ -596,6 +596,7 @@ class ProfileBuilder {
     void orient(Cut& c, bool finishing) const;
     std::vector<Cut> trim(std::vector<Cut> cuts);
     void chooseStarts(std::vector<Cut>& cuts);
+    void reportVanished(const char* pass);
     std::optional<TipEdges> tipEdges(const Cut& c, Vec2 target) const;
     double startOn(const Cut& c, const ArcLengthPath& walk, Vec2 target) const;
     std::vector<std::size_t> order(const std::vector<Cut>& cuts) const;
@@ -698,6 +699,8 @@ class ProfileBuilder {
     double indexSlack_{1e-9};
     ProfileResult result_;
     std::vector<bool> tooLargeReported_;
+    std::vector<bool> lostCut_;  // vectors that had a cut removed as a sliver or a point (T-0165)
+    std::vector<bool> keptCut_;  // vectors that still have a cut after the starts are chosen
 };
 
 bool ProfileBuilder::validate() {
@@ -852,6 +855,8 @@ void ProfileBuilder::prepareInputs() {
     in_.valid.assign(n, false);
     in_.area.assign(n, 0.0);
     tooLargeReported_.assign(n, false);
+    lostCut_.assign(n, false);
+    keptCut_.assign(n, false);
     std::vector<bool> closedValid(n, false);
     for (std::size_t i = 0; i < n; ++i) {
         const Contour& c = raw_[i];
@@ -1199,10 +1204,24 @@ double ProfileBuilder::startOn(const Cut& c, const ArcLengthPath& walk, Vec2 tar
 }
 
 void ProfileBuilder::chooseStarts(std::vector<Cut>& cuts) {
-    // Slivers no longer than the tolerance carry no cut.
-    cuts.erase(std::remove_if(cuts.begin(), cuts.end(),
-                              [&](const Cut& c) { return c.path.isEmpty() || c.path.length() <= tol_.distance; }),
-               cuts.end());
+    lostCut_.assign(lostCut_.size(), false);
+    keptCut_.assign(keptCut_.size(), false);
+    // Slivers no longer than the tolerance carry no cut. The vectors they came from are noted, so
+    // a vector left with no cut at all is reported (T-0165).
+    auto dropLost = [&](auto isLost) {
+        cuts.erase(std::remove_if(cuts.begin(), cuts.end(),
+                                  [&](const Cut& c) {
+                                      if (!isLost(c)) {
+                                          return false;
+                                      }
+                                      for (std::size_t src : c.sources) {
+                                          lostCut_[src] = true;
+                                      }
+                                      return true;
+                                  }),
+                   cuts.end());
+    };
+    dropLost([&](const Cut& c) { return c.path.isEmpty() || c.path.length() <= tol_.distance; });
     for (Cut& c : cuts) {
         const ArcLengthPath walk(c.path, offTol_);
         if (walk.closed() && p_.startAt != StartAt::Optimise) {
@@ -1217,6 +1236,25 @@ void ProfileBuilder::chooseStarts(std::vector<Cut>& cuts) {
         }
         closeExactly(c.path);
         c.walk = ArcLengthPath(c.path, offTol_);
+    }
+    // A closed cut that collapsed to a point when its start was chosen has no spans left: it never
+    // reaches ordering or the tabs' keep-clear points (T-0165).
+    dropLost([&](const Cut& c) { return c.walk.contour().isEmpty(); });
+    for (const Cut& c : cuts) {
+        for (std::size_t src : c.sources) {
+            keptCut_[src] = true;
+        }
+    }
+}
+
+// A vector whose cuts in a pass all vanished (offset collapsed to a sliver or a point) is
+// reported once, like any other vector with no room for the tool (T-0165). Call after chooseStarts.
+void ProfileBuilder::reportVanished(const char* pass) {
+    for (std::size_t i = 0; i < lostCut_.size(); ++i) {
+        if (lostCut_[i] && !keptCut_[i] && !tooLargeReported_[i]) {
+            tooLargeReported_[i] = true;
+            diag(ProfileIssue::ToolTooLarge, i, vecName(i) + ": no room for the tool (its offset collapses in the " + pass + " pass)");
+        }
     }
 }
 
@@ -3328,8 +3366,12 @@ ProfileResult ProfileBuilder::run() {
         finish = buildCuts(0.0, true);
     }
     chooseStarts(rough);
+    reportVanished(separate ? "roughing" : "cutting");
     chooseStarts(finish);
-    auto applyOptimisedStarts = [&](std::vector<Cut>& cuts, const std::vector<std::size_t>& ord) {
+    if (separate) {
+        reportVanished("finishing");
+    }
+    auto applyOptimisedStarts = [&](std::vector<Cut>& cuts, std::vector<std::size_t>& ord, const char* pass) {
         if (p_.startAt != StartAt::Optimise) {
             return;
         }
@@ -3344,9 +3386,37 @@ ProfileResult ProfileBuilder::run() {
             }
             prev = c.walk.pointAt(0.0);
         }
+        // A closed cut that collapsed to a point has no spans left: it is dropped here, and
+        // reported if it was the vector's only cut in this pass (T-0165).
+        lostCut_.assign(lostCut_.size(), false);
+        keptCut_.assign(keptCut_.size(), false);
+        std::vector<std::size_t> newIndex(cuts.size(), cuts.size());
+        std::vector<Cut> kept;
+        for (std::size_t i = 0; i < cuts.size(); ++i) {
+            const bool empty = cuts[i].walk.contour().isEmpty();
+            for (std::size_t src : cuts[i].sources) {
+                (empty ? lostCut_ : keptCut_)[src] = true;
+            }
+            if (!empty) {
+                newIndex[i] = kept.size();
+                kept.push_back(std::move(cuts[i]));
+            }
+        }
+        const bool dropped = kept.size() != cuts.size();
+        cuts = std::move(kept);
+        if (dropped) {
+            std::vector<std::size_t> remapped;
+            for (std::size_t i : ord) {
+                if (newIndex[i] != newIndex.size()) {
+                    remapped.push_back(newIndex[i]);
+                }
+            }
+            ord = std::move(remapped);
+            reportVanished(pass);
+        }
     };
-    const std::vector<std::size_t> roughOrder = order(rough);
-    applyOptimisedStarts(rough, roughOrder);
+    std::vector<std::size_t> roughOrder = order(rough);
+    applyOptimisedStarts(rough, roughOrder, separate ? "roughing" : "cutting");
     // Finishing cuts follow the roughing order: each takes the position of the roughing cut
     // nearest to it (they lie the last-pass allowance apart).
     std::vector<std::size_t> finishOrder(finish.size());
@@ -3429,7 +3499,7 @@ ProfileResult ProfileBuilder::run() {
         std::stable_sort(finishOrder.begin(), finishOrder.end(),
                          [&](std::size_t x, std::size_t y) { return key[x] < key[y]; });
     }
-    applyOptimisedStarts(finish, finishOrder);
+    applyOptimisedStarts(finish, finishOrder, "finishing");
     planLeadIns(rough);
     planLeadIns(finish);
     if (separate) {
