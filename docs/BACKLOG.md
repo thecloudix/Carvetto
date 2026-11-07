@@ -663,7 +663,7 @@ Goal: Found by the T-0158 verifier (harness t0158v1, wsf.cpp flood oracle, worse
 Acceptance criteria:
   1. Each repro has no severed/partial tab and every free piece is reported or held; flood-oracle sweep over the harness shows no scene worse than main; regression tests.
 
-### T-0168 Offsets: near-tolerance walks cost and inner-offset loss (T-0016 coder)   [status: in progress]
+### T-0168 Offsets: near-tolerance walks cost and inner-offset loss (T-0016 coder)   [status: verifying]
 Phase: 1   Module: core/geometry   Depends on: T-0016   ADR: 0012
 Goal: Found by the T-0016 coder on main.
 (a) Walks of 1.5 µm steps (just above tol) are super-linear for every join. Round: 4–7 s at 2000 steps, 17–43 s at 4000. Sharp: 12–13 s at 2000, 60–131 s at 4000. The whole walk lies within d of itself: pruning scans every input span per sample (closerThan) and boundary splitting is O(n²). Ideas exist on the shelved T-0009 branches (convex-hull distance hierarchy, domination trimming).
@@ -695,7 +695,7 @@ Goal: Non-blocking findings from harness t0128v2. (a) A recovered stray with mor
 Acceptance criteria:
   1. (a) a long stray comes back as ≤ ceil(n/512) chains with no spans dropped; (b) near-linear and ≤ 1.5× main on the clustered repros, or documented with measurements; (c) tests kill M3, W2, S, P, O (E2 if not redundant); outputs otherwise unchanged; full ctest.
 
-### T-0173 V-Carve corner sharpening follow-ups (T-0160 round-2 verifier)   [status: verifying]
+### T-0173 V-Carve corner sharpening follow-ups (T-0160 round-2 verifier)   [status: verifying (PR #68)]
 Phase: 1   Module: core/toolpath   Depends on: T-0160   ADR: 0025
 Goal: Non-blocking findings from harness t0160v2. (a) Super-linear: one region made of a horizontal chain of n squares joined by pinched necks — sharpening adds 0.27/0.83/2.6/11.8 s at n = 100/200/400/800 (×4.5 at the last doubling, +168% of the job); rotated 90° it is linear. The swept-area offset/difference runs over the whole part in one Clipper2 call (scanbeam); batch it per region/locality (repro perf2 chain 100 200 400 800). (b) Test gaps: mutants caught only by the golden (half-strip 0.3·s leaves 0.2683 > ridge 0.2598 in bigtri_ch0.002_apex30_V60s03; never_join; no back extension; no zig-zag) and not caught at all (ramps counted as swept; pieces < 50·distance dropped). (c) CLI help text still says "convex corners … each corner's bisector"; round 2 also cuts rounded corners, necks and spikes. (d) Pieces shorter than the distance tolerance are dropped — mention in ADR-0025 §6.
 Note (owner question, pre-existing): flat areas no end mill enters keep F/2 ridges along every wall from the carving tool's rest clearing; ask the owner whether to address it.
