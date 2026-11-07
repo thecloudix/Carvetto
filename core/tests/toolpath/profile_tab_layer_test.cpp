@@ -678,6 +678,17 @@ const char* const k_m0_9303_322 =
         "K 1 0\n";
 
 
+const char* const k_m0_9302_71 =
+        "C 1\n"
+        "L 0x0p+0 0x0p+0 0x1.2db7df4259f2cp+5 0x0p+0\n"
+        "L 0x1.2db7df4259f2cp+5 0x0p+0 0x1.2db7df4259f2cp+5 0x1.2afabb2b71ecbp+3\n"
+        "L 0x1.2db7df4259f2cp+5 0x1.2afabb2b71ecbp+3 0x1.2afabb2b71ecbp+3 0x1.2afabb2b71ecbp+3\n"
+        "L 0x1.2afabb2b71ecbp+3 0x1.2afabb2b71ecbp+3 0x1.2afabb2b71ecbp+3 0x1.a667d229b120ap+5\n"
+        "L 0x1.2afabb2b71ecbp+3 0x1.a667d229b120ap+5 0x0p+0 0x1.a667d229b120ap+5\n"
+        "L 0x0p+0 0x1.a667d229b120ap+5 0x0p+0 0x0p+0\n"
+        "P 0x1.9p+4 120 0x0p+0 0 0 0x0p+0 0x1.62b407341cb37p+2 0x1.b119b64dfa9a4p+2 0x1.7cbe4512ba89cp-1 0x1.4p+2 1 0x1.d2b98117446a4p-5 0 1 0x1.ecee18bbd3d64p-1 0x1.5fd3c40540a4p-1 0 4 0x1.bebbf3a7ee67p+5 0x0p+0 0 0 0x0p+0 0 0x1.55821ab14081ep+1 0 0 0x1.6cf09408167bp-3 0x1.a5ad730f52b52p+1 0x1.92717c14f983ep-1 0x1.5323506781db9p+2 0 0x1.2ac2e44f62a2ep-3 0 0 0x0p+0 0x0p+0 2 1 0 0 0 0 0x1.97f24f10e73b4p+4 0x1.a796d882db3p+4 0x1p+1\n"
+        "K 1 0\n";
+
 struct Scene {
     std::vector<Contour> cs;
     ProfileParams p;
@@ -807,7 +818,8 @@ TEST_CASE("T-0167: tabs the cone's wider tab layer would nick stay as before", "
     // - The raster reaches a tool radius + allowance to the vector side and the tab-layer radius beyond
     //   the kerf, and its core is not the stretch less the full radius (m0_9301_364, m0_9301_392,
     //   m0_9303_213, m3_9303_305: tabs that hold were left out and a 758 mm2 part came free;
-    //   m3_9302_30, m0_9303_322: the window of the full radius loses a tab).
+    //   m3_9302_30, m0_9303_322: the window of the full radius loses a tab; m0_9302_71: without the
+    //   two tab-layer radii of the window's far side a tab is lost).
     // - The other cuts are tested against the core trimmed by the full radius at each end, as before
     //   (m3_9302_251, m3_9303_94, m3_9304_67, m3_9301_367, m3_9301_272, m3_9301_441: measured against
     //   the longer core, tabs that hold were lost or one that is cut through was kept).
@@ -828,7 +840,8 @@ TEST_CASE("T-0167: tabs the cone's wider tab layer would nick stay as before", "
                           {"m0_9303_213", k_m0_9303_213, 0},
                           {"m3_9303_305", k_m3_9303_305, 0},
                           {"m3_9302_30", k_m3_9302_30, 1},
-                          {"m0_9303_322", k_m0_9303_322, 0}};
+                          {"m0_9303_322", k_m0_9303_322, 0},
+                          {"m0_9302_71", k_m0_9302_71, 0}};
     for (const Case& k : cases) {
         INFO(k.name);
         const Scene s = loadScene(k.text);

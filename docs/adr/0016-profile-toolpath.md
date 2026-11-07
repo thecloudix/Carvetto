@@ -523,14 +523,22 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     9308/234 and 9308/243 (main keeps no tab and frees 1 to 3 pieces; the branch keeps tabs, one of
     them cut through, and frees fewer), 9306/427 (two extra kept tabs cut through, nothing free),
     9305/161 (30.7 mm² held, one hairline of 0.045 mm² reported that the flood does not find) and
-    9308/291 (a 1,622 mm² part held; six hairlines of 0.074 mm² left over, reported). **Cost
+    9308/291 (a 1,622 mm² part held; six hairlines of 0.074 mm² left over, reported). **Kept tabs that hold nothing (accepted by the director).** Ten further scenes of the T-0167
+    verifier (harness t0167v2, files res/v*_br.txt and _mn.txt; scene numbers 228, 314, 68, 473, 67
+    (seed 5008), 193 (seed 5002, vt), 987, 444, 676 and 807) keep a tab that the flood finds
+    severed, partial or holding nothing where main left it out; nothing is freed by it, and in
+    several main frees pieces. It is the class above (a quick answer keeps a tab beside a closed
+    pocket of waste, or a placement with more tabs wins). The "N tabs" count the user sees includes
+    such tabs: a kept tab is not a promise that it holds anything there. **Cost
     (Release CPU, three interleaved reps with an A/A control, the T-0140 perf pages with a V-bit):**
     main → this change, seconds: rect 1,000 Outside V60 0.40 → 0.43 (A/A 1.07); rect 400 Outside V90
     TC6 0.217 → 0.214; rect 400 Inside V60 11.9 → 6.5 (output differs: tabs now kept); letters 200
     Outside V90 A0.2 2.47 → 1.42 (differs); gear 2,000 teeth Outside V60 3.20 → 1.07; Inside V60
     2.99 → 0.70; rect 1,000 Inside V90 TC6 18.8 → 11.7 (differs, A/A 1.28); arc 1,000 Outside V120
     4.99 → 2.19; bez 500 Outside V60 A0.2 13.6 → 14.1 (1.03); plate 500 Inside V90 A0.2 16.2 → 5.8
-    (differs); end-mill rect 1,000 Outside 0.386 → 0.372. The first version of this change was
+    (differs); end-mill rect 1,000 Outside 0.386 → 0.372. The block shortcut is `detail::settleBlock` (`block_settle.hpp`), pinned by unit tests
+    against the exact distance of synthetic vectors (a block is settled only if every cell would get
+    the same verdict: block radius, anchor cell and both comparisons). The first version of this change was
     1.4× to 2.7× slower on V-bit pages: it measured every sample against a second, longer set of
     sections (a guard), and its raster reached four full radii and asked the distance field for
     every cell, which dominates a long gear (96 % of the time in `obstacleDistance`). Now one set of
