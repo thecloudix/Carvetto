@@ -13,27 +13,29 @@
 #include <QSize>
 #include <QString>
 #include <QTemporaryDir>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <cmath>
 #include <cstdio>
-#include <variant>
+#include <filesystem>
 #include <memory>
 #include <string>
+#include <variant>
 
 #include "canvas_widget.hpp"
 #include "carvetto/document/commands.hpp"
 #include "carvetto/document/document.hpp"
+#include "carvetto/document/shape_params.hpp"
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/viewmodel/canvas_scene.hpp"
+#include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/new_job_form.hpp"
 #include "carvetto/viewmodel/pixel_probe.hpp"
 #include "carvetto/viewmodel/selection_tools.hpp"
+#include "carvetto/viewmodel/tools.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
 #include "main_window.hpp"
 #include "tool_panel.hpp"
-#include "carvetto/document/shape_params.hpp"
-#include "carvetto/viewmodel/tools.hpp"
 
 namespace carvetto::app {
 
@@ -335,6 +337,47 @@ int runSelfTest() {
     QCoreApplication::processEvents();
     if (window.dockWidgetArea(toolpaths) != Qt::RightDockWidgetArea) {
         return fail("the restored layout did not put the toolpaths panel back on the right");
+    }
+
+    // 6. File session: open -> modify -> save -> reopen, all headless (no dialogs).
+    window.setQuiet(true);
+    const std::filesystem::path carvPath = viewmodel::pathFromUtf8(tempDir.filePath(QStringLiteral("job.carv")).toStdString());
+    const std::filesystem::path dxfPath = viewmodel::pathFromUtf8(tempDir.filePath(QStringLiteral("part.dxf")).toStdString());
+    if (!window.saveFileAs(carvPath) || window.session().isDirty() || !window.windowTitle().startsWith(QStringLiteral("job.carv"))) {
+        return fail("saving the job as job.carv failed or left it dirty");
+    }
+    if (!window.openFile(carvPath) || window.currentDocument().objectCount() != 0) {
+        return fail("reopening the saved job failed");
+    }
+    document::Document& reopened = window.currentDocument();
+    if (!reopened.execute(std::make_unique<document::AddObjectCommand>(
+            document::Object::vector(geometry::Contour::circle(centre, radius), reopened.activeLayer(),
+                                     reopened.activeSheet(), document::CircleParams{centre, radius})))) {
+        return fail("adding a circle to the reopened job failed");
+    }
+    window.documentChanged();
+    if (!window.session().isDirty() || !window.windowTitle().contains(QStringLiteral("job.carv*"))) {
+        return fail("the modified job is not marked as unsaved in the title");
+    }
+    if (!window.saveFile() || window.session().isDirty()) {
+        return fail("saving the modified job failed");
+    }
+    if (!window.openFile(carvPath) || window.currentDocument().objectCount() != 1) {
+        return fail("the saved modification did not survive reopening");
+    }
+    if (!window.exportDxfFile(dxfPath, false)) {
+        return fail("exporting the sheet as DXF failed: " + window.session().lastError());
+    }
+    if (!window.importDxfFile(dxfPath, std::nullopt) || window.currentDocument().objectCount() != 2 ||
+        !window.session().isDirty()) {
+        return fail("importing the exported DXF failed: " + window.session().lastError());
+    }
+    if (!window.undo() || window.session().isDirty() || window.currentDocument().objectCount() != 1) {
+        return fail("undoing the DXF import did not return to the saved state");
+    }
+    if (window.openFile(viewmodel::pathFromUtf8(tempDir.filePath(QStringLiteral("missing.carv")).toStdString())) ||
+        window.currentDocument().objectCount() != 1) {
+        return fail("opening a missing file did not fail cleanly");
     }
 
     window.close();

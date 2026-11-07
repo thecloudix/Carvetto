@@ -1,10 +1,12 @@
 #include "carvetto/document/undo_stack.hpp"
 
 #include <catch2/catch_test_macros.hpp>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "carvetto/document/commands.hpp"
 #include "carvetto/document/document.hpp"
 
 using namespace carvetto::document;
@@ -205,4 +207,27 @@ TEST_CASE("clean state tracks the saved point", "[document][undo]") {
     stack.clear();
     CHECK(stack.count() == 0);
     CHECK(stack.isClean());
+}
+
+TEST_CASE("undo stack generation never repeats for different content", "[document][undo]") {
+    using namespace carvetto::document;
+    Document a;
+    Document b;
+    const std::uint64_t g0 = a.undoStack().generation();
+    CHECK(g0 != b.undoStack().generation());  // distinct stacks
+    REQUIRE(a.execute(std::make_unique<AddObjectCommand>(
+        Object::vector(carvetto::geometry::Contour::circle({0, 0}, 1), a.activeLayer(), a.activeSheet()))));
+    const std::uint64_t g1 = a.undoStack().generation();
+    REQUIRE(a.undo());
+    const std::uint64_t g2 = a.undoStack().generation();
+    REQUIRE(a.redo());
+    const std::uint64_t g3 = a.undoStack().generation();
+    for (std::uint64_t g : {g1, g2, g3}) {
+        CHECK(g != g0);
+    }
+    CHECK(g1 != g2);
+    CHECK(g2 != g3);
+    CHECK(g1 != g3);  // same undo index and count as g1, different generation
+    a.undoStack().clear();
+    CHECK(a.undoStack().generation() != g3);
 }

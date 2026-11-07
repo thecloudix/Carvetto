@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstdint>
 #include <iostream>
+#include <limits>
 #include <string>
 #include <variant>
 
@@ -680,4 +681,108 @@ TEST_CASE("scripted event sequences are deterministic", "[viewmodel][tool]") {
         return saveCarv(f.doc).value();
     };
     CHECK(run() == run());
+}
+
+TEST_CASE("snap index: undo then redo with no pointer event in between is not stale", "[viewmodel][tool][snap]") {
+    Fixture f;
+    f.tool.setTool(ToolKind::Circle);
+    REQUIRE(f.drag({100, 100}, {120, 100}).committed);
+    const Vec2 q = f.px({120, 100}) + Vec2{3, 3};
+    f.tool.pointerMove(q);  // caches the index over the circle's contours
+    REQUIRE(f.tool.snap().has_value());
+    REQUIRE(f.doc.undo());
+    REQUIRE(f.doc.redo());  // the same {undo index, count, objects, sheet} as before, rebuilt contours
+    f.tool.pointerMove(q);
+    REQUIRE(f.tool.snap().has_value());
+    // Matches a fresh index exactly.
+    const auto fresh = SnapIndex(f.doc).best(f.view, q, f.tool.snapSettings());
+    REQUIRE(fresh.has_value());
+    CHECK(f.tool.snap()->pointMm == fresh->pointMm);
+}
+
+TEST_CASE("snap index: undo then a different command yields the new geometry", "[viewmodel][tool][snap]") {
+    Fixture f;
+    f.tool.setTool(ToolKind::Circle);
+    REQUIRE(f.drag({100, 100}, {120, 100}).committed);
+    f.tool.pointerMove(f.px({120, 100}));
+    REQUIRE(f.doc.undo());
+    REQUIRE(f.drag({300, 300}, {330, 300}).committed);  // same counts as before the undo
+    f.tool.pointerMove(f.px({120, 100}) + Vec2{2, 2});
+    CHECK_FALSE(f.tool.snap().has_value());  // the old circle is gone
+    f.tool.pointerMove(f.px({330, 300}) + Vec2{2, 2});
+    REQUIRE(f.tool.snap().has_value());
+    CHECK(f.tool.snap()->pointMm == Vec2{330, 300});
+}
+
+TEST_CASE("snap index: sheet switch and document replacement", "[viewmodel][tool][snap]") {
+    Fixture f;
+    f.tool.setTool(ToolKind::Circle);
+    REQUIRE(f.drag({100, 100}, {120, 100}).committed);
+    const Vec2 q = f.px({120, 100}) + Vec2{2, 2};
+    f.tool.pointerMove(q);
+    REQUIRE(f.tool.snap().has_value());
+    // A second sheet becomes active: its geometry (none) is what snaps now.
+    Sheet other;
+    other.name = "Other";
+    const SheetId first = f.doc.activeSheet();
+    const SheetId second = f.doc.insertSheet(other);
+    REQUIRE(f.doc.setActiveSheet(second));
+    f.tool.pointerMove(q);
+    CHECK_FALSE(f.tool.snap().has_value());
+    REQUIRE(f.doc.setActiveSheet(first));
+    f.tool.pointerMove(q);
+    CHECK(f.tool.snap().has_value());
+
+    // Replacing the document object in place (as FileSession does) after the controller cached
+    // an index: re-binding drops the cache and cancels any shape.
+    f.tool.pointerPress(f.px({500, 500}));
+    f.doc = Document(Job::singleSided(1000.0, 1000.0, 18.0, Units::Millimetres));
+    f.tool.setDocument(&f.doc);
+    CHECK_FALSE(f.tool.active());
+    f.tool.pointerMove(q);
+    CHECK_FALSE(f.tool.snap().has_value());
+    // Even without re-binding, a different document at the same address has a different generation.
+    Fixture g;
+    g.tool.setTool(ToolKind::Circle);
+    REQUIRE(g.drag({100, 100}, {120, 100}).committed);
+    g.tool.pointerMove(q);
+    REQUIRE(g.tool.snap().has_value());
+    g.doc = Document(Job::singleSided(1000.0, 1000.0, 18.0, Units::Millimetres));
+    g.tool.pointerMove(q);
+    CHECK_FALSE(g.tool.snap().has_value());
+}
+
+TEST_CASE("polyline refuses non-finite or absurd coordinates", "[viewmodel][tool]") {
+    Fixture f;
+    f.tool.setTool(ToolKind::Polyline);
+    f.click({0, 0});
+    const double inf = std::numeric_limits<double>::infinity();
+    for (const Vec2 bad : {Vec2{inf, 0.0}, Vec2{0.0, -inf}, Vec2{1e300, 0.0}, Vec2{std::nan(""), 1.0}}) {
+        f.tool.pointerMove(Vec2{bad.x, bad.y});
+        const ToolResult r = f.tool.pointerPress(Vec2{bad.x, bad.y});
+        CHECK_FALSE(r.message.empty());
+        f.tool.pointerRelease(Vec2{bad.x, bad.y});
+    }
+    f.click({10, 10});
+    // Points far outside the pixel range convert to huge but finite mm; none was kept.
+    REQUIRE(f.tool.key(ToolKey::Enter).committed);
+    CHECK(f.last().asVector()->contours[0].spans.size() == 1);
+    // Typed absurd coordinates: parse rejects them; a huge pointer-derived end is refused at commit.
+    f.tool.setTool(ToolKind::Polyline);
+    f.click({0, 0});
+    CHECK_FALSE(f.tool.setField("x", "1e12").ok);
+}
+
+TEST_CASE("keys are only consumed while a tool uses them", "[viewmodel][tool]") {
+    Fixture f;
+    CHECK_FALSE(f.tool.wantsKeys());  // Select
+    f.tool.setTool(ToolKind::Polyline);
+    CHECK_FALSE(f.tool.wantsKeys());
+    f.click({0, 0});
+    CHECK(f.tool.wantsKeys());
+    f.tool.key(ToolKey::Escape);
+    CHECK_FALSE(f.tool.wantsKeys());
+    f.tool.setTool(ToolKind::Circle);
+    REQUIRE(f.tool.setField("radius", "5").ok);
+    CHECK(f.tool.wantsKeys());
 }

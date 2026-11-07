@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <charconv>
 #include <cmath>
+#include <cstdint>
 #include <memory>
 #include <system_error>
 #include <utility>
@@ -195,6 +196,10 @@ ToolResult ToolController::refuse(std::string message) const {
     return r;
 }
 
+bool ToolController::wantsKeys() const {
+    return tool_ != ToolKind::Select && (active() || !typed_.empty());
+}
+
 bool ToolController::layerWritable(std::string* why) const {
     const document::Layer* layer = doc_ != nullptr ? doc_->findLayer(doc_->activeLayer()) : nullptr;
     if (layer == nullptr) {
@@ -213,9 +218,9 @@ bool ToolController::layerWritable(std::string* why) const {
 }
 
 const SnapIndex& ToolController::snapIndex() {
-    const std::array<std::size_t, 4> sig{doc_->undoStack().index(), doc_->undoStack().count(),
-                                         doc_->objectCount(),
-                                         static_cast<std::size_t>(doc_->activeSheet().value)};
+    // The undo stack's generation is process-wide unique per edit state, so it cannot repeat for
+    // different content (undo/redo/new command/other document).
+    const std::array<std::uint64_t, 2> sig{doc_->undoStack().generation(), doc_->activeSheet().value};
     if (!snapIndex_.has_value() || sig != snapSignature_) {
         snapIndex_.emplace(*doc_);
         snapSignature_ = sig;
@@ -603,6 +608,14 @@ ToolResult ToolController::commitDraft(const Draft& draft) {
     if (!layerWritable(&why)) {
         return refuse(why);
     }
+    for (const Contour& c : draft.contours) {
+        const geometry::Box2 b = c.bounds();
+        if (!(std::isfinite(b.min.x) && std::isfinite(b.min.y) && std::isfinite(b.max.x) &&
+              std::isfinite(b.max.y) && std::fabs(b.min.x) <= kMaxMagnitude && std::fabs(b.min.y) <= kMaxMagnitude &&
+              std::fabs(b.max.x) <= kMaxMagnitude && std::fabs(b.max.y) <= kMaxMagnitude)) {
+            return refuse("coordinates must be finite and within 1e9 mm");
+        }
+    }
     document::Object obj = document::Object::vector(draft.contours, doc_->activeLayer(), doc_->activeSheet(),
                                                     *draft.params);
     if (!doc_->execute(std::make_unique<document::AddObjectCommand>(std::move(obj)))) {
@@ -704,6 +717,10 @@ ToolResult ToolController::shapePress(Modifiers mods) {
             if (!layerWritable(&why)) {
                 return refuse(why);
             }
+        }
+        if (!std::isfinite(cursorMm_.x) || !std::isfinite(cursorMm_.y) || std::fabs(cursorMm_.x) > kMaxMagnitude ||
+            std::fabs(cursorMm_.y) > kMaxMagnitude) {
+            return refuse("coordinates must be finite and within 1e9 mm");
         }
         if (pts_.empty() || geometry::distance(pts_.back(), cursorMm_) > snapSettings_.tolerance.distance) {
             pts_.push_back(cursorMm_);

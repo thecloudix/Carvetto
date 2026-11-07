@@ -281,11 +281,15 @@ void CanvasWidget::afterToolEvent(const viewmodel::ToolResult& result) {
 }
 
 bool CanvasWidget::focusNextPrevChild(bool next) {
-    Q_UNUSED(next);
-    return false;  // Tab closes a polyline instead of moving the focus
+    // Tab closes a polyline instead of moving the focus while a tool is using the keys.
+    return tools_.wantsKeys() ? false : QWidget::focusNextPrevChild(next);
 }
 
 void CanvasWidget::keyPressEvent(QKeyEvent* event) {
+    if (!tools_.wantsKeys()) {
+        QWidget::keyPressEvent(event);
+        return;
+    }
     viewmodel::ToolResult result;
     switch (event->key()) {
         case Qt::Key_Escape:

@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <map>
 #include <optional>
 #include <string>
@@ -166,8 +167,8 @@ class ToolController {
     /// Snap settings; the controller starts with the grid kind off.
     SnapSettings& snapSettings() { return snapSettings_; }
     const SnapSettings& snapSettings() const { return snapSettings_; }
-    /// Call after the document changed behind the controller's back (layer flags, ...). Edits made
-    /// through the undo stack are detected automatically.
+    /// Call after the document changed without a command (direct layer-flag or object edits).
+    /// Edits made through the undo stack are detected via its generation counter.
     void invalidateSnapIndex() { snapIndex_.reset(); }
 
     // --- Pointer and key events (screen pixels) ---------------------------------------------
@@ -179,6 +180,9 @@ class ToolController {
     ToolResult key(ToolKey k);
 
     // --- State for the overlay --------------------------------------------------------------
+    /// True when the tool would act on Escape / Enter / Backspace / Close now (a shape is in
+    /// progress or numeric values are typed); the canvas only consumes those keys then.
+    bool wantsKeys() const;
     /// True while a shape, point chain or marquee is in progress.
     bool active() const;
     /// Snap found for the last pointer event (nullopt when none, or snapping was off).
@@ -237,7 +241,7 @@ class ToolController {
     ToolOptions options_;
     SnapSettings snapSettings_;
     std::optional<SnapIndex> snapIndex_;
-    std::array<std::size_t, 4> snapSignature_{};
+    std::array<std::uint64_t, 2> snapSignature_{};
 
     std::optional<Snap> snap_;
     geometry::Vec2 cursorMm_{};
