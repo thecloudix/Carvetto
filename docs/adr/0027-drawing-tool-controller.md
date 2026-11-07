@@ -43,6 +43,20 @@ stay a thin event forwarder. The shape builders (T-0200) and snapping (T-0203) a
    and the radius from typing or the circle through the pointer, with a "larger arc" option;
    polyline Bezier click-drag, S/T quick keys and extending an existing vector are not implemented.
 
+### Snap cache key and `UndoStack::generation()`
+- New core API `UndoStack::generation()`: a process-wide unique value (static atomic counter),
+  replaced by a fresh one on construction and on every successful push (also a coalesced push and a
+  push inside a macro), undo, redo and `clear()`. It never repeats for different document content,
+  also across documents. A moved-from `Document` keeps its generation (unused in the app).
+- The controller's `SnapIndex` cache (raw pointers into document contours) is keyed on
+  {generation, active sheet}; the earlier {undo index, count, object count, sheet} key could repeat
+  after undo/redo and dangle.
+- Document replacement: `setDocument()` cancels the shape in progress and drops the cache; the
+  window re-binds the canvas after every new/open.
+- Raw-mutator contract: direct `Document` mutators (insertObject, ...) and direct layer-flag writes
+  bypass the undo stack, so the index can go stale or dangle after them. None exist in `app/` today;
+  `invalidateSnapIndex()` is the escape hatch (no callers yet).
+
 ## Consequences
 The Qt layer needs no tool logic: toolbar actions call `setTool`, the canvas forwards events and
 paints `preview()`/`snap()`, a small panel renders `fields()`. Pointer-driven arc and polyline

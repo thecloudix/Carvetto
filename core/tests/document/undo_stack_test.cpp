@@ -231,3 +231,49 @@ TEST_CASE("undo stack generation never repeats for different content", "[documen
     a.undoStack().clear();
     CHECK(a.undoStack().generation() != g3);
 }
+
+TEST_CASE("undo stack generation changes on coalesced pushes and pushes inside a macro", "[document][undo]") {
+    using namespace carvetto::document;
+    using carvetto::geometry::Transform2;
+    using carvetto::geometry::Vec2;
+    Document d;
+    REQUIRE(d.execute(std::make_unique<AddObjectCommand>(
+        Object::vector(carvetto::geometry::Contour::circle({0, 0}, 1), d.activeLayer(), d.activeSheet()))));
+    const ObjectId id = d.objects().begin()->first;
+    d.undoStack().breakCoalescing();
+
+    // First drag step opens a coalescing run; the second merges into it (one undo entry).
+    std::uint64_t before = d.undoStack().generation();
+    REQUIRE(d.execute(std::make_unique<TransformObjectsCommand>(std::vector<ObjectId>{id},
+                                                                Transform2::translation({1, 0}))));
+    CHECK(d.undoStack().generation() != before);
+    before = d.undoStack().generation();
+    const std::size_t steps = d.undoStack().count();
+    REQUIRE(d.execute(std::make_unique<TransformObjectsCommand>(std::vector<ObjectId>{id},
+                                                                Transform2::translation({1, 0}))));
+    CHECK(d.undoStack().count() == steps);  // it coalesced
+    CHECK(d.undoStack().generation() != before);
+
+    // Pushes inside a macro change the document before the macro is recorded.
+    d.undoStack().beginMacro("two");
+    before = d.undoStack().generation();
+    REQUIRE(d.execute(std::make_unique<TransformObjectsCommand>(std::vector<ObjectId>{id},
+                                                                Transform2::translation({0, 1}))));
+    CHECK(d.undoStack().generation() != before);
+    before = d.undoStack().generation();
+    REQUIRE(d.execute(std::make_unique<TransformObjectsCommand>(std::vector<ObjectId>{id},
+                                                                Transform2::translation({0, 1}))));
+    CHECK(d.undoStack().generation() != before);
+    d.undoStack().endMacro();
+
+    // Each of undo, redo and clear moves it on again.
+    before = d.undoStack().generation();
+    REQUIRE(d.undo());
+    CHECK(d.undoStack().generation() != before);
+    before = d.undoStack().generation();
+    REQUIRE(d.redo());
+    CHECK(d.undoStack().generation() != before);
+    before = d.undoStack().generation();
+    d.undoStack().clear();
+    CHECK(d.undoStack().generation() != before);
+}

@@ -11,6 +11,7 @@
 #include <variant>
 
 #include "carvetto/document/carv_io.hpp"
+#include "carvetto/document/commands.hpp"
 #include "carvetto/document/document.hpp"
 #include "carvetto/document/shape_params.hpp"
 #include "carvetto/geometry/shapes.hpp"
@@ -785,4 +786,43 @@ TEST_CASE("keys are only consumed while a tool uses them", "[viewmodel][tool]") 
     f.tool.setTool(ToolKind::Circle);
     REQUIRE(f.tool.setField("radius", "5").ok);
     CHECK(f.tool.wantsKeys());
+}
+
+TEST_CASE("snap index follows coalesced transform steps and macros", "[viewmodel][tool][snap]") {
+    Fixture f;
+    f.tool.setTool(ToolKind::Circle);
+    REQUIRE(f.drag({100, 100}, {120, 100}).committed);  // snap point (120,100)
+    const ObjectId id = f.doc.objects().begin()->first;
+    f.doc.undoStack().breakCoalescing();
+    auto hover = [&](Vec2 mm) {
+        f.tool.pointerMove(f.px(mm) + Vec2{2, 2});
+        return f.tool.snap();
+    };
+    REQUIRE(hover({120, 100}).has_value());
+    // First drag step, hover, then a second step that coalesces into the first.
+    REQUIRE(f.doc.execute(std::make_unique<TransformObjectsCommand>(std::vector<ObjectId>{id},
+                                                                    Transform2::translation({50, 0}))));
+    const auto moved1 = hover({170, 100});
+    REQUIRE(moved1.has_value());
+    CHECK(moved1->pointMm == Vec2{170, 100});
+    const std::size_t steps = f.doc.undoStack().count();
+    REQUIRE(f.doc.execute(std::make_unique<TransformObjectsCommand>(std::vector<ObjectId>{id},
+                                                                    Transform2::translation({50, 0}))));
+    CHECK(f.doc.undoStack().count() == steps);  // coalesced
+    CHECK_FALSE(hover({170, 100}).has_value());
+    const auto moved2 = hover({220, 100});
+    REQUIRE(moved2.has_value());
+    CHECK(moved2->pointMm == Vec2{220, 100});
+
+    // A two-command macro between hovers.
+    f.doc.undoStack().beginMacro("move twice");
+    REQUIRE(f.doc.execute(std::make_unique<TransformObjectsCommand>(std::vector<ObjectId>{id},
+                                                                    Transform2::translation({0, 50}))));
+    REQUIRE(f.doc.execute(std::make_unique<TransformObjectsCommand>(std::vector<ObjectId>{id},
+                                                                    Transform2::translation({0, 50}))));
+    f.doc.undoStack().endMacro();
+    CHECK_FALSE(hover({220, 100}).has_value());
+    const auto moved3 = hover({220, 200});
+    REQUIRE(moved3.has_value());
+    CHECK(moved3->pointMm == Vec2{220, 200});
 }
