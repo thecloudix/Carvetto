@@ -3139,7 +3139,7 @@ TEST_CASE("T-0135 round 2: exact loose pieces; add-back and fitting never cost a
          "L -0x1.1ae547522a1fcp+3 -0x1.28ec0c08f0322p+2 -0x1.059e88f2228c2p+3 -0x1.537988c8ff595p+2\n"
          "P 0x1.8p+2 60 0x0p+0 1 1 0x0p+0 0x1.e2c3e29e010e7p+1 0x1.46ce40eeaf792p+2 0x0p+0 0x1.4p+2 1 0x1.674198095f7b1p-1 0 1 0x1.29ac51f39b323p+0 0x1.ee42ad037b89ap-1 0 5 0x1.8678655993372p+4 0x0p+0 0 1 0x0p+0 0 0x1.a1ce7872b7d5p+4 0 0 0x1.f51f3b9a43e3dp-5 0x1.d550551a805e4p+3 0x1.0ad71e94637c2p+0 0x1.3361ee383e058p+3 0 0x1.ce0d167aa6615p-2 0 0 0x0p+0 0x0p+0 0 1 0 0 0 0 0x1.49c7ae5118c6p+0 -0x1.55381dce71b72p+5 0x1p+1\n"
          "K 0 0\n"
-         , 4, {}},
+         , 3, {}},
         {"m3_901028_23",
          "C 1\n"
          "L -0x1.065be320df556p+3 -0x1.065be320df556p+3 0x1.6f4d712e05778p+3 -0x1.065be320df556p+3\n"

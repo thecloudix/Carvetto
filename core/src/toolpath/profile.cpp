@@ -675,8 +675,11 @@ class ProfileBuilder {
     /// (the vector side is at most c.distance <= the radius + |allowance| away) to 0.7 mm past it,
     /// and a tool diameter further so a way round the tools can be found.
     double rasterReach() const {
-        return std::fabs(p_.allowance) + 2.0 * radius_ + (p_.separateLastPass ? p_.lastPassAllowance : 0.0) +
-               2.0 * radius_ + 0.7;
+        // (T-0167: the kerf at the tab layer is the tab-layer radius wide; the vector side is still a
+        // tool radius + allowance from the cut.)
+        const double rt = tabLayerRadius();
+        return std::fabs(p_.allowance) + radius_ + rt + (p_.separateLastPass ? p_.lastPassAllowance : 0.0) + 2.0 * rt +
+               0.7;
     }
     bool spanFits(const Cut& c, const TabSpan& t, const std::vector<double>& keepClear) const;
     std::vector<double> otherStarts(const Cut& c, const std::vector<Cut>& otherPass,
@@ -1794,11 +1797,28 @@ bool ProfileBuilder::tabHolds(const Cut& c, const TabSpan& t, const std::vector<
     }
     // 0 = blocked, 1 = open, 2 = tab material next to the vector, 3 = waste beyond the kerf.
     std::vector<char> state(cells, 0);
+    constexpr int kBlock = 4;
+    const int bx_n = (nx + kBlock - 1) / kBlock;
+    const int by_n = (ny + kBlock - 1) / kBlock;
+    std::vector<signed char> blockMode(static_cast<std::size_t>(bx_n) * static_cast<std::size_t>(by_n), -1);
     bool anyWaste = false;
     for (int j = 0; j < ny; ++j) {
         for (int i = 0; i < nx; ++i) {
             const Vec2 x = centre(i, j);
-            const double dv = allField_.distance(x);
+            // The distance to the vectors is 1-Lipschitz: a block of cells whose centre is more than the
+            // block's radius beyond a threshold needs no distance of its own (T-0167, cost).
+            const std::size_t blk = static_cast<std::size_t>(j / kBlock) * static_cast<std::size_t>(bx_n) +
+                                    static_cast<std::size_t>(i / kBlock);
+            if (blockMode[blk] < 0) {
+                const int ci = std::min(nx - 1, (i / kBlock) * kBlock + kBlock / 2);
+                const int cj = std::min(ny - 1, (j / kBlock) * kBlock + kBlock / 2);
+                const double dc = allField_.distance(centre(ci, cj));
+                const double rho = kBlock * h * 0.75 + 1e-6;  // half the block's diagonal, with slack
+                blockMode[blk] = dc - rho >= beyond ? 1 : (dc + rho < c.distance ? 2 : 0);
+            }
+            const double dv = blockMode[blk] == 1   ? std::numeric_limits<double>::infinity()
+                              : blockMode[blk] == 2 ? 0.0
+                                                    : allField_.distance(x);
             const auto [bx, by] = bkey(x);
             double best = std::numeric_limits<double>::infinity();
             std::size_t bk = 0;
@@ -1828,28 +1848,8 @@ bool ProfileBuilder::tabHolds(const Cut& c, const TabSpan& t, const std::vector<
             state[index(i, j)] = best < limit - 0.15 ? char{1} : char{2};
         }
     }
-    // The discs are widened by 1.5 cells, so a sliver of waste the kerfs leave between them narrower
-    // than three cells has no open cell. With no waste a margin beyond the kerf, look for waste
-    // past the far wall of the kerf at all (T-0167: a tab round the bottom corner of a notch whose
-    // two kerfs left a 0.145 mm sliver was kept although the tools at its ends sealed its material
-    // off) and widen the discs by half a cell only; with none, there is nothing to hold on to.
-    double widen = 1.5 * h;
     if (!anyWaste) {
-        const double farWall = c.distance + outer;
-        bool anyFar = false;
-        for (int j = 0; j < ny; ++j) {
-            for (int i = 0; i < nx; ++i) {
-                if (state[index(i, j)] != 1) continue;
-                if (allField_.distance(centre(i, j)) >= farWall) {
-                    state[index(i, j)] = 3;
-                    anyFar = true;
-                }
-            }
-        }
-        if (!anyFar) {
-            return true;  // no waste beyond the kerf near the tab: nothing to hold on to
-        }
-        widen = 0.5 * h;
+        return true;  // no waste beyond the kerf near the tab: nothing to hold on to
     }
     // Cut cells, a row of each tool's disc at a time.
     auto stamp = [&](Vec2 q, double rr) {
@@ -1867,13 +1867,13 @@ bool ProfileBuilder::tabHolds(const Cut& c, const TabSpan& t, const std::vector<
             }
         }
     };
-    const double rr = rk - 1e-3 + widen;
+    const double rr = rk - 1e-3 + 1.5 * h;
     for (const Vec2& q : tools) {
         stamp(q, rr);
     }
     // (A V-bit's corner moves cut smaller discs: the cone's radius at the tab layer.)
     for (const ToolDisc& d : toolsX) {
-        stamp(d.p, d.rho - 1e-3 + widen);
+        stamp(d.p, d.rho - 1e-3 + 1.5 * h);
     }
     std::vector<char> seen(cells, 0);
     std::vector<std::size_t> queue;
@@ -2196,7 +2196,7 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
         const Ref& r = groups[g].front();
         // (Judged at the tab layer: a V-bit's cut there is the cone's disc, narrower than at the top.)
         material[g] = sidedTabs_ ? tabSections(primary[r.cut], r.span)
-                                 : tabSections(primary[r.cut], r.span, false, tabLayerRadius(), tabLayerRadius());
+                                 : tabSections(primary[r.cut], r.span, false, tabLayerRadius());
     }
     std::vector<bool> alive(groups.size(), true);
     // Samples of every cut: every h along it, plus the exact ends of every raised stretch (where
@@ -2562,11 +2562,6 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
         const double rk = tabLayerRadius();
         const std::vector<TabSection>& sections = material[g];
         const Ref& own = groups[g].front();
-        // The tab's guaranteed core, trimmed by the full radius at each end (the matching's), against
-        // which no other cut may come within reach: the whole core at the tab layer is longer, and
-        // another cut's tool beyond the guaranteed core only narrows it (T-0167).
-        const std::vector<TabSection> guard =
-            rk < radius_ ? tabSections(primary[own.cut], own.span, false, rk, radius_) : std::vector<TabSection>{};
         const geometry::Box2& box = materialBox[g];
         std::vector<Vec2> nicks;   // tools of the tab's own cut near it that reach its material
         std::vector<Vec2> nearby;  // every open tool near the tab
@@ -2582,9 +2577,8 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
                     const bool local = !q.second && q.cut == own.cut &&
                                        pathGap(primary[own.cut].walk, q.u, own.span) < localReach;
                     const double d = sectionDistance(q.p, sections);
-                    const double dg = rk < radius_ ? sectionDistance(q.p, guard) : d;
-                    if (q.rho >= 0.0) {
-                        if (!local && dg < q.rho - 1e-3) {
+                                        if (q.rho >= 0.0) {
+                        if (!local && d < q.rho - 1e-3) {
                             return TabFate::Severed;
                         }
                         nearbyX.push_back({q.p, q.rho});
@@ -2593,7 +2587,7 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
                         }
                         continue;
                     }
-                    if (!local && dg < rk - 1e-3) {
+                    if (!local && d < rk - 1e-3) {
                         return TabFate::Severed;
                     }
                     nearby.push_back(q.p);

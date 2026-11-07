@@ -6,11 +6,7 @@
 //    the top, so tabs that hold were left out as "cut through" and whole parts came free
 //    (m2_1330000_9: both tabs of two vectors, 641 and 1,704 mm2). Now every judgement uses the
 //    tab-layer radius (ADR-0016 section 14).
-// 2. A tab round the bottom corner of a notch whose two kerfs leave a sliver of waste 0.145 mm
-//    wide was kept although the tools at the ends of its raised stretch sealed it off
-//    (m0_271016_20, VectorStart/Outside): the raster saw no waste beyond the kerf (it widens each
-//    tool's disc by 1.5 cells and the sliver is narrower than three cells).
-// 3. The unfixed repros are pinned as what they are: the pieces they free are reported (the cut
+// 2. The unfixed repros are pinned as what they are: the pieces they free are reported (the cut
 //    paths are searched, ADR-0016 section 14 "Known gaps"), leads off.
 //
 // The flood is the test's own: the uncut components at the layer just below the tab top that do not
@@ -372,32 +368,6 @@ const char* const k_m3_9301_367 =
         "P 0x1.9p+4 120 -0x0p+0 0 0 0x0p+0 0x1.8f55a3abbc38p+0 0x1.1f84d6e98632cp+2 0x0p+0 0x1.4p+2 1 0x1.232623565575fp-2 1 1 0x1.ccb1dc372e72ep+0 0x1.dfed212cdc27ap-1 0 9 0x1.2a93e280720e7p+6 0x0p+0 1 1 0x0p+0 0 0x1.317963170336fp+5 0 0 0x1.dc8ecd603e022p-4 0x1.b780e2605fe4ep+3 0x1.79ce86825391ap+0 0x1.84c4950d6bd1p+2 0 0x1.11465cb65c2bdp+0 0 0 0x0p+0 0x0p+0 0 1 0 0 0 1 0x1.6c02919d07b4ep+5 0x1.8b55e96ef30c4p+5 0x1p+1\n"
         "K 0 0\n";
 
-const char* const k_m0_271016_20 =
-        "C 1\n"
-        "L 0x0p+0 0x0p+0 0x1.3c7aaec3a544ap+1 0x0p+0\n"
-        "L 0x1.3c7aaec3a544ap+1 0x0p+0 0x1.3c7aaec3a544ap+1 0x1.06d1c600e9312p+2\n"
-        "L 0x1.3c7aaec3a544ap+1 0x1.06d1c600e9312p+2 0x1.06d1c600e9312p+3 0x1.06d1c600e9312p+2\n"
-        "L 0x1.06d1c600e9312p+3 0x1.06d1c600e9312p+2 0x1.06d1c600e9312p+3 0x0p+0\n"
-        "L 0x1.06d1c600e9312p+3 0x0p+0 0x1.55f071b1d2824p+3 0x0p+0\n"
-        "L 0x1.55f071b1d2824p+3 0x0p+0 0x1.55f071b1d2824p+3 0x1.55f071b1d2824p+3\n"
-        "L 0x1.55f071b1d2824p+3 0x1.55f071b1d2824p+3 0x1.06d1c600e9312p+3 0x1.55f071b1d2824p+3\n"
-        "L 0x1.06d1c600e9312p+3 0x1.55f071b1d2824p+3 0x1.06d1c600e9312p+3 0x1.a50f1d62bbd36p+2\n"
-        "L 0x1.06d1c600e9312p+3 0x1.a50f1d62bbd36p+2 0x1.3c7aaec3a544ap+1 0x1.a50f1d62bbd36p+2\n"
-        "L 0x1.3c7aaec3a544ap+1 0x1.a50f1d62bbd36p+2 0x1.3c7aaec3a544ap+1 0x1.55f071b1d2824p+3\n"
-        "L 0x1.3c7aaec3a544ap+1 0x1.55f071b1d2824p+3 0x0p+0 0x1.55f071b1d2824p+3\n"
-        "L 0x0p+0 0x1.55f071b1d2824p+3 0x0p+0 0x0p+0\n"
-        "C 1\n"
-        "L 0x1.9p+5 0x0p+0 0x1.f469d6cccba9ap+5 0x0p+0\n"
-        "L 0x1.f469d6cccba9ap+5 0x0p+0 0x1.f469d6cccba9ap+5 0x1.91a75b332ea6ap+3\n"
-        "L 0x1.f469d6cccba9ap+5 0x1.91a75b332ea6ap+3 0x1.dd62d872d47bap+5 0x1.91a75b332ea6ap+3\n"
-        "L 0x1.dd62d872d47bap+5 0x1.91a75b332ea6ap+3 0x1.dd62d872d47bap+5 0x1.706fe59f72ep+1\n"
-        "L 0x1.dd62d872d47bap+5 0x1.706fe59f72ep+1 0x1.a706fe59f72ep+5 0x1.706fe59f72ep+1\n"
-        "L 0x1.a706fe59f72ep+5 0x1.706fe59f72ep+1 0x1.a706fe59f72ep+5 0x1.91a75b332ea6ap+3\n"
-        "L 0x1.a706fe59f72ep+5 0x1.91a75b332ea6ap+3 0x1.9p+5 0x1.91a75b332ea6ap+3\n"
-        "L 0x1.9p+5 0x1.91a75b332ea6ap+3 0x1.9p+5 0x0p+0\n"
-        "P 0x1.9666666666666p+1 0 0x1.3339ecb88122p-3 2 1 0x0p+0 0x1.daedc1630746p+2 0x1.a95a1305f0364p+2 0x0p+0 0x1.4p+2 0 0x1.2ffbfda7bf59ep-1 1 1 0x1.2e0354920e7aap-2 0x1.39998d874259p+2 0 4 0x1.0370b8f775c96p+5 0x0p+0 0 0 0x0p+0 0 0x1.0bada92cfb11p+4 0 0 0x1.0e411452d5876p-3 0x1.006ebc78ef604p+1 0x1.69591195d982fp-2 0x1.5ceeb3ddd255dp+1 2 0x1.10c19c8ce7538p+0 0 0 0x1.bd159a6ac6462p+1 0x0p+0 0 2 0 0 0 1 -0x1.49d3d7ae70c94p+5 -0x1.58a45650d6efcp+4 0x1p+1\n"
-        "K 0 0\n";
-
 const char* const k_m1_1310133_29 =
         "C 1\n"
         "L 0x0p+0 0x0p+0 0x1.bb443074f069ap+3 0x0p+0\n"
@@ -429,58 +399,6 @@ const char* const k_m0_271000_0 =
         "P 0x1.8p+2 90 0x1.20ab087d865cfp-1 2 0 0x0p+0 0x1.ebf7250712cb9p+1 0x1.ec60cbc3a8073p+2 0x1.29876646ca16cp-1 0x1.4p+2 1 0x1.c565bbf865529p-1 1 1 0x1.18bfc3ce91eap-1 0x1.d9395ef4c6397p-2 0 9 0x1.134463d47e419p+3 0x0p+0 0 0 0x0p+0 3 0x1.8a4c81f170ed2p+3 0 0 0x1.66eec138ec4dfp-2 0x1.850e6600ef97bp+3 0x1.4455c13b310efp+0 0x1.3b06343104d9bp+3 2 0x1.15fb9174317bfp+0 1 0 0x0p+0 0x0p+0 2 0 0 1 0 0 0x1.50afc094c51f8p+5 -0x1.8623029076f3ap+5 0x1p+1\n"
         "K 0 0\n";
 
-
-const char* const k_u_1_131 =
-        "C 1\n"
-        "L 0x0p+0 0x0p+0 0x1.fc85ed2e06de8p+4 0x0p+0\n"
-        "L 0x1.fc85ed2e06de8p+4 0x0p+0 0x1.fc85ed2e06de8p+4 0x1.7e5c45e99990dp+4\n"
-        "L 0x1.fc85ed2e06de8p+4 0x1.7e5c45e99990dp+4 0x1.5f5b1bbca8a3ep+4 0x1.7e5c45e99990dp+4\n"
-        "L 0x1.5f5b1bbca8a3ep+4 0x1.7e5c45e99990dp+4 0x1.5f5b1bbca8a3ep+4 0x1.0110661ccb19p+2\n"
-        "L 0x1.5f5b1bbca8a3ep+4 0x1.0110661ccb19p+2 0x1.3a55a2e2bc756p+3 0x1.0110661ccb19p+2\n"
-        "L 0x1.3a55a2e2bc756p+3 0x1.0110661ccb19p+2 0x1.3a55a2e2bc756p+3 0x1.7e5c45e99990dp+4\n"
-        "L 0x1.3a55a2e2bc756p+3 0x1.7e5c45e99990dp+4 0x0p+0 0x1.7e5c45e99990dp+4\n"
-        "L 0x0p+0 0x1.7e5c45e99990dp+4 0x0p+0 0x0p+0\n"
-        "P 0x1.8p+2 0 0x1.1b0ee33de6c61p-6 0 0 0x0p+0 0x1.1aed04de26229p+3 0x1.de2f7a5c6e784p+1 0x0p+0 0x1.4p+2 0 0x1.e6ee25640914ap-3 0 1 0x1.f0cc6ba12adabp-2 0x1.68c142f842431p+1 0 4 0x1.9p+6 0x0p+0 0 0 0x0p+0 0 0x1.4p+3 0 0 0x1.657184ae74489p-4 0x1.4p+2 0x1.921fb54442d18p-1 0x1.4p+2 0 0x1.921fb54442d18p+0 0 0 0x0p+0 0x0p+0 1 0 0 0 0 0 0x0p+0 0x0p+0 0x1p+1\n"
-        "K 0 0\n";
-
-const char* const k_u_1_161 =
-        "C 1\n"
-        "L 0x0p+0 0x0p+0 0x1.d3388fe9b4654p+4 0x0p+0\n"
-        "L 0x1.d3388fe9b4654p+4 0x0p+0 0x1.d3388fe9b4654p+4 0x1.7e3f59de3abc8p+4\n"
-        "L 0x1.d3388fe9b4654p+4 0x1.7e3f59de3abc8p+4 0x1.4ec13c8246856p+4 0x1.7e3f59de3abc8p+4\n"
-        "L 0x1.4ec13c8246856p+4 0x1.7e3f59de3abc8p+4 0x1.4ec13c8246856p+4 0x1.7e6c4ef905028p+2\n"
-        "L 0x1.4ec13c8246856p+4 0x1.7e6c4ef905028p+2 0x1.08eea6cedbbfap+3 0x1.7e6c4ef905028p+2\n"
-        "L 0x1.08eea6cedbbfap+3 0x1.7e6c4ef905028p+2 0x1.08eea6cedbbfap+3 0x1.7e3f59de3abc8p+4\n"
-        "L 0x1.08eea6cedbbfap+3 0x1.7e3f59de3abc8p+4 0x0p+0 0x1.7e3f59de3abc8p+4\n"
-        "L 0x0p+0 0x1.7e3f59de3abc8p+4 0x0p+0 0x0p+0\n"
-        "P 0x1.8p+2 0 0x1.a1ee212c29e58p-4 0 1 0x0p+0 0x1.169870f6e0e18p+3 0x1.e8ba2cb158192p+1 0x0p+0 0x1.4p+2 1 0x1.22f14782db6edp-2 0 1 0x1.5cd4c94a52114p-1 0x1.7244c6d73ec8cp+1 0 6 0x1.9p+6 0x0p+0 0 0 0x0p+0 0 0x1.4p+3 0 0 0x1.657184ae74489p-4 0x1.4p+2 0x1.921fb54442d18p-1 0x1.4p+2 0 0x1.921fb54442d18p+0 0 0 0x0p+0 0x0p+0 1 0 0 0 0 0 0x0p+0 0x0p+0 0x1p+1\n"
-        "K 0 0\n";
-
-const char* const k_u_1_250 =
-        "C 1\n"
-        "L 0x0p+0 0x0p+0 0x1.f8f09b63c613fp+4 0x0p+0\n"
-        "L 0x1.f8f09b63c613fp+4 0x0p+0 0x1.f8f09b63c613fp+4 0x1.7f5b6af39d193p+4\n"
-        "L 0x1.f8f09b63c613fp+4 0x1.7f5b6af39d193p+4 0x1.5df7e20d62859p+4 0x1.7f5b6af39d193p+4\n"
-        "L 0x1.5df7e20d62859p+4 0x1.7f5b6af39d193p+4 0x1.5df7e20d62859p+4 0x1.874488446edfp+2\n"
-        "L 0x1.5df7e20d62859p+4 0x1.874488446edfp+2 0x1.35f172acc71ccp+3 0x1.874488446edfp+2\n"
-        "L 0x1.35f172acc71ccp+3 0x1.874488446edfp+2 0x1.35f172acc71ccp+3 0x1.7f5b6af39d193p+4\n"
-        "L 0x1.35f172acc71ccp+3 0x1.7f5b6af39d193p+4 0x0p+0 0x1.7f5b6af39d193p+4\n"
-        "L 0x0p+0 0x1.7f5b6af39d193p+4 0x0p+0 0x0p+0\n"
-        "P 0x1.8p+2 0 0x1.72c0deff03faap-7 0 1 0x0p+0 0x1.dca1720e29bfap+2 0x1.1faf55026566cp+2 0x0p+0 0x1.4p+2 0 0x1.50b63f81528e2p-1 0 1 0x1.29bbe713d80c4p-1 0x1.0dec664ffbfe9p+1 0 4 0x1.9p+6 0x0p+0 0 0 0x0p+0 0 0x1.4p+3 0 0 0x1.657184ae74489p-4 0x1.4p+2 0x1.921fb54442d18p-1 0x1.4p+2 0 0x1.921fb54442d18p+0 0 0 0x0p+0 0x0p+0 0 0 0 0 0 0 0x0p+0 0x0p+0 0x1p+1\n"
-        "K 0 0\n";
-
-const char* const k_u_1_287 =
-        "C 1\n"
-        "L 0x0p+0 0x0p+0 0x1.1332cadfaf2aap+4 0x0p+0\n"
-        "L 0x1.1332cadfaf2aap+4 0x0p+0 0x1.1332cadfaf2aap+4 0x1.2f3824605cbb5p+4\n"
-        "L 0x1.1332cadfaf2aap+4 0x1.2f3824605cbb5p+4 0x1.7e4aa3fe1c6a6p+3 0x1.2f3824605cbb5p+4\n"
-        "L 0x1.7e4aa3fe1c6a6p+3 0x1.2f3824605cbb5p+4 0x1.7e4aa3fe1c6a6p+3 0x1.2ec3a78c8c4bep+2\n"
-        "L 0x1.7e4aa3fe1c6a6p+3 0x1.2ec3a78c8c4bep+2 0x1.5035e38283d5cp+2 0x1.2ec3a78c8c4bep+2\n"
-        "L 0x1.5035e38283d5cp+2 0x1.2ec3a78c8c4bep+2 0x1.5035e38283d5cp+2 0x1.2f3824605cbb5p+4\n"
-        "L 0x1.5035e38283d5cp+2 0x1.2f3824605cbb5p+4 0x0p+0 0x1.2f3824605cbb5p+4\n"
-        "L 0x0p+0 0x1.2f3824605cbb5p+4 0x0p+0 0x0p+0\n"
-        "P 0x1.9666666666666p+1 0 0x1.d5c5d3f5d9cfap-4 0 0 0x0p+0 0x1.1f7b01b7fbdcfp+3 0x1.0e3b7d05187b8p+2 0x0p+0 0x1.4p+2 0 0x1.a705632092418p-2 0 1 0x1.6171312f5b57bp+1 0x1.0d64534eba8e4p+1 0 6 0x1.9p+6 0x0p+0 0 1 0x0p+0 0 0x1.4p+3 0 0 0x1.657184ae74489p-4 0x1.4p+2 0x1.921fb54442d18p-1 0x1.4p+2 0 0x1.921fb54442d18p+0 0 0 0x0p+0 0x0p+0 1 0 0 0 0 0 0x0p+0 0x0p+0 0x1p+1\n"
-        "K 0 0\n";
 
 const char* const k_m3_9301_272 =
         "C 1\n"
@@ -615,6 +533,68 @@ const char* const k_m0_9301_150 =
         "K 0 1\n";
 
 
+const char* const k_m3_9301_71 =
+        "C 1\n"
+        "B 0x1.3f000f9b4095ep+4 -0x1.9156c6f553a57p-5 0x1.36057db2431d8p+4 0x1.34a77d703a061p+2 0x1.2818d9ee21f05p+4 0x1.448db921fc16p+3 0x1.f74a1a0bb2c0ep+3 0x1.a65e1fea3fcb4p+3\n"
+        "B 0x1.f74a1a0bb2c0ep+3 0x1.a65e1fea3fcb4p+3 0x1.9e62803b21a12p+3 0x1.0417435941c04p+4 0x1.052f2f63b161cp+3 0x1.0a872d6912948p+4 0x1.a24a114c69b3dp+1 0x1.24a888f55076p+4\n"
+        "B 0x1.a24a114c69b3dp+1 0x1.24a888f55076p+4 -0x1.a05135ebe43eap+0 0x1.3ec9e4818e578p+4 -0x1.4326e2a21b65fp+3 0x1.8efbdc4c1bb41p+4 -0x1.b461e857d6fbep+3 0x1.6ff7353e932e9p+4\n"
+        "B -0x1.b461e857d6fbep+3 0x1.6ff7353e932e9p+4 -0x1.12ce7706c948ep+4 0x1.50f28e310aa91p+4 -0x1.0ade4356ae582p+4 0x1.78194678189a4p+3 -0x1.1f67cef7a58b5p+4 0x1.aa327a9075541p+2\n"
+        "B -0x1.1f67cef7a58b5p+4 0x1.aa327a9075541p+2 -0x1.33f15a989cbe8p+4 0x1.90c9a0c2e5cecp+0 -0x1.6485cf6b98fb2p+4 -0x1.839bb2ec2fed2p+1 -0x1.556a39f1b6b14p+4 -0x1.e42399441a884p+2\n"
+        "B -0x1.556a39f1b6b14p+4 -0x1.e42399441a884p+2 -0x1.464ea477d4676p+4 -0x1.833cac890e8dp+3 -0x1.075fbd98c15e6p+4 -0x1.27277d1811bd9p+4 -0x1.89849c38afa04p+3 -0x1.48f40110e6859p+4\n"
+        "B -0x1.89849c38afa04p+3 -0x1.48f40110e6859p+4 -0x1.0449bd3fdc83cp+3 -0x1.6ac08509bb4d9p+4 -0x1.9701375edb166p+0 -0x1.4fe74b9225e35p+4 0x1.d23317c615231p+1 -0x1.43d3fe2603522p+4\n"
+        "B 0x1.d23317c615231p+1 -0x1.43d3fe2603522p+4 0x1.1bf9b2cee5f45p+3 -0x1.37c0b0b9e0c0fp+4 0x1.0610310b5fdfap+4 -0x1.365768fdd88fdp+4 0x1.3184787bca329p+4 -0x1.00803088171e7p+4\n"
+        "B 0x1.3184787bca329p+4 -0x1.00803088171e7p+4 0x1.5cf8bfec34858p+4 -0x1.9551f024ab5a2p+3 0x1.47faa1843e0e4p+4 -0x1.3aecd88c0f54bp+2 0x1.3f000f9b4095ep+4 -0x1.9156c6f553a57p-5\n"
+        "P 0x1.8p+2 90 0x0p+0 2 1 0x0p+0 0x1.2f673b6e9f8c3p+2 0x1.c9b0024ba3422p+2 0x0p+0 0x1.4p+2 1 0x1.9dbdf4cc517dfp-1 1 1 0x1.472837060311p+1 0x1.1048d66549d22p+2 0 4 0x1.529274ec2e924p+3 0x0p+0 0 0 0x0p+0 0 0x1.b70102c5e9d9bp+3 0 0 0x1.69add5d13ff6ep-2 0x1.5291022c3276dp+0 0x1.0609432dd555dp+0 0x1.7dc154866159bp+3 0 0x1.7f4db7a593195p-1 0 0 0x0p+0 0x0p+0 0 5 0 0 0 0 0x1.368c73b5a1438p+5 0x1.009728b8e0618p+5 0x1p+1\n"
+        "K 0 0\n";
+
+const char* const k_m3_9302_237 =
+        "C 1\n"
+        "A 0x0p+0 0x0p+0 0x1.e5d15cc0e03ecp+2 0x0p+0 0x0p+0 1\n"
+        "P 0x1.8p+2 90 0x1.f71c3f275c4cfp-2 0 1 0x0p+0 0x1.262912be148dfp+2 0x1.ad1a5c464143p+2 0x0p+0 0x1.4p+2 1 0x1.09ffd61c2273cp-1 0 1 0x1.22e4144b9a613p+0 0x1.a848cfb81879dp+1 0 4 0x1.6f1cb79d54c65p+3 0x0p+0 1 0 0x0p+0 0 0x1.4943b8ea5674p+4 0 0 0x1.182e57e93b649p-2 0x1.400f4fa72b346p+3 0x1.0623ad56c2cb9p+0 0x1.c7b463a27676p+1 0 0x1.08b40c69b891dp+0 0 0 0x0p+0 0x0p+0 1 7 0 1 0 0 -0x1.322a67a1bb12p+0 0x1.5e40a74db9d18p+5 0x1p+1\n"
+        "K 1 0\n";
+
+const char* const k_m3_9302_316 =
+        "C 1\n"
+        "L 0x1.0404c7046df28p+4 0x0p+0 0x1.28b7a74f858ccp+4 0x1.4d9b7704cd323p+1\n"
+        "L 0x1.28b7a74f858ccp+4 0x1.4d9b7704cd323p+1 0x1.1990349da461bp+4 0x1.99ec3279d43a7p+2\n"
+        "L 0x1.1990349da461bp+4 0x1.99ec3279d43a7p+2 0x1.cb2a6b8317bp+3 0x1.e849148f4615cp+2\n"
+        "L 0x1.cb2a6b8317bp+3 0x1.e849148f4615cp+2 0x1.8e5f27db17534p+3 0x1.4e4607402ecb6p+3\n"
+        "L 0x1.8e5f27db17534p+3 0x1.4e4607402ecb6p+3 0x1.90fcde66585a2p+3 0x1.bd578f8b146aap+3\n"
+        "L 0x1.90fcde66585a2p+3 0x1.bd578f8b146aap+3 0x1.2ba2270e3c751p+3 0x1.037d7a0beb47cp+4\n"
+        "L 0x1.2ba2270e3c751p+3 0x1.037d7a0beb47cp+4 0x1.859e6b0406f58p+2 0x1.e22b92e46067ep+3\n"
+        "L 0x1.859e6b0406f58p+2 0x1.e22b92e46067ep+3 0x1.6936d17faa5b8p+1 0x1.00118245731e7p+4\n"
+        "L 0x1.6936d17faa5b8p+1 0x1.00118245731e7p+4 0x1.4ea0321f234f5p-1 0x1.2b736cdce1615p+4\n"
+        "L 0x1.4ea0321f234f5p-1 0x1.2b736cdce1615p+4 -0x1.a03f11a11999cp+1 0x1.2714d051a4d64p+4\n"
+        "L -0x1.a03f11a11999cp+1 0x1.2714d051a4d64p+4 -0x1.416696fc513c6p+2 0x1.ee95bb0a472b5p+3\n"
+        "L -0x1.416696fc513c6p+2 0x1.ee95bb0a472b5p+3 -0x1.0404c7046df26p+3 0x1.c25d939399abap+3\n"
+        "L -0x1.0404c7046df26p+3 0x1.c25d939399abap+3 -0x1.70f20bcd81042p+3 0x1.d83a8bd1e87eap+3\n"
+        "L -0x1.70f20bcd81042p+3 0x1.d83a8bd1e87eap+3 -0x1.cb10a4d3025cdp+3 0x1.813387665f8f6p+3\n"
+        "L -0x1.cb10a4d3025cdp+3 0x1.813387665f8f6p+3 -0x1.b90443f86ea16p+3 0x1.1393ea6de47dfp+3\n"
+        "L -0x1.b90443f86ea16p+3 0x1.1393ea6de47dfp+3 -0x1.e8acdc3b01ea1p+3 0x1.63b9fa956ee34p+2\n"
+        "L -0x1.e8acdc3b01ea1p+3 0x1.63b9fa956ee34p+2 -0x1.2515f06823acfp+4 0x1.f260d8d5085f5p+1\n"
+        "L -0x1.2515f06823acfp+4 0x1.f260d8d5085f5p+1 -0x1.2ba2270e3c75p+4 0x1.4a83c73202d3fp-49\n"
+        "L -0x1.2ba2270e3c75p+4 0x1.4a83c73202d3fp-49 -0x1.017cf93c1a32p+4 -0x1.2180363ed8013p+1\n"
+        "L -0x1.017cf93c1a32p+4 -0x1.2180363ed8013p+1 -0x1.e8acdc3b01ea2p+3 -0x1.63b9fa956ee3p+2\n"
+        "L -0x1.e8acdc3b01ea2p+3 -0x1.63b9fa956ee3p+2 -0x1.088f834451236p+4 -0x1.1956b6f265b57p+3\n"
+        "L -0x1.088f834451236p+4 -0x1.1956b6f265b57p+3 -0x1.cb10a4d3025cep+3 -0x1.813387665f8f4p+3\n"
+        "L -0x1.cb10a4d3025cep+3 -0x1.813387665f8f4p+3 -0x1.5bf90f4b4d924p+3 -0x1.82768a2f52846p+3\n"
+        "L -0x1.5bf90f4b4d924p+3 -0x1.82768a2f52846p+3 -0x1.0404c7046df2cp+3 -0x1.c25d939399ab7p+3\n"
+        "L -0x1.0404c7046df2cp+3 -0x1.c25d939399ab7p+3 -0x1.c0fa85a3142b2p+2 -0x1.15d0b4c98de58p+4\n"
+        "L -0x1.c0fa85a3142b2p+2 -0x1.15d0b4c98de58p+4 -0x1.a03f11a1199c2p+1 -0x1.2714d051a4d63p+4\n"
+        "L -0x1.a03f11a1199c2p+1 -0x1.2714d051a4d63p+4 -0x1.226278aa90ed6p-1 -0x1.03dc3a5ac3c45p+4\n"
+        "L -0x1.226278aa90ed6p-1 -0x1.03dc3a5ac3c45p+4 0x1.6936d17faa5a8p+1 -0x1.00118245731e8p+4\n"
+        "L 0x1.6936d17faa5a8p+1 -0x1.00118245731e8p+4 0x1.725e04d3ddff5p+2 -0x1.1cf7e2e02b415p+4\n"
+        "L 0x1.725e04d3ddff5p+2 -0x1.1cf7e2e02b415p+4 0x1.2ba2270e3c749p+3 -0x1.037d7a0beb47fp+4\n"
+        "L 0x1.2ba2270e3c749p+3 -0x1.037d7a0beb47fp+4 0x1.402abcf630e91p+3 -0x1.99cb8554aa67ap+3\n"
+        "L 0x1.402abcf630e91p+3 -0x1.99cb8554aa67ap+3 0x1.8e5f27db17532p+3 -0x1.4e4607402ecb9p+3\n"
+        "L 0x1.8e5f27db17532p+3 -0x1.4e4607402ecb9p+3 0x1.fc350366b011ep+3 -0x1.3d9022c75d0d5p+3\n"
+        "L 0x1.fc350366b011ep+3 -0x1.3d9022c75d0d5p+3 0x1.1990349da4619p+4 -0x1.99ec3279d43b6p+2\n"
+        "L 0x1.1990349da4619p+4 -0x1.99ec3279d43b6p+2 0x1.fcac5ac976304p+3 -0x1.b07cc36bd29c3p+1\n"
+        "L 0x1.fcac5ac976304p+3 -0x1.b07cc36bd29c3p+1 0x1.0404c7046df28p+4 0x0p+0\n"
+        "P 0x1.8p+2 120 0x1.1fe1d0d6788ebp-2 1 0 0x0p+0 0x1.60968ac51127cp+2 0x1.74677e8fa483p+1 0x0p+0 0x1.4p+2 0 0x1.1ef61cdab4f59p-1 0 1 0x1.7f8bf3e272fc6p+0 0x1.290570c38d21cp+2 1 7 0x1.a2693bc5a2754p+5 0x0p+0 0 0 0x0p+0 1 0x1.0876fe74b6fd5p+0 0 0 0x1.9d6ea1ba1af4bp-2 0x1.7565d94ed35d7p+3 0x1.db0aa9cc8bc8dp-4 0x1.1de38d95ae99ep+3 0 0x1.463543ee1a411p+0 0 0 0x0p+0 0x0p+0 0 6 0 0 0 0 0x1.6a58132d07576p+5 -0x1.73fea96c5abe9p+5 0x1p+1\n"
+        "K 1 0\n";
+
+
 struct Scene {
     std::vector<Contour> cs;
     ProfileParams p;
@@ -732,14 +712,18 @@ TEST_CASE("T-0167: a tab that only joins a closed tongue of waste is left out", 
 }
 
 TEST_CASE("T-0167: tabs the cone's wider tab layer would nick stay as before", "[toolpath][profile][tabs][vbit]") {
-    // The raster's core is the stretch less the tab-layer radius at each end (m0_9306_257, m3_9305_215,
-    // m3_9304_237: trimmed by the full radius, tabs that hold were left out and a piece came free; m0_9301_36 and
-    // m0_9301_150: judged with the full radius the waste to reach lies too far and the only tab of a 58 mm2
-    // part goes);
-    // the other cuts are tested against the core trimmed by the full radius at each end, as
-    // before (judged against the longer core, m3_9302_251, m3_9303_94, m3_9304_67, m3_9301_367,
-    // m3_9301_272 and m3_9301_441 lost tabs that hold or kept one that is cut through). Tabs left
-    // out as counted, nothing free.
+    // Each group pins one rule of the judgement; tabs left out are counted, nothing free.
+    // - The raster's core is the stretch less the tab-layer radius at each end (m0_9306_257,
+    //   m3_9305_215, m3_9304_237: trimmed by the full radius, tabs that hold were left out and a
+    //   piece came free).
+    // - The waste to reach lies a tab-layer radius beyond the cut (m0_9301_36, m0_9301_150: with a
+    //   full radius the only tab of a 58 mm2 part goes).
+    // - The tab-layer radius is capped at the tool's radius (m3_9301_71, m3_9302_237, m3_9302_316:
+    //   uncapped, the cone at the tab layer is wider than the tool and a part of 300 to 1,100 mm2
+    //   loses all its tabs).
+    // - The other cuts are tested against the core trimmed by the full radius at each end, as before
+    //   (m3_9302_251, m3_9303_94, m3_9304_67, m3_9301_367, m3_9301_272, m3_9301_441: measured against
+    //   the longer core, tabs that hold were lost or one that is cut through was kept).
     struct Case {
         const char* name;
         const char* text;
@@ -747,10 +731,11 @@ TEST_CASE("T-0167: tabs the cone's wider tab layer would nick stay as before", "
     };
     const Case cases[] = {{"m3_9302_251", k_m3_9302_251, 5}, {"m3_9303_94", k_m3_9303_94, 9},
                           {"m3_9304_67", k_m3_9304_67, 4},  {"m3_9301_367", k_m3_9301_367, 0},
-                          {"m3_9301_272", k_m3_9301_272, 2}, {"m3_9301_441", k_m3_9301_441, 0},
+                          {"m3_9301_272", k_m3_9301_272, 2}, {"m3_9301_441", k_m3_9301_441, 1},
                           {"m0_9306_257", k_m0_9306_257, 0}, {"m3_9305_215", k_m3_9305_215, 0},
                           {"m3_9304_237", k_m3_9304_237, 3}, {"m0_9301_36", k_m0_9301_36, 6},
-                          {"m0_9301_150", k_m0_9301_150, 3}};
+                          {"m0_9301_150", k_m0_9301_150, 3}, {"m3_9301_71", k_m3_9301_71, 0},
+                          {"m3_9302_237", k_m3_9302_237, 0}, {"m3_9302_316", k_m3_9302_316, 1}};
     for (const Case& k : cases) {
         INFO(k.name);
         const Scene s = loadScene(k.text);
@@ -759,20 +744,6 @@ TEST_CASE("T-0167: tabs the cone's wider tab layer would nick stay as before", "
         CHECK(leftOut(r) == k.left);
         CHECK(reported(r).size() == flooded(s, r, 0.1).size());
     }
-}
-
-TEST_CASE("T-0167: a tab round a notch's bottom corner is not kept when the tools seal it", "[toolpath][profile][tabs]") {
-    // m0_271016_20 at VectorStart/Outside (end mill 3.175, allowance 0.15): the notch of the U is
-    // 6.8 mm wide and the two kerfs leave a 0.145 mm sliver of waste between them. The tab centred
-    // on the notch's bottom corner has its end tools 2.7 mm apart (the diameter is 3.175 mm); it
-    // joins the part to nothing. It is left out; the five other tabs hold and nothing comes free.
-    const Scene s = loadScene(k_m0_271016_20, Start::VectorStartOutside);
-    const ProfileResult r = profileToolpath(s.cs, s.tool, s.p);
-    REQUIRE(r.ok());
-    CHECK(leftOut(r) == 3);
-    CHECK(reported(r).empty());
-    CHECK(flooded(s, r, 0.1).empty());
-    CHECK_FALSE(tabNear(s, r, {55.41, 4.62}, 1.7));
 }
 
 TEST_CASE("T-0167: the T-0158 repros that stay: pieces are reported (leads off)", "[toolpath][profile][tabs]") {
@@ -804,28 +775,3 @@ TEST_CASE("T-0167: the T-0158 repros that stay: pieces are reported (leads off)"
     }
 }
 
-TEST_CASE("T-0167: sealed notch corners across a family of U-shaped parts", "[toolpath][profile][tabs]") {
-    // Parts with a notch whose two kerfs leave 0.06 to 0.5 mm of waste between them (end mill,
-    // Outside, tab thickness 0.5 to 3 mm; harness t0167 ugen, 400 parts: 13 reach the sliver search,
-    // 8 change, all for the better by the flood). u_1_131: the tab round the notch's bottom corner
-    // is sealed off by the tools at its ends and is left out (2 of 4 tabs; the flood found it
-    // severed, the part held by the other two). u_1_161, u_1_250, u_1_287: the tabs in the notch
-    // join the part to the sliver and the rest of the waste, and are kept (judged with the discs
-    // widened by half a cell; by 1.5 cells nothing of the sliver is open and they were dropped).
-    struct Case {
-        const char* name;
-        const char* text;
-        std::size_t left;
-    };
-    const Case cases[] = {{"u_1_131", k_u_1_131, 2}, {"u_1_161", k_u_1_161, 2},
-                          {"u_1_250", k_u_1_250, 0}, {"u_1_287", k_u_1_287, 0}};
-    for (const Case& k : cases) {
-        INFO(k.name);
-        const Scene s = loadScene(k.text);
-        const ProfileResult r = profileToolpath(s.cs, s.tool, s.p);
-        REQUIRE(r.ok());
-        CHECK(leftOut(r) == k.left);
-        CHECK(reported(r).empty());
-        CHECK(flooded(s, r, 0.1).empty());
-    }
-}

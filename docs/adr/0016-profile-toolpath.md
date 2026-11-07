@@ -340,30 +340,35 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     tab-layer radius (`tabLayerRadius`: a V-bit's cone there, tab thickness × tan(half angle), at
     most its radius at the top of the cut; any other tool's radius), far narrower than the radius
     at the top for a V-bit and a thin tab. Before, the cross-sections, the "cut through" distance,
-    the nicks, the quick answers and the raster all took the radius at the top, so a V-bit's tabs
-    that hold were left out as cut through and the whole part came free (m2_1330000_9, Outside,
-    V-bit 90°, D25, allowance 0, separate last pass: the single tab of each of two vectors, 641 and
-    1,704 mm², at the stored start and at VectorStart; tab thickness 1.99 mm, so a cone 1.99 mm
-    wide at the tab layer where the radius at the top of the cut is 5.9 mm). Now the sections reach a tab-layer radius (plus the
-    last-pass allowance) beyond the cut, the waste to reach lies a tab-layer radius + the
-    allowance + 0.2 mm beyond it, the tools' discs in the raster and every distance test are the
-    tab-layer radius, and the raster's core is the raised stretch less the tab-layer radius at each
-    end (the tab is uncut for that much more at the layer). The check that no other cut comes
-    within reach of the tab still measures to the guaranteed core, the stretch less the full radius
-    at each end that the roughing cover is matched against: a tool of another cut beyond it only
-    narrows the tab (measured to the longer core, the first version of this change left out three
-    scenes' holding tabs: harness t0167, seeds 9301–9304 scenes 367, 251, 94, 67). End mills are
-    unchanged but for the sliver search below: `tabLayerRadius` is their radius, and moves and
-    diagnostics were byte-identical over 9,600 scenes with that change alone. Where the kerfs leave no waste a
-    margin beyond the cut (a notch the two kerfs consume, 0.145 mm of waste left), the raster used
-    to find none and keep the tab as holding a hole smaller than the kerf, although the tools at the
-    ends of its raised stretch sealed its material off (m0_271016_20 at VectorStart/Outside: a tab
-    round the bottom corner of a 6.8 mm notch, end mill 3.175 mm, the end tools 2.7 mm apart: the
-    oracle found it severed). It now looks for waste past the far wall of the kerf (the allowance
-    + a tab-layer radius from the vectors) at all and, if there is some, judges with the discs
-    widened by half a cell instead of 1.5 (a sliver of waste narrower than three cells has no open
-    cell otherwise), so a tab that joins nothing there is left out; with no waste at all the tab is
-    kept as before. **Sided tabs (T-0127).** On the vector, and for Inside/Outside with a negative
+    the quick answers and the raster all took the radius at the top, so a V-bit's tabs that hold
+    were left out as cut through and the whole part came free (m2_1330000_9, Outside, V-bit 90°,
+    D25, allowance 0, separate last pass: the single tab of each of two vectors, 641 and 1,704 mm²,
+    at the stored start and at VectorStart; tab thickness 1.99 mm, so a cone of radius 1.99 mm at the
+    tab layer where the radius at the top of the cut is 5.9 mm). Now the sections reach a tab-layer
+    radius (plus the last-pass allowance) beyond the cut, the waste to reach lies a tab-layer radius
+    + the allowance + 0.2 mm beyond it, the tools' discs in the raster and the quick answers' distances
+    are the tab-layer radius, and the raster's core is the raised stretch less the tab-layer radius at
+    each end (the tab is uncut for that much more at the layer; trimmed by the full radius, tabs that
+    hold were left out). The sections that the other cuts are measured against keep the core trimmed
+    by the full radius at each end, which the roughing cover is matched against: a tool of another cut
+    beyond it only narrows the tab (measured against the longer core the first version left out
+    holding tabs in six screen scenes). The nick test that picks the quick answers is unchanged. The
+    raster's reach is a tool radius + allowance to the vector side and the tab-layer radius beyond the
+    kerf, and the distance to the vectors is computed for blocks of 4 × 4 cells whose centre lies
+    further than the block's radius from the thresholds (the distance is 1-Lipschitz; results are
+    unchanged, cost is not: below). End mills are unchanged, moves and diagnostics byte-identical.
+    **Not fixed (T-0177 (l)):** a tab round the bottom corner of a notch whose two kerfs leave a
+    sliver of waste narrower than three raster cells is kept as holding "a hole smaller than the
+    kerf" although the tools at its ends seal it off (m0_271016_20 at VectorStart/Outside: a 6.8 mm
+    notch, end mill 3.175, 0.145 mm of waste, the end tools 2.7 mm apart; the part is held by the other
+    tabs and the loose-piece search is exact, so nothing is lost). A first version of T-0167 looked
+    for waste past the far wall of the kerf with the discs widened by half a cell. On the verifier's
+    U-part family (end mill, Outside, notches leaving 0.06–0.5 mm of waste, 4,000 parts) it removed
+    148 severed tabs but dropped 32 holding ones (slivers of up to 0.45 mm) and in one scene (seed
+    9735 scene 49, a 0.079 mm sliver) left all five tabs out so that a 426 mm² part came free where
+    main held it; it was reverted, because a resolution-dependent rule cannot be made safe. A rule
+    from the exact capsule geometry (waste past the far wall of the kerf judged by the exact union of
+    the tools, not by cells) is left to T-0177. **Sided tabs (T-0127).** On the vector, and for Inside/Outside with a negative
     allowance (the kerf then crosses the vector, so the distance to the vectors no longer tells
     the part from the waste), a tab is judged by the pieces of material the cut leaves, decided by
     the profile side and the allowance (never by `Cut::distance`), with no cross-section shortcut:
@@ -481,8 +486,8 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     /home/chris/harness/t0156v2/dump/m1_9302_2199.scn; carded as a T-0177 item).
     **Triage of the T-0158 verifier's repros (T-0167, on main after T-0156, whole-scene flood of
     the moves, leads off unless said).** Fixed: m2_1330000_9 (V-bit tabs judged at the top
-    radius, Tab layer above; both starts), m0_271016_20 at VectorStart/Outside (the severed tab at the
-    bottom corner of a notch; its other 2 of 4 left out are as before), m0_271000_0 at
+    radius, Tab layer above; both starts). Not fixed, as on main: m0_271016_20 at VectorStart/Outside
+    (the severed tab at the bottom corner of a notch, above; T-0177 (l)). Fixed too: m0_271000_0 at
     VectorStart/Outside (the V-bit tab that main left out is kept). Not tab defects: m0_291002_11
     (VectorStart/Outside 0.41 mm², and 4.76 mm² at the stored start), m0_271000_0 (1.19 mm²) and
     m0_271013_1 (box centre, 1.33 mm²) have an unreported free piece only with leads on, which is
