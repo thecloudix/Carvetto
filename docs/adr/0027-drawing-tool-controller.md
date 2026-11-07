@@ -1,4 +1,4 @@
-# ADR-0026: Drawing tool controller (one state machine, parameter-first creation)
+# ADR-0027: Drawing tool controller (one state machine, parameter-first creation)
 
 Date: 2026-11-07 · Status: proposed (T-0204)
 
@@ -35,6 +35,13 @@ stay a thin event forwarder. The shape builders (T-0200) and snapping (T-0203) a
    `SnapIndex::kMaxPairSpans` (20) spans nearest to the cursor and skips pairs whose common box
    misses the cursor window; a genuine crossing between spans that are not among the 20 nearest
    is not reported until the user zooms in (documented in `snapping.hpp`).
+
+8. **Director-accepted conservative decisions** (T-0204): Circle defaults to centre plus radius, Alt
+   makes the drag the diameter; the marquee is Window when dragged left to right and Crossing right
+   to left; Select acts on release so a click can be told from a marquee; the grid snap kind starts
+   off; a created object is not auto-selected; Arc start/end/radius takes the side from the pointer
+   and the radius from typing or the circle through the pointer, with a "larger arc" option;
+   polyline Bezier click-drag, S/T quick keys and extending an existing vector are not implemented.
 
 ## Consequences
 The Qt layer needs no tool logic: toolbar actions call `setTool`, the canvas forwards events and

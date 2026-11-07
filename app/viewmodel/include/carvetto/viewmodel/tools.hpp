@@ -19,7 +19,7 @@
 #include "carvetto/viewmodel/snapping.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
 
-// Qt-free drawing tools (T-0204, ADR-0014, ADR-0026). The canvas forwards pointer events in screen
+// Qt-free drawing tools (T-0204, ADR-0014, ADR-0027). The canvas forwards pointer events in screen
 // pixels, modifiers and a few keys to a `ToolController`; the active tool turns them into a
 // preview (contours in millimetres, for the overlay) and, on completion, exactly one undoable
 // `AddObjectCommand` that carries the creation parameters of the shape, so the object stays
