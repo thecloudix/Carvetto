@@ -164,6 +164,12 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   target_compile_options(carvetto_core PRIVATE -ffp-contract=off)
   target_compile_options(Clipper2 PRIVATE -ffp-contract=off)
 endif()
+# MSVC: /fp:precise (its default, stated explicitly) never contracts a * b + c into an fma on the
+# SSE2 baseline and rounds every double operation as written; ADR-0032 section 7 (byte-identical
+# simulation heightfields) and ADR-0025 section 11 rely on it. /fp:fast would break both.
+if(MSVC)
+  target_compile_options(carvetto_core PRIVATE /fp:precise)
+endif()
 # Written into manifest.json as the app version.
 target_compile_definitions(carvetto_core PRIVATE CARVETTO_VERSION_STRING="${PROJECT_VERSION}")
 add_library(carvetto::core ALIAS carvetto_core)

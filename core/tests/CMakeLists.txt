@@ -59,6 +59,7 @@ add_executable(carvetto_tests
   simulate/hostile_test.cpp
   simulate/perf_test.cpp
   simulate/playback_test.cpp
+  simulate/round2_test.cpp
   simulate/sweep_exact_test.cpp
   simulate/tool_shape_test.cpp
   tooling/starter_tools_test.cpp

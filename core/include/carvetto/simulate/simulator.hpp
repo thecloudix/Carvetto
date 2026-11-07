@@ -33,7 +33,14 @@ enum class SimStatus {
     InvalidMove,         ///< A move has non-finite or out-of-range coordinates, or a degenerate arc.
     TooManyMoves,        ///< More queued moves than `SimOptions::maxMoves`.
     WorkBudgetExceeded,  ///< The cell-evaluation budget `SimOptions::maxCellWork` ran out.
+    OutOfMemory,         ///< Allocating the heightfield or the move queue failed (std::bad_alloc caught).
 };
+
+namespace detail {
+/// Test hook: bit 0 makes the next heightfield allocation, bit 1 the next queueing of moves, fail as
+/// if std::bad_alloc had been thrown (the failure is consumed). Not for production use.
+void failNextAllocation(unsigned mask);
+}  // namespace detail
 
 struct SimError {
     SimStatus status{SimStatus::Ok};
@@ -83,7 +90,10 @@ struct SimOptions {
 class Simulator {
 public:
     /// Creates the heightfield (allocating `stock.cellCount * 5..9` bytes unless the stock is
-    /// refused: then `ok()` is false, `error()` says why, and nothing is allocated).
+    /// refused: then `ok()` is false, `error()` says why, and nothing is allocated). `maxCells` is a
+    /// limit on the cell COUNT, not a memory bound: 50 million cells (the default) are 250 MB, 450 MB
+    /// with pass ids; the hard cap of 400 million cells is 3.6 GB and cannot fit a 32-bit process. A
+    /// failed allocation (std::bad_alloc) is caught and reported as `OutOfMemory`; it never throws.
     explicit Simulator(const Stock& stock, const SimOptions& options = {});
     ~Simulator();
     Simulator(Simulator&&) noexcept;
@@ -99,7 +109,11 @@ public:
     /// the first move: it defaults to the end of the previous toolpath, and when there is none, the
     /// first move has zero length (a cutting first move then stamps the tool at its end point).
     /// All moves are validated first; on refusal nothing is queued and `error()` says why (InvalidTool,
-    /// InvalidMove with the move's global index, TooManyMoves). Returns true when queued.
+    /// InvalidMove with the move's global index, TooManyMoves, OutOfMemory). An arc is refused when
+    /// its end point's distance from the centre differs from the start radius by more than
+    /// max(0.005 mm, 1e-6 x start radius) (CNC controllers reject such arcs; toolpaths from the
+    /// generators match to floating-point precision); within that tolerance the arc is swept on the
+    /// start radius. Returns true when queued.
     bool addToolpath(const toolpath::Toolpath& path, const ToolShape& tool, std::uint32_t id,
                      std::optional<geometry::Vec3> from = std::nullopt);
 
@@ -139,6 +153,8 @@ public:
     double cellWork() const;
 
 private:
+    bool addToolpathImpl(const toolpath::Toolpath& path, const ToolShape& tool, std::uint32_t id,
+                         std::optional<geometry::Vec3> from);
     struct Impl;
     std::unique_ptr<Impl> impl_;
 };

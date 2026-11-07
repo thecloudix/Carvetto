@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
+#include <new>
 #include <utility>
 
 #include "carvetto/toolpath/time.hpp"
@@ -17,6 +19,8 @@ using toolpath::MoveKind;
 namespace {
 
 constexpr double kMaxCoordinate = 1e7;  // mm; every product and sum of coordinates stays finite
+constexpr double kArcRadiusSlack = 0.005;    // mm; largest accepted start/end radius mismatch of an arc ...
+constexpr double kArcRadiusRelative = 1e-6;  // ... or this fraction of the start radius, whichever is larger
 constexpr double kMinRadius = 1e-9;     // mm; smaller arc radii / distances count as zero
 
 bool coordOk(double v) {
@@ -55,7 +59,23 @@ void rotateBy(double ax, double ay, int dir, double phi, double& rx, double& ry)
     ry = d * x * s + y * c;
 }
 
+unsigned gFailMask = 0;
+
+/// Consumes the test-hook failure `bit`, throwing as a failed allocation would.
+void maybeFail(unsigned bit) {
+    if ((gFailMask & bit) != 0) {
+        gFailMask &= ~bit;
+        throw std::bad_alloc();
+    }
+}
+
 }  // namespace
+
+namespace detail {
+void failNextAllocation(unsigned mask) {
+    gFailMask = mask;
+}
+}  // namespace detail
 
 struct Simulator::Impl {
     Stock stock;
@@ -77,6 +97,10 @@ struct Simulator::Impl {
     std::size_t curRun{0};
     std::optional<Vec3> pos;
     double partial{0.0};
+    bool allocated{false};
+    /// ToolTooDeep verdict of the move at `probedMove`, probed before any partial cut of that move.
+    std::optional<std::size_t> probedMove;
+    bool probedTooDeep{false};
 
     Impl(const Stock& s, const SimOptions& o) : stock(s), options(o), check(checkStock(s)), sweeper(field) {
         if (!check.ok()) {
@@ -84,7 +108,22 @@ struct Simulator::Impl {
             error.message = check.message;
             return;
         }
-        field = Heightfield(stock, check);
+        // The byte count is cells * 9 at most; refuse what a size_t cannot hold (32-bit builds).
+        if (check.cells() > std::numeric_limits<std::size_t>::max() / 9) {
+            error.status = SimStatus::OutOfMemory;
+            error.message = "the stock does not fit in the address space";
+            return;
+        }
+        try {
+            maybeFail(1);
+            field = Heightfield(stock, check);
+        } catch (const std::bad_alloc&) {
+            field = Heightfield();
+            error.status = SimStatus::OutOfMemory;
+            error.message = "not enough memory for " + std::to_string(check.cells()) + " cells";
+            return;
+        }
+        allocated = true;
         sweeper.setProbeTolerance(options.collisionTolerance);
     }
 
@@ -188,6 +227,14 @@ struct Simulator::Impl {
         }
     }
 
+    /// True when the shank above the flutes would meet material on this move (probe, no cut).
+    bool shankHits(const Run& run, const Move& m, const Vec3& from) {
+        const double flute = run.tool.fluteLength();
+        const double zlow = std::min(from.z, m.to.z);
+        return m.kind != MoveKind::Dwell && std::isfinite(flute) && zlow + flute < field.topZ() &&
+               sweepMove(run.shank, m, from, SweepMode::Probe, 1.0) > 0;
+    }
+
     bool processMove(std::size_t idx) {
         while (idx >= runs[curRun].first + runs[curRun].count) {
             ++curRun;
@@ -207,9 +254,10 @@ struct Simulator::Impl {
         if (m.kind != MoveKind::Dwell) {
             // The shank above the flutes must not meet material: probed against the heights before
             // this move cuts (what the flutes have to remove above their own top is the problem).
-            const double flute = run.tool.fluteLength();
-            if (std::isfinite(flute) && zlow + flute < field.topZ() &&
-                sweepMove(run.shank, m, from, SweepMode::Probe, 1.0) > 0) {
+            // Computed from the state before any partial cut of this move (advanceToTime), so the
+            // diagnostics are a function of the job and the move index, not of the playback history.
+            const bool deep = (probedMove && *probedMove == idx) ? probedTooDeep : shankHits(run, m, from);
+            if (deep) {
                 addDiagnostic(DiagnosticKind::ToolTooDeep, idx, run.id, m.to,
                               "tool is deeper in the material than its flute length");
             }
@@ -227,6 +275,7 @@ struct Simulator::Impl {
                               "tool tip goes below the bottom of the stock (table or clamp)");
             }
         }
+        probedMove.reset();
         pos = m.to;
         if (sweeper.work() > options.maxCellWork) {
             error.status = SimStatus::WorkBudgetExceeded;
@@ -238,7 +287,7 @@ struct Simulator::Impl {
     }
 
     /// False once the stock was refused or the work budget ran out (until reset()).
-    bool usable() const { return check.ok() && error.status != SimStatus::WorkBudgetExceeded; }
+    bool usable() const { return allocated && error.status != SimStatus::WorkBudgetExceeded; }
 
     bool advanceTo(std::size_t n) {
         if (!usable()) {
@@ -256,9 +305,11 @@ struct Simulator::Impl {
     }
 
     void resetState() {
-        if (check.ok()) {
+        if (allocated) {
             field.reset();
         }
+        probedMove.reset();
+        probedTooDeep = false;
         sweeper.resetWork();
         diagnostics.clear();
         dropped = 0;
@@ -294,8 +345,20 @@ const SimError& Simulator::error() const {
 
 bool Simulator::addToolpath(const toolpath::Toolpath& path, const ToolShape& tool, std::uint32_t id,
                             std::optional<Vec3> from) {
+    try {
+        return addToolpathImpl(path, tool, id, from);
+    } catch (const std::bad_alloc&) {
+        impl_->error.status = SimStatus::OutOfMemory;
+        impl_->error.message = "not enough memory to queue the toolpath";
+        impl_->error.move = std::nullopt;
+        return false;
+    }
+}
+
+bool Simulator::addToolpathImpl(const toolpath::Toolpath& path, const ToolShape& tool, std::uint32_t id,
+                                std::optional<Vec3> from) {
     Impl& s = *impl_;
-    if (!s.check.ok()) {
+    if (!s.allocated) {
         return false;
     }
     auto refuse = [&](SimStatus st, std::string msg, std::optional<std::size_t> move = std::nullopt) {
@@ -341,6 +404,12 @@ bool Simulator::addToolpath(const toolpath::Toolpath& path, const ToolShape& too
                 return refuse(SimStatus::InvalidMove, "move " + std::to_string(global) + " is an arc that ends at its centre",
                               global);
             }
+            if (rho > kMinRadius && std::fabs(el - rho) > std::max(kArcRadiusSlack, kArcRadiusRelative * rho)) {
+                return refuse(SimStatus::InvalidMove,
+                              "move " + std::to_string(global) + " is an arc whose end radius differs from its start radius by " +
+                                  std::to_string(std::fabs(el - rho)) + " mm",
+                              global);
+            }
         }
         t += s.moveSeconds(m, p ? *p : m.to, p.has_value(), path.tool);
         times.push_back(t);
@@ -354,10 +423,19 @@ bool Simulator::addToolpath(const toolpath::Toolpath& path, const ToolShape& too
     run.id = id;
     run.toolNumber = path.tool.toolNumber;
     run.from = from;
-    s.moves.insert(s.moves.end(), path.moves.begin(), path.moves.end());
-    s.endTimes.insert(s.endTimes.end(), times.begin(), times.end());
-    if (run.count > 0) {
-        s.runs.push_back(std::move(run));
+    const std::size_t oldMoves = s.moves.size();
+    const std::size_t oldTimes = s.endTimes.size();
+    try {
+        maybeFail(2);
+        s.moves.insert(s.moves.end(), path.moves.begin(), path.moves.end());
+        s.endTimes.insert(s.endTimes.end(), times.begin(), times.end());
+        if (run.count > 0) {
+            s.runs.push_back(std::move(run));
+        }
+    } catch (const std::bad_alloc&) {
+        s.moves.resize(oldMoves);
+        s.endTimes.resize(oldTimes);
+        return refuse(SimStatus::OutOfMemory, "not enough memory to queue " + std::to_string(path.moves.size()) + " moves");
     }
     s.queueEnd = p;
     s.queueTime = t;
@@ -410,6 +488,10 @@ bool Simulator::advanceToTime(double seconds) {
                     const Vec3 from = start3 ? *start3 : m.to;
                     if (!start3 && isArc(m.kind)) {
                         m.kind = MoveKind::Feed;
+                    }
+                    if (!(s.probedMove && *s.probedMove == s.done)) {
+                        s.probedTooDeep = s.shankHits(run, m, from);  // before the first partial cut
+                        s.probedMove = s.done;
                     }
                     s.sweepMove(run.tool, m, from, SweepMode::Cut, f);
                 }

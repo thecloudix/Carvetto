@@ -43,8 +43,10 @@ is algebraic (cross products). Arcs are split algebraically (quarter turns, then
 normalised sum, pieces pruned when their bounding box misses the stock), so the work is bounded by
 the stock, not by the arc's radius. **Helices** (Z changes) have no closed form for ball and V
 profiles; they are swept as the chords of an inscribed polygon with sagitta <= cellSize / 64, each
-chord exactly (§2). The error is that sagitta horizontally (so at most slope(h) x cellSize / 64
-vertically, 8 um for a 0.5 mm cell with a 90 degree V). Direction, full circles (coincident start
+chord exactly (§2). The path error is at most cellSize / 64 horizontally. The height error is slope(h) x cellSize / 64
+only away from steep tool walls; at the rim of a flat end mill or any steep wall a cell whose centre
+lies within that distance of the edge can flip by up to the full depth (9 mm observed on a 0.078 mm
+cell). Direction, full circles (coincident start
 and end in XY, tested exactly) and zero-radius arcs follow ADR-0008; the radius is taken from the
 start, the end direction from the end point.
 
@@ -62,7 +64,11 @@ the shape (the database tool has none); infinity = unlimited.
 cut flag), 9 with pass ids; the cell count is limited by `Stock::maxCells` (default 50 million,
 never more than 400 million). A stock over the cap is refused with `TooManyCells` and a message
 naming the count; nothing is allocated. Dimensions are limited to 1e7 mm and counts are computed in
-double before any integer conversion.
+double before any integer conversion. `maxCells` limits the cell COUNT, not memory: 50 million cells
+(the default) are 250 MB, 450 MB with pass ids; the hard cap of 400 million cells is 3.6 GB and
+cannot fit a 32-bit process (a byte count that overflows `size_t` is refused). The allocation is
+guarded: `std::bad_alloc` is caught and reported as `OutOfMemory` (constructor and `addToolpath`;
+a failed queueing is rolled back), never thrown.
 
 ### 6. Diagnostics
 `RapidInMaterial`: a rapid whose path (swept by the tool, not cutting) would remove a cell by more
@@ -74,12 +80,18 @@ than the tolerance (rapids included). `ToolTooDeep`: the shank (a cylinder at th
 swept over the heights **before** the move; if it would remove anything, material stands above the
 flutes' top within the tool's reach (a plunge deeper than the flutes in uncut stock is flagged; in
 a pocket cleared before it is not). `ToolChangeWithoutRetract`: a toolpath with another tool
-(shape or tool number) starts while the previous end point is inside the stock (below the top). At
+(shape or tool number) starts while the previous end point is inside the stock (below the top). A tip exactly
+`fluteLength` below the surface is not flagged (the flute just reaches the surface; pinned by a
+test). The thresholds are `collisionTolerance` (1 um) in both directions of each test. Diagnostics
+are a pure function of the job and the move index: the shank probe of a move is made on the heights
+before the move's first (partial) cut and remembered, so scrubbing with `advanceToTime` and seeking
+in any order gives the same list as a one-shot run (tested with random call orders). At
 most `maxDiagnostics` (10,000) are kept; the rest are counted.
 
 ### 7. Determinism
 The path from input to a float height uses only + - * / and IEEE `sqrt`; the core is compiled
-with `-ffp-contract=off` (no fused multiply-add on GCC/Clang; MSVC /fp:precise never fuses).
+with `-ffp-contract=off` (no fused multiply-add on GCC/Clang) and, on MSVC, with `/fp:precise` set
+explicitly in core/CMakeLists.txt (never contracts on the SSE2 baseline).
 `sin`, `cos`, `tan` and `atan2` differ between libm implementations in the last bit, so the cone
 slope, the tapered-ball tangent point and the angle fractions of helices and of partly played arcs
 use the series in `det_math.hpp` (fixed term counts, accuracy ~1e-16). No decision depends on
@@ -93,7 +105,10 @@ the path widened by the tool radius, found row by row; arcs by pieces of at most
 max(2 r, 4 cells)), plus O(depth) for arc splitting; a move entirely above the top costs O(1). The
 total is near-linear in (moves x footprint cells). The simulator counts evaluated cells and stops
 with `WorkBudgetExceeded` beyond `maxCellWork` (default 1e10, minutes of CPU) so that no input can
-spin it forever. All moves are validated when queued: coordinates must be finite and within 1e7 mm;
+spin it forever. All moves are validated when queued: coordinates must be finite and within 1e7 mm; an arc whose end point's
+distance from the centre differs from the start radius by more than max(0.005 mm, 1e-6 x start
+radius) is refused (`InvalidMove`: controllers reject such arcs, the generators' records match to
+floating-point precision; within the tolerance the arc is swept on the start radius);
 arcs of zero radius that go somewhere or that end at their centre are refused (`InvalidMove`, with
 the global move index; nothing of that toolpath is queued); at most `maxMoves` (8 million, about 80 bytes each) moves.
 A move only touches the cells the tool can reach at its depth (`ToolShape::reachAtGap`: a V-bit or
@@ -110,8 +125,14 @@ the current state (cheap), never recompute. Time per move comes from `toolpath::
 toolpath's feed and plunge rates and `SimOptions::rapidRate`/`acceleration`. At a time inside a
 move, a prefix of its path proportional to the elapsed fraction is cut (constant speed inside a
 move; acceleration is ignored within one move); the next advance cuts the whole move again (min is
-idempotent). `seekMove`/`seekTime` rewind by resetting and replaying. Playback to move N equals a
-fresh run to N byte for byte (tested).
+idempotent). `seekMove`/`seekTime` rewind by resetting and replaying. `advanceToMove`, `seekMove` and planar-arc time playback give, at move N, exactly the heights of a
+fresh run to N, byte for byte (tested). A **partial helix prefix** under `advanceToTime` is not equal
+to the exact prefix: it is subdivided into different chords, and the min of heights keeps the deeper
+result; measured up to 7e-3 mm at slope 0.8 with 0.25 mm cells. This is the documented
+partial-playback error; the next completed move restores the exact state. Move end times come from
+`toolpath::moveLength` (libm trigonometry), so the position of a partial prefix is not bit-exact
+across platforms; the golden heightfield (whole moves) is. **For T-0223:** scrub with
+`advanceToMove`/`seekMove` (byte-exact); use `advanceToTime` only for animation.
 
 ### 10. Accuracy statement
 Point-sampled cells: the value at each cell centre is exact for segments and planar arcs; helices
