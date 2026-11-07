@@ -3,6 +3,15 @@
 namespace carvetto::geometry {
 
 double normalizeAngle(double angle) {
+    // T-0176: std::fmod(x, 2*pi) returns x itself for |x| < 2*pi, so skip its (slow) call there; the
+    // result is bit for bit the same. Anything else, NaN and infinities included, takes the long way.
+    if (angle >= 0.0 && angle < kTwoPi) {
+        return angle;
+    }
+    if (angle < 0.0 && angle > -kTwoPi) {
+        const double w = angle + kTwoPi;
+        return w >= kTwoPi ? 0.0 : w;
+    }
     double a = std::fmod(angle, kTwoPi);
     if (a < 0.0) {
         a += kTwoPi;
