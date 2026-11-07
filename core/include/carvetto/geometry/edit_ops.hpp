@@ -30,6 +30,7 @@ enum class EditStatus {
     NothingToTrim,    ///< No intersection around the picked point.
     ClosedContour,    ///< Extend needs an open contour.
     NoIntersection,   ///< Extend found no target ahead of the end.
+    TooComplex,       ///< The intersection work budget ran out (Bezier-heavy input, ADR-0005 A2): nothing was changed.
 };
 
 /// Human-readable reason for a status.

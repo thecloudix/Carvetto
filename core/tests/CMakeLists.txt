@@ -8,6 +8,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Catch2)
 
 add_executable(carvetto_tests
+  geometry/bezier_intersect_bounds_test.cpp
   geometry/bezier_work_bounds_test.cpp
   geometry/gap_trail_test.cpp
   geometry/hit_index_test.cpp

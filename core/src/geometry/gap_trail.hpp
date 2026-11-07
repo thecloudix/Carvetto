@@ -5,6 +5,7 @@
 // iteration order never depends on how a standard library inserts equal keys.
 
 #include <cstddef>
+#include <iterator>
 #include <limits>
 #include <optional>
 #include <set>
@@ -64,11 +65,16 @@ class GapMinima {
 
     /// The accepted minimum with l < t < h (both ends excluded) and gap <= maxGap that has the
     /// lowest gap (the earliest accepted among equal gaps), or null.
-    const GapSample* lowestIn(double l, double h, double maxGap) const {
+    /// `scanned`, when given, receives the number of minima looked at (the cost of the query,
+    /// linear in the minima inside the range).
+    const GapSample* lowestIn(double l, double h, double maxGap, std::size_t* scanned = nullptr) const {
         const GapSample* found = nullptr;
         std::size_t foundAt = 0;
         for (auto it = byT_.upper_bound({l, std::numeric_limits<std::size_t>::max()}); it != byT_.end() && it->first < h;
              ++it) {
+            if (scanned != nullptr) {
+                ++*scanned;
+            }
             const GapSample& k = list_[it->second];
             if (k.gap <= maxGap &&
                 (found == nullptr || k.gap < found->gap || (k.gap == found->gap && it->second < foundAt))) {
