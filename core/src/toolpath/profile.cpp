@@ -652,7 +652,7 @@ class ProfileBuilder {
     /// beyond it).
     TabFate judgeSidedTab(const std::vector<Vec2>& own, const std::vector<Vec2>& tools,
                           const std::vector<ToolDisc>& ownX, const std::vector<ToolDisc>& toolsX, double spacing,
-                          const std::vector<Vec2>& ends, double margin, bool& limited) const;
+                          const std::vector<Vec2>& ends, double margin, bool& limited, bool lenient = false) const;
     enum class PieceVerdict { NoHold, Hold, Partial, Severed };
     PieceVerdict sidedPieces(const std::vector<Vec2>& own, const std::vector<Vec2>& tools,
                              const std::vector<ToolDisc>& ownX, const std::vector<ToolDisc>& toolsX,
@@ -1894,7 +1894,7 @@ ProfileBuilder::TabFate ProfileBuilder::judgeSidedTab(const std::vector<Vec2>& o
                                                       const std::vector<ToolDisc>& ownX,
                                                       const std::vector<ToolDisc>& toolsX, double spacing,
                                                       const std::vector<Vec2>& ends, double margin,
-                                                      bool& limited) const {
+                                                      bool& limited, bool lenient) const {
     limited = false;
     if (own.empty()) {
         return TabFate::Severed;
@@ -1916,7 +1916,10 @@ ProfileBuilder::TabFate ProfileBuilder::judgeSidedTab(const std::vector<Vec2>& o
         for (const Vec2& q : own) nearRas.add(q, rt + 0.3 + 2.0 * h);
         for (const Vec2& q : ends) nearRas.add(q, rt + 0.3 + 2.0 * h);
         bool lim = false;
-        const PieceVerdict v = sidedPieces(own, tools, ownX, toolsX, box, h, cutRadius, nearRas.mask(), lim);
+        PieceVerdict v = sidedPieces(own, tools, ownX, toolsX, box, h, cutRadius, nearRas.mask(), lim);
+        // Lenient (a V-bit's corner moves in play): a tab that still joins two pieces, or one that
+        // the moves leave holding nothing, is kept, as without them.
+        if (lenient && (v == PieceVerdict::Partial || v == PieceVerdict::NoHold)) v = PieceVerdict::Hold;
         if (v == PieceVerdict::Partial || v == PieceVerdict::Severed) limited = limited || lim;
         return v;
     };
@@ -1945,7 +1948,10 @@ ProfileBuilder::PieceVerdict ProfileBuilder::sidedPieces(const std::vector<Vec2>
         return ras.mask();
     };
     // (Corner moves of a V-bit cut the cone's smaller disc: the same widening on its radius.)
-    const double widen = cutRadius - tabLayerRadius();
+    // (They are widened by the hairline allowance only, not by the 0.055 mm of the widened check: a
+    // tab is dropped for a corner move only where the move really crosses its neck, never on the
+    // margin alone.)
+    const double widen = std::min(cutRadius - tabLayerRadius(), 0.012);
     auto stampX = [&](const std::vector<ToolDisc>& discs) {
         for (const ToolDisc& d : discs) {
             if (toolBox.contains(d.p)) ras.add(d.p, widen + d.rho);
@@ -2290,6 +2296,20 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
     auto coveredBy = [&](const Sample& q, std::size_t g) {
         return std::find(q.coveredBy.begin(), q.coveredBy.end(), g) != q.coveredBy.end();
     };
+    // A V-bit corner move as group g sees it: 0 = not made while a live tab of another group covers
+    // its corner (it comes back, and g is judged again, when that tab is dropped), 1 = made only
+    // when g is lowered, 2 = made anyway.
+    auto cornerClass = [&](const Sample& q, std::size_t g) {
+        bool own = false;
+        for (std::size_t other : q.coveredBy) {
+            if (other == g) {
+                own = true;
+            } else if (alive[other]) {
+                return 0;
+            }
+        }
+        return own ? 1 : 2;
+    };
     // True when group g's tab is swept (or severed) by the samples open now. With sidedTabs_ the
     // quick answer also counts the raised stretches of the other live tabs as cut, so it only
     // accepts a bridge of the tab's own material.
@@ -2313,7 +2333,8 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
             // material within r + 0.3 mm of the stretch, the cut leaves exactly its two sides as
             // pieces there, both thicker than the widening, and the tab's material joins them.
             // (Every k-th sample, at most sqrt(0.04 r) apart, stands for the cut, with the stretch
-            // ends; judgeSidedTab grows its discs by the sagitta of the gap, at most 5 µm.)
+            // ends; judgeSidedTab grows its discs by the sagitta of the gap: 5 µm for a tab-layer radius of
+            // 0.0625 mm or more, more below it, about 11 µm at 0.028 mm.)
             const int stride = std::max(1, static_cast<int>(std::floor(std::sqrt(0.04 * rt) / h)));
             const double spacing = stride * h;
             const double near2 = 2.0 * rt + 0.7 + spacing;
@@ -2330,11 +2351,10 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
                     for (std::size_t i : it->second) {
                         const Sample& q = samples[i];
                         if (q.rho >= 0.0) {
-                            // (Under another tab as well, it still counts as cut: a tab never
-                            // relies on another's bridge.)
-                            if (coveredBy(q, g) && q.coveredBy.size() == 1) {
+                            const int cls = cornerClass(q, g);
+                            if (cls == 1) {
                                 ownX.push_back({q.p, q.rho});
-                            } else {
+                            } else if (cls == 2) {
                                 toolX.push_back({q.p, q.rho});
                                 quickPos.push_back(q.p);  // (as a full disc: the quick answers stay sound)
                                 toolIdx.push_back(i);
@@ -2469,7 +2489,21 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
             // has (the tools are the same; only the window grows).
             double margin = 2.0 * rt + 0.6;
             bool limited = false;
-            TabFate fate = judgeSidedTab(ownPos, toolPos, ownX, toolX, spacing, ends, margin, limited);
+            // A V-bit's corner moves make the judgement stricter only where they really cut the tab
+            // through: if the tab holds without them and still joins two pieces with them, keep it
+            // (the loose-piece search reports any piece they do leave free).
+            auto judge = [&](bool& lim) {
+                TabFate f = judgeSidedTab(ownPos, toolPos, ownX, toolX, spacing, ends, margin, lim);
+                if (f != TabFate::Holds && (!ownX.empty() || !toolX.empty())) {
+                    bool l0 = false;
+                    if (judgeSidedTab(ownPos, toolPos, {}, {}, spacing, ends, margin, l0) == TabFate::Holds &&
+                        judgeSidedTab(ownPos, toolPos, ownX, toolX, spacing, ends, margin, l0, true) == TabFate::Holds) {
+                        f = TabFate::Holds;
+                    }
+                }
+                return f;
+            };
+            TabFate fate = judge(limited);
             for (int grow = 0; grow < 2 && fate == TabFate::Severed && limited; ++grow) {
                 margin *= 2.0;
                 const geometry::Box2 wide = protectBox[g].inflated(margin + rt + 0.6);
@@ -2484,7 +2518,8 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
                         for (std::size_t i : it->second) {
                             const Sample& q = samples[i];
                             if (q.rho >= 0.0) {
-                                (coveredBy(q, g) && q.coveredBy.size() == 1 ? ownX : toolX).push_back({q.p, q.rho});
+                                const int cls = cornerClass(q, g);
+                                if (cls != 0) (cls == 1 ? ownX : toolX).push_back({q.p, q.rho});
                                 continue;
                             }
                             if (q.seq >= 0 && q.seq % stride != 0) continue;
@@ -2492,7 +2527,7 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
                         }
                     }
                 }
-                fate = judgeSidedTab(ownPos, toolPos, ownX, toolX, spacing, ends, margin, limited);
+                fate = judge(limited);
             }
             return fate;
         }

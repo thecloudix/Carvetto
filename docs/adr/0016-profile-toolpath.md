@@ -360,9 +360,9 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     cells), where the tab must not leave a near
     piece unjoined: every kept tab joins the material on both sides through a neck of about 0.1 mm
     or more (the cells resolve it to a few hundredths: a tab kept by the second try of the cover,
-    placed from the vector out, had a neck of about 0.086 mm in m1_1320038_46 (T-0156 (e); the
-    check judges those tabs like any other, with no extra margin, so 0.085 mm is the figure to
-    rely on)), and leaves no counting piece near it loose. With fewer than two counting pieces the
+    placed from the vector out, had a neck of about 0.086 mm in m1_1320038_46 when T-0156 looked at it, which cannot be
+    reproduced since T-0158 moved the cut starts; the check judges those tabs like any other, with no
+    extra margin, so a neck a few hundredths under 0.1 mm is possible (T-0156 (e))), and leaves no counting piece near it loose. With fewer than two counting pieces the
     tab would hold nothing (a loop or arm narrower than the kerf, the tip of an arm the kerf
     consumes): it is dropped and reported as such ("would hold nothing"); a tab that leaves a near
     piece unjoined is dropped as cut through. Tool positions every k-th sample along the cuts (at
@@ -433,7 +433,17 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     nothing does not cover them). A raised stretch that ended exactly at such a corner used to be
     left along a slope, down to the cut's depth over the whole stretch (appendLeg merged the
     stretch's end into the corner's insert and took the height after it for the stretch), which cut the
-    tab away; it now stays flat to the corner.
+    tab away; it now stays flat to the corner. The corner moves count in the tab check only where they really
+    cut a tab through: a tab that holds without them and still joins two pieces with them is kept
+    (T-0156 round 2: the first version dropped holding tabs, repro tabdrop_9001_11,
+    tabdrop_570014_182), and a corner under another live tab is not counted for the tab being judged
+    (it comes back, and that tab is judged again, if the other is dropped). **Known residual
+    defects, identical on main (T-0156 verifier, harness t0156v1/repro, carded as T-0177):** a
+    false "comes free" report on a held part (false939_7101_876: 939.84 mm² with one tab kept;
+    7102_671: 7.6 mm²), six free 0.216 mm² pieces unreported (miss6_7104_351), and reported
+    areas far from the flood's. **Tabs against the T-0135 merge:** the scenes where tabs are fewer
+    than at the T-0135 merge (48 in the verifier's screen) come from later commits (T-0158,
+    T-0140) and are the same on main; against main the kept tabs are never fewer.
     **Band polygons.** Each stretch's band is one polygon whose winding number is positive exactly
     on the band: the sum of the boundaries of positively wound pieces covering it (a line's
     rectangle along its normals, an arc's annular sector between radii ρ − w and ρ + w or, with
@@ -525,7 +535,7 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     at a leaf side is split, by design, and a zero-width touch may join or not.
     **Cost (round 3, Release CPU, interleaved with main, alternating order, the T-0140 verifier's
     pages):** Normal jobs (no loose pieces, 3 to 10 interleaved pairs per page) stay within 10 % of main on every page except 'rect GAP=3 A=0.3 SEP=1', which costs 1.10 to 1.15 (about +0.3 s at 2.6 s for 2,000 shapes and +0.8 s at 5.6 s for 4,000); the director's decision is that the performance exemption covers that page too, as bounded cost for a safety check. Where every shape is loose the check does show: rect +58 to +83 % (1,000 rect: +83 %, +0.035 s), arc +32 to +48 %, row +9 to +15 %. Moves are unchanged (the check only adds messages). Sided tabs used to keep the
-    region search (T-0156 replaced it by this one; its cost on the sided pages is measured in the T-0156 notes below). Measured (T-0140 round 3, whole-scene flood of the moves as in
+    region search (T-0156 replaced it by this one). Cost of the replacement (T-0156 verifier, Release, against the region search): sided pages with many close shapes got faster (2,000 rectangles Outside, allowance −0.5, GAP 3: 3.10 s to 0.60 s; 1,000 Bezier shapes On: 0.18 ×; 2,000 arcs On, GAP 3: 0.56 ×), 2,000 rectangles On 1.72 s to 1.56 s, and normal pages stay at 0.99 to 1.05 ×. Measured (T-0140 round 3, whole-scene flood of the moves as in
     T-0127, leads off, mode 4: 2,000 scenes, 304 free pieces, 303 reported, 0 false reports; mode 5: 2,000 scenes, 934 free pieces, 934 reported; the remaining mismatches were V-bit tools only; T-0156 added the corner moves, below). A V-bit's
     ramps and plunges are not in the band model (the cut paths stand for the moves): they cut less
     than its full-depth disc at the tab layer, so a reported area can be up to about 20 % smaller

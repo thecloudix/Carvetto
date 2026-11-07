@@ -4195,3 +4195,124 @@ TEST_CASE("Loose pieces (T-0156): sweep scenes, sided tabs, whole scene", "[tool
         }
     }
 }
+
+TEST_CASE("V-bit corner moves (T-0156 round 2): bands and tab check decide outcomes", "[toolpath][profile][tabs][vbit]") {
+    // Verifier scenes (harness t0156v1/repro). bandhull_7100_569: L-shape, Inside, V-bit 60 deg,
+    // allowance 0, every tab left out: the corner moves' tapered bands close six pieces round the
+    // part, which the cut paths alone close only two of. tabcheck_580009_6: a tab that holds,
+    // dropped without the corner moves' tool positions in the tab check (they make the exposed
+    // corner part of the tab's own material). tabdrop_9001_11 and tabdrop_570014_182: tabs that
+    // hold (even with the tools widened) and were dropped by a first version of the corner-move
+    // samples; they stay, as on main.
+    auto leftOut = [](const ProfileResult& r, const char* vec) {
+        std::size_t n = 0;
+        for (const ProfileDiagnostic& g : r.diagnostics) {
+            if (g.message.find(vec) == 0 && g.message.find("left out") != std::string::npos) ++n;
+        }
+        return n;
+    };
+    {
+        const FloodScene f = loadFloodScene(
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.4p+5 0x0p+0\n"
+         "L 0x1.4p+5 0x0p+0 0x1.4p+5 0x1.4p+3\n"
+         "L 0x1.4p+5 0x1.4p+3 0x1.4p+3 0x1.4p+3\n"
+         "L 0x1.4p+3 0x1.4p+3 0x1.4p+3 0x1.ep+4\n"
+         "L 0x1.4p+3 0x1.ep+4 0x0p+0 0x1.ep+4\n"
+         "L 0x0p+0 0x1.ep+4 0x0p+0 0x0p+0\n"
+         "P 0x1.8p+3 60 0x0p+0 1 0 0x0p+0 0x1.ce1bbed3a5b3fp+1 0x1.fb39036a2811p+0 0x0p+0 0x1.4p+2 1 0x1.b02e6d64af859p-1 0 1 0x1.5e289ae2ad04bp+2 0x1.3b3f74a9ec15bp-1 0 5 0x1.bc5c5878cae23p+4 0x0p+0 0 0 0x0p+0 2 0x1.0c6db42fdb06cp+3 0 0 0x1.e6a15aefae611p-3 0x1.75a5f42def378p+3 0x1.4c6ee4fc98ca1p-2 0x1.df102a4b4471fp+2 0 0x1.71737e6ebda8ep-1 0 0 0x0p+0 0x0p+0 0 0 0 0 0 1 0x1.ccb3df7b43ec8p+3 -0x1.1b4c0c1533557p+5 0x1p+1\n"
+         "K 1 1\n"        );
+        const ProfileResult r = profileToolpath(f.cs, f.tool, f.p);
+        REQUIRE(r.ok());
+        const std::vector<double> got = reportedAreas(r);
+        CHECK(got.size() == 6);
+        CHECK(floodOf(f, r).size() == 6);
+    }
+    {
+        const FloodScene f = loadFloodScene(
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.4d307451f47afp+3 0x0p+0\n"
+         "L 0x1.4d307451f47afp+3 0x0p+0 0x1.4d307451f47afp+3 0x1.6e711d2247c54p+3\n"
+         "L 0x1.4d307451f47afp+3 0x1.6e711d2247c54p+3 0x1.6e711d2247c54p+4 0x1.6e711d2247c54p+3\n"
+         "L 0x1.6e711d2247c54p+4 0x1.6e711d2247c54p+3 0x1.6e711d2247c54p+4 0x0p+0\n"
+         "L 0x1.6e711d2247c54p+4 0x0p+0 0x1.0a84aba5a1016p+5 0x0p+0\n"
+         "L 0x1.0a84aba5a1016p+5 0x0p+0 0x1.0a84aba5a1016p+5 0x1.0a84aba5a1016p+5\n"
+         "L 0x1.0a84aba5a1016p+5 0x1.0a84aba5a1016p+5 0x1.6e711d2247c54p+4 0x1.0a84aba5a1016p+5\n"
+         "L 0x1.6e711d2247c54p+4 0x1.0a84aba5a1016p+5 0x1.6e711d2247c54p+4 0x1.5dd0c8ba1e202p+4\n"
+         "L 0x1.6e711d2247c54p+4 0x1.5dd0c8ba1e202p+4 0x1.4d307451f47afp+3 0x1.5dd0c8ba1e202p+4\n"
+         "L 0x1.4d307451f47afp+3 0x1.5dd0c8ba1e202p+4 0x1.4d307451f47afp+3 0x1.0a84aba5a1016p+5\n"
+         "L 0x1.4d307451f47afp+3 0x1.0a84aba5a1016p+5 0x0p+0 0x1.0a84aba5a1016p+5\n"
+         "L 0x0p+0 0x1.0a84aba5a1016p+5 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "L 0x1.9p+5 0x0p+0 0x1.4128c0b3c8545p+6 0x0p+0\n"
+         "L 0x1.4128c0b3c8545p+6 0x0p+0 0x1.4128c0b3c8545p+6 0x1.e4a302cf21513p+4\n"
+         "L 0x1.4128c0b3c8545p+6 0x1.e4a302cf21513p+4 0x1.1f7bf6e4bcdecp+6 0x1.e4a302cf21513p+4\n"
+         "L 0x1.1f7bf6e4bcdecp+6 0x1.e4a302cf21513p+4 0x1.1f7bf6e4bcdecp+6 0x1.0d664e785bacap+3\n"
+         "L 0x1.1f7bf6e4bcdecp+6 0x1.0d664e785bacap+3 0x1.d359939e16eb2p+5 0x1.0d664e785bacap+3\n"
+         "L 0x1.d359939e16eb2p+5 0x1.0d664e785bacap+3 0x1.d359939e16eb2p+5 0x1.e4a302cf21513p+4\n"
+         "L 0x1.d359939e16eb2p+5 0x1.e4a302cf21513p+4 0x1.9p+5 0x1.e4a302cf21513p+4\n"
+         "L 0x1.9p+5 0x1.e4a302cf21513p+4 0x1.9p+5 0x0p+0\n"
+         "P 0x1.9p+4 60 -0x1.1cb6c21fed81p-6 0 0 0x0p+0 0x1.2ee58b4445d76p+1 0x1.a6e059d800ccp-1 0x0p+0 0x1.4p+2 1 0x1.c965ce0cc9445p-1 1 1 0x1.aa621b7197b37p+1 0x1.a09e7c7411d3ep-1 0 7 0x1.a622e4302aadep+5 0x0p+0 1 0 0x0p+0 0 0x1.ce94608ef08fep+4 1 1 0x1.b3cffa5ce1e6bp-2 0x1.cd8d18e775e8dp+1 0x1.93452c908fd9dp-1 0x1.1e0231e2f628cp+3 0 0x1.6ded7913916b9p+0 1 0 0x1.22dc77c14194dp+4 0x0p+0 2 6 0 0 0 0 -0x1.9a46b116ceafdp+4 -0x1.0c6379cb93d0fp+5 0x1p+1\n"
+         "K 1 1\n"        );
+        const ProfileResult r = profileToolpath(f.cs, f.tool, f.p);
+        REQUIRE(r.ok());
+        CHECK(leftOut(r, "vector 0") == 0);
+        CHECK(floodOf(f, r).empty());
+    }
+    {
+        const FloodScene f = loadFloodScene(
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.848035381fa5p+4 0x0p+0\n"
+         "L 0x1.848035381fa5p+4 0x0p+0 0x1.848035381fa5p+4 0x1.cd5b3e814d4bdp+2\n"
+         "L 0x1.848035381fa5p+4 0x1.cd5b3e814d4bdp+2 0x1.cd5b3e814d4bdp+2 0x1.cd5b3e814d4bdp+2\n"
+         "L 0x1.cd5b3e814d4bdp+2 0x1.cd5b3e814d4bdp+2 0x1.cd5b3e814d4bdp+2 0x1.0ff358741626bp+5\n"
+         "L 0x1.cd5b3e814d4bdp+2 0x1.0ff358741626bp+5 0x0p+0 0x1.0ff358741626bp+5\n"
+         "L 0x0p+0 0x1.0ff358741626bp+5 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "L 0x1.1449b1fe19d37p+5 0x1.ff3c65701e698p-1 0x1.a01b4959b7ebap+5 0x1.ff3c65701e698p-1\n"
+         "L 0x1.a01b4959b7ebap+5 0x1.ff3c65701e698p-1 0x1.a01b4959b7ebap+5 0x1.279d11e2bd23ap+4\n"
+         "L 0x1.a01b4959b7ebap+5 0x1.279d11e2bd23ap+4 0x1.73ec0d02d6666p+5 0x1.279d11e2bd23ap+4\n"
+         "L 0x1.73ec0d02d6666p+5 0x1.279d11e2bd23ap+4 0x1.73ec0d02d6666p+5 0x1.a1616f650ff71p+2\n"
+         "L 0x1.73ec0d02d6666p+5 0x1.a1616f650ff71p+2 0x1.4078ee54fb58bp+5 0x1.a1616f650ff71p+2\n"
+         "L 0x1.4078ee54fb58bp+5 0x1.a1616f650ff71p+2 0x1.4078ee54fb58bp+5 0x1.279d11e2bd23ap+4\n"
+         "L 0x1.4078ee54fb58bp+5 0x1.279d11e2bd23ap+4 0x1.1449b1fe19d37p+5 0x1.279d11e2bd23ap+4\n"
+         "L 0x1.1449b1fe19d37p+5 0x1.279d11e2bd23ap+4 0x1.1449b1fe19d37p+5 0x1.ff3c65701e698p-1\n"
+         "P 0x1.8p+2 60 -0x1.71e7fc117af62p-4 1 0 0x0p+0 0x1.22461f2caa1d2p+1 0x1.c5f546ba04691p+2 0x0p+0 0x1.4p+2 1 0x1.fd2deb71121d5p-1 0 1 0x1.5ece6c5e3a856p+1 0x1.6a11774c8e17ap-1 0 6 0x1.f6d934eaae276p+5 0x0p+0 0 0 0x0p+0 2 0x1.bd21dfd4656f2p+2 0 0 0x1.9382d0e27a694p-2 0x1.37b86b6a00a1fp+2 0x1.42a4dbd2f772dp+0 0x1.85c5749eea1f6p+1 2 0x1.fe9eb92ba9d66p-1 0 0 0x0p+0 0x0p+0 1 7 0 0 0 0 -0x1.04725a0b445aep+5 0x1.9fd95f7954d54p+4 0x1p+1\n"
+         "K 1 1\n"        );
+        const ProfileResult r = profileToolpath(f.cs, f.tool, f.p);
+        REQUIRE(r.ok());
+        CHECK(leftOut(r, "vector 0") == 0);
+        CHECK(reportedAreas(r).size() == floodOf(f, r).size());
+    }
+    {
+        const FloodScene f = loadFloodScene(
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.859a6c4f4c58fp+3 0x0p+0\n"
+         "L 0x1.859a6c4f4c58fp+3 0x0p+0 0x1.859a6c4f4c58fp+3 0x1.73f0dfd17bbaap+3\n"
+         "L 0x1.859a6c4f4c58fp+3 0x1.73f0dfd17bbaap+3 0x1.73f0dfd17bbaap+4 0x1.73f0dfd17bbaap+3\n"
+         "L 0x1.73f0dfd17bbaap+4 0x1.73f0dfd17bbaap+3 0x1.73f0dfd17bbaap+4 0x0p+0\n"
+         "L 0x1.73f0dfd17bbaap+4 0x0p+0 0x1.1b5f0afc90f39p+5 0x0p+0\n"
+         "L 0x1.1b5f0afc90f39p+5 0x0p+0 0x1.1b5f0afc90f39p+5 0x1.1b5f0afc90f39p+5\n"
+         "L 0x1.1b5f0afc90f39p+5 0x1.1b5f0afc90f39p+5 0x1.73f0dfd17bbaap+4 0x1.1b5f0afc90f39p+5\n"
+         "L 0x1.73f0dfd17bbaap+4 0x1.1b5f0afc90f39p+5 0x1.73f0dfd17bbaap+4 0x1.7cc5a6106409dp+4\n"
+         "L 0x1.73f0dfd17bbaap+4 0x1.7cc5a6106409dp+4 0x1.859a6c4f4c58fp+3 0x1.7cc5a6106409dp+4\n"
+         "L 0x1.859a6c4f4c58fp+3 0x1.7cc5a6106409dp+4 0x1.859a6c4f4c58fp+3 0x1.1b5f0afc90f39p+5\n"
+         "L 0x1.859a6c4f4c58fp+3 0x1.1b5f0afc90f39p+5 0x0p+0 0x1.1b5f0afc90f39p+5\n"
+         "L 0x0p+0 0x1.1b5f0afc90f39p+5 0x0p+0 0x0p+0\n"
+         "C 1\n"
+         "L 0x1.4344808245b48p+5 0x1.c951d8e902534p+0 0x1.c834b9584086cp+5 0x1.c951d8e902534p+0\n"
+         "L 0x1.c834b9584086cp+5 0x1.c951d8e902534p+0 0x1.c834b9584086cp+5 0x1.26758f3a85c9cp+4\n"
+         "L 0x1.c834b9584086cp+5 0x1.26758f3a85c9cp+4 0x1.a26abc7819ep+5 0x1.26758f3a85c9cp+4\n"
+         "L 0x1.a26abc7819ep+5 0x1.26758f3a85c9cp+4 0x1.a26abc7819ep+5 0x1.a0a45d3b75ca9p+2\n"
+         "L 0x1.a26abc7819ep+5 0x1.a0a45d3b75ca9p+2 0x1.690e7d626c5b4p+5 0x1.a0a45d3b75ca9p+2\n"
+         "L 0x1.690e7d626c5b4p+5 0x1.a0a45d3b75ca9p+2 0x1.690e7d626c5b4p+5 0x1.26758f3a85c9cp+4\n"
+         "L 0x1.690e7d626c5b4p+5 0x1.26758f3a85c9cp+4 0x1.4344808245b48p+5 0x1.26758f3a85c9cp+4\n"
+         "L 0x1.4344808245b48p+5 0x1.26758f3a85c9cp+4 0x1.4344808245b48p+5 0x1.c951d8e902534p+0\n"
+         "P 0x1.9p+4 90 -0x1.d72e7d0453c5ap-7 1 0 0x0p+0 0x1.28fe28d31c6f2p+2 0x1.a707b18611261p+0 0x1.df77762acb7ap-2 0x1.4p+2 0 0x1.15aa24c0b579cp-4 0 1 0x1.8d417a28341bp+0 0x1.67ce49d533255p+0 0 8 0x1.8e4cad575a5a7p+3 0x0p+0 0 0 0x0p+0 3 0x1.fedc533b70657p+4 1 0 0x1.b8ef2d04c6b5p-4 0x1.7d046ee6d601dp+3 0x1.91327c64e537fp-2 0x1.35dd7177d9d15p+3 2 0x1.1bc19756d2b52p-3 1 0 0x0p+0 0x0p+0 1 1 0 1 0 0 -0x1.5b79b2473848p+5 -0x1.2b7c22465ac12p+5 0x1p+1\n"
+         "K 1 1\n"        );
+        const ProfileResult r = profileToolpath(f.cs, f.tool, f.p);
+        REQUIRE(r.ok());
+        CHECK(leftOut(r, "vector 0") == 0);
+        CHECK(reportedAreas(r).size() == floodOf(f, r).size());
+    }
+}
