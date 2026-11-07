@@ -595,6 +595,89 @@ const char* const k_m3_9302_316 =
         "K 1 0\n";
 
 
+const char* const k_m0_9301_364 =
+        "C 1\n"
+        "L 0x1.6b6bebdb06f9p+2 -0x1.28eefe18e22c7p+3 0x1.d25cb448adb44p+2 0x1.027c61af2c7d1p+3\n"
+        "A 0x1.9bc321b69aedp-1 0x1.15b5afe40754cp+3 0x1.a0ab642eef023p+2 -0x1.7a7dfa9ac4b6ep-4 0x1.864bc56f6cabdp+1 0\n"
+        "L -0x1.6b6bebdb06f9p+2 0x1.28eefe18e22c7p+3 -0x1.d25cb448adb44p+2 -0x1.027c61af2c7d1p+3\n"
+        "A -0x1.9bc321b69aedp-1 -0x1.15b5afe40754cp+3 0x1.a0ab642eef023p+2 0x1.864bc56f6cabdp+1 -0x1.7a7dfa9ac4b6ep-4 0\n"
+        "P 0x1.9p+4 120 -0x0p+0 0 0 0x1.6d499e8b0ad6ap+1 0x1.235727cc7c69ep+2 0x1.33e9f8c423b35p+0 0x0p+0 0x1.4p+2 1 0x1.7052eec40772ap-3 0 1 0x1.ac30936e10158p-2 0x1.5b041b9e44d3dp-1 0 4 0x1.14b78c2ad6e6ap+5 0x0p+0 0 0 0x0p+0 3 0x1.35cb7e0057b8p+4 0 0 0x1.537ed61db08dfp-3 0x1.ad98f84d8ec55p+1 0x1.8bfca31ac11e9p+0 0x1.26f6e85830c4ep+3 0 0x1.4bc008314d52bp+0 0 0 0x0p+0 0x0p+0 0 5 0 0 0 0 0x1.888b88c6555bp+1 -0x1.2d5afb1c7eceep+5 0x1p+1\n"
+        "K 0 1\n";
+
+const char* const k_m0_9301_392 =
+        "C 1\n"
+        "L 0x0p+0 0x0p+0 0x1.81b2df35288b1p+4 0x0p+0\n"
+        "L 0x1.81b2df35288b1p+4 0x0p+0 0x1.81b2df35288b1p+4 0x1.a83d541dfc455p+4\n"
+        "L 0x1.81b2df35288b1p+4 0x1.a83d541dfc455p+4 0x0p+0 0x1.a83d541dfc455p+4\n"
+        "L 0x0p+0 0x1.a83d541dfc455p+4 0x0p+0 0x0p+0\n"
+        "P 0x1.8p+2 60 0x0p+0 0 0 0x1.03cc473d9da31p+0 0x1.ce3ec8c994912p+1 0x1.14efbe2c9bbdap+2 0x1.5536758ca64b8p-1 0x1.4p+2 1 0x1.ec0e06377431fp-2 0 1 0x1.20073bdc83e9p-2 0x1.56ed04fb28921p+1 0 4 0x1.b39c87922d5a6p+4 0x0p+0 0 0 0x0p+0 2 0x1.1d1a688c07924p+5 0 0 0x1.16889f3ea48cap-2 0x1.46a7bdedf4022p+0 0x1.b4d3b6d31508bp-2 0x1.8df08039aa003p+2 0 0x1.5e3edb5bb3c44p+0 0 0 0x0p+0 0x0p+0 2 1 0 0 0 0 0x1.560e95a71ef18p+3 -0x1.57bf3607b85e3p+5 0x1p+1\n"
+        "K 1 1\n";
+
+const char* const k_m0_9303_213 =
+        "C 1\n"
+        "A 0x1.b84005fc89ab3p+3 0x1.6cb711ee225cep+2 0x1.a23b872f67ac9p+2 -0x1.0f31c54bf43e8p+0 0x1.d8419fee15a74p+0 0\n"
+        "A 0x1.66d4e465581ddp+2 0x1.b125e7e6d463cp+3 0x1.a454c7cc64e71p+2 -0x1.e6a96f8162541p-3 0x1.4c025eeb48426p+1 0\n"
+        "A -0x1.14cb6de0727ddp+1 0x1.4e1ee5c2edb1p+2 0x1.7ddc6db41d59bp+3 0x1.6379ac3ce6dfbp+0 0x1.44eacc76e0161p+1 0\n"
+        "A -0x1.7b9ce1a76dbdp+3 0x1.3a7b4738b5388p+2 0x1.c4f1436463c79p+2 0x1.96b770bd4ee76p+0 -0x1.2fe3a5afb8282p+1 0\n"
+        "A -0x1.b2f0fbb408c23p+3 -0x1.6851344d08525p+2 0x1.a3bfc5ea51894p+2 0x1.0e01c4e948419p+1 -0x1.52f3af306f1a9p+0 0\n"
+        "A -0x1.d807751ede6cp-2 -0x1.1ce5107580aap+0 0x1.fb33ad6abd888p+3 -0x1.3150e78e0a6b9p+1 -0x1.8aad760e9234cp+0 0\n"
+        "A 0x1.ef1006fdb88a9p+1 -0x1.2acbf5808adfcp+3 0x1.116b1664d3769p+3 -0x1.0530838e0e171p+1 -0x1.433a232920311p-2 0\n"
+        "A 0x1.427b8a282b1cp+3 -0x1.0b273f94dc41dp+2 0x1.0179edbe3ca14p+3 -0x1.54b1a3d6e7c9dp+0 0x1.174392698cc2p-1 0\n"
+        "C 1\n"
+        "L 0x1.48a2f8fb1093p+4 -0x1.63e74a67b067p+2 0x1.886ac2c304cafp+4 -0x1.63e74a67b067p+2\n"
+        "L 0x1.886ac2c304cafp+4 -0x1.63e74a67b067p+2 0x1.886ac2c304cafp+4 -0x1.7d0b39175d256p+0\n"
+        "L 0x1.886ac2c304cafp+4 -0x1.7d0b39175d256p+0 0x1.caf5370bfd21ep+4 -0x1.7d0b39175d256p+0\n"
+        "L 0x1.caf5370bfd21ep+4 -0x1.7d0b39175d256p+0 0x1.caf5370bfd21ep+4 -0x1.63e74a67b067p+2\n"
+        "L 0x1.caf5370bfd21ep+4 -0x1.63e74a67b067p+2 0x1.055e8069f8acep+5 -0x1.63e74a67b067p+2\n"
+        "L 0x1.055e8069f8acep+5 -0x1.63e74a67b067p+2 0x1.055e8069f8acep+5 0x1.a480d4fbd2b3ep+2\n"
+        "L 0x1.055e8069f8acep+5 0x1.a480d4fbd2b3ep+2 0x1.caf5370bfd21ep+4 0x1.a480d4fbd2b3ep+2\n"
+        "L 0x1.caf5370bfd21ep+4 0x1.a480d4fbd2b3ep+2 0x1.caf5370bfd21ep+4 0x1.3fb8b1b3f32c7p+1\n"
+        "L 0x1.caf5370bfd21ep+4 0x1.3fb8b1b3f32c7p+1 0x1.886ac2c304cafp+4 0x1.3fb8b1b3f32c7p+1\n"
+        "L 0x1.886ac2c304cafp+4 0x1.3fb8b1b3f32c7p+1 0x1.886ac2c304cafp+4 0x1.a480d4fbd2b3ep+2\n"
+        "L 0x1.886ac2c304cafp+4 0x1.a480d4fbd2b3ep+2 0x1.48a2f8fb1093p+4 0x1.a480d4fbd2b3ep+2\n"
+        "L 0x1.48a2f8fb1093p+4 0x1.a480d4fbd2b3ep+2 0x1.48a2f8fb1093p+4 -0x1.63e74a67b067p+2\n"
+        "P 0x1.8p+3 60 0x0p+0 0 0 0x0p+0 0x1.2272e23364902p+2 0x1.475e78add323ep+2 0x0p+0 0x1.4p+2 1 0x1.77c1d8fb1899cp-1 0 1 0x1.046df7c664512p+0 0x1.7138b633f50a3p+1 0 8 0x1.fca6e06c68f1cp+4 0x0p+0 0 0 0x0p+0 1 0x1.2e61a404b4919p+5 0 0 0x1.bfdbb35491a1bp-2 0x1.1ad28fa2292dcp+2 0x1.8612de95f8c3cp-2 0x1.571ebb7aed82p+2 0 0x1.2b3580197d5b8p-2 0 0 0x0p+0 0x0p+0 0 5 0 0 0 0 0x1.8156997f6936ap+5 0x1.a11dbe2ca1a28p+4 0x1p+1\n"
+        "K 1 0\n";
+
+const char* const k_m3_9303_305 =
+        "C 1\n"
+        "A -0x1.98f730c3fcp-6 -0x1.98f730c3fcp-6 0x1.0e745679a2b12p+5 0x1.831bc32f20bb7p-11 0x1.91ef51cbdced7p+0 0\n"
+        "A -0x1.521add6b825f8p+4 0x1.521add6b825f9p+4 0x1.8a0f1b0940cccp+4 0x1.142f142f09a52p-1 -0x1.0e1b9fade3d21p+1 1\n"
+        "A 0x1.7fb8d87be1b44p+2 0x1.7fb8d87be1b4p+2 0x1.41d0854cbbddep+5 -0x1.7ef97e75881bdp+1 -0x1.b86c22e1b83d1p+0 0\n"
+        "A 0x1.cfdab251d0d36p+4 -0x1.cfdab251d0d38p+4 0x1.d6253fe881b82p+4 -0x1.7d29137e8ecdfp+1 0x1.683271b8daca4p+0 1\n"
+        "P 0x1.8p+3 120 0x1.2e8b1f2edfc3p-1 0 1 0x0p+0 0x1.26a90a169d3dep+1 0x1.3db2472eb0c6ap+2 0x0p+0 0x1.4p+2 0 0x1.cd71c5bb1980dp-1 0 1 0x1.af2bc624cbd7ap-1 0x1.c08258e45ad93p+0 0 3 0x1.d1e23174a6864p+5 0x0p+0 0 0 0x0p+0 3 0x1.6a4899b449626p+4 1 0 0x1.93c7a3fb436b2p-3 0x1.b774af886280ep+3 0x1.6bb5ed00f04a9p+0 0x1.323f82db7767cp+1 0 0x1.b9391fd25701ap-2 0 0 0x0p+0 0x0p+0 0 6 0 1 0 0 -0x1.75963f9e1d44cp+3 -0x1.10efc68a7ce07p+5 0x1p+1\n"
+        "K 1 0\n";
+
+const char* const k_m3_9302_30 =
+        "C 1\n"
+        "L 0x0p+0 0x0p+0 0x1.2d382df3f68c5p+6 0x0p+0\n"
+        "L 0x1.2d382df3f68c5p+6 0x0p+0 0x1.2d382df3f68c5p+6 0x1.d22971e4b9a66p+5\n"
+        "L 0x1.2d382df3f68c5p+6 0x1.d22971e4b9a66p+5 0x0p+0 0x1.d22971e4b9a66p+5\n"
+        "L 0x0p+0 0x1.d22971e4b9a66p+5 0x0p+0 0x0p+0\n"
+        "C 1\n"
+        "L 0x1.bf13038c109e9p+5 0x1.1dcf475c7016cp+5 0x1.1aec754d3121cp+6 0x1.1dcf475c7016cp+5\n"
+        "L 0x1.1aec754d3121cp+6 0x1.1dcf475c7016cp+5 0x1.1aec754d3121cp+6 0x1.70f36919a93d6p+5\n"
+        "L 0x1.1aec754d3121cp+6 0x1.70f36919a93d6p+5 0x1.bf13038c109e9p+5 0x1.70f36919a93d6p+5\n"
+        "L 0x1.bf13038c109e9p+5 0x1.70f36919a93d6p+5 0x1.bf13038c109e9p+5 0x1.1dcf475c7016cp+5\n"
+        "C 1\n"
+        "A 0x1.762f5af760163p+4 0x1.6bb7a49f5ed42p+5 0x1.6732e7423bd4p+2 0x0p+0 0x0p+0 0\n"
+        "P 0x1.9p+4 60 0x1.c00ccdb30bda6p-1 0 0 0x0p+0 0x1.595be3c9c3184p+2 0x1.1f7f9faaaffbcp+2 0x1.589fb7a479bep-2 0x1.4p+2 0 0x1.0ae81900f8f47p-1 1 1 0x1.de84bc9bd09b5p+2 0x1.f5fa1d680e372p+0 0 1 0x1.53bf477f7bab1p+3 0x0p+0 1 0 0x0p+0 2 0x1.04e1e91c1db94p+4 0 0 0x1.688841d7bb561p-2 0x1.bb43aa6e20578p+3 0x1.886e4078a84dep+0 0x1.d441abe4190acp+2 0 0x1.7e7239932c822p+0 0 0 0x0p+0 0x0p+0 1 5 0 1 0 0 0x1.04fa0293df0d4p+4 -0x1.f4e58f2f2c1d1p+4 0x1p+1\n"
+        "K 1 1\n";
+
+const char* const k_m0_9303_322 =
+        "C 1\n"
+        "L 0x1.f41bca0b68e3fp+1 0x0p+0 0x1.fec30888a921cp+2 0x0p+0\n"
+        "L 0x1.fec30888a921cp+2 0x0p+0 0x1.fec30888a921cp+2 0x1.f41bca0b68e3fp+2\n"
+        "L 0x1.fec30888a921cp+2 0x1.f41bca0b68e3fp+2 0x1.7c6876c72ec9ep+3 0x1.f41bca0b68e3fp+2\n"
+        "L 0x1.7c6876c72ec9ep+3 0x1.f41bca0b68e3fp+2 0x1.7c6876c72ec9ep+3 0x1.7c6876c72ec9ep+3\n"
+        "L 0x1.7c6876c72ec9ep+3 0x1.7c6876c72ec9ep+3 0x0p+0 0x1.7c6876c72ec9ep+3\n"
+        "L 0x0p+0 0x1.7c6876c72ec9ep+3 0x0p+0 0x1.f41bca0b68e3fp+2\n"
+        "L 0x0p+0 0x1.f41bca0b68e3fp+2 0x1.f41bca0b68e3fp+1 0x1.f41bca0b68e3fp+2\n"
+        "L 0x1.f41bca0b68e3fp+1 0x1.f41bca0b68e3fp+2 0x1.f41bca0b68e3fp+1 0x0p+0\n"
+        "P 0x1.8p+2 60 -0x0p+0 1 1 0x0p+0 0x1.8f1ccdd1e7c69p+1 0x1.5f6561c23738cp+0 0x0p+0 0x1.4p+2 1 0x1.0628c9c8d2a0fp-4 0 1 0x1.dcd0372044005p-3 0x1.a010dd6eaa889p-3 0 4 0x1.338d05fccff76p+4 0x0p+0 0 0 0x0p+0 1 0x1.21f57c27539cdp+4 0 0 0x1.4234b7903618ep-2 0x1.ea39ce3512339p+2 0x1.2e0baee6b8a8dp-2 0x1.4fbb1f884321bp+3 0 0x1.7da536038f5efp-1 0 0 0x0p+0 0x0p+0 1 5 0 1 0 0 0x1.89984df030c58p+4 0x1.77003b266cb24p+3 0x1p+1\n"
+        "K 1 0\n";
+
+
 struct Scene {
     std::vector<Contour> cs;
     ProfileParams p;
@@ -721,6 +804,10 @@ TEST_CASE("T-0167: tabs the cone's wider tab layer would nick stay as before", "
     // - The tab-layer radius is capped at the tool's radius (m3_9301_71, m3_9302_237, m3_9302_316:
     //   uncapped, the cone at the tab layer is wider than the tool and a part of 300 to 1,100 mm2
     //   loses all its tabs).
+    // - The raster reaches a tool radius + allowance to the vector side and the tab-layer radius beyond
+    //   the kerf, and its core is not the stretch less the full radius (m0_9301_364, m0_9301_392,
+    //   m0_9303_213, m3_9303_305: tabs that hold were left out and a 758 mm2 part came free;
+    //   m3_9302_30, m0_9303_322: the window of the full radius loses a tab).
     // - The other cuts are tested against the core trimmed by the full radius at each end, as before
     //   (m3_9302_251, m3_9303_94, m3_9304_67, m3_9301_367, m3_9301_272, m3_9301_441: measured against
     //   the longer core, tabs that hold were lost or one that is cut through was kept).
@@ -735,7 +822,13 @@ TEST_CASE("T-0167: tabs the cone's wider tab layer would nick stay as before", "
                           {"m0_9306_257", k_m0_9306_257, 0}, {"m3_9305_215", k_m3_9305_215, 0},
                           {"m3_9304_237", k_m3_9304_237, 3}, {"m0_9301_36", k_m0_9301_36, 6},
                           {"m0_9301_150", k_m0_9301_150, 3}, {"m3_9301_71", k_m3_9301_71, 0},
-                          {"m3_9302_237", k_m3_9302_237, 0}, {"m3_9302_316", k_m3_9302_316, 1}};
+                          {"m3_9302_237", k_m3_9302_237, 0}, {"m3_9302_316", k_m3_9302_316, 1},
+                          {"m0_9301_364", k_m0_9301_364, 0},
+                          {"m0_9301_392", k_m0_9301_392, 0},
+                          {"m0_9303_213", k_m0_9303_213, 0},
+                          {"m3_9303_305", k_m3_9303_305, 0},
+                          {"m3_9302_30", k_m3_9302_30, 1},
+                          {"m0_9303_322", k_m0_9303_322, 0}};
     for (const Case& k : cases) {
         INFO(k.name);
         const Scene s = loadScene(k.text);

@@ -2627,7 +2627,7 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
                     const TabSection ext{m.p1, m.p1 + dir * (0.4 / len)};
                     if (allField_.distance(ext.p1) >= beyond &&
                         std::none_of(nearby.begin(), nearby.end(),
-                                     [&](Vec2 q) { return sectionDistance(q, ext) < rk + 0.1; }) &&
+                                     [&](Vec2 q) { return sectionDistance(q, ext) < radius_ + 0.1; }) &&
                         std::none_of(nearbyX.begin(), nearbyX.end(),
                                      [&](const ToolDisc& d) { return sectionDistance(d.p, ext) < d.rho + 0.1; })) {
                         return TabFate::Holds;
