@@ -720,11 +720,17 @@ Goal: Heap-use-after-free on main (2901f51): `TransformGesture::update` only end
 Acceptance criteria:
   1. uaf5 and variants (undo, redo, delete of another/the dragged object, layer lock, sheet switch, setDocument, modifiers, consecutive gestures) clean under ASan/UBSan and pinned by tests that fail on the old code; mixed Select+NodeEdit fuzz (>= 3000 seeds) clean; mutants killed; production change small and confined to the gesture/index handling; full ctest; CI Linux + Windows.
 
-### T-0182 polygonise(ArcSpan) is unbounded in radius over chordal tolerance (T-0180 coder)   [status: in progress]
+### T-0182 polygonise(ArcSpan) is unbounded in radius over chordal tolerance (T-0180 coder)   [status: verifying]
 Phase: 1   Module: core/geometry   Depends on: T-0180   ADR: 0005 A2
 Goal: Found by the T-0180 coder (harness nf.cpp seed 5): `polygoniseInto(ArcSpan)` makes a number of points proportional to radius/chordal tolerance with no cap: R=1e12 gives 21M points in 0.6 s; a larger radius hangs or runs out of memory, so any caller that polygonises a huge finite arc (offset, boolean interop, snapping, selection hit tests, canvas painting, DXF/SVG import of hostile files) is unbounded. Add an explicit point cap (like the 2^20 split cap T-0178 added for Beziers) with a documented overflow behaviour (coarser chords beyond the cap, or an error flag the callers check), audit the other polygonise/flatten paths (ellipse arcs, offset arc joins, canvas scene builder `buildCanvasScene`, marquee `polygonise` in selection_tools which the T-0206 verifier saw hang with growing memory on an arc with infinite radius), and bound them the same way.
 Acceptance criteria:
   1. Arcs of radius 1e9..1.7e308 and inf at default and tiny chordal tolerances polygonise in <= 0.2 s with bounded memory (ulimit -v test) and documented accuracy; output unchanged (hash corpus main vs branch, bit-identical) for every arc that polygonised under the cap before; every caller listed above terminates promptly on a hostile arc (CPU-time tests); mutants killed; full ctest; MSVC CI green.
+
+### T-0183 Surface refused contours in toolpath diagnostics (T-0182 coder)   [status: ready]
+Phase: 1   Module: core/toolpath   Depends on: T-0182   ADR: 0005 A2, toolpath ADRs
+Goal: T-0182 caps arc polygonisation at 2^20 chords; `toClipperPath` refuses a coarse contour (empty path), so `booleanOp`/`unionContours`/`offsetContours`/`OpenPathClipper` silently omit it and count it in `BooleanResult::refusedContours` / `OpenPathClipper::refusedContours()`. No toolpath operation reads that count: a contour with an arc beyond ~1e9 mm radius (unrealistic, but reachable from hostile DXF/SVG files) would be silently missing from a Profile/Pocket/V-Carve/Engrave/Drill job. Wire the counts into the shared `ToolpathDiagnostic` (ADR-0018) so every operation reports a clear diagnostic naming the vector (Error severity: the toolpath for that vector is not generated, or the whole job is refused: decide per operation and document in each ADR: prefer refusing the vector with a diagnostic and still cutting the others) and the CLI/app show it.
+Acceptance criteria:
+  1. A job with a huge-radius arc contour plus normal contours produces a diagnostic per refused vector in Profile, Pocket, V-Carve, Engrave, Drill, Inlay-type operations that polygonise (list them), the normal contours are cut exactly as before (outputs byte-identical to main for jobs without refusals); the importers (DXF, SVG) warn on such an arc at import; tests per operation; full ctest; MSVC CI green.
 
 ### T-0171 Hole nesting: guard the box hierarchy; ADR-0006 §10 wording (T-0142 round-3 verifier)   [status: done (#60)]
 Phase: 1   Module: core/geometry   Depends on: T-0142   ADR: 0006
