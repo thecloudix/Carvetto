@@ -1,6 +1,7 @@
 #include "carvetto/geometry/span.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 namespace carvetto::geometry {
@@ -53,10 +54,29 @@ bool ArcSpan::containsAngle(double angle, double angleTol) const {
 Box2 ArcSpan::bounds() const {
     Box2 box{startPoint(), endPoint()};
     // Axis extremes occur at multiples of pi/2.
+    // T-0176: the sweep does not depend on the axis angle; compute it once (what containsAngle(angle)
+    // with its default tolerance does for each of the four, same values, same test).
+    constexpr double kTol = 1e-9;
+    const double sweep = std::fabs(sweepAngle());
+    const bool full = sweep >= kTwoPi - kTol;
     for (int q = 0; q < 4; ++q) {
         const double angle = static_cast<double>(q) * (kPi * 0.5);
-        if (containsAngle(angle)) {
-            box.expand(centre + Vec2::fromAngle(angle, radius));
+        bool inside = full;
+        if (!inside) {
+            const double delta = direction == ArcDirection::CCW ? normalizeAngle(angle - startAngle)
+                                                                : normalizeAngle(startAngle - angle);
+            inside = delta <= sweep + kTol || delta >= kTwoPi - kTol;
+        }
+        if (inside) {
+            // cos/sin of the four fixed axis angles, evaluated once (Vec2::fromAngle(angle, radius)
+            // is exactly (cos(angle) * radius, sin(angle) * radius)).
+            static const std::array<Vec2, 4> axis = {
+                Vec2{std::cos(0.0 * (kPi * 0.5)), std::sin(0.0 * (kPi * 0.5))},
+                Vec2{std::cos(1.0 * (kPi * 0.5)), std::sin(1.0 * (kPi * 0.5))},
+                Vec2{std::cos(2.0 * (kPi * 0.5)), std::sin(2.0 * (kPi * 0.5))},
+                Vec2{std::cos(3.0 * (kPi * 0.5)), std::sin(3.0 * (kPi * 0.5))}};
+            const Vec2 u = axis[static_cast<std::size_t>(q)];
+            box.expand(centre + Vec2{u.x * radius, u.y * radius});
         }
     }
     return box;

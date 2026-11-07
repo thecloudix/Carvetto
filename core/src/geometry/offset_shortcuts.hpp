@@ -5,6 +5,7 @@
 // (or evaluates the exact expression) when the answer is within a relative 1e-9 of its bound or
 // when an intermediate could lose precision (squares outside [1e-250, 1e250], so no denormals).
 
+#include <algorithm>
 #include <cmath>
 
 #include "carvetto/geometry/span.hpp"
@@ -44,6 +45,26 @@ inline int cosineSideOf(Vec2 u, Vec2 v, double level) {
         }
     }
     return 0;
+}
+
+/// True only when every point of the arc with this centre and radius is certainly at least
+/// `limit` from `p`: |rho - radius| >= limit by a margin, rho = |p - centre|. False whenever that is
+/// not clear (also for non-finite input, squares outside [1e-250, 1e250], or a limit so small
+/// that the margin would not be meaningful).
+inline bool arcClearlyFarther(Vec2 p, Vec2 centre, double radius, double limit) {
+    const Vec2 w = p - centre;
+    const double w2 = w.lengthSquared();
+    if (!(w2 > 1e-250 && w2 < 1e250) || !(radius > 1e-100 && radius < 1e100) || !(limit >= 0.0) ||
+        !(limit < 1e100)) {
+        return false;
+    }
+    const double scale = std::max({std::fabs(centre.x), std::fabs(centre.y), std::fabs(p.x), std::fabs(p.y), radius});
+    if (!(scale < 1e100)) {
+        return false;
+    }
+    const double rho = std::sqrt(w2);
+    const double margin = 1e-9 * limit + 1e-12 * scale;
+    return std::fabs(rho - radius) > limit + margin;
 }
 
 }  // namespace carvetto::geometry::detail
