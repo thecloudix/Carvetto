@@ -91,6 +91,7 @@ add_executable(carvetto_tests
   toolpath/pocket_move_check_test.cpp
   toolpath/toolpath_api_test.cpp
   toolpath/toolpath_scale_test.cpp
+  toolpath/enclosed_pieces_test.cpp
   toolpath/toolpath_residual_scale_test.cpp
   toolpath/drill_test.cpp
   toolpath/drill_post_test.cpp

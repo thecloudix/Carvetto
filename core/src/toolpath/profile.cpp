@@ -9,6 +9,7 @@
 #include <functional>
 #include <limits>
 #include <map>
+#include <numbers>
 #include <numeric>
 #include <optional>
 #include <set>
@@ -26,6 +27,7 @@
 #include "carvetto/toolpath/box_index.hpp"
 #include "carvetto/toolpath/clearance.hpp"
 #include "carvetto/toolpath/path_walk.hpp"
+#include "enclosed_pieces.hpp"
 
 namespace carvetto::toolpath {
 
@@ -2433,9 +2435,24 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
     for (Cut& c : secondary) std::sort(c.tabs.begin(), c.tabs.end(), byStart);
 }
 
-// Loose pieces (sidedTabs_, where the kerf can consume the part; also when every tab was left
-// out): with the kept tabs, every piece of material the tools leave inside a closed cut must still
-// join what lies outside it, through some kept tab. For each closed primary cut a raster over its
+// Inside/Outside with allowance >= 0 (T-0140 round 3): the band polygons cover the true bands and
+// reach at most this beyond their arcs (or the chordal tolerance, when smaller), so a neck of
+// material narrower than about twice this + 4 um between two convex band arcs can count as cut;
+// and the proof that most stretches enclose nothing (detail::pathsToSearch) splits arcs into
+// stretches whose sagitta is at most kLooseProofSagitta. A hole of the bands the proof might hide
+// lies within the sum of the two (0.017 mm) of the bands: at most 0.034 mm across, where the
+// thickness test (erosion by 0.025 mm, its chords at most 0.005 mm inside the arcs) needs more
+// than 0.04 mm.
+constexpr double kLooseBandSagitta = 0.005;
+constexpr double kLooseProofSagitta = 0.012;
+
+
+
+// Loose pieces (whenever tabs are on, also when every tab was left out): with the kept tabs, every
+// piece of material the tools leave must still join what lies outside it, through some kept tab.
+// Inside/Outside with allowance >= 0 (not sidedTabs_, T-0140): the pieces every stretch's band
+// encloses in the whole scene (see there). Sided tabs, where the kerf can consume the part:
+// the pieces inside a closed cut, as follows. For each closed primary cut a raster over its
 // box (0.05 mm cells, coarser only beyond 4 million of them) marks the cells within the tab-layer
 // radius + 2 µm of an open tool position (every 0.05 mm along every cut of both passes, outside the
 // kept raised stretches, with their exact ends) cut; uncut cells not joined (4-neighbour) to the
@@ -2445,7 +2462,7 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
 // by x, so each raster only stamps the positions near its own box; most cuts are answered exactly
 // by the union of the cuts' bands instead (see below).
 void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const std::vector<Cut>& secondary) {
-    if (!sidedTabs_ || !p_.tabs.enabled) {
+    if (!p_.tabs.enabled) {
         return;
     }
     const double rt = tabLayerRadius();
@@ -2494,6 +2511,193 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
         }
         found.push_back(piece);
     };
+    // The stretches of a cut that cut the tab layer: all of it, or (`raised`) all but its
+    // raised stretches, whose exact ends stay in (the tool goes back down there).
+    auto stretches = [&](const Cut& o, bool raised) {
+        std::vector<Contour> out;
+        if (!raised || o.tabs.empty()) {
+            Contour whole = o.walk.contour();
+            whole.closed = false;
+            out.push_back(std::move(whole));
+            return out;
+        }
+        std::vector<TabSpan> ts = o.tabs;
+        std::sort(ts.begin(), ts.end(), [](const TabSpan& x, const TabSpan& y) { return x.a < y.a; });
+        const double len = o.walk.length();
+        std::vector<std::pair<double, double>> open;
+        if (o.walk.closed()) {
+            for (std::size_t i = 0; i < ts.size(); ++i) {
+                const double u0 = ts[i].b;
+                const double u1 = i + 1 < ts.size() ? ts[i + 1].a : ts.front().a + len;
+                open.push_back({u0, u1});
+            }
+        } else {
+            double u = 0.0;
+            for (const TabSpan& t : ts) {
+                open.push_back({u, t.a});
+                u = t.b;
+            }
+            open.push_back({u, len});
+        }
+        for (const auto& [u0, u1] : open) {
+            if (u1 - u0 <= 1e-9) continue;
+            Contour piece;
+            piece.closed = false;
+            piece.spans = o.walk.extract(u0, u1);
+            if (!piece.spans.empty()) out.push_back(std::move(piece));
+        }
+        return out;
+    };
+    // The union of the bands of the stretches of `cuts` (each grown by `grow` on both sides), with
+    // the boxes and areas of its boundaries.
+    auto bandsUnion = [&](const std::vector<const Cut*>& cuts, double grow, bool raised) {
+        std::vector<Contour> bands;
+        for (const Cut* o : cuts) {
+            for (Contour& path : stretches(*o, raised)) {
+                std::vector<Contour> band =
+                    geometry::offsetContours({path}, grow, geometry::JoinType::Round, offTol_, p_.corners.mitreLimit);
+                std::size_t outer = 0;
+                for (std::size_t k = 1; k < band.size(); ++k) {
+                    if (geometry::area(band[k]) > geometry::area(band[outer])) outer = k;
+                }
+                for (std::size_t k = 0; k < band.size(); ++k) {
+                    geometry::setOrientation(band[k], k == outer ? Orientation::CCW : Orientation::CW, tol_);
+                    bands.push_back(std::move(band[k]));
+                }
+            }
+        }
+        Boundaries u;
+        u.c = geometry::unionContours(bands, offTol_, geometry::FillRule::NonZero);
+        for (const Contour& b : u.c) {
+            u.box.push_back(b.bounds());
+            u.signedArea.push_back(geometry::signedArea(b));
+            u.area.push_back(std::fabs(u.signedArea.back()));
+        }
+        return u;
+    };
+    // Inside/Outside with allowance >= 0 (T-0140): the whole scene at once. The kerf lies on the
+    // waste side of the vector, so the material each closed cut encloses is never cut by that cut
+    // and its region would always hold a piece with every tab lowered; searching region by region
+    // would build the union of the bands of every neighbour once per region. Instead the pieces
+    // that the bands of every cut (both passes, less the kept raised stretches) enclose in the
+    // whole scene are found at once, leaf by leaf (enclosed_pieces.hpp): each is bounded by cut
+    // all round, so no kept tab joins it to the outside. Each counts as above (area less its
+    // islands, 0.04 mm² or more, thicker than 0.05 mm somewhere: what is left of it eroded by
+    // 0.025 mm) and is attributed as above.
+    if (!sidedTabs_) {
+        std::vector<const Cut*> cuts;  // the primary cuts first, then the others
+        std::size_t primaryCuts = 0;
+        for (const std::vector<Cut>* pass : {&primary, &secondary}) {
+            for (const Cut& o : *pass) {
+                if (!o.walk.isEmpty()) cuts.push_back(&o);
+            }
+            if (pass == &primary) primaryCuts = cuts.size();
+        }
+        // The bands of every stretch (bandOutline; Clipper2's offset for a Bezier span). They are
+        // exact, so they reach the tab-layer radius + 2 um only (closing hairline gaps where two
+        // bands just touch), without the sagitta of T-0127's sampled positions; their arcs are
+        // polygons at most `bandSag` outside them (round 3).
+        const double reach = rt + 2e-3;
+        const double bandSag = std::min(offTol_.chordal, kLooseBandSagitta);
+        std::vector<Contour> paths;
+        std::vector<char> whole;
+        for (const Cut* o : cuts) {
+            const bool closedWhole = o->walk.closed() && o->tabs.empty();
+            for (Contour& path : stretches(*o, true)) {
+                paths.push_back(std::move(path));
+                whole.push_back(closedWhole ? 1 : 0);
+            }
+        }
+        // Most stretches provably enclose nothing (a part held by its tabs, far from other cuts):
+        // their bands are not built at all (detail::pathsToSearch, round 3; the proof's pieces
+        // reach bandSag + kLooseProofSagitta beyond the true bands, so what they could hide is
+        // thinner than the 0.05 mm that counts).
+        const std::vector<char> search = detail::pathsToSearch(paths, whole, reach + bandSag, kLooseProofSagitta);
+        std::vector<detail::PointRing> bands;
+        for (std::size_t i = 0; i < paths.size(); ++i) {
+            if (!search[i]) continue;
+            const Contour& path = paths[i];
+            std::vector<detail::PointRing> band = detail::bandOutline(path, reach, bandSag, whole[i] != 0);
+            if (!band.empty()) {
+                for (detail::PointRing& r : band) bands.push_back(std::move(r));
+            } else {
+                for (const Contour& b : geometry::offsetContours({path}, reach, geometry::JoinType::Round, offTol_,
+                                                                 p_.corners.mitreLimit)) {
+                    bands.push_back(b.polygonise(offTol_).points);
+                }
+            }
+        }
+        // The pieces they enclose, leaf by leaf (enclosed_pieces.hpp: one union over the whole
+        // scene is a single sweep over every band side by side, quadratic in a row or grid of
+        // shapes whose kerfs overlap).
+        detail::EnclosedOptions opt;
+        opt.minArea = 0.04;
+        opt.clearance = 0.025;
+        opt.tol = offTol_;
+        opt.mitreLimit = p_.corners.mitreLimit;
+        const std::vector<detail::EnclosedPiece> pieces =
+            bands.empty() ? std::vector<detail::EnclosedPiece>{} : detail::enclosedPieces(std::move(bands), opt);
+        // (The cuts' boxes, for attribution, only when there is something to attribute.)
+        std::vector<geometry::Box2> cutBox;
+        if (!pieces.empty()) {
+            for (const Cut* o : cuts) cutBox.push_back(o->walk.contour().bounds());
+        }
+        const BoxIndex cutIndex(cutBox);
+        std::vector<double> cutArea(cuts.size(), -1.0);  // of the closed primary cuts, when needed
+        for (const detail::EnclosedPiece& e : pieces) {
+            if (!e.inner) continue;  // not thicker than 0.05 mm anywhere
+            // Attributed to the innermost closed primary cut that contains it (any point inside the
+            // piece gives the same answer), or else to the cut nearest its anchor (a vertex of the
+            // piece, the same at every leaf size; it lies on bands of the cuts round it, so cuts
+            // within 0.01 mm of the nearest count as tied and the first of them is taken).
+            const Vec2 probe = *e.inner;
+            std::size_t src = cuts.front()->sources.front();
+            double loopArea = std::numeric_limits<double>::infinity();
+            for (std::size_t k : cutIndex.containing(probe)) {
+                const Cut* o = cuts[k];
+                if (k >= primaryCuts || !o->walk.closed()) continue;
+                if (cutArea[k] < 0.0) cutArea[k] = geometry::area(o->walk.contour());
+                const double a = cutArea[k];
+                if (a < loopArea && geometry::locatePoint(o->walk.contour(), probe, geometry::FillRule::EvenOdd, tol_) ==
+                                        geometry::PointLocation::Inside) {
+                    loopArea = a;
+                    src = o->sources.front();
+                }
+            }
+            if (loopArea == std::numeric_limits<double>::infinity()) {
+                // The nearest: the cuts whose boxes reach within `rad` of the anchor, `rad` doubled
+                // until the nearest of them and its ties lie within it (so no other can be nearer).
+                constexpr double kTie = 0.01;
+                const Vec2 anchor = e.anchor;
+                double rad = std::max(1.0, 4.0 * reach);
+                for (;;) {
+                    const std::vector<std::size_t> nearby =
+                        cutIndex.query(geometry::Box2{anchor - Vec2{rad, rad}, anchor + Vec2{rad, rad}});
+                    std::vector<std::pair<std::size_t, double>> dist;
+                    double best = std::numeric_limits<double>::infinity();
+                    for (std::size_t k : nearby) {
+                        dist.emplace_back(k, geometry::distanceTo(cuts[k]->walk.contour(), anchor));
+                        best = std::min(best, dist.back().second);
+                    }
+                    if (best + kTie <= rad || nearby.size() == cuts.size()) {
+                        std::size_t pick = cuts.size();
+                        for (const auto& [k, d] : dist) {
+                            if (d <= best + kTie) pick = std::min(pick, k);
+                        }
+                        if (pick < cuts.size()) src = cuts[pick]->sources.front();
+                        break;
+                    }
+                    rad *= 2.0;
+                }
+            }
+            Piece piece;
+            piece.bounds = e.bounds;
+            piece.area = e.area;
+            piece.source = src;
+            piece.inner = probe;
+            found.push_back(piece);
+        }
+    }
     // The regions searched: each closed primary cut, and each cluster of open primary cuts whose
     // boxes come within two tab-layer radii + 0.5 mm of each other (a loop trimmed into pieces
     // near another vector still encloses material, but no single piece's box holds it).
@@ -2502,7 +2706,7 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
         std::size_t source;
     };
     std::vector<Region> regions;
-    {
+    if (sidedTabs_) {
         std::vector<std::size_t> open;
         for (std::size_t k = 0; k < primary.size(); ++k) {
             if (primary[k].walk.closed()) {
@@ -2540,70 +2744,6 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
                 if (o.walk.contour().bounds().intersects(around)) nearCuts.push_back(&o);
             }
         }
-        // The stretches of a cut that cut the tab layer: all of it, or (`raised`) all but its
-        // raised stretches, whose exact ends stay in (the tool goes back down there).
-        auto stretches = [&](const Cut& o, bool raised) {
-            std::vector<Contour> out;
-            Contour whole = o.walk.contour();
-            whole.closed = false;
-            if (!raised || o.tabs.empty()) {
-                out.push_back(std::move(whole));
-                return out;
-            }
-            std::vector<TabSpan> ts = o.tabs;
-            std::sort(ts.begin(), ts.end(), [](const TabSpan& x, const TabSpan& y) { return x.a < y.a; });
-            const double len = o.walk.length();
-            std::vector<std::pair<double, double>> open;
-            if (o.walk.closed()) {
-                for (std::size_t i = 0; i < ts.size(); ++i) {
-                    const double u0 = ts[i].b;
-                    const double u1 = i + 1 < ts.size() ? ts[i + 1].a : ts.front().a + len;
-                    open.push_back({u0, u1});
-                }
-            } else {
-                double u = 0.0;
-                for (const TabSpan& t : ts) {
-                    open.push_back({u, t.a});
-                    u = t.b;
-                }
-                open.push_back({u, len});
-            }
-            for (const auto& [u0, u1] : open) {
-                if (u1 - u0 <= 1e-9) continue;
-                Contour piece;
-                piece.closed = false;
-                piece.spans = o.walk.extract(u0, u1);
-                if (!piece.spans.empty()) out.push_back(std::move(piece));
-            }
-            return out;
-        };
-        // The union of the bands of those stretches (each grown by `grow` on both sides), with the
-        // boxes and areas of its boundaries.
-        auto bandsUnion = [&](double grow, bool raised) {
-            std::vector<Contour> bands;
-            for (const Cut* o : nearCuts) {
-                for (Contour& path : stretches(*o, raised)) {
-                    std::vector<Contour> band =
-                        geometry::offsetContours({path}, grow, geometry::JoinType::Round, offTol_, p_.corners.mitreLimit);
-                    std::size_t outer = 0;
-                    for (std::size_t k = 1; k < band.size(); ++k) {
-                        if (geometry::area(band[k]) > geometry::area(band[outer])) outer = k;
-                    }
-                    for (std::size_t k = 0; k < band.size(); ++k) {
-                        geometry::setOrientation(band[k], k == outer ? Orientation::CCW : Orientation::CW, tol_);
-                        bands.push_back(std::move(band[k]));
-                    }
-                }
-            }
-            Boundaries u;
-            u.c = geometry::unionContours(bands, offTol_, geometry::FillRule::NonZero);
-            for (const Contour& b : u.c) {
-                u.box.push_back(b.bounds());
-                u.signedArea.push_back(geometry::signedArea(b));
-                u.area.push_back(std::fabs(u.signedArea.back()));
-            }
-            return u;
-        };
         // The holes of a union lying inside the box: the pieces it encloses there.
         auto holesOf = [&](const Boundaries& all) {
             std::vector<std::size_t> out;
@@ -2615,21 +2755,21 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
         };
         // With every tab lowered nothing is enclosed here: then nothing is with the tabs either (a
         // kept tab's material only joins pieces, of which there is only the outside here).
-        const Boundaries lowered = bandsUnion(reachCut, false);
+        const Boundaries lowered = bandsUnion(nearCuts, reachCut, false);
         if (holesOf(lowered).empty()) continue;
         // The material the cuts leave at the tab layer is what the bands of their open stretches
         // leave, and a piece no kept tab joins to the outside is a hole of that union. A hole
         // lying inside the box is such a piece in the whole scene too: every cut that reaches into
         // the box is near, and other cuts could only cut it further, never join it to the outside.
         const bool raised = std::any_of(nearCuts.begin(), nearCuts.end(), [](const Cut* o) { return !o->tabs.empty(); });
-        const Boundaries open = raised ? bandsUnion(reachCut, true) : lowered;
+        const Boundaries open = raised ? bandsUnion(nearCuts, reachCut, true) : lowered;
         const std::vector<std::size_t> holeIdx = holesOf(open);
         if (holeIdx.empty()) continue;
         std::vector<Contour> holes;
         for (std::size_t k : holeIdx) holes.push_back(open.c[k]);
             // (A piece counts when it is thicker than 0.05 mm somewhere: it survives bands
             // 0.025 mm wider.)
-            const Boundaries thickAll = bandsUnion(reachCut + 0.025, raised);
+            const Boundaries thickAll = bandsUnion(nearCuts, reachCut + 0.025, raised);
             std::vector<Contour> thickHoles;
             for (std::size_t k : holesOf(thickAll)) thickHoles.push_back(thickAll.c[k]);
             const Boundaries& all = open;
