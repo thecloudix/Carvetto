@@ -359,3 +359,61 @@ TEST_CASE("dxfUnitChoices: first is the file, the rest are forced scales", "[fil
     CHECK(c[1].mmPerUnit == 1.0);
     CHECK(c[4].mmPerUnit == 25.4);
 }
+
+TEST_CASE("FileSession: recent list collapses a symlinked folder and its target", "[file_session]") {
+    TempDir dir;
+    fs::create_directories(dir / "real");
+    std::error_code ec;
+    fs::create_directory_symlink(dir / "real", dir / "link", ec);
+    if (ec) {
+        SUCCEED("symlinks are not supported here; skipped");
+        return;
+    }
+    FileSession s;
+    s.addRecent(dir / "real" / "a.carv");
+    s.addRecent(dir / "link" / "a.carv");
+    CHECK(s.recentFiles().size() == 1);
+    CHECK(s.recentFiles().front() == dir / "link" / "a.carv");
+}
+
+TEST_CASE("FileSession: opening a folder says so in plain words", "[file_session]") {
+    TempDir dir;
+    fs::create_directories(dir / "folder.carv");
+    FileSession s;
+    CHECK_FALSE(s.open(dir / "folder.carv"));
+    CHECK(s.lastError().find("folder") != std::string::npos);
+    CHECK(s.lastError().find("basic_filebuf") == std::string::npos);
+    CHECK_FALSE(s.importDxf(dir / "folder.carv"));
+    CHECK(s.lastError().find("folder") != std::string::npos);
+    CHECK_FALSE(s.open(dir / "nothing.carv"));
+    CHECK(s.lastError().find("does not exist") != std::string::npos);
+}
+
+TEST_CASE("FileSession: DXF export writes only layers that hold geometry", "[file_session][dxf]") {
+    TempDir dir;
+    FileSession s;
+    Document& doc = s.document();
+    Layer empty;
+    empty.name = "EmptyA";
+    REQUIRE(doc.execute(std::make_unique<AddLayerCommand>(empty)));
+    Layer used;
+    used.name = "Used";
+    auto cmd = std::make_unique<AddLayerCommand>(used, true);
+    const AddLayerCommand* raw = cmd.get();
+    REQUIRE(doc.execute(std::move(cmd)));
+    REQUIRE(doc.activeLayer() == raw->id());
+    addCircle(doc);
+    addCircle(doc, {5.0, 5.0}, 1.0);
+    REQUIRE(s.exportDxf(dir / "l.dxf", false));
+    const std::string text = slurp(dir / "l.dxf");
+    CHECK(text.find("Used") != std::string::npos);
+    CHECK(text.find("EmptyA") == std::string::npos);
+    // One layer entry for two contours on the same layer.
+    std::size_t at = 0;
+    std::size_t entries = 0;
+    while ((at = text.find("\nUsed\n", at)) != std::string::npos) {
+        ++entries;
+        ++at;
+    }
+    CHECK(entries >= 3);  // table entry + two entities
+}

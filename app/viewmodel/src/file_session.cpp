@@ -16,15 +16,34 @@ namespace {
 
 fs::path normalised(const fs::path& p) {
     std::error_code ec;
-    fs::path abs = fs::absolute(p, ec);
+    fs::path canon = fs::weakly_canonical(p, ec);
     if (ec) {
-        abs = p;
+        ec.clear();
+        canon = fs::absolute(p, ec);
+        if (ec) {
+            canon = p;
+        }
+        canon = canon.lexically_normal();
     }
-    return abs.lexically_normal();
+    return canon;
 }
 
 /// Reads a whole file; false (with `why`) on any failure.
 bool readFile(const fs::path& path, std::vector<std::uint8_t>& out, std::string& why) {
+    std::error_code statEc;
+    const fs::file_status st = fs::status(path, statEc);
+    if (statEc || !fs::exists(st)) {
+        why = "'" + pathToUtf8(path) + "' does not exist";
+        return false;
+    }
+    if (fs::is_directory(st)) {
+        why = "'" + pathToUtf8(path) + "' is a folder, not a file";
+        return false;
+    }
+    if (!fs::is_regular_file(st)) {
+        why = "'" + pathToUtf8(path) + "' is not a regular file";
+        return false;
+    }
     std::ifstream in(path, std::ios::binary);
     if (!in) {
         why = "cannot open '" + pathToUtf8(path) + "' for reading";
