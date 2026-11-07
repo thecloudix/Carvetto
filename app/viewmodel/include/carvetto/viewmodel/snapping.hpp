@@ -30,7 +30,12 @@
 //                 `geometry::intersect` for the settings' tolerance. The shared junction of two
 //                 consecutive spans of one contour is an endpoint, not an intersection. A guide
 //                 crossing another guide is a Guide snap.
-//   Midpoint      point halfway along the length of a span (arc length, also for Beziers).
+//                 Collinear/coincident stretches that `intersect()` reports as overlaps deliberately
+//                 produce no Intersection snaps; only its isolated points do (the ends of an overlap
+//                 are still Endpoint snaps).
+//   Midpoint      point halfway along the length of a span (arc length, also for Beziers). Bezier
+//                 midpoints come from a 64-piece Gauss quadrature and are accurate to about 2e-4 mm
+//                 in the worst case (near cusps), far better for ordinary curves.
 //   Centre        centre of an arc span (so of circles and arcs), and the stored centre of
 //                 parametric rectangles, circles, ellipses, polygons and stars.
 //   Quadrant      the 0/90/180/270 degree points of an arc span that lie on the arc, and the four

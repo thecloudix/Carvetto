@@ -409,7 +409,7 @@ std::vector<Snap> SnapIndex::candidates(const ViewTransform& view, Vec2 cursorPx
                            (query.pendingStartMm.has_value() && (settings.isEnabled(SnapKind::Perpendicular) ||
                                                                  settings.isEnabled(SnapKind::Tangent)));
     if (needSpans) {
-        std::vector<NearSpan> near;
+        std::vector<NearSpan> closeSpans;
         for (const std::size_t i : spanIndex_.query(window)) {
             const SpanEntry& se = spans_[i];
             if (excluded(se.object)) {
@@ -417,18 +417,18 @@ std::vector<Snap> SnapIndex::candidates(const ViewTransform& view, Vec2 cursorPx
             }
             const geometry::ClosestPoint cp = geometry::closestPoint(se.contour->spans[se.spanIndex], cursor);
             if (cp.distance * scale <= settings.tolerancePx) {
-                near.push_back({i, cp.distance});
+                closeSpans.push_back({i, cp.distance});
             }
         }
-        if (near.size() > kMaxNearSpans) {
-            std::stable_sort(near.begin(), near.end(),
+        if (closeSpans.size() > kMaxNearSpans) {
+            std::stable_sort(closeSpans.begin(), closeSpans.end(),
                              [](const NearSpan& a, const NearSpan& b) { return a.distanceMm < b.distanceMm; });
-            near.resize(kMaxNearSpans);
-            std::sort(near.begin(), near.end(), [](const NearSpan& a, const NearSpan& b) { return a.entry < b.entry; });
+            closeSpans.resize(kMaxNearSpans);
+            std::sort(closeSpans.begin(), closeSpans.end(), [](const NearSpan& a, const NearSpan& b) { return a.entry < b.entry; });
         }
 
         if (settings.isEnabled(SnapKind::Nearest)) {
-            for (const NearSpan& ns : near) {
+            for (const NearSpan& ns : closeSpans) {
                 const SpanEntry& se = spans_[ns.entry];
                 const geometry::ClosestPoint cp = geometry::closestPoint(se.contour->spans[se.spanIndex], cursor);
                 add(SnapKind::Nearest, cp.point, {se.object});
@@ -436,12 +436,12 @@ std::vector<Snap> SnapIndex::candidates(const ViewTransform& view, Vec2 cursorPx
         }
 
         if (settings.isEnabled(SnapKind::Intersection)) {
-            for (std::size_t a = 0; a < near.size(); ++a) {
-                const SpanEntry& ea = spans_[near[a].entry];
+            for (std::size_t a = 0; a < closeSpans.size(); ++a) {
+                const SpanEntry& ea = spans_[closeSpans[a].entry];
                 const Span& sa = ea.contour->spans[ea.spanIndex];
                 const Box2 ba = geometry::bounds(sa).inflated(settings.tolerance.distance);
-                for (std::size_t b = a + 1; b < near.size(); ++b) {
-                    const SpanEntry& eb = spans_[near[b].entry];
+                for (std::size_t b = a + 1; b < closeSpans.size(); ++b) {
+                    const SpanEntry& eb = spans_[closeSpans[b].entry];
                     const Span& sb = eb.contour->spans[eb.spanIndex];
                     if (!ba.intersects(geometry::bounds(sb))) {
                         continue;
@@ -477,7 +477,7 @@ std::vector<Snap> SnapIndex::candidates(const ViewTransform& view, Vec2 cursorPx
                 if (!settings.isEnabled(kind)) {
                     continue;
                 }
-                for (const NearSpan& ns : near) {
+                for (const NearSpan& ns : closeSpans) {
                     const SpanEntry& se = spans_[ns.entry];
                     pts.clear();
                     if (kind == SnapKind::Perpendicular) {

@@ -459,6 +459,43 @@ TEST_CASE("priority: kind first, then distance, then ids, then position", "[view
     (void)a;
 }
 
+TEST_CASE("equal kind and distance: the smaller object id wins before position", "[viewmodel][snap]") {
+    // Two endpoints exactly 10 px from the cursor; the one with the smaller id has the LARGER x,
+    // so a position-only fallthrough would pick the other. Insertion order is swapped in the 2nd run.
+    for (const bool swapped : {false, true}) {
+        Fixture f;
+        ObjectId first;
+        ObjectId second;
+        if (!swapped) {
+            first = f.line({20.0, 0.0}, {20.0, 10.0});   // x = 20, smaller id
+            second = f.line({10.0, 0.0}, {10.0, -10.0});  // x = 10, larger id
+        } else {
+            first = f.line({10.0, 0.0}, {10.0, -10.0});
+            second = f.line({20.0, 0.0}, {20.0, 10.0});
+        }
+        REQUIRE(first < second);
+        const SnapIndex idx(f.doc);
+        auto got = idx.candidates(f.view, f.px({15.0, 0.0}), only(SnapKind::Endpoint, 20.0));
+        const auto onlyAtAxis = ofKind(got, SnapKind::Endpoint);
+        REQUIRE(onlyAtAxis.size() >= 2);
+        CHECK(onlyAtAxis[0].objects == std::vector<ObjectId>{first});
+        CHECK(onlyAtAxis[0].pointMm.x == (swapped ? 10.0 : 20.0));
+    }
+}
+
+TEST_CASE("perpendicular foot coinciding with the pending start is dropped", "[viewmodel][snap]") {
+    Fixture f;
+    f.line({0.0, 0.0}, {100.0, 0.0});
+    const SnapIndex idx(f.doc);
+    SnapQuery q;
+    q.pendingStartMm = Vec2{40.0, 0.0};  // the start lies on the line: its own foot
+    CHECK(idx.candidates(f.view, f.px({40.0, 0.0}), only(SnapKind::Perpendicular), q).empty());
+    q.pendingStartMm = Vec2{40.0, 0.5};  // off the line by more than the distance tolerance
+    auto got = idx.candidates(f.view, f.px({40.0, 0.0}), only(SnapKind::Perpendicular), q);
+    REQUIRE(got.size() == 1);
+    CHECK(distance(got[0].pointMm, {40.0, 0.0}) < 1e-12);
+}
+
 TEST_CASE("results do not depend on insertion order", "[viewmodel][snap]") {
     auto build = [](bool reversed) {
         auto f = std::make_unique<Fixture>();
@@ -600,7 +637,7 @@ TEST_CASE("generated scenes agree with brute-force oracles", "[viewmodel][snap][
             cursorMm = cursorMm + Vec2{rng.range(-3.0, 3.0), rng.range(-3.0, 3.0)};
             const Vec2 cpx = f.px(cursorMm);
             const auto got = idx.candidates(f.view, cpx, s);
-            auto near = [&](Vec2 p) { return distance(p, cursorMm) * f.view.scale() <= s.tolerancePx; };
+            auto inReach = [&](Vec2 p) { return distance(p, cursorMm) * f.view.scale() <= s.tolerancePx; };
 
             // Never beyond the tolerance, sorted.
             for (const Snap& sn : got) {
@@ -637,13 +674,13 @@ TEST_CASE("generated scenes agree with brute-force oracles", "[viewmodel][snap][
                                     Oracle{SnapKind::Intersection, &xs}}) {
                 const auto gk = ofKind(got, o.kind);
                 for (const Vec2& p : *o.pts) {
-                    if (near(p) && o.kind != SnapKind::Intersection) {
+                    if (inReach(p) && o.kind != SnapKind::Intersection) {
                         CHECK(hasPoint(gk, p, 1e-6));
                     }
                 }
                 if (o.kind == SnapKind::Intersection) {
                     for (const Vec2& p : *o.pts) {
-                        if (near(p)) {
+                        if (inReach(p)) {
                             CHECK(hasPoint(gk, p, 1e-6));
                         }
                     }
