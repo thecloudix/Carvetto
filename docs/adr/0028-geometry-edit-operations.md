@@ -82,9 +82,18 @@ node gives a bump, so the caller chooses the nodes.
   long diagonal span meets many, by design); classification O(log E + k) per piece with an
   implicit interval tree of polygon edges (k = edges crossing the scanline). 10k spans against
   10k boundary spans: see the performance test (near-linear, 2.5x per doubling).
+- Known adversarial quadratic cases (measured by the verifier): long diagonal spans against a grid
+  of small squares (6400 spans: 8.6 s), because a diagonal span's box meets many boundary boxes;
+  `joinContours` with all end points coincident (64k contours: 6.7 s, every query sees every
+  endpoint); and `trimSpansAt`, which uses the all-pairs library `intersect(Contour, Contour)` and
+  `selfIntersections` (fine for interactive picks, not for bulk).
 - Curve intersections involving a Bezier cost ~ extent / `tol.chordal` chord pairs, so the
   trim, interactive trim and extend operations refuse (`InvalidArgument`) a drawing whose extent
-  exceeds 1e6 x `tol.chordal` when a Bezier is involved: scale the tolerance with the drawing.
+  exceeds 1e6 x `tol.chordal` when a Bezier is involved: scale the tolerance with the drawing. The
+  extent of a Bezier is taken from its control polygon (not from `BezierSpan::bounds()`, which
+  overflows for controls above ~1e154 and reports a wrong small box). The rule also refuses, falsely,
+  honest drawings whose diagonal exceeds ~10 m at the default 0.01 mm chordal tolerance when they
+  contain a Bezier; pass a coarser tolerance for such drawings.
 
 ### 4. Interactive trim
 - Cut points on the contour = its self-intersections plus intersections with the `others`
@@ -119,7 +128,8 @@ node gives a bump, so the caller chooses the nodes.
   residual is within the tolerance); a larger gap gets a closing `LineSpan`.
 
 ### 7. Robustness
-- Non-finite coordinates / radii, negative or NaN tolerances: `InvalidArgument`. All results are
+- Non-finite coordinates / radii / tolerances, or any magnitude above 1e12 (mm), negative or NaN
+  tolerances: `InvalidArgument` at every public entry point (`kMaxMagnitude`). All results are
   deterministic (no hashing order or pointer values influence output).
 - Span lengths inside these functions use a 32-sample estimate, not `BezierSpan::length`, which
   recurses without a useful bound on looped Beziers with coincident ends.

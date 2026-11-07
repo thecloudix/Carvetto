@@ -3,6 +3,10 @@
 #include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <chrono>
+#include <future>
 #include <limits>
 #include <vector>
 
@@ -203,4 +207,87 @@ TEST_CASE("edit ops: filleting a 20000-corner contour is linear in practice", "[
     REQUIRE(r.status == EditStatus::Ok);
     CHECK(r.applied > n / 2);
     CHECK(elapsed < 30.0);  // loose Debug bound; quadratic insertion would be far above
+}
+
+namespace {
+
+/// Runs `fn` on a worker thread and fails the test within `seconds` if it has not returned: a
+/// regression of a hang guard then reports in seconds instead of stalling the suite. The stuck
+/// worker cannot be cancelled, so the process ends right after reporting.
+template <class F>
+auto failFast(double seconds, const char* what, F&& fn) {
+    auto fut = std::async(std::launch::async, std::forward<F>(fn));
+    if (fut.wait_for(std::chrono::duration<double>(seconds)) != std::future_status::ready) {
+        std::fprintf(stderr, "HANG: %s did not finish within %g s\n", what, seconds);
+        std::fflush(stderr);
+        std::_Exit(2);
+    }
+    return fut.get();
+}
+
+Contour hugeBezier(double big) {
+    Contour bz;
+    bz.append(BezierSpan{{0, 0}, {big, big}, {-big, big}, {10, 10}});
+    return bz;
+}
+
+}  // namespace
+
+TEST_CASE("edit ops: Beziers with huge control points are refused at once", "[edit][fuzz][guard]") {
+    const Contour ln = Contour::fromPolyline(Polyline{{{-5, 5}, {15, 5}}, false});
+    const Contour sq = Contour::rectangle(Box2{{0, 0}, {10, 10}});
+    for (double big : {1e100, 1e154, 1e155, 1e160, 1e200, 1e300, 1e13}) {
+        INFO("big = " << big);
+        const Contour bz = hugeBezier(big);
+        Contour closedBz = bz;
+        closedBz.append(LineSpan{{10, 10}, {0, 0}});
+        closedBz.closed = true;
+        CHECK(failFast(10.0, "trimSpansAt", [&] { return trimSpansAt(bz, {1, 1}, {ln}).status; }) ==
+              EditStatus::InvalidArgument);
+        CHECK(failFast(10.0, "trimToBoundary (curve)",
+                       [&] { return trimToBoundary({bz}, {sq}, TrimSide::ClearInside).status; }) ==
+              EditStatus::InvalidArgument);
+        CHECK(failFast(10.0, "trimToBoundary (boundary)",
+                       [&] { return trimToBoundary({ln}, {closedBz}, TrimSide::ClearInside).status; }) ==
+              EditStatus::InvalidArgument);
+        CHECK(failFast(10.0, "extendSpan", [&] {
+                  return extendSpan(Contour::fromPolyline(Polyline{{{-30, 0}, {-25, 0}}, false}), ContourEnd::End, {bz}).status;
+              }) == EditStatus::InvalidArgument);
+        CHECK(failFast(10.0, "filletAll", [&] { return filletAll(closedBz, 1.0, FilletKind::Normal).status; }) ==
+              EditStatus::InvalidArgument);
+        CHECK(failFast(10.0, "closeContour", [&] { return closeContour(bz).status; }) == EditStatus::InvalidArgument);
+        CHECK(failFast(10.0, "joinContours", [&] { return joinContours({bz, ln}).contours.size(); }) == 2);
+    }
+    // A control polygon far larger than its chordal tolerance (but within the magnitude cap) is
+    // refused by the cost rule, again without running the intersection.
+    const Contour wide = hugeBezier(1e9);
+    CHECK(failFast(10.0, "wide trimSpansAt", [&] { return trimSpansAt(wide, {1, 1}, {ln}).status; }) ==
+          EditStatus::InvalidArgument);
+    // With a tolerance that scales with the drawing the same call is accepted and returns quickly.
+    const Tolerance scaled{1e3, 1e-9, 1e4};
+    const auto st = failFast(30.0, "scaled trimSpansAt", [&] { return trimSpansAt(wide, {1, 1}, {ln}, {}, scaled).status; });
+    CHECK((st == EditStatus::Ok || st == EditStatus::NothingToTrim));
+}
+
+TEST_CASE("edit ops: fixed regression seeds of the hostile Bezier fuzz finish and stay finite", "[edit][fuzz][guard]") {
+    // The verifier's seeds 981 and 6967 hit the unguarded Bezier bounds overflow; this generator
+    // is ours (SplitMix), so the same numbers give different drawings, but they stay as fixed
+    // hostile cases next to a run of neighbours.
+    for (std::uint64_t seed : {std::uint64_t{981}, std::uint64_t{6967}, std::uint64_t{1}, std::uint64_t{2},
+                               std::uint64_t{3}, std::uint64_t{4}, std::uint64_t{5}, std::uint64_t{6}}) {
+        INFO("seed = " << seed);
+        failFast(60.0, "hostile fuzz seed", [seed] {
+            SplitMix rng{seed};
+            std::vector<Contour> sink;
+            for (int i = 0; i < 12; ++i) {
+                exercise(rng, 10.0, true, sink);
+                // Huge Beziers on top of the generic hostile spans.
+                Contour bz = hugeBezier(std::pow(10.0, rng.uniform(100.0, 300.0)));
+                const Tolerance tol{};
+                (void)trimSpansAt(bz, {1, 1}, {sink.empty() ? bz : sink.back()}, {}, tol);
+                (void)trimToBoundary({sink.empty() ? bz : sink.back()}, {bz}, TrimSide::ClearInside);
+            }
+            return 0;
+        });
+    }
 }

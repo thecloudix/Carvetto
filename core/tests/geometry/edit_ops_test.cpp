@@ -230,9 +230,9 @@ TEST_CASE("fillet: huge and tiny scales", "[edit][fillet]") {
         CHECK(maxGap(res.contour) < 1e-6 * scale + 1e-9);
     }
     // Offset far from the origin.
-    Contour far = square(10.0);
-    far.transform(Transform2::translation(Vec2{1e6, -1e6}));
-    const FilletResult res = filletCorner(far, 1, 2.0, FilletKind::Normal);
+    Contour remote = square(10.0);
+    remote.transform(Transform2::translation(Vec2{1e6, -1e6}));
+    const FilletResult res = filletCorner(remote, 1, 2.0, FilletKind::Normal);
     REQUIRE(res.status == EditStatus::Ok);
     CHECK_THAT(arcAt(res.contour, 1).radius, WithinAbs(2.0, 1e-6));
 }
@@ -336,11 +336,11 @@ TEST_CASE("trim to boundary: lines against a rectangle", "[edit][trim]") {
     // Lengths add up.
     CHECK_THAT(totalLength(inside.contours) + totalLength(outside.contours), WithinAbs(line.length(), 1e-9));
     // Untouched contours pass through unchanged (closed stays closed).
-    const Contour far = Contour::circle({100, 100}, 2.0);
-    const TrimResult passIn = trimToBoundary({far}, {boundary}, TrimSide::ClearInside);
+    const Contour distant = Contour::circle({100, 100}, 2.0);
+    const TrimResult passIn = trimToBoundary({distant}, {boundary}, TrimSide::ClearInside);
     REQUIRE(passIn.contours.size() == 1);
-    CHECK(passIn.contours[0] == far);
-    CHECK(trimToBoundary({far}, {boundary}, TrimSide::ClearOutside).contours.empty());
+    CHECK(passIn.contours[0] == distant);
+    CHECK(trimToBoundary({distant}, {boundary}, TrimSide::ClearOutside).contours.empty());
 }
 
 TEST_CASE("trim to boundary: curves are cut exactly and kept pieces lie on the kept side", "[edit][trim]") {
@@ -758,4 +758,70 @@ TEST_CASE("generative: extend lands exactly on the first target hit", "[edit][ex
         }
     }
     CHECK(landed > 100);
+}
+
+TEST_CASE("convexNodes and the relief default only touch convex vertices", "[edit][fillet][dogbone]") {
+    // L-shape, CCW: five convex corners and one reflex corner at (4,4).
+    const Contour ell = lines({{0, 0}, {10, 0}, {10, 4}, {4, 4}, {4, 10}, {0, 10}}, true);
+    const std::vector<std::size_t> ccw = convexNodes(ell);
+    CHECK(ccw == std::vector<std::size_t>{0, 1, 2, 4, 5});  // node 3 is the reflex vertex (4,4)
+    Contour cw = ell;
+    cw.reverse();
+    const std::vector<std::size_t> cwNodes = convexNodes(cw);
+    CHECK(cwNodes.size() == 5);
+    for (std::size_t n : cwNodes) {
+        const Vec2 corner = startPoint(cw.spans[n]);
+        CHECK_FALSE(approxEqual(corner, Vec2{4, 4}));
+    }
+    // No explicit node list: dog-bones only at convex nodes, so the region only grows.
+    for (const Contour& c : {ell, cw}) {
+        for (FilletKind kind : {FilletKind::DogBone, FilletKind::TBone}) {
+            const FilletAllResult r = filletAll(c, 0.5, kind);
+            REQUIRE(r.status == EditStatus::Ok);
+            CHECK(r.corners.size() == 5);
+            CHECK(r.applied == 5);
+            CHECK(area(r.contour) > area(c));
+        }
+    }
+    // An explicit list is honoured, reflex vertex included (caller's choice).
+    const FilletAllResult forced = filletAll(ell, 0.5, FilletKind::DogBone, std::vector<std::size_t>{3});
+    CHECK(forced.applied == 1);
+    // Open contours: left turns; degenerate input: none.
+    CHECK(convexNodes(lines({{0, 0}, {5, 0}, {5, 5}, {10, 5}})) == std::vector<std::size_t>{1});
+    CHECK(convexNodes(Contour{}).empty());
+    CHECK(convexNodes(lines({{0, 0}, {5, 0}, {10, 0}})).empty());
+}
+
+TEST_CASE("pinned behaviours: join tie, refit of an untouched closed contour, open rejoin closing", "[edit][join][trim]") {
+    // Two partners at exactly the same distance: the lowest input index wins.
+    const Contour a = lines({{0, 0}, {10, 0}});
+    const Contour up = lines({{10, 0}, {10, 5}});
+    const Contour down = lines({{10, 0}, {10, -5}});
+    const JoinResult j = joinContours({a, up, down});
+    REQUIRE(j.contours.size() == 2);
+    CHECK(j.sources[0] == std::vector<std::size_t>{0, 1});
+    CHECK(j.sources[1] == std::vector<std::size_t>{2});
+    const JoinResult j2 = joinContours({a, down, up});
+    CHECK(j2.sources[0] == std::vector<std::size_t>{0, 1});
+
+    // A closed contour that no boundary touches still gets refitted when asked.
+    Contour split = lines({{0, 0}, {5, 0}, {10, 0}, {10, 10}, {0, 10}}, true);
+    const Contour away = Contour::circle({100, 100}, 1.0);
+    const TrimResult plain = trimToBoundary({split}, {away}, TrimSide::ClearInside, false);
+    const TrimResult refit = trimToBoundary({split}, {away}, TrimSide::ClearInside, true);
+    REQUIRE(plain.contours.size() == 1);
+    CHECK(plain.contours[0].spans.size() == 5);
+    REQUIRE(refit.contours.size() == 1);
+    CHECK(refit.contours[0].spans.size() == 4);
+    CHECK(refit.contours[0].closed);
+
+    // Open contour whose rejoined remainder ends where it starts becomes closed.
+    const Contour bow = lines({{0, 0}, {10, 10}, {10, 0}, {0, 10}, {0, 0}});
+    TrimAtOptions opt;
+    opt.rejoin = true;
+    const TrimAtResult tr = trimSpansAt(bow, {10, 5}, {}, opt);
+    REQUIRE(tr.status == EditStatus::Ok);
+    REQUIRE(tr.contours.size() == 1);
+    CHECK(tr.contours[0].closed);
+    CHECK_THAT(area(tr.contours[0]), WithinAbs(25.0, 1e-9));
 }

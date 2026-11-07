@@ -36,12 +36,21 @@ const char* toString(EditStatus s) {
 
 namespace {
 
+/// Largest coordinate / radius / tolerance magnitude accepted (mm). Beyond ~1e154 the squares in
+/// BezierSpan::bounds() overflow and report a wrong box, so every public entry point refuses
+/// anything above this cap (and non-finite values) with InvalidArgument (ADR-0028 section 7).
+constexpr double kMaxMagnitude = 1e12;
+
+bool coordOk(double v) {
+    return std::isfinite(v) && std::fabs(v) <= kMaxMagnitude;
+}
+
 bool finite(Vec2 p) {
-    return std::isfinite(p.x) && std::isfinite(p.y);
+    return coordOk(p.x) && coordOk(p.y);
 }
 
 bool tolValid(const Tolerance& tol) {
-    return std::isfinite(tol.distance) && tol.distance >= 0.0 && std::isfinite(tol.chordal) && tol.chordal > 0.0;
+    return coordOk(tol.distance) && tol.distance >= 0.0 && coordOk(tol.chordal) && tol.chordal > 0.0;
 }
 
 bool spanFinite(const Span& s) {
@@ -49,7 +58,7 @@ bool spanFinite(const Span& s) {
         return finite(l->start) && finite(l->end);
     }
     if (const auto* a = std::get_if<ArcSpan>(&s)) {
-        return finite(a->centre) && std::isfinite(a->radius) && a->radius >= 0.0 && std::isfinite(a->startAngle) &&
+        return finite(a->centre) && coordOk(a->radius) && a->radius >= 0.0 && std::isfinite(a->startAngle) &&
                std::isfinite(a->endAngle);
     }
     const auto& b = std::get<BezierSpan>(s);
@@ -68,10 +77,19 @@ bool tooCostly(const std::vector<const std::vector<Contour>*>& sets, const Conto
     Box2 box;
     bool bezier = false;
     auto scan = [&](const Contour& c) {
+        // A Bezier's extent is taken from its control polygon, which always contains the curve; the
+        // curve's own bounds() is not trusted here (it overflows for huge controls).
         for (const Span& sp : c.spans) {
-            bezier = bezier || std::holds_alternative<BezierSpan>(sp);
+            if (const auto* bz = std::get_if<BezierSpan>(&sp)) {
+                bezier = true;
+                box.expand(bz->p0);
+                box.expand(bz->p1);
+                box.expand(bz->p2);
+                box.expand(bz->p3);
+            } else {
+                box.expand(bounds(sp));
+            }
         }
-        box.expand(c.bounds());
     };
     if (extra != nullptr) {
         scan(*extra);
@@ -455,7 +473,7 @@ std::vector<Span> assemble(const std::vector<Span>& spans, const std::vector<cha
 }
 
 bool radiusOk(double radius, const Tolerance& tol) {
-    return std::isfinite(radius) && radius > tol.distance && tolValid(tol);
+    return coordOk(radius) && radius > tol.distance && tolValid(tol);
 }
 
 }  // namespace
@@ -532,8 +550,47 @@ FilletAllResult filletNodes(const Contour& contour, double radius, FilletKind ki
 
 }  // namespace
 
+std::vector<std::size_t> convexNodes(const Contour& contour, const Tolerance& tol) {
+    std::vector<std::size_t> nodes;
+    const std::size_t n = contour.spans.size();
+    if (n < 2 || !tolValid(tol) || !contourFinite(contour)) {
+        return nodes;
+    }
+    double sign = 1.0;
+    if (contour.closed) {
+        const double a = signedArea(contour);
+        if (a == 0.0) {
+            return nodes;
+        }
+        sign = a > 0.0 ? 1.0 : -1.0;
+    }
+    for (std::size_t i = contour.closed ? 0 : 1; i < n; ++i) {
+        const Span& a = contour.spans[(i + n - 1) % n];
+        const Span& b = contour.spans[i];
+        if (distance(endPoint(a), startPoint(b)) > tol.distance) {
+            continue;
+        }
+        const Vec2 ta = tangentAt(a, 1.0);
+        const Vec2 tb = tangentAt(b, 0.0);
+        if (ta.lengthSquared() == 0.0 || tb.lengthSquared() == 0.0) {
+            continue;
+        }
+        const double turn = std::atan2(ta.cross(tb), ta.dot(tb));
+        if (std::fabs(turn) < 1e-6 || kPi - std::fabs(turn) < 1e-6) {
+            continue;
+        }
+        if (turn * sign > 0.0) {
+            nodes.push_back(i);
+        }
+    }
+    return nodes;
+}
+
 FilletAllResult filletAll(const Contour& contour, double radius, FilletKind kind, const FilletOptions& options,
                           const Tolerance& tol) {
+    if (kind != FilletKind::Normal) {
+        return filletNodes(contour, radius, kind, convexNodes(contour, tol), options, tol);
+    }
     std::vector<std::size_t> nodes;
     const std::size_t n = contour.spans.size();
     for (std::size_t i = contour.closed ? 0 : 1; i < n; ++i) {
@@ -1203,7 +1260,7 @@ class EndpointGrid {
     void add(const Endpoint& e) { cells_[key(cellOf(e.p.x), cellOf(e.p.y))].push_back(e); }
 
     template <class F>
-    void near(Vec2 p, F&& f) const {
+    void forEachNear(Vec2 p, F&& f) const {
         const std::int64_t cx = cellOf(p.x);
         const std::int64_t cy = cellOf(p.y);
         for (std::int64_t dx = -1; dx <= 1; ++dx) {
@@ -1263,7 +1320,7 @@ JoinResult joinContours(const std::vector<Contour>& contours, const Tolerance& t
     auto findPartner = [&](Vec2 at, Endpoint& best) {
         bool any = false;
         double bestD = 0.0;
-        grid.near(at, [&](const Endpoint& e) {
+        grid.forEachNear(at, [&](const Endpoint& e) {
             if (used[e.contour]) {
                 return;
             }

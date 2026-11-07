@@ -37,11 +37,23 @@ const char* toString(EditStatus s);
 
 // ------------------------------------------------------------------------------------ fillet
 
+/// WARNING (Dog-Bone / T-Bone): the relief is cut on the OUTER side of the turn at the node, so it
+/// is only a relief at an internal corner of a pocket, i.e. a convex vertex of the region (a left
+/// turn of a counter-clockwise contour, a right turn of a clockwise one). `filletCorner` applies
+/// it at whatever node it is given, so at a reflex vertex it carves a bump into the region (and on
+/// a contour of the opposite winding the area change is negative). `filletAll` without an explicit
+/// node list therefore uses `convexNodes` for these two kinds; Normal fillets use every corner.
 enum class FilletKind {
     Normal,   ///< Tangent circular arc of the given radius, rounding the corner.
     DogBone,  ///< Relief arc centred on the corner node with the given radius (270-ish degrees).
     TBone,    ///< Relief semicircle whose diameter lies on one span, starting at the node.
 };
+
+/// Nodes where a relief cut (Dog-Bone / T-Bone) makes sense: corners that turn left on a
+/// counter-clockwise closed contour, right on a clockwise one (convex vertices of the region).
+/// An open contour has no region; its left turns are returned (it is treated as counter-clockwise).
+/// Tangent-continuous nodes, cusps, gaps and contours that are not finite give none. Ascending.
+std::vector<std::size_t> convexNodes(const Contour& contour, const Tolerance& tol = Tolerance::defaults());
 
 struct FilletOptions {
     /// When the radius does not fit, use the largest radius that does (reported) instead of refusing.
@@ -84,7 +96,7 @@ struct FilletAllResult {
 };
 
 /// Applies the fillet at every corner of the contour (nodes that are tangent-continuous report
-/// NoCorner and are left alone).
+/// NoCorner and are left alone). For DogBone and TBone only the `convexNodes` are used.
 FilletAllResult filletAll(const Contour& contour, double radius, FilletKind kind, const FilletOptions& options = {},
                           const Tolerance& tol = Tolerance::defaults());
 /// As above, for the given nodes only (duplicates ignored; invalid ones report BadNode).
