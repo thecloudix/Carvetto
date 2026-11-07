@@ -363,7 +363,8 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     tab would hold nothing (a loop or arm narrower than the kerf, the tip of an arm the kerf
     consumes): it is dropped and reported as such ("would hold nothing"); a tab that leaves a near
     piece unjoined is dropped as cut through. Tool positions every k-th sample along the cuts (at
-    most sqrt(0.04·r) apart), their discs grown by the sagitta of the gap (≤ 5 µm), stand for the
+    most sqrt(0.04·r) apart), their discs grown by the sagitta of the gap (spacing² / 8r: 5 µm for a tab-layer radius r of
+    0.0625 mm or more, more below it, as the spacing stays 0.05 mm: about 11 µm at r = 0.028 mm), stand for the
     sweep. Two exact quick answers skip the raster: when every tool position within 2r + 0.7 mm
     (plus the sample gap) of the raised stretches lies on one of the tab's own cuts close to the
     stretch along it (within 2.5 times that distance), and the cut there either bends gently (no
@@ -377,58 +378,79 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     stretch, the cut leaves exactly its two sides as counting pieces there, and the tab's material
     joins them. **Loose pieces.** A kept tab holds the material next to it, but a piece elsewhere
     (the kerf consuming a neck of the part, a remnant between the finishing and roughing kerfs at a
-    corner) may have no tab: after the tab check, whenever tabs are on (also when every tab was
-    left out), pieces no kept tab joins to the outside are looked for and reported. For sided tabs
-    (On the vector, or Inside/Outside with a negative allowance; Inside/Outside with allowance
-    >= 0 below) these are the pieces of material inside a closed primary cut, or inside a cluster of open primary cuts (a
-    loop trimmed into pieces near another vector; boxes within two tab-layer radii + 0.5 mm of each
-    other, searched as one region, T-0135), that join the outside through no kept tab
-    are looked for and reported (known gaps below). Exact construction (T-0135; T-0127 used a
-    raster of sampled tool positions and skipped it when one hole had a kept tab beside it, which
-    missed real loose pieces): near the region are the cuts of both passes whose boxes reach within
-    the tab-layer radius + 0.1 mm of the region's box (grown by the radius + 0.5 mm). The material
-    the cuts leave at the tab layer is what the bands of their open stretches leave (each cut path
-    less its raised stretches, the exact stretch ends kept, grown on both sides by the tab-layer
-    radius + 2 µm + at most 5 µm); a loose piece is a hole of that union (bounded component of its
-    complement) lying inside the box. Soundness: the bands are exactly what those tools cut at that
-    layer (the disc model of the tab check); a hole of the union is bounded by cut all round, so its
-    material joins nothing outside it, and the kept tabs' material, uncut, is part of the holes it
-    lies in, so a piece a kept tab joins to the outside is no hole. Cuts that are not near cannot
-    reach into the box, so a hole inside it is a hole of the whole scene's union too (other cuts
-    could only cut it further, never join it to anything): every reported piece is loose, and every
-    loose piece inside some region's box is found. When even with every tab lowered (full paths) the
-    union has no hole inside the box, nothing is enclosed there and the open union is not built. A
-    piece's area is the hole's less the islands inside it (the band of a hole in the part, with
-    that hole's slug, itself a hole of the union, inside it), and it counts when it is 0.04 mm² or
-    more and thicker than 0.05 mm somewhere (a hole of the union with the bands 0.025 mm wider lies
-    inside it and none of its islands). A loose piece of 0.04 mm² or more, thicker
-    than 0.05 mm somewhere (a hairline sliver between two kerfs does not count), is reported
-    against the vector of the innermost closed primary cut that contains it, or else of the nearest
-    cut ("a piece of material inside the cut (about A square mm) is not held by any kept tab and comes free"), one
+    corner, waste the kerfs close in between vectors) may have no tab: after the tab check,
+    whenever tabs are on (also when every tab was left out), pieces no kept tab joins to the
+    outside are looked for and reported, the same way for every kind of tab (T-0156: sided tabs
+    were searched region by region, inside each closed primary cut and each cluster of open ones,
+    which missed pieces inside no single region's box, such as the waste between the four bars of
+    a "#" or between three circles whose kerfs overlap, and a roughing loop whose finishing cut
+    had vanished; T-0140 introduced the whole-scene search below for Inside/Outside with
+    allowance >= 0, and it now serves all). The whole scene is taken at once: the bands of every
+    cut of both passes, less the kept raised stretches (their exact ends kept), enclose the loose
+    pieces, wherever they lie (inside a vector or between vectors), leaf by leaf (enclosed_pieces.hpp).
+    Each band is the cut stretch grown on both sides by the tab-layer radius + 2 µm; the polygons
+    reach at most 5 µm beyond that where they approximate arcs, so the bands are 2 to 7 µm wider
+    than what the tool cuts at that layer (not exactly as wide; T-0127's region search
+    added the sagitta of its sampled tool positions on top, which is gone). Soundness: a hole of
+    the union is bounded by cut all round, so its material joins nothing outside it, and the kept
+    tabs' material, uncut, is part of the holes it lies in, so a piece a kept tab joins to the
+    outside is no hole: every reported piece is loose, and every loose piece thicker than the
+    bands' slack is found. A piece's area is the hole's less the islands inside it (the band of a
+    hole in the part, with that hole's slug, itself a hole of the union, inside it), and it counts
+    when it is 0.04 mm² or more and thicker than 0.05 mm somewhere (what is left of it eroded by
+    0.025 mm is not empty, the erosion's round joins chords at most 0.005 mm inside their arcs).
+    A loose piece of 0.04 mm² or more, thicker than 0.05 mm somewhere (a hairline sliver between
+    two kerfs does not count), is reported against the vector of the innermost closed primary cut
+    that contains it (any point of the piece gives the same answer), or else of the cut nearest the
+    piece's anchor, its lowest vertex of least x, the same at every leaf size (it lies on the bands
+    of the cuts round it, so cuts within 0.01 mm of the nearest count as tied and the first is
+    taken; a roughing cut whose finishing cut vanished counts as a cut of its vector),
+    ("a piece of material inside the cut (about A square mm) is not held by any kept tab and comes free"), one
     message per piece, numbered per vector, largest first ("vector 3: loose piece 2 of 4: ...", at
     most 50 per vector, then one "and N more loose pieces (about A square mm in all)"), so
     the de-duplication in run() never merges two pieces (T-0135; before, equal rounded areas were
-    merged and only five were listed). A piece is seen from every loop whose box holds it; it is
-    the same piece as one already found when it holds that piece's inner point (one at least
-    0.025 mm clear of the tools, so every view of the same piece holds it: inside the hole and none
-    of its islands), so a piece in
-    another's concave notch, whose box overlaps, is still reported. **Inside/Outside with allowance >= 0 (T-0140; before, not
+    merged and only five were listed). For Inside/Outside with allowance >= 0 (T-0140; before, not
     checked at all, so a part or slug whose every tab was left out, or waste the kerfs close in
-    between vectors, came free unreported).** Here the kerf lies on the waste side of the vector,
-    so each closed cut always encloses its vector-side material with every tab lowered and the
-    region search would build the union of every neighbour's bands once per region. Instead the
-    whole scene is taken at once: the bands of every cut of both passes (less the kept raised
-    stretches, as above, but grown by the tab-layer radius + 2 µm only: they are exact, so T-0127's
-    sagitta allowance is left out) enclose the loose pieces, wherever they lie (inside a vector
-    or between vectors, so the region-box gaps below do not apply here). A piece counts as above
-    (area less its islands, 0.04 mm² or more, thicker than 0.05 mm somewhere: what is left of it
-    eroded by 0.025 mm is not empty, the erosion's round joins chords at most 0.005 mm inside
-    their arcs) and is reported with the same message, against the innermost closed primary cut
-    that contains it (any point of the piece gives the same answer) or else the cut nearest the
-    piece's anchor, its lowest vertex of least x, the same at every leaf size (it lies on the bands
-    of the cuts round it, so cuts within 0.01 mm of the nearest count as tied and the first is
-    taken; round 3: before, the probe was a point of the first part found thick, which depended on
-    the leaves).
+    between vectors, came free unreported) the kerf lies on the waste side of the vector, so each
+    closed cut always encloses its vector-side material with every tab lowered; the search is the
+    same.
+    **V-bit corner moves (T-0156).** With "sharp internal corners" a V-bit makes a short excursion
+    at each inside corner of a cut at full depth (the tip climbs from the cut towards the corner of
+    the vector and back), which cuts the tab layer too: the cone's disc there shrinks from the
+    tab-layer radius at the cut to nothing where the tip passes the tab top. Before, neither the
+    tab check nor the loose-piece search saw these moves, so a tab they severed was kept and a part
+    they freed went unreported (m2_1310149_15: a 134 mm² part, no message). They are planned with
+    the cuts (before the tabs are judged; planExcursions, from the legs emit() walks, so a corner
+    the cut passes only on a ramp has none), made only where no kept tab covers the corner (its
+    raised stretch and, for 3D tabs, the ramps beside it), and swept as the convex hull of the
+    cone's discs at the ends of each move. The tab check counts them as tool positions every
+    0.02 mm along each move, with the disc radius there, among the cuts that a tab's lowering
+    exposes (the corner under it) or that are cut anyway; the loose-piece search adds their hulls
+    to the bands and builds every band when there are any (the proof that most stretches enclose
+    nothing does not cover them). A raised stretch that ended exactly at such a corner used to be
+    left along a slope, down to the cut's depth over the whole stretch (appendLeg merged the
+    stretch's end into the corner's insert and took the height after it for the stretch), which cut the
+    tab away; it now stays flat to the corner. The corner moves count in the tab check only where they really
+    cut a tab through: a tab that holds without them and still joins two pieces with them is kept
+    (T-0156 round 2: the first version dropped holding tabs, repro tabdrop_9001_11,
+    tabdrop_570014_182), and a corner under another live tab is not counted for the tab being judged
+    (it comes back, and that tab is judged again, if the other is dropped). **Known residual
+    defects, identical on main (T-0156 verifier, harness t0156v1/repro, carded as T-0177):** a
+    false "comes free" report on a held part (false939_7101_876: 939.84 mm² with one tab kept;
+    7102_671: 7.6 mm²), six free 0.216 mm² pieces unreported (miss6_7104_351), and reported
+    areas far from the flood's. New in the round-2 screen and also carded as T-0177: a false
+    report in seed 9301 scene 2132 (Outside, D12, V90, allowance −0.666, leads off; moves identical
+    to main, the branch reports 3 pieces of about 0.04 mm² where main reports none and the oracle
+    finds none: knife-edge at the 0.04 / 0.05 mm thresholds; repro
+    /home/chris/harness/t0156v2/dump/m1_9301_2132.scn). **Tabs against the T-0135 merge:** the scenes where tabs are fewer
+    than at the T-0135 merge (48 in the verifier's screen) come from later commits (T-0158,
+    T-0140) and are the same on main; against main, in a 123,274-scene screen (seeds 9301–9308, modes 1 and 2, V-bit corners forced,
+    leads on and off) the kept tabs were never fewer in all but one scene, and in 3 scenes the branch
+    keeps more. The exception is seed 9302 scene 2199 (Inside, D6, V120, allowance −1.276, leads off,
+    mode 1): main keeps all 3 tabs, the branch's corner-move tab check leaves 1 out ("1 of 3 tab(s)
+    left out … cut through … at a corner") although the exact oracle finds all 3 holding; no free piece
+    results, so the error is conservative (repro
+    /home/chris/harness/t0156v2/dump/m1_9302_2199.scn; carded as a T-0177 item).
     **Band polygons.** Each stretch's band is one polygon whose winding number is positive exactly
     on the band: the sum of the boundaries of positively wound pieces covering it (a line's
     rectangle along its normals, an arc's annular sector between radii ρ − w and ρ + w or, with
@@ -519,20 +541,18 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     and necks from 1 nm (5) — where a piece joined to another only through a neck under 10 nm
     at a leaf side is split, by design, and a zero-width touch may join or not.
     **Cost (round 3, Release CPU, interleaved with main, alternating order, the T-0140 verifier's
-    pages):** Normal jobs (no loose pieces, 3 to 10 interleaved pairs per page) stay within 10 % of main on every page except 'rect GAP=3 A=0.3 SEP=1', which costs 1.10 to 1.15 (about +0.3 s at 2.6 s for 2,000 shapes and +0.8 s at 5.6 s for 4,000); the director's decision is that the performance exemption covers that page too, as bounded cost for a safety check. Where every shape is loose the check does show: rect +58 to +83 % (1,000 rect: +83 %, +0.035 s), arc +32 to +48 %, row +9 to +15 %. Moves are unchanged (the check only adds messages). Sided tabs keep the
-    region search above unchanged. Measured (T-0140 round 3, whole-scene flood of the moves as in
-    T-0127, leads off, mode 4: 2,000 scenes, 304 free pieces, 303 reported, 0 false reports; mode 5: 2,000 scenes, 934 free pieces, 934 reported; the remaining mismatches are V-bit tools only, which the director excluded from criterion 1 (T-0156 (a))). A V-bit's corner moves, ramps and plunges are not in the band
-    model (the cut paths stand for the moves): they cut less than its full-depth disc at the tab
-    layer, so a reported area can be up to about 20 % smaller than the piece, and they can leave
-    whole pieces unreported (T-0156 (a)). With leads on, leads cut or split some pieces (the known
+    pages):** Normal jobs (no loose pieces, 3 to 10 interleaved pairs per page) stay within 10 % of main on every page except 'rect GAP=3 A=0.3 SEP=1', which costs 1.10 to 1.15 (about +0.3 s at 2.6 s for 2,000 shapes and +0.8 s at 5.6 s for 4,000); the director's decision is that the performance exemption covers that page too, as bounded cost for a safety check. Where every shape is loose the check does show: rect +58 to +83 % (1,000 rect: +83 %, +0.035 s), arc +32 to +48 %, row +9 to +15 %. Moves are unchanged (the check only adds messages). Sided tabs used to keep the
+    region search (T-0156 replaced it by this one). Cost of the replacement (T-0156 verifier, Release, against the region search): sided pages with many close shapes got faster (2,000 rectangles Outside, allowance −0.5, GAP 3: 3.10 s to 0.60 s; 1,000 Bezier shapes On: 0.18 ×; 2,000 arcs On, GAP 3: 0.56 ×), 2,000 rectangles On 1.72 s to 1.56 s, and normal pages stay at 0.99 to 1.05 ×. Measured (T-0140 round 3, whole-scene flood of the moves as in
+    T-0127, leads off, mode 4: 2,000 scenes, 304 free pieces, 303 reported, 0 false reports; mode 5: 2,000 scenes, 934 free pieces, 934 reported; the remaining mismatches were V-bit tools only; T-0156 added the corner moves, below). A V-bit's
+    ramps and plunges are not in the band model (the cut paths stand for the moves): they cut less
+    than its full-depth disc at the tab layer, so a reported area can be up to about 20 % smaller
+    than the piece. With leads on, leads cut or split some pieces (the known
     gap below). Known gaps: leads are not part of this
-    check (a lead crossing the part is a separate issue); with sided tabs, pieces between neighbouring vectors that
-    reach out of the region's box are not seen (also pieces enclosed by open cuts that are not one
-    cluster: a5_770001_273, a5_770001_60, missed by T-0127 too); the cut paths stand for the tool's
+    check (a lead crossing the part is a separate issue); the cut paths stand for the tool's
     moves, so links, plunges and ramps that cut more than the paths are not part of it, and a piece
-    they cut away or split may be reported (m1_881008_35, 713003_20, also in T-0127); the bands carry
-    T-0127's allowance of up to 7 µm over the tab-layer radius, so a piece within about that much of
-    the 0.05 mm thickness threshold can be left out (713004_23: a 0.052 mm² piece); a tab whose two "pieces" in its window
+    they cut away or split may be reported (m1_881008_35, 713003_20, also in T-0127); the bands are
+    2 to 7 µm wider than the cut, so a piece within about that much of the 0.05 mm thickness
+    threshold can be left out (713004_23: a 0.052 mm² piece); a tab whose two "pieces" in its window
     are one piece joined beyond the window (overlapping vectors, scene 401007_36) is kept although
     it holds nothing new (redundant, never severed); and a tab judged on a wider window (above) may join the main pieces beside it yet leave a sliver
     unjoined, which is then reported loose (a2_610000_162: 0.33 mm², 0.072 mm thick). Not a gap but the rule: a tab that leaves a
