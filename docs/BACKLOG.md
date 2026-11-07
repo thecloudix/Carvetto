@@ -642,7 +642,7 @@ Goal: Non-blocking findings from harness t0153v3: (a) holes/slivers thinner than
 Acceptance criteria:
   1. (a) and (d) are reported to the user (diagnostic) or documented in ADR-0025; (c) ≤ 2.5× per doubling; (e) the test checks laterals with a flat depth too; (b) and (f) fixed or documented with reasons.
 
-### T-0165 Profile: collapsed cuts vanish silently; empty walks ordered at the origin (T-0163 coder)   [status: verifying — PASS, PR #70 awaiting CI]
+### T-0165 Profile: collapsed cuts vanish silently; empty walks ordered at the origin (T-0163 coder)   [status: done (#70)]
 Phase: 1   Module: core/toolpath   Depends on: T-0163   ADR: 0016
 Goal: Found by the T-0163 coder. (1) At tiny scale with chordal larger than the vector, a closed roughing offset collapses to one line, then to a point, and the cut disappears with no diagnostic (seg_241_31). (2) A cut whose walk is empty when order() runs (StartAt VectorStart / ClosestOnBoundingBox) enters ordering at (0,0) via pointAt on an empty walk, and adds a (0,0) keep-clear point to other cuts' tab placement. (3) The ASan test build fails under -Werror: carv_storage_residuals_test.cpp:232 peakGrowth unused.
 Acceptance criteria:
@@ -770,7 +770,7 @@ Acceptance criteria:
   3. Selection state changes go through the core `Selection`; no Qt includes (the `viewmodel.qt_free` ctest passes); full ctest.
 Out of scope: dragging/transform tools, node editing, Qt event wiring beyond a click-to-select hook in CanvasWidget with self-test coverage.
 
-### T-0202 File session: open, save, save as, import/export DXF in the app   [status: in progress]
+### T-0202 File session: open, save, save as, import/export DXF in the app   [status: verifying]
 Phase: 1 (Batch B)   Module: app/viewmodel + app/src   Depends on: T-0012, T-0100, T-0060   ADR: 0014
 Goal: The app can open and save `.carv` files, import DXF into the current job (layers kept, units per $INSUNITS with an override), export the selection or whole sheet as DXF, track the dirty state (title bar asterisk, prompt on close/new/open), keep a recent-files list, and report load errors and import warnings in a dialog instead of crashing. Logic in a Qt-free `FileSession` (path, dirty tracking against the undo stack, recent list, title string, error text); Qt layer is menu actions and QFileDialog.
 Acceptance criteria:
@@ -779,7 +779,7 @@ Acceptance criteria:
   3. `carvetto --self-test` exercises open → modify → save → reopen headless; CI Linux + Windows green.
 Out of scope: SVG/EPS/PDF (wave 2), autosave/crash recovery, native file dialogs beyond QFileDialog.
 
-### T-0203 Snapping maths (viewmodel)   [status: in progress]
+### T-0203 Snapping maths (viewmodel)   [status: verifying — PASS, nits back to coder]
 Phase: 1 (Batch B)   Module: app/viewmodel (+ core/geometry helpers if missing)   Depends on: T-0001, T-0002, T-0010   ADR: 0014
 Goal: Qt-free snapping: given a cursor position, the visible objects and settings, return the best snap (kind, world point, source object ids) among endpoint, midpoint, centre, quadrant, intersection (line/arc/Bezier pairs via the core intersection routines), nearest-on-curve, perpendicular, tangent (from a pending start point), grid and user guides, with per-kind enable flags and a pixel tolerance through the view transform. Priority order documented; deterministic on ties. Only candidates near the cursor are examined (spatial index) so large drawings stay interactive.
 Acceptance criteria:
@@ -790,6 +790,7 @@ Out of scope: drawing the snap glyphs (wave 2 canvas overlay), guides UI.
 
 #### Wave 2 stubs (to be carded when wave 1 is done)
 - T-0200 follow-ups (director decisions 2026-11-06, from the coder's report): (1) internally radiused (cove) rectangle corners need a new `CornerStyle` value and a geometry spec from the feature inventory — card after wave 1 if the inventory defines it, else ask the owner; (2) the arc "Exact Size" Height variant (start, end, height) is a small addition to `buildArcStartEndRadius` — card with the arc tool (T-0204).
+- T-0203 follow-ups (verifier t0203v1, director 2026-11-07): (1) very dense drawings: with hundreds of spans inside the 10 px window of every cursor (10k objects in a ~300 mm square) a query takes >10 ms and 20k queries did not finish in 200 s; ordinary drawings are 1-300 us. Bound the per-query work (e.g. cap candidates per kind before the pairwise intersect/perpendicular/tangent search, or cache per-cursor-cell results) in the card that wires snapping into the canvas (T-0204); (2) the documented 256-span cap and 32-samples Bezier root search can silently lose a real snap (confirmed: >256 spans nearer the cursor than a genuine crossing) - acceptable for now, revisit with (1).
 - T-0204 Drawing tool framework + shape tools in the canvas (rectangle, circle, ellipse, polygon, star, arc, polyline/Bezier) — needs T-0200, T-0201, T-0203.
 - T-0205 Transforms: move/scale/rotate/mirror with handles, numeric entry; align and distribute — needs T-0201.
 - T-0206 Node editing (select/move/add/delete nodes, convert line↔curve, smooth/corner) — needs T-0201, T-0203.
