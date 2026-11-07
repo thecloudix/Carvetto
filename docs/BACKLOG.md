@@ -525,7 +525,7 @@ Acceptance criteria:
   1. signedArea (and any orientation/area helper with the same pattern) computed relative to a local origin or compensated, exact to rounding for small contours up to 1e9 mm; generative test vs an exact oracle.
   2. Outputs of Pocket/Profile/Drill/offsets unchanged for normal inputs (hash comparison vs main), changes only where the old area was wrong (explained).
 
-### T-0156 Profile loose pieces: V-bit corner moves, vanished finishing cuts, out-of-box pieces (T-0135 verifier)   [status: verifying — round 2 FAIL on two single scenes (of 123k), accepted as residual by director; docs-only commit then merge]
+### T-0156 Profile loose pieces: V-bit corner moves, vanished finishing cuts, out-of-box pieces (T-0135 verifier)   [status: done (#76; residuals → T-0177)]
 Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §14
 Goal: Pre-existing gaps found by the T-0135 round-3 verifier (harness t0135v3/, vfree.cpp exact oracle): (a) V-bit sharp-corner moves are not in the band model of the loose-piece search or the tab check — m2_1310149_15 leaves a 134 mm² part free with no message and a flood-PARTIAL kept tab (identical on T-0127/main); (b) when a finishing cut vanishes, its roughing loop is never searched (m0_1310036_24, 2.1 mm² slug); (c) pieces lying wholly outside every region box are not found ("#" of four bars, three circles with overlapping kerfs); (d) ADR §14 wording: band sampling allowance is up to ~11 µm for tab-layer radius < 0.0625 mm (not "at most 5 µm"), and bands are 2–7 µm wider than the cut (not "exactly"); (e) second-try tabs can have necks ≈ 0.086 mm (m1_1320038_46) — judge them with margin or document.
 Acceptance criteria:
@@ -657,7 +657,7 @@ Goal: Found by the T-0158 coder. After T-0158, GCC 13 and GCC 15 still choose di
 Acceptance criteria:
   1. Cut start and tab layout identical on GCC 13/15 (and MSVC CI) over the stored harness scenes; the rule documented in ADR-0016 §11; tab safety unchanged (flood oracle); output change rate reported to the owner.
 
-### T-0167 Profile tabs: pre-existing weaknesses exposed by moved starts (T-0158 verifier)   [status: ready]
+### T-0167 Profile tabs: pre-existing weaknesses exposed by moved starts (T-0158 verifier)   [status: in progress]
 Phase: 1   Module: core/toolpath   Depends on: T-0158   ADR: 0016
 Goal: Found by the T-0158 verifier (harness t0158v1, wsf.cpp flood oracle, worse.py). At starts moved by the T-0158 rule the unchanged tab code produces results main never does: m0_291002_11 (VectorStart/Outside) an unreported 0.41 mm² free piece; m0_271016_20 a severed tab (part still held); a4_770001_217 (box centre) a partial tab; random page r101_1_0_42 23 more free pieces. Overall unreported free pieces 720 → 733 across the changed runs. More from the T-0158 round-2 verifier (harness t0158v2 results/worse_attribution.txt, ulpflood_new.txt): m1_1310133_29 (VectorStart/Outside) a newly partial tab at (8.85, 8.60); m2_1330000_9 (V-bit, start at the mitre) both single tabs left out, a 1704 mm² piece comes free with no "comes free" message; m0_271013_1 and m0_271000_0 unreported free pieces. More repros from T-0158 rounds 3–4: harness t0158v3 repro3/mmrg_001_tabs_all_out.scn (V-bit merged region; all 3 tabs left out, a 1372 mm² piece comes free, reported); m1_272009_9 VectorStart Outside variant (merged round region; 7 of 10 tabs hold nothing).
 Acceptance criteria:
@@ -839,7 +839,7 @@ Acceptance criteria:
   3. Performance: trimming 10k spans against 10k boundary spans is near-linear using the box index (documented bound); full ctest; MSVC CI green (no Windows macro identifiers, no locals shadowing C library functions).
 Out of scope: UI/tools, 3D-view variants, Refit Curves beyond what trim needs, curve fit (separate card).
 
-### T-0209 Array, circular and along-vector copies (viewmodel)   [status: verifying]
+### T-0209 Array, circular and along-vector copies (viewmodel)   [status: verifying — round 2]
 Phase: 1 (Batch B, wave 2)   Module: app/viewmodel (+ core/document glue)   Depends on: T-0201, T-0010   ADR: 0014
 Goal: Qt-free operations producing copies of the selected objects as ONE undoable command each, behaviour per the feature inventory ("Array Copy", "Circular Copy", "Copy Along Vectors"): (a) Array: rows and columns, spacing by Gap or Offset X/Y, row/column displacement (alternate offsets), symmetry (block mirror/rotate of alternate cells), group copies option; (b) Circular: rotation centre, rotate-copies option, number of copies, total angle or step angle (negative = counter-clockwise); (c) Along vectors: copy objects or circles (diameter) along a selected open/closed vector at a distance, force even spacing, or a number of copies, align objects to the curve (rotate to the tangent), copies on a new layer, reverse direction. Copies are new objects on the source layer (or the new layer), keep creation params where the transform keeps them parametric (translation, 90-degree rotations) else become plain vectors, respect hidden/locked layers and groups (copy groups whole). Options validated in the viewmodel (`validateArrayOptions` etc.) with messages; huge requests (copy count x span count) are refused before any work. Qt layer: a small dialog per operation reached from the Edit menu (new files + one menu hook).
 Acceptance criteria:
