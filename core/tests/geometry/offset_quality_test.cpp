@@ -77,28 +77,38 @@ double cpuSeconds(double since) {
 
 struct JunctionStats {
     std::size_t junctions{0};
-    std::size_t gaps{0};          // end/start further apart than 1e-12
+    std::size_t gaps{0};          // see checkJunction
     std::size_t notIdentical{0};  // a junction with a line on either side that is not bit-identical
     std::size_t backward{0};      // next span starts behind the previous end, or retraces it
     double maxGap{0.0};
 };
 
-// One junction a -> b: gap and bit-identity. Backward steps are counted per chain by
-// countBackwardSteps (offset_chain_checks.hpp): starting behind the previous end, retracing it
-// (a near-reversal passes only as a needle tip whose sides diverge), and short spans that run
-// against both neighbours.
+// One junction a -> b: gap and bit-identity. A gap is a junction with a line on either side that
+// is not bit-identical, or an arc-arc junction further apart than the documented bound,
+// 1e-12 x max(1, |x|, |y|, radius) mm (offset.hpp "Junctions"; T-0172: an absolute 1e-12
+// tripped under sin/cos 1-4 ulps off glibc's, e.g. 1.4e-11 mm between arcs of radius ~50, as
+// MSVC's may be). notIdentical counts the junctions with a line that are not bit-identical
+// on their own. Backward steps are counted per chain by countBackwardSteps
+// (offset_chain_checks.hpp): starting behind the previous end, retracing it (a near-reversal
+// passes only as a needle tip whose sides diverge), and short spans that run against both
+// neighbours.
 void checkJunction(const Span& a, const Span& b, JunctionStats& st) {
     ++st.junctions;
     const Vec2 e = endPoint(a);
     const Vec2 s = startPoint(b);
     const double gap = distance(e, s);
     st.maxGap = std::max(st.maxGap, gap);
-    if (gap > 1e-12) {
-        ++st.gaps;
-    }
     const bool lineSide = std::holds_alternative<LineSpan>(a) || std::holds_alternative<LineSpan>(b);
-    if (lineSide && !(e == s)) {
-        ++st.notIdentical;
+    if (lineSide) {
+        if (!(e == s)) {
+            ++st.gaps;
+            ++st.notIdentical;
+        }
+        return;
+    }
+    const double r = std::max(std::get<ArcSpan>(a).radius, std::get<ArcSpan>(b).radius);
+    if (gap > 1e-12 * std::max({1.0, std::fabs(e.x), std::fabs(e.y), r})) {
+        ++st.gaps;
     }
 }
 
@@ -747,7 +757,8 @@ TEST_CASE("T-0006 AC3: junctions are shared exactly in typical toolpath shapes",
     }
 }
 
-TEST_CASE("T-0006 AC3 generative: no gap above 1e-12 and no backward step over 20k offsets",
+TEST_CASE("T-0006 AC3 generative: no junction gap beyond the documented bounds and no backward step over 20k "
+          "offsets",
           "[geometry][offset][open][t0006][generative]") {
     JunctionStats st;
     std::size_t offsets = 0;
@@ -2824,9 +2835,59 @@ double ulpSteps(double v, int k) {
     return v;
 }
 
+// Makes a closed loop of arcs bit-continuous by nudging each arc's centre and radius a few ulps
+// onto the previous end and the last arc's end angle onto the first start; false where that does
+// not succeed. With `keepExact`, a junction that is already exact is left alone, so a loop given
+// with literal centres and angles that is continuous with one platform's sin/cos stays
+// bit-identical there and is made continuous with another's (T-0172: the T-0017 repro loops below
+// were continuous only with glibc's, and their REQUIRE failed with sin/cos 1-4 ulps off, as
+// MSVC's may be).
+bool makeArcLoopContinuous(Contour& c, bool keepExact) {
+    const std::size_t n = c.spans.size();
+    for (std::size_t i = 1; i < n; ++i) {
+        const Vec2 j = endPoint(c.spans[i - 1]);
+        auto& arc = std::get<ArcSpan>(c.spans[i]);
+        if (keepExact && arc.startPoint() == j) {
+            continue;
+        }
+        ArcSpan base = arc;
+        base.centre = j - Vec2::fromAngle(arc.startAngle, arc.radius);
+        bool hit = base.startPoint() == j;
+        ArcSpan found = base;
+        for (int dr = -4; dr <= 4 && !hit; ++dr) {
+            for (int dx = -4; dx <= 4 && !hit; ++dx) {
+                for (int dy = -4; dy <= 4 && !hit; ++dy) {
+                    found = base;
+                    found.radius = ulpSteps(base.radius, dr);
+                    found.centre = Vec2{ulpSteps(base.centre.x, dx), ulpSteps(base.centre.y, dy)};
+                    hit = found.startPoint() == j;
+                }
+            }
+        }
+        if (!hit) {
+            return false;
+        }
+        arc = found;
+    }
+    const Vec2 j0 = startPoint(c.spans[0]);
+    auto& last = std::get<ArcSpan>(c.spans[n - 1]);
+    if (keepExact && last.endPoint() == j0) {
+        return true;
+    }
+    const double e0 = last.endAngle + std::remainder((j0 - last.centre).angle() - last.endAngle, 2.0 * kPi);
+    for (int k = -64; k <= 64; ++k) {
+        ArcSpan t = last;
+        t.endAngle = ulpSteps(e0, k);
+        if (t.endPoint() == j0) {
+            last = t;
+            return true;
+        }
+    }
+    return false;
+}
+
 // A closed loop of arcs through `pts` (sweeps in `sweeps`, signed: > 0 CCW), made bit-continuous
-// by nudging each arc's centre and radius a few ulps onto the previous end and the last arc's
-// end angle onto the first start. Empty where that does not succeed.
+// (makeArcLoopContinuous). Empty where that does not succeed.
 std::optional<Contour> continuousArcLoop(const std::vector<Vec2>& pts, const std::vector<double>& sweeps) {
     Contour c;
     c.closed = true;
@@ -2844,40 +2905,10 @@ std::optional<Contour> continuousArcLoop(const std::vector<Vec2>& pts, const std
         c.spans.emplace_back(ArcSpan{centre, r, (p0 - centre).angle(), (p1 - centre).angle(),
                                      sw > 0.0 ? ArcDirection::CCW : ArcDirection::CW});
     }
-    for (std::size_t i = 1; i < n; ++i) {
-        const Vec2 j = endPoint(c.spans[i - 1]);
-        auto& arc = std::get<ArcSpan>(c.spans[i]);
-        ArcSpan base = arc;
-        base.centre = j - Vec2::fromAngle(arc.startAngle, arc.radius);
-        bool hit = base.startPoint() == j;
-        ArcSpan found = base;
-        for (int dr = -4; dr <= 4 && !hit; ++dr) {
-            for (int dx = -4; dx <= 4 && !hit; ++dx) {
-                for (int dy = -4; dy <= 4 && !hit; ++dy) {
-                    found = base;
-                    found.radius = ulpSteps(base.radius, dr);
-                    found.centre = Vec2{ulpSteps(base.centre.x, dx), ulpSteps(base.centre.y, dy)};
-                    hit = found.startPoint() == j;
-                }
-            }
-        }
-        if (!hit) {
-            return std::nullopt;
-        }
-        arc = found;
+    if (!makeArcLoopContinuous(c, false)) {
+        return std::nullopt;
     }
-    const Vec2 j0 = startPoint(c.spans[0]);
-    auto& last = std::get<ArcSpan>(c.spans[n - 1]);
-    const double e0 = last.endAngle + std::remainder((j0 - last.centre).angle() - last.endAngle, 2.0 * kPi);
-    for (int k = -64; k <= 64; ++k) {
-        ArcSpan t = last;
-        t.endAngle = ulpSteps(e0, k);
-        if (t.endPoint() == j0) {
-            last = t;
-            return c;
-        }
-    }
-    return std::nullopt;
+    return c;
 }
 
 }  // namespace
@@ -2899,6 +2930,7 @@ TEST_CASE("T-0017: closed loops of arcs only never step back far from the origin
                                       -2.9453011998537355, -0.96720173187117575, ArcDirection::CCW});
         in.spans.emplace_back(ArcSpan{{9968.5842862924146, -7997.747088651955}, 35.090437701744214,
                                       -0.30308470313606828, 0.17869817934407367, ArcDirection::CCW});
+        REQUIRE(makeArcLoopContinuous(in, true));  // already continuous with glibc's sin/cos
         for (std::size_t i = 0; i < 3; ++i) {
             REQUIRE(endPoint(in.spans[i]) == startPoint(in.spans[(i + 1) % 3]));
         }
@@ -2979,18 +3011,19 @@ TEST_CASE("T-0017: a closed loop of arcs is closed from another arc where the fi
     auto arc = [&](double cx, double cy, double r, double sa, double ea, ArcDirection dir) {
         in.spans.emplace_back(ArcSpan{{cx, cy}, r, sa, ea, dir});
     };
-        arc(30000.180913933084, 70000.253272835995, 0.31824608042059538,
-            -1.1191829023721562, 0.33503067533139391, ccw);
-        arc(30000.179649078265, 70000.178564530011, 0.35108199884117636,
-            0.5361626033054907, 2.4588088149956593, ccw);
-        arc(30001.003447359588, 69999.410283359888, 1.4769221008991804,
-            2.4071463537549498, 2.7171557266167103, ccw);
-        arc(29999.686043219965, 69999.892209663405, 0.12945151686999248,
-            1.7925509700410036, -0.77176575536161041, cw);
-        arc(30006.382976843193, 70017.829718138557, 19.199376387476235,
-            -1.9219462091717359, -1.9003792319706851, ccw);
-        arc(30000.186626543051, 69999.844057065886, 0.18120207731024246,
-            -1.6675096977127655, 0.74519387427812267, ccw);
+    arc(30000.180913933084, 70000.253272835995, 0.31824608042059538,
+        -1.1191829023721562, 0.33503067533139391, ccw);
+    arc(30000.179649078265, 70000.178564530011, 0.35108199884117636,
+        0.5361626033054907, 2.4588088149956593, ccw);
+    arc(30001.003447359588, 69999.410283359888, 1.4769221008991804,
+        2.4071463537549498, 2.7171557266167103, ccw);
+    arc(29999.686043219965, 69999.892209663405, 0.12945151686999248,
+        1.7925509700410036, -0.77176575536161041, cw);
+    arc(30006.382976843193, 70017.829718138557, 19.199376387476235,
+        -1.9219462091717359, -1.9003792319706851, ccw);
+    arc(30000.186626543051, 69999.844057065886, 0.18120207731024246,
+        -1.6675096977127655, 0.74519387427812267, ccw);
+    REQUIRE(makeArcLoopContinuous(in, true));  // already continuous with glibc's sin/cos
     for (std::size_t i = 0; i < in.spans.size(); ++i) {
         REQUIRE(endPoint(in.spans[i]) == startPoint(in.spans[(i + 1) % in.spans.size()]));
     }

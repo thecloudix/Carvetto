@@ -1,12 +1,14 @@
 // T-0128: open offsets keep the path of narrow loops and needles (a tool centre still runs along
 // them) and do not cross themselves at reversal cusps. Round 2: the recovery is near-linear in the
 // number of stretches put back, an isolated stray shorter than 10 x the tolerance is not returned
-// (owner decision 2026-11-05), and the regression seeds of ADR-0012 A3 are tests.
+// (owner decision 2026-11-05), and the regression seeds of ADR-0012 A3 are tests. T-0172 (end of
+// file): long strays stay whole, and the rules the T-0128 verifiers' mutants showed untested.
 
 #include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <limits>
 #include <string>
 #include <variant>
@@ -15,6 +17,7 @@
 #include "carvetto/geometry/intersect.hpp"
 #include "carvetto/geometry/offset.hpp"
 #include "offset_chain_checks.hpp"
+#include "offset_junction.hpp"
 // Last: on Windows it includes <windows.h> (macros such as near/far/small).
 #include "cpu_scaling.hpp"
 
@@ -86,12 +89,15 @@ int uncovered(const std::vector<Contour>& chains, Vec2 a, Vec2 b) {
 // No span of a chain crosses or touches another one, except adjacent spans at their junction and
 // spans at most three apart touching at a junction between them (the bridge of about g between two
 // Round arcs whose circles miss each other by g, ADR-0012 A1; as the T-0017 verifiers' checker).
-// A second crossing of two adjacent spans counts only when it stands off their junction by more
-// than rounding: distance x sine of the crossing angle above 100 rounding units of the coordinates
-// and lengths, the bound removeCuspLoops uses (offset.hpp, ADR-0012 A3 (e)). Below it the spans
-// are tangent at the junction to rounding (two circles that touch: their computed circles overlap
-// or miss by ~1e-16 mm, and where they "cross" moves by ~1e-8 mm with the last bit of a radius or
-// an angle, so it differs between platforms' libm, e.g. MSVC against glibc at g = 0 below).
+// A second crossing of two adjacent spans at a reversal junction (turning back by more than a
+// right angle), within the tolerance of the junction along both, counts only when it stands off
+// the junction by more than rounding: distance x sine of the crossing angle above 100 rounding
+// units of the coordinates and lengths. These are exactly the crossings removeCuspLoops leaves
+// (offset.hpp, ADR-0012 A3 (e); T-0172: the filter applied to every adjacent pair before). Below
+// the bound the spans are tangent at the junction to rounding (two circles that touch: their
+// computed circles overlap or miss by ~1e-16 mm, and where they "cross" moves by ~1e-8 mm with the
+// last bit of a radius or an angle, so it differs between platforms' libm, e.g. MSVC against
+// glibc at g = 0 below).
 std::size_t countSelfCrossings(const std::vector<Contour>& chains) {
     const Tolerance exact{1e-9, 1e-9, 0.01};
     const double eps = std::numeric_limits<double>::epsilon();
@@ -116,20 +122,25 @@ std::size_t countSelfCrossings(const std::vector<Contour>& chains) {
                     }
                     bool noise = false;
                     if (next || wrap) {
-                        const double sine =
-                            std::fabs(tangentAt(c.spans[i], x.tA).cross(tangentAt(c.spans[j], x.tB)));
-                        const double unit = eps * std::max({1.0, std::fabs(x.point.x), std::fabs(x.point.y),
-                                                             length(c.spans[i]), length(c.spans[j])});
-                        std::vector<Vec2> junctions;
-                        if (next) {
-                            junctions.push_back(endPoint(c.spans[i]));
-                        }
-                        if (wrap) {
-                            junctions.push_back(startPoint(c.spans[i]));
-                        }
-                        for (const Vec2 jn : junctions) {
-                            noise = noise || distance(x.point, jn) * sine <= 100.0 * unit;
-                        }
+                        const Span& si = c.spans[i];
+                        const Span& sj = c.spans[j];
+                        const double li = length(si);
+                        const double lj = length(sj);
+                        const double sine = std::fabs(tangentAt(si, x.tA).cross(tangentAt(sj, x.tB)));
+                        const double unit =
+                            eps * std::max({1.0, std::fabs(x.point.x), std::fabs(x.point.y), li, lj});
+                        // A junction from span `from` (ending, crossing at tFrom) to span `to`
+                        // (starting, crossing at tTo), as removeCuspLoops sees it.
+                        auto cuspNoise = [&](const Span& from, double tFrom, double lFrom, const Span& to,
+                                             double tTo, double lTo) {
+                            const bool reversal = tangentAt(from, 1.0).dot(tangentAt(to, 0.0)) < 0.0;
+                            const bool withinTol =
+                                (1.0 - tFrom) * lFrom <= kTol.distance && tTo * lTo <= kTol.distance;
+                            return reversal && withinTol &&
+                                   distance(x.point, startPoint(to)) * sine <= 100.0 * unit;
+                        };
+                        noise = (next && cuspNoise(si, x.tA, li, sj, x.tB, lj)) ||
+                                (wrap && cuspNoise(sj, x.tB, lj, si, x.tA, li));
                     }
                     if (!atJunction && !nearJunction && !noise) {
                         ++count;
@@ -948,6 +959,88 @@ TEST_CASE("T-0128: strays are put back only where no chain covers them (fam4 0x2
     }
 }
 
+TEST_CASE("T-0172 (b): strays crowded next to a far feature are put back exactly where they are uncovered",
+          "[geometry][offset][open][t0172]") {
+    // One far feature stretches step 7's grids so that everything else crowds one cell: the boxes
+    // beyond kMaxPerCell go to the BoxIndex's tree, so the tree must answer for both the chains
+    // (mutant: chains in the tree not queried) and the strays put back (mutant: strays in the tree
+    // not queried).
+    {
+        // A hatch at pitch 2d (100 lines 10 mm long) and a U channel 2d wide at (1e5, 1e5), Left:
+        // every middle above a line run left to right is put back from tol / 2 past the U turn's
+        // arc to where the next U turn covers it, as without the far channel (where all boxes are
+        // in the grid); not over the arcs (5e-4 mm longer).
+        const double d = 0.05;
+        std::vector<Vec2> pts;
+        for (int i = 0; i < 100; ++i) {
+            const double y = 2.0 * d * i;
+            pts.push_back(i % 2 == 0 ? Vec2{0, y} : Vec2{10, y});
+            pts.push_back(i % 2 == 0 ? Vec2{10, y} : Vec2{0, y});
+        }
+        auto middles = [&](const std::vector<Vec2>& in) {
+            std::vector<LineSpan> found;
+            const Contour path = polyline(in, false);
+            for (const Contour& c : offsetOpenContour(path, d, OffsetSide::Left, JoinType::Round, kTol)) {
+                const auto* line = c.spans.size() == 1 ? std::get_if<LineSpan>(&c.spans[0]) : nullptr;
+                if (line != nullptr && line->start.y == line->end.y && line->start.x < 100.0) {
+                    found.push_back(*line);
+                }
+            }
+            return found;
+        };
+        const std::vector<LineSpan> alone = middles(pts);
+        const double w = 2 * d;
+        for (const Vec2 p : {Vec2{1e5, 1e5}, Vec2{1e5 + 5, 1e5}, Vec2{1e5 + 5, 1e5 + w},
+                             Vec2{1e5, 1e5 + w}}) {
+            pts.push_back(p);
+        }
+        const std::vector<LineSpan> crowded = middles(pts);
+        CHECK(alone.size() == 50);
+        REQUIRE(crowded.size() == alone.size());
+        // The last one meets the far channel's connector, which changes it (by 7e-9 mm with
+        // glibc's sin/cos, up to tol / 2 with others).
+        for (std::size_t i = 0; i + 1 < alone.size(); ++i) {
+            CAPTURE(alone[i].start.y);
+            CHECK(distance(crowded[i].start, alone[i].start) < 1e-6);
+            CHECK(distance(crowded[i].end, alone[i].end) < 1e-6);
+        }
+    }
+    {
+        // Six copies of fam4 0x2a0006b4's slot 50 mm apart and a U channel at (1e6, 1e6): the
+        // floors' strays are put back one by one, each only where those before it leave it
+        // uncovered, so neighbours meet but never run along each other.
+        const SeedCase c = fam4_2a0006b4();
+        Contour in;
+        for (int k = 0; k < 6; ++k) {
+            const Vec2 shift{0.0, 50.0 * k};
+            for (const Span& s : c.in.spans) {
+                const auto& l = std::get<LineSpan>(s);
+                if (!in.spans.empty() && endPoint(in.spans.back()) != l.start + shift) {
+                    in.spans.emplace_back(LineSpan{endPoint(in.spans.back()), l.start + shift});
+                }
+                in.spans.emplace_back(LineSpan{l.start + shift, l.end + shift});
+            }
+        }
+        const double w = 2 * c.d;
+        Vec2 at = endPoint(in.spans.back());
+        for (const Vec2 p : {Vec2{1e6, 1e6}, Vec2{1e6 + 5, 1e6}, Vec2{1e6 + 5, 1e6 + w},
+                             Vec2{1e6, 1e6 + w}}) {
+            in.spans.emplace_back(LineSpan{at, p});
+            at = p;
+        }
+        for (const JoinType join : kJoins) {
+            CAPTURE(static_cast<int>(join));
+            const std::vector<Contour> chains =
+                offsetOpenContour(in, c.d, OffsetSide::Left, join, kTol, c.mitre);
+            CHECK(countOverlaps(chains, 1e-6) == 0);
+            for (int k = 0; k < 6; ++k) {
+                const double y = 10000.0 + c.d + 50.0 * k;
+                CHECK(uncovered(chains, {-10001.5, y}, {-9999.0, y}) == 0);
+            }
+        }
+    }
+}
+
 TEST_CASE("T-0128: ADR-0012 A3 regression seeds keep the toolpath rules (fam5)",
           "[geometry][offset][open][t0128]") {
     // Found on intermediate versions of T-0128 (ADR-0012 A3): 0x2a500001 and 0x2a5000a6 (a loop's
@@ -999,4 +1092,807 @@ TEST_CASE("T-0128: putting strays back is near-linear in their number (hatch at 
     if constexpr (kRelease) {
         CHECK(t.largeSeconds < 0.25 * kAbsSlack);
     }
+}
+
+// --- T-0172: stray recovery follow-ups ----------------------------------------------------------
+
+namespace {
+
+// Deterministic on every platform (no <random> distributions).
+struct Lcg {
+    std::uint64_t state;
+    double uniform(double lo, double hi) {
+        state = state * 6364136223846793005ULL + 1442695040888963407ULL;
+        return lo + (hi - lo) * static_cast<double>(state >> 11) * (1.0 / 9007199254740992.0);
+    }
+};
+
+double chainLength(const Contour& c) {
+    double len = 0.0;
+    for (const Span& s : c.spans) {
+        len += length(s);
+    }
+    return len;
+}
+
+}  // namespace
+
+TEST_CASE("T-0172 (a): a stray of more than 512 spans comes back whole, no span dropped",
+          "[geometry][offset][open][t0128][t0172]") {
+    // A channel exactly 2d wide whose walls are polylines of M unit segments (a finely segmented
+    // DXF slot): the walls' offsets run both ways along the middle and are put back as one stray of
+    // ~M spans. T-0128 returned a stray of more than 512 spans as one chain per span (Profile cut
+    // each separately: one plunge per mm) and dropped its spans no longer than the tolerance.
+    const double d = 1.0;
+    const int M = 600;
+    for (const bool closed : {false, true}) {
+        std::vector<Vec2> pts;
+        for (int i = 0; i <= M; ++i) {
+            pts.push_back({static_cast<double>(i), 0.0});
+        }
+        if (closed) {
+            pts.push_back({M + 2 * d, 0.0});
+            pts.push_back({M + 2 * d, 2 * d});
+        }
+        for (int i = M; i >= 0; --i) {
+            pts.push_back({static_cast<double>(i), 2 * d});
+        }
+        if (closed) {
+            pts.push_back({-2 * d, 2 * d});
+            pts.push_back({-2 * d, 0.0});
+        }
+        const Contour in = polyline(pts, closed);
+        for (const JoinType join : kJoins) {
+            CAPTURE(closed, static_cast<int>(join));
+            const std::vector<Contour> chains = offsetOpenContour(in, d, OffsetSide::Left, join, kTol, 2.0);
+            std::size_t along = 0;
+            double len = 0.0;
+            for (const Contour& c : chains) {
+                const bool onMiddle = std::all_of(c.spans.begin(), c.spans.end(), [&](const Span& s) {
+                    return std::fabs(startPoint(s).y - d) <= 1e-9 && std::fabs(endPoint(s).y - d) <= 1e-9;
+                });
+                if (!onMiddle) {
+                    continue;
+                }
+                ++along;
+                len += chainLength(c);
+                for (std::size_t k = 1; k < c.spans.size(); ++k) {
+                    CHECK(endPoint(c.spans[k - 1]) == startPoint(c.spans[k]));
+                }
+            }
+            CHECK(along >= 1);
+            CHECK(along <= static_cast<std::size_t>((M + 511) / 512));
+            CHECK(len >= M - 1.0 - 1e-9);
+            CHECK(uncovered(chains, {0.05, d}, {M - 1.05, d}) == 0);
+        }
+    }
+}
+
+namespace {
+
+// The pairwise test selfCrossingCuts replaced, applied greedily: a new part starts at the first
+// span that meets (detail::spansMeet: carrierIntersections + inUnit) an earlier span of its part
+// other than its neighbour.
+std::vector<std::size_t> greedyCuts(const std::vector<Span>& spans) {
+    std::vector<std::size_t> cuts;
+    std::size_t from = 0;
+    for (std::size_t i = 0; i < spans.size(); ++i) {
+        bool hit = false;
+        for (std::size_t j = from; j + 2 <= i && !hit; ++j) {
+            hit = detail::spansMeet(spans[j], spans[i]);
+        }
+        if (hit) {
+            cuts.push_back(i);
+            from = i;
+        }
+    }
+    return cuts;
+}
+
+// A spiral of n line spans (never meets itself).
+std::vector<Span> lineSpiral(int n) {
+    std::vector<Span> spans;
+    Vec2 prev{1.0, 0.0};
+    for (int i = 1; i <= n; ++i) {
+        const double a = 0.05 * i;
+        const Vec2 q = Vec2::fromAngle(a, 1.0 + 0.02 * a);
+        spans.emplace_back(LineSpan{prev, q});
+        prev = q;
+    }
+    return spans;
+}
+
+// A spiral of n line spans 0.05 long at pitch 0.2 (never meets itself; each span's box meets only
+// its neighbours').
+std::vector<Span> evenSpiral(int n) {
+    std::vector<Span> spans;
+    const double pitch = 0.2 / (2.0 * kPi);
+    double angle = 0.0;
+    Vec2 prev{1.0, 0.0};
+    for (int i = 0; i < n; ++i) {
+        angle += 0.05 / (1.0 + pitch * angle);
+        const Vec2 q = Vec2::fromAngle(angle, 1.0 + pitch * angle);
+        spans.emplace_back(LineSpan{prev, q});
+        prev = q;
+    }
+    return spans;
+}
+
+// A strand going back and forth along one line, span lengths log-uniform over 1e-6..10 (the
+// T-0172 round-1 verifier's sxbf: collinear nested boxes; parallel lines never meet).
+std::vector<Span> backAndForth(int n, std::uint64_t seed) {
+    Lcg rng{seed};
+    std::vector<Span> spans;
+    double x = 0.0;
+    for (int i = 0; i < n; ++i) {
+        const double len = std::exp(rng.uniform(std::log(1e-6), std::log(10.0)));
+        const double next = i % 2 == 0 ? x + len : x - len;
+        spans.emplace_back(LineSpan{{x, 0.0}, {next, 0.0}});
+        x = next;
+    }
+    return spans;
+}
+
+// The box of `s` grown by detail::meetReach.
+Box2 reachBox(const Span& s) {
+    return bounds(s).inflated(detail::meetReach(s));
+}
+
+}  // namespace
+
+TEST_CASE("T-0172 (a): a strand is cut where it would cross itself, as by the pairwise test",
+          "[geometry][offset][open][t0172]") {
+    // detail::selfCrossingCuts (the step-7 and loop-strand check) against the pairwise test it
+    // replaced, on random strands of lines and arcs.
+    Lcg rng{0x7172u};
+    for (int trial = 0; trial < 60; ++trial) {
+        std::vector<Span> spans;
+        const double scale = trial % 3 == 0 ? 1.0 : (trial % 3 == 1 ? 1e-3 : 1e3);
+        const Vec2 shift = trial % 4 == 0 ? Vec2{3e5, -2e5} : Vec2{0, 0};
+        auto at = [&](double x, double y) { return shift + Vec2{x, y} * scale; };
+        Vec2 p = at(rng.uniform(-5, 5), rng.uniform(-5, 5));
+        const int n = 3 + trial;
+        for (int i = 0; i < n; ++i) {
+            const Vec2 q = at(rng.uniform(-5, 5), rng.uniform(-5, 5));
+            if (rng.uniform(0, 1) < 0.3) {
+                const double sweep = rng.uniform(0.3, 2.0);
+                const Vec2 chord = q - p;
+                const double r = chord.length() / (2.0 * std::sin(0.5 * sweep));
+                const double h = std::sqrt(r * r - 0.25 * chord.lengthSquared());
+                const Vec2 centre = (p + q) * 0.5 + chord.perp() / chord.length() * h;
+                ArcSpan arc{centre, r, (p - centre).angle(), (q - centre).angle(), ArcDirection::CCW};
+                arc.centre = p - Vec2::fromAngle(arc.startAngle, r);  // starts exactly at p
+                spans.emplace_back(arc);
+                p = arc.endPoint();
+            } else {
+                spans.emplace_back(LineSpan{p, q});
+                p = q;
+            }
+        }
+        CAPTURE(trial);
+        CHECK(detail::selfCrossingCuts(spans) == greedyCuts(spans));
+    }
+    // Crossings far back along the strand: a spiral, then chords back across it.
+    for (const int turns : {40, 300}) {
+        std::vector<Span> spans = lineSpiral(turns);
+        const Vec2 end = endPoint(spans.back());
+        spans.emplace_back(LineSpan{end, {-0.3, 0.2}});
+        spans.emplace_back(LineSpan{{-0.3, 0.2}, {3.0, 3.5}});
+        spans.emplace_back(LineSpan{{3.0, 3.5}, {-4.0, 0.1}});
+        const std::vector<std::size_t> expected = greedyCuts(spans);
+        CAPTURE(turns);
+        REQUIRE_FALSE(expected.empty());
+        CHECK(expected.front() >= static_cast<std::size_t>(turns));
+        CHECK(detail::selfCrossingCuts(spans) == expected);
+    }
+    // Strands that cross themselves again and again: cut after cut, each part tested afresh.
+    std::vector<Span> zig;
+    for (int i = 0; i < 200; ++i) {
+        const double x = 0.37 * i;
+        zig.emplace_back(LineSpan{{x, i % 2 ? 1.0 : -1.0}, {x + 1.5, i % 2 ? -1.0 : 1.0}});
+        zig.emplace_back(LineSpan{{x + 1.5, i % 2 ? -1.0 : 1.0}, {x + 0.37, i % 2 ? -1.0 : 1.0}});
+    }
+    const std::vector<std::size_t> zigCuts = greedyCuts(zig);
+    CHECK(zigCuts.size() > 50);
+    CHECK(detail::selfCrossingCuts(zig) == zigCuts);
+}
+
+TEST_CASE("T-0172 (a): near-tangent spans meet in the self-crossing cuts exactly as in the pairwise test",
+          "[geometry][offset][open][t0172]") {
+    // carrierIntersections treats near-tangent carriers as touching: circles up to 1e-9 mm apart
+    // (outside or inside), a line up to 1.25e-10 x r beyond a circle, plus the rounding of its
+    // discriminant's cancellation (a long line by a small circle). selfCrossingCuts tests only
+    // spans whose boxes, grown by detail::meetReach, meet, so every pair spansMeet accepts must
+    // have such boxes meeting (round 1 grew them by inUnit's slack only and missed an arc 5e-10
+    // mm from another).
+    const double pi = 3.14159265358979323846;
+    auto probe = [&](const Span& a, const Span& b) {
+        const bool meets = detail::spansMeet(a, b);
+        // As a strand: the two spans are not neighbours (a far line between them).
+        const std::vector<Span> strand{a, LineSpan{{-7e5, 9e5}, {-7e5 + 1, 9e5}}, b};
+        CHECK(detail::selfCrossingCuts(strand).empty() == !meets);
+        if (meets) {
+            CHECK(reachBox(a).intersects(reachBox(b)));
+        }
+        return meets;
+    };
+    // Hand-made pairs at gaps up to and beyond the tolerances, at the origin and far from it: arcs
+    // of radius r touching (outside, inside) at gaps up to 1e-9 mm whatever r, a line touching a
+    // circle of radius R up to 1.25e-10 x R beyond it.
+    for (const Vec2 o : {Vec2{0, 0}, Vec2{1.2e4, -3e4}, Vec2{-3e5, 2e5}}) {
+        for (const double gap : {0.0, 1e-11, 1e-10, 5e-10, 9e-10, 1.2e-9, 3e-9}) {
+            for (const double r : {1.0, 1e-3}) {
+                CAPTURE(o.x, gap, r);
+                const ArcSpan top{o, r, pi / 2 - 1e-3, pi / 2 + 1e-3, ArcDirection::CCW};
+                // Outside, tangent at the top.
+                const ArcSpan above{o + Vec2{0, 2 * r + gap}, r, -pi / 2 - 1e-3, -pi / 2 + 1e-3,
+                                    ArcDirection::CCW};
+                const bool outside = probe(top, above);
+                // Inside, tangent at the top.
+                const ArcSpan within{o + Vec2{0, 0.5 * r - gap}, 0.5 * r, pi / 2 - 1e-3, pi / 2 + 1e-3,
+                                     ArcDirection::CCW};
+                const bool inside = probe(top, within);
+                if (o.x == 0.0) {
+                    CHECK(outside == (gap <= 1e-9));
+                    CHECK(inside == (gap <= 1e-9));
+                }
+            }
+            for (const double R : {10.0, 1e3}) {
+                CAPTURE(o.x, gap, R);
+                const double g = gap * R / 10.0;
+                // A line above a circle of radius R.
+                const bool line = probe(ArcSpan{o, R, pi / 2 - 1e-3, pi / 2 + 1e-3, ArcDirection::CCW},
+                                        LineSpan{o + Vec2{-0.005, R + g}, o + Vec2{0.005, R + g}});
+                if (o.x == 0.0) {
+                    CHECK(line == (gap <= 1.2e-9));
+                }
+            }
+        }
+    }
+    // Random near-tangent pairs: arcs outside or inside each other, lines by circles (long lines
+    // by small circles too), lines meeting end to end, over scales and positions.
+    Lcg rng{0x7A26u};
+    int positives = 0;
+    int nearMisses = 0;
+    int noisy = 0;
+    for (int k = 0; k < 48000; ++k) {
+        auto logu = [&](double lo, double hi) { return std::exp(rng.uniform(std::log(lo), std::log(hi))); };
+        const double farAway = k % 3 == 0 ? 0.0 : (k % 3 == 1 ? 1e3 : 2e5);
+        const Vec2 c1{rng.uniform(-1, 1) * farAway, rng.uniform(-1, 1) * farAway};
+        const double r1 = logu(1e-3, 1e4);
+        const double angle = rng.uniform(0, 2 * pi);
+        const Vec2 u = Vec2::fromAngle(angle, 1.0);
+        const double g = (rng.uniform(0, 1) < 0.5 ? -1.0 : 1.0) * logu(1e-14, 3e-9);
+        const double sweep = logu(1e-6, 1.0);
+        auto arcAbout = [&](Vec2 c, double r, double a, ArcDirection dir) {
+            const double s0 = rng.uniform(0.0, sweep);
+            return dir == ArcDirection::CCW ? ArcSpan{c, r, a - s0, a - s0 + sweep, dir}
+                                            : ArcSpan{c, r, a + s0, a + s0 - sweep, dir};
+        };
+        const ArcDirection d1 = rng.uniform(0, 1) < 0.5 ? ArcDirection::CCW : ArcDirection::CW;
+        const ArcDirection d2 = rng.uniform(0, 1) < 0.5 ? ArcDirection::CCW : ArcDirection::CW;
+        Span a = arcAbout(c1, r1, angle, d1);
+        Span b;
+        switch (k % 6) {
+            case 0: {  // outside
+                const double r2 = logu(1e-3, 1e4);
+                b = arcAbout(c1 + u * (r1 + r2 + g), r2, angle + pi, d2);
+                break;
+            }
+            case 1: {  // inside (the second circle within the first)
+                const double r2 = r1 * rng.uniform(0.0, 1.0);
+                const double dist = std::max(1e-12 * logu(1.0, 1e3), r1 - r2 - g);
+                b = arcAbout(c1 + u * dist, r2, angle, d2);
+                break;
+            }
+            case 2:
+            case 3: {  // a line by the circle, at r + g or r (1 + g'), up to 1e4 mm long
+                const double h = k % 6 == 2 ? r1 + g : r1 * (1.0 + g / 3e-9 * 1.5e-10);
+                const Vec2 foot = c1 + u * h;
+                const double len = logu(1e-3, 1e4);
+                const double t0 = rng.uniform(-1.05, 0.05);
+                const Vec2 dir = u.perp();
+                b = LineSpan{foot + dir * (t0 * len), foot + dir * ((t0 + 1.0) * len)};
+                break;
+            }
+            case 4: {  // a long line by a small circle, gap up to 1e-3 mm: the discriminant's rounding
+                const double r = logu(1e-4, 1.0);
+                a = arcAbout(c1, r, angle, d1);
+                const Vec2 foot = c1 + u * (r + logu(1e-13, 1e-3));
+                const double len = logu(1.0, 1e4);
+                const double t0 = rng.uniform(-1.0, 0.0);
+                b = LineSpan{foot + u.perp() * (t0 * len), foot + u.perp() * ((t0 + 1.0) * len)};
+                break;
+            }
+            default: {  // lines meeting (or nearly) end to end
+                const Vec2 p = c1 + u * r1;
+                a = LineSpan{p - Vec2::fromAngle(rng.uniform(0, 2 * pi), logu(1e-3, 1e3)), p};
+                const Vec2 q = p + Vec2::fromAngle(rng.uniform(0, 2 * pi), g);
+                b = LineSpan{q, p + Vec2::fromAngle(rng.uniform(0, 2 * pi), logu(1e-3, 1e3))};
+                break;
+            }
+        }
+        CAPTURE(k);
+        if (probe(a, b)) {
+            ++positives;
+            const Box2 ba = bounds(a);
+            const Box2 bb = bounds(b);
+            nearMisses += !ba.intersects(bb);  // met only thanks to the growth
+            noisy += k % 6 == 4 && !ba.inflated(1e-9).intersects(bb);  // and beyond any tolerance
+        }
+    }
+    INFO("positives " << positives << ", met with plain boxes apart " << nearMisses << ", over 1e-9 apart "
+                       << noisy);
+    CHECK(positives > 10000);
+    CHECK(nearMisses > 100);
+    // A long line with a tiny arc by its end, up to 3e-8 x the line's length beyond it: the
+    // discriminant's rounding lets spansMeet accept gaps up to ~2e-8 x the length (163 nm by a
+    // 17.6 km line), more than the arc's own growth covers, so they meet only through the line's
+    // 1e-7 x length (the T-0172 round-2 verifier's mutant XL, which dropped it, missed such pairs).
+    int needLineGrowth = 0;
+    for (int k = 0; k < 20000; ++k) {
+        auto logu = [&](double lo, double hi) { return std::exp(rng.uniform(std::log(lo), std::log(hi))); };
+        const double len = logu(10.0, 1e5);
+        const double r = logu(1e-12, 1e-3);
+        const Vec2 dir = Vec2::fromAngle(rng.uniform(0, 2 * pi), 1.0);
+        const Vec2 start{rng.uniform(-1, 1) * 1e3, rng.uniform(-1, 1) * 1e3};
+        const Vec2 end = start + dir * len;
+        const Vec2 c = end + dir.perp() * (r + rng.uniform(0, 1) * 3e-8 * len);
+        const double at = (end - c).angle();
+        const Span line = LineSpan{start, end};
+        const Span arc = ArcSpan{c, r, at - 0.5, at + 0.5, ArcDirection::CCW};
+        CAPTURE(k, len, r);
+        if (probe(line, arc)) {
+            const Box2 lineBox = bounds(line).inflated(detail::meetReach(line) - 1e-7 * len);
+            needLineGrowth += !lineBox.intersects(reachBox(arc));
+        }
+    }
+    INFO("met only through the line's growth: " << needLineGrowth);
+    CHECK(needLineGrowth > 50);
+}
+
+TEST_CASE("T-0172 (a): self-crossing cuts cost near-linear time on long and collinear strands",
+          "[geometry][offset][open][t0172][perf]") {
+    // A spiral of spans shorter than its pitch never meets itself, and each span's box meets only
+    // its neighbours': one part however long, at a cost near-linear in the span count. 16x the
+    // spans: linear ~16 (measured 18-28 with cache effects), quadratic ~256. (Round 1 compared 4x
+    // and measured 5.4-5.9 against a bound of 8.)
+    const int nSmall = kRelease ? 4000 : 1000;
+    const std::vector<Span> shortSpiral = evenSpiral(nSmall);
+    const std::vector<Span> longSpiral = evenSpiral(16 * nSmall);
+    std::vector<std::size_t> cs;
+    std::vector<std::size_t> cl;
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+        3, [&] { cs = detail::selfCrossingCuts(shortSpiral); },
+        [&] { cl = detail::selfCrossingCuts(longSpiral); }, carvetto::test::kCpuTimeFloor, 0.02);
+    INFO("CPU seconds: " << nSmall << " spans " << t.smallSeconds << ", " << 16 * nSmall << " spans "
+                         << t.largeSeconds << ", ratio " << t.ratio());
+    CHECK(cs.empty());
+    CHECK(cl.empty());
+    CHECK(t.ratio() < 64.0);
+    // A strand going back and forth along one line, span lengths over seven decades: nested,
+    // collinear boxes (parallel lines never meet, so it is one part). Round 1's clustering grid
+    // took 9.9 s and 2.8 GB at 400 spans. The pairs of boxes that meet grow faster than the
+    // spans here (17 per span at 1000, 36 at 16 000), so only absolute bounds: Release 0.05 s.
+    for (const int n : {400, 16000}) {
+        const std::vector<Span> strand = backAndForth(n, 0xBAC4u);
+        const double t0 = carvetto::test::processCpuSeconds();
+        const std::vector<std::size_t> cuts = detail::selfCrossingCuts(strand);
+        const double seconds = carvetto::test::processCpuSeconds() - t0;
+        INFO("back and forth, " << n << " spans: " << seconds << " s");
+        CHECK(cuts.empty());
+        CHECK(seconds < (kRelease ? 0.5 * kAbsSlack : 10.0));
+    }
+}
+
+TEST_CASE("T-0172 (b): spiral slots and spirals are put back without a blow-up in time or memory",
+          "[geometry][offset][open][t0172][perf]") {
+    // The T-0172 round-1 verifier's perf2 sslot / spiral: a slot exactly 2d wide along a spiral of
+    // semicircles (its walls' offsets meet along the middle: one long stray of arcs), and a spiral
+    // of semicircles with a U channel 2d wide beyond it and one far away. The arcs' boxes are
+    // nested; round 1's clustering grid filed each into ever finer grids (sslot 400: 12.6 s and
+    // 2.5 GB, main 0.47 s; spiral 700 with the far channel at 1e3: bad_alloc at 6 GB). Release now:
+    // sslot 200 0.05 s, spiral 400 0.03 s, as main.
+    const double d = 0.5;
+    const double step = 4 * d;
+    auto semicircles = [&](int n, double r0) {
+        std::vector<ArcSpan> arcs;
+        Vec2 centre{0, 0};
+        double r = r0;
+        double a0 = 0.0;
+        for (int i = 0; i < n; ++i) {
+            const ArcSpan arc{centre, r, a0, a0 + kPi, ArcDirection::CCW};
+            arcs.push_back(arc);
+            const double r2 = r + 0.5 * step;
+            centre = arc.endPoint() - Vec2::fromAngle(a0 + kPi, r2);
+            r = r2;
+            a0 += kPi;
+        }
+        return arcs;
+    };
+    {
+        const int n = kRelease ? 200 : 100;
+        const double w = 2 * d;
+        const std::vector<ArcSpan> mid = semicircles(n, step + w);
+        Contour in;
+        for (ArcSpan a : mid) {
+            a.radius += 0.5 * w;
+            in.spans.emplace_back(a);
+        }
+        ArcSpan low = mid.back();
+        low.radius -= 0.5 * w;
+        in.spans.emplace_back(LineSpan{endPoint(in.spans.back()), low.endPoint()});
+        for (int i = n - 1; i >= 0; --i) {
+            ArcSpan a = mid[static_cast<std::size_t>(i)];
+            a.radius -= 0.5 * w;
+            std::swap(a.startAngle, a.endAngle);
+            a.direction = ArcDirection::CW;
+            in.spans.emplace_back(a);
+        }
+        const double t0 = carvetto::test::processCpuSeconds();
+        const std::vector<Contour> chains =
+            offsetOpenContour(in, d, OffsetSide::Left, JoinType::Round, kTol, 2.0);
+        const double seconds = carvetto::test::processCpuSeconds() - t0;
+        INFO("spiral slot of " << n << " semicircles: " << seconds << " s");
+        CHECK(seconds < (kRelease ? 0.5 * kAbsSlack : 10.0));
+        // The middle of the slot is covered (the stray put back).
+        for (std::size_t i = 1; i + 1 < mid.size(); i += 7) {
+            CHECK(distanceToChains(mid[i].pointAt(0.5), chains) <= 0.5 * kTol.distance);
+        }
+    }
+    {
+        const int n = kRelease ? 700 : 300;
+        Contour in;
+        for (const ArcSpan& a : semicircles(n, step)) {
+            in.spans.emplace_back(a);
+        }
+        const Vec2 e = endPoint(in.spans.back());
+        const double W = 2 * d;
+        const std::vector<Vec2> tail{e,
+                                     e + Vec2{0, -5},
+                                     e + Vec2{10, -5},
+                                     e + Vec2{10, -5 - W},
+                                     e + Vec2{0, -5 - W},
+                                     {1e3, 1e3},
+                                     {1e3 + 5, 1e3},
+                                     {1e3 + 5, 1e3 + W},
+                                     {1e3, 1e3 + W}};
+        for (std::size_t q = 1; q < tail.size(); ++q) {
+            in.spans.emplace_back(LineSpan{tail[q - 1], tail[q]});
+        }
+        const double t0 = carvetto::test::processCpuSeconds();
+        const std::vector<Contour> chains =
+            offsetOpenContour(in, d, OffsetSide::Left, JoinType::Round, kTol, 2.0);
+        const double seconds = carvetto::test::processCpuSeconds() - t0;
+        INFO("spiral of " << n << " semicircles: " << seconds << " s");
+        CHECK(seconds < (kRelease ? 0.5 * kAbsSlack : 10.0));
+        // The far channel's middle is covered (Left: its walls' offsets meet there).
+        CHECK(uncovered(chains, {1e3 + 0.5, 1e3 + d}, {1e3 + 4.5, 1e3 + d}) == 0);
+    }
+}
+
+TEST_CASE("T-0172 (b): strays of a hatch with varied line ends cost what those of an even hatch do",
+          "[geometry][offset][open][t0172][perf]") {
+    // The T-0172 round-2 verifier's perf2 rhatch: a hatch at pitch exactly 2d whose lines start in
+    // [0, 4] and end in [6, 10] at random, against the same hatch with every line over [0, 10].
+    // Their strays (the middles between lines) are equally many and dense, but the varied ends
+    // give boxes that overlap along x and differ only in y, a k-d tree's weak case: round 2, whose
+    // step 7 queried only a BoxTree, cost ~3.4 sqrt(n) per sample there and took 1.40 / 1.56 x
+    // the even hatch at 4 000 / 16 000 lines (Release; origin/main 1.17, now 1.13-1.19 / 1.15).
+    const double d = 0.05;
+    const int n = kRelease ? 16000 : 3000;
+    auto build = [&](bool varied) {
+        Lcg rng{0x7A7Cu};
+        std::vector<Vec2> pts;
+        for (int i = 0; i < n; ++i) {
+            const double y = 2.0 * d * i;
+            const double a = varied ? rng.uniform(0, 4) : 0.0;
+            const double b = varied ? rng.uniform(6, 10) : 10.0;
+            pts.push_back(i % 2 == 0 ? Vec2{a, y} : Vec2{b, y});
+            pts.push_back(i % 2 == 0 ? Vec2{b, y} : Vec2{a, y});
+        }
+        return polyline(pts, false);
+    };
+    const Contour even = build(false);
+    const Contour varied = build(true);
+    std::vector<Contour> re;
+    std::vector<Contour> rv;
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+        3, [&] { re = offsetOpenContour(even, d, OffsetSide::Left, JoinType::Round, kTol); },
+        [&] { rv = offsetOpenContour(varied, d, OffsetSide::Left, JoinType::Round, kTol); });
+    INFO("CPU seconds: even " << t.smallSeconds << ", varied " << t.largeSeconds << ", ratio " << t.ratio());
+    // The middle between two lines, where both reach, is put back and covered.
+    for (const int i : {0, n / 2, n - 2}) {
+        const double y = d * (2 * i + 1);
+        CHECK(uncovered(rv, {4.5, y}, {5.5, y}) == 0);
+        CHECK(uncovered(re, {1.0, y}, {9.0, y}) == 0);
+    }
+    CHECK(t.ratio() < 1.35);
+    if constexpr (kRelease) {
+        CHECK(t.largeSeconds < 0.6 * kAbsSlack);
+    }
+}
+
+TEST_CASE("T-0172 (c): a stray between tol and 10 x tol that meets a chain is returned and reaches it",
+          "[geometry][offset][open][t0128][t0172]") {
+    // A slot exactly 2d wide and d + e deep between two plateaus, Round: the walls' offsets along the
+    // slot's middle are dropped as opposite copies; the Round arcs about the slot's top corners meet
+    // on the middle at the top, so the stray put back there meets that chain. It is shorter than
+    // 10 x tol (the minimum for an isolated stray, owner decision 2026-11-05) but longer than tol,
+    // so it is returned, widened into the covered top so that it reaches the chain (ADR-0012 A3 (d)).
+    for (const double d : {1.0, 0.5}) {
+        for (const double e : {0.003, 0.006, 0.009}) {
+            const double D = d + e;
+            const Contour base =
+                polyline({{0, D}, {1, D}, {1, 0}, {1 + 2 * d, 0}, {1 + 2 * d, D}, {2 + 2 * d, D}}, false);
+            for (const Vec2 shift : {Vec2{0, 0}, Vec2{1.2e4, -3e4}}) {
+                const Contour in = translated(base, shift);
+                CAPTURE(d, e, shift.x);
+                const std::vector<Contour> chains =
+                    offsetOpenContour(in, d, OffsetSide::Left, JoinType::Round, kTol, 2.0);
+                const Vec2 mid = Vec2{1 + d, 0.0} + shift;
+                CHECK(uncovered(chains, mid + Vec2{0, d + 1e-4}, mid + Vec2{0, D - 1e-4}) == 0);
+                std::size_t strays = 0;
+                for (std::size_t a = 0; a < chains.size(); ++a) {
+                    const Contour& c = chains[a];
+                    const bool onMiddle = std::all_of(c.spans.begin(), c.spans.end(), [&](const Span& s) {
+                        return std::fabs(startPoint(s).x - mid.x) <= 1e-9 &&
+                               std::fabs(endPoint(s).x - mid.x) <= 1e-9;
+                    });
+                    if (!onMiddle) {
+                        continue;
+                    }
+                    ++strays;
+                    const double len = chainLength(c);
+                    CHECK(len > kTol.distance);
+                    CHECK(len < 10.0 * kTol.distance);
+                    // One end meets another chain within tol / 2.
+                    std::vector<Contour> others;
+                    for (std::size_t b = 0; b < chains.size(); ++b) {
+                        if (b != a) {
+                            others.push_back(chains[b]);
+                        }
+                    }
+                    const double gap = std::min(distanceToChains(startPoint(c.spans.front()), others),
+                                                distanceToChains(endPoint(c.spans.back()), others));
+                    CHECK(gap <= 0.5 * kTol.distance);
+                }
+                CHECK(strays == 1);
+                requireToolpathChains(chains, in, d, JoinType::Round);
+            }
+        }
+    }
+}
+
+TEST_CASE("T-0172 (c): a thin loop gives back its longer strand",
+          "[geometry][offset][open][t0128][t0172]") {
+    // A closed annular slot 2d + w wide sweeping 3 rad: the inner offset is a thin loop of two arcs,
+    // on radius R + d and R + d + w, joined by pieces about w long at the ends. Cut at its two
+    // points farthest apart (the ends of the outer arc), the outer arc alone is the longer strand
+    // (its extra length w x 2.7 rad exceeds the two end pieces), so it is the one returned.
+    for (const double R : {5.0, 20.0}) {
+        for (const double w : {1e-5, 5e-5}) {
+            const double d = 1.0;
+            const double R2 = R + 2 * d + w;
+            const ArcSpan outer{{0, 0}, R2, 0.0, 3.0, ArcDirection::CCW};
+            const ArcSpan inner{{0, 0}, R, 3.0, 0.0, ArcDirection::CW};
+            Contour in;
+            in.closed = true;
+            in.spans.emplace_back(outer);
+            in.spans.emplace_back(LineSpan{outer.endPoint(), inner.startPoint()});
+            in.spans.emplace_back(inner);
+            in.spans.emplace_back(LineSpan{inner.endPoint(), outer.startPoint()});
+            for (const JoinType join : kJoins) {
+                CAPTURE(R, w, static_cast<int>(join));
+                const std::vector<Contour> chains =
+                    offsetOpenContour(in, d, OffsetSide::Left, join, kTol, 2.0);
+                REQUIRE(chains.size() == 1);
+                for (const Span& s : chains[0].spans) {
+                    for (int k = 0; k <= 8; ++k) {
+                        CHECK(pointAt(s, k / 8.0).length() >= R + d + 0.75 * w);
+                    }
+                }
+                requireToolpathChains(chains, in, d, join);
+            }
+        }
+    }
+}
+
+TEST_CASE("T-0172 (c): a thin loop's strand of many spans comes back whole",
+          "[geometry][offset][open][t0128][t0172]") {
+    // The annular slot above with both walls polylines at the same angles (120 or 600 segments
+    // over 1.2 rad), 2d + w wide at the vertices: the offsets of facing segments are parallel,
+    // (2d + w) cos(0.005) - 2d ~ w / 2 apart (or closer to w), so the inner offset is a thin loop
+    // whose strand has about one span per segment. Round: it comes back as one chain along the
+    // whole slot, not as the loop's longest span (the fallback for a strand that would cross
+    // itself).
+    // (Sharp and Square give the same three chains as origin/main: the mitres at the inner wall's
+    // vertices make the inner offset no thin loop.)
+    const double d = 1.0;
+    const double w = 5e-5;
+    auto slot = [&](double R, int M) {
+        const double R2 = R + 2 * d + w;
+        std::vector<Vec2> pts;
+        for (int k = 0; k <= M; ++k) {
+            pts.push_back(Vec2::fromAngle(1.2 * k / M, R2));
+        }
+        for (int k = M; k >= 0; --k) {
+            pts.push_back(Vec2::fromAngle(1.2 * k / M, R));
+        }
+        return polyline(pts, true);
+    };
+    auto check = [&](const Contour& in, double R, std::size_t minSpans) {
+        const std::vector<Contour> chains =
+            offsetOpenContour(in, d, OffsetSide::Left, JoinType::Round, kTol, 2.0);
+        REQUIRE(chains.size() == 1);
+        CHECK(chains[0].spans.size() > minSpans);
+        // Along the middle, from d short of one end to d short of the other.
+        CHECK(chainLength(chains[0]) > 0.99 * (1.2 * (R + d) - 2 * d));
+        for (int k = 2; k <= 10; ++k) {
+            const Vec2 middle = Vec2::fromAngle(0.1 * k, R + d);
+            CHECK(distanceToChains(middle, chains) <= 1e-3);
+        }
+        return chains;
+    };
+    for (const double R : {5.0, 20.0}) {
+        CAPTURE(R);
+        const Contour in = slot(R, 120);
+        requireToolpathChains(check(in, R, 50), in, d, JoinType::Round);
+    }
+    // Over 512 spans (T-0128 fell back to the longest span there too).
+    check(slot(20.0, 600), 20.0, 512);
+}
+
+TEST_CASE("T-0172 (a): a stray that would cross itself is cut into consecutive runs without tiny ends",
+          "[geometry][offset][open][t0172]") {
+    // detail::nonCrossingRuns, step 7's fallback (never seen from an offset): runs in order,
+    // together the whole strand but for spans no longer than the tolerance at their ends, none
+    // crossing itself.
+    auto check = [&](const std::vector<Span>& strand, std::size_t minRuns) {
+        const std::vector<std::vector<Span>> runs = detail::nonCrossingRuns(strand, kTol);
+        CHECK(runs.size() >= minRuns);
+        std::size_t at = 0;  // next span of the strand
+        for (const std::vector<Span>& run : runs) {
+            REQUIRE_FALSE(run.empty());
+            CHECK(length(run.front()) > kTol.distance);
+            CHECK(length(run.back()) > kTol.distance);
+            CHECK(greedyCuts(run).empty());
+            // The run is the strand's next spans, after skipping only tiny ones.
+            while (at < strand.size() && !(strand[at] == run.front())) {
+                CHECK(length(strand[at]) <= kTol.distance);
+                ++at;
+            }
+            for (const Span& s : run) {
+                REQUIRE(at < strand.size());
+                CHECK(strand[at] == s);
+                ++at;
+            }
+        }
+        for (; at < strand.size(); ++at) {
+            CHECK(length(strand[at]) <= kTol.distance);
+        }
+    };
+    // A zig-zag with a span shorter than the tolerance after every leg, then a chord back across
+    // all of it: cut at the chord, and the first run loses the tiny span at its end.
+    std::vector<Span> zig;
+    Vec2 p{0, 0};
+    for (int i = 0; i < 40; ++i) {
+        const Vec2 q{p.x + 1.0, i % 2 ? -1.0 : 1.0};
+        zig.emplace_back(LineSpan{p, q});
+        const Vec2 r{q.x + 0.5 * kTol.distance, q.y};
+        zig.emplace_back(LineSpan{q, r});
+        p = r;
+    }
+    zig.emplace_back(LineSpan{p, {0, 0.3}});
+    zig.emplace_back(LineSpan{{0, 0.3}, {0.0002, 0.3}});
+    check(zig, 2);
+    // A spiral, a tiny span, then chords back across it.
+    std::vector<Span> spiral = lineSpiral(600);
+    Vec2 e = endPoint(spiral.back());
+    spiral.emplace_back(LineSpan{e, e + Vec2{0.4 * kTol.distance, 0}});
+    e = e + Vec2{0.4 * kTol.distance, 0};
+    spiral.emplace_back(LineSpan{e, {-0.3, 0.2}});
+    spiral.emplace_back(LineSpan{{-0.3, 0.2}, {3.0, 3.5}});
+    check(spiral, 2);
+    // A figure of eight, and a strand that does not cross itself (one run, itself).
+    check({LineSpan{{0, 0}, {2, 2}}, LineSpan{{2, 2}, {2, 0}}, LineSpan{{2, 0}, {0, 2}},
+           LineSpan{{0, 2}, {0, 0.5}}},
+          2);
+    const std::vector<Span> plain = lineSpiral(50);
+    const std::vector<std::vector<Span>> one = detail::nonCrossingRuns(plain, kTol);
+    REQUIRE(one.size() == 1);
+    CHECK(one[0] == plain);
+}
+
+TEST_CASE("T-0172 (c): strays put back are ordered by where they start along the input",
+          "[geometry][offset][open][t0128][t0172]") {
+    // A boustrophedon hatch of 6 lines at pitch 2d, Round, Left: the middles between lines 0-1, 2-3
+    // and 4-5 are strays; the turns at x = 0 between lines 1-2 and 3-4 form one chain around the
+    // left, starting at the turn after line 1. In input order: the first middle, the left chain,
+    // then the other two middles (ADR-0012 §1).
+    const double d = 1.0;
+    const std::vector<Contour> chains =
+        offsetOpenContour(hatch(6, d), d, OffsetSide::Left, JoinType::Round, kTol, 2.0);
+    REQUIRE(chains.size() == 4);
+    for (const int k : {0, 2, 3}) {
+        const double y = k == 0 ? d : (k == 2 ? 5 * d : 9 * d);
+        CAPTURE(k);
+        REQUIRE(chains[static_cast<std::size_t>(k)].spans.size() == 1);
+        CHECK(std::fabs(startPoint(chains[static_cast<std::size_t>(k)].spans.front()).y - y) <= 1e-9);
+        CHECK(std::fabs(endPoint(chains[static_cast<std::size_t>(k)].spans.back()).y - y) <= 1e-9);
+    }
+    bool leftOfLines = false;
+    for (const Span& s : chains[1].spans) {
+        leftOfLines = leftOfLines || pointAt(s, 0.5).x < -0.5 * d;
+    }
+    CHECK(leftOfLines);
+}
+
+TEST_CASE("T-0172 (c): dropped opposite copies hand back the copy exactly d from the input",
+          "[geometry][offset][open][t0128][t0172]") {
+    // A slot exactly 2d wide whose left wall is 10 high and right wall 12, Sharp/Square: over the
+    // slot's middle from y = 10 to the left top's mitre point or chamfer, the left wall's offset is
+    // a corner extension (not d from the input) running against the right wall's, which is still
+    // its own offset there. Of the copies running both ways, mergeOnCarriers hands back the one
+    // that is exactly d from the input (RawChain::exact), whichever comes first; handing back the
+    // first left the middle above y = 10 uncovered after the exact-range cut of step 7.
+    const double d = 1.0;
+    for (const bool mirrored : {false, true}) {
+        const double yl = mirrored ? 12.0 : 10.0;
+        const double yr = mirrored ? 10.0 : 12.0;
+        const Contour in =
+            polyline({{0, yl}, {1, yl}, {1, 0}, {1 + 2 * d, 0}, {1 + 2 * d, yr}, {2 + 2 * d, yr}}, false);
+        for (const JoinType join : {JoinType::Sharp, JoinType::Square}) {
+            CAPTURE(mirrored, static_cast<int>(join));
+            const std::vector<Contour> chains = offsetOpenContour(in, d, OffsetSide::Left, join, kTol, 2.0);
+            // Up to where the lower plateau's offset (y = 11) crosses the middle; above it the
+            // single copy is part of a chain.
+            CHECK(uncovered(chains, {1 + d, d + 0.05}, {1 + d, 10.0 + d - 0.05}) == 0);
+            requireToolpathChains(chains, in, d, join);
+        }
+    }
+}
+
+TEST_CASE("T-0172 (e): an arc start ahead by more than 1e-12 x the scale is moved onto the junction",
+          "[geometry][offset][open][t0128][t0172]") {
+    // detail::closeJunction (exactJunction) between two arcs whose residual is 1.5..95 x 1e-12 x the
+    // scale ahead of the previous end, with the second arc's radius 1e3..6e4 about a centre far from
+    // the junction: no ulp of its centre or radius hits the end point exactly in most cases (the
+    // centre's ulp is coarser than the point's), so it takes the nearest candidate that does not
+    // start behind. Before PR #61's MSVC fix it kept the arc wherever it started ahead, leaving the
+    // whole residual (up to 1e-10 x the scale) open; found only under perturbed sin/cos until now.
+    Lcg rng{0xE7u};
+    int fallbacks = 0;
+    for (int n = 0; n < 300; ++n) {
+        const Vec2 ca{rng.uniform(-1e4, 1e4), rng.uniform(-1e4, 1e4)};
+        const double a0 = rng.uniform(0.0, 2.0 * kPi);
+        const ArcSpan a{ca, rng.uniform(1.0, 11.0), a0, a0 + rng.uniform(0.3, 1.3), ArcDirection::CCW};
+        const Vec2 j = a.endPoint();
+        const Vec2 ta = tangentAt(Span{a}, 1.0);
+        const double rb = rng.uniform(1e3, 6e4);
+        const Vec2 cb = j - Vec2::fromAngle(rng.uniform(0.0, 2.0 * kPi), rb);
+        const double scale = std::max({1.0, std::fabs(j.x), std::fabs(j.y), rb});
+        const Vec2 start = j + ta * (rng.uniform(1.5, 95.0) * 1e-12 * scale);
+        const double angle = (start - cb).angle();
+        const ArcDirection dir = rng.uniform(0.0, 1.0) < 0.5 ? ArcDirection::CCW : ArcDirection::CW;
+        const double sweep = dir == ArcDirection::CCW ? 0.01 : -0.01;
+        const ArcSpan b0{cb, distance(start, cb), angle, angle + sweep, dir};
+        CAPTURE(n);
+        // The residual is well above 1e-12 x the scale and ahead, within the 1e-10 snapping limit.
+        REQUIRE(distance(b0.startPoint(), j) > 1e-12 * scale);
+        REQUIRE((b0.startPoint() - j).dot(ta) > 0.0);
+        Span sa = a;
+        Span sb = b0;
+        detail::closeJunction(sa, sb);
+        CHECK(std::get<ArcSpan>(sa) == a);  // a is never touched
+        const ArcSpan& b = std::get<ArcSpan>(sb);
+        if (b.startPoint() == j) {
+            continue;
+        }
+        ++fallbacks;
+        CHECK(distance(b.startPoint(), j) <= 1e-12 * scale);
+        CHECK((b.startPoint() - j).dot(ta) >= 0.0);
+    }
+    INFO("fallbacks " << fallbacks);
+    CHECK(fallbacks > 0);  // ~3 in 4 with glibc's sin/cos
 }
