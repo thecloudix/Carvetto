@@ -1,0 +1,495 @@
+#include "carvetto/viewmodel/toolpath_calc.hpp"
+
+#include <algorithm>
+#include <cmath>
+#include <exception>
+#include <new>
+#include <set>
+#include <type_traits>
+#include <utility>
+#include <variant>
+
+#include "carvetto/toolpath/drill.hpp"
+#include "carvetto/toolpath/engrave.hpp"
+#include "carvetto/toolpath/pocket.hpp"
+#include "carvetto/toolpath/profile.hpp"
+#include "carvetto/toolpath/v_carve.hpp"
+
+namespace carvetto::viewmodel {
+
+using document::ObjectId;
+using document::ToolpathOperation;
+using toolpath::ToolpathIssue;
+
+namespace {
+
+template <class... Ts>
+struct Overloaded : Ts... {
+    using Ts::operator()...;
+};
+template <class... Ts>
+Overloaded(Ts...) -> Overloaded<Ts...>;
+
+void addCuttingData(Fingerprint& fp, const tooling::CuttingData& d) {
+    fp.add(d.passDepth);
+    fp.add(d.stepover);
+    fp.add(d.finalPassStepover);
+    fp.add(d.clearancePassStepover);
+    fp.add(d.spindleSpeed);
+    fp.add(d.feedRate);
+    fp.add(d.plungeRate);
+    fp.add(d.maxBurnRate);
+    fp.add(static_cast<std::uint64_t>(static_cast<std::int64_t>(d.toolNumber)));
+}
+
+bool spanFinite(const geometry::Span& span) {
+    const auto ok = [](double v) { return std::isfinite(v) && std::fabs(v) <= kMaxToolpathCoordinateMm; };
+    return std::visit(
+        Overloaded{[&](const geometry::LineSpan& s) { return ok(s.start.x) && ok(s.start.y) && ok(s.end.x) && ok(s.end.y); },
+                   [&](const geometry::ArcSpan& s) {
+                       return ok(s.centre.x) && ok(s.centre.y) && ok(s.radius) && std::isfinite(s.startAngle) &&
+                              std::isfinite(s.endAngle) && std::fabs(s.startAngle) < 1e6 && std::fabs(s.endAngle) < 1e6;
+                   },
+                   [&](const geometry::BezierSpan& s) {
+                       return ok(s.p0.x) && ok(s.p0.y) && ok(s.p1.x) && ok(s.p1.y) && ok(s.p2.x) && ok(s.p2.y) &&
+                              ok(s.p3.x) && ok(s.p3.y);
+                   }},
+        span);
+}
+
+bool isInfoIssue(ToolpathIssue issue) {
+    return issue == ToolpathIssue::DuplicateHole || issue == ToolpathIssue::MergedWithNeighbour ||
+           issue == ToolpathIssue::CrossingVectorsResolved;
+}
+
+bool isRefusalIssue(ToolpathIssue issue) {
+    switch (issue) {
+        case ToolpathIssue::InvalidParameters:
+        case ToolpathIssue::NoPasses:
+        case ToolpathIssue::NoTool:
+        case ToolpathIssue::InvalidTool:
+        case ToolpathIssue::WorkLimitExceeded:
+        case ToolpathIssue::MedialAxisCapped:
+            return true;
+        default:
+            return false;
+    }
+}
+
+std::vector<ToolpathMessage> convertDiagnostics(const std::vector<toolpath::ToolpathDiagnostic>& diagnostics,
+                                                bool produced, const std::vector<ObjectId>& owners) {
+    std::vector<ToolpathMessage> out;
+    out.reserve(diagnostics.size());
+    for (const toolpath::ToolpathDiagnostic& d : diagnostics) {
+        ToolpathMessage m;
+        m.issue = d.issue;
+        m.text = d.message;
+        m.severity = (!produced || isRefusalIssue(d.issue)) ? MessageSeverity::Error
+                     : isInfoIssue(d.issue)                 ? MessageSeverity::Info
+                                                            : MessageSeverity::Warning;
+        if (d.contour.has_value()) {
+            m.contour = *d.contour;
+            if (*d.contour < owners.size()) {
+                m.vector = owners[*d.contour];
+            }
+        }
+        out.push_back(std::move(m));
+    }
+    return out;
+}
+
+std::string joinDiagnostics(const std::vector<toolpath::ToolpathDiagnostic>& diagnostics) {
+    std::string s;
+    for (const auto& d : diagnostics) {
+        s += s.empty() ? "" : "; ";
+        s += d.message;
+    }
+    return s.empty() ? "no reason given" : s;
+}
+
+ToolpathMessage note(MessageSeverity severity, std::string text) {
+    ToolpathMessage m;
+    m.severity = severity;
+    m.text = std::move(text);
+    return m;
+}
+
+}  // namespace
+
+// --- Definition ----------------------------------------------------------------------------------
+
+const std::string& ToolpathDefinition::name() const {
+    return std::visit([](const auto& p) -> const std::string& { return p.name; }, params);
+}
+
+void ToolpathDefinition::setName(std::string name) {
+    std::visit([&](auto& p) { p.name = std::move(name); }, params);
+}
+
+ToolpathDefinition defaultDefinition(ToolpathOperation operation) {
+    ToolpathDefinition def;
+    switch (operation) {
+        case ToolpathOperation::Profile: def.params = toolpath::ProfileParams{}; break;
+        case ToolpathOperation::Pocket: def.params = toolpath::PocketParams{}; break;
+        case ToolpathOperation::Drill: def.params = toolpath::DrillParams{}; break;
+        case ToolpathOperation::Engrave: def.params = toolpath::EngraveParams{}; break;
+        case ToolpathOperation::VCarving: def.params = toolpath::VCarvingParams{}; break;
+    }
+    return def;
+}
+
+std::string validateToolpathName(const std::string& name) {
+    if (name.empty()) {
+        return "the toolpath needs a name";
+    }
+    if (name.size() > kMaxToolpathNameBytes) {
+        return "the name is too long (at most " + std::to_string(kMaxToolpathNameBytes) + " bytes)";
+    }
+    for (const char c : name) {
+        const auto u = static_cast<unsigned char>(c);
+        if (u < 0x20 || u == 0x7F) {
+            return "the name must not contain control characters or line breaks";
+        }
+    }
+    return {};
+}
+
+const char* operationName(ToolpathOperation operation) {
+    switch (operation) {
+        case ToolpathOperation::Profile: return "profile";
+        case ToolpathOperation::Pocket: return "pocket";
+        case ToolpathOperation::Drill: return "drill";
+        case ToolpathOperation::Engrave: return "engrave";
+        case ToolpathOperation::VCarving: return "v_carve";
+    }
+    return "?";
+}
+
+bool toolAllowedFor(ToolpathOperation operation, tooling::ToolType type, bool clearance) {
+    switch (operation) {
+        case ToolpathOperation::Profile:
+        case ToolpathOperation::Pocket: return true;
+        case ToolpathOperation::Drill: return toolpath::drillToolAllowed(type);
+        case ToolpathOperation::Engrave: return toolpath::engraveToolAllowed(type);
+        case ToolpathOperation::VCarving:
+            return clearance ? toolpath::vCarvingClearanceToolAllowed(type) : toolpath::vCarvingToolAllowed(type);
+    }
+    return false;
+}
+
+// --- Tools ---------------------------------------------------------------------------------------
+
+ToolLookup resolveTool(const tooling::ToolDatabase& db, const document::ToolSource& source) {
+    ToolLookup out;
+    if (source.toolId.empty()) {
+        out.error = "no tool chosen";
+        return out;
+    }
+    const tooling::Tool* tool = db.findTool(source.toolId);
+    if (tool == nullptr) {
+        out.error = "the tool database has no tool with id '" + source.toolId + "'";
+        return out;
+    }
+    if (source.machine.empty() != source.material.empty()) {
+        out.error = "machine and material must be chosen together";
+        return out;
+    }
+    ResolvedTool resolved;
+    resolved.tool = *tool;
+    if (!source.machine.empty()) {
+        if (db.findMachine(source.machine) == nullptr) {
+            out.error = "the tool database has no machine with id '" + source.machine + "'";
+            return out;
+        }
+        if (db.findMaterial(source.material) == nullptr) {
+            out.error = "the tool database has no material with id '" + source.material + "'";
+            return out;
+        }
+        const tooling::CuttingDataLookup lookup = tool->cuttingDataFor(source.machine, source.material);
+        resolved.fallback = lookup.isFallback;
+        resolved.data = *lookup.data;
+    }
+    out.tool = std::move(resolved);
+    return out;
+}
+
+std::uint64_t toolFingerprint(const ResolvedTool& r) {
+    Fingerprint fp;
+    const tooling::Tool& t = r.tool;
+    fp.add(std::string_view(t.id));
+    fp.add(std::string_view(t.name));
+    fp.add(static_cast<std::uint64_t>(t.type));
+    fp.add(t.diameter);
+    fp.add(t.includedAngle);
+    fp.add(t.tipDiameter);
+    fp.add(t.cornerRadius);
+    fp.add(static_cast<std::uint64_t>(t.profile.size()));
+    for (const geometry::Vec2 p : t.profile) {
+        fp.add(p.x);
+        fp.add(p.y);
+    }
+    fp.add(static_cast<std::uint64_t>(static_cast<std::int64_t>(t.flutes)));
+    addCuttingData(fp, t.defaultCuttingData);
+    fp.add(static_cast<std::uint64_t>(r.data.has_value() ? 1 : 0));
+    if (r.data.has_value()) {
+        addCuttingData(fp, *r.data);
+    }
+    return fp.value();
+}
+
+std::uint64_t toolsFingerprintOf(const ToolpathDefinition& definition, const tooling::ToolDatabase& db) {
+    Fingerprint fp;
+    const auto one = [&](const document::ToolSource& s) {
+        const ToolLookup l = resolveTool(db, s);
+        if (!l.tool.has_value()) {
+            return false;
+        }
+        fp.add(toolFingerprint(*l.tool));
+        return true;
+    };
+    if (!one(definition.tool)) {
+        return 0;
+    }
+    if (definition.operation() == ToolpathOperation::VCarving) {
+        for (const document::ToolSource& c : definition.clearanceTools) {
+            if (!one(c)) {
+                return 0;
+            }
+        }
+    }
+    const std::uint64_t v = fp.value();
+    return v == 0 ? 1 : v;
+}
+
+// --- Calculation ---------------------------------------------------------------------------------
+
+bool ToolpathCalculation::hasError() const {
+    return std::any_of(messages.begin(), messages.end(),
+                       [](const ToolpathMessage& m) { return m.severity == MessageSeverity::Error; });
+}
+
+std::string ToolpathCalculation::errorText() const {
+    std::string s;
+    for (const ToolpathMessage& m : messages) {
+        if (m.severity == MessageSeverity::Error) {
+            s += s.empty() ? "" : "; ";
+            s += m.text;
+        }
+    }
+    return s;
+}
+
+ToolpathJob makeToolpathJob(const ToolpathDefinition& definition, const ResolvedVectors& vectors,
+                            const tooling::ToolDatabase& db, const document::VectorSelection& selection) {
+    ToolpathJob job;
+    job.definition = definition;
+    job.definition.selector = normalisedSelector(job.definition.selector);
+    if (job.definition.operation() != ToolpathOperation::VCarving) {
+        job.definition.clearanceTools.clear();
+    }
+    if (auto* profile = std::get_if<toolpath::ProfileParams>(&job.definition.params)) {
+        profile->cuttingData.reset();  // cutting data comes from the tool database, not the definition
+    }
+    job.selection = selection;
+    job.vectorsFingerprint = fingerprint(vectors);
+
+    const auto refuse = [&](std::string why) {
+        if (job.refusal.empty()) {
+            job.refusal = std::move(why);
+        }
+    };
+    if (const std::string bad = validateToolpathName(job.definition.name()); !bad.empty()) {
+        refuse(bad);
+    }
+    if (const std::string key = document::nonFiniteParam(job.definition.params); !key.empty()) {
+        refuse("parameter " + key + " is not a finite number");
+    }
+
+    // Tools.
+    const ToolLookup main = resolveTool(db, job.definition.tool);
+    if (!main.tool.has_value()) {
+        refuse("tool: " + main.error);
+    } else {
+        job.tool = *main.tool;
+        if (main.tool->fallback) {
+            job.notes.push_back(note(MessageSeverity::Info, "tool '" + main.tool->tool.name +
+                                                                "' has no cutting data for the chosen machine and "
+                                                                "material; its default cutting data is used"));
+        }
+    }
+    for (std::size_t i = 0; i < job.definition.clearanceTools.size(); ++i) {
+        const ToolLookup l = resolveTool(db, job.definition.clearanceTools[i]);
+        if (!l.tool.has_value()) {
+            refuse("clearance tool " + std::to_string(i + 1) + ": " + l.error);
+            continue;
+        }
+        job.clearance.push_back(*l.tool);
+        if (l.tool->fallback) {
+            job.notes.push_back(note(MessageSeverity::Info, "clearance tool '" + l.tool->tool.name +
+                                                                "' has no cutting data for the chosen machine and "
+                                                                "material; its default cutting data is used"));
+        }
+    }
+    job.toolsFingerprint = toolsFingerprintOf(job.definition, db);
+
+    // Vectors.
+    if (vectors.skippedHidden > 0) {
+        job.notes.push_back(note(MessageSeverity::Info, std::to_string(vectors.skippedHidden) +
+                                                            " vector(s) on hidden layers are not machined"));
+    }
+    if (vectors.skippedLocked > 0) {
+        job.notes.push_back(note(MessageSeverity::Info, std::to_string(vectors.skippedLocked) +
+                                                            " vector(s) on locked layers are not machined"));
+    }
+    if (vectors.skippedOtherSheet > 0) {
+        job.notes.push_back(note(MessageSeverity::Info, std::to_string(vectors.skippedOtherSheet) +
+                                                            " vector(s) on other sheets are not machined"));
+    }
+    if (vectors.contours.empty()) {
+        refuse("there are no vectors to machine (the selection is empty, or hidden, locked or on another sheet)");
+        return job;
+    }
+    if (vectors.spanCount > kMaxToolpathSpans) {
+        refuse("too many vectors to machine in one toolpath (" + std::to_string(vectors.spanCount) +
+               " spans; at most " + std::to_string(kMaxToolpathSpans) + ")");
+        return job;
+    }
+    for (const ContourRef& c : vectors.contours) {
+        for (const geometry::Span& s : c.contour->spans) {
+            if (!spanFinite(s)) {
+                refuse("vector #" + std::to_string(c.object.value) + " has coordinates that are not finite or beyond " +
+                       "1e9 mm");
+                return job;
+            }
+        }
+    }
+    job.contours = vectors.copyContours();
+    job.owners.reserve(vectors.contours.size());
+    for (const ContourRef& c : vectors.contours) {
+        job.owners.push_back(c.object);
+    }
+    return job;
+}
+
+namespace {
+
+document::ToolpathRecord makeRecord(const ToolpathJob& job, toolpath::Toolpath tp, const document::ToolSource& source) {
+    document::ToolpathRecord record;
+    record.name = tp.name;
+    record.params = job.definition.params;
+    if (auto* profile = std::get_if<toolpath::ProfileParams>(&record.params)) {
+        profile->cuttingData.reset();  // tool-database input, not part of the record
+    }
+    record.selection = job.selection;
+    record.tool = tp.tool;
+    record.toolSource = source;
+    record.moves = document::shareMoves(std::move(tp.moves));
+    return record;
+}
+
+}  // namespace
+
+ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
+    ToolpathCalculation out;
+    out.definition = definition;
+    out.vectorCount = contours.size();
+    out.vectorsFingerprint = vectorsFingerprint;
+    out.toolsFingerprint = toolsFingerprint;
+    out.target = target;
+    out.messages = notes;
+    if (!refusal.empty()) {
+        out.messages.push_back(note(MessageSeverity::Error, refusal));
+        return out;
+    }
+    const auto cancelled = [&] { return cancel != nullptr && cancel->load(); };
+    if (cancelled()) {
+        out.cancelled = true;
+        out.messages.push_back(note(MessageSeverity::Info, "the calculation was cancelled"));
+        return out;
+    }
+
+    const ToolpathOperation op = definition.operation();
+    std::vector<toolpath::ToolpathDiagnostic> diagnostics;
+    std::vector<ToolpathCalculation::Item> items;
+    try {
+        if (op == ToolpathOperation::Profile) {
+            toolpath::ProfileParams params = std::get<toolpath::ProfileParams>(definition.params);
+            params.cuttingData = tool->data;
+            toolpath::ProfileResult r = toolpath::profileToolpath(contours, tool->tool, params);
+            diagnostics = r.diagnostics;
+            if (r.ok()) {
+                items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});
+            }
+        } else if (op == ToolpathOperation::Drill) {
+            toolpath::DrillResult r = toolpath::drillToolpath(contours, tool->tool, tool->data,
+                                                              std::get<toolpath::DrillParams>(definition.params));
+            diagnostics = r.diagnostics;
+            if (r.ok()) {
+                items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});
+            }
+        } else if (op == ToolpathOperation::Engrave) {
+            toolpath::EngraveResult r = toolpath::engraveToolpath(contours, tool->tool, tool->data,
+                                                                  std::get<toolpath::EngraveParams>(definition.params));
+            diagnostics = r.diagnostics;
+            if (r.ok()) {
+                items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});
+            }
+        } else if (op == ToolpathOperation::VCarving) {
+            std::vector<toolpath::PocketTool> clearanceTools;
+            for (const ResolvedTool& c : clearance) {
+                clearanceTools.push_back(toolpath::PocketTool{c.tool, c.data});
+            }
+            toolpath::VCarvingResult r =
+                toolpath::vCarvingToolpath(contours, tool->tool, tool->data, clearanceTools,
+                                           std::get<toolpath::VCarvingParams>(definition.params));
+            diagnostics = r.diagnostics;
+            if (r.ok()) {
+                for (std::size_t i = 0; i < r.clearance.size(); ++i) {
+                    if (!r.clearance[i].isEmpty() && i < definition.clearanceTools.size()) {
+                        items.push_back({static_cast<int>(i),
+                                         makeRecord(*this, std::move(r.clearance[i]), definition.clearanceTools[i])});
+                    }
+                }
+                items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});
+            }
+        } else {
+            toolpath::PocketResult r = toolpath::pocketToolpath(
+                contours, {toolpath::PocketTool{tool->tool, tool->data}},
+                std::get<toolpath::PocketParams>(definition.params));
+            diagnostics = r.diagnostics;
+            for (toolpath::Toolpath& tp : r.toolpaths) {
+                if (!tp.isEmpty()) {
+                    items.push_back({-1, makeRecord(*this, std::move(tp), definition.tool)});
+                }
+            }
+        }
+    } catch (const std::bad_alloc&) {
+        out.messages.push_back(note(MessageSeverity::Error, "out of memory while calculating the toolpath"));
+        return out;
+    } catch (const std::exception& e) {
+        out.messages.push_back(
+            note(MessageSeverity::Error, std::string("the toolpath calculation failed: ") + e.what()));
+        return out;
+    }
+
+    if (cancelled()) {
+        out.cancelled = true;
+        out.messages.push_back(note(MessageSeverity::Info, "the calculation was cancelled"));
+        return out;
+    }
+    const bool produced = !items.empty();
+    for (ToolpathMessage& m : convertDiagnostics(diagnostics, produced, owners)) {
+        out.messages.push_back(std::move(m));
+    }
+    if (!produced) {
+        out.messages.push_back(note(MessageSeverity::Error, std::string("no ") + operationName(op) +
+                                                                " toolpath was produced: " +
+                                                                joinDiagnostics(diagnostics)));
+        return out;
+    }
+    out.items = std::move(items);
+    out.ok = true;
+    return out;
+}
+
+}  // namespace carvetto::viewmodel
