@@ -773,7 +773,7 @@ Acceptance criteria:
   3. Contour winding and start point are documented and stable; property tests over random parameters; full ctest incl. MSVC CI.
 Out of scope: UI, freehand/polyline/Bezier drawing, text.
 
-### T-0201 Selection and hit testing (viewmodel)   [status: verifying]
+### T-0201 Selection and hit testing (viewmodel)   [status: done (#71)]
 Phase: 1 (Batch B)   Module: app/viewmodel   Depends on: T-0010, T-0060   ADR: 0014
 Goal: Qt-free picking: `hitTest(document, view, screenPoint, tolerancePx)` returning the topmost object under the cursor (stroke hit within tolerance for open and closed vectors, fill hit optional by mode, groups resolve to the group), window select (fully inside) and crossing select (touching), additive/toggle/subtract modes, select-all/invert/by-layer, and a selection bounding box with handle positions for later transform tools. Works in screen space through the view transform; accounts for object transforms and hidden/locked layers.
 Acceptance criteria:
