@@ -821,7 +821,7 @@ Acceptance criteria:
   4. Headless tests; self-test step; CI Linux + Windows; CMake additions in alphabetical positions.
 Out of scope: trim/extend/fillet, join/close, curve fit (T-0208), boundary-from-selection UI.
 
-### T-0212 SVG import and export (core/io)   [status: verifying]
+### T-0212 SVG import and export (core/io)   [status: in progress — round 1 FAIL (circle direction not preserved; closing Z exact compare); round 2]
 Phase: 1 (Batch B, wave 2)   Module: core/io   Depends on: T-0001, T-0100   ADR: 0026 (new if a choice is made; own XML subset parser — no new dependency without owner approval)
 Goal: `importSvg(bytes, options) → {layers, contours, warnings}` and `exportSvg(layers, contours, options) → bytes` mirroring the DXF API (geometry-level, ADR-0015). Import: path data (M L H V C S Q T A Z, absolute and relative; arcs to exact circular arcs when rx = ry, otherwise Beziers within tolerance), rect (with rx/ry), circle, ellipse, line, polyline, polygon; nested transforms (matrix, translate, scale, rotate, skewX/Y); `<g>` ids and Inkscape layer labels become layers; viewBox and width/height units (px at 96 dpi, mm, cm, in, pt, pc) scaled to mm, Y flipped to Y-up; `<use>` of defs. Fill/stroke are ignored except hidden/`display:none`. Text, images, gradients, clip paths and filters are skipped with a warning each. Export: closed/open contours as `<path>`s in mm with a viewBox, one `<g>` per layer. Clean-room; SVG 1.1 spec is public.
 Acceptance criteria:
