@@ -120,3 +120,60 @@ TEST_CASE("T-0163: the collapsed cut emits nothing with leads or without", "[too
     REQUIRE(retracts(none) > 0);
     CHECK(retracts(with) == retracts(none));
 }
+
+TEST_CASE("T-0165: a vector whose roughing cut collapsed is reported", "[toolpath][profile][T-0165]") {
+    const std::vector<Contour> cs{tinyBlob()};
+    for (LeadType lead : {LeadType::None, LeadType::Straight}) {
+        const ProfileResult r = profileToolpath(cs, tinyVBit(), params(lead));
+        REQUIRE(r.has(ProfileIssue::ToolTooLarge));
+        std::size_t count = 0;
+        for (const ToolpathDiagnostic& d : r.diagnostics) {
+            if (d.issue == ProfileIssue::ToolTooLarge) {
+                ++count;
+                REQUIRE(d.contour.has_value());
+                CHECK(*d.contour == 0);
+            }
+        }
+        CHECK(count == 1);
+    }
+}
+
+TEST_CASE("T-0165: collapsed cuts never reach ordering or tab keep-clear", "[toolpath][profile][T-0165]") {
+    // An open line beside the blob, passing through the origin: the collapsed roughing cut of the blob
+    // used to enter ordering at (0,0) (and add that keep-clear point to the square's tabs). The
+    // line's moves must be the same with and without the blob.
+    Contour sq;  // open, so that tabs hold on the On side: one tab at its middle, the origin
+    sq.closed = false;
+    sq.spans = {geometry::LineSpan{{-0.1, 0.0}, {0.1, 0.0}}};
+    ProfileParams p = params(LeadType::None);
+    p.tabs.enabled = true;
+    p.tabs.count = 1;
+    p.tabs.length = 0.03;
+    p.tabs.thickness = 0.0005;
+    for (StartAt startAt : {StartAt::VectorStart, StartAt::Optimise}) {
+        p.startAt = startAt;
+        const ProfileResult alone = profileToolpath({sq}, tinyVBit(), p);
+        const ProfileResult both = profileToolpath({sq, tinyBlob()}, tinyVBit(), p);
+        REQUIRE(alone.ok());
+        REQUIRE(both.ok());
+        std::vector<Move> mine;
+        for (const Move& m : both.toolpath.moves) {
+            if (m.kind == MoveKind::Dwell || m.to.x > -0.15) {
+                mine.push_back(m);
+            }
+        }
+        std::vector<Move> ref;
+        for (const Move& m : alone.toolpath.moves) {
+            if (m.kind == MoveKind::Dwell || m.to.x > -0.15) {
+                ref.push_back(m);
+            }
+        }
+        REQUIRE(mine.size() == ref.size());
+        for (std::size_t i = 0; i < mine.size(); ++i) {
+            CHECK(mine[i].kind == ref[i].kind);
+            CHECK(mine[i].to.x == ref[i].to.x);
+            CHECK(mine[i].to.y == ref[i].to.y);
+            CHECK(mine[i].to.z == ref[i].to.z);
+        }
+    }
+}
