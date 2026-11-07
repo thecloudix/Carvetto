@@ -5,7 +5,11 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
 #include <cstddef>
+#include <chrono>
 #include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <future>
 #include <limits>
 #include <optional>
 #include <string>
@@ -47,6 +51,20 @@ BezierSpan shiftedLoopOf(double extent) {
 // The same loop run backwards: every point is a touch (512 hits at extent 1000).
 BezierSpan reversedLoopOf(double extent) {
     return loopOf(extent).reversed();
+}
+
+// Runs fn on a worker and ends the process if it does not finish within `seconds` (wall clock), so
+// that a regression to a hang fails in seconds instead of stalling the suite until the runner's
+// timeout. The stuck worker cannot be cancelled, hence the process exit.
+template <class F>
+auto failFast(double seconds, const char* what, F&& fn) {
+    auto fut = std::async(std::launch::async, std::forward<F>(fn));
+    if (fut.wait_for(std::chrono::duration<double>(seconds)) != std::future_status::ready) {
+        std::fprintf(stderr, "HANG: %s did not finish within %g s\n", what, seconds);
+        std::fflush(stderr);
+        std::_Exit(2);
+    }
+    return fut.get();
 }
 
 IntersectLimits pairLimit(std::uint64_t pair) {
@@ -111,8 +129,9 @@ TEST_CASE("Work budget: a small budget truncates, a large one reproduces the def
         const IntersectionResult cutSwapped = intersect(b, a, tol, pairLimit(limit));
         REQUIRE(cutSwapped.status == IntersectStatus::Truncated);
     }
-    // The best-effort part is not empty once the budget buys something.
-    REQUIRE_FALSE(intersect(a, b, tol, pairLimit(600'000)).points.empty());
+    // The best-effort part is not empty once the budget buys something: with the reserve for
+    // settling and merging the 600,000 units give 65 of the 512 hits (none without it).
+    REQUIRE(intersect(a, b, tol, pairLimit(600'000)).points.size() >= 30);
 }
 
 TEST_CASE("Work budget: lines and arcs are closed-form and never truncate", "[bezier][intersect][budget][geometry]") {
@@ -131,10 +150,10 @@ TEST_CASE("Work budget: lines and arcs are closed-form and never truncate", "[be
 }
 
 TEST_CASE("Work budget: a huge arc against a Bezier is charged before it is sampled", "[bezier][intersect][budget][geometry]") {
-    // R = 1e12 with the default chordal tolerance would be ~6e7 samples (a gigabyte and seconds).
+    // R = 1e11 with the default chordal tolerance would be ~7e6 samples (hundreds of MB, seconds).
     const Tolerance tol = Tolerance::defaults();
-    const ArcSpan arc{{0, 0}, 1e12, 0.0, 6.0, ArcDirection::CCW};
-    const BezierSpan bz{{1e12 - 5, -5}, {1e12 + 5, 1}, {1e12 - 3, 4}, {1e12 + 9, 9}};
+    const ArcSpan arc{{0, 0}, 1e11, 0.0, 6.0, ArcDirection::CCW};
+    const BezierSpan bz{{1e11 - 5, -5}, {1e11 + 5, 1}, {1e11 - 3, 4}, {1e11 + 9, 9}};
     const double t0 = processCpuSeconds();
     const IntersectionResult r = intersect(Span{arc}, Span{bz}, tol, pairLimit(50'000'000));
     // Sampling the circle would take seconds (and 1.4 GB): the charge refuses it up front.
@@ -441,7 +460,8 @@ TEST_CASE("Default budget: the old multi-second Bezier pairs finish quickly or r
         Span b;
         bool mustTruncate;  // needs more than the Debug limit below
     };
-    const double huge = 1e100;
+    const double huge = 1e12;  // the magnitude cap: the largest extent the routines accept
+    const BezierSpan spiky{{-0.0014121, -0.00345894}, {0.0030753, 0.00245513}, {huge, -huge}, {0.00425758, 0.00280278}};
     const std::vector<Case> cases{
         {"loops 1e6 shifted", loopOf(1e6), shiftedLoopOf(1e6), true},
         {"loops 1e7", loopOf(1e7), shiftedLoopOf(1e7), true},
@@ -449,10 +469,13 @@ TEST_CASE("Default budget: the old multi-second Bezier pairs finish quickly or r
         {"loops 1e8 reversed", loopOf(1e8), reversedLoopOf(1e8), true},
         {"huge 1e8", BezierSpan{{1e8, 0}, {1e8, 1e8}, {0, 1e8}, {-1e8, -1e8}},
          BezierSpan{{0, 0}, {1e8, 1e8}, {-1e8, 1e8}, {10, 10}}, false},
-        {"huge 1e100", BezierSpan{{huge, 0}, {huge, huge}, {0, huge}, {-huge, -huge}},
+        {"huge 1e12", BezierSpan{{huge, 0}, {huge, huge}, {0, huge}, {-huge, -huge}},
          BezierSpan{{0, 0}, {huge, huge}, {-huge, huge}, {10, 10}}, false},
-        {"huge 1e100 with itself", BezierSpan{{0, 0}, {huge, huge}, {-huge, huge}, {10, 10}},
-         BezierSpan{{0, 0}, {huge, huge}, {-huge, huge}, {10, 10}}, true},
+        {"huge 1e12 with itself", BezierSpan{{0, 0}, {huge, huge}, {-huge, huge}, {10, 10}},
+         BezierSpan{{0, 0}, {huge, huge}, {-huge, huge}, {10, 10}}, false},
+        {"spiky 1e12 with itself", spiky, spiky, false},
+        {"ends at the cap", BezierSpan{{-huge, -huge}, {1, 2}, {3, -4}, {huge, huge}},
+         BezierSpan{{-huge, -huge}, {1, 2}, {3, -4}, {huge, huge}}, false},
     };
     for (const Case& c : cases) {
         INFO(c.name);
@@ -589,4 +612,180 @@ TEST_CASE("V-carve resolves a nested pair whose crossing test is truncated", "[t
     const auto cut = carvetto::toolpath::vCarvingToolpath(vectors, tool, std::nullopt, {}, p);
     REQUIRE(cut.ok());
     REQUIRE(cut.has(carvetto::toolpath::ToolpathIssue::CrossingVectorsResolved));
+}
+
+TEST_CASE("Spans beyond the magnitude cap are refused up front", "[bezier][intersect][budget][toolarge][geometry]") {
+    const Tolerance tol = Tolerance::defaults();
+    const double cap = kMaxIntersectMagnitude;
+    const BezierSpan okBez{{0, 0}, {5, 5}, {10, -5}, {20, 0}};
+    const LineSpan okLine{{-5, 1}, {25, 1}};
+    const double t0 = processCpuSeconds();
+    // At the cap the span is accepted, just beyond it refused, in every field and kind.
+    std::vector<Span> atCap;
+    std::vector<Span> beyond;
+    for (int field = 0; field < 8; ++field) {
+        for (const double v : {cap, -cap, cap * 1.0001, -cap * 1.0001, 1e100, 1.7e308}) {
+            BezierSpan z = okBez;
+            double* f[8] = {&z.p0.x, &z.p0.y, &z.p1.x, &z.p1.y, &z.p2.x, &z.p2.y, &z.p3.x, &z.p3.y};
+            *f[field] = v;
+            (std::fabs(v) <= cap ? atCap : beyond).emplace_back(z);
+        }
+    }
+    for (const double v : {cap, cap * 1.0001, 1e100}) {
+        LineSpan l = okLine;
+        l.end.y = v;
+        (v <= cap ? atCap : beyond).emplace_back(l);
+        ArcSpan arc{{0, 0}, v, 0.0, 1.0, ArcDirection::CCW};
+        (v <= cap ? atCap : beyond).emplace_back(arc);
+        ArcSpan far_{{v, 0}, 5.0, 0.0, 1.0, ArcDirection::CCW};
+        (v <= cap ? atCap : beyond).emplace_back(far_);
+    }
+    for (const Span& s : beyond) {
+        for (const Span& partner : {Span{okBez}, Span{okLine}}) {
+            const IntersectionResult r1 = intersect(s, partner, tol);
+            REQUIRE(r1.status == IntersectStatus::TooLarge);
+            REQUIRE(r1.isEmpty());
+            REQUIRE(intersect(partner, s, tol).status == IntersectStatus::TooLarge);
+        }
+        Contour c;
+        c.append(okLine);
+        c.append(s);
+        Contour good;
+        good.append(okBez);
+        REQUIRE(intersect(c, good, tol).status == IntersectStatus::TooLarge);
+        REQUIRE(intersect(good, c, tol).status == IntersectStatus::TooLarge);
+        const ContourIntersections self = selfIntersections(c, tol);
+        REQUIRE(self.status == IntersectStatus::TooLarge);
+        REQUIRE(hasSelfIntersections(c, tol));
+        // Non-finite wins over too large, whichever span comes first.
+        Contour mixed;
+        mixed.append(LineSpan{{0, 0}, {kNaN, 1}});
+        mixed.append(s);
+        REQUIRE(selfIntersections(mixed, tol).status == IntersectStatus::InvalidInput);
+        Contour mixedRev;
+        mixedRev.append(s);
+        mixedRev.append(LineSpan{{0, 0}, {kNaN, 1}});
+        REQUIRE(selfIntersections(mixedRev, tol).status == IntersectStatus::InvalidInput);
+        REQUIRE(intersect(mixed, mixedRev, tol).status == IntersectStatus::InvalidInput);
+        REQUIRE(intersect(s, Span{LineSpan{{0, 0}, {kNaN, 1}}}, tol).status == IntersectStatus::InvalidInput);
+    }
+    REQUIRE(processCpuSeconds() - t0 < 3.0);
+    for (const Span& s : atCap) {
+        const IntersectionResult r = intersect(s, Span{okLine}, tol, pairLimit(2'000'000));
+        REQUIRE(r.status != IntersectStatus::TooLarge);
+        REQUIRE(r.status != IntersectStatus::InvalidInput);
+    }
+}
+
+TEST_CASE("Work units of reference pairs are pinned", "[bezier][intersect][budget][units][geometry]") {
+    // The unit counts are the budget's meaning (ADR-0005 A2): changing a unit constant or leaving a
+    // charge out moves them. Bands of +-12% leave room for libm differences between platforms.
+    const Tolerance tol = Tolerance::defaults();
+    struct Ref {
+        const char* name;
+        Span a;
+        Span b;
+        double units;
+        std::size_t hits;
+    };
+    const BezierSpan s{{0, 0}, {10, 20}, {20, -20}, {30, 0}};
+    const BezierSpan loop{{0, 0}, {1000, 1000}, {-1000, 1000}, {0, 0}};
+    const BezierSpan c{{0, 0}, {30, 40}, {60, -40}, {90, 0}};
+    const std::vector<Ref> refs{
+        {"S against a line", s, LineSpan{{5, -5}, {25, 5}}, 15541.0, 1},
+        {"loop against itself reversed", loop, loop.reversed(), 1803384.0, 512},
+        {"long smooth pair", BezierSpan{{0, 0}, {1e5, 1e5}, {-1e5, 2e5}, {1e5, 3e5}},
+         BezierSpan{{1e5, 0}, {-1e5, 1e5}, {1e5, 2e5}, {0, 3e5}}, 255803.0, 3},
+        {"near-parallel pair", c, BezierSpan{{0, 1}, {30, 41}, {60, -39}, {90, 1}}, 5970.0, 0},
+    };
+    for (const Ref& r : refs) {
+        INFO(r.name);
+        const IntersectionResult res = intersect(r.a, r.b, tol);
+        REQUIRE(res.complete());
+        REQUIRE(res.points.size() == r.hits);
+        const double units = static_cast<double>(detail::lastPairWork());
+        INFO("units " << units);
+        REQUIRE(units >= 0.88 * r.units);
+        REQUIRE(units <= 1.12 * r.units);
+    }
+}
+
+TEST_CASE("Long polylines give the same hits through the box index as through the direct loops", "[bezier][intersect][budget][geometry]") {
+    const Tolerance tol = Tolerance::defaults();
+    const BezierSpan loop{{0, 0}, {1000, 1000}, {-1000, 1000}, {0, 0}};
+    const BezierSpan other{{1e-4, 0}, {1000, 1000}, {-1000, 1000}, {0, 1e-4}};
+    const BezierSpan big{{0, 0}, {1e5, 1e5}, {-1e5, 2e5}, {1e5, 3e5}};
+    const BezierSpan big2{{1e5, 0}, {-1e5, 1e5}, {1e5, 2e5}, {0, 3e5}};
+    const std::vector<std::pair<Span, Span>> pairs{{loop, loop.reversed()}, {loop, other}, {big, big2}, {loop, loop}};
+    for (const auto& [a, b] : pairs) {
+        const IntersectionResult indexed = intersect(a, b, tol);
+        IntersectionResult direct;
+        {
+            detail::forceDirectChordPairs() = true;
+            direct = intersect(a, b, tol);
+            detail::forceDirectChordPairs() = false;
+        }
+        REQUIRE(samePoints(indexed, direct));
+        REQUIRE_FALSE(indexed.points.empty());
+    }
+    // The same for the chords of one curve against each other.
+    Contour c;
+    c.append(BezierSpan{{0, 0}, {1000, 1000}, {-1000, 1000}, {50, -100}});
+    const ContourIntersections indexed = selfIntersections(c, tol);
+    detail::forceDirectChordPairs() = true;
+    const ContourIntersections direct = selfIntersections(c, tol);
+    detail::forceDirectChordPairs() = false;
+    REQUIRE(indexed.points.size() == direct.points.size());
+    for (std::size_t i = 0; i < direct.points.size(); ++i) {
+        REQUIRE(indexed.points[i].hit.tA == direct.points[i].hit.tA);
+        REQUIRE(indexed.points[i].hit.tB == direct.points[i].hit.tB);
+    }
+}
+
+TEST_CASE("selfIntersections pairs each span with later spans only", "[intersect][contour][geometry]") {
+    // Three separate smooth Beziers whose boxes overlap but which never meet: no hits at all (a pair
+    // (i, i) or (j, i) would intersect a span with itself and report it everywhere).
+    const Tolerance tol = Tolerance::defaults();
+    Contour c;
+    c.closed = false;
+    c.append(BezierSpan{{0, 0}, {10, 10}, {20, 10}, {30, 0}});
+    c.append(LineSpan{{30, 0}, {30, 20}});
+    c.append(BezierSpan{{30, 20}, {20, 30}, {10, 30}, {0, 20}});
+    const ContourIntersections r = failFast(60.0, "selfIntersections", [&] { return selfIntersections(c, tol); });
+    REQUIRE(r.complete());
+    REQUIRE(r.isEmpty());
+    REQUIRE_FALSE(failFast(60.0, "hasSelfIntersections", [&] { return hasSelfIntersections(c, tol); }));
+    // Contours of many long Beziers: every span pair counted once, none with itself.
+    Contour many;
+    for (int k = 0; k < 40; ++k) {
+        const double y = 2000.0 * k;
+        many.append(BezierSpan{{0, y}, {1e4, y + 100}, {2e4, y - 100}, {3e4, y}});
+        many.append(LineSpan{{3e4, y}, {3e4, y + 2000}});
+    }
+    const ContourIntersections m =
+        failFast(60.0, "selfIntersections (many)", [&] { return selfIntersections(many, tol); });
+    REQUIRE(m.complete());
+    REQUIRE(m.isEmpty());
+}
+
+TEST_CASE("Chord pairs of a long reversed loop are taken in ascending order through the box index", "[bezier][intersect][budget][perf][geometry]") {
+    // Corpus seed 215 of the T-0178 verifier scaled by one half: a pair of near-coincident curves
+    // whose touch-settling walks reuse each other's trail, so the order in which chord pairs reach
+    // them changes the result (34,282 or 34,283 hits). About 1e8 units: Release builds only.
+    if constexpr (!kRelease) {
+        SKIP("about 1e8 work units: Release builds only");
+    } else {
+        Tolerance tol;
+        tol.distance = 1e-5;
+        tol.chordal = 1e-3;
+        const BezierSpan a{{-70538.35542655601, 39030.47786081348}, {-93954.00361986744, 49165.72843458336},
+                           {91117.01344457545, -70626.9452449531}, {70572.3412164351, -82952.72259104518}};
+        const IntersectionResult indexed = intersect(Span{a}, Span{a.reversed()}, tol);
+        detail::forceDirectChordPairs() = true;
+        const IntersectionResult direct = intersect(Span{a}, Span{a.reversed()}, tol);
+        detail::forceDirectChordPairs() = false;
+        REQUIRE(indexed.complete());
+        REQUIRE(indexed.points.size() > 30000);
+        REQUIRE(samePoints(indexed, direct));
+    }
 }

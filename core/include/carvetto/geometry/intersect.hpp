@@ -44,6 +44,11 @@ enum class IntersectStatus {
     /// A span has a non-finite coordinate or arc parameter (NaN or infinity): nothing was computed,
     /// the result is empty.
     InvalidInput,
+    /// A span has a coordinate or arc radius beyond 1e12 mm in magnitude (`kMaxIntersectMagnitude`):
+    /// nothing was computed, the result is empty. No CNC drawing is anywhere near it; past it the
+    /// arithmetic of the Bezier routines overflows or loses all precision and their cost cannot be
+    /// bounded (ADR-0005 A2).
+    TooLarge,
 };
 
 /// Everything two spans have in common: isolated points and coincident stretches. Points that
@@ -57,6 +62,9 @@ struct IntersectionResult {
     /// True when `points`/`overlaps` are the complete answer (`status == Complete`).
     bool complete() const { return status == IntersectStatus::Complete; }
 };
+
+/// Largest coordinate or arc radius (mm) the intersection routines accept; see `IntersectStatus::TooLarge`.
+inline constexpr double kMaxIntersectMagnitude = 1e12;
 
 /// Work budget of the Bezier intersection routines. Work is counted in deterministic units
 /// (a chord-pair test costs 1, a curve evaluation or nearest-point step costs tens, a Newton
@@ -134,7 +142,8 @@ IntersectionResult intersect(const ArcSpan& a, const ArcSpan& b, const Tolerance
 /// (the overload without `limits` uses the defaults). When that is not enough the result has
 /// `status == Truncated` and holds what was found so far. A span with a NaN or infinite
 /// coordinate (control point, centre, radius, angle) gives an empty result with `status ==
-/// InvalidInput`, whatever the other span is.
+/// InvalidInput`, and one with a coordinate or radius beyond `kMaxIntersectMagnitude` an empty
+/// result with `status == TooLarge`, whatever the other span is.
 IntersectionResult intersect(const Span& a, const Span& b, const Tolerance& tol);
 IntersectionResult intersect(const Span& a, const Span& b, const Tolerance& tol, const IntersectLimits& limits);
 
@@ -157,9 +166,9 @@ struct ContourOverlap {
 struct ContourIntersections {
     std::vector<ContourIntersection> points;
     std::vector<ContourOverlap> overlaps;
-    /// Worst status of any span pair (InvalidInput over Truncated over Complete), or Truncated
+    /// Worst status of any span pair (InvalidInput over TooLarge over Truncated over Complete), or Truncated
     /// when `IntersectLimits::totalWork` ran out. Anything but Complete means the lists may miss
-    /// intersections (and are empty for InvalidInput).
+    /// intersections (and are empty for InvalidInput and TooLarge).
     IntersectStatus status{IntersectStatus::Complete};
 
     bool isEmpty() const { return points.empty() && overlaps.empty(); }
