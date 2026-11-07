@@ -114,6 +114,80 @@ ToolpathMessage note(MessageSeverity severity, std::string text) {
     return m;
 }
 
+constexpr double kMaxWorkLevels = 10000.0;     // as Pocket and Drill
+constexpr double kMaxWorkMoves = 20000000.0;   // as Pocket and Drill
+
+/// Segments a circular arc of `sweep` radians and `radius` mm is cut into at the chordal tolerance.
+double arcSegments(double radius, double sweep, double chordal) {
+    const double c = std::max(chordal, 1e-4);
+    const double r = std::max(std::fabs(radius), c);
+    const double step = std::acos(1.0 - std::min(1.0, c / r));
+    return 1.0 + std::fabs(sweep) / std::max(step, 1e-6);
+}
+
+/// The profile has no work limit of its own (the pocket and drilling have: 10000 levels, 20 M moves),
+/// so a depth in micrometre steps, an allowance of a million millimetres, an overcut of a million
+/// millimetres or a tab every nanometre would make it allocate gigabytes. This refuses what would
+/// need more than those limits, by a coarse upper estimate of the moves.
+std::string profileWorkProblem(const toolpath::ProfileParams& p, const ResolvedTool& tool,
+                               const ResolvedVectors& vectors) {
+    double step = p.passes.passDepth;
+    if (!(step > 0.0)) {
+        step = toolpath::effectiveCuttingData(tool.tool, tool.data).passDepth;
+    }
+    double levels = 1.0;
+    if (p.passes.cutDepth > 0.0 && step > 0.0) {
+        levels = std::ceil(p.passes.cutDepth / step) + 2.0;
+    }
+    if (!(levels <= kMaxWorkLevels)) {
+        return "more than " + std::to_string(static_cast<long long>(kMaxWorkLevels)) + " passes (cut depth " +
+               std::to_string(p.passes.cutDepth) + " mm in steps of " + std::to_string(step) + " mm)";
+    }
+    const double chordal = p.tolerance.chordal;
+    const double reach = tool.tool.diameter * 0.5 + std::fabs(p.allowance) +
+                         (p.separateLastPass ? std::fabs(p.lastPassAllowance) : 0.0);
+    const double contours = static_cast<double>(vectors.contours.size());
+    double perCut = static_cast<double>(vectors.spanCount) * arcSegments(reach, 1.5707963267948966, chordal);
+    if (p.leads.type == toolpath::LeadType::Circular) {
+        perCut += contours * 2.0 * arcSegments(p.leads.radius, p.leads.sweep, chordal);
+    } else if (p.leads.type == toolpath::LeadType::Straight) {
+        perCut += contours * 4.0;
+    }
+    if (p.leads.type != toolpath::LeadType::None) {
+        perCut += contours * std::fabs(p.leads.overcut) / std::max(chordal, 1e-4);
+    }
+    if (p.tabs.enabled) {
+        double length = 0.0;
+        for (const ContourRef& c : vectors.contours) {
+            length += c.contour->length();
+        }
+        const double tabs = p.tabs.spacing == toolpath::TabSpacing::ConstantNumber
+                                ? contours * static_cast<double>(std::max(p.tabs.count, 0))
+                                : length / std::max(p.tabs.distance, 1e-9) + contours;
+        perCut += tabs * 8.0;
+    }
+    if (p.ramp.type == toolpath::RampType::ZigZag && p.ramp.useAngle) {
+        const double legs = step / std::max(p.ramp.distance * std::tan(std::max(p.ramp.angle, 1e-9)), 1e-12);
+        perCut += contours * 2.0 * legs;
+    }
+    const double moves = levels * perCut * 2.0;
+    if (!(moves <= kMaxWorkMoves)) {
+        return "the toolpath would have more than " + std::to_string(static_cast<long long>(kMaxWorkMoves)) +
+               " moves (too many passes, vectors, tabs or too large an offset, lead or overcut)";
+    }
+    return {};
+}
+
+/// Quick Engrave outlines cut every vector `passes` times.
+std::string engraveWorkProblem(const toolpath::EngraveParams& p, const ResolvedVectors& vectors) {
+    if (p.strategy == toolpath::EngraveStrategy::Outline &&
+        !(static_cast<double>(std::max(p.passes, 0)) * static_cast<double>(vectors.spanCount) * 2.0 <= kMaxWorkMoves)) {
+        return "the toolpath would have more than " + std::to_string(static_cast<long long>(kMaxWorkMoves)) +
+               " moves (too many passes or vectors)";
+    }
+    return {};
+}
+
 }  // namespace
 
 // --- Definition ----------------------------------------------------------------------------------
@@ -303,6 +377,8 @@ ToolpathJob makeToolpathJob(const ToolpathDefinition& definition, const Resolved
     }
     if (const std::string key = document::nonFiniteParam(job.definition.params); !key.empty()) {
         refuse("parameter " + key + " is not a finite number");
+    } else if (const std::string range = validateParams(job.definition.params); !range.empty()) {
+        refuse(range);
     }
 
     // Tools.
@@ -358,9 +434,29 @@ ToolpathJob makeToolpathJob(const ToolpathDefinition& definition, const Resolved
         for (const geometry::Span& s : c.contour->spans) {
             if (!spanFinite(s)) {
                 refuse("vector #" + std::to_string(c.object.value) + " has coordinates that are not finite or beyond " +
-                       "1e9 mm");
+                       std::to_string(static_cast<long long>(kMaxToolpathCoordinateMm)) + " mm");
                 return job;
             }
+        }
+    }
+    std::string work;
+    if (const auto* profile = std::get_if<toolpath::ProfileParams>(&job.definition.params);
+        profile != nullptr && job.tool.has_value()) {
+        work = profileWorkProblem(*profile, *job.tool, vectors);
+    } else if (const auto* engrave = std::get_if<toolpath::EngraveParams>(&job.definition.params)) {
+        work = engraveWorkProblem(*engrave, vectors);
+    }
+    if (!work.empty()) {
+        refuse(work);
+        return job;
+    }
+    double totalLength = 0.0;
+    for (const ContourRef& c : vectors.contours) {
+        totalLength += c.contour->length();
+        if (!(totalLength <= kMaxToolpathLengthMm)) {
+            refuse("the vectors are too long to machine in one toolpath (more than " +
+                   std::to_string(static_cast<long long>(kMaxToolpathLengthMm)) + " mm in all)");
+            return job;
         }
     }
     job.contours = vectors.copyContours();

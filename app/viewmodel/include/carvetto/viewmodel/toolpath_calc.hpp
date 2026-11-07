@@ -51,6 +51,12 @@ struct ToolpathDefinition {
 /// A fresh definition of `operation` with the core's default parameters.
 ToolpathDefinition defaultDefinition(document::ToolpathOperation operation);
 
+/// Empty when every number of `params` is finite and within the range a form accepts (lengths and
+/// times up to 1e9, angles up to 360000 degrees, counts in their range) and every option is one of
+/// its choices; else the first offender. A definition built in code is held to what the forms
+/// allow; the core operations judge the rest.
+std::string validateParams(const document::ToolpathParams& params);
+
 /// Longest toolpath name (bytes) the session accepts.
 inline constexpr std::size_t kMaxToolpathNameBytes = 256;
 /// Empty when `name` is usable: non-empty, at most `kMaxToolpathNameBytes`, no control characters
@@ -152,10 +158,13 @@ struct ToolpathJob {
     ToolpathCalculation run(const std::atomic<bool>* cancel = nullptr) const;
 };
 
-/// Most spans a job accepts over all its contours, and the largest coordinate magnitude (mm);
-/// larger input is refused before the operation runs.
+/// Most spans a job accepts over all its contours, the largest coordinate magnitude (mm) and the
+/// longest total contour length (mm); larger input is refused before the operation runs. The core
+/// operations' cost grows with the length of the vectors (a 1e6 mm edge costs 14 s of CPU in a
+/// Debug build, 1e7 mm minutes), and no machine works over 100 m.
 inline constexpr std::size_t kMaxToolpathSpans = 2'000'000;
-inline constexpr double kMaxToolpathCoordinateMm = 1.0e9;
+inline constexpr double kMaxToolpathCoordinateMm = 1.0e5;
+inline constexpr double kMaxToolpathLengthMm = 1.0e7;
 
 /// Builds a job from `definition`, the resolved vectors and the tool database (never throws; a
 /// problem with the input becomes `refusal`). `selection` is what the records will store.

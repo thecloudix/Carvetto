@@ -142,6 +142,21 @@ void addChordal(Table<P>& t, std::function<geometry::Tolerance&(P&)> tol, double
     d.hi = 1.0;
 }
 
+/// Narrows the bounds of field `id` (in its own unit). Offsets, leads and overcuts beyond a metre
+/// make the core's offsetting and trimming cost grow with the distance over the chordal tolerance
+/// for no use; they are refused here instead of running for minutes.
+template <class P>
+void bound(Table<P>& t, const char* id, double lo, double hi) {
+    for (NumDef<P>& d : t.nums) {
+        if (d.id == id) {
+            d.lo = std::max(d.lo, lo);
+            d.hi = std::min(d.hi, hi);
+        }
+    }
+}
+
+constexpr double kMaxOffsetMm = 1000.0;
+
 // --- Tables --------------------------------------------------------------------------------------
 
 Table<toolpath::ProfileParams> makeProfileTable() {
@@ -154,7 +169,7 @@ Table<toolpath::ProfileParams> makeProfileTable() {
     t.num("lastPassThickness", "Last pass thickness", "Depth", Kind::Length, false, true,
           [](P& p) -> double& { return p.passes.lastPassThickness; });
     t.num("safeZ", "Safe Z", "Depth", Kind::Length, false, false, [](P& p) -> double& { return p.safeZ; });
-    t.num("allowance", "Allowance offset", "Cut", Kind::Length, true, true, [](P& p) -> double& { return p.allowance; });
+    t.num("allowance", "Allowance offset", "Cut", Kind::Length, true, true, [](P& p) -> double& { return p.allowance; });;
     t.num("lastPassAllowance", "Last pass allowance", "Cut", Kind::Length, false, true,
           [](P& p) -> double& { return p.lastPassAllowance; }, [](const P& p) { return p.separateLastPass; });
     t.num("tabLength", "Tab length", "Tabs", Kind::Length, false, false, [](P& p) -> double& { return p.tabs.length; },
@@ -237,6 +252,10 @@ Table<toolpath::ProfileParams> makeProfileTable() {
                                   [](const P& p) { return p.startAt == toolpath::StartAt::ClosestOnBoundingBox; });
     t.flag("sharpExternal", "Sharp external corners", "Corners", [](P& p) -> bool& { return p.corners.sharpExternal; });
     t.flag("sharpInternal", "Sharp internal corners", "Corners", [](P& p) -> bool& { return p.corners.sharpInternal; });
+    for (const char* id : {"allowance", "lastPassAllowance", "overcut", "leadLength", "leadRadius", "rampDistance",
+                           "tabLength", "tabDistance"}) {
+        bound(t, id, -kMaxOffsetMm, kMaxOffsetMm);
+    }
     return t;
 }
 
@@ -262,6 +281,8 @@ Table<toolpath::PocketParams> makePocketTable() {
                                     [](P& p) -> toolpath::ProfilePass& { return p.profilePass; });
     t.flag("maintainExactStep", "Maintain exact pass depth", "Depth", [](P& p) -> bool& { return p.maintainExactStep; });
     t.flag("rampPlunge", "Ramp plunge moves", "Ramp", [](P& p) -> bool& { return p.rampPlunge; });
+    bound(t, "allowance", -kMaxOffsetMm, kMaxOffsetMm);
+    bound(t, "rampDistance", -kMaxOffsetMm, kMaxOffsetMm);
     return t;
 }
 
@@ -287,6 +308,7 @@ Table<toolpath::DrillParams> makeDrillTable() {
                                     [](P& p) -> toolpath::PeckRetract& { return p.peckRetract; },
                                     [](const P& p) { return p.peck; });
     addOrder<P>(t, [](P& p) -> toolpath::OrderOptions& { return p.order; });
+    bound(t, "retractGap", -kMaxOffsetMm, kMaxOffsetMm);
     return t;
 }
 
@@ -334,6 +356,7 @@ Table<toolpath::VCarvingParams> makeVCarvingTable() {
     t.flag("rampPlunge", "Ramp plunge moves", "Clearance", [](P& p) -> bool& { return p.rampPlunge; });
     t.flag("cornerSharpen", "Corner sharpen", "Clearance", [](P& p) -> bool& { return p.cornerSharpen; });
     addOrder<P>(t, [](P& p) -> toolpath::OrderOptions& { return p.order; });
+    bound(t, "rampDistance", -kMaxOffsetMm, kMaxOffsetMm);
     return t;
 }
 
@@ -598,9 +621,45 @@ std::vector<std::string> choiceIds() {
     return ids;
 }
 
+template <class P>
+std::string checkParams(const P& p) {
+    for (const NumDef<P>& d : tableOf<P>().nums) {
+        double v = readValue(d, p);
+        if (d.kind == Kind::Angle) {
+            v /= kRadPerDeg;
+        }
+        const double limit = d.kind == Kind::Angle ? 360000.0 : kMaxLength;
+        if (!std::isfinite(v) || std::fabs(v) > limit) {
+            return "parameter '" + d.id + "' is out of range";
+        }
+        if (v < d.lo || v > d.hi) {  // the field's own bounds (counts, angles, tolerances)
+            return "parameter '" + d.id + "' is out of range";
+        }
+    }
+    for (const ChoiceDef<P>& c : tableOf<P>().choices) {
+        const int v = c.get(p);
+        if (v < 0 || static_cast<std::size_t>(v) >= c.options.size()) {
+            return "option '" + c.id + "' is not valid";
+        }
+    }
+    // The tolerances not offered as fields: the core's own ranges (distance <= chordal <= 1 mm).
+    const geometry::Tolerance& tol = p.tolerance;
+    if (!(tol.distance >= 1e-6 && tol.distance <= 1.0)) {
+        return "parameter 'tolerance.distance' is out of range";
+    }
+    if (!(tol.angle >= 0.0 && tol.angle <= 1.0)) {
+        return "parameter 'tolerance.angle' is out of range";
+    }
+    return {};
+}
+
 std::string toolTypeLabel(tooling::ToolType type) { return std::string(tooling::toString(type)); }
 
 }  // namespace
+
+std::string validateParams(const document::ToolpathParams& params) {
+    return std::visit([](const auto& p) { return checkParams(p); }, params);
+}
 
 // --- ToolpathForm --------------------------------------------------------------------------------
 
@@ -772,6 +831,8 @@ std::vector<std::string> ToolpathForm::problems() const {
     }
     if (const std::string key = document::nonFiniteParam(definition_.params); !key.empty()) {
         out.push_back("parameter " + key + " is not a finite number");
+    } else if (const std::string range = validateParams(definition_.params); !range.empty()) {
+        out.push_back(range);
     }
     return out;
 }

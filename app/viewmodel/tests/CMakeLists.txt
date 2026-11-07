@@ -29,6 +29,7 @@ add_executable(carvetto_viewmodel_tests
   selection_tools_test.cpp
   toolpath_cli_identity_test.cpp
   toolpath_form_test.cpp
+  toolpath_robustness_test.cpp
   toolpath_session_test.cpp
   vector_selector_test.cpp
 )
