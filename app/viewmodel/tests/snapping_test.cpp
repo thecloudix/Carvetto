@@ -765,3 +765,79 @@ TEST_CASE("10k objects: queries touch only the neighbourhood of the cursor", "[v
     // on a shared machine). A linear scan over 10k objects per move would exceed it.
     CHECK(perQuery < 1e-3);
 }
+
+TEST_CASE("dense drawing: hundreds of spans inside the tolerance window stay interactive", "[viewmodel][snap][perf][dense]") {
+    // T-0204 criterion 3: 10k objects in a ~300 mm square; at 0.5 px/mm the 10 px window covers
+    // 20 mm, so hundreds of spans overlap every cursor. All kinds on, with a pending start so the
+    // perpendicular and tangent searches run too.
+    Fixture f(400.0);
+    Rng rng(7);
+    const int n = 10000;
+    for (int i = 0; i < n; ++i) {
+        const Vec2 c{rng.range(50.0, 350.0), rng.range(50.0, 350.0)};
+        Contour k;
+        switch (i % 4) {
+            case 0:
+                k.append(LineSpan{c, c + Vec2{rng.range(-30.0, 30.0), rng.range(-30.0, 30.0)}});
+                break;
+            case 1:
+                k = Contour::circle(c, rng.range(2.0, 15.0));
+                break;
+            case 2:
+                k.append(BezierSpan{c, c + Vec2{10, 20}, c + Vec2{25, -10}, c + Vec2{30, 5}});
+                break;
+            default:
+                k = polyline({c, c + Vec2{20, 0}, c + Vec2{20, 15}, c + Vec2{0, 15}}, true);
+                break;
+        }
+        f.add(std::move(k));
+    }
+    f.view.set(0.5, {20.0, 220.0});
+    const SnapIndex idx(f.doc);
+    SnapSettings s;
+    s.gridSpacingMm = 5.0;
+    SnapQuery q;
+    q.pendingStartMm = Vec2{200.0, 200.0};
+    const int queries = 300;
+    double worst = 0.0;
+    double total = 0.0;
+    std::size_t found = 0;
+    for (int i = 0; i < queries; ++i) {
+        const Vec2 cur{rng.range(100.0, 300.0), rng.range(100.0, 300.0)};
+        const double t0 = cpuSeconds();
+        found += idx.candidates(f.view, f.view.worldToScreen(cur), s, q).size();
+        const double dt = cpuSeconds() - t0;
+        total += dt;
+        worst = std::max(worst, dt);
+    }
+    std::cout << "[T-0204 dense] objects=" << n << " query avg=" << total / queries * 1e6
+              << " us, worst=" << worst * 1e6 << " us, candidates=" << found << "\n";
+    CHECK(found > 0);
+    // Documented bound: kMaxPairSpans^2 / 2 span-pair intersections per query. Measured on the
+    // development machine: Release ~2.4 ms average / ~6 ms worst, Debug ~15 ms / ~70 ms (before the
+    // bound the same scene needed hundreds of ms per query). The limits leave room for a loaded CI
+    // machine in Debug builds.
+    CHECK(total / queries < 0.05);
+    CHECK(worst < 0.3);
+}
+
+TEST_CASE("dense window: the crossing nearest the cursor is still found among hundreds of spans", "[viewmodel][snap][dense]") {
+    Fixture f(400.0);
+    Rng rng(11);
+    // 300 distractor lines through the 10 px window, all slightly off the cursor point.
+    const Vec2 cursor{200.0, 200.0};
+    for (int i = 0; i < 300; ++i) {
+        const double a = rng.range(0.0, 3.14159);
+        const Vec2 d = Vec2::fromAngle(a, 40.0);
+        const Vec2 off = Vec2::fromAngle(a + 1.5707963, rng.range(2.0, 8.0));
+        f.line(cursor + off - d, cursor + off + d);
+    }
+    // The true crossing exactly at the cursor.
+    f.line({160.0, 200.0}, {240.0, 200.0});
+    f.line({200.0, 160.0}, {200.0, 240.0});
+    const SnapIndex idx(f.doc);
+    const auto best = idx.best(f.view, f.px(cursor), only(SnapKind::Intersection));
+    REQUIRE(best.has_value());
+    CHECK(distance(best->pointMm, cursor) < 1e-9);
+    REQUIRE(best->objects.size() == 2);
+}
