@@ -58,7 +58,12 @@
 //
 // Performance: only spans and points whose boxes touch the cursor's tolerance box are examined
 // (a uniform grid, `toolpath::BoxIndex`). At most `kMaxNearSpans` spans (the nearest ones, ties
-// by index) take part in the intersection / perpendicular / tangent searches of one query.
+// by index) take part in the nearest / perpendicular / tangent searches of one query, and at most
+// `kMaxPairSpans` of those (again the nearest) in the pairwise Intersection search, so one query
+// costs a bounded number of span-pair intersections however dense the drawing is (T-0204).
+// Silent-loss case: in a window holding more than `kMaxPairSpans` spans, a genuine crossing between
+// spans that are not among the nearest `kMaxPairSpans` is not reported (the nearer spans' own
+// snaps are); zooming in shrinks the window and restores it.
 
 namespace carvetto::viewmodel {
 
@@ -131,6 +136,8 @@ struct Snap {
 class SnapIndex {
    public:
     static constexpr std::size_t kMaxNearSpans = 256;
+    /// Spans (the nearest to the cursor) that take part in the pairwise Intersection search.
+    static constexpr std::size_t kMaxPairSpans = 20;
 
     explicit SnapIndex(const document::Document& doc, bool includeLocked = false);
 

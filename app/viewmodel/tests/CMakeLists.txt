@@ -12,8 +12,10 @@ if(NOT catch2_POPULATED)
 endif()
 
 add_executable(carvetto_viewmodel_tests
+  vector_ops_test.cpp
   view_transform_test.cpp
   ruler_test.cpp
+  tools_test.cpp
   units_format_test.cpp
   canvas_scene_test.cpp
   array_copies_test.cpp

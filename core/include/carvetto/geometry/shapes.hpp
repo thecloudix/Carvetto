@@ -96,4 +96,12 @@ ShapeResult<Contour> buildArcCentreStartEnd(Vec2 centre, Vec2 start, Vec2 end, A
 ShapeResult<Contour> buildArcStartEndRadius(Vec2 start, Vec2 end, double radius, ArcDirection dir,
                                             bool large, const Tolerance& tol = Tolerance::defaults());
 
+/// Arc over the chord `start`-`end` whose apex stands `height` away from the chord midpoint (the
+/// "Exact Size" start / end / height variant). A positive `height` bulges to the left of the
+/// direction start -> end (the arc then travels clockwise), a negative one to the right
+/// (counter-clockwise). A height above half the chord gives an arc of more than a half circle.
+/// Error when start and end coincide or |height| is within `tol.distance` of zero.
+ShapeResult<Contour> buildArcStartEndHeight(Vec2 start, Vec2 end, double height,
+                                            const Tolerance& tol = Tolerance::defaults());
+
 }  // namespace carvetto::geometry

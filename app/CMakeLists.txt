@@ -14,8 +14,12 @@ qt_add_executable(carvetto
   src/ruler_widget.hpp
   src/new_job_dialog.cpp
   src/new_job_dialog.hpp
+  src/tool_panel.cpp
+  src/tool_panel.hpp
   src/self_test.cpp
   src/self_test.hpp
+  src/vector_ops_menu.cpp
+  src/vector_ops_menu.hpp
 )
 target_link_libraries(carvetto PRIVATE carvetto::viewmodel carvetto::core Qt6::Widgets carvetto_warnings)
 # GUI subsystem on Windows (no console window). CI waits for `--self-test` with

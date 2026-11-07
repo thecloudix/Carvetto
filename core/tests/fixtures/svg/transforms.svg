@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Authored for Carvetto (T-0212): nested transforms and inch units. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="2in" height="1in" viewBox="0 0 200 100">
+  <g transform="translate(10,20) scale(2)">
+    <g transform="rotate(90)">
+      <path d="M0 0 L10 0 L10 5"/>
+    </g>
+  </g>
+  <g transform="matrix(1 0 0.5 1 0 0)"><path d="M100 50 h10 v10"/></g>
+  <g transform="skewX(45)"><path d="M0 80 h10"/></g>
+</svg>

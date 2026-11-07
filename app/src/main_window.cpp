@@ -1,6 +1,7 @@
 #include "main_window.hpp"
 
 #include <QAction>
+#include <QActionGroup>
 #include <QByteArray>
 #include <QCloseEvent>
 #include <QComboBox>
@@ -38,6 +39,8 @@
 #include "carvetto/viewmodel/units_format.hpp"
 #include "new_job_dialog.hpp"
 #include "ruler_widget.hpp"
+#include "tool_panel.hpp"
+#include "vector_ops_menu.hpp"
 
 namespace carvetto::app {
 
@@ -70,6 +73,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     buildDocks();
     buildMenus();
     buildToolBar();
+    buildToolPalette();
 
     cursorLabel_ = new QLabel(this);
     cursorLabel_->setMinimumWidth(220);
@@ -129,8 +133,8 @@ void MainWindow::buildDocks() {
         return dock;
     };
 
-    designDock_ =
-        makeDock("Design", "designDock", placeholder("Drawing and editing tools will appear here.", this));
+    toolPanel_ = new ToolPanel(canvas_, this);
+    designDock_ = makeDock("Design", "designDock", toolPanel_);
     sheetsList_ = new QListWidget(this);
     sheetsDock_ = makeDock("Sheets", "sheetsDock", sheetsList_);
     layersList_ = new QListWidget(this);
@@ -194,6 +198,8 @@ void MainWindow::buildMenus() {
     redoAction_ = edit->addAction(QStringLiteral("&Redo"));
     redoAction_->setShortcut(QKeySequence::Redo);
     connect(redoAction_, &QAction::triggered, this, [this]() { redo(); });
+    edit->addSeparator();
+    vectorOps_ = std::make_unique<VectorOpsMenu>(*this, edit);
     copies_ = std::make_unique<CopiesMenu>(*this, edit);
 
     QMenu* view = menuBar()->addMenu(QStringLiteral("&View"));
@@ -232,12 +238,70 @@ void MainWindow::buildToolBar() {
     connect(layerCombo_, &QComboBox::currentIndexChanged, this, [this](int row) { pickLayer(row); });
 }
 
+void MainWindow::buildToolPalette() {
+    struct Entry {
+        viewmodel::ToolKind kind;
+        const char* text;
+        const char* tip;
+    };
+    const Entry entries[] = {
+        {viewmodel::ToolKind::Select, "Select", "Select objects (click, or drag a marquee)"},
+        {viewmodel::ToolKind::Rectangle, "Rectangle", "Draw a rectangle (Alt: from centre, Ctrl: square)"},
+        {viewmodel::ToolKind::Circle, "Circle", "Draw a circle (Alt: drag the diameter)"},
+        {viewmodel::ToolKind::Ellipse, "Ellipse", "Draw an ellipse (Alt: from centre, Ctrl: circle)"},
+        {viewmodel::ToolKind::Polygon, "Polygon", "Draw a regular polygon"},
+        {viewmodel::ToolKind::Star, "Star", "Draw a star"},
+        {viewmodel::ToolKind::Arc, "Arc", "Draw an arc"},
+        {viewmodel::ToolKind::Polyline, "Polyline",
+         "Draw lines (Shift: 45 degrees, Enter/double-click: finish, Tab: close, Backspace: undo point)"},
+    };
+    QToolBar* bar = addToolBar(QStringLiteral("Tools"));
+    bar->setObjectName(QStringLiteral("toolsToolBar"));
+    bar->setMovable(false);
+    toolGroup_ = new QActionGroup(this);
+    toolGroup_->setExclusive(true);
+    for (const Entry& e : entries) {
+        QAction* action = bar->addAction(QString::fromUtf8(e.text));
+        action->setCheckable(true);
+        action->setToolTip(QString::fromUtf8(e.tip));
+        toolGroup_->addAction(action);
+        toolActions_[e.kind] = action;
+        const viewmodel::ToolKind kind = e.kind;
+        connect(action, &QAction::triggered, this, [this, kind]() {
+            canvas_->tools().setTool(kind);
+            toolPanel_->rebuild();
+            canvas_->update();
+        });
+    }
+    toolActions_[viewmodel::ToolKind::Select]->setChecked(true);
+
+    canvas_->onDocumentEdited = [this]() {
+        documentChanged();
+        toolPanel_->refreshValues();
+    };
+    canvas_->onToolStateChanged = [this]() { toolPanel_->refreshValues(); };
+}
+
+void MainWindow::selectTool(viewmodel::ToolKind tool) {
+    const auto it = toolActions_.find(tool);
+    if (it != toolActions_.end()) {
+        it->second->setChecked(true);
+        it->second->trigger();
+    }
+}
+
+QAction* MainWindow::toolAction(viewmodel::ToolKind tool) const {
+    const auto it = toolActions_.find(tool);
+    return it == toolActions_.end() ? nullptr : it->second;
+}
+
 void MainWindow::setDocument(std::unique_ptr<document::Document> doc) {
     if (!doc) {
         return;
     }
     session_.newDocument(std::move(doc));
     canvas_->setDocument(&session_.document());
+    toolPanel_->rebuild();
     documentChanged();
 }
 

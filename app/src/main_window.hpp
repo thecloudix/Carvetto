@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QMainWindow>
+#include <map>
 #include <memory>
 
 #include <filesystem>
@@ -8,8 +9,10 @@
 
 #include "carvetto/document/document.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
+#include "carvetto/viewmodel/tools.hpp"
 
 class QAction;
+class QActionGroup;
 class QMenu;
 class QCloseEvent;
 class QComboBox;
@@ -24,6 +27,8 @@ namespace carvetto::app {
 class CanvasWidget;
 class RulerWidget;
 class CopiesMenu;
+class ToolPanel;
+class VectorOpsMenu;
 
 /// Main window: 2D/3D view tabs with rulers around the 2D canvas, sheet and layer selectors,
 /// docked panels (Design, Sheets, Layers, Components, Library on the left; Toolpaths on the
@@ -50,8 +55,15 @@ class MainWindow : public QMainWindow {
     CopiesMenu* copies() const { return copies_.get(); }
 
     CanvasWidget* canvas() const { return canvas_; }
+    VectorOpsMenu* vectorOps() const { return vectorOps_.get(); }
     QDockWidget* toolpathsDock() const { return toolpathsDock_; }
     QDockWidget* layersDock() const { return layersDock_; }
+    ToolPanel* toolPanel() const { return toolPanel_; }
+
+    /// Activates a drawing / selection tool (same as clicking its toolbar button).
+    void selectTool(viewmodel::ToolKind tool);
+    /// The toolbar action of a tool (checkable, exclusive).
+    QAction* toolAction(viewmodel::ToolKind tool) const;
 
     /// Writes window geometry and dock layout to `settings`.
     void saveLayout(QSettings& settings) const;
@@ -82,6 +94,7 @@ class MainWindow : public QMainWindow {
    private:
     void buildMenus();
     void buildToolBar();
+    void buildToolPalette();
     void buildDocks();
     void buildCentralArea();
     void newJob();
@@ -101,6 +114,7 @@ class MainWindow : public QMainWindow {
     viewmodel::FileSession session_;
     QMenu* recentMenu_{nullptr};
     std::unique_ptr<CopiesMenu> copies_;
+    std::unique_ptr<VectorOpsMenu> vectorOps_;
 
     QTabWidget* views_{nullptr};
     CanvasWidget* canvas_{nullptr};
@@ -118,6 +132,10 @@ class MainWindow : public QMainWindow {
     QDockWidget* componentsDock_{nullptr};
     QDockWidget* libraryDock_{nullptr};
     QDockWidget* toolpathsDock_{nullptr};
+
+    QActionGroup* toolGroup_{nullptr};
+    std::map<viewmodel::ToolKind, QAction*> toolActions_;
+    ToolPanel* toolPanel_{nullptr};
 
     QAction* undoAction_{nullptr};
     QAction* redoAction_{nullptr};

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Authored for Carvetto (T-0212): px page without viewBox (96 dpi), closed path with arcs. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="96">
+  <path d="M 48 0 A 48 48 0 0 1 96 48 A 48 48 0 0 1 48 96 L 0 96 Z"/>
+</svg>
