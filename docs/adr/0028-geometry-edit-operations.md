@@ -29,9 +29,10 @@ the relief fillets or the tolerances. This ADR records the choices. All function
   is removed. If the radius does not fit: `RadiusTooLarge` (default) or, with
   `FilletOptions::clampToFit`, the largest fitting radius found by bisection (60 steps) is used
   and reported (`appliedRadius`, `clamped`).
-- `filletAll` handles nodes highest first (an inserted arc only shifts spans above it); a later
-  fillet therefore sees the already trimmed neighbour, which is what makes overlapping fillets on a
-  short edge fail cleanly instead of overlapping. Per-corner results are reported.
+- `filletAll` keeps the arcs aside (no insertion, so span indices stay valid) and applies nodes
+  highest first, each on the spans as the previous fillets left them: a later fillet sees its
+  already trimmed neighbour, which is what makes overlapping fillets on a short edge fail cleanly
+  instead of overlapping. Per-corner results are reported. Cost O(corners x samples).
 - Radii <= `tol.distance`, non-finite input, zero-length neighbours and gaps larger than the
   tolerance between the two spans are refused with a status.
 

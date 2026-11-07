@@ -339,7 +339,8 @@ std::optional<CornerGeom> cornerGeometry(const Span& a, const Span& b, Vec2 corn
 
 /// Applies one corner to a working span list. `consumed` marks spans reduced to nothing (erased
 /// by the caller once all corners are done so node indices stay valid).
-EditStatus applyCorner(std::vector<Span>& spans, std::vector<char>& consumed, bool closed, std::size_t node,
+EditStatus applyCorner(std::vector<Span>& spans, std::vector<char>& consumed, std::vector<std::optional<Span>>& arcs,
+                       bool closed, std::size_t node,
                        double radius, FilletKind kind, const FilletOptions& opt, const Tolerance& tol,
                        double& applied, bool& clamped, std::size_t& arcPos) {
     const std::size_t n = spans.size();
@@ -422,29 +423,35 @@ EditStatus applyCorner(std::vector<Span>& spans, std::vector<char>& consumed, bo
     if (geom->tb > 0.0 && approxLength(newB) <= eps) {
         consumed[ib] = 1;
     }
-    const std::size_t at = node == 0 ? n : node;
-    spans.insert(spans.begin() + static_cast<std::ptrdiff_t>(at), Span{geom->arc});
-    consumed.insert(consumed.begin() + static_cast<std::ptrdiff_t>(at), 0);
-    arcPos = at;
+    // The arc goes before span `node` (after the last span for node 0); no insertion, so every
+    // span index stays valid while more corners are applied.
+    arcPos = node == 0 ? n : node;
+    arcs[arcPos] = Span{geom->arc};
     return EditStatus::Ok;
 }
 
-void eraseConsumed(std::vector<Span>& spans, const std::vector<char>& consumed, std::size_t* track = nullptr) {
+/// Spans in order with each corner's arc before the span it precedes; spans reduced to nothing are
+/// dropped. `track` (a slot index on entry) becomes the arc's index in the result.
+std::vector<Span> assemble(const std::vector<Span>& spans, const std::vector<char>& consumed,
+                           const std::vector<std::optional<Span>>& arcs, std::size_t* track = nullptr) {
     std::vector<Span> out;
-    out.reserve(spans.size());
+    out.reserve(spans.size() + arcs.size());
     std::size_t newTrack = 0;
-    for (std::size_t i = 0; i < spans.size(); ++i) {
-        if (track != nullptr && i == *track) {
-            newTrack = out.size();
+    for (std::size_t i = 0; i <= spans.size(); ++i) {
+        if (arcs[i]) {
+            if (track != nullptr && i == *track) {
+                newTrack = out.size();
+            }
+            out.push_back(*arcs[i]);
         }
-        if (!consumed[i]) {
-            out.push_back(std::move(spans[i]));
+        if (i < spans.size() && !consumed[i]) {
+            out.push_back(spans[i]);
         }
     }
-    spans = std::move(out);
     if (track != nullptr) {
         *track = newTrack;
     }
+    return out;
 }
 
 bool radiusOk(double radius, const Tolerance& tol) {
@@ -468,16 +475,16 @@ FilletResult filletCorner(const Contour& contour, std::size_t nodeIndex, double 
     }
     std::vector<Span> spans = contour.spans;
     std::vector<char> consumed(spans.size(), 0);
+    std::vector<std::optional<Span>> arcs(spans.size() + 1);
     std::size_t arcPos = 0;
-    res.status = applyCorner(spans, consumed, contour.closed, nodeIndex, radius, kind, options, tol,
+    res.status = applyCorner(spans, consumed, arcs, contour.closed, nodeIndex, radius, kind, options, tol,
                              res.appliedRadius, res.clamped, arcPos);
     if (res.status != EditStatus::Ok) {
         res.appliedRadius = 0.0;
         res.clamped = false;
         return res;
     }
-    eraseConsumed(spans, consumed, &arcPos);
-    res.contour.spans = std::move(spans);
+    res.contour.spans = assemble(spans, consumed, arcs, &arcPos);
     res.contour.closed = contour.closed;
     res.arcSpan = arcPos;
     return res;
@@ -500,12 +507,14 @@ FilletAllResult filletNodes(const Contour& contour, double radius, FilletKind ki
     nodes.erase(std::unique(nodes.begin(), nodes.end()), nodes.end());
     std::vector<Span> spans = contour.spans;
     std::vector<char> consumed(spans.size(), 0);
-    // Highest node first: an inserted arc only shifts the spans above it.
+    std::vector<std::optional<Span>> arcs(spans.size() + 1);
+    // Highest node first, so a corner sees its lower neighbour untouched; the neighbour above it
+    // is already trimmed.
     for (std::size_t k = nodes.size(); k-- > 0;) {
         CornerReport rep;
         rep.node = nodes[k];
         std::size_t arcPos = 0;
-        rep.status = applyCorner(spans, consumed, contour.closed, nodes[k], radius, kind, options, tol,
+        rep.status = applyCorner(spans, consumed, arcs, contour.closed, nodes[k], radius, kind, options, tol,
                                  rep.appliedRadius, rep.clamped, arcPos);
         if (rep.status == EditStatus::Ok) {
             ++res.applied;
@@ -516,8 +525,7 @@ FilletAllResult filletNodes(const Contour& contour, double radius, FilletKind ki
         res.corners.push_back(rep);
     }
     std::reverse(res.corners.begin(), res.corners.end());
-    eraseConsumed(spans, consumed);
-    res.contour.spans = std::move(spans);
+    res.contour.spans = assemble(spans, consumed, arcs);
     res.contour.closed = contour.closed;
     return res;
 }

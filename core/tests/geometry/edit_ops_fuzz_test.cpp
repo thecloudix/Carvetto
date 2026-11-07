@@ -185,3 +185,22 @@ TEST_CASE("edit ops: trimming scales near-linearly with the box index", "[edit][
     CHECK(times.largeSeconds < 2.0);
 #endif
 }
+
+TEST_CASE("edit ops: filleting a 20000-corner contour is linear in practice", "[edit][perf]") {
+    Contour c;
+    c.closed = true;
+    const std::size_t n = 20000;
+    for (std::size_t i = 0; i < n; ++i) {
+        const double a = kTwoPi * static_cast<double>(i) / static_cast<double>(n);
+        const double b = kTwoPi * static_cast<double>(i + 1) / static_cast<double>(n);
+        const double ra = i % 2 == 0 ? 100.0 : 101.0;
+        const double rb = (i + 1) % 2 == 0 ? 100.0 : 101.0;
+        c.append(LineSpan{Vec2::fromAngle(a, ra), Vec2::fromAngle(b, n == i + 1 ? 100.0 : rb)});
+    }
+    const double t0 = carvetto::test::processCpuSeconds();
+    const FilletAllResult r = filletAll(c, 0.001, FilletKind::Normal, FilletOptions{true, false}, Tolerance{1e-6, 1e-9, 1e-4});
+    const double elapsed = carvetto::test::processCpuSeconds() - t0;
+    REQUIRE(r.status == EditStatus::Ok);
+    CHECK(r.applied > n / 2);
+    CHECK(elapsed < 30.0);  // loose Debug bound; quadratic insertion would be far above
+}
