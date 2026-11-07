@@ -287,4 +287,36 @@ ShapeResult<Contour> buildArcStartEndRadius(Vec2 start, Vec2 end, double radius,
     return out;
 }
 
+ShapeResult<Contour> buildArcStartEndHeight(Vec2 start, Vec2 end, double height, const Tolerance& tol) {
+    if (!finite(start) || !finite(end) || !finite(height)) {
+        return std::string("arc: parameters must be finite");
+    }
+    const Vec2 chord = end - start;
+    const double len = chord.length();
+    if (len <= tol.distance) {
+        return std::string("arc: start and end must be distinct");
+    }
+    const double h = std::fabs(height);
+    if (h <= tol.distance) {
+        return std::string("arc: height must be non-zero");
+    }
+    const Vec2 normal = chord.perp() / len;
+    const Vec2 mid = start + chord * 0.5;
+    const double radius = (0.25 * len * len + h * h) / (2.0 * h);
+    if (!finite(radius)) {
+        return std::string("arc: height is too small for the chord");
+    }
+    const double side = height > 0.0 ? 1.0 : -1.0;
+    // The apex lies `h` from the chord midpoint on the bulge side; the centre is `radius` further
+    // back along the same line.
+    const Vec2 centre = mid + normal * (side * (h - radius));
+    const ArcDirection dir = height > 0.0 ? ArcDirection::CW : ArcDirection::CCW;
+    Contour out;
+    out.closed = false;
+    ArcSpan arc = ArcSpan::fromCentre(centre, start, end, dir);
+    arc.radius = radius;
+    out.spans.emplace_back(arc);
+    return out;
+}
+
 }  // namespace carvetto::geometry

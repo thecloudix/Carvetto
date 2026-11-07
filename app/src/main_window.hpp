@@ -1,11 +1,14 @@
 #pragma once
 
 #include <QMainWindow>
+#include <map>
 #include <memory>
 
 #include "carvetto/document/document.hpp"
+#include "carvetto/viewmodel/tools.hpp"
 
 class QAction;
+class QActionGroup;
 class QCloseEvent;
 class QComboBox;
 class QDockWidget;
@@ -18,6 +21,7 @@ namespace carvetto::app {
 
 class CanvasWidget;
 class RulerWidget;
+class ToolPanel;
 
 /// Main window: 2D/3D view tabs with rulers around the 2D canvas, sheet and layer selectors,
 /// docked panels (Design, Sheets, Layers, Components, Library on the left; Toolpaths on the
@@ -41,6 +45,12 @@ class MainWindow : public QMainWindow {
     CanvasWidget* canvas() const { return canvas_; }
     QDockWidget* toolpathsDock() const { return toolpathsDock_; }
     QDockWidget* layersDock() const { return layersDock_; }
+    ToolPanel* toolPanel() const { return toolPanel_; }
+
+    /// Activates a drawing / selection tool (same as clicking its toolbar button).
+    void selectTool(viewmodel::ToolKind tool);
+    /// The toolbar action of a tool (checkable, exclusive).
+    QAction* toolAction(viewmodel::ToolKind tool) const;
 
     /// Writes window geometry and dock layout to `settings`.
     void saveLayout(QSettings& settings) const;
@@ -55,6 +65,7 @@ class MainWindow : public QMainWindow {
    private:
     void buildMenus();
     void buildToolBar();
+    void buildToolPalette();
     void buildDocks();
     void buildCentralArea();
     void newJob();
@@ -81,6 +92,10 @@ class MainWindow : public QMainWindow {
     QDockWidget* componentsDock_{nullptr};
     QDockWidget* libraryDock_{nullptr};
     QDockWidget* toolpathsDock_{nullptr};
+
+    QActionGroup* toolGroup_{nullptr};
+    std::map<viewmodel::ToolKind, QAction*> toolActions_;
+    ToolPanel* toolPanel_{nullptr};
 
     QAction* undoAction_{nullptr};
     QAction* redoAction_{nullptr};

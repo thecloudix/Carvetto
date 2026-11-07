@@ -3,6 +3,7 @@
 add_library(carvetto_viewmodel STATIC
   src/view_transform.cpp
   src/ruler.cpp
+  src/tools.cpp
   src/units_format.cpp
   src/canvas_scene.cpp
   src/pixel_probe.cpp

@@ -1,11 +1,13 @@
 #include "canvas_widget.hpp"
 
 #include <QBrush>
+#include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
 #include <QPainterPath>
 #include <QPen>
+#include <QPolygonF>
 #include <QRectF>
 #include <QResizeEvent>
 #include <QWheelEvent>
@@ -41,6 +43,7 @@ CanvasWidget::CanvasWidget(QWidget* parent) : QWidget(parent) {
 
 void CanvasWidget::setDocument(document::Document* doc) {
     doc_ = doc;
+    tools_.setDocument(doc);
     fitPending_ = true;
     if (width() > 0 && height() > 0) {
         zoomToMaterial();
@@ -79,6 +82,7 @@ bool CanvasWidget::selectAt(QPointF widgetPos, bool additive, bool toggle) {
 }
 
 void CanvasWidget::notifyViewChanged() {
+    tools_.setView(view_);
     if (onViewChanged) {
         onViewChanged();
     }
@@ -163,6 +167,157 @@ void CanvasWidget::paintEvent(QPaintEvent* event) {
     Q_UNUSED(event);
     QPainter painter(this);
     paintScene(painter, view_, size());
+    paintOverlay(painter);
+}
+
+void CanvasWidget::paintOverlay(QPainter& painter) const {
+    if (doc_ == nullptr) {
+        return;
+    }
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    const viewmodel::ToolPreview preview = tools_.preview();
+
+    QPen previewPen(preview.valid ? QColor(30, 110, 230) : QColor(150, 150, 150));
+    previewPen.setStyle(Qt::DashLine);
+    previewPen.setWidthF(1.5);
+    previewPen.setCosmetic(true);
+    painter.setPen(previewPen);
+    painter.setBrush(Qt::NoBrush);
+    for (const geometry::Contour& contour : preview.contours) {
+        const std::vector<Vec2> pts = viewmodel::polygoniseForScreen(contour, view_, 0.25);
+        if (pts.size() < 2) {
+            continue;
+        }
+        QPainterPath qp;
+        qp.moveTo(toQt(pts.front()));
+        for (std::size_t i = 1; i < pts.size(); ++i) {
+            qp.lineTo(toQt(pts[i]));
+        }
+        if (contour.closed) {
+            qp.closeSubpath();
+        }
+        painter.drawPath(qp);
+    }
+
+    painter.setPen(QPen(QColor(30, 110, 230), 1.0));
+    painter.setBrush(QBrush(QColor(255, 255, 255)));
+    for (const Vec2& a : preview.anchorsMm) {
+        const QPointF p = toQt(view_.worldToScreen(a));
+        painter.drawRect(QRectF(p.x() - 3.0, p.y() - 3.0, 6.0, 6.0));
+    }
+
+    if (preview.marqueePx.has_value()) {
+        QPen pen(QColor(30, 110, 230));
+        pen.setStyle(Qt::DashLine);
+        pen.setCosmetic(true);
+        painter.setPen(pen);
+        painter.setBrush(QBrush(QColor(30, 110, 230, 30)));
+        painter.drawRect(toQt(*preview.marqueePx));
+    }
+
+    // Snap glyph at the snapped point; the shape depends on the kind.
+    if (tools_.snap().has_value()) {
+        const viewmodel::Snap& snap = *tools_.snap();
+        const QPointF p = toQt(view_.worldToScreen(snap.pointMm));
+        QPen pen(QColor(230, 120, 0));
+        pen.setWidthF(2.0);
+        pen.setCosmetic(true);
+        painter.setPen(pen);
+        painter.setBrush(Qt::NoBrush);
+        constexpr double r = 6.0;
+        switch (snap.kind) {
+            case viewmodel::SnapKind::Endpoint:
+                painter.drawRect(QRectF(p.x() - r, p.y() - r, 2 * r, 2 * r));
+                break;
+            case viewmodel::SnapKind::Midpoint:
+                painter.drawPolygon(QPolygonF({QPointF(p.x(), p.y() - r), QPointF(p.x() - r, p.y() + r),
+                                               QPointF(p.x() + r, p.y() + r)}));
+                break;
+            case viewmodel::SnapKind::Centre:
+                painter.drawEllipse(p, r, r);
+                break;
+            case viewmodel::SnapKind::Quadrant:
+            case viewmodel::SnapKind::Nearest:
+                painter.drawPolygon(QPolygonF({QPointF(p.x(), p.y() - r), QPointF(p.x() + r, p.y()),
+                                               QPointF(p.x(), p.y() + r), QPointF(p.x() - r, p.y())}));
+                break;
+            case viewmodel::SnapKind::Intersection:
+                painter.drawLine(QPointF(p.x() - r, p.y() - r), QPointF(p.x() + r, p.y() + r));
+                painter.drawLine(QPointF(p.x() - r, p.y() + r), QPointF(p.x() + r, p.y() - r));
+                break;
+            case viewmodel::SnapKind::Perpendicular:
+            case viewmodel::SnapKind::Tangent:
+                painter.drawLine(QPointF(p.x() - r, p.y() + r), QPointF(p.x() + r, p.y() + r));
+                painter.drawLine(QPointF(p.x() - r, p.y() + r), QPointF(p.x() - r, p.y() - r));
+                break;
+            case viewmodel::SnapKind::Guide:
+            case viewmodel::SnapKind::Grid:
+                painter.drawLine(QPointF(p.x() - r, p.y()), QPointF(p.x() + r, p.y()));
+                painter.drawLine(QPointF(p.x(), p.y() - r), QPointF(p.x(), p.y() + r));
+                break;
+        }
+    }
+}
+
+viewmodel::Modifiers CanvasWidget::toolModifiers(Qt::KeyboardModifiers mods) {
+    viewmodel::Modifiers m;
+    m.shift = mods.testFlag(Qt::ShiftModifier);
+    m.ctrl = mods.testFlag(Qt::ControlModifier);
+    m.alt = mods.testFlag(Qt::AltModifier);
+    return m;
+}
+
+void CanvasWidget::afterToolEvent(const viewmodel::ToolResult& result) {
+    if (result.committed && onDocumentEdited) {
+        onDocumentEdited();
+    }
+    if (result.selectionChanged && onSelectionChanged) {
+        onSelectionChanged();
+    }
+    if (onToolStateChanged) {
+        onToolStateChanged();
+    }
+    update();
+}
+
+bool CanvasWidget::focusNextPrevChild(bool next) {
+    Q_UNUSED(next);
+    return false;  // Tab closes a polyline instead of moving the focus
+}
+
+void CanvasWidget::keyPressEvent(QKeyEvent* event) {
+    viewmodel::ToolResult result;
+    switch (event->key()) {
+        case Qt::Key_Escape:
+            result = tools_.key(viewmodel::ToolKey::Escape);
+            break;
+        case Qt::Key_Return:
+        case Qt::Key_Enter:
+            result = tools_.key(viewmodel::ToolKey::Enter);
+            break;
+        case Qt::Key_Backspace:
+            result = tools_.key(viewmodel::ToolKey::Backspace);
+            break;
+        case Qt::Key_Tab:
+            result = tools_.key(viewmodel::ToolKey::Close);
+            break;
+        default:
+            QWidget::keyPressEvent(event);
+            return;
+    }
+    event->accept();
+    afterToolEvent(result);
+}
+
+void CanvasWidget::mouseDoubleClickEvent(QMouseEvent* event) {
+    if (event->button() == Qt::LeftButton) {
+        tools_.setView(view_);
+        const QPointF pos = event->position();
+        afterToolEvent(tools_.doubleClick(Vec2{pos.x(), pos.y()}, toolModifiers(event->modifiers())));
+        event->accept();
+        return;
+    }
+    QWidget::mouseDoubleClickEvent(event);
 }
 
 void CanvasWidget::resizeEvent(QResizeEvent* event) {
@@ -200,8 +355,10 @@ void CanvasWidget::mousePressEvent(QMouseEvent* event) {
         return;
     }
     if (event->button() == Qt::LeftButton) {
-        const Qt::KeyboardModifiers mods = event->modifiers();
-        selectAt(event->position(), mods.testFlag(Qt::ShiftModifier), mods.testFlag(Qt::ControlModifier));
+        setFocus(Qt::MouseFocusReason);
+        tools_.setView(view_);
+        const QPointF pos = event->position();
+        afterToolEvent(tools_.pointerPress(Vec2{pos.x(), pos.y()}, toolModifiers(event->modifiers())));
         event->accept();
         return;
     }
@@ -218,9 +375,15 @@ void CanvasWidget::mouseMoveEvent(QMouseEvent* event) {
         notifyViewChanged();
         update();
     }
+    tools_.setView(view_);
+    tools_.pointerMove(Vec2{pos.x(), pos.y()}, toolModifiers(event->modifiers()));
     if (onCursorMoved) {
-        onCursorMoved(view_.screenToWorld(Vec2{pos.x(), pos.y()}));
+        onCursorMoved(tools_.pointMm());
     }
+    if (onToolStateChanged) {
+        onToolStateChanged();
+    }
+    update();
     QWidget::mouseMoveEvent(event);
 }
 
@@ -228,6 +391,13 @@ void CanvasWidget::mouseReleaseEvent(QMouseEvent* event) {
     if (panning_ && (event->button() == Qt::MiddleButton || event->button() == Qt::RightButton)) {
         panning_ = false;
         unsetCursor();
+        event->accept();
+        return;
+    }
+    if (event->button() == Qt::LeftButton) {
+        tools_.setView(view_);
+        const QPointF pos = event->position();
+        afterToolEvent(tools_.pointerRelease(Vec2{pos.x(), pos.y()}, toolModifiers(event->modifiers())));
         event->accept();
         return;
     }

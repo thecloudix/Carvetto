@@ -10,8 +10,10 @@
 
 #include "carvetto/document/document.hpp"
 #include "carvetto/geometry/vec2.hpp"
+#include "carvetto/viewmodel/tools.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
 
+class QKeyEvent;
 class QMouseEvent;
 class QPaintEvent;
 class QPainter;
@@ -50,6 +52,11 @@ class CanvasWidget : public QWidget {
     /// Repaints after a document change.
     void refresh();
 
+    /// Drawing and selection tools (T-0204). The canvas only forwards pointer and key events to
+    /// the controller and paints its preview; the select tool owns click and marquee picking.
+    viewmodel::ToolController& tools() { return tools_; }
+    const viewmodel::ToolController& tools() const { return tools_; }
+
     /// Paints one frame into a new `size` image (RGB32) with a view fitted to the material, the
     /// same way `paintEvent` paints the widget. `usedView`, when given, receives that view.
     QImage renderFitted(QSize size, viewmodel::ViewTransform* usedView = nullptr) const;
@@ -58,6 +65,10 @@ class CanvasWidget : public QWidget {
     std::function<void()> onViewChanged;
     /// Called after a click changed (or tried to change) the selection.
     std::function<void()> onSelectionChanged;
+    /// Called after a tool added an object to the document (one undo step).
+    std::function<void()> onDocumentEdited;
+    /// Called after every tool event that may change the numeric fields or the active shape.
+    std::function<void()> onToolStateChanged;
     /// Called with the document position under the mouse.
     std::function<void(geometry::Vec2)> onCursorMoved;
 
@@ -68,13 +79,21 @@ class CanvasWidget : public QWidget {
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
+    void mouseDoubleClickEvent(QMouseEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
+    bool focusNextPrevChild(bool next) override;
 
    private:
+    void paintOverlay(QPainter& painter) const;
+    void afterToolEvent(const viewmodel::ToolResult& result);
+    static viewmodel::Modifiers toolModifiers(Qt::KeyboardModifiers mods);
+
     void paintScene(QPainter& painter, const viewmodel::ViewTransform& view, QSize size) const;
     void notifyViewChanged();
 
     document::Document* doc_{nullptr};
     viewmodel::ViewTransform view_;
+    viewmodel::ToolController tools_;
     bool fitPending_{true};
     bool panning_{false};
     QPointF lastPanPos_;
