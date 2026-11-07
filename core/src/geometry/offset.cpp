@@ -22,6 +22,7 @@
 #include "offset_batch.hpp"
 #include "offset_dust.hpp"
 #include "offset_junction.hpp"
+#include "offset_shortcuts.hpp"
 
 namespace carvetto::geometry {
 
@@ -652,16 +653,7 @@ std::vector<Vec2> carrierIntersections(const Span& a, const Span& b) {
         const Vec2 u = la->end - la->start;
         const Vec2 v = lb->end - lb->start;
         const double den = u.cross(v);
-        // |den| <= 1e-12 |u| |v| (parallel), decided on squares unless within 1e-9 of the bound
-        // (hypot, used by length(), was a visible share of the time, T-0170).
-        const double bound2 = 1e-24 * u.lengthSquared() * v.lengthSquared();
-        const double den2 = den * den;
-        bool parallel = false;
-        if (bound2 > 1e-280 && bound2 < 1e280 && (den2 < bound2 * (1.0 - 1e-9) || den2 > bound2 * (1.0 + 1e-9))) {
-            parallel = den2 < bound2;
-        } else {
-            parallel = std::fabs(den) <= 1e-12 * u.length() * v.length();
-        }
+        const bool parallel = detail::directionsParallel(u, v);  // T-0170: no hypot unless close
         if (parallel) {
             return out;
         }
@@ -2389,21 +2381,7 @@ bool closeSmallGap(Span& a, Span& b, const SnapContext& ctx, std::optional<Span>
 int cosineSide(const Span& a, const Span& b, double level) {
     const auto* la = std::get_if<LineSpan>(&a);
     const auto* lb = std::get_if<LineSpan>(&b);
-    if (la && lb) {
-        const Vec2 u = la->end - la->start;
-        const Vec2 v = lb->end - lb->start;
-        const double n = std::sqrt(u.lengthSquared()) * std::sqrt(v.lengthSquared());
-        if (n > 1e-140 && n < 1e140) {
-            const double r = u.dot(v);
-            if (r > (level + 1e-9) * n) {
-                return 1;
-            }
-            if (r < (level - 1e-9) * n) {
-                return -1;
-            }
-        }
-    }
-    return 0;
+    return la && lb ? detail::cosineSideOf(la->end - la->start, lb->end - lb->start, level) : 0;
 }
 
 // Exactly `tangentAt(a, 1.0).dot(tangentAt(b, 0.0)) < 0.0`.

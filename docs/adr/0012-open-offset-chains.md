@@ -735,7 +735,8 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     `cosineSide` (with `endsReverse`) and the two inline tests. Decisions, hence outputs, are those of the exact
     expressions (660 offsets of zig-zags, saws, hatches, filleted zig-zags, walks, spirals, sines, every
     join and side, two mitre limits, compared bit for bit with the build before: no difference). The
-    result is within 0–3 % of the build before T-0016 on those inputs (1.00–1.02 against an A/A control of ±1 %). On the T-0016
+    result is within 3 % of the build before T-0016 on those inputs (1.00–1.02 against an A/A control of ±1 %); that holds for line inputs up to about 20 000 spans (spiral 8000, sine 16000).
+    **Arcs are not recovered:** the replacements cover lines only (arcs still use hypot, atan2 and fabs), and a filleted-arc zig-zag Round offset with nothing to prune (arc 50000, 100 000 spans) is still about +8 % against the build before T-0016, a 300 000-span zig-zag +3 to +13 %. Carded as follow-up T-0176. The shortcuts live in `offset_shortcuts.hpp`; they fall back to the exact expression when a square would be denormal or too large (squares outside 1e-250..1e250). On the T-0016
     verifier's dense inputs (zig-zag, filleted zig-zag, saw, hatch, d = 7) Round is 2–40× faster than
     before T-0016, which T-0168 made possible, so there is nothing left to recover there.
   - *Growth per doubling of the span count* (Release CPU seconds, minimum of 3–7, pitch 0.02,
@@ -753,9 +754,9 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     | hatch Sharp | 0.029 | 0.104 | 0.262 | 0.62 | 1.31 |
     | filleted zig-zag Round / Sharp / Square | – | 0.092 | 0.206 | 0.47 | 1.0 |
 
-    Every doubling from 2000 spans on costs 1.9–2.4× (at most 2.5×), for every join; the filleted
-    zig-zag, whose 8× to 30× cost before T-0168 made it the worst case, costs 2.2×. Above 2.5× are
-    only the first doublings, 500 → 1000 → 2000 spans (2.3–4×, mostly Sharp and Square, e.g. zig-zag
+    Every doubling from 2000 spans on costs at most 2.7× (mostly 1.9–2.4×; zig-zag Round and saw Sharp are 2.7× at 2000 → 4000), for every join; the filleted
+    zig-zag, whose 8× to 30× cost before T-0168 made it the worst case, costs 2.2×. Above 2.5× are mainly
+    the first doublings, 500 → 1000 → 2000 spans (2.3–4×, mostly Sharp and Square, e.g. zig-zag
     Sharp 3.9× then 2.0×), where the path (10–40 mm) is not yet longer than a few times 2d = 14 mm:
     every piece of the boundary still meets every other, so the work per piece grows with the
     length until it saturates at the pieces within 2d. That is the geometry of the input, not a
