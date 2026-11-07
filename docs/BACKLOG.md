@@ -695,7 +695,7 @@ Goal: Defects found by the T-0156 verifier (harness t0156v1, exact-flood oracle 
 Acceptance criteria:
   1. (a)-(c) fixed on the repro scenes and in a >= 10k-scene V-bit-forced screen, leads off: no held piece reported, no free piece >= 0.04 mm² unreported, reported areas within 5% or 0.05 mm² of the flood (or documented why not); never worse than T-0156 head; ADR §14 updated; mutants killed; full ctest.
 
-### T-0178 BezierSpan::length() hangs on looped Beziers whose ends coincide (T-0208 coder)   [status: verifying — PASS; small hardening commit then PR (tie-break determinism for MSVC, test gaps, docs)]
+### T-0178 BezierSpan::length() hangs on looped Beziers whose ends coincide (T-0208 coder)   [status: verifying — PR in CI; follow-up commit re-verified separately]
 Phase: 1   Module: core/geometry   Depends on: —   ADR: 0005
 Goal: Found by the T-0208 coder while fuzzing: `BezierSpan::length()` recurses without a useful bound on looped cubic Beziers whose end points coincide (control polygon a closed loop), so a fuzz case hung; T-0208 works around it with a 32-sample estimate. Fix `length()` (adaptive subdivision with a depth and tolerance bound, or Gauss-Legendre per monotone piece, or flatness test that cannot be fooled by coincident ends) so it always terminates with documented accuracy, and audit the other recursive span routines (bounds, closestPoint, intersect(Span,Span) which also took >15 s on a 1e6-extent Bezier-loop pair per T-0208: bound its work or return an error/overflow flag) for the same pattern.
 Acceptance criteria:
