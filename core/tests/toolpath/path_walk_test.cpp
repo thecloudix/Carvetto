@@ -3,6 +3,7 @@
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <variant>
@@ -115,6 +116,33 @@ TEST_CASE("appendLeg: helical arcs, vertical jumps and inserts", "[toolpath][pat
     appendLeg(tp3, tp3.length(), 0.0, ZProfile::flat(0.0), t3);
     REQUIRE(t3.moves.size() == 2);
     CHECK(t3.moves[1].kind == MoveKind::Feed);
+}
+
+TEST_CASE("appendLeg (T-0156): a raised stretch ending at an insert stays flat to it", "[toolpath][path_walk]") {
+    // A tab top at 0 from s = 3 to s = 6 over a floor at -1, and a corner insert exactly at the
+    // end of the stretch (or a hair past it, as the corner's position is computed): the stretch
+    // is cut flat and the tool goes down at its end, not along all of it.
+    Contour line;
+    line.append(LineSpan{{0, 0}, {10, 0}});
+    const ArcLengthPath lp(line, geometry::Tolerance::defaults());
+    const ZProfile z{{ZKnot{3.0, -1.0, 0.0}, ZKnot{6.0, 0.0, -1.0}}};
+    for (const double at : {6.0, 6.0 + 4e-10, 6.0 - 4e-10}) {
+        INFO("insert at " << at);
+        Toolpath tp;
+        tp.append(Move::rapid({0, 0, -1}));
+        appendLeg(lp, 0.0, 10.0, z, tp, {LegInsert{at, {Move::feed({6, 1, -1}), Move::feed({6, 0, -1})}}});
+        // Every move that travels along the line between x = 3 and 6 is at the tab top.
+        double lowest = 1.0;
+        Vec3 prev{0, 0, -1};
+        for (const Move& m : tp.moves) {
+            if (m.kind == MoveKind::Feed && prev.x >= 3.0 - 1e-6 && m.to.x <= 6.0 + 1e-6 && m.to.x > prev.x + 1e-6) {
+                lowest = std::min({lowest, prev.z, m.to.z});
+            }
+            prev = m.to;
+        }
+        CHECK(lowest == Approx(0.0));
+        CHECK(tp.moves.back().to == Vec3{10, 0, -1});
+    }
 }
 
 TEST_CASE("Clearance: violations along a path are found and bracketed", "[toolpath][clearance]") {
