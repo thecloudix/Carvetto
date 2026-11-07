@@ -760,7 +760,7 @@ TEST_CASE("selfIntersections pairs each span with later spans only", "[intersect
     for (int k = 0; k < 40; ++k) {
         const double y = 2000.0 * k;
         many.append(BezierSpan{{0, y}, {1e4, y + 100}, {2e4, y - 100}, {3e4, y}});
-        many.append(LineSpan{{3e4, y}, {3e4, y + 2000}});
+        many.append(LineSpan{{3e4, y}, {3e4, y + 1000}});
     }
     const ContourIntersections m =
         failFast(60.0, "selfIntersections (many)", [&] { return selfIntersections(many, tol); });
