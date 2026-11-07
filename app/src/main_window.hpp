@@ -3,9 +3,14 @@
 #include <QMainWindow>
 #include <memory>
 
+#include <filesystem>
+#include <optional>
+
 #include "carvetto/document/document.hpp"
+#include "carvetto/viewmodel/file_session.hpp"
 
 class QAction;
+class QMenu;
 class QCloseEvent;
 class QComboBox;
 class QDockWidget;
@@ -28,9 +33,12 @@ class MainWindow : public QMainWindow {
     explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow() override;
 
-    document::Document& currentDocument() { return *doc_; }
-    const document::Document& currentDocument() const { return *doc_; }
-    /// Replaces the open document (the view re-fits to its material).
+    document::Document& currentDocument() { return session_.document(); }
+    const document::Document& currentDocument() const { return session_.document(); }
+    /// The file session behind the File menu (path, dirty state, recent files).
+    viewmodel::FileSession& session() { return session_; }
+    /// Replaces the open document with a new untitled one (the view re-fits to its material).
+    /// No unsaved-changes prompt: callers ask `confirmDiscard()` first.
     void setDocument(std::unique_ptr<document::Document> doc);
     /// Refreshes every view after the document changed.
     void documentChanged();
@@ -48,8 +56,24 @@ class MainWindow : public QMainWindow {
     void saveLayout(QSettings& settings) const;
     /// Restores what `saveLayout` wrote. Returns false when nothing (valid) was stored.
     bool restoreLayout(QSettings& settings);
-    /// When true, closing the window saves the layout to the application's default settings.
-    void setPersistLayout(bool persist) { persistLayout_ = persist; }
+    /// When true, closing the window saves the layout to the application's default settings, and
+    /// the recent-files list is read from and written to them.
+    void setPersistLayout(bool persist);
+
+    /// File operations without dialogs for the file name (the menu actions call them after the
+    /// file dialog; the self-test calls them directly). They show an error box on failure unless
+    /// `setQuiet(true)`; the text stays available in `session().lastError()`.
+    bool openFile(const std::filesystem::path& path);
+    bool saveFile();
+    bool saveFileAs(const std::filesystem::path& path);
+    bool importDxfFile(const std::filesystem::path& path, std::optional<double> forcedMmPerUnit = std::nullopt);
+    bool exportDxfFile(const std::filesystem::path& path, bool selectionOnly);
+    /// True when it is fine to drop the open document: it is clean, or the user chose Save (and
+    /// it saved) or Discard in the prompt. False on Cancel or a failed save. Always true when
+    /// quiet (no prompt can be shown).
+    bool confirmDiscard();
+    /// Suppresses message boxes (headless self-test); the file operations still report by result.
+    void setQuiet(bool quiet) { quiet_ = quiet; }
 
    protected:
     void closeEvent(QCloseEvent* event) override;
@@ -60,12 +84,21 @@ class MainWindow : public QMainWindow {
     void buildDocks();
     void buildCentralArea();
     void newJob();
+    void openDialog();
+    bool saveDialog();
+    bool saveAsDialog();
+    void importDxfDialog();
+    void exportDxfDialog(bool selectionOnly);
+    void rebuildRecentMenu();
+    void storeRecent();
+    void showError(const QString& title);
     void refreshSelectors();
     void pickSheet(int row);
     void pickLayer(int row);
     void refreshStatus();
 
-    std::unique_ptr<document::Document> doc_;
+    viewmodel::FileSession session_;
+    QMenu* recentMenu_{nullptr};
     std::unique_ptr<VectorOpsMenu> vectorOps_;
 
     QTabWidget* views_{nullptr};
@@ -92,6 +125,7 @@ class MainWindow : public QMainWindow {
 
     bool persistLayout_{false};
     bool refreshing_{false};
+    bool quiet_{false};
 };
 
 }  // namespace carvetto::app

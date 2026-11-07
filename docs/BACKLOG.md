@@ -782,7 +782,7 @@ Acceptance criteria:
   3. Selection state changes go through the core `Selection`; no Qt includes (the `viewmodel.qt_free` ctest passes); full ctest.
 Out of scope: dragging/transform tools, node editing, Qt event wiring beyond a click-to-select hook in CanvasWidget with self-test coverage.
 
-### T-0202 File session: open, save, save as, import/export DXF in the app   [status: verifying — PASS, nits back to coder]
+### T-0202 File session: open, save, save as, import/export DXF in the app   [status: done (#74)]
 Phase: 1 (Batch B)   Module: app/viewmodel + app/src   Depends on: T-0012, T-0100, T-0060   ADR: 0014
 Goal: The app can open and save `.carv` files, import DXF into the current job (layers kept, units per $INSUNITS with an override), export the selection or whole sheet as DXF, track the dirty state (title bar asterisk, prompt on close/new/open), keep a recent-files list, and report load errors and import warnings in a dialog instead of crashing. Logic in a Qt-free `FileSession` (path, dirty tracking against the undo stack, recent list, title string, error text); Qt layer is menu actions and QFileDialog.
 Acceptance criteria:
@@ -800,18 +800,18 @@ Acceptance criteria:
   3. Pure viewmodel API (no Qt); full ctest.
 Out of scope: drawing the snap glyphs (wave 2 canvas overlay), guides UI.
 
-### T-0204 Drawing tool framework and shape tools (viewmodel + canvas)   [status: in progress]
-Phase: 1 (Batch B, wave 2)   Module: app/viewmodel + app/src   Depends on: T-0200, T-0201, T-0203   ADR: 0014 (+ ADR 0026 for the tool interface if a choice is made)
+### T-0204 Drawing tool framework and shape tools (viewmodel + canvas)   [status: verifying]
+Phase: 1 (Batch B, wave 2)   Module: app/viewmodel + app/src   Depends on: T-0200, T-0201, T-0203   ADR: 0014 (+ ADR 0027 for the tool interface if a choice is made)
 Goal: A Qt-free `ToolController` state machine: the canvas forwards pointer events in screen px (move/press/release/double-click, modifiers, Escape/Enter) and the active tool turns them into previews and, on completion, one undoable `AddObjectCommand` (parametric creation params kept so the object stays re-editable, ARCHITECTURE "parametric objects"). Snapping (T-0203) is applied to every pointer position before the tool sees it, and the snapped point and kind are exposed for the overlay. Tools: Select (click/marquee via T-0201), Rectangle (corner types square/rounded/chamfer), Circle, Ellipse, Polygon, Star, Arc (three-point, centre-start-end, start-end-radius, and the "Exact Size" start/end/height variant deferred from T-0200), Polyline/Line. Numeric entry of the defining values while drawing is a viewmodel contract (field list + parse/validate), UI for it can be a simple dock. Qt layer: a tool palette (toolbar), event forwarding in CanvasWidget (keep it thin), preview and snap-glyph overlay painted from `buildCanvasScene`-style data.
 Interfaces: owns `carvetto/viewmodel/tools.hpp` (+ tool implementations); may edit CanvasWidget event routing (T-0201's click-to-select hook moves behind the Select tool). T-0202 owns main_window file actions: do not touch them; add only the toolbar.
 Acceptance criteria:
   1. Per tool, scripted pointer-event sequences produce the exact contours of the T-0200 builders (compare against `buildContours`) and exactly one undo step; Escape cancels with no document change; undo/redo round trips; a created object re-opened from `.carv` rebuilds identically.
-  2. Snapping integration: the point the tool receives equals the T-0203 best snap (or the raw point when none), modifiers (Shift constrain/ortho, Ctrl centre-out) tested; numeric entry validated (units via the display unit, bad input rejected without side effects).
+  2. Snapping integration: the point the tool receives equals the T-0203 best snap (or the raw point when none), modifiers tested (director 2026-11-07: follow the feature inventory — Alt centre-out, Ctrl square/circle, Shift disables snapping; polyline Shift 45°); numeric entry validated (units via the display unit, bad input rejected without side effects).
   3. Dense-drawing guard (T-0203 follow-up): per-pointer-move snapping work is bounded — a 10k-object scene with hundreds of spans inside the tolerance window of the cursor answers within a documented time (cap the candidates per kind before the pairwise intersect/perpendicular/tangent search, or cache per cursor cell; document any silent-loss case).
   4. Headless tests for the controller; `carvetto --self-test` drives a tool through the real window; CI Linux + Windows; sources added to the CMake lists in alphabetical positions and main merged before READY.
 Out of scope: freehand, Bezier node drawing, text, dimensions, transform handles, node editing.
 
-### T-0207 Boolean and offset operations on the selection (viewmodel)   [status: in progress]
+### T-0207 Boolean and offset operations on the selection (viewmodel)   [status: verifying]
 Phase: 1 (Batch B, wave 2)   Module: app/viewmodel (+ core/document glue)   Depends on: T-0201, T-0003, T-0004, T-0005   ADR: 0014
 Goal: Qt-free operations over the current selection, each one undoable command: Weld (union), Subtract (first minus the rest, or selected-from-picked order per the feature inventory), Intersect, Exclude, and Offset (distance, side, join type; open and closed vectors; Delete original on/off) built on the existing core boolean/offset routines with their documented tolerances. Results become plain vector objects on the source layer (creation parameters of the sources are not kept), keeping holes (hole nesting from core) and winding conventions. Errors (no closed vectors selected, nothing left after the operation, input too large) come back as messages for a dialog, never partial results. Menu enabling rules (`canWeld(selection)` etc.) are in the viewmodel; Qt layer adds Edit/Vectors menu entries and a small offset dialog.
 Acceptance criteria:
@@ -821,7 +821,7 @@ Acceptance criteria:
   4. Headless tests; self-test step; CI Linux + Windows; CMake additions in alphabetical positions.
 Out of scope: trim/extend/fillet, join/close, curve fit (T-0208), boundary-from-selection UI.
 
-### T-0212 SVG import and export (core/io)   [status: in progress]
+### T-0212 SVG import and export (core/io)   [status: verifying]
 Phase: 1 (Batch B, wave 2)   Module: core/io   Depends on: T-0001, T-0100   ADR: 0026 (new if a choice is made; own XML subset parser — no new dependency without owner approval)
 Goal: `importSvg(bytes, options) → {layers, contours, warnings}` and `exportSvg(layers, contours, options) → bytes` mirroring the DXF API (geometry-level, ADR-0015). Import: path data (M L H V C S Q T A Z, absolute and relative; arcs to exact circular arcs when rx = ry, otherwise Beziers within tolerance), rect (with rx/ry), circle, ellipse, line, polyline, polygon; nested transforms (matrix, translate, scale, rotate, skewX/Y); `<g>` ids and Inkscape layer labels become layers; viewBox and width/height units (px at 96 dpi, mm, cm, in, pt, pc) scaled to mm, Y flipped to Y-up; `<use>` of defs. Fill/stroke are ignored except hidden/`display:none`. Text, images, gradients, clip paths and filters are skipped with a warning each. Export: closed/open contours as `<path>`s in mm with a viewBox, one `<g>` per layer. Clean-room; SVG 1.1 spec is public.
 Acceptance criteria:
