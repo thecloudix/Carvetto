@@ -353,8 +353,8 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     at each end that the roughing cover is matched against: a tool of another cut beyond it only
     narrows the tab (measured to the longer core, the first version of this change left out three
     scenes' holding tabs: harness t0167, seeds 9301–9304 scenes 367, 251, 94, 67). End mills are
-    unchanged: `tabLayerRadius` is their radius, and moves and diagnostics are byte-identical
-    over 12,800 scenes (modes 1, 2 and 3, leads on and off). Where the kerfs leave no waste a
+    unchanged but for the sliver search below: `tabLayerRadius` is their radius, and moves and
+    diagnostics were byte-identical over 9,600 scenes with that change alone. Where the kerfs leave no waste a
     margin beyond the cut (a notch the two kerfs consume, 0.145 mm of waste left), the raster used
     to find none and keep the tab as holding a hole smaller than the kerf, although the tools at the
     ends of its raised stretch sealed its material off (m0_271016_20 at VectorStart/Outside: a tab
@@ -497,15 +497,33 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     near them and hold nothing, none is severed, nothing is free. r101_1_0_42 (V-bit 120°, D1, On,
     616 tabs requested): with leads on 150 flood pieces ≥ 0.04 mm² against 98 reported at the box
     centre, with leads off 100 against 98 (2 unreported, the T-0177 (b) family; none at VectorStart). All
-    carded in T-0177 (g)–(k). **Screen (T-0167):** moves compared with main over V-bit-forced
-    scenes (seeds 9301–9308, 500 scenes each, modes 0, 1, 3, stored/VectorStart/box-centre/optimised
-    starts, leads on and off, sharp corners forced): see the changelog entry for the counts; every
-    changed scene was flooded on both sides. Residual worse-than-main entries (benign by the
-    flood): seed 9301 scene 153 (V-bit 60, Outside, SHARP: main keeps no tab and two pieces of 15.5
-    and 2.9 mm² come free; the branch keeps three, two hold them, one is cut through by a closed
-    pocket of waste that the quick answer keeps; no piece is free), 9308 scene 100 (eleven tabs kept,
-    five hold nothing, none severed, none free), 9308 scene 412 (a partial tab whose unjoined piece
-    is the 0.6 mm² piece that main also frees and reports).
+    carded in T-0177 (g)–(k). **Screen (T-0167):** the moves of main and of this change were hashed
+    over 36,000 V-bit-forced scenes (nine configurations; harness t0167 wsf, seeds 9301–9308, 500 scenes each, modes 0
+    with forced Inside/Outside and allowance ≥ 0, 1 and 3, stored / VectorStart / box-centre /
+    optimised starts, leads on and off, sharp corners forced) and 28,000 scenes with end mills (six
+    configurations and the natural mix), and every scene whose moves differ was flooded on both sides (exact
+    capsules at the layer below the tab top, per tab hold / partial / severed, free pieces against
+    the reported ones). V-bit: 3,380 scenes change, 3,346 for the better (a tab kept that holds, a
+    free piece held, a severed or hold-nothing tab gone), 14 no net change and 18 flagged worse by
+    the strict per-metric comparison (14 distinct); mode 1 (allowance ≤ 0, sided) changes nothing.
+    End mills: 2 of 28,000 change (the sliver search), neither worse; moves and diagnostics
+    elsewhere are byte-identical. U-shaped parts built for the sliver search (end mill, Outside, a
+    notch the kerfs consume to 0.06–0.5 mm of waste, 400 parts): 13 reach it, 8 change (4 severed
+    and 4 hold-nothing tabs gone), none worse. The flagged entries are benign by the flood: seed
+    9301 scene 153 (V-bit 60, Outside, SHARP: main keeps no tab and two pieces of 15.5 and 2.9 mm²
+    come free; the branch keeps three, two hold them, one is cut through by a closed pocket of
+    waste that the quick answer keeps; no piece is free), 9308 scene 100 (eleven tabs kept, five
+    hold nothing, none severed, none free), 9308 scene 412 (a partial tab whose unjoined piece is
+    the 0.6 mm² piece that main also frees and reports), 9304 scene 275 (box centre: a 38 mm²
+    piece held; a 0.075 mm² hairline left over is not reported, T-0177 (d)), 9307 scene 110 (two
+    partial tabs, a 74 mm² piece held, nothing free), and in the Inside/Outside screen (mode 0
+    forced) 9302/175, 9303/109, 9304/312, 9306/152, 9308/234 and 9308/243 (main keeps no tab and
+    frees 1 to 3 pieces; the branch keeps tabs, one of them cut through, and frees fewer),
+    9306/427 (two extra kept tabs cut through, nothing free), 9305/161 (30.7 mm² held, one
+    hairline of 0.045 mm² reported that the flood does not find) and 9308/291 (a 1,622 mm² part held;
+    six hairlines of 0.074 mm² left over, reported). Cost: the sliver search runs only where a tab's
+    raster finds no waste a margin beyond the kerf, and the tab-layer judgement changes only radii
+    (not measured separately).
     **Band polygons.** Each stretch's band is one polygon whose winding number is positive exactly
     on the band: the sum of the boundaries of positively wound pieces covering it (a line's
     rectangle along its normals, an arc's annular sector between radii ρ − w and ρ + w or, with
