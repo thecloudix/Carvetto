@@ -3,6 +3,7 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
+#include <ctime>
 #include <cstdint>
 #include <limits>
 #include <utility>
@@ -379,7 +380,16 @@ TEST_CASE("array: locked and hidden layers are never copied; invalid requests ch
     CHECK_FALSE(canArrayCopy(doc));
 }
 
-TEST_CASE("array: work cap counts spans", "[array][copy]") {
+TEST_CASE("copies: work cap arithmetic counts objects and spans", "[array][copy]") {
+    CHECK_FALSE(copyWorkExceeded(499.0, 1002));   // 499998
+    CHECK(copyWorkExceeded(500.0, 1002));         // 501000
+    CHECK_FALSE(copyWorkExceeded(0.0, 5));
+    CHECK(copyWorkExceeded(std::numeric_limits<double>::quiet_NaN(), 5));
+    CHECK(copyWorkExceeded(1e300, 1'000'000));
+    CHECK(kMaxCopyWork == 500'000);
+}
+
+TEST_CASE("array: an over-cap request is refused without building anything", "[array][copy]") {
     Document doc;
     Contour many;
     for (int i = 0; i < 1000; ++i) {
@@ -389,12 +399,55 @@ TEST_CASE("array: work cap counts spans", "[array][copy]") {
     select(doc, {id});
     ArrayOptions o;
     o.rows = 10;
-    o.columns = 300;  // 2999 copies x 1002 > 2 million
+    o.columns = 100;  // 999 copies x 1002 > 500000
     CHECK_FALSE(applyArrayCopy(doc, o).ok);
     CHECK(doc.objectCount() == 1);
-    o.columns = 100;  // 999 x 1002 < 2 million
-    CHECK(applyArrayCopy(doc, o).ok);
-    CHECK(doc.objectCount() == 1000);
+    CHECK(doc.undoStack().count() == 0);
+}
+
+TEST_CASE("copies: non-finite source coordinates are refused", "[array][circular][along][copy]") {
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    for (const double bad : {nan, std::numeric_limits<double>::infinity(), 2.0e9}) {
+        Document doc;
+        Contour c;
+        c.append(geometry::LineSpan{{0, 0}, {bad, 1}});
+        const ObjectId src = add(doc, c);
+        select(doc, {src});
+        const auto before = bytes(doc);
+        ArrayOptions a;
+        CHECK_FALSE(applyArrayCopy(doc, a).ok);
+        CircularOptions ci;
+        CHECK_FALSE(applyCircularCopy(doc, ci).ok);
+        CHECK_FALSE(applyArrayCopy(doc, a).message.empty());
+        CHECK(doc.undoStack().count() == 0);
+        CHECK(doc.objectCount() == 1);
+        (void)before;
+
+        // A non-finite guide.
+        Document d2;
+        const ObjectId guide = add(d2, c);
+        const ObjectId s2 = addRect(d2, 0, 0, 1, 1);
+        select(d2, {s2, guide});
+        AlongVectorOptions o;
+        o.guide = guide;
+        CHECK_FALSE(applyCopyAlongVectors(d2, o).ok);
+        CHECK(d2.objectCount() == 2);
+        CHECK(d2.undoStack().count() == 0);
+    }
+}
+
+TEST_CASE("copies: count limit of 100000 for circular and along-vector counts", "[circular][along][copy]") {
+    CircularOptions ci;
+    ci.count = kMaxCopyCount + 1;
+    CHECK_FALSE(validateCircularOptions(ci).empty());
+    ci.count = kMaxCopyCount;
+    CHECK(validateCircularOptions(ci).empty());
+    AlongVectorOptions al;
+    al.spacing = AlongSpacing::Count;
+    al.count = kMaxCopyCount + 1;
+    CHECK_FALSE(validateAlongVectorOptions(al).empty());
+    al.count = kMaxCopyCount;
+    CHECK(validateAlongVectorOptions(al).empty());
 }
 
 TEST_CASE("circular: step and total angle with rotated copies", "[circular][copy]") {
@@ -833,4 +886,31 @@ TEST_CASE("copies: id exhaustion refuses before touching the document", "[array]
     CHECK_FALSE(r.ok);
     CHECK(bytes(doc) == before);
     CHECK(doc.undoStack().count() == 0);
+}
+
+TEST_CASE("circular: undo and redo of a 100k-copy request stay linear", "[circular][copy][perf]") {
+    // Undo used to be quadratic (Selection::remove searched a vector per removed object): 26 s.
+    Document doc;
+    const ObjectId src = addRect(doc, 9, -1, 11, 1);
+    select(doc, {src});
+    CircularOptions o;
+    o.count = kMaxCopyCount;  // 99999 copies x 5 units < the work cap
+    o.angleRad = 2 * kPi;
+    const auto cpu = [] { return static_cast<double>(std::clock()) / CLOCKS_PER_SEC; };
+    double t0 = cpu();
+    const CopyResult r = applyCircularCopy(doc, o);
+    const double applySeconds = cpu() - t0;
+    REQUIRE(r.ok);
+    REQUIRE(r.created.size() == 99999);
+    t0 = cpu();
+    REQUIRE(doc.undo());
+    const double undoSeconds = cpu() - t0;
+    CHECK(doc.objectCount() == 1);
+    t0 = cpu();
+    REQUIRE(doc.redo());
+    const double redoSeconds = cpu() - t0;
+    CHECK(doc.objectCount() == 100000);
+    INFO("apply " << applySeconds << " s, undo " << undoSeconds << " s, redo " << redoSeconds << " s");
+    CHECK(undoSeconds < 5.0);
+    CHECK(redoSeconds < 5.0);
 }

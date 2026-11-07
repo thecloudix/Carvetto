@@ -27,12 +27,16 @@
 // Document ids are never reused (ADR-0007), so undo restores the document except for the id
 // counter.
 //
-// Work cap: (copies) x (objects + spans per copy) must not exceed `kMaxCopyWork`.
+// Work cap: (copies) x (objects + spans per copy) must not exceed `kMaxCopyWork` (500000).
 
 namespace carvetto::viewmodel {
 
 /// Most (copies x (objects + spans)) a copy operation accepts.
-inline constexpr std::size_t kMaxCopyWork = 2'000'000;
+inline constexpr std::size_t kMaxCopyWork = 500'000;
+/// True when `copies` x `unitCost` (objects + spans of one copy) is over `kMaxCopyWork` (or NaN).
+bool copyWorkExceeded(double copies, std::size_t unitCost);
+/// Most copies a circular copy or a count-based along-vector copy accepts.
+inline constexpr int kMaxCopyCount = 100'000;
 /// Largest coordinate / distance magnitude (mm) accepted in options.
 inline constexpr double kMaxCopyCoordinateMm = 1.0e9;
 /// Most rows or columns of an array.

@@ -31,6 +31,32 @@ constexpr double kTwoPi = 2.0 * kPi;
 
 bool finiteIn(double v, double limit) { return std::isfinite(v) && std::fabs(v) <= limit; }
 
+bool spanFinite(const geometry::Span& span) {
+    return std::visit(
+        [](const auto& sp) {
+            using T = std::decay_t<decltype(sp)>;
+            if constexpr (std::is_same_v<T, geometry::LineSpan>) {
+                return finiteIn(sp.start.x, kMaxCopyCoordinateMm) && finiteIn(sp.start.y, kMaxCopyCoordinateMm) &&
+                       finiteIn(sp.end.x, kMaxCopyCoordinateMm) && finiteIn(sp.end.y, kMaxCopyCoordinateMm);
+            } else if constexpr (std::is_same_v<T, geometry::ArcSpan>) {
+                return finiteIn(sp.centre.x, kMaxCopyCoordinateMm) && finiteIn(sp.centre.y, kMaxCopyCoordinateMm) &&
+                       finiteIn(sp.radius, kMaxCopyCoordinateMm) && std::isfinite(sp.startAngle) &&
+                       std::isfinite(sp.endAngle);
+            } else {
+                return finiteIn(sp.p0.x, kMaxCopyCoordinateMm) && finiteIn(sp.p0.y, kMaxCopyCoordinateMm) &&
+                       finiteIn(sp.p1.x, kMaxCopyCoordinateMm) && finiteIn(sp.p1.y, kMaxCopyCoordinateMm) &&
+                       finiteIn(sp.p2.x, kMaxCopyCoordinateMm) && finiteIn(sp.p2.y, kMaxCopyCoordinateMm) &&
+                       finiteIn(sp.p3.x, kMaxCopyCoordinateMm) && finiteIn(sp.p3.y, kMaxCopyCoordinateMm);
+            }
+        },
+        span);
+}
+
+bool boxFinite(const Box2& b) {
+    return finiteIn(b.min.x, kMaxCopyCoordinateMm) && finiteIn(b.min.y, kMaxCopyCoordinateMm) &&
+           finiteIn(b.max.x, kMaxCopyCoordinateMm) && finiteIn(b.max.y, kMaxCopyCoordinateMm);
+}
+
 // --- Eligibility --------------------------------------------------------------------------------
 
 bool layerUsable(const Document& doc, document::LayerId id) {
@@ -84,6 +110,7 @@ struct Plan {
     Box2 bounds;
     std::size_t spans{0};
     std::size_t roots{0};
+    bool badGeometry{false};  ///< A source has non-finite or out-of-range coordinates.
 
     std::size_t unitCost() const { return entries.size() + spans; }
 };
@@ -117,9 +144,13 @@ bool addTree(const Document& doc, const Object& obj, int parent, Plan& plan, std
     if (const document::VectorObject* vec = obj.asVector(); vec != nullptr) {
         for (const Contour& c : vec->contours) {
             plan.spans += c.spans.size();
+            for (const geometry::Span& sp : c.spans) {
+                plan.badGeometry = plan.badGeometry || !spanFinite(sp);
+            }
         }
         plan.bounds.expand(vec->bounds());
     } else if (const document::BitmapObject* bmp = obj.asBitmap(); bmp != nullptr) {
+        plan.badGeometry = plan.badGeometry || !boxFinite(bmp->bounds());
         plan.bounds.expand(bmp->bounds());
     }
     plan.entries.push_back(std::move(entry));
@@ -284,13 +315,16 @@ CopyResult commit(Document& doc, const char* text, std::vector<Planned> planned,
 
 /// Empty when the work fits the cap.
 std::string checkWork(double copies, const Plan& plan) {
-    if (copies * static_cast<double>(plan.unitCost()) > static_cast<double>(kMaxCopyWork)) {
-        return "The request is too large (copies times objects and spans over 2 million).";
+    if (copyWorkExceeded(copies, plan.unitCost())) {
+        return "The request is too large (copies times objects and spans over 500000).";
     }
     return {};
 }
 
 std::string checkSources(const Plan& plan) {
+    if (plan.badGeometry || (!plan.bounds.isEmpty() && !boxFinite(plan.bounds))) {
+        return "The selection has coordinates that are not finite or beyond 1e9 mm.";
+    }
     if (plan.roots == 0 || plan.bounds.isEmpty()) {
         return "Select objects to copy first (hidden and locked layers are skipped).";
     }
@@ -304,6 +338,10 @@ CopyResult failure(std::string message) {
 }
 
 }  // namespace
+
+bool copyWorkExceeded(double copies, std::size_t unitCost) {
+    return !(copies * static_cast<double>(unitCost) <= static_cast<double>(kMaxCopyWork));
+}
 
 bool canArrayCopy(const Document& doc) { return collectPlan(doc, {}).roots > 0; }
 bool canCircularCopy(const Document& doc) { return collectPlan(doc, {}).roots > 0; }
@@ -402,8 +440,8 @@ std::string validateCircularOptions(const CircularOptions& o) {
     if (o.count < 2) {
         return "Circular copy needs at least 2 copies (the original counts as one).";
     }
-    if (static_cast<double>(o.count) > static_cast<double>(kMaxCopyWork)) {
-        return "Too many copies requested.";
+    if (o.count > kMaxCopyCount) {
+        return "Too many copies requested (at most 100000).";
     }
     if (!finiteIn(o.centreMm.x, kMaxCopyCoordinateMm) || !finiteIn(o.centreMm.y, kMaxCopyCoordinateMm)) {
         return "The rotation centre must be finite and within 1e9 mm.";
@@ -550,8 +588,8 @@ std::string validateAlongVectorOptions(const AlongVectorOptions& o) {
         if (!finiteIn(o.distanceMm, kMaxCopyCoordinateMm) || o.distanceMm <= 0.0) {
             return "The distance between copies must be a positive number.";
         }
-    } else if (o.count < 1 || static_cast<double>(o.count) > static_cast<double>(kMaxCopyWork)) {
-        return "The number of copies must be at least 1 (and not absurdly large).";
+    } else if (o.count < 1 || o.count > kMaxCopyCount) {
+        return "The number of copies must be between 1 and 100000.";
     }
     return {};
 }
@@ -585,26 +623,8 @@ CopyResult applyCopyAlongVectors(Document& doc, const AlongVectorOptions& o) {
     }
 
     const Contour oriented = o.reverse ? path->reversed() : *path;
-    for (const geometry::Span& s : oriented.spans) {
-        const bool ok = std::visit(
-            [](const auto& sp) {
-                using T = std::decay_t<decltype(sp)>;
-                if constexpr (std::is_same_v<T, geometry::LineSpan>) {
-                    return finiteIn(sp.start.x, kMaxCopyCoordinateMm) && finiteIn(sp.start.y, kMaxCopyCoordinateMm) &&
-                           finiteIn(sp.end.x, kMaxCopyCoordinateMm) && finiteIn(sp.end.y, kMaxCopyCoordinateMm);
-                } else if constexpr (std::is_same_v<T, geometry::ArcSpan>) {
-                    return finiteIn(sp.centre.x, kMaxCopyCoordinateMm) && finiteIn(sp.centre.y, kMaxCopyCoordinateMm) &&
-                           finiteIn(sp.radius, kMaxCopyCoordinateMm) && std::isfinite(sp.startAngle) &&
-                           std::isfinite(sp.endAngle);
-                } else {
-                    return finiteIn(sp.p0.x, kMaxCopyCoordinateMm) && finiteIn(sp.p0.y, kMaxCopyCoordinateMm) &&
-                           finiteIn(sp.p1.x, kMaxCopyCoordinateMm) && finiteIn(sp.p1.y, kMaxCopyCoordinateMm) &&
-                           finiteIn(sp.p2.x, kMaxCopyCoordinateMm) && finiteIn(sp.p2.y, kMaxCopyCoordinateMm) &&
-                           finiteIn(sp.p3.x, kMaxCopyCoordinateMm) && finiteIn(sp.p3.y, kMaxCopyCoordinateMm);
-                }
-            },
-            s);
-        if (!ok) {
+    for (const geometry::Span& sp : oriented.spans) {
+        if (!spanFinite(sp)) {
             return failure("The chosen vector has coordinates outside the supported range or not finite.");
         }
     }
