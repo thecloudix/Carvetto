@@ -525,7 +525,7 @@ Acceptance criteria:
   1. signedArea (and any orientation/area helper with the same pattern) computed relative to a local origin or compensated, exact to rounding for small contours up to 1e9 mm; generative test vs an exact oracle.
   2. Outputs of Pocket/Profile/Drill/offsets unchanged for normal inputs (hash comparison vs main), changes only where the old area was wrong (explained).
 
-### T-0156 Profile loose pieces: V-bit corner moves, vanished finishing cuts, out-of-box pieces (T-0135 verifier)   [status: verifying]
+### T-0156 Profile loose pieces: V-bit corner moves, vanished finishing cuts, out-of-box pieces (T-0135 verifier)   [status: in progress — round 1 FAIL (tab dropped that holds: tabdrop_9001_11; untested corner-move code); round 2]
 Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §14
 Goal: Pre-existing gaps found by the T-0135 round-3 verifier (harness t0135v3/, vfree.cpp exact oracle): (a) V-bit sharp-corner moves are not in the band model of the loose-piece search or the tab check — m2_1310149_15 leaves a 134 mm² part free with no message and a flood-PARTIAL kept tab (identical on T-0127/main); (b) when a finishing cut vanishes, its roughing loop is never searched (m0_1310036_24, 2.1 mm² slug); (c) pieces lying wholly outside every region box are not found ("#" of four bars, three circles with overlapping kerfs); (d) ADR §14 wording: band sampling allowance is up to ~11 µm for tab-layer radius < 0.0625 mm (not "at most 5 µm"), and bands are 2–7 µm wider than the cut (not "exactly"); (e) second-try tabs can have necks ≈ 0.086 mm (m1_1320038_46) — judge them with margin or document.
 Acceptance criteria:
@@ -688,6 +688,12 @@ Phase: 1   Module: core/geometry   Depends on: T-0170   ADR: 0012
 Goal: T-0170 recovered the Round/no-prune slowdown for line inputs (std::hypot replaced by squared comparisons at five sites) but the verifier (harness t0170v1) measured, A/A-controlled against pre-T-0016 (993d0f9): filleted-arc zig-zag Round with nothing to prune (arc 50000, 100k spans, d=0.004) +8% (1.06..1.10; main is +8.3% too, so nothing recovered), and a 300k-span line zig-zag +3% to +13% (A/A 0.97..1.0, so not noise). Arcs still go through hypot, atan2 and fabs. Find and remove the cost on the arc paths the same way, and check the 300k-span line case.
 Acceptance criteria:
   1. Round on the arc 50000 and zz 200000 inputs within 3% of pre-T-0016 (interleaved CPU, A/A control, repeated until A/A <= 2%); outputs byte-identical to main over a broad corpus (all joins, both sides, arcs included); full ctest; the changelog and ADR-0012 A5 wording updated.
+
+### T-0177 Profile loose pieces: residual false reports and misses with V-bit corners (T-0156 verifier)   [status: ready]
+Phase: 1   Module: core/toolpath   Depends on: T-0156   ADR: 0016 §14
+Goal: Defects found by the T-0156 verifier (harness t0156v1, exact-flood oracle drv/o.cpp, repro scenes in repro/), all identical on main and accepted by the director as residual at the T-0156 merge. (a) A held part is reported as loose: repro/false939_7101_876.scn (Outside, V-bit 120°, D6, allowance 0.0022, 2 tabs requested; with 1 tab kept the flood finds nothing free but the product reports '939.84 mm² comes free'; with tab count 1 the message disappears and the moves are unchanged, so it is a defect in the search), repro/false939_7102_671.scn (7.6 mm²). (b) Free pieces unreported with leads off and V-bit corners: repro/miss6_7104_351.scn (six free pieces of 0.216 mm², none reported). (c) Reported areas far from the flood's (29.77 vs 6.4+11.6; 61.5 and 149.7 vs 6.6 and 19.7). (d) Hairline cases within a few µm of the 0.04 / 0.05 thresholds stay documented knife-edge cases. (e) Ramps and plunges are still not in the band model.
+Acceptance criteria:
+  1. (a)-(c) fixed on the repro scenes and in a >= 10k-scene V-bit-forced screen, leads off: no held piece reported, no free piece >= 0.04 mm² unreported, reported areas within 5% or 0.05 mm² of the flood (or documented why not); never worse than T-0156 head; ADR §14 updated; mutants killed; full ctest.
 
 ### T-0171 Hole nesting: guard the box hierarchy; ADR-0006 §10 wording (T-0142 round-3 verifier)   [status: done (#60)]
 Phase: 1   Module: core/geometry   Depends on: T-0142   ADR: 0006
