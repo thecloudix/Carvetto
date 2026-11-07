@@ -1,6 +1,6 @@
 # ADR-0029: Transforms, interactive handles and alignment
 
-Date: 2026-11-07 · Status: proposed (T-0205)
+Date: 2026-11-07 · Status: accepted (director 2026-11-07)
 
 ## Context
 T-0205 adds move, scale, rotate, mirror, align and space on the selection, both interactively (the
@@ -14,12 +14,18 @@ nothing decided which objects a transform may touch.
    operand made of all its leaves and transforms whole; a group with any unusable leaf (locked,
    hidden, other sheet) is skipped entirely rather than torn apart. Bounds are the exact bounds of
    the contours.
-2. **Parametric rule lives in the core command.** `TransformObjectsCommand`/`Paste` now run
-   `transformData`, which keeps `CreationParams` (moving the centre, swapping a rectangle's
-   width/height and adding the angle of ellipses/polygons/stars) for translations and rotations by
-   a multiple of 90 degrees, and sets `NoParams` for every other map (arbitrary rotation, any
-   scale, mirror). The pre-transform snapshot includes the parameters, so undo is exact. T-0209's
-   array copies apply the same rule independently on their own copies.
+2. **Parametric rule lives in the core command, and is verified.** `TransformObjectsCommand`/`Paste`
+   run `transformData`. Creation parameters are kept only when (a) the map is a translation or a
+   rotation by a multiple of 90 degrees, to 1e-12 on every entry of the linear part (so small
+   rotations, near-multiples and near-unit scales such as scale(1, 1+5e-10) are NOT quarter turns),
+   AND (b) rebuilding the shape from the candidate parameters (`buildContours`) reproduces the
+   transformed contours span by span (same kinds, start, end and mid points within 1e-9 mm + 1e-14 of
+   the coordinate size), start point and direction included. Otherwise the object becomes a plain
+   vector (`NoParams`). In practice translations keep the parameters; quarter turns keep them only
+   where the rebuilt start is the turned start (polygons, stars, rotated ellipses); a turned rectangle
+   or circle starts at another corner/point and is dropped. Scaling out and back also ends as a
+   plain vector. The pre-transform snapshot includes the parameters, so undo is exact. T-0209's array
+   copies apply the same rule independently on their own copies.
 3. **Operations are functions over a `Document`** (`transform_ops.hpp`): each validates everything
    first (finite, range 1e9 mm, scale factors in [1e-6, 1e6]) and then pushes one macro, so a refusal
    changes nothing, not even the undo history; a no-op (already aligned) pushes nothing. A mirrored
@@ -28,9 +34,9 @@ nothing decided which objects a transform may touch.
 4. **Interactive gestures** (`TransformGesture`, owned by `ToolController`, Select tool): the
    gesture keeps one absolute transform from the press and pushes only the delta since the last
    step; the pushes coalesce on the undo stack (`breakCoalescing()` before the first and after the
-   last), so any number of pointer steps is one undo step. Pointer positions are snapped (the dragged
-   objects are excluded from the snap query; the generation-keyed index of ADR-0027 is rebuilt per
-   step because every step changes the generation). Escape reverts the gesture's step; an unrelated
+   last), so any number of pointer steps is one undo step. Pointer positions are snapped with an index built once at the first drag step with the dragged
+   objects left out of it (`SnapIndex` `skip`), valid while the undo generation is the one the
+   gesture itself produced; the generation-keyed index of ADR-0027 serves everything else. Escape reverts the gesture's step and drops it from the stack (`UndoStack::undoAndDiscard`, nothing becomes redoable); an unrelated
    edit during the drag ends it. Handles: Scale mode (corner proportional, Alt free, Shift about
    the centre; edge handles one axis, Shift proportional), Rotate mode (corner handles rotate, Alt
    15 degree steps, the middle handle drags the pivot), body drag and the middle handle in Scale
@@ -56,5 +62,8 @@ nothing decided which objects a transform may touch.
 ## Consequences
 Moves keep shapes re-editable. Transforming an object with a rotated rectangle is an ordinary
 `NoParams` vector. Dragging the dragged objects out of the snap set keeps snapping stable, at the
-price of an index rebuild per pointer step (acceptable for ordinary drawings; dense drawings pay
-O(objects) per step).
+
+
+## Deferred (director decision 2026-11-07)
+Ctrl+drag paste-copy and Ctrl+Alt+drag axis-aligned copy (inventory, common handles) are outside
+this card.

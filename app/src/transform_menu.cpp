@@ -6,6 +6,7 @@
 #include <QCursor>
 #include <QDialogButtonBox>
 #include <QFormLayout>
+#include <QKeySequence>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
@@ -342,6 +343,7 @@ TransformMenu::TransformMenu(MainWindow& window) : window_(window) {
     QObject::connect(rotate_, &QAction::triggered, menu_, [this]() { openDialog(TransformFormKind::Rotate); });
     QObject::connect(menu_, &QMenu::aboutToShow, menu_, [this]() { refresh(); });
     QObject::connect(alignMenu_, &QMenu::aboutToShow, alignMenu_, [this]() { refresh(); });
+    refresh();  // the window refreshes again on every selection and document change
 }
 
 void TransformMenu::refresh() {
@@ -476,7 +478,7 @@ std::string transformSelfTest(MainWindow& window) {
     document::Document& doc = window.currentDocument();
     CanvasWidget* canvas = window.canvas();
     const std::size_t objects0 = doc.objectCount();
-    const std::size_t steps0 = doc.undoStack().count();
+    const std::size_t steps0 = doc.undoStack().index();
     const geometry::Box2 material = doc.findSheet(doc.activeSheet())->materialBoundsMm();
     const double unit = material.width() * 0.05;
 
@@ -492,8 +494,36 @@ std::string transformSelfTest(MainWindow& window) {
     const document::ObjectId a = addRect(geometry::Box2{o, {o.x + 3.0 * unit, o.y + 2.0 * unit}});
     const document::ObjectId b =
         addRect(geometry::Box2{{o.x + 8.0 * unit, o.y + 6.0 * unit}, {o.x + 10.0 * unit, o.y + 9.0 * unit}});
-    doc.selection().assign({a});
-    window.documentChanged();
+    // Select A with a real click on its bottom edge: the shortcut actions must become usable
+    // through the window's own change notifications (no manual refresh).
+    sendMouseEvent(canvas, QEvent::MouseMove, pixelOf(canvas, {o.x + 1.5 * unit, o.y}));
+    sendMouseEvent(canvas, QEvent::MouseButtonPress, pixelOf(canvas, {o.x + 1.5 * unit, o.y}));
+    sendMouseEvent(canvas, QEvent::MouseButtonRelease, pixelOf(canvas, {o.x + 1.5 * unit, o.y}));
+    if (doc.selection().size() != 1 || !doc.selection().contains(a)) {
+        return "clicking the rectangle did not select it";
+    }
+    const auto byShortcut = [&](const char* keys) -> QAction* {
+        for (QAction* action : window.menuBar()->findChildren<QAction*>()) {
+            if (action->shortcut() == QKeySequence(QString::fromLatin1(keys))) {
+                return action;
+            }
+        }
+        return nullptr;
+    };
+    for (const char* keys : {"H", "V", "M", "T", "R", "F9"}) {
+        QAction* action = byShortcut(keys);
+        if (action == nullptr || !action->isEnabled()) {
+            return std::string("the shortcut ") + keys + " is not usable with a selection";
+        }
+    }
+    {
+        QAction* flip = byShortcut("H");
+        const std::size_t count = doc.undoStack().index();
+        flip->trigger();
+        if (doc.undoStack().index() != count + 1 || !window.undo() || doc.undoStack().index() != count) {
+            return "the H shortcut did not mirror in one undo step";
+        }
+    }
     QCoreApplication::processEvents();
 
     // 1. Drag the top-right handle of A: proportional scale about the opposite corner, one undo step.
@@ -506,7 +536,7 @@ std::string transformSelfTest(MainWindow& window) {
     const geometry::Vec2 corner = handles->handles[static_cast<std::size_t>(viewmodel::HandleKind::TopRight)].positionMm;
     const geometry::Vec2 anchor = before.min;
     const geometry::Vec2 target = anchor + (corner - anchor) * 1.5;
-    const std::size_t stepsBefore = doc.undoStack().count();
+    const std::size_t stepsBefore = doc.undoStack().index();
     sendMouseEvent(canvas, QEvent::MouseMove, pixelOf(canvas, corner));
     sendMouseEvent(canvas, QEvent::MouseButtonPress, pixelOf(canvas, corner));
     for (double t : {0.25, 0.5, 0.75, 1.0}) {
@@ -514,7 +544,7 @@ std::string transformSelfTest(MainWindow& window) {
     }
     sendMouseEvent(canvas, QEvent::MouseButtonRelease, pixelOf(canvas, target));
     const geometry::Box2 scaled = boundsOfObject(doc, a);
-    if (doc.undoStack().count() != stepsBefore + 1 || std::fabs(scaled.width() - 1.5 * before.width()) > 1e-6 ||
+    if (doc.undoStack().index() != stepsBefore + 1 || std::fabs(scaled.width() - 1.5 * before.width()) > 1e-6 ||
         std::fabs(scaled.height() - 1.5 * before.height()) > 1e-6 || std::fabs(scaled.min.x - before.min.x) > 1e-6) {
         return "dragging the corner handle did not scale the rectangle in one undo step";
     }
@@ -534,7 +564,7 @@ std::string transformSelfTest(MainWindow& window) {
 
     // 3. Align A to the last-selected B (left edges), through the real menu action.
     doc.selection().assign({a, b});
-    menu->refresh();
+    window.documentChanged();
     QAction* left = menu->alignAction(viewmodel::AlignKind::Left);
     if (left == nullptr || !left->isEnabled()) {
         return "Align Left is not enabled for two objects";
@@ -550,7 +580,7 @@ std::string transformSelfTest(MainWindow& window) {
             return "undoing the transform steps failed";
         }
     }
-    if (doc.objectCount() != objects0 || doc.undoStack().count() < steps0) {
+    if (doc.objectCount() != objects0 || doc.undoStack().index() < steps0) {
         return "undo did not restore the document";
     }
     doc.selection().clear();

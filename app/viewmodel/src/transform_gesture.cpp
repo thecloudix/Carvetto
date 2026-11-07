@@ -199,7 +199,7 @@ void TransformGesture::end(document::Document& doc) {
 bool TransformGesture::cancel(document::Document& doc) {
     bool reverted = false;
     if (active() && pushed_ && doc.undoStack().generation() == generation_) {
-        reverted = doc.undoStack().undo(doc);
+        reverted = doc.undoStack().undoAndDiscard(doc);
     }
     kind_ = GestureKind::None;
     pushed_ = false;

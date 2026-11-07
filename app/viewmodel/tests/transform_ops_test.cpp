@@ -109,29 +109,6 @@ bool sameGeometry(const std::vector<Contour>& a, const std::vector<Contour>& b, 
     return true;
 }
 
-/// Same closed shape up to the start corner: equal span counts and every span start of `a` is a
-/// span start of `b`.
-bool sameShape(const std::vector<Contour>& a, const std::vector<Contour>& b, double tol = 1e-9) {
-    if (a.size() != b.size()) {
-        return false;
-    }
-    for (std::size_t i = 0; i < a.size(); ++i) {
-        if (a[i].spanCount() != b[i].spanCount() || a[i].closed != b[i].closed) {
-            return false;
-        }
-        for (const geometry::Span& sa : a[i].spans) {
-            bool found = false;
-            for (const geometry::Span& sb : b[i].spans) {
-                found = found || nearPt(geometry::startPoint(sa), geometry::startPoint(sb), tol);
-            }
-            if (!found) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
 std::vector<Contour> transformedBy(const std::vector<Contour>& in, const Transform2& m) {
     std::vector<Contour> out;
     for (const Contour& c : in) {
@@ -336,7 +313,7 @@ TEST_CASE("rotate: corner and coordinate pivots, absolute angle", "[transform][v
     CHECK(sameGeometry(contoursOf(s.doc, poly), transformedBy(built.value(), Transform2::rotation(0.5, built.value().front().bounds().centre()))));
 }
 
-TEST_CASE("parametric objects: translation and quarter turns keep parameters, others do not",
+TEST_CASE("parametric objects: translation keeps parameters, quarter turns only when the rebuild matches",
           "[transform][viewmodel]") {
     Scene s;
     const ObjectId a = addParamRect(s.doc, {100, 100}, 40, 20);
@@ -347,7 +324,7 @@ TEST_CASE("parametric objects: translation and quarter turns keep parameters, ot
         REQUIRE_FALSE(std::holds_alternative<document::NoParams>(v->params));
         auto rebuilt = document::buildContours(v->params);
         REQUIRE(rebuilt.ok());
-        return sameShape(rebuilt.value(), v->contours, 1e-9);
+        return rebuilt.value() == v->contours || sameGeometry(rebuilt.value(), v->contours, 1e-9);
     };
 
     MoveOptions mv;
@@ -356,20 +333,30 @@ TEST_CASE("parametric objects: translation and quarter turns keep parameters, ot
     REQUIRE(moveSelection(s.doc, mv).ok);
     CHECK(rebuilds(a));
 
+    // A rectangle rebuilt after a quarter turn would start at another corner: plain vector.
     RotateOptions r90;
     r90.angleRad = kPi / 2.0;
     r90.pivotMm = Vec2{10.0, 10.0};
     REQUIRE(rotateSelection(s.doc, r90).ok);
-    CHECK(rebuilds(a));
-    const auto& p = std::get<document::RectangleParams>(s.doc.findObject(a)->asVector()->params);
-    CHECK(near(p.widthMm, 20.0));
-    CHECK(near(p.heightMm, 40.0));
-    r90.angleRad = kPi;
-    REQUIRE(rotateSelection(s.doc, r90).ok);
-    CHECK(rebuilds(a));
-    r90.angleRad = 3.0 * kPi / 2.0;
-    REQUIRE(rotateSelection(s.doc, r90).ok);
-    CHECK(rebuilds(a));
+    CHECK(std::holds_alternative<document::NoParams>(s.doc.findObject(a)->asVector()->params));
+
+    // A polygon keeps its parameters through a half turn (angle + pi) and rebuilds identically.
+    document::PolygonParams pp;
+    pp.centreMm = {400, 300};
+    pp.sides = 6;
+    pp.radiusMm = 40.0;
+    pp.angle = 0.2;
+    auto built = document::buildContours(pp);
+    REQUIRE(built.ok());
+    const ObjectId poly = s.doc.insertObject(Object::vector(built.value(), s.doc.activeLayer(), s.doc.activeSheet(), pp));
+    select(s.doc, {poly});
+    RotateOptions r180;
+    r180.angleRad = kPi;
+    r180.pivotMm = Vec2{0.0, 0.0};
+    REQUIRE(rotateSelection(s.doc, r180).ok);
+    CHECK(rebuilds(poly));
+    CHECK(near(std::get<document::PolygonParams>(s.doc.findObject(poly)->asVector()->params).angle, 0.2 + kPi));
+    select(s.doc, {a});
 
     // Each of these makes a plain vector.
     const auto becomesPlain = [&](auto&& op) {
@@ -704,4 +691,30 @@ TEST_CASE("space selection: even gaps, selection order, inside last", "[transfor
     CHECK_FALSE(spaceSelection(w.doc, so).ok);
     CHECK(near(boundsOf(w.doc, i1).min.x, 100.0));
     CHECK(bytes(w.doc) == stable);
+}
+
+TEST_CASE("input beyond 1e9 mm is refused", "[transform][viewmodel]") {
+    Scene s;
+    const ObjectId a = addRect(s.doc, 100, 100, 200, 150);
+    const ObjectId far1 = addRect(s.doc, 2e9, 0, 2e9 + 10, 10);
+    select(s.doc, {a, far1});
+    const auto before = bytes(s.doc);
+    MoveOptions mv;
+    mv.xMm = 1.0;
+    CHECK_FALSE(moveSelection(s.doc, mv).ok);
+    CHECK_FALSE(applyTransform(s.doc, Transform2::translation({1, 1})).ok);
+    CHECK(bytes(s.doc) == before);
+    CHECK(s.doc.undoStack().count() == 0);
+}
+
+TEST_CASE("scale factors at the limits are consistent", "[transform][viewmodel]") {
+    Scene s;
+    const ObjectId a = addRect(s.doc, 100, 100, 200, 150);
+    select(s.doc, {a});
+    ScaleOptions so;
+    so.scaleX = so.scaleY = kMinScaleFactor;
+    const TransformResult r = scaleSelection(s.doc, so);
+    CHECK(r.ok);  // validFactor accepts it, so the invertibility check must too
+    so.scaleX = so.scaleY = kMaxScaleFactor;
+    CHECK(scaleSelection(s.doc, so).ok);
 }

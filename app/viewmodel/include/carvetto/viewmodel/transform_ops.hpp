@@ -24,10 +24,10 @@
 //     hidden, locked and other-sheet objects in the selection are never touched.
 //   * The bounds used for anchors are the exact bounds of the target contours (not stored values).
 //
-// Creation parameters: translation and rotation by a multiple of 90 degrees keep them (the object
-// stays re-editable and rebuilds identically); every other transform (mirror, non-uniform scale,
-// arbitrary rotation, uniform scale) turns the object into a plain vector. This is the rule of
-// `TransformObjectsCommand`.
+// Creation parameters: kept for translations, and for 90-degree multiples only when rebuilding the
+// shape from the turned parameters reproduces the turned contours span by span (start point
+// included); every other transform (mirror, any scale, other angles) makes a plain vector. This is
+// the rule of `TransformObjectsCommand` (ADR-0029).
 //
 // Directions: anchors use the `HandleKind` names of the selection box (Top is +Y, Left is -X).
 // Angles are radians, counter-clockwise positive, in the core; the numeric form converts degrees.

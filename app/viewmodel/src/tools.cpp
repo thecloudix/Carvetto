@@ -259,7 +259,11 @@ void ToolController::updatePointer(Vec2 px, Modifiers mods) {
     if (tool_ == ToolKind::Select) {
         query.exclude = gesture_.targets();  // the objects being dragged never snap to themselves
     }
-    snap_ = snapIndex().best(view_, px, snapSettings_, query);
+    // During a transform drag the index of the other objects is built once (the dragged objects are
+    // left out, and nothing else changes), not once per pointer step.
+    const bool frozen = gestureSnapIndex_.has_value() && gesture_.active() &&
+                        doc_->undoStack().generation() == gesture_.expectedGeneration();
+    snap_ = (frozen ? *gestureSnapIndex_ : snapIndex()).best(view_, px, snapSettings_, query);
     cursorMm_ = snap_.has_value() ? snap_->pointMm : raw;
 }
 
@@ -1077,6 +1081,7 @@ CursorHint ToolController::cursorHint() const {
 }
 
 void ToolController::xfReset() {
+    gestureSnapIndex_.reset();
     xfPress_ = XfPress::None;
     xfDragging_ = false;
     xfToggleOnClick_ = false;
@@ -1144,6 +1149,9 @@ ToolResult ToolController::xfMove(Vec2 px) {
     if (xfPress_ == XfPress::Pivot) {
         pivot_ = cursorMm_;
         return r;
+    }
+    if (gesture_.active() && !gestureSnapIndex_.has_value()) {
+        gestureSnapIndex_.emplace(*doc_, false, gesture_.targets());
     }
     if (gesture_.active()) {
         r.transformed = gesture_.update(*doc_, cursorMm_, mods_.shift, mods_.ctrl, mods_.alt);

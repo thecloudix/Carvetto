@@ -282,6 +282,8 @@ class ToolController {
     SnapSettings snapSettings_;
     std::optional<SnapIndex> snapIndex_;
     std::array<std::uint64_t, 2> snapSignature_{};
+    /// Index frozen for the duration of a transform drag (dragged objects left out of it).
+    std::optional<SnapIndex> gestureSnapIndex_;
 
     std::optional<Snap> snap_;
     geometry::Vec2 cursorMm_{};

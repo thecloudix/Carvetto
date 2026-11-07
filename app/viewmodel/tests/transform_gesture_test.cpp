@@ -3,11 +3,13 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
 #include <cstdint>
+#include <memory>
 #include <utility>
 #include <variant>
 #include <vector>
 
 #include "carvetto/document/carv_io.hpp"
+#include "carvetto/document/commands.hpp"
 #include "carvetto/document/document.hpp"
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/viewmodel/tools.hpp"
@@ -282,6 +284,8 @@ TEST_CASE("Escape reverts an interactive transform; a document swap is safe", "[
     CHECK(r.transformed);
     CHECK_FALSE(w.tool.transforming());
     CHECK(bytes(w.doc) == before);
+    CHECK_FALSE(w.doc.undoStack().canRedo());  // the cancelled step is gone, not redoable
+    CHECK(w.doc.undoStack().count() == 0);
     w.release({170, 160});
     CHECK(bytes(w.doc) == before);
 
@@ -368,4 +372,38 @@ TEST_CASE("Ctrl/Shift clicks still select instead of transforming", "[transform]
     // Plain click on empty space clears.
     w.click({800, 800});
     CHECK(w.doc.selection().empty());
+}
+
+TEST_CASE("drags survive undo, redo, deletion and a document swap (sanitizer target)", "[transform][tool]") {
+    World w;
+    Contour other;
+    other.append(geometry::LineSpan{{400, 300}, {450, 300}});
+    w.doc.insertObject(Object::vector(other, w.doc.activeLayer(), w.doc.activeSheet()));
+    w.press({150, 125});
+    w.move({160, 135});
+    w.move({401, 301});  // snapped against the frozen index
+    REQUIRE(w.doc.undo());
+    w.move({410, 310});
+    CHECK_FALSE(w.tool.transforming());
+    REQUIRE(w.doc.redo());
+    w.move({420, 320});
+    w.release({420, 320});
+
+    World d;
+    d.press({150, 125});
+    d.move({170, 145});
+    REQUIRE(d.doc.execute(std::make_unique<document::RemoveObjectsCommand>(std::vector<ObjectId>{d.rect})));
+    d.move({180, 155});
+    d.move({190, 165});
+    d.release({190, 165});
+    CHECK(d.doc.objectCount() == 0);
+
+    World s;
+    Document replacement{document::Job::singleSided(500.0, 500.0, 18.0, document::Units::Millimetres)};
+    s.press({150, 125});
+    s.move({170, 145});
+    s.tool.setDocument(&replacement);
+    s.move({180, 155});
+    s.release({180, 155});
+    CHECK(replacement.undoStack().count() == 0);
 }

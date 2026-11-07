@@ -280,6 +280,11 @@ void MainWindow::buildToolPalette() {
         toolPanel_->refreshValues();
     };
     canvas_->onToolStateChanged = [this]() { toolPanel_->refreshValues(); };
+    canvas_->onSelectionChanged = [this]() {
+        if (transformMenu_) {
+            transformMenu_->refresh();  // keeps the shortcut actions (M, T, R, H, V, F9) usable
+        }
+    };
 }
 
 void MainWindow::selectTool(viewmodel::ToolKind tool) {
@@ -306,6 +311,9 @@ void MainWindow::setDocument(std::unique_ptr<document::Document> doc) {
 }
 
 void MainWindow::documentChanged() {
+    if (transformMenu_) {
+        transformMenu_->refresh();
+    }
     setWindowTitle(qs(session_.title("Carvetto")));
     refreshSelectors();
     refreshStatus();

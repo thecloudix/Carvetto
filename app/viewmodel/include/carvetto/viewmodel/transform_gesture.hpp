@@ -44,13 +44,15 @@ class TransformGesture {
     bool update(document::Document& doc, geometry::Vec2 pointMm, bool shift, bool ctrl, bool alt);
     /// Ends the gesture; the changes stay as one undo step.
     void end(document::Document& doc);
-    /// Reverts the gesture's changes (undoes its step). False when there was nothing to revert.
+    /// Reverts the gesture's changes and drops its step from the stack (nothing becomes redoable). False when there was nothing to revert.
     bool cancel(document::Document& doc);
 
     bool active() const { return kind_ != GestureKind::None; }
     GestureKind kind() const { return kind_; }
     /// Objects the gesture moves (for excluding them from snapping).
     const std::vector<document::ObjectId>& targets() const { return targets_; }
+    /// Undo-stack generation the document must have for the gesture to be undisturbed.
+    std::uint64_t expectedGeneration() const { return generation_; }
     /// The net transform applied so far.
     const geometry::Transform2& applied() const { return applied_; }
 

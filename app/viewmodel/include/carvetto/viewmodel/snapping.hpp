@@ -139,7 +139,10 @@ class SnapIndex {
     /// Spans (the nearest to the cursor) that take part in the pairwise Intersection search.
     static constexpr std::size_t kMaxPairSpans = 20;
 
-    explicit SnapIndex(const document::Document& doc, bool includeLocked = false);
+    /// `skip` objects are left out of the index entirely (no pointers into them are kept), e.g. the
+    /// objects being dragged, which are edited while the index is in use.
+    explicit SnapIndex(const document::Document& doc, bool includeLocked = false,
+                       const std::vector<document::ObjectId>& skip = {});
 
     /// Number of indexed spans / static snap points (endpoints, midpoints, centres, quadrants).
     std::size_t spanCount() const { return spans_.size(); }

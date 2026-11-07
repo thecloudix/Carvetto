@@ -1,6 +1,7 @@
 #include "carvetto/viewmodel/snapping.hpp"
 
 #include <algorithm>
+#include <unordered_set>
 #include <cmath>
 #include <cstdint>
 #include <type_traits>
@@ -303,7 +304,8 @@ struct NearSpan {
 
 // ----------------------------------------------------------------------- index
 
-SnapIndex::SnapIndex(const document::Document& doc, bool includeLocked) {
+SnapIndex::SnapIndex(const document::Document& doc, bool includeLocked, const std::vector<document::ObjectId>& skip) {
+    const std::unordered_set<document::ObjectId> skipped(skip.begin(), skip.end());
     std::vector<Box2> spanBoxes;
     std::vector<Box2> pointBoxes;
     auto addPoint = [&](SnapKind kind, Vec2 p, ObjectId object) {
@@ -313,6 +315,9 @@ SnapIndex::SnapIndex(const document::Document& doc, bool includeLocked) {
 
     for (const auto& [id, obj] : doc.objects()) {
         const document::VectorObject* vec = obj.asVector();
+        if (skipped.contains(id)) {
+            continue;
+        }
         if (vec == nullptr || obj.sheet != doc.activeSheet() || !chainSnappable(doc, obj, includeLocked)) {
             continue;
         }

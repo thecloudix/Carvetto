@@ -164,7 +164,7 @@ TransformResult refuse(std::string message) {
 /// successful no-op.
 TransformResult runSteps(Document& doc, const std::vector<Step>& steps, const std::string& text) {
     for (const Step& s : steps) {
-        if (!transformFinite(s.m) || !s.m.isInvertible(1e-12)) {
+        if (!transformFinite(s.m) || !s.m.isInvertible(1e-13)) {
             return refuse("the transform is not valid");
         }
         if (!inRange(s.operand->bounds)) {
