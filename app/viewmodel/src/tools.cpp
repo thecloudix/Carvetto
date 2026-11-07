@@ -230,6 +230,7 @@ const SnapIndex& ToolController::snapIndex() {
     const std::array<std::uint64_t, 2> sig{doc_->undoStack().generation(), doc_->activeSheet().value};
     if (!snapIndex_.has_value() || sig != snapSignature_) {
         snapIndex_.emplace(*doc_);
+        ++snapIndexBuilds_;
         snapSignature_ = sig;
     }
     return *snapIndex_;
@@ -261,8 +262,7 @@ void ToolController::updatePointer(Vec2 px, Modifiers mods) {
     }
     // During a transform drag the index of the other objects is built once (the dragged objects are
     // left out, and nothing else changes), not once per pointer step.
-    const bool frozen = gestureSnapIndex_.has_value() && gesture_.active() &&
-                        doc_->undoStack().generation() == gesture_.expectedGeneration();
+    const bool frozen = gestureSnapIndex_.has_value() && gesture_.active() && gestureIndexValid();
     snap_ = (frozen ? *gestureSnapIndex_ : snapIndex()).best(view_, px, snapSettings_, query);
     cursorMm_ = snap_.has_value() ? snap_->pointMm : raw;
 }
@@ -1080,6 +1080,11 @@ CursorHint ToolController::cursorHint() const {
     return isCornerHandle(*h) ? CursorHint::Rotate : CursorHint::Default;
 }
 
+bool ToolController::gestureIndexValid() const {
+    return gestureSnapIndex_.has_value() && doc_ != nullptr &&
+           gestureIndexKey_[0] == doc_->undoStack().generation() && gestureIndexKey_[1] == doc_->activeSheet().value;
+}
+
 void ToolController::xfReset() {
     gestureSnapIndex_.reset();
     xfPress_ = XfPress::None;
@@ -1152,9 +1157,17 @@ ToolResult ToolController::xfMove(Vec2 px) {
     }
     if (gesture_.active() && !gestureSnapIndex_.has_value()) {
         gestureSnapIndex_.emplace(*doc_, false, gesture_.targets());
+        ++snapIndexBuilds_;
+        gestureIndexKey_ = {doc_->undoStack().generation(), doc_->activeSheet().value};
     }
     if (gesture_.active()) {
+        const bool valid = gestureIndexValid();
         r.transformed = gesture_.update(*doc_, cursorMm_, mods_.shift, mods_.ctrl, mods_.alt);
+        if (!valid || !gesture_.active()) {
+            gestureSnapIndex_.reset();  // an outside edit (or the end of the gesture) invalidates it
+        } else if (r.transformed) {
+            gestureIndexKey_[0] = doc_->undoStack().generation();  // the gesture's own push
+        }
     }
     return r;
 }
