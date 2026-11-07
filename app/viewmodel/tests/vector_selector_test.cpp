@@ -133,6 +133,16 @@ TEST_CASE("selector: open, closed and circle filters apply per contour", "[selec
     CHECK(resolveVectors(doc, circles).objects == std::vector<ObjectId>{split});
     circles.circleDiameterMm = 5.0;
     CHECK(resolveVectors(doc, circles).objects.empty());
+    // A closed contour of arcs that is not a full turn is not a circle.
+    geometry::Contour half;
+    half.append(geometry::ArcSpan{{0, 0}, 3.0, 0.0, geometry::kPi, geometry::ArcDirection::CCW});
+    half.closed = true;
+    CHECK_FALSE(isCircleContour(half, 0.0, 0.01));
+    geometry::Contour offCentre = twoArcCircle(0, 0, 3.0);
+    std::get<geometry::ArcSpan>(offCentre.spans[1]).centre = {0.5, 0.0};
+    CHECK_FALSE(isCircleContour(offCentre, 0.0, 0.01));
+    CHECK_FALSE(isCircleContour(openLine(0), 0.0, 0.01));
+    CHECK(isCircleContour(twoArcCircle(1, 2, 3.0), 6.0, 0.001));
     CHECK(VectorSelector{}.hasFilters() == false);
     CHECK(circles.hasFilters());
 }

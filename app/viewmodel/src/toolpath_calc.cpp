@@ -212,6 +212,50 @@ ToolpathDefinition defaultDefinition(ToolpathOperation operation) {
     return def;
 }
 
+namespace {
+
+/// True when `text` is well-formed UTF-8 without control characters (C0, DEL, C1).
+bool cleanUtf8(const std::string& text) {
+    std::size_t i = 0;
+    while (i < text.size()) {
+        const auto lead = static_cast<unsigned char>(text[i]);
+        std::size_t extra = 0;
+        std::uint32_t cp = 0;
+        if (lead < 0x80) {
+            cp = lead;
+        } else if (lead >= 0xC2 && lead <= 0xDF) {
+            extra = 1;
+            cp = lead & 0x1FU;
+        } else if (lead >= 0xE0 && lead <= 0xEF) {
+            extra = 2;
+            cp = lead & 0x0FU;
+        } else if (lead >= 0xF0 && lead <= 0xF4) {
+            extra = 3;
+            cp = lead & 0x07U;
+        } else {
+            return false;
+        }
+        if (extra > 0 && i + extra >= text.size()) {
+            return false;  // cut short
+        }
+        for (std::size_t k = 1; k <= extra; ++k) {
+            const auto next = static_cast<unsigned char>(text[i + k]);
+            if ((next & 0xC0U) != 0x80U) {
+                return false;
+            }
+            cp = (cp << 6) | (next & 0x3FU);
+        }
+        if ((extra == 2 && cp < 0x800) || (extra == 3 && cp < 0x10000) || cp > 0x10FFFF ||
+            (cp >= 0xD800 && cp <= 0xDFFF) || cp < 0x20 || cp == 0x7F || (cp >= 0x80 && cp <= 0x9F)) {
+            return false;
+        }
+        i += extra + 1;
+    }
+    return true;
+}
+
+}  // namespace
+
 std::string validateToolpathName(const std::string& name) {
     if (name.empty()) {
         return "the toolpath needs a name";
@@ -219,11 +263,8 @@ std::string validateToolpathName(const std::string& name) {
     if (name.size() > kMaxToolpathNameBytes) {
         return "the name is too long (at most " + std::to_string(kMaxToolpathNameBytes) + " bytes)";
     }
-    for (const char c : name) {
-        const auto u = static_cast<unsigned char>(c);
-        if (u < 0x20 || u == 0x7F) {
-            return "the name must not contain control characters or line breaks";
-        }
+    if (!cleanUtf8(name)) {
+        return "the name must be valid text without control characters or line breaks";
     }
     return {};
 }
@@ -495,6 +536,10 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
     out.messages = notes;
     if (!refusal.empty()) {
         out.messages.push_back(note(MessageSeverity::Error, refusal));
+        return out;
+    }
+    if (!tool.has_value() || contours.empty()) {  // a job not made by makeToolpathJob
+        out.messages.push_back(note(MessageSeverity::Error, "the job has no tool or no vectors"));
         return out;
     }
     const auto cancelled = [&] { return cancel != nullptr && cancel->load(); };

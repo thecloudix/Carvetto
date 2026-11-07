@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <fstream>
 #include <functional>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -113,7 +114,17 @@ void runCase(const Case& c) {
         CHECK(mine == theirs);
         CHECK(mine.moveCount() > 0);
     }
-    CHECK(bytesOf(dir + "/mine.carv") == bytesOf(dir + "/cli.carv"));
+    const std::string mineBytes = bytesOf(dir + "/mine.carv");
+    CHECK(mineBytes == bytesOf(dir + "/cli.carv"));
+    std::size_t moves = 0;
+    for (const document::ToolpathRecord& r : doc.toolpaths()) {
+        moves += r.moveCount();
+    }
+    Fingerprint fp;
+    fp.add(std::string_view(mineBytes));
+    std::cout << "[T-0220 CLI identity] " << c.name << ": " << doc.toolpaths().size() << " record(s), " << moves
+              << " moves, .carv " << mineBytes.size() << " bytes, hash " << std::hex << fp.value() << std::dec
+              << " (session = CLI)" << std::endl;
 }
 
 ToolpathForm formFor(document::ToolpathOperation op, const tooling::ToolDatabase& db, const std::string& toolId,

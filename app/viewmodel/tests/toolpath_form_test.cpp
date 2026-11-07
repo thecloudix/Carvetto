@@ -243,6 +243,15 @@ TEST_CASE("form: the name is checked", "[toolpath][form]") {
     CHECK_FALSE(form.setName(std::string(kMaxToolpathNameBytes + 1, 'x')).ok);
     CHECK(form.setName(std::string(kMaxToolpathNameBytes, 'x')).ok);
     CHECK(form.setName("Plaque \xC3\xA9").ok);  // UTF-8 is fine
+    CHECK(form.setName("\xE2\x82\xAC 5").ok);
+    CHECK_FALSE(form.setName("bad \xFF").ok);              // not UTF-8
+    CHECK_FALSE(form.setName("cut \xC3").ok);              // cut short
+    CHECK_FALSE(form.setName("over \xC0\x80").ok);         // overlong
+    CHECK_FALSE(form.setName("sur \xED\xA0\x80").ok);     // a surrogate
+    CHECK_FALSE(form.setName("big \xF4\x90\x80\x80").ok);  // beyond U+10FFFF
+    CHECK_FALSE(form.setName("c1 \xC2\x85").ok);          // a C1 control (next line)
+    CHECK_FALSE(form.setName("lone \x80").ok);
+    CHECK(form.name() == "\xE2\x82\xAC 5");
     CHECK(validateToolpathName("ok").empty());
 }
 
@@ -336,4 +345,34 @@ TEST_CASE("form: problems lists what blocks a calculation", "[toolpath][form]") 
     ToolpathForm v(ToolpathOperation::VCarving, Units::Millimetres);
     REQUIRE(v.setTool(db, source("v-bit-90")).ok);
     CHECK(v.problems().empty());
+}
+
+TEST_CASE("form: tools an operation accepts and their cutting data choices", "[toolpath][form]") {
+    const tooling::ToolDatabase db = cliToolDatabase();
+    const auto ids = [](const std::vector<const tooling::Tool*>& tools) {
+        std::vector<std::string> out;
+        for (const tooling::Tool* t : tools) {
+            out.push_back(t->id);
+        }
+        return out;
+    };
+    CHECK(ids(toolsFor(db, ToolpathOperation::Pocket)) ==
+          std::vector<std::string>{"drill-3mm", "end-mill-3mm", "end-mill-6mm", "v-bit-90"});
+    CHECK(ids(toolsFor(db, ToolpathOperation::Drill)) ==
+          std::vector<std::string>{"drill-3mm", "end-mill-3mm", "end-mill-6mm"});
+    CHECK(ids(toolsFor(db, ToolpathOperation::VCarving)) == std::vector<std::string>{"v-bit-90"});
+    CHECK(ids(toolsFor(db, ToolpathOperation::VCarving, true)) ==
+          std::vector<std::string>{"end-mill-3mm", "end-mill-6mm"});
+    CHECK(toolsFor(tooling::ToolDatabase{}, ToolpathOperation::Pocket).empty());
+
+    const auto choices = cuttingDataChoices(*db.findTool("end-mill-6mm"));
+    REQUIRE(choices.size() == 5);  // the default data and four materials
+    CHECK(choices[0] == source("end-mill-6mm"));
+    CHECK(choices[1].machine == "machine-generic-router");
+    CHECK(choices[1].material == "material-acrylic");
+    for (const document::ToolSource& c : choices) {
+        ToolpathForm form(ToolpathOperation::Pocket, Units::Millimetres);
+        CHECK(form.setTool(db, c).ok);
+    }
+    CHECK(cuttingDataChoices(*db.findTool("v-bit-90")).size() == 1);
 }

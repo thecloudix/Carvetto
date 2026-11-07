@@ -661,6 +661,27 @@ std::string validateParams(const document::ToolpathParams& params) {
     return std::visit([](const auto& p) { return checkParams(p); }, params);
 }
 
+std::vector<const tooling::Tool*> toolsFor(const tooling::ToolDatabase& db, ToolpathOperation operation,
+                                           bool clearance) {
+    std::vector<const tooling::Tool*> out;
+    for (const auto& [id, tool] : db.tools()) {
+        if (toolAllowedFor(operation, tool.type, clearance)) {
+            out.push_back(&tool);
+        }
+    }
+    return out;
+}
+
+std::vector<document::ToolSource> cuttingDataChoices(const tooling::Tool& tool) {
+    std::vector<document::ToolSource> out;
+    out.push_back(document::ToolSource{tool.id, {}, {}});
+    for (const auto& [key, data] : tool.cuttingData) {
+        (void)data;
+        out.push_back(document::ToolSource{tool.id, key.machineId, key.materialId});
+    }
+    return out;
+}
+
 // --- ToolpathForm --------------------------------------------------------------------------------
 
 ToolpathForm::ToolpathForm(ToolpathOperation operation, Units units)

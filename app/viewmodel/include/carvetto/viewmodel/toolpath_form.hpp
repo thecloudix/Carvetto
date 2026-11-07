@@ -79,6 +79,15 @@ struct ToolSummary {
     bool fallback{false};
 };
 
+/// The tools of `db` an operation accepts (`toolAllowedFor`), in id order; `clearance` = the V-carve's
+/// clearance tools. Pointers are valid while `db` is unchanged.
+std::vector<const tooling::Tool*> toolsFor(const tooling::ToolDatabase& db, document::ToolpathOperation operation,
+                                           bool clearance = false);
+
+/// The machine/material pairs `tool` has cutting data for, as tool sources (in key order), after the
+/// source with neither (the tool's default data).
+std::vector<document::ToolSource> cuttingDataChoices(const tooling::Tool& tool);
+
 class ToolpathForm {
    public:
     ToolpathForm(document::ToolpathOperation operation, document::Units units);

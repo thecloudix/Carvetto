@@ -931,3 +931,41 @@ TEST_CASE("session: forms reopen with the toolpath's values", "[toolpath][sessio
     CHECK(std::get<toolpath::PocketParams>(f.doc.toolpaths()[0].params).cutDepth == 2.0);
     CHECK(f.session.newForm(ToolpathOperation::Drill).operation() == ToolpathOperation::Drill);
 }
+
+TEST_CASE("session: a recalculation that changes nothing refreshes the toolpath without an undo step", "[toolpath][session]") {
+    Fixture f;
+    // A pocket machines closed vectors; an open vector in its selection is ignored (reported).
+    geometry::Contour line;
+    line.append(geometry::LineSpan{{0, 80}, {10, 80}});
+    const ObjectId open = addVector(f.doc, line);
+    ToolpathDefinition def = pocketDefinition(f.db);
+    def.selector = VectorSelector::fromObjects({f.big, open});
+    const ToolpathId id = f.session.add(def).ids.front();
+    const Snapshot before = snapshot(f.doc);
+    moveObject(f.doc, open, 5.0, 0.0);
+    CHECK(f.session.item(id)->status == ToolpathStatus::NeedsRecalculation);
+    const std::size_t steps = f.steps();
+    const ToolpathOutcome out = f.session.recalculate(id);
+    REQUIRE(out.ok);
+    CHECK(f.steps() == steps);  // identical records: nothing to store
+    CHECK(f.doc.toolpaths() == before.toolpaths);
+    CHECK(f.session.item(id)->status == ToolpathStatus::Current);
+}
+
+TEST_CASE("session: a job that was not made by prepare cannot crash the calculation", "[toolpath][session]") {
+    ToolpathJob empty;
+    CHECK_FALSE(empty.run().ok);
+    CHECK(empty.run().hasError());
+    ToolpathJob noTool;
+    noTool.contours.push_back(square(0, 0, 10));
+    noTool.owners.push_back(ObjectId{1});
+    CHECK_FALSE(noTool.run().ok);
+    // A tool but mismatching owners and clearance lists.
+    Fixture f;
+    ToolpathJob job = f.session.prepare(vCarveDefinition(f.db, true));
+    job.clearance.clear();
+    job.owners.clear();
+    const ToolpathCalculation calc = job.run();
+    CHECK(calc.ok);  // the carving tool alone still carves
+    CHECK(calc.items.size() == 1);
+}
