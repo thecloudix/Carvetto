@@ -214,8 +214,11 @@ double distanceToChord(Vec2 p, Vec2 a, Vec2 b) {
 }  // namespace
 
 double BezierSpan::length(double relTol) const {
-    // Control values beyond ~1e100 would overflow the squares in distance(): work on a copy
-    // scaled by an exact power of two and scale the result back (inf if it exceeds the range).
+    // Control values beyond ~1e100: work on a copy scaled by an exact power of two and scale the
+    // result back (+inf if it exceeds the double range). distance() uses std::hypot, which does
+    // not overflow itself, so this is functionally redundant for the pieces' lengths; it is exact
+    // and keeps the sum of the three polygon legs and the tolerance arithmetic far from the range
+    // limits. Kept deliberately.
     const double big = std::max(std::max(std::max(std::fabs(p0.x), std::fabs(p0.y)), std::max(std::fabs(p1.x), std::fabs(p1.y))),
                                 std::max(std::max(std::fabs(p2.x), std::fabs(p2.y)), std::max(std::fabs(p3.x), std::fabs(p3.y))));
     if (!std::isfinite(big)) {

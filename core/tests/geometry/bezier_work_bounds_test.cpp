@@ -2,7 +2,9 @@
 // intersect(Span, Span) on long near-coincident Beziers stays within a CPU bound (ADR-0005 A2).
 #include <algorithm>
 #include <catch2/catch_test_macros.hpp>
+#include <cfloat>
 #include <cmath>
+#include <limits>
 #include <vector>
 
 #include "carvetto/geometry/contour_ops.hpp"
@@ -209,7 +211,8 @@ TEST_CASE("Bezier polygonisation is bounded when the tolerance cannot be met", "
     polygoniseInto(Span{b}, Tolerance::defaults(), pts);
     REQUIRE(processCpuSeconds() - t0 < 20.0);
     REQUIRE(pts.size() >= 2);
-    REQUIRE(pts.size() <= (std::size_t{1} << 21) + 2);
+    // Exactly the split budget: a binary tree of 2^20 splits has 2^20 + 1 leaves, one point each.
+    REQUIRE(pts.size() == (std::size_t{1} << 20) + 1);
     REQUIRE(pts.back() == b.p3);
     // A modest curve is unaffected by the bound: chordal accuracy holds.
     std::vector<Vec2> fine;
@@ -217,3 +220,57 @@ TEST_CASE("Bezier polygonisation is bounded when the tolerance cannot be met", "
     REQUIRE(fine.size() > 8);
     REQUIRE(fine.size() < 200);
 }
+
+TEST_CASE("Bezier length of non-finite control values returns promptly", "[bezier][length][geometry]") {
+    // Before T-0178 a NaN control point made length() recurse to the depth cap (it hung).
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    const double inf = std::numeric_limits<double>::infinity();
+    const std::vector<BezierSpan> withNan{
+        {{0, 0}, {nan, 0}, {1, 1}, {2, 2}}, {{0, 0}, {1, 1}, {2, 2}, {nan, nan}},
+        {{nan, 0}, {1, 1}, {2, 2}, {3, 3}}, {{nan, nan}, {nan, nan}, {nan, nan}, {nan, nan}}};
+    const std::vector<BezierSpan> withInf{
+        {{0, 0}, {inf, 0}, {1, 1}, {2, 2}}, {{0, 0}, {1, 1}, {-inf, 0}, {2, 2}}, {{0, 0}, {1, 1}, {2, 2}, {3, inf}}};
+    const double t0 = processCpuSeconds();
+    for (const BezierSpan& b : withNan) {
+        REQUIRE(std::isnan(b.length()));
+    }
+    for (const BezierSpan& b : withInf) {
+        REQUIRE(std::isinf(b.length()));
+    }
+    REQUIRE(processCpuSeconds() - t0 < 1.0);
+}
+
+TEST_CASE("Bezier bounds fallback box near the double range", "[bezier][bounds][geometry]") {
+    // Evaluating the extrema overflows for these curves; the control-polygon box is returned and
+    // it contains the curve (not just the box of the end points).
+    const BezierSpan a{{-DBL_MAX, -DBL_MAX * (1 - 1e-16)}, {-DBL_MAX * (1 - 1e-16), -DBL_MAX},
+                       {DBL_MAX, DBL_MAX * (1 - 1e-16)}, {DBL_MAX * (1 - 1e-16), DBL_MAX * (1 - 1e-16)}};
+    const BezierSpan b{{-DBL_MAX, DBL_MAX * (1 - 1e-16)}, {-DBL_MAX, DBL_MAX}, {-DBL_MAX, -DBL_MAX}, {DBL_MAX * (1 - 1e-16), DBL_MAX}};
+    for (const BezierSpan& c : {a, b}) {
+        const Box2 box = c.bounds();
+        REQUIRE(std::isfinite(box.min.x));
+        REQUIRE(std::isfinite(box.min.y));
+        REQUIRE(std::isfinite(box.max.x));
+        REQUIRE(std::isfinite(box.max.y));
+        for (const Vec2 q : {c.p0, c.p1, c.p2, c.p3}) {  // the whole control polygon
+            REQUIRE(q.x >= box.min.x);
+            REQUIRE(q.x <= box.max.x);
+            REQUIRE(q.y >= box.min.y);
+            REQUIRE(q.y <= box.max.y);
+        }
+        for (int i = 0; i <= 200; ++i) {
+            const Vec2 p = c.pointAt(static_cast<double>(i) / 200.0);
+            if (std::isfinite(p.x) && std::isfinite(p.y)) {
+                REQUIRE(p.x >= box.min.x);
+                REQUIRE(p.x <= box.max.x);
+                REQUIRE(p.y >= box.min.y);
+                REQUIRE(p.y <= box.max.y);
+            }
+        }
+    }
+}
+
+// The pass-2 piece cap of BezierSpan::length (2^20) is a defensive bound that no finite input
+// reaches: pass 2 stops a piece once polygon - chord is below 8 eps of its own magnitude, and
+// that needs about 2^17 pieces for a size-1 loop whatever the scale (the criterion is relative), so
+// a unit test cannot exercise the cap itself. kLengthSecondPassPieces is covered by review only.

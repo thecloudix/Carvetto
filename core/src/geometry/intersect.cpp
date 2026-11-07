@@ -6,9 +6,7 @@
 #include <cstddef>
 #include <iterator>
 #include <limits>
-#include <map>
 #include <optional>
-#include <set>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -16,6 +14,7 @@
 #include <vector>
 
 #include "carvetto/geometry/contour_ops.hpp"
+#include "gap_trail.hpp"
 #include "hit_index.hpp"
 
 namespace carvetto::geometry {
@@ -1064,57 +1063,14 @@ std::vector<Piece> piecesOf(const Span& s, const Tolerance& tol) {
     return out;
 }
 
-// Gap between A(t) and B, with B's parameter of the nearest point (locally, seeded from `seedB`).
-struct GapSample {
-    double t;
-    double tB;
-    double gap;
-};
+using detail::GapMinima;
+using detail::GapSample;
+using detail::GapTrail;
 
 GapSample gapAlongA(const Span& a, const Span& b, double t, double seedB) {
     const ClosestPoint cp = nearestFrom(b, pointAt(a, t), seedB);
     return {t, cp.t, cp.distance};
 }
-
-// Every gap evaluation of a span pair's walks, ordered by t (equal t: the later one first, as an
-// insertion at the lower bound of a sorted vector would). A tree instead of a sorted vector: the
-// vector's mid-insertions were O(n) each, quadratic over the ~1e5 samples that near-coincident
-// long Beziers produce (T-0178).
-struct GapTrail {
-    struct Before {
-        bool operator()(const GapSample& l, const GapSample& r) const { return l.t < r.t; }
-    };
-    using Tree = std::multiset<GapSample, Before>;
-    Tree samples;
-
-    Tree::const_iterator lowerBound(double t) const { return samples.lower_bound(GapSample{t, 0.0, 0.0}); }
-    void record(const GapSample& g) { samples.emplace_hint(lowerBound(g.t), g); }
-};
-
-// Minima accepted by earlier walks, in acceptance order, with an index by t for range queries.
-struct GapMinima {
-    std::vector<GapSample> list;
-    std::multimap<double, std::size_t> byT;
-
-    void push_back(const GapSample& g) {
-        byT.emplace(g.t, list.size());
-        list.push_back(g);
-    }
-    /// The accepted minimum with t strictly inside (l, h) and gap <= maxGap that has the lowest
-    /// gap (the earliest accepted among equals), or null.
-    const GapSample* lowestIn(double l, double h, double maxGap) const {
-        const GapSample* found = nullptr;
-        std::size_t foundAt = 0;
-        for (auto it = byT.upper_bound(l); it != byT.end() && it->first < h; ++it) {
-            const GapSample& k = list[it->second];
-            if (k.gap <= maxGap && (found == nullptr || k.gap < found->gap || (k.gap == found->gap && it->second < foundAt))) {
-                found = &k;
-                foundAt = it->second;
-            }
-        }
-        return found;
-    }
-};
 
 // Nearest-point evaluations carry rounding noise of this order; gap differences below it say
 // nothing about the slope.
@@ -1211,12 +1167,9 @@ std::vector<Candidate> settleTouch(const Span& a, const Span& b, Candidate c, Ga
     // Earlier samples either side of the candidate, if any (looked up before this walk records).
     std::optional<GapSample> trailL;
     std::optional<GapSample> trailR;
-    {
-        const auto right = trail.lowerBound(mid.t);
-        if (right != trail.samples.end() && right != trail.samples.begin()) {
-            trailL = *std::prev(right);
-            trailR = *right;
-        }
+    if (const auto around = trail.around(mid.t)) {
+        trailL = around->first;
+        trailR = around->second;
     }
     const bool walked = trailL && trailR && trailR->t - trailL->t <= kMaxWalkStep;
     const auto between = [&] {

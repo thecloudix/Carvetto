@@ -24,13 +24,13 @@ class HitIndex {
 
     explicit HitIndex(const Tolerance& tol) : tol_(tol), cell_(2.0 * tol.distance) {}
 
-    void add(std::size_t index, Vec2 p) {
+    void add(std::size_t id, Vec2 p) {
         std::int64_t cx = 0;
         std::int64_t cy = 0;
         if (cellOf(p, cx, cy)) {
-            cells_[key(cx, cy)].push_back(index);
+            cells_[key(cx, cy)].push_back(id);
         } else {
-            loose_.push_back(index);
+            loose_.push_back(id);
         }
     }
 
