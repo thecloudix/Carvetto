@@ -27,6 +27,7 @@
 #include "carvetto/toolpath/box_index.hpp"
 #include "carvetto/toolpath/clearance.hpp"
 #include "carvetto/toolpath/path_walk.hpp"
+#include "block_settle.hpp"
 #include "enclosed_pieces.hpp"
 
 namespace carvetto::toolpath {
@@ -638,8 +639,7 @@ class ProfileBuilder {
     void reportLoosePieces(const std::vector<Cut>& primary, const std::vector<Cut>& secondary);
     bool mapTab(const Cut& from, const TabSpan& t, const Cut& onto, TabSpan& out, bool& near,
                 bool coverOnly = false) const;
-    std::vector<TabSection> tabSections(const Cut& c, const TabSpan& t, bool coverOnly = false, double kerf = -1.0,
-                                        double trim = -1.0) const;
+    std::vector<TabSection> tabSections(const Cut& c, const TabSpan& t, bool coverOnly = false, double kerf = -1.0) const;
     bool tabHolds(const Cut& c, const TabSpan& t, const std::vector<Vec2>& tools,
                   const std::vector<ToolDisc>& toolsX) const;
     /// What becomes of a tab: it holds, the tools cut it through, or it would hold nothing (the
@@ -1403,13 +1403,11 @@ bool ProfileBuilder::spanFits(const Cut& c, const TabSpan& t, const std::vector<
 // when the roughing cut runs outside it), less 0.02 mm at each end so the walls do not count.
 // `coverOnly` (Inside/Outside with a negative allowance only): the sections stop at the vector, as
 // for allowance >= 0, instead of crossing it with the kerf (see matchRoughingTabs).
-std::vector<TabSection> ProfileBuilder::tabSections(const Cut& c, const TabSpan& t, bool coverOnly, double kerf,
-                                                    double trim) const {
+std::vector<TabSection> ProfileBuilder::tabSections(const Cut& c, const TabSpan& t, bool coverOnly, double kerf) const {
     std::vector<TabSection> out;
-    // (`kerf` and `trim`, when given, replace the tool radius: how far the sections reach beyond the cut,
-    // and how much of each end of the stretch the core leaves out. T-0167: the tab layer's radius.)
-    const double ca = t.a + (trim >= 0.0 ? trim : radius_);
-    const double cb = t.b - (trim >= 0.0 ? trim : radius_);
+    // (`kerf`, when given, replaces the tool radius as the reach beyond the cut: T-0167, the tab layer's.)
+    const double ca = t.a + radius_;
+    const double cb = t.b - radius_;
     if (cb < ca) {
         return out;
     }
@@ -1797,7 +1795,7 @@ bool ProfileBuilder::tabHolds(const Cut& c, const TabSpan& t, const std::vector<
     }
     // 0 = blocked, 1 = open, 2 = tab material next to the vector, 3 = waste beyond the kerf.
     std::vector<char> state(cells, 0);
-    constexpr int kBlock = 4;
+    constexpr int kBlock = detail::kSettleBlock;
     const int bx_n = (nx + kBlock - 1) / kBlock;
     const int by_n = (ny + kBlock - 1) / kBlock;
     std::vector<signed char> blockMode(static_cast<std::size_t>(bx_n) * static_cast<std::size_t>(by_n), -1);
@@ -1810,11 +1808,9 @@ bool ProfileBuilder::tabHolds(const Cut& c, const TabSpan& t, const std::vector<
             const std::size_t blk = static_cast<std::size_t>(j / kBlock) * static_cast<std::size_t>(bx_n) +
                                     static_cast<std::size_t>(i / kBlock);
             if (blockMode[blk] < 0) {
-                const int ci = std::min(nx - 1, (i / kBlock) * kBlock + kBlock / 2);
-                const int cj = std::min(ny - 1, (j / kBlock) * kBlock + kBlock / 2);
-                const double dc = allField_.distance(centre(ci, cj));
-                const double rho = kBlock * h * 0.75 + 1e-6;  // half the block's diagonal, with slack
-                blockMode[blk] = dc - rho >= beyond ? 1 : (dc + rho < c.distance ? 2 : 0);
+                blockMode[blk] = static_cast<signed char>(detail::settleBlock(
+                    i / kBlock, j / kBlock, nx, ny, h, box.min, beyond, c.distance,
+                    [&](Vec2 q) { return allField_.distance(q); }));
             }
             const double dv = blockMode[blk] == 1   ? std::numeric_limits<double>::infinity()
                               : blockMode[blk] == 2 ? 0.0
@@ -2577,7 +2573,7 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
                     const bool local = !q.second && q.cut == own.cut &&
                                        pathGap(primary[own.cut].walk, q.u, own.span) < localReach;
                     const double d = sectionDistance(q.p, sections);
-                                        if (q.rho >= 0.0) {
+                    if (q.rho >= 0.0) {
                         if (!local && d < q.rho - 1e-3) {
                             return TabFate::Severed;
                         }
