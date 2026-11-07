@@ -649,8 +649,10 @@ medial axis, so the tool touches both walls):
   "ramp_plunge": false, "ramp_distance": 10   (clearance)
   "corner_sharpen": true         with a flat depth and clearance tools: the carving tool also
                                  clears the sloped floor the end mills leave in the convex
-                                 corners of the flat areas (a groove along each corner's
-                                 bisector and passes either side at its stepover)
+                                 stretches of the flat areas' walls they cannot reach into
+                                 (sharp and rounded corners, small fillets and chamfers, necks,
+                                 spikes): a groove along each stretch's axis and passes either
+                                 side at its stepover
   "order": {"selection_order": false, "left_to_right": false,
             "bottom_to_top": false, "grid": false}   order of the regions (letters with
                                  their counters); none: nearest region first

@@ -13,11 +13,13 @@
 //  - output without a flat depth or without clearance tools (or switched off) is unchanged, and
 //    otherwise only complete corner cuts at the flat depth are added, every other move in place.
 
+#include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <optional>
 #include <string>
 #include <utility>
@@ -541,17 +543,17 @@ TEST_CASE("T-0160: the passes reach the chordal tolerance into the end mill's sw
     const double inset = 3.0 + 1.0 + 0.05 / 3.0;
     const Vec2 centre{inset, inset};
     // The groove along the corner's bisector: the farthest of its points from the corner.
-    double far = -1.0;
+    double farSum = -1.0;
     Vec2 end{};
     for (const auto& [a, b] : addedFeeds(on.toolpath, off.toolpath)) {
         for (const Vec2 p : {a, b}) {
-            if (std::fabs(p.x - p.y) < 1e-3 && p.x < 10.0 && p.x + p.y > far) {
-                far = p.x + p.y;
+            if (std::fabs(p.x - p.y) < 1e-3 && p.x < 10.0 && p.x + p.y > farSum) {
+                farSum = p.x + p.y;
                 end = p;
             }
         }
     }
-    REQUIRE(far > 0.0);
+    REQUIRE(farSum > 0.0);
     INFO("groove ends at (" << end.x << ", " << end.y << ")");
     CHECK(geometry::distance(end, centre) <= 3.0 - 0.05 + 1e-6);
 }
@@ -677,4 +679,180 @@ TEST_CASE("T-0160: corner sharpening is on by default", "[toolpath][v_carve][cor
     const VCarvingResult r = vCarvingToolpath(j.region, j.tool, std::nullopt, j.clearance, j.params);
     CHECK(r.toolpath.moves == run(j, true).toolpath.moves);
     CHECK(r.toolpath.moves.size() > run(j, false).toolpath.moves.size());
+}
+
+// ----------------------------------------------------------------------------- T-0173: test gaps of T-0160
+
+namespace {
+
+double distanceToSegment(Vec2 p, Vec2 a, Vec2 b) {
+    const Vec2 ab = b - a;
+    const double l2 = ab.lengthSquared();
+    const double t = l2 > 0.0 ? std::clamp((p - a).dot(ab) / l2, 0.0, 1.0) : 0.0;
+    return geometry::distance(p, a + ab * t);
+}
+
+/// The passes of one stretch of `job` (the first the detection finds) and the pieces it was made from.
+struct PassSetup {
+    detail::SharpStretch stretch;
+    detail::CornerSpec spec;
+    std::vector<std::vector<Vec2>> rings;
+};
+
+PassSetup firstStretchOf(const Job& job) {
+    const CornerSetup setup = cornerSetup(job);
+    const detail::RingRegion walls(setup.rings, 1e-10);
+    const std::vector<detail::SharpStretch> cs = detail::sharpStretches(walls, setup.swept, setup.spec);
+    REQUIRE_FALSE(cs.empty());
+    return PassSetup{cs.front(), setup.spec, setup.rings};
+}
+
+double backReachOf(const Job& job) {
+    const double rho = orc::footprintAt(job.tool, limitOf(job));
+    return 2.0 * (0.5 * job.clearance.front().tool.diameter + rho + job.params.tolerance.chordal / 3.0);
+}
+
+}  // namespace
+
+TEST_CASE("T-0173: the passes of a stretch cover it, alternate direction, join, and reach back to the wall ring",
+          "[toolpath][v_carve][corner]") {
+    const Job j = squareJob();
+    const PassSetup ps = firstStretchOf(j);
+    const detail::RingRegion walls(ps.rings, 1e-10);
+    const auto cuts = detail::stretchPasses(ps.stretch, walls, ps.spec, backReachOf(j));
+    REQUIRE_FALSE(cuts.empty());
+    const Vec2 u = ps.stretch.direction;
+
+    // Passes are the segments along the stretch's direction; the others are links at depth.
+    std::vector<std::pair<Vec2, Vec2>> passes;
+    std::size_t links = 0;
+    for (const auto& cut : cuts) {
+        for (std::size_t i = 0; i + 1 < cut.size(); ++i) {
+            const Vec2 d = cut[i + 1] - cut[i];
+            if (std::fabs(d.cross(u)) <= 1e-9 * std::max(1.0, d.length())) {
+                passes.emplace_back(cut[i], cut[i + 1]);
+            } else {
+                ++links;
+            }
+        }
+    }
+    REQUIRE(passes.size() >= 3);
+    INFO("passes " << passes.size() << ", links " << links << ", cuts " << cuts.size());
+
+    // Zig-zag: consecutive passes run in opposite directions.
+    for (std::size_t i = 0; i + 1 < passes.size(); ++i) {
+        const double a = (passes[i].second - passes[i].first).dot(u);
+        const double b = (passes[i + 1].second - passes[i + 1].first).dot(u);
+        CHECK(a * b < 0.0);
+    }
+    // In a square corner every link between passes stays inside the walls, so the passes form
+    // one cut (a mutant that never joins makes one cut per pass).
+    CHECK(cuts.size() == 1);
+    CHECK(links + 1 == passes.size());
+
+    // The groove along the bisector starts on the wall ring (the back extension is clipped to it,
+    // not cut short), and the pass lines are one stepover apart.
+    double backmost = std::numeric_limits<double>::infinity();
+    Vec2 at{};
+    for (const auto& [a, b] : passes) {
+        for (const Vec2 p : {a, b}) {
+            if (std::fabs((p - ps.stretch.root).cross(u)) < 1e-9 && (p - ps.stretch.root).dot(u) < backmost) {
+                backmost = (p - ps.stretch.root).dot(u);
+                at = p;
+            }
+        }
+    }
+    REQUIRE(std::isfinite(backmost));
+    CHECK(walls.distance(at, 1.0) <= 1e-6);
+    for (std::size_t i = 0; i + 1 < passes.size(); ++i) {
+        const double gap = std::fabs((passes[i + 1].first - passes[i].first).cross(u));
+        CHECK(gap == Catch::Approx(ps.spec.stepover).margin(1e-9));
+    }
+}
+
+TEST_CASE("T-0173: every point of a stretch lies within half a stepover of a pass", "[toolpath][v_carve][corner]") {
+    // The strip a pass serves is half a stepover either side of its line (round 2 shortened it to
+    // 0.3 stepovers: the steep fillet between two passes then kept more than the ridge).
+    Job j;
+    j.what = "30-degree corner, 60-degree V-bit, stepover 0.3, chordal 0.002";
+    const double h = 20.0;
+    const double hw = h * std::tan(15.0 * geometry::kPi / 180.0);
+    j.region = {orc::polygon({{0, 0}, {h, -hw}, {h + 4, -hw}, {h + 4, hw}, {h, hw}})};
+    j.tool = orc::vBit(60.0, 12.7, "V 60");
+    j.tool.defaultCuttingData.stepover = 0.3;
+    j.clearance = {{orc::endMill(6.0, "EM 6", 4), std::nullopt}};
+    j.params.flatDepth = 1.0;
+    j.params.tolerance.chordal = 0.002;
+    const CornerSetup setup = cornerSetup(j);
+    const detail::RingRegion walls(setup.rings, 1e-10);
+    const std::vector<detail::SharpStretch> cs = detail::sharpStretches(walls, setup.swept, setup.spec);
+    REQUIRE_FALSE(cs.empty());
+    for (const detail::SharpStretch& st : cs) {
+        const auto cuts = detail::stretchPasses(st, walls, setup.spec, backReachOf(j));
+        const std::size_t n = st.outline.size();
+        std::size_t samples = 0;
+        for (std::size_t i = 0; i < n; ++i) {
+            const Vec2 a = st.outline[i];
+            const Vec2 b = st.outline[(i + 1) % n];
+            for (int k = 0; k < 16; ++k) {
+                const Vec2 p = a + (b - a) * (k / 16.0);
+                // The nearest cut at the flat depth: a pass or the wall ring itself.
+                double best = walls.distance(p, 10.0);
+                for (const auto& cut : cuts) {
+                    for (std::size_t q = 0; q + 1 < cut.size(); ++q) {
+                        best = std::min(best, distanceToSegment(p, cut[q], cut[q + 1]));
+                    }
+                }
+                ++samples;
+                CHECK(best <= 0.5 * setup.spec.stepover + 1e-6);
+            }
+        }
+        CHECK(samples >= 48);
+    }
+}
+
+TEST_CASE("T-0173: only level moves at the flat depth count as swept", "[toolpath][v_carve][corner]") {
+    const double floorZ = -1.0;
+    using geometry::Vec3;
+    const std::vector<Move> moves{
+        Move::rapid({0, 0, 5}),
+        Move::plunge({0, 0, floorZ}),         // straight down: sweeps nothing new
+        Move::feed({10, 0, floorZ}),          // level
+        Move::feed({10, 10, floorZ}),         // level, chained
+        Move::feed({20, 10, -0.5}),           // a ramp up: not level, ends the chain
+        Move::feed({30, 10, floorZ}),         // a ramp down onto the floor: not level either
+        Move::feed({30, 20, floorZ}),         // level (a one-segment chain)
+        Move::retract({30, 20, 5}),
+        Move::rapid({40, 20, 5}),
+        Move::plunge({40, 20, floorZ + 1e-3}),
+        Move::feed({50, 20, floorZ + 1e-3}),  // level but not at the flat depth
+    };
+    std::vector<detail::SweptPath> out;
+    detail::appendSweptPaths(moves, floorZ, 1.5, out);
+    REQUIRE(out.size() == 2);
+    CHECK(out[0].radius == 1.5);
+    CHECK(out[0].points == std::vector<Vec2>{{0, 0}, {10, 0}, {10, 10}});
+    CHECK(out[1].points == std::vector<Vec2>{{30, 10}, {30, 20}});
+}
+
+TEST_CASE("T-0173: short passes survive: only pieces within the distance tolerance are dropped",
+          "[toolpath][v_carve][corner]") {
+    const std::vector<std::vector<Vec2>> rings{{{0, 0}, {10, 0}, {10, 10}, {0, 10}}};
+    const detail::RingRegion walls(rings, 1e-10);
+    detail::SharpStretch st;
+    st.outline = {{5.0, 5.0}, {5.02, 5.0}, {5.02, 5.004}, {5.0, 5.004}};
+    st.root = Vec2{5.0, 5.002};
+    st.direction = Vec2{1.0, 0.0};
+    detail::CornerSpec spec;
+    spec.stepover = 1.0;
+    spec.chordal = 0.0005;
+    spec.distance = 0.001;
+    // A piece of 0.0205 mm: 20 times the distance tolerance, not 50.
+    const auto kept = detail::stretchPasses(st, walls, spec, 0.0);
+    REQUIRE(kept.size() == 1);
+    REQUIRE(kept.front().size() == 2);
+    CHECK(geometry::distance(kept.front().front(), kept.front().back()) == Catch::Approx(0.0205).margin(1e-9));
+    // Below the tolerance it is dropped.
+    spec.distance = 0.03;
+    CHECK(detail::stretchPasses(st, walls, spec, 0.0).empty());
 }

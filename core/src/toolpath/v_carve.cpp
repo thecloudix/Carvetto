@@ -767,40 +767,6 @@ void shiftZ(std::vector<Move>& moves, double dz) {
     }
 }
 
-/// Appends to `out` the polylines of `moves` that run level at `floorZ` (each feed whose start
-/// and end are at that height, consecutive ones chained): where an end mill of `radius` swept
-/// the floor flat. Ramps, plunges and rapids are left out (they sweep less, so leaving them out
-/// only makes the swept area smaller than it is).
-void appendSweptPaths(const std::vector<Move>& moves, double floorZ, double radius,
-                      std::vector<detail::SweptPath>& out) {
-    const double tolZ = 1e-9 * std::max(1.0, std::fabs(floorZ));
-    auto atFloor = [&](double z) { return std::fabs(z - floorZ) <= tolZ; };
-    detail::SweptPath cur;
-    cur.radius = radius;
-    auto flush = [&]() {
-        if (cur.points.size() >= 2) {
-            out.push_back(std::move(cur));
-        }
-        cur = detail::SweptPath{};
-        cur.radius = radius;
-    };
-    for (std::size_t i = 1; i < moves.size(); ++i) {
-        const Vec3 a = moves[i - 1].to;
-        const Vec3 b = moves[i].to;
-        const bool level = (moves[i].kind == MoveKind::Feed || moves[i].kind == MoveKind::Plunge) && atFloor(a.z) &&
-                           atFloor(b.z) && !(a.x == b.x && a.y == b.y);
-        if (!level) {
-            flush();
-            continue;
-        }
-        if (cur.points.empty()) {
-            cur.points.push_back(Vec2{a.x, a.y});
-        }
-        cur.points.push_back(Vec2{b.x, b.y});
-    }
-    flush();
-}
-
 bool refusal(ToolpathIssue i) {
     return i == ToolpathIssue::InvalidTool || i == ToolpathIssue::InvalidParameters ||
            i == ToolpathIssue::WorkLimitExceeded || i == ToolpathIssue::NoTool;
@@ -1202,7 +1168,7 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
                 if (sharpen) {
                     const double radius = 0.5 * clearanceTools[t].tool.diameter;
                     backReach = std::max(backReach, 2.0 * (radius + limitRadius + inner.chordal));
-                    appendSweptPaths(moves, -limit, radius, swept);
+                    detail::appendSweptPaths(moves, -limit, radius, swept);
                 }
                 shiftZ(moves, params.startDepth);
                 estimate += static_cast<double>(moves.size());

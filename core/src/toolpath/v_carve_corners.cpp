@@ -15,6 +15,7 @@
 #include "carvetto/geometry/polyline.hpp"
 #include "carvetto/geometry/span.hpp"
 #include "carvetto/geometry/tolerance.hpp"
+#include "carvetto/toolpath/move.hpp"
 #include "carvetto/toolpath/v_carve.hpp"
 
 namespace carvetto::toolpath::detail {
@@ -163,6 +164,71 @@ class EdgeIndex {
     BoxIndex index_;
 };
 
+/// A closed polygon with its edges indexed by box: crossing-number membership (as `insideRing`)
+/// in the time of the edges a ray from the point meets, not of all of them.
+class IndexedRing {
+   public:
+    explicit IndexedRing(const std::vector<Vec2>& ring) {
+        std::vector<Box2> boxes;
+        for (std::size_t i = 0, n = ring.size(); i < n; ++i) {
+            const Vec2 a = ring[i];
+            const Vec2 b = ring[(i + 1) % n];
+            if (a == b) {
+                continue;
+            }
+            edges_.emplace_back(a, b);
+            boxes.push_back(segmentBox(a, b));
+            bounds_.expand(a);
+        }
+        index_ = BoxIndex(std::move(boxes));
+        alongY_ = bounds_.width() > bounds_.height();
+    }
+    bool contains(Vec2 p) const {
+        // The ray runs along the shorter side of the ring's box: a long row of parts has few
+        // edges across it, and many along it.
+        if (edges_.empty()) {
+            return false;
+        }
+        bool in = false;
+        if (alongY_) {
+            if (!(bounds_.max.y > p.y)) {
+                return false;
+            }
+            for (const std::size_t i : index_.query(Box2{p, Vec2{p.x, bounds_.max.y + 1.0}})) {
+                const Vec2 a = edges_[i].first;
+                const Vec2 b = edges_[i].second;
+                if ((a.x > p.x) != (b.x > p.x)) {
+                    const double y = a.y + (p.x - a.x) * (b.y - a.y) / (b.x - a.x);
+                    if (y > p.y) {
+                        in = !in;
+                    }
+                }
+            }
+            return in;
+        }
+        if (!(bounds_.max.x > p.x)) {
+            return false;
+        }
+        for (const std::size_t i : index_.query(Box2{p, Vec2{bounds_.max.x + 1.0, p.y}})) {
+            const Vec2 a = edges_[i].first;
+            const Vec2 b = edges_[i].second;
+            if ((a.y > p.y) != (b.y > p.y)) {
+                const double x = a.x + (p.y - a.y) * (b.x - a.x) / (b.y - a.y);
+                if (x > p.x) {
+                    in = !in;
+                }
+            }
+        }
+        return in;
+    }
+
+   private:
+    std::vector<std::pair<Vec2, Vec2>> edges_;
+    BoxIndex index_;
+    Box2 bounds_;
+    bool alongY_{false};
+};
+
 }  // namespace
 
 // ----------------------------------------------------------------------------- RingRegion
@@ -182,6 +248,7 @@ RingRegion::RingRegion(std::vector<std::vector<Vec2>> rings, double eps) : rings
         }
     }
     index_ = BoxIndex(std::move(boxes));
+    alongY_ = bounds_.width() > bounds_.height();
 }
 
 bool RingRegion::inside(Vec2 p) const {
@@ -194,10 +261,28 @@ bool RingRegion::inside(Vec2 p) const {
             return true;
         }
     }
+    // The ray runs along the shorter side of the rings' box: a long row of parts has few edges
+    // across it, and many along it.
+    bool in = false;
+    if (alongY_) {
+        if (!(bounds_.max.y > p.y)) {
+            return false;
+        }
+        for (const std::size_t i : index_.query(Box2{p, Vec2{p.x, bounds_.max.y + 1.0}})) {
+            const Vec2 a = edges_[i].a;
+            const Vec2 b = edges_[i].b;
+            if ((a.x > p.x) != (b.x > p.x)) {
+                const double y = a.y + (p.x - a.x) * (b.y - a.y) / (b.x - a.x);
+                if (y > p.y) {
+                    in = !in;
+                }
+            }
+        }
+        return in;
+    }
     if (!(bounds_.max.x > p.x)) {
         return false;
     }
-    bool in = false;
     for (const std::size_t i : index_.query(Box2{p, Vec2{bounds_.max.x + 1.0, p.y}})) {
         const Vec2 a = edges_[i].a;
         const Vec2 b = edges_[i].b;
@@ -274,6 +359,39 @@ bool RingRegion::segmentInside(Vec2 a, Vec2 b) const {
 
 // ----------------------------------------------------------------------------- stretches
 
+/// Appends to `out` the polylines of `moves` that run level at `floorZ` (each feed whose start
+/// and end are at that height, consecutive ones chained): where an end mill of `radius` swept
+/// the floor flat. Ramps, plunges and rapids are left out (they sweep less, so leaving them out
+/// only makes the swept area smaller than it is).
+void appendSweptPaths(const std::vector<Move>& moves, double floorZ, double radius, std::vector<SweptPath>& out) {
+    const double tolZ = 1e-9 * std::max(1.0, std::fabs(floorZ));
+    auto atFloor = [&](double z) { return std::fabs(z - floorZ) <= tolZ; };
+    SweptPath cur;
+    cur.radius = radius;
+    auto flush = [&]() {
+        if (cur.points.size() >= 2) {
+            out.push_back(std::move(cur));
+        }
+        cur = SweptPath{};
+        cur.radius = radius;
+    };
+    for (std::size_t i = 1; i < moves.size(); ++i) {
+        const geometry::Vec3 a = moves[i - 1].to;
+        const geometry::Vec3 b = moves[i].to;
+        const bool level = (moves[i].kind == MoveKind::Feed || moves[i].kind == MoveKind::Plunge) && atFloor(a.z) &&
+                           atFloor(b.z) && !(a.x == b.x && a.y == b.y);
+        if (!level) {
+            flush();
+            continue;
+        }
+        if (cur.points.empty()) {
+            cur.points.push_back(Vec2{a.x, a.y});
+        }
+        cur.points.push_back(Vec2{b.x, b.y});
+    }
+    flush();
+}
+
 std::vector<SharpStretch> sharpStretches(const RingRegion& walls, const std::vector<SweptPath>& swept,
                                          const CornerSpec& spec) {
     std::vector<SharpStretch> out;
@@ -306,30 +424,97 @@ std::vector<SharpStretch> sharpStretches(const RingRegion& walls, const std::vec
         return out;
     }
     // Less what the end mills swept at the flat depth (a subset: the round joins' and caps'
-    // vertices lie on the circles of each end mill's radius, a grid margin short).
-    std::map<double, std::vector<Contour>> paths;  // by end-mill radius
-    for (const SweptPath& p : swept) {
-        if (p.points.size() >= 2 && p.radius > margin) {
-            paths[p.radius].push_back(Contour::fromPolyline(geometry::Polyline{p.points, false}));
-        }
-    }
+    // vertices lie on the circles of each end mill's radius, a grid margin short). Done per
+    // locality: one Clipper2 call over a long row of parts costs more than the sum of its parts
+    // (its sweep keeps every edge crossing a scanline active), so the patches and polylines are
+    // grouped by the overlap of their boxes (a polyline's inflated by its radius) and each group
+    // is offset and differenced alone. Groups share nothing, so the result is that of one call.
     // Finer round joins here: their chords decide how closely the patches, and so the threshold,
     // follow the end mills' fillets.
     geometry::Tolerance fine = tol;
     fine.chordal = std::max(spec.chordal / kFineDivisor, kFinestChordal);
     fine.distance = std::min(spec.distance, fine.chordal);
     std::vector<std::vector<Vec2>> sweptPolygons;
-    for (const auto& [radius, open] : paths) {
-        const std::vector<Contour> area =
-            geometry::offsetContours(open, radius - margin, geometry::JoinType::Round, fine);
-        for (const Contour& c : area) {
-            sweptPolygons.push_back(verticesOf(c));
+    {
+        struct PathItem {
+            double radius;
+            Contour open;
+        };
+        std::vector<PathItem> items;
+        std::vector<Box2> boxes;
+        for (const Contour& c : patches) {
+            Box2 box;
+            for (const Vec2 v : verticesOf(c)) {
+                box.expand(v);
+            }
+            boxes.push_back(box.inflated(kOnPatch));
         }
-        if (!area.empty()) {
-            patches = geometry::booleanOp(geometry::BooleanOp::Difference, patches, area, tol,
-                                          geometry::FillRule::NonZero)
-                          .closed;
+        const std::size_t patchCount = patches.size();
+        for (const SweptPath& p : swept) {
+            if (p.points.size() >= 2 && p.radius > margin) {
+                Box2 box;
+                for (const Vec2 v : p.points) {
+                    box.expand(v);
+                }
+                boxes.push_back(box.inflated(p.radius + kOnPatch));
+                items.push_back(PathItem{p.radius, Contour::fromPolyline(geometry::Polyline{p.points, false})});
+            }
         }
+        const BoxIndex index(boxes);
+        std::vector<std::size_t> root(boxes.size());
+        for (std::size_t i = 0; i < root.size(); ++i) {
+            root[i] = i;
+        }
+        auto find = [&](std::size_t i) {
+            while (root[i] != i) {
+                root[i] = root[root[i]];
+                i = root[i];
+            }
+            return i;
+        };
+        for (std::size_t i = 0; i < boxes.size(); ++i) {
+            for (const std::size_t j : index.query(boxes[i])) {
+                const std::size_t ri = find(i);
+                const std::size_t rj = find(j);
+                if (ri != rj) {
+                    root[std::max(ri, rj)] = std::min(ri, rj);  // the group's root: its first member
+                }
+            }
+        }
+        // Groups in the order of their first patch; groups without a polyline keep their patches.
+        std::map<std::size_t, std::pair<std::vector<std::size_t>, std::vector<std::size_t>>> groups;
+        for (std::size_t i = 0; i < boxes.size(); ++i) {
+            auto& g = groups[find(i)];
+            (i < patchCount ? g.first : g.second).push_back(i);
+        }
+        std::vector<Contour> kept;
+        for (auto& entry : groups) {
+            auto& members = entry.second;
+            std::vector<Contour> part;
+            for (const std::size_t i : members.first) {
+                part.push_back(std::move(patches[i]));
+            }
+            std::map<double, std::vector<Contour>> paths;  // by end-mill radius
+            for (const std::size_t i : members.second) {
+                paths[items[i - patchCount].radius].push_back(std::move(items[i - patchCount].open));
+            }
+            for (const auto& [radius, open] : paths) {
+                const std::vector<Contour> area =
+                    geometry::offsetContours(open, radius - margin, geometry::JoinType::Round, fine);
+                for (const Contour& c : area) {
+                    sweptPolygons.push_back(verticesOf(c));
+                }
+                if (!area.empty() && !part.empty()) {
+                    part = geometry::booleanOp(geometry::BooleanOp::Difference, part, area, tol,
+                                               geometry::FillRule::NonZero)
+                               .closed;
+                }
+            }
+            for (Contour& c : part) {
+                kept.push_back(std::move(c));
+            }
+        }
+        patches = std::move(kept);
         if (patches.empty()) {
             return out;
         }
@@ -343,17 +528,19 @@ std::vector<SharpStretch> sharpStretches(const RingRegion& walls, const std::vec
     const std::vector<std::vector<Vec2>>& wallRings = walls.rings();
     std::vector<std::size_t> outers;
     std::vector<double> outerArea;
+    std::vector<IndexedRing> outerIndex;
     for (std::size_t i = 0; i < wallRings.size(); ++i) {
         const double a = doubleArea(wallRings[i]);
         if (wallRings[i].size() >= 3 && a > 0.0) {
             outers.push_back(i);
             outerArea.push_back(a);
+            outerIndex.emplace_back(wallRings[i]);
         }
     }
     auto flatAreaOf = [&](Vec2 p) -> std::optional<std::size_t> {
         std::optional<std::size_t> best;
         for (std::size_t k = 0; k < outers.size(); ++k) {
-            if ((!best || outerArea[k] < outerArea[*best]) && insideRing(wallRings[outers[k]], p)) {
+            if ((!best || outerArea[k] < outerArea[*best]) && outerIndex[k].contains(p)) {
                 best = k;
             }
         }
