@@ -26,6 +26,7 @@ namespace carvetto::app {
 
 class CanvasWidget;
 class RulerWidget;
+class CopiesMenu;
 class ToolPanel;
 class TransformMenu;
 class VectorOpsMenu;
@@ -51,6 +52,8 @@ class MainWindow : public QMainWindow {
     /// Undoes / redoes one step and refreshes. Return false when there was nothing to do.
     bool undo();
     bool redo();
+    /// The Edit > Copies submenu (array, circular and along-vector copies).
+    CopiesMenu* copies() const { return copies_.get(); }
 
     CanvasWidget* canvas() const { return canvas_; }
     VectorOpsMenu* vectorOps() const { return vectorOps_.get(); }
@@ -112,6 +115,7 @@ class MainWindow : public QMainWindow {
 
     viewmodel::FileSession session_;
     QMenu* recentMenu_{nullptr};
+    std::unique_ptr<CopiesMenu> copies_;
     std::unique_ptr<VectorOpsMenu> vectorOps_;
     std::unique_ptr<TransformMenu> transformMenu_;
 

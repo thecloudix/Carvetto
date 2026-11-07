@@ -10,6 +10,7 @@ add_library(carvetto_viewmodel STATIC
   src/transform_ops.cpp
   src/units_format.cpp
   src/canvas_scene.cpp
+  src/array_copies.cpp
   src/pixel_probe.cpp
   src/new_job_form.cpp
   src/dxf_exchange.cpp

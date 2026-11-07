@@ -21,6 +21,7 @@ add_executable(carvetto_viewmodel_tests
   transform_ops_test.cpp
   units_format_test.cpp
   canvas_scene_test.cpp
+  array_copies_test.cpp
   pixel_probe_test.cpp
   new_job_form_test.cpp
   file_session_test.cpp
