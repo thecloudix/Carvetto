@@ -1,6 +1,7 @@
 # carvetto_viewmodel: Qt-free view logic for the desktop app (ADR-0014). It must never link Qt;
 # tests/qt_free_check.cmake enforces that (and that core/ includes no Qt header).
 add_library(carvetto_viewmodel STATIC
+  src/vector_ops.cpp
   src/view_transform.cpp
   src/ruler.cpp
   src/units_format.cpp

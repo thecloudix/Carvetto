@@ -18,6 +18,7 @@ namespace carvetto::app {
 
 class CanvasWidget;
 class RulerWidget;
+class VectorOpsMenu;
 
 /// Main window: 2D/3D view tabs with rulers around the 2D canvas, sheet and layer selectors,
 /// docked panels (Design, Sheets, Layers, Components, Library on the left; Toolpaths on the
@@ -39,6 +40,7 @@ class MainWindow : public QMainWindow {
     bool redo();
 
     CanvasWidget* canvas() const { return canvas_; }
+    VectorOpsMenu* vectorOps() const { return vectorOps_.get(); }
     QDockWidget* toolpathsDock() const { return toolpathsDock_; }
     QDockWidget* layersDock() const { return layersDock_; }
 
@@ -64,6 +66,7 @@ class MainWindow : public QMainWindow {
     void refreshStatus();
 
     std::unique_ptr<document::Document> doc_;
+    std::unique_ptr<VectorOpsMenu> vectorOps_;
 
     QTabWidget* views_{nullptr};
     CanvasWidget* canvas_{nullptr};
