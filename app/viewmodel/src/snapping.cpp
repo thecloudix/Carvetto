@@ -1,10 +1,10 @@
 #include "carvetto/viewmodel/snapping.hpp"
 
 #include <algorithm>
-#include <unordered_set>
 #include <cmath>
 #include <cstdint>
 #include <type_traits>
+#include <unordered_set>
 #include <variant>
 
 #include "carvetto/geometry/contour_ops.hpp"

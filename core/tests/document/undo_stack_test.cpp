@@ -277,3 +277,104 @@ TEST_CASE("undo stack generation changes on coalesced pushes and pushes inside a
     d.undoStack().clear();
     CHECK(d.undoStack().generation() != before);
 }
+
+TEST_CASE("undoAndDiscard reverts and forgets the latest step", "[document][undo]") {
+    Document doc;
+    std::string log;
+    UndoStack& stack = doc.undoStack();
+    REQUIRE(doc.execute(std::make_unique<AppendCommand>(log, 'a')));
+    stack.setClean();
+    REQUIRE(doc.execute(std::make_unique<AppendCommand>(log, 'b', true)));
+    REQUIRE(doc.execute(std::make_unique<AppendCommand>(log, 'c')));
+    CHECK_FALSE(stack.isClean());
+
+    const std::uint64_t before = stack.generation();
+    REQUIRE(stack.undoAndDiscard(doc));
+    CHECK(log == "ab");
+    CHECK(stack.generation() != before);
+    CHECK(stack.count() == 2);
+    CHECK(stack.index() == 2);
+    CHECK_FALSE(stack.canRedo());
+    CHECK(stack.canUndo());
+    CHECK(stack.undoText() == "append b");
+
+    // Discarding back to the saved state is clean again; the saved step itself is not.
+    REQUIRE(stack.undoAndDiscard(doc));
+    CHECK(log == "a");
+    CHECK(stack.isClean());
+    CHECK(stack.count() == 1);
+    const std::uint64_t g2 = stack.generation();
+    REQUIRE(stack.undoAndDiscard(doc));
+    CHECK(log.empty());
+    CHECK_FALSE(stack.isClean());
+    CHECK(stack.generation() != g2);
+    CHECK_FALSE(stack.canUndo());
+    CHECK_FALSE(stack.undoAndDiscard(doc));  // nothing left
+    // A new step must not look like the saved state just because the index came back to it.
+    REQUIRE(doc.execute(std::make_unique<AppendCommand>(log, 'z')));
+    CHECK_FALSE(stack.isClean());
+    REQUIRE(stack.undoAndDiscard(doc));
+
+    // Earlier steps still undo and redo normally afterwards.
+    REQUIRE(doc.execute(std::make_unique<AppendCommand>(log, 'x')));
+    REQUIRE(doc.execute(std::make_unique<AppendCommand>(log, 'y')));
+    REQUIRE(stack.undo(doc));
+    REQUIRE(stack.redo(doc));
+    CHECK(log == "xy");
+    CHECK(stack.undoText() == "append y");
+}
+
+TEST_CASE("undoAndDiscard: generations stay unique and the next push does not coalesce", "[document][undo]") {
+    Document a;
+    Document b;
+    std::string logA;
+    std::string logB;
+    REQUIRE(a.execute(std::make_unique<AppendCommand>(logA, 'p', true)));
+    REQUIRE(b.execute(std::make_unique<AppendCommand>(logB, 'p', true)));
+    REQUIRE(a.execute(std::make_unique<AppendCommand>(logA, 'q', true)));  // coalesced into 'p'
+    CHECK(a.undoStack().count() == 1);
+    REQUIRE(a.undoStack().undoAndDiscard(a));
+    CHECK(logA.empty());
+    const std::uint64_t afterDiscard = a.undoStack().generation();
+    CHECK(afterDiscard != b.undoStack().generation());
+    // A mergeable push right after a discard starts a new step (it must not merge into the
+    // discarded one, nor into anything older).
+    REQUIRE(a.execute(std::make_unique<AppendCommand>(logA, 'r', true)));
+    REQUIRE(a.execute(std::make_unique<AppendCommand>(logA, 's', true)));
+    CHECK(a.undoStack().count() == 1);
+    CHECK(a.undoStack().generation() != afterDiscard);
+    REQUIRE(a.undoStack().undoAndDiscard(a));
+    REQUIRE(a.execute(std::make_unique<AppendCommand>(logA, 't', true)));
+    REQUIRE(a.execute(std::make_unique<AppendCommand>(logA, 'u')));
+    REQUIRE(a.undoStack().undoAndDiscard(a));
+    REQUIRE(a.execute(std::make_unique<AppendCommand>(logA, 'v', true)));
+    CHECK(a.undoStack().count() == 2);  // 't' stays its own step: 'v' did not merge into it
+}
+
+TEST_CASE("undoAndDiscard refuses with a redo tail or inside a macro", "[document][undo]") {
+    Document doc;
+    std::string log;
+    UndoStack& stack = doc.undoStack();
+    REQUIRE(doc.execute(std::make_unique<AppendCommand>(log, 'a')));
+    REQUIRE(doc.execute(std::make_unique<AppendCommand>(log, 'b')));
+    REQUIRE(stack.undo(doc));
+    const std::uint64_t g = stack.generation();
+    CHECK_FALSE(stack.undoAndDiscard(doc));
+    CHECK(log == "a");
+    CHECK(stack.count() == 2);
+    CHECK(stack.index() == 1);
+    CHECK(stack.canRedo());
+    CHECK(stack.generation() == g);
+
+    REQUIRE(stack.redo(doc));
+    stack.beginMacro("m");
+    REQUIRE(doc.execute(std::make_unique<AppendCommand>(log, 'c')));
+    const std::uint64_t inMacro = stack.generation();
+    CHECK_FALSE(stack.undoAndDiscard(doc));
+    CHECK(log == "abc");
+    CHECK(stack.generation() == inMacro);
+    stack.endMacro();
+    CHECK(stack.count() == 3);
+    CHECK(stack.undoAndDiscard(doc));
+    CHECK(log == "ab");
+}

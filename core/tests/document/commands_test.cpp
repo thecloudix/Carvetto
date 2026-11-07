@@ -706,3 +706,45 @@ TEST_CASE("transform: a quarter turn drops parameters whose rebuild would start 
     REQUIRE(doc.undo());
     CHECK(*doc.findObject(id) == before);  // undo restores the parameters too
 }
+
+TEST_CASE("transform: parameters must reproduce the contours within the guard tolerance", "[document][commands]") {
+    const auto drifted = [](double drift) {
+        Document doc;
+        RectangleParams r;
+        r.widthMm = 40;
+        r.heightMm = 14;
+        auto built = buildContours(r);
+        REQUIRE(built.ok());
+        std::vector<Contour> contours = built.value();
+        // Nudge one corner of the stored contour away from what the parameters build.
+        auto* first = std::get_if<carvetto::geometry::LineSpan>(&contours.front().spans.front());
+        REQUIRE(first != nullptr);
+        first->end.x += drift;
+        auto* second = std::get_if<carvetto::geometry::LineSpan>(&contours.front().spans[1]);
+        REQUIRE(second != nullptr);
+        second->start.x += drift;
+        const ObjectId id = doc.insertObject(Object::vector(contours, doc.activeLayer(), doc.activeSheet(), r));
+        return keepsParams(transformed(doc, id, Transform2::translation({3, 4})));
+    };
+    CHECK(drifted(1e-11));          // below the guard: still reproduced
+    CHECK_FALSE(drifted(1e-7));     // above it: the parameters no longer describe the shape
+    CHECK_FALSE(drifted(1e-5));
+    CHECK_FALSE(drifted(1e-4));
+}
+
+TEST_CASE("transform: same point set but another start drops the parameters", "[document][commands]") {
+    // A rectangle turned a half circle covers the same points, but its rebuild starts at the
+    // opposite corner: only a start-aware comparison notices.
+    Document doc;
+    RectangleParams r;
+    r.widthMm = 40;
+    r.heightMm = 14;
+    const ObjectId id = addParametric(doc, r);
+    const Object o = transformed(doc, id, Transform2::rotation(2 * kQuarter, {0, 0}));
+    CHECK_FALSE(keepsParams(o));
+    auto rebuilt = buildContours(r);
+    REQUIRE(rebuilt.ok());
+    CHECK_THAT(carvetto::geometry::startPoint(o.asVector()->contours.front().spans.front()).x +
+                   carvetto::geometry::startPoint(rebuilt.value().front().spans.front()).x,
+               WithinAbs(0.0, 1e-9));
+}

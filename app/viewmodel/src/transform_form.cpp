@@ -150,7 +150,7 @@ FieldResult TransformForm::setField(const std::string& id, const std::string& te
             return fail(plain ? p.error : "not a number");
         }
         if (!(p.value >= kMinScaleFactor) || p.value > kMaxScaleFactor) {
-            return fail("the scale factor must be a positive number");
+            return fail("the scale factor must be between 0.000001 and 1000000");
         }
         e.value = p.value;
         e.factor = true;

@@ -407,3 +407,30 @@ TEST_CASE("drags survive undo, redo, deletion and a document swap (sanitizer tar
     s.release({180, 155});
     CHECK(replacement.undoStack().count() == 0);
 }
+
+TEST_CASE("a frozen drag snap index is not used after an outside edit (also run under ASan)",
+          "[transform][tool][snapping]") {
+    World w;
+    Contour target;
+    target.append(geometry::LineSpan{{400, 300}, {450, 300}});
+    const ObjectId other = w.doc.insertObject(Object::vector(target, w.doc.activeLayer(), w.doc.activeSheet()));
+    w.press({150, 125});
+    w.move({160, 135});
+    w.move({401, 301});
+    REQUIRE(w.tool.transforming());
+    REQUIRE(w.tool.snap().has_value());  // snapped to the other object's endpoint
+    CHECK(nearPt(w.tool.pointMm(), {400, 300}));
+
+    // The other object is deleted behind the gesture's back: its geometry must not snap any more
+    // and the stale index must not be dereferenced.
+    REQUIRE(w.doc.execute(std::make_unique<document::RemoveObjectsCommand>(std::vector<ObjectId>{other})));
+    w.move({401, 301});
+    if (w.tool.snap().has_value()) {
+        CHECK_FALSE(nearPt(w.tool.snap()->pointMm, {400, 300}));
+        for (ObjectId id : w.tool.snap()->objects) {
+            CHECK(id != other);
+        }
+    }
+    CHECK_FALSE(nearPt(w.tool.pointMm(), {400, 300}));
+    w.release({401, 301});
+}

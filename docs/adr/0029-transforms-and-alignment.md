@@ -67,3 +67,11 @@ Moves keep shapes re-editable. Transforming an object with a rotated rectangle i
 ## Deferred (director decision 2026-11-07)
 Ctrl+drag paste-copy and Ctrl+Alt+drag axis-aligned copy (inventory, common handles) are outside
 this card.
+
+## Known limits (verifier notes, round 2)
+- Ctrl+H and F9 also fire while a numeric field has focus (they are not text keys); the plain letters
+  are typed as text there.
+- Window-driven undo/redo refreshes the action enabling; a direct `doc.undo()` that bypasses the
+  window leaves it stale until the next change notification.
+- The node-editing keys H and V (T-0206) collide with Mirror H/V. T-0206 handles this with a
+  ShortcutOverride / enable switch while node editing is active; confirm once both are merged.

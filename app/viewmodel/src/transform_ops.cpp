@@ -274,7 +274,7 @@ TransformResult moveSelection(Document& doc, const MoveOptions& options) {
 
 TransformResult scaleSelection(Document& doc, const ScaleOptions& options) {
     if (!validFactor(options.scaleX) || !validFactor(options.scaleY)) {
-        return refuse("the scale factor must be a positive number");
+        return refuse("the scale factor must be between 0.000001 and 1000000");
     }
     const std::vector<Operand> operands = collectOperands(doc);
     if (operands.empty()) {
