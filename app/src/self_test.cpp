@@ -36,6 +36,7 @@
 #include "carvetto/viewmodel/view_transform.hpp"
 #include "main_window.hpp"
 #include "tool_panel.hpp"
+#include "vector_ops_menu.hpp"
 
 namespace carvetto::app {
 
@@ -179,6 +180,47 @@ int runSelfTest() {
         if (!doc.selection().empty()) {
             return fail("ctrl-click did not toggle the circle off");
         }
+    }
+
+    // 3c. Vectors menu: weld the circle with an overlapping rectangle through the real window
+    // (enabling rules, one undo step, selection = the result), then an offset, then undo both.
+    {
+        VectorOpsMenu* vectors = window.vectorOps();
+        if (vectors == nullptr) {
+            return fail("the main window has no Vectors menu");
+        }
+        const std::size_t objectsBefore = doc.objectCount();
+        const document::ObjectId circleId = doc.selection().empty() ? doc.objectIds().front() : doc.selection().ids().front();
+        if (!doc.execute(std::make_unique<document::AddObjectCommand>(document::Object::vector(
+                geometry::Contour::rectangle(geometry::Box2{{centre.x, centre.y - radius}, {centre.x + 2.0 * radius, centre.y + radius}}),
+                doc.activeLayer(), doc.activeSheet())))) {
+            return fail("adding the overlapping rectangle failed");
+        }
+        doc.selection().assign(doc.objectIds());
+        vectors->refresh();
+        if (!vectors->booleanAction(viewmodel::BooleanKind::Weld)->isEnabled() || !vectors->offsetAction()->isEnabled()) {
+            return fail("Weld and Offset are not enabled for two closed vectors");
+        }
+        const std::size_t steps = doc.undoStack().count();
+        const viewmodel::VectorOpResult welded = vectors->runBoolean(viewmodel::BooleanKind::Weld, false);
+        if (!welded.ok || welded.created.size() != 1 || doc.objectCount() != 1 ||
+            doc.selection().ids() != welded.created || doc.undoStack().count() != steps + 1) {
+            return fail("welding the circle and the rectangle gave the wrong result: " + welded.message);
+        }
+        viewmodel::OffsetOptions offsetOptions;
+        offsetOptions.distanceMm = 2.0;
+        const viewmodel::VectorOpResult grown = vectors->runOffset(offsetOptions, false);
+        if (!grown.ok || grown.created.size() != 1 || doc.objectCount() != 2) {
+            return fail("offsetting the welded vector failed: " + grown.message);
+        }
+        if (!window.undo() || !window.undo() || doc.objectCount() != objectsBefore + 1) {
+            return fail("undoing the offset and the weld did not restore the objects");
+        }
+        if (!doc.hasObject(circleId) || !doc.undo() || doc.objectCount() != objectsBefore) {
+            return fail("undoing the rectangle failed");
+        }
+        doc.selection().clear();
+        window.documentChanged();
     }
 
     // 4. Undo the add, re-render, and check the circle is gone.

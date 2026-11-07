@@ -413,6 +413,10 @@ void appendLeg(const ArcLengthPath& path, double u0, double u1, const ZProfile& 
     // Breaks closer than kTinyLength are merged into the last of them, so the height after a merged
     // break is the one after all its knots (a tab starting just past a corner insert is entered
     // vertically there, not along a slope).
+    // The stretch ending at a merged break is still at the height before its first member (T-0156:
+    // a raised stretch ending at a V-bit corner insert stayed flat to the corner, but the height
+    // before the merged break, which lies past the knot, sent the tool down along all of it).
+    std::vector<double> firsts;
     {
         std::vector<double> merged;
         for (double b : breaks) {
@@ -420,12 +424,14 @@ void appendLeg(const ArcLengthPath& path, double u0, double u1, const ZProfile& 
                 merged.back() = merged.size() == 1 ? merged.back() : b;  // the leg start stays at 0
             } else {
                 merged.push_back(b);
+                firsts.push_back(b);
             }
         }
         breaks = std::move(merged);
     }
     if (breaks.back() < len) {
         breaks.back() = len;
+        firsts.back() = len;
     }
 
     // Each insert runs at its nearest break (breaks closer than kTinyLength were merged).
@@ -466,7 +472,7 @@ void appendLeg(const ArcLengthPath& path, double u0, double u1, const ZProfile& 
         const double a = breaks[i];
         const double b = breaks[i + 1];
         const double za = z.after(a);
-        const double zb = z.before(b);
+        const double zb = z.before(firsts[i + 1]);
         const std::vector<Span> spans = path.extract(u0 + dir * a, u0 + dir * b);
         double total = 0.0;
         for (const Span& s : spans) {

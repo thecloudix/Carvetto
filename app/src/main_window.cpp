@@ -39,6 +39,7 @@
 #include "new_job_dialog.hpp"
 #include "ruler_widget.hpp"
 #include "tool_panel.hpp"
+#include "vector_ops_menu.hpp"
 
 namespace carvetto::app {
 
@@ -196,6 +197,8 @@ void MainWindow::buildMenus() {
     redoAction_ = edit->addAction(QStringLiteral("&Redo"));
     redoAction_->setShortcut(QKeySequence::Redo);
     connect(redoAction_, &QAction::triggered, this, [this]() { redo(); });
+    edit->addSeparator();
+    vectorOps_ = std::make_unique<VectorOpsMenu>(*this, edit);
 
     QMenu* view = menuBar()->addMenu(QStringLiteral("&View"));
     QAction* fit = view->addAction(QStringLiteral("Zoom to &Material"));
