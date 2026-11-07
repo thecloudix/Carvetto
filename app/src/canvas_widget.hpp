@@ -36,12 +36,17 @@ class CanvasWidget : public QWidget {
    public:
     explicit CanvasWidget(QWidget* parent = nullptr);
 
-    /// Document to draw (not owned; may be null). Re-fits the view to the material.
-    void setDocument(const document::Document* doc);
+    /// Document to draw and whose selection a click edits (not owned; may be null). Re-fits the
+    /// view to the material.
+    void setDocument(document::Document* doc);
     const viewmodel::ViewTransform& view() const { return view_; }
     /// Fits the active sheet's material into the widget with a 5% margin, and keeps it fitted on
     /// resize until the user zooms or pans.
     void zoomToMaterial();
+    /// Click-to-select at a widget position (left click): replaces the selection with the object
+    /// under the cursor, or clears it on empty canvas; `additive` (Shift) adds, `toggle` (Ctrl)
+    /// flips. All picking is `viewmodel::clickSelect`. Returns true when an object was hit.
+    bool selectAt(QPointF widgetPos, bool additive = false, bool toggle = false);
     /// Repaints after a document change.
     void refresh();
 
@@ -51,6 +56,8 @@ class CanvasWidget : public QWidget {
 
     /// Called whenever the view transform changes (zoom, pan, resize).
     std::function<void()> onViewChanged;
+    /// Called after a click changed (or tried to change) the selection.
+    std::function<void()> onSelectionChanged;
     /// Called with the document position under the mouse.
     std::function<void(geometry::Vec2)> onCursorMoved;
 
@@ -66,7 +73,7 @@ class CanvasWidget : public QWidget {
     void paintScene(QPainter& painter, const viewmodel::ViewTransform& view, QSize size) const;
     void notifyViewChanged();
 
-    const document::Document* doc_{nullptr};
+    document::Document* doc_{nullptr};
     viewmodel::ViewTransform view_;
     bool fitPending_{true};
     bool panning_{false};
