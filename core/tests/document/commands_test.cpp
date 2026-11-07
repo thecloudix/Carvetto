@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <memory>
 #include <set>
+#include <variant>
 #include <vector>
 
 #include "carvetto/document/document.hpp"
@@ -527,4 +528,46 @@ TEST_CASE("macro on the document groups several commands", "[document][commands]
     CHECK(doc.findLayer(layer) == nullptr);
     REQUIRE(doc.redo());
     CHECK(doc.findObject(id)->layer == layer);
+}
+
+TEST_CASE("transform keeps creation parameters for translation and quarter turns only", "[document][commands]") {
+    Document doc;
+    RectangleParams rp;
+    rp.centreMm = {10, 20};
+    rp.widthMm = 8;
+    rp.heightMm = 4;
+    Contour c = Contour::rectangle(Box2{{6, 18}, {14, 22}});
+    const ObjectId id = doc.insertObject(Object::vector(c, doc.activeLayer(), doc.activeSheet(), rp));
+    const Object original = *doc.findObject(id);
+    doc.undoStack().breakCoalescing();
+
+    REQUIRE(doc.execute(std::make_unique<TransformObjectsCommand>(std::vector<ObjectId>{id},
+                                                                  Transform2::translation({5, -3}))));
+    const auto* moved = std::get_if<RectangleParams>(&doc.findObject(id)->asVector()->params);
+    REQUIRE(moved != nullptr);
+    CHECK_THAT(moved->centreMm.x, WithinAbs(15.0, 1e-12));
+    CHECK_THAT(moved->centreMm.y, WithinAbs(17.0, 1e-12));
+    CHECK_THAT(moved->widthMm, WithinAbs(8.0, 1e-12));
+
+    doc.undoStack().breakCoalescing();
+    REQUIRE(doc.execute(std::make_unique<TransformObjectsCommand>(
+        std::vector<ObjectId>{id}, Transform2::rotation(1.5707963267948966, {0, 0}))));
+    const auto* turned = std::get_if<RectangleParams>(&doc.findObject(id)->asVector()->params);
+    REQUIRE(turned != nullptr);
+    CHECK_THAT(turned->widthMm, WithinAbs(4.0, 1e-12));
+    CHECK_THAT(turned->heightMm, WithinAbs(8.0, 1e-12));
+
+    doc.undoStack().breakCoalescing();
+    REQUIRE(doc.execute(std::make_unique<TransformObjectsCommand>(std::vector<ObjectId>{id},
+                                                                  Transform2::scaling(2.0))));
+    CHECK(std::holds_alternative<NoParams>(doc.findObject(id)->asVector()->params));
+    doc.undoStack().breakCoalescing();
+    REQUIRE(doc.execute(std::make_unique<TransformObjectsCommand>(std::vector<ObjectId>{id}, Transform2::mirrorX(0.0))));
+    CHECK(std::holds_alternative<NoParams>(doc.findObject(id)->asVector()->params));
+
+    // Three undo steps back (the merged ones are separate here) restores the original exactly.
+    while (doc.undoStack().canUndo()) {
+        REQUIRE(doc.undo());
+    }
+    CHECK(*doc.findObject(id) == original);
 }

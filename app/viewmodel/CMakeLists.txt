@@ -5,6 +5,9 @@ add_library(carvetto_viewmodel STATIC
   src/view_transform.cpp
   src/ruler.cpp
   src/tools.cpp
+  src/transform_form.cpp
+  src/transform_gesture.cpp
+  src/transform_ops.cpp
   src/units_format.cpp
   src/canvas_scene.cpp
   src/pixel_probe.cpp

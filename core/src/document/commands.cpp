@@ -91,11 +91,68 @@ bool canTakeId(const Document& doc, std::uint64_t presetId) {
     return presetId < IdGenerator::kMaxId && presetId >= doc.idGenerator().peek() && !idInUse(doc, presetId);
 }
 
+namespace {
+
+bool nearUnit(double a, double b) { return a - b < 1e-9 && b - a < 1e-9; }
+
+// Quarter turns (0..3) when the linear part of `m` is a rotation by a multiple of 90 degrees
+// (a pure translation is 0); -1 for anything else, including every mirroring and scaling map.
+int quarterTurns(const geometry::Transform2& m) {
+    if (!nearUnit(m.a, m.d) || !nearUnit(m.b, -m.c) || !nearUnit(m.a * m.a + m.b * m.b, 1.0)) {
+        return -1;
+    }
+    if (nearUnit(m.a, 1.0)) {
+        return 0;
+    }
+    if (nearUnit(m.a, 0.0)) {
+        return m.c > 0.0 ? 1 : 3;
+    }
+    return nearUnit(m.a, -1.0) ? 2 : -1;
+}
+
+// Creation parameters after `m`: translation and 90-degree multiples keep them (moved with the
+// object, so `buildContours` rebuilds the same contours); every other transform makes plain vectors.
+CreationParams transformedParams(const CreationParams& params, const geometry::Transform2& m) {
+    if (std::holds_alternative<NoParams>(params)) {
+        return params;
+    }
+    const int turns = quarterTurns(m);
+    if (turns < 0) {
+        return NoParams{};
+    }
+    constexpr double kHalfPi = 1.57079632679489661923;
+    return std::visit(
+        [&](const auto& p) -> CreationParams {
+            using T = std::decay_t<decltype(p)>;
+            if constexpr (std::is_same_v<T, NoParams>) {
+                return p;
+            } else {
+                T q = p;
+                q.centreMm = m.apply(p.centreMm);
+                if constexpr (std::is_same_v<T, RectangleParams>) {
+                    if (turns % 2 == 1) {
+                        std::swap(q.widthMm, q.heightMm);
+                    }
+                } else if constexpr (std::is_same_v<T, EllipseParams> || std::is_same_v<T, PolygonParams> ||
+                                     std::is_same_v<T, StarParams>) {
+                    q.angle = p.angle + turns * kHalfPi;
+                }
+                return q;
+            }
+        },
+        params);
+}
+
+}  // namespace
+
 void transformData(ObjectData& data, const geometry::Transform2& m) {
     std::visit(
         [&m](auto& payload) {
             using T = std::decay_t<decltype(payload)>;
-            if constexpr (!std::is_same_v<T, GroupObject>) {
+            if constexpr (std::is_same_v<T, VectorObject>) {
+                payload.params = transformedParams(payload.params, m);
+                payload.transform(m);
+            } else if constexpr (!std::is_same_v<T, GroupObject>) {
                 payload.transform(m);
             }
         },

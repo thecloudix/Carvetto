@@ -215,6 +215,8 @@ void CanvasWidget::paintOverlay(QPainter& painter) const {
         painter.drawRect(toQt(*preview.marqueePx));
     }
 
+    paintSelectionBox(painter);
+
     // Snap glyph at the snapped point; the shape depends on the kind.
     if (tools_.snap().has_value()) {
         const viewmodel::Snap& snap = *tools_.snap();
@@ -259,6 +261,62 @@ void CanvasWidget::paintOverlay(QPainter& painter) const {
     }
 }
 
+void CanvasWidget::paintSelectionBox(QPainter& painter) const {
+    const std::optional<viewmodel::SelectionBox> box = tools_.selectionHandles();
+    if (!box.has_value()) {
+        return;
+    }
+    const bool rotate = tools_.transformMode() == viewmodel::TransformMode::Rotate;
+    const geometry::Box2 outline = view_.worldToScreen(box->boundsMm);
+    QPen dashed(QColor(30, 110, 230));
+    dashed.setStyle(Qt::DashLine);
+    dashed.setCosmetic(true);
+    painter.setPen(dashed);
+    painter.setBrush(Qt::NoBrush);
+    painter.drawRect(toQt(outline));
+    painter.setPen(QPen(QColor(30, 110, 230), 1.0));
+    for (const viewmodel::Handle& h : box->handles) {
+        const QPointF p = toQt(h.positionPx);
+        const bool corner = h.kind == viewmodel::HandleKind::TopLeft || h.kind == viewmodel::HandleKind::TopRight ||
+                            h.kind == viewmodel::HandleKind::BottomLeft || h.kind == viewmodel::HandleKind::BottomRight;
+        if (h.kind == viewmodel::HandleKind::Centre) {
+            painter.setBrush(QBrush(QColor(255, 255, 255)));
+            painter.drawEllipse(p, 4.0, 4.0);
+        } else if (rotate) {
+            if (corner) {  // black corners rotate
+                painter.setBrush(QBrush(QColor(20, 20, 20)));
+                painter.drawEllipse(p, 4.5, 4.5);
+            }
+        } else {
+            painter.setBrush(QBrush(QColor(255, 255, 255)));
+            painter.drawRect(QRectF(p.x() - 4.0, p.y() - 4.0, 8.0, 8.0));
+        }
+    }
+    if (rotate) {
+        if (const std::optional<Vec2> pivot = tools_.pivotMm()) {
+            const QPointF p = toQt(view_.worldToScreen(*pivot));
+            painter.setPen(QPen(QColor(200, 30, 30), 1.5));
+            painter.setBrush(Qt::NoBrush);
+            painter.drawEllipse(p, 6.0, 6.0);
+            painter.drawLine(QPointF(p.x() - 9.0, p.y()), QPointF(p.x() + 9.0, p.y()));
+            painter.drawLine(QPointF(p.x(), p.y() - 9.0), QPointF(p.x(), p.y() + 9.0));
+        }
+    }
+}
+
+void CanvasWidget::updateCursorHint() {
+    switch (tools_.cursorHint()) {
+        case viewmodel::CursorHint::Default: unsetCursor(); break;
+        case viewmodel::CursorHint::Move: setCursor(Qt::SizeAllCursor); break;
+        case viewmodel::CursorHint::ScaleHorizontal: setCursor(Qt::SizeHorCursor); break;
+        case viewmodel::CursorHint::ScaleVertical: setCursor(Qt::SizeVerCursor); break;
+        case viewmodel::CursorHint::ScaleDiagonalUp: setCursor(Qt::SizeBDiagCursor); break;
+        case viewmodel::CursorHint::ScaleDiagonalDown: setCursor(Qt::SizeFDiagCursor); break;
+        case viewmodel::CursorHint::Rotate:
+        case viewmodel::CursorHint::Pivot: setCursor(Qt::CrossCursor); break;
+    }
+}
+
 viewmodel::Modifiers CanvasWidget::toolModifiers(Qt::KeyboardModifiers mods) {
     viewmodel::Modifiers m;
     m.shift = mods.testFlag(Qt::ShiftModifier);
@@ -268,7 +326,7 @@ viewmodel::Modifiers CanvasWidget::toolModifiers(Qt::KeyboardModifiers mods) {
 }
 
 void CanvasWidget::afterToolEvent(const viewmodel::ToolResult& result) {
-    if (result.committed && onDocumentEdited) {
+    if ((result.committed || result.transformed) && onDocumentEdited) {
         onDocumentEdited();
     }
     if (result.selectionChanged && onSelectionChanged) {
@@ -380,12 +438,18 @@ void CanvasWidget::mouseMoveEvent(QMouseEvent* event) {
         update();
     }
     tools_.setView(view_);
-    tools_.pointerMove(Vec2{pos.x(), pos.y()}, toolModifiers(event->modifiers()));
+    const viewmodel::ToolResult moved = tools_.pointerMove(Vec2{pos.x(), pos.y()}, toolModifiers(event->modifiers()));
     if (onCursorMoved) {
         onCursorMoved(tools_.pointMm());
     }
+    if (moved.transformed && onDocumentEdited) {
+        onDocumentEdited();  // an interactive transform step changed the document
+    }
     if (onToolStateChanged) {
         onToolStateChanged();
+    }
+    if (!panning_) {
+        updateCursorHint();
     }
     update();
     QWidget::mouseMoveEvent(event);

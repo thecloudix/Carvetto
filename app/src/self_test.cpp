@@ -36,6 +36,7 @@
 #include "carvetto/viewmodel/view_transform.hpp"
 #include "main_window.hpp"
 #include "tool_panel.hpp"
+#include "transform_menu.hpp"
 #include "vector_ops_menu.hpp"
 
 namespace carvetto::app {
@@ -379,6 +380,11 @@ int runSelfTest() {
     QCoreApplication::processEvents();
     if (window.dockWidgetArea(toolpaths) != Qt::RightDockWidgetArea) {
         return fail("the restored layout did not put the toolpaths panel back on the right");
+    }
+
+    // 5b. Transforms through the real window: handle drag, numeric move, align, undo (T-0205).
+    if (const std::string why = transformSelfTest(window); !why.empty()) {
+        return fail(why);
     }
 
     // 6. File session: open -> modify -> save -> reopen, all headless (no dialogs).
