@@ -452,12 +452,13 @@ Goal: Non-blocking findings (harness t0136v1/). (a) Names that grow when stored 
 Acceptance criteria:
   1. (a)–(d) fixed with tests where behaviour changes; save/load invariant preserved (fuzz3).
 
-### T-0140 Profile: loose-piece check for Inside/Outside with allowance ≥ 0   [status: needs owner decision — round 3 FAIL (ADR-0016 §14 has unfilled [[HASH]]/[[PERF]]/[[FLOOD]] placeholders; "A=0.3 SEP=1" normal page +10..15% over 10%; V-bit gap vs criterion 1)]
+### T-0140 Profile: loose-piece check for Inside/Outside with allowance ≥ 0   [status: in progress — docs-only step (ADR-0016 §14 numbers), then light verify]]/[[PERF]]/[[FLOOD]] placeholders; "A=0.3 SEP=1" normal page +10..15% over 10%; V-bit gap vs criterion 1)]
 Owner decision 2026-11-06 (after round 2): the 10% performance target holds for normal jobs; pages where every tab is left out on many cheap vectors (every part comes loose) may cost more (measured +12–71%, a fraction of a second), documented in ADR-0016 §14.
+Director decisions 2026-11-06 (owner delegated product decisions; round 3 FAIL): (a) the perf exemption extends to the 'rect GAP=3 A=0.3 SEP=1' page (+10–15%, about +0.3 s absolute; a bounded cost for a safety check); (b) the V-bit gap stays documented under T-0156 (a) and criterion 1 excludes V-bit tools; (c) the measured +83% on loose-everything pages (rect 1000, +0.035 s) is recorded in ADR-0016 §14. Remaining work: fill the [[HASH]]/[[PERF]]/[[FLOOD]] placeholders in ADR-0016 §14 from harness t0140v3, docs only.
 Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §14
 Goal: Found by the T-0135 verifier (harness t0135v1/scn/m3_630018_3.scn): the loose-piece report runs only for sided cuts (On, allowance < 0), so with Inside/Outside and allowance ≥ 0 pieces that no kept tab holds come free unreported (15.1 mm² in that scene, leads off; same in T-0127). Extend the check to all tabbed profiles without changing toolpaths.
 Acceptance criteria:
-  1. Every free piece ≥ 0.04 mm² reported for Inside/Outside allowance ≥ 0 (whole-scene flood, ≥ 2,000 new-seed scenes, leads off); held pieces never reported.
+  1. Every free piece ≥ 0.04 mm² (non-V-bit tools; V-bit gap is T-0156 (a)) reported for Inside/Outside allowance ≥ 0 (whole-scene flood, ≥ 2,000 new-seed scenes, leads off); held pieces never reported.
   2. Moves byte-identical to the T-0135 merge (diagnostics may only gain loose-piece messages); perf within 10%.
 
 ### T-0141 Offset/Profile robustness residuals (T-0138 verifier)   [status: done (2026-11-03, #37)]
@@ -649,7 +650,8 @@ Acceptance criteria:
   2. An ASan/UBSan build of the tests compiles with -Werror and passes.
   3. Output otherwise byte-identical to main (hash sweep).
 
-### T-0166 Profile: platform-stable start for near-equal spans (symmetric shapes)   [status: needs owner decision]
+### T-0166 Profile: platform-stable start for near-equal spans (symmetric shapes)   [status: ready (director decision 2026-11-06)]
+Director decision 2026-11-06 (owner delegated): approved the tolerance tie-break (lowest span within tol of the nearest distance) because identical output across compilers/platforms outweighs a small one-time change in cut starts; the coder must report the output change rate and keep tab safety unchanged.
 Phase: 1   Module: core/toolpath   Depends on: T-0158   ADR: 0016 §11
 Goal: Found by the T-0158 coder. After T-0158, GCC 13 and GCC 15 still choose different cut starts in 9 of 2,183 stored harness scenes (31 on main) and different tab-left counts in 6 (main 8). These are not arc-centre ties: with the bounding-box Centre anchor on symmetric shapes (rectangles, point-symmetric m2_1330009_35), two spans are equally near up to rounding, and "ties go to the lowest span" only works when the distances are bit-equal. A tolerance tie-break (lowest span within tol of the nearest distance) would change more outputs, so it needs the owner's approval first.
 Acceptance criteria:
@@ -661,7 +663,7 @@ Goal: Found by the T-0158 verifier (harness t0158v1, wsf.cpp flood oracle, worse
 Acceptance criteria:
   1. Each repro has no severed/partial tab and every free piece is reported or held; flood-oracle sweep over the harness shows no scene worse than main; regression tests.
 
-### T-0168 Offsets: near-tolerance walks cost and inner-offset loss (T-0016 coder)   [status: ready]
+### T-0168 Offsets: near-tolerance walks cost and inner-offset loss (T-0016 coder)   [status: in progress]
 Phase: 1   Module: core/geometry   Depends on: T-0016   ADR: 0012
 Goal: Found by the T-0016 coder on main.
 (a) Walks of 1.5 µm steps (just above tol) are super-linear for every join. Round: 4–7 s at 2000 steps, 17–43 s at 4000. Sharp: 12–13 s at 2000, 60–131 s at 4000. The whole walk lies within d of itself: pruning scans every input span per sample (closerThan) and boundary splitting is O(n²). Ideas exist on the shelved T-0009 branches (convex-hull distance hierarchy, domination trimming).
@@ -693,7 +695,7 @@ Goal: Non-blocking findings from harness t0128v2. (a) A recovered stray with mor
 Acceptance criteria:
   1. (a) a long stray comes back as ≤ ceil(n/512) chains with no spans dropped; (b) near-linear and ≤ 1.5× main on the clustered repros, or documented with measurements; (c) tests kill M3, W2, S, P, O (E2 if not redundant); outputs otherwise unchanged; full ctest.
 
-### T-0173 V-Carve corner sharpening follow-ups (T-0160 round-2 verifier)   [status: ready]
+### T-0173 V-Carve corner sharpening follow-ups (T-0160 round-2 verifier)   [status: in progress]
 Phase: 1   Module: core/toolpath   Depends on: T-0160   ADR: 0025
 Goal: Non-blocking findings from harness t0160v2. (a) Super-linear: one region made of a horizontal chain of n squares joined by pinched necks — sharpening adds 0.27/0.83/2.6/11.8 s at n = 100/200/400/800 (×4.5 at the last doubling, +168% of the job); rotated 90° it is linear. The swept-area offset/difference runs over the whole part in one Clipper2 call (scanbeam); batch it per region/locality (repro perf2 chain 100 200 400 800). (b) Test gaps: mutants caught only by the golden (half-strip 0.3·s leaves 0.2683 > ridge 0.2598 in bigtri_ch0.002_apex30_V60s03; never_join; no back extension; no zig-zag) and not caught at all (ramps counted as swept; pieces < 50·distance dropped). (c) CLI help text still says "convex corners … each corner's bisector"; round 2 also cuts rounded corners, necks and spikes. (d) Pieces shorter than the distance tolerance are dropped — mention in ADR-0025 §6.
 Note (owner question, pre-existing): flat areas no end mill enters keep F/2 ridges along every wall from the carving tool's rest clearing; ask the owner whether to address it.
