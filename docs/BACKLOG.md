@@ -779,7 +779,7 @@ Acceptance criteria:
   3. `carvetto --self-test` exercises open → modify → save → reopen headless; CI Linux + Windows green.
 Out of scope: SVG/EPS/PDF (wave 2), autosave/crash recovery, native file dialogs beyond QFileDialog.
 
-### T-0203 Snapping maths (viewmodel)   [status: in progress]
+### T-0203 Snapping maths (viewmodel)   [status: verifying]
 Phase: 1 (Batch B)   Module: app/viewmodel (+ core/geometry helpers if missing)   Depends on: T-0001, T-0002, T-0010   ADR: 0014
 Goal: Qt-free snapping: given a cursor position, the visible objects and settings, return the best snap (kind, world point, source object ids) among endpoint, midpoint, centre, quadrant, intersection (line/arc/Bezier pairs via the core intersection routines), nearest-on-curve, perpendicular, tangent (from a pending start point), grid and user guides, with per-kind enable flags and a pixel tolerance through the view transform. Priority order documented; deterministic on ties. Only candidates near the cursor are examined (spatial index) so large drawings stay interactive.
 Acceptance criteria:
