@@ -4,6 +4,8 @@ qt_standard_project_setup()
 
 qt_add_executable(carvetto
   src/main.cpp
+  src/array_copy_menu.cpp
+  src/array_copy_menu.hpp
   src/main_window.cpp
   src/main_window.hpp
   src/canvas_widget.cpp

@@ -31,6 +31,7 @@
 #include <utility>
 #include <vector>
 
+#include "array_copy_menu.hpp"
 #include "canvas_widget.hpp"
 #include "carvetto/viewmodel/dxf_exchange.hpp"
 #include "carvetto/viewmodel/new_job_form.hpp"
@@ -193,6 +194,7 @@ void MainWindow::buildMenus() {
     redoAction_ = edit->addAction(QStringLiteral("&Redo"));
     redoAction_->setShortcut(QKeySequence::Redo);
     connect(redoAction_, &QAction::triggered, this, [this]() { redo(); });
+    copies_ = std::make_unique<CopiesMenu>(*this, edit);
 
     QMenu* view = menuBar()->addMenu(QStringLiteral("&View"));
     QAction* fit = view->addAction(QStringLiteral("Zoom to &Material"));
