@@ -149,7 +149,9 @@ bool TransformGesture::update(document::Document& doc, Vec2 pointMm, bool shift,
     if (!active()) {
         return false;
     }
-    if (pushed_ && doc.undoStack().generation() != generation_) {
+    // Any change of the undo generation that the gesture did not make itself (also before its
+    // first push: undo, redo, delete, a lock change, ...) ends it.
+    if (doc.undoStack().generation() != generation_) {
         kind_ = GestureKind::None;  // something else edited the document: the gesture is over
         return false;
     }

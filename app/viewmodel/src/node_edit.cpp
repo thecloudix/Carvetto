@@ -469,7 +469,7 @@ void NodeEditor::validateGesture() {
     if (gesture_ == Gesture::None) {
         return;
     }
-    if (doc_ == nullptr || doc_->undoStack().generation() != generation_) {
+    if (doc_ == nullptr || doc_->undoStack().generation() != generation_ || doc_->activeSheet() != sheet_) {
         // Somebody else edited (or replaced) the document during the drag: it is over, and our
         // snapshots are stale. Nothing is reverted.
         gesture_ = Gesture::None;
@@ -751,6 +751,7 @@ bool NodeEditor::beginGesture(const Vec2& snappedMm, bool ctrl) {
         gestureObjects_.push_back(s.id);
     }
     generation_ = doc_->undoStack().generation();
+    sheet_ = doc_->activeSheet();
     gesture_ = kind;
     return true;
 }

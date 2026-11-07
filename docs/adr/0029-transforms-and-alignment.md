@@ -75,3 +75,13 @@ this card.
   window leaves it stale until the next change notification.
 - The node-editing keys H and V (T-0206) collide with Mirror H/V. T-0206 handles this with a
   ShortcutOverride / enable switch while node editing is active; confirm once both are merged.
+
+## Gesture generation rule (hotfix, T-0181)
+A "nothing pushed yet" state must not skip the outside-edit check. `TransformGesture::update` ends
+the gesture on ANY undo-generation change it did not make itself, also before its first push. The
+drag-frozen snap index records {undo generation, active sheet} when it is built and is used only
+while both are unchanged; the only advance allowed is the gesture's own push (tracked right after
+each push). Undo, redo, delete, a lock change, a sheet switch or a document swap drop the index
+(and end the gesture), so a later push can never re-validate an index built before the edit. Any
+other gesture that caches pointers into the document (the node editor, T-0206) must follow the same
+rule: record the build-time key, accept only its own pushes, check on every step.

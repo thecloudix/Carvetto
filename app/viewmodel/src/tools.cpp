@@ -252,6 +252,7 @@ void ToolController::updatePointer(Vec2 px, Modifiers mods) {
         if (!nodeEditor_.gestureActive()) {
             gestureSnapIndex_.reset();  // a drag ended behind our back: its index is stale
         }
+        nodeIndexWasValid_ = gestureSnapIndex_.has_value() && gestureIndexValid();
     }
     snap_.reset();
     Vec2 raw = view_.screenToWorld(px);
@@ -275,13 +276,11 @@ void ToolController::updatePointer(Vec2 px, Modifiers mods) {
     }
     // During a transform drag the index of the other objects is built once (the dragged objects are
     // left out, and nothing else changes), not once per pointer step.
-    // One rule for both gestures: the frozen index is usable only while the undo generation is the
-    // one the gesture itself produced (anything else ended or invalidated the drag).
-    const std::uint64_t generation = doc_->undoStack().generation();
+    // One rule for both gestures (ADR-0029 "Gesture generation rule", ADR-0030): the frozen index is
+    // valid only for the gesture's own pushes; its key is {undo generation, active sheet}.
     const bool frozen = gestureSnapIndex_.has_value() &&
-                        ((gesture_.active() && generation == gesture_.expectedGeneration()) ||
-                         (tool_ == ToolKind::NodeEdit && nodeEditor_.gestureActive() &&
-                          generation == nodeEditor_.expectedGeneration()));
+                        (gesture_.active() || (tool_ == ToolKind::NodeEdit && nodeEditor_.gestureActive())) &&
+                        gestureIndexValid();
     snap_ = (frozen ? *gestureSnapIndex_ : snapIndex()).best(view_, px, snapSettings_, query);
     cursorMm_ = snap_.has_value() ? snap_->pointMm : raw;
 }
@@ -689,10 +688,14 @@ ToolResult fromNodeEdit(const NodeEditResult& r) {
 ToolResult ToolController::afterNodeEdit(const NodeEditResult& r) {
     if (!nodeEditor_.gestureActive()) {
         gestureSnapIndex_.reset();
-    } else if (!gestureSnapIndex_.has_value() && doc_ != nullptr) {
-        // The drag began in this event: index everything but the objects it edits, once.
+    } else if (nodeIndexWasValid_ && gestureSnapIndex_.has_value()) {
+        gestureIndexKey_[0] = nodeEditor_.expectedGeneration();  // the gesture's own push
+    } else if (doc_ != nullptr) {
+        // The drag began in this event (or the index was not valid): index everything but the edited
+        // objects, from the document as it is now.
         gestureSnapIndex_.emplace(*doc_, false, nodeEditor_.gestureObjects());
         ++snapIndexBuilds_;
+        gestureIndexKey_ = {nodeEditor_.expectedGeneration(), doc_->activeSheet().value};
     }
     return fromNodeEdit(r);
 }
@@ -1142,6 +1145,11 @@ CursorHint ToolController::cursorHint() const {
     return isCornerHandle(*h) ? CursorHint::Rotate : CursorHint::Default;
 }
 
+bool ToolController::gestureIndexValid() const {
+    return gestureSnapIndex_.has_value() && doc_ != nullptr &&
+           gestureIndexKey_[0] == doc_->undoStack().generation() && gestureIndexKey_[1] == doc_->activeSheet().value;
+}
+
 void ToolController::xfReset() {
     gestureSnapIndex_.reset();
     xfPress_ = XfPress::None;
@@ -1214,9 +1222,17 @@ ToolResult ToolController::xfMove(Vec2 px) {
     }
     if (gesture_.active() && !gestureSnapIndex_.has_value()) {
         gestureSnapIndex_.emplace(*doc_, false, gesture_.targets());
+        ++snapIndexBuilds_;
+        gestureIndexKey_ = {doc_->undoStack().generation(), doc_->activeSheet().value};
     }
     if (gesture_.active()) {
+        const bool valid = gestureIndexValid();
         r.transformed = gesture_.update(*doc_, cursorMm_, mods_.shift, mods_.ctrl, mods_.alt);
+        if (!valid || !gesture_.active()) {
+            gestureSnapIndex_.reset();  // an outside edit (or the end of the gesture) invalidates it
+        } else if (r.transformed) {
+            gestureIndexKey_[0] = doc_->undoStack().generation();  // the gesture's own push
+        }
     }
     return r;
 }

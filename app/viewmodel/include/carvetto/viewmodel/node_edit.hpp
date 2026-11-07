@@ -255,6 +255,7 @@ class NodeEditor {
     bool insertedOnBegin_{false};
     bool pushed_{false};
     std::uint64_t generation_{0};
+    document::SheetId sheet_{};  ///< active sheet when the drag began
     geometry::Vec2 grabMm_{};      ///< Nodes: position of the grabbed node at the start; Span: grab point
     geometry::Vec2 centreMm_{};    ///< mirror axis centre
     NodeRef grabbedNode_;

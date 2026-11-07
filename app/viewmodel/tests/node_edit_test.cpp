@@ -1191,3 +1191,28 @@ TEST_CASE("a typed move that changes nothing records no step and keeps the circl
     CHECK(std::holds_alternative<CircleParams>(f.obj(c).asVector()->params));
     CHECK(f.contour(c).spans.size() == 1);  // still the single full-circle arc
 }
+
+TEST_CASE("a sheet switch during a node drag ends it and drops the frozen index", "[viewmodel][node][edit][snap][uaf]") {
+    for (const bool pushedFirst : {false, true}) {
+        SnapFix f;
+        REQUIRE(f.doc.execute(std::make_unique<AddSheetCommand>(Sheet{.name = "S2"}, false)));
+        const SheetId first = f.doc.activeSheet();
+        f.tool.pointerMove(f.px({300, 300}));
+        const std::size_t steps = f.doc.undoStack().count();
+        f.tool.pointerMove(f.px({60, 40}));
+        f.tool.pointerPress(f.px({60, 40}));
+        // Either a real first step, or a refused one (onto the neighbouring node): nothing pushed.
+        f.tool.pointerMove(pushedFirst ? f.px({80, 50}) : f.px({60, 20}));
+        REQUIRE(f.tool.nodeEditor().gestureActive());
+        REQUIRE(f.doc.undoStack().count() == (pushedFirst ? steps + 1 : steps));
+        const auto after = f.doc.objects();
+        f.doc.setActiveSheet(f.doc.sheets().back().id);  // does not change the undo generation
+        f.tool.pointerMove(f.px({140.3, 80.2}));         // B's corner: B is on the other sheet now
+        CHECK_FALSE(f.tool.nodeEditor().gestureActive());
+        CHECK_FALSE(f.tool.snap().has_value());
+        f.tool.pointerMove(f.px({150, 90}));
+        f.tool.pointerRelease(f.px({150, 90}));
+        CHECK(f.doc.objects() == after);  // the drag edited nothing after the switch
+        f.doc.setActiveSheet(first);
+    }
+}

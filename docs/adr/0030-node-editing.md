@@ -113,16 +113,17 @@ keeps the parameters.
 ### 8. Snapping during a drag
 Every pointer position goes through the snapper (Shift disables it) with the objects being edited
 excluded. A drag changes the document on every step, which would invalidate the generation-keyed
-`SnapIndex` (ADR-0027) per step; only the objects being edited change, though. So the node-edit drag
-uses the same mechanism as the transform drag of ADR-0029: when the drag begins, the controller
-builds one index of everything but the edited objects (`SnapIndex` with its skip list, kept in
-`gestureSnapIndex_`) and uses it only while the undo generation equals the one the gesture itself
-produced last (`NodeEditor::expectedGeneration`, `TransformGesture::expectedGeneration`). Anything
-else that edits the document ends the drag (`NodeEditor::validateGesture`) and discards the
-frozen index; the normal generation-keyed cache then applies again. The frozen index is built from
-the document as it is when the drag begins, whatever the modifiers (a first version reused an older
-cache when the drag began with Shift held and read freed memory: found by the verifier).
-`ToolController::snapIndexBuilds()` is a test hook that pins this (no rebuild per drag step).
+`SnapIndex` (ADR-0027) per step; only the objects being edited change, though. So a node-edit drag
+follows the same rule as the transform drag (ADR-0029, "Gesture generation rule (hotfix, T-0181)"),
+with the same helpers: when the drag begins the controller builds one index of everything but the
+edited objects (`gestureSnapIndex_`, `SnapIndex` skip list) from the document as it is then, and
+records the key {undo generation, active sheet} (`gestureIndexKey_`). `ToolController::gestureIndexValid()`
+says whether the key still matches; the key advances only for the gesture's own pushes
+(`NodeEditor::expectedGeneration()`). Any other change (undo, redo, delete, layer lock, sheet switch,
+document swap, end of the drag) drops the index and ends the drag, also when nothing was pushed
+yet: `NodeEditor` records the generation and the active sheet when the drag begins and
+`validateGesture` ends the drag when either differs. A sheet switch does not change the undo
+generation, hence the sheet in the key. `ToolController::snapIndexBuilds()` is a test hook that pins this (no rebuild per drag step).
 
 ### 8b. Keys against the Transform shortcuts (ADR-0029)
 While the NodeEdit tool is active the canvas claims plain letter keys (with or without Shift)

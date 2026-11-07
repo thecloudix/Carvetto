@@ -196,8 +196,6 @@ class ToolController {
     /// Call after the document changed without a command (direct layer-flag or object edits).
     /// Edits made through the undo stack are detected via its generation counter.
     void invalidateSnapIndex() { snapIndex_.reset(); }
-    /// How many snap indexes were built so far (test hook: pins the reuse during a node-edit drag).
-    std::size_t snapIndexBuilds() const { return snapIndexBuilds_; }
 
     // --- Pointer and key events (screen pixels) ---------------------------------------------
     ToolResult pointerMove(geometry::Vec2 px, Modifiers mods = {});
@@ -237,6 +235,9 @@ class ToolController {
     void setPivotAnchor(HandleKind anchor);
     /// True while an interactive transform is being dragged.
     bool transforming() const { return gesture_.active(); }
+    /// Number of snap indexes built so far (cached and drag-frozen ones); a test hook for pinning
+    /// that a drag does not rebuild per pointer step.
+    std::size_t snapIndexBuilds() const { return snapIndexBuilds_; }
     /// Mouse cursor hint for the last pointer position.
     CursorHint cursorHint() const;
 
@@ -293,9 +294,13 @@ class ToolController {
     SnapSettings snapSettings_;
     std::optional<SnapIndex> snapIndex_;
     std::array<std::uint64_t, 2> snapSignature_{};
-    std::size_t snapIndexBuilds_{0};
+    bool nodeIndexWasValid_{false};  // NodeEdit: the frozen index was valid before this event
     /// Index frozen for the duration of a transform drag (dragged objects left out of it).
     std::optional<SnapIndex> gestureSnapIndex_;
+    /// {undo generation, active sheet} the frozen index is valid for: the state when it was built,
+    /// advanced only by the gesture's own pushes. Anything else drops the index.
+    std::array<std::uint64_t, 2> gestureIndexKey_{};
+    std::size_t snapIndexBuilds_{0};
 
     std::optional<Snap> snap_;
     geometry::Vec2 cursorMm_{};
@@ -330,6 +335,7 @@ class ToolController {
     ToolResult xfMove(geometry::Vec2 px);
     ToolResult xfRelease();
     void xfReset();
+    bool gestureIndexValid() const;
 };
 
 /// Display name of a tool ("Rectangle", ...).
