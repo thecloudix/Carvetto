@@ -5,6 +5,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <cstring>
 #include <vector>
 
@@ -202,4 +203,132 @@ TEST_CASE("T-0176: ArcSpan::bounds matches the box of the endpoints and the axis
             }
         }
     }
+}
+
+TEST_CASE("T-0176: arcClearlyFarther stays safe when the coordinate scale dwarfs the radius and the limit",
+          "[geometry][offset][t0176]") {
+    // The endpoints of an arc are computed from angles at absolute coordinates of size `scale`, so
+    // they are off by a few ulp of the scale; a margin made of the limit alone would then say
+    // "farther" for points whose true distance is just below the limit.
+    std::uint64_t state = 0x9E3779B97F4A7C15ull;
+    const auto next = [&state]() {
+        state += 0x9E3779B97F4A7C15ull;
+        std::uint64_t z = state;
+        z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ull;
+        z = (z ^ (z >> 27)) * 0x94D049BB133111EBull;
+        return z ^ (z >> 31);
+    };
+    const auto unit = [&next]() { return static_cast<double>(next() >> 11) * (1.0 / 9007199254740992.0); };
+    int yes = 0;
+    int tried = 0;
+    for (const double scale : {1e4, 1e6, 1e8, 1e12, 1e20, 1.8e34}) {
+        for (int it = 0; it < 4000; ++it) {
+            const double radius = (it % 3 == 0) ? 1e-3 : (it % 3 == 1) ? 1.0 : 0.1 * scale;
+            const Vec2 centre{scale * (0.5 + unit()), -scale * (0.5 + unit())};
+            const double a0 = 6.0 * unit();
+            const ArcDirection dir = (it % 2 == 0) ? ArcDirection::CCW : ArcDirection::CW;
+            const double sweep = 0.2 + 2.0 * unit();
+            const ArcSpan arc{centre, radius, a0, dir == ArcDirection::CCW ? a0 + sweep : a0 - sweep, dir};
+            // Limits from far below to far above the rounding of the endpoints.
+            const double limits[] = {1e-12 * scale * (0.3 + 3.0 * unit()), 1e-13 * scale, 1e-9, 1e-3 * unit(),
+                                     1e-14 * scale * unit()};
+            const double lim = limits[it % 5];
+            // The point: beyond the end of the arc (so the endpoint decides), at a radius that makes
+            // |rho - r| about the limit, within a few 1e-10 of it; or the endpoint itself.
+            Vec2 p = arc.endPoint();
+            if (it % 4 != 0) {
+                // at the end angle itself or a hair beyond/inside it: the endpoint and the circle agree
+                const double beyond = (dir == ArcDirection::CCW ? 1.0 : -1.0) * ((it % 3) - 1) * 1e-13 * unit();
+                const double rho = radius + lim * (1.0 + 4e-10 * (unit() - 0.5)) * ((it % 8 < 4) ? 1.0 : -1.0);
+                if (rho <= 0.0) {
+                    continue;
+                }
+                p = centre + Vec2::fromAngle(arc.endAngle + beyond, rho);
+            }
+            const double exact = exactArcDistance(p, arc);
+            ++tried;
+            if (detail::arcClearlyFarther(p, centre, radius, lim)) {
+                CAPTURE(scale, radius, lim, exact, it);
+                REQUIRE(!(exact < lim));
+                ++yes;
+            }
+        }
+    }
+    CHECK(tried > 10000);
+    static_cast<void>(yes);
+}
+
+TEST_CASE("T-0176: arcClearlyFarther on the verifier's repro and for tiny limits against distance 0",
+          "[geometry][offset][t0176]") {
+    // Exact distance 0 (the endpoint itself) against tiny limits at large coordinates.
+    for (const double scale : {1e4, 1e8, 1e12}) {
+        const Vec2 centre{scale, -scale};
+        for (const double radius : {1e-3, 1.0, 50.0}) {
+            for (int ia = 0; ia < 20; ++ia) {
+                const ArcSpan arc{centre, radius, 0.37 * ia, 0.37 * ia + 1.3, ArcDirection::CCW};
+                for (const Vec2 p : {arc.startPoint(), arc.endPoint()}) {
+                    for (const double lim : {1e-15, 1e-12, 1e-10, 1e-9, 1e-8, 1e-6}) {
+                        CAPTURE(scale, radius, ia, lim);
+                        CHECK_FALSE(detail::arcClearlyFarther(p, centre, radius, lim));
+                    }
+                }
+            }
+        }
+    }
+    // m = 1.8e34, r = 4.2e35, L = 9.7767743590660e22: the margin is the scale term here.
+    const double m = 1.8e34;
+    const double r = 4.2e35;
+    const double lim = 9.7767743590660e22;
+    const Vec2 centre{m, -m};
+    for (const double f : {0.9, 0.99, 1.0 - 1e-9, 1.0, 1.0 + 1e-9, 1.01, 1.1}) {
+        const Vec2 p = centre + Vec2{r + f * lim, 0.0};
+        const ArcSpan arc{centre, r, 0.0, 1.0, ArcDirection::CCW};
+        const double exact = exactArcDistance(p, arc);
+        if (detail::arcClearlyFarther(p, centre, r, lim)) {
+            CAPTURE(f, exact);
+            CHECK(!(exact < lim));
+        }
+    }
+}
+
+TEST_CASE("T-0176: ArcSpan::bounds at the tolerance windows of containsAngle", "[geometry][t0176]") {
+    constexpr double kTol = 1e-9;
+    const auto reference = [](const ArcSpan& arc) {
+        Box2 box{arc.startPoint(), arc.endPoint()};
+        for (int q = 0; q < 4; ++q) {
+            const double angle = static_cast<double>(q) * (kPi * 0.5);
+            if (arc.containsAngle(angle)) {
+                box.expand(arc.centre + Vec2::fromAngle(angle, arc.radius));
+            }
+        }
+        return box;
+    };
+    int cases = 0;
+    for (int q = 0; q < 4; ++q) {
+        const double axis = static_cast<double>(q) * (kPi * 0.5);
+        for (const double dv : {0.0, 1e-10, -1e-10, 2e-9, -2e-9, 0.9e-9, -0.9e-9, 1.1e-9, -1.1e-9, 5e-10}) {
+            for (const ArcDirection dir : {ArcDirection::CCW, ArcDirection::CW}) {
+                const double sgn = dir == ArcDirection::CCW ? 1.0 : -1.0;
+                // Arcs that start or end at the axis angle +- dv, and the other end 1.0 away either side.
+                const double edges[][2] = {{axis + dv, axis + dv + sgn * 1.0}, {axis + dv - sgn * 1.0, axis + dv},
+                                           {axis + dv + sgn * 0.3, axis + dv + sgn * 0.3 + sgn * (kTwoPi - 1e-9) + dv},
+                                           {axis + dv, axis + dv + sgn * (kTwoPi - 1e-9)},
+                                           {axis, axis + sgn * (kTwoPi - 1e-9 + dv)},
+                                           {axis + dv, axis + dv + sgn * (kTwoPi - 2e-9)}};
+                for (const auto& e : edges) {
+                    const ArcSpan arc{Vec2{2.0, -3.0}, 1.25, e[0], e[1], dir};
+                    const Box2 got = arc.bounds();
+                    const Box2 want = reference(arc);
+                    CAPTURE(q, dv, e[0], e[1]);
+                    CHECK(std::memcmp(&got.min.x, &want.min.x, sizeof(double)) == 0);
+                    CHECK(std::memcmp(&got.min.y, &want.min.y, sizeof(double)) == 0);
+                    CHECK(std::memcmp(&got.max.x, &want.max.x, sizeof(double)) == 0);
+                    CHECK(std::memcmp(&got.max.y, &want.max.y, sizeof(double)) == 0);
+                    ++cases;
+                }
+            }
+        }
+    }
+    CHECK(cases > 400);
+    CHECK(kTol > 0.0);
 }

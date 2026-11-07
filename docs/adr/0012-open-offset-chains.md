@@ -765,6 +765,12 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     depend on the load, is still +5.5 % against the build before T-0016 (main +6.3 %); it is spread over
     many small items (grid queries, `mergeOnCarriers`, the point tree) and no single hot spot was left to
     remove without changing results. The cycle count is at parity at best and +5 % at worst.
+    *Criterion as accepted by the director:* arc 50000 within 3 % of the build before T-0016 (met: 0.98..1.00;
+    the T-0176 verifier measured 0.983 and 0.986 against main's 1.08 and 1.10); zz 200000 no worse than main
+    (met: branch/main 0.967..0.994 in the verifier's runs; against the build before T-0016 0.97..1.05) with
+    the instruction count reported (+5.5 % against +6.3 % for main); the remaining cost is spread over many
+    small items. The unit tests also cover the scale term of the arc margin (large coordinates, small radius
+    and limit, exact distance 0) and the tolerance windows of `ArcSpan::bounds`.
   - *Growth per doubling of the span count* (Release CPU seconds, minimum of 3–7, pitch 0.02,
     amplitude 1, hatch rows 3 mm, d = 7, left side, mitre limit 2; at 4000 spans the path is 80 mm
     long = 5.7 d):
