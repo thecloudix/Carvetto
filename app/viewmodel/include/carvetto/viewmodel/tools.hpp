@@ -173,6 +173,8 @@ class ToolController {
     /// Call after the document changed without a command (direct layer-flag or object edits).
     /// Edits made through the undo stack are detected via its generation counter.
     void invalidateSnapIndex() { snapIndex_.reset(); }
+    /// How many snap indexes were built so far (test hook: pins the reuse during a node-edit drag).
+    std::size_t snapIndexBuilds() const { return snapIndexBuilds_; }
 
     // --- Pointer and key events (screen pixels) ---------------------------------------------
     ToolResult pointerMove(geometry::Vec2 px, Modifiers mods = {});
@@ -234,6 +236,7 @@ class ToolController {
     void cancel();
     void updatePointer(geometry::Vec2 px, Modifiers mods);
     const SnapIndex& snapIndex();
+    ToolResult afterNodeEdit(const NodeEditResult& r);
     ToolResult selectPress(geometry::Vec2 px, Modifiers mods);
     ToolResult selectRelease(geometry::Vec2 px, Modifiers mods);
     ToolResult shapePress(Modifiers mods);
@@ -251,6 +254,10 @@ class ToolController {
     SnapSettings snapSettings_;
     std::optional<SnapIndex> snapIndex_;
     std::array<std::uint64_t, 2> snapSignature_{};
+    // NodeEdit drag: the index was current when the drag began and may be kept (ADR-0030).
+    bool dragIndexValid_{false};
+    std::size_t snapIndexBuilds_{0};
+    std::array<std::uint64_t, 2> preSig_{};
 
     std::optional<Snap> snap_;
     geometry::Vec2 cursorMm_{};

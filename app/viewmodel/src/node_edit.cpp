@@ -1426,6 +1426,10 @@ NodeEditResult NodeEditor::run(NodeOp op, const NodeOpArgs& args) {
 
     std::vector<document::ContourReplacement> items;
     for (const ObjectId id : work.touched) {
+        // An object whose edit changed nothing (a zero-length move) is left alone, circles included.
+        if (work.contours.at(id) == modelContours(*doc_->findObject(id)) && !std::count(removals.begin(), removals.end(), id)) {
+            continue;
+        }
         items.push_back({id, work.contours.at(id)});
     }
     if (items.empty() && removals.empty()) {
@@ -1507,7 +1511,13 @@ NodeEditResult NodeEditor::setSelectedNodeCoordinates(std::optional<double> xMm,
     }
     std::vector<document::ContourReplacement> items;
     for (const ObjectId id : work.touched) {
+        if (work.contours.at(id) == modelContours(*doc_->findObject(id))) {
+            continue;  // zero-length move: nothing to record (a circle is not normalised for it)
+        }
         items.push_back({id, work.contours.at(id)});
+    }
+    if (items.empty()) {
+        return fail("the nodes are already there");
     }
     const NodeEditResult r = commitContours(std::move(items), {}, "Move nodes");
     return r.ok ? r : fail("the nodes are already there");

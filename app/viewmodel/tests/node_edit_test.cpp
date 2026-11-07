@@ -1014,3 +1014,132 @@ TEST_CASE("degenerate and out-of-range edits are refused as a whole", "[viewmode
     }
     CHECK(closeTo(nodeops::nodePoint(f.contour(r), 2), {80, 60}, 1e-12));
 }
+
+// ------------------------------------------------------------ snap index lifetime (verifier round 1)
+
+namespace {
+
+/// Two rectangles, A selected, Endpoint snapping on; the index is built by hovering.
+struct SnapFix : Fix {
+    ObjectId a;
+    ObjectId b;
+    SnapFix() {
+        tool.snapSettings().setEnabled(SnapKind::Endpoint, true);
+        a = addRect(20, 20, 60, 40);
+        b = addRect(100, 60, 140, 80);
+        select(a);
+        tool.pointerMove(px({300, 300}));  // hover: builds the snap index
+    }
+    /// Press on A's node 2 with `pressMods`, move with `dragMods`, release Shift mid-drag, finish.
+    void dragFromNode2(Modifiers pressMods, Modifiers dragMods, Vec2 target) {
+        tool.pointerMove(px({60, 40}), pressMods);
+        tool.pointerPress(px({60, 40}), pressMods);
+        tool.pointerMove(px({80, 50}), dragMods);
+        tool.pointerMove(px({120, 60}), dragMods);
+        tool.pointerMove(px(target), Modifiers{});
+        tool.pointerRelease(px(target), Modifiers{});
+    }
+};
+
+void requireNoStaleCorner(SnapFix& f, Vec2 target) {
+    // B's corner (140,80) is gone: the node lands where the pointer is, not on a stale snap.
+    CHECK(closeTo(nodeops::nodePoint(f.contour(f.a), 2), target, 1e-12));
+}
+
+}  // namespace
+
+TEST_CASE("a drag begun with a modifier never uses a stale snap index", "[viewmodel][node][edit][snap][uaf]") {
+    Modifiers shift;
+    shift.shift = true;
+    Modifiers alt;
+    alt.alt = true;
+    Modifiers ctrl;
+    ctrl.ctrl = true;
+    const Vec2 target{140.6, 80.4};  // within snapping reach of B's corner (140,80)
+
+    for (const Modifiers& m : {shift, alt, ctrl, Modifiers{}}) {
+        SECTION("other object removed after the hover") {
+            SnapFix f;
+            REQUIRE(f.doc.execute(std::make_unique<RemoveObjectsCommand>(std::vector<ObjectId>{f.b})));
+            f.dragFromNode2(m, m, target);
+            requireNoStaleCorner(f, target);
+        }
+        SECTION("add of the other object undone after the hover") {
+            SnapFix f;
+            REQUIRE(f.doc.undoStack().undo(f.doc));  // undoes the add of B
+            f.dragFromNode2(m, m, target);
+            requireNoStaleCorner(f, target);
+        }
+        SECTION("undo then redo of other steps") {
+            SnapFix f;
+            REQUIRE(f.doc.undoStack().undo(f.doc));
+            REQUIRE(f.doc.undoStack().redo(f.doc));
+            f.dragFromNode2(m, m, target);
+            CHECK(closeTo(nodeops::nodePoint(f.contour(f.a), 2), {140, 80}, 1e-12));  // B is back: snaps
+        }
+        SECTION("layer of the other object locked after the hover") {
+            SnapFix f;
+            REQUIRE(f.doc.execute(std::make_unique<AddLayerCommand>(Layer{.name = "L2"}, false)));
+            const LayerId l2 = f.doc.layers().back().id;
+            REQUIRE(f.doc.execute(std::make_unique<MoveObjectsToLayerCommand>(std::vector<ObjectId>{f.b}, l2)));
+            f.tool.pointerMove(f.px({300, 300}));  // index rebuilt with B on L2
+            Layer locked = *f.doc.findLayer(l2);
+            locked.locked = true;
+            REQUIRE(f.doc.execute(std::make_unique<SetLayerPropertiesCommand>(locked)));
+            f.dragFromNode2(m, m, target);
+            requireNoStaleCorner(f, target);
+        }
+        SECTION("sheet switched after the hover") {
+            SnapFix f;
+            REQUIRE(f.doc.execute(std::make_unique<AddSheetCommand>(Sheet{.name = "S2"}, false)));
+            f.tool.pointerMove(f.px({300, 300}));
+            const SheetId first = f.doc.activeSheet();
+            f.doc.setActiveSheet(f.doc.sheets().back().id);
+            f.doc.setActiveSheet(first);  // switching back and forth must not leave a stale key
+            REQUIRE(f.doc.execute(std::make_unique<RemoveObjectsCommand>(std::vector<ObjectId>{f.b})));
+            f.dragFromNode2(m, m, target);
+            requireNoStaleCorner(f, target);
+        }
+    }
+}
+
+TEST_CASE("setDocument during a drag drops the snap index", "[viewmodel][node][edit][snap][uaf]") {
+    SnapFix f;
+    f.tool.pointerMove(f.px({60, 40}));
+    f.tool.pointerPress(f.px({60, 40}));
+    f.tool.pointerMove(f.px({80, 50}));
+    Document other(Job::singleSided(500.0, 500.0, 18.0, Units::Millimetres));
+    f.tool.setDocument(&other);
+    f.tool.pointerMove(f.px({139.5, 79.5}));
+    f.tool.pointerRelease(f.px({139.5, 79.5}));
+    CHECK(other.undoStack().count() == 0);
+    CHECK_FALSE(f.tool.snap().has_value());
+}
+
+TEST_CASE("the snap index is kept for the whole drag and rebuilt when the document changes", "[viewmodel][node][edit][snap]") {
+    SnapFix f;
+    f.tool.pointerMove(f.px({60, 40}));
+    f.tool.pointerPress(f.px({60, 40}));
+    f.tool.pointerMove(f.px({70, 45}));  // the drag begins
+    REQUIRE(f.tool.nodeEditor().gestureActive());
+    const std::size_t builds = f.tool.snapIndexBuilds();
+    for (int i = 0; i < 30; ++i) {
+        f.tool.pointerMove(f.px({70.0 + i, 45.0 + 0.5 * i}));
+    }
+    CHECK(f.tool.snapIndexBuilds() == builds);  // pinned: no rebuild per step although every step edits
+    f.tool.pointerRelease(f.px({99, 60}));
+    CHECK(f.tool.snapIndexBuilds() == builds);
+    f.tool.pointerMove(f.px({300, 300}));
+    CHECK(f.tool.snapIndexBuilds() == builds + 1);  // the finished drag changed the document: rebuilt
+
+    // A change by somebody else mid-drag ends the drag and the next event rebuilds.
+    f.tool.pointerMove(f.px({99, 60}));
+    f.tool.pointerPress(f.px({99, 60}));
+    f.tool.pointerMove(f.px({90, 55}));
+    REQUIRE(f.tool.nodeEditor().gestureActive());
+    const std::size_t before = f.tool.snapIndexBuilds();
+    REQUIRE(f.doc.execute(std::make_unique<RemoveObjectsCommand>(std::vector<ObjectId>{f.b})));
+    f.tool.pointerMove(f.px({80, 50}));
+    CHECK_FALSE(f.tool.nodeEditor().gestureActive());
+    CHECK(f.tool.snapIndexBuilds() == before + 1);
+}

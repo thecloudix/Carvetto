@@ -118,6 +118,18 @@ excluded ones, and the index never dereferences an excluded entry. So while a no
 active the controller keeps the index built at the drag's start (key: the generation of that
 moment); `NodeEditor::validateGesture` ends the drag if the generation moves for any other reason,
 and the index is rebuilt by the normal key check at the next event after the drag.
+The index is refreshed (normal generation key) on every pointer event while no drag is active,
+also when Shift skips snapping, and the drag may keep it only if it was current at the moment the
+drag began (`dragIndexValid_`); otherwise the normal key check applies on every event. (A first
+version skipped the refresh with Shift held and kept a stale index: use-after-free, found by the
+verifier.)
+
+### 9. Known limits
+- Dragging after an undo discards the redo entry for good (a drag is a new edit); Escape reverts
+  the drag but does not bring the discarded redo back.
+- An object with 100k spans costs about 8.5 ms per pointer step (worst 22 ms): the edit copies and
+  validates the whole edited object per step. The 16 ms budget holds for ordinary objects.
+- Convert to Arc with a through point or bulge on a span that already is an arc refits it.
 
 ## Consequences
 - A pointer step costs the edited objects only (10k objects, one edited: 0.06 ms in Release).

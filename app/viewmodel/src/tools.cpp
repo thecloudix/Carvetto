@@ -163,6 +163,7 @@ void ToolController::setDocument(document::Document* doc) {
     doc_ = doc;
     nodeEditor_.setDocument(doc);
     snapIndex_.reset();
+    dragIndexValid_ = false;
     snap_.reset();
 }
 
@@ -192,6 +193,7 @@ void ToolController::cancel() {
     selPressed_ = false;
     selDragging_ = false;
     nodeEditor_.escape();
+    dragIndexValid_ = false;
 }
 
 ToolResult ToolController::refuse(std::string message) const {
@@ -228,7 +230,9 @@ const SnapIndex& ToolController::snapIndex() {
     // A node-edit drag changes the document on every pointer step, but only the objects it edits,
     // and those are excluded from the query. The index built when the drag began (its key is the
     // generation of that moment) therefore stays usable until the drag ends (ADR-0030).
-    if (tool_ == ToolKind::NodeEdit && nodeEditor_.gestureActive() && snapIndex_.has_value()) {
+    // `dragIndexValid_` is only set when the index was current (checked against the generation) at
+    // the moment the drag began, whatever the modifiers were.
+    if (tool_ == ToolKind::NodeEdit && nodeEditor_.gestureActive() && dragIndexValid_ && snapIndex_.has_value()) {
         return *snapIndex_;
     }
     // The undo stack's generation is process-wide unique per edit state, so it cannot repeat for
@@ -236,6 +240,7 @@ const SnapIndex& ToolController::snapIndex() {
     const std::array<std::uint64_t, 2> sig{doc_->undoStack().generation(), doc_->activeSheet().value};
     if (!snapIndex_.has_value() || sig != snapSignature_) {
         snapIndex_.emplace(*doc_);
+        ++snapIndexBuilds_;
         snapSignature_ = sig;
     }
     return *snapIndex_;
@@ -247,6 +252,12 @@ void ToolController::updatePointer(Vec2 px, Modifiers mods) {
     hasCursor_ = true;
     if (tool_ == ToolKind::NodeEdit) {
         nodeEditor_.validateGesture();
+        if (!nodeEditor_.gestureActive() && doc_ != nullptr) {
+            // Refresh the index before any drag can begin, also when Shift skips snapping below.
+            snapIndex();
+            dragIndexValid_ = false;
+            preSig_ = snapSignature_;
+        }
     }
     snap_.reset();
     Vec2 raw = view_.screenToWorld(px);
@@ -672,10 +683,21 @@ ToolResult fromNodeEdit(const NodeEditResult& r) {
 }
 }  // namespace
 
+ToolResult ToolController::afterNodeEdit(const NodeEditResult& r) {
+    if (!nodeEditor_.gestureActive()) {
+        dragIndexValid_ = false;
+    } else if (!dragIndexValid_) {
+        // The drag began during this event; the index is reusable if it was current just before.
+        dragIndexValid_ = snapIndex_.has_value() && snapSignature_ == preSig_ && doc_ != nullptr &&
+                          preSig_[1] == doc_->activeSheet().value;
+    }
+    return fromNodeEdit(r);
+}
+
 ToolResult ToolController::pointerMove(Vec2 px, Modifiers mods) {
     updatePointer(px, mods);
     if (tool_ == ToolKind::NodeEdit) {
-        return fromNodeEdit(nodeEditor_.move(px, cursorMm_, mods.shift, mods.ctrl, mods.alt));
+        return afterNodeEdit(nodeEditor_.move(px, cursorMm_, mods.shift, mods.ctrl, mods.alt));
     }
     if (tool_ == ToolKind::Select && selPressed_) {
         selCurPx_ = px;
@@ -781,7 +803,7 @@ ToolResult ToolController::shapeRelease(Vec2 px) {
 ToolResult ToolController::pointerPress(Vec2 px, Modifiers mods) {
     updatePointer(px, mods);
     if (tool_ == ToolKind::NodeEdit) {
-        return fromNodeEdit(nodeEditor_.press(px, cursorMm_, mods.shift, mods.ctrl, mods.alt));
+        return afterNodeEdit(nodeEditor_.press(px, cursorMm_, mods.shift, mods.ctrl, mods.alt));
     }
     if (tool_ == ToolKind::Select) {
         return selectPress(px, mods);
@@ -792,7 +814,7 @@ ToolResult ToolController::pointerPress(Vec2 px, Modifiers mods) {
 ToolResult ToolController::pointerRelease(Vec2 px, Modifiers mods) {
     updatePointer(px, mods);
     if (tool_ == ToolKind::NodeEdit) {
-        return fromNodeEdit(nodeEditor_.release(px, cursorMm_, mods.shift, mods.ctrl, mods.alt));
+        return afterNodeEdit(nodeEditor_.release(px, cursorMm_, mods.shift, mods.ctrl, mods.alt));
     }
     if (tool_ == ToolKind::Select) {
         return selectRelease(px, mods);

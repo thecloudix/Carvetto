@@ -132,6 +132,7 @@ std::size_t runSeed(std::uint32_t seed) {
         return view.worldToScreen({rng.range(0, 400), rng.range(0, 400)});
     };
 
+    bool externalUndo = false;
     const int events = 60;
     for (int e = 0; e < events; ++e) {
         Modifiers m;
@@ -168,7 +169,16 @@ std::size_t runSeed(std::uint32_t seed) {
                 break;
             default:
                 // Idle edits of the document by others: a lock toggle or a transform.
-                if (!tool.nodeEditor().pressed() && !ids.empty() && rng.next(3) == 0) {
+                if (!tool.nodeEditor().pressed() && !ids.empty() && rng.next(6) == 0) {
+                    // Other objects vanish (removal or undo) while the snap index may be cached.
+                    externalUndo = true;
+                    if (rng.next(2) == 0) {
+                        doc->execute(std::make_unique<RemoveObjectsCommand>(
+                            std::vector<ObjectId>{ids[rng.next(static_cast<std::uint32_t>(ids.size()))]}));
+                    } else {
+                        doc->undoStack().undo(*doc);
+                    }
+                } else if (!tool.nodeEditor().pressed() && !ids.empty() && rng.next(3) == 0) {
                     doc->execute(std::make_unique<TransformObjectsCommand>(
                         std::vector<ObjectId>{ids[rng.next(static_cast<std::uint32_t>(ids.size()))]},
                         Transform2::translation({rng.range(-5, 5), rng.range(-5, 5)})));
@@ -191,7 +201,7 @@ std::size_t runSeed(std::uint32_t seed) {
         }
         doc->undoStack().undo(*doc);
     }
-    if (doc->undoStack().index() == setupSteps) {
+    if (!externalUndo && doc->undoStack().index() == setupSteps) {
         REQUIRE(doc->objects() == setupObjects);
     }
     return recorded;

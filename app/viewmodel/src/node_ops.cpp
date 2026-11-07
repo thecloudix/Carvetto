@@ -567,7 +567,8 @@ std::optional<Contour> convertSpan(const Contour& c, std::size_t span, const Con
         }
         case SpanTarget::Arc: {
             std::optional<ArcSpan> arc;
-            if (const auto* existing = std::get_if<ArcSpan>(&s)) {
+            if (const auto* existing = std::get_if<ArcSpan>(&s); existing != nullptr && !spec.through.has_value() &&
+                                                                  !spec.bulge.has_value()) {
                 arc = *existing;
             } else if (spec.through.has_value()) {
                 arc = arcThrough(a, *spec.through, b);

@@ -229,7 +229,7 @@ QMenu* NodeEditMenu::buildMenu(HandleType kind, geometry::Vec2 posMm) {
         QObject::connect(props, &QAction::triggered, menu, [this]() { showProperties(); });
     }
     menu->addSeparator();
-    QAction* exitAction = menu->addAction(QStringLiteral("E&xit"));
+    QAction* exitAction = menu->addAction(QStringLiteral("Exit"));
     QObject::connect(exitAction, &QAction::triggered, menu, [this]() { exit(); });
     return menu;
 }

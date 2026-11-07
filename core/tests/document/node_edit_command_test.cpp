@@ -2,7 +2,9 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
+#include <cstdint>
 #include <limits>
+#include <set>
 #include <memory>
 #include <vector>
 
@@ -146,4 +148,60 @@ TEST_CASE("UndoStack::cancelLast clears the clean point of a dropped step", "[do
     doc.undoStack().setClean();
     REQUIRE(doc.undoStack().cancelLast(doc));
     CHECK_FALSE(doc.undoStack().isClean());
+}
+
+namespace {
+bool pushEdit(Document& doc, ObjectId id, double apex) {
+    return doc.execute(std::make_unique<SetObjectContoursCommand>(
+        std::vector<ContourReplacement>{{id, {triangle(apex)}}}));
+}
+}  // namespace
+
+TEST_CASE("cancelLast bumps the generation, which stays unique", "[document][undo]") {
+    Document doc;
+    const ObjectId id = addRect(doc);
+    std::set<std::uint64_t> seen{doc.undoStack().generation()};
+    auto fresh = [&] { return seen.insert(doc.undoStack().generation()).second; };
+    REQUIRE(pushEdit(doc, id, 7));
+    CHECK(fresh());
+    doc.undoStack().breakCoalescing();
+    REQUIRE(pushEdit(doc, id, 8));  // a coalesced step also changes the generation
+    CHECK(fresh());
+    doc.undoStack().beginMacro("m");
+    REQUIRE(pushEdit(doc, id, 9));
+    CHECK(fresh());  // pushes inside a macro too
+    doc.undoStack().endMacro();
+    REQUIRE(doc.undoStack().cancelLast(doc));
+    CHECK(fresh());
+}
+
+TEST_CASE("cancelLast: clean point, refusals, no coalescing into a cancelled step", "[document][undo]") {
+    Document doc;
+    const ObjectId id = addRect(doc);
+    doc.undoStack().setClean();
+    REQUIRE(pushEdit(doc, id, 7));
+    REQUIRE(doc.undoStack().cancelLast(doc));
+    CHECK(doc.undoStack().isClean());
+    // A different step pushed afterwards is not clean.
+    REQUIRE(pushEdit(doc, id, 9));
+    CHECK_FALSE(doc.undoStack().isClean());
+    REQUIRE(doc.undoStack().cancelLast(doc));
+    CHECK(doc.undoStack().isClean());
+
+    // The step after a cancel starts a new run: it does not merge into whatever came before.
+    REQUIRE(pushEdit(doc, id, 5));
+    doc.undoStack().breakCoalescing();
+    REQUIRE(pushEdit(doc, id, 6));
+    const std::size_t count = doc.undoStack().count();
+    REQUIRE(doc.undoStack().cancelLast(doc));
+    CHECK(doc.undoStack().count() == count - 1);
+    REQUIRE(pushEdit(doc, id, 11));
+    CHECK(doc.undoStack().count() == count);  // not merged into the step before the cancelled one
+
+    // Refusals: inside a macro, with a redo tail.
+    doc.undoStack().beginMacro("m");
+    CHECK_FALSE(doc.undoStack().cancelLast(doc));
+    doc.undoStack().endMacro();
+    REQUIRE(doc.undoStack().undo(doc));
+    CHECK_FALSE(doc.undoStack().cancelLast(doc));
 }
