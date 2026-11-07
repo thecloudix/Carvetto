@@ -22,11 +22,13 @@
 #include <string>
 #include <variant>
 
+#include "array_copy_menu.hpp"
 #include "canvas_widget.hpp"
 #include "carvetto/document/commands.hpp"
 #include "carvetto/document/document.hpp"
 #include "carvetto/document/shape_params.hpp"
 #include "carvetto/geometry/contour.hpp"
+#include "carvetto/viewmodel/array_copies.hpp"
 #include "carvetto/viewmodel/canvas_scene.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/new_job_form.hpp"
@@ -336,6 +338,39 @@ int runSelfTest() {
             return fail("undoing the drawn objects did not empty the document");
         }
         window.selectTool(viewmodel::ToolKind::Select);
+    }
+
+    // 4c. Edit > Copies: a 2 x 2 array of a rectangle through the real window, then undo.
+    {
+        CopiesMenu* copies = window.copies();
+        if (copies == nullptr) {
+            return fail("the main window has no Copies menu");
+        }
+        if (!doc.execute(std::make_unique<document::AddObjectCommand>(document::Object::vector(
+                geometry::Contour::rectangle(geometry::Box2{{0.0, 0.0}, {10.0, 5.0}}), doc.activeLayer(),
+                doc.activeSheet())))) {
+            return fail("could not add a rectangle for the array copy");
+        }
+        doc.selection().assign(doc.objectIds());
+        copies->refresh();
+        if (!copies->arrayAction()->isEnabled() || !copies->circularAction()->isEnabled()) {
+            return fail("Array Copy and Circular Copy are not enabled for a selected rectangle");
+        }
+        viewmodel::ArrayOptions options;
+        options.rows = 2;
+        options.columns = 2;
+        options.xMm = 20.0;
+        options.yMm = 20.0;
+        const viewmodel::CopyResult made = copies->runArray(options, false);
+        if (!made.ok || made.created.size() != 3 || doc.objectCount() != 4) {
+            return fail("the array copy failed: " + made.message);
+        }
+        if (!window.undo() || doc.objectCount() != 1) {
+            return fail("undoing the array copy did not remove all copies in one step");
+        }
+        if (!window.undo() || doc.objectCount() != 0) {
+            return fail("undoing the rectangle failed after the array copy");
+        }
     }
 
     // The live widget tree must also render headlessly.
