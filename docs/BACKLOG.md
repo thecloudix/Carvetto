@@ -817,7 +817,7 @@ Acceptance criteria:
   4. Headless tests for the controller; `carvetto --self-test` drives a tool through the real window; CI Linux + Windows; sources added to the CMake lists in alphabetical positions and main merged before READY.
 Out of scope: freehand, Bezier node drawing, text, dimensions, transform handles, node editing.
 
-### T-0207 Boolean and offset operations on the selection (viewmodel)   [status: verifying]
+### T-0207 Boolean and offset operations on the selection (viewmodel)   [status: done (#77)]
 Phase: 1 (Batch B, wave 2)   Module: app/viewmodel (+ core/document glue)   Depends on: T-0201, T-0003, T-0004, T-0005   ADR: 0014
 Goal: Qt-free operations over the current selection, each one undoable command: Weld (union), Subtract (first minus the rest, or selected-from-picked order per the feature inventory), Intersect, Exclude, and Offset (distance, side, join type; open and closed vectors; Delete original on/off) built on the existing core boolean/offset routines with their documented tolerances. Results become plain vector objects on the source layer (creation parameters of the sources are not kept), keeping holes (hole nesting from core) and winding conventions. Errors (no closed vectors selected, nothing left after the operation, input too large) come back as messages for a dialog, never partial results. Menu enabling rules (`canWeld(selection)` etc.) are in the viewmodel; Qt layer adds Edit/Vectors menu entries and a small offset dialog.
 Acceptance criteria:
