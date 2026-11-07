@@ -16,6 +16,9 @@ add_executable(carvetto_viewmodel_tests
   view_transform_test.cpp
   ruler_test.cpp
   tools_test.cpp
+  transform_form_test.cpp
+  transform_gesture_test.cpp
+  transform_ops_test.cpp
   units_format_test.cpp
   canvas_scene_test.cpp
   array_copies_test.cpp
