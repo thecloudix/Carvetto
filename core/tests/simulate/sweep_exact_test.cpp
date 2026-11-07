@@ -64,6 +64,7 @@ double distToArc(double px, double py, double cx, double cy, double rho, double 
 
 TEST_CASE("simulate: level feed move equals the analytic swept surface for every tool", "[simulate][oracle][segment]") {
     const Stock stock = stockOf(24, 16, 0.25);
+    double worstAll = 0.0;
     for (const NamedTool& t : allTools()) {
         INFO(t.name);
         const double z = -1.5;
@@ -77,11 +78,14 @@ TEST_CASE("simulate: level feed move equals the analytic swept surface for every
         INFO("cells " << w.cells << " max deviation " << w.dev);
         CHECK(w.dev <= kTol);
         CHECK(f.cutCells() > 0);
+        worstAll = std::max(worstAll, w.dev);
     }
+    std::cout << "[oracle] level feed (8 tools): max |cell - analytic| " << worstAll << " mm\n";
 }
 
 TEST_CASE("simulate: plunge into the stock stamps the tool profile", "[simulate][oracle][plunge]") {
     const Stock stock = stockOf(16, 16, 0.2);
+    double worstAll = 0.0;
     for (const NamedTool& t : allTools()) {
         INFO(t.name);
         const Simulator sim = run(stock, t.shape, {8.05, 7.9, 5}, {Move::plunge({8.05, 7.9, -3.0})});
@@ -89,11 +93,13 @@ TEST_CASE("simulate: plunge into the stock stamps the tool profile", "[simulate]
                                         [&](double x, double y) { return std::hypot(x - 8.05, y - 7.9); });
         INFO("max deviation " << w.dev);
         CHECK(w.dev <= kTol);
+        worstAll = std::max(worstAll, w.dev);
         // A retract after it leaves the same hole.
         const Simulator sim2 = run(stock, t.shape, {8.05, 7.9, 5},
                                    {Move::plunge({8.05, 7.9, -3.0}), Move::retract({8.05, 7.9, 5})});
         CHECK(sim2.heightfield().heights() == sim.heightfield().heights());
     }
+    std::cout << "[oracle] plunge (8 tools): max |cell - analytic| " << worstAll << " mm\n";
 }
 
 TEST_CASE("simulate: planar arcs equal the analytic swept surface", "[simulate][oracle][arc]") {
@@ -111,6 +117,7 @@ TEST_CASE("simulate: planar arcs equal the analytic swept surface", "[simulate][
         {"small ccw", true, 15, 15, 0.4, 10, 300},     {"tiny sweep cw", false, 15, 15, 8, 100, 4},
         {"just over a quarter", true, 15, 15, 8, 89, 91}, {"exact quarters cw", false, 15, 15, 10, 270, 180},
     };
+    double worstAll = 0.0;
     for (const NamedTool& t : allTools()) {
         for (const ArcCase& a : cases) {
             INFO(t.name << " / " << a.name);
@@ -132,8 +139,11 @@ TEST_CASE("simulate: planar arcs equal the analytic swept surface", "[simulate][
             });
             INFO("max deviation " << w.dev);
             CHECK(w.dev <= kTol);
+            worstAll = std::max(worstAll, w.dev);
         }
     }
+    std::cout << "[oracle] planar arcs (8 tools x 12 arcs, CW/CCW, full circles): max |cell - analytic| " << worstAll
+              << " mm\n";
 }
 
 TEST_CASE("simulate: sloped segments and helices stay inside the sampled oracle's bounds", "[simulate][oracle][helix]") {

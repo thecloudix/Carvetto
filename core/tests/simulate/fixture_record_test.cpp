@@ -110,7 +110,6 @@ Outcome simulateAndCompare(const Record& rec, double cell, double stockThickness
     for (const auto& d : sim.diagnostics()) {
         INFO(label << ": diagnostic kind " << static_cast<int>(d.kind) << " at move " << d.move);
     }
-    Heightfield oracleMin = sim.heightfield();  // only for its geometry
     std::vector<Samples> sets;
     std::vector<Profile> profiles;
     for (std::size_t k = 0; k < rec.paths.size(); ++k) {
