@@ -1,6 +1,7 @@
 #include "carvetto/document/commands.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <map>
 #include <optional>
@@ -11,6 +12,7 @@
 #include <vector>
 
 #include "carvetto/document/document.hpp"
+#include "carvetto/document/shape_params.hpp"
 
 namespace carvetto::document {
 
@@ -91,11 +93,129 @@ bool canTakeId(const Document& doc, std::uint64_t presetId) {
     return presetId < IdGenerator::kMaxId && presetId >= doc.idGenerator().peek() && !idInUse(doc, presetId);
 }
 
+namespace {
+
+// Rounds `v` to -1, 0 or 1 when it is within 1e-12 of it (a rigid axis-aligned map has only such
+// entries); 2 when it is not.
+int axisEntry(double v) {
+    for (int r = -1; r <= 1; ++r) {
+        const double d = v - static_cast<double>(r);
+        if (d < 1e-12 && d > -1e-12) {
+            return r;
+        }
+    }
+    return 2;
+}
+
+// Quarter turns (0..3) when the linear part of `m` is, to 1e-12 on every entry, a rotation by a
+// multiple of 90 degrees (a pure translation is 0); -1 for anything else, including every
+// mirroring, scaling and near-miss rotation.
+int quarterTurns(const geometry::Transform2& m) {
+    const int a = axisEntry(m.a);
+    const int b = axisEntry(m.b);
+    const int c = axisEntry(m.c);
+    const int d = axisEntry(m.d);
+    if (a == 2 || b == 2 || c == 2 || d == 2 || a != d || b != -c || a * a + b * b != 1) {
+        return -1;
+    }
+    if (a == 1) {
+        return 0;
+    }
+    if (a == -1) {
+        return 2;
+    }
+    return c > 0 ? 1 : 3;
+}
+
+// Candidate parameters after `m`: the centre moves, a rectangle swaps its sides on odd turns and
+// an ellipse/polygon/star adds the turn to its angle.
+CreationParams candidateParams(const CreationParams& params, const geometry::Transform2& m, int turns) {
+    constexpr double kHalfPi = 1.57079632679489661923;
+    return std::visit(
+        [&](const auto& p) -> CreationParams {
+            using T = std::decay_t<decltype(p)>;
+            if constexpr (std::is_same_v<T, NoParams>) {
+                return p;
+            } else {
+                T q = p;
+                q.centreMm = m.apply(p.centreMm);
+                if constexpr (std::is_same_v<T, RectangleParams>) {
+                    if (turns % 2 == 1) {
+                        std::swap(q.widthMm, q.heightMm);
+                    }
+                } else if constexpr (std::is_same_v<T, EllipseParams> || std::is_same_v<T, PolygonParams> ||
+                                     std::is_same_v<T, StarParams>) {
+                    q.angle = p.angle + turns * kHalfPi;
+                }
+                return q;
+            }
+        },
+        params);
+}
+
+// True when the rebuilt contours equal the transformed ones span by span (same kinds, same end
+// points and mid points, same start), within `tol`.
+bool sameSpans(const std::vector<geometry::Contour>& a, const std::vector<geometry::Contour>& b, double tol) {
+    const auto close = [tol](geometry::Vec2 p, geometry::Vec2 q) {
+        return std::abs(p.x - q.x) <= tol && std::abs(p.y - q.y) <= tol;
+    };
+    if (a.size() != b.size()) {
+        return false;
+    }
+    for (std::size_t i = 0; i < a.size(); ++i) {
+        if (a[i].closed != b[i].closed || a[i].spans.size() != b[i].spans.size()) {
+            return false;
+        }
+        for (std::size_t k = 0; k < a[i].spans.size(); ++k) {
+            const geometry::Span& sa = a[i].spans[k];
+            const geometry::Span& sb = b[i].spans[k];
+            if (sa.index() != sb.index() || !close(geometry::startPoint(sa), geometry::startPoint(sb)) ||
+                !close(geometry::endPoint(sa), geometry::endPoint(sb)) ||
+                !close(geometry::pointAt(sa, 0.5), geometry::pointAt(sb, 0.5))) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+// Creation parameters of a vector after `m` was applied to its contours (`moved`). They are kept
+// only when the map is a translation or a 90-degree multiple AND rebuilding the shape from the
+// new parameters reproduces `moved` exactly, start point and direction included; otherwise the
+// object becomes a plain vector (`NoParams`). So in practice translations keep them; a quarter turn
+// keeps them only for shapes whose rebuilt start is the turned start (polygons, stars, some ellipses).
+CreationParams keptParams(const CreationParams& params, const geometry::Transform2& m,
+                          const std::vector<geometry::Contour>& moved) {
+    if (std::holds_alternative<NoParams>(params)) {
+        return params;
+    }
+    const int turns = quarterTurns(m);
+    if (turns < 0) {
+        return NoParams{};
+    }
+    const CreationParams candidate = candidateParams(params, m, turns);
+    const auto rebuilt = buildContours(candidate);
+    if (!rebuilt.ok()) {
+        return NoParams{};
+    }
+    double reach = 0.0;
+    for (const geometry::Contour& c : moved) {
+        const geometry::Box2 b = c.bounds();
+        reach = std::max({reach, std::abs(b.min.x), std::abs(b.min.y), std::abs(b.max.x), std::abs(b.max.y)});
+    }
+    return sameSpans(rebuilt.value(), moved, 1e-9 + 1e-14 * reach) ? candidate : CreationParams{NoParams{}};
+}
+
+}  // namespace
+
 void transformData(ObjectData& data, const geometry::Transform2& m) {
     std::visit(
         [&m](auto& payload) {
             using T = std::decay_t<decltype(payload)>;
-            if constexpr (!std::is_same_v<T, GroupObject>) {
+            if constexpr (std::is_same_v<T, VectorObject>) {
+                payload.transform(m);
+                payload.params = keptParams(payload.params, m, payload.contours);
+            } else if constexpr (!std::is_same_v<T, GroupObject>) {
                 payload.transform(m);
             }
         },
