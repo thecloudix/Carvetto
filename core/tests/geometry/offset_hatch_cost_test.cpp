@@ -109,7 +109,7 @@ TEST_CASE("T-0016: dense zig-zag, Sharp and Square: one chain on the chamfer lin
     }
 }
 
-TEST_CASE("T-0016 AC1: dense zig-zag, Sharp and Square cost within 3x of Round (CPU-time ratio)",
+TEST_CASE("T-0016 AC1: dense zig-zag, Sharp and Square cost bounded against Round (CPU-time ratio)",
           "[geometry][offset][open][t0016][perf]") {
     // The card's case is 1000 spans, pitch 0.02, amplitude 1, d = 7: before T-0016 Sharp and
     // Square took 10-30x as long as Round (~14-20 s vs 0.7 s in Release; measured in the T-0016
@@ -140,7 +140,11 @@ TEST_CASE("T-0016 AC1: dense zig-zag, Sharp and Square cost within 3x of Round (
             });
         CHECK(spans > 0);
         CAPTURE(t.smallSeconds, t.largeSeconds, t.ratio());
-        CHECK(t.ratio() < 3.0);
+        // T-0168 made Round on this zig-zag ~8x faster (its long arcs are mostly inside the
+        // neighbourhood of single input points), while Sharp and Square, whose collinear chamfer
+        // copies still split each other, did not change. The 3x bound of T-0016 against the old
+        // Round is therefore 30x against the new one; before T-0016 the ratio was ~15 x 8 = 120.
+        CHECK(t.ratio() < 30.0);
     }
 }
 

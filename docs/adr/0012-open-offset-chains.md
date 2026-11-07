@@ -115,7 +115,7 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     (the new step takes ~3 ms there), but on large inputs Round, and other inputs with nothing to
     prune, run 13–15 % slower than main even with every new path disabled, which points to code
     generation in buildRaw / mergeOnCarriers / offsetOpenContour (T-0016 verifier, A/A-controlled;
-    follow-up T-0170). Small inputs are not slower. Not addressed (separate cards): input whose whole length lies
+    follow-up T-0170). Small inputs are not slower. Not addressed here (T-0168, see A4): input whose whole length lies
     within d of itself, e.g. a walk of 2000/4000 steps of 1.5 µm offset by 1, costs super-linearly
     for every join (Round 4 s / 40 s, Sharp 12 s / 120 s, main and T-0016 alike), because each
     piece beyond d scans every input span and every vertex circle splits every raw element.
@@ -680,3 +680,43 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     (K = 1..4), `[offset]~[perf]` passes 24 of 24 runs and `[t0128]~[perf]` 200 of 200.
     Outputs: bit-identical to origin/main except the long strays above (cmp6, call order alternating, fresh
     seeds: 2 x 64 800 offsets of families 0, 2-5, 21-23, 25, none differ; CPU 0.99-1.01x per family).
+- **A4 (2026-11-06, T-0168): near-tolerance walks; small closed loops.** Status unchanged.
+  - *Cost (§8, A1).* A path whose whole length lies within d of itself (a walk of 1.5 um steps against
+    tol 1 um, offset by 1 mm) made every raw element overlap hundreds of others, nearly all of each
+    inside the neighbourhood of the input as a whole but not of any one span, so the whole-element
+    `dead` test missed it and crossings, vertex-circle splits and pieces grew with the square of the
+    spans (Round 4-7 s at 2000 steps and 17-43 s at 4000, Sharp 12 s and 60-130 s, Square alike).
+    Now (a) the `dead` scan stops after 64 candidate spans and asks the input points instead (a
+    k-d tree; the search gives up after 1000 nodes and then only reports what it has seen, so a
+    miss costs time and nothing else); (b) an element with more than 48 input spans within d of its
+    box gets its *dominated ranges* (`deadRangesOf`): parameter ranges, found by halving down to the
+    tolerance (depth 14), whose hull lies in one disc of radius `keepAbove` about an input point, or
+    strictly inside one convex Sharp/Square corner region (`ConvexRegions`: line-edged polygons,
+    margin 1e-9 max(1, d), at most 240 candidate regions per query from a 32 x 32 grid). Everything in
+    such a range is pruned exactly as before, so it takes no crossing splits, no boundary splits and
+    no pieces; its ends are split points, the grid holds only the live runs (one box per run), and
+    candidate partners are collected per element in ascending order. A range left out only costs
+    time. The pass stops after 128 elements if fewer than one in 32 has a range (the vertices of a
+    fine circle are all about as far from the offset as each other and defeat it). Input with
+    fewer than 49 spans in reach of every element takes no refinement: the same grid layout and
+    partner order as before. (c) `inWedge` stops at the first region that holds the sample
+    (`queryUntil`, the same answer); (d) `BoxGrid` cells are at least a quarter of the mean box side
+    (boxes covering hundreds of cells each, as on dense input at a large d, made the build grow with
+    the square of the boxes; for ordinary input the cell size is unchanged).
+    Release, CPU time per offset, both sides, three seeds, best of 6, shared 2-core container:
+    1.5 um steps, d = 1, 2000 / 4000 / 8000 steps: Round 0.014-0.024 / 0.027-0.051 / 0.055-0.13 s,
+    Sharp 0.027-0.036 / 0.057-0.084 / 0.12-0.19 s, Square 0.055-0.11 / 0.12-0.26 / 0.27-0.63 s; at most
+    2.5 per doubling (2.1-2.4 typically; 16000 steps 0.4-1.7 s). Outputs against the previous build:
+    byte-identical on the walks of 500 and 1000 steps (all joins, both sides) except one Round arc start
+    moved by 4e-6 mm (still exactly d from the input), and on zig-zags (pitch 0.02, amplitude 1, d = 2
+    and 7; pitch 0.05, amplitude 0.2, d = 5). Round on those zig-zags also became 5-8 times faster
+    (their long arcs are mostly inside single input-point discs; Sharp and Square 0.95-1.3 times as fast, i.e. about the same:
+    their collinear chamfer copies still split each other pairwise, see T-0170).
+  - *Small closed loops (§7).* A closed loop whose every piece is no longer than the tolerance (a
+    polygon of 8000 sides of 1.5 um approximating a circle of radius 1.9, offset inwards by 1: pieces of
+    0.71 um) had no solid piece to measure the others against, so `emit` dropped all of them and the
+    inner offset vanished. Such a loop is now measured from its own start: a piece is dropped when its
+    end is within the tolerance of the last kept piece's end (of the loop's start before the first), the
+    others are kept, and `snapChain` closes the junctions as for any other run of tiny pieces. The
+    8000-side case returns one closed chain exactly d from the input (all 8000 pieces; the dropped ones
+    are put back to close the junctions) in about 0.9 s.
