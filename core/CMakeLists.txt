@@ -96,6 +96,7 @@ add_library(carvetto_core STATIC
   src/geometry/intersect.cpp
   src/geometry/robust_predicates.cpp
   src/geometry/delaunay.cpp
+  src/geometry/edit_ops.cpp
   src/geometry/medial_axis.cpp
   src/toolpath/move.cpp
   src/toolpath/toolpath.cpp
@@ -132,6 +133,10 @@ add_library(carvetto_core STATIC
   src/io/dxf_colour.cpp
   src/io/dxf_import.cpp
   src/io/dxf_export.cpp
+  src/io/svg_export.cpp
+  src/io/svg_import.cpp
+  src/io/svg_path.cpp
+  src/io/svg_xml.cpp
   src/toolpath/pocket.cpp
   src/toolpath/drill.cpp
   src/toolpath/engrave.cpp

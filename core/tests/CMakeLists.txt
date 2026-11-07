@@ -8,6 +8,9 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Catch2)
 
 add_executable(carvetto_tests
+  geometry/bezier_work_bounds_test.cpp
+  geometry/gap_trail_test.cpp
+  geometry/hit_index_test.cpp
   geometry/vec2_test.cpp
   geometry/box2_test.cpp
   geometry/transform2_test.cpp
@@ -29,6 +32,8 @@ add_executable(carvetto_tests
   geometry/medial_axis_test.cpp
   geometry/medial_axis_robustness_test.cpp
   geometry/delaunay_test.cpp
+  geometry/edit_ops_test.cpp
+  geometry/edit_ops_fuzz_test.cpp
   toolpath/move_test.cpp
   toolpath/toolpath_test.cpp
   toolpath/pass_plan_test.cpp
@@ -84,6 +89,10 @@ add_executable(carvetto_tests
   io/dxf_export_test.cpp
   io/dxf_curves_test.cpp
   io/dxf_fuzz_test.cpp
+  io/svg_export_test.cpp
+  io/svg_fuzz_test.cpp
+  io/svg_import_test.cpp
+  io/svg_xml_test.cpp
   toolpath/pocket_coverage_test.cpp
   toolpath/pocket_test.cpp
   toolpath/pocket_gouge_test.cpp
@@ -119,6 +128,7 @@ target_compile_definitions(carvetto_tests PRIVATE
   CARVETTO_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
   CARVETTO_STARTER_TOOLS="${PROJECT_SOURCE_DIR}/data/tools/starter_tools.json"
   CARVETTO_DXF_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dxf"
+  CARVETTO_SVG_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/svg"
   CARVETTO_POCKET_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/pocket"
 )
 target_link_libraries(carvetto_tests PRIVATE carvetto::core Catch2::Catch2WithMain carvetto_warnings)

@@ -263,6 +263,35 @@ TEST_CASE("arc: start, end, radius picks the requested arc", "[shapes]") {
     CHECK_FALSE(buildArcStartEndRadius({0, 0}, {1, 0}, -1, ArcDirection::CCW, false).ok());
 }
 
+TEST_CASE("arc: start, end, height", "[shapes]") {
+    const Vec2 s{0, 0};
+    const Vec2 e{4, 0};
+    // Positive height bulges left (up) and travels clockwise; negative the opposite.
+    for (double h : {1.0, 2.0, 3.5, -1.0, -2.0, -3.5}) {
+        const Contour c = need(buildArcStartEndHeight(s, e, h));
+        const auto& a = std::get<ArcSpan>(c.spans[0]);
+        CHECK(a.direction == (h > 0 ? ArcDirection::CW : ArcDirection::CCW));
+        CHECK(kTol.equalPoints(c.startPoint(), s));
+        CHECK(kTol.equalPoints(c.endPoint(), e));
+        const double r = (4.0 + h * h) / (2.0 * std::fabs(h));
+        CHECK_THAT(a.radius, WithinRel(r, 1e-12));
+        // The arc midpoint is the apex: `h` from the chord midpoint on the bulge side.
+        const Vec2 apex = a.pointAt(0.5);
+        CHECK_THAT(apex.x, WithinAbs(2.0, 1e-9));
+        CHECK_THAT(apex.y, WithinAbs(h, 1e-9));
+        CHECK_THAT(std::fabs(a.sweepAngle()) > kPi ? 1.0 : 0.0, WithinAbs(std::fabs(h) > 2.0 ? 1.0 : 0.0, 0.0));
+    }
+    // Height equal to half the chord is the semicircle.
+    CHECK_THAT(need(buildArcStartEndHeight(s, e, 2.0)).length(), WithinRel(kPi * 2, 1e-12));
+    CHECK_FALSE(buildArcStartEndHeight(s, s, 1.0).ok());
+    CHECK_FALSE(buildArcStartEndHeight(s, e, 0.0).ok());
+    CHECK_FALSE(buildArcStartEndHeight(s, e, std::numeric_limits<double>::quiet_NaN()).ok());
+    // Agrees with the three-point builder through the apex.
+    const Contour viaThree = need(buildArcThreePoint(s, {2, 1.5}, e));
+    const Contour viaHeight = need(buildArcStartEndHeight(s, e, 1.5));
+    CHECK_THAT(viaHeight.length(), WithinRel(viaThree.length(), 1e-9));
+}
+
 TEST_CASE("property: random parameters give valid, continuous, correct-area contours", "[shapes]") {
     std::mt19937 rng(12345);
     auto uni = [&](double lo, double hi) { return std::uniform_real_distribution<double>(lo, hi)(rng); };

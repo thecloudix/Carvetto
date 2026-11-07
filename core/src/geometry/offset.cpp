@@ -1032,6 +1032,16 @@ bool nearerThan(Vec2 p, const Span& s, double limit) {
             }
         }
     }
+    if (const auto* arc = std::get_if<ArcSpan>(&s)) {
+        // T-0176: every point of the arc lies on its circle, so the distance is at least
+        // |rho - r| (rho = distance of p from the centre), whichever branch distanceToSpan takes.
+        // When that is clearly at least `limit` the answer is "no" without the angle (atan2,
+        // two fmods) and the two hypots. The margin covers the ulps of the square root and of
+        // the endpoints' coordinates (computed from angles) at the scale of the inputs.
+        if (detail::arcClearlyFarther(p, arc->centre, arc->radius, limit)) {
+            return false;
+        }
+    }
     return distanceToSpan(p, s) < limit;
 }
 

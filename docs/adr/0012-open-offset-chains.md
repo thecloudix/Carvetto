@@ -736,9 +736,41 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     expressions (660 offsets of zig-zags, saws, hatches, filleted zig-zags, walks, spirals, sines, every
     join and side, two mitre limits, compared bit for bit with the build before: no difference). The
     result is within 3 % of the build before T-0016 on those inputs (1.00–1.02 against an A/A control of ±1 %); that holds for line inputs up to about 20 000 spans (spiral 8000, sine 16000).
-    **Arcs are not recovered:** the replacements cover lines only (arcs still use hypot, atan2 and fabs), and a filleted-arc zig-zag Round offset with nothing to prune (arc 50000, 100 000 spans) is still about +8 % against the build before T-0016, a 300 000-span zig-zag +3 to +13 %. Carded as follow-up T-0176. The shortcuts live in `offset_shortcuts.hpp`; they fall back to the exact expression when a square would be denormal or too large (squares outside 1e-250..1e250). On the T-0016
+    **Arcs were not recovered by T-0170** (see the T-0176 follow-up below). The shortcuts live in `offset_shortcuts.hpp`; they fall back to the exact expression when a square would be denormal or too large (squares outside 1e-250..1e250). On the T-0016
     verifier's dense inputs (zig-zag, filleted zig-zag, saw, hatch, d = 7) Round is 2–40× faster than
     before T-0016, which T-0168 made possible, so there is nothing left to recover there.
+  - *Arcs and the 200 000-span zig-zag (T-0176).* Profiling the filleted-arc zig-zag (arc 50000, 100 000
+    spans, d = 0.004, Round, nothing to prune) showed that the cost was not hypot but `normalizeAngle`
+    (`std::fmod`, 6 % of the time) and `Vec2::fromAngle` (`sincos`), both reached through
+    `ArcSpan::bounds`, which is called about eight times per arc and called `containsAngle` (hence
+    `sweepAngle`, hence two fmods) for each of the four axis angles. Three changes, all bit-exact:
+    `normalizeAngle` returns its argument (or argument + 2 pi) without `fmod` when |x| < 2 pi, which is
+    what `fmod` returns there; `ArcSpan::bounds` computes the sweep once and takes cos/sin of the four
+    fixed axis angles from a table evaluated once (the same `std::cos`/`std::sin` calls, so the same
+    values); `nearerThan` for an arc answers "no" from `|rho - r| > limit + margin` (rho the distance of
+    the point from the centre; every point of the arc is on the circle, so the exact distance is at
+    least that on either branch), the margin covering the square root and the endpoints' coordinates at
+    the scale of the inputs (`arcClearlyFarther` in `offset_shortcuts.hpp`: squares outside
+    1e-250..1e250, non-finite values and a margin larger than the limit all give "not clear"). Unit tests
+    check the three against the exact expressions at denormal and huge magnitudes. Outputs are
+    bit-identical: the T-0170 verifier's hash corpus (36 offsets per seed over lines, arcs, degenerate and near-tolerance
+    families at scales 1e-150..1e150, 97 800 offsets for seeds 0..141, 1000..1574, 2000..2905, 2908..2999 and 3000..3999 (the other seeds were not finished within the time limit or exceed the harness's 4 GB limit in both builds), plus 54 000 integer-grid offsets) matches the build before this change bit for bit.
+    Measured in a Release build on a shared machine (load average about 15 of 16, so the A/A control is the
+    limit of what can be resolved): interleaved CPU time, minimum of 11 alternating runs, ratio to the build
+    before T-0016 (A/A control in brackets): arc 50000 Round **0.98..1.00** (main before this change 1.08;
+    A/A 1.00..1.005, cycles likewise, instructions +3.9 % against main's +7.6 %). **Not recovered with
+    certainty:** zz 200000 Round (whose round joins are arcs) went from 1.03..1.12 on main to 0.98..1.04
+    in two runs of 11 and 13 alternations, but its A/A spread (2..6 %) is larger than the 3 % criterion, so
+    "within 3 %" cannot be asserted from timings on this machine. The instruction count, which does not
+    depend on the load, is still +5.5 % against the build before T-0016 (main +6.3 %); it is spread over
+    many small items (grid queries, `mergeOnCarriers`, the point tree) and no single hot spot was left to
+    remove without changing results. The cycle count is at parity at best and +5 % at worst.
+    *Criterion as accepted by the director:* arc 50000 within 3 % of the build before T-0016 (met: 0.98..1.00;
+    the T-0176 verifier measured 0.983 and 0.986 against main's 1.08 and 1.10); zz 200000 no worse than main
+    (met: branch/main 0.967..0.994 in the verifier's runs; against the build before T-0016 0.97..1.05) with
+    the instruction count reported (+5.5 % against +6.3 % for main); the remaining cost is spread over many
+    small items. The unit tests also cover the scale term of the arc margin (large coordinates, small radius
+    and limit, exact distance 0) and the tolerance windows of `ArcSpan::bounds`.
   - *Growth per doubling of the span count* (Release CPU seconds, minimum of 3–7, pitch 0.02,
     amplitude 1, hatch rows 3 mm, d = 7, left side, mitre limit 2; at 4000 spans the path is 80 mm
     long = 5.7 d):

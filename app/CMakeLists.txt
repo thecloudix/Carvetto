@@ -4,6 +4,8 @@ qt_standard_project_setup()
 
 qt_add_executable(carvetto
   src/main.cpp
+  src/array_copy_menu.cpp
+  src/array_copy_menu.hpp
   src/main_window.cpp
   src/main_window.hpp
   src/canvas_widget.cpp
@@ -12,6 +14,8 @@ qt_add_executable(carvetto
   src/ruler_widget.hpp
   src/new_job_dialog.cpp
   src/new_job_dialog.hpp
+  src/tool_panel.cpp
+  src/tool_panel.hpp
   src/self_test.cpp
   src/self_test.hpp
   src/vector_ops_menu.cpp

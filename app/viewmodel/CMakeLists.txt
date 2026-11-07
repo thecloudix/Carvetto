@@ -4,8 +4,10 @@ add_library(carvetto_viewmodel STATIC
   src/vector_ops.cpp
   src/view_transform.cpp
   src/ruler.cpp
+  src/tools.cpp
   src/units_format.cpp
   src/canvas_scene.cpp
+  src/array_copies.cpp
   src/pixel_probe.cpp
   src/new_job_form.cpp
   src/dxf_exchange.cpp

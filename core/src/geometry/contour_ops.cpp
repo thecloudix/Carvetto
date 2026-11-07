@@ -415,6 +415,22 @@ void isolateRoots(const BezierSpan& s, Vec2 q, const Quintic& c, double t0, doub
 }  // namespace
 
 ClosestPoint closestPoint(const BezierSpan& s, Vec2 p) {
+    // The quintic below is built from products of two coordinates (squares of the extent): control
+    // values beyond ~1e100 are scaled down by an exact power of two first so they cannot overflow
+    // (T-0178); t is unchanged and the point and distance scale back.
+    {
+        double big = 0.0;
+        for (const Vec2 v : {s.p0, s.p1, s.p2, s.p3, p}) {
+            big = std::max(big, std::max(std::fabs(v.x), std::fabs(v.y)));
+        }
+        if (big > 1e100 && std::isfinite(big)) {
+            int e = 0;
+            std::frexp(big, &e);
+            const auto down = [e](Vec2 v) { return Vec2{std::ldexp(v.x, -e), std::ldexp(v.y, -e)}; };
+            const ClosestPoint r = closestPoint(BezierSpan{down(s.p0), down(s.p1), down(s.p2), down(s.p3)}, down(p));
+            return {Vec2{std::ldexp(r.point.x, e), std::ldexp(r.point.y, e)}, r.t, std::ldexp(r.distance, e)};
+        }
+    }
     // Global minimum of |B(t) - p| over [0,1]: it is attained at an end point or at a root of
     // g(t) = (B(t) - p) . B'(t). All roots of that quintic are isolated (see isolateRoots), so
     // every local minimum is a candidate and the best one is global, unlike a seeded Newton search.

@@ -436,14 +436,38 @@ std::vector<Snap> SnapIndex::candidates(const ViewTransform& view, Vec2 cursorPx
         }
 
         if (settings.isEnabled(SnapKind::Intersection)) {
-            for (std::size_t a = 0; a < closeSpans.size(); ++a) {
-                const SpanEntry& ea = spans_[closeSpans[a].entry];
+            // Pairwise search on the `kMaxPairSpans` spans nearest to the cursor (T-0204 bound: the
+            // work is at most kMaxPairSpans^2 / 2 span pairs however dense the drawing is). A pair
+            // whose boxes overlap only outside the cursor window cannot produce a snap and is
+            // skipped without loss.
+            std::vector<NearSpan> pairSpans = closeSpans;
+            if (pairSpans.size() > kMaxPairSpans) {
+                std::stable_sort(pairSpans.begin(), pairSpans.end(), [](const NearSpan& a, const NearSpan& b) {
+                    return a.distanceMm < b.distanceMm;
+                });
+                pairSpans.resize(kMaxPairSpans);
+                std::sort(pairSpans.begin(), pairSpans.end(),
+                          [](const NearSpan& a, const NearSpan& b) { return a.entry < b.entry; });
+            }
+            const Box2 clip = window.inflated(settings.tolerance.distance);
+            for (std::size_t a = 0; a < pairSpans.size(); ++a) {
+                const SpanEntry& ea = spans_[pairSpans[a].entry];
                 const Span& sa = ea.contour->spans[ea.spanIndex];
                 const Box2 ba = geometry::bounds(sa).inflated(settings.tolerance.distance);
-                for (std::size_t b = a + 1; b < closeSpans.size(); ++b) {
-                    const SpanEntry& eb = spans_[closeSpans[b].entry];
+                if (!ba.intersects(clip)) {
+                    continue;
+                }
+                for (std::size_t b = a + 1; b < pairSpans.size(); ++b) {
+                    const SpanEntry& eb = spans_[pairSpans[b].entry];
                     const Span& sb = eb.contour->spans[eb.spanIndex];
-                    if (!ba.intersects(geometry::bounds(sb))) {
+                    const Box2 bb = geometry::bounds(sb);
+                    if (!ba.intersects(bb)) {
+                        continue;
+                    }
+                    // Any crossing lies in both boxes; if that common box misses the window, so does it.
+                    const Box2 common{Vec2{std::max(ba.min.x, bb.min.x), std::max(ba.min.y, bb.min.y)},
+                                      Vec2{std::min(ba.max.x, bb.max.x), std::min(ba.max.y, bb.max.y)}};
+                    if (!common.intersects(clip)) {
                         continue;
                     }
                     std::vector<Vec2> junctions;
