@@ -582,3 +582,28 @@ TEST_CASE("picking 10k objects uses the spatial index", "[viewmodel][selection][
         CHECK(a->object == b->object);
     }
 }
+
+TEST_CASE("marquee and picking terminate on an arc of huge or infinite radius", "[viewmodel][selection][cap]") {
+    // T-0182: the marquee polygonised such an arc with ~radius / tolerance points (hang, growing memory).
+    const double inf = std::numeric_limits<double>::infinity();
+    for (const double radius : {1e12, 1e100, 1.7e308, inf}) {
+        Document doc;
+        Contour c;
+        c.closed = false;
+        geometry::ArcSpan a;
+        a.centre = {50.0, -radius};
+        a.radius = radius;
+        a.startAngle = 1.2;
+        a.endAngle = 1.9;
+        c.spans.emplace_back(a);
+        addVector(doc, c);
+        const ViewTransform view = makeView();
+        const auto t0 = std::chrono::steady_clock::now();
+        const Box2 rectPx{{0.0, 0.0}, {900.0, 700.0}};
+        (void)viewmodel::marqueeSelect(doc, view, rectPx, MarqueeMode::Crossing);
+        (void)viewmodel::marqueeSelect(doc, view, rectPx, MarqueeMode::Window, FillHit::StrokeAndFill);
+        const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+        INFO("radius " << radius);
+        CHECK(seconds < 5.0);
+    }
+}

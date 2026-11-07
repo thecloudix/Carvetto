@@ -2,12 +2,15 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
+#include <chrono>
 #include <cmath>
+#include <limits>
 #include <memory>
 
 #include "carvetto/document/commands.hpp"
 #include "carvetto/document/document.hpp"
 #include "carvetto/geometry/contour.hpp"
+#include "carvetto/geometry/span.hpp"
 
 using namespace carvetto::document;
 using carvetto::geometry::Box2;
@@ -112,4 +115,30 @@ TEST_CASE("scene skips hidden layers, other sheets and off-screen objects", "[vi
     auto addSheet = std::make_unique<AddSheetCommand>(Sheet::fromJob(doc.job(), "Sheet 2"), true);
     REQUIRE(doc.execute(std::move(addSheet)));
     CHECK(buildCanvasScene(doc, view).paths.empty());
+}
+
+TEST_CASE("scene building terminates on an arc of huge or infinite radius", "[viewmodel][scene][cap]") {
+    // T-0182: the arc polygon is capped (kMaxArcSegments chords) whatever the radius.
+    const double inf = std::numeric_limits<double>::infinity();
+    for (const double radius : {1e12, 1e100, 1.7e308, inf}) {
+        Document doc(Job::singleSided(254.0, 254.0, 18.0, Units::Millimetres));
+        const ViewTransform view = fittedView(doc);
+        Contour c;
+        carvetto::geometry::ArcSpan a;
+        a.centre = {127.0, 127.0 - radius};
+        a.radius = radius;
+        a.startAngle = 1.2;
+        a.endAngle = 1.9;
+        c.spans.emplace_back(a);
+        REQUIRE(doc.execute(std::make_unique<AddObjectCommand>(
+            Object::vector(c, doc.activeLayer(), doc.activeSheet()))));
+        const auto t0 = std::chrono::steady_clock::now();
+        const auto scene = buildCanvasScene(doc, view);
+        const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+        INFO("radius " << radius);
+        CHECK(seconds < 5.0);
+        for (const auto& path : scene.paths) {
+            CHECK(path.pointsPx.size() <= carvetto::geometry::kMaxArcSegments + 1);
+        }
+    }
 }

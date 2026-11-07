@@ -109,19 +109,44 @@ std::vector<BezierSpan> ArcSpan::toBeziers() const {
     return out;
 }
 
-std::size_t ArcSpan::segmentCountFor(double chordalTol) const {
-    const double sweep = std::fabs(sweepAngle());
-    if (radius <= 0.0) {
-        return 1;
+namespace {
+
+// Chord count an arc needs for `chordalTol`, before the cap; 0 for a non-finite arc.
+// (kMaxArcSegments, T-0182, ADR-0005 A2.) Returns +inf-safe doubles: the caller clamps.
+double arcSegmentsWanted(const ArcSpan& a, double chordalTol) {
+    const double sweep = std::fabs(a.sweepAngle());
+    if (!std::isfinite(a.radius) || !std::isfinite(sweep) || !std::isfinite(a.centre.x) || !std::isfinite(a.centre.y)) {
+        return 0.0;
     }
-    if (chordalTol <= 0.0 || chordalTol >= radius) {
+    if (a.radius <= 0.0) {
+        return 1.0;
+    }
+    if (!(chordalTol > 0.0) || chordalTol >= a.radius) {
         // Degenerate tolerance: fall back to a coarse but sane subdivision.
-        return std::max<std::size_t>(1, static_cast<std::size_t>(std::ceil(sweep / (kPi * 0.5))));
+        return std::max(1.0, std::ceil(sweep / (kPi * 0.5)));
     }
     // Chordal deviation of a chord spanning angle a is r*(1 - cos(a/2)).
-    const double maxStep = 2.0 * std::acos(1.0 - chordalTol / radius);
-    const auto n = static_cast<std::size_t>(std::ceil(sweep / maxStep - 1e-9));
-    return std::max<std::size_t>(1, n);
+    const double maxStep = 2.0 * std::acos(1.0 - chordalTol / a.radius);
+    return std::max(1.0, std::ceil(sweep / maxStep - 1e-9));
+}
+
+}  // namespace
+
+std::size_t ArcSpan::segmentCountFor(double chordalTol) const {
+    const double wanted = arcSegmentsWanted(*this, chordalTol);
+    if (wanted == 0.0) {
+        return 1;  // non-finite arc: nothing sensible to subdivide
+    }
+    // `!(wanted <= cap)` also catches +inf (tolerance below what the radius can resolve) and NaN.
+    if (!(wanted <= static_cast<double>(kMaxArcSegments))) {
+        return kMaxArcSegments;
+    }
+    return static_cast<std::size_t>(wanted);
+}
+
+bool ArcSpan::segmentCountIsCapped(double chordalTol) const {
+    const double wanted = arcSegmentsWanted(*this, chordalTol);
+    return wanted == 0.0 || !(wanted <= static_cast<double>(kMaxArcSegments));
 }
 
 // -------------------------------------------------------------- BezierSpan
@@ -183,21 +208,25 @@ double bezierLengthRecursive(const BezierSpan& b, double absTol, int depth, int&
 constexpr int kPolygoniseMaxSplits = 1 << 20;
 
 void bezierPolygoniseRecursive(const BezierSpan& b, double chordalTol, int depth, std::vector<Vec2>& out,
-                               int& splits, int minDepth = 0) {
-    if ((depth >= minDepth && b.flatness() <= chordalTol) || depth >= 24 || splits <= 0) {
+                               int& splits, bool* coarse, int minDepth = 0) {
+    const bool flat = depth >= minDepth && b.flatness() <= chordalTol;
+    if (flat || depth >= 24 || splits <= 0) {
+        if (!flat && coarse != nullptr) {
+            *coarse = true;
+        }
         out.push_back(b.p3);
         return;
     }
     --splits;
     const auto [l, r] = b.split(0.5);
-    bezierPolygoniseRecursive(l, chordalTol, depth + 1, out, splits, minDepth);
-    bezierPolygoniseRecursive(r, chordalTol, depth + 1, out, splits, minDepth);
+    bezierPolygoniseRecursive(l, chordalTol, depth + 1, out, splits, coarse, minDepth);
+    bezierPolygoniseRecursive(r, chordalTol, depth + 1, out, splits, coarse, minDepth);
 }
 
 void bezierPolygoniseRecursive(const BezierSpan& b, double chordalTol, int depth, std::vector<Vec2>& out,
-                               int minDepth = 0) {
+                               bool* coarse, int minDepth = 0) {
     int splits = kPolygoniseMaxSplits;
-    bezierPolygoniseRecursive(b, chordalTol, depth, out, splits, minDepth);
+    bezierPolygoniseRecursive(b, chordalTol, depth, out, splits, coarse, minDepth);
 }
 
 // Distance from point p to the segment a-b (so control points overshooting the chord count too).
@@ -437,7 +466,7 @@ std::vector<Span> transformed(const Span& s, const Transform2& m) {
         s);
 }
 
-void polygoniseInto(const Span& s, const Tolerance& tol, std::vector<Vec2>& out) {
+void polygoniseInto(const Span& s, const Tolerance& tol, std::vector<Vec2>& out, bool* coarse) {
     std::visit(
         [&](const auto& v) {
             using T = std::decay_t<decltype(v)>;
@@ -445,21 +474,25 @@ void polygoniseInto(const Span& s, const Tolerance& tol, std::vector<Vec2>& out)
                 out.push_back(v.end);
             } else if constexpr (std::is_same_v<T, ArcSpan>) {
                 const std::size_t n = v.segmentCountFor(tol.chordal);
+                if (coarse != nullptr && v.segmentCountIsCapped(tol.chordal)) {
+                    *coarse = true;
+                }
                 for (std::size_t i = 1; i <= n; ++i) {
                     out.push_back(v.pointAt(static_cast<double>(i) / static_cast<double>(n)));
                 }
             } else {
-                bezierPolygoniseRecursive(v, tol.chordal, 0, out);
+                bezierPolygoniseRecursive(v, tol.chordal, 0, out, coarse);
             }
         },
         s);
 }
 
-void polygoniseRegionInto(const Span& s, const Tolerance& tol, std::vector<Vec2>& out) {
+void polygoniseRegionInto(const Span& s, const Tolerance& tol, std::vector<Vec2>& out, bool* coarse) {
     if (const auto* arc = std::get_if<ArcSpan>(&s)) {
         // One chord would be the whole polygon: add the midpoint, where the arc is farthest from
         // its chord (more chords already have vertices off it, an arc being convex).
-        if (arc->segmentCountFor(tol.chordal) == 1 && arc->radius > 0.0 && arc->sweepAngle() != 0.0) {
+        if (arc->segmentCountFor(tol.chordal) == 1 && arc->radius > 0.0 && arc->sweepAngle() != 0.0 &&
+            !arc->segmentCountIsCapped(tol.chordal)) {
             out.push_back(arc->pointAt(0.5));
             out.push_back(arc->endPoint());
             return;
@@ -473,10 +506,10 @@ void polygoniseRegionInto(const Span& s, const Tolerance& tol, std::vector<Vec2>
         const double c1 = chord.cross(bez->p1 - bez->p0);
         const double c2 = chord.cross(bez->p2 - bez->p0);
         const int minDepth = (c1 < 0.0 && c2 > 0.0) || (c1 > 0.0 && c2 < 0.0) ? 2 : bez->flatness() > 0.0 ? 1 : 0;
-        bezierPolygoniseRecursive(*bez, tol.chordal, 0, out, minDepth);
+        bezierPolygoniseRecursive(*bez, tol.chordal, 0, out, coarse, minDepth);
         return;
     }
-    polygoniseInto(s, tol, out);
+    polygoniseInto(s, tol, out, coarse);
 }
 
 bool isDegenerate(const Span& s, const Tolerance& tol) {
