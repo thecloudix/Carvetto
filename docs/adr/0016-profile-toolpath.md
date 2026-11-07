@@ -359,10 +359,7 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     cell centres) and again widened by 0.055 mm (on 0.05 mm cells, and where that fails on 0.025 mm
     cells), where the tab must not leave a near
     piece unjoined: every kept tab joins the material on both sides through a neck of about 0.1 mm
-    or more (the cells resolve it to a few hundredths: a tab kept by the second try of the cover,
-    placed from the vector out, had a neck of about 0.086 mm in m1_1320038_46 when T-0156 looked at it, which cannot be
-    reproduced since T-0158 moved the cut starts; the check judges those tabs like any other, with no
-    extra margin, so a neck a few hundredths under 0.1 mm is possible (T-0156 (e))), and leaves no counting piece near it loose. With fewer than two counting pieces the
+    or more, and leaves no counting piece near it loose. With fewer than two counting pieces the
     tab would hold nothing (a loop or arm narrower than the kerf, the tip of an arm the kerf
     consumes): it is dropped and reported as such ("would hold nothing"); a tab that leaves a near
     piece unjoined is dropped as cut through. Tool positions every k-th sample along the cuts (at
@@ -441,9 +438,19 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     defects, identical on main (T-0156 verifier, harness t0156v1/repro, carded as T-0177):** a
     false "comes free" report on a held part (false939_7101_876: 939.84 mm² with one tab kept;
     7102_671: 7.6 mm²), six free 0.216 mm² pieces unreported (miss6_7104_351), and reported
-    areas far from the flood's. **Tabs against the T-0135 merge:** the scenes where tabs are fewer
+    areas far from the flood's. New in the round-2 screen and also carded as T-0177: a false
+    report in seed 9301 scene 2132 (Outside, D12, V90, allowance −0.666, leads off; moves identical
+    to main, the branch reports 3 pieces of about 0.04 mm² where main reports none and the oracle
+    finds none: knife-edge at the 0.04 / 0.05 mm thresholds; repro
+    /home/chris/harness/t0156v2/dump/m1_9301_2132.scn). **Tabs against the T-0135 merge:** the scenes where tabs are fewer
     than at the T-0135 merge (48 in the verifier's screen) come from later commits (T-0158,
-    T-0140) and are the same on main; against main the kept tabs are never fewer.
+    T-0140) and are the same on main; against main, in a 123,274-scene screen (seeds 9301–9308, modes 1 and 2, V-bit corners forced,
+    leads on and off) the kept tabs were never fewer in all but one scene, and in 3 scenes the branch
+    keeps more. The exception is seed 9302 scene 2199 (Inside, D6, V120, allowance −1.276, leads off,
+    mode 1): main keeps all 3 tabs, the branch's corner-move tab check leaves 1 out ("1 of 3 tab(s)
+    left out … cut through … at a corner") although the exact oracle finds all 3 holding; no free piece
+    results, so the error is conservative (repro
+    /home/chris/harness/t0156v2/dump/m1_9302_2199.scn; carded as a T-0177 item).
     **Band polygons.** Each stretch's band is one polygon whose winding number is positive exactly
     on the band: the sum of the boundaries of positively wound pieces covering it (a line's
     rectangle along its normals, an arc's annular sector between radii ρ − w and ρ + w or, with
