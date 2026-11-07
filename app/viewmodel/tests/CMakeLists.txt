@@ -19,6 +19,7 @@ add_executable(carvetto_viewmodel_tests
   pixel_probe_test.cpp
   new_job_form_test.cpp
   file_session_test.cpp
+  snapping_test.cpp
   selection_tools_test.cpp
 )
 target_link_libraries(carvetto_viewmodel_tests PRIVATE carvetto::viewmodel Catch2::Catch2WithMain carvetto_warnings)
