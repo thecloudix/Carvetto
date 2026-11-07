@@ -222,9 +222,9 @@ TEST_CASE("hit test: ties go to the topmost layer, then smaller, then later", "[
     const ViewTransform view = makeView();
     // Same stroke point on three objects at equal distance.
     const ObjectId big = addVector(doc, Contour::rectangle(Box2{{0, 0}, {100, 100}}), doc.defaultLayer());
-    const ObjectId small = addVector(doc, line({50, 0}, {60, 0}), doc.defaultLayer());
+    const ObjectId narrow = addVector(doc, line({50, 0}, {60, 0}), doc.defaultLayer());
     const Vec2 p = px(view, {55, 0});
-    CHECK(hitTest(doc, view, p)->object == small);
+    CHECK(hitTest(doc, view, p)->object == narrow);
     const ObjectId onTop = addVector(doc, line({0, 0}, {100, 0}), top);
     CHECK(hitTest(doc, view, p)->object == onTop);
     (void)big;
@@ -239,16 +239,27 @@ TEST_CASE("hit test: ties go to the topmost layer, then smaller, then later", "[
 
 TEST_CASE("hit test: stroke hit beats interior hit", "[viewmodel][selection]") {
     Document doc;
+    document::Layer l;
+    l.name = "top";
+    const LayerId top = doc.insertLayer(l);
     const ViewTransform view = makeView();
-    const ObjectId big = addVector(doc, Contour::circle({50, 50}, 40));
-    const ObjectId inner = addVector(doc, Contour::circle({50, 50}, 10));
-    (void)inner;
+    // Big circle outline on the lower layer; a small filled rectangle on the top layer whose
+    // interior contains the point (90,50) on that outline. The rectangle is topmost AND smaller,
+    // so only the "outline beats interior" rule lets the circle win.
+    const ObjectId big = addVector(doc, Contour::circle({50, 50}, 40), doc.defaultLayer());
+    const ObjectId pad = addVector(doc, Contour::rectangle(Box2{{80, 40}, {100, 60}}), top);
     HitOptions opt;
+    opt.tolerancePx = 2.0;
     opt.fill = FillHit::StrokeAndFill;
-    // On the big circle's outline, inside the inner circle? no: (90,50) is outside the inner one.
-    CHECK(hitTest(doc, view, px(view, {90, 50}), opt)->object == big);
-    // Inside both: the inner circle is smaller and equally topmost.
-    CHECK(hitTest(doc, view, px(view, {50, 50}), opt)->object == inner);
+    const auto h = hitTest(doc, view, px(view, {90, 50}), opt);
+    REQUIRE(h.has_value());
+    CHECK(h->object == big);
+    CHECK_FALSE(h->viaFill);
+    // Inside the rectangle but away from the circle's outline: the fill hit is the only one.
+    const auto f = hitTest(doc, view, px(view, {96, 50}), opt);
+    REQUIRE(f.has_value());
+    CHECK(f->object == pad);
+    CHECK(f->viaFill);
 }
 
 TEST_CASE("hit test agrees with a distance oracle on generated scenes", "[viewmodel][selection]") {

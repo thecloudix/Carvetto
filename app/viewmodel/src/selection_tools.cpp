@@ -247,15 +247,15 @@ std::vector<ObjectId> PickIndex::marquee(const ViewTransform& view, const Box2& 
         return {};
     }
     const geometry::Tolerance tol = toleranceFor(view.scale(), kMarqueeChordPx);
-    const std::vector<std::size_t> near = index_.query(rect);
+    const std::vector<std::size_t> nearby = index_.query(rect);
 
     std::unordered_set<ObjectId> candidates;
-    for (const std::size_t i : near) {
+    for (const std::size_t i : nearby) {
         candidates.insert(entries_[i].top);
     }
     std::unordered_set<std::size_t> touching;  // entries whose geometry touches the rectangle
     if (mode == MarqueeMode::Crossing) {
-        for (const std::size_t i : near) {
+        for (const std::size_t i : nearby) {
             const Entry& e = entries_[i];
             const Object* obj = doc_->findObject(e.leaf);
             if (obj == nullptr) {
