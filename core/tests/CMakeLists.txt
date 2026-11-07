@@ -29,6 +29,8 @@ add_executable(carvetto_tests
   geometry/medial_axis_test.cpp
   geometry/medial_axis_robustness_test.cpp
   geometry/delaunay_test.cpp
+  geometry/edit_ops_test.cpp
+  geometry/edit_ops_fuzz_test.cpp
   toolpath/move_test.cpp
   toolpath/toolpath_test.cpp
   toolpath/pass_plan_test.cpp
