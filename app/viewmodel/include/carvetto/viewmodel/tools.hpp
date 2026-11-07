@@ -228,6 +228,9 @@ class ToolController {
     void setPivotAnchor(HandleKind anchor);
     /// True while an interactive transform is being dragged.
     bool transforming() const { return gesture_.active(); }
+    /// Number of snap indexes built so far (cached and drag-frozen ones); a test hook for pinning
+    /// that a drag does not rebuild per pointer step.
+    std::size_t snapIndexBuilds() const { return snapIndexBuilds_; }
     /// Mouse cursor hint for the last pointer position.
     CursorHint cursorHint() const;
 
@@ -284,6 +287,10 @@ class ToolController {
     std::array<std::uint64_t, 2> snapSignature_{};
     /// Index frozen for the duration of a transform drag (dragged objects left out of it).
     std::optional<SnapIndex> gestureSnapIndex_;
+    /// {undo generation, active sheet} the frozen index is valid for: the state when it was built,
+    /// advanced only by the gesture's own pushes. Anything else drops the index.
+    std::array<std::uint64_t, 2> gestureIndexKey_{};
+    std::size_t snapIndexBuilds_{0};
 
     std::optional<Snap> snap_;
     geometry::Vec2 cursorMm_{};
@@ -318,6 +325,7 @@ class ToolController {
     ToolResult xfMove(geometry::Vec2 px);
     ToolResult xfRelease();
     void xfReset();
+    bool gestureIndexValid() const;
 };
 
 /// Display name of a tool ("Rectangle", ...).
