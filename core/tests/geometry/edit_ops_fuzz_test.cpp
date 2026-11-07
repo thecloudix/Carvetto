@@ -225,6 +225,13 @@ auto failFast(double seconds, const char* what, F&& fn) {
     return fut.get();
 }
 
+/// One open line (no Polyline: <windows.h>, pulled in by cpu_time.hpp, declares a GDI Polyline).
+Contour openLine(Vec2 a, Vec2 b) {
+    Contour c;
+    c.append(LineSpan{a, b});
+    return c;
+}
+
 Contour hugeBezier(double big) {
     Contour bz;
     bz.append(BezierSpan{{0, 0}, {big, big}, {-big, big}, {10, 10}});
@@ -234,7 +241,7 @@ Contour hugeBezier(double big) {
 }  // namespace
 
 TEST_CASE("edit ops: Beziers with huge control points are refused at once", "[edit][fuzz][guard]") {
-    const Contour ln = Contour::fromPolyline(Polyline{{{-5, 5}, {15, 5}}, false});
+    const Contour ln = openLine({-5, 5}, {15, 5});
     const Contour sq = Contour::rectangle(Box2{{0, 0}, {10, 10}});
     for (double big : {1e100, 1e154, 1e155, 1e160, 1e200, 1e300, 1e13}) {
         INFO("big = " << big);
@@ -251,7 +258,7 @@ TEST_CASE("edit ops: Beziers with huge control points are refused at once", "[ed
                        [&] { return trimToBoundary({ln}, {closedBz}, TrimSide::ClearInside).status; }) ==
               EditStatus::InvalidArgument);
         CHECK(failFast(10.0, "extendSpan", [&] {
-                  return extendSpan(Contour::fromPolyline(Polyline{{{-30, 0}, {-25, 0}}, false}), ContourEnd::End, {bz}).status;
+                  return extendSpan(openLine({-30, 0}, {-25, 0}), ContourEnd::End, {bz}).status;
               }) == EditStatus::InvalidArgument);
         CHECK(failFast(10.0, "filletAll", [&] { return filletAll(closedBz, 1.0, FilletKind::Normal).status; }) ==
               EditStatus::InvalidArgument);
