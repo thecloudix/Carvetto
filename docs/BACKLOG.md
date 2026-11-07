@@ -525,7 +525,7 @@ Acceptance criteria:
   1. signedArea (and any orientation/area helper with the same pattern) computed relative to a local origin or compensated, exact to rounding for small contours up to 1e9 mm; generative test vs an exact oracle.
   2. Outputs of Pocket/Profile/Drill/offsets unchanged for normal inputs (hash comparison vs main), changes only where the old area was wrong (explained).
 
-### T-0156 Profile loose pieces: V-bit corner moves, vanished finishing cuts, out-of-box pieces (T-0135 verifier)   [status: ready]
+### T-0156 Profile loose pieces: V-bit corner moves, vanished finishing cuts, out-of-box pieces (T-0135 verifier)   [status: verifying]
 Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §14
 Goal: Pre-existing gaps found by the T-0135 round-3 verifier (harness t0135v3/, vfree.cpp exact oracle): (a) V-bit sharp-corner moves are not in the band model of the loose-piece search or the tab check — m2_1310149_15 leaves a 134 mm² part free with no message and a flood-PARTIAL kept tab (identical on T-0127/main); (b) when a finishing cut vanishes, its roughing loop is never searched (m0_1310036_24, 2.1 mm² slug); (c) pieces lying wholly outside every region box are not found ("#" of four bars, three circles with overlapping kerfs); (d) ADR §14 wording: band sampling allowance is up to ~11 µm for tab-layer radius < 0.0625 mm (not "at most 5 µm"), and bands are 2–7 µm wider than the cut (not "exactly"); (e) second-try tabs can have necks ≈ 0.086 mm (m1_1320038_46) — judge them with margin or document.
 Acceptance criteria:
@@ -642,7 +642,7 @@ Goal: Non-blocking findings from harness t0153v3: (a) holes/slivers thinner than
 Acceptance criteria:
   1. (a) and (d) are reported to the user (diagnostic) or documented in ADR-0025; (c) ≤ 2.5× per doubling; (e) the test checks laterals with a flat depth too; (b) and (f) fixed or documented with reasons.
 
-### T-0165 Profile: collapsed cuts vanish silently; empty walks ordered at the origin (T-0163 coder)   [status: verifying — PASS, PR #70 awaiting CI]
+### T-0165 Profile: collapsed cuts vanish silently; empty walks ordered at the origin (T-0163 coder)   [status: done (#70)]
 Phase: 1   Module: core/toolpath   Depends on: T-0163   ADR: 0016
 Goal: Found by the T-0163 coder. (1) At tiny scale with chordal larger than the vector, a closed roughing offset collapses to one line, then to a point, and the cut disappears with no diagnostic (seg_241_31). (2) A cut whose walk is empty when order() runs (StartAt VectorStart / ClosestOnBoundingBox) enters ordering at (0,0) via pointAt on an empty walk, and adds a (0,0) keep-clear point to other cuts' tab placement. (3) The ASan test build fails under -Werror: carv_storage_residuals_test.cpp:232 peakGrowth unused.
 Acceptance criteria:
@@ -677,11 +677,17 @@ Goal: Found by the T-0164 coder (harness t0153v3 repro2/nest_frame.txt, VC_FIX "
 Acceptance criteria:
   1. Tool centres never come closer to the boundary than the tool radius + allowance − (documented numeric slack); regression test; Pocket output otherwise identical or explained.
 
-### T-0170 Offset: Round/no-prune 13–15% slower after T-0016; super-linear growth on saw/hatch/arc inputs (T-0016 verifier)   [status: ready]
+### T-0170 Offset: Round/no-prune 13–15% slower after T-0016; super-linear growth on saw/hatch/arc inputs (T-0016 verifier)   [status: verifying — PASS, wording and denormal-guard fixes back to coder; arcs → T-0176]
 Phase: 1   Module: core/geometry   Depends on: T-0016   ADR: 0012
 Goal: (a) After T-0016, Round offsets and inputs with nothing to prune are 13–15% slower than before on large inputs (zig-zag Round 1.118→1.261 s; filleted-arc zig-zag 2000 spans 8.67→9.81 s), even with every new path disabled (A/A-controlled), pointing to code generation in buildRaw / mergeOnCarriers / offsetOpenContour. Recover it (profile with symbols; e.g. keep pruneLineCopies out of line). (b) Saw / hatch / filleted-arc open offsets grow 2.6–4× per doubling for every join, Round included, on main as well (harness t0016v1 perf3.sh); the card case's first doubling is 2.7–2.8× for Round. Find the cause and bring it to ≤ 2.5× per doubling, or document it (may overlap T-0168).
 Acceptance criteria:
   1. (a) Round on the t0016v1 perf inputs is within 3% of pre-T-0016 main (interleaved CPU, A/A control); (b) fixed to ≤ 2.5× per doubling or documented in ADR-0012 with measurements; outputs byte-identical; full ctest.
+
+### T-0176 Offset: filleted-arc inputs still ~8% slower than pre-T-0016; 300k-span lines +3..13% (T-0170 verifier)   [status: ready]
+Phase: 1   Module: core/geometry   Depends on: T-0170   ADR: 0012
+Goal: T-0170 recovered the Round/no-prune slowdown for line inputs (std::hypot replaced by squared comparisons at five sites) but the verifier (harness t0170v1) measured, A/A-controlled against pre-T-0016 (993d0f9): filleted-arc zig-zag Round with nothing to prune (arc 50000, 100k spans, d=0.004) +8% (1.06..1.10; main is +8.3% too, so nothing recovered), and a 300k-span line zig-zag +3% to +13% (A/A 0.97..1.0, so not noise). Arcs still go through hypot, atan2 and fabs. Find and remove the cost on the arc paths the same way, and check the 300k-span line case.
+Acceptance criteria:
+  1. Round on the arc 50000 and zz 200000 inputs within 3% of pre-T-0016 (interleaved CPU, A/A control, repeated until A/A <= 2%); outputs byte-identical to main over a broad corpus (all joins, both sides, arcs included); full ctest; the changelog and ADR-0012 A5 wording updated.
 
 ### T-0171 Hole nesting: guard the box hierarchy; ADR-0006 §10 wording (T-0142 round-3 verifier)   [status: done (#60)]
 Phase: 1   Module: core/geometry   Depends on: T-0142   ADR: 0006
@@ -748,10 +754,59 @@ Acceptance criteria:
   1. Every V-bit move stays within the region (the cone never crosses a boundary) — exact cone/wall check over a generative sweep; depth = radius / tan(θ/2) within tolerance; flat depth honoured with clearance pocketing; goldens; post safety rules.
   2. Text-heavy jobs (≥ 5,000 glyph-like regions) within a documented time bound.
 
-### Batch B — drawing & editing (viewmodel + Qt), to be carded after Batch A is dispatched
-- Drawing tools, snapping/guides, selection & node editing, transforms, align, group; boolean/shape ops UI (weld/subtract/overlap/trim/fillet/offset wrappers over T-0003/T-0004/T-0005), curve fit, join/close.
-- Text (FreeType/HarfBuzz) T-0130, dimensions, measure, bitmaps/trace, layout (arrays, nesting).
-- File open/save in the app (T-0015 done — unblocked), SVG/EPS/PDF I/O.
+### Batch B — drawing & editing (viewmodel + Qt)
+Owner decision 2026-11-06: start Batch B now. Director carded wave 1 below; wave 2 is listed as stubs and gets cards when its dependencies are done. Rule for every Batch B card (ADR-0014): the logic lives in `core/` or `app/viewmodel/` and is unit-tested headless; `app/src` only paints and forwards events. Windows macro names (far, near, min, max, small, interface, IN, OUT) are not identifiers.
+
+### T-0200 Shape builders: rectangle, circle, ellipse, polygon, star, arc → contours   [status: done (#72)]
+Phase: 1 (Batch B)   Module: core/geometry (+ core/document glue)   Depends on: T-0001, T-0010   ADR: 0026 (new, only if a choice is made)
+Goal: Pure functions that turn the existing parametric object params (`RectangleParams`, `CircleParams`, `EllipseParams`, `PolygonParams`, `StarParams` in document/object.hpp) into exact span contours, plus an arc builder (three-point, centre-start-end, start-end-radius). Rectangle supports the corner types the params already record (square, round, chamfer, cove/ogee only if the params have them). Circles and ellipses are exact (arcs / Beziers within tolerance, stated). Behaviour per docs/reference/feature-inventory.md drawing sections; clean-room.
+Interfaces: owns new `carvetto/geometry/shapes.hpp`; reads document params; if a param struct lacks a field the feature needs, add it additively and keep the .carv schema backward compatible (ADR-0003/0013 rules, version bump if needed).
+Acceptance criteria:
+  1. Each builder returns closed contours (arc: open) with correct area/perimeter against analytic values within the stated tolerance; degenerate parameters (zero size, radius > half side, sides < 3, star inner ≥ outer) return an error, not garbage.
+  2. Re-editing: building from params stored in a saved/loaded `.carv` object gives byte-identical contours (determinism).
+  3. Contour winding and start point are documented and stable; property tests over random parameters; full ctest incl. MSVC CI.
+Out of scope: UI, freehand/polyline/Bezier drawing, text.
+
+### T-0201 Selection and hit testing (viewmodel)   [status: verifying]
+Phase: 1 (Batch B)   Module: app/viewmodel   Depends on: T-0010, T-0060   ADR: 0014
+Goal: Qt-free picking: `hitTest(document, view, screenPoint, tolerancePx)` returning the topmost object under the cursor (stroke hit within tolerance for open and closed vectors, fill hit optional by mode, groups resolve to the group), window select (fully inside) and crossing select (touching), additive/toggle/subtract modes, select-all/invert/by-layer, and a selection bounding box with handle positions for later transform tools. Works in screen space through the view transform; accounts for object transforms and hidden/locked layers.
+Acceptance criteria:
+  1. Hit tests agree with an exact distance oracle over generated scenes (lines, arcs, Beziers, transformed objects, groups); locked/hidden layers never hit; ties resolved deterministically (topmost, then smallest).
+  2. Window vs crossing semantics tested on edge cases (touching, containing, open contours); ≥ 10k objects pick in a documented time bound (spatial index, not a linear scan per move).
+  3. Selection state changes go through the core `Selection`; no Qt includes (the `viewmodel.qt_free` ctest passes); full ctest.
+Out of scope: dragging/transform tools, node editing, Qt event wiring beyond a click-to-select hook in CanvasWidget with self-test coverage.
+
+### T-0202 File session: open, save, save as, import/export DXF in the app   [status: verifying — PASS, nits back to coder]
+Phase: 1 (Batch B)   Module: app/viewmodel + app/src   Depends on: T-0012, T-0100, T-0060   ADR: 0014
+Goal: The app can open and save `.carv` files, import DXF into the current job (layers kept, units per $INSUNITS with an override), export the selection or whole sheet as DXF, track the dirty state (title bar asterisk, prompt on close/new/open), keep a recent-files list, and report load errors and import warnings in a dialog instead of crashing. Logic in a Qt-free `FileSession` (path, dirty tracking against the undo stack, recent list, title string, error text); Qt layer is menu actions and QFileDialog.
+Acceptance criteria:
+  1. `FileSession` tests: dirty after any command, clean after save, clean after undo to the saved state, save-as changes the path, failed save leaves the old file intact (write to temp then rename), recent list de-duplicates and caps at a documented size, corrupt/hostile files give an error string and leave the current document untouched.
+  2. DXF import into an existing job is one undoable command; export round-trips through `importDxf` to the same geometry within tolerance.
+  3. `carvetto --self-test` exercises open → modify → save → reopen headless; CI Linux + Windows green.
+Out of scope: SVG/EPS/PDF (wave 2), autosave/crash recovery, native file dialogs beyond QFileDialog.
+
+### T-0203 Snapping maths (viewmodel)   [status: verifying — PASS, nits back to coder]
+Phase: 1 (Batch B)   Module: app/viewmodel (+ core/geometry helpers if missing)   Depends on: T-0001, T-0002, T-0010   ADR: 0014
+Goal: Qt-free snapping: given a cursor position, the visible objects and settings, return the best snap (kind, world point, source object ids) among endpoint, midpoint, centre, quadrant, intersection (line/arc/Bezier pairs via the core intersection routines), nearest-on-curve, perpendicular, tangent (from a pending start point), grid and user guides, with per-kind enable flags and a pixel tolerance through the view transform. Priority order documented; deterministic on ties. Only candidates near the cursor are examined (spatial index) so large drawings stay interactive.
+Acceptance criteria:
+  1. Each snap kind verified against exact oracles on generated scenes; intersection snaps agree with `intersect()`; no snap is returned beyond the tolerance; disabled kinds never snap.
+  2. Priority and tie-breaking tests; ≥ 10k objects within a documented time bound per query.
+  3. Pure viewmodel API (no Qt); full ctest.
+Out of scope: drawing the snap glyphs (wave 2 canvas overlay), guides UI.
+
+#### Wave 2 stubs (to be carded when wave 1 is done)
+- T-0200 follow-ups (director decisions 2026-11-06, from the coder's report): (1) internally radiused (cove) rectangle corners need a new `CornerStyle` value and a geometry spec from the feature inventory — card after wave 1 if the inventory defines it, else ask the owner; (2) the arc "Exact Size" Height variant (start, end, height) is a small addition to `buildArcStartEndRadius` — card with the arc tool (T-0204).
+- T-0203 follow-ups (verifier t0203v1, director 2026-11-07): (1) very dense drawings: with hundreds of spans inside the 10 px window of every cursor (10k objects in a ~300 mm square) a query takes >10 ms and 20k queries did not finish in 200 s; ordinary drawings are 1-300 us. Bound the per-query work (e.g. cap candidates per kind before the pairwise intersect/perpendicular/tangent search, or cache per-cursor-cell results) in the card that wires snapping into the canvas (T-0204); (2) the documented 256-span cap and 32-samples Bezier root search can silently lose a real snap (confirmed: >256 spans nearer the cursor than a genuine crossing) - acceptable for now, revisit with (1).
+- T-0204 Drawing tool framework + shape tools in the canvas (rectangle, circle, ellipse, polygon, star, arc, polyline/Bezier) — needs T-0200, T-0201, T-0203.
+- T-0205 Transforms: move/scale/rotate/mirror with handles, numeric entry; align and distribute — needs T-0201.
+- T-0206 Node editing (select/move/add/delete nodes, convert line↔curve, smooth/corner) — needs T-0201, T-0203.
+- T-0207 Boolean wrappers: weld, subtract, intersect, overlap/trim over T-0003/T-0005; offset and vector-boundary wrappers over T-0004 — needs T-0201.
+- T-0208 Trim, extend, fillet (normal/dog-bone/T-bone), join/close variants, curve fit.
+- T-0209 Arrays: rectangular, circular, along-vector copy; group/ungroup UI; nesting later.
+- T-0210 Properties panel, layers and sheets UI, undo/redo menu and history.
+- T-0211 Text: T-0130 core (FreeType/HarfBuzz; new dependencies go to the owner first for licence review) then text tool, text in box, text on curve.
+- T-0212 SVG import/export (EPS/PDF later); bitmap import and trace (potrace — licence check with the owner).
+- T-0213 Dimensions and measure tools.
 
 ### Batch C — the rest of the toolpaths, simulation and output
 - Drill, quick engrave, V-carve (medial axis) with clearance, fluting, chamfer, prism, inlay, VCarve inlay, photo V-carve, thread milling, texture, keep-out zones, templates, merge, array copy, tiling, double-sided.

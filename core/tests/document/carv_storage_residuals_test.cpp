@@ -228,6 +228,7 @@ std::int64_t inChild(const std::function<std::int64_t()>& fn) {
     return result;
 }
 
+#if !CARVETTO_TEST_ASAN
 /// Peak RSS growth (bytes) while `fn` runs, measured as in carv_toolpath_test (heap trimmed,
 /// high-water mark reset through /proc/self/clear_refs). -1 if unsupported or `fn` fails.
 std::int64_t peakGrowth(const std::function<bool()>& fn) {
@@ -249,6 +250,7 @@ std::int64_t peakGrowth(const std::function<bool()>& fn) {
         return (statusKb("VmHWM:") - before) * 1024;
     });
 }
+#endif  // !CARVETTO_TEST_ASAN
 #endif
 
 }  // namespace
