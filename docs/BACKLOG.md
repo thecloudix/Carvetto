@@ -677,7 +677,7 @@ Goal: Found by the T-0164 coder (harness t0153v3 repro2/nest_frame.txt, VC_FIX "
 Acceptance criteria:
   1. Tool centres never come closer to the boundary than the tool radius + allowance − (documented numeric slack); regression test; Pocket output otherwise identical or explained.
 
-### T-0170 Offset: Round/no-prune 13–15% slower after T-0016; super-linear growth on saw/hatch/arc inputs (T-0016 verifier)   [status: verifying — PASS, wording and denormal-guard fixes back to coder; arcs → T-0176]
+### T-0170 Offset: Round/no-prune 13–15% slower after T-0016; super-linear growth on saw/hatch/arc inputs (T-0016 verifier)   [status: done (#75; arcs → T-0176)]
 Phase: 1   Module: core/geometry   Depends on: T-0016   ADR: 0012
 Goal: (a) After T-0016, Round offsets and inputs with nothing to prune are 13–15% slower than before on large inputs (zig-zag Round 1.118→1.261 s; filleted-arc zig-zag 2000 spans 8.67→9.81 s), even with every new path disabled (A/A-controlled), pointing to code generation in buildRaw / mergeOnCarriers / offsetOpenContour. Recover it (profile with symbols; e.g. keep pruneLineCopies out of line). (b) Saw / hatch / filleted-arc open offsets grow 2.6–4× per doubling for every join, Round included, on main as well (harness t0016v1 perf3.sh); the card case's first doubling is 2.7–2.8× for Round. Find the cause and bring it to ≤ 2.5× per doubling, or document it (may overlap T-0168).
 Acceptance criteria:
@@ -791,7 +791,7 @@ Acceptance criteria:
   3. `carvetto --self-test` exercises open → modify → save → reopen headless; CI Linux + Windows green.
 Out of scope: SVG/EPS/PDF (wave 2), autosave/crash recovery, native file dialogs beyond QFileDialog.
 
-### T-0203 Snapping maths (viewmodel)   [status: verifying — PASS, nits back to coder]
+### T-0203 Snapping maths (viewmodel)   [status: done (#73)]
 Phase: 1 (Batch B)   Module: app/viewmodel (+ core/geometry helpers if missing)   Depends on: T-0001, T-0002, T-0010   ADR: 0014
 Goal: Qt-free snapping: given a cursor position, the visible objects and settings, return the best snap (kind, world point, source object ids) among endpoint, midpoint, centre, quadrant, intersection (line/arc/Bezier pairs via the core intersection routines), nearest-on-curve, perpendicular, tangent (from a pending start point), grid and user guides, with per-kind enable flags and a pixel tolerance through the view transform. Priority order documented; deterministic on ties. Only candidates near the cursor are examined (spatial index) so large drawings stay interactive.
 Acceptance criteria:
