@@ -33,3 +33,21 @@ Work is organised as tasks in `docs/BACKLOG.md`, executed by coder agents and ch
 - Format with `clang-format` (config in repo). Headers under `core/include/carvetto/<module>/`, sources under `core/src/<module>/`.
 - Public types are documented with a one-line `///` comment; algorithms get a short paragraph describing the approach and its references.
 - No global mutable state. Every operation takes its inputs explicitly and is unit-testable headless.
+
+## Windows-safe names
+
+CI compiles with MSVC, which most of us cannot run locally. `<windows.h>` (pulled in by the test helpers
+`core/tests/geometry/cpu_time.hpp` and `cpu_scaling.hpp`, or included directly) defines the macros `far`,
+`near` (and `small`, `interface`, `IN`, `OUT`, `ERROR`, `min`, `max` unless `NOMINMAX`/`WIN32_LEAN_AND_MEAN`
+are set) and, without `NOGDI`, GDI functions named `Polyline`, `Polygon`, `Rectangle`, `Ellipse`, `Arc`,
+`Pie`, `Chord`, ... A test that uses such a name as an identifier compiles on Linux and fails on MSVC.
+Rules: include `cpu_time.hpp`/`cpu_scaling.hpp`/`<windows.h>` **last**; never name a variable, parameter,
+member or lambda `far`, `near`, `small`, `interface`, `IN`, `OUT`, `ERROR`; write `std::min`/`std::max`
+(or `(std::max)(...)`); qualify GDI-like type names (`geometry::Polyline`) in files that can see
+`<windows.h>`; do not name locals like C library functions (`round`, `abs`, `y0`, `index`, ...).
+
+`python3 -I tools/check_windows_names.py` checks the first three groups on Linux (ctest `lint.windows_names`; its
+own tests are `lint.windows_names_unit`). It strips comments and string literals and only looks at files that can see
+`<windows.h>`: those that include it (directly or via the helpers) and shared headers under `tests/`. Escape hatch for a
+provably safe use: `// lint-allow-windows-name` on the line, or an entry (`path` or `path:line`) in
+`tools/windows_names_allowlist.txt`.

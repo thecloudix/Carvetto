@@ -529,9 +529,9 @@ inline TabJoin tabJoins(const toolpath::Toolpath& tp, const std::vector<geometry
                 }
             }
         };
-        auto far = [&](std::size_t k) { return !cut[k] && !nearVec[k]; };
+        auto isFar = [&](std::size_t k) { return !cut[k] && !nearVec[k]; };
         for (std::size_t c = 0; c < cut.size(); ++c) {
-            if (far(c) && farId[c] == -1) flood(c, farId, regions++, far);
+            if (isFar(c) && farId[c] == -1) flood(c, farId, regions++, isFar);
         }
         TabJoin out;
         out.slug = regions >= 2;
