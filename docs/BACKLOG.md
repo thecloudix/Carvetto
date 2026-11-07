@@ -761,7 +761,7 @@ Acceptance criteria:
   3. Contour winding and start point are documented and stable; property tests over random parameters; full ctest incl. MSVC CI.
 Out of scope: UI, freehand/polyline/Bezier drawing, text.
 
-### T-0201 Selection and hit testing (viewmodel)   [status: in progress]
+### T-0201 Selection and hit testing (viewmodel)   [status: verifying]
 Phase: 1 (Batch B)   Module: app/viewmodel   Depends on: T-0010, T-0060   ADR: 0014
 Goal: Qt-free picking: `hitTest(document, view, screenPoint, tolerancePx)` returning the topmost object under the cursor (stroke hit within tolerance for open and closed vectors, fill hit optional by mode, groups resolve to the group), window select (fully inside) and crossing select (touching), additive/toggle/subtract modes, select-all/invert/by-layer, and a selection bounding box with handle positions for later transform tools. Works in screen space through the view transform; accounts for object transforms and hidden/locked layers.
 Acceptance criteria:
@@ -779,7 +779,7 @@ Acceptance criteria:
   3. `carvetto --self-test` exercises open → modify → save → reopen headless; CI Linux + Windows green.
 Out of scope: SVG/EPS/PDF (wave 2), autosave/crash recovery, native file dialogs beyond QFileDialog.
 
-### T-0203 Snapping maths (viewmodel)   [status: ready]
+### T-0203 Snapping maths (viewmodel)   [status: in progress]
 Phase: 1 (Batch B)   Module: app/viewmodel (+ core/geometry helpers if missing)   Depends on: T-0001, T-0002, T-0010   ADR: 0014
 Goal: Qt-free snapping: given a cursor position, the visible objects and settings, return the best snap (kind, world point, source object ids) among endpoint, midpoint, centre, quadrant, intersection (line/arc/Bezier pairs via the core intersection routines), nearest-on-curve, perpendicular, tangent (from a pending start point), grid and user guides, with per-kind enable flags and a pixel tolerance through the view transform. Priority order documented; deterministic on ties. Only candidates near the cursor are examined (spatial index) so large drawings stay interactive.
 Acceptance criteria:
