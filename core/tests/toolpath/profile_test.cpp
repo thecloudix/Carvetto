@@ -2721,7 +2721,8 @@ namespace {
 // on the other side through the kept tabs, on a 0.05 mm raster at the tab top, independently of
 // the toolpath's own diagnostics. For end mills; the scenes it serves have one vector or parts
 // that do not nest.
-void checkPartsHeld(const ProfileResult& r, const std::vector<Contour>& cs, const ProfileParams& p, double d) {
+void checkPartsHeld(const ProfileResult& r, const std::vector<Contour>& cs, const ProfileParams& p, double d,
+                    double radius = -1.0) {
     const double zTab = p.passes.bottomZ() + std::min(p.tabs.thickness, p.passes.cutDepth);
     geometry::Box2 all;
     for (const Contour& c : cs) all.expand(c.bounds());
@@ -2746,7 +2747,7 @@ void checkPartsHeld(const ProfileResult& r, const std::vector<Contour>& cs, cons
             }
         }
         INFO("vector bounds " << cb.min.x << "," << cb.min.y << " .. " << cb.max.x << "," << cb.max.y);
-        CHECK(test::floodHeld(r.toolpath, window, zTab, 0.5 * d, inside, window.min + Vec2{0.5, 0.5}, 0.05));
+        CHECK(test::floodHeld(r.toolpath, window, zTab, radius > 0.0 ? radius : 0.5 * d, inside, window.min + Vec2{0.5, 0.5}, 0.05));
     }
 }
 
@@ -3400,7 +3401,10 @@ TEST_CASE("T-0135 round 2: exact loose pieces; add-back and fitting never cost a
         // with loose pieces keep the exact count.
         if (tabsLeftOut(r) != k.left && k.areas.empty()) {
             CHECK(tabsLeftOut(r) < k.left);
-            checkPartsHeld(r, cs, p, d);
+            // (A V-bit cuts the cone's disc at the tab layer, T-0167.)
+            const double layer = vbitDeg > 0 ? std::min(0.5 * d, p.tabs.thickness * std::tan(0.5 * vbitDeg * geometry::kPi / 180.0))
+                                             : 0.5 * d;
+            checkPartsHeld(r, cs, p, d, layer);
         } else {
             CHECK(tabsLeftOut(r) == k.left);
         }
@@ -3865,7 +3869,8 @@ TEST_CASE("Loose pieces (T-0140): sweep scenes, Inside/Outside with allowance >=
          "P 0x1.8p+2 0 -0x0p+0 1 1 0x1.80488ff57c4f3p-1 0x1.a2c598ad639dcp+3 0x1.ff14789ad15cap+1 0x0p+0 0x1.4p+2 0 0x1.b35090cb55462p-2 1 1 0x1.4babe86f79a44p+3 0x1.0aba2c5a7ce1fp+2 1 7 0x1.6ca0106feaeb5p+5 0x0p+0 1 0 0x0p+0 3 0x1.a294af2d8bc4bp+4 0 0 0x1.6036f0fd682b2p-3 0x1.3c237149c7994p+3 0x1.3833a72a02555p-2 0x1.4a6f8d576f31ap+3 0 0x1.1d518ffecc526p+0 0 0 0x0p+0 0x0p+0 1 6 0 0 0 0 0x1.824b6d493446cp+5 -0x1.79886279e068p-1 0x1p+1\n"
          "K 0 0\n"
          , {5.381, 115.729}},
-        // 1480030_22: V-bit 90 deg, Inside, separate last pass, 1 of 18 tabs kept.
+        // 1480030_22: V-bit 90 deg, Inside, separate last pass, 5 of 18 tabs kept (T-0167: 1 before; the
+        // 720 mm2 part is now held by tabs the tab-layer judgement keeps).
         {"1480030_22",
          "C 1\n"
          "L 0x0p+0 0x0p+0 0x1.5271f282072cap+5 0x0p+0\n"
@@ -3880,7 +3885,7 @@ TEST_CASE("Loose pieces (T-0140): sweep scenes, Inside/Outside with allowance >=
          "A 0x1.8438b336e3508p+4 0x1.13320b0e475e4p+5 0x1.1fbc8c47ef97ep+3 0x0p+0 0x0p+0 0\n"
          "P 0x1.8p+3 90 0x1.ba8afe274656bp-7 1 0 0x0p+0 0x1.fbf4cac1dd3aep+1 0x1.4153f2f586151p+2 0x0p+0 0x1.4p+2 1 0x1.b95de59d82075p-1 1 1 0x1.46bc3c95c92c2p+2 0x1.cf785e546d5afp+0 0 9 0x1.f68b9a0f53044p+4 0x0p+0 1 0 0x0p+0 1 0x1.ccf5e91833176p+4 0 0 0x1.591cd880c2e17p-4 0x1.aeec7bde8f6fdp+2 0x1.1ec980e4c8f2fp-1 0x1.53bdd16ccc752p+3 0 0x1.5b2c2dab53651p-2 0 0 0x0p+0 0x0p+0 0 4 0 0 0 1 0x1.2624989f77a6cp+5 -0x1.91acc2c9cc09ap+4 0x1p+1\n"
          "K 1 0\n"
-         , {2.979, 719.753}},
+         , {2.979}},
         // 1480009_31: End mill 12 mm, Inside, separate last pass, every tab left out.
         {"1480009_31",
          "C 1\n"
@@ -4212,7 +4217,7 @@ TEST_CASE("V-bit corner moves (T-0156 round 2): bands and tab check decide outco
         return n;
     };
     {
-        const FloodScene f = loadFloodScene(
+        FloodScene f = loadFloodScene(
          "C 1\n"
          "L 0x0p+0 0x0p+0 0x1.4p+5 0x0p+0\n"
          "L 0x1.4p+5 0x0p+0 0x1.4p+5 0x1.4p+3\n"
@@ -4222,6 +4227,9 @@ TEST_CASE("V-bit corner moves (T-0156 round 2): bands and tab check decide outco
          "L 0x0p+0 0x1.ep+4 0x0p+0 0x0p+0\n"
          "P 0x1.8p+3 60 0x0p+0 1 0 0x0p+0 0x1.ce1bbed3a5b3fp+1 0x1.fb39036a2811p+0 0x0p+0 0x1.4p+2 1 0x1.b02e6d64af859p-1 0 1 0x1.5e289ae2ad04bp+2 0x1.3b3f74a9ec15bp-1 0 5 0x1.bc5c5878cae23p+4 0x0p+0 0 0 0x0p+0 2 0x1.0c6db42fdb06cp+3 0 0 0x1.e6a15aefae611p-3 0x1.75a5f42def378p+3 0x1.4c6ee4fc98ca1p-2 0x1.df102a4b4471fp+2 0 0x1.71737e6ebda8ep-1 0 0 0x0p+0 0x0p+0 0 0 0 0 0 1 0x1.ccb3df7b43ec8p+3 -0x1.1b4c0c1533557p+5 0x1p+1\n"
          "K 1 1\n"        );
+        // (Every tab left out, as the scene is meant: since T-0167 the V-bit tabs of this scene that
+        // hold are kept, and only one piece is left; a tab 500 mm long fits nowhere.)
+        f.p.tabs.length = 500.0;
         const ProfileResult r = profileToolpath(f.cs, f.tool, f.p);
         REQUIRE(r.ok());
         const std::vector<double> got = reportedAreas(r);
