@@ -482,7 +482,7 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     pieces of one path within two reaches along it. Checked against searching every band:
     7,200 random path sets (crowded and spread, near-closing loops, gaps about two reaches, shifted
     to 1e9 mm; 20,314 thick pieces, 9,135 stretches cleared) find the same pieces, and
-    [[HASH]] whole Profile scenes give the same messages.
+    144 random sweeps of whole Profile scenes (72 pairs of this branch and main, leads on and off, three scene modes, 50 scenes each) give identical moves (0 differences) and identical non-loose diagnostics (0 differences) (the loose-piece messages are the only addition).
     **Leaf by leaf (round 2).** One Clipper2 union of all the bands is a single sweep whose active
     edge list holds every band side by side, so where neighbouring kerfs overlap and the pieces are
     free it grew about 3.5× per doubling of the shapes (a grid of 4,000 shapes: 49 s in the union;
@@ -519,9 +519,9 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     and necks from 1 nm (5) — where a piece joined to another only through a neck under 10 nm
     at a leaf side is split, by design, and a zero-width touch may join or not.
     **Cost (round 3, Release CPU, interleaved with main, alternating order, the T-0140 verifier's
-    pages):** [[PERF]] Moves are unchanged (the check only adds messages). Sided tabs keep the
+    pages):** Normal jobs (no loose pieces, 3 to 10 interleaved pairs per page) stay within 10 % of main on every page except 'rect GAP=3 A=0.3 SEP=1', which costs 1.10 to 1.15 (about +0.3 s at 2.6 s for 2,000 shapes and +0.8 s at 5.6 s for 4,000); the director's decision is that the performance exemption covers that page too, as bounded cost for a safety check. Where every shape is loose the check does show: rect +58 to +83 % (1,000 rect: +83 %, +0.035 s), arc +32 to +48 %, row +9 to +15 %. Moves are unchanged (the check only adds messages). Sided tabs keep the
     region search above unchanged. Measured (T-0140 round 3, whole-scene flood of the moves as in
-    T-0127, leads off, [[FLOOD]]). A V-bit's corner moves, ramps and plunges are not in the band
+    T-0127, leads off, mode 4: 2,000 scenes, 304 free pieces, 303 reported, 0 false reports; mode 5: 2,000 scenes, 934 free pieces, 934 reported; the remaining mismatches are V-bit tools only, which the director excluded from criterion 1 (T-0156 (a))). A V-bit's corner moves, ramps and plunges are not in the band
     model (the cut paths stand for the moves): they cut less than its full-depth disc at the tab
     layer, so a reported area can be up to about 20 % smaller than the piece, and they can leave
     whole pieces unreported (T-0156 (a)). With leads on, leads cut or split some pieces (the known
