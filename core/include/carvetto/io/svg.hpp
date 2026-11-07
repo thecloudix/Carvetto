@@ -94,7 +94,7 @@ struct SvgContour {
 /// Options for `importSvg`.
 struct SvgImportOptions {
     /// `chordal` bounds the deviation of curves approximated by cubic Beziers (elliptical arcs
-    /// and ellipses); `distance` decides when a closing `Z` needs a line (within it: no line, first point wins).
+    /// and ellipses); `distance` decides when a closing `Z` needs a line (within it: no line). In that case the last span keeps its own end point and the first point only wins the decision to close, so a closed contour may have a gap of up to `distance` (1e-3 mm by default).
     geometry::Tolerance tolerance{};
     /// Resolution that maps CSS pixels (the unit of unitless lengths) to millimetres.
     double dpi{96.0};
@@ -152,7 +152,8 @@ struct SvgExportOptions {
 /// closed or open, any start angle and direction) are written as two arc commands, so direction,
 /// start point and the closed flag survive a round trip (a full circle comes back as two arcs).
 /// Layer names are written as valid XML: `& < > "` escaped, characters not allowed in XML 1.0
-/// and invalid UTF-8 replaced by U+FFFD, an empty name written as "Layer".
+/// and invalid UTF-8 replaced by U+FFFD, an empty name written as "Layer", names longer than
+/// 1024 bytes truncated at a UTF-8 boundary (so that export then import is symmetric).
 /// When `warnings` is given it receives counted notes: contours without spans and zero-length
 /// spans (both dropped), and layer names that were changed.
 SvgResult<std::vector<std::uint8_t>> exportSvg(std::span<const SvgLayer> layers,

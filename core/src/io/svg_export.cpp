@@ -185,7 +185,17 @@ std::string xmlSafe(std::string_view in, bool& changed) {
     return out;
 }
 
-std::string sanitiseLayerName(std::string_view name, bool& changed) {
+constexpr std::size_t kMaxLayerNameBytes = 1024;
+
+std::string sanitiseLayerName(std::string_view name, bool& changed, bool& truncated) {
+    if (name.size() > kMaxLayerNameBytes) {
+        std::size_t cut = kMaxLayerNameBytes;
+        while (cut > 0 && (static_cast<unsigned char>(name[cut]) & 0xC0U) == 0x80U) {
+            --cut;  // back to a UTF-8 character boundary
+        }
+        name = name.substr(0, cut);
+        truncated = true;
+    }
     std::string s = xmlSafe(name, changed);
     if (s.empty()) {
         changed = true;
@@ -251,7 +261,11 @@ SvgResult<std::vector<std::uint8_t>> exportSvg(std::span<const SvgLayer> layers,
     std::set<std::string> used;
     for (std::size_t li = 0; li < layers.size(); ++li) {
         bool changed = false;
-        const std::string base = sanitiseLayerName(layers[li].name, changed);
+        bool truncated = false;
+        const std::string base = sanitiseLayerName(layers[li].name, changed, truncated);
+        if (truncated) {
+            note(warnings, "layer name longer than 1024 bytes truncated");
+        }
         if (changed) {
             note(warnings, "layer name changed to be valid XML (empty, invalid characters or invalid UTF-8)");
         }

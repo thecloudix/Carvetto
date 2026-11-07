@@ -300,3 +300,25 @@ TEST_CASE("svg export: names are valid XML and dropped input is reported", "[svg
         CHECK(emptyNote);
     }
 }
+
+TEST_CASE("svg export: long layer names are truncated so that import accepts them", "[svg][io]") {
+    const std::vector<SvgContour> in{{0, polyline({{0, 0}, {1, 1}}, false)}};
+    for (const std::string& unit : {std::string("a"), std::string("\xE2\x82\xAC")}) {
+        std::string name;
+        while (name.size() < 100000) {
+            name += unit;
+        }
+        std::vector<SvgWarning> w;
+        const auto out = exportSvg(std::vector<SvgLayer>{{name}}, in, {}, &w);
+        REQUIRE(out.ok());
+        const auto back = importSvg(out.value());
+        REQUIRE(back.ok());
+        const std::string got = back.value().layers[0].name;
+        CHECK(got.size() <= 1024);
+        CHECK(got.size() >= 1022);
+        CHECK(got.find("\xEF\xBF\xBD") == std::string::npos);  // cut at a character boundary
+        CHECK(name.compare(0, got.size(), got) == 0);
+        REQUIRE(w.size() == 1);
+        CHECK(w[0].message.find("truncated") != std::string::npos);
+    }
+}

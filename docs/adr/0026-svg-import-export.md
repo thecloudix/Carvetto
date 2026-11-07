@@ -54,7 +54,9 @@ Beziers (deviation bounded by `tolerance.chordal`, span count bounded by the spa
   `detail::appendEllipticalArc` of the DXF importer. Quadratics are raised exactly to cubics.
   A closing `Z` adds a line only when the current point is farther than `tolerance.distance`
   (mm, after transforms) from the subpath start; otherwise the contour is closed as it is, with no
-  sliver line, and the ends keep their own coordinates (the first point wins, nothing is moved).
+  sliver line, and the ends keep their own coordinates: the last span keeps its own end point, the "first point
+wins" only in the decision to close, so a closed contour may have a gap of up to `tolerance.distance`
+  (1e-3 mm by default). The comparison is made in mm after the transform.
   `<circle>` is imported as the SVG drawing direction, clockwise on screen, i.e. CW in Y-up.
 - Y is flipped so the page's bottom-left corner is the origin. Units: unitless and `px` follow
   `SvgImportOptions::dpi` (default 96, the CSS value); `mm`, `cm`, `in`, `pt`, `pc` are exact;
@@ -76,7 +78,8 @@ One `<g inkscape:groupmode="layer" inkscape:label="...">` per layer (duplicate n
 open, any start angle and direction), are written as two `A` commands starting at the contour's own
 start point and going in its own direction, so direction, start point and the closed flag survive a
 round trip (a full circle comes back as two half arcs). Layer names are escaped and anything not
-allowed in XML 1.0 or invalid UTF-8 becomes U+FFFD; an empty name is written as "Layer". Dropped
+allowed in XML 1.0 or invalid UTF-8 becomes U+FFFD; an empty name is written as "Layer"; names are truncated to 1024 bytes at a UTF-8 boundary so that
+export then import is symmetric (the attribute cap is 64 KiB). Dropped
 input (contours without spans, zero-length spans, changed names) is reported through the optional
 `warnings` out-parameter as counted notes. The page is the geometry's bounding box
 plus `margin`, at least 1 mm square, `width`/`height` in mm and `viewBox="0 0 W H"`; Y is

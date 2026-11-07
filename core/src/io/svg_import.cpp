@@ -200,15 +200,15 @@ std::optional<Transform2> parseTransform(std::string_view s) {
         if (name.empty() || pos >= s.size() || s[pos] != '(') {
             return std::nullopt;
         }
-        const std::size_t close = s.find(')', pos);
-        if (close == std::string_view::npos) {
+        const std::size_t closeParen = s.find(')', pos);
+        if (closeParen == std::string_view::npos) {
             return std::nullopt;
         }
         std::vector<double> a;
-        if (!parseNumberList(s.substr(pos + 1, close - pos - 1), a, 6)) {
+        if (!parseNumberList(s.substr(pos + 1, closeParen - pos - 1), a, 6)) {
             return std::nullopt;
         }
-        pos = close + 1;
+        pos = closeParen + 1;
         Transform2 t;
         constexpr double kDeg = geometry::kPi / 180.0;
         if (name == "matrix" && a.size() == 6) {
@@ -561,16 +561,16 @@ class Importer {
                 return;
             }
         } else if (name == "line") {
-            const double x1 = num(n, "x1", 'x', valid);
-            const double y1 = num(n, "y1", 'y', valid);
-            const double x2 = num(n, "x2", 'x', valid);
-            const double y2 = num(n, "y2", 'y', valid);
+            const double lx1 = num(n, "x1", 'x', valid);
+            const double ly1 = num(n, "y1", 'y', valid);
+            const double lx2 = num(n, "x2", 'x', valid);
+            const double ly2 = num(n, "y2", 'y', valid);
             if (!valid) {
                 warn(n.line, "invalid <line> skipped");
                 return;
             }
-            b.moveTo(Vec2{x1, y1});
-            b.lineTo(Vec2{x2, y2});
+            b.moveTo(Vec2{lx1, ly1});
+            b.lineTo(Vec2{lx2, ly2});
             b.finish();
         } else {  // polyline, polygon
             const std::string* pts = n.attr("points");

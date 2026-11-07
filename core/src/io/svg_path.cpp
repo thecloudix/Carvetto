@@ -438,7 +438,7 @@ class PathParser {
         const Vec2 cur = b_.current();
         const Vec2 base = rel ? cur : Vec2{0.0, 0.0};
         std::array<double, 7> v{};
-        auto read = [&](std::size_t n) {
+        auto readArgs = [&](std::size_t n) {
             for (std::size_t i = 0; i < n; ++i) {
                 if (i > 0) {
                     sep();
@@ -451,31 +451,31 @@ class PathParser {
         };
         switch (c) {
             case 'M':
-                if (!read(2)) return false;
+                if (!readArgs(2)) return false;
                 b_.moveTo(Vec2{base.x + v[0], base.y + v[1]});
                 lastCubic_.reset();
                 lastQuad_.reset();
                 break;
             case 'L':
-                if (!read(2)) return false;
+                if (!readArgs(2)) return false;
                 b_.lineTo(Vec2{base.x + v[0], base.y + v[1]});
                 lastCubic_.reset();
                 lastQuad_.reset();
                 break;
             case 'H':
-                if (!read(1)) return false;
+                if (!readArgs(1)) return false;
                 b_.lineTo(Vec2{(rel ? cur.x : 0.0) + v[0], cur.y});
                 lastCubic_.reset();
                 lastQuad_.reset();
                 break;
             case 'V':
-                if (!read(1)) return false;
+                if (!readArgs(1)) return false;
                 b_.lineTo(Vec2{cur.x, (rel ? cur.y : 0.0) + v[0]});
                 lastCubic_.reset();
                 lastQuad_.reset();
                 break;
             case 'C': {
-                if (!read(6)) return false;
+                if (!readArgs(6)) return false;
                 const Vec2 c1{base.x + v[0], base.y + v[1]};
                 const Vec2 c2{base.x + v[2], base.y + v[3]};
                 const Vec2 p{base.x + v[4], base.y + v[5]};
@@ -485,7 +485,7 @@ class PathParser {
                 break;
             }
             case 'S': {
-                if (!read(4)) return false;
+                if (!readArgs(4)) return false;
                 const Vec2 c1 = lastCubic_.has ? cur * 2.0 - lastCubic_.p : cur;
                 const Vec2 c2{base.x + v[0], base.y + v[1]};
                 const Vec2 p{base.x + v[2], base.y + v[3]};
@@ -495,7 +495,7 @@ class PathParser {
                 break;
             }
             case 'Q': {
-                if (!read(4)) return false;
+                if (!readArgs(4)) return false;
                 const Vec2 c1{base.x + v[0], base.y + v[1]};
                 const Vec2 p{base.x + v[2], base.y + v[3]};
                 b_.quadTo(c1, p);
@@ -504,7 +504,7 @@ class PathParser {
                 break;
             }
             case 'T': {
-                if (!read(2)) return false;
+                if (!readArgs(2)) return false;
                 const Vec2 c1 = lastQuad_.has ? cur * 2.0 - lastQuad_.p : cur;
                 const Vec2 p{base.x + v[0], base.y + v[1]};
                 b_.quadTo(c1, p);
