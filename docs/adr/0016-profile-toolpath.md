@@ -335,7 +335,35 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     its radius plus 1.5 cells; the tab holds when uncut cells join the material next to the vector
     to the waste beyond the kerf (or when there is no such waste near it at all: a hole smaller
     than the kerf). This distance rule serves Inside/Outside with allowance ≥ 0, where the kerf
-    lies wholly on the waste side of the vector. **Sided tabs (T-0127).** On the vector, and for Inside/Outside with a negative
+    lies wholly on the waste side of the vector. **Tab layer (T-0167).** The rule judges the
+    tab at the layer just below the tab top, like the sided one: the cut there is the disc of the
+    tab-layer radius (`tabLayerRadius`: a V-bit's cone there, tab thickness × tan(half angle), at
+    most its radius at the top of the cut; any other tool's radius), far narrower than the radius
+    at the top for a V-bit and a thin tab. Before, the cross-sections, the "cut through" distance,
+    the nicks, the quick answers and the raster all took the radius at the top, so a V-bit's tabs
+    that hold were left out as cut through and the whole part came free (m2_1330000_9, Outside,
+    V-bit 90°, D25, allowance 0, separate last pass: the single tab of each of two vectors, 641 and
+    1,704 mm², at the stored start and at VectorStart; tab thickness 1.99 mm, so a cone 1.99 mm
+    wide at the tab layer where the radius at the top of the cut is 5.9 mm). Now the sections reach a tab-layer radius (plus the
+    last-pass allowance) beyond the cut, the waste to reach lies a tab-layer radius + the
+    allowance + 0.2 mm beyond it, the tools' discs in the raster and every distance test are the
+    tab-layer radius, and the raster's core is the raised stretch less the tab-layer radius at each
+    end (the tab is uncut for that much more at the layer). The check that no other cut comes
+    within reach of the tab still measures to the guaranteed core, the stretch less the full radius
+    at each end that the roughing cover is matched against: a tool of another cut beyond it only
+    narrows the tab (measured to the longer core, the first version of this change left out three
+    scenes' holding tabs: harness t0167, seeds 9301–9304 scenes 367, 251, 94, 67). End mills are
+    unchanged: `tabLayerRadius` is their radius, and moves and diagnostics are byte-identical
+    over 12,800 scenes (modes 1, 2 and 3, leads on and off). Where the kerfs leave no waste a
+    margin beyond the cut (a notch the two kerfs consume, 0.145 mm of waste left), the raster used
+    to find none and keep the tab as holding a hole smaller than the kerf, although the tools at the
+    ends of its raised stretch sealed its material off (m0_271016_20 at VectorStart/Outside: a tab
+    round the bottom corner of a 6.8 mm notch, end mill 3.175 mm, the end tools 2.7 mm apart: the
+    oracle found it severed). It now looks for waste past the far wall of the kerf (the allowance
+    + a tab-layer radius from the vectors) at all and, if there is some, judges with the discs
+    widened by half a cell instead of 1.5 (a sliver of waste narrower than three cells has no open
+    cell otherwise), so a tab that joins nothing there is left out; with no waste at all the tab is
+    kept as before. **Sided tabs (T-0127).** On the vector, and for Inside/Outside with a negative
     allowance (the kerf then crosses the vector, so the distance to the vectors no longer tells
     the part from the waste), a tab is judged by the pieces of material the cut leaves, decided by
     the profile side and the allowance (never by `Cut::distance`), with no cross-section shortcut:
@@ -451,6 +479,33 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     left out … cut through … at a corner") although the exact oracle finds all 3 holding; no free piece
     results, so the error is conservative (repro
     /home/chris/harness/t0156v2/dump/m1_9302_2199.scn; carded as a T-0177 item).
+    **Triage of the T-0158 verifier's repros (T-0167, on main after T-0156, whole-scene flood of
+    the moves, leads off unless said).** Fixed: m2_1330000_9 (V-bit tabs judged at the top
+    radius, Tab layer above; both starts), m0_271016_20 at VectorStart/Outside (the severed tab at the
+    bottom corner of a notch; its other 2 of 4 left out are as before), m0_271000_0 at
+    VectorStart/Outside (the V-bit tab that main left out is kept). Not tab defects: m0_291002_11
+    (VectorStart/Outside 0.41 mm², and 4.76 mm² at the stored start), m0_271000_0 (1.19 mm²) and
+    m0_271013_1 (box centre, 1.33 mm²) have an unreported free piece only with leads on, which is
+    the known lead gap (no piece with leads off, moves otherwise identical). Kept and reported, not
+    fixed: m1_1310133_29 (VectorStart/Outside) and a4_770001_217 (box centre) have a partial tab
+    whose unjoined piece is a hairline sliver 0.05–0.11 mm thick (0.41 and 0.067 mm²) that the
+    loose-piece search reports; the exact check resolves necks only from about 0.11 mm, and dropping
+    the tab would free the part. mmrg_001_tabs_all_out (V-bit merged region): at the stored start
+    and at VectorStart all three tabs are truly severed (kept, the flood finds them cut through),
+    so the 1,373 mm² piece is reported; at the box centre three tabs hold. m1_272009_9
+    (VectorStart/Outside, merged round region): 7 of 10 placed tabs have fewer than two pieces
+    near them and hold nothing, none is severed, nothing is free. r101_1_0_42 (V-bit 120°, D1, On,
+    616 tabs requested): with leads on 150 flood pieces ≥ 0.04 mm² against 98 reported at the box
+    centre, with leads off 100 against 98 (2 unreported, the T-0177 (b) family; none at VectorStart). All
+    carded in T-0177 (g)–(k). **Screen (T-0167):** moves compared with main over V-bit-forced
+    scenes (seeds 9301–9308, 500 scenes each, modes 0, 1, 3, stored/VectorStart/box-centre/optimised
+    starts, leads on and off, sharp corners forced): see the changelog entry for the counts; every
+    changed scene was flooded on both sides. Residual worse-than-main entries (benign by the
+    flood): seed 9301 scene 153 (V-bit 60, Outside, SHARP: main keeps no tab and two pieces of 15.5
+    and 2.9 mm² come free; the branch keeps three, two hold them, one is cut through by a closed
+    pocket of waste that the quick answer keeps; no piece is free), 9308 scene 100 (eleven tabs kept,
+    five hold nothing, none severed, none free), 9308 scene 412 (a partial tab whose unjoined piece
+    is the 0.6 mm² piece that main also frees and reports).
     **Band polygons.** Each stretch's band is one polygon whose winding number is positive exactly
     on the band: the sum of the boundaries of positively wound pieces covering it (a line's
     rectangle along its normals, an arc's annular sector between radii ρ − w and ρ + w or, with
