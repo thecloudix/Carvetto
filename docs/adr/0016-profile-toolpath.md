@@ -502,33 +502,40 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     near them and hold nothing, none is severed, nothing is free. r101_1_0_42 (V-bit 120°, D1, On,
     616 tabs requested): with leads on 150 flood pieces ≥ 0.04 mm² against 98 reported at the box
     centre, with leads off 100 against 98 (2 unreported, the T-0177 (b) family; none at VectorStart). All
-    carded in T-0177 (g)–(k). **Screen (T-0167):** the moves of main and of this change were hashed
-    over 36,000 V-bit-forced scenes (nine configurations; harness t0167 wsf, seeds 9301–9308, 500 scenes each, modes 0
-    with forced Inside/Outside and allowance ≥ 0, 1 and 3, stored / VectorStart / box-centre /
-    optimised starts, leads on and off, sharp corners forced) and 28,000 scenes with end mills (six
-    configurations and the natural mix), and every scene whose moves differ was flooded on both sides (exact
-    capsules at the layer below the tab top, per tab hold / partial / severed, free pieces against
-    the reported ones). V-bit: 3,380 scenes change, 3,346 for the better (a tab kept that holds, a
-    free piece held, a severed or hold-nothing tab gone), 14 no net change and 18 flagged worse by
-    the strict per-metric comparison (14 distinct); mode 1 (allowance ≤ 0, sided) changes nothing.
-    End mills: 2 of 28,000 change (the sliver search), neither worse; moves and diagnostics
-    elsewhere are byte-identical. U-shaped parts built for the sliver search (end mill, Outside, a
-    notch the kerfs consume to 0.06–0.5 mm of waste, 400 parts): 13 reach it, 8 change (4 severed
-    and 4 hold-nothing tabs gone), none worse. The flagged entries are benign by the flood: seed
-    9301 scene 153 (V-bit 60, Outside, SHARP: main keeps no tab and two pieces of 15.5 and 2.9 mm²
-    come free; the branch keeps three, two hold them, one is cut through by a closed pocket of
-    waste that the quick answer keeps; no piece is free), 9308 scene 100 (eleven tabs kept, five
-    hold nothing, none severed, none free), 9308 scene 412 (a partial tab whose unjoined piece is
-    the 0.6 mm² piece that main also frees and reports), 9304 scene 275 (box centre: a 38 mm²
-    piece held; a 0.075 mm² hairline left over is not reported, T-0177 (d)), 9307 scene 110 (two
-    partial tabs, a 74 mm² piece held, nothing free), and in the Inside/Outside screen (mode 0
-    forced) 9302/175, 9303/109, 9304/312, 9306/152, 9308/234 and 9308/243 (main keeps no tab and
-    frees 1 to 3 pieces; the branch keeps tabs, one of them cut through, and frees fewer),
-    9306/427 (two extra kept tabs cut through, nothing free), 9305/161 (30.7 mm² held, one
-    hairline of 0.045 mm² reported that the flood does not find) and 9308/291 (a 1,622 mm² part held;
-    six hairlines of 0.074 mm² left over, reported). Cost: the sliver search runs only where a tab's
-    raster finds no waste a margin beyond the kerf, and the tab-layer judgement changes only radii
-    (not measured separately).
+    carded in T-0177 (g)–(l). **Screen (T-0167, round 2):** the moves of main and of this change were hashed over 24,000
+    V-bit-forced scenes (six configurations; harness t0167 wsf, seeds 9301–9308, 500 scenes each:
+    mode 3 leads off, leads on, sharp corners forced, at VectorStart/Outside, at the box centre, and
+    mode 0 with Inside/Outside and allowance ≥ 0 forced), 4,000 scenes of the natural mix and 8,000 end-mill
+    scenes, and every scene whose moves differ was flooded on both sides (exact capsules at the
+    layer below the tab top, per tab hold / partial / severed, free pieces against the reported
+    ones). V-bit: 2,681 scenes change, 2,637 for the better (a tab kept that holds, a free piece
+    held, a severed or hold-nothing tab gone), 28 with no net change and 16 flagged worse by the
+    strict per-metric comparison (14 distinct scenes). End mills: moves and diagnostics are
+    byte-identical in all 8,000 scenes and in the verifier's U-part family (4,000 parts, seeds
+    9731–9738 of my generator). The flagged entries are benign by the flood: seed 9301 scene 153
+    (V-bit 60, Outside, SHARP: main keeps no tab and two pieces of 15.5 and 2.9 mm² come free; the
+    branch keeps three, two hold them, one is cut through by a closed pocket of waste that the
+    quick answer keeps; no piece is free), 9308 scene 100 (eleven tabs kept, five hold nothing, none
+    severed, none free), 9308 scene 412 (a partial tab whose unjoined piece is the 0.6 mm² piece that
+    main also frees and reports), 9304 scene 275 (box centre: a 38 mm² piece held; a 0.075 mm²
+    hairline left over is not reported, T-0177 (d)), 9307 scene 110 (two partial tabs, a 74 mm² piece
+    held, nothing free), and in the Inside/Outside screen 9302/175, 9303/109, 9304/312, 9306/152,
+    9308/234 and 9308/243 (main keeps no tab and frees 1 to 3 pieces; the branch keeps tabs, one of
+    them cut through, and frees fewer), 9306/427 (two extra kept tabs cut through, nothing free),
+    9305/161 (30.7 mm² held, one hairline of 0.045 mm² reported that the flood does not find) and
+    9308/291 (a 1,622 mm² part held; six hairlines of 0.074 mm² left over, reported). **Cost
+    (Release CPU, three interleaved reps with an A/A control, the T-0140 perf pages with a V-bit):**
+    main → this change, seconds: rect 1,000 Outside V60 0.40 → 0.43 (A/A 1.07); rect 400 Outside V90
+    TC6 0.217 → 0.214; rect 400 Inside V60 11.9 → 6.5 (output differs: tabs now kept); letters 200
+    Outside V90 A0.2 2.47 → 1.42 (differs); gear 2,000 teeth Outside V60 3.20 → 1.07; Inside V60
+    2.99 → 0.70; rect 1,000 Inside V90 TC6 18.8 → 11.7 (differs, A/A 1.28); arc 1,000 Outside V120
+    4.99 → 2.19; bez 500 Outside V60 A0.2 13.6 → 14.1 (1.03); plate 500 Inside V90 A0.2 16.2 → 5.8
+    (differs); end-mill rect 1,000 Outside 0.386 → 0.372. The first version of this change was
+    1.4× to 2.7× slower on V-bit pages: it measured every sample against a second, longer set of
+    sections (a guard), and its raster reached four full radii and asked the distance field for
+    every cell, which dominates a long gear (96 % of the time in `obstacleDistance`). Now one set of
+    sections serves, the raster reaches the tab-layer radius, and the distance is asked once per 4 × 4
+    block of cells whose centre is further than the block's radius from the thresholds.
     **Band polygons.** Each stretch's band is one polygon whose winding number is positive exactly
     on the band: the sum of the boundaries of positively wound pieces covering it (a line's
     rectangle along its normals, an arc's annular sector between radii ρ − w and ρ + w or, with
