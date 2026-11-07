@@ -89,6 +89,20 @@ bool UndoStack::redo(Document& doc) {
     return true;
 }
 
+bool UndoStack::undoAndDiscard(Document& doc) {
+    if (!canUndo() || index_ != commands_.size()) {
+        return false;
+    }
+    commands_[--index_]->revert(doc);
+    commands_.pop_back();
+    generation_ = nextGeneration();
+    coalesceOpen_ = false;
+    if (cleanIndex_ > static_cast<long long>(index_)) {
+        cleanIndex_ = -1;
+    }
+    return true;
+}
+
 std::string UndoStack::undoText() const {
     return canUndo() ? commands_[index_ - 1]->text() : std::string{};
 }
