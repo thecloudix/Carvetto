@@ -14,6 +14,8 @@
 #include "carvetto/document/document.hpp"
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/geometry/span.hpp"
+// Last: on Windows it includes <windows.h> (macros such as near/far).
+#include "../../../core/tests/geometry/cpu_time.hpp"
 
 using namespace carvetto;
 using document::Document;
@@ -598,12 +600,12 @@ TEST_CASE("marquee and picking terminate on an arc of huge or infinite radius", 
         c.spans.emplace_back(a);
         addVector(doc, c);
         const ViewTransform view = makeView();
-        const auto t0 = std::chrono::steady_clock::now();
+        const double t0 = carvetto::test::processCpuSeconds();
         const Box2 rectPx{{0.0, 0.0}, {900.0, 700.0}};
         (void)viewmodel::marqueeSelect(doc, view, rectPx, MarqueeMode::Crossing);
         (void)viewmodel::marqueeSelect(doc, view, rectPx, MarqueeMode::Window, FillHit::StrokeAndFill);
-        const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+        const double seconds = carvetto::test::processCpuSeconds() - t0;
         INFO("radius " << radius);
-        CHECK(seconds < 5.0);
+        CHECK(seconds < 20.0);  // CPU time; ~0.1 s expected, fails fast on a hang
     }
 }

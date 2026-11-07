@@ -18,6 +18,7 @@
 
 using namespace carvetto::geometry;
 using carvetto::test::processCpuSeconds;
+namespace geometry = carvetto::geometry;
 
 namespace {
 
@@ -191,15 +192,16 @@ TEST_CASE("non-finite arcs are bounded and flagged", "[polygonise][arc][geometry
         CHECK(coarse);
         Contour c = closedWith(arc);
         bool contourCoarse = false;
-        const Polyline pl = c.polygonise(tolWith(1e-9), &contourCoarse);
+        const geometry::Polyline pl = c.polygonise(tolWith(1e-9), &contourCoarse);
         CHECK(contourCoarse);
         CHECK(pl.points.size() <= 3);
     }
     // A bad tolerance is a degenerate one, not a hang.
+    // (the documented degenerate-tolerance count: a quarter turn per chord, 4 for a full circle)
     for (const double bad : {kNaN, kInf, -1.0, 0.0}) {
         std::vector<Vec2> pts;
         polygoniseInto(Span{makeArc({0, 0}, 10.0, 0.0, 0.0)}, tolWith(bad), pts);
-        CHECK(pts.size() <= 4);
+        CHECK(pts.size() == 4);
     }
 }
 
@@ -207,7 +209,7 @@ TEST_CASE("Contour::polygonise and the region variant report a coarse polygon", 
     const Tolerance tol = tolWith(0.001);
     SECTION("closed") {
         bool coarse = false;
-        const Polyline pl = closedWith(makeArc({0, 0}, 1e13, 0.0, 0.0)).polygonise(tol, &coarse);
+        const geometry::Polyline pl = closedWith(makeArc({0, 0}, 1e13, 0.0, 0.0)).polygonise(tol, &coarse);
         CHECK(coarse);
         CHECK(pl.points.size() <= kMaxArcSegments + 1);
     }

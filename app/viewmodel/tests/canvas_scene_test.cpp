@@ -11,6 +11,8 @@
 #include "carvetto/document/document.hpp"
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/geometry/span.hpp"
+// Last: on Windows it includes <windows.h> (macros such as near/far).
+#include "../../../core/tests/geometry/cpu_time.hpp"
 
 using namespace carvetto::document;
 using carvetto::geometry::Box2;
@@ -132,11 +134,11 @@ TEST_CASE("scene building terminates on an arc of huge or infinite radius", "[vi
         c.spans.emplace_back(a);
         REQUIRE(doc.execute(std::make_unique<AddObjectCommand>(
             Object::vector(c, doc.activeLayer(), doc.activeSheet()))));
-        const auto t0 = std::chrono::steady_clock::now();
+        const double t0 = carvetto::test::processCpuSeconds();
         const auto scene = buildCanvasScene(doc, view);
-        const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+        const double seconds = carvetto::test::processCpuSeconds() - t0;
         INFO("radius " << radius);
-        CHECK(seconds < 5.0);
+        CHECK(seconds < 20.0);  // CPU time; ~0.1 s expected, fails fast on a hang
         for (const auto& path : scene.paths) {
             CHECK(path.pointsPx.size() <= carvetto::geometry::kMaxArcSegments + 1);
         }
