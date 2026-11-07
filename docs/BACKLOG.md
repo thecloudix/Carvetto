@@ -751,7 +751,7 @@ Acceptance criteria:
 ### Batch B — drawing & editing (viewmodel + Qt)
 Owner decision 2026-11-06: start Batch B now. Director carded wave 1 below; wave 2 is listed as stubs and gets cards when its dependencies are done. Rule for every Batch B card (ADR-0014): the logic lives in `core/` or `app/viewmodel/` and is unit-tested headless; `app/src` only paints and forwards events. Windows macro names (far, near, min, max, small, interface, IN, OUT) are not identifiers.
 
-### T-0200 Shape builders: rectangle, circle, ellipse, polygon, star, arc → contours   [status: verifying]
+### T-0200 Shape builders: rectangle, circle, ellipse, polygon, star, arc → contours   [status: done (#72)]
 Phase: 1 (Batch B)   Module: core/geometry (+ core/document glue)   Depends on: T-0001, T-0010   ADR: 0026 (new, only if a choice is made)
 Goal: Pure functions that turn the existing parametric object params (`RectangleParams`, `CircleParams`, `EllipseParams`, `PolygonParams`, `StarParams` in document/object.hpp) into exact span contours, plus an arc builder (three-point, centre-start-end, start-end-radius). Rectangle supports the corner types the params already record (square, round, chamfer, cove/ogee only if the params have them). Circles and ellipses are exact (arcs / Beziers within tolerance, stated). Behaviour per docs/reference/feature-inventory.md drawing sections; clean-room.
 Interfaces: owns new `carvetto/geometry/shapes.hpp`; reads document params; if a param struct lacks a field the feature needs, add it additively and keep the .carv schema backward compatible (ADR-0003/0013 rules, version bump if needed).
