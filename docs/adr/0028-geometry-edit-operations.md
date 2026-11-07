@@ -37,8 +37,11 @@ the relief fillets or the tolerances. This ADR records the choices. All function
   tolerance between the two spans are refused with a status.
 
 ### 2. Dog-bone and T-bone (the inventory does not define them)
-Both are relief cuts for internal corners, i.e. convex vertices of a pocket region (a left turn
-of a counter-clockwise contour). They are defined purely from the contour's turn direction, with
+**Both are relief cuts for internal corners only**, i.e. convex vertices of a pocket region (a left
+turn of a counter-clockwise contour, a right turn of a clockwise one). Applied at a reflex vertex
+they carve a bump into the region, and on the opposite winding the area change is negative.
+`filletCorner` and the explicit-node `filletAll` apply them wherever told; `filletAll` with no node
+list (the tool default) uses `convexNodes(contour)` for these two kinds (open contours: left turns). They are defined purely from the contour's turn direction, with
 `r` = the requested radius (the tool radius). The relief is on the outer side of the turn,
 so it enlarges the region on the left of the contour (the pocket); on a clockwise contour the same
 node gives a bump, so the caller chooses the nodes.
