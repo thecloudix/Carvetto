@@ -720,3 +720,47 @@ input span, which is quadratic. T-0004 owns the signature and fixes all three.
     others are kept, and `snapChain` closes the junctions as for any other run of tiny pieces. The
     8000-side case returns one closed chain exactly d from the input (all 8000 pieces; the dropped ones
     are put back to close the junctions) in about 0.9 s.
+- **A5 (2026-11-06, T-0170): Round cost after T-0016; growth per doubling.** Status unchanged; outputs are bit-identical to before.
+  - *Round on inputs with nothing to prune.* A/A-controlled interleaved CPU time (Release, one process
+    per run, minimum of 7–9 alternating runs; control = the same binary twice, ±1 %) of a Round offset
+    of an 8000-step spiral and a 16000-point sine (lines only, no pruning, d well below the pitch of
+    the path) against the build before T-0016 (993d0f9): T-0016 +2–4 %, T-0142, T-0128 and T-0172 about +1 % each,
+    T-0168 +4 % (its point tree and dense-element pass, a few percent in all, are not free there), 8–11 %
+    together. The cost was not in the T-0016 code but in `std::hypot`, which `Vec2::length()` uses and
+    glibc computes slowly: it was a quarter of the time of such an offset, called from the distance
+    tests of `closerThan` (every sample of every piece), from `carrierIntersections` (parallel test),
+    `sameCarrier` and from normalising the tangents in `removeCuspLoops` and `removeRetraces`. Each of those only decides
+    a comparison, so each now compares on squares or raw vectors and falls back to the exact
+    expression within a relative 1e-9 (1e-12 for the distance) of the bound: `nearerThan`,
+    `cosineSide` (with `endsReverse`) and the two inline tests. Decisions, hence outputs, are those of the exact
+    expressions (660 offsets of zig-zags, saws, hatches, filleted zig-zags, walks, spirals, sines, every
+    join and side, two mitre limits, compared bit for bit with the build before: no difference). The
+    result is within 3 % of the build before T-0016 on those inputs (1.00–1.02 against an A/A control of ±1 %); that holds for line inputs up to about 20 000 spans (spiral 8000, sine 16000).
+    **Arcs are not recovered:** the replacements cover lines only (arcs still use hypot, atan2 and fabs), and a filleted-arc zig-zag Round offset with nothing to prune (arc 50000, 100 000 spans) is still about +8 % against the build before T-0016, a 300 000-span zig-zag +3 to +13 %. Carded as follow-up T-0176. The shortcuts live in `offset_shortcuts.hpp`; they fall back to the exact expression when a square would be denormal or too large (squares outside 1e-250..1e250). On the T-0016
+    verifier's dense inputs (zig-zag, filleted zig-zag, saw, hatch, d = 7) Round is 2–40× faster than
+    before T-0016, which T-0168 made possible, so there is nothing left to recover there.
+  - *Growth per doubling of the span count* (Release CPU seconds, minimum of 3–7, pitch 0.02,
+    amplitude 1, hatch rows 3 mm, d = 7, left side, mitre limit 2; at 4000 spans the path is 80 mm
+    long = 5.7 d):
+
+    | input / join | 500 | 1000 | 2000 | 4000 | 8000 |
+    |---|---|---|---|---|---|
+    | zig-zag Round | 0.012 | 0.028 | 0.078 | 0.21 | 0.41 |
+    | zig-zag Sharp | 0.10 | 0.40 | 0.79 | 1.70 | 3.03 |
+    | zig-zag Square | 0.10 | 0.36 | 0.79 | 1.52 | 2.95 |
+    | saw Round | 0.012 | 0.029 | 0.069 | 0.150 | 0.315 |
+    | saw Sharp | 0.020 | 0.061 | 0.179 | 0.479 | 0.937 |
+    | hatch Round | 0.106 | 0.247 | 0.509 | 1.07 | 2.40 |
+    | hatch Sharp | 0.029 | 0.104 | 0.262 | 0.62 | 1.31 |
+    | filleted zig-zag Round / Sharp / Square | – | 0.092 | 0.206 | 0.47 | 1.0 |
+
+    Every doubling from 2000 spans on costs at most 2.7× (mostly 1.9–2.4×; zig-zag Round and saw Sharp are 2.7× at 2000 → 4000), for every join; the filleted
+    zig-zag, whose 8× to 30× cost before T-0168 made it the worst case, costs 2.2×. Above 2.5× are mainly
+    the first doublings, 500 → 1000 → 2000 spans (2.3–4×, mostly Sharp and Square, e.g. zig-zag
+    Sharp 3.9× then 2.0×), where the path (10–40 mm) is not yet longer than a few times 2d = 14 mm:
+    every piece of the boundary still meets every other, so the work per piece grows with the
+    length until it saturates at the pieces within 2d. That is the geometry of the input, not a
+    defect (the same doublings are 2.0–2.1× at d = 3, 800 → 1600 spans, where the path is long
+    compared to d). The previous 2.6–4× per doubling for every join (T-0016 verifier) was this plus the
+    near-tolerance cost T-0168 removed. `offset_hatch_cost_test` now also checks that Sharp, Square
+    and Round each cost at most 2.5× per doubling on the amplitude-1 zig-zag (CPU time, interleaved).
