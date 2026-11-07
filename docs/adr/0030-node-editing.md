@@ -131,7 +131,27 @@ editor, where unbound letters do nothing) instead of the Transform menu actions.
 the function keys are not claimed and stay Transform shortcuts. In Select mode nothing is claimed.
 Typing into a tool-panel field never reaches either (the line edit consumes the key).
 
+Exclusion of the edited objects from snapping is done once, by the frozen index (its skip list).
+`SnapQuery::exclude` is not used for node editing: during a drag the frozen index is always the one
+in use (`validateGesture` ends the drag as soon as the generation differs), and outside a drag
+nothing is excluded. `NodeEditor::generation_` is taken when the drag begins, so an outside
+undo/redo/delete before the first pushed step ends the drag too (regression test
+"an outside undo before the first pushed step ...").
+
+Key and shortcut collision table (verified with real key events): File Ctrl+N/O/S/Shift+S/I/Quit,
+Edit Undo/Redo, View F4 and the tool palette N are not touched by node editing. Transform: M, T, R, H,
+V, Ctrl+H, Ctrl+V, F9, F10. In NodeEdit the canvas claims A-Z through `ShortcutOverride`, so there
+H/V toggle the mirror mode and M, T, R, N are swallowed and inert; Ctrl+H/Ctrl+V remain Transform
+shortcuts (mirror copy: one more object, one step) and F9 centres the selection (one step); Alt+H does
+nothing. The override only works while the canvas has focus: with focus on another dock widget (for
+instance the layers list) H in NodeEdit runs the Transform mirror action, and with the Mirror combo
+focused H selects its "Horizontal" item. Move and Mirror in the Transform menu share the mnemonic M
+(T-0205 code). `NodeEditor::escape` with an undo macro open returns success but reverts nothing
+(`undoAndDiscard` refuses inside a macro); no UI path reaches that state.
+
 ### 9. Known limits
+- The first pointer move that starts a drag builds the frozen snap index: 12 ms with 10k objects
+  (the 16 ms budget holds, narrowly); later steps cost under 0.1 ms.
 - Dragging after an undo discards the redo entry for good (a drag is a new edit); Escape reverts
   the drag but does not bring the discarded redo back.
 - An object with 100k spans costs about 8.5 ms per pointer step (worst 22 ms): the edit copies and

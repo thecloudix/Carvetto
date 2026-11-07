@@ -267,9 +267,6 @@ void ToolController::updatePointer(Vec2 px, Modifiers mods) {
         return;
     }
     SnapQuery query;
-    if (tool_ == ToolKind::NodeEdit) {
-        query.exclude = nodeEditor_.gestureObjects();
-    }
     if (!pts_.empty()) {
         query.pendingStartMm = pts_.back();
     }

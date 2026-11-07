@@ -1143,3 +1143,51 @@ TEST_CASE("the snap index is kept for the whole drag and rebuilt when the docume
     CHECK_FALSE(f.tool.nodeEditor().gestureActive());
     CHECK(f.tool.snapIndexBuilds() == before + 1);
 }
+
+TEST_CASE("an outside undo before the first pushed step ends the drag and the frozen index", "[viewmodel][node][edit][snap][uaf]") {
+    SnapFix f;
+    Contour c;
+    c.append(LineSpan{{300, 0}, {300, 50}});
+    c.append(LineSpan{{300, 50}, {350, 50}});
+    const ObjectId extra = f.add(c);
+    f.tool.pointerMove(f.px({300, 300}));
+    // Press on A's node 2 and drag it onto the neighbouring node 1: the move is refused (zero-length
+    // span), so the drag has begun but nothing was pushed.
+    const std::size_t steps = f.doc.undoStack().count();
+    f.tool.pointerMove(f.px({60, 40}));
+    f.tool.pointerPress(f.px({60, 40}));
+    f.tool.pointerMove(f.px({60, 20}));
+    REQUIRE(f.tool.nodeEditor().gestureActive());
+    REQUIRE(f.doc.undoStack().count() == steps);
+    REQUIRE(f.doc.undoStack().undo(f.doc));  // frees `extra` while the button is down
+    CHECK(f.doc.findObject(extra) == nullptr);
+    f.tool.pointerMove(f.px({300.3, 0.2}));  // near its old endpoint: a stale index would read freed memory
+    CHECK_FALSE(f.tool.nodeEditor().gestureActive());
+    CHECK_FALSE(f.tool.snap().has_value());
+    f.tool.pointerMove(f.px({310, 10}));
+    f.tool.pointerRelease(f.px({310, 10}));
+    CHECK(f.doc.undoStack().count() == steps);      // the drag recorded nothing
+    CHECK(f.doc.undoStack().index() == steps - 1);  // only the outside undo happened
+}
+
+TEST_CASE("a typed move that changes nothing records no step and keeps the circle", "[viewmodel][node][edit][ops]") {
+    Fix f;
+    CircleParams cp;
+    cp.centreMm = {50, 50};
+    cp.radiusMm = 20;
+    const ObjectId c = f.add(Contour::circle({50, 50}, 20), cp);
+    f.select(c);
+    f.ed().selectAllNodes();
+    const auto before = f.doc.objects();
+    const std::size_t steps = f.doc.undoStack().count();
+    NodeEditResult r = f.ed().moveSelectedNodes({0, 0});
+    CHECK_FALSE(r.ok);
+    CHECK(r.message.find("already there") != std::string::npos);
+    const Vec2 p = *f.ed().nodePosition(f.ed().selectedNodes().front());
+    r = f.ed().setSelectedNodeCoordinates(p.x, p.y, false);
+    CHECK_FALSE(r.ok);
+    CHECK(f.doc.undoStack().count() == steps);
+    CHECK(f.doc.objects() == before);
+    CHECK(std::holds_alternative<CircleParams>(f.obj(c).asVector()->params));
+    CHECK(f.contour(c).spans.size() == 1);  // still the single full-circle arc
+}
