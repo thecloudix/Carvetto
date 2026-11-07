@@ -8,6 +8,7 @@ add_library(carvetto_viewmodel STATIC
   src/pixel_probe.cpp
   src/new_job_form.cpp
   src/snapping.cpp
+  src/selection_tools.cpp
 )
 target_include_directories(carvetto_viewmodel PUBLIC include)
 target_link_libraries(carvetto_viewmodel

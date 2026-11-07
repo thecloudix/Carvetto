@@ -13,6 +13,7 @@
 #include <cstddef>
 
 #include "carvetto/viewmodel/canvas_scene.hpp"
+#include "carvetto/viewmodel/selection_tools.hpp"
 
 namespace carvetto::app {
 
@@ -38,7 +39,7 @@ CanvasWidget::CanvasWidget(QWidget* parent) : QWidget(parent) {
     setAttribute(Qt::WA_OpaquePaintEvent, true);
 }
 
-void CanvasWidget::setDocument(const document::Document* doc) {
+void CanvasWidget::setDocument(document::Document* doc) {
     doc_ = doc;
     fitPending_ = true;
     if (width() > 0 && height() > 0) {
@@ -60,6 +61,21 @@ void CanvasWidget::zoomToMaterial() {
 
 void CanvasWidget::refresh() {
     update();
+}
+
+bool CanvasWidget::selectAt(QPointF widgetPos, bool additive, bool toggle) {
+    if (doc_ == nullptr) {
+        return false;
+    }
+    const viewmodel::SelectMode mode = toggle     ? viewmodel::SelectMode::Toggle
+                                       : additive ? viewmodel::SelectMode::Add
+                                                  : viewmodel::SelectMode::Replace;
+    const auto hit = viewmodel::clickSelect(*doc_, view_, Vec2{widgetPos.x(), widgetPos.y()}, mode);
+    update();
+    if (onSelectionChanged) {
+        onSelectionChanged();
+    }
+    return hit.has_value();
 }
 
 void CanvasWidget::notifyViewChanged() {
@@ -125,6 +141,17 @@ void CanvasWidget::paintScene(QPainter& painter, const ViewTransform& view, QSiz
         painter.drawPath(qp);
     }
 
+    // Selection: dashed bounding box around the selected objects.
+    if (const auto sel = viewmodel::selectionBounds(*doc_)) {
+        QPen pen(QColor(30, 110, 230));
+        pen.setStyle(Qt::DashLine);
+        pen.setWidthF(1.0);
+        pen.setCosmetic(true);
+        painter.setPen(pen);
+        painter.setBrush(Qt::NoBrush);
+        painter.drawRect(toQt(view.worldToScreen(*sel)).adjusted(-3.0, -3.0, 3.0, 3.0));
+    }
+
     // Datum marker: a small filled square at the active sheet's XY datum.
     const QPointF datum = toQt(scene.datumPx);
     painter.setPen(Qt::NoPen);
@@ -169,6 +196,12 @@ void CanvasWidget::mousePressEvent(QMouseEvent* event) {
         panning_ = true;
         lastPanPos_ = event->position();
         setCursor(Qt::ClosedHandCursor);
+        event->accept();
+        return;
+    }
+    if (event->button() == Qt::LeftButton) {
+        const Qt::KeyboardModifiers mods = event->modifiers();
+        selectAt(event->position(), mods.testFlag(Qt::ShiftModifier), mods.testFlag(Qt::ControlModifier));
         event->accept();
         return;
     }
