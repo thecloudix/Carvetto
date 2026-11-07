@@ -18,7 +18,7 @@
 /// a layer index, and warnings. Everything is converted to millimetres and radians, with Y
 /// pointing up (the page's bottom-left corner is the origin). Fill and stroke are ignored.
 ///
-/// `exportSvg` writes each contour as a `<path>` (single full circles as `<circle>`) in
+/// `exportSvg` writes each contour as a `<path>` in
 /// millimetres, one `<g>` per layer, with a viewBox covering the geometry.
 namespace carvetto::io {
 
@@ -94,12 +94,12 @@ struct SvgContour {
 /// Options for `importSvg`.
 struct SvgImportOptions {
     /// `chordal` bounds the deviation of curves approximated by cubic Beziers (elliptical arcs
-    /// and ellipses); `distance` decides when a closing line is needed.
+    /// and ellipses); `distance` decides when a closing `Z` needs a line (within it: no line, first point wins).
     geometry::Tolerance tolerance{};
     /// Resolution that maps CSS pixels (the unit of unitless lengths) to millimetres.
     double dpi{96.0};
     /// Maximum input size in bytes.
-    std::size_t maxInputBytes{64U * 1024U * 1024U};
+    std::size_t maxInputBytes{32U * 1024U * 1024U};
     /// Maximum element nesting depth.
     std::size_t maxDepth{128};
     /// Maximum number of elements in the document.
@@ -111,7 +111,7 @@ struct SvgImportOptions {
     /// Maximum length of path data (`d`) and point lists (`points`) in bytes.
     std::size_t maxPathLength{16U * 1024U * 1024U};
     /// Maximum number of spans in the result.
-    std::size_t maxSpans{5'000'000};
+    std::size_t maxSpans{1'000'000};
     /// Maximum number of element visits while rendering (`<use>` expansion counts each visit).
     std::size_t maxVisits{2'000'000};
     /// Maximum nesting of `<use>` references.
@@ -148,10 +148,16 @@ struct SvgExportOptions {
 /// geometry plus `margin` (at least 1 mm square); the root element carries a
 /// `data-origin-mm="x y"` attribute holding the model coordinates of the page's bottom-left
 /// corner, which `importSvg` honours so that a round trip restores the original positions.
-/// Single full circles become `<circle>` (direction and start angle are not kept); arcs
-/// sweeping more than 270 degrees are written as two arc commands.
+/// Every contour is a `<path>`; arcs sweeping more than 270 degrees (including full circles,
+/// closed or open, any start angle and direction) are written as two arc commands, so direction,
+/// start point and the closed flag survive a round trip (a full circle comes back as two arcs).
+/// Layer names are written as valid XML: `& < > "` escaped, characters not allowed in XML 1.0
+/// and invalid UTF-8 replaced by U+FFFD, an empty name written as "Layer".
+/// When `warnings` is given it receives counted notes: contours without spans and zero-length
+/// spans (both dropped), and layer names that were changed.
 SvgResult<std::vector<std::uint8_t>> exportSvg(std::span<const SvgLayer> layers,
                                                std::span<const SvgContour> contours,
-                                               const SvgExportOptions& options = {});
+                                               const SvgExportOptions& options = {},
+                                               std::vector<SvgWarning>* warnings = nullptr);
 
 }  // namespace carvetto::io

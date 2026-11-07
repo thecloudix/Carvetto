@@ -21,7 +21,9 @@ bool scanSvgNumber(std::string_view s, std::size_t& pos, double& out);
 /// `ctm` into millimetres.
 class PathBuilder {
    public:
-    PathBuilder(const geometry::Transform2& ctm, double chordal, std::size_t spanBudget);
+    /// `distance` is the tolerance below which a closing `Z` adds no line (the subpath keeps its
+    /// own last point: the first point wins, nothing is moved).
+    PathBuilder(const geometry::Transform2& ctm, double chordal, double distance, std::size_t spanBudget);
 
     void moveTo(geometry::Vec2 p);
     void lineTo(geometry::Vec2 p);
@@ -54,6 +56,7 @@ class PathBuilder {
 
     geometry::Transform2 ctm_;
     double chordal_;
+    double distance_;
     std::size_t budget_;
     std::size_t used_{0};
     geometry::Vec2 cur_;

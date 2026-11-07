@@ -61,23 +61,6 @@ std::string number(double v) {
     return std::string(buf.data(), ec == std::errc{} ? ptr : buf.data());
 }
 
-std::string escape(std::string_view s) {
-    std::string out;
-    for (const char c : s) {
-        const auto u = static_cast<unsigned char>(c);
-        switch (c) {
-            case '&': out += "&amp;"; break;
-            case '<': out += "&lt;"; break;
-            case '>': out += "&gt;"; break;
-            case '"': out += "&quot;"; break;
-            default:
-                // Control characters are not valid in XML 1.0: replace them.
-                out += (u < 0x20) ? ' ' : c;
-        }
-    }
-    return out;
-}
-
 class PathWriter {
    public:
     PathWriter(double ox, double oy, double height) : ox_(ox), oy_(oy), h_(height) {}
@@ -126,16 +109,97 @@ class PathWriter {
     double h_;
 };
 
-std::string sanitiseLayerName(std::string_view name) {
-    std::string s = escape(name);
-    return s.empty() ? std::string{"Layer"} : s;
+bool isZeroLength(const Span& s) {
+    if (const auto* l = std::get_if<LineSpan>(&s)) {
+        return l->start == l->end;
+    }
+    if (const auto* b = std::get_if<BezierSpan>(&s)) {
+        return b->p0 == b->p1 && b->p1 == b->p2 && b->p2 == b->p3;
+    }
+    return false;
+}
+
+void note(std::vector<SvgWarning>* warnings, const std::string& message) {
+    if (warnings == nullptr) {
+        return;
+    }
+    for (SvgWarning& w : *warnings) {
+        if (w.message == message) {
+            ++w.count;
+            return;
+        }
+    }
+    SvgWarning w;
+    w.message = message;
+    warnings->push_back(std::move(w));
+}
+
+/// Strict UTF-8 pass: invalid sequences, XML-forbidden characters and U+FFFE/U+FFFF become U+FFFD.
+std::string xmlSafe(std::string_view in, bool& changed) {
+    std::string out;
+    std::size_t i = 0;
+    const std::string_view repl = "\xEF\xBF\xBD";
+    while (i < in.size()) {
+        const auto c = static_cast<unsigned char>(in[i]);
+        std::size_t len = 0;
+        std::uint32_t cp = 0;
+        if (c < 0x80) {
+            len = 1;
+            cp = c;
+        } else if (c >= 0xC2 && c <= 0xDF) {
+            len = 2;
+            cp = c & 0x1FU;
+        } else if (c >= 0xE0 && c <= 0xEF) {
+            len = 3;
+            cp = c & 0x0FU;
+        } else if (c >= 0xF0 && c <= 0xF4) {
+            len = 4;
+            cp = c & 0x07U;
+        }
+        bool ok = len != 0 && i + len <= in.size();
+        for (std::size_t k = 1; ok && k < len; ++k) {
+            const auto cc = static_cast<unsigned char>(in[i + k]);
+            ok = (cc & 0xC0U) == 0x80U;
+            cp = (cp << 6) | (cc & 0x3FU);
+        }
+        if (ok) {
+            const std::uint32_t minCp[] = {0, 0, 0x80, 0x800, 0x10000};
+            ok = cp >= minCp[len] && cp <= 0x10FFFF && !(cp >= 0xD800 && cp <= 0xDFFF) && cp != 0xFFFE &&
+                 cp != 0xFFFF && (cp >= 0x20);
+        }
+        if (!ok) {
+            out += repl;
+            changed = true;
+            ++i;
+            continue;
+        }
+        switch (cp) {
+            case '&': out += "&amp;"; break;
+            case '<': out += "&lt;"; break;
+            case '>': out += "&gt;"; break;
+            case '"': out += "&quot;"; break;
+            default: out.append(in.substr(i, len));
+        }
+        i += len;
+    }
+    return out;
+}
+
+std::string sanitiseLayerName(std::string_view name, bool& changed) {
+    std::string s = xmlSafe(name, changed);
+    if (s.empty()) {
+        changed = true;
+        return "Layer";
+    }
+    return s;
 }
 
 }  // namespace
 
 SvgResult<std::vector<std::uint8_t>> exportSvg(std::span<const SvgLayer> layers,
                                                std::span<const SvgContour> contours,
-                                               const SvgExportOptions& options) {
+                                               const SvgExportOptions& options,
+                                               std::vector<SvgWarning>* warnings) {
     if (!std::isfinite(options.margin) || options.margin < 0.0 || options.margin > kMaxCoordinate) {
         return SvgError{SvgError::Code::InvalidArgument, "margin must be finite and not negative", 0};
     }
@@ -186,7 +250,11 @@ SvgResult<std::vector<std::uint8_t>> exportSvg(std::span<const SvgLayer> layers,
 
     std::set<std::string> used;
     for (std::size_t li = 0; li < layers.size(); ++li) {
-        const std::string base = sanitiseLayerName(layers[li].name);
+        bool changed = false;
+        const std::string base = sanitiseLayerName(layers[li].name, changed);
+        if (changed) {
+            note(warnings, "layer name changed to be valid XML (empty, invalid characters or invalid UTF-8)");
+        }
         std::string name = base;
         for (int k = 2; used.count(name) != 0; ++k) {
             name = base + "_" + std::to_string(k);
@@ -195,17 +263,22 @@ SvgResult<std::vector<std::uint8_t>> exportSvg(std::span<const SvgLayer> layers,
         out += "<g id=\"layer" + std::to_string(li) + "\" inkscape:groupmode=\"layer\" inkscape:label=\"" + name +
                "\">\n";
         for (const SvgContour& c : contours) {
-            if (c.layer != li || c.contour.spans.empty()) {
+            if (c.layer != li) {
                 continue;
             }
-            const auto* arc = std::get_if<ArcSpan>(&c.contour.spans[0]);
-            if (c.contour.spans.size() == 1 && arc != nullptr && std::fabs(arc->sweepAngle()) >= geometry::kTwoPi) {
-                const Vec2 centre{arc->centre.x - ox, h - (arc->centre.y - oy)};
-                out += "<circle cx=\"" + number(centre.x) + "\" cy=\"" + number(centre.y) + "\" r=\"" +
-                       number(arc->radius) + "\"/>\n";
-            } else {
-                out += "<path d=\"" + pw.path(c.contour) + "\"/>\n";
+            Contour kept = c.contour;
+            std::erase_if(kept.spans, [&](const Span& sp) {
+                if (!isZeroLength(sp)) {
+                    return false;
+                }
+                note(warnings, "zero-length span dropped");
+                return true;
+            });
+            if (kept.spans.empty()) {
+                note(warnings, "contour without spans dropped");
+                continue;
             }
+            out += "<path d=\"" + pw.path(kept) + "\"/>\n";
         }
         out += "</g>\n";
     }

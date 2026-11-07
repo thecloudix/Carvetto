@@ -691,3 +691,73 @@ TEST_CASE("svg import: determinism and limits", "[svg][io]") {
     o.dpi = 0.0;
     CHECK_FALSE(importText(page(""), o).ok());
 }
+
+TEST_CASE("svg import: closing Z uses the distance tolerance", "[svg][io]") {
+    SECTION("near-closed hand-written path adds no sliver") {
+        const auto d = loadPage("<path d=\"M10 10 H30 V30 H10 V10.000001 Z\"/>");
+        REQUIRE(d.contours.size() == 1);
+        CHECK(d.contours[0].contour.closed);
+        CHECK(d.contours[0].contour.spans.size() == 4);
+    }
+    SECTION("a point beyond the tolerance still gets its closing line") {
+        // Default distance tolerance is 0.001 mm; 0.002 is twice that.
+        const auto d = loadPage("<path d=\"M10 10 H30 V30 H10 V10.002 Z\"/>");
+        REQUIRE(d.contours.size() == 1);
+        CHECK(d.contours[0].contour.spans.size() == 5);
+        const auto& last = d.contours[0].contour.spans.back();
+        CHECK(std::holds_alternative<LineSpan>(last));
+        CHECK(near(endPoint(last), {10.0, 90.0}, 1e-9));
+    }
+    SECTION("the tolerance option is honoured") {
+        SvgImportOptions o;
+        o.tolerance.distance = 0.01;
+        const auto d = load(page("<path d=\"M10 10 H30 V30 H10 V10.002 Z\"/>"), o);
+        CHECK(d.contours[0].contour.spans.size() == 4);
+    }
+    SECTION("two half arcs and a four-Bezier ellipse close without a sliver") {
+        const auto a = loadPage("<path d=\"M10 50 A10 10 0 0 1 30 50 A10 10 0 0 1 10 50 Z\"/>");
+        REQUIRE(a.contours.size() == 1);
+        CHECK(a.contours[0].contour.spans.size() == 2);
+        const auto b = loadPage("<path d=\"M10 50 A10 5 0 0 1 30 50 A10 5 0 0 1 10 50 Z\"/>");
+        REQUIRE(b.contours.size() == 1);
+        for (const Span& s : b.contours[0].contour.spans) {
+            CHECK(std::holds_alternative<BezierSpan>(s));
+        }
+        const auto e = loadPage("<ellipse cx=\"50\" cy=\"50\" rx=\"20\" ry=\"10\"/>");
+        REQUIRE(e.contours.size() == 1);
+        CHECK(e.contours[0].contour.spans.size() == 4);
+    }
+}
+
+TEST_CASE("svg import: smaller diagnostics", "[svg][io]") {
+    SECTION("UTF-16 input") {
+        Bytes b{0xFF, 0xFE, '<', 0, 's', 0, 'v', 0, 'g', 0, '/', 0, '>', 0};
+        auto r = importSvg(b);
+        REQUIRE_FALSE(r.ok());
+        CHECK(r.error().message == "UTF-16 input is not supported (convert to UTF-8)");
+        b = {'<', 0, 's', 0, 'v', 0, 'g', 0};
+        r = importSvg(b);
+        REQUIRE_FALSE(r.ok());
+        CHECK(r.error().message.find("UTF-16") != std::string::npos);
+        b = {0, '<', 0, 's'};
+        CHECK(importSvg(b).error().message.find("UTF-16") != std::string::npos);
+    }
+    SECTION("ellipse with only one radius") {
+        auto d = loadPage("<ellipse rx=\"5\"/><ellipse ry=\"5\"/>");
+        CHECK(d.contours.empty());
+        REQUIRE(d.warnings.size() == 1);
+        CHECK(d.warnings[0].count == 2);
+        CHECK(hasWarning(d, "only one of rx and ry"));
+    }
+    SECTION("zero scale") {
+        const auto d = loadPage("<path transform=\"scale(0)\" d=\"M0 0 L1 1\"/><g transform=\"matrix(0 0 0 0 1 1)\"><path d=\"M0 0 L1 1\"/></g>");
+        CHECK(d.contours.empty());
+        REQUIRE(d.warnings.size() == 2);
+        CHECK(hasWarning(d, "non-invertible"));
+    }
+    SECTION("default caps") {
+        const SvgImportOptions o;
+        CHECK(o.maxSpans == 1'000'000);
+        CHECK(o.maxInputBytes == 32U * 1024U * 1024U);
+    }
+}

@@ -520,7 +520,7 @@ class Importer {
 
     void shape(std::string_view name, const XmlNode& n, const Ctx& ctx) {
         const std::size_t budget = opt_.maxSpans > spans_ ? opt_.maxSpans - spans_ : 0;
-        PathBuilder b(ctx.ctm, opt_.tolerance.chordal, budget);
+        PathBuilder b(ctx.ctm, opt_.tolerance.chordal, opt_.tolerance.distance, budget);
         bool valid = true;
         if (name == "path") {
             const std::string* d = n.attr("d");
@@ -556,6 +556,9 @@ class Importer {
             }
             if (rx > 0.0 && ry > 0.0) {
                 b.ellipse(Vec2{cx, cy}, rx, ry);
+            } else if ((n.attr("rx") != nullptr) != (n.attr("ry") != nullptr)) {
+                warn(n.line, "<ellipse> with only one of rx and ry skipped");
+                return;
             }
         } else if (name == "line") {
             const double x1 = num(n, "x1", 'x', valid);
@@ -678,6 +681,10 @@ class Importer {
                 return;
             }
             ctx.ctm = ctx.ctm * *m;
+            if (!ctx.ctm.isInvertible(1e-24)) {
+                warn(n.line, "<" + std::string(name) + "> with a non-invertible transform (zero scale) skipped");
+                return;
+            }
             if (!sane(ctx.ctm)) {
                 warn(n.line, "<" + std::string(name) + "> with an out-of-range transform skipped");
                 return;

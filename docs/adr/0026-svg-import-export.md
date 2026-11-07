@@ -33,9 +33,9 @@ excludes copying from other SVG libraries; the SVG 1.1 specification is public.
   deep document cannot exhaust the call stack.
 
 ### 2. Limits (all in `SvgImportOptions`, violation = `ResourceLimit` with a message)
-Input size 64 MiB; element depth 128; elements 1,000,000; attributes per element 256; attribute
+Input size 32 MiB; element depth 128; elements 1,000,000; attributes per element 256; attribute
 value 64 KiB, except `d` and `points` 16 MiB; name length 256 (fixed); spans in the result
-5,000,000; element visits during rendering 2,000,000 (each `<use>` expansion counts, which bounds
+1,000,000 (a 15 MB path used about 0.8 GB at 5,000,000); element visits during rendering 2,000,000 (each `<use>` expansion counts, which bounds
 exponential reference trees); `<use>` nesting 16; layers 100,000. Path-data syntax errors are not
 fatal: as the SVG error rules say, the path is kept up to the error and a warning names it.
 Numbers: overflow (`1e999`) is an error at that token, underflow reads as 0, `NaN` / `Infinity` are
@@ -52,7 +52,10 @@ Beziers (deviation bounded by `tolerance.chordal`, span count bounded by the spa
   Circular arcs (|u| = |v|, perpendicular, which includes any similarity transform) become exact
   `ArcSpan`s; other elliptical arcs and ellipses become cubic Beziers via the shared
   `detail::appendEllipticalArc` of the DXF importer. Quadratics are raised exactly to cubics.
-  A closing `Z` adds a line only when the current point differs from the subpath start.
+  A closing `Z` adds a line only when the current point is farther than `tolerance.distance`
+  (mm, after transforms) from the subpath start; otherwise the contour is closed as it is, with no
+  sliver line, and the ends keep their own coordinates (the first point wins, nothing is moved).
+  `<circle>` is imported as the SVG drawing direction, clockwise on screen, i.e. CW in Y-up.
 - Y is flipped so the page's bottom-left corner is the origin. Units: unitless and `px` follow
   `SvgImportOptions::dpi` (default 96, the CSS value); `mm`, `cm`, `in`, `pt`, `pc` are exact;
   `%` refers to the viewBox; `em`/`ex` are unsupported (the element is skipped with a warning).
@@ -69,14 +72,23 @@ Beziers (deviation bounded by `tolerance.chordal`, span count bounded by the spa
 
 ### 4. Export
 One `<g inkscape:groupmode="layer" inkscape:label="...">` per layer (duplicate names get `_2`,
-...), one `<path>` per contour in millimetres (`M L C A Z`, absolute), a single full circle as
-`<circle>` (direction and start angle are not kept). Arcs above 270 degrees are written as two
-`A` commands so the large-arc flag is never ambiguous. The page is the geometry's bounding box
+...), one `<path>` per contour in millimetres (`M L C A Z`, absolute). Arcs above 270 degrees, including full circles (closed or
+open, any start angle and direction), are written as two `A` commands starting at the contour's own
+start point and going in its own direction, so direction, start point and the closed flag survive a
+round trip (a full circle comes back as two half arcs). Layer names are escaped and anything not
+allowed in XML 1.0 or invalid UTF-8 becomes U+FFFD; an empty name is written as "Layer". Dropped
+input (contours without spans, zero-length spans, changed names) is reported through the optional
+`warnings` out-parameter as counted notes. The page is the geometry's bounding box
 plus `margin`, at least 1 mm square, `width`/`height` in mm and `viewBox="0 0 W H"`; Y is
 flipped. The root carries `data-origin-mm="x y"` (model position of the page's bottom-left
 corner) which `importSvg` honours, so a round trip restores positions even when the geometry
 lies at negative coordinates. Output is deterministic (shortest round-trip numbers, fixed order).
 Contours are grouped by layer, so a round trip keeps order within a layer but not across layers.
+
+### 5. Smaller diagnostics
+UTF-16 input (BOM or `<` with NUL bytes) fails with "UTF-16 input is not supported (convert to
+UTF-8)". `<ellipse>` with only one of rx/ry and elements under a non-invertible transform (zero
+scale) are skipped with counted warnings. `<use>` width/height on a symbol are ignored.
 
 ## Consequences
 - Files using a DTD with entities are refused rather than partially read; those are rare for

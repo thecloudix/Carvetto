@@ -71,7 +71,8 @@ TEST_CASE("svg export: document structure", "[svg][io]") {
     CHECK(s.find("inkscape:label=\"Outline\"") != std::string::npos);
     CHECK(s.find("inkscape:label=\"Pockets &amp; &lt;more&gt;\"") != std::string::npos);
     CHECK(s.find("<path d=\"M0 23L10 23L10 18L0 23Z\"/>") != std::string::npos);
-    CHECK(s.find("<circle cx=\"20\" cy=\"3\" r=\"3\"/>") != std::string::npos);
+    CHECK(s.find("<circle") == std::string::npos);
+    CHECK(s.find("<path d=\"M23 3A3 3 0 0 0 ") != std::string::npos);
     CHECK(s.find("data-origin-mm=\"0 0\"") != std::string::npos);
     // Same input, same bytes.
     CHECK(s == text(exportSvg(layers, contours)));
@@ -152,9 +153,9 @@ TEST_CASE("svg export: round trip within tolerance", "[svg][io]") {
     CHECK(cw->direction == ArcDirection::CW);
     CHECK(cw->radius == Approx(10.0));
     CHECK(back.contours[8].contour.spans.size() == 2);  // the 338 degree arc is written as two commands
+    REQUIRE(back.contours[4].contour.spans.size() == 2);  // a full circle comes back as two half arcs
     const auto* circle = std::get_if<ArcSpan>(&back.contours[4].contour.spans[0]);
     REQUIRE(circle != nullptr);
-    CHECK(circle->isFullCircle());
     CHECK(circle->radius == Approx(4.0));
 }
 
@@ -197,5 +198,105 @@ TEST_CASE("svg export: ellipse and imported shapes survive", "[svg][io]") {
     for (std::size_t i = 0; i < first.value().contours.size(); ++i) {
         INFO("contour " << i);
         CHECK(outlineDistance(first.value().contours[i].contour, second.value().contours[i].contour) < 1e-6);
+    }
+}
+
+namespace {
+
+double signedArea(const Contour& c) {
+    Tolerance tol;
+    tol.chordal = 1e-6;
+    const auto pts = c.polygonise(tol).points;
+    double a = 0.0;
+    for (std::size_t i = 0; i < pts.size(); ++i) {
+        const Vec2 p = pts[i];
+        const Vec2 q = pts[(i + 1) % pts.size()];
+        a += p.cross(q);
+    }
+    return 0.5 * a;
+}
+
+}  // namespace
+
+TEST_CASE("svg export: full circles keep direction, start point and closed flag", "[svg][io]") {
+    struct Case {
+        const char* name;
+        ArcDirection dir;
+        double start;
+        bool closed;
+    };
+    const Case cases[] = {
+        {"CCW circle", ArcDirection::CCW, 0.0, true},
+        {"CW circle", ArcDirection::CW, 0.0, true},
+        {"start angle 1 rad CCW", ArcDirection::CCW, 1.0, true},
+        {"start angle 1 rad CW", ArcDirection::CW, 1.0, true},
+        {"open single full-circle arc", ArcDirection::CCW, 2.0, false},
+        {"open CW full-circle arc", ArcDirection::CW, 0.5, false},
+    };
+    for (const Case& k : cases) {
+        INFO(k.name);
+        Contour c = arcContour({12.5, -7.25}, 6.0, k.start, k.start, k.dir);
+        c.closed = k.closed;
+        const SvgDrawing back = roundTrip({{"L"}}, {{0, c}});
+        REQUIRE(back.contours.size() == 1);
+        const Contour& r = back.contours[0].contour;
+        CHECK(r.closed == k.closed);
+        CHECK((r.startPoint() - c.startPoint()).length() < 1e-9);
+        CHECK(r.spans.size() == 2);  // two arcs; the closing Z adds no sliver line
+        if (k.closed) {
+            CHECK((signedArea(r) > 0.0) == (k.dir == ArcDirection::CCW));
+            CHECK(std::fabs(signedArea(r)) == Approx(kPi * 36.0).epsilon(1e-6));
+        }
+        for (const Span& s : r.spans) {
+            const auto* a = std::get_if<ArcSpan>(&s);
+            REQUIRE(a != nullptr);
+            CHECK(a->direction == k.dir);
+            CHECK(a->radius == Approx(6.0));
+        }
+        CHECK(outlineDistance(r, c) < 1e-6);
+    }
+}
+
+TEST_CASE("svg export: names are valid XML and dropped input is reported", "[svg][io]") {
+    SECTION("hostile layer names re-parse") {
+        const std::string bad = std::string("a\x01b\x1f&<>\"'\xFF\xC0\x80\xED\xA0\x80\xEF\xBF\xBE tail\xE2\x82\xAC\xE2\x82");
+        std::vector<SvgWarning> w;
+        const std::vector<SvgLayer> layers{{bad}, {""}};
+        const auto out = exportSvg(layers, std::vector<SvgContour>{{0, polyline({{0, 0}, {1, 1}}, false)}}, {}, &w);
+        REQUIRE(out.ok());
+        const auto back = importSvg(out.value());
+        REQUIRE(back.ok());
+        REQUIRE(back.value().layers.size() == 2);
+        CHECK(back.value().layers[1].name == "Layer");
+        const std::string name = back.value().layers[0].name;
+        CHECK(name.find('\x01') == std::string::npos);
+        CHECK(name.find("\xEF\xBF\xBD") != std::string::npos);
+        CHECK(name.find("&<>\"'") != std::string::npos);
+        CHECK(name.find("\xE2\x82\xAC") != std::string::npos);  // valid euro sign kept
+        REQUIRE(w.size() == 1);
+        CHECK(w[0].count == 2);
+    }
+    SECTION("empty and zero-length contours are counted") {
+        std::vector<SvgWarning> w;
+        Contour zero;
+        zero.spans.emplace_back(LineSpan{{3, 3}, {3, 3}});
+        Contour empty;
+        empty.closed = true;
+        Contour partly = polyline({{0, 0}, {5, 0}}, false);
+        partly.spans.insert(partly.spans.begin(), LineSpan{{0, 0}, {0, 0}});
+        const auto out =
+            exportSvg(std::vector<SvgLayer>{{"a"}}, std::vector<SvgContour>{{0, zero}, {0, empty}, {0, partly}}, {}, &w);
+        REQUIRE(out.ok());
+        const auto back = importSvg(out.value());
+        REQUIRE(back.ok());
+        CHECK(back.value().contours.size() == 1);
+        bool zeroNote = false;
+        bool emptyNote = false;
+        for (const SvgWarning& x : w) {
+            zeroNote = zeroNote || (x.message.find("zero-length") != std::string::npos && x.count == 2);
+            emptyNote = emptyNote || (x.message.find("without spans") != std::string::npos && x.count == 2);
+        }
+        CHECK(zeroNote);
+        CHECK(emptyNote);
     }
 }

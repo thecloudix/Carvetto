@@ -64,7 +64,7 @@ inline double distToPolyline(carvetto::geometry::Vec2 p, const std::vector<carve
 /// Largest distance between the two contours' outlines (both ways), using fine polygonisation.
 inline double outlineDistance(const carvetto::geometry::Contour& a, const carvetto::geometry::Contour& b) {
     carvetto::geometry::Tolerance tol;
-    tol.chordal = 1e-4;
+    tol.chordal = 1e-6;
     auto pa = a.polygonise(tol).points;
     auto pb = b.polygonise(tol).points;
     if (a.closed && !pa.empty() && !(pa.front() == pa.back())) {

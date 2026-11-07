@@ -45,7 +45,7 @@ struct XmlDoc {
 };
 
 struct XmlLimits {
-    std::size_t maxInputBytes{64U * 1024U * 1024U};
+    std::size_t maxInputBytes{32U * 1024U * 1024U};
     std::size_t maxDepth{128};
     std::size_t maxElements{1'000'000};
     std::size_t maxAttributes{256};

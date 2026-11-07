@@ -59,6 +59,12 @@ class Parser {
         if (s_.size() > lim_.maxInputBytes) {
             return fail(SvgError::Code::ResourceLimit, "input exceeds the size limit", 0);
         }
+        const auto b0 = s_.size() > 0 ? static_cast<unsigned char>(s_[0]) : 0U;
+        const auto b1 = s_.size() > 1 ? static_cast<unsigned char>(s_[1]) : 0U;
+        if ((b0 == 0xFF && b1 == 0xFE) || (b0 == 0xFE && b1 == 0xFF) || (b0 == '<' && b1 == 0 && s_.size() > 2) ||
+            (b0 == 0 && b1 == '<')) {
+            return fail(SvgError::Code::Unsupported, "UTF-16 input is not supported (convert to UTF-8)", 1);
+        }
         if (s_.size() >= 3 && s_.substr(0, 3) == "\xEF\xBB\xBF") {
             pos_ = 3;
         }

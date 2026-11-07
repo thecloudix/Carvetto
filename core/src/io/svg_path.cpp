@@ -149,8 +149,8 @@ bool scanSvgNumber(std::string_view s, std::size_t& pos, double& out) {
     return true;
 }
 
-PathBuilder::PathBuilder(const Transform2& ctm, double chordal, std::size_t spanBudget)
-    : ctm_(ctm), chordal_(chordal), budget_(spanBudget) {}
+PathBuilder::PathBuilder(const Transform2& ctm, double chordal, double distance, std::size_t spanBudget)
+    : ctm_(ctm), chordal_(chordal), distance_(distance), budget_(spanBudget) {}
 
 void PathBuilder::add(Span s) {
     if (used_ >= budget_) {
@@ -289,7 +289,11 @@ void PathBuilder::arcTo(double rx, double ry, double phiDegrees, bool largeArc, 
 
 void PathBuilder::close() {
     if (!(cur_ == start_)) {
-        lineTo(start_);
+        // Closer than the distance tolerance (in mm): the contour is closed as it is, without a
+        // sliver line; the ends keep their own coordinates.
+        if (geometry::distance(ctm_.apply(cur_), ctm_.apply(start_)) > distance_) {
+            lineTo(start_);
+        }
     }
     flush(true);
     cur_ = start_;
