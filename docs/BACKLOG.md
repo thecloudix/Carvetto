@@ -779,7 +779,7 @@ Acceptance criteria:
   3. `carvetto --self-test` exercises open → modify → save → reopen headless; CI Linux + Windows green.
 Out of scope: SVG/EPS/PDF (wave 2), autosave/crash recovery, native file dialogs beyond QFileDialog.
 
-### T-0203 Snapping maths (viewmodel)   [status: verifying]
+### T-0203 Snapping maths (viewmodel)   [status: verifying — PASS, nits back to coder]
 Phase: 1 (Batch B)   Module: app/viewmodel (+ core/geometry helpers if missing)   Depends on: T-0001, T-0002, T-0010   ADR: 0014
 Goal: Qt-free snapping: given a cursor position, the visible objects and settings, return the best snap (kind, world point, source object ids) among endpoint, midpoint, centre, quadrant, intersection (line/arc/Bezier pairs via the core intersection routines), nearest-on-curve, perpendicular, tangent (from a pending start point), grid and user guides, with per-kind enable flags and a pixel tolerance through the view transform. Priority order documented; deterministic on ties. Only candidates near the cursor are examined (spatial index) so large drawings stay interactive.
 Acceptance criteria:
@@ -790,6 +790,7 @@ Out of scope: drawing the snap glyphs (wave 2 canvas overlay), guides UI.
 
 #### Wave 2 stubs (to be carded when wave 1 is done)
 - T-0200 follow-ups (director decisions 2026-11-06, from the coder's report): (1) internally radiused (cove) rectangle corners need a new `CornerStyle` value and a geometry spec from the feature inventory — card after wave 1 if the inventory defines it, else ask the owner; (2) the arc "Exact Size" Height variant (start, end, height) is a small addition to `buildArcStartEndRadius` — card with the arc tool (T-0204).
+- T-0203 follow-ups (verifier t0203v1, director 2026-11-07): (1) very dense drawings: with hundreds of spans inside the 10 px window of every cursor (10k objects in a ~300 mm square) a query takes >10 ms and 20k queries did not finish in 200 s; ordinary drawings are 1-300 us. Bound the per-query work (e.g. cap candidates per kind before the pairwise intersect/perpendicular/tangent search, or cache per-cursor-cell results) in the card that wires snapping into the canvas (T-0204); (2) the documented 256-span cap and 32-samples Bezier root search can silently lose a real snap (confirmed: >256 spans nearer the cursor than a genuine crossing) - acceptable for now, revisit with (1).
 - T-0204 Drawing tool framework + shape tools in the canvas (rectangle, circle, ellipse, polygon, star, arc, polyline/Bezier) — needs T-0200, T-0201, T-0203.
 - T-0205 Transforms: move/scale/rotate/mirror with handles, numeric entry; align and distribute — needs T-0201.
 - T-0206 Node editing (select/move/add/delete nodes, convert line↔curve, smooth/corner) — needs T-0201, T-0203.
