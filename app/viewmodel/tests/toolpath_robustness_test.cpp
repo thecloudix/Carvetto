@@ -622,12 +622,13 @@ tooling::ToolDatabase mutatedDatabase(const tooling::ToolDatabase& base, Rng& rn
     tooling::ToolDatabase db = base;
     switch (rng.below(4)) {
         case 0: db.removeTool(rng.pick<std::string>({"end-mill-3mm", "end-mill-6mm", "v-bit-90", "drill-3mm"})); break;
-        case 1: {
-            tooling::Tool t = *db.findTool("end-mill-3mm");
-            t.defaultCuttingData.feedRate = rng.range(100, 2000);
-            db.updateTool(t);
+        case 1:
+            if (const tooling::Tool* found = db.findTool("end-mill-3mm")) {
+                tooling::Tool t = *found;
+                t.defaultCuttingData.feedRate = rng.range(100, 2000);
+                db.updateTool(t);
+            }
             break;
-        }
         case 2: db = tooling::ToolDatabase{}; break;
         default: break;
     }
