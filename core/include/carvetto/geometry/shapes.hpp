@@ -18,6 +18,9 @@
 ///    bit-identical contours.
 ///  * Invalid parameters (non-finite, non-positive sizes, impossible radii) return an error
 ///    message and never a contour.
+///  * Limits: every coordinate and size must be finite with magnitude at most 1e9 mm (larger
+///    values return an error), polygon sides and star points are capped at 100000, and an
+///    ellipse never uses more than 1024 Bezier spans.
 ///  * Zero-length spans are never emitted: where a corner radius or chamfer consumes a whole
 ///    side, that side's line span is left out.
 namespace carvetto::geometry {
@@ -62,7 +65,7 @@ ShapeResult<Contour> buildCircle(Vec2 centre, double radius);
 /// Built from cubic Beziers (4, 8, 16 ... equal parameter steps), the count chosen so the
 /// radial deviation from the true ellipse is below `tol.distance` (never more than 1024 spans);
 /// the Bezier ends lie exactly on the ellipse. When width == height the result is the exact
-
+/// circle arc (one span, see `buildCircle`) and `angle` has no effect.
 ShapeResult<Contour> buildEllipse(Vec2 centre, double width, double height, double angle,
                                   const Tolerance& tol = Tolerance::defaults());
 

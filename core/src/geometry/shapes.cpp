@@ -45,42 +45,42 @@ ShapeResult<Contour> buildRectangle(Vec2 centre, double width, double height, Re
         }
         r = cornerSize;
     }
-    const double x0 = centre.x - 0.5 * width;
-    const double x1 = centre.x + 0.5 * width;
-    const double y0 = centre.y - 0.5 * height;
-    const double y1 = centre.y + 0.5 * height;
+    const double xLo = centre.x - 0.5 * width;
+    const double xHi = centre.x + 0.5 * width;
+    const double yLo = centre.y - 0.5 * height;
+    const double yHi = centre.y + 0.5 * height;
     Contour c;
     c.closed = true;
     if (r == 0.0) {
-        c.spans.emplace_back(LineSpan{{x0, y0}, {x1, y0}});
-        c.spans.emplace_back(LineSpan{{x1, y0}, {x1, y1}});
-        c.spans.emplace_back(LineSpan{{x1, y1}, {x0, y1}});
-        c.spans.emplace_back(LineSpan{{x0, y1}, {x0, y0}});
+        c.spans.emplace_back(LineSpan{{xLo, yLo}, {xHi, yLo}});
+        c.spans.emplace_back(LineSpan{{xHi, yLo}, {xHi, yHi}});
+        c.spans.emplace_back(LineSpan{{xHi, yHi}, {xLo, yHi}});
+        c.spans.emplace_back(LineSpan{{xLo, yHi}, {xLo, yLo}});
         return c;
     }
     // A side consumed completely (r == half the side, up to rounding) emits no line span.
     const double eps = 1e-9 * std::max(width, height);
     const double half = 0.5 * kPi;
-    const Vec2 bl{x0 + r, y0 + r};
-    const Vec2 br{x1 - r, y0 + r};
-    const Vec2 tr{x1 - r, y1 - r};
-    const Vec2 tl{x0 + r, y1 - r};
-    const bool round = corner == RectCorner::Rounded;
+    const Vec2 bl{xLo + r, yLo + r};
+    const Vec2 br{xHi - r, yLo + r};
+    const Vec2 tr{xHi - r, yHi - r};
+    const Vec2 tl{xLo + r, yHi - r};
+    const bool isRound = corner == RectCorner::Rounded;
     auto cornerSpan = [&](Vec2 cc, double a0, Vec2 from, Vec2 to) {
-        if (round) {
+        if (isRound) {
             addArc(c, cc, r, a0, a0 + half);
         } else {
             c.spans.emplace_back(LineSpan{from, to});
         }
     };
-    addLine(c, {x0 + r, y0}, {x1 - r, y0}, eps);
-    cornerSpan(br, -half, {x1 - r, y0}, {x1, y0 + r});
-    addLine(c, {x1, y0 + r}, {x1, y1 - r}, eps);
-    cornerSpan(tr, 0.0, {x1, y1 - r}, {x1 - r, y1});
-    addLine(c, {x1 - r, y1}, {x0 + r, y1}, eps);
-    cornerSpan(tl, half, {x0 + r, y1}, {x0, y1 - r});
-    addLine(c, {x0, y1 - r}, {x0, y0 + r}, eps);
-    cornerSpan(bl, kPi, {x0, y0 + r}, {x0 + r, y0});
+    addLine(c, {xLo + r, yLo}, {xHi - r, yLo}, eps);
+    cornerSpan(br, -half, {xHi - r, yLo}, {xHi, yLo + r});
+    addLine(c, {xHi, yLo + r}, {xHi, yHi - r}, eps);
+    cornerSpan(tr, 0.0, {xHi, yHi - r}, {xHi - r, yHi});
+    addLine(c, {xHi - r, yHi}, {xLo + r, yHi}, eps);
+    cornerSpan(tl, half, {xLo + r, yHi}, {xLo, yHi - r});
+    addLine(c, {xLo, yHi - r}, {xLo, yLo + r}, eps);
+    cornerSpan(bl, kPi, {xLo, yLo + r}, {xLo + r, yLo});
     return c;
 }
 
