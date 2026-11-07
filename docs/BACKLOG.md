@@ -663,7 +663,7 @@ Goal: Found by the T-0158 verifier (harness t0158v1, wsf.cpp flood oracle, worse
 Acceptance criteria:
   1. Each repro has no severed/partial tab and every free piece is reported or held; flood-oracle sweep over the harness shows no scene worse than main; regression tests.
 
-### T-0168 Offsets: near-tolerance walks cost and inner-offset loss (T-0016 coder)   [status: verifying]
+### T-0168 Offsets: near-tolerance walks cost and inner-offset loss (T-0016 coder)   [status: done (2026-11-07, #69)]
 Phase: 1   Module: core/geometry   Depends on: T-0016   ADR: 0012
 Goal: Found by the T-0016 coder on main.
 (a) Walks of 1.5 µm steps (just above tol) are super-linear for every join. Round: 4–7 s at 2000 steps, 17–43 s at 4000. Sharp: 12–13 s at 2000, 60–131 s at 4000. The whole walk lies within d of itself: pruning scans every input span per sample (closerThan) and boundary splitting is O(n²). Ideas exist on the shelved T-0009 branches (convex-hull distance hierarchy, domination trimming).
