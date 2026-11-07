@@ -327,6 +327,19 @@ corners, outer passes): points there were up to 1.18 × h(s/2) from every cut. T
 extent from the whole strip it serves, not from its own line, closes that band by construction;
 the chordal tolerance beyond is the overlap the card asks for (decision 2), a margin on top.
 
+**Short pieces and cost (T-0173).** A piece of a pass no longer than the user's distance tolerance
+is dropped (it is not a cut worth a plunge): a stretch whose every piece is that short gets no
+passes, and keeps at most the leftover its ring and the neighbouring cuts leave. Detection groups
+the patches and the end mills' polylines by the overlap of their boxes (a polyline's inflated by
+its radius) and offsets and differences each group alone: Clipper2's sweep over one call for a long
+row of parts (a chain of squares joined by pinched necks, one region) costs more than the sum of
+its parts (n = 100 / 200 / 400 / 800 adds 0.27 / 0.83 / 2.6 / 11.8 s; rotated 90° it was linear).
+Groups share no edge, so each group's result is what the single call made of it, and the output is
+byte-identical (checked on the chain at n = 30 and 100, rotated or not, and by the suite's goldens).
+Point-in-ring tests for the flat area of a patch or polyline, and the wall rings' membership test,
+cast their ray along the shorter side of the rings' box, so a long row costs the few edges across it.
+After it the added time is 0.20 / 0.43 / 0.98 s at n = 400 / 800 / 1600 (×2.2 per doubling).
+
 **Measured.** `v_carve_corner_test.cpp` asserts the bound with the exact oracle
 (`v_carve_leftover.hpp`: the deepest tool surface over each point, in closed form for level
 moves, by golden-section search for inclined ones) on a 0.04 mm grid over the floor round each

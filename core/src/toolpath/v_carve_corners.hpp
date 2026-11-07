@@ -16,6 +16,7 @@
 #include "carvetto/geometry/vec2.hpp"
 #include "carvetto/tooling/tool.hpp"
 #include "carvetto/toolpath/box_index.hpp"
+#include "carvetto/toolpath/move.hpp"
 
 namespace carvetto::toolpath::detail {
 
@@ -48,6 +49,7 @@ class RingRegion {
     BoxIndex index_;
     geometry::Box2 bounds_;
     double eps_{0.0};
+    bool alongY_{false};  // membership rays run along y (the box is wider than tall)
 };
 
 /// Where a clearance end mill's flat bottom ran at the flat depth: a polyline of its centre and
@@ -56,6 +58,12 @@ struct SweptPath {
     std::vector<geometry::Vec2> points;
     double radius{0.0};
 };
+
+/// Appends to `out` the polylines of `moves` that run level at `floorZ` (each feed or plunge whose
+/// start and end are at that height, consecutive ones chained): where an end mill of `radius`
+/// swept the floor flat. Ramps, plunges straight down and rapids are left out (they sweep less, so
+/// leaving them out only makes the swept area smaller than it is).
+void appendSweptPaths(const std::vector<Move>& moves, double floorZ, double radius, std::vector<SweptPath>& out);
 
 /// What corner sharpening needs to know about the carve (ADR-0025 §6). Lengths in mm.
 struct CornerSpec {
