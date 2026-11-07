@@ -335,7 +335,40 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     its radius plus 1.5 cells; the tab holds when uncut cells join the material next to the vector
     to the waste beyond the kerf (or when there is no such waste near it at all: a hole smaller
     than the kerf). This distance rule serves Inside/Outside with allowance ≥ 0, where the kerf
-    lies wholly on the waste side of the vector. **Sided tabs (T-0127).** On the vector, and for Inside/Outside with a negative
+    lies wholly on the waste side of the vector. **Tab layer (T-0167).** The rule judges the
+    tab at the layer just below the tab top, like the sided one: the cut there is the disc of the
+    tab-layer radius (`tabLayerRadius`: a V-bit's cone there, tab thickness × tan(half angle), at
+    most its radius at the top of the cut; any other tool's radius), far narrower than the radius
+    at the top for a V-bit and a thin tab. Before, the cross-sections, the "cut through" distance,
+    the quick answers and the raster all took the radius at the top, so a V-bit's tabs that hold
+    were left out as cut through and the whole part came free (m2_1330000_9, Outside, V-bit 90°,
+    D25, allowance 0, separate last pass: the single tab of each of two vectors, 641 and 1,704 mm²,
+    at the stored start and at VectorStart; tab thickness 1.99 mm, so a cone of radius 1.99 mm at the
+    tab layer where the radius at the top of the cut is 5.9 mm). Now the sections reach a tab-layer
+    radius (plus the last-pass allowance) beyond the cut, the waste to reach lies a tab-layer radius
+    + the allowance + 0.2 mm beyond it, the tools' discs in the raster and the quick answers' distances
+    are the tab-layer radius, and the raster's core is the raised stretch less the tab-layer radius at
+    each end (the tab is uncut for that much more at the layer; trimmed by the full radius, tabs that
+    hold were left out). The sections that the other cuts are measured against keep the core trimmed
+    by the full radius at each end, which the roughing cover is matched against: a tool of another cut
+    beyond it only narrows the tab (measured against the longer core the first version left out
+    holding tabs in six screen scenes). The nick test that picks the quick answers is unchanged. The
+    raster's reach is a tool radius + allowance to the vector side and the tab-layer radius beyond the
+    kerf, and the distance to the vectors is computed for blocks of 4 × 4 cells whose centre lies
+    further than the block's radius from the thresholds (the distance is 1-Lipschitz; results are
+    unchanged, cost is not: below). End mills are unchanged, moves and diagnostics byte-identical.
+    **Not fixed (T-0177 (l)):** a tab round the bottom corner of a notch whose two kerfs leave a
+    sliver of waste narrower than three raster cells is kept as holding "a hole smaller than the
+    kerf" although the tools at its ends seal it off (m0_271016_20 at VectorStart/Outside: a 6.8 mm
+    notch, end mill 3.175, 0.145 mm of waste, the end tools 2.7 mm apart; the part is held by the other
+    tabs and the loose-piece search is exact, so nothing is lost). A first version of T-0167 looked
+    for waste past the far wall of the kerf with the discs widened by half a cell. On the verifier's
+    U-part family (end mill, Outside, notches leaving 0.06–0.5 mm of waste, 4,000 parts) it removed
+    148 severed tabs but dropped 32 holding ones (slivers of up to 0.45 mm) and in one scene (seed
+    9735 scene 49, a 0.079 mm sliver) left all five tabs out so that a 426 mm² part came free where
+    main held it; it was reverted, because a resolution-dependent rule cannot be made safe. A rule
+    from the exact capsule geometry (waste past the far wall of the kerf judged by the exact union of
+    the tools, not by cells) is left to T-0177. **Sided tabs (T-0127).** On the vector, and for Inside/Outside with a negative
     allowance (the kerf then crosses the vector, so the distance to the vectors no longer tells
     the part from the waste), a tab is judged by the pieces of material the cut leaves, decided by
     the profile side and the allowance (never by `Cut::distance`), with no cross-section shortcut:
@@ -451,6 +484,66 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     left out … cut through … at a corner") although the exact oracle finds all 3 holding; no free piece
     results, so the error is conservative (repro
     /home/chris/harness/t0156v2/dump/m1_9302_2199.scn; carded as a T-0177 item).
+    **Triage of the T-0158 verifier's repros (T-0167, on main after T-0156, whole-scene flood of
+    the moves, leads off unless said).** Fixed: m2_1330000_9 (V-bit tabs judged at the top
+    radius, Tab layer above; both starts). Not fixed, as on main: m0_271016_20 at VectorStart/Outside
+    (the severed tab at the bottom corner of a notch, above; T-0177 (l)). Fixed too: m0_271000_0 at
+    VectorStart/Outside (the V-bit tab that main left out is kept). Not tab defects: m0_291002_11
+    (VectorStart/Outside 0.41 mm², and 4.76 mm² at the stored start), m0_271000_0 (1.19 mm²) and
+    m0_271013_1 (box centre, 1.33 mm²) have an unreported free piece only with leads on, which is
+    the known lead gap (no piece with leads off, moves otherwise identical). Kept and reported, not
+    fixed: m1_1310133_29 (VectorStart/Outside) and a4_770001_217 (box centre) have a partial tab
+    whose unjoined piece is a hairline sliver 0.05–0.11 mm thick (0.41 and 0.067 mm²) that the
+    loose-piece search reports; the exact check resolves necks only from about 0.11 mm, and dropping
+    the tab would free the part. mmrg_001_tabs_all_out (V-bit merged region): at the stored start
+    and at VectorStart all three tabs are truly severed (kept, the flood finds them cut through),
+    so the 1,373 mm² piece is reported; at the box centre three tabs hold. m1_272009_9
+    (VectorStart/Outside, merged round region): 7 of 10 placed tabs have fewer than two pieces
+    near them and hold nothing, none is severed, nothing is free. r101_1_0_42 (V-bit 120°, D1, On,
+    616 tabs requested): with leads on 150 flood pieces ≥ 0.04 mm² against 98 reported at the box
+    centre, with leads off 100 against 98 (2 unreported, the T-0177 (b) family; none at VectorStart). All
+    carded in T-0177 (g)–(l). **Screen (T-0167, round 2):** the moves of main and of this change were hashed over 24,000
+    V-bit-forced scenes (six configurations; harness t0167 wsf, seeds 9301–9308, 500 scenes each:
+    mode 3 leads off, leads on, sharp corners forced, at VectorStart/Outside, at the box centre, and
+    mode 0 with Inside/Outside and allowance ≥ 0 forced), 4,000 scenes of the natural mix and 8,000 end-mill
+    scenes, and every scene whose moves differ was flooded on both sides (exact capsules at the
+    layer below the tab top, per tab hold / partial / severed, free pieces against the reported
+    ones). V-bit: 2,681 scenes change, 2,637 for the better (a tab kept that holds, a free piece
+    held, a severed or hold-nothing tab gone), 28 with no net change and 16 flagged worse by the
+    strict per-metric comparison (14 distinct scenes). End mills: moves and diagnostics are
+    byte-identical in all 8,000 scenes and in the verifier's U-part family (4,000 parts, seeds
+    9731–9738 of my generator). The flagged entries are benign by the flood: seed 9301 scene 153
+    (V-bit 60, Outside, SHARP: main keeps no tab and two pieces of 15.5 and 2.9 mm² come free; the
+    branch keeps three, two hold them, one is cut through by a closed pocket of waste that the
+    quick answer keeps; no piece is free), 9308 scene 100 (eleven tabs kept, five hold nothing, none
+    severed, none free), 9308 scene 412 (a partial tab whose unjoined piece is the 0.6 mm² piece that
+    main also frees and reports), 9304 scene 275 (box centre: a 38 mm² piece held; a 0.075 mm²
+    hairline left over is not reported, T-0177 (d)), 9307 scene 110 (two partial tabs, a 74 mm² piece
+    held, nothing free), and in the Inside/Outside screen 9302/175, 9303/109, 9304/312, 9306/152,
+    9308/234 and 9308/243 (main keeps no tab and frees 1 to 3 pieces; the branch keeps tabs, one of
+    them cut through, and frees fewer), 9306/427 (two extra kept tabs cut through, nothing free),
+    9305/161 (30.7 mm² held, one hairline of 0.045 mm² reported that the flood does not find) and
+    9308/291 (a 1,622 mm² part held; six hairlines of 0.074 mm² left over, reported). **Kept tabs that hold nothing (accepted by the director).** Ten further scenes of the T-0167
+    verifier (harness t0167v2, files res/v*_br.txt and _mn.txt; scene numbers 228, 314, 68, 473, 67
+    (seed 5008), 193 (seed 5002, vt), 987, 444, 676 and 807) keep a tab that the flood finds
+    severed, partial or holding nothing where main left it out; nothing is freed by it, and in
+    several main frees pieces. It is the class above (a quick answer keeps a tab beside a closed
+    pocket of waste, or a placement with more tabs wins). The "N tabs" count the user sees includes
+    such tabs: a kept tab is not a promise that it holds anything there. **Cost
+    (Release CPU, three interleaved reps with an A/A control, the T-0140 perf pages with a V-bit):**
+    main → this change, seconds: rect 1,000 Outside V60 0.40 → 0.43 (A/A 1.07); rect 400 Outside V90
+    TC6 0.217 → 0.214; rect 400 Inside V60 11.9 → 6.5 (output differs: tabs now kept); letters 200
+    Outside V90 A0.2 2.47 → 1.42 (differs); gear 2,000 teeth Outside V60 3.20 → 1.07; Inside V60
+    2.99 → 0.70; rect 1,000 Inside V90 TC6 18.8 → 11.7 (differs, A/A 1.28); arc 1,000 Outside V120
+    4.99 → 2.19; bez 500 Outside V60 A0.2 13.6 → 14.1 (1.03); plate 500 Inside V90 A0.2 16.2 → 5.8
+    (differs); end-mill rect 1,000 Outside 0.386 → 0.372. The block shortcut is `detail::settleBlock` (`block_settle.hpp`), pinned by unit tests
+    against the exact distance of synthetic vectors (a block is settled only if every cell would get
+    the same verdict: block radius, anchor cell and both comparisons). The first version of this change was
+    1.4× to 2.7× slower on V-bit pages: it measured every sample against a second, longer set of
+    sections (a guard), and its raster reached four full radii and asked the distance field for
+    every cell, which dominates a long gear (96 % of the time in `obstacleDistance`). Now one set of
+    sections serves, the raster reaches the tab-layer radius, and the distance is asked once per 4 × 4
+    block of cells whose centre is further than the block's radius from the thresholds.
     **Band polygons.** Each stretch's band is one polygon whose winding number is positive exactly
     on the band: the sum of the boundaries of positively wound pieces covering it (a line's
     rectangle along its normals, an arc's annular sector between radii ρ − w and ρ + w or, with
