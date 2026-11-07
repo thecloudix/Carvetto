@@ -4,8 +4,11 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <iterator>
 #include <limits>
+#include <map>
 #include <optional>
+#include <set>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -13,6 +16,7 @@
 #include <vector>
 
 #include "carvetto/geometry/contour_ops.hpp"
+#include "hit_index.hpp"
 
 namespace carvetto::geometry {
 
@@ -1072,6 +1076,46 @@ GapSample gapAlongA(const Span& a, const Span& b, double t, double seedB) {
     return {t, cp.t, cp.distance};
 }
 
+// Every gap evaluation of a span pair's walks, ordered by t (equal t: the later one first, as an
+// insertion at the lower bound of a sorted vector would). A tree instead of a sorted vector: the
+// vector's mid-insertions were O(n) each, quadratic over the ~1e5 samples that near-coincident
+// long Beziers produce (T-0178).
+struct GapTrail {
+    struct Before {
+        bool operator()(const GapSample& l, const GapSample& r) const { return l.t < r.t; }
+    };
+    using Tree = std::multiset<GapSample, Before>;
+    Tree samples;
+
+    Tree::const_iterator lowerBound(double t) const { return samples.lower_bound(GapSample{t, 0.0, 0.0}); }
+    void record(const GapSample& g) { samples.emplace_hint(lowerBound(g.t), g); }
+};
+
+// Minima accepted by earlier walks, in acceptance order, with an index by t for range queries.
+struct GapMinima {
+    std::vector<GapSample> list;
+    std::multimap<double, std::size_t> byT;
+
+    void push_back(const GapSample& g) {
+        byT.emplace(g.t, list.size());
+        list.push_back(g);
+    }
+    /// The accepted minimum with t strictly inside (l, h) and gap <= maxGap that has the lowest
+    /// gap (the earliest accepted among equals), or null.
+    const GapSample* lowestIn(double l, double h, double maxGap) const {
+        const GapSample* found = nullptr;
+        std::size_t foundAt = 0;
+        for (auto it = byT.upper_bound(l); it != byT.end() && it->first < h; ++it) {
+            const GapSample& k = list[it->second];
+            if (k.gap <= maxGap && (found == nullptr || k.gap < found->gap || (k.gap == found->gap && it->second < foundAt))) {
+                found = &k;
+                foundAt = it->second;
+            }
+        }
+        return found;
+    }
+};
+
 // Nearest-point evaluations carry rounding noise of this order; gap differences below it say
 // nothing about the slope.
 constexpr double kGapNoise = 1e-12;
@@ -1086,7 +1130,7 @@ constexpr double kMaxWalkStep = 1.0 / 64.0;
 // and records a sample.
 template <typename Probe>
 GapSample descend(GapSample mid, GapSample next, double step, bool periodic,
-                  const std::vector<GapSample>* known, const Probe& probe) {
+                  const GapMinima* known, const Probe& probe) {
     const bool forward = next.t > mid.t;
     GapSample behind = mid;
     for (int iter = 0; iter < 80 && next.gap < mid.gap; ++iter) {
@@ -1106,12 +1150,7 @@ GapSample descend(GapSample mid, GapSample next, double step, bool periodic,
     // is where this walk would end too: return it instead of searching again (along
     // near-coincident curves many candidates descend into the same few minima).
     if (known != nullptr) {
-        const GapSample* found = nullptr;
-        for (const GapSample& k : *known) {
-            if (k.t > l && k.t < h && k.gap <= mid.gap && (found == nullptr || k.gap < found->gap)) {
-                found = &k;
-            }
-        }
+        const GapSample* found = known->lowestIn(l, h, mid.gap);
         if (found != nullptr) {
             return *found;
         }
@@ -1159,26 +1198,23 @@ GapSample descend(GapSample mid, GapSample next, double step, bool periodic,
 //
 // A full circle has no ends: its seam is an arbitrary point, so the walk wraps around it (samples
 // are evaluated and recorded at the wrapped parameter) instead of stopping there.
-std::vector<Candidate> settleTouch(const Span& a, const Span& b, Candidate c, std::vector<GapSample>& trail,
-                                   std::vector<GapSample>& minima) {
+std::vector<Candidate> settleTouch(const Span& a, const Span& b, Candidate c, GapTrail& trail,
+                                   GapMinima& minima) {
     std::vector<Candidate> out;
     const auto* arcA = std::get_if<ArcSpan>(&a);
     const bool periodic = arcA != nullptr && arcA->isFullCircle();
     const auto wrap = [periodic](double t) { return periodic ? t - std::floor(t) : std::clamp(t, 0.0, 1.0); };
     const auto record = [&](const GapSample& g) {
-        const auto pos = std::lower_bound(trail.begin(), trail.end(), g.t,
-                                          [](const GapSample& e, double t) { return e.t < t; });
-        trail.insert(pos, g);
+        trail.record(g);
     };
     const GapSample mid = gapAlongA(a, b, std::clamp(c.tA, 0.0, 1.0), c.tB);
     // Earlier samples either side of the candidate, if any (looked up before this walk records).
     std::optional<GapSample> trailL;
     std::optional<GapSample> trailR;
     {
-        const auto right = std::lower_bound(trail.begin(), trail.end(), mid.t,
-                                            [](const GapSample& e, double t) { return e.t < t; });
-        if (right != trail.end() && right != trail.begin()) {
-            trailL = *(right - 1);
+        const auto right = trail.lowerBound(mid.t);
+        if (right != trail.samples.end() && right != trail.samples.begin()) {
+            trailL = *std::prev(right);
             trailR = *right;
         }
     }
@@ -1335,8 +1371,8 @@ IntersectionResult polygoniseAndRefine(const Span& a, const Span& b, const Toler
         bool end{false};
     };
     std::vector<Raw> raw;
-    std::vector<GapSample> trail;
-    std::vector<GapSample> minima;
+    GapTrail trail;
+    GapMinima minima;
     std::vector<std::pair<double, Candidate>> touches;
     const auto emit = [&](Candidate c, double res, bool exact, bool end) {
         if (exact) {
@@ -1413,18 +1449,20 @@ IntersectionResult polygoniseAndRefine(const Span& a, const Span& b, const Toler
     IntersectionResult out;
     std::vector<double> keptRes;
     std::vector<bool> keptEnd;
+    detail::HitIndex merged(tol);
     for (const Raw& r : raw) {
         const Intersection& hit = r.hit;
-        const auto it = std::find_if(out.points.begin(), out.points.end(), [&](const Intersection& e) {
-            return tol.equalPoints(e.point, hit.point);
-        });
-        if (it == out.points.end()) {
+        const std::size_t at =
+            merged.first(hit.point, [&](std::size_t i) { return out.points[i].point; });
+        if (at == detail::HitIndex::npos) {
+            merged.add(out.points.size(), hit.point);
             out.points.push_back(hit);
             keptRes.push_back(r.res);
             keptEnd.push_back(r.end);
             continue;
         }
-        const auto k = static_cast<std::size_t>(it - out.points.begin());
+        const auto it = out.points.begin() + static_cast<std::ptrdiff_t>(at);
+        const std::size_t k = at;
         if (distance(it->point, hit.point) > 1e-3 * tol.distance && r.res <= 1e-6 * tol.distance &&
             keptRes[k] <= 1e-6 * tol.distance && !r.end && !keptEnd[k]) {
             // Two distinct exact crossings closer than the tolerance: a touch, not a crossing. (A

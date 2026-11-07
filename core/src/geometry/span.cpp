@@ -108,29 +108,76 @@ std::size_t ArcSpan::segmentCountFor(double chordalTol) const {
 
 namespace {
 
-double bezierLengthRecursive(const BezierSpan& b, double absTol, int depth) {
-    // Gravesen's estimate: L ~ (2*chord + polygon)/3, with error bounded by (polygon - chord).
-    // Subdivide while the bound exceeds the budget for this piece.
+// Work bounds of BezierSpan::length (T-0178, ADR-0005 appendix A2).
+//
+// Pass 1 is the original scheme: Gravesen's estimate L ~ (2*chord + polygon)/3, error bounded by
+// (polygon - chord), halves split while that bound exceeds the piece's share of the tolerance
+// (depth cap 40). It examines at most kLengthFirstPassPieces pieces; every curve it finishes on
+// keeps exactly the value it always had.
+//
+// A curve that does not finish is one whose flatness is below the rounding noise of its own
+// coordinates (far from the origin compared with its size: the halving tolerance is never met and
+// the pieces split to the depth cap, 2^40 of them). Pass 2 then also stops a piece when
+// (polygon - chord) is below kNoise * (largest coordinate magnitude of the piece, taken relative to the curve's first control point), which is a bound
+// of that piece's error as well, and examines at most kLengthSecondPassPieces pieces; pieces left
+// when that is spent take their unrefined estimate.
+constexpr int kLengthFirstPassPieces = 1 << 19;
+constexpr int kLengthSecondPassPieces = 1 << 20;
+
+double bezierLengthRecursive(const BezierSpan& b, double absTol, int depth, int& pieces, bool noiseFloor) {
     const double chord = distance(b.p0, b.p3);
     const double poly = distance(b.p0, b.p1) + distance(b.p1, b.p2) + distance(b.p2, b.p3);
-    if (poly - chord <= absTol || depth >= 40) {
+    const double excess = poly - chord;
+    if (excess <= absTol || depth >= 40) {
         return (2.0 * chord + poly) / 3.0;
     }
+    if (noiseFloor) {
+        const double reach = std::max(std::max(std::fabs(b.p0.x), std::fabs(b.p0.y)),
+                                      std::max(std::max(std::fabs(b.p1.x), std::fabs(b.p1.y)),
+                                               std::max(std::max(std::fabs(b.p2.x), std::fabs(b.p2.y)),
+                                                        std::max(std::fabs(b.p3.x), std::fabs(b.p3.y)))));
+        constexpr double kNoise = 8.0 * 2.220446049250313e-16;
+        if (excess <= kNoise * reach) {
+            return (2.0 * chord + poly) / 3.0;
+        }
+    }
+    if (--pieces < 0) {
+        return noiseFloor ? (2.0 * chord + poly) / 3.0 : -1.0;  // -1: pass 1 gave up
+    }
     const auto [l, r] = b.split(0.5);
-    return bezierLengthRecursive(l, absTol * 0.5, depth + 1) +
-           bezierLengthRecursive(r, absTol * 0.5, depth + 1);
+    const double left = bezierLengthRecursive(l, absTol * 0.5, depth + 1, pieces, noiseFloor);
+    if (left < 0.0) {
+        return -1.0;
+    }
+    const double right = bezierLengthRecursive(r, absTol * 0.5, depth + 1, pieces, noiseFloor);
+    if (right < 0.0) {
+        return -1.0;
+    }
+    return left + right;
 }
 
-// Pieces are split in halves until flat within `chordalTol`, and at least `minDepth` times.
+// Pieces are split in halves until flat within `chordalTol`, and at least `minDepth` times. Work
+// bound (T-0178, ADR-0005 A2): depth 24, and at most kPolygoniseMaxSplits splits per curve; once
+// those are spent the remaining pieces are emitted as single chords (best effort: the polygon is
+// then coarser than `chordalTol`, and still ends at the curve's end point).
+constexpr int kPolygoniseMaxSplits = 1 << 20;
+
 void bezierPolygoniseRecursive(const BezierSpan& b, double chordalTol, int depth, std::vector<Vec2>& out,
-                               int minDepth = 0) {
-    if ((depth >= minDepth && b.flatness() <= chordalTol) || depth >= 24) {
+                               int& splits, int minDepth = 0) {
+    if ((depth >= minDepth && b.flatness() <= chordalTol) || depth >= 24 || splits <= 0) {
         out.push_back(b.p3);
         return;
     }
+    --splits;
     const auto [l, r] = b.split(0.5);
-    bezierPolygoniseRecursive(l, chordalTol, depth + 1, out, minDepth);
-    bezierPolygoniseRecursive(r, chordalTol, depth + 1, out, minDepth);
+    bezierPolygoniseRecursive(l, chordalTol, depth + 1, out, splits, minDepth);
+    bezierPolygoniseRecursive(r, chordalTol, depth + 1, out, splits, minDepth);
+}
+
+void bezierPolygoniseRecursive(const BezierSpan& b, double chordalTol, int depth, std::vector<Vec2>& out,
+                               int minDepth = 0) {
+    int splits = kPolygoniseMaxSplits;
+    bezierPolygoniseRecursive(b, chordalTol, depth, out, splits, minDepth);
 }
 
 // Distance from point p to the segment a-b (so control points overshooting the chord count too).
@@ -147,11 +194,42 @@ double distanceToChord(Vec2 p, Vec2 a, Vec2 b) {
 }  // namespace
 
 double BezierSpan::length(double relTol) const {
-    const double poly = distance(p0, p1) + distance(p1, p2) + distance(p2, p3);
-    if (poly <= 0.0) {
-        return 0.0;
+    // Control values beyond ~1e100 would overflow the squares in distance(): work on a copy
+    // scaled by an exact power of two and scale the result back (inf if it exceeds the range).
+    const double big = std::max(std::max(std::max(std::fabs(p0.x), std::fabs(p0.y)), std::max(std::fabs(p1.x), std::fabs(p1.y))),
+                                std::max(std::max(std::fabs(p2.x), std::fabs(p2.y)), std::max(std::fabs(p3.x), std::fabs(p3.y))));
+    if (!std::isfinite(big)) {
+        return big;  // +inf: no meaningful length
     }
-    return bezierLengthRecursive(*this, relTol * poly, 0);
+    if (big > 1e100) {
+        int e = 0;
+        std::frexp(big, &e);
+        const BezierSpan scaled{{std::ldexp(p0.x, -e), std::ldexp(p0.y, -e)},
+                               {std::ldexp(p1.x, -e), std::ldexp(p1.y, -e)},
+                               {std::ldexp(p2.x, -e), std::ldexp(p2.y, -e)},
+                               {std::ldexp(p3.x, -e), std::ldexp(p3.y, -e)}};
+        return std::ldexp(scaled.length(relTol), e);
+    }
+    const double poly = distance(p0, p1) + distance(p1, p2) + distance(p2, p3);
+    if (!(poly > 0.0)) {
+        return poly > 0.0 ? poly : (std::isnan(poly) ? poly : 0.0);
+    }
+    // Position-to-size ratio: rounding noise of the absolute coordinates, summed over the pieces,
+    // is ~ ratio * 1e-16 relative; beyond kLocalRatio it is no longer negligible (and the original
+    // scheme may not terminate), so the curve is measured relative to its first control point.
+    constexpr double kLocalRatio = 1e4;
+    int pieces = kLengthFirstPassPieces;
+    if (big <= kLocalRatio * poly) {
+        const double first = bezierLengthRecursive(*this, relTol * poly, 0, pieces, false);
+        if (first >= 0.0) {
+            return first;
+        }
+    }
+    // Pass 2 works relative to p0: differences of nearby coordinates are exact, so the halving
+    // carries the rounding noise of the curve's own size only, not that of its position.
+    pieces = kLengthSecondPassPieces;
+    const BezierSpan local{{0.0, 0.0}, p1 - p0, p2 - p0, p3 - p0};
+    return bezierLengthRecursive(local, relTol * poly, 0, pieces, true);
 }
 
 Vec2 BezierSpan::pointAt(double t) const {
@@ -194,6 +272,15 @@ Box2 BezierSpan::bounds() const {
     Box2 box{p0, p3};
     // x(t), y(t) are cubics; their derivatives are quadratics a*t^2 + b*t + c.
     const auto addExtrema = [&](double c0, double c1, double c2, double c3) {
+        // The discriminant squares the coefficients: control values beyond ~1e100 are scaled down
+        // first (the roots are scale invariant), so it cannot overflow (T-0178).
+        const double big = std::max(std::max(std::fabs(c0), std::fabs(c1)), std::max(std::fabs(c2), std::fabs(c3)));
+        if (big > 1e100) {
+            c0 /= big;
+            c1 /= big;
+            c2 /= big;
+            c3 /= big;
+        }
         const double a = -c0 + 3.0 * c1 - 3.0 * c2 + c3;
         const double b = 2.0 * (c0 - 2.0 * c1 + c2);
         const double c = c1 - c0;
@@ -218,6 +305,15 @@ Box2 BezierSpan::bounds() const {
     };
     addExtrema(p0.x, p1.x, p2.x, p3.x);
     addExtrema(p0.y, p1.y, p2.y, p3.y);
+    if (!std::isfinite(box.min.x) || !std::isfinite(box.min.y) || !std::isfinite(box.max.x) ||
+        !std::isfinite(box.max.y)) {
+        // Evaluating the curve overflowed (control values near the double range): the control
+        // polygon's box still contains the curve.
+        Box2 hull{p0, p1};
+        hull.expand(p2);
+        hull.expand(p3);
+        return hull;
+    }
     return box;
 }
 

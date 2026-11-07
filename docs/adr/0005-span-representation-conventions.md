@@ -18,3 +18,21 @@ Date: 2026-10-24 · Status: accepted (director, 2026-10-24; verified consistent 
 - Downstream code must not assume one-span-in/one-span-out for transforms; `Contour::transform` already handles the expansion.
 - Arc fitting after offsets/booleans (T-0003, Fit Curves) should produce `ArcSpan`s with the same angle convention.
 - Zero-length spans are detected with `isDegenerate(span, tol)` and cleaned by later cards (Vector Validator).
+
+## Appendix A2 — Work bounds of the Bezier routines (T-0178)
+
+Every recursive or subdividing Bezier routine has an explicit bound and a stated behaviour when it is hit.
+
+| Routine | Bound | When it is spent |
+|---|---|---|
+| `BezierSpan::length(relTol)` | Pass 1 (the original Gravesen subdivision, depth ≤ 40) examines ≤ 2^19 pieces; pass 2 ≤ 2^20 pieces. | Pass 1 gives up and pass 2 runs; pieces left in pass 2 take their unrefined estimate (best effort). |
+| `BezierSpan::length`, flatness | A piece with `polygon − chord ≤ 8·ε·(largest coordinate of the piece)` stops (pass 2 only): below that the flatness is rounding noise. Pass 2 measures the curve relative to its first control point, so the noise is that of its size, not its position. | — |
+| `BezierSpan::length`, range | Control values beyond 1e100 are scaled by an exact power of two and the result scaled back; the result is `+inf` when it exceeds the double range. | — |
+| `bounds()` | Closed form (no recursion). Control values beyond 1e100 are scaled before the discriminant is formed; if evaluating the extrema still overflows, the control-polygon box (which contains the curve) is returned. The result always contains the curve. | — |
+| `closestPoint(BezierSpan, p)` | Quintic root isolation, depth ≤ 60. Curve and point beyond 1e100 are scaled by a power of two (`t` unchanged). | — |
+| `polygoniseInto` / `polygoniseRegionInto` (Bezier) | Depth ≤ 24 and ≤ 2^20 splits per curve. | The remaining pieces become single chords: the polygon is coarser than `tol.chordal`, still ends at the curve's end. |
+| `intersect(Span, Span)` sampling / piece split | Depth ≤ 16 (≤ 65 537 samples) / depth ≤ 10 (≤ 1024 pieces) per Bezier. | Pieces at the cap are used as they are. |
+
+Accuracy of `length`: the result is within `relTol` (default 1e-10) of the true length plus the coordinate rounding noise (~ `ε · position`). Pass 1 is bit-identical to the pre-T-0178 code and is used when the largest coordinate is ≤ 1e4 × the control polygon's length and it finishes within its piece budget; every other curve (position/size above 1e4, where the old scheme could run for seconds or not terminate) takes pass 2, whose values differ from the old ones by the old scheme's own rounding noise (≤ ~1e-5 relative in the sampled corpus, typically 1e-12).
+
+`intersect(Span, Span)` for two Beziers is polynomial in the sample and piece counts above; the near-coincident long-curve case (two loops of extent 1e6 at the default tolerance: ~1.6·10^4 raw hits) is no longer quadratic in the hits (hit merging uses a hash grid with the linear scan's first-match semantics, `hit_index.hpp`; the touch-settling trail and minima are ordered trees, not sorted vectors). Results are unchanged; CPU time for that pair fell from 5.2 s to 0.47 s (Release).
