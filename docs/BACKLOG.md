@@ -452,7 +452,7 @@ Goal: Non-blocking findings (harness t0136v1/). (a) Names that grow when stored 
 Acceptance criteria:
   1. (a)–(d) fixed with tests where behaviour changes; save/load invariant preserved (fuzz3).
 
-### T-0140 Profile: loose-piece check for Inside/Outside with allowance ≥ 0   [status: in progress — docs-only step (ADR-0016 §14 numbers), then light verify]]/[[PERF]]/[[FLOOD]] placeholders; "A=0.3 SEP=1" normal page +10..15% over 10%; V-bit gap vs criterion 1)]
+### T-0140 Profile: loose-piece check for Inside/Outside with allowance ≥ 0   [status: done (2026-11-06, #67)]]/[[PERF]]/[[FLOOD]] placeholders; "A=0.3 SEP=1" normal page +10..15% over 10%; V-bit gap vs criterion 1)]
 Owner decision 2026-11-06 (after round 2): the 10% performance target holds for normal jobs; pages where every tab is left out on many cheap vectors (every part comes loose) may cost more (measured +12–71%, a fraction of a second), documented in ADR-0016 §14.
 Director decisions 2026-11-06 (owner delegated product decisions; round 3 FAIL): (a) the perf exemption extends to the 'rect GAP=3 A=0.3 SEP=1' page (+10–15%, about +0.3 s absolute; a bounded cost for a safety check); (b) the V-bit gap stays documented under T-0156 (a) and criterion 1 excludes V-bit tools; (c) the measured +83% on loose-everything pages (rect 1000, +0.035 s) is recorded in ADR-0016 §14. Remaining work: fill the [[HASH]]/[[PERF]]/[[FLOOD]] placeholders in ADR-0016 §14 from harness t0140v3, docs only.
 Phase: 1   Module: core/toolpath   Depends on: T-0135   ADR: 0016 §14
@@ -642,7 +642,7 @@ Goal: Non-blocking findings from harness t0153v3: (a) holes/slivers thinner than
 Acceptance criteria:
   1. (a) and (d) are reported to the user (diagnostic) or documented in ADR-0025; (c) ≤ 2.5× per doubling; (e) the test checks laterals with a flat depth too; (b) and (f) fixed or documented with reasons.
 
-### T-0165 Profile: collapsed cuts vanish silently; empty walks ordered at the origin (T-0163 coder)   [status: ready]
+### T-0165 Profile: collapsed cuts vanish silently; empty walks ordered at the origin (T-0163 coder)   [status: in progress]
 Phase: 1   Module: core/toolpath   Depends on: T-0163   ADR: 0016
 Goal: Found by the T-0163 coder. (1) At tiny scale with chordal larger than the vector, a closed roughing offset collapses to one line, then to a point, and the cut disappears with no diagnostic (seg_241_31). (2) A cut whose walk is empty when order() runs (StartAt VectorStart / ClosestOnBoundingBox) enters ordering at (0,0) via pointAt on an empty walk, and adds a (0,0) keep-clear point to other cuts' tab placement. (3) The ASan test build fails under -Werror: carv_storage_residuals_test.cpp:232 peakGrowth unused.
 Acceptance criteria:
@@ -695,7 +695,7 @@ Goal: Non-blocking findings from harness t0128v2. (a) A recovered stray with mor
 Acceptance criteria:
   1. (a) a long stray comes back as ≤ ceil(n/512) chains with no spans dropped; (b) near-linear and ≤ 1.5× main on the clustered repros, or documented with measurements; (c) tests kill M3, W2, S, P, O (E2 if not redundant); outputs otherwise unchanged; full ctest.
 
-### T-0173 V-Carve corner sharpening follow-ups (T-0160 round-2 verifier)   [status: verifying (PR #68)]
+### T-0173 V-Carve corner sharpening follow-ups (T-0160 round-2 verifier)   [status: done (2026-11-07, #68)]
 Phase: 1   Module: core/toolpath   Depends on: T-0160   ADR: 0025
 Goal: Non-blocking findings from harness t0160v2. (a) Super-linear: one region made of a horizontal chain of n squares joined by pinched necks — sharpening adds 0.27/0.83/2.6/11.8 s at n = 100/200/400/800 (×4.5 at the last doubling, +168% of the job); rotated 90° it is linear. The swept-area offset/difference runs over the whole part in one Clipper2 call (scanbeam); batch it per region/locality (repro perf2 chain 100 200 400 800). (b) Test gaps: mutants caught only by the golden (half-strip 0.3·s leaves 0.2683 > ridge 0.2598 in bigtri_ch0.002_apex30_V60s03; never_join; no back extension; no zig-zag) and not caught at all (ramps counted as swept; pieces < 50·distance dropped). (c) CLI help text still says "convex corners … each corner's bisector"; round 2 also cuts rounded corners, necks and spikes. (d) Pieces shorter than the distance tolerance are dropped — mention in ADR-0025 §6.
 Note (owner question, pre-existing): flat areas no end mill enters keep F/2 ridges along every wall from the carving tool's rest clearing; ask the owner whether to address it.
