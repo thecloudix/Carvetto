@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <thread>
 
 #include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/save_toolpaths.hpp"
@@ -25,6 +26,26 @@ fs::path workDir(const std::string& name) {
     fs::remove_all(dir);
     fs::create_directories(dir);
     return dir;
+}
+
+std::vector<fs::path> tempFiles(const fs::path& dir) {
+    std::vector<fs::path> out;
+    for (const auto& e : fs::directory_iterator(dir)) {
+        if (e.path().filename().string().find(".carvetto-tmp") != std::string::npos) {
+            out.push_back(e.path());
+        }
+    }
+    return out;
+}
+
+SaveOutput oneFile(const fs::path& path, const std::string& text) {
+    SaveOutput out;
+    out.ok = true;
+    OutputFile f;
+    f.path = path;
+    f.text = text;
+    out.files.push_back(f);
+    return out;
 }
 
 std::vector<PostInfo> shipped() {
@@ -430,7 +451,7 @@ TEST_CASE("writing: bytes as generated, no overwrite by default, all or nothing"
     blocked.files[0].path = blockedPath;
     w = writeOutput(blocked, true);
     CHECK_FALSE(w.ok);
-    CHECK_FALSE(fs::exists(fs::path(blockedPath.string() + ".carvetto-tmp")));
+    CHECK(tempFiles(dir).empty());
 }
 
 TEST_CASE("inch posts scale the numbers, mm posts do not", "[save]") {
@@ -456,4 +477,149 @@ TEST_CASE("uncalculated toolpaths are skipped with a warning", "[save]") {
     REQUIRE(out.ok);
     REQUIRE_FALSE(out.warnings.empty());
     CHECK(out.warnings.front().find("'Pending'") != std::string::npos);
+}
+
+TEST_CASE("a planted symlink at a predictable temp name is not followed", "[save][safety]") {
+    const fs::path dir = workDir("symtmp");
+    const fs::path victim = dir / "victim.txt";
+    { std::ofstream(victim) << "precious"; }
+    std::error_code ec;
+    fs::create_symlink(victim, dir / "job.nc.carvetto-tmp", ec);
+    fs::create_symlink(victim, dir / ".job.nc.carvetto-tmp", ec);
+    if (ec) {
+        SKIP("symlinks are not available here");
+    }
+    const WriteResult w = writeOutput(oneFile(dir / "job.nc", "G-code"), false);
+    REQUIRE(w.ok);
+    CHECK(readTextFile(pathToUtf8(victim)) == "precious");
+    CHECK_FALSE(fs::is_symlink(dir / "job.nc"));
+    CHECK(readTextFile(pathToUtf8(dir / "job.nc")) == "G-code");
+}
+
+TEST_CASE("a symlinked target is refused, or replaced itself when overwriting", "[save][safety]") {
+    const fs::path dir = workDir("symtarget");
+    const fs::path victim = dir / "victim.txt";
+    { std::ofstream(victim) << "precious"; }
+    std::error_code ec;
+    fs::create_symlink(victim, dir / "job.nc", ec);
+    fs::create_symlink(dir / "nowhere", dir / "dangling.nc", ec);
+    if (ec) {
+        SKIP("symlinks are not available here");
+    }
+    WriteResult w = writeOutput(oneFile(dir / "job.nc", "new"), false);
+    CHECK_FALSE(w.ok);
+    CHECK(readTextFile(pathToUtf8(victim)) == "precious");
+    w = writeOutput(oneFile(dir / "dangling.nc", "new"), false);
+    CHECK_FALSE(w.ok);
+    CHECK_FALSE(fs::exists(dir / "nowhere"));
+
+    w = writeOutput(oneFile(dir / "job.nc", "new"), true);
+    REQUIRE(w.ok);
+    CHECK(readTextFile(pathToUtf8(victim)) == "precious");  // the link was replaced, not its target
+    CHECK_FALSE(fs::is_symlink(dir / "job.nc"));
+    CHECK(readTextFile(pathToUtf8(dir / "job.nc")) == "new");
+    CHECK(tempFiles(dir).empty());
+}
+
+TEST_CASE("a target created between the check and the commit is not replaced", "[save][safety]") {
+    const fs::path dir = workDir("race");
+    SaveOutput out = oneFile(dir / "a.nc", "A");
+    OutputFile second;
+    second.path = dir / "b.nc";
+    second.text = "B";
+    out.files.push_back(second);
+    detail::setCommitHook([&](const std::vector<fs::path>&) { std::ofstream(dir / "b.nc") << "someone else"; });
+    const WriteResult w = writeOutput(out, false);
+    detail::setCommitHook({});
+    CHECK_FALSE(w.ok);
+    CHECK(w.error.find("exists already") != std::string::npos);
+    CHECK(readTextFile(pathToUtf8(dir / "b.nc")) == "someone else");
+    CHECK_FALSE(fs::exists(dir / "a.nc"));  // the file this call had created is taken away again
+    CHECK(tempFiles(dir).empty());
+    CHECK(w.written.empty());
+}
+
+TEST_CASE("every staged file has its own random name; concurrent saves do not clash", "[save][safety]") {
+    const fs::path dir = workDir("concurrent");
+    std::vector<fs::path> seen;
+    detail::setCommitHook(
+        [&](const std::vector<fs::path>& staged) { seen.insert(seen.end(), staged.begin(), staged.end()); });
+    REQUIRE(writeOutput(oneFile(dir / "x.nc", "1"), true).ok);
+    REQUIRE(writeOutput(oneFile(dir / "x.nc", "2"), true).ok);
+    detail::setCommitHook({});
+    REQUIRE(seen.size() == 2);
+    CHECK(seen[0] != seen[1]);
+    CHECK(seen[0].parent_path() == dir);
+
+    std::atomic<int> failures{0};
+    std::vector<std::thread> threads;
+    for (int t = 0; t < 4; ++t) {
+        threads.emplace_back([&, t]() {
+            for (int i = 0; i < 25; ++i) {
+                const std::string text(2000, static_cast<char>('a' + t));
+                if (!writeOutput(oneFile(dir / "same.nc", text), true).ok) {
+                    ++failures;
+                }
+            }
+        });
+    }
+    for (std::thread& th : threads) {
+        th.join();
+    }
+    CHECK(failures == 0);
+    const std::string final = readTextFile(pathToUtf8(dir / "same.nc"));
+    CHECK(final.size() == 2000);
+    CHECK(final.find_first_not_of(final[0]) == std::string::npos);  // one writer's complete content
+    CHECK(tempFiles(dir).empty());
+}
+
+TEST_CASE("a failure while committing cleans up and names what was replaced", "[save][safety]") {
+    const fs::path dir = workDir("commitfail");
+    SaveOutput out = oneFile(dir / "a.nc", "A");
+    OutputFile second;
+    second.path = dir / "dir.nc";
+    second.text = "B";
+    out.files.push_back(second);
+    fs::create_directories(dir / "dir.nc" / "inner");  // a directory cannot be replaced by a file
+    { std::ofstream(dir / "a.nc") << "old"; }
+    const WriteResult w = writeOutput(out, true);
+    CHECK_FALSE(w.ok);
+    CHECK(w.error.find("already replaced: 'a.nc'") != std::string::npos);
+    CHECK(readTextFile(pathToUtf8(dir / "a.nc")) == "A");
+    CHECK(tempFiles(dir).empty());
+}
+
+TEST_CASE("names that differ only in case collide, also beyond ASCII", "[save]") {
+    Fixture f;
+    const auto posts = shipped();
+    SaveJob job = jobFor(f, postNamed(posts, "grbl_mm.pp"), OutputMode::FilePerToolpath, workDir("case"));
+    job.records[0].name = "Part";
+    job.records[1].name = "PART";
+    job.records[2].name = "part";
+    job.options.nameTemplate = "{toolpath}";
+    SaveOutput out = generateOutput(job);
+    REQUIRE(out.ok);
+    CHECK(out.files[0].path.filename() == "Part.nc");
+    CHECK(out.files[1].path.filename() == "PART_2.nc");
+    CHECK(out.files[2].path.filename() == "part_3.nc");
+
+    job.records[0].name = "\xC3\x89" "cole";  // E acute
+    job.records[1].name = "\xC3\xA9" "cole";  // e acute
+    job.records[2].name = "\xD0\x96";         // Cyrillic capital zhe
+    out = generateOutput(job);
+    REQUIRE(out.ok);
+    CHECK(out.files[1].path.filename() == "\xC3\xA9" "cole_2.nc");
+    CHECK(out.files[2].path.filename() == "\xD0\x96.nc");
+}
+
+TEST_CASE("reserved name variants and invisible characters are neutralised", "[save]") {
+    CHECK(sanitizeFileStem("COM\xC2\xB9") == "_COM\xC2\xB9");
+    CHECK(sanitizeFileStem("lpt\xC2\xB2") == "_lpt\xC2\xB2");
+    CHECK(sanitizeFileStem("CON .x") == "_CON .x");
+    CHECK(sanitizeFileStem("conin$") == "conin_");
+    CHECK(sanitizeFileStem("a\xC2\x85" "b") == "a_b");           // C1 control (NEL)
+    CHECK(sanitizeFileStem("a\xE2\x80\xAE" "b") == "a_b");       // right-to-left override
+    CHECK(sanitizeFileStem("a\xE2\x81\xA6" "b") == "a_b");       // isolate
+    CHECK(sanitizeFileStem("a\xE2\x80\x8B" "b") == "a_b");       // zero width space
+    CHECK(sanitizeFileStem("a\xEF\xBB\xBF" "b") == "a_b");       // BOM
 }

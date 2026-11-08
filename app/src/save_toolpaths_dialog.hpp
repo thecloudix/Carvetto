@@ -18,6 +18,7 @@ class QLineEdit;
 class QPlainTextEdit;
 class QPushButton;
 class QThread;
+class QTimer;
 
 namespace carvetto::app {
 
@@ -65,6 +66,8 @@ class SaveToolpathsDialog : public QDialog {
    private:
     void fillPosts();
     void settingsChanged();
+    /// Text typed into the folder or name field: the post runs 300 ms after the last keystroke.
+    void typingChanged();
     void startGeneration();
     void generationDone(viewmodel::SaveOutput out, unsigned generation);
     void writeDone(viewmodel::WriteResult result);
@@ -104,6 +107,7 @@ class SaveToolpathsDialog : public QDialog {
     bool closeAfterWrite_{false};
     unsigned generation_{0};
     bool updating_{false};
+    QTimer* debounce_{nullptr};
     std::shared_ptr<std::atomic<bool>> cancel_;
 };
 

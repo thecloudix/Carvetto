@@ -8,6 +8,26 @@
 #include <set>
 #include <sstream>
 #include <system_error>
+#include <atomic>
+#include <cerrno>
+#include <cstdint>
+#include <cstring>
+#include <functional>
+#include <mutex>
+#include <random>
+
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#else
+#include <fcntl.h>
+#include <unistd.h>
+#endif
 
 #include "carvetto/viewmodel/file_session.hpp"
 
@@ -153,11 +173,103 @@ std::size_t utf8Length(const std::string& s, std::size_t i) {
 }
 
 bool isReservedDeviceName(const std::string& stem) {
-    const std::string head = lowerAscii(stem.substr(0, stem.find('.')));
-    static const std::set<std::string> names = {"con",  "prn",  "aux",  "nul",  "com1", "com2", "com3", "com4",
-                                                "com5", "com6", "com7", "com8", "com9", "lpt1", "lpt2", "lpt3",
-                                                "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9"};
+    std::string head = lowerAscii(stem.substr(0, stem.find('.')));
+    while (!head.empty() && head.back() == ' ') {
+        head.pop_back();
+    }
+    // COM1..9 / LPT1..9 also with the superscript digits (U+00B9, U+00B2, U+00B3).
+    for (const char* sup : {"\xC2\xB9", "\xC2\xB2", "\xC2\xB3"}) {
+        const std::string tail = sup;
+        if (head.size() == 3 + tail.size() && head.compare(3, tail.size(), tail) == 0 &&
+            (head.compare(0, 3, "com") == 0 || head.compare(0, 3, "lpt") == 0)) {
+            return true;
+        }
+    }
+    static const std::set<std::string> names = {"con",  "prn",  "aux",  "nul",    "conin$", "conout$", "com1", "com2",
+                                                "com3", "com4", "com5", "com6",   "com7",   "com8",    "com9", "lpt1",
+                                                "lpt2", "lpt3", "lpt4", "lpt5",   "lpt6",   "lpt7",    "lpt8", "lpt9"};
     return names.count(head) != 0;
+}
+
+/// The code point of the valid UTF-8 sequence of length n at s[i].
+char32_t decodeAt(const std::string& s, std::size_t i, std::size_t n) {
+    const auto b = [&](std::size_t k) { return static_cast<char32_t>(static_cast<unsigned char>(s[i + k])); };
+    if (n == 1) {
+        return b(0);
+    }
+    if (n == 2) {
+        return ((b(0) & 0x1Fu) << 6) | (b(1) & 0x3Fu);
+    }
+    if (n == 3) {
+        return ((b(0) & 0x0Fu) << 12) | ((b(1) & 0x3Fu) << 6) | (b(2) & 0x3Fu);
+    }
+    return ((b(0) & 0x07u) << 18) | ((b(1) & 0x3Fu) << 12) | ((b(2) & 0x3Fu) << 6) | (b(3) & 0x3Fu);
+}
+
+void encode(char32_t c, std::string& out) {
+    if (c < 0x80) {
+        out += static_cast<char>(c);
+    } else if (c < 0x800) {
+        out += static_cast<char>(0xC0 | (c >> 6));
+        out += static_cast<char>(0x80 | (c & 0x3F));
+    } else if (c < 0x10000) {
+        out += static_cast<char>(0xE0 | (c >> 12));
+        out += static_cast<char>(0x80 | ((c >> 6) & 0x3F));
+        out += static_cast<char>(0x80 | (c & 0x3F));
+    } else {
+        out += static_cast<char>(0xF0 | (c >> 18));
+        out += static_cast<char>(0x80 | ((c >> 12) & 0x3F));
+        out += static_cast<char>(0x80 | ((c >> 6) & 0x3F));
+        out += static_cast<char>(0x80 | (c & 0x3F));
+    }
+}
+
+/// Simple case folding for Latin-1, Latin Extended-A, Greek and Cyrillic (what file systems that
+/// ignore case commonly fold); other characters are unchanged.
+char32_t foldCodePoint(char32_t c) {
+    if (c >= 'A' && c <= 'Z') {
+        return c + 0x20;
+    }
+    if ((c >= 0xC0 && c <= 0xDE && c != 0xD7)) {
+        return c + 0x20;
+    }
+    if ((c >= 0x100 && c <= 0x137) || (c >= 0x14A && c <= 0x177)) {
+        return (c % 2 == 0) ? c + 1 : c;
+    }
+    if ((c >= 0x139 && c <= 0x148)) {
+        return (c % 2 == 1) ? c + 1 : c;
+    }
+    if (c >= 0x391 && c <= 0x3A9 && c != 0x3A2) {
+        return c + 0x20;
+    }
+    if (c >= 0x410 && c <= 0x42F) {
+        return c + 0x20;
+    }
+    if (c >= 0x400 && c <= 0x40F) {
+        return c + 0x50;
+    }
+    return c;
+}
+
+/// A key equal for names that differ only in case.
+std::string foldCase(const std::string& s) {
+    std::string out;
+    for (std::size_t i = 0; i < s.size();) {
+        const std::size_t n = std::max<std::size_t>(utf8Length(s, i), 1);
+        if (utf8Length(s, i) == 0) {
+            out += s[i];
+        } else {
+            encode(foldCodePoint(decodeAt(s, i, n)), out);
+        }
+        i += n;
+    }
+    return out;
+}
+
+/// Characters that never belong in a file name: C1 controls, bidi controls, zero-width marks.
+bool isHiddenCodePoint(char32_t c) {
+    return (c >= 0x80 && c <= 0x9F) || c == 0x61C || (c >= 0x200B && c <= 0x200F) || (c >= 0x202A && c <= 0x202E) ||
+           (c >= 0x2060 && c <= 0x2064) || (c >= 0x2066 && c <= 0x2069) || c == 0xFEFF;
 }
 
 /// Character-level mapping only (no trimming): what a template literal or a value may contain.
@@ -171,7 +283,11 @@ std::string mapName(const std::string& text) {
             continue;
         }
         if (n > 1) {
-            out.append(text, i, n);
+            if (isHiddenCodePoint(decodeAt(text, i, n))) {
+                out += '_';
+            } else {
+                out.append(text, i, n);
+            }
         } else {
             const char c = text[i];
             const bool ok = std::isalnum(static_cast<unsigned char>(c)) != 0 || c == ' ' || c == '-' || c == '_' ||
@@ -480,10 +596,10 @@ SaveOutput generateOutput(const SaveJob& job, const std::atomic<bool>* cancel) {
             return fail(error);
         }
         std::string candidate = stem;
-        for (std::size_t k = 2; taken.count(lowerAscii(candidate)) != 0; ++k) {
+        for (std::size_t k = 2; taken.count(foldCase(candidate)) != 0; ++k) {
             candidate = stem + "_" + std::to_string(k);
         }
-        taken.insert(lowerAscii(candidate));
+        taken.insert(foldCase(candidate));
         paths.push_back(job.options.directory / pathFromUtf8(candidate + "." + ext));
     }
 
@@ -577,6 +693,153 @@ std::string previewText(const SaveOutput& output, std::size_t maxLines) {
     return preview;
 }
 
+// ------------------------------------------------------------------------------ safe writing
+
+namespace {
+
+std::function<void(const std::vector<fs::path>&)>& commitHook() {
+    static std::function<void(const std::vector<fs::path>&)> hook;
+    return hook;
+}
+
+std::mutex& hookMutex() {
+    static std::mutex m;
+    return m;
+}
+
+/// A target "exists" when anything is at the path, a dangling symlink included.
+bool occupied(const fs::path& p) {
+    std::error_code ec;
+    const fs::file_status st = fs::symlink_status(p, ec);
+    return !ec && st.type() != fs::file_type::not_found;
+}
+
+std::string randomHex() {
+    static std::atomic<std::uint64_t> counter{0};
+    std::random_device rd;
+    std::uint64_t v =
+        (static_cast<std::uint64_t>(rd()) << 32) ^ rd() ^ (counter.fetch_add(1) * 0x9E3779B97F4A7C15ull);
+    std::string out;
+    for (int i = 0; i < 16; ++i) {
+        out += "0123456789abcdef"[v & 0xF];
+        v >>= 4;
+    }
+    return out;
+}
+
+enum class Commit { Ok, Exists, Failed };
+
+#ifdef _WIN32
+
+/// Creates `path` (it must not exist), never following a link, and writes `data`.
+bool createExclusive(const fs::path& path, const std::string& data, std::string& err) {
+    HANDLE h = CreateFileW(path.wstring().c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW,
+                           FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+    if (h == INVALID_HANDLE_VALUE) {
+        const DWORD code = GetLastError();
+        err = (code == ERROR_FILE_EXISTS || code == ERROR_ALREADY_EXISTS) ? "exists" : "cannot create";
+        return false;
+    }
+    std::size_t done = 0;
+    bool ok = true;
+    while (done < data.size() && ok) {
+        const DWORD chunk = static_cast<DWORD>(std::min<std::size_t>(data.size() - done, 1u << 20));
+        DWORD wrote = 0;
+        ok = WriteFile(h, data.data() + done, chunk, &wrote, nullptr) != 0 && wrote == chunk;
+        done += wrote;
+    }
+    ok = ok && FlushFileBuffers(h) != 0;
+    CloseHandle(h);
+    if (!ok) {
+        err = "cannot write";
+    }
+    return ok;
+}
+
+/// Moves the staged file to `target`; without `overwrite` an existing target is never replaced.
+Commit commitFile(const fs::path& staged, const fs::path& target, bool overwrite, std::string& err) {
+    const DWORD flags = overwrite ? MOVEFILE_REPLACE_EXISTING : 0;
+    if (MoveFileExW(staged.wstring().c_str(), target.wstring().c_str(), flags) != 0) {
+        return Commit::Ok;
+    }
+    const DWORD code = GetLastError();
+    if (!overwrite && (code == ERROR_ALREADY_EXISTS || code == ERROR_FILE_EXISTS)) {
+        return Commit::Exists;
+    }
+    err = "error " + std::to_string(static_cast<unsigned long>(code));
+    return Commit::Failed;
+}
+
+#else
+
+bool createExclusive(const fs::path& path, const std::string& data, std::string& err) {
+    const int fd = ::open(path.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0644);
+    if (fd < 0) {
+        err = errno == EEXIST ? "exists" : std::strerror(errno);
+        return false;
+    }
+    std::size_t done = 0;
+    bool ok = true;
+    while (done < data.size()) {
+        const ssize_t n = ::write(fd, data.data() + done, data.size() - done);
+        if (n < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+            err = std::strerror(errno);
+            ok = false;
+            break;
+        }
+        done += static_cast<std::size_t>(n);
+    }
+    if (ok && ::fsync(fd) != 0 && errno != EINVAL && errno != EROFS) {
+        err = std::strerror(errno);
+        ok = false;
+    }
+    if (::close(fd) != 0 && ok) {
+        err = std::strerror(errno);
+        ok = false;
+    }
+    return ok;
+}
+
+Commit commitFile(const fs::path& staged, const fs::path& target, bool overwrite, std::string& err) {
+    if (overwrite) {
+        // rename() replaces the directory entry itself: a symlink at the target is replaced, not followed.
+        if (::rename(staged.c_str(), target.c_str()) != 0) {
+            err = std::strerror(errno);
+            return Commit::Failed;
+        }
+        return Commit::Ok;
+    }
+    // link() fails when anything (a dangling symlink too) is at the target: no replace, no race.
+    if (::link(staged.c_str(), target.c_str()) != 0) {
+        if (errno == EEXIST) {
+            return Commit::Exists;
+        }
+        err = std::strerror(errno);
+        return Commit::Failed;
+    }
+    ::unlink(staged.c_str());
+    return Commit::Ok;
+}
+
+#endif
+
+void removeQuietly(const fs::path& p) {
+    std::error_code ec;
+    fs::remove(p, ec);
+}
+
+}  // namespace
+
+namespace detail {
+void setCommitHook(std::function<void(const std::vector<std::filesystem::path>&)> hook) {
+    const std::lock_guard<std::mutex> lock(hookMutex());
+    commitHook() = std::move(hook);
+}
+}  // namespace detail
+
 WriteResult writeOutput(const SaveOutput& output, bool overwrite) {
     WriteResult res;
     if (!output.ok || output.files.empty()) {
@@ -590,44 +853,72 @@ WriteResult writeOutput(const SaveOutput& output, bool overwrite) {
             res.error = "the output folder '" + pathToUtf8(f.path.parent_path()) + "' does not exist";
             return res;
         }
-        if (!overwrite && fs::exists(f.path, ec)) {
+        if (!overwrite && occupied(f.path)) {
             res.error = "'" + pathToUtf8(f.path) + "' exists already";
             return res;
         }
     }
+    // Stage: every file under its own random name, created exclusively (never through a link).
     std::vector<fs::path> staged;
-    const auto cleanup = [&]() {
-        for (const fs::path& p : staged) {
-            std::error_code ec;
-            fs::remove(p, ec);
+    const auto cleanup = [&](std::size_t from) {
+        for (std::size_t i = from; i < staged.size(); ++i) {
+            removeQuietly(staged[i]);
         }
     };
     for (const OutputFile& f : output.files) {
-        fs::path tmp = f.path;
-        tmp += ".carvetto-tmp";
-        std::ofstream o(tmp, std::ios::binary | std::ios::trunc);
-        if (!o) {
-            res.error = "cannot write '" + pathToUtf8(f.path) + "'";
-            cleanup();
+        bool created = false;
+        std::string err;
+        fs::path tmp;
+        for (int attempt = 0; attempt < 20 && !created; ++attempt) {
+            tmp = f.path.parent_path() /
+                  pathFromUtf8("." + pathToUtf8(f.path.filename()) + "." + randomHex() + ".carvetto-tmp");
+            err.clear();
+            created = createExclusive(tmp, f.text, err);
+            if (!created && err != "exists") {
+                break;
+            }
+        }
+        if (!created) {
+            res.error = "cannot write '" + pathToUtf8(f.path) + "': " + err;
+            removeQuietly(tmp);
+            cleanup(0);
             return res;
         }
         staged.push_back(tmp);
-        o.write(f.text.data(), static_cast<std::streamsize>(f.text.size()));
-        o.close();
-        if (!o) {
-            res.error = "cannot write '" + pathToUtf8(f.path) + "' (disk full?)";
-            cleanup();
-            return res;
+    }
+    {
+        std::function<void(const std::vector<fs::path>&)> hook;
+        {
+            const std::lock_guard<std::mutex> lock(hookMutex());
+            hook = commitHook();
+        }
+        if (hook) {
+            hook(staged);
         }
     }
+    // Commit. Without overwrite a file that appeared meanwhile is never replaced, and files this
+    // call already created are taken away again (they are new, so nothing is lost).
     for (std::size_t i = 0; i < output.files.size(); ++i) {
-        std::error_code ec;
-        fs::rename(staged[i], output.files[i].path, ec);
-        if (ec) {
-            res.error = "cannot write '" + pathToUtf8(output.files[i].path) + "': " + ec.message();
-            std::vector<fs::path> rest(staged.begin() + static_cast<std::ptrdiff_t>(i), staged.end());
-            staged = rest;
-            cleanup();
+        std::string err;
+        const Commit c = commitFile(staged[i], output.files[i].path, overwrite, err);
+        if (c != Commit::Ok) {
+            std::string done;
+            if (!overwrite) {
+                for (const fs::path& w : res.written) {
+                    removeQuietly(w);
+                }
+            } else {
+                for (const fs::path& w : res.written) {
+                    done += (done.empty() ? "'" : ", '") + pathToUtf8(w.filename()) + "'";
+                }
+            }
+            res.error = c == Commit::Exists ? "'" + pathToUtf8(output.files[i].path) + "' exists already"
+                                            : "cannot write '" + pathToUtf8(output.files[i].path) + "': " + err;
+            if (!done.empty()) {
+                res.error += " (already replaced: " + done + ")";
+            }
+            cleanup(i);
+            res.written.clear();
             return res;
         }
         res.written.push_back(output.files[i].path);

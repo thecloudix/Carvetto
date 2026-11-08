@@ -19,6 +19,7 @@
 #include <QStandardPaths>
 #include <QString>
 #include <QThread>
+#include <QTimer>
 #include <QVBoxLayout>
 #include <algorithm>
 #include <utility>
@@ -160,6 +161,11 @@ SaveToolpathsDialog::SaveToolpathsDialog(const document::Document& doc, const st
     connect(buttons, &QDialogButtonBox::accepted, this, [this]() { accept(); });
     connect(buttons, &QDialogButtonBox::rejected, this, [this]() { reject(); });
 
+    debounce_ = new QTimer(this);
+    debounce_->setSingleShot(true);
+    debounce_->setInterval(300);
+    connect(debounce_, &QTimer::timeout, this, [this]() { settingsChanged(); });
+
     connect(browse, &QPushButton::clicked, this, [this]() {
         const QString dir = QFileDialog::getExistingDirectory(this, QStringLiteral("Output folder"), folder_->text());
         if (!dir.isEmpty()) {
@@ -205,8 +211,8 @@ SaveToolpathsDialog::SaveToolpathsDialog(const document::Document& doc, const st
         }
         settingsChanged();
     });
-    connect(folder_, &QLineEdit::textChanged, this, [this](const QString&) { settingsChanged(); });
-    connect(template_, &QLineEdit::textChanged, this, [this](const QString&) { settingsChanged(); });
+    connect(folder_, &QLineEdit::textChanged, this, [this](const QString&) { typingChanged(); });
+    connect(template_, &QLineEdit::textChanged, this, [this](const QString&) { typingChanged(); });
     connect(overwrite_, &QCheckBox::toggled, this, [this](bool) { settingsChanged(); });
 
     fillPosts();
@@ -278,10 +284,21 @@ viewmodel::SaveOptions SaveToolpathsDialog::currentOptions() const {
     return o;
 }
 
+void SaveToolpathsDialog::typingChanged() {
+    if (updating_) {
+        return;
+    }
+    outputFresh_ = false;
+    writeError_.clear();
+    save_->setEnabled(false);
+    debounce_->start();
+}
+
 void SaveToolpathsDialog::settingsChanged() {
     if (updating_) {
         return;
     }
+    debounce_->stop();
     outputFresh_ = false;
     writeError_.clear();
     startGeneration();
@@ -471,6 +488,10 @@ int SaveToolpathsDialog::postCount() const {
 bool SaveToolpathsDialog::waitIdle() {
     QElapsedTimer timer;
     timer.start();
+    if (debounce_->isActive()) {  // typing pending: generate now
+        debounce_->stop();
+        settingsChanged();
+    }
     while (running_ && timer.elapsed() < 10000) {
         QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
         QThread::msleep(2);

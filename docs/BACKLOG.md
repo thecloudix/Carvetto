@@ -967,7 +967,7 @@ Phase: 1 (Batch C-1)   Module: app/viewmodel + app/src   Depends on: T-0220, T-0
 Goal: Toolpath preview on the 2D canvas (moves coloured by kind: rapid/feed/plunge/lead/ramp; selected toolpath highlighted; per-toolpath visibility), the simulation view (shaded heightfield from the T-0222 result as a 3D/isometric or top-down relief view in the 3D tab, stock/tool colours, quality level, playback slider and run/pause/step, speed), and a readout of estimated machining time. Viewmodel holds the scene building (Qt-free, tested); Qt paints.
 
 ### T-0224 Save toolpaths dialog and output (Qt + viewmodel)   [status: blocked — depends on T-0220]
-Phase: 1 (Batch C-1)   Module: app/viewmodel + app/src   Depends on: T-0220, T-0110, T-0030, T-0133, T-0134   ADR: 0033
+Phase: 1 (Batch C-1)   Module: app/viewmodel + app/src   Depends on: T-0220, T-0110, T-0030, T-0133, T-0134   ADR: 0034
 Goal: Output the selected toolpaths through the post-processors: choose the post (Grbl/Mach3/LinuxCNC/Marlin and user .pp posts), machine, units, output to a single file or one file per toolpath/tool, tool-change handling, preview of the first lines of G-code, file name templates, safety (the T-0133/T-0134 post rules: no injection, finite numbers) and clear error reporting; wraps the same code the CLI uses. Headless viewmodel tests (output byte-identical to the CLI for the same inputs) and a self-test step that saves a file and re-reads it.
 
 ### Batch C — the rest of the toolpaths, simulation and output

@@ -43,3 +43,24 @@ The app has no tool database or toolpath session yet (T-0221): the dialog posts 
 toolpath of the document, and the machine list is empty until the window is given machines
 (`MainWindow::setMachines`). T-0221 should pass `ToolpathSession::enabledToolpaths()` as the ids and the
 database's machines.
+
+## Amendment (verifier round 1)
+- **File safety.** A staged file gets a random name (`.<target>.<16 hex>.carvetto-tmp`) in the target's
+  folder and is created exclusively and without following links (`O_CREAT|O_EXCL|O_NOFOLLOW` on POSIX,
+  `CreateFileW(CREATE_NEW, FILE_FLAG_OPEN_REPARSE_POINT)` on Windows). Without "replace" a file is
+  moved into place by `link()` (Windows: `MoveFileExW` without `MOVEFILE_REPLACE_EXISTING`), which
+  fails when anything, a dangling symlink included, is at the target, so a file that appears between
+  the check and the commit is never replaced and the files this call already created are removed again.
+  With "replace" `rename()` / `MoveFileExW(REPLACE_EXISTING)` replaces the directory entry itself, so a
+  symlink at the target is replaced, never written through. A failed commit removes the staged files
+  and names the files already replaced. The Windows branch is not built locally (CI checks it).
+- **Names.** Collisions compare simple-case-folded names (ASCII, Latin-1/Extended-A, Greek,
+  Cyrillic); C1 controls, bidi controls, zero-width marks and the BOM become `_`; `COM¹`, `CON .x`,
+  `CONIN$` style reserved names are covered.
+- **Cancel.** The post run (`PostProcessor::run`) has no cancellation hook, so Close/Cancel waits for
+  a post already running (milliseconds to seconds for large jobs) before the dialog goes away.
+  Typing in the folder or name field re-posts only 300 ms after the last keystroke.
+- **TODO (T-0221 merge).** When the Toolpaths dock is on main, `MainWindow::saveToolpathsDialog` must
+  pass `ToolpathSession::enabledToolpaths()` as the ids (and the tool database's machines to
+  `setMachines`), with a test that a disabled toolpath is not in the output. Until then every
+  calculated toolpath is posted.

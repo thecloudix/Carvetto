@@ -3,6 +3,7 @@
 #include <atomic>
 #include <cstddef>
 #include <filesystem>
+#include <functional>
 #include <optional>
 #include <string>
 #include <vector>
@@ -151,8 +152,18 @@ struct WriteResult {
 };
 
 /// Writes the files (bytes as generated, no newline conversion). Refuses existing files unless
-/// `overwrite`, and a missing directory. Stages all files before renaming any; on a failure the
-/// staged files are removed.
+/// `overwrite`, and a missing directory. Every file is first created under its own random
+/// temporary name in the target folder, exclusively and without following links, then moved into
+/// place: without `overwrite` by an operation that fails when the target exists (so a file that
+/// appeared meanwhile is never replaced and the files this call created are taken away again),
+/// with `overwrite` by a rename that replaces the target entry itself (a symlink is replaced, not
+/// followed). On failure temporary files are removed and the error names files already replaced.
 WriteResult writeOutput(const SaveOutput& output, bool overwrite);
+
+namespace detail {
+/// Test seam: called with the staged temporary files after all were written and before any is
+/// moved into place. Pass an empty function to remove it.
+void setCommitHook(std::function<void(const std::vector<std::filesystem::path>&)> hook);
+}  // namespace detail
 
 }  // namespace carvetto::viewmodel
