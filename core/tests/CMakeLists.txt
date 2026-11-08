@@ -104,6 +104,12 @@ add_executable(carvetto_tests
   io/svg_fuzz_test.cpp
   io/svg_import_test.cpp
   io/svg_xml_test.cpp
+  text/font_test.cpp
+  text/outline_test.cpp
+  text/layout_test.cpp
+  text/path_test.cpp
+  text/limits_test.cpp
+  text/fuzz_test.cpp
   toolpath/pocket_coverage_test.cpp
   toolpath/pocket_test.cpp
   toolpath/pocket_gouge_test.cpp
@@ -139,6 +145,7 @@ target_compile_definitions(carvetto_tests PRIVATE
   CARVETTO_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
   CARVETTO_STARTER_TOOLS="${PROJECT_SOURCE_DIR}/data/tools/starter_tools.json"
   CARVETTO_DXF_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dxf"
+  CARVETTO_TEXT_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/text"
   CARVETTO_SVG_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/svg"
   CARVETTO_POCKET_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/pocket"
   CARVETTO_CLI_DATA_DIR="${PROJECT_SOURCE_DIR}/app/cli/tests/data"
