@@ -118,8 +118,16 @@ ParsedNumber parseNumber(std::string_view text, FieldKind kind, document::Units 
     }
     if (t.front() == '+') {
         t.remove_prefix(1);
+        if (!t.empty() && (t.front() == '+' || t.front() == '-')) {  // "+-1", "++1"
+            out.error = "not a number";
+            return out;
+        }
     }
     // Only plain decimal / exponent notation: reject "inf", "nan", hex.
+    if (t.empty()) {
+        out.error = "not a number";
+        return out;
+    }
     const char first = t.front();
     const bool numericStart = (first >= '0' && first <= '9') || first == '.' || first == '-';
     if (!numericStart || t.size() > 64) {

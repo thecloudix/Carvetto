@@ -178,10 +178,11 @@ TEST_CASE("form: bad entries are rejected with a message and no side effect", "[
 TEST_CASE("form: ranges of the angle, count and tolerance fields", "[toolpath][form]") {
     ToolpathForm profile(ToolpathOperation::Profile, Units::Millimetres);
     REQUIRE(profile.setChoice("leadType", 2).ok);
-    CHECK_FALSE(profile.setField("leadSweep", "0.05").ok);
-    CHECK_FALSE(profile.setField("leadSweep", "91").ok);
-    CHECK(profile.setField("leadSweep", "90").ok);
-    CHECK(profile.setField("leadSweep", "0.1").ok);
+    // The core and the CLI bound neither the sweep nor the angles; only sign and magnitude are checked.
+    CHECK(profile.setField("leadSweep", "0.05").ok);
+    CHECK(profile.setField("leadSweep", "120").ok);
+    CHECK_FALSE(profile.setField("leadSweep", "0").ok);
+    CHECK_FALSE(profile.setField("leadSweep", "-5").ok);
     CHECK_FALSE(profile.setField("chordal", "0.00001").ok);
     CHECK_FALSE(profile.setField("chordal", "1.5").ok);
     CHECK(profile.setField("chordal", "0.02").ok);
@@ -207,6 +208,11 @@ TEST_CASE("form: ranges of the angle, count and tolerance fields", "[toolpath][f
     CHECK_FALSE(drill.setField("dwellTime", "-1").ok);
     CHECK_FALSE(drill.setField("dwellTime", "1 s").ok);
     CHECK_FALSE(drill.setField("dwellTime", "+-1").ok);
+    CHECK_FALSE(drill.setField("startX", "+-1").ok);  // the shared length parser, a field allowing negatives
+    CHECK_FALSE(drill.setField("startX", "++1").ok);
+    CHECK_FALSE(drill.setField("startX", "+").ok);
+    CHECK(drill.setField("startX", "+1").ok);
+    CHECK(drill.setField("startX", "-1").ok);
     CHECK_FALSE(drill.setField("dwellTime", "++1").ok);
     CHECK(drill.setField("dwellTime", "+0.5").ok);
     CHECK(drill.setField("dwellTime", "0.5").ok);

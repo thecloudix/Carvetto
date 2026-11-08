@@ -104,8 +104,12 @@ operation the same result and diagnostic types; ADR-0007 makes ids monotonic.
   (`undoAndDiscard`) and is reported ("cannot be saved"). The rule is not repeated in the session.
 - **Stale targets.** A job remembers the target's records at `prepare`; `apply` refuses it when any
   of them has been edited, renamed or recalculated since.
-- **Form ranges vs the CLI.** Field bounds follow the core's documented ranges, including the lead
-  sweep of 0.1 to 90 degrees; they apply to definitions built in code too (`validateParams`), so a
-  params.json with a larger sweep would be refused by the session where the CLI passes it on to the
-  core. Offsets/leads/overcuts are additionally bounded to +-1000 mm (decision 4 of the report).
+- **Form ranges vs the CLI.** Field bounds are the core's documented ranges only (chordal 1e-4..1 mm,
+  counts, sign rules) plus +-1000 mm for offsets, leads, overcut and distances and 1e9 mm / 360000
+  degrees overall; the lead sweep and ramp/lead angles are not bounded (the core has no bound), so a
+  params.json the CLI accepts passes the session unless it exceeds those limits.
+- A refused unsavable result is found by a trial pass outside the undo stack (commands applied
+  directly, saved, taken back), so a refusal keeps even the redo history. Only jobs that could reach
+  the rule (2000 or more moves) are tried; the trial burns the ids it allocates, so those need twice
+  the ids.
 - The "rapid rate not set" case is part of the summary cache key.

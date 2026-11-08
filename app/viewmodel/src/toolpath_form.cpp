@@ -183,29 +183,19 @@ Table<toolpath::ProfileParams> makeProfileTable() {
           [](const P& p) { return p.tabs.enabled && p.tabs.spacing == toolpath::TabSpacing::ConstantDistance; });
     t.num("rampDistance", "Ramp distance", "Ramp", Kind::Length, false, false, [](P& p) -> double& { return p.ramp.distance; },
           [](const P& p) { return p.ramp.type != toolpath::RampType::None; });
-    {
-        NumDef<P>& d = t.num("rampAngle", "Ramp angle", "Ramp", Kind::Angle, false, false,
-                             [](P& p) -> double& { return p.ramp.angle; },
-                             [](const P& p) { return p.ramp.type != toolpath::RampType::None && p.ramp.useAngle; });
-        d.hi = 90.0;
-    }
+    t.num("rampAngle", "Ramp angle", "Ramp", Kind::Angle, false, false,
+                         [](P& p) -> double& { return p.ramp.angle; },
+                         [](const P& p) { return p.ramp.type != toolpath::RampType::None && p.ramp.useAngle; });
     t.num("leadLength", "Lead length", "Leads", Kind::Length, false, false, [](P& p) -> double& { return p.leads.length; },
           [](const P& p) { return p.leads.type == toolpath::LeadType::Straight; });
-    {
-        NumDef<P>& d = t.num("leadAngle", "Lead angle", "Leads", Kind::Angle, false, true,
-                             [](P& p) -> double& { return p.leads.angle; },
-                             [](const P& p) { return p.leads.type == toolpath::LeadType::Straight; });
-        d.hi = 90.0;
-    }
+    t.num("leadAngle", "Lead angle", "Leads", Kind::Angle, false, true,
+                         [](P& p) -> double& { return p.leads.angle; },
+                         [](const P& p) { return p.leads.type == toolpath::LeadType::Straight; });
     t.num("leadRadius", "Lead radius", "Leads", Kind::Length, false, false, [](P& p) -> double& { return p.leads.radius; },
           [](const P& p) { return p.leads.type == toolpath::LeadType::Circular; });
-    {
-        NumDef<P>& d = t.num("leadSweep", "Lead sweep", "Leads", Kind::Angle, false, false,
-                             [](P& p) -> double& { return p.leads.sweep; },
-                             [](const P& p) { return p.leads.type == toolpath::LeadType::Circular; });
-        d.lo = 0.1;
-        d.hi = 90.0;
-    }
+    t.num("leadSweep", "Lead sweep", "Leads", Kind::Angle, false, false,
+                         [](P& p) -> double& { return p.leads.sweep; },
+                         [](const P& p) { return p.leads.type == toolpath::LeadType::Circular; });
     t.num("overcut", "Overcut distance", "Leads", Kind::Length, false, true, [](P& p) -> double& { return p.leads.overcut; },
           [](const P& p) { return p.leads.type != toolpath::LeadType::None; });
     addStartPosition<P>(t, [](P& p) -> geometry::Vec2& { return p.startPosition; });

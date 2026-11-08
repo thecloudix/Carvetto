@@ -13,7 +13,6 @@
 #include <string>
 
 #include "carvetto/document/carv_io.hpp"
-#include "carvetto/document/carv_io.hpp"
 #include "toolpath_test_support.hpp"
 
 using namespace carvetto;
@@ -1088,4 +1087,141 @@ TEST_CASE("session: a cancelled job does not run the operation", "[toolpath][ses
     const ToolpathCalculation c = job.run(&cancel);
     CHECK(c.cancelled);
     CHECK(c.items.empty());
+}
+
+namespace {
+
+/// A profile of the 3 mm end mill whose pass depth comes from the tool database (0 = the tool's).
+ToolpathDefinition toolDepthProfile(const tooling::ToolDatabase& db, ObjectId on) {
+    ToolpathForm form(ToolpathOperation::Profile, document::Units::Millimetres);
+    REQUIRE(form.setTool(db, source("end-mill-3mm")).ok);
+    REQUIRE(form.setField("cutDepth", "12").ok);
+    ToolpathDefinition d = form.definition();
+    d.selector = VectorSelector::fromObjects({on});
+    return d;
+}
+
+tooling::ToolDatabase fineDepthDatabase(const tooling::ToolDatabase& db) {
+    tooling::ToolDatabase out = db;
+    tooling::Tool t = *out.findTool("end-mill-3mm");
+    t.defaultCuttingData.passDepth = 0.006;  // 2000 identical passes: more moves than bytes
+    REQUIRE(out.updateTool(t));
+    return out;
+}
+
+}  // namespace
+
+TEST_CASE("session: a refused unsavable edit keeps the redo history", "[toolpath][session]") {
+    // Each scenario: a toolpath P, a pocket Q added and undone (so there is something to redo), then
+    // an edit that cannot be saved. Nothing may change, the redo stack included.
+    const auto scenario = [](const char* name, auto&& edit) {
+        INFO(name);
+        Fixture f;
+        const ToolpathId p = f.session.add(toolDepthProfile(f.db, f.big)).ids.front();
+        REQUIRE(f.session.add(f.pocketOnBig()).ok);
+        REQUIRE(f.doc.undo());
+        REQUIRE(f.doc.undoStack().canRedo());
+        const std::string redoText = f.doc.undoStack().redoText();
+        const std::size_t count = f.doc.undoStack().count();
+        const Snapshot before = snapshot(f.doc);
+        const ToolpathOutcome out = edit(f, p);
+        CHECK_FALSE(out.ok);
+        CHECK(out.message.find("cannot be saved") != std::string::npos);
+        CHECK(snapshot(f.doc) == before);
+        CHECK(f.doc.undoStack().canRedo());
+        CHECK(f.doc.undoStack().redoText() == redoText);
+        CHECK(f.doc.undoStack().count() == count);
+        REQUIRE(f.doc.redo());  // the pocket comes back
+        CHECK(f.doc.toolpaths().size() == 2);
+        CHECK(f.doc.toolpaths()[1].operation() == ToolpathOperation::Pocket);
+    };
+    scenario("add", [](Fixture& f, ToolpathId) {
+        ToolpathDefinition d = toolDepthProfile(f.db, f.big);
+        std::get<toolpath::ProfileParams>(d.params).passes.passDepth = 0.006;
+        return f.session.add(d);
+    });
+    scenario("update", [](Fixture& f, ToolpathId p) {
+        ToolpathDefinition d = *f.session.definition(p);
+        std::get<toolpath::ProfileParams>(d.params).passes.passDepth = 0.006;
+        return f.session.update(p, d);
+    });
+    scenario("recalculate", [](Fixture& f, ToolpathId p) {
+        f.session.setToolDatabase(fineDepthDatabase(f.db));
+        return f.session.recalculate(p);
+    });
+    scenario("applyAll", [](Fixture& f, ToolpathId p) {
+        f.session.setToolDatabase(fineDepthDatabase(f.db));
+        const ToolpathCalculation calc = f.session.prepare(*f.session.definition(p), p).run();
+        const BatchOutcome b = f.session.applyAll({calc});
+        ToolpathOutcome o = b.items.front();
+        return o;
+    });
+    scenario("recalculateAll", [](Fixture& f, ToolpathId) {
+        f.session.setToolDatabase(fineDepthDatabase(f.db));
+        const BatchOutcome b = f.session.recalculateAll(false);
+        ToolpathOutcome o;
+        for (const ToolpathOutcome& i : b.items) {
+            if (!i.ok) {
+                o = i;
+            }
+        }
+        return o;
+    });
+}
+
+TEST_CASE("session: the rapid-rate setting is part of the summary cache", "[toolpath][session]") {
+    Fixture f;
+    ToolpathDefinition prof = profileDefinition(f.db);
+    prof.selector = VectorSelector::fromObjects({f.big, f.tiny});
+    REQUIRE(f.session.add(prof).ok);
+    CHECK(f.session.summary().rapidRateMissing);
+    REQUIRE(f.session.setMachineSetup(MachineSetup{1.0, std::numeric_limits<double>::infinity()}));
+    const JobSummary one = f.session.summary();
+    CHECK_FALSE(one.rapidRateMissing);
+    CHECK(one.time.rapid > 0.0);
+    REQUIRE(f.session.setMachineSetup(MachineSetup{0.0, std::numeric_limits<double>::infinity()}));
+    const JobSummary unset = f.session.summary();
+    CHECK(unset.rapidRateMissing);
+    CHECK(unset.time.rapid == 0.0);
+}
+
+TEST_CASE("session: apply notices every kind of change to the target since prepare", "[toolpath][session]") {
+    const auto changed = [](const char* name, auto&& edit) {
+        INFO(name);
+        Fixture f;
+        const ToolpathId id = f.addPocket();
+        const ToolpathCalculation calc = f.session.prepare(*f.session.definition(id), id).run();
+        REQUIRE(calc.ok);
+        ToolpathRecord r = *f.doc.findToolpath(id);
+        edit(f, r);
+        REQUIRE(f.doc.execute(std::make_unique<document::SetToolpathCommand>(r)));
+        const Snapshot now = snapshot(f.doc);
+        const ToolpathOutcome out = f.session.apply(calc);
+        CHECK_FALSE(out.ok);
+        CHECK(snapshot(f.doc) == now);
+    };
+    changed("params only", [](Fixture&, ToolpathRecord& r) { std::get<toolpath::PocketParams>(r.params).safeZ = 9.0; });
+    changed("name only", [](Fixture&, ToolpathRecord& r) { r.name = "Other"; });
+    changed("selection only", [](Fixture& f, ToolpathRecord& r) { r.selection.objects = {f.big, f.tiny}; });
+    changed("tool source only", [](Fixture&, ToolpathRecord& r) { r.toolSource.toolId = "end-mill-3mm"; });
+    changed("moves only", [](Fixture&, ToolpathRecord& r) {
+        auto moves = std::make_shared<std::vector<toolpath::Move>>(*r.moves);
+        moves->pop_back();
+        r.moves = moves;
+    });
+}
+
+TEST_CASE("session: apply notices a V-carve group that gained or lost a member since prepare", "[toolpath][session]") {
+    Fixture f;
+    ToolpathDefinition vc = vCarveDefinition(f.db, true);
+    vc.selector = VectorSelector::fromObjects({f.big});
+    const ToolpathOutcome out = f.session.add(vc);
+    REQUIRE(out.ok);
+    REQUIRE(out.ids.size() == 2);
+    const ToolpathCalculation calc = f.session.prepare(*f.session.definition(out.ids[1]), out.ids[1]).run();
+    REQUIRE(calc.ok);
+    REQUIRE(f.session.deleteToolpaths({out.ids[0]}).ok);
+    const Snapshot now = snapshot(f.doc);
+    CHECK_FALSE(f.session.apply(calc).ok);
+    CHECK(snapshot(f.doc) == now);
 }
