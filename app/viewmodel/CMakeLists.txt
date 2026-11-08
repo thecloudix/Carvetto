@@ -2,8 +2,12 @@
 # tests/qt_free_check.cmake enforces that (and that core/ includes no Qt header).
 add_library(carvetto_viewmodel STATIC
   src/vector_ops.cpp
+  src/vector_selector.cpp
   src/view_transform.cpp
   src/ruler.cpp
+  src/toolpath_calc.cpp
+  src/toolpath_form.cpp
+  src/toolpath_session.cpp
   src/tools.cpp
   src/transform_form.cpp
   src/transform_gesture.cpp

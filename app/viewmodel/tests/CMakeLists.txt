@@ -30,8 +30,23 @@ add_executable(carvetto_viewmodel_tests
   node_ops_test.cpp
   snapping_test.cpp
   selection_tools_test.cpp
+  toolpath_form_test.cpp
+  toolpath_robustness_test.cpp
+  toolpath_session_test.cpp
+  vector_selector_test.cpp
 )
+# The toolpath tests drive carvetto-cli in process (cli::run) to compare its records with the session's.
 target_link_libraries(carvetto_viewmodel_tests PRIVATE carvetto::viewmodel Catch2::Catch2WithMain carvetto_warnings)
+if(CARVETTO_BUILD_CLI)
+  target_sources(carvetto_viewmodel_tests PRIVATE toolpath_cli_identity_test.cpp)
+  target_link_libraries(carvetto_viewmodel_tests PRIVATE carvetto_cli_lib)
+endif()
+target_compile_definitions(carvetto_viewmodel_tests PRIVATE
+  CARVETTO_CLI_DATA_DIR="${PROJECT_SOURCE_DIR}/app/cli/tests/data"
+  CARVETTO_VM_WORK_DIR="${CMAKE_CURRENT_BINARY_DIR}/work"
+  CARVETTO_DXF_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/core/tests/fixtures/dxf"
+  CARVETTO_STARTER_TOOLS="${PROJECT_SOURCE_DIR}/data/tools/starter_tools.json"
+)
 
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 include(Catch)
