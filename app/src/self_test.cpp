@@ -48,6 +48,7 @@
 #include "node_edit_menu.hpp"
 #include "save_toolpaths_dialog.hpp"
 #include "tool_panel.hpp"
+#include "preview_panel.hpp"
 #include "toolpaths_panel.hpp"
 #include "transform_menu.hpp"
 #include "vector_ops_menu.hpp"
@@ -739,7 +740,12 @@ int runSelfTest() {
         return fail(why);
     }
 
-    // 9. Save Toolpaths (T-0224): two calculated toolpaths with different tools, post them through
+    // 9. The toolpath preview and the simulation view (T-0223).
+    if (const std::string why = previewSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 10. Save Toolpaths (T-0224): two calculated toolpaths with different tools, post them through
     // the dialog (generation and writing run on a worker thread), re-read the files.
     {
         document::Document& cur = window.currentDocument();

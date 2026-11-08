@@ -27,6 +27,11 @@ qt_add_executable(carvetto
   src/new_job_dialog.hpp
   src/node_edit_menu.cpp
   src/node_edit_menu.hpp
+  src/preview_panel.cpp
+  src/preview_panel.hpp
+  src/preview_self_test.cpp
+  src/relief_view.cpp
+  src/relief_view.hpp
   src/tool_panel.cpp
   src/tool_panel.hpp
   src/save_toolpaths_dialog.cpp

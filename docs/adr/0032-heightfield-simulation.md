@@ -146,3 +146,45 @@ closed-form distances; deviations are reported in the T-0222 report.
 - Radiused end mills and form tools need profile pieces (a torus piece / a table); the
   convexity requirement of §2 must be kept or a different minimiser used.
 - Overhangs (2.5D limit) are out of scope; Phase 2 3D relief is a different component.
+
+## Amendment (T-0223, preview and simulation view)
+- **Files** (`app/viewmodel`, Qt-free): `toolpath_preview` (scene, draw list), `time_readout`, `simulation_setup`,
+  `simulation_controller`, `relief_render`, `playback`. Qt glue (`app/src`): `preview_panel` (the Preview dock),
+  `relief_view` (the simulation view in the "3D View" tab), the overlay in `canvas_widget`.
+- **2D preview.** Every enabled, computed toolpath becomes polylines in document coordinates, cut into chunks of about
+  256 points (arcs by chord error 0.01 mm, at most 4096 points each; an arc is never split, so a chunk with a
+  full circle of radius 1e5 holds 4097 points), with a class per run of moves: Rapid, Feed (arcs
+  included), Plunge, Retract, Ramp (a feed or arc whose Z changes while it travels in XY: ramps and helices; the move
+  list has no "lead" kind, so lead-ins are Feed). Vertical plunge/retract moves are dots; vertical feeds and rapids have no XY extent and are counted but not drawn. The geometry is keyed by the
+  identity of the shared `moves` (a recalculation replaces it, nothing else rebuilds it). A frame is a draw list for the
+  view: chunks outside the viewport are culled by their box, the rest decimated to points at least 1.5 px apart (a chunk
+  smaller than that becomes one stroke). Cost per frame is O(chunks + drawn points), not O(moves); measured numbers are in
+  the T-0223 report. The canvas paints the list from cached layer images (re-rendered only when the view, the model or the
+  visible classes change; playback adds the newly played moves to the layer).
+- **Visibility and staleness.** On/off, per-toolpath, "selected only", and per-class visibility are viewmodel state
+  (session-only). A toolpath that needs recalculation is drawn grey and dashed; disabled or uncomputed toolpaths are not drawn.
+- **Time readout.** `makeTimeReadout(JobSummary)`; it states what is missing (rapid rate not set: rapids left out; feed rate
+  0: unknown; stale or uncomputed toolpaths) rather than showing a bare number. The dock lets the user enter the rapid rate
+  (stored in the session's `MachineSetup`); playback pacing assumes 5000 mm/min when it is unset and says so.
+- **Setup.** `makeSimulationSetup` copies out of the session: the enabled computed toolpaths (shared moves), tool shapes
+  (`ToolShape::fromTool` from the database tool of the record's `ToolSource`, else a flat cutter of the snapshot diameter,
+  with a note), the stock (active sheet's material, job thickness, Z zero: material surface -> top at 0, machine bed -> top
+  at thickness; rotary jobs are refused). Quality is the cell size, coarsened (and reported) so that the grid never exceeds
+  16 M cells (144 MB with pass ids). The id given to the simulator is the position + 1. `checkSimulationCurrent` compares
+  the setup with the session (same toolpaths with the same move-list identity, same stock, none needing recalculation).
+- **Controller.** One worker thread owns the `Simulator`, built from the setup's copies; it advances in chunks (adaptive,
+  about 30 ms) with `advanceToMove`, so cancel and newer requests take effect within a chunk; the latest `seek` wins, a
+  backward seek resets and replays. It publishes immutable frames (shaded relief raster of at most 1600 px on the long side,
+  diagnostics) that the UI polls with a 30 ms timer; there are no callbacks into Qt. `cancel()` stops the run where it got to
+  and a frame at that move follows. Failures (allocation, refused stock) become a `Failed` state with a message. Scrubbing and
+  stepping use `advanceToMove` (byte-exact, section 9); `advanceToTime` is not used.
+- **Lifetime rule.** Nothing in a setup, a frame or the worker refers to the `Document`. The panel reads the document only on
+  the UI thread (`refresh()`); when the document is replaced the simulation is stopped first (`documentReplaced`), and a result
+  that no longer matches (edit, recalculation, enabling, material) is shown with an "Out of date" banner and without the
+  canvas tool/played marks (their move indices would refer to a different list). Tested under ASan.
+- **Relief.** Top-down hill-shaded raster (light from the upper left), uncut stock in wood colour, cut cells darker with
+  depth (or one colour per toolpath), table colour where the cut went through; an isometric 3D view is left for Phase 2.
+- **Replacing the document** goes through one `MainWindow::replaceDocument`: repaints are blocked, the canvas (and its tool
+  controller) and the preview are detached before the file session frees the old document (`PreviewPanel::detach` stops the
+  worker and clears the scene without touching widgets), and only then are the holders re-pointed and refreshed. A widget that
+  repaints synchronously (a progress bar value change) can therefore never make a dirty canvas read a dead document.

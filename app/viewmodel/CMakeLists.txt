@@ -19,6 +19,12 @@ add_library(carvetto_viewmodel STATIC
   src/toolpath_form.cpp
   src/toolpath_runner.cpp
   src/toolpath_session.cpp
+  src/toolpath_preview.cpp
+  src/time_readout.cpp
+  src/simulation_setup.cpp
+  src/simulation_controller.cpp
+  src/relief_render.cpp
+  src/playback.cpp
   src/tools.cpp
   src/text_tool.cpp
   src/transform_form.cpp

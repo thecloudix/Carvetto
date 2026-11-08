@@ -5,6 +5,7 @@
 #include <memory>
 
 #include <filesystem>
+#include <functional>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -31,6 +32,8 @@ class CanvasWidget;
 class RulerWidget;
 class CopiesMenu;
 class NodeEditMenu;
+class PreviewPanel;
+class ReliefView;
 class ToolPanel;
 class ToolpathsPanel;
 class TransformMenu;
@@ -72,6 +75,13 @@ class MainWindow : public QMainWindow {
     /// the machines of the tool database.
     void saveToolpathsDialog();
     ToolpathsPanel* toolpaths() const { return toolpaths_; }
+    /// The Preview dock (toolpath preview, time readout, simulation) and the simulation view in the 3D tab.
+    PreviewPanel* preview() const { return preview_; }
+    QDockWidget* previewDock() const { return previewDock_; }
+    ReliefView* reliefView() const { return relief_; }
+    /// Switches the central tabs: the 2D design view or the simulation ("3D") view.
+    void showView(bool simulation);
+    bool simulationViewShown() const;
     QAction* undoAction() const { return undoAction_; }
     QAction* redoAction() const { return redoAction_; }
     QDockWidget* layersDock() const { return layersDock_; }
@@ -109,6 +119,7 @@ class MainWindow : public QMainWindow {
     void closeEvent(QCloseEvent* event) override;
 
    private:
+    bool replaceDocument(const std::function<bool()>& swap);
     void buildMenus();
     void buildToolBar();
     void buildToolPalette();
@@ -152,11 +163,14 @@ class MainWindow : public QMainWindow {
     QDockWidget* componentsDock_{nullptr};
     QDockWidget* libraryDock_{nullptr};
     QDockWidget* toolpathsDock_{nullptr};
+    QDockWidget* previewDock_{nullptr};
 
     QActionGroup* toolGroup_{nullptr};
     std::map<viewmodel::ToolKind, QAction*> toolActions_;
     ToolPanel* toolPanel_{nullptr};
     ToolpathsPanel* toolpaths_{nullptr};
+    PreviewPanel* preview_{nullptr};
+    ReliefView* relief_{nullptr};
 
     QAction* undoAction_{nullptr};
     QAction* redoAction_{nullptr};
