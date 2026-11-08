@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <span>
 #include <tuple>
 #include <utility>
 
@@ -543,7 +544,7 @@ BatchOutcome ToolpathSession::applyMany(const std::vector<ToolpathCalculation>& 
             }
             plan.members = membersOf(*rec);
             bool same = plan.members.size() == c.targetRecords.size();
-            for (std::size_t k = 0; same && k < plan.members.size(); ++k) {
+            for (std::size_t k = 0; same && k < plan.members.size() && k < c.targetRecords.size(); ++k) {
                 const ToolpathRecord* cur = doc_->findToolpath(plan.members[k]);
                 const ToolpathRecord& was = c.targetRecords[k];
                 same = cur != nullptr && cur->id == was.id &&
@@ -599,8 +600,7 @@ BatchOutcome ToolpathSession::applyMany(const std::vector<ToolpathCalculation>& 
         out.message = out.items.empty() ? "nothing to apply" : out.items.front().message;
         return out;
     }
-    // Small jobs cannot reach the writer's one-move-per-byte rule; larger ones are tried out first
-    // (the trial burns the ids it allocates, so those need twice the ids).
+    // Small jobs cannot reach the writer's one-move-per-byte rule; larger ones are tried out first.
     std::uint64_t upperMoves = 0;
     for (const ToolpathRecord& r : doc_->toolpaths()) {
         upperMoves += r.moveCount();
@@ -611,7 +611,7 @@ BatchOutcome ToolpathSession::applyMany(const std::vector<ToolpathCalculation>& 
         }
     }
     const bool needTrial = upperMoves >= 2000;
-    if (!doc_->idGenerator().canAllocate(needTrial ? 2 * newIds : newIds)) {
+    if (!doc_->idGenerator().canAllocate(newIds)) {
         failAll("the document has no free ids left for another toolpath");
         return out;
     }
@@ -627,26 +627,16 @@ BatchOutcome ToolpathSession::applyMany(const std::vector<ToolpathCalculation>& 
     document::UndoStack& undo = doc_->undoStack();
     bool failed = false;
     std::size_t executed = 0;
-    bool trial = false;
-    std::vector<std::unique_ptr<document::Command>> trialCommands;
+    // The document the commands run on: the real one, or a scratch copy for the trial.
+    Document* work = doc_;
     const auto run = [&](std::unique_ptr<document::Command> cmd) {
-        if (trial) {  // applied straight to the document, outside the undo stack, and taken back after
-            if (cmd->apply(*doc_)) {
-                trialCommands.push_back(std::move(cmd));
-                return true;
-            }
-            failed = true;
-            return false;
-        }
-        if (doc_->execute(std::move(cmd))) {
+        if (work->execute(std::move(cmd))) {
             ++executed;
             return true;
         }
         failed = true;
         return false;
     };
-    // `AddToolpathCommand` keeps its id once applied: a command is only ever applied once through
-    // `run` in the real pass, so the trial uses its own commands.
     const auto pass = [&]() {
     for (const Plan& plan : plans) {
             if (failed) {
@@ -666,9 +656,9 @@ BatchOutcome ToolpathSession::applyMany(const std::vector<ToolpathCalculation>& 
                 if (existing != plan.roles.end()) {
                     rec.id = existing->second;
                     kept.insert(rec.id);
-                    const ToolpathRecord* cur = doc_->findToolpath(rec.id);
-                    if (cur != nullptr && *cur == rec) {
-                        regs.push_back({cur->moves, plan.slot, item.role, group});  // nothing to store
+                    const ToolpathRecord* now = work->findToolpath(rec.id);
+                    if (now != nullptr && *now == rec) {
+                        regs.push_back({now->moves, plan.slot, item.role, group});  // nothing to store
                     } else {
                         if (!run(std::make_unique<document::SetToolpathCommand>(rec))) {
                             break;
@@ -680,11 +670,11 @@ BatchOutcome ToolpathSession::applyMany(const std::vector<ToolpathCalculation>& 
                 } else {
                     std::optional<std::size_t> at;
                     if (prev.has_value()) {
-                        if (const auto pi = doc_->toolpathIndex(*prev)) {
+                        if (const auto pi = work->toolpathIndex(*prev)) {
                             at = *pi + 1;
                         }
                     } else if (!plan.members.empty()) {
-                        at = doc_->toolpathIndex(plan.members.front());
+                        at = work->toolpathIndex(plan.members.front());
                     }
                     auto cmd = std::make_unique<document::AddToolpathCommand>(rec, at);
                     const document::AddToolpathCommand* raw = cmd.get();
@@ -711,39 +701,38 @@ BatchOutcome ToolpathSession::applyMany(const std::vector<ToolpathCalculation>& 
             }
         }
     };
-    // 1. A trial: apply everything to the document without touching the undo stack (so a refusal
-    //    keeps the redo history too), ask the file writer whether the result can be saved (at most
-    //    one move per byte of the compressed file: known only after compression, so the writer's own
-    //    rule is used, not a copy of it), then take it all back.
+    // 1. A trial on a scratch copy of the document (saved to memory and loaded back), so the real
+    //    document, its undo stack (redo history included) and its id counter are untouched: ask the
+    //    file writer whether the result can be saved (at most one move per byte of the compressed
+    //    file, known only after compression, so the writer's own rule is used, not a copy of it).
+    //    If no copy can be made (the document does not save or load by itself) there is no trial.
     std::string unsavable;
-    trial = needTrial;
     if (needTrial) {
-        pass();
-    }
-    if (needTrial && !failed) {
-        std::uint64_t moves = 0;
-        for (const ToolpathRecord& r : doc_->toolpaths()) {
-            moves += r.moveCount();
-        }
-        if (moves >= 2000) {
-            const auto saved = document::saveCarv(*doc_);
-            if (!saved && saved.error().code == document::CarvError::Code::ResourceLimit) {
-                unsavable = saved.error().message;
-                failed = true;
+        auto bytes = document::saveCarv(*doc_);
+        if (bytes) {
+            auto copy = document::loadCarv(std::span<const std::uint8_t>(bytes.value()));
+            if (copy) {
+                Document& scratch = copy.value().document;
+                work = &scratch;
+                pass();
+                work = doc_;
+                if (!failed) {
+                    const auto saved = document::saveCarv(scratch);
+                    if (!saved && saved.error().code == document::CarvError::Code::ResourceLimit) {
+                        unsavable = saved.error().message;
+                        failed = true;
+                    }
+                }
+                executed = 0;
+                regs.clear();
+                for (ToolpathOutcome& o : out.items) {
+                    o.ids.clear();
+                }
             }
         }
     }
-    for (auto it = trialCommands.rbegin(); it != trialCommands.rend(); ++it) {
-        (*it)->revert(*doc_);
-    }
-    trialCommands.clear();
-    regs.clear();
-    for (ToolpathOutcome& o : out.items) {
-        o.ids.clear();
-    }
     // 2. The real pass, one undo step.
     if (!failed) {
-        trial = false;
         undo.breakCoalescing();
         undo.beginMacro(text);
         pass();

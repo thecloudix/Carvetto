@@ -1225,3 +1225,47 @@ TEST_CASE("session: apply notices a V-carve group that gained or lost a member s
     CHECK_FALSE(f.session.apply(calc).ok);
     CHECK(snapshot(f.doc) == now);
 }
+
+TEST_CASE("session: a large job (the save trial) consumes exactly the ids the toolpath needs", "[toolpath][session]") {
+    Fixture f;
+    const ObjectId wide = addVector(f.doc, square(5, 40, 280));
+    ToolpathDefinition def = pocketDefinition(f.db);
+    def.setName("Wide");
+    def.tool = source("end-mill-3mm");
+    def.selector = VectorSelector::fromObjects({wide});
+    f.doc.undoStack().clear();
+    const std::uint64_t next = f.doc.idGenerator().peek();
+    const ToolpathOutcome out = f.session.add(def);
+    REQUIRE(out.ok);
+    REQUIRE(out.ids.size() == 1);
+    REQUIRE(f.doc.toolpaths()[0].moveCount() >= 2000);  // past the threshold of the trial
+    CHECK(out.ids[0].value == next);                    // the id the CLI would give
+    CHECK(f.doc.idGenerator().peek() == next + 1);
+    CHECK(f.steps() == 1);
+    // A refused large edit consumes none.
+    ToolpathDefinition bad = toolDepthProfile(f.db, f.big);
+    std::get<toolpath::ProfileParams>(bad.params).passes.passDepth = 0.006;
+    const ToolpathOutcome refused = f.session.add(bad);
+    CHECK_FALSE(refused.ok);
+    CHECK(f.doc.idGenerator().peek() == next + 1);
+    // With one id left a large job still fits (no ids are held back for the trial).
+    document::Object top = document::Object::vector(square(500, 0, 5), f.doc.defaultLayer(), f.doc.activeSheet());
+    top.id = ObjectId{document::IdGenerator::kMaxId - 2};
+    f.doc.insertObject(top);
+    REQUIRE(f.doc.idGenerator().remaining() == 1);
+    ToolpathDefinition again = def;
+    again.setName("Last");
+    CHECK(f.session.add(again).ok);
+    CHECK(f.doc.idGenerator().remaining() == 0);
+    CHECK_FALSE(f.session.add(again).ok);
+}
+
+TEST_CASE("session: apply accepts a target whose moves were replaced by an equal copy", "[toolpath][session]") {
+    Fixture f;
+    const ToolpathId id = f.addPocket();
+    const ToolpathCalculation calc = f.session.prepare(*f.session.definition(id), id).run();
+    ToolpathRecord* r = f.doc.findToolpath(id);
+    r->moves = std::make_shared<const std::vector<toolpath::Move>>(*r->moves);  // same content, other identity
+    f.session.invalidate();
+    CHECK(f.session.apply(calc).ok);
+}

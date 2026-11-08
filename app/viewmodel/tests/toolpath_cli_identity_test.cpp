@@ -313,3 +313,16 @@ TEST_CASE("toolpath session records equal the CLI on the DXF fixtures", "[toolpa
                  return f.definition();
              }});
 }
+
+TEST_CASE("toolpath session records equal the CLI past the save-trial threshold", "[toolpath][cli]") {
+    // More than 2000 moves: the session tries the save out on a scratch copy; ids and bytes must not differ.
+    runCase({"pocket_large", kPart, "pocket", R"({"name": "Fine", "layers": ["Pockets"], "cut_depth": 4, )" +
+                                                  tool("end-mill-3mm") + "}",
+             [](const tooling::ToolDatabase& db, const document::Document& doc) {
+                 ToolpathForm f = formFor(document::ToolpathOperation::Pocket, db, "end-mill-3mm");
+                 ok(f.setName("Fine"));
+                 ok(f.setField("cutDepth", "4"));
+                 f.setSelector(layersNamed(doc, {"Pockets"}));
+                 return f.definition();
+             }});
+}

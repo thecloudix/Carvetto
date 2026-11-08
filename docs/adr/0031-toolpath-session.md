@@ -108,8 +108,9 @@ operation the same result and diagnostic types; ADR-0007 makes ids monotonic.
   counts, sign rules) plus +-1000 mm for offsets, leads, overcut and distances and 1e9 mm / 360000
   degrees overall; the lead sweep and ramp/lead angles are not bounded (the core has no bound), so a
   params.json the CLI accepts passes the session unless it exceeds those limits.
-- A refused unsavable result is found by a trial pass outside the undo stack (commands applied
-  directly, saved, taken back), so a refusal keeps even the redo history. Only jobs that could reach
-  the rule (2000 or more moves) are tried; the trial burns the ids it allocates, so those need twice
-  the ids.
+- A refused unsavable result is found by a trial on a scratch copy of the document (saved to memory
+  and loaded back, 2000 or more moves only): the real document, its undo stack (redo history
+  included) and its id counter are untouched, so saved ids equal the CLI's. If no copy can be made
+  there is no trial. The rule is all-or-nothing per batch: `recalculateAll` / `applyAll` are refused
+  as a whole when the combined result cannot be saved.
 - The "rapid rate not set" case is part of the summary cache key.
