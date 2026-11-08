@@ -42,6 +42,7 @@
 #include "main_window.hpp"
 #include "node_edit_menu.hpp"
 #include "tool_panel.hpp"
+#include "preview_panel.hpp"
 #include "toolpaths_panel.hpp"
 #include "transform_menu.hpp"
 #include "vector_ops_menu.hpp"
@@ -652,6 +653,11 @@ int runSelfTest() {
 
     // 8. The Toolpaths dock through the real widgets (T-0221).
     if (const std::string why = toolpathsSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 9. The toolpath preview and the simulation view (T-0223).
+    if (const std::string why = previewSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

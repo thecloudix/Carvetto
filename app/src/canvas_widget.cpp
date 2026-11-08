@@ -1,6 +1,7 @@
 #include "canvas_widget.hpp"
 
 #include <QBrush>
+#include <QElapsedTimer>
 #include <QEvent>
 #include <QKeyEvent>
 #include <QLineF>
@@ -13,6 +14,7 @@
 #include <QRectF>
 #include <QResizeEvent>
 #include <QWheelEvent>
+#include <algorithm>
 #include <cmath>
 #include <cctype>
 #include <cstddef>
@@ -85,6 +87,19 @@ bool CanvasWidget::selectAt(QPointF widgetPos, bool additive, bool toggle) {
     return hit.has_value();
 }
 
+void CanvasWidget::setPreview(const viewmodel::PreviewModel* model) {
+    preview_ = model;
+    layerValid_ = false;
+    update();
+}
+
+void CanvasWidget::setPreviewState(const PreviewPaintState& state) {
+    if (!(previewState_ == state)) {
+        previewState_ = state;
+        update();
+    }
+}
+
 void CanvasWidget::notifyViewChanged() {
     tools_.setView(view_);
     if (onViewChanged) {
@@ -149,6 +164,8 @@ void CanvasWidget::paintScene(QPainter& painter, const ViewTransform& view, QSiz
         painter.drawPath(qp);
     }
 
+    paintPreview(painter, view, size);
+
     // Selection: dashed bounding box around the selected objects.
     if (const auto sel = viewmodel::selectionBounds(*doc_)) {
         QPen pen(QColor(30, 110, 230));
@@ -165,6 +182,128 @@ void CanvasWidget::paintScene(QPainter& painter, const ViewTransform& view, QSiz
     painter.setPen(Qt::NoPen);
     painter.setBrush(QBrush(QColor(200, 30, 30)));
     painter.drawRect(QRectF(datum.x() - 4.0, datum.y() - 4.0, 8.0, 8.0));
+}
+
+namespace {
+
+QColor previewPenColour(const viewmodel::PreviewStyle& style) {
+    const viewmodel::PreviewColour c = viewmodel::colourOf(style.cls);
+    if (style.stale) {
+        return QColor(140, 140, 140, style.played ? 220 : 90);
+    }
+    return QColor(c.r, c.g, c.b, style.played ? 255 : 80);
+}
+
+}  // namespace
+
+void CanvasWidget::renderPreviewRange(QImage& layer, const ViewTransform& view, std::size_t from, std::size_t to,
+                                      bool played) const {
+    viewmodel::PreviewDrawOptions options;
+    options.fromMove = from;
+    options.toMove = to;
+    options.played = played;
+    options.classVisible = previewState_.classVisible;
+    const viewmodel::PreviewDrawList list = preview_->draw(view, options);
+    lastPreviewPoints_ += list.stats.pointsOut;
+    QPainter p(&layer);
+    p.setRenderHint(QPainter::Antialiasing, list.stats.pointsOut < 150000);
+    std::vector<QPointF> buffer;
+    for (const viewmodel::PreviewBatch& batch : list.batches) {
+        QPen pen(previewPenColour(batch.style));
+        pen.setCosmetic(true);
+        pen.setWidthF(batch.style.highlighted ? 2.5 : 1.0);
+        pen.setCapStyle(Qt::RoundCap);
+        pen.setJoinStyle(Qt::RoundJoin);
+        if (batch.style.cls == viewmodel::MoveClass::Rapid) {
+            pen.setStyle(Qt::DotLine);
+        } else if (batch.style.stale) {
+            pen.setStyle(Qt::DashLine);
+        }
+        p.setPen(pen);
+        buffer.clear();
+        buffer.reserve(batch.points.size());
+        for (const Vec2& pt : batch.points) {
+            buffer.emplace_back(pt.x, pt.y);
+        }
+        std::size_t at = 0;
+        for (const std::uint32_t len : batch.runLengths) {
+            if (len == 1) {
+                QPen dot = pen;
+                dot.setWidthF(batch.style.highlighted ? 5.0 : 3.5);
+                dot.setStyle(Qt::SolidLine);
+                p.setPen(dot);
+                p.drawPoint(buffer[at]);
+                p.setPen(pen);
+            } else if (len > 1) {
+                p.drawPolyline(buffer.data() + at, static_cast<int>(len));
+            }
+            at += len;
+        }
+    }
+}
+
+void CanvasWidget::paintPreview(QPainter& painter, const ViewTransform& view, QSize size) const {
+    lastPreviewMs_ = 0.0;
+    lastPreviewPoints_ = 0;
+    if (preview_ == nullptr || !preview_->enabled() || preview_->scene().totalMoves == 0 || size.isEmpty()) {
+        return;
+    }
+    const std::size_t total = preview_->scene().totalMoves;
+    const bool playback = previewState_.playback;
+    const std::size_t played = playback ? std::min(previewState_.playedMoves, total) : total;
+    PreviewLayerKey key;
+    key.revision = preview_->revision();
+    key.scale = view.scale();
+    key.origin = view.origin();
+    key.size = size;
+    key.playback = playback;
+    key.classes = previewState_.classVisible;
+
+    QElapsedTimer timer;
+    timer.start();
+    const bool rebuild = !layerValid_ || !(key == layerKey_) || playedLayer_.size() != size;
+    if (rebuild) {
+        layerKey_ = key;
+        layerValid_ = true;
+        playedLayer_ = QImage(size, QImage::Format_ARGB32_Premultiplied);
+        playedLayer_.fill(Qt::transparent);
+        playedUpTo_ = 0;
+        pendingLayer_ = QImage();
+        if (playback) {
+            pendingLayer_ = QImage(size, QImage::Format_ARGB32_Premultiplied);
+            pendingLayer_.fill(Qt::transparent);
+            renderPreviewRange(pendingLayer_, view, 0, total, false);
+        }
+    }
+    if (played < playedUpTo_) {
+        playedLayer_.fill(Qt::transparent);
+        playedUpTo_ = 0;
+    }
+    if (played > playedUpTo_) {
+        renderPreviewRange(playedLayer_, view, playedUpTo_, played, true);
+        playedUpTo_ = played;
+    }
+    if (rebuild || lastPreviewPoints_ > 0) {
+        lastPreviewMs_ = static_cast<double>(timer.nsecsElapsed()) / 1.0e6;
+    }
+    if (!pendingLayer_.isNull()) {
+        painter.drawImage(QPoint(0, 0), pendingLayer_);
+    }
+    painter.drawImage(QPoint(0, 0), playedLayer_);
+
+    if (previewState_.toolPosMm.has_value()) {
+        const QPointF c = toQt(view.worldToScreen(*previewState_.toolPosMm));
+        const double r = std::max(5.0, 0.5 * previewState_.toolDiameterMm * view.scale());
+        painter.setRenderHint(QPainter::Antialiasing, true);
+        QPen outline(QColor(20, 20, 20));
+        outline.setCosmetic(true);
+        outline.setWidthF(1.5);
+        painter.setPen(outline);
+        painter.setBrush(QBrush(QColor(255, 220, 0, 90)));
+        painter.drawEllipse(c, r, r);
+        painter.drawLine(QPointF(c.x() - r - 3.0, c.y()), QPointF(c.x() + r + 3.0, c.y()));
+        painter.drawLine(QPointF(c.x(), c.y() - r - 3.0), QPointF(c.x(), c.y() + r + 3.0));
+    }
 }
 
 void CanvasWidget::paintEvent(QPaintEvent* event) {

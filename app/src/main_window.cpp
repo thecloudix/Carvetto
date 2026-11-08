@@ -39,6 +39,8 @@
 #include "carvetto/viewmodel/units_format.hpp"
 #include "new_job_dialog.hpp"
 #include "node_edit_menu.hpp"
+#include "preview_panel.hpp"
+#include "relief_view.hpp"
 #include "ruler_widget.hpp"
 #include "tool_panel.hpp"
 #include "toolpaths_panel.hpp"
@@ -109,13 +111,12 @@ void MainWindow::buildCentralArea() {
     grid->setRowStretch(1, 1);
     grid->setColumnStretch(1, 1);
 
-    auto* page3d = placeholder("3D view: not implemented yet.", this);
-    page3d->setAlignment(Qt::AlignCenter);
+    relief_ = new ReliefView(this);
 
     views_ = new QTabWidget(this);
     views_->setDocumentMode(true);
     views_->addTab(page2d, QStringLiteral("2D View"));
-    views_->addTab(page3d, QStringLiteral("3D View"));
+    views_->addTab(relief_, QStringLiteral("3D View"));
     setCentralWidget(views_);
 
     canvas_->onViewChanged = [this]() {
@@ -159,6 +160,8 @@ void MainWindow::buildDocks() {
         }
     };
     toolpathsDock_ = makeDock("Toolpaths", "toolpathsDock", toolpaths_);
+    preview_ = new PreviewPanel(toolpaths_, canvas_, relief_, this);
+    previewDock_ = makeDock("Preview", "previewDock", preview_);
 
     addDockWidget(Qt::LeftDockWidgetArea, designDock_);
     addDockWidget(Qt::LeftDockWidgetArea, sheetsDock_);
@@ -171,6 +174,9 @@ void MainWindow::buildDocks() {
     tabifyDockWidget(componentsDock_, libraryDock_);
     designDock_->raise();
     addDockWidget(Qt::RightDockWidgetArea, toolpathsDock_);
+    addDockWidget(Qt::RightDockWidgetArea, previewDock_);
+    tabifyDockWidget(toolpathsDock_, previewDock_);
+    toolpathsDock_->raise();
 
     connect(sheetsList_, &QListWidget::currentRowChanged, this, [this](int row) { pickSheet(row); });
     connect(layersList_, &QListWidget::currentRowChanged, this, [this](int row) { pickLayer(row); });
@@ -225,9 +231,19 @@ void MainWindow::buildMenus() {
     view->addSeparator();
     QMenu* panels = view->addMenu(QStringLiteral("&Panels"));
     for (QDockWidget* dock :
-         {designDock_, sheetsDock_, layersDock_, componentsDock_, libraryDock_, toolpathsDock_}) {
+         {designDock_, sheetsDock_, layersDock_, componentsDock_, libraryDock_, toolpathsDock_, previewDock_}) {
         panels->addAction(dock->toggleViewAction());
     }
+    view->addAction(preview_->showAction());
+    QAction* simView = view->addAction(QStringLiteral("&Simulation View"));
+    simView->setCheckable(true);
+    simView->setShortcut(QKeySequence(QStringLiteral("F6")));
+    connect(simView, &QAction::toggled, this, [this](bool on) { showView(on); });
+    connect(views_, &QTabWidget::currentChanged, this, [simView](int index) {
+        simView->blockSignals(true);
+        simView->setChecked(index == 1);
+        simView->blockSignals(false);
+    });
 
     QMenu* help = menuBar()->addMenu(QStringLiteral("&Help"));
     QAction* about = help->addAction(QStringLiteral("&About Carvetto"));
@@ -339,6 +355,7 @@ void MainWindow::setDocument(std::unique_ptr<document::Document> doc) {
     }
     session_.newDocument(std::move(doc));
     toolpaths_->setDocument(&session_.document());
+    preview_->documentReplaced();
     canvas_->setDocument(&session_.document());
     toolPanel_->rebuild();
     documentChanged();
@@ -367,6 +384,17 @@ void MainWindow::documentChanged() {
     if (toolpaths_ != nullptr) {
         toolpaths_->refresh();
     }
+    if (preview_ != nullptr) {
+        preview_->refresh();
+    }
+}
+
+void MainWindow::showView(bool simulation) {
+    views_->setCurrentIndex(simulation ? 1 : 0);
+}
+
+bool MainWindow::simulationViewShown() const {
+    return views_->currentIndex() == 1;
 }
 
 bool MainWindow::undo() {
@@ -514,6 +542,7 @@ bool MainWindow::openFile(const std::filesystem::path& path) {
     const bool ok = session_.open(path);
     if (ok) {
         toolpaths_->setDocument(&session_.document());
+        preview_->documentReplaced();
         canvas_->setDocument(&session_.document());
         documentChanged();
     } else {
@@ -685,6 +714,9 @@ void MainWindow::closeEvent(QCloseEvent* event) {
     if (persistLayout_) {
         QSettings settings;
         saveLayout(settings);
+    }
+    if (preview_ != nullptr) {
+        preview_->shutdown();
     }
     if (toolpaths_ != nullptr) {
         toolpaths_->showClosing();
