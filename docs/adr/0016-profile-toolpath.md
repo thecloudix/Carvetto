@@ -739,6 +739,190 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     which run Pocket for Fill and flat areas, refuse a distance below 1e-6 mm too, each with its
     own message ("... distance between 0.000001 mm and chordal", ADR-0024, ADR-0025); Drill keeps
     its own bounds.
+19. **Work budget and cancellation (T-0186).** The profile had no work limit and could not be
+    interrupted: the cost of a vector grows with its length (one clearance sample per
+    millimetre: a 1e6 mm edge beside a neighbour took 17 s in Release), is steep on thin
+    self-intersecting loops (a 730 mm tall Bezier loop 3 s, one 7.3 m tall 25 s), and hostile parameters
+    allocated gigabytes (0.0001 mm pass depth, a tab every nanometre) or ran for minutes. Three
+    parts, none of which changes the output of a job that stays inside them (checked against main,
+    below).
+
+    *Up-front refusals* (`ProfileBuilder::withinLimits`, closed-form, before any allocation that
+    grows with the parameters). Each is `WorkLimitExceeded`, one diagnostic naming the value, an
+    empty toolpath ("nothing is cut"); non-finite values are left to `validate()`'s own checks:
+    - depth passes <= `kProfileMaxLevels` = 10000 (as Pocket and Drill; `PassPlan::levels()` is
+      only called when the closed form is near the limit, so a 1e9 mm cut in 0.0001 mm steps
+      allocates nothing);
+    - |allowance|, and with a separate last pass the last-pass allowance, lead length (straight),
+      lead radius (circular), overcut (any lead), ramp distance (any ramp) and tab length (tabs
+      on) <= `kProfileMaxOffsetMm` = 1000 mm (an option that is off is not judged);
+    - the end points of every span (a Bezier's control points) within +-`kProfileMaxCoordinateMm`
+      = 1e5 mm, every arc radius <= `kProfileMaxRadiusMm` = 1e12 mm (the importers' cap; a
+      nearly straight arc has a huge radius and a far centre, so the end points decide, not the
+      centre: the T-0158 star tests have such arcs) and every arc angle below 1e6 rad; total vector length (lines and arcs exact, a Bezier by its control polygon, an upper bound: the exact length of a Bezier costs milliseconds and this check must stay cheap) <= `kProfileMaxLengthMm` = 1e7 mm; spans <=
+      `kProfileMaxSpans` = 2,000,000;
+    - tabs asked for over all vectors <= `kProfileMaxTabs` = 5e6 (constant number: count per
+      vector; constant distance: length / distance, at least one per vector);
+    - estimated moves <= `kProfileMaxMoves` = 20e6. The estimate is deliberately close to the
+      real count for ordinary jobs and low for curve-heavy ones: levels x (2 per span + 4 per tab
+      on the levels the tab stands on + the legs of a ZigZag ramp with a descent angle). It stops
+      what the closed form can see (a ramp whose legs are 1e-9 apart); the emitted moves are
+      counted as they are made and the run stops past the same 20e6 (`TooManyMoves`), so a
+      Bezier-heavy job that polygonises into more is refused after its cut is planned, before it
+      is all in memory.
+
+    *Work meter* (`work_meter.hpp`). A `WorkMeter` counts integer work units; hot paths call
+    `detail::chargeWork(n)`, which adds to the meter installed on the calling thread (a
+    `thread_local` pointer; null for every other operation, so Pocket, Drill, V-Carve and Engrave
+    are unaffected). One unit is meant as about 30 ns of Release CPU (a line's closest-point
+    test). The charges, each calibrated against measured time (round 2, T-0186 verifier):
+    - ClearanceField: span-box scan 1/4 unit a span; exact closest-point test 1 (line), 4 (arc),
+      40 (Bezier, 1.2 us) or 110 (a Bezier whose control polygon crosses itself, a loop or cusp: 2
+      to 3 us); a query 2 + the boxes it meets; one unit per millimetre of path sampled by
+      `findViolations` (charged before the sample grid is allocated); the constructor.
+    - ArcLengthPath: 15 per flattened Bezier point (evaluation and chord length), 1 per span,
+      2 per span of a projection, 1 per step of `extract`.
+    - Exact offset of a vector (`offsetOpenContour`), `chargeOffset`: n x (350 + n/188) units for n
+      spans (11 us a span at 1,000 spans, 23 us at 64,000, 53 us at 250,000: the geometry library is
+      superlinear there; a Bezier counts as one span here) plus
+      14 units per polygon piece of a Bezier; plus, per Bezier span, 200 + 5e5 x sqrt(x) units with
+      x = (control polygon - chord) / control polygon, which models the exact length the offset
+      computes (its adaptive recursion needs about x / tolerance pieces): measured on 40 random cubics
+      10 us at x = 1e-6, 80 us at 1e-4, 0.8 ms at 1e-2 and 4 to 8 ms at x = 0.2 to 0.7 (quarter
+      circles, loops), so a smooth traced outline costs microseconds a span and a curvy one
+      milliseconds (a flat constant, round 2, refused 4,000-span smooth outlines that main cuts in
+      0.4 s); plus 8 units for each pair of span boxes that overlap once grown by the offset distance
+      (a polygon of 100,000 chords of 1.3 micrometres offset by 1.5 mm took 27 s against 2 s for 63 mm
+      chords; more than 7.5e7 pairs refuses the vector); plus (5 inwards, 1.5 outwards) x S^1.7 for
+      S junctions turning by more than 60 degrees (a comb of thin teeth offset inwards took 6.5 s at
+      20,000 teeth, 41 s at 40,000, 122 s at 60,000 on the verifier's machine: n^2.7).
+    - Region union and offset of merged vectors (`chargeRegion`): 333 units per polygon vertex plus
+      0.7 x P^1.35 + 50 x P for P overlapping pairs of polygon-segment boxes (found by a sweep that
+      stops at 4e7 pairs or 4e8 steps, which count as over any limit). Concentric star rings
+      (500 spikes x 3 to 16) took 0.06 to 5 s for P = 6e4 to 1.6e6, circles in a grid and nested
+      circles 0.05 to 0.9 s; the model is within a factor of 3 of all of them.
+    - Preparing the inputs: 4 units per polygon vertex (20 for a vector with Beziers); band union of
+      the loose-piece check 20 + 60 per vertex; the tab-check raster one unit per eight cells; one
+      unit per move emitted.
+    The count depends only on the input and the parameters (not on time or load): the same job
+    refuses at the same point everywhere. `ProfileResult::workUnits` reports it. When the count
+    passes the limit (`ToolpathRunControl::workLimit`, default `kProfileDefaultWorkUnits` = 9e8)
+    `charge` throws `WorkAborted`; `profileToolpath` catches it (and `TooManyMoves`,
+    `std::bad_alloc`, `std::length_error`) and returns a fresh result: the toolpath name, no
+    moves, and the single diagnostic `WorkLimitExceeded` ("... needs more work than the limit
+    allows (N work units ...); nothing is cut"). Diagnostics collected so far (merges, trims) are
+    dropped with the toolpath: nothing partial. `ToolpathRunControl::moveLimit` (default 20e6)
+    lowers the move limit; it exists so the emit-time stop can be tested without 1.4 GB of moves.
+    *One step at most 6e8 units.* The exact offset of a vector, and the union and offset of a merged
+    group, are single geometry calls the meter cannot interrupt, and they are charged before they
+    run. A vector or group charged more than `kMaxSingleCallUnits` = 6e8 (10 s only at about 16 ns
+    per unit; at 30 to 60 ns, 18 to 36 s) is refused up front, naming it ("vector #N ... is too complex to offset in one step").
+    This bounds the wait of a cancel (below) and spares the wasted work of a doomed job. The
+    number is a trade-off: a lower one (1.5e8, 3 s) bounds the wait more tightly but refuses single
+    contours main finishes in 5 to 10 s (2,000 curvy Beziers in one outline: 2.4e8 units, 5.3 s).
+    Non-finite Bezier control points are refused up front as "a non-finite coordinate" (the Bezier
+    polygonisation and the Clipper2 conversion behind it are undefined for them).
+
+    *Calibration and the default.* Measured ns per unit, Release CPU on the shared machine at load
+    average 20 to 30 (so each figure is inflated by up to about 2x against an idle machine; the
+    ratios between families are what matter). Round 1 (verifier) -> round 2:
+
+    | family | round 1 | round 2 |
+    |---|---|---|
+    | 500,000-span polygon circle R1000 (29.5 s on main) | 187 | refused up front (0.3 s, 1.5e9 units) |
+    | 100,000-span polygon circle | 28 | 12.7 |
+    | 20,000 thin spikes (0.2 mm pitch) | 197 | 52 |
+    | 5,000 thin spikes (0.02 mm pitch) | 169 | 8.6 |
+    | starburst 500 spikes x 50 shapes | 91 | refused by the region estimate (0.7 s) |
+    | starburst 2000 x 5 / 40 x 500 | 75 / 22 | 20 / 24 |
+    | 200 circles of 4 Beziers | 53 | 19.6 |
+    | thin self-intersecting Bezier loop 730 mm | 52 | 31 |
+    | 50 thin Bezier bow-ties | 20 | 30 |
+    | 3,000 concentric circles / 500 | 31 / 49 | 29 / 40 |
+    | grid of merging circles 4900 / inside 2500 / rings 1600 | 36 / 30 / 30 | 23 / 27 / 26 |
+    | 160,000 tabs by distance | 51 | 49 |
+    | near-straight huge arc, 99,000 mm | 29 | 29 |
+
+    The default `kProfileDefaultWorkUnits` = 9e8 is a count, not a time, and the time it stands for
+    varies 4 to 8x with the shape of the job (ns per unit: 4 to 36 on most of the families above, 57
+    to 67 on a V-bit starburst and on nested circles offset inwards, whose cost is Clipper2's
+    intersection search, which the charges only partly model). **Plainly: the real CPU at the
+    default limit is not "12 to 27 s". The verifier measured, on loaded or idle-equivalent
+    machines, runs that reach 9e8 units after 35 to 75 s: a comb of Bezier teeth offset inwards
+    ("bcomb 10000 0.2 I") refused after 64 to 73 s, a 1,000-Bezier blob 63 to 68 s, 1,000 nested
+    circles offset inwards accepted after 52 s (8.4e8 units), a V-bit starburst of 200 x 100 spans 34
+    s; the thin Bezier loop and bow-tie families reach the limit after 20 to 28 s.** Do not read
+    the default as a time bound. A bound in time needs the geometry offset to poll (T-0228). What the
+    default does guarantee is that a hostile job stops and that nothing main finishes in under
+    2 s is refused: over the 1200-job corpus the 1161 jobs main runs in under 2 s count at most
+    1.1e8 (8x below the limit); the verifier's 13 overlap-heavy Bezier and polygon-blob jobs
+    (seeds 101, 332, 333, 368, 582, 603, 705, 893, 1334, 1641, 2096, 2166, 2221; main 4 to 9 s idle)
+    count 4.3e8 to 7.7e8 and all run. A 5,000-circle profile with 20 passes counts 5e6; a 3 m x
+    1.5 m sheet of 10,000 rectangles in 0.1 mm passes to 2 mm counts 3e7 (0.8 s). A Bezier-built
+    sign is expensive on main already (12 ms of exact length per Bezier span in the offset): 5,000
+    glyphs of 30 Beziers would take main about 25 minutes and are refused here (4e9 units).
+
+    *Tabs.* Tab planning was uncharged and quadratic in the tab count (a square of 24,000 mm with a
+    tab every 3 mm: 2.2 / 8.7 / 33 / 128 s at 3,000 / 6,000 / 12,000 / 24,000 mm, at under 5e5
+    units). Round 4 made the two quadratic parts linear with unchanged output: the stretches that
+    cover a sample are found by position (`dropSweptTabs`), and `tabCeiling` appends a stretch that
+    lies wholly after the ceiling so far instead of rebuilding every knot (checked against the
+    repeated `ZProfile::max` on random sorted, overlapping and ramped stretches); the same job takes
+    0.07 / 0.13 / 0.27 / 0.53 s. The stage is charged 500 units per tab (16 us) and 5 per sample of a
+    cut, after the tab-count limit is checked.
+
+    *Known over-refusals.* The charges over-count a few exotic shapes, so jobs main finishes in under
+    10 s are refused: a thin sawtooth ribbon offset inwards (comb of 20,000 teeth "combzz 20000 0.2
+    I": main 0.82 s, empty result "no region"; 100,000 teeth of height 5: main 5.2 s), and an open
+    zigzag of 100,000 spans with V-bit leads (main about 5.6 s). The sharp-junction term and the box-pair term are
+    charged even where the offset turns out empty or the contour is open. They are accepted until the
+    geometry offset can report its own work (T-0228).
+
+    *Cancellation.* `ToolpathRunControl::cancel` (an optional `const std::atomic<bool>*` in the
+    new four-argument `profileToolpath`) is read with relaxed ordering once per 1024 units charged
+    and between the stages (after the inputs are prepared, after the starts, after the lead
+    plans, after the tabs, after each cut's moves). A set flag returns the empty toolpath and one
+    `Cancelled` diagnostic, with the same nothing-partial guarantee; a flag that is already set
+    returns before any work. Without a flag the polls cost one branch. Latency is the work
+    between two polls (1024 units, about 30 us) plus the rest of the uncancellable geometry call in
+    progress: one exact offset of one vector, one union and offset of one merged group, or the exact
+    length of one Bezier span, or the tab stage of one cut (a cancel waited up to about 2.5 s at 1.3 million
+    tabs). Those are charged up front and refused above 6e8 units, so the wait
+    is up to about 11 s for a single Bezier outline and 26 to 35 s for a merged V-bit
+    starburst group ("starburst 2000 5 V", 26.6 s and 35.0 s in two measurements), because the real cost per unit varies as above. Measured with the verifier's probes
+    (Release, CPU seconds from the flag being set to the call returning, flag set at 50 ms and
+    400 ms): 200 four-Bezier circles 0.02; 10,000-part sheets 0.001 to 0.08; thin Bezier loop
+    and bow-ties under 0.04; 1,000 concentric squares 0.007; 60,000-span polygon 0.3 to 0.6 and
+    100,000-span polygon 1.1 (one offset call); 20,000 thin teeth outside 1.1 to 1.6; 5,000 Bezier
+    spikes 0.35 to 0.7; one outline of 2,000 curvy Beziers 4.9 to 5.3; 1,000 curvy Beziers (blob)
+    8.2 to 8.4; one outline of 2,200 mixed Beziers 11.1. A job of many small vectors or cuts
+    cancels in milliseconds. A cancel that arrives while the only vector is being offset waits for
+    it. Interrupting those calls needs the geometry library (offset, Bezier length) to poll, which
+    this card does not do: it is T-0228 (interruptible geometry offset), and until then the latency
+    of a cancel during one huge offset is the figures above, not a bound.
+
+    *Shared types.* `ToolpathRunControl` (cancel flag, work limit) and `ToolpathIssue::Cancelled`
+    live in `operation.hpp` so Pocket, V-Carve and the rest can adopt the same hook; the meter
+    (`work_meter.hpp`, `detail::chargeWork`) is installed per call by the entry point, and
+    `ClearanceField`, `ArcLengthPath` and the other shared helpers charge it when one is installed.
+
+    *Other operations.* Quick Engrave Outline does not share this code; it already refuses in core
+    (`engrave.cpp`) when passes x (spans + 1) would pass the same 20e6 moves, and Pocket, Drill
+    and V-Carve keep their own limits (ADR-0017, ADR-0022, ADR-0025). **For the T-0221 author:**
+    the viewmodel's `profileWorkProblem` (levels, moves, parameter ranges), coordinate, length and
+    span limits are now enforced by the core with the same values (its move estimate there was
+    stricter: it counted every span as a polygonised arc); the session may keep its own as defence in depth, but should not report
+    its messages as the core's, and should pass a cancel flag (`ToolpathRunControl`) instead of
+    abandoning a running calculation. The viewmodel still needs its own checks for
+    Engrave Outline's coordinates, length and span count (the core refuses only the move count
+    there) and for anything it does before calling the core.
+
+    *Limits of the budget.* Runs inside the limit are unchanged byte for byte (the meter only
+    adds); a job just under it can still take half a minute, and the geometry library's
+    superlinear cases (ADR-0005 amendments, T-0180) are charged by estimate, not measured: a
+    vector whose offset is much slower than 300 units per span passes the limit later than the
+    count says. The costs the count tracks best are clearance sampling and exact closest-point
+    tests, which are what grows with edge length and with thin self-intersecting loops.
 
 ### Golden hand-check (AC1 / AC6)
 `core/tests/golden/toolpath/profile_rect_tabs.moves` and `profile_rect_tabs_grbl.nc` were
