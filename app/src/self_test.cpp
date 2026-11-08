@@ -5,7 +5,10 @@
 #include <QDockWidget>
 #include <QFileInfo>
 #include <QImage>
+#include <QAction>
 #include <QKeyEvent>
+#include <QKeySequence>
+#include <QMenu>
 #include <QMouseEvent>
 #include <QPixmap>
 #include <QPoint>
@@ -37,6 +40,7 @@
 #include "carvetto/viewmodel/tools.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
 #include "main_window.hpp"
+#include "node_edit_menu.hpp"
 #include "tool_panel.hpp"
 #include "transform_menu.hpp"
 #include "vector_ops_menu.hpp"
@@ -374,6 +378,109 @@ int runSelfTest() {
         }
     }
 
+    // 4d. Node editing through the real window: select, N, drag a node, convert a span, insert a
+    // point, Escape reverts a drag, undo everything (T-0206).
+    {
+        CanvasWidget* canvas = window.canvas();
+        NodeEditMenu* nodeMenu = window.nodeEdit();
+        QAction* nodeAction = window.toolAction(viewmodel::ToolKind::NodeEdit);
+        if (nodeMenu == nullptr || nodeAction == nullptr ||
+            nodeAction->shortcut() != QKeySequence(QStringLiteral("N"))) {
+            return fail("the Node Edit tool is missing or has no N shortcut");
+        }
+        const double w = material.width();
+        const geometry::Vec2 lo{material.min.x + w * 0.5, material.min.y + w * 0.5};
+        const geometry::Vec2 hi{lo.x + w * 0.2, lo.y + w * 0.1};
+        document::RectangleParams rp;
+        rp.centreMm = (lo + hi) * 0.5;
+        rp.widthMm = hi.x - lo.x;
+        rp.heightMm = hi.y - lo.y;
+        if (!doc.execute(std::make_unique<document::AddObjectCommand>(document::Object::vector(
+                geometry::Contour::rectangle(geometry::Box2{lo, hi}), doc.activeLayer(), doc.activeSheet(), rp)))) {
+            return fail("could not add a rectangle for node editing");
+        }
+        const document::ObjectId rectId = doc.objectIds().back();
+        const auto objectsBefore = doc.objects();
+        const std::size_t stepsBefore = doc.undoStack().count();
+        doc.selection().assign({rectId});
+        window.documentChanged();
+
+        window.selectTool(viewmodel::ToolKind::NodeEdit);
+        if (canvas->tools().tool() != viewmodel::ToolKind::NodeEdit || !nodeAction->isChecked()) {
+            return fail("choosing Node Edit did not activate the tool");
+        }
+        // Drag the top right node: one undo step, the parameters are gone, the node is where dropped.
+        const QImage idle = canvas->grab().toImage();
+        const geometry::Vec2 moved{hi.x + w * 0.05, hi.y + w * 0.05};
+        dragOnCanvas(canvas, hi, moved);
+        if (doc.undoStack().count() != stepsBefore + 1) {
+            return fail("dragging a node did not make exactly one undo step");
+        }
+        const auto* edited = doc.findObject(rectId)->asVector();
+        if (std::holds_alternative<document::RectangleParams>(edited->params) || edited->contours.at(0).spans.size() != 4 ||
+            geometry::distance(geometry::endPoint(edited->contours.at(0).spans[1]), moved) > 1e-6) {
+            return fail("the dragged node did not end where it was dropped");
+        }
+        if (canvas->grab().toImage() == idle) {
+            return fail("the node handles / edit were not painted");
+        }
+
+        // Escape reverts a drag in progress exactly and leaves nothing to redo.
+        const auto afterDrag = doc.objects();
+        sendMouse(canvas, QEvent::MouseMove, screenOf(canvas, lo), Qt::NoButton);
+        sendMouse(canvas, QEvent::MouseButtonPress, screenOf(canvas, lo));
+        sendMouse(canvas, QEvent::MouseMove, screenOf(canvas, lo - geometry::Vec2{w * 0.03, w * 0.03}),
+                  Qt::LeftButton);
+        sendKey(canvas, Qt::Key_Escape);
+        sendMouse(canvas, QEvent::MouseButtonRelease, screenOf(canvas, lo));
+        if (!(doc.objects() == afterDrag) || doc.undoStack().canRedo() || doc.undoStack().count() != stepsBefore + 1) {
+            return fail("Escape did not revert the node drag exactly");
+        }
+
+        // Select a span by clicking near the start of the bottom edge, convert it to an arc (menu glue
+        // and the viewmodel operation behind it), then insert a point with the I key.
+        clickOnCanvas(canvas, geometry::Vec2{lo.x + (hi.x - lo.x) * 0.2, lo.y});
+        QMenu* spanMenu = nodeMenu->buildMenu(viewmodel::HandleType::Span, lo);
+        bool arcEnabled = false;
+        for (QAction* a : spanMenu->actions()) {
+            if (a->text().contains(QStringLiteral("Convert to &Arc"))) {
+                arcEnabled = a->isEnabled();
+            }
+        }
+        delete spanMenu;
+        if (!arcEnabled) {
+            return fail("Convert to Arc is not enabled for a selected span");
+        }
+        viewmodel::NodeOpArgs through;
+        through.throughMm = geometry::Vec2{(lo.x + hi.x) * 0.5, lo.y - w * 0.03};
+        if (!nodeMenu->run(viewmodel::NodeOp::ConvertArc, through).ok ||
+            !std::holds_alternative<geometry::ArcSpan>(doc.findObject(rectId)->asVector()->contours.at(0).spans[0])) {
+            return fail("converting the span to an arc failed");
+        }
+        sendKey(canvas, Qt::Key_I);
+        if (doc.findObject(rectId)->asVector()->contours.at(0).spans.size() != 5) {
+            return fail("the I key did not insert a point");
+        }
+        if (doc.undoStack().count() != stepsBefore + 3) {
+            return fail("convert and insert were not one undo step each");
+        }
+        // Undo all three steps: the rectangle, parameters included, is back byte-identically.
+        for (int i = 0; i < 3; ++i) {
+            if (!window.undo()) {
+                return fail("undoing the node edits failed");
+            }
+        }
+        if (!(doc.objects() == objectsBefore)) {
+            return fail("undoing the node edits did not restore the rectangle exactly");
+        }
+        window.selectTool(viewmodel::ToolKind::Select);
+        doc.selection().clear();
+        if (!window.undo() || doc.objectCount() != 0) {
+            return fail("undoing the node-edit rectangle failed");
+        }
+        window.documentChanged();
+    }
+
     // The live widget tree must also render headlessly.
     QCoreApplication::processEvents();
     if (window.grab().isNull()) {
@@ -415,6 +522,53 @@ int runSelfTest() {
     QCoreApplication::processEvents();
     if (window.dockWidgetArea(toolpaths) != Qt::RightDockWidgetArea) {
         return fail("the restored layout did not put the toolpaths panel back on the right");
+    }
+
+    // 4e. H / V collision (T-0206 / T-0205): in NodeEdit the plain letters win over the window
+    // shortcuts (ShortcutOverride) and H toggles the mirror mode without a Mirror undo step; in
+    // Select mode the same key is left to the Transform shortcut, which mirrors the selection.
+    {
+        CanvasWidget* canvas = window.canvas();
+        const geometry::Box2 box{{material.min.x + 5.0, material.min.y + 5.0}, {material.min.x + 25.0, material.min.y + 15.0}};
+        if (!doc.execute(std::make_unique<document::AddObjectCommand>(document::Object::vector(
+                geometry::Contour::rectangle(box), doc.activeLayer(), doc.activeSheet())))) {
+            return fail("could not add a rectangle for the H/V test");
+        }
+        doc.selection().assign({doc.objectIds().back()});
+        window.documentChanged();
+        const std::size_t steps = doc.undoStack().count();
+        auto overrideAccepted = [&](Qt::Key key) {
+            QKeyEvent ev(QEvent::ShortcutOverride, key, Qt::NoModifier, QString(QChar('a' + (key - Qt::Key_A))));
+            QCoreApplication::sendEvent(canvas, &ev);
+            return ev.isAccepted();
+        };
+        window.selectTool(viewmodel::ToolKind::NodeEdit);
+        if (!overrideAccepted(Qt::Key_H) || !overrideAccepted(Qt::Key_V)) {
+            return fail("NodeEdit does not claim the H / V keys from the window shortcuts");
+        }
+        sendKey(canvas, Qt::Key_H);
+        if (canvas->tools().nodeEditor().options().mirror != viewmodel::MirrorMode::Horizontal ||
+            doc.undoStack().count() != steps) {
+            return fail("H in NodeEdit did not toggle the mirror mode without an undo step");
+        }
+        sendKey(canvas, Qt::Key_H);
+        window.selectTool(viewmodel::ToolKind::Select);
+        if (overrideAccepted(Qt::Key_H)) {
+            return fail("Select mode claims H although it belongs to the Transform shortcut");
+        }
+        QAction* flip = window.transformMenu()->mirrorAction(viewmodel::MirrorAxis::Horizontal, false, false);
+        if (flip == nullptr || flip->shortcut() != QKeySequence(QStringLiteral("H")) || !flip->isEnabled()) {
+            return fail("the Transform menu has no enabled H mirror action");
+        }
+        flip->trigger();
+        if (doc.undoStack().count() != steps + 1) {
+            return fail("H in Select mode did not mirror the selection in one undo step");
+        }
+        if (!window.undo() || !window.undo() || doc.objectCount() != 0) {
+            return fail("undoing the H/V test objects failed");
+        }
+        doc.selection().clear();
+        window.documentChanged();
     }
 
     // 5b. Transforms through the real window: handle drag, numeric move, align, undo (T-0205).
@@ -461,6 +615,38 @@ int runSelfTest() {
     if (window.openFile(viewmodel::pathFromUtf8(tempDir.filePath(QStringLiteral("missing.carv")).toStdString())) ||
         window.currentDocument().objectCount() != 1) {
         return fail("opening a missing file did not fail cleanly");
+    }
+
+    // 7. Replacing the document during a node drag (File > New order: the old document is freed
+    // first, then the canvas rebinds the tools); the app must not touch the freed document.
+    {
+        CanvasWidget* canvas = window.canvas();
+        document::Document& cur = window.currentDocument();
+        const geometry::Box2 box = viewmodel::activeMaterialMm(cur);
+        const double w = box.width();
+        const geometry::Vec2 lo{box.min.x + w * 0.2, box.min.y + w * 0.2};
+        const geometry::Vec2 hi{lo.x + w * 0.2, lo.y + w * 0.1};
+        if (!cur.execute(std::make_unique<document::AddObjectCommand>(document::Object::vector(
+                geometry::Contour::rectangle(geometry::Box2{lo, hi}), cur.activeLayer(), cur.activeSheet())))) {
+            return fail("could not add a rectangle for the document replacement test");
+        }
+        cur.selection().assign({cur.objectIds().back()});
+        window.documentChanged();
+        window.selectTool(viewmodel::ToolKind::NodeEdit);
+        sendMouse(canvas, QEvent::MouseMove, screenOf(canvas, hi), Qt::NoButton);
+        sendMouse(canvas, QEvent::MouseButtonPress, screenOf(canvas, hi));
+        sendMouse(canvas, QEvent::MouseMove, screenOf(canvas, hi + geometry::Vec2{w * 0.05, w * 0.05}), Qt::LeftButton);
+        if (!canvas->tools().nodeEditor().gestureActive()) {
+            return fail("the node drag for the replacement test did not start");
+        }
+        window.setDocument(std::make_unique<document::Document>(document::Job::singleSided(300.0, 300.0, 18.0, document::Units::Millimetres)));
+        sendMouse(canvas, QEvent::MouseMove, screenOf(canvas, lo), Qt::LeftButton);
+        sendMouse(canvas, QEvent::MouseButtonRelease, screenOf(canvas, lo));
+        sendKey(canvas, Qt::Key_Escape);
+        if (window.currentDocument().objectCount() != 0 || canvas->tools().nodeEditor().gestureActive()) {
+            return fail("replacing the document during a node drag left state behind");
+        }
+        window.selectTool(viewmodel::ToolKind::Select);
     }
 
     window.close();

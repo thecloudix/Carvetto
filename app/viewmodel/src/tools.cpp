@@ -81,6 +81,7 @@ const char* toolName(ToolKind tool) {
         case ToolKind::Star: return "Star";
         case ToolKind::Arc: return "Arc";
         case ToolKind::Polyline: return "Polyline";
+        case ToolKind::NodeEdit: return "Node Edit";
     }
     return "";
 }
@@ -162,21 +163,26 @@ ParsedNumber parseNumber(std::string_view text, FieldKind kind, document::Units 
 
 // ---------------------------------------------------------------------------------------------
 
-ToolController::ToolController(document::Document* doc) : doc_(doc) {
+ToolController::ToolController(document::Document* doc) : doc_(doc), nodeEditor_(doc) {
     snapSettings_.setEnabled(SnapKind::Grid, false);
 }
 
 void ToolController::setDocument(document::Document* doc) {
-    gesture_ = TransformGesture{};  // the old document may already be gone: no revert
+    // The old document may already be gone (the file session frees it before the window rebinds the
+    // tools): drop every drag state first, without touching it, then cancel what is left.
+    gesture_ = TransformGesture{};
+    nodeEditor_.setDocument(nullptr);
     xfReset();
     cancel();
     doc_ = doc;
+    nodeEditor_.setDocument(doc);
     snapIndex_.reset();
     snap_.reset();
 }
 
 void ToolController::setView(const ViewTransform& view) {
     view_ = view;
+    nodeEditor_.setView(view);
 }
 
 void ToolController::setTool(ToolKind tool) {
@@ -190,7 +196,7 @@ bool ToolController::isTwoPointTool() const {
 }
 
 bool ToolController::active() const {
-    return !pts_.empty() || pressed_ || selPressed_;
+    return !pts_.empty() || pressed_ || selPressed_ || nodeEditor_.pressed();
 }
 
 void ToolController::cancel() {
@@ -199,6 +205,7 @@ void ToolController::cancel() {
     typed_.clear();
     selPressed_ = false;
     selDragging_ = false;
+    nodeEditor_.escape();
     if (gesture_.active() && doc_ != nullptr) {
         gesture_.cancel(*doc_);
     }
@@ -212,6 +219,9 @@ ToolResult ToolController::refuse(std::string message) const {
 }
 
 bool ToolController::wantsKeys() const {
+    if (tool_ == ToolKind::NodeEdit) {
+        return nodeEditor_.pressed() || nodeEditor_.gestureActive();
+    }
     return gesture_.active() || (tool_ != ToolKind::Select && (active() || !typed_.empty()));
 }
 
@@ -248,6 +258,13 @@ void ToolController::updatePointer(Vec2 px, Modifiers mods) {
     cursorPx_ = px;
     mods_ = mods;
     hasCursor_ = true;
+    if (tool_ == ToolKind::NodeEdit) {
+        nodeEditor_.validateGesture();
+        if (!nodeEditor_.gestureActive()) {
+            gestureSnapIndex_.reset();  // a drag ended behind our back: its index is stale
+        }
+        nodeIndexWasValid_ = gestureSnapIndex_.has_value() && gestureIndexValid();
+    }
     snap_.reset();
     Vec2 raw = view_.screenToWorld(px);
     if (doc_ == nullptr || (tool_ == ToolKind::Select && xfPress_ == XfPress::None)) {
@@ -270,7 +287,11 @@ void ToolController::updatePointer(Vec2 px, Modifiers mods) {
     }
     // During a transform drag the index of the other objects is built once (the dragged objects are
     // left out, and nothing else changes), not once per pointer step.
-    const bool frozen = gestureSnapIndex_.has_value() && gesture_.active() && gestureIndexValid();
+    // One rule for both gestures (ADR-0029 "Gesture generation rule", ADR-0030): the frozen index is
+    // valid only for the gesture's own pushes; its key is {undo generation, active sheet}.
+    const bool frozen = gestureSnapIndex_.has_value() &&
+                        (gesture_.active() || (tool_ == ToolKind::NodeEdit && nodeEditor_.gestureActive())) &&
+                        gestureIndexValid();
     snap_ = (frozen ? *gestureSnapIndex_ : snapIndex()).best(view_, px, snapSettings_, query);
     cursorMm_ = snap_.has_value() ? snap_->pointMm : raw;
 }
@@ -596,6 +617,7 @@ ToolController::Draft ToolController::makeDraft() const {
         case ToolKind::Polyline:
             return polylineDraft(hasCursor_, false);
         case ToolKind::Select:
+        case ToolKind::NodeEdit:
             break;
     }
     return {};
@@ -603,6 +625,10 @@ ToolController::Draft ToolController::makeDraft() const {
 
 ToolPreview ToolController::preview() const {
     ToolPreview out;
+    if (tool_ == ToolKind::NodeEdit) {
+        out.marqueePx = nodeEditor_.marqueePx();
+        return out;
+    }
     if (tool_ == ToolKind::Select) {
         if (selDragging_) {
             out.marqueePx = geometry::Box2(selStartPx_, selCurPx_);
@@ -660,8 +686,46 @@ ToolResult ToolController::finishPolyline(bool closeIt) {
 
 // --- Events ----------------------------------------------------------------------------------
 
+namespace {
+ToolResult fromNodeEdit(const NodeEditResult& r) {
+    ToolResult t;
+    t.committed = r.changed;
+    t.selectionChanged = r.selectionChanged;
+    t.message = r.message;
+    return t;
+}
+}  // namespace
+
+ToolResult ToolController::afterNodeEdit(const NodeEditResult& r) {
+    if (!nodeEditor_.gestureActive()) {
+        gestureSnapIndex_.reset();
+    } else if (nodeIndexWasValid_ && gestureSnapIndex_.has_value()) {
+        gestureIndexKey_[0] = nodeEditor_.expectedGeneration();  // the gesture's own push
+    } else if (doc_ != nullptr) {
+        // The drag began in this event (or the index was not valid): index everything but the edited
+        // objects, from the document as it is now.
+        gestureSnapIndex_.emplace(*doc_, false, nodeEditor_.gestureObjects());
+        ++snapIndexBuilds_;
+        gestureIndexKey_ = {nodeEditor_.expectedGeneration(), doc_->activeSheet().value};
+    }
+    return fromNodeEdit(r);
+}
+
 ToolResult ToolController::pointerMove(Vec2 px, Modifiers mods) {
     updatePointer(px, mods);
+    if (tool_ == ToolKind::NodeEdit) {
+        const bool wasActive = nodeEditor_.gestureActive();
+        ToolResult r = afterNodeEdit(nodeEditor_.move(px, cursorMm_, mods.shift, mods.ctrl, mods.alt));
+        if (!wasActive && nodeEditor_.gestureActive() && snap_.has_value() && gestureSnapIndex_.has_value()) {
+            // The drag began in this event, so this first position was snapped against the full
+            // index, the edited objects included. Snap it again without them and replace the step.
+            snap_ = gestureSnapIndex_->best(view_, px, snapSettings_, SnapQuery{});
+            cursorMm_ = snap_.has_value() ? snap_->pointMm : view_.screenToWorld(px);
+            nodeIndexWasValid_ = true;
+            r = afterNodeEdit(nodeEditor_.move(px, cursorMm_, mods.shift, mods.ctrl, mods.alt));
+        }
+        return r;
+    }
     if (tool_ == ToolKind::Select && selPressed_) {
         selCurPx_ = px;
         if (!selDragging_ && geometry::distance(px, selStartPx_) >= kDragThresholdPx) {
@@ -779,6 +843,9 @@ ToolResult ToolController::shapeRelease(Vec2 px) {
 
 ToolResult ToolController::pointerPress(Vec2 px, Modifiers mods) {
     updatePointer(px, mods);
+    if (tool_ == ToolKind::NodeEdit) {
+        return afterNodeEdit(nodeEditor_.press(px, cursorMm_, mods.shift, mods.ctrl, mods.alt));
+    }
     if (tool_ == ToolKind::Select) {
         return selectPress(px, mods);
     }
@@ -787,6 +854,9 @@ ToolResult ToolController::pointerPress(Vec2 px, Modifiers mods) {
 
 ToolResult ToolController::pointerRelease(Vec2 px, Modifiers mods) {
     updatePointer(px, mods);
+    if (tool_ == ToolKind::NodeEdit) {
+        return afterNodeEdit(nodeEditor_.release(px, cursorMm_, mods.shift, mods.ctrl, mods.alt));
+    }
     if (tool_ == ToolKind::Select) {
         return selectRelease(px, mods);
     }
@@ -808,6 +878,12 @@ ToolResult ToolController::key(ToolKey k) {
     switch (k) {
         case ToolKey::Escape: {
             const bool wasTransforming = gesture_.active();
+            if (tool_ == ToolKind::NodeEdit) {
+                NodeEditResult r;
+                nodeEditor_.escape(&r);
+                cancel();
+                return fromNodeEdit(r);
+            }
             cancel();
             ToolResult r;
             r.transformed = wasTransforming;
@@ -838,6 +914,7 @@ std::vector<NumericField> ToolController::fields() const {
     std::vector<NumericField> list;
     switch (tool_) {
         case ToolKind::Select:
+        case ToolKind::NodeEdit:
             return list;
         case ToolKind::Rectangle:
             list = {field("x", "X", FieldKind::Length, true, true), field("y", "Y", FieldKind::Length, true, true),
@@ -940,6 +1017,7 @@ FieldResult ToolController::setField(const std::string& id, const std::string& t
 ToolResult ToolController::commitNumeric() {
     switch (tool_) {
         case ToolKind::Select:
+        case ToolKind::NodeEdit:
             return {};
         case ToolKind::Rectangle:
         case ToolKind::Circle:
