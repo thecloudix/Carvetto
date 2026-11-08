@@ -134,7 +134,7 @@ CreationParams candidateParams(const CreationParams& params, const geometry::Tra
     return std::visit(
         [&](const auto& p) -> CreationParams {
             using T = std::decay_t<decltype(p)>;
-            if constexpr (std::is_same_v<T, NoParams>) {
+            if constexpr (std::is_same_v<T, NoParams> || std::is_same_v<T, TextParams>) {
                 return p;
             } else {
                 T q = p;
@@ -214,7 +214,18 @@ void transformData(ObjectData& data, const geometry::Transform2& m) {
             using T = std::decay_t<decltype(payload)>;
             if constexpr (std::is_same_v<T, VectorObject>) {
                 payload.transform(m);
-                payload.params = keptParams(payload.params, m, payload.contours);
+                if (auto* text = std::get_if<TextParams>(&payload.params)) {
+                    // Text keeps its parameters under any affine map: the map joins the placement
+                    // (and a mirror flips the contour orientation back, as buildTextContours does).
+                    text->placement = m * text->placement;
+                    if (m.a * m.d - m.b * m.c < 0.0) {
+                        for (geometry::Contour& c : payload.contours) {
+                            c.reverse();
+                        }
+                    }
+                } else {
+                    payload.params = keptParams(payload.params, m, payload.contours);
+                }
             } else if constexpr (!std::is_same_v<T, GroupObject>) {
                 payload.transform(m);
             }

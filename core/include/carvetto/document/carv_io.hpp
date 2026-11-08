@@ -31,7 +31,11 @@ namespace carvetto::document {
 inline constexpr int kCarvFormatMajor = 1;
 /// Minor format version written by this build. Minor bumps only add optional content.
 /// 1.1 (T-0132, ADR-0021) adds toolpath records (`job.json` `toolpaths`) and their move caches.
-inline constexpr int kCarvFormatMinor = 1;
+/// 1.2 (T-0211, ADR-0033 amendment A1) adds text parameters (`"type": "text"`) and embedded fonts
+/// (`fonts/<key>.font` members); a document without text objects is still written as 1.1.
+inline constexpr int kCarvFormatMinor = 2;
+/// The minor version written for documents that use no 1.2 features (no text objects): 1.1.
+inline constexpr int kCarvFormatMinorBase = 1;
 /// Most toolpath moves (summed over every toolpath record) a `.carv` file may hold: `loadCarv`
 /// refuses files with more and `saveCarv` refuses to write them (ADR-0021).
 inline constexpr std::uint64_t kCarvMaxToolpathMoves = 8'000'000;

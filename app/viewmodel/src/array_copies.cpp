@@ -199,6 +199,11 @@ int quarterTurns(const Transform2& m) {
 }
 
 document::CreationParams transformedParams(const document::CreationParams& params, const Transform2& m) {
+    if (const auto* text = std::get_if<document::TextParams>(&params)) {
+        document::TextParams q = *text;  // text keeps its parameters under any affine map
+        q.placement = m * q.placement;
+        return q;
+    }
     const int turns = quarterTurns(m);
     if (turns < 0 || std::holds_alternative<document::NoParams>(params)) {
         return document::NoParams{};
@@ -208,7 +213,7 @@ document::CreationParams transformedParams(const document::CreationParams& param
         [&](const auto& p) -> document::CreationParams {
             using T = std::decay_t<decltype(p)>;
             T q = p;
-            if constexpr (std::is_same_v<T, document::NoParams>) {
+            if constexpr (std::is_same_v<T, document::NoParams> || std::is_same_v<T, document::TextParams>) {
                 return q;
             } else {
                 q.centreMm = m.apply(p.centreMm);
@@ -244,6 +249,11 @@ void instantiate(const Plan& plan, const Transform2& m, int groupParent, std::ve
         if (document::VectorObject* vec = p.obj.asVector(); vec != nullptr) {
             vec->params = transformedParams(vec->params, m);
             vec->transform(m);
+            if (std::holds_alternative<document::TextParams>(vec->params) && m.a * m.d - m.b * m.c < 0.0) {
+                for (geometry::Contour& c : vec->contours) {
+                    c.reverse();  // a mirror flips orientation; keep outers counter-clockwise
+                }
+            }
         } else if (document::BitmapObject* bmp = p.obj.asBitmap(); bmp != nullptr) {
             bmp->transform(m);
         }

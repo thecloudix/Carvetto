@@ -381,6 +381,16 @@ bool CanvasWidget::event(QEvent* e) {
             return true;
         }
     }
+    // While a text is being typed every plain key belongs to the text, not to window shortcuts.
+    if (e->type() == QEvent::ShortcutOverride && tools_.tool() == viewmodel::ToolKind::Text &&
+        tools_.textEditor().hasDraft()) {
+        auto* ke = static_cast<QKeyEvent*>(e);
+        const bool command = ke->modifiers() & (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier);
+        if (!command || ke->key() == Qt::Key_Return || ke->key() == Qt::Key_Enter) {
+            e->accept();
+            return true;
+        }
+    }
     return QWidget::event(e);
 }
 
@@ -445,6 +455,29 @@ void CanvasWidget::keyPressEvent(QKeyEvent* event) {
                 onToolStateChanged();
             }
             update();
+            return;
+        }
+    }
+    if (tools_.tool() == viewmodel::ToolKind::Text && tools_.textEditor().hasDraft()) {
+        const bool command = event->modifiers() & (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier);
+        viewmodel::ToolResult textResult;
+        bool handled = true;
+        if (event->key() == Qt::Key_Escape) {
+            textResult = tools_.key(viewmodel::ToolKey::Escape);
+        } else if (event->key() == Qt::Key_Backspace) {
+            textResult = tools_.key(viewmodel::ToolKey::Backspace);
+        } else if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
+            // Enter is a new line; Ctrl+Enter places the text.
+            textResult = (event->modifiers() & Qt::ControlModifier) ? tools_.key(viewmodel::ToolKey::Enter)
+                                                                    : tools_.typeText("\n");
+        } else if (!command && !event->text().isEmpty() && QChar::isPrint(event->text().toUcs4().front())) {
+            textResult = tools_.typeText(event->text().toUtf8().toStdString());
+        } else {
+            handled = false;
+        }
+        if (handled) {
+            event->accept();
+            afterToolEvent(textResult);
             return;
         }
     }

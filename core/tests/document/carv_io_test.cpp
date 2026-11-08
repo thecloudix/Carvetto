@@ -296,7 +296,7 @@ TEST_CASE("AC1: save -> load -> save gives byte-identical job.json and archive",
     requireSameDocument(doc, loaded.document);
     CHECK(loaded.extras.empty());
     CHECK(loaded.formatMajor == kCarvFormatMajor);
-    CHECK(loaded.formatMinor == kCarvFormatMinor);
+    CHECK(loaded.formatMinor == kCarvFormatMinorBase);
     const Bytes second = save(loaded.document, loaded.extras);
 
     CHECK(memberText(first, "job.json") == memberText(second, "job.json"));
@@ -344,7 +344,7 @@ TEST_CASE("AC3: a file with a higher major version fails with a clear error", "[
             withMember(original, "manifest.json", replaced(manifest, "\"major\": 1", "\"major\": 2"));
         const CarvError err = loadError(newer);
         CHECK(err.code == Code::UnsupportedVersion);
-        CHECK(contains(err.message, "2." + std::to_string(kCarvFormatMinor)));
+        CHECK(contains(err.message, "2." + std::to_string(kCarvFormatMinorBase)));
         CHECK(contains(err.message, "newer"));
     }
     SECTION("the version is checked before job.json is read") {
@@ -361,12 +361,12 @@ TEST_CASE("AC3: a file with a higher major version fails with a clear error", "[
     SECTION("a higher minor version of the same major loads") {
         const Bytes minor =
             withMember(original, "manifest.json",
-                       replaced(manifest, "\"minor\": " + std::to_string(kCarvFormatMinor), "\"minor\": 7"));
+                       replaced(manifest, "\"minor\": " + std::to_string(kCarvFormatMinorBase), "\"minor\": 7"));
         LoadedCarv loaded = load(minor);
         CHECK(loaded.formatMinor == 7);
         // Re-saved with this build's version.
         CHECK(contains(memberText(save(loaded.document, loaded.extras), "manifest.json"),
-                       "\"minor\": " + std::to_string(kCarvFormatMinor)));
+                       "\"minor\": " + std::to_string(kCarvFormatMinorBase)));
     }
 }
 
@@ -432,20 +432,20 @@ TEST_CASE("unknown fields on every record and unknown archive members are preser
     CHECK(loaded.document.hasObject(kept));
 }
 
-TEST_CASE("creation parameters of an unknown kind (e.g. text) are kept verbatim", "[document][carv]") {
+TEST_CASE("creation parameters of an unknown kind (e.g. a future label tool) are kept verbatim", "[document][carv]") {
     Document doc;
     const ObjectId id =
         addObject(doc, Object::vector(mixedContour(1.0), doc.defaultLayer(), doc.activeSheet()));
     const Bytes original = save(doc);
     const std::string job = replaced(memberText(original, "job.json"), "\"type\": \"none\"",
-                                     R"("type": "text", "text": "Hello", "font": "Sans", "height_mm": 12.5)");
+                                     R"("type": "label", "text": "Hello", "font": "Sans", "height_mm": 12.5)");
     LoadedCarv loaded = load(withMember(original, "job.json", job));
     const auto* v = loaded.document.findObject(id)->asVector();
     REQUIRE(v);
     CHECK(std::holds_alternative<NoParams>(v->params));  // modelled as plain geometry
     const Bytes resaved = save(loaded.document, loaded.extras);
     const std::string resavedJob = memberText(resaved, "job.json");
-    CHECK(contains(resavedJob, "\"type\": \"text\""));
+    CHECK(contains(resavedJob, "\"type\": \"label\""));
     CHECK(contains(resavedJob, "\"text\": \"Hello\""));
     CHECK(contains(resavedJob, "\"height_mm\": 12.5"));
     LoadedCarv again = load(resaved);

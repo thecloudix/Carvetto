@@ -535,6 +535,13 @@ std::vector<IntegrityIssue> Document::checkIntegrity() const {
     for (const ToolpathRecord& tp : toolpaths_) {
         owners[tp.id.value].names.push_back("toolpath");
     }
+    for (const auto& [id, obj] : objects_) {
+        if (const VectorObject* v = obj.asVector()) {
+            if (const auto* t = std::get_if<TextParams>(&v->params); t && !fonts_.contains(t->fontKey)) {
+                report(Kind::MissingFont, id, {}, "text object " + idText(id) + " names a font that is not embedded");
+            }
+        }
+    }
     for (const auto& [value, entry] : owners) {
         if (value == 0 || entry.names.size() < 2) {
             continue;  // the null id is already reported as IdOutOfRange
@@ -660,6 +667,93 @@ std::vector<IntegrityIssue> Document::checkIntegrity() const {
         }
     }
     return issues;
+}
+
+// --- Embedded fonts (T-0211) ---------------------------------------------------------------------
+
+std::string fontKeyFor(const std::vector<std::uint8_t>& bytes) {
+    std::uint64_t h = 14695981039346656037ull;
+    for (const std::uint8_t b : bytes) {
+        h ^= b;
+        h *= 1099511628211ull;
+    }
+    static const char* const kDigits = "0123456789abcdef";
+    std::string key(16, '0');
+    for (std::size_t i = 16; i-- > 0;) {
+        key[i] = kDigits[h & 0xFu];
+        h >>= 4;
+    }
+    return key;
+}
+
+bool isFontKey(const std::string& key) {
+    if (key.size() != 16) {
+        return false;
+    }
+    for (const char c : key) {
+        if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+const FontAsset* Document::findFont(const std::string& key) const {
+    const auto it = fonts_.find(key);
+    return it == fonts_.end() ? nullptr : &it->second;
+}
+
+std::string Document::fontProblem(const FontAsset& font) const {
+    if (!isFontKey(font.key) || font.bytes.empty()) {
+        return "the font is empty or has no valid key";
+    }
+    if (const auto it = fonts_.find(font.key); it != fonts_.end()) {
+        return it->second.bytes == font.bytes ? std::string{} : std::string("a different font has the same key");
+    }
+    if (font.bytes.size() > kMaxEmbeddedFontBytes) {
+        return "the font file is larger than " + std::to_string(kMaxEmbeddedFontBytes >> 20) +
+               " MiB, the most a document embeds";
+    }
+    if (fonts_.size() >= kMaxEmbeddedFonts) {
+        return "the document already embeds " + std::to_string(kMaxEmbeddedFonts) +
+               " fonts, the most it can hold";
+    }
+    std::size_t total = font.bytes.size();
+    for (const auto& [k, f] : fonts_) {
+        total += f.bytes.size();
+    }
+    if (total > kMaxEmbeddedFontsTotalBytes) {
+        return "the embedded fonts would exceed " + std::to_string(kMaxEmbeddedFontsTotalBytes >> 20) +
+               " MiB together";
+    }
+    return {};
+}
+
+bool Document::insertFont(FontAsset font) {
+    if (!isFontKey(font.key) || font.bytes.empty() || font.bytes.size() > kMaxEmbeddedFontBytes ||
+        fonts_.contains(font.key) || fonts_.size() >= kMaxEmbeddedFonts) {
+        return false;
+    }
+    std::size_t total = font.bytes.size();
+    for (const auto& [k, f] : fonts_) {
+        total += f.bytes.size();
+    }
+    if (total > kMaxEmbeddedFontsTotalBytes) {
+        return false;
+    }
+    const std::string key = font.key;
+    fonts_.emplace(key, std::move(font));
+    return true;
+}
+
+std::optional<FontAsset> Document::takeFont(const std::string& key) {
+    const auto it = fonts_.find(key);
+    if (it == fonts_.end()) {
+        return std::nullopt;
+    }
+    FontAsset f = std::move(it->second);
+    fonts_.erase(it);
+    return f;
 }
 
 }  // namespace carvetto::document
