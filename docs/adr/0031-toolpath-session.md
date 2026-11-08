@@ -114,3 +114,18 @@ operation the same result and diagnostic types; ADR-0007 makes ids monotonic.
   there is no trial. The rule is all-or-nothing per batch: `recalculateAll` / `applyAll` are refused
   as a whole when the combined result cannot be saved.
 - The "rapid rate not set" case is part of the summary cache key.
+
+## Amendment (T-0221, the Qt dock)
+- **Off the UI thread.** `viewmodel::ToolpathRunner` (Qt-free, one `std::thread`) runs the `ToolpathJob`s of a batch on a
+  worker; the jobs are copies, so no reference into the document crosses the gap. The dock posts the completion to the UI
+  thread and applies it there through `ToolpathSession::apply` / `applyAll`, which refuse a result whose vectors, tools or
+  target changed meanwhile (shown inline). Apply is synchronous: the dock shows "Applying the result..." and stays disabled.
+- **Document lifetime.** Replacing the document (File > New/Open) cancels the run, bumps a generation and discards the
+  result; the dock never touches the old document (it may already be freed). Closing the window cancels and joins the worker
+  (it waits for the core call in progress). While busy, the toolpath actions and Undo / Redo are disabled.
+- Session additions: `targetOf(id)` and `prepareRecalculateAll(onlyStale)` (the jobs of `recalculateAll`, to run off-thread
+  and apply with `applyAll`).
+- The enabled flag, selector filters and V-carve clearance lists stay session state (not in the native record); persisting
+  them needs a record schema revision (ADR-0021) and is left to the owner.
+- The dock offers the compiled-in starter tool database (as `carvetto-cli` does); no machine rapid rate is set, so the
+  summary says rapid moves are left out of the time estimate.
