@@ -75,6 +75,27 @@ TEST_CASE("GapMinima range is open at both ends, lowest gap wins, earliest among
     REQUIRE(minima.size() == 5);
 }
 
+TEST_CASE("GapMinima equal gaps: the earliest accepted wins even when it lies at a higher t", "[gaptrail][geometry]") {
+    // The scan runs by ascending t, so the tie-break by acceptance index must beat "first seen":
+    // index 0 sits at the higher t. (T-0180: the mutants "first by t" and "latest accepted" both
+    // survived the earlier cases, where the lower index was also at the lower t.)
+    GapMinima minima;
+    minima.push_back({0.6, 10.0, 3.0});  // index 0, higher t
+    minima.push_back({0.4, 11.0, 3.0});  // index 1, lower t, equal gap
+    minima.push_back({0.5, 12.0, 3.0});  // index 2, in between, equal gap
+    REQUIRE(minima.lowestIn(0.0, 1.0, 10.0)->tB == 10.0);
+    // Dropping index 0 from the range leaves the earliest of the others, again not the lowest t.
+    REQUIRE(minima.lowestIn(0.0, 0.55, 10.0)->tB == 11.0);
+    // A strictly lower gap still beats an earlier acceptance.
+    minima.push_back({0.45, 13.0, 2.0});
+    REQUIRE(minima.lowestIn(0.0, 1.0, 10.0)->tB == 13.0);
+    // Pushed in the other order: index 0 at the lower t wins as before.
+    GapMinima other;
+    other.push_back({0.4, 20.0, 3.0});
+    other.push_back({0.6, 21.0, 3.0});
+    REQUIRE(other.lowestIn(0.0, 1.0, 10.0)->tB == 20.0);
+}
+
 TEST_CASE("Near-coincident Beziers (verifier corpus seed 87) keep their hit count", "[gaptrail][intersect][geometry]") {
     const BezierSpan a{{1.1695751753846242, -0.88604445838327339},
                        {-0.99922524477883568, 0.35850538370472607},

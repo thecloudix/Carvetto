@@ -216,7 +216,10 @@ std::vector<Boundary> resolveCrossings(const std::vector<Contour>& contours, con
             if (j <= k) {
                 continue;
             }
-            if (!geometry::intersect(contours[usable[k]], contours[usable[j]], tol).isEmpty()) {
+            // An answer cut short by the intersection work budget cannot rule a crossing out: the
+            // pair is resolved together (the union is exact for non-crossing vectors too).
+            const geometry::ContourIntersections x = geometry::intersect(contours[usable[k]], contours[usable[j]], tol);
+            if (!x.isEmpty() || !x.complete()) {
                 crossing[k] = true;
                 crossing[j] = true;
                 const std::size_t ra = findRoot(parent, k);
@@ -275,7 +278,8 @@ std::vector<Boundary> resolveCrossings(const std::vector<Contour>& contours, con
                 if (findRoot(parent, j) == k) {
                     continue;
                 }
-                if (!geometry::intersect(poly, contours[usable[j]], tol).isEmpty()) {
+                const geometry::ContourIntersections x = geometry::intersect(poly, contours[usable[j]], tol);
+                if (!x.isEmpty() || !x.complete()) {  // incomplete: cannot rule out a touch (see above)
                     crossing[j] = true;
                     const std::size_t rj = findRoot(parent, j);
                     involved.push_back(rj);

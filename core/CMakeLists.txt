@@ -83,6 +83,56 @@ if(NOT MSVC)
   target_compile_options(carvetto_miniz PRIVATE -O2)
 endif()
 
+# FreeType 2.14.3 (FreeType License, used under that option: it is GPL-3.0 compatible; ADR-0033) -
+# parses TrueType/OpenType fonts and decomposes glyph outlines. Pinned release tag (commit
+# 0a0221a1347e2f1e07c395263540026e9a0aa7c7). Optional compression/PNG/HarfBuzz back ends are
+# disabled and FT_CONFIG_OPTION_USE_ZLIB / ENVIRONMENT_PROPERTIES are undefined (freetype_options.h), so
+# gzip/WOFF/WOFF2 fonts are unsupported (and refused by core/text before FreeType sees them).
+include(FetchContent)
+FetchContent_Declare(
+  freetype
+  GIT_REPOSITORY https://github.com/freetype/freetype.git
+  GIT_TAG        VER-2-14-3
+  GIT_SHALLOW    TRUE
+)
+set(FT_DISABLE_ZLIB     ON CACHE BOOL "" FORCE)
+set(FT_DISABLE_BZIP2    ON CACHE BOOL "" FORCE)
+set(FT_DISABLE_PNG      ON CACHE BOOL "" FORCE)
+set(FT_DISABLE_HARFBUZZ ON CACHE BOOL "" FORCE)
+set(FT_DISABLE_BROTLI   ON CACHE BOOL "" FORCE)
+set(SKIP_INSTALL_ALL    ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(freetype)
+set_target_properties(freetype PROPERTIES
+  INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${freetype_SOURCE_DIR}/include>")
+set_target_properties(freetype PROPERTIES POSITION_INDEPENDENT_CODE ON)
+# Our own option set (src/text/freetype_options.h): no FREETYPE_PROPERTIES environment variable and
+# no zlib/gzip/WOFF code, for the library and for every translation unit that includes its headers.
+target_compile_definitions(freetype PUBLIC
+  "FT_CONFIG_OPTIONS_H=\"${CMAKE_CURRENT_SOURCE_DIR}/src/text/freetype_options.h\"")
+
+# HarfBuzz 15.1.0 (Old MIT licence; ADR-0033) - text shaping. Pinned release tarball by SHA256 and
+# built as a small private static library from its single-file amalgamation (src/harfbuzz.cc); no
+# FreeType/GLib/ICU/CoreText/DirectWrite back ends and no subsetter. Glyph outlines come from FreeType;
+# HarfBuzz only shapes (built-in Unicode data, OpenType layout), so output does not depend on the OS.
+FetchContent_Declare(
+  harfbuzz
+  URL      https://github.com/harfbuzz/harfbuzz/releases/download/15.1.0/harfbuzz-15.1.0.tar.xz
+  URL_HASH SHA256=0fc7c565443a5f4be7da65ac5ee5bd737d9b158dc908708b7689a0a5796b0c8d
+  SOURCE_SUBDIR carvetto-no-cmake  # sources only: upstream's CMakeLists.txt is not used
+)
+FetchContent_MakeAvailable(harfbuzz)
+add_library(carvetto_harfbuzz STATIC ${harfbuzz_SOURCE_DIR}/src/harfbuzz.cc)
+target_include_directories(carvetto_harfbuzz SYSTEM PUBLIC ${harfbuzz_SOURCE_DIR}/src)
+set_target_properties(carvetto_harfbuzz PROPERTIES POSITION_INDEPENDENT_CODE ON)
+# HarfBuzz must not read HB_SHAPER_LIST / HB_FACE_LOADER / HB_FONT_FUNCS from the environment.
+target_compile_definitions(carvetto_harfbuzz PRIVATE HB_NO_GETENV)
+if(NOT MSVC)
+  # Optimised even in Debug (shaping a long string is otherwise slow in unoptimised template code).
+  target_compile_options(carvetto_harfbuzz PRIVATE -O2)
+else()
+  target_compile_options(carvetto_harfbuzz PRIVATE /bigobj)
+endif()
+
 add_library(carvetto_core STATIC
   src/geometry/vec2.cpp
   src/geometry/box2.cpp
@@ -147,6 +197,10 @@ add_library(carvetto_core STATIC
   src/toolpath/engrave.cpp
   src/toolpath/v_carve.cpp
   src/toolpath/v_carve_corners.cpp
+  src/text/font.cpp
+  src/text/layout_builder.cpp
+  src/text/layout.cpp
+  src/text/path_layout.cpp
 )
 target_include_directories(carvetto_core PUBLIC include)
 target_link_libraries(carvetto_core
@@ -154,6 +208,8 @@ target_link_libraries(carvetto_core
   PRIVATE nlohmann_json::nlohmann_json
   PRIVATE Clipper2
   PRIVATE carvetto_miniz
+  PRIVATE freetype
+  PRIVATE carvetto_harfbuzz
 )
 # Identical floating-point arithmetic on every compiler (T-0153, ADR-0025 §11): GCC and Clang may
 # fuse a * b + c into one fma (GCC 15 at -march=x86-64-v3 does, Clang does by default), which rounds

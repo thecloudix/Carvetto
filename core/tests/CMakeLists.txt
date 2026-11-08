@@ -9,6 +9,7 @@ FetchContent_MakeAvailable(Catch2)
 
 add_executable(carvetto_tests
   geometry/arc_segment_cap_test.cpp
+  geometry/bezier_intersect_bounds_test.cpp
   geometry/bezier_work_bounds_test.cpp
   geometry/gap_trail_test.cpp
   geometry/hit_index_test.cpp
@@ -107,6 +108,13 @@ add_executable(carvetto_tests
   io/svg_fuzz_test.cpp
   io/svg_import_test.cpp
   io/svg_xml_test.cpp
+  text/font_test.cpp
+  text/outline_test.cpp
+  text/layout_test.cpp
+  text/path_test.cpp
+  text/limits_test.cpp
+  text/fuzz_test.cpp
+  text/hardening_test.cpp
   toolpath/pocket_coverage_test.cpp
   toolpath/pocket_test.cpp
   toolpath/pocket_gouge_test.cpp
@@ -142,6 +150,7 @@ target_compile_definitions(carvetto_tests PRIVATE
   CARVETTO_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
   CARVETTO_STARTER_TOOLS="${PROJECT_SOURCE_DIR}/data/tools/starter_tools.json"
   CARVETTO_DXF_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dxf"
+  CARVETTO_TEXT_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/text"
   CARVETTO_SVG_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/svg"
   CARVETTO_POCKET_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/pocket"
   CARVETTO_CLI_DATA_DIR="${PROJECT_SOURCE_DIR}/app/cli/tests/data"
@@ -157,3 +166,17 @@ endif()
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 include(Catch)
 catch_discover_tests(carvetto_tests)
+
+# T-0130: environment independence. HarfBuzz/FreeType read their environment once per process, so the
+# same executable runs under several environments (ADR-0033 section 2); each must match the golden hashes.
+add_executable(carvetto_text_env_test text/env_test.cpp)
+target_compile_definitions(carvetto_text_env_test PRIVATE
+  CARVETTO_TEXT_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/text")
+target_link_libraries(carvetto_text_env_test PRIVATE carvetto::core Catch2::Catch2WithMain carvetto_warnings freetype)
+add_test(NAME text.env.plain COMMAND carvetto_text_env_test)
+add_test(NAME text.env.hb_shaper_fallback COMMAND carvetto_text_env_test)
+set_tests_properties(text.env.hb_shaper_fallback PROPERTIES ENVIRONMENT "HB_SHAPER_LIST=fallback")
+add_test(NAME text.env.hb_loaders COMMAND carvetto_text_env_test)
+set_tests_properties(text.env.hb_loaders PROPERTIES ENVIRONMENT "HB_SHAPER_LIST=nonexistent;HB_FACE_LOADER=nonexistent;HB_FONT_FUNCS=nonexistent")
+add_test(NAME text.env.freetype COMMAND carvetto_text_env_test)
+set_tests_properties(text.env.freetype PROPERTIES ENVIRONMENT "FREETYPE_PROPERTIES=truetype:interpreter-version=35 cff:no-stem-darkening=0;FT2_DEBUG=any:7")

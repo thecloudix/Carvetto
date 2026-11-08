@@ -30,6 +30,7 @@ const char* toString(EditStatus s) {
         case EditStatus::NothingToTrim: return "no intersection to trim to";
         case EditStatus::ClosedContour: return "contour is closed";
         case EditStatus::NoIntersection: return "no intersection ahead of the end";
+        case EditStatus::TooComplex: return "intersection work limit exceeded";
     }
     return "unknown";
 }
@@ -80,6 +81,13 @@ constexpr double kMinChordalUlps = 4.0;
 /// extendSpan cuts the probe along a circle to `reach` once the rest of the circle is more than
 /// this many times longer than `reach` (see there).
 constexpr double kProbeCutRatio = 1000.0;
+
+// The edit status for an intersection answer that is not complete: running out of work is
+// TooComplex; a refused span (non-finite, or beyond the magnitude cap the routines accept) is an
+// invalid argument, with its own message.
+EditStatus refusalStatus(IntersectStatus s) {
+    return s == IntersectStatus::Truncated ? EditStatus::TooComplex : EditStatus::InvalidArgument;
+}
 
 bool tooCostly(const std::vector<const std::vector<Contour>*>& sets, const Contour* extra, const Tolerance& tol) {
     Box2 box;
@@ -889,6 +897,7 @@ TrimResult trimToBoundary(const std::vector<Contour>& contours, const std::vecto
         return side == TrimSide::ClearInside ? loc == BoundarySet::Loc::Outside : loc == BoundarySet::Loc::Inside;
     };
 
+    IntersectStatus incomplete = IntersectStatus::Complete;
     for (std::size_t ci = 0; ci < contours.size(); ++ci) {
         const Contour& c = contours[ci];
         if (c.isEmpty()) {
@@ -901,6 +910,9 @@ TrimResult trimToBoundary(const std::vector<Contour>& contours, const std::vecto
             if (set.size() > 0) {
                 set.query(bounds(s).inflated(tol.distance), [&](std::size_t bi) {
                     const IntersectionResult r = intersect(s, set.span(bi), tol);
+                    if (!r.complete()) {
+                        incomplete = r.status;  // cuts would be missing: no result is better than a wrong one
+                    }
                     for (const Intersection& h : r.points) {
                         cuts.push_back({h.tA, h.tangent});
                     }
@@ -909,6 +921,11 @@ TrimResult trimToBoundary(const std::vector<Contour>& contours, const std::vecto
                         cuts.push_back({o.tA1, false});
                     }
                 });
+            }
+            if (incomplete != IntersectStatus::Complete) {
+                res = TrimResult{};  // contours of earlier inputs are dropped too: all or nothing
+                res.status = refusalStatus(incomplete);
+                return res;
             }
             cuts = normaliseCuts(s, std::move(cuts), tol);
             double t0 = 0.0;
@@ -1046,6 +1063,10 @@ TrimAtResult trimSpansAt(const Contour& contour, Vec2 pick, const std::vector<Co
     };
     {
         const ContourIntersections self = selfIntersections(contour, tol);
+        if (!self.complete()) {
+            res.status = refusalStatus(self.status);  // cuts would be missing
+            return res;
+        }
         for (const ContourIntersection& h : self.points) {
             addCut(posOf(h.spanA, h.hit.tA));
             addCut(posOf(h.spanB, h.hit.tB));
@@ -1062,6 +1083,10 @@ TrimAtResult trimSpansAt(const Contour& contour, Vec2 pick, const std::vector<Co
             continue;
         }
         const ContourIntersections hits = intersect(contour, o, tol);
+        if (!hits.complete()) {
+            res.status = refusalStatus(hits.status);
+            return res;
+        }
         for (const ContourIntersection& h : hits.points) {
             addCut(posOf(h.spanA, h.hit.tA));
         }
@@ -1243,6 +1268,10 @@ ExtendResult extendSpan(const Contour& contour, ContourEnd end, const std::vecto
                 continue;
             }
             const IntersectionResult r = intersect(probe, ts, tol);
+            if (!r.complete()) {
+                res.status = refusalStatus(r.status);  // a nearer target hit may be missing
+                return res;
+            }
             for (const Intersection& h : r.points) {
                 const double along = h.tA * probeLen;
                 if (along > tol.distance && distance(h.point, tip) > tol.distance && along < bestAlong) {

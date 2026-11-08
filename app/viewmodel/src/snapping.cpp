@@ -479,6 +479,8 @@ std::vector<Snap> SnapIndex::candidates(const ViewTransform& view, Vec2 cursorPx
                     if (ea.contour == eb.contour) {
                         junctions = sharedJunctions(*ea.contour, ea.spanIndex, eb.spanIndex);
                     }
+                    // A snap is a suggestion the user can see: if the work budget cut the answer short
+                    // (r.complete() is false) the hits found are used as they are (best effort).
                     const geometry::IntersectionResult r = geometry::intersect(sa, sb, settings.tolerance);
                     for (const geometry::Intersection& hit : r.points) {
                         if (!within(hit.point)) {

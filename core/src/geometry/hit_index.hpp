@@ -39,6 +39,7 @@ class HitIndex {
     std::size_t first(Vec2 p, PointOf&& pointOf) const {
         std::size_t best = npos;
         const auto test = [&](std::size_t i) {
+            ++tests_;
             if (i < best && tol_.equalPoints(pointOf(i), p)) {
                 best = i;
             }
@@ -69,6 +70,11 @@ class HitIndex {
         return best;
     }
 
+    /// Point comparisons made by `first` so far: the cost of the queries (a linear scan's would be
+    /// the stored count per query; the grid keeps it to a few unless many points share a cell or
+    /// fall outside the grid).
+    std::uint64_t tests() const { return tests_; }
+
    private:
     bool cellOf(Vec2 p, std::int64_t& cx, std::int64_t& cy) const {
         constexpr double kLimit = 1e15;
@@ -94,6 +100,7 @@ class HitIndex {
     double cell_;
     std::unordered_map<std::uint64_t, std::vector<std::size_t>> cells_;
     std::vector<std::size_t> loose_;
+    mutable std::uint64_t tests_{0};
 };
 
 }  // namespace carvetto::geometry::detail

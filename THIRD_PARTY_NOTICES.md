@@ -10,6 +10,13 @@ GPL-compatible licence. Their full licence texts are fetched with the sources at
 | Clipper2 | 1.4.0 (one upstream fix backported, ADR-0006 §6) | Boost Software License 1.0 | Polygon offsets and booleans |
 | nlohmann/json | 3.11.3 | MIT | JSON import/export |
 | miniz | 3.0.2 | MIT | `.carv` zip container |
+| FreeType | 2.14.3 | FreeType License (FTL; used under this option, which is GPLv3 compatible, ADR-0033) | Font parsing and glyph outlines (`core/text`) |
+| HarfBuzz | 15.1.0 | "Old MIT" | Text shaping (`core/text`) |
 | Catch2 | 3.7.1 | Boost Software License 1.0 | Unit tests only (not distributed) |
+| CarvettoTest-Regular.ttf | 1.0 | SIL Open Font License 1.1 (original Carvetto work, `core/tests/fixtures/text/OFL.txt`) | Text tests only (not distributed) |
+
+**Required credit (FreeType License, clause 2):** "Portions of this software are copyright © The
+FreeType Project (www.freetype.org). All rights reserved." Binary distributions must include this line
+in their documentation, together with `docs/FTL.TXT` of the FreeType sources and HarfBuzz's `COPYING`.
 
 When adding a dependency: pin it (tag or URL + SHA-256), confirm GPL compatibility, add a row here.
