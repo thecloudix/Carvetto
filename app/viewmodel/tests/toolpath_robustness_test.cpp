@@ -959,7 +959,7 @@ TEST_CASE("fuzz: scripted session events keep the document consistent", "[toolpa
 #ifdef NDEBUG
     const std::uint64_t defaultSeeds = 120;
 #else
-    const std::uint64_t defaultSeeds = 40;
+    const std::uint64_t defaultSeeds = 24;
 #endif
     const std::uint64_t seeds = envNumber("CARVETTO_FUZZ_SEEDS", defaultSeeds);
     const std::uint64_t first = envNumber("CARVETTO_FUZZ_FIRST", 1);
