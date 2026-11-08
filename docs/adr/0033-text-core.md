@@ -172,7 +172,7 @@ Commands that embed a font check `Document::fontProblem` first: the Text tool an
 (with a message naming the cap) instead of adding a text object without its font. Caps: 8 MiB per font, 32 MiB and 64 fonts per document; the loader and
 the saver refuse more (`ResourceLimit`). Only fonts a text object uses are written (unused ones are
 dropped at save); the user has no font-licence prompt, so **embedding is the user's decision to make
-for fonts they pick**; the bundled starter font is OFL. Fonts are parsed by `core/text` only when
+for fonts they pick**; the bundled starter font is DejaVu Serif (Bitstream Vera licence, redistributable; amendment A2). Fonts are parsed by `core/text` only when
 text is edited, never when a file is opened. Member names `fonts/*.font` are reserved in
 `CarvExtras::withMember`.
 
@@ -193,8 +193,8 @@ error appears. Newer files with a higher *major* are refused as before.
 - **Commit is one undo step** (a `MacroCommand` of `AddFontCommand` and `AddObjectCommand` or
   `SetTextCommand`). Editing in place re-lays out the whole object; committing without a change
   records nothing.
-- **Fonts** come from bytes/files the user or app supplies; the app compiles in the OFL starter font
-  (`data/fonts`); the file dialog picks a TTF/OTF. No system font enumeration anywhere in core.
+- **Fonts** come from bytes/files the user or app supplies; the app compiles in the DejaVu Serif starter font
+  (`data/fonts`, amendment A2); the file dialog picks a TTF/OTF. No system font enumeration anywhere in core.
 - Typing has no caret: characters append, Backspace removes the last code point, and the full text
   can be replaced (`setText`). Caret navigation is a follow-up.
 
@@ -211,3 +211,17 @@ is the anchor; Aligned/Fit run the baseline from group 10 to group 11 (Aligned s
 Fit only the width); Bottom attachment lifts the baseline by the descender. The upside-down generation
 flag is not read by the importer and is ignored. Text drawn with `.notdef` boxes because the font lacks
 glyphs produces an import warning.
+
+## Amendment A2 (T-0233): DejaVu Serif is the starter font
+
+Owner decision 2026-11-08. The placeholder starter font is replaced by **DejaVu Serif 2.37 Regular**
+(no Bold: the Text tool has no bold option), vendored unmodified as `data/fonts/DejaVuSerif.ttf` (380132
+bytes, SHA-256 `42d1edeb7952f31b1f96d767ed7030b08a39e0c372b0071641518864e2bffb51`) with the upstream
+`LICENSE` as `data/fonts/DEJAVU-LICENSE.txt`. Source: official release
+`dejavu-fonts-ttf-2.37.tar.bz2` from github.com/dejavu-fonts/dejavu-fonts (tag `version_2_37`),
+tarball SHA-256 `fa9ca4d13871dd122f61258a80d01751d603b4d3ee14095d65453b4e846e17d7`. The licence
+(Bitstream Vera, DejaVu changes public domain) permits redistribution; the font must not be modified
+under the same name and may not be sold by itself. The font is compiled in by the existing
+`starter_font.hpp` mechanism; its display name is "DejaVu Serif". Tests keep the tiny Carvetto test
+font except for the starter-font coverage tests. Embedding the full font in a `.carv` costs about
+380 KB, far below the 8 MiB per-font cap.
