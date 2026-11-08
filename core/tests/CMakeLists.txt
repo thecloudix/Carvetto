@@ -165,3 +165,17 @@ endif()
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 include(Catch)
 catch_discover_tests(carvetto_tests)
+
+# T-0130: environment independence. HarfBuzz/FreeType read their environment once per process, so the
+# same executable runs under several environments (ADR-0033 section 2); each must match the golden hashes.
+add_executable(carvetto_text_env_test text/env_test.cpp)
+target_compile_definitions(carvetto_text_env_test PRIVATE
+  CARVETTO_TEXT_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/text")
+target_link_libraries(carvetto_text_env_test PRIVATE carvetto::core Catch2::Catch2WithMain carvetto_warnings freetype)
+add_test(NAME text.env.plain COMMAND carvetto_text_env_test)
+add_test(NAME text.env.hb_shaper_fallback COMMAND carvetto_text_env_test)
+set_tests_properties(text.env.hb_shaper_fallback PROPERTIES ENVIRONMENT "HB_SHAPER_LIST=fallback")
+add_test(NAME text.env.hb_loaders COMMAND carvetto_text_env_test)
+set_tests_properties(text.env.hb_loaders PROPERTIES ENVIRONMENT "HB_SHAPER_LIST=nonexistent;HB_FACE_LOADER=nonexistent;HB_FONT_FUNCS=nonexistent")
+add_test(NAME text.env.freetype COMMAND carvetto_text_env_test)
+set_tests_properties(text.env.freetype PROPERTIES ENVIRONMENT "FREETYPE_PROPERTIES=truetype:interpreter-version=35 cff:no-stem-darkening=0;FT2_DEBUG=any:7")

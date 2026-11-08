@@ -1,6 +1,5 @@
 #include <chrono>
 #include <cmath>
-#include <cstdlib>
 #include <numbers>
 #include <string>
 #include <variant>
@@ -54,21 +53,6 @@ void requireFast(double seconds, Fn&& fn) {
     CHECK(elapsed.count() < seconds);
 }
 
-void setEnv(const char* name, const char* value) {
-#ifdef _WIN32
-    _putenv_s(name, value);
-#else
-    setenv(name, value, 1);
-#endif
-}
-void clearEnv(const char* name) {
-#ifdef _WIN32
-    _putenv_s(name, "");
-#else
-    unsetenv(name);
-#endif
-}
-
 }  // namespace
 
 TEST_CASE("Line-break floods are linear time on both entry points", "[text][hostile][limits]") {
@@ -113,38 +97,6 @@ TEST_CASE("Line-break floods are linear time on both entry points", "[text][host
     const TextLayout small = layoutTextOnPath(f, "I\r\nI\rI\nI", s, path);
     REQUIRE(small.ok());
     CHECK(small.glyphs.size() == 7);
-}
-
-TEST_CASE("Layout does not depend on HarfBuzz or FreeType environment variables", "[text][determinism]") {
-    const std::string text = "TOI IT\xC3\x89\n\xD7\x90 Z\xCC\x81 fi";
-    TextStyle s;
-    s.sizeMm = 12.5;
-    Contour path;
-    path.spans.emplace_back(LineSpan{{0, 0}, {300, 0}});
-    const auto run = [&] {
-        const Font f = loadTestFont();  // FreeType reads FREETYPE_PROPERTIES when it initialises
-        const TextLayout a = layoutText(f, text, s);
-        const TextLayout b = layoutTextOnPath(f, text, s, path);
-        REQUIRE(a.ok());
-        REQUIRE(b.ok());
-        return std::pair{hashLayout(a), hashLayout(b)};
-    };
-    const auto baseline = run();
-    const char* const vars[][2] = {
-        {"HB_SHAPER_LIST", "fallback"},
-        {"HB_SHAPER_LIST", "nonexistent"},
-        {"HB_FACE_LOADER", "nonexistent"},
-        {"HB_FONT_FUNCS", "nonexistent"},
-        {"FREETYPE_PROPERTIES", "truetype:interpreter-version=35 cff:no-stem-darkening=0 cff:darkening-parameters=500,500,1000,500,2000,500,4000,0"},
-        {"FREETYPE_PROPERTIES", "autofitter:warping=1"},
-        {"FT2_DEBUG", "any:7"},
-    };
-    for (const auto& v : vars) {
-        setEnv(v[0], v[1]);
-        CHECK(run() == baseline);
-        clearEnv(v[0]);
-    }
-    CHECK(run() == baseline);
 }
 
 TEST_CASE("OpenType/CFF fonts: PostScript winding and real cubics", "[text][outline][oracle][cff]") {
