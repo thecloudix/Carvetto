@@ -54,6 +54,15 @@ add_executable(carvetto_tests
   post/post_safety_test.cpp
   post/spindle_off_test.cpp
   post/line_length_test.cpp
+  simulate/determinism_test.cpp
+  simulate/diagnostics_test.cpp
+  simulate/fixture_record_test.cpp
+  simulate/hostile_test.cpp
+  simulate/perf_test.cpp
+  simulate/playback_test.cpp
+  simulate/round2_test.cpp
+  simulate/sweep_exact_test.cpp
+  simulate/tool_shape_test.cpp
   tooling/starter_tools_test.cpp
   document/job_test.cpp
   document/variables_test.cpp
@@ -132,6 +141,7 @@ target_compile_definitions(carvetto_tests PRIVATE
   CARVETTO_DXF_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dxf"
   CARVETTO_SVG_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/svg"
   CARVETTO_POCKET_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/pocket"
+  CARVETTO_CLI_DATA_DIR="${PROJECT_SOURCE_DIR}/app/cli/tests/data"
 )
 target_link_libraries(carvetto_tests PRIVATE carvetto::core Catch2::Catch2WithMain carvetto_warnings)
 
