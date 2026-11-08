@@ -113,7 +113,10 @@ node gives a bump, so the caller chooses the nodes.
 - The last span (the first, for `ContourEnd::Start`, by reversing) travels on: a line along its
   end tangent, an arc along the rest of its circle, a Bezier along its end tangent as a line.
   The probe is intersected with the target spans (boxes first); the nearest hit farther than
-  `tol.distance` from the end wins, ties to the first target in input order. A line end or arc end
+  `tol.distance` from the end wins, ties to the first target in input order. The probe along a
+  circle is the rest of the circle, except that once the rest is more than 1000 x `reach`
+  (`reach` = `2 max(D, 1)`, D = diagonal of the box of the end point and all targets) only the
+  first `reach` of arc length is probed (T-0179, see section 8). A line end or arc end
   is changed in place so the span count is unchanged and the end is exactly the intersection
   (arc: to the angle of the hit, i.e. within rounding of the circle); a Bezier gets an appended
   tangent line (G1, never an invented curve). No hit: `NoIntersection`; closed contour:
@@ -132,10 +135,57 @@ node gives a bump, so the caller chooses the nodes.
 
 ### 7. Robustness
 - Non-finite coordinates / radii / tolerances, or any magnitude above 1e12 (mm), negative or NaN
-  tolerances: `InvalidArgument` at every public entry point (`kMaxMagnitude`). All results are
-  deterministic (no hashing order or pointer values influence output).
+  tolerances: `InvalidArgument` at every public entry point that returns a status
+  (`kMaxMagnitude`). The exceptions are `convexNodes` (returns an empty list) and `joinContours`,
+  which refuses only an invalid tolerance: a contour that is non-finite or over the cap is not
+  usable, takes no part in the chaining and passes through unjoined, in place, with status Ok
+  (like closed and empty ones). All results are deterministic (no hashing order or pointer
+  values influence output).
 - Span lengths inside these functions use a 32-sample estimate, not `BezierSpan::length`, which
   recurses without a useful bound on looped Beziers with coincident ends.
+
+### 8. Hardening measurements (T-0179)
+- **Huge-radius arc end (extend).** The probe along the rest of a circle used to be the whole
+  rest; against Beziers that costs 0.22 s at R = 1e9 mm and 6.8 s at the 1e12 cap (Release CPU;
+  R = 1e6: 0.01 s). Every target lies within D of the end point, so a first-pass hit is within
+  chord D of it, i.e. an arc length <= (pi/2) D < `reach` = 2 max(D, 1) for R >= D. Contract:
+  when the rest of the circle is longer than `kProbeCutRatio` = 1000 x `reach` (so R is at least
+  ~300 D) the probe is limited to the first `reach` of arc. Hits that would require travelling
+  beyond it, i.e. wrap-around hits (a target behind the tip, or through the arc's own start,
+  reached by going almost round a circle of millions of mm), are reported as `NoIntersection`
+  (the unbounded probe returned them as Ok; the verifier measured this on ~1% of a 40,000-case
+  corpus and judged it nonsense for an extend). Within the probe the result is the same hit,
+  but the arc-length parameterisation changes, so `point` / `distance` may differ in the last
+  digits (relative < 1e-6 measured). The verifier's oracle agreed with the bounded probe in
+  every inspected disagreement (the unbounded probe also missed ~30 noise-level first-pass hits
+  and reported 3 unconfirmed ones). After the cut every R costs the same (<= 0.001 s at
+  1e6 / 1e9 / 1e12). Shorter circles are probed unchanged.
+- **Chordal tolerance versus coordinates.** With a Bezier involved, a `tol.chordal` below
+  ~1 ulp of the coordinates cannot be reached by subdividing: 1e-5 mm at coordinates of 1e11 mm
+  (ulp 1.5e-5) ran 4 s .. 29 s in trimSpansAt / trimToBoundary / extendSpan; at 1 ulp and above
+  0.01-0.04 s. The cost rule therefore also refuses (`InvalidArgument`) a `tol.chordal` below
+  `kMinChordalUlps` = 4 x epsilon x the largest coordinate magnitude (4 to 8 ulps), next to the
+  1e6 extent ratio. At the default 0.01 mm this matters beyond 1.1e13 mm, i.e. never within the
+  1e12 cap; it only bites custom tiny tolerances on far-from-origin drawings.
+- **`tol.distance` much larger than the geometry.** A scan of 42,900 combinations of entry point
+  x coordinate offset (0 .. 9e11) x scale (1e-3 .. 1e9) x `tol.distance` (1e-9 .. 1e12) x
+  `tol.chordal` (1e-12 .. 1e12) found no slow case other than the chordal-versus-ulp one above, so no
+  extra relation is imposed on `tol.distance`. The T-0179 verifier confirmed it: with
+  `tol.distance` about the drawing size and `tol.chordal` about 1e-5 x scale the cost stays
+  <= 1.6 s.
+- **Per-pair cost rule (considered, not done).** The refusal of a drawing whose union extent
+  exceeds 1e6 x `tol.chordal` as soon as a Bezier is present was re-measured with the rule
+  disabled (Release CPU): a small Bezier next to far-away geometry (a second Bezier at 1e5 / 1e7 / 1e9
+  mm, a 2e9 mm line, a 2e9 mm square boundary) costs 0.00-0.01 s in every entry point, and a
+  line against a 1e9 mm circle 0.31 s. The cost is driven by large spans that overlap (curve
+  against curve, huge arcs, which flatten whole), not by the union extent. A per-pair rule needs
+  the partners of every Bezier, which `trimSpansAt` takes from the library all-pairs
+  `intersect(Contour, Contour)` / `selfIntersections` that this module cannot restructure, and a
+  bound for huge partner arcs; it would also overlap the intersection work budget of T-0180. The
+  union rule is kept (documented false refusals above ~10 m diagonal at 0.01 mm: pass a coarser
+  tolerance); revisit when `intersect(Bezier, Bezier)` reports truncation.
+- **Tests.** Hang regressions use `failFast` (core/tests/geometry/fail_fast.hpp), which limits
+  CPU seconds of the process, not wall-clock, and keeps all assertions on the main thread.
 
 ## Consequences
 - The UI cards can call these directly; statuses carry the reason for a refusal.
