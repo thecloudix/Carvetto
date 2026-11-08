@@ -997,7 +997,7 @@ Director decision 2026-11-07 (T-0186 round 3): the Profile single-call cap stays
 ### T-0227 T-0130 documentation and test nits (verifier)   [status: ready — LOW]
 ADR-0033 sentence "a test sets these variables in-process" is inaccurate (they are separate ctest processes with the variables set before launch); THIRD_PARTY_NOTICES.md lacks a row for CarvettoTestCFF-Regular.otf; `requireFast` uses a 3 s wall-clock bound (use CPU time); no boundary test for `checkTextSize` `>=` on the path entry point; no test for the `loadFile` ceiling clamp; f04 zero-length-line drop is documented but unasserted.
 
-### T-0211 Text tool (viewmodel + Qt): text object, text in box, text on curve   [status: ready — depends on T-0130 (done), T-0224 not required]
+### T-0211 Text tool (viewmodel + Qt): text object, text in box, text on curve   [status: done — merged PR #97; follow-ups T-0230]
 Phase: 1   Module: app/viewmodel + app/src + core/document (text object type)   ADR: 0033 amendment
 Goal: a Text tool and a text object stored in the native format (font reference/embedding, size mm, alignment, spacing, kerning, text-on-curve guide reference) that renders via core/text layout into contours and converts to curves; bundled OFL starter font(s) since no system-font enumeration in core (app may enumerate system fonts and embed/reference; decide embedding policy and tell the owner); text on a selected curve; edit text in place; undo as one step; DXF TEXT/MTEXT import maps onto it (T-0130 brief). Note: large Bezier-heavy text makes Profile/V-carve slow until T-0228 (cheaper/interruptible geometry offset); the Profile work budget (T-0186) may refuse very large sign text.
 
