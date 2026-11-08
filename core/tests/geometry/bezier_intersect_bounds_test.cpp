@@ -16,11 +16,13 @@
 #include <vector>
 
 #include "carvetto/geometry/contour.hpp"
+#include "carvetto/geometry/contour_ops.hpp"
 #include "carvetto/geometry/edit_ops.hpp"
 #include "carvetto/geometry/intersect.hpp"
 #include "carvetto/geometry/span.hpp"
 #include "cpu_scaling.hpp"
 #include "cpu_time.hpp"
+#include "closest_work.hpp"
 #include "intersect_defaults.hpp"
 #include "test_rng.hpp"
 #include "../toolpath/v_carve_test_util.hpp"
@@ -683,9 +685,10 @@ TEST_CASE("Work units of reference pairs are pinned", "[bezier][intersect][budge
     // charge out moves them. Most pairs have a band of +-12%; two are pinned to a few percent
     // because one cost dominates them: the Newton refinements of the reversed loop (kRefine 256
     // -> 220 or 300 moves its count by -2.9% / +3.6%) and the global nearest-point searches of the
-    // spiky curve (closestPoint's step costs 16 -> 12 or 20 move it by -2.6% / +2.6%, its bisection
-    // cost 4 -> 3 by -3.8%). The counts are integers of discrete floating-point decisions; a
-    // platform whose libm differs in the last bit may move them by a fraction of a percent.
+    // spiky curve was once pinned to 1.5% for the closestPoint step costs, but at 1e11 its count
+    // (129 hits on one toolchain, 130 on another) is libm-sensitive: those costs are pinned
+    // by the exact-work test below instead, at moderate magnitudes. The counts are integers of
+    // discrete floating-point decisions; hit counts and units at 1e9 and beyond get slack.
     const Tolerance tol = Tolerance::defaults();
     struct Ref {
         const char* name;
@@ -694,26 +697,28 @@ TEST_CASE("Work units of reference pairs are pinned", "[bezier][intersect][budge
         double units;
         std::size_t hits;
         double band;
+        std::size_t hitSlack;  // hit counts at extreme magnitudes depend on the last bit of libm
     };
     const BezierSpan s{{0, 0}, {10, 20}, {20, -20}, {30, 0}};
     const BezierSpan loop{{0, 0}, {1000, 1000}, {-1000, 1000}, {0, 0}};
     const BezierSpan c{{0, 0}, {30, 40}, {60, -40}, {90, 0}};
     const BezierSpan spiky{{-0.0014121, -0.00345894}, {0.0030753, 0.00245513}, {1e11, -1e11}, {0.00425758, 0.00280278}};
     const std::vector<Ref> refs{
-        {"S against a line", s, LineSpan{{5, -5}, {25, 5}}, 16991.0, 1, 0.12},
-        {"loop against itself reversed", loop, loop.reversed(), 1898682.0, 512, 0.02},
+        {"S against a line", s, LineSpan{{5, -5}, {25, 5}}, 16991.0, 1, 0.12, 0},
+        {"loop against itself reversed", loop, loop.reversed(), 1898682.0, 512, 0.02, 0},
         {"long smooth pair", BezierSpan{{0, 0}, {1e5, 1e5}, {-1e5, 2e5}, {1e5, 3e5}},
-         BezierSpan{{1e5, 0}, {-1e5, 1e5}, {1e5, 2e5}, {0, 3e5}}, 1238681.0, 3, 0.12},
-        {"near-parallel pair", c, BezierSpan{{0, 1}, {30, 41}, {60, -39}, {90, 1}}, 17594.0, 0, 0.12},
+         BezierSpan{{1e5, 0}, {-1e5, 1e5}, {1e5, 2e5}, {0, 3e5}}, 1238681.0, 3, 0.12, 1},
+        {"near-parallel pair", c, BezierSpan{{0, 1}, {30, 41}, {60, -39}, {90, 1}}, 17594.0, 0, 0.12, 0},
         {"two crossing S curves", BezierSpan{{0, 0}, {40, 60}, {60, -60}, {100, 0}},
-         BezierSpan{{0, 10}, {40, -50}, {60, 70}, {100, 10}}, 12848.0, 2, 0.12},
-        {"spiky curve at 1e11 with itself", spiky, spiky, 1194292.0, 129, 0.015},
+         BezierSpan{{0, 10}, {40, -50}, {60, 70}, {100, 10}}, 12848.0, 2, 0.12, 0},
+        {"spiky curve at 1e11 with itself", spiky, spiky, 1194292.0, 129, 0.12, 4},
     };
     for (const Ref& r : refs) {
         INFO(r.name);
         const IntersectionResult res = intersect(r.a, r.b, tol);
         REQUIRE(res.complete());
-        REQUIRE(res.points.size() == r.hits);
+        REQUIRE(res.points.size() + r.hitSlack >= r.hits);
+        REQUIRE(res.points.size() <= r.hits + r.hitSlack);
         const double units = static_cast<double>(detail::lastPairWork());
         INFO("units " << units);
         REQUIRE(units >= (1.0 - r.band) * r.units);
@@ -813,4 +818,26 @@ TEST_CASE("The default work limits are the documented ones", "[bezier][intersect
     // The overloads without limits use them (unless a test replaced them).
     REQUIRE(detail::defaultLimits().pairWork == defaults.pairWork);
     REQUIRE(detail::defaultLimits().totalWork == defaults.totalWork);
+}
+
+TEST_CASE("closestPoint work is counted step by step", "[bezier][intersect][budget][units][geometry]") {
+    // The meter charges what closestPoint reports (closest_work.hpp): 128 per call, 16 per quintic
+    // subdivision step, 4 per bisection step. Twelve searches on ordinary curves at ordinary
+    // magnitudes (no libm-sensitive branch) pin the sum exactly: changing a step cost by one unit
+    // moves it. (7,624 = 12 calls, 1,536 base + 6,088 of steps.)
+    const BezierSpan curves[3]{{{0, 0}, {10, 20}, {20, -20}, {30, 0}},
+                               {{0, 0}, {50, 80}, {-30, 90}, {40, 10}},
+                               {{-5, 3}, {2, 40}, {60, -35}, {25, 12}}};
+    const Vec2 points[4]{{15, 3}, {-4, 10}, {33, -8}, {20, 25}};
+    std::uint64_t sum = 0;
+    for (const BezierSpan& z : curves) {
+        for (const Vec2& p : points) {
+            const std::uint64_t before = detail::closestPointWork();
+            (void)closestPoint(Span{z}, p);
+            const std::uint64_t one = detail::closestPointWork() - before;
+            REQUIRE(one >= 128);
+            sum += one;
+        }
+    }
+    REQUIRE(sum == 7624);
 }
