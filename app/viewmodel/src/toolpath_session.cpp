@@ -838,6 +838,50 @@ ToolpathOutcome ToolpathSession::recalculate(ToolpathId id) {
     return runAndApply(def, carving != nullptr ? carving->id : rec->id, "Recalculate toolpath");
 }
 
+std::optional<ToolpathId> ToolpathSession::targetOf(ToolpathId id) {
+    if (doc_ == nullptr) {
+        return std::nullopt;
+    }
+    sync();
+    const ToolpathRecord* rec = doc_->findToolpath(id);
+    if (rec == nullptr) {
+        return std::nullopt;
+    }
+    const ToolpathRecord* carving = carvingOf(*rec);
+    return carving != nullptr ? carving->id : rec->id;
+}
+
+std::vector<ToolpathJob> ToolpathSession::prepareRecalculateAll(bool onlyStale,
+                                                                std::vector<ToolpathOutcome>* refused) {
+    std::vector<ToolpathJob> jobs;
+    if (doc_ == nullptr) {
+        return jobs;
+    }
+    computeStaleness();
+    std::set<ToolpathId> handled;
+    for (const ToolpathRecord& rec : doc_->toolpaths()) {
+        const Staleness s = staleness_[rec.id];
+        if (onlyStale && s.computed && !(s.vectors || s.params || s.tool)) {
+            continue;
+        }
+        const ToolpathRecord* carving = carvingOf(rec);
+        const ToolpathId target = carving != nullptr ? carving->id : rec.id;
+        if (!handled.insert(target).second) {
+            continue;
+        }
+        if (!s.canRecalculate) {
+            if (refused != nullptr) {
+                ToolpathOutcome o = failure(s.note.empty() ? "this toolpath cannot be recalculated" : s.note);
+                o.ids.push_back(rec.id);
+                refused->push_back(std::move(o));
+            }
+            continue;
+        }
+        jobs.push_back(prepare(definitionOf(rec), target));
+    }
+    return jobs;
+}
+
 BatchOutcome ToolpathSession::recalculateAll(bool onlyStale) {
     BatchOutcome out;
     if (doc_ == nullptr) {

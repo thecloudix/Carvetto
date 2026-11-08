@@ -29,6 +29,7 @@ class RulerWidget;
 class CopiesMenu;
 class NodeEditMenu;
 class ToolPanel;
+class ToolpathsPanel;
 class TransformMenu;
 class VectorOpsMenu;
 
@@ -62,6 +63,7 @@ class MainWindow : public QMainWindow {
     NodeEditMenu* nodeEdit() const { return nodeEdit_.get(); }
     TransformMenu* transformMenu() const { return transformMenu_.get(); }
     QDockWidget* toolpathsDock() const { return toolpathsDock_; }
+    ToolpathsPanel* toolpaths() const { return toolpaths_; }
     QDockWidget* layersDock() const { return layersDock_; }
     ToolPanel* toolPanel() const { return toolPanel_; }
 
@@ -143,6 +145,7 @@ class MainWindow : public QMainWindow {
     QActionGroup* toolGroup_{nullptr};
     std::map<viewmodel::ToolKind, QAction*> toolActions_;
     ToolPanel* toolPanel_{nullptr};
+    ToolpathsPanel* toolpaths_{nullptr};
 
     QAction* undoAction_{nullptr};
     QAction* redoAction_{nullptr};

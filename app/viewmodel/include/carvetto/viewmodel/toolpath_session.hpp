@@ -194,6 +194,15 @@ class ToolpathSession {
     /// are applied.
     BatchOutcome applyAll(const std::vector<ToolpathCalculation>& calculations);
 
+    /// The toolpath to pass to `prepare` to recalculate or edit `id` (the carving toolpath of its
+    /// V-carve, else `id` itself); nullopt when `id` is not a toolpath.
+    std::optional<document::ToolpathId> targetOf(document::ToolpathId id);
+    /// The jobs `recalculateAll(onlyStale)` would run (one per toolpath or V-carve, in job order),
+    /// ready to run on a worker thread; apply the results with `applyAll`. Toolpaths that cannot be
+    /// recalculated are not in the list; their outcomes (failures with the reason) go to `refused`
+    /// when given.
+    std::vector<ToolpathJob> prepareRecalculateAll(bool onlyStale, std::vector<ToolpathOutcome>* refused = nullptr);
+
     /// `prepare` + `run` + `apply`.
     ToolpathOutcome add(const ToolpathDefinition& definition);
     /// Recalculates toolpath `id` with a new definition and replaces it (and the other toolpaths of
