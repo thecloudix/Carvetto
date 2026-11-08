@@ -966,7 +966,7 @@ Out of scope: Qt rendering (T-0223), 3D relief/heightfield components of Phase 2
 Phase: 1 (Batch C-1)   Module: app/viewmodel + app/src   Depends on: T-0220, T-0221, T-0222   ADR: 0032
 Goal: Toolpath preview on the 2D canvas (moves coloured by kind: rapid/feed/plunge/lead/ramp; selected toolpath highlighted; per-toolpath visibility), the simulation view (shaded heightfield from the T-0222 result as a 3D/isometric or top-down relief view in the 3D tab, stock/tool colours, quality level, playback slider and run/pause/step, speed), and a readout of estimated machining time. Viewmodel holds the scene building (Qt-free, tested); Qt paints.
 
-### T-0224 Save toolpaths dialog and output (Qt + viewmodel)   [status: blocked — depends on T-0220]
+### T-0224 Save toolpaths dialog and output (Qt + viewmodel)   [status: done — merged PR #96]
 Phase: 1 (Batch C-1)   Module: app/viewmodel + app/src   Depends on: T-0220, T-0110, T-0030, T-0133, T-0134   ADR: 0034
 Goal: Output the selected toolpaths through the post-processors: choose the post (Grbl/Mach3/LinuxCNC/Marlin and user .pp posts), machine, units, output to a single file or one file per toolpath/tool, tool-change handling, preview of the first lines of G-code, file name templates, safety (the T-0133/T-0134 post rules: no injection, finite numbers) and clear error reporting; wraps the same code the CLI uses. Headless viewmodel tests (output byte-identical to the CLI for the same inputs) and a self-test step that saves a file and re-reads it.
 
@@ -1001,7 +1001,7 @@ ADR-0033 sentence "a test sets these variables in-process" is inaccurate (they a
 Phase: 1   Module: app/viewmodel + app/src + core/document (text object type)   ADR: 0033 amendment
 Goal: a Text tool and a text object stored in the native format (font reference/embedding, size mm, alignment, spacing, kerning, text-on-curve guide reference) that renders via core/text layout into contours and converts to curves; bundled OFL starter font(s) since no system-font enumeration in core (app may enumerate system fonts and embed/reference; decide embedding policy and tell the owner); text on a selected curve; edit text in place; undo as one step; DXF TEXT/MTEXT import maps onto it (T-0130 brief). Note: large Bezier-heavy text makes Profile/V-carve slow until T-0228 (cheaper/interruptible geometry offset); the Profile work budget (T-0186) may refuse very large sign text.
 
-### T-0229 Wire Save Toolpaths dialog to the Toolpaths dock (after T-0221 and T-0224 merge)   [status: blocked — depends on T-0221, T-0224]
+### T-0229 Wire Save Toolpaths dialog to the Toolpaths dock (after T-0221 and T-0224 merge)   [status: wiring done in PR #96; remaining: core/post PostProcessor cancel hook (LOW)]
 The Save Toolpaths dialog (T-0224) posts every calculated toolpath (ids empty) and its machine list is empty (`setMachines` never called). Pass `ToolpathSession::enabledToolpaths()` ids and the machine/tool database machines; test that a disabled toolpath is NOT in the output and stale toolpaths are warned about (offer recalculate). Also: Save Toolpaths cancel/close freeze (PostProcessor::run has no cancel hook; add one in core/post without changing output).
 
 ### T-0230 Text follow-ups (from T-0211 verification)   [status: starter font DECIDED by owner 2026-11-08: DejaVu Serif; rest ready]
