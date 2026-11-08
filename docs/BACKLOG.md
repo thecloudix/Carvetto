@@ -744,7 +744,7 @@ Goal: Three PRs in a row (#82 `Polyline`, T-0182 `Polyline` and `far`) failed to
 Acceptance criteria:
   1. The lint runs as a ctest on Linux, has a fixture-based self-test, reports file:line, zero violations on main after the fixes; documented in CONTRIBUTING.md.
 
-### T-0186 Work budget for Profile in core (T-0220 coder)   [status: in progress]
+### T-0186 Work budget for Profile in core (T-0220 coder)   [status: done — merged PR #94]
 Phase: 1   Module: core/toolpath   Depends on: —   ADR: 0016
 Goal: Found by the T-0220 coder: the core Profile has no work limit and the core operations cannot be interrupted. Profile cost grows with edge length (a 1e6 mm edge with a neighbour costs 14 s in Debug) and is super-linear on thin self-intersecting loops (a 100 mm tall Bezier loop 9 s, 1000 mm over 100 s Debug); the session added its own protective limits (levels <= 10000, estimated moves <= 20M, offsets within +-1000 mm, coordinates within 1e5 mm, total length <= 1e7 mm, spans <= 2M) because degenerate or hostile parameters (allowance 1e5, overcut 1e6, 0.0001 mm pass depth, nanometre tab pitch) allocated 5+ GB or ran for minutes. Add a deterministic work meter to Profile (like T-0180's intersect meter and Pocket's/Drill's existing move estimates) with a documented overflow behaviour (a ToolpathDiagnostic, nothing partial), a cancellation hook (cancel flag polled at coarse points) and move the session's protective limits into the core where they belong.
 Acceptance criteria:
