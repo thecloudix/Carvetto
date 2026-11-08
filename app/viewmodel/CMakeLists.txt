@@ -15,6 +15,8 @@ add_library(carvetto_viewmodel STATIC
   src/new_job_form.cpp
   src/dxf_exchange.cpp
   src/file_session.cpp
+  src/node_edit.cpp
+  src/node_ops.cpp
   src/snapping.cpp
   src/selection_tools.cpp
 )

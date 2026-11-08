@@ -590,3 +590,28 @@ TEST_CASE("two consecutive drags each get a fresh frozen index; own pushes keep 
     w.release({401, 301});
     CHECK(w.doc.undoStack().index() == 2);
 }
+
+TEST_CASE("a sheet switch ends a transform gesture, pushed or not", "[viewmodel][transform][gesture][uaf]") {
+    using namespace carvetto::document;
+    using namespace carvetto::geometry;
+    using namespace carvetto::viewmodel;
+    for (const bool pushedFirst : {false, true}) {
+        Document doc(Job::singleSided(1000.0, 1000.0, 18.0, Units::Millimetres));
+        REQUIRE(doc.execute(std::make_unique<AddObjectCommand>(
+            Object::vector(Contour::rectangle(Box2{{20, 20}, {60, 40}}), doc.activeLayer(), doc.activeSheet()))));
+        REQUIRE(doc.execute(std::make_unique<AddSheetCommand>(Sheet{.name = "S2"}, false)));
+        doc.selection().assign(doc.objectIds());
+        const SheetId first = doc.activeSheet();
+        TransformGesture g;
+        REQUIRE(g.begin(doc, GestureKind::Move, HandleKind::Centre, {40, 30}, {40, 30}));
+        if (pushedFirst) {
+            REQUIRE(g.update(doc, {50, 40}, false, false, false));
+        }
+        const std::size_t steps = doc.undoStack().count();
+        doc.setActiveSheet(doc.sheets().back().id);  // the undo generation does not move
+        CHECK_FALSE(g.update(doc, {70, 60}, false, false, false));
+        CHECK_FALSE(g.active());
+        CHECK(doc.undoStack().count() == steps);
+        doc.setActiveSheet(first);
+    }
+}

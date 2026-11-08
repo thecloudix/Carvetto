@@ -63,6 +63,7 @@ bool TransformGesture::begin(document::Document& doc, GestureKind kind, HandleKi
     totalAngle_ = 0.0;
     lastAngle_ = std::atan2(startMm.y - pivotMm.y, startMm.x - pivotMm.x);
     generation_ = doc.undoStack().generation();
+    sheet_ = doc.activeSheet();
     kind_ = kind;
     return true;
 }
@@ -151,7 +152,8 @@ bool TransformGesture::update(document::Document& doc, Vec2 pointMm, bool shift,
     }
     // Any change of the undo generation that the gesture did not make itself (also before its
     // first push: undo, redo, delete, a lock change, ...) ends it.
-    if (doc.undoStack().generation() != generation_) {
+    // A sheet switch does not change the generation, but the targets are no longer on screen.
+    if (doc.undoStack().generation() != generation_ || doc.activeSheet() != sheet_) {
         kind_ = GestureKind::None;  // something else edited the document: the gesture is over
         return false;
     }

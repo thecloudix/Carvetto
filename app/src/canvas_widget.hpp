@@ -7,6 +7,7 @@
 #include <QSize>
 #include <QWidget>
 #include <functional>
+#include <string>
 #include <optional>
 
 #include "carvetto/document/document.hpp"
@@ -14,6 +15,7 @@
 #include "carvetto/viewmodel/tools.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
 
+class QEvent;
 class QKeyEvent;
 class QMouseEvent;
 class QPaintEvent;
@@ -72,8 +74,16 @@ class CanvasWidget : public QWidget {
     std::function<void()> onToolStateChanged;
     /// Called with the document position under the mouse.
     std::function<void(geometry::Vec2)> onCursorMoved;
+    /// NodeEdit tool (T-0206): a right click without drag at a widget position (global position,
+    /// widget pixels); the window shows the span / node menu.
+    std::function<void(const QPoint& globalPos, geometry::Vec2 px)> onNodeContextMenu;
+    /// NodeEdit tool: the P key asked for the Properties dialog.
+    std::function<void()> onNodeProperties;
+    /// NodeEdit tool: a key or event was refused; text for the status bar.
+    std::function<void(const std::string&)> onNodeMessage;
 
    protected:
+    bool event(QEvent* event) override;
     void paintEvent(QPaintEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
@@ -86,6 +96,8 @@ class CanvasWidget : public QWidget {
 
    private:
     void paintOverlay(QPainter& painter) const;
+    void paintNodes(QPainter& painter) const;
+    void updateNodeCursor(QPointF pos);
     void paintSelectionBox(QPainter& painter) const;
     void updateCursorHint();
     void afterToolEvent(const viewmodel::ToolResult& result);
@@ -100,6 +112,8 @@ class CanvasWidget : public QWidget {
     bool fitPending_{true};
     bool panning_{false};
     QPointF lastPanPos_;
+    QPointF rightPressPos_;
+    bool rightMoved_{false};
 };
 
 }  // namespace carvetto::app

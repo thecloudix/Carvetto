@@ -1,7 +1,9 @@
 #include "canvas_widget.hpp"
 
 #include <QBrush>
+#include <QEvent>
 #include <QKeyEvent>
+#include <QLineF>
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
@@ -12,7 +14,9 @@
 #include <QResizeEvent>
 #include <QWheelEvent>
 #include <cmath>
+#include <cctype>
 #include <cstddef>
+#include <vector>
 
 #include "carvetto/viewmodel/canvas_scene.hpp"
 #include "carvetto/viewmodel/selection_tools.hpp"
@@ -215,6 +219,7 @@ void CanvasWidget::paintOverlay(QPainter& painter) const {
         painter.drawRect(toQt(*preview.marqueePx));
     }
 
+    paintNodes(painter);
     paintSelectionBox(painter);
 
     // Snap glyph at the snapped point; the shape depends on the kind.
@@ -256,6 +261,46 @@ void CanvasWidget::paintOverlay(QPainter& painter) const {
             case viewmodel::SnapKind::Grid:
                 painter.drawLine(QPointF(p.x() - r, p.y()), QPointF(p.x() + r, p.y()));
                 painter.drawLine(QPointF(p.x(), p.y() - r), QPointF(p.x(), p.y() + r));
+                break;
+        }
+    }
+}
+
+void CanvasWidget::paintNodes(QPainter& painter) const {
+    if (tools_.tool() != viewmodel::ToolKind::NodeEdit) {
+        return;
+    }
+    const std::vector<viewmodel::NodeHandle> handles = tools_.nodeEditor().handles();
+    const QColor blue(30, 110, 230);
+    const QColor orange(230, 120, 0);
+    // Control handle lines first, so the squares sit on top.
+    painter.setBrush(Qt::NoBrush);
+    painter.setPen(QPen(QColor(140, 140, 160), 1.0, Qt::DashLine));
+    for (const viewmodel::NodeHandle& h : handles) {
+        if (h.type == viewmodel::HandleType::Control) {
+            painter.drawLine(toQt(view_.worldToScreen(h.anchorMm)), toQt(view_.worldToScreen(h.positionMm)));
+        }
+    }
+    for (const viewmodel::NodeHandle& h : handles) {
+        const QPointF p = toQt(view_.worldToScreen(h.positionMm));
+        switch (h.type) {
+            case viewmodel::HandleType::Node:
+                painter.setPen(QPen(blue, 1.5));
+                painter.setBrush(h.selected ? QBrush(blue) : QBrush(QColor(255, 255, 255)));
+                painter.drawRect(QRectF(p.x() - 4.0, p.y() - 4.0, 8.0, 8.0));
+                break;
+            case viewmodel::HandleType::Control:
+                painter.setPen(QPen(QColor(110, 110, 150), 1.0));
+                painter.setBrush(QBrush(QColor(255, 255, 255)));
+                painter.drawEllipse(p, 3.5, 3.5);
+                break;
+            case viewmodel::HandleType::Midpoint:
+                painter.setPen(QPen(h.selected ? orange : QColor(120, 160, 220), 1.0));
+                painter.setBrush(h.selected ? QBrush(orange) : Qt::NoBrush);
+                painter.drawPolygon(QPolygonF({QPointF(p.x(), p.y() - 3.5), QPointF(p.x() + 3.5, p.y()),
+                                               QPointF(p.x(), p.y() + 3.5), QPointF(p.x() - 3.5, p.y())}));
+                break;
+            case viewmodel::HandleType::Span:
                 break;
         }
     }
@@ -304,6 +349,41 @@ void CanvasWidget::paintSelectionBox(QPainter& painter) const {
     }
 }
 
+void CanvasWidget::updateNodeCursor(QPointF pos) {
+    if (tools_.tool() != viewmodel::ToolKind::NodeEdit || tools_.nodeEditor().pressed()) {
+        return;
+    }
+    tools_.setView(view_);
+    const auto hit = tools_.nodeEditor().hitTest(Vec2{pos.x(), pos.y()});
+    if (!hit.has_value()) {
+        unsetCursor();
+        return;
+    }
+    switch (hit->type) {
+        case viewmodel::HandleType::Node:
+        case viewmodel::HandleType::Control:
+            setCursor(Qt::PointingHandCursor);
+            break;
+        case viewmodel::HandleType::Midpoint:
+        case viewmodel::HandleType::Span:
+            setCursor(Qt::SizeAllCursor);
+            break;
+    }
+}
+
+bool CanvasWidget::event(QEvent* e) {
+    // While the NodeEdit tool is active its letter keys win over window-level shortcuts.
+    if (e->type() == QEvent::ShortcutOverride && tools_.tool() == viewmodel::ToolKind::NodeEdit) {
+        auto* ke = static_cast<QKeyEvent*>(e);
+        const bool plain = !(ke->modifiers() & (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier));
+        if (plain && ke->key() >= Qt::Key_A && ke->key() <= Qt::Key_Z) {
+            e->accept();
+            return true;
+        }
+    }
+    return QWidget::event(e);
+}
+
 void CanvasWidget::updateCursorHint() {
     switch (tools_.cursorHint()) {
         case viewmodel::CursorHint::Default: unsetCursor(); break;
@@ -344,6 +424,30 @@ bool CanvasWidget::focusNextPrevChild(bool next) {
 }
 
 void CanvasWidget::keyPressEvent(QKeyEvent* event) {
+    if (tools_.tool() == viewmodel::ToolKind::NodeEdit && !tools_.wantsKeys() && event->key() >= Qt::Key_A &&
+        event->key() <= Qt::Key_Z &&
+        !(event->modifiers() & (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier))) {
+        tools_.setView(view_);
+        const viewmodel::NodeEditResult r =
+            tools_.nodeEditor().handleKey(static_cast<char>('a' + (event->key() - Qt::Key_A)));
+        if (r.handled) {
+            event->accept();
+            if (r.openProperties && onNodeProperties) {
+                onNodeProperties();
+            }
+            if (!r.ok && onNodeMessage) {
+                onNodeMessage(r.message);
+            }
+            if (r.changed && onDocumentEdited) {
+                onDocumentEdited();
+            }
+            if (onToolStateChanged) {
+                onToolStateChanged();
+            }
+            update();
+            return;
+        }
+    }
     if (!tools_.wantsKeys()) {
         QWidget::keyPressEvent(event);
         return;
@@ -412,6 +516,8 @@ void CanvasWidget::mousePressEvent(QMouseEvent* event) {
     if (event->button() == Qt::MiddleButton || event->button() == Qt::RightButton) {
         panning_ = true;
         lastPanPos_ = event->position();
+        rightPressPos_ = event->position();
+        rightMoved_ = false;
         setCursor(Qt::ClosedHandCursor);
         event->accept();
         return;
@@ -432,6 +538,9 @@ void CanvasWidget::mouseMoveEvent(QMouseEvent* event) {
     if (panning_) {
         const QPointF d = pos - lastPanPos_;
         lastPanPos_ = pos;
+        if (QLineF(pos, rightPressPos_).length() >= 4.0) {
+            rightMoved_ = true;
+        }
         view_.pan(Vec2{d.x(), d.y()});
         fitPending_ = false;
         notifyViewChanged();
@@ -449,7 +558,11 @@ void CanvasWidget::mouseMoveEvent(QMouseEvent* event) {
         onToolStateChanged();
     }
     if (!panning_) {
-        updateCursorHint();
+        if (tools_.tool() == viewmodel::ToolKind::NodeEdit) {
+            updateNodeCursor(pos);
+        } else {
+            updateCursorHint();
+        }
     }
     update();
     QWidget::mouseMoveEvent(event);
@@ -460,6 +573,12 @@ void CanvasWidget::mouseReleaseEvent(QMouseEvent* event) {
         panning_ = false;
         unsetCursor();
         event->accept();
+        if (event->button() == Qt::RightButton && !rightMoved_ && tools_.tool() == viewmodel::ToolKind::NodeEdit &&
+            onNodeContextMenu) {
+            tools_.setView(view_);
+            const QPointF pos = event->position();
+            onNodeContextMenu(event->globalPosition().toPoint(), Vec2{pos.x(), pos.y()});
+        }
         return;
     }
     if (event->button() == Qt::LeftButton) {
