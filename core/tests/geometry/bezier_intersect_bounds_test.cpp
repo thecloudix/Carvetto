@@ -150,13 +150,14 @@ TEST_CASE("Work budget: lines and arcs are closed-form and never truncate", "[be
 }
 
 TEST_CASE("Work budget: a huge arc against a Bezier is charged before it is sampled", "[bezier][intersect][budget][geometry]") {
-    // R = 1e11 with the default chordal tolerance would be ~7e6 samples (hundreds of MB, seconds).
+    // R = 1e11 with the default chordal tolerance would be ~7e6 samples (capped at 2^20 by segmentCountFor).
     const Tolerance tol = Tolerance::defaults();
     const ArcSpan arc{{0, 0}, 1e11, 0.0, 6.0, ArcDirection::CCW};
     const BezierSpan bz{{1e11 - 5, -5}, {1e11 + 5, 1}, {1e11 - 3, 4}, {1e11 + 9, 9}};
     const double t0 = processCpuSeconds();
-    const IntersectionResult r = intersect(Span{arc}, Span{bz}, tol, pairLimit(50'000'000));
-    // Sampling the circle would take seconds (and 1.4 GB): the charge refuses it up front.
+    const IntersectionResult r = intersect(Span{arc}, Span{bz}, tol, pairLimit(5'000'000));
+    // The circle would be sampled at the 2^20-chord cap of ArcSpan::segmentCountFor (T-0182), 8 units
+    // each: the 8.4e6 charge exceeds this budget and refuses the sampling up front.
     REQUIRE(processCpuSeconds() - t0 < 1.0);
     REQUIRE(r.status == IntersectStatus::Truncated);
 }
