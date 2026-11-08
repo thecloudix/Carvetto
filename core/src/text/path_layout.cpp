@@ -197,14 +197,19 @@ TextLayout layoutTextOnPath(const Font& font, std::string_view utf8, const TextS
         return out;
     }
 
-    // One line: line breaks become spaces.
-    std::string text(utf8);
-    for (std::size_t i = 0; i < text.size(); ++i) {
-        if (text[i] == '\r' && i + 1 < text.size() && text[i + 1] == '\n') {
-            text.erase(i, 1);
-        }
-        if (text[i] == '\r' || text[i] == '\n') {
-            text[i] = ' ';
+    // One line: each line break (LF, CRLF, CR) becomes one space. Size checked first, one linear pass.
+    if (!b.checkTextSize(utf8.size())) {
+        return out;
+    }
+    std::string text;
+    text.reserve(utf8.size());
+    for (std::size_t i = 0; i < utf8.size(); ++i) {
+        const char c = utf8[i];
+        if (c == '\r' && i + 1 < utf8.size() && utf8[i + 1] == '\n') {
+            ++i;
+            text.push_back(' ');
+        } else {
+            text.push_back(c == '\r' || c == '\n' ? ' ' : c);
         }
     }
     std::vector<detail::LineRange> lines;

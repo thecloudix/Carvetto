@@ -113,6 +113,7 @@ add_executable(carvetto_tests
   text/path_test.cpp
   text/limits_test.cpp
   text/fuzz_test.cpp
+  text/hardening_test.cpp
   toolpath/pocket_coverage_test.cpp
   toolpath/pocket_test.cpp
   toolpath/pocket_gouge_test.cpp

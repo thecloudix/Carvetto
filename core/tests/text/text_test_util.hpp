@@ -24,8 +24,12 @@ inline std::string fixturePath() {
     return std::string(CARVETTO_TEXT_FIXTURE_DIR) + "/CarvettoTest-Regular.ttf";
 }
 
-inline std::vector<std::uint8_t> fontBytes() {
-    std::ifstream in(fixturePath(), std::ios::binary);
+inline std::string cffFixturePath() {
+    return std::string(CARVETTO_TEXT_FIXTURE_DIR) + "/CarvettoTestCFF-Regular.otf";
+}
+
+inline std::vector<std::uint8_t> fontBytes(const std::string& path = std::string()) {
+    std::ifstream in(path.empty() ? fixturePath() : path, std::ios::binary);
     REQUIRE(in.good());
     return std::vector<std::uint8_t>(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
 }
@@ -33,6 +37,12 @@ inline std::vector<std::uint8_t> fontBytes() {
 inline Font loadTestFont() {
     const std::vector<std::uint8_t> bytes = fontBytes();
     FontLoad r = Font::load(bytes);
+    REQUIRE(r.ok());
+    return std::move(r.font);
+}
+
+inline Font loadCffFont() {
+    FontLoad r = Font::load(fontBytes(cffFixturePath()));
     REQUIRE(r.ok());
     return std::move(r.font);
 }

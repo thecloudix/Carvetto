@@ -35,6 +35,8 @@ public:
 
     /// Checks font, style and limits (not the text). False with `out.status` set on failure.
     bool validate();
+    /// Refuses (TextTooLong) text of more than the byte limit; call before copying or scanning it.
+    bool checkTextSize(std::size_t bytes);
     /// Splits `text` at "\n", "\r\n" and "\r", counting code points and applying the size limits.
     /// False with `out.status` set on failure.
     bool scan(std::string_view text, std::vector<LineRange>& lines);

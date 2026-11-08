@@ -18,13 +18,20 @@ and radians, and bounded work on hostile fonts and strings.
   `LICENSE.TXT` states, compatible with GPLv3, and Carvetto is GPL-3.0-or-later. The FTL's advertising
   clause is satisfied by the credit line in `THIRD_PARTY_NOTICES.md` ("portions of this software are
   copyright The FreeType Project, www.freetype.org. All rights reserved"), which must ship with
-  binaries. Built with `FT_DISABLE_{ZLIB,BZIP2,PNG,HARFBUZZ,BROTLI}`: no compressed (gzip, WOFF,
-  WOFF2) fonts and no colour/bitmap formats.
+  binaries. Built with `FT_DISABLE_{ZLIB,BZIP2,PNG,HARFBUZZ,BROTLI}`; additionally our own option header
+  (`core/src/text/freetype_options.h`, selected with `FT_CONFIG_OPTIONS_H`) undefines
+  `FT_CONFIG_OPTION_USE_ZLIB` (so the bundled zlib is not compiled in: no gzip, WOFF; WOFF2 needs Brotli)
+  and `FT_CONFIG_OPTION_ENVIRONMENT_PROPERTIES` (FreeType would otherwise read `FREETYPE_PROPERTIES`).
+  FreeType's other drivers (Type 1, CID, BDF, PCF, ...) are still compiled into the library but are
+  unreachable, because `Font::load` only passes sfnt-magic data on. FreeType's debug-level getenv
+  paths (`FT2_DEBUG`, ...) exist only in builds defining `FT_DEBUG_LEVEL_*`, which we do not.
 - **HarfBuzz 15.1.0** ("Old MIT" licence, GPL compatible), release tarball pinned by SHA-256, built
   from its single-file amalgamation (`src/harfbuzz.cc`) as a private static library
   `carvetto_harfbuzz`: no FreeType/GLib/ICU/CoreText/DirectWrite back ends, no subsetter, no
   upstream CMake. Shaping uses HarfBuzz's built-in Unicode data and OpenType code only, so it does
-  not depend on the operating system.
+  not depend on the operating system. It is compiled with `HB_NO_GETENV` (no `HB_SHAPER_LIST`,
+  `HB_FACE_LOADER` or `HB_FONT_FUNCS`) and shaping calls `hb_shape_full` with the explicit shaper list
+  `{"ot"}`. A test sets these variables (and `FREETYPE_PROPERTIES`) in-process and requires identical hashes.
 - Both are PRIVATE dependencies of `carvetto_core` and SYSTEM includes; no FreeType or HarfBuzz header
   is included from a public Carvetto header. Neither is vendored in the repository: CI and the cloud
   workspace can reach github.com (as for Clipper2, Catch2 and miniz).
@@ -49,6 +56,8 @@ and radians, and bounded work on hostile fonts and strings.
   `C2 = (P2 + 2Q) / 3`, before scaling. Contours are closed lines/cubics; zero-length lines are dropped.
 - Orientation is normalised: outer contours counter-clockwise (positive area), holes clockwise, for
   TrueType-style (FreeType default) and PostScript-style (`FT_OUTLINE_REVERSE_FILL`) outlines.
+- Hostile line-break floods are linear: the byte limit is checked before any copy, and text on a
+  curve converts line breaks to spaces in one pass (a CPU-time test covers both entry points).
 - Shaping language is fixed (`TextStyle::language`, default "en"), never the process locale
   (`hb_buffer_guess_segment_properties` would otherwise ask `setlocale`). Script and direction are
   guessed from the text by HarfBuzz's own tables, or forced by `TextStyle::direction`.

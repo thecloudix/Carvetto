@@ -86,7 +86,8 @@ endif()
 # FreeType 2.14.3 (FreeType License, used under that option: it is GPL-3.0 compatible; ADR-0033) -
 # parses TrueType/OpenType fonts and decomposes glyph outlines. Pinned release tag (commit
 # 0a0221a1347e2f1e07c395263540026e9a0aa7c7). Optional compression/PNG/HarfBuzz back ends are
-# disabled: no zlib, bzip2, PNG, Brotli, so WOFF/WOFF2/gzip fonts are refused by core/text.
+# disabled and FT_CONFIG_OPTION_USE_ZLIB / ENVIRONMENT_PROPERTIES are undefined (freetype_options.h), so
+# gzip/WOFF/WOFF2 fonts are unsupported (and refused by core/text before FreeType sees them).
 include(FetchContent)
 FetchContent_Declare(
   freetype
@@ -104,6 +105,10 @@ FetchContent_MakeAvailable(freetype)
 set_target_properties(freetype PROPERTIES
   INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${freetype_SOURCE_DIR}/include>")
 set_target_properties(freetype PROPERTIES POSITION_INDEPENDENT_CODE ON)
+# Our own option set (src/text/freetype_options.h): no FREETYPE_PROPERTIES environment variable and
+# no zlib/gzip/WOFF code, for the library and for every translation unit that includes its headers.
+target_compile_definitions(freetype PUBLIC
+  "FT_CONFIG_OPTIONS_H=\"${CMAKE_CURRENT_SOURCE_DIR}/src/text/freetype_options.h\"")
 
 # HarfBuzz 15.1.0 (Old MIT licence; ADR-0033) - text shaping. Pinned release tarball by SHA256 and
 # built as a small private static library from its single-file amalgamation (src/harfbuzz.cc); no
@@ -119,6 +124,8 @@ FetchContent_MakeAvailable(harfbuzz)
 add_library(carvetto_harfbuzz STATIC ${harfbuzz_SOURCE_DIR}/src/harfbuzz.cc)
 target_include_directories(carvetto_harfbuzz SYSTEM PUBLIC ${harfbuzz_SOURCE_DIR}/src)
 set_target_properties(carvetto_harfbuzz PROPERTIES POSITION_INDEPENDENT_CODE ON)
+# HarfBuzz must not read HB_SHAPER_LIST / HB_FACE_LOADER / HB_FONT_FUNCS from the environment.
+target_compile_definitions(carvetto_harfbuzz PRIVATE HB_NO_GETENV)
 if(NOT MSVC)
   # Optimised even in Debug (shaping a long string is otherwise slow in unoptimised template code).
   target_compile_options(carvetto_harfbuzz PRIVATE -O2)

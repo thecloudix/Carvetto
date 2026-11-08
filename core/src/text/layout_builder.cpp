@@ -128,6 +128,13 @@ bool LayoutBuilder::addWork(std::uint64_t n) {
     return true;
 }
 
+bool LayoutBuilder::checkTextSize(std::size_t bytes) {
+    if (bytes > maxTextBytes_) {
+        return fail(TextStatus::TextTooLong, "text is longer than the limit");
+    }
+    return true;
+}
+
 bool LayoutBuilder::scan(std::string_view text, std::vector<LineRange>& lines) {
     if (text.size() > maxTextBytes_) {
         return fail(TextStatus::TextTooLong, "text is longer than the limit");
@@ -186,7 +193,9 @@ bool LayoutBuilder::shape(std::string_view line, std::size_t base, std::vector<S
     kernOff.value = 0;
     kernOff.start = HB_FEATURE_GLOBAL_START;
     kernOff.end = HB_FEATURE_GLOBAL_END;
-    hb_shape(impl->hbFont, buf, style_.kerning ? nullptr : &kernOff, style_.kerning ? 0u : 1u);
+    // Explicit shaper list: never HB_SHAPER_LIST (also compiled out with HB_NO_GETENV) or the build's defaults.
+    static const char* const kShapers[] = {"ot", nullptr};
+    hb_shape_full(impl->hbFont, buf, style_.kerning ? nullptr : &kernOff, style_.kerning ? 0u : 1u, kShapers);
 
     unsigned int n = 0;
     const hb_glyph_info_t* infos = hb_buffer_get_glyph_infos(buf, &n);
