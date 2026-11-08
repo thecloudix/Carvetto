@@ -6,6 +6,8 @@
 
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
+#include <mutex>
 #include <thread>
 
 #include "carvetto/viewmodel/toolpath_runner.hpp"
@@ -69,37 +71,110 @@ TEST_CASE("runner: a batch runs on a worker and equals the synchronous result", 
     CHECK(out.ok);
 }
 
-TEST_CASE("runner: cancel before the run skips the jobs", "[toolpath][runner]") {
+TEST_CASE("runner: cancel while the first job runs skips the others", "[toolpath][runner]") {
     Setup s;
     std::vector<ToolpathJob> jobs;
     for (int i = 0; i < 3; ++i) {
         jobs.push_back(s.session.prepare(s.def()));
     }
+    std::mutex m;
+    std::condition_variable cv;
+    bool started = false;
+    bool release = false;
+    std::atomic<int> calls{0};
     ToolpathRunner runner;
-    REQUIRE(runner.start(std::move(jobs)));
+    REQUIRE(runner.start(
+        std::move(jobs), {},
+        [&](const ToolpathJob& job, const std::atomic<bool>* cancel) {
+            calls.fetch_add(1);
+            {
+                std::unique_lock<std::mutex> lock(m);
+                started = true;
+                cv.notify_all();
+                cv.wait(lock, [&] { return release; });
+            }
+            return job.run(cancel);  // the flag is set by now: the run reports cancelled
+        }));
+    {
+        std::unique_lock<std::mutex> lock(m);
+        cv.wait(lock, [&] { return started; });
+    }
     runner.cancel();
-    auto results = runner.take();  // blocks until done
+    {
+        std::lock_guard<std::mutex> lock(m);
+        release = true;
+    }
+    cv.notify_all();
+    auto results = runner.take();
     REQUIRE(results.has_value());
     REQUIRE(results->size() == 3);
-    // The first job may have started before the flag was set; later ones may not have produced.
-    CHECK((*results)[2].cancelled);
     for (const auto& r : *results) {
-        CHECK((r.cancelled || r.ok));
+        CHECK(r.cancelled);
+        CHECK_FALSE(r.ok);
     }
+    CHECK(calls.load() == 1);  // the other two were skipped, not run
     CHECK(s.doc.toolpaths().empty());
 }
 
-TEST_CASE("runner: destroying a running runner cancels and joins", "[toolpath][runner]") {
+TEST_CASE("runner: destroying a running runner cancels it and does not return before the job ends",
+          "[toolpath][runner]") {
     Setup s;
     std::vector<ToolpathJob> jobs;
-    for (int i = 0; i < 5; ++i) {
-        jobs.push_back(s.session.prepare(s.def()));
-    }
+    jobs.push_back(s.session.prepare(s.def()));
+    std::atomic<bool> inJob{false};
+    std::atomic<bool> jobEnded{false};
+    std::atomic<bool> sawCancel{false};
     {
         ToolpathRunner runner;
-        REQUIRE(runner.start(std::move(jobs)));
-    }  // no crash, no leak (ASan)
-    SUCCEED();
+        REQUIRE(runner.start(std::move(jobs), {}, [&](const ToolpathJob&, const std::atomic<bool>* cancel) {
+            inJob.store(true);
+            while (!cancel->load()) {
+                std::this_thread::yield();  // only the destructor's cancel() ends this
+            }
+            sawCancel.store(true);
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            jobEnded.store(true);
+            return ToolpathCalculation{};
+        }));
+        while (!inJob.load()) {
+            std::this_thread::yield();
+        }
+    }  // the destructor must cancel and join
+    CHECK(sawCancel.load());
+    CHECK(jobEnded.load());
+}
+
+TEST_CASE("runner: an exception in a job becomes an error result", "[toolpath][runner]") {
+    Setup s;
+    std::vector<ToolpathJob> jobs;
+    jobs.push_back(s.session.prepare(s.def()));
+    ToolpathRunner runner;
+    REQUIRE(runner.start(std::move(jobs), {}, [](const ToolpathJob&, const std::atomic<bool>*) -> ToolpathCalculation {
+        throw 42;
+    }));
+    auto results = runner.take();
+    REQUIRE(results.has_value());
+    REQUIRE(results->size() == 1);
+    CHECK_FALSE(results->front().ok);
+    CHECK(results->front().hasError());
+}
+
+TEST_CASE("session: targetOf and prepareRecalculateAll report what cannot be recalculated", "[toolpath][runner]") {
+    Setup s;
+    const ToolpathOutcome added = s.session.add(s.def());
+    REQUIRE(added.ok);
+    const document::ToolpathId id = added.ids.front();
+    CHECK(s.session.targetOf(id) == id);
+    CHECK_FALSE(s.session.targetOf(document::ToolpathId{9999}).has_value());
+    CHECK(s.session.prepareRecalculateAll(false).size() == 1);
+    // The tool leaves the database: the toolpath is listed but cannot be recalculated.
+    s.session.setToolDatabase(tooling::ToolDatabase{});
+    std::vector<ToolpathOutcome> refused;
+    CHECK(s.session.prepareRecalculateAll(false, &refused).empty());
+    REQUIRE(refused.size() == 1);
+    CHECK_FALSE(refused.front().ok);
+    CHECK_FALSE(refused.front().message.empty());
+    CHECK(refused.front().ids == std::vector<document::ToolpathId>{id});
 }
 
 TEST_CASE("runner: the document may change or die while a job runs; apply refuses the stale result",

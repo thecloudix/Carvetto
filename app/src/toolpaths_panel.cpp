@@ -47,20 +47,15 @@ QString qs(const std::string& s) {
 
 constexpr int kIdRole = Qt::UserRole + 1;
 
-const char* operationLabel(ToolpathOperation op) {
-    switch (op) {
-        case ToolpathOperation::Profile:
-            return "Profile";
-        case ToolpathOperation::Pocket:
-            return "Pocket";
-        case ToolpathOperation::Drill:
-            return "Drill";
-        case ToolpathOperation::Engrave:
-            return "Engrave";
-        case ToolpathOperation::VCarving:
-            return "V-Carve";
+/// Drops repeated "; "-separated parts (the same refusal can be reported for several vectors).
+QString uniqueParts(const QString& text) {
+    QStringList seen;
+    for (const QString& part : text.split(QStringLiteral("; "), Qt::SkipEmptyParts)) {
+        if (!seen.contains(part)) {
+            seen << part;
+        }
     }
-    return "?";
+    return seen.join(QStringLiteral("; "));
 }
 
 QString durationText(double seconds) {
@@ -259,6 +254,14 @@ QAction* ToolpathsPanel::addAction(ToolpathOperation operation) const {
     return it == addActions_.end() ? nullptr : it->second;
 }
 
+void ToolpathsPanel::showClosing() {
+    if (busy_) {
+        busyLabel_->setText(QStringLiteral("Closing... (waiting for the calculation to stop)"));
+        busyLabel_->setVisible(true);
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+    }
+}
+
 ToolpathFormDialog* ToolpathsPanel::formDialog() const {
     return dialog_.data();
 }
@@ -275,7 +278,8 @@ QString ToolpathsPanel::statusText() const {
 void ToolpathsPanel::setStatus(const QString& text, bool error) {
     status_ = text;
     statusError_ = error;
-    statusLabel_->setText(text);
+    status_ = uniqueParts(text);
+    statusLabel_->setText(status_);
     statusLabel_->setStyleSheet(error ? QStringLiteral("color: #b00020;") : QString());
 }
 
@@ -378,11 +382,7 @@ void ToolpathsPanel::rebuildDiagnostics() {
     const auto add = [this](const ToolpathMessage& m, const QString& prefix) {
         QString text = QStringLiteral("%1%2: %3").arg(prefix, severityText(m.severity), qs(m.text));
         if (m.vector.has_value()) {
-            text += QStringLiteral(" (vector %1").arg(static_cast<qulonglong>(m.vector->value));
-            if (m.contour.has_value()) {
-                text += QStringLiteral(", contour %1").arg(static_cast<qulonglong>(*m.contour));
-            }
-            text += QLatin1Char(')');
+            text += QStringLiteral(" [object %1]").arg(static_cast<qulonglong>(m.vector->value));
         }
         auto* item = new QListWidgetItem(text, diagnostics_);
         if (m.vector.has_value()) {
@@ -605,8 +605,10 @@ void ToolpathsPanel::finishRun() {
     std::optional<std::vector<viewmodel::ToolpathCalculation>> results = runner_.take();
     const Pending pending = pending_;
     pending_ = Pending{};
-    if (!results.has_value()) {
+    if (!results.has_value() || results->empty()) {
         setBusy(false, QString());
+        setStatus(QStringLiteral("The calculation produced no result (out of memory?)."), true);
+        refresh();
         return;
     }
     if (pending.generation != generation_ || doc_ == nullptr) {
@@ -672,10 +674,13 @@ void ToolpathsPanel::finishRun() {
             }
             return;
         }
-        ToolpathMessage why;
-        why.severity = MessageSeverity::Error;
-        why.text = out.message;
-        lastMessages_.push_back(why);
+        // The outcome's message repeats the calculation's error messages; add it only when it says more.
+        if (!calc.hasError()) {
+            ToolpathMessage why;
+            why.severity = MessageSeverity::Error;
+            why.text = out.message;
+            lastMessages_.push_back(why);
+        }
         for (const ToolpathMessage& m : calc.messages) {
             lastMessages_.push_back(m);
         }

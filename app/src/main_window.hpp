@@ -64,6 +64,8 @@ class MainWindow : public QMainWindow {
     TransformMenu* transformMenu() const { return transformMenu_.get(); }
     QDockWidget* toolpathsDock() const { return toolpathsDock_; }
     ToolpathsPanel* toolpaths() const { return toolpaths_; }
+    QAction* undoAction() const { return undoAction_; }
+    QAction* redoAction() const { return redoAction_; }
     QDockWidget* layersDock() const { return layersDock_; }
     ToolPanel* toolPanel() const { return toolPanel_; }
 

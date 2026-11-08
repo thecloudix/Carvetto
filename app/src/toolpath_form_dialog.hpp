@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "carvetto/document/ids.hpp"
+#include "carvetto/document/toolpath_record.hpp"
 #include "carvetto/tooling/tool_database.hpp"
 #include "carvetto/viewmodel/toolpath_form.hpp"
 
@@ -23,6 +24,9 @@ class QVBoxLayout;
 class QWidget;
 
 namespace carvetto::app {
+
+/// Human name of an operation ("Profile", "V-Carve", ...).
+const char* operationLabel(document::ToolpathOperation operation);
 
 /// What the form needs to know about the document, copied so the dialog never holds a reference to
 /// it (the document can be replaced while the dialog is open; the panel then closes the dialog).

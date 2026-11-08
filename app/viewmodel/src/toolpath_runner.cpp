@@ -13,16 +13,21 @@ ToolpathRunner::~ToolpathRunner() {
     }
 }
 
-bool ToolpathRunner::start(std::vector<ToolpathJob> jobs, std::function<void()> onFinished) {
+bool ToolpathRunner::start(std::vector<ToolpathJob> jobs, std::function<void()> onFinished, Executor executor) {
     if (state_ != nullptr) {
         return false;
     }
     auto state = std::make_shared<State>();
     state->jobs = std::move(jobs);
     state->onFinished = std::move(onFinished);
+    state->executor = std::move(executor);
     try {
         worker_ = std::thread([state]() {
-            state->results.reserve(state->jobs.size());
+            try {
+                state->results.reserve(state->jobs.size());
+            } catch (...) {
+            }
+            try {
             for (const ToolpathJob& job : state->jobs) {
                 if (state->cancel.load()) {
                     ToolpathCalculation skipped;
@@ -33,21 +38,28 @@ bool ToolpathRunner::start(std::vector<ToolpathJob> jobs, std::function<void()> 
                     continue;
                 }
                 try {
-                    state->results.push_back(job.run(&state->cancel));
-                } catch (const std::exception& e) {
+                    state->results.push_back(state->executor ? state->executor(job, &state->cancel)
+                                                             : job.run(&state->cancel));
+                } catch (...) {
                     ToolpathCalculation failed;
                     failed.definition = job.definition;
                     failed.target = job.target;
                     ToolpathMessage m;
                     m.severity = MessageSeverity::Error;
-                    m.text = std::string("calculation failed: ") + e.what();
+                    m.text = "calculation failed (out of memory or an internal error)";
                     failed.messages.push_back(std::move(m));
                     state->results.push_back(std::move(failed));
                 }
             }
+            } catch (...) {
+                // even recording a failure ran out of memory: the batch ends with what it has
+            }
             state->done.store(true);
-            if (state->onFinished) {
-                state->onFinished();
+            try {
+                if (state->onFinished) {
+                    state->onFinished();
+                }
+            } catch (...) {
             }
         });
     } catch (const std::exception&) {

@@ -25,6 +25,22 @@ using document::ToolpathOperation;
 using viewmodel::ToolpathField;
 using viewmodel::ToolpathFieldKind;
 
+const char* operationLabel(ToolpathOperation op) {
+    switch (op) {
+        case ToolpathOperation::Profile:
+            return "Profile";
+        case ToolpathOperation::Pocket:
+            return "Pocket";
+        case ToolpathOperation::Drill:
+            return "Drill";
+        case ToolpathOperation::Engrave:
+            return "Engrave";
+        case ToolpathOperation::VCarving:
+            return "V-Carve";
+    }
+    return "?";
+}
+
 namespace {
 
 QString qs(const std::string& s) {
@@ -50,7 +66,7 @@ ToolpathFormDialog::ToolpathFormDialog(viewmodel::ToolpathForm form, tooling::To
                                        bool editing, QWidget* parent)
     : QDialog(parent), form_(std::move(form)), db_(std::move(db)), info_(std::move(info)), editing_(editing) {
     setObjectName(QStringLiteral("ToolpathFormDialog"));
-    setWindowTitle(QStringLiteral("%1 toolpath").arg(QString::fromUtf8(viewmodel::operationName(form_.operation()))));
+    setWindowTitle(QStringLiteral("%1 toolpath").arg(QString::fromUtf8(operationLabel(form_.operation()))));
     form_.refreshTools(db_);
     buildStatic();
     rebuildParameters();

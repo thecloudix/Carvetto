@@ -32,7 +32,9 @@ class ToolpathRunner {
     /// Starts `jobs` on a worker thread. False (nothing started) when a batch is already running
     /// or its result has not been taken. `onFinished` (optional) is called on the worker thread
     /// after the last job; it must not touch the runner.
-    bool start(std::vector<ToolpathJob> jobs, std::function<void()> onFinished = {});
+    /// `executor` (optional, for tests) replaces `job.run(cancel)` as the way one job is run.
+    using Executor = std::function<ToolpathCalculation(const ToolpathJob&, const std::atomic<bool>*)>;
+    bool start(std::vector<ToolpathJob> jobs, std::function<void()> onFinished = {}, Executor executor = {});
     /// Asks the batch to stop (no effect when idle).
     void cancel();
     /// True from `start` until `take`.
@@ -50,6 +52,7 @@ class ToolpathRunner {
         std::atomic<bool> cancel{false};
         std::atomic<bool> done{false};
         std::function<void()> onFinished;
+        Executor executor;
     };
     std::shared_ptr<State> state_;
     std::thread worker_;

@@ -192,6 +192,8 @@ std::string toolpathsSelfTest(MainWindow& window) {
     panel->recalculateAction()->trigger();
     ST_REQUIRE(panel->busy(), "recalculate did not start");
     ST_REQUIRE(!window.undo(), "Undo ran during a calculation");
+    ST_REQUIRE(!window.undoAction()->isEnabled() && !window.redoAction()->isEnabled(),
+               "Undo / Redo actions are enabled during a calculation");
     ST_REQUIRE(doc.execute(std::make_unique<document::TransformObjectsCommand>(
                    std::vector<document::ObjectId>{big}, geometry::Transform2::translation({0, -5}))),
                "could not edit during the calculation");
@@ -203,10 +205,12 @@ std::string toolpathsSelfTest(MainWindow& window) {
 
     // 8. Cancel: either cancelled (nothing changes) or already done (one step), never both.
     {
+        ST_REQUIRE(window.undo() && window.redoAction()->isEnabled(), "could not set up a redoable step");
         const std::size_t n = doc.undoStack().index();
         panel->selectToolpath(heavy);
         panel->recalculateAction()->trigger();
         ST_REQUIRE(panel->busy(), "recalculate did not start (cancel test)");
+        ST_REQUIRE(!window.redo() && !window.redoAction()->isEnabled(), "Redo ran or is enabled during a calculation");
         panel->cancelAction()->trigger();
         ST_REQUIRE(panel->waitIdle(120000), "the cancelled calculation did not finish");
         const std::size_t now = doc.undoStack().index();

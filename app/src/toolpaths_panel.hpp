@@ -46,6 +46,8 @@ class ToolpathsPanel : public QWidget {
     /// Rebinds to another document (the old one may already be destroyed: nothing of it is
     /// touched). Cancels a running calculation and discards its result; closes an open form.
     void setDocument(document::Document* doc);
+    /// Shows "Closing..." while the window waits for the worker to stop.
+    void showClosing();
     /// Re-reads the list, summary and diagnostics after the document changed.
     void refresh();
     /// Forgets cached staleness after a change made without a command (active sheet), then refreshes.

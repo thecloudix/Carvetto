@@ -686,6 +686,9 @@ void MainWindow::closeEvent(QCloseEvent* event) {
         QSettings settings;
         saveLayout(settings);
     }
+    if (toolpaths_ != nullptr) {
+        toolpaths_->showClosing();
+    }
     QMainWindow::closeEvent(event);
 }
 

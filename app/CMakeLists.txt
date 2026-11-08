@@ -29,15 +29,15 @@ qt_add_executable(carvetto
   src/node_edit_menu.hpp
   src/tool_panel.cpp
   src/tool_panel.hpp
+  src/toolpath_form_dialog.cpp
+  src/toolpath_form_dialog.hpp
+  src/toolpaths_panel.cpp
+  src/toolpaths_panel.hpp
+  src/toolpaths_self_test.cpp
   src/self_test.cpp
   src/self_test.hpp
   src/starter_tools.hpp
   ${CMAKE_CURRENT_BINARY_DIR}/app_starter_tools_embedded.cpp
-  src/toolpath_form_dialog.cpp
-  src/toolpath_form_dialog.hpp
-  src/toolpaths_panel.cpp
-  src/toolpaths_self_test.cpp
-  src/toolpaths_panel.hpp
   src/transform_menu.cpp
   src/transform_menu.hpp
   src/vector_ops_menu.cpp
