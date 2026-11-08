@@ -24,6 +24,14 @@ Work is organised as tasks in `docs/BACKLOG.md`, executed by coder agents and ch
 4. A `docs/adr/NNNN-*.md` file when the change makes an architectural decision.
 5. A row in `THIRD_PARTY_NOTICES.md` when the change adds a third-party dependency.
 
+## CI, caching and reruns
+
+Every dependency is fetched by CMake `FetchContent` at configure time, pinned by tag or by `URL_HASH SHA256` (never relax a pin to get past an outage). GitHub release assets sometimes answer 503/504; that is not a code failure.
+
+- **Cache (T-0232).** Each CI job restores `.fc-src/` with `actions/cache`, keyed on the OS (and runner image) plus a hash of every `CMakeLists.txt` that declares a dependency (`core/`, `core/tests/`, `app/**`). `tools/ci/configure.sh` (Linux) and `tools/ci/configure.ps1` (Windows) pass `-DFETCHCONTENT_SOURCE_DIR_<NAME>=.fc-src/<name>-src` for each cached source tree, so a cache hit needs no network access. After a successful configure the scripts copy newly downloaded `_deps/*-src` trees into `.fc-src/`, and the cache is saved when the job ends green. Only source trees are cached, never build directories. Changing a version or hash in a declaration changes the key and forces a fresh, hash-verified download. When you add a dependency, put its `FetchContent_Declare` in a `CMakeLists.txt` under `core/` or `app/` so the key covers it. ccache is deliberately not used: it does not help the outage and adds floating-point/compiler-flag cache-poisoning risk to the Release matrix.
+- **Retry.** If configure fails and its log shows a download or network error (HTTP 5xx, DNS, TLS, timeout, git clone/fetch failure), the scripts re-run it up to 3 attempts in total with 15 s and 45 s backoff and print a `::warning`. Any other failure (a SHA256 mismatch, a CMake error) fails immediately. Run `tools/ci/configure.sh -S . -B build ...` locally to see the same behaviour.
+- **Rerun policy.** A red job whose annotation or `configure.log` tail shows a download error after three attempts is an infrastructure failure: use "Re-run failed jobs" once or twice, don't change code, and don't merge around a red check. A job failing for any other reason is a real failure, whatever it looks like.
+
 ## Code conventions
 
 - C++20, warnings as errors (`-Wall -Wextra -Werror` / `/W4 /WX`).

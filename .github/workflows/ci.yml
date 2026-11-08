@@ -28,8 +28,14 @@ jobs:
           fi
       - name: Install tools
         run: sudo apt-get update && sudo apt-get install -y ninja-build
+      # T-0232: FetchContent source trees (restored => no download); key = the pinned declarations.
+      - name: Cache FetchContent sources
+        uses: actions/cache@v4
+        with:
+          path: .fc-src
+          key: fc-src-linux-core-${{ hashFiles('core/CMakeLists.txt', 'core/tests/CMakeLists.txt', 'app/**/CMakeLists.txt') }}
       - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCARVETTO_BUILD_APP=OFF
+        run: tools/ci/configure.sh -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCARVETTO_BUILD_APP=OFF
       - name: Build
         run: cmake --build build
       - name: Test
@@ -147,8 +153,14 @@ jobs:
         with:
           version: '6.7.*'
           cache: true
+      # T-0232: FetchContent source trees (restored => no download); key = the pinned declarations.
+      - name: Cache FetchContent sources
+        uses: actions/cache@v4
+        with:
+          path: .fc-src
+          key: fc-src-${{ matrix.os }}-${{ hashFiles('core/CMakeLists.txt', 'core/tests/CMakeLists.txt', 'app/**/CMakeLists.txt') }}
       - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release 2>&1 | tee configure.log || (echo "::error title=CMake configure failed::$(tail -30 configure.log | tr '\n' '|')"; exit 1)
+        run: tools/ci/configure.sh -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build
         run: |
           set -o pipefail
@@ -176,15 +188,15 @@ jobs:
           arch: x64
       - name: Install Ninja
         run: choco install ninja --no-progress -y
+      # T-0232: FetchContent source trees (restored => no download); key = the pinned declarations.
+      - name: Cache FetchContent sources
+        uses: actions/cache@v4
+        with:
+          path: .fc-src
+          key: fc-src-windows-${{ hashFiles('core/CMakeLists.txt', 'core/tests/CMakeLists.txt', 'app/**/CMakeLists.txt') }}
       - name: Configure
         shell: pwsh
-        run: |
-          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release 2>&1 | Tee-Object -FilePath configure.log
-          if ($LASTEXITCODE -ne 0) {
-            $tail = (Get-Content configure.log -Tail 40) -join '%0A'
-            Write-Host "::error title=CMake configure failed::$tail"
-            exit 1
-          }
+        run: tools/ci/configure.ps1 -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build
         shell: pwsh
         run: |
