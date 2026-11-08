@@ -32,8 +32,10 @@ struct DxfImportOutcome {
     /// Layers created (DXF layers whose name did not exist in the document are added; layers with
     /// an existing name are reused).
     std::size_t layersAdded{0};
-    /// Text items that were not imported (text import is not supported yet).
+    /// Text items that were not imported (no font was given, or the text had no outlines).
     std::size_t textSkipped{0};
+    /// Text objects created from TEXT/MTEXT/ATTRIB items (needs a font, see `importDxfIntoDocument`).
+    std::size_t textAdded{0};
     /// Import warnings, each one line ("line N: ... (xK)"), plus a note about skipped text.
     std::vector<std::string> warnings;
 };
@@ -42,10 +44,20 @@ struct DxfImportOutcome {
 /// layers are matched to document layers by name (new ones are added with their colour and
 /// visibility), every contour becomes a vector object, and the new objects become the selection.
 /// `forcedMmPerUnit` overrides the file's units. On failure (unreadable file, id space exhausted)
-/// the document is left untouched. A drawing without contours succeeds with a warning and adds
-/// nothing (no undo step).
+/// the document is left untouched. A drawing without contours or text succeeds with a warning and
+/// adds nothing (no undo step).
+///
+/// Text (T-0211): with non-empty `textFontBytes` (a TTF/OTF the caller chose; DXF font names are
+/// never resolved against system fonts) every TEXT/MTEXT/ATTRIB item becomes a Text object, embedded
+/// with that font, inside the same undo step. Mapping: character height -> em size via the font's cap
+/// height ("H", 0.7 em when the font has no H); rotation, width factor and mirroring -> the object's
+/// placement; left/centre/right justification -> alignment; top/middle vertical attachment moves the
+/// first baseline down by the character height (or half of it); MTEXT with a reference width -> text
+/// in a box of that width. Aligned/Fit/Middle horizontal modes use centre/left alignment and the
+/// second alignment point is ignored. Without font bytes the text is skipped with a warning.
 DxfImportOutcome importDxfIntoDocument(document::Document& doc, std::span<const std::uint8_t> bytes,
-                                       std::optional<double> forcedMmPerUnit = std::nullopt);
+                                       std::optional<double> forcedMmPerUnit = std::nullopt,
+                                       std::span<const std::uint8_t> textFontBytes = {});
 
 /// Result of `exportDocumentDxf`.
 struct DxfExportOutcome {

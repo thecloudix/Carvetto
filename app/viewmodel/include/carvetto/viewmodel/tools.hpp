@@ -19,6 +19,7 @@
 #include "carvetto/viewmodel/node_edit.hpp"
 #include "carvetto/viewmodel/selection_tools.hpp"
 #include "carvetto/viewmodel/snapping.hpp"
+#include "carvetto/viewmodel/text_tool.hpp"
 #include "carvetto/viewmodel/transform_gesture.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
 
@@ -76,7 +77,7 @@ enum class CursorHint {
     Pivot
 };
 
-enum class ToolKind { Select, Rectangle, Circle, Ellipse, Polygon, Star, Arc, Polyline, NodeEdit };
+enum class ToolKind { Select, Rectangle, Circle, Ellipse, Polygon, Star, Arc, Polyline, NodeEdit, Text };
 
 /// How the Arc tool defines the arc.
 enum class ArcMode {
@@ -204,6 +205,8 @@ class ToolController {
     /// Second click of a double-click. Polyline: adds the point and finishes. Other tools: a press.
     ToolResult doubleClick(geometry::Vec2 px, Modifiers mods = {});
     ToolResult key(ToolKey k);
+    /// Text tool: types characters (UTF-8) into the open text draft; refused when there is none.
+    ToolResult typeText(std::string_view utf8);
 
     // --- State for the overlay --------------------------------------------------------------
     /// True when the tool would act on Escape / Enter / Backspace / Close now (a shape is in
@@ -221,6 +224,12 @@ class ToolController {
     /// The node editor behind `ToolKind::NodeEdit`: handles for painting, operations, keys.
     NodeEditor& nodeEditor() { return nodeEditor_; }
     const NodeEditor& nodeEditor() const { return nodeEditor_; }
+    // --- Text (T-0211, text_tool.hpp) ---------------------------------------------------------
+    /// The text editor behind `ToolKind::Text`: settings, font, typing, commit. Pointer events reach
+    /// it through this controller (snapped); `ToolKey::Enter` commits the draft, Escape drops it and
+    /// Backspace deletes the last character.
+    TextEditor& textEditor() { return textEditor_; }
+    const TextEditor& textEditor() const { return textEditor_; }
     // --- Selection box and transform gestures (Select tool) ------------------------------------
     /// Handles of the selection box when the Select tool is active and something can be
     /// transformed; nullopt otherwise.
@@ -277,6 +286,7 @@ class ToolController {
     void updatePointer(geometry::Vec2 px, Modifiers mods);
     const SnapIndex& snapIndex();
     ToolResult afterNodeEdit(const NodeEditResult& r);
+    static ToolResult fromText(const TextEditResult& r);
     ToolResult selectPress(geometry::Vec2 px, Modifiers mods);
     ToolResult selectRelease(geometry::Vec2 px, Modifiers mods);
     ToolResult shapePress(Modifiers mods);
@@ -288,6 +298,7 @@ class ToolController {
 
     document::Document* doc_{nullptr};
     NodeEditor nodeEditor_;
+    TextEditor textEditor_;
     ViewTransform view_;
     ToolKind tool_{ToolKind::Select};
     ToolOptions options_;

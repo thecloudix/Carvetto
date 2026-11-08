@@ -75,9 +75,44 @@ struct StarParams {
     bool operator==(const StarParams&) const = default;
 };
 
+/// Horizontal alignment of text lines about the anchor (point text), the box edges or centre (text
+/// in a box), or the start offset along the guide (text on a curve).
+enum class TextAlign { Left, Centre, Right };
+
+/// How the text is placed (T-0211, ADR-0033 amendment A1).
+enum class TextMode {
+    Point,  ///< Lines grow from a baseline anchor at the local origin; no wrapping.
+    Box,    ///< Wrapped to `boxWidthMm`; the box spans x in [0, w], y in [-h, 0] of the local frame.
+    Curve,  ///< One line set along `guide` (a snapshot of the guide contour in the local frame).
+};
+
+/// A text object: the string and everything needed to lay it out again. The object's contours (the
+/// glyph outlines, a cached derived view, see `buildTextContours`) are stored next to it in the
+/// `VectorObject`, so every geometry operation and toolpath works on text unchanged; this record
+/// is what the text tool edits. Layout happens in a local frame and `placement` maps it into the
+/// sheet, so moving, rotating, scaling or mirroring the object only composes into `placement`.
+struct TextParams {
+    std::string text;     ///< UTF-8; line feed separates lines/paragraphs.
+    std::string fontKey;  ///< Key of an embedded font in `Document::fonts()`.
+    double sizeMm{10.0};  ///< Em size in mm.
+    TextAlign align{TextAlign::Left};
+    double letterSpacingMm{0.0};
+    double lineSpacing{1.0};
+    bool kerning{true};
+    TextMode mode{TextMode::Point};
+    double boxWidthMm{0.0};   ///< Box mode.
+    double boxHeightMm{0.0};  ///< Box mode (informational: overflow is reported, not clipped).
+    std::optional<ObjectId> guideId;   ///< Curve mode: the object the guide was taken from (informational).
+    geometry::Contour guide;           ///< Curve mode: guide contour in the local frame.
+    double startOffsetMm{0.0};         ///< Curve mode: arc length of the alignment anchor on the guide.
+    geometry::Transform2 placement{};  ///< Local frame -> sheet.
+
+    bool operator==(const TextParams&) const = default;
+};
+
 /// Tagged set of creation parameters.
-using CreationParams =
-    std::variant<NoParams, RectangleParams, CircleParams, EllipseParams, PolygonParams, StarParams>;
+using CreationParams = std::variant<NoParams, RectangleParams, CircleParams, EllipseParams, PolygonParams,
+                                    StarParams, TextParams>;
 
 // ---------------------------------------------------------------------------------------------
 // Object payloads.

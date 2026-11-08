@@ -17,6 +17,8 @@ add_executable(carvetto_viewmodel_tests
   ruler_test.cpp
   save_toolpaths_test.cpp
   tools_test.cpp
+  text_tool_test.cpp
+  text_dxf_test.cpp
   transform_form_test.cpp
   transform_gesture_test.cpp
   transform_ops_test.cpp
@@ -46,6 +48,7 @@ endif()
 target_compile_definitions(carvetto_viewmodel_tests PRIVATE
   CARVETTO_CLI_DATA_DIR="${PROJECT_SOURCE_DIR}/app/cli/tests/data"
   CARVETTO_VM_WORK_DIR="${CMAKE_CURRENT_BINARY_DIR}/work"
+  CARVETTO_TEXT_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/core/tests/fixtures/text"
   CARVETTO_DXF_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/core/tests/fixtures/dxf"
   CARVETTO_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts"
   CARVETTO_STARTER_TOOLS="${PROJECT_SOURCE_DIR}/data/tools/starter_tools.json"

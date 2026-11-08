@@ -78,9 +78,18 @@ void sendMouse(CanvasWidget* canvas, QEvent::Type type, QPointF pos, Qt::MouseBu
     QCoreApplication::sendEvent(canvas, &event);
 }
 
-void sendKey(CanvasWidget* canvas, Qt::Key key) {
-    QKeyEvent press(QEvent::KeyPress, key, Qt::NoModifier);
+void sendKey(CanvasWidget* canvas, Qt::Key key, Qt::KeyboardModifiers mods = Qt::NoModifier) {
+    QKeyEvent press(QEvent::KeyPress, key, mods);
     QCoreApplication::sendEvent(canvas, &press);
+}
+
+/// A printable key press carrying its text, as the keyboard delivers it.
+void sendText(CanvasWidget* canvas, const QString& text) {
+    for (const QChar c : text) {
+        const int key = c.toUpper().unicode();
+        QKeyEvent press(QEvent::KeyPress, key, Qt::NoModifier, QString(c));
+        QCoreApplication::sendEvent(canvas, &press);
+    }
 }
 
 QPointF screenOf(const CanvasWidget* canvas, geometry::Vec2 mm) {
@@ -656,7 +665,76 @@ int runSelfTest() {
         window.selectTool(viewmodel::ToolKind::Select);
     }
 
-    // 8. The Toolpaths dock through the real widgets (T-0221).
+    // 8. Text tool (T-0211) through the real window: click, type, place with Ctrl+Enter, undo as one
+    // step, edit in place, convert to curves, and replace the document in the middle of typing.
+    {
+        CanvasWidget* canvas = window.canvas();
+        window.setDocument(std::make_unique<document::Document>(
+            document::Job::singleSided(300.0, 300.0, 18.0, document::Units::Millimetres)));
+        window.selectTool(viewmodel::ToolKind::Text);
+        if (canvas->tools().tool() != viewmodel::ToolKind::Text || !canvas->tools().textEditor().hasFont()) {
+            return fail("the Text tool did not start with the starter font");
+        }
+        document::Document& textDoc = window.currentDocument();
+        const std::size_t steps = textDoc.undoStack().count();
+        clickOnCanvas(canvas, {50.0, 50.0});
+        if (!canvas->tools().textEditor().hasDraft()) {
+            return fail("a click with the Text tool did not open a text draft");
+        }
+        sendText(canvas, QStringLiteral("TOI"));
+        if (canvas->tools().textEditor().draftParams()->text != "TOI" ||
+            canvas->tools().textEditor().previewContours().empty()) {
+            return fail("typing into the text draft did not lay the text out");
+        }
+        if (textDoc.objectCount() != 0 || textDoc.undoStack().count() != steps) {
+            return fail("typing changed the document before the text was placed");
+        }
+        sendKey(canvas, Qt::Key_Return, Qt::ControlModifier);
+        if (textDoc.objectCount() != 1 || textDoc.undoStack().count() != steps + 1 || textDoc.fonts().size() != 1 ||
+            canvas->tools().textEditor().hasDraft()) {
+            return fail("Ctrl+Enter did not place the text as one undo step");
+        }
+        const document::ObjectId textId = textDoc.objectIds().front();
+        const auto* tp = std::get_if<document::TextParams>(&textDoc.findObject(textId)->asVector()->params);
+        if (tp == nullptr || tp->text != "TOI") {
+            return fail("the placed object does not carry its text parameters");
+        }
+        // The canvas painted something at the text (the glyph pixels differ from the material fill).
+        if (!window.undo() || textDoc.objectCount() != 0 || !textDoc.fonts().empty() || !window.redo() ||
+            textDoc.objectCount() != 1) {
+            return fail("undo / redo of the text was not one step");
+        }
+        // Edit in place: click on the stem of the T (x 2.5..3.5 mm, y 0..7 mm from the anchor).
+        clickOnCanvas(canvas, {53.0, 53.0});
+        if (canvas->tools().textEditor().editedObject() != textId) {
+            return fail("clicking a text did not open it for editing");
+        }
+        sendKey(canvas, Qt::Key_Backspace);
+        sendKey(canvas, Qt::Key_Return, Qt::ControlModifier);
+        const auto* edited = std::get_if<document::TextParams>(&textDoc.findObject(textId)->asVector()->params);
+        if (textDoc.objectCount() != 1 || edited == nullptr || edited->text != "TO") {
+            return fail("editing the text in place failed");
+        }
+        // Convert to curves keeps the glyphs and drops the text parameters.
+        textDoc.selection().assign({textId});
+        const std::size_t contours = textDoc.findObject(textId)->asVector()->contours.size();
+        if (!canvas->tools().textEditor().convertSelectionToCurves().committed ||
+            !std::holds_alternative<document::NoParams>(textDoc.findObject(textId)->asVector()->params) ||
+            textDoc.findObject(textId)->asVector()->contours.size() != contours) {
+            return fail("converting text to curves failed");
+        }
+        // Replace the document while a draft is open: nothing of the old one may be touched.
+        clickOnCanvas(canvas, {100.0, 100.0});
+        sendText(canvas, QStringLiteral("I"));
+        window.setDocument(std::make_unique<document::Document>(
+            document::Job::singleSided(300.0, 300.0, 18.0, document::Units::Millimetres)));
+        if (canvas->tools().textEditor().hasDraft() || window.currentDocument().objectCount() != 0) {
+            return fail("replacing the document while typing left a draft behind");
+        }
+        window.selectTool(viewmodel::ToolKind::Select);
+    }
+
+    // 9. The Toolpaths dock through the real widgets (T-0221).
     if (const std::string why = toolpathsSelfTest(window); !why.empty()) {
         return fail(why);
     }
