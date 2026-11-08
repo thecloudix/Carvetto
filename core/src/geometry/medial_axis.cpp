@@ -619,7 +619,20 @@ bool finitePoint(Vec2 p) {
     return std::isfinite(p.x) && std::isfinite(p.y);
 }
 
-bool finiteSpan(const Span& s) {
+/// Largest coordinate or radius magnitude a boundary may have (mm; the importer's cap). Larger
+/// input is ignored like non-finite input (T-0182): it is beyond what the arithmetic resolves, and
+/// some of the routines below index by coordinates.
+constexpr double kMaxMagnitude = 1e12;
+
+bool usableValue(double v) {
+    return std::isfinite(v) && std::fabs(v) <= kMaxMagnitude;
+}
+
+bool finitePointU(Vec2 p) {
+    return usableValue(p.x) && usableValue(p.y);
+}
+
+bool rawFiniteSpan(const Span& s) {
     if (const auto* l = std::get_if<LineSpan>(&s)) {
         return finitePoint(l->start) && finitePoint(l->end);
     }
@@ -629,6 +642,18 @@ bool finiteSpan(const Span& s) {
     }
     const auto& b = std::get<BezierSpan>(s);
     return finitePoint(b.p0) && finitePoint(b.p1) && finitePoint(b.p2) && finitePoint(b.p3);
+}
+
+bool finiteSpan(const Span& s) {
+    if (const auto* l = std::get_if<LineSpan>(&s)) {
+        return finitePointU(l->start) && finitePointU(l->end);
+    }
+    if (const auto* a = std::get_if<ArcSpan>(&s)) {
+        return finitePointU(a->centre) && usableValue(a->radius) && std::isfinite(a->startAngle) &&
+               std::isfinite(a->endAngle);
+    }
+    const auto& b = std::get<BezierSpan>(s);
+    return finitePointU(b.p0) && finitePointU(b.p1) && finitePointU(b.p2) && finitePointU(b.p3);
 }
 
 /// True for spans of exactly zero extent (dropped; tiny but non-zero spans are kept).
@@ -806,7 +831,7 @@ private:
     std::pair<std::size_t, std::size_t> rowRange(const Edge& e) const {
         auto row = [&](double y) {
             const double f = std::floor((y - y0_) / rowH_);
-            return static_cast<std::size_t>(std::clamp(f, 0.0, static_cast<double>(rows_ - 1)));
+            return static_cast<std::size_t>(f > 0.0 ? std::min(f, static_cast<double>(rows_ - 1)) : 0.0);
         };
         return {row(std::min(e.a.y, e.b.y)), row(std::max(e.a.y, e.b.y))};
     }
@@ -922,6 +947,7 @@ private:
     Box2 bounds_;
     std::size_t ignored_{0};
     bool capped_{false};
+    bool beyondMagnitude_{false};  // a finite contour was ignored for coordinates beyond 1e12 mm
     bool beyondScale_{false};  // coordinates so large that 1e-12 x scale exceeds chordal / 2
 
     std::vector<Piece> pieces_;
@@ -974,6 +1000,7 @@ void Solver::classifyContours(std::vector<int>& leftInside) {
         bool nonZero = false;
         for (const Span& s : c.spans) {
             ok = ok && finiteSpan(s);
+            beyondMagnitude_ = beyondMagnitude_ || (!finiteSpan(s) && rawFiniteSpan(s));
             nonZero = nonZero || !zeroSpan(s);
         }
         if (!ok || !nonZero) {
@@ -2046,7 +2073,7 @@ MedialAxis Solver::run() {
     }
     if (pieces_.empty() || bounds_.isEmpty()) {
         out.ignoredContours = ignored_;
-        out.accuracyCapped = beyondScale_;
+        out.accuracyCapped = beyondScale_ || beyondMagnitude_;
         return out;
     }
     scale_ = std::max({std::fabs(bounds_.min.x), std::fabs(bounds_.min.y), std::fabs(bounds_.max.x),
@@ -2088,7 +2115,7 @@ MedialAxis Solver::run() {
     evaluateCreated(nullptr);
     out = assemble();
     out.ignoredContours = ignored_;
-    out.accuracyCapped = capped_ || beyondScale_;
+    out.accuracyCapped = capped_ || beyondScale_ || beyondMagnitude_;
     out.boundarySamples = samples_.size();
     return out;
 }

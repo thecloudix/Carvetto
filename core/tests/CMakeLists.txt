@@ -8,6 +8,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Catch2)
 
 add_executable(carvetto_tests
+  geometry/arc_segment_cap_test.cpp
   geometry/bezier_intersect_bounds_test.cpp
   geometry/bezier_work_bounds_test.cpp
   geometry/gap_trail_test.cpp
@@ -35,6 +36,7 @@ add_executable(carvetto_tests
   geometry/delaunay_test.cpp
   geometry/edit_ops_test.cpp
   geometry/edit_ops_fuzz_test.cpp
+  toolpath/hostile_arc_test.cpp
   geometry/edit_ops_hardening_test.cpp
   toolpath/move_test.cpp
   toolpath/toolpath_test.cpp
@@ -55,8 +57,18 @@ add_executable(carvetto_tests
   post/post_safety_test.cpp
   post/spindle_off_test.cpp
   post/line_length_test.cpp
+  simulate/determinism_test.cpp
+  simulate/diagnostics_test.cpp
+  simulate/fixture_record_test.cpp
+  simulate/hostile_test.cpp
+  simulate/perf_test.cpp
+  simulate/playback_test.cpp
+  simulate/round2_test.cpp
+  simulate/sweep_exact_test.cpp
+  simulate/tool_shape_test.cpp
   tooling/starter_tools_test.cpp
   document/job_test.cpp
+  document/node_edit_command_test.cpp
   document/variables_test.cpp
   document/selection_test.cpp
   document/undo_stack_test.cpp
@@ -133,8 +145,15 @@ target_compile_definitions(carvetto_tests PRIVATE
   CARVETTO_DXF_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dxf"
   CARVETTO_SVG_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/svg"
   CARVETTO_POCKET_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/pocket"
+  CARVETTO_CLI_DATA_DIR="${PROJECT_SOURCE_DIR}/app/cli/tests/data"
 )
 target_link_libraries(carvetto_tests PRIVATE carvetto::core Catch2::Catch2WithMain carvetto_warnings)
+# T-0182: arc_segment_cap_test compares polygons bit for bit with a reference built from the same inline
+# expressions as the library (ArcSpan::pointAt). The library is compiled with -ffp-contract=off; this
+# TU must be too, or an FMA-contracting target (aarch64, -march=native) rounds the inline copy differently.
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+  set_source_files_properties(geometry/arc_segment_cap_test.cpp PROPERTIES COMPILE_OPTIONS -ffp-contract=off)
+endif()
 
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 include(Catch)

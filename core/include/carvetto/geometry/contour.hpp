@@ -46,8 +46,10 @@ struct Contour {
     void transform(const Transform2& m);
     Contour transformed(const Transform2& m) const;
     /// Polygonises every span so that chordal deviation stays within `tol.chordal`. The
-    /// result carries the `closed` flag and omits the duplicated closing vertex.
-    Polyline polygonise(const Tolerance& tol) const;
+    /// result carries the `closed` flag and omits the duplicated closing vertex. When a span hit its
+    /// work bound (`polygoniseInto`: arc chord cap, Bezier split cap, non-finite span) the polygon is
+    /// coarser there and `*coarse` (if not null) is set to true; it is never reset to false.
+    Polyline polygonise(const Tolerance& tol, bool* coarse = nullptr) const;
     /// Appends a span, enforcing nothing; callers keep continuity.
     void append(Span s) { spans.push_back(std::move(s)); }
 };

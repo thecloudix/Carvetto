@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 // Internal conversion between Carvetto contours and Clipper2 fixed-point paths. Not installed;
 // only offset.cpp and boolean.cpp include it.
 
@@ -23,7 +25,11 @@ double toClipperDistance(double mm);
 /// Polygonises the contour at `tol.chordal` and converts it. Consecutive duplicate vertices are
 /// dropped. Returns an empty path when the contour is degenerate (fewer than 2 distinct points
 /// open, fewer than 3 closed).
-Clipper2Lib::Path64 toClipperPath(const Contour& c, const Tolerance& tol);
+///
+/// T-0182: a contour whose polygon would be coarser than `tol.chordal` (arc chord cap, Bezier split
+/// cap, or a non-finite span; `Contour::polygonise` reports it) is refused: the path is empty and
+/// `*refused` (when given) is incremented.
+Clipper2Lib::Path64 toClipperPath(const Contour& c, const Tolerance& tol, std::size_t* refused = nullptr);
 
 /// Converts a closed Clipper2 path to a contour of line spans (empty for < 3 points).
 Contour closedContourFromClipper(const Clipper2Lib::Path64& path);

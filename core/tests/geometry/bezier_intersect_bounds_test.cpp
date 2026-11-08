@@ -799,3 +799,17 @@ TEST_CASE("Chord pairs of a long reversed loop are taken in ascending order thro
         REQUIRE(samePoints(indexed, direct));
     }
 }
+
+TEST_CASE("The default work limits are the documented ones", "[bezier][intersect][budget][geometry]") {
+    // ADR-0005 A2: 5e8 units per pair (up to about 3 s of Release CPU), 2e9 per contour call
+    // (5-11 s). Changing either changes what every caller may spend; do it deliberately.
+    const IntersectLimits defaults{};
+    REQUIRE(defaults.pairWork == 500'000'000ULL);
+    REQUIRE(defaults.totalWork == 2'000'000'000ULL);
+    REQUIRE(IntersectLimits::kDefaultPairWork == 500'000'000ULL);
+    REQUIRE(IntersectLimits::kDefaultTotalWork == 2'000'000'000ULL);
+    REQUIRE(kMaxIntersectMagnitude == 1e12);
+    // The overloads without limits use them (unless a test replaced them).
+    REQUIRE(detail::defaultLimits().pairWork == defaults.pairWork);
+    REQUIRE(detail::defaultLimits().totalWork == defaults.totalWork);
+}

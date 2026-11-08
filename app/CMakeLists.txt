@@ -14,6 +14,8 @@ qt_add_executable(carvetto
   src/ruler_widget.hpp
   src/new_job_dialog.cpp
   src/new_job_dialog.hpp
+  src/node_edit_menu.cpp
+  src/node_edit_menu.hpp
   src/tool_panel.cpp
   src/tool_panel.hpp
   src/self_test.cpp

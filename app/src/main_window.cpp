@@ -38,6 +38,7 @@
 #include "carvetto/viewmodel/new_job_form.hpp"
 #include "carvetto/viewmodel/units_format.hpp"
 #include "new_job_dialog.hpp"
+#include "node_edit_menu.hpp"
 #include "ruler_widget.hpp"
 #include "tool_panel.hpp"
 #include "transform_menu.hpp"
@@ -256,6 +257,8 @@ void MainWindow::buildToolPalette() {
         {viewmodel::ToolKind::Arc, "Arc", "Draw an arc"},
         {viewmodel::ToolKind::Polyline, "Polyline",
          "Draw lines (Shift: 45 degrees, Enter/double-click: finish, Tab: close, Backspace: undo point)"},
+        {viewmodel::ToolKind::NodeEdit, "Node Edit",
+         "Edit nodes, control points and spans (N). Drag; Shift: add; Ctrl+drag moves a span; right click: menu"},
     };
     QToolBar* bar = addToolBar(QStringLiteral("Tools"));
     bar->setObjectName(QStringLiteral("toolsToolBar"));
@@ -268,6 +271,9 @@ void MainWindow::buildToolPalette() {
         action->setToolTip(QString::fromUtf8(e.tip));
         toolGroup_->addAction(action);
         toolActions_[e.kind] = action;
+        if (e.kind == viewmodel::ToolKind::NodeEdit) {
+            action->setShortcut(QKeySequence(QStringLiteral("N")));
+        }
         const viewmodel::ToolKind kind = e.kind;
         connect(action, &QAction::triggered, this, [this, kind]() {
             canvas_->tools().setTool(kind);
@@ -285,6 +291,18 @@ void MainWindow::buildToolPalette() {
     canvas_->onSelectionChanged = [this]() {
         if (transformMenu_) {
             transformMenu_->refresh();  // keeps the shortcut actions (M, T, R, H, V, F9) usable
+        }
+    };
+
+
+    nodeEdit_ = std::make_unique<NodeEditMenu>(*this);
+    canvas_->onNodeContextMenu = [this](const QPoint& globalPos, geometry::Vec2 px) {
+        nodeEdit_->showContextMenu(globalPos, px);
+    };
+    canvas_->onNodeProperties = [this]() { nodeEdit_->showProperties(); };
+    canvas_->onNodeMessage = [this](const std::string& text) {
+        if (!text.empty()) {
+            statusBar()->showMessage(qs(text), 6000);
         }
     };
 }

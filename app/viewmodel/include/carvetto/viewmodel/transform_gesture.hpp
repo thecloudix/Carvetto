@@ -68,6 +68,7 @@ class TransformGesture {
     geometry::Transform2 applied_;
     bool pushed_{false};
     std::uint64_t generation_{0};
+    document::SheetId sheet_{};  ///< active sheet when the gesture began
     // Rotate: unwrapped total angle.
     double totalAngle_{0.0};
     double lastAngle_{0.0};

@@ -27,6 +27,7 @@ namespace carvetto::app {
 class CanvasWidget;
 class RulerWidget;
 class CopiesMenu;
+class NodeEditMenu;
 class ToolPanel;
 class TransformMenu;
 class VectorOpsMenu;
@@ -57,6 +58,8 @@ class MainWindow : public QMainWindow {
 
     CanvasWidget* canvas() const { return canvas_; }
     VectorOpsMenu* vectorOps() const { return vectorOps_.get(); }
+    /// The node-editing menus and Properties dialog of the NodeEdit tool.
+    NodeEditMenu* nodeEdit() const { return nodeEdit_.get(); }
     TransformMenu* transformMenu() const { return transformMenu_.get(); }
     QDockWidget* toolpathsDock() const { return toolpathsDock_; }
     QDockWidget* layersDock() const { return layersDock_; }
@@ -117,6 +120,7 @@ class MainWindow : public QMainWindow {
     QMenu* recentMenu_{nullptr};
     std::unique_ptr<CopiesMenu> copies_;
     std::unique_ptr<VectorOpsMenu> vectorOps_;
+    std::unique_ptr<NodeEditMenu> nodeEdit_;
     std::unique_ptr<TransformMenu> transformMenu_;
 
     QTabWidget* views_{nullptr};
