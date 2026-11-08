@@ -323,7 +323,8 @@ TEST_CASE("form: values the tool database provides are shown for fields left at 
     const tooling::ToolDatabase db = cliToolDatabase();
     ToolpathForm form(ToolpathOperation::Profile, Units::Millimetres);
     REQUIRE(form.setTool(db, source("end-mill-3mm")).ok);
-    const ToolpathField* pass = find(form.fields(), "passDepth");
+    const std::vector<ToolpathField> shown = form.fields();
+    const ToolpathField* pass = find(shown, "passDepth");
     REQUIRE(pass != nullptr);
     CHECK(pass->fromTool);
     CHECK_FALSE(pass->typed);
