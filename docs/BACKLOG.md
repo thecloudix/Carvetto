@@ -962,7 +962,7 @@ Acceptance criteria:
   3. Diagnostics tested (rapid in material, below-table, flute length); determinism across -O0/-O2 and repeated runs; mutants killed; CMake and ctest integration; MSVC CI green (no Windows macro identifiers, GDI names qualified, no locals named like C library functions).
 Out of scope: Qt rendering (T-0223), 3D relief/heightfield components of Phase 2, material appearance, texture.
 
-### T-0223 Toolpath preview and simulation view (Qt + viewmodel)   [status: blocked — depends on T-0221, T-0222]
+### T-0223 Toolpath preview and simulation view (Qt + viewmodel)   [status: done — merged PR #98; nits T-0231]
 Phase: 1 (Batch C-1)   Module: app/viewmodel + app/src   Depends on: T-0220, T-0221, T-0222   ADR: 0032
 Goal: Toolpath preview on the 2D canvas (moves coloured by kind: rapid/feed/plunge/lead/ramp; selected toolpath highlighted; per-toolpath visibility), the simulation view (shaded heightfield from the T-0222 result as a 3D/isometric or top-down relief view in the 3D tab, stock/tool colours, quality level, playback slider and run/pause/step, speed), and a readout of estimated machining time. Viewmodel holds the scene building (Qt-free, tested); Qt paints.
 
