@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <iterator>
 #include <limits>
 #include <optional>
@@ -13,13 +14,128 @@
 #include <variant>
 #include <vector>
 
+#include "box_index.hpp"
+#include "closest_work.hpp"
 #include "carvetto/geometry/contour_ops.hpp"
 #include "gap_trail.hpp"
 #include "hit_index.hpp"
+#include "intersect_defaults.hpp"
 
 namespace carvetto::geometry {
 
 namespace {
+
+// ------------------------------------------------------------------ work budget (T-0180)
+
+// Deterministic work counter of the Bezier routines. Units: a chord-pair test is 1, a curve
+// evaluation or nearest-point step kEval, a Newton refinement kRefine (2-5 ns Release CPU
+// per unit). Loops that can run long check `spent()` and stop; the work done so far is kept.
+constexpr std::uint64_t kEval = 64;
+constexpr std::uint64_t kRefine = 256;
+constexpr std::uint64_t kSample = 24;   // one Bezier chord sample (T-0180 round 3: measured ~100 ns)
+constexpr std::uint64_t kIndexBuild = 4;  // per box and tree level
+constexpr std::uint64_t kPiece = 64;    // one piece of a cut Bezier (split, bounds)
+
+struct Meter {
+    std::uint64_t used{0};
+    std::uint64_t limit{0};
+    bool over{false};
+    void charge(std::uint64_t n) {
+        used += n;
+        if (used > limit) {
+            over = true;
+        }
+    }
+};
+
+thread_local Meter* tlMeter = nullptr;
+
+// Installs `m` as the current thread's meter for a scope (restoring the previous one).
+class MeterScope {
+   public:
+    explicit MeterScope(Meter& m) : saved_(tlMeter) { tlMeter = &m; }
+    ~MeterScope() { tlMeter = saved_; }
+    MeterScope(const MeterScope&) = delete;
+    MeterScope& operator=(const MeterScope&) = delete;
+
+   private:
+    Meter* saved_;
+};
+
+void charge(std::uint64_t n) {
+    if (tlMeter != nullptr) {
+        tlMeter->charge(n);
+    }
+}
+
+bool spent() {
+    return tlMeter != nullptr && tlMeter->over;
+}
+
+// closestPoint, charged what the search actually did (T-0180: a flat estimate let a badly
+// conditioned Bezier at extreme extents cost 100x the charge).
+ClosestPoint meteredClosest(const Span& o, Vec2 p) {
+    const std::uint64_t before = detail::closestPointWork();
+    const ClosestPoint cp = closestPoint(o, p);
+    charge(detail::closestPointWork() - before + kEval);
+    return cp;
+}
+
+// Largest coordinate or arc radius (mm) a span may have for the intersection routines: 1e12 mm is
+// a billion metres' worth of CNC table and the same cap as edit_ops. Beyond it the squares in
+// the nearest-point search and the chord sampling overflow or lose all precision and the cost of
+// a pair is not bounded by anything the meter can predict (T-0180 round 2).
+constexpr double kMaxMagnitude = kMaxIntersectMagnitude;
+
+// Complete when finite and within kMaxMagnitude, else InvalidInput (NaN/infinite) or TooLarge.
+IntersectStatus checkSpan(const Span& s) {
+    IntersectStatus worst = IntersectStatus::Complete;
+    const auto look = [&](double v) {
+        if (!std::isfinite(v)) {
+            worst = IntersectStatus::InvalidInput;
+        } else if (std::fabs(v) > kMaxMagnitude && worst == IntersectStatus::Complete) {
+            worst = IntersectStatus::TooLarge;
+        }
+    };
+    const auto lookAt = [&](Vec2 p) {
+        look(p.x);
+        look(p.y);
+    };
+    if (const auto* l = std::get_if<LineSpan>(&s)) {
+        lookAt(l->start);
+        lookAt(l->end);
+    } else if (const auto* a = std::get_if<ArcSpan>(&s)) {
+        lookAt(a->centre);
+        look(a->radius);
+        // Angles only need to be finite: a huge angle is a legitimate (if odd) turn count.
+        if (!std::isfinite(a->startAngle) || !std::isfinite(a->endAngle)) {
+            worst = IntersectStatus::InvalidInput;
+        }
+    } else {
+        const auto& z = std::get<BezierSpan>(s);
+        lookAt(z.p0);
+        lookAt(z.p1);
+        lookAt(z.p2);
+        lookAt(z.p3);
+    }
+    return worst;
+}
+
+// The status a pair or a contour call must refuse with, or Complete when all spans are usable.
+// Status priority: InvalidInput over TooLarge over Truncated over Complete.
+int severity(IntersectStatus s) {
+    switch (s) {
+        case IntersectStatus::InvalidInput: return 3;
+        case IntersectStatus::TooLarge: return 2;
+        case IntersectStatus::Truncated: return 1;
+        case IntersectStatus::Complete: break;
+    }
+    return 0;
+}
+
+IntersectStatus refusal(IntersectStatus a, IntersectStatus b) {
+    return severity(b) > severity(a) ? b : a;
+}
 
 // ------------------------------------------------------------------ small helpers
 
@@ -89,7 +205,7 @@ bool isClosedCircle(const Span& s) {
 // A degenerate span is a point: it intersects where it lies on the other span.
 IntersectionResult pointAgainstSpan(Vec2 p, const Span& b, bool pointIsA, const Tolerance& tol) {
     IntersectionResult out;
-    const ClosestPoint cp = closestPoint(b, p);
+    const ClosestPoint cp = meteredClosest(b, p);
     if (cp.distance <= tol.distance) {
         out.points.push_back(pointIsA ? Intersection{cp.point, 0.0, cp.t, false}
                                       : Intersection{cp.point, cp.t, 0.0, false});
@@ -476,7 +592,7 @@ std::vector<std::pair<double, Intersection>> endContacts(const Span& a, const Sp
             if (distanceLowerBound(o, e) > tol.distance) {
                 continue;
             }
-            const ClosestPoint cp = closestPoint(o, e);
+            const ClosestPoint cp = meteredClosest(o, e);
             if (cp.distance > tol.distance) {
                 continue;
             }
@@ -565,6 +681,15 @@ std::vector<ParamPoint> sampleSpan(const Span& s, const Tolerance& tol) {
                 out.push_back({1.0, v.end});
             } else if constexpr (std::is_same_v<T, ArcSpan>) {
                 const std::size_t n = v.segmentCountFor(tol.chordal);
+                // A huge radius against a fine chordal tolerance asks for millions of samples
+                // (the whole circle): charged up front; when that is more than the budget the arc
+                // is represented by its end points alone and the result is truncated.
+                charge(8 * static_cast<std::uint64_t>(n));
+                if (spent()) {
+                    out.push_back({0.0, v.pointAt(0.0)});
+                    out.push_back({1.0, v.pointAt(1.0)});
+                    return;
+                }
                 for (std::size_t i = 0; i <= n; ++i) {
                     const double t = static_cast<double>(i) / static_cast<double>(n);
                     out.push_back({t, v.pointAt(t)});
@@ -572,6 +697,7 @@ std::vector<ParamPoint> sampleSpan(const Span& s, const Tolerance& tol) {
             } else {
                 out.push_back({0.0, v.p0});
                 bezierSamples(v, 0.0, 1.0, tol.chordal, 0, out);
+                charge(kSample * out.size());  // each sample is a flatness test and a split
             }
         },
         s);
@@ -633,6 +759,7 @@ double residual(const Span& a, const Span& b, const Candidate& c) {
 // Newton on A(t) - B(s) = 0: quadratic convergence at a transversal crossing. Stops when the
 // Jacobian degenerates (parallel tangents), which the caller handles separately.
 Candidate newton(const Span& a, const Span& b, Candidate c) {
+    charge(kRefine);
     for (int iter = 0; iter < 40; ++iter) {
         const Vec2 r = pointAt(a, c.tA) - pointAt(b, c.tB);
         if (r.lengthSquared() <= 1e-30) {
@@ -663,9 +790,10 @@ Candidate newton(const Span& a, const Span& b, Candidate c) {
 // global search is used. Callers walk along a curve in small steps and seed each query with the
 // previous answer, so the local foot point is the one they want (and moves continuously).
 ClosestPoint nearestFrom(const Span& o, Vec2 p, double seed) {
+    charge(kEval);
     const auto* z = std::get_if<BezierSpan>(&o);
     if (z == nullptr) {
-        return closestPoint(o, p);
+        return meteredClosest(o, p);
     }
     double s = std::clamp(seed, 0.0, 1.0);
     for (int iter = 0; iter < 20; ++iter) {
@@ -686,7 +814,7 @@ ClosestPoint nearestFrom(const Span& o, Vec2 p, double seed) {
         }
         s = next;
     }
-    return closestPoint(o, p);
+    return meteredClosest(o, p);
 }
 
 // Refines a chord seed by Newton on A(t) - B(s) = 0. At a transversal crossing this converges
@@ -710,7 +838,7 @@ struct SideSample {
 // `seedO` < 0 asks for the global closest point; otherwise the foot point near O(seedO).
 SideSample sideSample(const Span& s, const Span& o, double t, double seedO) {
     const Vec2 p = pointAt(s, t);
-    const ClosestPoint cp = seedO < 0.0 ? closestPoint(o, p) : nearestFrom(o, p, seedO);
+    const ClosestPoint cp = seedO < 0.0 ? meteredClosest(o, p) : nearestFrom(o, p, seedO);
     return {t, tangentAt(o, cp.t).cross(p - cp.point), cp.t};
 }
 
@@ -949,6 +1077,107 @@ void scanCrossings(const Span& s, const Span& o, double t0, double t1, bool span
     }
 }
 
+// Building a box index over n boxes: the k-d tree's median splits and the grid's cell lists,
+// about n log2(n) element moves at ~10 ns each (measured with 65 537 overlapping chords).
+void chargeIndexBuild(std::size_t n) {
+    std::uint64_t levels = 1;
+    for (std::size_t m = n; m > 1; m >>= 1) {
+        ++levels;
+    }
+    charge(kIndexBuild * static_cast<std::uint64_t>(n) * levels);
+}
+
+// Calls f(i, j) for every pair of chords (chord i runs pa[i-1]..pa[i], chord j pb[j-1]..pb[j]) whose
+// boxes, A's grown by `reach`, meet, in ascending (i, j). Long polylines go through a box index
+// instead of testing all pairs (T-0180: two 65 537-chord polylines are 4e9 pairs); the pairs and
+// their order are the same either way. Stops at the first row after the work budget is spent.
+template <class F>
+void forEachNearChordPair(const std::vector<ParamPoint>& pa, const std::vector<ParamPoint>& pb, double reach,
+                          F&& f) {
+    constexpr std::size_t kDirectPairs = 4096;
+    if (pa.size() * pb.size() <= kDirectPairs || detail::forceDirectChordPairs()) {
+        for (std::size_t i = 1; i < pa.size() && !spent(); ++i) {
+            charge(pb.size());
+            const Box2 boxA = Box2{pa[i - 1].p, pa[i].p}.inflated(reach);
+            for (std::size_t j = 1; j < pb.size(); ++j) {
+                if (boxA.intersects(Box2{pb[j - 1].p, pb[j].p})) {
+                    f(i, j);
+                }
+            }
+        }
+        return;
+    }
+    std::vector<Box2> boxesB;
+    boxesB.reserve(pb.size());
+    for (std::size_t j = 1; j < pb.size(); ++j) {
+        boxesB.push_back(Box2{pb[j - 1].p, pb[j].p});
+    }
+    chargeIndexBuild(boxesB.size());
+    detail::BoxIndex boxIndex(boxesB);
+    std::size_t visited = boxIndex.work();
+    std::vector<std::size_t> hits;
+    for (std::size_t i = 1; i < pa.size() && !spent(); ++i) {
+        const Box2 boxA = Box2{pa[i - 1].p, pa[i].p}.inflated(reach);
+        hits.clear();
+        boxIndex.query(boxA, [&](std::size_t k) { hits.push_back(k); });
+        charge(hits.size() + boxIndex.work() - visited);  // what the query looked at, not just found
+        visited = boxIndex.work();
+        std::sort(hits.begin(), hits.end());
+        for (const std::size_t k : hits) {
+            f(i, k + 1);
+        }
+    }
+}
+
+// Calls f(i, j) for every pair of chords of one polyline with j >= i + 2 (not neighbours) whose
+// boxes, each grown by half its own length, meet, in ascending (i, j). The growth keeps every pair
+// `segmentProximity` could report a crossing for however its division rounds (a crossing it finds
+// has parameters within half a chord of the segments), so skipping the others changes no result.
+template <class F>
+void forEachSelfChordPair(const std::vector<ParamPoint>& pts, F&& f) {
+    const auto boxOf = [&](std::size_t j) {
+        const Vec2 a = pts[j - 1].p;
+        const Vec2 b = pts[j].p;
+        return Box2{a, b}.inflated(0.5 * (std::fabs(b.x - a.x) + std::fabs(b.y - a.y)));
+    };
+    constexpr std::size_t kDirectChords = 64;
+    if (pts.size() <= kDirectChords || detail::forceDirectChordPairs()) {
+        for (std::size_t i = 1; i < pts.size() && !spent(); ++i) {
+            charge(pts.size() - i);
+            const Box2 boxI = boxOf(i);
+            for (std::size_t j = i + 2; j < pts.size(); ++j) {
+                if (boxI.intersects(boxOf(j))) {
+                    f(i, j);
+                }
+            }
+        }
+        return;
+    }
+    std::vector<Box2> boxes;
+    boxes.reserve(pts.size());
+    for (std::size_t j = 1; j < pts.size(); ++j) {
+        boxes.push_back(boxOf(j));
+    }
+    chargeIndexBuild(boxes.size());
+    detail::BoxIndex boxIndex(boxes);
+    std::size_t visited = boxIndex.work();
+    std::vector<std::size_t> hits;
+    for (std::size_t i = 1; i < pts.size() && !spent(); ++i) {
+        hits.clear();
+        boxIndex.query(boxes[i - 1], [&](std::size_t k) {
+            if (k + 1 >= i + 2) {
+                hits.push_back(k + 1);
+            }
+        });
+        charge(hits.size() + boxIndex.work() - visited);
+        visited = boxIndex.work();
+        std::sort(hits.begin(), hits.end());
+        for (const std::size_t j : hits) {
+            f(i, j);
+        }
+    }
+}
+
 // Crossing candidates of one pair of well-behaved pieces (`b` is a Bezier piece), in the pieces'
 // own parameters: chord seeds refined by Newton, plus the signed-distance scan of B's near chords.
 void pieceCandidates(const Span& a, const Span& b, const Tolerance& tol, std::vector<Candidate>& found) {
@@ -958,46 +1187,40 @@ void pieceCandidates(const Span& a, const Span& b, const Tolerance& tol, std::ve
     // (plus the acceptance tolerance) may still be genuine contacts.
     const double reach = 2.0 * tol.chordal + tol.distance;
     std::vector<bool> nearB(pb.size(), false);
-    for (std::size_t i = 1; i < pa.size(); ++i) {
-        const Box2 boxA = Box2{pa[i - 1].p, pa[i].p}.inflated(reach);
-        for (std::size_t j = 1; j < pb.size(); ++j) {
-            if (!boxA.intersects(Box2{pb[j - 1].p, pb[j].p})) {
-                continue;
-            }
-            const auto prox = segmentProximity(pa[i - 1].p, pa[i].p, pb[j - 1].p, pb[j].p, reach);
-            if (!prox) {
-                continue;
-            }
-            nearB[j] = true;
-            const double wA = pa[i].t - pa[i - 1].t;
-            const Candidate seed{pa[i - 1].t + wA * prox->first.tA,
-                                 pb[j - 1].t + (pb[j].t - pb[j - 1].t) * prox->first.tB};
-            // A seed that Newton converges is a crossing. One that it cannot converge lies where the
-            // tangents are nearly parallel: a near miss or a touch. Every touch within tolerance has
-            // such a chord pair, so the seed is kept as a touch candidate too, to be walked to the
-            // local minimum of the gap by `settleTouch`. (The scan below also finds the samples
-            // near a touch, but only within bounds estimated from the samples, which narrow dips
-            // near piece cuts and span ends defeat.)
-            const Candidate c = refine(a, b, seed);
-            if (residual(a, b, c) <= 1e-6 * tol.distance) {
-                found.push_back(c);
-            } else {
-                // The same fraction along a chord need not be the nearest curve point (a Bezier's
-                // speed varies along a chord), so the closest point of A's chord is projected onto
-                // A, and that onto B. Each curve lies within tol.chordal of its chord and the chords
-                // come within `reach`, so the gap is below 4 * tol.chordal + tol.distance.
-                const Vec2 onChordA = pa[i - 1].p + (pa[i].p - pa[i - 1].p) * prox->first.tA;
-                const double tA = nearestFrom(a, onChordA, seed.tA).t;
-                const ClosestPoint cp = nearestFrom(b, pointAt(a, tA), seed.tB);
-                found.push_back({tA, cp.t, 4.0 * tol.chordal});
-            }
+    forEachNearChordPair(pa, pb, reach, [&](std::size_t i, std::size_t j) {
+        const auto prox = segmentProximity(pa[i - 1].p, pa[i].p, pb[j - 1].p, pb[j].p, reach);
+        if (!prox) {
+            return;
         }
-    }
+        nearB[j] = true;
+        const double wA = pa[i].t - pa[i - 1].t;
+        const Candidate seed{pa[i - 1].t + wA * prox->first.tA,
+                             pb[j - 1].t + (pb[j].t - pb[j - 1].t) * prox->first.tB};
+        // A seed that Newton converges is a crossing. One that it cannot converge lies where the
+        // tangents are nearly parallel: a near miss or a touch. Every touch within tolerance has
+        // such a chord pair, so the seed is kept as a touch candidate too, to be walked to the
+        // local minimum of the gap by `settleTouch`. (The scan below also finds the samples
+        // near a touch, but only within bounds estimated from the samples, which narrow dips
+        // near piece cuts and span ends defeat.)
+        const Candidate c = refine(a, b, seed);
+        if (residual(a, b, c) <= 1e-6 * tol.distance) {
+            found.push_back(c);
+        } else {
+            // The same fraction along a chord need not be the nearest curve point (a Bezier's
+            // speed varies along a chord), so the closest point of A's chord is projected onto
+            // A, and that onto B. Each curve lies within tol.chordal of its chord and the chords
+            // come within `reach`, so the gap is below 4 * tol.chordal + tol.distance.
+            const Vec2 onChordA = pa[i - 1].p + (pa[i].p - pa[i - 1].p) * prox->first.tA;
+            const double tA = nearestFrom(a, onChordA, seed.tA).t;
+            const ClosestPoint cp = nearestFrom(b, pointAt(a, tA), seed.tB);
+            found.push_back({tA, cp.t, 4.0 * tol.chordal});
+        }
+    });
     // Newton from chord seeds misses one of two crossings that lie close together along a shallow
     // contact (both seeds converge to the same root). Every chord of B near A is therefore also
     // scanned for sign changes of its distance to A.
     std::vector<Candidate> scanned;
-    for (std::size_t j = 1; j < pb.size(); ++j) {
+    for (std::size_t j = 1; j < pb.size() && !spent(); ++j) {
         if (nearB[j]) {
             scanCrossings(b, a, pb[j - 1].t, pb[j].t, j == 1, j + 1 == pb.size(), 1e-6 * tol.distance,
                           tol.distance, scanned);
@@ -1106,7 +1329,9 @@ GapSample descend(GapSample mid, GapSample next, double step, bool periodic,
     // is where this walk would end too: return it instead of searching again (along
     // near-coincident curves many candidates descend into the same few minima).
     if (known != nullptr) {
-        const GapSample* found = known->lowestIn(l, h, mid.gap);
+        std::size_t scanned = 0;
+        const GapSample* found = known->lowestIn(l, h, mid.gap, &scanned);
+        charge(6 * scanned);  // tree nodes: several times the cost of a chord-pair test
         if (found != nullptr) {
             return *found;
         }
@@ -1256,6 +1481,7 @@ IntersectionResult polygoniseAndRefine(const Span& a, const Span& b, const Toler
     const double reach = 2.0 * tol.chordal + tol.distance;
     const std::vector<Piece> piecesA = piecesOf(a, tol);
     const std::vector<Piece> piecesB = piecesOf(b, tol);
+    charge(kPiece * (piecesA.size() + piecesB.size()));
     std::vector<Box2> boxesB;
     for (const Piece& q : piecesB) {
         boxesB.push_back(bounds(q.span).inflated(reach));
@@ -1263,8 +1489,12 @@ IntersectionResult polygoniseAndRefine(const Span& a, const Span& b, const Toler
     std::vector<Candidate> found;
     std::vector<Candidate> local;
     for (const Piece& p : piecesA) {
+        if (spent()) {
+            break;
+        }
         const Box2 boxA = bounds(p.span);
-        for (std::size_t j = 0; j < piecesB.size(); ++j) {
+        charge(piecesB.size());
+        for (std::size_t j = 0; j < piecesB.size() && !spent(); ++j) {
             if (!boxA.intersects(boxesB[j])) {
                 continue;
             }
@@ -1277,6 +1507,16 @@ IntersectionResult polygoniseAndRefine(const Span& a, const Span& b, const Toler
             }
         }
     }
+    // Work budget (ADR-0005 A2): when candidate generation spent it, the hits found so far are
+    // still accepted and merged with a reserve of an eighth of the budget, so that a truncated
+    // result is the best the budget buys rather than empty.
+    const std::uint64_t pairLimit = tlMeter->limit;
+    bool truncated = spent();
+    if (truncated) {
+        tlMeter->over = false;
+        tlMeter->limit = tlMeter->used + pairLimit / 8;
+    }
+
     // The ends of both spans, paired with their nearest points on the other span. An end touch is
     // a minimum of the distance along one span only (along the other the distance may keep falling
     // towards a crossing), so neither the scan, which runs along B, nor the walk, which runs along
@@ -1294,7 +1534,7 @@ IntersectionResult polygoniseAndRefine(const Span& a, const Span& b, const Toler
     for (const double t : {0.0, 1.0}) {
         const Vec2 endA = pointAt(a, t);
         if (nearB.contains(endA)) {
-            const ClosestPoint onB = closestPoint(b, endA);
+            const ClosestPoint onB = meteredClosest(b, endA);
             if (onB.distance <= 1.5 * tol.distance) {
                 found.push_back({t, onB.t, 0.0, true});
             }
@@ -1304,7 +1544,7 @@ IntersectionResult polygoniseAndRefine(const Span& a, const Span& b, const Toler
         }
         const Vec2 endB = pointAt(b, t);
         if (nearA.contains(endB)) {
-            const ClosestPoint onA = closestPoint(a, endB);
+            const ClosestPoint onA = meteredClosest(a, endB);
             if (onA.distance <= 1.5 * tol.distance) {
                 found.push_back({onA.t, t, 0.0, true});
             }
@@ -1364,8 +1604,14 @@ IntersectionResult polygoniseAndRefine(const Span& a, const Span& b, const Toler
                       (before > 0.0) == (after > 0.0);
         }
         raw.push_back({res, {p, c.tA, c.tB, tangent}, end});
+        charge(4 * kEval);
     };
     for (const Candidate& c : found) {
+        if (spent()) {
+            truncated = true;
+            break;
+        }
+        charge(2 * kEval);
         const double res = residual(a, b, c);
         if (res > 1.5 * tol.distance + c.reach) {
             continue;
@@ -1396,6 +1642,12 @@ IntersectionResult polygoniseAndRefine(const Span& a, const Span& b, const Toler
         const double res = residual(a, b, c);
         emit(c, res, res <= exactGap(tol), true);
     }
+    // The merge gets a reserve of its own when settling used the previous one up.
+    if (spent()) {
+        truncated = true;
+        tlMeter->over = false;
+        tlMeter->limit = tlMeter->used + pairLimit / 16;
+    }
     std::stable_sort(raw.begin(), raw.end(), [](const Raw& l, const Raw& r) {
         return std::tie(l.res, l.hit.tA, l.hit.tB) < std::tie(r.res, r.hit.tA, r.hit.tB);
     });
@@ -1403,7 +1655,17 @@ IntersectionResult polygoniseAndRefine(const Span& a, const Span& b, const Toler
     std::vector<double> keptRes;
     std::vector<bool> keptEnd;
     detail::HitIndex merged(tol);
+    std::uint64_t mergeTests = 0;
     for (const Raw& r : raw) {
+        // Merging is charged too (a few units per point comparison): hits at absurd extents fall
+        // outside the hash grid and are scanned linearly. When the budget is gone the remaining,
+        // less exact hits are dropped.
+        charge(4 * (merged.tests() - mergeTests) + 1);
+        mergeTests = merged.tests();
+        if (spent()) {
+            truncated = true;
+            break;
+        }
         const Intersection& hit = r.hit;
         const std::size_t at =
             merged.first(hit.point, [&](std::size_t i) { return out.points[i].point; });
@@ -1424,6 +1686,9 @@ IntersectionResult polygoniseAndRefine(const Span& a, const Span& b, const Toler
         }
     }
     finish(out, 0.0);
+    if (truncated || spent()) {
+        out.status = IntersectStatus::Truncated;
+    }
     return out;
 }
 
@@ -1462,19 +1727,56 @@ IntersectionResult swapped(IntersectionResult r) {
 
 // ------------------------------------------------------------- contour machinery
 
-void appendContourHits(ContourIntersections& out, std::size_t i, std::size_t j, const IntersectionResult& r,
-                       const Tolerance& tol) {
-    for (const Intersection& hit : r.points) {
-        const bool dup = std::any_of(out.points.begin(), out.points.end(), [&](const ContourIntersection& e) {
-            return tol.equalPoints(e.hit.point, hit.point);
-        });
-        if (!dup) {
-            out.points.push_back({i, j, hit});
+// Collects the hits of span pairs into a ContourIntersections. A hit within tolerance of one
+// already collected is dropped (first wins), found through the hash grid of `HitIndex`, which
+// answers as the linear scan over the collected points did (T-0180: that scan was quadratic).
+class HitCollector {
+   public:
+    HitCollector(ContourIntersections& out, const Tolerance& tol, Meter& meter)
+        : out_(out), tol_(tol), index_(tol), meter_(meter) {}
+
+    void add(std::size_t i, std::size_t j, const IntersectionResult& r) {
+        for (const Intersection& hit : r.points) {
+            if (meter_.over) {
+                return;  // out of budget (the caller reports Truncated): the rest is dropped
+            }
+            const std::size_t at =
+                index_.first(hit.point, [&](std::size_t k) { return out_.points[k].hit.point; });
+            meter_.charge(4 * (index_.tests() - tests_) + 1);
+            tests_ = index_.tests();
+            if (at == detail::HitIndex::npos) {
+                index_.add(out_.points.size(), hit.point);
+                out_.points.push_back({i, j, hit});
+            }
+        }
+        for (const Overlap& o : r.overlaps) {
+            out_.overlaps.push_back({i, j, o});
         }
     }
-    for (const Overlap& o : r.overlaps) {
-        out.overlaps.push_back({i, j, o});
+
+    const Tolerance& tolerance() const { return tol_; }
+
+   private:
+    ContourIntersections& out_;
+    Tolerance tol_;
+    detail::HitIndex index_;
+    Meter& meter_;
+    std::uint64_t tests_{0};
+};
+
+
+void worsen(IntersectStatus& status, IntersectStatus to) {
+    if (severity(to) > severity(status)) {
+        status = to;
     }
+}
+
+// The span indices whose boxes meet `q`, ascending (the index reports in no particular order).
+std::vector<std::size_t> meeting(detail::BoxIndex& boxIndex, const Box2& q) {
+    std::vector<std::size_t> ids;
+    boxIndex.query(q, [&](std::size_t j) { ids.push_back(j); });
+    std::sort(ids.begin(), ids.end());
+    return ids;
 }
 
 // The double point of a cubic, from its power-basis form B(t) = a t^3 + b t^2 + c t + d: for
@@ -1515,7 +1817,7 @@ std::optional<Candidate> cubicDoublePoint(const BezierSpan& z) {
 // within `tol.distance` of its double point is a cusp within tolerance and is not reported. Chord crossings
 // are also refined, as a fallback when rounding puts the analytic roots just outside [0, 1].
 void bezierSelfIntersections(const BezierSpan& bz, std::size_t index, std::optional<Vec2> closingJunction,
-                             ContourIntersections& out, const Tolerance& tol) {
+                             HitCollector& out, const Tolerance& tol) {
     const Span s{bz};
     if (const std::optional<Candidate> dp = cubicDoublePoint(bz)) {
         Candidate c = newton(s, s, *dp);
@@ -1551,54 +1853,125 @@ void bezierSelfIntersections(const BezierSpan& bz, std::size_t index, std::optio
             !(closingJunction && tol.equalPoints(p, *closingJunction))) {
             IntersectionResult r;
             r.points.push_back({p, c.tA, c.tB, false});
-            appendContourHits(out, index, index, r, tol);
+            out.add(index, index, r);
         }
     }
     const std::vector<ParamPoint> pts = sampleSpan(s, tol);
-    for (std::size_t i = 1; i < pts.size(); ++i) {
-        for (std::size_t j = i + 2; j < pts.size(); ++j) {
-            const auto prox = segmentProximity(pts[i - 1].p, pts[i].p, pts[j - 1].p, pts[j].p, 0.0);
-            if (!prox) {
-                continue;
-            }
-            const Candidate seed{pts[i - 1].t + (pts[i].t - pts[i - 1].t) * prox->first.tA,
-                                 pts[j - 1].t + (pts[j].t - pts[j - 1].t) * prox->first.tB};
-            const Candidate c = newton(s, s, seed);
-            if (std::fabs(c.tA - c.tB) > 1e-6 && residual(s, s, c) <= tol.distance) {
-                const Vec2 p = pointAt(s, c.tA);
-                if (closingJunction && tol.equalPoints(p, *closingJunction)) {
-                    continue;
-                }
-                IntersectionResult r;
-                r.points.push_back({p, c.tA, c.tB, false});
-                appendContourHits(out, index, index, r, tol);
-            }
+    forEachSelfChordPair(pts, [&](std::size_t i, std::size_t j) {
+        const auto prox = segmentProximity(pts[i - 1].p, pts[i].p, pts[j - 1].p, pts[j].p, 0.0);
+        if (!prox) {
+            return;
         }
-    }
+        const Candidate seed{pts[i - 1].t + (pts[i].t - pts[i - 1].t) * prox->first.tA,
+                             pts[j - 1].t + (pts[j].t - pts[j - 1].t) * prox->first.tB};
+        const Candidate c = newton(s, s, seed);
+        if (std::fabs(c.tA - c.tB) > 1e-6 && residual(s, s, c) <= tol.distance) {
+            const Vec2 p = pointAt(s, c.tA);
+            if (closingJunction && tol.equalPoints(p, *closingJunction)) {
+                return;
+            }
+            IntersectionResult r;
+            r.points.push_back({p, c.tA, c.tB, false});
+            out.add(index, index, r);
+        }
+    });
 }
 
-ContourIntersections selfIntersectionsImpl(const Contour& c, const Tolerance& tol, bool stopAtFirst) {
+// A pair's budget inside a contour-level call: at most `pairWork`, and what is left of the total.
+std::uint64_t pairBudget(const IntersectLimits& limits, const Meter& total) {
+    const std::uint64_t left = total.limit > total.used ? total.limit - total.used : 0;
+    return std::min(limits.pairWork, left);
+}
+
+IntersectionResult intersectPair(const Span& a, const Span& b, const Tolerance& tol, std::uint64_t pairWork,
+                                 std::uint64_t& used) {
+    IntersectionResult out;
+    used = 0;
+    detail::lastPairWork() = 0;
+    const IntersectStatus refused = refusal(checkSpan(a), checkSpan(b));
+    if (refused != IntersectStatus::Complete) {
+        out.status = refused;
+        return out;
+    }
+    const bool degA = isZeroLength(a, tol);
+    const bool degB = isZeroLength(b, tol);
+    if (degA && degB) {
+        if (tol.equalPoints(startPoint(a), startPoint(b))) {
+            out.points.push_back({startPoint(a), 0.0, 0.0, false});
+        }
+        return out;
+    }
+    if (degA) {
+        return pointAgainstSpan(startPoint(a), b, true, tol);
+    }
+    if (degB) {
+        return pointAgainstSpan(startPoint(b), a, false, tol);
+    }
+
+    if (!std::holds_alternative<BezierSpan>(a) && !std::holds_alternative<BezierSpan>(b)) {
+        return analyticPair(a, b, tol);
+    }
+    Meter meter;
+    meter.limit = pairWork;
+    const MeterScope scope(meter);
+    IntersectionResult r = !canonicalOrder(a, b) ? swapped(polygoniseAndRefine(b, a, tol))
+                                                 : polygoniseAndRefine(a, b, tol);
+    used = meter.used;
+    detail::lastPairWork() = meter.used;
+    return r;
+}
+
+IntersectStatus checkContour(const Contour& c) {
+    IntersectStatus worst = IntersectStatus::Complete;
+    for (const Span& s : c.spans) {
+        worst = refusal(worst, checkSpan(s));
+    }
+    return worst;
+}
+
+ContourIntersections selfIntersectionsImpl(const Contour& c, const Tolerance& tol, bool stopAtFirst,
+                                           const IntersectLimits& limits) {
     ContourIntersections out;
+    if (const IntersectStatus refused = checkContour(c); refused != IntersectStatus::Complete) {
+        out.status = refused;
+        return out;
+    }
+    Meter total;
+    total.limit = limits.totalWork;
+    HitCollector hits(out, tol, total);
     const std::size_t n = c.spans.size();
     std::vector<Box2> boxes(n);
     for (std::size_t i = 0; i < n; ++i) {
         boxes[i] = bounds(c.spans[i]).inflated(tol.distance);
     }
+    detail::BoxIndex boxIndex(boxes);
     for (std::size_t i = 0; i < n; ++i) {
+        if (total.over) {
+            break;
+        }
         if (const auto* bz = std::get_if<BezierSpan>(&c.spans[i])) {
             // A closed contour of one span joins that span's end to its own start.
             const std::optional<Vec2> closing =
                 c.closed && n == 1 ? std::optional<Vec2>{bz->p0} : std::nullopt;
-            bezierSelfIntersections(*bz, i, closing, out, tol);
+            {
+                const MeterScope scope(total);
+                bezierSelfIntersections(*bz, i, closing, hits, tol);
+            }
             if (stopAtFirst && !out.isEmpty()) {
                 return out;
             }
         }
-        for (std::size_t j = i + 1; j < n; ++j) {
-            if (!boxes[i].intersects(boxes[j])) {
+        for (const std::size_t j : meeting(boxIndex, boxes[i])) {
+            if (j <= i) {
                 continue;
             }
-            IntersectionResult r = intersect(c.spans[i], c.spans[j], tol);
+            if (total.over) {
+                break;
+            }
+            std::uint64_t used = 0;
+            IntersectionResult r = intersectPair(c.spans[i], c.spans[j], tol, pairBudget(limits, total), used);
+            total.charge(used);
+            worsen(out.status, r.status);
             // Consecutive spans legitimately meet at their shared junction. In a closed contour of
             // exactly two spans the pair (0, 1) shares two junctions: the inner one (end of span 0)
             // and the closing one (start of span 0), and both are ignored.
@@ -1614,12 +1987,16 @@ ContourIntersections selfIntersectionsImpl(const Contour& c, const Tolerance& to
                     return q && tol.equalPoints(p.point, *q);
                 });
             });
-            appendContourHits(out, i, j, r, tol);
+            hits.add(i, j, r);
             if (stopAtFirst && !out.isEmpty()) {
                 return out;
             }
         }
     }
+    if (total.over) {
+        worsen(out.status, IntersectStatus::Truncated);
+    }
+    detail::lastTotalWork() = total.used;
     return out;
 }
 
@@ -1640,55 +2017,66 @@ IntersectionResult intersect(const ArcSpan& a, const ArcSpan& b, const Tolerance
 }
 
 IntersectionResult intersect(const Span& a, const Span& b, const Tolerance& tol) {
-    const bool degA = isZeroLength(a, tol);
-    const bool degB = isZeroLength(b, tol);
-    if (degA && degB) {
-        IntersectionResult out;
-        if (tol.equalPoints(startPoint(a), startPoint(b))) {
-            out.points.push_back({startPoint(a), 0.0, 0.0, false});
-        }
-        return out;
-    }
-    if (degA) {
-        return pointAgainstSpan(startPoint(a), b, true, tol);
-    }
-    if (degB) {
-        return pointAgainstSpan(startPoint(b), a, false, tol);
-    }
+    return intersect(a, b, tol, detail::defaultLimits());
+}
 
-    if (!std::holds_alternative<BezierSpan>(a) && !std::holds_alternative<BezierSpan>(b)) {
-        return analyticPair(a, b, tol);
-    }
-    if (!canonicalOrder(a, b)) {
-        return swapped(polygoniseAndRefine(b, a, tol));
-    }
-    return polygoniseAndRefine(a, b, tol);
+IntersectionResult intersect(const Span& a, const Span& b, const Tolerance& tol, const IntersectLimits& limits) {
+    std::uint64_t used = 0;
+    return intersectPair(a, b, tol, limits.pairWork, used);
 }
 
 ContourIntersections intersect(const Contour& a, const Contour& b, const Tolerance& tol) {
+    return intersect(a, b, tol, detail::defaultLimits());
+}
+
+ContourIntersections intersect(const Contour& a, const Contour& b, const Tolerance& tol,
+                               const IntersectLimits& limits) {
     ContourIntersections out;
+    if (const IntersectStatus refused = refusal(checkContour(a), checkContour(b));
+        refused != IntersectStatus::Complete) {
+        out.status = refused;
+        return out;
+    }
+    Meter total;
+    total.limit = limits.totalWork;
+    HitCollector hits(out, tol, total);
     std::vector<Box2> boxesB(b.spans.size());
     for (std::size_t j = 0; j < b.spans.size(); ++j) {
         boxesB[j] = bounds(b.spans[j]).inflated(tol.distance);
     }
-    for (std::size_t i = 0; i < a.spans.size(); ++i) {
+    detail::BoxIndex boxIndex(boxesB);
+    for (std::size_t i = 0; i < a.spans.size() && !total.over; ++i) {
         const Box2 boxA = bounds(a.spans[i]).inflated(tol.distance);
-        for (std::size_t j = 0; j < b.spans.size(); ++j) {
-            if (!boxA.intersects(boxesB[j])) {
-                continue;
+        for (const std::size_t j : meeting(boxIndex, boxA)) {
+            if (total.over) {
+                break;
             }
-            appendContourHits(out, i, j, intersect(a.spans[i], b.spans[j], tol), tol);
+            std::uint64_t used = 0;
+            const IntersectionResult r =
+                intersectPair(a.spans[i], b.spans[j], tol, pairBudget(limits, total), used);
+            total.charge(used);
+            worsen(out.status, r.status);
+            hits.add(i, j, r);
         }
     }
+    if (total.over) {
+        worsen(out.status, IntersectStatus::Truncated);
+    }
+    detail::lastTotalWork() = total.used;
     return out;
 }
 
 ContourIntersections selfIntersections(const Contour& c, const Tolerance& tol) {
-    return selfIntersectionsImpl(c, tol, false);
+    return selfIntersectionsImpl(c, tol, false, detail::defaultLimits());
+}
+
+ContourIntersections selfIntersections(const Contour& c, const Tolerance& tol, const IntersectLimits& limits) {
+    return selfIntersectionsImpl(c, tol, false, limits);
 }
 
 bool hasSelfIntersections(const Contour& c, const Tolerance& tol) {
-    return !selfIntersectionsImpl(c, tol, true).isEmpty();
+    const ContourIntersections r = selfIntersectionsImpl(c, tol, true, detail::defaultLimits());
+    return !r.isEmpty() || !r.complete();
 }
 
 }  // namespace carvetto::geometry

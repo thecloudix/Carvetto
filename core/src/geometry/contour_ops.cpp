@@ -8,6 +8,8 @@
 #include <utility>
 #include <vector>
 
+#include "closest_work.hpp"
+
 namespace carvetto::geometry {
 
 // ------------------------------------------------------------- area / orientation
@@ -365,6 +367,7 @@ double stationaryFunction(const BezierSpan& s, Vec2 q, double t) {
 
 void isolateRoots(const BezierSpan& s, Vec2 q, const Quintic& c, double t0, double t1, int depth,
                   std::vector<double>& roots) {
+    detail::closestPointWork() += 16;  // one sign count and (maybe) one split of the quintic
     const int changes = signChanges(c);
     if (changes == 0) {
         return;
@@ -382,6 +385,7 @@ void isolateRoots(const BezierSpan& s, Vec2 q, const Quintic& c, double t0, doub
                 if (mid <= lo || mid >= hi) {
                     break;
                 }
+                detail::closestPointWork() += 4;
                 const double gm = stationaryFunction(s, q, mid);
                 if (gm == 0.0) {
                     lo = mid;
@@ -415,6 +419,7 @@ void isolateRoots(const BezierSpan& s, Vec2 q, const Quintic& c, double t0, doub
 }  // namespace
 
 ClosestPoint closestPoint(const BezierSpan& s, Vec2 p) {
+    detail::closestPointWork() += 128;
     // The quintic below is built from products of two coordinates (squares of the extent): control
     // values beyond ~1e100 are scaled down by an exact power of two first so they cannot overflow
     // (T-0178); t is unchanged and the point and distance scale back.
