@@ -82,6 +82,7 @@ const char* toolName(ToolKind tool) {
         case ToolKind::Arc: return "Arc";
         case ToolKind::Polyline: return "Polyline";
         case ToolKind::NodeEdit: return "Node Edit";
+        case ToolKind::Text: return "Text";
     }
     return "";
 }
@@ -163,7 +164,7 @@ ParsedNumber parseNumber(std::string_view text, FieldKind kind, document::Units 
 
 // ---------------------------------------------------------------------------------------------
 
-ToolController::ToolController(document::Document* doc) : doc_(doc), nodeEditor_(doc) {
+ToolController::ToolController(document::Document* doc) : doc_(doc), nodeEditor_(doc), textEditor_(doc) {
     snapSettings_.setEnabled(SnapKind::Grid, false);
 }
 
@@ -172,10 +173,12 @@ void ToolController::setDocument(document::Document* doc) {
     // tools): drop every drag state first, without touching it, then cancel what is left.
     gesture_ = TransformGesture{};
     nodeEditor_.setDocument(nullptr);
+    textEditor_.setDocument(nullptr);
     xfReset();
     cancel();
     doc_ = doc;
     nodeEditor_.setDocument(doc);
+    textEditor_.setDocument(doc);
     snapIndex_.reset();
     snap_.reset();
 }
@@ -183,6 +186,7 @@ void ToolController::setDocument(document::Document* doc) {
 void ToolController::setView(const ViewTransform& view) {
     view_ = view;
     nodeEditor_.setView(view);
+    textEditor_.setView(view);
 }
 
 void ToolController::setTool(ToolKind tool) {
@@ -196,7 +200,8 @@ bool ToolController::isTwoPointTool() const {
 }
 
 bool ToolController::active() const {
-    return !pts_.empty() || pressed_ || selPressed_ || nodeEditor_.pressed();
+    return !pts_.empty() || pressed_ || selPressed_ || nodeEditor_.pressed() || textEditor_.pressed() ||
+           textEditor_.hasDraft();
 }
 
 void ToolController::cancel() {
@@ -206,6 +211,7 @@ void ToolController::cancel() {
     selPressed_ = false;
     selDragging_ = false;
     nodeEditor_.escape();
+    textEditor_.cancel();
     if (gesture_.active() && doc_ != nullptr) {
         gesture_.cancel(*doc_);
     }
@@ -221,6 +227,9 @@ ToolResult ToolController::refuse(std::string message) const {
 bool ToolController::wantsKeys() const {
     if (tool_ == ToolKind::NodeEdit) {
         return nodeEditor_.pressed() || nodeEditor_.gestureActive();
+    }
+    if (tool_ == ToolKind::Text) {
+        return textEditor_.hasDraft() || textEditor_.pressed();
     }
     return gesture_.active() || (tool_ != ToolKind::Select && (active() || !typed_.empty()));
 }
@@ -618,6 +627,7 @@ ToolController::Draft ToolController::makeDraft() const {
             return polylineDraft(hasCursor_, false);
         case ToolKind::Select:
         case ToolKind::NodeEdit:
+        case ToolKind::Text:
             break;
     }
     return {};
@@ -625,6 +635,15 @@ ToolController::Draft ToolController::makeDraft() const {
 
 ToolPreview ToolController::preview() const {
     ToolPreview out;
+    if (tool_ == ToolKind::Text) {
+        out.contours = textEditor_.previewContours();
+        out.valid = textEditor_.hasDraft() && textEditor_.previewMessage().empty();
+        out.message = textEditor_.previewMessage();
+        if (const auto box = textEditor_.dragBoxMm()) {
+            out.marqueePx = geometry::Box2(view_.worldToScreen(box->min), view_.worldToScreen(box->max));
+        }
+        return out;
+    }
     if (tool_ == ToolKind::NodeEdit) {
         out.marqueePx = nodeEditor_.marqueePx();
         return out;
@@ -696,6 +715,15 @@ ToolResult fromNodeEdit(const NodeEditResult& r) {
 }
 }  // namespace
 
+ToolResult ToolController::fromText(const TextEditResult& r) {
+    ToolResult t;
+    t.committed = r.committed;
+    t.selectionChanged = r.selectionChanged;
+    t.previewChanged = true;
+    t.message = r.message;
+    return t;
+}
+
 ToolResult ToolController::afterNodeEdit(const NodeEditResult& r) {
     if (!nodeEditor_.gestureActive()) {
         gestureSnapIndex_.reset();
@@ -725,6 +753,9 @@ ToolResult ToolController::pointerMove(Vec2 px, Modifiers mods) {
             r = afterNodeEdit(nodeEditor_.move(px, cursorMm_, mods.shift, mods.ctrl, mods.alt));
         }
         return r;
+    }
+    if (tool_ == ToolKind::Text) {
+        return fromText(textEditor_.move(px, cursorMm_));
     }
     if (tool_ == ToolKind::Select && selPressed_) {
         selCurPx_ = px;
@@ -846,6 +877,9 @@ ToolResult ToolController::pointerPress(Vec2 px, Modifiers mods) {
     if (tool_ == ToolKind::NodeEdit) {
         return afterNodeEdit(nodeEditor_.press(px, cursorMm_, mods.shift, mods.ctrl, mods.alt));
     }
+    if (tool_ == ToolKind::Text) {
+        return fromText(textEditor_.press(px, cursorMm_));
+    }
     if (tool_ == ToolKind::Select) {
         return selectPress(px, mods);
     }
@@ -856,6 +890,9 @@ ToolResult ToolController::pointerRelease(Vec2 px, Modifiers mods) {
     updatePointer(px, mods);
     if (tool_ == ToolKind::NodeEdit) {
         return afterNodeEdit(nodeEditor_.release(px, cursorMm_, mods.shift, mods.ctrl, mods.alt));
+    }
+    if (tool_ == ToolKind::Text) {
+        return fromText(textEditor_.release(px, cursorMm_));
     }
     if (tool_ == ToolKind::Select) {
         return selectRelease(px, mods);
@@ -892,6 +929,9 @@ ToolResult ToolController::key(ToolKey k) {
         case ToolKey::Enter:
             return commitNumeric();
         case ToolKey::Backspace:
+            if (tool_ == ToolKind::Text) {
+                return fromText(textEditor_.backspace());
+            }
             if (!pts_.empty() && (tool_ == ToolKind::Polyline || tool_ == ToolKind::Arc)) {
                 pts_.pop_back();
             }
@@ -908,6 +948,13 @@ ToolResult ToolController::key(ToolKey k) {
     return {};
 }
 
+ToolResult ToolController::typeText(std::string_view utf8) {
+    if (tool_ != ToolKind::Text) {
+        return refuse("the Text tool is not active");
+    }
+    return fromText(textEditor_.insertText(utf8));
+}
+
 // --- Numeric entry ---------------------------------------------------------------------------
 
 std::vector<NumericField> ToolController::fields() const {
@@ -915,6 +962,7 @@ std::vector<NumericField> ToolController::fields() const {
     switch (tool_) {
         case ToolKind::Select:
         case ToolKind::NodeEdit:
+        case ToolKind::Text:
             return list;
         case ToolKind::Rectangle:
             list = {field("x", "X", FieldKind::Length, true, true), field("y", "Y", FieldKind::Length, true, true),
@@ -1019,6 +1067,8 @@ ToolResult ToolController::commitNumeric() {
         case ToolKind::Select:
         case ToolKind::NodeEdit:
             return {};
+        case ToolKind::Text:
+            return fromText(textEditor_.commit());
         case ToolKind::Rectangle:
         case ToolKind::Circle:
         case ToolKind::Ellipse:

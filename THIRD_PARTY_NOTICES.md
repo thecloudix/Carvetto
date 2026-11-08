@@ -13,6 +13,7 @@ GPL-compatible licence. Their full licence texts are fetched with the sources at
 | FreeType | 2.14.3 | FreeType License (FTL; used under this option, which is GPLv3 compatible, ADR-0033) | Font parsing and glyph outlines (`core/text`) |
 | HarfBuzz | 15.1.0 | "Old MIT" | Text shaping (`core/text`) |
 | Catch2 | 3.7.1 | Boost Software License 1.0 | Unit tests only (not distributed) |
+| CarvettoStarter-Regular.ttf | 1.0 | SIL Open Font License 1.1 (original Carvetto work, `data/fonts/OFL.txt`) | Starter font of the Text tool, compiled into the app |
 | CarvettoTest-Regular.ttf | 1.0 | SIL Open Font License 1.1 (original Carvetto work, `core/tests/fixtures/text/OFL.txt`) | Text tests only (not distributed) |
 
 **Required credit (FreeType License, clause 2):** "Portions of this software are copyright © The

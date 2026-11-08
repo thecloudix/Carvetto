@@ -32,6 +32,7 @@
 #include "carv_json_reader.hpp"
 #include "carv_moves.hpp"
 #include "carv_zip.hpp"
+#include "carvetto/document/text_object.hpp"
 #include "carvetto/geometry/vec2.hpp"
 
 #ifndef CARVETTO_VERSION_STRING
@@ -119,6 +120,9 @@ CarvExtras CarvExtras::withMember(std::string name, std::vector<std::uint8_t> by
     }
     if (detail::isToolpathCacheName(name)) {
         bad("reserved for toolpath move caches, which saveCarv writes from the toolpath records");
+    }
+    if (name.starts_with("fonts/") && name.ends_with(".font")) {
+        bad("reserved for embedded fonts, which saveCarv writes from the document's font table");
     }
     if (detail::isInterimToolpathName(name)) {
         bad("an interim toolpath member (ADR-0019); toolpaths are stored as toolpath records now");
@@ -340,6 +344,11 @@ constexpr EnumName<RectangleParams::CornerStyle> kCorners[] = {
     {RectangleParams::CornerStyle::Rounded, "rounded"},
     {RectangleParams::CornerStyle::Chamfered, "chamfered"}};
 
+constexpr EnumName<TextAlign> kTextAligns[] = {
+    {TextAlign::Left, "left"}, {TextAlign::Centre, "centre"}, {TextAlign::Right, "right"}};
+constexpr EnumName<TextMode> kTextModes[] = {
+    {TextMode::Point, "point"}, {TextMode::Box, "box"}, {TextMode::Curve, "curve"}};
+
 // Toolpath parameter enums (ADR-0021: the params.json names of T-0122, ADR-0019). Aliases come
 // after the canonical name, which is the one written.
 constexpr EnumName<toolpath::ProfileSide> kProfileSides[] = {{toolpath::ProfileSide::Outside, "outside"},
@@ -540,6 +549,31 @@ json encodeParams(const CreationParams& params) {
         j["sides"] = p->sides;
         j["radius_mm"] = p->radiusMm;
         j["angle_rad"] = p->angle;
+    } else if (const auto* t = std::get_if<TextParams>(&params)) {
+        j["type"] = "text";
+        j["text"] = t->text;
+        j["font"] = t->fontKey;
+        j["size_mm"] = t->sizeMm;
+        j["align"] = nameOf(kTextAligns, t->align);
+        j["letter_spacing_mm"] = t->letterSpacingMm;
+        j["line_spacing"] = t->lineSpacing;
+        j["kerning"] = t->kerning;
+        j["mode"] = nameOf(kTextModes, t->mode);
+        j["box_width_mm"] = t->boxWidthMm;
+        j["box_height_mm"] = t->boxHeightMm;
+        if (t->guideId) {
+            j["guide_id"] = t->guideId->value;
+        }
+        if (t->mode == TextMode::Curve) {
+            j["guide"] = encodeContour(t->guide);
+        }
+        j["start_offset_mm"] = t->startOffsetMm;
+        json m = json::array();
+        for (const double v : {t->placement.a, t->placement.b, t->placement.c, t->placement.d, t->placement.tx,
+                               t->placement.ty}) {
+            m.push_back(v);
+        }
+        j["placement"] = std::move(m);
     } else {
         const auto& s = std::get<StarParams>(params);
         j["type"] = "star";
@@ -742,6 +776,23 @@ json encodeVCarvingParams(const toolpath::VCarvingParams& p) {
 }
 
 /// Name of the move cache of the toolpath at `index` (0-based) in the job order.
+/// "fonts/<key>.font" for an embedded font.
+std::string fontMemberName(const std::string& key) {
+    return "fonts/" + key + ".font";
+}
+
+/// The key of a "fonts/<key>.font" member name; empty when `name` is not one.
+std::string fontKeyOfMember(const std::string& name) {
+    constexpr std::string_view prefix = "fonts/";
+    constexpr std::string_view suffix = ".font";
+    if (name.size() != prefix.size() + 16 + suffix.size() || name.compare(0, prefix.size(), prefix) != 0 ||
+        name.compare(name.size() - suffix.size(), suffix.size(), suffix) != 0) {
+        return {};
+    }
+    std::string key = name.substr(prefix.size(), 16);
+    return isFontKey(key) ? key : std::string{};
+}
+
 std::string cacheMemberName(std::size_t index) {
     std::string digits = std::to_string(index + 1);
     digits.insert(0, digits.size() < 4 ? 4 - digits.size() : 0, '0');
@@ -1319,6 +1370,86 @@ constexpr std::array<std::string_view, 12> kParamKeys{
     "type",      "centre_mm", "width_mm", "height_mm", "corners",         "corner_radius_mm",
     "radius_mm", "angle_rad", "sides",    "points",    "outer_radius_mm", "inner_radius_mm"};
 
+constexpr std::array<std::string_view, 15> kTextParamKeys{
+    "type",          "text",           "font",          "size_mm",      "align",       "letter_spacing_mm",
+    "line_spacing",  "kerning",        "mode",          "box_width_mm", "box_height_mm", "guide_id",
+    "guide",         "start_offset_mm", "placement"};
+
+/// Text parameters (T-0211, format 1.2). Numbers must be finite; the same checks as
+/// `textParamsProblem` apply, and the guide is bounded.
+TextParams decodeTextParams(const std::string& text, const Path& p, LoadBudget& local) {
+    detail::StringSource src(text);
+    JsonReader r(src, local, "params", text.size() + 1);
+    Record rec(r, p, kTextParamKeys);
+    TextParams t;
+    t.placement = geometry::Transform2{};
+    std::size_t guideSpans = 0;
+    while (rec.next()) {
+        const Path f = rec.field();
+        const std::string& k = rec.key();
+        if (k == "type") {
+            readString(r, f);
+        } else if (k == "text") {
+            t.text = readString(r, f);
+            if (t.text.size() > kMaxTextObjectBytes) {
+                fail(f, "is longer than " + std::to_string(kMaxTextObjectBytes) + " bytes");
+            }
+        } else if (k == "font") {
+            t.fontKey = readString(r, f);
+            if (!isFontKey(t.fontKey)) {
+                fail(f, "must be 16 lower-case hex digits");
+            }
+        } else if (k == "size_mm") {
+            t.sizeMm = readFinite(r, f);
+        } else if (k == "align") {
+            t.align = readEnum(r, f, kTextAligns);
+        } else if (k == "letter_spacing_mm") {
+            t.letterSpacingMm = readFinite(r, f);
+        } else if (k == "line_spacing") {
+            t.lineSpacing = readFinite(r, f);
+        } else if (k == "kerning") {
+            t.kerning = readBool(r, f);
+        } else if (k == "mode") {
+            t.mode = readEnum(r, f, kTextModes);
+        } else if (k == "box_width_mm") {
+            t.boxWidthMm = readFinite(r, f);
+        } else if (k == "box_height_mm") {
+            t.boxHeightMm = readFinite(r, f);
+        } else if (k == "guide_id") {
+            t.guideId = ObjectId{readEntityId(r, f)};
+        } else if (k == "guide") {
+            t.guide = decodeContour(r, f);
+            guideSpans = t.guide.spans.size();
+            if (guideSpans > 100000) {
+                fail(f, "has more than 100000 spans");
+            }
+        } else if (k == "start_offset_mm") {
+            t.startOffsetMm = readFinite(r, f);
+        } else if (k == "placement") {
+            const auto v = readTuple<6>(r, f, "[a, b, c, d, tx, ty] array");
+            for (const double d : v) {
+                if (!std::isfinite(d)) {
+                    fail(f, "must be finite");
+                }
+            }
+            t.placement = geometry::Transform2{v[0], v[1], v[2], v[3], v[4], v[5]};
+        } else {
+            rec.skip();
+        }
+    }
+    for (const char* k : {"text", "font", "size_mm", "align", "letter_spacing_mm", "line_spacing", "kerning",
+                          "mode", "box_width_mm", "box_height_mm", "start_offset_mm", "placement"}) {
+        rec.require(k);
+    }
+    if (t.mode == TextMode::Curve) {
+        rec.require("guide");
+    }
+    if (const std::string problem = textParamsProblem(t); !problem.empty()) {
+        fail(p, problem);
+    }
+    return t;
+}
+
 /// Decodes canonical params text (already bounded by the extras budget). An unknown `type`
 /// yields `NoParams` and sets `unknown`.
 CreationParams decodeParamsText(const std::string& text, const Path& p, bool& unknown) {
@@ -1344,11 +1475,14 @@ CreationParams decodeParamsText(const std::string& text, const Path& p, bool& un
     if (type == "none") {
         return NoParams{};
     }
-    constexpr std::array<std::string_view, 6> kKnown{"rectangle", "circle", "ellipse",
-                                                     "polygon",   "star",   "none"};
+    constexpr std::array<std::string_view, 7> kKnown{"rectangle", "circle", "ellipse",
+                                                     "polygon",   "star",   "none", "text"};
     if (std::find(kKnown.begin(), kKnown.end(), type) == kKnown.end()) {
         unknown = true;  // a parameter kind from a newer minor version: kept verbatim
         return NoParams{};
+    }
+    if (type == "text") {
+        return decodeTextParams(text, p, local);
     }
     detail::StringSource src(text);
     JsonReader r(src, local, "params", text.size() + 1);
@@ -1530,6 +1664,11 @@ DecodedObject decodeObject(JsonReader& r, const Path& p) {
         v.contours = std::move(contours);
         bool unknownParams = false;
         v.params = decodeParamsText(paramsText, p.field("params"), unknownParams);
+        if (const auto* t = std::get_if<TextParams>(&v.params)) {
+            // Text and guide stay in memory: charge them to the document budget (the extras
+            // charge for the params text is refunded below as for every known kind).
+            r.budget().chargeDocument(kCostString + t->text.size() + t->guide.spans.size() * kCostSpan);
+        }
         if (unknownParams) {
             out.unknownParams = std::move(paramsText);
         } else {
@@ -2998,6 +3137,27 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
         }
         doc.insertToolpath(std::move(record));
     }
+    // Embedded fonts (format 1.2, T-0211): members "fonts/<key>.font" move from the preserved
+    // members into the document. A malformed name stays a preserved (unknown) member.
+    for (auto it = extras->members.begin(); it != extras->members.end();) {
+        const std::string key = fontKeyOfMember(it->first);
+        if (key.empty()) {
+            ++it;
+            continue;
+        }
+        if (it->second.size() > kMaxEmbeddedFontBytes) {
+            throw LoadFailure{CarvError::Code::ResourceLimit,
+                              "embedded font '" + it->first + "' is larger than " +
+                                  std::to_string(kMaxEmbeddedFontBytes >> 20) + " MiB"};
+        }
+        if (!doc.insertFont(FontAsset{key, std::move(it->second)})) {
+            throw LoadFailure{CarvError::Code::ResourceLimit,
+                              "embedded font '" + it->first + "' exceeds the embedded font limits (" +
+                                  std::to_string(kMaxEmbeddedFonts) + " fonts, " +
+                                  std::to_string(kMaxEmbeddedFontsTotalBytes >> 20) + " MiB together)"};
+        }
+        it = extras->members.erase(it);
+    }
     // saveCarv names caches by position, so a computed toolpath past the last name could be
     // loaded but never saved again.
     for (std::size_t i = kCarvMaxCachedToolpaths; i < doc.toolpaths().size(); ++i) {
@@ -3164,7 +3324,26 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
         manifest["format"] = kFormatName;
         json version = json::object();
         version["major"] = kCarvFormatMajor;
-        version["minor"] = kCarvFormatMinor;
+        // Format 1.2 (embedded fonts, text parameters) only when the document uses text; every other
+        // document stays 1.1 so older readers and existing files see no change (ADR-0021 amendment).
+        std::set<std::string> usedFonts;
+        for (const auto& [oid, obj] : doc.objects()) {
+            if (const VectorObject* v = obj.asVector()) {
+                if (const auto* t = std::get_if<TextParams>(&v->params)) {
+                    usedFonts.insert(t->fontKey);
+                }
+            }
+        }
+        std::map<std::string, std::vector<std::uint8_t>> fontMembers;
+        for (const std::string& key : usedFonts) {
+            const FontAsset* font = doc.findFont(key);
+            if (font == nullptr) {
+                return CarvError{CarvError::Code::InvalidContent,
+                                 "a text object names font " + key + ", which is not embedded in the document"};
+            }
+            fontMembers.emplace(fontMemberName(key), font->bytes);
+        }
+        version["minor"] = usedFonts.empty() ? kCarvFormatMinorBase : kCarvFormatMinor;
         manifest["format_version"] = std::move(version);
         manifest["app_version"] = CARVETTO_VERSION_STRING;
         mergeUnknown(manifest, ex ? &ex->manifest : nullptr);
@@ -3223,6 +3402,9 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
                     names.insert(cacheMemberName(i));
                 }
             }
+            for (const auto& [name, data] : fontMembers) {
+                names.insert(name);
+            }
             if (ex) {
                 for (const auto& [name, data] : ex->members) {
                     names.insert(name);
@@ -3276,7 +3458,7 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
                                      " can keep computed moves (move it up the job order, or clear its moves)"};
             }
         }
-        std::map<std::string, std::vector<std::uint8_t>> caches;
+        std::map<std::string, std::vector<std::uint8_t>> caches = std::move(fontMembers);
         json toolpaths = json::array();
         for (std::size_t i = 0; i < doc.toolpaths().size(); ++i) {
             const ToolpathRecord& tp = doc.toolpaths()[i];

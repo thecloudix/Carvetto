@@ -2,15 +2,22 @@
 
 #include <QCheckBox>
 #include <QComboBox>
+#include <QDoubleSpinBox>
+#include <QFileDialog>
 #include <QFormLayout>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
+#include <QPushButton>
 #include <QSpinBox>
 #include <QString>
 #include <QVBoxLayout>
 
 #include "canvas_widget.hpp"
 #include "carvetto/document/units.hpp"
+#include "carvetto/viewmodel/file_session.hpp"
+#include "carvetto/viewmodel/starter_font.hpp"
+#include "carvetto/viewmodel/text_tool.hpp"
 
 namespace carvetto::app {
 
@@ -112,6 +119,8 @@ void ToolPanel::addOptionRows(ToolKind tool) {
         form_->addRow(QString(), keep);
         connect(keep, &QCheckBox::toggled, this,
                 [this](bool on) { canvas_->tools().nodeEditor().options().keepBezierTangency = on; });
+    } else if (tool == ToolKind::Text) {
+        addTextRows();
     } else if (tool == ToolKind::Arc) {
         auto* mode = new QComboBox(this);
         mode->addItems({QStringLiteral("Through 3 points"), QStringLiteral("Centre, start, end"),
@@ -141,6 +150,121 @@ void ToolPanel::addOptionRows(ToolKind tool) {
             canvas_->update();
         });
     }
+}
+
+void ToolPanel::addTextRows() {
+    viewmodel::TextEditor& ed = canvas_->tools().textEditor();
+    if (!ed.hasFont()) {
+        const auto starter = viewmodel::starterFontBytes();
+        ed.setFont(std::vector<std::uint8_t>(starter.begin(), starter.end()), viewmodel::starterFontName());
+    }
+    const auto report = [this](const viewmodel::TextEditResult& r) {
+        status_->setText(qs(r.message));
+        canvas_->update();
+    };
+
+    auto* fontRow = new QWidget(this);
+    auto* fontLayout = new QHBoxLayout(fontRow);
+    fontLayout->setContentsMargins(0, 0, 0, 0);
+    auto* fontName = new QLabel(qs(ed.fontName()), fontRow);
+    fontName->setObjectName(QStringLiteral("textFontName"));
+    auto* choose = new QPushButton(QStringLiteral("Choose..."), fontRow);
+    choose->setToolTip(QStringLiteral("Pick a TrueType or OpenType font file; it is embedded in the document"));
+    fontLayout->addWidget(fontName, 1);
+    fontLayout->addWidget(choose);
+    form_->addRow(QStringLiteral("Font"), fontRow);
+    connect(choose, &QPushButton::clicked, this, [this, fontName, report]() {
+        const QString file = QFileDialog::getOpenFileName(this, QStringLiteral("Choose a font"), QString(),
+                                                          QStringLiteral("Fonts (*.ttf *.otf *.ttc)"));
+        if (file.isEmpty()) {
+            return;
+        }
+        const viewmodel::TextEditResult r =
+            canvas_->tools().textEditor().setFontFile(viewmodel::pathFromUtf8(file.toStdString()));
+        if (r.ok) {
+            fontName->setText(qs(canvas_->tools().textEditor().fontName()));
+        }
+        report(r);
+    });
+
+    auto* mode = new QComboBox(this);
+    mode->addItems({QStringLiteral("Point (click)"), QStringLiteral("In a box (drag)"),
+                    QStringLiteral("On a curve (click a curve)")});
+    mode->setCurrentIndex(static_cast<int>(ed.settings().mode));
+    form_->addRow(QStringLiteral("Mode"), mode);
+    connect(mode, &QComboBox::currentIndexChanged, this, [this, report](int i) {
+        report(canvas_->tools().textEditor().setMode(static_cast<document::TextMode>(i)));
+        if (canvas_->onDocumentEdited) {
+            canvas_->onDocumentEdited();
+        }
+    });
+
+    const document::Units units = canvas_->tools().displayUnits();
+    auto* size = new QDoubleSpinBox(this);
+    size->setDecimals(3);
+    size->setRange(0.01, 10000.0);
+    size->setValue(document::toDisplay(ed.settings().sizeMm, units));
+    size->setSuffix(QStringLiteral(" ") + QString::fromUtf8(document::unitSuffix(units).data()));
+    form_->addRow(QStringLiteral("Size (em)"), size);
+    connect(size, &QDoubleSpinBox::valueChanged, this, [this, report, units](double v) {
+        report(canvas_->tools().textEditor().setSize(document::fromDisplay(v, units)));
+    });
+
+    auto* align = new QComboBox(this);
+    align->addItems({QStringLiteral("Left"), QStringLiteral("Centre"), QStringLiteral("Right")});
+    align->setCurrentIndex(static_cast<int>(ed.settings().align));
+    form_->addRow(QStringLiteral("Alignment"), align);
+    connect(align, &QComboBox::currentIndexChanged, this, [this, report](int i) {
+        report(canvas_->tools().textEditor().setAlign(static_cast<document::TextAlign>(i)));
+    });
+
+    auto* letter = new QDoubleSpinBox(this);
+    letter->setDecimals(3);
+    letter->setRange(-1000.0, 1000.0);
+    letter->setValue(ed.settings().letterSpacingMm);
+    letter->setSuffix(QStringLiteral(" mm"));
+    form_->addRow(QStringLiteral("Letter spacing"), letter);
+    connect(letter, &QDoubleSpinBox::valueChanged, this,
+            [this, report](double v) { report(canvas_->tools().textEditor().setLetterSpacing(v)); });
+
+    auto* line = new QDoubleSpinBox(this);
+    line->setDecimals(2);
+    line->setRange(0.0, 100.0);
+    line->setSingleStep(0.1);
+    line->setValue(ed.settings().lineSpacing);
+    form_->addRow(QStringLiteral("Line spacing"), line);
+    connect(line, &QDoubleSpinBox::valueChanged, this,
+            [this, report](double v) { report(canvas_->tools().textEditor().setLineSpacing(v)); });
+
+    auto* kerning = new QCheckBox(QStringLiteral("Kerning"), this);
+    kerning->setChecked(ed.settings().kerning);
+    form_->addRow(QString(), kerning);
+    connect(kerning, &QCheckBox::toggled, this,
+            [this, report](bool on) { report(canvas_->tools().textEditor().setKerning(on)); });
+
+    auto* place = new QPushButton(QStringLiteral("Place text (Ctrl+Enter)"), this);
+    form_->addRow(QString(), place);
+    connect(place, &QPushButton::clicked, this, [this, report]() {
+        const viewmodel::ToolResult r = canvas_->tools().key(viewmodel::ToolKey::Enter);
+        status_->setText(qs(r.message));
+        if (r.committed && canvas_->onDocumentEdited) {
+            canvas_->onDocumentEdited();
+        }
+        if (r.selectionChanged && canvas_->onSelectionChanged) {
+            canvas_->onSelectionChanged();
+        }
+        canvas_->update();
+        (void)report;
+    });
+    auto* convert = new QPushButton(QStringLiteral("Convert selected text to curves"), this);
+    form_->addRow(QString(), convert);
+    connect(convert, &QPushButton::clicked, this, [this, report]() {
+        const viewmodel::TextEditResult r = canvas_->tools().textEditor().convertSelectionToCurves();
+        if (r.committed && canvas_->onDocumentEdited) {
+            canvas_->onDocumentEdited();
+        }
+        report(r);
+    });
 }
 
 void ToolPanel::rebuild() {

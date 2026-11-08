@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -59,7 +60,8 @@ class FileSession {
 
     /// Imports a DXF file into the document as one undo step (`importDxfIntoDocument`). The
     /// path is not remembered; the document becomes dirty. `forcedMmPerUnit` overrides the units.
-    bool importDxf(const std::filesystem::path& path, std::optional<double> forcedMmPerUnit = std::nullopt);
+    bool importDxf(const std::filesystem::path& path, std::optional<double> forcedMmPerUnit = std::nullopt,
+                   std::span<const std::uint8_t> textFontBytes = {});
     /// Result of the last successful `importDxf` (warnings for the dialog).
     const DxfImportOutcome& lastImport() const { return lastImport_; }
     /// Writes the active sheet (or the selection) as DXF to `path` (atomically). Does not change

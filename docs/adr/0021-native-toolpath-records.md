@@ -237,6 +237,9 @@ schema, the cache format and its budget open; they are decided here.
   layer of that name in the canonical order of §1 (no `layers`: every vector). The member is not kept: the next save writes the
   record natively. A damaged interim member fails the load with a message naming it.
 
+- **1.2 (T-0211, ADR-0033 amendment A1)** adds text parameters and embedded fonts; a document
+  without text objects is still written as 1.1.
+
 ### 6. carvetto-cli
 - `toolpath` adds a record through `AddToolpathCommand` (selection = the named layers' ids, or all
   vectors) and saves normally; `post` and `info` read `Document::toolpaths()`; `post` refuses a

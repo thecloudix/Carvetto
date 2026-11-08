@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <optional>
@@ -43,6 +44,7 @@ struct IntegrityIssue {
                               ///< (across kinds, or two sheets/layers sharing an id). An
                               ///< object's stored `id` counts as well as its map key.
         IdKeyMismatch,        ///< An object's stored `id` differs from the key it is stored under.
+        MissingFont,          ///< A text object names a font that is not embedded (T-0211).
         BadToolpathSelection, ///< A toolpath's vector selection names an id that was never
                               ///< allocated or belongs to another kind of item, lists an id
                               ///< twice, or combines `all` with explicit layers/objects (ADR-0021).
@@ -56,6 +58,23 @@ struct IntegrityIssue {
     /// Human-readable description for test output and logs.
     std::string message;
 };
+
+/// A font embedded in the document (T-0211): the TTF/OTF bytes, keyed by a content hash so equal
+/// fonts are stored once and `.carv` files are portable (no system fonts are referenced).
+struct FontAsset {
+    std::string key;  ///< 16 lower-case hex digits (`fontKeyFor`).
+    std::vector<std::uint8_t> bytes;
+
+    bool operator==(const FontAsset&) const = default;
+};
+/// Embedding caps: one font, all fonts together, and their count.
+inline constexpr std::size_t kMaxEmbeddedFontBytes = 8u << 20;
+inline constexpr std::size_t kMaxEmbeddedFontsTotalBytes = 32u << 20;
+inline constexpr std::size_t kMaxEmbeddedFonts = 64;
+/// Content key of font bytes: FNV-1a 64 as 16 lower-case hex digits.
+std::string fontKeyFor(const std::vector<std::uint8_t>& bytes);
+/// True for a well-formed font key (16 lower-case hex digits).
+bool isFontKey(const std::string& key);
 
 /// The in-memory design: one job, its sheets, ordered layers, objects, toolpath records,
 /// selection, document variables and undo history.
@@ -174,6 +193,15 @@ class Document {
     /// (deleted items) are skipped.
     std::vector<ObjectId> selectedVectors(const VectorSelection& selection) const;
 
+    // --- Embedded fonts (T-0211) -------------------------------------------------------------
+    const std::map<std::string, FontAsset>& fonts() const { return fonts_; }
+    const FontAsset* findFont(const std::string& key) const;
+    /// Raw: stores `font` unless its key is taken, malformed, or a cap would be exceeded.
+    /// Returns false (nothing changed) in those cases.
+    bool insertFont(FontAsset font);
+    /// Raw: removes a font. Nullopt when absent.
+    std::optional<FontAsset> takeFont(const std::string& key);
+
     // --- Ids -------------------------------------------------------------------------------
     // Each returns a null id when the generator is exhausted (and asserts in Debug); commands
     // check `idGenerator().canAllocate(n)` first and refuse (no-op) instead.
@@ -204,6 +232,7 @@ class Document {
     LayerId activeLayer_;
     std::map<ObjectId, Object> objects_;
     std::vector<ToolpathRecord> toolpaths_;
+    std::map<std::string, FontAsset> fonts_;
     Selection selection_;
     DocumentVariables variables_;
     UndoStack undo_;

@@ -119,4 +119,86 @@ HarfBuzz are fuzzed continuously upstream (OSS-Fuzz); we add our own bounds, not
 ### 6. Out of scope
 Single-line (stroke) fonts, system-font discovery, variable-font axes (the default instance is used),
 colour/SVG/bitmap glyphs, WOFF/WOFF2, vertical text, bidi reordering within a line, glyph bending,
-and the text tool UI (T-0211).
+and the text tool UI (delivered by T-0211, amendment A1).
+
+## Amendment A1 (T-0211): text objects, embedded fonts, the Text tool
+
+Date: 2026-11-08 · Status: proposed
+
+### 1. The text object
+Text is a `VectorObject` whose creation parameters are a new kind, `TextParams` (the existing
+"parameters that produced the contours" convention of ADR-0013): the string, the embedded font's
+key, em size, alignment, letter and line spacing, kerning, a mode and a placement. Reusing the vector
+payload means selection, snapping, boolean/offset operations, transforms and toolpaths work on text
+with no new code path: a toolpath selects the glyph contours like any other vector.
+- **Contours are a cached derived view.** `buildTextContours` (core/document, on top of `layoutText`
+  and `layoutTextOnPath`) computes them; the commands store the result in the object next to the
+  parameters, and the `.carv` loader trusts the stored contours and never re-lays out. So opening a
+  file does not depend on FreeType/HarfBuzz output, save -> load -> save is byte-stable, and a file
+  whose font cannot be parsed still opens, cuts and displays. The editor recomputes the contours
+  whenever a parameter changes. A test checks that re-laying out a loaded object reproduces its
+  stored contours.
+- **Layout is in a local frame**; `placement` (a `Transform2`) maps it into the sheet. Any affine
+  transform (move, rotate, scale, mirror, array copy) composes into `placement` and is applied to the
+  contours too, so text stays editable after being transformed (a mirror also reverses the contours
+  so outer ones stay counter-clockwise). Node editing, boolean operations and offsets still turn a
+  text into plain curves (`NoParams`) because they change the contours; the existing rule of
+  ADR-0030.
+- **Modes.** *Point*: lines grow from a baseline anchor at the local origin. *Box*: the local box is
+  x in [0, w], y in [-h, 0]; words wrap greedily at the box width (word widths come from shaping each
+  word alone and adding the shaped space advance and letter spacing, so kerning across a space is
+  ignored when choosing breaks; not when drawing); the first baseline is one ascender below the top;
+  alignment is about the box edges; an over-wide word or a text taller than `h` sets an `overflow`
+  flag (reported, not clipped). Wrapping is bounded: more than 4 000 words is refused. *Curve*: the
+  guide contour is **snapshotted into the parameters** (local frame) together with the id of the
+  object it came from (informational). A snapshot, not a live link, because live links need
+  dependency tracking and dangling-reference rules for deleted or edited guides; moving the guide
+  does not move the text, and the editor re-picks a guide to refit. Text on a curve runs along the
+  guide in its own direction; "reverse guide" flips it.
+- **Convert to curves** (`ConvertTextToCurvesCommand`) sets the parameters to `NoParams` and keeps
+  the contours; one undo step for the whole selection, restored exactly by undo.
+- Limits: text at most 256 KiB, parameters finite and in range (`textParamsProblem`), the layout
+  limits of section 4 apply to every layout. The document integrity check reports a text whose font
+  is not embedded (`MissingFont`).
+
+### 2. Embedded fonts (embedding policy)
+Font bytes are **embedded in the `.carv`** as members `fonts/<key>.font`, where `<key>` is the
+FNV-1a 64 hash of the bytes as 16 hex digits, so the same font is stored once and files are portable:
+no system font is ever referenced and the file looks the same on every machine. (FNV-1a is a key, not
+a security measure: `Document::insertFont` refuses a different font under a taken key, and the loader
+treats the key as a name only.) Caps: 8 MiB per font, 32 MiB and 64 fonts per document; the loader and
+the saver refuse more (`ResourceLimit`). Only fonts a text object uses are written (unused ones are
+dropped at save); the user has no font-licence prompt, so **embedding is the user's decision to make
+for fonts they pick**; the bundled starter font is OFL. Fonts are parsed by `core/text` only when
+text is edited, never when a file is opened. Member names `fonts/*.font` are reserved in
+`CarvExtras::withMember`.
+
+### 3. Format version (ADR-0021 section 5 amended)
+The format becomes **1.2**: text parameters (`"type": "text"`) and font members are optional
+additions. A document without text is still written as **1.1** (byte-identical to before), so only
+files that use text carry 1.2. Older readers: a 1.1 reader keeps the unknown parameter kind verbatim
+(the ADR-0013 unknown-parameter path), shows and cuts the stored contours as plain curves, keeps the
+`fonts/` members as unknown members and writes both back unchanged on save; nothing is lost and no
+error appears. Newer files with a higher *major* are refused as before.
+
+### 4. The Text tool (viewmodel)
+`TextEditor` (owned by `ToolController`, `ToolKind::Text`) follows ADR-0027/0030 conventions:
+- **Gesture-frozen draft.** The text being typed lives only in the editor until `commit()`; the
+  document is not touched while typing, so a draft needs no undo and is discarded by Escape. The draft
+  holds copies of its font bytes and guide, and `setDocument` drops it without dereferencing either
+  document: a replaced or freed document cannot be reached (tested, including under ASan).
+- **Commit is one undo step** (a `MacroCommand` of `AddFontCommand` and `AddObjectCommand` or
+  `SetTextCommand`). Editing in place re-lays out the whole object; committing without a change
+  records nothing.
+- **Fonts** come from bytes/files the user or app supplies; the app compiles in the OFL starter font
+  (`data/fonts`); the file dialog picks a TTF/OTF. No system font enumeration anywhere in core.
+- Typing has no caret: characters append, Backspace removes the last code point, and the full text
+  can be replaced (`setText`). Caret navigation is a follow-up.
+
+### 5. DXF TEXT / MTEXT import
+`importDxfIntoDocument` maps each parsed text item onto a Text object when the caller supplies a font
+(the app passes the Text tool's current font): character height becomes the em size through the
+font's cap height; rotation, width factor and mirroring go into `placement`; left/centre/right
+justification becomes the alignment; top/middle vertical attachment moves the first baseline; an
+MTEXT reference width makes text in a box. DXF font names are never resolved. Without a usable font
+the text is skipped with a warning, as before.

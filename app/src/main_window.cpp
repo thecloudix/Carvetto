@@ -19,6 +19,7 @@
 #include <QMessageBox>
 #include <QSettings>
 #include <QStatusBar>
+#include <span>
 #include <QStringList>
 #include <QString>
 #include <QTabWidget>
@@ -36,6 +37,8 @@
 #include "canvas_widget.hpp"
 #include "carvetto/viewmodel/dxf_exchange.hpp"
 #include "carvetto/viewmodel/new_job_form.hpp"
+#include "carvetto/viewmodel/starter_font.hpp"
+#include "carvetto/viewmodel/text_tool.hpp"
 #include "carvetto/viewmodel/units_format.hpp"
 #include "new_job_dialog.hpp"
 #include "node_edit_menu.hpp"
@@ -204,6 +207,16 @@ void MainWindow::buildMenus() {
     vectorOps_ = std::make_unique<VectorOpsMenu>(*this, edit);
     copies_ = std::make_unique<CopiesMenu>(*this, edit);
     transformMenu_ = std::make_unique<TransformMenu>(*this);
+    edit->addSeparator();
+    QAction* convertText = edit->addAction(QStringLiteral("Convert &Text to Curves"));
+    connect(convertText, &QAction::triggered, this, [this]() {
+        const viewmodel::TextEditResult r = canvas_->tools().textEditor().convertSelectionToCurves();
+        if (r.committed) {
+            documentChanged();
+        } else {
+            statusBar()->showMessage(qs(r.message), 6000);
+        }
+    });
 
     QMenu* view = menuBar()->addMenu(QStringLiteral("&View"));
     QAction* fit = view->addAction(QStringLiteral("Zoom to &Material"));
@@ -259,6 +272,9 @@ void MainWindow::buildToolPalette() {
          "Draw lines (Shift: 45 degrees, Enter/double-click: finish, Tab: close, Backspace: undo point)"},
         {viewmodel::ToolKind::NodeEdit, "Node Edit",
          "Edit nodes, control points and spans (N). Drag; Shift: add; Ctrl+drag moves a span; right click: menu"},
+        {viewmodel::ToolKind::Text, "Text",
+         "Place text: click (point text), drag a box (text in a box) or click a curve (text on a curve). "
+         "Type; Enter: new line, Ctrl+Enter: place, Escape: cancel. Click a text to edit it"},
     };
     QToolBar* bar = addToolBar(QStringLiteral("Tools"));
     bar->setObjectName(QStringLiteral("toolsToolBar"));
@@ -521,7 +537,14 @@ bool MainWindow::saveFileAs(const std::filesystem::path& path) {
 }
 
 bool MainWindow::importDxfFile(const std::filesystem::path& path, std::optional<double> forcedMmPerUnit) {
-    const bool ok = session_.importDxf(path, forcedMmPerUnit);
+    // DXF text has no usable font names (no system fonts): it is set in the Text tool's font, the
+    // starter font until the user picks another one.
+    const viewmodel::TextEditor& textEditor = canvas_->tools().textEditor();
+    const auto starter = viewmodel::starterFontBytes();
+    const std::span<const std::uint8_t> textFont = textEditor.hasFont()
+                                                       ? std::span<const std::uint8_t>(textEditor.fontBytes())
+                                                       : starter;
+    const bool ok = session_.importDxf(path, forcedMmPerUnit, textFont);
     if (!ok) {
         showError(QStringLiteral("Import failed"));
         return false;
@@ -529,8 +552,9 @@ bool MainWindow::importDxfFile(const std::filesystem::path& path, std::optional<
     documentChanged();
     const viewmodel::DxfImportOutcome& report = session_.lastImport();
     if (!quiet_) {
-        QString text = QStringLiteral("Imported %1 object(s) and %2 new layer(s).")
+        QString text = QStringLiteral("Imported %1 object(s), %2 text(s) and %3 new layer(s).")
                            .arg(static_cast<qulonglong>(report.objectsAdded))
+                           .arg(static_cast<qulonglong>(report.textAdded))
                            .arg(static_cast<qulonglong>(report.layersAdded));
         if (report.warnings.empty()) {
             QMessageBox::information(this, QStringLiteral("DXF import"), text);

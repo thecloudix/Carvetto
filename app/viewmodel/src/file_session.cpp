@@ -193,7 +193,8 @@ bool FileSession::saveAs(const fs::path& path) {
     return true;
 }
 
-bool FileSession::importDxf(const fs::path& path, std::optional<double> forcedMmPerUnit) {
+bool FileSession::importDxf(const fs::path& path, std::optional<double> forcedMmPerUnit,
+                            std::span<const std::uint8_t> textFontBytes) {
     error_.clear();
     try {
         std::vector<std::uint8_t> bytes;
@@ -201,7 +202,7 @@ bool FileSession::importDxf(const fs::path& path, std::optional<double> forcedMm
         if (!readFile(path, bytes, why)) {
             return fail("Cannot open the file: " + why + ".");
         }
-        DxfImportOutcome outcome = importDxfIntoDocument(*doc_, bytes, forcedMmPerUnit);
+        DxfImportOutcome outcome = importDxfIntoDocument(*doc_, bytes, forcedMmPerUnit, textFontBytes);
         if (!outcome.ok) {
             return fail(outcome.error);
         }
