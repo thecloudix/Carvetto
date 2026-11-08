@@ -136,6 +136,12 @@ target_compile_definitions(carvetto_tests PRIVATE
   CARVETTO_POCKET_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/pocket"
 )
 target_link_libraries(carvetto_tests PRIVATE carvetto::core Catch2::Catch2WithMain carvetto_warnings)
+# T-0182: arc_segment_cap_test compares polygons bit for bit with a reference built from the same inline
+# expressions as the library (ArcSpan::pointAt). The library is compiled with -ffp-contract=off; this
+# TU must be too, or an FMA-contracting target (aarch64, -march=native) rounds the inline copy differently.
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+  set_source_files_properties(geometry/arc_segment_cap_test.cpp PROPERTIES COMPILE_OPTIONS -ffp-contract=off)
+endif()
 
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 include(Catch)
