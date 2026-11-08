@@ -32,6 +32,7 @@ class RulerWidget;
 class CopiesMenu;
 class NodeEditMenu;
 class ToolPanel;
+class ToolpathsPanel;
 class TransformMenu;
 class VectorOpsMenu;
 
@@ -65,14 +66,14 @@ class MainWindow : public QMainWindow {
     NodeEditMenu* nodeEdit() const { return nodeEdit_.get(); }
     TransformMenu* transformMenu() const { return transformMenu_.get(); }
     QDockWidget* toolpathsDock() const { return toolpathsDock_; }
-    /// File > Save Toolpaths... (T-0224): posts the document's calculated toolpaths.
+    /// File > Save Toolpaths... (T-0224): posts the enabled, calculated toolpaths.
     QAction* saveToolpathsAction() const { return saveToolpathsAction_; }
-    /// The machines offered in the Save Toolpaths dialog (from the tool database; none = the
-    /// dialog offers only the post list).
-    void setMachines(std::vector<tooling::Machine> machines) { machines_ = std::move(machines); }
-    const std::vector<tooling::Machine>& machines() const { return machines_; }
-    /// Opens the Save Toolpaths dialog (modal).
+    /// Opens the Save Toolpaths dialog (modal) for `toolpaths()->session().enabledToolpaths()`, with
+    /// the machines of the tool database.
     void saveToolpathsDialog();
+    ToolpathsPanel* toolpaths() const { return toolpaths_; }
+    QAction* undoAction() const { return undoAction_; }
+    QAction* redoAction() const { return redoAction_; }
     QDockWidget* layersDock() const { return layersDock_; }
     ToolPanel* toolPanel() const { return toolPanel_; }
 
@@ -130,7 +131,6 @@ class MainWindow : public QMainWindow {
     viewmodel::FileSession session_;
     QMenu* recentMenu_{nullptr};
     QAction* saveToolpathsAction_{nullptr};
-    std::vector<tooling::Machine> machines_;
     std::unique_ptr<CopiesMenu> copies_;
     std::unique_ptr<VectorOpsMenu> vectorOps_;
     std::unique_ptr<NodeEditMenu> nodeEdit_;
@@ -156,6 +156,7 @@ class MainWindow : public QMainWindow {
     QActionGroup* toolGroup_{nullptr};
     std::map<viewmodel::ToolKind, QAction*> toolActions_;
     ToolPanel* toolPanel_{nullptr};
+    ToolpathsPanel* toolpaths_{nullptr};
 
     QAction* undoAction_{nullptr};
     QAction* redoAction_{nullptr};

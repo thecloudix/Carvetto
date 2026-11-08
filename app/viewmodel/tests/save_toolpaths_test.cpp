@@ -479,6 +479,25 @@ TEST_CASE("uncalculated toolpaths are skipped with a warning", "[save]") {
     CHECK(out.warnings.front().find("'Pending'") != std::string::npos);
 }
 
+TEST_CASE("only the session's enabled toolpaths are posted", "[save]") {
+    Fixture f;
+    const auto posts = shipped();
+    REQUIRE(f.session.setEnabled(f.ids[1], false));
+    const std::vector<document::ToolpathId> enabled = f.session.enabledToolpaths();
+    REQUIRE(enabled.size() == 2);
+    SaveOptions o;
+    o.directory = workDir("enabled");
+    const SaveOutput out = generateOutput(prepareSave(f.doc, enabled, postNamed(posts, "grbl_mm.pp"), o));
+    REQUIRE(out.ok);
+    REQUIRE(out.files[0].toolpaths.size() == 2);
+    const std::string disabledName = f.doc.toolpaths()[1].name;
+    for (const std::string& n : out.files[0].toolpaths) {
+        CHECK(n != disabledName);
+    }
+    CHECK(out.files[0].text.find("(" + disabledName + ")") == std::string::npos);
+    CHECK(out.toolChanges == 0);  // the 6 mm pocket between the two profiles is gone
+}
+
 TEST_CASE("a planted symlink at a predictable temp name is not followed", "[save][safety]") {
     const fs::path dir = workDir("symtmp");
     const fs::path victim = dir / "victim.txt";

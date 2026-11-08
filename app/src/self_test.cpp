@@ -40,6 +40,7 @@
 #include "carvetto/viewmodel/new_job_form.hpp"
 #include "carvetto/viewmodel/pixel_probe.hpp"
 #include "carvetto/viewmodel/save_toolpaths.hpp"
+#include "carvetto/viewmodel/toolpath_session.hpp"
 #include "carvetto/viewmodel/selection_tools.hpp"
 #include "carvetto/viewmodel/tools.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
@@ -47,6 +48,7 @@
 #include "node_edit_menu.hpp"
 #include "save_toolpaths_dialog.hpp"
 #include "tool_panel.hpp"
+#include "toolpaths_panel.hpp"
 #include "transform_menu.hpp"
 #include "vector_ops_menu.hpp"
 
@@ -654,10 +656,16 @@ int runSelfTest() {
         window.selectTool(viewmodel::ToolKind::Select);
     }
 
-    // 8. Save Toolpaths (T-0224): two calculated toolpaths with different tools, post them through
+    // 8. The Toolpaths dock through the real widgets (T-0221).
+    if (const std::string why = toolpathsSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 9. Save Toolpaths (T-0224): two calculated toolpaths with different tools, post them through
     // the dialog (generation and writing run on a worker thread), re-read the files.
     {
         document::Document& cur = window.currentDocument();
+        const std::size_t recordsBefore = cur.toolpaths().size();
         const auto addRecord = [&](const std::string& name, int toolNumber, double diameter) {
             document::ToolpathRecord r;
             r.name = name;
@@ -687,13 +695,32 @@ int runSelfTest() {
             return fail("no temporary directory for the Save Toolpaths test");
         }
         const std::filesystem::path outPath = viewmodel::pathFromUtf8(outDir.path().toStdString());
-        SaveToolpathsDialog dialog(cur, {}, "job", {}, outPath);
+        // The caller passes the session's enabled toolpaths: a disabled one is not posted.
+        viewmodel::ToolpathSession& tpSession = window.toolpaths()->session();
+        std::vector<document::ToolpathId> ids = tpSession.enabledToolpaths();
+        if (ids.size() != recordsBefore + 2) {
+            return fail("the session does not list the added toolpaths as enabled");
+        }
+        {
+            tpSession.setEnabled(ids.back(), false);
+            SaveToolpathsDialog skip(cur, tpSession.enabledToolpaths(), "job", {}, outPath);
+            if (!skip.waitIdle() || !skip.output().ok || skip.output().files.size() != 1 ||
+                skip.output().files.front().toolpaths.size() != recordsBefore + 1) {
+                return fail("a disabled toolpath was posted by the Save Toolpaths dialog");
+            }
+            tpSession.setEnabled(ids.back(), true);
+        }
+        std::vector<tooling::Machine> machines;
+        for (const auto& entry : tpSession.toolDatabase().machines()) {
+            machines.push_back(entry.second);
+        }
+        SaveToolpathsDialog dialog(cur, ids, "job", machines, outPath);
         dialog.show();
         if (!dialog.waitIdle() || dialog.postCount() < 3 || !dialog.output().ok) {
             return fail("the Save Toolpaths dialog did not generate: " + dialog.output().error);
         }
         if (!dialog.selectPost("grbl_mm.pp") || !dialog.waitIdle() || !dialog.output().ok ||
-            dialog.output().files.size() != 1 || dialog.output().toolChanges != 1) {
+            dialog.output().files.size() != 1 || dialog.output().toolChanges < 1) {
             return fail("the Save Toolpaths dialog gave no single Grbl file with one tool change");
         }
         if (dialog.previewShown().find("G21") == std::string::npos || !dialog.canSave()) {
@@ -725,7 +752,8 @@ int runSelfTest() {
         // One file per toolpath with a name template.
         dialog.setOutputMode(viewmodel::OutputMode::FilePerToolpath);
         dialog.setNameTemplate("{n}-{toolpath}");
-        if (!dialog.waitIdle() || dialog.output().files.size() != 2 || !dialog.saveNow() || dialog.written().size() != 2 ||
+        if (!dialog.waitIdle() || dialog.output().files.size() != recordsBefore + 2 || !dialog.saveNow() ||
+            dialog.written().size() != recordsBefore + 2 ||
             !QFileInfo::exists(outDir.filePath(QStringLiteral("01-Outline.nc"))) ||
             !QFileInfo::exists(outDir.filePath(QStringLiteral("02-Pocket.nc")))) {
             return fail("one file per toolpath was not written");
@@ -738,7 +766,7 @@ int runSelfTest() {
         dialog.reject();
         window.undo();
         window.undo();
-        if (!cur.toolpaths().empty()) {
+        if (cur.toolpaths().size() != recordsBefore) {
             return fail("undoing the test toolpaths did not remove them");
         }
     }

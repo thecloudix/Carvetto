@@ -8,6 +8,7 @@ add_library(carvetto_viewmodel STATIC
   src/save_toolpaths.cpp
   src/toolpath_calc.cpp
   src/toolpath_form.cpp
+  src/toolpath_runner.cpp
   src/toolpath_session.cpp
   src/tools.cpp
   src/transform_form.cpp
@@ -25,9 +26,10 @@ add_library(carvetto_viewmodel STATIC
   src/snapping.cpp
   src/selection_tools.cpp
 )
+find_package(Threads REQUIRED)
 target_include_directories(carvetto_viewmodel PUBLIC include)
 target_link_libraries(carvetto_viewmodel
-  PUBLIC carvetto::core
+  PUBLIC carvetto::core Threads::Threads
   PRIVATE carvetto_warnings
 )
 add_library(carvetto::viewmodel ALIAS carvetto_viewmodel)

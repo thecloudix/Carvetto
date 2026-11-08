@@ -43,6 +43,7 @@
 #include "save_toolpaths_dialog.hpp"
 #include "ruler_widget.hpp"
 #include "tool_panel.hpp"
+#include "toolpaths_panel.hpp"
 #include "transform_menu.hpp"
 #include "vector_ops_menu.hpp"
 
@@ -146,8 +147,20 @@ void MainWindow::buildDocks() {
     componentsDock_ =
         makeDock("Components", "componentsDock", placeholder("3D components will be listed here.", this));
     libraryDock_ = makeDock("Library", "libraryDock", placeholder("Clipart and project library.", this));
-    toolpathsDock_ =
-        makeDock("Toolpaths", "toolpathsDock", placeholder("Toolpath operations and list.", this));
+    toolpaths_ = new ToolpathsPanel(&session_.document(), this);
+    toolpaths_->onDocumentEdited = [this]() { documentChanged(); };
+    toolpaths_->onSelectionChanged = [this]() {
+        if (transformMenu_) {
+            transformMenu_->refresh();
+        }
+        canvas_->refresh();
+    };
+    toolpaths_->onBusyChanged = [this]() {
+        if (undoAction_ != nullptr) {
+            documentChanged();  // Undo / Redo are disabled while a calculation runs
+        }
+    };
+    toolpathsDock_ = makeDock("Toolpaths", "toolpathsDock", toolpaths_);
 
     addDockWidget(Qt::LeftDockWidgetArea, designDock_);
     addDockWidget(Qt::LeftDockWidgetArea, sheetsDock_);
@@ -330,6 +343,7 @@ void MainWindow::setDocument(std::unique_ptr<document::Document> doc) {
         return;
     }
     session_.newDocument(std::move(doc));
+    toolpaths_->setDocument(&session_.document());
     canvas_->setDocument(&session_.document());
     toolPanel_->rebuild();
     documentChanged();
@@ -345,8 +359,9 @@ void MainWindow::documentChanged() {
     const document::Units units = session_.document().job().displayUnits;
     hRuler_->setUnits(units);
     vRuler_->setUnits(units);
-    undoAction_->setEnabled(session_.document().undoStack().canUndo());
-    redoAction_->setEnabled(session_.document().undoStack().canRedo());
+    const bool calculating = toolpaths_ != nullptr && toolpaths_->busy();
+    undoAction_->setEnabled(session_.document().undoStack().canUndo() && !calculating);
+    redoAction_->setEnabled(session_.document().undoStack().canRedo() && !calculating);
     undoAction_->setText(session_.document().undoStack().canUndo()
                              ? QStringLiteral("&Undo ") + qs(session_.document().undoStack().undoText())
                              : QStringLiteral("&Undo"));
@@ -354,15 +369,24 @@ void MainWindow::documentChanged() {
                              ? QStringLiteral("&Redo ") + qs(session_.document().undoStack().redoText())
                              : QStringLiteral("&Redo"));
     canvas_->refresh();
+    if (toolpaths_ != nullptr) {
+        toolpaths_->refresh();
+    }
 }
 
 bool MainWindow::undo() {
+    if (toolpaths_ != nullptr && toolpaths_->busy()) {
+        return false;  // a toolpath calculation is running: it would be applied to a different state
+    }
     const bool done = session_.document().undo();
     documentChanged();
     return done;
 }
 
 bool MainWindow::redo() {
+    if (toolpaths_ != nullptr && toolpaths_->busy()) {
+        return false;
+    }
     const bool done = session_.document().redo();
     documentChanged();
     return done;
@@ -413,6 +437,7 @@ void MainWindow::pickSheet(int row) {
     refreshing_ = false;
     canvas_->zoomToMaterial();
     canvas_->refresh();
+    toolpaths_->invalidate();  // the active sheet decides which vectors a toolpath machines
 }
 
 void MainWindow::pickLayer(int row) {
@@ -489,7 +514,20 @@ void MainWindow::saveToolpathsDialog() {
     const std::filesystem::path folder = path.empty() ? viewmodel::pathFromUtf8(QDir::homePath().toStdString())
                                                       : path.parent_path();
     const std::string job = path.empty() ? std::string("toolpaths") : viewmodel::pathToUtf8(path.stem());
-    SaveToolpathsDialog dialog(session_.document(), {}, job, machines_, folder, this);
+    // Only enabled, calculated toolpaths are posted (an empty list must not mean "all").
+    const std::vector<document::ToolpathId> ids = toolpaths_->session().enabledToolpaths();
+    if (ids.empty()) {
+        if (!quiet_) {
+            QMessageBox::information(this, QStringLiteral("Save Toolpaths"),
+                                     QStringLiteral("There are no enabled, calculated toolpaths to save."));
+        }
+        return;
+    }
+    std::vector<tooling::Machine> machines;
+    for (const auto& entry : toolpaths_->session().toolDatabase().machines()) {
+        machines.push_back(entry.second);
+    }
+    SaveToolpathsDialog dialog(session_.document(), ids, job, machines, folder, this);
     dialog.exec();
 }
 
@@ -502,6 +540,7 @@ void MainWindow::showError(const QString& title) {
 bool MainWindow::openFile(const std::filesystem::path& path) {
     const bool ok = session_.open(path);
     if (ok) {
+        toolpaths_->setDocument(&session_.document());
         canvas_->setDocument(&session_.document());
         documentChanged();
     } else {
@@ -673,6 +712,9 @@ void MainWindow::closeEvent(QCloseEvent* event) {
     if (persistLayout_) {
         QSettings settings;
         saveLayout(settings);
+    }
+    if (toolpaths_ != nullptr) {
+        toolpaths_->showClosing();
     }
     QMainWindow::closeEvent(event);
 }
