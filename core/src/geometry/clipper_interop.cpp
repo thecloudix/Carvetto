@@ -20,12 +20,21 @@ double toClipperDistance(double mm) {
     return mm * kFixedPointScale;
 }
 
-Clipper2Lib::Path64 toClipperPath(const Contour& c, const Tolerance& tol) {
+Clipper2Lib::Path64 toClipperPath(const Contour& c, const Tolerance& tol, std::size_t* refused) {
     // Only true grid duplicates are merged (below), not points closer than tol.distance: that
     // merge collapsed a closed contour smaller than the distance tolerance (an island circle of
     // radius below it), which the booleans then dropped (T-0175, owner decision; ADR-0006 §11).
-    const Polyline pl = c.polygonise(tol);
+    // T-0182: a polygon coarser than the chordal tolerance (an arc past the chord cap, a Bezier past
+    // its split cap, a non-finite span) would silently change the shape: refuse the contour.
+    bool coarse = false;
+    const Polyline pl = c.polygonise(tol, &coarse);
     Clipper2Lib::Path64 path;
+    if (coarse) {
+        if (refused != nullptr) {
+            ++*refused;
+        }
+        return path;
+    }
     path.reserve(pl.points.size());
     for (const Vec2 p : pl.points) {
         const Clipper2Lib::Point64 q = toClipper(p);

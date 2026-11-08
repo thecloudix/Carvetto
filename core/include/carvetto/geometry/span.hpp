@@ -34,6 +34,9 @@ struct LineSpan {
     LineSpan transformed(const Transform2& m) const { return {m.apply(start), m.apply(end)}; }
 };
 
+/// Most chords one arc is polygonised into (T-0182, ADR-0005 A2).
+inline constexpr std::size_t kMaxArcSegments = std::size_t{1} << 20;
+
 /// Circular arc given by centre, radius, start/end angles (radians from +X) and direction.
 ///
 /// The arc travels from `startAngle` to `endAngle` in `direction`. The swept angle is
@@ -73,8 +76,14 @@ struct ArcSpan {
     ArcSpan reversed() const;
     /// Approximates the arc by cubic Beziers of at most 90 degrees each.
     std::vector<BezierSpan> toBeziers() const;
-    /// Number of equal chords needed so that chordal deviation <= `chordalTol` (at least 1).
+    /// Number of equal chords needed so that chordal deviation <= `chordalTol` (at least 1), at most
+    /// `kMaxArcSegments` (T-0182, ADR-0005 A2): a larger need is cut to the cap, so the deviation of
+    /// that polygon is up to radius * (sweep / cap)^2 / 8. A non-finite arc (NaN/infinite centre, radius or
+    /// angles) gives 1.
     std::size_t segmentCountFor(double chordalTol) const;
+    /// True when `segmentCountFor` cut the count (the polygon is coarser than `chordalTol`), or the
+    /// arc is not finite (its points are NaN/infinite and no tolerance is met).
+    bool segmentCountIsCapped(double chordalTol) const;
 };
 
 /// Cubic Bezier from p0 to p3 with control points p1, p2.
@@ -128,15 +137,19 @@ Span reversed(const Span& s);
 /// arc is converted to cubic Beziers first, which is why the result is a list.
 std::vector<Span> transformed(const Span& s, const Transform2& m);
 /// Appends the polygonisation of `s` to `out`, excluding the start point and including the
-/// end point, so consecutive spans can be chained. Chordal deviation stays within `tol.chordal`.
-void polygoniseInto(const Span& s, const Tolerance& tol, std::vector<Vec2>& out);
+/// end point, so consecutive spans can be chained. Chordal deviation stays within `tol.chordal`,
+/// except when the work bound is hit (arc: `kMaxArcSegments` chords; Bezier: depth 24 / 2^20
+/// splits, ADR-0005 A2) or the span is not finite: then the polygon is coarser and, when `coarse`
+/// is not null, `*coarse` is set to true (it is never reset to false). Callers whose result must
+/// meet the tolerance (toolpaths) check it and refuse; drawing and hit tests may use the polygon.
+void polygoniseInto(const Span& s, const Tolerance& tol, std::vector<Vec2>& out, bool* coarse = nullptr);
 /// As `polygoniseInto`, for the boundary of a region (closed contours, T-0175): a curved span
 /// never becomes its bare chord. An arc that one chord would cover also gets its midpoint; a
 /// Bezier is split at least once, and at least twice when it is S-shaped (control points either
 /// side of the chord), so its polygon has vertices off the chord. A closed shape bounded by curves
 /// within the tolerance of their chords (a thin lens, a crescent, a flat tab) thus keeps a polygon
 /// of non-zero area instead of collapsing onto the chords, which booleans would drop.
-void polygoniseRegionInto(const Span& s, const Tolerance& tol, std::vector<Vec2>& out);
+void polygoniseRegionInto(const Span& s, const Tolerance& tol, std::vector<Vec2>& out, bool* coarse = nullptr);
 /// True when the span has (near) zero length.
 bool isDegenerate(const Span& s, const Tolerance& tol);
 
