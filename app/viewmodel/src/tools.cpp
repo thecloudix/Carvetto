@@ -160,7 +160,10 @@ ToolController::ToolController(document::Document* doc) : doc_(doc), nodeEditor_
 }
 
 void ToolController::setDocument(document::Document* doc) {
-    gesture_ = TransformGesture{};  // the old document may already be gone: no revert
+    // The old document may already be gone (the file session frees it before the window rebinds the
+    // tools): drop every drag state first, without touching it, then cancel what is left.
+    gesture_ = TransformGesture{};
+    nodeEditor_.setDocument(nullptr);
     xfReset();
     cancel();
     doc_ = doc;
@@ -703,7 +706,17 @@ ToolResult ToolController::afterNodeEdit(const NodeEditResult& r) {
 ToolResult ToolController::pointerMove(Vec2 px, Modifiers mods) {
     updatePointer(px, mods);
     if (tool_ == ToolKind::NodeEdit) {
-        return afterNodeEdit(nodeEditor_.move(px, cursorMm_, mods.shift, mods.ctrl, mods.alt));
+        const bool wasActive = nodeEditor_.gestureActive();
+        ToolResult r = afterNodeEdit(nodeEditor_.move(px, cursorMm_, mods.shift, mods.ctrl, mods.alt));
+        if (!wasActive && nodeEditor_.gestureActive() && snap_.has_value() && gestureSnapIndex_.has_value()) {
+            // The drag began in this event, so this first position was snapped against the full
+            // index, the edited objects included. Snap it again without them and replace the step.
+            snap_ = gestureSnapIndex_->best(view_, px, snapSettings_, SnapQuery{});
+            cursorMm_ = snap_.has_value() ? snap_->pointMm : view_.screenToWorld(px);
+            nodeIndexWasValid_ = true;
+            r = afterNodeEdit(nodeEditor_.move(px, cursorMm_, mods.shift, mods.ctrl, mods.alt));
+        }
+        return r;
     }
     if (tool_ == ToolKind::Select && selPressed_) {
         selCurPx_ = px;

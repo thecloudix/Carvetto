@@ -617,6 +617,38 @@ int runSelfTest() {
         return fail("opening a missing file did not fail cleanly");
     }
 
+    // 7. Replacing the document during a node drag (File > New order: the old document is freed
+    // first, then the canvas rebinds the tools); the app must not touch the freed document.
+    {
+        CanvasWidget* canvas = window.canvas();
+        document::Document& cur = window.currentDocument();
+        const geometry::Box2 box = viewmodel::activeMaterialMm(cur);
+        const double w = box.width();
+        const geometry::Vec2 lo{box.min.x + w * 0.2, box.min.y + w * 0.2};
+        const geometry::Vec2 hi{lo.x + w * 0.2, lo.y + w * 0.1};
+        if (!cur.execute(std::make_unique<document::AddObjectCommand>(document::Object::vector(
+                geometry::Contour::rectangle(geometry::Box2{lo, hi}), cur.activeLayer(), cur.activeSheet())))) {
+            return fail("could not add a rectangle for the document replacement test");
+        }
+        cur.selection().assign({cur.objectIds().back()});
+        window.documentChanged();
+        window.selectTool(viewmodel::ToolKind::NodeEdit);
+        sendMouse(canvas, QEvent::MouseMove, screenOf(canvas, hi), Qt::NoButton);
+        sendMouse(canvas, QEvent::MouseButtonPress, screenOf(canvas, hi));
+        sendMouse(canvas, QEvent::MouseMove, screenOf(canvas, hi + geometry::Vec2{w * 0.05, w * 0.05}), Qt::LeftButton);
+        if (!canvas->tools().nodeEditor().gestureActive()) {
+            return fail("the node drag for the replacement test did not start");
+        }
+        window.setDocument(std::make_unique<document::Document>(document::Job::singleSided(300.0, 300.0, 18.0, document::Units::Millimetres)));
+        sendMouse(canvas, QEvent::MouseMove, screenOf(canvas, lo), Qt::LeftButton);
+        sendMouse(canvas, QEvent::MouseButtonRelease, screenOf(canvas, lo));
+        sendKey(canvas, Qt::Key_Escape);
+        if (window.currentDocument().objectCount() != 0 || canvas->tools().nodeEditor().gestureActive()) {
+            return fail("replacing the document during a node drag left state behind");
+        }
+        window.selectTool(viewmodel::ToolKind::Select);
+    }
+
     window.close();
     std::printf("carvetto self-test: OK\n");
     std::fflush(stdout);

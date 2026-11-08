@@ -229,18 +229,34 @@ bool NodeEditor::pruneSelection() const {
     }
     const std::vector<ObjectId> edited = editedObjects();
     const std::set<ObjectId> editedSet(edited.begin(), edited.end());
+    // Counts per contour are computed once: a selection of every node of a long contour costs
+    // O(nodes + spans), not O(nodes x spans).
+    struct Counts {
+        std::size_t nodes{0};
+        std::size_t spans{0};
+        bool ok{false};
+    };
+    std::map<ContourKey, Counts> counts;
+    auto countsOf = [&](ObjectId id, std::size_t contour) -> const Counts& {
+        const auto found = counts.find({id, contour});
+        if (found != counts.end()) {
+            return found->second;
+        }
+        Counts c;
+        if (editedSet.contains(id)) {
+            const Object* obj = doc_->findObject(id);
+            const auto* vec = obj != nullptr ? obj->asVector() : nullptr;
+            if (vec != nullptr && contour < vec->contours.size()) {
+                Contour store;
+                const Contour& m = modelOf(vec->contours[contour], store);
+                c = {nodeops::nodeCount(m), m.spans.size(), true};
+            }
+        }
+        return counts.emplace(ContourKey{id, contour}, c).first->second;
+    };
     auto valid = [&](ObjectId id, std::size_t contour, std::size_t position, bool isNode) {
-        if (!editedSet.contains(id)) {
-            return false;
-        }
-        const Object* obj = doc_->findObject(id);
-        const auto* vec = obj != nullptr ? obj->asVector() : nullptr;
-        if (vec == nullptr || contour >= vec->contours.size()) {
-            return false;
-        }
-        Contour store;
-        const Contour& c = modelOf(vec->contours[contour], store);
-        return isNode ? position < nodeops::nodeCount(c) : position < c.spans.size();
+        const Counts& c = countsOf(id, contour);
+        return c.ok && position < (isNode ? c.nodes : c.spans);
     };
     std::erase_if(nodes_, [&](const NodeRef& r) { return !valid(r.object, r.contour, r.node, true); });
     std::erase_if(spans_, [&](const SpanRef& r) { return !valid(r.object, r.contour, r.span, false); });

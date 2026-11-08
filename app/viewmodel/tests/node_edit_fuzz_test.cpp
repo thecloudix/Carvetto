@@ -168,6 +168,15 @@ std::size_t runSeed(std::uint32_t seed) {
                 tool.nodeEditor().setSelectedNodeCoordinates(rng.range(-50, 400), std::nullopt, rng.next(2) == 0);
                 break;
             default:
+                if (rng.next(40) == 0) {
+                    // Replace the document in the order of the app: free the old one, then rebind.
+                    externalUndo = true;
+                    doc.reset();
+                    doc = std::make_unique<Document>(Job::singleSided(1000.0, 1000.0, 18.0, Units::Millimetres));
+                    tool.setDocument(doc.get());
+                    ids.clear();
+                    break;
+                }
                 // Idle edits of the document by others: a lock toggle or a transform.
                 if (!tool.nodeEditor().pressed() && !ids.empty() && rng.next(6) == 0) {
                     // Other objects vanish (removal or undo) while the snap index may be cached.
@@ -191,7 +200,7 @@ std::size_t runSeed(std::uint32_t seed) {
         }
         (void)tool.nodeEditor().handles();
     }
-    const std::size_t recorded = doc->undoStack().count() - setupSteps;
+    const std::size_t recorded = doc->undoStack().count() > setupSteps ? doc->undoStack().count() - setupSteps : 0;
     // Finish any drag, then undo everything: the setup state returns byte-identically.
     tool.pointerRelease({0, 0});
     tool.key(ToolKey::Escape);
@@ -265,4 +274,39 @@ TEST_CASE("performance: a pointer step with 10k objects and one edited object", 
     std::cout << "[T-0206 perf] objects=" << n << " step=" << perStep * 1e3 << " ms\n";
     CHECK(doc.undoStack().count() == static_cast<std::size_t>(n) + 1);
     CHECK(perStep < 0.016);
+}
+
+TEST_CASE("performance: a contour of thousands of spans with every node selected stays linear", "[viewmodel][node][edit][perf]") {
+    Document doc(Job::singleSided(5000.0, 5000.0, 18.0, Units::Millimetres));
+    ViewTransform view;
+    view.setViewport(1000.0, 1000.0);
+    view.set(0.2, {50.0, 950.0});
+    ToolController tool;
+    tool.setView(view);
+    tool.setDocument(&doc);
+    tool.setTool(ToolKind::NodeEdit);
+    const int n = 8000;
+    carvetto::geometry::Contour c;
+    for (int i = 0; i < n; ++i) {
+        const double a0 = 6.283185307179586 * i / n;
+        const double a1 = 6.283185307179586 * (i + 1) / n;
+        c.append(carvetto::geometry::LineSpan{{1000 + 900 * std::cos(a0), 1000 + 900 * std::sin(a0)},
+                                              {1000 + 900 * std::cos(a1), 1000 + 900 * std::sin(a1)}});
+    }
+    c.closed = true;
+    auto cmd = std::make_unique<AddObjectCommand>(Object::vector(c, doc.activeLayer(), doc.activeSheet()));
+    REQUIRE(doc.execute(std::move(cmd)));
+    doc.selection().assign(doc.objectIds());
+    tool.nodeEditor().selectAllNodes();
+    const double t0 = carvetto::test::processCpuSeconds();
+    const int calls = 5;
+    for (int i = 0; i < calls; ++i) {
+        (void)tool.nodeEditor().handles();
+        (void)tool.nodeEditor().hitTest({500.0 + i, 500.0});
+        (void)tool.nodeEditor().selectedNodes();
+    }
+    const double perCall = (carvetto::test::processCpuSeconds() - t0) / calls;
+    std::cout << "[T-0206 perf] 8000 spans, all nodes selected: handles+hitTest+selectedNodes = " << perCall * 1e3
+              << " ms\n";
+    CHECK(perCall < 0.1);
 }

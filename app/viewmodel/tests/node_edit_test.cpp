@@ -494,6 +494,7 @@ TEST_CASE("a drag survives unrelated edits and a replaced document without crash
         CHECK(f.doc.hasObject(s));
     }
     SECTION("document replaced mid-drag") {
+        // Real order of the app: the old document is freed, THEN the tools are rebound.
         auto doc1 = std::make_unique<Document>(Job::singleSided(1000.0, 1000.0, 18.0, Units::Millimetres));
         ToolController tool;
         ViewTransform view;
@@ -510,9 +511,9 @@ TEST_CASE("a drag survives unrelated edits and a replaced document without crash
         tool.pointerMove(view.worldToScreen({60, 40}));
         tool.pointerPress(view.worldToScreen({60, 40}));
         tool.pointerMove(view.worldToScreen({70, 50}));
+        doc1.reset();  // the old document is gone
         auto doc2 = std::make_unique<Document>(Job::singleSided(500.0, 500.0, 18.0, Units::Millimetres));
         tool.setDocument(doc2.get());
-        doc1.reset();  // the old document is gone
         tool.pointerMove(view.worldToScreen({80, 60}));
         tool.pointerRelease(view.worldToScreen({80, 60}));
         CHECK(doc2->undoStack().count() == 0);
@@ -1215,4 +1216,97 @@ TEST_CASE("a sheet switch during a node drag ends it and drops the frozen index"
         CHECK(f.doc.objects() == after);  // the drag edited nothing after the switch
         f.doc.setActiveSheet(first);
     }
+}
+
+// ------------------------------------------------- document replaced in the order the app uses
+
+namespace {
+
+/// What is in progress when the document is replaced.
+enum class Pending { PushedStep, NothingPushed, Marquee };
+
+void replaceInAppOrder(ToolKind kind, Pending pending, Modifiers m) {
+    auto doc = std::make_unique<Document>(Job::singleSided(1000.0, 1000.0, 18.0, Units::Millimetres));
+    ViewTransform view;
+    view.setViewport(1000, 1000);
+    view.set(2.0, {100.0, 900.0});
+    ToolController tool;
+    tool.setView(view);
+    tool.setDocument(doc.get());
+    tool.setTool(kind);
+    auto px = [&](Vec2 mm) { return view.worldToScreen(mm); };
+    auto cmd = std::make_unique<AddObjectCommand>(Object::vector(Contour::rectangle(Box2{{20, 20}, {60, 40}}),
+                                                                  doc->activeLayer(), doc->activeSheet()));
+    REQUIRE(doc->execute(std::move(cmd)));
+    doc->selection().assign(doc->objectIds());
+    const bool node = kind == ToolKind::NodeEdit;
+    // Press on a node (NodeEdit) / on the selected object's outline (Select), or on empty canvas.
+    const Vec2 start = pending == Pending::Marquee ? Vec2{300, 300} : Vec2{60, 40};
+    Vec2 away{70, 50};
+    if (pending == Pending::NothingPushed) {
+        away = node ? Vec2{60, 20} : start;  // onto the neighbouring node: refused; Select: no move
+    }
+    tool.pointerMove(px(start), m);
+    tool.pointerPress(px(start), m);
+    tool.pointerMove(px(pending == Pending::Marquee ? Vec2{340, 340} : away), m);
+    doc.reset();  // FileSession frees the old document ...
+    auto replacement = std::make_unique<Document>(Job::singleSided(500.0, 500.0, 18.0, Units::Millimetres));
+    tool.setDocument(replacement.get());  // ... and only then the window rebinds the tools
+    tool.pointerMove(px({80, 60}), m);
+    tool.pointerRelease(px({80, 60}), m);
+    tool.key(ToolKey::Escape);
+    CHECK(replacement->undoStack().count() == 0);
+    CHECK_FALSE(tool.active());
+    CHECK_FALSE(tool.wantsKeys());
+    if (node) {
+        CHECK(tool.nodeEditor().handles().empty());
+        CHECK(tool.nodeEditor().selectedNodes().empty());
+    }
+}
+
+}  // namespace
+
+TEST_CASE("a document freed before the tools are rebound is never touched again", "[viewmodel][node][edit][uaf][replace]") {
+    Modifiers shift;
+    shift.shift = true;
+    Modifiers ctrl;
+    ctrl.ctrl = true;
+    Modifiers alt;
+    alt.alt = true;
+    for (const ToolKind kind : {ToolKind::NodeEdit, ToolKind::Select}) {
+        for (const Pending pending : {Pending::PushedStep, Pending::NothingPushed, Pending::Marquee}) {
+            for (const Modifiers& m : {Modifiers{}, shift, ctrl, alt}) {
+                replaceInAppOrder(kind, pending, m);
+            }
+        }
+    }
+}
+
+TEST_CASE("the first step of a drag does not snap to the edited object itself", "[viewmodel][node][edit][snap]") {
+    Fix f;
+    f.tool.snapSettings().setEnabled(SnapKind::Endpoint, true);
+    Contour c;
+    c.append(LineSpan{{0, 100}, {50, 100}});
+    c.append(LineSpan{{50, 100}, {50, 104}});
+    const ObjectId id = f.add(c);
+    f.select(id);
+    f.tool.pointerMove(f.px({50, 100}));
+    f.tool.pointerPress(f.px({50, 100}));
+    f.tool.pointerMove(f.px({50, 102.2}));  // 4.4 px: the first step beyond the drag threshold
+    REQUIRE(f.tool.nodeEditor().gestureActive());
+    CHECK_FALSE(f.tool.snap().has_value());  // (50,104) is the object's own endpoint
+    CHECK(closeTo(nodeops::nodePoint(f.contour(id), 1), {50, 102.2}, 1e-9));
+}
+
+TEST_CASE("a second drag on another object snaps to the object dragged before", "[viewmodel][node][edit][snap]") {
+    Fix f;
+    f.tool.snapSettings().setEnabled(SnapKind::Endpoint, true);
+    const ObjectId a = f.addRect(20, 20, 60, 40);
+    const ObjectId b = f.addRect(200, 200, 240, 220);
+    f.select(a);
+    f.drag({60, 40}, {{70, 50}, {90, 70}});  // A's node 2 now at (90,70) (nothing near to snap to)
+    f.select(b);
+    f.drag({240, 220}, {{200, 150}, {110, 90}, {91, 71}});  // near A's moved corner
+    CHECK(closeTo(nodeops::nodePoint(f.contour(b), 2), {90, 70}, 1e-9));
+    (void)a;
 }

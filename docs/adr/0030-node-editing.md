@@ -125,6 +125,20 @@ yet: `NodeEditor` records the generation and the active sheet when the drag begi
 `validateGesture` ends the drag when either differs. A sheet switch does not change the undo
 generation, hence the sheet in the key. `ToolController::snapIndexBuilds()` is a test hook that pins this (no rebuild per drag step).
 
+The first step beyond the drag threshold is snapped before the drag exists, i.e. against the full
+index; when the drag begins in that event the controller snaps it again against the frozen index
+(edited objects excluded) and replaces the step, so no step ever snaps to the object being edited.
+Mutants that make `gestureIndexValid` always true or drop the sheet from the key are equivalent:
+`validateGesture` already ends the drag on a changed generation or sheet before the key is consulted.
+Resetting the frozen index when no drag is active is pinned by "a second drag on another object snaps
+to the object dragged before".
+
+Document replacement: the file session frees the old document before the window rebinds the tools,
+so `ToolController::setDocument` first drops the drag state of both gestures and nulls the node
+editor's document pointer without dereferencing either, and only then cancels and binds the new
+document (regression tests free the old document first, for both tools, with a pushed step, with
+nothing pushed and with a marquee, under every modifier).
+
 ### 8b. Keys against the Transform shortcuts (ADR-0029)
 While the NodeEdit tool is active the canvas claims plain letter keys (with or without Shift)
 through `ShortcutOverride`, so H/V toggle the node-edit mirror mode (and J, M, T, R reach the node
@@ -157,6 +171,10 @@ focused H selects its "Horizontal" item. Move and Mirror in the Transform menu s
   the drag but does not bring the discarded redo back.
 - An object with 100k spans costs about 8.5 ms per pointer step (worst 22 ms): the edit copies and
   validates the whole edited object per step. The 16 ms budget holds for ordinary objects.
+- `pruneSelection` computes node and span counts once per contour: 8000 spans with every node
+  selected cost about 11 ms (Debug, `handles()` + `hitTest` + `selectedNodes`), linear; it was
+  quadratic (281 ms under ASan).
+- Cut Vector refuses the end nodes of an open contour (nothing to split off); cut a span or an inner node.
 - Convert to Arc with a through point or bulge on a span that already is an arc refits it.
 
 ## Consequences
