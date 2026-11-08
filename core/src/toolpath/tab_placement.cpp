@@ -211,7 +211,17 @@ ZProfile tabCeiling(const ArcLengthPath& path, double u0, double u1, const std::
         } else {
             tab.knots = {ZKnot{s0, kNoCeiling, zTab}, ZKnot{s1, zTab, kNoCeiling}};
         }
-        ceiling = ZProfile::max(ceiling, tab);
+        // A stretch wholly after the ceiling so far (the usual case, the stretches being sorted)
+        // leaves the ceiling's knots as they are and adds its own: the same profile `max` builds,
+        // without rebuilding every knot for every tab (T-0186 round 4: quadratic in the tab count).
+        // (A zero-width stretch with a 3D ramp would put two knots at one position here where `max`
+        // merges them; tab placement gives every tab a positive length, so this is not reachable.)
+        if (ceiling.knots.size() >= 2 && ceiling.knots.back().zAfter == kNoCeiling &&
+            tab.knots.front().s > ceiling.knots.back().s) {
+            ceiling.knots.insert(ceiling.knots.end(), tab.knots.begin(), tab.knots.end());
+        } else {
+            ceiling = ZProfile::max(ceiling, tab);
+        }
     }
     return ceiling;
 }

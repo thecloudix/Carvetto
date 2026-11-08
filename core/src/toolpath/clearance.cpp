@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <limits>
 #include <memory>
 #include <utility>
@@ -10,6 +11,7 @@
 #include <vector>
 
 #include "carvetto/geometry/contour_ops.hpp"
+#include "work_meter.hpp"
 
 namespace carvetto::toolpath {
 
@@ -35,6 +37,31 @@ bool boxAtLeast(const geometry::Box2& b, geometry::Vec2 p, double limit) {
         return std::max(dx, dy) >= limit;  // false here; hypot(d, 0) == d
     }
     return std::hypot(dx, dy) >= limit;
+}
+
+/// True when the segments ab and cd cross (proper crossing; touching ends do not count).
+bool segmentsCross(geometry::Vec2 a, geometry::Vec2 b, geometry::Vec2 c, geometry::Vec2 d) {
+    const auto side = [](geometry::Vec2 p, geometry::Vec2 q, geometry::Vec2 r) {
+        return (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
+    };
+    const double d1 = side(a, b, c);
+    const double d2 = side(a, b, d);
+    const double d3 = side(c, d, a);
+    const double d4 = side(c, d, b);
+    return ((d1 > 0.0) != (d2 > 0.0)) && ((d3 > 0.0) != (d4 > 0.0)) && d1 != 0.0 && d2 != 0.0 && d3 != 0.0 &&
+           d4 != 0.0;
+}
+
+/// Work units of one exact closest-point evaluation on `s` (T-0186; one unit is about 30 ns of
+/// CPU): a line costs 1, an arc 4 (a square root and angle tests). A Bezier costs 40 (1.2 us: the
+/// root isolation of an ordinary curve measured 0.6 to 1.5 us), 110 (3 us) when its control
+/// polygon crosses itself, a looped or cusped curve, which isolates many more roots (a thin
+/// self-intersecting loop measured 2 to 3 us a test at every size from 73 mm to 7 m).
+std::uint64_t closestPointUnits(const geometry::Span& s) {
+    if (const auto* bz = std::get_if<geometry::BezierSpan>(&s)) {
+        return segmentsCross(bz->p0, bz->p1, bz->p2, bz->p3) ? 110 : 40;
+    }
+    return std::holds_alternative<geometry::ArcSpan>(s) ? 4 : 1;
 }
 
 struct Sample {
@@ -99,6 +126,7 @@ ClearanceField::ClearanceField(std::vector<geometry::Contour> obstacles) {
     }
     data->spanStart.push_back(data->spanBoxes.size());
     data->margin = 1e-9 * (1.0 + scale);
+    detail::chargeWork(data->spanBoxes.size() + data->obstacles.size() + 1);  // work meter (T-0186)
     data_ = std::move(data);
 }
 
@@ -110,6 +138,8 @@ ClearanceField::ClearanceField(std::vector<geometry::Contour> obstacles) {
 double ClearanceField::obstacleDistance(std::size_t i, geometry::Vec2 p, double best) const {
     const geometry::Contour& c = data_->obstacles[i];
     const std::size_t n = c.spans.size();
+    // Work meter (T-0186): the box scan costs about a quarter of a unit per span.
+    detail::chargeWork(n / 4 + 1);
     const geometry::Box2* boxes = data_->spanBoxes.data() + data_->spanStart[i];
     auto gap = [&](const geometry::Box2& b) {
         return std::max({b.min.x - p.x, p.x - b.max.x, b.min.y - p.y, p.y - b.max.y});
@@ -125,6 +155,7 @@ double ClearanceField::obstacleDistance(std::size_t i, geometry::Vec2 p, double 
     }
     double d = std::numeric_limits<double>::infinity();
     if (n > 0) {
+        detail::chargeWork(closestPointUnits(c.spans[first]));
         d = geometry::closestPoint(c.spans[first], p).distance;
         if (!(d < std::numeric_limits<double>::infinity())) {
             d = std::numeric_limits<double>::infinity();  // NaN counts as no value, as in distanceTo
@@ -135,6 +166,7 @@ double ClearanceField::obstacleDistance(std::size_t i, geometry::Vec2 p, double 
         if (k == first || gap(boxes[k]) > std::min(best, d) + slack) {
             continue;
         }
+        detail::chargeWork(closestPointUnits(c.spans[k]));
         const double dk = geometry::closestPoint(c.spans[k], p).distance;
         if (dk < d) {
             d = dk;
@@ -189,6 +221,7 @@ double ClearanceField::distance(geometry::Vec2 p) const {
         const bool last = r >= reach || !std::isfinite(r);
         const std::vector<std::size_t> hits =
             last ? std::vector<std::size_t>{} : index.query(geometry::Box2{p - Vec2{r, r}, p + Vec2{r, r}});
+        detail::chargeWork(2 + hits.size());
         auto visit = [&](std::size_t i) {
             if (skipped(i) || boxAtLeast(index.box(i), p, best)) {
                 return;  // excluded, or cannot be nearer (a repeat visit from a smaller square)
@@ -241,6 +274,8 @@ std::vector<std::pair<double, double>> findViolations(const ArcLengthPath& path,
         }
     }
     std::sort(seeds.begin(), seeds.end());
+    // Work meter (T-0186): about one sample per millimetre, charged before the grid is built.
+    detail::chargeWork(detail::unitsOf(u1 - u0) + seeds.size());
     std::vector<double> grid;
     for (std::size_t i = 0; i < seeds.size(); ++i) {
         grid.push_back(seeds[i]);

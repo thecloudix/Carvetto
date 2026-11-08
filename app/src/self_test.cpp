@@ -42,6 +42,7 @@
 #include "main_window.hpp"
 #include "node_edit_menu.hpp"
 #include "tool_panel.hpp"
+#include "toolpaths_panel.hpp"
 #include "transform_menu.hpp"
 #include "vector_ops_menu.hpp"
 
@@ -725,6 +726,11 @@ int runSelfTest() {
             return fail("replacing the document while typing left a draft behind");
         }
         window.selectTool(viewmodel::ToolKind::Select);
+    }
+
+    // 9. The Toolpaths dock through the real widgets (T-0221).
+    if (const std::string why = toolpathsSelfTest(window); !why.empty()) {
+        return fail(why);
     }
 
     window.close();

@@ -5,14 +5,17 @@
 #include <charconv>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <functional>
 #include <limits>
 #include <map>
+#include <new>
 #include <numbers>
 #include <numeric>
 #include <optional>
 #include <set>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -29,6 +32,7 @@
 #include "carvetto/toolpath/path_walk.hpp"
 #include "block_settle.hpp"
 #include "enclosed_pieces.hpp"
+#include "work_meter.hpp"
 
 namespace carvetto::toolpath {
 
@@ -492,6 +496,9 @@ double sectionDistance(Vec2 q, const std::vector<TabSection>& sections) {
 class DiscRaster {
    public:
     DiscRaster(const geometry::Box2& box, double h) : box_(box), h_(h) {
+        // Work meter (T-0186): one unit per eight cells, charged before the cells are allocated.
+        const double cellCount = (std::ceil(box.width() / h) + 1.0) * (std::ceil(box.height() / h) + 1.0);
+        detail::chargeWork(detail::unitsOf(cellCount / 8.0));  // (an empty box counts as one)
         nx_ = static_cast<int>(std::ceil(box.width() / h)) + 1;
         ny_ = static_cast<int>(std::ceil(box.height() / h)) + 1;
         diff_.assign(static_cast<std::size_t>(nx_ + 1) * static_cast<std::size_t>(ny_), 0);
@@ -506,6 +513,7 @@ class DiscRaster {
     void add(Vec2 q, double r) {
         const int j0 = std::max(0, static_cast<int>(std::ceil((q.y - r - box_.min.y) / h_ - 0.5)));
         const int j1 = std::min(ny_ - 1, static_cast<int>(std::floor((q.y + r - box_.min.y) / h_ - 0.5)));
+        detail::chargeWork(j1 >= j0 ? static_cast<std::uint64_t>(j1 - j0) + 1 : 1);
         for (int j = j0; j <= j1; ++j) {
             const double dy = box_.min.y + (j + 0.5) * h_ - q.y;
             const double w2 = r * r - dy * dy;
@@ -521,6 +529,7 @@ class DiscRaster {
     }
     /// 1 for every cell covered by a stamped disc; clears the stamps.
     std::vector<char> mask() {
+        detail::chargeWork(cells() / 8 + 1);
         std::vector<char> out(cells(), 0);
         for (int j = 0; j < ny_; ++j) {
             const std::size_t row = static_cast<std::size_t>(j) * static_cast<std::size_t>(nx_ + 1);
@@ -604,10 +613,201 @@ std::string mmText(double v) {
     return std::string(buf.data(), res.ptr) + " mm";
 }
 
+// --- Work meter (T-0186, ADR-0016 section 19) -----------------------------------------------------
+
+/// Why a run was stopped by the builder itself (the meter stops runs for the work limit and cancel).
+struct TooManyMoves {};
+
+/// A vector or merged group whose single offset (one uncancellable geometry call) is charged more
+/// than `kMaxSingleCallUnits`: refused with its input index (round 3).
+struct TooComplexForOneStep {
+    std::size_t contour;
+    double units;
+};
+
+/// The most a single uncancellable geometry call may be charged: 6e8 units (10 s only at about 16 ns
+/// a unit; up to 26 s measured on a merged V-bit starburst group). A cancel waits for the call in progress, so a vector that needs more
+/// is refused instead (ADR-0016 s19; the trade-off against refusing slow-but-finishing jobs is there).
+constexpr double kMaxSingleCallUnits = 6.0e8;
+
+/// Vertices the polygonisation of `span` will produce at `chordal` (lines 1, arcs by sag, Beziers
+/// bounded): the size the offset and region calls work on.
+double spanVertices(const Span& span, double chordal) {
+    return std::visit(
+        [&](const auto& sp) -> double {
+            using S = std::decay_t<decltype(sp)>;
+            if constexpr (std::is_same_v<S, geometry::ArcSpan>) {
+                return static_cast<double>(sp.segmentCountFor(chordal));
+            } else if constexpr (std::is_same_v<S, geometry::BezierSpan>) {
+                const double len = geometry::distance(sp.p0, sp.p1) + geometry::distance(sp.p1, sp.p2) +
+                                   geometry::distance(sp.p2, sp.p3);
+                return 1.0 + std::sqrt(len / chordal);
+            } else {
+                return 1.0;
+            }
+        },
+        span);
+}
+
+/// An upper bound of the length of `c`, cheap whatever the spans (lines and arcs exact, a Bezier by
+/// its control polygon): the exact length of a Bezier costs milliseconds, which the up-front limit
+/// check must not.
+double lengthBound(const Contour& c) {
+    double total = 0.0;
+    for (const Span& span : c.spans) {
+        total += std::visit(
+            [](const auto& sp) -> double {
+                using S = std::decay_t<decltype(sp)>;
+                if constexpr (std::is_same_v<S, geometry::BezierSpan>) {
+                    return geometry::distance(sp.p0, sp.p1) + geometry::distance(sp.p1, sp.p2) +
+                           geometry::distance(sp.p2, sp.p3);
+                } else {
+                    return geometry::length(geometry::Span{sp});
+                }
+            },
+            span);
+    }
+    return total;
+}
+
+double workVertices(const Contour& c, double chordal) {
+    double n = 0.0;
+    for (const Span& span : c.spans) {
+        n += spanVertices(span, chordal);
+    }
+    return n;
+}
+
+/// A bounding box of one segment, for counting overlapping pairs.
+struct SegBox {
+    double x0;
+    double x1;
+    double y0;
+    double y1;
+};
+
+SegBox segBox(Vec2 a, Vec2 b, double grow) {
+    return {std::min(a.x, b.x) - grow, std::max(a.x, b.x) + grow, std::min(a.y, b.y) - grow, std::max(a.y, b.y) + grow};
+}
+
+/// Number of overlapping pairs among `boxes` (a sweep over x). Stops at `kPairCap` pairs or
+/// `kScanCap` sweep steps, which cost more than any limit; `capped` is then set.
+double overlapPairs(std::vector<SegBox>& boxes, double pairCap, bool& capped) {
+    const double kPairCap = pairCap;
+    constexpr double kScanCap = 4.0e8;
+    std::sort(boxes.begin(), boxes.end(), [](const SegBox& a, const SegBox& b) { return a.x0 < b.x0; });
+    double pairs = 0.0;
+    double scans = 0.0;
+    std::vector<std::size_t> active;
+    for (std::size_t i = 0; i < boxes.size() && pairs < kPairCap && scans < kScanCap; ++i) {
+        std::size_t kept = 0;
+        for (std::size_t k : active) {
+            if (boxes[k].x1 >= boxes[i].x0) {
+                active[kept++] = k;
+                if (boxes[k].y0 <= boxes[i].y1 && boxes[i].y0 <= boxes[k].y1) {
+                    pairs += 1.0;
+                }
+            }
+        }
+        scans += static_cast<double>(active.size()) + 1.0;
+        active.resize(kept);
+        active.push_back(i);
+    }
+    capped = pairs >= kPairCap || scans >= kScanCap;
+    return pairs;
+}
+
+/// Work units of the exact offset of `c`: it works span by span (arcs stay arcs), a Bezier by its
+/// polygonised pieces. About 10 us (350 units) per span, growing with the contour's span count.
+void chargeOffset(const Contour& c, double chordal, double distance, bool inwards, std::size_t index) {
+    double spans = 0.0;
+    double bezierUnits = 0.0;
+    std::vector<SegBox> boxes;
+    for (const Span& sp : c.spans) {
+        const geometry::Box2 box = geometry::bounds(sp);
+        boxes.push_back(segBox(box.min, box.max, distance));
+        if (const auto* bz = std::get_if<geometry::BezierSpan>(&sp)) {
+            // Polygon pieces of a curve cost about 14 units each (a 200-piece spike curve offsets in
+            // 94 us); only the span itself counts towards the contour's superlinear term.
+            spans += 1.0;
+            bezierUnits += 14.0 * spanVertices(sp, chordal);
+            // The exact length the offset computes: pieces ~ (control polygon excess) / tolerance, so
+            // time ~ sqrt(excess / polygon). Measured on 40 random cubics: 10 us at 1e-6, 80 us at
+            // 1e-4, 800 us at 1e-2, 4 to 8 ms for loops and quarter circles (x ~ 0.2 to 0.7).
+            const double poly = geometry::distance(bz->p0, bz->p1) + geometry::distance(bz->p1, bz->p2) +
+                                geometry::distance(bz->p2, bz->p3);
+            const double excess = poly - geometry::distance(bz->p0, bz->p3);
+            const double x = poly > 0.0 && excess > 0.0 ? excess / poly : 0.0;
+            bezierUnits += 200.0 + 5.0e5 * std::sqrt(x);
+        } else {
+            spans += 1.0;
+        }
+    }
+    // Measured on closed polygons (Release): 11 us a span at 1,000 spans, 23 us at 64,000, 53 us at
+    // 250,000: about 10 us + 0.16 ns per span of the contour, a span (T-0186 round 2).
+    double total = spans * (350.0 + spans / 188.0) + bezierUnits;
+    // Spans close together relative to the offset distance crowd the point search: a polygon of
+    // 100,000 chords of 1.3 micrometres (R20, offset 1.5) took 27 s against 2 s for the same count of 63 mm
+    // chords (R1000, offset 3): 8 units (0.26 us) for each pair of span boxes that overlap once
+    // grown by the distance. A sweep that finds more than 7.5e7 pairs refuses the vector.
+    bool capped = false;
+    total += 8.0 * overlapPairs(boxes, 7.5e7, capped);
+    // Sharp junctions (turning by more than 60 degrees): a comb of thin teeth offset inwards cost
+    // 6.5 s at 20,000 teeth, 41 s at 40,000 and 122 s at 60,000, i.e. n^2.7 in the junction count
+    // S = 2 x teeth; 5 x S^1.7 units reproduces those within 1.5x. Outwards the same comb costs
+    // 2.5 s at 20,000 teeth: 1.5 x S^1.7.
+    double sharp = 0.0;
+    const std::size_t n = c.spans.size();
+    for (std::size_t i = 0; i < n; ++i) {
+        if (i + 1 == n && !c.closed) {
+            break;
+        }
+        const geometry::Vec2 a = geometry::tangentAt(c.spans[i], 1.0);
+        const geometry::Vec2 b = geometry::tangentAt(c.spans[(i + 1) % n], 0.0);
+        if (a.dot(b) < 0.5) {
+            sharp += 1.0;
+        }
+    }
+    total += (inwards ? 5.0 : 1.5) * std::pow(sharp, 1.7);
+    if (capped || !(total <= kMaxSingleCallUnits)) {
+        throw TooComplexForOneStep{index, capped ? 1e18 : total};
+    }
+    detail::chargeWork(detail::unitsOf(total));
+}
+
+/// Charges the union and exact offset of the region of `members` (T-0186 round 2). Measured
+/// (Release, Clipper2 through geometry::unionContours + offsetContours): about 10 us per polygon
+/// vertex, plus a cost that grows faster than linearly with the number P of overlapping
+/// pairs of polygon segment boxes (crossings and near-coincident edges): 2.1e-8 s * P^1.35, plus
+/// 1.5 us a pair. Concentric star rings (500 spikes x 3..16) took 0.06 to 5 s for P = 6e4 to 1.6e6,
+/// circles in a grid and nested circles 0.05 to 0.9 s; the model is within a factor of 3 of all of them.
+void chargeRegion(const std::vector<Contour>& members, const Tolerance& tol, std::size_t index) {
+    std::vector<SegBox> segs;
+    for (const Contour& m : members) {
+        const std::vector<Vec2> pts = m.polygonise(tol).points;
+        for (std::size_t i = 0; i < pts.size(); ++i) {
+            segs.push_back(segBox(pts[i], pts[(i + 1) % pts.size()], 0.0));
+        }
+    }
+    bool capped = false;
+    const double pairs = overlapPairs(segs, 1.2e7, capped);
+    const double total = 333.0 * static_cast<double>(segs.size()) + 0.7 * std::pow(pairs, 1.35) + 50.0 * pairs;
+    if (capped || !(total <= kMaxSingleCallUnits)) {
+        throw TooComplexForOneStep{index, capped ? 1e18 : total};
+    }
+    detail::chargeWork(detail::unitsOf(total));
+}
+
+/// Charges `factor` work units per vertex of `c` (a region call over it).
+void chargeVertices(const Contour& c, double chordal, double factor) {
+    detail::chargeWork(detail::unitsOf(factor * workVertices(c, chordal)));
+}
+
 class ProfileBuilder {
    public:
-    ProfileBuilder(const std::vector<Contour>& contours, const tooling::Tool& tool, const ProfileParams& params)
-        : raw_(contours), tool_(tool), p_(params), tol_(params.tolerance) {}
+    ProfileBuilder(const std::vector<Contour>& contours, const tooling::Tool& tool, const ProfileParams& params,
+                   double moveLimit)
+        : raw_(contours), tool_(tool), p_(params), tol_(params.tolerance), moveLimit_(moveLimit) {}
 
     ProfileResult run();
 
@@ -616,6 +816,10 @@ class ProfileBuilder {
         result_.diagnostics.push_back({issue, contour, std::move(message), std::nullopt});
     }
     bool validate();
+    bool withinLimits();
+    void refuseWork(std::string message) { diag(ProfileIssue::WorkLimitExceeded, std::nullopt, std::move(message)); }
+    /// Counts the moves made since the last call (work units) and stops the run past the move limit.
+    void chargeMoves();
     bool allowanceWithinLimit();
     bool allowanceOnWithinLimit(double roughAllowance);
     void prepareInputs();
@@ -747,6 +951,8 @@ class ProfileBuilder {
     std::vector<bool> tooLargeReported_;
     std::vector<bool> lostCut_;  // vectors that had a cut removed as a sliver or a point (T-0165)
     std::vector<bool> keptCut_;  // vectors that still have a cut after the starts are chosen
+    std::size_t chargedMoves_{0};  // moves already counted by chargeMoves
+    double moveLimit_;             // estimated and emitted moves are refused past this
 };
 
 bool ProfileBuilder::validate() {
@@ -799,6 +1005,9 @@ bool ProfileBuilder::validate() {
         return false;
     }
     if (!allowanceWithinLimit()) {
+        return false;
+    }
+    if (!withinLimits()) {
         return false;
     }
     if (passes_.levels().empty()) {
@@ -895,9 +1104,177 @@ bool ProfileBuilder::allowanceOnWithinLimit(double roughAllowance) {
     return false;
 }
 
+// T-0186 (ADR-0016 section 19): what the profile refuses up front, before any allocation that
+// grows with the parameters. Everything here is a cheap closed-form count over the input; the work
+// meter (WorkMeter) covers what only the run can tell. Every refusal is `WorkLimitExceeded` and
+// nothing is cut. A value that is not finite is not judged here (validate() and the importers'
+// own checks deal with it).
+bool ProfileBuilder::withinLimits() {
+    auto mm = [](double v) { return mmText(v); };
+    auto count = [](double v) { return v < 9e18 ? std::to_string(static_cast<long long>(v)) : std::string("more than 9e18"); };
+    // Parameter ranges: the distances a job can mean are well inside +-kProfileMaxOffsetMm.
+    struct Named {
+        const char* name;
+        double value;
+        bool used;
+    };
+    const bool leads = p_.leads.type != LeadType::None;
+    const Named ranges[] = {
+        {"allowance", p_.allowance, true},
+        {"last pass allowance", p_.lastPassAllowance, p_.separateLastPass},
+        {"lead length", p_.leads.length, p_.leads.type == LeadType::Straight},
+        {"lead radius", p_.leads.radius, p_.leads.type == LeadType::Circular},
+        {"overcut", p_.leads.overcut, leads},
+        {"ramp distance", p_.ramp.distance, p_.ramp.type != RampType::None},
+        {"tab length", p_.tabs.length, p_.tabs.enabled},
+    };
+    for (const Named& r : ranges) {
+        if (r.used && std::isfinite(r.value) && std::fabs(r.value) > kProfileMaxOffsetMm) {
+            refuseWork(std::string(r.name) + " " + mm(r.value) + " is beyond the limit of " + mm(kProfileMaxOffsetMm) +
+                       "; nothing is cut");
+            return false;
+        }
+    }
+    // Depth passes. A closed form first; PassPlan's own count decides only near the limit.
+    double levels = 1.0;
+    if (passes_.cutDepth > 0.0 && passes_.passDepth > 0.0) {
+        const double estimate = std::ceil(passes_.cutDepth / passes_.passDepth) + 2.0;
+        levels = estimate;
+        if (!(estimate <= static_cast<double>(kProfileMaxLevels))) {
+            levels = estimate <= 4.0 * static_cast<double>(kProfileMaxLevels)
+                         ? static_cast<double>(passes_.levels().size())
+                         : std::numeric_limits<double>::infinity();
+        }
+        if (!(levels <= static_cast<double>(kProfileMaxLevels))) {
+            refuseWork("more than " + std::to_string(kProfileMaxLevels) + " passes (cut depth " + mm(passes_.cutDepth) +
+                       " in steps of " + mm(passes_.passDepth) + "); nothing is cut");
+            return false;
+        }
+    }
+    // The input: spans, coordinates and total length.
+    std::size_t spans = 0;
+    double totalLength = 0.0;
+    std::vector<double> lengths(raw_.size(), 0.0);
+    const auto outside = [](double v) { return std::fabs(v) > kProfileMaxCoordinateMm; };
+    for (std::size_t i = 0; i < raw_.size(); ++i) {
+        for (const Span& sp : raw_[i].spans) {
+            const bool beyond = std::visit(
+                [&](const auto& x) {
+                    using S = std::decay_t<decltype(x)>;
+                    if constexpr (std::is_same_v<S, geometry::LineSpan>) {
+                        return outside(x.start.x) || outside(x.start.y) || outside(x.end.x) || outside(x.end.y);
+                    } else if constexpr (std::is_same_v<S, geometry::ArcSpan>) {
+                        // The end points, not the centre: a nearly straight arc has a far-away centre.
+                        return std::fabs(x.radius) > kProfileMaxRadiusMm ||
+                               (std::isfinite(x.startAngle) && std::fabs(x.startAngle) >= 1e6) ||
+                               (std::isfinite(x.endAngle) && std::fabs(x.endAngle) >= 1e6) ||
+                               (std::fabs(x.radius) <= kProfileMaxRadiusMm &&
+                                (outside(x.startPoint().x) || outside(x.startPoint().y) || outside(x.endPoint().x) ||
+                                 outside(x.endPoint().y)));
+                    } else {
+                        // A non-finite control point is refused too: the Bezier polygonisation and the
+                        // Clipper2 conversion behind it are undefined for it (found by the T-0186 verifier).
+                        const auto bad = [&](double v) { return !std::isfinite(v) || outside(v); };
+                        return bad(x.p0.x) || bad(x.p0.y) || bad(x.p1.x) || bad(x.p1.y) || bad(x.p2.x) ||
+                               bad(x.p2.y) || bad(x.p3.x) || bad(x.p3.y);
+                    }
+                },
+                sp);
+            if (beyond) {
+                refuseWork("vector #" + std::to_string(i + 1) + " has a non-finite coordinate (a Bezier) or one beyond " + mm(kProfileMaxCoordinateMm) +
+                           " (or an arc with a radius beyond " + mm(kProfileMaxRadiusMm) +
+                           " or an angle beyond a million radians); nothing is cut");
+                return false;
+            }
+        }
+        spans += raw_[i].spans.size();
+        if (spans > kProfileMaxSpans) {
+            refuseWork("more than " + std::to_string(kProfileMaxSpans) + " spans in the vectors; nothing is cut");
+            return false;
+        }
+        const double len = lengthBound(raw_[i]);
+        if (std::isfinite(len)) {
+            lengths[i] = len;
+            totalLength += len;
+        }
+    }
+    if (!(totalLength <= kProfileMaxLengthMm)) {
+        refuseWork("the vectors are " + mm(totalLength) + " long in all; the limit is " + mm(kProfileMaxLengthMm) +
+                   "; nothing is cut");
+        return false;
+    }
+    // Tabs asked for, over all vectors.
+    double tabs = 0.0;
+    if (p_.tabs.enabled) {
+        for (std::size_t i = 0; i < raw_.size(); ++i) {
+            if (raw_[i].isEmpty()) {
+                continue;
+            }
+            if (p_.tabs.spacing == TabSpacing::ConstantNumber) {
+                tabs += static_cast<double>(std::max(p_.tabs.count, 0));
+            } else if (p_.tabs.distance > 0.0) {
+                tabs += std::max(1.0, lengths[i] / p_.tabs.distance);
+            }
+        }
+        if (!(tabs <= kProfileMaxTabs)) {
+            refuseWork("more than " + std::to_string(static_cast<long long>(kProfileMaxTabs)) +
+                       " tabs would be placed (tab count or spacing); nothing is cut");
+            return false;
+        }
+        // Work meter (T-0186 round 4): placing, matching and cutting a tab costs about 16 us (500
+        // units), whatever the tab count (it was quadratic before the sample covering and the tab
+        // ceiling were made linear: 128 s at 24,000 mm of square with a tab every 3 mm).
+        detail::chargeWork(detail::unitsOf(500.0 * tabs));
+    }
+    // Moves: a closed-form estimate that follows the actual count closely for ordinary jobs and
+    // is far below it only for curve-heavy ones (those are stopped as they are emitted).
+    const double contours = static_cast<double>(raw_.size());
+    double perLevel = 2.0 * static_cast<double>(spans);
+    if (p_.tabs.enabled) {
+        const double step = passes_.passDepth > 0.0 ? passes_.passDepth : passes_.cutDepth;
+        const double tabLevels = step > 0.0 ? std::min(levels, std::floor(p_.tabs.thickness / step) + 1.0) : 1.0;
+        perLevel += tabs * 4.0 * std::max(tabLevels, 1.0) / std::max(levels, 1.0);
+    }
+    if (p_.ramp.type == RampType::ZigZag && p_.ramp.useAngle && p_.ramp.distance > 0.0 && p_.ramp.angle > 0.0) {
+        const double slope = p_.ramp.distance * std::tan(p_.ramp.angle);
+        const double step = passes_.passDepth > 0.0 ? passes_.passDepth : passes_.cutDepth;
+        if (slope > 0.0 && std::isfinite(slope) && step > 0.0) {
+            perLevel += contours * 2.0 * std::ceil(step / slope);
+        }
+    }
+    const double moves = levels * perLevel;
+    if (!(moves <= moveLimit_)) {
+        refuseWork("the toolpath would have about " + count(moves) + " moves; the limit is " +
+                   std::to_string(static_cast<long long>(moveLimit_)) +
+                   " (too many passes, vectors, tabs or ramp legs); nothing is cut");
+        return false;
+    }
+    return true;
+}
+
+void ProfileBuilder::chargeMoves() {
+    const std::size_t n = result_.toolpath.moves.size();
+    if (n > chargedMoves_) {
+        detail::chargeWork(n - chargedMoves_);
+        chargedMoves_ = n;
+    }
+    if (static_cast<double>(n) > moveLimit_) {
+        throw TooManyMoves{};
+    }
+}
+
 void ProfileBuilder::prepareInputs() {
     const std::size_t n = raw_.size();
     in_.contours = raw_;
+    {
+        // Work meter (T-0186): validity, area, nesting, clearance field. Beziers are measured at the
+        // tightened offset tolerance they are polygonised at, 20 units a vertex (their length and
+        // area integrate at that resolution); lines and arcs 4.
+        const double chordal = hasBezier(raw_) ? std::min(tol_.chordal, 0.5 * tol_.distance) : tol_.chordal;
+        for (const Contour& c : raw_) {
+            chargeVertices(c, chordal, hasBezier({c}) ? 20.0 : 4.0);
+        }
+    }
     in_.valid.assign(n, false);
     in_.area.assign(n, 0.0);
     tooLargeReported_.assign(n, false);
@@ -987,6 +1364,7 @@ std::vector<Cut> ProfileBuilder::buildCuts(double extra, bool finishing) {
         if (d == 0.0) {
             chains[i] = {ArcLengthPath(c, offTol_).contour()};
         } else {
+            chargeOffset(c, offTol_.chordal, d, side == geometry::OffsetSide::Left, i);  // work meter (T-0186)
             chains[i] = geometry::offsetOpenContour(c, d, side, join, offTol_, p_.corners.mitreLimit);
         }
         for (Contour& ch : chains[i]) {
@@ -1071,6 +1449,7 @@ std::vector<Cut> ProfileBuilder::buildCuts(double extra, bool finishing) {
                 outer = i;
             }
         }
+        chargeRegion(members, offTol_, group.front());  // work meter (T-0186): union and offset of the region
         const std::vector<Contour> region = geometry::unionContours(members, offTol_, geometry::FillRule::EvenOdd);
         // Nesting parity of the group as a whole: how many other closed vectors contain it. When
         // odd, the group sits in a hole and the global region is the complement of its own.
@@ -2211,14 +2590,6 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
     };
     std::vector<Sample> samples;
     {
-        auto inside = [](const ArcLengthPath& w, double u, const TabSpan& t) {
-            if (!w.closed()) return u > t.a && u < t.b;
-            const double len = w.length();
-            for (double x : {u - len, u, u + len}) {
-                if (x > t.a && x < t.b) return true;
-            }
-            return false;
-        };
         auto add = [&](const std::vector<Cut>& cuts, bool second) {
             for (std::size_t c = 0; c < cuts.size(); ++c) {
                 std::vector<std::pair<std::size_t, TabSpan>> spans;
@@ -2234,14 +2605,39 @@ void ProfileBuilder::dropSweptTabs(std::vector<Cut>& primary, std::vector<Cut>& 
                     us.push_back({t.b, -1});
                 }
                 const int n = std::max(1, static_cast<int>(std::ceil(w.length() / h)));
+                detail::chargeWork(detail::unitsOf(5.0 * n));  // work meter (T-0186): the samples of the cut
                 for (int i = 0; i <= n; ++i) {
                     us.push_back({w.length() * i / n, i == n ? -1 : i});
                 }
+                // The stretches covering a sample, found by position (T-0186 round 4: every sample
+                // against every stretch was quadratic in the tab count); the result is the same list,
+                // in the same order (ascending stretch index).
+                std::vector<std::size_t> byStart(spans.size());
+                std::iota(byStart.begin(), byStart.end(), std::size_t{0});
+                std::sort(byStart.begin(), byStart.end(), [&](std::size_t x, std::size_t y) {
+                    return spans[x].second.a < spans[y].second.a;
+                });
+                double longest = 0.0;
+                for (const auto& sp : spans) longest = std::max(longest, sp.second.b - sp.second.a);
+                const double wlen = w.length();
+                std::vector<std::size_t> hit;
                 for (const auto& [u, seq] : us) {
                     Sample q{second, c, u, w.pointAt(u), {}, seq};
-                    for (const auto& [g, t] : spans) {
-                        if (inside(w, u, t)) q.coveredBy.push_back(g);
+                    hit.clear();
+                    const int shifts = w.closed() ? 3 : 1;
+                    for (int sh = 0; sh < shifts; ++sh) {
+                        const double x = w.closed() ? (sh == 0 ? u - wlen : sh == 1 ? u : u + wlen) : u;
+                        // Stretches with a < x < b: a in (x - longest, x).
+                        auto lo = std::lower_bound(byStart.begin(), byStart.end(), x - longest, [&](std::size_t i, double v) {
+                            return spans[i].second.a < v;
+                        });
+                        for (; lo != byStart.end() && spans[*lo].second.a < x; ++lo) {
+                            if (x > spans[*lo].second.a && x < spans[*lo].second.b) hit.push_back(*lo);
+                        }
                     }
+                    std::sort(hit.begin(), hit.end());
+                    hit.erase(std::unique(hit.begin(), hit.end()), hit.end());
+                    for (std::size_t i : hit) q.coveredBy.push_back(spans[i].first);
                     samples.push_back(std::move(q));
                 }
             }
@@ -2839,6 +3235,7 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
     for (std::size_t i = 0; i < paths.size(); ++i) {
         if (!search[i]) continue;
         const Contour& path = paths[i];
+        chargeVertices(path, offTol_.chordal, 20.0);  // work meter (T-0186): the band
         std::vector<detail::PointRing> band = detail::bandOutline(path, reach, bandSag, whole[i] != 0);
         if (!band.empty()) {
             for (detail::PointRing& r : band) bands.push_back(std::move(r));
@@ -2848,6 +3245,13 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
                 bands.push_back(b.polygonise(offTol_).points);
             }
         }
+    }
+    {  // Work meter (T-0186): the union of the bands, about 2 us (60 units) per vertex.
+        std::uint64_t vertices = 0;
+        for (const detail::PointRing& r : bands) {
+            vertices += r.size();
+        }
+        detail::chargeWork(60 * vertices + 1);
     }
     // The pieces they enclose, leaf by leaf (enclosed_pieces.hpp: one union over the whole
     // scene is a single sweep over every band side by side, quadratic in a row or grid of
@@ -3461,6 +3865,7 @@ void ProfileBuilder::emitLeg(const Cut& cut, const PathLeg& leg, bool lastLevel,
         }
     }
     appendLeg(cut.walk, leg.u0, leg.u1, z, result_.toolpath, inserts);
+    chargeMoves();
 }
 
 void ProfileBuilder::emit(const Cut& cut, const std::vector<double>& levels, bool finishing) {
@@ -3537,6 +3942,7 @@ void ProfileBuilder::emit(const Cut& cut, const std::vector<double>& levels, boo
         }
     }
     out.append(Move::retract(Vec3{out.moves.back().to.xy(), p_.safeZ}));
+    chargeMoves();
 }
 
 ProfileResult ProfileBuilder::run() {
@@ -3547,6 +3953,7 @@ ProfileResult ProfileBuilder::run() {
     result_.toolpath.tool = toolSnapshot(tool_, cd_);
 
     prepareInputs();
+    detail::pollCancel();
     const std::vector<double> levels = passes_.levels();
     const bool separate = p_.separateLastPass;
     std::vector<Cut> rough = buildCuts(separate ? p_.lastPassAllowance : 0.0, false);
@@ -3554,6 +3961,7 @@ ProfileResult ProfileBuilder::run() {
     if (separate) {
         finish = buildCuts(0.0, true);
     }
+    detail::pollCancel();
     chooseStarts(rough);
     reportVanished(separate ? "roughing" : "cutting");
     chooseStarts(finish);
@@ -3646,6 +4054,7 @@ ProfileResult ProfileBuilder::run() {
             }
             for (std::size_t r : roughIndex.query(ptsBox.inflated(match + margin))) {
                 std::vector<double> ds;
+                detail::chargeWork(17 * (4 * rough[r].walk.spanCount() + 1));  // work meter (T-0186)
                 for (const Vec2& p : pts) {
                     ds.push_back(geometry::distanceTo(rough[r].walk.contour(), p));
                 }
@@ -3671,6 +4080,7 @@ ProfileResult ProfileBuilder::run() {
                                                                    std::numeric_limits<double>::max()}})
                             : roughIndex.query(square);
                     for (std::size_t r : found) {
+                        detail::chargeWork(4 * rough[r].walk.spanCount() + 1);
                         const double ds0 = geometry::distanceTo(rough[r].walk.contour(), start);
                         if (ds0 < nearestStart) {
                             nearestStart = ds0;
@@ -3689,6 +4099,7 @@ ProfileResult ProfileBuilder::run() {
                          [&](std::size_t x, std::size_t y) { return key[x] < key[y]; });
     }
     applyOptimisedStarts(finish, finishOrder, "finishing");
+    detail::pollCancel();
     planLeadIns(rough);
     planLeadIns(finish);
     planExcursions(rough, levels, false);
@@ -3783,11 +4194,14 @@ ProfileResult ProfileBuilder::run() {
     reportTabs();
     collectTabMaterial(rough);
     collectTabMaterial(finish);
+    detail::pollCancel();
     for (std::size_t i : roughOrder) {
         emit(rough[i], levels, false);
+        detail::pollCancel();
     }
     for (std::size_t i : finishOrder) {
         emit(finish[i], {levels.back()}, true);
+        detail::pollCancel();
     }
     // Roughing and finishing report the same vector-level issue once.
     std::vector<ProfileDiagnostic> unique;
@@ -3807,9 +4221,57 @@ ProfileResult ProfileBuilder::run() {
 }  // namespace
 
 ProfileResult profileToolpath(const std::vector<Contour>& contours, const tooling::Tool& tool,
+                              const ProfileParams& params, const ToolpathRunControl& control) {
+    // The work meter counts what the run does and stops it at the limit or a cancel; the throw
+    // unwinds the whole builder, so no partial toolpath or diagnostic leaves this function.
+    constexpr std::uint64_t kMaxLimit = std::uint64_t{1} << 60;
+    detail::WorkMeter meter(control.workLimit == 0 ? kProfileDefaultWorkUnits : std::min(control.workLimit, kMaxLimit),
+                            control.cancel);
+    detail::MeterScope scope(meter);
+    ProfileResult stopped;
+    stopped.toolpath.name = params.name;
+    const auto stop = [&](ProfileIssue issue, std::string message) {
+        stopped.diagnostics.push_back({issue, std::nullopt, std::move(message), std::nullopt});
+        stopped.workUnits = meter.used();
+        return stopped;
+    };
+    try {
+        meter.poll();
+        ProfileBuilder builder(contours, tool, params,
+                               control.moveLimit == 0 ? kProfileMaxMoves : static_cast<double>(control.moveLimit));
+        ProfileResult result = builder.run();
+        result.workUnits = meter.used();
+        return result;
+    } catch (const detail::WorkAborted& stopReason) {
+        if (stopReason.cancelled) {
+            return stop(ProfileIssue::Cancelled, "the profile was cancelled; nothing is cut");
+        }
+        return stop(ProfileIssue::WorkLimitExceeded,
+                    "the profile needs more work than the limit allows (" + std::to_string(meter.limit()) +
+                        " work units; the job is too large, too detailed or has very long vectors); nothing is cut");
+    } catch (const TooComplexForOneStep& big) {
+        return stop(ProfileIssue::WorkLimitExceeded,
+                    "vector #" + std::to_string(big.contour + 1) + " (or the group of vectors merged with it) is too" +
+                        " complex to offset in one step (about " +
+                        (big.units < 9e17 ? std::to_string(static_cast<long long>(big.units)) : std::string("over 1e17")) +
+                        " work units; a single step may take at most " +
+                        std::to_string(static_cast<long long>(kMaxSingleCallUnits)) + "); nothing is cut");
+    } catch (const TooManyMoves&) {
+        return stop(ProfileIssue::WorkLimitExceeded,
+                    "the toolpath would have more than " +
+                        std::to_string(control.moveLimit == 0 ? static_cast<unsigned long long>(kProfileMaxMoves)
+                                                              : static_cast<unsigned long long>(control.moveLimit)) +
+                        " moves; nothing is cut");
+    } catch (const std::bad_alloc&) {
+        return stop(ProfileIssue::WorkLimitExceeded, "the profile ran out of memory; nothing is cut");
+    } catch (const std::length_error&) {
+        return stop(ProfileIssue::WorkLimitExceeded, "the profile needs more memory than can be allocated; nothing is cut");
+    }
+}
+
+ProfileResult profileToolpath(const std::vector<Contour>& contours, const tooling::Tool& tool,
                               const ProfileParams& params) {
-    ProfileBuilder builder(contours, tool, params);
-    return builder.run();
+    return profileToolpath(contours, tool, params, ToolpathRunControl{});
 }
 
 }  // namespace carvetto::toolpath

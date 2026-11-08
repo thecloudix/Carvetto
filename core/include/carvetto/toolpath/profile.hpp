@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
@@ -61,6 +62,27 @@ struct CornerOptions {
     bool operator==(const CornerOptions&) const = default;
 };
 
+/// Limits of a profile toolpath (T-0186, ADR-0016 section 19). A job beyond one of them is refused
+/// up front with `WorkLimitExceeded` (a parameter or input out of range) and nothing is produced;
+/// none of them is near a realistic job (a 5,000-glyph sign, a 3 m x 1.5 m sheet with 10,000
+/// vectors, 2 mm deep in 0.1 mm passes).
+inline constexpr std::size_t kProfileMaxLevels = 10000;               ///< depth passes
+inline constexpr double kProfileMaxMoves = 20e6;                      ///< estimated moves in the toolpath
+inline constexpr double kProfileMaxOffsetMm = 1000.0;                 ///< |allowance|, |last pass allowance|,
+                                                                      ///< lead length/radius/overcut, ramp distance, tab length
+inline constexpr double kProfileMaxCoordinateMm = 1.0e5;              ///< |x|, |y| of every span's end points (control
+                                                                      ///< points for a Bezier)
+inline constexpr double kProfileMaxRadiusMm = 1.0e12;                 ///< arc radius (a nearly straight arc has a huge one)
+inline constexpr double kProfileMaxLengthMm = 1.0e7;                  ///< total length of all vectors
+inline constexpr std::size_t kProfileMaxSpans = 2000000;              ///< spans of all vectors
+inline constexpr double kProfileMaxTabs = 5.0e6;                      ///< tabs requested over all vectors
+/// Default work limit, in work units (see `ProfileResult::workUnits`); `ToolpathRunControl::workLimit`
+/// overrides it. A unit is meant as about 30 ns of Release CPU, but the real time per unit varies 4 to
+/// 8x with the shape of the job (4 to 67 ns measured): the CPU spent before a run reaches this limit
+/// is from about 10 s to over a minute. It is a stop for hostile jobs, not a time bound (ADR-0016
+/// section 19; precise bounding needs T-0228, an interruptible geometry offset).
+inline constexpr std::uint64_t kProfileDefaultWorkUnits = 900000000ULL;
+
 /// Parameters of a profile toolpath. Lengths in mm, angles in radians.
 struct ProfileParams {
     std::string name{"Profile"};
@@ -114,6 +136,9 @@ using ProfileDiagnostic = ToolpathDiagnostic;
 struct ProfileResult {
     Toolpath toolpath;
     std::vector<ProfileDiagnostic> diagnostics;
+    /// Work units the run counted (deterministic: depends only on the input and the parameters).
+    /// A refused or cancelled run reports the units counted when it stopped.
+    std::uint64_t workUnits{0};
     /// True when the toolpath has moves.
     bool ok() const { return !toolpath.isEmpty(); }
     /// True when some diagnostic has the given issue.
@@ -142,6 +167,15 @@ double profileToolRadius(const tooling::Tool& tool, const PassPlan& passes);
 ///    then the finishing cuts in the same order.
 ///
 /// Output is deterministic. An empty toolpath always comes with at least one diagnostic.
+///
+/// Work budget (ADR-0016 section 19): parameters and inputs beyond the `kProfileMax...` limits are
+/// refused up front (`WorkLimitExceeded`); the run counts work units and stops with
+/// `WorkLimitExceeded` when it passes `control.workLimit` (default `kProfileDefaultWorkUnits`), or
+/// with `Cancelled` when `control.cancel` reads true. Either way the toolpath is empty and the
+/// diagnostics are only the reason: nothing partial is returned. Runs within the budget give the
+/// same result with or without a control.
+ProfileResult profileToolpath(const std::vector<geometry::Contour>& contours, const tooling::Tool& tool,
+                              const ProfileParams& params, const ToolpathRunControl& control);
 ProfileResult profileToolpath(const std::vector<geometry::Contour>& contours, const tooling::Tool& tool,
                               const ProfileParams& params);
 
