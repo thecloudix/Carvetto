@@ -138,11 +138,12 @@ namespace detail {
 
 BooleanResult booleanOpBatched(BooleanOp op, const std::vector<Contour>& subject, const std::vector<Contour>& clip,
                                const Tolerance& tol, FillRule fill, std::size_t minBatchDepth) {
+    std::size_t refused = 0;
     Clipper2Lib::Paths64 closedSubjects;
     Clipper2Lib::Paths64 openSubjects;
     Clipper2Lib::Paths64 clips;
     for (const Contour& c : subject) {
-        Clipper2Lib::Path64 p = detail::toClipperPath(c, tol);
+        Clipper2Lib::Path64 p = detail::toClipperPath(c, tol, &refused);
         if (p.empty()) {
             continue;
         }
@@ -152,13 +153,14 @@ BooleanResult booleanOpBatched(BooleanOp op, const std::vector<Contour>& subject
         if (!c.closed) {
             continue;
         }
-        Clipper2Lib::Path64 p = detail::toClipperPath(c, tol);
+        Clipper2Lib::Path64 p = detail::toClipperPath(c, tol, &refused);
         if (!p.empty()) {
             clips.push_back(std::move(p));
         }
     }
 
     BooleanResult result;
+    result.refusedContours = refused;
     if (closedSubjects.empty() && openSubjects.empty()) {
         return result;
     }
@@ -315,6 +317,7 @@ struct OpenPathClipper::Impl {
     Tolerance tol;
     FillRule fill{FillRule::NonZero};
     Vec2 across;
+    std::size_t refused{0};
     Clipper2Lib::Paths64 clips;               // the whole clip
     std::optional<detail::StripIndex> index;  // when cropping
 };
@@ -329,7 +332,7 @@ OpenPathClipper::OpenPathClipper(const std::vector<Contour>& clip, Vec2 across, 
         if (!c.closed) {
             continue;
         }
-        Clipper2Lib::Path64 p = detail::toClipperPath(c, tol);
+        Clipper2Lib::Path64 p = detail::toClipperPath(c, tol, &impl_->refused);
         if (!p.empty()) {
             edges += p.size();
             impl_->clips.push_back(std::move(p));
@@ -355,13 +358,17 @@ OpenPathClipper::~OpenPathClipper() = default;
 OpenPathClipper::OpenPathClipper(OpenPathClipper&&) noexcept = default;
 OpenPathClipper& OpenPathClipper::operator=(OpenPathClipper&&) noexcept = default;
 
+std::size_t OpenPathClipper::refusedContours() const {
+    return impl_->refused;
+}
+
 std::vector<Contour> OpenPathClipper::clip(BooleanOp op, const std::vector<Contour>& subject) const {
     Clipper2Lib::Paths64 openSubjects;
     for (const Contour& c : subject) {
         if (c.closed) {
             continue;
         }
-        Clipper2Lib::Path64 p = detail::toClipperPath(c, impl_->tol);
+        Clipper2Lib::Path64 p = detail::toClipperPath(c, impl_->tol, &impl_->refused);
         if (!p.empty()) {
             openSubjects.push_back(std::move(p));
         }

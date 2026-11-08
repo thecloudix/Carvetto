@@ -71,7 +71,9 @@ enum class OffsetSide { Left, Right };
 /// both sides are offset by |distance| and the ends are capped (round caps for Round joins,
 /// square caps otherwise), producing a closed contour. `mitreLimit` is the maximum mitre length
 /// as a multiple of |distance| for Sharp joins (minimum 1). A non-finite `distance` (NaN or
-/// infinity) yields an empty result.
+/// infinity) yields an empty result. An input contour whose polygon cannot meet `tol.chordal` within
+/// the work bounds (an arc needing more than `kMaxArcSegments` chords, a non-finite span; T-0182,
+/// ADR-0005 A2) is left out, as degenerate input is, rather than offset from a coarser polygon.
 std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double distance, JoinType join,
                                     const Tolerance& tol = Tolerance::defaults(), double mitreLimit = 2.0);
 

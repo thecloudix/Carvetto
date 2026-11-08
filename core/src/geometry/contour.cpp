@@ -119,7 +119,7 @@ Contour Contour::transformed(const Transform2& m) const {
     return c;
 }
 
-Polyline Contour::polygonise(const Tolerance& tol) const {
+Polyline Contour::polygonise(const Tolerance& tol, bool* coarse) const {
     Polyline pl;
     pl.closed = closed;
     if (spans.empty()) {
@@ -128,9 +128,9 @@ Polyline Contour::polygonise(const Tolerance& tol) const {
     pl.points.push_back(startPoint());
     for (const Span& s : spans) {
         if (closed) {
-            polygoniseRegionInto(s, tol, pl.points);
+            polygoniseRegionInto(s, tol, pl.points, coarse);
         } else {
-            polygoniseInto(s, tol, pl.points);
+            polygoniseInto(s, tol, pl.points, coarse);
         }
     }
     if (closed && pl.points.size() > 1 && tol.equalPoints(pl.points.front(), pl.points.back())) {
