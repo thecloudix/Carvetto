@@ -35,10 +35,12 @@
 #include "array_copy_menu.hpp"
 #include "canvas_widget.hpp"
 #include "carvetto/viewmodel/dxf_exchange.hpp"
+#include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/new_job_form.hpp"
 #include "carvetto/viewmodel/units_format.hpp"
 #include "new_job_dialog.hpp"
 #include "node_edit_menu.hpp"
+#include "save_toolpaths_dialog.hpp"
 #include "ruler_widget.hpp"
 #include "tool_panel.hpp"
 #include "transform_menu.hpp"
@@ -179,6 +181,9 @@ void MainWindow::buildMenus() {
     QAction* saveAsAction = file->addAction(QStringLiteral("Save &As..."));
     saveAsAction->setShortcut(QKeySequence::SaveAs);
     connect(saveAsAction, &QAction::triggered, this, [this]() { saveAsDialog(); });
+    file->addSeparator();
+    saveToolpathsAction_ = file->addAction(QStringLiteral("Save &Toolpaths..."));
+    connect(saveToolpathsAction_, &QAction::triggered, this, [this]() { saveToolpathsDialog(); });
     file->addSeparator();
     QAction* importAction = file->addAction(QStringLiteral("&Import DXF..."));
     importAction->setShortcut(QKeySequence(QStringLiteral("Ctrl+I")));
@@ -477,6 +482,15 @@ void MainWindow::rebuildRecentMenu() {
         });
     }
     recentMenu_->setEnabled(!recentMenu_->isEmpty());
+}
+
+void MainWindow::saveToolpathsDialog() {
+    const std::filesystem::path path = session_.path();
+    const std::filesystem::path folder = path.empty() ? viewmodel::pathFromUtf8(QDir::homePath().toStdString())
+                                                      : path.parent_path();
+    const std::string job = path.empty() ? std::string("toolpaths") : viewmodel::pathToUtf8(path.stem());
+    SaveToolpathsDialog dialog(session_.document(), {}, job, machines_, folder, this);
+    dialog.exec();
 }
 
 void MainWindow::showError(const QString& title) {

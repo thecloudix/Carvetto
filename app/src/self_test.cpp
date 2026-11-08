@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QDockWidget>
+#include <QFile>
 #include <QFileInfo>
 #include <QImage>
 #include <QAction>
@@ -24,11 +25,13 @@
 #include <memory>
 #include <string>
 #include <variant>
+#include <vector>
 
 #include "array_copy_menu.hpp"
 #include "canvas_widget.hpp"
 #include "carvetto/document/commands.hpp"
 #include "carvetto/document/document.hpp"
+#include "carvetto/document/toolpath_record.hpp"
 #include "carvetto/document/shape_params.hpp"
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/viewmodel/array_copies.hpp"
@@ -36,11 +39,13 @@
 #include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/new_job_form.hpp"
 #include "carvetto/viewmodel/pixel_probe.hpp"
+#include "carvetto/viewmodel/save_toolpaths.hpp"
 #include "carvetto/viewmodel/selection_tools.hpp"
 #include "carvetto/viewmodel/tools.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
 #include "main_window.hpp"
 #include "node_edit_menu.hpp"
+#include "save_toolpaths_dialog.hpp"
 #include "tool_panel.hpp"
 #include "transform_menu.hpp"
 #include "vector_ops_menu.hpp"
@@ -647,6 +652,95 @@ int runSelfTest() {
             return fail("replacing the document during a node drag left state behind");
         }
         window.selectTool(viewmodel::ToolKind::Select);
+    }
+
+    // 8. Save Toolpaths (T-0224): two calculated toolpaths with different tools, post them through
+    // the dialog (generation and writing run on a worker thread), re-read the files.
+    {
+        document::Document& cur = window.currentDocument();
+        const auto addRecord = [&](const std::string& name, int toolNumber, double diameter) {
+            document::ToolpathRecord r;
+            r.name = name;
+            r.tool.name = "Tool " + std::to_string(toolNumber);
+            r.tool.toolNumber = toolNumber;
+            r.tool.diameter = diameter;
+            r.tool.feedRate = 800.0;
+            r.tool.plungeRate = 300.0;
+            r.tool.spindleSpeed = 12000.0;
+            std::vector<toolpath::Move> moves;
+            moves.push_back(toolpath::Move::rapid({0.0, 0.0, 5.0}));
+            moves.push_back(toolpath::Move::plunge({0.0, 0.0, -1.0}));
+            moves.push_back(toolpath::Move::feed({20.0, 0.0, -1.0}));
+            moves.push_back(toolpath::Move::feed({20.0, 20.0, -1.0}));
+            moves.push_back(toolpath::Move::retract({20.0, 20.0, 5.0}));
+            r.moves = document::shareMoves(std::move(moves));
+            return cur.execute(std::make_unique<document::AddToolpathCommand>(std::move(r)));
+        };
+        if (!addRecord("Outline", 1, 3.0) || !addRecord("Pocket", 2, 6.0)) {
+            return fail("could not add toolpaths for the Save Toolpaths test");
+        }
+        if (window.saveToolpathsAction() == nullptr) {
+            return fail("the File menu has no Save Toolpaths action");
+        }
+        QTemporaryDir outDir;
+        if (!outDir.isValid()) {
+            return fail("no temporary directory for the Save Toolpaths test");
+        }
+        const std::filesystem::path outPath = viewmodel::pathFromUtf8(outDir.path().toStdString());
+        SaveToolpathsDialog dialog(cur, {}, "job", {}, outPath);
+        dialog.show();
+        if (!dialog.waitIdle() || dialog.postCount() < 3 || !dialog.output().ok) {
+            return fail("the Save Toolpaths dialog did not generate: " + dialog.output().error);
+        }
+        if (!dialog.selectPost("grbl_mm.pp") || !dialog.waitIdle() || !dialog.output().ok ||
+            dialog.output().files.size() != 1 || dialog.output().toolChanges != 1) {
+            return fail("the Save Toolpaths dialog gave no single Grbl file with one tool change");
+        }
+        if (dialog.previewShown().find("G21") == std::string::npos || !dialog.canSave()) {
+            return fail("the Save Toolpaths preview is empty or Save is disabled");
+        }
+        if (!dialog.saveNow() || dialog.written().size() != 1 || dialog.written().front() != outPath / "job.nc") {
+            return fail("saving the toolpaths through the dialog failed");
+        }
+        std::string reread;
+        {
+            QFile f(outDir.filePath(QStringLiteral("job.nc")));
+            if (!f.open(QIODevice::ReadOnly)) {
+                return fail("the saved G-code file cannot be read");
+            }
+            reread = QString::fromUtf8(f.readAll()).toStdString();
+        }
+        if (reread != dialog.output().files.front().text || reread.find("(Change to tool 2: Tool 2)") == std::string::npos) {
+            return fail("the saved file differs from the generated G-code");
+        }
+        // The file exists now: the dialog says so and a second save is refused until Replace is ticked.
+        dialog.setNameTemplate("job");  // regenerate to see the file
+        if (!dialog.waitIdle() || !dialog.output().files.front().exists || dialog.saveNow()) {
+            return fail("the dialog did not refuse to overwrite the saved file");
+        }
+        dialog.setOverwrite(true);
+        if (!dialog.waitIdle() || !dialog.saveNow()) {
+            return fail("replacing the saved file failed");
+        }
+        // One file per toolpath with a name template.
+        dialog.setOutputMode(viewmodel::OutputMode::FilePerToolpath);
+        dialog.setNameTemplate("{n}-{toolpath}");
+        if (!dialog.waitIdle() || dialog.output().files.size() != 2 || !dialog.saveNow() || dialog.written().size() != 2 ||
+            !QFileInfo::exists(outDir.filePath(QStringLiteral("01-Outline.nc"))) ||
+            !QFileInfo::exists(outDir.filePath(QStringLiteral("02-Pocket.nc")))) {
+            return fail("one file per toolpath was not written");
+        }
+        // A bad template is reported, not saved.
+        dialog.setNameTemplate("{nope}");
+        if (!dialog.waitIdle() || dialog.canSave() || dialog.messageShown().find("{nope}") == std::string::npos) {
+            return fail("a bad file name template was not reported");
+        }
+        dialog.reject();
+        window.undo();
+        window.undo();
+        if (!cur.toolpaths().empty()) {
+            return fail("undoing the test toolpaths did not remove them");
+        }
     }
 
     window.close();

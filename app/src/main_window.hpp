@@ -6,8 +6,11 @@
 
 #include <filesystem>
 #include <optional>
+#include <utility>
+#include <vector>
 
 #include "carvetto/document/document.hpp"
+#include "carvetto/tooling/machine.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/tools.hpp"
 
@@ -62,6 +65,14 @@ class MainWindow : public QMainWindow {
     NodeEditMenu* nodeEdit() const { return nodeEdit_.get(); }
     TransformMenu* transformMenu() const { return transformMenu_.get(); }
     QDockWidget* toolpathsDock() const { return toolpathsDock_; }
+    /// File > Save Toolpaths... (T-0224): posts the document's calculated toolpaths.
+    QAction* saveToolpathsAction() const { return saveToolpathsAction_; }
+    /// The machines offered in the Save Toolpaths dialog (from the tool database; none = the
+    /// dialog offers only the post list).
+    void setMachines(std::vector<tooling::Machine> machines) { machines_ = std::move(machines); }
+    const std::vector<tooling::Machine>& machines() const { return machines_; }
+    /// Opens the Save Toolpaths dialog (modal).
+    void saveToolpathsDialog();
     QDockWidget* layersDock() const { return layersDock_; }
     ToolPanel* toolPanel() const { return toolPanel_; }
 
@@ -118,6 +129,8 @@ class MainWindow : public QMainWindow {
 
     viewmodel::FileSession session_;
     QMenu* recentMenu_{nullptr};
+    QAction* saveToolpathsAction_{nullptr};
+    std::vector<tooling::Machine> machines_;
     std::unique_ptr<CopiesMenu> copies_;
     std::unique_ptr<VectorOpsMenu> vectorOps_;
     std::unique_ptr<NodeEditMenu> nodeEdit_;
