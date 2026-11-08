@@ -16,6 +16,7 @@
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/geometry/span.hpp"
 #include "carvetto/geometry/vec2.hpp"
+#include "carvetto/viewmodel/node_edit.hpp"
 #include "carvetto/viewmodel/selection_tools.hpp"
 #include "carvetto/viewmodel/snapping.hpp"
 #include "carvetto/viewmodel/transform_gesture.hpp"
@@ -42,6 +43,8 @@
 //     moves it, and the middle handle moves (Scale mode) or drags the rotation pivot (Rotate
 //     mode). A click on a selected object or on the middle handle switches Scale <-> Rotate. The
 //     pointer is snapped (Shift disables snapping) and the whole drag is ONE undo step.
+//   * NodeEdit: pointer events go to the `NodeEditor` (node_edit.hpp); every drag step is snapped
+//     with the dragged objects excluded (ADR-0030).
 //   * Escape cancels whatever is in progress without touching the document (an interactive
 //     transform is reverted).
 //
@@ -73,7 +76,7 @@ enum class CursorHint {
     Pivot
 };
 
-enum class ToolKind { Select, Rectangle, Circle, Ellipse, Polygon, Star, Arc, Polyline };
+enum class ToolKind { Select, Rectangle, Circle, Ellipse, Polygon, Star, Arc, Polyline, NodeEdit };
 
 /// How the Arc tool defines the arc.
 enum class ArcMode {
@@ -214,6 +217,10 @@ class ToolController {
     geometry::Vec2 pointMm() const { return cursorMm_; }
     ToolPreview preview() const;
 
+    // --- Node editing (T-0206, ADR-0030) ----------------------------------------------------
+    /// The node editor behind `ToolKind::NodeEdit`: handles for painting, operations, keys.
+    NodeEditor& nodeEditor() { return nodeEditor_; }
+    const NodeEditor& nodeEditor() const { return nodeEditor_; }
     // --- Selection box and transform gestures (Select tool) ------------------------------------
     /// Handles of the selection box when the Select tool is active and something can be
     /// transformed; nullopt otherwise.
@@ -269,6 +276,7 @@ class ToolController {
     void cancel();
     void updatePointer(geometry::Vec2 px, Modifiers mods);
     const SnapIndex& snapIndex();
+    ToolResult afterNodeEdit(const NodeEditResult& r);
     ToolResult selectPress(geometry::Vec2 px, Modifiers mods);
     ToolResult selectRelease(geometry::Vec2 px, Modifiers mods);
     ToolResult shapePress(Modifiers mods);
@@ -279,12 +287,14 @@ class ToolController {
     bool layerWritable(std::string* why) const;
 
     document::Document* doc_{nullptr};
+    NodeEditor nodeEditor_;
     ViewTransform view_;
     ToolKind tool_{ToolKind::Select};
     ToolOptions options_;
     SnapSettings snapSettings_;
     std::optional<SnapIndex> snapIndex_;
     std::array<std::uint64_t, 2> snapSignature_{};
+    bool nodeIndexWasValid_{false};  // NodeEdit: the frozen index was valid before this event
     /// Index frozen for the duration of a transform drag (dragged objects left out of it).
     std::optional<SnapIndex> gestureSnapIndex_;
     /// {undo generation, active sheet} the frozen index is valid for: the state when it was built,

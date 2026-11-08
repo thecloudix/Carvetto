@@ -98,6 +98,20 @@ void ToolPanel::addOptionRows(ToolKind tool) {
             canvas_->tools().options().starInnerPercent = static_cast<double>(v);
             canvas_->update();
         });
+    } else if (tool == ToolKind::NodeEdit) {
+        viewmodel::NodeEditor& editor = ctl.nodeEditor();
+        auto* mirror = new QComboBox(this);
+        mirror->addItems({QStringLiteral("Off"), QStringLiteral("Horizontal"), QStringLiteral("Vertical")});
+        mirror->setCurrentIndex(static_cast<int>(editor.options().mirror));
+        form_->addRow(QStringLiteral("Mirror mode"), mirror);
+        connect(mirror, &QComboBox::currentIndexChanged, this, [this](int i) {
+            canvas_->tools().nodeEditor().setMirror(static_cast<viewmodel::MirrorMode>(i));
+        });
+        auto* keep = new QCheckBox(QStringLiteral("Keep Bezier tangency"), this);
+        keep->setChecked(editor.options().keepBezierTangency);
+        form_->addRow(QString(), keep);
+        connect(keep, &QCheckBox::toggled, this,
+                [this](bool on) { canvas_->tools().nodeEditor().options().keepBezierTangency = on; });
     } else if (tool == ToolKind::Arc) {
         auto* mode = new QComboBox(this);
         mode->addItems({QStringLiteral("Through 3 points"), QStringLiteral("Centre, start, end"),

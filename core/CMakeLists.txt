@@ -158,6 +158,7 @@ add_library(carvetto_core STATIC
   src/simulate/simulator.cpp
   src/simulate/tool_shape.cpp
   src/document/job.cpp
+  src/document/node_edit_command.cpp
   src/document/sheet.cpp
   src/document/object.cpp
   src/document/selection.cpp
