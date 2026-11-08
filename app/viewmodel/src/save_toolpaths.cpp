@@ -9,6 +9,9 @@
 #include <sstream>
 #include <system_error>
 #include <atomic>
+#include <exception>
+#include <chrono>
+#include <thread>
 #include <cerrno>
 #include <cstdint>
 #include <cstring>
@@ -547,7 +550,29 @@ SaveJob prepareSave(const SaveSource& source, const PostInfo& post, const SaveOp
     return job;
 }
 
+/// The path in UTF-8 with '/' separators: what `generic_string()` gives, without the narrow code
+/// page conversion that throws for non-ASCII names on Windows.
+static std::string genericUtf8(const fs::path& p) {
+    std::string s = pathToUtf8(p);
+#ifdef _WIN32
+    std::replace(s.begin(), s.end(), '\\', '/');
+#endif
+    return s;
+}
+
+static SaveOutput generateOutputImpl(const SaveJob& job, const std::atomic<bool>* cancel);
+
 SaveOutput generateOutput(const SaveJob& job, const std::atomic<bool>* cancel) {
+    try {
+        return generateOutputImpl(job, cancel);
+    } catch (const std::exception& e) {
+        SaveOutput out;
+        out.error = std::string("saving failed: ") + e.what();
+        return out;
+    }
+}
+
+SaveOutput generateOutputImpl(const SaveJob& job, const std::atomic<bool>* cancel) {
     SaveOutput out;
     const auto fail = [&](std::string message) {
         out.ok = false;
@@ -625,8 +650,8 @@ SaveOutput generateOutput(const SaveJob& job, const std::atomic<bool>* cancel) {
         post::PostContext ctx;
         ctx.fileName = pathToUtf8(outFs.stem());
         ctx.fileExt = outFs.has_extension() ? pathToUtf8(outFs.extension()).substr(1) : std::string();
-        ctx.fileDir = outFs.parent_path().generic_string();
-        ctx.pathName = outFs.generic_string();
+        ctx.fileDir = genericUtf8(outFs.parent_path());
+        ctx.pathName = genericUtf8(outFs);
         ctx.safeZ = safeZ;
         ctx.home = {0.0, 0.0, safeZ};
         const document::Job& j = job.job;
@@ -759,12 +784,21 @@ bool createExclusive(const fs::path& path, const std::string& data, std::string&
 /// Moves the staged file to `target`; without `overwrite` an existing target is never replaced.
 Commit commitFile(const fs::path& staged, const fs::path& target, bool overwrite, std::string& err) {
     const DWORD flags = overwrite ? MOVEFILE_REPLACE_EXISTING : 0;
-    if (MoveFileExW(staged.wstring().c_str(), target.wstring().c_str(), flags) != 0) {
-        return Commit::Ok;
-    }
-    const DWORD code = GetLastError();
-    if (!overwrite && (code == ERROR_ALREADY_EXISTS || code == ERROR_FILE_EXISTS)) {
-        return Commit::Exists;
+    DWORD code = 0;
+    // Another save replacing the same target (or a virus scanner holding the new file) makes the
+    // move fail for a moment with a sharing or access error: retry briefly, then report.
+    for (int attempt = 0; attempt < 20; ++attempt) {
+        if (MoveFileExW(staged.wstring().c_str(), target.wstring().c_str(), flags) != 0) {
+            return Commit::Ok;
+        }
+        code = GetLastError();
+        if (!overwrite && (code == ERROR_ALREADY_EXISTS || code == ERROR_FILE_EXISTS)) {
+            return Commit::Exists;
+        }
+        if (code != ERROR_ACCESS_DENIED && code != ERROR_SHARING_VIOLATION && code != ERROR_LOCK_VIOLATION) {
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     err = "error " + std::to_string(static_cast<unsigned long>(code));
     return Commit::Failed;
@@ -840,7 +874,19 @@ void setCommitHook(std::function<void(const std::vector<std::filesystem::path>&)
 }
 }  // namespace detail
 
+static WriteResult writeOutputImpl(const SaveOutput& output, bool overwrite);
+
 WriteResult writeOutput(const SaveOutput& output, bool overwrite) {
+    try {
+        return writeOutputImpl(output, overwrite);
+    } catch (const std::exception& e) {
+        WriteResult res;
+        res.error = std::string("saving failed: ") + e.what();
+        return res;
+    }
+}
+
+static WriteResult writeOutputImpl(const SaveOutput& output, bool overwrite) {
     WriteResult res;
     if (!output.ok || output.files.empty()) {
         res.error = output.error.empty() ? "there is nothing to write" : output.error;

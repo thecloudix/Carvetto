@@ -484,9 +484,10 @@ TEST_CASE("a planted symlink at a predictable temp name is not followed", "[save
     const fs::path victim = dir / "victim.txt";
     { std::ofstream(victim) << "precious"; }
     std::error_code ec;
+    std::error_code ec2;
     fs::create_symlink(victim, dir / "job.nc.carvetto-tmp", ec);
-    fs::create_symlink(victim, dir / ".job.nc.carvetto-tmp", ec);
-    if (ec) {
+    fs::create_symlink(victim, dir / ".job.nc.carvetto-tmp", ec2);
+    if (ec || ec2) {  // e.g. Windows without the symlink privilege
         SKIP("symlinks are not available here");
     }
     const WriteResult w = writeOutput(oneFile(dir / "job.nc", "G-code"), false);
@@ -501,9 +502,10 @@ TEST_CASE("a symlinked target is refused, or replaced itself when overwriting", 
     const fs::path victim = dir / "victim.txt";
     { std::ofstream(victim) << "precious"; }
     std::error_code ec;
+    std::error_code ec2;
     fs::create_symlink(victim, dir / "job.nc", ec);
-    fs::create_symlink(dir / "nowhere", dir / "dangling.nc", ec);
-    if (ec) {
+    fs::create_symlink(dir / "nowhere", dir / "dangling.nc", ec2);
+    if (ec || ec2) {  // e.g. Windows without the symlink privilege
         SKIP("symlinks are not available here");
     }
     WriteResult w = writeOutput(oneFile(dir / "job.nc", "new"), false);
@@ -551,14 +553,21 @@ TEST_CASE("every staged file has its own random name; concurrent saves do not cl
     CHECK(seen[0] != seen[1]);
     CHECK(seen[0].parent_path() == dir);
 
-    std::atomic<int> failures{0};
+    // Concurrent saves to one target are a legitimate race: each write either succeeds completely or
+    // fails cleanly (Windows may refuse a replace for a moment; the commit retries first). Whatever
+    // happens, the target holds exactly one writer's complete content and no temp file is left.
+    std::atomic<int> succeeded{0};
+    std::atomic<int> malformed{0};
     std::vector<std::thread> threads;
     for (int t = 0; t < 4; ++t) {
         threads.emplace_back([&, t]() {
             for (int i = 0; i < 25; ++i) {
                 const std::string text(2000, static_cast<char>('a' + t));
-                if (!writeOutput(oneFile(dir / "same.nc", text), true).ok) {
-                    ++failures;
+                const WriteResult r = writeOutput(oneFile(dir / "same.nc", text), true);
+                if (r.ok) {
+                    ++succeeded;
+                } else if (r.error.empty() || !r.written.empty()) {
+                    ++malformed;
                 }
             }
         });
@@ -566,7 +575,8 @@ TEST_CASE("every staged file has its own random name; concurrent saves do not cl
     for (std::thread& th : threads) {
         th.join();
     }
-    CHECK(failures == 0);
+    CHECK(malformed == 0);
+    CHECK(succeeded > 0);
     const std::string final = readTextFile(pathToUtf8(dir / "same.nc"));
     CHECK(final.size() == 2000);
     CHECK(final.find_first_not_of(final[0]) == std::string::npos);  // one writer's complete content
@@ -608,8 +618,8 @@ TEST_CASE("names that differ only in case collide, also beyond ASCII", "[save]")
     job.records[2].name = "\xD0\x96";         // Cyrillic capital zhe
     out = generateOutput(job);
     REQUIRE(out.ok);
-    CHECK(out.files[1].path.filename() == "\xC3\xA9" "cole_2.nc");
-    CHECK(out.files[2].path.filename() == "\xD0\x96.nc");
+    CHECK(pathToUtf8(out.files[1].path.filename()) == "\xC3\xA9" "cole_2.nc");
+    CHECK(pathToUtf8(out.files[2].path.filename()) == "\xD0\x96.nc");
 }
 
 TEST_CASE("reserved name variants and invisible characters are neutralised", "[save]") {
