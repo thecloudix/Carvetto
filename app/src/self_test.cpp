@@ -852,10 +852,22 @@ int runSelfTest() {
         dialog.setOutputMode(viewmodel::OutputMode::FilePerToolpath);
         dialog.setNameTemplate("{n}-{toolpath}");
         if (!dialog.waitIdle() || dialog.output().files.size() != recordsBefore + 2 || !dialog.saveNow() ||
-            dialog.written().size() != recordsBefore + 2 ||
-            !QFileInfo::exists(outDir.filePath(QStringLiteral("01-Outline.nc"))) ||
-            !QFileInfo::exists(outDir.filePath(QStringLiteral("02-Pocket.nc")))) {
+            dialog.written().size() != recordsBefore + 2) {
             return fail("one file per toolpath was not written");
+        }
+        // Other toolpaths of the document may precede ours: find ours by name, all files must exist.
+        std::size_t named = 0;
+        for (const std::filesystem::path& w : dialog.written()) {
+            const std::string fileName = viewmodel::pathToUtf8(w.filename());
+            if (!QFileInfo::exists(QString::fromStdString(viewmodel::pathToUtf8(w)))) {
+                return fail("a per-toolpath file is missing: " + fileName);
+            }
+            if (fileName.find("Outline") != std::string::npos || fileName.find("Pocket") != std::string::npos) {
+                ++named;
+            }
+        }
+        if (named != 2) {
+            return fail("the per-toolpath files are not named after the toolpaths");
         }
         // A bad template is reported, not saved.
         dialog.setNameTemplate("{nope}");
