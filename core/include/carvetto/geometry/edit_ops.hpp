@@ -18,7 +18,11 @@ namespace carvetto::geometry {
 /// Outcome of an edit operation.
 enum class EditStatus {
     Ok,
-    InvalidArgument,  ///< NaN / infinite / non-positive radius, tolerance or point.
+    InvalidArgument,  ///< NaN / infinite / non-positive radius, tolerance or point; any coordinate, radius or
+                      ///< tolerance above 1e12 mm (kMaxMagnitude); or, when a Bezier is involved in a trim /
+                      ///< extend, a drawing larger than 1e6 x tol.chordal or a tol.chordal within 4 ulps of the
+                      ///< coordinates (too costly: scale the tolerance with the drawing; ADR-0028 section 7).
+                      ///< `joinContours` only refuses a bad tolerance: unusable contours pass through.
     EmptyContour,     ///< No spans to work on.
     BadNode,          ///< Node index outside the contour (open contours: the two ends are not corners).
     Discontinuous,    ///< The two spans at a node do not meet within the tolerance.
@@ -46,7 +50,8 @@ const char* toString(EditStatus s);
 /// node list therefore uses `convexNodes` for these two kinds; Normal fillets use every corner.
 enum class FilletKind {
     Normal,   ///< Tangent circular arc of the given radius, rounding the corner.
-    DogBone,  ///< Relief arc centred on the corner node with the given radius (270-ish degrees).
+    DogBone,  ///< Relief arc centred on the corner node with the given radius; sweep pi + |turn|, i.e. always
+              ///< more than pi (exactly 3 pi / 2 for a right-angle corner).
     TBone,    ///< Relief semicircle whose diameter lies on one span, starting at the node.
 };
 
@@ -160,7 +165,12 @@ struct ExtendResult {
 
 /// Extends the open contour's `end` to the nearest intersection ahead with the target contours.
 /// A line end is lengthened; an arc end continues round its circle; a Bezier end gets a tangent
-/// line appended (ADR-0028). Hits closer than tol.distance to the end are ignored.
+/// line appended (ADR-0028). Hits closer than tol.distance to the end are ignored. For an arc end
+/// whose remaining circle is longer than 1000 x reach (reach = 2 max(D, 1), D = diagonal of the box
+/// of the end point and all targets) the probe is limited to the first `reach` of arc: hits that
+/// would need travelling farther (wrap-around hits on the far side of a huge circle, targets
+/// behind the end reached by going almost all the way round) are reported as NoIntersection, and
+/// within the probe `distance` / `point` may differ from an unbounded probe in the last digits.
 ExtendResult extendSpan(const Contour& contour, ContourEnd end, const std::vector<Contour>& targets,
                         const Tolerance& tol = Tolerance::defaults());
 
@@ -177,6 +187,9 @@ struct JoinResult {
 };
 
 /// Chains open contours whose ends lie within tol.distance of each other (reversing as needed).
+/// Closed, empty and unusable contours (non-finite, or a coordinate / radius above 1e12 mm) take no
+/// part: they pass through unjoined, in place, with status Ok; only an invalid tolerance gives
+/// InvalidArgument.
 /// Deterministic: chains are grown from the lowest unused input, nearest partner first (ties to
 /// the lowest index, a partner's start before its end). Gaps up to the tolerance are kept (not
 /// bridged). A chain whose ends meet within the tolerance becomes closed.
