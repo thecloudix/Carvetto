@@ -20,6 +20,11 @@ enum class BooleanOp { Union, Difference, Intersection, Xor };
 struct BooleanResult {
     std::vector<Contour> closed;
     std::vector<Contour> open;
+    /// Input contours (subject or clip) left out because their polygon could not meet `tol.chordal`
+    /// within the work bounds (T-0182, ADR-0005 A2: an arc needing more than `kMaxArcSegments`
+    /// chords, a Bezier past its split cap, a non-finite span). They contribute nothing, as
+    /// degenerate input does; a non-zero count tells the caller the result is incomplete.
+    std::size_t refusedContours{0};
 
     bool isEmpty() const { return closed.empty() && open.empty(); }
 };
@@ -77,6 +82,9 @@ public:
 
     /// The open contours of `subject` clipped by `op` (closed contours of `subject` are ignored).
     std::vector<Contour> clip(BooleanOp op, const std::vector<Contour>& subject) const;
+    /// Contours (clip ones at construction, subjects over all `clip` calls) left out for the reason
+    /// given at `BooleanResult::refusedContours`. Not thread-safe against concurrent `clip` calls.
+    std::size_t refusedContours() const;
 
 private:
     struct Impl;

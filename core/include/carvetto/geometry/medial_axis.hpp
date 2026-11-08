@@ -69,7 +69,10 @@ struct MedialAxis {
     std::vector<MedialNode> nodes;
     std::vector<MedialBranch> branches;
     /// Input contours not used as boundary: open, empty or non-finite, zero area, or with the
-    /// same side (inside or outside) on both sides under the fill rule.
+    /// same side (inside or outside) on both sides under the fill rule. A contour with a non-finite
+    /// coordinate, radius or angle, or a coordinate or radius beyond 1e12 mm in magnitude, is ignored
+    /// (T-0182), promptly;
+    /// `accuracyCapped` is also set when a finite contour was ignored for its magnitude.
     std::size_t ignoredContours{0};
     /// True when the sample or work budget (`MedialAxisOptions::maxSamples`) stopped refinement:
     /// the accuracy guarantees may not hold.

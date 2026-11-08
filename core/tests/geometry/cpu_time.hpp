@@ -12,6 +12,9 @@
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
+#ifndef NOGDI
+#define NOGDI  // no GDI: its Polyline/Rectangle/Ellipse/Arc/Pie/Chord clash with geometry names
+#endif
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif

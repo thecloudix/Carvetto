@@ -720,7 +720,7 @@ Goal: Heap-use-after-free on main (2901f51): `TransformGesture::update` only end
 Acceptance criteria:
   1. uaf5 and variants (undo, redo, delete of another/the dragged object, layer lock, sheet switch, setDocument, modifiers, consecutive gestures) clean under ASan/UBSan and pinned by tests that fail on the old code; mixed Select+NodeEdit fuzz (>= 3000 seeds) clean; mutants killed; production change small and confined to the gesture/index handling; full ctest; CI Linux + Windows.
 
-### T-0182 polygonise(ArcSpan) is unbounded in radius over chordal tolerance (T-0180 coder)   [status: in progress — PR #89 CI: ubuntu-26.04 fails a bit-exact test-vs-inlined-reference comparison (test fragility, toolchain FP difference); fixing the test]
+### T-0182 polygonise(ArcSpan) is unbounded in radius over chordal tolerance (T-0180 coder)   [status: done — merged PR #89]
 Phase: 1   Module: core/geometry   Depends on: T-0180   ADR: 0005 A2
 Goal: Found by the T-0180 coder (harness nf.cpp seed 5): `polygoniseInto(ArcSpan)` makes a number of points proportional to radius/chordal tolerance with no cap: R=1e12 gives 21M points in 0.6 s; a larger radius hangs or runs out of memory, so any caller that polygonises a huge finite arc (offset, boolean interop, snapping, selection hit tests, canvas painting, DXF/SVG import of hostile files) is unbounded. Add an explicit point cap (like the 2^20 split cap T-0178 added for Beziers) with a documented overflow behaviour (coarser chords beyond the cap, or an error flag the callers check), audit the other polygonise/flatten paths (ellipse arcs, offset arc joins, canvas scene builder `buildCanvasScene`, marquee `polygonise` in selection_tools which the T-0206 verifier saw hang with growing memory on an arc with infinite radius), and bound them the same way.
 Acceptance criteria:
@@ -738,7 +738,7 @@ Goal: Pre-existing defects found by the T-0182 verifier (harness t0182v1) while 
 Acceptance criteria:
   1. Huge arcs (R 1e6..1e12, sweeps up to 1e5 revolutions) in Profile/Pocket/offset finish within a documented CPU and memory bound (ulimit -v 400000) or are refused with a diagnostic; UBSan float-cast-overflow clean over the hostile corpora; outputs byte-identical to main for inputs that finished within bounds before (CLI diff on the DXF fixtures + hash corpus); mutants killed; full ctest; MSVC CI green.
 
-### T-0185 Windows-safe names lint (ctest) (systemic, from three MSVC compile failures)   [status: verifying — in the T-0182 PR]
+### T-0185 Windows-safe names lint (ctest) (systemic, from three MSVC compile failures)   [status: done — merged PR #89]
 Phase: 1   Module: tools   Depends on: —   ADR: —
 Goal: Three PRs in a row (#82 `Polyline`, T-0182 `Polyline` and `far`) failed to compile on MSVC because <windows.h> (pulled in through core/tests/geometry/cpu_time.hpp) defines `far`/`near` as empty macros and declares the GDI functions Polyline/Rectangle/Ellipse/Arc/...; nobody can compile MSVC locally. `tools/check_windows_names.py` + a ctest scans core/, app/ and tools/ sources after stripping comments and literals and fails on those identifiers; CONTRIBUTING.md section. Delivered inside the T-0182 round-3 branch (the next free card id is intentionally shared).
 Acceptance criteria:
@@ -974,3 +974,12 @@ Goal: Output the selected toolpaths through the post-processors: choose the post
 - Drill, quick engrave, V-carve (medial axis) with clearance, fluting, chamfer, prism, inlay, VCarve inlay, photo V-carve, thread milling, texture, keep-out zones, templates, merge, array copy, tiling, double-sided.
 - Material-removal simulation and time estimates; save-toolpaths dialog; job sheet.
 - MVP acceptance run on a real machine (owner).
+
+## Owner decision 2026-11-07 — text dependencies
+Owner: "FreeType and HarfBuzz together, as the plan originally said." Both libraries are approved for `core/text` (licence terms: FreeType under FTL/GPLv2 dual — use under GPLv2+-compatible FTL option; HarfBuzz under the Old MIT licence; both GPL-3.0-or-later compatible). Vendor/fetch the way Clipper2 is handled; record in ADR 0033 and third-party notices.
+
+### T-0130 Text core (core/text: FreeType + HarfBuzz)   [status: ready — not started]
+Phase: 1   Module: core/text   Depends on: none   ADR: 0033 (new)
+Goal: `Font` loading (TTF/OTF from file/bytes, no system-font enumeration in core), HarfBuzz shaping, glyph outlines → `geometry::Contour` (lines + cubic Béziers; quadratics elevated exactly), `TextBlock` layout (size mm, alignment, line/letter spacing, kerning), text along a curve (contour arc-length path, per-glyph placement), deterministic output (same bytes → same contours across platforms: no system fonts, fixed hinting off, 26.6 → mm conversion in integers where possible). Own test font(s) must be redistributable (OFL) and small. Hostile inputs: corrupt fonts, huge sizes, huge strings, empty text, missing glyphs (.notdef), RTL/combining sequences — all bounded work, no crash, no UB (ASan/UBSan fuzz on font bytes).
+Criteria: (1) glyph outlines match an independent oracle (area/winding/bbox of known glyphs in the test font); (2) text on curve places glyph baselines tangent within tolerance; (3) work/size caps with refusal statuses; (4) clean MSVC + GCC/Clang builds, deterministic hashes on CI Linux and Windows; (5) licences recorded; mutation checks.
+Out of scope: single-line stroke fonts, the text tool UI (T-0211).

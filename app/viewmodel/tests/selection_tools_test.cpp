@@ -14,6 +14,8 @@
 #include "carvetto/document/document.hpp"
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/geometry/span.hpp"
+// Last: on Windows it includes <windows.h> (macros such as near/far).
+#include "../../../core/tests/geometry/cpu_time.hpp"
 
 using namespace carvetto;
 using document::Document;
@@ -580,5 +582,30 @@ TEST_CASE("picking 10k objects uses the spatial index", "[viewmodel][selection][
     CHECK(a.has_value() == b.has_value());
     if (a.has_value() && b.has_value()) {
         CHECK(a->object == b->object);
+    }
+}
+
+TEST_CASE("marquee and picking terminate on an arc of huge or infinite radius", "[viewmodel][selection][cap]") {
+    // T-0182: the marquee polygonised such an arc with ~radius / tolerance points (hang, growing memory).
+    const double inf = std::numeric_limits<double>::infinity();
+    for (const double radius : {1e12, 1e100, 1.7e308, inf}) {
+        Document doc;
+        Contour c;
+        c.closed = false;
+        geometry::ArcSpan a;
+        a.centre = {50.0, -radius};
+        a.radius = radius;
+        a.startAngle = 1.2;
+        a.endAngle = 1.9;
+        c.spans.emplace_back(a);
+        addVector(doc, c);
+        const ViewTransform view = makeView();
+        const double t0 = carvetto::test::processCpuSeconds();
+        const Box2 rectPx{{0.0, 0.0}, {900.0, 700.0}};
+        (void)viewmodel::marqueeSelect(doc, view, rectPx, MarqueeMode::Crossing);
+        (void)viewmodel::marqueeSelect(doc, view, rectPx, MarqueeMode::Window, FillHit::StrokeAndFill);
+        const double seconds = carvetto::test::processCpuSeconds() - t0;
+        INFO("radius " << radius);
+        CHECK(seconds < 20.0);  // CPU time; ~0.1 s expected, fails fast on a hang
     }
 }
