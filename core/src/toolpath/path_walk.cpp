@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "carvetto/geometry/contour_ops.hpp"
+#include "work_meter.hpp"
 
 namespace carvetto::toolpath {
 
@@ -52,6 +53,7 @@ ArcLengthPath::ArcLengthPath(const Contour& contour, const geometry::Tolerance& 
         if (std::holds_alternative<BezierSpan>(s)) {
             std::vector<geometry::Vec2> pts;
             geometry::polygoniseInto(s, tol, pts);
+            detail::chargeWork(15 * pts.size() + 1);  // work meter (T-0186): a point costs about 15 units (evaluation, chord length)
             geometry::Vec2 prev = geometry::startPoint(s);
             for (const geometry::Vec2& p : pts) {
                 contour_.spans.emplace_back(LineSpan{prev, p});
@@ -61,6 +63,7 @@ ArcLengthPath::ArcLengthPath(const Contour& contour, const geometry::Tolerance& 
             contour_.spans.push_back(s);
         }
     }
+    detail::chargeWork(contour.spans.size() + 1);
     cum_.reserve(contour_.spans.size() + 1);
     cum_.push_back(0.0);
     for (const Span& s : contour_.spans) {
@@ -160,6 +163,7 @@ std::vector<Span> ArcLengthPath::extract(double u0, double u1) const {
     // Bound the walk: whole revolutions plus one.
     const std::size_t maxSteps = n * (static_cast<std::size_t>((b - a) / len) + 2);
     for (std::size_t step = 0; step < maxSteps; ++step) {
+        detail::chargeWork(1);  // work meter (T-0186): a wide stretch of a closed path wraps many times
         const double s0 = base + cum_[i];
         const double s1 = base + cum_[i + 1];
         const double l = s1 - s0;
@@ -211,6 +215,7 @@ double ArcLengthPath::project(geometry::Vec2 p) const {
     if (isEmpty()) {
         return 0.0;
     }
+    detail::chargeWork(2 * contour_.spans.size() + 1);  // work meter (T-0186)
     const geometry::ContourClosestPoint cp = geometry::closestPoint(contour_, p);
     const double u = cum_[cp.spanIndex] + cp.t * spanLength(cp.spanIndex);
     return wrap(u);
