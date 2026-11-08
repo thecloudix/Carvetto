@@ -14,6 +14,7 @@ add_library(carvetto_viewmodel STATIC
   src/vector_selector.cpp
   src/view_transform.cpp
   src/ruler.cpp
+  src/save_toolpaths.cpp
   src/toolpath_calc.cpp
   src/toolpath_form.cpp
   src/toolpath_runner.cpp

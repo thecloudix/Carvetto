@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QDockWidget>
+#include <QFile>
 #include <QFileInfo>
 #include <QImage>
 #include <QAction>
@@ -24,11 +25,13 @@
 #include <memory>
 #include <string>
 #include <variant>
+#include <vector>
 
 #include "array_copy_menu.hpp"
 #include "canvas_widget.hpp"
 #include "carvetto/document/commands.hpp"
 #include "carvetto/document/document.hpp"
+#include "carvetto/document/toolpath_record.hpp"
 #include "carvetto/document/shape_params.hpp"
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/viewmodel/array_copies.hpp"
@@ -36,11 +39,14 @@
 #include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/new_job_form.hpp"
 #include "carvetto/viewmodel/pixel_probe.hpp"
+#include "carvetto/viewmodel/save_toolpaths.hpp"
+#include "carvetto/viewmodel/toolpath_session.hpp"
 #include "carvetto/viewmodel/selection_tools.hpp"
 #include "carvetto/viewmodel/tools.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
 #include "main_window.hpp"
 #include "node_edit_menu.hpp"
+#include "save_toolpaths_dialog.hpp"
 #include "tool_panel.hpp"
 #include "preview_panel.hpp"
 #include "toolpaths_panel.hpp"
@@ -737,6 +743,143 @@ int runSelfTest() {
     // 9. The toolpath preview and the simulation view (T-0223).
     if (const std::string why = previewSelfTest(window); !why.empty()) {
         return fail(why);
+    }
+
+    // 10. Save Toolpaths (T-0224): two calculated toolpaths with different tools, post them through
+    // the dialog (generation and writing run on a worker thread), re-read the files.
+    {
+        document::Document& cur = window.currentDocument();
+        const std::size_t recordsBefore = cur.toolpaths().size();
+        const auto addRecord = [&](const std::string& name, int toolNumber, double diameter) {
+            document::ToolpathRecord r;
+            r.name = name;
+            r.tool.name = "Tool " + std::to_string(toolNumber);
+            r.tool.toolNumber = toolNumber;
+            r.tool.diameter = diameter;
+            r.tool.feedRate = 800.0;
+            r.tool.plungeRate = 300.0;
+            r.tool.spindleSpeed = 12000.0;
+            std::vector<toolpath::Move> moves;
+            moves.push_back(toolpath::Move::rapid({0.0, 0.0, 5.0}));
+            moves.push_back(toolpath::Move::plunge({0.0, 0.0, -1.0}));
+            moves.push_back(toolpath::Move::feed({20.0, 0.0, -1.0}));
+            moves.push_back(toolpath::Move::feed({20.0, 20.0, -1.0}));
+            moves.push_back(toolpath::Move::retract({20.0, 20.0, 5.0}));
+            r.moves = document::shareMoves(std::move(moves));
+            return cur.execute(std::make_unique<document::AddToolpathCommand>(std::move(r)));
+        };
+        if (!addRecord("Outline", 1, 3.0) || !addRecord("Pocket", 2, 6.0)) {
+            return fail("could not add toolpaths for the Save Toolpaths test");
+        }
+        if (window.saveToolpathsAction() == nullptr) {
+            return fail("the File menu has no Save Toolpaths action");
+        }
+        QTemporaryDir outDir;
+        if (!outDir.isValid()) {
+            return fail("no temporary directory for the Save Toolpaths test");
+        }
+        const std::filesystem::path outPath = viewmodel::pathFromUtf8(outDir.path().toStdString());
+        // The caller passes the session's enabled toolpaths: a disabled one is not posted.
+        viewmodel::ToolpathSession& tpSession = window.toolpaths()->session();
+        std::vector<document::ToolpathId> ids = tpSession.enabledToolpaths();
+        if (ids.size() != recordsBefore + 2) {
+            return fail("the session does not list the added toolpaths as enabled");
+        }
+        {
+            tpSession.setEnabled(ids.back(), false);
+            SaveToolpathsDialog skip(cur, tpSession.enabledToolpaths(), "job", {}, outPath);
+            if (!skip.waitIdle() || !skip.output().ok || skip.output().files.size() != 1 ||
+                skip.output().files.front().toolpaths.size() != recordsBefore + 1) {
+                return fail("a disabled toolpath was posted by the Save Toolpaths dialog");
+            }
+            tpSession.setEnabled(ids.back(), true);
+        }
+        std::vector<tooling::Machine> machines;
+        for (const auto& entry : tpSession.toolDatabase().machines()) {
+            machines.push_back(entry.second);
+        }
+        {  // Out-of-date toolpaths need an explicit tick before Save.
+            viewmodel::SaveSource src = viewmodel::makeSaveSource(tpSession);
+            src.stale.push_back("Outline");
+            SaveToolpathsDialog gated(std::move(src), "job", machines, outPath);
+            if (!gated.waitIdle() || !gated.output().ok || !gated.staleBoxShown() || gated.canSave() ||
+                gated.output().stale.size() != 1 || gated.messageShown().find("out of date") == std::string::npos) {
+                return fail("out-of-date toolpaths did not block Save until confirmed");
+            }
+            gated.setAcceptStale(true);
+            if (!gated.canSave()) {
+                return fail("confirming the out-of-date toolpaths did not enable Save");
+            }
+        }
+        viewmodel::SaveSource source = viewmodel::makeSaveSource(tpSession);
+        SaveToolpathsDialog dialog(std::move(source), "job", machines, outPath);
+        dialog.setAcceptStale(true);  // the records were added without a calculation: the session may call them stale
+        dialog.show();
+        if (!dialog.waitIdle() || dialog.postCount() < 3 || !dialog.output().ok) {
+            return fail("the Save Toolpaths dialog did not generate: " + dialog.output().error);
+        }
+        if (!dialog.selectPost("grbl_mm.pp") || !dialog.waitIdle() || !dialog.output().ok ||
+            dialog.output().files.size() != 1 || dialog.output().toolChanges < 1) {
+            return fail("the Save Toolpaths dialog gave no single Grbl file with one tool change");
+        }
+        if (dialog.previewShown().find("G21") == std::string::npos || !dialog.canSave()) {
+            return fail("the Save Toolpaths preview is empty or Save is disabled");
+        }
+        if (!dialog.saveNow() || dialog.written().size() != 1 || dialog.written().front() != outPath / "job.nc") {
+            return fail("saving the toolpaths through the dialog failed");
+        }
+        std::string reread;
+        {
+            QFile f(outDir.filePath(QStringLiteral("job.nc")));
+            if (!f.open(QIODevice::ReadOnly)) {
+                return fail("the saved G-code file cannot be read");
+            }
+            reread = QString::fromUtf8(f.readAll()).toStdString();
+        }
+        if (reread != dialog.output().files.front().text || reread.find("(Change to tool 2: Tool 2)") == std::string::npos) {
+            return fail("the saved file differs from the generated G-code");
+        }
+        // The file exists now: the dialog says so and a second save is refused until Replace is ticked.
+        dialog.setNameTemplate("job");  // regenerate to see the file
+        if (!dialog.waitIdle() || !dialog.output().files.front().exists || dialog.saveNow()) {
+            return fail("the dialog did not refuse to overwrite the saved file");
+        }
+        dialog.setOverwrite(true);
+        if (!dialog.waitIdle() || !dialog.saveNow()) {
+            return fail("replacing the saved file failed");
+        }
+        // One file per toolpath with a name template.
+        dialog.setOutputMode(viewmodel::OutputMode::FilePerToolpath);
+        dialog.setNameTemplate("{n}-{toolpath}");
+        if (!dialog.waitIdle() || dialog.output().files.size() != recordsBefore + 2 || !dialog.saveNow() ||
+            dialog.written().size() != recordsBefore + 2) {
+            return fail("one file per toolpath was not written");
+        }
+        // Other toolpaths of the document may precede ours: find ours by name, all files must exist.
+        std::size_t named = 0;
+        for (const std::filesystem::path& w : dialog.written()) {
+            const std::string fileName = viewmodel::pathToUtf8(w.filename());
+            if (!QFileInfo::exists(QString::fromStdString(viewmodel::pathToUtf8(w)))) {
+                return fail("a per-toolpath file is missing: " + fileName);
+            }
+            if (fileName.find("Outline") != std::string::npos || fileName.find("Pocket") != std::string::npos) {
+                ++named;
+            }
+        }
+        if (named != 2) {
+            return fail("the per-toolpath files are not named after the toolpaths");
+        }
+        // A bad template is reported, not saved.
+        dialog.setNameTemplate("{nope}");
+        if (!dialog.waitIdle() || dialog.canSave() || dialog.messageShown().find("{nope}") == std::string::npos) {
+            return fail("a bad file name template was not reported");
+        }
+        dialog.reject();
+        window.undo();
+        window.undo();
+        if (cur.toolpaths().size() != recordsBefore) {
+            return fail("undoing the test toolpaths did not remove them");
+        }
     }
 
     window.close();

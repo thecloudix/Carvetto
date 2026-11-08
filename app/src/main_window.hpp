@@ -7,8 +7,11 @@
 #include <filesystem>
 #include <functional>
 #include <optional>
+#include <utility>
+#include <vector>
 
 #include "carvetto/document/document.hpp"
+#include "carvetto/tooling/machine.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/tools.hpp"
 
@@ -66,6 +69,11 @@ class MainWindow : public QMainWindow {
     NodeEditMenu* nodeEdit() const { return nodeEdit_.get(); }
     TransformMenu* transformMenu() const { return transformMenu_.get(); }
     QDockWidget* toolpathsDock() const { return toolpathsDock_; }
+    /// File > Save Toolpaths... (T-0224): posts the enabled, calculated toolpaths.
+    QAction* saveToolpathsAction() const { return saveToolpathsAction_; }
+    /// Opens the Save Toolpaths dialog (modal) for `toolpaths()->session().enabledToolpaths()`, with
+    /// the machines of the tool database.
+    void saveToolpathsDialog();
     ToolpathsPanel* toolpaths() const { return toolpaths_; }
     /// The Preview dock (toolpath preview, time readout, simulation) and the simulation view in the 3D tab.
     PreviewPanel* preview() const { return preview_; }
@@ -133,6 +141,7 @@ class MainWindow : public QMainWindow {
 
     viewmodel::FileSession session_;
     QMenu* recentMenu_{nullptr};
+    QAction* saveToolpathsAction_{nullptr};
     std::unique_ptr<CopiesMenu> copies_;
     std::unique_ptr<VectorOpsMenu> vectorOps_;
     std::unique_ptr<NodeEditMenu> nodeEdit_;
