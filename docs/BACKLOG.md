@@ -974,3 +974,12 @@ Goal: Output the selected toolpaths through the post-processors: choose the post
 - Drill, quick engrave, V-carve (medial axis) with clearance, fluting, chamfer, prism, inlay, VCarve inlay, photo V-carve, thread milling, texture, keep-out zones, templates, merge, array copy, tiling, double-sided.
 - Material-removal simulation and time estimates; save-toolpaths dialog; job sheet.
 - MVP acceptance run on a real machine (owner).
+
+## Owner decision 2026-11-07 — text dependencies
+Owner: "FreeType and HarfBuzz together, as the plan originally said." Both libraries are approved for `core/text` (licence terms: FreeType under FTL/GPLv2 dual — use under GPLv2+-compatible FTL option; HarfBuzz under the Old MIT licence; both GPL-3.0-or-later compatible). Vendor/fetch the way Clipper2 is handled; record in ADR 0033 and third-party notices.
+
+### T-0130 Text core (core/text: FreeType + HarfBuzz)   [status: ready — not started]
+Phase: 1   Module: core/text   Depends on: none   ADR: 0033 (new)
+Goal: `Font` loading (TTF/OTF from file/bytes, no system-font enumeration in core), HarfBuzz shaping, glyph outlines → `geometry::Contour` (lines + cubic Béziers; quadratics elevated exactly), `TextBlock` layout (size mm, alignment, line/letter spacing, kerning), text along a curve (contour arc-length path, per-glyph placement), deterministic output (same bytes → same contours across platforms: no system fonts, fixed hinting off, 26.6 → mm conversion in integers where possible). Own test font(s) must be redistributable (OFL) and small. Hostile inputs: corrupt fonts, huge sizes, huge strings, empty text, missing glyphs (.notdef), RTL/combining sequences — all bounded work, no crash, no UB (ASan/UBSan fuzz on font bytes).
+Criteria: (1) glyph outlines match an independent oracle (area/winding/bbox of known glyphs in the test font); (2) text on curve places glyph baselines tangent within tolerance; (3) work/size caps with refusal statuses; (4) clean MSVC + GCC/Clang builds, deterministic hashes on CI Linux and Windows; (5) licences recorded; mutation checks.
+Out of scope: single-line stroke fonts, the text tool UI (T-0211).
