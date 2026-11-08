@@ -2,6 +2,7 @@
 // round trip with embedded fonts, and the 1.1/1.2 format rules.
 
 #include <algorithm>
+#include <cstdio>
 #include <cmath>
 #include <fstream>
 #include <iterator>
@@ -533,4 +534,37 @@ TEST_CASE("embedded font caps", "[text][document]") {
     CHECK_FALSE(doc.insertFont(FontAsset{"0123456789abcdef", {2}}));  // key taken
     CHECK(fontKeyFor({}) == "cbf29ce484222325");                      // FNV-1a offset basis
     CHECK(fontKeyFor({'a'}) == "af63dc4c8601ec8c");                   // FNV-1a 64 of "a"
+}
+
+TEST_CASE("an embedded font whose bytes do not hash to its name is refused", "[text][document][carv]") {
+    Fixture f("I");
+    const Bytes bytes = saveOk(f.doc);
+    auto zip = detail::readZip(bytes);
+    REQUIRE(zip.ok);
+    for (auto& m : zip.members) {
+        if (m.name.rfind("fonts/", 0) == 0) {
+            m.data.back() ^= 0x01;
+        }
+    }
+    auto w = detail::writeZip(zip.members);
+    REQUIRE(w.ok);
+    auto r = loadCarv(std::span<const std::uint8_t>(w.bytes));
+    REQUIRE_FALSE(r.ok());
+    CHECK(r.error().code == CarvError::Code::InvalidContent);
+    CHECK(r.error().message.find("does not match") != std::string::npos);
+}
+
+TEST_CASE("fontProblem names the cap that is hit", "[text][document]") {
+    Document doc;
+    CHECK(doc.fontProblem(FontAsset{"0123456789abcdef", {1}}).empty());
+    FontAsset big{"0123456789abcdef", Bytes(kMaxEmbeddedFontBytes + 1, 1)};
+    CHECK(doc.fontProblem(big).find("MiB") != std::string::npos);
+    for (std::size_t i = 0; i < kMaxEmbeddedFonts; ++i) {
+        char key[17];
+        std::snprintf(key, sizeof key, "%016zx", i + 1);
+        REQUIRE(doc.insertFont(FontAsset{key, {1}}));
+    }
+    CHECK(doc.fontProblem(FontAsset{"ffffffffffffffff", {1}}).find("64") != std::string::npos);
+    CHECK(doc.fontProblem(FontAsset{"0000000000000001", {1}}).empty());   // same font, already there
+    CHECK_FALSE(doc.fontProblem(FontAsset{"0000000000000001", {2}}).empty());
 }

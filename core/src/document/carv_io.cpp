@@ -3150,6 +3150,10 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
                               "embedded font '" + it->first + "' is larger than " +
                                   std::to_string(kMaxEmbeddedFontBytes >> 20) + " MiB"};
         }
+        if (fontKeyFor(it->second) != key) {
+            throw LoadFailure{CarvError::Code::InvalidContent,
+                              "embedded font '" + it->first + "' does not match its name (damaged file?)"};
+        }
         if (!doc.insertFont(FontAsset{key, std::move(it->second)})) {
             throw LoadFailure{CarvError::Code::ResourceLimit,
                               "embedded font '" + it->first + "' exceeds the embedded font limits (" +

@@ -552,6 +552,10 @@ TextEditResult TextEditor::commit() {
     const document::ObjectId editing = draft_->editing;
     auto macro = std::make_unique<document::MacroCommand>(editing.isNull() ? "Add text" : "Edit text");
     if (doc_->findFont(fontKey_) == nullptr) {
+        const std::string why = doc_->fontProblem(document::FontAsset{fontKey_, fontBytes_});
+        if (!why.empty()) {
+            return refused("cannot embed the font: " + why);
+        }
         macro->add(std::make_unique<document::AddFontCommand>(document::FontAsset{fontKey_, fontBytes_}));
     }
     document::ObjectId resultId = editing;

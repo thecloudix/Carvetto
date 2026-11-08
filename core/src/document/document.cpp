@@ -703,6 +703,32 @@ const FontAsset* Document::findFont(const std::string& key) const {
     return it == fonts_.end() ? nullptr : &it->second;
 }
 
+std::string Document::fontProblem(const FontAsset& font) const {
+    if (!isFontKey(font.key) || font.bytes.empty()) {
+        return "the font is empty or has no valid key";
+    }
+    if (const auto it = fonts_.find(font.key); it != fonts_.end()) {
+        return it->second.bytes == font.bytes ? std::string{} : std::string("a different font has the same key");
+    }
+    if (font.bytes.size() > kMaxEmbeddedFontBytes) {
+        return "the font file is larger than " + std::to_string(kMaxEmbeddedFontBytes >> 20) +
+               " MiB, the most a document embeds";
+    }
+    if (fonts_.size() >= kMaxEmbeddedFonts) {
+        return "the document already embeds " + std::to_string(kMaxEmbeddedFonts) +
+               " fonts, the most it can hold";
+    }
+    std::size_t total = font.bytes.size();
+    for (const auto& [k, f] : fonts_) {
+        total += f.bytes.size();
+    }
+    if (total > kMaxEmbeddedFontsTotalBytes) {
+        return "the embedded fonts would exceed " + std::to_string(kMaxEmbeddedFontsTotalBytes >> 20) +
+               " MiB together";
+    }
+    return {};
+}
+
 bool Document::insertFont(FontAsset font) {
     if (!isFontKey(font.key) || font.bytes.empty() || font.bytes.size() > kMaxEmbeddedFontBytes ||
         fonts_.contains(font.key) || fonts_.size() >= kMaxEmbeddedFonts) {

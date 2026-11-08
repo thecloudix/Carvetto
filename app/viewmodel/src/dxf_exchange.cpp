@@ -67,9 +67,16 @@ double capHeightEm(const text::Font& font) {
     return 0.7;
 }
 
-/// Maps one DXF text item; nullopt when it cannot be laid out (reason in `why`).
+/// Maps one DXF text item; nullopt when it cannot be laid out (reason in `why`). `missing` is set
+/// when the font lacks glyphs for the text (it shows as .notdef boxes).
+///
+/// TEXT justification (DXF spec): with a non-default horizontal or vertical justification the
+/// anchor is the second alignment point (group 11) and group 10 is only the computed baseline start;
+/// Aligned and Fit run the baseline from group 10 to group 11 (Aligned scales the height with the
+/// width, Fit only stretches the width), fitted to the laid-out text's extent from its origin.
+/// The "upside down" generation flag is not parsed by the importer and is ignored.
 std::optional<ImportedText> mapDxfText(const io::DxfText& t, const text::Font& font, const std::string& key,
-                                       double capEm, std::string* why) {
+                                       double capEm, std::string* why, bool* missing) {
     if (!(t.height > 0.0) || !std::isfinite(t.height) || t.text.empty()) {
         *why = "empty text or no character height";
         return std::nullopt;
@@ -78,23 +85,29 @@ std::optional<ImportedText> mapDxfText(const io::DxfText& t, const text::Font& f
     p.text = t.text;
     p.fontKey = key;
     p.sizeMm = t.height / capEm;
+    const bool isText = t.kind != io::DxfTextKind::MText;
+    const bool stretched =
+        isText && t.alignmentPoint && (t.hAlign == io::DxfHAlign::Aligned || t.hAlign == io::DxfHAlign::Fit);
     switch (t.hAlign) {
         case io::DxfHAlign::Center:
         case io::DxfHAlign::Middle:
-        case io::DxfHAlign::Aligned:
             p.align = document::TextAlign::Centre;
             break;
         case io::DxfHAlign::Right:
             p.align = document::TextAlign::Right;
             break;
-        case io::DxfHAlign::Left:
+        case io::DxfHAlign::Aligned:
         case io::DxfHAlign::Fit:
+        case io::DxfHAlign::Left:
             p.align = document::TextAlign::Left;
             break;
     }
+    geometry::Vec2 anchor = t.insertion;
+    double rotation = t.rotation;
     double dx = 0.0;
     double dy = 0.0;
-    if (t.kind == io::DxfTextKind::MText && t.referenceWidth > 0.0) {
+    double stretchX = 1.0;
+    if (!isText && t.referenceWidth > 0.0) {
         // Text in a box: the box top is at the insertion height, the layout puts the first baseline
         // below it; the attachment column decides where the box sits horizontally.
         p.mode = document::TextMode::Box;
@@ -102,14 +115,43 @@ std::optional<ImportedText> mapDxfText(const io::DxfText& t, const text::Font& f
         dx = t.hAlign == io::DxfHAlign::Right    ? -t.referenceWidth
              : t.hAlign == io::DxfHAlign::Center ? -t.referenceWidth * 0.5
                                                  : 0.0;
-    } else if (t.vAlign == io::DxfVAlign::Top) {
-        dy = -t.height;
-    } else if (t.vAlign == io::DxfVAlign::Middle) {
-        dy = -t.height * 0.5;
+    } else {
+        if (isText && t.alignmentPoint && !stretched) {
+            anchor = *t.alignmentPoint;
+        }
+        if (t.vAlign == io::DxfVAlign::Top) {
+            dy = -t.height;
+        } else if (t.vAlign == io::DxfVAlign::Middle || t.hAlign == io::DxfHAlign::Middle) {
+            dy = -t.height * 0.5;
+        } else if (t.vAlign == io::DxfVAlign::Bottom) {
+            const double desc = static_cast<double>(font.metrics().descender) * p.sizeMm /
+                                static_cast<double>(font.metrics().unitsPerEm);
+            dy = -desc;  // lift the baseline so the descender touches the anchor
+        }
+        if (stretched) {
+            const double ex = t.alignmentPoint->x - t.insertion.x;
+            const double ey = t.alignmentPoint->y - t.insertion.y;
+            const double len = std::hypot(ex, ey);
+            if (len > 0.0) {
+                rotation = std::atan2(ey, ex);
+                const document::TextBuild pb = document::buildTextContours(font, p);
+                geometry::Box2 box;
+                for (const geometry::Contour& c : pb.contours) {
+                    box.expand(c.bounds());
+                }
+                if (pb.ok() && !box.isEmpty() && box.max.x > 0.0) {
+                    stretchX = len / (box.max.x * t.widthFactor);
+                    if (t.hAlign == io::DxfHAlign::Aligned) {
+                        p.sizeMm *= stretchX;
+                        stretchX = 1.0;
+                    }
+                }
+            }
+        }
     }
     const geometry::Transform2 scale =
-        geometry::Transform2::scaling(t.mirrored ? -t.widthFactor : t.widthFactor, 1.0);
-    p.placement = geometry::Transform2::translation(t.insertion) * geometry::Transform2::rotation(t.rotation) *
+        geometry::Transform2::scaling((t.mirrored ? -t.widthFactor : t.widthFactor) * stretchX, 1.0);
+    p.placement = geometry::Transform2::translation(anchor) * geometry::Transform2::rotation(rotation) *
                   geometry::Transform2::translation({dx, dy}) * scale;
     document::TextBuild b = document::buildTextContours(font, p);
     if (!b.ok()) {
@@ -120,6 +162,7 @@ std::optional<ImportedText> mapDxfText(const io::DxfText& t, const text::Font& f
         *why = "the font has no outlines for this text";
         return std::nullopt;
     }
+    *missing = b.missingGlyphs;
     ImportedText out;
     out.params = std::move(p);
     out.contours = std::move(b.contours);
@@ -164,17 +207,30 @@ DxfImportOutcome importDxfIntoDocument(document::Document& doc, std::span<const 
             fontAsset.key = document::fontKeyFor(fontCopy);
             fontAsset.bytes = std::move(fontCopy);
             text::FontLoad loaded = text::Font::load(fontAsset.bytes);
-            if (loaded.ok() && fontAsset.bytes.size() <= document::kMaxEmbeddedFontBytes) {
+            const std::string embedProblem = doc.fontProblem(fontAsset);
+            if (loaded.ok() && !embedProblem.empty()) {
+                out.textSkipped = dxf.texts.size();
+                out.warnings.push_back(std::to_string(out.textSkipped) +
+                                       " text item(s) skipped: cannot embed the font: " + embedProblem);
+            } else if (loaded.ok()) {
                 const double capEm = capHeightEm(loaded.font);
                 std::string firstWhy;
+                std::size_t notdef = 0;
                 for (const io::DxfText& t : dxf.texts) {
                     std::string why;
-                    if (auto mapped = mapDxfText(t, loaded.font, fontAsset.key, capEm, &why)) {
+                    bool missing = false;
+                    if (auto mapped = mapDxfText(t, loaded.font, fontAsset.key, capEm, &why, &missing)) {
+                        notdef += missing ? 1U : 0U;
                         mapped->layer = t.layer;
                         texts.push_back(std::move(*mapped));
                     } else if (firstWhy.empty()) {
                         firstWhy = why;
                     }
+                }
+                if (notdef > 0) {
+                    out.warnings.push_back(std::to_string(notdef) +
+                                           " text item(s) use characters the font has no glyph for (drawn as "
+                                           "boxes); choose a font with full coverage in the Text tool");
                 }
                 out.textSkipped = dxf.texts.size() - texts.size();
                 if (out.textSkipped > 0) {

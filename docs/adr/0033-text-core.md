@@ -154,7 +154,8 @@ with no new code path: a toolpath selects the glyph contours like any other vect
   object it came from (informational). A snapshot, not a live link, because live links need
   dependency tracking and dangling-reference rules for deleted or edited guides; moving the guide
   does not move the text, and the editor re-picks a guide to refit. Text on a curve runs along the
-  guide in its own direction; "reverse guide" flips it.
+  guide in its own direction; "reverse guide" flips it. On a closed guide the text wraps around and
+  very long text may overlap itself (no stop at one full turn).
 - **Convert to curves** (`ConvertTextToCurvesCommand`) sets the parameters to `NoParams` and keeps
   the contours; one undo step for the whole selection, restored exactly by undo.
 - Limits: text at most 256 KiB, parameters finite and in range (`textParamsProblem`), the layout
@@ -166,7 +167,9 @@ Font bytes are **embedded in the `.carv`** as members `fonts/<key>.font`, where 
 FNV-1a 64 hash of the bytes as 16 hex digits, so the same font is stored once and files are portable:
 no system font is ever referenced and the file looks the same on every machine. (FNV-1a is a key, not
 a security measure: `Document::insertFont` refuses a different font under a taken key, and the loader
-treats the key as a name only.) Caps: 8 MiB per font, 32 MiB and 64 fonts per document; the loader and
+recomputes the hash of every font member and refuses a file whose bytes do not match their name.)
+Commands that embed a font check `Document::fontProblem` first: the Text tool and the DXF import refuse
+(with a message naming the cap) instead of adding a text object without its font. Caps: 8 MiB per font, 32 MiB and 64 fonts per document; the loader and
 the saver refuse more (`ResourceLimit`). Only fonts a text object uses are written (unused ones are
 dropped at save); the user has no font-licence prompt, so **embedding is the user's decision to make
 for fonts they pick**; the bundled starter font is OFL. Fonts are parsed by `core/text` only when
@@ -202,3 +205,9 @@ font's cap height; rotation, width factor and mirroring go into `placement`; lef
 justification becomes the alignment; top/middle vertical attachment moves the first baseline; an
 MTEXT reference width makes text in a box. DXF font names are never resolved. Without a usable font
 the text is skipped with a warning, as before.
+
+DXF justification follows the specification: for a justified TEXT the second alignment point (group 11)
+is the anchor; Aligned/Fit run the baseline from group 10 to group 11 (Aligned scales the height too,
+Fit only the width); Bottom attachment lifts the baseline by the descender. The upside-down generation
+flag is not read by the importer and is ignored. Text drawn with `.notdef` boxes because the font lacks
+glyphs produces an import warning.

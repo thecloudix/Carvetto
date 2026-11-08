@@ -5,6 +5,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <cmath>
+#include <cstdio>
 #include <fstream>
 #include <iterator>
 #include <memory>
@@ -478,4 +479,68 @@ TEST_CASE("a text made with the tool survives save and load and lays out the sam
     REQUIRE(tool.textEditor().beginEditSelected().ok);
     CHECK(tool.textEditor().hasFont());
     CHECK(tool.textEditor().previewContours() == f.onlyVector()->contours);
+}
+
+TEST_CASE("a full font table refuses the commit with a message and changes nothing", "[text][tool][caps]") {
+    SECTION("font count cap") {
+        Fixture f;
+        for (std::size_t i = 0; i < kMaxEmbeddedFonts; ++i) {
+            char key[17];
+            std::snprintf(key, sizeof key, "%016zx", i + 1);
+            REQUIRE(f.doc.insertFont(FontAsset{key, {1}}));
+        }
+        f.click({10.0, 10.0});
+        f.tool.textEditor().insertText("TOI");
+        const std::size_t steps = f.doc.undoStack().count();
+        const ToolResult r = f.tool.key(ToolKey::Enter);
+        CHECK_FALSE(r.committed);
+        CHECK(r.message.find("64") != std::string::npos);
+        CHECK(f.doc.objectCount() == 0);
+        CHECK(f.doc.undoStack().count() == steps);
+        CHECK(f.doc.checkIntegrity().empty());
+        CHECK(f.tool.textEditor().hasDraft());  // kept
+    }
+    SECTION("total size cap") {
+        Fixture f;
+        const std::size_t chunk = kMaxEmbeddedFontBytes;
+        for (std::size_t i = 0; i < 4; ++i) {
+            char key[17];
+            std::snprintf(key, sizeof key, "%016zx", i + 1);
+            REQUIRE(f.doc.insertFont(FontAsset{key, std::vector<std::uint8_t>(chunk, 1)}));
+        }
+        f.click({10.0, 10.0});
+        f.tool.textEditor().insertText("I");
+        const ToolResult r = f.tool.key(ToolKey::Enter);
+        CHECK_FALSE(r.committed);
+        CHECK(r.message.find("MiB") != std::string::npos);
+        CHECK(f.doc.objectCount() == 0);
+    }
+    SECTION("an already embedded font is fine at the cap") {
+        Fixture f;
+        f.click({10.0, 10.0});
+        f.tool.textEditor().insertText("I");
+        REQUIRE(f.tool.key(ToolKey::Enter).committed);
+        for (std::size_t i = 1; i < kMaxEmbeddedFonts; ++i) {
+            char key[17];
+            std::snprintf(key, sizeof key, "%016zx", i + 1);
+            REQUIRE(f.doc.insertFont(FontAsset{key, {1}}));
+        }
+        f.click({50.0, 50.0});
+        f.tool.textEditor().insertText("T");
+        CHECK(f.tool.key(ToolKey::Enter).committed);
+        CHECK(f.doc.objectCount() == 2);
+    }
+}
+
+TEST_CASE("characters outside the BMP are typed and deleted whole", "[text][tool]") {
+    Fixture f;
+    f.click({10.0, 10.0});
+    auto& ed = f.tool.textEditor();
+    ed.insertText("I\xF0\x9F\x98\x80\xF0\xA0\x80\x80");  // emoji, CJK Ext-B
+    CHECK(ed.draftParams()->text.size() == 9);
+    CHECK(ed.previewMessage().empty());
+    f.tool.key(ToolKey::Backspace);
+    CHECK(ed.draftParams()->text == "I\xF0\x9F\x98\x80");
+    f.tool.key(ToolKey::Backspace);
+    CHECK(ed.draftParams()->text == "I");
 }

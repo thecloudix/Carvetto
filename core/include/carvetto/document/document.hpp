@@ -199,6 +199,9 @@ class Document {
     /// Raw: stores `font` unless its key is taken, malformed, or a cap would be exceeded.
     /// Returns false (nothing changed) in those cases.
     bool insertFont(FontAsset font);
+    /// Empty when `font` is embedded already (same bytes) or `insertFont` would accept it; otherwise
+    /// the reason, naming the cap that is hit (for user messages).
+    std::string fontProblem(const FontAsset& font) const;
     /// Raw: removes a font. Nullopt when absent.
     std::optional<FontAsset> takeFont(const std::string& key);
 

@@ -470,7 +470,7 @@ void CanvasWidget::keyPressEvent(QKeyEvent* event) {
             // Enter is a new line; Ctrl+Enter places the text.
             textResult = (event->modifiers() & Qt::ControlModifier) ? tools_.key(viewmodel::ToolKey::Enter)
                                                                     : tools_.typeText("\n");
-        } else if (!command && !event->text().isEmpty() && event->text().at(0).isPrint()) {
+        } else if (!command && !event->text().isEmpty() && QChar::isPrint(event->text().toUcs4().front())) {
             textResult = tools_.typeText(event->text().toUtf8().toStdString());
         } else {
             handled = false;
