@@ -29,7 +29,12 @@
 #include <windows.h>
 #else
 #include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/syscall.h>
 #include <unistd.h>
+#ifdef __APPLE__
+#include <stdio.h>
+#endif
 #endif
 
 #include "carvetto/viewmodel/file_session.hpp"
@@ -521,6 +526,40 @@ SaveSource makeSaveSource(const document::Document& doc, const std::vector<docum
     return src;
 }
 
+SaveSource makeSaveSource(ToolpathSession& session) {
+    SaveSource src;
+    const document::Document* doc = session.document();
+    if (doc == nullptr) {
+        return src;
+    }
+    src.job = doc->job();
+    std::set<document::ToolpathId> stale;
+    std::set<document::ToolpathId> enabled;
+    for (const ToolpathListItem& item : session.list()) {
+        if (!item.enabled) {
+            continue;
+        }
+        enabled.insert(item.id);
+        if (item.status == ToolpathStatus::NeedsRecalculation) {
+            stale.insert(item.id);
+        }
+    }
+    for (const document::ToolpathRecord& r : doc->toolpaths()) {
+        if (enabled.count(r.id) == 0) {
+            continue;
+        }
+        if (!r.hasMoves()) {
+            src.notComputed.push_back(r.name);
+            continue;
+        }
+        if (stale.count(r.id) != 0) {
+            src.stale.push_back(r.name);
+        }
+        src.records.push_back(r);
+    }
+    return src;
+}
+
 SaveJob prepareSave(const document::Document& doc, const std::vector<document::ToolpathId>& ids, const PostInfo& post,
                     const SaveOptions& options) {
     return prepareSave(makeSaveSource(doc, ids), post, options);
@@ -531,6 +570,7 @@ SaveJob prepareSave(const SaveSource& source, const PostInfo& post, const SaveOp
     job.job = source.job;
     job.records = source.records;
     job.notComputed = source.notComputed;
+    job.stale = source.stale;
     job.post = post;
     job.options = options;
     if (!post.usable()) {
@@ -604,6 +644,15 @@ SaveOutput generateOutputImpl(const SaveJob& job, const std::atomic<bool>* cance
     }
     for (const std::string& name : job.notComputed) {
         out.warnings.push_back("toolpath '" + name + "' has not been calculated and is left out");
+    }
+    if (!job.stale.empty()) {
+        std::string names;
+        for (const std::string& n : job.stale) {
+            names += (names.empty() ? "'" : ", '") + n + "'";
+        }
+        out.stale = job.stale;
+        out.warnings.push_back(std::to_string(job.stale.size()) + " toolpath(s) are out of date and are posted from their old moves: " +
+                               names + " (recalculate them first)");
     }
 
     const std::string tmpl = job.options.nameTemplate.empty() ? defaultNameTemplate(job.options.mode)
@@ -739,7 +788,29 @@ bool occupied(const fs::path& p) {
     return !ec && st.type() != fs::file_type::not_found;
 }
 
+/// Test seams (see detail::setTestSeams).
+struct Seams {
+    std::atomic<int> linkErrno{0};       ///< POSIX: the link() step fails with this errno
+    std::atomic<int> noRenameNoReplace{0};  ///< POSIX: the no-replace rename is "unsupported"
+    std::atomic<int> failStageAfter{-1};  ///< staging the file with this index fails
+    std::mutex mutex;
+    std::vector<std::string> randomNames;  ///< returned (front first) instead of random names
+};
+
+Seams& seams() {
+    static Seams s;
+    return s;
+}
+
 std::string randomHex() {
+    {
+        const std::lock_guard<std::mutex> lock(seams().mutex);
+        if (!seams().randomNames.empty()) {
+            std::string forced = seams().randomNames.front();
+            seams().randomNames.erase(seams().randomNames.begin());
+            return forced;
+        }
+    }
     static std::atomic<std::uint64_t> counter{0};
     std::random_device rd;
     std::uint64_t v =
@@ -777,6 +848,7 @@ bool createExclusive(const fs::path& path, const std::string& data, std::string&
     CloseHandle(h);
     if (!ok) {
         err = "cannot write";
+        DeleteFileW(path.wstring().c_str());  // the file is ours: created just now with CREATE_NEW
     }
     return ok;
 }
@@ -834,7 +906,40 @@ bool createExclusive(const fs::path& path, const std::string& data, std::string&
         err = std::strerror(errno);
         ok = false;
     }
+    if (!ok) {
+        ::unlink(path.c_str());  // the file is ours: created just now with O_EXCL
+    }
     return ok;
+}
+
+/// Moves `staged` to `target` only when nothing is at `target`, without hard links:
+/// renameat2(RENAME_NOREPLACE) on Linux, renamex_np(RENAME_EXCL) on macOS. Returns 0 on success,
+/// otherwise errno (ENOSYS/ENOTSUP/EINVAL: the system or file system cannot do it).
+int renameNoReplace(const fs::path& staged, const fs::path& target) {
+    if (seams().noRenameNoReplace.load() != 0) {
+        return ENOSYS;
+    }
+#if defined(__linux__) && defined(SYS_renameat2)
+    constexpr unsigned int kNoReplace = 1;  // RENAME_NOREPLACE
+    if (::syscall(SYS_renameat2, AT_FDCWD, staged.c_str(), AT_FDCWD, target.c_str(), kNoReplace) == 0) {
+        return 0;
+    }
+    return errno;
+#elif defined(__APPLE__)
+    if (::renamex_np(staged.c_str(), target.c_str(), RENAME_EXCL) == 0) {
+        return 0;
+    }
+    return errno;
+#else
+    (void)staged;
+    (void)target;
+    return ENOSYS;
+#endif
+}
+
+bool linkUnsupported(int code) {
+    return code == EPERM || code == ENOTSUP || code == EOPNOTSUPP || code == ENOSYS || code == EXDEV ||
+           code == EMLINK;
 }
 
 Commit commitFile(const fs::path& staged, const fs::path& target, bool overwrite, std::string& err) {
@@ -846,15 +951,51 @@ Commit commitFile(const fs::path& staged, const fs::path& target, bool overwrite
         }
         return Commit::Ok;
     }
-    // link() fails when anything (a dangling symlink too) is at the target: no replace, no race.
-    if (::link(staged.c_str(), target.c_str()) != 0) {
-        if (errno == EEXIST) {
-            return Commit::Exists;
-        }
+    // 1. link() fails when anything (a dangling symlink too) is at the target: no replace, no race.
+    int code = 0;
+    if (seams().linkErrno.load() != 0) {
+        code = seams().linkErrno.load();
+    } else if (::link(staged.c_str(), target.c_str()) != 0) {
+        code = errno;
+    }
+    if (code == 0) {
+        ::unlink(staged.c_str());
+        return Commit::Ok;
+    }
+    if (code == EEXIST) {
+        return Commit::Exists;
+    }
+    if (!linkUnsupported(code)) {
+        err = std::strerror(code);
+        return Commit::Failed;
+    }
+    // 2. No hard links here (FAT, exFAT, some network and FUSE file systems): an atomic no-replace rename.
+    code = renameNoReplace(staged, target);
+    if (code == 0) {
+        return Commit::Ok;
+    }
+    if (code == EEXIST) {
+        return Commit::Exists;
+    }
+    if (code != ENOSYS && code != ENOTSUP && code != EOPNOTSUPP && code != EINVAL && code != EPERM) {
+        err = std::strerror(code);
+        return Commit::Failed;
+    }
+    // 3. Last resort: look at the target (lstat: a symlink, dangling or not, counts as present) right
+    // before rename(). A file created between the lstat and the rename can still be replaced; that
+    // window is a few microseconds and only exists on file systems without a no-replace primitive.
+    struct stat st {};
+    if (::lstat(target.c_str(), &st) == 0) {
+        return Commit::Exists;
+    }
+    if (errno != ENOENT) {
         err = std::strerror(errno);
         return Commit::Failed;
     }
-    ::unlink(staged.c_str());
+    if (::rename(staged.c_str(), target.c_str()) != 0) {
+        err = std::strerror(errno);
+        return Commit::Failed;
+    }
     return Commit::Ok;
 }
 
@@ -871,6 +1012,14 @@ namespace detail {
 void setCommitHook(std::function<void(const std::vector<std::filesystem::path>&)> hook) {
     const std::lock_guard<std::mutex> lock(hookMutex());
     commitHook() = std::move(hook);
+}
+
+void setTestSeams(int linkErrno, bool noRenameNoReplace, int failStageAfter, std::vector<std::string> randomNames) {
+    seams().linkErrno = linkErrno;
+    seams().noRenameNoReplace = noRenameNoReplace ? 1 : 0;
+    seams().failStageAfter = failStageAfter;
+    const std::lock_guard<std::mutex> lock(seams().mutex);
+    seams().randomNames = std::move(randomNames);
 }
 }  // namespace detail
 
@@ -911,10 +1060,16 @@ static WriteResult writeOutputImpl(const SaveOutput& output, bool overwrite) {
             removeQuietly(staged[i]);
         }
     };
-    for (const OutputFile& f : output.files) {
+    for (std::size_t fileIndex = 0; fileIndex < output.files.size(); ++fileIndex) {
+        const OutputFile& f = output.files[fileIndex];
         bool created = false;
         std::string err;
         fs::path tmp;
+        if (seams().failStageAfter.load() >= 0 && static_cast<std::size_t>(seams().failStageAfter.load()) == fileIndex) {
+            res.error = "cannot write '" + pathToUtf8(f.path) + "': injected failure";
+            cleanup(0);
+            return res;
+        }
         for (int attempt = 0; attempt < 20 && !created; ++attempt) {
             tmp = f.path.parent_path() /
                   pathFromUtf8("." + pathToUtf8(f.path.filename()) + "." + randomHex() + ".carvetto-tmp");
@@ -926,7 +1081,6 @@ static WriteResult writeOutputImpl(const SaveOutput& output, bool overwrite) {
         }
         if (!created) {
             res.error = "cannot write '" + pathToUtf8(f.path) + "': " + err;
-            removeQuietly(tmp);
             cleanup(0);
             return res;
         }

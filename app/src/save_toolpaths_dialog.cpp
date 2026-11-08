@@ -76,8 +76,13 @@ fs::path userPostsDir() {
 SaveToolpathsDialog::SaveToolpathsDialog(const document::Document& doc, const std::vector<document::ToolpathId>& ids,
                                          const std::string& jobName, const std::vector<tooling::Machine>& machines,
                                          const fs::path& startFolder, QWidget* parent)
+    : SaveToolpathsDialog(viewmodel::makeSaveSource(doc, ids), jobName, machines, startFolder, parent) {}
+
+SaveToolpathsDialog::SaveToolpathsDialog(viewmodel::SaveSource source, const std::string& jobName,
+                                         const std::vector<tooling::Machine>& machines, const fs::path& startFolder,
+                                         QWidget* parent)
     : QDialog(parent),
-      source_(viewmodel::makeSaveSource(doc, ids)),
+      source_(std::move(source)),
       jobName_(jobName),
       machines_(machines),
       posts_(viewmodel::discoverPosts(shippedPostsDir(), userPostsDir())),
@@ -136,6 +141,12 @@ SaveToolpathsDialog::SaveToolpathsDialog(const document::Document& doc, const st
     overwrite_ = new QCheckBox(QStringLiteral("Replace existing files"), this);
     overwrite_->setObjectName(QStringLiteral("saveOverwrite"));
     layout->addWidget(overwrite_);
+
+    acceptStale_ = new QCheckBox(QStringLiteral("Post the out-of-date toolpaths from their old moves anyway"), this);
+    acceptStale_->setObjectName(QStringLiteral("saveAcceptStale"));
+    acceptStale_->setVisible(!source_.stale.empty());
+    layout->addWidget(acceptStale_);
+    connect(acceptStale_, &QCheckBox::toggled, this, [this](bool) { showState(); });
 
     summary_ = new QLabel(this);
     summary_->setObjectName(QStringLiteral("saveSummary"));
@@ -391,7 +402,8 @@ void SaveToolpathsDialog::setBusy(bool busy) {
 }
 
 bool SaveToolpathsDialog::canSave() const {
-    return !running_ && outputFresh_ && output_.ok && !output_.files.empty();
+    const bool staleOk = source_.stale.empty() || acceptStale_->isChecked();
+    return !running_ && outputFresh_ && output_.ok && !output_.files.empty() && staleOk;
 }
 
 void SaveToolpathsDialog::showState() {
@@ -416,6 +428,9 @@ void SaveToolpathsDialog::showState() {
         previewText = qs(viewmodel::previewText(output_, 40));
         for (const std::string& w : output_.warnings) {
             message += QStringLiteral("Warning: ") + qs(w) + QLatin1Char('\n');
+        }
+        if (!output_.stale.empty() && !acceptStale_->isChecked()) {
+            message += QStringLiteral("Tick the box above to post the out-of-date toolpaths, or recalculate them first.\n");
         }
         bool exists = false;
         for (const viewmodel::OutputFile& f : output_.files) {
@@ -458,6 +473,14 @@ void SaveToolpathsDialog::setOutputMode(viewmodel::OutputMode mode) {
 
 void SaveToolpathsDialog::setNameTemplate(const std::string& tmpl) {
     template_->setText(qs(tmpl));
+}
+
+void SaveToolpathsDialog::setAcceptStale(bool accept) {
+    acceptStale_->setChecked(accept);
+}
+
+bool SaveToolpathsDialog::staleBoxShown() const {
+    return !acceptStale_->isHidden();
 }
 
 void SaveToolpathsDialog::setOverwrite(bool overwrite) {

@@ -1,6 +1,6 @@
 # ADR-0034: Save Toolpaths (post selection, output files, threading)
 
-Date: 2026-11-08 · Status: proposed (T-0224). (The card named ADR 0033, which T-0130 took for the text core.)
+Date: 2026-11-08 · Status: accepted, implemented (T-0224). (The card named ADR 0033, which T-0130 took for the text core.)
 
 ## Context
 The core posts toolpaths (ADR-0004, ADR-0011) and `carvetto-cli post` writes one file. The app needs a
@@ -39,10 +39,8 @@ errors, without a second code path that could drift from the CLI.
    `Document` reference across the asynchronous gap.
 
 ## Consequences
-Superseded by the wiring note in the amendment below.
-toolpath of the document, and the machine list is empty until the window is given machines
-(`MainWindow::setMachines`). T-0221 should pass `ToolpathSession::enabledToolpaths()` as the ids and the
-database's machines.
+The dialog posts the session's enabled toolpaths and offers the tool database's machines (see the
+amendments below); out-of-date toolpaths are posted only after an explicit tick.
 
 ## Amendment (verifier round 1)
 - **File safety.** A staged file gets a random name (`.<target>.<16 hex>.carvetto-tmp`) in the target's
@@ -61,3 +59,18 @@ database's machines.
   a post already running (milliseconds to seconds for large jobs) before the dialog goes away.
   Typing in the folder or name field re-posts only 300 ms after the last keystroke.
 - **Wiring (T-0221 on main).** `MainWindow::saveToolpathsDialog` passes `ToolpathSession::enabledToolpaths()` (an empty list shows a message instead of meaning "all") and the tool database's machines. A disabled toolpath is not in the output (viewmodel test and self-test).
+
+## Amendment (verifier round 2)
+- **No hard links.** On file systems without hard links (FAT32, exFAT, some network and FUSE mounts)
+  `link()` fails with EPERM and friends. The no-replace commit then falls back, in order, to
+  `renameat2(RENAME_NOREPLACE)` (Linux) or `renamex_np(RENAME_EXCL)` (macOS), both atomic, and as a last
+  resort to an `lstat()` of the target (a symlink, dangling or not, counts as present) immediately before
+  `rename()`. Only that last step has a residual race (a file created in the microseconds between the two
+  calls could be replaced); it is used only where neither primitive exists. The staged file is always in
+  the target's folder, so every step stays on one file system. Other `link()` errors are reported.
+- **Out-of-date toolpaths.** `makeSaveSource(session)` posts enabled toolpaths with moves, lists enabled
+  ones without moves as "not calculated" (left out, warned) and ones whose status is "needs
+  recalculation" as stale. Stale ones produce a warning naming them, and the dialog keeps Save disabled
+  until the user ticks "post the out-of-date toolpaths from their old moves anyway".
+- Test seams (`detail::setTestSeams`) force the link failure, the missing no-replace rename, a staging
+  failure and fixed temporary names.

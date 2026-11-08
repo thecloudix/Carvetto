@@ -792,7 +792,22 @@ int runSelfTest() {
         for (const auto& entry : tpSession.toolDatabase().machines()) {
             machines.push_back(entry.second);
         }
-        SaveToolpathsDialog dialog(cur, ids, "job", machines, outPath);
+        {  // Out-of-date toolpaths need an explicit tick before Save.
+            viewmodel::SaveSource src = viewmodel::makeSaveSource(tpSession);
+            src.stale.push_back("Outline");
+            SaveToolpathsDialog gated(std::move(src), "job", machines, outPath);
+            if (!gated.waitIdle() || !gated.output().ok || !gated.staleBoxShown() || gated.canSave() ||
+                gated.output().stale.size() != 1 || gated.messageShown().find("out of date") == std::string::npos) {
+                return fail("out-of-date toolpaths did not block Save until confirmed");
+            }
+            gated.setAcceptStale(true);
+            if (!gated.canSave()) {
+                return fail("confirming the out-of-date toolpaths did not enable Save");
+            }
+        }
+        viewmodel::SaveSource source = viewmodel::makeSaveSource(tpSession);
+        SaveToolpathsDialog dialog(std::move(source), "job", machines, outPath);
+        dialog.setAcceptStale(true);  // the records were added without a calculation: the session may call them stale
         dialog.show();
         if (!dialog.waitIdle() || dialog.postCount() < 3 || !dialog.output().ok) {
             return fail("the Save Toolpaths dialog did not generate: " + dialog.output().error);

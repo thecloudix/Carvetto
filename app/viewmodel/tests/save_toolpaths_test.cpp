@@ -5,6 +5,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <atomic>
+#include <cerrno>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -496,6 +497,204 @@ TEST_CASE("only the session's enabled toolpaths are posted", "[save]") {
     }
     CHECK(out.files[0].text.find("(" + disabledName + ")") == std::string::npos);
     CHECK(out.toolChanges == 0);  // the 6 mm pocket between the two profiles is gone
+}
+
+TEST_CASE("stale and uncalculated enabled toolpaths are reported from the session", "[save]") {
+    Fixture f;
+    const auto posts = shipped();
+    {
+        const SaveSource clean = makeSaveSource(f.session);
+        CHECK(clean.records.size() == 3);
+        CHECK(clean.stale.empty());
+        CHECK(clean.notComputed.empty());
+    }
+    addVector(f.doc, square(100, 100, 20));  // the vectors the toolpaths machine changed: all are stale now
+    f.session.invalidate();
+    document::ToolpathRecord pending;
+    pending.name = "Pending";
+    REQUIRE(f.doc.execute(std::make_unique<document::AddToolpathCommand>(pending)));
+    const SaveSource src = makeSaveSource(f.session);
+    REQUIRE(src.records.size() == 3);
+    CHECK(src.stale.size() == 3);
+    REQUIRE(src.notComputed.size() == 1);
+    CHECK(src.notComputed[0] == "Pending");
+
+    SaveOptions o;
+    o.directory = workDir("stale");
+    const SaveOutput out = generateOutput(prepareSave(src, postNamed(posts, "grbl_mm.pp"), o));
+    REQUIRE(out.ok);
+    CHECK(out.stale.size() == 3);
+    bool staleWarning = false;
+    bool pendingWarning = false;
+    for (const std::string& w : out.warnings) {
+        staleWarning = staleWarning || (w.find("3 toolpath(s) are out of date") != std::string::npos &&
+                                        w.find("old moves") != std::string::npos);
+        pendingWarning = pendingWarning || w.find("'Pending' has not been calculated") != std::string::npos;
+    }
+    CHECK(staleWarning);
+    CHECK(pendingWarning);
+
+    // A disabled stale toolpath is neither posted nor reported.
+    REQUIRE(f.session.setEnabled(f.ids[0], false));
+    CHECK(makeSaveSource(f.session).stale.size() == 2);
+}
+
+TEST_CASE("the commit falls back when hard links are not available", "[save][safety]") {
+#ifdef _WIN32
+    SKIP("POSIX commit steps");
+#else
+    const fs::path dir = workDir("nolink");
+    struct Reset {
+        ~Reset() { detail::setTestSeams(); }
+    } reset;
+
+    // 1. link() says EPERM (FAT, exFAT): a normal no-overwrite save still works, via the no-replace rename.
+    detail::setTestSeams(EPERM);
+    WriteResult w = writeOutput(oneFile(dir / "a.nc", "A"), false);
+    INFO(w.error);
+    REQUIRE(w.ok);
+    CHECK(readTextFile(pathToUtf8(dir / "a.nc")) == "A");
+    CHECK(tempFiles(dir).empty());
+
+    // ... and still refuses to replace what is there.
+    w = writeOutput(oneFile(dir / "a.nc", "B"), false);
+    CHECK_FALSE(w.ok);
+    CHECK(readTextFile(pathToUtf8(dir / "a.nc")) == "A");
+    CHECK(tempFiles(dir).empty());
+
+    // 2. Also without the no-replace rename (lstat + rename).
+    for (int errnoValue : {EPERM, ENOTSUP, ENOSYS, EXDEV}) {
+        detail::setTestSeams(errnoValue, true);
+        const std::string name = "b" + std::to_string(errnoValue) + ".nc";
+        w = writeOutput(oneFile(dir / name, "B"), false);
+        INFO(errnoValue << ": " << w.error);
+        REQUIRE(w.ok);
+        CHECK(readTextFile(pathToUtf8(dir / name)) == "B");
+        w = writeOutput(oneFile(dir / name, "C"), false);
+        CHECK_FALSE(w.ok);
+        CHECK(readTextFile(pathToUtf8(dir / name)) == "B");
+    }
+    CHECK(tempFiles(dir).empty());
+
+    // 3. Symlinks, also dangling, are refused in every variant and never followed.
+    const fs::path victim = dir / "victim.txt";
+    { std::ofstream(victim) << "precious"; }
+    std::error_code ec;
+    fs::create_symlink(victim, dir / "link.nc", ec);
+    std::error_code ec2;
+    fs::create_symlink(dir / "nowhere", dir / "dangling.nc", ec2);
+    REQUIRE_FALSE(ec);
+    REQUIRE_FALSE(ec2);
+    for (bool noRename : {false, true}) {
+        detail::setTestSeams(EPERM, noRename);
+        CHECK_FALSE(writeOutput(oneFile(dir / "link.nc", "x"), false).ok);
+        CHECK_FALSE(writeOutput(oneFile(dir / "dangling.nc", "x"), false).ok);
+        CHECK(readTextFile(pathToUtf8(victim)) == "precious");
+        CHECK_FALSE(fs::exists(dir / "nowhere"));
+        CHECK(tempFiles(dir).empty());
+    }
+
+    // 4. A file created between the check and the commit is not replaced (renameat2 path), and the
+    // files this call already created are taken away again.
+    detail::setTestSeams(EPERM);
+    SaveOutput two = oneFile(dir / "first.nc", "1");
+    OutputFile second;
+    second.path = dir / "second.nc";
+    second.text = "2";
+    two.files.push_back(second);
+    detail::setCommitHook([&](const std::vector<fs::path>&) { std::ofstream(dir / "second.nc") << "someone else"; });
+    w = writeOutput(two, false);
+    detail::setCommitHook({});
+    CHECK_FALSE(w.ok);
+    CHECK(w.error.find("exists already") != std::string::npos);
+    CHECK(readTextFile(pathToUtf8(dir / "second.nc")) == "someone else");
+    CHECK_FALSE(fs::exists(dir / "first.nc"));
+    CHECK(tempFiles(dir).empty());
+
+    // 5. Same with the lstat fallback (the file is there when it looks).
+    fs::remove(dir / "second.nc");
+    detail::setTestSeams(EPERM, true);
+    detail::setCommitHook([&](const std::vector<fs::path>&) { std::ofstream(dir / "second.nc") << "someone else"; });
+    w = writeOutput(two, false);
+    detail::setCommitHook({});
+    CHECK_FALSE(w.ok);
+    CHECK(readTextFile(pathToUtf8(dir / "second.nc")) == "someone else");
+    CHECK_FALSE(fs::exists(dir / "first.nc"));
+    CHECK(tempFiles(dir).empty());
+
+    // 6. With overwrite the fallback is not involved and "already replaced" is still reported.
+    detail::setTestSeams(EPERM, true);
+    fs::create_directories(dir / "dir.nc" / "inner");
+    SaveOutput mixed = oneFile(dir / "ok.nc", "ok");
+    OutputFile blocked;
+    blocked.path = dir / "dir.nc";
+    blocked.text = "x";
+    mixed.files.push_back(blocked);
+    w = writeOutput(mixed, true);
+    CHECK_FALSE(w.ok);
+    CHECK(w.error.find("already replaced: 'ok.nc'") != std::string::npos);
+    CHECK(tempFiles(dir).empty());
+#endif
+}
+
+TEST_CASE("staging: a collision on the temporary name is retried; a later failure removes earlier files", "[save][safety]") {
+    const fs::path dir = workDir("staging");
+    struct Reset {
+        ~Reset() { detail::setTestSeams(); }
+    } reset;
+
+    // O_EXCL retry: the first random name is already taken by someone else's file.
+    const std::string taken = ".x.nc.0123456789abcdef.carvetto-tmp";
+    { std::ofstream(dir / taken) << "foreign"; }
+    detail::setTestSeams(0, false, -1, {"0123456789abcdef", "fedcba9876543210"});
+    WriteResult w = writeOutput(oneFile(dir / "x.nc", "X"), false);
+    REQUIRE(w.ok);
+    CHECK(readTextFile(pathToUtf8(dir / "x.nc")) == "X");
+    CHECK(readTextFile(pathToUtf8(dir / taken)) == "foreign");  // untouched, not removed
+
+    // The second of three files cannot be staged: the first temporary file is removed, nothing is written.
+    fs::remove(dir / taken);
+    SaveOutput three = oneFile(dir / "t1.nc", "1");
+    for (const char* name : {"t2.nc", "t3.nc"}) {
+        OutputFile of;
+        of.path = dir / name;
+        of.text = name;
+        three.files.push_back(of);
+    }
+    detail::setTestSeams(0, false, 1);
+    w = writeOutput(three, false);
+    CHECK_FALSE(w.ok);
+    CHECK(w.error.find("injected failure") != std::string::npos);
+    CHECK(tempFiles(dir).empty());
+    CHECK_FALSE(fs::exists(dir / "t1.nc"));
+    CHECK_FALSE(fs::exists(dir / "t2.nc"));
+}
+
+TEST_CASE("a non-ASCII output folder works end to end", "[save]") {
+    Fixture f;
+    const fs::path base = workDir("unicode");
+    const fs::path dir = base / pathFromUtf8("\xC3\xA9t\xC3\xA9 \xD0\x96");
+    fs::create_directories(dir);
+    // A post that prints the folder and path it is given.
+    std::string text = readTextFile(std::string(CARVETTO_POSTS_DIR) + "/grbl_mm.pp");
+    const auto at = text.find("begin HEADER\n");
+    REQUIRE(at != std::string::npos);
+    text.insert(at + 13, "\"([TP_DIR]) ([PATHNAME])\"\n");
+    { std::ofstream(base / "echo.pp", std::ios::binary) << text; }
+    const auto posts = discoverPosts({}, base);
+    REQUIRE(posts.size() == 1);
+    REQUIRE(posts[0].usable());
+    SaveOptions o;
+    o.directory = dir;
+    o.jobName = "caf\xC3\xA9";
+    const SaveOutput out = generateOutput(prepareSave(f.doc, {}, posts[0], o));
+    INFO(out.error);
+    REQUIRE(out.ok);
+    CHECK(out.files[0].text.find("/ete _)") != std::string::npos);  // the post writes comments in ASCII
+    CHECK(pathToUtf8(out.files[0].path.filename()) == "caf\xC3\xA9.nc");
+    const WriteResult w = writeOutput(out, false);
+    REQUIRE(w.ok);
+    CHECK(fs::exists(dir / pathFromUtf8("caf\xC3\xA9.nc")));
 }
 
 TEST_CASE("a planted symlink at a predictable temp name is not followed", "[save][safety]") {

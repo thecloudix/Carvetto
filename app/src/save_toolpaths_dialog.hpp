@@ -39,6 +39,11 @@ class SaveToolpathsDialog : public QDialog {
     SaveToolpathsDialog(const document::Document& doc, const std::vector<document::ToolpathId>& ids,
                         const std::string& jobName, const std::vector<tooling::Machine>& machines,
                         const std::filesystem::path& startFolder, QWidget* parent = nullptr);
+    /// The usual way: `viewmodel::makeSaveSource(session)` (enabled toolpaths, stale and uncalculated
+    /// ones named). Out-of-date toolpaths need an explicit tick before Save is possible.
+    SaveToolpathsDialog(viewmodel::SaveSource source, const std::string& jobName,
+                        const std::vector<tooling::Machine>& machines, const std::filesystem::path& startFolder,
+                        QWidget* parent = nullptr);
     ~SaveToolpathsDialog() override;
 
     // --- State the self-test drives and reads -------------------------------------------------
@@ -46,6 +51,9 @@ class SaveToolpathsDialog : public QDialog {
     void setOutputMode(viewmodel::OutputMode mode);
     void setNameTemplate(const std::string& tmpl);
     void setOverwrite(bool overwrite);
+    /// Ticks "post out-of-date toolpaths anyway" (only shown when there are some).
+    void setAcceptStale(bool accept);
+    bool staleBoxShown() const;
     /// Selects the post whose file name is `fileName` (e.g. "grbl_mm.pp") if it is listed.
     bool selectPost(const std::string& fileName);
     int postCount() const;
@@ -90,6 +98,7 @@ class SaveToolpathsDialog : public QDialog {
     QLineEdit* folder_{nullptr};
     QLineEdit* template_{nullptr};
     QCheckBox* overwrite_{nullptr};
+    QCheckBox* acceptStale_{nullptr};
     QLabel* summary_{nullptr};
     QLabel* message_{nullptr};
     QPlainTextEdit* preview_{nullptr};

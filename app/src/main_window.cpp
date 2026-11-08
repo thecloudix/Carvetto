@@ -530,12 +530,15 @@ void MainWindow::saveToolpathsDialog() {
     const std::filesystem::path folder = path.empty() ? viewmodel::pathFromUtf8(QDir::homePath().toStdString())
                                                       : path.parent_path();
     const std::string job = path.empty() ? std::string("toolpaths") : viewmodel::pathToUtf8(path.stem());
-    // Only enabled, calculated toolpaths are posted (an empty list must not mean "all").
-    const std::vector<document::ToolpathId> ids = toolpaths_->session().enabledToolpaths();
-    if (ids.empty()) {
+    // Enabled toolpaths are posted; uncalculated ones are named in a warning, out-of-date ones need a tick.
+    viewmodel::SaveSource source = viewmodel::makeSaveSource(toolpaths_->session());
+    if (source.records.empty()) {
         if (!quiet_) {
             QMessageBox::information(this, QStringLiteral("Save Toolpaths"),
-                                     QStringLiteral("There are no enabled, calculated toolpaths to save."));
+                                     source.notComputed.empty()
+                                         ? QStringLiteral("There are no enabled toolpaths to save.")
+                                         : QStringLiteral("The enabled toolpaths have not been calculated yet: "
+                                                          "recalculate them first."));
         }
         return;
     }
@@ -543,7 +546,7 @@ void MainWindow::saveToolpathsDialog() {
     for (const auto& entry : toolpaths_->session().toolDatabase().machines()) {
         machines.push_back(entry.second);
     }
-    SaveToolpathsDialog dialog(session_.document(), ids, job, machines, folder, this);
+    SaveToolpathsDialog dialog(std::move(source), job, machines, folder, this);
     dialog.exec();
 }
 

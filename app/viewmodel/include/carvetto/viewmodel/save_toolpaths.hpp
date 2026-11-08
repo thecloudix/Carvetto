@@ -14,6 +14,7 @@
 #include "carvetto/document/toolpath_record.hpp"
 #include "carvetto/post/post_processor.hpp"
 #include "carvetto/tooling/machine.hpp"
+#include "carvetto/viewmodel/toolpath_session.hpp"
 
 // Save toolpaths (T-0224, ADR-0034): Qt-free logic behind the Save Toolpaths dialog.
 //
@@ -94,6 +95,9 @@ struct SaveJob {
     SaveOptions options;
     /// Records that were asked for but have no computed moves (skipped).
     std::vector<std::string> notComputed;
+    /// Records whose moves are out of date (their vectors, tool or parameters changed since the
+    /// moves were calculated): posted from the old moves, with a warning.
+    std::vector<std::string> stale;
     /// Set when the job cannot run; `generateOutput` reports it.
     std::string error;
 };
@@ -105,11 +109,17 @@ struct SaveSource {
     document::Job job;
     /// Records that were asked for but have no computed moves (left out).
     std::vector<std::string> notComputed;
+    /// Included records whose moves are out of date (see SaveJob::stale).
+    std::vector<std::string> stale;
 };
 
 /// Copies the records `ids` (document order; empty = all) and the job. Records without moves
 /// are left out and named in `notComputed`.
 SaveSource makeSaveSource(const document::Document& doc, const std::vector<document::ToolpathId>& ids);
+
+/// The enabled toolpaths of a session: enabled and calculated ones are posted, enabled ones
+/// without moves are named in `notComputed`, posted ones that need recalculation in `stale`.
+SaveSource makeSaveSource(ToolpathSession& session);
 
 /// Reads the post file and builds the job. Errors (no toolpaths, unusable post, unreadable file)
 /// are in `error`.
@@ -136,6 +146,8 @@ struct SaveOutput {
     std::vector<std::string> warnings;
     /// Tool changes between consecutive toolpaths inside the files.
     std::size_t toolChanges{0};
+    /// Posted toolpaths whose moves are out of date (also in `warnings`).
+    std::vector<std::string> stale;
 };
 
 /// Runs the post. `cancel` (optional) is checked between files. Pure: touches no document; it
@@ -164,6 +176,12 @@ namespace detail {
 /// Test seam: called with the staged temporary files after all were written and before any is
 /// moved into place. Pass an empty function to remove it.
 void setCommitHook(std::function<void(const std::vector<std::filesystem::path>&)> hook);
+/// Test seams of `writeOutput` (call with the defaults to remove them): `linkErrno` != 0 makes the
+/// hard-link commit step fail with that errno (POSIX), `noRenameNoReplace` makes the no-replace
+/// rename unavailable (POSIX), `failStageAfter` >= 0 makes staging of that file index fail, and
+/// `randomNames` are used (in order) instead of random temporary-name parts.
+void setTestSeams(int linkErrno = 0, bool noRenameNoReplace = false, int failStageAfter = -1,
+                  std::vector<std::string> randomNames = {});
 }  // namespace detail
 
 }  // namespace carvetto::viewmodel
