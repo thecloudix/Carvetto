@@ -29,6 +29,12 @@ inline std::uint64_t& lastPairWork() {
     return work;
 }
 
+/// Work units the most recent contour-level call on this thread spent over all its pairs.
+inline std::uint64_t& lastTotalWork() {
+    thread_local std::uint64_t work = 0;
+    return work;
+}
+
 /// Test switch: enumerate chord pairs by the direct double loop even for long polylines, to compare
 /// it with the box-index path (they must give identical results).
 inline bool& forceDirectChordPairs() {

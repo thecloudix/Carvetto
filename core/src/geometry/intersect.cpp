@@ -28,10 +28,13 @@ namespace {
 // ------------------------------------------------------------------ work budget (T-0180)
 
 // Deterministic work counter of the Bezier routines. Units: a chord-pair test is 1, a curve
-// evaluation or nearest-point step kEval, a Newton refinement kRefine (about 4 ns Release CPU
+// evaluation or nearest-point step kEval, a Newton refinement kRefine (2-5 ns Release CPU
 // per unit). Loops that can run long check `spent()` and stop; the work done so far is kept.
 constexpr std::uint64_t kEval = 64;
 constexpr std::uint64_t kRefine = 256;
+constexpr std::uint64_t kSample = 24;   // one Bezier chord sample (T-0180 round 3: measured ~100 ns)
+constexpr std::uint64_t kIndexBuild = 4;  // per box and tree level
+constexpr std::uint64_t kPiece = 64;    // one piece of a cut Bezier (split, bounds)
 
 struct Meter {
     std::uint64_t used{0};
@@ -694,7 +697,7 @@ std::vector<ParamPoint> sampleSpan(const Span& s, const Tolerance& tol) {
             } else {
                 out.push_back({0.0, v.p0});
                 bezierSamples(v, 0.0, 1.0, tol.chordal, 0, out);
-                charge(out.size());
+                charge(kSample * out.size());  // each sample is a flatness test and a split
             }
         },
         s);
@@ -1074,6 +1077,16 @@ void scanCrossings(const Span& s, const Span& o, double t0, double t1, bool span
     }
 }
 
+// Building a box index over n boxes: the k-d tree's median splits and the grid's cell lists,
+// about n log2(n) element moves at ~10 ns each (measured with 65 537 overlapping chords).
+void chargeIndexBuild(std::size_t n) {
+    std::uint64_t levels = 1;
+    for (std::size_t m = n; m > 1; m >>= 1) {
+        ++levels;
+    }
+    charge(kIndexBuild * static_cast<std::uint64_t>(n) * levels);
+}
+
 // Calls f(i, j) for every pair of chords (chord i runs pa[i-1]..pa[i], chord j pb[j-1]..pb[j]) whose
 // boxes, A's grown by `reach`, meet, in ascending (i, j). Long polylines go through a box index
 // instead of testing all pairs (T-0180: two 65 537-chord polylines are 4e9 pairs); the pairs and
@@ -1099,13 +1112,16 @@ void forEachNearChordPair(const std::vector<ParamPoint>& pa, const std::vector<P
     for (std::size_t j = 1; j < pb.size(); ++j) {
         boxesB.push_back(Box2{pb[j - 1].p, pb[j].p});
     }
+    chargeIndexBuild(boxesB.size());
     detail::BoxIndex boxIndex(boxesB);
+    std::size_t visited = boxIndex.work();
     std::vector<std::size_t> hits;
     for (std::size_t i = 1; i < pa.size() && !spent(); ++i) {
         const Box2 boxA = Box2{pa[i - 1].p, pa[i].p}.inflated(reach);
         hits.clear();
         boxIndex.query(boxA, [&](std::size_t k) { hits.push_back(k); });
-        charge(16 + hits.size());
+        charge(hits.size() + boxIndex.work() - visited);  // what the query looked at, not just found
+        visited = boxIndex.work();
         std::sort(hits.begin(), hits.end());
         for (const std::size_t k : hits) {
             f(i, k + 1);
@@ -1142,7 +1158,9 @@ void forEachSelfChordPair(const std::vector<ParamPoint>& pts, F&& f) {
     for (std::size_t j = 1; j < pts.size(); ++j) {
         boxes.push_back(boxOf(j));
     }
+    chargeIndexBuild(boxes.size());
     detail::BoxIndex boxIndex(boxes);
+    std::size_t visited = boxIndex.work();
     std::vector<std::size_t> hits;
     for (std::size_t i = 1; i < pts.size() && !spent(); ++i) {
         hits.clear();
@@ -1151,7 +1169,8 @@ void forEachSelfChordPair(const std::vector<ParamPoint>& pts, F&& f) {
                 hits.push_back(k + 1);
             }
         });
-        charge(16 + hits.size());
+        charge(hits.size() + boxIndex.work() - visited);
+        visited = boxIndex.work();
         std::sort(hits.begin(), hits.end());
         for (const std::size_t j : hits) {
             f(i, j);
@@ -1462,6 +1481,7 @@ IntersectionResult polygoniseAndRefine(const Span& a, const Span& b, const Toler
     const double reach = 2.0 * tol.chordal + tol.distance;
     const std::vector<Piece> piecesA = piecesOf(a, tol);
     const std::vector<Piece> piecesB = piecesOf(b, tol);
+    charge(kPiece * (piecesA.size() + piecesB.size()));
     std::vector<Box2> boxesB;
     for (const Piece& q : piecesB) {
         boxesB.push_back(bounds(q.span).inflated(reach));
@@ -1976,6 +1996,7 @@ ContourIntersections selfIntersectionsImpl(const Contour& c, const Tolerance& to
     if (total.over) {
         worsen(out.status, IntersectStatus::Truncated);
     }
+    detail::lastTotalWork() = total.used;
     return out;
 }
 
@@ -2041,6 +2062,7 @@ ContourIntersections intersect(const Contour& a, const Contour& b, const Toleran
     if (total.over) {
         worsen(out.status, IntersectStatus::Truncated);
     }
+    detail::lastTotalWork() = total.used;
     return out;
 }
 

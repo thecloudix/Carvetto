@@ -82,6 +82,13 @@ constexpr double kMinChordalUlps = 4.0;
 /// this many times longer than `reach` (see there).
 constexpr double kProbeCutRatio = 1000.0;
 
+// The edit status for an intersection answer that is not complete: running out of work is
+// TooComplex; a refused span (non-finite, or beyond the magnitude cap the routines accept) is an
+// invalid argument, with its own message.
+EditStatus refusalStatus(IntersectStatus s) {
+    return s == IntersectStatus::Truncated ? EditStatus::TooComplex : EditStatus::InvalidArgument;
+}
+
 bool tooCostly(const std::vector<const std::vector<Contour>*>& sets, const Contour* extra, const Tolerance& tol) {
     Box2 box;
     bool bezier = false;
@@ -890,7 +897,7 @@ TrimResult trimToBoundary(const std::vector<Contour>& contours, const std::vecto
         return side == TrimSide::ClearInside ? loc == BoundarySet::Loc::Outside : loc == BoundarySet::Loc::Inside;
     };
 
-    bool incomplete = false;
+    IntersectStatus incomplete = IntersectStatus::Complete;
     for (std::size_t ci = 0; ci < contours.size(); ++ci) {
         const Contour& c = contours[ci];
         if (c.isEmpty()) {
@@ -904,7 +911,7 @@ TrimResult trimToBoundary(const std::vector<Contour>& contours, const std::vecto
                 set.query(bounds(s).inflated(tol.distance), [&](std::size_t bi) {
                     const IntersectionResult r = intersect(s, set.span(bi), tol);
                     if (!r.complete()) {
-                        incomplete = true;  // cuts would be missing: no result is better than a wrong one
+                        incomplete = r.status;  // cuts would be missing: no result is better than a wrong one
                     }
                     for (const Intersection& h : r.points) {
                         cuts.push_back({h.tA, h.tangent});
@@ -915,9 +922,9 @@ TrimResult trimToBoundary(const std::vector<Contour>& contours, const std::vecto
                     }
                 });
             }
-            if (incomplete) {
+            if (incomplete != IntersectStatus::Complete) {
                 res = TrimResult{};  // contours of earlier inputs are dropped too: all or nothing
-                res.status = EditStatus::TooComplex;
+                res.status = refusalStatus(incomplete);
                 return res;
             }
             cuts = normaliseCuts(s, std::move(cuts), tol);
@@ -1057,7 +1064,7 @@ TrimAtResult trimSpansAt(const Contour& contour, Vec2 pick, const std::vector<Co
     {
         const ContourIntersections self = selfIntersections(contour, tol);
         if (!self.complete()) {
-            res.status = EditStatus::TooComplex;  // cuts would be missing
+            res.status = refusalStatus(self.status);  // cuts would be missing
             return res;
         }
         for (const ContourIntersection& h : self.points) {
@@ -1077,7 +1084,7 @@ TrimAtResult trimSpansAt(const Contour& contour, Vec2 pick, const std::vector<Co
         }
         const ContourIntersections hits = intersect(contour, o, tol);
         if (!hits.complete()) {
-            res.status = EditStatus::TooComplex;
+            res.status = refusalStatus(hits.status);
             return res;
         }
         for (const ContourIntersection& h : hits.points) {
@@ -1262,7 +1269,7 @@ ExtendResult extendSpan(const Contour& contour, ContourEnd end, const std::vecto
             }
             const IntersectionResult r = intersect(probe, ts, tol);
             if (!r.complete()) {
-                res.status = EditStatus::TooComplex;  // a nearer target hit may be missing
+                res.status = refusalStatus(r.status);  // a nearer target hit may be missing
                 return res;
             }
             for (const Intersection& h : r.points) {

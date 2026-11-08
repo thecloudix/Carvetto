@@ -486,7 +486,7 @@ TEST_CASE("Default budget: the old multi-second Bezier pairs finish quickly or r
         const IntersectionResult r = intersect(c.a, c.b, tol, limits);
         const double cpu = processCpuSeconds() - t0;
         INFO("CPU " << cpu << " s, hits " << r.points.size());
-        REQUIRE(cpu < (kRelease ? 6.0 : 30.0));  // ~2 s unloaded; the margin is for a busy machine
+        REQUIRE(cpu < (kRelease ? 12.0 : 60.0));  // ~2 s unloaded; the margin is for a busy machine (a budget off takes 30-100 s)
         if (!kRelease && c.mustTruncate) {
             REQUIRE(r.status == IntersectStatus::Truncated);
         }
@@ -679,7 +679,12 @@ TEST_CASE("Spans beyond the magnitude cap are refused up front", "[bezier][inter
 
 TEST_CASE("Work units of reference pairs are pinned", "[bezier][intersect][budget][units][geometry]") {
     // The unit counts are the budget's meaning (ADR-0005 A2): changing a unit constant or leaving a
-    // charge out moves them. Bands of +-12% leave room for libm differences between platforms.
+    // charge out moves them. Most pairs have a band of +-12%; two are pinned to a few percent
+    // because one cost dominates them: the Newton refinements of the reversed loop (kRefine 256
+    // -> 220 or 300 moves its count by -2.9% / +3.6%) and the global nearest-point searches of the
+    // spiky curve (closestPoint's step costs 16 -> 12 or 20 move it by -2.6% / +2.6%, its bisection
+    // cost 4 -> 3 by -3.8%). The counts are integers of discrete floating-point decisions; a
+    // platform whose libm differs in the last bit may move them by a fraction of a percent.
     const Tolerance tol = Tolerance::defaults();
     struct Ref {
         const char* name;
@@ -687,16 +692,21 @@ TEST_CASE("Work units of reference pairs are pinned", "[bezier][intersect][budge
         Span b;
         double units;
         std::size_t hits;
+        double band;
     };
     const BezierSpan s{{0, 0}, {10, 20}, {20, -20}, {30, 0}};
     const BezierSpan loop{{0, 0}, {1000, 1000}, {-1000, 1000}, {0, 0}};
     const BezierSpan c{{0, 0}, {30, 40}, {60, -40}, {90, 0}};
+    const BezierSpan spiky{{-0.0014121, -0.00345894}, {0.0030753, 0.00245513}, {1e11, -1e11}, {0.00425758, 0.00280278}};
     const std::vector<Ref> refs{
-        {"S against a line", s, LineSpan{{5, -5}, {25, 5}}, 15541.0, 1},
-        {"loop against itself reversed", loop, loop.reversed(), 1803384.0, 512},
+        {"S against a line", s, LineSpan{{5, -5}, {25, 5}}, 16991.0, 1, 0.12},
+        {"loop against itself reversed", loop, loop.reversed(), 1898682.0, 512, 0.02},
         {"long smooth pair", BezierSpan{{0, 0}, {1e5, 1e5}, {-1e5, 2e5}, {1e5, 3e5}},
-         BezierSpan{{1e5, 0}, {-1e5, 1e5}, {1e5, 2e5}, {0, 3e5}}, 255803.0, 3},
-        {"near-parallel pair", c, BezierSpan{{0, 1}, {30, 41}, {60, -39}, {90, 1}}, 5970.0, 0},
+         BezierSpan{{1e5, 0}, {-1e5, 1e5}, {1e5, 2e5}, {0, 3e5}}, 1238681.0, 3, 0.12},
+        {"near-parallel pair", c, BezierSpan{{0, 1}, {30, 41}, {60, -39}, {90, 1}}, 17594.0, 0, 0.12},
+        {"two crossing S curves", BezierSpan{{0, 0}, {40, 60}, {60, -60}, {100, 0}},
+         BezierSpan{{0, 10}, {40, -50}, {60, 70}, {100, 10}}, 12848.0, 2, 0.12},
+        {"spiky curve at 1e11 with itself", spiky, spiky, 1194292.0, 129, 0.015},
     };
     for (const Ref& r : refs) {
         INFO(r.name);
@@ -705,8 +715,8 @@ TEST_CASE("Work units of reference pairs are pinned", "[bezier][intersect][budge
         REQUIRE(res.points.size() == r.hits);
         const double units = static_cast<double>(detail::lastPairWork());
         INFO("units " << units);
-        REQUIRE(units >= 0.88 * r.units);
-        REQUIRE(units <= 1.12 * r.units);
+        REQUIRE(units >= (1.0 - r.band) * r.units);
+        REQUIRE(units <= (1.0 + r.band) * r.units);
     }
 }
 

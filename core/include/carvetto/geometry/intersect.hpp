@@ -68,7 +68,7 @@ inline constexpr double kMaxIntersectMagnitude = 1e12;
 
 /// Work budget of the Bezier intersection routines. Work is counted in deterministic units
 /// (a chord-pair test costs 1, a curve evaluation or nearest-point step costs tens, a Newton
-/// refinement hundreds; about 4 ns of Release CPU per unit on a 2020s desktop core), so a
+/// refinement hundreds; 2-5 ns of Release CPU per unit on a 2020s desktop core), so a
 /// truncated result is reproducible and does not depend on the machine. Line and arc pairs are
 /// closed-form and unlimited. The defaults let every input that finishes in a second or two
 /// complete unchanged (ADR-0005 A2).
@@ -80,7 +80,7 @@ struct IntersectLimits {
     std::uint64_t totalWork{kDefaultTotalWork};
 
     static constexpr std::uint64_t kDefaultPairWork = 500'000'000;
-    static constexpr std::uint64_t kDefaultTotalWork = 4'000'000'000;
+    static constexpr std::uint64_t kDefaultTotalWork = 2'000'000'000;
 };
 
 /// Exact line–line intersection. Segments are collinear when both end points of the shorter lie
