@@ -986,3 +986,6 @@ Out of scope: single-line stroke fonts, the text tool UI (T-0211).
 
 ### T-0225 TransformDialog holds a const Document& (T-0206 verifier note)   [status: ready — LOW]
 TransformDialog (transform_menu.cpp) keeps a `const Document&` and `rebuild()` re-reads it from option-toggle callbacks. Unreachable today (modal, nothing replaces the document), but pass the document live or close the dialog on replacement. Also remove the redundant xfReset() in ToolController::setDocument (equivalent mutant).
+
+### T-0226 Flaky CPU-ratio test: T-0172 (b) (offset_narrow_loops_test.cpp:1610)   [status: ready — LOW]
+`CHECK(t.ratio() < 1.35)` failed once on ubuntu-26.04 CI with ratio 1.362 (even 0.1505 s vs varied 0.2057 s) on PR #91, unrelated to that PR. Timing-ratio tests on ~0.15 s runs are noise-sensitive: widen the bound, lengthen the workload, or use best-of-N / operation counts instead of CPU seconds. Audit other ratio-based tests (cpu_scaling.hpp users).
