@@ -39,7 +39,7 @@ errors, without a second code path that could drift from the CLI.
    `Document` reference across the asynchronous gap.
 
 ## Consequences
-The app has no tool database or toolpath session yet (T-0221): the dialog posts every calculated
+Superseded by the wiring note in the amendment below.
 toolpath of the document, and the machine list is empty until the window is given machines
 (`MainWindow::setMachines`). T-0221 should pass `ToolpathSession::enabledToolpaths()` as the ids and the
 database's machines.
@@ -60,7 +60,4 @@ database's machines.
 - **Cancel.** The post run (`PostProcessor::run`) has no cancellation hook, so Close/Cancel waits for
   a post already running (milliseconds to seconds for large jobs) before the dialog goes away.
   Typing in the folder or name field re-posts only 300 ms after the last keystroke.
-- **TODO (T-0221 merge).** When the Toolpaths dock is on main, `MainWindow::saveToolpathsDialog` must
-  pass `ToolpathSession::enabledToolpaths()` as the ids (and the tool database's machines to
-  `setMachines`), with a test that a disabled toolpath is not in the output. Until then every
-  calculated toolpath is posted.
+- **Wiring (T-0221 on main).** `MainWindow::saveToolpathsDialog` passes `ToolpathSession::enabledToolpaths()` (an empty list shows a message instead of meaning "all") and the tool database's machines. A disabled toolpath is not in the output (viewmodel test and self-test).
