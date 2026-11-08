@@ -13,6 +13,7 @@
 #include <string>
 
 #include "carvetto/document/carv_io.hpp"
+#include "carvetto/document/carv_io.hpp"
 #include "toolpath_test_support.hpp"
 
 using namespace carvetto;
@@ -968,4 +969,123 @@ TEST_CASE("session: a job that was not made by prepare cannot crash the calculat
     const ToolpathCalculation calc = job.run();
     CHECK(calc.ok);  // the carving tool alone still carves
     CHECK(calc.items.size() == 1);
+}
+
+TEST_CASE("session: a toolpath the .carv writer would refuse is refused up front", "[toolpath][session]") {
+    Fixture f;
+    ToolpathForm form(ToolpathOperation::Profile, document::Units::Millimetres);
+    REQUIRE(form.setTool(f.db, source("end-mill-3mm")).ok);
+    REQUIRE(form.setField("cutDepth", "12").ok);
+    REQUIRE(form.setField("passDepth", "0.006").ok);  // 2000 identical passes: more moves than bytes
+    ToolpathDefinition def = form.definition();
+    def.selector = VectorSelector::fromObjects({f.big});
+    const Snapshot before = snapshot(f.doc);
+    const std::size_t steps = f.steps();
+    const ToolpathOutcome out = f.session.add(def);
+    INFO(out.message);
+    CHECK_FALSE(out.ok);
+    CHECK(out.message.find("cannot be saved") != std::string::npos);
+    CHECK(snapshot(f.doc) == before);
+    CHECK(f.steps() == steps);
+    // The same rule decides what the file writer says: a document that does save is accepted.
+    REQUIRE(f.session.add(f.pocketOnBig()).ok);
+    CHECK(document::saveCarv(f.doc));
+}
+
+TEST_CASE("session: apply refuses a result for a toolpath that was edited since prepare", "[toolpath][session]") {
+    Fixture f;
+    const ToolpathId id = f.addPocket();
+    const ToolpathCalculation old = f.session.prepare(*f.session.definition(id), id).run();
+    REQUIRE(old.ok);
+    ToolpathDefinition deeper = *f.session.definition(id);
+    std::get<toolpath::PocketParams>(deeper.params).cutDepth = 6.0;
+    REQUIRE(f.session.update(id, deeper).ok);
+    const Snapshot edited = snapshot(f.doc);
+    const std::size_t steps = f.steps();
+    const ToolpathOutcome out = f.session.apply(old);
+    CHECK_FALSE(out.ok);
+    CHECK(out.message.find("calculate it again") != std::string::npos);
+    CHECK(snapshot(f.doc) == edited);
+    CHECK(f.steps() == steps);
+    // A rename in between counts too.
+    const ToolpathCalculation old2 = f.session.prepare(*f.session.definition(id), id).run();
+    REQUIRE(f.session.rename(id, "Renamed").ok);
+    CHECK_FALSE(f.session.apply(old2).ok);
+    CHECK(f.doc.toolpaths()[0].name == "Renamed");
+    // Unchanged since prepare: accepted.
+    const ToolpathCalculation fresh = f.session.prepare(*f.session.definition(id), id).run();
+    CHECK(f.session.apply(fresh).ok);
+}
+
+TEST_CASE("session: duplicating a V-carve group is one undo step; the stale cache honours the active sheet",
+          "[toolpath][session]") {
+    Fixture f;
+    ToolpathDefinition vc = vCarveDefinition(f.db, true);
+    vc.selector = VectorSelector::fromObjects({f.big});
+    const ToolpathOutcome out = f.session.add(vc);
+    REQUIRE(out.ok);
+    const Snapshot before = snapshot(f.doc);
+    const std::size_t steps = f.steps();
+    REQUIRE(f.session.duplicate(out.ids[0]).ok);
+    CHECK(f.steps() == steps + 1);
+    CHECK(f.doc.toolpaths().size() == 4);
+    f.doc.undo();
+    CHECK(snapshot(f.doc) == before);
+
+    // Switching the active sheet changes what the selector resolves to, with no command in between.
+    const ToolpathId pocket = f.addPocket();
+    CHECK(f.session.item(pocket)->status == ToolpathStatus::Current);
+    document::Sheet other;
+    other.name = "Other";
+    const document::SheetId s2 = f.doc.insertSheet(other);
+    f.doc.setActiveSheet(s2);
+    CHECK(f.session.item(pocket)->status == ToolpathStatus::NeedsRecalculation);
+}
+
+TEST_CASE("session: V-carve groups are inferred only from records with equal parameters", "[toolpath][session]") {
+    Fixture f;
+    ToolpathDefinition vc = vCarveDefinition(f.db, true);
+    vc.selector = VectorSelector::fromObjects({f.big});
+    const ToolpathOutcome out = f.session.add(vc);
+    REQUIRE(out.ok);
+    // An outside edit gives the clearance record other parameters (a different name).
+    ToolpathRecord edited = f.doc.toolpaths()[0];
+    std::get<toolpath::VCarvingParams>(edited.params).name = "Other";
+    REQUIRE(f.doc.execute(std::make_unique<document::SetToolpathCommand>(edited)));
+    ToolpathSession fresh(&f.doc);
+    fresh.setToolDatabase(f.db);
+    const auto list = fresh.list();
+    REQUIRE(list.size() == 2);
+    CHECK(fresh.definition(f.doc.toolpaths()[1].id)->clearanceTools.empty());
+    CHECK_FALSE(list[0].canRecalculate);  // a clearance toolpath without its carving toolpath
+}
+
+TEST_CASE("session: a calculation over the span limit is refused", "[toolpath][session]") {
+    Document doc;
+    ToolpathSession session(&doc);
+    const tooling::ToolDatabase db = cliToolDatabase();
+    session.setToolDatabase(db);
+    geometry::Contour c;
+    c.spans.reserve(kMaxToolpathSpans + 1);
+    for (std::size_t i = 0; i <= kMaxToolpathSpans; ++i) {
+        c.append(geometry::LineSpan{{0.0, 0.0}, {0.001, 0.0}});
+    }
+    doc.insertObject(document::Object::vector(std::move(c), doc.defaultLayer(), doc.activeSheet()));
+    const ToolpathOutcome out = session.add(pocketDefinition(db));
+    CHECK_FALSE(out.ok);
+    CHECK(out.message.find("too many") != std::string::npos);
+}
+
+TEST_CASE("session: a cancelled job does not run the operation", "[toolpath][session]") {
+    Fixture f;
+    for (int k = 0; k < 400; ++k) {
+        addVector(f.doc, square(100.0 + (k % 20) * 14.0, 100.0 + (k / 20) * 14.0, 10.0));
+    }
+    const ToolpathJob job = f.session.prepare(pocketDefinition(f.db));
+    const ToolpathCalculation done = job.run();
+    REQUIRE(done.ok);
+    std::atomic<bool> cancel{true};
+    const ToolpathCalculation c = job.run(&cancel);
+    CHECK(c.cancelled);
+    CHECK(c.items.empty());
 }

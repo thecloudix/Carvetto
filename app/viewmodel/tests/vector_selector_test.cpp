@@ -143,6 +143,18 @@ TEST_CASE("selector: open, closed and circle filters apply per contour", "[selec
     CHECK_FALSE(isCircleContour(offCentre, 0.0, 0.01));
     CHECK_FALSE(isCircleContour(openLine(0), 0.0, 0.01));
     CHECK(isCircleContour(twoArcCircle(1, 2, 3.0), 6.0, 0.001));
+    // Out and back along one half circle is not a circle; neither is a radius off by a thousandth.
+    geometry::Contour outBack;
+    outBack.append(geometry::ArcSpan{{0, 0}, 3.0, 0.0, geometry::kPi, geometry::ArcDirection::CCW});
+    outBack.append(geometry::ArcSpan{{0, 0}, 3.0, geometry::kPi, 0.0, geometry::ArcDirection::CW});
+    outBack.closed = true;
+    CHECK_FALSE(isCircleContour(outBack, 0.0, 0.01));
+    geometry::Contour offRadius = twoArcCircle(0, 0, 3.0);
+    std::get<geometry::ArcSpan>(offRadius.spans[1]).radius = 3.001;
+    CHECK_FALSE(isCircleContour(offRadius, 0.0, 0.01));
+    CHECK(isCircleContour(geometry::Contour::circle({0, 0}, 3.0), 6.0, 0.01));
+    CHECK(isCircleContour(geometry::Contour::circle({0, 0}, 3.0), 6.009, 0.01));
+    CHECK_FALSE(isCircleContour(geometry::Contour::circle({0, 0}, 3.0), 6.011, 0.01));
     CHECK(VectorSelector{}.hasFilters() == false);
     CHECK(circles.hasFilters());
 }

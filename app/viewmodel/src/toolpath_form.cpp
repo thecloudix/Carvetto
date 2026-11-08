@@ -432,6 +432,12 @@ ParsedNumber parsePlain(const std::string& text) {
     std::string t = trimmed(text);
     if (!t.empty() && t.front() == '+') {
         t.erase(0, 1);
+        if (!t.empty() && (t.front() == '+' || t.front() == '-')) {
+            t.clear();  // "+-1", "++1"
+            ParsedNumber bad;
+            bad.error = "not a number";
+            return bad;
+        }
     }
     if (t.empty() || t.size() > 64) {
         out.error = t.empty() ? "enter a number" : "not a number";

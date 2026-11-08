@@ -244,6 +244,7 @@ class ToolpathSession {
 
     struct Stats {
         toolpath::MachineRates rates;
+        bool rapidSet{false};
         std::size_t moves{0};
         geometry::Box2 bounds;
         double length{0.0};

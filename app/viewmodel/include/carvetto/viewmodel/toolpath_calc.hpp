@@ -127,6 +127,9 @@ struct ToolpathCalculation {
     std::uint64_t toolsFingerprint{0};
     /// The toolpath this recalculates (null for a new one).
     document::ToolpathId target;
+    /// The records of the target (its V-carve) as they were when the job was prepared; `apply`
+    /// refuses the result when they have changed since (an edit or rename in between).
+    std::vector<document::ToolpathRecord> targetRecords;
 
     bool hasError() const;
     /// All error messages, joined by "; ".
@@ -151,6 +154,9 @@ struct ToolpathJob {
     std::uint64_t vectorsFingerprint{0};
     std::uint64_t toolsFingerprint{0};
     document::ToolpathId target;
+    /// The records of the target (its V-carve) as they were when the job was prepared; `apply`
+    /// refuses the result when they have changed since (an edit or rename in between).
+    std::vector<document::ToolpathRecord> targetRecords;
 
     /// Runs the core operation. Deterministic. A set `cancel` flag is checked before the run and
     /// after it (the core operations themselves are not interruptible); a cancelled run produces

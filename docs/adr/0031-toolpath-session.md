@@ -49,13 +49,15 @@ operation the same result and diagnostic types; ADR-0007 makes ids monotonic.
    (Info: notes such as duplicate holes or vectors left out; Warning: something skipped but a toolpath
    produced; Error: refusals, and every diagnostic when nothing was produced), the core issue, and the
    drawing object / contour index the diagnostic named. `run()` takes an optional cancel flag, checked
-   before and after the (synchronous) core call; out-of-memory and other exceptions become errors.
-   Inputs over 2 M spans, coordinates beyond 1e9 mm, non-finite numbers and names with control
+   before and after the (synchronous) core call, so cancelling takes effect at once before the run
+   and only after the core call returns during it (latency = the rest of that call, bounded by the
+   operations' own work limits; seconds for large jobs); out-of-memory and other exceptions become errors.
+   Inputs over 2 M spans, coordinates beyond 1e5 mm, more than 1e7 mm of vector length in all, non-finite numbers and names with control
    characters (a name reaches the G-code as a comment) are refused before the operation runs.
 6. **Applying** (`ToolpathSession::apply`) is the only step that touches the document. It checks
    that the calculation is still valid (the resolved vectors and the tools hash to what the job was
    made from, the target still exists, the records pass the guards of the core's toolpath commands,
-   ids are available), then executes the core commands in ONE macro (never coalescing with a
+   ids are available, the target's records are still those the job was prepared from), then executes the core commands in ONE macro (never coalescing with a
    neighbour), and rolls back if a command fails anyway. Several calculations may be applied in one
    macro (`applyAll`, recalculate all). A refusal changes nothing, not even the undo history.
    Add/edit/duplicate/delete/reorder/rename/recalculate are each one undo step.
@@ -94,3 +96,16 @@ operation the same result and diagnostic types; ADR-0007 makes ids monotonic.
 - A cutting-data override per toolpath is not possible until ADR-0021 stores the data.
 - The core operations cannot be interrupted; cancellation is checked around them, and the cost is
   bounded by the operations' own work limits.
+
+## Amendment (verifier round 1)
+- **Unsavable toolpaths are refused at apply.** The file writer allows at most one move per byte of the
+  compressed file, known only after compression, so after the macro runs (for documents of 2000 or
+  more moves) the session asks `saveCarv` itself; a `ResourceLimit` refusal rolls the step back
+  (`undoAndDiscard`) and is reported ("cannot be saved"). The rule is not repeated in the session.
+- **Stale targets.** A job remembers the target's records at `prepare`; `apply` refuses it when any
+  of them has been edited, renamed or recalculated since.
+- **Form ranges vs the CLI.** Field bounds follow the core's documented ranges, including the lead
+  sweep of 0.1 to 90 degrees; they apply to definitions built in code too (`validateParams`), so a
+  params.json with a larger sweep would be refused by the session where the CLI passes it on to the
+  core. Offsets/leads/overcuts are additionally bounded to +-1000 mm (decision 4 of the report).
+- The "rapid rate not set" case is part of the summary cache key.

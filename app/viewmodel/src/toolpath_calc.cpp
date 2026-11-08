@@ -533,6 +533,7 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
     out.vectorsFingerprint = vectorsFingerprint;
     out.toolsFingerprint = toolsFingerprint;
     out.target = target;
+    out.targetRecords = targetRecords;
     out.messages = notes;
     if (!refusal.empty()) {
         out.messages.push_back(note(MessageSeverity::Error, refusal));

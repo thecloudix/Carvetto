@@ -6,6 +6,7 @@
 #include <tuple>
 #include <utility>
 
+#include "carvetto/document/carv_io.hpp"
 #include "carvetto/document/commands.hpp"
 #include "carvetto/toolpath/v_carve.hpp"
 
@@ -448,6 +449,15 @@ ToolpathJob ToolpathSession::prepare(const ToolpathDefinition& definition, std::
         job.refusal = bad;
     }
     job.target = target.value_or(ToolpathId{});
+    if (!job.target.isNull()) {
+        if (const ToolpathRecord* rec = doc_->findToolpath(job.target)) {
+            for (const ToolpathId m : membersOf(*rec)) {
+                if (const ToolpathRecord* mr = doc_->findToolpath(m)) {
+                    job.targetRecords.push_back(*mr);
+                }
+            }
+        }
+    }
     return job;
 }
 
@@ -532,6 +542,19 @@ BatchOutcome ToolpathSession::applyMany(const std::vector<ToolpathCalculation>& 
                 continue;
             }
             plan.members = membersOf(*rec);
+            bool same = plan.members.size() == c.targetRecords.size();
+            for (std::size_t k = 0; same && k < plan.members.size(); ++k) {
+                const ToolpathRecord* cur = doc_->findToolpath(plan.members[k]);
+                const ToolpathRecord& was = c.targetRecords[k];
+                same = cur != nullptr && cur->id == was.id &&
+                       (cur->moves == was.moves || *cur == was) && cur->name == was.name &&
+                       cur->params == was.params && cur->selection == was.selection &&
+                       cur->toolSource == was.toolSource;
+            }
+            if (!same) {
+                reject("the toolpath was edited or recalculated since this calculation was prepared; calculate it again");
+                continue;
+            }
             if (std::any_of(plan.members.begin(), plan.members.end(),
                             [&](ToolpathId m) { return claimed.contains(m); })) {
                 reject("the toolpath is recalculated twice in one step");
@@ -665,9 +688,33 @@ BatchOutcome ToolpathSession::applyMany(const std::vector<ToolpathCalculation>& 
         }
     }
     undo.endMacro();
+    std::string unsavable;
+    if (!failed) {
+        // A file must hold at most one move per byte (and 8 M moves): that is only known once it is
+        // compressed, so ask the file writer itself rather than repeating its rules. Small jobs
+        // cannot reach the ratio.
+        std::uint64_t moves = 0;
+        for (const ToolpathRecord& r : doc_->toolpaths()) {
+            moves += r.moveCount();
+        }
+        if (moves >= 2000) {
+            const auto saved = document::saveCarv(*doc_);
+            if (!saved && saved.error().code == document::CarvError::Code::ResourceLimit) {
+                unsavable = saved.error().message;
+                failed = true;
+            }
+        }
+    }
     if (failed) {
         if (executed > 0) {
             undo.undoAndDiscard(*doc_);
+        }
+        if (!unsavable.empty()) {
+            for (ToolpathOutcome& o : out.items) {
+                o.ids.clear();
+            }
+            failAll("the toolpath cannot be saved in a .carv file: " + unsavable + "; nothing was changed");
+            return out;
         }
         for (ToolpathOutcome& o : out.items) {
             o.ids.clear();
@@ -1056,12 +1103,13 @@ ToolpathSession::Stats ToolpathSession::statsOf(const ToolpathRecord& record) {
     rates.plungeRate = record.tool.plungeRate;
     rates.acceleration = setup_.accelerationMmPerS2;
     const auto it = stats_.find(record.moves);
-    if (it != stats_.end() && it->second.rates == rates) {
+    if (it != stats_.end() && it->second.rates == rates && it->second.rapidSet == (setup_.rapidRateMmPerMin > 0.0)) {
         return it->second;
     }
     const toolpath::Toolpath tp = record.toolpath();
     Stats s;
     s.rates = rates;
+    s.rapidSet = setup_.rapidRateMmPerMin > 0.0;
     s.moves = tp.moveCount();
     s.bounds = tp.bounds();
     const toolpath::LengthByKind len = tp.lengthByKind();

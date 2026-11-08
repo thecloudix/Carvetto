@@ -206,6 +206,10 @@ TEST_CASE("form: ranges of the angle, count and tolerance fields", "[toolpath][f
     CHECK(drill.setField("dwellTime", "0.5").ok);
     CHECK_FALSE(drill.setField("dwellTime", "-1").ok);
     CHECK_FALSE(drill.setField("dwellTime", "1 s").ok);
+    CHECK_FALSE(drill.setField("dwellTime", "+-1").ok);
+    CHECK_FALSE(drill.setField("dwellTime", "++1").ok);
+    CHECK(drill.setField("dwellTime", "+0.5").ok);
+    CHECK(drill.setField("dwellTime", "0.5").ok);
     CHECK(find(drill.fields(), "dwellTime")->text == "0.5");
 }
 

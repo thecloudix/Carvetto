@@ -118,7 +118,7 @@ bool isCircleContour(const Contour& contour, double diameterMm, double tolerance
     if (first == nullptr || !(first->radius > 0.0) || !std::isfinite(first->radius)) {
         return false;
     }
-    double sweep = 0.0;
+    double sweep = 0.0;  // signed: every arc must turn the same way, so an out-and-back pair is no circle
     for (const geometry::Span& s : contour.spans) {
         const auto* arc = std::get_if<geometry::ArcSpan>(&s);
         if (arc == nullptr) {
@@ -127,6 +127,9 @@ bool isCircleContour(const Contour& contour, double diameterMm, double tolerance
         const double tol = 1e-6 * std::max(1.0, first->radius);
         if (std::fabs(arc->radius - first->radius) > tol || std::fabs(arc->centre.x - first->centre.x) > tol ||
             std::fabs(arc->centre.y - first->centre.y) > tol) {
+            return false;
+        }
+        if (arc->direction != first->direction) {
             return false;
         }
         sweep += std::fabs(arc->sweepAngle());
