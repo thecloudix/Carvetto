@@ -48,7 +48,9 @@ const char* nameOf(MoveClass cls);
 /// helices); Dwell has no class (nullopt: nothing to draw).
 std::optional<MoveClass> classify(const toolpath::Move& move, const toolpath::Vec3& from);
 
-/// Most points of one polyline chunk (the unit of culling).
+/// Most points of one polyline chunk (the unit of culling); an arc is never split, so a chunk holding
+/// one can have up to kPreviewMaxArcPoints + 1 points. Moves without XY travel (vertical feeds and
+/// rapids) are counted in `movesByClass` but not drawn; only vertical Plunge/Retract make dots.
 inline constexpr std::size_t kPreviewChunkPoints = 256;
 /// Chord error in mm used to turn arcs into polylines, and the most points of one arc.
 inline constexpr double kPreviewArcTolerance = 0.01;

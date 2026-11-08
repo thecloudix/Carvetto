@@ -330,12 +330,27 @@ TEST_CASE("simulation controller: cancel and superseded requests", "[simulation]
     CHECK(c.frame()->relief->pixels == directRelief(setup, p.movesDone).pixels);
 
     // The latest request wins: seek far, then back to a near one while it is working.
+    const std::uint64_t serialBefore = c.frame()->serial;
     c.seek(setup.totalMoves);
     REQUIRE(waitFor([&] { return c.progress().state == SimState::Working; }));
     c.seek(p.movesDone + 3);
     c.setChunkDelayForTest(0);
     REQUIRE(waitReadyAt(c, p.movesDone + 3));
     CHECK_FALSE(c.progress().cancelled);
+    // The abandoned run to the end published nothing: exactly one new frame.
+    CHECK(c.frame()->serial == serialBefore + 1);
+
+    // A cancel issued while the worker is still preparing applies to the run requested before it started.
+    {
+        SimulationController early;
+        REQUIRE(early.start(setup));
+        early.seek(setup.totalMoves);
+        early.cancel();  // state is Preparing right after start()
+        REQUIRE(waitFor([&] { return early.progress().state == SimState::Ready && early.frame(); }));
+        REQUIRE(waitFor([&] { return early.progress().cancelled || early.frame()->move == setup.totalMoves; }));
+        CHECK(early.progress().cancelled);
+        CHECK(early.frame()->move < setup.totalMoves);
+    }
 
     // Cancel while idle changes nothing.
     c.cancel();

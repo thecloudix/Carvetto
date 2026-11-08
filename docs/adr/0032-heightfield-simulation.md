@@ -151,10 +151,11 @@ closed-form distances; deviations are reported in the T-0222 report.
 - **Files** (`app/viewmodel`, Qt-free): `toolpath_preview` (scene, draw list), `time_readout`, `simulation_setup`,
   `simulation_controller`, `relief_render`, `playback`. Qt glue (`app/src`): `preview_panel` (the Preview dock),
   `relief_view` (the simulation view in the "3D View" tab), the overlay in `canvas_widget`.
-- **2D preview.** Every enabled, computed toolpath becomes polylines in document coordinates, cut into chunks of at most
-  256 points (arcs by chord error 0.01 mm, at most 4096 points each), with a class per run of moves: Rapid, Feed (arcs
+- **2D preview.** Every enabled, computed toolpath becomes polylines in document coordinates, cut into chunks of about
+  256 points (arcs by chord error 0.01 mm, at most 4096 points each; an arc is never split, so a chunk with a
+  full circle of radius 1e5 holds 4097 points), with a class per run of moves: Rapid, Feed (arcs
   included), Plunge, Retract, Ramp (a feed or arc whose Z changes while it travels in XY: ramps and helices; the move
-  list has no "lead" kind, so lead-ins are Feed). Vertical plunge/retract moves are dots. The geometry is keyed by the
+  list has no "lead" kind, so lead-ins are Feed). Vertical plunge/retract moves are dots; vertical feeds and rapids have no XY extent and are counted but not drawn. The geometry is keyed by the
   identity of the shared `moves` (a recalculation replaces it, nothing else rebuilds it). A frame is a draw list for the
   view: chunks outside the viewport are culled by their box, the rest decimated to points at least 1.5 px apart (a chunk
   smaller than that becomes one stroke). Cost per frame is O(chunks + drawn points), not O(moves); measured numbers are in
@@ -183,3 +184,7 @@ closed-form distances; deviations are reported in the T-0222 report.
   canvas tool/played marks (their move indices would refer to a different list). Tested under ASan.
 - **Relief.** Top-down hill-shaded raster (light from the upper left), uncut stock in wood colour, cut cells darker with
   depth (or one colour per toolpath), table colour where the cut went through; an isometric 3D view is left for Phase 2.
+- **Replacing the document** goes through one `MainWindow::replaceDocument`: repaints are blocked, the canvas (and its tool
+  controller) and the preview are detached before the file session frees the old document (`PreviewPanel::detach` stops the
+  worker and clears the scene without touching widgets), and only then are the holders re-pointed and refreshed. A widget that
+  repaints synchronously (a progress bar value change) can therefore never make a dirty canvas read a dead document.

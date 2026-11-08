@@ -279,6 +279,24 @@ TEST_CASE("preview: culling, decimation and played/pending split", "[preview]") 
     CHECK(batchOf(f.model.draw(view, opt), MoveClass::Feed) == nullptr);
 }
 
+TEST_CASE("preview: move ranges are job-wide across several toolpaths", "[preview]") {
+    PreviewFixture f;
+    REQUIRE(f.session.add(profileDefinition(f.db, 2.0)).ok);
+    f.model.sync(f.session);
+    REQUIRE(f.model.scene().toolpaths.size() == 2);
+    const PreviewToolpath& t0 = f.model.scene().toolpaths[0];
+    const PreviewToolpath& t1 = f.model.scene().toolpaths[1];
+    CHECK(t0.firstMove == 0);
+    CHECK(t1.firstMove == t0.moveCount);
+    const ViewTransform view = viewOf(1000, 800, 1.0, {0, 700});
+    PreviewDrawOptions opt;
+    opt.toMove = t0.moveCount;
+    CHECK(f.model.draw(view, opt).stats.chunksDrawn == t0.geometry->chunks.size());
+    opt.toMove = static_cast<std::size_t>(-1);
+    opt.fromMove = t0.moveCount;
+    CHECK(f.model.draw(view, opt).stats.chunksDrawn == t1.geometry->chunks.size());
+}
+
 TEST_CASE("preview: tool position after a move", "[preview]") {
     PreviewFixture f;
     const auto& moves = *f.doc.toolpaths().front().moves;
@@ -362,6 +380,7 @@ TEST_CASE("time readout: durations", "[readout]") {
     CHECK(formatDuration(247.0) == "4 min 07 s");
     CHECK(formatDuration(3723.0) == "1 h 02 min 03 s");
     CHECK(formatDuration(-1.0) == "unknown");
+    CHECK(formatDuration(-0.4) == "unknown");  // would round to 0 s
     CHECK(formatDuration(std::numeric_limits<double>::infinity()) == "unknown");
     CHECK(formatDuration(std::numeric_limits<double>::quiet_NaN()) == "unknown");
     CHECK(formatDuration(1e300) == "unknown");

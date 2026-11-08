@@ -50,6 +50,9 @@ class PreviewPanel : public QWidget {
     PreviewPanel(ToolpathsPanel* toolpaths, CanvasWidget* canvas, ReliefView* relief, QWidget* parent = nullptr);
     ~PreviewPanel() override;
 
+    /// Stops the simulation and forgets the scene without touching any widget or document: called
+    /// before the Document is swapped (the old one dies during the swap).
+    void detach();
     /// Re-reads the toolpaths after the document or the toolpath list changed.
     void refresh();
     /// The toolpaths panel was rebound to another document: stops the simulation and forgets the

@@ -12,12 +12,15 @@
 #include <QImage>
 #include <QLabel>
 #include <QListWidget>
+#include <QProgressBar>
 #include <QPushButton>
 #include <QSlider>
+#include <QTemporaryDir>
 #include <QThread>
 #include <QTreeWidget>
 #include <cstdio>
 #include <cstdlib>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <variant>
@@ -27,6 +30,7 @@
 #include "carvetto/document/document.hpp"
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/geometry/transform2.hpp"
+#include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/toolpath_form.hpp"
 #include "main_window.hpp"
 #include "preview_panel.hpp"
@@ -81,6 +85,29 @@ bool addProfile(MainWindow& window, double depth, std::string* why) {
     }
     window.documentChanged();
     return true;
+}
+
+/// Adds a rectangle and a Profile toolpath to the window's document and runs a simulation to its
+/// first frame.
+bool simulatedDocument(MainWindow& window, std::string* why) {
+    document::Document& d = window.currentDocument();
+    if (addRect(d, 40, 40, 80, 60).isNull() || !addProfile(window, 3.0, why)) {
+        if (why->empty()) {
+            *why = "could not build the document";
+        }
+        return false;
+    }
+    PreviewPanel* panel = window.preview();
+    if (!panel->startSimulation() || !panel->waitSimulation(120000)) {
+        *why = "the simulation did not run";
+        return false;
+    }
+    return true;
+}
+
+std::unique_ptr<document::Document> freshDocument() {
+    return std::make_unique<document::Document>(
+        document::Job::singleSided(300.0, 300.0, 18.0, document::Units::Millimetres));
 }
 
 bool pump(int ms) {
@@ -330,6 +357,57 @@ std::string previewSelfTest(MainWindow& window) {
                "replacing the document left the simulation or preview behind");
     pump(100);
     PT_REQUIRE(!panel->startSimulation(), "a simulation started on an empty document");
+
+    // 7b. Replacing the document with a simulation that FINISHED (progress 100%, relief shown, idle),
+    // one that is running, and with the preview off: File > New and File > Open paths. A dirty canvas
+    // must never be painted with the freed document (a progress bar value change repaints at once).
+    {
+        QTemporaryDir dir;
+        PT_REQUIRE(dir.isValid(), "no temporary directory");
+        const std::filesystem::path file = viewmodel::pathFromUtf8(dir.filePath(QStringLiteral("sim.carv")).toStdString());
+        window.showView(false);  // the 2D canvas must be on screen: it is what a stale repaint would read
+        window.resize(1400, 1100);
+        window.previewDock()->raise();  // the dock's widgets must be visible: they repaint when they change
+        pump(200);
+        PT_REQUIRE(simulatedDocument(window, &why), why);
+        pump(100);
+        PT_REQUIRE(!panel->progressBar()->visibleRegion().isEmpty() && !canvas->visibleRegion().isEmpty(),
+                   "the progress bar or the canvas is not on screen");
+        PT_REQUIRE(panel->progressBar()->value() == 100 && relief->hasPicture(), "the simulation did not finish");
+        PT_REQUIRE(window.saveFileAs(file), "could not save the document");
+        pump(800);  // idle, as a user looking at the result
+        window.repaint();
+        canvas->update();  // dirty canvas at the moment of the swap (the preview timer's tick used to do this)
+        window.setDocument(freshDocument());  // New
+        PT_REQUIRE(!panel->simActive() && !relief->hasPicture() && panel->progressBar()->value() == 0,
+                   "New with a finished simulation left it behind");
+        PT_REQUIRE(window.openFile(file) && window.currentDocument().toolpaths().size() == 1, "reopening the saved job failed");
+        PT_REQUIRE(panel->model().scene().toolpaths.size() == 1 && !panel->simActive(), "Open did not rebuild the preview");
+        // Open with a finished simulation.
+        PT_REQUIRE(panel->startSimulation() && panel->waitSimulation(120000), "no simulation after Open");
+        pump(800);
+        PT_REQUIRE(window.openFile(file) && !panel->simActive() && !relief->hasPicture(), "Open with a finished simulation failed");
+        // Open with a running simulation.
+        PT_REQUIRE(panel->startSimulation() && panel->waitSimulation(120000), "no simulation to interrupt");
+        panel->simulation().setChunkDelayForTest(20);
+        panel->scrubTo(panel->playback().moveCount());
+        pump(100);
+        PT_REQUIRE(window.openFile(file) && !panel->simActive(), "Open during a running simulation failed");
+        // Preview off, finished simulation, then New.
+        panel->showAction()->setChecked(false);
+        PT_REQUIRE(panel->startSimulation() && panel->waitSimulation(120000), "no simulation with the preview off");
+        pump(800);
+        window.setDocument(freshDocument());
+        PT_REQUIRE(!panel->simActive() && panel->progressBar()->value() == 0, "New with the preview off left a simulation");
+        panel->showAction()->setChecked(true);
+        // A failed Open changes nothing: the document, the preview and the simulation stay.
+        PT_REQUIRE(simulatedDocument(window, &why), why);
+        const std::size_t objectsBefore = window.currentDocument().objectCount();
+        PT_REQUIRE(!window.openFile(viewmodel::pathFromUtf8(dir.filePath(QStringLiteral("missing.carv")).toStdString())) &&
+                       window.currentDocument().objectCount() == objectsBefore && !panel->model().scene().toolpaths.empty(),
+                   "a failed Open damaged the document or the preview");
+        window.setDocument(freshDocument());
+    }
 
     // 8. Close while a simulation is running (the caller closes the window).
     document::Document& doc2 = window.currentDocument();

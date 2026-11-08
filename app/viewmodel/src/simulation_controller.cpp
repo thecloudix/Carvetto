@@ -113,8 +113,7 @@ void worker(std::shared_ptr<SimulationShared> shp) {
                 sh.targetPending = false;
                 sh.reliefDirty = false;
                 relief = sh.relief;
-                sh.cancelRun.store(false);
-                sh.cancelled = false;
+                sh.cancelled = false;  // a cancel() issued before this point still applies to this run
                 if (target != sim.movesDone()) {
                     sh.state = SimState::Working;
                 }
@@ -165,6 +164,7 @@ void worker(std::shared_ptr<SimulationShared> shp) {
                     break;
                 }
             }
+            sh.cancelRun.store(false);
             if (superseded) {
                 continue;  // the newer request is taken at the top of the loop
             }
@@ -244,6 +244,7 @@ void SimulationController::seek(std::size_t move) {
         }
         shared_->target = move;
         shared_->targetPending = true;
+        shared_->cancelRun.store(false);  // a newer request replaces an earlier cancel
         if (shared_->state == SimState::Ready) {
             shared_->state = SimState::Working;
         }

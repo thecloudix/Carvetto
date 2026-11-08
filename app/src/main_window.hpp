@@ -5,6 +5,7 @@
 #include <memory>
 
 #include <filesystem>
+#include <functional>
 #include <optional>
 
 #include "carvetto/document/document.hpp"
@@ -110,6 +111,7 @@ class MainWindow : public QMainWindow {
     void closeEvent(QCloseEvent* event) override;
 
    private:
+    bool replaceDocument(const std::function<bool()>& swap);
     void buildMenus();
     void buildToolBar();
     void buildToolPalette();

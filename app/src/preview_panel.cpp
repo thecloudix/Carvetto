@@ -302,15 +302,20 @@ void PreviewPanel::refresh() {
     canvas_->update();
 }
 
-void PreviewPanel::documentReplaced() {
-    // The old document may already be gone: nothing of it is touched here.
+void PreviewPanel::detach() {
     sim_.stop();
     timer_.stop();
     playback_.reset(nullptr);
     playbackReady_ = false;
     simCurrent_ = false;
+    simReason_.clear();
     shownSerial_ = 0;
     lastSeek_ = static_cast<std::size_t>(-1);
+    model_.clear();
+}
+
+void PreviewPanel::documentReplaced() {
+    detach();
     setupProblem_.clear();
     diagnostics_->clear();
     notes_->clear();
@@ -517,8 +522,7 @@ void PreviewPanel::tick() {
     }
     updateStatus();
     updateControls();
-    updateCanvasState();
-    canvas_->update();
+    updateCanvasState();  // repaints the canvas only when the state it shows changed
 }
 
 void PreviewPanel::showFrame(const std::shared_ptr<const viewmodel::SimulationFrame>& frame) {

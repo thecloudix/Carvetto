@@ -27,6 +27,7 @@
 #include <QWidget>
 #include <cstddef>
 #include <filesystem>
+#include <functional>
 #include <optional>
 #include <string>
 #include <utility>
@@ -353,12 +354,37 @@ void MainWindow::setDocument(std::unique_ptr<document::Document> doc) {
     if (!doc) {
         return;
     }
-    session_.newDocument(std::move(doc));
-    toolpaths_->setDocument(&session_.document());
+    std::unique_ptr<document::Document> incoming = std::move(doc);
+    replaceDocument([this, &incoming]() {
+        session_.newDocument(std::move(incoming));
+        return true;
+    });
+}
+
+bool MainWindow::replaceDocument(const std::function<bool()>& swap) {
+    // The one path that swaps the Document (File > New, Open, setDocument). The file session frees the
+    // old document inside `swap`; nothing may dereference it from then on. So, in this order:
+    //  1. repaints are blocked for the whole window (a progress bar or label changing value repaints
+    //     synchronously, and a dirty canvas would be painted with the dead document);
+    //  2. every holder is detached: the canvas (and its tool controller) drops its pointer, the
+    //     preview stops its simulation and forgets its scene (no widget is touched);
+    //  3. the swap runs; 4. every holder is pointed at the current document; 5. only then refresh.
+    const bool wasEnabled = updatesEnabled();
+    setUpdatesEnabled(false);
+    canvas_->setDocument(nullptr);
+    preview_->detach();
+    const bool ok = swap();
+    if (ok) {
+        toolpaths_->setDocument(&session_.document());
+    }
     preview_->documentReplaced();
     canvas_->setDocument(&session_.document());
-    toolPanel_->rebuild();
+    if (ok) {
+        toolPanel_->rebuild();
+    }
     documentChanged();
+    setUpdatesEnabled(wasEnabled);
+    return ok;
 }
 
 void MainWindow::documentChanged() {
@@ -539,13 +565,8 @@ void MainWindow::showError(const QString& title) {
 }
 
 bool MainWindow::openFile(const std::filesystem::path& path) {
-    const bool ok = session_.open(path);
-    if (ok) {
-        toolpaths_->setDocument(&session_.document());
-        preview_->documentReplaced();
-        canvas_->setDocument(&session_.document());
-        documentChanged();
-    } else {
+    const bool ok = replaceDocument([this, &path]() { return session_.open(path); });
+    if (!ok) {
         showError(QStringLiteral("Open failed"));
     }
     storeRecent();
