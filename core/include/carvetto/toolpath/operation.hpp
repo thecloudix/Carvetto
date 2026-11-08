@@ -1,6 +1,8 @@
 #pragma once
 
+#include <atomic>
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
@@ -43,7 +45,8 @@ enum class ToolpathIssue {
     OpenContourIgnored,   ///< Open vectors were ignored: closed ones are needed (Pocket, Drill).
     NoRegion,             ///< The closed vectors enclose no area; nothing produced (Pocket); a vector
                           ///< without area was skipped (Drill).
-    WorkLimitExceeded,    ///< Refused: detail, pass depth or stepover too small (Pocket, Drill).
+    WorkLimitExceeded,    ///< Refused: detail, pass depth or stepover too small, a parameter out of range, or
+                          ///< more work than the budget allows; nothing produced (Pocket, Drill, Profile).
     RegionNotKept,        ///< A part could not be kept within the safety margin; not cut (Pocket).
     RegionTrimmed,        ///< A part was trimmed by more than the tolerance (Pocket).
     NoRestMaterial,       ///< A rest tool found nothing left by the earlier tools (Pocket).
@@ -55,6 +58,21 @@ enum class ToolpathIssue {
     MedialAxisCapped,     ///< The medial axis hit its budget or missed a boundary; nothing produced (V-Carve).
     CrossingVectorsResolved,  ///< Crossing or touching vectors were resolved into their even-odd region (V-Carve).
     StepoverLimited,      ///< A stepover wider than the tool cuts was limited; ridges may be left (V-Carve).
+    Cancelled,            ///< The caller cancelled the run; nothing produced (Profile).
+};
+
+/// What a caller can control about one run of an operation (T-0186, ADR-0016 section 19).
+struct ToolpathRunControl {
+    /// Polled at coarse, deterministic points while the operation works (every 1024 work units and
+    /// between the stages). When it reads true the run stops and returns an empty toolpath with a
+    /// `Cancelled` diagnostic: nothing partial. Null = not cancellable. The flag must outlive the call.
+    const std::atomic<bool>* cancel{nullptr};
+    /// Work limit in the operation's work units; 0 = the operation's default. A run that needs more
+    /// is refused with `WorkLimitExceeded`, after at most about this many units of work.
+    std::uint64_t workLimit{0};
+    /// Limit on the moves of the toolpath (estimated up front, counted as emitted); 0 = the
+    /// operation's default (Profile: `kProfileMaxMoves`, 20 million).
+    std::uint64_t moveLimit{0};
 };
 
 /// One diagnostic of a toolpath operation.
