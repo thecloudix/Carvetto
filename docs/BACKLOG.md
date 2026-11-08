@@ -989,3 +989,7 @@ TransformDialog (transform_menu.cpp) keeps a `const Document&` and `rebuild()` r
 
 ### T-0226 Flaky CPU-ratio test: T-0172 (b) (offset_narrow_loops_test.cpp:1610)   [status: ready — LOW]
 `CHECK(t.ratio() < 1.35)` failed once on ubuntu-26.04 CI with ratio 1.362 (even 0.1505 s vs varied 0.2057 s) on PR #91, unrelated to that PR. Timing-ratio tests on ~0.15 s runs are noise-sensitive: widen the bound, lengthen the workload, or use best-of-N / operation counts instead of CPU seconds. Audit other ratio-based tests (cpu_scaling.hpp users).
+
+### T-0228 Geometry offset: interruptible + cheaper Bezier length (from T-0186/T-0130 findings)   [status: ready — MEDIUM]
+Phase: 1   Module: core/geometry (offset), core/toolpath   Depends on: T-0186
+Director decision 2026-11-07 (T-0186 round 3): the Profile single-call cap stays at 6e8 units (never refuse a job main finishes in <=10 s); consequence: cancel latency is up to ~11 s while ONE huge vector (e.g. a 1,000-4,400-Bezier outline) is being offset. Fix at the source: (1) a cooperative poll/budget hook inside offsetOpenContour / offsetContours / union so a single call can stop in ms; (2) the exact Bezier length used by the offset costs 0.2 ms-8 ms per span depending on curvature (smooth 0.18 ms, quarter circle/loop 4-12 ms): use an adaptive cheaper length (error-bounded) or cache; (3) Clipper2 BuildIntersectList dominates starburst/nested Inside/V-bit (50-70 ns/unit): evaluate. Must keep byte-identical results for finished inputs. Large sign text (thousands of Bezier glyph spans) depends on (2).
