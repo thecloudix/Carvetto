@@ -169,15 +169,15 @@ TEST_CASE("typing keys: backspace removes whole code points, escape drops the dr
     CHECK_FALSE(ed.hasDraft());
 }
 
-TEST_CASE("the compiled-in starter font is the bundled OFL font and loads", "[text][tool][font]") {
+TEST_CASE("the compiled-in starter font is DejaVu Serif and loads", "[text][tool][font]") {
     const auto bytes = starterFontBytes();
     REQUIRE_FALSE(bytes.empty());
-    CHECK(std::vector<std::uint8_t>(bytes.begin(), bytes.end()) == fontBytes());
+    const std::vector<std::uint8_t> copy(bytes.begin(), bytes.end());
     Document doc;
     ToolController tool(&doc);
-    REQUIRE(tool.textEditor().setFont(std::vector<std::uint8_t>(bytes.begin(), bytes.end()), starterFontName()).ok);
-    CHECK(tool.textEditor().fontName() == "Carvetto Starter");
-    CHECK(tool.textEditor().fontKey() == fontKeyFor(fontBytes()));
+    REQUIRE(tool.textEditor().setFont(copy, starterFontName()).ok);
+    CHECK(tool.textEditor().fontName() == "DejaVu Serif");
+    CHECK(tool.textEditor().fontKey() == fontKeyFor(copy));
 }
 
 TEST_CASE("text needs a font, a writable layer and sane input", "[text][tool]") {

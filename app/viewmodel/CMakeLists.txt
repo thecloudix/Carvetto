@@ -1,8 +1,8 @@
 # carvetto_viewmodel: Qt-free view logic for the desktop app (ADR-0014). It must never link Qt;
 # tests/qt_free_check.cmake enforces that (and that core/ includes no Qt header).
 # The Text tool's starter font is compiled in (T-0211): a generated source holds the bytes of
-# data/fonts/CarvettoStarter-Regular.ttf, regenerated when the font file changes.
-set(STARTER_FONT_FILE ${PROJECT_SOURCE_DIR}/data/fonts/CarvettoStarter-Regular.ttf)
+# data/fonts/DejaVuSerif.ttf, regenerated when the font file changes.
+set(STARTER_FONT_FILE ${PROJECT_SOURCE_DIR}/data/fonts/DejaVuSerif.ttf)
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${STARTER_FONT_FILE})
 file(READ ${STARTER_FONT_FILE} STARTER_FONT_HEX HEX)
 string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," STARTER_FONT_ARRAY "${STARTER_FONT_HEX}")

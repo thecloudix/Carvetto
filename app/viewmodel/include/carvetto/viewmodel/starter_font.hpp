@@ -5,10 +5,10 @@
 
 namespace carvetto::viewmodel {
 
-/// The font the Text tool starts with: `data/fonts/CarvettoStarter-Regular.ttf` (SIL OFL 1.1, an
-/// original Carvetto font), compiled into the program so a fresh install can place text without any
-/// system font. It is a minimal glyph set (see data/fonts/README); users pick their own TTF/OTF file
-/// for real work. The bytes are generated at build time from the data file.
+/// The font the Text tool starts with: `data/fonts/DejaVuSerif.ttf` (DejaVu Serif 2.37, Regular;
+/// Bitstream Vera / DejaVu licence, see data/fonts/DEJAVU-LICENSE.txt and THIRD_PARTY_NOTICES.md),
+/// compiled into the program so a fresh install can place text without any system font. The file is
+/// never modified. The bytes are generated at build time from the data file.
 std::span<const std::uint8_t> starterFontBytes();
 
 /// Display name of the starter font.
