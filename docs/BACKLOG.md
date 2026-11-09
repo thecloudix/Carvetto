@@ -1027,7 +1027,7 @@ Goal: the app lets a user manage the document without scripts: Layers panel (lis
 Phase: 1 (usability)   Module: app/viewmodel + app/src (+ core/tooling where missing)   Depends on: T-0221, T-0224
 Goal: close the setup gap found in the T-0224/T-0221 work: the app only has the compiled-in starter tools and no machine/material setup (summary says 'rapid rate not set'; Save dialog machine list empty). Add: Tool database editor (list/add/edit/duplicate/delete tools of all supported types with the core/tooling data model: diameter, flutes, flute length, V-angle, feeds/speeds per machine x material, units mm/in), Machines editor (name, work area, default post, associated posts, rapid rate, acceleration, spindle/feed limits), Materials editor, a Job setup dialog (material block size/thickness/Z zero/ origin, units), import/export of the tool database (core/tooling serialisation if it exists), persistence in the user config dir (QStandardPaths) with versioned, validated JSON, safe atomic writes, and hostile-file handling (corrupt/huge/NaN fields -> refuse with message, keep defaults). The Toolpaths dock tool picker, Preview time readout (rapid rate) and Save Toolpaths dialog (machines) must read from these. Document references tools by name/id: handle deleted/renamed tools (stale toolpaths flag). Tests: persistence round-trip, hostile files, UI via self-test.
 
-### T-0236 Chamfer toolpath (core/toolpath + toolpaths dock form)   [status: ready]
+### T-0236 Chamfer toolpath (core/toolpath + toolpaths dock form)   [status: in-progress]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0120, T-0153, T-0220
 Goal: Chamfer toolpath: angle, width/cut depth (linked), overcut, inside/outside, slope up/down, cut direction, V-bit or round-nose. Inventory 'Chamfer Toolpath'.
 Acceptance criteria:
@@ -1126,7 +1126,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0247 Weld and Subtract vector operations (menu/UI parity)   [status: ready]
+### T-0247 Weld and Subtract vector operations (menu/UI parity)   [status: in-progress]
 Phase: 1   Module: app/viewmodel + app   Depends on: T-0207
 Goal: Weld Vectors keeping inner regions of text, Subtract, Overlap exposed as Edit-menu commands on the selection, built on T-0207 booleans.
 Acceptance criteria:
@@ -1144,7 +1144,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0249 Vector validator (find/fix open, duplicate, tiny, self-intersecting, wrong-direction vectors)   [status: ready]
+### T-0249 Vector validator (find/fix open, duplicate, tiny, self-intersecting, wrong-direction vectors)   [status: in-progress]
 Phase: 1   Module: core/geometry + app   Depends on: T-0210, T-0208
 Goal: Vector Validator per inventory §'Vector Validator': detect and optionally fix problems, select offenders, report counts.
 Acceptance criteria:
@@ -1162,7 +1162,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0251 Texture: vector texture generator and textured area   [status: ready]
+### T-0251 Texture: vector texture generator and textured area   [status: in-progress]
 Phase: 1   Module: core/geometry + app   Depends on: T-0210
 Goal: Create Vector Texture (wavy fill lines: angle, spacing, wavelength, amplitude, noise, seed) as 2D vectors. The 3D 'textured area component' depends on Phase 2 and is excluded. Deterministic given seed.
 Acceptance criteria:
