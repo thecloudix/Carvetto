@@ -174,7 +174,6 @@ void ToolController::setDocument(document::Document* doc) {
     gesture_ = TransformGesture{};
     nodeEditor_.setDocument(nullptr);
     textEditor_.setDocument(nullptr);
-    xfReset();
     cancel();
     doc_ = doc;
     nodeEditor_.setDocument(doc);
