@@ -48,6 +48,34 @@ if(_clipper2_offset_patched EQUAL -1)
   string(REPLACE "${_clipper2_offset_old}" "${_clipper2_offset_new}" _clipper2_offset_src "${_clipper2_offset_src}")
   file(WRITE "${_clipper2_offset_cpp}" "${_clipper2_offset_src}")
 endif()
+# Cooperative cancel hook (T-0228): a long Clipper2 sweep (one scanbeam can hold millions of edge
+# intersections) must be interruptible. The engine gets a thread-local function pointer
+# `Clipper2Lib::carvettoPollHook`, null unless Carvetto installs it (core/src/geometry/cancel.cpp),
+# polled every 1024th intersection and scanbeam; the installed function throws to unwind the call.
+# Nothing else changes: with a null hook the results are those of 1.4.0 (plus the T-0018 fix).
+# Applied at configure time, idempotently, like the patch above.
+set(_clipper2_engine_cpp "${clipper2_SOURCE_DIR}/CPP/Clipper2Lib/src/clipper.engine.cpp")
+file(READ "${_clipper2_engine_cpp}" _clipper2_engine_src)
+string(FIND "${_clipper2_engine_src}" "carvettoPollHook" _clipper2_engine_patched)
+if(_clipper2_engine_patched EQUAL -1)
+  macro(_carvetto_clipper_edit old new)
+    string(FIND "${_clipper2_engine_src}" "${old}" _at)
+    if(_at EQUAL -1)
+      message(FATAL_ERROR "Clipper2: cannot apply the T-0228 cancel hook to ${_clipper2_engine_cpp} "
+                          "(source differs from 1.4.0)")
+    endif()
+    string(REPLACE "${old}" "${new}" _clipper2_engine_src "${_clipper2_engine_src}")
+  endmacro()
+  _carvetto_clipper_edit("namespace Clipper2Lib {\n\n  static const Rect64 invalid_rect = Rect64(false);"
+    "namespace Clipper2Lib {\n\n  thread_local void (*carvettoPollHook)() = nullptr; // Carvetto T-0228\n  static inline void CarvettoPoll()\n  {\n    static thread_local unsigned counter = 0;\n    if (carvettoPollHook && (++counter & 1023u) == 0) carvettoPollHook();\n  }\n\n  static const Rect64 invalid_rect = Rect64(false);")
+  _carvetto_clipper_edit("  void ClipperBase::DoIntersections(const int64_t top_y)\n  {\n"
+    "  void ClipperBase::DoIntersections(const int64_t top_y)\n  {\n    CarvettoPoll();\n")
+  _carvetto_clipper_edit("  void ClipperBase::AddNewIntersectNode(Active& e1, Active& e2, int64_t top_y)\n  {\n"
+    "  void ClipperBase::AddNewIntersectNode(Active& e1, Active& e2, int64_t top_y)\n  {\n    CarvettoPoll();\n")
+  _carvetto_clipper_edit("      node_iter != intersect_nodes_.end();  ++node_iter)\n    {\n"
+    "      node_iter != intersect_nodes_.end();  ++node_iter)\n    {\n      CarvettoPoll();\n")
+  file(WRITE "${_clipper2_engine_cpp}" "${_clipper2_engine_src}")
+endif()
 set_target_properties(Clipper2 PROPERTIES
   INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${clipper2_SOURCE_DIR}/CPP/Clipper2Lib/include>")
 # Clipper2 builds itself with -Werror (/WX on MSVC). Strip that so warnings a future compiler

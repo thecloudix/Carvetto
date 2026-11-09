@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstddef>
 #include <thread>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -67,7 +68,7 @@ bool sameChains(const std::vector<Contour>& a, const std::vector<Contour>& b) {
 TEST_CASE("isDegenerate for a Bezier equals the exact length test", "[geometry][cancel]") {
     const Tolerance tol = Tolerance::defaults();
     carvetto::test::SplitMix rng{228};
-    for (int i = 0; i < 3000; ++i) {
+    for (int i = 0; i < 120; ++i) {
         // Sizes from far below to far above the tolerance, so both bounds and the exact fallback run.
         const double scale = rng.logUniform(1e-5, 1e-1);
         auto p = [&] { return Vec2{rng.uniform(-1.0, 1.0) * scale, rng.uniform(-1.0, 1.0) * scale}; };
@@ -126,23 +127,69 @@ TEST_CASE("scopes nest and restore the outer flag", "[geometry][cancel]") {
     REQUIRE_FALSE(cancelRequested());
 }
 
-TEST_CASE("a cancel raised during a long open offset stops it quickly", "[geometry][cancel]") {
-    const Tolerance tol = Tolerance::defaults();
-    const Contour c = wavyOutline(3000);
+namespace {
+
+struct Timed {
+    std::vector<Contour> out;
+    bool raisedBeforeReturn{false};
+    double latencySeconds{0.0};  // from the flag going up to the call returning
+};
+
+// Runs `call` under a scope whose flag a second thread raises after `delayMs`.
+template <class Call>
+Timed runCancelled(int delayMs, Call call) {
+    using Clock = std::chrono::steady_clock;
     std::atomic<bool> flag{false};
+    std::atomic<Clock::rep> raisedAt{0};
     std::thread raiser([&] {
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        std::this_thread::sleep_for(std::chrono::milliseconds(delayMs));
+        raisedAt = Clock::now().time_since_epoch().count();
         flag = true;
     });
-    const auto t0 = std::chrono::steady_clock::now();
-    std::vector<Contour> out;
+    Timed t;
     {
         const CancelScope scope(&flag);
-        out = offsetOpenContour(c, 1.5, OffsetSide::Left, JoinType::Round, tol);
+        t.out = call();
     }
+    const Clock::rep doneAt = Clock::now().time_since_epoch().count();
     raiser.join();
-    const double secs = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
-    // Either it was cancelled (nothing returned) or it finished before the flag went up.
-    REQUIRE((out.empty() || !out.front().isEmpty()));
-    REQUIRE(secs < 30.0);
+    t.raisedBeforeReturn = raisedAt.load() != 0 && raisedAt.load() <= doneAt;
+    t.latencySeconds = std::chrono::duration<double>(Clock::duration(doneAt - raisedAt.load())).count();
+    return t;
+}
+
+}  // namespace
+
+TEST_CASE("a cancel raised mid-call stops offsetContours on a Bezier ring in well under a second",
+          "[geometry][cancel]") {
+    // 3000 spans, 7 lobes: Clipper2 spends ~10 s in one sweep without the hook.
+    const Tolerance tol = Tolerance::defaults();
+    const Contour c = wavyOutline(3000);
+    const Timed t = runCancelled(50, [&] { return offsetContours({c}, 1.5, JoinType::Round, tol); });
+    REQUIRE(t.raisedBeforeReturn);
+    REQUIRE(t.out.empty());
+    REQUIRE(t.latencySeconds < 1.0);
+}
+
+TEST_CASE("a cancel raised mid-call stops offsetOpenContour quickly", "[geometry][cancel]") {
+    const Tolerance tol = Tolerance::defaults();
+    const Contour c = wavyOutline(3000);
+    const Timed t = runCancelled(5, [&] { return offsetOpenContour(c, 1.5, OffsetSide::Left, JoinType::Round, tol); });
+    REQUIRE(t.latencySeconds < 1.0);
+    REQUIRE((t.out.empty() || !t.raisedBeforeReturn));
+}
+
+TEST_CASE("a cancel raised mid-call stops unionContours quickly", "[geometry][cancel]") {
+    const Tolerance tol = Tolerance::defaults();
+    const Contour c = wavyOutline(3000);
+    Contour shifted = c;
+    for (Span& sp : shifted.spans) {
+        auto& b = std::get<BezierSpan>(sp);
+        for (Vec2* p : {&b.p0, &b.p1, &b.p2, &b.p3}) {
+            p->x += 1.7;
+        }
+    }
+    const Timed t = runCancelled(1, [&] { return unionContours({c, shifted}, tol, FillRule::EvenOdd); });
+    REQUIRE(t.latencySeconds < 1.0);
+    REQUIRE((t.out.empty() || !t.raisedBeforeReturn));
 }

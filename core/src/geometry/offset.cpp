@@ -568,6 +568,7 @@ static std::vector<Contour> offsetContoursBatchedImpl(const std::vector<Contour>
 std::vector<Contour> offsetContoursBatched(const std::vector<Contour>& contours, double distance, JoinType join,
                                            const Tolerance& tol, double mitreLimit, std::size_t minBatchDepth) {
     try {
+        const detail::ClipperCancelGuard guard;
         return offsetContoursBatchedImpl(contours, distance, join, tol, mitreLimit, minBatchDepth);
     } catch (const GeometryCancelled&) {
         return {};  // T-0228: cancelled; the caller discards it

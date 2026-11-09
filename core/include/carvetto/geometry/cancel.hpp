@@ -12,8 +12,9 @@ namespace carvetto::geometry {
 /// scope. A null flag installs nothing. Scopes nest (the previous flag is restored). A call whose
 /// flag never reads true returns exactly what it would without any scope.
 ///
-/// Limit: a single Clipper2 call (one scanline sweep over one batch) cannot be interrupted; the
-/// poll happens before and after it and between batches.
+/// The vendored Clipper2 sweep polls too (patched in core/CMakeLists.txt), so even one huge
+/// sweep stops in milliseconds. `Contour::polygonise` also checks the flag (every 32 spans) and
+/// then returns the polygon built so far: a partial result, valid only to be discarded.
 class CancelScope {
    public:
     explicit CancelScope(const std::atomic<bool>* flag);

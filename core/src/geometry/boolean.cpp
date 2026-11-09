@@ -147,6 +147,7 @@ BooleanResult booleanOpBatchedImpl(BooleanOp op, const std::vector<Contour>& sub
 BooleanResult booleanOpBatched(BooleanOp op, const std::vector<Contour>& subject, const std::vector<Contour>& clip,
                                const Tolerance& tol, FillRule fill, std::size_t minBatchDepth) {
     try {
+        const ClipperCancelGuard guard;
         return booleanOpBatchedImpl(op, subject, clip, tol, fill, minBatchDepth);
     } catch (const GeometryCancelled&) {
         return {};  // T-0228: cancelled; the caller discards it
