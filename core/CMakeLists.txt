@@ -56,6 +56,8 @@ endif()
 # Applied at configure time, idempotently, like the patch above.
 set(_clipper2_engine_cpp "${clipper2_SOURCE_DIR}/CPP/Clipper2Lib/src/clipper.engine.cpp")
 file(READ "${_clipper2_engine_cpp}" _clipper2_engine_src)
+# A Windows checkout may have CRLF line endings (autocrlf): the edits below match LF text.
+string(REPLACE "\r\n" "\n" _clipper2_engine_src "${_clipper2_engine_src}")
 string(FIND "${_clipper2_engine_src}" "carvettoPollHook" _clipper2_engine_patched)
 if(_clipper2_engine_patched EQUAL -1)
   macro(_carvetto_clipper_edit old new)
