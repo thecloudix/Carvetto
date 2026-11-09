@@ -29,6 +29,10 @@ class QTabWidget;
 namespace carvetto::app {
 
 class CanvasWidget;
+class HistoryPanel;
+class LayersPanel;
+class PropertiesPanel;
+class SheetsPanel;
 class RulerWidget;
 class CopiesMenu;
 class NodeEditMenu;
@@ -91,6 +95,13 @@ class MainWindow : public QMainWindow {
     QAction* undoAction() const { return undoAction_; }
     QAction* redoAction() const { return redoAction_; }
     QDockWidget* layersDock() const { return layersDock_; }
+    /// Properties, Layers, Sheets and History panels (T-0210).
+    PropertiesPanel* propertiesPanel() const { return properties_; }
+    LayersPanel* layersPanel() const { return layersPanel_; }
+    SheetsPanel* sheetsPanel() const { return sheetsPanel_; }
+    HistoryPanel* historyPanel() const { return historyPanel_; }
+    QDockWidget* propertiesDock() const { return propertiesDock_; }
+    QDockWidget* historyDock() const { return historyDock_; }
     ToolPanel* toolPanel() const { return toolPanel_; }
 
     /// Activates a drawing / selection tool (same as clicking its toolbar button).
@@ -162,8 +173,10 @@ class MainWindow : public QMainWindow {
 
     QComboBox* sheetCombo_{nullptr};
     QComboBox* layerCombo_{nullptr};
-    QListWidget* sheetsList_{nullptr};
-    QListWidget* layersList_{nullptr};
+    PropertiesPanel* properties_{nullptr};
+    LayersPanel* layersPanel_{nullptr};
+    SheetsPanel* sheetsPanel_{nullptr};
+    HistoryPanel* historyPanel_{nullptr};
 
     QDockWidget* designDock_{nullptr};
     QDockWidget* sheetsDock_{nullptr};
@@ -172,6 +185,8 @@ class MainWindow : public QMainWindow {
     QDockWidget* libraryDock_{nullptr};
     QDockWidget* toolpathsDock_{nullptr};
     QDockWidget* previewDock_{nullptr};
+    QDockWidget* propertiesDock_{nullptr};
+    QDockWidget* historyDock_{nullptr};
 
     QActionGroup* toolGroup_{nullptr};
     std::map<viewmodel::ToolKind, QAction*> toolActions_;

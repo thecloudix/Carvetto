@@ -23,6 +23,8 @@ qt_add_executable(carvetto
   src/canvas_widget.hpp
   src/ruler_widget.cpp
   src/ruler_widget.hpp
+  src/document_panels.cpp
+  src/document_panels.hpp
   src/new_job_dialog.cpp
   src/new_job_dialog.hpp
   src/node_edit_menu.cpp
@@ -30,6 +32,9 @@ qt_add_executable(carvetto
   src/preview_panel.cpp
   src/preview_panel.hpp
   src/preview_self_test.cpp
+  src/panels_self_test.cpp
+  src/properties_panel.cpp
+  src/properties_panel.hpp
   src/relief_view.cpp
   src/relief_view.hpp
   src/tool_panel.cpp

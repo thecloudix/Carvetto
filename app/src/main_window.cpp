@@ -36,6 +36,7 @@
 
 #include "array_copy_menu.hpp"
 #include "canvas_widget.hpp"
+#include "document_panels.hpp"
 #include "carvetto/viewmodel/dxf_exchange.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/new_job_form.hpp"
@@ -46,6 +47,7 @@
 #include "node_edit_menu.hpp"
 #include "save_toolpaths_dialog.hpp"
 #include "preview_panel.hpp"
+#include "properties_panel.hpp"
 #include "relief_view.hpp"
 #include "ruler_widget.hpp"
 #include "tool_panel.hpp"
@@ -145,16 +147,32 @@ void MainWindow::buildDocks() {
 
     toolPanel_ = new ToolPanel(canvas_, this);
     designDock_ = makeDock("Design", "designDock", toolPanel_);
-    sheetsList_ = new QListWidget(this);
-    sheetsDock_ = makeDock("Sheets", "sheetsDock", sheetsList_);
-    layersList_ = new QListWidget(this);
-    layersDock_ = makeDock("Layers", "layersDock", layersList_);
+    const DocumentGetter currentDoc = [this]() { return &session_.document(); };
+    sheetsPanel_ = new SheetsPanel(currentDoc, this);
+    sheetsDock_ = makeDock("Sheets", "sheetsDock", sheetsPanel_);
+    layersPanel_ = new LayersPanel(currentDoc, this);
+    layersDock_ = makeDock("Layers", "layersDock", layersPanel_);
+    properties_ = new PropertiesPanel(currentDoc, this);
+    propertiesDock_ = makeDock("Properties", "propertiesDock", properties_);
+    historyPanel_ = new HistoryPanel(currentDoc, this);
+    historyDock_ = makeDock("History", "historyDock", historyPanel_);
+    for (PanelBase* panel : {static_cast<PanelBase*>(sheetsPanel_), static_cast<PanelBase*>(layersPanel_),
+                             static_cast<PanelBase*>(properties_), static_cast<PanelBase*>(historyPanel_)}) {
+        panel->onEdited = [this]() { documentChanged(); };
+        panel->onMessage = [this](const std::string& text) { statusBar()->showMessage(qs(text), 6000); };
+    }
+    historyPanel_->historyBlocked = [this]() { return toolpaths_ != nullptr && toolpaths_->busy(); };
+    sheetsPanel_->onPick = [this](int row) { pickSheet(row); };
+    layersPanel_->onPick = [this](int row) { pickLayer(row); };
     componentsDock_ =
         makeDock("Components", "componentsDock", placeholder("3D components will be listed here.", this));
     libraryDock_ = makeDock("Library", "libraryDock", placeholder("Clipart and project library.", this));
     toolpaths_ = new ToolpathsPanel(&session_.document(), this);
     toolpaths_->onDocumentEdited = [this]() { documentChanged(); };
     toolpaths_->onSelectionChanged = [this]() {
+        if (properties_ != nullptr) {
+            properties_->refresh();
+        }
         if (transformMenu_) {
             transformMenu_->refresh();
         }
@@ -186,13 +204,14 @@ void MainWindow::buildDocks() {
     tabifyDockWidget(layersDock_, componentsDock_);
     tabifyDockWidget(componentsDock_, libraryDock_);
     designDock_->raise();
+    addDockWidget(Qt::LeftDockWidgetArea, propertiesDock_);
+    addDockWidget(Qt::LeftDockWidgetArea, historyDock_);
+    tabifyDockWidget(libraryDock_, propertiesDock_);
+    tabifyDockWidget(propertiesDock_, historyDock_);
     addDockWidget(Qt::RightDockWidgetArea, toolpathsDock_);
     addDockWidget(Qt::RightDockWidgetArea, previewDock_);
     tabifyDockWidget(toolpathsDock_, previewDock_);
     toolpathsDock_->raise();
-
-    connect(sheetsList_, &QListWidget::currentRowChanged, this, [this](int row) { pickSheet(row); });
-    connect(layersList_, &QListWidget::currentRowChanged, this, [this](int row) { pickLayer(row); });
 }
 
 void MainWindow::buildMenus() {
@@ -257,7 +276,8 @@ void MainWindow::buildMenus() {
     view->addSeparator();
     QMenu* panels = view->addMenu(QStringLiteral("&Panels"));
     for (QDockWidget* dock :
-         {designDock_, sheetsDock_, layersDock_, componentsDock_, libraryDock_, toolpathsDock_, previewDock_}) {
+         {designDock_, sheetsDock_, layersDock_, propertiesDock_, historyDock_, componentsDock_, libraryDock_,
+          toolpathsDock_, previewDock_}) {
         panels->addAction(dock->toggleViewAction());
     }
     view->addAction(preview_->showAction());
@@ -355,6 +375,7 @@ void MainWindow::buildToolPalette() {
     };
     canvas_->onToolStateChanged = [this]() { toolPanel_->refreshValues(); };
     canvas_->onSelectionChanged = [this]() {
+        properties_->refresh();
         if (transformMenu_) {
             transformMenu_->refresh();  // keeps the shortcut actions (M, T, R, H, V, F9) usable
         }
@@ -443,6 +464,10 @@ void MainWindow::documentChanged() {
                              ? QStringLiteral("&Redo ") + qs(session_.document().undoStack().redoText())
                              : QStringLiteral("&Redo"));
     canvas_->refresh();
+    if (properties_ != nullptr) {
+        properties_->refresh();
+        historyPanel_->refresh();
+    }
     if (toolpaths_ != nullptr) {
         toolpaths_->refresh();
     }
@@ -480,32 +505,28 @@ bool MainWindow::redo() {
 void MainWindow::refreshSelectors() {
     refreshing_ = true;
     sheetCombo_->clear();
-    sheetsList_->clear();
     int activeSheetRow = 0;
     for (std::size_t i = 0; i < session_.document().sheets().size(); ++i) {
         const document::Sheet& sheet = session_.document().sheets()[i];
         sheetCombo_->addItem(qs(sheet.name));
-        sheetsList_->addItem(qs(sheet.name));
         if (sheet.id == session_.document().activeSheet()) {
             activeSheetRow = static_cast<int>(i);
         }
     }
     sheetCombo_->setCurrentIndex(activeSheetRow);
-    sheetsList_->setCurrentRow(activeSheetRow);
 
     layerCombo_->clear();
-    layersList_->clear();
     int activeLayerRow = 0;
     for (std::size_t i = 0; i < session_.document().layers().size(); ++i) {
         const document::Layer& layer = session_.document().layers()[i];
         layerCombo_->addItem(qs(layer.name));
-        layersList_->addItem(qs(layer.name));
         if (layer.id == session_.document().activeLayer()) {
             activeLayerRow = static_cast<int>(i);
         }
     }
     layerCombo_->setCurrentIndex(activeLayerRow);
-    layersList_->setCurrentRow(activeLayerRow);
+    sheetsPanel_->refresh();
+    layersPanel_->refresh();
     refreshing_ = false;
 }
 
@@ -518,11 +539,12 @@ void MainWindow::pickSheet(int row) {
     session_.document().setActiveSheet(session_.document().sheets()[static_cast<std::size_t>(row)].id);
     refreshing_ = true;
     sheetCombo_->setCurrentIndex(row);
-    sheetsList_->setCurrentRow(row);
+    sheetsPanel_->setCurrentRow(row);
     refreshing_ = false;
     canvas_->zoomToMaterial();
     canvas_->refresh();
     toolpaths_->invalidate();  // the active sheet decides which vectors a toolpath machines
+    properties_->refresh();
 }
 
 void MainWindow::pickLayer(int row) {
@@ -532,7 +554,7 @@ void MainWindow::pickLayer(int row) {
     session_.document().setActiveLayer(session_.document().layers()[static_cast<std::size_t>(row)].id);
     refreshing_ = true;
     layerCombo_->setCurrentIndex(row);
-    layersList_->setCurrentRow(row);
+    layersPanel_->setCurrentRow(row);
     refreshing_ = false;
 }
 
