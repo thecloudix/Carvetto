@@ -984,7 +984,7 @@ Goal: `Font` loading (TTF/OTF from file/bytes, no system-font enumeration in cor
 Criteria: (1) glyph outlines match an independent oracle (area/winding/bbox of known glyphs in the test font); (2) text on curve places glyph baselines tangent within tolerance; (3) work/size caps with refusal statuses; (4) clean MSVC + GCC/Clang builds, deterministic hashes on CI Linux and Windows; (5) licences recorded; mutation checks.
 Out of scope: single-line stroke fonts, the text tool UI (T-0211).
 
-### T-0225 TransformDialog holds a const Document& (T-0206 verifier note)   [status: in-progress]
+### T-0225 TransformDialog holds a const Document& (T-0206 verifier note)   [status: verifying]
 TransformDialog (transform_menu.cpp) keeps a `const Document&` and `rebuild()` re-reads it from option-toggle callbacks. Unreachable today (modal, nothing replaces the document), but pass the document live or close the dialog on replacement. Also remove the redundant xfReset() in ToolController::setDocument (equivalent mutant).
 
 ### T-0226 Flaky CPU-ratio test: T-0172 (b) (offset_narrow_loops_test.cpp:1610)   [status: ready — LOW]
