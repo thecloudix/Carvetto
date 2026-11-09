@@ -467,11 +467,26 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     cut a tab through: a tab that holds without them and still joins two pieces with them is kept
     (T-0156 round 2: the first version dropped holding tabs, repro tabdrop_9001_11,
     tabdrop_570014_182), and a corner under another live tab is not counted for the tab being judged
-    (it comes back, and that tab is judged again, if the other is dropped). **Known residual
-    defects, identical on main (T-0156 verifier, harness t0156v1/repro, carded as T-0177):** a
-    false "comes free" report on a held part (false939_7101_876: 939.84 mm² with one tab kept;
-    7102_671: 7.6 mm²), six free 0.216 mm² pieces unreported (miss6_7104_351), and reported
-    areas far from the flood's. New in the round-2 screen and also carded as T-0177: a false
+    (it comes back, and that tab is judged again, if the other is dropped). **Ramps of 3D tabs (T-0177).** With a V-bit and 3D tabs the tool climbs a ramp as long as the
+    tab's thickness on each side of a raised stretch (45 degrees), so at the tab layer the cone's
+    disc shrinks along the ramp from the tab-layer radius to nothing at the raised stretch (radius
+    min(r, s tan(half angle)), s the distance from the stretch). The loose-piece search used to band
+    the ramps at the full tab-layer radius, which closed the channel past a tab and reported a held
+    part as loose (false939_7101_876: 939.84 mm² with one tab kept, a mitred corner; 7102_671:
+    7.6 mm²; the exact flood finds nothing free). Each ramp is now banded by tapers, the convex
+    hull of the discs at the ends of each straight (or, on an arc, 0.5 µm-flat) stretch of it,
+    grown by 2 µm like the other bands, split where the radius stops being linear (the cap at the
+    bit's radius, the middle of a stretch between two tabs closer than two ramps) and at every
+    span boundary; the flat part of the stretch between the ramps is banded as before. The proof
+    that most stretches enclose nothing is unchanged: the tapers lie within the bands of the full
+    stretches it covers. End mills have no such taper (a flat end cuts its full radius at any
+    height below the layer). The tab check still judges the ramps at the full radius (conservative:
+    it may leave out a tab the flood finds holding; the T-0177 (f) case).
+    **Known residual
+    defects, identical on main (T-0156 verifier, harness t0156v1/repro, carded as T-0177):** six
+    free 0.216 mm² pieces unreported (miss6_7104_351: the flood's pieces are 0.0505 mm thick, within
+    2.5 µm of the 0.05 mm threshold, and the bands' slack above, which reports from about 0.055 mm,
+    hides them: a knife-edge case, (d)), and reported areas far from the flood's. New in the round-2 screen and also carded as T-0177: a false
     report in seed 9301 scene 2132 (Outside, D12, V90, allowance −0.666, leads off; moves identical
     to main, the branch reports 3 pieces of about 0.04 mm² where main reports none and the oracle
     finds none: knife-edge at the 0.04 / 0.05 mm thresholds; repro
