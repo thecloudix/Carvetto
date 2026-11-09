@@ -8,12 +8,14 @@
 #include <QFormLayout>
 #include <QMenu>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QString>
 #include <QVBoxLayout>
 #include <QVariant>
 #include <string>
 
 #include "carvetto/document/units.hpp"
+#include "carvetto/viewmodel/vector_validator.hpp"
 #include "main_window.hpp"
 
 namespace carvetto::app {
@@ -98,6 +100,21 @@ VectorOpsMenu::VectorOpsMenu(MainWindow& window, QMenu* editMenu) : window_(wind
             runOffset(lastOffset_);
         }
     });
+    menu->addSeparator();
+    QAction* validate = menu->addAction(QStringLiteral("&Validate Vectors..."));
+    QAction* selectDuplicates = menu->addAction(QStringLiteral("Select All Duplicate Vectors"));
+    QObject::connect(validate, &QAction::triggered, menu, [this]() { runValidator(); });
+    QObject::connect(selectDuplicates, &QAction::triggered, menu, [this]() {
+        document::Document& doc = window_.currentDocument();
+        viewmodel::ValidatorOptions options;
+        options.scope = viewmodel::defaultValidatorScope(doc);
+        const std::size_t n = viewmodel::selectDuplicateVectors(doc, options);
+        if (n > 0) {
+            window_.documentChanged();
+        } else {
+            QMessageBox::information(&window_, QStringLiteral("Vectors"), QStringLiteral("No duplicate vectors found."));
+        }
+    });
     QObject::connect(menu, &QMenu::aboutToShow, menu, [this]() { refresh(); });
     for (QAction* action : {weld_, subtract_, intersect_, exclude_, offset_}) {
         action->setEnabled(false);  // until the menu opens (the window may not have a document yet)
@@ -137,6 +154,46 @@ VectorOpResult VectorOpsMenu::runOffset(const OffsetOptions& options, bool showE
     VectorOpResult result = viewmodel::applyOffset(window_.currentDocument(), options);
     report(result, showErrors);
     return result;
+}
+
+void VectorOpsMenu::runValidator() {
+    document::Document& doc = window_.currentDocument();
+    viewmodel::ValidatorOptions options;
+    options.scope = viewmodel::defaultValidatorScope(doc);
+    QMessageBox box(&window_);
+    box.setWindowTitle(QStringLiteral("Vector Validator"));
+    auto* vcarve = new QCheckBox(QStringLiteral("V-carving mode (ignore crossings inside text)"), &box);
+    vcarve->setChecked(lastVCarvingMode_);
+    box.setCheckBox(vcarve);
+    QPushButton* fix = box.addButton(QStringLiteral("Fix"), QMessageBox::AcceptRole);
+    QPushButton* select = box.addButton(QStringLiteral("Select Offenders"), QMessageBox::ActionRole);
+    QPushButton* search = box.addButton(QStringLiteral("Search"), QMessageBox::ActionRole);
+    box.addButton(QMessageBox::Close);
+    const QString scope = options.scope == viewmodel::ValidatorScope::Selection
+                              ? QStringLiteral("Checking the selected vectors.")
+                              : QStringLiteral("Checking all visible vectors on this sheet.");
+    for (;;) {
+        options.vCarvingMode = vcarve->isChecked();
+        lastVCarvingMode_ = options.vCarvingMode;
+        const viewmodel::ValidatorReport r = viewmodel::validateVectors(doc, options);
+        box.setText(scope + QStringLiteral("\n\n") + QString::fromStdString(r.summary()));
+        fix->setEnabled(r.report.fixableCount() > 0);
+        select->setEnabled(r.report.total() > 0);
+        box.exec();
+        if (box.clickedButton() == fix) {
+            const viewmodel::ValidatorFixResult f = viewmodel::fixVectors(doc, options);
+            if (f.objectsChanged > 0 || f.objectsRemoved > 0) {
+                window_.documentChanged();
+            }
+        } else if (box.clickedButton() == select) {
+            if (viewmodel::selectOffenders(doc, r) > 0) {
+                window_.documentChanged();
+            }
+            return;
+        } else if (box.clickedButton() != search) {
+            return;
+        }
+    }
 }
 
 void VectorOpsMenu::report(const VectorOpResult& result, bool showErrors) {

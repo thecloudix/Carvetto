@@ -53,6 +53,8 @@ class VectorOpsMenu {
     viewmodel::VectorOpResult runOffset(const viewmodel::OffsetOptions& options, bool showErrors = true);
 
    private:
+    /// Vector Validator dialog: Search / Fix / Select Offenders on the selection, else all visible vectors.
+    void runValidator();
     void report(const viewmodel::VectorOpResult& result, bool showErrors);
 
     MainWindow& window_;
@@ -62,6 +64,7 @@ class VectorOpsMenu {
     QAction* exclude_{nullptr};
     QAction* offset_{nullptr};
     viewmodel::OffsetOptions lastOffset_;
+    bool lastVCarvingMode_{false};
 };
 
 }  // namespace carvetto::app

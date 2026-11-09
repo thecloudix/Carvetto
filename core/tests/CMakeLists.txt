@@ -35,6 +35,7 @@ add_executable(carvetto_tests
   geometry/medial_axis_robustness_test.cpp
   geometry/delaunay_test.cpp
   geometry/edit_ops_test.cpp
+  geometry/validator_test.cpp
   geometry/edit_ops_fuzz_test.cpp
   toolpath/hostile_arc_test.cpp
   geometry/edit_ops_hardening_test.cpp
