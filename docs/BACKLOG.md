@@ -1144,7 +1144,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0249 Vector validator (find/fix open, duplicate, tiny, self-intersecting, wrong-direction vectors)   [status: in-progress]
+### T-0249 Vector validator (find/fix open, duplicate, tiny, self-intersecting, wrong-direction vectors)   [status: verifying]
 Phase: 1   Module: core/geometry + app   Depends on: T-0210, T-0208
 Goal: Vector Validator per inventory §'Vector Validator': detect and optionally fix problems, select offenders, report counts.
 Acceptance criteria:
