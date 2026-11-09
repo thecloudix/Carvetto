@@ -306,3 +306,36 @@ TEST_CASE("Imported file can be merged into an existing database", "[tooling][js
     CHECK(report.tools.added == static_cast<int>(sampleDb().tools().size()) - 1);
     CHECK(mine.findTool("tool-0")->name == "Mine");
 }
+
+TEST_CASE("Machine rapid rate, work area and limits round-trip; missing keys default to 0", "[tooling][json]") {
+    ToolDatabase db;
+    Machine m;
+    m.id = "m1";
+    m.name = "M";
+    m.rapidRate = 6000.5;
+    m.workAreaX = 1200.0;
+    m.workAreaY = 800.0;
+    m.workAreaZ = 100.0;
+    m.maxSpindleSpeed = 24000.0;
+    m.maxFeedRate = 9000.0;
+    REQUIRE(db.addMachine(m));
+    const ImportResult r = importToolDatabaseJson(exportToolDatabaseJson(db));
+    REQUIRE(r.ok);
+    CHECK(*r.database.findMachine("m1") == m);
+
+    const ImportResult old = importToolDatabaseJson(
+        R"({"format":"carvetto-tool-database","version":1,"groups":[],"materials":[],"tools":[],)"
+        R"("machines":[{"id":"m","name":"Old"}]})");
+    REQUIRE(old.ok);
+    CHECK(old.database.findMachine("m")->rapidRate == 0.0);
+    CHECK(old.database.findMachine("m")->workAreaZ == 0.0);
+
+    const ImportResult bad = importToolDatabaseJson(
+        R"({"format":"carvetto-tool-database","version":1,"groups":[],"materials":[],"tools":[],)"
+        R"("machines":[{"id":"m","name":"Bad","work_area_mm":[1,2]}]})");
+    CHECK_FALSE(bad.ok);
+    const ImportResult inf = importToolDatabaseJson(
+        R"({"format":"carvetto-tool-database","version":1,"groups":[],"materials":[],"tools":[],)"
+        R"("machines":[{"id":"m","name":"Inf","rapid_mm_min":1e999}]})");
+    CHECK_FALSE(inf.ok);
+}

@@ -84,6 +84,10 @@ json machineToJson(const Machine& m) {
         {"acceleration_angular_deg_s2", toDeg(m.accelerationAngular)},
         {"associated_posts", m.associatedPosts},
         {"default_post", m.defaultPost},
+        {"rapid_mm_min", quantise(m.rapidRate)},
+        {"work_area_mm", json::array({quantise(m.workAreaX), quantise(m.workAreaY), quantise(m.workAreaZ)})},
+        {"max_spindle_rpm", quantise(m.maxSpindleSpeed)},
+        {"max_feed_mm_min", quantise(m.maxFeedRate)},
     };
 }
 
@@ -117,7 +121,9 @@ double getNumber(const json& obj, const char* key, const std::string& where, dou
     const auto it = obj.find(key);
     if (it == obj.end()) return fallback;
     if (!it->is_number()) fail(where, std::string("'") + key + "' must be a number");
-    return it->get<double>();
+    const double v = it->get<double>();
+    if (!std::isfinite(v)) fail(where, std::string("'") + key + "' must be a finite number");
+    return v;
 }
 
 int getInt(const json& obj, const char* key, const std::string& where, int fallback) {
@@ -227,6 +233,17 @@ Machine machineFromJson(const json& j, const std::string& where) {
         }
     }
     m.defaultPost = getString(j, "default_post", here, false);
+    m.rapidRate = getNumber(j, "rapid_mm_min", here);
+    if (const json* area = optionalArray(j, "work_area_mm", here)) {
+        if (area->size() != 3 || !(*area)[0].is_number() || !(*area)[1].is_number() || !(*area)[2].is_number()) {
+            fail(here, "'work_area_mm' must be three numbers");
+        }
+        m.workAreaX = (*area)[0].get<double>();
+        m.workAreaY = (*area)[1].get<double>();
+        m.workAreaZ = (*area)[2].get<double>();
+    }
+    m.maxSpindleSpeed = getNumber(j, "max_spindle_rpm", here);
+    m.maxFeedRate = getNumber(j, "max_feed_mm_min", here);
     return m;
 }
 
