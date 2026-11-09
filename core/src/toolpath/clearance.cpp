@@ -244,6 +244,9 @@ double ClearanceField::distance(geometry::Vec2 p) const {
     }
 }
 
+/// Most evenly spaced samples findViolations lays along a path (T-0184): 2^21 points, about 100 MB.
+constexpr std::size_t kMaxGridSamples = std::size_t{1} << 21;
+
 std::vector<std::pair<double, double>> findViolations(const ArcLengthPath& path, double u0, double u1,
                                                       const ClearanceField& field, double threshold,
                                                       double resolution) {
@@ -277,13 +280,19 @@ std::vector<std::pair<double, double>> findViolations(const ArcLengthPath& path,
     // Work meter (T-0186): about one sample per millimetre, charged before the grid is built.
     detail::chargeWork(detail::unitsOf(u1 - u0) + seeds.size());
     std::vector<double> grid;
+    // T-0184: the grid holds at most about kMaxGridSamples points whatever the length. Up to that
+    // many millimetres of path the spacing is the 1 mm above (unchanged); a longer path (a huge
+    // arc, 6e9 mm round) gets a proportionally wider spacing instead of an int overflow and an
+    // allocation of gigabytes. Profile refuses such vectors up front, so this guards direct callers.
+    const double stride = std::max(1.0, (u1 - u0) / static_cast<double>(kMaxGridSamples));
     for (std::size_t i = 0; i < seeds.size(); ++i) {
         grid.push_back(seeds[i]);
         if (i + 1 < seeds.size()) {
             const double gap = seeds[i + 1] - seeds[i];
-            const int extra = static_cast<int>(std::floor(gap / 1.0));
-            for (int k = 1; k <= extra; ++k) {
-                grid.push_back(seeds[i] + gap * k / (extra + 1));
+            const double wanted = std::floor(gap / stride);
+            const auto extra = wanted >= 1.0 ? static_cast<std::size_t>(std::min(wanted, 1e9)) : std::size_t{0};
+            for (std::size_t k = 1; k <= extra; ++k) {
+                grid.push_back(seeds[i] + gap * static_cast<double>(k) / static_cast<double>(extra + 1));
             }
         }
     }
