@@ -1026,3 +1026,147 @@ Goal: the app lets a user manage the document without scripts: Layers panel (lis
 ### T-0235 Tool database, machine and material setup UI (viewmodel + Qt)   [status: done — merged PR #101]
 Phase: 1 (usability)   Module: app/viewmodel + app/src (+ core/tooling where missing)   Depends on: T-0221, T-0224
 Goal: close the setup gap found in the T-0224/T-0221 work: the app only has the compiled-in starter tools and no machine/material setup (summary says 'rapid rate not set'; Save dialog machine list empty). Add: Tool database editor (list/add/edit/duplicate/delete tools of all supported types with the core/tooling data model: diameter, flutes, flute length, V-angle, feeds/speeds per machine x material, units mm/in), Machines editor (name, work area, default post, associated posts, rapid rate, acceleration, spindle/feed limits), Materials editor, a Job setup dialog (material block size/thickness/Z zero/ origin, units), import/export of the tool database (core/tooling serialisation if it exists), persistence in the user config dir (QStandardPaths) with versioned, validated JSON, safe atomic writes, and hostile-file handling (corrupt/huge/NaN fields -> refuse with message, keep defaults). The Toolpaths dock tool picker, Preview time readout (rapid rate) and Save Toolpaths dialog (machines) must read from these. Document references tools by name/id: handle deleted/renamed tools (stale toolpaths flag). Tests: persistence round-trip, hostile files, UI via self-test.
+
+### T-0236 Chamfer toolpath (core/toolpath + toolpaths dock form)   [status: ready]
+Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0120, T-0153, T-0220
+Goal: Chamfer toolpath: angle, width/cut depth (linked), overcut, inside/outside, slope up/down, cut direction, V-bit or round-nose. Inventory 'Chamfer Toolpath'.
+Acceptance criteria:
+  1. Result on a 20x20 square with 90 deg V-bit, width 2: cut depth 1 (tool-geometry exact), moves on offset contours, depth never exceeds tool max cut depth; form wired in the dock; save/load as toolpath record; tests + hostile-input bounds.
+  2. Clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
+Out of scope: anything beyond the card; 3D/Phase 2 features.
+Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
+
+### T-0237 Thread milling toolpath   [status: ready]
+Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0120, T-0220
+Goal: Thread milling: single/multi-point cutters, ISO metric/universal pitch presets, internal/external, left/right, cut up/down, fit tolerance, create circles for internal threads. Inventory 'Thread Milling Toolpath'.
+Acceptance criteria:
+  1. Helical moves match pitch x turns for a M6x1 internal thread (Z advance per revolution == pitch within 1e-6); direction/cut-direction combinations verified; tolerances applied; form + records + tests.
+  2. Clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
+Out of scope: anything beyond the card; 3D/Phase 2 features.
+Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
+
+### T-0238 Inlay toolpaths: straight inlay (male/female, stepped) and VCarve inlay (plug and pocket)   [status: ready]
+Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0121, T-0153, T-0220
+Goal: Straight inlays (male straight/stepped, female pocket/hole, allowance) and VCarve Inlay (pocket depth, glue gap, surface clearance, plug destination sheet, mirrored plug, plug boundary options).
+Acceptance criteria:
+  1. Male and female pieces for the same vector mate within the stated allowance/glue gap (geometry test); plug is mirrored on the destination sheet; forms, records, tests. May be split into two cards by the coder at start (report to director).
+  2. Clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
+Out of scope: anything beyond the card; 3D/Phase 2 features.
+Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
+
+### T-0239 Fluting toolpath   [status: ready]
+Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0120, T-0220
+Goal: Fluting toolpath per inventory 'Fluting Toolpath' (flat or ball-nose, depth profile along the vector, start/end ramps).
+Acceptance criteria:
+  1. Depth profile verified at sample points along a straight and a curved vector; form, records, tests.
+  2. Clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
+Out of scope: anything beyond the card; 3D/Phase 2 features.
+Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
+
+### T-0240 Prism carving toolpath   [status: ready]
+Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0153, T-0220
+Goal: Prism Carving: prism depth, set depth for full prism, cut direction (inventory 'Prism Carving Toolpath').
+Acceptance criteria:
+  1. Peak depth equals the stated depth for a symmetric shape; full-prism option reaches the tool-limited depth; form, records, tests.
+  2. Clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
+Out of scope: anything beyond the card; 3D/Phase 2 features.
+Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
+
+### T-0241 Keep-out zones (document, rapid routing, UI)   [status: ready]
+Phase: 1   Module: core/document + core/toolpath/linking + app   Depends on: T-0220, T-0235
+Goal: Keep-out zones created from closed vectors (not linked to source), clearance value, show/hide, and rapid moves routed around them (post blocks INITIAL/FIRST/STRAIGHT_RAPID_MOVE variables). Persisted in .carv.
+Acceptance criteria:
+  1. No rapid segment of any toolpath enters a zone (property test); zones survive save/load; undoable create/delete; post variables per inventory; tests.
+  2. Clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
+Out of scope: anything beyond the card; 3D/Phase 2 features.
+Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
+
+### T-0242 Toolpath tiling manager   [status: ready]
+Phase: 1   Module: core/toolpath + app   Depends on: T-0224, T-0220
+Goal: Tiling of a job larger than the work area into tiles with overlap, per-tile output (inventory 'Toolpath Tiling Manager').
+Acceptance criteria:
+  1. Tile outputs together cover the same cut set as the untiled job within tolerance; tiles fit the machine work area; UI via self-test; tests.
+  2. Clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
+Out of scope: anything beyond the card; 3D/Phase 2 features.
+Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
+
+### T-0243 Double-sided jobs (job setup, flip, swap sides, multi-sided view)   [status: ready]
+Phase: 1   Module: core/document + app   Depends on: T-0235, T-0210
+Goal: Job Type Double Sided: flip direction, Zero off same side, per-side sheets/toolpaths, swap sides, multi-sided view; Rotary excluded.
+Acceptance criteria:
+  1. Flipped geometry maps correctly (round-trip test of flip H and V); toolpaths per side output with correct Z zero; persisted in .carv; self-test.
+  2. Clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
+Out of scope: anything beyond the card; 3D/Phase 2 features.
+Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
+
+### T-0244 Job sheet / toolpath summary report   [status: ready]
+Phase: 1   Module: app/viewmodel + core   Depends on: T-0224, T-0235
+Goal: Create Job Sheet (inventory §'Create Job Sheet') plus time estimation summary: job info, tool list, per-toolpath times, thumbnails; export to HTML/PDF-free text format first.
+Acceptance criteria:
+  1. Report for a known job lists every toolpath, tool and time estimate matching core/toolpath time.hpp; output is deterministic; escaped hostile names; tests.
+  2. Clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
+Out of scope: anything beyond the card; 3D/Phase 2 features.
+Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
+
+### T-0245 Trace bitmap to vectors   [status: ready]
+Phase: 1   Module: core/io + app   Depends on: T-0202, T-0210
+Goal: Trace Selected Area, B&W with threshold and colour mode (16 colours): bitmap import to fitted Bezier/line contours. Clean-room tracing algorithm, no third-party code beyond a permissive image decoder (dependency choice to director: ADR).
+Acceptance criteria:
+  1. A known test bitmap (disc, letter) traces to contours with area within 2% and bounded node count; hostile image size capped; undoable; tests.
+  2. Clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
+Out of scope: anything beyond the card; 3D/Phase 2 features.
+Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
+
+### T-0246 Dimensions (linear, aligned, angular, radial) with associative update   [status: ready]
+Phase: 1   Module: core/document + app   Depends on: T-0211, T-0210
+Goal: Dimension objects, options (decimals, font/text height, offset, custom text), associativity on scale/move, edit via handles/selection.
+Acceptance criteria:
+  1. Scaling a dimensioned part updates the measured text; each type measures a known figure exactly; undo/redo; saved in .carv; DXF export as DIMENSION or exploded; tests.
+  2. Clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
+Out of scope: anything beyond the card; 3D/Phase 2 features.
+Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
+
+### T-0247 Weld and Subtract vector operations (menu/UI parity)   [status: ready]
+Phase: 1   Module: app/viewmodel + app   Depends on: T-0207
+Goal: Weld Vectors keeping inner regions of text, Subtract, Overlap exposed as Edit-menu commands on the selection, built on T-0207 booleans.
+Acceptance criteria:
+  1. Weld of two overlapping circles = one contour; weld of text keeps counters; subtract/overlap results exact on squares; single undo step; self-test.
+  2. Clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
+Out of scope: anything beyond the card; 3D/Phase 2 features.
+Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
+
+### T-0248 Document variables (Edit > Document Variables, expressions in edit boxes)   [status: ready]
+Phase: 1   Module: core/document + app   Depends on: T-0210
+Goal: Create/edit/import/export document variables, use {Name} and letter variables (W,H,T,P,I,M) in numeric edit boxes and text; deletion refused while used. core/document/variables.hpp exists: extend, do not duplicate.
+Acceptance criteria:
+  1. Expression evaluation matches hand-computed values; deleting a used variable is refused; import overwrites same-named; hostile expressions bounded (no recursion blowup); tests.
+  2. Clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
+Out of scope: anything beyond the card; 3D/Phase 2 features.
+Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
+
+### T-0249 Vector validator (find/fix open, duplicate, tiny, self-intersecting, wrong-direction vectors)   [status: ready]
+Phase: 1   Module: core/geometry + app   Depends on: T-0210, T-0208
+Goal: Vector Validator per inventory §'Vector Validator': detect and optionally fix problems, select offenders, report counts.
+Acceptance criteria:
+  1. Seeded corpus of defects is detected exactly (counts); fixes are single undo steps and never lose area beyond tolerance; hostile input bounded; tests.
+  2. Clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
+Out of scope: anything beyond the card; 3D/Phase 2 features.
+Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
+
+### T-0250 Photo V-carve (raster to depth-modulated V-carve/engrave toolpath)   [status: blocked — owner scope confirmation]
+Phase: 1   Module: core/toolpath + core/io + app   Depends on: T-0245, T-0153
+Goal: Photo V-Carve from a bitmap per inventory; needs raster decoding shared with T-0245. PRODUCT DECISION PENDING: confirm it is Phase 1 (owner listed it) vs. the heightmap work in Phase 2; ask the owner before dispatching.
+Acceptance criteria:
+  1. To be written on dispatch after the owner confirms scope.
+  2. Clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
+Out of scope: anything beyond the card; 3D/Phase 2 features.
+Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
+
+### T-0251 Texture: vector texture generator and textured area   [status: ready]
+Phase: 1   Module: core/geometry + app   Depends on: T-0210
+Goal: Create Vector Texture (wavy fill lines: angle, spacing, wavelength, amplitude, noise, seed) as 2D vectors. The 3D 'textured area component' depends on Phase 2 and is excluded. Deterministic given seed.
+Acceptance criteria:
+  1. Same seed gives identical output on every platform; spacing/wavelength/amplitude measured within 1%; bounded vertex count; undoable; tests.
+  2. Clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
+Out of scope: anything beyond the card; 3D/Phase 2 features.
+Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
