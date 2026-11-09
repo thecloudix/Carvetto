@@ -90,6 +90,7 @@ add_executable(carvetto_tests
   geometry/offset_inradius_test.cpp
   geometry/offset_dust_test.cpp
   geometry/offset_batch_test.cpp
+  geometry/cancel_test.cpp
   geometry/boolean_test.cpp
   geometry/boolean_batch_test.cpp
   geometry/offset_unnested_hole_test.cpp

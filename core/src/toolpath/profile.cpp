@@ -32,6 +32,7 @@
 #include "carvetto/toolpath/path_walk.hpp"
 #include "block_settle.hpp"
 #include "enclosed_pieces.hpp"
+#include "carvetto/geometry/cancel.hpp"
 #include "work_meter.hpp"
 
 namespace carvetto::toolpath {
@@ -1366,6 +1367,7 @@ std::vector<Cut> ProfileBuilder::buildCuts(double extra, bool finishing) {
         } else {
             chargeOffset(c, offTol_.chordal, d, side == geometry::OffsetSide::Left, i);  // work meter (T-0186)
             chains[i] = geometry::offsetOpenContour(c, d, side, join, offTol_, p_.corners.mitreLimit);
+            detail::pollCancel();  // T-0228: a cancelled call returned early (empty)
         }
         for (Contour& ch : chains[i]) {
             if (!ch.closed && !ch.isEmpty() && geometry::distance(ch.startPoint(), ch.endPoint()) <= tol_.distance) {
@@ -1451,6 +1453,7 @@ std::vector<Cut> ProfileBuilder::buildCuts(double extra, bool finishing) {
         }
         chargeRegion(members, offTol_, group.front());  // work meter (T-0186): union and offset of the region
         const std::vector<Contour> region = geometry::unionContours(members, offTol_, geometry::FillRule::EvenOdd);
+        detail::pollCancel();  // T-0228
         // Nesting parity of the group as a whole: how many other closed vectors contain it. When
         // odd, the group sits in a hole and the global region is the complement of its own.
         int base = 0;
@@ -1471,6 +1474,7 @@ std::vector<Cut> ProfileBuilder::buildCuts(double extra, bool finishing) {
             dd = -dd;
         }
         std::vector<Contour> res = geometry::offsetContours(region, dd, join, offTol_, p_.corners.mitreLimit);
+        detail::pollCancel();  // T-0228
         for (Contour& r : res) {
             if (base == 1) {
                 r.reverse();  // keep the global region on the left
@@ -3240,8 +3244,10 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
         if (!band.empty()) {
             for (detail::PointRing& r : band) bands.push_back(std::move(r));
         } else {
-            for (const Contour& b : geometry::offsetContours({path}, reach, geometry::JoinType::Round, offTol_,
-                                                             p_.corners.mitreLimit)) {
+            const std::vector<Contour> banded = geometry::offsetContours({path}, reach, geometry::JoinType::Round,
+                                                                         offTol_, p_.corners.mitreLimit);
+            detail::pollCancel();  // T-0228
+            for (const Contour& b : banded) {
                 bands.push_back(b.polygonise(offTol_).points);
             }
         }
@@ -4228,6 +4234,8 @@ ProfileResult profileToolpath(const std::vector<Contour>& contours, const toolin
     detail::WorkMeter meter(control.workLimit == 0 ? kProfileDefaultWorkUnits : std::min(control.workLimit, kMaxLimit),
                             control.cancel);
     detail::MeterScope scope(meter);
+    // T-0228: the geometry calls poll the same flag, so a cancel stops a huge single offset in ms.
+    const geometry::CancelScope cancelScope(control.cancel);
     ProfileResult stopped;
     stopped.toolpath.name = params.name;
     const auto stop = [&](ProfileIssue issue, std::string message) {

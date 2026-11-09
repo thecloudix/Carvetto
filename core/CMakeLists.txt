@@ -176,6 +176,7 @@ add_library(carvetto_core STATIC
   src/document/document.cpp
   src/document/commands.cpp
   src/document/toolpath_record.cpp
+  src/geometry/cancel.cpp
   src/geometry/clipper_interop.cpp
   src/geometry/offset.cpp
   src/geometry/hole_nesting.cpp
