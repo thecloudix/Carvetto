@@ -7,7 +7,7 @@ GPL-compatible licence. Their full licence texts are fetched with the sources at
 | Component | Version | Licence | Used for |
 |---|---|---|---|
 | Qt | 6.x | LGPL-3.0 (dynamically linked) | Desktop UI (`app/`) |
-| Clipper2 | 1.4.0 (one upstream fix backported, ADR-0006 §6) | Boost Software License 1.0 | Polygon offsets and booleans |
+| Clipper2 | 1.4.0 (one upstream fix backported, ADR-0006 §6; plus a local cancel-poll hook, T-0228) | Boost Software License 1.0 | Polygon offsets and booleans |
 | nlohmann/json | 3.11.3 | MIT | JSON import/export |
 | miniz | 3.0.2 | MIT | `.carv` zip container |
 | FreeType | 2.14.3 | FreeType License (FTL; used under this option, which is GPLv3 compatible, ADR-0033) | Font parsing and glyph outlines (`core/text`) |

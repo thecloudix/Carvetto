@@ -12,6 +12,7 @@
 #include <utility>
 
 #include "boolean_batch.hpp"
+#include "cancel_poll.hpp"
 #include "clipper_interop.hpp"
 #include "offset_batch.hpp"
 
@@ -128,6 +129,7 @@ void clipBatched(Clipper2Lib::ClipType op, Clipper2Lib::FillRule fill, bool reve
         if (cs.empty() && os.empty() && !clipsAloneCount) {
             continue;
         }
+        detail::pollCancel();  // T-0228: between batches (one Clipper2 call is not interruptible)
         clipOnce(op, fill, reverse, cs, os, cl, closedOut, openOut);
     }
 }
@@ -136,14 +138,33 @@ void clipBatched(Clipper2Lib::ClipType op, Clipper2Lib::FillRule fill, bool reve
 
 namespace detail {
 
+namespace {
+BooleanResult booleanOpBatchedImpl(BooleanOp op, const std::vector<Contour>& subject,
+                                   const std::vector<Contour>& clip, const Tolerance& tol, FillRule fill,
+                                   std::size_t minBatchDepth);
+}
+
 BooleanResult booleanOpBatched(BooleanOp op, const std::vector<Contour>& subject, const std::vector<Contour>& clip,
                                const Tolerance& tol, FillRule fill, std::size_t minBatchDepth) {
+    try {
+        const ClipperCancelGuard guard;
+        return booleanOpBatchedImpl(op, subject, clip, tol, fill, minBatchDepth);
+    } catch (const GeometryCancelled&) {
+        return {};  // T-0228: cancelled; the caller discards it
+    }
+}
+
+namespace {
+BooleanResult booleanOpBatchedImpl(BooleanOp op, const std::vector<Contour>& subject,
+                                   const std::vector<Contour>& clip, const Tolerance& tol, FillRule fill,
+                                   std::size_t minBatchDepth) {
     std::size_t refused = 0;
     Clipper2Lib::Paths64 closedSubjects;
     Clipper2Lib::Paths64 openSubjects;
     Clipper2Lib::Paths64 clips;
     for (const Contour& c : subject) {
         Clipper2Lib::Path64 p = detail::toClipperPath(c, tol, &refused);
+        pollCancel();
         if (p.empty()) {
             continue;
         }
@@ -154,6 +175,7 @@ BooleanResult booleanOpBatched(BooleanOp op, const std::vector<Contour>& subject
             continue;
         }
         Clipper2Lib::Path64 p = detail::toClipperPath(c, tol, &refused);
+        pollCancel();
         if (!p.empty()) {
             clips.push_back(std::move(p));
         }
@@ -170,10 +192,12 @@ BooleanResult booleanOpBatched(BooleanOp op, const std::vector<Contour>& subject
     clipBatched(toClipType(op), toFillRule(fill), false, closedSubjects, openSubjects, clips, minBatchDepth,
                 closedOut, openOut);
 
+    pollCancel();
     result.closed = detail::contoursFromClipper(closedOut, true);
     result.open = detail::contoursFromClipper(openOut, false);
     return result;
 }
+}  // namespace
 
 Clipper2Lib::Paths64 clipClosedPaths(Clipper2Lib::ClipType op, Clipper2Lib::FillRule fill, bool reverse,
                                      Clipper2Lib::Paths64 subjects, Clipper2Lib::Paths64 clips) {

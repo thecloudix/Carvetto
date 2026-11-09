@@ -513,6 +513,22 @@ void polygoniseRegionInto(const Span& s, const Tolerance& tol, std::vector<Vec2>
 }
 
 bool isDegenerate(const Span& s, const Tolerance& tol) {
+    if (const auto* bez = std::get_if<BezierSpan>(&s)) {
+        // T-0228: the exact length costs 0.2-12 ms a span, and the answer is almost always clear
+        // from two cheap bounds: the chord is a lower and the control polygon an upper bound of the
+        // length (the exact scheme's value lies between them to rounding; the 1e-6 margins cover
+        // it), so only a span within a hair of the tolerance needs the exact value. The result is
+        // the one `length(s) <= tol.distance` gives.
+        constexpr double kMargin = 1e-6;
+        const double chord = distance(bez->p0, bez->p3);
+        if (chord > tol.distance * (1.0 + kMargin)) {
+            return false;
+        }
+        const double poly = distance(bez->p0, bez->p1) + distance(bez->p1, bez->p2) + distance(bez->p2, bez->p3);
+        if (poly * (1.0 + kMargin) <= tol.distance) {
+            return true;
+        }
+    }
     return length(s) <= tol.distance;
 }
 

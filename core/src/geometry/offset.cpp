@@ -17,6 +17,7 @@
 
 #include "box_index.hpp"
 #include "box_tree.hpp"
+#include "cancel_poll.hpp"
 #include "clipper_interop.hpp"
 #include "hole_nesting.hpp"
 #include "offset_batch.hpp"
@@ -25,6 +26,9 @@
 #include "offset_shortcuts.hpp"
 
 namespace carvetto::geometry {
+
+using detail::pollCancel;
+using detail::pollCancelEvery;
 
 // ---------------------------------------------------------------------------------------------
 // Closed contours: Clipper2.
@@ -490,8 +494,9 @@ std::size_t batchDepth(const std::vector<GridBox>& boxes, const std::vector<std:
     return best;
 }
 
-std::vector<Contour> offsetContoursBatched(const std::vector<Contour>& contours, double distance, JoinType join,
-                                           const Tolerance& tol, double mitreLimit, std::size_t minBatchDepth) {
+static std::vector<Contour> offsetContoursBatchedImpl(const std::vector<Contour>& contours, double distance,
+                                                      JoinType join, const Tolerance& tol, double mitreLimit,
+                                                      std::size_t minBatchDepth) {
     if (!std::isfinite(distance)) {
         return {};
     }
@@ -507,6 +512,7 @@ std::vector<Contour> offsetContoursBatched(const std::vector<Contour>& contours,
             continue;  // outlining an open contour with zero width yields nothing
         }
         Clipper2Lib::Path64 path = detail::toClipperPath(c, tol);
+        pollCancel();
         if (path.empty()) {
             continue;
         }
@@ -517,7 +523,9 @@ std::vector<Contour> offsetContoursBatched(const std::vector<Contour>& contours,
     }
     const double delta = detail::toClipperDistance(distance);
     const Clipper2Lib::JoinType clipperJoin = toClipperJoin(join);
+    pollCancel();
     resolveUnnestedHoles(closedPaths, delta);
+    pollCancel();
     if (closedPaths.empty() && openPaths.empty()) {
         return {};
     }
@@ -530,6 +538,7 @@ std::vector<Contour> offsetContoursBatched(const std::vector<Contour>& contours,
         // Batches in the order of their first input contour, each in Clipper2's own order.
         Clipper2Lib::Paths64 part;
         for (const auto& batch : *batches) {
+            pollCancel();  // T-0228: one Clipper2 call is not interruptible, the gaps between are
             part.clear();
             part.reserve(batch.size());
             for (const std::size_t i : batch) {
@@ -550,8 +559,20 @@ std::vector<Contour> offsetContoursBatched(const std::vector<Contour>& contours,
         }
         offsetter.Execute(delta, out);
     }
+    pollCancel();
     dropDustRings(out);
+    pollCancel();
     return detail::contoursFromClipper(out, true);
+}
+
+std::vector<Contour> offsetContoursBatched(const std::vector<Contour>& contours, double distance, JoinType join,
+                                           const Tolerance& tol, double mitreLimit, std::size_t minBatchDepth) {
+    try {
+        const detail::ClipperCancelGuard guard;
+        return offsetContoursBatchedImpl(contours, distance, join, tol, mitreLimit, minBatchDepth);
+    } catch (const GeometryCancelled&) {
+        return {};  // T-0228: cancelled; the caller discards it
+    }
 }
 
 }  // namespace detail
@@ -598,7 +619,9 @@ constexpr double kInf = std::numeric_limits<double>::infinity();
 // Flattened input span list: lines and arcs only, Beziers polygonised, degenerate pieces gone.
 std::vector<Span> flattenForOffset(const Contour& c, const Tolerance& tol) {
     std::vector<Span> out;
+    std::size_t index = 0;
     for (const Span& s : c.spans) {
+        pollCancelEvery(index++);
         if (isDegenerate(s, tol)) {
             continue;
         }
@@ -2962,6 +2985,7 @@ RawChain buildRaw(const std::vector<Span>& input, double d, double sign, JoinTyp
     };
     std::vector<std::optional<Span>> unextended;  // per element: the offset span as first computed
     for (std::size_t i = 0; i < input.size(); ++i) {
+        pollCancelEvery(i);
         std::optional<Span> next = offsetSpan(input[i], d, sign);
         const std::optional<Span> own = next;
         if (!next) {
@@ -4102,8 +4126,8 @@ class ConvexRegions {
 
 }  // namespace
 
-std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, OffsetSide side,
-                                       JoinType join, const Tolerance& tol, double mitreLimit) {
+static std::vector<Contour> offsetOpenContourImpl(const Contour& contour, double distance, OffsetSide side,
+                                                  JoinType join, const Tolerance& tol, double mitreLimit) {
     std::vector<Contour> result;
     const std::vector<Span> input = flattenForOffset(contour, tol);
     if (input.empty() || !std::isfinite(distance)) {
@@ -4176,6 +4200,7 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     std::vector<bool> dead(m, false);
     std::vector<Vec2> hull;
     for (std::size_t i = 0; i < m; ++i) {
+        pollCancelEvery(i);
         hullPoints(raw[i], hull);
         const Vec2 a = hull.front();
         std::size_t scanned = 0;
@@ -4332,6 +4357,7 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
         return cyclic && m > 1 && i == 0 && j + 1 == m && ti <= kParamEps && tj >= 1.0 - kParamEps;
     };
     for (std::size_t i = 0; i < m; ++i) {
+        pollCancelEvery(i);
         if (dead[i]) {
             continue;
         }
@@ -4383,6 +4409,7 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     //    (T-0006).
     std::vector<Span> boundary;
     for (std::size_t i = 0; i < input.size(); ++i) {
+        pollCancelEvery(i);
         const Span& s = input[i];
         const Span& prev = input[i == 0 ? input.size() - 1 : i - 1];
         if (i == 0 && !cyclic) {
@@ -4423,6 +4450,7 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     // this function and its loop variable can end up kept in memory, which cost ~12% on dense
     // zig-zags at large d (T-0172, after unrelated code was added to the function).
     std::vector<std::size_t> boundaryHits;
+    pollCancel();
     for (const Span& b : boundary) {
         const auto* arc = std::get_if<ArcSpan>(&b);
         const bool wholeCarrier = arc && arc->isFullCircle();
@@ -4485,6 +4513,7 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     };
     std::vector<Piece> candidates;
     for (std::size_t i = 0; i < m; ++i) {
+        pollCancelEvery(i);
         if (dead[i]) {
             continue;
         }
@@ -4519,6 +4548,7 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
     pruneLineCopies(raw, rc.connector, candidates, overlapping, d, sign, state, handled, keep);
     std::vector<Piece> kept;
     for (std::size_t k = 0; k < candidates.size(); ++k) {
+        pollCancelEvery(k);
         if (!handled[k] && state[k] < 0) {
             state[k] = keep(candidates[k]) ? 1 : 0;
         }
@@ -4984,6 +5014,15 @@ std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, 
         putBackStrays(result, resultKeys, strays, tol);
     }
     return result;
+}
+
+std::vector<Contour> offsetOpenContour(const Contour& contour, double distance, OffsetSide side,
+                                       JoinType join, const Tolerance& tol, double mitreLimit) {
+    try {
+        return offsetOpenContourImpl(contour, distance, side, join, tol, mitreLimit);
+    } catch (const detail::GeometryCancelled&) {
+        return {};  // T-0228: cancelled; the caller discards it
+    }
 }
 
 namespace detail {

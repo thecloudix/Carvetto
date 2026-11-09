@@ -1,5 +1,7 @@
 #include "carvetto/geometry/contour.hpp"
 
+#include "carvetto/geometry/cancel.hpp"
+
 #include <algorithm>
 
 namespace carvetto::geometry {
@@ -126,7 +128,12 @@ Polyline Contour::polygonise(const Tolerance& tol, bool* coarse) const {
         return pl;
     }
     pl.points.push_back(startPoint());
+    std::size_t index = 0;
     for (const Span& s : spans) {
+        // A cancel (T-0228) cuts a long contour short; the caller discards the partial polygon.
+        if ((index++ & 31U) == 0U && cancelRequested()) {
+            break;
+        }
         if (closed) {
             polygoniseRegionInto(s, tol, pl.points, coarse);
         } else {
