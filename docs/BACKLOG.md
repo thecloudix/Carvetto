@@ -1126,7 +1126,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0247 Weld and Subtract vector operations (menu/UI parity)   [status: in-progress]
+### T-0247 Weld and Subtract vector operations (menu/UI parity)   [status: verifying]
 Phase: 1   Module: app/viewmodel + app   Depends on: T-0207
 Goal: Weld Vectors keeping inner regions of text, Subtract, Overlap exposed as Edit-menu commands on the selection, built on T-0207 booleans.
 Acceptance criteria:
