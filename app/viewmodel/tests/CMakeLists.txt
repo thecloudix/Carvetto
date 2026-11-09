@@ -40,6 +40,7 @@ add_executable(carvetto_viewmodel_tests
   toolpath_robustness_test.cpp
   toolpath_runner_test.cpp
   toolpath_session_test.cpp
+  tool_setup_test.cpp
   vector_selector_test.cpp
 )
 # The toolpath tests drive carvetto-cli in process (cli::run) to compare its records with the session's.
