@@ -46,6 +46,7 @@
 #include "carvetto/viewmodel/view_transform.hpp"
 #include "main_window.hpp"
 #include "node_edit_menu.hpp"
+#include "properties_panel.hpp"
 #include "save_toolpaths_dialog.hpp"
 #include "tool_panel.hpp"
 #include "preview_panel.hpp"
@@ -733,6 +734,11 @@ int runSelfTest() {
             return fail("replacing the document while typing left a draft behind");
         }
         window.selectTool(viewmodel::ToolKind::Select);
+    }
+
+    // 8b. Properties, Layers, Sheets and History panels (T-0210).
+    if (const std::string why = panelsSelfTest(window); !why.empty()) {
+        return fail(why);
     }
 
     // 9. The Toolpaths dock through the real widgets (T-0221).

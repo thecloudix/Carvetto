@@ -111,6 +111,10 @@ std::string UndoStack::redoText() const {
     return canRedo() ? commands_[index_]->text() : std::string{};
 }
 
+std::string UndoStack::stepText(std::size_t i) const {
+    return i < commands_.size() ? commands_[i]->text() : std::string{};
+}
+
 void UndoStack::beginMacro(std::string text) {
     if (macroDepth_++ == 0) {
         macro_ = std::make_unique<MacroCommand>(std::move(text));

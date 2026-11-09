@@ -56,6 +56,10 @@ class UndoStack {
     /// `Document` mutators); callers of those must invalidate their caches themselves.
     std::uint64_t generation() const { return generation_; }
 
+    /// Description of recorded step `i` (0 = oldest, `i < count()`); "" when out of range. Steps
+    /// below `index()` are applied, the rest can be redone (the history list of the UI).
+    std::string stepText(std::size_t i) const;
+
     /// Number of recorded steps (undone ones included).
     std::size_t count() const { return commands_.size(); }
     /// Number of steps currently applied.
