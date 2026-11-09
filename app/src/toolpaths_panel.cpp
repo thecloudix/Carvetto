@@ -28,6 +28,7 @@
 #include "carvetto/tooling/tool_database.hpp"
 #include "carvetto/tooling/json_io.hpp"
 #include "carvetto/viewmodel/vector_selector.hpp"
+#include "carvetto/viewmodel/tool_setup.hpp"
 #include "starter_tools.hpp"
 #include "toolpath_form_dialog.hpp"
 
@@ -104,8 +105,42 @@ ToolpathsPanel::ToolpathsPanel(document::Document* doc, QWidget* parent)
     : QWidget(parent), session_(doc), doc_(doc), db_(loadStarterTools()) {
     setObjectName(QStringLiteral("ToolpathsPanel"));
     session_.setToolDatabase(db_);
+    if (const tooling::Machine* machine = viewmodel::activeMachine(db_, std::string())) {
+        activeMachineId_ = machine->id;
+        session_.setMachine(*machine, machine->rapidRate);
+    }
     build();
     refresh();
+}
+
+void ToolpathsPanel::applySetup(tooling::ToolDatabase db, const std::string& activeMachineId) {
+    db_ = std::move(db);
+    const tooling::Machine* machine = viewmodel::activeMachine(db_, activeMachineId);
+    activeMachineId_ = machine != nullptr ? machine->id : std::string();
+    session_.setToolDatabase(db_);
+    if (machine != nullptr) {
+        session_.setMachine(*machine, machine->rapidRate);
+    }
+    setupSaveError_.clear();
+    if (!setupFile_.empty()) {
+        viewmodel::writeToolDatabaseFile(setupFile_, db_, setupSaveError_);
+    }
+    refresh();
+    if (onSetupChanged) {
+        onSetupChanged();
+    }
+}
+
+std::string ToolpathsPanel::useSetupFile(const std::filesystem::path& path, const std::string& activeMachineId) {
+    setupFile_ = path;
+    viewmodel::SetupLoadResult loaded = viewmodel::loadToolSetup(path, db_);
+    const std::string message = loaded.message;
+    // Applying also writes the file; do not rewrite a file that was just read, or replace a refused one.
+    const std::filesystem::path keep = std::move(setupFile_);
+    setupFile_.clear();
+    applySetup(std::move(loaded.database), activeMachineId);
+    setupFile_ = keep;
+    return message;
 }
 
 ToolpathsPanel::~ToolpathsPanel() {

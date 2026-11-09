@@ -79,6 +79,12 @@ class MainWindow : public QMainWindow {
     /// the machines of the tool database.
     void saveToolpathsDialog();
     ToolpathsPanel* toolpaths() const { return toolpaths_; }
+    /// Setup > Job Setup... (edits the open job, one undo step) and Setup > Tools, Machines and
+    /// Materials... (T-0235). The dialogs are modal; the self-test drives the dialog classes directly.
+    QAction* jobSetupAction() const { return jobSetupAction_; }
+    QAction* toolSetupAction() const { return toolSetupAction_; }
+    void jobSetupDialog();
+    void toolSetupDialog();
     /// The Preview dock (toolpath preview, time readout, simulation) and the simulation view in the 3D tab.
     PreviewPanel* preview() const { return preview_; }
     QDockWidget* previewDock() const { return previewDock_; }
@@ -153,6 +159,8 @@ class MainWindow : public QMainWindow {
     viewmodel::FileSession session_;
     QMenu* recentMenu_{nullptr};
     QAction* saveToolpathsAction_{nullptr};
+    QAction* jobSetupAction_{nullptr};
+    QAction* toolSetupAction_{nullptr};
     std::unique_ptr<CopiesMenu> copies_;
     std::unique_ptr<VectorOpsMenu> vectorOps_;
     std::unique_ptr<NodeEditMenu> nodeEdit_;
@@ -192,6 +200,8 @@ class MainWindow : public QMainWindow {
     QLabel* cursorLabel_{nullptr};
     QLabel* jobLabel_{nullptr};
 
+    /// Reads the user's tool setup from the config folder (T-0235); warns when the file is refused.
+    void loadUserSetup(const QString& activeMachine);
     bool persistLayout_{false};
     bool refreshing_{false};
     bool quiet_{false};

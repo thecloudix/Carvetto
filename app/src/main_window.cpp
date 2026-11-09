@@ -186,6 +186,13 @@ void MainWindow::buildDocks() {
     toolpathsDock_ = makeDock("Toolpaths", "toolpathsDock", toolpaths_);
     preview_ = new PreviewPanel(toolpaths_, canvas_, relief_, this);
     previewDock_ = makeDock("Preview", "previewDock", preview_);
+    toolpaths_->onSetupChanged = [this]() {
+        preview_->refresh();  // the time readout uses the active machine's rates
+        if (persistLayout_) {
+            QSettings settings;
+            settings.setValue(QStringLiteral("activeMachine"), qs(toolpaths_->activeMachineId()));
+        }
+    };
 
     addDockWidget(Qt::LeftDockWidgetArea, designDock_);
     addDockWidget(Qt::LeftDockWidgetArea, sheetsDock_);
@@ -283,6 +290,14 @@ void MainWindow::buildMenus() {
         simView->setChecked(index == 1);
         simView->blockSignals(false);
     });
+
+    QMenu* setup = menuBar()->addMenu(QStringLiteral("&Setup"));
+    jobSetupAction_ = setup->addAction(QStringLiteral("&Job Setup..."));
+    jobSetupAction_->setObjectName(QStringLiteral("jobSetupAction"));
+    connect(jobSetupAction_, &QAction::triggered, this, [this]() { jobSetupDialog(); });
+    toolSetupAction_ = setup->addAction(QStringLiteral("&Tools, Machines and Materials..."));
+    toolSetupAction_->setObjectName(QStringLiteral("toolSetupAction"));
+    connect(toolSetupAction_, &QAction::triggered, this, [this]() { toolSetupDialog(); });
 
     QMenu* help = menuBar()->addMenu(QStringLiteral("&Help"));
     QAction* about = help->addAction(QStringLiteral("&About Carvetto"));
@@ -567,6 +582,7 @@ void MainWindow::setPersistLayout(bool persist) {
     persistLayout_ = persist;
     if (persist) {
         QSettings settings;
+        loadUserSetup(settings.value(QStringLiteral("activeMachine")).toString());
         std::vector<std::filesystem::path> paths;
         for (const QString& s : settings.value(QStringLiteral("recentFiles")).toStringList()) {
             paths.push_back(viewmodel::pathFromUtf8(s.toStdString()));

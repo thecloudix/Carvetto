@@ -4,6 +4,7 @@
 #include <QString>
 #include <QWidget>
 #include <cstdint>
+#include <filesystem>
 #include <functional>
 #include <map>
 #include <string>
@@ -67,6 +68,21 @@ class ToolpathsPanel : public QWidget {
     std::function<void()> onDocumentEdited;    ///< after toolpaths were applied or edited
     std::function<void()> onSelectionChanged;  ///< after the list linked the document selection
     std::function<void()> onBusyChanged;
+    std::function<void()> onSetupChanged;      ///< after the tool database / active machine changed
+
+    // --- Tool database and machine (T-0235) ---------------------------------------------------------
+    /// The tool database the dock offers (the user's setup, or the built-in starter tools).
+    const tooling::ToolDatabase& toolDatabase() const { return db_; }
+    /// The machine whose rapid rate and acceleration feed the time estimate ("" = the first one).
+    const std::string& activeMachineId() const { return activeMachineId_; }
+    /// Replaces the tool database and the active machine; toolpaths whose tool changed or vanished
+    /// show it in their state. Saves to the setup file when one is set.
+    void applySetup(tooling::ToolDatabase db, const std::string& activeMachineId);
+    /// Uses `path` as the user's setup file: loads it now (the built-in tools when it is missing or
+    /// refused; the refusal text is returned, empty when fine) and saves there on `applySetup`.
+    std::string useSetupFile(const std::filesystem::path& path, const std::string& activeMachineId);
+    /// Text of the last failed save of the setup file (empty when fine).
+    const std::string& setupSaveError() const { return setupSaveError_; }
 
     // --- Actions (also reachable by name for the self-test) ---------------------------------------
     QAction* addAction(document::ToolpathOperation operation) const;
@@ -124,6 +140,9 @@ class ToolpathsPanel : public QWidget {
     viewmodel::ToolpathSession session_;
     document::Document* doc_{nullptr};
     tooling::ToolDatabase db_;
+    std::string activeMachineId_;
+    std::filesystem::path setupFile_;
+    std::string setupSaveError_;
     std::uint64_t generation_{1};
     Pending pending_;
     bool busy_{false};

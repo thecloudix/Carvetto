@@ -41,6 +41,10 @@ qt_add_executable(carvetto
   src/tool_panel.hpp
   src/save_toolpaths_dialog.cpp
   src/save_toolpaths_dialog.hpp
+  src/tool_setup_dialog.cpp
+  src/tool_setup_dialog.hpp
+  src/tool_setup_self_test.cpp
+  src/main_window_setup.cpp
   src/toolpath_form_dialog.cpp
   src/toolpath_form_dialog.hpp
   src/toolpaths_panel.cpp
