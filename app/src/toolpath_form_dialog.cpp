@@ -37,6 +37,8 @@ const char* operationLabel(ToolpathOperation op) {
             return "Engrave";
         case ToolpathOperation::VCarving:
             return "V-Carve";
+        case ToolpathOperation::Chamfer:
+            return "Chamfer";
     }
     return "?";
 }

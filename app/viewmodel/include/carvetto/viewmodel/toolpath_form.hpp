@@ -32,6 +32,8 @@
 //   Drill       startDepth cutDepth safeZ retractGap dwellTime startX startY distance chordal
 //   Engrave     depth passes safeZ stepover rasterAngle startX startY chordal
 //   V-Carve     startDepth flatDepth safeZ clearanceRasterAngle rampDistance startX startY chordal
+//   Chamfer     angle width cutDepth overcut safeZ startX startY chordal (angle, width and cutDepth
+//               are linked: cutDepth = width / (2 tan angle); a V-bit's angle comes from the tool)
 // Choices carry the enum/bool inputs; see `choices()`.
 
 namespace carvetto::viewmodel {
@@ -73,6 +75,11 @@ struct ToolSummary {
     std::string name;
     tooling::ToolType type{tooling::ToolType::EndMill};
     double diameterMm{0.0};
+    /// Included angle of the tool, radians (V-bits and the like; 0 otherwise).
+    double includedAngleRad{0.0};
+    /// Deepest cut a chamfer can make with the tool, mm (read-only "Max Cut Depth"; 0 when the tool
+    /// is not a chamfer tool).
+    double maxCutDepthMm{0.0};
     /// The cutting data the toolpath will use (the chosen machine/material entry, else the default).
     tooling::CuttingData data;
     /// No entry for the chosen machine and material: the default data stands in.

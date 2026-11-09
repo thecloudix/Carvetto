@@ -91,6 +91,13 @@ inline ToolpathDefinition engraveDefinition(const tooling::ToolDatabase& db) {
     return form.definition();
 }
 
+inline ToolpathDefinition chamferDefinition(const tooling::ToolDatabase& db) {
+    ToolpathForm form(document::ToolpathOperation::Chamfer, document::Units::Millimetres);
+    REQUIRE(form.setTool(db, source("v-bit-90")).ok);
+    REQUIRE(form.setField("width", "2").ok);
+    return form.definition();
+}
+
 inline ToolpathDefinition vCarveDefinition(const tooling::ToolDatabase& db, bool withClearance) {
     ToolpathForm form(document::ToolpathOperation::VCarving, document::Units::Millimetres);
     REQUIRE(form.setTool(db, source("v-bit-90")).ok);
