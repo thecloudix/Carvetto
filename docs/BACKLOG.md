@@ -1162,7 +1162,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0251 Texture: vector texture generator and textured area   [status: in-progress]
+### T-0251 Texture: vector texture generator and textured area   [status: verifying — core generator only; UI and arbitrary-region clip → T-0254]
 Phase: 1   Module: core/geometry + app   Depends on: T-0210
 Goal: Create Vector Texture (wavy fill lines: angle, spacing, wavelength, amplitude, noise, seed) as 2D vectors. The 3D 'textured area component' depends on Phase 2 and is excluded. Deterministic given seed.
 Acceptance criteria:
@@ -1183,3 +1183,9 @@ Phase: 1   Module: app/viewmodel tests   Depends on: T-0224
 Goal: the test fails on some environments (C.UTF-8 locale, long scratch path; passes on the director's main build) because its expectation "/ete _)" depends on locale/transliteration. Make the expectation locale-independent or set the locale in the test; no product change unless the transliteration itself is locale-dependent (then fix it).
 Acceptance criteria:
   1. Test passes under LANG=C, C.UTF-8 and en_US.UTF-8 on Linux and on Windows CI; one changelog fragment if behaviour changes.
+
+### T-0254 Vector texture: dialog, preview and clipping to arbitrary closed vectors (T-0251 follow-up)   [status: ready]
+Phase: 1   Module: app/viewmodel + app/src + core/geometry   Depends on: T-0251
+Goal: T-0251 delivered only the deterministic core generator (rectangle region). Add the Create Vector Texture dialog (angle, max spacing, spacing variation, wavelength, amplitude, noise, seed, target layer), live preview, one undo step, and clipping to the selected closed vectors (with holes) instead of the bounding box.
+Acceptance criteria:
+  1. Generated lines lie inside the selected region (holes excluded) within tolerance; dialog edits validated with units; one undo step; self-test drives the real dialog; bounded work for hostile regions.
