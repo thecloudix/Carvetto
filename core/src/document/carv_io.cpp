@@ -487,8 +487,8 @@ json encodeSheet(const Sheet& s) {
     j["datum"] = nameOf(kDatums, s.datum);
     j["datum_offset_mm"] = encodePoint(s.datumOffsetMm);
     j["visible"] = s.visible;
-    // Double-sided keys (T-0243, ADR-0036): written only for a paired or back-side sheet, so every
-    // other document keeps its bytes and its format minor.
+    // Double-sided keys (T-0243, ADR-0039): written only for a paired or back-side sheet, so every
+    // other document keeps its bytes; a document with one is written as format 1.5.
     if (s.side != Side::Front) {
         j["side"] = "back";
     }
@@ -3680,13 +3680,17 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
             }
             fontMembers.emplace(fontMemberName(key), font->bytes);
         }
-        // The minor is the highest one any used feature requires: keep-out zones (1.4, T-0241),
+        // The minor is the highest one any used feature requires: paired sheets (1.5, T-0243), keep-out zones (1.4, T-0241),
         // dimension objects (1.3, T-0246), text/fonts (1.2); otherwise the base minor.
         const bool usesKeepOut =
             !doc.keepOutZones().empty() || doc.keepOutClearance() != 0.0 || !doc.keepOutVisible();
+        const bool usesDoubleSided = std::any_of(doc.sheets().begin(), doc.sheets().end(), [](const Sheet& s) {
+            return s.side != Side::Front || s.partner.value != 0;
+        });
         const bool hasDimensions = std::any_of(doc.objects().begin(), doc.objects().end(),
                                                [](const auto& kv) { return kv.second.isDimension(); });
-        version["minor"] = usesKeepOut      ? kCarvFormatMinor
+        version["minor"] = usesDoubleSided  ? kCarvFormatMinorDoubleSided
+                           : usesKeepOut    ? kCarvFormatMinorKeepOut
                            : hasDimensions  ? kCarvFormatMinorDimension
                            : usedFonts.empty() ? kCarvFormatMinorBase
                                                : kCarvFormatMinorText;

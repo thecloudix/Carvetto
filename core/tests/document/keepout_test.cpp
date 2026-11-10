@@ -129,7 +129,7 @@ TEST_CASE("zones, clearance and visibility survive save and load", "[keepout][do
     REQUIRE(loaded.ok());
     const Document& d = loaded.value().document;
     CHECK(loaded.value().formatMinor == 4);
-    CHECK(loaded.value().formatMinor == kCarvFormatMinor);
+    CHECK(loaded.value().formatMinor == kCarvFormatMinorKeepOut);
     CHECK(d.keepOutZones() == doc.keepOutZones());
     CHECK(d.keepOutClearance() == 1.5);
     CHECK_FALSE(d.keepOutVisible());

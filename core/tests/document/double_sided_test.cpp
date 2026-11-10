@@ -1,3 +1,4 @@
+#include <memory>
 #include <span>
 #include <string>
 #include <vector>
@@ -7,6 +8,7 @@
 
 #include "carvetto/document/carv_io.hpp"
 #include "carvetto/document/document.hpp"
+#include "carvetto/document/keepout_commands.hpp"
 #include "carvetto/document/double_sided.hpp"
 
 using namespace carvetto::document;
@@ -98,12 +100,13 @@ std::vector<std::uint8_t> save(const Document& d, const CarvExtras& ex = {}) {
 
 }  // namespace
 
-TEST_CASE("paired sheets round-trip byte-stably without bumping the format minor", "[document][double-sided][carv]") {
+TEST_CASE("paired sheets round-trip byte-stably as format 1.5", "[document][double-sided][carv]") {
     const Document doc = pairedDocument();
     const auto first = save(doc);
     auto loaded = loadCarv(std::span<const std::uint8_t>(first));
     REQUIRE(loaded.ok());
-    CHECK(loaded.value().formatMinor == kCarvFormatMinorBase);
+    CHECK(loaded.value().formatMinor == kCarvFormatMinorDoubleSided);
+    CHECK(kCarvFormatMinor == 5);
     CHECK(loaded.value().extras.empty());
     const Document& back = loaded.value().document;
     REQUIRE(back.sheets().size() == 2);
@@ -139,4 +142,27 @@ TEST_CASE("a non-mutual or same-side pairing is an integrity error and cannot be
         CHECK(issues.front().kind == IntegrityIssue::Kind::BadSheetPartner);
         CHECK_FALSE(saveCarv(*d).ok());
     }
+}
+
+TEST_CASE("paired sheets plus keep-out zones or dimensions write the highest minor", "[document][double-sided][carv]") {
+    Document doc = pairedDocument();
+    REQUIRE(doc.execute(std::make_unique<SetKeepOutClearanceCommand>(2.0)));
+    const auto bytes = save(doc);
+    auto loaded = loadCarv(std::span<const std::uint8_t>(bytes));
+    REQUIRE(loaded.ok());
+    CHECK(loaded.value().formatMinor == kCarvFormatMinorDoubleSided);
+    CHECK(loaded.value().document.keepOutClearance() == 2.0);
+    CHECK(save(loaded.value().document, loaded.value().extras) == bytes);
+}
+
+TEST_CASE("a document without paired sheets keeps its previous minor", "[document][double-sided][carv]") {
+    Document plain;
+    auto loaded = loadCarv(std::span<const std::uint8_t>(save(plain)));
+    REQUIRE(loaded.ok());
+    CHECK(loaded.value().formatMinor == kCarvFormatMinorBase);
+    Document zones;
+    REQUIRE(zones.execute(std::make_unique<SetKeepOutClearanceCommand>(1.0)));
+    auto l2 = loadCarv(std::span<const std::uint8_t>(save(zones)));
+    REQUIRE(l2.ok());
+    CHECK(l2.value().formatMinor == kCarvFormatMinorKeepOut);
 }

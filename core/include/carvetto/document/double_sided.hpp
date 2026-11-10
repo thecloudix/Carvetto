@@ -8,7 +8,7 @@
 #include "carvetto/geometry/vec2.hpp"
 #include "carvetto/toolpath/move.hpp"
 
-// Double-sided job maths (T-0243, ADR-0036): how a design on one face of the stock maps onto the
+// Double-sided job maths (T-0243, ADR-0039): how a design on one face of the stock maps onto the
 // other face, and where Z = 0 sits for each side. Millimetres; no document state.
 
 namespace carvetto::document {

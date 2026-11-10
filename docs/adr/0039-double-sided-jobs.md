@@ -1,4 +1,4 @@
-# ADR-0036: Double-sided jobs (T-0243)
+# ADR-0039: Double-sided jobs (T-0243)
 
 Status: accepted
 
@@ -19,8 +19,10 @@ Toolpaths are computed with the cut face at Z = 0; `shiftMovesZ(moves, sheetTopZ
 
 ## Persistence and format version
 The sheet record gains optional `side` (`"back"`, written only for back sheets) and `partner` (id,
-written only when paired). Loading checks that pairs are mutual and front/back. The format minor is
-NOT bumped: other features (dimensions 1.3, keep-out zones) also claim minors, and a number chosen
-here would collide. Files without double-sided sheets are byte-identical to before; an older reader
-keeps the two keys verbatim in its extras (no data loss) and merely treats the back sheet as a front
-one. If a hard "needs newer reader" gate is wanted, the director should allocate a minor.
+written only when paired). Loading checks that pairs are mutual and front/back. The format minor
+is **1.5** (`kCarvFormatMinorDoubleSided`), written ONLY when the document has a back or paired
+sheet; the writer takes the highest minor any used feature requires (so keep-out zones plus paired
+sheets is 1.5, dimensions plus paired sheets is 1.5, and documents with neither keep their previous
+minors, byte-identical). The bump makes an older build refuse the file as too new instead of loading
+a paired sheet as two independent sheets and later stranding it. `kCarvFormatMinor` is 5 for the
+loader's too-new check.
