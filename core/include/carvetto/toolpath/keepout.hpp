@@ -19,6 +19,7 @@ enum class RouteStatus {
     Routed,         ///< A detour around the zones was found (`RouteResult::points`).
     EndpointInside, ///< The start or end lies inside a zone (or its clearance band): cannot be routed.
     NoRoute,        ///< Both ends are free but no path exists (a closed-in pocket): cannot be routed.
+    TooComplex,     ///< The search exceeded its work budget (or was cancelled): left unrouted.
 };
 
 struct RouteResult {
@@ -27,14 +28,14 @@ struct RouteResult {
     std::vector<geometry::Vec2> points;
 };
 
-/// The keep-out zones of a document, prepared for routing (T-0241, ADR-0035): the closed
+/// The keep-out zones of a document, prepared for routing (T-0241, ADR-0036): the closed
 /// outlines are merged (union, non-zero fill) and grown by `clearance` mm with round corners, and
 /// the result is held as polygons (curves polygonised at `tol.chordal`; every polygon vertex lies
 /// on or outside the exact grown outline's chord band). A rapid is *blocked* when its segment
 /// passes through the interior of that region; touching the boundary is allowed.
 ///
 /// `route` finds the shortest XY path between two free points that stays out of the region
-/// (visibility graph over the polygon vertices, Dijkstra). Visibility between vertices is
+/// (visibility graph over the polygon vertices, A*, bounded work). Visibility between vertices is
 /// memoised, so one field serves a whole job. Not thread-safe.
 class KeepOutField {
    public:
@@ -50,7 +51,14 @@ class KeepOutField {
     /// True when the segment a-b passes through the interior of the grown region.
     bool blocks(geometry::Vec2 a, geometry::Vec2 b) const;
     /// Routes one rapid from `a` to `b` around the region.
+    /// The search is bounded: it counts the polygon edges scanned by its visibility tests and
+    /// returns `TooComplex` past `routeWorkLimit()` (default 10 million edge scans, about 0.1-0.4 s;
+    /// a few hundred polygon vertices route well inside it) or when a geometry `CancelScope`
+    /// flag reads true.
     RouteResult route(geometry::Vec2 a, geometry::Vec2 b);
+    /// Per-`route` work limit in polygon-edge scans.
+    std::uint64_t routeWorkLimit() const { return workLimit_; }
+    void setRouteWorkLimit(std::uint64_t limit) { workLimit_ = limit; }
 
    private:
     struct Edge {
@@ -64,6 +72,8 @@ class KeepOutField {
     std::vector<geometry::Vec2> vertices_;
     geometry::Box2 bounds_;
     std::unordered_map<std::uint64_t, bool> visibleMemo_;
+    mutable std::uint64_t work_{0};
+    std::uint64_t workLimit_{10'000'000};
 };
 
 /// What `routeRapids` did to a toolpath.
@@ -72,6 +82,8 @@ struct RoutingReport {
     std::size_t routed{0};
     /// Rapids left straight although they enter a zone (an end point is inside, or no path exists).
     std::size_t unroutable{0};
+    /// Rapids left straight because the routing search exceeded its work budget (or was cancelled).
+    std::size_t tooComplex{0};
 };
 
 /// Replaces every rapid of `tp` that would pass through a keep-out zone with a detour of rapids

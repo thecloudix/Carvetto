@@ -33,7 +33,7 @@ inline constexpr int kCarvFormatMajor = 1;
 /// 1.1 (T-0132, ADR-0021) adds toolpath records (`job.json` `toolpaths`) and their move caches.
 /// 1.2 (T-0211, ADR-0033 amendment A1) adds text parameters (`"type": "text"`) and embedded fonts
 /// (`fonts/<key>.font` members); a document without text objects is still written as 1.1.
-/// 1.3 (T-0241, ADR-0035) adds keep-out zones (`job.json` `keepout`); written only when the
+/// 1.3 (T-0241, ADR-0036) adds keep-out zones (`job.json` `keepout`); written only when the
 /// document has zones or a non-default clearance/visibility.
 inline constexpr int kCarvFormatMinor = 3;
 /// The minor version written for documents that use text (1.2) but no 1.3 features.

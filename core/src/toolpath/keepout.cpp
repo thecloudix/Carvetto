@@ -6,6 +6,7 @@
 #include <limits>
 
 #include "carvetto/geometry/boolean.hpp"
+#include "carvetto/geometry/cancel.hpp"
 #include "carvetto/geometry/offset.hpp"
 #include "carvetto/geometry/polyline.hpp"
 
@@ -94,6 +95,7 @@ bool KeepOutField::segmentClear(Vec2 a, Vec2 b) const {
     if (edges_.empty() || !bounds_.intersects(sb)) {
         return true;
     }
+    work_ += edges_.size();
     const Vec2 d = b - a;
     std::vector<double> ts{0.0, 1.0};
     for (const Edge& e : edges_) {
@@ -152,7 +154,9 @@ RouteResult KeepOutField::route(Vec2 a, Vec2 b) {
         out.status = RouteStatus::EndpointInside;
         return out;
     }
-    // Nodes: 0..n-1 region vertices, n = a, n+1 = b. Dense Dijkstra, edges tested lazily.
+    // Nodes: 0..n-1 region vertices, n = a, n+1 = b. A* (straight-line heuristic) with edges
+    // tested lazily. The cost is bounded: every visibility test adds its edge scans to `work_`
+    // and the search gives up (TooComplex) past `workLimit_` or when a cancel is requested.
     const std::size_t n = vertices_.size();
     const std::size_t src = n;
     const std::size_t dst = n + 1;
@@ -168,13 +172,18 @@ RouteResult KeepOutField::route(Vec2 a, Vec2 b) {
     std::vector<std::size_t> prev(n + 2, n + 2);
     std::vector<bool> done(n + 2, false);
     dist[src] = 0.0;
+    const std::uint64_t workStart = work_;
+    std::uint32_t tests = 0;
     for (;;) {
         std::size_t u = n + 2;
         double best = kInf;
         for (std::size_t i = 0; i < n + 2; ++i) {
-            if (!done[i] && dist[i] < best) {
-                best = dist[i];
-                u = i;
+            if (!done[i] && dist[i] < kInf) {
+                const double f = dist[i] + geometry::distance(pos(i), b);
+                if (f < best) {
+                    best = f;
+                    u = i;
+                }
             }
         }
         if (u == n + 2) {
@@ -189,9 +198,15 @@ RouteResult KeepOutField::route(Vec2 a, Vec2 b) {
                 continue;
             }
             const double nd = dist[u] + geometry::distance(pos(u), pos(v));
-            if (nd < dist[v] && visible(u, v)) {
-                dist[v] = nd;
-                prev[v] = u;
+            if (nd < dist[v]) {
+                if (work_ - workStart > workLimit_ || ((++tests & 63U) == 0 && geometry::cancelRequested())) {
+                    out.status = RouteStatus::TooComplex;
+                    return out;
+                }
+                if (visible(u, v)) {
+                    dist[v] = nd;
+                    prev[v] = u;
+                }
             }
         }
     }
@@ -230,7 +245,9 @@ RoutingReport routeRapids(Toolpath& tp, KeepOutField& field, std::optional<Vec3>
                 pos = m.to;
                 continue;
             }
-            if (r.status != RouteStatus::Clear) {
+            if (r.status == RouteStatus::TooComplex) {
+                ++report.tooComplex;
+            } else if (r.status != RouteStatus::Clear) {
                 ++report.unroutable;
             }
         }

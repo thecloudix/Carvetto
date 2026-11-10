@@ -723,6 +723,12 @@ SaveOutput generateOutputImpl(const SaveJob& job, const std::atomic<bool>* cance
                                            " rapid move(s) cannot be routed around the keep-out zones (an end point "
                                            "lies inside a zone) and are left straight");
                 }
+                if (rep.tooComplex != 0) {
+                    out.warnings.push_back(pathToUtf8(outFs.filename()) + ": toolpath '" + tp.name + "': " +
+                                           std::to_string(rep.tooComplex) +
+                                           " rapid move(s) were not routed around the keep-out zones (the zones "
+                                           "are too complex) and are left straight");
+                }
                 if (!tp.moves.empty()) {
                     at = tp.moves.back().to;
                 }

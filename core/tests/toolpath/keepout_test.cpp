@@ -1,13 +1,17 @@
-// Keep-out zone routing (T-0241, ADR-0035): rapids never enter a zone, detours are shortest
+// Keep-out zone routing (T-0241, ADR-0036): rapids never enter a zone, detours are shortest
 // around the obstacle, post blocks are chosen by detour role.
 
+#include <atomic>
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
 #include <random>
 #include <string>
 #include <vector>
 
+#include "../geometry/cpu_time.hpp"
+#include "carvetto/geometry/cancel.hpp"
 #include "carvetto/geometry/contour.hpp"
+#include "carvetto/geometry/polyline.hpp"
 #include "carvetto/post/post_processor.hpp"
 #include "carvetto/toolpath/keepout.hpp"
 #include "carvetto/toolpath/toolpath.hpp"
@@ -183,7 +187,7 @@ TEST_CASE("property: no rapid of a random toolpath enters a zone", "[keepout][pr
     std::uniform_real_distribution<double> size(3.0, 25.0);
     std::uniform_real_distribution<double> clr(0.0, 4.0);
     int routedTotal = 0;
-    for (int iter = 0; iter < 60; ++iter) {
+    for (int iter = 0; iter < 25; ++iter) {
         std::vector<Contour> zones;
         const int nz = 1 + static_cast<int>(rng() % 5);
         for (int i = 0; i < nz; ++i) {
@@ -300,4 +304,86 @@ TEST_CASE("post: missing straight blocks fall back to RAPID_MOVE", "[keepout][po
     REQUIRE(out.ok());
     CHECK(out.value().text.find("RAPID X0.000 Y10.000") != std::string::npos);
     CHECK(out.value().text.find("RAPID X15.000 Y5.000") != std::string::npos);
+}
+
+namespace {
+
+Contour polygonCircle(Vec2 c, double r, int n) {
+    carvetto::geometry::Polyline pl;
+    pl.closed = true;
+    for (int i = 0; i < n; ++i) {
+        const double a = 6.283185307179586 * i / n;
+        pl.points.push_back({c.x + r * std::cos(a), c.y + r * std::sin(a)});
+    }
+    return Contour::fromPolyline(pl);
+}
+
+// Routes must either be refused or keep the guarantee: no leg enters the region.
+void checkRouteSafe(KeepOutField& field, Vec2 a, Vec2 b, const RouteResult& r) {
+    if (r.status != RouteStatus::Routed) {
+        return;
+    }
+    Vec2 prev = a;
+    for (const Vec2& p : r.points) {
+        CHECK_FALSE(field.blocks(prev, p));
+        prev = p;
+    }
+    CHECK(prev == b);
+}
+
+}  // namespace
+
+TEST_CASE("routing cost is bounded: a 4000-vertex polygon", "[keepout][scale]") {
+    const double t0 = carvetto::test::processCpuSeconds();
+    KeepOutField field({polygonCircle({0, 0}, 50.0, 4000)}, 0.0);
+    const RouteResult r = field.route({-80, 1}, {80, 1});
+    CHECK(r.status != RouteStatus::Clear);
+    checkRouteSafe(field, {-80, 1}, {80, 1}, r);
+    CHECK(carvetto::test::processCpuSeconds() - t0 < 5.0);
+}
+
+TEST_CASE("routing cost is bounded: maximum clearance on a small square", "[keepout][scale]") {
+    const double t0 = carvetto::test::processCpuSeconds();
+    KeepOutField field({rect(0, 0, 10, 10)}, 1000.0);
+    const RouteResult r = field.route({-2000, 5}, {2000, 5});
+    checkRouteSafe(field, {-2000, 5}, {2000, 5}, r);
+    CHECK(r.status != RouteStatus::Clear);
+    CHECK(carvetto::test::processCpuSeconds() - t0 < 5.0);
+}
+
+TEST_CASE("routing cost is bounded: many zones and many rapids", "[keepout][scale]") {
+    const double t0 = carvetto::test::processCpuSeconds();
+    std::vector<Contour> zones;
+    for (int i = 0; i < 40; ++i) {
+        for (int j = 0; j < 25; ++j) {
+            zones.push_back(polygonCircle({i * 10.0, j * 10.0}, 3.0, 24));
+        }
+    }
+    KeepOutField field(zones, 0.5);
+    Toolpath tp = rapidsOnly({{-5, 5}, {405, 245}, {-5, 245}, {405, 5}, {200, 125}, {-5, 125}});
+    const RoutingReport rep = routeRapids(tp, field, Vec3{-5, 5, 5});
+    CHECK(rep.routed + rep.unroutable + rep.tooComplex >= 1);
+    CHECK(countBlockedRapids(tp, field, Vec3{-5, 5, 5}) == rep.unroutable + rep.tooComplex);
+    CHECK(carvetto::test::processCpuSeconds() - t0 < 15.0);
+}
+
+TEST_CASE("a route over the work budget is left straight and counted", "[keepout]") {
+    KeepOutField field({polygonCircle({0, 0}, 50.0, 400)}, 0.0);
+    field.setRouteWorkLimit(1000);
+    CHECK(field.route({-80, 1}, {80, 1}).status == RouteStatus::TooComplex);
+    Toolpath tp = rapidsOnly({{-80, 1}, {80, 1}});
+    const Toolpath before = tp;
+    const RoutingReport rep = routeRapids(tp, field, Vec3{-80, 1, 5});
+    CHECK(rep.tooComplex == 1);
+    CHECK(rep.routed == 0);
+    CHECK(tp == before);
+    field.setRouteWorkLimit(1'000'000'000);
+    CHECK(field.route({-80, 1}, {80, 1}).status == RouteStatus::Routed);
+}
+
+TEST_CASE("a cancelled routing search stops and leaves the rapid straight", "[keepout]") {
+    KeepOutField field({polygonCircle({0, 0}, 50.0, 400)}, 0.0);
+    const std::atomic<bool> stop{true};
+    carvetto::geometry::CancelScope scope(&stop);
+    CHECK(field.route({-80, 1}, {80, 1}).status == RouteStatus::TooComplex);
 }

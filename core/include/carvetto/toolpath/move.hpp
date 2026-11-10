@@ -23,7 +23,7 @@ enum class MoveKind {
     Dwell,    ///< Pause for `dwellSeconds` at the current position; no motion.
 };
 
-/// Where a rapid move sits in a detour around a keep-out zone (T-0241, ADR-0035). It selects the
+/// Where a rapid move sits in a detour around a keep-out zone (T-0241, ADR-0036). It selects the
 /// post block: `None` is an ordinary rapid (RAPID_MOVE); legs of a routed detour use the straight
 /// rapid family (the first rapid of a toolpath INITIAL_STRAIGHT_RAPID_MOVE, the first leg of a
 /// detour FIRST_STRAIGHT_RAPID_MOVE, later legs STRAIGHT_RAPID_MOVE). In-memory only: it is set

@@ -1,4 +1,4 @@
-# ADR-0035: Keep-out zones (document, rapid routing, post blocks, .carv 1.3)
+# ADR-0036: Keep-out zones (document, rapid routing, post blocks, .carv 1.3)
 
 Date: 2026-11-09 · Status: proposed (T-0241)
 
@@ -18,12 +18,16 @@ rapids that go round a zone but does not say how a post picks between them.
    (`offsetContours`), polygonised at the default chordal tolerance. A rapid is blocked when it passes
    through the region's interior; running along the boundary or touching it is allowed.
 3. **Routing is applied when posting, not stored.** `toolpath::routeRapids` replaces a blocked rapid
-   by the shortest XY detour (visibility graph over the region's vertices, Dijkstra; intermediate
+   by the shortest XY detour (visibility graph over the region's vertices, A*; intermediate
    legs at the higher of the two end heights). Toolpath records and their move caches are unchanged,
    so editing zones never marks a toolpath stale. The Save Toolpaths job copies the zones and routes
    each toolpath, chaining the start position from home and the previous toolpath's end.
    A rapid whose end point lies inside the region, or that is enclosed, cannot be routed: it is left
    straight and reported as a warning (nothing is silently moved).
+   The search is work-bounded (round 1 of the review: it was O(V^3)): each route counts the polygon
+   edges scanned by its visibility tests, gives up past 10 million (`TooComplex`) or on a geometry
+   cancel, and the rapid is then left straight with a "zones too complex" warning. A few hundred
+   polygon vertices route inside the budget; a thousands-of-vertices outline does not, by design.
 4. **Post blocks.** `Move::route` (`RapidRoute`, in memory only) marks detour legs. The first rapid of
    a toolpath uses `INITIAL_STRAIGHT_RAPID_MOVE`, the first leg of a detour `FIRST_STRAIGHT_RAPID_MOVE`,
    later legs `STRAIGHT_RAPID_MOVE`. A missing block falls back to `STRAIGHT_RAPID_MOVE`, then to the
