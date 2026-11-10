@@ -698,6 +698,46 @@ bool isFontKey(const std::string& key) {
     return true;
 }
 
+const KeepOutZone* Document::findKeepOutZone(KeepOutZoneId id) const {
+    const std::optional<std::size_t> i = keepOutZoneIndex(id);
+    return i ? &keepOutZones_[*i] : nullptr;
+}
+
+std::optional<std::size_t> Document::keepOutZoneIndex(KeepOutZoneId id) const {
+    for (std::size_t i = 0; i < keepOutZones_.size(); ++i) {
+        if (keepOutZones_[i].id == id) {
+            return i;
+        }
+    }
+    return std::nullopt;
+}
+
+KeepOutZoneId Document::insertKeepOutZone(KeepOutZone zone, std::optional<std::size_t> index) {
+    if (zone.id.isNull()) {
+        zone.id = allocateKeepOutZoneId();
+        if (zone.id.isNull()) {
+            return {};  // generator exhausted (asserted in allocate)
+        }
+    } else {
+        assert(!findKeepOutZone(zone.id) && "duplicate keep-out zone id");
+        ids_.reserveThrough(zone.id.value);
+    }
+    const KeepOutZoneId id = zone.id;
+    const std::size_t at = std::min(index.value_or(keepOutZones_.size()), keepOutZones_.size());
+    keepOutZones_.insert(keepOutZones_.begin() + static_cast<std::ptrdiff_t>(at), std::move(zone));
+    return id;
+}
+
+std::optional<KeepOutZone> Document::takeKeepOutZone(KeepOutZoneId id) {
+    const std::optional<std::size_t> i = keepOutZoneIndex(id);
+    if (!i) {
+        return std::nullopt;
+    }
+    KeepOutZone zone = std::move(keepOutZones_[*i]);
+    keepOutZones_.erase(keepOutZones_.begin() + static_cast<std::ptrdiff_t>(*i));
+    return zone;
+}
+
 const FontAsset* Document::findFont(const std::string& key) const {
     const auto it = fonts_.find(key);
     return it == fonts_.end() ? nullptr : &it->second;

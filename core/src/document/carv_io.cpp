@@ -2577,8 +2577,17 @@ ManifestFile decodeManifest(JsonReader& r) {
 }
 
 /// The parsed job.json, before it becomes a Document.
+/// The optional `keepout` record (format 1.3, T-0241).
+struct KeepOutFile {
+    bool present{false};
+    double clearance{0.0};
+    bool visible{true};
+    std::vector<KeepOutZone> zones;
+};
+
 struct JobFile {
     Job job;
+    KeepOutFile keepOut;
     ExtraMap jobUnknown;
     ExtraMap rootUnknown;
     std::vector<std::pair<Sheet, ExtraMap>> sheets;
@@ -2591,9 +2600,69 @@ struct JobFile {
     std::uint64_t activeLayer{0};
 };
 
-constexpr std::array<std::string_view, 9> kRootKeys{"active_layer", "active_sheet", "job",
-                                                    "layers",       "next_id",      "objects",
-                                                    "sheets",       "toolpaths",    "variables"};
+constexpr std::array<std::string_view, 10> kRootKeys{"active_layer", "active_sheet", "job",
+                                                     "keepout",      "layers",       "next_id",
+                                                     "objects",      "sheets",       "toolpaths",
+                                                     "variables"};
+
+constexpr std::array<std::string_view, 3> kKeepOutKeys{"clearance_mm", "visible", "zones"};
+constexpr std::array<std::string_view, 2> kKeepOutZoneKeys{"id", "outline"};
+
+KeepOutFile decodeKeepOut(JsonReader& r, const Path& p) {
+    KeepOutFile k;
+    k.present = true;
+    Record rec(r, p, kKeepOutKeys);
+    while (rec.next()) {
+        const Path f = rec.field();
+        if (rec.key() == "clearance_mm") {
+            k.clearance = readFinite(r, f);
+            if (k.clearance < 0.0 || k.clearance > kMaxKeepOutClearanceMm) {
+                fail(f, "must be between 0 and " + std::to_string(static_cast<int>(kMaxKeepOutClearanceMm)) + " mm");
+            }
+        } else if (rec.key() == "visible") {
+            k.visible = readBool(r, f);
+        } else if (rec.key() == "zones") {
+            if (r.peek() != JKind::Array) {
+                fail(f, "must be a JSON array");
+            }
+            r.beginArray();
+            std::size_t spans = 0;
+            for (std::size_t i = 0; r.nextElement(); ++i) {
+                if (i >= kMaxKeepOutZones) {
+                    fail(f, "more than " + std::to_string(kMaxKeepOutZones) + " zones", CarvError::Code::ResourceLimit);
+                }
+                r.budget().chargeDocument(kCostRecord);
+                const Path zp = f.at(i);
+                Record zr(r, zp, kKeepOutZoneKeys);
+                KeepOutZone z;
+                while (zr.next()) {
+                    const Path zf = zr.field();
+                    if (zr.key() == "id") {
+                        z.id = KeepOutZoneId{readEntityId(r, zf)};
+                    } else if (zr.key() == "outline") {
+                        z.outline = decodeContour(r, zf);
+                    } else {
+                        zr.skip();
+                    }
+                }
+                zr.requireAll();
+                if (!z.outline.closed || z.outline.spans.empty()) {
+                    fail(zp.field("outline"), "a keep-out zone must be a closed contour with spans");
+                }
+                spans += z.outline.spans.size();
+                if (spans > kMaxKeepOutSpans) {
+                    fail(f, "more than " + std::to_string(kMaxKeepOutSpans) + " zone spans",
+                         CarvError::Code::ResourceLimit);
+                }
+                k.zones.push_back(std::move(z));
+            }
+        } else {
+            rec.skip();
+        }
+    }
+    rec.requireAll();
+    return k;
+}
 
 JobFile decodeJobFile(JsonReader& r) {
     const Path root{nullptr, kJobName, 0, false};
@@ -2613,6 +2682,11 @@ JobFile decodeJobFile(JsonReader& r) {
             }
         } else if (k == "job") {
             jf.job = decodeJob(r, f, jf.jobUnknown);
+        } else if (k == "keepout") {
+            if (r.peek() != JKind::Object) {
+                fail(f, "must be a JSON object");
+            }
+            jf.keepOut = decodeKeepOut(r, f);
         } else if (k == "sheets" || k == "layers") {
             const bool sheets = k == "sheets";
             if (r.peek() != JKind::Array) {
@@ -2684,7 +2758,7 @@ JobFile decodeJobFile(JsonReader& r) {
         }
     }
     for (const std::string_view key : kRootKeys) {
-        if (key != "toolpaths") {  // optional: added in format 1.1
+        if (key != "toolpaths" && key != "keepout") {  // optional: added in format 1.1 / 1.3
             rec.require(key);
         }
     }
@@ -3045,6 +3119,9 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
     if (!layerIds.contains(jf.activeLayer)) {
         fail(where + ".active_layer", "layer " + std::to_string(jf.activeLayer) + " does not exist");
     }
+    for (std::size_t i = 0; i < jf.keepOut.zones.size(); ++i) {
+        claimId(jf.keepOut.zones[i].id.value, where + ".keepout.zones[" + std::to_string(i) + "]");
+    }
     checkGroupStructure(jf.objects);
 
     // --- Build the document. Everything referenced below was validated above, so none of the
@@ -3112,6 +3189,11 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
         }
         doc.insertToolpath(std::move(d.record));
     }
+    for (KeepOutZone& z : jf.keepOut.zones) {
+        doc.insertKeepOutZone(std::move(z));
+    }
+    doc.setKeepOutClearance(jf.keepOut.clearance);
+    doc.setKeepOutVisible(jf.keepOut.visible);
     // Interim members become records after the file's own, in member-name (creation) order, with
     // fresh ids. Their "layers" names select every layer of that name; names that match no layer
     // select nothing.
@@ -3347,7 +3429,12 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
             }
             fontMembers.emplace(fontMemberName(key), font->bytes);
         }
-        version["minor"] = usedFonts.empty() ? kCarvFormatMinorBase : kCarvFormatMinor;
+        // Format 1.3 (keep-out zones, T-0241) only when the document has zones or a non-default
+        // clearance/visibility; otherwise the version is what it was before.
+        const bool usesKeepOut =
+            !doc.keepOutZones().empty() || doc.keepOutClearance() != 0.0 || !doc.keepOutVisible();
+        version["minor"] = usesKeepOut ? kCarvFormatMinor
+                           : usedFonts.empty() ? kCarvFormatMinorBase : kCarvFormatMinorText;
         manifest["format_version"] = std::move(version);
         manifest["app_version"] = CARVETTO_VERSION_STRING;
         mergeUnknown(manifest, ex ? &ex->manifest : nullptr);
@@ -3503,6 +3590,21 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
             toolpaths.push_back(encodeToolpath(tp, tp.hasMoves() ? &member : nullptr, ex));
         }
         root["toolpaths"] = std::move(toolpaths);
+
+        if (usesKeepOut) {
+            json keepOut = json::object();
+            keepOut["clearance_mm"] = doc.keepOutClearance();
+            keepOut["visible"] = doc.keepOutVisible();
+            json zones = json::array();
+            for (const KeepOutZone& z : doc.keepOutZones()) {
+                json zj = json::object();
+                zj["id"] = z.id.value;
+                zj["outline"] = encodeContour(z.outline);
+                zones.push_back(std::move(zj));
+            }
+            keepOut["zones"] = std::move(zones);
+            root["keepout"] = std::move(keepOut);
+        }
 
         json variables = json::object();
         for (const auto& [name, value] : doc.variables().all()) {

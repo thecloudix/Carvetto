@@ -37,6 +37,7 @@
 #endif
 #endif
 
+#include "carvetto/toolpath/keepout.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
 
 namespace carvetto::viewmodel {
@@ -509,9 +510,17 @@ std::string sanitizeFileStem(const std::string& text) {
     return finishStem(mapName(text));
 }
 
+static void copyKeepOut(const document::Document& doc, SaveSource& src) {
+    for (const document::KeepOutZone& z : doc.keepOutZones()) {
+        src.keepOutZones.push_back(z.outline);
+    }
+    src.keepOutClearance = doc.keepOutClearance();
+}
+
 SaveSource makeSaveSource(const document::Document& doc, const std::vector<document::ToolpathId>& ids) {
     SaveSource src;
     src.job = doc.job();
+    copyKeepOut(doc, src);
     const std::set<document::ToolpathId> wanted(ids.begin(), ids.end());
     for (const document::ToolpathRecord& r : doc.toolpaths()) {
         if (!ids.empty() && wanted.count(r.id) == 0) {
@@ -533,6 +542,7 @@ SaveSource makeSaveSource(ToolpathSession& session) {
         return src;
     }
     src.job = doc->job();
+    copyKeepOut(*doc, src);
     std::set<document::ToolpathId> stale;
     std::set<document::ToolpathId> enabled;
     for (const ToolpathListItem& item : session.list()) {
@@ -571,6 +581,8 @@ SaveJob prepareSave(const SaveSource& source, const PostInfo& post, const SaveOp
     job.records = source.records;
     job.notComputed = source.notComputed;
     job.stale = source.stale;
+    job.keepOutZones = source.keepOutZones;
+    job.keepOutClearance = source.keepOutClearance;
     job.post = post;
     job.options = options;
     if (!post.usable()) {
@@ -677,6 +689,10 @@ SaveOutput generateOutputImpl(const SaveJob& job, const std::atomic<bool>* cance
         paths.push_back(job.options.directory / pathFromUtf8(candidate + "." + ext));
     }
 
+    std::optional<toolpath::KeepOutField> keepOut;
+    if (!job.keepOutZones.empty()) {
+        keepOut.emplace(job.keepOutZones, job.keepOutClearance);
+    }
     for (std::size_t gi = 0; gi < groups.size(); ++gi) {
         if (cancel != nullptr && cancel->load()) {
             return fail("cancelled");
@@ -694,6 +710,24 @@ SaveOutput generateOutputImpl(const SaveJob& job, const std::atomic<bool>* cance
             file.toolpaths.push_back(r.name);
         }
         out.toolChanges += countToolChanges(recs);
+
+        // Keep-out zones (T-0241): rapids are routed around them. The tool starts at home and
+        // each toolpath starts where the previous one ended.
+        if (keepOut && !keepOut->empty()) {
+            std::optional<geometry::Vec3> at = geometry::Vec3{0.0, 0.0, safeZ};
+            for (toolpath::Toolpath& tp : toolpaths) {
+                const toolpath::RoutingReport rep = toolpath::routeRapids(tp, *keepOut, at);
+                if (rep.unroutable != 0) {
+                    out.warnings.push_back(pathToUtf8(outFs.filename()) + ": toolpath '" + tp.name + "': " +
+                                           std::to_string(rep.unroutable) +
+                                           " rapid move(s) cannot be routed around the keep-out zones (an end point "
+                                           "lies inside a zone) and are left straight");
+                }
+                if (!tp.moves.empty()) {
+                    at = tp.moves.back().to;
+                }
+            }
+        }
 
         // The same context carvetto-cli builds (app/cli/src/cli.cpp, cmdPost).
         post::PostContext ctx;
