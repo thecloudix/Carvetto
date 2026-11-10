@@ -1178,7 +1178,7 @@ Acceptance criteria:
   1. Each item fixed on its repro scene or documented as an accepted limit in ADR-0016 §14; a >= 10k-scene V-bit-forced screen, leads off, shows no regression vs main; mutants killed; full ctest.
 Out of scope: anything outside Profile loose-piece reporting.
 
-### T-0253 Locale-dependent test: "a non-ASCII output folder works end to end" (save_toolpaths_test.cpp:693)   [status: in-progress]
+### T-0253 Locale-dependent test: "a non-ASCII output folder works end to end" (save_toolpaths_test.cpp:693)   [status: verifying]
 Phase: 1   Module: app/viewmodel tests   Depends on: T-0224
 Goal: the test fails on some environments (C.UTF-8 locale, long scratch path; passes on the director's main build) because its expectation "/ete _)" depends on locale/transliteration. Make the expectation locale-independent or set the locale in the test; no product change unless the transliteration itself is locale-dependent (then fix it).
 Acceptance criteria:
