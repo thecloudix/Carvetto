@@ -1,4 +1,4 @@
-# ADR-0047: reflex angular dimensions are encoded in the sign of the offset
+# ADR-0050: reflex angular dimensions are encoded in the sign of the offset
 
 Status: accepted (T-0255)
 

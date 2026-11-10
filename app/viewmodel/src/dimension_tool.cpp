@@ -103,7 +103,7 @@ DimensionToolResult DimensionTool::click(Vec2 mm, double snapToleranceMm) {
         return refused("the dimension could not be added");
     }
     doc_->selection().assign({*id});
-    editTarget_ = *id;
+    editTarget_.reset();  // handles appear only after a Shift-click, so the next pick is not a handle grab
     r.committed = true;
     r.created = *id;
     r.draftChanged = true;
