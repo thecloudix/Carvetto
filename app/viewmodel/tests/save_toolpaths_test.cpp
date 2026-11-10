@@ -911,3 +911,65 @@ TEST_CASE("keep-out zones: the save source copies the document's zones and clear
     CHECK(viaSession.keepOutZones.size() == 1);
     CHECK(viaSession.keepOutClearance == 2.0);
 }
+
+TEST_CASE("Output Tiled Toolpaths: one record per tile and toolpath, tile by tile (T-0242)", "[save][tiling]") {
+    Fixture f;
+    const auto posts = shipped();
+    SaveOptions o;
+    o.mode = OutputMode::FilePerToolpath;
+    o.directory = workDir("tiled");
+    o.jobName = "part";
+    toolpath::TileSpec spec;
+    spec.width = 30;
+    spec.height = 30;
+    spec.overlap = 2;
+    o.tiling = spec;
+    o.workAreaX = 30;
+    o.workAreaY = 30;
+    const SaveJob job = prepareSave(f.doc, {}, postNamed(posts, "grbl_mm.pp"), o);
+    INFO(job.error);
+    REQUIRE(job.error.empty());
+    REQUIRE(job.records.size() > 3);
+    CHECK(job.records[0].name.find("(tile 1)") != std::string::npos);
+    for (const auto& r : job.records) {
+        REQUIRE(r.hasMoves());
+        // tile coordinates: every tile moves within the 30 mm work area
+        double minX = 1e9, maxX = -1e9;
+        for (const auto& m : *r.moves) {
+            minX = std::min(minX, m.to.x);
+            maxX = std::max(maxX, m.to.x);
+        }
+        CHECK(minX >= -1e-6);
+        CHECK(maxX <= 30 + 1e-6);
+    }
+    const SaveOutput out = generateOutput(job);
+    INFO(out.error);
+    REQUIRE(out.ok);
+    CHECK(out.files.size() == job.records.size());
+    CHECK(generateOutput(job).files[0].text == out.files[0].text);
+}
+
+TEST_CASE("Output Tiled Toolpaths: tiles larger than the work area, bad specs and keep-out are refused", "[save][tiling]") {
+    Fixture f;
+    const auto posts = shipped();
+    SaveOptions o;
+    o.jobName = "part";
+    toolpath::TileSpec spec;
+    spec.width = 30;
+    spec.height = 30;
+    o.tiling = spec;
+    o.workAreaX = 20;
+    const SaveJob big = prepareSave(f.doc, {}, postNamed(posts, "grbl_mm.pp"), o);
+    CHECK(big.error.find("work area") != std::string::npos);
+
+    o.workAreaX = 0;
+    o.tiling->width = 0;
+    CHECK(prepareSave(f.doc, {}, postNamed(posts, "grbl_mm.pp"), o).error.find("tiling") != std::string::npos);
+
+    o.tiling->width = 30;
+    SaveSource src = makeSaveSource(f.doc, {});
+    src.keepOutZones.push_back(square(0, 0, 5));
+    CHECK(prepareSave(src, postNamed(posts, "grbl_mm.pp"), o).error.find("keep-out") != std::string::npos);
+    o.tiling->originalPosition = true;
+    CHECK(prepareSave(src, postNamed(posts, "grbl_mm.pp"), o).error.empty());
+}
