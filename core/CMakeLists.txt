@@ -185,6 +185,7 @@ add_library(carvetto_core STATIC
   src/toolpath/pass_plan.cpp
   src/toolpath/linking.cpp
   src/toolpath/keepout.cpp
+  src/toolpath/tiling.cpp
   src/toolpath/time.cpp
   src/toolpath/path_walk.cpp src/toolpath/clearance.cpp src/toolpath/box_index.cpp src/toolpath/operation.cpp src/toolpath/tab_placement.cpp src/toolpath/lead_moves.cpp src/toolpath/cut_order.cpp src/toolpath/ramp_entry.cpp src/toolpath/profile.cpp src/toolpath/enclosed_pieces.cpp
   src/tooling/tool.cpp
@@ -238,6 +239,7 @@ add_library(carvetto_core STATIC
   src/toolpath/drill.cpp
   src/toolpath/engrave.cpp
   src/toolpath/chamfer.cpp
+  src/toolpath/prism.cpp
   src/toolpath/thread_mill.cpp
   src/toolpath/v_carve.cpp
   src/toolpath/v_carve_corners.cpp

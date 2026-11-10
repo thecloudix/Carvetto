@@ -53,6 +53,7 @@
 #include "preview_panel.hpp"
 #include "toolpaths_panel.hpp"
 #include "transform_menu.hpp"
+#include "keepout_panel.hpp"
 #include "vector_ops_menu.hpp"
 
 namespace carvetto::app {
@@ -891,6 +892,11 @@ int runSelfTest() {
 
     // 11. Dimensions: place, edit with handles and the dialog, delete (T-0255).
     if (const std::string why = dimensionSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 12. Keep-out zones: dock, menu, canvas drawing, routed preview (T-0256).
+    if (const std::string why = keepOutSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

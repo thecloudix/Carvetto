@@ -546,8 +546,20 @@ std::string dimensionSelfTest(MainWindow& window) {
         const auto heightHandle = *std::find_if(dt.handles().begin(), dt.handles().end(), [](const auto& h) {
             return h.kind == document::DimensionHandleKind::TextHeight;
         });
-        drag(canvas, heightHandle.pos, heightHandle.pos + geometry::Vec2{0.0, 4.0});
-        DIM_REQUIRE(dimOf(doc, id)->textHeightMm > before.textHeightMm, "the text height handle did not enlarge the text");
+        // Pull it outwards along the text's own up direction (from the model, not from pixels or a
+        // font), far enough that pointer snapping or rounding cannot swallow the change.
+        const auto geomNow = document::dimensionGeometry(doc, *dimOf(doc, id));
+        DIM_REQUIRE(geomNow.valid, "the dimension geometry is not valid");
+        const geometry::Vec2 up = geometry::Vec2::fromAngle(geomNow.textAngle + geometry::kPi / 2.0);
+        const geometry::Vec2 target = heightHandle.pos + up * (2.0 * before.textHeightMm + 3.0);
+        const auto modelMoved = document::moveDimensionHandle(doc, *dimOf(doc, id), heightHandle, target);
+        DIM_REQUIRE(modelMoved && modelMoved->textHeightMm > before.textHeightMm,
+                    "the model does not enlarge the text for the height handle");
+        drag(canvas, heightHandle.pos, target);
+        DIM_REQUIRE(dimOf(doc, id)->textHeightMm > before.textHeightMm,
+                    "the text height handle did not enlarge the text (dimension " + std::to_string(n) + ", height " +
+                        std::to_string(dimOf(doc, id)->textHeightMm) + " of " + std::to_string(before.textHeightMm) +
+                        " mm, view scale " + std::to_string(canvas->view().scale()) + ")");
         DIM_REQUIRE(doc.undoStack().index() == steps + 1, "a text height drag was not one undo step");
         window.undo();
         // Escape during a drag reverts it.

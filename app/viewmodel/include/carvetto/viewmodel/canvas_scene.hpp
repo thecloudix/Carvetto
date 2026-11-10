@@ -47,12 +47,30 @@ struct CanvasScene {
     std::vector<DrawPath> paths;
     /// Dimension texts on visible layers, in the order of `paths`.
     std::vector<DrawLabel> labels;
+    /// Keep-out zone outlines and the clearance halo round them (T-0256), empty when the zones are
+    /// hidden. `object` is null and `colour` unused for these.
+    std::vector<DrawPath> keepOutZones;
+    std::vector<DrawPath> keepOutHalo;
+};
+
+/// Remembers the halo of the keep-out zones between frames (it only changes with the zones).
+class KeepOutHaloCache {
+   public:
+    /// The halo contours of `doc`, recomputed only when its zones or clearance changed.
+    const std::vector<geometry::Contour>& get(const document::Document& doc);
+
+   private:
+    std::vector<geometry::Contour> zones_;
+    double clearance_{-1.0};
+    std::vector<geometry::Contour> halo_;
 };
 
 /// Options for building a scene.
 struct SceneOptions {
     /// Maximum chordal deviation of drawn curves, in screen pixels.
     double tolerancePx{0.25};
+    /// Optional per-widget cache for the keep-out halo; computed afresh each frame when null.
+    KeepOutHaloCache* haloCache{nullptr};
 };
 
 /// Polygonises `contour` so its deviation on screen stays within `tolerancePx`, and maps the
