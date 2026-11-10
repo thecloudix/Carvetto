@@ -684,13 +684,25 @@ TEST_CASE("a non-ASCII output folder works end to end", "[save]") {
     const auto posts = discoverPosts({}, base);
     REQUIRE(posts.size() == 1);
     REQUIRE(posts[0].usable());
+    // A comment too long for the line limit is cut with "..." (T-0162), and the scratch directory
+    // can be arbitrarily deep, so the post is shown the folder relative to the working directory:
+    // its text is then short on every machine. (This was the T-0253 failure on long build paths.)
+    struct Cwd {
+        fs::path old = fs::current_path();
+        ~Cwd() {
+            std::error_code ec;
+            fs::current_path(old, ec);
+        }
+    } cwd;
+    fs::current_path(base);
     SaveOptions o;
-    o.directory = dir;
+    o.directory = pathFromUtf8("\xC3\xA9t\xC3\xA9 \xD0\x96");
     o.jobName = "caf\xC3\xA9";
     const SaveOutput out = generateOutput(prepareSave(f.doc, {}, posts[0], o));
     INFO(out.error);
     REQUIRE(out.ok);
-    CHECK(out.files[0].text.find("/ete _)") != std::string::npos);  // the post writes comments in ASCII
+    // The post writes comments in ASCII: "\xC3\xA9" becomes "e", the Cyrillic letter "_".
+    CHECK(out.files[0].text.find("(ete _/caf") != std::string::npos);
     CHECK(pathToUtf8(out.files[0].path.filename()) == "caf\xC3\xA9.nc");
     const WriteResult w = writeOutput(out, false);
     REQUIRE(w.ok);
