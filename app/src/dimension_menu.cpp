@@ -395,7 +395,9 @@ const document::DimensionObject* dimOf(const document::Document& doc, document::
 std::size_t dimensionCount(const document::Document& doc) {
     std::size_t n = 0;
     for (const auto& [id, obj] : doc.objects()) {
-        n += obj.asDimension() != nullptr ? 1 : 0;
+        if (obj.asDimension() != nullptr) {
+            ++n;
+        }
     }
     return n;
 }
@@ -432,8 +434,8 @@ std::string dimensionSelfTest(MainWindow& window) {
             dialog.accept();
             DIM_REQUIRE(dialog.result() != QDialog::Accepted, "OK closed the dialog on a hostile entry");
         }
+        custom->setMaxLength(100000);  // the field itself caps input; lift that so problem() is what is tested
         custom->setText(QString(5000, QLatin1Char('x')));
-        custom->setMaxLength(100000);
         height->setText(QStringLiteral("4"));
         DIM_REQUIRE(!dialog.problem().empty(), "an over-long custom text was accepted");
         custom->setText(QStringLiteral("TYP"));
@@ -527,7 +529,7 @@ std::string dimensionSelfTest(MainWindow& window) {
         const auto textHandle = *std::find_if(handles.begin(), handles.end(), [](const document::DimensionHandle& h) {
             return h.kind == document::DimensionHandleKind::Text;
         });
-        drag(canvas, textHandle.pos, textHandle.pos + geometry::Vec2{0.0, 12.0});
+        drag(canvas, textHandle.pos, textHandle.pos + geometry::Vec2{12.0, 12.0});
         DIM_REQUIRE(doc.undoStack().index() == steps + 1, "a text handle drag was not one undo step");
         DIM_REQUIRE(!(*dimOf(doc, id) == before), "the text handle drag changed nothing");
         window.undo();

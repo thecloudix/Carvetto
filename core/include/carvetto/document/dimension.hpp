@@ -42,9 +42,13 @@ std::array<geometry::Vec2, 3> resolveDimensionPoints(const Document& doc, const 
 /// Number of defining points the kind uses: 2 (linear, aligned, radial) or 3 (angular).
 std::size_t dimensionPointCount(DimensionKind kind);
 
-/// The measured value from `points` (mm; radians for angular, in (0, pi], or (pi, 2*pi) when reflex, see below; the radius or, with
-/// `diameter`, the diameter for radial). Nullopt when degenerate (coincident points, a zero-length
-/// arm, non-finite input).
+/// The measured value from `points` (mm; radians for angular, in (0, pi], or (pi, 2*pi) when
+/// reflex; the radius or, with `diameter`, the diameter for radial). Nullopt when degenerate
+/// (coincident points, a zero-length arm, non-finite input).
+/// An angular dimension measures the reflex angle (2*pi minus the smaller angle) when its
+/// `offsetMm` is negative (the radius is its magnitude); the dimension tool sets that when the arc
+/// is placed outside the smaller angle. This needs no stored flag, so the `.carv` format is
+/// unchanged.
 std::optional<double> measureDimensionPoints(const DimensionObject& dim,
                                              const std::array<geometry::Vec2, 3>& points);
 
@@ -66,11 +70,6 @@ std::string dimensionText(const Document& doc, const DimensionObject& dim, Units
 /// (never negative). `points` are resolved positions. Nullopt when degenerate.
 std::optional<double> offsetForPlacement(const DimensionObject& dim, const std::array<geometry::Vec2, 3>& points,
                                          geometry::Vec2 placement);
-
-/// An angular dimension measures the reflex angle (2*pi minus the smaller angle) when its
-/// `offsetMm` is negative (the radius is its magnitude); the dimension tool sets that when the arc
-/// is placed outside the smaller angle. This needs no stored flag, so the `.carv` format is
-/// unchanged.
 
 /// Drawing geometry of a dimension: extension lines, dimension line or arc and arrowheads (closed
 /// triangles), plus where the text goes.
