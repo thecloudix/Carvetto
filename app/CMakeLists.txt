@@ -58,6 +58,9 @@ qt_add_executable(carvetto
   src/texture_menu.hpp
   src/transform_menu.cpp
   src/transform_menu.hpp
+  src/keepout_panel.cpp
+  src/keepout_self_test.cpp
+  src/keepout_panel.hpp
   src/vector_ops_menu.cpp
   src/vector_ops_menu.hpp
 )

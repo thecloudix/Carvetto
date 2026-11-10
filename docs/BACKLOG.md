@@ -532,7 +532,7 @@ Acceptance criteria:
   1. (a)–(c) every free piece ≥ 0.04 mm² reported in the repro scenes and a ≥ 10k-scene vfree screen with V-bit corners on; no held piece reported; no kept tab severed/partial because of corner moves.
   2. (d)/(e) docs true as written or behaviour changed; holding tabs never fewer than the T-0135 merge.
 
-### T-0157 Profile precision for small parts far from the origin   [status: ready]
+### T-0157 Profile precision for small parts far from the origin   [status: verifying — re-scoped: documented limit (1e5 mm, T-0186) + pinning test + signedArea cache]
 Phase: 1   Module: core/toolpath, core/geometry   Depends on: T-0147
 Goal: Found by the T-0147 verifier (harness t0147v1/far.cpp): with signedArea fixed, Profile still behaves differently from the origin for small parts at ≥ 1e7–1e8 mm (same-count 0–10/20; e.g. a circle at 3e8 gives "offset by 0.25 mm vanishes"); same on base — the cause is in offset/Profile precision (absolute coordinates in offset or clearance code), not area. Also: signedArea is now ~3–4× slower per arc span (sin/cos recomputed for junction terms; end-to-end unchanged) — cache per-span ends if cheap.
 Acceptance criteria:
@@ -726,7 +726,7 @@ Goal: Found by the T-0180 coder (harness nf.cpp seed 5): `polygoniseInto(ArcSpan
 Acceptance criteria:
   1. Arcs of radius 1e9..1.7e308 and inf at default and tiny chordal tolerances polygonise in <= 0.2 s with bounded memory (ulimit -v test) and documented accuracy; output unchanged (hash corpus main vs branch, bit-identical) for every arc that polygonised under the cap before; every caller listed above terminates promptly on a hostile arc (CPU-time tests); mutants killed; full ctest; MSVC CI green.
 
-### T-0183 Surface refused contours in toolpath diagnostics (T-0182 coder)   [status: ready]
+### T-0183 Surface refused contours in toolpath diagnostics (T-0182 coder)   [status: in-progress]
 Phase: 1   Module: core/toolpath   Depends on: T-0182   ADR: 0005 A2, toolpath ADRs
 Goal: T-0182 caps arc polygonisation at 2^20 chords; `toClipperPath` refuses a coarse contour (empty path), so `booleanOp`/`unionContours`/`offsetContours`/`OpenPathClipper` silently omit it and count it in `BooleanResult::refusedContours` / `OpenPathClipper::refusedContours()`. No toolpath operation reads that count: a contour with an arc beyond ~1e9 mm radius (unrealistic, but reachable from hostile DXF/SVG files) would be silently missing from a Profile/Pocket/V-Carve/Engrave/Drill job. Wire the counts into the shared `ToolpathDiagnostic` (ADR-0018) so every operation reports a clear diagnostic naming the vector (Error severity: the toolpath for that vector is not generated, or the whole job is refused: decide per operation and document in each ADR: prefer refusing the vector with a diagnostic and still cutting the others) and the CLI/app show it.
 Acceptance criteria:
@@ -1063,7 +1063,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0240 Prism carving toolpath   [status: verifying — ADR-0042; OWNER to confirm geometry: inverted-pyramid recess (built) vs raised prism]
+### T-0240 Prism carving toolpath   [status: done — merged PR #121 (geometry reading OWNER to confirm: inverted-pyramid recess vs raised prism, ADR-0042)]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0153, T-0220
 Goal: Prism Carving: prism depth, set depth for full prism, cut direction (inventory 'Prism Carving Toolpath').
 Acceptance criteria:
@@ -1184,25 +1184,25 @@ Goal: the test fails on some environments (C.UTF-8 locale, long scratch path; pa
 Acceptance criteria:
   1. Test passes under LANG=C, C.UTF-8 and en_US.UTF-8 on Linux and on Windows CI; one changelog fragment if behaviour changes.
 
-### T-0254 Vector texture: dialog, preview and clipping to arbitrary closed vectors (T-0251 follow-up)   [status: ready]
+### T-0254 Vector texture: dialog, preview and clipping to arbitrary closed vectors (T-0251 follow-up)   [status: verifying]
 Phase: 1   Module: app/viewmodel + app/src + core/geometry   Depends on: T-0251
 Goal: T-0251 delivered only the deterministic core generator (rectangle region). Add the Create Vector Texture dialog (angle, max spacing, spacing variation, wavelength, amplitude, noise, seed, target layer), live preview, one undo step, and clipping to the selected closed vectors (with holes) instead of the bounding box.
 Acceptance criteria:
   1. Generated lines lie inside the selected region (holes excluded) within tolerance; dialog edits validated with units; one undo step; self-test drives the real dialog; bounded work for hostile regions.
 
-### T-0255 Dimensions: ToolController wiring, options dialog, canvas handle editing, DXF text (T-0246 follow-up)   [status: ready]
+### T-0255 Dimensions: ToolController wiring, options dialog, canvas handle editing, DXF text (T-0246 follow-up)   [status: in-progress]
 Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0246
 Goal: wire DimensionTool into ToolController (ToolKind::Dimension, toolbar/menu), Qt options dialog (decimals, font/text height, offset, custom text), canvas control-point handles and shift-select editing, Edit > Dimensions; DXF export of dimension text when a text entity path exists; reflex angular dimensions.
 Acceptance criteria:
   1. A user can place, edit and delete each dimension kind in the real app (self-test drives it); one undo step per edit; hostile option input refused.
 
-### T-0256 Keep-out zones: Qt UI (Create from Selection, Clear Zones, clearance, show/hide, canvas drawing) (T-0241 follow-up)   [status: ready]
+### T-0256 Keep-out zones: Qt UI (Create from Selection, Clear Zones, clearance, show/hide, canvas drawing) (T-0241 follow-up)   [status: verifying — ADR-0046]
 Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0241
 Goal: menu/dock entries for the T-0241 commands, clearance field, show/hide toggle, canvas drawing of zones (+ clearance halo), preview shows routed rapids, summary reports unroutable rapids. Self-test drives it.
 Acceptance criteria:
   1. In the real app: create zones from selected closed vectors, change clearance, hide/show, clear; each edit one undo step; preview/save use the routed rapids.
 
-### T-0257 Document variables: Qt dialog, calculation edit boxes, toolpath references (T-0248 follow-up)   [status: ready]
+### T-0257 Document variables: Qt dialog, calculation edit boxes, toolpath references (T-0248 follow-up)   [status: verifying — session-only expressions; persistence etc. → T-0271]
 Phase: 1   Module: app/viewmodel + app/src + core/toolpath   Depends on: T-0248, T-0210
 Goal: Edit > Document Variables dialog (create/edit/delete/import/export), expression evaluation in numeric edit boxes (units, letter variables) and 'Insert New Document Variable', toolpath forms register addReference/removeReference so a used variable cannot be deleted (also while its form is open), text {Variable} substitution.
 Acceptance criteria:
@@ -1220,13 +1220,13 @@ Goal: File > Create Job Sheet action writing the HTML/text sheet via a save dial
 Acceptance criteria:
   1. In the real app the action writes a job sheet equal to makeJobSheet output; hostile paths refused; self-test drives it.
 
-### T-0260 Trace Bitmap: app dialog, QImage decoding, undoable command (T-0245 follow-up)   [status: ready]
+### T-0260 Trace Bitmap: app dialog, QImage decoding, undoable command (T-0245 follow-up)   [status: in-progress]
 Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0245, T-0210
 Goal: File/Edit > Trace Bitmap: choose an image (PNG/JPEG/BMP decoded with QImage in the app layer into io::RasterImage, size-checked before decode), dialog with mode (B&W threshold/invert, colour count 2..16), noise filter, corner fit, scale (mm per pixel/target size), live preview, result as one undo step with one layer per colour; Pick from 2D View; Bitmap Fading. Also: the tracer has no work cap or cancel hook (a valid 4000x4000 single-loop bitmap takes ~170-220 s), so add a boundary-edge budget and a cancel poll in core and run the trace off the UI thread.
 Acceptance criteria:
   1. In the real app a user traces a bitmap into vectors in one undo step; oversize/hostile images refused with a message; self-test drives it.
 
-### T-0261 Double-sided jobs: UI, object/toolpath copy to other side, per-side output (T-0243 follow-up)   [status: ready]
+### T-0261 Double-sided jobs: UI, object/toolpath copy to other side, per-side output (T-0243 follow-up)   [status: in-progress]
 Phase: 1   Module: app + app/viewmodel + core/document + core/toolpath   Depends on: T-0243, T-0224
 Goal: Job Setup double-sided page, Swap Sides button and keys, multi-sided view drawing (from multiSidedView), Copy/Move to Other Side for objects (mirroring transform) and toolpaths (sheet link on toolpath records), apply shiftMovesZ(sheetTopZ) in Save Toolpaths so each side posts with the correct Z zero, switching back to single-sided, Preview All Sides. Needs owner confirmation of the 'Zero off same side' interpretation (T-0243 ADR) before dispatch if the coder cannot settle it from the inventory.
 Acceptance criteria:
@@ -1276,3 +1276,21 @@ Phase: 1   Module: core/toolpath/tiling   Depends on: T-0242
 Goal: (1) NaN/inf coordinates leak through to tile output as non-finite moves: reject or skip them (and consider a finite check in save_toolpaths); (2) cost is O(tiles x moves) with no bounding-box prefilter: 200k moves x 10000 tiles ran past 60 s; add a per-move bounds reject / spatial bucketing, lower the 100000-tile cap, add a work bound and cancel; (3) originalPosition=true does not check the tile lies inside the machine bed: decide/document; (4) huge or degenerate arcs (1e300 centre gives 0 tiles; zero-radius arc yields many moves); tests for the clip-boundary tolerances (kEps 1e-9, kMinPiece 1e-6) so mutants die; (5) document tile numbering ("tile N" counts non-empty tiles after ordering).
 Acceptance criteria:
   1. Hostile jobs finish or refuse within a documented bound; non-finite input never reaches output; byte-identical tile output for inputs that finished before; tests.
+
+### T-0269 Inlay derived-span cap and diagnostics (T-0238 round-2 verifier nits)   [status: ready — LOW]
+Phase: 1   Module: core/toolpath/inlay   Depends on: T-0238
+Goal: the 4000 derived-span cap refuses polygonal inputs above ~1000-1500 vertices that the old code handled in <0.3 s (real cost cliff is ~15,000-20,000 derived spans): raise the cap (~15,000) or key it to estimated work, keep the 20,000-span zigzag repro bounded; refusal message should name the input span count and suggest simplifying; replace the string-compare of kAllowanceConsumes with a flag on InlayShapes; mention the cap in ADR-0040.
+Acceptance criteria:
+  1. 3,000-span inputs that finished before are accepted again with byte-identical output; the 20,000-span repro stays refused in <1 s CPU; tests.
+
+### T-0270 Flaky timing tests: 'selection removal scales near-linearly in every order' and other ratio/absolute CPU bounds (T-0226 verifier)   [status: ready — LOW]
+Phase: 1   Module: core/tests, app/viewmodel/tests   Depends on: T-0226
+Goal: the T-0226 verifier saw 'selection removal scales near-linearly in every order' flake under heavy load; the T-0226 coder left unhardened: the 2.5-per-doubling checks in toolpath_scale_test, toolpath_residual_scale_test, perf_test, offset_unnested_hole_test, v_carve_test, boolean_batch_test, medial_axis_robustness_test, open_offset_chains_test and absolute CPU-second bounds (e.g. spiral seconds < 0.5*kAbsSlack). Measure idle ratios and under-load behaviour, harden the fragile ones (least-of-N, longer workloads, justified bounds), keep each test's guarding power (mutant check).
+Acceptance criteria:
+  1. 40x runs under sustained load pass; synthetic slowdowns still fail the tests; list of what was left and why.
+
+### T-0271 Document variables follow-ups (T-0257 coder)   [status: ready]
+Phase: 1   Module: core/document + app   Depends on: T-0257
+Goal: (1) persist toolpath calculation expressions in .carv (optional 'expressions' object per toolpath record in job.json, loader/writer, ToolpathRecord field/equality; format minor allocation per the highest-required-minor scheme, ADR) so the expression link and delete protection survive save/load; (2) 'Insert New Document Variable' context menu on all numeric boxes; (3) feet (') conversion respects display units (inch mode); (4) run variable-triggered recalculation off the UI thread; (5) re-derive chamfer linked fields when a sibling holds an expression; (6) {Variable} substitution in text/data-merge if the owner wants it.
+Acceptance criteria:
+  1. Save/reload keeps expressions and blocks deleting a used variable; old files load; other items tested.

@@ -37,6 +37,7 @@ class RulerWidget;
 class CopiesMenu;
 class NodeEditMenu;
 class PreviewPanel;
+class KeepOutPanel;
 class ReliefView;
 class ToolPanel;
 class ToolpathsPanel;
@@ -75,6 +76,9 @@ class MainWindow : public QMainWindow {
     /// The node-editing menus and Properties dialog of the NodeEdit tool.
     NodeEditMenu* nodeEdit() const { return nodeEdit_.get(); }
     TransformMenu* transformMenu() const { return transformMenu_.get(); }
+    /// Keep-out zones dock and Edit submenu (T-0256).
+    KeepOutPanel* keepOutPanel() const { return keepOut_; }
+    QDockWidget* keepOutDock() const { return keepOutDock_; }
     QDockWidget* toolpathsDock() const { return toolpathsDock_; }
     /// File > Save Toolpaths... (T-0224): posts the enabled, calculated toolpaths.
     QAction* saveToolpathsAction() const { return saveToolpathsAction_; }
@@ -189,6 +193,8 @@ class MainWindow : public QMainWindow {
     QDockWidget* libraryDock_{nullptr};
     QDockWidget* toolpathsDock_{nullptr};
     QDockWidget* previewDock_{nullptr};
+    QDockWidget* keepOutDock_{nullptr};
+    KeepOutPanel* keepOut_{nullptr};
     QDockWidget* propertiesDock_{nullptr};
     QDockWidget* historyDock_{nullptr};
 

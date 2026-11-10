@@ -15,6 +15,7 @@
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/post/post_processor.hpp"
 #include "carvetto/tooling/machine.hpp"
+#include "carvetto/toolpath/tiling.hpp"
 #include "carvetto/viewmodel/toolpath_session.hpp"
 
 // Save toolpaths (T-0224, ADR-0034): Qt-free logic behind the Save Toolpaths dialog.
@@ -85,6 +86,13 @@ struct SaveOptions {
     std::string nameTemplate;
     /// Name of the job for {job}: usually the document's file stem.
     std::string jobName{"job"};
+    /// Output Tiled Toolpaths (T-0242, ADR-0043): when set, the toolpaths are split into tiles of
+    /// `tiling` and the output holds one record per tile and toolpath, tile by tile, named
+    /// "<toolpath> (tile N)". Tiling is done by `prepareSave`.
+    std::optional<toolpath::TileSpec> tiling;
+    /// Machine work area in mm (0 = not set): a tile larger than it makes the job fail.
+    double workAreaX{0.0};
+    double workAreaY{0.0};
 };
 
 /// Everything posting needs, by value.

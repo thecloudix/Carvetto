@@ -46,11 +46,12 @@ add_executable(carvetto_tests
   toolpath/pass_plan_test.cpp
   toolpath/linking_test.cpp
   toolpath/keepout_test.cpp
+  toolpath/tiling_test.cpp
   document/keepout_test.cpp
   toolpath/time_test.cpp
   toolpath/block_settle_test.cpp
   toolpath/profile_tab_layer_test.cpp
-  toolpath/path_walk_test.cpp toolpath/profile_test.cpp toolpath/profile_allowance_limit_test.cpp toolpath/profile_budget_test.cpp toolpath/profile_on_allowance_limit_test.cpp toolpath/profile_tolerance_test.cpp toolpath/profile_golden_test.cpp toolpath/profile_property_test.cpp toolpath/profile_empty_walk_test.cpp toolpath/profile_tip_start_test.cpp
+  toolpath/path_walk_test.cpp toolpath/profile_test.cpp toolpath/profile_allowance_limit_test.cpp toolpath/profile_budget_test.cpp toolpath/profile_far_test.cpp toolpath/profile_on_allowance_limit_test.cpp toolpath/profile_tolerance_test.cpp toolpath/profile_golden_test.cpp toolpath/profile_property_test.cpp toolpath/profile_empty_walk_test.cpp toolpath/profile_tip_start_test.cpp
   tooling/tool_test.cpp
   tooling/tool_database_test.cpp
   tooling/json_io_test.cpp
@@ -110,6 +111,7 @@ add_executable(carvetto_tests
   document/carv_drill_record_test.cpp
   document/carv_chamfer_record_test.cpp
   document/carv_thread_mill_record_test.cpp
+  document/carv_prism_record_test.cpp
   document/carv_engrave_record_test.cpp
   document/carv_v_carve_record_test.cpp
   io/dxf_import_test.cpp
@@ -144,6 +146,7 @@ add_executable(carvetto_tests
   toolpath/drill_test.cpp
   toolpath/drill_post_test.cpp
   toolpath/chamfer_test.cpp
+  toolpath/prism_test.cpp
   toolpath/thread_mill_test.cpp
   toolpath/engrave_test.cpp
   toolpath/engrave_post_test.cpp
