@@ -487,6 +487,14 @@ json encodeSheet(const Sheet& s) {
     j["datum"] = nameOf(kDatums, s.datum);
     j["datum_offset_mm"] = encodePoint(s.datumOffsetMm);
     j["visible"] = s.visible;
+    // Double-sided keys (T-0243, ADR-0036): written only for a paired or back-side sheet, so every
+    // other document keeps its bytes and its format minor.
+    if (s.side != Side::Front) {
+        j["side"] = "back";
+    }
+    if (s.partner.value != 0) {
+        j["partner"] = s.partner.value;
+    }
     return j;
 }
 
@@ -1283,10 +1291,28 @@ constexpr std::array<std::string_view, 7> kSheetKeys{
 Sheet decodeSheet(JsonReader& r, const Path& p, ExtraMap& unknown) {
     Record rec(r, p, kSheetKeys);
     Sheet s;
+    bool sawSide = false;
+    bool sawPartner = false;
     while (rec.next()) {
         const Path f = rec.field();
         const std::string& k = rec.key();
-        if (k == "id") {
+        if (k == "side" || k == "partner") {
+            bool& seen = k == "side" ? sawSide : sawPartner;
+            if (seen) {
+                fail(p, "duplicate key '" + k + "'");
+            }
+            seen = true;
+            if (k == "partner") {
+                s.partner = SheetId{readEntityId(r, f)};
+            } else {
+                const std::string v = readString(r, f);
+                if (v == "back") {
+                    s.side = Side::Back;
+                } else if (v != "front") {
+                    fail(f, "must be \"front\" or \"back\"");
+                }
+            }
+        } else if (k == "id") {
             s.id = SheetId{readEntityId(r, f)};
         } else if (k == "name") {
             s.name = readStoredString(r, f);
@@ -3218,6 +3244,23 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
     for (std::size_t i = 0; i < jf.sheets.size(); ++i) {
         claimId(jf.sheets[i].first.id.value, where + ".sheets[" + std::to_string(i) + "]");
         sheetIds.insert(jf.sheets[i].first.id.value);
+    }
+    // A pairing must be mutual, between a front and a back sheet.
+    for (std::size_t i = 0; i < jf.sheets.size(); ++i) {
+        const Sheet& s = jf.sheets[i].first;
+        if (s.partner.value == 0) {
+            continue;
+        }
+        const auto other = std::find_if(jf.sheets.begin(), jf.sheets.end(), [&](const auto& e) {
+            return e.first.id == s.partner;
+        });
+        const std::string w = where + ".sheets[" + std::to_string(i) + "].partner";
+        if (other == jf.sheets.end()) {
+            fail(w, "sheet " + std::to_string(s.partner.value) + " does not exist");
+        }
+        if (other->first.partner != s.id || other->first.side == s.side) {
+            fail(w, "must pair a front sheet with a back sheet that names this sheet back");
+        }
     }
     std::set<std::uint64_t> layerIds;
     for (std::size_t i = 0; i < jf.layers.size(); ++i) {

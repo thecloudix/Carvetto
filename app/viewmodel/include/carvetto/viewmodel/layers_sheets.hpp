@@ -8,6 +8,7 @@
 #include "carvetto/document/document.hpp"
 #include "carvetto/document/ids.hpp"
 #include "carvetto/document/layer.hpp"
+#include "carvetto/geometry/box2.hpp"
 #include "carvetto/viewmodel/properties_model.hpp"
 
 // Qt-free operations of the Layers and Sheets panels and the undo history list (T-0210, ADR-0014).
@@ -58,6 +59,40 @@ struct SheetMaterialEdit {
 };
 /// Edits the per-sheet material block. Sizes must be finite, positive and at most `kMaxSheetSizeMm`.
 EditResult setSheetMaterial(document::Document& doc, document::SheetId id, const SheetMaterialEdit& edit);
+
+// --- Double-sided jobs (T-0243) ---------------------------------------------------------------
+
+/// Makes the job double-sided (one undo step): sets the job type, flip direction and "zero off same
+/// side", and gives the active sheet a back-side partner sheet of the same material (named
+/// "<name> (back)") when it has none. Refused for rotary jobs and when the active sheet is itself a
+/// back sheet without a front. Calling it again only updates the flip settings.
+EditResult makeDoubleSided(document::Document& doc, document::FlipDirection flip, bool zeroOffSameSide);
+/// Changes the flip direction of a double-sided job.
+EditResult setFlipDirection(document::Document& doc, document::FlipDirection flip);
+/// Swap Sides: activates the other face's sheet of the active sheet. Refused without a partner.
+EditResult swapSides(document::Document& doc);
+
+/// One sheet in the multi-sided view.
+struct SideOutline {
+    document::SheetId sheet;
+    document::Side side{document::Side::Front};
+    bool active{false};
+    /// Material rectangle of the sheet in document coordinates.
+    geometry::Box2 material;
+    /// Bounds of the sheet's drawing; empty box when it has no objects.
+    geometry::Box2 content;
+    /// `content` of the partner mirrored into this sheet's frame (where the other face's drawing
+    /// lies when seen through the stock); empty when there is no partner or it has no objects.
+    geometry::Box2 otherSideContent;
+};
+/// Outlines of the active sheet and its partner (active first). Just the active sheet when the job
+/// is not double-sided or the sheet is unpaired.
+std::vector<SideOutline> multiSidedView(const document::Document& doc);
+
+/// Machine Z of the top of the stock for `sheet` (see `document::materialTopZ`), using the job's
+/// "zero off same side"; add it to toolpath Z (computed with the cut face at 0) for that sheet's
+/// output. Zero for an unknown sheet.
+double sheetTopZ(const document::Document& doc, document::SheetId sheet);
 
 // --- Undo history ------------------------------------------------------------------------------
 

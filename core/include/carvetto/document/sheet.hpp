@@ -9,6 +9,9 @@
 
 namespace carvetto::document {
 
+/// Which face of the stock a sheet of a double-sided job machines.
+enum class Side { Front, Back };
+
 /// One sheet of material in a job. Each sheet has its own size, Z-zero and datum; objects belong
 /// to exactly one sheet. A document always keeps at least one sheet.
 struct Sheet {
@@ -19,6 +22,10 @@ struct Sheet {
     Datum datum{Datum::BottomLeft};
     geometry::Vec2 datumOffsetMm{};
     bool visible{true};
+    /// Double-sided jobs (T-0243): the face this sheet machines and the sheet of the other face of
+    /// the same stock (null when unpaired). Both sheets of a pair name each other.
+    Side side{Side::Front};
+    SheetId partner{};
 
     bool operator==(const Sheet&) const = default;
 

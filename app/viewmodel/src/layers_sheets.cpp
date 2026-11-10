@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "carvetto/document/commands.hpp"
+#include "carvetto/document/double_sided.hpp"
 #include "carvetto/document/object_property_commands.hpp"
 
 namespace carvetto::viewmodel {
@@ -48,6 +49,27 @@ std::string freeName(const Container& items, const std::string& stem) {
         }
     }
 }
+
+/// Opens an undo macro and closes it on `finish()` (or on scope exit).
+class UndoStackGuard {
+   public:
+    UndoStackGuard(Document& doc, const char* text) : doc_(doc) {
+        doc_.undoStack().breakCoalescing();
+        doc_.undoStack().beginMacro(text);
+    }
+    ~UndoStackGuard() { finish(); }
+    void finish() {
+        if (open_) {
+            open_ = false;
+            doc_.undoStack().endMacro();
+            doc_.undoStack().breakCoalescing();
+        }
+    }
+
+   private:
+    Document& doc_;
+    bool open_{true};
+};
 
 bool sizeOk(double v) {
     return std::isfinite(v) && v > 0.0 && v <= kMaxSheetSizeMm;
@@ -206,6 +228,8 @@ EditResult addSheet(Document& doc, const std::string& name) {
         sheet = *active;
     }
     sheet.id = {};
+    sheet.side = document::Side::Front;  // a new sheet is never part of a front/back pair
+    sheet.partner = {};
     sheet.name = chosen;
     sheet.visible = true;
     return run(doc, std::make_unique<document::AddSheetCommand>(std::move(sheet), true),
@@ -236,7 +260,25 @@ EditResult deleteSheet(Document& doc, document::SheetId id) {
     if (doc.sheets().size() <= 1) {
         return refused("the last sheet cannot be deleted");
     }
-    return run(doc, std::make_unique<document::DeleteSheetCommand>(id), "the sheet cannot be deleted");
+    const document::Sheet* partner = doc.findSheet(doc.findSheet(id)->partner);
+    if (partner == nullptr) {
+        return run(doc, std::make_unique<document::DeleteSheetCommand>(id), "the sheet cannot be deleted");
+    }
+    // Unpair the surviving face first so no sheet names a deleted one; one undo step.
+    document::Sheet unpaired = *partner;
+    unpaired.partner = {};
+    doc.undoStack().breakCoalescing();
+    doc.undoStack().beginMacro("Delete sheet");
+    bool ok = doc.execute(std::make_unique<document::SetSheetPropertiesCommand>(std::move(unpaired)));
+    ok = ok && doc.execute(std::make_unique<document::DeleteSheetCommand>(id));
+    doc.undoStack().endMacro();
+    doc.undoStack().breakCoalescing();
+    if (!ok) {
+        return refused("the sheet cannot be deleted");
+    }
+    EditResult r;
+    r.changed = true;
+    return r;
 }
 
 EditResult setSheetMaterial(Document& doc, document::SheetId id, const SheetMaterialEdit& edit) {
@@ -269,6 +311,136 @@ EditResult setSheetMaterial(Document& doc, document::SheetId id, const SheetMate
     }
     return run(doc, std::make_unique<document::SetSheetPropertiesCommand>(std::move(next)),
                "the material cannot be changed");
+}
+
+// --- Double-sided jobs --------------------------------------------------------------------------
+
+EditResult makeDoubleSided(Document& doc, document::FlipDirection flip, bool zeroOffSameSide) {
+    if (doc.job().type == document::JobType::Rotary) {
+        return refused("a rotary job cannot be double-sided");
+    }
+    const document::Sheet* active = doc.findSheet(doc.activeSheet());
+    if (active == nullptr) {
+        return refused("the sheet no longer exists");
+    }
+    const bool needsBack = doc.findSheet(active->partner) == nullptr;
+    if (needsBack && active->side == document::Side::Back) {
+        return refused("the back sheet has no front sheet");
+    }
+    if (needsBack && doc.sheets().size() >= kMaxSheets) {
+        return refused("a document holds at most " + std::to_string(kMaxSheets) + " sheets");
+    }
+    document::Job job = doc.job();
+    job.type = document::JobType::DoubleSided;
+    job.flipDirection = flip;
+    job.zeroOffSameSide = zeroOffSameSide;
+
+    UndoStackGuard guard(doc, "Double-sided job");
+    bool ok = job == doc.job() || doc.execute(std::make_unique<document::SetJobCommand>(job));
+    if (needsBack) {
+        document::Sheet back = *active;
+        back.id = {};
+        back.side = document::Side::Back;
+        back.partner = active->id;
+        back.visible = true;
+        back.name = active->name + " (back)";
+        if (!document::nameProblem(back.name, true).empty()) {
+            back.name = freeName(doc.sheets(), "Back");
+        }
+        const document::SheetId frontId = active->id;
+        auto add = std::make_unique<document::AddSheetCommand>(std::move(back), false);
+        document::AddSheetCommand* raw = add.get();
+        ok = ok && doc.execute(std::move(add));
+        if (ok) {
+            document::Sheet front = *doc.findSheet(frontId);
+            front.partner = raw->id();
+            ok = doc.execute(std::make_unique<document::SetSheetPropertiesCommand>(std::move(front)));
+        }
+    }
+    guard.finish();
+    if (!ok) {
+        return refused("the job cannot be made double-sided");
+    }
+    EditResult r;
+    r.changed = true;
+    return r;
+}
+
+EditResult setFlipDirection(Document& doc, document::FlipDirection flip) {
+    if (doc.job().type != document::JobType::DoubleSided) {
+        return refused("the job is not double-sided");
+    }
+    if (doc.job().flipDirection == flip) {
+        return {};
+    }
+    document::Job job = doc.job();
+    job.flipDirection = flip;
+    return run(doc, std::make_unique<document::SetJobCommand>(job), "the flip direction cannot be changed");
+}
+
+EditResult swapSides(Document& doc) {
+    const document::Sheet* active = doc.findSheet(doc.activeSheet());
+    if (active == nullptr || doc.findSheet(active->partner) == nullptr) {
+        return refused("the active sheet has no other side");
+    }
+    if (!doc.setActiveSheet(active->partner)) {
+        return refused("the other side cannot be activated");
+    }
+    EditResult r;
+    r.changed = true;
+    return r;
+}
+
+namespace {
+
+geometry::Box2 sheetContent(const Document& doc, document::SheetId sheet) {
+    geometry::Box2 box;
+    for (const document::ObjectId id : doc.objectsOnSheet(sheet)) {
+        if (const auto b = doc.objectBounds(id)) {
+            box.expand(*b);
+        }
+    }
+    return box;
+}
+
+}  // namespace
+
+std::vector<SideOutline> multiSidedView(const Document& doc) {
+    std::vector<SideOutline> out;
+    const document::Sheet* active = doc.findSheet(doc.activeSheet());
+    if (active == nullptr) {
+        return out;
+    }
+    const document::Sheet* partner =
+        doc.job().type == document::JobType::DoubleSided ? doc.findSheet(active->partner) : nullptr;
+    const auto describe = [&](const document::Sheet& s, const document::Sheet* other, bool isActive) {
+        SideOutline o;
+        o.sheet = s.id;
+        o.side = s.side;
+        o.active = isActive;
+        o.material = s.materialBoundsMm();
+        o.content = sheetContent(doc, s.id);
+        if (other != nullptr) {
+            const geometry::Box2 theirs = sheetContent(doc, other->id);
+            if (!theirs.isEmpty()) {
+                o.otherSideContent = document::flipBox(o.material, doc.job().flipDirection, theirs);
+            }
+        }
+        return o;
+    };
+    out.push_back(describe(*active, partner, true));
+    if (partner != nullptr) {
+        out.push_back(describe(*partner, active, false));
+    }
+    return out;
+}
+
+double sheetTopZ(const Document& doc, document::SheetId sheet) {
+    const document::Sheet* s = doc.findSheet(sheet);
+    if (s == nullptr) {
+        return 0.0;
+    }
+    return document::materialTopZ(s->zZero, doc.job().zeroOffSameSide, s->sizeMm.z, s->side);
 }
 
 // --- History ------------------------------------------------------------------------------------

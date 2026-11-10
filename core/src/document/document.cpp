@@ -484,6 +484,16 @@ std::vector<IntegrityIssue> Document::checkIntegrity() const {
     if (!findSheet(activeSheet_)) {
         report(Kind::BadActiveSheet, {}, {}, "active sheet does not exist");
     }
+    for (const Sheet& sheet : sheets_) {
+        if (sheet.partner.value == 0) {
+            continue;
+        }
+        const Sheet* other = findSheet(sheet.partner);
+        if (!other || other->partner != sheet.id || other->side == sheet.side) {
+            report(Kind::BadSheetPartner, {}, {},
+                   "sheet " + std::to_string(sheet.id.value) + " is not paired with a sheet of the other side");
+        }
+    }
     for (ObjectId id : selection_.ids()) {
         if (!hasObject(id)) {
             report(Kind::StaleSelection, id, {}, "selection holds missing object " + idText(id));
