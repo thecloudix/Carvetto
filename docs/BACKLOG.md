@@ -1282,3 +1282,9 @@ Phase: 1   Module: core/toolpath/inlay   Depends on: T-0238
 Goal: the 4000 derived-span cap refuses polygonal inputs above ~1000-1500 vertices that the old code handled in <0.3 s (real cost cliff is ~15,000-20,000 derived spans): raise the cap (~15,000) or key it to estimated work, keep the 20,000-span zigzag repro bounded; refusal message should name the input span count and suggest simplifying; replace the string-compare of kAllowanceConsumes with a flag on InlayShapes; mention the cap in ADR-0040.
 Acceptance criteria:
   1. 3,000-span inputs that finished before are accepted again with byte-identical output; the 20,000-span repro stays refused in <1 s CPU; tests.
+
+### T-0270 Flaky timing tests: 'selection removal scales near-linearly in every order' and other ratio/absolute CPU bounds (T-0226 verifier)   [status: ready — LOW]
+Phase: 1   Module: core/tests, app/viewmodel/tests   Depends on: T-0226
+Goal: the T-0226 verifier saw 'selection removal scales near-linearly in every order' flake under heavy load; the T-0226 coder left unhardened: the 2.5-per-doubling checks in toolpath_scale_test, toolpath_residual_scale_test, perf_test, offset_unnested_hole_test, v_carve_test, boolean_batch_test, medial_axis_robustness_test, open_offset_chains_test and absolute CPU-second bounds (e.g. spiral seconds < 0.5*kAbsSlack). Measure idle ratios and under-load behaviour, harden the fragile ones (least-of-N, longer workloads, justified bounds), keep each test's guarding power (mutant check).
+Acceptance criteria:
+  1. 40x runs under sustained load pass; synthetic slowdowns still fail the tests; list of what was left and why.
