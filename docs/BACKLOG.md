@@ -1196,7 +1196,7 @@ Goal: wire DimensionTool into ToolController (ToolKind::Dimension, toolbar/menu)
 Acceptance criteria:
   1. A user can place, edit and delete each dimension kind in the real app (self-test drives it); one undo step per edit; hostile option input refused.
 
-### T-0256 Keep-out zones: Qt UI (Create from Selection, Clear Zones, clearance, show/hide, canvas drawing) (T-0241 follow-up)   [status: in-progress]
+### T-0256 Keep-out zones: Qt UI (Create from Selection, Clear Zones, clearance, show/hide, canvas drawing) (T-0241 follow-up)   [status: verifying — ADR-0046]
 Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0241
 Goal: menu/dock entries for the T-0241 commands, clearance field, show/hide toggle, canvas drawing of zones (+ clearance halo), preview shows routed rapids, summary reports unroutable rapids. Self-test drives it.
 Acceptance criteria:
@@ -1220,7 +1220,7 @@ Goal: File > Create Job Sheet action writing the HTML/text sheet via a save dial
 Acceptance criteria:
   1. In the real app the action writes a job sheet equal to makeJobSheet output; hostile paths refused; self-test drives it.
 
-### T-0260 Trace Bitmap: app dialog, QImage decoding, undoable command (T-0245 follow-up)   [status: ready]
+### T-0260 Trace Bitmap: app dialog, QImage decoding, undoable command (T-0245 follow-up)   [status: in-progress]
 Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0245, T-0210
 Goal: File/Edit > Trace Bitmap: choose an image (PNG/JPEG/BMP decoded with QImage in the app layer into io::RasterImage, size-checked before decode), dialog with mode (B&W threshold/invert, colour count 2..16), noise filter, corner fit, scale (mm per pixel/target size), live preview, result as one undo step with one layer per colour; Pick from 2D View; Bitmap Fading. Also: the tracer has no work cap or cancel hook (a valid 4000x4000 single-loop bitmap takes ~170-220 s), so add a boundary-edge budget and a cancel poll in core and run the trace off the UI thread.
 Acceptance criteria:
