@@ -52,6 +52,7 @@
 #include "preview_panel.hpp"
 #include "toolpaths_panel.hpp"
 #include "transform_menu.hpp"
+#include "keepout_panel.hpp"
 #include "vector_ops_menu.hpp"
 
 namespace carvetto::app {
@@ -886,6 +887,12 @@ int runSelfTest() {
         if (cur.toolpaths().size() != recordsBefore) {
             return fail("undoing the test toolpaths did not remove them");
         }
+    }
+
+
+    // 11. Keep-out zones: dock, menu, canvas drawing, routed preview (T-0256).
+    if (const std::string why = keepOutSelfTest(window); !why.empty()) {
+        return fail(why);
     }
 
     window.close();

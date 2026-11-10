@@ -117,7 +117,9 @@ void arcPoints(const Vec3& from, const Move& m, std::vector<Vec2>& out) {
 
 }  // namespace
 
-std::shared_ptr<const PreviewGeometry> buildPreviewGeometry(const std::vector<Move>& moves) {
+std::shared_ptr<const PreviewGeometry> buildPreviewGeometry(const std::vector<Move>& moves,
+                                                            const std::vector<std::uint32_t>* originalIndex,
+                                                            std::optional<Vec3> startAt) {
     auto geo = std::make_shared<PreviewGeometry>();
     if (moves.empty()) {
         return geo;
@@ -134,31 +136,33 @@ std::shared_ptr<const PreviewGeometry> buildPreviewGeometry(const std::vector<Mo
         isOpen = false;
     };
 
-    Vec3 cur = moves.front().to;
+    Vec3 cur = startAt.value_or(moves.front().to);
+    const bool zeroFirst = !startAt.has_value();
     std::vector<Vec2> pts;
     for (std::size_t i = 0; i < moves.size(); ++i) {
         const Move& m = moves[i];
         if (!finite(m.to)) {
             continue;
         }
-        const Vec3 from = i == 0 ? m.to : cur;
+        const Vec3 from = i == 0 && zeroFirst ? m.to : cur;
         const std::optional<MoveClass> cls = classify(m, from);
         if (!cls) {
             continue;
         }
-        const std::uint32_t idx = static_cast<std::uint32_t>(std::min<std::size_t>(i, 0xFFFFFFFEu));
+        const std::size_t source = originalIndex != nullptr && i < originalIndex->size() ? (*originalIndex)[i] : i;
+        const std::uint32_t idx = static_cast<std::uint32_t>(std::min<std::size_t>(source, 0xFFFFFFFEu));
         ++geo->movesByClass[static_cast<std::size_t>(*cls)];
         pts.clear();
-        if (toolpath::isArc(m.kind) && i > 0) {
+        if (toolpath::isArc(m.kind) && (i > 0 || !zeroFirst)) {
             arcPoints(from, m, pts);
         } else {
             pts.push_back({m.to.x, m.to.y});
         }
         const Vec2 start{from.x, from.y};
-        const bool still = i == 0 || (std::fabs(m.to.x - from.x) < 1e-12 && std::fabs(m.to.y - from.y) < 1e-12 &&
+        const bool still = (i == 0 && zeroFirst) || (std::fabs(m.to.x - from.x) < 1e-12 && std::fabs(m.to.y - from.y) < 1e-12 &&
                                       !toolpath::isArc(m.kind));
         cur = m.to;
-        if (i == 0) {
+        if (i == 0 && zeroFirst) {
             continue;
         }
         if (still) {
@@ -250,6 +254,7 @@ void PreviewModel::sync(ToolpathSession& session) {
         return;
     }
     const std::vector<ToolpathListItem> items = session.list();
+    const RoutedJob& routing = session.keepOutRouting();
     std::map<document::ToolpathId, const PreviewToolpath*> old;
     for (const PreviewToolpath& tp : scene_.toolpaths) {
         old[tp.id] = &tp;
@@ -260,6 +265,7 @@ void PreviewModel::sync(ToolpathSession& session) {
         tp.id = rec.id;
         tp.name = rec.name;
         tp.moves = rec.moves;
+        tp.routedMoves = rec.moves;
         tp.computed = rec.hasMoves();
         tp.moveCount = rec.moveCount();
         for (const ToolpathListItem& it : items) {
@@ -269,14 +275,25 @@ void PreviewModel::sync(ToolpathSession& session) {
                 break;
             }
         }
+        const RoutedToolpath* routed = tp.enabled && tp.computed ? routing.find(rec.id) : nullptr;
+        if (routed != nullptr) {
+            tp.routedMoves = routed->routed;
+            tp.routing = routed->report;
+        }
         if (tp.computed) {
             const auto it = old.find(rec.id);
-            if (it != old.end() && it->second->moves == rec.moves && it->second->geometry) {
+            if (it != old.end() && it->second->moves == rec.moves && it->second->routedMoves == tp.routedMoves &&
+                it->second->geometry) {
                 tp.geometry = it->second->geometry;
+            } else if (routed != nullptr && routed->changed()) {
+                tp.geometry = buildPreviewGeometry(*routed->routed, routed->originalIndex.get(), routed->start);
             } else {
                 tp.geometry = buildPreviewGeometry(*rec.moves);
             }
             if (tp.enabled) {
+                next.routing.routed += tp.routing.routed;
+                next.routing.unroutable += tp.routing.unroutable;
+                next.routing.tooComplex += tp.routing.tooComplex;
                 tp.firstMove = nextMove;
                 nextMove += tp.moveCount;
                 if (!tp.geometry->bounds.isEmpty()) {
@@ -293,7 +310,7 @@ void PreviewModel::sync(ToolpathSession& session) {
         const PreviewToolpath& a = next.toolpaths[i];
         const PreviewToolpath& b = scene_.toolpaths[i];
         same = a.id == b.id && a.stale == b.stale && a.enabled == b.enabled && a.computed == b.computed &&
-               a.firstMove == b.firstMove && a.moves == b.moves && a.name == b.name;
+               a.firstMove == b.firstMove && a.moves == b.moves && a.routedMoves == b.routedMoves && a.name == b.name;
     }
     if (!same) {
         scene_ = std::move(next);
