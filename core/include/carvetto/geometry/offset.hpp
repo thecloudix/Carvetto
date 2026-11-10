@@ -74,6 +74,9 @@ enum class OffsetSide { Left, Right };
 /// infinity) yields an empty result. An input contour whose polygon cannot meet `tol.chordal` within
 /// the work bounds (an arc needing more than `kMaxArcSegments` chords, a non-finite span; T-0182,
 /// ADR-0005 A2) is left out, as degenerate input is, rather than offset from a coarser polygon.
+/// Memory bound (T-0184): the polygons handed to Clipper2 hold at most 750,000 vertices in all (an
+/// open contour counts 1.8 each, its outline being costlier); a contour that would pass that is left
+/// out in the same way (about 400 MB; a full circle of radius 1e9 mm is still offset closed, not open).
 std::vector<Contour> offsetContours(const std::vector<Contour>& contours, double distance, JoinType join,
                                     const Tolerance& tol = Tolerance::defaults(), double mitreLimit = 2.0);
 

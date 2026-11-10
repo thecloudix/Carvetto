@@ -494,6 +494,13 @@ std::size_t batchDepth(const std::vector<GridBox>& boxes, const std::vector<std:
     return best;
 }
 
+// Memory bound of one offsetContours call (T-0184): the polygon vertices handed to Clipper2, an open
+// vertex counting kOpenVertexWeight closed ones. 750,000 closed vertices (a closed circle of radius
+// 1e9 mm, 290 MB measured) or 416,000 open ones (radius 3e8, 280 MB; radius 1e9 took 505 MB and
+// 12 s). A contour that would pass the total is left out of the offset.
+constexpr double kMaxOffsetVertexLoad = 750000.0;
+constexpr double kOpenVertexWeight = 1.8;
+
 static std::vector<Contour> offsetContoursBatchedImpl(const std::vector<Contour>& contours, double distance,
                                                       JoinType join, const Tolerance& tol, double mitreLimit,
                                                       std::size_t minBatchDepth) {
@@ -507,6 +514,7 @@ static std::vector<Contour> offsetContoursBatchedImpl(const std::vector<Contour>
     // orientation convention and opposite-oriented contours are treated as holes.
     Clipper2Lib::Paths64 closedPaths;
     Clipper2Lib::Paths64 openPaths;
+    double vertexLoad = 0.0;
     for (const Contour& c : contours) {
         if (!c.closed && zeroDistance) {
             continue;  // outlining an open contour with zero width yields nothing
@@ -516,6 +524,14 @@ static std::vector<Contour> offsetContoursBatchedImpl(const std::vector<Contour>
         if (path.empty()) {
             continue;
         }
+        // T-0184: a polygon that would take Clipper2 past about 400 MB is left out, like one that
+        // cannot meet the tolerance (an open outline costs about 720 bytes a vertex, a closed ring
+        // about 410).
+        const double weight = static_cast<double>(path.size()) * (c.closed ? 1.0 : kOpenVertexWeight);
+        if (!(vertexLoad + weight <= kMaxOffsetVertexLoad)) {
+            continue;
+        }
+        vertexLoad += weight;
         (c.closed ? closedPaths : openPaths).push_back(std::move(path));
     }
     if (closedPaths.empty() && openPaths.empty()) {

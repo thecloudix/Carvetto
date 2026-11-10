@@ -161,7 +161,10 @@ std::vector<Span> ArcLengthPath::extract(double u0, double u1) const {
     std::size_t i = spanAt(a);
     const std::size_t n = contour_.spans.size();
     // Bound the walk: whole revolutions plus one.
-    const std::size_t maxSteps = n * (static_cast<std::size_t>((b - a) / len) + 2);
+    // T-0184: the revolutions are range-checked before the cast (a non-finite or huge stretch).
+    const double turns = (b - a) / len;
+    const std::size_t maxSteps =
+        n * (static_cast<std::size_t>(turns >= 1.0 ? std::min(turns, 1e15) : 0.0) + 2);
     for (std::size_t step = 0; step < maxSteps; ++step) {
         detail::chargeWork(1);  // work meter (T-0186): a wide stretch of a closed path wraps many times
         const double s0 = base + cum_[i];

@@ -706,8 +706,8 @@ std::vector<PointRing> bandOutline(const Contour& path, double w, double chordal
         std::size_t n = 1;
         if (r > chordal) {
             const double step = outer ? 2.0 * std::acos(r / (r + chordal)) : 2.0 * std::acos(1.0 - chordal / r);
-            n = static_cast<std::size_t>(std::ceil(std::fabs(sweep) / step));
-            n = std::clamp(n, std::size_t{1}, std::size_t{100000});
+            const double wanted = std::ceil(std::fabs(sweep) / step);  // T-0184: clamp before the cast
+            n = wanted >= 1.0 ? static_cast<std::size_t>(std::min(wanted, 100000.0)) : std::size_t{1};
         } else if (outer) {
             n = static_cast<std::size_t>(std::ceil(std::fabs(sweep) / (0.25 * std::numbers::pi)));
         }

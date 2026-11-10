@@ -23,7 +23,10 @@ std::vector<PathLeg> zigZagLegs(double u, double dir, double L, double zFrom, do
     if (ramp.useAngle) {
         const double perLeg = L * std::tan(ramp.angle);
         if (perLeg > 0.0) {
-            m = std::max(2, 2 * static_cast<int>(std::ceil(drop / (2.0 * perLeg) - 1e-12)));
+            // T-0184: range-checked (a tiny angle or a huge drop made the cast overflow); the legs
+            // are capped at 1e6 pairs, far above any ramp that fits the work limits.
+            const double pairs = std::ceil(drop / (2.0 * perLeg) - 1e-12);
+            m = std::max(2, 2 * static_cast<int>(pairs >= 1.0 ? std::min(pairs, 1e6) : 0.0));
         }
     }
     for (int j = 0; j < m; ++j) {
