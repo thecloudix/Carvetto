@@ -39,9 +39,12 @@ inline constexpr int kCarvFormatMinorDimension = 3;
 /// document has zones or a non-default clearance/visibility.
 inline constexpr int kCarvFormatMinorKeepOut = 4;
 /// 1.5 (T-0243, ADR-0039) adds double-sided jobs (sheet `side`/`partner`); written only when the
-/// document has a back or paired sheet. The newest minor this build writes and reads.
+/// document has a back or paired sheet.
 inline constexpr int kCarvFormatMinorDoubleSided = 5;
-inline constexpr int kCarvFormatMinor = kCarvFormatMinorDoubleSided;
+/// 1.6 (T-0261, ADR-0048) adds the sheet a toolpath record belongs to (`job.json` toolpath
+/// `sheet`); written only when a record links to a sheet. The newest minor this build writes and reads.
+inline constexpr int kCarvFormatMinorToolpathSheet = 6;
+inline constexpr int kCarvFormatMinor = kCarvFormatMinorToolpathSheet;
 /// The minor version written for documents that use text (1.2) but no 1.3/1.4 features.
 inline constexpr int kCarvFormatMinorText = 2;
 /// The minor version written for documents that use no 1.2 features (no text objects): 1.1.

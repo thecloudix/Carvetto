@@ -35,6 +35,7 @@ class PropertiesPanel;
 class SheetsPanel;
 class RulerWidget;
 class CopiesMenu;
+class DoubleSidedMenu;
 class NodeEditMenu;
 class PreviewPanel;
 class ReliefView;
@@ -66,6 +67,8 @@ class MainWindow : public QMainWindow {
     bool redo();
     /// The Edit > Copies submenu (array, circular and along-vector copies).
     CopiesMenu* copies() const { return copies_.get(); }
+    /// The Edit > Double-sided submenu (T-0261).
+    DoubleSidedMenu* doubleSided() const { return doubleSided_.get(); }
 
     CanvasWidget* canvas() const { return canvas_; }
     VectorOpsMenu* vectorOps() const { return vectorOps_.get(); }
@@ -162,6 +165,7 @@ class MainWindow : public QMainWindow {
     QAction* jobSetupAction_{nullptr};
     QAction* toolSetupAction_{nullptr};
     std::unique_ptr<CopiesMenu> copies_;
+    std::unique_ptr<DoubleSidedMenu> doubleSided_;
     std::unique_ptr<VectorOpsMenu> vectorOps_;
     std::unique_ptr<NodeEditMenu> nodeEdit_;
     std::unique_ptr<TransformMenu> transformMenu_;

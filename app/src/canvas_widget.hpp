@@ -71,6 +71,11 @@ class CanvasWidget : public QWidget {
     bool selectAt(QPointF widgetPos, bool additive = false, bool toggle = false);
     /// Repaints after a document change.
     void refresh();
+    /// Multi-sided view (T-0261): also shows where the other side's drawing lies, seen through the
+    /// stock (`viewmodel::multiSidedView`). A double-sided job always shows its active side and
+    /// flip direction in the corner of the material.
+    void setMultiSidedView(bool on) { multiSided_ = on; }
+    bool multiSidedView() const { return multiSided_; }
 
     /// Toolpath preview overlay (T-0223): the model is owned by the preview panel (not owned here;
     /// may be null). It is painted over the vectors, from a cached layer image that is redrawn only
@@ -130,6 +135,7 @@ class CanvasWidget : public QWidget {
     void afterToolEvent(const viewmodel::ToolResult& result);
     static viewmodel::Modifiers toolModifiers(Qt::KeyboardModifiers mods);
 
+    void paintSides(QPainter& painter, const viewmodel::ViewTransform& view) const;
     void paintScene(QPainter& painter, const viewmodel::ViewTransform& view, QSize size) const;
     void paintPreview(QPainter& painter, const viewmodel::ViewTransform& view, QSize size) const;
     void renderPreviewRange(QImage& layer, const viewmodel::ViewTransform& view, std::size_t from, std::size_t to,
@@ -162,6 +168,7 @@ class CanvasWidget : public QWidget {
     viewmodel::ViewTransform view_;
     viewmodel::ToolController tools_;
     bool fitPending_{true};
+    bool multiSided_{false};
     bool panning_{false};
     QPointF lastPanPos_;
     QPointF rightPressPos_;

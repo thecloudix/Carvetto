@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "carvetto/document/commands.hpp"
+#include "carvetto/viewmodel/double_sided_ops.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/new_job_form.hpp"
 #include "carvetto/viewmodel/tool_setup.hpp"
@@ -33,7 +34,12 @@ void MainWindow::jobSetupDialog() {
     if (dialog.exec() != QDialog::Accepted || !dialog.job().has_value()) {
         return;
     }
-    if (session_.document().execute(std::make_unique<document::SetJobCommand>(*dialog.job()))) {
+    // Double-sided jobs pair or unpair their sheets together with the job type (T-0261).
+    const viewmodel::EditResult result = viewmodel::applyJobSetup(session_.document(), *dialog.job());
+    if (!result.ok && !quiet_) {
+        QMessageBox::warning(this, QStringLiteral("Job Setup"), toQ(result.message));
+    }
+    if (result.changed) {
         toolpaths_->invalidate();
         documentChanged();
     }

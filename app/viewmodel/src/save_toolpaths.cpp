@@ -37,8 +37,10 @@
 #endif
 #endif
 
+#include "carvetto/document/double_sided.hpp"
 #include "carvetto/toolpath/keepout.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
+#include "carvetto/viewmodel/layers_sheets.hpp"
 
 namespace carvetto::viewmodel {
 
@@ -340,7 +342,21 @@ std::string safeExtension(const std::string& ext) {
     return out.empty() ? std::string("nc") : out;
 }
 
+/// The side a record is posted for (null: no side, posted as it is).
+const SideInfo* sideOf(const SaveJob& job, const document::ToolpathRecord& r) {
+    if (r.sheet.isNull()) {
+        return nullptr;
+    }
+    for (const SideInfo& s : job.sides) {
+        if (s.sheet == r.sheet) {
+            return &s;
+        }
+    }
+    return nullptr;
+}
+
 struct Group {
+    const SideInfo* side{nullptr};  ///< Every record of the group is posted for this side.
     std::vector<std::size_t> records;
     std::string tool;  ///< Name when every record has the same tool, else "".
     bool sameTool{true};
@@ -355,16 +371,25 @@ std::vector<Group> makeGroups(const SaveJob& job) {
     const auto& recs = job.records;
     switch (job.options.mode) {
         case OutputMode::SingleFile: {
-            Group g;
+            // One file per side (a file never mixes sides: each has its own Z zero).
             for (std::size_t i = 0; i < recs.size(); ++i) {
-                g.records.push_back(i);
+                const SideInfo* side = sideOf(job, recs[i]);
+                const auto it = std::find_if(groups.begin(), groups.end(), [side](const Group& g) { return g.side == side; });
+                if (it == groups.end()) {
+                    Group g;
+                    g.side = side;
+                    g.records.push_back(i);
+                    groups.push_back(std::move(g));
+                } else {
+                    it->records.push_back(i);
+                }
             }
-            groups.push_back(std::move(g));
             break;
         }
         case OutputMode::FilePerToolpath:
             for (std::size_t i = 0; i < recs.size(); ++i) {
                 Group g;
+                g.side = sideOf(job, recs[i]);
                 g.records.push_back(i);
                 groups.push_back(std::move(g));
             }
@@ -373,7 +398,7 @@ std::vector<Group> makeGroups(const SaveJob& job) {
             for (std::size_t i = 0; i < recs.size(); ++i) {
                 bool placed = false;
                 for (Group& g : groups) {
-                    if (sameTool(recs[g.records.front()].tool, recs[i].tool)) {
+                    if (g.side == sideOf(job, recs[i]) && sameTool(recs[g.records.front()].tool, recs[i].tool)) {
                         g.records.push_back(i);
                         placed = true;
                         break;
@@ -381,6 +406,7 @@ std::vector<Group> makeGroups(const SaveJob& job) {
                 }
                 if (!placed) {
                     Group g;
+                    g.side = sideOf(job, recs[i]);
                     g.records.push_back(i);
                     groups.push_back(std::move(g));
                 }
@@ -431,6 +457,9 @@ std::string expandName(const std::string& tmpl, const SaveJob& job, const Group&
         }
         raw += mapName(value);
         i = close + 1;
+    }
+    if (g.side != nullptr) {
+        raw += g.side->side == document::Side::Back ? "_back" : "_front";
     }
     std::string stem = finishStem(raw);
     if (stem.empty()) {
@@ -515,6 +544,11 @@ static void copyKeepOut(const document::Document& doc, SaveSource& src) {
         src.keepOutZones.push_back(z.outline);
     }
     src.keepOutClearance = doc.keepOutClearance();
+    if (doc.job().type == document::JobType::DoubleSided) {
+        for (const document::Sheet& s : doc.sheets()) {
+            src.sides.push_back({s.id, s.side, s.name, sheetTopZ(doc, s.id), s.sizeMm.z});
+        }
+    }
 }
 
 SaveSource makeSaveSource(const document::Document& doc, const std::vector<document::ToolpathId>& ids) {
@@ -583,6 +617,7 @@ SaveJob prepareSave(const SaveSource& source, const PostInfo& post, const SaveOp
     job.stale = source.stale;
     job.keepOutZones = source.keepOutZones;
     job.keepOutClearance = source.keepOutClearance;
+    job.sides = source.sides;
     job.post = post;
     job.options = options;
     if (!post.usable()) {
@@ -700,12 +735,18 @@ SaveOutput generateOutputImpl(const SaveJob& job, const std::atomic<bool>* cance
         const fs::path& outFs = paths[gi];
         std::vector<toolpath::Toolpath> toolpaths;
         std::vector<const document::ToolpathRecord*> recs;
-        double safeZ = job.records[groups[gi].records.front()].safeZ();
+        const SideInfo* side = groups[gi].side;
+        const double dz = side != nullptr ? side->topZ : 0.0;
+        double safeZ = job.records[groups[gi].records.front()].safeZ() + dz;
         OutputFile file;
         for (std::size_t ri : groups[gi].records) {
             const document::ToolpathRecord& r = job.records[ri];
-            safeZ = std::max(safeZ, r.safeZ());
+            safeZ = std::max(safeZ, r.safeZ() + dz);
             toolpaths.push_back(r.toolpath());
+            if (side != nullptr) {
+                // The side's Z zero (T-0261): moves were computed with the cut face at 0.
+                toolpaths.back().moves = document::shiftMovesZ(toolpaths.back().moves, dz);
+            }
             recs.push_back(&r);
             file.toolpaths.push_back(r.name);
         }
@@ -748,6 +789,10 @@ SaveOutput generateOutputImpl(const SaveJob& job, const std::atomic<bool>* cance
         const bool bedZero = j.zZero == document::ZZero::MachineBed;
         ctx.materialMin = {material.min.x, material.min.y, bedZero ? 0.0 : -j.sizeMm.z};
         ctx.materialMax = {material.max.x, material.max.y, bedZero ? j.sizeMm.z : 0.0};
+        if (side != nullptr) {
+            ctx.materialMin.z = side->topZ - side->thicknessMm;
+            ctx.materialMax.z = side->topZ;
+        }
         ctx.rotaryDiameter = j.diameterMm;
 
         auto program = pp.value().run(toolpaths, ctx);

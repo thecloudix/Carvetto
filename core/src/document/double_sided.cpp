@@ -37,4 +37,19 @@ std::vector<toolpath::Move> shiftMovesZ(const std::vector<toolpath::Move>& moves
     return out;
 }
 
+std::vector<toolpath::Move> flipMoves(const std::vector<toolpath::Move>& moves, const Box2& material,
+                                      FlipDirection direction) {
+    std::vector<toolpath::Move> out = moves;
+    for (toolpath::Move& m : out) {
+        const Vec2 to = flipPoint(material, direction, {m.to.x, m.to.y});
+        m.to.x = to.x;
+        m.to.y = to.y;
+        if (toolpath::isArc(m.kind)) {
+            m.centre = flipPoint(material, direction, m.centre);
+            m.kind = m.kind == toolpath::MoveKind::ArcCW ? toolpath::MoveKind::ArcCCW : toolpath::MoveKind::ArcCW;
+        }
+    }
+    return out;
+}
+
 }  // namespace carvetto::document

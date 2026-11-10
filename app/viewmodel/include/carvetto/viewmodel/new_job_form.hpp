@@ -21,6 +21,8 @@ struct NewJobForm {
     double diameter{50.0};
     document::RotaryAxis rotaryAxis{document::RotaryAxis::X};
     document::FlipDirection flip{document::FlipDirection::Horizontal};
+    /// Double-sided jobs: "Zero off same side" (T-0261).
+    bool zeroOffSameSide{false};
     document::ZZero zZero{document::ZZero::MaterialSurface};
     document::Datum datum{document::Datum::BottomLeft};
     /// "Offset datum": place the datum point at (offsetX, offsetY) instead of (0, 0).

@@ -177,7 +177,7 @@ bool spindleOffAllowed(const ToolpathRecord& record) {
 
 bool ToolpathRecord::operator==(const ToolpathRecord& other) const {
     if (!(id == other.id && name == other.name && params == other.params && selection == other.selection &&
-          tool == other.tool && toolSource == other.toolSource)) {
+          tool == other.tool && toolSource == other.toolSource && sheet == other.sheet)) {
         return false;
     }
     if (moves == other.moves) {

@@ -87,6 +87,17 @@ struct SaveOptions {
     std::string jobName{"job"};
 };
 
+/// A face of a double-sided job as far as posting is concerned (T-0261, ADR-0039): toolpaths are
+/// computed with the cut face at Z = 0 and posted with `topZ` added to every Z, so each side gets
+/// the Z zero its sheet asks for.
+struct SideInfo {
+    document::SheetId sheet;
+    document::Side side{document::Side::Front};
+    std::string name;       ///< The sheet's name.
+    double topZ{0.0};       ///< Machine Z of the stock top for this side (document::materialTopZ).
+    double thicknessMm{0.0};
+};
+
 /// Everything posting needs, by value.
 struct SaveJob {
     std::vector<document::ToolpathRecord> records;
@@ -102,6 +113,10 @@ struct SaveJob {
     /// Keep-out zones (T-0241): rapids are routed around them before posting. Empty = none.
     std::vector<geometry::Contour> keepOutZones;
     double keepOutClearance{0.0};
+    /// Double-sided jobs: the sides records link to (records with a null or unknown sheet are posted
+    /// as they are). Posting never mixes sides in one file; file names of side groups end in
+    /// "_front" / "_back".
+    std::vector<SideInfo> sides;
     /// Set when the job cannot run; `generateOutput` reports it.
     std::string error;
 };
@@ -118,6 +133,8 @@ struct SaveSource {
     /// The document's keep-out zones and clearance (see SaveJob).
     std::vector<geometry::Contour> keepOutZones;
     double keepOutClearance{0.0};
+    /// See SaveJob::sides.
+    std::vector<SideInfo> sides;
 };
 
 /// Copies the records `ids` (document order; empty = all) and the job. Records without moves
