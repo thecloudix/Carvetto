@@ -101,6 +101,10 @@ TEST_CASE("toolpaths know their sheet and copy to the other side with mirrored m
     const document::ToolpathRecord* rec = f.doc.findToolpath(o.ids.front());
     REQUIRE(rec != nullptr);
     CHECK(rec->sheet == f.front);
+    // The record pointer dies when the document grows; keep what the checks below need.
+    const std::string origName = rec->name;
+    const std::size_t origMoves = rec->moveCount();
+    const document::SharedMoves origMovesList = rec->moves;
 
     const SideCopyResult r = copyToolpathsToOtherSide(f.doc, {o.ids.front()}, false);
     REQUIRE(r.edit.ok);
@@ -108,11 +112,11 @@ TEST_CASE("toolpaths know their sheet and copy to the other side with mirrored m
     const document::ToolpathRecord* copy = f.doc.findToolpath(r.toolpaths[0]);
     REQUIRE(copy != nullptr);
     CHECK(copy->sheet == f.back);
-    CHECK(copy->name == rec->name + " (back)");
+    CHECK(copy->name == origName + " (back)");
     REQUIRE(copy->hasMoves());
-    REQUIRE(copy->moveCount() == rec->moveCount());
+    REQUIRE(copy->moveCount() == origMoves);
     const auto material = f.doc.findSheet(f.back)->materialBoundsMm();
-    CHECK(*copy->moves == document::flipMoves(*rec->moves, material, document::FlipDirection::Horizontal));
+    CHECK(*copy->moves == document::flipMoves(*origMovesList, material, document::FlipDirection::Horizontal));
     CHECK(f.doc.checkIntegrity().empty());
 
     // Recalculating the back toolpath needs its side to be active.
