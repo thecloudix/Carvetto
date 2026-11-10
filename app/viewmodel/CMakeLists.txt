@@ -10,6 +10,7 @@ configure_file(starter_font.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/starter_font.cpp 
 
 add_library(carvetto_viewmodel STATIC
   ${CMAKE_CURRENT_BINARY_DIR}/starter_font.cpp
+  src/bitmap_trace.cpp
   src/vector_ops.cpp
   src/vector_validator.cpp
   src/vector_selector.cpp
