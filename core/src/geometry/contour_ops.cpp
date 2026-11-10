@@ -19,11 +19,16 @@ namespace {
 // Contribution of one span to the Green's theorem integral 1/2 * integral(x dy - y dx), taken
 // about the local origin `o` (T-0147): coordinates are made relative to `o` before any product, so
 // a small contour far from the global origin does not cancel to rounding noise.
-double spanAreaContribution(const Span& s, Vec2 o) {
+// `start`/`end` receive the span's absolute end points. An arc's come from the sin/cos already
+// evaluated for the area terms, bit-identical to `ArcSpan::startPoint/endPoint` (T-0157: they were
+// recomputed per span, ~3x the trigonometry).
+double spanAreaContribution(const Span& s, Vec2 o, Vec2& start, Vec2& end) {
     return std::visit(
-        [o](const auto& v) -> double {
+        [o, &start, &end](const auto& v) -> double {
             using T = std::decay_t<decltype(v)>;
             if constexpr (std::is_same_v<T, LineSpan>) {
+                start = v.start;
+                end = v.end;
                 return 0.5 * (v.start - o).cross(v.end - o);
             } else if constexpr (std::is_same_v<T, ArcSpan>) {
                 // x = cx + r cos(a), y = cy + r sin(a):  x y' - y x' = r^2 + r (cx cos a + cy sin a).
@@ -42,10 +47,14 @@ double spanAreaContribution(const Span& s, Vec2 o) {
                 // them to the exact ends, so the region is closed however far out it lies.
                 const Vec2 exactStart = c + Vec2{r * c0, r * s0};
                 const Vec2 exactEnd = c + Vec2{r * c1, r * s1};
-                const double jumps = (v.startPoint() - o).cross(exactStart) + exactEnd.cross(v.endPoint() - o);
+                start = v.centre + Vec2{c0 * r, s0 * r};
+                end = v.centre + Vec2{c1 * r, s1 * r};
+                const double jumps = (start - o).cross(exactStart) + exactEnd.cross(end - o);
                 return 0.5 * (integral + jumps);
             } else {
                 // x(t) y'(t) - y(t) x'(t) is a degree-5 polynomial: 3-point Gauss-Legendre is exact.
+                start = v.p0;
+                end = v.p3;
                 const BezierSpan b{v.p0 - o, v.p1 - o, v.p2 - o, v.p3 - o};
                 constexpr double h = 0.3872983346207417;  // sqrt(15)/10
                 constexpr std::array<double, 3> nodes{0.5 - h, 0.5, 0.5 + h};
@@ -78,12 +87,14 @@ double signedArea(const Contour& c) {
         // Where a span does not start exactly where the previous one ended (span junctions within
         // tolerance, arc end points evaluated by trigonometry), the two are joined by a straight
         // gap, as in point-in-contour (T-0143).
-        const Vec2 start = startPoint(s);
+        Vec2 start;
+        Vec2 end;
+        const double part = spanAreaContribution(s, o, start, end);
         if (start.x != prevEnd.x || start.y != prevEnd.y) {
             total += 0.5 * (prevEnd - o).cross(start - o);
         }
-        total += spanAreaContribution(s, o);
-        prevEnd = endPoint(s);
+        total += part;
+        prevEnd = end;
     }
     // The straight closing gap from the last end point back to the start ends at the local
     // origin, so its contribution is zero.

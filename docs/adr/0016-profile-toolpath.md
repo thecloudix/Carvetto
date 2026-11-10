@@ -786,6 +786,14 @@ choices. Behaviour descriptions come from `docs/reference/` only.
       Bezier-heavy job that polygonises into more is refused after its cut is planned, before it
       is all in memory.
 
+    *Far from the origin (T-0157).* The coordinate limit is also the precision limit: a part
+    0.5 to 10 mm across behaves like its copy at the origin (same move count, moves equal up to
+    translation within 1e-3 mm) at every placement tried up to 9e4 mm; beyond 1e5 mm the offset
+    and clearance code, which works on absolute coordinates, no longer does (a 1.2 mm circle at
+    3e8 mm: "offset by 0.25 mm vanishes"), so such a job is refused up front with
+    `WorkLimitExceeded` and not cut wrongly. A part that far away has to be moved nearer the
+    origin (translate the job) before profiling. `profile_far_test.cpp` pins both sides.
+
     *Work meter* (`work_meter.hpp`). A `WorkMeter` counts integer work units; hot paths call
     `detail::chargeWork(n)`, which adds to the meter installed on the calling thread (a
     `thread_local` pointer; null for every other operation, so Pocket, Drill, V-Carve and Engrave
