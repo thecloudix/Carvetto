@@ -47,6 +47,8 @@ add_library(carvetto_viewmodel STATIC
   src/selection_tools.cpp
   src/properties_model.cpp
   src/layers_sheets.cpp
+  src/calculation.cpp
+  src/variables_model.cpp
 )
 find_package(Threads REQUIRED)
 target_include_directories(carvetto_viewmodel PUBLIC include)

@@ -58,6 +58,9 @@ qt_add_executable(carvetto
   src/transform_menu.hpp
   src/vector_ops_menu.cpp
   src/vector_ops_menu.hpp
+  src/variables_dialog.cpp
+  src/variables_dialog.hpp
+  src/variables_self_test.cpp
 )
 # Development builds find the shipped posts in the source tree (a packaged app has posts/ beside it).
 target_compile_definitions(carvetto PRIVATE CARVETTO_SHIPPED_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts")
