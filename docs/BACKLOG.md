@@ -1036,7 +1036,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0237 Thread milling toolpath   [status: in-progress]
+### T-0237 Thread milling toolpath   [status: verifying — core+record+viewmodel form; tool type/create-circles → T-0262; ADR number to renumber]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0120, T-0220
 Goal: Thread milling: single/multi-point cutters, ISO metric/universal pitch presets, internal/external, left/right, cut up/down, fit tolerance, create circles for internal threads. Inventory 'Thread Milling Toolpath'.
 Acceptance criteria:
@@ -1231,3 +1231,9 @@ Phase: 1   Module: app + app/viewmodel + core/document + core/toolpath   Depends
 Goal: Job Setup double-sided page, Swap Sides button and keys, multi-sided view drawing (from multiSidedView), Copy/Move to Other Side for objects (mirroring transform) and toolpaths (sheet link on toolpath records), apply shiftMovesZ(sheetTopZ) in Save Toolpaths so each side posts with the correct Z zero, switching back to single-sided, Preview All Sides. Needs owner confirmation of the 'Zero off same side' interpretation (T-0243 ADR) before dispatch if the coder cannot settle it from the inventory.
 Acceptance criteria:
   1. A two-sided job can be set up, drawn, copied across and saved with per-side posts whose Z zero matches the side; self-test drives it.
+
+### T-0262 Thread milling: thread-mill tool type and Create Circles command (T-0237 follow-up)   [status: ready — LOW]
+Phase: 1   Module: core/tooling + core/document + app/viewmodel   Depends on: T-0237, T-0235
+Goal: model single/multi-point thread-mill tools in the tool database (S, H, D, A, O, threaded length; versioned tool file migration), use them in the Thread Mill form; 'Create circles for internal threads' inserts the bore circles into the document as one undo step on calculation.
+Acceptance criteria:
+  1. A thread-mill tool saved in the tool DB round-trips (old files still load); the form lists only such tools (and end mills); circles are inserted undoably and removed on undo; tests incl. hostile tool files.
