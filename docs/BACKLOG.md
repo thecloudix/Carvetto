@@ -1054,7 +1054,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0239 Fluting toolpath   [status: in-progress]
+### T-0239 Fluting toolpath   [status: verifying — ADR-0041; Wrapped Fluting Layout is a separate rotary gadget, out of scope]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0120, T-0220
 Goal: Fluting toolpath per inventory 'Fluting Toolpath' (flat or ball-nose, depth profile along the vector, start/end ramps).
 Acceptance criteria:
