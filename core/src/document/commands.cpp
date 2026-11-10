@@ -77,7 +77,8 @@ namespace {
 // generator, so a value names at most one item of any kind (ADR-0007, amendment A2).
 bool idInUse(const Document& doc, std::uint64_t value) {
     return doc.findSheet(SheetId{value}) != nullptr || doc.findLayer(LayerId{value}) != nullptr ||
-           doc.hasObject(ObjectId{value}) || doc.findToolpath(ToolpathId{value}) != nullptr;
+           doc.hasObject(ObjectId{value}) || doc.findToolpath(ToolpathId{value}) != nullptr ||
+           doc.findKeepOutZone(KeepOutZoneId{value}) != nullptr;
 }
 
 // Id-allocation guard shared by every command that creates something (ADR-0007, amendments A1

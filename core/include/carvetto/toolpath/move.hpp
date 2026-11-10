@@ -23,6 +23,13 @@ enum class MoveKind {
     Dwell,    ///< Pause for `dwellSeconds` at the current position; no motion.
 };
 
+/// Where a rapid move sits in a detour around a keep-out zone (T-0241, ADR-0036). It selects the
+/// post block: `None` is an ordinary rapid (RAPID_MOVE); legs of a routed detour use the straight
+/// rapid family (the first rapid of a toolpath INITIAL_STRAIGHT_RAPID_MOVE, the first leg of a
+/// detour FIRST_STRAIGHT_RAPID_MOVE, later legs STRAIGHT_RAPID_MOVE). In-memory only: it is set
+/// when a toolpath is routed for posting and is not stored in `.carv` move caches.
+enum class RapidRoute : unsigned char { None, DetourFirst, DetourNext };
+
 /// True for Feed/Plunge/Retract/ArcCW/ArcCCW: moves that travel at a programmed feed rate.
 constexpr bool isCutting(MoveKind k) {
     return k != MoveKind::Rapid && k != MoveKind::Dwell;
@@ -53,27 +60,31 @@ struct Move {
     std::optional<double> feedOverride;
     /// Pause length in seconds; only meaningful for Dwell.
     double dwellSeconds{0.0};
+    /// Keep-out detour role of a Rapid (see `RapidRoute`); `None` for every other move.
+    RapidRoute route{RapidRoute::None};
 
     bool operator==(const Move&) const = default;
 
-    static Move rapid(Vec3 to) { return {MoveKind::Rapid, to, {}, {}, 0.0}; }
+    static Move rapid(Vec3 to, RapidRoute route = RapidRoute::None) {
+        return {MoveKind::Rapid, to, {}, {}, 0.0, route};
+    }
     static Move feed(Vec3 to, std::optional<double> feedOverride = {}) {
-        return {MoveKind::Feed, to, {}, feedOverride, 0.0};
+        return {MoveKind::Feed, to, {}, feedOverride, 0.0, RapidRoute::None};
     }
     static Move plunge(Vec3 to, std::optional<double> feedOverride = {}) {
-        return {MoveKind::Plunge, to, {}, feedOverride, 0.0};
+        return {MoveKind::Plunge, to, {}, feedOverride, 0.0, RapidRoute::None};
     }
     static Move retract(Vec3 to, std::optional<double> feedOverride = {}) {
-        return {MoveKind::Retract, to, {}, feedOverride, 0.0};
+        return {MoveKind::Retract, to, {}, feedOverride, 0.0, RapidRoute::None};
     }
     static Move arcCW(Vec3 to, Vec2 centre, std::optional<double> feedOverride = {}) {
-        return {MoveKind::ArcCW, to, centre, feedOverride, 0.0};
+        return {MoveKind::ArcCW, to, centre, feedOverride, 0.0, RapidRoute::None};
     }
     static Move arcCCW(Vec3 to, Vec2 centre, std::optional<double> feedOverride = {}) {
-        return {MoveKind::ArcCCW, to, centre, feedOverride, 0.0};
+        return {MoveKind::ArcCCW, to, centre, feedOverride, 0.0, RapidRoute::None};
     }
     /// Dwell at `at` (the previous move's end point) for `seconds`.
-    static Move dwell(Vec3 at, double seconds) { return {MoveKind::Dwell, at, {}, {}, seconds}; }
+    static Move dwell(Vec3 at, double seconds) { return {MoveKind::Dwell, at, {}, {}, seconds, RapidRoute::None}; }
 };
 
 /// Radius of an arc move, measured from `from` (its start point) to the centre.

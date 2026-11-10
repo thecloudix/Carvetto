@@ -1132,7 +1132,7 @@ class Interpreter {
             case MoveKind::Feed:
             case MoveKind::Plunge:
             case MoveKind::Retract:
-                return linear(m.kind, m.to, m.feedOverride);
+                return linear(m.kind, m.to, m.feedOverride, m.route);
             case MoveKind::ArcCW:
             case MoveKind::ArcCCW:
                 return arc(m);
@@ -1174,11 +1174,25 @@ class Interpreter {
         frame_.cutting = true;
     }
 
-    std::optional<Error> linear(MoveKind kind, Vec3 to, std::optional<double> override) {
+    std::optional<Error> linear(MoveKind kind, Vec3 to, std::optional<double> override,
+                                toolpath::RapidRoute route = toolpath::RapidRoute::None) {
         std::string_view name;
         switch (kind) {
             case MoveKind::Rapid:
-                if (firstRapid_ && has("INITIAL_RAPID_MOVE")) {
+                if (route != toolpath::RapidRoute::None) {
+                    // Detour around a keep-out zone (T-0241): the straight rapid family, each
+                    // falling back to STRAIGHT_RAPID_MOVE and then to the ordinary rapid blocks.
+                    if (firstRapid_ && has("INITIAL_STRAIGHT_RAPID_MOVE")) {
+                        name = "INITIAL_STRAIGHT_RAPID_MOVE";
+                    } else if (route == toolpath::RapidRoute::DetourFirst && has("FIRST_STRAIGHT_RAPID_MOVE")) {
+                        name = "FIRST_STRAIGHT_RAPID_MOVE";
+                    } else if (has("STRAIGHT_RAPID_MOVE")) {
+                        name = "STRAIGHT_RAPID_MOVE";
+                    }
+                }
+                if (!name.empty()) {
+                    // a straight-rapid block was chosen above
+                } else if (firstRapid_ && has("INITIAL_RAPID_MOVE")) {
                     name = "INITIAL_RAPID_MOVE";
                 } else if (has("RAPID_MOVE")) {
                     name = "RAPID_MOVE";
