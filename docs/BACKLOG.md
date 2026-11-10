@@ -1045,7 +1045,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0238 Inlay toolpaths: straight inlay (male/female, stepped) and VCarve inlay (plug and pocket)   [status: in-progress]
+### T-0238 Inlay toolpaths: straight inlay (male/female, stepped) and VCarve inlay (plug and pocket)   [status: ready]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0121, T-0153, T-0220
 Goal: Straight inlays (male straight/stepped, female pocket/hole, allowance) and VCarve Inlay (pocket depth, glue gap, surface clearance, plug destination sheet, mirrored plug, plug boundary options).
 Acceptance criteria:
@@ -1054,7 +1054,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0239 Fluting toolpath   [status: in-progress]
+### T-0239 Fluting toolpath   [status: ready]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0120, T-0220
 Goal: Fluting toolpath per inventory 'Fluting Toolpath' (flat or ball-nose, depth profile along the vector, start/end ramps).
 Acceptance criteria:
@@ -1063,7 +1063,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0240 Prism carving toolpath   [status: in-progress]
+### T-0240 Prism carving toolpath   [status: ready]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0153, T-0220
 Goal: Prism Carving: prism depth, set depth for full prism, cut direction (inventory 'Prism Carving Toolpath').
 Acceptance criteria:
@@ -1081,7 +1081,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0242 Toolpath tiling manager   [status: in-progress]
+### T-0242 Toolpath tiling manager   [status: ready]
 Phase: 1   Module: core/toolpath + app   Depends on: T-0224, T-0220
 Goal: Tiling of a job larger than the work area into tiles with overlap, per-tile output (inventory 'Toolpath Tiling Manager').
 Acceptance criteria:
