@@ -13,6 +13,7 @@
 #include "carvetto/document/carv_io.hpp"
 #include "carvetto/document/commands.hpp"
 #include "carvetto/document/dimension.hpp"
+#include "carvetto/document/keepout_commands.hpp"
 #include "carvetto/document/document.hpp"
 #include "carvetto/geometry/box2.hpp"
 #include "carvetto/geometry/contour.hpp"
@@ -519,7 +520,7 @@ TEST_CASE("dimensions round trip through .carv byte for byte", "[dimension][docu
     auto loaded = loadCarv(std::span<const std::uint8_t>(saved.value()));
     INFO((loaded.ok() ? std::string() : loaded.error().message));
     REQUIRE(loaded.ok());
-    CHECK(loaded.value().formatMinor == kCarvFormatMinor);
+    CHECK(loaded.value().formatMinor == kCarvFormatMinorDimension);
     const Document& back = loaded.value().document;
     REQUIRE(back.objectCount() == doc.objectCount());
     for (const auto& [id, obj] : doc.objects()) {
@@ -580,4 +581,21 @@ TEST_CASE("hostile dimension records are refused on load", "[dimension][document
     CHECK_FALSE(mutate("\"offset_mm\": 5", "\"offset_mm\": \"Infinity\"").ok());
     CHECK_FALSE(mutate("\"type\": \"dimension\"", "\"type\": \"vector\"").ok());
     CHECK_FALSE(mutate("\"vertical\": false", "\"vertical\": 1").ok());
+}
+
+TEST_CASE("dimensions with keep-out zones are written as the higher minor and round-trip", "[dimension][keepout][carv]") {
+    Document doc;
+    addRect(doc);
+    REQUIRE(addDimension(doc, make(DimensionKind::Linear, {0, 0}, {10, 0}), doc.activeSheet()));
+    REQUIRE(doc.execute(std::make_unique<SetKeepOutClearanceCommand>(2.0)));
+    auto saved = saveCarv(doc);
+    REQUIRE(saved.ok());
+    auto loaded = loadCarv(std::span<const std::uint8_t>(saved.value()));
+    REQUIRE(loaded.ok());
+    CHECK(loaded.value().formatMinor == kCarvFormatMinor);
+    CHECK(loaded.value().formatMinor > kCarvFormatMinorDimension);
+    CHECK(loaded.value().document.keepOutClearance() == 2.0);
+    auto again = saveCarv(loaded.value().document, loaded.value().extras);
+    REQUIRE(again.ok());
+    CHECK(again.value() == saved.value());
 }

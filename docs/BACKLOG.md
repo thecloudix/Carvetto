@@ -1036,7 +1036,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0237 Thread milling toolpath   [status: ready]
+### T-0237 Thread milling toolpath   [status: verifying — core+record+viewmodel form; tool type/create-circles → T-0262; ADR number to renumber]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0120, T-0220
 Goal: Thread milling: single/multi-point cutters, ISO metric/universal pitch presets, internal/external, left/right, cut up/down, fit tolerance, create circles for internal threads. Inventory 'Thread Milling Toolpath'.
 Acceptance criteria:
@@ -1072,7 +1072,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0241 Keep-out zones (document, rapid routing, UI)   [status: verifying — core+viewmodel save path only; Qt UI → T-0256; needs ADR renumber (0035 taken by T-0236) and rebase vs T-0246 (both bump .carv minor, kCarvFormatMinorText)]
+### T-0241 Keep-out zones (document, rapid routing, UI)   [status: done — merged PR #115 (UI → T-0256, large outlines → T-0258)]
 Phase: 1   Module: core/document + core/toolpath/linking + app   Depends on: T-0220, T-0235
 Goal: Keep-out zones created from closed vectors (not linked to source), clearance value, show/hide, and rapid moves routed around them (post blocks INITIAL/FIRST/STRAIGHT_RAPID_MOVE variables). Persisted in .carv.
 Acceptance criteria:
@@ -1090,7 +1090,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0243 Double-sided jobs (job setup, flip, swap sides, multi-sided view)   [status: ready]
+### T-0243 Double-sided jobs (job setup, flip, swap sides, multi-sided view)   [status: verifying — core+viewmodel slice; rest → T-0261; ADR number to renumber]
 Phase: 1   Module: core/document + app   Depends on: T-0235, T-0210
 Goal: Job Type Double Sided: flip direction, Zero off same side, per-side sheets/toolpaths, swap sides, multi-sided view; Rotary excluded.
 Acceptance criteria:
@@ -1099,7 +1099,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0244 Job sheet / toolpath summary report   [status: ready]
+### T-0244 Job sheet / toolpath summary report   [status: verifying — viewmodel job sheet (HTML+text); menu action/file write → T-0259]
 Phase: 1   Module: app/viewmodel + core   Depends on: T-0224, T-0235
 Goal: Create Job Sheet (inventory §'Create Job Sheet') plus time estimation summary: job info, tool list, per-toolpath times, thumbnails; export to HTML/PDF-free text format first.
 Acceptance criteria:
@@ -1108,7 +1108,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0245 Trace bitmap to vectors   [status: ready]
+### T-0245 Trace bitmap to vectors   [status: verifying — core tracer + Netpbm; app dialog/QImage decode/undo → T-0260; ADR number must be renumbered (0036 taken by T-0241)]
 Phase: 1   Module: core/io + app   Depends on: T-0202, T-0210
 Goal: Trace Selected Area, B&W with threshold and colour mode (16 colours): bitmap import to fitted Bezier/line contours. Clean-room tracing algorithm, no third-party code beyond a permissive image decoder (dependency choice to director: ADR).
 Acceptance criteria:
@@ -1213,3 +1213,33 @@ Phase: 1   Module: core/toolpath/keepout   Depends on: T-0241
 Goal: T-0241 bounds routing cost (work budget, TooComplex warning, rapid left straight) but outlines of ~1000+ vertices needing a wrapping detour exceed the budget. Add a spatial index for edge scans and/or tolerance-bounded outline simplification so large DXF-imported outlines route. Also preserve unknown keys in the keepout record.
 Acceptance criteria:
   1. A 4000-vertex circle zone routes a blocked rapid within a few seconds CPU in Debug, with the no-rapid-enters-zone guarantee (independent oracle test); byte-identical routes for inputs routed before.
+
+### T-0259 Job sheet: menu action, save/print and PDF (T-0244 follow-up)   [status: ready — LOW]
+Phase: 1   Module: app/src + app/viewmodel   Depends on: T-0244
+Goal: File > Create Job Sheet action writing the HTML/text sheet via a save dialog (atomic write, safe name), open in browser, optional PDF through Qt printing, per-sheet/per-side split once T-0243 lands.
+Acceptance criteria:
+  1. In the real app the action writes a job sheet equal to makeJobSheet output; hostile paths refused; self-test drives it.
+
+### T-0260 Trace Bitmap: app dialog, QImage decoding, undoable command (T-0245 follow-up)   [status: ready]
+Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0245, T-0210
+Goal: File/Edit > Trace Bitmap: choose an image (PNG/JPEG/BMP decoded with QImage in the app layer into io::RasterImage, size-checked before decode), dialog with mode (B&W threshold/invert, colour count 2..16), noise filter, corner fit, scale (mm per pixel/target size), live preview, result as one undo step with one layer per colour; Pick from 2D View; Bitmap Fading. Also: the tracer has no work cap or cancel hook (a valid 4000x4000 single-loop bitmap takes ~170-220 s), so add a boundary-edge budget and a cancel poll in core and run the trace off the UI thread.
+Acceptance criteria:
+  1. In the real app a user traces a bitmap into vectors in one undo step; oversize/hostile images refused with a message; self-test drives it.
+
+### T-0261 Double-sided jobs: UI, object/toolpath copy to other side, per-side output (T-0243 follow-up)   [status: ready]
+Phase: 1   Module: app + app/viewmodel + core/document + core/toolpath   Depends on: T-0243, T-0224
+Goal: Job Setup double-sided page, Swap Sides button and keys, multi-sided view drawing (from multiSidedView), Copy/Move to Other Side for objects (mirroring transform) and toolpaths (sheet link on toolpath records), apply shiftMovesZ(sheetTopZ) in Save Toolpaths so each side posts with the correct Z zero, switching back to single-sided, Preview All Sides. Needs owner confirmation of the 'Zero off same side' interpretation (T-0243 ADR) before dispatch if the coder cannot settle it from the inventory.
+Acceptance criteria:
+  1. A two-sided job can be set up, drawn, copied across and saved with per-side posts whose Z zero matches the side; self-test drives it.
+
+### T-0262 Thread milling: thread-mill tool type and Create Circles command (T-0237 follow-up)   [status: ready — LOW]
+Phase: 1   Module: core/tooling + core/document + app/viewmodel   Depends on: T-0237, T-0235
+Goal: model single/multi-point thread-mill tools in the tool database (S, H, D, A, O, threaded length; versioned tool file migration), use them in the Thread Mill form; 'Create circles for internal threads' inserts the bore circles into the document as one undo step on calculation.
+Acceptance criteria:
+  1. A thread-mill tool saved in the tool DB round-trips (old files still load); the form lists only such tools (and end mills); circles are inserted undoably and removed on undo; tests incl. hostile tool files.
+
+### T-0263 Job sheet nits (T-0244 round-2 verifier)   [status: ready — LOW]
+Phase: 1   Module: app/viewmodel   Depends on: T-0244
+Goal: (1) makeJobSheet tool lookup is a linear find_if on full names, quadratic with many distinct tools (5000 distinct 100 KB tool names took 56 s): key a map on (number, name, diameter); (2) header says "well below 1 MB" but the measured worst case is ~740 KB: reword; (3) SVG thumbnail drops toolpaths beyond the 500th without a notice; (4) cap the stored sheet size for huge inputs.
+Acceptance criteria:
+  1. 20,000 distinct tools build a sheet in well under a second; thumbnail notice present; tests.
