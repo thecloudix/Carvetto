@@ -12,6 +12,7 @@
 #include "carvetto/document/ids.hpp"
 #include "carvetto/document/job.hpp"
 #include "carvetto/document/toolpath_record.hpp"
+#include "carvetto/geometry/contour.hpp"
 #include "carvetto/post/post_processor.hpp"
 #include "carvetto/tooling/machine.hpp"
 #include "carvetto/viewmodel/toolpath_session.hpp"
@@ -98,6 +99,9 @@ struct SaveJob {
     /// Records whose moves are out of date (their vectors, tool or parameters changed since the
     /// moves were calculated): posted from the old moves, with a warning.
     std::vector<std::string> stale;
+    /// Keep-out zones (T-0241): rapids are routed around them before posting. Empty = none.
+    std::vector<geometry::Contour> keepOutZones;
+    double keepOutClearance{0.0};
     /// Set when the job cannot run; `generateOutput` reports it.
     std::string error;
 };
@@ -111,6 +115,9 @@ struct SaveSource {
     std::vector<std::string> notComputed;
     /// Included records whose moves are out of date (see SaveJob::stale).
     std::vector<std::string> stale;
+    /// The document's keep-out zones and clearance (see SaveJob).
+    std::vector<geometry::Contour> keepOutZones;
+    double keepOutClearance{0.0};
 };
 
 /// Copies the records `ids` (document order; empty = all) and the job. Records without moves
