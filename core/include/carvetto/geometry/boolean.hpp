@@ -47,6 +47,16 @@ struct BooleanResult {
 BooleanResult booleanOp(BooleanOp op, const std::vector<Contour>& subject, const std::vector<Contour>& clip,
                         const Tolerance& tol = Tolerance::defaults(), FillRule fill = FillRule::NonZero);
 
+/// True when `booleanOp`, `unionContours`, `offsetContours` and `OpenPathClipper` would refuse `c`
+/// at `tol` (T-0183): its polygon cannot meet `tol.chordal` within the work bounds (an arc needing
+/// more than `kMaxArcSegments` chords, a Bezier past its split cap, a non-finite arc or Bezier;
+/// ADR-0005 A2). Decides exactly what `toClipperPath` decides, without building the polygon of a
+/// contour made of lines and arcs (O(spans)); a contour with a Bezier span is polygonised once.
+bool refusedByClippers(const Contour& c, const Tolerance& tol);
+
+/// Indices (ascending) of the `contours` that `refusedByClippers(c, tol)` is true for.
+std::vector<std::size_t> refusedContourIndices(const std::vector<Contour>& contours, const Tolerance& tol);
+
 /// Convenience: union of one set of closed contours with itself (resolves overlaps and holes).
 std::vector<Contour> unionContours(const std::vector<Contour>& contours,
                                    const Tolerance& tol = Tolerance::defaults(),

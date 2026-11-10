@@ -72,6 +72,7 @@ bool isRefusalIssue(ToolpathIssue issue) {
         case ToolpathIssue::InvalidTool:
         case ToolpathIssue::WorkLimitExceeded:
         case ToolpathIssue::MedialAxisCapped:
+        case ToolpathIssue::ContourRefused:
             return true;
         default:
             return false;

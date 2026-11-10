@@ -939,6 +939,14 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     count says. The costs the count tracks best are clearance sampling and exact closest-point
     tests, which are what grows with edge length and with thin self-intersecting loops.
 
+### Refused vectors (T-0183)
+A vector the offset and union code would leave out silently (an arc past the 2^20-chord cap, a
+Bezier past its split cap, a non-finite curve; at Profile's input limits that is an arc of many
+windings or a Bezier, since coordinates stay within 1e5 mm) gets a `ContourRefused` diagnostic
+(ADR-0018 item 5) in the validity pass, is marked invalid like an empty or discontinuous vector
+and is not cut; the other vectors are cut exactly as without it. The screen runs at the offset
+tolerance (`offTol_`).
+
 ### Golden hand-check (AC1 / AC6)
 `core/tests/golden/toolpath/profile_rect_tabs.moves` and `profile_rect_tabs_grbl.nc` were
 checked by hand: the offset of the 100×50 rectangle by 3 is the lines y = −3, x = 103, y = 53,

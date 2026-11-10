@@ -362,6 +362,14 @@ quality) and T-0120 (Profile, ADR-0016), so it may use only the public geometry 
     The verifier's repros now return at once: pass depth 1e-9 (round 1: `std::bad_alloc` from
     2·10⁹ levels), stepover 1e-6, and chordal 1e-7 on an r = 20 circle (both ran unbounded).
 
+### Refused vectors (T-0183)
+A closed vector whose polygon cannot meet the region tolerance (half the chordal tolerance; an
+arc past the 2^20-chord cap, a Bezier past its split cap, a non-finite curve) used to drop out of
+the region union without a word. It is now left out up front with a `ContourRefused` diagnostic
+(ADR-0018 item 5, `contour` = input index) and the pocket is cut from the other vectors, exactly
+as without it. Open vectors are ignored as before (`OpenContourIgnored`). A vector between 200000
+and 2^20 chords is still refused as a whole by the vertex limit (`WorkLimitExceeded`).
+
 ## Golden file
 `core/tests/golden/toolpath/pocket_rect_grbl.nc` is AC1's case through `posts/grbl_mm.pp`, in two
 3 mm passes. It is regenerated only by `tools/regen_golden.py`, which now also lists
