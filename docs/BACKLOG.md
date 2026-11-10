@@ -1045,7 +1045,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0238 Inlay toolpaths: straight inlay (male/female, stepped) and VCarve inlay (plug and pocket)   [status: in progress — straight inlay slice; VCarve inlay split to T-0265]
+### T-0238 Inlay toolpaths: straight inlay (male/female, stepped) and VCarve inlay (plug and pocket)   [status: in-progress]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0121, T-0153, T-0220
 Goal: Straight inlays (male straight/stepped, female pocket/hole, allowance) and VCarve Inlay (pocket depth, glue gap, surface clearance, plug destination sheet, mirrored plug, plug boundary options).
 Acceptance criteria:
@@ -1054,7 +1054,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0239 Fluting toolpath   [status: ready]
+### T-0239 Fluting toolpath   [status: in-progress]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0120, T-0220
 Goal: Fluting toolpath per inventory 'Fluting Toolpath' (flat or ball-nose, depth profile along the vector, start/end ramps).
 Acceptance criteria:
@@ -1063,7 +1063,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0240 Prism carving toolpath   [status: ready]
+### T-0240 Prism carving toolpath   [status: in-progress]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0153, T-0220
 Goal: Prism Carving: prism depth, set depth for full prism, cut direction (inventory 'Prism Carving Toolpath').
 Acceptance criteria:
@@ -1081,7 +1081,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0242 Toolpath tiling manager   [status: ready]
+### T-0242 Toolpath tiling manager   [status: in-progress]
 Phase: 1   Module: core/toolpath + app   Depends on: T-0224, T-0220
 Goal: Tiling of a job larger than the work area into tiles with overlap, per-tile output (inventory 'Toolpath Tiling Manager').
 Acceptance criteria:
@@ -1249,12 +1249,3 @@ Phase: 1   Module: core/document + docs/adr   Depends on: T-0243
 Goal: (1) ADR-0039 (and any other ADR/comments) say a minor bump makes an older build refuse the file as too new; in fact the loader only checks the major version and older builds keep unknown keys in extras: fix the wording, or decide with the owner whether older readers should refuse files that use a newer minor feature (conflicts with the forward-compat test 'a higher minor version of the same major loads'); (2) carv_io.cpp comment above struct KeepOutFile says 1.3, keep-out is 1.4; a doc fragment meant for JobFile sits above KeepOutFile.
 Acceptance criteria:
   1. ADR and comments accurate; no behaviour change unless the owner decides otherwise.
-
-### T-0265 VCarve inlay toolpath: V-bit pocket and plug, glue gap, plug sheet (T-0238 split)   [status: ready]
-Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0238, T-0153, T-0220
-Goal: VCarve Inlay (inventory 'VCarve Inlay Toolpath'): pocket depth, glue gap, surface clearance, V-bit and clearance tools, plug destination sheet (the plug is mirrored, and centred when on another sheet), plug outer boundary (Sheet Limits / Vector Offset / Boundary Offset). Builds on the straight inlay's record/form/viewmodel wiring (ADR-0040).
-Acceptance criteria:
-  1. The V-carved pocket and the V-carved plug of the same vector mate within the stated glue gap (geometry/depth test, V-bit flank geometry); the plug is mirrored on the destination sheet (and centred on another sheet); each plug boundary option verified; forms, records, tests.
-  2. Clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
-Out of scope: anything beyond the card; the straight inlay (T-0238); 3D/Phase 2 features.
-Notes/refs: docs/reference/feature-inventory.md 'VCarve Inlay Toolpath' (the Pocket and Plug sub-pages' fields are not fetched: the owner may need to supply them); ADR-0040.
