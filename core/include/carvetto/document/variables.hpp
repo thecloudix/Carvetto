@@ -59,4 +59,34 @@ class DocumentVariables {
     std::map<std::string, std::size_t, std::less<>> references_;
 };
 
+/// Values for the letter variables of a calculation edit box (mm). W/X = width, H/Y = height,
+/// T/Z = thickness; P = pi, I = mm->inch and M = inch->mm are constants.
+struct ExpressionContext {
+    double width{0.0};
+    double height{0.0};
+    double thickness{0.0};
+};
+
+/// Result of `evaluateExpression`: either a finite value or an error message.
+struct ExpressionResult {
+    std::optional<double> value;
+    std::string error;
+    /// Document variable names the expression uses (sorted, unique), even when evaluation failed
+    /// later; lets a caller register references so used variables cannot be deleted.
+    std::vector<std::string> usedVariables;
+    bool ok() const { return value.has_value(); }
+};
+
+/// Hard bounds so hostile input costs bounded time and stack.
+inline constexpr std::size_t kMaxExpressionLength = 1024;
+inline constexpr int kMaxExpressionDepth = 64;
+
+/// Evaluates a calculation-edit-box expression: numbers, `+ - * / ^` (`^` right-associative,
+/// binds tighter than unary minus), parentheses, `{Name}` document variables, letter variables
+/// (case-insensitive) and a postfix `'` meaning feet (x 304.8 mm). A leading `=` is ignored.
+/// Division by zero, unknown names, non-finite results, over-long or too-deeply-nested input
+/// are errors; never throws.
+ExpressionResult evaluateExpression(std::string_view text, const DocumentVariables& vars,
+                                    const ExpressionContext& ctx = {});
+
 }  // namespace carvetto::document

@@ -1,5 +1,9 @@
 #include "carvetto/document/variables.hpp"
 
+#include <limits>
+#include <string>
+#include <vector>
+
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
@@ -108,4 +112,105 @@ TEST_CASE("variable import skips comments and reports bad lines", "[document][va
     CHECK_THAT(*vars.get("Good"), WithinAbs(1.5, 0.0));
     CHECK_THAT(*vars.get("Spaced"), WithinAbs(-2.25, 0.0));
     CHECK_THAT(*vars.get("Last"), WithinAbs(4.0, 0.0));
+}
+
+namespace {
+double evalOk(std::string_view text, const DocumentVariables& v = {}, ExpressionContext c = {}) {
+    const auto r = evaluateExpression(text, v, c);
+    INFO(text << " -> " << r.error);
+    REQUIRE(r.ok());
+    return *r.value;
+}
+}  // namespace
+
+TEST_CASE("expressions evaluate to hand-computed values", "[document][variables][expression]") {
+    CHECK_THAT(evalOk("1+2*3"), WithinAbs(7.0, 1e-12));
+    CHECK_THAT(evalOk("=(1+2)*3"), WithinAbs(9.0, 1e-12));
+    CHECK_THAT(evalOk("10-4-3"), WithinAbs(3.0, 1e-12));
+    CHECK_THAT(evalOk("100/5/2"), WithinAbs(10.0, 1e-12));
+    CHECK_THAT(evalOk("2^3^2"), WithinAbs(512.0, 1e-9));   // right-associative
+    CHECK_THAT(evalOk("-2^2"), WithinAbs(-4.0, 1e-12));    // power binds tighter than minus
+    CHECK_THAT(evalOk("2^-1"), WithinAbs(0.5, 1e-12));
+    CHECK_THAT(evalOk("--3"), WithinAbs(3.0, 1e-12));
+    CHECK_THAT(evalOk(" 1.5e2 + .5 "), WithinAbs(150.5, 1e-12));
+    CHECK_THAT(evalOk("2*-3"), WithinAbs(-6.0, 1e-12));
+}
+
+TEST_CASE("letter variables, feet and document variables in expressions",
+          "[document][variables][expression]") {
+    ExpressionContext ctx;
+    ctx.width = 300.0;
+    ctx.height = 200.0;
+    ctx.thickness = 18.0;
+    DocumentVariables vars;
+    vars.set("Margin", 12.5);
+    CHECK_THAT(evalOk("W/2", vars, ctx), WithinAbs(150.0, 1e-12));
+    CHECK_THAT(evalOk("x+y", vars, ctx), WithinAbs(500.0, 1e-12));
+    CHECK_THAT(evalOk("H-T", vars, ctx), WithinAbs(182.0, 1e-12));
+    CHECK_THAT(evalOk("Z", vars, ctx), WithinAbs(18.0, 1e-12));
+    CHECK_THAT(evalOk("P", vars, ctx), WithinAbs(3.14159265358979, 1e-12));
+    CHECK_THAT(evalOk("25.4*I", vars, ctx), WithinAbs(1.0, 1e-12));
+    CHECK_THAT(evalOk("2*M", vars, ctx), WithinAbs(50.8, 1e-12));
+    CHECK_THAT(evalOk("2'", vars, ctx), WithinAbs(609.6, 1e-9));
+    CHECK_THAT(evalOk("{Margin}*2+W", vars, ctx), WithinAbs(325.0, 1e-12));
+    CHECK_THAT(evalOk("({Margin})'", vars, ctx), WithinAbs(3810.0, 1e-9));
+
+    const auto r = evaluateExpression("{Margin}+{Margin}+{Other}", vars, ctx);
+    CHECK_FALSE(r.ok());
+    CHECK(r.usedVariables == std::vector<std::string>{"Margin", "Other"});
+}
+
+TEST_CASE("malformed and hostile expressions fail cleanly and bounded",
+          "[document][variables][expression]") {
+    DocumentVariables vars;
+    vars.set("Big", 1e308);
+    vars.set("Bad", std::numeric_limits<double>::infinity());
+    const char* bad[] = {"",       "   ",   "=",     "1+",     "*2",   "(1",     "1)",   "1 2",
+                         "1/0",    "1/(2-2)", "{",   "{Nope}", "{1x}", "{}",     "Depth", "WW",
+                         "W1",     "abc",   "1..2",  ".",      "1e",   "$",      "1+*2", "{Bad}",
+                         "{Big}*10", "{Big}^2", "(-8)^0.5", "10^400", "1e999", "'", "2''x"};
+    for (const char* b : bad) {
+        INFO(b);
+        CHECK_FALSE(evaluateExpression(b, vars).ok());
+    }
+    // 2'' is feet-of-feet by design and fine; just make sure it parses.
+    CHECK(evaluateExpression("2''", vars).ok());
+}
+
+TEST_CASE("expression nesting and length are bounded", "[document][variables][expression]") {
+    const DocumentVariables vars;
+    const std::string shallow = std::string(20, '(') + "1" + std::string(20, ')');
+    CHECK_THAT(evalOk(shallow), WithinAbs(1.0, 0.0));
+
+    const std::string deep = std::string(100000, '(') + "1" + std::string(100000, ')');
+    const auto d = evaluateExpression(deep, vars);
+    CHECK_FALSE(d.ok());
+    CHECK_FALSE(d.error.empty());
+
+    const std::string within = std::string(200, '(') + "1" + std::string(200, ')');
+    CHECK_FALSE(evaluateExpression(within, vars).ok());  // exceeds depth bound, no crash
+
+    std::string powChain = "2";
+    for (int i = 0; i < 500; ++i) powChain += "^1";
+    CHECK_FALSE(evaluateExpression(powChain, vars).ok());
+
+    CHECK_THAT(evalOk(std::string(500, '-') + "3"), WithinAbs(3.0, 0.0));  // iterative signs
+    CHECK_FALSE(evaluateExpression(std::string(5000, '-') + "3", vars).ok());
+
+    std::string longSum = "1";
+    for (int i = 0; i < 300; ++i) longSum += "+1";  // 601 chars, long but flat
+    CHECK_THAT(evalOk(longSum), WithinAbs(301.0, 0.0));
+    CHECK_FALSE(evaluateExpression(std::string(kMaxExpressionLength + 1, '1'), vars).ok());
+}
+
+TEST_CASE("deleting a variable used by an expression is refused until released",
+          "[document][variables][expression]") {
+    DocumentVariables vars;
+    vars.set("Depth", 6.0);
+    const auto r = evaluateExpression("{Depth}*2", vars);
+    REQUIRE(r.ok());
+    for (const auto& n : r.usedVariables) vars.addReference(n);
+    CHECK_FALSE(vars.remove("Depth"));
+    for (const auto& n : r.usedVariables) vars.removeReference(n);
+    CHECK(vars.remove("Depth"));
 }
