@@ -14,6 +14,7 @@ endif()
 add_executable(carvetto_viewmodel_tests
   vector_ops_test.cpp
   vector_validator_test.cpp
+  weld_subtract_test.cpp
   view_transform_test.cpp
   ruler_test.cpp
   save_toolpaths_test.cpp
@@ -36,6 +37,7 @@ add_executable(carvetto_viewmodel_tests
   snapping_test.cpp
   selection_tools_test.cpp
   toolpath_form_test.cpp
+  toolpath_chamfer_test.cpp
   toolpath_preview_test.cpp
   simulation_test.cpp
   toolpath_robustness_test.cpp

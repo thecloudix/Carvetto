@@ -85,7 +85,7 @@ VectorOpsMenu::VectorOpsMenu(MainWindow& window, QMenu* editMenu) : window_(wind
     QMenu* menu = editMenu->addMenu(QStringLiteral("&Vectors"));
     weld_ = menu->addAction(QStringLiteral("&Weld"));
     subtract_ = menu->addAction(QStringLiteral("&Subtract (last selected from the others)"));
-    intersect_ = menu->addAction(QStringLiteral("&Intersect (overlap with last selected)"));
+    intersect_ = menu->addAction(QStringLiteral("&Overlap (intersect with last selected)"));
     exclude_ = menu->addAction(QStringLiteral("&Exclude"));
     menu->addSeparator();
     offset_ = menu->addAction(QStringLiteral("&Offset..."));

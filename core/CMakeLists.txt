@@ -230,6 +230,7 @@ add_library(carvetto_core STATIC
   src/toolpath/pocket.cpp
   src/toolpath/drill.cpp
   src/toolpath/engrave.cpp
+  src/toolpath/chamfer.cpp
   src/toolpath/v_carve.cpp
   src/toolpath/v_carve_corners.cpp
   src/text/font.cpp

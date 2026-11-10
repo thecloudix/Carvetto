@@ -1,5 +1,6 @@
 #include "carvetto/toolpath/pass_plan.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 namespace carvetto::toolpath {
@@ -24,7 +25,9 @@ void planStretch(const PassPlan& plan, double top, double depth, std::vector<dou
         return;
     }
     if (plan.maintainExactStep) {
-        const auto full = static_cast<std::size_t>(std::floor(depth / plan.passDepth + kEps));
+        // T-0184: range-checked cast (a tiny pass depth). Beyond 1e9 passes nothing can be built anyway.
+        const double fullD = std::floor(depth / plan.passDepth + kEps);
+        const auto full = static_cast<std::size_t>(fullD >= 1.0 ? std::min(fullD, 1e9) : 0.0);
         for (std::size_t i = 1; i <= full; ++i) {
             const double d = static_cast<double>(i) * plan.passDepth;
             if (d < depth - eps) {
@@ -35,7 +38,8 @@ void planStretch(const PassPlan& plan, double top, double depth, std::vector<dou
         return;
     }
     // Equalised passes: prefer fewer passes if the step grows by at most kStepSlack.
-    auto n = static_cast<std::size_t>(std::ceil(depth / plan.passDepth - kEps));
+    const double nD = std::ceil(depth / plan.passDepth - kEps);
+    auto n = static_cast<std::size_t>(nD >= 1.0 ? std::min(nD, 1e9) : 0.0);
     if (n > 1 &&
         depth / static_cast<double>(n - 1) <= plan.passDepth * (1.0 + PassPlan::kStepSlack) * (1.0 + kEps)) {
         --n;

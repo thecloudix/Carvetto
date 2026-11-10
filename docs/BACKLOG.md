@@ -689,7 +689,7 @@ Goal: T-0170 recovered the Round/no-prune slowdown for line inputs (std::hypot r
 Acceptance criteria:
   1. [director 2026-11-07, reworded after the verifier could not reach A/A <= 2% on the shared machine: arc 50000 within 3% of pre-T-0016 (met: 0.983); zz 200000 no worse than main with the instruction count reported (met: branch/main 0.967..0.994, +5.5% vs +6.3% instructions)] Round on the arc 50000 and zz 200000 inputs within 3% of pre-T-0016 (interleaved CPU, A/A control, repeated until A/A <= 2%); outputs byte-identical to main over a broad corpus (all joins, both sides, arcs included); full ctest; the changelog and ADR-0012 A5 wording updated.
 
-### T-0177 Profile loose pieces: residual false reports and misses with V-bit corners (T-0156 verifier)   [status: verifying — re-scoped to item (a) (director 2026-11-09); rest → T-0252]
+### T-0177 Profile loose pieces: residual false reports and misses with V-bit corners (T-0156 verifier)   [status: done — merged PR #107, scope item (a); rest → T-0252]
 Phase: 1   Module: core/toolpath   Depends on: T-0156   ADR: 0016 §14
 Goal: Defects found by the T-0156 verifier (harness t0156v1, exact-flood oracle drv/o.cpp, repro scenes in repro/), all identical on main and accepted by the director as residual at the T-0156 merge. (a) A held part is reported as loose: repro/false939_7101_876.scn (Outside, V-bit 120°, D6, allowance 0.0022, 2 tabs requested; with 1 tab kept the flood finds nothing free but the product reports '939.84 mm² comes free'; with tab count 1 the message disappears and the moves are unchanged, so it is a defect in the search), repro/false939_7102_671.scn (7.6 mm²). (b) Free pieces unreported with leads off and V-bit corners: repro/miss6_7104_351.scn (six free pieces of 0.216 mm², none reported). (c) Reported areas far from the flood's (29.77 vs 6.4+11.6; 61.5 and 149.7 vs 6.6 and 19.7). (d) Hairline cases within a few µm of the 0.04 / 0.05 thresholds stay documented knife-edge cases. (e) Ramps and plunges are still not in the band model. (f) Found by the T-0156 round-2 verifier (harness t0156v2, scenes in dump/): seed 9302 scene 2199 (m1_9302_2199.scn) the corner-move tab check leaves 1 of 3 tabs out although the exact oracle finds all 3 holding (main keeps all 3); seed 9301 scene 2132 (m1_9301_2132.scn) the branch reports 3 pieces of about 0.04 mm² where main reports 0 and the oracle finds none (threshold knife-edge). Both accepted by the director as residual at the T-0156 merge. (g) Left by T-0167 (triage of the T-0158 verifier's repros on main after T-0156; scenes in harness t0158v1/t0158v2/t0158v3, t0127v1/d4new, t0127v2/d/wsf7, t0135v2/v3 scn): the pieces that stay unreported with leads on and vanish with leads off, moves otherwise identical, are lead moves cutting a piece off (m0_291002_11 VectorStart/Outside 0.41 mm² and, at the stored start, 4.76 mm²; m0_271000_0 VectorStart/Outside 1.19 mm² outside a corner; m0_271013_1 box centre 1.33 mm²): the band model has no leads (with (e): ramps and plunges). (h) Partial tabs whose unjoined piece is a reported hairline sliver 0.05-0.11 mm thick: m1_1310133_29 VectorStart/Outside (0.41 mm²) and a4_770001_217 box centre (0.067 mm²); the tab joins the outside, the part and the slug and the sliver is reported; dropping the tab would free the part, so the exact check (tools widened by 0.055 mm) is left as it is. (i) A tab the quick answers keep although the oracle finds it severed, where the waste beyond is a closed pocket: seed 9301 scene 153 (V-bit 60 D25, Outside, VectorStart, SHARP; the net result is better than main: 2 free pieces gone, 1 useless tab kept) and 9308 scene 412 (partial, the unjoined piece is reported). (j) Tabs left out although some other place would hold: mmrg_001_tabs_all_out (V-bit 120 merged region; at the stored start and VectorStart all 3 tabs are truly severed and the 1,373 mm² piece is reported; at the box centre 3 tabs hold) and m1_272009_9 VectorStart/Outside (merged round region, 7 of 10 tabs near fewer than two pieces: they hold nothing, none is severed). (k) r101_1_0_42 (V-bit 120 D1, On, 616 requested tabs), leads off: 2 of 100 free pieces >= 0.04 mm² unreported at the box centre and 2 of 98 at the stored start, none at VectorStart (the (b) family). (l) A tab round the bottom corner of a notch, kept as holding "a hole smaller than the kerf" although the tools at its ends seal it off, when the two kerfs leave a sliver of waste narrower than three raster cells: m0_271016_20 at VectorStart/Outside (end mill 3.175, 0.145 mm sliver; pre-existing on main, harmless while other tabs hold the part and the exact loose-piece search backs it up). T-0167's cell-widening fix was reverted: on the T-0167 verifier's U-part family (harness t0167v1, seeds 9731-9738) it removed 148 severed tabs but dropped 32 holding ones and, in seed 9735 scene 49 (repro/free426_9735_49.scn, 0.079 mm sliver), freed a 426 mm² part main held. Needed: decide the far-wall waste from the exact union of the tools' capsules, not from cells; acceptance on that family 0 holding tabs dropped, 0 parts freed.
 Acceptance criteria:
@@ -732,7 +732,7 @@ Goal: T-0182 caps arc polygonisation at 2^20 chords; `toClipperPath` refuses a c
 Acceptance criteria:
   1. A job with a huge-radius arc contour plus normal contours produces a diagnostic per refused vector in Profile, Pocket, V-Carve, Engrave, Drill, Inlay-type operations that polygonise (list them), the normal contours are cut exactly as before (outputs byte-identical to main for jobs without refusals); the importers (DXF, SVG) warn on such an arc at import; tests per operation; full ctest; MSVC CI green.
 
-### T-0184 Huge-arc robustness leftovers in toolpath and offset code (T-0182 verifier, pre-existing)   [status: verifying]
+### T-0184 Huge-arc robustness leftovers in toolpath and offset code (T-0182 verifier, pre-existing)   [status: done — merged PR #105]
 Phase: 1   Module: core/toolpath + core/geometry   Depends on: T-0182   ADR: 0005 A2, 0016
 Goal: Pre-existing defects found by the T-0182 verifier (harness t0182v1) while probing huge arcs; none is reachable at CNC scale (importers cap coordinates and radius at 1e12 mm; the CLI skips 1e100 circles), all are real UB or unbounded cost for hostile .carv files or direct API callers. (a) `core/src/toolpath/clearance.cpp:249` `static_cast<int>(std::floor(gap / 1.0))` is UB when a profile cut is a huge arc (6.28e9 mm path length; UBSan 'outside the range of representable values of type int'); on x86 the garbage value skips the loop so R=1e12 'works' by luck; R=1e9 profile (outside/inside) fails 'out of memory' on main and branch, R=1e8 and 3e8 run 60 s or more, R=1e6 takes 3.7-51 s and 3-4.5 GB (near-part case): bound the clearance sampling (cap samples, range-check the cast, refuse with a diagnostic naming the vector). (b) `offsetContours` on an open contour with an arc of sweep 1e5 revolutions at R=1e9 needs ~490 MB (bad_alloc under 400 MB) on main and branch: bound or refuse. (c) audit float-to-integer casts in core/toolpath and core/geometry with UBSan float-cast-overflow over the hostile corpora (nf.cpp-style, huge radii, tiny tolerances) and range-check each.
 Acceptance criteria:
@@ -984,7 +984,7 @@ Goal: `Font` loading (TTF/OTF from file/bytes, no system-font enumeration in cor
 Criteria: (1) glyph outlines match an independent oracle (area/winding/bbox of known glyphs in the test font); (2) text on curve places glyph baselines tangent within tolerance; (3) work/size caps with refusal statuses; (4) clean MSVC + GCC/Clang builds, deterministic hashes on CI Linux and Windows; (5) licences recorded; mutation checks.
 Out of scope: single-line stroke fonts, the text tool UI (T-0211).
 
-### T-0225 TransformDialog holds a const Document& (T-0206 verifier note)   [status: verifying]
+### T-0225 TransformDialog holds a const Document& (T-0206 verifier note)   [status: done — merged PR #106]
 TransformDialog (transform_menu.cpp) keeps a `const Document&` and `rebuild()` re-reads it from option-toggle callbacks. Unreachable today (modal, nothing replaces the document), but pass the document live or close the dialog on replacement. Also remove the redundant xfReset() in ToolController::setDocument (equivalent mutant).
 
 ### T-0226 Flaky CPU-ratio test: T-0172 (b) (offset_narrow_loops_test.cpp:1610)   [status: ready — LOW]
@@ -1016,7 +1016,7 @@ On 2026-11-08 GitHub release assets (nlohmann_json, miniz, harfbuzz tarballs) re
 ### T-0233 Ship DejaVu Serif as the starter font (owner decision 2026-11-08)   [status: done — merged PR #100]
 Owner: "I like DejaVu Serif." Replace the placeholder starter font (`data/fonts/CarvettoStarter-Regular.ttf`, ~8 glyphs) with DejaVu Serif (Regular; consider Bold) as the compiled-in starter font for the Text tool and DXF text import. Vendor the font file(s) under `data/fonts/` with the upstream licence text (Bitstream Vera + DejaVu changes licence; check it is redistributable under a GPL-3.0-or-later project and note the "name change when modified" clause: never modify the font files), add THIRD_PARTY_NOTICES.md rows, keep the CMake embedding mechanism (starter_font.hpp generated at build time), keep tests using the tiny Carvetto test font (do not slow the test suite with a 380 KB font unless needed), verify glyph coverage (Latin, Latin-1, Greek, Cyrillic) and that embedding it in a .carv stays within the font caps, and that save/load/undo/convert-to-curves work with the full font. Source file for vendoring: the DejaVu release tarball from dejavu-fonts.github.io / GitHub release with SHA256 recorded (do not copy from /usr/share/fonts without recording version); CI download resilience (T-0232) applies if fetched at build time — prefer vendoring the single .ttf in the repo.
 
-### T-0234 CI cache hardening (T-0232 verifier nits)   [status: verifying]
+### T-0234 CI cache hardening (T-0232 verifier nits)   [status: done — merged PR #104]
 (1) FETCHCONTENT_SOURCE_DIR bypasses download AND hash verification: record the verified content hash / git commit of each source tree when caching (manifest) and re-check in tools/ci/configure.{sh,ps1} on a cache hit (poisoned-cache defence in depth). (2) Cache entries are ~171 MB each x 4 jobs including .git dirs: trim `.git` / shallow copies to ease the 10 GB cache limit. (3) Add `.fc-src/` and `configure.log` to .gitignore. (4) Retry regex is matched over the whole log (a later SHA mismatch after an earlier download-failure line would still be retried; bounded) — match the last error only. (5) configure.sh handles only `-B <dir>` not `-Bdir`. (6) Verify the Qt/app-ON configure on a cache hit.
 
 ### T-0210 Properties panel, layers and sheets UI, undo/redo history (viewmodel + Qt)   [status: done — merged PR #102]
@@ -1027,7 +1027,7 @@ Goal: the app lets a user manage the document without scripts: Layers panel (lis
 Phase: 1 (usability)   Module: app/viewmodel + app/src (+ core/tooling where missing)   Depends on: T-0221, T-0224
 Goal: close the setup gap found in the T-0224/T-0221 work: the app only has the compiled-in starter tools and no machine/material setup (summary says 'rapid rate not set'; Save dialog machine list empty). Add: Tool database editor (list/add/edit/duplicate/delete tools of all supported types with the core/tooling data model: diameter, flutes, flute length, V-angle, feeds/speeds per machine x material, units mm/in), Machines editor (name, work area, default post, associated posts, rapid rate, acceleration, spindle/feed limits), Materials editor, a Job setup dialog (material block size/thickness/Z zero/ origin, units), import/export of the tool database (core/tooling serialisation if it exists), persistence in the user config dir (QStandardPaths) with versioned, validated JSON, safe atomic writes, and hostile-file handling (corrupt/huge/NaN fields -> refuse with message, keep defaults). The Toolpaths dock tool picker, Preview time readout (rapid rate) and Save Toolpaths dialog (machines) must read from these. Document references tools by name/id: handle deleted/renamed tools (stale toolpaths flag). Tests: persistence round-trip, hostile files, UI via self-test.
 
-### T-0236 Chamfer toolpath (core/toolpath + toolpaths dock form)   [status: ready]
+### T-0236 Chamfer toolpath (core/toolpath + toolpaths dock form)   [status: done — merged PR #108]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0120, T-0153, T-0220
 Goal: Chamfer toolpath: angle, width/cut depth (linked), overcut, inside/outside, slope up/down, cut direction, V-bit or round-nose. Inventory 'Chamfer Toolpath'.
 Acceptance criteria:
@@ -1072,7 +1072,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0241 Keep-out zones (document, rapid routing, UI)   [status: ready]
+### T-0241 Keep-out zones (document, rapid routing, UI)   [status: verifying — core+viewmodel save path only; Qt UI → T-0256; needs ADR renumber (0035 taken by T-0236) and rebase vs T-0246 (both bump .carv minor, kCarvFormatMinorText)]
 Phase: 1   Module: core/document + core/toolpath/linking + app   Depends on: T-0220, T-0235
 Goal: Keep-out zones created from closed vectors (not linked to source), clearance value, show/hide, and rapid moves routed around them (post blocks INITIAL/FIRST/STRAIGHT_RAPID_MOVE variables). Persisted in .carv.
 Acceptance criteria:
@@ -1117,7 +1117,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0246 Dimensions (linear, aligned, angular, radial) with associative update   [status: ready]
+### T-0246 Dimensions (linear, aligned, angular, radial) with associative update   [status: verifying — first slice (core object, associativity, .carv, standalone DimensionTool); ToolController/dialog/handles → T-0255]
 Phase: 1   Module: core/document + app   Depends on: T-0211, T-0210
 Goal: Dimension objects, options (decimals, font/text height, offset, custom text), associativity on scale/move, edit via handles/selection.
 Acceptance criteria:
@@ -1126,7 +1126,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0247 Weld and Subtract vector operations (menu/UI parity)   [status: ready]
+### T-0247 Weld and Subtract vector operations (menu/UI parity)   [status: verifying]
 Phase: 1   Module: app/viewmodel + app   Depends on: T-0207
 Goal: Weld Vectors keeping inner regions of text, Subtract, Overlap exposed as Edit-menu commands on the selection, built on T-0207 booleans.
 Acceptance criteria:
@@ -1135,7 +1135,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0248 Document variables (Edit > Document Variables, expressions in edit boxes)   [status: ready]
+### T-0248 Document variables (Edit > Document Variables, expressions in edit boxes)   [status: verifying — expression evaluator in core; Qt dialog, edit-box hookup, toolpath-form reference rule → T-0257]
 Phase: 1   Module: core/document + app   Depends on: T-0210
 Goal: Create/edit/import/export document variables, use {Name} and letter variables (W,H,T,P,I,M) in numeric edit boxes and text; deletion refused while used. core/document/variables.hpp exists: extend, do not duplicate.
 Acceptance criteria:
@@ -1144,7 +1144,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0249 Vector validator (find/fix open, duplicate, tiny, self-intersecting, wrong-direction vectors)   [status: ready]
+### T-0249 Vector validator (find/fix open, duplicate, tiny, self-intersecting, wrong-direction vectors)   [status: verifying]
 Phase: 1   Module: core/geometry + app   Depends on: T-0210, T-0208
 Goal: Vector Validator per inventory §'Vector Validator': detect and optionally fix problems, select offenders, report counts.
 Acceptance criteria:
@@ -1162,7 +1162,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0251 Texture: vector texture generator and textured area   [status: ready]
+### T-0251 Texture: vector texture generator and textured area   [status: verifying — core generator only; UI and arbitrary-region clip → T-0254]
 Phase: 1   Module: core/geometry + app   Depends on: T-0210
 Goal: Create Vector Texture (wavy fill lines: angle, spacing, wavelength, amplitude, noise, seed) as 2D vectors. The 3D 'textured area component' depends on Phase 2 and is excluded. Deterministic given seed.
 Acceptance criteria:
@@ -1178,8 +1178,32 @@ Acceptance criteria:
   1. Each item fixed on its repro scene or documented as an accepted limit in ADR-0016 §14; a >= 10k-scene V-bit-forced screen, leads off, shows no regression vs main; mutants killed; full ctest.
 Out of scope: anything outside Profile loose-piece reporting.
 
-### T-0253 Locale-dependent test: "a non-ASCII output folder works end to end" (save_toolpaths_test.cpp:693)   [status: ready — LOW]
+### T-0253 Locale-dependent test: "a non-ASCII output folder works end to end" (save_toolpaths_test.cpp:693)   [status: verifying]
 Phase: 1   Module: app/viewmodel tests   Depends on: T-0224
 Goal: the test fails on some environments (C.UTF-8 locale, long scratch path; passes on the director's main build) because its expectation "/ete _)" depends on locale/transliteration. Make the expectation locale-independent or set the locale in the test; no product change unless the transliteration itself is locale-dependent (then fix it).
 Acceptance criteria:
   1. Test passes under LANG=C, C.UTF-8 and en_US.UTF-8 on Linux and on Windows CI; one changelog fragment if behaviour changes.
+
+### T-0254 Vector texture: dialog, preview and clipping to arbitrary closed vectors (T-0251 follow-up)   [status: ready]
+Phase: 1   Module: app/viewmodel + app/src + core/geometry   Depends on: T-0251
+Goal: T-0251 delivered only the deterministic core generator (rectangle region). Add the Create Vector Texture dialog (angle, max spacing, spacing variation, wavelength, amplitude, noise, seed, target layer), live preview, one undo step, and clipping to the selected closed vectors (with holes) instead of the bounding box.
+Acceptance criteria:
+  1. Generated lines lie inside the selected region (holes excluded) within tolerance; dialog edits validated with units; one undo step; self-test drives the real dialog; bounded work for hostile regions.
+
+### T-0255 Dimensions: ToolController wiring, options dialog, canvas handle editing, DXF text (T-0246 follow-up)   [status: ready]
+Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0246
+Goal: wire DimensionTool into ToolController (ToolKind::Dimension, toolbar/menu), Qt options dialog (decimals, font/text height, offset, custom text), canvas control-point handles and shift-select editing, Edit > Dimensions; DXF export of dimension text when a text entity path exists; reflex angular dimensions.
+Acceptance criteria:
+  1. A user can place, edit and delete each dimension kind in the real app (self-test drives it); one undo step per edit; hostile option input refused.
+
+### T-0256 Keep-out zones: Qt UI (Create from Selection, Clear Zones, clearance, show/hide, canvas drawing) (T-0241 follow-up)   [status: ready]
+Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0241
+Goal: menu/dock entries for the T-0241 commands, clearance field, show/hide toggle, canvas drawing of zones (+ clearance halo), preview shows routed rapids, summary reports unroutable rapids. Self-test drives it.
+Acceptance criteria:
+  1. In the real app: create zones from selected closed vectors, change clearance, hide/show, clear; each edit one undo step; preview/save use the routed rapids.
+
+### T-0257 Document variables: Qt dialog, calculation edit boxes, toolpath references (T-0248 follow-up)   [status: ready]
+Phase: 1   Module: app/viewmodel + app/src + core/toolpath   Depends on: T-0248, T-0210
+Goal: Edit > Document Variables dialog (create/edit/delete/import/export), expression evaluation in numeric edit boxes (units, letter variables) and 'Insert New Document Variable', toolpath forms register addReference/removeReference so a used variable cannot be deleted (also while its form is open), text {Variable} substitution.
+Acceptance criteria:
+  1. In the real app: define W-based variable, use it in a toolpath depth box, change it and the toolpath recalculates; deleting a used variable is refused; self-test drives the dialog; one undo step per edit.

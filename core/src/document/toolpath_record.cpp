@@ -116,6 +116,15 @@ std::string nonFiniteParam(const ToolpathParams& params) {
                                           {"start_position[1]", v->startPosition.y}});
         return key.empty() ? nonFiniteTolerance(v->tolerance) : key;
     }
+    if (const auto* c = std::get_if<toolpath::ChamferParams>(&params)) {
+        std::string key = firstNonFinite({{"angle_rad", c->angle},
+                                          {"width", c->width},
+                                          {"overcut", c->overcut},
+                                          {"safe_z", c->safeZ},
+                                          {"start_position[0]", c->startPosition.x},
+                                          {"start_position[1]", c->startPosition.y}});
+        return key.empty() ? nonFiniteTolerance(c->tolerance) : key;
+    }
     const auto& p = std::get<toolpath::PocketParams>(params);
     std::string key = firstNonFinite({{"start_depth", p.startDepth},
                                       {"cut_depth", p.cutDepth},

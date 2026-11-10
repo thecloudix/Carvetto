@@ -3160,38 +3160,52 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
     std::vector<Piece> found;
     // The stretches of a cut that cut the tab layer: all of it, or (`raised`) all but its
     // raised stretches, whose exact ends stay in (the tool goes back down there).
-    auto stretches = [&](const Cut& o, bool raised) {
+    // `ends` gets, for each stretch, its arc lengths on the cut and whether a raised stretch's
+    // ramp (3D tabs) lies at its start / at its end.
+    struct StretchEnds {
+        double u0{0.0};
+        double u1{0.0};
+        bool lead{false};
+        bool trail{false};
+    };
+    auto stretches = [&](const Cut& o, bool raised, std::vector<StretchEnds>& ends) {
         std::vector<Contour> out;
         if (!raised || o.tabs.empty()) {
             Contour whole = o.walk.contour();
             whole.closed = false;
             out.push_back(std::move(whole));
+            ends.push_back({});
             return out;
         }
         std::vector<TabSpan> ts = o.tabs;
         std::sort(ts.begin(), ts.end(), [](const TabSpan& x, const TabSpan& y) { return x.a < y.a; });
         const double len = o.walk.length();
-        std::vector<std::pair<double, double>> open;
+        std::vector<StretchEnds> open;
         if (o.walk.closed()) {
             for (std::size_t i = 0; i < ts.size(); ++i) {
                 const double u0 = ts[i].b;
                 const double u1 = i + 1 < ts.size() ? ts[i + 1].a : ts.front().a + len;
-                open.push_back({u0, u1});
+                open.push_back({u0, u1, true, true});
             }
         } else {
             double u = 0.0;
+            bool lead = false;
             for (const TabSpan& t : ts) {
-                open.push_back({u, t.a});
+                open.push_back({u, t.a, lead, true});
                 u = t.b;
+                lead = true;
             }
-            open.push_back({u, len});
+            open.push_back({u, len, lead, false});
         }
-        for (const auto& [u0, u1] : open) {
-            if (u1 - u0 <= 1e-9) continue;
+        for (const StretchEnds& e : open) {
+            if (e.u1 - e.u0 <= 1e-9) continue;
             Contour piece;
             piece.closed = false;
-            piece.spans = o.walk.extract(u0, u1);
-            if (!piece.spans.empty()) out.push_back(std::move(piece));
+            piece.spans = o.walk.extract(e.u0, e.u1);
+            if (!piece.spans.empty()) {
+                out.push_back(std::move(piece));
+                ends.push_back(e);
+            }
         }
         return out;
     };
@@ -3211,11 +3225,17 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
     const double bandSag = std::min(offTol_.chordal, kLooseBandSagitta);
     std::vector<Contour> paths;
     std::vector<char> whole;
+    std::vector<StretchEnds> pathEnds;
+    std::vector<const Cut*> pathCut;
     for (const Cut* o : cuts) {
         const bool closedWhole = o->walk.closed() && o->tabs.empty();
-        for (Contour& path : stretches(*o, true)) {
-            paths.push_back(std::move(path));
+        std::vector<StretchEnds> ends;
+        std::vector<Contour> pieces = stretches(*o, true, ends);
+        for (std::size_t k = 0; k < pieces.size(); ++k) {
+            paths.push_back(std::move(pieces[k]));
             whole.push_back(closedWhole ? 1 : 0);
+            pathEnds.push_back(ends[k]);
+            pathCut.push_back(o);
         }
     }
     // Most stretches provably enclose nothing (a part held by its tabs, far from other cuts):
@@ -3236,9 +3256,98 @@ void ProfileBuilder::reportLoosePieces(const std::vector<Cut>& primary, const st
             std::fill(search.begin(), search.end(), char{1});
         }
     }
+    // A V-bit's 3D tabs: the tool climbs a ramp the tab's thickness long on each side of a raised
+    // stretch, so at the tab layer the cone's disc shrinks along it from the tab-layer radius to
+    // nothing at the raised stretch (radius min(r, s tan(half angle)), s the distance from the raised
+    // stretch). Banding the ramps at the full tab-layer radius closed channels the tool leaves
+    // beside a tab, and reported a held part as loose (T-0177 (a)); each ramp is banded by tapers
+    // (hulls of the discs at their ends, as the corner moves are) instead. The proof above, which
+    // bands them at the full radius, still covers them: the tapers lie within those bands.
+    const double tanHalf = vbit_ ? std::tan(0.5 * tool_.includedAngle) : 0.0;
+    const bool rampTapers = vbit_ && p_.tabs.threeD && p_.tabs.thickness > 0.0 && tanHalf > 0.0 &&
+                            std::isfinite(tanHalf);
+    auto rampBands = [&](const Cut& o, double u0, double u1, bool lead, bool trail,
+                         std::vector<detail::PointRing>& out) {
+        const double ramp = p_.tabs.thickness;
+        const double cap = radius_ / tanHalf;  // the ramp climbs to the tab top
+        auto rho = [&](double u) {
+            double s = ramp;
+            if (lead) s = std::min(s, u - u0);
+            if (trail) s = std::min(s, u1 - u);
+            return std::min(radius_, std::max(0.0, s) * tanHalf);
+        };
+        // Where the radius is not linear in the arc length, and where the path turns.
+        std::vector<double> at;
+        auto add = [&](double u) {
+            if (u > u0 && u < u1) at.push_back(u);
+        };
+        if (lead && trail && u1 - u0 < 2.0 * ramp) {
+            add(0.5 * (u0 + u1));
+        }
+        if (lead) {
+            add(u0 + ramp);
+            add(u0 + cap);
+        }
+        if (trail) {
+            add(u1 - ramp);
+            add(u1 - cap);
+        }
+        const double len = o.walk.length();
+        if (len > 0.0) {
+            const long k0 = o.walk.closed() ? static_cast<long>(std::floor(u0 / len)) : 0;
+            const long k1 = o.walk.closed() ? static_cast<long>(std::ceil(u1 / len)) : 0;
+            for (long k = k0; k <= k1; ++k) {
+                for (std::size_t j = 0; j < o.walk.spanCount(); ++j) {
+                    add(o.walk.spanStart(j) + static_cast<double>(k) * len);
+                }
+            }
+        }
+        at.push_back(u0);
+        at.push_back(u1);
+        std::sort(at.begin(), at.end());
+        // The part of the stretch that is ramp: [u0, u0 + ramp] and [u1 - ramp, u1].
+        auto onRamp = [&](double mid) { return (lead && mid < u0 + ramp) || (trail && mid > u1 - ramp); };
+        std::function<void(double, double, int)> taper = [&](double x, double y, int depth) {
+            const Vec2 pa = o.walk.pointAt(x);
+            const Vec2 pb = o.walk.pointAt(y);
+            bool straight = true;
+            for (double f : {0.25, 0.5, 0.75}) {
+                const Vec2 m = o.walk.pointAt(x + (y - x) * f);
+                const Vec2 c = geometry::lerp(pa, pb, f);
+                if (geometry::distance(m, c) > 5e-4) straight = false;
+            }
+            if (!straight && depth < 12 && y - x > 1e-4) {
+                taper(x, 0.5 * (x + y), depth + 1);
+                taper(0.5 * (x + y), y, depth + 1);
+                return;
+            }
+            detail::PointRing ring = taperRing(Taper{pa, pb, rho(x), rho(y)}, 2e-3, bandSag);
+            if (ring.size() >= 3) out.push_back(std::move(ring));
+        };
+        for (std::size_t j = 0; j + 1 < at.size(); ++j) {
+            if (at[j + 1] - at[j] <= 1e-9 || !onRamp(0.5 * (at[j] + at[j + 1]))) continue;
+            taper(at[j], at[j + 1], 0);
+        }
+    };
     for (std::size_t i = 0; i < paths.size(); ++i) {
         if (!search[i]) continue;
-        const Contour& path = paths[i];
+        const Contour* pathPtr = &paths[i];
+        Contour flat;  // the stretch less its ramps, when they are banded by their tapers
+        if (rampTapers) {
+            const StretchEnds& e = pathEnds[i];
+            const double rampLen = p_.tabs.thickness;
+            if ((e.lead || e.trail) && whole[i] == 0) {
+                rampBands(*pathCut[i], e.u0, e.u1, e.lead, e.trail, bands);
+                const double f0 = e.u0 + (e.lead ? rampLen : 0.0);
+                const double f1 = e.u1 - (e.trail ? rampLen : 0.0);
+                if (f1 - f0 <= 1e-9) continue;
+                flat.closed = false;
+                flat.spans = pathCut[i]->walk.extract(f0, f1);
+                if (flat.spans.empty()) continue;
+                pathPtr = &flat;
+            }
+        }
+        const Contour& path = *pathPtr;
         chargeVertices(path, offTol_.chordal, 20.0);  // work meter (T-0186): the band
         std::vector<detail::PointRing> band = detail::bandOutline(path, reach, bandSag, whole[i] != 0);
         if (!band.empty()) {
