@@ -468,14 +468,14 @@ std::string dimensionSelfTest(MainWindow& window) {
     std::vector<document::ObjectId> ids;
     for (const Place& p : places) {
         kindCombo->setCurrentIndex(p.index);
-        const std::size_t steps = doc.undoStack().count();
+        const std::size_t steps = doc.undoStack().index();
         for (const geometry::Vec2 c : p.clicks) {
             click(canvas, c);
         }
         const document::ObjectId id = doc.selection().single();
         DIM_REQUIRE(!id.isNull() && dimOf(doc, id) != nullptr, "placing a dimension did not select it");
         // The first dimension also creates the layer; either way it is a single step.
-        DIM_REQUIRE(doc.undoStack().count() == steps + 1, "placing a dimension was not one undo step");
+        DIM_REQUIRE(doc.undoStack().index() == steps + 1, "placing a dimension was not one undo step");
         DIM_REQUIRE(document::dimensionText(doc, *dimOf(doc, id), doc.job().displayUnits) == p.text,
                     std::string("wrong dimension text, expected ") + p.text);
         DIM_REQUIRE(doc.findLayer(doc.findObject(id)->layer)->name == "Dimensions", "not on the Dimensions layer");
@@ -497,11 +497,11 @@ std::string dimensionSelfTest(MainWindow& window) {
     // Cancel: Escape drops a draft; nothing is added.
     {
         kindCombo->setCurrentIndex(0);
-        const std::size_t steps = doc.undoStack().count();
+        const std::size_t steps = doc.undoStack().index();
         click(canvas, {20, 20});
         click(canvas, {40, 20});
         key(canvas, Qt::Key_Escape);
-        DIM_REQUIRE(dt.pickedCount() == 0 && doc.undoStack().count() == steps, "Escape did not cancel the draft");
+        DIM_REQUIRE(dt.pickedCount() == 0 && doc.undoStack().index() == steps, "Escape did not cancel the draft");
     }
 
     // Shift-click selects a dimension; its handles edit it, one undo step per drag.
@@ -523,12 +523,12 @@ std::string dimensionSelfTest(MainWindow& window) {
         DIM_REQUIRE(whiteSeen && blackSeen, "handles are not both white and black");
         // Drag the text position handle: the annotation moves, the measurement does not.
         const document::DimensionObject before = *dimOf(doc, id);
-        const std::size_t steps = doc.undoStack().count();
+        const std::size_t steps = doc.undoStack().index();
         const auto textHandle = *std::find_if(handles.begin(), handles.end(), [](const document::DimensionHandle& h) {
             return h.kind == document::DimensionHandleKind::Text;
         });
         drag(canvas, textHandle.pos, textHandle.pos + geometry::Vec2{0.0, 12.0});
-        DIM_REQUIRE(doc.undoStack().count() == steps + 1, "a text handle drag was not one undo step");
+        DIM_REQUIRE(doc.undoStack().index() == steps + 1, "a text handle drag was not one undo step");
         DIM_REQUIRE(!(*dimOf(doc, id) == before), "the text handle drag changed nothing");
         window.undo();
         DIM_REQUIRE(*dimOf(doc, id) == before, "undo did not restore the dimension");
@@ -536,7 +536,7 @@ std::string dimensionSelfTest(MainWindow& window) {
         const auto pointHandle = dt.handles().front();
         const auto textBefore = document::dimensionText(doc, before, doc.job().displayUnits);
         drag(canvas, pointHandle.pos, pointHandle.pos + geometry::Vec2{6.0, -7.0});
-        DIM_REQUIRE(doc.undoStack().count() == steps + 1, "a point handle drag was not one undo step");
+        DIM_REQUIRE(doc.undoStack().index() == steps + 1, "a point handle drag was not one undo step");
         window.undo();
         DIM_REQUIRE(document::dimensionText(doc, *dimOf(doc, id), doc.job().displayUnits) == textBefore,
                     "undo did not restore the text");
@@ -546,7 +546,7 @@ std::string dimensionSelfTest(MainWindow& window) {
         });
         drag(canvas, heightHandle.pos, heightHandle.pos + geometry::Vec2{0.0, 4.0});
         DIM_REQUIRE(dimOf(doc, id)->textHeightMm > before.textHeightMm, "the text height handle did not enlarge the text");
-        DIM_REQUIRE(doc.undoStack().count() == steps + 1, "a text height drag was not one undo step");
+        DIM_REQUIRE(doc.undoStack().index() == steps + 1, "a text height drag was not one undo step");
         window.undo();
         // Escape during a drag reverts it.
         {
@@ -558,7 +558,7 @@ std::string dimensionSelfTest(MainWindow& window) {
             key(canvas, Qt::Key_Escape);
             sendMouse(canvas, QEvent::MouseButtonRelease, screenOf(canvas, h0.pos + geometry::Vec2{9.0, 9.0}),
                       Qt::NoModifier);
-            DIM_REQUIRE(*dimOf(doc, id) == before && doc.undoStack().count() == steps, "Escape did not cancel the drag");
+            DIM_REQUIRE(*dimOf(doc, id) == before && doc.undoStack().index() == steps, "Escape did not cancel the drag");
         }
     }
 
@@ -585,9 +585,9 @@ std::string dimensionSelfTest(MainWindow& window) {
         reflex->setChecked(false);
         decimals->setValue(0);
         DIM_REQUIRE(dialog.problem().empty(), "valid edit entries were refused");
-        const std::size_t steps = doc.undoStack().count();
+        const std::size_t steps = doc.undoStack().index();
         DIM_REQUIRE(window.dimensions()->applyEdit(id, dialog.options()), "the edit was refused");
-        DIM_REQUIRE(doc.undoStack().count() == steps + 1, "the edit was not one undo step");
+        DIM_REQUIRE(doc.undoStack().index() == steps + 1, "the edit was not one undo step");
         DIM_REQUIRE(document::dimensionText(doc, *dimOf(doc, id), doc.job().displayUnits) == "90\xC2\xB0" &&
                         dimOf(doc, id)->offsetMm == 25.0,
                     "the edit did not apply");
@@ -625,24 +625,24 @@ std::string dimensionSelfTest(MainWindow& window) {
     {
         const document::ObjectId id = ids[1];
         doc.selection().assign({id});
-        std::size_t steps = doc.undoStack().count();
+        std::size_t steps = doc.undoStack().index();
         key(canvas, Qt::Key_Delete);
-        DIM_REQUIRE(doc.findObject(id) == nullptr && doc.undoStack().count() == steps + 1,
+        DIM_REQUIRE(doc.findObject(id) == nullptr && doc.undoStack().index() == steps + 1,
                     "Delete did not remove the dimension in one step");
         window.undo();
         DIM_REQUIRE(doc.findObject(id) != nullptr, "undo did not restore the dimension");
         doc.selection().assign({id});
-        steps = doc.undoStack().count();
+        steps = doc.undoStack().index();
         window.dimensions()->refresh();
         window.dimensions()->deleteAction()->trigger();
-        DIM_REQUIRE(doc.findObject(id) == nullptr && doc.undoStack().count() == steps + 1,
+        DIM_REQUIRE(doc.findObject(id) == nullptr && doc.undoStack().index() == steps + 1,
                     "Edit > Delete Selected Dimension failed");
         window.undo();
         // Nothing selected: refused with no change.
         doc.selection().clear();
-        steps = doc.undoStack().count();
+        steps = doc.undoStack().index();
         DIM_REQUIRE(!window.dimensions()->deleteSelected(), "deleting with no dimension selected was accepted");
-        DIM_REQUIRE(doc.undoStack().count() == steps, "a refused delete changed the document");
+        DIM_REQUIRE(doc.undoStack().index() == steps, "a refused delete changed the document");
     }
     window.selectTool(viewmodel::ToolKind::Select);
     return {};

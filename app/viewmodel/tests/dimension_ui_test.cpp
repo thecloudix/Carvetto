@@ -81,7 +81,7 @@ TEST_CASE("the dimension tool is a ToolController tool: place, preview, one undo
     DimensionOptions o;
     o.kind = document::DimensionKind::Aligned;
     REQUIRE(f.tool.dimensionTool().setOptions(o).ok);
-    const std::size_t steps = f.doc.undoStack().count();
+    const std::size_t steps = f.doc.undoStack().index();
     CHECK_FALSE(f.tool.active());
     f.click({0, 0});
     CHECK(f.tool.active());
@@ -94,7 +94,7 @@ TEST_CASE("the dimension tool is a ToolController tool: place, preview, one undo
     const ToolResult r = f.click({20, 10});
     CHECK(r.committed);
     CHECK_FALSE(f.tool.active());
-    CHECK(f.doc.undoStack().count() == steps + 1);  // layer + object are one step
+    CHECK(f.doc.undoStack().index() == steps + 1);  // layer + object are one step
     const document::ObjectId id = f.doc.selection().single();
     REQUIRE_FALSE(id.isNull());
     CHECK(f.dim(id).offsetMm == Approx(10.0));
@@ -150,25 +150,25 @@ TEST_CASE("Shift-click selects a dimension and its handles edit it in one undo s
     CHECK(std::count_if(handles.begin(), handles.end(), [](const document::DimensionHandle& h) { return h.white; }) == 3);
 
     // Drag the leg handle (end of the extension lines) up: the dimension line moves, the size stays.
-    const std::size_t steps = f.doc.undoStack().count();
+    const std::size_t steps = f.doc.undoStack().index();
     f.drag({40, 10}, {40, 25});
     CHECK(f.dim(id).offsetMm == Approx(25.0));
     CHECK(f.dim(id).points[1].pos.x == Approx(40.0));
-    CHECK(f.doc.undoStack().count() == steps + 1);
+    CHECK(f.doc.undoStack().index() == steps + 1);
 
     // Drag a size handle: the measured text follows.
     f.drag({40, 0}, {60, 0});
     CHECK(document::measureDimension(f.doc, f.dim(id)).value() == Approx(60.0));
-    CHECK(f.doc.undoStack().count() == steps + 2);
+    CHECK(f.doc.undoStack().index() == steps + 2);
     REQUIRE(f.doc.undo());
     CHECK(document::measureDimension(f.doc, f.dim(id)).value() == Approx(40.0));
     REQUIRE(f.doc.undo());
     CHECK(f.dim(id).offsetMm == Approx(10.0));
 
     // A click on a handle without moving is no edit; Escape during a drag reverts it.
-    const std::size_t before = f.doc.undoStack().count();
+    const std::size_t before = f.doc.undoStack().index();
     f.click({40, 0});
-    CHECK(f.doc.undoStack().count() == before);
+    CHECK(f.doc.undoStack().index() == before);
     f.tool.pointerMove(f.px({40, 10}));
     f.tool.pointerPress(f.px({40, 10}));
     f.tool.pointerMove(f.px({40, 30}));
@@ -177,7 +177,7 @@ TEST_CASE("Shift-click selects a dimension and its handles edit it in one undo s
     f.tool.key(viewmodel::ToolKey::Escape);
     CHECK_FALSE(f.tool.dimensionTool().dragging());
     f.tool.pointerRelease(f.px({40, 30}));
-    CHECK(f.doc.undoStack().count() == before);
+    CHECK(f.doc.undoStack().index() == before);
     CHECK(f.dim(id).offsetMm == Approx(10.0));
 
     // A second Escape drops the edit target; a miss with Shift too.
@@ -233,7 +233,7 @@ TEST_CASE("dimension option edits refuse hostile input and are one undo step eac
     const auto id = f.place(document::DimensionKind::Linear, {{0, 0}, {30, 5}, {10, 20}});
     auto o = f.tool.dimensionTool().optionsOf(id);
     REQUIRE(o);
-    const std::size_t steps = f.doc.undoStack().count();
+    const std::size_t steps = f.doc.undoStack().index();
     const double inf = std::numeric_limits<double>::infinity();
     for (const double bad : {inf, -inf, std::nan(""), 2e9}) {
         auto b = *o;
@@ -252,14 +252,14 @@ TEST_CASE("dimension option edits refuse hostile input and are one undo step eac
     b = *o;
     b.customText = std::string(5000, 'x');
     CHECK_FALSE(f.tool.dimensionTool().edit(id, b).ok);
-    CHECK(f.doc.undoStack().count() == steps);
+    CHECK(f.doc.undoStack().index() == steps);
 
     o->decimals = 1;
     o->offsetMm = -7.5;
     o->useCustomText = true;
     o->customText = "30 +/- 0.1";
     REQUIRE(f.tool.dimensionTool().edit(id, *o).committed);
-    CHECK(f.doc.undoStack().count() == steps + 1);
+    CHECK(f.doc.undoStack().index() == steps + 1);
     CHECK(f.dim(id).offsetMm == Approx(-7.5));
     // Delete: one undo step, restores everything.
     const auto del = f.tool.dimensionTool().removeSelected();
@@ -284,10 +284,10 @@ TEST_CASE("each dimension kind can be placed, edited by handles and deleted", "[
             const document::DimensionObject before = f.dim(id);
             REQUIRE(f.tool.dimensionTool().beginHandle(h.pos, 0.5));
             // Moves a little: either the edit is valid and one undo step, or it is ignored.
-            const std::size_t steps = f.doc.undoStack().count();
+            const std::size_t steps = f.doc.undoStack().index();
             f.tool.dimensionTool().dragTo(h.pos + Vec2{1.0, 2.0});
             const auto r = f.tool.dimensionTool().endDrag(h.pos + Vec2{1.0, 2.0});
-            CHECK(f.doc.undoStack().count() == steps + (r.committed ? 1u : 0u));
+            CHECK(f.doc.undoStack().index() == steps + (r.committed ? 1u : 0u));
             if (r.committed) {
                 CHECK_FALSE(f.dim(id) == before);
                 REQUIRE(f.doc.undo());

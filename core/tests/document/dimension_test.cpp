@@ -630,7 +630,7 @@ TEST_CASE("a reflex angular dimension draws the long arc", "[dimension][document
     REQUIRE(arc != nullptr);
     CHECK(arc->radius == Approx(6.0));
     CHECK(arc->direction == geometry::ArcDirection::CW);  // from +X clockwise to +Y: 270 degrees
-    CHECK(g.textCentre.x > 0.0);                          // the text sits on the long side's middle
+    CHECK(g.textCentre.x < 0.0);                          // the text sits on the long side's middle (225 degrees)
     CHECK(g.textCentre.y < 0.0);
     const auto h = dimensionHandles(doc, d);
     const auto radius = std::find_if(h.begin(), h.end(),
@@ -791,9 +791,9 @@ TEST_CASE("handle drags follow an anchored part and are one undo step as a comma
     const auto next = moveDimensionHandle(doc, stored, *findHandle(h, DimensionHandleKind::Leg), {50, 30});
     REQUIRE(next.has_value());
     CHECK(next->points[0].anchor.has_value());  // the untouched point keeps its anchor
-    const std::size_t before = doc.undoStack().count();
+    const std::size_t before = doc.undoStack().index();
     REQUIRE(doc.execute(std::make_unique<SetDimensionCommand>(*id, *next, "Move dimension handle")));
-    CHECK(doc.undoStack().count() == before + 1);
+    CHECK(doc.undoStack().index() == before + 1);
     REQUIRE(doc.undo());
     CHECK(doc.findObject(*id)->asDimension()->offsetMm == Approx(5.0));
 }
