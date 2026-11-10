@@ -13,6 +13,7 @@ endif()
 
 add_executable(carvetto_viewmodel_tests
   vector_ops_test.cpp
+  vector_validator_test.cpp
   weld_subtract_test.cpp
   view_transform_test.cpp
   ruler_test.cpp

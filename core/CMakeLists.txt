@@ -178,6 +178,7 @@ add_library(carvetto_core STATIC
   src/geometry/robust_predicates.cpp
   src/geometry/delaunay.cpp
   src/geometry/edit_ops.cpp
+  src/geometry/validator.cpp
   src/geometry/medial_axis.cpp
   src/toolpath/move.cpp
   src/toolpath/toolpath.cpp
