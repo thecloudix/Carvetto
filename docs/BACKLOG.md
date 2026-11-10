@@ -1099,7 +1099,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0244 Job sheet / toolpath summary report   [status: verifying — viewmodel job sheet (HTML+text); menu action/file write → T-0259]
+### T-0244 Job sheet / toolpath summary report   [status: done — merged PR #117 (menu action → T-0259, nits → T-0263)]
 Phase: 1   Module: app/viewmodel + core   Depends on: T-0224, T-0235
 Goal: Create Job Sheet (inventory §'Create Job Sheet') plus time estimation summary: job info, tool list, per-toolpath times, thumbnails; export to HTML/PDF-free text format first.
 Acceptance criteria:
