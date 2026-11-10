@@ -4,7 +4,9 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <limits>
+#include <locale>
 #include <string>
+#include <utility>
 
 #include "carvetto/viewmodel/job_sheet.hpp"
 #include "toolpath_test_support.hpp"
@@ -135,4 +137,150 @@ TEST_CASE("job sheet: empty job, missing rapid rate, inches, unknown time", "[jo
     const JobSheet off = makeJobSheet(f.doc, f.session.summary(), "J");
     CHECK(off.tools.empty());
     CHECK(contains(renderJobSheetText(off), "(not in the estimate)"));
+}
+
+namespace {
+
+JobSheetToolpath fakeToolpath(const std::string& name, const std::string& tool) {
+    JobSheetToolpath t;
+    t.name = name;
+    t.operation = "profile";
+    t.toolName = tool;
+    t.toolNumber = 1;
+    t.toolDiameterMm = 3.0;
+    t.feedRateMmPerMin = 1000.0;
+    t.included = true;
+    t.bounds = geometry::Box2{{0.0, 0.0}, {10.0, 10.0}};
+    return t;
+}
+
+JobSheet bigSheet(std::size_t count, std::size_t nameBytes) {
+    JobSheet s;
+    s.title = "Big";
+    JobSheetTool tool;
+    tool.name = "Tool";
+    tool.number = 1;
+    for (std::size_t i = 0; i < count; ++i) {
+        s.toolpaths.push_back(fakeToolpath(std::string(nameBytes, 'x'), "Tool"));
+        tool.toolpaths.push_back(s.toolpaths.back().name);
+    }
+    s.tools.push_back(tool);
+    return s;
+}
+
+struct CommaPunct : std::numpunct<char> {
+    char do_decimal_point() const override { return ','; }
+    char do_thousands_sep() const override { return '.'; }
+    std::string do_grouping() const override { return "\3"; }
+};
+
+}  // namespace
+
+TEST_CASE("job sheet: output size is bounded for large jobs and long names", "[jobsheet]") {
+    for (const auto& dims : {std::pair<std::size_t, std::size_t>{2000, 100000}, {50000, 256}}) {
+        const JobSheet s = bigSheet(dims.first, dims.second);
+        const std::string html = renderJobSheetHtml(s);
+        const std::string text = renderJobSheetText(s);
+        CHECK(html.size() < 1000000);
+        CHECK(text.size() < 500000);
+        CHECK(contains(html, "more toolpaths"));
+        CHECK(contains(text, "more toolpaths"));
+        CHECK(contains(html, "... and " + std::to_string(dims.first - kJobSheetMaxToolpathsPerTool) + " more"));
+        CHECK(contains(text, "... and " + std::to_string(dims.first - kJobSheetMaxToolpathsPerTool) + " more"));
+        CHECK_FALSE(contains(text, std::string(kJobSheetMaxNameBytes + 1, 'x')));
+        CHECK(contains(text, std::string(kJobSheetMaxNameBytes, 'x') + "..."));
+    }
+}
+
+TEST_CASE("job sheet: clipping respects UTF-8 and limits tools and warnings", "[jobsheet]") {
+    CHECK(clipJobSheetText("short") == "short");
+    std::string name(kJobSheetMaxNameBytes - 1, 'a');
+    name += "\xC3\xA9\xC3\xA9";  // two-byte characters straddling the limit
+    const std::string clipped = clipJobSheetText(name);
+    CHECK(clipped == std::string(kJobSheetMaxNameBytes - 1, 'a') + "...");
+
+    JobSheet s;
+    for (std::size_t i = 0; i < kJobSheetMaxToolRows + 5; ++i) {
+        s.tools.push_back({"T", static_cast<int>(i), 1.0, {}});
+    }
+    for (std::size_t i = 0; i < kJobSheetMaxWarnings + 3; ++i) {
+        s.readout.warnings.push_back("w");
+    }
+    CHECK(contains(renderJobSheetText(s), "... and 5 more tools"));
+    CHECK(contains(renderJobSheetHtml(s), "... and 5 more tools"));
+    CHECK(contains(renderJobSheetText(s), "... and 3 more warnings"));
+    CHECK(contains(renderJobSheetHtml(s), "... and 3 more warnings"));
+}
+
+TEST_CASE("job sheet: non-finite numbers print n/a; extreme aspect ratios are clamped", "[jobsheet]") {
+    JobSheet s = bigSheet(1, 5);
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    const double inf = std::numeric_limits<double>::infinity();
+    s.widthMm = nan;
+    s.thicknessMm = -inf;
+    s.toolpaths[0].feedRateMmPerMin = nan;
+    s.toolpaths[0].plungeRateMmPerMin = inf;
+    s.toolpaths[0].spindleRpm = nan;
+    s.toolpaths[0].toolDiameterMm = inf;
+    const std::string text = renderJobSheetText(s);
+    const std::string html = renderJobSheetHtml(s);
+    CHECK(contains(text, "n/a mm x"));
+    CHECK(contains(text, "Feed: n/a mm/min, plunge: n/a mm/min"));
+    CHECK(contains(html, "n/a"));
+    CHECK_FALSE(contains(text, "nan"));
+    CHECK_FALSE(contains(text, "inf"));
+    CHECK_FALSE(contains(html, "nan"));
+    CHECK_FALSE(contains(html, "inf"));
+
+    for (const double h : {1e-9, 1e9}) {
+        JobSheet a = bigSheet(1, 3);
+        a.material = geometry::Box2{{0.0, 0.0}, {100.0, h}};
+        a.toolpaths.clear();
+        const std::string svg = renderJobSheetHtml(a);
+        const std::size_t p = svg.find("<svg");
+        REQUIRE(p != std::string::npos);
+        const std::size_t q = svg.find("height=\"", p) + 8;
+        const double height = std::stod(svg.substr(q, svg.find('"', q) - q));
+        CHECK(height >= 40.0);
+        CHECK(height <= 4000.0);
+    }
+}
+
+TEST_CASE("job sheet: control characters never reach the output", "[jobsheet]") {
+    JobSheet s = bigSheet(1, 3);
+    s.title = std::string("T\r\nitle\x1b[0m");
+    s.toolpaths[0].name = "a\nb\rc\x01\x7f";
+    s.toolpaths[0].operation = "op\nX";
+    s.toolpaths[0].toolName = "tool\nY";
+    s.tools[0].name = "tn\nZ";
+    s.tools[0].toolpaths = {"p\nQ"};
+    s.readout.breakdown = "br\nW";
+    s.readout.headline = "hl\nH";
+    s.readout.warnings = {"wa\nR"};
+    const std::string html = renderJobSheetHtml(s);
+    const std::string text = renderJobSheetText(s);
+    for (const std::string* out : {&html, &text}) {
+        for (const char c : *out) {
+            const unsigned char u = static_cast<unsigned char>(c);
+            CHECK((u >= 0x20 || c == '\n'));
+            CHECK(u != 0x7f);
+        }
+    }
+    for (const char* forged : {"\nitle", "\nX", "\nY", "\nZ", "\nQ", "\nW", "\nH", "\nR", "\nb"}) {
+        CHECK_FALSE(contains(text, forged));
+    }
+}
+
+TEST_CASE("job sheet: output does not depend on the global locale", "[jobsheet]") {
+    Fixture f;
+    f.addProfile("Outline");
+    const JobSheet sheet = makeJobSheet(f.doc, f.session.summary(), "L");
+    const std::string html = renderJobSheetHtml(sheet);
+    const std::string text = renderJobSheetText(sheet);
+    const std::locale old = std::locale::global(std::locale(std::locale::classic(), new CommaPunct));
+    const std::string html2 = renderJobSheetHtml(sheet);
+    const std::string text2 = renderJobSheetText(sheet);
+    std::locale::global(old);
+    CHECK(html == html2);
+    CHECK(text == text2);
 }

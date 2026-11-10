@@ -32,7 +32,7 @@ std::string fixed(double v, int decimals) {
 }
 
 std::string textSafe(const std::string& s) {
-    std::string out = s;
+    std::string out = clipJobSheetText(s);
     for (char& c : out) {
         if (static_cast<unsigned char>(c) < 0x20 || c == 0x7f) {
             c = ' ';
@@ -97,20 +97,22 @@ std::string layoutSvg(const JobSheet& s) {
                         fixed(view.max.y - b.max.y, 2) + "\" width=\"" + fixed(b.width(), 2) + "\" height=\"" +
                         fixed(b.height(), 2) + "\">";
         if (!title.empty()) {
-            r += "<title>" + escapeHtml(title) + "</title>";
+            r += "<title>" + escapeHtml(clipJobSheetText(title)) + "</title>";
         }
         return r + "</rect>\n";
     };
+    const double aspectHeight = std::clamp(400.0 * view.height() / view.width(), 40.0, 4000.0);
     std::string svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"400\" height=\"" +
-                      fixed(400.0 * view.height() / view.width(), 0) + "\" viewBox=\"0 0 " + fixed(view.width(), 2) +
+                      fixed(aspectHeight, 0) + "\" viewBox=\"0 0 " + fixed(view.width(), 2) +
                       " " + fixed(view.height(), 2) + "\">\n";
     svg += "<style>rect{vector-effect:non-scaling-stroke;stroke-width:1}"
            ".m{fill:#f4e3c1;stroke:#7a5c2e}.t{fill:#3b82f633;stroke:#1d4ed8}</style>\n";
     if (!s.material.isEmpty()) {
         svg += rect(s.material, "m", "Material");
     }
+    std::size_t drawn = 0;
     for (const JobSheetToolpath& t : s.toolpaths) {
-        if (t.included && !t.bounds.isEmpty()) {
+        if (t.included && !t.bounds.isEmpty() && drawn++ < kJobSheetMaxToolpathRows) {
             svg += rect(t.bounds, "t", t.name);
         }
     }
@@ -118,6 +120,17 @@ std::string layoutSvg(const JobSheet& s) {
 }
 
 }  // namespace
+
+std::string clipJobSheetText(const std::string& text) {
+    if (text.size() <= kJobSheetMaxNameBytes) {
+        return text;
+    }
+    std::size_t n = kJobSheetMaxNameBytes;
+    while (n > 0 && (static_cast<unsigned char>(text[n]) & 0xC0) == 0x80) {
+        --n;
+    }
+    return text.substr(0, n) + "...";
+}
 
 std::string escapeHtml(const std::string& text) {
     std::string out;
@@ -204,25 +217,35 @@ std::string renderJobSheetText(const JobSheet& s) {
     o += "Toolpaths summary\n";
     o += "  " + textSafe(s.readout.headline) + "\n";
     if (!s.readout.breakdown.empty()) {
-        o += "  " + s.readout.breakdown + "\n";
+        o += "  " + textSafe(s.readout.breakdown) + "\n";
     }
     o += "  Toolpaths: " + std::to_string(s.summary.toolpaths) + " (" + std::to_string(s.summary.included) +
          " in the estimate)\n";
     o += "  Tools: " + std::to_string(s.summary.distinctTools) + ", tool changes: " +
          std::to_string(s.summary.toolChanges) + "\n";
-    for (const std::string& w : s.readout.warnings) {
-        o += "  Warning: " + textSafe(w) + "\n";
+    for (std::size_t i = 0; i < s.readout.warnings.size() && i < kJobSheetMaxWarnings; ++i) {
+        o += "  Warning: " + textSafe(s.readout.warnings[i]) + "\n";
+    }
+    if (s.readout.warnings.size() > kJobSheetMaxWarnings) {
+        o += "  ... and " + std::to_string(s.readout.warnings.size() - kJobSheetMaxWarnings) + " more warnings\n";
     }
     o += "\nTools\n";
     if (s.tools.empty()) {
         o += "  (none)\n";
     }
-    for (const JobSheetTool& t : s.tools) {
+    for (std::size_t k = 0; k < s.tools.size() && k < kJobSheetMaxToolRows; ++k) {
+        const JobSheetTool& t = s.tools[k];
         o += "  T" + std::to_string(t.number) + " " + textSafe(t.name) + ", diameter " + f.len(t.diameterMm) + ": ";
-        for (std::size_t i = 0; i < t.toolpaths.size(); ++i) {
+        for (std::size_t i = 0; i < t.toolpaths.size() && i < kJobSheetMaxToolpathsPerTool; ++i) {
             o += (i ? ", " : "") + textSafe(t.toolpaths[i]);
         }
+        if (t.toolpaths.size() > kJobSheetMaxToolpathsPerTool) {
+            o += ", ... and " + std::to_string(t.toolpaths.size() - kJobSheetMaxToolpathsPerTool) + " more";
+        }
         o += "\n";
+    }
+    if (s.tools.size() > kJobSheetMaxToolRows) {
+        o += "  ... and " + std::to_string(s.tools.size() - kJobSheetMaxToolRows) + " more tools\n";
     }
     o += "\nToolpaths list\n";
     if (s.toolpaths.empty()) {
@@ -230,7 +253,10 @@ std::string renderJobSheetText(const JobSheet& s) {
     }
     std::size_t n = 0;
     for (const JobSheetToolpath& t : s.toolpaths) {
-        o += std::to_string(++n) + ". " + textSafe(t.name) + " [" + t.operation + "]" +
+        if (n >= kJobSheetMaxToolpathRows) {
+            break;
+        }
+        o += std::to_string(++n) + ". " + textSafe(t.name) + " [" + textSafe(t.operation) + "]" +
              (t.included ? "" : " (not in the estimate)") + "\n";
         o += "     Tool: T" + std::to_string(t.toolNumber) + " " + textSafe(t.toolName) + ", diameter " +
              f.len(t.toolDiameterMm) + "\n";
@@ -239,12 +265,15 @@ std::string renderJobSheetText(const JobSheet& s) {
         o += "     Time: " + (t.included ? formatDuration(t.time.total()) : std::string("-")) + ", moves: " +
              std::to_string(t.moves) + "\n";
     }
+    if (s.toolpaths.size() > kJobSheetMaxToolpathRows) {
+        o += "... and " + std::to_string(s.toolpaths.size() - kJobSheetMaxToolpathRows) + " more toolpaths\n";
+    }
     return o;
 }
 
 std::string renderJobSheetHtml(const JobSheet& s) {
     const Fmt f{s.inches};
-    auto e = [](const std::string& x) { return escapeHtml(x); };
+    auto e = [](const std::string& x) { return escapeHtml(clipJobSheetText(x)); };
     auto td = [&](const std::string& x) { return "<td>" + e(x) + "</td>"; };
     std::string o;
     o += "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Job sheet - " + e(s.title) +
@@ -270,30 +299,50 @@ std::string renderJobSheetHtml(const JobSheet& s) {
          ", tool changes: " + std::to_string(s.summary.toolChanges) + ".</p>\n";
     if (!s.readout.warnings.empty()) {
         o += "<ul class=\"warnings\">\n";
-        for (const std::string& w : s.readout.warnings) {
-            o += "<li>" + e(w) + "</li>\n";
+        for (std::size_t i = 0; i < s.readout.warnings.size() && i < kJobSheetMaxWarnings; ++i) {
+            o += "<li>" + e(s.readout.warnings[i]) + "</li>\n";
+        }
+        if (s.readout.warnings.size() > kJobSheetMaxWarnings) {
+            o += "<li>... and " + std::to_string(s.readout.warnings.size() - kJobSheetMaxWarnings) +
+                 " more warnings</li>\n";
         }
         o += "</ul>\n";
     }
     o += "<h2>Tools</h2>\n<table>\n<tr><th>Number</th><th>Name</th><th>Diameter</th><th>Toolpaths</th></tr>\n";
-    for (const JobSheetTool& t : s.tools) {
+    for (std::size_t k = 0; k < s.tools.size() && k < kJobSheetMaxToolRows; ++k) {
+        const JobSheetTool& t = s.tools[k];
         std::string names;
-        for (std::size_t i = 0; i < t.toolpaths.size(); ++i) {
-            names += (i ? ", " : "") + t.toolpaths[i];
+        for (std::size_t i = 0; i < t.toolpaths.size() && i < kJobSheetMaxToolpathsPerTool; ++i) {
+            names += (i ? ", " : "") + e(t.toolpaths[i]);
         }
-        o += "<tr>" + td("T" + std::to_string(t.number)) + td(t.name) + td(f.len(t.diameterMm)) + td(names) + "</tr>\n";
+        if (t.toolpaths.size() > kJobSheetMaxToolpathsPerTool) {
+            names += ", ... and " + std::to_string(t.toolpaths.size() - kJobSheetMaxToolpathsPerTool) + " more";
+        }
+        o += "<tr>" + td("T" + std::to_string(t.number)) + td(t.name) + td(f.len(t.diameterMm)) + "<td>" + names +
+             "</td></tr>\n";
+    }
+    if (s.tools.size() > kJobSheetMaxToolRows) {
+        o += "<tr><td colspan=\"4\">... and " + std::to_string(s.tools.size() - kJobSheetMaxToolRows) +
+             " more tools</td></tr>\n";
     }
     o += "</table>\n<h2>Toolpaths list</h2>\n<table>\n<tr><th>#</th><th>Name</th><th>Operation</th><th>Tool</th>"
          "<th>Feed</th><th>Plunge</th><th>Spindle</th><th>Time</th><th>Moves</th></tr>\n";
     std::size_t n = 0;
     for (const JobSheetToolpath& t : s.toolpaths) {
+        if (n >= kJobSheetMaxToolpathRows) {
+            break;
+        }
         o += "<tr>" + td(std::to_string(++n)) + td(t.name + (t.included ? "" : " (not in the estimate)")) +
              td(t.operation) + td("T" + std::to_string(t.toolNumber) + " " + t.toolName) +
              td(f.rate(t.feedRateMmPerMin)) + td(f.rate(t.plungeRateMmPerMin)) + td(f.rpm(t.spindleRpm)) +
              td(t.included ? formatDuration(t.time.total()) : std::string("-")) + td(std::to_string(t.moves)) +
              "</tr>\n";
     }
-    o += "</table>\n</body>\n</html>\n";
+    o += "</table>\n";
+    if (s.toolpaths.size() > kJobSheetMaxToolpathRows) {
+        o += "<p>... and " + std::to_string(s.toolpaths.size() - kJobSheetMaxToolpathRows) + " more toolpaths</p>\n";
+    }
+    o += "</body>\n</html>\n";
     return o;
 }
 

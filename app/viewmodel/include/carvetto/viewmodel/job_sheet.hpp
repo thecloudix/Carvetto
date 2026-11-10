@@ -21,8 +21,21 @@
 // Every user-supplied string (job title, toolpath and tool names) is HTML-escaped in the HTML and
 // has control characters replaced by spaces in the text form, so a hostile name cannot add
 // markup or forge lines. Export format: HTML and plain text (no PDF).
+//
+// Bounded size: every user string is clipped to `kJobSheetMaxNameBytes` bytes (cut at a UTF-8
+// boundary, "..." appended); the toolpath list shows at most `kJobSheetMaxToolpathRows` rows, the
+// tool table `kJobSheetMaxToolRows` rows, each tool lists at most `kJobSheetMaxToolpathsPerTool`
+// toolpath names and at most `kJobSheetMaxWarnings` warnings are shown; what is left out is
+// replaced by an "N more" notice. The layout thumbnail draws at most `kJobSheetMaxToolpathRows`
+// rectangles. The output is thus bounded independently of the job size (well below 1 MB).
 
 namespace carvetto::viewmodel {
+
+inline constexpr std::size_t kJobSheetMaxNameBytes = 80;
+inline constexpr std::size_t kJobSheetMaxToolpathRows = 500;
+inline constexpr std::size_t kJobSheetMaxToolRows = 100;
+inline constexpr std::size_t kJobSheetMaxToolpathsPerTool = 20;
+inline constexpr std::size_t kJobSheetMaxWarnings = 20;
 
 struct JobSheetToolpath {
     std::string name;
@@ -70,6 +83,10 @@ struct JobSheet {
 /// The sheet of `doc` with `summary` (from `ToolpathSession::summary()` on the same document).
 /// `title` is the job's name (empty = "Untitled job").
 JobSheet makeJobSheet(const document::Document& doc, const JobSummary& summary, const std::string& title = {});
+
+/// `text` cut to at most `kJobSheetMaxNameBytes` bytes (at a UTF-8 boundary) with "..." appended
+/// when it was longer.
+std::string clipJobSheetText(const std::string& text);
 
 /// HTML-escapes &, <, >, " and ' and replaces control characters by spaces.
 std::string escapeHtml(const std::string& text);
