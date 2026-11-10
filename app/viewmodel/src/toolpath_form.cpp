@@ -11,6 +11,7 @@
 
 #include "carvetto/geometry/vec2.hpp"
 #include "carvetto/toolpath/chamfer.hpp"
+#include "carvetto/toolpath/inlay.hpp"
 #include "carvetto/toolpath/thread_mill.hpp"
 #include "carvetto/viewmodel/units_format.hpp"
 
@@ -459,6 +460,42 @@ Table<toolpath::ThreadMillParams> makeThreadMillTable() {
     return t;
 }
 
+Table<toolpath::InlayParams> makeInlayTable() {
+    using P = toolpath::InlayParams;
+    using toolpath::InlayMaleStyle;
+    using toolpath::InlayPiece;
+    const auto male = [](const P& p) { return p.piece == InlayPiece::Male; };
+    const auto stepped = [](const P& p) { return p.piece == InlayPiece::Male && p.maleStyle == InlayMaleStyle::Stepped; };
+    Table<P> t;
+    t.num("startDepth", "Start depth", "Depth", Kind::Length, false, true, [](P& p) -> double& { return p.startDepth; });
+    t.num("cutDepth", "Inlay depth", "Depth", Kind::Length, false, false, [](P& p) -> double& { return p.cutDepth; });
+    t.num("stepDepth", "Step depth", "Step", Kind::Length, false, false, [](P& p) -> double& { return p.stepDepth; },
+          stepped);
+    t.num("stepWidth", "Step width", "Step", Kind::Length, false, false, [](P& p) -> double& { return p.stepWidth; },
+          stepped);
+    t.num("allowance", "Allowance (glue gap)", "Fit", Kind::Length, false, true,
+          [](P& p) -> double& { return p.allowance; });
+    t.num("safeZ", "Safe Z", "Depth", Kind::Length, false, false, [](P& p) -> double& { return p.safeZ; });
+    addStartPosition<P>(t, [](P& p) -> geometry::Vec2& { return p.startPosition; });
+    addChordal<P>(t, [](P& p) -> geometry::Tolerance& { return p.tolerance; }, 1e-4);
+    bound(t, "startDepth", 0.0, 100000.0);
+    bound(t, "cutDepth", 1e-6, 100000.0);
+    bound(t, "stepDepth", 1e-6, 100000.0);
+    bound(t, "stepWidth", 1e-6, kMaxOffsetMm);
+    bound(t, "allowance", 0.0, kMaxOffsetMm);
+    t.option<InlayPiece>("piece", "Piece", "Inlay", {"Male (plug)", "Female"},
+                         [](P& p) -> InlayPiece& { return p.piece; });
+    t.option<InlayMaleStyle>("maleStyle", "Male inlay", "Inlay", {"Straight", "Stepped"},
+                             [](P& p) -> InlayMaleStyle& { return p.maleStyle; }, male);
+    t.option<toolpath::InlayFemaleStyle>("femaleStyle", "Female inlay", "Inlay", {"Pocket", "Hole"},
+                                         [](P& p) -> toolpath::InlayFemaleStyle& { return p.femaleStyle; },
+                                         [](const P& p) { return p.piece == InlayPiece::Female; });
+    t.option<CutDirection>("direction", "Direction", "Cut", {"Climb", "Conventional"},
+                           [](P& p) -> CutDirection& { return p.direction; });
+    addOrder<P>(t, [](P& p) -> toolpath::OrderOptions& { return p.order; });
+    return t;
+}
+
 template <class P>
 const Table<P>& tableOf();
 template <>
@@ -490,6 +527,12 @@ const Table<toolpath::VCarvingParams>& tableOf() {
 template <>
 const Table<toolpath::ThreadMillParams>& tableOf() {
     static const Table<toolpath::ThreadMillParams> t = makeThreadMillTable();
+    return t;
+}
+
+template <>
+const Table<toolpath::InlayParams>& tableOf() {
+    static const Table<toolpath::InlayParams> t = makeInlayTable();
     return t;
 }
 

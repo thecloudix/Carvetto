@@ -414,13 +414,20 @@ constexpr EnumName<toolpath::ThreadPitchPreset> kThreadPresets[] = {
     {toolpath::ThreadPitchPreset::Custom, "custom"},
     {toolpath::ThreadPitchPreset::IsoMetricCoarse, "iso_metric_coarse"},
     {toolpath::ThreadPitchPreset::UnifiedCoarse, "unified_coarse"}};
+constexpr EnumName<toolpath::InlayPiece> kInlayPieces[] = {{toolpath::InlayPiece::Male, "male"},
+                                                          {toolpath::InlayPiece::Female, "female"}};
+constexpr EnumName<toolpath::InlayMaleStyle> kInlayMaleStyles[] = {{toolpath::InlayMaleStyle::Straight, "straight"},
+                                                                  {toolpath::InlayMaleStyle::Stepped, "stepped"}};
+constexpr EnumName<toolpath::InlayFemaleStyle> kInlayFemaleStyles[] = {{toolpath::InlayFemaleStyle::Pocket, "pocket"},
+                                                                      {toolpath::InlayFemaleStyle::Hole, "hole"}};
 constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Profile, "profile"},
                                                       {ToolpathOperation::Pocket, "pocket"},
                                                       {ToolpathOperation::Drill, "drill"},
                                                       {ToolpathOperation::Engrave, "engrave"},
                                                       {ToolpathOperation::VCarving, "v_carve"},
                                                       {ToolpathOperation::Chamfer, "chamfer"},
-                                                      {ToolpathOperation::ThreadMill, "thread_mill"}};
+                                                      {ToolpathOperation::ThreadMill, "thread_mill"},
+                                                      {ToolpathOperation::Inlay, "inlay"}};
 
 template <class E, std::size_t N>
 const char* nameOf(const EnumName<E> (&table)[N], E value) {
@@ -877,6 +884,25 @@ json encodeThreadMillParams(const toolpath::ThreadMillParams& p) {
     return j;
 }
 
+json encodeInlayParams(const toolpath::InlayParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["piece"] = nameOf(kInlayPieces, p.piece);
+    j["male_style"] = nameOf(kInlayMaleStyles, p.maleStyle);
+    j["female_style"] = nameOf(kInlayFemaleStyles, p.femaleStyle);
+    j["start_depth"] = p.startDepth;
+    j["cut_depth"] = p.cutDepth;
+    j["step_depth"] = p.stepDepth;
+    j["step_width"] = p.stepWidth;
+    j["allowance"] = p.allowance;
+    j["safe_z"] = p.safeZ;
+    j["direction"] = nameOf(kCutDirections, p.direction);
+    j["order"] = encodeOrder(p.order);
+    j["start_position"] = encodePoint(p.startPosition);
+    j["tolerance"] = encodeTolerance(p.tolerance);
+    return j;
+}
+
 /// Name of the move cache of the toolpath at `index` (0-based) in the job order.
 /// "fonts/<key>.font" for an embedded font.
 std::string fontMemberName(const std::string& key) {
@@ -918,6 +944,8 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
         j["params"] = encodeChamferParams(*chamfer);
     } else if (const auto* threadMill = std::get_if<toolpath::ThreadMillParams>(&tp.params)) {
         j["params"] = encodeThreadMillParams(*threadMill);
+    } else if (const auto* inlay = std::get_if<toolpath::InlayParams>(&tp.params)) {
+        j["params"] = encodeInlayParams(*inlay);
     } else {
         j["params"] = encodePocketParams(std::get<toolpath::PocketParams>(tp.params));
     }
@@ -2091,6 +2119,11 @@ constexpr std::array<std::string_view, 20> kThreadMillKeys{
     "pitch",         "diameter",      "fit_tolerance",   "create_circles", "start_depth", "thread_length", "max_depth",
     "safe_z",        "order",         "start_position",  "tolerance",   "tool",       "layers"};
 
+// Inlay records exist only in job.json, like V-carve.
+constexpr std::array<std::string_view, 16> kInlayKeys{
+    "name",       "piece",     "male_style", "female_style", "start_depth", "cut_depth", "step_depth", "step_width",
+    "allowance",  "safe_z",    "direction",  "order",        "start_position", "tolerance", "tool",    "layers"};
+
 template <std::size_t N>
 std::span<const std::string_view> keysFor(const std::array<std::string_view, N>& keys, ParamsDialect d) {
     // "tool" and "layers" (always the last two) belong to params.json only.
@@ -2500,6 +2533,48 @@ toolpath::ThreadMillParams decodeThreadMillParams(JsonReader& r, const Path& p, 
     return out;
 }
 
+toolpath::InlayParams decodeInlayParams(JsonReader& r, const Path& p, ParamsDialect d, LegacyParamsExtras* legacy) {
+    toolpath::InlayParams out;
+    ParamsRecord rec(r, p, keysFor(kInlayKeys, d), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "piece") {
+            out.piece = rec.choice(kInlayPieces);
+        } else if (k == "male_style") {
+            out.maleStyle = rec.choice(kInlayMaleStyles);
+        } else if (k == "female_style") {
+            out.femaleStyle = rec.choice(kInlayFemaleStyles);
+        } else if (k == "start_depth") {
+            out.startDepth = rec.number();
+        } else if (k == "cut_depth") {
+            out.cutDepth = rec.number();
+        } else if (k == "step_depth") {
+            out.stepDepth = rec.number();
+        } else if (k == "step_width") {
+            out.stepWidth = rec.number();
+        } else if (k == "allowance") {
+            out.allowance = rec.number();
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else if (k == "direction") {
+            out.direction = rec.choice(kCutDirections);
+        } else if (k == "order") {
+            out.order = decodeOrder(r, rec.field(), d);
+        } else if (k == "start_position") {
+            out.startPosition = readFinitePoint(r, rec.field());
+        } else if (k == "tolerance") {
+            out.tolerance = decodeTolerance(r, rec.field(), d);
+        } else if (legacy) {
+            decodeLegacyCommon(rec, *legacy);
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
 /// Decodes params captured as canonical text (already charged to the budget) for `operation`.
 ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& text, const Path& p,
                               ParamsDialect d, LegacyParamsExtras* legacy) {
@@ -2523,6 +2598,9 @@ ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& te
     }
     if (operation == ToolpathOperation::ThreadMill) {
         return decodeThreadMillParams(r, p, d, legacy);
+    }
+    if (operation == ToolpathOperation::Inlay) {
+        return decodeInlayParams(r, p, d, legacy);
     }
     return decodePocketParams(r, p, d, legacy);
 }
