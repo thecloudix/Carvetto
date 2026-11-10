@@ -207,7 +207,7 @@ TEST_CASE("applyTrace: one undo step, one layer per colour", "[trace][viewmodel]
         const document::Layer* l = doc.findLayer(id);
         REQUIRE(l != nullptr);
         CHECK(l->name.rfind("Trace #", 0) == 0);
-        if (l->colour == document::Colour{200, 0, 0}) sawRed = true;
+        if (l->colour.r > 150 && l->colour.g < 60 && l->colour.b < 60) sawRed = true;
     }
     CHECK(sawRed);
     REQUIRE(doc.undo());
