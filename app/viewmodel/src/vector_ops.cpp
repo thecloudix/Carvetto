@@ -422,4 +422,33 @@ VectorOpResult applyOffset(Document& doc, const OffsetOptions& options, const ge
     return commit(doc, "Offset vectors", std::move(pending), consumed);
 }
 
+SelectionRegion selectedClosedRegion(const Document& doc, const geometry::Tolerance& tol) {
+    SelectionRegion out;
+    const std::vector<Operand> operands = collectOperands(doc, true);
+    if (operands.empty()) {
+        out.message = "Select closed vectors first.";
+        return out;
+    }
+    std::vector<ObjectId> leaves;
+    for (const Operand& op : operands) {
+        leaves.insert(leaves.end(), op.leaves.begin(), op.leaves.end());
+    }
+    if (std::string size = checkSize(doc, leaves); !size.empty()) {
+        out.message = std::move(size);
+        return out;
+    }
+    std::vector<Contour> all;
+    for (ObjectId leaf : leaves) {
+        std::vector<Contour> r = leafRegion(*doc.findObject(leaf)->asVector(), tol);
+        std::move(r.begin(), r.end(), std::back_inserter(all));
+    }
+    out.contours = leaves.size() == 1 ? std::move(all) : geometry::unionContours(all, tol, FillRule::NonZero);
+    if (out.contours.empty()) {
+        out.message = "The selected vectors enclose no area.";
+        return out;
+    }
+    out.ok = true;
+    return out;
+}
+
 }  // namespace carvetto::viewmodel

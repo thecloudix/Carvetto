@@ -138,6 +138,14 @@ std::string nonFiniteParam(const ToolpathParams& params) {
                                           {"start_position[1]", m->startPosition.y}});
         return key.empty() ? nonFiniteTolerance(m->tolerance) : key;
     }
+    if (const auto* m = std::get_if<toolpath::PrismParams>(&params)) {
+        std::string key = firstNonFinite({{"depth", m->depth},
+                                          {"stepover", m->stepover},
+                                          {"safe_z", m->safeZ},
+                                          {"start_position[0]", m->startPosition.x},
+                                          {"start_position[1]", m->startPosition.y}});
+        return key.empty() ? nonFiniteTolerance(m->tolerance) : key;
+    }
     const auto& p = std::get<toolpath::PocketParams>(params);
     std::string key = firstNonFinite({{"start_depth", p.startDepth},
                                       {"cut_depth", p.cutDepth},

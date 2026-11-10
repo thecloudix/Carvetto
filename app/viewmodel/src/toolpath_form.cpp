@@ -13,6 +13,7 @@
 #include "carvetto/toolpath/chamfer.hpp"
 #include "carvetto/toolpath/thread_mill.hpp"
 #include "carvetto/viewmodel/calculation.hpp"
+#include "carvetto/toolpath/prism.hpp"
 #include "carvetto/viewmodel/units_format.hpp"
 
 namespace carvetto::viewmodel {
@@ -460,6 +461,24 @@ Table<toolpath::ThreadMillParams> makeThreadMillTable() {
     return t;
 }
 
+Table<toolpath::PrismParams> makePrismTable() {
+    using P = toolpath::PrismParams;
+    Table<P> t;
+    t.num("depth", "Prism depth", "Depth", Kind::Length, false, false, [](P& p) -> double& { return p.depth; },
+          [](const P& p) { return !p.fullPrism; });
+    bound(t, "depth", 1e-3, 100000.0);
+    t.num("stepover", "Stepover", "Cut", Kind::Length, false, false, [](P& p) -> double& { return p.stepover; });
+    bound(t, "stepover", 1e-3, 100.0);
+    t.num("safeZ", "Safe Z", "Depth", Kind::Length, false, false, [](P& p) -> double& { return p.safeZ; });
+    addStartPosition<P>(t, [](P& p) -> geometry::Vec2& { return p.startPosition; });
+    addChordal<P>(t, [](P& p) -> geometry::Tolerance& { return p.tolerance; }, 1e-4);
+    t.flag("fullPrism", "Set depth for full prism", "Depth", [](P& p) -> bool& { return p.fullPrism; });
+    t.option<CutDirection>("direction", "Cut direction", "Cut", {"Climb", "Conventional"},
+                           [](P& p) -> CutDirection& { return p.direction; });
+    addOrder<P>(t, [](P& p) -> toolpath::OrderOptions& { return p.order; });
+    return t;
+}
+
 template <class P>
 const Table<P>& tableOf();
 template <>
@@ -491,6 +510,12 @@ const Table<toolpath::VCarvingParams>& tableOf() {
 template <>
 const Table<toolpath::ThreadMillParams>& tableOf() {
     static const Table<toolpath::ThreadMillParams> t = makeThreadMillTable();
+    return t;
+}
+
+template <>
+const Table<toolpath::PrismParams>& tableOf() {
+    static const Table<toolpath::PrismParams> t = makePrismTable();
     return t;
 }
 

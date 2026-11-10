@@ -662,3 +662,24 @@ TEST_CASE("Carvetto-specific checks: colours, budgets, depth and malformed struc
         CHECK(hasWarning(d, "non-positive radius"));
     }
 }
+
+TEST_CASE("DXF import warns about an arc too large to approximate (T-0183)", "[dxf][io]") {
+    const DxfDrawing d = importText(
+                             "0\nSECTION\n2\nENTITIES\n"
+                             "0\nCIRCLE\n10\n0\n20\n0\n40\n10\n"
+                             "0\nCIRCLE\n10\n0\n20\n0\n40\n1e10\n"
+                             "0\nCIRCLE\n10\n5\n20\n0\n40\n2e10\n"
+                             "0\nENDSEC\n0\nEOF\n")
+                             .value();
+    REQUIRE(d.contours.size() == 3);  // kept, only reported
+    std::size_t found = 0;
+    for (const DxfWarning& w : d.warnings) {
+        if (w.message.find("too large to approximate") != std::string::npos) {
+            ++found;
+            CHECK(w.count == 2);
+        }
+    }
+    CHECK(found == 1);
+    const DxfDrawing ok = importText("0\nSECTION\n2\nENTITIES\n0\nCIRCLE\n10\n0\n20\n0\n40\n10\n0\nENDSEC\n0\nEOF\n").value();
+    CHECK(ok.warnings.empty());
+}

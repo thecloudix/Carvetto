@@ -17,6 +17,7 @@
 #include "carvetto/tooling/machine.hpp"
 #include "carvetto/tooling/tool_database.hpp"
 #include "carvetto/toolpath/time.hpp"
+#include "carvetto/viewmodel/keepout.hpp"
 #include "carvetto/viewmodel/toolpath_calc.hpp"
 #include "carvetto/viewmodel/toolpath_form.hpp"
 #include "carvetto/viewmodel/vector_selector.hpp"
@@ -136,6 +137,12 @@ struct JobSummary {
     std::size_t toolChanges{0};
     std::size_t distinctTools{0};
     std::vector<ToolpathSummaryEntry> entries;
+    /// Keep-out zones (T-0256): rapids of the included toolpaths replaced by a detour round a zone
+    /// (the time and length above count the detours), left straight because an end lies inside a
+    /// zone or no path exists, and left straight because the zones are too complex to route.
+    std::size_t keepOutRouted{0};
+    std::size_t keepOutUnroutable{0};
+    std::size_t keepOutTooComplex{0};
 };
 
 class ToolpathSession {
@@ -246,6 +253,9 @@ class ToolpathSession {
 
     // --- Job summary -------------------------------------------------------------------------
     JobSummary summary();
+    /// The enabled, computed toolpaths with their rapids routed round the keep-out zones (as Save
+    /// Toolpaths posts them); empty `toolpaths` when the document has no zones. Cached.
+    const RoutedJob& keepOutRouting();
 
    private:
     using MovesKey = std::weak_ptr<const std::vector<toolpath::Move>>;
@@ -294,7 +304,7 @@ class ToolpathSession {
     /// The record that carries the V-carve's definition (the carving toolpath), or `record`.
     const document::ToolpathRecord* carvingOf(const document::ToolpathRecord& record);
     void computeStaleness();
-    Stats statsOf(const document::ToolpathRecord& record);
+    Stats statsOf(const document::ToolpathRecord& record, const document::SharedMoves* moves = nullptr);
     ToolpathOutcome applyOne(const ToolpathCalculation& calculation, const char* text);
     BatchOutcome applyMany(const std::vector<ToolpathCalculation>& calculations, const char* text);
     ToolpathOutcome runAndApply(const ToolpathDefinition& definition, std::optional<document::ToolpathId> target,
@@ -307,6 +317,7 @@ class ToolpathSession {
 
     std::map<MovesKey, Baseline, std::owner_less<>> baselines_;
     std::map<MovesKey, Stats, std::owner_less<>> stats_;
+    KeepOutRouter router_;
     std::uint64_t nextGroup_{1};
     std::set<document::ToolpathId> disabled_;
     std::map<document::ToolpathId, std::vector<ToolpathMessage>> messages_;

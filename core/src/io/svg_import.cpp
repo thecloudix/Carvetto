@@ -11,6 +11,7 @@
 #include <utility>
 #include <vector>
 
+#include "carvetto/geometry/boolean.hpp"
 #include "carvetto/geometry/transform2.hpp"
 #include "carvetto/geometry/vec2.hpp"
 #include "carvetto/io/svg.hpp"
@@ -34,6 +35,11 @@ std::string SvgWarning::describe() const {
 }
 
 namespace {
+
+// T-0183: an arc or curve whose polygon cannot meet the tolerance within the work bounds (ADR-0005 A2).
+constexpr const char* kCoarseArcWarning =
+    "arc or curve too large to approximate within the tolerance (about 1e9 mm radius or more); toolpaths, offsets "
+    "and boolean operations will leave it out";
 
 using detail::kNoNode;
 using detail::PathBuilder;
@@ -514,6 +520,10 @@ class Importer {
         }
         const std::size_t layer = ctx.layer != kNoNode ? ctx.layer : layerIndex("0");
         for (geometry::Contour& c : b.contours()) {
+            if (geometry::refusedByClippers(c, opt_.tolerance)) {
+                // T-0183: toolpaths, offsets and booleans leave such a contour out; warn here.
+                warn(n.line, kCoarseArcWarning);
+            }
             out_.contours.push_back(SvgContour{layer, std::move(c)});
         }
     }

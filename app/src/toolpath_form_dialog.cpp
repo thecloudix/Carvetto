@@ -45,6 +45,8 @@ const char* operationLabel(ToolpathOperation op) {
             return "Chamfer";
         case ToolpathOperation::ThreadMill:
             return "Thread Mill";
+        case ToolpathOperation::Prism:
+            return "Prism";
     }
     return "?";
 }

@@ -1580,7 +1580,12 @@ TEST_CASE("T-0172 (b): strays of a hatch with varied line ends cost what those o
     // step 7 queried only a BoxTree, cost ~3.4 sqrt(n) per sample there and took 1.40 / 1.56 x
     // the even hatch at 4 000 / 16 000 lines (Release; origin/main 1.17, now 1.13-1.19 / 1.15).
     const double d = 0.05;
-    const int n = kRelease ? 16000 : 3000;
+    // T-0226: CI once measured 1.362 (even 0.15 s, varied 0.21 s) against a bound of 1.35 where an
+    // idle machine gives 1.20-1.22 (Release), so the runs are twice as long (the weak case's extra
+    // cost grows with n, so the bound separates better there), the least of 5 interleaved pairs
+    // is taken, and the bound is 1.5: ~25 % above the idle ratio, below the 1.56 the round-2
+    // regression took at 16 000 lines and the more it takes at 32 000.
+    const int n = kRelease ? 32000 : 6000;
     auto build = [&](bool varied) {
         Lcg rng{0x7A7Cu};
         std::vector<Vec2> pts;
@@ -1598,7 +1603,7 @@ TEST_CASE("T-0172 (b): strays of a hatch with varied line ends cost what those o
     std::vector<Contour> re;
     std::vector<Contour> rv;
     const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
-        3, [&] { re = offsetOpenContour(even, d, OffsetSide::Left, JoinType::Round, kTol); },
+        5, [&] { re = offsetOpenContour(even, d, OffsetSide::Left, JoinType::Round, kTol); },
         [&] { rv = offsetOpenContour(varied, d, OffsetSide::Left, JoinType::Round, kTol); });
     INFO("CPU seconds: even " << t.smallSeconds << ", varied " << t.largeSeconds << ", ratio " << t.ratio());
     // The middle between two lines, where both reach, is put back and covered.
@@ -1607,9 +1612,9 @@ TEST_CASE("T-0172 (b): strays of a hatch with varied line ends cost what those o
         CHECK(uncovered(rv, {4.5, y}, {5.5, y}) == 0);
         CHECK(uncovered(re, {1.0, y}, {9.0, y}) == 0);
     }
-    CHECK(t.ratio() < 1.35);
+    CHECK(t.ratio() < 1.5);
     if constexpr (kRelease) {
-        CHECK(t.largeSeconds < 0.6 * kAbsSlack);
+        CHECK(t.largeSeconds < 2.0 * kAbsSlack);  // idle 0.55 s; ~2x under heavy parallel load
     }
 }
 

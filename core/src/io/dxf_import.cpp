@@ -12,6 +12,7 @@
 #include <variant>
 #include <vector>
 
+#include "carvetto/geometry/boolean.hpp"
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/geometry/span.hpp"
 #include "carvetto/geometry/transform2.hpp"
@@ -84,6 +85,11 @@ std::optional<double> insunitsToMillimetres(int code) {
 }
 
 namespace {
+
+// T-0183: an arc or curve whose polygon cannot meet the tolerance within the work bounds (ADR-0005 A2).
+constexpr const char* kCoarseArcWarning =
+    "arc or curve too large to approximate within the tolerance (about 1e9 mm radius or more); toolpaths, offsets "
+    "and boolean operations will leave it out";
 
 using detail::Pair;
 using detail::PairReader;
@@ -1297,6 +1303,10 @@ class Emitter {
             return;
         }
         spans_ += contour.spans.size();
+        if (geometry::refusedByClippers(contour, opt_.tolerance)) {
+            // T-0183: toolpaths, offsets and booleans leave such a contour out; warn here.
+            warnings_.add(kCoarseArcWarning, line);
+        }
         out_.contours.push_back(DxfContour{layer, std::move(contour)});
         tags_.push_back(topLevel ? tag : std::nullopt);
     }

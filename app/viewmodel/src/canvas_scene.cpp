@@ -6,6 +6,7 @@
 #include "carvetto/document/dimension.hpp"
 #include "carvetto/geometry/polyline.hpp"
 #include "carvetto/geometry/tolerance.hpp"
+#include "carvetto/viewmodel/keepout.hpp"
 
 namespace carvetto::viewmodel {
 
@@ -32,6 +33,16 @@ std::vector<Vec2> polygoniseForScreen(const geometry::Contour& contour, const Vi
         out.push_back(view.worldToScreen(p));
     }
     return out;
+}
+
+const std::vector<geometry::Contour>& KeepOutHaloCache::get(const Document& doc) {
+    const std::vector<geometry::Contour> zones = keepOutOutlines(doc);
+    if (clearance_ != doc.keepOutClearance() || zones != zones_) {
+        zones_ = zones;
+        clearance_ = doc.keepOutClearance();
+        halo_ = keepOutHalo(doc);
+    }
+    return halo_;
 }
 
 Box2 activeMaterialMm(const Document& doc) {
@@ -79,6 +90,27 @@ CanvasScene buildCanvasScene(const Document& doc, const ViewTransform& view, con
                 path.colour = layer.colour;
                 path.pointsPx = polygoniseForScreen(contour, view, options.tolerancePx);
                 scene.paths.push_back(std::move(path));
+            }
+        }
+    }
+    if (doc.keepOutVisible() && !doc.keepOutZones().empty()) {
+        auto add = [&](const geometry::Contour& contour, std::vector<DrawPath>& list) {
+            if (contour.isEmpty() || !contour.bounds().intersects(visible)) {
+                return;
+            }
+            DrawPath path;
+            path.closed = contour.closed;
+            path.pointsPx = polygoniseForScreen(contour, view, options.tolerancePx);
+            list.push_back(std::move(path));
+        };
+        for (const document::KeepOutZone& zone : doc.keepOutZones()) {
+            add(zone.outline, scene.keepOutZones);
+        }
+        if (doc.keepOutClearance() > 0.0) {
+            KeepOutHaloCache local;
+            KeepOutHaloCache& cache = options.haloCache != nullptr ? *options.haloCache : local;
+            for (const geometry::Contour& halo : cache.get(doc)) {
+                add(halo, scene.keepOutHalo);
             }
         }
     }
