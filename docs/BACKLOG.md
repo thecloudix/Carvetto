@@ -984,7 +984,7 @@ Goal: `Font` loading (TTF/OTF from file/bytes, no system-font enumeration in cor
 Criteria: (1) glyph outlines match an independent oracle (area/winding/bbox of known glyphs in the test font); (2) text on curve places glyph baselines tangent within tolerance; (3) work/size caps with refusal statuses; (4) clean MSVC + GCC/Clang builds, deterministic hashes on CI Linux and Windows; (5) licences recorded; mutation checks.
 Out of scope: single-line stroke fonts, the text tool UI (T-0211).
 
-### T-0225 TransformDialog holds a const Document& (T-0206 verifier note)   [status: verifying]
+### T-0225 TransformDialog holds a const Document& (T-0206 verifier note)   [status: done — merged PR #106]
 TransformDialog (transform_menu.cpp) keeps a `const Document&` and `rebuild()` re-reads it from option-toggle callbacks. Unreachable today (modal, nothing replaces the document), but pass the document live or close the dialog on replacement. Also remove the redundant xfReset() in ToolController::setDocument (equivalent mutant).
 
 ### T-0226 Flaky CPU-ratio test: T-0172 (b) (offset_narrow_loops_test.cpp:1610)   [status: ready — LOW]
@@ -1016,7 +1016,7 @@ On 2026-11-08 GitHub release assets (nlohmann_json, miniz, harfbuzz tarballs) re
 ### T-0233 Ship DejaVu Serif as the starter font (owner decision 2026-11-08)   [status: done — merged PR #100]
 Owner: "I like DejaVu Serif." Replace the placeholder starter font (`data/fonts/CarvettoStarter-Regular.ttf`, ~8 glyphs) with DejaVu Serif (Regular; consider Bold) as the compiled-in starter font for the Text tool and DXF text import. Vendor the font file(s) under `data/fonts/` with the upstream licence text (Bitstream Vera + DejaVu changes licence; check it is redistributable under a GPL-3.0-or-later project and note the "name change when modified" clause: never modify the font files), add THIRD_PARTY_NOTICES.md rows, keep the CMake embedding mechanism (starter_font.hpp generated at build time), keep tests using the tiny Carvetto test font (do not slow the test suite with a 380 KB font unless needed), verify glyph coverage (Latin, Latin-1, Greek, Cyrillic) and that embedding it in a .carv stays within the font caps, and that save/load/undo/convert-to-curves work with the full font. Source file for vendoring: the DejaVu release tarball from dejavu-fonts.github.io / GitHub release with SHA256 recorded (do not copy from /usr/share/fonts without recording version); CI download resilience (T-0232) applies if fetched at build time — prefer vendoring the single .ttf in the repo.
 
-### T-0234 CI cache hardening (T-0232 verifier nits)   [status: verifying]
+### T-0234 CI cache hardening (T-0232 verifier nits)   [status: done — merged PR #104]
 (1) FETCHCONTENT_SOURCE_DIR bypasses download AND hash verification: record the verified content hash / git commit of each source tree when caching (manifest) and re-check in tools/ci/configure.{sh,ps1} on a cache hit (poisoned-cache defence in depth). (2) Cache entries are ~171 MB each x 4 jobs including .git dirs: trim `.git` / shallow copies to ease the 10 GB cache limit. (3) Add `.fc-src/` and `configure.log` to .gitignore. (4) Retry regex is matched over the whole log (a later SHA mismatch after an earlier download-failure line would still be retried; bounded) — match the last error only. (5) configure.sh handles only `-B <dir>` not `-Bdir`. (6) Verify the Qt/app-ON configure on a cache hit.
 
 ### T-0210 Properties panel, layers and sheets UI, undo/redo history (viewmodel + Qt)   [status: done — merged PR #102]
