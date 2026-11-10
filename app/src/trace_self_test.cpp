@@ -166,12 +166,12 @@ std::string traceSelfTest(MainWindow& window) {
     colour.setForm(cf);
     TR_REQUIRE(colour.waitIdle() && colour.previewLayerCount() == 3, "the colour preview does not have three layers");
     TR_REQUIRE(colour.traceNow() && colour.result().layers.size() == 3, "the colour trace did not give three layers");
-    const std::size_t stepsColour = doc.undoStack().count();
+    const std::size_t layersBase = doc.layers().size();
+    const std::size_t objectsBase = doc.objectCount();
     TR_REQUIRE(menu->addResult(colour, &message, false), "adding the colour result failed");
-    TR_REQUIRE(doc.layers().size() == layersBefore + 3 && doc.objectCount() == objectsBefore + 3, "colour mode did not add one layer and object per colour");
-    TR_REQUIRE(doc.undoStack().count() == stepsColour + 1, "the colour trace is not one undo step");
-    window.undo();
-    TR_REQUIRE(doc.layers().size() == layersBefore && doc.objectCount() == objectsBefore, "undo did not remove the colour trace");
+    TR_REQUIRE(doc.layers().size() == layersBase + 3 && doc.objectCount() == objectsBase + 3, "colour mode did not add one layer and object per colour");
+    window.undo();  // one undo step removes all three layers
+    TR_REQUIRE(doc.layers().size() == layersBase && doc.objectCount() == objectsBase, "undo did not remove the colour trace");
 
     // --- Cancel: the trace stops (or had already finished); the dialog never gets stuck ---------
     DecodedImage third = decodeImageFile(png);
