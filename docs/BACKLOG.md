@@ -1072,7 +1072,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0241 Keep-out zones (document, rapid routing, UI)   [status: verifying — core+viewmodel save path only; Qt UI → T-0256; needs ADR renumber (0035 taken by T-0236) and rebase vs T-0246 (both bump .carv minor, kCarvFormatMinorText)]
+### T-0241 Keep-out zones (document, rapid routing, UI)   [status: verifying (round 2; routing work budget; merged main)]
 Phase: 1   Module: core/document + core/toolpath/linking + app   Depends on: T-0220, T-0235
 Goal: Keep-out zones created from closed vectors (not linked to source), clearance value, show/hide, and rapid moves routed around them (post blocks INITIAL/FIRST/STRAIGHT_RAPID_MOVE variables). Persisted in .carv.
 Acceptance criteria:
