@@ -1081,7 +1081,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0242 Toolpath tiling manager   [status: in-progress]
+### T-0242 Toolpath tiling manager   [status: verifying — core tiling + Output Tiled Toolpaths save path; dialog checkbox/Tiling Manager panel → UI follow-up; ADR-0043]
 Phase: 1   Module: core/toolpath + app   Depends on: T-0224, T-0220
 Goal: Tiling of a job larger than the work area into tiles with overlap, per-tile output (inventory 'Toolpath Tiling Manager').
 Acceptance criteria:
@@ -1258,3 +1258,9 @@ Acceptance criteria:
   2. Clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
 Out of scope: anything beyond the card; the straight inlay (T-0238); 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md 'VCarve Inlay Toolpath' (the Pocket and Plug sub-pages' fields are not fetched: the owner may need to supply them); ADR-0040.
+
+### T-0266 Toolpath tiling: dialog checkbox and Tiling Manager panel (T-0242 follow-up)   [status: ready — LOW]
+Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0242
+Goal: Save Toolpaths dialog 'Tile Toolpaths' checkbox with strategy (individual/feed-through X/Y), tile size, overlap, order, original-position option, machine work area default; Tiling Manager panel with a tile preview over the job; self-test drives it.
+Acceptance criteria:
+  1. In the real app a user tiles a job larger than the machine and saves per-tile files; oversize tiles refused; one changelog fragment.
