@@ -1237,3 +1237,9 @@ Phase: 1   Module: core/tooling + core/document + app/viewmodel   Depends on: T-
 Goal: model single/multi-point thread-mill tools in the tool database (S, H, D, A, O, threaded length; versioned tool file migration), use them in the Thread Mill form; 'Create circles for internal threads' inserts the bore circles into the document as one undo step on calculation.
 Acceptance criteria:
   1. A thread-mill tool saved in the tool DB round-trips (old files still load); the form lists only such tools (and end mills); circles are inserted undoably and removed on undo; tests incl. hostile tool files.
+
+### T-0263 Job sheet nits (T-0244 round-2 verifier)   [status: ready — LOW]
+Phase: 1   Module: app/viewmodel   Depends on: T-0244
+Goal: (1) makeJobSheet tool lookup is a linear find_if on full names, quadratic with many distinct tools (5000 distinct 100 KB tool names took 56 s): key a map on (number, name, diameter); (2) header says "well below 1 MB" but the measured worst case is ~740 KB: reword; (3) SVG thumbnail drops toolpaths beyond the 500th without a notice; (4) cap the stored sheet size for huge inputs.
+Acceptance criteria:
+  1. 20,000 distinct tools build a sheet in well under a second; thumbnail notice present; tests.
