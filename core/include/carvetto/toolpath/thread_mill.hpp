@@ -13,7 +13,7 @@
 #include "carvetto/toolpath/operation.hpp"
 #include "carvetto/toolpath/toolpath.hpp"
 
-// Thread milling toolpath (T-0237, ADR-0036; feature-inventory "Thread Milling Toolpath"): a
+// Thread milling toolpath (T-0237, ADR-0037; feature-inventory "Thread Milling Toolpath"): a
 // helical path round the centre of every closed vector (the hole of an internal thread, the pin
 // of an external one) whose Z advance per revolution is exactly the pitch.
 
@@ -100,7 +100,7 @@ double threadBoreDiameter(double diameter, double pitch);
 /// Depth of an external ISO thread, 0.6134 P.
 double threadExternalDepth(double pitch);
 /// Radius of the path of the tool axis round the thread axis for a cutter of diameter `toolDiameter`
-/// (ADR-0036): internal (D + t) / 2 - d / 2; external (D - 2 h - t) / 2 + d / 2 (h the thread
+/// (ADR-0037): internal (D + t) / 2 - d / 2; external (D - 2 h - t) / 2 + d / 2 (h the thread
 /// depth, t the fit tolerance, d the cutter diameter). nullopt when invalid or not above 1 um.
 std::optional<double> threadPathRadius(const ThreadMillParams& params, double toolDiameter);
 /// Circles of the bore diameter at the given centres (CCW), for the "create circles" option.
@@ -111,7 +111,7 @@ std::vector<geometry::Contour> threadBoreCircles(const ThreadMillParams& params,
 /// Only an end mill (the thread mill, with its diameter the cutting diameter of the teeth).
 bool threadMillToolAllowed(tooling::ToolType type);
 
-/// Computes the thread milling toolpath (ADR-0036). Per thread: a rapid to a point above it at
+/// Computes the thread milling toolpath (ADR-0037). Per thread: a rapid to a point above it at
 /// safe Z, a plunge to the start of the helix, a lead-in (internal: a half circle out from the
 /// centre; external: a tangent line), the helix, a lead-out (the same, mirrored) and a retract.
 /// The helix is arcs of one revolution each whose Z changes by exactly the pitch, then an arc of

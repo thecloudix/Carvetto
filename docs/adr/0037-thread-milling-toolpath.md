@@ -1,4 +1,4 @@
-# ADR-0036: Thread milling toolpath (geometry and conventions)
+# ADR-0037: Thread milling toolpath (geometry and conventions)
 
 Date: 2026-11-09 · Status: accepted, implemented (T-0237).
 
