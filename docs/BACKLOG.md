@@ -1117,7 +1117,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0246 Dimensions (linear, aligned, angular, radial) with associative update   [status: in-progress]
+### T-0246 Dimensions (linear, aligned, angular, radial) with associative update   [status: verifying — first slice (core object, associativity, .carv, standalone DimensionTool); ToolController/dialog/handles → T-0255]
 Phase: 1   Module: core/document + app   Depends on: T-0211, T-0210
 Goal: Dimension objects, options (decimals, font/text height, offset, custom text), associativity on scale/move, edit via handles/selection.
 Acceptance criteria:
@@ -1189,3 +1189,9 @@ Phase: 1   Module: app/viewmodel + app/src + core/geometry   Depends on: T-0251
 Goal: T-0251 delivered only the deterministic core generator (rectangle region). Add the Create Vector Texture dialog (angle, max spacing, spacing variation, wavelength, amplitude, noise, seed, target layer), live preview, one undo step, and clipping to the selected closed vectors (with holes) instead of the bounding box.
 Acceptance criteria:
   1. Generated lines lie inside the selected region (holes excluded) within tolerance; dialog edits validated with units; one undo step; self-test drives the real dialog; bounded work for hostile regions.
+
+### T-0255 Dimensions: ToolController wiring, options dialog, canvas handle editing, DXF text (T-0246 follow-up)   [status: ready]
+Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0246
+Goal: wire DimensionTool into ToolController (ToolKind::Dimension, toolbar/menu), Qt options dialog (decimals, font/text height, offset, custom text), canvas control-point handles and shift-select editing, Edit > Dimensions; DXF export of dimension text when a text entity path exists; reflex angular dimensions.
+Acceptance criteria:
+  1. A user can place, edit and delete each dimension kind in the real app (self-test drives it); one undo step per edit; hostile option input refused.
