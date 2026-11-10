@@ -18,6 +18,7 @@ add_executable(carvetto_viewmodel_tests
   save_toolpaths_test.cpp
   tools_test.cpp
   text_tool_test.cpp
+  dimension_tool_test.cpp
   text_dxf_test.cpp
   starter_font_test.cpp
   transform_form_test.cpp

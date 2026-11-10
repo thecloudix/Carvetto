@@ -33,7 +33,10 @@ inline constexpr int kCarvFormatMajor = 1;
 /// 1.1 (T-0132, ADR-0021) adds toolpath records (`job.json` `toolpaths`) and their move caches.
 /// 1.2 (T-0211, ADR-0033 amendment A1) adds text parameters (`"type": "text"`) and embedded fonts
 /// (`fonts/<key>.font` members); a document without text objects is still written as 1.1.
-inline constexpr int kCarvFormatMinor = 2;
+/// 1.3 (T-0246) adds dimension objects (`"type": "dimension"`); written only when one exists.
+inline constexpr int kCarvFormatMinor = 3;
+/// The minor version written for documents that use text but no dimensions: 1.2.
+inline constexpr int kCarvFormatMinorText = 2;
 /// The minor version written for documents that use no 1.2 features (no text objects): 1.1.
 inline constexpr int kCarvFormatMinorBase = 1;
 /// Most toolpath moves (summed over every toolpath record) a `.carv` file may hold: `loadCarv`

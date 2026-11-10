@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -156,11 +157,68 @@ struct GroupObject {
     bool operator==(const GroupObject&) const = default;
 };
 
+/// Kinds of dimension (T-0246).
+enum class DimensionKind {
+    Linear,   ///< Distance between two points projected on the X axis (or Y with `vertical`).
+    Aligned,  ///< True distance between two points, dimension line parallel to them.
+    Angular,  ///< Angle at a vertex between two arms (the smaller angle, 0..pi).
+    Radial,   ///< Radius (or diameter) of a circle given by its centre and a point on it.
+};
+
+/// Where a dimension point is attached so it follows the part (associativity). It names a span
+/// of a vector object's contour; the point is that span's start, end or arc centre. When the
+/// object or span is gone, or the span has no such point, the stored position is used instead.
+struct DimensionAnchor {
+    enum class Which { Start, End, Centre };
+    ObjectId object{};
+    std::uint32_t contour{0};
+    std::uint32_t span{0};
+    Which which{Which::Start};
+
+    bool operator==(const DimensionAnchor&) const = default;
+};
+
+/// One defining point: its last known position in the sheet (mm) and, optionally, the anchor
+/// that re-resolves it when the part it measures changes.
+struct DimensionPoint {
+    geometry::Vec2 pos{};
+    std::optional<DimensionAnchor> anchor;
+
+    bool operator==(const DimensionPoint&) const = default;
+};
+
+/// A dimension (T-0246). The defining points are `points[0..1]` for linear/aligned, vertex and
+/// the two arm points for angular, and centre plus a point on the circle for radial. `offsetMm`
+/// places the annotation: linear/aligned, signed distance of the dimension line from the midpoint
+/// of the two points (positive to the left of point 0 -> point 1; for linear, towards +Y, or -X
+/// when `vertical`); angular, radius of the dimension arc; radial, length of the leader beyond
+/// the circle. The measured value is never stored: it is computed from the (resolved) points, so
+/// the text follows scaling and moving of the part.
+struct DimensionObject {
+    DimensionKind kind{DimensionKind::Aligned};
+    bool vertical{false};  ///< Linear: measure along Y instead of X.
+    bool diameter{false};  ///< Radial: show the diameter instead of the radius.
+    std::array<DimensionPoint, 3> points{};
+    double offsetMm{5.0};
+    double textHeightMm{3.0};
+    int decimals{2};       ///< Lengths and radii, 0..8.
+    int angleDecimals{2};  ///< Angles, 0..6.
+    bool useCustomText{false};
+    std::string customText;  ///< Shown instead of the measurement when `useCustomText`.
+    std::string fontKey;     ///< Informational; empty selects the application's default font.
+
+    bool operator==(const DimensionObject&) const = default;
+
+    /// Maps the stored positions by `m`; the offset follows (scaled by a conformal transform's
+    /// scale, and re-signed for mirrors so the annotation stays on the same side of the part).
+    void transform(const geometry::Transform2& m);
+};
+
 /// Tagged object payload.
-using ObjectData = std::variant<VectorObject, BitmapObject, GroupObject>;
+using ObjectData = std::variant<VectorObject, BitmapObject, GroupObject, DimensionObject>;
 
 /// Discriminator for `Object::kind()`.
-enum class ObjectKind { Vector, Bitmap, Group };
+enum class ObjectKind { Vector, Bitmap, Group, Dimension };
 
 /// A drawing object: identity, where it lives (layer, sheet, parent group) and its payload.
 struct Object {
@@ -177,6 +235,7 @@ struct Object {
     bool isVector() const { return std::holds_alternative<VectorObject>(data); }
     bool isBitmap() const { return std::holds_alternative<BitmapObject>(data); }
     bool isGroup() const { return std::holds_alternative<GroupObject>(data); }
+    bool isDimension() const { return std::holds_alternative<DimensionObject>(data); }
 
     VectorObject* asVector() { return std::get_if<VectorObject>(&data); }
     const VectorObject* asVector() const { return std::get_if<VectorObject>(&data); }
@@ -184,6 +243,8 @@ struct Object {
     const BitmapObject* asBitmap() const { return std::get_if<BitmapObject>(&data); }
     GroupObject* asGroup() { return std::get_if<GroupObject>(&data); }
     const GroupObject* asGroup() const { return std::get_if<GroupObject>(&data); }
+    DimensionObject* asDimension() { return std::get_if<DimensionObject>(&data); }
+    const DimensionObject* asDimension() const { return std::get_if<DimensionObject>(&data); }
 
     /// Convenience: a vector object with one contour and no parameters.
     static Object vector(geometry::Contour contour, LayerId layerId, SheetId sheetId,

@@ -32,6 +32,7 @@
 #include "carv_json_reader.hpp"
 #include "carv_moves.hpp"
 #include "carv_zip.hpp"
+#include "carvetto/document/dimension.hpp"
 #include "carvetto/document/text_object.hpp"
 #include "carvetto/geometry/vec2.hpp"
 
@@ -346,6 +347,13 @@ constexpr EnumName<RectangleParams::CornerStyle> kCorners[] = {
 
 constexpr EnumName<TextAlign> kTextAligns[] = {
     {TextAlign::Left, "left"}, {TextAlign::Centre, "centre"}, {TextAlign::Right, "right"}};
+constexpr EnumName<DimensionKind> kDimensionKinds[] = {{DimensionKind::Linear, "linear"},
+                                                       {DimensionKind::Aligned, "aligned"},
+                                                       {DimensionKind::Angular, "angular"},
+                                                       {DimensionKind::Radial, "radial"}};
+constexpr EnumName<DimensionAnchor::Which> kAnchorWhich[] = {{DimensionAnchor::Which::Start, "start"},
+                                                             {DimensionAnchor::Which::End, "end"},
+                                                             {DimensionAnchor::Which::Centre, "centre"}};
 constexpr EnumName<TextMode> kTextModes[] = {
     {TextMode::Point, "point"}, {TextMode::Box, "box"}, {TextMode::Curve, "curve"}};
 
@@ -619,6 +627,35 @@ json encodeObject(const Object& obj, const CarvExtras::Impl* extras) {
         placement["max"] = encodePoint(b->placementMm.max);
         j["placement_mm"] = std::move(placement);
         j["source_ref"] = b->sourceRef;
+    } else if (const auto* d = obj.asDimension()) {
+        j["type"] = "dimension";
+        json dj = json::object();
+        dj["kind"] = nameOf(kDimensionKinds, d->kind);
+        dj["vertical"] = d->vertical;
+        dj["diameter"] = d->diameter;
+        json pts = json::array();
+        for (const DimensionPoint& p : d->points) {
+            json pj = json::object();
+            pj["pos"] = encodePoint(p.pos);
+            if (p.anchor) {
+                json aj = json::object();
+                aj["object"] = p.anchor->object.value;
+                aj["contour"] = p.anchor->contour;
+                aj["span"] = p.anchor->span;
+                aj["which"] = nameOf(kAnchorWhich, p.anchor->which);
+                pj["anchor"] = std::move(aj);
+            }
+            pts.push_back(std::move(pj));
+        }
+        dj["points"] = std::move(pts);
+        dj["offset_mm"] = d->offsetMm;
+        dj["text_height_mm"] = d->textHeightMm;
+        dj["decimals"] = d->decimals;
+        dj["angle_decimals"] = d->angleDecimals;
+        dj["use_custom_text"] = d->useCustomText;
+        dj["custom_text"] = d->customText;
+        dj["font"] = d->fontKey;
+        j["dimension"] = std::move(dj);
     } else {
         j["type"] = "group";
         json children = json::array();
@@ -1555,9 +1592,104 @@ struct DecodedObject {
     std::optional<std::string> unknownParams;
 };
 
-constexpr std::array<std::string_view, 13> kObjectKeys{
+constexpr std::array<std::string_view, 14> kObjectKeys{
     "id",     "layer",    "sheet",     "parent",       "name",       "type",    "contours",
-    "params", "width_px", "height_px", "placement_mm", "source_ref", "children"};
+    "params", "width_px", "height_px", "placement_mm", "source_ref", "children", "dimension"};
+constexpr std::array<std::string_view, 11> kDimensionKeys{
+    "kind",     "vertical",       "diameter", "points",         "offset_mm",       "text_height_mm",
+    "decimals", "angle_decimals", "use_custom_text", "custom_text", "font"};
+constexpr std::array<std::string_view, 2> kDimensionPointKeys{"pos", "anchor"};
+constexpr std::array<std::string_view, 4> kDimensionAnchorKeys{"object", "contour", "span", "which"};
+constexpr std::uint64_t kCostDimension = 512;
+
+/// A dimension payload (format 1.3, T-0246). Numbers must be finite and the same checks as
+/// `dimensionProblem` apply.
+DimensionObject decodeDimension(JsonReader& r, const Path& p) {
+    Record rec(r, p, kDimensionKeys);
+    DimensionObject d;
+    constexpr int kIntMax = std::numeric_limits<int>::max();
+    while (rec.next()) {
+        const Path f = rec.field();
+        const std::string& k = rec.key();
+        if (k == "kind") {
+            d.kind = readEnum(r, f, kDimensionKinds);
+        } else if (k == "vertical") {
+            d.vertical = readBool(r, f);
+        } else if (k == "diameter") {
+            d.diameter = readBool(r, f);
+        } else if (k == "points") {
+            if (r.peek() != JKind::Array) {
+                fail(f, "must be a JSON array");
+            }
+            r.beginArray();
+            std::size_t count = 0;
+            for (; r.nextElement(); ++count) {
+                if (count >= d.points.size()) {
+                    fail(f, "has more than 3 points");
+                }
+                const Path pf = f.at(count);
+                Record pr(r, pf, kDimensionPointKeys);
+                while (pr.next()) {
+                    if (pr.key() == "pos") {
+                        d.points[count].pos = readFinitePoint(r, pr.field());
+                    } else if (pr.key() == "anchor") {
+                        const Path af = pr.field();
+                        Record ar(r, af, kDimensionAnchorKeys);
+                        DimensionAnchor a;
+                        while (ar.next()) {
+                            const std::string& ak = ar.key();
+                            if (ak == "object") {
+                                a.object = ObjectId{readEntityId(r, ar.field())};
+                            } else if (ak == "contour") {
+                                a.contour = static_cast<std::uint32_t>(readInt(r, ar.field(), 0, kIntMax));
+                            } else if (ak == "span") {
+                                a.span = static_cast<std::uint32_t>(readInt(r, ar.field(), 0, kIntMax));
+                            } else if (ak == "which") {
+                                a.which = readEnum(r, ar.field(), kAnchorWhich);
+                            } else {
+                                ar.skip();
+                            }
+                        }
+                        ar.requireAll();
+                        d.points[count].anchor = a;
+                    } else {
+                        pr.skip();
+                    }
+                }
+                pr.require("pos");
+            }
+            if (count != 2 && count != 3) {
+                fail(f, "must hold 2 or 3 points");
+            }
+        } else if (k == "offset_mm") {
+            d.offsetMm = readFinite(r, f);
+        } else if (k == "text_height_mm") {
+            d.textHeightMm = readFinite(r, f);
+        } else if (k == "decimals") {
+            d.decimals = readInt(r, f, 0, kMaxDimensionDecimals);
+        } else if (k == "angle_decimals") {
+            d.angleDecimals = readInt(r, f, 0, kMaxDimensionAngleDecimals);
+        } else if (k == "use_custom_text") {
+            d.useCustomText = readBool(r, f);
+        } else if (k == "custom_text") {
+            d.customText = readStoredString(r, f);
+            if (d.customText.size() > kMaxDimensionTextBytes) {
+                fail(f, "is longer than " + std::to_string(kMaxDimensionTextBytes) + " bytes");
+            }
+        } else if (k == "font") {
+            d.fontKey = readStoredString(r, f);
+        } else {
+            rec.skip();
+        }
+    }
+    for (const char* k : {"kind", "points", "offset_mm", "text_height_mm", "decimals", "angle_decimals"}) {
+        rec.require(k);
+    }
+    if (const std::string problem = dimensionProblem(d); !problem.empty()) {
+        fail(p, problem);
+    }
+    return d;
+}
 constexpr std::array<std::string_view, 2> kPlacementKeys{"min", "max"};
 
 DecodedObject decodeObject(JsonReader& r, const Path& p) {
@@ -1570,6 +1702,7 @@ DecodedObject decodeObject(JsonReader& r, const Path& p) {
     std::uint64_t paramsExtras = 0;
     std::uint64_t paramsUnknownValues = 0;
     BitmapObject bitmap;
+    DimensionObject dimension;
     std::vector<ObjectId> children;
     constexpr int kIntMax = std::numeric_limits<int>::max();
     while (rec.next()) {
@@ -1625,6 +1758,9 @@ DecodedObject decodeObject(JsonReader& r, const Path& p) {
             placement.requireAll();
         } else if (k == "source_ref") {
             bitmap.sourceRef = readStoredString(r, f);
+        } else if (k == "dimension") {
+            r.budget().chargeDocument(kCostDimension);
+            dimension = decodeDimension(r, f);
         } else if (k == "children") {
             if (r.peek() != JKind::Array) {
                 fail(f, "must be a JSON array");
@@ -1650,7 +1786,8 @@ DecodedObject decodeObject(JsonReader& r, const Path& p) {
             }
         }
         for (const char* k :
-             {"contours", "params", "width_px", "height_px", "placement_mm", "source_ref", "children"}) {
+             {"contours", "params", "width_px", "height_px", "placement_mm", "source_ref", "children",
+              "dimension"}) {
             if (rec.has(k) && std::find_if(allowed.begin(), allowed.end(), [k](const char* a) {
                                   return std::string_view(a) == k;
                               }) == allowed.end()) {
@@ -1680,6 +1817,9 @@ DecodedObject decodeObject(JsonReader& r, const Path& p) {
         only({"width_px", "height_px", "placement_mm", "source_ref"},
              {"width_px", "height_px", "placement_mm", "source_ref"});
         obj.data = std::move(bitmap);
+    } else if (type == "dimension") {
+        only({"dimension"}, {"dimension"});
+        obj.data = std::move(dimension);
     } else if (type == "group") {
         only({"children"}, {"children"});
         obj.data = GroupObject{std::move(children)};
@@ -3347,7 +3487,12 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
             }
             fontMembers.emplace(fontMemberName(key), font->bytes);
         }
-        version["minor"] = usedFonts.empty() ? kCarvFormatMinorBase : kCarvFormatMinor;
+        // Format 1.3 (dimension objects, T-0246) only when the document has one.
+        const bool hasDimensions = std::any_of(doc.objects().begin(), doc.objects().end(),
+                                               [](const auto& kv) { return kv.second.isDimension(); });
+        version["minor"] = hasDimensions ? kCarvFormatMinor
+                           : usedFonts.empty() ? kCarvFormatMinorBase
+                                               : kCarvFormatMinorText;
         manifest["format_version"] = std::move(version);
         manifest["app_version"] = CARVETTO_VERSION_STRING;
         mergeUnknown(manifest, ex ? &ex->manifest : nullptr);

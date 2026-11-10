@@ -1,4 +1,5 @@
 #include "carvetto/document/document.hpp"
+#include "carvetto/document/dimension.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -247,6 +248,22 @@ std::optional<geometry::Box2> Document::objectBounds(ObjectId id) const {
     }
     if (const auto* b = obj->asBitmap()) {
         return b->bounds();
+    }
+    if (const auto* d = obj->asDimension()) {
+        const DimensionGeometry g = dimensionGeometry(*this, *d);
+        geometry::Box2 box;
+        if (g.valid) {
+            for (const geometry::Contour& c : g.contours) {
+                box.expand(c.bounds());
+            }
+            box.expand(g.textCentre);
+        } else {
+            const auto pts = resolveDimensionPoints(*this, *d);
+            for (std::size_t i = 0; i < dimensionPointCount(d->kind); ++i) {
+                box.expand(pts[i]);
+            }
+        }
+        return box;
     }
     geometry::Box2 box;
     for (ObjectId child : obj->asGroup()->children) {
