@@ -532,7 +532,7 @@ Acceptance criteria:
   1. (a)–(c) every free piece ≥ 0.04 mm² reported in the repro scenes and a ≥ 10k-scene vfree screen with V-bit corners on; no held piece reported; no kept tab severed/partial because of corner moves.
   2. (d)/(e) docs true as written or behaviour changed; holding tabs never fewer than the T-0135 merge.
 
-### T-0157 Profile precision for small parts far from the origin   [status: in-progress]
+### T-0157 Profile precision for small parts far from the origin   [status: verifying — re-scoped: documented limit (1e5 mm, T-0186) + pinning test + signedArea cache]
 Phase: 1   Module: core/toolpath, core/geometry   Depends on: T-0147
 Goal: Found by the T-0147 verifier (harness t0147v1/far.cpp): with signedArea fixed, Profile still behaves differently from the origin for small parts at ≥ 1e7–1e8 mm (same-count 0–10/20; e.g. a circle at 3e8 gives "offset by 0.25 mm vanishes"); same on base — the cause is in offset/Profile precision (absolute coordinates in offset or clearance code), not area. Also: signedArea is now ~3–4× slower per arc span (sin/cos recomputed for junction terms; end-to-end unchanged) — cache per-span ends if cheap.
 Acceptance criteria:
@@ -726,7 +726,7 @@ Goal: Found by the T-0180 coder (harness nf.cpp seed 5): `polygoniseInto(ArcSpan
 Acceptance criteria:
   1. Arcs of radius 1e9..1.7e308 and inf at default and tiny chordal tolerances polygonise in <= 0.2 s with bounded memory (ulimit -v test) and documented accuracy; output unchanged (hash corpus main vs branch, bit-identical) for every arc that polygonised under the cap before; every caller listed above terminates promptly on a hostile arc (CPU-time tests); mutants killed; full ctest; MSVC CI green.
 
-### T-0183 Surface refused contours in toolpath diagnostics (T-0182 coder)   [status: ready]
+### T-0183 Surface refused contours in toolpath diagnostics (T-0182 coder)   [status: in-progress]
 Phase: 1   Module: core/toolpath   Depends on: T-0182   ADR: 0005 A2, toolpath ADRs
 Goal: T-0182 caps arc polygonisation at 2^20 chords; `toClipperPath` refuses a coarse contour (empty path), so `booleanOp`/`unionContours`/`offsetContours`/`OpenPathClipper` silently omit it and count it in `BooleanResult::refusedContours` / `OpenPathClipper::refusedContours()`. No toolpath operation reads that count: a contour with an arc beyond ~1e9 mm radius (unrealistic, but reachable from hostile DXF/SVG files) would be silently missing from a Profile/Pocket/V-Carve/Engrave/Drill job. Wire the counts into the shared `ToolpathDiagnostic` (ADR-0018) so every operation reports a clear diagnostic naming the vector (Error severity: the toolpath for that vector is not generated, or the whole job is refused: decide per operation and document in each ADR: prefer refusing the vector with a diagnostic and still cutting the others) and the CLI/app show it.
 Acceptance criteria:
