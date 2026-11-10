@@ -7,7 +7,7 @@
 
 #include "carvetto/geometry/shapes.hpp"
 
-/// Raw raster images and a tiny in-repo decoder (T-0245, ADR-0036).
+/// Raw raster images and a tiny in-repo decoder (T-0245, ADR-0038).
 ///
 /// `RasterImage` is the only thing the bitmap tracer consumes: 8-bit RGB, row 0 at the top. Other
 /// formats (PNG, JPEG, ...) are decoded by the app layer into this structure; core has no image

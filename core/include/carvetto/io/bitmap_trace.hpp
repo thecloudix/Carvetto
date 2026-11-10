@@ -9,7 +9,7 @@
 #include "carvetto/geometry/vec2.hpp"
 #include "carvetto/io/raster.hpp"
 
-/// Bitmap to vector tracing (T-0245, ADR-0036). Clean-room algorithm, in four steps:
+/// Bitmap to vector tracing (T-0245, ADR-0038). Clean-room algorithm, in four steps:
 ///  1. Mask: Black and White mode marks pixels darker than `threshold` (Rec.601 luma; `invert`
 ///     flips it); Colour mode quantises to `colourCount` (2..16) colours by median cut on a 5-bit
 ///     histogram and gives each colour its own mask.

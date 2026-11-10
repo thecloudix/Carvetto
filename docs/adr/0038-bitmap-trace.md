@@ -1,4 +1,4 @@
-# ADR-0036: Bitmap tracing and raster input
+# ADR-0038: Bitmap tracing and raster input
 
 Date: 2026-11-09 · Status: accepted, core implemented (T-0245).
 
