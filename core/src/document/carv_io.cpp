@@ -414,13 +414,22 @@ constexpr EnumName<toolpath::ThreadPitchPreset> kThreadPresets[] = {
     {toolpath::ThreadPitchPreset::Custom, "custom"},
     {toolpath::ThreadPitchPreset::IsoMetricCoarse, "iso_metric_coarse"},
     {toolpath::ThreadPitchPreset::UnifiedCoarse, "unified_coarse"}};
+constexpr EnumName<toolpath::FluteType> kFluteTypes[] = {
+    {toolpath::FluteType::RampOverLength, "ramp_over_length"},
+    {toolpath::FluteType::RampAtStart, "ramp_at_start"},
+    {toolpath::FluteType::RampAtStartAndEnd, "ramp_at_start_and_end"}};
+constexpr EnumName<toolpath::FluteRampType> kFluteRampTypes[] = {{toolpath::FluteRampType::Linear, "linear"},
+                                                                {toolpath::FluteRampType::Smooth, "smooth"}};
+constexpr EnumName<toolpath::FluteRampBasis> kFluteRampBases[] = {{toolpath::FluteRampBasis::Length, "length"},
+                                                                 {toolpath::FluteRampBasis::Percent, "percent"}};
 constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Profile, "profile"},
                                                       {ToolpathOperation::Pocket, "pocket"},
                                                       {ToolpathOperation::Drill, "drill"},
                                                       {ToolpathOperation::Engrave, "engrave"},
                                                       {ToolpathOperation::VCarving, "v_carve"},
                                                       {ToolpathOperation::Chamfer, "chamfer"},
-                                                      {ToolpathOperation::ThreadMill, "thread_mill"}};
+                                                      {ToolpathOperation::ThreadMill, "thread_mill"},
+                                                      {ToolpathOperation::Fluting, "fluting"}};
 
 template <class E, std::size_t N>
 const char* nameOf(const EnumName<E> (&table)[N], E value) {
@@ -877,6 +886,22 @@ json encodeThreadMillParams(const toolpath::ThreadMillParams& p) {
     return j;
 }
 
+json encodeFlutingParams(const toolpath::FlutingParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["flute_depth"] = p.fluteDepth;
+    j["flute_type"] = nameOf(kFluteTypes, p.type);
+    j["ramp_basis"] = nameOf(kFluteRampBases, p.rampBasis);
+    j["ramp_length"] = p.rampLength;
+    j["ramp_percent"] = p.rampPercent;
+    j["ramp_type"] = nameOf(kFluteRampTypes, p.rampType);
+    j["safe_z"] = p.safeZ;
+    j["order"] = encodeOrder(p.order);
+    j["start_position"] = encodePoint(p.startPosition);
+    j["tolerance"] = encodeTolerance(p.tolerance);
+    return j;
+}
+
 /// Name of the move cache of the toolpath at `index` (0-based) in the job order.
 /// "fonts/<key>.font" for an embedded font.
 std::string fontMemberName(const std::string& key) {
@@ -918,6 +943,8 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
         j["params"] = encodeChamferParams(*chamfer);
     } else if (const auto* threadMill = std::get_if<toolpath::ThreadMillParams>(&tp.params)) {
         j["params"] = encodeThreadMillParams(*threadMill);
+    } else if (const auto* fluting = std::get_if<toolpath::FlutingParams>(&tp.params)) {
+        j["params"] = encodeFlutingParams(*fluting);
     } else {
         j["params"] = encodePocketParams(std::get<toolpath::PocketParams>(tp.params));
     }
@@ -2091,6 +2118,11 @@ constexpr std::array<std::string_view, 20> kThreadMillKeys{
     "pitch",         "diameter",      "fit_tolerance",   "create_circles", "start_depth", "thread_length", "max_depth",
     "safe_z",        "order",         "start_position",  "tolerance",   "tool",       "layers"};
 
+// Fluting records exist only in job.json, like V-carve.
+constexpr std::array<std::string_view, 13> kFlutingKeys{
+    "name",     "flute_depth", "flute_type", "ramp_basis",     "ramp_length", "ramp_percent", "ramp_type",
+    "safe_z",   "order",       "start_position", "tolerance", "tool",        "layers"};
+
 template <std::size_t N>
 std::span<const std::string_view> keysFor(const std::array<std::string_view, N>& keys, ParamsDialect d) {
     // "tool" and "layers" (always the last two) belong to params.json only.
@@ -2500,6 +2532,43 @@ toolpath::ThreadMillParams decodeThreadMillParams(JsonReader& r, const Path& p, 
     return out;
 }
 
+toolpath::FlutingParams decodeFlutingParams(JsonReader& r, const Path& p, ParamsDialect d,
+                                            LegacyParamsExtras* legacy) {
+    toolpath::FlutingParams out;
+    ParamsRecord rec(r, p, keysFor(kFlutingKeys, d), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "flute_depth") {
+            out.fluteDepth = rec.number();
+        } else if (k == "flute_type") {
+            out.type = rec.choice(kFluteTypes);
+        } else if (k == "ramp_basis") {
+            out.rampBasis = rec.choice(kFluteRampBases);
+        } else if (k == "ramp_length") {
+            out.rampLength = rec.number();
+        } else if (k == "ramp_percent") {
+            out.rampPercent = rec.number();
+        } else if (k == "ramp_type") {
+            out.rampType = rec.choice(kFluteRampTypes);
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else if (k == "order") {
+            out.order = decodeOrder(r, rec.field(), d);
+        } else if (k == "start_position") {
+            out.startPosition = readFinitePoint(r, rec.field());
+        } else if (k == "tolerance") {
+            out.tolerance = decodeTolerance(r, rec.field(), d);
+        } else if (legacy) {
+            decodeLegacyCommon(rec, *legacy);
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
 /// Decodes params captured as canonical text (already charged to the budget) for `operation`.
 ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& text, const Path& p,
                               ParamsDialect d, LegacyParamsExtras* legacy) {
@@ -2523,6 +2592,9 @@ ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& te
     }
     if (operation == ToolpathOperation::ThreadMill) {
         return decodeThreadMillParams(r, p, d, legacy);
+    }
+    if (operation == ToolpathOperation::Fluting) {
+        return decodeFlutingParams(r, p, d, legacy);
     }
     return decodePocketParams(r, p, d, legacy);
 }

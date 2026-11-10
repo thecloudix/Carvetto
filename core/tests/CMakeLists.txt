@@ -109,6 +109,7 @@ add_executable(carvetto_tests
   document/carv_drill_record_test.cpp
   document/carv_chamfer_record_test.cpp
   document/carv_thread_mill_record_test.cpp
+  document/carv_fluting_record_test.cpp
   document/carv_engrave_record_test.cpp
   document/carv_v_carve_record_test.cpp
   io/dxf_import_test.cpp
@@ -144,6 +145,7 @@ add_executable(carvetto_tests
   toolpath/drill_post_test.cpp
   toolpath/chamfer_test.cpp
   toolpath/thread_mill_test.cpp
+  toolpath/fluting_test.cpp
   toolpath/engrave_test.cpp
   toolpath/engrave_post_test.cpp
   toolpath/v_carve_test.cpp

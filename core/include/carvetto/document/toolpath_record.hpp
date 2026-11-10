@@ -11,6 +11,7 @@
 #include "carvetto/toolpath/drill.hpp"
 #include "carvetto/toolpath/chamfer.hpp"
 #include "carvetto/toolpath/engrave.hpp"
+#include "carvetto/toolpath/fluting.hpp"
 #include "carvetto/toolpath/move.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/profile.hpp"
@@ -61,10 +62,10 @@ struct ToolSource {
 /// its own tool. A chamfer (T-0236) takes its tool and cutting data as arguments too, as does a thread mill (T-0237).
 using ToolpathParams = std::variant<toolpath::ProfileParams, toolpath::PocketParams, toolpath::DrillParams,
                                     toolpath::EngraveParams, toolpath::VCarvingParams, toolpath::ChamferParams,
-                                    toolpath::ThreadMillParams>;
+                                    toolpath::ThreadMillParams, toolpath::FlutingParams>;
 
 /// Discriminator for `ToolpathRecord::operation()` (same order as the `ToolpathParams` variant).
-enum class ToolpathOperation { Profile, Pocket, Drill, Engrave, VCarving, Chamfer, ThreadMill };
+enum class ToolpathOperation { Profile, Pocket, Drill, Engrave, VCarving, Chamfer, ThreadMill, Fluting };
 
 /// Computed moves of a toolpath, shared and immutable so copies (undo history, clipboard) are cheap.
 using SharedMoves = std::shared_ptr<const std::vector<toolpath::Move>>;
