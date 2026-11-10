@@ -88,7 +88,7 @@ namespace {
 
 // T-0183: an arc or curve whose polygon cannot meet the tolerance within the work bounds (ADR-0005 A2).
 constexpr const char* kCoarseArcWarning =
-    "arc or curve too large to approximate within the tolerance (about 1e8 mm radius or more); toolpaths, offsets "
+    "arc or curve too large to approximate within the tolerance (about 1e9 mm radius or more); toolpaths, offsets "
     "and boolean operations will leave it out";
 
 using detail::Pair;

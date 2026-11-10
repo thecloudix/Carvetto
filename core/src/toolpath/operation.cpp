@@ -11,7 +11,7 @@ ToolpathDiagnostic refusedContourDiagnostic(std::size_t contour, const std::stri
     return ToolpathDiagnostic{ToolpathIssue::ContourRefused, contour,
                               vectorName +
                                   " has an arc or curve too large to approximate within the tolerance (it would need "
-                                  "more than a million chords; a radius beyond about 1e8 mm); it is not cut",
+                                  "more than a million chords; a radius beyond about 1e9 mm); it is not cut",
                               std::nullopt};
 }
 

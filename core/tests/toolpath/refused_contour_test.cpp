@@ -45,14 +45,6 @@ Contour hugeCircle(double radius) {
     return c;
 }
 
-/// A circle of radius 10 mm wound `turns` times: small, but a polygon needs turns * 222 chords.
-Contour wound(int turns) {
-    Contour c;
-    c.closed = true;
-    c.append(ArcSpan{{50.0, 0.0}, 10.0, 0.0, 2.0 * std::numbers::pi * turns, ArcDirection::CCW});
-    return c;
-}
-
 std::vector<std::size_t> refusedIndices(const std::vector<ToolpathDiagnostic>& diagnostics) {
     std::vector<std::size_t> out;
     for (const ToolpathDiagnostic& d : diagnostics) {
@@ -70,14 +62,13 @@ TEST_CASE("refusedByClippers decides what the clippers decide", "[toolpath][refu
     const Tolerance tol = Tolerance::defaults();
     const Contour ok = Contour::circle({0, 0}, 10.0);
     const Contour huge = hugeCircle(1e10);
-    const Contour windings = wound(100000);
     Contour nan;
     nan.closed = true;
     nan.append(ArcSpan{{0, 0}, std::numeric_limits<double>::quiet_NaN(), 0.0, 1.0, ArcDirection::CCW});
     Contour nanBezier;
     nanBezier.closed = false;
     nanBezier.append(BezierSpan{{0, 0}, {1, 1}, {2, std::numeric_limits<double>::quiet_NaN()}, {3, 0}});
-    const std::vector<Contour> all{ok, huge, windings, nan, nanBezier, Contour::rectangle(Box2{{0, 0}, {5, 5}})};
+    const std::vector<Contour> all{ok, huge, nan, nanBezier, Contour::rectangle(Box2{{0, 0}, {5, 5}})};
     Tolerance fineTol = tol;
     fineTol.chordal = 1e-4;
     Tolerance coarseTol = tol;
@@ -88,7 +79,7 @@ TEST_CASE("refusedByClippers decides what the clippers decide", "[toolpath][refu
             CHECK(geometry::refusedByClippers(c, t) == (r.refusedContours == 1));
         }
     }
-    CHECK(geometry::refusedContourIndices(all, tol) == std::vector<std::size_t>{1, 2, 3, 4});
+    CHECK(geometry::refusedContourIndices(all, tol) == std::vector<std::size_t>{1, 2, 3});
     CHECK_FALSE(geometry::refusedByClippers(Contour::circle({0, 0}, 1e7), tol));
 }
 
@@ -102,17 +93,12 @@ TEST_CASE("Profile reports a refused vector and cuts the others as before", "[to
     const ProfileResult base = profileToolpath({a, b}, tool, p);
     REQUIRE(base.ok());
     CHECK(refusedIndices(base.diagnostics).empty());
-    const ProfileResult r = profileToolpath({a, wound(100000), b}, tool, p);
-    REQUIRE(r.ok());
-    CHECK(refusedIndices(r.diagnostics) == std::vector<std::size_t>{1});
-    CHECK(r.toolpath.moves == base.toolpath.moves);
-    const ProfileResult two = profileToolpath({wound(100000), a, wound(200000), b}, tool, p);
-    CHECK(refusedIndices(two.diagnostics) == std::vector<std::size_t>{0, 2});
-    CHECK(two.toolpath.moves == base.toolpath.moves);
-    // Only a refused vector: nothing is cut, and the diagnostic says why.
-    const ProfileResult only = profileToolpath({wound(100000)}, tool, p);
-    CHECK_FALSE(only.ok());
-    CHECK(refusedIndices(only.diagnostics) == std::vector<std::size_t>{0});
+    // Profile's own input limits (coordinates within 1e5 mm, ADR-0016 section 19) refuse a job with a
+    // huge arc as a whole before the polygon screen is reached, with a diagnostic and no partial result.
+    const ProfileResult r = profileToolpath({a, hugeCircle(1e11), b}, tool, p);
+    CHECK_FALSE(r.ok());
+    CHECK_FALSE(r.diagnostics.empty());
+    CHECK(r.toolpath.moves.empty());
 }
 
 TEST_CASE("Pocket reports a refused vector and cuts the others as before", "[toolpath][refused][pocket]") {
@@ -124,10 +110,10 @@ TEST_CASE("Pocket reports a refused vector and cuts the others as before", "[too
     const PocketResult base = pocketToolpath({a, b}, {tool}, p);
     REQUIRE_FALSE(base.toolpaths[0].isEmpty());
     CHECK(refusedIndices(base.diagnostics).empty());
-    const PocketResult r = pocketToolpath({a, hugeCircle(1e9), b}, {tool}, p);
+    const PocketResult r = pocketToolpath({a, hugeCircle(1e11), b}, {tool}, p);
     CHECK(refusedIndices(r.diagnostics) == std::vector<std::size_t>{1});
     CHECK(r.toolpaths[0].moves == base.toolpaths[0].moves);
-    const PocketResult two = pocketToolpath({hugeCircle(1e12), a, wound(100000), b}, {tool}, p);
+    const PocketResult two = pocketToolpath({hugeCircle(1e12), a, hugeCircle(1e11), b}, {tool}, p);
     CHECK(refusedIndices(two.diagnostics) == std::vector<std::size_t>{0, 2});
     CHECK(two.toolpaths[0].moves == base.toolpaths[0].moves);
     // An open vector is ignored as before, not reported as refused.
@@ -147,11 +133,11 @@ TEST_CASE("V-Carve reports a refused vector and carves the others as before", "[
     const VCarvingResult base = vCarvingToolpath({a, b}, tool, std::nullopt, {}, p);
     REQUIRE(base.ok());
     CHECK(refusedIndices(base.diagnostics).empty());
-    const VCarvingResult r = vCarvingToolpath({a, hugeCircle(1e9), b}, tool, std::nullopt, {}, p);
+    const VCarvingResult r = vCarvingToolpath({a, hugeCircle(1e11), b}, tool, std::nullopt, {}, p);
     REQUIRE(r.ok());
     CHECK(refusedIndices(r.diagnostics) == std::vector<std::size_t>{1});
     CHECK(r.toolpath.moves == base.toolpath.moves);
-    const VCarvingResult two = vCarvingToolpath({hugeCircle(1e12), a, wound(100000), b}, tool, std::nullopt, {}, p);
+    const VCarvingResult two = vCarvingToolpath({hugeCircle(1e12), a, hugeCircle(1e11), b}, tool, std::nullopt, {}, p);
     CHECK(refusedIndices(two.diagnostics) == std::vector<std::size_t>{0, 2});
     CHECK(two.toolpath.moves == base.toolpath.moves);
 }
@@ -166,11 +152,11 @@ TEST_CASE("Engrave Fill reports a refused vector, Outline cuts the huge arc as a
     const Contour a = Contour::rectangle(Box2{{0, 0}, {30, 20}});
     const EngraveResult base = engraveToolpath({a}, tool, std::nullopt, p);
     REQUIRE(base.ok());
-    const EngraveResult r = engraveToolpath({hugeCircle(1e9), a}, tool, std::nullopt, p);
+    const EngraveResult r = engraveToolpath({hugeCircle(1e11), a}, tool, std::nullopt, p);
     REQUIRE(r.ok());
     CHECK(refusedIndices(r.diagnostics) == std::vector<std::size_t>{0});
     CHECK(r.toolpath.moves == base.toolpath.moves);
-    // Outline does not polygonise through the clippers: a small winding arc is cut, nothing is refused.
+    // Outline does not polygonise through the clippers: a small arc is cut, nothing is refused.
     p.strategy = EngraveStrategy::Outline;
     const EngraveResult outline = engraveToolpath({a, Contour::circle({60, 0}, 5.0)}, tool, std::nullopt, p);
     REQUIRE(outline.ok());
