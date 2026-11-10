@@ -1099,7 +1099,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0244 Job sheet / toolpath summary report   [status: in-progress]
+### T-0244 Job sheet / toolpath summary report   [status: verifying — viewmodel job sheet (HTML+text); menu action/file write → T-0259]
 Phase: 1   Module: app/viewmodel + core   Depends on: T-0224, T-0235
 Goal: Create Job Sheet (inventory §'Create Job Sheet') plus time estimation summary: job info, tool list, per-toolpath times, thumbnails; export to HTML/PDF-free text format first.
 Acceptance criteria:
@@ -1213,3 +1213,9 @@ Phase: 1   Module: core/toolpath/keepout   Depends on: T-0241
 Goal: T-0241 bounds routing cost (work budget, TooComplex warning, rapid left straight) but outlines of ~1000+ vertices needing a wrapping detour exceed the budget. Add a spatial index for edge scans and/or tolerance-bounded outline simplification so large DXF-imported outlines route. Also preserve unknown keys in the keepout record.
 Acceptance criteria:
   1. A 4000-vertex circle zone routes a blocked rapid within a few seconds CPU in Debug, with the no-rapid-enters-zone guarantee (independent oracle test); byte-identical routes for inputs routed before.
+
+### T-0259 Job sheet: menu action, save/print and PDF (T-0244 follow-up)   [status: ready — LOW]
+Phase: 1   Module: app/src + app/viewmodel   Depends on: T-0244
+Goal: File > Create Job Sheet action writing the HTML/text sheet via a save dialog (atomic write, safe name), open in browser, optional PDF through Qt printing, per-sheet/per-side split once T-0243 lands.
+Acceptance criteria:
+  1. In the real app the action writes a job sheet equal to makeJobSheet output; hostile paths refused; self-test drives it.
