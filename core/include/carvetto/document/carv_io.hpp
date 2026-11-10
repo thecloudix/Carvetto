@@ -36,9 +36,12 @@ inline constexpr int kCarvFormatMajor = 1;
 /// 1.3 (T-0246) adds dimension objects (`"type": "dimension"`); written only when one exists.
 inline constexpr int kCarvFormatMinorDimension = 3;
 /// 1.4 (T-0241, ADR-0036) adds keep-out zones (`job.json` `keepout`); written only when the
-/// document has zones or a non-default clearance/visibility. The newest minor this build writes
-/// and reads.
-inline constexpr int kCarvFormatMinor = 4;
+/// document has zones or a non-default clearance/visibility.
+inline constexpr int kCarvFormatMinorKeepOut = 4;
+/// 1.5 (T-0243, ADR-0039) adds double-sided jobs (sheet `side`/`partner`); written only when the
+/// document has a back or paired sheet. The newest minor this build writes and reads.
+inline constexpr int kCarvFormatMinorDoubleSided = 5;
+inline constexpr int kCarvFormatMinor = kCarvFormatMinorDoubleSided;
 /// The minor version written for documents that use text (1.2) but no 1.3/1.4 features.
 inline constexpr int kCarvFormatMinorText = 2;
 /// The minor version written for documents that use no 1.2 features (no text objects): 1.1.

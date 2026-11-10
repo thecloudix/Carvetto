@@ -592,7 +592,7 @@ TEST_CASE("dimensions with keep-out zones are written as the higher minor and ro
     REQUIRE(saved.ok());
     auto loaded = loadCarv(std::span<const std::uint8_t>(saved.value()));
     REQUIRE(loaded.ok());
-    CHECK(loaded.value().formatMinor == kCarvFormatMinor);
+    CHECK(loaded.value().formatMinor == kCarvFormatMinorKeepOut);
     CHECK(loaded.value().formatMinor > kCarvFormatMinorDimension);
     CHECK(loaded.value().document.keepOutClearance() == 2.0);
     auto again = saveCarv(loaded.value().document, loaded.value().extras);

@@ -38,6 +38,7 @@ struct IntegrityIssue {
         MissingSheet,         ///< An object's sheet does not exist.
         BadActiveLayer,       ///< The active layer does not exist.
         BadActiveSheet,       ///< The active sheet does not exist.
+        BadSheetPartner,      ///< A sheet's `partner` is missing, not mutual, or on the same side (T-0243).
         StaleSelection,       ///< The selection holds an id that does not exist.
         IdOutOfRange,         ///< A sheet, layer or object id is null or >= `IdGenerator::kMaxId`.
         IdNotBelowNext,       ///< The id generator's next id is <= an existing id (could reuse it).

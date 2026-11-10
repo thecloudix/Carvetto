@@ -1,5 +1,6 @@
 #include "carvetto/viewmodel/layers_sheets.hpp"
 
+#include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
 #include <limits>
@@ -213,4 +214,116 @@ TEST_CASE("replacing the document between calls leaves nothing dangling", "[view
     CHECK_FALSE(deleteLayer(*doc, stale, true).ok);
     CHECK_FALSE(setLayerVisible(*doc, stale, false).ok);
     CHECK(historyEntries(*doc).empty());
+}
+
+TEST_CASE("makeDoubleSided pairs a back sheet in one undo step", "[viewmodel][sheets][double-sided]") {
+    Document doc;
+    const SheetId front = doc.sheets().front().id;
+    const std::size_t steps = doc.undoStack().count();
+    REQUIRE(makeDoubleSided(doc, FlipDirection::Vertical, true).ok);
+    CHECK(doc.undoStack().count() == steps + 1);
+    CHECK(doc.job().type == JobType::DoubleSided);
+    CHECK(doc.job().flipDirection == FlipDirection::Vertical);
+    CHECK(doc.job().zeroOffSameSide);
+    REQUIRE(doc.sheets().size() == 2);
+    const Sheet& back = doc.sheets()[1];
+    CHECK(back.side == Side::Back);
+    CHECK(back.name == "Sheet 1 (back)");
+    CHECK(back.partner == front);
+    CHECK(doc.findSheet(front)->partner == back.id);
+    CHECK(doc.activeSheet() == front);
+    CHECK(doc.checkIntegrity().empty());
+
+    // Again: only the flip settings change, no second back sheet.
+    REQUIRE(makeDoubleSided(doc, FlipDirection::Horizontal, false).ok);
+    CHECK(doc.sheets().size() == 2);
+    CHECK(doc.job().flipDirection == FlipDirection::Horizontal);
+
+    REQUIRE(doc.undoStack().canUndo());
+    doc.undo();
+    doc.undo();
+    CHECK(doc.sheets().size() == 1);
+    CHECK(doc.findSheet(front)->partner == SheetId{});
+    CHECK(doc.job().type == JobType::SingleSided);
+}
+
+TEST_CASE("makeDoubleSided is refused for rotary jobs and for a lone back sheet", "[viewmodel][sheets][double-sided]") {
+    Document rotary(Job::rotary(400, 60, Units::Millimetres));
+    CHECK_FALSE(makeDoubleSided(rotary, FlipDirection::Horizontal, false).ok);
+    CHECK(rotary.job().type == JobType::Rotary);
+
+    Document doc;
+    doc.findSheet(doc.activeSheet())->side = Side::Back;
+    CHECK_FALSE(makeDoubleSided(doc, FlipDirection::Horizontal, false).ok);
+}
+
+TEST_CASE("swapSides activates the other face; setFlipDirection needs a double-sided job",
+          "[viewmodel][sheets][double-sided]") {
+    Document doc;
+    CHECK_FALSE(swapSides(doc).ok);
+    CHECK_FALSE(setFlipDirection(doc, FlipDirection::Vertical).ok);
+    const SheetId front = doc.activeSheet();
+    REQUIRE(makeDoubleSided(doc, FlipDirection::Horizontal, false).ok);
+    REQUIRE(swapSides(doc).ok);
+    CHECK(doc.activeSheet() == doc.sheets()[1].id);
+    REQUIRE(swapSides(doc).ok);
+    CHECK(doc.activeSheet() == front);
+    REQUIRE(setFlipDirection(doc, FlipDirection::Vertical).ok);
+    CHECK(doc.job().flipDirection == FlipDirection::Vertical);
+    CHECK(setFlipDirection(doc, FlipDirection::Vertical).message.empty());
+}
+
+TEST_CASE("deleting one face unpairs the other, and undo restores the pair", "[viewmodel][sheets][double-sided]") {
+    Document doc;
+    const SheetId front = doc.activeSheet();
+    REQUIRE(makeDoubleSided(doc, FlipDirection::Horizontal, false).ok);
+    const SheetId back = doc.sheets()[1].id;
+    REQUIRE(deleteSheet(doc, back).ok);
+    CHECK(doc.findSheet(front)->partner == SheetId{});
+    CHECK(doc.checkIntegrity().empty());
+    doc.undo();
+    CHECK(doc.findSheet(front)->partner == back);
+    CHECK(doc.findSheet(back) != nullptr);
+}
+
+TEST_CASE("addSheet never copies the pairing", "[viewmodel][sheets][double-sided]") {
+    Document doc;
+    REQUIRE(makeDoubleSided(doc, FlipDirection::Horizontal, false).ok);
+    REQUIRE(swapSides(doc).ok);  // active = back sheet
+    REQUIRE(addSheet(doc).ok);
+    const Sheet& added = *doc.findSheet(doc.activeSheet());
+    CHECK(added.side == Side::Front);
+    CHECK(added.partner == SheetId{});
+}
+
+TEST_CASE("multiSidedView shows the partner's drawing mirrored into the active frame",
+          "[viewmodel][sheets][double-sided]") {
+    Document doc(Job::doubleSided(100, 50, 10, Units::Millimetres));
+    CHECK(multiSidedView(doc).size() == 1);
+    const SheetId front = doc.activeSheet();
+    REQUIRE(makeDoubleSided(doc, FlipDirection::Horizontal, false).ok);
+    const SheetId back = doc.sheets()[1].id;
+    addCircle(doc, doc.layers().front().id, back);  // centre (20,20) r 5 -> x 15..25
+
+    const auto view = multiSidedView(doc);
+    REQUIRE(view.size() == 2);
+    CHECK(view[0].sheet == front);
+    CHECK(view[0].active);
+    CHECK(view[0].content.isEmpty());
+    CHECK(view[0].otherSideContent.min.x == Catch::Approx(75));
+    CHECK(view[0].otherSideContent.max.x == Catch::Approx(85));
+    CHECK(view[1].sheet == back);
+    CHECK_FALSE(view[1].active);
+    CHECK(view[1].content.min.x == Catch::Approx(15));
+    CHECK(view[1].otherSideContent.isEmpty());
+}
+
+TEST_CASE("sheetTopZ follows the job's zero settings per side", "[viewmodel][sheets][double-sided]") {
+    Document doc(Job::doubleSided(100, 50, 12, Units::Millimetres, Datum::BottomLeft, ZZero::MaterialSurface));
+    REQUIRE(makeDoubleSided(doc, FlipDirection::Horizontal, true).ok);
+    CHECK(sheetTopZ(doc, doc.sheets()[0].id) == 0.0);
+    CHECK(sheetTopZ(doc, doc.sheets()[1].id) == 12.0);
+    REQUIRE(makeDoubleSided(doc, FlipDirection::Horizontal, false).ok);
+    CHECK(sheetTopZ(doc, doc.sheets()[1].id) == 0.0);
+    CHECK(sheetTopZ(doc, SheetId{424242}) == 0.0);
 }

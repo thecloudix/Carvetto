@@ -72,6 +72,7 @@ add_executable(carvetto_tests
   simulate/tool_shape_test.cpp
   tooling/starter_tools_test.cpp
   document/job_test.cpp
+  document/double_sided_test.cpp
   document/node_edit_command_test.cpp
   document/object_property_commands_test.cpp
   document/text_object_test.cpp
