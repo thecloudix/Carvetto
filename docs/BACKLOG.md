@@ -1036,7 +1036,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0237 Thread milling toolpath   [status: verifying — core+record+viewmodel form; tool type/create-circles → T-0262; ADR number to renumber]
+### T-0237 Thread milling toolpath   [status: done — merged PR #116 (tool type → T-0262)]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0120, T-0220
 Goal: Thread milling: single/multi-point cutters, ISO metric/universal pitch presets, internal/external, left/right, cut up/down, fit tolerance, create circles for internal threads. Inventory 'Thread Milling Toolpath'.
 Acceptance criteria:
@@ -1090,7 +1090,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0243 Double-sided jobs (job setup, flip, swap sides, multi-sided view)   [status: verifying — core+viewmodel slice; rest → T-0261; ADR number to renumber]
+### T-0243 Double-sided jobs (job setup, flip, swap sides, multi-sided view)   [status: done — merged PR #119 (UI → T-0261, nits → T-0264)]
 Phase: 1   Module: core/document + app   Depends on: T-0235, T-0210
 Goal: Job Type Double Sided: flip direction, Zero off same side, per-side sheets/toolpaths, swap sides, multi-sided view; Rotary excluded.
 Acceptance criteria:
@@ -1108,7 +1108,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0245 Trace bitmap to vectors   [status: verifying — core tracer + Netpbm; app dialog/QImage decode/undo → T-0260; ADR number must be renumbered (0036 taken by T-0241)]
+### T-0245 Trace bitmap to vectors   [status: done — merged PR #118 (app → T-0260)]
 Phase: 1   Module: core/io + app   Depends on: T-0202, T-0210
 Goal: Trace Selected Area, B&W with threshold and colour mode (16 colours): bitmap import to fitted Bezier/line contours. Clean-room tracing algorithm, no third-party code beyond a permissive image decoder (dependency choice to director: ADR).
 Acceptance criteria:
