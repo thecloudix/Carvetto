@@ -1135,7 +1135,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0248 Document variables (Edit > Document Variables, expressions in edit boxes)   [status: in-progress]
+### T-0248 Document variables (Edit > Document Variables, expressions in edit boxes)   [status: verifying — expression evaluator in core; Qt dialog, edit-box hookup, toolpath-form reference rule → T-0257]
 Phase: 1   Module: core/document + app   Depends on: T-0210
 Goal: Create/edit/import/export document variables, use {Name} and letter variables (W,H,T,P,I,M) in numeric edit boxes and text; deletion refused while used. core/document/variables.hpp exists: extend, do not duplicate.
 Acceptance criteria:
@@ -1201,3 +1201,9 @@ Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0241
 Goal: menu/dock entries for the T-0241 commands, clearance field, show/hide toggle, canvas drawing of zones (+ clearance halo), preview shows routed rapids, summary reports unroutable rapids. Self-test drives it.
 Acceptance criteria:
   1. In the real app: create zones from selected closed vectors, change clearance, hide/show, clear; each edit one undo step; preview/save use the routed rapids.
+
+### T-0257 Document variables: Qt dialog, calculation edit boxes, toolpath references (T-0248 follow-up)   [status: ready]
+Phase: 1   Module: app/viewmodel + app/src + core/toolpath   Depends on: T-0248, T-0210
+Goal: Edit > Document Variables dialog (create/edit/delete/import/export), expression evaluation in numeric edit boxes (units, letter variables) and 'Insert New Document Variable', toolpath forms register addReference/removeReference so a used variable cannot be deleted (also while its form is open), text {Variable} substitution.
+Acceptance criteria:
+  1. In the real app: define W-based variable, use it in a toolpath depth box, change it and the toolpath recalculates; deleting a used variable is refused; self-test drives the dialog; one undo step per edit.
