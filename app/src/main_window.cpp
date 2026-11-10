@@ -53,6 +53,7 @@
 #include "tool_panel.hpp"
 #include "toolpaths_panel.hpp"
 #include "transform_menu.hpp"
+#include "texture_menu.hpp"
 #include "vector_ops_menu.hpp"
 
 namespace carvetto::app {
@@ -257,6 +258,7 @@ void MainWindow::buildMenus() {
     edit->addSeparator();
     vectorOps_ = std::make_unique<VectorOpsMenu>(*this, edit);
     copies_ = std::make_unique<CopiesMenu>(*this, edit);
+    textureMenu_ = std::make_unique<TextureMenu>(*this, edit);
     transformMenu_ = std::make_unique<TransformMenu>(*this);
     edit->addSeparator();
     QAction* convertText = edit->addAction(QStringLiteral("Convert &Text to Curves"));
