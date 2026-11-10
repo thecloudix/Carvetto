@@ -34,6 +34,8 @@
 //   V-Carve     startDepth flatDepth safeZ clearanceRasterAngle rampDistance startX startY chordal
 //   Chamfer     angle width cutDepth overcut safeZ startX startY chordal (angle, width and cutDepth
 //               are linked: cutDepth = width / (2 tan angle); a V-bit's angle comes from the tool)
+//   Thread Mill startDepth maxDepth threadLength safeZ threadedLength diameter pitch fitTolerance startX startY
+//               distance chordal (pitch is hidden while a pitch preset is chosen)
 // Choices carry the enum/bool inputs; see `choices()`.
 
 namespace carvetto::viewmodel {

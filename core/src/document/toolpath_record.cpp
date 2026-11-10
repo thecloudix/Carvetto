@@ -125,6 +125,19 @@ std::string nonFiniteParam(const ToolpathParams& params) {
                                           {"start_position[1]", c->startPosition.y}});
         return key.empty() ? nonFiniteTolerance(c->tolerance) : key;
     }
+    if (const auto* m = std::get_if<toolpath::ThreadMillParams>(&params)) {
+        std::string key = firstNonFinite({{"threaded_length", m->threadedLength},
+                                          {"pitch", m->pitch},
+                                          {"diameter", m->diameter},
+                                          {"fit_tolerance", m->fitTolerance},
+                                          {"start_depth", m->startDepth},
+                                          {"thread_length", m->threadLength},
+                                          {"max_depth", m->maxDepth},
+                                          {"safe_z", m->safeZ},
+                                          {"start_position[0]", m->startPosition.x},
+                                          {"start_position[1]", m->startPosition.y}});
+        return key.empty() ? nonFiniteTolerance(m->tolerance) : key;
+    }
     const auto& p = std::get<toolpath::PocketParams>(params);
     std::string key = firstNonFinite({{"start_depth", p.startDepth},
                                       {"cut_depth", p.cutDepth},

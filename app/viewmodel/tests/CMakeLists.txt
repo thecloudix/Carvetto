@@ -39,6 +39,7 @@ add_executable(carvetto_viewmodel_tests
   selection_tools_test.cpp
   toolpath_form_test.cpp
   toolpath_chamfer_test.cpp
+  toolpath_thread_mill_test.cpp
   toolpath_preview_test.cpp
   simulation_test.cpp
   toolpath_robustness_test.cpp

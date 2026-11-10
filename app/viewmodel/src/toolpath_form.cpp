@@ -11,6 +11,7 @@
 
 #include "carvetto/geometry/vec2.hpp"
 #include "carvetto/toolpath/chamfer.hpp"
+#include "carvetto/toolpath/thread_mill.hpp"
 #include "carvetto/viewmodel/units_format.hpp"
 
 namespace carvetto::viewmodel {
@@ -411,6 +412,53 @@ Table<toolpath::ChamferParams> makeChamferTable() {
     return t;
 }
 
+Table<toolpath::ThreadMillParams> makeThreadMillTable() {
+    using P = toolpath::ThreadMillParams;
+    Table<P> t;
+    t.num("startDepth", "Start depth", "Depth", Kind::Length, false, true, [](P& p) -> double& { return p.startDepth; });
+    t.num("maxDepth", "Max depth (M)", "Depth", Kind::Length, false, true, [](P& p) -> double& { return p.maxDepth; });
+    t.num("threadLength", "Thread length (L)", "Depth", Kind::Length, false, false,
+          [](P& p) -> double& { return p.threadLength; });
+    t.num("safeZ", "Safe Z", "Depth", Kind::Length, false, false, [](P& p) -> double& { return p.safeZ; });
+    t.num("threadedLength", "Threaded length of the cutter", "Tool", Kind::Length, false, false,
+          [](P& p) -> double& { return p.threadedLength; },
+          [](const P& p) { return p.cutter == toolpath::ThreadCutter::MultiPoint; });
+    t.num("diameter", "Thread diameter", "Thread", Kind::Length, false, false, [](P& p) -> double& { return p.diameter; });
+    t.num("pitch", "Pitch", "Thread", Kind::Length, false, false, [](P& p) -> double& { return p.pitch; },
+          [](const P& p) { return p.pitchPreset == toolpath::ThreadPitchPreset::Custom; });
+    t.num("fitTolerance", "Fit tolerance", "Thread", Kind::Length, true, true,
+          [](P& p) -> double& { return p.fitTolerance; });
+    addStartPosition<P>(t, [](P& p) -> geometry::Vec2& { return p.startPosition; });
+    {
+        NumDef<P>& d = t.num("distance", "Merge threads closer than", "Tolerance", Kind::Length, false, false,
+                             [](P& p) -> double& { return p.tolerance.distance; });
+        d.lo = 1e-6;
+        d.hi = 1.0;
+    }
+    addChordal<P>(t, [](P& p) -> geometry::Tolerance& { return p.tolerance; }, 1e-4);
+    bound(t, "diameter", 1e-3, 1000.0);
+    bound(t, "pitch", 1e-3, 1000.0);
+    bound(t, "startDepth", 0.0, 100000.0);
+    bound(t, "maxDepth", 0.0, 100000.0);
+    bound(t, "threadLength", 1e-3, 100000.0);
+    t.option<toolpath::ThreadCutter>("cutter", "Cutter", "Tool", {"Single point", "Multi point"},
+                                     [](P& p) -> toolpath::ThreadCutter& { return p.cutter; });
+    t.option<toolpath::ThreadPitchPreset>("pitchPreset", "Pitch preset", "Thread",
+                                          {"Custom", "ISO metric", "Universal"},
+                                          [](P& p) -> toolpath::ThreadPitchPreset& { return p.pitchPreset; });
+    t.option<toolpath::ThreadType>("type", "Thread type", "Thread", {"Internal", "External"},
+                                   [](P& p) -> toolpath::ThreadType& { return p.type; });
+    t.option<toolpath::ThreadHand>("hand", "Thread direction", "Thread", {"Right", "Left"},
+                                   [](P& p) -> toolpath::ThreadHand& { return p.hand; });
+    t.option<toolpath::ThreadCutDirection>("cutDirection", "Cut direction", "Thread", {"Down", "Up"},
+                                           [](P& p) -> toolpath::ThreadCutDirection& { return p.cutDirection; });
+    t.flag("createCircles", "Create circles for internal threads", "Thread",
+           [](P& p) -> bool& { return p.createCircles; },
+           [](const P& p) { return p.type == toolpath::ThreadType::Internal; });
+    addOrder<P>(t, [](P& p) -> toolpath::OrderOptions& { return p.order; });
+    return t;
+}
+
 template <class P>
 const Table<P>& tableOf();
 template <>
@@ -436,6 +484,12 @@ const Table<toolpath::EngraveParams>& tableOf() {
 template <>
 const Table<toolpath::VCarvingParams>& tableOf() {
     static const Table<toolpath::VCarvingParams> t = makeVCarvingTable();
+    return t;
+}
+
+template <>
+const Table<toolpath::ThreadMillParams>& tableOf() {
+    static const Table<toolpath::ThreadMillParams> t = makeThreadMillTable();
     return t;
 }
 

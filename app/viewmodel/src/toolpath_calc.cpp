@@ -11,6 +11,7 @@
 
 #include "carvetto/toolpath/drill.hpp"
 #include "carvetto/toolpath/chamfer.hpp"
+#include "carvetto/toolpath/thread_mill.hpp"
 #include "carvetto/toolpath/engrave.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/profile.hpp"
@@ -210,6 +211,7 @@ ToolpathDefinition defaultDefinition(ToolpathOperation operation) {
         case ToolpathOperation::Engrave: def.params = toolpath::EngraveParams{}; break;
         case ToolpathOperation::VCarving: def.params = toolpath::VCarvingParams{}; break;
         case ToolpathOperation::Chamfer: def.params = toolpath::ChamferParams{}; break;
+        case ToolpathOperation::ThreadMill: def.params = toolpath::ThreadMillParams{}; break;
     }
     return def;
 }
@@ -279,6 +281,7 @@ const char* operationName(ToolpathOperation operation) {
         case ToolpathOperation::Engrave: return "engrave";
         case ToolpathOperation::VCarving: return "v_carve";
         case ToolpathOperation::Chamfer: return "chamfer";
+        case ToolpathOperation::ThreadMill: return "thread_mill";
     }
     return "?";
 }
@@ -290,6 +293,7 @@ bool toolAllowedFor(ToolpathOperation operation, tooling::ToolType type, bool cl
         case ToolpathOperation::Drill: return toolpath::drillToolAllowed(type);
         case ToolpathOperation::Engrave: return toolpath::engraveToolAllowed(type);
         case ToolpathOperation::Chamfer: return toolpath::chamferToolAllowed(type);
+        case ToolpathOperation::ThreadMill: return toolpath::threadMillToolAllowed(type);
         case ToolpathOperation::VCarving:
             return clearance ? toolpath::vCarvingClearanceToolAllowed(type) : toolpath::vCarvingToolAllowed(type);
     }
@@ -583,6 +587,13 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
         } else if (op == ToolpathOperation::Chamfer) {
             toolpath::ChamferResult r = toolpath::chamferToolpath(contours, tool->tool, tool->data,
                                                                   std::get<toolpath::ChamferParams>(definition.params));
+            diagnostics = r.diagnostics;
+            if (r.ok()) {
+                items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});
+            }
+        } else if (op == ToolpathOperation::ThreadMill) {
+            toolpath::ThreadMillResult r = toolpath::threadMillToolpath(
+                contours, tool->tool, tool->data, std::get<toolpath::ThreadMillParams>(definition.params));
             diagnostics = r.diagnostics;
             if (r.ok()) {
                 items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});
