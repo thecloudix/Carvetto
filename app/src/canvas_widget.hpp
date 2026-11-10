@@ -15,6 +15,7 @@
 
 #include "carvetto/document/document.hpp"
 #include "carvetto/geometry/vec2.hpp"
+#include "carvetto/viewmodel/canvas_scene.hpp"
 #include "carvetto/viewmodel/toolpath_preview.hpp"
 #include "carvetto/viewmodel/tools.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
@@ -132,6 +133,7 @@ class CanvasWidget : public QWidget {
 
     void paintScene(QPainter& painter, const viewmodel::ViewTransform& view, QSize size) const;
     void paintPreview(QPainter& painter, const viewmodel::ViewTransform& view, QSize size) const;
+    void paintKeepOut(QPainter& painter, const viewmodel::CanvasScene& scene) const;
     void renderPreviewRange(QImage& layer, const viewmodel::ViewTransform& view, std::size_t from, std::size_t to,
                             bool played) const;
     void notifyViewChanged();
@@ -160,6 +162,7 @@ class CanvasWidget : public QWidget {
     mutable double lastPreviewMs_{0.0};
     mutable std::size_t lastPreviewPoints_{0};
     viewmodel::ViewTransform view_;
+    mutable viewmodel::KeepOutHaloCache haloCache_;
     viewmodel::ToolController tools_;
     bool fitPending_{true};
     bool panning_{false};
