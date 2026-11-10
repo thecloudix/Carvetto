@@ -173,6 +173,7 @@ add_library(carvetto_core STATIC
   src/geometry/contour_ops.cpp
   src/geometry/shapes.cpp
   src/geometry/vector_texture.cpp
+  src/geometry/vector_texture_region.cpp
   src/document/shape_params.cpp
   src/geometry/intersect.cpp
   src/geometry/robust_predicates.cpp

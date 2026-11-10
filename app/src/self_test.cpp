@@ -52,6 +52,7 @@
 #include "preview_panel.hpp"
 #include "toolpaths_panel.hpp"
 #include "transform_menu.hpp"
+#include "texture_menu.hpp"
 #include "keepout_panel.hpp"
 #include "vector_ops_menu.hpp"
 
@@ -592,6 +593,11 @@ int runSelfTest() {
 
     // 5b. Transforms through the real window: handle drag, numeric move, align, undo (T-0205).
     if (const std::string why = transformSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 5c. Create Vector Texture dialog through the real window (T-0254).
+    if (const std::string why = textureSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

@@ -54,6 +54,8 @@ qt_add_executable(carvetto
   src/self_test.hpp
   src/starter_tools.hpp
   ${CMAKE_CURRENT_BINARY_DIR}/app_starter_tools_embedded.cpp
+  src/texture_menu.cpp
+  src/texture_menu.hpp
   src/transform_menu.cpp
   src/transform_menu.hpp
   src/keepout_panel.cpp
