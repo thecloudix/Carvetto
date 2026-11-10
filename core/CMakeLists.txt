@@ -238,6 +238,7 @@ add_library(carvetto_core STATIC
   src/toolpath/drill.cpp
   src/toolpath/engrave.cpp
   src/toolpath/chamfer.cpp
+  src/toolpath/prism.cpp
   src/toolpath/thread_mill.cpp
   src/toolpath/v_carve.cpp
   src/toolpath/v_carve_corners.cpp
