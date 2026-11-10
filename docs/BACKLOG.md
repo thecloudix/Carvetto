@@ -1090,7 +1090,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0243 Double-sided jobs (job setup, flip, swap sides, multi-sided view)   [status: in-progress]
+### T-0243 Double-sided jobs (job setup, flip, swap sides, multi-sided view)   [status: verifying — core+viewmodel slice; rest → T-0261; ADR number to renumber]
 Phase: 1   Module: core/document + app   Depends on: T-0235, T-0210
 Goal: Job Type Double Sided: flip direction, Zero off same side, per-side sheets/toolpaths, swap sides, multi-sided view; Rotary excluded.
 Acceptance criteria:
@@ -1225,3 +1225,9 @@ Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0245, T-0210
 Goal: File/Edit > Trace Bitmap: choose an image (PNG/JPEG/BMP decoded with QImage in the app layer into io::RasterImage, size-checked before decode), dialog with mode (B&W threshold/invert, colour count 2..16), noise filter, corner fit, scale (mm per pixel/target size), live preview, result as one undo step with one layer per colour; Pick from 2D View; Bitmap Fading.
 Acceptance criteria:
   1. In the real app a user traces a bitmap into vectors in one undo step; oversize/hostile images refused with a message; self-test drives it.
+
+### T-0261 Double-sided jobs: UI, object/toolpath copy to other side, per-side output (T-0243 follow-up)   [status: ready]
+Phase: 1   Module: app + app/viewmodel + core/document + core/toolpath   Depends on: T-0243, T-0224
+Goal: Job Setup double-sided page, Swap Sides button and keys, multi-sided view drawing (from multiSidedView), Copy/Move to Other Side for objects (mirroring transform) and toolpaths (sheet link on toolpath records), apply shiftMovesZ(sheetTopZ) in Save Toolpaths so each side posts with the correct Z zero, switching back to single-sided, Preview All Sides. Needs owner confirmation of the 'Zero off same side' interpretation (T-0243 ADR) before dispatch if the coder cannot settle it from the inventory.
+Acceptance criteria:
+  1. A two-sided job can be set up, drawn, copied across and saved with per-side posts whose Z zero matches the side; self-test drives it.
