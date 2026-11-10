@@ -1243,3 +1243,9 @@ Phase: 1   Module: app/viewmodel   Depends on: T-0244
 Goal: (1) makeJobSheet tool lookup is a linear find_if on full names, quadratic with many distinct tools (5000 distinct 100 KB tool names took 56 s): key a map on (number, name, diameter); (2) header says "well below 1 MB" but the measured worst case is ~740 KB: reword; (3) SVG thumbnail drops toolpaths beyond the 500th without a notice; (4) cap the stored sheet size for huge inputs.
 Acceptance criteria:
   1. 20,000 distinct tools build a sheet in well under a second; thumbnail notice present; tests.
+
+### T-0264 .carv minor-version wording and comment nits (T-0243 delta verifier)   [status: ready — LOW]
+Phase: 1   Module: core/document + docs/adr   Depends on: T-0243
+Goal: (1) ADR-0039 (and any other ADR/comments) say a minor bump makes an older build refuse the file as too new; in fact the loader only checks the major version and older builds keep unknown keys in extras: fix the wording, or decide with the owner whether older readers should refuse files that use a newer minor feature (conflicts with the forward-compat test 'a higher minor version of the same major loads'); (2) carv_io.cpp comment above struct KeepOutFile says 1.3, keep-out is 1.4; a doc fragment meant for JobFile sits above KeepOutFile.
+Acceptance criteria:
+  1. ADR and comments accurate; no behaviour change unless the owner decides otherwise.
