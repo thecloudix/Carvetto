@@ -1,4 +1,4 @@
-// T-0237: thread mill toolpaths as native toolpath records (ADR-0021 schema, ADR-0036): the
+// T-0237: thread mill toolpaths as native toolpath records (ADR-0021 schema, ADR-0037): the
 // ThreadMillParams variant alternative, its job.json params, exact round trips, non-finite refusal.
 
 #include <catch2/catch_test_macros.hpp>

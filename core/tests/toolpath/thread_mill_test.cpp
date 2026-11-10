@@ -1,4 +1,4 @@
-// T-0237: Thread milling toolpath (thread_mill.hpp, ADR-0036): helix pitch / turns of an M6x1
+// T-0237: Thread milling toolpath (thread_mill.hpp, ADR-0037): helix pitch / turns of an M6x1
 // internal thread, direction combinations, single and multi point cutters, fit tolerance, presets,
 // external threads, bore circles, hostile input.
 
