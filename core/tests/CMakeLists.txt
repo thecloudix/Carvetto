@@ -45,6 +45,7 @@ add_executable(carvetto_tests
   toolpath/pass_plan_test.cpp
   toolpath/linking_test.cpp
   toolpath/keepout_test.cpp
+  toolpath/tiling_test.cpp
   document/keepout_test.cpp
   toolpath/time_test.cpp
   toolpath/block_settle_test.cpp
