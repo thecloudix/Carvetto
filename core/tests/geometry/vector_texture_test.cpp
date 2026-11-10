@@ -1,3 +1,5 @@
+#include <cstring>
+#include <cstdint>
 #include "carvetto/geometry/vector_texture.hpp"
 
 #include <algorithm>
@@ -77,10 +79,15 @@ TEST_CASE("golden vertex pins the platform-stable arithmetic", "[texture]") {
     p.seed = 7;
     const auto v = make(kRegion, p);
     REQUIRE(v.size() > 5);
-    // Values (to 1e-12, bit-exact on the recording platform) recorded from this implementation; a change means the output changed.
+    // Values (raw IEEE-754 bits) recorded from this implementation; a change means the output changed.
     const Vec2 q = v[3].points[5];
-    REQUIRE_THAT(q.x, WithinAbs(2.0833333333290796, 1e-12));
-    REQUIRE_THAT(q.y, WithinAbs(15.099258808269781, 1e-12));
+    std::uint64_t bx = 0;
+    std::uint64_t by = 0;
+    std::memcpy(&bx, &q.x, sizeof bx);
+    std::memcpy(&by, &q.y, sizeof by);
+    INFO(std::hex << bx << " " << by);
+    REQUIRE(bx == 0x4000aaaaaaaa8540ULL);
+    REQUIRE(by == 0x402e32d20ceeb7a0ULL);
 }
 
 TEST_CASE("spacing is exact without variation and bounded with it", "[texture]") {
@@ -230,6 +237,17 @@ TEST_CASE("invalid parameters and oversize requests are errors", "[texture]") {
     huge.maxSpacing = 0.001;
     huge.wavelength = 0.001;
     REQUIRE_FALSE(generateVectorTexture(Box2{{0, 0}, {1000, 1000}}, huge).ok());
+    // Straight lines (amplitude 0) are capped too.
+    VectorTextureParams flat = good;
+    flat.amplitude = 0.0;
+    flat.wavelength = 10.0;
+    flat.spacingVariation = 0.0;
+    flat.noise = 0.0;
+    flat.maxSpacing = 0.0006;
+    REQUIRE_FALSE(generateVectorTexture(Box2{{0, 0}, {1000, 1000}}, flat).ok());
+    REQUIRE(bad([](auto& p) { p.amplitude = 2e9; }));
+    REQUIRE(bad([](auto& p) { p.maxSpacing = 2e9; }));
+    REQUIRE(bad([](auto& p) { p.wavelength = 2e9; }));
     // Just under the limit succeeds and stays bounded.
     VectorTextureParams dense = good;
     dense.maxSpacing = 1.0;

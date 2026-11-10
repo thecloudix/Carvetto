@@ -94,12 +94,18 @@ ShapeResult<std::vector<Polyline>> generateVectorTexture(const Box2& region,
     const double w = region.width();
     const double h = region.height();
     if (!(w > 0.0) || !(h > 0.0)) return R{std::string("texture region must have a positive area")};
-    if (!std::isfinite(p.angle) || std::fabs(p.angle) > kPi / 2.0 + 1e-9)
+    if (!std::isfinite(p.angle) || std::fabs(p.angle) > kPi / 2.0)
         return R{std::string("angle must be within -90 and 90 degrees")};
+    if (std::isfinite(p.maxSpacing) && p.maxSpacing > kMaxCoord)
+        return R{std::string("spacing is too large")};
     if (!finite(p.maxSpacing) || !(p.maxSpacing > 0.0))
         return R{std::string("spacing must be positive")};
+    if (std::isfinite(p.wavelength) && p.wavelength > kMaxCoord)
+        return R{std::string("wavelength is too large")};
     if (!finite(p.wavelength) || !(p.wavelength > 0.0))
         return R{std::string("wavelength must be positive")};
+    if (std::isfinite(p.amplitude) && p.amplitude > kMaxCoord)
+        return R{std::string("amplitude is too large")};
     if (!finite(p.amplitude) || p.amplitude < 0.0)
         return R{std::string("amplitude must not be negative")};
     if (!(p.spacingVariation >= 0.0 && p.spacingVariation <= 1.0))
@@ -148,6 +154,8 @@ ShapeResult<std::vector<Polyline>> generateVectorTexture(const Box2& region,
             }
         } else {
             total += 2;
+            if (total > kVectorTextureMaxVertices)
+                return R{std::string("texture would have too many vertices; increase spacing or wavelength")};
             pts = {{-hx, y}, {hx, y}};
         }
         // Rotate to world and clip, splitting where the line leaves the region.
