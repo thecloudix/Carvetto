@@ -1036,7 +1036,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0237 Thread milling toolpath   [status: ready]
+### T-0237 Thread milling toolpath   [status: in-progress]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0120, T-0220
 Goal: Thread milling: single/multi-point cutters, ISO metric/universal pitch presets, internal/external, left/right, cut up/down, fit tolerance, create circles for internal threads. Inventory 'Thread Milling Toolpath'.
 Acceptance criteria:
@@ -1090,7 +1090,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0243 Double-sided jobs (job setup, flip, swap sides, multi-sided view)   [status: ready]
+### T-0243 Double-sided jobs (job setup, flip, swap sides, multi-sided view)   [status: in-progress]
 Phase: 1   Module: core/document + app   Depends on: T-0235, T-0210
 Goal: Job Type Double Sided: flip direction, Zero off same side, per-side sheets/toolpaths, swap sides, multi-sided view; Rotary excluded.
 Acceptance criteria:
@@ -1099,7 +1099,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0244 Job sheet / toolpath summary report   [status: ready]
+### T-0244 Job sheet / toolpath summary report   [status: in-progress]
 Phase: 1   Module: app/viewmodel + core   Depends on: T-0224, T-0235
 Goal: Create Job Sheet (inventory §'Create Job Sheet') plus time estimation summary: job info, tool list, per-toolpath times, thumbnails; export to HTML/PDF-free text format first.
 Acceptance criteria:
@@ -1108,7 +1108,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0245 Trace bitmap to vectors   [status: ready]
+### T-0245 Trace bitmap to vectors   [status: in-progress]
 Phase: 1   Module: core/io + app   Depends on: T-0202, T-0210
 Goal: Trace Selected Area, B&W with threshold and colour mode (16 colours): bitmap import to fitted Bezier/line contours. Clean-room tracing algorithm, no third-party code beyond a permissive image decoder (dependency choice to director: ADR).
 Acceptance criteria:
