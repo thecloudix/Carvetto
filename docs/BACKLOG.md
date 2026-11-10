@@ -1190,7 +1190,7 @@ Goal: T-0251 delivered only the deterministic core generator (rectangle region).
 Acceptance criteria:
   1. Generated lines lie inside the selected region (holes excluded) within tolerance; dialog edits validated with units; one undo step; self-test drives the real dialog; bounded work for hostile regions.
 
-### T-0255 Dimensions: ToolController wiring, options dialog, canvas handle editing, DXF text (T-0246 follow-up)   [status: ready]
+### T-0255 Dimensions: ToolController wiring, options dialog, canvas handle editing, DXF text (T-0246 follow-up)   [status: in-progress]
 Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0246
 Goal: wire DimensionTool into ToolController (ToolKind::Dimension, toolbar/menu), Qt options dialog (decimals, font/text height, offset, custom text), canvas control-point handles and shift-select editing, Edit > Dimensions; DXF export of dimension text when a text entity path exists; reflex angular dimensions.
 Acceptance criteria:
@@ -1202,7 +1202,7 @@ Goal: menu/dock entries for the T-0241 commands, clearance field, show/hide togg
 Acceptance criteria:
   1. In the real app: create zones from selected closed vectors, change clearance, hide/show, clear; each edit one undo step; preview/save use the routed rapids.
 
-### T-0257 Document variables: Qt dialog, calculation edit boxes, toolpath references (T-0248 follow-up)   [status: in-progress]
+### T-0257 Document variables: Qt dialog, calculation edit boxes, toolpath references (T-0248 follow-up)   [status: verifying — session-only expressions; persistence etc. → T-0271]
 Phase: 1   Module: app/viewmodel + app/src + core/toolpath   Depends on: T-0248, T-0210
 Goal: Edit > Document Variables dialog (create/edit/delete/import/export), expression evaluation in numeric edit boxes (units, letter variables) and 'Insert New Document Variable', toolpath forms register addReference/removeReference so a used variable cannot be deleted (also while its form is open), text {Variable} substitution.
 Acceptance criteria:
@@ -1288,3 +1288,9 @@ Phase: 1   Module: core/tests, app/viewmodel/tests   Depends on: T-0226
 Goal: the T-0226 verifier saw 'selection removal scales near-linearly in every order' flake under heavy load; the T-0226 coder left unhardened: the 2.5-per-doubling checks in toolpath_scale_test, toolpath_residual_scale_test, perf_test, offset_unnested_hole_test, v_carve_test, boolean_batch_test, medial_axis_robustness_test, open_offset_chains_test and absolute CPU-second bounds (e.g. spiral seconds < 0.5*kAbsSlack). Measure idle ratios and under-load behaviour, harden the fragile ones (least-of-N, longer workloads, justified bounds), keep each test's guarding power (mutant check).
 Acceptance criteria:
   1. 40x runs under sustained load pass; synthetic slowdowns still fail the tests; list of what was left and why.
+
+### T-0271 Document variables follow-ups (T-0257 coder)   [status: ready]
+Phase: 1   Module: core/document + app   Depends on: T-0257
+Goal: (1) persist toolpath calculation expressions in .carv (optional 'expressions' object per toolpath record in job.json, loader/writer, ToolpathRecord field/equality; format minor allocation per the highest-required-minor scheme, ADR) so the expression link and delete protection survive save/load; (2) 'Insert New Document Variable' context menu on all numeric boxes; (3) feet (') conversion respects display units (inch mode); (4) run variable-triggered recalculation off the UI thread; (5) re-derive chamfer linked fields when a sibling holds an expression; (6) {Variable} substitution in text/data-merge if the owner wants it.
+Acceptance criteria:
+  1. Save/reload keeps expressions and blocks deleting a used variable; old files load; other items tested.
