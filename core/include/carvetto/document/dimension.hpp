@@ -21,6 +21,9 @@ namespace carvetto::document {
 inline constexpr int kMaxDimensionDecimals = 8;
 inline constexpr int kMaxDimensionAngleDecimals = 6;
 inline constexpr std::size_t kMaxDimensionTextBytes = 1024;
+/// Largest accepted coordinate or offset, and text height (mm); hostile input is refused beyond.
+inline constexpr double kMaxDimensionMagnitudeMm = 1e9;
+inline constexpr double kMaxDimensionTextHeightMm = 10000.0;
 /// The layer name dimensions are placed on by default.
 inline constexpr const char* kDimensionLayerName = "Dimensions";
 
@@ -39,7 +42,7 @@ std::array<geometry::Vec2, 3> resolveDimensionPoints(const Document& doc, const 
 /// Number of defining points the kind uses: 2 (linear, aligned, radial) or 3 (angular).
 std::size_t dimensionPointCount(DimensionKind kind);
 
-/// The measured value from `points` (mm; radians for angular, in [0, pi]; the radius or, with
+/// The measured value from `points` (mm; radians for angular, in (0, pi], or (pi, 2*pi) when reflex, see below; the radius or, with
 /// `diameter`, the diameter for radial). Nullopt when degenerate (coincident points, a zero-length
 /// arm, non-finite input).
 std::optional<double> measureDimensionPoints(const DimensionObject& dim,
@@ -64,6 +67,11 @@ std::string dimensionText(const Document& doc, const DimensionObject& dim, Units
 std::optional<double> offsetForPlacement(const DimensionObject& dim, const std::array<geometry::Vec2, 3>& points,
                                          geometry::Vec2 placement);
 
+/// An angular dimension measures the reflex angle (2*pi minus the smaller angle) when its
+/// `offsetMm` is negative (the radius is its magnitude); the dimension tool sets that when the arc
+/// is placed outside the smaller angle. This needs no stored flag, so the `.carv` format is
+/// unchanged.
+
 /// Drawing geometry of a dimension: extension lines, dimension line or arc and arrowheads (closed
 /// triangles), plus where the text goes.
 struct DimensionGeometry {
@@ -79,6 +87,33 @@ inline constexpr double kDimensionArrowFactor = 1.0;
 /// Builds the geometry from the resolved points. A closed-form function of the dimension and the
 /// part, so exploding to DXF and canvas drawing agree.
 DimensionGeometry dimensionGeometry(const Document& doc, const DimensionObject& dim);
+
+/// Control points of a dimension (T-0255), as the inventory describes: white handles change the
+/// size or placement (points, text position, arc radius), black ones the legs and the text height.
+enum class DimensionHandleKind {
+    Point,       ///< Defining point `index` (white).
+    Text,        ///< Text position: moves the annotation (white).
+    ArcRadius,   ///< Angular: radius of the dimension arc (white).
+    Leg,         ///< Linear/aligned: end of the extension legs, i.e. the dimension line position (black).
+    TextHeight,  ///< Text height (black).
+};
+struct DimensionHandle {
+    DimensionHandleKind kind{DimensionHandleKind::Point};
+    std::size_t index{0};
+    geometry::Vec2 pos{};
+    bool white{true};
+    bool operator==(const DimensionHandle&) const = default;
+};
+
+/// Handles at their current positions (empty for a degenerate dimension).
+std::vector<DimensionHandle> dimensionHandles(const Document& doc, const DimensionObject& dim);
+
+/// The dimension with `handle` dragged to `to`: a point moves (and loses its anchor), the text,
+/// arc radius or leg handles change the offset, the text-height handle scales the text height by
+/// its distance from the text centre. Nullopt when the result would be invalid or degenerate or
+/// `to` is not finite / beyond 1e9 mm. Never touches the document.
+std::optional<DimensionObject> moveDimensionHandle(const Document& doc, const DimensionObject& dim,
+                                                   const DimensionHandle& handle, geometry::Vec2 to);
 
 /// The nearest vertex or arc centre of a vector object on the active sheet within `toleranceMm`
 /// of `p`, as an anchor with its position. Used by the dimension tool to attach picked points to

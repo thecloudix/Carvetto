@@ -15,6 +15,7 @@
 #include "carvetto/document/text_object.hpp"
 #include "carvetto/geometry/transform2.hpp"
 #include "carvetto/io/dxf.hpp"
+#include "carvetto/viewmodel/dimension_text.hpp"
 
 namespace carvetto::viewmodel {
 
@@ -343,7 +344,7 @@ DxfExportOutcome exportDocumentDxf(const document::Document& doc, bool selection
                 continue;
             }
             // Dimensions are exported exploded: their lines and arrowheads as plain geometry on
-            // the dimension's layer (the text is not exported).
+            // the dimension's layer plus the text as outline geometry (no DXF TEXT entity).
             std::vector<geometry::Contour> exploded;
             const document::VectorObject* vec = obj->asVector();
             if (vec == nullptr) {
@@ -352,6 +353,9 @@ DxfExportOutcome exportDocumentDxf(const document::Document& doc, bool selection
                     continue;
                 }
                 exploded = document::dimensionGeometry(doc, *dim).contours;
+                for (geometry::Contour& t : dimensionTextContours(doc, *dim)) {
+                    exploded.push_back(std::move(t));
+                }
             }
             for (const geometry::Contour& contour : vec != nullptr ? vec->contours : exploded) {
                 if (contour.isEmpty()) {

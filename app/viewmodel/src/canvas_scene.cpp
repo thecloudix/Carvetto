@@ -6,6 +6,7 @@
 #include "carvetto/document/dimension.hpp"
 #include "carvetto/geometry/polyline.hpp"
 #include "carvetto/geometry/tolerance.hpp"
+#include "carvetto/viewmodel/dimension_text.hpp"
 
 namespace carvetto::viewmodel {
 
@@ -66,8 +67,25 @@ CanvasScene buildCanvasScene(const Document& doc, const ViewTransform& view, con
                 if (dim == nullptr) {
                     continue;
                 }
-                // Dimension lines and arrowheads; the app draws the text at dimensionGeometry().
-                dimensionContours = document::dimensionGeometry(doc, *dim).contours;
+                // Dimension lines and arrowheads, then the text as a label.
+                const document::DimensionGeometry g = document::dimensionGeometry(doc, *dim);
+                dimensionContours = g.contours;
+                std::string text = g.valid ? document::dimensionText(doc, *dim, doc.job().displayUnits) : std::string{};
+                const double reach = dim->textHeightMm * (1.0 + 0.6 * static_cast<double>(text.size()));
+                if (!text.empty() && visible.intersects(Box2(g.textCentre - Vec2{reach, reach},
+                                                              g.textCentre + Vec2{reach, reach}))) {
+                    DrawLabel label;
+                    label.object = id;
+                    label.colour = layer.colour;
+                    label.text = std::move(text);
+                    label.centrePx = view.worldToScreen(g.textCentre);
+                    label.angle = -g.textAngle;
+                    label.heightPx = dim->textHeightMm * view.scale();
+                    for (const geometry::Contour& c : dimensionTextContours(doc, *dim, g, label.text)) {
+                        label.outlinesPx.push_back(polygoniseForScreen(c, view, options.tolerancePx));
+                    }
+                    scene.labels.push_back(std::move(label));
+                }
             }
             for (const geometry::Contour& contour : vec != nullptr ? vec->contours : dimensionContours) {
                 if (contour.isEmpty() || !contour.bounds().intersects(visible)) {

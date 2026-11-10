@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <vector>
 
 #include "carvetto/document/document.hpp"
@@ -21,6 +22,20 @@ struct DrawPath {
     document::Colour colour{};
 };
 
+/// The text of a dimension (T-0255). `outlinesPx` are the glyph outlines (closed polygons, fill
+/// them non-zero) laid out with the text core; when it is empty (no font could set the text) the
+/// widget draws `text` with its own font, centred on `centrePx`, turned by `angle` (radians, screen
+/// orientation: y down) at `heightPx` digit height.
+struct DrawLabel {
+    document::ObjectId object{};
+    document::Colour colour{};
+    std::string text;
+    std::vector<std::vector<geometry::Vec2>> outlinesPx;
+    geometry::Vec2 centrePx;
+    double angle{0.0};
+    double heightPx{0.0};
+};
+
 /// Everything the 2D canvas paints for one frame, in screen pixels. The Qt widget only strokes
 /// and fills what is listed here.
 struct CanvasScene {
@@ -30,6 +45,8 @@ struct CanvasScene {
     geometry::Vec2 datumPx;
     /// Visible vector contours on the active sheet, bottom layer first, then creation order.
     std::vector<DrawPath> paths;
+    /// Dimension texts on visible layers, in the order of `paths`.
+    std::vector<DrawLabel> labels;
 };
 
 /// Options for building a scene.

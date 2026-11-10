@@ -47,6 +47,7 @@
 #include "main_window.hpp"
 #include "node_edit_menu.hpp"
 #include "properties_panel.hpp"
+#include "dimension_menu.hpp"
 #include "save_toolpaths_dialog.hpp"
 #include "tool_panel.hpp"
 #include "preview_panel.hpp"
@@ -886,6 +887,11 @@ int runSelfTest() {
         if (cur.toolpaths().size() != recordsBefore) {
             return fail("undoing the test toolpaths did not remove them");
         }
+    }
+
+    // 11. Dimensions: place, edit with handles and the dialog, delete (T-0255).
+    if (const std::string why = dimensionSelfTest(window); !why.empty()) {
+        return fail(why);
     }
 
     window.close();

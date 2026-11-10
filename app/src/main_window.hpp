@@ -35,6 +35,7 @@ class PropertiesPanel;
 class SheetsPanel;
 class RulerWidget;
 class CopiesMenu;
+class DimensionMenu;
 class NodeEditMenu;
 class PreviewPanel;
 class ReliefView;
@@ -72,6 +73,8 @@ class MainWindow : public QMainWindow {
     /// The node-editing menus and Properties dialog of the NodeEdit tool.
     NodeEditMenu* nodeEdit() const { return nodeEdit_.get(); }
     TransformMenu* transformMenu() const { return transformMenu_.get(); }
+    /// Edit > Dimensions (T-0255).
+    DimensionMenu* dimensions() const { return dimensions_.get(); }
     QDockWidget* toolpathsDock() const { return toolpathsDock_; }
     /// File > Save Toolpaths... (T-0224): posts the enabled, calculated toolpaths.
     QAction* saveToolpathsAction() const { return saveToolpathsAction_; }
@@ -165,6 +168,7 @@ class MainWindow : public QMainWindow {
     std::unique_ptr<VectorOpsMenu> vectorOps_;
     std::unique_ptr<NodeEditMenu> nodeEdit_;
     std::unique_ptr<TransformMenu> transformMenu_;
+    std::unique_ptr<DimensionMenu> dimensions_;
 
     QTabWidget* views_{nullptr};
     CanvasWidget* canvas_{nullptr};
