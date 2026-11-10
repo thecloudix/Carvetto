@@ -4134,6 +4134,47 @@ TEST_CASE("V-bit corner moves (T-0156 a): a tab is not cut away along its stretc
     CHECK(reportedAreas(r).empty());
 }
 
+TEST_CASE("Loose pieces (T-0177 a): a V-bit's 3D-tab ramps are banded as tapers, a held part is not reported", "[toolpath][profile][tabs][vbit]") {
+    // false939_7101_876: Outside, V-bit 120 deg, 3D tabs, one tab kept at a mitred corner. The ramps
+    // each side of the raised stretch were banded at the full tab-layer radius although the cone's
+    // disc there shrinks to nothing at the stretch, which closed the channel past the tab: the
+    // exact flood finds nothing free, the search reported "939.84 mm2 comes free".
+    FloodScene f = loadFloodScene(
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.5fd38c1275bb5p+5 0x0p+0\n"
+         "L 0x1.5fd38c1275bb5p+5 0x0p+0 0x1.feae47bb6b85ap+4 0x1.8d91891a97e6ep+4\n"
+         "L 0x1.feae47bb6b85ap+4 0x1.8d91891a97e6ep+4 0x1.f7340906a4611p+2 0x1.9d65e1dd1ac09p+3\n"
+         "L 0x1.f7340906a4611p+2 0x1.9d65e1dd1ac09p+3 0x1.3b18d874cea1cp+3 0x1.1e52040b538fep+5\n"
+         "L 0x1.3b18d874cea1cp+3 0x1.1e52040b538fep+5 0x0p+0 0x1.4709d67ea849cp+5\n"
+         "L 0x0p+0 0x1.4709d67ea849cp+5 0x0p+0 0x0p+0\n"
+         "P 0x1.8p+2 120 0x1.1f34a31dc2486p-9 0 1 0x0p+0 0x1.9a477a89a2943p+1 0x1.0aa951c69adbfp+0 0x1.f206014218ed2p-1 0x1.4p+2 1 0x1.abcd8b242ba0dp-1 1 1 0x1.2818b4266adfbp+2 0x1.0f01ec03ef81fp+1 0 2 0x1.09a4151161768p+4 0x0p+0 0 1 0x0p+0 1 0x1.c28c9dc92295ep+3 1 0 0x1.be7589c000922p-2 0x1.55db3221dbf2dp+2 0x1.65f3f140712c1p-1 0x1.48dab3ec36f06p+2 0 0x1.f57de31066294p-2 0 0 0x0p+0 0x0p+0 0 1 0 0 0 0 0x1.7f237dedbe314p+5 -0x1.665aea05d2d24p+3 0x1p+1\n"
+         "K 1 1\n");
+    REQUIRE(f.p.tabs.threeD);
+    const ProfileResult r = profileToolpath(f.cs, f.tool, f.p);
+    REQUIRE(r.ok());
+    CHECK(floodOf(f, r).empty());
+    CHECK(reportedAreas(r).empty());
+}
+
+TEST_CASE("Loose pieces (T-0177 a): the same, a part held by 3D tabs of a 90 deg V-bit", "[toolpath][profile][tabs][vbit]") {
+    // false939_7102_671 (m1_7102_671): a 7.6 mm2 false report, the same cause.
+    FloodScene f = loadFloodScene(
+         "C 1\n"
+         "L 0x0p+0 0x0p+0 0x1.25f963e54724bp+5 0x0p+0\n"
+         "L 0x1.25f963e54724bp+5 0x0p+0 0x1.7b06202994ea6p+5 0x1.a87a66c27873p+3\n"
+         "L 0x1.7b06202994ea6p+5 0x1.a87a66c27873p+3 0x1.1ae59719f7decp+3 0x1.809dc654c4fefp+4\n"
+         "L 0x1.1ae59719f7decp+3 0x1.809dc654c4fefp+4 0x1.544b645cbf021p+3 0x1.2f2c5e52e4bf1p+5\n"
+         "L 0x1.544b645cbf021p+3 0x1.2f2c5e52e4bf1p+5 0x0p+0 0x1.882d86698516ep+5\n"
+         "L 0x0p+0 0x1.882d86698516ep+5 0x0p+0 0x0p+0\n"
+         "P 0x1.9p+4 90 -0x1.71b06abf9ee0ap+2 1 1 0x0p+0 0x1.7facb600e53a8p+2 0x1.e1dc99b0fdd2p+0 0x0p+0 0x1.4p+2 1 0x1.30b1511444c9dp-1 1 1 0x1.cc69ed06c09f5p+1 0x1.dc7e1174d3e87p+1 0 5 0x1.15e8eebf0e42cp+5 0x0p+0 0 1 0x0p+0 3 0x1.23a1700fc7b31p+5 1 0 0x1.34264d34ececcp-4 0x1.ef4150058404bp+1 0x1.5e187a5ac73bfp+0 0x1.8ef4b1dd459e2p+2 0 0x1.365d8159f407ep-2 0 0 0x0p+0 0x0p+0 0 8 0 0 0 0 -0x1.f7af6a50383fcp+3 -0x1.8929a92db3985p+5 0x1p+1\n"
+         "K 1 1\n");
+    REQUIRE(f.p.tabs.threeD);
+    const ProfileResult r = profileToolpath(f.cs, f.tool, f.p);
+    REQUIRE(r.ok());
+    CHECK(floodOf(f, r).empty());
+    CHECK(reportedAreas(r).empty());
+}
+
 TEST_CASE("Loose pieces (T-0156): sweep scenes, sided tabs, whole scene", "[toolpath][profile][tabs]") {
     // T-0156 screen (harness vfree, exact flood of the moves, leads off, V-bit corners on), scenes
     // where the region search of sided tabs disagreed with the flood: a piece it did not see
