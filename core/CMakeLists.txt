@@ -172,6 +172,7 @@ add_library(carvetto_core STATIC
   src/geometry/contour.cpp
   src/geometry/contour_ops.cpp
   src/geometry/shapes.cpp
+  src/geometry/vector_texture.cpp
   src/document/shape_params.cpp
   src/geometry/intersect.cpp
   src/geometry/robust_predicates.cpp
@@ -264,4 +265,8 @@ if(MSVC)
 endif()
 # Written into manifest.json as the app version.
 target_compile_definitions(carvetto_core PRIVATE CARVETTO_VERSION_STRING="${PROJECT_VERSION}")
+# Platform-stable vector texture (T-0251): no fused multiply-add contraction in its arithmetic.
+if(NOT MSVC)
+  set_source_files_properties(src/geometry/vector_texture.cpp PROPERTIES COMPILE_OPTIONS "-ffp-contract=off")
+endif()
 add_library(carvetto::core ALIAS carvetto_core)
