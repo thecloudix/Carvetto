@@ -227,6 +227,8 @@ add_library(carvetto_core STATIC
   src/io/dxf_colour.cpp
   src/io/dxf_import.cpp
   src/io/dxf_export.cpp
+  src/io/raster.cpp
+  src/io/bitmap_trace.cpp
   src/io/svg_export.cpp
   src/io/svg_import.cpp
   src/io/svg_path.cpp
