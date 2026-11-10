@@ -20,6 +20,7 @@ add_executable(carvetto_tests
   geometry/polyline_test.cpp
   geometry/contour_test.cpp
   geometry/shapes_test.cpp
+  geometry/vector_texture_test.cpp
   geometry/region_polygon_test.cpp
   geometry/contour_ops_test.cpp
   geometry/signed_area_far_test.cpp
@@ -35,6 +36,7 @@ add_executable(carvetto_tests
   geometry/medial_axis_robustness_test.cpp
   geometry/delaunay_test.cpp
   geometry/edit_ops_test.cpp
+  geometry/validator_test.cpp
   geometry/edit_ops_fuzz_test.cpp
   toolpath/hostile_arc_test.cpp toolpath/huge_arc_test.cpp
   geometry/edit_ops_hardening_test.cpp
@@ -73,6 +75,7 @@ add_executable(carvetto_tests
   document/node_edit_command_test.cpp
   document/object_property_commands_test.cpp
   document/text_object_test.cpp
+  document/dimension_test.cpp
   document/variables_test.cpp
   document/selection_test.cpp
   document/undo_stack_test.cpp
@@ -103,6 +106,7 @@ add_executable(carvetto_tests
   document/carv_toolpath_test.cpp
   document/carv_storage_residuals_test.cpp
   document/carv_drill_record_test.cpp
+  document/carv_chamfer_record_test.cpp
   document/carv_engrave_record_test.cpp
   document/carv_v_carve_record_test.cpp
   io/dxf_import_test.cpp
@@ -135,6 +139,7 @@ add_executable(carvetto_tests
   toolpath/toolpath_residual_scale_test.cpp
   toolpath/drill_test.cpp
   toolpath/drill_post_test.cpp
+  toolpath/chamfer_test.cpp
   toolpath/engrave_test.cpp
   toolpath/engrave_post_test.cpp
   toolpath/v_carve_test.cpp

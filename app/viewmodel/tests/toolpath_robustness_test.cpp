@@ -91,7 +91,8 @@ std::string toolFor(ToolpathOperation op, Rng& rng) {
             return rng.pick<std::string>({"end-mill-3mm", "end-mill-6mm", "v-bit-90"});
         case ToolpathOperation::Drill: return rng.pick<std::string>({"drill-3mm", "end-mill-3mm"});
         case ToolpathOperation::Engrave: return rng.pick<std::string>({"v-bit-90", "end-mill-3mm"});
-        case ToolpathOperation::VCarving: return "v-bit-90";
+        case ToolpathOperation::VCarving:
+        case ToolpathOperation::Chamfer: return "v-bit-90";
     }
     return "end-mill-3mm";
 }
@@ -474,6 +475,7 @@ TEST_CASE("robustness: degenerate and hostile vectors", "[toolpath][robust]") {
                 case ToolpathOperation::Drill: def = drillDefinition(db); break;
                 case ToolpathOperation::Engrave: def = engraveDefinition(db); break;
                 case ToolpathOperation::VCarving: def = vCarveDefinition(db, true); break;
+                case ToolpathOperation::Chamfer: def = chamferDefinition(db); break;
             }
             if (tracing()) {
                 std::cerr << "vector " << shape.name << " op " << static_cast<int>(op) << std::endl;

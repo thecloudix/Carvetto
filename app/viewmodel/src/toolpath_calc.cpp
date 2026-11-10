@@ -10,6 +10,7 @@
 #include <variant>
 
 #include "carvetto/toolpath/drill.hpp"
+#include "carvetto/toolpath/chamfer.hpp"
 #include "carvetto/toolpath/engrave.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/profile.hpp"
@@ -208,6 +209,7 @@ ToolpathDefinition defaultDefinition(ToolpathOperation operation) {
         case ToolpathOperation::Drill: def.params = toolpath::DrillParams{}; break;
         case ToolpathOperation::Engrave: def.params = toolpath::EngraveParams{}; break;
         case ToolpathOperation::VCarving: def.params = toolpath::VCarvingParams{}; break;
+        case ToolpathOperation::Chamfer: def.params = toolpath::ChamferParams{}; break;
     }
     return def;
 }
@@ -276,6 +278,7 @@ const char* operationName(ToolpathOperation operation) {
         case ToolpathOperation::Drill: return "drill";
         case ToolpathOperation::Engrave: return "engrave";
         case ToolpathOperation::VCarving: return "v_carve";
+        case ToolpathOperation::Chamfer: return "chamfer";
     }
     return "?";
 }
@@ -286,6 +289,7 @@ bool toolAllowedFor(ToolpathOperation operation, tooling::ToolType type, bool cl
         case ToolpathOperation::Pocket: return true;
         case ToolpathOperation::Drill: return toolpath::drillToolAllowed(type);
         case ToolpathOperation::Engrave: return toolpath::engraveToolAllowed(type);
+        case ToolpathOperation::Chamfer: return toolpath::chamferToolAllowed(type);
         case ToolpathOperation::VCarving:
             return clearance ? toolpath::vCarvingClearanceToolAllowed(type) : toolpath::vCarvingToolAllowed(type);
     }
@@ -572,6 +576,13 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
         } else if (op == ToolpathOperation::Engrave) {
             toolpath::EngraveResult r = toolpath::engraveToolpath(contours, tool->tool, tool->data,
                                                                   std::get<toolpath::EngraveParams>(definition.params));
+            diagnostics = r.diagnostics;
+            if (r.ok()) {
+                items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});
+            }
+        } else if (op == ToolpathOperation::Chamfer) {
+            toolpath::ChamferResult r = toolpath::chamferToolpath(contours, tool->tool, tool->data,
+                                                                  std::get<toolpath::ChamferParams>(definition.params));
             diagnostics = r.diagnostics;
             if (r.ok()) {
                 items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});

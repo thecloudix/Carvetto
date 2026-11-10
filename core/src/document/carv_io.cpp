@@ -32,6 +32,7 @@
 #include "carv_json_reader.hpp"
 #include "carv_moves.hpp"
 #include "carv_zip.hpp"
+#include "carvetto/document/dimension.hpp"
 #include "carvetto/document/text_object.hpp"
 #include "carvetto/geometry/vec2.hpp"
 
@@ -346,6 +347,13 @@ constexpr EnumName<RectangleParams::CornerStyle> kCorners[] = {
 
 constexpr EnumName<TextAlign> kTextAligns[] = {
     {TextAlign::Left, "left"}, {TextAlign::Centre, "centre"}, {TextAlign::Right, "right"}};
+constexpr EnumName<DimensionKind> kDimensionKinds[] = {{DimensionKind::Linear, "linear"},
+                                                       {DimensionKind::Aligned, "aligned"},
+                                                       {DimensionKind::Angular, "angular"},
+                                                       {DimensionKind::Radial, "radial"}};
+constexpr EnumName<DimensionAnchor::Which> kAnchorWhich[] = {{DimensionAnchor::Which::Start, "start"},
+                                                             {DimensionAnchor::Which::End, "end"},
+                                                             {DimensionAnchor::Which::Centre, "centre"}};
 constexpr EnumName<TextMode> kTextModes[] = {
     {TextMode::Point, "point"}, {TextMode::Box, "box"}, {TextMode::Curve, "curve"}};
 
@@ -390,11 +398,16 @@ constexpr EnumName<toolpath::PeckRetract> kPeckRetracts[] = {
     {toolpath::PeckRetract::AbovePreviousPass, "above_previous_pass"}};
 constexpr EnumName<toolpath::EngraveStrategy> kEngraveStrategies[] = {
     {toolpath::EngraveStrategy::Outline, "outline"}, {toolpath::EngraveStrategy::Fill, "fill"}};
+constexpr EnumName<toolpath::ChamferType> kChamferTypes[] = {{toolpath::ChamferType::Inside, "inside"},
+                                                            {toolpath::ChamferType::Outside, "outside"}};
+constexpr EnumName<toolpath::ChamferSlope> kChamferSlopes[] = {{toolpath::ChamferSlope::Down, "down"},
+                                                              {toolpath::ChamferSlope::Up, "up"}};
 constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Profile, "profile"},
                                                       {ToolpathOperation::Pocket, "pocket"},
                                                       {ToolpathOperation::Drill, "drill"},
                                                       {ToolpathOperation::Engrave, "engrave"},
-                                                      {ToolpathOperation::VCarving, "v_carve"}};
+                                                      {ToolpathOperation::VCarving, "v_carve"},
+                                                      {ToolpathOperation::Chamfer, "chamfer"}};
 
 template <class E, std::size_t N>
 const char* nameOf(const EnumName<E> (&table)[N], E value) {
@@ -619,6 +632,35 @@ json encodeObject(const Object& obj, const CarvExtras::Impl* extras) {
         placement["max"] = encodePoint(b->placementMm.max);
         j["placement_mm"] = std::move(placement);
         j["source_ref"] = b->sourceRef;
+    } else if (const auto* d = obj.asDimension()) {
+        j["type"] = "dimension";
+        json dj = json::object();
+        dj["kind"] = nameOf(kDimensionKinds, d->kind);
+        dj["vertical"] = d->vertical;
+        dj["diameter"] = d->diameter;
+        json pts = json::array();
+        for (const DimensionPoint& p : d->points) {
+            json pj = json::object();
+            pj["pos"] = encodePoint(p.pos);
+            if (p.anchor) {
+                json aj = json::object();
+                aj["object"] = p.anchor->object.value;
+                aj["contour"] = p.anchor->contour;
+                aj["span"] = p.anchor->span;
+                aj["which"] = nameOf(kAnchorWhich, p.anchor->which);
+                pj["anchor"] = std::move(aj);
+            }
+            pts.push_back(std::move(pj));
+        }
+        dj["points"] = std::move(pts);
+        dj["offset_mm"] = d->offsetMm;
+        dj["text_height_mm"] = d->textHeightMm;
+        dj["decimals"] = d->decimals;
+        dj["angle_decimals"] = d->angleDecimals;
+        dj["use_custom_text"] = d->useCustomText;
+        dj["custom_text"] = d->customText;
+        dj["font"] = d->fontKey;
+        j["dimension"] = std::move(dj);
     } else {
         j["type"] = "group";
         json children = json::array();
@@ -775,6 +817,22 @@ json encodeVCarvingParams(const toolpath::VCarvingParams& p) {
     return j;
 }
 
+json encodeChamferParams(const toolpath::ChamferParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["type"] = nameOf(kChamferTypes, p.type);
+    j["slope"] = nameOf(kChamferSlopes, p.slope);
+    j["angle_rad"] = p.angle;
+    j["width"] = p.width;
+    j["overcut"] = p.overcut;
+    j["direction"] = nameOf(kCutDirections, p.direction);
+    j["safe_z"] = p.safeZ;
+    j["order"] = encodeOrder(p.order);
+    j["start_position"] = encodePoint(p.startPosition);
+    j["tolerance"] = encodeTolerance(p.tolerance);
+    return j;
+}
+
 /// Name of the move cache of the toolpath at `index` (0-based) in the job order.
 /// "fonts/<key>.font" for an embedded font.
 std::string fontMemberName(const std::string& key) {
@@ -812,6 +870,8 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
         j["params"] = encodeEngraveParams(*engrave);
     } else if (const auto* vCarving = std::get_if<toolpath::VCarvingParams>(&tp.params)) {
         j["params"] = encodeVCarvingParams(*vCarving);
+    } else if (const auto* chamfer = std::get_if<toolpath::ChamferParams>(&tp.params)) {
+        j["params"] = encodeChamferParams(*chamfer);
     } else {
         j["params"] = encodePocketParams(std::get<toolpath::PocketParams>(tp.params));
     }
@@ -1555,9 +1615,104 @@ struct DecodedObject {
     std::optional<std::string> unknownParams;
 };
 
-constexpr std::array<std::string_view, 13> kObjectKeys{
+constexpr std::array<std::string_view, 14> kObjectKeys{
     "id",     "layer",    "sheet",     "parent",       "name",       "type",    "contours",
-    "params", "width_px", "height_px", "placement_mm", "source_ref", "children"};
+    "params", "width_px", "height_px", "placement_mm", "source_ref", "children", "dimension"};
+constexpr std::array<std::string_view, 11> kDimensionKeys{
+    "kind",     "vertical",       "diameter", "points",         "offset_mm",       "text_height_mm",
+    "decimals", "angle_decimals", "use_custom_text", "custom_text", "font"};
+constexpr std::array<std::string_view, 2> kDimensionPointKeys{"pos", "anchor"};
+constexpr std::array<std::string_view, 4> kDimensionAnchorKeys{"object", "contour", "span", "which"};
+constexpr std::uint64_t kCostDimension = 512;
+
+/// A dimension payload (format 1.3, T-0246). Numbers must be finite and the same checks as
+/// `dimensionProblem` apply.
+DimensionObject decodeDimension(JsonReader& r, const Path& p) {
+    Record rec(r, p, kDimensionKeys);
+    DimensionObject d;
+    constexpr int kIntMax = std::numeric_limits<int>::max();
+    while (rec.next()) {
+        const Path f = rec.field();
+        const std::string& k = rec.key();
+        if (k == "kind") {
+            d.kind = readEnum(r, f, kDimensionKinds);
+        } else if (k == "vertical") {
+            d.vertical = readBool(r, f);
+        } else if (k == "diameter") {
+            d.diameter = readBool(r, f);
+        } else if (k == "points") {
+            if (r.peek() != JKind::Array) {
+                fail(f, "must be a JSON array");
+            }
+            r.beginArray();
+            std::size_t count = 0;
+            for (; r.nextElement(); ++count) {
+                if (count >= d.points.size()) {
+                    fail(f, "has more than 3 points");
+                }
+                const Path pf = f.at(count);
+                Record pr(r, pf, kDimensionPointKeys);
+                while (pr.next()) {
+                    if (pr.key() == "pos") {
+                        d.points[count].pos = readFinitePoint(r, pr.field());
+                    } else if (pr.key() == "anchor") {
+                        const Path af = pr.field();
+                        Record ar(r, af, kDimensionAnchorKeys);
+                        DimensionAnchor a;
+                        while (ar.next()) {
+                            const std::string& ak = ar.key();
+                            if (ak == "object") {
+                                a.object = ObjectId{readEntityId(r, ar.field())};
+                            } else if (ak == "contour") {
+                                a.contour = static_cast<std::uint32_t>(readInt(r, ar.field(), 0, kIntMax));
+                            } else if (ak == "span") {
+                                a.span = static_cast<std::uint32_t>(readInt(r, ar.field(), 0, kIntMax));
+                            } else if (ak == "which") {
+                                a.which = readEnum(r, ar.field(), kAnchorWhich);
+                            } else {
+                                ar.skip();
+                            }
+                        }
+                        ar.requireAll();
+                        d.points[count].anchor = a;
+                    } else {
+                        pr.skip();
+                    }
+                }
+                pr.require("pos");
+            }
+            if (count != 2 && count != 3) {
+                fail(f, "must hold 2 or 3 points");
+            }
+        } else if (k == "offset_mm") {
+            d.offsetMm = readFinite(r, f);
+        } else if (k == "text_height_mm") {
+            d.textHeightMm = readFinite(r, f);
+        } else if (k == "decimals") {
+            d.decimals = readInt(r, f, 0, kMaxDimensionDecimals);
+        } else if (k == "angle_decimals") {
+            d.angleDecimals = readInt(r, f, 0, kMaxDimensionAngleDecimals);
+        } else if (k == "use_custom_text") {
+            d.useCustomText = readBool(r, f);
+        } else if (k == "custom_text") {
+            d.customText = readStoredString(r, f);
+            if (d.customText.size() > kMaxDimensionTextBytes) {
+                fail(f, "is longer than " + std::to_string(kMaxDimensionTextBytes) + " bytes");
+            }
+        } else if (k == "font") {
+            d.fontKey = readStoredString(r, f);
+        } else {
+            rec.skip();
+        }
+    }
+    for (const char* k : {"kind", "points", "offset_mm", "text_height_mm", "decimals", "angle_decimals"}) {
+        rec.require(k);
+    }
+    if (const std::string problem = dimensionProblem(d); !problem.empty()) {
+        fail(p, problem);
+    }
+    return d;
+}
 constexpr std::array<std::string_view, 2> kPlacementKeys{"min", "max"};
 
 DecodedObject decodeObject(JsonReader& r, const Path& p) {
@@ -1570,6 +1725,7 @@ DecodedObject decodeObject(JsonReader& r, const Path& p) {
     std::uint64_t paramsExtras = 0;
     std::uint64_t paramsUnknownValues = 0;
     BitmapObject bitmap;
+    DimensionObject dimension;
     std::vector<ObjectId> children;
     constexpr int kIntMax = std::numeric_limits<int>::max();
     while (rec.next()) {
@@ -1625,6 +1781,9 @@ DecodedObject decodeObject(JsonReader& r, const Path& p) {
             placement.requireAll();
         } else if (k == "source_ref") {
             bitmap.sourceRef = readStoredString(r, f);
+        } else if (k == "dimension") {
+            r.budget().chargeDocument(kCostDimension);
+            dimension = decodeDimension(r, f);
         } else if (k == "children") {
             if (r.peek() != JKind::Array) {
                 fail(f, "must be a JSON array");
@@ -1650,7 +1809,8 @@ DecodedObject decodeObject(JsonReader& r, const Path& p) {
             }
         }
         for (const char* k :
-             {"contours", "params", "width_px", "height_px", "placement_mm", "source_ref", "children"}) {
+             {"contours", "params", "width_px", "height_px", "placement_mm", "source_ref", "children",
+              "dimension"}) {
             if (rec.has(k) && std::find_if(allowed.begin(), allowed.end(), [k](const char* a) {
                                   return std::string_view(a) == k;
                               }) == allowed.end()) {
@@ -1680,6 +1840,9 @@ DecodedObject decodeObject(JsonReader& r, const Path& p) {
         only({"width_px", "height_px", "placement_mm", "source_ref"},
              {"width_px", "height_px", "placement_mm", "source_ref"});
         obj.data = std::move(bitmap);
+    } else if (type == "dimension") {
+        only({"dimension"}, {"dimension"});
+        obj.data = std::move(dimension);
     } else if (type == "group") {
         only({"children"}, {"children"});
         obj.data = GroupObject{std::move(children)};
@@ -1852,6 +2015,11 @@ constexpr std::array<std::string_view, 15> kVCarvingKeys{
     "name",          "start_depth", "flat_depth",     "safe_z",    "clearance_strategy", "clearance_direction",
     "clearance_raster_angle_rad", "ramp_plunge", "ramp_distance", "corner_sharpen", "order", "start_position",
     "tolerance",     "tool",        "layers"};
+
+// Chamfer records exist only in job.json, like V-carve.
+constexpr std::array<std::string_view, 13> kChamferKeys{
+    "name",   "type",  "slope",          "angle_rad", "width",     "overcut", "direction",
+    "safe_z", "order", "start_position", "tolerance", "tool",      "layers"};
 
 template <std::size_t N>
 std::span<const std::string_view> keysFor(const std::array<std::string_view, N>& keys, ParamsDialect d) {
@@ -2174,6 +2342,43 @@ toolpath::VCarvingParams decodeVCarvingParams(JsonReader& r, const Path& p, Para
     return out;
 }
 
+toolpath::ChamferParams decodeChamferParams(JsonReader& r, const Path& p, ParamsDialect d,
+                                            LegacyParamsExtras* legacy) {
+    toolpath::ChamferParams out;
+    ParamsRecord rec(r, p, keysFor(kChamferKeys, d), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "type") {
+            out.type = rec.choice(kChamferTypes);
+        } else if (k == "slope") {
+            out.slope = rec.choice(kChamferSlopes);
+        } else if (rec.isAngle("angle")) {
+            out.angle = rec.angle();
+        } else if (k == "width") {
+            out.width = rec.number();
+        } else if (k == "overcut") {
+            out.overcut = rec.number();
+        } else if (k == "direction") {
+            out.direction = rec.choice(kCutDirections);
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else if (k == "order") {
+            out.order = decodeOrder(r, rec.field(), d);
+        } else if (k == "start_position") {
+            out.startPosition = readFinitePoint(r, rec.field());
+        } else if (k == "tolerance") {
+            out.tolerance = decodeTolerance(r, rec.field(), d);
+        } else if (legacy) {
+            decodeLegacyCommon(rec, *legacy);
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
 /// Decodes params captured as canonical text (already charged to the budget) for `operation`.
 ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& text, const Path& p,
                               ParamsDialect d, LegacyParamsExtras* legacy) {
@@ -2191,6 +2396,9 @@ ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& te
     }
     if (operation == ToolpathOperation::VCarving) {
         return decodeVCarvingParams(r, p, d, legacy);
+    }
+    if (operation == ToolpathOperation::Chamfer) {
+        return decodeChamferParams(r, p, d, legacy);
     }
     return decodePocketParams(r, p, d, legacy);
 }
@@ -3429,12 +3637,16 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
             }
             fontMembers.emplace(fontMemberName(key), font->bytes);
         }
-        // Format 1.3 (keep-out zones, T-0241) only when the document has zones or a non-default
-        // clearance/visibility; otherwise the version is what it was before.
+        // The minor is the highest one any used feature requires: keep-out zones (1.4, T-0241),
+        // dimension objects (1.3, T-0246), text/fonts (1.2); otherwise the base minor.
         const bool usesKeepOut =
             !doc.keepOutZones().empty() || doc.keepOutClearance() != 0.0 || !doc.keepOutVisible();
-        version["minor"] = usesKeepOut ? kCarvFormatMinor
-                           : usedFonts.empty() ? kCarvFormatMinorBase : kCarvFormatMinorText;
+        const bool hasDimensions = std::any_of(doc.objects().begin(), doc.objects().end(),
+                                               [](const auto& kv) { return kv.second.isDimension(); });
+        version["minor"] = usesKeepOut      ? kCarvFormatMinor
+                           : hasDimensions  ? kCarvFormatMinorDimension
+                           : usedFonts.empty() ? kCarvFormatMinorBase
+                                               : kCarvFormatMinorText;
         manifest["format_version"] = std::move(version);
         manifest["app_version"] = CARVETTO_VERSION_STRING;
         mergeUnknown(manifest, ex ? &ex->manifest : nullptr);

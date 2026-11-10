@@ -172,11 +172,13 @@ add_library(carvetto_core STATIC
   src/geometry/contour.cpp
   src/geometry/contour_ops.cpp
   src/geometry/shapes.cpp
+  src/geometry/vector_texture.cpp
   src/document/shape_params.cpp
   src/geometry/intersect.cpp
   src/geometry/robust_predicates.cpp
   src/geometry/delaunay.cpp
   src/geometry/edit_ops.cpp
+  src/geometry/validator.cpp
   src/geometry/medial_axis.cpp
   src/toolpath/move.cpp
   src/toolpath/toolpath.cpp
@@ -202,6 +204,7 @@ add_library(carvetto_core STATIC
   src/document/text_commands.cpp
   src/document/sheet.cpp
   src/document/object.cpp
+  src/document/dimension.cpp
   src/document/selection.cpp
   src/document/variables.cpp
   src/document/undo_stack.cpp
@@ -231,6 +234,7 @@ add_library(carvetto_core STATIC
   src/toolpath/pocket.cpp
   src/toolpath/drill.cpp
   src/toolpath/engrave.cpp
+  src/toolpath/chamfer.cpp
   src/toolpath/v_carve.cpp
   src/toolpath/v_carve_corners.cpp
   src/text/font.cpp
@@ -265,4 +269,8 @@ if(MSVC)
 endif()
 # Written into manifest.json as the app version.
 target_compile_definitions(carvetto_core PRIVATE CARVETTO_VERSION_STRING="${PROJECT_VERSION}")
+# Platform-stable vector texture (T-0251): no fused multiply-add contraction in its arithmetic.
+if(NOT MSVC)
+  set_source_files_properties(src/geometry/vector_texture.cpp PROPERTIES COMPILE_OPTIONS "-ffp-contract=off")
+endif()
 add_library(carvetto::core ALIAS carvetto_core)

@@ -1,7 +1,9 @@
 #include "carvetto/viewmodel/canvas_scene.hpp"
 
 #include <algorithm>
+#include <vector>
 
+#include "carvetto/document/dimension.hpp"
 #include "carvetto/geometry/polyline.hpp"
 #include "carvetto/geometry/tolerance.hpp"
 
@@ -57,11 +59,17 @@ CanvasScene buildCanvasScene(const Document& doc, const ViewTransform& view, con
             if (obj == nullptr || obj->sheet != sheet->id) {
                 continue;
             }
+            std::vector<geometry::Contour> dimensionContours;
             const document::VectorObject* vec = obj->asVector();
             if (vec == nullptr) {
-                continue;
+                const document::DimensionObject* dim = obj->asDimension();
+                if (dim == nullptr) {
+                    continue;
+                }
+                // Dimension lines and arrowheads; the app draws the text at dimensionGeometry().
+                dimensionContours = document::dimensionGeometry(doc, *dim).contours;
             }
-            for (const geometry::Contour& contour : vec->contours) {
+            for (const geometry::Contour& contour : vec != nullptr ? vec->contours : dimensionContours) {
                 if (contour.isEmpty() || !contour.bounds().intersects(visible)) {
                     continue;
                 }

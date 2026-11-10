@@ -128,6 +128,7 @@ TEST_CASE("zones, clearance and visibility survive save and load", "[keepout][do
     auto loaded = loadCarv(std::span<const std::uint8_t>(bytes.value()));
     REQUIRE(loaded.ok());
     const Document& d = loaded.value().document;
+    CHECK(loaded.value().formatMinor == 4);
     CHECK(loaded.value().formatMinor == kCarvFormatMinor);
     CHECK(d.keepOutZones() == doc.keepOutZones());
     CHECK(d.keepOutClearance() == 1.5);

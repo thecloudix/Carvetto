@@ -482,6 +482,7 @@ const char* operationName(document::ToolpathOperation op) {
         case document::ToolpathOperation::Drill: return "drill";
         case document::ToolpathOperation::Engrave: return "engrave";
         case document::ToolpathOperation::VCarving: return "v_carve";
+        case document::ToolpathOperation::Chamfer: return "chamfer";
     }
     return "?";
 }

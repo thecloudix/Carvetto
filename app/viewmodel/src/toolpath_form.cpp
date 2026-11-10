@@ -10,6 +10,7 @@
 #include <variant>
 
 #include "carvetto/geometry/vec2.hpp"
+#include "carvetto/toolpath/chamfer.hpp"
 #include "carvetto/viewmodel/units_format.hpp"
 
 namespace carvetto::viewmodel {
@@ -43,6 +44,12 @@ struct NumDef {
     std::function<int&(P&)> iref;     ///< for Count
     std::function<bool(const P&)> visible;
     FromTool fromTool{FromTool::No};
+    /// A field derived from the parameters (linked fields): `getter` reads it (mm, in the field's
+    /// own unit), `setter` stores a value by changing the parameters it derives from and returns
+    /// an error message, or "" when stored; `reset` puts those parameters back to their defaults.
+    std::function<double(const P&)> getter;
+    std::function<std::string(P&, double)> setter;
+    std::function<void(P&)> reset;
 };
 
 template <class P>
@@ -76,6 +83,20 @@ struct Table {
         d.zero = zero;
         d.ref = std::move(ref);
         d.visible = std::move(vis);
+        nums.push_back(std::move(d));
+        return nums.back();
+    }
+    /// A derived (linked) number: see `NumDef::getter`.
+    NumDef<P>& derived(std::string id, std::string label, std::string group, Kind kind, std::function<double(const P&)> getter,
+                       std::function<std::string(P&, double)> setter, std::function<void(P&)> reset) {
+        NumDef<P> d;
+        d.id = std::move(id);
+        d.label = std::move(label);
+        d.group = std::move(group);
+        d.kind = kind;
+        d.getter = std::move(getter);
+        d.setter = std::move(setter);
+        d.reset = std::move(reset);
         nums.push_back(std::move(d));
         return nums.back();
     }
@@ -350,6 +371,46 @@ Table<toolpath::VCarvingParams> makeVCarvingTable() {
     return t;
 }
 
+Table<toolpath::ChamferParams> makeChamferTable() {
+    using P = toolpath::ChamferParams;
+    Table<P> t;
+    // Angle A (half the V-bit angle; the form copies it from a V-bit and hides the field there),
+    // Width W and Cut Depth C are linked: C = W / (2 tan A).
+    t.num("angle", "Angle (A)", "Chamfer", Kind::Angle, false, false, [](P& p) -> double& { return p.angle; });
+    bound(t, "angle", 0.0573, 89.9427);  // 0.001 rad to just under 90 degrees
+    {
+        NumDef<P>& d = t.num("width", "Width (W)", "Chamfer", Kind::Length, false, false,
+                             [](P& p) -> double& { return p.width; });
+        d.lo = 1e-6;
+        d.hi = 2.0 * kMaxOffsetMm;
+    }
+    t.derived(
+        "cutDepth", "Cut depth (C)", "Chamfer", Kind::Length,
+        [](const P& p) { return toolpath::chamferCutDepth(p.angle, p.width); },
+        [](P& p, double v) -> std::string {
+            const double w = toolpath::chamferWidth(p.angle, v);
+            if (!(w > 0.0)) {
+                return "set the angle (or choose a V-bit) first";
+            }
+            p.width = w;
+            return {};
+        },
+        [](P& p) { p.width = P{}.width; });
+    t.num("overcut", "Overcut", "Chamfer", Kind::Length, false, true, [](P& p) -> double& { return p.overcut; });
+    bound(t, "overcut", 0.0, kMaxOffsetMm);
+    t.num("safeZ", "Safe Z", "Depth", Kind::Length, false, false, [](P& p) -> double& { return p.safeZ; });
+    addStartPosition<P>(t, [](P& p) -> geometry::Vec2& { return p.startPosition; });
+    addChordal<P>(t, [](P& p) -> geometry::Tolerance& { return p.tolerance; }, 1e-4);
+    t.option<toolpath::ChamferType>("type", "Chamfer type", "Chamfer", {"Inside", "Outside"},
+                                    [](P& p) -> toolpath::ChamferType& { return p.type; });
+    t.option<toolpath::ChamferSlope>("slope", "Slope", "Chamfer", {"Down", "Up"},
+                                     [](P& p) -> toolpath::ChamferSlope& { return p.slope; });
+    t.option<CutDirection>("direction", "Direction", "Cut", {"Climb", "Conventional"},
+                           [](P& p) -> CutDirection& { return p.direction; });
+    addOrder<P>(t, [](P& p) -> toolpath::OrderOptions& { return p.order; });
+    return t;
+}
+
 template <class P>
 const Table<P>& tableOf();
 template <>
@@ -375,6 +436,12 @@ const Table<toolpath::EngraveParams>& tableOf() {
 template <>
 const Table<toolpath::VCarvingParams>& tableOf() {
     static const Table<toolpath::VCarvingParams> t = makeVCarvingTable();
+    return t;
+}
+
+template <>
+const Table<toolpath::ChamferParams>& tableOf() {
+    static const Table<toolpath::ChamferParams> t = makeChamferTable();
     return t;
 }
 
@@ -455,6 +522,9 @@ ParsedNumber parsePlain(const std::string& text) {
 
 template <class P>
 double readValue(const NumDef<P>& d, const P& p) {
+    if (d.getter) {
+        return d.getter(p);
+    }
     P copy = p;  // the accessors take a mutable reference; the params are small
     if (d.iref) {
         return static_cast<double>(d.iref(copy));
@@ -534,7 +604,9 @@ FieldResult storeField(P& p, const std::string& id, const std::string& text, Uni
     const std::string t = trimmed(text);
     if (t.empty()) {  // reset to the default
         P defaults{};
-        if (def->iref) {
+        if (def->setter) {
+            def->reset(p);
+        } else if (def->iref) {
             def->iref(p) = def->iref(defaults);
         } else {
             def->ref(p) = def->ref(defaults);
@@ -570,7 +642,11 @@ FieldResult storeField(P& p, const std::string& id, const std::string& text, Uni
     if (def->kind == Kind::Angle && std::fabs(n.value) > 360000.0) {
         return fail("the angle is too large");
     }
-    if (def->kind == Kind::Count) {
+    if (def->setter) {
+        if (std::string bad = def->setter(p, n.value); !bad.empty()) {
+            return fail(std::move(bad));
+        }
+    } else if (def->kind == Kind::Count) {
         def->iref(p) = static_cast<int>(n.value);
     } else if (def->kind == Kind::Angle) {
         def->ref(p) = n.value * kRadPerDeg;
@@ -689,6 +765,19 @@ ToolpathForm::ToolpathForm(const ToolpathDefinition& definition, Units units) : 
     }
 }
 
+namespace {
+/// A chamfer with a V-bit takes its angle from the tool: the half angle is copied into the
+/// parameters (so the linked cut depth works) and the field is hidden and read-only.
+bool isChamferVBit(const document::ToolpathParams& params, const ToolSummary& tool) {
+    return std::holds_alternative<toolpath::ChamferParams>(params) && tool.valid && tool.type == tooling::ToolType::VBit;
+}
+void syncChamferAngle(document::ToolpathParams& params, const ToolSummary& tool) {
+    if (isChamferVBit(params, tool)) {
+        std::get<toolpath::ChamferParams>(params).angle = 0.5 * tool.includedAngleRad;
+    }
+}
+}  // namespace
+
 FieldResult ToolpathForm::setName(const std::string& name) {
     FieldResult res;
     const std::string bad = validateToolpathName(name);
@@ -702,7 +791,12 @@ FieldResult ToolpathForm::setName(const std::string& name) {
 }
 
 std::vector<ToolpathField> ToolpathForm::fields() const {
-    return std::visit([&](const auto& p) { return buildFields(p, units_, toolSummary_); }, definition_.params);
+    std::vector<ToolpathField> out =
+        std::visit([&](const auto& p) { return buildFields(p, units_, toolSummary_); }, definition_.params);
+    if (isChamferVBit(definition_.params, toolSummary_)) {
+        std::erase_if(out, [](const ToolpathField& f) { return f.id == "angle"; });
+    }
+    return out;
 }
 
 std::vector<ToolpathChoice> ToolpathForm::choices() const {
@@ -710,6 +804,12 @@ std::vector<ToolpathChoice> ToolpathForm::choices() const {
 }
 
 FieldResult ToolpathForm::setField(const std::string& id, const std::string& text) {
+    if (id == "angle" && isChamferVBit(definition_.params, toolSummary_)) {
+        FieldResult res;
+        res.ok = false;
+        res.message = "the angle is the V-bit's half angle";
+        return res;
+    }
     // Work on a copy: a rejected entry leaves the form untouched.
     return std::visit(
         [&](auto& p) {
@@ -766,6 +866,8 @@ FieldResult ToolpathForm::checkTool(const tooling::ToolDatabase& db, const docum
         summary->name = tool.name;
         summary->type = tool.type;
         summary->diameterMm = tool.diameter;
+        summary->includedAngleRad = tool.includedAngle;
+        summary->maxCutDepthMm = toolpath::chamferMaxCutDepth(tool);
         summary->data = toolpath::effectiveCuttingData(tool, lookup.tool->data);
         summary->fallback = lookup.tool->fallback;
     }
@@ -778,6 +880,7 @@ FieldResult ToolpathForm::setTool(const tooling::ToolDatabase& db, const documen
     if (res.ok) {
         definition_.tool = source;
         toolSummary_ = std::move(summary);
+        syncChamferAngle(definition_.params, toolSummary_);
     }
     return res;
 }
@@ -807,6 +910,7 @@ void ToolpathForm::refreshTools(const tooling::ToolDatabase& db) {
         ToolSummary summary;
         if (checkTool(db, definition_.tool, false, &summary).ok) {
             toolSummary_ = std::move(summary);
+            syncChamferAngle(definition_.params, toolSummary_);
         }
     }
 }

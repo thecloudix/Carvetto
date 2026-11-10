@@ -1027,7 +1027,7 @@ Goal: the app lets a user manage the document without scripts: Layers panel (lis
 Phase: 1 (usability)   Module: app/viewmodel + app/src (+ core/tooling where missing)   Depends on: T-0221, T-0224
 Goal: close the setup gap found in the T-0224/T-0221 work: the app only has the compiled-in starter tools and no machine/material setup (summary says 'rapid rate not set'; Save dialog machine list empty). Add: Tool database editor (list/add/edit/duplicate/delete tools of all supported types with the core/tooling data model: diameter, flutes, flute length, V-angle, feeds/speeds per machine x material, units mm/in), Machines editor (name, work area, default post, associated posts, rapid rate, acceleration, spindle/feed limits), Materials editor, a Job setup dialog (material block size/thickness/Z zero/ origin, units), import/export of the tool database (core/tooling serialisation if it exists), persistence in the user config dir (QStandardPaths) with versioned, validated JSON, safe atomic writes, and hostile-file handling (corrupt/huge/NaN fields -> refuse with message, keep defaults). The Toolpaths dock tool picker, Preview time readout (rapid rate) and Save Toolpaths dialog (machines) must read from these. Document references tools by name/id: handle deleted/renamed tools (stale toolpaths flag). Tests: persistence round-trip, hostile files, UI via self-test.
 
-### T-0236 Chamfer toolpath (core/toolpath + toolpaths dock form)   [status: verifying]
+### T-0236 Chamfer toolpath (core/toolpath + toolpaths dock form)   [status: done — merged PR #108]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0120, T-0153, T-0220
 Goal: Chamfer toolpath: angle, width/cut depth (linked), overcut, inside/outside, slope up/down, cut direction, V-bit or round-nose. Inventory 'Chamfer Toolpath'.
 Acceptance criteria:
@@ -1072,7 +1072,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0241 Keep-out zones (document, rapid routing, UI)   [status: ready]
+### T-0241 Keep-out zones (document, rapid routing, UI)   [status: verifying — core+viewmodel save path only; Qt UI → T-0256; needs ADR renumber (0035 taken by T-0236) and rebase vs T-0246 (both bump .carv minor, kCarvFormatMinorText)]
 Phase: 1   Module: core/document + core/toolpath/linking + app   Depends on: T-0220, T-0235
 Goal: Keep-out zones created from closed vectors (not linked to source), clearance value, show/hide, and rapid moves routed around them (post blocks INITIAL/FIRST/STRAIGHT_RAPID_MOVE variables). Persisted in .carv.
 Acceptance criteria:
@@ -1117,7 +1117,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0246 Dimensions (linear, aligned, angular, radial) with associative update   [status: ready]
+### T-0246 Dimensions (linear, aligned, angular, radial) with associative update   [status: done — merged PR #113 (first slice; wiring → T-0255)]
 Phase: 1   Module: core/document + app   Depends on: T-0211, T-0210
 Goal: Dimension objects, options (decimals, font/text height, offset, custom text), associativity on scale/move, edit via handles/selection.
 Acceptance criteria:
@@ -1126,7 +1126,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0247 Weld and Subtract vector operations (menu/UI parity)   [status: verifying]
+### T-0247 Weld and Subtract vector operations (menu/UI parity)   [status: done — merged PR #109]
 Phase: 1   Module: app/viewmodel + app   Depends on: T-0207
 Goal: Weld Vectors keeping inner regions of text, Subtract, Overlap exposed as Edit-menu commands on the selection, built on T-0207 booleans.
 Acceptance criteria:
@@ -1135,7 +1135,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0248 Document variables (Edit > Document Variables, expressions in edit boxes)   [status: ready]
+### T-0248 Document variables (Edit > Document Variables, expressions in edit boxes)   [status: done — merged PR #114 (core evaluator; UI → T-0257)]
 Phase: 1   Module: core/document + app   Depends on: T-0210
 Goal: Create/edit/import/export document variables, use {Name} and letter variables (W,H,T,P,I,M) in numeric edit boxes and text; deletion refused while used. core/document/variables.hpp exists: extend, do not duplicate.
 Acceptance criteria:
@@ -1144,7 +1144,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0249 Vector validator (find/fix open, duplicate, tiny, self-intersecting, wrong-direction vectors)   [status: verifying]
+### T-0249 Vector validator (find/fix open, duplicate, tiny, self-intersecting, wrong-direction vectors)   [status: done — merged PR #110]
 Phase: 1   Module: core/geometry + app   Depends on: T-0210, T-0208
 Goal: Vector Validator per inventory §'Vector Validator': detect and optionally fix problems, select offenders, report counts.
 Acceptance criteria:
@@ -1162,7 +1162,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0251 Texture: vector texture generator and textured area   [status: verifying — core generator only; UI and arbitrary-region clip → T-0254]
+### T-0251 Texture: vector texture generator and textured area   [status: done — merged PR #111 (core generator; UI → T-0254)]
 Phase: 1   Module: core/geometry + app   Depends on: T-0210
 Goal: Create Vector Texture (wavy fill lines: angle, spacing, wavelength, amplitude, noise, seed) as 2D vectors. The 3D 'textured area component' depends on Phase 2 and is excluded. Deterministic given seed.
 Acceptance criteria:
@@ -1178,7 +1178,7 @@ Acceptance criteria:
   1. Each item fixed on its repro scene or documented as an accepted limit in ADR-0016 §14; a >= 10k-scene V-bit-forced screen, leads off, shows no regression vs main; mutants killed; full ctest.
 Out of scope: anything outside Profile loose-piece reporting.
 
-### T-0253 Locale-dependent test: "a non-ASCII output folder works end to end" (save_toolpaths_test.cpp:693)   [status: ready — LOW]
+### T-0253 Locale-dependent test: "a non-ASCII output folder works end to end" (save_toolpaths_test.cpp:693)   [status: done — merged PR #112]
 Phase: 1   Module: app/viewmodel tests   Depends on: T-0224
 Goal: the test fails on some environments (C.UTF-8 locale, long scratch path; passes on the director's main build) because its expectation "/ete _)" depends on locale/transliteration. Make the expectation locale-independent or set the locale in the test; no product change unless the transliteration itself is locale-dependent (then fix it).
 Acceptance criteria:
@@ -1189,3 +1189,27 @@ Phase: 1   Module: app/viewmodel + app/src + core/geometry   Depends on: T-0251
 Goal: T-0251 delivered only the deterministic core generator (rectangle region). Add the Create Vector Texture dialog (angle, max spacing, spacing variation, wavelength, amplitude, noise, seed, target layer), live preview, one undo step, and clipping to the selected closed vectors (with holes) instead of the bounding box.
 Acceptance criteria:
   1. Generated lines lie inside the selected region (holes excluded) within tolerance; dialog edits validated with units; one undo step; self-test drives the real dialog; bounded work for hostile regions.
+
+### T-0255 Dimensions: ToolController wiring, options dialog, canvas handle editing, DXF text (T-0246 follow-up)   [status: ready]
+Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0246
+Goal: wire DimensionTool into ToolController (ToolKind::Dimension, toolbar/menu), Qt options dialog (decimals, font/text height, offset, custom text), canvas control-point handles and shift-select editing, Edit > Dimensions; DXF export of dimension text when a text entity path exists; reflex angular dimensions.
+Acceptance criteria:
+  1. A user can place, edit and delete each dimension kind in the real app (self-test drives it); one undo step per edit; hostile option input refused.
+
+### T-0256 Keep-out zones: Qt UI (Create from Selection, Clear Zones, clearance, show/hide, canvas drawing) (T-0241 follow-up)   [status: ready]
+Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0241
+Goal: menu/dock entries for the T-0241 commands, clearance field, show/hide toggle, canvas drawing of zones (+ clearance halo), preview shows routed rapids, summary reports unroutable rapids. Self-test drives it.
+Acceptance criteria:
+  1. In the real app: create zones from selected closed vectors, change clearance, hide/show, clear; each edit one undo step; preview/save use the routed rapids.
+
+### T-0257 Document variables: Qt dialog, calculation edit boxes, toolpath references (T-0248 follow-up)   [status: ready]
+Phase: 1   Module: app/viewmodel + app/src + core/toolpath   Depends on: T-0248, T-0210
+Goal: Edit > Document Variables dialog (create/edit/delete/import/export), expression evaluation in numeric edit boxes (units, letter variables) and 'Insert New Document Variable', toolpath forms register addReference/removeReference so a used variable cannot be deleted (also while its form is open), text {Variable} substitution.
+Acceptance criteria:
+  1. In the real app: define W-based variable, use it in a toolpath depth box, change it and the toolpath recalculates; deleting a used variable is refused; self-test drives the dialog; one undo step per edit.
+
+### T-0258 Keep-out routing for large outlines (spatial index / outline simplification) (T-0241 follow-up)   [status: ready — LOW]
+Phase: 1   Module: core/toolpath/keepout   Depends on: T-0241
+Goal: T-0241 bounds routing cost (work budget, TooComplex warning, rapid left straight) but outlines of ~1000+ vertices needing a wrapping detour exceed the budget. Add a spatial index for edge scans and/or tolerance-bounded outline simplification so large DXF-imported outlines route. Also preserve unknown keys in the keepout record.
+Acceptance criteria:
+  1. A 4000-vertex circle zone routes a blocked rapid within a few seconds CPU in Debug, with the no-rapid-enters-zone guarantee (independent oracle test); byte-identical routes for inputs routed before.

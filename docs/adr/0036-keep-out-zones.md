@@ -1,4 +1,4 @@
-# ADR-0036: Keep-out zones (document, rapid routing, post blocks, .carv 1.3)
+# ADR-0036: Keep-out zones (document, rapid routing, post blocks, .carv 1.4)
 
 Date: 2026-11-09 · Status: proposed (T-0241)
 
@@ -33,9 +33,11 @@ rapids that go round a zone but does not say how a post picks between them.
    later legs `STRAIGHT_RAPID_MOVE`. A missing block falls back to `STRAIGHT_RAPID_MOVE`, then to the
    ordinary `INITIAL_RAPID_MOVE`/`RAPID_MOVE` chain, so every existing post works unchanged. (The
    inventory names the three blocks only; this mapping is our reading of it.)
-5. **.carv 1.3.** Optional root record `keepout` in `job.json`: `{clearance_mm, visible, zones:[{id,
-   outline}]}`. Written, and `format_version.minor` set to 3, only when a document has zones or a
-   non-default clearance/visibility; documents without them keep 1.1 (or 1.2 with text). Text-only
+5. **.carv 1.4.** Optional root record `keepout` in `job.json`: `{clearance_mm, visible, zones:[{id,
+   outline}]}`. Written, and `format_version.minor` set to 4, only when a document has zones or a
+   non-default clearance/visibility; documents without them keep their previous minor (1.1, 1.2 with text, 1.3 with dimension
+   objects, T-0246). The written minor is the highest any used feature requires, so keep-out (4)
+   and dimensions (3) are independent; a document with both is 1.4. Text-only
    documents are written as 1.2 (`kCarvFormatMinorText`). Unknown keys inside `keepout` are dropped.
 
 ## Consequences
