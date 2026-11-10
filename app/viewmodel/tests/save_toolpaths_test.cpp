@@ -4,13 +4,16 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <algorithm>
 #include <atomic>
+#include <memory>
 #include <cerrno>
 #include <filesystem>
 #include <fstream>
 #include <string>
 #include <thread>
 
+#include "carvetto/document/keepout_commands.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/save_toolpaths.hpp"
 #include "toolpath_test_support.hpp"
@@ -862,4 +865,49 @@ TEST_CASE("reserved name variants and invisible characters are neutralised", "[s
     CHECK(sanitizeFileStem("a\xE2\x81\xA6" "b") == "a_b");       // isolate
     CHECK(sanitizeFileStem("a\xE2\x80\x8B" "b") == "a_b");       // zero width space
     CHECK(sanitizeFileStem("a\xEF\xBB\xBF" "b") == "a_b");       // BOM
+}
+
+TEST_CASE("keep-out zones: rapids are routed round them when posting; unroutable ones warn", "[save][keepout]") {
+    Fixture f;
+    const auto posts = shipped();
+    const PostInfo& grbl = postNamed(posts, "grbl_mm.pp");
+    SaveJob job = jobFor(f, grbl, OutputMode::SingleFile, workDir("keepout"));
+    const SaveOutput plain = generateOutput(job);
+    REQUIRE(plain.ok);
+
+    // The tool leaves home (0, 0) for the first toolpath's first rapid; put a small zone on that line.
+    const geometry::Vec3 target = f.doc.toolpaths()[0].toolpath().moves[0].to;
+    const geometry::Vec2 mid{target.x * 0.5, target.y * 0.5};
+    const auto box = [](geometry::Vec2 c, double h) {
+        return geometry::Contour::rectangle(geometry::Box2{{c.x - h, c.y - h}, {c.x + h, c.y + h}});
+    };
+    job.keepOutZones = {box(mid, 0.5)};
+    const SaveOutput routed = generateOutput(job);
+    REQUIRE(routed.ok);
+    CHECK(routed.warnings.size() == plain.warnings.size());
+    CHECK(routed.files[0].text != plain.files[0].text);
+    const auto lines = [](const std::string& t) {
+        return static_cast<std::size_t>(std::count(t.begin(), t.end(), '\n'));
+    };
+    CHECK(lines(routed.files[0].text) > lines(plain.files[0].text));
+
+    // A zone swallowing the target cannot be routed: the rapid stays straight and a warning says so.
+    job.keepOutZones = {box({target.x, target.y}, 2.0)};
+    const SaveOutput bad = generateOutput(job);
+    REQUIRE(bad.ok);
+    CHECK(bad.warnings.size() > plain.warnings.size());
+    CHECK(bad.files[0].text == plain.files[0].text);
+}
+
+TEST_CASE("keep-out zones: the save source copies the document's zones and clearance", "[save][keepout]") {
+    Fixture f;
+    REQUIRE(f.doc.execute(std::make_unique<document::CreateKeepOutZonesCommand>(
+        std::vector<geometry::Contour>{geometry::Contour::circle({100, 100}, 5.0)})));
+    REQUIRE(f.doc.execute(std::make_unique<document::SetKeepOutClearanceCommand>(2.0)));
+    const SaveSource src = makeSaveSource(f.doc, {});
+    CHECK(src.keepOutZones.size() == 1);
+    CHECK(src.keepOutClearance == 2.0);
+    const SaveSource viaSession = makeSaveSource(f.session);
+    CHECK(viaSession.keepOutZones.size() == 1);
+    CHECK(viaSession.keepOutClearance == 2.0);
 }

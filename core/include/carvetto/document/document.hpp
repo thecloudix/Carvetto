@@ -11,6 +11,7 @@
 #include "carvetto/document/command.hpp"
 #include "carvetto/document/ids.hpp"
 #include "carvetto/document/job.hpp"
+#include "carvetto/document/keepout.hpp"
 #include "carvetto/document/layer.hpp"
 #include "carvetto/document/object.hpp"
 #include "carvetto/document/selection.hpp"
@@ -195,6 +196,25 @@ class Document {
     std::vector<ObjectId> selectedVectors(const VectorSelection& selection) const;
 
     // --- Embedded fonts (T-0211) -------------------------------------------------------------
+    // --- Keep-out zones (T-0241) -------------------------------------------------------------
+    /// Zones in creation order.
+    const std::vector<KeepOutZone>& keepOutZones() const { return keepOutZones_; }
+    const KeepOutZone* findKeepOutZone(KeepOutZoneId id) const;
+    std::optional<std::size_t> keepOutZoneIndex(KeepOutZoneId id) const;
+    /// Raw insert (what commands are built from): a null id is allocated, a preset one reserves
+    /// the id generator through it (a duplicate id is a programmer error). Returns the id, or
+    /// null when the generator is exhausted.
+    KeepOutZoneId insertKeepOutZone(KeepOutZone zone, std::optional<std::size_t> index = std::nullopt);
+    std::optional<KeepOutZone> takeKeepOutZone(KeepOutZoneId id);
+    KeepOutZoneId allocateKeepOutZoneId() { return KeepOutZoneId{ids_.allocate()}; }
+    /// Distance in mm the rapid moves keep from every zone (default 0).
+    double keepOutClearance() const { return keepOutClearance_; }
+    void setKeepOutClearance(double mm) { keepOutClearance_ = mm; }
+    /// Whether the zones are drawn (a view toggle; saved with the document, not undoable).
+    bool keepOutVisible() const { return keepOutVisible_; }
+    void setKeepOutVisible(bool visible) { keepOutVisible_ = visible; }
+
+    // --- Fonts -------------------------------------------------------------------------------
     const std::map<std::string, FontAsset>& fonts() const { return fonts_; }
     const FontAsset* findFont(const std::string& key) const;
     /// Raw: stores `font` unless its key is taken, malformed, or a cap would be exceeded.
@@ -237,6 +257,9 @@ class Document {
     std::map<ObjectId, Object> objects_;
     std::vector<ToolpathRecord> toolpaths_;
     std::map<std::string, FontAsset> fonts_;
+    std::vector<KeepOutZone> keepOutZones_;
+    double keepOutClearance_{0.0};
+    bool keepOutVisible_{true};
     Selection selection_;
     DocumentVariables variables_;
     UndoStack undo_;
