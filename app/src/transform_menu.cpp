@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cmath>
 #include <memory>
+#include <utility>
 
 #include "canvas_widget.hpp"
 #include "carvetto/document/commands.hpp"
@@ -73,8 +74,8 @@ QComboBox* anchorCombo(QWidget* parent, bool cornersAndCentreOnly, HandleKind cu
 
 // --- Dialog -----------------------------------------------------------------------------------------
 
-TransformDialog::TransformDialog(viewmodel::TransformForm& form, const document::Document& doc, QWidget* parent)
-    : QDialog(parent), form_(form), doc_(doc) {
+TransformDialog::TransformDialog(viewmodel::TransformForm& form, std::function<const document::Document&()> doc, QWidget* parent)
+    : QDialog(parent), form_(form), doc_(std::move(doc)) {
     setWindowTitle(titleFor());
     auto* layout = new QVBoxLayout(this);
     body_ = new QWidget(this);
@@ -172,7 +173,7 @@ void TransformDialog::rebuild() {
             grid->addRow(line_);
             break;
     }
-    for (const viewmodel::NumericField& f : form_.fields(doc_)) {
+    for (const viewmodel::NumericField& f : form_.fields(doc_())) {
         auto* edit = new QLineEdit(body_);
         edit->setText(qs(f.text));
         edit->setPlaceholderText(qs(f.text));
@@ -395,7 +396,8 @@ viewmodel::TransformForm& TransformMenu::form(TransformFormKind kind) {
 void TransformMenu::openDialog(TransformFormKind kind) {
     viewmodel::TransformForm& f = form(kind);
     f.clear();
-    TransformDialog dialog(f, window_.currentDocument(), &window_);
+    const MainWindow& win = window_;
+    TransformDialog dialog(f, [&win]() -> const document::Document& { return win.currentDocument(); }, &window_);
     if (dialog.exec() == QDialog::Accepted) {
         run(f);
     }

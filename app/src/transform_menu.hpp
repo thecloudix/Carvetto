@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QDialog>
+#include <functional>
 #include <map>
 #include <string>
 
@@ -23,7 +24,7 @@ class MainWindow;
 /// refused. The options are written back to the form.
 class TransformDialog : public QDialog {
    public:
-    TransformDialog(viewmodel::TransformForm& form, const document::Document& doc, QWidget* parent = nullptr);
+    TransformDialog(viewmodel::TransformForm& form, std::function<const document::Document&()> doc, QWidget* parent = nullptr);
 
     void accept() override;
 
@@ -33,7 +34,7 @@ class TransformDialog : public QDialog {
     QString titleFor() const;
 
     viewmodel::TransformForm& form_;
-    const document::Document& doc_;
+    std::function<const document::Document&()> doc_;
     QWidget* body_{nullptr};
     std::map<std::string, QLineEdit*> edits_;
     QLabel* message_{nullptr};
