@@ -1117,7 +1117,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0246 Dimensions (linear, aligned, angular, radial) with associative update   [status: verifying — first slice (core object, associativity, .carv, standalone DimensionTool); ToolController/dialog/handles → T-0255]
+### T-0246 Dimensions (linear, aligned, angular, radial) with associative update   [status: done — merged PR #113 (first slice; wiring → T-0255)]
 Phase: 1   Module: core/document + app   Depends on: T-0211, T-0210
 Goal: Dimension objects, options (decimals, font/text height, offset, custom text), associativity on scale/move, edit via handles/selection.
 Acceptance criteria:
@@ -1126,7 +1126,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0247 Weld and Subtract vector operations (menu/UI parity)   [status: verifying]
+### T-0247 Weld and Subtract vector operations (menu/UI parity)   [status: done — merged PR #109]
 Phase: 1   Module: app/viewmodel + app   Depends on: T-0207
 Goal: Weld Vectors keeping inner regions of text, Subtract, Overlap exposed as Edit-menu commands on the selection, built on T-0207 booleans.
 Acceptance criteria:
@@ -1135,7 +1135,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0248 Document variables (Edit > Document Variables, expressions in edit boxes)   [status: verifying — expression evaluator in core; Qt dialog, edit-box hookup, toolpath-form reference rule → T-0257]
+### T-0248 Document variables (Edit > Document Variables, expressions in edit boxes)   [status: done — merged PR #114 (core evaluator; UI → T-0257)]
 Phase: 1   Module: core/document + app   Depends on: T-0210
 Goal: Create/edit/import/export document variables, use {Name} and letter variables (W,H,T,P,I,M) in numeric edit boxes and text; deletion refused while used. core/document/variables.hpp exists: extend, do not duplicate.
 Acceptance criteria:
@@ -1144,7 +1144,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0249 Vector validator (find/fix open, duplicate, tiny, self-intersecting, wrong-direction vectors)   [status: verifying]
+### T-0249 Vector validator (find/fix open, duplicate, tiny, self-intersecting, wrong-direction vectors)   [status: done — merged PR #110]
 Phase: 1   Module: core/geometry + app   Depends on: T-0210, T-0208
 Goal: Vector Validator per inventory §'Vector Validator': detect and optionally fix problems, select offenders, report counts.
 Acceptance criteria:
@@ -1162,7 +1162,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0251 Texture: vector texture generator and textured area   [status: verifying — core generator only; UI and arbitrary-region clip → T-0254]
+### T-0251 Texture: vector texture generator and textured area   [status: done — merged PR #111 (core generator; UI → T-0254)]
 Phase: 1   Module: core/geometry + app   Depends on: T-0210
 Goal: Create Vector Texture (wavy fill lines: angle, spacing, wavelength, amplitude, noise, seed) as 2D vectors. The 3D 'textured area component' depends on Phase 2 and is excluded. Deterministic given seed.
 Acceptance criteria:
@@ -1178,7 +1178,7 @@ Acceptance criteria:
   1. Each item fixed on its repro scene or documented as an accepted limit in ADR-0016 §14; a >= 10k-scene V-bit-forced screen, leads off, shows no regression vs main; mutants killed; full ctest.
 Out of scope: anything outside Profile loose-piece reporting.
 
-### T-0253 Locale-dependent test: "a non-ASCII output folder works end to end" (save_toolpaths_test.cpp:693)   [status: verifying]
+### T-0253 Locale-dependent test: "a non-ASCII output folder works end to end" (save_toolpaths_test.cpp:693)   [status: done — merged PR #112]
 Phase: 1   Module: app/viewmodel tests   Depends on: T-0224
 Goal: the test fails on some environments (C.UTF-8 locale, long scratch path; passes on the director's main build) because its expectation "/ete _)" depends on locale/transliteration. Make the expectation locale-independent or set the locale in the test; no product change unless the transliteration itself is locale-dependent (then fix it).
 Acceptance criteria:
