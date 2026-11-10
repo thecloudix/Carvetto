@@ -390,11 +390,16 @@ constexpr EnumName<toolpath::PeckRetract> kPeckRetracts[] = {
     {toolpath::PeckRetract::AbovePreviousPass, "above_previous_pass"}};
 constexpr EnumName<toolpath::EngraveStrategy> kEngraveStrategies[] = {
     {toolpath::EngraveStrategy::Outline, "outline"}, {toolpath::EngraveStrategy::Fill, "fill"}};
+constexpr EnumName<toolpath::ChamferType> kChamferTypes[] = {{toolpath::ChamferType::Inside, "inside"},
+                                                            {toolpath::ChamferType::Outside, "outside"}};
+constexpr EnumName<toolpath::ChamferSlope> kChamferSlopes[] = {{toolpath::ChamferSlope::Down, "down"},
+                                                              {toolpath::ChamferSlope::Up, "up"}};
 constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Profile, "profile"},
                                                       {ToolpathOperation::Pocket, "pocket"},
                                                       {ToolpathOperation::Drill, "drill"},
                                                       {ToolpathOperation::Engrave, "engrave"},
-                                                      {ToolpathOperation::VCarving, "v_carve"}};
+                                                      {ToolpathOperation::VCarving, "v_carve"},
+                                                      {ToolpathOperation::Chamfer, "chamfer"}};
 
 template <class E, std::size_t N>
 const char* nameOf(const EnumName<E> (&table)[N], E value) {
@@ -775,6 +780,22 @@ json encodeVCarvingParams(const toolpath::VCarvingParams& p) {
     return j;
 }
 
+json encodeChamferParams(const toolpath::ChamferParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["type"] = nameOf(kChamferTypes, p.type);
+    j["slope"] = nameOf(kChamferSlopes, p.slope);
+    j["angle_rad"] = p.angle;
+    j["width"] = p.width;
+    j["overcut"] = p.overcut;
+    j["direction"] = nameOf(kCutDirections, p.direction);
+    j["safe_z"] = p.safeZ;
+    j["order"] = encodeOrder(p.order);
+    j["start_position"] = encodePoint(p.startPosition);
+    j["tolerance"] = encodeTolerance(p.tolerance);
+    return j;
+}
+
 /// Name of the move cache of the toolpath at `index` (0-based) in the job order.
 /// "fonts/<key>.font" for an embedded font.
 std::string fontMemberName(const std::string& key) {
@@ -812,6 +833,8 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
         j["params"] = encodeEngraveParams(*engrave);
     } else if (const auto* vCarving = std::get_if<toolpath::VCarvingParams>(&tp.params)) {
         j["params"] = encodeVCarvingParams(*vCarving);
+    } else if (const auto* chamfer = std::get_if<toolpath::ChamferParams>(&tp.params)) {
+        j["params"] = encodeChamferParams(*chamfer);
     } else {
         j["params"] = encodePocketParams(std::get<toolpath::PocketParams>(tp.params));
     }
@@ -1853,6 +1876,11 @@ constexpr std::array<std::string_view, 15> kVCarvingKeys{
     "clearance_raster_angle_rad", "ramp_plunge", "ramp_distance", "corner_sharpen", "order", "start_position",
     "tolerance",     "tool",        "layers"};
 
+// Chamfer records exist only in job.json, like V-carve.
+constexpr std::array<std::string_view, 13> kChamferKeys{
+    "name",   "type",  "slope",          "angle_rad", "width",     "overcut", "direction",
+    "safe_z", "order", "start_position", "tolerance", "tool",      "layers"};
+
 template <std::size_t N>
 std::span<const std::string_view> keysFor(const std::array<std::string_view, N>& keys, ParamsDialect d) {
     // "tool" and "layers" (always the last two) belong to params.json only.
@@ -2174,6 +2202,43 @@ toolpath::VCarvingParams decodeVCarvingParams(JsonReader& r, const Path& p, Para
     return out;
 }
 
+toolpath::ChamferParams decodeChamferParams(JsonReader& r, const Path& p, ParamsDialect d,
+                                            LegacyParamsExtras* legacy) {
+    toolpath::ChamferParams out;
+    ParamsRecord rec(r, p, keysFor(kChamferKeys, d), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "type") {
+            out.type = rec.choice(kChamferTypes);
+        } else if (k == "slope") {
+            out.slope = rec.choice(kChamferSlopes);
+        } else if (rec.isAngle("angle")) {
+            out.angle = rec.angle();
+        } else if (k == "width") {
+            out.width = rec.number();
+        } else if (k == "overcut") {
+            out.overcut = rec.number();
+        } else if (k == "direction") {
+            out.direction = rec.choice(kCutDirections);
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else if (k == "order") {
+            out.order = decodeOrder(r, rec.field(), d);
+        } else if (k == "start_position") {
+            out.startPosition = readFinitePoint(r, rec.field());
+        } else if (k == "tolerance") {
+            out.tolerance = decodeTolerance(r, rec.field(), d);
+        } else if (legacy) {
+            decodeLegacyCommon(rec, *legacy);
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
 /// Decodes params captured as canonical text (already charged to the budget) for `operation`.
 ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& text, const Path& p,
                               ParamsDialect d, LegacyParamsExtras* legacy) {
@@ -2191,6 +2256,9 @@ ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& te
     }
     if (operation == ToolpathOperation::VCarving) {
         return decodeVCarvingParams(r, p, d, legacy);
+    }
+    if (operation == ToolpathOperation::Chamfer) {
+        return decodeChamferParams(r, p, d, legacy);
     }
     return decodePocketParams(r, p, d, legacy);
 }

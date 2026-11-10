@@ -9,6 +9,7 @@
 
 #include "carvetto/document/ids.hpp"
 #include "carvetto/toolpath/drill.hpp"
+#include "carvetto/toolpath/chamfer.hpp"
 #include "carvetto/toolpath/engrave.hpp"
 #include "carvetto/toolpath/move.hpp"
 #include "carvetto/toolpath/pocket.hpp"
@@ -56,12 +57,12 @@ struct ToolSource {
 /// (T-0151) take their cutting data as a separate argument, so `DrillParams` and `EngraveParams`
 /// hold only record content. A V-carve (T-0153) takes its tools (carving tool, clearance tools)
 /// as arguments too; each toolpath it makes is its own record with the same `VCarvingParams` and
-/// its own tool.
+/// its own tool. A chamfer (T-0236) takes its tool and cutting data as arguments too.
 using ToolpathParams = std::variant<toolpath::ProfileParams, toolpath::PocketParams, toolpath::DrillParams,
-                                    toolpath::EngraveParams, toolpath::VCarvingParams>;
+                                    toolpath::EngraveParams, toolpath::VCarvingParams, toolpath::ChamferParams>;
 
 /// Discriminator for `ToolpathRecord::operation()` (same order as the `ToolpathParams` variant).
-enum class ToolpathOperation { Profile, Pocket, Drill, Engrave, VCarving };
+enum class ToolpathOperation { Profile, Pocket, Drill, Engrave, VCarving, Chamfer };
 
 /// Computed moves of a toolpath, shared and immutable so copies (undo history, clipboard) are cheap.
 using SharedMoves = std::shared_ptr<const std::vector<toolpath::Move>>;
