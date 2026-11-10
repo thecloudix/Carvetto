@@ -1063,7 +1063,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0240 Prism carving toolpath   [status: in-progress]
+### T-0240 Prism carving toolpath   [status: verifying — ADR-0042; OWNER to confirm geometry: inverted-pyramid recess (built) vs raised prism]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0153, T-0220
 Goal: Prism Carving: prism depth, set depth for full prism, cut direction (inventory 'Prism Carving Toolpath').
 Acceptance criteria:
