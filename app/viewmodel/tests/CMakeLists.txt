@@ -44,6 +44,7 @@ add_executable(carvetto_viewmodel_tests
   toolpath_robustness_test.cpp
   toolpath_runner_test.cpp
   toolpath_session_test.cpp
+  job_sheet_test.cpp
   tool_setup_test.cpp
   vector_selector_test.cpp
   properties_model_test.cpp

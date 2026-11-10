@@ -23,6 +23,7 @@ add_library(carvetto_viewmodel STATIC
   src/tool_setup.cpp
   src/toolpath_preview.cpp
   src/time_readout.cpp
+  src/job_sheet.cpp
   src/simulation_setup.cpp
   src/simulation_controller.cpp
   src/relief_render.cpp
