@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "carvetto/geometry/boolean.hpp"
+#include "carvetto/geometry/cancel.hpp"
 #include "carvetto/geometry/fill_rule.hpp"
 #include "carvetto/geometry/offset.hpp"
 #include "carvetto/toolpath/pocket.hpp"
@@ -21,6 +22,8 @@ using geometry::JoinType;
 
 constexpr double kMaxLength = 100000.0;
 constexpr std::size_t kMaxSpans = 100000;
+constexpr std::size_t kMaxDerivedSpans = 4000;  // spans of the offset shapes handed on to the profile / pocket
+constexpr const char* kAllowanceConsumes = "the allowance consumes the whole shape";
 constexpr std::size_t kMaxBandPasses = 1000;
 constexpr double kBandOverlap = 0.9;  // band pass spacing as a fraction of the tool diameter
 
@@ -31,6 +34,14 @@ ToolpathDiagnostic diag(ToolpathIssue issue, std::string message, std::optional<
 InlayResult refuse(InlayResult r, ToolpathIssue issue, std::string message) {
     r.diagnostics.push_back(diag(issue, std::move(message)));
     return r;
+}
+
+std::size_t spanCount(const std::vector<Contour>& cs) {
+    std::size_t n = 0;
+    for (const Contour& c : cs) {
+        n += c.spans.size();
+    }
+    return n;
 }
 
 bool inRange(double v, double lo, double hi) {
@@ -134,16 +145,26 @@ InlayShapes inlayShapes(const std::vector<Contour>& contours, double toolDiamete
         out.diagnostics.push_back(diag(ToolpathIssue::NoRegion, "the closed vectors enclose no area"));
         return out;
     }
-    // Opening (what a pocket leaves), then closing (what an outside profile leaves).
-    std::vector<Contour> shape = geometry::offsetContours(region, -r, JoinType::Round, tol);
-    if (!shape.empty()) {
-        shape = geometry::offsetContours(shape, r, JoinType::Round, tol);
-    }
-    if (!shape.empty()) {
-        shape = geometry::offsetContours(shape, r, JoinType::Round, tol);
-    }
-    if (!shape.empty()) {
-        shape = geometry::offsetContours(shape, -r, JoinType::Round, tol);
+    // Opening (what a pocket leaves), then closing (what an outside profile leaves). The offset
+    // arcs are polygonised, so each stage can have more spans than its input: the span count is
+    // bounded after every stage, and a cancel request ends the run between stages.
+    const double steps[] = {-r, r, r, -r};
+    std::vector<Contour> shape = std::move(region);
+    for (const double step : steps) {
+        shape = geometry::offsetContours(shape, step, JoinType::Round, tol);
+        if (geometry::cancelRequested()) {
+            out.diagnostics.push_back(diag(ToolpathIssue::Cancelled, "cancelled"));
+            return out;
+        }
+        if (shape.empty()) {
+            break;
+        }
+        if (spanCount(shape) > kMaxDerivedSpans) {
+            out.diagnostics.push_back(
+                diag(ToolpathIssue::WorkLimitExceeded, "the offset shape has too many spans for an inlay (limit " +
+                                                           std::to_string(kMaxDerivedSpans) + ")"));
+            return out;
+        }
     }
     if (shape.empty()) {
         out.diagnostics.push_back(diag(ToolpathIssue::ToolTooLarge, "the tool is too large for the vectors"));
@@ -152,11 +173,18 @@ InlayShapes inlayShapes(const std::vector<Contour>& contours, double toolDiamete
     out.female = shape;
     if (allowance > 0.0) {
         out.male = geometry::offsetContours(shape, -allowance, JoinType::Round, tol);
+        if (geometry::cancelRequested()) {
+            return InlayShapes{{}, {}, {diag(ToolpathIssue::Cancelled, "cancelled")}};
+        }
+        if (spanCount(out.male) > kMaxDerivedSpans) {
+            return InlayShapes{{}, {}, {diag(ToolpathIssue::WorkLimitExceeded, "the offset shape has too many spans for an inlay (limit " +
+                                                                                   std::to_string(kMaxDerivedSpans) + ")")}};
+        }
     } else {
         out.male = shape;
     }
     if (out.male.empty()) {
-        out.diagnostics.push_back(diag(ToolpathIssue::NoRegion, "the allowance consumes the whole shape"));
+        out.diagnostics.push_back(diag(ToolpathIssue::NoRegion, kAllowanceConsumes));
     }
     return out;
 }
@@ -170,8 +198,17 @@ InlayResult inlayToolpath(const std::vector<Contour>& contours, const tooling::T
                       inlayToolAllowed(tool.type) ? ToolpathIssue::InvalidParameters : ToolpathIssue::InvalidTool, bad);
     }
     InlayShapes shapes = inlayShapes(contours, tool.diameter, params.allowance, params.tolerance);
-    result.diagnostics = std::move(shapes.diagnostics);
     const bool male = params.piece == InlayPiece::Male;
+    if (geometry::cancelRequested()) {
+        return refuse(std::move(result), ToolpathIssue::Cancelled, "cancelled");
+    }
+    result.diagnostics = std::move(shapes.diagnostics);
+    if (!male && !shapes.female.empty()) {
+        // The allowance only shrinks the plug: a female cut fine without it needs no warning.
+        std::erase_if(result.diagnostics, [](const ToolpathDiagnostic& d) {
+            return d.issue == ToolpathIssue::NoRegion && d.message == kAllowanceConsumes;
+        });
+    }
     const std::vector<Contour>& shape = male ? shapes.male : shapes.female;
     if (shape.empty()) {
         if (result.diagnostics.empty()) {
@@ -191,6 +228,10 @@ InlayResult inlayToolpath(const std::vector<Contour>& contours, const tooling::T
 
     // Appends one profile run; false when it made nothing (the whole piece is then refused).
     const auto absorb = [&](ProfileResult&& pr) {
+        if (geometry::cancelRequested()) {
+            result.diagnostics.push_back(diag(ToolpathIssue::Cancelled, "cancelled"));
+            return false;
+        }
         const bool ok = !pr.toolpath.isEmpty();
         if (result.toolpath.tool.name.empty() && result.toolpath.tool.diameter == 0.0) {
             result.toolpath.tool = pr.toolpath.tool;
@@ -220,9 +261,19 @@ InlayResult inlayToolpath(const std::vector<Contour>& contours, const tooling::T
         kp.safeZ = params.safeZ;
         kp.direction = params.direction;
         kp.tolerance = params.tolerance;
+        if (geometry::cancelRequested()) {
+            return refuse(std::move(result), ToolpathIssue::Cancelled, "cancelled");
+        }
+        if (spanCount(grown) > kMaxDerivedSpans) {
+            return refuse(std::move(result), ToolpathIssue::WorkLimitExceeded,
+                          "the offset shape has too many spans for an inlay (limit " + std::to_string(kMaxDerivedSpans) + ")");
+        }
         PocketResult pr = pocketToolpath(grown.empty() ? shape : grown, {PocketTool{tool, cuttingData}}, kp);
         for (ToolpathDiagnostic& d : pr.diagnostics) {
             result.diagnostics.push_back(std::move(d));
+        }
+        if (geometry::cancelRequested()) {
+            return refuse(std::move(result), ToolpathIssue::Cancelled, "cancelled");
         }
         if (!pr.toolpaths.empty()) {
             result.toolpath = std::move(pr.toolpaths.front());

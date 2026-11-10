@@ -4,6 +4,7 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <limits>
 #include <optional>
@@ -13,6 +14,7 @@
 
 #include "carvetto/geometry/boolean.hpp"
 #include "carvetto/geometry/box2.hpp"
+#include "carvetto/geometry/cancel.hpp"
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/geometry/contour_ops.hpp"
 #include "carvetto/geometry/offset.hpp"
@@ -20,6 +22,7 @@
 #include "carvetto/tooling/tool.hpp"
 #include "carvetto/toolpath/inlay.hpp"
 #include "carvetto/toolpath/move.hpp"
+#include "../geometry/cpu_time.hpp"
 
 using namespace carvetto;
 using namespace carvetto::toolpath;
@@ -358,4 +361,59 @@ TEST_CASE("inlay: hostile parameters and vectors are refused with a diagnostic",
     const InlayResult mixed = inlayToolpath({open, square()}, tool, std::nullopt, params(InlayPiece::Male));
     CHECK(mixed.ok());
     CHECK(mixed.has(ToolpathIssue::OpenContourIgnored));
+}
+
+namespace {
+
+Contour zigzagCircle(int n) {
+    std::vector<Vec2> pts;
+    for (int i = 0; i < n; ++i) {
+        const double a = 2.0 * 3.14159265358979323846 * i / n;
+        const double r = 500.0 + ((i % 2) != 0 ? 0.3 : 0.0);
+        pts.push_back({r * std::cos(a), r * std::sin(a)});
+    }
+    return polygon(pts);
+}
+
+}  // namespace
+
+TEST_CASE("inlay: a huge detailed vector is refused or finished in bounded CPU time", "[inlay][robust]") {
+    const std::vector<Contour> big{zigzagCircle(20000)};
+    const tooling::Tool tool = endMill(2.0);
+    for (const InlayPiece piece : {InlayPiece::Male, InlayPiece::Female}) {
+        InlayParams p = params(piece);
+        p.allowance = 0.1;
+        const double t0 = carvetto::test::processCpuSeconds();
+        const InlayResult r = inlayToolpath(big, tool, std::nullopt, p);
+        CHECK(carvetto::test::processCpuSeconds() - t0 < 5.0);
+        CHECK_FALSE(r.ok());
+        CHECK(r.has(ToolpathIssue::WorkLimitExceeded));
+    }
+}
+
+TEST_CASE("inlay: a cancel request stops the run with a Cancelled diagnostic", "[inlay][robust]") {
+    std::atomic<bool> stop{true};
+    carvetto::geometry::CancelScope scope(&stop);
+    const tooling::Tool tool = endMill(6.0);
+    for (const InlayPiece piece : {InlayPiece::Male, InlayPiece::Female}) {
+        const InlayResult r = inlayToolpath({square()}, tool, std::nullopt, params(piece));
+        CHECK_FALSE(r.ok());
+        CHECK(r.has(ToolpathIssue::Cancelled));
+        CHECK(r.toolpath.isEmpty());
+    }
+    const InlayShapes sh = inlayShapes({square()}, 6.0, 0.2, carvetto::geometry::Tolerance::defaults());
+    CHECK(sh.female.empty());
+    CHECK(sh.male.empty());
+}
+
+TEST_CASE("inlay female: an allowance that consumes the shape does not warn the female", "[inlay]") {
+    InlayParams p = params(InlayPiece::Female);
+    p.allowance = 12.0;
+    const InlayResult f = inlayToolpath({square()}, endMill(6.0), std::nullopt, p);
+    CHECK(f.ok());
+    CHECK_FALSE(f.has(ToolpathIssue::NoRegion));
+    p.piece = InlayPiece::Male;
+    const InlayResult m = inlayToolpath({square()}, endMill(6.0), std::nullopt, p);
+    CHECK_FALSE(m.ok());
+    CHECK(m.has(ToolpathIssue::NoRegion));
 }
