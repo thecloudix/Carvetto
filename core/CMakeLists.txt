@@ -202,6 +202,7 @@ add_library(carvetto_core STATIC
   src/document/text_commands.cpp
   src/document/sheet.cpp
   src/document/object.cpp
+  src/document/dimension.cpp
   src/document/selection.cpp
   src/document/variables.cpp
   src/document/undo_stack.cpp

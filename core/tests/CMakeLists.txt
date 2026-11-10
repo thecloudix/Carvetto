@@ -72,6 +72,7 @@ add_executable(carvetto_tests
   document/node_edit_command_test.cpp
   document/object_property_commands_test.cpp
   document/text_object_test.cpp
+  document/dimension_test.cpp
   document/variables_test.cpp
   document/selection_test.cpp
   document/undo_stack_test.cpp

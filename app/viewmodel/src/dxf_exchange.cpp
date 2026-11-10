@@ -10,6 +10,7 @@
 #include <utility>
 
 #include "carvetto/document/commands.hpp"
+#include "carvetto/document/dimension.hpp"
 #include "carvetto/document/text_commands.hpp"
 #include "carvetto/document/text_object.hpp"
 #include "carvetto/geometry/transform2.hpp"
@@ -338,11 +339,21 @@ DxfExportOutcome exportDocumentDxf(const document::Document& doc, bool selection
         std::map<document::LayerId, std::size_t> layerIndex;
         for (const document::ObjectId id : ids) {
             const document::Object* obj = doc.findObject(id);
-            const document::VectorObject* vec = obj != nullptr ? obj->asVector() : nullptr;
-            if (vec == nullptr || obj->sheet != doc.activeSheet()) {
+            if (obj == nullptr || obj->sheet != doc.activeSheet()) {
                 continue;
             }
-            for (const geometry::Contour& contour : vec->contours) {
+            // Dimensions are exported exploded: their lines and arrowheads as plain geometry on
+            // the dimension's layer (the text is not exported).
+            std::vector<geometry::Contour> exploded;
+            const document::VectorObject* vec = obj->asVector();
+            if (vec == nullptr) {
+                const document::DimensionObject* dim = obj->asDimension();
+                if (dim == nullptr) {
+                    continue;
+                }
+                exploded = document::dimensionGeometry(doc, *dim).contours;
+            }
+            for (const geometry::Contour& contour : vec != nullptr ? vec->contours : exploded) {
                 if (contour.isEmpty()) {
                     continue;
                 }

@@ -28,6 +28,7 @@ add_library(carvetto_viewmodel STATIC
   src/playback.cpp
   src/tools.cpp
   src/text_tool.cpp
+  src/dimension_tool.cpp
   src/transform_form.cpp
   src/transform_gesture.cpp
   src/transform_ops.cpp

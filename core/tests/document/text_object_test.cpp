@@ -387,7 +387,7 @@ TEST_CASE("text objects round trip through .carv byte for byte", "[text][documen
 
     const Bytes first = saveOk(f.doc);
     LoadedCarv loaded = loadOk(first);
-    CHECK(loaded.formatMinor == kCarvFormatMinor);
+    CHECK(loaded.formatMinor == kCarvFormatMinorText);
     CHECK(loaded.extras.empty());
     REQUIRE(loaded.document.objectCount() == 3);
     CHECK(loaded.document.checkIntegrity().empty());
