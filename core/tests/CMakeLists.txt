@@ -39,6 +39,7 @@ add_executable(carvetto_tests
   geometry/validator_test.cpp
   geometry/edit_ops_fuzz_test.cpp
   toolpath/hostile_arc_test.cpp toolpath/huge_arc_test.cpp
+  toolpath/refused_contour_test.cpp
   geometry/edit_ops_hardening_test.cpp
   toolpath/move_test.cpp
   toolpath/toolpath_test.cpp

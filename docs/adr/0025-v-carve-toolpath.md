@@ -505,6 +505,13 @@ MSVC's default `/fp:precise` never contracts, and builds without FMA cannot. Exp
 (no golden changes); a GCC 15 FMA build now produces the same bytes. Tests stay free to be
 compiled either way (T-0159's contraction-independent tests keep guarding the code itself).
 
+### 12. Refused vectors (T-0183)
+A closed vector whose polygon cannot meet the medial axis's tolerance (chordal / 3, at least
+1e-4 mm) is left out of the carve with a `ContourRefused` diagnostic (ADR-0018 item 5, one per
+vector) before the crossing check and the medial axis; the other regions are carved exactly as
+without it. A member of a crossing cluster that is too coarse only at the resolving tolerance
+(chordal / 8) drops out of the cluster's union and is reported the same way.
+
 ## Alternatives
 - **Depth exactly r/tan(θ/2) with no margin:** relies on the medial axis' interpolation
   guarantee being exact between points; a margin of chordal/2 keeps AC1 by construction.
