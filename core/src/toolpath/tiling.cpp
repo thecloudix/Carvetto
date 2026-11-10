@@ -141,15 +141,16 @@ void clipArc(Emitter& em, const Move& m, Vec3 from, const Box2& r) {
     };
 
     // Merge consecutive inside intervals so an arc wholly inside stays one move.
-    std::optional<double> runStart;
+    bool inRun = false;
+    double runStart = 0.0;
     double runEnd = 0.0;
     const auto flush = [&]() {
-        if (!runStart) {
+        if (!inRun) {
             return;
         }
-        const double ta = *runStart;
+        const double ta = runStart;
         const double tb = runEnd;
-        runStart.reset();
+        inRun = false;
         if ((tb - ta) * absSweep * rad < kMinPiece) {
             return;
         }
@@ -170,7 +171,8 @@ void clipArc(Emitter& em, const Move& m, Vec3 from, const Box2& r) {
         const Vec3 mid = at((ta + tb) * 0.5);
         // A midpoint is tested with a tolerance, so an arc running along an edge is kept.
         if (inside(r, mid.xy())) {
-            if (!runStart) {
+            if (!inRun) {
+                inRun = true;
                 runStart = ta;
             }
             runEnd = tb;
