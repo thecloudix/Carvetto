@@ -1,4 +1,4 @@
-# ADR-0047: Trace Bitmap command, work budget and cancel
+# ADR-0049: Trace Bitmap command, work budget and cancel
 
 Date: 2026-11-10 · Status: accepted (T-0260; follows ADR-0038).
 
