@@ -10,9 +10,7 @@
 #include <QTemporaryDir>
 #include <cmath>
 #include <filesystem>
-#include <fstream>
 #include <memory>
-#include <sstream>
 #include <string>
 
 #include "canvas_widget.hpp"
@@ -45,13 +43,6 @@ namespace {
             return std::string("double-sided: ") + (text); \
         }                                               \
     } while (false)
-
-std::string readAll(const std::filesystem::path& path) {
-    std::ifstream in(path, std::ios::binary);
-    std::ostringstream ss;
-    ss << in.rdbuf();
-    return ss.str();
-}
 
 }  // namespace
 
