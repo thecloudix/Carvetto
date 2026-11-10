@@ -1072,7 +1072,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0241 Keep-out zones (document, rapid routing, UI)   [status: in-progress]
+### T-0241 Keep-out zones (document, rapid routing, UI)   [status: verifying — core+viewmodel save path only; Qt UI → T-0256; needs ADR renumber (0035 taken by T-0236) and rebase vs T-0246 (both bump .carv minor, kCarvFormatMinorText)]
 Phase: 1   Module: core/document + core/toolpath/linking + app   Depends on: T-0220, T-0235
 Goal: Keep-out zones created from closed vectors (not linked to source), clearance value, show/hide, and rapid moves routed around them (post blocks INITIAL/FIRST/STRAIGHT_RAPID_MOVE variables). Persisted in .carv.
 Acceptance criteria:
@@ -1195,3 +1195,9 @@ Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0246
 Goal: wire DimensionTool into ToolController (ToolKind::Dimension, toolbar/menu), Qt options dialog (decimals, font/text height, offset, custom text), canvas control-point handles and shift-select editing, Edit > Dimensions; DXF export of dimension text when a text entity path exists; reflex angular dimensions.
 Acceptance criteria:
   1. A user can place, edit and delete each dimension kind in the real app (self-test drives it); one undo step per edit; hostile option input refused.
+
+### T-0256 Keep-out zones: Qt UI (Create from Selection, Clear Zones, clearance, show/hide, canvas drawing) (T-0241 follow-up)   [status: ready]
+Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0241
+Goal: menu/dock entries for the T-0241 commands, clearance field, show/hide toggle, canvas drawing of zones (+ clearance halo), preview shows routed rapids, summary reports unroutable rapids. Self-test drives it.
+Acceptance criteria:
+  1. In the real app: create zones from selected closed vectors, change clearance, hide/show, clear; each edit one undo step; preview/save use the routed rapids.
