@@ -485,6 +485,7 @@ const char* operationName(document::ToolpathOperation op) {
         case document::ToolpathOperation::Chamfer: return "chamfer";
         case document::ToolpathOperation::ThreadMill: return "thread_mill";
         case document::ToolpathOperation::Fluting: return "fluting";
+        case document::ToolpathOperation::Prism: return "prism";
     }
     return "?";
 }

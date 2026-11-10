@@ -131,7 +131,9 @@ void CanvasWidget::paintScene(QPainter& painter, const ViewTransform& view, QSiz
         return;
     }
     painter.setRenderHint(QPainter::Antialiasing, true);
-    const viewmodel::CanvasScene scene = viewmodel::buildCanvasScene(*doc_, view);
+    viewmodel::SceneOptions sceneOptions;
+    sceneOptions.haloCache = &haloCache_;
+    const viewmodel::CanvasScene scene = viewmodel::buildCanvasScene(*doc_, view, sceneOptions);
 
     if (!scene.materialPx.isEmpty()) {
         const QRectF material = toQt(scene.materialPx);
@@ -164,6 +166,7 @@ void CanvasWidget::paintScene(QPainter& painter, const ViewTransform& view, QSiz
         painter.drawPath(qp);
     }
 
+    paintKeepOut(painter, scene);
     paintPreview(painter, view, size);
 
     // Selection: dashed bounding box around the selected objects.
@@ -182,6 +185,42 @@ void CanvasWidget::paintScene(QPainter& painter, const ViewTransform& view, QSiz
     painter.setPen(Qt::NoPen);
     painter.setBrush(QBrush(QColor(200, 30, 30)));
     painter.drawRect(QRectF(datum.x() - 4.0, datum.y() - 4.0, 8.0, 8.0));
+}
+
+void CanvasWidget::paintKeepOut(QPainter& painter, const viewmodel::CanvasScene& scene) const {
+    auto trace = [](const viewmodel::DrawPath& path) {
+        QPainterPath qp;
+        if (path.pointsPx.size() < 2) {
+            return qp;
+        }
+        qp.moveTo(toQt(path.pointsPx.front()));
+        for (std::size_t i = 1; i < path.pointsPx.size(); ++i) {
+            qp.lineTo(toQt(path.pointsPx[i]));
+        }
+        if (path.closed) {
+            qp.closeSubpath();
+        }
+        return qp;
+    };
+    // Clearance halo: a dashed outline round the zones.
+    QPen haloPen(QColor(220, 60, 60, 200));
+    haloPen.setStyle(Qt::DashLine);
+    haloPen.setWidthF(1.0);
+    haloPen.setCosmetic(true);
+    painter.setPen(haloPen);
+    painter.setBrush(Qt::NoBrush);
+    for (const viewmodel::DrawPath& path : scene.keepOutHalo) {
+        painter.drawPath(trace(path));
+    }
+    // The zones: translucent red fill with a solid outline.
+    QPen zonePen(QColor(200, 30, 30));
+    zonePen.setWidthF(1.5);
+    zonePen.setCosmetic(true);
+    painter.setPen(zonePen);
+    painter.setBrush(QBrush(QColor(220, 60, 60, 60)));
+    for (const viewmodel::DrawPath& path : scene.keepOutZones) {
+        painter.drawPath(trace(path));
+    }
 }
 
 namespace {
