@@ -1264,3 +1264,9 @@ Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0242
 Goal: Save Toolpaths dialog 'Tile Toolpaths' checkbox with strategy (individual/feed-through X/Y), tile size, overlap, order, original-position option, machine work area default; Tiling Manager panel with a tile preview over the job; self-test drives it.
 Acceptance criteria:
   1. In the real app a user tiles a job larger than the machine and saves per-tile files; oversize tiles refused; one changelog fragment.
+
+### T-0267 orderCuts is quadratic with many coincident vectors (T-0239 verifier)   [status: ready — LOW]
+Phase: 1   Module: core/toolpath (cut_order / orderCuts)   Depends on: —
+Goal: with many coincident or heavily overlapping vectors the shared cut ordering costs O(n^2): 4000 identical vectors took 10.4 s and 20000 took 204 s in fluting (orderCuts is shared with thread mill, drill, engrave). Make ordering sub-quadratic (spatial index / duplicate merge) with byte-identical order for inputs that finished before, plus a work bound.
+Acceptance criteria:
+  1. 20000 coincident vectors order in well under a second CPU; existing orders unchanged (golden tests); hostile bounds; tests.
