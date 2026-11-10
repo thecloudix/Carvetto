@@ -64,7 +64,7 @@ TEST_CASE("copy to other side mirrors the selection onto the partner sheet in on
     CHECK(b.max.x == Approx(200 - 10));
     CHECK(b.min.y == Approx(10));
     CHECK(f.doc.findObject(a)->sheet == f.front);  // the original stays
-    CHECK(f.doc.validate().empty());
+    CHECK(f.doc.checkIntegrity().empty());
     f.doc.undo();
     CHECK(f.doc.objectsOnSheet(f.back).empty());
 }
@@ -113,7 +113,7 @@ TEST_CASE("toolpaths know their sheet and copy to the other side with mirrored m
     REQUIRE(copy->moveCount() == rec->moveCount());
     const auto material = f.doc.findSheet(f.back)->materialBoundsMm();
     CHECK(*copy->moves == document::flipMoves(*rec->moves, material, document::FlipDirection::Horizontal));
-    CHECK(f.doc.validate().empty());
+    CHECK(f.doc.checkIntegrity().empty());
 
     // Recalculating the back toolpath needs its side to be active.
     const ToolpathJob job = f.session.prepare(f.session.definition(copy->id).value(), copy->id);
@@ -130,7 +130,7 @@ TEST_CASE("toolpaths know their sheet and copy to the other side with mirrored m
 TEST_CASE("switching back to single-sided unpairs the sheets in one undo step", "[viewmodel][double-sided]") {
     Fixture f;
     const std::size_t steps = f.doc.undoStack().count();
-    REQUIRE(makeSingleSided(f.doc).edit.ok == true);
+    REQUIRE(makeSingleSided(f.doc).ok);
     CHECK(f.doc.undoStack().count() == steps + 1);
     CHECK(f.doc.job().type == document::JobType::SingleSided);
     for (const document::Sheet& s : f.doc.sheets()) {
@@ -138,7 +138,7 @@ TEST_CASE("switching back to single-sided unpairs the sheets in one undo step", 
         CHECK(s.partner.isNull());
     }
     CHECK(f.doc.sheets().size() == 2);
-    CHECK(f.doc.validate().empty());
+    CHECK(f.doc.checkIntegrity().empty());
     CHECK_FALSE(makeSingleSided(f.doc).ok);
     f.doc.undo();
     CHECK(f.doc.job().type == document::JobType::DoubleSided);
