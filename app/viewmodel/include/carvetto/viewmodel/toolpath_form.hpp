@@ -36,6 +36,7 @@
 //               are linked: cutDepth = width / (2 tan angle); a V-bit's angle comes from the tool)
 //   Thread Mill startDepth maxDepth threadLength safeZ threadedLength diameter pitch fitTolerance startX startY
 //               distance chordal (pitch is hidden while a pitch preset is chosen)
+//   Prism       depth (hidden with fullPrism) stepover safeZ startX startY chordal
 // Choices carry the enum/bool inputs; see `choices()`.
 
 namespace carvetto::viewmodel {

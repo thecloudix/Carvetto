@@ -420,7 +420,8 @@ constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Profi
                                                       {ToolpathOperation::Engrave, "engrave"},
                                                       {ToolpathOperation::VCarving, "v_carve"},
                                                       {ToolpathOperation::Chamfer, "chamfer"},
-                                                      {ToolpathOperation::ThreadMill, "thread_mill"}};
+                                                      {ToolpathOperation::ThreadMill, "thread_mill"},
+                                                      {ToolpathOperation::Prism, "prism"}};
 
 template <class E, std::size_t N>
 const char* nameOf(const EnumName<E> (&table)[N], E value) {
@@ -877,6 +878,20 @@ json encodeThreadMillParams(const toolpath::ThreadMillParams& p) {
     return j;
 }
 
+json encodePrismParams(const toolpath::PrismParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["depth"] = p.depth;
+    j["full_prism"] = p.fullPrism;
+    j["stepover"] = p.stepover;
+    j["direction"] = nameOf(kCutDirections, p.direction);
+    j["safe_z"] = p.safeZ;
+    j["order"] = encodeOrder(p.order);
+    j["start_position"] = encodePoint(p.startPosition);
+    j["tolerance"] = encodeTolerance(p.tolerance);
+    return j;
+}
+
 /// Name of the move cache of the toolpath at `index` (0-based) in the job order.
 /// "fonts/<key>.font" for an embedded font.
 std::string fontMemberName(const std::string& key) {
@@ -918,6 +933,8 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
         j["params"] = encodeChamferParams(*chamfer);
     } else if (const auto* threadMill = std::get_if<toolpath::ThreadMillParams>(&tp.params)) {
         j["params"] = encodeThreadMillParams(*threadMill);
+    } else if (const auto* prism = std::get_if<toolpath::PrismParams>(&tp.params)) {
+        j["params"] = encodePrismParams(*prism);
     } else {
         j["params"] = encodePocketParams(std::get<toolpath::PocketParams>(tp.params));
     }
@@ -2091,6 +2108,11 @@ constexpr std::array<std::string_view, 20> kThreadMillKeys{
     "pitch",         "diameter",      "fit_tolerance",   "create_circles", "start_depth", "thread_length", "max_depth",
     "safe_z",        "order",         "start_position",  "tolerance",   "tool",       "layers"};
 
+// Prism records exist only in job.json, like V-carve.
+constexpr std::array<std::string_view, 11> kPrismKeys{
+    "name", "depth", "full_prism", "stepover", "direction", "safe_z", "order", "start_position", "tolerance",
+    "tool", "layers"};
+
 template <std::size_t N>
 std::span<const std::string_view> keysFor(const std::array<std::string_view, N>& keys, ParamsDialect d) {
     // "tool" and "layers" (always the last two) belong to params.json only.
@@ -2500,6 +2522,38 @@ toolpath::ThreadMillParams decodeThreadMillParams(JsonReader& r, const Path& p, 
     return out;
 }
 
+toolpath::PrismParams decodePrismParams(JsonReader& r, const Path& p, ParamsDialect d, LegacyParamsExtras* legacy) {
+    toolpath::PrismParams out;
+    ParamsRecord rec(r, p, keysFor(kPrismKeys, d), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "depth") {
+            out.depth = rec.number();
+        } else if (k == "full_prism") {
+            out.fullPrism = rec.boolean();
+        } else if (k == "stepover") {
+            out.stepover = rec.number();
+        } else if (k == "direction") {
+            out.direction = rec.choice(kCutDirections);
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else if (k == "order") {
+            out.order = decodeOrder(r, rec.field(), d);
+        } else if (k == "start_position") {
+            out.startPosition = readFinitePoint(r, rec.field());
+        } else if (k == "tolerance") {
+            out.tolerance = decodeTolerance(r, rec.field(), d);
+        } else if (legacy) {
+            decodeLegacyCommon(rec, *legacy);
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
 /// Decodes params captured as canonical text (already charged to the budget) for `operation`.
 ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& text, const Path& p,
                               ParamsDialect d, LegacyParamsExtras* legacy) {
@@ -2523,6 +2577,9 @@ ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& te
     }
     if (operation == ToolpathOperation::ThreadMill) {
         return decodeThreadMillParams(r, p, d, legacy);
+    }
+    if (operation == ToolpathOperation::Prism) {
+        return decodePrismParams(r, p, d, legacy);
     }
     return decodePocketParams(r, p, d, legacy);
 }
