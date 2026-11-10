@@ -402,12 +402,25 @@ constexpr EnumName<toolpath::ChamferType> kChamferTypes[] = {{toolpath::ChamferT
                                                             {toolpath::ChamferType::Outside, "outside"}};
 constexpr EnumName<toolpath::ChamferSlope> kChamferSlopes[] = {{toolpath::ChamferSlope::Down, "down"},
                                                               {toolpath::ChamferSlope::Up, "up"}};
+constexpr EnumName<toolpath::ThreadCutter> kThreadCutters[] = {{toolpath::ThreadCutter::SinglePoint, "single_point"},
+                                                              {toolpath::ThreadCutter::MultiPoint, "multi_point"}};
+constexpr EnumName<toolpath::ThreadType> kThreadTypes[] = {{toolpath::ThreadType::Internal, "internal"},
+                                                          {toolpath::ThreadType::External, "external"}};
+constexpr EnumName<toolpath::ThreadHand> kThreadHands[] = {{toolpath::ThreadHand::Right, "right"},
+                                                          {toolpath::ThreadHand::Left, "left"}};
+constexpr EnumName<toolpath::ThreadCutDirection> kThreadCutDirections[] = {
+    {toolpath::ThreadCutDirection::Down, "down"}, {toolpath::ThreadCutDirection::Up, "up"}};
+constexpr EnumName<toolpath::ThreadPitchPreset> kThreadPresets[] = {
+    {toolpath::ThreadPitchPreset::Custom, "custom"},
+    {toolpath::ThreadPitchPreset::IsoMetricCoarse, "iso_metric_coarse"},
+    {toolpath::ThreadPitchPreset::UnifiedCoarse, "unified_coarse"}};
 constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Profile, "profile"},
                                                       {ToolpathOperation::Pocket, "pocket"},
                                                       {ToolpathOperation::Drill, "drill"},
                                                       {ToolpathOperation::Engrave, "engrave"},
                                                       {ToolpathOperation::VCarving, "v_carve"},
-                                                      {ToolpathOperation::Chamfer, "chamfer"}};
+                                                      {ToolpathOperation::Chamfer, "chamfer"},
+                                                      {ToolpathOperation::ThreadMill, "thread_mill"}};
 
 template <class E, std::size_t N>
 const char* nameOf(const EnumName<E> (&table)[N], E value) {
@@ -833,6 +846,29 @@ json encodeChamferParams(const toolpath::ChamferParams& p) {
     return j;
 }
 
+json encodeThreadMillParams(const toolpath::ThreadMillParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["cutter"] = nameOf(kThreadCutters, p.cutter);
+    j["threaded_length"] = p.threadedLength;
+    j["type"] = nameOf(kThreadTypes, p.type);
+    j["hand"] = nameOf(kThreadHands, p.hand);
+    j["cut_direction"] = nameOf(kThreadCutDirections, p.cutDirection);
+    j["pitch_preset"] = nameOf(kThreadPresets, p.pitchPreset);
+    j["pitch"] = p.pitch;
+    j["diameter"] = p.diameter;
+    j["fit_tolerance"] = p.fitTolerance;
+    j["create_circles"] = p.createCircles;
+    j["start_depth"] = p.startDepth;
+    j["thread_length"] = p.threadLength;
+    j["max_depth"] = p.maxDepth;
+    j["safe_z"] = p.safeZ;
+    j["order"] = encodeOrder(p.order);
+    j["start_position"] = encodePoint(p.startPosition);
+    j["tolerance"] = encodeTolerance(p.tolerance);
+    return j;
+}
+
 /// Name of the move cache of the toolpath at `index` (0-based) in the job order.
 /// "fonts/<key>.font" for an embedded font.
 std::string fontMemberName(const std::string& key) {
@@ -872,6 +908,8 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
         j["params"] = encodeVCarvingParams(*vCarving);
     } else if (const auto* chamfer = std::get_if<toolpath::ChamferParams>(&tp.params)) {
         j["params"] = encodeChamferParams(*chamfer);
+    } else if (const auto* threadMill = std::get_if<toolpath::ThreadMillParams>(&tp.params)) {
+        j["params"] = encodeThreadMillParams(*threadMill);
     } else {
         j["params"] = encodePocketParams(std::get<toolpath::PocketParams>(tp.params));
     }
@@ -2021,6 +2059,12 @@ constexpr std::array<std::string_view, 13> kChamferKeys{
     "name",   "type",  "slope",          "angle_rad", "width",     "overcut", "direction",
     "safe_z", "order", "start_position", "tolerance", "tool",      "layers"};
 
+// Thread mill records exist only in job.json, like V-carve.
+constexpr std::array<std::string_view, 20> kThreadMillKeys{
+    "name",          "cutter",        "threaded_length", "type",        "hand",       "cut_direction", "pitch_preset",
+    "pitch",         "diameter",      "fit_tolerance",   "create_circles", "start_depth", "thread_length", "max_depth",
+    "safe_z",        "order",         "start_position",  "tolerance",   "tool",       "layers"};
+
 template <std::size_t N>
 std::span<const std::string_view> keysFor(const std::array<std::string_view, N>& keys, ParamsDialect d) {
     // "tool" and "layers" (always the last two) belong to params.json only.
@@ -2379,6 +2423,57 @@ toolpath::ChamferParams decodeChamferParams(JsonReader& r, const Path& p, Params
     return out;
 }
 
+toolpath::ThreadMillParams decodeThreadMillParams(JsonReader& r, const Path& p, ParamsDialect d,
+                                                  LegacyParamsExtras* legacy) {
+    toolpath::ThreadMillParams out;
+    ParamsRecord rec(r, p, keysFor(kThreadMillKeys, d), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "cutter") {
+            out.cutter = rec.choice(kThreadCutters);
+        } else if (k == "threaded_length") {
+            out.threadedLength = rec.number();
+        } else if (k == "type") {
+            out.type = rec.choice(kThreadTypes);
+        } else if (k == "hand") {
+            out.hand = rec.choice(kThreadHands);
+        } else if (k == "cut_direction") {
+            out.cutDirection = rec.choice(kThreadCutDirections);
+        } else if (k == "pitch_preset") {
+            out.pitchPreset = rec.choice(kThreadPresets);
+        } else if (k == "pitch") {
+            out.pitch = rec.number();
+        } else if (k == "diameter") {
+            out.diameter = rec.number();
+        } else if (k == "fit_tolerance") {
+            out.fitTolerance = rec.number();
+        } else if (k == "create_circles") {
+            out.createCircles = rec.boolean();
+        } else if (k == "start_depth") {
+            out.startDepth = rec.number();
+        } else if (k == "thread_length") {
+            out.threadLength = rec.number();
+        } else if (k == "max_depth") {
+            out.maxDepth = rec.number();
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else if (k == "order") {
+            out.order = decodeOrder(r, rec.field(), d);
+        } else if (k == "start_position") {
+            out.startPosition = readFinitePoint(r, rec.field());
+        } else if (k == "tolerance") {
+            out.tolerance = decodeTolerance(r, rec.field(), d);
+        } else if (legacy) {
+            decodeLegacyCommon(rec, *legacy);
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
 /// Decodes params captured as canonical text (already charged to the budget) for `operation`.
 ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& text, const Path& p,
                               ParamsDialect d, LegacyParamsExtras* legacy) {
@@ -2399,6 +2494,9 @@ ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& te
     }
     if (operation == ToolpathOperation::Chamfer) {
         return decodeChamferParams(r, p, d, legacy);
+    }
+    if (operation == ToolpathOperation::ThreadMill) {
+        return decodeThreadMillParams(r, p, d, legacy);
     }
     return decodePocketParams(r, p, d, legacy);
 }

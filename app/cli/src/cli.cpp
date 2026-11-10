@@ -483,6 +483,7 @@ const char* operationName(document::ToolpathOperation op) {
         case document::ToolpathOperation::Engrave: return "engrave";
         case document::ToolpathOperation::VCarving: return "v_carve";
         case document::ToolpathOperation::Chamfer: return "chamfer";
+        case document::ToolpathOperation::ThreadMill: return "thread_mill";
     }
     return "?";
 }

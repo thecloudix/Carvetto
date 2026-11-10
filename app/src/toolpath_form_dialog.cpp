@@ -39,6 +39,8 @@ const char* operationLabel(ToolpathOperation op) {
             return "V-Carve";
         case ToolpathOperation::Chamfer:
             return "Chamfer";
+        case ToolpathOperation::ThreadMill:
+            return "Thread Mill";
     }
     return "?";
 }
