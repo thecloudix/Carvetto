@@ -1108,7 +1108,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0245 Trace bitmap to vectors   [status: in-progress]
+### T-0245 Trace bitmap to vectors   [status: verifying — core tracer + Netpbm; app dialog/QImage decode/undo → T-0260; ADR number must be renumbered (0036 taken by T-0241)]
 Phase: 1   Module: core/io + app   Depends on: T-0202, T-0210
 Goal: Trace Selected Area, B&W with threshold and colour mode (16 colours): bitmap import to fitted Bezier/line contours. Clean-room tracing algorithm, no third-party code beyond a permissive image decoder (dependency choice to director: ADR).
 Acceptance criteria:
@@ -1219,3 +1219,9 @@ Phase: 1   Module: app/src + app/viewmodel   Depends on: T-0244
 Goal: File > Create Job Sheet action writing the HTML/text sheet via a save dialog (atomic write, safe name), open in browser, optional PDF through Qt printing, per-sheet/per-side split once T-0243 lands.
 Acceptance criteria:
   1. In the real app the action writes a job sheet equal to makeJobSheet output; hostile paths refused; self-test drives it.
+
+### T-0260 Trace Bitmap: app dialog, QImage decoding, undoable command (T-0245 follow-up)   [status: ready]
+Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0245, T-0210
+Goal: File/Edit > Trace Bitmap: choose an image (PNG/JPEG/BMP decoded with QImage in the app layer into io::RasterImage, size-checked before decode), dialog with mode (B&W threshold/invert, colour count 2..16), noise filter, corner fit, scale (mm per pixel/target size), live preview, result as one undo step with one layer per colour; Pick from 2D View; Bitmap Fading.
+Acceptance criteria:
+  1. In the real app a user traces a bitmap into vectors in one undo step; oversize/hostile images refused with a message; self-test drives it.
