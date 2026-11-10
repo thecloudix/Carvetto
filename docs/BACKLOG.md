@@ -1207,3 +1207,9 @@ Phase: 1   Module: app/viewmodel + app/src + core/toolpath   Depends on: T-0248,
 Goal: Edit > Document Variables dialog (create/edit/delete/import/export), expression evaluation in numeric edit boxes (units, letter variables) and 'Insert New Document Variable', toolpath forms register addReference/removeReference so a used variable cannot be deleted (also while its form is open), text {Variable} substitution.
 Acceptance criteria:
   1. In the real app: define W-based variable, use it in a toolpath depth box, change it and the toolpath recalculates; deleting a used variable is refused; self-test drives the dialog; one undo step per edit.
+
+### T-0258 Keep-out routing for large outlines (spatial index / outline simplification) (T-0241 follow-up)   [status: ready — LOW]
+Phase: 1   Module: core/toolpath/keepout   Depends on: T-0241
+Goal: T-0241 bounds routing cost (work budget, TooComplex warning, rapid left straight) but outlines of ~1000+ vertices needing a wrapping detour exceed the budget. Add a spatial index for edge scans and/or tolerance-bounded outline simplification so large DXF-imported outlines route. Also preserve unknown keys in the keepout record.
+Acceptance criteria:
+  1. A 4000-vertex circle zone routes a blocked rapid within a few seconds CPU in Debug, with the no-rapid-enters-zone guarantee (independent oracle test); byte-identical routes for inputs routed before.
