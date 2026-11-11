@@ -113,6 +113,7 @@ add_executable(carvetto_tests
   document/carv_drill_record_test.cpp
   document/carv_chamfer_record_test.cpp
   document/carv_thread_mill_record_test.cpp
+  document/carv_inlay_record_test.cpp
   document/carv_fluting_record_test.cpp
   document/carv_prism_record_test.cpp
   document/carv_engrave_record_test.cpp
@@ -151,6 +152,7 @@ add_executable(carvetto_tests
   toolpath/chamfer_test.cpp
   toolpath/prism_test.cpp
   toolpath/thread_mill_test.cpp
+  toolpath/inlay_test.cpp
   toolpath/fluting_test.cpp
   toolpath/photo_vcarve_test.cpp
   toolpath/engrave_test.cpp

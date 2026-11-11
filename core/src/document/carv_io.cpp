@@ -426,6 +426,12 @@ constexpr EnumName<toolpath::FluteRampType> kFluteRampTypes[] = {{toolpath::Flut
                                                                 {toolpath::FluteRampType::Smooth, "smooth"}};
 constexpr EnumName<toolpath::FluteRampBasis> kFluteRampBases[] = {{toolpath::FluteRampBasis::Length, "length"},
                                                                  {toolpath::FluteRampBasis::Percent, "percent"}};
+constexpr EnumName<toolpath::InlayPiece> kInlayPieces[] = {{toolpath::InlayPiece::Male, "male"},
+                                                          {toolpath::InlayPiece::Female, "female"}};
+constexpr EnumName<toolpath::InlayMaleStyle> kInlayMaleStyles[] = {{toolpath::InlayMaleStyle::Straight, "straight"},
+                                                                  {toolpath::InlayMaleStyle::Stepped, "stepped"}};
+constexpr EnumName<toolpath::InlayFemaleStyle> kInlayFemaleStyles[] = {{toolpath::InlayFemaleStyle::Pocket, "pocket"},
+                                                                      {toolpath::InlayFemaleStyle::Hole, "hole"}};
 constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Profile, "profile"},
                                                       {ToolpathOperation::Pocket, "pocket"},
                                                       {ToolpathOperation::Drill, "drill"},
@@ -434,7 +440,8 @@ constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Profi
                                                       {ToolpathOperation::Chamfer, "chamfer"},
                                                       {ToolpathOperation::ThreadMill, "thread_mill"},
                                                       {ToolpathOperation::Prism, "prism"},
-                                                      {ToolpathOperation::Fluting, "fluting"}};
+                                                      {ToolpathOperation::Fluting, "fluting"},
+                                                      {ToolpathOperation::Inlay, "inlay"}};
 
 template <class E, std::size_t N>
 const char* nameOf(const EnumName<E> (&table)[N], E value) {
@@ -891,6 +898,25 @@ json encodeThreadMillParams(const toolpath::ThreadMillParams& p) {
     return j;
 }
 
+json encodeInlayParams(const toolpath::InlayParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["piece"] = nameOf(kInlayPieces, p.piece);
+    j["male_style"] = nameOf(kInlayMaleStyles, p.maleStyle);
+    j["female_style"] = nameOf(kInlayFemaleStyles, p.femaleStyle);
+    j["start_depth"] = p.startDepth;
+    j["cut_depth"] = p.cutDepth;
+    j["step_depth"] = p.stepDepth;
+    j["step_width"] = p.stepWidth;
+    j["allowance"] = p.allowance;
+    j["safe_z"] = p.safeZ;
+    j["direction"] = nameOf(kCutDirections, p.direction);
+    j["order"] = encodeOrder(p.order);
+    j["start_position"] = encodePoint(p.startPosition);
+    j["tolerance"] = encodeTolerance(p.tolerance);
+    return j;
+}
+
 json encodeFlutingParams(const toolpath::FlutingParams& p) {
     json j = json::object();
     j["name"] = p.name;
@@ -982,6 +1008,8 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
         j["params"] = encodeFlutingParams(*fluting);
     } else if (const auto* prism = std::get_if<toolpath::PrismParams>(&tp.params)) {
         j["params"] = encodePrismParams(*prism);
+    } else if (const auto* inlay = std::get_if<toolpath::InlayParams>(&tp.params)) {
+        j["params"] = encodeInlayParams(*inlay);
     } else {
         j["params"] = encodePocketParams(std::get<toolpath::PocketParams>(tp.params));
     }
@@ -2163,6 +2191,11 @@ constexpr std::array<std::string_view, 13> kFlutingKeys{
 constexpr std::array<std::string_view, 11> kPrismKeys{
     "name", "depth", "full_prism", "stepover", "direction", "safe_z", "order", "start_position", "tolerance",
     "tool", "layers"};
+// Inlay records exist only in job.json, like V-carve.
+constexpr std::array<std::string_view, 16> kInlayKeys{
+    "name",        "piece",      "male_style", "female_style",   "start_depth", "cut_depth",
+    "step_depth",  "step_width", "allowance",  "safe_z",         "direction",   "order",
+    "start_position", "tolerance", "tool",     "layers"};
 
 template <std::size_t N>
 std::span<const std::string_view> keysFor(const std::array<std::string_view, N>& keys, ParamsDialect d) {
@@ -2573,6 +2606,48 @@ toolpath::ThreadMillParams decodeThreadMillParams(JsonReader& r, const Path& p, 
     return out;
 }
 
+toolpath::InlayParams decodeInlayParams(JsonReader& r, const Path& p, ParamsDialect d, LegacyParamsExtras* legacy) {
+    toolpath::InlayParams out;
+    ParamsRecord rec(r, p, keysFor(kInlayKeys, d), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "piece") {
+            out.piece = rec.choice(kInlayPieces);
+        } else if (k == "male_style") {
+            out.maleStyle = rec.choice(kInlayMaleStyles);
+        } else if (k == "female_style") {
+            out.femaleStyle = rec.choice(kInlayFemaleStyles);
+        } else if (k == "start_depth") {
+            out.startDepth = rec.number();
+        } else if (k == "cut_depth") {
+            out.cutDepth = rec.number();
+        } else if (k == "step_depth") {
+            out.stepDepth = rec.number();
+        } else if (k == "step_width") {
+            out.stepWidth = rec.number();
+        } else if (k == "allowance") {
+            out.allowance = rec.number();
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else if (k == "direction") {
+            out.direction = rec.choice(kCutDirections);
+        } else if (k == "order") {
+            out.order = decodeOrder(r, rec.field(), d);
+        } else if (k == "start_position") {
+            out.startPosition = readFinitePoint(r, rec.field());
+        } else if (k == "tolerance") {
+            out.tolerance = decodeTolerance(r, rec.field(), d);
+        } else if (legacy) {
+            decodeLegacyCommon(rec, *legacy);
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
 toolpath::FlutingParams decodeFlutingParams(JsonReader& r, const Path& p, ParamsDialect d,
                                             LegacyParamsExtras* legacy) {
     toolpath::FlutingParams out;
@@ -2671,6 +2746,9 @@ ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& te
     }
     if (operation == ToolpathOperation::Prism) {
         return decodePrismParams(r, p, d, legacy);
+    }
+    if (operation == ToolpathOperation::Inlay) {
+        return decodeInlayParams(r, p, d, legacy);
     }
     return decodePocketParams(r, p, d, legacy);
 }
