@@ -226,6 +226,24 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     outlines (malformed input, cut as a region) are best effort: the start may switch between the
     corner rule and the fallback under translation (about 2 mm, repro5/selfx_*). The sliver bound
     above is sub-µm only up to about 2000 mm coordinates (1.56 µm at 3 m).
+    Mutant notes (T-0174; harness t0158v5 mutants of the corner rule). Killed by tests: N8 (Bezier
+    edges not replaced by their chord: the T-0174 (d) test), N1 (spans on both offsets count as on
+    neither), N2 (no "contains a nearest span" check) and N11 (no chordal slack in the arc ring
+    test): pinned scenes found by a 4000-scene differential fuzz, at the end of
+    profile_tip_start_test.cpp. Not killable, an unreachability argument: N3 (`count >= 1` for `count == 1`:
+    with several corners the last wins instead of the fallback). `count` is the number of places in the cut's cyclic label
+    sequence where a span on the first edge's offset is followed, over unlabelled spans only, by one
+    on the other edge's offset, with a span at the nearest distance among them. Each input edge
+    contributes one offset, and the offset of a contour runs round it in the contour's order, so
+    the offsets of the tip's two edges are adjacent only at the corner they share; trimming by other
+    vectors splits an offset into pieces but never interleaves two edges' pieces (that needs the
+    cut to visit the in edge's offset twice, which the single contour the target belongs to does not
+    do), and a second transition would also need a span at the nearest distance, which on the tip's
+    own offsets is only the foot of the target on each. A pair elsewhere (another vector's offset
+    between the pieces) is the case N2 covers, and there the pair is rejected, never counted. The
+    differential fuzz (4000 scenes, 24-64 N2 events, no event with count > 1) agrees: with N3 the
+    fuzz output is identical to the rule's, so any scene with count > 1 would have to be built
+    from an interleaved outline that no input produces.
     Near spans in two or more separate places (a box-centre anchor on a symmetric shape) are not
     broken by rule and still follow rounding (T-0166). The rules apply to all three start modes.
     They are stable under ulp and 1e-9 relative perturbations and translations, and they compare
