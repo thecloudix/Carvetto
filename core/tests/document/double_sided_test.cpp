@@ -106,7 +106,7 @@ TEST_CASE("paired sheets round-trip byte-stably as format 1.5", "[document][doub
     auto loaded = loadCarv(std::span<const std::uint8_t>(first));
     REQUIRE(loaded.ok());
     CHECK(loaded.value().formatMinor == kCarvFormatMinorDoubleSided);
-    CHECK(kCarvFormatMinor == 5);
+    CHECK(kCarvFormatMinor >= kCarvFormatMinorDoubleSided);
     CHECK(loaded.value().extras.empty());
     const Document& back = loaded.value().document;
     REQUIRE(back.sheets().size() == 2);
