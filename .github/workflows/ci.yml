@@ -3,7 +3,15 @@ name: CI
 on:
   push:
     branches: [main]
+    # Backlog/ADR-only commits to main change no code: do not spend four runner jobs on them.
+    paths-ignore: ['docs/**']
   pull_request:
+
+# A newer push to the same PR branch supersedes the older run: cancel it so stale runs do not
+# starve the runner queue. Runs on main are never cancelled.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   linux-core:
@@ -34,12 +42,16 @@ jobs:
         with:
           path: .fc-src
           key: fc-src-linux-core-${{ hashFiles('core/CMakeLists.txt', 'core/tests/CMakeLists.txt', 'app/**/CMakeLists.txt') }}
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: linux-core
       - name: Configure
-        run: tools/ci/configure.sh -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCARVETTO_BUILD_APP=OFF
+        run: tools/ci/configure.sh -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCARVETTO_BUILD_APP=OFF -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
       - name: Build
         run: cmake --build build
       - name: Test
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build --output-on-failure -j4
       # T-0122 AC1: the real carvetto-cli, DXF -> pocket + profile with tabs -> Grbl, checksum vs golden.
       - name: CLI end-to-end (DXF to Grbl G-code)
         run: |
@@ -124,10 +136,13 @@ jobs:
             echo "::error title=CLI end-to-end (V-carve)::G-code checksum differs from core/tests/golden/cli/sign_v_carve_grbl.nc"
             exit 1
           fi
-      # T-0014: timing-sensitive tests must hold under parallel load. Runs the suite with 8 jobs;
-      # each test is repeated up to 3 times and the step fails as soon as any repetition fails.
+      # T-0014: timing-sensitive tests must hold under parallel load. Runs the suite with 8 jobs and
+      # repeats it, failing as soon as any repetition fails: 5 times on main, 2 times on a PR
+      # (the full 5x stress is what made PR runs take over an hour).
       - name: Test (parallel stress, -j8)
-        run: ctest --test-dir build --output-on-failure -j8 --repeat until-fail:5
+        env:
+          REPEAT: ${{ github.event_name == 'pull_request' && '2' || '5' }}
+        run: ctest --test-dir build --output-on-failure -j8 --repeat until-fail:$REPEAT
 
   # T-0159: the Release build runs on both runner images: ubuntu-24.04 (GCC 13) and ubuntu-26.04
   # (GCC 15; its Release build there contracts a * b - c into fma, for a reason the Compiler step reports), so results that depend on the
@@ -159,14 +174,18 @@ jobs:
         with:
           path: .fc-src
           key: fc-src-${{ matrix.os }}-${{ hashFiles('core/CMakeLists.txt', 'core/tests/CMakeLists.txt', 'app/**/CMakeLists.txt') }}
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: linux-app-${{ matrix.os }}
       - name: Configure
-        run: tools/ci/configure.sh -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+        run: tools/ci/configure.sh -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
       - name: Build
         run: |
           set -o pipefail
           cmake --build build 2>&1 | tee build.log || { echo "::error title=Build failed::$(grep -E 'error' build.log | head -25 | tr '\n' '|')"; exit 1; }
       - name: Test
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build --output-on-failure -j4
       - name: App self-test (headless)
         env:
           QT_QPA_PLATFORM: offscreen
@@ -209,7 +228,7 @@ jobs:
       - name: Test
         shell: pwsh
         run: |
-          ctest --test-dir build --output-on-failure 2>&1 | Tee-Object -FilePath test.log
+          ctest --test-dir build --output-on-failure -j4 2>&1 | Tee-Object -FilePath test.log
           if ($LASTEXITCODE -ne 0) {
             $fails = (Select-String -Path test.log -Pattern 'FAILED|Failed|failed|REQUIRE|CHECK|with expansion|==' | Select-Object -Last 40 | ForEach-Object { $_.Line }) -join '%0A'
             Write-Host "::error title=Tests failed::$fails"
