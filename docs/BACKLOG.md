@@ -1315,3 +1315,9 @@ Goal: Native toolpath record, ToolpathParams/Operation entry, PhotoVCarve form, 
 Acceptance criteria:
   1. Form exposes Max Carving Depth, Stepover Retract, Line Spacing %, Line Angle, strategy (Raster/Hatch/Selected Vectors), invert; generates and previews; recalculates on edit; one undo step.
   2. Record saves/loads; cancel and work cap honoured; changelog fragment; CI green.
+
+### T-0274 Trace Bitmap follow-ups: Pick from 2D View, Bitmap Fading (T-0260 follow-up)   [status: ready]
+Phase: 1   Module: app   Depends on: T-0260
+Goal: The two Trace Bitmap dialog features listed in the T-0260 goal but deferred (see ADR-0049): "Pick from 2D View" (choose the bitmap object on the canvas) and "Bitmap Fading" (dim the source bitmap while tracing).
+Acceptance criteria:
+  1. Both features work in the real app, are undo-safe, and are driven by the app self-test; changelog fragment; CI green.
