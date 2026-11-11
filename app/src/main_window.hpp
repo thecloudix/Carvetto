@@ -35,6 +35,7 @@ class PropertiesPanel;
 class SheetsPanel;
 class RulerWidget;
 class CopiesMenu;
+class DimensionMenu;
 class NodeEditMenu;
 class PreviewPanel;
 class KeepOutPanel;
@@ -76,6 +77,8 @@ class MainWindow : public QMainWindow {
     /// The node-editing menus and Properties dialog of the NodeEdit tool.
     NodeEditMenu* nodeEdit() const { return nodeEdit_.get(); }
     TransformMenu* transformMenu() const { return transformMenu_.get(); }
+    /// Edit > Dimensions (T-0255).
+    DimensionMenu* dimensions() const { return dimensions_.get(); }
     /// Keep-out zones dock and Edit submenu (T-0256).
     KeepOutPanel* keepOutPanel() const { return keepOut_; }
     QDockWidget* keepOutDock() const { return keepOutDock_; }
@@ -177,6 +180,7 @@ class MainWindow : public QMainWindow {
     std::unique_ptr<TextureMenu> textureMenu_;
     std::unique_ptr<NodeEditMenu> nodeEdit_;
     std::unique_ptr<TransformMenu> transformMenu_;
+    std::unique_ptr<DimensionMenu> dimensions_;
 
     QTabWidget* views_{nullptr};
     CanvasWidget* canvas_{nullptr};

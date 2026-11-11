@@ -205,6 +205,7 @@ add_library(carvetto_core STATIC
   src/document/object_property_commands.cpp
   src/document/text_object.cpp
   src/document/text_commands.cpp
+  src/document/bitmap_store.cpp
   src/document/sheet.cpp
   src/document/object.cpp
   src/document/dimension.cpp
@@ -242,7 +243,9 @@ add_library(carvetto_core STATIC
   src/toolpath/chamfer.cpp
   src/toolpath/prism.cpp
   src/toolpath/thread_mill.cpp
+  src/toolpath/inlay.cpp
   src/toolpath/fluting.cpp
+  src/toolpath/photo_vcarve.cpp
   src/toolpath/v_carve.cpp
   src/toolpath/v_carve_corners.cpp
   src/text/font.cpp

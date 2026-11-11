@@ -13,6 +13,7 @@
 #include "carvetto/toolpath/chamfer.hpp"
 #include "carvetto/toolpath/fluting.hpp"
 #include "carvetto/toolpath/thread_mill.hpp"
+#include "carvetto/toolpath/inlay.hpp"
 #include "carvetto/toolpath/prism.hpp"
 #include "carvetto/toolpath/engrave.hpp"
 #include "carvetto/toolpath/pocket.hpp"
@@ -215,6 +216,7 @@ ToolpathDefinition defaultDefinition(ToolpathOperation operation) {
         case ToolpathOperation::VCarving: def.params = toolpath::VCarvingParams{}; break;
         case ToolpathOperation::Chamfer: def.params = toolpath::ChamferParams{}; break;
         case ToolpathOperation::ThreadMill: def.params = toolpath::ThreadMillParams{}; break;
+        case ToolpathOperation::Inlay: def.params = toolpath::InlayParams{}; break;
         case ToolpathOperation::Fluting: def.params = toolpath::FlutingParams{}; break;
         case ToolpathOperation::Prism: def.params = toolpath::PrismParams{}; break;
     }
@@ -287,6 +289,7 @@ const char* operationName(ToolpathOperation operation) {
         case ToolpathOperation::VCarving: return "v_carve";
         case ToolpathOperation::Chamfer: return "chamfer";
         case ToolpathOperation::ThreadMill: return "thread_mill";
+        case ToolpathOperation::Inlay: return "inlay";
         case ToolpathOperation::Fluting: return "fluting";
         case ToolpathOperation::Prism: return "prism";
     }
@@ -301,6 +304,7 @@ bool toolAllowedFor(ToolpathOperation operation, tooling::ToolType type, bool cl
         case ToolpathOperation::Engrave: return toolpath::engraveToolAllowed(type);
         case ToolpathOperation::Chamfer: return toolpath::chamferToolAllowed(type);
         case ToolpathOperation::ThreadMill: return toolpath::threadMillToolAllowed(type);
+        case ToolpathOperation::Inlay: return toolpath::inlayToolAllowed(type);
         case ToolpathOperation::Fluting: return toolpath::flutingToolAllowed(type);
         case ToolpathOperation::Prism: return toolpath::prismToolAllowed(type);
         case ToolpathOperation::VCarving:
@@ -603,6 +607,13 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
         } else if (op == ToolpathOperation::ThreadMill) {
             toolpath::ThreadMillResult r = toolpath::threadMillToolpath(
                 contours, tool->tool, tool->data, std::get<toolpath::ThreadMillParams>(definition.params));
+            diagnostics = r.diagnostics;
+            if (r.ok()) {
+                items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});
+            }
+        } else if (op == ToolpathOperation::Inlay) {
+            toolpath::InlayResult r = toolpath::inlayToolpath(contours, tool->tool, tool->data,
+                                                              std::get<toolpath::InlayParams>(definition.params));
             diagnostics = r.diagnostics;
             if (r.ok()) {
                 items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});

@@ -1298,3 +1298,26 @@ Phase: 1   Module: core/document + app   Depends on: T-0257
 Goal: (1) persist toolpath calculation expressions in .carv (optional 'expressions' object per toolpath record in job.json, loader/writer, ToolpathRecord field/equality; format minor allocation per the highest-required-minor scheme, ADR) so the expression link and delete protection survive save/load; (2) 'Insert New Document Variable' context menu on all numeric boxes; (3) feet (') conversion respects display units (inch mode); (4) run variable-triggered recalculation off the UI thread; (5) re-derive chamfer linked fields when a sibling holds an expression; (6) {Variable} substitution in text/data-merge if the owner wants it.
 Acceptance criteria:
   1. Save/reload keeps expressions and blocks deleting a used variable; old files load; other items tested.
+
+### T-0273 Bitmap pixel store in .carv (BitmapObject holds decodable image data)   [status: verifying — core only; app import → T-0250b; ADR-0051]
+Phase: 1   Module: core/document + core/io + app   Depends on: T-0245
+Goal: BitmapObject is currently a placeholder (placement + sourceRef). Owner decision 2026-11-10: store pixel data inside the .carv file (bitmaps/* entries, format minor bump with forward/backward compat per ARCHITECTURE.md), loadable into a RasterImage/GrayImage in core.
+Acceptance criteria:
+  1. Importing a bitmap embeds its encoded bytes; save/load round-trips byte-exact; older readers/files handled per the format-versioning rules; ADR.
+  2. Core API to fetch decoded raster for a BitmapObject (decoding stays in app/QImage or existing core decoder; core remains Qt-free).
+  3. Undo/redo of import; dedup of identical images; corrupt/oversized entries rejected with errors, never a crash.
+  4. One changelog fragment; full ctest and MSVC CI green.
+Out of scope: Photo V-carve wiring (T-0250b).
+
+### T-0250b Photo V-carve app wiring (T-0250 follow-up)   [status: blocked — depends on T-0250, T-0273]
+Phase: 1   Module: app + core/toolpath   Depends on: T-0250, T-0273
+Goal: App-side bitmap import (QImage decode → makeImportBitmapCommand from T-0273, which is core-only), gray conversion (grayFromRaster), native toolpath record, ToolpathParams/Operation entry, PhotoVCarve form, ToolController wiring and preview for a selected bitmap, with self-test coverage.
+Acceptance criteria:
+  1. Form exposes Max Carving Depth, Stepover Retract, Line Spacing %, Line Angle, strategy (Raster/Hatch/Selected Vectors), invert; generates and previews; recalculates on edit; one undo step.
+  2. Record saves/loads; cancel and work cap honoured; changelog fragment; CI green.
+
+### T-0274 Trace Bitmap follow-ups: Pick from 2D View, Bitmap Fading (T-0260 follow-up)   [status: ready]
+Phase: 1   Module: app   Depends on: T-0260
+Goal: The two Trace Bitmap dialog features listed in the T-0260 goal but deferred (see ADR-0049): "Pick from 2D View" (choose the bitmap object on the canvas) and "Bitmap Fading" (dim the source bitmap while tracing).
+Acceptance criteria:
+  1. Both features work in the real app, are undo-safe, and are driven by the app self-test; changelog fragment; CI green.

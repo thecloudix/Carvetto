@@ -12,6 +12,7 @@
 #include "carvetto/document/shape_params.hpp"
 #include "carvetto/geometry/shapes.hpp"
 #include "carvetto/viewmodel/calculation.hpp"
+#include "carvetto/viewmodel/dimension_text.hpp"
 #include "carvetto/viewmodel/transform_ops.hpp"
 #include "carvetto/viewmodel/units_format.hpp"
 
@@ -84,6 +85,7 @@ const char* toolName(ToolKind tool) {
         case ToolKind::Polyline: return "Polyline";
         case ToolKind::NodeEdit: return "Node Edit";
         case ToolKind::Text: return "Text";
+        case ToolKind::Dimension: return "Dimension";
     }
     return "";
 }
@@ -187,7 +189,7 @@ ParsedNumber parseNumber(std::string_view text, FieldKind kind, document::Units 
 
 // ---------------------------------------------------------------------------------------------
 
-ToolController::ToolController(document::Document* doc) : doc_(doc), nodeEditor_(doc), textEditor_(doc) {
+ToolController::ToolController(document::Document* doc) : doc_(doc), nodeEditor_(doc), textEditor_(doc), dimensionTool_(doc) {
     snapSettings_.setEnabled(SnapKind::Grid, false);
 }
 
@@ -197,10 +199,12 @@ void ToolController::setDocument(document::Document* doc) {
     gesture_ = TransformGesture{};
     nodeEditor_.setDocument(nullptr);
     textEditor_.setDocument(nullptr);
+    dimensionTool_.setDocument(nullptr);
     cancel();
     doc_ = doc;
     nodeEditor_.setDocument(doc);
     textEditor_.setDocument(doc);
+    dimensionTool_.setDocument(doc);
     snapIndex_.reset();
     snap_.reset();
 }
@@ -223,7 +227,7 @@ bool ToolController::isTwoPointTool() const {
 
 bool ToolController::active() const {
     return !pts_.empty() || pressed_ || selPressed_ || nodeEditor_.pressed() || textEditor_.pressed() ||
-           textEditor_.hasDraft();
+           textEditor_.hasDraft() || dimensionTool_.pickedCount() > 0 || dimensionTool_.dragging();
 }
 
 void ToolController::cancel() {
@@ -234,6 +238,8 @@ void ToolController::cancel() {
     selDragging_ = false;
     nodeEditor_.escape();
     textEditor_.cancel();
+    dimensionTool_.cancel();
+    dimensionTool_.cancelDrag();
     if (gesture_.active() && doc_ != nullptr) {
         gesture_.cancel(*doc_);
     }
@@ -252,6 +258,9 @@ bool ToolController::wantsKeys() const {
     }
     if (tool_ == ToolKind::Text) {
         return textEditor_.hasDraft() || textEditor_.pressed();
+    }
+    if (tool_ == ToolKind::Dimension) {
+        return dimensionTool_.pickedCount() > 0 || dimensionTool_.dragging() || dimensionTool_.editTarget().has_value();
     }
     return gesture_.active() || (tool_ != ToolKind::Select && (active() || !typed_.empty()));
 }
@@ -650,6 +659,7 @@ ToolController::Draft ToolController::makeDraft() const {
         case ToolKind::Select:
         case ToolKind::NodeEdit:
         case ToolKind::Text:
+        case ToolKind::Dimension:
             break;
     }
     return {};
@@ -668,6 +678,19 @@ ToolPreview ToolController::preview() const {
     }
     if (tool_ == ToolKind::NodeEdit) {
         out.marqueePx = nodeEditor_.marqueePx();
+        return out;
+    }
+    if (tool_ == ToolKind::Dimension) {
+        if (doc_ == nullptr) {
+            return out;
+        }
+        const document::DimensionGeometry g = dimensionTool_.preview();
+        out.contours = g.contours;
+        out.valid = g.valid;
+        if (const auto dim = dimensionTool_.previewObject(); dim && g.valid) {
+            const auto text = dimensionTextContours(*doc_, *dim);
+            out.contours.insert(out.contours.end(), text.begin(), text.end());
+        }
         return out;
     }
     if (tool_ == ToolKind::Select) {
@@ -746,6 +769,36 @@ ToolResult ToolController::fromText(const TextEditResult& r) {
     return t;
 }
 
+ToolResult ToolController::fromDimension(const DimensionToolResult& r) {
+    ToolResult t;
+    t.committed = r.committed;
+    t.selectionChanged = r.created.has_value();
+    t.previewChanged = true;
+    if (!r.ok) {
+        t.message = r.message;
+    }
+    return t;
+}
+
+ToolResult ToolController::dimensionPress(Modifiers mods) {
+    if (doc_ == nullptr) {
+        return refuse("no document");
+    }
+    constexpr double kPickPx = 8.0;
+    const double tolMm = kPickPx / std::max(view_.scale(), 1e-9);
+    if (mods.shift) {
+        // Shift-click edits an existing dimension: select it and show its handles.
+        dimensionTool_.cancel();
+        ToolResult r = fromDimension(dimensionTool_.selectAt(cursorMm_, tolMm));
+        r.selectionChanged = true;
+        return r;
+    }
+    if (dimensionTool_.pickedCount() == 0 && dimensionTool_.beginHandle(cursorMm_, tolMm)) {
+        return {};
+    }
+    return fromDimension(dimensionTool_.click(cursorMm_, tolMm));
+}
+
 ToolResult ToolController::afterNodeEdit(const NodeEditResult& r) {
     if (!nodeEditor_.gestureActive()) {
         gestureSnapIndex_.reset();
@@ -778,6 +831,13 @@ ToolResult ToolController::pointerMove(Vec2 px, Modifiers mods) {
     }
     if (tool_ == ToolKind::Text) {
         return fromText(textEditor_.move(px, cursorMm_));
+    }
+    if (tool_ == ToolKind::Dimension) {
+        if (dimensionTool_.dragging()) {
+            return fromDimension(dimensionTool_.dragTo(cursorMm_));
+        }
+        dimensionTool_.move(cursorMm_);
+        return {};
     }
     if (tool_ == ToolKind::Select && selPressed_) {
         selCurPx_ = px;
@@ -902,6 +962,9 @@ ToolResult ToolController::pointerPress(Vec2 px, Modifiers mods) {
     if (tool_ == ToolKind::Text) {
         return fromText(textEditor_.press(px, cursorMm_));
     }
+    if (tool_ == ToolKind::Dimension) {
+        return dimensionPress(mods);
+    }
     if (tool_ == ToolKind::Select) {
         return selectPress(px, mods);
     }
@@ -915,6 +978,9 @@ ToolResult ToolController::pointerRelease(Vec2 px, Modifiers mods) {
     }
     if (tool_ == ToolKind::Text) {
         return fromText(textEditor_.release(px, cursorMm_));
+    }
+    if (tool_ == ToolKind::Dimension) {
+        return dimensionTool_.dragging() ? fromDimension(dimensionTool_.endDrag(cursorMm_)) : ToolResult{};
     }
     if (tool_ == ToolKind::Select) {
         return selectRelease(px, mods);
@@ -943,6 +1009,9 @@ ToolResult ToolController::key(ToolKey k) {
                 cancel();
                 return fromNodeEdit(r);
             }
+            if (tool_ == ToolKind::Dimension && !dimensionTool_.dragging() && dimensionTool_.pickedCount() == 0) {
+                dimensionTool_.setEditTarget(std::nullopt);  // nothing in progress: drop the edit target
+            }
             cancel();
             ToolResult r;
             r.transformed = wasTransforming;
@@ -953,6 +1022,10 @@ ToolResult ToolController::key(ToolKey k) {
         case ToolKey::Backspace:
             if (tool_ == ToolKind::Text) {
                 return fromText(textEditor_.backspace());
+            }
+            if (tool_ == ToolKind::Dimension) {
+                dimensionTool_.backspace();
+                return {};
             }
             if (!pts_.empty() && (tool_ == ToolKind::Polyline || tool_ == ToolKind::Arc)) {
                 pts_.pop_back();
@@ -985,6 +1058,7 @@ std::vector<NumericField> ToolController::fields() const {
         case ToolKind::Select:
         case ToolKind::NodeEdit:
         case ToolKind::Text:
+        case ToolKind::Dimension:
             return list;
         case ToolKind::Rectangle:
             list = {field("x", "X", FieldKind::Length, true, true), field("y", "Y", FieldKind::Length, true, true),
@@ -1089,6 +1163,8 @@ ToolResult ToolController::commitNumeric() {
         case ToolKind::Select:
         case ToolKind::NodeEdit:
             return {};
+        case ToolKind::Dimension:
+            return refuse("click to pick the points and place the dimension");
         case ToolKind::Text:
             return fromText(textEditor_.commit());
         case ToolKind::Rectangle:

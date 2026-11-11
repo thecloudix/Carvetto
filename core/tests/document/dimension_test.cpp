@@ -1,6 +1,7 @@
 // Dimensions (T-0246): measuring each kind exactly, text options, drawing geometry, associativity
 // under scale/move/mirror, undo, and the .carv round trip.
 
+#include <algorithm>
 #include <cmath>
 #include <memory>
 #include <string>
@@ -598,4 +599,241 @@ TEST_CASE("dimensions with keep-out zones are written as the higher minor and ro
     auto again = saveCarv(loaded.value().document, loaded.value().extras);
     REQUIRE(again.ok());
     CHECK(again.value() == saved.value());
+}
+
+// --- T-0255: reflex angles, handles, limits --------------------------------------------------
+
+TEST_CASE("a negative angular offset measures the reflex angle", "[dimension][document][reflex]") {
+    Document doc;
+    DimensionObject d = make(DimensionKind::Angular, {0, 0}, {10, 0}, {0, 10});
+    d.offsetMm = 6.0;
+    CHECK(measured(doc, d) == Approx(kPi / 2));
+    d.offsetMm = -6.0;
+    CHECK(measured(doc, d) == Approx(3 * kPi / 2));
+    CHECK(dimensionText(doc, d, Units::Millimetres) == "270.00\xC2\xB0");
+    // A straight angle is its own reflex; arms along one ray stay degenerate either way.
+    DimensionObject straight = make(DimensionKind::Angular, {0, 0}, {10, 0}, {-10, 0});
+    straight.offsetMm = -4.0;
+    CHECK(measured(doc, straight) == Approx(kPi));
+    DimensionObject zero = make(DimensionKind::Angular, {0, 0}, {10, 0}, {20, 0});
+    zero.offsetMm = -4.0;
+    CHECK_FALSE(measureDimension(doc, zero).has_value());
+}
+
+TEST_CASE("a reflex angular dimension draws the long arc", "[dimension][document][reflex]") {
+    Document doc;
+    DimensionObject d = make(DimensionKind::Angular, {0, 0}, {10, 0}, {0, 10});
+    d.offsetMm = -6.0;
+    const DimensionGeometry g = dimensionGeometry(doc, d);
+    REQUIRE(g.valid);
+    const auto* arc = std::get_if<geometry::ArcSpan>(&g.contours[0].spans[0]);
+    REQUIRE(arc != nullptr);
+    CHECK(arc->radius == Approx(6.0));
+    CHECK(arc->direction == geometry::ArcDirection::CW);  // from +X clockwise to +Y: 270 degrees
+    CHECK(g.textCentre.x < 0.0);                          // the text sits on the long side's middle (225 degrees)
+    CHECK(g.textCentre.y < 0.0);
+    const auto h = dimensionHandles(doc, d);
+    const auto radius = std::find_if(h.begin(), h.end(),
+                                     [](const DimensionHandle& x) { return x.kind == DimensionHandleKind::ArcRadius; });
+    REQUIRE(radius != h.end());
+    CHECK(geometry::distance(radius->pos, Vec2{0, 0}) == Approx(6.0));
+    CHECK(radius->pos.x + radius->pos.y < 0.0);  // on the long arc, not the short one
+}
+
+TEST_CASE("placing an angular dimension outside the angle selects the reflex angle", "[dimension][reflex]") {
+    DimensionObject d = make(DimensionKind::Angular, {0, 0}, {10, 0}, {0, 10});
+    const std::array<Vec2, 3> p{d.points[0].pos, d.points[1].pos, d.points[2].pos};
+    CHECK(*offsetForPlacement(d, p, {3, 4}) == Approx(5.0));
+    CHECK(*offsetForPlacement(d, p, {-3, -4}) == Approx(-5.0));
+    CHECK(*offsetForPlacement(d, p, {-3, 4}) == Approx(-5.0));
+    CHECK(*offsetForPlacement(d, p, {3, -4}) == Approx(-5.0));
+    // Clockwise arms (sweep negative) behave the same.
+    DimensionObject cw = make(DimensionKind::Angular, {0, 0}, {0, 10}, {10, 0});
+    const std::array<Vec2, 3> q{cw.points[0].pos, cw.points[1].pos, cw.points[2].pos};
+    CHECK(*offsetForPlacement(cw, q, {3, 4}) == Approx(5.0));
+    CHECK(*offsetForPlacement(cw, q, {-3, -4}) == Approx(-5.0));
+}
+
+TEST_CASE("dimension limits refuse hostile numbers", "[dimension][document]") {
+    DimensionObject d = make(DimensionKind::Aligned, {0, 0}, {10, 0});
+    d.offsetMm = 2e9;
+    CHECK_FALSE(dimensionProblem(d).empty());
+    d.offsetMm = -2e9;
+    CHECK_FALSE(dimensionProblem(d).empty());
+    d.offsetMm = 5.0;
+    d.textHeightMm = 10001.0;
+    CHECK_FALSE(dimensionProblem(d).empty());
+    d.textHeightMm = 10000.0;
+    CHECK(dimensionProblem(d).empty());
+    d.points[1].pos = {1.5e9, 0};
+    CHECK_FALSE(dimensionProblem(d).empty());
+}
+
+namespace {
+const DimensionHandle* findHandle(const std::vector<DimensionHandle>& hs, DimensionHandleKind k, std::size_t index = 0) {
+    for (const DimensionHandle& h : hs) {
+        if (h.kind == k && (k != DimensionHandleKind::Point || h.index == index)) {
+            return &h;
+        }
+    }
+    return nullptr;
+}
+}  // namespace
+
+TEST_CASE("handles: counts and colours per kind", "[dimension][document][handles]") {
+    Document doc;
+    DimensionObject lin = make(DimensionKind::Aligned, {0, 0}, {10, 0});
+    const auto hl = dimensionHandles(doc, lin);
+    CHECK(hl.size() == 5);  // 2 points, text, leg, text height
+    CHECK(findHandle(hl, DimensionHandleKind::Point, 1)->white);
+    CHECK(findHandle(hl, DimensionHandleKind::Text)->white);
+    CHECK_FALSE(findHandle(hl, DimensionHandleKind::Leg)->white);
+    CHECK_FALSE(findHandle(hl, DimensionHandleKind::TextHeight)->white);
+    CHECK(findHandle(hl, DimensionHandleKind::Leg)->pos.x == Approx(10.0));
+    CHECK(findHandle(hl, DimensionHandleKind::Leg)->pos.y == Approx(5.0));
+
+    DimensionObject ang = make(DimensionKind::Angular, {0, 0}, {10, 0}, {0, 10});
+    ang.offsetMm = 6.0;
+    const auto ha = dimensionHandles(doc, ang);
+    CHECK(ha.size() == 6);  // 3 points, text, arc radius, text height
+    CHECK(findHandle(ha, DimensionHandleKind::ArcRadius)->white);
+    CHECK(findHandle(ha, DimensionHandleKind::Leg) == nullptr);
+
+    DimensionObject rad = make(DimensionKind::Radial, {0, 0}, {10, 0});
+    CHECK(dimensionHandles(doc, rad).size() == 4);  // 2 points, text, text height
+
+    DimensionObject degenerate = make(DimensionKind::Aligned, {1, 1}, {1, 1});
+    CHECK(dimensionHandles(doc, degenerate).empty());
+}
+
+TEST_CASE("handles: dragging changes the right parameter", "[dimension][document][handles]") {
+    Document doc;
+    DimensionObject lin = make(DimensionKind::Aligned, {0, 0}, {10, 0});
+    lin.offsetMm = 5.0;
+    const auto hl = dimensionHandles(doc, lin);
+
+    // Size: a point handle moves the point and drops its anchor.
+    DimensionObject anchored = lin;
+    anchored.points[1].anchor = DimensionAnchor{};
+    const auto moved = moveDimensionHandle(doc, anchored, *findHandle(hl, DimensionHandleKind::Point, 1), {20, 0});
+    REQUIRE(moved.has_value());
+    CHECK(moved->points[1].pos.x == Approx(20.0));
+    CHECK_FALSE(moved->points[1].anchor.has_value());
+    CHECK(measured(doc, *moved) == Approx(20.0));
+    // Dragging a point onto the other one would be degenerate: refused.
+    CHECK_FALSE(moveDimensionHandle(doc, lin, *findHandle(hl, DimensionHandleKind::Point, 1), {0, 0}).has_value());
+
+    // Leg: sets the dimension line position.
+    const auto leg = moveDimensionHandle(doc, lin, *findHandle(hl, DimensionHandleKind::Leg), {10, 9});
+    REQUIRE(leg.has_value());
+    CHECK(leg->offsetMm == Approx(9.0));
+    CHECK(leg->points[1].pos.x == Approx(10.0));  // size untouched
+
+    // Text position: the text ends up at the dragged place (0.75 text heights beyond the line).
+    const auto text = moveDimensionHandle(doc, lin, *findHandle(hl, DimensionHandleKind::Text), {5, 12});
+    REQUIRE(text.has_value());
+    CHECK(dimensionGeometry(doc, *text).textCentre.y == Approx(12.0));
+
+    // Text height scales with the distance from the text centre.
+    const DimensionHandle th = *findHandle(hl, DimensionHandleKind::TextHeight);
+    const Vec2 centre = dimensionGeometry(doc, lin).textCentre;
+    const auto taller = moveDimensionHandle(doc, lin, th, centre + Vec2{0, 3.0});
+    REQUIRE(taller.has_value());
+    CHECK(taller->textHeightMm == Approx(6.0));
+    CHECK_FALSE(moveDimensionHandle(doc, lin, th, centre).has_value());  // zero height refused
+    CHECK_FALSE(moveDimensionHandle(doc, lin, th, centre + Vec2{0, 1e6}).has_value());  // beyond the cap
+
+    // Hostile positions.
+    CHECK_FALSE(moveDimensionHandle(doc, lin, th, {std::nan(""), 0}).has_value());
+    CHECK_FALSE(moveDimensionHandle(doc, lin, th, {2e9, 0}).has_value());
+}
+
+TEST_CASE("handles: arc radius keeps the reflex sign; text keeps the side", "[dimension][document][handles]") {
+    Document doc;
+    DimensionObject ang = make(DimensionKind::Angular, {0, 0}, {10, 0}, {0, 10});
+    ang.offsetMm = 6.0;
+    const auto h = dimensionHandles(doc, ang);
+    const auto bigger = moveDimensionHandle(doc, ang, *findHandle(h, DimensionHandleKind::ArcRadius), {8, 8});
+    REQUIRE(bigger.has_value());
+    CHECK(bigger->offsetMm == Approx(std::sqrt(128.0)));
+    const auto flipped = moveDimensionHandle(doc, ang, *findHandle(h, DimensionHandleKind::ArcRadius), {-8, -8});
+    REQUIRE(flipped.has_value());
+    CHECK(flipped->offsetMm == Approx(-std::sqrt(128.0)));  // dragged outside the angle: reflex
+    CHECK(measured(doc, *flipped) == Approx(3 * kPi / 2));
+    // Text handle at the vertex gives no radius.
+    CHECK_FALSE(moveDimensionHandle(doc, ang, *findHandle(h, DimensionHandleKind::Text), {0, 0}).has_value());
+    // Radial: the leader length never goes negative.
+    DimensionObject rad = make(DimensionKind::Radial, {0, 0}, {10, 0});
+    rad.offsetMm = 4.0;
+    const auto hr = dimensionHandles(doc, rad);
+    const auto shorter = moveDimensionHandle(doc, rad, *findHandle(hr, DimensionHandleKind::Text), {5, 0});
+    REQUIRE(shorter.has_value());
+    CHECK(shorter->offsetMm == Approx(0.0));
+    // The wrong handle for the kind is refused.
+    CHECK_FALSE(moveDimensionHandle(doc, rad, DimensionHandle{DimensionHandleKind::Leg, 0, {}, false}, {1, 1}).has_value());
+    CHECK_FALSE(moveDimensionHandle(doc, rad, DimensionHandle{DimensionHandleKind::ArcRadius, 0, {}, true}, {1, 1}).has_value());
+    CHECK_FALSE(moveDimensionHandle(doc, rad, DimensionHandle{DimensionHandleKind::Point, 2, {}, true}, {1, 1}).has_value());
+}
+
+TEST_CASE("handle drags follow an anchored part and are one undo step as a command", "[dimension][document][handles]") {
+    Document doc;
+    const ObjectId rect = addRect(doc);
+    DimensionObject d = make(DimensionKind::Aligned, {10, 20}, {50, 20});
+    DimensionAnchor a0;
+    a0.object = rect;
+    a0.span = 0;
+    d.points[0].anchor = a0;
+    d.offsetMm = 5.0;
+    const auto id = addDimension(doc, d, doc.activeSheet());
+    REQUIRE(id.has_value());
+    const DimensionObject& stored = *doc.findObject(*id)->asDimension();
+    const auto h = dimensionHandles(doc, stored);
+    const auto next = moveDimensionHandle(doc, stored, *findHandle(h, DimensionHandleKind::Leg), {50, 30});
+    REQUIRE(next.has_value());
+    CHECK(next->points[0].anchor.has_value());  // the untouched point keeps its anchor
+    const std::size_t before = doc.undoStack().index();
+    REQUIRE(doc.execute(std::make_unique<SetDimensionCommand>(*id, *next, "Move dimension handle")));
+    CHECK(doc.undoStack().index() == before + 1);
+    REQUIRE(doc.undo());
+    CHECK(doc.findObject(*id)->asDimension()->offsetMm == Approx(5.0));
+}
+
+TEST_CASE("handles: the text-height handle enlarges every kind and orientation", "[dimension][document][handles]") {
+    Document doc;
+    std::vector<DimensionObject> dims;
+    auto add = [&](DimensionKind kind, Vec2 a, Vec2 b, Vec2 c, double offset, bool vertical = false,
+                   bool diameter = false) {
+        DimensionObject d = make(kind, a, b, c);
+        d.offsetMm = offset;
+        d.vertical = vertical;
+        d.diameter = diameter;
+        d.textHeightMm = 4.0;
+        dims.push_back(d);
+    };
+    add(DimensionKind::Aligned, {50, 50}, {150, 50}, {}, 30);
+    add(DimensionKind::Linear, {50, 110}, {120, 140}, {}, 30);
+    add(DimensionKind::Linear, {200, 110}, {230, 190}, {}, -20, true);  // vertical: text angle at the +pi/2 edge
+    add(DimensionKind::Angular, {220, 50}, {270, 50}, {220, 100}, 28);
+    add(DimensionKind::Angular, {220, 160}, {270, 160}, {220, 210}, -28);  // reflex
+    add(DimensionKind::Radial, {60, 230}, {90, 230}, {}, 20);
+    add(DimensionKind::Radial, {150, 240}, {170, 240}, {}, 30, false, true);
+    // Aligned dimensions all round the compass, including the exact quarter turns.
+    for (int deg = 0; deg < 360; deg += 15) {
+        const double a = deg * kPi / 180.0;
+        add(DimensionKind::Aligned, {0, 0}, Vec2::fromAngle(a, 40.0), {}, 7.0);
+    }
+    for (const DimensionObject& d : dims) {
+        const auto handles = dimensionHandles(doc, d);
+        const DimensionHandle* th = findHandle(handles, DimensionHandleKind::TextHeight);
+        REQUIRE(th != nullptr);
+        const DimensionGeometry g = dimensionGeometry(doc, d);
+        REQUIRE(g.valid);
+        const Vec2 up = Vec2::fromAngle(g.textAngle + kPi / 2.0);
+        // The handle sits half a text height above the text centre, along the text's up direction.
+        CHECK((th->pos - g.textCentre).length() == Approx(d.textHeightMm * 0.5));
+        CHECK((th->pos - g.textCentre).dot(up) == Approx(d.textHeightMm * 0.5));
+        const auto taller = moveDimensionHandle(doc, d, *th, th->pos + up * (2.0 * d.textHeightMm + 3.0));
+        REQUIRE(taller.has_value());
+        CHECK(taller->textHeightMm == Approx(d.textHeightMm * (1.0 + (2.0 * d.textHeightMm + 3.0) / (d.textHeightMm * 0.5))));
+    }
 }

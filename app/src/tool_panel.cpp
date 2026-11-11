@@ -14,6 +14,7 @@
 #include <QVBoxLayout>
 
 #include "canvas_widget.hpp"
+#include "dimension_menu.hpp"
 #include "carvetto/document/units.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/starter_font.hpp"
@@ -121,6 +122,8 @@ void ToolPanel::addOptionRows(ToolKind tool) {
                 [this](bool on) { canvas_->tools().nodeEditor().options().keepBezierTangency = on; });
     } else if (tool == ToolKind::Text) {
         addTextRows();
+    } else if (tool == ToolKind::Dimension) {
+        addDimensionRows();
     } else if (tool == ToolKind::Arc) {
         auto* mode = new QComboBox(this);
         mode->addItems({QStringLiteral("Through 3 points"), QStringLiteral("Centre, start, end"),
@@ -150,6 +153,55 @@ void ToolPanel::addOptionRows(ToolKind tool) {
             canvas_->update();
         });
     }
+}
+
+void ToolPanel::addDimensionRows() {
+    viewmodel::DimensionTool& dt = canvas_->tools().dimensionTool();
+    auto* kind = new QComboBox(this);
+    kind->setObjectName(QStringLiteral("dimensionKindCombo"));
+    const std::pair<const char*, document::DimensionKind> kinds[] = {
+        {"Aligned", document::DimensionKind::Aligned},
+        {"Horizontal", document::DimensionKind::Linear},
+        {"Vertical", document::DimensionKind::Linear},
+        {"Angular", document::DimensionKind::Angular},
+        {"Radius", document::DimensionKind::Radial},
+        {"Diameter", document::DimensionKind::Radial}};
+    for (const auto& [name, k] : kinds) {
+        kind->addItem(QString::fromUtf8(name), static_cast<int>(k));
+    }
+    // Rows 1 and 5 are the vertical linear and the diameter variants.
+    int row = 0;
+    switch (dt.options().kind) {
+        case document::DimensionKind::Aligned: row = 0; break;
+        case document::DimensionKind::Linear: row = dt.options().vertical ? 2 : 1; break;
+        case document::DimensionKind::Angular: row = 3; break;
+        case document::DimensionKind::Radial: row = dt.options().diameter ? 5 : 4; break;
+    }
+    kind->setCurrentIndex(row);
+    form_->addRow(QStringLiteral("Kind"), kind);
+    connect(kind, &QComboBox::currentIndexChanged, this, [this, kind](int index) {
+        viewmodel::DimensionOptions o = canvas_->tools().dimensionTool().options();
+        o.kind = static_cast<document::DimensionKind>(kind->itemData(index).toInt());
+        o.vertical = index == 2;
+        o.diameter = index == 5;
+        status_->setText(QString::fromStdString(canvas_->tools().dimensionTool().setOptions(o).message));
+        canvas_->update();
+    });
+    auto* options = new QPushButton(QStringLiteral("Options..."), this);
+    options->setObjectName(QStringLiteral("dimensionOptionsButton"));
+    form_->addRow(options);
+    connect(options, &QPushButton::clicked, this, [this]() {
+        auto& tool = canvas_->tools().dimensionTool();
+        if (tool.document() == nullptr) {
+            return;
+        }
+        DimensionDialog dialog(*tool.document(), tool.options(), false, this);
+        if (dialog.exec() == QDialog::Accepted) {
+            status_->setText(QString::fromStdString(tool.setOptions(dialog.options()).message));
+            rebuild();
+        }
+    });
+    form_->addRow(new QLabel(QStringLiteral("Click the points, then the line position.\nShift-click a dimension to edit it."), this));
 }
 
 void ToolPanel::addTextRows() {

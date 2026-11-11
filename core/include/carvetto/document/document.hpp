@@ -47,6 +47,7 @@ struct IntegrityIssue {
                               ///< object's stored `id` counts as well as its map key.
         IdKeyMismatch,        ///< An object's stored `id` differs from the key it is stored under.
         MissingFont,          ///< A text object names a font that is not embedded (T-0211).
+        MissingBitmap,        ///< A bitmap object's `sourceRef` is an asset key with no embedded image (T-0273).
         BadToolpathSelection, ///< A toolpath's vector selection names an id that was never
                               ///< allocated or belongs to another kind of item, lists an id
                               ///< twice, or combines `all` with explicit layers/objects (ADR-0021).
@@ -69,6 +70,21 @@ struct FontAsset {
 
     bool operator==(const FontAsset&) const = default;
 };
+/// An encoded image embedded in the document (T-0273, ADR-0051): the file's bytes exactly as
+/// imported (PNG, JPEG, Netpbm, ...), keyed by a content hash so identical images are stored once.
+/// A `BitmapObject` refers to it by putting the key in `sourceRef`. Core never decodes these
+/// itself beyond Netpbm; see `decodeBitmapObject` in bitmap_store.hpp.
+struct BitmapAsset {
+    std::string key;  ///< 16 lower-case hex digits (`fontKeyFor`, same hash).
+    std::vector<std::uint8_t> bytes;
+
+    bool operator==(const BitmapAsset&) const = default;
+};
+/// Embedding caps: one image, all images together, and their count.
+inline constexpr std::size_t kMaxEmbeddedBitmapBytes = 64u << 20;
+inline constexpr std::size_t kMaxEmbeddedBitmapsTotalBytes = 256u << 20;
+inline constexpr std::size_t kMaxEmbeddedBitmaps = 256;
+
 /// Embedding caps: one font, all fonts together, and their count.
 inline constexpr std::size_t kMaxEmbeddedFontBytes = 8u << 20;
 inline constexpr std::size_t kMaxEmbeddedFontsTotalBytes = 32u << 20;
@@ -226,6 +242,17 @@ class Document {
     /// Raw: removes a font. Nullopt when absent.
     std::optional<FontAsset> takeFont(const std::string& key);
 
+    // --- Embedded bitmaps (T-0273) ---------------------------------------------------------------
+    const std::map<std::string, BitmapAsset>& bitmaps() const { return bitmaps_; }
+    const BitmapAsset* findBitmap(const std::string& key) const;
+    /// Raw: stores `image` unless its key is taken, malformed, empty, or a cap would be exceeded.
+    bool insertBitmap(BitmapAsset image);
+    /// Empty when `image` is embedded already (same bytes) or `insertBitmap` would accept it;
+    /// otherwise the reason (for user messages).
+    std::string bitmapProblem(const BitmapAsset& image) const;
+    /// Raw: removes an image. Nullopt when absent.
+    std::optional<BitmapAsset> takeBitmap(const std::string& key);
+
     // --- Ids -------------------------------------------------------------------------------
     // Each returns a null id when the generator is exhausted (and asserts in Debug); commands
     // check `idGenerator().canAllocate(n)` first and refuse (no-op) instead.
@@ -257,6 +284,7 @@ class Document {
     std::map<ObjectId, Object> objects_;
     std::vector<ToolpathRecord> toolpaths_;
     std::map<std::string, FontAsset> fonts_;
+    std::map<std::string, BitmapAsset> bitmaps_;
     std::vector<KeepOutZone> keepOutZones_;
     double keepOutClearance_{0.0};
     bool keepOutVisible_{true};
