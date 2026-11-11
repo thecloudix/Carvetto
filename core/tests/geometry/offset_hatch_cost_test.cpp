@@ -168,7 +168,7 @@ TEST_CASE("T-0016 AC1: dense zig-zag, Sharp and Square cost about linear in the 
         CAPTURE(static_cast<int>(join));
         std::size_t chains = 0;
         const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
-            3,
+            5,  // T-0226: least of 5 pairs (idle ratio is 2.0-2.2 against 2.5)
             [&] {
                 for (int r = 0; r < 2; ++r) {
                     chains += offsetOpenContour(shortZig, d, OffsetSide::Left, join, kTol).size();
@@ -204,7 +204,7 @@ TEST_CASE("T-0170: dense amplitude-1 zig-zag, Sharp, Square and Round: at most 2
         CAPTURE(static_cast<int>(join));
         std::size_t spans = 0;
         const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
-            3,
+            5,  // T-0226: least of 5 pairs (idle ratio is 2.0-2.2 against 2.5)
             [&] {
                 for (int r = 0; r < 2; ++r) {
                     for (const Contour& c : offsetOpenContour(shortZig, d, OffsetSide::Left, join, kTol)) {

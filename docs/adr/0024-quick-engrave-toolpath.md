@@ -139,6 +139,10 @@ and `tool_type` (T-0154), both written only for a spindle-off snapshot (`"tool_t
 variant alternative, as ADR-0021 foresaw); a build from before T-0151 refuses a file with an
 engrave record ("unsupported toolpath operation 'engrave'").
 
+### 8. Refused vectors (T-0183)
+Fill passes Pocket's `ContourRefused` diagnostics on (ADR-0017). Outline follows spans (a huge arc
+stays an arc) and polygonises nothing through the clippers, so it never reports it.
+
 ## Alternatives
 - **A start depth like Pocket's:** not on the inventory form; engraving marks from the surface.
 - **Retract and restart open vectors at every pass:** more air moves, same groove.

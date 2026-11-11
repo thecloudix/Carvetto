@@ -53,6 +53,7 @@ add_executable(carvetto_viewmodel_tests
   vector_selector_test.cpp
   properties_model_test.cpp
   layers_sheets_test.cpp
+  texture_form_test.cpp
 )
 # The toolpath tests drive carvetto-cli in process (cli::run) to compare its records with the session's.
 target_link_libraries(carvetto_viewmodel_tests PRIVATE carvetto::viewmodel Catch2::Catch2WithMain carvetto_warnings)

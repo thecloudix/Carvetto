@@ -21,6 +21,7 @@ add_executable(carvetto_tests
   geometry/contour_test.cpp
   geometry/shapes_test.cpp
   geometry/vector_texture_test.cpp
+  geometry/vector_texture_region_test.cpp
   geometry/region_polygon_test.cpp
   geometry/contour_ops_test.cpp
   geometry/signed_area_far_test.cpp
@@ -39,6 +40,7 @@ add_executable(carvetto_tests
   geometry/validator_test.cpp
   geometry/edit_ops_fuzz_test.cpp
   toolpath/hostile_arc_test.cpp toolpath/huge_arc_test.cpp
+  toolpath/refused_contour_test.cpp
   geometry/edit_ops_hardening_test.cpp
   toolpath/move_test.cpp
   toolpath/toolpath_test.cpp
