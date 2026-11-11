@@ -165,6 +165,11 @@ void closeExactly(Contour& c) {
 struct TipEdges {
     Span in;   // ends at the vertex
     Span out;  // starts there
+    // For an arc edge: the polygon chord a region's union makes of it at the vertex (its offset is
+    // a straight run of the cut, whose last chord can lie farther from the offset circle than
+    // the chordal band when it is stretched by a mitre, T-0174).
+    std::optional<Span> inChord;
+    std::optional<Span> outChord;
 };
 
 // Arc length on the closed walk at which a cut asked to start nearest `target` starts (ADR-0016
@@ -249,7 +254,7 @@ double tieFreeStart(const ArcLengthPath& walk, Vec2 target, double eps, double c
             // farther along than the edge is long is less exact) and, on a region, to its chords'
             // sagitta. The spans the offset builds at the corner itself (mitre, chamfer, join arc
             // or chords) lie off both by far more: they turn against both edges.
-            auto onOffsetOf = [&](const Span& s, const Span& edge) {
+            auto onOffsetOf = [&](const Span& s, const Span& edge, const std::optional<Span>& chord, auto&& self) -> bool {
                 const std::array<Vec2, 3> pts{geometry::startPoint(s), geometry::pointAt(s, 0.5), geometry::endPoint(s)};
                 if (const auto* l = std::get_if<geometry::LineSpan>(&edge)) {
                     const Vec2 d = l->end - l->start;
@@ -270,14 +275,20 @@ double tieFreeStart(const ArcLengthPath& walk, Vec2 target, double eps, double c
                 }
                 if (const auto* a = std::get_if<geometry::ArcSpan>(&edge)) {
                     const double noise = 8.0 * coord + 4e-12 * a->radius + slack;
+                    bool onRing = true;
                     for (const Vec2 p : pts) {
                         const double rho = geometry::distance(p, a->centre);
                         if (std::min(std::fabs(rho - (a->radius + cutDistance)),
                                      std::fabs(rho - std::fabs(a->radius - cutDistance))) > noise) {
-                            return false;
+                            onRing = false;
+                            break;
                         }
                     }
-                    return true;
+                    // A chord of a region stretched by a mitre can sag off the circle by more than the
+                    // band, a deviation that varies continuously with the geometry and so flips the
+                    // label (and the start by a chord) at a razor's edge. It lies on its polygon
+                    // chord's offset exactly (T-0174).
+                    return onRing || (slack > 0.0 && chord && self(s, *chord, std::nullopt, self));
                 }
                 return false;
             };
@@ -285,7 +296,8 @@ double tieFreeStart(const ArcLengthPath& walk, Vec2 target, double eps, double c
             // is no corner) counts as on either.
             std::vector<int> label(n, 0);
             for (std::size_t i = 0; i < n; ++i) {
-                label[i] = (onOffsetOf(c.spans[i], tip->in) ? 1 : 0) + (onOffsetOf(c.spans[i], tip->out) ? 2 : 0);
+                label[i] = (onOffsetOf(c.spans[i], tip->in, tip->inChord, onOffsetOf) ? 1 : 0) +
+                           (onOffsetOf(c.spans[i], tip->out, tip->outChord, onOffsetOf) ? 2 : 0);
             }
             // Does the cut run the vector's way (entering edge first) or against it? Asked of the
             // nearest spans on one edge's offset, which must agree.
@@ -356,6 +368,26 @@ double tieFreeStart(const ArcLengthPath& walk, Vec2 target, double eps, double c
                     ++count;
                 }
                 if (count == 1) {
+                    // A region's polygonal round join starts tangent to the arc edge's offset, so its
+                    // first chords lie within the chordal band of that offset and may be labelled on
+                    // it (which of them does follows the geometry continuously, flipping the start by
+                    // a chord at the band's edge). All join vertices lie on the circle about the
+                    // target, the arc's offset vertices do not (but the foot): the join starts at the
+                    // first of the run of labelled chords on the circle. A sliver (a neighbouring
+                    // region vertex's join, within a few um) is no chord of this join (T-0174).
+                    if (slack > 0.0 && roundJoins) {
+                        // Shorter than a join chord can be (the chord's end is off the circle about a
+                        // vertex that close by more than the band): the join of a neighbouring vertex.
+                        const double minChord = 4.0 * std::sqrt(2.0 * cutDistance * onCircle);
+                        auto joinChord = [&](std::size_t k) {
+                            return (label[k] & met) != 0 && walk.spanLength(k) > minChord &&
+                                   std::fabs(geometry::distance(geometry::startPoint(c.spans[k]), target) -
+                                             cutDistance) <= onCircle;
+                        };
+                        for (std::size_t back = 0; back + 1 < n && joinChord((pick + n - 1) % n); ++back) {
+                            pick = (pick + n - 1) % n;
+                        }
+                    }
                     return startAt(walk.spanStart(pick));
                 }
             }
@@ -454,9 +486,13 @@ double tieFreeStart(const ArcLengthPath& walk, Vec2 target, double eps, double c
                 // Feet of `target` on the two spans either side of the junction.
                 lopsided[k] = std::fabs((1.0 - param[a]) * walk.spanLength(a) - param[b] * walk.spanLength(b));
             }
+            // Feet that lie evenly to within rounding tie (a squared-off tip's chamfer is
+            // symmetric about the target): the first in travel wins (T-0174).
+            const double tie = 8.0 * coord;
             std::size_t pick = junctions;
             for (std::size_t k = 0; k < junctions; ++k) {
-                if ((equi[k] != 0 || !anyEqui) && (pick == junctions || lopsided[k] < lopsided[pick])) {
+                if ((equi[k] != 0 || !anyEqui) &&
+                    (pick == junctions || lopsided[k] < lopsided[pick] - tie)) {
                     pick = k;
                 }
             }
@@ -1626,12 +1662,43 @@ std::optional<TipEdges> ProfileBuilder::tipEdges(const Cut& c, Vec2 target) cons
                 }
                 return chord;
             };
-            const std::optional<Span> in = chordAt(v.spans[i == 0 ? n - 1 : i - 1], true);
-            const std::optional<Span> out = chordAt(v.spans[i], false);
+            // An edge no longer than the distance tolerance (a duplicate vertex, a sub-um closing
+            // edge) is dropped by the offset, so it bounds no corner: the vertex's own edges are the
+            // nearest longer ones either side (T-0174).
+            auto degenerate = [&](const Span& sp) {
+                return std::holds_alternative<geometry::LineSpan>(sp) &&
+                       tol_.equalPoints(geometry::startPoint(sp), geometry::endPoint(sp));
+            };
+            std::size_t back = i == 0 ? n - 1 : i - 1;
+            for (std::size_t k = 0; k + 1 < n && degenerate(v.spans[back]); ++k) {
+                back = back == 0 ? n - 1 : back - 1;
+            }
+            std::size_t fwd = i;
+            for (std::size_t k = 0; k + 1 < n && degenerate(v.spans[fwd]); ++k) {
+                fwd = fwd + 1 == n ? 0 : fwd + 1;
+            }
+            const std::optional<Span> in = chordAt(v.spans[back], true);
+            const std::optional<Span> out = chordAt(v.spans[fwd], false);
             if (!in || !out) {
                 return std::nullopt;
             }
-            return TipEdges{*in, *out};
+            // An arc's chord at the vertex as a closed vector's region polygon has it.
+            auto arcChord = [&](const Span& sp, bool last) -> std::optional<Span> {
+                if (!std::holds_alternative<geometry::ArcSpan>(sp)) {
+                    return std::nullopt;
+                }
+                std::vector<Vec2> pts{geometry::startPoint(sp)};
+                if (v.closed) {
+                    geometry::polygoniseRegionInto(sp, offTol_, pts);
+                } else {
+                    geometry::polygoniseInto(sp, offTol_, pts);
+                }
+                if (pts.size() < 2) {
+                    return std::nullopt;
+                }
+                return last ? geometry::LineSpan{pts[pts.size() - 2], pts.back()} : geometry::LineSpan{pts[0], pts[1]};
+            };
+            return TipEdges{*in, *out, arcChord(v.spans[back], true), arcChord(v.spans[fwd], false)};
         }
     }
     return std::nullopt;
