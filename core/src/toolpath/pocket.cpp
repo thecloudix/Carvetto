@@ -2294,8 +2294,15 @@ PocketResult pocketToolpath(const std::vector<Contour>& contours, const std::vec
     std::vector<Contour> closedInput;
     std::size_t openCount = 0;
     double inputVertices = 0.0;
-    for (const Contour& c : contours) {
+    for (std::size_t ci = 0; ci < contours.size(); ++ci) {
+        const Contour& c = contours[ci];
         if (c.closed) {
+            if (geometry::refusedByClippers(c, tol)) {
+                // T-0183: the union below would leave such a vector out without a word.
+                result.diagnostics.push_back(
+                    refusedContourDiagnostic(ci, "vector #" + std::to_string(ci + 1)));
+                continue;
+            }
             inputVertices += estimatedVertices(c, tol);
             closedInput.push_back(c);
         } else if (!c.isEmpty()) {

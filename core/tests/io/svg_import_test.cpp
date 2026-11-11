@@ -795,3 +795,13 @@ TEST_CASE("svg import: the closing tolerance is evaluated in mm after the transf
         CHECK(spans(doc("10.5000001"), o) == 5);
     }
 }
+
+TEST_CASE("svg import warns about an arc too large to approximate (T-0183)", "[svg][io]") {
+    const auto d =
+        svgtest::importText(svgtest::page("<circle cx=\"0\" cy=\"0\" r=\"10\"/><circle cx=\"0\" cy=\"0\" r=\"1e10\"/>"))
+            .value();
+    REQUIRE(d.contours.size() == 2);  // kept, only reported
+    CHECK(svgtest::hasWarning(d, "too large to approximate"));
+    const auto ok = svgtest::importText(svgtest::page("<circle cx=\"0\" cy=\"0\" r=\"10\"/>")).value();
+    CHECK_FALSE(svgtest::hasWarning(ok, "too large to approximate"));
+}

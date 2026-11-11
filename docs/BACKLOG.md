@@ -1063,7 +1063,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0240 Prism carving toolpath   [status: verifying — ADR-0042; OWNER to confirm geometry: inverted-pyramid recess (built) vs raised prism]
+### T-0240 Prism carving toolpath   [status: done — merged PR #121 (geometry reading OWNER to confirm: inverted-pyramid recess vs raised prism, ADR-0042)]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0153, T-0220
 Goal: Prism Carving: prism depth, set depth for full prism, cut direction (inventory 'Prism Carving Toolpath').
 Acceptance criteria:
@@ -1184,7 +1184,7 @@ Goal: the test fails on some environments (C.UTF-8 locale, long scratch path; pa
 Acceptance criteria:
   1. Test passes under LANG=C, C.UTF-8 and en_US.UTF-8 on Linux and on Windows CI; one changelog fragment if behaviour changes.
 
-### T-0254 Vector texture: dialog, preview and clipping to arbitrary closed vectors (T-0251 follow-up)   [status: in-progress]
+### T-0254 Vector texture: dialog, preview and clipping to arbitrary closed vectors (T-0251 follow-up)   [status: verifying]
 Phase: 1   Module: app/viewmodel + app/src + core/geometry   Depends on: T-0251
 Goal: T-0251 delivered only the deterministic core generator (rectangle region). Add the Create Vector Texture dialog (angle, max spacing, spacing variation, wavelength, amplitude, noise, seed, target layer), live preview, one undo step, and clipping to the selected closed vectors (with holes) instead of the bounding box.
 Acceptance criteria:
@@ -1226,7 +1226,7 @@ Goal: File/Edit > Trace Bitmap: choose an image (PNG/JPEG/BMP decoded with QImag
 Acceptance criteria:
   1. In the real app a user traces a bitmap into vectors in one undo step; oversize/hostile images refused with a message; self-test drives it.
 
-### T-0261 Double-sided jobs: UI, object/toolpath copy to other side, per-side output (T-0243 follow-up)   [status: ready]
+### T-0261 Double-sided jobs: UI, object/toolpath copy to other side, per-side output (T-0243 follow-up)   [status: in-progress]
 Phase: 1   Module: app + app/viewmodel + core/document + core/toolpath   Depends on: T-0243, T-0224
 Goal: Job Setup double-sided page, Swap Sides button and keys, multi-sided view drawing (from multiSidedView), Copy/Move to Other Side for objects (mirroring transform) and toolpaths (sheet link on toolpath records), apply shiftMovesZ(sheetTopZ) in Save Toolpaths so each side posts with the correct Z zero, switching back to single-sided, Preview All Sides. Needs owner confirmation of the 'Zero off same side' interpretation (T-0243 ADR) before dispatch if the coder cannot settle it from the inventory.
 Acceptance criteria:

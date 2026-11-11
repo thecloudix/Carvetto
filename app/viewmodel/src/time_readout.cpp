@@ -78,6 +78,21 @@ TimeReadout makeTimeReadout(const JobSummary& s) {
                              " not computed and not in the estimate.");
         r.incomplete = true;
     }
+    if (s.keepOutRouted > 0) {
+        r.warnings.push_back(plural(s.keepOutRouted, "rapid move goes", "rapid moves go") +
+                             " round keep-out zones (included in the estimate).");
+    }
+    if (s.keepOutUnroutable > 0) {
+        r.warnings.push_back(plural(s.keepOutUnroutable, "rapid move cannot", "rapid moves cannot") +
+                             " be routed round the keep-out zones (an end point lies inside a zone or no path "
+                             "exists) and enters them.");
+        r.incomplete = true;
+    }
+    if (s.keepOutTooComplex > 0) {
+        r.warnings.push_back(plural(s.keepOutTooComplex, "rapid move was", "rapid moves were") +
+                             " not routed round the keep-out zones (the zones are too complex) and enter them.");
+        r.incomplete = true;
+    }
     if (s.toolChanges > 0) {
         r.warnings.push_back("Tool changes (" + std::to_string(s.toolChanges) + ") are not timed (operator time).");
     }

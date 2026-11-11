@@ -54,6 +54,8 @@
 #include "tool_panel.hpp"
 #include "toolpaths_panel.hpp"
 #include "transform_menu.hpp"
+#include "texture_menu.hpp"
+#include "keepout_panel.hpp"
 #include "vector_ops_menu.hpp"
 
 namespace carvetto::app {
@@ -195,6 +197,25 @@ void MainWindow::buildDocks() {
         }
     };
 
+    keepOut_ = new KeepOutPanel(currentDoc, this);
+    keepOutDock_ = makeDock("Keep-out Zones", "keepOutDock", keepOut_);
+    keepOut_->onEdited = [this]() { documentChanged(); };
+    keepOut_->onMessage = [this](const std::string& text) { statusBar()->showMessage(qs(text), 6000); };
+    keepOut_->routingText = [this]() {
+        const toolpath::RoutingReport& r = preview_->model().scene().routing;
+        std::string text;
+        if (r.routed != 0) {
+            text += std::to_string(r.routed) + " rapid move(s) routed round the zones.";
+        }
+        if (r.unroutable != 0) {
+            text += (text.empty() ? "" : " ") + std::to_string(r.unroutable) + " rapid move(s) cannot be routed.";
+        }
+        if (r.tooComplex != 0) {
+            text += (text.empty() ? "" : " ") + std::to_string(r.tooComplex) + " rapid move(s) not routed (zones too complex).";
+        }
+        return text;
+    };
+
     addDockWidget(Qt::LeftDockWidgetArea, designDock_);
     addDockWidget(Qt::LeftDockWidgetArea, sheetsDock_);
     addDockWidget(Qt::LeftDockWidgetArea, layersDock_);
@@ -212,6 +233,8 @@ void MainWindow::buildDocks() {
     addDockWidget(Qt::RightDockWidgetArea, toolpathsDock_);
     addDockWidget(Qt::RightDockWidgetArea, previewDock_);
     tabifyDockWidget(toolpathsDock_, previewDock_);
+    addDockWidget(Qt::RightDockWidgetArea, keepOutDock_);
+    tabifyDockWidget(previewDock_, keepOutDock_);
     toolpathsDock_->raise();
 }
 
@@ -258,8 +281,10 @@ void MainWindow::buildMenus() {
     edit->addSeparator();
     vectorOps_ = std::make_unique<VectorOpsMenu>(*this, edit);
     copies_ = std::make_unique<CopiesMenu>(*this, edit);
+    textureMenu_ = std::make_unique<TextureMenu>(*this, edit);
     transformMenu_ = std::make_unique<TransformMenu>(*this);
     doubleSided_ = std::make_unique<DoubleSidedMenu>(*this, edit);
+    keepOut_->buildMenu(edit);
     edit->addSeparator();
     QAction* convertText = edit->addAction(QStringLiteral("Convert &Text to Curves"));
     connect(convertText, &QAction::triggered, this, [this]() {
@@ -279,7 +304,7 @@ void MainWindow::buildMenus() {
     QMenu* panels = view->addMenu(QStringLiteral("&Panels"));
     for (QDockWidget* dock :
          {designDock_, sheetsDock_, layersDock_, propertiesDock_, historyDock_, componentsDock_, libraryDock_,
-          toolpathsDock_, previewDock_}) {
+          toolpathsDock_, previewDock_, keepOutDock_}) {
         panels->addAction(dock->toggleViewAction());
     }
     view->addAction(preview_->showAction());
@@ -381,6 +406,9 @@ void MainWindow::buildToolPalette() {
         if (transformMenu_) {
             transformMenu_->refresh();  // keeps the shortcut actions (M, T, R, H, V, F9) usable
         }
+        if (keepOut_ != nullptr) {
+            keepOut_->refresh();
+        }
     };
 
 
@@ -478,6 +506,9 @@ void MainWindow::documentChanged() {
     }
     if (preview_ != nullptr) {
         preview_->refresh();
+    }
+    if (keepOut_ != nullptr) {
+        keepOut_->refresh();  // after the preview: it shows the routing counts
     }
 }
 

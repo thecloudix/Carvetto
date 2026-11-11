@@ -38,11 +38,13 @@ class CopiesMenu;
 class DoubleSidedMenu;
 class NodeEditMenu;
 class PreviewPanel;
+class KeepOutPanel;
 class ReliefView;
 class ToolPanel;
 class ToolpathsPanel;
 class TransformMenu;
 class VectorOpsMenu;
+class TextureMenu;
 
 /// Main window: 2D/3D view tabs with rulers around the 2D canvas, sheet and layer selectors,
 /// docked panels (Design, Sheets, Layers, Components, Library on the left; Toolpaths on the
@@ -72,9 +74,14 @@ class MainWindow : public QMainWindow {
 
     CanvasWidget* canvas() const { return canvas_; }
     VectorOpsMenu* vectorOps() const { return vectorOps_.get(); }
+    /// Edit > Create Vector Texture (T-0254).
+    TextureMenu* textureMenu() const { return textureMenu_.get(); }
     /// The node-editing menus and Properties dialog of the NodeEdit tool.
     NodeEditMenu* nodeEdit() const { return nodeEdit_.get(); }
     TransformMenu* transformMenu() const { return transformMenu_.get(); }
+    /// Keep-out zones dock and Edit submenu (T-0256).
+    KeepOutPanel* keepOutPanel() const { return keepOut_; }
+    QDockWidget* keepOutDock() const { return keepOutDock_; }
     QDockWidget* toolpathsDock() const { return toolpathsDock_; }
     /// File > Save Toolpaths... (T-0224): posts the enabled, calculated toolpaths.
     QAction* saveToolpathsAction() const { return saveToolpathsAction_; }
@@ -167,6 +174,7 @@ class MainWindow : public QMainWindow {
     std::unique_ptr<CopiesMenu> copies_;
     std::unique_ptr<DoubleSidedMenu> doubleSided_;
     std::unique_ptr<VectorOpsMenu> vectorOps_;
+    std::unique_ptr<TextureMenu> textureMenu_;
     std::unique_ptr<NodeEditMenu> nodeEdit_;
     std::unique_ptr<TransformMenu> transformMenu_;
 
@@ -189,6 +197,8 @@ class MainWindow : public QMainWindow {
     QDockWidget* libraryDock_{nullptr};
     QDockWidget* toolpathsDock_{nullptr};
     QDockWidget* previewDock_{nullptr};
+    QDockWidget* keepOutDock_{nullptr};
+    KeepOutPanel* keepOut_{nullptr};
     QDockWidget* propertiesDock_{nullptr};
     QDockWidget* historyDock_{nullptr};
 

@@ -44,6 +44,24 @@ The card fixes the outcomes (one ramp, Tool + cutting data in, one diagnostics t
    machine and material pass `Tool::cuttingDataFor(machine, material)`. Parameter field names
    (`ProfileParams`, `PocketParams`) are unchanged so params.json (T-0122) can mirror them.
 
+5. **Refused vectors (T-0183).** `ToolpathIssue::ContourRefused` says that one input vector was
+   not cut because its polygon cannot meet the chordal tolerance within the work bounds (an arc
+   needing more than 2^20 chords, a Bezier past its split cap, a non-finite arc or Bezier;
+   ADR-0005 A2): the booleans, offsets and `OpenPathClipper` leave such a vector out and only
+   count it (`BooleanResult::refusedContours`, `OpenPathClipper::refusedContours()`; the offset
+   has no count). An operation that polygonises its input therefore screens it up front with
+   `geometry::refusedByClippers(contour, tol)` (`tol` = the finest tolerance the operation
+   polygonises the input at, so a vector the operation would have cut is never refused), and
+   reports one `ContourRefused` diagnostic per refused vector (`contour` = its input index,
+   `refusedContourDiagnostic`), then goes on with the others: the refused vector is skipped like
+   an empty one, the result for the rest is exactly what the operation gives without it. The
+   viewmodel shows it as an Error (the toolpath of that vector is not generated). Operations:
+   Profile (every vector, open or closed), Pocket and Engrave Fill (closed vectors; open ones are
+   ignored as before), V-Carve (closed vectors; also a member of a crossing cluster that is only
+   too coarse at the finer resolving tolerance). Not affected, because they never polygonise
+   through the clippers: Drill, Thread Mill, Chamfer and Engrave Outline (they work on the spans
+   and the centre / distance queries, which handle a huge arc exactly).
+
 ### One ramp module
 5. `ramp_entry` owns every ramp. Its zig-zag is exposed as `zigZagLegs(u, direction, length,
    zFrom, zTo, ramp)`; `planPass` uses it, and Pocket's ramp plunge is `appendPathRamp(polyline,

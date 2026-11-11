@@ -198,7 +198,8 @@ std::vector<Contour> splitAtTouchingVertices(const Contour& poly) {
 /// Even-odd membership is the parity over all contours, so resolving each crossing cluster on
 /// its own gives the same region.
 std::vector<Boundary> resolveCrossings(const std::vector<Contour>& contours, const std::vector<std::size_t>& usable,
-                                       const geometry::Tolerance& tol, std::size_t& clusters) {
+                                       const geometry::Tolerance& tol, std::size_t& clusters,
+                                       std::set<std::size_t>& refusedAtFine) {
     const std::size_t n = usable.size();
     std::vector<Box2> boxes(n);
     for (std::size_t k = 0; k < n; ++k) {
@@ -271,7 +272,19 @@ std::vector<Boundary> resolveCrossings(const std::vector<Contour>& contours, con
         for (const std::size_t m : members[k]) {
             cluster.push_back(contours[usable[m]]);
         }
-        resolved[k] = geometry::unionContours(cluster, fine, geometry::FillRule::EvenOdd);
+        {
+            // T-0183: a member too coarse at the resolving tolerance drops out of the union; name it.
+            geometry::BooleanResult unionResult =
+                geometry::booleanOp(geometry::BooleanOp::Union, cluster, {}, fine, geometry::FillRule::EvenOdd);
+            resolved[k] = std::move(unionResult.closed);
+            if (unionResult.refusedContours > 0) {
+                for (const std::size_t m : members[k]) {
+                    if (geometry::refusedByClippers(contours[usable[m]], fine)) {
+                        refusedAtFine.insert(usable[m]);
+                    }
+                }
+            }
+        }
         std::vector<std::size_t> involved{k};  // roots whose clusters the absorptions touch
         for (const Contour& poly : resolved[k]) {
             for (const std::size_t j : index.query(poly.bounds().inflated(fine.chordal + tol.distance))) {
@@ -873,7 +886,10 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
     }
     const double limitRadius = footprint(tool, limit);
 
-    // Usable vectors.
+    // Usable vectors. A vector whose polygon cannot meet the medial axis's tolerance (the user's
+    // chordal tolerance over `kInnerDivisor`, see `inner` below) is refused (T-0183).
+    geometry::Tolerance screen = tol;
+    screen.chordal = std::max(tol.chordal / kInnerDivisor, kPocketMinChordal);
     std::vector<std::size_t> usable;
     std::size_t openCount = 0;
     std::optional<std::size_t> firstOpen;
@@ -894,6 +910,11 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
             say(ToolpathIssue::DiscontinuousContour, i, vecName(i) + " has gaps between spans; skipped");
             continue;
         }
+        if (geometry::refusedByClippers(c, screen)) {
+            // T-0183: the medial axis ignores such a vector without a word; say so.
+            result.diagnostics.push_back(refusedContourDiagnostic(i, vecName(i)));
+            continue;
+        }
         usable.push_back(i);
     }
     if (openCount > 0) {
@@ -901,7 +922,11 @@ VCarvingResult vCarvingToolpath(const std::vector<Contour>& contours, const tool
             std::to_string(openCount) + " open vector(s) ignored: V-carving needs closed vectors");
     }
     std::size_t crossingClusters = 0;
-    const std::vector<Boundary> boundaries = resolveCrossings(contours, usable, tol, crossingClusters);
+    std::set<std::size_t> refusedAtFine;
+    const std::vector<Boundary> boundaries = resolveCrossings(contours, usable, tol, crossingClusters, refusedAtFine);
+    for (const std::size_t i : refusedAtFine) {
+        result.diagnostics.push_back(refusedContourDiagnostic(i, vecName(i)));
+    }
     const std::vector<Group> groups = nestRegions(boundaries, tol);
     result.regions = groups.size();
 

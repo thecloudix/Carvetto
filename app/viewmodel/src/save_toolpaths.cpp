@@ -609,6 +609,48 @@ SaveJob prepareSave(const document::Document& doc, const std::vector<document::T
     return prepareSave(makeSaveSource(doc, ids), post, options);
 }
 
+/// Replaces `job.records` by their tiles (tile-major, document order inside a tile). Sets
+/// `job.error` when the tiling is invalid or a tile does not fit the work area.
+static void tileRecords(SaveJob& job) {
+    const toolpath::TileSpec& spec = *job.options.tiling;
+    std::vector<toolpath::Toolpath> tps;
+    std::vector<std::size_t> index;
+    for (std::size_t i = 0; i < job.records.size(); ++i) {
+        if (job.records[i].hasMoves()) {
+            tps.push_back(job.records[i].toolpath());
+            index.push_back(i);
+        }
+    }
+    if (!spec.originalPosition && !job.keepOutZones.empty()) {
+        job.error = "keep-out zones cannot be combined with tiles in tile coordinates (use the original position)";
+        return;
+    }
+    const toolpath::TilingResult res = toolpath::tileToolpaths(tps, spec);
+    if (!res.ok()) {
+        job.error = "tiling: " + res.error;
+        return;
+    }
+    std::vector<document::ToolpathRecord> out;
+    std::size_t n = 0;
+    for (const toolpath::Tile& tile : res.tiles) {
+        ++n;
+        if (!toolpath::tileFitsWorkArea(tile, job.options.workAreaX, job.options.workAreaY)) {
+            job.error = "tiling: tile " + std::to_string(n) + " is larger than the machine work area";
+            return;
+        }
+        for (std::size_t k = 0; k < tile.toolpaths.size(); ++k) {
+            if (tile.toolpaths[k].isEmpty()) {
+                continue;
+            }
+            document::ToolpathRecord rec = job.records[index[k]];
+            rec.name += " (tile " + std::to_string(n) + ")";
+            rec.moves = document::shareMoves(tile.toolpaths[k].moves);
+            out.push_back(std::move(rec));
+        }
+    }
+    job.records = std::move(out);
+}
+
 SaveJob prepareSave(const SaveSource& source, const PostInfo& post, const SaveOptions& options) {
     SaveJob job;
     job.job = source.job;
@@ -629,6 +671,9 @@ SaveJob prepareSave(const SaveSource& source, const PostInfo& post, const SaveOp
         if (!err.empty()) {
             job.error = "post-processor: " + err;
         }
+    }
+    if (job.error.empty() && job.options.tiling && !job.records.empty()) {
+        tileRecords(job);
     }
     if (job.error.empty() && job.records.empty()) {
         job.error = job.notComputed.empty() ? "there are no toolpaths to save"

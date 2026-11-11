@@ -786,6 +786,14 @@ choices. Behaviour descriptions come from `docs/reference/` only.
       Bezier-heavy job that polygonises into more is refused after its cut is planned, before it
       is all in memory.
 
+    *Far from the origin (T-0157).* The coordinate limit is also the precision limit: a part
+    0.5 to 10 mm across behaves like its copy at the origin (same move count, moves equal up to
+    translation within 1e-3 mm) at every placement tried up to 9e4 mm; beyond 1e5 mm the offset
+    and clearance code, which works on absolute coordinates, no longer does (a 1.2 mm circle at
+    3e8 mm: "offset by 0.25 mm vanishes"), so such a job is refused up front with
+    `WorkLimitExceeded` and not cut wrongly. A part that far away has to be moved nearer the
+    origin (translate the job) before profiling. `profile_far_test.cpp` pins both sides.
+
     *Work meter* (`work_meter.hpp`). A `WorkMeter` counts integer work units; hot paths call
     `detail::chargeWork(n)`, which adds to the meter installed on the calling thread (a
     `thread_local` pointer; null for every other operation, so Pocket, Drill, V-Carve and Engrave
@@ -938,6 +946,14 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     vector whose offset is much slower than 300 units per span passes the limit later than the
     count says. The costs the count tracks best are clearance sampling and exact closest-point
     tests, which are what grows with edge length and with thin self-intersecting loops.
+
+### Refused vectors (T-0183)
+A vector the offset and union code would leave out silently (an arc past the 2^20-chord cap, a
+Bezier past its split cap, a non-finite curve; at Profile's input limits that is an arc of many
+windings or a Bezier, since coordinates stay within 1e5 mm) gets a `ContourRefused` diagnostic
+(ADR-0018 item 5) in the validity pass, is marked invalid like an empty or discontinuous vector
+and is not cut; the other vectors are cut exactly as without it. The screen runs at the offset
+tolerance (`offTol_`).
 
 ### Golden hand-check (AC1 / AC6)
 `core/tests/golden/toolpath/profile_rect_tabs.moves` and `profile_rect_tabs_grbl.nc` were
