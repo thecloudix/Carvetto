@@ -569,6 +569,11 @@ std::vector<IntegrityIssue> Document::checkIntegrity() const {
             }
         }
     }
+    for (const auto& [id, obj] : objects_) {
+        if (const BitmapObject* b = obj.asBitmap(); b && isFontKey(b->sourceRef) && !bitmaps_.contains(b->sourceRef)) {
+            report(Kind::MissingBitmap, id, {}, "bitmap object " + idText(id) + " names an image that is not embedded");
+        }
+    }
     for (const auto& [value, entry] : owners) {
         if (value == 0 || entry.names.size() < 2) {
             continue;  // the null id is already reported as IdOutOfRange
@@ -821,6 +826,57 @@ std::optional<FontAsset> Document::takeFont(const std::string& key) {
     FontAsset f = std::move(it->second);
     fonts_.erase(it);
     return f;
+}
+
+// --- Embedded bitmaps (T-0273) -------------------------------------------------------------------
+
+const BitmapAsset* Document::findBitmap(const std::string& key) const {
+    const auto it = bitmaps_.find(key);
+    return it == bitmaps_.end() ? nullptr : &it->second;
+}
+
+std::string Document::bitmapProblem(const BitmapAsset& image) const {
+    if (!isFontKey(image.key) || image.bytes.empty()) {
+        return "the image is empty or has no valid key";
+    }
+    if (const auto it = bitmaps_.find(image.key); it != bitmaps_.end()) {
+        return it->second.bytes == image.bytes ? std::string{} : std::string("a different image has the same key");
+    }
+    if (image.bytes.size() > kMaxEmbeddedBitmapBytes) {
+        return "the image file is larger than " + std::to_string(kMaxEmbeddedBitmapBytes >> 20) +
+               " MiB, the most a document embeds";
+    }
+    if (bitmaps_.size() >= kMaxEmbeddedBitmaps) {
+        return "the document already embeds " + std::to_string(kMaxEmbeddedBitmaps) + " images, the most it can hold";
+    }
+    std::size_t total = image.bytes.size();
+    for (const auto& [k, b] : bitmaps_) {
+        total += b.bytes.size();
+    }
+    if (total > kMaxEmbeddedBitmapsTotalBytes) {
+        return "the embedded images would exceed " + std::to_string(kMaxEmbeddedBitmapsTotalBytes >> 20) +
+               " MiB together";
+    }
+    return {};
+}
+
+bool Document::insertBitmap(BitmapAsset image) {
+    if (bitmaps_.contains(image.key) || !bitmapProblem(image).empty()) {
+        return false;
+    }
+    const std::string key = image.key;
+    bitmaps_.emplace(key, std::move(image));
+    return true;
+}
+
+std::optional<BitmapAsset> Document::takeBitmap(const std::string& key) {
+    const auto it = bitmaps_.find(key);
+    if (it == bitmaps_.end()) {
+        return std::nullopt;
+    }
+    BitmapAsset b = std::move(it->second);
+    bitmaps_.erase(it);
+    return b;
 }
 
 }  // namespace carvetto::document

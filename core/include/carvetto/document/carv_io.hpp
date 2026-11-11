@@ -39,9 +39,14 @@ inline constexpr int kCarvFormatMinorDimension = 3;
 /// document has zones or a non-default clearance/visibility.
 inline constexpr int kCarvFormatMinorKeepOut = 4;
 /// 1.5 (T-0243, ADR-0039) adds double-sided jobs (sheet `side`/`partner`); written only when the
-/// document has a back or paired sheet. The newest minor this build writes and reads.
+/// document has a back or paired sheet.
 inline constexpr int kCarvFormatMinorDoubleSided = 5;
-inline constexpr int kCarvFormatMinor = kCarvFormatMinorDoubleSided;
+/// 1.6 (T-0273, ADR-0051) embeds bitmap pixel data (`bitmaps/<key>.img` members, referenced by a
+/// bitmap object's `source_ref`); written only when a bitmap object refers to an embedded image.
+/// Older 1.x readers keep the members as unknown archive members and write them back.
+/// The newest minor this build writes and reads.
+inline constexpr int kCarvFormatMinorBitmap = 6;
+inline constexpr int kCarvFormatMinor = kCarvFormatMinorBitmap;
 /// The minor version written for documents that use text (1.2) but no 1.3/1.4 features.
 inline constexpr int kCarvFormatMinorText = 2;
 /// The minor version written for documents that use no 1.2 features (no text objects): 1.1.
