@@ -532,7 +532,7 @@ Acceptance criteria:
   1. (a)–(c) every free piece ≥ 0.04 mm² reported in the repro scenes and a ≥ 10k-scene vfree screen with V-bit corners on; no held piece reported; no kept tab severed/partial because of corner moves.
   2. (d)/(e) docs true as written or behaviour changed; holding tabs never fewer than the T-0135 merge.
 
-### T-0157 Profile precision for small parts far from the origin   [status: verifying — re-scoped: documented limit (1e5 mm, T-0186) + pinning test + signedArea cache]
+### T-0157 Profile precision for small parts far from the origin   [status: done — merged #126]
 Phase: 1   Module: core/toolpath, core/geometry   Depends on: T-0147
 Goal: Found by the T-0147 verifier (harness t0147v1/far.cpp): with signedArea fixed, Profile still behaves differently from the origin for small parts at ≥ 1e7–1e8 mm (same-count 0–10/20; e.g. a circle at 3e8 gives "offset by 0.25 mm vanishes"); same on base — the cause is in offset/Profile precision (absolute coordinates in offset or clearance code), not area. Also: signedArea is now ~3–4× slower per arc span (sin/cos recomputed for junction terms; end-to-end unchanged) — cache per-span ends if cheap.
 Acceptance criteria:
@@ -726,7 +726,7 @@ Goal: Found by the T-0180 coder (harness nf.cpp seed 5): `polygoniseInto(ArcSpan
 Acceptance criteria:
   1. Arcs of radius 1e9..1.7e308 and inf at default and tiny chordal tolerances polygonise in <= 0.2 s with bounded memory (ulimit -v test) and documented accuracy; output unchanged (hash corpus main vs branch, bit-identical) for every arc that polygonised under the cap before; every caller listed above terminates promptly on a hostile arc (CPU-time tests); mutants killed; full ctest; MSVC CI green.
 
-### T-0183 Surface refused contours in toolpath diagnostics (T-0182 coder)   [status: in-progress]
+### T-0183 Surface refused contours in toolpath diagnostics (T-0182 coder)   [status: done — merged #129]
 Phase: 1   Module: core/toolpath   Depends on: T-0182   ADR: 0005 A2, toolpath ADRs
 Goal: T-0182 caps arc polygonisation at 2^20 chords; `toClipperPath` refuses a coarse contour (empty path), so `booleanOp`/`unionContours`/`offsetContours`/`OpenPathClipper` silently omit it and count it in `BooleanResult::refusedContours` / `OpenPathClipper::refusedContours()`. No toolpath operation reads that count: a contour with an arc beyond ~1e9 mm radius (unrealistic, but reachable from hostile DXF/SVG files) would be silently missing from a Profile/Pocket/V-Carve/Engrave/Drill job. Wire the counts into the shared `ToolpathDiagnostic` (ADR-0018) so every operation reports a clear diagnostic naming the vector (Error severity: the toolpath for that vector is not generated, or the whole job is refused: decide per operation and document in each ADR: prefer refusing the vector with a diagnostic and still cutting the others) and the CLI/app show it.
 Acceptance criteria:
@@ -770,7 +770,7 @@ Director decision 2026-11-06 (owner delegated): leave the F/2 ridges as they are
 Acceptance criteria:
   1. (a) ≤ 2.5× per doubling on the chain repro, output byte-identical; (b) the listed mutants are killed by corner tests; (c), (d) docs fixed; full ctest.
 
-### T-0174 Profile start: degenerate start edge and region-arc band (T-0158 round-5 verifier)   [status: ready]
+### T-0174 Profile start: degenerate start edge and region-arc band (T-0158 round-5 verifier)   [status: in-progress]
 Phase: 1   Module: core/toolpath   Depends on: T-0158   ADR: 0016 §11
 Goal: Known limits accepted at the T-0158 merge (harness t0158v5). (a) A squared-off tip whose start vertex has a duplicate or sub-µm edge next to it labels no span on that edge; the fallback's "most even feet" ties exactly between the chamfer's two corners and rounding picks one — the start jumps up to 4.3 mm under ulp/1e-9 (repro5/sq_tiny_tA2.5_e0_phi0_o0_d0_lim2.scn, sq_tiny_tA2.5_e1e-09_*; mitre limit 1: 0.45/1.86/3.28 mm at turns 0.3/1.2/2), and with a collinear 1e-7–1e-5 mm edge both directions start at the same chamfer corner (last in travel for one). Skip degenerate edges when finding the start vertex's own edges, and break any chamfer tie by first in travel. (b) Merged-region arc labelling band: arc chord sag on the chordal-slack band flips the start by one chord (repro5/mrgarc_vb_R20.771966844133722_d1.scn 1.67 mm, mrgarc_em_R18.966862802842932_d1.scn 0.36 mm). (c) Surviving mutants N1, N2, N3, N8, N11 — add tests. (d) ADR §11: describe the label-3 "from" rule. Self-intersecting outlines stay best effort (owner).
 Acceptance criteria:
@@ -987,7 +987,7 @@ Out of scope: single-line stroke fonts, the text tool UI (T-0211).
 ### T-0225 TransformDialog holds a const Document& (T-0206 verifier note)   [status: done — merged PR #106]
 TransformDialog (transform_menu.cpp) keeps a `const Document&` and `rebuild()` re-reads it from option-toggle callbacks. Unreachable today (modal, nothing replaces the document), but pass the document live or close the dialog on replacement. Also remove the redundant xfReset() in ToolController::setDocument (equivalent mutant).
 
-### T-0226 Flaky CPU-ratio test: T-0172 (b) (offset_narrow_loops_test.cpp:1610)   [status: verifying]
+### T-0226 Flaky CPU-ratio test: T-0172 (b) (offset_narrow_loops_test.cpp:1610)   [status: done — merged #124]
 `CHECK(t.ratio() < 1.35)` failed once on ubuntu-26.04 CI with ratio 1.362 (even 0.1505 s vs varied 0.2057 s) on PR #91, unrelated to that PR. Timing-ratio tests on ~0.15 s runs are noise-sensitive: widen the bound, lengthen the workload, or use best-of-N / operation counts instead of CPU seconds. Audit other ratio-based tests (cpu_scaling.hpp users).
 
 ### T-0228 Geometry offset: interruptible + cheaper Bezier length (from T-0186/T-0130 findings)   [status: done — merged PR #103; nits: open-offset late phase unpolled, no BuildIntersectList evaluation note, cancel tests loose (<1 s)]
@@ -1045,7 +1045,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0238 Inlay toolpaths: straight inlay (male/female, stepped) and VCarve inlay (plug and pocket)   [status: verifying — straight inlay slice; VCarve inlay → T-0265; ADR-0040]
+### T-0238 Inlay toolpaths: straight inlay (male/female, stepped) and VCarve inlay (plug and pocket)   [status: done — merged #123]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0121, T-0153, T-0220
 Goal: Straight inlays (male straight/stepped, female pocket/hole, allowance) and VCarve Inlay (pocket depth, glue gap, surface clearance, plug destination sheet, mirrored plug, plug boundary options).
 Acceptance criteria:
@@ -1054,7 +1054,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0239 Fluting toolpath   [status: verifying — ADR-0041; Wrapped Fluting Layout is a separate rotary gadget, out of scope]
+### T-0239 Fluting toolpath   [status: done — merged #120]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0120, T-0220
 Goal: Fluting toolpath per inventory 'Fluting Toolpath' (flat or ball-nose, depth profile along the vector, start/end ramps).
 Acceptance criteria:
@@ -1081,7 +1081,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0242 Toolpath tiling manager   [status: verifying — core tiling + Output Tiled Toolpaths save path; dialog checkbox/Tiling Manager panel → UI follow-up; ADR-0043]
+### T-0242 Toolpath tiling manager   [status: done — merged #122]
 Phase: 1   Module: core/toolpath + app   Depends on: T-0224, T-0220
 Goal: Tiling of a job larger than the work area into tiles with overlap, per-tile output (inventory 'Toolpath Tiling Manager').
 Acceptance criteria:
@@ -1153,7 +1153,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0250 Photo V-carve (raster to depth-modulated V-carve/engrave toolpath)   [status: in-progress — owner confirmed Phase 1, 2026-11-10]
+### T-0250 Photo V-carve (raster to depth-modulated V-carve/engrave toolpath)   [status: done — merged #134 (core slice; app → T-0275)]
 Phase: 1   Module: core/toolpath + core/io + app   Depends on: T-0245, T-0153
 Goal: Photo V-Carve from a bitmap per docs/reference/feature-inventory.md ("Photo V-Carve Toolpath"): the tool depth along each line follows image brightness (V-bit engraving), bounded by Max Carving Depth. Reuses the raster decoding from T-0245. Core is Qt-free (takes a grayscale pixel buffer + placement in mm); app side decodes via QImage.
 Acceptance criteria:
@@ -1188,19 +1188,19 @@ Goal: the test fails on some environments (C.UTF-8 locale, long scratch path; pa
 Acceptance criteria:
   1. Test passes under LANG=C, C.UTF-8 and en_US.UTF-8 on Linux and on Windows CI; one changelog fragment if behaviour changes.
 
-### T-0254 Vector texture: dialog, preview and clipping to arbitrary closed vectors (T-0251 follow-up)   [status: verifying]
+### T-0254 Vector texture: dialog, preview and clipping to arbitrary closed vectors (T-0251 follow-up)   [status: done — merged #128]
 Phase: 1   Module: app/viewmodel + app/src + core/geometry   Depends on: T-0251
 Goal: T-0251 delivered only the deterministic core generator (rectangle region). Add the Create Vector Texture dialog (angle, max spacing, spacing variation, wavelength, amplitude, noise, seed, target layer), live preview, one undo step, and clipping to the selected closed vectors (with holes) instead of the bounding box.
 Acceptance criteria:
   1. Generated lines lie inside the selected region (holes excluded) within tolerance; dialog edits validated with units; one undo step; self-test drives the real dialog; bounded work for hostile regions.
 
-### T-0255 Dimensions: ToolController wiring, options dialog, canvas handle editing, DXF text (T-0246 follow-up)   [status: in-progress]
+### T-0255 Dimensions: ToolController wiring, options dialog, canvas handle editing, DXF text (T-0246 follow-up)   [status: done — merged #131]
 Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0246
 Goal: wire DimensionTool into ToolController (ToolKind::Dimension, toolbar/menu), Qt options dialog (decimals, font/text height, offset, custom text), canvas control-point handles and shift-select editing, Edit > Dimensions; DXF export of dimension text when a text entity path exists; reflex angular dimensions.
 Acceptance criteria:
   1. A user can place, edit and delete each dimension kind in the real app (self-test drives it); one undo step per edit; hostile option input refused.
 
-### T-0256 Keep-out zones: Qt UI (Create from Selection, Clear Zones, clearance, show/hide, canvas drawing) (T-0241 follow-up)   [status: verifying — ADR-0046]
+### T-0256 Keep-out zones: Qt UI (Create from Selection, Clear Zones, clearance, show/hide, canvas drawing) (T-0241 follow-up)   [status: done — merged #127]
 Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0241
 Goal: menu/dock entries for the T-0241 commands, clearance field, show/hide toggle, canvas drawing of zones (+ clearance halo), preview shows routed rapids, summary reports unroutable rapids. Self-test drives it.
 Acceptance criteria:
@@ -1299,7 +1299,7 @@ Goal: (1) persist toolpath calculation expressions in .carv (optional 'expressio
 Acceptance criteria:
   1. Save/reload keeps expressions and blocks deleting a used variable; old files load; other items tested.
 
-### T-0273 Bitmap pixel store in .carv (BitmapObject holds decodable image data)   [status: verifying — core only; app import → T-0250b; ADR-0051]
+### T-0273 Bitmap pixel store in .carv (BitmapObject holds decodable image data)   [status: done — merged #135]
 Phase: 1   Module: core/document + core/io + app   Depends on: T-0245
 Goal: BitmapObject is currently a placeholder (placement + sourceRef). Owner decision 2026-11-10: store pixel data inside the .carv file (bitmaps/* entries, format minor bump with forward/backward compat per ARCHITECTURE.md), loadable into a RasterImage/GrayImage in core.
 Acceptance criteria:
@@ -1307,9 +1307,9 @@ Acceptance criteria:
   2. Core API to fetch decoded raster for a BitmapObject (decoding stays in app/QImage or existing core decoder; core remains Qt-free).
   3. Undo/redo of import; dedup of identical images; corrupt/oversized entries rejected with errors, never a crash.
   4. One changelog fragment; full ctest and MSVC CI green.
-Out of scope: Photo V-carve wiring (T-0250b).
+Out of scope: Photo V-carve wiring (T-0275).
 
-### T-0250b Photo V-carve app wiring (T-0250 follow-up)   [status: blocked — depends on T-0250, T-0273]
+### T-0275 Photo V-carve app wiring (T-0250 follow-up)   [status: in-progress]
 Phase: 1   Module: app + core/toolpath   Depends on: T-0250, T-0273
 Goal: App-side bitmap import (QImage decode → makeImportBitmapCommand from T-0273, which is core-only), gray conversion (grayFromRaster), native toolpath record, ToolpathParams/Operation entry, PhotoVCarve form, ToolController wiring and preview for a selected bitmap, with self-test coverage.
 Acceptance criteria:
