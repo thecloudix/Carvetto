@@ -2172,8 +2172,9 @@ constexpr std::array<std::string_view, 11> kPrismKeys{
     "tool", "layers"};
 // Inlay records exist only in job.json, like V-carve.
 constexpr std::array<std::string_view, 16> kInlayKeys{
-    "name",       "piece",     "male_style", "female_style", "start_depth", "cut_depth", "step_depth", "step_width",
-    "allowance",  "safe_z",    "direction",  "order",        "start_position", "tolerance", "tool",    "layers"};
+    "name",        "piece",      "male_style", "female_style",   "start_depth", "cut_depth",
+    "step_depth",  "step_width", "allowance",  "safe_z",         "direction",   "order",
+    "start_position", "tolerance", "tool",     "layers"};
 
 template <std::size_t N>
 std::span<const std::string_view> keysFor(const std::array<std::string_view, N>& keys, ParamsDialect d) {

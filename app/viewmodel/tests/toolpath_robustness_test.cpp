@@ -95,7 +95,7 @@ std::string toolFor(ToolpathOperation op, Rng& rng) {
         case ToolpathOperation::Prism:
         case ToolpathOperation::Chamfer: return "v-bit-90";
         case ToolpathOperation::ThreadMill:
-        case ToolpathOperation::Inlay: return "end-mill-3mm";
+        case ToolpathOperation::Inlay:
         case ToolpathOperation::Fluting: return "end-mill-3mm";
     }
     return "end-mill-3mm";
