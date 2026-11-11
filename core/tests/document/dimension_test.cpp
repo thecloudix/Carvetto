@@ -797,3 +797,43 @@ TEST_CASE("handle drags follow an anchored part and are one undo step as a comma
     REQUIRE(doc.undo());
     CHECK(doc.findObject(*id)->asDimension()->offsetMm == Approx(5.0));
 }
+
+TEST_CASE("handles: the text-height handle enlarges every kind and orientation", "[dimension][document][handles]") {
+    Document doc;
+    std::vector<DimensionObject> dims;
+    auto add = [&](DimensionKind kind, Vec2 a, Vec2 b, Vec2 c, double offset, bool vertical = false,
+                   bool diameter = false) {
+        DimensionObject d = make(kind, a, b, c);
+        d.offsetMm = offset;
+        d.vertical = vertical;
+        d.diameter = diameter;
+        d.textHeightMm = 4.0;
+        dims.push_back(d);
+    };
+    add(DimensionKind::Aligned, {50, 50}, {150, 50}, {}, 30);
+    add(DimensionKind::Linear, {50, 110}, {120, 140}, {}, 30);
+    add(DimensionKind::Linear, {200, 110}, {230, 190}, {}, -20, true);  // vertical: text angle at the +pi/2 edge
+    add(DimensionKind::Angular, {220, 50}, {270, 50}, {220, 100}, 28);
+    add(DimensionKind::Angular, {220, 160}, {270, 160}, {220, 210}, -28);  // reflex
+    add(DimensionKind::Radial, {60, 230}, {90, 230}, {}, 20);
+    add(DimensionKind::Radial, {150, 240}, {170, 240}, {}, 30, false, true);
+    // Aligned dimensions all round the compass, including the exact quarter turns.
+    for (int deg = 0; deg < 360; deg += 15) {
+        const double a = deg * kPi / 180.0;
+        add(DimensionKind::Aligned, {0, 0}, Vec2::fromAngle(a, 40.0), {}, 7.0);
+    }
+    for (const DimensionObject& d : dims) {
+        const auto handles = dimensionHandles(doc, d);
+        const DimensionHandle* th = findHandle(handles, DimensionHandleKind::TextHeight);
+        REQUIRE(th != nullptr);
+        const DimensionGeometry g = dimensionGeometry(doc, d);
+        REQUIRE(g.valid);
+        const Vec2 up = Vec2::fromAngle(g.textAngle + kPi / 2.0);
+        // The handle sits half a text height above the text centre, along the text's up direction.
+        CHECK((th->pos - g.textCentre).length() == Approx(d.textHeightMm * 0.5));
+        CHECK((th->pos - g.textCentre).dot(up) == Approx(d.textHeightMm * 0.5));
+        const auto taller = moveDimensionHandle(doc, d, *th, th->pos + up * (2.0 * d.textHeightMm + 3.0));
+        REQUIRE(taller.has_value());
+        CHECK(taller->textHeightMm == Approx(d.textHeightMm * (1.0 + (2.0 * d.textHeightMm + 3.0) / (d.textHeightMm * 0.5))));
+    }
+}

@@ -543,7 +543,9 @@ std::string dimensionSelfTest(MainWindow& window) {
         DIM_REQUIRE(document::dimensionText(doc, *dimOf(doc, id), doc.job().displayUnits) == textBefore,
                     "undo did not restore the text");
         // Black handle: the text height.
-        const auto heightHandle = *std::find_if(dt.handles().begin(), dt.handles().end(), [](const auto& h) {
+        // One vector: begin() and end() of two separate handles() temporaries are not a range (UB).
+        const auto currentHandles = dt.handles();
+        const auto heightHandle = *std::find_if(currentHandles.begin(), currentHandles.end(), [](const auto& h) {
             return h.kind == document::DimensionHandleKind::TextHeight;
         });
         // Pull it outwards along the text's own up direction (from the model, not from pixels or a
