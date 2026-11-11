@@ -1299,7 +1299,7 @@ Goal: (1) persist toolpath calculation expressions in .carv (optional 'expressio
 Acceptance criteria:
   1. Save/reload keeps expressions and blocks deleting a used variable; old files load; other items tested.
 
-### T-0273 Bitmap pixel store in .carv (BitmapObject holds decodable image data)   [status: ready]
+### T-0273 Bitmap pixel store in .carv (BitmapObject holds decodable image data)   [status: in-progress]
 Phase: 1   Module: core/document + core/io + app   Depends on: T-0245
 Goal: BitmapObject is currently a placeholder (placement + sourceRef). Owner decision 2026-11-10: store pixel data inside the .carv file (bitmaps/* entries, format minor bump with forward/backward compat per ARCHITECTURE.md), loadable into a RasterImage/GrayImage in core.
 Acceptance criteria:
