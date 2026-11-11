@@ -82,15 +82,17 @@ std::size_t dimensionPointCount(DimensionKind kind) {
 
 std::string dimensionProblem(const DimensionObject& dim) {
     for (const DimensionPoint& p : dim.points) {
-        if (!finite(p.pos)) {
-            return "the dimension points must be finite";
+        if (!finite(p.pos) || std::fabs(p.pos.x) > kMaxDimensionMagnitudeMm ||
+            std::fabs(p.pos.y) > kMaxDimensionMagnitudeMm) {
+            return "the dimension points must be finite and within 1e9 mm";
         }
     }
-    if (!finite(dim.offsetMm)) {
-        return "the dimension offset must be finite";
+    if (!finite(dim.offsetMm) || std::fabs(dim.offsetMm) > kMaxDimensionMagnitudeMm) {
+        return "the dimension offset must be finite and within 1e9 mm";
     }
-    if (!finite(dim.textHeightMm) || !(dim.textHeightMm > 0.0)) {
-        return "the text height must be a finite number greater than zero";
+    if (!finite(dim.textHeightMm) || !(dim.textHeightMm > 0.0) || dim.textHeightMm > kMaxDimensionTextHeightMm) {
+        return "the text height must be greater than zero and at most " +
+               std::to_string(static_cast<int>(kMaxDimensionTextHeightMm)) + " mm";
     }
     if (dim.decimals < 0 || dim.decimals > kMaxDimensionDecimals) {
         return "the decimal places must be between 0 and " + std::to_string(kMaxDimensionDecimals);
@@ -164,6 +166,9 @@ std::optional<double> measureDimensionPoints(const DimensionObject& dim, const s
                 return std::nullopt;
             }
             value = std::atan2(std::fabs(a.cross(b)), a.dot(b));
+            if (value > kTiny && dim.offsetMm < 0.0) {
+                value = 2.0 * geometry::kPi - value;  // reflex: the other way round
+            }
             break;
         }
         case DimensionKind::Radial:
@@ -210,8 +215,16 @@ std::optional<double> offsetForPlacement(const DimensionObject& dim, const std::
         case DimensionKind::Linear:
         case DimensionKind::Aligned:
             return (placement - (p[0] + p[1]) * 0.5).dot(axisOf(dim, p).perp());
-        case DimensionKind::Angular:
-            return geometry::distance(placement, p[0]);
+        case DimensionKind::Angular: {
+            // Placing the arc outside the smaller angle measures the reflex angle (negative offset).
+            const double dist = geometry::distance(placement, p[0]);
+            const Vec2 a = p[1] - p[0];
+            const Vec2 d = placement - p[0];
+            const double sweep = std::atan2(a.cross(p[2] - p[0]), a.dot(p[2] - p[0]));
+            const double t = std::atan2(a.cross(d), a.dot(d));
+            const bool inside = sweep >= 0.0 ? (t >= 0.0 && t <= sweep) : (t <= 0.0 && t >= sweep);
+            return inside || dist <= kTiny ? dist : -dist;
+        }
         case DimensionKind::Radial: {
             const Vec2 dir = (p[1] - p[0]).normalized();
             return std::max(0.0, (placement - p[0]).dot(dir) - geometry::distance(p[0], p[1]));
@@ -256,7 +269,10 @@ DimensionGeometry dimensionGeometry(const Document& doc, const DimensionObject& 
             const Vec2 a = p[1] - v;
             const Vec2 b = p[2] - v;
             const double a1 = a.angle();
-            const double sweep = std::atan2(a.cross(b), a.dot(b));  // signed, (-pi, pi]
+            double sweep = std::atan2(a.cross(b), a.dot(b));  // signed, (-pi, pi]
+            if (dim.offsetMm < 0.0) {
+                sweep -= (sweep >= 0.0 ? 1.0 : -1.0) * 2.0 * geometry::kPi;  // reflex: the long way round
+            }
             const ArcDirection dir = sweep >= 0.0 ? ArcDirection::CCW : ArcDirection::CW;
             ArcSpan arc;
             arc.centre = v;
@@ -304,6 +320,136 @@ DimensionGeometry dimensionGeometry(const Document& doc, const DimensionObject& 
     }
     g.valid = true;
     return g;
+}
+
+namespace {
+
+/// End of the dimension line (towards point 1) of a linear or aligned dimension.
+Vec2 dimensionLineEnd(const DimensionObject& dim, const std::array<Vec2, 3>& p) {
+    const Vec2 u = axisOf(dim, p);
+    const Vec2 n = u.perp();
+    const double line = ((p[0] + p[1]) * 0.5).dot(n) + dim.offsetMm;
+    return u * p[1].dot(u) + n * line;
+}
+
+/// Text lies this many text heights beyond the dimension line / arc / leader end.
+constexpr double kTextGap = 0.75;
+
+}  // namespace
+
+std::vector<DimensionHandle> dimensionHandles(const Document& doc, const DimensionObject& dim) {
+    std::vector<DimensionHandle> out;
+    const DimensionGeometry g = dimensionGeometry(doc, dim);
+    if (!g.valid) {
+        return out;
+    }
+    const std::array<Vec2, 3> p = resolveDimensionPoints(doc, dim);
+    for (std::size_t i = 0; i < dimensionPointCount(dim.kind); ++i) {
+        out.push_back({DimensionHandleKind::Point, i, p[i], true});
+    }
+    out.push_back({DimensionHandleKind::Text, 0, g.textCentre, true});
+    if (dim.kind == DimensionKind::Angular) {
+        const Vec2 a = p[1] - p[0];
+        const Vec2 b = p[2] - p[0];
+        double sweep = std::atan2(a.cross(b), a.dot(b));
+        if (dim.offsetMm < 0.0) {
+            sweep -= (sweep >= 0.0 ? 1.0 : -1.0) * 2.0 * geometry::kPi;
+        }
+        out.push_back({DimensionHandleKind::ArcRadius, 0,
+                       p[0] + Vec2::fromAngle(a.angle() + sweep / 2.0, std::fabs(dim.offsetMm)), true});
+    }
+    if (dim.kind == DimensionKind::Linear || dim.kind == DimensionKind::Aligned) {
+        out.push_back({DimensionHandleKind::Leg, 0, dimensionLineEnd(dim, p), false});
+    }
+    const Vec2 up = Vec2::fromAngle(g.textAngle + geometry::kPi / 2.0);
+    out.push_back({DimensionHandleKind::TextHeight, 0, g.textCentre + up * (dim.textHeightMm * 0.5), false});
+    return out;
+}
+
+std::optional<DimensionObject> moveDimensionHandle(const Document& doc, const DimensionObject& dim,
+                                                   const DimensionHandle& handle, Vec2 to) {
+    if (!finite(to) || std::fabs(to.x) > kMaxDimensionMagnitudeMm || std::fabs(to.y) > kMaxDimensionMagnitudeMm) {
+        return std::nullopt;
+    }
+    DimensionObject next = dim;
+    const std::array<Vec2, 3> p = resolveDimensionPoints(doc, dim);
+    for (std::size_t i = 0; i < next.points.size(); ++i) {
+        next.points[i].pos = p[i];  // anchored points keep their anchor; the position is current
+    }
+    switch (handle.kind) {
+        case DimensionHandleKind::Point:
+            if (handle.index >= dimensionPointCount(dim.kind)) {
+                return std::nullopt;
+            }
+            next.points[handle.index].pos = to;
+            next.points[handle.index].anchor.reset();
+            break;
+        case DimensionHandleKind::Leg: {
+            if (dim.kind != DimensionKind::Linear && dim.kind != DimensionKind::Aligned) {
+                return std::nullopt;
+            }
+            const auto o = offsetForPlacement(dim, p, to);
+            if (!o) {
+                return std::nullopt;
+            }
+            next.offsetMm = *o;
+            break;
+        }
+        case DimensionHandleKind::ArcRadius: {
+            if (dim.kind != DimensionKind::Angular) {
+                return std::nullopt;
+            }
+            const auto o = offsetForPlacement(dim, p, to);
+            if (!o || std::fabs(*o) <= kTiny) {
+                return std::nullopt;
+            }
+            next.offsetMm = *o;
+            break;
+        }
+        case DimensionHandleKind::Text: {
+            const auto o = offsetForPlacement(dim, p, to);
+            if (!o) {
+                return std::nullopt;
+            }
+            const double gap = kTextGap * dim.textHeightMm;
+            switch (dim.kind) {
+                case DimensionKind::Linear:
+                case DimensionKind::Aligned:
+                    next.offsetMm = *o - gap;
+                    break;
+                case DimensionKind::Angular: {
+                    const double r = std::fabs(*o) - gap;
+                    if (!(r > kTiny)) {
+                        return std::nullopt;
+                    }
+                    next.offsetMm = *o < 0.0 ? -r : r;
+                    break;
+                }
+                case DimensionKind::Radial:
+                    next.offsetMm = std::max(0.0, *o - gap);
+                    break;
+            }
+            break;
+        }
+        case DimensionHandleKind::TextHeight: {
+            const DimensionGeometry g = dimensionGeometry(doc, dim);
+            if (!g.valid) {
+                return std::nullopt;
+            }
+            const Vec2 up = Vec2::fromAngle(g.textAngle + geometry::kPi / 2.0);
+            const double k = std::fabs((to - g.textCentre).dot(up)) / (dim.textHeightMm * 0.5);
+            const double h = dim.textHeightMm * k;
+            if (!finite(h) || !(h >= 1e-3) || h > kMaxDimensionTextHeightMm) {
+                return std::nullopt;
+            }
+            next.textHeightMm = h;
+            break;
+        }
+    }
+    if (!dimensionProblem(next).empty() || !measureDimension(doc, next)) {
+        return std::nullopt;
+    }
+    return next;
 }
 
 std::optional<AnchorHit> findAnchorNear(const Document& doc, SheetId sheet, Vec2 p, double toleranceMm) {

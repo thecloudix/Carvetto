@@ -1063,7 +1063,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0240 Prism carving toolpath   [status: done — merged PR #121 (geometry reading OWNER to confirm: inverted-pyramid recess vs raised prism, ADR-0042)]
+### T-0240 Prism carving toolpath   [status: done — merged PR #121 (owner confirmed inverted-pyramid recess 2026-11-10, ADR-0042)]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0153, T-0220
 Goal: Prism Carving: prism depth, set depth for full prism, cut direction (inventory 'Prism Carving Toolpath').
 Acceptance criteria:
@@ -1153,14 +1153,18 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0250 Photo V-carve (raster to depth-modulated V-carve/engrave toolpath)   [status: blocked — owner scope confirmation]
+### T-0250 Photo V-carve (raster to depth-modulated V-carve/engrave toolpath)   [status: in-progress — owner confirmed Phase 1, 2026-11-10]
 Phase: 1   Module: core/toolpath + core/io + app   Depends on: T-0245, T-0153
-Goal: Photo V-Carve from a bitmap per inventory; needs raster decoding shared with T-0245. PRODUCT DECISION PENDING: confirm it is Phase 1 (owner listed it) vs. the heightmap work in Phase 2; ask the owner before dispatching.
+Goal: Photo V-Carve from a bitmap per docs/reference/feature-inventory.md ("Photo V-Carve Toolpath"): the tool depth along each line follows image brightness (V-bit engraving), bounded by Max Carving Depth. Reuses the raster decoding from T-0245. Core is Qt-free (takes a grayscale pixel buffer + placement in mm); app side decodes via QImage.
 Acceptance criteria:
-  1. To be written on dispatch after the owner confirms scope.
-  2. Clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
-Out of scope: anything beyond the card; 3D/Phase 2 features.
-Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
+  1. Core: `photoVCarve(gray image, placement rect, tool, params)` returns toolpaths; depth = Max Carving Depth * darkness (0..1, invert option), clamped so V-bit width never exceeds tool diameter; flat (uniform) image gives constant depth.
+  2. Params: Max Carving Depth, Stepover Retract (retract between lines/segments when depth change would exceed it), Line Spacing (% of tool diameter), Line Angle (radians in core).
+  3. Strategies: Raster (parallel lines at angle), Hatch (raster + perpendicular pass), Selected Vectors (follow supplied vector paths, sampling depth along them).
+  4. Deterministic; handles degenerate input (empty/zero-size image, zero spacing) with a clear error, never a crash; large image bounded work with cancel (follow T-0260 pattern).
+  5. App: toolpath dialog/ToolController wiring for a selected bitmap, with preview; self-test coverage.
+  6. ADR for depth mapping decisions; clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
+Out of scope: heightmap/3D relief (Phase 2), Sketch Carving.
+Notes/refs: docs/reference/feature-inventory.md.
 
 ### T-0251 Texture: vector texture generator and textured area   [status: done — merged PR #111 (core generator; UI → T-0254)]
 Phase: 1   Module: core/geometry + app   Depends on: T-0210
@@ -1294,3 +1298,26 @@ Phase: 1   Module: core/document + app   Depends on: T-0257
 Goal: (1) persist toolpath calculation expressions in .carv (optional 'expressions' object per toolpath record in job.json, loader/writer, ToolpathRecord field/equality; format minor allocation per the highest-required-minor scheme, ADR) so the expression link and delete protection survive save/load; (2) 'Insert New Document Variable' context menu on all numeric boxes; (3) feet (') conversion respects display units (inch mode); (4) run variable-triggered recalculation off the UI thread; (5) re-derive chamfer linked fields when a sibling holds an expression; (6) {Variable} substitution in text/data-merge if the owner wants it.
 Acceptance criteria:
   1. Save/reload keeps expressions and blocks deleting a used variable; old files load; other items tested.
+
+### T-0273 Bitmap pixel store in .carv (BitmapObject holds decodable image data)   [status: verifying — core only; app import → T-0250b; ADR-0051]
+Phase: 1   Module: core/document + core/io + app   Depends on: T-0245
+Goal: BitmapObject is currently a placeholder (placement + sourceRef). Owner decision 2026-11-10: store pixel data inside the .carv file (bitmaps/* entries, format minor bump with forward/backward compat per ARCHITECTURE.md), loadable into a RasterImage/GrayImage in core.
+Acceptance criteria:
+  1. Importing a bitmap embeds its encoded bytes; save/load round-trips byte-exact; older readers/files handled per the format-versioning rules; ADR.
+  2. Core API to fetch decoded raster for a BitmapObject (decoding stays in app/QImage or existing core decoder; core remains Qt-free).
+  3. Undo/redo of import; dedup of identical images; corrupt/oversized entries rejected with errors, never a crash.
+  4. One changelog fragment; full ctest and MSVC CI green.
+Out of scope: Photo V-carve wiring (T-0250b).
+
+### T-0250b Photo V-carve app wiring (T-0250 follow-up)   [status: blocked — depends on T-0250, T-0273]
+Phase: 1   Module: app + core/toolpath   Depends on: T-0250, T-0273
+Goal: App-side bitmap import (QImage decode → makeImportBitmapCommand from T-0273, which is core-only), gray conversion (grayFromRaster), native toolpath record, ToolpathParams/Operation entry, PhotoVCarve form, ToolController wiring and preview for a selected bitmap, with self-test coverage.
+Acceptance criteria:
+  1. Form exposes Max Carving Depth, Stepover Retract, Line Spacing %, Line Angle, strategy (Raster/Hatch/Selected Vectors), invert; generates and previews; recalculates on edit; one undo step.
+  2. Record saves/loads; cancel and work cap honoured; changelog fragment; CI green.
+
+### T-0274 Trace Bitmap follow-ups: Pick from 2D View, Bitmap Fading (T-0260 follow-up)   [status: ready]
+Phase: 1   Module: app   Depends on: T-0260
+Goal: The two Trace Bitmap dialog features listed in the T-0260 goal but deferred (see ADR-0049): "Pick from 2D View" (choose the bitmap object on the canvas) and "Bitmap Fading" (dim the source bitmap while tracing).
+Acceptance criteria:
+  1. Both features work in the real app, are undo-safe, and are driven by the app self-test; changelog fragment; CI green.

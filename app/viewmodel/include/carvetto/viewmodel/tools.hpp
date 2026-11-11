@@ -16,6 +16,7 @@
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/geometry/span.hpp"
 #include "carvetto/geometry/vec2.hpp"
+#include "carvetto/viewmodel/dimension_tool.hpp"
 #include "carvetto/viewmodel/node_edit.hpp"
 #include "carvetto/viewmodel/selection_tools.hpp"
 #include "carvetto/viewmodel/snapping.hpp"
@@ -46,6 +47,9 @@
 //     pointer is snapped (Shift disables snapping) and the whole drag is ONE undo step.
 //   * NodeEdit: pointer events go to the `NodeEditor` (node_edit.hpp); every drag step is snapped
 //     with the dragged objects excluded (ADR-0030).
+//   * Dimension (T-0255): clicks pick the points and the placement (`DimensionTool`); Shift-click
+//     selects an existing dimension, whose control points are then dragged (one undo step); Escape
+//     drops the draft or drag, and Backspace the last point.
 //   * Escape cancels whatever is in progress without touching the document (an interactive
 //     transform is reverted).
 //
@@ -77,7 +81,7 @@ enum class CursorHint {
     Pivot
 };
 
-enum class ToolKind { Select, Rectangle, Circle, Ellipse, Polygon, Star, Arc, Polyline, NodeEdit, Text };
+enum class ToolKind { Select, Rectangle, Circle, Ellipse, Polygon, Star, Arc, Polyline, NodeEdit, Text, Dimension };
 
 /// How the Arc tool defines the arc.
 enum class ArcMode {
@@ -230,6 +234,11 @@ class ToolController {
     /// Backspace deletes the last character.
     TextEditor& textEditor() { return textEditor_; }
     const TextEditor& textEditor() const { return textEditor_; }
+    // --- Dimensions (T-0255, dimension_tool.hpp) ----------------------------------------------
+    /// The dimension tool behind `ToolKind::Dimension`: options, edit target, handles. Pointer
+    /// events reach it through this controller (snapped; Shift selects instead of placing).
+    DimensionTool& dimensionTool() { return dimensionTool_; }
+    const DimensionTool& dimensionTool() const { return dimensionTool_; }
     // --- Selection box and transform gestures (Select tool) ------------------------------------
     /// Handles of the selection box when the Select tool is active and something can be
     /// transformed; nullopt otherwise.
@@ -287,6 +296,8 @@ class ToolController {
     const SnapIndex& snapIndex();
     ToolResult afterNodeEdit(const NodeEditResult& r);
     static ToolResult fromText(const TextEditResult& r);
+    static ToolResult fromDimension(const DimensionToolResult& r);
+    ToolResult dimensionPress(Modifiers mods);
     ToolResult selectPress(geometry::Vec2 px, Modifiers mods);
     ToolResult selectRelease(geometry::Vec2 px, Modifiers mods);
     ToolResult shapePress(Modifiers mods);
@@ -299,6 +310,7 @@ class ToolController {
     document::Document* doc_{nullptr};
     NodeEditor nodeEditor_;
     TextEditor textEditor_;
+    DimensionTool dimensionTool_;
     ViewTransform view_;
     ToolKind tool_{ToolKind::Select};
     ToolOptions options_;

@@ -37,6 +37,7 @@ class ToolPanel : public QWidget {
    private:
     void addOptionRows(viewmodel::ToolKind tool);
     void addTextRows();
+    void addDimensionRows();
     void clearForm();
 
     CanvasWidget* canvas_;

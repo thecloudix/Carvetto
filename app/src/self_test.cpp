@@ -47,6 +47,7 @@
 #include "main_window.hpp"
 #include "node_edit_menu.hpp"
 #include "properties_panel.hpp"
+#include "dimension_menu.hpp"
 #include "save_toolpaths_dialog.hpp"
 #include "tool_panel.hpp"
 #include "preview_panel.hpp"
@@ -896,12 +897,17 @@ int runSelfTest() {
         }
     }
 
-    // 11. Trace Bitmap (T-0260): decode, dialog, undoable result.
+    // 11. Dimensions: place, edit with handles and the dialog, delete (T-0255).
+    if (const std::string why = dimensionSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 12. Trace Bitmap (T-0260): decode, dialog, undoable result.
     if (const std::string why = traceSelfTest(window); !why.empty()) {
         return fail(why);
     }
 
-    // 12. Keep-out zones: dock, menu, canvas drawing, routed preview (T-0256).
+    // 13. Keep-out zones: dock, menu, canvas drawing, routed preview (T-0256).
     if (const std::string why = keepOutSelfTest(window); !why.empty()) {
         return fail(why);
     }
