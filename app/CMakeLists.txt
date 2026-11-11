@@ -23,6 +23,8 @@ qt_add_executable(carvetto
   src/canvas_widget.hpp
   src/ruler_widget.cpp
   src/ruler_widget.hpp
+  src/dimension_menu.cpp
+  src/dimension_menu.hpp
   src/document_panels.cpp
   src/document_panels.hpp
   src/new_job_dialog.cpp

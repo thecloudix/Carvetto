@@ -36,6 +36,7 @@
 
 #include "array_copy_menu.hpp"
 #include "canvas_widget.hpp"
+#include "dimension_menu.hpp"
 #include "document_panels.hpp"
 #include "carvetto/viewmodel/dxf_exchange.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
@@ -293,6 +294,7 @@ void MainWindow::buildMenus() {
             statusBar()->showMessage(qs(r.message), 6000);
         }
     });
+    dimensions_ = std::make_unique<DimensionMenu>(*this, edit);
 
     QMenu* view = menuBar()->addMenu(QStringLiteral("&View"));
     QAction* fit = view->addAction(QStringLiteral("Zoom to &Material"));
@@ -370,6 +372,9 @@ void MainWindow::buildToolPalette() {
         {viewmodel::ToolKind::Text, "Text",
          "Place text: click (point text), drag a box (text in a box) or click a curve (text on a curve). "
          "Type; Enter: new line, Ctrl+Enter: place, Escape: cancel. Click a text to edit it"},
+        {viewmodel::ToolKind::Dimension, "Dimension",
+         "Dimension: click the points, then the line position. Shift-click a dimension to edit it "
+         "(drag its handles, Delete removes it, Escape: cancel)"},
     };
     QToolBar* bar = addToolBar(QStringLiteral("Tools"));
     bar->setObjectName(QStringLiteral("toolsToolBar"));

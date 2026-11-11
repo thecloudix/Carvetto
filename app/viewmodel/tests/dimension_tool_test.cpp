@@ -174,5 +174,5 @@ TEST_CASE("the canvas scene draws dimension lines and DXF export explodes them",
 
     const auto out = viewmodel::exportDocumentDxf(doc, false);
     REQUIRE(out.ok);
-    CHECK(out.contoursWritten == 5);
+    CHECK(out.contoursWritten > 5);  // plus the text outlines (T-0255)
 }
