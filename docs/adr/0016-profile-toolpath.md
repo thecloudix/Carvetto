@@ -1,6 +1,6 @@
 # ADR-0016: 2D Profile toolpath
 
-Date: 2026-10-26 · Status: accepted 2026-11-01 (T-0120; amended in place by T-0124, 2026-10-30/11-01, T-0127, T-0129 and T-0141)
+Date: 2026-10-26 · Status: accepted 2026-11-01 (T-0120; amended in place by T-0124, 2026-10-30/11-01, T-0127, T-0129, T-0141 and T-0174)
 
 ## Context
 T-0120 asks for `profileToolpath(contours, Tool, ProfileParams)` with the options of
@@ -163,7 +163,30 @@ choices. Behaviour descriptions come from `docs/reference/` only.
       sliver of the first edge's offset split off next to the mitre, or a join chord too short to
       tell) counts as on either; then the start is the first junction among such spans that lies on
       the circle of the offset distance about the target (within 3 grid units on a region, 4e-10 ×
-      the coordinates on an exact offset), else the one after them.
+      the coordinates on an exact offset), else the one after them. Which junctions are candidates
+      (the "from" rule, T-0174): let the run be the consecutive spans labelled on both offsets that
+      ends at the last span on the first edge's offset. If a span on that offset alone precedes the
+      run, the run's first span is a sliver of that offset (split off next to the mitre) and its
+      start, the end of the offset, is the first candidate; otherwise the run's first span stands
+      for the join's first chord and the candidates begin at its end.
+    - Degenerate edges (T-0174): an input edge no longer than the distance tolerance (a duplicate
+      vertex, a sub-µm or 1e-9 mm closing edge, a collinear 1e-6 mm edge) is dropped by the offset
+      and labels no span, so it is skipped when finding the vertex's own two edges: the in edge is
+      the nearest non-degenerate edge before the vertex, the out edge the nearest after it.
+    - Arc edges of a region (T-0174): the region's union polygonises an arc into chords, and the
+      cut's chord at the vertex (stretched to the mitre) lies off the arc's offset circle by an
+      amount that grows continuously with the geometry, so a circle test with the chordal band
+      flipped the chord's label, and the start by a chord (1.67 mm), at a razor's edge (harness
+      repro5/mrgarc_*). A span is also on an arc edge's offset when it lies on the offset of that
+      arc's chord at the vertex (the polygon chord the region has, as for a Bezier edge) by the
+      line test above. A region's polygonal round join starts tangent to the arc's offset, so its
+      first chords also lie within the chordal band of that offset and may be labelled on it (which
+      of them are follows the geometry continuously: one chord flipped at the band's edge, 0.36 mm,
+      repro5/mrgarc_em). The join's vertices all lie on the circle of the offset distance about the
+      target and the arc offset's do not (but the foot), so the start walks back over the labelled
+      chords of the first edge's offset that start on that circle to the first of them. A chord no
+      longer than 4 × sqrt(2 × offset × 3e-6 mm) is no chord of this join (the join of a region
+      vertex a few µm away, whose last point is on the circle) and stops the walk.
     - Every other junction is bounded by a span that is not on the target's own two offsets:
       neighbouring vertices — collinear (redundant), nearly collinear, short or sharp — and split
       points of the offset lines never take the start, however near they are; a finely segmented
@@ -180,7 +203,9 @@ choices. Behaviour descriptions come from `docs/reference/` only.
       that meet there, to within 4 times their rounding (1e-10 × the coordinates × (1 + offset /
       span length) on an exact offset, 1e-6 mm × (1 + offset / span length) on a region), the one
       whose feet of the target on its two spans lie most evenly either side of it (with none
-      equidistant, of all junctions). A target at a redundant vertex thus starts at its own foot.
+      equidistant, of all junctions); feet that are even to within 8 × the rounding tie, and the
+      first junction in travel wins (T-0174: a squared-off tip's chamfer is symmetric about the
+      target, so both its corners tie exactly). A target at a redundant vertex thus starts at its own foot.
     A target nearest one junction starts there, as before. Limits: an input edge shorter than the
     distance tolerance is dropped by the offset (ADR-0006), so at that length the two corners at its
     ends become one corner and the start moves with the geometry; likewise a merged region whose
@@ -194,16 +219,10 @@ choices. Behaviour descriptions come from `docs/reference/` only.
     that circle and move the start back by at most that vertex's distance; without, a neighbour's
     junction whose edge length × sin(turn) is within the rounding counts as equidistant and takes
     the start where its feet lie more evenly.
-    Known limits accepted by the owner at merge (2026-11-05; follow-up T-0174): (a) a squared-off
-    tip whose start vertex has a duplicate or sub-µm edge next to it labels no span on that edge, so
-    the corner is not found and the fallback's "most even feet" ties exactly between the chamfer's
-    two corners; rounding picks one, so the start can jump to the other corner (up to 4.3 mm at a 3 mm
-    offset) under ulp or 1e-9 perturbations, and with a collinear edge of 1e-7–1e-5 mm both
-    directions can start at the same corner (the last in travel for one of them). The DXF importer
-    drops exact duplicate points; near-duplicates and API input reach this case (T-0158 round-5
-    harness t0158v5 repro5/sq_tiny_*). (b) On a merged region an arc whose chord sag lies exactly on
-    the labelling band (chordal slack) can flip the start by one chord (up to 1.7 mm; repro5/mrgarc_*);
-    no stored, generated or random scene came within 7e-4 of the band. (c) Self-intersecting
+    Known limits accepted by the owner at merge (2026-11-05), (a) and (b) fixed by T-0174 (the
+    degenerate-edge and arc-chord rules above, and the tie going to the first junction in travel;
+    the chamfer starts at its first corner in both directions, stable under ulp and 1e-9
+    perturbations): (c) Self-intersecting
     outlines (malformed input, cut as a region) are best effort: the start may switch between the
     corner rule and the fallback under translation (about 2 mm, repro5/selfx_*). The sliver bound
     above is sub-µm only up to about 2000 mm coordinates (1.56 µm at 3 m).
