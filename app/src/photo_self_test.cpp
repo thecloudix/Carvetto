@@ -1,4 +1,4 @@
-// Self-test of Photo V-carve in the real app (T-0250b), offscreen: File > Import Bitmap (a PNG,
+// Self-test of Photo V-carve in the real app (T-0275), offscreen: File > Import Bitmap (a PNG,
 // decoded by QImage), the bitmap painted on the canvas, the Photo V-Carve form of the Toolpaths dock,
 // calculation off the UI thread, edit, stale after moving the bitmap, undo, save and reload.
 

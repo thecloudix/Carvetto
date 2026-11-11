@@ -1,6 +1,6 @@
-# ADR-0052: Photo V-carve app wiring (T-0250b)
+# ADR-0052: Photo V-carve app wiring (T-0275)
 
-Date: 2026-11-11 · Status: accepted (T-0250b, follows ADR-0047 and ADR-0051)
+Date: 2026-11-11 · Status: accepted (T-0275, follows ADR-0047 and ADR-0051)
 
 ## Context
 T-0250 delivered the Qt-free photo V-carve and T-0273 the embedded bitmap store. What was missing is

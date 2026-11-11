@@ -58,7 +58,7 @@ std::unique_ptr<Command> makeImportBitmapCommand(const Document& doc, BitmapImpo
 
 /// Decodes encoded image bytes: Netpbm directly, anything else through `decoder` (an error when
 /// none is supplied or the result is not a valid image). The bytes-level part of
-/// `decodeBitmapObject`, usable on a copy of the bytes away from the document (T-0250b).
+/// `decodeBitmapObject`, usable on a copy of the bytes away from the document (T-0275).
 geometry::ShapeResult<io::RasterImage> decodeBitmapBytes(std::span<const std::uint8_t> bytes,
                                                          const BitmapDecoder& decoder = {});
 

@@ -63,7 +63,7 @@ class FileSession {
     /// path is not remembered; the document becomes dirty. `forcedMmPerUnit` overrides the units.
     bool importDxf(const std::filesystem::path& path, std::optional<double> forcedMmPerUnit = std::nullopt,
                    std::span<const std::uint8_t> textFontBytes = {});
-    /// Imports an image file as a bitmap object (`importBitmapIntoDocument`, T-0250b): one undo
+    /// Imports an image file as a bitmap object (`importBitmapIntoDocument`, T-0275): one undo
     /// step, the new object is selected, the document becomes dirty. `decoder` reads non-Netpbm
     /// formats.
     bool importBitmap(const std::filesystem::path& path, const document::BitmapDecoder& decoder);

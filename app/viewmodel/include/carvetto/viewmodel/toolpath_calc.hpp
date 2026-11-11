@@ -138,7 +138,7 @@ struct ToolpathCalculation {
     std::string errorText() const;
 };
 
-/// What a photo V-carve reads, copied from the document so the job stays independent of it (T-0250b):
+/// What a photo V-carve reads, copied from the document so the job stays independent of it (T-0275):
 /// the encoded image (decoded on the worker thread, where the cancel flag is honoured) and where it
 /// is placed.
 struct PhotoInput {

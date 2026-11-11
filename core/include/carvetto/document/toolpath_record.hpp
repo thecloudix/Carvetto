@@ -63,7 +63,7 @@ struct ToolSource {
 /// hold only record content. A V-carve (T-0153) takes its tools (carving tool, clearance tools)
 /// as arguments too; each toolpath it makes is its own record with the same `VCarvingParams` and
 /// its own tool. A chamfer (T-0236) takes its tool and cutting data as arguments too, as do a thread mill
-/// (T-0237) and a straight inlay (T-0238). A photo V-carve (T-0250b) reads a bitmap object of the
+/// (T-0237) and a straight inlay (T-0238). A photo V-carve (T-0275) reads a bitmap object of the
 /// document: the record's selection lists it (the first bitmap object among `selection.objects`)
 /// and, for the Selected Vectors strategy, the vectors to follow.
 using ToolpathParams = std::variant<toolpath::ProfileParams, toolpath::PocketParams, toolpath::DrillParams,

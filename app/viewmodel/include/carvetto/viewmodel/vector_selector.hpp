@@ -86,7 +86,7 @@ struct ResolvedVectors {
 /// Resolves `selector` against `doc` (see the rules above). Never fails.
 ResolvedVectors resolveVectors(const document::Document& doc, const VectorSelector& selector);
 
-/// The bitmap a photo V-carve reads (T-0250b): the first bitmap object among the selector's
+/// The bitmap a photo V-carve reads (T-0275): the first bitmap object among the selector's
 /// explicit objects (a selection of every vector or of layers names none).
 struct ResolvedBitmap {
     /// Null when there is none; then `problem` says why.

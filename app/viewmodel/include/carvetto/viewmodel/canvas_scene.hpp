@@ -36,7 +36,7 @@ struct DrawLabel {
     double heightPx{0.0};
 };
 
-/// A placed bitmap (T-0250b): the widget paints the embedded image `key` into `rectPx` (screen
+/// A placed bitmap (T-0275): the widget paints the embedded image `key` into `rectPx` (screen
 /// pixels, y down) under the vectors.
 struct DrawBitmap {
     document::ObjectId object{};

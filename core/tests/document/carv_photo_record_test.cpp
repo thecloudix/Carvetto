@@ -1,4 +1,4 @@
-// T-0250b: photo V-carve toolpaths as native toolpath records (ADR-0021 schema, ADR-0047/ADR-0052): the
+// T-0275: photo V-carve toolpaths as native toolpath records (ADR-0021 schema, ADR-0047/ADR-0052): the
 // PhotoVCarveParams variant alternative, its job.json params, exact round trips, non-finite refusal.
 
 #include <catch2/catch_test_macros.hpp>
@@ -90,7 +90,7 @@ Document photoDocument(const toolpath::PhotoVCarveParams& params) {
 
 }  // namespace
 
-TEST_CASE("T-0250b: photo records save and load exactly; save -> load -> save is byte-identical",
+TEST_CASE("T-0275: photo records save and load exactly; save -> load -> save is byte-identical",
           "[document][toolpath][carv][photo]") {
     for (const toolpath::PhotoStrategy strategy :
          {toolpath::PhotoStrategy::Raster, toolpath::PhotoStrategy::Hatch, toolpath::PhotoStrategy::SelectedVectors}) {
@@ -120,7 +120,7 @@ TEST_CASE("T-0250b: photo records save and load exactly; save -> load -> save is
     }
 }
 
-TEST_CASE("T-0250b: non-finite photo parameters are refused by the commands", "[document][toolpath][photo]") {
+TEST_CASE("T-0275: non-finite photo parameters are refused by the commands", "[document][toolpath][photo]") {
     Document doc = photoDocument(fullPhoto(toolpath::PhotoStrategy::Raster));
     ToolpathRecord edit = doc.toolpaths()[0];
     const double inf = std::numeric_limits<double>::infinity();

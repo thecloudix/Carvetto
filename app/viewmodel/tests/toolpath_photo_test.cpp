@@ -1,4 +1,4 @@
-// T-0250b: the Photo V-carve form, bitmap import and the session around the T-0250 core: the bitmap
+// T-0275: the Photo V-carve form, bitmap import and the session around the T-0250 core: the bitmap
 // is read from the selection, the record names it, one undo step, save/load, staleness, cancel and
 // the work cap.
 

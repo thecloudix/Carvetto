@@ -43,7 +43,7 @@
 //   Prism       depth (hidden with fullPrism) stepover safeZ startX startY chordal
 //   Photo V-Carve  maxDepth stepoverRetract safeZ lineSpacing (percent of the tool diameter) lineAngle (not for
 //               Selected Vectors) chordal (Selected Vectors only); choices strategy, invert. It reads the bitmap
-//               in the selector's objects (T-0250b).
+//               in the selector's objects (T-0275).
 // Choices carry the enum/bool inputs; see `choices()`.
 
 namespace carvetto::viewmodel {
