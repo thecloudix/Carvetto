@@ -1153,7 +1153,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0250 Photo V-carve (raster to depth-modulated V-carve/engrave toolpath)   [status: done — merged #134 (core slice; app → T-0250b)]
+### T-0250 Photo V-carve (raster to depth-modulated V-carve/engrave toolpath)   [status: done — merged #134 (core slice; app → T-0275)]
 Phase: 1   Module: core/toolpath + core/io + app   Depends on: T-0245, T-0153
 Goal: Photo V-Carve from a bitmap per docs/reference/feature-inventory.md ("Photo V-Carve Toolpath"): the tool depth along each line follows image brightness (V-bit engraving), bounded by Max Carving Depth. Reuses the raster decoding from T-0245. Core is Qt-free (takes a grayscale pixel buffer + placement in mm); app side decodes via QImage.
 Acceptance criteria:
@@ -1307,9 +1307,9 @@ Acceptance criteria:
   2. Core API to fetch decoded raster for a BitmapObject (decoding stays in app/QImage or existing core decoder; core remains Qt-free).
   3. Undo/redo of import; dedup of identical images; corrupt/oversized entries rejected with errors, never a crash.
   4. One changelog fragment; full ctest and MSVC CI green.
-Out of scope: Photo V-carve wiring (T-0250b).
+Out of scope: Photo V-carve wiring (T-0275).
 
-### T-0250b Photo V-carve app wiring (T-0250 follow-up)   [status: in-progress]
+### T-0275 Photo V-carve app wiring (T-0250 follow-up)   [status: in-progress]
 Phase: 1   Module: app + core/toolpath   Depends on: T-0250, T-0273
 Goal: App-side bitmap import (QImage decode → makeImportBitmapCommand from T-0273, which is core-only), gray conversion (grayFromRaster), native toolpath record, ToolpathParams/Operation entry, PhotoVCarve form, ToolController wiring and preview for a selected bitmap, with self-test coverage.
 Acceptance criteria:
