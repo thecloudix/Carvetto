@@ -156,6 +156,10 @@ class ToolpathSession {
     void setDocument(document::Document* doc);
     document::Document* document() const { return doc_; }
 
+    /// Decodes the non-Netpbm images (PNG, JPEG, ...) of a photo V-carve; the app supplies QImage's.
+    /// Without one only Netpbm bitmaps can be carved. Must be thread-safe: it runs on the worker.
+    void setBitmapDecoder(document::BitmapDecoder decoder) { bitmapDecoder_ = std::move(decoder); }
+
     void setToolDatabase(tooling::ToolDatabase db);
     const tooling::ToolDatabase& toolDatabase() const { return db_; }
     /// Rates for `summary()`. Non-finite or negative values are rejected (returns false).
@@ -189,6 +193,8 @@ class ToolpathSession {
     std::optional<ToolpathForm> form(document::ToolpathId id);
     /// Number of vectors (contours) `selector` selects now ("objects count readout").
     std::size_t countVectors(const VectorSelector& selector) const;
+    /// Photo V-carve: why `selector` names no usable bitmap now (empty when it does).
+    std::string bitmapProblem(const VectorSelector& selector) const;
 
     // --- Calculation -------------------------------------------------------------------------
     /// Copies everything a calculation needs. `target` = recalculate that toolpath (its V-carve).
@@ -292,6 +298,7 @@ class ToolpathSession {
 
     document::Document* doc_{nullptr};
     tooling::ToolDatabase db_;
+    document::BitmapDecoder bitmapDecoder_;
     MachineSetup setup_;
 
     std::map<MovesKey, Baseline, std::owner_less<>> baselines_;

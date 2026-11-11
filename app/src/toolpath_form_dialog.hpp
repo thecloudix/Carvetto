@@ -40,6 +40,9 @@ struct FormDocumentInfo {
     std::vector<document::ObjectId> selection;
     /// Number of vectors a selector selects now (the readout). Optional.
     std::function<std::size_t(const viewmodel::VectorSelector&)> countVectors;
+    /// Photo V-carve: why the bitmap the selector names cannot be carved (empty when it can).
+    /// Optional; without it only the presence of a bitmap object is not checked.
+    std::function<std::string(const viewmodel::VectorSelector&)> bitmapProblem;
 };
 
 /// The operation form generated from a `viewmodel::ToolpathForm`: name, tool picker (tool database),
@@ -76,6 +79,9 @@ class ToolpathFormDialog : public QDialog {
     void applyTool();
     void applyClearance();
     void setMessage(const std::string& text, bool error);
+    bool isPhoto() const { return form_.operation() == document::ToolpathOperation::PhotoVCarve; }
+    /// What is wrong with the vectors or bitmap the toolpath would read now; empty when fine.
+    std::string sourceProblem() const;
 
     viewmodel::ToolpathForm form_;
     tooling::ToolDatabase db_;

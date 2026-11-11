@@ -13,6 +13,7 @@
 #include <QScrollArea>
 #include <QVBoxLayout>
 #include <algorithm>
+#include <initializer_list>
 #include <utility>
 
 #include "carvetto/document/units.hpp"
@@ -47,6 +48,8 @@ const char* operationLabel(ToolpathOperation op) {
             return "Fluting";
         case ToolpathOperation::Prism:
             return "Prism";
+        case ToolpathOperation::PhotoVCarve:
+            return "Photo V-Carve";
     }
     return "?";
 }
@@ -78,6 +81,10 @@ ToolpathFormDialog::ToolpathFormDialog(viewmodel::ToolpathForm form, tooling::To
     setObjectName(QStringLiteral("ToolpathFormDialog"));
     setWindowTitle(QStringLiteral("%1 toolpath").arg(QString::fromUtf8(operationLabel(form_.operation()))));
     form_.refreshTools(db_);
+    if (isPhoto() && form_.selector().base.all) {
+        // The photo V-carve reads the selected bitmap: start from the current selection.
+        form_.setSelector(viewmodel::VectorSelector::fromObjects(info_.selection));
+    }
     buildStatic();
     rebuildParameters();
     refreshStatus();
@@ -219,7 +226,7 @@ void ToolpathFormDialog::buildStatic() {
     });
 
     // Vectors (the selector).
-    auto* vbox = new QGroupBox(QStringLiteral("Vectors"), this);
+    auto* vbox = new QGroupBox(isPhoto() ? QStringLiteral("Bitmap") : QStringLiteral("Vectors"), this);
     auto* vform = new QFormLayout(vbox);
     baseCombo_ = new QComboBox(vbox);
     baseCombo_->setObjectName(QStringLiteral("vectorBase"));
@@ -249,6 +256,16 @@ void ToolpathFormDialog::buildStatic() {
     countLabel_->setObjectName(QStringLiteral("vectorCount"));
     vform->addRow(countLabel_);
     outer->addWidget(vbox);
+    if (isPhoto()) {
+        // The source is the selected bitmap (and, for Selected Vectors, the selected vectors): no
+        // layer or open/closed/circle choices.
+        for (QWidget* w : std::initializer_list<QWidget*>{baseCombo_, layerList_, openCheck_, closedCheck_,
+                                                          circlesCheck_, diameterEdit_}) {
+            w->hide();
+        }
+        vform->labelForField(baseCombo_)->hide();
+        vform->labelForField(diameterEdit_)->hide();
+    }
 
     const viewmodel::VectorSelector& sel = form_.selector();
     openCheck_->setChecked(sel.includeOpen);
@@ -381,7 +398,17 @@ void ToolpathFormDialog::refreshVectors() {
     const int base = baseCombo_->currentIndex();
     layerList_->setVisible(base == BaseLayers);
     diameterEdit_->setEnabled(circlesCheck_->isChecked());
-    if (info_.countVectors) {
+    if (isPhoto()) {
+        const std::string problem = info_.bitmapProblem ? info_.bitmapProblem(form_.selector()) : std::string();
+        QString text = problem.empty() ? QStringLiteral("A bitmap is selected.") : qs(problem);
+        if (info_.countVectors && problem.empty() &&
+            std::get<toolpath::PhotoVCarveParams>(form_.definition().params).strategy ==
+                toolpath::PhotoStrategy::SelectedVectors) {
+            text += QStringLiteral(" %1 vector(s) to follow.")
+                        .arg(static_cast<qulonglong>(info_.countVectors(form_.selector())));
+        }
+        countLabel_->setText(text);
+    } else if (info_.countVectors) {
         const std::size_t n = info_.countVectors(form_.selector());
         countLabel_->setText(QStringLiteral("%1 vector(s) selected now").arg(static_cast<qulonglong>(n)));
     }
@@ -508,7 +535,7 @@ void ToolpathFormDialog::rebuildParameters() {
                     const viewmodel::FieldResult r = form_.setChoice(id, row);
                     setMessage(r.message, !r.ok);
                     rebuildParameters();
-                    refreshStatus();
+                    refreshVectors();  // the strategy decides what a photo V-carve needs selected
                 });
             }
         }
@@ -569,10 +596,27 @@ bool ToolpathFormDialog::canAccept() const {
     if (!badFields_.empty() || !form_.problems().empty()) {
         return false;
     }
-    if (info_.countVectors && info_.countVectors(form_.selector()) == 0) {
-        return false;
+    return sourceProblem().empty();
+}
+
+std::string ToolpathFormDialog::sourceProblem() const {
+    if (isPhoto()) {
+        if (info_.bitmapProblem) {
+            if (std::string bad = info_.bitmapProblem(form_.selector()); !bad.empty()) {
+                return bad;
+            }
+        }
+        const auto& p = std::get<toolpath::PhotoVCarveParams>(form_.definition().params);
+        if (p.strategy == toolpath::PhotoStrategy::SelectedVectors && info_.countVectors &&
+            info_.countVectors(form_.selector()) == 0) {
+            return "Selected Vectors needs vectors to follow: select some besides the bitmap";
+        }
+        return {};
     }
-    return true;
+    if (info_.countVectors && info_.countVectors(form_.selector()) == 0) {
+        return "no vectors are selected";
+    }
+    return {};
 }
 
 void ToolpathFormDialog::refreshStatus() {
@@ -587,8 +631,8 @@ void ToolpathFormDialog::refreshStatus() {
         for (const std::string& p : form_.problems()) {
             parts << qs(p);
         }
-        if (info_.countVectors && info_.countVectors(form_.selector()) == 0) {
-            parts << QStringLiteral("no vectors are selected");
+        if (const std::string bad = sourceProblem(); !bad.empty()) {
+            parts << qs(bad);
         }
         text = parts.join(QStringLiteral("; "));
     }

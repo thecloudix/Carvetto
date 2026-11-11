@@ -432,6 +432,10 @@ constexpr EnumName<toolpath::InlayMaleStyle> kInlayMaleStyles[] = {{toolpath::In
                                                                   {toolpath::InlayMaleStyle::Stepped, "stepped"}};
 constexpr EnumName<toolpath::InlayFemaleStyle> kInlayFemaleStyles[] = {{toolpath::InlayFemaleStyle::Pocket, "pocket"},
                                                                       {toolpath::InlayFemaleStyle::Hole, "hole"}};
+constexpr EnumName<toolpath::PhotoStrategy> kPhotoStrategies[] = {{toolpath::PhotoStrategy::Raster, "raster"},
+                                                                  {toolpath::PhotoStrategy::Hatch, "hatch"},
+                                                                  {toolpath::PhotoStrategy::SelectedVectors,
+                                                                   "selected_vectors"}};
 constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Profile, "profile"},
                                                       {ToolpathOperation::Pocket, "pocket"},
                                                       {ToolpathOperation::Drill, "drill"},
@@ -441,7 +445,8 @@ constexpr EnumName<ToolpathOperation> kOperations[] = {{ToolpathOperation::Profi
                                                       {ToolpathOperation::ThreadMill, "thread_mill"},
                                                       {ToolpathOperation::Prism, "prism"},
                                                       {ToolpathOperation::Fluting, "fluting"},
-                                                      {ToolpathOperation::Inlay, "inlay"}};
+                                                      {ToolpathOperation::Inlay, "inlay"},
+                                                      {ToolpathOperation::PhotoVCarve, "photo_vcarve"}};
 
 template <class E, std::size_t N>
 const char* nameOf(const EnumName<E> (&table)[N], E value) {
@@ -917,6 +922,21 @@ json encodeInlayParams(const toolpath::InlayParams& p) {
     return j;
 }
 
+json encodePhotoVCarveParams(const toolpath::PhotoVCarveParams& p) {
+    json j = json::object();
+    j["name"] = p.name;
+    j["max_depth"] = p.maxDepth;
+    j["invert"] = p.invert;
+    j["stepover_retract"] = p.stepoverRetract;
+    j["line_spacing_percent"] = p.lineSpacingPercent;
+    j["line_angle_rad"] = p.lineAngle;
+    j["strategy"] = nameOf(kPhotoStrategies, p.strategy);
+    j["safe_z"] = p.safeZ;
+    j["depth_tolerance"] = p.depthTolerance;
+    j["tolerance"] = encodeTolerance(p.tolerance);
+    return j;
+}
+
 json encodeFlutingParams(const toolpath::FlutingParams& p) {
     json j = json::object();
     j["name"] = p.name;
@@ -1010,6 +1030,8 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
         j["params"] = encodePrismParams(*prism);
     } else if (const auto* inlay = std::get_if<toolpath::InlayParams>(&tp.params)) {
         j["params"] = encodeInlayParams(*inlay);
+    } else if (const auto* photo = std::get_if<toolpath::PhotoVCarveParams>(&tp.params)) {
+        j["params"] = encodePhotoVCarveParams(*photo);
     } else {
         j["params"] = encodePocketParams(std::get<toolpath::PocketParams>(tp.params));
     }
@@ -2197,6 +2219,11 @@ constexpr std::array<std::string_view, 16> kInlayKeys{
     "step_depth",  "step_width", "allowance",  "safe_z",         "direction",   "order",
     "start_position", "tolerance", "tool",     "layers"};
 
+// Photo V-carve records exist only in job.json, like V-carve.
+constexpr std::array<std::string_view, 12> kPhotoVCarveKeys{
+    "name",   "max_depth", "invert",    "stepover_retract", "line_spacing_percent", "line_angle_rad",
+    "strategy", "safe_z",  "depth_tolerance", "tolerance",   "tool",              "layers"};
+
 template <std::size_t N>
 std::span<const std::string_view> keysFor(const std::array<std::string_view, N>& keys, ParamsDialect d) {
     // "tool" and "layers" (always the last two) belong to params.json only.
@@ -2648,6 +2675,41 @@ toolpath::InlayParams decodeInlayParams(JsonReader& r, const Path& p, ParamsDial
     return out;
 }
 
+toolpath::PhotoVCarveParams decodePhotoVCarveParams(JsonReader& r, const Path& p, ParamsDialect d,
+                                                    LegacyParamsExtras* legacy) {
+    toolpath::PhotoVCarveParams out;
+    ParamsRecord rec(r, p, keysFor(kPhotoVCarveKeys, d), d);
+    while (rec.next()) {
+        const std::string& k = rec.key();
+        if (k == "name") {
+            out.name = rec.string();
+        } else if (k == "max_depth") {
+            out.maxDepth = rec.number();
+        } else if (k == "invert") {
+            out.invert = rec.boolean();
+        } else if (k == "stepover_retract") {
+            out.stepoverRetract = rec.number();
+        } else if (k == "line_spacing_percent") {
+            out.lineSpacingPercent = rec.number();
+        } else if (k == "line_angle_rad") {
+            out.lineAngle = rec.number();
+        } else if (k == "strategy") {
+            out.strategy = rec.choice(kPhotoStrategies);
+        } else if (k == "safe_z") {
+            out.safeZ = rec.number();
+        } else if (k == "depth_tolerance") {
+            out.depthTolerance = rec.number();
+        } else if (k == "tolerance") {
+            out.tolerance = decodeTolerance(r, rec.field(), d);
+        } else if (legacy) {
+            decodeLegacyCommon(rec, *legacy);
+        } else {
+            rec.skip();
+        }
+    }
+    return out;
+}
+
 toolpath::FlutingParams decodeFlutingParams(JsonReader& r, const Path& p, ParamsDialect d,
                                             LegacyParamsExtras* legacy) {
     toolpath::FlutingParams out;
@@ -2749,6 +2811,9 @@ ToolpathParams decodeParamsOf(ToolpathOperation operation, const std::string& te
     }
     if (operation == ToolpathOperation::Inlay) {
         return decodeInlayParams(r, p, d, legacy);
+    }
+    if (operation == ToolpathOperation::PhotoVCarve) {
+        return decodePhotoVCarveParams(r, p, d, legacy);
     }
     return decodePocketParams(r, p, d, legacy);
 }

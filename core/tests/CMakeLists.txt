@@ -114,6 +114,7 @@ add_executable(carvetto_tests
   document/carv_chamfer_record_test.cpp
   document/carv_thread_mill_record_test.cpp
   document/carv_inlay_record_test.cpp
+  document/carv_photo_record_test.cpp
   document/carv_fluting_record_test.cpp
   document/carv_prism_record_test.cpp
   document/carv_engrave_record_test.cpp

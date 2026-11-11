@@ -86,6 +86,21 @@ struct ResolvedVectors {
 /// Resolves `selector` against `doc` (see the rules above). Never fails.
 ResolvedVectors resolveVectors(const document::Document& doc, const VectorSelector& selector);
 
+/// The bitmap a photo V-carve reads (T-0250b): the first bitmap object among the selector's
+/// explicit objects (a selection of every vector or of layers names none).
+struct ResolvedBitmap {
+    /// Null when there is none; then `problem` says why.
+    document::ObjectId object;
+    /// Valid while the document is unchanged; null when `object` is null.
+    const document::BitmapObject* bitmap{nullptr};
+    /// Why it cannot be read (no bitmap selected, hidden, locked, on another sheet, no embedded image).
+    std::string problem;
+};
+
+/// Finds the bitmap of `selector` in `doc` under the same usability rules as vectors (active
+/// sheet, visible and unlocked layers). Never fails.
+ResolvedBitmap resolveBitmap(const document::Document& doc, const VectorSelector& selector);
+
 /// Empty when the selector's ids are all usable in a record (allocated ids of the right kind,
 /// `all` alone, no repeats), else the reason. Filter values must be finite and non-negative.
 std::string validateSelector(const document::Document& doc, const VectorSelector& selector);
@@ -114,6 +129,10 @@ class Fingerprint {
    private:
     std::uint64_t state_{14695981039346656037ULL};
 };
+
+/// Hash of what a photo V-carve reads: the bitmap's object, image key, size and placement (the
+/// pixels are named by their content key), or its problem.
+std::uint64_t fingerprint(const ResolvedBitmap& resolved);
 
 /// Hash of the resolved vectors: object ids and the geometry of every contour taking part.
 std::uint64_t fingerprint(const ResolvedVectors& resolved);

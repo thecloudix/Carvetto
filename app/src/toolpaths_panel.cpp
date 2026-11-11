@@ -29,6 +29,7 @@
 #include "carvetto/tooling/json_io.hpp"
 #include "carvetto/viewmodel/vector_selector.hpp"
 #include "carvetto/viewmodel/tool_setup.hpp"
+#include "bitmap_decoder.hpp"
 #include "starter_tools.hpp"
 #include "toolpath_form_dialog.hpp"
 
@@ -105,6 +106,7 @@ ToolpathsPanel::ToolpathsPanel(document::Document* doc, QWidget* parent)
     : QWidget(parent), session_(doc), doc_(doc), db_(loadStarterTools()) {
     setObjectName(QStringLiteral("ToolpathsPanel"));
     session_.setToolDatabase(db_);
+    session_.setBitmapDecoder(qtBitmapDecoder());
     if (const tooling::Machine* machine = viewmodel::activeMachine(db_, std::string())) {
         activeMachineId_ = machine->id;
         session_.setMachine(*machine, machine->rapidRate);
@@ -162,7 +164,7 @@ void ToolpathsPanel::build() {
     for (ToolpathOperation op : {ToolpathOperation::Profile, ToolpathOperation::Pocket, ToolpathOperation::Drill,
                                  ToolpathOperation::Engrave, ToolpathOperation::VCarving, ToolpathOperation::Chamfer,
                                  ToolpathOperation::ThreadMill, ToolpathOperation::Prism, ToolpathOperation::Fluting,
-                                 ToolpathOperation::Inlay}) {
+                                 ToolpathOperation::Inlay, ToolpathOperation::PhotoVCarve}) {
         QAction* a = addMenu->addAction(QString::fromUtf8(operationLabel(op)));
         a->setObjectName(QStringLiteral("add%1").arg(QString::fromUtf8(operationLabel(op))));
         a->setToolTip(QStringLiteral("Add a %1 toolpath").arg(QString::fromUtf8(operationLabel(op))));
@@ -586,6 +588,7 @@ void ToolpathsPanel::openForm(viewmodel::ToolpathForm form, bool editing, Toolpa
     }
     info.selection = doc_->selection().ids();
     info.countVectors = [this](const viewmodel::VectorSelector& s) { return session_.countVectors(s); };
+    info.bitmapProblem = [this](const viewmodel::VectorSelector& s) { return session_.bitmapProblem(s); };
     auto* dlg = new ToolpathFormDialog(std::move(form), db_, std::move(info), editing, window());
     dialog_ = dlg;
     dlg->setAttribute(Qt::WA_DeleteOnClose);

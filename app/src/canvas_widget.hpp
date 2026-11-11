@@ -10,6 +10,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <map>
 #include <optional>
 #include <string>
 
@@ -164,6 +165,10 @@ class CanvasWidget : public QWidget {
     mutable std::size_t lastPreviewPoints_{0};
     viewmodel::ViewTransform view_;
     mutable viewmodel::KeepOutHaloCache haloCache_;
+    /// Decoded (and shrunk to at most 1024 pixels an edge) bitmaps by content key; a null image
+    /// marks an image that could not be decoded.
+    mutable std::map<std::string, QImage> bitmapCache_;
+    const QImage& bitmapImage(const std::string& key) const;
     viewmodel::ToolController tools_;
     bool fitPending_{true};
     bool panning_{false};

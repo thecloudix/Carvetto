@@ -1,6 +1,7 @@
 #include "canvas_widget.hpp"
 
 #include <QBrush>
+#include <QByteArray>
 #include <QElapsedTimer>
 #include <QEvent>
 #include <QFont>
@@ -51,6 +52,7 @@ CanvasWidget::CanvasWidget(QWidget* parent) : QWidget(parent) {
 
 void CanvasWidget::setDocument(document::Document* doc) {
     doc_ = doc;
+    bitmapCache_.clear();
     tools_.setDocument(doc);
     fitPending_ = true;
     if (width() > 0 && height() > 0) {
@@ -127,6 +129,29 @@ QImage CanvasWidget::renderFitted(QSize size, ViewTransform* usedView) const {
     return image;
 }
 
+const QImage& CanvasWidget::bitmapImage(const std::string& key) const {
+    static const QImage none;
+    if (doc_ == nullptr) {
+        return none;
+    }
+    const auto found = bitmapCache_.find(key);
+    if (found != bitmapCache_.end()) {
+        return found->second;
+    }
+    QImage image;
+    if (const document::BitmapAsset* asset = doc_->findBitmap(key)) {
+        image = QImage::fromData(QByteArray::fromRawData(reinterpret_cast<const char*>(asset->bytes.data()),
+                                                         static_cast<qsizetype>(asset->bytes.size())));
+        if (!image.isNull() && (image.width() > 1024 || image.height() > 1024)) {
+            image = image.scaled(1024, 1024, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        }
+    }
+    if (bitmapCache_.size() >= 32) {
+        bitmapCache_.clear();
+    }
+    return bitmapCache_.emplace(key, std::move(image)).first->second;
+}
+
 void CanvasWidget::paintScene(QPainter& painter, const ViewTransform& view, QSize size) const {
     painter.fillRect(QRectF(QPointF(0.0, 0.0), QSizeF(size)), canvasBackground());
     if (doc_ == nullptr) {
@@ -146,6 +171,22 @@ void CanvasWidget::paintScene(QPainter& painter, const ViewTransform& view, QSiz
         painter.setPen(outline);
         painter.setBrush(Qt::NoBrush);
         painter.drawRect(material);
+    }
+
+    // Bitmaps lie under the vectors: the image, then a frame in the layer colour.
+    for (const viewmodel::DrawBitmap& bitmap : scene.bitmaps) {
+        const QRectF rect = toQt(bitmap.rectPx);
+        const QImage& image = bitmapImage(bitmap.key);
+        if (!image.isNull()) {
+            painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+            painter.drawImage(rect, image);
+        }
+        QPen frame(QColor(bitmap.colour.r, bitmap.colour.g, bitmap.colour.b));
+        frame.setWidthF(1.0);
+        frame.setCosmetic(true);
+        painter.setPen(frame);
+        painter.setBrush(Qt::NoBrush);
+        painter.drawRect(rect);
     }
 
     for (const viewmodel::DrawPath& path : scene.paths) {

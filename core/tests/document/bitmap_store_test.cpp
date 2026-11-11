@@ -121,6 +121,20 @@ TEST_CASE("decodeBitmapObject", "[bitmap_store]") {
     CHECK_FALSE(decodeBitmapObject(d2, legacy, dec).ok());
 }
 
+TEST_CASE("decodeBitmapBytes works on bytes away from the document", "[bitmap_store]") {
+    const std::vector<std::uint8_t> ppm = bytesOf(kPpm);
+    auto r = decodeBitmapBytes(std::span<const std::uint8_t>(ppm));
+    REQUIRE(r.ok());
+    CHECK(r.value().width == 2);
+    const std::vector<std::uint8_t> other = bytesOf("\x89PNG...");
+    CHECK_FALSE(decodeBitmapBytes(std::span<const std::uint8_t>(other)).ok());
+    CHECK_FALSE(decodeBitmapBytes(std::span<const std::uint8_t>{}).ok());
+    BitmapDecoder bad = [](std::span<const std::uint8_t>) {
+        return geometry::ShapeResult<io::RasterImage>(io::RasterImage{});
+    };
+    CHECK_FALSE(decodeBitmapBytes(std::span<const std::uint8_t>(other), bad).ok());
+}
+
 TEST_CASE("bitmap store .carv round trip", "[bitmap_store][carv]") {
     Document doc;
     UndoStack stack;

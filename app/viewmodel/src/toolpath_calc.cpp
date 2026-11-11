@@ -5,6 +5,8 @@
 #include <exception>
 #include <new>
 #include <set>
+#include <span>
+#include <string>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -14,6 +16,7 @@
 #include "carvetto/toolpath/fluting.hpp"
 #include "carvetto/toolpath/thread_mill.hpp"
 #include "carvetto/toolpath/inlay.hpp"
+#include "carvetto/toolpath/photo_vcarve.hpp"
 #include "carvetto/toolpath/prism.hpp"
 #include "carvetto/toolpath/engrave.hpp"
 #include "carvetto/toolpath/pocket.hpp"
@@ -219,6 +222,7 @@ ToolpathDefinition defaultDefinition(ToolpathOperation operation) {
         case ToolpathOperation::Inlay: def.params = toolpath::InlayParams{}; break;
         case ToolpathOperation::Fluting: def.params = toolpath::FlutingParams{}; break;
         case ToolpathOperation::Prism: def.params = toolpath::PrismParams{}; break;
+        case ToolpathOperation::PhotoVCarve: def.params = toolpath::PhotoVCarveParams{}; break;
     }
     return def;
 }
@@ -292,6 +296,7 @@ const char* operationName(ToolpathOperation operation) {
         case ToolpathOperation::Inlay: return "inlay";
         case ToolpathOperation::Fluting: return "fluting";
         case ToolpathOperation::Prism: return "prism";
+        case ToolpathOperation::PhotoVCarve: return "photo_vcarve";
     }
     return "?";
 }
@@ -307,6 +312,7 @@ bool toolAllowedFor(ToolpathOperation operation, tooling::ToolType type, bool cl
         case ToolpathOperation::Inlay: return toolpath::inlayToolAllowed(type);
         case ToolpathOperation::Fluting: return toolpath::flutingToolAllowed(type);
         case ToolpathOperation::Prism: return toolpath::prismToolAllowed(type);
+        case ToolpathOperation::PhotoVCarve: return toolpath::photoVCarveToolAllowed(type);
         case ToolpathOperation::VCarving:
             return clearance ? toolpath::vCarvingClearanceToolAllowed(type) : toolpath::vCarvingToolAllowed(type);
     }
@@ -483,8 +489,15 @@ ToolpathJob makeToolpathJob(const ToolpathDefinition& definition, const Resolved
         job.notes.push_back(note(MessageSeverity::Info, std::to_string(vectors.skippedOtherSheet) +
                                                             " vector(s) on other sheets are not machined"));
     }
+    const auto* photoParams = std::get_if<toolpath::PhotoVCarveParams>(&job.definition.params);
+    const bool photoWithoutVectors = photoParams != nullptr && photoParams->strategy != toolpath::PhotoStrategy::SelectedVectors;
+    if (photoWithoutVectors) {
+        return job;  // reads the bitmap only (see attachPhotoInput)
+    }
     if (vectors.contours.empty()) {
-        refuse("there are no vectors to machine (the selection is empty, or hidden, locked or on another sheet)");
+        refuse(photoParams != nullptr
+                   ? "Selected Vectors needs vectors to follow: select some besides the bitmap"
+                   : "there are no vectors to machine (the selection is empty, or hidden, locked or on another sheet)");
         return job;
     }
     if (vectors.spanCount > kMaxToolpathSpans) {
@@ -529,6 +542,54 @@ ToolpathJob makeToolpathJob(const ToolpathDefinition& definition, const Resolved
     return job;
 }
 
+void attachPhotoInput(ToolpathJob& job, const document::Document& doc, const ResolvedBitmap& bitmap,
+                      const document::BitmapDecoder& decoder) {
+    if (!std::holds_alternative<toolpath::PhotoVCarveParams>(job.definition.params)) {
+        return;
+    }
+    const auto refuse = [&](std::string why) {
+        if (job.refusal.empty()) {
+            job.refusal = std::move(why);
+        }
+    };
+    if (bitmap.bitmap == nullptr) {
+        refuse(bitmap.problem.empty() ? std::string("select a bitmap") : bitmap.problem);
+        return;
+    }
+    const document::BitmapAsset* asset = doc.findBitmap(bitmap.bitmap->sourceRef);
+    if (asset == nullptr) {
+        refuse("the bitmap has no embedded image data");
+        return;
+    }
+    const geometry::Box2& box = bitmap.bitmap->placementMm;
+    const auto ok = [](double v) { return std::isfinite(v) && std::fabs(v) <= kMaxToolpathCoordinateMm; };
+    if (!(ok(box.min.x) && ok(box.min.y) && ok(box.max.x) && ok(box.max.y)) || box.isEmpty()) {
+        refuse("the bitmap's placement is empty or beyond " +
+               std::to_string(static_cast<long long>(kMaxToolpathCoordinateMm)) + " mm");
+        return;
+    }
+    PhotoInput in;
+    in.bitmap = bitmap.object;
+    in.placement = box;
+    in.bytes = asset->bytes;
+    in.decoder = decoder;
+    job.photo = std::move(in);
+}
+
+std::uint64_t inputsFingerprint(const document::Document& doc, const VectorSelector& selector,
+                                const document::ToolpathParams& params) {
+    const auto* photo = std::get_if<toolpath::PhotoVCarveParams>(&params);
+    if (photo == nullptr) {
+        return fingerprint(resolveVectors(doc, selector));
+    }
+    Fingerprint fp;
+    fp.add(fingerprint(resolveBitmap(doc, selector)));
+    if (photo->strategy == toolpath::PhotoStrategy::SelectedVectors) {
+        fp.add(fingerprint(resolveVectors(doc, selector)));
+    }
+    return fp.value();
+}
+
 namespace {
 
 document::ToolpathRecord makeRecord(const ToolpathJob& job, toolpath::Toolpath tp, const document::ToolSource& source) {
@@ -560,7 +621,10 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
         out.messages.push_back(note(MessageSeverity::Error, refusal));
         return out;
     }
-    if (!tool.has_value() || contours.empty()) {  // a job not made by makeToolpathJob
+    const auto* photoParams = std::get_if<toolpath::PhotoVCarveParams>(&definition.params);
+    const bool needsContours = photoParams == nullptr || photoParams->strategy == toolpath::PhotoStrategy::SelectedVectors;
+    if (!tool.has_value() || (needsContours && contours.empty()) || (photoParams != nullptr && !photo.has_value())) {
+        // a job not made by makeToolpathJob
         out.messages.push_back(note(MessageSeverity::Error, "the job has no tool or no vectors"));
         return out;
     }
@@ -628,6 +692,28 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
         } else if (op == ToolpathOperation::Prism) {
             toolpath::PrismResult r = toolpath::prismToolpath(contours, tool->tool, tool->data,
                                                               std::get<toolpath::PrismParams>(definition.params));
+            diagnostics = r.diagnostics;
+            if (r.ok()) {
+                items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});
+            }
+        } else if (op == ToolpathOperation::PhotoVCarve) {
+            const document::BitmapDecoder& decode = photo->decoder;
+            geometry::ShapeResult<io::RasterImage> raster =
+                document::decodeBitmapBytes(std::span<const std::uint8_t>(photo->bytes), decode);
+            if (!raster.ok()) {
+                out.messages.push_back(note(MessageSeverity::Error, "the bitmap cannot be read: " + raster.error()));
+                return out;
+            }
+            if (cancelled()) {
+                out.cancelled = true;
+                out.messages.push_back(note(MessageSeverity::Info, "the calculation was cancelled"));
+                return out;
+            }
+            const toolpath::GrayImage gray = toolpath::grayFromRaster(raster.value());
+            toolpath::ToolpathRunControl control;
+            control.cancel = cancel;
+            toolpath::PhotoVCarveResult r = toolpath::photoVCarve(gray, photo->placement, tool->tool, tool->data,
+                                                                  *photoParams, contours, control);
             diagnostics = r.diagnostics;
             if (r.ok()) {
                 items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});

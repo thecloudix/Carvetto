@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include "carvetto/document/bitmap_store.hpp"
+#include "carvetto/document/document.hpp"
 #include "carvetto/document/ids.hpp"
 #include "carvetto/document/toolpath_record.hpp"
 #include "carvetto/geometry/contour.hpp"
@@ -136,10 +138,23 @@ struct ToolpathCalculation {
     std::string errorText() const;
 };
 
+/// What a photo V-carve reads, copied from the document so the job stays independent of it (T-0250b):
+/// the encoded image (decoded on the worker thread, where the cancel flag is honoured) and where it
+/// is placed.
+struct PhotoInput {
+    document::ObjectId bitmap;
+    geometry::Box2 placement;
+    std::vector<std::uint8_t> bytes;
+    document::BitmapDecoder decoder;
+};
+
 /// Everything one calculation needs, copied from the document and the tool database. Independent
 /// of both: it may be run on another thread, and run more than once with the same result.
 struct ToolpathJob {
     ToolpathDefinition definition;
+    /// Photo V-carve only: the bitmap. The contours are then the vectors of the Selected Vectors
+    /// strategy (none for Raster and Hatch).
+    std::optional<PhotoInput> photo;
     std::vector<geometry::Contour> contours;
     /// The drawing object of each contour.
     std::vector<document::ObjectId> owners;
@@ -177,6 +192,16 @@ inline constexpr double kMaxToolpathLengthMm = 1.0e7;
 ToolpathJob makeToolpathJob(const ToolpathDefinition& definition, const ResolvedVectors& vectors,
                             const tooling::ToolDatabase& db, const document::VectorSelection& selection);
 
+/// Gives `job` the bitmap of a photo V-carve (a no-op for other operations): copies the encoded
+/// image and placement of `bitmap`, or sets the job's refusal when there is none or it is unusable.
+void attachPhotoInput(ToolpathJob& job, const document::Document& doc, const ResolvedBitmap& bitmap,
+                      const document::BitmapDecoder& decoder);
+
+/// Hash of what the toolpath of `params` reads from `selector` in `doc`: the resolved vectors, or
+/// for a photo V-carve its bitmap (and, for Selected Vectors, the vectors too).
+std::uint64_t inputsFingerprint(const document::Document& doc, const VectorSelector& selector,
+                                const document::ToolpathParams& params);
+
 /// Hash of the tools `definition` uses in `db` (see `toolFingerprint`); 0 when one is missing.
 std::uint64_t toolsFingerprintOf(const ToolpathDefinition& definition, const tooling::ToolDatabase& db);
 
@@ -184,7 +209,7 @@ std::uint64_t toolsFingerprintOf(const ToolpathDefinition& definition, const too
 /// Profile and Pocket accept any type (the core refuses unusable geometry).
 bool toolAllowedFor(document::ToolpathOperation operation, tooling::ToolType type, bool clearance = false);
 
-/// Name of an operation for messages: "profile", "pocket", "drill", "engrave", "v_carve".
+/// Name of an operation for messages: "profile", "pocket", "drill", "engrave", "v_carve", "photo_vcarve".
 const char* operationName(document::ToolpathOperation operation);
 
 }  // namespace carvetto::viewmodel

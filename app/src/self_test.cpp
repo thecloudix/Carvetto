@@ -754,6 +754,11 @@ int runSelfTest() {
         return fail(why);
     }
 
+    // 9b. Photo V-carve: import a bitmap, form, calculation, stale, save and reload (T-0250b).
+    if (const std::string why = photoSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
     // 9. The toolpath preview and the simulation view (T-0223).
     if (const std::string why = previewSelfTest(window); !why.empty()) {
         return fail(why);

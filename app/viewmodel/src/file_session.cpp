@@ -8,6 +8,8 @@
 #include <system_error>
 #include <utility>
 
+#include "carvetto/viewmodel/bitmap_import.hpp"
+
 namespace carvetto::viewmodel {
 
 namespace fs = std::filesystem;
@@ -210,6 +212,30 @@ bool FileSession::importDxf(const fs::path& path, std::optional<double> forcedMm
         return true;
     } catch (const std::exception& e) {
         return fail(std::string("Cannot import the DXF file: ") + e.what());
+    }
+}
+
+bool FileSession::importBitmap(const fs::path& path, const document::BitmapDecoder& decoder) {
+    error_.clear();
+    try {
+        std::error_code sizeEc;
+        const std::uintmax_t size = fs::file_size(path, sizeEc);
+        if (!sizeEc && size > document::kMaxEmbeddedBitmapBytes) {
+            return fail("Cannot import the bitmap: the file is too large to embed (more than 64 MiB).");
+        }
+        std::vector<std::uint8_t> bytes;
+        std::string why;
+        if (!readFile(path, bytes, why)) {
+            return fail("Cannot open the file: " + why + ".");
+        }
+        const BitmapImportOutcome outcome =
+            importBitmapIntoDocument(*doc_, std::move(bytes), pathToUtf8(path.filename()), decoder);
+        if (!outcome.ok) {
+            return fail("Cannot import the bitmap: " + outcome.error + ".");
+        }
+        return true;
+    } catch (const std::exception& e) {
+        return fail(std::string("Cannot import the bitmap: ") + e.what());
     }
 }
 
