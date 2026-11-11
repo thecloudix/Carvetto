@@ -1153,7 +1153,7 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0250 Photo V-carve (raster to depth-modulated V-carve/engrave toolpath)   [status: ready — owner confirmed Phase 1, 2026-11-10]
+### T-0250 Photo V-carve (raster to depth-modulated V-carve/engrave toolpath)   [status: in-progress — owner confirmed Phase 1, 2026-11-10]
 Phase: 1   Module: core/toolpath + core/io + app   Depends on: T-0245, T-0153
 Goal: Photo V-Carve from a bitmap per docs/reference/feature-inventory.md ("Photo V-Carve Toolpath"): the tool depth along each line follows image brightness (V-bit engraving), bounded by Max Carving Depth. Reuses the raster decoding from T-0245. Core is Qt-free (takes a grayscale pixel buffer + placement in mm); app side decodes via QImage.
 Acceptance criteria:
