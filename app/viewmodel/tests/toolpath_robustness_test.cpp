@@ -94,7 +94,8 @@ std::string toolFor(ToolpathOperation op, Rng& rng) {
         case ToolpathOperation::VCarving:
         case ToolpathOperation::Prism:
         case ToolpathOperation::Chamfer: return "v-bit-90";
-        case ToolpathOperation::ThreadMill: return "end-mill-3mm";
+        case ToolpathOperation::ThreadMill:
+        case ToolpathOperation::Fluting: return "end-mill-3mm";
     }
     return "end-mill-3mm";
 }
@@ -479,6 +480,7 @@ TEST_CASE("robustness: degenerate and hostile vectors", "[toolpath][robust]") {
                 case ToolpathOperation::VCarving: def = vCarveDefinition(db, true); break;
                 case ToolpathOperation::Chamfer: def = chamferDefinition(db); break;
                 case ToolpathOperation::ThreadMill: def = threadMillDefinition(db); break;
+                case ToolpathOperation::Fluting: def = flutingDefinition(db); break;
                 case ToolpathOperation::Prism: def = prismDefinition(db); break;
             }
             if (tracing()) {

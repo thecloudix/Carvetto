@@ -11,8 +11,8 @@ prism option reaches the tool-limited depth. The meaning of "prism" is not descr
 1. **Shape.** A prism is the inside of a closed vector carved into a faceted pyramid-like recess:
    the vector stays at the surface and the facets fall towards the middle at the tool's flank angle,
    so the lowest point (the "peak depth") is at the prism depth. Interpreted this way it is a V-carve
-   whose depth is stated rather than found; if the product owner means a raised prism (surface at the
-   centre), only the sign of the facets changes and the field set stays.
+   whose depth is stated rather than found; the product owner confirmed this reading (2026-11-10). A raised prism (surface at the
+   centre) would only change the sign of the facets; the field set would stay.
 2. **Cuts.** The tool runs on inward offsets of the vector (round joins, via `profileToolpath`, side
    Inside, allowance 0): the cut at inset s is made at the depth where the tool's cutting width at the
    surface is 2 s (`vCarvingDepthForRadius`), so its edge sits on the vector. Insets run s = stepover,

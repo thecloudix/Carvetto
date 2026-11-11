@@ -37,6 +37,8 @@
 //               are linked: cutDepth = width / (2 tan angle); a V-bit's angle comes from the tool)
 //   Thread Mill startDepth maxDepth threadLength safeZ threadedLength diameter pitch fitTolerance startX startY
 //               distance chordal (pitch is hidden while a pitch preset is chosen)
+//   Fluting     fluteDepth rampLength|rampPercent (by the ramp basis; hidden for a ramp over the complete
+//               length) safeZ startX startY chordal
 //   Prism       depth (hidden with fullPrism) stepover safeZ startX startY chordal
 // Choices carry the enum/bool inputs; see `choices()`.
 
