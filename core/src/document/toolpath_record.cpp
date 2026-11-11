@@ -138,6 +138,23 @@ std::string nonFiniteParam(const ToolpathParams& params) {
                                           {"start_position[1]", m->startPosition.y}});
         return key.empty() ? nonFiniteTolerance(m->tolerance) : key;
     }
+    if (const auto* f = std::get_if<toolpath::FlutingParams>(&params)) {
+        std::string key = firstNonFinite({{"flute_depth", f->fluteDepth},
+                                          {"ramp_length", f->rampLength},
+                                          {"ramp_percent", f->rampPercent},
+                                          {"safe_z", f->safeZ},
+                                          {"start_position[0]", f->startPosition.x},
+                                          {"start_position[1]", f->startPosition.y}});
+        return key.empty() ? nonFiniteTolerance(f->tolerance) : key;
+    }
+    if (const auto* m = std::get_if<toolpath::PrismParams>(&params)) {
+        std::string key = firstNonFinite({{"depth", m->depth},
+                                          {"stepover", m->stepover},
+                                          {"safe_z", m->safeZ},
+                                          {"start_position[0]", m->startPosition.x},
+                                          {"start_position[1]", m->startPosition.y}});
+        return key.empty() ? nonFiniteTolerance(m->tolerance) : key;
+    }
     if (const auto* n = std::get_if<toolpath::InlayParams>(&params)) {
         std::string key = firstNonFinite({{"start_depth", n->startDepth},
                                           {"cut_depth", n->cutDepth},

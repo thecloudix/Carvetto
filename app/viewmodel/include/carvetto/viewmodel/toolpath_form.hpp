@@ -38,6 +38,9 @@
 //               distance chordal (pitch is hidden while a pitch preset is chosen)
 //   Inlay       startDepth cutDepth stepDepth stepWidth allowance safeZ startX startY chordal (step fields only
 //               for a stepped male; choices piece, maleStyle, femaleStyle, direction, order)
+//   Fluting     fluteDepth rampLength|rampPercent (by the ramp basis; hidden for a ramp over the complete
+//               length) safeZ startX startY chordal
+//   Prism       depth (hidden with fullPrism) stepover safeZ startX startY chordal
 // Choices carry the enum/bool inputs; see `choices()`.
 
 namespace carvetto::viewmodel {

@@ -11,8 +11,10 @@
 
 #include "carvetto/toolpath/drill.hpp"
 #include "carvetto/toolpath/chamfer.hpp"
+#include "carvetto/toolpath/fluting.hpp"
 #include "carvetto/toolpath/thread_mill.hpp"
 #include "carvetto/toolpath/inlay.hpp"
+#include "carvetto/toolpath/prism.hpp"
 #include "carvetto/toolpath/engrave.hpp"
 #include "carvetto/toolpath/pocket.hpp"
 #include "carvetto/toolpath/profile.hpp"
@@ -73,6 +75,7 @@ bool isRefusalIssue(ToolpathIssue issue) {
         case ToolpathIssue::InvalidTool:
         case ToolpathIssue::WorkLimitExceeded:
         case ToolpathIssue::MedialAxisCapped:
+        case ToolpathIssue::ContourRefused:
             return true;
         default:
             return false;
@@ -214,6 +217,8 @@ ToolpathDefinition defaultDefinition(ToolpathOperation operation) {
         case ToolpathOperation::Chamfer: def.params = toolpath::ChamferParams{}; break;
         case ToolpathOperation::ThreadMill: def.params = toolpath::ThreadMillParams{}; break;
         case ToolpathOperation::Inlay: def.params = toolpath::InlayParams{}; break;
+        case ToolpathOperation::Fluting: def.params = toolpath::FlutingParams{}; break;
+        case ToolpathOperation::Prism: def.params = toolpath::PrismParams{}; break;
     }
     return def;
 }
@@ -285,6 +290,8 @@ const char* operationName(ToolpathOperation operation) {
         case ToolpathOperation::Chamfer: return "chamfer";
         case ToolpathOperation::ThreadMill: return "thread_mill";
         case ToolpathOperation::Inlay: return "inlay";
+        case ToolpathOperation::Fluting: return "fluting";
+        case ToolpathOperation::Prism: return "prism";
     }
     return "?";
 }
@@ -298,6 +305,8 @@ bool toolAllowedFor(ToolpathOperation operation, tooling::ToolType type, bool cl
         case ToolpathOperation::Chamfer: return toolpath::chamferToolAllowed(type);
         case ToolpathOperation::ThreadMill: return toolpath::threadMillToolAllowed(type);
         case ToolpathOperation::Inlay: return toolpath::inlayToolAllowed(type);
+        case ToolpathOperation::Fluting: return toolpath::flutingToolAllowed(type);
+        case ToolpathOperation::Prism: return toolpath::prismToolAllowed(type);
         case ToolpathOperation::VCarving:
             return clearance ? toolpath::vCarvingClearanceToolAllowed(type) : toolpath::vCarvingToolAllowed(type);
     }
@@ -605,6 +614,20 @@ ToolpathCalculation ToolpathJob::run(const std::atomic<bool>* cancel) const {
         } else if (op == ToolpathOperation::Inlay) {
             toolpath::InlayResult r = toolpath::inlayToolpath(contours, tool->tool, tool->data,
                                                               std::get<toolpath::InlayParams>(definition.params));
+            diagnostics = r.diagnostics;
+            if (r.ok()) {
+                items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});
+            }
+        } else if (op == ToolpathOperation::Fluting) {
+            toolpath::FlutingResult r = toolpath::flutingToolpath(
+                contours, tool->tool, tool->data, std::get<toolpath::FlutingParams>(definition.params));
+            diagnostics = r.diagnostics;
+            if (r.ok()) {
+                items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});
+            }
+        } else if (op == ToolpathOperation::Prism) {
+            toolpath::PrismResult r = toolpath::prismToolpath(contours, tool->tool, tool->data,
+                                                              std::get<toolpath::PrismParams>(definition.params));
             diagnostics = r.diagnostics;
             if (r.ok()) {
                 items.push_back({-1, makeRecord(*this, std::move(r.toolpath), definition.tool)});

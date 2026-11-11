@@ -43,6 +43,10 @@ const char* operationLabel(ToolpathOperation op) {
             return "Thread Mill";
         case ToolpathOperation::Inlay:
             return "Inlay";
+        case ToolpathOperation::Fluting:
+            return "Fluting";
+        case ToolpathOperation::Prism:
+            return "Prism";
     }
     return "?";
 }

@@ -105,4 +105,18 @@ std::string validateOffsetOptions(const OffsetOptions& options);
 VectorOpResult applyOffset(document::Document& doc, const OffsetOptions& options,
                            const geometry::Tolerance& tol = geometry::Tolerance::defaults());
 
+/// The selected closed vectors as one filled region (T-0254), for operations that clip to it (the
+/// vector texture). Operands are those of the boolean operations (visible, unlocked, active
+/// sheet, groups resolved). Each object's closed contours form a region by the even-odd rule
+/// (nested contours are holes), and the objects are united. `contours` is the result: outers
+/// counter-clockwise, holes clockwise, fill rule NonZero. Errors: nothing closed selected, too
+/// many spans or coordinates out of range (same limits as the operations), nothing left.
+struct SelectionRegion {
+    bool ok{false};
+    std::string message;
+    std::vector<geometry::Contour> contours;
+};
+SelectionRegion selectedClosedRegion(const document::Document& doc,
+                                     const geometry::Tolerance& tol = geometry::Tolerance::defaults());
+
 }  // namespace carvetto::viewmodel

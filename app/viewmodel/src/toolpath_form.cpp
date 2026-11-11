@@ -12,7 +12,9 @@
 #include "carvetto/geometry/vec2.hpp"
 #include "carvetto/toolpath/chamfer.hpp"
 #include "carvetto/toolpath/inlay.hpp"
+#include "carvetto/toolpath/fluting.hpp"
 #include "carvetto/toolpath/thread_mill.hpp"
+#include "carvetto/toolpath/prism.hpp"
 #include "carvetto/viewmodel/units_format.hpp"
 
 namespace carvetto::viewmodel {
@@ -496,6 +498,55 @@ Table<toolpath::InlayParams> makeInlayTable() {
     return t;
 }
 
+Table<toolpath::FlutingParams> makeFlutingTable() {
+    using P = toolpath::FlutingParams;
+    Table<P> t;
+    t.num("fluteDepth", "Flute depth", "Depth", Kind::Length, false, false, [](P& p) -> double& { return p.fluteDepth; });
+    bound(t, "fluteDepth", 1e-3, 100000.0);
+    t.num("rampLength", "Ramp length", "Ramp", Kind::Length, false, false, [](P& p) -> double& { return p.rampLength; },
+          [](const P& p) {
+              return p.type != toolpath::FluteType::RampOverLength && p.rampBasis == toolpath::FluteRampBasis::Length;
+          });
+    bound(t, "rampLength", 1e-3, 100000.0);
+    t.num("rampPercent", "Ramp (% of the vector's length)", "Ramp", Kind::Factor, false, false,
+          [](P& p) -> double& { return p.rampPercent; },
+          [](const P& p) {
+              return p.type != toolpath::FluteType::RampOverLength && p.rampBasis == toolpath::FluteRampBasis::Percent;
+          });
+    bound(t, "rampPercent", 1e-3, 100.0);
+    t.num("safeZ", "Safe Z", "Depth", Kind::Length, false, false, [](P& p) -> double& { return p.safeZ; });
+    addStartPosition<P>(t, [](P& p) -> geometry::Vec2& { return p.startPosition; });
+    addChordal<P>(t, [](P& p) -> geometry::Tolerance& { return p.tolerance; }, 1e-4);
+    t.option<toolpath::FluteType>("fluteType", "Flute type", "Ramp",
+                                  {"Ramp over complete length", "Ramp at start", "Ramp at start and end"},
+                                  [](P& p) -> toolpath::FluteType& { return p.type; });
+    t.option<toolpath::FluteRampBasis>("rampBasis", "Ramp given as", "Ramp", {"Length", "Percent"},
+                                       [](P& p) -> toolpath::FluteRampBasis& { return p.rampBasis; },
+                                       [](const P& p) { return p.type != toolpath::FluteType::RampOverLength; });
+    t.option<toolpath::FluteRampType>("rampType", "Ramp type", "Ramp", {"Linear", "Smooth"},
+                                      [](P& p) -> toolpath::FluteRampType& { return p.rampType; });
+    addOrder<P>(t, [](P& p) -> toolpath::OrderOptions& { return p.order; });
+    return t;
+}
+
+Table<toolpath::PrismParams> makePrismTable() {
+    using P = toolpath::PrismParams;
+    Table<P> t;
+    t.num("depth", "Prism depth", "Depth", Kind::Length, false, false, [](P& p) -> double& { return p.depth; },
+          [](const P& p) { return !p.fullPrism; });
+    bound(t, "depth", 1e-3, 100000.0);
+    t.num("stepover", "Stepover", "Cut", Kind::Length, false, false, [](P& p) -> double& { return p.stepover; });
+    bound(t, "stepover", 1e-3, 100.0);
+    t.num("safeZ", "Safe Z", "Depth", Kind::Length, false, false, [](P& p) -> double& { return p.safeZ; });
+    addStartPosition<P>(t, [](P& p) -> geometry::Vec2& { return p.startPosition; });
+    addChordal<P>(t, [](P& p) -> geometry::Tolerance& { return p.tolerance; }, 1e-4);
+    t.flag("fullPrism", "Set depth for full prism", "Depth", [](P& p) -> bool& { return p.fullPrism; });
+    t.option<CutDirection>("direction", "Cut direction", "Cut", {"Climb", "Conventional"},
+                           [](P& p) -> CutDirection& { return p.direction; });
+    addOrder<P>(t, [](P& p) -> toolpath::OrderOptions& { return p.order; });
+    return t;
+}
+
 template <class P>
 const Table<P>& tableOf();
 template <>
@@ -527,6 +578,18 @@ const Table<toolpath::VCarvingParams>& tableOf() {
 template <>
 const Table<toolpath::ThreadMillParams>& tableOf() {
     static const Table<toolpath::ThreadMillParams> t = makeThreadMillTable();
+    return t;
+}
+
+template <>
+const Table<toolpath::FlutingParams>& tableOf() {
+    static const Table<toolpath::FlutingParams> t = makeFlutingTable();
+    return t;
+}
+
+template <>
+const Table<toolpath::PrismParams>& tableOf() {
+    static const Table<toolpath::PrismParams> t = makePrismTable();
     return t;
 }
 

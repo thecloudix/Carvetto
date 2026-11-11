@@ -10,6 +10,7 @@
 #include <optional>
 #include <tuple>
 #include <utility>
+#include <variant>
 
 #include "boolean_batch.hpp"
 #include "cancel_poll.hpp"
@@ -213,6 +214,35 @@ Clipper2Lib::Paths64 clipClosedPaths(Clipper2Lib::ClipType op, Clipper2Lib::Fill
 BooleanResult booleanOp(BooleanOp op, const std::vector<Contour>& subject, const std::vector<Contour>& clip,
                         const Tolerance& tol, FillRule fill) {
     return detail::booleanOpBatched(op, subject, clip, tol, fill, detail::kOffsetBatchMinDepth);
+}
+
+bool refusedByClippers(const Contour& c, const Tolerance& tol) {
+    bool bezier = false;
+    for (const Span& s : c.spans) {
+        if (const auto* arc = std::get_if<ArcSpan>(&s)) {
+            if (arc->segmentCountIsCapped(tol.chordal)) {
+                return true;
+            }
+        } else if (std::holds_alternative<BezierSpan>(s)) {
+            bezier = true;
+        }
+    }
+    if (!bezier) {
+        return false;
+    }
+    bool coarse = false;
+    (void)c.polygonise(tol, &coarse);
+    return coarse;
+}
+
+std::vector<std::size_t> refusedContourIndices(const std::vector<Contour>& contours, const Tolerance& tol) {
+    std::vector<std::size_t> out;
+    for (std::size_t i = 0; i < contours.size(); ++i) {
+        if (refusedByClippers(contours[i], tol)) {
+            out.push_back(i);
+        }
+    }
+    return out;
 }
 
 std::vector<Contour> unionContours(const std::vector<Contour>& contours, const Tolerance& tol,

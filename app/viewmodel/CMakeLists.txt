@@ -11,6 +11,7 @@ configure_file(starter_font.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/starter_font.cpp 
 add_library(carvetto_viewmodel STATIC
   ${CMAKE_CURRENT_BINARY_DIR}/starter_font.cpp
   src/vector_ops.cpp
+  src/keepout.cpp
   src/vector_validator.cpp
   src/vector_selector.cpp
   src/view_transform.cpp
@@ -47,6 +48,7 @@ add_library(carvetto_viewmodel STATIC
   src/selection_tools.cpp
   src/properties_model.cpp
   src/layers_sheets.cpp
+  src/texture_form.cpp
 )
 find_package(Threads REQUIRED)
 target_include_directories(carvetto_viewmodel PUBLIC include)

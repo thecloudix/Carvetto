@@ -13,6 +13,7 @@ endif()
 
 add_executable(carvetto_viewmodel_tests
   vector_ops_test.cpp
+  keepout_test.cpp
   vector_validator_test.cpp
   weld_subtract_test.cpp
   view_transform_test.cpp
@@ -41,6 +42,8 @@ add_executable(carvetto_viewmodel_tests
   toolpath_chamfer_test.cpp
   toolpath_thread_mill_test.cpp
   toolpath_inlay_test.cpp
+  toolpath_fluting_test.cpp
+  toolpath_prism_test.cpp
   toolpath_preview_test.cpp
   simulation_test.cpp
   toolpath_robustness_test.cpp
@@ -51,6 +54,7 @@ add_executable(carvetto_viewmodel_tests
   vector_selector_test.cpp
   properties_model_test.cpp
   layers_sheets_test.cpp
+  texture_form_test.cpp
 )
 # The toolpath tests drive carvetto-cli in process (cli::run) to compare its records with the session's.
 target_link_libraries(carvetto_viewmodel_tests PRIVATE carvetto::viewmodel Catch2::Catch2WithMain carvetto_warnings)

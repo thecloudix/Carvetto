@@ -1276,6 +1276,11 @@ void ProfileBuilder::prepareInputs() {
             chargeVertices(c, chordal, hasBezier({c}) ? 20.0 : 4.0);
         }
     }
+    // The finest tolerance the vectors are polygonised at (offTol_, below).
+    geometry::Tolerance screenTol = tol_;
+    if (hasBezier(raw_)) {
+        screenTol.chordal = std::min(tol_.chordal, 0.5 * tol_.distance);
+    }
     in_.valid.assign(n, false);
     in_.area.assign(n, 0.0);
     tooLargeReported_.assign(n, false);
@@ -1290,6 +1295,11 @@ void ProfileBuilder::prepareInputs() {
         }
         if (!c.isContinuous(tol_)) {
             diag(ProfileIssue::DiscontinuousContour, i, vecName(i) + " has gaps between spans; skipped");
+            continue;
+        }
+        if (geometry::refusedByClippers(c, screenTol)) {
+            // T-0183: the offset and union code leaves such a vector out without a word; say so.
+            result_.diagnostics.push_back(refusedContourDiagnostic(i, vecName(i)));
             continue;
         }
         in_.valid[i] = true;
