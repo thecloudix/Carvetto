@@ -13,6 +13,7 @@
 #include "carvetto/document/toolpath_record.hpp"
 #include "carvetto/geometry/box2.hpp"
 #include "carvetto/geometry/vec2.hpp"
+#include "carvetto/toolpath/keepout.hpp"
 #include "carvetto/toolpath/move.hpp"
 #include "carvetto/viewmodel/toolpath_session.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
@@ -75,7 +76,13 @@ struct PreviewGeometry {
 };
 
 /// Polylines of `moves`. The tool starts at the end of the first move (zero length), as everywhere.
-std::shared_ptr<const PreviewGeometry> buildPreviewGeometry(const std::vector<toolpath::Move>& moves);
+/// With keep-out routing (T-0256) `moves` are the routed moves: `originalIndex[i]` is the index of
+/// the record's move that move i stands for (chunks then carry original indices, so the playback
+/// still lines up) and `start`, when set, is where the tool is before move 0 (so the first detour
+/// is drawn instead of being taken as the start point).
+std::shared_ptr<const PreviewGeometry> buildPreviewGeometry(const std::vector<toolpath::Move>& moves,
+                                                            const std::vector<std::uint32_t>* originalIndex = nullptr,
+                                                            std::optional<toolpath::Vec3> start = std::nullopt);
 
 struct PreviewToolpath {
     document::ToolpathId id;
@@ -92,6 +99,10 @@ struct PreviewToolpath {
     std::size_t firstMove{0};
     /// The shared moves the geometry was built from (keeps the identity valid).
     document::SharedMoves moves;
+    /// With keep-out zones: the moves after routing (the geometry is built from these; equals
+    /// `moves` when nothing was routed) and what routing did to this toolpath.
+    document::SharedMoves routedMoves;
+    toolpath::RoutingReport routing;
     std::shared_ptr<const PreviewGeometry> geometry;
 };
 
@@ -100,6 +111,8 @@ struct PreviewScene {
     /// Moves of the enabled, computed toolpaths.
     std::size_t totalMoves{0};
     geometry::Box2 bounds;
+    /// Keep-out routing totals over the enabled, computed toolpaths (T-0256).
+    toolpath::RoutingReport routing;
 };
 
 /// How a batch of runs is painted.

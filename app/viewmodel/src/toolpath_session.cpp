@@ -69,6 +69,7 @@ void ToolpathSession::setDocument(Document* doc) {
     doc_ = doc;
     baselines_.clear();
     stats_.clear();
+    router_.clear();
     disabled_.clear();
     messages_.clear();
     staleness_.clear();
@@ -1170,17 +1171,21 @@ ToolpathOutcome ToolpathSession::rename(ToolpathId id, const std::string& name) 
 
 // --- Summary -------------------------------------------------------------------------------------
 
-ToolpathSession::Stats ToolpathSession::statsOf(const ToolpathRecord& record) {
+ToolpathSession::Stats ToolpathSession::statsOf(const ToolpathRecord& record, const document::SharedMoves* moves) {
+    const document::SharedMoves& key = moves != nullptr ? *moves : record.moves;
     toolpath::MachineRates rates;
     rates.rapidRate = setup_.rapidRateMmPerMin > 0.0 ? setup_.rapidRateMmPerMin : 1.0;
     rates.feedRate = record.tool.feedRate;
     rates.plungeRate = record.tool.plungeRate;
     rates.acceleration = setup_.accelerationMmPerS2;
-    const auto it = stats_.find(record.moves);
+    const auto it = stats_.find(key);
     if (it != stats_.end() && it->second.rates == rates && it->second.rapidSet == (setup_.rapidRateMmPerMin > 0.0)) {
         return it->second;
     }
-    const toolpath::Toolpath tp = record.toolpath();
+    toolpath::Toolpath tp = record.toolpath();
+    if (moves != nullptr && *moves != nullptr) {
+        tp.moves = **moves;
+    }
     Stats s;
     s.rates = rates;
     s.rapidSet = setup_.rapidRateMmPerMin > 0.0;
@@ -1195,10 +1200,18 @@ ToolpathSession::Stats ToolpathSession::statsOf(const ToolpathRecord& record) {
         s.rapidMissing = len.rapid > 0.0;
         s.time.rapid = 0.0;
     }
-    if (record.moves != nullptr) {
-        stats_[MovesKey(record.moves)] = s;
+    if (key != nullptr) {
+        stats_[MovesKey(key)] = s;
     }
     return s;
+}
+
+const RoutedJob& ToolpathSession::keepOutRouting() {
+    static const RoutedJob none;
+    if (doc_ == nullptr) {
+        return none;
+    }
+    return router_.route(*doc_, enabledToolpaths());
 }
 
 JobSummary ToolpathSession::summary() {
@@ -1207,6 +1220,10 @@ JobSummary ToolpathSession::summary() {
         return out;
     }
     computeStaleness();
+    const RoutedJob& routing = keepOutRouting();
+    out.keepOutRouted = routing.total.routed;
+    out.keepOutUnroutable = routing.total.unroutable;
+    out.keepOutTooComplex = routing.total.tooComplex;
     std::set<std::tuple<int, std::string, double>> tools;
     std::optional<std::tuple<int, std::string, double>> previous;
     for (const ToolpathRecord& rec : doc_->toolpaths()) {
@@ -1222,7 +1239,15 @@ JobSummary ToolpathSession::summary() {
             if (s.vectors || s.params || s.tool) {
                 ++out.needRecalculation;
             }
-            const Stats st = statsOf(rec);
+            Stats st = statsOf(rec);
+            if (!disabled_.contains(rec.id)) {
+                const RoutedToolpath* rt = routing.find(rec.id);
+                if (rt != nullptr && rt->changed()) {
+                    // The estimate counts the detours; the move count stays the record's (playback).
+                    st = statsOf(rec, &rt->routed);
+                    st.moves = rec.moveCount();
+                }
+            }
             e.moves = st.moves;
             e.bounds = st.bounds;
             e.lengthMm = st.length;

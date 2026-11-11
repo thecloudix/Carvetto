@@ -4,6 +4,8 @@
 #include <vector>
 
 #include "carvetto/geometry/box2.hpp"
+#include "carvetto/geometry/contour.hpp"
+#include "carvetto/geometry/fill_rule.hpp"
 #include "carvetto/geometry/polyline.hpp"
 #include "carvetto/geometry/shapes.hpp"
 
@@ -47,6 +49,25 @@ ShapeResult<std::vector<Polyline>> generateVectorTexture(const Box2& region,
 /// The same, as open line-span contours ready for `Object::vector`.
 ShapeResult<std::vector<Contour>> generateVectorTextureContours(const Box2& region,
                                                                 const VectorTextureParams& p);
+
+/// Most spans of clip region `generateVectorTextureInRegion` accepts.
+inline constexpr std::size_t kVectorTextureMaxRegionSpans = 200'000;
+
+/// The texture clipped to an arbitrary closed region (T-0254): `region` is a set of closed
+/// contours (outers and holes) filled by `fill` (NonZero: holes wound opposite to their outer;
+/// EvenOdd: nested contours alternate). The texture is generated over the region's bounding box
+/// exactly as `generateVectorTexture` does (same seed, same lines, so the pattern does not move
+/// when the region changes) and then clipped to the region (Clipper2 via `booleanOp`, polygonised
+/// at `tol.chordal`). Every returned contour is open, made of line spans, and lies inside the
+/// region within the fixed-point grid; a line leaving and re-entering gives several contours.
+/// Errors (messages for a dialog): no closed contour, non-finite or beyond-1e9 coordinates, more
+/// than `kVectorTextureMaxRegionSpans` spans, a contour the clipper had to refuse, invalid
+/// parameters or too many vertices as in `generateVectorTexture`. An empty result (no line
+/// reaches the region) is a success with no contours.
+ShapeResult<std::vector<Contour>> generateVectorTextureInRegion(const std::vector<Contour>& region,
+                                                                const VectorTextureParams& p,
+                                                                const Tolerance& tol = Tolerance::defaults(),
+                                                                FillRule fill = FillRule::NonZero);
 
 namespace detail {
 /// SplitMix64 finaliser of `x` (stateless; exposed for tests).

@@ -59,6 +59,8 @@ enum class ToolpathIssue {
     CrossingVectorsResolved,  ///< Crossing or touching vectors were resolved into their even-odd region (V-Carve).
     StepoverLimited,      ///< A stepover wider than the tool cuts was limited; ridges may be left (V-Carve).
     Cancelled,            ///< The caller cancelled the run; nothing produced (Profile).
+    ContourRefused,       ///< A vector's polygon cannot meet the chordal tolerance within the work bounds (an arc
+                          ///< far beyond CNC size): that vector is not cut, the others are (Profile, Pocket, V-Carve).
 };
 
 /// What a caller can control about one run of an operation (T-0186, ADR-0016 section 19).
@@ -87,6 +89,10 @@ struct ToolpathDiagnostic {
 
     bool operator==(const ToolpathDiagnostic&) const = default;
 };
+
+/// The `ContourRefused` diagnostic for input vector `contour`, called `vectorName` in the
+/// operation's messages (T-0183, ADR-0018): one per refused vector.
+ToolpathDiagnostic refusedContourDiagnostic(std::size_t contour, const std::string& vectorName);
 
 /// True when some diagnostic in `diagnostics` has the given issue.
 bool hasIssue(const std::vector<ToolpathDiagnostic>& diagnostics, ToolpathIssue issue);
