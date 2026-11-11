@@ -1299,7 +1299,7 @@ Goal: (1) persist toolpath calculation expressions in .carv (optional 'expressio
 Acceptance criteria:
   1. Save/reload keeps expressions and blocks deleting a used variable; old files load; other items tested.
 
-### T-0273 Bitmap pixel store in .carv (BitmapObject holds decodable image data)   [status: in-progress]
+### T-0273 Bitmap pixel store in .carv (BitmapObject holds decodable image data)   [status: verifying — core only; app import → T-0250b; ADR-0051]
 Phase: 1   Module: core/document + core/io + app   Depends on: T-0245
 Goal: BitmapObject is currently a placeholder (placement + sourceRef). Owner decision 2026-11-10: store pixel data inside the .carv file (bitmaps/* entries, format minor bump with forward/backward compat per ARCHITECTURE.md), loadable into a RasterImage/GrayImage in core.
 Acceptance criteria:
@@ -1311,7 +1311,7 @@ Out of scope: Photo V-carve wiring (T-0250b).
 
 ### T-0250b Photo V-carve app wiring (T-0250 follow-up)   [status: blocked — depends on T-0250, T-0273]
 Phase: 1   Module: app + core/toolpath   Depends on: T-0250, T-0273
-Goal: Native toolpath record, ToolpathParams/Operation entry, PhotoVCarve form, ToolController wiring and preview for a selected bitmap, with self-test coverage.
+Goal: App-side bitmap import (QImage decode → makeImportBitmapCommand from T-0273, which is core-only), gray conversion (grayFromRaster), native toolpath record, ToolpathParams/Operation entry, PhotoVCarve form, ToolController wiring and preview for a selected bitmap, with self-test coverage.
 Acceptance criteria:
   1. Form exposes Max Carving Depth, Stepover Retract, Line Spacing %, Line Angle, strategy (Raster/Hatch/Selected Vectors), invert; generates and previews; recalculates on edit; one undo step.
   2. Record saves/loads; cancel and work cap honoured; changelog fragment; CI green.
