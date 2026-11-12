@@ -44,6 +44,7 @@ class ToolPanel;
 class ToolpathsPanel;
 class TransformMenu;
 class VectorOpsMenu;
+class TraceBitmapMenu;
 class TextureMenu;
 
 /// Main window: 2D/3D view tabs with rulers around the 2D canvas, sheet and layer selectors,
@@ -72,6 +73,8 @@ class MainWindow : public QMainWindow {
 
     CanvasWidget* canvas() const { return canvas_; }
     VectorOpsMenu* vectorOps() const { return vectorOps_.get(); }
+    /// File / Edit > Trace Bitmap (T-0260).
+    TraceBitmapMenu* traceBitmap() const { return traceBitmap_.get(); }
     /// Edit > Create Vector Texture (T-0254).
     TextureMenu* textureMenu() const { return textureMenu_.get(); }
     /// The node-editing menus and Properties dialog of the NodeEdit tool.
@@ -95,6 +98,9 @@ class MainWindow : public QMainWindow {
     QAction* toolSetupAction() const { return toolSetupAction_; }
     void jobSetupDialog();
     void toolSetupDialog();
+    /// Edit > Document Variables... (T-0257): the variables dialog (modal); every edit is one undo step.
+    QAction* variablesAction() const { return variablesAction_; }
+    void variablesDialog();
     /// The Preview dock (toolpath preview, time readout, simulation) and the simulation view in the 3D tab.
     PreviewPanel* preview() const { return preview_; }
     QDockWidget* previewDock() const { return previewDock_; }
@@ -174,8 +180,10 @@ class MainWindow : public QMainWindow {
     QAction* saveToolpathsAction_{nullptr};
     QAction* jobSetupAction_{nullptr};
     QAction* toolSetupAction_{nullptr};
+    QAction* variablesAction_{nullptr};
     std::unique_ptr<CopiesMenu> copies_;
     std::unique_ptr<VectorOpsMenu> vectorOps_;
+    std::unique_ptr<TraceBitmapMenu> traceBitmap_;
     std::unique_ptr<TextureMenu> textureMenu_;
     std::unique_ptr<NodeEditMenu> nodeEdit_;
     std::unique_ptr<TransformMenu> transformMenu_;

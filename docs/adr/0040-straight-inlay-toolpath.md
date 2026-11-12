@@ -6,7 +6,7 @@ Date: 2026-11-10 · Status: accepted, implemented (T-0238, first slice).
 The inventory lists "Inlay Toolpath" (straight inlays): male inlay Straight or Stepped (Step Depth,
 Step Width), female inlay Pocket or Hole, an allowance offset / pocket allowance, and a female pocket
 with automatic corner radiusing. The card requires that the male and female pieces of one vector mate
-within the stated allowance. The card also covers the VCarve inlay (plug, pocket, glue gap, surface
+within the stated allowance. The card also covers the V-carve inlay (plug, pocket, glue gap, surface
 clearance, plug destination sheet, mirrored plug, plug boundary); that is split off as its own card
 (see BACKLOG) and not part of this ADR.
 
@@ -18,7 +18,7 @@ clearance, plug destination sheet, mirrored plug, plug boundary); that is split 
    r (morphological opening of the vector region) and an outside profile leaves concave corners of
    radius r (closing). The common shape is closing(opening(region)) with Round offsets: the female
    cavity. "Automatic corner radiusing" of the inventory is this; it applies to both pieces so they
-   still fit. Only flat end mills are accepted (V-bit and ball-nose plugs belong to the VCarve slice).
+   still fit. Only flat end mills are accepted (V-bit and ball-nose plugs belong to the V-carve slice).
 3. **Allowance.** `allowance` >= 0 is the gap all round, taken from the male: male = cavity inset by
    the allowance (Round offset), female = cavity. A male whose allowance consumes the shape is
    refused. The inventory's "Pocket Allowance" (material left on pocket walls) is not the same thing

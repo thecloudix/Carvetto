@@ -1,7 +1,7 @@
-# Vectric Aspire 12.5 — Feature Inventory (from the official Reference Manual)
+# Reference CAM package — Feature Inventory (behaviour only)
 
-**Source:** https://docs.vectric.com/docs/V12.5/Aspire/ENU/Help/ (all sections below come from **V12.5** pages unless tagged **[V12.0]**).
-The V12.0 "What's New" page was used only for §7. Extra sources are tagged where used (vectric.com/upgrade).
+**Source:** the published reference manual of a commercial 2D/3D CAM package (version 12.5; all sections below come from it unless tagged **[V12.0]**). Behaviour only; no code, assets or wording are reused.
+The V12.0 "What's New" page was used only for §7. Extra sources are tagged where used (the vendor's marketing page).
 Page URL pattern: `.../Help/form/<Page Name>/index.html`. Some pages exist but are not in the sidebar TOC (for example `form/Component Properties`).
 
 **Legend:** `[NOT FOUND]` means the docs have no page or section for this item. `[PARTIAL]` means the page exists but does not list all its fields.
@@ -11,14 +11,14 @@ Page URL pattern: `.../Help/form/<Page Name>/index.html`. Some pages exist but a
 ## 0. Application shell (menus, panels, views)
 
 ### Main menus
-- **File:** New · New from template… · Open… · Close · Save · Save As… · Save As Template… · **Increment and Save** (saves as `_N+1`, never overwrites) · Print · Print Preview · Print Setup · Import ► (Import Vectors / Bitmaps…, Import Component / 3D Model…, Import PhotoVCarve or Cut3D Toolpaths…) · Export ► (EPS, DXF, AI, SVG, PDF) · Open Application Data Folder… · Exit.
+- **File:** New · New from template… · Open… · Close · Save · Save As… · Save As Template… · **Increment and Save** (saves as `_N+1`, never overwrites) · Print · Print Preview · Print Setup · Import ► (Import Vectors / Bitmaps…, Import Component / 3D Model…, Import companion-product toolpaths…) · Export ► (EPS, DXF, AI, SVG, PDF) · Open Application Data Folder… · Exit.
 - **Edit:** Undo · Redo · Cut · Copy · Paste · Delete · Selection ► (Select All Vectors, Select All Open Vectors, Select All Duplicate Vectors, Select All Vectors On Current Layer, Unselect All, Vector Selector…) · Align Selected Objects ► · Join Vectors · Curve Fit Vectors · Nest Selected Vectors · Job Size and Position · **Swap Sides** (two-sided jobs) · **Notes** (free-text job notes) · Document Variables · Snap Options · Options.
 - **Model:** Create Component ► (Two Rail Sweep, Extrude and Weave, Turn and Spin, Create Textured Area Component, Add Zero Plane) · Create Component From… ► (Bake Components, Create Component From Visible Model, Add Draft To Model, Create an Offset Model, Slice Model, **Create Component from Toolpath Preview**; Shift or Ctrl changes the result) · Export as STL · Export as Grayscale Bitmap (highest areas white) · Export as 3D Clipart (.3dclip) · Sculpt Visible Model · Smooth Selected Components · Reset Inside Selected Vectors · Reset Outside Selected Vectors · Split Selected Component · Create Vector Boundary Around Selected Components · Emboss Component · Scale Model Z Height · Distort Selected Component · Replace Below · Selected Component Properties.
 - **Machine:** Machine Configuration… · Add Machine… · Install Offline Package… · Search for Machine Online… · Post-Processor Management… · Install Post-Processor… · Update Post-Processor Database.
 - **Toolpaths:** Show Toolpaths Tab · Recalculate All Toolpaths · Toolpath Drawing ► (Draw 2D Previews, Make 2D Previews Solid, Auto Open 3D View, Draw rapid moves (red), Draw plunge moves (cyan), Draw retract moves (green), Draw join moves (purple)) · Preview Simulation Quality ► (Standard; High 2×; Very High 4×; Extremely High 8×; Maximum 25× slower) · Templates ► (Save Selected Toolpath as Template, Save All Visible Toolpaths as Template, Load Template) · Merge Visible Toolpaths · Create Job Sheet · Materials… · Tool Database….
 - **View:** Zoom to Drawing · Refresh 2D View (F5) · Guide Lines ► (Guides Visible, Delete All Guides, Lock All Existing Guides, Unlock All Existing Guides) · Draw Origin · Draw Modeling Plane · Draw Material Block · Multi Sided View · Auto-Wrapping View (rotary) · Color Shaded View · Use Shaded Background · Light follows viewer · Use Shadow Shading (Ctrl+NumPad± sets intensity; not for 2-sided or rotary jobs) · Save Shaded Image (BMP/JPG/PNG/GIF) · Tile Windows Horizontal / Vertical · Cascade Windows.
 - **Gadgets:** Install New Gadget… · Gadget Shortcuts · plus the installed gadgets (see §6).
-- **Help:** Help Contents · Keyboard Shortcuts · Video Tutorial Browser… · What's New · Release Notes · Third Party Licences · Enter License Code · Vectric Online FAQ / User Forum / Support / User Portal links · Post Processor Editing Guide · Migrate From Older Version · Check for Updates · Run Kickstarter · About.
+- **Help:** Help Contents · Keyboard Shortcuts · Video Tutorial Browser… · What's New · Release Notes · Third Party Licences · Enter License Code · vendor online FAQ / forum / support / portal links · Post Processor Editing Guide · Migrate From Older Version · Check for Updates · Run Kickstarter · About.
 
 ### Interface elements (Interface Overview, View Toolbar)
 - **Panels:** Main Menu Bar; Design Panel (left; Drawing and Modeling tabs, now one combined panel [V12.0]); Toolpath Tab (right; operations at the top, Toolpath Tree below); 2D Design Window and 3D View (F2/F3, or tabbed); interface layout buttons; quick drop-downs for Layer, Sheet and Component Level; push-pin auto-hide panels; Switch Layout buttons for the design and machining layouts (F11/F12); a Help (?) icon on every form; 3D View help prompts ("Show Usage Information").
@@ -75,7 +75,7 @@ Page URL pattern: `.../Help/form/<Page Name>/index.html`. Some pages exist but a
 - **Modeling Resolution:** Standard (fastest) / High (~3× slower) / Highest (~7× slower).
 - **Appearance ► Material Settings:** colour or material effect for the base 3D model.
 - **Job Templates:** `.crv3dt` / `.crvt` files that store dimensions, machine setup and geometry. Created with File ► Save As Template; used with New from template.
-- **Native file types:** `.crv3d` (Aspire 3D), `.crv`, `.crvt`, `.crv3dt`. Toolpaths are stored inside the file.
+- **Native file types:** `.crv3d` (3D), `.crv`, `.crvt`, `.crv3dt`. Toolpaths are stored inside the file.
 
 ### Material Setup (Toolpaths tab; one form for Flat jobs, one for Rotary)
 - **Active Sheet**; **Thickness** (Flat) or **Diameter** (Rotary); **Show detailed summary on toolpath tab**.
@@ -127,7 +127,7 @@ Page URL pattern: `.../Help/form/<Page Name>/index.html`. Some pages exist but a
   - View Controls Mode (Modern/Legacy); Show Usage Information.
 - **Toolpath:**
   - Display: Show Toolpath Operations with Preview; Auto Open 3D view; 2D Solid Preview Color; Create 2D Previews.
-  - Calculation: Select Sheet When Edit Toolpaths; Toolpath Geometry Fixing Timeout; **Drop Tool** (drop the tool onto the surface instead of projecting it); 2D / 3D / VCarve Toolpath Tolerance; **Use new raster**.
+  - Calculation: Select Sheet When Edit Toolpaths; Toolpath Geometry Fixing Timeout; **Drop Tool** (drop the tool onto the surface instead of projecting it); 2D / 3D / V-carve toolpath tolerance; **Use new raster**.
   - List management: Maximum Toolpath Undo Stack Size (MB); Append duplicated toolpath; Append new toolpaths to selected group.
   - Checks and filtering: Check depth of all toolpaths; Default toolpath filtering mode.
 - **General:** Use Graphics tablet (for sculpting); Process User Files; Recent File / Recent Font list sizes; Show additional file operations; Show the clipart Subfolder Contents; Always open local documentation; Smooth Join Vectors; Default to last used text anchor position; File Dialog Default (Global/Operation/Job).
@@ -210,7 +210,7 @@ Each shape tool has an Exact Size form, interactive drag creation, Quick Keys ty
   - Create Circles / Arcs (refit polygonal geometry).
   - **import visible data on selected layers.**
   - Group imported parts; Keep components starting with `__` together; Replace outer boundary (flat jobs only).
-- **Import PhotoVCarve or Cut3D Toolpaths** (`.pvc`, `.v3d`; the user guide also lists Design and Make Machinist `.v3m`): imports pre-calculated 3D toolpaths as a movable grayscale thumbnail. They can be moved, mirrored and rotated but not scaled; Start Depth, feeds and speeds are editable.
+- **Import pre-calculated 3D toolpaths from companion products** (`.pvc`, `.v3d`; the user guide also lists a third companion format `.v3m`): imports pre-calculated 3D toolpaths as a movable grayscale thumbnail. They can be moved, mirrored and rotated but not scaled; Start Depth, feeds and speeds are editable.
 - **Export (vectors):** EPS, DXF (keeps layers), AI, SVG, PDF. With nothing selected, all visible vectors are exported.
   - **PDF Export dialog:** Export All / Export Selected Only; per-sheet checkboxes (each sheet becomes a page); All visible layers / Selected layers only; **Export Job Bounds**.
 - **Printing:** Print, Print Preview and Print Setup in the File menu, plus the Options setting "Print 3D View Shaded Background". `[PARTIAL]` (no dedicated print page).
@@ -259,7 +259,7 @@ Each shape tool has an Exact Size form, interactive drag creation, Quick Keys ty
 ### Boolean and shape operations
 - **Weld Vectors:** union of overlapping closed vectors (keeps the inner regions of text characters).
 - **Subtract Vectors:** removes the last-selected shape from the others.
-- **Overlap Vectors:** keeps the overlap with the last-selected shape. This is Vectric's intersect; no separate "Intersect" tool exists.
+- **Overlap Vectors:** keeps the overlap with the last-selected shape. This is the package's intersect; no separate "Intersect" tool exists.
 - The Weld, Subtract and Overlap pages do not list form fields. `[PARTIAL]`
 - **Trim Objects** (boundary trim): Clear inside boundary / Clear outside boundary / **Refit Curves After Clipping**.
 - **Interactive Vector Trim:** click or drag across spans to trim to the nearest intersections; **Rejoin Trimmed Sections**. 12.5 adds trim in the 3D view (spans to be deleted show in red).
@@ -508,12 +508,12 @@ Replaced the earlier Shape Creator in [V12.0]. Shapes remember their creation se
   - **Use Clearance Tools** (multi-tool list): **Clearance Strategy** (Offset or Raster with Raster Angle), Cutting Direction per tool, **Ramp Plunge Moves**.
   - **Corner Sharpen**; **Use Vector Start Points**; Use Vector Selection Order.
 - **Advanced V-Carve** (fluted-end or flat-bottom variant): `[NOT FOUND]` as a separate page in 12.5. The flat-bottom behaviour is the **Flat Depth** option above.
-- **VCarve Inlay Toolpath** [V12.0 new]:
+- **V-Carve Inlay Toolpath** [V12.0 new]:
   - Depths: **Pocket Depth**; **Glue Gap**; **Surface Clearance**.
   - V-bit; Use Clearance Tools.
   - **Plug Destination Sheet** (the plug is mirrored, and centred when on another sheet).
   - **Plug Outer Boundary:** Sheet Limits / Vector Offset / **Boundary Offset**.
-  - Sub-pages "VCarve Inlay Toolpath – Pocket" and "– Plug" exist (fields not fetched).
+  - Sub-pages "V-Carve Inlay Toolpath – Pocket" and "– Plug" exist (fields not fetched).
 - **Prism Carving Toolpath:** Prism Depth; **Set Depth for Full Prism**; Cut Direction.
 - **Photo V-Carve Toolpath:**
   - Source: a selected bitmap.
@@ -556,7 +556,7 @@ Replaced the earlier Shape Creator in [V12.0]. Shapes remember their creation se
   - Scallops: Max. Cut Depth; Min. Depth %; Max. Cut Length; Min Length %; **Max. Overlap %**; **Variation** %.
   - Stepover; Angle; Boundary Vector Offset.
 - **Profile with 3D** (as a named toolpath): `[NOT FOUND]` in 12.5. The equivalent is the **Project toolpath onto 3D Model** option on 2D toolpath forms. Vector boundaries for 3D toolpaths come from Create Vector Boundary From Selected Components.
-- **Imported 3D toolpaths:** PhotoVCarve, Cut3D or Machinist toolpaths can be positioned, duplicated or mirrored, and their Start Depth, feeds and speeds edited.
+- **Imported 3D toolpaths:** Toolpaths from companion products can be positioned, duplicated or mirrored, and their Start Depth, feeds and speeds edited.
 
 ### Toolpath management
 - **Toolpath Tree:**
@@ -607,7 +607,7 @@ Replaced the earlier Shape Creator in [V12.0]. Shapes remember their creation se
 - **Tree actions:** New Tool, Copy Tool, Delete Tool, New Tool Group, Export Tools, Import Tools (Import, or Merge with or without overwrite).
 - **Material Management:** Add / Duplicate (Copy Cutting Data) / Delete / Name.
 - **Machine Management:** see Machine configuration below.
-- **Online Tool Database** (V&Co account): Login, Download, Upload backup. **Cloud Version Selector** chooses a backup by product and version.
+- **Online Tool Database** (vendor account): Login, Download, Upload backup. **Cloud Version Selector** chooses a backup by product and version.
 - **Remote Tool Databases:** subscribe by URL (read-only); copy tools into the local database; switch databases from a drop-down.
 - **Naming:** **Tool Database – Name Format** and **Custom Naming Variables** pages exist (fields not fetched).
 
@@ -618,11 +618,11 @@ Replaced the earlier Shape Creator in [V12.0]. Shapes remember their creation se
   - **Associated Post-Processors:** add or remove; **Post-Processor Version** ("Latest (Vn)" or a pinned Vn); right-click View / **Make Default**.
   - Other machine parameters (bed size, ATC, laser flags): `[PARTIAL]`. The page says optional parameters exist but does not list them.
 - **Search for Machine Online:** Manufacturer → Series → Model → Configuration (rotary axis on X or Y). Downloads the post-processor, machine layout and starter feeds and speeds.
-- **Kickstarter Wizard** (first run): Signing in → Registering with V&Co → Looking for your machine online → Manual configuration.
+- **Kickstarter Wizard** (first run): Signing in → Registering with the vendor → Looking for your machine online → Manual configuration.
 - **Post-Processor Management:**
   - Per post: **View** (Post-Processor Content), **Changelog**, **Customize** (creates an editable copy in `My_PostP`).
   - Custom posts: Open File Location, Delete.
-  - **Install Post-Processor**; **Update Post-Processor List** (needs a V&Co login).
+  - **Install Post-Processor**; **Update Post-Processor List** (needs a vendor login).
 - **Post-processor file format** (`.pp` text; "15. Advanced – Post-Processor Editing"):
   - **Global settings:** POST_NAME, FILE_EXTENSION, UNITS, PRINT_DIRECT, DIRECT_OUTPUT, LINE_ENDING, RAPID_PLUNGE_TO_STARTZ, RAPID_SPEED, MAXIMUM_LENGTH, MAXIMUM_ROTATION, MIN/MAX_ARC_RADIUS, **ROTARY_WRAP_X / ROTARY_WRAP_Y**, INVERSE_TIME_MODE, SPINDLE_SPEED_RANGE, **LASER_SUPPORT**, SUBSTITUTE, TAPE_SPLITTING, FIRST_TOOLPATH_NEW_SEGMENT, LINE_NUMBER_START/INCREMENT/MAXIMUM.
   - POST_BASE inheritance is no longer supported; a migration page exists.
@@ -689,8 +689,8 @@ Replaced the earlier Shape Creator in [V12.0]. Shapes remember their creation se
 ## 6. Gadgets, clipart, cloud, printing, preferences
 
 - **Gadgets:**
-  - Add-ons scripted in **Lua**. The SDK and tutorials are at gadgets.vectric.com/developerinfo.html; the API itself is not documented in the help.
-  - Installed to `Public Documents/Vectric/Aspire/Gadgets` with Install New Gadget…; the menu is built at startup.
+  - Add-ons scripted in **Lua**. The SDK and tutorials are published by the vendor; the API itself is not documented in the help.
+  - Installed to the vendor's Public Documents Gadgets folder with Install New Gadget…; the menu is built at startup.
   - **Gadget Shortcuts** (Ctrl+F-key).
   - Lua API reference: `[NOT FOUND]` in the Reference Manual (external SDK only).
 - **Preinstalled gadgets:**
@@ -707,12 +707,12 @@ Replaced the earlier Shape Creator in [V12.0]. Shapes remember their creation se
   - Placing clipart: double-click to place at the job centre; **Import to Level**; drag into the 2D or 3D view; drag V3M files in from Explorer.
   - **Cloud icon** shows online clipart not yet downloaded; **Refresh** logs in to the Customer Portal.
   - Right-click: Import to Level, Open Containing Folder, Download.
-  - Search, Design & Make store and V&Co marketplace integration: `[NOT FOUND]` in 12.5 docs.
-- **Vectric account (V&Co) and cloud:**
+  - Search, vendor store and marketplace integration: `[NOT FOUND]` in 12.5 docs.
+- **Vendor account and cloud:**
   - **Signing In** (top-right button, License dialog, Tool Database, Clipart tab) enables tool-database backup and restore, licence updates and clipart access.
-  - **License Dialog:** Online (V&Co login) or Manual (Load from File `.vlicence`, Enter License Data, Enter User Name & License Code); **Add Module**.
-  - V&Co also supplies machine packages and the post-processor list (§5).
-  - Other pages: Migration Dialog (copies settings from an older version), Crash Handling. There is no general "Vectric Cloud" file-storage feature. `[NOT FOUND]`
+  - **License Dialog:** Online (vendor login) or Manual (Load from File `.vlicence`, Enter License Data, Enter User Name & License Code); **Add Module**.
+  - The vendor also supplies machine packages and the post-processor list (§5).
+  - Other pages: Migration Dialog (copies settings from an older version), Crash Handling. There is no general cloud file-storage feature. `[NOT FOUND]`
 - **Printing:** File ► Print / Print Preview / Print Setup; Options ► Print 3D View Shaded Background. `[PARTIAL]`
 - **Options and preferences:** see §1.
 - **Application Data Folder** (File menu): textures, gadgets, post-processors (`My_PostP`), the tool database, default toolpath settings, vector textures.
@@ -727,7 +727,7 @@ Replaced the earlier Shape Creator in [V12.0]. Shapes remember their creation se
   - Components drop-down; Sheet drop-down.
   - **Orthographic View Mode**; **View Control** cube; **View Toolbar**.
   - Unified import.
-- **Toolpaths:** **Sketch Carving**; **VCarve Inlay Toolpath** (plug and pocket, mirroring, sheet placement); **Keep-out Zones**.
+- **Toolpaths:** **Sketch Carving**; **V-Carve Inlay Toolpath** (plug and pocket, mirroring, sheet placement); **Keep-out Zones**.
 - **3D design:** **Create Angled Shape**, **Create Rounded Shape**, **Create Smooth Shape**, **Create Flat Plane**. They replace the old shape creator and keep their parameters for later editing.
 - **Design:** **3D Cross-Section Tool**; **Drawing in the 3D View**; **Vectors in the 3D View** toggle.
 
@@ -745,7 +745,7 @@ Replaced the earlier Shape Creator in [V12.0]. Shapes remember their creation se
 - **Interface:** **Snap Grid and Guide lines in 3D view** (colour and thickness); **Re-sizeable Interface Elements** (drop-downs); **Rotary Import Orientation** gizmo.
 - **Layers:** **Duplicate Layers**; **Drag and Drop Layer Management**; **Layer Filtering** (hides empty layers).
 - **3D Design Tools:** **Quick Component Baking** (from the context menu).
-- **vectric.com/upgrade** (marketing page) adds **Surface Color Simulation** (painted or laminated stock) and "realistic material visualization".
+- The vendor's upgrade marketing page adds **Surface Color Simulation** (painted or laminated stock) and "realistic material visualization".
 
 ---
 
@@ -760,14 +760,14 @@ Replaced the earlier Shape Creator in [V12.0]. Shapes remember their creation se
 - SVG *import* (only SVG export is documented).
 - Spiral and radial 3D finishing strategies; indexed rotary or dedicated rotary toolpaths.
 - A Lua API reference.
-- Clipart search and Design & Make / V&Co store integration; a Vectric Cloud file feature.
+- Clipart search and vendor store integration; a cloud file feature.
 
 **Partial (page exists but fields are not listed):**
 - Weld, Subtract and Overlap form fields.
 - Offset options beyond those listed.
 - Machine Configuration hardware parameters.
 - The Quick Engrave fill-pattern names (shown only as images).
-- VCarve Inlay Pocket and Plug sub-pages (not fetched).
+- V-carve inlay Pocket and Plug sub-pages (not fetched).
 - Tool DB Name Format and Custom Naming Variables pages (not fetched).
 - Print dialog details.
 - Create Zero Plane and Cross Section tool (no options documented).

@@ -43,6 +43,12 @@ struct FormDocumentInfo {
     /// Photo V-carve: why the bitmap the selector names cannot be carved (empty when it can).
     /// Optional; without it only the presence of a bitmap object is not checked.
     std::function<std::string(const viewmodel::VectorSelector&)> bitmapProblem;
+    /// Called with the document variables the form's calculation boxes name, whenever they change
+    /// (and on opening), so the owner can hold them: a variable an open form uses cannot be deleted.
+    std::function<void(const std::vector<std::string>&)> variablesChanged;
+    /// Creates (or changes) a document variable for "Insert New Document Variable"; returns an error
+    /// message, empty on success. Optional: without it the menu entry is not offered.
+    std::function<std::string(const std::string& name, const std::string& value)> createVariable;
 };
 
 /// The operation form generated from a `viewmodel::ToolpathForm`: name, tool picker (tool database),
@@ -66,6 +72,10 @@ class ToolpathFormDialog : public QDialog {
     bool chooseOption(const std::string& id, int option);
     bool pickTool(const std::string& toolId);
     QLineEdit* fieldEdit(const std::string& id) const;
+    /// "Insert New Document Variable" on the box of field `id`: creates the variable through
+    /// `FormDocumentInfo::createVariable` and inserts `{name}` at the cursor (a leading `=` is added
+    /// when the box is not yet a calculation). Returns the error message, empty on success.
+    std::string insertNewVariable(const std::string& id, const std::string& name, const std::string& value);
     QPushButton* okButton() const { return ok_; }
 
    private:
@@ -82,6 +92,7 @@ class ToolpathFormDialog : public QDialog {
     bool isPhoto() const { return form_.operation() == document::ToolpathOperation::PhotoVCarve; }
     /// What is wrong with the vectors or bitmap the toolpath would read now; empty when fine.
     std::string sourceProblem() const;
+    void reportVariables();
 
     viewmodel::ToolpathForm form_;
     tooling::ToolDatabase db_;

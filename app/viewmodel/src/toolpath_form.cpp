@@ -15,6 +15,7 @@
 #include "carvetto/toolpath/photo_vcarve.hpp"
 #include "carvetto/toolpath/fluting.hpp"
 #include "carvetto/toolpath/thread_mill.hpp"
+#include "carvetto/viewmodel/calculation.hpp"
 #include "carvetto/toolpath/prism.hpp"
 #include "carvetto/viewmodel/units_format.hpp"
 
@@ -675,9 +676,23 @@ std::string valueText(Kind kind, double value, Units units) {
 }
 
 /// A plain decimal number (no unit suffix, no inf/nan/hex), as `parseNumber` accepts for lengths.
-ParsedNumber parsePlain(const std::string& text) {
+ParsedNumber parsePlain(const std::string& text, Units units) {
     ParsedNumber out;
     std::string t = trimmed(text);
+    if (isExpressionText(t)) {
+        const Calculation calc = calculate(t, units);
+        if (!calc.ok) {
+            out.error = calc.error;
+            return out;
+        }
+        if (std::fabs(calc.value) > kMaxLength) {
+            out.error = "value is too large";
+            return out;
+        }
+        out.ok = true;
+        out.value = calc.value;
+        return out;
+    }
     if (!t.empty() && t.front() == '+') {
         t.erase(0, 1);
         if (!t.empty() && (t.front() == '+' || t.front() == '-')) {
@@ -810,7 +825,7 @@ FieldResult storeField(P& p, const std::string& id, const std::string& text, Uni
         case Kind::Angle: n = parseNumber(t, FieldKind::Angle, units); break;
         case Kind::Count: n = parseNumber(t, FieldKind::Count, units); break;
         case Kind::Seconds:
-        case Kind::Factor: n = parsePlain(t); break;
+        case Kind::Factor: n = parsePlain(t, units); break;
     }
     if (!n.ok) {
         return fail(n.error);
@@ -987,6 +1002,12 @@ std::vector<ToolpathField> ToolpathForm::fields() const {
     if (isChamferVBit(definition_.params, toolSummary_)) {
         std::erase_if(out, [](const ToolpathField& f) { return f.id == "angle"; });
     }
+    for (ToolpathField& f : out) {
+        if (const auto it = expressions_.find(f.id); it != expressions_.end()) {
+            f.text = it->second;
+            f.typed = true;
+        }
+    }
     return out;
 }
 
@@ -1002,7 +1023,7 @@ FieldResult ToolpathForm::setField(const std::string& id, const std::string& tex
         return res;
     }
     // Work on a copy: a rejected entry leaves the form untouched.
-    return std::visit(
+    FieldResult out = std::visit(
         [&](auto& p) {
             auto copy = p;
             FieldResult res = storeField(copy, id, text, units_);
@@ -1012,6 +1033,43 @@ FieldResult ToolpathForm::setField(const std::string& id, const std::string& tex
             return res;
         },
         definition_.params);
+    if (out.ok) {
+        // A calculation (`=...`) keeps its text so the toolpath can be recalculated when a document
+        // variable it names changes; any other entry (or a reset) drops it.
+        if (isExpressionText(text)) {
+            expressions_[id] = trimmed(text);
+        } else {
+            expressions_.erase(id);
+        }
+    }
+    return out;
+}
+
+std::vector<std::string> ToolpathForm::usedVariables() const {
+    std::vector<std::string> out;
+    for (const auto& [id, text] : expressions_) {
+        const Calculation calc = calculate(text, units_);
+        out.insert(out.end(), calc.usedVariables.begin(), calc.usedVariables.end());
+    }
+    std::sort(out.begin(), out.end());
+    out.erase(std::unique(out.begin(), out.end()), out.end());
+    return out;
+}
+
+std::string ToolpathForm::expression(const std::string& id) const {
+    const auto it = expressions_.find(id);
+    return it == expressions_.end() ? std::string() : it->second;
+}
+
+FieldResult ToolpathForm::setExpressions(const std::map<std::string, std::string>& expressions) {
+    FieldResult first;
+    for (const auto& [id, text] : expressions) {
+        FieldResult r = setField(id, text);
+        if (!r.ok && first.ok) {
+            first = std::move(r);
+        }
+    }
+    return first;
 }
 
 FieldResult ToolpathForm::setChoice(const std::string& id, int option) {
@@ -1153,6 +1211,7 @@ void ToolpathForm::resetValues() {
     const std::string name = definition_.name();
     definition_.params = defaultDefinition(operation()).params;
     definition_.setName(name);
+    expressions_.clear();
 }
 
 }  // namespace carvetto::viewmodel

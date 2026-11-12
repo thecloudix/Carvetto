@@ -5,6 +5,10 @@
 #include <numbers>
 #include <string>
 
+#include <algorithm>
+#include <atomic>
+
+#include "carvetto/geometry/cancel.hpp"
 #include "carvetto/geometry/contour_ops.hpp"
 #include "carvetto/io/raster.hpp"
 
@@ -291,4 +295,61 @@ TEST_CASE("PNM decoding", "[trace][pnm]") {
         p.noiseFilter = 0;
         CHECK(netArea(trace(r.value(), p)[0]) == 4.0);
     }
+}
+
+TEST_CASE("trace: boundary-edge budget is exact and refuses before fitting (T-0260)", "[trace][budget]") {
+    RasterImage im = blank(20, 20);
+    fillRect(im, 3, 3, 13, 9);  // 10x6 rectangle: 32 boundary edges
+    TraceParams p;
+    p.noiseFilter = 0;
+    const auto reference = traceBitmap(im, p);
+    REQUIRE(reference.ok());
+    p.maxBoundaryEdges = 32;
+    const auto exact = traceBitmap(im, p);
+    REQUIRE(exact.ok());
+    REQUIRE(exact.value().size() == reference.value().size());
+    CHECK(exact.value()[0].contours[0].spans.size() == reference.value()[0].contours[0].spans.size());
+    CHECK(netArea(exact.value()[0]) == netArea(reference.value()[0]));
+    p.maxBoundaryEdges = 31;
+    const auto over = traceBitmap(im, p);
+    REQUIRE_FALSE(over.ok());
+    CHECK(over.error().find("too complex") != std::string::npos);
+}
+
+TEST_CASE("trace: the default budget refuses a 4000x4000 serpentine quickly (T-0260)", "[trace][budget]") {
+    // Alternating one-pixel walls: one huge boundary, valid input, ~16 M edges.
+    RasterImage im = blank(4000, 4000);
+    for (int y = 0; y < 4000; y += 2) fillRect(im, 0, y, 3999, y + 1);
+    for (int y = 1; y < 4000; y += 4) fillRect(im, 3998, y, 3999, std::min(y + 2, 4000));
+    for (int y = 3; y < 4000; y += 4) fillRect(im, 0, y, 1, std::min(y + 2, 4000));
+    TraceParams p;
+    const auto r = traceBitmap(im, p);
+    REQUIRE_FALSE(r.ok());
+    CHECK(r.error().find("too complex") != std::string::npos);
+}
+
+TEST_CASE("trace: cancel flag stops the trace (T-0260)", "[trace][cancel]") {
+    const RasterImage im = disc(200, 80);
+    TraceParams p;
+    const auto reference = traceBitmap(im, p);
+    REQUIRE(reference.ok());
+    std::atomic<bool> flag{true};
+    {
+        geometry::CancelScope scope(&flag);
+        const auto r = traceBitmap(im, p);
+        REQUIRE_FALSE(r.ok());
+        CHECK(r.error().find("cancelled") != std::string::npos);
+        p.mode = TraceMode::Colour;
+        CHECK_FALSE(traceBitmap(im, p).ok());
+    }
+    // A scope whose flag never reads true changes nothing.
+    std::atomic<bool> quiet{false};
+    geometry::CancelScope scope(&quiet);
+    p.mode = TraceMode::BlackWhite;
+    const auto again = traceBitmap(im, p);
+    REQUIRE(again.ok());
+    REQUIRE(again.value().size() == reference.value().size());
+    CHECK(again.value()[0].contours.size() == reference.value()[0].contours.size());
+    CHECK(spans(again.value()[0]) == spans(reference.value()[0]));
+    CHECK(netArea(again.value()[0]) == netArea(reference.value()[0]));
 }

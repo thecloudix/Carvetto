@@ -59,6 +59,11 @@ qt_add_executable(carvetto
   src/self_test.hpp
   src/starter_tools.hpp
   ${CMAKE_CURRENT_BINARY_DIR}/app_starter_tools_embedded.cpp
+  src/trace_dialog.cpp
+  src/trace_dialog.hpp
+  src/trace_image.cpp
+  src/trace_image.hpp
+  src/trace_self_test.cpp
   src/texture_menu.cpp
   src/texture_menu.hpp
   src/transform_menu.cpp
@@ -68,6 +73,9 @@ qt_add_executable(carvetto
   src/keepout_panel.hpp
   src/vector_ops_menu.cpp
   src/vector_ops_menu.hpp
+  src/variables_dialog.cpp
+  src/variables_dialog.hpp
+  src/variables_self_test.cpp
 )
 # Development builds find the shipped posts in the source tree (a packaged app has posts/ beside it).
 target_compile_definitions(carvetto PRIVATE CARVETTO_SHIPPED_POSTS_DIR="${PROJECT_SOURCE_DIR}/posts")

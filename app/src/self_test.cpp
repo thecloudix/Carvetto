@@ -52,7 +52,9 @@
 #include "tool_panel.hpp"
 #include "preview_panel.hpp"
 #include "toolpaths_panel.hpp"
+#include "variables_dialog.hpp"
 #include "transform_menu.hpp"
+#include "trace_dialog.hpp"
 #include "texture_menu.hpp"
 #include "keepout_panel.hpp"
 #include "vector_ops_menu.hpp"
@@ -759,6 +761,11 @@ int runSelfTest() {
         return fail(why);
     }
 
+    // 9c. Document variables: the dialog, calculation boxes and toolpath references (T-0257).
+    if (const std::string why = variablesSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
     // 9. The toolpath preview and the simulation view (T-0223).
     if (const std::string why = previewSelfTest(window); !why.empty()) {
         return fail(why);
@@ -906,7 +913,12 @@ int runSelfTest() {
         return fail(why);
     }
 
-    // 12. Keep-out zones: dock, menu, canvas drawing, routed preview (T-0256).
+    // 12. Trace Bitmap (T-0260): decode, dialog, undoable result.
+    if (const std::string why = traceSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 13. Keep-out zones: dock, menu, canvas drawing, routed preview (T-0256).
     if (const std::string why = keepOutSelfTest(window); !why.empty()) {
         return fail(why);
     }

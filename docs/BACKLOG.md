@@ -770,7 +770,7 @@ Director decision 2026-11-06 (owner delegated): leave the F/2 ridges as they are
 Acceptance criteria:
   1. (a) ≤ 2.5× per doubling on the chain repro, output byte-identical; (b) the listed mutants are killed by corner tests; (c), (d) docs fixed; full ctest.
 
-### T-0174 Profile start: degenerate start edge and region-arc band (T-0158 round-5 verifier)   [status: in-progress]
+### T-0174 Profile start: degenerate start edge and region-arc band (T-0158 round-5 verifier)   [status: done — merged #137]
 Phase: 1   Module: core/toolpath   Depends on: T-0158   ADR: 0016 §11
 Goal: Known limits accepted at the T-0158 merge (harness t0158v5). (a) A squared-off tip whose start vertex has a duplicate or sub-µm edge next to it labels no span on that edge; the fallback's "most even feet" ties exactly between the chamfer's two corners and rounding picks one — the start jumps up to 4.3 mm under ulp/1e-9 (repro5/sq_tiny_tA2.5_e0_phi0_o0_d0_lim2.scn, sq_tiny_tA2.5_e1e-09_*; mitre limit 1: 0.45/1.86/3.28 mm at turns 0.3/1.2/2), and with a collinear 1e-7–1e-5 mm edge both directions start at the same chamfer corner (last in travel for one). Skip degenerate edges when finding the start vertex's own edges, and break any chamfer tie by first in travel. (b) Merged-region arc labelling band: arc chord sag on the chordal-slack band flips the start by one chord (repro5/mrgarc_vb_R20.771966844133722_d1.scn 1.67 mm, mrgarc_em_R18.966862802842932_d1.scn 0.36 mm). (c) Surviving mutants N1, N2, N3, N8, N11 — add tests. (d) ADR §11: describe the label-3 "from" rule. Self-intersecting outlines stay best effort (owner).
 Acceptance criteria:
@@ -808,7 +808,7 @@ Acceptance criteria:
 
 ### T-0153 V-Carve toolpath   [status: done (2026-11-05, #51; core built with -ffp-contract=off on GCC/Clang)]
 Owner decision 2026-11-03: corner sharpening split out to T-0160.
-Owner decision 2026-11-03: identifiers `v_carve` (code, CLI command, job.json "operation"), UI label "V-Carve"; "vcarve" matches the VCarve trademark (CONTRIBUTING).
+Owner decision 2026-11-03: identifiers `v_carve` (code, CLI command, job.json "operation"), UI label "V-Carve"; the single-word spelling is avoided because it matches a third-party trademark (CONTRIBUTING).
 Phase: 1 (Batch C)   Module: core/toolpath   Depends on: T-0152, T-0123, T-0132   ADR: new
 Goal: V-carve closed regions with a V-bit (behaviour per feature-inventory "V-Carve Toolpath"): depth from the medial axis radius and bit angle, start depth, optional flat depth (flat-bottom areas cleared with clearance tools, Offset or Raster strategy reusing Pocket), corner sharpening, ordering, safe links; native record + CLI.
 Acceptance criteria:
@@ -971,7 +971,7 @@ Phase: 1 (Batch C-1)   Module: app/viewmodel + app/src   Depends on: T-0220, T-0
 Goal: Output the selected toolpaths through the post-processors: choose the post (Grbl/Mach3/LinuxCNC/Marlin and user .pp posts), machine, units, output to a single file or one file per toolpath/tool, tool-change handling, preview of the first lines of G-code, file name templates, safety (the T-0133/T-0134 post rules: no injection, finite numbers) and clear error reporting; wraps the same code the CLI uses. Headless viewmodel tests (output byte-identical to the CLI for the same inputs) and a self-test step that saves a file and re-reads it.
 
 ### Batch C — the rest of the toolpaths, simulation and output
-- Drill, quick engrave, V-carve (medial axis) with clearance, fluting, chamfer, prism, inlay, VCarve inlay, photo V-carve, thread milling, texture, keep-out zones, templates, merge, array copy, tiling, double-sided.
+- Drill, quick engrave, V-carve (medial axis) with clearance, fluting, chamfer, prism, inlay, V-carve inlay, photo V-carve, thread milling, texture, keep-out zones, templates, merge, array copy, tiling, double-sided.
 - Material-removal simulation and time estimates; save-toolpaths dialog; job sheet.
 - MVP acceptance run on a real machine (owner).
 
@@ -1045,9 +1045,9 @@ Acceptance criteria:
 Out of scope: anything beyond the card; 3D/Phase 2 features.
 Notes/refs: docs/reference/feature-inventory.md (section named in the goal).
 
-### T-0238 Inlay toolpaths: straight inlay (male/female, stepped) and VCarve inlay (plug and pocket)   [status: done — merged #123]
+### T-0238 Inlay toolpaths: straight inlay (male/female, stepped) and V-carve inlay (plug and pocket)   [status: done — merged #123]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0121, T-0153, T-0220
-Goal: Straight inlays (male straight/stepped, female pocket/hole, allowance) and VCarve Inlay (pocket depth, glue gap, surface clearance, plug destination sheet, mirrored plug, plug boundary options).
+Goal: Straight inlays (male straight/stepped, female pocket/hole, allowance) and V-carve inlay (pocket depth, glue gap, surface clearance, plug destination sheet, mirrored plug, plug boundary options).
 Acceptance criteria:
   1. Male and female pieces for the same vector mate within the stated allowance/glue gap (geometry test); plug is mirrored on the destination sheet; forms, records, tests. May be split into two cards by the coder at start (report to director).
   2. Clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
@@ -1206,7 +1206,7 @@ Goal: menu/dock entries for the T-0241 commands, clearance field, show/hide togg
 Acceptance criteria:
   1. In the real app: create zones from selected closed vectors, change clearance, hide/show, clear; each edit one undo step; preview/save use the routed rapids.
 
-### T-0257 Document variables: Qt dialog, calculation edit boxes, toolpath references (T-0248 follow-up)   [status: verifying — session-only expressions; persistence etc. → T-0271]
+### T-0257 Document variables: Qt dialog, calculation edit boxes, toolpath references (T-0248 follow-up)   [status: done — merged #125]
 Phase: 1   Module: app/viewmodel + app/src + core/toolpath   Depends on: T-0248, T-0210
 Goal: Edit > Document Variables dialog (create/edit/delete/import/export), expression evaluation in numeric edit boxes (units, letter variables) and 'Insert New Document Variable', toolpath forms register addReference/removeReference so a used variable cannot be deleted (also while its form is open), text {Variable} substitution.
 Acceptance criteria:
@@ -1224,7 +1224,7 @@ Goal: File > Create Job Sheet action writing the HTML/text sheet via a save dial
 Acceptance criteria:
   1. In the real app the action writes a job sheet equal to makeJobSheet output; hostile paths refused; self-test drives it.
 
-### T-0260 Trace Bitmap: app dialog, QImage decoding, undoable command (T-0245 follow-up)   [status: in-progress]
+### T-0260 Trace Bitmap: app dialog, QImage decoding, undoable command (T-0245 follow-up)   [status: done — merged #130]
 Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0245, T-0210
 Goal: File/Edit > Trace Bitmap: choose an image (PNG/JPEG/BMP decoded with QImage in the app layer into io::RasterImage, size-checked before decode), dialog with mode (B&W threshold/invert, colour count 2..16), noise filter, corner fit, scale (mm per pixel/target size), live preview, result as one undo step with one layer per colour; Pick from 2D View; Bitmap Fading. Also: the tracer has no work cap or cancel hook (a valid 4000x4000 single-loop bitmap takes ~170-220 s), so add a boundary-edge budget and a cancel poll in core and run the trace off the UI thread.
 Acceptance criteria:
@@ -1254,14 +1254,14 @@ Goal: (1) ADR-0039 (and any other ADR/comments) say a minor bump makes an older 
 Acceptance criteria:
   1. ADR and comments accurate; no behaviour change unless the owner decides otherwise.
 
-### T-0265 VCarve inlay toolpath: V-bit pocket and plug, glue gap, plug sheet (T-0238 split)   [status: ready]
+### T-0265 V-carve inlay toolpath: V-bit pocket and plug, glue gap, plug sheet (T-0238 split)   [status: ready]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0238, T-0153, T-0220
-Goal: VCarve Inlay (inventory 'VCarve Inlay Toolpath'): pocket depth, glue gap, surface clearance, V-bit and clearance tools, plug destination sheet (the plug is mirrored, and centred when on another sheet), plug outer boundary (Sheet Limits / Vector Offset / Boundary Offset). Builds on the straight inlay's record/form/viewmodel wiring (ADR-0040).
+Goal: V-carve inlay (inventory 'V-carve inlay Toolpath'): pocket depth, glue gap, surface clearance, V-bit and clearance tools, plug destination sheet (the plug is mirrored, and centred when on another sheet), plug outer boundary (Sheet Limits / Vector Offset / Boundary Offset). Builds on the straight inlay's record/form/viewmodel wiring (ADR-0040).
 Acceptance criteria:
   1. The V-carved pocket and the V-carved plug of the same vector mate within the stated glue gap (geometry/depth test, V-bit flank geometry); the plug is mirrored on the destination sheet (and centred on another sheet); each plug boundary option verified; forms, records, tests.
   2. Clean-room per CONTRIBUTING.md; units mm/radians in core; one changelog fragment; full ctest and MSVC CI green; mutants killed for core logic.
 Out of scope: anything beyond the card; the straight inlay (T-0238); 3D/Phase 2 features.
-Notes/refs: docs/reference/feature-inventory.md 'VCarve Inlay Toolpath' (the Pocket and Plug sub-pages' fields are not fetched: the owner may need to supply them); ADR-0040.
+Notes/refs: docs/reference/feature-inventory.md 'V-carve inlay Toolpath' (the Pocket and Plug sub-pages' fields are not fetched: the owner may need to supply them); ADR-0040.
 
 ### T-0266 Toolpath tiling: dialog checkbox and Tiling Manager panel (T-0242 follow-up)   [status: ready — LOW]
 Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0242
@@ -1321,3 +1321,12 @@ Phase: 1   Module: app   Depends on: T-0260
 Goal: The two Trace Bitmap dialog features listed in the T-0260 goal but deferred (see ADR-0049): "Pick from 2D View" (choose the bitmap object on the canvas) and "Bitmap Fading" (dim the source bitmap while tracing).
 Acceptance criteria:
   1. Both features work in the real app, are undo-safe, and are driven by the app self-test; changelog fragment; CI green.
+
+### T-0276 Neutral naming: remove third-party product names from identifiers, UI and filenames   [status: ready]
+Phase: 1   Module: core/toolpath + app + docs   Depends on: T-0275
+Goal: Owner directive 2026-11-12: no mention of any third-party CAM product (or its trademarks) anywhere in the project. Docs were scrubbed by the director; code still uses `photoVCarve`/`PhotoVCarve`/`photo_vcarve` (T-0250, T-0275, and the "Photo V-Carve" UI label), which matches a vendor's product name, and the 2026-11-03 decision already bans the single-word "vcarve" spelling. Rename to neutral names (e.g. `image_engrave`/`ImageEngrave`, UI "Image Engrave" / "Relief Engrave from Image"), including: file names (core/.../photo_vcarve.*, tests, app photo_self_test), job.json record key `photo_vcarve` (T-0275 shipped it unreleased: no compatibility shim needed unless a release tagged it — check), ADR-0052 and 0047 titles/text, changelog fragments, BACKLOG text.
+Acceptance criteria:
+  1. `git grep -iE "aspire|vectric|v&co|cut3d|photovcarve|photo_vcarve|\bvcarve\b"` returns nothing outside git history (excluding the generic words "V-carve"/"V-carving" and the existing `VCarving`/`v_carve` operation identifiers).
+  2. Behaviour unchanged: full ctest, Qt app self-test, MSVC CI green; save/load round trip of the renamed record.
+  3. One changelog fragment.
+

@@ -16,7 +16,7 @@ Act as `.claude/agents/director.md`. Coders and verifiers are spawned with the A
 
 ## Progress
 
-About **19% overall** of Aspire parity, **Phase 1 ~26%**. Merging T-0124 → ~20% / ~30%. T-0017 and T-0126 are quality cards (< 1% each). T-0122 (CLI) is the next feature card after T-0124 merges.
+About **19% overall** of the planned feature parity, **Phase 1 ~26%**. Merging T-0124 → ~20% / ~30%. T-0017 and T-0126 are quality cards (< 1% each). T-0122 (CLI) is the next feature card after T-0124 merges.
 
 ## Harnesses
 

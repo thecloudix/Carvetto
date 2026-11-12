@@ -11,6 +11,7 @@
 #include "carvetto/document/commands.hpp"
 #include "carvetto/document/shape_params.hpp"
 #include "carvetto/geometry/shapes.hpp"
+#include "carvetto/viewmodel/calculation.hpp"
 #include "carvetto/viewmodel/dimension_text.hpp"
 #include "carvetto/viewmodel/transform_ops.hpp"
 #include "carvetto/viewmodel/units_format.hpp"
@@ -94,6 +95,28 @@ ParsedNumber parseNumber(std::string_view text, FieldKind kind, document::Units 
     std::string_view t = trim(text);
     if (t.empty()) {
         out.error = "enter a number";
+        return out;
+    }
+    if (isExpressionText(t)) {  // calculation edit box (T-0257): `=W/2 - {Margin}`
+        const Calculation calc = calculate(t, units);
+        if (!calc.ok) {
+            out.error = calc.error;
+            return out;
+        }
+        double v = calc.value;
+        if (kind == FieldKind::Count && (v != std::floor(v) || std::fabs(v) > kMaxCount * 10.0)) {
+            out.error = "enter a whole number";
+            return out;
+        }
+        if (kind == FieldKind::Length) {
+            v = document::fromDisplay(v, units);
+        }
+        if (std::fabs(v) > kMaxMagnitude) {
+            out.error = "value is too large";
+            return out;
+        }
+        out.ok = true;
+        out.value = v;
         return out;
     }
     document::Units entered = units;
