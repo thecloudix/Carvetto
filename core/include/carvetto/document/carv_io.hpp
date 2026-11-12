@@ -46,7 +46,10 @@ inline constexpr int kCarvFormatMinorDoubleSided = 5;
 /// Older 1.x readers keep the members as unknown archive members and write them back.
 /// The newest minor this build writes and reads.
 inline constexpr int kCarvFormatMinorBitmap = 6;
-inline constexpr int kCarvFormatMinor = kCarvFormatMinorBitmap;
+/// 1.7 (T-0261, ADR-0048) adds the sheet a toolpath record belongs to (`job.json` toolpath
+/// `sheet`); written only when a record links to a sheet. The newest minor this build writes and reads.
+inline constexpr int kCarvFormatMinorToolpathSheet = 7;
+inline constexpr int kCarvFormatMinor = kCarvFormatMinorToolpathSheet;
 /// The minor version written for documents that use text (1.2) but no 1.3/1.4 features.
 inline constexpr int kCarvFormatMinorText = 2;
 /// The minor version written for documents that use no 1.2 features (no text objects): 1.1.

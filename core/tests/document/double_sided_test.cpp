@@ -166,3 +166,69 @@ TEST_CASE("a document without paired sheets keeps its previous minor", "[documen
     REQUIRE(l2.ok());
     CHECK(l2.value().formatMinor == kCarvFormatMinorKeepOut);
 }
+
+TEST_CASE("a toolpath's sheet link round-trips byte-stably as format 1.7", "[document][double-sided][carv]") {
+    Document doc = pairedDocument();
+    ToolpathRecord tp;
+    tp.name = "back cut";
+    tp.sheet = doc.sheets()[1].id;
+    doc.insertToolpath(tp);
+    const auto first = save(doc);
+    auto loaded = loadCarv(std::span<const std::uint8_t>(first));
+    REQUIRE(loaded.ok());
+    CHECK(loaded.value().formatMinor == kCarvFormatMinorToolpathSheet);
+    REQUIRE(loaded.value().document.toolpaths().size() == 1);
+    CHECK(loaded.value().document.toolpaths()[0].sheet == doc.sheets()[1].id);
+    CHECK(save(loaded.value().document, loaded.value().extras) == first);
+}
+
+TEST_CASE("an unlinked toolpath keeps the older minor; a link to a deleted sheet is written unlinked",
+          "[document][double-sided][carv]") {
+    Document doc = pairedDocument();
+    ToolpathRecord tp;
+    tp.name = "front cut";
+    doc.insertToolpath(tp);
+    const auto plain = save(doc);
+    auto loaded = loadCarv(std::span<const std::uint8_t>(plain));
+    REQUIRE(loaded.ok());
+    CHECK(loaded.value().formatMinor == kCarvFormatMinorDoubleSided);
+    const std::string text(plain.begin(), plain.end());
+    CHECK(text.find("\"sheet\"") == std::string::npos);  // member names are stored, but no key inside job.json
+
+    ToolpathRecord dangling;
+    dangling.name = "gone";
+    dangling.sheet = SheetId{999};
+    doc.insertToolpath(dangling);
+    auto again = loadCarv(std::span<const std::uint8_t>(save(doc)));
+    REQUIRE(again.ok());
+    CHECK(again.value().formatMinor == kCarvFormatMinorDoubleSided);
+    CHECK(again.value().document.toolpaths()[1].sheet.value == 0);
+}
+
+TEST_CASE("record equality includes the sheet", "[document][double-sided]") {
+    ToolpathRecord a;
+    ToolpathRecord b;
+    CHECK(a == b);
+    b.sheet = SheetId{3};
+    CHECK_FALSE(a == b);
+}
+
+TEST_CASE("flipMoves mirrors XY, swaps arc direction and is an involution", "[document][double-sided]") {
+    const Box2 m{{0, 0}, {100, 50}};
+    const std::vector<Move> in{Move::rapid({10, 5, 5}), Move::feed({20, 5, -1}),
+                               Move::arcCW({30, 15, -1}, {20, 15}), Move::arcCCW({20, 25, -1}, {20, 15})};
+    const auto h = flipMoves(in, m, FlipDirection::Horizontal);
+    REQUIRE(h.size() == 4);
+    CHECK(h[0].to.x == Approx(90));
+    CHECK(h[0].to.y == Approx(5));
+    CHECK(h[0].to.z == Approx(5));
+    CHECK(h[2].kind == carvetto::toolpath::MoveKind::ArcCCW);
+    CHECK(h[3].kind == carvetto::toolpath::MoveKind::ArcCW);
+    CHECK(h[2].centre.x == Approx(80));
+    CHECK(h[2].centre.y == Approx(15));
+    CHECK(flipMoves(h, m, FlipDirection::Horizontal) == in);
+    const auto v = flipMoves(in, m, FlipDirection::Vertical);
+    CHECK(v[1].to.x == Approx(20));
+    CHECK(v[1].to.y == Approx(45));
+    CHECK(flipMoves(v, m, FlipDirection::Vertical) == in);
+}

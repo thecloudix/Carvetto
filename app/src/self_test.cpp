@@ -44,6 +44,7 @@
 #include "carvetto/viewmodel/selection_tools.hpp"
 #include "carvetto/viewmodel/tools.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
+#include "double_sided_menu.hpp"
 #include "main_window.hpp"
 #include "node_edit_menu.hpp"
 #include "properties_panel.hpp"
@@ -753,6 +754,11 @@ int runSelfTest() {
 
     // 9. The Toolpaths dock through the real widgets (T-0221).
     if (const std::string why = toolpathsSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 9c. Double-sided jobs: setup, swap sides, copy across, per-side posts (T-0261).
+    if (const std::string why = doubleSidedSelfTest(window); !why.empty()) {
         return fail(why);
     }
 

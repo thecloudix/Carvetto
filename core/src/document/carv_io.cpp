@@ -1043,6 +1043,9 @@ json encodeToolpath(const ToolpathRecord& tp, const std::string* cacheMember, co
         tool["tool_type"] = tp.tool.toolType;  // T-0154: only spindle-off snapshots record it
     }
     j["tool"] = std::move(tool);
+    if (tp.sheet.value != 0) {
+        j["sheet"] = tp.sheet.value;  // T-0261: only double-sided records, so other files are unchanged
+    }
     if (cacheMember) {
         json moves = json::object();
         moves["count"] = static_cast<std::uint64_t>(tp.moveCount());
@@ -2777,8 +2780,8 @@ struct DecodedToolpath {
     std::uint64_t moveCount{0};
 };
 
-constexpr std::array<std::string_view, 7> kToolpathKeys{"id",        "name", "operation", "params",
-                                                        "selection", "tool", "moves"};
+constexpr std::array<std::string_view, 8> kToolpathKeys{"id",        "name", "operation", "params",
+                                                        "selection", "tool", "moves",     "sheet"};
 constexpr std::array<std::string_view, 3> kSelectionKeys{"all", "layers", "objects"};
 constexpr std::array<std::string_view, 11> kToolKeys{"id",          "machine",       "material",   "name",
                                                      "tool_number", "diameter",      "feed_rate",  "plunge_rate",
@@ -2863,6 +2866,8 @@ DecodedToolpath decodeToolpath(JsonReader& r, const Path& p) {
             for (const char* key : {"name", "tool_number", "diameter", "feed_rate", "plunge_rate", "spindle_speed"}) {
                 tool.require(key);
             }
+        } else if (k == "sheet") {
+            tp.sheet = SheetId{readEntityId(r, f)};  // T-0261
         } else if (k == "moves") {
             Record moves(r, f, kMovesKeys);
             while (moves.next()) {
@@ -3759,6 +3764,10 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
     jf.objects.clear();
     jf.objects.shrink_to_fit();
     for (DecodedToolpath& d : jf.toolpaths) {
+        if (d.record.sheet.value != 0 && !sheetIds.contains(d.record.sheet.value)) {
+            fail(where + ".toolpaths (id " + std::to_string(d.record.id.value) + ").sheet",
+                 "names sheet " + std::to_string(d.record.sheet.value) + ", which does not exist");
+        }
         if (!d.unknown.empty()) {
             extras->toolpaths[d.record.id.value] = std::move(d.unknown);
         }
@@ -4043,16 +4052,20 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
             usesBitmaps = true;
             fontMembers.emplace(bitmapMemberName(b->sourceRef), image->bytes);
         }
-        // The minor is the highest one any used feature requires: paired sheets (1.5, T-0243), keep-out zones (1.4, T-0241),
+        // The minor is the highest one any used feature requires: toolpath sheet links (1.7, T-0261), embedded bitmaps (1.6, T-0273), paired sheets (1.5, T-0243), keep-out zones (1.4, T-0241),
         // dimension objects (1.3, T-0246), text/fonts (1.2); otherwise the base minor.
         const bool usesKeepOut =
             !doc.keepOutZones().empty() || doc.keepOutClearance() != 0.0 || !doc.keepOutVisible();
         const bool usesDoubleSided = std::any_of(doc.sheets().begin(), doc.sheets().end(), [](const Sheet& s) {
             return s.side != Side::Front || s.partner.value != 0;
         });
+        const bool usesToolpathSheet = std::any_of(doc.toolpaths().begin(), doc.toolpaths().end(), [&doc](const ToolpathRecord& tp) {
+            return tp.sheet.value != 0 && doc.findSheet(tp.sheet) != nullptr;
+        });
         const bool hasDimensions = std::any_of(doc.objects().begin(), doc.objects().end(),
                                                [](const auto& kv) { return kv.second.isDimension(); });
-        version["minor"] = usesBitmaps      ? kCarvFormatMinorBitmap
+        version["minor"] = usesToolpathSheet ? kCarvFormatMinorToolpathSheet
+                           : usesBitmaps      ? kCarvFormatMinorBitmap
                            : usesDoubleSided  ? kCarvFormatMinorDoubleSided
                            : usesKeepOut    ? kCarvFormatMinorKeepOut
                            : hasDimensions  ? kCarvFormatMinorDimension
@@ -4210,7 +4223,13 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
                 }
                 caches.emplace(member, std::move(bytes));
             }
-            toolpaths.push_back(encodeToolpath(tp, tp.hasMoves() ? &member : nullptr, ex));
+            if (tp.sheet.value != 0 && doc.findSheet(tp.sheet) == nullptr) {
+                ToolpathRecord unlinked = tp;  // its sheet was deleted: write it unlinked (T-0261)
+                unlinked.sheet = SheetId{};
+                toolpaths.push_back(encodeToolpath(unlinked, tp.hasMoves() ? &member : nullptr, ex));
+            } else {
+                toolpaths.push_back(encodeToolpath(tp, tp.hasMoves() ? &member : nullptr, ex));
+            }
         }
         root["toolpaths"] = std::move(toolpaths);
 

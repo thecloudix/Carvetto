@@ -39,6 +39,7 @@
 #include "canvas_widget.hpp"
 #include "dimension_menu.hpp"
 #include "document_panels.hpp"
+#include "double_sided_menu.hpp"
 #include "carvetto/viewmodel/dxf_exchange.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/new_job_form.hpp"
@@ -292,6 +293,7 @@ void MainWindow::buildMenus() {
     traceBitmap_ = std::make_unique<TraceBitmapMenu>(*this, file, edit);
     textureMenu_ = std::make_unique<TextureMenu>(*this, edit);
     transformMenu_ = std::make_unique<TransformMenu>(*this);
+    doubleSided_ = std::make_unique<DoubleSidedMenu>(*this, edit);
     keepOut_->buildMenu(edit);
     edit->addSeparator();
     QAction* convertText = edit->addAction(QStringLiteral("Convert &Text to Curves"));
@@ -494,6 +496,9 @@ bool MainWindow::replaceDocument(const std::function<bool()>& swap) {
 void MainWindow::documentChanged() {
     if (transformMenu_) {
         transformMenu_->refresh();
+    }
+    if (doubleSided_) {
+        doubleSided_->refresh();
     }
     setWindowTitle(qs(session_.title("Carvetto")));
     refreshSelectors();

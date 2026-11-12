@@ -62,6 +62,7 @@ NewJobResult validateNewJob(const NewJobForm& form) {
         case JobType::DoubleSided:
             job = Job::doubleSided(form.width, form.height, form.thickness, form.units, form.datum,
                                    form.zZero, form.flip);
+            job.zeroOffSameSide = form.zeroOffSameSide;
             break;
         case JobType::Rotary:
             job = Job::rotary(form.length, form.diameter, form.units, form.rotaryAxis, form.zZero);
@@ -98,6 +99,7 @@ NewJobForm formFromJob(const Job& job) {
     form.zZero = job.zZero;
     form.datum = job.datum;
     form.flip = job.flipDirection;
+    form.zeroOffSameSide = job.zeroOffSameSide;
     form.rotaryAxis = job.rotaryAxis;
     const document::JobSize size = job.displaySize();
     if (job.type == JobType::Rotary) {

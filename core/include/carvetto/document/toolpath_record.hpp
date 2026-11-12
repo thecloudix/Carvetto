@@ -86,6 +86,9 @@ struct ToolpathRecord {
     ToolSource toolSource;
     /// Computed moves; null when the toolpath has not been computed (or the cache was not saved).
     SharedMoves moves;
+    /// Double-sided jobs (T-0261, ADR-0048): the sheet (face of the stock) the toolpath machines;
+    /// null for single-sided jobs and for records made before the job became double-sided.
+    SheetId sheet{};
 
     ToolpathOperation operation() const { return static_cast<ToolpathOperation>(params.index()); }
     /// Absolute safe Z of the operation's parameters (mm).

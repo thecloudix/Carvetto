@@ -459,8 +459,14 @@ ToolpathJob ToolpathSession::prepare(const ToolpathDefinition& definition, std::
         job.refusal = bad;
     }
     job.target = target.value_or(ToolpathId{});
+    if (doc_->job().type == document::JobType::DoubleSided) {
+        job.sheet = doc_->activeSheet();
+    }
     if (!job.target.isNull()) {
         if (const ToolpathRecord* rec = doc_->findToolpath(job.target)) {
+            if (job.refusal.empty() && !job.sheet.isNull() && !rec->sheet.isNull() && rec->sheet != doc_->activeSheet()) {
+                job.refusal = "this toolpath belongs to the other side of the job; activate that side (Swap Sides) to recalculate it";
+            }
             for (const ToolpathId m : membersOf(*rec)) {
                 if (const ToolpathRecord* mr = doc_->findToolpath(m)) {
                     job.targetRecords.push_back(*mr);
