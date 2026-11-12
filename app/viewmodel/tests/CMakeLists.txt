@@ -12,6 +12,7 @@ if(NOT catch2_POPULATED)
 endif()
 
 add_executable(carvetto_viewmodel_tests
+  bitmap_trace_test.cpp
   vector_ops_test.cpp
   keepout_test.cpp
   vector_validator_test.cpp

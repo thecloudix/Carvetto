@@ -56,6 +56,11 @@ qt_add_executable(carvetto
   src/self_test.hpp
   src/starter_tools.hpp
   ${CMAKE_CURRENT_BINARY_DIR}/app_starter_tools_embedded.cpp
+  src/trace_dialog.cpp
+  src/trace_dialog.hpp
+  src/trace_image.cpp
+  src/trace_image.hpp
+  src/trace_self_test.cpp
   src/texture_menu.cpp
   src/texture_menu.hpp
   src/transform_menu.cpp

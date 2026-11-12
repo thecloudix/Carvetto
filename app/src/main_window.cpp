@@ -54,6 +54,7 @@
 #include "tool_panel.hpp"
 #include "toolpaths_panel.hpp"
 #include "transform_menu.hpp"
+#include "trace_dialog.hpp"
 #include "texture_menu.hpp"
 #include "keepout_panel.hpp"
 #include "vector_ops_menu.hpp"
@@ -281,6 +282,7 @@ void MainWindow::buildMenus() {
     edit->addSeparator();
     vectorOps_ = std::make_unique<VectorOpsMenu>(*this, edit);
     copies_ = std::make_unique<CopiesMenu>(*this, edit);
+    traceBitmap_ = std::make_unique<TraceBitmapMenu>(*this, file, edit);
     textureMenu_ = std::make_unique<TextureMenu>(*this, edit);
     transformMenu_ = std::make_unique<TransformMenu>(*this);
     keepOut_->buildMenu(edit);
