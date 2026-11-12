@@ -1,14 +1,17 @@
 #include "toolpath_form_dialog.hpp"
 
+#include <QAction>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
+#include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
+#include <QMenu>
 #include <QPushButton>
 #include <QScrollArea>
 #include <QVBoxLayout>
@@ -16,6 +19,7 @@
 #include <utility>
 
 #include "carvetto/document/units.hpp"
+#include "carvetto/viewmodel/calculation.hpp"
 #include "carvetto/viewmodel/tools.hpp"
 #include "carvetto/viewmodel/units_format.hpp"
 
@@ -81,6 +85,7 @@ ToolpathFormDialog::ToolpathFormDialog(viewmodel::ToolpathForm form, tooling::To
     buildStatic();
     rebuildParameters();
     refreshStatus();
+    reportVariables();
     resize(560, 720);
 }
 
@@ -540,9 +545,44 @@ void ToolpathFormDialog::rebuildParameters() {
                 } else {
                     badFields_.insert(id);
                 }
+                // A calculation shows its result as the tooltip; a refused one shows why.
+                if (r.ok && viewmodel::isExpressionText(t.toStdString())) {
+                    const viewmodel::Calculation calc = viewmodel::calculate(t.toStdString(), form_.units());
+                    edit->setToolTip(calc.ok ? qs("= " + viewmodel::numberText(calc.value)) : QString());
+                }
                 setMessage(r.message, !r.ok);
                 refreshPlaceholders();
+                reportVariables();
             });
+            if (info_.createVariable) {
+                edit->setContextMenuPolicy(Qt::CustomContextMenu);
+                connect(edit, &QLineEdit::customContextMenuRequested, this, [this, id, edit](const QPoint& pos) {
+                    QMenu* menu = edit->createStandardContextMenu();
+                    menu->addSeparator();
+                    QAction* insert = menu->addAction(QStringLiteral("Insert New Document Variable..."));
+                    connect(insert, &QAction::triggered, this, [this, id]() {
+                        bool ok = false;
+                        const QString name = QInputDialog::getText(this, QStringLiteral("New Document Variable"),
+                                                                   QStringLiteral("Name"), QLineEdit::Normal,
+                                                                   QString(), &ok);
+                        if (!ok) {
+                            return;
+                        }
+                        const QString value = QInputDialog::getText(this, QStringLiteral("New Document Variable"),
+                                                                    QStringLiteral("Value"), QLineEdit::Normal,
+                                                                    QString(), &ok);
+                        if (!ok) {
+                            return;
+                        }
+                        const std::string err = insertNewVariable(id, name.toStdString(), value.toStdString());
+                        if (!err.empty()) {
+                            setMessage(err, true);
+                        }
+                    });
+                    menu->setAttribute(Qt::WA_DeleteOnClose);
+                    menu->popup(edit->mapToGlobal(pos));
+                });
+            }
         }
         paramLayout_->addWidget(box);
     }
@@ -630,6 +670,39 @@ bool ToolpathFormDialog::pickTool(const std::string& toolId) {
     }
     toolCombo_->setCurrentIndex(row);
     return form_.tool().toolId == toolId;
+}
+
+std::string ToolpathFormDialog::insertNewVariable(const std::string& id, const std::string& name,
+                                                  const std::string& value) {
+    QLineEdit* edit = fieldEdit(id);
+    if (edit == nullptr) {
+        return "no such field";
+    }
+    if (!info_.createVariable) {
+        return "variables are not available";
+    }
+    const std::string err = info_.createVariable(name, value);
+    if (!err.empty()) {
+        return err;
+    }
+    QString text = edit->text();
+    int pos = edit->cursorPosition();
+    const QString token = qs("{" + name + "}");
+    if (!viewmodel::isExpressionText(text.toStdString())) {
+        text = QStringLiteral("=") + text;
+        ++pos;
+    }
+    text.insert(pos, token);
+    edit->setText(text);
+    edit->setCursorPosition(pos + static_cast<int>(token.size()));
+    Q_EMIT edit->textEdited(text);
+    return {};
+}
+
+void ToolpathFormDialog::reportVariables() {
+    if (info_.variablesChanged) {
+        info_.variablesChanged(form_.usedVariables());
+    }
 }
 
 QLineEdit* ToolpathFormDialog::fieldEdit(const std::string& id) const {

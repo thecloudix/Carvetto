@@ -171,6 +171,9 @@ class ToolpathsPanel : public QWidget {
     QAction* recalculateAll_{nullptr};
     QAction* cancel_{nullptr};
     QPointer<ToolpathFormDialog> dialog_;
+    /// Calculation-box expressions of the form being calculated (T-0257), bound to the toolpath(s)
+    /// when the result is applied.
+    std::map<std::string, std::string> pendingExpressions_;
     // Declared last: destroyed first, so a still-running worker is cancelled and joined before the
     // widgets its completion callback posts to go away.
     viewmodel::ToolpathRunner runner_;

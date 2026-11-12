@@ -230,6 +230,27 @@ class ToolpathSession {
     /// "<name> [<tool>]").
     ToolpathOutcome rename(document::ToolpathId id, const std::string& name);
 
+    // --- Document variables (T-0257) ---------------------------------------------------------
+    /// Remembers the calculation-edit-box expressions (field id -> text, e.g. "=H/2 - {Margin}") a
+    /// toolpath was made with, for `ids` (all toolpaths of one calculation); an empty map forgets
+    /// them. Every variable an expression names is held with `DocumentVariables::addReference`, so
+    /// it cannot be deleted while the toolpath exists. Session state, like the vector selector:
+    /// not in the .carv file and not undoable; bindings of toolpaths that no longer exist
+    /// (deleted, or their add undone) are dropped on the next `refreshReferences`.
+    void bindExpressions(const std::vector<document::ToolpathId>& ids, const std::map<std::string, std::string>& expressions);
+    /// The expressions of toolpath `id` (empty when none).
+    std::map<std::string, std::string> expressionsOf(document::ToolpathId id) const;
+    /// Variables an open toolpath form names: they cannot be deleted while it is open. Empty = none.
+    void setOpenFormVariables(const std::vector<std::string>& names);
+    /// Drops bindings of vanished toolpaths and re-registers the references, so the document's
+    /// reference counts match the bindings and the open form.
+    void refreshReferences();
+    /// After a document variable or the job size changed: re-evaluates the expressions of every bound
+    /// toolpath and recalculates those whose values changed (one undo step per toolpath, so wrap the
+    /// variable edit and this call in one `UndoStack` macro). A toolpath whose new values are refused
+    /// by its form, or whose calculation fails, keeps its record and is reported.
+    BatchOutcome recalculateBound();
+
     // --- Job summary -------------------------------------------------------------------------
     JobSummary summary();
     /// The enabled, computed toolpaths with their rapids routed round the keep-out zones (as Save
@@ -300,6 +321,10 @@ class ToolpathSession {
     std::uint64_t nextGroup_{1};
     std::set<document::ToolpathId> disabled_;
     std::map<document::ToolpathId, std::vector<ToolpathMessage>> messages_;
+    std::map<document::ToolpathId, std::map<std::string, std::string>> expressions_;
+    std::vector<std::string> openFormVariables_;
+    /// The references this session added to the document's variables (removed again on refresh).
+    std::vector<std::string> registeredRefs_;
 
     bool staleValid_{false};
     std::uint64_t staleGeneration_{0};

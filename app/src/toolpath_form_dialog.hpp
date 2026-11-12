@@ -40,6 +40,12 @@ struct FormDocumentInfo {
     std::vector<document::ObjectId> selection;
     /// Number of vectors a selector selects now (the readout). Optional.
     std::function<std::size_t(const viewmodel::VectorSelector&)> countVectors;
+    /// Called with the document variables the form's calculation boxes name, whenever they change
+    /// (and on opening), so the owner can hold them: a variable an open form uses cannot be deleted.
+    std::function<void(const std::vector<std::string>&)> variablesChanged;
+    /// Creates (or changes) a document variable for "Insert New Document Variable"; returns an error
+    /// message, empty on success. Optional: without it the menu entry is not offered.
+    std::function<std::string(const std::string& name, const std::string& value)> createVariable;
 };
 
 /// The operation form generated from a `viewmodel::ToolpathForm`: name, tool picker (tool database),
@@ -63,6 +69,10 @@ class ToolpathFormDialog : public QDialog {
     bool chooseOption(const std::string& id, int option);
     bool pickTool(const std::string& toolId);
     QLineEdit* fieldEdit(const std::string& id) const;
+    /// "Insert New Document Variable" on the box of field `id`: creates the variable through
+    /// `FormDocumentInfo::createVariable` and inserts `{name}` at the cursor (a leading `=` is added
+    /// when the box is not yet a calculation). Returns the error message, empty on success.
+    std::string insertNewVariable(const std::string& id, const std::string& name, const std::string& value);
     QPushButton* okButton() const { return ok_; }
 
    private:
@@ -76,6 +86,7 @@ class ToolpathFormDialog : public QDialog {
     void applyTool();
     void applyClearance();
     void setMessage(const std::string& text, bool error);
+    void reportVariables();
 
     viewmodel::ToolpathForm form_;
     tooling::ToolDatabase db_;

@@ -1,4 +1,5 @@
 #include "main_window.hpp"
+#include "carvetto/viewmodel/calculation.hpp"
 
 #include <QAction>
 #include <QActionGroup>
@@ -86,6 +87,10 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     setObjectName(QStringLiteral("CarvettoMainWindow"));
     setDockOptions(QMainWindow::AnimatedDocks | QMainWindow::AllowTabbedDocks);
 
+    // Calculation edit boxes read the open document's variables and job size (T-0257).
+    viewmodel::setCalculationProvider(this, [this]() {
+        return std::optional<viewmodel::CalculationEnv>(viewmodel::environmentOf(session_.document()));
+    });
     buildCentralArea();
     buildDocks();
     buildMenus();
@@ -103,7 +108,9 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     documentChanged();
 }
 
-MainWindow::~MainWindow() = default;
+MainWindow::~MainWindow() {
+    viewmodel::clearCalculationProvider(this);
+}
 
 void MainWindow::buildCentralArea() {
     auto* page2d = new QWidget(this);
@@ -297,6 +304,11 @@ void MainWindow::buildMenus() {
         }
     });
     dimensions_ = std::make_unique<DimensionMenu>(*this, edit);
+
+    edit->addSeparator();
+    variablesAction_ = edit->addAction(QStringLiteral("Document &Variables..."));
+    variablesAction_->setObjectName(QStringLiteral("variablesAction"));
+    connect(variablesAction_, &QAction::triggered, this, [this]() { variablesDialog(); });
 
     QMenu* view = menuBar()->addMenu(QStringLiteral("&View"));
     QAction* fit = view->addAction(QStringLiteral("Zoom to &Material"));

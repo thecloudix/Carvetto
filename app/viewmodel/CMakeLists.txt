@@ -50,6 +50,8 @@ add_library(carvetto_viewmodel STATIC
   src/selection_tools.cpp
   src/properties_model.cpp
   src/layers_sheets.cpp
+  src/calculation.cpp
+  src/variables_model.cpp
   src/texture_form.cpp
 )
 find_package(Threads REQUIRED)

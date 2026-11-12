@@ -98,6 +98,9 @@ class MainWindow : public QMainWindow {
     QAction* toolSetupAction() const { return toolSetupAction_; }
     void jobSetupDialog();
     void toolSetupDialog();
+    /// Edit > Document Variables... (T-0257): the variables dialog (modal); every edit is one undo step.
+    QAction* variablesAction() const { return variablesAction_; }
+    void variablesDialog();
     /// The Preview dock (toolpath preview, time readout, simulation) and the simulation view in the 3D tab.
     PreviewPanel* preview() const { return preview_; }
     QDockWidget* previewDock() const { return previewDock_; }
@@ -174,6 +177,7 @@ class MainWindow : public QMainWindow {
     QAction* saveToolpathsAction_{nullptr};
     QAction* jobSetupAction_{nullptr};
     QAction* toolSetupAction_{nullptr};
+    QAction* variablesAction_{nullptr};
     std::unique_ptr<CopiesMenu> copies_;
     std::unique_ptr<VectorOpsMenu> vectorOps_;
     std::unique_ptr<TraceBitmapMenu> traceBitmap_;

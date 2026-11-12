@@ -52,6 +52,7 @@
 #include "tool_panel.hpp"
 #include "preview_panel.hpp"
 #include "toolpaths_panel.hpp"
+#include "variables_dialog.hpp"
 #include "transform_menu.hpp"
 #include "trace_dialog.hpp"
 #include "texture_menu.hpp"
@@ -752,6 +753,11 @@ int runSelfTest() {
 
     // 9. The Toolpaths dock through the real widgets (T-0221).
     if (const std::string why = toolpathsSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 9b. Document variables: the dialog, calculation boxes and toolpath references (T-0257).
+    if (const std::string why = variablesSelfTest(window); !why.empty()) {
         return fail(why);
     }
 
