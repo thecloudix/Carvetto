@@ -16,7 +16,7 @@
 // Straight inlay toolpath (T-0238, ADR-0040; feature-inventory "Inlay Toolpath"): the male piece
 // (a plug, straight or stepped) and the female piece (a pocket or a through hole) of the same
 // vectors, made so that the male fits the female with a stated allowance (glue gap) all round.
-// The VCarve inlay (V-bit plug and pocket) is a separate card.
+// The V-carve inlay (V-bit plug and pocket) is a separate card.
 
 namespace carvetto::toolpath {
 

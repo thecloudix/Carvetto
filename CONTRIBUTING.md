@@ -6,11 +6,11 @@ Carvetto reproduces the *functionality and workflow* of commercial CAM software.
 
 Contributors (human or agent) must not:
 
-- Paste, transcribe, or port source code, scripts, or decompiled output from any Vectric product or other proprietary CAM package.
+- Paste, transcribe, or port source code, scripts, or decompiled output from any proprietary CAM package.
 - Copy icons, textures, clipart, sample files, fonts, help text, or UI artwork from those products.
 - Reverse-engineer proprietary file formats (`.crv`, `.crv3d`, `.v3m`, `.3dclip`). Interchange happens through open formats (DXF, SVG, STL, OBJ, PDF, bitmaps).
 - Redistribute post-processor files shipped with proprietary products. Test against community-published posts or posts written for Carvetto.
-- Use trademarked product names in Carvetto's own UI or identifiers. Reference docs under `docs/reference/` may name them for comparison purposes only.
+- Use trademarked product names in Carvetto's own UI or identifiers. Reference docs under `docs/reference/` describe behaviour only and name no third-party product.
 
 Describing what a feature does, what its options are, and how a user expects it to behave is fine, and is what `docs/reference/feature-inventory.md` is for.
 
