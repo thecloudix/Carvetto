@@ -770,7 +770,7 @@ Director decision 2026-11-06 (owner delegated): leave the F/2 ridges as they are
 Acceptance criteria:
   1. (a) ≤ 2.5× per doubling on the chain repro, output byte-identical; (b) the listed mutants are killed by corner tests; (c), (d) docs fixed; full ctest.
 
-### T-0174 Profile start: degenerate start edge and region-arc band (T-0158 round-5 verifier)   [status: in-progress]
+### T-0174 Profile start: degenerate start edge and region-arc band (T-0158 round-5 verifier)   [status: done — merged #137]
 Phase: 1   Module: core/toolpath   Depends on: T-0158   ADR: 0016 §11
 Goal: Known limits accepted at the T-0158 merge (harness t0158v5). (a) A squared-off tip whose start vertex has a duplicate or sub-µm edge next to it labels no span on that edge; the fallback's "most even feet" ties exactly between the chamfer's two corners and rounding picks one — the start jumps up to 4.3 mm under ulp/1e-9 (repro5/sq_tiny_tA2.5_e0_phi0_o0_d0_lim2.scn, sq_tiny_tA2.5_e1e-09_*; mitre limit 1: 0.45/1.86/3.28 mm at turns 0.3/1.2/2), and with a collinear 1e-7–1e-5 mm edge both directions start at the same chamfer corner (last in travel for one). Skip degenerate edges when finding the start vertex's own edges, and break any chamfer tie by first in travel. (b) Merged-region arc labelling band: arc chord sag on the chordal-slack band flips the start by one chord (repro5/mrgarc_vb_R20.771966844133722_d1.scn 1.67 mm, mrgarc_em_R18.966862802842932_d1.scn 0.36 mm). (c) Surviving mutants N1, N2, N3, N8, N11 — add tests. (d) ADR §11: describe the label-3 "from" rule. Self-intersecting outlines stay best effort (owner).
 Acceptance criteria:
@@ -1206,7 +1206,7 @@ Goal: menu/dock entries for the T-0241 commands, clearance field, show/hide togg
 Acceptance criteria:
   1. In the real app: create zones from selected closed vectors, change clearance, hide/show, clear; each edit one undo step; preview/save use the routed rapids.
 
-### T-0257 Document variables: Qt dialog, calculation edit boxes, toolpath references (T-0248 follow-up)   [status: verifying — session-only expressions; persistence etc. → T-0271]
+### T-0257 Document variables: Qt dialog, calculation edit boxes, toolpath references (T-0248 follow-up)   [status: done — merged #125]
 Phase: 1   Module: app/viewmodel + app/src + core/toolpath   Depends on: T-0248, T-0210
 Goal: Edit > Document Variables dialog (create/edit/delete/import/export), expression evaluation in numeric edit boxes (units, letter variables) and 'Insert New Document Variable', toolpath forms register addReference/removeReference so a used variable cannot be deleted (also while its form is open), text {Variable} substitution.
 Acceptance criteria:
@@ -1224,7 +1224,7 @@ Goal: File > Create Job Sheet action writing the HTML/text sheet via a save dial
 Acceptance criteria:
   1. In the real app the action writes a job sheet equal to makeJobSheet output; hostile paths refused; self-test drives it.
 
-### T-0260 Trace Bitmap: app dialog, QImage decoding, undoable command (T-0245 follow-up)   [status: in-progress]
+### T-0260 Trace Bitmap: app dialog, QImage decoding, undoable command (T-0245 follow-up)   [status: done — merged #130]
 Phase: 1   Module: app/viewmodel + app/src   Depends on: T-0245, T-0210
 Goal: File/Edit > Trace Bitmap: choose an image (PNG/JPEG/BMP decoded with QImage in the app layer into io::RasterImage, size-checked before decode), dialog with mode (B&W threshold/invert, colour count 2..16), noise filter, corner fit, scale (mm per pixel/target size), live preview, result as one undo step with one layer per colour; Pick from 2D View; Bitmap Fading. Also: the tracer has no work cap or cancel hook (a valid 4000x4000 single-loop bitmap takes ~170-220 s), so add a boundary-edge budget and a cancel poll in core and run the trace off the UI thread.
 Acceptance criteria:
