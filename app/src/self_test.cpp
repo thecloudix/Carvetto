@@ -48,11 +48,14 @@
 #include "main_window.hpp"
 #include "node_edit_menu.hpp"
 #include "properties_panel.hpp"
+#include "dimension_menu.hpp"
 #include "save_toolpaths_dialog.hpp"
 #include "tool_panel.hpp"
 #include "preview_panel.hpp"
 #include "toolpaths_panel.hpp"
+#include "variables_dialog.hpp"
 #include "transform_menu.hpp"
+#include "trace_dialog.hpp"
 #include "texture_menu.hpp"
 #include "keepout_panel.hpp"
 #include "vector_ops_menu.hpp"
@@ -754,8 +757,13 @@ int runSelfTest() {
         return fail(why);
     }
 
-    // 9b. Double-sided jobs: setup, swap sides, copy across, per-side posts (T-0261).
+    // 9c. Double-sided jobs: setup, swap sides, copy across, per-side posts (T-0261).
     if (const std::string why = doubleSidedSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 9b. Document variables: the dialog, calculation boxes and toolpath references (T-0257).
+    if (const std::string why = variablesSelfTest(window); !why.empty()) {
         return fail(why);
     }
 
@@ -901,8 +909,17 @@ int runSelfTest() {
         }
     }
 
+    // 11. Dimensions: place, edit with handles and the dialog, delete (T-0255).
+    if (const std::string why = dimensionSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
 
-    // 11. Keep-out zones: dock, menu, canvas drawing, routed preview (T-0256).
+    // 12. Trace Bitmap (T-0260): decode, dialog, undoable result.
+    if (const std::string why = traceSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 13. Keep-out zones: dock, menu, canvas drawing, routed preview (T-0256).
     if (const std::string why = keepOutSelfTest(window); !why.empty()) {
         return fail(why);
     }

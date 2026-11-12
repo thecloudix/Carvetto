@@ -12,6 +12,7 @@ if(NOT catch2_POPULATED)
 endif()
 
 add_executable(carvetto_viewmodel_tests
+  bitmap_trace_test.cpp
   vector_ops_test.cpp
   keepout_test.cpp
   vector_validator_test.cpp
@@ -22,6 +23,7 @@ add_executable(carvetto_viewmodel_tests
   tools_test.cpp
   text_tool_test.cpp
   dimension_tool_test.cpp
+  dimension_ui_test.cpp
   text_dxf_test.cpp
   starter_font_test.cpp
   transform_form_test.cpp
@@ -41,6 +43,8 @@ add_executable(carvetto_viewmodel_tests
   toolpath_form_test.cpp
   toolpath_chamfer_test.cpp
   toolpath_thread_mill_test.cpp
+  toolpath_inlay_test.cpp
+  toolpath_fluting_test.cpp
   toolpath_prism_test.cpp
   toolpath_preview_test.cpp
   simulation_test.cpp
@@ -53,6 +57,8 @@ add_executable(carvetto_viewmodel_tests
   properties_model_test.cpp
   double_sided_ops_test.cpp
   layers_sheets_test.cpp
+  calculation_test.cpp
+  variables_model_test.cpp
   texture_form_test.cpp
 )
 # The toolpath tests drive carvetto-cli in process (cli::run) to compare its records with the session's.

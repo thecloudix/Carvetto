@@ -106,7 +106,7 @@ TEST_CASE("paired sheets round-trip byte-stably as format 1.5", "[document][doub
     auto loaded = loadCarv(std::span<const std::uint8_t>(first));
     REQUIRE(loaded.ok());
     CHECK(loaded.value().formatMinor == kCarvFormatMinorDoubleSided);
-    CHECK(kCarvFormatMinor == 6);
+    CHECK(kCarvFormatMinor >= kCarvFormatMinorDoubleSided);
     CHECK(loaded.value().extras.empty());
     const Document& back = loaded.value().document;
     REQUIRE(back.sheets().size() == 2);
@@ -167,7 +167,7 @@ TEST_CASE("a document without paired sheets keeps its previous minor", "[documen
     CHECK(l2.value().formatMinor == kCarvFormatMinorKeepOut);
 }
 
-TEST_CASE("a toolpath's sheet link round-trips byte-stably as format 1.6", "[document][double-sided][carv]") {
+TEST_CASE("a toolpath's sheet link round-trips byte-stably as format 1.7", "[document][double-sided][carv]") {
     Document doc = pairedDocument();
     ToolpathRecord tp;
     tp.name = "back cut";

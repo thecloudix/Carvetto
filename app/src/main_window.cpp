@@ -1,4 +1,5 @@
 #include "main_window.hpp"
+#include "carvetto/viewmodel/calculation.hpp"
 
 #include <QAction>
 #include <QActionGroup>
@@ -36,6 +37,7 @@
 
 #include "array_copy_menu.hpp"
 #include "canvas_widget.hpp"
+#include "dimension_menu.hpp"
 #include "document_panels.hpp"
 #include "double_sided_menu.hpp"
 #include "carvetto/viewmodel/dxf_exchange.hpp"
@@ -54,6 +56,7 @@
 #include "tool_panel.hpp"
 #include "toolpaths_panel.hpp"
 #include "transform_menu.hpp"
+#include "trace_dialog.hpp"
 #include "texture_menu.hpp"
 #include "keepout_panel.hpp"
 #include "vector_ops_menu.hpp"
@@ -85,6 +88,10 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     setObjectName(QStringLiteral("CarvettoMainWindow"));
     setDockOptions(QMainWindow::AnimatedDocks | QMainWindow::AllowTabbedDocks);
 
+    // Calculation edit boxes read the open document's variables and job size (T-0257).
+    viewmodel::setCalculationProvider(this, [this]() {
+        return std::optional<viewmodel::CalculationEnv>(viewmodel::environmentOf(session_.document()));
+    });
     buildCentralArea();
     buildDocks();
     buildMenus();
@@ -102,7 +109,9 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     documentChanged();
 }
 
-MainWindow::~MainWindow() = default;
+MainWindow::~MainWindow() {
+    viewmodel::clearCalculationProvider(this);
+}
 
 void MainWindow::buildCentralArea() {
     auto* page2d = new QWidget(this);
@@ -281,6 +290,7 @@ void MainWindow::buildMenus() {
     edit->addSeparator();
     vectorOps_ = std::make_unique<VectorOpsMenu>(*this, edit);
     copies_ = std::make_unique<CopiesMenu>(*this, edit);
+    traceBitmap_ = std::make_unique<TraceBitmapMenu>(*this, file, edit);
     textureMenu_ = std::make_unique<TextureMenu>(*this, edit);
     transformMenu_ = std::make_unique<TransformMenu>(*this);
     doubleSided_ = std::make_unique<DoubleSidedMenu>(*this, edit);
@@ -295,6 +305,12 @@ void MainWindow::buildMenus() {
             statusBar()->showMessage(qs(r.message), 6000);
         }
     });
+    dimensions_ = std::make_unique<DimensionMenu>(*this, edit);
+
+    edit->addSeparator();
+    variablesAction_ = edit->addAction(QStringLiteral("Document &Variables..."));
+    variablesAction_->setObjectName(QStringLiteral("variablesAction"));
+    connect(variablesAction_, &QAction::triggered, this, [this]() { variablesDialog(); });
 
     QMenu* view = menuBar()->addMenu(QStringLiteral("&View"));
     QAction* fit = view->addAction(QStringLiteral("Zoom to &Material"));
@@ -372,6 +388,9 @@ void MainWindow::buildToolPalette() {
         {viewmodel::ToolKind::Text, "Text",
          "Place text: click (point text), drag a box (text in a box) or click a curve (text on a curve). "
          "Type; Enter: new line, Ctrl+Enter: place, Escape: cancel. Click a text to edit it"},
+        {viewmodel::ToolKind::Dimension, "Dimension",
+         "Dimension: click the points, then the line position. Shift-click a dimension to edit it "
+         "(drag its handles, Delete removes it, Escape: cancel)"},
     };
     QToolBar* bar = addToolBar(QStringLiteral("Tools"));
     bar->setObjectName(QStringLiteral("toolsToolBar"));

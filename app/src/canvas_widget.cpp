@@ -3,6 +3,7 @@
 #include <QBrush>
 #include <QElapsedTimer>
 #include <QEvent>
+#include <QFont>
 #include <QKeyEvent>
 #include <QLineF>
 #include <QMouseEvent>
@@ -12,6 +13,7 @@
 #include <QPen>
 #include <QPolygonF>
 #include <QRectF>
+#include <QString>
 #include <QResizeEvent>
 #include <QWheelEvent>
 #include <algorithm>
@@ -196,6 +198,40 @@ void CanvasWidget::paintScene(QPainter& painter, const ViewTransform& view, QSiz
         painter.setPen(pen);
         painter.setBrush(Qt::NoBrush);
         painter.drawPath(qp);
+    }
+
+    // Dimension texts: glyph outlines filled (non-zero), or the toolkit's own text when no font could
+    // set them.
+    for (const viewmodel::DrawLabel& label : scene.labels) {
+        const QColor ink(label.colour.r, label.colour.g, label.colour.b);
+        if (!label.outlinesPx.empty()) {
+            QPainterPath qp;
+            qp.setFillRule(Qt::WindingFill);
+            for (const std::vector<Vec2>& poly : label.outlinesPx) {
+                if (poly.size() < 3) {
+                    continue;
+                }
+                qp.moveTo(toQt(poly.front()));
+                for (std::size_t i = 1; i < poly.size(); ++i) {
+                    qp.lineTo(toQt(poly[i]));
+                }
+                qp.closeSubpath();
+            }
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(ink);
+            painter.drawPath(qp);
+        } else if (label.heightPx >= 1.0) {
+            painter.save();
+            painter.translate(toQt(label.centrePx));
+            painter.rotate(label.angle * 180.0 / 3.14159265358979323846);
+            QFont font = painter.font();
+            font.setPixelSize(std::max(1, static_cast<int>(label.heightPx / 0.73)));
+            painter.setFont(font);
+            painter.setPen(ink);
+            const QRectF box(-1.0e4, -1.0e4, 2.0e4, 2.0e4);
+            painter.drawText(box, Qt::AlignCenter, QString::fromStdString(label.text));
+            painter.restore();
+        }
     }
 
     paintKeepOut(painter, scene);
@@ -432,6 +468,7 @@ void CanvasWidget::paintOverlay(QPainter& painter) const {
     }
 
     paintNodes(painter);
+    paintDimensionHandles(painter);
     paintSelectionBox(painter);
 
     // Snap glyph at the snapped point; the shape depends on the kind.
@@ -475,6 +512,19 @@ void CanvasWidget::paintOverlay(QPainter& painter) const {
                 painter.drawLine(QPointF(p.x(), p.y() - r), QPointF(p.x(), p.y() + r));
                 break;
         }
+    }
+}
+
+void CanvasWidget::paintDimensionHandles(QPainter& painter) const {
+    if (tools_.tool() != viewmodel::ToolKind::Dimension) {
+        return;
+    }
+    // White squares change size or placement, black ones the legs and the text height.
+    for (const document::DimensionHandle& h : tools_.dimensionTool().handles()) {
+        const QPointF p = toQt(view_.worldToScreen(h.pos));
+        painter.setPen(QPen(h.white ? QColor(30, 110, 230) : QColor(255, 255, 255), 1.0));
+        painter.setBrush(h.white ? QColor(255, 255, 255) : QColor(0, 0, 0));
+        painter.drawRect(QRectF(p.x() - 4.0, p.y() - 4.0, 8.0, 8.0));
     }
 }
 
@@ -628,6 +678,9 @@ viewmodel::Modifiers CanvasWidget::toolModifiers(Qt::KeyboardModifiers mods) {
 }
 
 void CanvasWidget::afterToolEvent(const viewmodel::ToolResult& result) {
+    if (!result.message.empty() && tools_.tool() == viewmodel::ToolKind::Dimension && onNodeMessage) {
+        onNodeMessage(result.message);
+    }
     if ((result.committed || result.transformed) && onDocumentEdited) {
         onDocumentEdited();
     }
@@ -692,6 +745,19 @@ void CanvasWidget::keyPressEvent(QKeyEvent* event) {
             afterToolEvent(textResult);
             return;
         }
+    }
+    if (tools_.tool() == viewmodel::ToolKind::Dimension && event->key() == Qt::Key_Delete &&
+        tools_.dimensionTool().pickedCount() == 0 && !tools_.dimensionTool().dragging()) {
+        const viewmodel::DimensionToolResult r = tools_.dimensionTool().removeSelected();
+        event->accept();
+        if (!r.ok && onNodeMessage) {
+            onNodeMessage(r.message);
+        }
+        viewmodel::ToolResult t;
+        t.committed = r.committed;
+        t.selectionChanged = r.committed;
+        afterToolEvent(t);
+        return;
     }
     if (!tools_.wantsKeys()) {
         QWidget::keyPressEvent(event);

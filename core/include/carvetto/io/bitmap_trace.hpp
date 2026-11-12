@@ -24,6 +24,12 @@ namespace carvetto::io {
 
 enum class TraceMode { BlackWhite, Colour };
 
+/// Default boundary-edge budget. Fitting costs roughly 10-15 us per edge, so a request at the
+/// budget finishes in under a minute; a valid 4000x4000 single-loop bitmap (about 16 M edges)
+/// is refused in a fraction of a second instead of running for minutes. Inputs below the budget
+/// give exactly the output they gave before the budget existed.
+inline constexpr std::size_t kTraceDefaultMaxBoundaryEdges = 4'000'000;
+
 struct TraceParams {
     TraceMode mode{TraceMode::BlackWhite};
     std::uint8_t threshold{128};   ///< B&W: luma < threshold is foreground
@@ -33,6 +39,9 @@ struct TraceParams {
     int noiseFilter{2};            ///< minimum feature size in pixels (0/1 = off)
     double mmPerPixel{1.0};        ///< > 0
     geometry::Vec2 origin{0, 0};   ///< position of the image's bottom-left corner, mm
+    /// Work budget: most mask boundary edges (pixel-edge segments, over all colour layers, after
+    /// noise filtering) the trace accepts; more is an error ("too complex"), raised before any fitting.
+    std::size_t maxBoundaryEdges{kTraceDefaultMaxBoundaryEdges};
 };
 
 /// Output limits; a request exceeding them returns an error rather than a partial result.
@@ -45,6 +54,8 @@ struct TraceLayer {
     std::vector<geometry::Contour> contours;  ///< closed; outer CCW, holes CW
 };
 
+/// Cooperative cancel: a `geometry::CancelScope` on the calling thread makes the trace poll its flag
+/// (per mask row, per loop, every 65536 loop steps, per fit) and return the error "trace cancelled".
 /// B&W mode returns one layer; Colour mode one per non-empty palette entry, most populous first.
 geometry::ShapeResult<std::vector<TraceLayer>> traceBitmap(const RasterImage& img, const TraceParams& p);
 

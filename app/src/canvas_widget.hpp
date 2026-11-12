@@ -130,6 +130,7 @@ class CanvasWidget : public QWidget {
    private:
     void paintOverlay(QPainter& painter) const;
     void paintNodes(QPainter& painter) const;
+    void paintDimensionHandles(QPainter& painter) const;
     void updateNodeCursor(QPointF pos);
     void paintSelectionBox(QPainter& painter) const;
     void updateCursorHint();

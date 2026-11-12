@@ -9,9 +9,9 @@ stamps the active sheet; single-sided jobs keep it null. Selections (`all`, laye
 must be stored. Recalculating a linked toolpath is refused unless its sheet is active (the vectors it
 machines are only resolved on the active sheet).
 
-## Persistence: format 1.6
+## Persistence: format 1.7
 `job.json` toolpath records get an optional `sheet` (entity id), written ONLY for records whose sheet
-exists. The writer's minor is the highest one any used feature needs: 1.6 only when such a record exists
+exists. The writer's minor is the highest one any used feature needs: 1.7 only when such a record exists
 (`kCarvFormatMinorToolpathSheet`), so every document without linked records keeps its previous minor and
 bytes. A link to a deleted sheet is written unlinked; the loader refuses a link to a sheet the file does
 not have. Older readers keep the unknown `sheet` key in their extras (the loader only checks the major).

@@ -5,6 +5,8 @@
 #include <cmath>
 #include <string>
 
+#include "carvetto/geometry/cancel.hpp"
+
 namespace carvetto::io {
 
 using geometry::BezierSpan;
@@ -144,12 +146,18 @@ Palette medianCut(const RasterImage& img, int colours) {
 // ------------------------------------------------------------------ boundary loops
 
 /// Lattice loops (x,y in pixel-corner coordinates, y down), foreground on the left of travel.
-std::vector<std::vector<std::pair<int, int>>> boundaryLoops(const Mask& m, int w, int h, bool& tooMany) {
+enum class BoundaryStatus { Ok, TooManyContours, OverBudget, Cancelled };
+
+/// `edgeBudget` is what is left of the boundary-edge budget; it is reduced by this mask's edges.
+std::vector<std::vector<std::pair<int, int>>> boundaryLoops(const Mask& m, int w, int h, std::size_t& edgeBudget,
+                                                            BoundaryStatus& status) {
     auto fg = [&](int x, int y) { return x >= 0 && y >= 0 && x < w && y < h && m[static_cast<std::size_t>(y) * static_cast<std::size_t>(w) + static_cast<std::size_t>(x)] != 0; };
     const int vw = w + 1, vh = h + 1;
     std::vector<std::uint8_t> out(static_cast<std::size_t>(vw) * static_cast<std::size_t>(vh), 0);  // bit d: unused edge leaving in dir d
+    std::size_t edges = 0;
     auto vi = [&](int x, int y) { return static_cast<std::size_t>(y) * static_cast<std::size_t>(vw) + static_cast<std::size_t>(x); };
     for (int y = 0; y <= h; ++y) {
+        if (geometry::cancelRequested()) { status = BoundaryStatus::Cancelled; return {}; }
         for (int x = 0; x <= w; ++x) {
             std::uint8_t b = 0;
             if (fg(x, y - 1) && !fg(x, y)) b |= 1;          // E
@@ -157,8 +165,11 @@ std::vector<std::vector<std::pair<int, int>>> boundaryLoops(const Mask& m, int w
             if (fg(x - 1, y) && !fg(x - 1, y - 1)) b |= 4;  // W
             if (fg(x - 1, y - 1) && !fg(x, y - 1)) b |= 8;  // N
             out[vi(x, y)] = b;
+            edges += static_cast<std::size_t>((b & 1) + ((b >> 1) & 1) + ((b >> 2) & 1) + ((b >> 3) & 1));
         }
     }
+    if (edges > edgeBudget) { status = BoundaryStatus::OverBudget; return {}; }
+    edgeBudget -= edges;
     static constexpr int dx[4] = {1, 0, -1, 0};
     static constexpr int dy[4] = {0, 1, 0, -1};
     std::vector<std::vector<std::pair<int, int>>> loops;
@@ -166,12 +177,14 @@ std::vector<std::vector<std::pair<int, int>>> boundaryLoops(const Mask& m, int w
         for (int x = 0; x <= w; ++x) {
             for (int d0 = 0; d0 < 4; ++d0) {
                 if (!(out[vi(x, y)] & (1 << d0))) continue;
-                if (loops.size() >= kTraceMaxContours) { tooMany = true; return loops; }
+                if (loops.size() >= kTraceMaxContours) { status = BoundaryStatus::TooManyContours; return loops; }
+                if (geometry::cancelRequested()) { status = BoundaryStatus::Cancelled; return {}; }
                 std::vector<std::pair<int, int>> loop;
                 int cx = x, cy = y, d = d0;
                 for (;;) {
                     out[vi(cx, cy)] = static_cast<std::uint8_t>(out[vi(cx, cy)] & ~(1 << d));
                     loop.emplace_back(cx, cy);
+                    if ((loop.size() & 0xFFFFu) == 0 && geometry::cancelRequested()) { status = BoundaryStatus::Cancelled; return {}; }
                     cx += dx[d];
                     cy += dy[d];
                     // Left turn first, then straight, then right.
@@ -222,6 +235,7 @@ double distToSegment(Vec2 p, Vec2 a, Vec2 b) {
 
 void fitCubic(const Pts& d, std::size_t first, std::size_t last, Vec2 t1, Vec2 t2, std::vector<geometry::Span>& out,
               int depth) {
+    if (geometry::cancelRequested()) return;  // the caller sees the flag and discards the result
     const std::size_t n = last - first + 1;
     const Vec2 a = d[first], b = d[last];
     // Straight enough: one line span.
@@ -403,6 +417,8 @@ geometry::ShapeResult<std::vector<TraceLayer>> traceBitmap(const RasterImage& im
     if (!(p.cornerFit >= 0.0 && p.cornerFit <= 1.0)) return R(std::string("cornerFit must be in [0,1]"));
     if (p.noiseFilter < 0) return R(std::string("noiseFilter must be >= 0"));
     if (p.mode == TraceMode::Colour && (p.colourCount < 2 || p.colourCount > 16)) return R(std::string("colourCount must be 2..16"));
+    const std::string cancelled = "trace cancelled";
+    if (geometry::cancelRequested()) return R(cancelled);
 
     const int w = img.width, h = img.height;
     const std::size_t n = static_cast<std::size_t>(w) * static_cast<std::size_t>(h);
@@ -430,18 +446,24 @@ geometry::ShapeResult<std::vector<TraceLayer>> traceBitmap(const RasterImage& im
     const int smooth = 1 + static_cast<int>(std::lround((1.0 - p.cornerFit) * 3.0));  // 4 loose .. 1 tight
     std::vector<TraceLayer> layers;
     std::size_t spanTotal = 0;
+    std::size_t edgeBudget = p.maxBoundaryEdges;
     for (auto& pl : planes) {
+        if (geometry::cancelRequested()) return R(cancelled);
         noiseFilter(pl.mask, w, h, p.noiseFilter);
+        if (geometry::cancelRequested()) return R(cancelled);
         TraceLayer layer;
         layer.r = pl.colour[0];
         layer.g = pl.colour[1];
         layer.b = pl.colour[2];
         for (std::uint8_t v : pl.mask) layer.pixelCount += v;
         if (layer.pixelCount == 0) continue;
-        bool tooMany = false;
-        const auto loops = boundaryLoops(pl.mask, w, h, tooMany);
-        if (tooMany) return R(std::string("too many contours"));
+        BoundaryStatus status = BoundaryStatus::Ok;
+        const auto loops = boundaryLoops(pl.mask, w, h, edgeBudget, status);
+        if (status == BoundaryStatus::Cancelled) return R(cancelled);
+        if (status == BoundaryStatus::OverBudget) return R(std::string("image too complex to trace (boundary edge budget exceeded)"));
+        if (status == BoundaryStatus::TooManyContours) return R(std::string("too many contours"));
         for (const auto& loop : loops) {
+            if (geometry::cancelRequested()) return R(cancelled);
             Contour c = fitLoop(loop, cornerRun, smooth);
             spanTotal += c.spans.size();
             if (spanTotal > kTraceMaxSpans) return R(std::string("result too large"));
@@ -450,6 +472,7 @@ geometry::ShapeResult<std::vector<TraceLayer>> traceBitmap(const RasterImage& im
         }
         layers.push_back(std::move(layer));
     }
+    if (geometry::cancelRequested()) return R(cancelled);
     std::stable_sort(layers.begin(), layers.end(), [](const TraceLayer& a, const TraceLayer& b) { return a.pixelCount > b.pixelCount; });
     return R(std::move(layers));
 }

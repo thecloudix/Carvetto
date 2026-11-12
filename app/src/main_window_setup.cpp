@@ -13,9 +13,11 @@
 #include "carvetto/viewmodel/file_session.hpp"
 #include "carvetto/viewmodel/new_job_form.hpp"
 #include "carvetto/viewmodel/tool_setup.hpp"
+#include "carvetto/viewmodel/variables_model.hpp"
 #include "main_window.hpp"
 #include "new_job_dialog.hpp"
 #include "tool_setup_dialog.hpp"
+#include "variables_dialog.hpp"
 #include "toolpaths_panel.hpp"
 
 namespace carvetto::app {
@@ -73,6 +75,20 @@ void MainWindow::toolSetupDialog() {
                              QStringLiteral("The setup could not be saved: ") + toQ(toolpaths_->setupSaveError()));
     }
     documentChanged();
+}
+
+void MainWindow::variablesDialog() {
+    if (toolpaths_->busy()) {
+        if (!quiet_) {
+            QMessageBox::information(this, QStringLiteral("Document Variables"),
+                                     QStringLiteral("Wait for the toolpath calculation to finish."));
+        }
+        return;
+    }
+    viewmodel::VariablesModel model(&session_.document(), &toolpaths_->session());
+    VariablesDialog dialog(model, this);
+    dialog.onEdited = [this]() { documentChanged(); };
+    dialog.exec();
 }
 
 void MainWindow::loadUserSetup(const QString& activeMachine) {

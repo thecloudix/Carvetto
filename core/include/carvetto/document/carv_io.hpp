@@ -41,9 +41,14 @@ inline constexpr int kCarvFormatMinorKeepOut = 4;
 /// 1.5 (T-0243, ADR-0039) adds double-sided jobs (sheet `side`/`partner`); written only when the
 /// document has a back or paired sheet.
 inline constexpr int kCarvFormatMinorDoubleSided = 5;
-/// 1.6 (T-0261, ADR-0048) adds the sheet a toolpath record belongs to (`job.json` toolpath
+/// 1.6 (T-0273, ADR-0051) embeds bitmap pixel data (`bitmaps/<key>.img` members, referenced by a
+/// bitmap object's `source_ref`); written only when a bitmap object refers to an embedded image.
+/// Older 1.x readers keep the members as unknown archive members and write them back.
+/// The newest minor this build writes and reads.
+inline constexpr int kCarvFormatMinorBitmap = 6;
+/// 1.7 (T-0261, ADR-0048) adds the sheet a toolpath record belongs to (`job.json` toolpath
 /// `sheet`); written only when a record links to a sheet. The newest minor this build writes and reads.
-inline constexpr int kCarvFormatMinorToolpathSheet = 6;
+inline constexpr int kCarvFormatMinorToolpathSheet = 7;
 inline constexpr int kCarvFormatMinor = kCarvFormatMinorToolpathSheet;
 /// The minor version written for documents that use text (1.2) but no 1.3/1.4 features.
 inline constexpr int kCarvFormatMinorText = 2;

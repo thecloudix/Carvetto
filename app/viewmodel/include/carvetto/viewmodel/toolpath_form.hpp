@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
@@ -36,6 +37,10 @@
 //               are linked: cutDepth = width / (2 tan angle); a V-bit's angle comes from the tool)
 //   Thread Mill startDepth maxDepth threadLength safeZ threadedLength diameter pitch fitTolerance startX startY
 //               distance chordal (pitch is hidden while a pitch preset is chosen)
+//   Inlay       startDepth cutDepth stepDepth stepWidth allowance safeZ startX startY chordal (step fields only
+//               for a stepped male; choices piece, maleStyle, femaleStyle, direction, order)
+//   Fluting     fluteDepth rampLength|rampPercent (by the ramp basis; hidden for a ramp over the complete
+//               length) safeZ startX startY chordal
 //   Prism       depth (hidden with fullPrism) stepover safeZ startX startY chordal
 // Choices carry the enum/bool inputs; see `choices()`.
 
@@ -116,6 +121,17 @@ class ToolpathForm {
     std::vector<ToolpathChoice> choices() const;
     /// Validates and stores one entry; an empty text resets the field. A bad value changes nothing.
     FieldResult setField(const std::string& id, const std::string& text);
+    /// Calculation edit boxes (T-0257): a numeric entry starting with `=` is evaluated by
+    /// `calculate` (units of the form) and its text is kept, field id -> text; the field's value in
+    /// the definition is the result. `fields()` shows the kept text for such a field.
+    const std::map<std::string, std::string>& expressions() const { return expressions_; }
+    /// The expression of field `id`, or empty.
+    std::string expression(const std::string& id) const;
+    /// Document variables the kept expressions name (sorted, unique).
+    std::vector<std::string> usedVariables() const;
+    /// Re-enters every expression (e.g. when loading a form for editing); the first failure is
+    /// returned, the rest are still applied.
+    FieldResult setExpressions(const std::map<std::string, std::string>& expressions);
     /// Sets one option (index into `ToolpathChoice::options`; a bool is 0/1).
     FieldResult setChoice(const std::string& id, int option);
 
@@ -158,6 +174,7 @@ class ToolpathForm {
     ToolpathDefinition definition_;
     document::Units units_;
     ToolSummary toolSummary_;
+    std::map<std::string, std::string> expressions_;
 };
 
 }  // namespace carvetto::viewmodel

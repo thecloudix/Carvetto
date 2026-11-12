@@ -30,6 +30,7 @@
 #include "carvetto/viewmodel/vector_selector.hpp"
 #include "carvetto/viewmodel/tool_setup.hpp"
 #include "starter_tools.hpp"
+#include "carvetto/viewmodel/variables_model.hpp"
 #include "toolpath_form_dialog.hpp"
 
 namespace carvetto::app {
@@ -161,7 +162,8 @@ void ToolpathsPanel::build() {
     auto* addMenu = new QMenu(bar_);
     for (ToolpathOperation op : {ToolpathOperation::Profile, ToolpathOperation::Pocket, ToolpathOperation::Drill,
                                  ToolpathOperation::Engrave, ToolpathOperation::VCarving, ToolpathOperation::Chamfer,
-                                 ToolpathOperation::ThreadMill, ToolpathOperation::Prism}) {
+                                 ToolpathOperation::ThreadMill, ToolpathOperation::Prism, ToolpathOperation::Fluting,
+                                 ToolpathOperation::Inlay}) {
         QAction* a = addMenu->addAction(QString::fromUtf8(operationLabel(op)));
         a->setObjectName(QStringLiteral("add%1").arg(QString::fromUtf8(operationLabel(op))));
         a->setToolTip(QStringLiteral("Add a %1 toolpath").arg(QString::fromUtf8(operationLabel(op))));
@@ -323,12 +325,15 @@ void ToolpathsPanel::setDocument(document::Document* doc) {
     // The old document may be gone already: do not touch doc_ before replacing it.
     ++generation_;
     runner_.cancel();
+    // The session first: it forgets the variable references without touching the old document, so
+    // closing the form (which clears its variables) cannot reach a document that is gone.
+    session_.setDocument(doc);
+    pendingExpressions_.clear();
     if (dialog_) {
         dialog_->reject();
         delete dialog_.data();
     }
     doc_ = doc;
-    session_.setDocument(doc);
     failed_.clear();
     lastMessages_.clear();
     setStatus(busy_ ? QStringLiteral("Finishing the previous calculation; its result will be discarded.")
@@ -585,8 +590,19 @@ void ToolpathsPanel::openForm(viewmodel::ToolpathForm form, bool editing, Toolpa
     }
     info.selection = doc_->selection().ids();
     info.countVectors = [this](const viewmodel::VectorSelector& s) { return session_.countVectors(s); };
+    // Variables the form names are held while it is open (T-0257); closing it releases them.
+    info.variablesChanged = [this](const std::vector<std::string>& names) { session_.setOpenFormVariables(names); };
+    info.createVariable = [this](const std::string& name, const std::string& value) {
+        viewmodel::VariablesModel model(doc_, &session_);
+        const viewmodel::VariableEdit r = model.set(name, value);
+        if (r.ok) {
+            edited();
+        }
+        return r.ok ? std::string() : r.message;
+    };
     auto* dlg = new ToolpathFormDialog(std::move(form), db_, std::move(info), editing, window());
     dialog_ = dlg;
+    connect(dlg, &QDialog::finished, this, [this]() { session_.setOpenFormVariables({}); });
     dlg->setAttribute(Qt::WA_DeleteOnClose);
     dlg->setModal(true);
     connect(dlg, &QDialog::accepted, this, [this, dlg, editing, id]() {
@@ -594,6 +610,7 @@ void ToolpathsPanel::openForm(viewmodel::ToolpathForm form, bool editing, Toolpa
             return;
         }
         const viewmodel::ToolpathDefinition def = dlg->form().definition();
+        pendingExpressions_ = dlg->form().expressions();
         if (editing) {
             const std::optional<ToolpathId> target = session_.targetOf(id);
             if (!target.has_value()) {
@@ -698,6 +715,10 @@ void ToolpathsPanel::finishRun() {
         const viewmodel::ToolpathCalculation& calc = results->front();
         const viewmodel::ToolpathOutcome out = session_.apply(calc);
         if (out.ok) {
+            if (pending.kind == Kind::Add || pending.kind == Kind::Edit) {
+                session_.bindExpressions(out.ids, pendingExpressions_);  // also forgets them when none
+            }
+            pendingExpressions_.clear();
             if (!calc.target.isNull()) {
                 failed_.erase(calc.target);
             }

@@ -10,6 +10,7 @@
 #include "carvetto/document/carv_io.hpp"
 #include "carvetto/document/commands.hpp"
 #include "carvetto/toolpath/v_carve.hpp"
+#include "carvetto/viewmodel/calculation.hpp"
 
 namespace carvetto::viewmodel {
 
@@ -66,6 +67,10 @@ ToolpathSession::ToolpathSession(Document* doc) : doc_(doc) {}
 ToolpathSession::~ToolpathSession() = default;
 
 void ToolpathSession::setDocument(Document* doc) {
+    // The old document may be gone: forget the references without releasing them.
+    registeredRefs_.clear();
+    expressions_.clear();
+    openFormVariables_.clear();
     doc_ = doc;
     baselines_.clear();
     stats_.clear();
@@ -422,6 +427,9 @@ std::optional<ToolpathForm> ToolpathSession::form(ToolpathId id) {
     }
     ToolpathForm f(*def, doc_->job().displayUnits);
     f.refreshTools(db_);
+    if (const auto it = expressions_.find(id); it != expressions_.end()) {
+        f.setExpressions(it->second);
+    }
     return f;
 }
 
@@ -1288,6 +1296,140 @@ JobSummary ToolpathSession::summary() {
         out.entries.push_back(std::move(e));
     }
     out.distinctTools = tools.size();
+    return out;
+}
+
+}  // namespace carvetto::viewmodel
+
+// --- Document variables ----------------------------------------------------------------------------
+
+namespace carvetto::viewmodel {
+
+void ToolpathSession::bindExpressions(const std::vector<ToolpathId>& ids,
+                                      const std::map<std::string, std::string>& expressions) {
+    for (const ToolpathId id : ids) {
+        if (expressions.empty()) {
+            expressions_.erase(id);
+        } else {
+            expressions_[id] = expressions;
+        }
+    }
+    refreshReferences();
+}
+
+std::map<std::string, std::string> ToolpathSession::expressionsOf(ToolpathId id) const {
+    const auto it = expressions_.find(id);
+    return it == expressions_.end() ? std::map<std::string, std::string>{} : it->second;
+}
+
+void ToolpathSession::setOpenFormVariables(const std::vector<std::string>& names) {
+    openFormVariables_ = names;
+    refreshReferences();
+}
+
+void ToolpathSession::refreshReferences() {
+    if (doc_ == nullptr) {
+        registeredRefs_.clear();
+        return;
+    }
+    document::DocumentVariables& vars = doc_->variables();
+    for (const std::string& name : registeredRefs_) {
+        vars.removeReference(name);
+    }
+    registeredRefs_.clear();
+    for (auto it = expressions_.begin(); it != expressions_.end();) {
+        it = doc_->findToolpath(it->first) == nullptr ? expressions_.erase(it) : std::next(it);
+    }
+    const document::Units units = doc_->job().displayUnits;
+    const auto hold = [&](const std::string& name) {
+        if (vars.contains(name)) {
+            vars.addReference(name);
+            registeredRefs_.push_back(name);
+        }
+    };
+    for (const auto& [id, exprs] : expressions_) {
+        std::vector<std::string> used;
+        for (const auto& [field, text] : exprs) {
+            const Calculation calc = calculate(text, units);
+            used.insert(used.end(), calc.usedVariables.begin(), calc.usedVariables.end());
+        }
+        std::sort(used.begin(), used.end());
+        used.erase(std::unique(used.begin(), used.end()), used.end());
+        for (const std::string& name : used) {
+            hold(name);
+        }
+    }
+    for (const std::string& name : openFormVariables_) {
+        hold(name);
+    }
+}
+
+BatchOutcome ToolpathSession::recalculateBound() {
+    BatchOutcome out;
+    out.ok = true;
+    if (doc_ == nullptr) {
+        out.message = "there is no document";
+        out.ok = false;
+        return out;
+    }
+    sync();
+    std::vector<ToolpathId> done;  // targets already handled (a V-carve's members share one)
+    std::vector<ToolpathId> ids;
+    for (const auto& [id, exprs] : expressions_) {
+        ids.push_back(id);
+    }
+    for (const ToolpathId id : ids) {
+        if (doc_->findToolpath(id) == nullptr) {
+            continue;
+        }
+        const std::optional<ToolpathId> target = targetOf(id);
+        if (!target.has_value() || std::find(done.begin(), done.end(), *target) != done.end()) {
+            continue;
+        }
+        done.push_back(*target);
+        const std::optional<ToolpathDefinition> current = definition(id);
+        if (!current.has_value()) {
+            continue;
+        }
+        ToolpathForm f(*current, doc_->job().displayUnits);
+        f.refreshTools(db_);
+        const FieldResult entered = f.setExpressions(expressions_[id]);
+        ToolpathOutcome item;
+        if (!entered.ok) {
+            item.ok = false;
+            item.message = "'" + current->name() + "': " + entered.message;
+            ++out.failed;
+            out.items.push_back(std::move(item));
+            continue;
+        }
+        if (f.definition().params == current->params) {
+            continue;  // the values did not change
+        }
+        ToolpathDefinition next = *current;
+        next.params = f.definition().params;
+        item = update(id, next);
+        if (item.ok) {
+            ++out.recalculated;
+        } else {
+            ++out.failed;
+            item.message = "'" + current->name() + "': " + item.message;
+        }
+        out.items.push_back(std::move(item));
+    }
+    out.ok = out.failed == 0;
+    if (out.failed != 0) {
+        out.message = out.items.back().message;
+        for (const ToolpathOutcome& it : out.items) {
+            if (!it.ok) {
+                out.message = it.message;
+                break;
+            }
+        }
+    } else if (out.recalculated != 0) {
+        out.message = std::to_string(out.recalculated) + " toolpath(s) recalculated";
+    } else {
+        out.message = "no toolpath depends on the change";
+    }
     return out;
 }
 

@@ -11,7 +11,10 @@
 
 #include "carvetto/geometry/vec2.hpp"
 #include "carvetto/toolpath/chamfer.hpp"
+#include "carvetto/toolpath/inlay.hpp"
+#include "carvetto/toolpath/fluting.hpp"
 #include "carvetto/toolpath/thread_mill.hpp"
+#include "carvetto/viewmodel/calculation.hpp"
 #include "carvetto/toolpath/prism.hpp"
 #include "carvetto/viewmodel/units_format.hpp"
 
@@ -460,6 +463,73 @@ Table<toolpath::ThreadMillParams> makeThreadMillTable() {
     return t;
 }
 
+Table<toolpath::InlayParams> makeInlayTable() {
+    using P = toolpath::InlayParams;
+    using toolpath::InlayMaleStyle;
+    using toolpath::InlayPiece;
+    const auto male = [](const P& p) { return p.piece == InlayPiece::Male; };
+    const auto stepped = [](const P& p) { return p.piece == InlayPiece::Male && p.maleStyle == InlayMaleStyle::Stepped; };
+    Table<P> t;
+    t.num("startDepth", "Start depth", "Depth", Kind::Length, false, true, [](P& p) -> double& { return p.startDepth; });
+    t.num("cutDepth", "Inlay depth", "Depth", Kind::Length, false, false, [](P& p) -> double& { return p.cutDepth; });
+    t.num("stepDepth", "Step depth", "Step", Kind::Length, false, false, [](P& p) -> double& { return p.stepDepth; },
+          stepped);
+    t.num("stepWidth", "Step width", "Step", Kind::Length, false, false, [](P& p) -> double& { return p.stepWidth; },
+          stepped);
+    t.num("allowance", "Allowance (glue gap)", "Fit", Kind::Length, false, true,
+          [](P& p) -> double& { return p.allowance; });
+    t.num("safeZ", "Safe Z", "Depth", Kind::Length, false, false, [](P& p) -> double& { return p.safeZ; });
+    addStartPosition<P>(t, [](P& p) -> geometry::Vec2& { return p.startPosition; });
+    addChordal<P>(t, [](P& p) -> geometry::Tolerance& { return p.tolerance; }, 1e-4);
+    bound(t, "startDepth", 0.0, 100000.0);
+    bound(t, "cutDepth", 1e-6, 100000.0);
+    bound(t, "stepDepth", 1e-6, 100000.0);
+    bound(t, "stepWidth", 1e-6, kMaxOffsetMm);
+    bound(t, "allowance", 0.0, kMaxOffsetMm);
+    t.option<InlayPiece>("piece", "Piece", "Inlay", {"Male (plug)", "Female"},
+                         [](P& p) -> InlayPiece& { return p.piece; });
+    t.option<InlayMaleStyle>("maleStyle", "Male inlay", "Inlay", {"Straight", "Stepped"},
+                             [](P& p) -> InlayMaleStyle& { return p.maleStyle; }, male);
+    t.option<toolpath::InlayFemaleStyle>("femaleStyle", "Female inlay", "Inlay", {"Pocket", "Hole"},
+                                         [](P& p) -> toolpath::InlayFemaleStyle& { return p.femaleStyle; },
+                                         [](const P& p) { return p.piece == InlayPiece::Female; });
+    t.option<CutDirection>("direction", "Direction", "Cut", {"Climb", "Conventional"},
+                           [](P& p) -> CutDirection& { return p.direction; });
+    addOrder<P>(t, [](P& p) -> toolpath::OrderOptions& { return p.order; });
+    return t;
+}
+
+Table<toolpath::FlutingParams> makeFlutingTable() {
+    using P = toolpath::FlutingParams;
+    Table<P> t;
+    t.num("fluteDepth", "Flute depth", "Depth", Kind::Length, false, false, [](P& p) -> double& { return p.fluteDepth; });
+    bound(t, "fluteDepth", 1e-3, 100000.0);
+    t.num("rampLength", "Ramp length", "Ramp", Kind::Length, false, false, [](P& p) -> double& { return p.rampLength; },
+          [](const P& p) {
+              return p.type != toolpath::FluteType::RampOverLength && p.rampBasis == toolpath::FluteRampBasis::Length;
+          });
+    bound(t, "rampLength", 1e-3, 100000.0);
+    t.num("rampPercent", "Ramp (% of the vector's length)", "Ramp", Kind::Factor, false, false,
+          [](P& p) -> double& { return p.rampPercent; },
+          [](const P& p) {
+              return p.type != toolpath::FluteType::RampOverLength && p.rampBasis == toolpath::FluteRampBasis::Percent;
+          });
+    bound(t, "rampPercent", 1e-3, 100.0);
+    t.num("safeZ", "Safe Z", "Depth", Kind::Length, false, false, [](P& p) -> double& { return p.safeZ; });
+    addStartPosition<P>(t, [](P& p) -> geometry::Vec2& { return p.startPosition; });
+    addChordal<P>(t, [](P& p) -> geometry::Tolerance& { return p.tolerance; }, 1e-4);
+    t.option<toolpath::FluteType>("fluteType", "Flute type", "Ramp",
+                                  {"Ramp over complete length", "Ramp at start", "Ramp at start and end"},
+                                  [](P& p) -> toolpath::FluteType& { return p.type; });
+    t.option<toolpath::FluteRampBasis>("rampBasis", "Ramp given as", "Ramp", {"Length", "Percent"},
+                                       [](P& p) -> toolpath::FluteRampBasis& { return p.rampBasis; },
+                                       [](const P& p) { return p.type != toolpath::FluteType::RampOverLength; });
+    t.option<toolpath::FluteRampType>("rampType", "Ramp type", "Ramp", {"Linear", "Smooth"},
+                                      [](P& p) -> toolpath::FluteRampType& { return p.rampType; });
+    addOrder<P>(t, [](P& p) -> toolpath::OrderOptions& { return p.order; });
+    return t;
+}
+
 Table<toolpath::PrismParams> makePrismTable() {
     using P = toolpath::PrismParams;
     Table<P> t;
@@ -513,8 +583,20 @@ const Table<toolpath::ThreadMillParams>& tableOf() {
 }
 
 template <>
+const Table<toolpath::FlutingParams>& tableOf() {
+    static const Table<toolpath::FlutingParams> t = makeFlutingTable();
+    return t;
+}
+
+template <>
 const Table<toolpath::PrismParams>& tableOf() {
     static const Table<toolpath::PrismParams> t = makePrismTable();
+    return t;
+}
+
+template <>
+const Table<toolpath::InlayParams>& tableOf() {
+    static const Table<toolpath::InlayParams> t = makeInlayTable();
     return t;
 }
 
@@ -563,9 +645,23 @@ std::string valueText(Kind kind, double value, Units units) {
 }
 
 /// A plain decimal number (no unit suffix, no inf/nan/hex), as `parseNumber` accepts for lengths.
-ParsedNumber parsePlain(const std::string& text) {
+ParsedNumber parsePlain(const std::string& text, Units units) {
     ParsedNumber out;
     std::string t = trimmed(text);
+    if (isExpressionText(t)) {
+        const Calculation calc = calculate(t, units);
+        if (!calc.ok) {
+            out.error = calc.error;
+            return out;
+        }
+        if (std::fabs(calc.value) > kMaxLength) {
+            out.error = "value is too large";
+            return out;
+        }
+        out.ok = true;
+        out.value = calc.value;
+        return out;
+    }
     if (!t.empty() && t.front() == '+') {
         t.erase(0, 1);
         if (!t.empty() && (t.front() == '+' || t.front() == '-')) {
@@ -698,7 +794,7 @@ FieldResult storeField(P& p, const std::string& id, const std::string& text, Uni
         case Kind::Angle: n = parseNumber(t, FieldKind::Angle, units); break;
         case Kind::Count: n = parseNumber(t, FieldKind::Count, units); break;
         case Kind::Seconds:
-        case Kind::Factor: n = parsePlain(t); break;
+        case Kind::Factor: n = parsePlain(t, units); break;
     }
     if (!n.ok) {
         return fail(n.error);
@@ -875,6 +971,12 @@ std::vector<ToolpathField> ToolpathForm::fields() const {
     if (isChamferVBit(definition_.params, toolSummary_)) {
         std::erase_if(out, [](const ToolpathField& f) { return f.id == "angle"; });
     }
+    for (ToolpathField& f : out) {
+        if (const auto it = expressions_.find(f.id); it != expressions_.end()) {
+            f.text = it->second;
+            f.typed = true;
+        }
+    }
     return out;
 }
 
@@ -890,7 +992,7 @@ FieldResult ToolpathForm::setField(const std::string& id, const std::string& tex
         return res;
     }
     // Work on a copy: a rejected entry leaves the form untouched.
-    return std::visit(
+    FieldResult out = std::visit(
         [&](auto& p) {
             auto copy = p;
             FieldResult res = storeField(copy, id, text, units_);
@@ -900,6 +1002,43 @@ FieldResult ToolpathForm::setField(const std::string& id, const std::string& tex
             return res;
         },
         definition_.params);
+    if (out.ok) {
+        // A calculation (`=...`) keeps its text so the toolpath can be recalculated when a document
+        // variable it names changes; any other entry (or a reset) drops it.
+        if (isExpressionText(text)) {
+            expressions_[id] = trimmed(text);
+        } else {
+            expressions_.erase(id);
+        }
+    }
+    return out;
+}
+
+std::vector<std::string> ToolpathForm::usedVariables() const {
+    std::vector<std::string> out;
+    for (const auto& [id, text] : expressions_) {
+        const Calculation calc = calculate(text, units_);
+        out.insert(out.end(), calc.usedVariables.begin(), calc.usedVariables.end());
+    }
+    std::sort(out.begin(), out.end());
+    out.erase(std::unique(out.begin(), out.end()), out.end());
+    return out;
+}
+
+std::string ToolpathForm::expression(const std::string& id) const {
+    const auto it = expressions_.find(id);
+    return it == expressions_.end() ? std::string() : it->second;
+}
+
+FieldResult ToolpathForm::setExpressions(const std::map<std::string, std::string>& expressions) {
+    FieldResult first;
+    for (const auto& [id, text] : expressions) {
+        FieldResult r = setField(id, text);
+        if (!r.ok && first.ok) {
+            first = std::move(r);
+        }
+    }
+    return first;
 }
 
 FieldResult ToolpathForm::setChoice(const std::string& id, int option) {
@@ -1041,6 +1180,7 @@ void ToolpathForm::resetValues() {
     const std::string name = definition_.name();
     definition_.params = defaultDefinition(operation()).params;
     definition_.setName(name);
+    expressions_.clear();
 }
 
 }  // namespace carvetto::viewmodel
