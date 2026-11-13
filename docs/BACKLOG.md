@@ -1394,7 +1394,7 @@ Phase: 2   Module: core/relief   Depends on: T-0281, T-0273
 Goal: Heightfield from a bitmap in the `.carv` bitmap store or a file (keep 16-bit depth, brightness maps to height, invert option, auto-scale, combine mode Add); Add Zero Plane (job-size zero component); Scale Model Z (percent or exact height, both sides option for double-sided jobs).
 Acceptance criteria: 16-bit input keeps full precision; uniform image gives a flat field; exact-height scale hits the target to 1e-6; zero plane matches the job size; degenerate input errors cleanly.
 
-### T-0285 Mesh reading: STL (binary and ASCII), OBJ, with orientation transform   [status: in-progress]
+### T-0285 Mesh reading: STL (binary and ASCII), OBJ, with orientation transform   [status: verifying]
 Phase: 2   Module: core/io   Depends on: T-0001   ADR: 0063
 Goal: Qt-free triangle-mesh reader for STL (binary, ASCII) and OBJ (triangulate polygons; ignore materials), a `TriangleMesh` type, bounds, unit scale (mm/inches), Center Model, six top-face choices times five rotations about Z, arbitrary rotation, lock-ratio scale. 3DS, DXF-mesh and SKP are deferred (note in the ADR; open an extra card if cheap). Hostile input safe: size caps, NaN/inf rejected, truncated files report an error, fuzz-style tests.
 Acceptance criteria: round-trip against small hand-built meshes; orientation goldens; all malformed-file classes return errors without crash or unbounded allocation.
