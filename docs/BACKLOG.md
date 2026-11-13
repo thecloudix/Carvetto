@@ -1336,7 +1336,7 @@ Goal: (also from T-0269: a test asserting a case just above 15000 derived spans,
 Acceptance criteria:
   1. Both mutants fail a test; one changelog fragment; CI green.
 
-### T-0278 Job sheet: per-sheet / per-side split (T-0259 follow-up)   [status: in-progress]
+### T-0278 Job sheet: per-sheet / per-side split (T-0259 follow-up)   [status: done — merged #156]
 Phase: 1   Module: app/viewmodel   Depends on: T-0259, T-0261
 Goal: The job sheet is a single document for the whole job. For double-sided jobs, produce per-sheet/per-side sections (setup, toolpaths, tools, thumbnail per side) as T-0243/T-0261 now allow; PDF output includes them. Optional: a direct print dialog if the PrintSupport module is acceptable (owner decision).
 Acceptance criteria:
