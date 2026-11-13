@@ -1212,7 +1212,7 @@ Goal: Edit > Document Variables dialog (create/edit/delete/import/export), expre
 Acceptance criteria:
   1. In the real app: define W-based variable, use it in a toolpath depth box, change it and the toolpath recalculates; deleting a used variable is refused; self-test drives the dialog; one undo step per edit.
 
-### T-0258 Keep-out routing for large outlines (spatial index / outline simplification) (T-0241 follow-up)   [status: ready — LOW]
+### T-0258 Keep-out routing for large outlines (spatial index / outline simplification) (T-0241 follow-up)   [status: in-progress]
 Phase: 1   Module: core/toolpath/keepout   Depends on: T-0241
 Goal: T-0241 bounds routing cost (work budget, TooComplex warning, rapid left straight) but outlines of ~1000+ vertices needing a wrapping detour exceed the budget. Add a spatial index for edge scans and/or tolerance-bounded outline simplification so large DXF-imported outlines route. Also preserve unknown keys in the keepout record.
 Acceptance criteria:
@@ -1269,7 +1269,7 @@ Goal: Save Toolpaths dialog 'Tile Toolpaths' checkbox with strategy (individual/
 Acceptance criteria:
   1. In the real app a user tiles a job larger than the machine and saves per-tile files; oversize tiles refused; one changelog fragment.
 
-### T-0267 orderCuts is quadratic with many coincident vectors (T-0239 verifier)   [status: ready — LOW]
+### T-0267 orderCuts is quadratic with many coincident vectors (T-0239 verifier)   [status: in-progress]
 Phase: 1   Module: core/toolpath (cut_order / orderCuts)   Depends on: —
 Goal: with many coincident or heavily overlapping vectors the shared cut ordering costs O(n^2): 4000 identical vectors took 10.4 s and 20000 took 204 s in fluting (orderCuts is shared with thread mill, drill, engrave). Make ordering sub-quadratic (spatial index / duplicate merge) with byte-identical order for inputs that finished before, plus a work bound.
 Acceptance criteria:
@@ -1287,7 +1287,7 @@ Goal: the 4000 derived-span cap refuses polygonal inputs above ~1000-1500 vertic
 Acceptance criteria:
   1. 3,000-span inputs that finished before are accepted again with byte-identical output; the 20,000-span repro stays refused in <1 s CPU; tests.
 
-### T-0270 Flaky timing tests: 'selection removal scales near-linearly in every order' and other ratio/absolute CPU bounds (T-0226 verifier)   [status: ready — LOW]
+### T-0270 Flaky timing tests: 'selection removal scales near-linearly in every order' and other ratio/absolute CPU bounds (T-0226 verifier)   [status: in-progress]
 Phase: 1   Module: core/tests, app/viewmodel/tests   Depends on: T-0226
 Goal: the T-0226 verifier saw 'selection removal scales near-linearly in every order' flake under heavy load; the T-0226 coder left unhardened: the 2.5-per-doubling checks in toolpath_scale_test, toolpath_residual_scale_test, perf_test, offset_unnested_hole_test, v_carve_test, boolean_batch_test, medial_axis_robustness_test, open_offset_chains_test and absolute CPU-second bounds (e.g. spiral seconds < 0.5*kAbsSlack). Measure idle ratios and under-load behaviour, harden the fragile ones (least-of-N, longer workloads, justified bounds), keep each test's guarding power (mutant check).
 Acceptance criteria:
