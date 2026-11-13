@@ -1335,3 +1335,9 @@ Phase: 1   Module: core/toolpath   Depends on: T-0268
 Goal: (also from T-0269: a test asserting a case just above 15000 derived spans, e.g. a 3000-vertex female, is refused, so the cap-40000 mutant is killed.) A mutant restoring the tiling total-tile limit to 100000 passes all tests. Add a test with between 10,001 and 100,000 tiles expecting a refusal; also confirm the kMinPiece 1e-6 -> 1e-8 mutant is killed (verifier left it unchecked).
 Acceptance criteria:
   1. Both mutants fail a test; one changelog fragment; CI green.
+
+### T-0278 Job sheet: per-sheet / per-side split (T-0259 follow-up)   [status: ready — LOW]
+Phase: 1   Module: app/viewmodel   Depends on: T-0259, T-0261
+Goal: The job sheet is a single document for the whole job. For double-sided jobs, produce per-sheet/per-side sections (setup, toolpaths, tools, thumbnail per side) as T-0243/T-0261 now allow; PDF output includes them. Optional: a direct print dialog if the PrintSupport module is acceptable (owner decision).
+Acceptance criteria:
+  1. A double-sided job's sheet lists each side with its own toolpaths and zero reference; single-sided output unchanged byte-for-byte; self-test; changelog fragment; CI green.
