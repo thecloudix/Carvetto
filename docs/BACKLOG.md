@@ -1336,7 +1336,7 @@ Goal: (also from T-0269: a test asserting a case just above 15000 derived spans,
 Acceptance criteria:
   1. Both mutants fail a test; one changelog fragment; CI green.
 
-### T-0278 Job sheet: per-sheet / per-side split (T-0259 follow-up)   [status: ready — LOW]
+### T-0278 Job sheet: per-sheet / per-side split (T-0259 follow-up)   [status: in-progress]
 Phase: 1   Module: app/viewmodel   Depends on: T-0259, T-0261
 Goal: The job sheet is a single document for the whole job. For double-sided jobs, produce per-sheet/per-side sections (setup, toolpaths, tools, thumbnail per side) as T-0243/T-0261 now allow; PDF output includes them. Optional: a direct print dialog if the PrintSupport module is acceptable (owner decision).
 Acceptance criteria:
@@ -1348,7 +1348,7 @@ Goal: The remaining loose-piece/tab residuals (i, j, l) need an exact capsule-un
 Acceptance criteria:
   1. Residuals i, j, l fixed against the flood oracle over >=10k scenes with no new false reports; mutants killed or soundly argued; CI green. Owner may defer this card indefinitely.
 
-### T-0280 Small test gaps from T-0230 / T-0252 verification   [status: ready — LOW]
+### T-0280 Small test gaps from T-0230 / T-0252 verification   [status: in-progress]
 Phase: 1   Module: app/viewmodel + core/toolpath   Depends on: T-0230, T-0252
 Goal: (a) text draft byte-cap on replacement: a mutant ignoring the replaced range survives (add a test filling to the cap with multi-byte characters, select all, replace with same size: must succeed); (b) stale-object test: a draft editing an existing object, tool switch, then deleting that object; (c) T-0252 ramp-taper test tolerance 1.0 mm2 lets single-side radius-0 mutants survive: pin the third area more tightly; (d) ADR-0016 wording: diagnostics reorder rate is 2/10000 with leads off but ~18% with leads on (content identical); the ramp mutants are killed by full-radius banding, not "without the ramp"; (e) T-0231 leftover from verification: none.
 Acceptance criteria:
