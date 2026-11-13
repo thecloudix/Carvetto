@@ -48,6 +48,8 @@ qt_add_executable(carvetto
   src/tool_panel.hpp
   src/save_toolpaths_dialog.cpp
   src/save_toolpaths_dialog.hpp
+  src/tiling_manager_panel.cpp
+  src/tiling_manager_panel.hpp
   src/tool_setup_dialog.cpp
   src/tool_setup_dialog.hpp
   src/tool_setup_self_test.cpp
