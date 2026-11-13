@@ -1,6 +1,7 @@
 // Shared toolpath machinery added by T-0120: arc-length paths, height profiles, legs, clearance,
 // tab placement, leads, ramps and cut ordering.
 
+#include <limits>
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <algorithm>
@@ -413,7 +414,48 @@ OrderItem boxItem(double x0, double y0, double x1, double y1, std::size_t sel) {
     return it;
 }
 
+OrderItem triItem(double x0, double y0, double s, std::size_t sel) {
+    OrderItem it;
+    it.path.append(LineSpan{{x0, y0}, {x0 + s, y0}});
+    it.path.append(LineSpan{{x0 + s, y0}, {x0, y0 + s}});
+    it.path.append(LineSpan{{x0, y0 + s}, {x0, y0}});
+    it.path.closed = true;
+    it.selectionIndex = sel;
+    it.start = it.end = it.path.startPoint();
+    return it;
+}
+
 }  // namespace
+
+TEST_CASE("orderCuts: same bounds but different areas are not merged", "[toolpath][order][T-0267]") {
+    std::vector<OrderItem> items;
+    items.push_back(triItem(0, 0, 10, 0));
+    items.push_back(boxItem(0, 0, 10, 10, 1));
+    items.push_back(boxItem(-5, -5, 15, 15, 2));
+    items.push_back(lineItem({2, 2}, {2, 2}, 3));
+    items.push_back(triItem(0, 0, 10, 4));
+    items.push_back(boxItem(0, 0, 10, 10, 5));
+    for (const bool nearest : {true, false}) {
+        OrderOptions o;
+        o.selectionOrder = !nearest;
+        for (const Vec2 from : {Vec2{0, 0}, Vec2{12, 3}}) {
+            CHECK(orderCuts(items, o, from, geometry::Tolerance::defaults()) == refOrder(items, nearest, from));
+        }
+    }
+}
+
+TEST_CASE("orderCuts: non-finite start points do not crash and match the old result", "[toolpath][order][T-0267]") {
+    std::vector<OrderItem> items;
+    items.push_back(boxItem(0, 0, 10, 10, 0));
+    items.push_back(boxItem(0, 0, 10, 10, 1));
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    const double inf = std::numeric_limits<double>::infinity();
+    OrderOptions o;
+    for (const Vec2 from : {Vec2{nan, nan}, Vec2{inf, 0}}) {
+        // The travel cost is NaN/inf, so no candidate beats the infinite initial cost: empty, as before.
+        CHECK(orderCuts(items, o, from, geometry::Tolerance::defaults()).empty());
+    }
+}
 
 TEST_CASE("orderCuts: same order as the exhaustive scans on scenes full of coincident vectors",
           "[toolpath][order][T-0267]") {
@@ -429,7 +471,10 @@ TEST_CASE("orderCuts: same order as the exhaustive scans on scenes full of coinc
             const double x = static_cast<double>(rnd(6)) * 10.0;
             const double y = static_cast<double>(rnd(6)) * 10.0;
             const std::size_t sel = rnd(4) == 0 ? rnd(8) : i;  // some equal selection indices
-            switch (rnd(3)) {
+            switch (rnd(4)) {
+                case 3:
+                    items.push_back(triItem(x, y, 4.0 + 8.0 * static_cast<double>(rnd(4)), sel));
+                    break;
                 case 0:
                     items.push_back(lineItem({x, y}, {x + 5.0 * static_cast<double>(rnd(3)), y + 3.0}, sel));
                     break;
