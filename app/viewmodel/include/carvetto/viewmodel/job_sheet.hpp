@@ -39,6 +39,8 @@ inline constexpr std::size_t kJobSheetMaxToolpathRows = 500;
 inline constexpr std::size_t kJobSheetMaxToolRows = 100;
 inline constexpr std::size_t kJobSheetMaxToolpathsPerTool = 20;
 inline constexpr std::size_t kJobSheetMaxWarnings = 20;
+/// Double-sided jobs (T-0278): sides (sheets) given their own section; the rest are counted.
+inline constexpr std::size_t kJobSheetMaxSides = 8;
 
 struct JobSheetToolpath {
     std::string name;
@@ -67,6 +69,32 @@ struct JobSheetTool {
     std::size_t toolpathsTotal{0};
 };
 
+/// One sheet (face of the stock) of a double-sided job (T-0278): its own setup, tools, toolpath
+/// rows and layout thumbnail. The row caps are the sheet's (`kJobSheetMax...`), per side.
+struct JobSheetSide {
+    std::string name;
+    /// "Front" or "Back".
+    std::string side;
+    double widthMm{0.0};
+    double heightMm{0.0};
+    double thicknessMm{0.0};
+    std::string zZero;
+    /// Machine Z of the top face of the stock while this side is cut (`document::materialTopZ`),
+    /// the zero reference of the side's post.
+    double topZMm{0.0};
+    std::string datum;
+    geometry::Box2 material;
+    /// Toolpaths of the side, and how many are in the estimate; their time in seconds.
+    std::size_t toolpathCount{0};
+    std::size_t includedCount{0};
+    double seconds{0.0};
+    std::vector<JobSheetTool> tools;
+    std::vector<JobSheetToolpath> toolpaths;
+    std::size_t toolsTotal{0};
+    std::size_t toolpathsTotal{0};
+    std::size_t thumbnailOmitted{0};
+};
+
 struct JobSheet {
     std::string title;
     // Material setup.
@@ -89,6 +117,14 @@ struct JobSheet {
     std::size_t toolpathsTotal{0};
     /// Included toolpaths with bounds that were dropped from `toolpaths` and so are not in the thumbnail.
     std::size_t thumbnailOmitted{0};
+    /// Double-sided jobs only (empty otherwise, and then the output is the single-sided form
+    /// byte for byte): one entry per sheet in sheet order, at most `kJobSheetMaxSides`. A toolpath
+    /// belongs to the sheet it names; one without a sheet belongs to the first sheet.
+    std::vector<JobSheetSide> sides;
+    /// Sheets left out of `sides` (more than `kJobSheetMaxSides`).
+    std::size_t sidesOmitted{0};
+    /// Job-level "Zero off same side" (double-sided jobs).
+    bool zeroOffSameSide{false};
 };
 
 /// The sheet of `doc` with `summary` (from `ToolpathSession::summary()` on the same document).

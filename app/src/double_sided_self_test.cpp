@@ -5,6 +5,7 @@
 #include <QAction>
 #include <QCheckBox>
 #include <QComboBox>
+#include <QFile>
 #include <QImage>
 #include <QKeySequence>
 #include <QTemporaryDir>
@@ -20,6 +21,7 @@
 #include "carvetto/geometry/contour.hpp"
 #include "carvetto/viewmodel/double_sided_ops.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
+#include "carvetto/viewmodel/job_sheet.hpp"
 #include "carvetto/viewmodel/layers_sheets.hpp"
 #include "carvetto/viewmodel/new_job_form.hpp"
 #include "carvetto/viewmodel/save_toolpaths.hpp"
@@ -130,6 +132,26 @@ std::string doubleSidedSelfTest(MainWindow& window) {
     const auto outlines = viewmodel::multiSidedView(doc);
     DS_REQUIRE(outlines.size() == 2 && !outlines[0].otherSideContent.isEmpty(), "multiSidedView has no other-side content");
     menu->multiSidedAction()->setChecked(false);
+
+    // 3b. Create Job Sheet (T-0278): one section per side with its own toolpaths and zero reference.
+    {
+        QTemporaryDir sheetDir;
+        DS_REQUIRE(sheetDir.isValid(), "no temporary directory for the job sheet");
+        const viewmodel::JobSheet jobSheet = viewmodel::makeJobSheet(doc, panel->session().summary(), "");
+        DS_REQUIRE(jobSheet.sides.size() == 2 && jobSheet.sides[0].toolpathCount == 1 && jobSheet.sides[1].toolpathCount == 1 &&
+                       jobSheet.sides[0].side == "Front" && jobSheet.sides[1].side == "Back",
+                   "the job sheet has no per-side sections");
+        const std::filesystem::path txt = viewmodel::pathFromUtf8(sheetDir.path().toStdString()) / "sides.txt";
+        DS_REQUIRE(window.createJobSheetFile(txt, viewmodel::JobSheetFormat::Text, false, false).empty(),
+                   "writing the double-sided job sheet failed");
+        QFile sheetFile(QString::fromStdString(viewmodel::pathToUtf8(txt)));
+        DS_REQUIRE(sheetFile.open(QIODevice::ReadOnly), "the double-sided job sheet was not written");
+        const QByteArray bytes = sheetFile.readAll();
+        const std::string written(bytes.constData(), static_cast<std::size_t>(bytes.size()));
+        DS_REQUIRE(written == viewmodel::renderJobSheetText(jobSheet) && written.find("Side 1: ") != std::string::npos &&
+                       written.find("Side 2: ") != std::string::npos && written.find("(Back)") != std::string::npos,
+                   "the written job sheet does not list both sides");
+    }
 
     // 4. Save Toolpaths: one file per side, each with its own Z zero (bed zero + same-side zero:
     // top side cut face at Z 18, bottom side at Z 0; cut depth 3).

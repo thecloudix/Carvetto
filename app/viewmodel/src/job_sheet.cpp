@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <functional>
 #include <cmath>
 #include <system_error>
 #include <locale>
@@ -9,6 +10,7 @@
 #include <sstream>
 #include <tuple>
 
+#include "carvetto/document/double_sided.hpp"
 #include "carvetto/document/units.hpp"
 #include "carvetto/viewmodel/save_toolpaths.hpp"
 #include "carvetto/viewmodel/file_session.hpp"
@@ -87,25 +89,27 @@ struct Fmt {
 
 /// Included toolpaths the layout thumbnail leaves out (more than `kJobSheetMaxToolpathRows`, or
 /// dropped from the stored sheet).
-std::size_t thumbnailOmitted(const JobSheet& s) {
+std::size_t thumbnailOmitted(const std::vector<JobSheetToolpath>& toolpaths, std::size_t declaredOmitted) {
     std::size_t drawable = 0;
-    for (const JobSheetToolpath& t : s.toolpaths) {
+    for (const JobSheetToolpath& t : toolpaths) {
         if (t.included && !t.bounds.isEmpty()) {
             ++drawable;
         }
     }
-    return s.thumbnailOmitted + (drawable > kJobSheetMaxToolpathRows ? drawable - kJobSheetMaxToolpathRows : 0);
+    return declaredOmitted + (drawable > kJobSheetMaxToolpathRows ? drawable - kJobSheetMaxToolpathRows : 0);
 }
 
 /// Count of rows the sheet really has (the stored vector can be shorter than the job's).
 std::size_t total(std::size_t stored, std::size_t declared) { return std::max(stored, declared); }
 
-std::size_t shownTools(const JobSheet& s) { return std::min(s.tools.size(), kJobSheetMaxToolRows); }
-std::size_t shownToolpaths(const JobSheet& s) { return std::min(s.toolpaths.size(), kJobSheetMaxToolpathRows); }
+std::size_t shownTools(const std::vector<JobSheetTool>& tools) { return std::min(tools.size(), kJobSheetMaxToolRows); }
+std::size_t shownToolpaths(const std::vector<JobSheetToolpath>& list) {
+    return std::min(list.size(), kJobSheetMaxToolpathRows);
+}
 
-std::string layoutSvg(const JobSheet& s) {
-    geometry::Box2 view = s.material;
-    for (const JobSheetToolpath& t : s.toolpaths) {
+std::string layoutSvg(const geometry::Box2& material, const std::vector<JobSheetToolpath>& toolpaths) {
+    geometry::Box2 view = material;
+    for (const JobSheetToolpath& t : toolpaths) {
         if (t.included) {
             view.expand(t.bounds);
         }
@@ -130,11 +134,11 @@ std::string layoutSvg(const JobSheet& s) {
                       " " + fixed(view.height(), 2) + "\">\n";
     svg += "<style>rect{vector-effect:non-scaling-stroke;stroke-width:1}"
            ".m{fill:#f4e3c1;stroke:#7a5c2e}.t{fill:#3b82f633;stroke:#1d4ed8}</style>\n";
-    if (!s.material.isEmpty()) {
-        svg += rect(s.material, "m", "Material");
+    if (!material.isEmpty()) {
+        svg += rect(material, "m", "Material");
     }
     std::size_t drawn = 0;
-    for (const JobSheetToolpath& t : s.toolpaths) {
+    for (const JobSheetToolpath& t : toolpaths) {
         if (t.included && !t.bounds.isEmpty() && drawn++ < kJobSheetMaxToolpathRows) {
             svg += rect(t.bounds, "t", t.name);
         }
@@ -176,6 +180,54 @@ std::string escapeHtml(const std::string& text) {
     return out;
 }
 
+namespace {
+
+/// Accumulates the capped tool table and toolpath rows of one block (the whole job or one side).
+struct ToolpathBlock {
+    std::vector<JobSheetTool>& tools;
+    std::vector<JobSheetToolpath>& toolpaths;
+    std::size_t& toolsTotal;
+    std::size_t& toolpathsTotal;
+    std::size_t& omitted;
+    // Tool table keyed on (number, name, diameter): a logarithmic lookup however many tools there are.
+    // The value is the index in `tools`, or npos for a tool beyond the stored rows (still counted).
+    using ToolIdent = std::tuple<int, std::string, bool, double>;
+    std::map<ToolIdent, std::size_t> toolIndex;
+
+    void add(JobSheetToolpath t, bool included, const geometry::Box2& bounds) {
+        constexpr std::size_t npos = static_cast<std::size_t>(-1);
+        ++toolpathsTotal;
+        if (included) {
+            const double d = t.toolDiameterMm;
+            const ToolIdent key{t.toolNumber, t.toolName, std::isnan(d), std::isnan(d) ? 0.0 : d};
+            auto found = toolIndex.find(key);
+            if (found == toolIndex.end()) {
+                std::size_t idx = npos;
+                if (tools.size() < kJobSheetMaxToolRows) {
+                    idx = tools.size();
+                    tools.push_back({t.toolName, t.toolNumber, t.toolDiameterMm, {}, 0});
+                }
+                found = toolIndex.emplace(key, idx).first;
+                ++toolsTotal;
+            }
+            if (found->second != npos) {
+                JobSheetTool& tool = tools[found->second];
+                if (tool.toolpaths.size() < kJobSheetMaxToolpathsPerTool) {
+                    tool.toolpaths.push_back(t.name);
+                }
+                ++tool.toolpathsTotal;
+            }
+        }
+        if (toolpaths.size() < kJobSheetMaxToolpathRows) {
+            toolpaths.push_back(std::move(t));
+        } else if (included && !bounds.isEmpty()) {
+            ++omitted;
+        }
+    }
+};
+
+}  // namespace
+
 JobSheet makeJobSheet(const document::Document& doc, const JobSummary& summary, const std::string& title) {
     JobSheet s;
     const document::Job& job = doc.job();
@@ -195,12 +247,36 @@ JobSheet makeJobSheet(const document::Document& doc, const JobSummary& summary, 
     for (const document::ToolpathRecord& r : doc.toolpaths()) {
         records[r.id] = &r;
     }
-    // Tool table keyed on (number, name, diameter): a logarithmic lookup however many tools there are.
-    // The value is the index in s.tools, or npos for a tool beyond the stored rows (still counted).
-    constexpr std::size_t npos = static_cast<std::size_t>(-1);
-    using ToolIdent = std::tuple<int, std::string, bool, double>;
-    std::map<ToolIdent, std::size_t> toolIndex;
-    s.toolpathsTotal = summary.entries.size();
+    // The whole-job block and, for a double-sided job, one block per sheet.
+    ToolpathBlock all{s.tools, s.toolpaths, s.toolsTotal, s.toolpathsTotal, s.thumbnailOmitted, {}};
+    std::vector<ToolpathBlock> perSide;
+    std::map<document::SheetId, std::size_t> sideIndex;
+    if (job.type == document::JobType::DoubleSided && !doc.sheets().empty()) {
+        for (const document::Sheet& sh : doc.sheets()) {
+            if (s.sides.size() >= kJobSheetMaxSides) {
+                ++s.sidesOmitted;
+                continue;
+            }
+            JobSheetSide side;
+            side.name = clipJobSheetText(sh.name);
+            side.side = sh.side == document::Side::Front ? "Front" : "Back";
+            side.widthMm = sh.sizeMm.x;
+            side.heightMm = sh.sizeMm.y;
+            side.thicknessMm = sh.sizeMm.z;
+            side.zZero = zZeroName(sh.zZero);
+            side.topZMm = document::materialTopZ(sh.zZero, job.zeroOffSameSide, sh.sizeMm.z, sh.side);
+            side.datum = datumName(sh.datum);
+            side.material = sh.materialBoundsMm();
+            sideIndex[sh.id] = s.sides.size();
+            s.sides.push_back(std::move(side));
+        }
+        s.zeroOffSameSide = job.zeroOffSameSide;
+        for (JobSheetSide& side : s.sides) {
+            perSide.push_back({side.tools, side.toolpaths, side.toolsTotal, side.toolpathsTotal,
+                               side.thumbnailOmitted, {}});
+        }
+    }
+    s.toolpathsTotal = 0;
     for (const ToolpathSummaryEntry& e : summary.entries) {
         JobSheetToolpath t;
         t.name = clipJobSheetText(e.name);
@@ -210,6 +286,7 @@ JobSheet makeJobSheet(const document::Document& doc, const JobSummary& summary, 
         t.moves = e.moves;
         t.time = e.time;
         t.bounds = e.bounds;
+        document::SheetId sheetId{};
         const auto it = records.find(e.id);
         if (it != records.end()) {
             const document::ToolpathRecord& r = *it->second;
@@ -218,36 +295,104 @@ JobSheet makeJobSheet(const document::Document& doc, const JobSummary& summary, 
             t.feedRateMmPerMin = r.tool.feedRate;
             t.plungeRateMmPerMin = r.tool.plungeRate;
             t.spindleRpm = r.tool.spindleSpeed;
+            sheetId = r.sheet;
         }
-        if (e.included) {
-            const double d = t.toolDiameterMm;
-            const ToolIdent key{t.toolNumber, t.toolName, std::isnan(d), std::isnan(d) ? 0.0 : d};
-            auto found = toolIndex.find(key);
-            if (found == toolIndex.end()) {
-                std::size_t idx = npos;
-                if (s.tools.size() < kJobSheetMaxToolRows) {
-                    idx = s.tools.size();
-                    s.tools.push_back({t.toolName, t.toolNumber, t.toolDiameterMm, {}, 0});
-                }
-                found = toolIndex.emplace(key, idx).first;
-                ++s.toolsTotal;
+        if (!perSide.empty()) {
+            // A record without a sheet (made before the job became double-sided) is on the first
+            // sheet; one naming a sheet that is not stored is left to the whole-job block only.
+            auto si = sideIndex.find(sheetId);
+            if (sheetId == document::SheetId{} && !doc.sheets().empty()) {
+                si = sideIndex.find(doc.sheets().front().id);
             }
-            if (found->second != npos) {
-                JobSheetTool& tool = s.tools[found->second];
-                if (tool.toolpaths.size() < kJobSheetMaxToolpathsPerTool) {
-                    tool.toolpaths.push_back(t.name);
+            if (si != sideIndex.end()) {
+                JobSheetSide& side = s.sides[si->second];
+                ++side.toolpathCount;
+                if (e.included) {
+                    ++side.includedCount;
+                    side.seconds += e.time.total();
                 }
-                ++tool.toolpathsTotal;
+                perSide[si->second].add(t, e.included, e.bounds);
             }
         }
-        if (s.toolpaths.size() < kJobSheetMaxToolpathRows) {
-            s.toolpaths.push_back(std::move(t));
-        } else if (e.included && !e.bounds.isEmpty()) {
-            ++s.thumbnailOmitted;
-        }
+        all.add(std::move(t), e.included, e.bounds);
     }
     return s;
 }
+
+namespace {
+
+void textTools(std::string& o, const std::vector<JobSheetTool>& tools, std::size_t toolsTotal, const Fmt& f) {
+    if (tools.empty()) {
+        o += "  (none)\n";
+    }
+    for (std::size_t k = 0; k < tools.size() && k < kJobSheetMaxToolRows; ++k) {
+        const JobSheetTool& t = tools[k];
+        o += "  T" + std::to_string(t.number) + " " + textSafe(t.name) + ", diameter " + f.len(t.diameterMm) + ": ";
+        for (std::size_t i = 0; i < t.toolpaths.size() && i < kJobSheetMaxToolpathsPerTool; ++i) {
+            o += (i ? ", " : "") + textSafe(t.toolpaths[i]);
+        }
+        if (total(t.toolpaths.size(), t.toolpathsTotal) > t.toolpaths.size() ||
+            t.toolpaths.size() > kJobSheetMaxToolpathsPerTool) {
+            o += ", ... and " + std::to_string(total(t.toolpaths.size(), t.toolpathsTotal) -
+                                               std::min(t.toolpaths.size(), kJobSheetMaxToolpathsPerTool)) + " more";
+        }
+        o += "\n";
+    }
+    if (shownTools(tools) < total(tools.size(), toolsTotal)) {
+        o += "  ... and " + std::to_string(total(tools.size(), toolsTotal) - shownTools(tools)) + " more tools\n";
+    }
+}
+
+void textToolpaths(std::string& o, const std::vector<JobSheetToolpath>& toolpaths, std::size_t toolpathsTotal,
+                   const Fmt& f) {
+    if (toolpaths.empty()) {
+        o += "  (none)\n";
+    }
+    std::size_t n = 0;
+    for (const JobSheetToolpath& t : toolpaths) {
+        if (n >= kJobSheetMaxToolpathRows) {
+            break;
+        }
+        o += std::to_string(++n) + ". " + textSafe(t.name) + " [" + textSafe(t.operation) + "]" +
+             (t.included ? "" : " (not in the estimate)") + "\n";
+        o += "     Tool: T" + std::to_string(t.toolNumber) + " " + textSafe(t.toolName) + ", diameter " +
+             f.len(t.toolDiameterMm) + "\n";
+        o += "     Feed: " + f.rate(t.feedRateMmPerMin) + ", plunge: " + f.rate(t.plungeRateMmPerMin) +
+             ", spindle: " + f.rpm(t.spindleRpm) + "\n";
+        o += "     Time: " + (t.included ? formatDuration(t.time.total()) : std::string("-")) + ", moves: " +
+             std::to_string(t.moves) + "\n";
+    }
+    if (shownToolpaths(toolpaths) < total(toolpaths.size(), toolpathsTotal)) {
+        o += "... and " + std::to_string(total(toolpaths.size(), toolpathsTotal) - shownToolpaths(toolpaths)) +
+             " more toolpaths\n";
+    }
+}
+
+std::string zeroLine(const JobSheetSide& d, const Fmt& f) {
+    return d.zZero + "; top of the stock at Z " + f.len(d.topZMm) + " while machining this side";
+}
+
+void textSides(std::string& o, const JobSheet& s, const Fmt& f) {
+    o += "\nSides (double-sided job, zero off same side: " + std::string(s.zeroOffSameSide ? "yes" : "no") + ")\n";
+    std::size_t k = 0;
+    for (const JobSheetSide& d : s.sides) {
+        o += "\nSide " + std::to_string(++k) + ": " + textSafe(d.name) + " (" + d.side + ")\n";
+        o += "  Size: " + f.len(d.widthMm) + " x " + f.len(d.heightMm) + " x " + f.len(d.thicknessMm) + "\n";
+        o += "  Z zero: " + zeroLine(d, f) + "\n";
+        o += "  XY datum: " + d.datum + "\n";
+        o += "  Toolpaths: " + std::to_string(d.toolpathCount) + " (" + std::to_string(d.includedCount) +
+             " in the estimate), time: " + formatDuration(d.seconds) + "\n";
+        o += "  Tools\n";
+        textTools(o, d.tools, d.toolsTotal, f);
+        o += "  Toolpaths list\n";
+        textToolpaths(o, d.toolpaths, d.toolpathsTotal, f);
+    }
+    if (s.sidesOmitted > 0) {
+        o += "\n... and " + std::to_string(s.sidesOmitted) + " more sides\n";
+    }
+}
+
+}  // namespace
 
 std::string renderJobSheetText(const JobSheet& s) {
     const Fmt f{s.inches};
@@ -274,49 +419,96 @@ std::string renderJobSheetText(const JobSheet& s) {
         o += "  ... and " + std::to_string(s.readout.warnings.size() - kJobSheetMaxWarnings) + " more warnings\n";
     }
     o += "\nTools\n";
-    if (s.tools.empty()) {
-        o += "  (none)\n";
-    }
-    for (std::size_t k = 0; k < s.tools.size() && k < kJobSheetMaxToolRows; ++k) {
-        const JobSheetTool& t = s.tools[k];
-        o += "  T" + std::to_string(t.number) + " " + textSafe(t.name) + ", diameter " + f.len(t.diameterMm) + ": ";
-        for (std::size_t i = 0; i < t.toolpaths.size() && i < kJobSheetMaxToolpathsPerTool; ++i) {
-            o += (i ? ", " : "") + textSafe(t.toolpaths[i]);
-        }
-        if (total(t.toolpaths.size(), t.toolpathsTotal) > t.toolpaths.size() ||
-            t.toolpaths.size() > kJobSheetMaxToolpathsPerTool) {
-            o += ", ... and " + std::to_string(total(t.toolpaths.size(), t.toolpathsTotal) -
-                                               std::min(t.toolpaths.size(), kJobSheetMaxToolpathsPerTool)) + " more";
-        }
-        o += "\n";
-    }
-    if (shownTools(s) < total(s.tools.size(), s.toolsTotal)) {
-        o += "  ... and " + std::to_string(total(s.tools.size(), s.toolsTotal) - shownTools(s)) + " more tools\n";
-    }
+    textTools(o, s.tools, s.toolsTotal, f);
     o += "\nToolpaths list\n";
-    if (s.toolpaths.empty()) {
-        o += "  (none)\n";
-    }
-    std::size_t n = 0;
-    for (const JobSheetToolpath& t : s.toolpaths) {
-        if (n >= kJobSheetMaxToolpathRows) {
-            break;
-        }
-        o += std::to_string(++n) + ". " + textSafe(t.name) + " [" + textSafe(t.operation) + "]" +
-             (t.included ? "" : " (not in the estimate)") + "\n";
-        o += "     Tool: T" + std::to_string(t.toolNumber) + " " + textSafe(t.toolName) + ", diameter " +
-             f.len(t.toolDiameterMm) + "\n";
-        o += "     Feed: " + f.rate(t.feedRateMmPerMin) + ", plunge: " + f.rate(t.plungeRateMmPerMin) +
-             ", spindle: " + f.rpm(t.spindleRpm) + "\n";
-        o += "     Time: " + (t.included ? formatDuration(t.time.total()) : std::string("-")) + ", moves: " +
-             std::to_string(t.moves) + "\n";
-    }
-    if (shownToolpaths(s) < total(s.toolpaths.size(), s.toolpathsTotal)) {
-        o += "... and " + std::to_string(total(s.toolpaths.size(), s.toolpathsTotal) - shownToolpaths(s)) +
-             " more toolpaths\n";
+    textToolpaths(o, s.toolpaths, s.toolpathsTotal, f);
+    if (!s.sides.empty()) {
+        textSides(o, s, f);
     }
     return o;
 }
+
+namespace {
+
+void htmlTools(std::string& o, const std::vector<JobSheetTool>& tools, std::size_t toolsTotal, const Fmt& f,
+               const std::function<std::string(const std::string&)>& e,
+               const std::function<std::string(const std::string&)>& td) {
+    o += "<table>\n<tr><th>Number</th><th>Name</th><th>Diameter</th><th>Toolpaths</th></tr>\n";
+    for (std::size_t k = 0; k < tools.size() && k < kJobSheetMaxToolRows; ++k) {
+        const JobSheetTool& t = tools[k];
+        std::string names;
+        for (std::size_t i = 0; i < t.toolpaths.size() && i < kJobSheetMaxToolpathsPerTool; ++i) {
+            names += (i ? ", " : "") + e(t.toolpaths[i]);
+        }
+        if (total(t.toolpaths.size(), t.toolpathsTotal) > t.toolpaths.size() ||
+            t.toolpaths.size() > kJobSheetMaxToolpathsPerTool) {
+            names += ", ... and " + std::to_string(total(t.toolpaths.size(), t.toolpathsTotal) -
+                                                   std::min(t.toolpaths.size(), kJobSheetMaxToolpathsPerTool)) + " more";
+        }
+        o += "<tr>" + td("T" + std::to_string(t.number)) + td(t.name) + td(f.len(t.diameterMm)) + "<td>" + names +
+             "</td></tr>\n";
+    }
+    if (shownTools(tools) < total(tools.size(), toolsTotal)) {
+        o += "<tr><td colspan=\"4\">... and " + std::to_string(total(tools.size(), toolsTotal) - shownTools(tools)) +
+             " more tools</td></tr>\n";
+    }
+    o += "</table>\n";
+}
+
+void htmlToolpaths(std::string& o, const std::vector<JobSheetToolpath>& toolpaths, std::size_t toolpathsTotal,
+                   const Fmt& f, const std::function<std::string(const std::string&)>& td) {
+    o += "<table>\n<tr><th>#</th><th>Name</th><th>Operation</th><th>Tool</th>"
+         "<th>Feed</th><th>Plunge</th><th>Spindle</th><th>Time</th><th>Moves</th></tr>\n";
+    std::size_t n = 0;
+    for (const JobSheetToolpath& t : toolpaths) {
+        if (n >= kJobSheetMaxToolpathRows) {
+            break;
+        }
+        o += "<tr>" + td(std::to_string(++n)) + td(t.name + (t.included ? "" : " (not in the estimate)")) +
+             td(t.operation) + td("T" + std::to_string(t.toolNumber) + " " + t.toolName) +
+             td(f.rate(t.feedRateMmPerMin)) + td(f.rate(t.plungeRateMmPerMin)) + td(f.rpm(t.spindleRpm)) +
+             td(t.included ? formatDuration(t.time.total()) : std::string("-")) + td(std::to_string(t.moves)) +
+             "</tr>\n";
+    }
+    o += "</table>\n";
+    if (shownToolpaths(toolpaths) < total(toolpaths.size(), toolpathsTotal)) {
+        o += "<p>... and " + std::to_string(total(toolpaths.size(), toolpathsTotal) - shownToolpaths(toolpaths)) +
+             " more toolpaths</p>\n";
+    }
+}
+
+void htmlSides(std::string& o, const JobSheet& s, const Fmt& f,
+               const std::function<std::string(const std::string&)>& e,
+               const std::function<std::string(const std::string&)>& td) {
+    o += "<h2>Sides</h2>\n<p>Double-sided job, zero off same side: " + std::string(s.zeroOffSameSide ? "yes" : "no") +
+         ".</p>\n";
+    std::size_t k = 0;
+    for (const JobSheetSide& d : s.sides) {
+        o += "<h3>Side " + std::to_string(++k) + ": " + e(d.name) + " (" + d.side + ")</h3>\n";
+        const std::string svg = layoutSvg(d.material, d.toolpaths);
+        if (!svg.empty()) {
+            o += svg;
+            if (const std::size_t omitted = thumbnailOmitted(d.toolpaths, d.thumbnailOmitted); omitted > 0) {
+                o += "<p>The layout shows the first " + std::to_string(kJobSheetMaxToolpathRows) + " toolpaths; " +
+                     std::to_string(omitted) + " more are not drawn.</p>\n";
+            }
+        }
+        o += "<table>\n";
+        o += "<tr><th>Size</th>" + td(f.len(d.widthMm) + " x " + f.len(d.heightMm) + " x " + f.len(d.thicknessMm)) +
+             "</tr>\n";
+        o += "<tr><th>Z zero</th>" + td(zeroLine(d, f)) + "</tr>\n";
+        o += "<tr><th>XY datum</th>" + td(d.datum) + "</tr>\n";
+        o += "<tr><th>Toolpaths</th>" + td(std::to_string(d.toolpathCount) + " (" + std::to_string(d.includedCount) +
+                                           " in the estimate), time: " + formatDuration(d.seconds)) + "</tr>\n</table>\n";
+        htmlTools(o, d.tools, d.toolsTotal, f, e, td);
+        htmlToolpaths(o, d.toolpaths, d.toolpathsTotal, f, td);
+    }
+    if (s.sidesOmitted > 0) {
+        o += "<p>... and " + std::to_string(s.sidesOmitted) + " more sides</p>\n";
+    }
+}
+
+}  // namespace
 
 std::string renderJobSheetHtml(const JobSheet& s) {
     const Fmt f{s.inches};
@@ -327,10 +519,10 @@ std::string renderJobSheetHtml(const JobSheet& s) {
          "</title>\n<style>body{font-family:sans-serif}table{border-collapse:collapse}"
          "td,th{border:1px solid #888;padding:2px 8px;text-align:left}</style>\n</head>\n<body>\n";
     o += "<h1>Job sheet: " + e(s.title) + "</h1>\n";
-    const std::string svg = layoutSvg(s);
+    const std::string svg = layoutSvg(s.material, s.toolpaths);
     if (!svg.empty()) {
         o += "<h2>Job layout</h2>\n" + svg;
-        if (const std::size_t omitted = thumbnailOmitted(s); omitted > 0) {
+        if (const std::size_t omitted = thumbnailOmitted(s.toolpaths, s.thumbnailOmitted); omitted > 0) {
             o += "<p>The layout shows the first " + std::to_string(kJobSheetMaxToolpathRows) + " toolpaths; " +
                  std::to_string(omitted) + " more are not drawn.</p>\n";
         }
@@ -359,42 +551,12 @@ std::string renderJobSheetHtml(const JobSheet& s) {
         }
         o += "</ul>\n";
     }
-    o += "<h2>Tools</h2>\n<table>\n<tr><th>Number</th><th>Name</th><th>Diameter</th><th>Toolpaths</th></tr>\n";
-    for (std::size_t k = 0; k < s.tools.size() && k < kJobSheetMaxToolRows; ++k) {
-        const JobSheetTool& t = s.tools[k];
-        std::string names;
-        for (std::size_t i = 0; i < t.toolpaths.size() && i < kJobSheetMaxToolpathsPerTool; ++i) {
-            names += (i ? ", " : "") + e(t.toolpaths[i]);
-        }
-        if (total(t.toolpaths.size(), t.toolpathsTotal) > t.toolpaths.size() ||
-            t.toolpaths.size() > kJobSheetMaxToolpathsPerTool) {
-            names += ", ... and " + std::to_string(total(t.toolpaths.size(), t.toolpathsTotal) -
-                                                   std::min(t.toolpaths.size(), kJobSheetMaxToolpathsPerTool)) + " more";
-        }
-        o += "<tr>" + td("T" + std::to_string(t.number)) + td(t.name) + td(f.len(t.diameterMm)) + "<td>" + names +
-             "</td></tr>\n";
-    }
-    if (shownTools(s) < total(s.tools.size(), s.toolsTotal)) {
-        o += "<tr><td colspan=\"4\">... and " + std::to_string(total(s.tools.size(), s.toolsTotal) - shownTools(s)) +
-             " more tools</td></tr>\n";
-    }
-    o += "</table>\n<h2>Toolpaths list</h2>\n<table>\n<tr><th>#</th><th>Name</th><th>Operation</th><th>Tool</th>"
-         "<th>Feed</th><th>Plunge</th><th>Spindle</th><th>Time</th><th>Moves</th></tr>\n";
-    std::size_t n = 0;
-    for (const JobSheetToolpath& t : s.toolpaths) {
-        if (n >= kJobSheetMaxToolpathRows) {
-            break;
-        }
-        o += "<tr>" + td(std::to_string(++n)) + td(t.name + (t.included ? "" : " (not in the estimate)")) +
-             td(t.operation) + td("T" + std::to_string(t.toolNumber) + " " + t.toolName) +
-             td(f.rate(t.feedRateMmPerMin)) + td(f.rate(t.plungeRateMmPerMin)) + td(f.rpm(t.spindleRpm)) +
-             td(t.included ? formatDuration(t.time.total()) : std::string("-")) + td(std::to_string(t.moves)) +
-             "</tr>\n";
-    }
-    o += "</table>\n";
-    if (shownToolpaths(s) < total(s.toolpaths.size(), s.toolpathsTotal)) {
-        o += "<p>... and " + std::to_string(total(s.toolpaths.size(), s.toolpathsTotal) - shownToolpaths(s)) +
-             " more toolpaths</p>\n";
+    o += "<h2>Tools</h2>\n";
+    htmlTools(o, s.tools, s.toolsTotal, f, e, td);
+    o += "<h2>Toolpaths list</h2>\n";
+    htmlToolpaths(o, s.toolpaths, s.toolpathsTotal, f, td);
+    if (!s.sides.empty()) {
+        htmlSides(o, s, f, e, td);
     }
     o += "</body>\n</html>\n";
     return o;
