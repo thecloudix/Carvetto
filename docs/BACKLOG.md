@@ -1322,7 +1322,7 @@ Goal: The two Trace Bitmap dialog features listed in the T-0260 goal but deferre
 Acceptance criteria:
   1. Both features work in the real app, are undo-safe, and are driven by the app self-test; changelog fragment; CI green.
 
-### T-0276 Neutral naming: remove third-party product names from identifiers, UI and filenames   [status: in-progress]
+### T-0276 Neutral naming: remove third-party product names from identifiers, UI and filenames   [status: done — merged #142]
 Phase: 1   Module: core/toolpath + app + docs   Depends on: T-0275
 Goal: Owner directive 2026-11-12: no mention of any third-party CAM product or its trademarks anywhere in the project (docs scrubbed by the director; code, UI labels and file names of the image-engrave feature renamed to neutral names by this card; no compatibility shim since no release tag shipped the old record key).
 Acceptance criteria:
