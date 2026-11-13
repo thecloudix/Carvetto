@@ -1254,7 +1254,7 @@ Goal: (1) ADR-0039 (and any other ADR/comments) say a minor bump makes an older 
 Acceptance criteria:
   1. ADR and comments accurate; no behaviour change unless the owner decides otherwise.
 
-### T-0265 V-carve inlay toolpath: V-bit pocket and plug, glue gap, plug sheet (T-0238 split)   [status: ready]
+### T-0265 V-carve inlay toolpath: V-bit pocket and plug, glue gap, plug sheet (T-0238 split)   [status: in-progress]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0238, T-0153, T-0220
 Goal: V-carve inlay (inventory 'V-carve inlay Toolpath'): pocket depth, glue gap, surface clearance, V-bit and clearance tools, plug destination sheet (the plug is mirrored, and centred when on another sheet), plug outer boundary (Sheet Limits / Vector Offset / Boundary Offset). Builds on the straight inlay's record/form/viewmodel wiring (ADR-0040).
 Acceptance criteria:
@@ -1309,7 +1309,7 @@ Acceptance criteria:
   4. One changelog fragment; full ctest and MSVC CI green.
 Out of scope: Photo V-carve wiring (T-0275).
 
-### T-0275 Photo V-carve app wiring (T-0250 follow-up)   [status: in-progress]
+### T-0275 Photo V-carve app wiring (T-0250 follow-up)   [status: done — merged #136]
 Phase: 1   Module: app + core/toolpath   Depends on: T-0250, T-0273
 Goal: App-side bitmap import (QImage decode → makeImportBitmapCommand from T-0273, which is core-only), gray conversion (grayFromRaster), native toolpath record, ToolpathParams/Operation entry, PhotoVCarve form, ToolController wiring and preview for a selected bitmap, with self-test coverage.
 Acceptance criteria:
@@ -1322,7 +1322,7 @@ Goal: The two Trace Bitmap dialog features listed in the T-0260 goal but deferre
 Acceptance criteria:
   1. Both features work in the real app, are undo-safe, and are driven by the app self-test; changelog fragment; CI green.
 
-### T-0276 Neutral naming: remove third-party product names from identifiers, UI and filenames   [status: ready]
+### T-0276 Neutral naming: remove third-party product names from identifiers, UI and filenames   [status: in-progress]
 Phase: 1   Module: core/toolpath + app + docs   Depends on: T-0275
 Goal: Owner directive 2026-11-12: no mention of any third-party CAM product (or its trademarks) anywhere in the project. Docs were scrubbed by the director; code still uses `photoVCarve`/`PhotoVCarve`/`photo_vcarve` (T-0250, T-0275, and the "Photo V-Carve" UI label), which matches a vendor's product name, and the 2026-11-03 decision already bans the single-word "vcarve" spelling. Rename to neutral names (e.g. `image_engrave`/`ImageEngrave`, UI "Image Engrave" / "Relief Engrave from Image"), including: file names (core/.../photo_vcarve.*, tests, app photo_self_test), job.json record key `photo_vcarve` (T-0275 shipped it unreleased: no compatibility shim needed unless a release tagged it — check), ADR-0052 and 0047 titles/text, changelog fragments, BACKLOG text.
 Acceptance criteria:
