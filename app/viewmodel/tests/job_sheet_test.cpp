@@ -1,6 +1,7 @@
 // T-0244: job sheet / toolpath summary report: contents match the session summary and
 // core/toolpath/time.hpp, deterministic output, hostile names escaped.
 
+#include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
 #include <filesystem>
@@ -11,12 +12,15 @@
 #include <string>
 #include <utility>
 
+#include "carvetto/document/double_sided.hpp"
 #include "carvetto/viewmodel/job_sheet.hpp"
+#include "carvetto/viewmodel/layers_sheets.hpp"
 #include "toolpath_test_support.hpp"
 
 using namespace carvetto;
 using namespace carvetto::viewmodel;
 using namespace carvetto::viewmodel::testing;
+using Catch::Approx;
 
 namespace {
 
@@ -406,4 +410,124 @@ TEST_CASE("job sheet: PDF names are checked but not written by the viewmodel", "
     const document::Document doc;
     const JobSheet s = makeJobSheet(doc, JobSummary{}, "t");
     CHECK_FALSE(writeJobSheet(s, JobSheetFormat::Pdf, "/tmp/never.pdf", true).ok);
+}
+
+namespace {
+
+/// A double-sided job: front has a profile and a pocket, back has a profile.
+struct TwoSided {
+    document::Document doc{document::Job::doubleSided(200, 100, 18, document::Units::Millimetres,
+                                                       document::Datum::BottomLeft, document::ZZero::MachineBed,
+                                                       document::FlipDirection::Horizontal)};
+    tooling::ToolDatabase db{cliToolDatabase()};
+    ToolpathSession session{&doc};
+    document::SheetId front, back;
+    explicit TwoSided(bool zeroOffSame = false) {
+        session.setToolDatabase(db);
+        REQUIRE(session.setMachineSetup(MachineSetup{3000.0, 500.0}));
+        front = doc.activeSheet();
+        REQUIRE(makeDoubleSided(doc, document::FlipDirection::Horizontal, zeroOffSame).ok);
+        back = doc.findSheet(front)->partner;
+        REQUIRE(doc.setActiveSheet(front));
+        addVector(doc, square(10, 10, 30));
+        REQUIRE(session.add(profileDefinition(db)).ok);
+        REQUIRE(session.add(pocketDefinition(db)).ok);
+        REQUIRE(doc.setActiveSheet(back));
+        addVector(doc, square(100, 10, 30));
+        REQUIRE(session.add(profileDefinition(db)).ok);
+        REQUIRE(session.rename(doc.toolpaths().back().id, "Back outline").ok);
+    }
+};
+
+}  // namespace
+
+TEST_CASE("job sheet: a double-sided job lists each side with its own toolpaths and zero reference", "[jobsheet]") {
+    TwoSided f;
+    REQUIRE(f.doc.toolpaths().size() == 3);
+    const JobSheet sheet = makeJobSheet(f.doc, f.session.summary(), "Box");
+    REQUIRE(sheet.sides.size() == 2);
+    CHECK(sheet.toolpaths.size() == 3);  // the whole-job block is still there
+    const JobSheetSide& a = sheet.sides[0];
+    const JobSheetSide& b = sheet.sides[1];
+    CHECK(a.side == "Front");
+    CHECK(b.side == "Back");
+    CHECK(a.toolpathCount == 2);
+    CHECK(b.toolpathCount == 1);
+    REQUIRE(b.toolpaths.size() == 1);
+    CHECK(b.toolpaths[0].name == "Back outline");
+    CHECK(a.toolpaths[0].name == f.doc.toolpaths()[0].name);
+    CHECK(a.seconds > 0.0);
+    CHECK(b.seconds > 0.0);
+    CHECK(a.seconds + b.seconds == Approx(sheet.summary.time.total()));
+    // Machine bed zero: the front is cut from the face away from the bed (top at the thickness),
+    // the flipped back side has the other face up (Z 0 is that face's own bed face).
+    CHECK(a.topZMm == document::materialTopZ(document::ZZero::MachineBed, false, 18.0, document::Side::Front));
+    CHECK(b.topZMm == document::materialTopZ(document::ZZero::MachineBed, false, 18.0, document::Side::Back));
+    CHECK(a.topZMm == 18.0);
+
+    const std::string text = renderJobSheetText(sheet);
+    CHECK(contains(text, "Side 1: " + f.doc.sheets()[0].name + " (Front)"));
+    CHECK(contains(text, "Side 2: " + f.doc.sheets()[1].name + " (Back)"));
+    CHECK(contains(text, "top of the stock at Z 18.00 mm"));
+    const std::size_t side2 = text.find("Side 2:");
+    REQUIRE(side2 != std::string::npos);
+    CHECK(contains(text.substr(side2), "Back outline"));
+    CHECK_FALSE(contains(text.substr(side2), "Pocket"));
+    CHECK(contains(text.substr(0, side2), "Pocket"));
+    const std::string html = renderJobSheetHtml(sheet);
+    CHECK(contains(html, "<h3>Side 2: "));
+    CHECK(contains(html, "<h2>Sides</h2>"));
+    // Whole job layout plus one thumbnail per side.
+    std::size_t svgs = 0;
+    for (std::size_t at = html.find("<svg"); at != std::string::npos; at = html.find("<svg", at + 1)) {
+        ++svgs;
+    }
+    CHECK(svgs == 3);
+}
+
+TEST_CASE("job sheet: zero off same side changes the back side's zero reference", "[jobsheet]") {
+    TwoSided same(true);
+    TwoSided separate(false);
+    const JobSheet a = makeJobSheet(same.doc, same.session.summary());
+    const JobSheet b = makeJobSheet(separate.doc, separate.session.summary());
+    REQUIRE(a.sides.size() == 2);
+    CHECK(a.zeroOffSameSide);
+    CHECK_FALSE(b.zeroOffSameSide);
+    CHECK(a.sides[1].topZMm == document::materialTopZ(document::ZZero::MachineBed, true, 18.0, document::Side::Back));
+    CHECK(a.sides[1].topZMm != b.sides[1].topZMm);
+    CHECK(contains(renderJobSheetText(a), "zero off same side: yes"));
+}
+
+TEST_CASE("job sheet: a toolpath without a sheet belongs to the first sheet; single-sided has no sides", "[jobsheet]") {
+    TwoSided f;
+    document::ToolpathRecord* rec = f.doc.findToolpath(f.doc.toolpaths().back().id);  // the back toolpath
+    REQUIRE(rec != nullptr);
+    rec->sheet = document::SheetId{};
+    const JobSheet sheet = makeJobSheet(f.doc, f.session.summary());
+    REQUIRE(sheet.sides.size() == 2);
+    CHECK(sheet.sides[0].toolpathCount == 3);
+    CHECK(sheet.sides[1].toolpathCount == 0);
+
+    Fixture single;
+    single.addProfile("A");
+    const JobSheet one = makeJobSheet(single.doc, single.session.summary(), "J");
+    CHECK(one.sides.empty());
+    CHECK_FALSE(contains(renderJobSheetText(one), "Side"));
+    CHECK_FALSE(contains(renderJobSheetHtml(one), "<h3>"));
+}
+
+TEST_CASE("job sheet: sides are capped and the rest counted", "[jobsheet]") {
+    TwoSided f;
+    for (std::size_t i = 0; i < kJobSheetMaxSides + 3; ++i) {
+        document::Sheet sh = *f.doc.findSheet(f.front);
+        sh.id = document::SheetId{};
+        sh.name = "Extra " + std::to_string(i);
+        sh.partner = document::SheetId{};
+        f.doc.insertSheet(sh);
+    }
+    const JobSheet sheet = makeJobSheet(f.doc, f.session.summary());
+    CHECK(sheet.sides.size() == kJobSheetMaxSides);
+    CHECK(sheet.sidesOmitted == f.doc.sheets().size() - kJobSheetMaxSides);
+    CHECK(contains(renderJobSheetText(sheet), "more sides"));
+    CHECK(contains(renderJobSheetHtml(sheet), "more sides</p>"));
 }
