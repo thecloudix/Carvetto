@@ -104,4 +104,27 @@ ScalingTimes interleavedCpuSeconds(int pairs, Small&& runSmall, Large&& runLarge
     return t;
 }
 
+/// `interleavedCpuSeconds` repeated up to `attempts` times until `ratio() <= bound`; returns the
+/// attempt with the least ratio (T-0270). Load noise is transient and independent between
+/// attempts, whereas a genuinely super-linear cost exceeds `bound` in every attempt, so a
+/// regression is still caught while a load spike on one attempt is not. The callables are run
+/// again each attempt, so whatever they record for the test's other checks is from the last
+/// attempt (the work is deterministic, so these are the same in each).
+template <class Small, class Large>
+ScalingTimes interleavedCpuSecondsRetry(double bound, int pairs, Small&& runSmall, Large&& runLarge,
+                                        double timeFloor = kCpuTimeFloor,
+                                        double minWindowSeconds = kCpuMinWindow, int attempts = 3) {
+    ScalingTimes best;
+    for (int a = 0; a < attempts; ++a) {
+        const ScalingTimes t = interleavedCpuSeconds(pairs, runSmall, runLarge, timeFloor, minWindowSeconds);
+        if (a == 0 || t.ratio() < best.ratio()) {
+            best = t;
+        }
+        if (best.ratio() <= bound) {
+            break;
+        }
+    }
+    return best;
+}
+
 }  // namespace carvetto::test

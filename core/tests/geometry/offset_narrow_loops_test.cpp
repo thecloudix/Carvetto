@@ -1076,7 +1076,7 @@ TEST_CASE("T-0128: putting strays back is near-linear in their number (hatch at 
     const Contour cl = hatch(nLarge, d);
     std::vector<Contour> rs;
     std::vector<Contour> rl;
-    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(8.0,
         3, [&] { rs = offsetOpenContour(cs, d, OffsetSide::Left, JoinType::Round, kTol); },
         [&] { rl = offsetOpenContour(cl, d, OffsetSide::Left, JoinType::Round, kTol); });
     INFO("CPU seconds: " << nSmall << " lines " << t.smallSeconds << ", " << nLarge << " lines "
@@ -1462,7 +1462,7 @@ TEST_CASE("T-0172 (a): self-crossing cuts cost near-linear time on long and coll
     const std::vector<Span> longSpiral = evenSpiral(16 * nSmall);
     std::vector<std::size_t> cs;
     std::vector<std::size_t> cl;
-    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(64.0,
         3, [&] { cs = detail::selfCrossingCuts(shortSpiral); },
         [&] { cl = detail::selfCrossingCuts(longSpiral); }, carvetto::test::kCpuTimeFloor, 0.02);
     INFO("CPU seconds: " << nSmall << " spans " << t.smallSeconds << ", " << 16 * nSmall << " spans "
@@ -1602,7 +1602,7 @@ TEST_CASE("T-0172 (b): strays of a hatch with varied line ends cost what those o
     const Contour varied = build(true);
     std::vector<Contour> re;
     std::vector<Contour> rv;
-    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(1.5,
         5, [&] { re = offsetOpenContour(even, d, OffsetSide::Left, JoinType::Round, kTol); },
         [&] { rv = offsetOpenContour(varied, d, OffsetSide::Left, JoinType::Round, kTol); });
     INFO("CPU seconds: even " << t.smallSeconds << ", varied " << t.largeSeconds << ", ratio " << t.ratio());

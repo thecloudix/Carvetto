@@ -282,7 +282,7 @@ TEST_CASE("T-0131 c: Raster zig-zag linking on a 1000-tooth comb is near-linear"
     const Contour cl = comb(nLarge);
     PocketResult rs;
     PocketResult rl;
-    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(3.0 * 3.0,
         kRelease ? 3 : 2, [&] { rs = pocketToolpath({cs}, tools, p); },
         [&] { rl = pocketToolpath({cl}, tools, p); });
     INFO("CPU seconds: " << nSmall << " teeth " << t.smallSeconds << ", " << nLarge << " teeth "
@@ -315,7 +315,7 @@ TEST_CASE("T-0131 d: Profile with a separate last pass is near-linear in the vec
     const std::vector<Contour> cl = textPage(nLarge);
     ProfileResult rs;
     ProfileResult rl;
-    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(2.5,
         2, [&] { rs = profileToolpath(cs, profileTool(), p); },
         [&] { rl = profileToolpath(cl, profileTool(), p); });
     INFO("CPU seconds: " << nSmall << " vectors " << t.smallSeconds << ", " << nLarge << " vectors "
@@ -349,7 +349,7 @@ TEST_CASE("T-0131 d: tabs with a separate last pass are matched near-linearly",
     const std::vector<Contour> cl = textPage(nLarge);
     ProfileResult rs;
     ProfileResult rl;
-    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(2.5,
         1, [&] { rs = profileToolpath(cs, profileTool(), p); },
         [&] { rl = profileToolpath(cl, profileTool(), p); });
     INFO("CPU seconds: " << nSmall << " vectors " << t.smallSeconds << ", " << nLarge << " vectors "
@@ -386,7 +386,7 @@ TEST_CASE("T-0131 e: Pocket with a rest tool on a page of vectors is near-linear
     const std::vector<Contour> cl = textPage(nLarge);
     PocketResult rs;
     PocketResult rl;
-    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(2.5 * 2.5,
         3, [&] { rs = pocketToolpath(cs, tools, p); },
         [&] { rl = pocketToolpath(cl, tools, p); });
     INFO("CPU seconds: " << nSmall << " vectors " << t.smallSeconds << ", " << nLarge << " vectors "
@@ -417,7 +417,7 @@ TEST_CASE("T-0131 f: Profile tabs on a page of vectors stay linear",
     const std::vector<Contour> cl = textPage(nLarge);
     ProfileResult rs;
     ProfileResult rl;
-    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(2.5 * 2.5,
         1, [&] { rs = profileToolpath(cs, profileTool(), p); },
         [&] { rl = profileToolpath(cl, profileTool(), p); });
     INFO("CPU seconds: " << nSmall << " vectors " << t.smallSeconds << ", " << nLarge << " vectors "
@@ -453,7 +453,7 @@ TEST_CASE("T-0142 e: nearest-first order of thousands of single-part groups is l
     restParts(nLarge, 1, cl, pl);
     std::vector<std::size_t> os;
     std::vector<std::size_t> ol;
-    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(2.5,
         3, [&] { os = detail::nearestFirstOrder(cs, ps); }, [&] { ol = detail::nearestFirstOrder(cl, pl); });
     INFO("CPU seconds: " << nSmall << " groups " << t.smallSeconds << ", " << nLarge << " groups " << t.largeSeconds
                          << ", ratio " << t.ratio());

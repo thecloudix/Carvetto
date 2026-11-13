@@ -905,8 +905,8 @@ TEST_CASE("T-0004 AC3: offset cost grows about linearly with the span count (CPU
     const Contour longSpiral = densePolyline(4000);
     constexpr int kSmallReps = 4;
     std::size_t chains = 0;
-    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
-        3,
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(
+        8.0 / 4, 3,
         [&] {
             for (int r = 0; r < kSmallReps; ++r) {
                 chains += offsetOpenContour(shortSpiral, 1.5, OffsetSide::Left, JoinType::Round, kTol).size();

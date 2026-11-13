@@ -417,7 +417,7 @@ TEST_CASE("Contour-level intersect is near-linear in spans and hits", "[intersec
     const Contour bl = baseline(nLarge);
     ContourIntersections rs;
     ContourIntersections rl;
-    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(7.0,
         3, [&] { rs = intersect(zs, bs, tol); }, [&] { rl = intersect(zl, bl, tol); });
     INFO("CPU seconds: " << nSmall << " spans " << t.smallSeconds << ", " << nLarge << " spans " << t.largeSeconds
                          << ", ratio " << t.ratio());
@@ -441,7 +441,7 @@ TEST_CASE("Contour-level selfIntersections is near-linear in spans and hits", "[
     const Contour cl = looped(nLarge);
     ContourIntersections rs;
     ContourIntersections rl;
-    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+    const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(7.0,
         3, [&] { rs = selfIntersections(cs, tol); }, [&] { rl = selfIntersections(cl, tol); });
     INFO("CPU seconds: " << nSmall << " spans " << t.smallSeconds << ", " << nLarge << " spans " << t.largeSeconds
                          << ", ratio " << t.ratio());

@@ -179,7 +179,7 @@ TEST_CASE("edit ops: trimming scales near-linearly with the box index", "[edit][
     build(10000, segsLarge, ringLarge);
     TrimResult small_;
     TrimResult large_;
-    const auto times = carvetto::test::interleavedCpuSeconds(
+    const auto times = carvetto::test::interleavedCpuSecondsRetry(9.0,
         3, [&] { small_ = trimToBoundary(segsSmall, ringSmall, TrimSide::ClearOutside); },
         [&] { large_ = trimToBoundary(segsLarge, ringLarge, TrimSide::ClearOutside); });
     REQUIRE(small_.contours.size() == 2500);

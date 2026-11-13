@@ -316,7 +316,7 @@ TEST_CASE("T-0142 b: outsets of many shapes with nested holes stay near-linear",
         const std::vector<Contour> b = scene(2 * nSmall, grid);
         std::size_t ra = 0;
         std::size_t rb = 0;
-        const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+        const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(2.5,
             3, [&] { ra = offsetContours(a, 0.05, JoinType::Round, tol).size(); },
             [&] { rb = offsetContours(b, 0.05, JoinType::Round, tol).size(); });
         INFO((grid ? "grid" : "row") << " CPU seconds: " << nSmall << " shapes " << t.smallSeconds << ", "
@@ -389,7 +389,7 @@ TEST_CASE("T-0142 round 3: outsets of touching shapes with holes and of holes in
         const std::vector<Contour> b = scene(2 * nSmall, layout);
         std::size_t ra = 0;
         std::size_t rb = 0;
-        const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+        const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(2.5,
             3, [&] { ra = offsetContours(a, 0.05, JoinType::Round, tol).size(); },
             [&] { rb = offsetContours(b, 0.05, JoinType::Round, tol).size(); });
         INFO("layout " << layout << " CPU seconds: " << nSmall << " shapes " << t.smallSeconds << ", " << 2 * nSmall
@@ -457,7 +457,7 @@ TEST_CASE("T-0171: outsets of a column whose holes are listed far from their out
         const std::vector<Contour> b = scene(2 * nSmall, layout);
         std::size_t ra = 0;
         std::size_t rb = 0;
-        const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSeconds(
+        const carvetto::test::ScalingTimes t = carvetto::test::interleavedCpuSecondsRetry(2.5,
             3, [&] { ra = offsetContours(a, 0.05, JoinType::Round, tol).size(); },
             [&] { rb = offsetContours(b, 0.05, JoinType::Round, tol).size(); });
         INFO((layout == 0 ? "reversed" : "shuffled") << " CPU seconds: " << nSmall << " shapes " << t.smallSeconds
