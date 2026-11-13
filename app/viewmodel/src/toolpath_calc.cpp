@@ -600,6 +600,7 @@ document::ToolpathRecord makeRecord(const ToolpathJob& job, toolpath::Toolpath t
         profile->cuttingData.reset();  // tool-database input, not part of the record
     }
     record.selection = job.selection;
+    record.sheet = job.sheet;
     record.tool = tp.tool;
     record.toolSource = source;
     record.moves = document::shareMoves(std::move(tp.moves));

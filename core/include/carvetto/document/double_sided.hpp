@@ -34,4 +34,9 @@ double materialTopZ(ZZero zero, bool zeroOffSameSide, double thicknessMm, Side s
 /// `moves` with `dz` added to every Z (toolpaths are computed with the cut face at Z = 0).
 std::vector<toolpath::Move> shiftMovesZ(const std::vector<toolpath::Move>& moves, double dz);
 
+/// `moves` mirrored about the centre line of `material` like `flipPoint` (X and Y of every end
+/// point and arc centre; Z untouched). A mirror reverses handedness, so ArcCW and ArcCCW swap.
+std::vector<toolpath::Move> flipMoves(const std::vector<toolpath::Move>& moves, const geometry::Box2& material,
+                                      FlipDirection direction);
+
 }  // namespace carvetto::document

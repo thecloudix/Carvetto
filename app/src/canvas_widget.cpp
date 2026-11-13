@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "carvetto/viewmodel/canvas_scene.hpp"
+#include "carvetto/viewmodel/layers_sheets.hpp"
 #include "carvetto/viewmodel/selection_tools.hpp"
 
 namespace carvetto::app {
@@ -152,6 +153,37 @@ const QImage& CanvasWidget::bitmapImage(const std::string& key) const {
     return bitmapCache_.emplace(key, std::move(image)).first->second;
 }
 
+void CanvasWidget::paintSides(QPainter& painter, const ViewTransform& view) const {
+    if (doc_ == nullptr || doc_->job().type != document::JobType::DoubleSided) {
+        return;
+    }
+    const std::vector<viewmodel::SideOutline> outlines = viewmodel::multiSidedView(*doc_);
+    if (outlines.empty()) {
+        return;
+    }
+    const viewmodel::SideOutline& active = outlines.front();
+    if (multiSided_ && outlines.size() > 1 && !active.otherSideContent.isEmpty()) {
+        QPen pen(QColor(220, 120, 20));
+        pen.setStyle(Qt::DashDotLine);
+        pen.setWidthF(1.0);
+        pen.setCosmetic(true);
+        painter.setPen(pen);
+        painter.setBrush(QColor(220, 120, 20, 28));
+        painter.drawRect(toQt(view.worldToScreen(active.otherSideContent)));
+    }
+    // Active side and flip direction, in the corner of the material.
+    const QRectF material = toQt(view.worldToScreen(active.material));
+    const bool back = active.side == document::Side::Back;
+    const bool horizontal = doc_->job().flipDirection == document::FlipDirection::Horizontal;
+    QString text = back ? QStringLiteral("Bottom side") : QStringLiteral("Top side");
+    text += horizontal ? QStringLiteral(" - flip left-right") : QStringLiteral(" - flip top-bottom");
+    if (multiSided_) {
+        text += QStringLiteral(" - multi-sided view");
+    }
+    painter.setPen(QColor(90, 90, 90));
+    painter.drawText(material.topLeft() + QPointF(6.0, 14.0), text);
+}
+
 void CanvasWidget::paintScene(QPainter& painter, const ViewTransform& view, QSize size) const {
     painter.fillRect(QRectF(QPointF(0.0, 0.0), QSizeF(size)), canvasBackground());
     if (doc_ == nullptr) {
@@ -256,6 +288,8 @@ void CanvasWidget::paintScene(QPainter& painter, const ViewTransform& view, QSiz
         painter.setBrush(Qt::NoBrush);
         painter.drawRect(toQt(view.worldToScreen(*sel)).adjusted(-3.0, -3.0, 3.0, 3.0));
     }
+
+    paintSides(painter, view);
 
     // Datum marker: a small filled square at the active sheet's XY datum.
     const QPointF datum = toQt(scene.datumPx);

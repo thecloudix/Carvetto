@@ -43,6 +43,7 @@ class NewJobDialog : public QDialog {
     QDoubleSpinBox* diameter_{nullptr};
     QComboBox* rotaryAxis_{nullptr};
     QComboBox* flip_{nullptr};
+    QCheckBox* zeroOffSame_{nullptr};
     QComboBox* zZero_{nullptr};
     QComboBox* datum_{nullptr};
     QCheckBox* useOffset_{nullptr};

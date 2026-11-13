@@ -50,6 +50,7 @@ add_library(carvetto_viewmodel STATIC
   src/snapping.cpp
   src/selection_tools.cpp
   src/properties_model.cpp
+  src/double_sided_ops.cpp
   src/layers_sheets.cpp
   src/calculation.cpp
   src/variables_model.cpp

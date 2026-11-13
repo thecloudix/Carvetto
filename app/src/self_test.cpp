@@ -44,6 +44,7 @@
 #include "carvetto/viewmodel/selection_tools.hpp"
 #include "carvetto/viewmodel/tools.hpp"
 #include "carvetto/viewmodel/view_transform.hpp"
+#include "double_sided_menu.hpp"
 #include "main_window.hpp"
 #include "node_edit_menu.hpp"
 #include "properties_panel.hpp"
@@ -761,7 +762,12 @@ int runSelfTest() {
         return fail(why);
     }
 
-    // 9c. Document variables: the dialog, calculation boxes and toolpath references (T-0257).
+    // 9c. Double-sided jobs: setup, swap sides, copy across, per-side posts (T-0261).
+    if (const std::string why = doubleSidedSelfTest(window); !why.empty()) {
+        return fail(why);
+    }
+
+    // 9d. Document variables: the dialog, calculation boxes and toolpath references (T-0257).
     if (const std::string why = variablesSelfTest(window); !why.empty()) {
         return fail(why);
     }

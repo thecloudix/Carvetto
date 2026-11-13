@@ -77,6 +77,10 @@ NewJobDialog::NewJobDialog(const viewmodel::NewJobForm& initial, QWidget* parent
     addChoice(flip_, "Flip left-right", FlipDirection::Horizontal);
     addChoice(flip_, "Flip top-bottom", FlipDirection::Vertical);
 
+    zeroOffSame_ = new QCheckBox(QStringLiteral("Zero off same side"), this);
+    zeroOffSame_->setObjectName(QStringLiteral("zeroOffSameSide"));
+    flip_->setObjectName(QStringLiteral("flipDirection"));
+
     zZero_ = new QComboBox(this);
     addChoice(zZero_, "Top of material", ZZero::MaterialSurface);
     addChoice(zZero_, "Machine bed", ZZero::MachineBed);
@@ -108,6 +112,7 @@ NewJobDialog::NewJobDialog(const viewmodel::NewJobForm& initial, QWidget* parent
     form->addRow(QStringLiteral("Rotary diameter:"), diameter_);
     form->addRow(QStringLiteral("Rotary axis:"), rotaryAxis_);
     form->addRow(QStringLiteral("Second side:"), flip_);
+    form->addRow(QString(), zeroOffSame_);
     form->addRow(QStringLiteral("Z zero:"), zZero_);
     form->addRow(QStringLiteral("XY datum:"), datum_);
     form->addRow(QString(), useOffset_);
@@ -141,6 +146,7 @@ viewmodel::NewJobForm NewJobDialog::form() const {
     f.diameter = diameter_->value();
     f.rotaryAxis = choice<RotaryAxis>(rotaryAxis_);
     f.flip = choice<FlipDirection>(flip_);
+    f.zeroOffSameSide = zeroOffSame_->isChecked();
     f.zZero = choice<ZZero>(zZero_);
     f.datum = choice<Datum>(datum_);
     f.useOffset = useOffset_->isChecked();
@@ -160,6 +166,7 @@ void NewJobDialog::setForm(const viewmodel::NewJobForm& f) {
     diameter_->setValue(f.diameter);
     select(rotaryAxis_, f.rotaryAxis);
     select(flip_, f.flip);
+    zeroOffSame_->setChecked(f.zeroOffSameSide);
     select(zZero_, f.zZero);
     select(datum_, f.datum);
     useOffset_->setChecked(f.useOffset);
@@ -197,6 +204,7 @@ void NewJobDialog::updateEnabledFields() {
     diameter_->setEnabled(rotary);
     rotaryAxis_->setEnabled(rotary);
     flip_->setEnabled(type == JobType::DoubleSided);
+    zeroOffSame_->setEnabled(type == JobType::DoubleSided);
     datum_->setEnabled(!rotary);
     useOffset_->setEnabled(!rotary);
     offsetX_->setEnabled(!rotary && useOffset_->isChecked());

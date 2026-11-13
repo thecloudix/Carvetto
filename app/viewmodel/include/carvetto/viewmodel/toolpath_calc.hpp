@@ -169,6 +169,8 @@ struct ToolpathJob {
     std::uint64_t vectorsFingerprint{0};
     std::uint64_t toolsFingerprint{0};
     document::ToolpathId target;
+    /// The sheet the records are linked to (T-0261): the active sheet of a double-sided job, else null.
+    document::SheetId sheet;
     /// The records of the target (its V-carve) as they were when the job was prepared; `apply`
     /// refuses the result when they have changed since (an edit or rename in between).
     std::vector<document::ToolpathRecord> targetRecords;

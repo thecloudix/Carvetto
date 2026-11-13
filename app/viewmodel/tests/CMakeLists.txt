@@ -56,6 +56,7 @@ add_executable(carvetto_viewmodel_tests
   tool_setup_test.cpp
   vector_selector_test.cpp
   properties_model_test.cpp
+  double_sided_ops_test.cpp
   layers_sheets_test.cpp
   calculation_test.cpp
   variables_model_test.cpp

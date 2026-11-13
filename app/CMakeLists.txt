@@ -18,6 +18,9 @@ qt_add_executable(carvetto
   src/bitmap_decoder.cpp
   src/bitmap_decoder.hpp
   src/array_copy_menu.cpp
+  src/double_sided_menu.cpp
+  src/double_sided_self_test.cpp
+  src/double_sided_menu.hpp
   src/array_copy_menu.hpp
   src/main_window.cpp
   src/main_window.hpp
