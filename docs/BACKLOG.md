@@ -1254,7 +1254,7 @@ Goal: (1) ADR-0039 (and any other ADR/comments) say a minor bump makes an older 
 Acceptance criteria:
   1. ADR and comments accurate; no behaviour change unless the owner decides otherwise.
 
-### T-0265 V-carve inlay toolpath: V-bit pocket and plug, glue gap, plug sheet (T-0238 split)   [status: in-progress]
+### T-0265 V-carve inlay toolpath: V-bit pocket and plug, glue gap, plug sheet (T-0238 split)   [status: done — merged #141 (product readings in ADR-0054 for owner review)]
 Phase: 1   Module: core/toolpath + app/viewmodel   Depends on: T-0238, T-0153, T-0220
 Goal: V-carve inlay (inventory 'V-carve inlay Toolpath'): pocket depth, glue gap, surface clearance, V-bit and clearance tools, plug destination sheet (the plug is mirrored, and centred when on another sheet), plug outer boundary (Sheet Limits / Vector Offset / Boundary Offset). Builds on the straight inlay's record/form/viewmodel wiring (ADR-0040).
 Acceptance criteria:
