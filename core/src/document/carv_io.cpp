@@ -67,6 +67,8 @@ struct CarvExtras::Impl {
     ExtraMap manifest;
     ExtraMap root;
     ExtraMap job;
+    /// Unknown keys of the `keepout` record (T-0258).
+    ExtraMap keepout;
     /// Unknown keys of each sheet / layer / object record, by id.
     std::map<std::uint64_t, ExtraMap> sheets;
     std::map<std::uint64_t, ExtraMap> layers;
@@ -80,7 +82,7 @@ struct CarvExtras::Impl {
     std::map<std::string, std::vector<std::uint8_t>> members;
 
     bool empty() const {
-        return manifest.empty() && root.empty() && job.empty() && sheets.empty() && layers.empty() &&
+        return manifest.empty() && root.empty() && job.empty() && keepout.empty() && sheets.empty() && layers.empty() &&
                objects.empty() && toolpaths.empty() && params.empty() && members.empty();
     }
 };
@@ -3336,6 +3338,7 @@ struct JobFile {
     Job job;
     KeepOutFile keepOut;
     ExtraMap jobUnknown;
+    ExtraMap keepOutUnknown;
     ExtraMap rootUnknown;
     std::vector<std::pair<Sheet, ExtraMap>> sheets;
     std::vector<std::pair<Layer, ExtraMap>> layers;
@@ -3355,7 +3358,7 @@ constexpr std::array<std::string_view, 10> kRootKeys{"active_layer", "active_she
 constexpr std::array<std::string_view, 3> kKeepOutKeys{"clearance_mm", "visible", "zones"};
 constexpr std::array<std::string_view, 2> kKeepOutZoneKeys{"id", "outline"};
 
-KeepOutFile decodeKeepOut(JsonReader& r, const Path& p) {
+KeepOutFile decodeKeepOut(JsonReader& r, const Path& p, ExtraMap& unknown) {
     KeepOutFile k;
     k.present = true;
     Record rec(r, p, kKeepOutKeys);
@@ -3404,7 +3407,7 @@ KeepOutFile decodeKeepOut(JsonReader& r, const Path& p) {
                 k.zones.push_back(std::move(z));
             }
         } else {
-            rec.skip();
+            rec.keep(unknown);
         }
     }
     rec.requireAll();
@@ -3433,7 +3436,7 @@ JobFile decodeJobFile(JsonReader& r) {
             if (r.peek() != JKind::Object) {
                 fail(f, "must be a JSON object");
             }
-            jf.keepOut = decodeKeepOut(r, f);
+            jf.keepOut = decodeKeepOut(r, f, jf.keepOutUnknown);
         } else if (k == "sheets" || k == "layers") {
             const bool sheets = k == "sheets";
             if (r.peek() != JKind::Array) {
@@ -3705,6 +3708,7 @@ LoadedCarv loadImpl(std::span<const std::uint8_t> bytes, const detail::LoadLimit
     JobFile jf = decodeMember(zip, *jobEntry, budget, decodeJobFile);
     extras->root = std::move(jf.rootUnknown);
     extras->job = std::move(jf.jobUnknown);
+    extras->keepout = std::move(jf.keepOutUnknown);
 
     // --- other members, kept verbatim under the held-bytes cap: max(64 MiB, 32 x archive size).
     // Binary members are read incrementally; an unknown .json member is first streamed through
@@ -4239,7 +4243,8 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
         // The minor is the highest one any used feature requires: toolpath calculation expressions (1.8, T-0271), toolpath sheet links (1.7, T-0261), embedded bitmaps (1.6, T-0273), paired sheets (1.5, T-0243), keep-out zones (1.4, T-0241),
         // dimension objects (1.3, T-0246), text/fonts (1.2); otherwise the base minor.
         const bool usesKeepOut =
-            !doc.keepOutZones().empty() || doc.keepOutClearance() != 0.0 || !doc.keepOutVisible();
+            !doc.keepOutZones().empty() || doc.keepOutClearance() != 0.0 || !doc.keepOutVisible() ||
+            (ex && !ex->keepout.empty());
         const bool usesDoubleSided = std::any_of(doc.sheets().begin(), doc.sheets().end(), [](const Sheet& s) {
             return s.side != Side::Front || s.partner.value != 0;
         });
@@ -4432,6 +4437,7 @@ CarvResult<std::vector<std::uint8_t>> saveCarv(const Document& doc, const CarvEx
                 zones.push_back(std::move(zj));
             }
             keepOut["zones"] = std::move(zones);
+            mergeUnknown(keepOut, ex ? &ex->keepout : nullptr);
             root["keepout"] = std::move(keepOut);
         }
 

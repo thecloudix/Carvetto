@@ -3,7 +3,10 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <functional>
 #include <limits>
+#include <queue>
+#include <utility>
 
 #include "carvetto/geometry/boolean.hpp"
 #include "carvetto/geometry/cancel.hpp"
@@ -45,6 +48,7 @@ KeepOutField::KeepOutField(const std::vector<Contour>& zones, double clearance, 
     if (closed.empty()) {
         return;
     }
+    std::vector<std::pair<std::size_t, std::size_t>> rings;
     std::vector<Contour> region = geometry::unionContours(closed, tol);
     if (clearance > 0.0) {
         region = geometry::offsetContours(region, clearance, geometry::JoinType::Round, tol);
@@ -55,6 +59,7 @@ KeepOutField::KeepOutField(const std::vector<Contour>& zones, double clearance, 
         if (pts.size() < 3) {
             continue;
         }
+        const std::size_t ringStart = edges_.size();
         for (std::size_t i = 0; i < pts.size(); ++i) {
             const Vec2 a = pts[i];
             const Vec2 b = pts[(i + 1) % pts.size()];
@@ -64,8 +69,171 @@ KeepOutField::KeepOutField(const std::vector<Contour>& zones, double clearance, 
             edges_.push_back(e);
             bounds_.expand(a);
             vertices_.push_back(a);
+            Link l;
+            l.prev = static_cast<std::uint32_t>(ringStart + (i + pts.size() - 1) % pts.size());
+            l.next = static_cast<std::uint32_t>(ringStart + (i + 1) % pts.size());
+            const auto unit = [](Vec2 v) {
+                const double len = std::sqrt(v.dot(v));
+                return len > 0.0 ? Vec2{v.x / len, v.y / len} : Vec2{0.0, 0.0};
+            };
+            l.unitNext = unit(pts[(i + 1) % pts.size()] - a);
+            l.unitPrev = unit(pts[(i + pts.size() - 1) % pts.size()] - a);
+            // A degenerate (zero-length) neighbour edge: never prune at this vertex.
+            l.prune = l.unitNext.dot(l.unitNext) > 0.5 && l.unitPrev.dot(l.unitPrev) > 0.5;
+            links_.push_back(l);
+        }
+        rings.emplace_back(ringStart, pts.size());
+    }
+    buildGrid();
+    // Which side of each ring is the region's interior? Probe just left and just right of the
+    // first edge; when the probes do not disagree the ring is never pruned.
+    for (const auto& [start, count] : rings) {
+        bool decided = false;
+        for (std::size_t k = 0; k < count && !decided; ++k) {
+            const Edge& e = edges_[start + k];
+            const Vec2 d = e.b - e.a;
+            const double len = std::sqrt(d.dot(d));
+            if (len <= 0.0) {
+                continue;
+            }
+            const double delta = std::min(len * 1e-4, 1e-6);
+            const Vec2 mid = (e.a + e.b) * 0.5;
+            const Vec2 left{-d.y / len * delta, d.x / len * delta};
+            const bool inL = contains(mid + left);
+            const bool inR = contains(mid - left);
+            decided = true;
+            for (std::size_t i = start; i < start + count; ++i) {
+                links_[i].interiorLeft = inL;
+                links_[i].prune = links_[i].prune && inL != inR;
+            }
+        }
+        if (!decided) {
+            for (std::size_t i = start; i < start + count; ++i) {
+                links_[i].prune = false;
+            }
         }
     }
+}
+
+namespace {
+constexpr double kIndexMargin = 1e-7;
+}
+
+void KeepOutField::buildGrid() {
+    const std::size_t e = edges_.size();
+    if (e == 0) {
+        return;
+    }
+    const std::size_t side = std::clamp<std::size_t>(static_cast<std::size_t>(std::sqrt(static_cast<double>(e))), 1, 512);
+    gridCols_ = gridRows_ = side;
+    cellW_ = std::max(bounds_.width() / static_cast<double>(side), 1e-9);
+    cellH_ = std::max(bounds_.height() / static_cast<double>(side), 1e-9);
+    cells_.assign(side * side, {});
+    stamp_.assign(e, 0);
+    std::vector<std::uint32_t> ids;
+    for (std::size_t i = 0; i < e; ++i) {
+        // Registration visits each cell once, so no de-duplication is needed here.
+        const Edge& ed = edges_[i];
+        const double x0 = std::min(ed.a.x, ed.b.x) - kIndexMargin;
+        const double x1 = std::max(ed.a.x, ed.b.x) + kIndexMargin;
+        const auto col = [&](double x) {
+            const double c = std::floor((x - bounds_.min.x) / cellW_);
+            return static_cast<std::size_t>(std::clamp(c, 0.0, static_cast<double>(side - 1)));
+        };
+        const auto row = [&](double y) {
+            const double r = std::floor((y - bounds_.min.y) / cellH_);
+            return static_cast<std::size_t>(std::clamp(r, 0.0, static_cast<double>(side - 1)));
+        };
+        const Vec2 d = ed.b - ed.a;
+        for (std::size_t c = col(x0); c <= col(x1); ++c) {
+            const double cl = std::max(x0, bounds_.min.x + static_cast<double>(c) * cellW_);
+            const double cr = std::min(x1, bounds_.min.x + static_cast<double>(c + 1) * cellW_);
+            double ylo = std::min(ed.a.y, ed.b.y);
+            double yhi = std::max(ed.a.y, ed.b.y);
+            if (std::fabs(d.x) > 0.0) {
+                const double ya = ed.a.y + (std::clamp(cl, x0 + kIndexMargin, x1 - kIndexMargin) - ed.a.x) / d.x * d.y;
+                const double yb = ed.a.y + (std::clamp(cr, x0 + kIndexMargin, x1 - kIndexMargin) - ed.a.x) / d.x * d.y;
+                ylo = std::min(ya, yb);
+                yhi = std::max(ya, yb);
+            }
+            for (std::size_t r = row(ylo - kIndexMargin); r <= row(yhi + kIndexMargin); ++r) {
+                cells_[r * side + c].push_back(static_cast<std::uint32_t>(i));
+            }
+        }
+    }
+}
+
+void KeepOutField::gather(Vec2 p, Vec2 q, double margin, std::vector<std::uint32_t>& out) const {
+    out.clear();
+    const std::size_t side = gridCols_;
+    if (++stampGen_ == 0) {
+        std::fill(stamp_.begin(), stamp_.end(), 0U);
+        stampGen_ = 1;
+    }
+    const auto col = [&](double x) {
+        const double c = std::floor((x - bounds_.min.x) / cellW_);
+        return static_cast<std::size_t>(std::clamp(c, 0.0, static_cast<double>(side - 1)));
+    };
+    const auto row = [&](double y) {
+        const double r = std::floor((y - bounds_.min.y) / cellH_);
+        return static_cast<std::size_t>(std::clamp(r, 0.0, static_cast<double>(side - 1)));
+    };
+    const double x0 = std::min(p.x, q.x) - margin;
+    const double x1 = std::max(p.x, q.x) + margin;
+    const Vec2 d = q - p;
+    for (std::size_t c = col(x0); c <= col(x1); ++c) {
+        const double cl = std::max(x0, bounds_.min.x + static_cast<double>(c) * cellW_);
+        const double cr = std::min(x1, bounds_.min.x + static_cast<double>(c + 1) * cellW_);
+        double ylo = std::min(p.y, q.y);
+        double yhi = std::max(p.y, q.y);
+        if (std::fabs(d.x) > 0.0) {
+            const double ya = p.y + (std::clamp(cl, std::min(p.x, q.x), std::max(p.x, q.x)) - p.x) / d.x * d.y;
+            const double yb = p.y + (std::clamp(cr, std::min(p.x, q.x), std::max(p.x, q.x)) - p.x) / d.x * d.y;
+            ylo = std::min(ya, yb);
+            yhi = std::max(ya, yb);
+        }
+        for (std::size_t r = row(ylo - margin); r <= row(yhi + margin); ++r) {
+            for (const std::uint32_t id : cells_[r * side + c]) {
+                if (stamp_[id] != stampGen_) {
+                    stamp_[id] = stampGen_;
+                    out.push_back(id);
+                }
+            }
+        }
+    }
+}
+
+bool KeepOutField::leavesVertexFree(std::size_t vertex, Vec2 towards) const {
+    const Link& l = links_[vertex];
+    if (!l.prune) {
+        return true;
+    }
+    const Vec2 u = vertices_[vertex];
+    const Vec2 d = towards - u;
+    const double dl = std::sqrt(d.dot(d));
+    if (!(dl > 0.0)) {
+        return true;
+    }
+    // Interior wedge: from the next edge direction `n` to the previous edge direction `p`,
+    // counter-clockwise when the region is on the left of the ring, clockwise otherwise.
+    // Cross products are of unit vectors, so kTol is an angle tolerance in radians.
+    const double sgn = l.interiorLeft ? 1.0 : -1.0;
+    const Vec2 dir{d.x / dl, d.y / dl};
+    const double cn = sgn * l.unitNext.cross(dir);  // > 0: dir is counter-clockwise of next
+    const double cp = sgn * dir.cross(l.unitPrev);  // > 0: dir is clockwise of prev
+    constexpr double kTol = 1e-9;
+    const double wedgeCross = sgn * l.unitNext.cross(l.unitPrev);
+    if (wedgeCross > kTol) {  // convex corner, wedge < pi
+        return !(cn > kTol && cp > kTol);
+    }
+    if (wedgeCross < -kTol) {  // reflex corner, wedge > pi: free only in the closed complement
+        return cn <= kTol && cp <= kTol;
+    }
+    // Straight (wedge = pi) or a spike (wedge = 0): straight is free on the clockwise side only.
+    if (l.unitNext.dot(l.unitPrev) < 0.0) {
+        return !(cn > kTol);
+    }
+    return true;
 }
 
 bool KeepOutField::contains(Vec2 p) const {
@@ -73,7 +241,14 @@ bool KeepOutField::contains(Vec2 p) const {
         return false;
     }
     bool inside = false;
-    for (const Edge& e : edges_) {
+    std::vector<std::uint32_t> ids;
+    // Edges that can be within the boundary tolerance of p or cross the +x ray from p.
+    gather(Vec2{p.x - kBoundaryEps, p.y}, Vec2{bounds_.max.x + kBoundaryEps, p.y}, kBoundaryEps, ids);
+    if (scalable_) {
+        work_ += ids.size();  // the tangent search charges its point tests too
+    }
+    for (const std::uint32_t id : ids) {
+        const Edge& e = edges_[id];
         if (distToSegment(p, e.a, e.b) <= kBoundaryEps) {
             return false;
         }
@@ -95,10 +270,13 @@ bool KeepOutField::segmentClear(Vec2 a, Vec2 b) const {
     if (edges_.empty() || !bounds_.intersects(sb)) {
         return true;
     }
-    work_ += edges_.size();
+    std::vector<std::uint32_t> ids;
+    gather(a, b, 0.0, ids);
+    work_ += scalable_ ? ids.size() + 1 : edges_.size();
     const Vec2 d = b - a;
     std::vector<double> ts{0.0, 1.0};
-    for (const Edge& e : edges_) {
+    for (const std::uint32_t id : ids) {
+        const Edge& e = edges_[id];
         if (!e.box.intersects(sb)) {
             continue;
         }
@@ -154,6 +332,96 @@ RouteResult KeepOutField::route(Vec2 a, Vec2 b) {
         out.status = RouteStatus::EndpointInside;
         return out;
     }
+    if (!scalable_) {
+        out = routeFull(a, b);
+        if (out.status != RouteStatus::TooComplex || geometry::cancelRequested()) {
+            return out;
+        }
+        scalable_ = true;
+    }
+    return routeScalable(a, b);
+}
+
+RouteResult KeepOutField::routeScalable(Vec2 a, Vec2 b) {
+    RouteResult out;
+    const std::size_t n = vertices_.size();
+    const std::size_t src = n;
+    const std::size_t dst = n + 1;
+    const auto pos = [&](std::size_t i) { return i == src ? a : i == dst ? b : vertices_[i]; };
+    constexpr double kInf = std::numeric_limits<double>::infinity();
+    std::vector<double> dist(n + 2, kInf);
+    std::vector<std::size_t> prev(n + 2, n + 2);
+    std::vector<char> done(n + 2, 0);
+    using Item = std::pair<double, std::size_t>;
+    std::priority_queue<Item, std::vector<Item>, std::greater<>> open;
+    dist[src] = 0.0;
+    open.emplace(geometry::distance(a, b), src);
+    const std::uint64_t workStart = work_;
+    std::uint32_t steps = 0;
+    while (!open.empty()) {
+        const std::size_t u = open.top().second;
+        open.pop();
+        if (done[u]) {
+            continue;
+        }
+        done[u] = 1;
+        if (u == dst) {
+            break;
+        }
+        const Vec2 pu = pos(u);
+        // Scanning the candidate neighbours costs about a quarter of an edge scan per vertex.
+        work_ += n / 4 + 1;
+        if (work_ - workStart > workLimit_) {
+            out.status = RouteStatus::TooComplex;
+            return out;
+        }
+        for (std::size_t v = 0; v < n + 2; ++v) {
+            if (done[v] || v == u || (u == src && v == dst)) {
+                continue;
+            }
+            const Vec2 pv = pos(v);
+            const double nd = dist[u] + geometry::distance(pu, pv);
+            if (nd >= dist[v]) {
+                continue;
+            }
+            // Tangent pruning: the shortest path only joins vertices through free space at both ends.
+            if (u < n && !leavesVertexFree(u, pv)) {
+                continue;
+            }
+            if (v < n && !leavesVertexFree(v, pu)) {
+                continue;
+            }
+            if (work_ - workStart > workLimit_ || ((++steps & 63U) == 0 && geometry::cancelRequested())) {
+                out.status = RouteStatus::TooComplex;
+                return out;
+            }
+            const bool ok = (u < n && v < n) ? vertexVisible(u, v) : segmentClear(pu, pv);
+            if (ok) {
+                dist[v] = nd;
+                prev[v] = u;
+                open.emplace(nd + geometry::distance(pv, b), v);
+            }
+        }
+        if ((++steps & 63U) == 0 && geometry::cancelRequested()) {
+            out.status = RouteStatus::TooComplex;
+            return out;
+        }
+    }
+    if (!done[dst]) {
+        out.status = RouteStatus::NoRoute;
+        return out;
+    }
+    std::vector<Vec2> rev;
+    for (std::size_t v = dst; v != src; v = prev[v]) {
+        rev.push_back(pos(v));
+    }
+    out.points.assign(rev.rbegin(), rev.rend());
+    out.status = RouteStatus::Routed;
+    return out;
+}
+
+RouteResult KeepOutField::routeFull(Vec2 a, Vec2 b) {
+    RouteResult out;
     // Nodes: 0..n-1 region vertices, n = a, n+1 = b. A* (straight-line heuristic) with edges
     // tested lazily. The cost is bounded: every visibility test adds its edge scans to `work_`
     // and the search gives up (TooComplex) past `workLimit_` or when a cancel is requested.
