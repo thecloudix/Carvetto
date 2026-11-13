@@ -22,7 +22,10 @@ using geometry::JoinType;
 
 constexpr double kMaxLength = 100000.0;
 constexpr std::size_t kMaxSpans = 100000;
-constexpr std::size_t kMaxDerivedSpans = 4000;  // spans of the offset shapes handed on to the profile / pocket
+// Spans of the offset shapes handed on to the profile / pocket. The cost cliff of the offset and
+// the cutting stages lies at 15,000-20,000 derived spans (ADR-0040), so this is the largest cap
+// that keeps a refused run bounded.
+constexpr std::size_t kMaxDerivedSpans = 15000;
 constexpr const char* kAllowanceConsumes = "the allowance consumes the whole shape";
 constexpr std::size_t kMaxBandPasses = 1000;
 constexpr double kBandOverlap = 0.9;  // band pass spacing as a fraction of the tool diameter
@@ -34,6 +37,12 @@ ToolpathDiagnostic diag(ToolpathIssue issue, std::string message, std::optional<
 InlayResult refuse(InlayResult r, ToolpathIssue issue, std::string message) {
     r.diagnostics.push_back(diag(issue, std::move(message)));
     return r;
+}
+
+std::string tooManySpans(std::size_t inputSpans) {
+    return "the vector has " + std::to_string(inputSpans) +
+           " spans, and offsetting it for an inlay gives more than " + std::to_string(kMaxDerivedSpans) +
+           ": simplify the vector (fewer nodes) and try again";
 }
 
 std::size_t spanCount(const std::vector<Contour>& cs) {
@@ -160,9 +169,7 @@ InlayShapes inlayShapes(const std::vector<Contour>& contours, double toolDiamete
             break;
         }
         if (spanCount(shape) > kMaxDerivedSpans) {
-            out.diagnostics.push_back(
-                diag(ToolpathIssue::WorkLimitExceeded, "the offset shape has too many spans for an inlay (limit " +
-                                                           std::to_string(kMaxDerivedSpans) + ")"));
+            out.diagnostics.push_back(diag(ToolpathIssue::WorkLimitExceeded, tooManySpans(spans)));
             return out;
         }
     }
@@ -174,16 +181,16 @@ InlayShapes inlayShapes(const std::vector<Contour>& contours, double toolDiamete
     if (allowance > 0.0) {
         out.male = geometry::offsetContours(shape, -allowance, JoinType::Round, tol);
         if (geometry::cancelRequested()) {
-            return InlayShapes{{}, {}, {diag(ToolpathIssue::Cancelled, "cancelled")}};
+            return InlayShapes{{}, {}, {diag(ToolpathIssue::Cancelled, "cancelled")}, false};
         }
         if (spanCount(out.male) > kMaxDerivedSpans) {
-            return InlayShapes{{}, {}, {diag(ToolpathIssue::WorkLimitExceeded, "the offset shape has too many spans for an inlay (limit " +
-                                                                                   std::to_string(kMaxDerivedSpans) + ")")}};
+            return InlayShapes{{}, {}, {diag(ToolpathIssue::WorkLimitExceeded, tooManySpans(spans))}, false};
         }
     } else {
         out.male = shape;
     }
     if (out.male.empty()) {
+        out.allowanceConsumed = true;
         out.diagnostics.push_back(diag(ToolpathIssue::NoRegion, kAllowanceConsumes));
     }
     return out;
@@ -203,11 +210,9 @@ InlayResult inlayToolpath(const std::vector<Contour>& contours, const tooling::T
         return refuse(std::move(result), ToolpathIssue::Cancelled, "cancelled");
     }
     result.diagnostics = std::move(shapes.diagnostics);
-    if (!male && !shapes.female.empty()) {
+    if (!male && shapes.allowanceConsumed) {
         // The allowance only shrinks the plug: a female cut fine without it needs no warning.
-        std::erase_if(result.diagnostics, [](const ToolpathDiagnostic& d) {
-            return d.issue == ToolpathIssue::NoRegion && d.message == kAllowanceConsumes;
-        });
+        std::erase_if(result.diagnostics, [](const ToolpathDiagnostic& d) { return d.issue == ToolpathIssue::NoRegion; });
     }
     const std::vector<Contour>& shape = male ? shapes.male : shapes.female;
     if (shape.empty()) {
@@ -265,8 +270,7 @@ InlayResult inlayToolpath(const std::vector<Contour>& contours, const tooling::T
             return refuse(std::move(result), ToolpathIssue::Cancelled, "cancelled");
         }
         if (spanCount(grown) > kMaxDerivedSpans) {
-            return refuse(std::move(result), ToolpathIssue::WorkLimitExceeded,
-                          "the offset shape has too many spans for an inlay (limit " + std::to_string(kMaxDerivedSpans) + ")");
+            return refuse(std::move(result), ToolpathIssue::WorkLimitExceeded, tooManySpans(spanCount(contours)));
         }
         PocketResult pr = pocketToolpath(grown.empty() ? shape : grown, {PocketTool{tool, cuttingData}}, kp);
         for (ToolpathDiagnostic& d : pr.diagnostics) {

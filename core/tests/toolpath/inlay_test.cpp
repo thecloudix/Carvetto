@@ -375,6 +375,17 @@ Contour zigzagCircle(int n) {
     return polygon(pts);
 }
 
+// A smooth closed vector of n vertices (a lobed circle), as an imported curve would be.
+Contour wobblyCircle(int n) {
+    std::vector<Vec2> pts;
+    for (int i = 0; i < n; ++i) {
+        const double a = 2.0 * 3.14159265358979323846 * i / n;
+        const double r = 8.0 + 0.2 * std::cos(5.0 * a);
+        pts.push_back({r * std::cos(a), r * std::sin(a)});
+    }
+    return polygon(pts);
+}
+
 }  // namespace
 
 TEST_CASE("inlay: a huge detailed vector is refused or finished in bounded CPU time", "[inlay][robust]") {
@@ -388,7 +399,38 @@ TEST_CASE("inlay: a huge detailed vector is refused or finished in bounded CPU t
         CHECK(carvetto::test::processCpuSeconds() - t0 < 5.0);
         CHECK_FALSE(r.ok());
         CHECK(r.has(ToolpathIssue::WorkLimitExceeded));
+        // The refusal names the input span count and says what to do.
+        REQUIRE_FALSE(r.diagnostics.empty());
+        CHECK(r.diagnostics.front().message.find("20000 spans") != std::string::npos);
+        CHECK(r.diagnostics.front().message.find("simplify") != std::string::npos);
     }
+    const InlayShapes sh = inlayShapes(big, 2.0, 0.1, carvetto::geometry::Tolerance::defaults());
+    CHECK(sh.female.empty());
+    CHECK(sh.male.empty());
+    CHECK_FALSE(sh.allowanceConsumed);
+}
+
+TEST_CASE("inlay shapes: 1500- and 3000-span vectors are accepted (derived spans above the old 4000 cap)", "[inlay][robust]") {
+    const auto tol = carvetto::geometry::Tolerance::defaults();
+    const auto total = [](const std::vector<Contour>& cs) {
+        std::size_t n = 0;
+        for (const Contour& c : cs) {
+            n += c.spans.size();
+        }
+        return n;
+    };
+    const InlayShapes a = inlayShapes({wobblyCircle(1500)}, 2.0, 0.1, tol);
+    CHECK(a.diagnostics.empty());
+    CHECK_FALSE(a.female.empty());
+    CHECK_FALSE(a.male.empty());
+    CHECK(total(a.female) > 4000);
+    CHECK(total(a.male) > 4000);
+    CHECK(total(a.male) <= 15000);
+    // 3000 input spans, no allowance: the derived shape is about 10,000 spans.
+    const InlayShapes b = inlayShapes({wobblyCircle(3000)}, 2.0, 0.0, tol);
+    CHECK(b.diagnostics.empty());
+    CHECK(total(b.female) > 4000);
+    CHECK(total(b.female) <= 15000);
 }
 
 TEST_CASE("inlay: a cancel request stops the run with a Cancelled diagnostic", "[inlay][robust]") {
@@ -412,8 +454,26 @@ TEST_CASE("inlay female: an allowance that consumes the shape does not warn the 
     const InlayResult f = inlayToolpath({square()}, endMill(6.0), std::nullopt, p);
     CHECK(f.ok());
     CHECK_FALSE(f.has(ToolpathIssue::NoRegion));
+    const InlayShapes sh = inlayShapes({square()}, 6.0, 12.0, carvetto::geometry::Tolerance::defaults());
+    CHECK(sh.allowanceConsumed);
+    CHECK(sh.male.empty());
+    CHECK_FALSE(sh.female.empty());
+    CHECK_FALSE(inlayShapes({square()}, 6.0, 0.2, carvetto::geometry::Tolerance::defaults()).allowanceConsumed);
     p.piece = InlayPiece::Male;
     const InlayResult m = inlayToolpath({square()}, endMill(6.0), std::nullopt, p);
     CHECK_FALSE(m.ok());
     CHECK(m.has(ToolpathIssue::NoRegion));
+}
+
+TEST_CASE("inlay female: a NoRegion diagnostic that is not the allowance one is kept", "[inlay]") {
+    const Contour open = polygon({{0, 0}, {10, 0}, {10, 10}});  // polygon() closes; make it open below
+    Contour o = open;
+    o.closed = false;
+    const InlayResult r = inlayToolpath({o}, endMill(6.0), std::nullopt, params(InlayPiece::Female));
+    REQUIRE(r.has(ToolpathIssue::NoRegion));
+    bool kept = false;
+    for (const ToolpathDiagnostic& d : r.diagnostics) {
+        kept = kept || d.message.find("no closed vector") != std::string::npos;
+    }
+    CHECK(kept);
 }

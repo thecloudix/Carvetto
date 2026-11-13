@@ -72,6 +72,9 @@ struct InlayShapes {
     /// The plug: `female` inset by the allowance.
     std::vector<geometry::Contour> male;
     std::vector<ToolpathDiagnostic> diagnostics;
+    /// True when the allowance consumed the whole plug (`male` empty, `female` usable); the
+    /// NoRegion diagnostic then concerns the male only.
+    bool allowanceConsumed = false;
 };
 
 /// Flat end mills only (the tool radius is what rounds the corners).
